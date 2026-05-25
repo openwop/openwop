@@ -197,6 +197,28 @@ export interface NotificationRecord {
 }
 
 /**
+ * Web Push subscription record (RFC 8030). One row per browser/device
+ * per tenant — a user with two laptops + a phone produces three rows.
+ *
+ * `endpoint` + `p256dhKey` + `authKey` are the three opaque values the
+ * browser handed us at subscribe time. The `web-push` library uses all
+ * three to encrypt the payload before delivering to the user agent.
+ * Treated like credentials: anyone with all three can push to that
+ * browser, so we serve them only over auth'd routes and never log
+ * verbatim.
+ */
+export interface PushSubscriptionRecord {
+  subscriptionId: string;
+  tenantId: string;
+  endpoint: string;
+  p256dhKey: string;
+  authKey: string;
+  userAgent?: string;
+  createdAt: string;
+  lastUsedAt?: string;
+}
+
+/**
  * Canonical openwop error codes used inside the sample. Wire shape is
  * `ErrorEnvelope`; the route handlers map host-internal exceptions to
  * these codes via `mapErrorToEnvelope()`.

@@ -23,7 +23,7 @@ export function RunStepInspector({ events, seq, onForkFrom }: Props) {
   );
 
   return (
-    <div className="card">
+    <div className="card" data-run-step-inspector>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <h2 style={{ margin: 0, flex: 1 }}>
           Step inspector <span className="muted" style={{ fontSize: 12, fontWeight: 400 }}>· at #{seq}</span>

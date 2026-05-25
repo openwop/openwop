@@ -22,6 +22,7 @@ import type {
   InterruptRecord,
   NotificationRecord,
   NotificationStatus,
+  PushSubscriptionRecord,
   RunRecord,
   WebhookSubscriptionRecord,
 } from '../types.js';
@@ -140,6 +141,7 @@ export interface Storage {
     workflows: number;
     secrets: number;
     notifications: number;
+    pushSubscriptions: number;
   }>;
 
   // ── tenant reassignment (anon → user migration) ──
@@ -285,6 +287,27 @@ export interface Storage {
   deleteNotification(notificationId: string): Promise<boolean>;
   /** Drop every notification owned by a tenant (used by account-delete). */
   deleteAllTenantNotifications(tenantId: string): Promise<number>;
+
+  // ── Web Push subscriptions (PR #174) ──
+  /**
+   * Per-tenant push subscription rows. One per browser/device, identified
+   * by the `endpoint` URL the browser hands us at `pushManager.subscribe()`
+   * time. The same endpoint re-subscribing (e.g., key rotation, user
+   * re-enabled permission) UPSERTs by endpoint — keeps the row count
+   * matched to active browsers, not historical subscription attempts.
+   */
+  insertPushSubscription(record: PushSubscriptionRecord): Promise<void>;
+  /** List every active subscription owned by a tenant. Used by the
+   *  notification emitter to fan out a push delivery on emit. */
+  listPushSubscriptions(tenantId: string): Promise<readonly PushSubscriptionRecord[]>;
+  /** Look up a subscription by endpoint — used to detect duplicates
+   *  and to delete one specific browser's row on permission-revoke. */
+  getPushSubscriptionByEndpoint(endpoint: string): Promise<PushSubscriptionRecord | null>;
+  /** Drop a single subscription. Returns true when a row was removed. */
+  deletePushSubscription(subscriptionId: string): Promise<boolean>;
+  /** Drop every subscription owned by a tenant — wired into the
+   *  account-delete cascade. */
+  deleteAllTenantPushSubscriptions(tenantId: string): Promise<number>;
 
   // ── lifecycle ──
   close(): Promise<void>;

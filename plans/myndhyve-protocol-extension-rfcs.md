@@ -1,5 +1,17 @@
 # OpenWOP Protocol Extension RFCs — Enabling MyndHyve
 
+> **Status: CLOSED 2026-05-25** — 8 of the 10 proposed RFCs landed `Draft → Active → Accepted` in a single cohort on 2026-05-25 (commit `c9c6bfc`, PR #148). The verification run was MyndHyve workflow-runtime revision `workflow-runtime-00211-69w` against `@openwop/openwop-conformance@1.6.0`, reporting **28 PASS / 0 FAIL** across the cohort scenarios with all five new capability blocks (`host.credentials`, `host.oauth`, `authorization`, `host.scheduling`, `host.deadLetter`) advertised live on `https://api.myndhyve.ai/.well-known/openwop` (curl-verified 2026-05-25). Per-RFC adoption write-up is `docs/openwop-adoption/0045-0054-cohort-summary.md` in the adopter's repo; see also [`INTEROP-MATRIX.md`](../INTEROP-MATRIX.md) §"VERIFIED cohort".
+>
+> **Accepted (8):** RFC 0045 (connector pack manifest) · RFC 0046 (`host.credentials`) · RFC 0047 (`host.oauth`) · RFC 0048 (tenant·workspace·principal) · RFC 0049 (RBAC scopes) · RFC 0051 (approval-gate primitive) · RFC 0052 (scheduling) · RFC 0053 (dead-letter routing). Each promoted on the same conformance run.
+>
+> **Still `Draft` — MyndHyve opted out (2):** RFC 0050 (SAML / SCIM enterprise identity profiles) — MyndHyve hasn't yet wired a SAML ACS endpoint, so the cohort run had no positive SAML evidence; the synthetic-IdP fixture is now bundled in `@openwop/openwop-conformance` (see `examples/conformance-saml-idp/`) so any host with `auth-profiles.saml` wiring can graduate it independently. RFC 0054 (run diff & execution comparison) — defers on a time-travel-debug UI surface in MyndHyve's app; the spec is land-ready and the schema (`run-diff-response.schema.json`) is vendored, awaiting a consuming UI before the host wires the endpoint.
+>
+> **Sequencing held.** The "Recommended order" below (0046 → 0047 → 0045 → 0048 → 0049/0050/0051 → 0052/0053/0054) was honored — `host.credentials` landed first, the OAuth flows that depend on it shipped second, the connector manifest that depends on both shipped third. Identity (0048) preceded the RBAC + approval-gate work it enables. Tier 3 reliability landed as an independent track.
+>
+> **Body preserved.** The proposal text below is retained as-authored for traceability; it uses future tense ("MyndHyve **must** advertise…", "**Depends on RFC 0046**") because it was a plan, not a retrospective. Read it as "what was proposed" — the actual Accepted RFCs at `RFCS/0045-*.md` through `RFCS/0053-*.md` are the normative artifacts.
+
+---
+
 **Purpose:** This document outlines the RFCs OpenWOP needs to author so that MyndHyve can express its product features *through the protocol* instead of as host-only code that no other host can interoperate with. It is the protocol-track companion to [`openwop_roadmap_gap_analysis.md`](./openwop_roadmap_gap_analysis.md).
 
 **Framing.** MyndHyve is an OpenWOP **host**. Much of MyndHyve's product surface — connectors, the workspace credential vault, OAuth, workspace/RBAC scoping, CMS approval gates, scheduled routines — is currently implemented as MyndHyve-private code *above* the protocol. That works for MyndHyve alone, but it means:

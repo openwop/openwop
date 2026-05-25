@@ -56,6 +56,8 @@ export function WorkflowCompletionCard({ run, onPreviewArtifact }: Props): JSX.E
     ? `${run.completedNodeIds.length}/${run.totalNodes} steps`
     : `${run.completedNodeIds.length} step${run.completedNodeIds.length === 1 ? '' : 's'}`;
 
+  const unavailable = run.runUnavailable === true;
+
   if (run.status === 'failed') {
     return (
       <CompletionShell tone="danger" iconKind="alert" title="Workflow failed">
@@ -70,9 +72,7 @@ export function WorkflowCompletionCard({ run, onPreviewArtifact }: Props): JSX.E
         )}
         {run.runId && (
           <Actions>
-            <Link to={`/runs/${run.runId}`} style={{ fontSize: 12 }}>
-              Open run →
-            </Link>
+            <OpenRunLink runId={run.runId} unavailable={unavailable} />
           </Actions>
         )}
       </CompletionShell>
@@ -85,9 +85,7 @@ export function WorkflowCompletionCard({ run, onPreviewArtifact }: Props): JSX.E
         <Meta items={[stepCount, elapsed]} />
         {run.runId && (
           <Actions>
-            <Link to={`/runs/${run.runId}`} style={{ fontSize: 12 }}>
-              Open run →
-            </Link>
+            <OpenRunLink runId={run.runId} unavailable={unavailable} />
           </Actions>
         )}
       </CompletionShell>
@@ -101,25 +99,80 @@ export function WorkflowCompletionCard({ run, onPreviewArtifact }: Props): JSX.E
       <Actions>
         {terminals.length > 0
           ? terminals.map((t) => (
-              <button
-                key={t.nodeId}
-                type="button"
-                className="secondary"
-                onClick={() => onPreviewArtifact?.(t.nodeId, t.output, t.label)}
-                disabled={!onPreviewArtifact}
-                style={{ fontSize: 12 }}
-              >
-                {terminals.length > 1 ? `View ${t.label}` : 'View output'} →
-              </button>
+              <span key={t.nodeId} style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => onPreviewArtifact?.(t.nodeId, t.output, t.label)}
+                  disabled={!onPreviewArtifact}
+                  style={{ fontSize: 12 }}
+                  // Button label:
+                  //   - primary-tagged terminal → "View {label}" (author named
+                  //     it; lean on that)
+                  //   - one terminal, untagged → "View output" (generic;
+                  //     legacy v1 behavior)
+                  //   - N>1 untagged terminals → "View {label}" (disambiguates)
+                  title={t.isPrimary ? `Primary output — declared by workflow author` : undefined}
+                >
+                  {(t.isPrimary || terminals.length > 1) ? `View ${t.label}` : 'View output'} →
+                </button>
+                {run.runId && !unavailable && (
+                  // Deep-link companion to the modal-opening View button —
+                  // opens /runs/:runId#node-:nodeId in a new tab so the user
+                  // can inspect the artifact in the full run-detail surface
+                  // (event log, agent trace, etc.) alongside the chat thread.
+                  <a
+                    href={`/runs/${run.runId}#node-${encodeURIComponent(t.nodeId)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Open in run detail (new tab)"
+                    style={{
+                      fontSize: 12,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      textDecoration: 'none',
+                      color: 'var(--color-accent)',
+                      padding: '0 4px',
+                    }}
+                    aria-label={`Open ${t.label} in run detail (new tab)`}
+                  >
+                    ↗
+                  </a>
+                )}
+              </span>
             ))
           : null}
         {run.runId && (
-          <Link to={`/runs/${run.runId}`} style={{ fontSize: 12, alignSelf: 'center' }}>
-            Open run →
-          </Link>
+          <span style={{ alignSelf: 'center' }}>
+            <OpenRunLink runId={run.runId} unavailable={unavailable} />
+          </span>
         )}
       </Actions>
     </CompletionShell>
+  );
+}
+
+/**
+ * Shared "Open run" affordance — renders the link normally when the
+ * run is still on the server, or a muted "(unavailable)" placeholder
+ * when the orphan-detection probe set `runUnavailable: true`.
+ */
+function OpenRunLink({ runId, unavailable }: { runId: string; unavailable: boolean }): JSX.Element {
+  if (unavailable) {
+    return (
+      <span
+        className="muted"
+        style={{ fontSize: 12, fontStyle: 'italic' }}
+        title="Run record no longer available on the server"
+      >
+        Open run (unavailable)
+      </span>
+    );
+  }
+  return (
+    <Link to={`/runs/${runId}`} style={{ fontSize: 12 }}>
+      Open run →
+    </Link>
   );
 }
 
@@ -127,6 +180,12 @@ interface Terminal {
   nodeId: string;
   label: string;
   output: unknown;
+  /** RFC 0065 — true when the workflow author tagged this node as the
+   *  canonical-deliverable artifact. When ≥1 terminal is primary, the
+   *  card surfaces only the primary as a "View output" button and the
+   *  rest as a single "Open run" link; otherwise it falls back to the
+   *  v1 "N View links for N terminals" convention. */
+  isPrimary: boolean;
 }
 
 /**
@@ -138,6 +197,14 @@ interface Terminal {
  *
  * Hooked rather than computed inline because `getSavedWorkflow` reads
  * localStorage and we want to memoize the result.
+ *
+ * RFC 0065 note: `outputRole` flows through the entire round-trip —
+ * `BuilderNode.outputRole` is preserved in the localStorage
+ * SavedWorkflow AND forwarded by `builder/schema/serialize.ts` to the
+ * BE `BackendNode` shape on workflow registration / run dispatch.
+ * This hook reads from `getSavedWorkflow()` (localStorage) for the
+ * fast path; a future cross-device path would re-fetch the BE
+ * workflow definition and read the same field server-side.
  */
 function useTerminalNodes(run: WorkflowRunState): Terminal[] {
   // Memo key is a stable string hash of the inputs that actually
@@ -179,8 +246,25 @@ function useTerminalNodes(run: WorkflowRunState): Terminal[] {
         nodeId: backendNodeId,
         label,
         output,
+        isPrimary: n.outputRole === 'primary',
       });
     }
+    // RFC 0065 — if at least one terminal is tagged `primary`, narrow
+    // the surfaced list to JUST the primary one. Per the RFC, the
+    // tiebreaker for multiple primaries is lexicographic node id —
+    // **Unicode code-point order** (NOT `localeCompare`, which uses
+    // the host's default ICU collation and can diverge across
+    // implementations for non-ASCII ids). The schema pins ids to
+    // `[a-zA-Z0-9._-]` so the two coincide today; the explicit
+    // ordering makes the RFC's "reproducible across implementations"
+    // promise honest if the regex ever loosens.
+    const primaries = terminals.filter((t) => t.isPrimary);
+    const [primary] = primaries.sort((a, b) =>
+      a.nodeId < b.nodeId ? -1 : a.nodeId > b.nodeId ? 1 : 0,
+    );
+    if (primary) return [primary];
+    // Fallback (v1 convention): show every terminal as a separate
+    // "View output" link.
     return terminals;
   }, [memoKey]);
 }

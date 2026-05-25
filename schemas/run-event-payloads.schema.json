@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
   "title": "RunEventPayloads",
-  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n71 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n72 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
   "type": "object",
   "$defs": {
     "_typeIndex": {
@@ -76,6 +76,7 @@
         "conversation.exchanged":    { "$ref": "#/$defs/conversationExchanged" },
         "conversation.closed":       { "$ref": "#/$defs/conversationClosed" },
         "memory.compacted":          { "$ref": "#/$defs/memoryCompacted" },
+        "memory.written":            { "$ref": "#/$defs/memoryWritten" },
         "core.workflowChain.event":  { "$ref": "#/$defs/coreWorkflowChainEvent" },
         "core.workflowChain.confidence-escalated": { "$ref": "#/$defs/coreWorkflowChainConfidenceEscalated" },
         "connector.authorized":      { "$ref": "#/$defs/connectorAuthorized" },
@@ -1276,6 +1277,19 @@
         "sourceCount": { "type": "integer", "minimum": 1, "description": "Total source entries collapsed, including any not enumerated in `sourceIds`." },
         "trigger":     { "type": "string", "enum": ["host-managed", "client-requested", "both"], "description": "Matches `capabilities.memory.compaction.trigger`; indicates which trigger path drove this run. v1.x normates only `host-managed`." },
         "byteSize":    { "type": "integer", "minimum": 0, "description": "Byte size of the resulting MemoryEntry.content." }
+      },
+      "additionalProperties": true
+    },
+    "memoryWritten": {
+      "type": "object",
+      "description": "RFC 0057. Emitted by a host advertising `capabilities.memory.attribution.emitsWriteEvents: true` for each memory write a run makes, attributing it to the node (and agent, when known) that caused it. Content-free: identifiers + non-secret tags only — the entry content is served by the read-side (`MemoryAdapter.get`), already SR-1-redacted. On replay the event is re-read from the log, never regenerated (the host MUST NOT mint a new `memoryId` or timestamp at replay time). SECURITY invariants `memory-attribution-no-content` + `memory-attribution-tenant-scoped` apply.",
+      "required": ["memoryRef", "memoryId"],
+      "properties": {
+        "memoryRef": { "type": "string", "minLength": 1, "description": "Opaque MemoryAdapter handle (RFC 0004 §C) the entry was written under; resolvable via the read-side." },
+        "memoryId":  { "type": "string", "minLength": 1, "description": "Host-issued, stable entry id; correlates to `MemoryAdapter.get(memoryRef, memoryId)`." },
+        "nodeId":    { "type": "string", "minLength": 1, "description": "SHOULD — the node whose execution caused the write. Omitted only for writes with no node attribution (e.g. host session-end auto-memory)." },
+        "agentId":   { "type": "string", "minLength": 1, "description": "MAY — the agent identity (AgentRef per RFC 0002) behind the write, when known." },
+        "tags":      { "type": "array", "items": { "type": "string" }, "description": "MAY — the entry's non-secret labels. MUST NOT carry secret material (the no-content invariant covers payload bodies)." }
       },
       "additionalProperties": true
     }

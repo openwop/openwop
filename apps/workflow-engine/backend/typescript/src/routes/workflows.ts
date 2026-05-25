@@ -218,10 +218,28 @@ function validateDefinition(raw: unknown): WorkflowDefinition {
         400,
       );
     }
+    // RFC 0065 — optional advisory `outputRole` annotation; enum
+    // validation matches the wire-level schema. Reject unknown values
+    // at the route boundary so the registered definition is round-
+    // trippable through `workflow-definition.schema.json`.
+    if (
+      node.outputRole !== undefined
+      && node.outputRole !== 'primary'
+      && node.outputRole !== 'secondary'
+    ) {
+      throw new OpenwopError(
+        'validation_error',
+        `nodes[${i}].outputRole MUST be 'primary' or 'secondary' when present.`,
+        400,
+      );
+    }
     return {
       nodeId: node.nodeId,
       typeId: node.typeId,
       ...(node.config ? { config: node.config as Record<string, unknown> } : {}),
+      ...(node.outputRole !== undefined
+        ? { outputRole: node.outputRole as 'primary' | 'secondary' }
+        : {}),
     };
   });
   // RFC 0022 §C capability-gate refusal check.

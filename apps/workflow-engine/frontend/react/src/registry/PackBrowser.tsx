@@ -30,6 +30,10 @@ interface Props {
   /** typeIds already in the merged local catalog (installed + draggable). */
   installedTypeIds: ReadonlySet<string>;
   onClose: () => void;
+  /** §A6 — "use in builder": drop an installed pack node onto the canvas.
+   *  Receives the node's typeId; the host resolves it to a builder kind and
+   *  adds it. Omitted when the browser is opened outside a builder context. */
+  onUseNode?: (typeId: string) => void;
 }
 
 const TIER_COLOR: Record<string, string> = {
@@ -39,7 +43,7 @@ const TIER_COLOR: Record<string, string> = {
   unknown: 'var(--ink-3)',
 };
 
-export function PackBrowser({ installedTypeIds, onClose }: Props) {
+export function PackBrowser({ installedTypeIds, onClose, onUseNode }: Props) {
   const [packs, setPacks] = useState<PackIndexEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
@@ -115,7 +119,7 @@ export function PackBrowser({ installedTypeIds, onClose }: Props) {
           </ul>
           <div className="pack-browser-detail">
             {selected ? (
-              <PackDetailView name={selected} installedTypeIds={installedTypeIds} />
+              <PackDetailView name={selected} installedTypeIds={installedTypeIds} onUseNode={onUseNode} />
             ) : (
               <p className="muted" style={{ padding: 16 }}>Select a pack to view its manifest, signature, trust tier and SBOM.</p>
             )}
@@ -126,7 +130,15 @@ export function PackBrowser({ installedTypeIds, onClose }: Props) {
   );
 }
 
-function PackDetailView({ name, installedTypeIds }: { name: string; installedTypeIds: ReadonlySet<string> }) {
+function PackDetailView({
+  name,
+  installedTypeIds,
+  onUseNode,
+}: {
+  name: string;
+  installedTypeIds: ReadonlySet<string>;
+  onUseNode?: (typeId: string) => void;
+}) {
   const [detail, setDetail] = useState<PackDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -186,14 +198,28 @@ function PackDetailView({ name, installedTypeIds }: { name: string; installedTyp
 
       <h4>Type IDs ({detail.typeIds.length})</h4>
       <ul className="pack-typeid-list">
-        {detail.typeIds.map((t) => (
-          <li key={t}>
-            <code>{t}</code>
-            {installedTypeIds.has(t)
-              ? <span className="pack-flag pack-flag-ok">installed</span>
-              : <span className="muted pack-flag">not installed</span>}
-          </li>
-        ))}
+        {detail.typeIds.map((t) => {
+          const installed = installedTypeIds.has(t);
+          return (
+            <li key={t}>
+              <code>{t}</code>
+              {installed
+                ? <span className="pack-flag pack-flag-ok">installed</span>
+                : <span className="muted pack-flag">not installed</span>}
+              {installed && onUseNode && (
+                <button
+                  type="button"
+                  className="secondary pack-use-node"
+                  style={{ marginLeft: 6, padding: '1px 8px', fontSize: 11, minHeight: 0 }}
+                  onClick={() => onUseNode(t)}
+                  title="Add this node to the builder canvas"
+                >
+                  + canvas
+                </button>
+              )}
+            </li>
+          );
+        })}
       </ul>
 
       {detail.versions.length > 1 && (

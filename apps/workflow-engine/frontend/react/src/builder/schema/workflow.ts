@@ -32,6 +32,13 @@ export interface BuilderNode {
   position: { x: number; y: number };
   /** Node-kind-specific configuration. Mirrors backend node.config. */
   config: Record<string, unknown>;
+  /** RFC 0065 — author hint that this terminal node's output is the
+   *  workflow's primary deliverable. Advisory: engine ignores the
+   *  value; tooling (chat-surface completion cards, run-detail page)
+   *  uses it to pick which of N terminal nodes' outputs to surface as
+   *  the canonical artifact. Mirrors the wire-level `outputRole` field
+   *  on `WorkflowNode` per `schemas/workflow-definition.schema.json`. */
+  outputRole?: 'primary' | 'secondary';
 }
 
 /** When a target node has multiple incoming edges, this rule controls

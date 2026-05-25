@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import type { RunSnapshot, RunEventDoc, StreamMode } from '@openwop/openwop';
 import { cancelRun, deleteRun, forkRun, getRun, pollEvents } from '../client/runsClient.js';
 import { subscribeToRun } from '../client/streamsClient.js';
@@ -20,6 +20,10 @@ import { RenderInterrupt } from '../interrupts/RenderInterrupt.js';
 export function RunDetailPage() {
   const { runId = '' } = useParams();
   const nav = useNavigate();
+  // §C3/§D — when this run was opened from a fork, carry a back-reference to
+  // the source so a reviewer can navigate to the feedback that motivated it.
+  const [searchParams] = useSearchParams();
+  const forkedFrom = searchParams.get('from');
   const [snapshot, setSnapshot] = useState<RunSnapshot | null>(null);
   const [events, setEvents] = useState<RunEventDoc[]>([]);
   const [activeInterrupt, setActiveInterrupt] = useState<OpenInterrupt | null>(null);
@@ -71,6 +75,32 @@ export function RunDetailPage() {
       cancelled = true;
     };
   }, [runId, refreshInterrupts, refreshAnnotations]);
+
+  // Hash-driven node deep-link: `/runs/<id>#node-<nodeId>` sets the
+  // playhead to the matching `node.completed` event's sequence and
+  // scrolls the step inspector into view. Used by the chat surface's
+  // `WorkflowCompletionCard` to open a terminal node's artifact panel
+  // in a new tab — the modal preview is the in-chat affordance; this
+  // is the "give me the full run-detail context" affordance.
+  useEffect(() => {
+    if (events.length === 0) return;
+    const hash = window.location.hash;
+    if (!hash.startsWith('#node-')) return;
+    const targetNodeId = decodeURIComponent(hash.slice('#node-'.length));
+    // Pick the LAST `node.completed` for this nodeId so a node that
+    // ran multiple times (retries, loops) selects the terminal attempt.
+    const ev = [...events].reverse().find(
+      (e) => e.type === 'node.completed' && e.nodeId === targetNodeId,
+    );
+    if (!ev) return;
+    setPlayheadSeq(ev.sequence);
+    // Defer the scroll until the inspector has rendered with the new
+    // playhead — the inspector mounts conditionally on `playheadSeq`.
+    requestAnimationFrame(() => {
+      const inspector = document.querySelector<HTMLElement>('[data-run-step-inspector]');
+      inspector?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, [events]);
 
   // Subscribe to live SSE events.
   useEffect(() => {
@@ -143,7 +173,9 @@ export function RunDetailPage() {
     if (!runId) return;
     try {
       const res = await forkRun(runId, { fromSeq: seq, mode: 'branch' });
-      window.location.href = `/runs/${res.runId}`;
+      // Carry the source run as a back-reference (RFC 0056 §D) so the forked
+      // run's page can link back to where the fork was motivated.
+      window.location.href = `/runs/${res.runId}?from=${encodeURIComponent(res.sourceRunId)}`;
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
@@ -154,6 +186,11 @@ export function RunDetailPage() {
   return (
     <section>
       <div className="card">
+        {forkedFrom && (
+          <p className="muted" style={{ margin: '0 0 8px', fontSize: 12 }}>
+            ↳ Forked from <Link to={`/runs/${forkedFrom}`}><code>{forkedFrom.slice(0, 8)}…</code></Link>
+          </p>
+        )}
         <h2>
           Run <code>{runId}</code>
           {snapshot && <span className={`status-badge ${snapshot.status}`} style={{ marginLeft: 8 }}>{snapshot.status}</span>}

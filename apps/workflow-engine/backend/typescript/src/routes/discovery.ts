@@ -408,7 +408,12 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
           substitutionSupported: cfg.substitutionSupported,
         };
       })(),
-      memory: { supported: false },
+      // `supported: false` — no standard four-op MemoryAdapter; this demo
+      // only does host-internal run-summary writes + the read-side
+      // (GET /v1/host/sample/memory). RFC 0057: it DOES attribute those
+      // writes via the content-free `memory.written` event, so it advertises
+      // attribution independently of the adapter contract.
+      memory: { supported: false, attribution: { supported: true, emitsWriteEvents: true } },
       // RFC 0023 §B.2 — capabilities.conformance.mockAgent. Reference
       // host registers core.conformance.mock-agent unconditionally
       // (see bootstrap/conformanceMockAgent.ts). Production deployments

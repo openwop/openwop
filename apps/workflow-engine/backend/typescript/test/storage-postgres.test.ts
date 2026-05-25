@@ -170,7 +170,7 @@ async function makeStorage(): Promise<Storage> {
     listTenantSecretRefs: async () => [],
     deleteAllTenantSecrets: async () => 0,
     reassignTenant: async () => ({ runs: 0, workflows: 0 }),
-    deleteAllTenantData: async () => ({ runs: 0, events: 0, interrupts: 0, workflows: 0, secrets: 0, notifications: 0 }),
+    deleteAllTenantData: async () => ({ runs: 0, events: 0, interrupts: 0, workflows: 0, secrets: 0, notifications: 0, pushSubscriptions: 0 }),
     incrementManagedUsage: async () => {},
     getManagedUsage: async () => ({ inputTokens: 0, outputTokens: 0 }),
     getEnvelopeCorrelation: async () => null,
@@ -189,6 +189,11 @@ async function makeStorage(): Promise<Storage> {
     markAllNotificationsRead: async () => 0,
     deleteNotification: async () => false,
     deleteAllTenantNotifications: async () => 0,
+    insertPushSubscription: async () => { throw new Error('not exercised'); },
+    listPushSubscriptions: async () => [],
+    getPushSubscriptionByEndpoint: async () => null,
+    deletePushSubscription: async () => false,
+    deleteAllTenantPushSubscriptions: async () => 0,
     close: async () => { await pool.end(); },
   };
 }

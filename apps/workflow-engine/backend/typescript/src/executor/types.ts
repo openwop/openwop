@@ -293,6 +293,12 @@ export interface WorkflowDefinition {
      *  Future shapes (`{type: 'literal', value}`, `{type: 'config'}`,
      *  etc.) can be added without breaking the resolution interface. */
     inputs?: Record<string, unknown>;
+    /** RFC 0065 — author hint that this terminal node's output is the
+     *  workflow's canonical-deliverable artifact. Advisory; executor
+     *  ignores the value. Forwarded round-trip so consuming tools
+     *  (chat-surface completion cards, run-detail page, third-party
+     *  hosts) can pick a primary output deterministically. */
+    outputRole?: 'primary' | 'secondary';
   }>;
   /** DAG edges. When absent or empty, the executor builds an implicit linear
    *  chain from `nodes` (back-compat path for callers that pre-date the

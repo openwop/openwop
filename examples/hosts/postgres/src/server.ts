@@ -57,10 +57,22 @@ import {
   endRunSpan,
   startNodeSpan,
   endNodeSpan,
+  addNodeSpanAttributes,
   recordRunDuration,
   parseTraceparent,
   recordInboundTraceContext,
 } from './observability.js';
+import { sanitizeCostAttrs, applyCostRollup, snapshotCostRollup } from './cost.js';
+import {
+  evaluateModelCapabilityGate,
+  buildInsufficientPayload,
+  aggregateAdvertisedCapabilities,
+  FIXTURE_NODE_MODEL_CAPABILITIES,
+  ACTIVE_PROVIDER,
+  ACTIVE_MODEL,
+  SUPPORTED_PROVIDERS,
+  SUBSTITUTION_SUPPORTED,
+} from './modelCapability.js';
 import {
   setupInterruptSchema,
   createInterrupt,
@@ -839,6 +851,41 @@ async function executeNode(
       });
       return 'failed';
     }
+  }
+
+  // RFC 0031 §B — model-capability gate. A node declaring
+  // `requiredModelCapabilities` the active model doesn't advertise is
+  // refused at dispatch with `model.capability.insufficient` (emitted
+  // BEFORE node.failed per §D) + `capability_not_provided`. Runs before
+  // node.started so the node never executes (no node.completed / provider
+  // / envelope events). substitutionSupported is false, so a declared
+  // fallbackModel does not trigger substitution.
+  const requiredModelCaps = FIXTURE_NODE_MODEL_CAPABILITIES[node.typeId];
+  if (requiredModelCaps && requiredModelCaps.length > 0) {
+    const outcome = evaluateModelCapabilityGate({
+      module: { requiredModelCapabilities: requiredModelCaps },
+      activeProvider: ACTIVE_PROVIDER,
+      activeModel: ACTIVE_MODEL,
+      substitutionSupported: SUBSTITUTION_SUPPORTED,
+      supportedProviders: SUPPORTED_PROVIDERS,
+    });
+    if (outcome.route === 'refuse') {
+      await appendEvent(runId, 'model.capability.insufficient', {
+        nodeId: node.id,
+        data: buildInsufficientPayload(outcome, node.id, ACTIVE_PROVIDER, ACTIVE_MODEL),
+      });
+      await appendEvent(runId, 'node.failed', {
+        nodeId: node.id,
+        data: { code: 'capability_not_provided' },
+      });
+      runFailureErrors.set(runId, {
+        code: 'capability_not_provided',
+        message: `Node "${node.id}" model capabilities not satisfied: missing ${outcome.missingCapabilities.join(', ')}.`,
+      });
+      return 'failed';
+    }
+    // route 'dispatch' | 'substitute' → fall through (the reference host
+    // advertises substitutionSupported:false, so 'substitute' won't arise here).
   }
 
   await appendEvent(runId, 'node.started', { nodeId: node.id });
@@ -2054,6 +2101,22 @@ async function executeNode(
       }
     }
 
+    case 'conformance.cost.emit': {
+      // RFC 0026 — fixture producer. Sanitize the declared cost attrs
+      // (allowlist drops non-`openwop.cost.*` keys + the credential-shaped
+      // canary), write them onto the node span (for an OTel scrape), and
+      // fold the snapshot subset into the per-run rollup so
+      // `metrics.openwopCost` surfaces on the run snapshot.
+      const cfg = (node.config ?? {}) as { attrs?: unknown };
+      const attrs = cfg.attrs && typeof cfg.attrs === 'object' && !Array.isArray(cfg.attrs)
+        ? (cfg.attrs as Record<string, unknown>)
+        : {};
+      const sanitized = sanitizeCostAttrs(attrs);
+      addNodeSpanAttributes(runId, node.id, sanitized);
+      applyCostRollup(runId, sanitized);
+      break;
+    }
+
     default:
       await appendEvent(runId, 'node.failed', {
         nodeId: node.id,
@@ -2668,6 +2731,16 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
         // `OPENWOP_AI_POLICY_<PROVIDER>` env vars; resolver-outage
         // failures fail-open to `optional`.
         aiProviders: REFERENCE_AI_PROVIDERS_CAPABILITY,
+        // RFC 0031 §E — the host honors `NodeModule.requiredModelCapabilities`
+        // at dispatch (model-capability gate in executeNode) and emits
+        // `model.capability.insufficient`. No substitution posture
+        // (substitutionSupported: false). `advertised` is the union of the
+        // host's providers' verified capabilities.
+        modelCapabilities: {
+          supported: true,
+          advertised: aggregateAdvertisedCapabilities(SUPPORTED_PROVIDERS),
+          substitutionSupported: SUBSTITUTION_SUPPORTED,
+        },
         // Phase H.2 — capabilities.md §`mcpClient` (additive). MCP
         // tool-call surface via HTTP/JSON-RPC transport. Operators
         // configure individual servers via OPENWOP_MCP_SERVER_<ID>
@@ -3121,6 +3194,9 @@ async function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: st
     ...(currentNodeId ? { currentNodeId } : {}),
     ...(interrupt ? { interrupt } : {}),
     ...(childRuns.length > 0 ? { childRuns } : {}),
+    // RFC 0026 — per-run cost rollup (run-snapshot.schema.json
+    // §metrics.openwopCost). Omitted when no cost was recorded.
+    ...(snapshotCostRollup(runId) ? { metrics: { openwopCost: snapshotCostRollup(runId) } } : {}),
   });
 }
 

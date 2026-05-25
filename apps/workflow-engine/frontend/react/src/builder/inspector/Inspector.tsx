@@ -156,6 +156,32 @@ export function Inspector() {
       )}
 
       <div className="builder-inspector-divider" />
+      <div className="builder-inspector-section-label">Output role</div>
+      <div className="form-row">
+        <label htmlFor="builder-inspector-output-role">Artifact</label>
+        <select
+          id="builder-inspector-output-role"
+          value={node.outputRole ?? ''}
+          onChange={(e) => {
+            const v = e.target.value;
+            useBuilderStore.getState().updateNode(node.id, {
+              outputRole: v === 'primary' || v === 'secondary' ? v : undefined,
+            });
+          }}
+          title="RFC 0065 — author hint for which terminal node's output is the workflow's canonical deliverable. Advisory; engine ignores the value."
+        >
+          <option value="">(none)</option>
+          <option value="primary">Primary</option>
+          <option value="secondary">Secondary</option>
+        </select>
+      </div>
+      <p className="muted" style={{ fontSize: 11, marginTop: -4 }}>
+        Tag the canonical-deliverable terminal node so the chat's
+        completion card surfaces this output as the workflow's primary
+        artifact. RFC 0065 — advisory; the engine ignores the value.
+      </p>
+
+      <div className="builder-inspector-divider" />
       <button
         className="secondary"
         onClick={() => useBuilderStore.getState().removeNode(node.id)}

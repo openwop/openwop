@@ -32,7 +32,7 @@ export interface Queryable {
   ): Promise<{ rows: R[] }>;
 }
 
-export const LATEST_SCHEMA_VERSION = 6;
+export const LATEST_SCHEMA_VERSION = 7;
 
 const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
   1: async (client) => {
@@ -261,6 +261,40 @@ const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
         ON notifications (tenant_id, created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_notifications_tenant_status
         ON notifications (tenant_id, status, created_at DESC);
+    `);
+  },
+  7: async (client) => {
+    // Web Push subscriptions (RFC 8030 / Web Push Protocol). Each row
+    // is one browser/device per tenant — a user with two laptops + a
+    // phone produces three rows. The BE pushes a notification to every
+    // subscription owned by the tenant on every emit.
+    //
+    // `endpoint` is the pushService URL the browser handed us at
+    // subscribe time (FCM / Mozilla / Apple). `p256dh_key` + `auth_key`
+    // are the ECDH + HMAC keys the pushService uses to encrypt the
+    // payload before delivering to the browser — these MUST be stored
+    // verbatim per the Web Push spec; the `web-push` library handles
+    // the cryptography.
+    //
+    // No PII beyond the tenant id; everything else is a browser-
+    // generated opaque identifier. The endpoint URL is sensitive only
+    // in the sense that anyone with both keys could push to that
+    // browser, so we treat it like a credential.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS push_subscriptions (
+        subscription_id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        endpoint TEXT NOT NULL,
+        p256dh_key TEXT NOT NULL,
+        auth_key TEXT NOT NULL,
+        user_agent TEXT,
+        created_at TIMESTAMPTZ NOT NULL,
+        last_used_at TIMESTAMPTZ
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_push_subs_endpoint
+        ON push_subscriptions (endpoint);
+      CREATE INDEX IF NOT EXISTS idx_push_subs_tenant
+        ON push_subscriptions (tenant_id, created_at DESC);
     `);
   },
 };

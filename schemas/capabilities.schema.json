@@ -861,6 +861,22 @@
           "additionalProperties": false,
           "if": { "properties": { "supported": { "const": true } }, "required": ["supported"] },
           "then": { "required": ["supported", "trigger"] }
+        },
+        "attribution": {
+          "type": "object",
+          "description": "RFC 0057 Memory write-attribution. Hosts that emit per-node memory provenance on the run event log MAY advertise here. Advertising `emitsWriteEvents: true` commits the host to emit a `memory.written` RunEvent for every memory write a run makes (identifiers only, never content), and implies the SECURITY invariants `memory-attribution-no-content` + `memory-attribution-tenant-scoped`.",
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "const": true,
+              "description": "REQUIRED when the sub-block is present. The block is omitted entirely by hosts that do not support write attribution."
+            },
+            "emitsWriteEvents": {
+              "type": "boolean",
+              "description": "When `true`, the host emits `memory.written` (per `run-event-payloads.schema.json#/$defs/memoryWritten`) for every memory write during a run. When `false` or absent, consumers MUST tolerate the event never appearing."
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": true
