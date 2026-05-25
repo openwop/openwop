@@ -26,6 +26,13 @@ import {
   cloneTemplateToUserWorkflow,
   type TemplateWorkflow,
 } from './templates/premadeWorkflows.js';
+import { loadDynamicCatalog, useCatalog } from './palette/catalogRegistry.js';
+
+/** A template is offerable when it needs no pack nodes, or every pack
+ *  typeId it needs is present in the merged catalog (host has the pack). */
+function templateAvailable(tpl: TemplateWorkflow, installed: ReadonlySet<string>): boolean {
+  return !tpl.requiresTypeIds || tpl.requiresTypeIds.every((t) => installed.has(t));
+}
 
 type SortBy = 'updated' | 'created' | 'name';
 type SortDir = 'asc' | 'desc';
@@ -76,8 +83,19 @@ export function WorkflowsDashboard() {
   // so the dashboard isn't empty on day one. Subsequent visits no-op
   // (a `seeded` flag is persisted alongside) — if the user deletes
   // everything, we honor that intent and don't re-seed.
+  // Pull the dynamic (pack) catalog so pack-dependent templates can be
+  // gated on what the connected host actually has installed.
+  useEffect(() => { void loadDynamicCatalog(); }, []);
+  const catalog = useCatalog();
+  const installedTypeIds = useMemo(() => new Set(catalog.map((e) => e.typeId)), [catalog]);
+
   useEffect(() => {
-    const seeds = PREMADE_WORKFLOWS.map((tpl) => cloneTemplateToUserWorkflow(tpl));
+    // Seed only built-in templates on first visit. Pack-dependent
+    // templates are gallery-only + catalog-gated, so we never seed a
+    // workflow with "Unknown" nodes before the catalog has loaded.
+    const seeds = PREMADE_WORKFLOWS
+      .filter((tpl) => !tpl.requiresTypeIds)
+      .map((tpl) => cloneTemplateToUserWorkflow(tpl));
     const n = seedSavedWorkflowsIfFirstVisit(seeds);
     if (n > 0) refresh();
     // refresh is stable for this hook's lifetime (closes over setVersion);
@@ -243,7 +261,7 @@ export function WorkflowsDashboard() {
           <span className="muted">Premade starting points — click <em>Use template</em> to clone into your workflows.</span>
         </div>
         <div className="workflows-grid">
-          {PREMADE_WORKFLOWS.map((tpl) => (
+          {PREMADE_WORKFLOWS.filter((tpl) => templateAvailable(tpl, installedTypeIds)).map((tpl) => (
             <TemplateCard key={tpl.templateId} template={tpl} onUse={() => onUseTemplate(tpl)} />
           ))}
         </div>
