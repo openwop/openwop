@@ -83,6 +83,8 @@ This document anticipates a transition from maintainer-driven governance to a wo
 
 When those conditions are met, a working group charter will be filed as an RFC and ratified by lazy consensus among the current maintainers. The charter will define voting rules, term limits, and the succession model for the lead-maintainer role.
 
+Working-group activation also ratifies the registry and extension policy in [`RFCS/0043-registry-and-extension-policy.md`](./RFCS/0043-registry-and-extension-policy.md) (currently `Draft`, auditable today): the WG's first ballot is to ratify RFC 0043 §B/§C verbatim or amend, flipping it to `Accepted`. The policy index is [`docs/governance/registry-policy.md`](./docs/governance/registry-policy.md).
+
 ## Amendments
 
 This document is amended via the same process as a non-normative addition (one maintainer approval; CHANGELOG entry). Changes that affect the maintainer set or the decision rule require two maintainer approvals **and an RFC** per `RFCS/0001-rfc-process.md`.
