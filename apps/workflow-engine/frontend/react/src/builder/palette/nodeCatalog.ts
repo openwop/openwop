@@ -23,11 +23,15 @@ export interface ConfigField {
     | 'number'
     | 'textarea'
     | 'checkbox'
+    | 'select'
     | 'prompt-picker'
     | 'credential-picker'
     | 'provider-picker'
     | 'model-picker';
   placeholder?: string;
+  /** For `kind: 'select'` (e.g. a JSON-Schema `enum`), the allowed
+   *  values rendered as a dropdown. */
+  options?: readonly { value: string; label: string }[];
   /** Default value used when a node of this kind is created. */
   defaultValue?: string | number | boolean;
   /** Help text shown beneath the input. */

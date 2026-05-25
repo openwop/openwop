@@ -230,8 +230,13 @@ function configFieldsFromSchema(schema: unknown): ConfigField[] {
     if (!raw || typeof raw !== 'object') continue;
     const ps = raw as Record<string, unknown>;
     const type = Array.isArray(ps.type) ? (ps.type[0] as string) : (ps.type as string | undefined);
+    // A scalar `enum` becomes a dropdown; otherwise infer by type.
+    const enumVals = Array.isArray(ps.enum)
+      ? (ps.enum as unknown[]).filter((v) => typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean')
+      : null;
     let kind: ConfigField['kind'] = 'text';
-    if (type === 'boolean') kind = 'checkbox';
+    if (enumVals && enumVals.length > 0 && type !== 'object' && type !== 'array') kind = 'select';
+    else if (type === 'boolean') kind = 'checkbox';
     else if (type === 'number' || type === 'integer') kind = 'number';
     else if (type === 'object' || type === 'array') kind = 'textarea';
     const labelBase = (ps.title as string | undefined) ?? key;
@@ -246,6 +251,9 @@ function configFieldsFromSchema(schema: unknown): ConfigField[] {
           ? def
           : undefined,
       help: typeof ps.description === 'string' ? ps.description : undefined,
+      ...(kind === 'select' && enumVals
+        ? { options: enumVals.map((v) => ({ value: String(v), label: String(v) })) }
+        : {}),
     });
   }
   return fields;

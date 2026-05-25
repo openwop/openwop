@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getCapabilities } from '../client/runsClient.js';
 import { authedHeaders, config, fetchOpts } from '../client/config.js';
+import { McpToolsPanel } from '../mcp/McpToolsPanel.js';
 
 /** Render an advertised boolean as a tri-state glyph. `undefined` means the
  *  host hasn't declared the field; that's distinct from `false` (declared off). */
@@ -266,6 +267,8 @@ export function CapabilitiesPanel() {
           !error && <div className="muted">Host doesn't advertise <code>modelCapabilities</code> yet.</div>
         )}
       </div>
+
+      <McpToolsPanel />
 
       <div className="card">
         <h2>Raw advertisement</h2>
