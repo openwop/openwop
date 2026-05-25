@@ -19,6 +19,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { createSyntheticSamlIdp, type SamlVariant } from '../lib/saml-idp.js';
 
 const SAML_PROFILE = 'openwop-auth-saml';
 
@@ -76,4 +77,43 @@ describe('auth-saml-profile: assertion validation (RFC 0050 §A — opt-in)', ()
       driver.describe('RFC 0050 §A', 'an `alg:none`/unsigned SAML assertion MUST be rejected (non-2xx)'),
     ).toBeGreaterThanOrEqual(400);
   });
+});
+
+describe('category: auth-saml synthetic-IdP reference suite (RFC 0050 §A)', () => {
+  // Server-free: the bundled synthetic IdP (conformance/src/lib/saml-idp.ts)
+  // mints a valid assertion + the 6 negative variants, and its verify()
+  // implements the RFC 0050 §A MUST list. This proves each negative is
+  // detectably malformed and gives the suite a reference SAML validator.
+  // A host's real ACS validates the SAME assertions over the
+  // `auth/saml/validate` seam (gated above on OPENWOP_TEST_SAML_IDP_URL).
+  const idp = createSyntheticSamlIdp();
+
+  it('publishes a PEM signing certificate', () => {
+    expect(idp.certificatePem).toContain('BEGIN PUBLIC KEY');
+  });
+
+  it('accepts a valid signed, in-window, non-wrapped assertion', () => {
+    const r = idp.verify(idp.mint('valid'));
+    expect(r.valid, `expected valid; got reason=${r.reason}`).toBe(true);
+  });
+
+  const negatives: ReadonlyArray<[Exclude<SamlVariant, 'valid'>, string]> = [
+    ['alg-none', 'alg-none'],
+    ['unsigned', 'unsigned'],
+    ['bad-signature', 'bad-signature'],
+    ['expired', 'expired'],
+    ['not-yet-valid', 'not-yet-valid'],
+    ['signature-wrapping', 'signature-wrapping'],
+  ];
+
+  for (const [variant, expectedReason] of negatives) {
+    it(`rejects the ${variant} assertion (RFC 0050 §A MUST)`, () => {
+      const r = idp.verify(idp.mint(variant));
+      expect(r.valid, `${variant} MUST be rejected`).toBe(false);
+      expect(
+        r.reason,
+        `${variant} MUST be rejected for the ${expectedReason} reason`,
+      ).toBe(expectedReason);
+    });
+  }
 });

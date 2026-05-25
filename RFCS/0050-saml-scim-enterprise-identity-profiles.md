@@ -93,11 +93,11 @@ New fixture: a synthetic SAML IdP (deterministic signed assertions, including th
 - [x] Spec text merged (this file).
 - [x] `openwop-auth-saml` + `openwop-auth-scim` + optional `openwop-auth-ldap` profiles in `spec/v1/auth-profiles.md`.
 - [x] Reserved `openwop-auth-saml`/`-scim`/`-ldap` profile ids pinned in the `capabilities.auth.profiles` schema description.
-- [~] Conformance — `auth-saml-profile.test.ts` + `auth-scim-profile.test.ts` landed (profile-advertisement shape always; behavioral assertion-validation / provisioning opt-in via `OPENWOP_TEST_SAML_IDP_URL` / `OPENWOP_TEST_SCIM_URL` + the `auth/saml/validate` + `auth/scim/provision` seams, registered in `host-sample-test-seams.md` §"Open seams"). The full SAML 1-positive-+-6-negatives suite + a bundled synthetic-IdP XML-DSig harness are deferred (mirrors the `auth-mtls` / OIDC opt-in precedent — no synthetic IdP is bundled yet).
+- [x] SAML (1 positive + ≥6 negatives) conformance via a bundled synthetic-IdP fixture — `conformance/src/lib/saml-idp.ts` mints valid + `alg-none`/`bad-signature`/`unsigned`/`expired`/`not-yet-valid`/`signature-wrapping`; `auth-saml-profile.test.ts` runs the negative reference suite **server-free** (its `verify()` implements the §A MUST list). SCIM scenario landed. Both seams (`auth/saml/validate`, `auth/scim/provision`) registered in `host-sample-test-seams.md`; the host-ACS path is opt-in via `OPENWOP_TEST_SAML_IDP_URL` / `OPENWOP_TEST_SCIM_URL`.
 - [x] CHANGELOG entry under `[Unreleased]`.
 - [ ] A non-steward host advertises `openwop-auth-saml` and/or `-scim` and passes the negative suite.
 
-**Implementation note (2026-05-25):** Profile prose (`auth-profiles.md`) + the reserved `auth.profiles` ids + the two opt-in conformance scenarios + the two seams landed on `main`. Maps onto the RFC 0048 `principal` + RFC 0049 roles already on `main`; extends the RFC 0010 auth-profile family. Status stays `Draft`. The behavioral SAML negative suite is gated on a synthetic-IdP harness that is not yet bundled (the same gap RFC 0010's OIDC profile noted) — opt-in via env until it ships.
+**Implementation note (2026-05-25):** Profile prose (`auth-profiles.md`) + reserved `auth.profiles` ids + the two conformance scenarios + the two seams landed on `main`. The **synthetic SAML IdP fixture is now bundled** (`conformance/src/lib/saml-idp.ts`, `node:crypto` RSA-SHA256, no deps) so the 1-positive + 6-negative reference suite runs server-free — this closes the "no synthetic IdP" gap MyndHyve flagged for RFC 0050 graduation. A non-MyndHyve enterprise-SSO host wiring its SAML ACS to the seam (or MyndHyve itself) is the remaining `Active → Accepted` gate. Maps onto RFC 0048 `principal` + RFC 0049 roles; extends RFC 0010. Status stays `Draft`.
 
 ## References
 
