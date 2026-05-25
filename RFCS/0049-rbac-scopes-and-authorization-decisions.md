@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0049 |
 | **Title** | A portable role→scope binding (reusing the existing API-key scope grammar) plus a standardized, redaction-safe `authorization.decided` event, with a normative **fail-closed** default — so a host's RBAC becomes observable, auditable, and conformance-testable |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-24 |
-| **Updated** | 2026-05-25 (Draft → Active: MyndHyve non-steward implementation landed — advertise + behavioral seams shipped per `docs/openwop-adoption/0045-0054-cohort-summary.md` (MyndHyve, 2026-05-25). Active → Accepted is gated on the published `@openwop/openwop-conformance@1.6.0` conformance run against `api.myndhyve.ai/workflow-runtime` reporting pass, per `RFCS/0001` §"Promotion to Accepted".) |
+| **Updated** | 2026-05-25 (Draft → Active → **Accepted** — MyndHyve workflow-runtime advertises the capability live on `https://api.myndhyve.ai/.well-known/openwop` (curl-verified 2026-05-25) and the cohort conformance scenarios pass against it: `@openwop/openwop-conformance@1.6.0`, revision `workflow-runtime-00211-69w`, commit `85275cdf87972e02c2e588cba481415f3e0edb15`, 28 PASS / 0 FAIL across RFCs 0045/0046/0047/0048/0049/0051/0052/0053. Implementation per `docs/openwop-adoption/0045-0054-cohort-summary.md`; promoted per `RFCS/0001` §"Promotion to Accepted".) |
 | **Affects** | `schemas/capabilities.schema.json` (additive `authorization.roles` advertisement) · `schemas/run-event-payloads.schema.json` (additive `authorization.decided` event) · `spec/v1/auth.md` (role→scope binding; the scope grammar this reuses) · RFC 0009/0010 (feeds the audit-log integrity profile) · `SECURITY/invariants.yaml` (new `authorization-fail-closed` invariant) · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |

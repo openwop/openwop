@@ -22,8 +22,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 37 |
-| Active | 12 |
+| Accepted | 45 |
+| Active | 4 |
 | Draft | 8 |
 
 | Latest RFC | Title | Status |
@@ -32,7 +32,7 @@
 | RFC 0056 | An optional `host.feedback` capability + a per-run annotation store exposed via `POST/GET /v1/runs/{runId}/annotations` + a live `run.annotated` SSE notification, so a human (or supervisor agent) can attach a portable quality signal - rating / correction / label / flag - to a run, event, or node, feeding analytics, the HITL inbox, and review. Annotations are a side-resource, **not** replayable run-event-log entries. | Draft |
 | RFC 0055 | Promote RFC 0031's reserved `vision-input` / `audio` model-capability identifiers into a formal vocabulary, and add an optional `meta.rendering` hint + `media.*` URL-reference convention to the AI envelope, so an LLM node can emit images / audio / files / structured cards that any consumer renders portably | Draft |
 | RFC 0054 | A read-only `GET /v1/runs/{runId}:diff?against={otherRunId}` endpoint returning a deterministic, replay-aware structured diff of two runs' event sequences and terminal states - the protocol surface behind run-vs-fork comparison | Draft |
-| RFC 0053 | A `host.deadLetter` capability + `run.dead_lettered` event - terminally-failed runs/nodes land in a durable, inspectable sink that stays fork-eligible, so a poisoned run can be examined and replayed rather than silently lost | Active |
+| RFC 0053 | A `host.deadLetter` capability + `run.dead_lettered` event - terminally-failed runs/nodes land in a durable, inspectable sink that stays fork-eligible, so a poisoned run can be examined and replayed rather than silently lost | Accepted |
 
 ## SDK Helper Coverage
 
@@ -73,7 +73,7 @@
 ## Active Follow-Ups
 
 - 8 RFCs still `Draft` (RFC 0038, RFC 0042, RFC 0043, RFC 0050, RFC 0054, RFC 0055, RFC 0056, RFC 0057) — advance with schema/conformance proof or defer.
-- 12 RFCs `Active` (RFC 0025, RFC 0029, RFC 0035, RFC 0036, RFC 0045, RFC 0046, RFC 0047, RFC 0048, RFC 0049, RFC 0051, RFC 0052, RFC 0053) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 4 RFCs `Active` (RFC 0025, RFC 0029, RFC 0035, RFC 0036) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.

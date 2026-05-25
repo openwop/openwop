@@ -198,6 +198,23 @@ The conformance suite's `experimentalGate()` helper (`conformance/src/lib/behavi
 
 **Six `it.skip` blocks across three scenario files** carry an explicit `out of stable profile via RFC 0042` marker (replacing the earlier `it.todo` form). These mark the scenarios as "tracked-but-deferred" rather than "unfinished," satisfying the 2026-05-23 audit's "Replace remaining `it.todo` assertions with runnable behavior tests or mark them out of the stable profile" acceptance-bar item.
 
+## Capability adoption — RFC 0045–0054 cohort (MyndHyve) — ✅ VERIFIED 2026-05-25
+
+> **✅ VERIFIED 2026-05-25.** MyndHyve workflow-runtime implements the 8 RFCs below (advertise + behavioral seams) per `docs/openwop-adoption/0045-0054-cohort-summary.md`, and the cohort conformance scenarios pass against the live host. **Evidence:** suite `@openwop/openwop-conformance@1.6.0`; host `MyndHyve workflow-runtime`; Cloud Run revision `workflow-runtime-00211-69w`; commit `85275cdf87972e02c2e588cba481415f3e0edb15`; discovery `https://api.myndhyve.ai/.well-known/openwop` (bare host — `/workflow-runtime` is **not** a path prefix, it 404s; openwop-side curl-verified 2026-05-25 — all 5 cohort capability blocks present + `supported`); **28 cohort scenarios PASS / 0 FAIL across RFCs 0045/0046/0047/0048/0049/0051/0052/0053** (12 cohort test files). All 8 promoted `Active → Accepted` on this run, per `RFCS/0001` §"Promotion to Accepted".
+
+| RFC | Capability advertised | Evidence | Promotion impact |
+|---|---|---|---|
+| 0045 connector manifest | pack `connector` block (typed actions + auth) | ✅ PASS — `connector-manifest-validity.test.ts` | **Accepted** ✅ |
+| 0046 `host.credentials` | `capabilities.credentials.{supported,scopes,encryptionAtRest,sharing}` (curl-verified live) | ✅ PASS — `credential-payload-redaction.test.ts` via the `credentials/echo` seam | **Accepted** ✅ |
+| 0047 `host.oauth` | `capabilities.oauth.{supported,grants,providers}` (curl-verified live) | ✅ PASS — `oauth-connector-redaction.test.ts` via the `oauth/connector-echo` seam | **Accepted** ✅ |
+| 0048 identity triple | `RunSnapshot.owner` + `secrets.scopes` gains `workspace` | ✅ PASS — `cross-workspace-isolation.test.ts` via the `identity/*` seams | **Accepted** ✅ |
+| 0049 RBAC | `capabilities.authorization.{supported,failClosed,roles}` (curl-verified live) | ✅ PASS — `authorization-fail-closed.test.ts` via the `authorization/decide` seam | **Accepted** ✅ |
+| 0051 approval gate | `core.openwop.governance.approvalGate` + `approval.*` events | ✅ PASS — `approval-gate-flow.test.ts` via the `governance/approval-gate` seam | **Accepted** ✅ |
+| 0052 scheduling | `capabilities.scheduling.{supported,cron,delayed,calendar}` (curl-verified live) | ✅ PASS — `scheduling-cron-fires-once.test.ts` via the `scheduling/tick` seam | **Accepted** ✅ |
+| 0053 dead-letter | `capabilities.deadLetter.{supported,retentionDays}` (curl-verified live) + `run.dead_lettered` | ✅ PASS — `deadletter-retry-exhaustion.test.ts` via the `deadletter/exhaust` seam | **Accepted** ✅ |
+
+**Not in this cohort:** RFC 0050 (SAML/SCIM) + RFC 0054 (run-diff) remain `Draft` — MyndHyve documented opt-outs (no SSO infra/UI demand; the RFC 0050 synthetic-IdP fixture is bundled). They graduate when a different non-steward host advertises them or MyndHyve's internal demand triggers implementation.
+
 ## Reading Rows
 
 - **Compatibility profile claim** is derived from `/.well-known/openwop` according to `spec/v1/profiles.md`.
