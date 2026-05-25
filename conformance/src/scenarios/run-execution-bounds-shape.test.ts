@@ -2,15 +2,17 @@
  * run-execution-bounds-shape — RFC 0058 advertisement-shape + breach-contract
  * verification for the two run-scoped execution bounds.
  *
- * Status: DRAFT. RFC 0058 (run execution bounds) is `Draft`. The
+ * Status: ACTIVE. RFC 0058 (run execution bounds) is `Active`. The
  * `capabilities.limits.{maxRunDurationMs,maxLoopIterations}` fields and the
  * `run-duration` / `loop-iterations` kinds on `cap.breached` have landed in
  * `schemas/capabilities.schema.json` + `schemas/run-event-payloads.schema.json`.
  *
  * Always runs (shape-only): when the host advertises either limit, its value
- * MUST be well-formed. Behavior (timeout / loop-limit fires) is capability- AND
- * fixture-gated — it soft-skips on hosts that do not yet enforce the bounds
- * (e.g. the reference hosts), mirroring the RFC 0052 scheduling pattern.
+ * MUST be well-formed. Behavior is capability- AND fixture-gated. The
+ * `run-duration` (wall-clock timeout) block is now enforced + green against the
+ * in-memory reference host. The `loop-iterations` block stays soft-skipped until
+ * an execution-loop host advertises `multiAgent.executionModel` (RFC 0061),
+ * mirroring the RFC 0052 scheduling pattern.
  *
  * What this scenario asserts:
  *   1. `capabilities.limits.maxRunDurationMs`, when present, is an integer ≥ 1000.

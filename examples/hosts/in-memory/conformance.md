@@ -114,9 +114,15 @@ The interop matrix in `INTEROP-MATRIX.md` cross-tabulates this host with other p
 - **Host-side test:** `examples/hosts/in-memory/test/workflow-chain-expansion.test.ts` — 5/5 passing under `npx tsx`. Covers the same paths as a pure-function exercise (no HTTP boot).
 - **Sample pack:** `examples/packs/workflow-chain-sample/pack.json` (in-tree, unsigned — sample-host concession; production deployers MUST require signatures per `node-packs.md §"Verification flow"`).
 
+## Run execution bounds (RFC 0058 — 2026-05-25)
+
+- **`run-execution-bounds-shape.test.ts`** — 3/3 passing with `OPENWOP_BASE_URL=http://127.0.0.1:3737`. The host advertises `capabilities.limits.maxRunDurationMs` (`600000`) and **enforces the wall-clock `runTimeoutMs` bound**: `handleCreateRun` resolves + clamps `configurable.runTimeoutMs` to that ceiling (rejecting out-of-range with `400 validation_error`); `runWorkflow` arms a per-run deadline timer that emits `cap.breached { kind: 'run-duration', limit, observed }` and transitions the run to `failed` with `error.code = 'run_timeout'`. The `run-duration` behavior block is **live + green** against this host.
+- **`maxLoopIterations` (loop-iterations) is not enforced here** — this host is a linear node walk with no RFC 0037 orchestrator loop, so it doesn't advertise `multiAgent.executionModel.supported` and has no per-turn iterations to count. That bound's enforcement rides RFC 0061 (the execution-loop host). The shape scenario's `loop-iterations` behavior block soft-skips accordingly.
+- **Implementation surface:** `examples/hosts/in-memory/src/server.ts` (`MAX_RUN_DURATION_MS`, `failRunDuration()`, the deadline timer in `runWorkflow`, `runTimeoutMs` resolution in `handleCreateRun`). Making the breach observable to the black-box suite also moved the poll path's event serialization to the canonical `run-event.schema.json` envelope (see candidate #1 below).
+
 ## Known v1.x Expansion Candidates
 
-1. **Event-shape gap (`seq` → `eventId` + `sequence`).** Move the event constructor to spec-canonical field names. Will lift `version-negotiation.test.ts` 1/4 → 4/4.
+1. **Event-shape gap (`seq` → `eventId` + `sequence`).** The **`/v1/runs/{runId}/events/poll`** path now emits the spec-canonical envelope (`eventId` / `sequence` / `payload`, with `seq` / `data` retained as aliases) — landed alongside RFC 0058 enforcement so `cap.breached` payloads are readable by black-box scenarios. The SSE path + the debug-bundle path still use the legacy `seq` / `data` shape; moving them to canonical names will lift `version-negotiation.test.ts` 1/4 → 4/4.
 2. **SSE buffering (`bufferMs`).** Implement query-param-driven backlog buffering before terminal close. Lifts `stream-modes-buffer.test.ts` 1/4 → 4/4.
 3. **Array `streamMode` parameter.** Accept `?streamMode=poll,sse` and dispatch deterministically. Lifts `stream-modes-mixed.test.ts` 2/4 → 4/4.
 4. **Identity passthrough.** Mount `inputs.*` into `variables.*` in the snapshot.
