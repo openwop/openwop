@@ -15,12 +15,12 @@
  */
 
 // ── Static per-provider capability map (sample-grade; production hosts
-//    probe vendor APIs). Conservative: only end-to-end-verified caps. ──
-const PROVIDER_CAPABILITIES: Readonly<Record<string, readonly string[]>> = {
-  anthropic: ['structured-output', 'discriminator-enum', 'long-context', 'reasoning', 'function-calling'],
-  openai: ['structured-output', 'discriminator-enum', 'long-context', 'reasoning', 'function-calling'],
-  google: ['structured-output', 'discriminator-enum', 'long-context', 'reasoning', 'function-calling'],
-};
+//    probe vendor APIs). EMPTY here: the SQLite reference host routes NO
+//    AI calls (it omits the `aiProviders` capability), so it knows no
+//    provider's model capabilities. Any node requiring a capability is
+//    therefore refused. A real AI-routing host populates this map (see
+//    the Postgres reference host). ──
+const PROVIDER_CAPABILITIES: Readonly<Record<string, readonly string[]>> = {};
 
 export function probeProviderCapabilities(provider: string): readonly string[] {
   return PROVIDER_CAPABILITIES[provider] ?? [];
