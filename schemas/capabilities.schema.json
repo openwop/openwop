@@ -370,15 +370,46 @@
           "type": "array",
           "items": {
             "type": "string",
-            "enum": ["tenant", "user", "run"]
+            "enum": ["tenant", "user", "run", "workspace"]
           },
           "uniqueItems": true,
-          "description": "Subset of scopes the host implements. Tenant-scoped secrets are workspace-shared; user-scoped are per-end-user; run-scoped are ephemeral per-run."
+          "description": "Subset of scopes the host implements. Tenant-scoped secrets are workspace-shared; user-scoped are per-end-user; run-scoped are ephemeral per-run; `workspace` (RFC 0046/0048) is the explicit sub-tenant scope. Appended `workspace` is additive — hosts that omit it are unaffected."
         },
         "resolution": {
           "type": "string",
           "enum": ["host-managed"],
           "description": "Resolution mode. v1.x supports only `host-managed` (clients reference stored secrets via opaque ids); reserved for future modes."
+        }
+      },
+      "additionalProperties": false
+    },
+    "credentials": {
+      "type": "object",
+      "description": "RFC 0046 (`Draft`). Portable credential resolution + lifecycle contract — sibling to `secrets`, first-class store-at-rest + workspace sharing + two-key-overlap rotation. A pack references a credential by `{ ref, scope }` (see `credential-reference.schema.json`); the host resolves it into the node sandbox ONLY — never into inputs, persisted variables, channels, any run.* event payload, the debug bundle, or replay state (SECURITY invariant `credential-payload-redaction`). Supersedes the informal BYOK annex; the `secrets` advertisement stays valid.",
+      "required": ["supported"],
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Host implements the host.credentials resolution + lifecycle contract."
+        },
+        "scopes": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["user", "workspace", "tenant"] },
+          "uniqueItems": true,
+          "description": "Subset of resolution scopes the host implements. `workspace` is the RFC 0048 sub-tenant; `tenant` and `user` align with the `secrets.scopes` vocabulary."
+        },
+        "encryptionAtRest": {
+          "type": "boolean",
+          "description": "Host encrypts stored credential material at rest."
+        },
+        "rotation": {
+          "type": "string",
+          "enum": ["none", "two-key-overlap"],
+          "description": "`two-key-overlap`: old + new credential both resolve as valid during a grace window, then the old fails with `credential_not_found` (mirrors `openwop-auth-api-key-rotation`). `none`: no rotation surface."
+        },
+        "sharing": {
+          "type": "boolean",
+          "description": "A single stored credential can be referenced by many workflows within a scope (e.g. a workspace-shared key) without copying material between references."
         }
       },
       "additionalProperties": false

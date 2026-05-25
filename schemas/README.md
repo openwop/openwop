@@ -17,6 +17,7 @@
 | `conversation-event.schema.json` | `channels-and-reducers.md` + conversation RFC | Multi-turn conversation event shape for orchestrator-driven HITL flows |
 | `conversation-turn.schema.json` | `channels-and-reducers.md` + conversation RFC | Conversation turn shape for user/agent/system messages |
 | `core-conformance-mock-agent-config.schema.json` | `node-packs.md` + RFC 0023 | Config shape for the conformance-only `core.conformance.mock-agent` typeId — drives `agent.*` event emission on cue (`mockReasoning` / `mockToolCalls` / `mockHandoff` / `mockDecision` / `mockConfidence`). Hosts MUST refuse this typeId for production tenants unless `capabilities.conformance.mockAgent` is advertised. |
+| `credential-reference.schema.json` | `host-capabilities.md` §host.credentials + RFC 0046 | Opaque `{ ref, scope }` handle to a host-stored credential — the only credential artifact on the wire; never carries key material |
 | `debug-bundle.schema.json` | `debug-bundle.md` | Portable run diagnostic export from `GET /v1/runs/{runId}/debug-bundle` |
 | `dispatch-config.schema.json` | `node-packs.md` + dispatch RFC | Configuration shape for `core.dispatch` / sub-workflow routing |
 | `error-envelope.schema.json` | `rest-endpoints.md` + `auth.md` | Canonical `{error, message, details?}` shape returned on every non-2xx |
