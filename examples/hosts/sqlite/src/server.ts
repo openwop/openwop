@@ -807,6 +807,7 @@ async function executeNode(
       const config = (node.config ?? {}) as {
         workflowId?: string;
         propagateCancellation?: boolean;
+        inputMapping?: Record<string, string>;
         outputMapping?: Record<string, string>;
         onChildFailure?: 'fail-parent' | 'absorb';
       };
@@ -826,13 +827,25 @@ async function executeNode(
       if (!childRunId) {
         childRunId = `run-${randomUUID()}`;
         const startedAt = new Date().toISOString();
-        // Seed child variables from the child workflow's
-        // variables[].defaultValue declarations (node-packs.md
-        // §"core.subWorkflow contract" — Variable seeding).
+        // Seed child variables in two passes (node-packs.md
+        // §"core.subWorkflow contract" — Variable seeding + RFC 0022 §B):
+        //   1. variables[].defaultValue declarations on the child.
+        //   2. inputMapping projections from parent variables, which
+        //      override matching defaultValue keys. This is a one-shot
+        //      fold at dispatch time — later parent mutations MUST NOT
+        //      propagate into the seeded child. Unset parent variables
+        //      surface as `undefined` on the child variable (NOT `null`).
         const childWorkflow = workflows.get(childWorkflowId)!;
         const childVars: Record<string, unknown> = {};
         for (const v of childWorkflow.variables ?? []) {
           if (v.defaultValue !== undefined) childVars[v.name] = v.defaultValue;
+        }
+        if (config.inputMapping && typeof config.inputMapping === 'object') {
+          const parentVars = loadRunVariables(runId);
+          for (const [childKey, parentKey] of Object.entries(config.inputMapping)) {
+            if (typeof parentKey !== 'string') continue;
+            childVars[childKey] = parentVars[parentKey];
+          }
         }
         db.prepare(
           `INSERT INTO runs (run_id, workflow_id, status, inputs_json, started_at, parent_run_id, parent_node_id, variables_json)
@@ -1021,15 +1034,47 @@ async function executeNode(
         stmts.getEventsAfter.all(runId, -1) as EventRow[]
       ).filter((e) => e.type === 'runOrchestrator.decided').length;
       const agentId = (node.config?.agentId as string | undefined) ?? 'core.reference-supervisor';
-      const decision = prior === 0
-        ? {
-            kind: 'next-worker' as const,
-            nextWorkerIds: ['conformance-noop'],
-          }
-        : {
-            kind: 'terminate' as const,
-            reason: 'goal-reached',
-          };
+      // Two modes:
+      //
+      // 1. `mockDispatchPlan` (RFC 0022 §"Unresolved questions" #6): when
+      //    `node.config.mockDispatchPlan` is a non-empty array of
+      //    `OrchestratorDecision` shapes, the supervisor emits them in
+      //    order — first tick uses plan[0], second tick plan[1], etc.
+      //    Once the plan is exhausted, falls back to `terminate`. Lets
+      //    conformance fixtures drive multi-worker dispatch sequences
+      //    without an LLM. This mode is conformance-only (the supervisor
+      //    block is non-normative reference code).
+      //
+      // 2. Default (legacy): first tick → `next-worker:
+      //    ['conformance-noop']`, subsequent ticks → `terminate`.
+      //    Preserves the original `conformance-dispatch-loop` fixture.
+      const mockPlan = Array.isArray(node.config?.mockDispatchPlan)
+        ? (node.config!.mockDispatchPlan as Array<{
+            kind?: string;
+            nextWorkerIds?: string[];
+            reason?: string;
+            prompt?: string;
+          }>)
+        : null;
+      let decision:
+        | { kind: 'next-worker'; nextWorkerIds: string[] }
+        | { kind: 'terminate'; reason?: string };
+      if (mockPlan && mockPlan.length > 0 && prior < mockPlan.length) {
+        const entry = mockPlan[prior]!;
+        if (entry.kind === 'next-worker' && Array.isArray(entry.nextWorkerIds)) {
+          decision = { kind: 'next-worker', nextWorkerIds: entry.nextWorkerIds };
+        } else if (entry.kind === 'terminate') {
+          decision = { kind: 'terminate', ...(entry.reason !== undefined ? { reason: entry.reason } : {}) };
+        } else {
+          decision = { kind: 'terminate', reason: 'mockPlan-malformed' };
+        }
+      } else if (mockPlan && mockPlan.length > 0) {
+        decision = { kind: 'terminate', reason: 'mockPlan-exhausted' };
+      } else {
+        decision = prior === 0
+          ? { kind: 'next-worker', nextWorkerIds: ['conformance-noop'] }
+          : { kind: 'terminate', reason: 'goal-reached' };
+      }
       appendEvent(runId, 'runOrchestrator.decided', {
         nodeId: node.id,
         data: { agentId, decision },
@@ -1082,13 +1127,21 @@ async function executeNode(
         // RFC 0007 §D `next-worker`: each `nextWorkerIds[i]` resolves to
         // a workflow id; dispatch creates a child run via the canonical
         // `core.subWorkflow` machinery (`workerDispatchModel: child-run`,
-        // v1's only model). The reference impl honors `nextWorkerIds[0]`
-        // only — `fanOutSupported: false` is advertised in the host's
-        // capabilities.dispatch block. After the child reaches terminal,
-        // dispatch emits node.completed with `outputs.{childRunId,
-        // childStatus}` (per §D step 3 + node-packs.md §"core.subWorkflow
-        // contract") and returns 'loopback' so the DAG cycle back to the
-        // orchestrator-supervisor fires.
+        // v1's only model). Workers are dispatched sequentially (RFC 0007
+        // §D `fanOutPolicy: 'sequential'`); the host advertises
+        // `dispatch.fanOutSupported: false` (no PARALLEL fan-out). After
+        // all children terminate, dispatch emits node.completed with the
+        // last child's `outputs.{childRunId, childStatus}` (per §D step 3)
+        // and returns 'loopback' so the DAG cycles back to the
+        // orchestrator-supervisor.
+        //
+        // RFC 0022 §A — when the dispatch node's config carries
+        // inputMapping / outputMapping / perWorker{Input,Output}Mappings,
+        // the host MUST (1) project parent variables into child inputs
+        // before invocation, and (2) harvest child variables back into
+        // parent variables on terminal `completed`. The shared parent
+        // variable bag is the handoff channel between sibling children
+        // under sequential fan-out (RFC 0022 §D).
         const nextWorkerIds = Array.isArray(payload?.decision?.nextWorkerIds)
           ? (payload!.decision!.nextWorkerIds as string[])
           : [];
@@ -1098,108 +1151,162 @@ async function executeNode(
           runFailureErrors.set(runId, err);
           return 'failed';
         }
-        const childWorkflowId = nextWorkerIds[0]!;
-        if (!workflows.has(childWorkflowId)) {
-          const err = {
-            code: 'unknown_child_workflow',
-            message: `core.dispatch (node "${node.id}") next-worker references unknown workflowId "${childWorkflowId}".`,
-          };
-          appendEvent(runId, 'node.failed', { nodeId: node.id, causationId: decisionEventId, data: err });
-          runFailureErrors.set(runId, err);
-          return 'failed';
-        }
-        // Idempotent child reuse: if a prior incarnation of this
-        // dispatch node already started a child (process restarted
-        // mid-dispatch), find it; otherwise create a fresh run.
-        const existingChild = db
-          .prepare('SELECT run_id FROM runs WHERE parent_run_id = ? AND parent_node_id = ?')
-          .get(runId, node.id) as { run_id: string } | undefined;
-        let childRunId = existingChild?.run_id;
-        if (!childRunId) {
-          childRunId = `run-${randomUUID()}`;
-          const startedAt = new Date().toISOString();
-          const childWorkflow = workflows.get(childWorkflowId)!;
-          const childVars: Record<string, unknown> = {};
-          for (const v of childWorkflow.variables ?? []) {
-            if (v.defaultValue !== undefined) childVars[v.name] = v.defaultValue;
-          }
-          db.prepare(
-            `INSERT INTO runs (run_id, workflow_id, status, inputs_json, started_at, parent_run_id, parent_node_id, variables_json)
-             VALUES (?, ?, 'pending', '{}', ?, ?, ?, ?)`,
-          ).run(childRunId, childWorkflowId, startedAt, runId, node.id, JSON.stringify(childVars));
-          appendEvent(runId, 'node.dispatched', {
-            nodeId: node.id,
-            causationId: decisionEventId,
-            data: { childRunId, childWorkflowId },
-          });
-          if (tryClaim(childRunId)) {
-            void runWorkflow(childRunId).catch((err: unknown) => {
-              const message = err instanceof Error ? err.message : String(err);
-              appendEvent(childRunId!, 'run.failed', { data: { code: 'internal', message } });
-              setRunTerminal(childRunId!, 'failed', { code: 'internal', message });
-            });
-          }
-        }
-        // Poll for child terminal. Cancellation cascade follows the
-        // same convention as `core.subWorkflow`.
-        while (true) {
-          const refreshedParent = loadRun(runId);
-          if (refreshedParent?.status === 'cancelling') {
-            cancelRunInternal(childRunId, 'parent-cancelled');
-            appendEvent(runId, 'node.cancelled', { nodeId: node.id, causationId: decisionEventId });
-            return 'cancelled';
-          }
-          const child = loadRun(childRunId);
-          if (!child) {
-            const err = { code: 'child_missing', message: `core.dispatch child run "${childRunId}" disappeared.` };
+        // RFC 0022 §A — read mapping fields off the dispatch node's
+        // config. All four are optional; absent ones default to {}.
+        const dispatchConfig = (node.config ?? {}) as {
+          inputMapping?: Record<string, string>;
+          outputMapping?: Record<string, string>;
+          perWorkerInputMappings?: Record<string, Record<string, string>>;
+          perWorkerOutputMappings?: Record<string, Record<string, string>>;
+        };
+        let lastChildRunId: string | null = null;
+        let lastChildStatus: 'completed' | 'failed' | 'cancelled' | null = null;
+        for (let workerIdx = 0; workerIdx < nextWorkerIds.length; workerIdx++) {
+          const childWorkflowId = nextWorkerIds[workerIdx]!;
+          if (!workflows.has(childWorkflowId)) {
+            const err = {
+              code: 'unknown_child_workflow',
+              message: `core.dispatch (node "${node.id}") next-worker references unknown workflowId "${childWorkflowId}".`,
+            };
             appendEvent(runId, 'node.failed', { nodeId: node.id, causationId: decisionEventId, data: err });
             runFailureErrors.set(runId, err);
             return 'failed';
           }
-          if (child.status === 'completed' || child.status === 'failed' || child.status === 'cancelled') {
-            const childStatus = child.status as 'completed' | 'failed' | 'cancelled';
-            if (childStatus === 'completed') {
-              appendEvent(runId, 'node.completed', {
-                nodeId: node.id,
-                causationId: decisionEventId,
-                data: { outputs: { childRunId, childStatus } },
-              });
-              endNodeSpan(runId, node.id, 'completed');
-              // DAG cycle: route control back to the orchestrator-
-              // supervisor so the next decision tick can fire.
-              const wfRow = loadRun(runId);
-              const workflow = wfRow ? workflows.get(wfRow.workflow_id) : null;
-              const supervisorIdx = workflow
-                ? workflow.nodes.findIndex((n) => n.typeId === 'core.orchestrator.supervisor')
-                : -1;
-              if (supervisorIdx >= 0) {
-                loopbackTargets.set(runId, supervisorIdx);
-                return 'loopback';
-              }
-              // No upstream supervisor: dispatch is a leaf; advance linearly.
-              db.prepare("UPDATE runs SET status = 'running' WHERE run_id = ?").run(runId);
-              return 'completed';
+          // RFC 0022 §A — compute the effective input mapping. perWorker
+          // overrides take precedence over the dispatch-level default.
+          const effectiveInputMapping =
+            dispatchConfig.perWorkerInputMappings?.[childWorkflowId] ??
+            dispatchConfig.inputMapping ??
+            {};
+          // Project parent variables → child inputs. Unset parent vars
+          // surface as `undefined` on the child input per RFC 0022 §A
+          // (not omitted via a present-key fallback, not `null`).
+          const parentVars = loadRunVariables(runId);
+          const childInputs: Record<string, unknown> = {};
+          for (const [childKey, parentKey] of Object.entries(effectiveInputMapping)) {
+            if (typeof parentKey !== 'string') continue;
+            childInputs[childKey] = parentVars[parentKey];
+          }
+          // Idempotent child reuse + create. For multi-worker fan-out,
+          // each child gets a distinct (parent_run, parent_node, workerIdx)
+          // tuple so the per-node lookup matches only the first child and
+          // subsequent siblings always create fresh.
+          const childParentNodeId = workerIdx === 0 ? node.id : `${node.id}#${workerIdx}`;
+          const existingChild = db
+            .prepare('SELECT run_id FROM runs WHERE parent_run_id = ? AND parent_node_id = ?')
+            .get(runId, childParentNodeId) as { run_id: string } | undefined;
+          let childRunId = existingChild?.run_id;
+          if (!childRunId) {
+            childRunId = `run-${randomUUID()}`;
+            const startedAt = new Date().toISOString();
+            const childWorkflow = workflows.get(childWorkflowId)!;
+            const childVars: Record<string, unknown> = {};
+            for (const v of childWorkflow.variables ?? []) {
+              if (v.defaultValue !== undefined) childVars[v.name] = v.defaultValue;
             }
-            // child failed or cancelled — propagate per default
-            // subWorkflow semantics (RFC 0007 §D step 4).
+            db.prepare(
+              `INSERT INTO runs (run_id, workflow_id, status, inputs_json, started_at, parent_run_id, parent_node_id, variables_json)
+               VALUES (?, ?, 'pending', ?, ?, ?, ?, ?)`,
+            ).run(childRunId, childWorkflowId, JSON.stringify(childInputs), startedAt, runId, childParentNodeId, JSON.stringify(childVars));
+            appendEvent(runId, 'node.dispatched', {
+              nodeId: node.id,
+              causationId: decisionEventId,
+              data: { childRunId, childWorkflowId },
+            });
+            if (tryClaim(childRunId)) {
+              const innerChildRunId = childRunId;
+              void runWorkflow(innerChildRunId).catch((err: unknown) => {
+                const message = err instanceof Error ? err.message : String(err);
+                appendEvent(innerChildRunId, 'run.failed', { data: { code: 'internal', message } });
+                setRunTerminal(innerChildRunId, 'failed', { code: 'internal', message });
+              });
+            }
+          }
+          // Poll for THIS child's terminal status before advancing to the
+          // next sibling (sequential fan-out per RFC 0007 §D). Cancellation
+          // cascade follows the same convention as `core.subWorkflow`.
+          let childTerminal: 'completed' | 'failed' | 'cancelled' | null = null;
+          while (true) {
+            const refreshedParent = loadRun(runId);
+            if (refreshedParent?.status === 'cancelling') {
+              cancelRunInternal(childRunId, 'parent-cancelled');
+              appendEvent(runId, 'node.cancelled', { nodeId: node.id, causationId: decisionEventId });
+              return 'cancelled';
+            }
+            const child = loadRun(childRunId);
+            if (!child) {
+              const err = { code: 'child_missing', message: `core.dispatch child run "${childRunId}" disappeared.` };
+              appendEvent(runId, 'node.failed', { nodeId: node.id, causationId: decisionEventId, data: err });
+              runFailureErrors.set(runId, err);
+              return 'failed';
+            }
+            if (child.status === 'completed' || child.status === 'failed' || child.status === 'cancelled') {
+              childTerminal = child.status as 'completed' | 'failed' | 'cancelled';
+              break;
+            }
+            try {
+              await sleep(50, signal);
+            } catch {
+              // signal aborted (cancel path). Loop top will see cancelling.
+            }
+          }
+          lastChildRunId = childRunId;
+          lastChildStatus = childTerminal;
+          if (childTerminal !== 'completed') {
+            // RFC 0022 §A — failed / cancelled children MUST skip
+            // outputMapping; parent variables stay at pre-dispatch state.
             const err = {
               code: 'child_failed',
-              message: `core.dispatch child run "${childRunId}" terminated '${childStatus}'.`,
+              message: `core.dispatch child run "${childRunId}" terminated '${childTerminal}'.`,
             };
             appendEvent(runId, 'node.failed', {
               nodeId: node.id,
               causationId: decisionEventId,
-              data: { ...err, outputs: { childRunId, childStatus } },
+              data: { ...err, outputs: { childRunId, childStatus: childTerminal } },
             });
             runFailureErrors.set(runId, err);
             return 'failed';
           }
-          try {
-            await sleep(50, signal);
-          } catch {
-            // signal aborted (cancel path). Loop top will see cancelling.
+          // RFC 0022 §A — harvest child variables into parent variables
+          // via the effective output mapping. Visible to the next
+          // sibling's inputMapping (RFC 0022 §D — sequential fan-out
+          // shares the parent variable bag).
+          const effectiveOutputMapping =
+            dispatchConfig.perWorkerOutputMappings?.[childWorkflowId] ??
+            dispatchConfig.outputMapping ??
+            {};
+          if (Object.keys(effectiveOutputMapping).length > 0) {
+            const childVars = loadRunVariables(childRunId);
+            const parentVarsRow = loadRunVariables(runId);
+            for (const [parentKey, childKey] of Object.entries(effectiveOutputMapping)) {
+              if (typeof childKey !== 'string') continue;
+              parentVarsRow[parentKey] = childVars[childKey];
+            }
+            saveRunVariables(runId, parentVarsRow);
           }
         }
+        // All workers completed. RFC 0007 §D — emit node.completed with
+        // the LAST child's (childRunId, childStatus).
+        appendEvent(runId, 'node.completed', {
+          nodeId: node.id,
+          causationId: decisionEventId,
+          data: { outputs: { childRunId: lastChildRunId, childStatus: lastChildStatus } },
+        });
+        endNodeSpan(runId, node.id, 'completed');
+        // DAG cycle: route control back to the orchestrator-supervisor so
+        // the next decision tick can fire.
+        const wfRow = loadRun(runId);
+        const workflow = wfRow ? workflows.get(wfRow.workflow_id) : null;
+        const supervisorIdx = workflow
+          ? workflow.nodes.findIndex((n) => n.typeId === 'core.orchestrator.supervisor')
+          : -1;
+        if (supervisorIdx >= 0) {
+          loopbackTargets.set(runId, supervisorIdx);
+          return 'loopback';
+        }
+        // No upstream supervisor: dispatch is a leaf; advance linearly.
+        db.prepare("UPDATE runs SET status = 'running' WHERE run_id = ?").run(runId);
+        return 'completed';
       }
 
       if (kind === 'ask-user') {
@@ -1701,6 +1808,22 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
               fanOutSupported: false,
               askUserRoutings: ['clarification', 'auto'],
             },
+            // RFC 0022 §C — host honors inputMapping / outputMapping /
+            // perWorkerInputMappings / perWorkerOutputMappings on the
+            // `core.dispatch` config. Advertised under `agents` because
+            // the conformance suite gates the dispatch-mapping scenarios
+            // on `capabilities.agents.dispatchMapping`. `supported` is
+            // intentionally omitted — the SQLite host does not claim the
+            // broader `agents` profile, only this additive flag.
+            agents: {
+              dispatchMapping: true,
+            },
+            // RFC 0022 §B — host honors `inputMapping` on
+            // `core.subWorkflow`, seeding child variables from
+            // parent-variable projections after the `defaultValue` fold.
+            subWorkflow: {
+              inputMapping: true,
+            },
           }),
       // observability.md §"Span attributes" — host advertises OTel
       // emission only when OTEL_EXPORTER_OTLP_ENDPOINT is configured.
@@ -1839,8 +1962,18 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
   const startedAt = new Date().toISOString();
 
   // Per workflow-definition.schema.json §variables + run-snapshot
-  // §variables, the run's variable map starts initialized from inputs.
-  // Identity / passthrough fixtures rely on this seeding.
+  // §variables, the run's variable map starts initialized from the
+  // workflow's `variables[].defaultValue` declarations, then overlaid
+  // with the run inputs. Two-pass so a run created with no inputs still
+  // carries its declared defaults (RFC 0022 §A/§B dispatch/subWorkflow
+  // inputMapping projects these parent variables into children), while
+  // identity / passthrough fixtures still observe inputs in variables.
+  const createWorkflowDef = workflows.get(parsed.workflowId);
+  const seededVariables: Record<string, unknown> = {};
+  for (const v of createWorkflowDef?.variables ?? []) {
+    if (v.defaultValue !== undefined) seededVariables[v.name] = v.defaultValue;
+  }
+  Object.assign(seededVariables, inputs);
   stmts.insertRun.run(
     runId,
     parsed.workflowId,
@@ -1848,7 +1981,7 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
     JSON.stringify(inputs),
     startedAt,
     parsed.configurable !== undefined ? JSON.stringify(parsed.configurable) : null,
-    JSON.stringify(inputs),
+    JSON.stringify(seededVariables),
   );
 
   // W3C Trace Context propagation (observability.md §"Trace context propagation").

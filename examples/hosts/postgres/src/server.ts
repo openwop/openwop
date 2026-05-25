@@ -850,6 +850,33 @@ async function executeNode(
     case 'core.noop':
       break;
 
+    case 'core.identity': {
+      // node-packs.md §"core.identity": echo-input primitive — passes
+      // each named input port to a same-named output port unchanged.
+      // The RFC 0022 dispatch/subWorkflow child fixtures use it as a
+      // noop body, and conformance-identity (identity-passthrough.test.ts)
+      // asserts inputs.{var} round-trips to RunSnapshot.variables.{var}.
+      // This host seeds variables_json from workflow.variables[].defaultValue
+      // only (see seedVariablesFromWorkflow), NOT from run inputs, so the
+      // passthrough explicitly folds the run inputs into the variable bag.
+      const q = await querier();
+      await withTransaction(q, async () => {
+        const res = await q.query<{ variables_json: Record<string, unknown> | null }>(
+          'SELECT variables_json FROM runs WHERE run_id = $1',
+          [runId],
+        );
+        const current = (res.rows[0]?.variables_json ?? {}) as Record<string, unknown>;
+        for (const [key, value] of Object.entries(inputs)) {
+          current[key] = value;
+        }
+        await q.query('UPDATE runs SET variables_json = $1 WHERE run_id = $2', [
+          JSON.stringify(current),
+          runId,
+        ]);
+      });
+      break;
+    }
+
     case 'core.delay': {
       // Resolve effective delay duration. Precedence:
       //   1. Node spec declares delayMs (possibly via variable
