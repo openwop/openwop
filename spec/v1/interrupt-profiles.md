@@ -86,6 +86,7 @@ A first-class, **role-gated, audited** approval/deployment-gate node — distinc
 
 **Requirements (normative):**
 
+- The gate's **request** surfaces via the canonical `interrupt.requested` event with `kind: 'approval'` (per `interrupt.md` — the modern interrupt-primitive event), carrying the gate fields (`gateId`, `requiredRole`/`requiredScope`, `quorum`) in the interrupt `data`. The gate MUST NOT use the legacy `approval.requested` event for its request.
 - The resuming `principal` (RFC 0048) MUST satisfy `requiredRole` / `requiredScope` per the RFC 0049 decision. An unauthorized or unseeded principal is denied (fail-closed per RFC 0049 §C — `authorization-fail-closed`); the run stays suspended and the host SHOULD emit `authorization.decided { allowed: false }`.
 - A grant emits `approval.granted`; when `quorum` is set, the gate releases only after N distinct authorized grants (each grant carries `quorumProgress`).
 - A reject emits `approval.rejected` and loops the run back per the workflow's edges — it does NOT terminate the run by default.

@@ -438,7 +438,9 @@ components:
         Includes events filtered out of `updates`: `log.appended`,
         `variable.changed`, `version.pinned`, `lease.*`, `node.retried`,
         `replay.diverged`, `connector.authorized`,
-        `connector.auth_expired` (RFC 0047), etc.
+        `connector.auth_expired` (RFC 0047), `authorization.decided`
+        (RFC 0049), `approval.granted` / `approval.rejected` /
+        `approval.overridden` (RFC 0051), etc.
       contentType: application/json
       payload:
         $ref: '#/components/schemas/RunEventDoc'

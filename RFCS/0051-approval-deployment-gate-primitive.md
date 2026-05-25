@@ -15,7 +15,7 @@
 
 ## Summary
 
-Add a first-class **approval/deployment-gate** node, `core.openwop.governance.approvalGate` — an interrupt node with `requiredRole`/`requiredScope`, optional quorum, and a role-gated, audited `override` path — plus `approval.requested` / `approval.granted` / `approval.rejected` / `approval.overridden` events. It composes the existing interrupt-profile machinery (RFC's quorum + auth-required-resume) with RFC 0049 authorization and the RFC 0009/0010 audit log, so "approval as a governed, role-bound, audited gate" — distinct from a generic clarification interrupt — becomes portable and certifiable.
+Add a first-class **approval/deployment-gate** node, `core.openwop.governance.approvalGate` — an interrupt node with `requiredRole`/`requiredScope`, optional quorum, and a role-gated, audited `override` path — surfacing its request via the canonical `interrupt.requested` (`kind: 'approval'`) event plus three new outcome events `approval.granted` / `approval.rejected` / `approval.overridden`. It composes the existing interrupt-profile machinery (RFC's quorum + auth-required-resume) with RFC 0049 authorization and the RFC 0009/0010 audit log, so "approval as a governed, role-bound, audited gate" — distinct from a generic clarification interrupt — becomes portable and certifiable.
 
 ## Motivation
 
@@ -45,9 +45,10 @@ An **interrupt node** (`kind: 'approval'` per `spec/v1/interrupt.md`) with confi
 
 ### §B — Events (additive, redaction-safe)
 
-Add to `run-event-payloads.schema.json`:
+**Request.** The gate's *request* surfaces via the canonical **`interrupt.requested` with `kind: 'approval'`** (per `interrupt.md` — the modern interrupt-primitive event), carrying the gate fields (`gateId`, `requiredRole`/`requiredScope`, `quorum`) in the interrupt `data`. The gate does NOT use the legacy `approval.requested` event (which is the back-compat artifact-approval shape; `interrupt.md` already directs modern servers to `interrupt.requested`).
 
-- `approval.requested` → `{ gateId, requiredRole?, requiredScope?, quorum? }`
+**Outcomes.** Add three new governance events to `run-event-payloads.schema.json`:
+
 - `approval.granted` → `{ gateId, principal, quorumProgress? }`
 - `approval.rejected` → `{ gateId, principal, reason? }`
 - `approval.overridden` → `{ gateId, principal, reason }` — MUST feed the audit log.
@@ -95,13 +96,13 @@ New fixture: a minimal workflow with an `approvalGate` node + seeded roles, cata
 
 - [x] Spec text merged (this file).
 - [x] `core.openwop.governance.approvalGate` node contract defined in `spec/v1/interrupt-profiles.md` (config + normative requirements; the executable pack is reference-impl work).
-- [x] `approval.granted` / `approval.rejected` / `approval.overridden` events in `run-event-payloads.schema.json` (+ `RunEventType` enum). `approval.requested` reuses the existing event.
+- [x] `approval.granted` / `approval.rejected` / `approval.overridden` events in `run-event-payloads.schema.json` (+ `RunEventType` enum). The request surfaces via the canonical `interrupt.requested` (`kind: 'approval'`) event per `interrupt.md` — NOT the legacy `approval.requested`.
 - [x] Composition with quorum + auth-required profiles documented in `spec/v1/interrupt-profiles.md`.
 - [~] Conformance — 2 of 5 landed: `approval-gate-events.test.ts` (server-free event-shape) + `approval-gate-flow.test.ts` (unauthorized-denied + override-audited, capability-gated on `authorization.supported`, `governance/approval-gate` seam soft-skips). The grant-releases / reject-loopback / quorum scenarios are deferred until a host registers the gate.
 - [x] CHANGELOG entry under `[Unreleased]`.
 - [ ] A non-steward host registers the gate and passes the unauthorized + override-audited scenarios.
 
-**Implementation note (2026-05-25):** The three governance events + the `approvalGate` node contract (in `interrupt-profiles.md`, composing the quorum + auth-required profiles with RFC 0049 authorization) + the two scenarios + the `governance/approval-gate` seam landed on `main`. `approval.requested` reuses the existing event (the spec already has it); the new events are `granted`/`rejected`/`overridden`. No new SECURITY invariant — fail-closed denial reuses RFC 0049's `authorization-fail-closed`; override-audited is conformance-asserted. Status stays `Draft`. **Completes Tier 2** of the MyndHyve protocol-extension batch on the openwop side.
+**Implementation note (2026-05-25):** The three governance events + the `approvalGate` node contract (in `interrupt-profiles.md`, composing the quorum + auth-required profiles with RFC 0049 authorization) + the two scenarios + the `governance/approval-gate` seam landed on `main`. the gate's request surfaces via the canonical `interrupt.requested` (`kind: 'approval'`) event (per `interrupt.md` modern guidance — not the legacy `approval.requested`); the three new outcome events are `granted`/`rejected`/`overridden`. No new SECURITY invariant — fail-closed denial reuses RFC 0049's `authorization-fail-closed`; override-audited is conformance-asserted. Status stays `Draft`. **Completes Tier 2** of the MyndHyve protocol-extension batch on the openwop side.
 
 ## References
 
