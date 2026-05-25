@@ -327,7 +327,7 @@ See [CHANGELOG.md](./CHANGELOG.md) — `[1] — 2026-05-08 — OpenWOP v1 FINAL 
 - [**RFC 0057**](./RFCS/0057-memory-write-attribution-event.md) — Memory-write attribution event (`Draft`). Optional `memory.attribution` capability + additive `memory.written` RunEvent carrying `{ memoryRef, memoryId, nodeId?, agentId? }` (identifiers only — no content) so consumers can attribute per-node memory provenance. Closes an `agent-memory.md` Open spec gap.
 
 **v1 Foundation (2026-04-27):**
-Current generated state: 39 prose specs (35 FINAL + 4 DRAFT) · 36 JSON Schemas · 33 OpenAPI operations · AsyncAPI 3.1 · 246 conformance scenario files · 3 reference SDKs. See [docs/PROTOCOL-STATUS.md](./docs/PROTOCOL-STATUS.md) for the machine-generated snapshot.
+Current generated state: 39 prose specs (35 FINAL + 4 DRAFT) · 36 JSON Schemas · 33 OpenAPI operations · AsyncAPI 3.1 · 247 conformance scenario files · 3 reference SDKs. See [docs/PROTOCOL-STATUS.md](./docs/PROTOCOL-STATUS.md) for the machine-generated snapshot.
 
 - **Protocol corpus** — Normative REST, SSE, discovery, auth, idempotency, replay/fork, interruption, observability, node-pack, host-extension, and version-negotiation contracts are frozen for v1.
 - **Machine-readable contracts** — OpenAPI 3.1, AsyncAPI 3.1, and JSON Schemas are bundled and cross-validated by the conformance corpus.

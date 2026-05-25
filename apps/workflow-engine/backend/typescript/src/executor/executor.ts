@@ -972,6 +972,13 @@ async function finalizeRun(input: {
     // RFC 0004 demo: the host writes a run-summary to the tenant's memory on
     // completion (the "session-end write" the spec sanctions). Best-effort —
     // a memory write must never fail the run.
+    //
+    // RFC 0057 §D (replay determinism): skip this on a `replay`-mode fork.
+    // Re-executing a recorded run MUST NOT mint a new `memoryId` or re-emit
+    // `memory.written` — the original run's event is the canonical recorded
+    // fact. `branch`-mode forks are genuinely new runs and legitimately write
+    // (and attribute) their own memory.
+    if (run.forkMode !== 'replay') {
     try {
       const preview = JSON.stringify(output ?? null);
       const summaryTags = ['run-summary', `run-id:${run.runId}`, `workflow:${run.workflowId}`];
@@ -992,6 +999,7 @@ async function finalizeRun(input: {
       });
     } catch {
       /* memory is a demo surface; never block run completion */
+    }
     }
     clearRunSecrets(run.runId);
     notifyRunTerminal(run.runId);

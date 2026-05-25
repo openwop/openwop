@@ -87,6 +87,10 @@ Two protocol-tier invariants in `SECURITY/invariants.yaml`, each with a public c
 
 Per `replay.md`: `memory.written` is an immutable recorded fact. On `POST /v1/runs/{runId}:fork` against a historical checkpoint, the host MUST re-emit the recorded events from the log and MUST NOT regenerate `memoryId` or timestamps. No new non-determinism is introduced (the payload is content-free).
 
+The distinction is between the two fork modes. A `branch`-mode fork is a genuinely new run: it MAY perform its own memory writes and emit its own `memory.written` events with fresh `memoryId`s — those are new facts, not regenerated ones. A `replay`-mode fork reproduces a prior run's recorded history; the host MUST NOT mint a new `memoryId` for a write the source run already recorded.
+
+*Implementation note (non-normative).* The reference workflow-engine host honors this by **skipping** its host session-end run-summary write when `run.forkMode === 'replay'` — it does not re-mint, so no second `memory.written` with a new `memoryId` appears on a replay. (Full replay-stable re-emission of a historical `memory.written` whose original sequence is `≥ fromSeq` is a host responsibility tied to whether the host replays recorded events or re-executes; the reference host re-executes, so it suppresses rather than re-emits — which satisfies the "MUST NOT regenerate" half. The `memory-attribution-replay-stable` conformance scenario asserts a replay introduces no new-`memoryId` `memory.written`.)
+
 ## Compatibility
 
 **Additive.** New optional capability block + new optional event type. No existing required field changes; no existing event shape changes; no existing `MUST` relaxes. Hosts that don't advertise `memory.attribution` never emit the event, and consumers that don't recognize `memory.written` ignore it per the forward-compatibility rule (`COMPATIBILITY.md` §2.1). Existing v1.x conformance passes are unaffected.
