@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0048 tenant·workspace·principal identity model — opens Tier-2 (2026-05-25)
+
+First step of Tier-2 (multi-tenant identity & governance); foundation for RFC 0049/0050/0051. Promotes the existing tenant dimension to an explicit `{ tenant, workspace?, principal }` triple threading run ownership + discovery + events. Builds on RFC 0011. RFC 0048 stays `Draft`. All additive.
+
+- **Schema:** optional `owner` triple (`{ tenant (required), workspace?, principal? }`) on `RunSnapshot` (`run-snapshot.schema.json`), echoed redaction-safe on the `run.started` event payload (`run-event-payloads.schema.json`). `principal` is an opaque id, never PII.
+- **Spec:** `auth.md` §"Identity claims — tenant · workspace · principal" — the three optional auth-context claims, run-ownership recording, workspace isolation (a `principal` in workspace A MUST NOT read workspace B's run — fail-closed `run_forbidden`), and workspace-scoped discovery extending RFC 0011's tenant-narrowing (reuses `capabilities.discovery.authScoped`).
+- **Error code:** `run_forbidden` registered in `rest-endpoints.md` (cross-workspace isolation, fail-closed, no existence leak).
+- **Conformance:** `identity-owner-shape.test.ts` (server-free owner-triple schema validity) + `cross-workspace-isolation.test.ts` (§D isolation MUST-NOT via the `cross-workspace-read` seam, capability-gated/soft-skip). Workspace-scoped-discovery + behavioral ownership-echo scenarios deferred to a host.
+- **Counts synced:** conformance scenario files 215→217; README + conformance README + `coverage.md` updated; `docs/PROTOCOL-STATUS.md` regenerated. (No new schema file; no new invariant — isolation is conformance-asserted per the RFC's acceptance criteria.)
+
 ### RFC 0045/0046/0047 code-review follow-ups — spec-coherence cleanup (2026-05-25)
 
 Resolves findings from a senior code-review pass over the Tier-1 batch. No wire-shape change; editorial + registry completeness.

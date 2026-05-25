@@ -85,6 +85,24 @@ Beyond scope checks on API keys, an OpenWOP-compliant server MUST enforce:
 
 3. **Test-mode segregation.** If the server distinguishes live and test keys (recommended), it MUST NOT permit a test key to read or mutate live data, and vice versa. Resources created by test keys MUST be marked as such.
 
+## Identity claims — tenant · workspace · principal (RFC 0048)
+
+OpenWOP standardizes a small, explicit **identity triple** the host MAY derive from the caller's credential and carry in the auth context. All three are **optional** — single-tenant hosts emit none of them and are unaffected:
+
+| Claim | Meaning |
+|---|---|
+| `tenant` | The top-level isolation boundary (the dimension RFC 0011 already narrows discovery by; now named). |
+| `workspace` | An **optional** sub-tenant within a tenant — a collaborative scope. A tenant has ≥ 1 workspace. |
+| `principal` | The **acting identity** (a user or an agent) making the request. Opaque id — never PII. |
+
+The protocol does not prescribe *how* a host derives these (API key, OIDC token, SAML assertion per RFC 0050, etc.) — only their names and the binding rules below.
+
+- **Run ownership.** When a run is created under an identity triple, the host SHOULD record it as `RunSnapshot.owner` (`{ tenant, workspace?, principal? }`, per `run-snapshot.schema.json`) and echo it, redaction-safe, on the `run.started` event payload.
+- **Workspace isolation (normative).** Tenant isolation (§Authorization rule 1) extends to workspace granularity: a `principal` scoped to workspace A MUST NOT read or mutate a run owned by workspace B — within or across tenants. A cross-workspace read MUST fail closed with `run_forbidden` (never silently return another workspace's data). This is the CTI-style guarantee that makes the `workspace` claim enforceable rather than advisory.
+- **Workspace-scoped discovery.** RFC 0011's tenant-narrowing of the `/.well-known/openwop` capability view extends to workspace granularity: when the caller's context carries a `workspace` claim, the host MAY present a workspace-scoped subset, and the RFC 0011 authorization-oracle invariant holds at workspace granularity (a workspace-scoped view MUST NOT include an optional capability a strictly-narrower workspace's view lacks). Reuses the `capabilities.discovery.authScoped` advertisement.
+
+RBAC (RFC 0049), enterprise SSO/provisioning (RFC 0050), and approval gates (RFC 0051) all bind to this triple.
+
 ## Error response shape
 
 Auth failures use the standard JSON-RPC 2.0 error shape on JSON-RPC transports, and the following on REST:

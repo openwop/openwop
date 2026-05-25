@@ -231,6 +231,17 @@
         "inputs":      { "$ref": "#/$defs/_inputsObject" },
         "transport":   { "type": "string", "enum": ["rest", "mcp", "a2a", "ui"] },
         "engineVersion":  { "type": "string" },
+        "owner": {
+          "type": "object",
+          "description": "RFC 0048. Redaction-safe echo of the run's owning identity triple (matches `RunSnapshot.owner`). Optional; single-tenant hosts omit it.",
+          "required": ["tenant"],
+          "properties": {
+            "tenant": { "type": "string", "minLength": 1 },
+            "workspace": { "type": "string", "minLength": 1 },
+            "principal": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
         "tags":     { "type": "array", "items": { "type": "string" } },
         "metadata": { "type": "object" }
       },

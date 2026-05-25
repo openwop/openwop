@@ -99,12 +99,14 @@ A principal scoped to workspace A MUST NOT be able to read a run owned by worksp
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (this file).
-- [ ] `owner` field in `run-snapshot.schema.json`; `run.created` echo in `run-event-payloads.schema.json`.
-- [ ] Identity claims documented in `spec/v1/auth.md`; workspace-scoped discovery extension noted against RFC 0011.
-- [ ] Four conformance scenarios (shape, workspace discovery, ownership echo, cross-workspace isolation).
-- [ ] CHANGELOG entry under `[Unreleased]`.
+- [x] Spec text merged (this file).
+- [x] `owner` triple in `run-snapshot.schema.json`; echoed on the `run.started` event payload in `run-event-payloads.schema.json` (the spec's authoritative run-creation event; there is no separate `run.created`).
+- [x] Identity claims documented in `spec/v1/auth.md` §"Identity claims — tenant · workspace · principal"; workspace-scoped discovery extension noted against RFC 0011 (reuses `capabilities.discovery.authScoped`).
+- [~] Conformance — 2 of 4 landed: `identity-owner-shape.test.ts` (server-free owner-triple schema validity, always runs) + `cross-workspace-isolation.test.ts` (owner-echo shape + §D isolation MUST-NOT via the `cross-workspace-read` seam, capability-gated/soft-skip). The workspace-scoped-discovery subset scenario + the behavioral ownership-echo scenario are deferred until a host advertises run ownership.
+- [x] CHANGELOG entry under `[Unreleased]`.
 - [ ] A non-steward host advertises workspace-scoped discovery + run ownership and passes the isolation scenario.
+
+**Implementation note (2026-05-25):** Schema (`RunSnapshot.owner` + `run.started` echo) + `auth.md` identity-claims section + the `run_forbidden` error code + the two shape/isolation scenarios landed on `main`. Status stays `Draft`; foundation for RFC 0049/0050/0051. The `run.created` reference in this RFC's original §C is satisfied by the existing `run.started` event (the spec has no distinct `run.created`).
 
 ## References
 
