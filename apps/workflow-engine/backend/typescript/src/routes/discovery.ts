@@ -13,6 +13,7 @@ import { listCapabilities } from '../executor/runtimeCapabilities.js';
 import type { Storage } from '../storage/storage.js';
 import { listHostSurfaces } from '../bootstrap/hostSurfaceRegistry.js';
 import { universalEnvelopeKinds } from '../host/envelopeAcceptor.js';
+import { MAX_INLINE_MEDIA_BYTES } from './mediaAssets.js';
 import { getFsSandboxRoot } from '../host/inMemorySurfaces.js';
 import { listLoadedConformanceFixtures } from '../host/index.js';
 import { getPromptsHostConfig } from '../host/promptHostConfig.js';
@@ -205,6 +206,10 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
         embeddings: { supported: false },
         imageGeneration: { supported: false },
         videoGeneration: { supported: false },
+        // RFC 0055 §C rule 2 — inline-vs-URL cap for media.* envelope payloads.
+        // Assets above this size are served by a tenant-scoped URL
+        // (GET /v1/host/sample/assets/{token}) rather than inlined.
+        maxInlineMediaBytes: MAX_INLINE_MEDIA_BYTES,
       },
       interrupts: {
         supported: true,

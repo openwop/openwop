@@ -60,6 +60,7 @@ import { registerNodeCatalogRoute } from './routes/nodeCatalog.js';
 import { registerMigrateRoute } from './routes/migrate.js';
 import { registerAccountRoutes } from './routes/account.js';
 import { registerMemoryRoutes } from './routes/memory.js';
+import { registerMediaAssetRoutes } from './routes/mediaAssets.js';
 
 const log = createLogger('workflow-engine');
 
@@ -278,6 +279,7 @@ export async function createApp(config: AppConfig): Promise<Express> {
   registerMigrateRoute(app, { storage });
   registerAccountRoutes(app, { storage });
   registerMemoryRoutes(app);
+  registerMediaAssetRoutes(app);
   registerTestSeamRoutes(app, { storage });
   registerMcpServerRoutes(app, { storage, hostSuite });
   registerAdminRoutes(app);
