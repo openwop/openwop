@@ -1894,6 +1894,70 @@ ctx.knowledge.embed({
 
 ---
 
+## §host.secrets
+
+**Capability flag:** `secrets.resolveInPack: supported` *(advertised via top-level `Capabilities.secrets`; see [capabilities.md §secrets](capabilities.md#secrets))*
+
+**Used by:** packs that must call external HTTP APIs requiring stored credentials (e.g., ad-platform APIs, third-party analytics endpoints, vendor-specific SaaS integrations). Future consumers: `vendor.myndhyve.ads-publish-platform`, `vendor.myndhyve.ads-metrics-import`.
+
+Resolves an opaque, host-issued secret reference into plaintext **inside the pack process**, for the narrow case where a pack needs raw credentials to call an external service that the host doesn't proxy. **This is the highest-risk host capability in the spec** — every related rule below is a hard requirement, not a recommendation.
+
+```typescript
+ctx.secrets.resolve({
+  ref: string,                       // opaque host-issued credential reference (e.g., "secret:tenant:meta-ads-api-token:v3")
+  purpose: string,                   // free-form audit string — required (logged by host, NOT by pack)
+}) → Promise<{
+  plaintext: string,                 // raw credential value; consumed and discarded by the pack — NEVER re-emitted
+  expiresAt?: string,                // ISO 8601; pack SHOULD treat as advisory and re-resolve before expiry on long-running calls
+  rotatedAt?: string,                // ISO 8601 of last rotation (advisory; for caches that key on rotation epoch)
+}>
+```
+
+**Required methods:** `resolve`. Hosts that advertise `secrets.resolveInPack: supported` MUST implement this method AND comply with the redaction invariants below.
+
+**Hard rules (extending NFR-7 — Sensitive Data Redaction):**
+
+The plaintext returned by `ctx.secrets.resolve(...)` is the most sensitive value flowing through the pack runtime. Hosts AND packs MUST jointly enforce:
+
+| Rule | Owner | Detail |
+|---|---|---|
+| Plaintext MUST NOT appear in `RunEvent` payloads | Host | Event emitter MUST redact `secrets.resolve` outputs from every serialized event (including `node.input` / `node.output` / `node.error`). |
+| Plaintext MUST NOT appear in OTel spans, log lines, or trace exports | Host | Tracing adapter MUST scrub. Pack runtime MUST NOT log resolved plaintext via `ctx.log`. |
+| Plaintext MUST NOT appear in `RunSnapshot` exports or replay snapshots | Host | Snapshot serializer MUST redact. Replay determinism is preserved by replaying the *resolve call*, not by snapshotting the plaintext (host resolves freshly from the credential store on replay). |
+| Plaintext MUST NOT be persisted in pack-side caches across run boundaries | Pack | Pack MAY cache within a single `ctx.callImageGenerator` / `fetch()` call site for that one invocation. After the call, the plaintext reference MUST be discarded. |
+| Plaintext MUST NOT be sent to any `ctx.*` method other than the consuming call (e.g., `fetch`) | Pack | Specifically: never pass to `ctx.callAI`, `ctx.chat.sendMessage`, `ctx.canvas.write`, or any other host method. The resolution is for direct external HTTP only. |
+| `purpose` field MUST be present and non-empty | Pack | Host audit log records `{ref, purpose, runId, packName, packVersion, ts}` — `purpose` is the required audit breadcrumb. |
+| Lint + redaction unit tests | Host | Hosts that advertise this capability MUST add CI checks verifying plaintext never appears in serialized output across the surfaces above. |
+
+**Determinism note.** `ctx.secrets.resolve` is non-deterministic by design — the host MAY rotate secrets between runs, MAY return different plaintext on the same `ref` across runs (rotation), AND MUST NOT snapshot plaintext for replay. Replay-aware hosts SHOULD record only the resolve *call site* (ref + purpose + ts) and re-resolve from the credential store at replay time. Packs that change behavior based on plaintext content (e.g., parsing a JWT to extract a tenant id) MUST treat the resolved value as run-input that may differ across runs.
+
+**RBAC.** The host MUST enforce that `ref` resolves only to credentials the calling run has access to. Refs from another workspace's secret namespace MUST fail with `secret_access_denied`. Hosts MUST NOT silently substitute a different credential if the requested `ref` is unavailable.
+
+**Failure modes:**
+- `host_capability_missing` — `ctx.secrets.resolve` absent (workflow-register-time refusal via `peerDependencies: { "secrets.resolveInPack": "supported" }` is the correct path; runtime check is defense-in-depth)
+- `secret_not_found` — `ref` doesn't resolve in the host's credential store
+- `secret_access_denied` — caller lacks read permission on `ref` (RBAC denied)
+- `secret_revoked` — credential was revoked since last successful resolution (advisory: the host MAY surface this as `secret_not_found` to avoid leaking lifecycle metadata)
+- `secret_expired` — credential is past its expiry and rotation is required
+- `secret_quota_exhausted` — host-side rate limit on resolution calls (defense against bulk-leak attacks)
+
+**Capability advertisement shape:**
+
+```json
+{
+  "secrets": {
+    "supported": true,
+    "scopes": ["tenant", "user"],
+    "resolution": "host-managed",
+    "resolveInPack": "supported"
+  }
+}
+```
+
+`resolveInPack` is additive — hosts that omit it advertise only the proxy-flow path (clients pass `ai.credentialRef` to `ctx.callAI`; pack-side resolution is unavailable). Hosts that advertise it MUST implement all hard rules above.
+
+---
+
 ## Reserved-but-undocumented surfaces
 
 The following `host.*` capability slots are reserved for future surfaces. Hosts MUST NOT advertise them until this spec defines the contract.
