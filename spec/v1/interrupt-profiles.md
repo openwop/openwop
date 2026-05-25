@@ -68,6 +68,33 @@ The host propagates cancellation between parent and child runs created through s
 
 **Conformance gaps to close:** add parent/child cancellation fixtures building on `subworkflow.test.ts`.
 
+### `core.openwop.governance.approvalGate` (RFC 0051)
+
+A first-class, **role-gated, audited** approval/deployment-gate node — distinct from a generic clarification/approval interrupt. It is an interrupt node (`kind: 'approval'` per `interrupt.md`) that composes the `openwop-interrupt-quorum` + `openwop-interrupt-auth-required` profiles above with RFC 0049 authorization, so "approval as a governed gate" (CMS publish, force-publish, deploy-promote) is portable and certifiable. Requires a host advertising `capabilities.authorization.supported` (peerDependency `authorization: 'supported'`).
+
+**Node config:**
+
+```jsonc
+{
+  "requiredRole": "admin",          // at least one of requiredRole / requiredScope MUST be present
+  "requiredScope": "deploy:promote",
+  "quorum": 2,                       // optional — reuses openwop-interrupt-quorum
+  "override": { "requiredRole": "owner", "audited": true },  // optional role-gated escape hatch
+  "resumeSchema": { "decision": "granted | rejected", "reason": "string?" }
+}
+```
+
+**Requirements (normative):**
+
+- The resuming `principal` (RFC 0048) MUST satisfy `requiredRole` / `requiredScope` per the RFC 0049 decision. An unauthorized or unseeded principal is denied (fail-closed per RFC 0049 §C — `authorization-fail-closed`); the run stays suspended and the host SHOULD emit `authorization.decided { allowed: false }`.
+- A grant emits `approval.granted`; when `quorum` is set, the gate releases only after N distinct authorized grants (each grant carries `quorumProgress`).
+- A reject emits `approval.rejected` and loops the run back per the workflow's edges — it does NOT terminate the run by default.
+- Taking the `override` path MUST emit `approval.overridden { principal, reason }` (reason REQUIRED) AND write an audit-log entry (RFC 0009/0010). The overriding principal MUST satisfy `override.requiredRole`.
+- The resume value is validated against `resumeSchema` per the engine interrupt contract; a malformed resume MUST be rejected with `400 INVALID_RESUME_VALUE` and the run stays suspended.
+- All `approval.*` events are redaction-safe — `principal` is an opaque RFC 0048 id; no credential material in `reason`.
+
+**Conformance gaps to close:** `approval-gate-flow.test.ts` (capability-gated): role-gated grant releases; unauthorized principal denied (run stays suspended); override emits `approval.overridden` + an audit entry; reject loops back; quorum requires N grants. Behavioral assertions gate on the `POST /v1/host/sample/governance/approval-gate` seam and soft-skip until a governance-advertising host wires it.
+
 ---
 
 ## Discovery guidance
