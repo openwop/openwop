@@ -109,6 +109,7 @@ An OpenWOP-compliant server MUST guarantee determinism of replay subject to the 
 2. **`ctx.interrupt(payload)`** — every interrupt with key `K` short-circuits to the persisted `interrupt.resolved` value. The external system is NOT prompted again.
 3. **`ctx.getVersion(changeId, min, max)`** — pinned values from the original run are preserved (events `< fromSeq` are fixed history). The branch the original run took is the branch the replay takes.
 4. **Time-dependent code** — if a NodeModule reads `Date.now()` directly (not via the engine's logical clock), replay is non-deterministic. NodeModules MUST consume time via `ctx.now()` if available, or accept non-determinism.
+5. **Recorded-fact events** — events whose payload records a write that already happened, such as `memory.written` (RFC 0057), are fixed history. On replay against a checkpoint a host MUST re-emit them from the event log and MUST NOT regenerate their identifiers or timestamps (e.g. MUST NOT mint a new `memoryId`). Because such payloads are content-free, they introduce no non-deterministic body to diverge on.
 
 ### `branch` mode
 
