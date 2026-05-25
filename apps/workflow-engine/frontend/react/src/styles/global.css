@@ -1444,6 +1444,49 @@ pre {
 .handoff-chip-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .handoff-chip-sub { font-size: 10px; font-style: italic; }
 
+/* Mission Control (CommandCenterPage) — two-column rail + live detail.
+   Layout only; all color/spacing routes through tokens per DESIGN.app.md §5. */
+.command-center { display: flex; gap: var(--space-4); align-items: flex-start; }
+.command-center-rail {
+  flex: 0 0 260px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.command-center-detail {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.cc-run {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--paper);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.cc-run:hover { border-color: var(--rule-2); }
+.cc-run--selected { border-color: var(--clay-rule); background: var(--clay-wash); }
+.cc-run-top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.cc-run-wf { font-size: 12px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cc-attention { font-family: var(--mono); font-size: 11px; color: var(--color-warning); }
+.cc-live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-success); flex-shrink: 0; }
+
+/* Stack the rail above the detail on narrow viewports (sets up §A7 mobile). */
+@media (max-width: 720px) {
+  .command-center { flex-direction: column; }
+  .command-center-rail { flex-basis: auto; width: 100%; }
+}
+
 /* Run timeline (RFC 0002 event log → node-keyed swimlanes) */
 .run-timeline {
   display: flex;
