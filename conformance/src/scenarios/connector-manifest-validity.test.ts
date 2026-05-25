@@ -66,7 +66,7 @@ function unresolvedReferences(nodeTypeIds: string[], connector: ConnectorBlock):
   return refs.filter((t) => !known.has(t));
 }
 
-describe('connector-manifest-validity: schema shape (RFC 0045 §A)', () => {
+describe('category: connector-manifest validity — schema shape (RFC 0045 §A)', () => {
   const ajv = new Ajv2020({ allErrors: true, strict: false });
   addFormats(ajv);
   const validate = ajv.compile(connectorSchema);
@@ -118,7 +118,7 @@ describe('connector-manifest-validity: schema shape (RFC 0045 §A)', () => {
   });
 });
 
-describe('connector-manifest-validity: action resolution (RFC 0045 §B)', () => {
+describe('category: connector-manifest validity — action resolution (RFC 0045 §B)', () => {
   const nodeTypeIds = [
     'vendor.acme.salesforce.upsert',
     'vendor.acme.salesforce.query',

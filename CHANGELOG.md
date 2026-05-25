@@ -11,6 +11,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0045/0046/0047 code-review follow-ups — spec-coherence cleanup (2026-05-25)
+
+Resolves findings from a senior code-review pass over the Tier-1 batch. No wire-shape change; editorial + registry completeness.
+
+- **RFC 0046 + 0047 §A reconciled to the implemented wire path.** The §A schema diffs + normative MUST clauses showed the capability nested under a `host` key (`host.credentials.supported` / `host.oauth.supported`); the implemented and authoritative path is **top-level `capabilities.credentials` / `capabilities.oauth`** (matching `fs` / `queueBus`). Added a wire-path note to each §A and corrected the field-path references. The `§host.*` prose name is unchanged.
+- **Error codes registered in `rest-endpoints.md`.** Added `credential_not_found`, `credential_scope_unsupported`, `oauth_provider_unsupported`, `oauth_scope_unsupported`, `connector_auth_expired` (RFC 0047), `connector_action_unresolved` (RFC 0045); extended `credential_forbidden` + `credential_unavailable` to cover the RFC 0046 `capabilities.credentials` surface.
+- **AsyncAPI `AnyRunEvent` catch-all** now names `connector.authorized` / `connector.auth_expired` and clarifies the named messages are a curated `updates`-tier subset (the `RunEventType` enum remains authoritative/exhaustive).
+- **`connector-manifest-validity.test.ts`** `describe()` blocks aligned to the `category:` server-free convention.
+
 ### RFC 0045 connector pack manifest — completes Tier-1 of the MyndHyve protocol-extension batch (2026-05-25)
 
 Third and final step of the Tier-1 critical path (depends on RFC 0046 + 0047, both on `main`). Lands the optional `connector` manifest block — the n8n/Make-style *trigger + action + auth + pagination* bundle, expressed manifest-first. This is the leverage point: it lets MyndHyve re-emit its 38 host-locked `vendor.myndhyve.*` integration packs as portable, registry-installable connectors. RFC 0045 stays `Draft`. All additive (optional block; packs without it are unchanged plain node packs).

@@ -32,36 +32,37 @@ This is the foundation of Tier 1 in `plans/myndhyve-protocol-extension-rfcs.md`:
 
 ## Proposal
 
-### §A — `capabilities.schema.json`: `host.credentials` block (additive)
+### §A — `capabilities.schema.json`: `credentials` block (additive)
 
-Add a `credentials` block under `host`, mirroring the shape of the existing `queueBus` / `blobStorage` blocks:
+> **Wire-path note — the advertised path is top-level `capabilities.credentials`.** The capability is advertised at **top level**, a sibling of `capabilities.secrets` / `capabilities.queueBus`, matching the corpus schema convention (the `§host.*` naming is prose; the schema key is top-level, exactly as `fs` / `queueBus` are). An earlier draft of this section showed the block nested under a `host` key; the implemented and normative path — used by the §C MUST clauses, the §E invariant, and `host-capabilities.md` §host.credentials — is `capabilities.credentials.*`.
+
+Add a top-level `credentials` block, mirroring the shape of the existing `secrets` / `queueBus` / `blobStorage` blocks:
 
 ```diff
-   "host": {
-     "properties": {
-+      "credentials": {
-+        "type": "object",
-+        "description": "RFC 0046. Portable credential resolution + lifecycle contract. A pack references a credential by `{ ref, scope }` (see `credential-reference.schema.json`); the host resolves it into the node sandbox ONLY — never into inputs, persisted variables, events, debug bundles, or replay state (SECURITY invariant `credential-payload-redaction`).",
-+        "properties": {
-+          "supported": { "type": "boolean" },
-+          "scopes": {
-+            "type": "array",
-+            "items": { "type": "string", "enum": ["user", "workspace", "tenant"] },
-+            "uniqueItems": true,
-+            "description": "Subset of resolution scopes the host implements. `workspace` is the RFC 0048 sub-tenant; `tenant` and `user` align with the existing `secrets.scopes` vocabulary."
-+          },
-+          "encryptionAtRest": { "type": "boolean", "description": "Host encrypts stored credential material at rest." },
-+          "rotation": {
-+            "type": "string",
-+            "enum": ["none", "two-key-overlap"],
-+            "description": "`two-key-overlap`: old + new credential both resolve as valid during a grace window (mirrors `openwop-auth-api-key-rotation`)."
-+          },
-+          "sharing": { "type": "boolean", "description": "A single stored credential can be referenced by many workflows within a scope (e.g. a workspace-shared key)." }
+   "properties": {
+     "secrets": { ... },
++    "credentials": {
++      "type": "object",
++      "description": "RFC 0046. Portable credential resolution + lifecycle contract. A pack references a credential by `{ ref, scope }` (see `credential-reference.schema.json`); the host resolves it into the node sandbox ONLY — never into inputs, persisted variables, events, debug bundles, or replay state (SECURITY invariant `credential-payload-redaction`).",
++      "properties": {
++        "supported": { "type": "boolean" },
++        "scopes": {
++          "type": "array",
++          "items": { "type": "string", "enum": ["user", "workspace", "tenant"] },
++          "uniqueItems": true,
++          "description": "Subset of resolution scopes the host implements. `workspace` is the RFC 0048 sub-tenant; `tenant` and `user` align with the existing `secrets.scopes` vocabulary."
 +        },
-+        "required": ["supported"],
-+        "additionalProperties": false
-+      }
-     }
++        "encryptionAtRest": { "type": "boolean", "description": "Host encrypts stored credential material at rest." },
++        "rotation": {
++          "type": "string",
++          "enum": ["none", "two-key-overlap"],
++          "description": "`two-key-overlap`: old + new credential both resolve as valid during a grace window (mirrors `openwop-auth-api-key-rotation`)."
++        },
++        "sharing": { "type": "boolean", "description": "A single stored credential can be referenced by many workflows within a scope (e.g. a workspace-shared key)." }
++      },
++      "required": ["supported"],
++      "additionalProperties": false
++    }
    }
 ```
 
@@ -98,7 +99,7 @@ The only credential artifact that ever crosses the wire is the reference:
 
 ### §C — Resolution contract (added to `host-capabilities.md`, normative)
 
-A host advertising `host.credentials.supported: true` MUST:
+A host advertising `capabilities.credentials.supported: true` MUST:
 
 1. Resolve a `{ ref, scope }` reference at **node-execution time** and inject the resolved material into the node sandbox **only**. The resolved value MUST NOT appear in `inputs`, persisted `variables`, `channels`, any `run.*` event payload, the debug bundle, or replay state. (This mirrors the framework-reserved-name stripping MyndHyve already performs and is gated by §E.)
 2. Return a typed error envelope on resolution failure: `credential_not_found` (unknown ref), `credential_forbidden` (ref resolvable but out of the caller's scope — fail-closed), `credential_scope_unsupported` (scope not in the advertised `scopes`).
@@ -120,7 +121,7 @@ Add to `SECURITY/invariants.yaml`, sibling to `mcp-toolcall-payload-redaction`:
   tests:
     - conformance/src/scenarios/credential-payload-redaction.test.ts
   note: |
-    RFC 0046 §C.1: hosts advertising `host.credentials.supported` MUST resolve a
+    RFC 0046 §C.1: hosts advertising `capabilities.credentials.supported` MUST resolve a
     credential reference into the node sandbox ONLY. Resolved material MUST NOT appear
     in run inputs, persisted variables, channels, any run.* event payload, the debug
     bundle, or replay state. The reference (`{ ref, scope }`) is the only credential
@@ -138,7 +139,7 @@ Extend `node-pack-manifest.schema.json` with a node-level `requiredCredentials[]
 +      "requiredCredentials": {
 +        "type": "array",
 +        "items": { "$ref": "#/$defs/CredentialRequirement" },
-+        "description": "RFC 0046. Credentials the node needs. Resolved by the host's host.credentials resolver at dispatch time; refuses to register on a host lacking host.credentials.supported."
++        "description": "RFC 0046. Credentials the node needs. Resolved by the host's host.credentials resolver at dispatch time; refuses to register on a host lacking capabilities.credentials.supported."
 +      }
      }
    }
@@ -148,14 +149,14 @@ where `CredentialRequirement` is `{ key: string, scope?: 'user'|'workspace'|'ten
 
 ## Compatibility
 
-**Additive.** New optional capability block; new optional schema; new optional node-manifest array; one new enum value (`workspace`) appended to `secrets.scopes` (appending to an `enum` is non-breaking — no existing advertisement is invalidated). Hosts without `host.credentials.supported` ignore the block, and a pack declaring `requiredCredentials` refuses to register on them (peerDependency `credentials: 'supported'`, the same pattern `core.openwop.files` uses against `host.fs`).
+**Additive.** New optional capability block; new optional schema; new optional node-manifest array; one new enum value (`workspace`) appended to `secrets.scopes` (appending to an `enum` is non-breaking — no existing advertisement is invalidated). Hosts without `capabilities.credentials.supported` ignore the block, and a pack declaring `requiredCredentials` refuses to register on them (peerDependency `credentials: 'supported'`, the same pattern `core.openwop.files` uses against `host.fs`).
 
 This **supersedes the informal** `ai.credentialRef` reserved-key annex with a first-class surface; that annex's existing behavior (opaque ref, host-side `SecretResolver` dereference, `credential_forbidden` on provider mismatch) stays valid and is now a special case of the general contract. The `secrets.scopes` advertisement remains valid.
 
 ## Conformance
 
 - **`credentials-capability-shape.test.ts`** — `host.credentials` block validates; `scopes` is a subset of the enum. (Always runs.)
-- **`credential-resolve-roundtrip.test.ts`** — a `conformance.credential.echo` fixture node references a seeded credential and the host resolves it in-sandbox; the echo proves resolution without leaking. (Gated on `host.credentials.supported`.)
+- **`credential-resolve-roundtrip.test.ts`** — a `conformance.credential.echo` fixture node references a seeded credential and the host resolves it in-sandbox; the echo proves resolution without leaking. (Gated on `capabilities.credentials.supported`.)
 - **`credential-payload-redaction.test.ts`** — adversarial: assert the resolved material is absent from inputs, variables, every event payload, the debug bundle, and replay state. (Gated; backs §E.)
 - **`credential-rotation-overlap.test.ts`** — old + new valid during the grace window; old fails after; canary-redaction holds. (Gated on `rotation: 'two-key-overlap'`.)
 

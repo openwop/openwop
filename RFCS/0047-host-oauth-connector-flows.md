@@ -25,40 +25,41 @@ MyndHyve hits this on every connector: `users/{uid}/connectors` and Campaign Stu
 
 ## Proposal
 
-### §A — `capabilities.schema.json`: `host.oauth` block (additive)
+### §A — `capabilities.schema.json`: `oauth` block (additive)
+
+> **Wire-path note — the advertised path is top-level `capabilities.oauth`.** Like `capabilities.credentials` (RFC 0046) and `capabilities.fs` / `capabilities.queueBus`, this capability is advertised at **top level**, not nested under a `host` key (the `§host.oauth` naming is prose convention). An earlier draft showed the block nested under `host`; the implemented and normative path — used by the §C MUST clauses and `host-capabilities.md` §host.oauth — is `capabilities.oauth.*`.
 
 ```diff
-   "host": {
-     "properties": {
-+      "oauth": {
-+        "type": "object",
-+        "description": "RFC 0047. Host performs OAuth 2.0 grants on a user's behalf, stores the token as a host.credentials entry (RFC 0046), refreshes it transparently, and resolves it into the node sandbox as a bearer token. Token material NEVER crosses the wire (SECURITY invariant `credential-payload-redaction`).",
-+        "properties": {
-+          "supported": { "type": "boolean" },
-+          "grants": {
-+            "type": "array",
-+            "items": { "type": "string", "enum": ["authorization_code", "client_credentials", "refresh_token"] },
-+            "uniqueItems": true
-+          },
-+          "providers": {
-+            "type": "array",
-+            "items": {
-+              "type": "object",
-+              "required": ["id"],
-+              "properties": {
-+                "id": { "type": "string", "minLength": 1, "description": "Stable provider id, e.g. `slack`, `google`." },
-+                "authUrl": { "type": "string", "format": "uri" },
-+                "tokenUrl": { "type": "string", "format": "uri" },
-+                "scopesSupported": { "type": "array", "items": { "type": "string" } }
-+              },
-+              "additionalProperties": false
-+            }
-+          }
+   "properties": {
+     "credentials": { ... },
++    "oauth": {
++      "type": "object",
++      "description": "RFC 0047. Host performs OAuth 2.0 grants on a user's behalf, stores the token as a capabilities.credentials entry (RFC 0046), refreshes it transparently, and resolves it into the node sandbox as a bearer token. Token material NEVER crosses the wire (SECURITY invariant `credential-payload-redaction`).",
++      "properties": {
++        "supported": { "type": "boolean" },
++        "grants": {
++          "type": "array",
++          "items": { "type": "string", "enum": ["authorization_code", "client_credentials", "refresh_token"] },
++          "uniqueItems": true
 +        },
-+        "required": ["supported"],
-+        "additionalProperties": false
-+      }
-     }
++        "providers": {
++          "type": "array",
++          "items": {
++            "type": "object",
++            "required": ["id"],
++            "properties": {
++              "id": { "type": "string", "minLength": 1, "description": "Stable provider id, e.g. `slack`, `google`." },
++              "authUrl": { "type": "string", "format": "uri" },
++              "tokenUrl": { "type": "string", "format": "uri" },
++              "scopesSupported": { "type": "array", "items": { "type": "string" } }
++            },
++            "additionalProperties": false
++          }
++        }
++      },
++      "required": ["supported"],
++      "additionalProperties": false
++    }
    }
 ```
 
@@ -74,11 +75,11 @@ A node (or the connector block of RFC 0045) declares its OAuth need, never the s
 }
 ```
 
-The host matches `provider` against an advertised `host.oauth.providers[].id` and refuses to register the pack if the provider or a requested scope is not advertised (`oauth_provider_unsupported` / `oauth_scope_unsupported`).
+The host matches `provider` against an advertised `capabilities.oauth.providers[].id` and refuses to register the pack if the provider or a requested scope is not advertised (`oauth_provider_unsupported` / `oauth_scope_unsupported`).
 
-### §C — Token lifecycle (normative, when `host.oauth.supported: true`)
+### §C — Token lifecycle (normative, when `capabilities.oauth.supported: true`)
 
-A host advertising `host.oauth.supported: true` MUST:
+A host advertising `capabilities.oauth.supported: true` MUST:
 
 1. Perform the advertised grant(s). For `authorization_code`, drive the redirect/callback exchange host-side; the protocol does **not** put the authorization-code, the redirect URI, or the `state` parameter into any run-visible surface.
 2. Persist the acquired access + refresh tokens as a `host.credentials` (RFC 0046) entry at scope `user` or `workspace`. The node receives a **resolved bearer token in-sandbox only** — never in `inputs`, variables, events, debug bundles, or replay state (the RFC 0046 `credential-payload-redaction` invariant covers it).
@@ -99,14 +100,14 @@ The Open-spec-gap row for OAuth 2.0 authorization-code flips to "Closed as optio
 
 ## Compatibility
 
-**Additive.** New optional capability block; new optional manifest `auth` declaration; two new event types consumers can ignore; no new required fields. Hosts without `host.oauth.supported` ignore the block; connector packs declaring `auth: { type: 'oauth2' }` refuse to register on them. No existing v1 conformance pass is invalidated.
+**Additive.** New optional capability block; new optional manifest `auth` declaration; two new event types consumers can ignore; no new required fields. Hosts without `capabilities.oauth.supported` ignore the block; connector packs declaring `auth: { type: 'oauth2' }` refuse to register on them. No existing v1 conformance pass is invalidated.
 
 **Depends on RFC 0046** for token storage and the redaction invariant.
 
 ## Conformance
 
 - **`oauth-capability-shape.test.ts`** — `host.oauth` block validates; declared `grants`/`providers` well-formed. (Always runs.)
-- **`oauth-authcode-roundtrip.test.ts`** — against a synthetic provider fixture, drive the authorization-code grant; assert a `host.credentials` entry is created and `connector.authorized` carries the ref (not the token). (Gated on `host.oauth.supported` ∧ `grants` includes `authorization_code`.)
+- **`oauth-authcode-roundtrip.test.ts`** — against a synthetic provider fixture, drive the authorization-code grant; assert a `host.credentials` entry is created and `connector.authorized` carries the ref (not the token). (Gated on `capabilities.oauth.supported` ∧ `grants` includes `authorization_code`.)
 - **`oauth-refresh.test.ts`** — expire the access token; assert transparent refresh; assert `connector.auth_expired` on terminal refresh failure. (Gated on `grants` includes `refresh_token`.)
 - **`oauth-token-redaction.test.ts`** — adversarial: assert no token material in any event, debug bundle, or replay state (reuses the RFC 0046 redaction harness). (Gated.)
 
