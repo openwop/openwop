@@ -109,10 +109,27 @@ interface Run {
   abortController: AbortController;
 }
 
+// RFC 0056 — a quality annotation is a per-run SIDE-RESOURCE, deliberately
+// NOT a RunEvent (so it is never replayed and never copied into a fork per
+// §D). `signal.correction` and `note` are untrusted user content and are
+// secret-scrubbed (SR-1) BEFORE persistence — see scrubSecretShaped().
+interface StoredAnnotation {
+  annotationId: string;
+  target: { runId: string; eventId?: string; nodeId?: string };
+  signal: Record<string, unknown>;
+  actor: { principalRef: string };
+  note?: string;
+  createdAt: string;
+}
+
 // ─── In-memory state ─────────────────────────────────────────────────────────
 
 const workflows = new Map<string, FixtureWorkflow>();
 const runs = new Map<string, Run>();
+
+// RFC 0056 annotation side-store, keyed by runId. Separate from `runs` so a
+// fork (a new runId) starts with zero annotations without any copy logic.
+const annotations = new Map<string, StoredAnnotation[]>();
 
 // WASM pack registry. Map of node-typeId → (pack, typeId) so dispatch can
 // route unknown typeIds to a loaded pack. See loadWasmPacks() below.
@@ -620,6 +637,14 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
     };
   }
 
+  // RFC 0056 — advertise non-blocking run feedback. This host supports
+  // run-level annotations carrying any of the four standard signal kinds.
+  capabilities.feedback = {
+    supported: true,
+    targets: ['run'],
+    signals: ['rating', 'correction', 'label', 'flag'],
+  };
+
   const payload = {
     protocolVersion: '1.0',
     implementation: {
@@ -779,6 +804,116 @@ function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: string):
     ...(run.error ? { error: run.error } : {}),
   };
   sendJSON(res, 200, snapshot);
+}
+
+// RFC 0056 §E + SECURITY/invariants.yaml `annotation-content-redaction`.
+// `signal.correction` and `note` are untrusted user content; secret-shaped
+// material MUST be redacted (SR-1) before it is persisted, listed, or
+// exported. We scrub at write time so the side-store never holds plaintext.
+const SECRET_SHAPED = [
+  /\bsk-[A-Za-z0-9_-]{6,}/g, // OpenAI-style and similar `sk-` prefixed keys
+  /\b(?:AKIA|ASIA)[A-Z0-9]{12,}/g, // AWS access key IDs
+  /\bxox[baprs]-[A-Za-z0-9-]{8,}/g, // Slack tokens
+  /\bgh[pousr]_[A-Za-z0-9]{16,}/g, // GitHub tokens
+  /\bey[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g, // JWTs
+];
+function scrubSecretShaped(value: string): string {
+  let out = value;
+  for (const re of SECRET_SHAPED) out = out.replace(re, '[redacted]');
+  return out;
+}
+
+async function handleCreateAnnotation(
+  req: IncomingMessage,
+  res: ServerResponse,
+  runId: string,
+): Promise<void> {
+  if (!checkAuth(req, res)) return;
+
+  const run = runs.get(runId);
+  if (!run) {
+    sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
+    return;
+  }
+
+  const bodyText = await readBody(req);
+  let body: {
+    signal?: Record<string, unknown>;
+    target?: { eventId?: unknown; nodeId?: unknown };
+    note?: unknown;
+  };
+  try {
+    body = JSON.parse(bodyText) as typeof body;
+  } catch {
+    sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+    return;
+  }
+
+  const signal = body.signal;
+  if (typeof signal !== 'object' || signal === null || Array.isArray(signal)) {
+    sendError(res, 400, 'validation_error', 'signal: object is required.');
+    return;
+  }
+  const kind = signal['kind'];
+  if (kind !== 'rating' && kind !== 'correction' && kind !== 'label' && kind !== 'flag') {
+    sendError(res, 400, 'validation_error', 'signal.kind MUST be one of rating|correction|label|flag.');
+    return;
+  }
+  if (kind === 'rating' && !Number.isInteger(signal['rating'])) {
+    sendError(res, 400, 'validation_error', 'signal.rating: integer 1..5 is required when kind is rating.');
+    return;
+  }
+  if (kind === 'label' && typeof signal['label'] !== 'string') {
+    sendError(res, 400, 'validation_error', 'signal.label: string is required when kind is label.');
+    return;
+  }
+  if (kind === 'correction' && typeof signal['correction'] !== 'string') {
+    sendError(res, 400, 'validation_error', 'signal.correction: string is required when kind is correction.');
+    return;
+  }
+
+  // Scrub untrusted free-text BEFORE persistence (SR-1, RFC 0056 §E).
+  const storedSignal: Record<string, unknown> = { ...signal };
+  if (typeof storedSignal['correction'] === 'string') {
+    storedSignal['correction'] = scrubSecretShaped(storedSignal['correction']);
+  }
+  if (typeof storedSignal['label'] === 'string') {
+    storedSignal['label'] = scrubSecretShaped(storedSignal['label']);
+  }
+
+  const annotation: StoredAnnotation = {
+    annotationId: `ann-${randomUUID()}`,
+    target: {
+      runId,
+      ...(typeof body.target?.eventId === 'string' ? { eventId: body.target.eventId } : {}),
+      ...(typeof body.target?.nodeId === 'string' ? { nodeId: body.target.nodeId } : {}),
+    },
+    signal: storedSignal,
+    // Single-API-key host: the principal is the bearer-token identity. Opaque
+    // ref per the schema; never the credential itself.
+    actor: { principalRef: 'apikey:in-memory' },
+    ...(typeof body.note === 'string' ? { note: scrubSecretShaped(body.note) } : {}),
+    createdAt: new Date().toISOString(),
+  };
+
+  const list = annotations.get(runId) ?? [];
+  list.push(annotation);
+  annotations.set(runId, list);
+
+  sendJSON(res, 201, annotation);
+}
+
+function handleListAnnotations(req: IncomingMessage, res: ServerResponse, runId: string): void {
+  if (!checkAuth(req, res)) return;
+
+  const run = runs.get(runId);
+  if (!run) {
+    sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
+    return;
+  }
+
+  // Run-scoped store → the list is inherently isolated to this run (CTI-1).
+  sendJSON(res, 200, { annotations: annotations.get(runId) ?? [] });
 }
 
 async function handleCancelRun(
@@ -958,6 +1093,7 @@ const RUN_CANCEL_PATTERN = /^\/v1\/runs\/([^/]+)\/cancel$/;
 const RUN_EVENTS_POLL_PATTERN = /^\/v1\/runs\/([^/]+)\/events\/poll$/;
 const RUN_EVENTS_SSE_PATTERN = /^\/v1\/runs\/([^/]+)\/events$/;
 const RUN_DEBUG_BUNDLE_PATTERN = /^\/v1\/runs\/([^/]+)\/debug-bundle$/;
+const RUN_ANNOTATIONS_PATTERN = /^\/v1\/runs\/([^/]+)\/annotations$/; // RFC 0056
 
 /**
  * RFC 0013 Phase 3 — workflow-chain pack expansion endpoint.
@@ -1107,6 +1243,10 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
 
   m = RUN_CANCEL_PATTERN.exec(path);
   if (m && method === 'POST') return handleCancelRun(req, res, m[1]!);
+
+  m = RUN_ANNOTATIONS_PATTERN.exec(path); // RFC 0056 — run feedback
+  if (m && method === 'POST') return handleCreateAnnotation(req, res, m[1]!);
+  if (m && method === 'GET') return handleListAnnotations(req, res, m[1]!);
 
   m = RUN_ID_PATTERN.exec(path);
   if (m && method === 'GET') return handleGetRun(req, res, m[1]!);

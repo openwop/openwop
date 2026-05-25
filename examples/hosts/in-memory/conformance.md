@@ -8,6 +8,7 @@
 > **Conformance suite:** `@openwop/openwop-conformance@1.5.0` (latest run)
 > **Profile claim:** `openwop-core` + `openwop-stream-poll` + `openwop-stream-sse`
 > **Capability claim (RFC 0013):** `workflowChainPacks.supported: true` — host advertises the chain-expansion capability under `/.well-known/openwop` and serves the vendor-prefixed expansion endpoint `POST /v1/host/sample/workflow-chain:expand`. Mounted on top of `OPENWOP_PACK_REGISTRY_DIR` (defaults to the in-tree `examples/packs/`).
+> **Capability claim (RFC 0056):** `feedback.{supported: true, targets: ["run"], signals: ["rating", "correction", "label", "flag"]}` — host serves `POST/GET /v1/runs/{runId}/annotations` backed by a per-run annotation side-store (not a RunEvent). See the RFC 0056 evidence section below.
 > **Scale profile claim:** `minimal`
 
 ## Summary
@@ -17,6 +18,28 @@ Against the live in-memory host (single Node process, `npm start`):
 - **Test files:** 30 total — 16 fully passing, 14 with at least one failure.
 - **Tests:** 193 total — 135 passing, 28 failing, 30 todo (intentionally skipped scenarios).
 - **Profile-targeted result:** every scenario the host's claimed profile gates on passes. Failures are all in scenarios that exercise capabilities outside the claimed profile set.
+
+## RFC 0056 — run feedback & annotations (2026-05-25)
+
+Run against the live host (`npm start`, default `http://127.0.0.1:3737`):
+
+```bash
+OPENWOP_BASE_URL=http://127.0.0.1:3737 OPENWOP_API_KEY=openwop-inmem-dev-key \
+  npx vitest run src/scenarios/feedback-*.test.ts
+# → Test Files  7 passed (7) · Tests  7 passed (7)
+```
+
+| Scenario file | Result | Notes |
+|---|---|---|
+| `feedback-capability-shape.test.ts` | ✅ PASS | `capabilities.feedback` well-formed (boolean `supported`; `targets`/`signals` from the closed vocabularies) |
+| `feedback-record-and-list.test.ts` | ✅ PASS | `POST` → 201 with `annotationId`; `GET` lists it back |
+| `feedback-on-terminal-run.test.ts` | ✅ PASS | annotation on a `completed` run accepted (non-blocking, post-hoc) |
+| `feedback-cross-tenant-isolation.test.ts` | ✅ PASS | run-scoped side-store → list carries only this run's `target.runId` (CTI-1) |
+| `feedback-correction-redaction.test.ts` | ✅ PASS | `sk-…` canary in `signal.correction` + `note` scrubbed to `[redacted]` before persistence/listing (SR-1) |
+| `feedback-unsupported-501.test.ts` | ⏭️ soft-skip | N/A — this host advertises `feedback.supported: true`, so the unadvertised-501 path doesn't apply |
+| `feedback-fork-not-copied.test.ts` | ⏭️ soft-skip | this host doesn't expose `POST /v1/runs/{runId}:fork`; the side-store design means a fork would inherently start with zero annotations |
+
+Implementation: `examples/hosts/in-memory/src/server.ts` — `annotations: Map<runId, StoredAnnotation[]>` side-store, `handleCreateAnnotation` / `handleListAnnotations`, `scrubSecretShaped()` for SR-1. This is the first reference-host implementation backing RFC 0056 (`Active`).
 
 ## Per-file result
 

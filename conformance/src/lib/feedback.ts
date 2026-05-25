@@ -19,10 +19,10 @@ export async function readFeedbackCap(): Promise<Record<string, unknown> | null>
   return fb && typeof fb === 'object' ? (fb as Record<string, unknown>) : null;
 }
 
-const SEED_FIXTURE = 'conformance-a';
+const SEED_FIXTURE = 'conformance-noop';
 
-/** Seeds a run via the basic `conformance-a` fixture; null (soft-skip) when
- *  the fixture isn't advertised or creation fails. */
+/** Seeds a run via the basic `conformance-noop` fixture; null (soft-skip)
+ *  when the fixture isn't advertised or creation fails. */
 export async function seedRun(tenantId: string): Promise<string | null> {
   if (!isFixtureAdvertised(SEED_FIXTURE)) return null;
   const r = await driver.post('/v1/runs', { workflowId: SEED_FIXTURE, tenantId, inputs: {} });
