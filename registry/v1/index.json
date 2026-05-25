@@ -647,6 +647,15 @@
       "yanked": false
     },
     {
+      "name": "vendor.myndhyve.ads-creative-validate",
+      "latestVersion": "1.0.0",
+      "description": "MyndHyve ads.creative.validate — full compliance scanner combining built-in policy text rules, placement text-length checks, AND asset-format checks (image/video dimensions, file sizes, durations). Caller supplies placement spec data via inputs (resolve upstream from vendor.myndhyve.ads-platforms OR host.adPlatformSpecs).",
+      "license": "Apache-2.0",
+      "tags": [],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
       "name": "vendor.myndhyve.ads-export",
       "kind": "node",
       "latestVersion": "1.0.0",
