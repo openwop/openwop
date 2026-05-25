@@ -1047,7 +1047,7 @@
     },
     "packs": {
       "type": "object",
-      "description": "RFC 0025 (`Draft`). Pack-registry surface advertisement. The baseline `/v1/packs/*` read surface (per `spec/v1/node-packs.md` §\"Registry HTTP API\") is unconditional for hosts that ship a pack catalog and does NOT require a capability flag; this object carries optional sub-blocks (currently the test-mode mirror namespace). Hosts that don't expose any optional pack-registry sub-block MAY omit this block entirely.",
+      "description": "RFC 0025 (`Active`). Pack-registry surface advertisement. The baseline `/v1/packs/*` read surface (per `spec/v1/node-packs.md` §\"Registry HTTP API\") is unconditional for hosts that ship a pack catalog and does NOT require a capability flag; this object carries optional sub-blocks (currently the test-mode mirror namespace). Hosts that don't expose any optional pack-registry sub-block MAY omit this block entirely.",
       "properties": {
         "testMode": {
           "type": "object",
