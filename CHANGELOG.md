@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0064 (`host.toolHooks`) — wire surface landed; promote Draft → `Active` (2026-05-25)
+
+Wire surface for the autonomous-agent-runtime cohort's tool-invocation hooks — per-tool authorization + rate limiting + a content-free tool-call audit trail, layered on the **existing** `agent.toolCalled` / `agent.toolReturned` events (RFC 0002) rather than a parallel surface: additive top-level `capabilities.toolHooks` block (`{ supported, prePostEvents?, perToolAuthorization?, perToolRateLimit? }`); five additive optional payload fields — `argsHash` (SR-1-redacted JCS+SHA-256, content-free per RFC 0057), `principal` (RFC 0048; `core.system` for non-agent egress), `transport` (`mcp`/`http`/`native`) on `agentToolCalled`, and `status` (`ok`/`error`/`forbidden`/`rate_limited`) + `durationMs` (recorded, re-emitted on replay) on `agentToolReturned`; the normative §host.toolHooks contract in `host-capabilities.md` + a cross-ref from `mcp-integration.md`. Per-tool authorization **reuses** RFC 0049's `forbidden` error + `authorization-fail-closed` invariant (fail-closed: a lacked/unevaluable scope never invokes the tool); rate limiting reuses `rate_limited`. **No new event type, error code, or SECURITY invariant.** Five conformance scenarios (`tool-hooks-shape` always-on + `-content-free`/`-authorization-fail-closed`/`-rate-limit`/`-secret-redaction` gated on the documented tool-hooks invoke seam in `host-sample-test-seams.md`). **RFC 0064 graduates `Draft → Active`**; `Active → Accepted` awaits a host wiring the seam. Additive; no existing wire-shape change.
+
 ### RFC 0059 (agent workspace) — Milestone 1: schema + spec prose; promoted Draft → `Active` (2026-05-25)
 
 Lands the additive `host.workspace` capability — a versioned, atomic, tenant·workspace-scoped (RFC 0048) ground-truth file store, complementing the transactional `MemoryAdapter` (RFC 0004) with a durable, path-addressable file layer. The wire surface landed atomically across:
@@ -21,7 +25,7 @@ Lands the additive `host.workspace` capability — a versioned, atomic, tenant·
 - **SDK:** `listFiles`/`getFile`/`putFile`/`deleteFile` (TS), `list_workspace_files`/`get_workspace_file`/`put_workspace_file`/`delete_workspace_file` (Python), `ListWorkspaceFiles`/`GetWorkspaceFile`/`PutWorkspaceFile`/`DeleteWorkspaceFile` (Go) — null/false-on-404/501 + `If-Match` support, mirroring the annotation methods.
 - **Conformance:** always-on `workspace-capability-shape.test.ts` (+1 scenario file; suite 247 → 248); coverage.md row added.
 
-Behavioral conformance (CRUD/ETag/cross-tenant-isolation/run-snapshot) and the `workspace-cross-tenant-isolation` SECURITY invariant + its public test land at the implementation milestone (Milestone 2), not at Active. README counts re-synced (Active 9 → 10, Draft 11 → 10). Additive; no breaking change.
+Behavioral conformance (CRUD/ETag/cross-tenant-isolation/run-snapshot) and the `workspace-cross-tenant-isolation` SECURITY invariant + its public test land at the implementation milestone (Milestone 2), not at Active. README counts re-synced. Additive; no breaking change.
 
 ### RFC 0060 — document the heartbeat tick seam; code-review follow-ups (2026-05-25)
 
