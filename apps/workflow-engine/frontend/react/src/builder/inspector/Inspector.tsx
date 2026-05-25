@@ -325,6 +325,7 @@ function MultiSelectInspector({ ids }: { ids: string[] }) {
         <button
           className="secondary"
           disabled={ids.length < 3}
+          aria-label="Distribute horizontally"
           onClick={() => alignNodes(ids, 'distribute-h')}
         >
           Distribute ↔
@@ -332,6 +333,7 @@ function MultiSelectInspector({ ids }: { ids: string[] }) {
         <button
           className="secondary"
           disabled={ids.length < 3}
+          aria-label="Distribute vertically"
           onClick={() => alignNodes(ids, 'distribute-v')}
         >
           Distribute ↕
