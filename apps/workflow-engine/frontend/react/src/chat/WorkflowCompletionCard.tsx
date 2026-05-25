@@ -27,6 +27,7 @@ import { Link } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import { getSavedWorkflow } from '../builder/persistence/localStore.js';
 import { formatElapsed } from './workflowProgress/formatters.js';
+import { AlertIcon, BanIcon, CheckIcon } from './icons/index.js';
 import type { WorkflowRunState } from './types.js';
 
 interface Props {
@@ -57,7 +58,7 @@ export function WorkflowCompletionCard({ run, onPreviewArtifact }: Props): JSX.E
 
   if (run.status === 'failed') {
     return (
-      <CompletionShell tone="danger" icon="!" title="Workflow failed">
+      <CompletionShell tone="danger" iconKind="alert" title="Workflow failed">
         <Meta items={[stepCount, elapsed]} />
         {run.error && (
           <div
@@ -80,7 +81,7 @@ export function WorkflowCompletionCard({ run, onPreviewArtifact }: Props): JSX.E
 
   if (run.status === 'cancelled') {
     return (
-      <CompletionShell tone="muted" icon="⊘" title="Workflow cancelled">
+      <CompletionShell tone="muted" iconKind="ban" title="Workflow cancelled">
         <Meta items={[stepCount, elapsed]} />
         {run.runId && (
           <Actions>
@@ -95,7 +96,7 @@ export function WorkflowCompletionCard({ run, onPreviewArtifact }: Props): JSX.E
 
   // status === 'completed'
   return (
-    <CompletionShell tone="success" icon="✓" title="Workflow completed">
+    <CompletionShell tone="success" iconKind="check" title="Workflow completed">
       <Meta items={[stepCount, elapsed]} />
       <Actions>
         {terminals.length > 0
@@ -211,31 +212,42 @@ function useElapsedSince(startedAt: string): string {
 
 interface ShellProps {
   tone: 'success' | 'danger' | 'muted';
-  icon: string;
+  iconKind: 'check' | 'alert' | 'ban';
   title: string;
   children: React.ReactNode;
 }
 
-function CompletionShell({ tone, icon, title, children }: ShellProps): JSX.Element {
+function CompletionShell({ tone, iconKind, title, children }: ShellProps): JSX.Element {
   const color = tone === 'success'
     ? 'var(--color-success)'
     : tone === 'danger'
       ? 'var(--color-danger)'
       : 'var(--color-text-muted)';
+  // Danger uses a 2px border for non-color differentiation so users
+  // with limited color discrimination still see the failure call-out.
+  const borderWidth = tone === 'danger' ? 2 : 1;
+  // ARIA landmark label so SR users can navigate the row as a unit.
+  const ariaLabel = `Workflow run: ${title}`;
   return (
     <div
+      role="status"
+      aria-label={ariaLabel}
       style={{
         marginTop: 8,
         padding: '10px 14px',
         borderRadius: 10,
         background: `color-mix(in oklch, ${color} 8%, transparent)`,
-        border: `1px solid color-mix(in oklch, ${color} 30%, var(--color-border))`,
+        border: `${borderWidth}px solid color-mix(in oklch, ${color} 40%, var(--color-border))`,
         fontSize: 13,
         lineHeight: 1.4,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-        <span aria-hidden="true" style={{ color, fontWeight: 700 }}>{icon}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ color, display: 'inline-flex' }}>
+          {iconKind === 'check' && <CheckIcon size={14} />}
+          {iconKind === 'alert' && <AlertIcon size={14} />}
+          {iconKind === 'ban' && <BanIcon size={14} />}
+        </span>
         <strong style={{ color }}>{title}</strong>
       </div>
       {children}
