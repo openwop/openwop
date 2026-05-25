@@ -11,6 +11,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### feat(app): item #11a — JSON-Schema validation-hint surfacing + array<string> rendering (2026-05-25)
+
+Architect audit (against `plans/app-buildable-now-on-existing-protocol.md` item #11) found the pack-manifest JSON-Schema → form pipeline already shipped (frontend `configFieldsFromSchema` + `Inspector.tsx` + boot-time `loadDynamicCatalog()` merging pack-served nodes into the catalog). Item #11 split into **11a (this entry; no RFC needed)** and **11b (pending RFC for picker UX via `x-openwop-form` vendor extension)** — see the plan doc for the split rationale.
+
+This entry ships 11a: extend the converter + renderer to honor JSON-Schema 2020-12 keywords the original pass ignored. App-only; no protocol-corpus change. Frontend `tsc --noEmit` clean.
+
+- **`configFieldsFromSchema` extracted to its own module** (`apps/workflow-engine/frontend/react/src/builder/palette/configFieldsFromSchema.ts`) so it's unit-testable without the React store wiring. `catalogRegistry.ts` re-exports for back-compat; no call-site change.
+- **Number inputs** forward `minimum` / `maximum` / `multipleOf` → HTML5 `min` / `max` / `step`. Integer fields default `step` to `1`.
+- **Text inputs** forward `minLength` / `maxLength` / `pattern` → HTML5 `minlength` / `maxlength` / `pattern`. Textareas forward length hints only (HTML5 has no `pattern` on textarea).
+- **New `string-list` ConfigField kind** for `array` of `items: { type: 'string' }` — one-per-line textarea that round-trips to `string[]`, honors `maxItems` (clamps + warns at the help row), and surfaces `items.pattern` in help text. Replaces the prior raw-JSON-textarea fallback for the common stop-sequence / tag-list shape (e.g., `core.ai.chatCompletion`'s `stopSequences`).
+- **`default` values for `array<string>` and `object` shapes** are now carried through unchanged; the renderer pretty-prints object/array defaults into the textarea (previously silently dropped).
+- **`ConfigField` interface extended** with optional `min` / `max` / `step` / `minLength` / `maxLength` / `pattern` / `maxItems` validation-hint fields + the new `string-list` kind + a wider `defaultValue` type covering `string[]` / `Record<string, unknown>` / `unknown[]`.
+- **Unit test surface** at `apps/workflow-engine/frontend/react/src/builder/palette/__tests__/configFieldsFromSchema.test.ts` — vitest-style, 25+ cases, including the production `core.ai.chatCompletion` configSchema as a regression fixture. The frontend doesn't currently ship a test runner; the file is excluded from `tsc --noEmit` and becomes auto-running the moment `vitest` is added as a frontend devDep (one `npm install` + `"test": "vitest run"` script away — documented at the top of the test file).
+
+**Validation hints are advisory UX only** — the host MUST still validate the persisted workflow against the authoritative pack manifest schema. The Inspector's HTML5 attribute forwarding catches obvious typos at edit time but is not a substitute for backend validation.
+
 ### fix(host-postgres): artifact endpoint rejects unauthenticated requests (401 before existence) (2026-05-25)
 
 The Postgres host had no `GET /v1/runs/{runId}/artifacts/{artifactId}` route, so unauthenticated requests fell through to the catch-all 404 — answerable without ever checking auth, a cross-tenant existence oracle (`artifact-auth.test.ts` expects 401). Adds an artifact route that runs `checkAuth` **before** any existence check: missing/invalid auth → canonical 401 `unauthenticated`; an authenticated caller → 404 `artifact_not_found` (this host persists no artifacts). Closes the last deterministic Postgres conformance failure (now 0 failed / 1627 passed; `webhook-signed-delivery` remains a known full-suite timing flake). Host-only; no protocol-corpus change.

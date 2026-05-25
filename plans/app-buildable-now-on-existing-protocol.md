@@ -68,9 +68,23 @@ The gap analysis found the protocol/runtime is ~65% `Done` while the app is an e
 - **Protocol surface:** `/.well-known/openwop` capability advertisement + `Capabilities-Etag` + auth-scoped narrowing — RFC 0011 (Accepted).
 - **App adds:** render the connected host's capabilities (envelopes, limits, profiles, host.* capabilities, models). Drives feature-gating in the UI (e.g. hide vector-node config if `host.vectorStore` absent). Show the narrowed view when authed with a scoped key.
 
-## 🟡 11. Auto-generated node config forms from pack manifests
-- **Protocol surface:** node-pack manifest input/output schemas are JSON Schema 2020-12 (Done); component schema provider.
-- **App adds:** render a config form for any node from its manifest schema (JSON Schema → form), so newly-installed packs (item 6) get a working config UI for free.
+## 🟡 11. Auto-generated node config forms from pack manifests *(materially shipped; split into 11a [✅ this branch] + 11b [RFC pending])*
+
+The architect audit (2026-05-25) found the JSON-Schema → form pipeline already lives in `apps/workflow-engine/frontend/react/src/builder/palette/configFieldsFromSchema.ts` (extracted from `catalogRegistry.ts` for testability) + the existing `Inspector.tsx` renderer. Boot-time `loadDynamicCatalog()` merges pack-served nodes into the catalog and they get a config form today. The remaining work split into two trackable sub-items:
+
+### ✅ 11a. JSON-Schema validation-hint surfacing + `array<string>` rendering (no RFC needed)
+
+Pure renderer/converter extension. Surfaces JSON-Schema 2020-12 keywords that the original converter ignored:
+
+- `minimum` / `maximum` / `multipleOf` → HTML5 `min` / `max` / `step` on number inputs (integer step defaults to 1).
+- `minLength` / `maxLength` / `pattern` → HTML5 `minlength` / `maxlength` / `pattern` on text inputs.
+- `array` of `items: { type: 'string' }` → new `string-list` ConfigField kind, rendered as a one-per-line textarea instead of raw JSON. Honors `maxItems` (clamps + warns) and surfaces `items.pattern` in help text.
+- `default` for `array<string>` and `object` shapes are now carried through and pretty-printed (previously silently dropped).
+- New `configFieldsFromSchema.ts` extracted for unit testability + vitest-style test file (`__tests__/configFieldsFromSchema.test.ts`) covering 25+ cases including the production `core.ai.chatCompletion` configSchema as a regression fixture.
+
+### 🚧 11b. Picker UX for pack-installed nodes via `x-openwop-form` vendor extension (RFC pending)
+
+Static-catalog AI nodes get model/provider/credential pickers + cross-field dependency cascades (e.g., changing provider clears the model). Pack-served nodes can't reach picker-grade UX today because JSON Schema alone can't express "this string is a model id whose options depend on the sibling `provider` field." Pursuing as a new RFC that reserves the `x-openwop-form` namespace on pack `configSchema`s, mirroring the existing `ConfigField.kind` / `dependsOn` / `credentialProvider` vocabulary. Additive per `COMPATIBILITY.md §2.1`; pack authors opt in; existing manifests work unchanged via the pure-schema fallback shipped in 11a.
 
 ## ✅ 12. Workflow validation against host capabilities (pre-flight)
 - **Protocol surface:** cap-breach enforcement + `RunOptions.configurable` limits — RFC 0009 (`cap-breach.test.ts`, Done).
