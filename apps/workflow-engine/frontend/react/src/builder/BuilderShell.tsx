@@ -18,6 +18,7 @@ import { useBuilderStore } from './store/builderStore.js';
 import { newWorkflowId } from './persistence/localStore.js';
 import { registerWorkflow } from './persistence/registerClient.js';
 import { serializeWithIdMap, SerializeError } from './schema/serialize.js';
+import { buildChainPackManifest } from './schema/chainPackManifest.js';
 import { createRun } from '../client/runsClient.js';
 import { subscribeToRun } from '../client/streamsClient.js';
 import type { SavedWorkflow } from './schema/workflow.js';
@@ -147,6 +148,35 @@ export function BuilderShell({ onNewWorkflow }: Props) {
     URL.revokeObjectURL(url);
   }
 
+  // Export the built graph as an RFC 0013 workflow-chain-pack manifest
+  // (the authoring half of "publish as a chain pack" — the user submits
+  // it via the PR-based registry flow; the app never signs/pushes). Runs
+  // the same graph validation as Run, so cycles/orphans surface here too.
+  function onExportChainPack() {
+    setError(null);
+    try {
+      const snap = useBuilderStore.getState().snapshot();
+      const manifest = buildChainPackManifest(snap);
+      const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const safe = (snap.name || 'workflow').replace(/[^a-z0-9-_]+/gi, '-').toLowerCase();
+      a.download = `${safe}.workflow-chain-pack.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      if (err instanceof SerializeError) {
+        setError(err.message);
+        if (err.nodeId) useBuilderStore.getState().selectNode(err.nodeId);
+      } else {
+        setError(err instanceof Error ? err.message : String(err));
+      }
+    }
+  }
+
   // Import portable JSON. Mints a fresh workflow id so importing never
   // clobbers the workflow currently open, then navigates into it.
   async function onImportFile(file: File) {
@@ -193,6 +223,13 @@ export function BuilderShell({ onNewWorkflow }: Props) {
         <button className="secondary" onClick={undo} disabled={!canUndo} title="Undo">↶</button>
         <button className="secondary" onClick={redo} disabled={!canRedo} title="Redo">↷</button>
         <button className="secondary" onClick={onExport} title="Export this workflow as portable JSON">Export</button>
+        <button
+          className="secondary"
+          onClick={onExportChainPack}
+          title="Export as an RFC 0013 workflow-chain-pack manifest (submit via the registry PR flow)"
+        >
+          Export chain pack
+        </button>
         <button
           className="secondary"
           onClick={() => importInputRef.current?.click()}
