@@ -11,6 +11,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFCs 0058–0064 — Phase-0 architect decision batch resolved; RFC 0058 promoted Draft → `Active` (2026-05-25)
+
+Closes the architect Phase-0 decision batch (`docs/autonomous-agent-runtime-plan.md` §8.3) — the only gate to `Draft → Active` for the autonomous-agent-runtime cohort. No wire-shape change (decisions + status only):
+
+- **Decisions recorded** in each RFC's "Phase-0 resolution" block + the §8.3 checklist (all ticked). Rulings: (A) the four additive event extensions confirmed non-breaking against `origin/main` schemas — no `eventLogSchemaVersion` bump; (B) checksums (0063) + `argsHash` (0064) pinned to the existing RFC 8785 JCS recipe in `replay.md §B`; (C) `token_budget_exceeded` / `workspace_conflict` / `workspace_too_large` are the only new error codes (0064 reuses `forbidden` + `rate_limited`); (D1–D11) the eleven "decide before Active" knobs resolved; (E) two new protocol-tier invariants (0059, 0063) land with their tests at implementation, 0064 reuses RFC 0049's `authorization-fail-closed`.
+- **Additive-amendment notes** added to the three Accepted RFCs whose events the cohort extends: 0002 (`agent.toolCalled`/`agent.toolReturned`), 0012 (`memory.compacted`), 0037 (`runOrchestrator.decided` + `core.workflowChain.event`).
+- **RFC 0058 → `Active`** — its wire surface (schema + spec + conformance + SDK) landed atomically, meeting the repo's Active bar; architect-cleared + steward-accepted. `Active → Accepted` awaits reference-host enforcement. README counts re-synced (Active 7 → 8, Draft 13 → 12). RFCs 0059–0064 stay `Draft` (decision-complete + wire-shape-pinned; they flip to Active when their Phase-2 schema + prose land).
+
 ### feat(host-postgres): RFC 0031 gate-decision test seam — flips the synthetic model-capability assertions live (2026-05-25)
 
 Adds `POST /v1/host/sample/test/evaluate-model-capability-gate` to the Postgres reference host — a pure-function exerciser for the RFC 0031 §B gate's substitute/refuse/dispatch decision matrix + emitted event payloads (no event-log write, no secrets; always-on). This flips the previously-soft-skipping synthetic assertions in `model-capability-insufficient.test.ts` (4 refuse cases) and `model-capability-substituted.test.ts` (substitute/refuse/dispatch) from 404-skip → live against Postgres. New `test/model-capability-gate-seam.test.ts` (PGlite) exercises all five outcomes (refuse ×3, substitute, dispatch). Postgres-only: the seam belongs on a host with a real provider-capability map — the SQLite host routes no AI (empty map, can only refuse), so it correctly does NOT expose the seam and keeps soft-skipping the synthetic cases. Host-only; no protocol-corpus change.

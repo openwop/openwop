@@ -91,6 +91,14 @@ This is what prevents notification spam: the action is gated on a *transition*, 
 2. **Backpressure.** If enqueued runs from a heartbeat pile up, does the heartbeat self-pause? Proposed: advertise `maxPendingEnqueued`, pause emission past it. Decide before Active.
 3. **Interaction with RFC 0061 agent loop.** Can a heartbeat *be* the trigger that advances an agent loop iteration, or are they strictly separate? Proposed separate (heartbeat enqueues a run; the run may be a loop). Confirm with 0061.
 
+## Phase-0 resolution (architect ruling, 2026-05-25)
+
+Per `docs/autonomous-agent-runtime-plan.md` §8 — Unresolved questions resolved (wire shape pinned; Active-ready pending schema + prose):
+
+1. **Prior-state token shape** → opaque host blob, size-capped via an advertised `heartbeat.maxStateBytes`.
+2. **Backpressure** → advertise `heartbeat.maxPendingEnqueued`; the host MUST pause emission past it.
+3. **Interaction with RFC 0061 agent loop** → a heartbeat MAY only *enqueue a fresh run*; it MUST NOT advance a suspended loop in place.
+
 ## Implementation notes (non-normative)
 
 - `apps/workflow-engine`: build on the RFC 0052 tick seam; the predicate is an ordinary workflow whose output carries `{ changed, enqueue?, notify? }`. Persist prior-state per `heartbeatId`. No new SECURITY invariant at Draft.
