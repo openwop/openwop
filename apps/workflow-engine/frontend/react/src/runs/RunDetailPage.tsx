@@ -4,6 +4,7 @@ import type { RunSnapshot, RunEventDoc, StreamMode } from '@openwop/openwop';
 import { cancelRun, deleteRun, forkRun, getRun, pollEvents } from '../client/runsClient.js';
 import { subscribeToRun } from '../client/streamsClient.js';
 import { listOpenInterrupts, type OpenInterrupt } from '../client/interruptsClient.js';
+import { listAnnotations, type Annotation } from '../client/feedbackClient.js';
 import { EventStreamView } from '../streams/EventStreamView.js';
 import { RunTimeline } from './RunTimeline.js';
 import { RunStepInspector } from './RunStepInspector.js';
@@ -22,6 +23,7 @@ export function RunDetailPage() {
   const [snapshot, setSnapshot] = useState<RunSnapshot | null>(null);
   const [events, setEvents] = useState<RunEventDoc[]>([]);
   const [activeInterrupt, setActiveInterrupt] = useState<OpenInterrupt | null>(null);
+  const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [eventView, setEventView] = useState<'timeline' | 'log'>('timeline');
   const [streamMode, setStreamMode] = useState<StreamMode>('updates');
@@ -38,6 +40,17 @@ export function RunDetailPage() {
     }
   }, [runId]);
 
+  // §C2 — annotation quality signals. listAnnotations resolves to [] when the
+  // host doesn't advertise capabilities.feedback, so this is a safe no-op there.
+  const refreshAnnotations = useCallback(async () => {
+    if (!runId) return;
+    try {
+      setAnnotations(await listAnnotations(runId));
+    } catch {
+      /* non-fatal — the quality panel just stays empty */
+    }
+  }, [runId]);
+
   // Initial snapshot + replay buffered events + open-interrupt fetch.
   useEffect(() => {
     if (!runId) return;
@@ -49,6 +62,7 @@ export function RunDetailPage() {
         const polled = await pollEvents(runId, 0);
         if (!cancelled) setEvents([...polled.events]);
         await refreshInterrupts();
+        if (!cancelled) await refreshAnnotations();
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err));
       }
@@ -56,7 +70,7 @@ export function RunDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [runId, refreshInterrupts]);
+  }, [runId, refreshInterrupts, refreshAnnotations]);
 
   // Subscribe to live SSE events.
   useEffect(() => {
@@ -179,8 +193,8 @@ export function RunDetailPage() {
         }}
       />
 
-      <RunAnalyticsPanel events={events} />
-      <RunFeedback runId={runId} />
+      <RunAnalyticsPanel events={events} annotations={annotations} />
+      <RunFeedback runId={runId} onRecorded={refreshAnnotations} />
       <RunCostPanel events={events} />
       <RunHandoffMap events={events} />
       <RunAgentTrace events={events} />

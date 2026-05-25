@@ -1,10 +1,10 @@
 /**
- * feedbackClient — RFC 0056 (`host.feedback` + run.annotated). Client for
- * the proposed annotation surface. The reference host does NOT implement
- * RFC 0056 yet (it's Draft), so `getFeedbackCapability()` returns null and
- * every feedback affordance stays inert until a host advertises
- * `capabilities.feedback.supported`. See plans/app-ux-enhancements.md
- * Track C — built behind a capability gate against the proposed shape.
+ * feedbackClient — RFC 0056 (`capabilities.feedback` + run.annotated). Client
+ * for the run annotation surface. RFC 0056 is `Active` and the reference host
+ * advertises `capabilities.feedback.supported`, so the affordances light up
+ * when the connected host does; `getFeedbackCapability()` returns null (and
+ * every affordance stays inert) against a host that doesn't. See
+ * plans/app-ux-enhancements.md Track C — gated on the capability handshake.
  */
 import { authedHeaders, config } from './config.js';
 import { getCapabilities } from './runsClient.js';
@@ -40,6 +40,37 @@ export interface AnnotationInput {
   target: { runId: string; eventId?: string; nodeId?: string };
   signal: AnnotationSignal;
   note?: string;
+}
+
+/** Full annotation as returned by GET /v1/runs/{runId}/annotations (RFC 0056).
+ *  The host assigns annotationId/actor/createdAt; `signal.correction` and
+ *  `note` are secret-scrubbed server-side (SR-1) before they reach us. */
+export interface Annotation {
+  annotationId: string;
+  target: { runId: string; eventId?: string; nodeId?: string };
+  signal: AnnotationSignal;
+  actor: { principalRef: string };
+  note?: string;
+  createdAt: string;
+}
+
+/** GET /v1/runs/{runId}/annotations (RFC 0056 §C). Resolves to `[]` when the
+ *  host doesn't advertise feedback (404/501) so callers can aggregate across
+ *  runs without a per-run try/catch. Throws only on unexpected failures. */
+export async function listAnnotations(runId: string): Promise<Annotation[]> {
+  let res: Response;
+  try {
+    res = await fetch(`${config.baseUrl}/v1/runs/${encodeURIComponent(runId)}/annotations`, {
+      headers: { ...authedHeaders() },
+      credentials: config.authMode === 'cookie' ? 'include' : 'same-origin',
+    });
+  } catch {
+    return []; // network/discovery unreachable — treat as no annotations
+  }
+  if (res.status === 404 || res.status === 501) return [];
+  if (!res.ok) throw new Error(`Failed to list annotations (${res.status})`);
+  const body = (await res.json()) as { annotations?: Annotation[] };
+  return Array.isArray(body.annotations) ? body.annotations : [];
 }
 
 /** POST /v1/runs/{runId}/annotations (RFC 0056 §C). */

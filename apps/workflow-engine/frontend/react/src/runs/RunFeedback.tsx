@@ -1,10 +1,10 @@
 /**
  * RunFeedback — RFC 0056 quality-signal affordance (thumbs up/down + flag)
  * for a run. Strictly gated: renders nothing unless the host advertises
- * `capabilities.feedback.supported`, so it's fully inert against the
- * current reference host (which doesn't implement RFC 0056 yet). When a
- * host wires the surface, this lights up with zero further app changes.
- * See plans/app-ux-enhancements.md §C1.
+ * `capabilities.feedback.supported` (RFC 0056, Active), so it's inert against
+ * a host that doesn't implement feedback and lights up against one that does
+ * with zero further app changes. `onRecorded` lets the parent refresh derived
+ * views (e.g. the §C2 quality analytics panel). See app-ux-enhancements §C1.
  */
 import { useEffect, useState } from 'react';
 import {
@@ -14,7 +14,7 @@ import {
   type FeedbackCapability,
 } from '../client/feedbackClient.js';
 
-export function RunFeedback({ runId }: { runId: string }) {
+export function RunFeedback({ runId, onRecorded }: { runId: string; onRecorded?: () => void }) {
   const [cap, setCap] = useState<FeedbackCapability | null>(null);
   const [pending, setPending] = useState(false);
   const [sent, setSent] = useState<string | null>(null);
@@ -35,6 +35,8 @@ export function RunFeedback({ runId }: { runId: string }) {
     try {
       await recordAnnotation(runId, { target: { runId }, signal });
       setSent(label);
+      onRecorded?.(); // §C2 — refresh the analytics panel's quality signals
+
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
