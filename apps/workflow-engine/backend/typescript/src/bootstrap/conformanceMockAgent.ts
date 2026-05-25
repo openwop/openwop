@@ -188,19 +188,25 @@ export const mockAgentNode: NodeModule = {
     if (Array.isArray(config.mockToolCalls)) {
       for (const call of config.mockToolCalls) {
         const callId = randomUUID();
+        // Emit the spec-canonical payload field names per
+        // `run-event-payloads.schema.json` §agentToolCalled/agentToolReturned
+        // (`toolName` / `inputs` / `outcome`) — not the legacy `toolId` /
+        // `arguments` / `result`. The mock's CONFIG keys stay as-is; only
+        // the emitted wire shape is normalized so it matches the schema,
+        // the SDK/clients, and the agentReasoningEvents conformance assertions.
         const calledRecord = await ctx.emit('agent.toolCalled', {
           agentId,
           callId,
-          toolId: call.toolId,
-          arguments: call.arguments ?? null,
+          toolName: call.toolId,
+          inputs: call.arguments ?? null,
         });
         const returnedPayload: Record<string, unknown> = {
           agentId,
           callId,
           // RFC 0002 §B: MUST equal corresponding agent.toolCalled.eventId.
           causationId: calledRecord.eventId,
-          toolId: call.toolId,
-          ...(call.result !== undefined && { result: call.result }),
+          toolName: call.toolId,
+          ...(call.result !== undefined && { outcome: call.result }),
           ...(call.error !== undefined && { error: call.error }),
           ...(call.durationMs !== undefined && { durationMs: call.durationMs }),
         };
@@ -213,8 +219,11 @@ export const mockAgentNode: NodeModule = {
       const ho = config.mockHandoff;
       await ctx.emit('agent.handoff', {
         agentId,
-        from: { agentId },
-        to: { agentId: ho.toAgentId },
+        // Canonical per schema §agentHandoff: fromAgentId / toAgentId are
+        // STRINGS (not `from`/`to` objects). The agentReasoningEvents
+        // conformance scenario asserts `typeof fromAgentId === 'string'`.
+        fromAgentId: agentId,
+        toAgentId: ho.toAgentId,
         ...(ho.reason !== undefined && { reason: ho.reason }),
         ...(ho.context !== undefined && { context: ho.context }),
       });
