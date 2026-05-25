@@ -1,16 +1,24 @@
 /**
  * Scrollable message feed with auto-scroll-to-bottom on new content.
- * Each assistant bubble renders any attached interrupt card via the
- * registry below itself.
+ * EVERY message that carries `activeInterrupt` (assistant turns AND
+ * workflow_run bubbles) renders the matching interrupt card via the
+ * `CardHost` registry below itself — the chat thread is where the
+ * user takes action. The right-side `WorkflowProgressPanel` is for
+ * *tracking* the run's shape, not for responding to gates.
  *
- * **Prop change 2026-05-24** — `workflow_run` progress UI moved out of
- * the chat bubble into the right-side `WorkflowProgressPanel`. Props
- * were renamed accordingly: `onCancelWorkflowRun` removed (cancel now
- * lives on the panel); added `onOpenWorkflowProgress` (callback to
- * focus a run + open the panel) and `focusedWorkflowMessageId`
- * (mirrors panel state so the bubble's "View progress" link can flip
- * to "Showing in panel"). Adopters with a vendor fork of MessageFeed
- * need to thread the new props through.
+ * **History (informational, no API impact):**
+ *   - 2026-05-24 — progress UI moved out of the bubble into the
+ *     right-side panel; interrupt cards moved with it.
+ *   - 2026-05-25 — interrupt cards REVERTED to the chat thread per
+ *     user feedback that the split forced users to swivel between
+ *     two surfaces every gate. The panel now shows a pointer chip.
+ *
+ * **Current prop surface:** `onCancelWorkflowRun` was removed during
+ * the 2026-05-24 split (cancel lives on the panel); added
+ * `onOpenWorkflowProgress` (callback to focus a run + open the panel)
+ * and `focusedWorkflowMessageId` (mirrors panel state so the bubble's
+ * "View progress" link can flip to "Showing in panel"). Adopters
+ * forking this file need to thread these through.
  */
 
 import { useEffect, useRef } from 'react';

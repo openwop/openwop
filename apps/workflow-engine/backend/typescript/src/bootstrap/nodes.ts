@@ -610,10 +610,20 @@ const approvalGateNode: NodeModule = {
     // input ports carry string content (the Triple-AI fan-in shape:
     // three critic summaries reaching the arbiter on distinct ports),
     // bundle them as `options` so the FE card can render a per-option
-    // expand + pick button. The resume value the user clicks for an
-    // option is the option's CONTENT string, so downstream edges read
-    // the chosen text via the executor's `{output: resumeValue}` shape
-    // without further plumbing.
+    // expand + pick button.
+    //
+    // **Producer↔consumer coupling.** This is the PRODUCER side. The
+    // consumer is `ApprovalCard` in
+    // `apps/workflow-engine/frontend/react/src/chat/registry/defaultCards.tsx`,
+    // which renders `data.options` as a picker and sends back
+    // `{action: 'approve', content: <picked>, selectedKey, comment?}`
+    // as the resume value. `content` is the key the executor's
+    // `findFirstStringValue()` walks last (`['prompt', 'text',
+    // 'message', 'content', 'completion']`), so downstream nodes pull
+    // the picked text out via the standard input-fallback path with
+    // no further plumbing. Both sides MUST move together when the
+    // shape changes — there's no spec/v1 schema for `data.options`
+    // yet (sample-app contract; spec promotion is a follow-up).
     const inputs = (ctx.inputs && typeof ctx.inputs === 'object' && !Array.isArray(ctx.inputs))
       ? (ctx.inputs as Record<string, unknown>)
       : {};

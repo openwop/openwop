@@ -10,11 +10,13 @@
  *     + progress bar.
  *   - StepList (per-node check/pending/running/suspended icons with
  *     expandable outputs).
- *   - Active-interrupt CardHost — wired through the same `CardHost`
- *     /`registerDefaultCards` registry the chat-turn path uses, so
- *     `approval` / `clarification` / `refinement` / `cancellation`
- *     interrupts and any vendor-registered kinds render without
- *     per-card edits here.
+ *   - Active-interrupt POINTER chip — the actual `CardHost` (approval
+ *     picker, clarification form, etc.) renders inline below the
+ *     workflow_run bubble in `MessageFeed`. The panel only flags
+ *     presence + directs the user to the chat so they don't have to
+ *     swivel between two surfaces to respond. Layout decision:
+ *     2026-05-25 (reverted from the 2026-05-24 split where the panel
+ *     hosted the CardHost directly).
  *   - Outputs / error / footer (runId + builder link + elapsed).
  */
 
@@ -23,6 +25,17 @@ import { Link } from 'react-router-dom';
 import { StepList, STATUS_COLORS, STATUS_LABELS } from './StepList.js';
 import { formatElapsed } from './formatters.js';
 import type { ChatMessage } from '../hooks/useChatSession.js';
+
+/** Render-time humanization for the pointer-chip copy. Raw `kind`
+ *  values are lowercase enum strings — the labels here read more
+ *  naturally in a sentence like "see the {label} card". Unknown
+ *  vendor kinds fall back to the raw value. */
+const INTERRUPT_KIND_LABEL: Record<string, string> = {
+  approval: 'approval',
+  clarification: 'clarification',
+  refinement: 'refinement',
+  cancellation: 'cancellation',
+};
 
 interface Props {
   /** Every `workflow_run` message in the current session. Most-recent
@@ -299,7 +312,7 @@ function FocusedRunView({
           borderRadius: 6,
           fontSize: 12,
         }}>
-          ⏸ Awaiting your input — see the {message.activeInterrupt.kind} card in the chat ↑
+          ⏸ Awaiting your input — see the {INTERRUPT_KIND_LABEL[message.activeInterrupt.kind] ?? message.activeInterrupt.kind} card in the chat ↑
         </div>
       )}
 

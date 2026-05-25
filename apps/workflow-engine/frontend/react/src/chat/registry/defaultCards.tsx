@@ -28,7 +28,15 @@ interface InterruptPayload {
      *  as discrete options the approver should pick between. Rendered
      *  as expandable cards with a per-option "Pick" button. The chosen
      *  option's `content` becomes the resume value so downstream nodes
-     *  receive the selected text directly. */
+     *  receive the selected text directly.
+     *
+     *  **Producer↔consumer coupling** — the BE `approvalGateNode`
+     *  (`apps/workflow-engine/backend/typescript/src/bootstrap/nodes.ts`)
+     *  bundles this array when 2+ string-valued input ports land on the
+     *  approval node. This consumer (`ApprovalCard` below) renders it
+     *  as a per-option picker. Both sides MUST move together when the
+     *  shape changes — there's no spec/v1 schema for this field yet
+     *  (sample-app contract; spec promotion is a follow-up). */
     options?: readonly ApprovalOption[];
   };
 }
@@ -42,6 +50,10 @@ function ApprovalCard({ payload, onAction, isLoading }: CardProps): JSX.Element 
   const prompt = data.prompt ?? 'Please approve to continue.';
   const actions = (data.actions ?? ['approve', 'reject', 'request-changes', 'defer', 'escalate']);
   const options = data.options ?? [];
+  // Picker only makes sense when there are ≥2 alternatives to choose
+  // between. A single string input on the approval node falls through
+  // to the plain approve/reject path — the approver has nothing to
+  // *pick* among, just to approve or reject the run continuing.
   const hasOptions = options.length >= 2;
 
   return (
@@ -104,7 +116,6 @@ function ApprovalCard({ payload, onAction, isLoading }: CardProps): JSX.Element 
                         action: 'approve',
                         content: opt.content,
                         selectedKey: opt.key,
-                        selectedLabel: opt.label,
                         ...(comment ? { comment } : {}),
                       })}
                     >
@@ -141,16 +152,24 @@ function ApprovalCard({ payload, onAction, isLoading }: CardProps): JSX.Element 
         />
       </div>
       <div className="button-row" style={{ flexWrap: 'wrap', gap: 6 }}>
-        {actions.map((action) => (
-          <button
-            key={action}
-            className={action === 'approve' && !hasOptions ? '' : 'secondary'}
-            disabled={isLoading}
-            onClick={() => onAction('resolve', { action, comment: comment || undefined })}
-          >
-            {hasOptions && action === 'approve' ? 'approve (no pick)' : action}
-          </button>
-        ))}
+        {actions
+          // When the picker is active, hide the bottom "approve"
+          // button — its semantics are contradictory (downstream
+          // would forward the literal string "approve" instead of
+          // any critic's content). Force the user to either Pick
+          // one or Reject. Other actions (`reject`, `request-changes`,
+          // etc.) still render.
+          .filter((action) => !(hasOptions && action === 'approve'))
+          .map((action) => (
+            <button
+              key={action}
+              className={action === 'approve' && !hasOptions ? '' : 'secondary'}
+              disabled={isLoading}
+              onClick={() => onAction('resolve', { action, comment: comment || undefined })}
+            >
+              {action}
+            </button>
+          ))}
       </div>
     </div>
   );
