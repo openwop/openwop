@@ -32,7 +32,7 @@ Add to the reserved-keys table:
 | Key | Type | Semantics |
 |---|---|---|
 | `runTimeoutMs` | `number` | Wall-clock deadline for the whole run, in milliseconds, measured from `run.started`. The server resolves the effective limit as `min(runTimeoutMs, Capabilities.limits.maxRunDurationMs)`; out-of-range values are validated at run-create time (`400 validation_error`), never at runtime. When the deadline passes the host MUST emit `cap.breached { kind: 'run-duration', limit: <resolvedMs>, observed: <elapsedMs> }`, transition the run to `failed`, set `RunSnapshot.error.code = 'run_timeout'`, and stop scheduling. Absent ⇒ only the host ceiling applies. |
-| `maxLoopIterations` | `number` | Ceiling on **agent-loop iterations** — one increment per orchestrator turn per `multi-agent-execution.md` §"Execution loop". Distinct from `recursionLimit` (total node executions). Effective limit `min(maxLoopIterations, Capabilities.limits.maxLoopIterations)`. On breach the host MUST emit `cap.breached { kind: 'loop-iterations', limit: <resolvedMax>, observed: <iterationCount> }`, transition to `failed`, set `error.code = 'loop_limit_exceeded'`, stop scheduling. Hosts that don't advertise `agents.loop.supported` (RFC 0061) ignore the key. |
+| `maxLoopIterations` | `number` | Ceiling on **agent-loop iterations** — one increment per orchestrator turn per `multi-agent-execution.md` §"Execution loop". Distinct from `recursionLimit` (total node executions). Effective limit `min(maxLoopIterations, Capabilities.limits.maxLoopIterations)`. On breach the host MUST emit `cap.breached { kind: 'loop-iterations', limit: <resolvedMax>, observed: <iterationCount> }`, transition to `failed`, set `error.code = 'loop_limit_exceeded'`, stop scheduling. Hosts that don't advertise `capabilities.multiAgent.executionModel.supported` (the execution loop, RFC 0037) ignore the key — there are no orchestrator turns to count. RFC 0061 (`version: 5`) adds the observable per-turn `iteration` counter this bound reads. |
 
 These follow the `recursionLimit` resolution + validation pattern in `capabilities.md` §"Resolution: `recursionLimit` + `maxNodeExecutions`" verbatim — only the counted quantity differs.
 
@@ -51,7 +51,7 @@ Joins the existing engine-enforced limits (`clarificationRounds` / `schemaRounds
 +      },
 +      "maxLoopIterations": {
 +        "type": "integer", "minimum": 1,
-+        "description": "RFC 0058. Authoritative engine-side ceiling on agent-loop iterations; upper bound for RunOptions.configurable.maxLoopIterations. agents.loop.maxIterationsCeiling (RFC 0061), if advertised, MUST equal this value; on conflict this field wins. Breach emits cap.breached{kind:'loop-iterations'} + error loop_limit_exceeded."
++        "description": "RFC 0058. Engine-side ceiling on agent-loop iterations (orchestrator turns per RFC 0037's execution loop); upper bound for RunOptions.configurable.maxLoopIterations. Breach emits cap.breached{kind:'loop-iterations'} + error loop_limit_exceeded. Optional; hosts that advertise it MUST enforce it."
 +      }
      }
    }
@@ -86,7 +86,7 @@ The host MUST record `observed` (the `elapsedMs` / `iterationCount` at trip) in 
 Siblings of the existing `recursion_limit_exceeded` and `sandbox_timeout` rows:
 
 - `run_timeout` — RFC 0058. A run exceeded its effective `runTimeoutMs` (`min(runTimeoutMs, maxRunDurationMs)`). `details.elapsedMs` SHOULD report observed duration (mirrors `sandbox_timeout`). Pairs with `cap.breached { kind: 'run-duration' }`. The run terminates `failed`.
-- `loop_limit_exceeded` — RFC 0058. A run exceeded its effective `maxLoopIterations`. `details.iteration` SHOULD report the count reached. Pairs with `cap.breached { kind: 'loop-iterations' }`. Applies only on hosts advertising `agents.loop.supported` (RFC 0061).
+- `loop_limit_exceeded` — RFC 0058. A run exceeded its effective `maxLoopIterations`. `details.iteration` SHOULD report the count reached. Pairs with `cap.breached { kind: 'loop-iterations' }`. Applies only on hosts advertising `capabilities.multiAgent.executionModel.supported` (RFC 0037).
 
 ## Compatibility
 
@@ -100,7 +100,7 @@ Existing coverage: `conformance-cap-breach` fixture (`conformance/fixtures.md`) 
 
 - **`run-bounds-shape.test.ts`** — `maxRunDurationMs` / `maxLoopIterations` validate as positive integers when advertised; the `capBreached.kind` enum includes the two new values. (Always runs.)
 - **`run-timeout-fires.test.ts`** — a run with `runTimeoutMs` below its real duration emits `cap.breached { kind: 'run-duration' }` + terminal `failed` + `run_timeout`. (Gated on `limits.maxRunDurationMs` advertised; uses the RFC 0052 `scheduling/tick` deterministic-clock seam.)
-- **`run-loop-limit-fires.test.ts`** — an agent loop with `maxLoopIterations: N` emits `cap.breached { kind: 'loop-iterations' }` on the (N+1)th orchestrator turn + `loop_limit_exceeded`. (Gated on `agents.loop.supported`, RFC 0061.)
+- **`run-loop-limit-fires.test.ts`** — an agent loop with `maxLoopIterations: N` emits `cap.breached { kind: 'loop-iterations' }` on the (N+1)th orchestrator turn + `loop_limit_exceeded`. (Gated on `multiAgent.executionModel.supported`, RFC 0037; RFC 0061 `version: 5` adds the `iteration` counter.)
 - **`run-bounds-clamp.test.ts`** — a `runTimeoutMs` above `maxRunDurationMs` is clamped at run-create (not rejected unless out of validator range); the run breaches at the ceiling. (Gated.)
 
 New fixture `conformance-run-duration-breach` added to `conformance/fixtures.md`. Server-free shape subset <1s.

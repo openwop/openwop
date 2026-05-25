@@ -1,113 +1,139 @@
-# RFC 0061: Autonomous agent loop lifecycle (`agents.loop`)
+# RFC 0061: Stateful agent-loop lifecycle (`multiAgent.executionModel.version: 5`)
 
 | Field | Value |
 |---|---|
 | **RFC** | 0061 |
-| **Title** | An `agents.loop` capability formalizing a re-entrant, stateful agent loop — each iteration loads workspace + memory + recent transcript, runs the orchestrator turn, persists deltas, appends a deterministic `agent.loop.iterated` event, and continues until an acceptance predicate, `maxLoopIterations`, or a suspend; the keystone tying RFC 0037 / 0058 / 0059 / 0004 into a portable autonomous-runtime contract |
+| **Title** | Promote the RFC 0037 execution loop to a *stateful* lifecycle at `multiAgent.executionModel.version: 5` — per-iteration workspace snapshot (RFC 0059) as a deterministic input, an observable iteration counter on `runOrchestrator.decided` that `maxLoopIterations` (RFC 0058) bounds, and a stateful-resume guarantee across HITL suspends — without inventing a parallel loop surface |
 | **Status** | `Draft` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-25 |
 | **Updated** | 2026-05-25 |
-| **Affects** | `schemas/capabilities.schema.json` (`agents.loop` sub-block) · `spec/v1/multi-agent-execution.md` (promote loop to a named, bounded, stateful lifecycle) · `api/asyncapi.yaml` (`agent.loop.iterated` event) · `RFCS/0058` (`maxLoopIterations` + the `cap.breached` exit) · `RFCS/0059` (workspace snapshot) · `RFCS/0004` (memory snapshot) · `RFCS/0037` (orchestrator turn) · new conformance scenarios |
+| **Affects** | `spec/v1/multi-agent-execution.md` (version-5 section + iteration counter + stateful resume) · `schemas/capabilities.schema.json` (`multiAgent.executionModel.version` ceiling + optional `statefulResume`) · `schemas/run-event-payloads.schema.json` (additive optional `iteration` on `runOrchestratorDecided`) · `RFCS/0037` (the loop this extends) · `RFCS/0058` (`maxLoopIterations` — corrects its gating reference) · `RFCS/0059` (workspace snapshot) · `RFCS/0039` (memory snapshot, MAE-3) · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
 | **Superseded by** | — |
 
 ## Summary
 
-RFC 0037's execution loop is a *framework* — it defines the orchestrator turn and handoff state machine but leaves "what state is reloaded each iteration," "when does the loop stop on its own," and "how is an iteration observable" undefined (its own "Open spec gaps"). This RFC promotes that framework into a named, bounded, **stateful** lifecycle: `agents.loop`. Each iteration deterministically (1) loads the workspace snapshot (RFC 0059) + memory snapshot (RFC 0004) + recent transcript, (2) runs the orchestrator turn, (3) persists workspace/memory deltas, (4) appends `agent.loop.iterated { iteration, runId, ts }`, and (5) continues until the supervisor returns `terminate` (acceptance met), `maxLoopIterations` is hit (RFC 0058), or the run suspends. It is the keystone of the autonomous-agent-runtime cohort: scheduling (0052) starts loops, heartbeats (0060) can advance them, workspace (0059) + memory (0004) are the state they carry, and bounds (0058) keep them safe.
+RFC 0037 already defines a re-entrant, replay-deterministic execution loop (`multi-agent-execution.md` §"Execution loop"): the supervisor emits one `OrchestratorDecision` per turn, the engine appends `runOrchestrator.decided`, and a `terminate` decision exits the loop. What it does *not* pin is (a) what *persistent* state each iteration reloads, (b) a bounded iteration count, and (c) that a HITL suspend resumes mid-loop without losing progress. This RFC lands those three as `multiAgent.executionModel.version: 5` — reusing the existing loop, the existing `runOrchestrator.decided` per-turn event (gaining an additive optional `iteration` counter), and the existing `terminate` exit — rather than a parallel `agents.loop` capability or `agent.loop.iterated` event. It composes the autonomous-agent durable layer (RFC 0059 workspace) and transactional layer (RFC 0004/0039 memory) into one bounded, stateful, portable loop.
 
 ## Motivation
 
-The feature set's core ask is a "repeated execution cycle where an agent loads state, runs reasoning/code, optionally performs actions… preserves/merge memory, produces deterministic logs, includes run id + timestamp," with the Claude Code `/loop` pattern: "run tests, read failures, propose edits, run tests again… loop stops when acceptance criteria met or max iterations reached." Today the `apps/workflow-engine` executor has the *mechanics* (a drain loop, suspend/resume, an event log with run id + timestamp) and RFC 0037 has the *handoff*, but there is no protocol-level contract that says: this is a loop, here is what it reloads each turn, here is the deterministic per-iteration record, and here is the bounded stop condition. A workflow author cannot portably express "iterate until green, ≤ 20 times."
+The autonomous-agent feature set asks for a "repeated execution cycle where an agent loads state, runs reasoning, optionally acts… preserves/merges memory, produces deterministic logs," with the Claude Code `/loop` pattern ("run tests, read failures, edit, re-run… stop when acceptance criteria met or max iterations reached"). Most of that already exists: RFC 0037's loop is the cycle, it is re-entrant + replay-deterministic (`multi-agent-execution.md` line 46), `runOrchestrator.decided` is the deterministic per-iteration record, the `terminate` decision is "acceptance criteria met," and RFC 0039 (MAE-3) already snapshots *memory* per event-log index for replay carry-forward.
 
-The spec is the right place because per-iteration state-reload and the iteration record are replay-determinism guarantees: a loop replayed on another host MUST reload the same snapshots and reach the same iteration count, or cross-host replay (the multi-agent roadmap's whole thesis) breaks.
+Three gaps remain, and they are interop guarantees, not implementation detail: (1) an agent's **workspace** ground-truth (RFC 0059) is not yet declared a per-iteration input, so two hosts could disagree on what an iteration "sees"; (2) there is no bounded **iteration count** an operator can rely on across hosts — `recursionLimit` counts nodes, not orchestrator turns (closed by RFC 0058, which needs an observable counter to bound); (3) nothing pins that a `clarify`/`escalate` suspend (which the loop already does, `multi-agent-execution.md` lines 35–38) **resumes at the same iteration with the same snapshot lineage**. A workflow moved between hosts, or replayed, must reload the same per-iteration state and reach the same iteration count.
 
 ## Proposal
 
-### §A — `capabilities.schema.json`: `agents.loop` sub-block (additive, nested under `agents`)
+### §A — version ladder: `version: 5` (additive)
+
+`multiAgent.executionModel.version` is the established ladder (1=RFC 0037, 2=0039, 3=0040, 4=0041; "a host advertising `version: N` MUST implement all versions 1..N"). This RFC is **`version: 5`**. The `capabilities.schema.json` `multiAgent.executionModel` block gains one optional field:
 
 ```diff
-   "agents": {
+   "executionModel": {
      "properties": {
        "supported": { "type": "boolean" },
-+      "loop": {
-+        "type": "object",
-+        "description": "RFC 0061. Re-entrant stateful agent-loop lifecycle.",
-+        "additionalProperties": false,
-+        "properties": {
-+          "supported": { "type": "boolean" },
-+          "statefulResume": { "type": "boolean", "description": "A suspended loop resumes preserving its iteration counter + state snapshots." },
-+          "maxIterationsCeiling": { "type": "integer", "minimum": 1, "description": "Non-normative discovery echo of Capabilities.limits.maxLoopIterations (RFC 0058), advertised here for agent-capability discovery. When both are advertised they MUST be equal; on conflict limits.maxLoopIterations is authoritative and this field is ignored." }
-+        }
+       "version":   { "type": "integer", "minimum": 1 },
++      "statefulResume": {
++        "type": "boolean",
++        "description": "RFC 0061 (version >= 5). A clarify/escalate suspend resumes the loop at the same iteration with the workspace+memory snapshot lineage and iteration counter intact."
 +      }
      }
    }
 ```
 
-### §B — loop lifecycle contract (normative, when `agents.loop.supported: true`)
+No new `agents.loop` block. The version-5 contract is gated by `version >= 5`; `statefulResume` is an explicit sub-claim a host advertises when it honors §D.
 
-An agent-loop run executes the RFC 0037 orchestrator loop with these added guarantees. On entering iteration *i* the host MUST:
+### §B — iteration counter on `runOrchestrator.decided` (additive)
 
-1. **Load state deterministically** — the workspace read snapshot (RFC 0059, as-of iteration start), the memory read snapshot (RFC 0004), and the recent run transcript (the event log tail, bounded by a host-advertised window). These three are the iteration's inputs; they MUST be reproducible on replay.
-2. **Run the orchestrator turn** per `multi-agent-execution.md` (the supervisor emits one `OrchestratorDecision`).
-3. **Persist deltas** — any workspace `PUT` (0059) or memory write (0004) the turn produced becomes visible to iteration *i+1*, never retroactively to *i* (snapshot immutability).
-4. **Append `agent.loop.iterated { iteration: i, runId, ts, decision }`** — a deterministic per-iteration record (closes the RFC 0037 gap that no loop-iteration event exists).
-5. **Evaluate the stop condition, in this order:** (a) supervisor returned `terminate` ⇒ acceptance met, exit to `run.completed`; (b) `i == effective maxLoopIterations` ⇒ exit via RFC 0058 `cap.breached { kind: 'loop-iterations' }` + `loop_limit_exceeded`; (c) the turn suspended (interrupt) ⇒ pause, preserving the iteration counter and snapshots when `statefulResume: true`.
+The loop iteration is **already** marked by `runOrchestrator.decided` (one per orchestrator turn, `multi-agent-execution.md` line 31). This RFC adds one optional field to that payload — no new event type:
 
-**Acceptance-criteria semantics.** "Run until acceptance criteria met" is expressed as the supervisor's `terminate` decision — the supervisor evaluates the criteria (tests green, artifact approved) and returns `terminate`. The protocol does not prescribe *what* the criteria are; it guarantees that `terminate` deterministically ends the loop and `maxLoopIterations` deterministically bounds it.
+```diff
+   "runOrchestratorDecided": {
+     "required": ["agentId", "decision"],
+     "properties": {
+       "agentId":  { "...": "unchanged" },
+       "decision": { "$ref": "orchestrator-decision.schema.json" },
++      "iteration": {
++        "type": "integer", "minimum": 1,
++        "description": "RFC 0061 (version >= 5). 1-based count of orchestrator turns in this run. The quantity `maxLoopIterations` (RFC 0058) bounds; a breach emits cap.breached{kind:'loop-iterations', observed: <this+1>}."
++      }
+     },
+     "additionalProperties": false
+   }
+```
 
-**Stateful resume.** When `statefulResume: true`, a loop suspended at iteration *i* MUST resume at iteration *i+1* with the same workspace/memory snapshot lineage and the counter intact, so a human-in-the-loop interrupt (RFC 0005) mid-loop does not reset progress.
+A host advertising `version >= 5` MUST set `iteration` on every `runOrchestrator.decided`, monotonic from 1. Hosts on `version < 5` omit it (consumers ignore the unknown field per the forward-compat contract).
 
-**Positive example.** Test-fix loop, `maxLoopIterations: 20`. Iterations 1–3 emit `agent.loop.iterated`; iteration 3's supervisor sees tests green and returns `terminate` → `run.completed`. Three iteration events, deterministic.
-**Negative example.** Same loop, tests never green → iteration 20 runs, iteration 21 is refused: `cap.breached { kind: 'loop-iterations', limit: 20, observed: 21 }` + `loop_limit_exceeded` (RFC 0058) + terminal `failed`.
+### §C — per-iteration state inputs (normative, `version >= 5`)
 
-### §C — relationship to the cohort
+On entering orchestrator turn *i*, a `version >= 5` host MUST treat the following as the iteration's deterministic inputs, reproducible on replay:
 
-- **RFC 0058** supplies `maxLoopIterations` (the bound this enforces) and the `cap.breached { kind: 'loop-iterations' }` + `loop_limit_exceeded` exit surface. The ceiling's authoritative home is `Capabilities.limits.maxLoopIterations` (RFC 0058); `agents.loop.maxIterationsCeiling` is a discovery echo that MUST match it, and `limits` wins on any conflict.
-- **RFC 0059 / 0004** supply the workspace / memory snapshots loaded in step 1.
-- **RFC 0052 / 0060** can *start* or *advance* a loop run (a scheduled tick or heartbeat enqueues the loop run); they are orthogonal to the loop's internal contract.
-- **RFC 0037** supplies the orchestrator turn this wraps; this RFC closes 0037's "no loop-iteration semantics" gap without changing the handoff state machine.
+1. **Memory snapshot** — as-of the iteration's event-log index, per RFC 0039 §MAE-3 (already required at `version >= 2` + `memory.supported`). Unchanged; restated as a loop input.
+2. **Workspace snapshot** — when `host.workspace.supported` (RFC 0059), the workspace read snapshot as-of turn *i* per RFC 0059 §D. A host advertising `version >= 5` WITHOUT `host.workspace` simply has no workspace input (the workspace is optional; the loop still runs).
+3. **Recent transcript** — the event-log tail (a host-advertised window).
+
+Writes a turn produces (memory writes, RFC 0059 workspace `PUT`s) become visible to turn *i+1*, never retroactively to *i* (snapshot immutability — the existing replay-determinism rule, `multi-agent-execution.md` line 46).
+
+### §D — stateful resume (normative, when `statefulResume: true`)
+
+The loop already suspends on `clarify`/`escalate` (`multi-agent-execution.md` lines 35–38). A host advertising `statefulResume: true` MUST, on resume, continue at the **same iteration** (the counter does not reset or skip) with the same memory + workspace snapshot lineage, so a human-in-the-loop interrupt mid-loop does not lose progress.
+
+### §E — acceptance + bound (already-existing surfaces, restated)
+
+- **"Run until acceptance criteria met"** is the existing `terminate` decision (`multi-agent-execution.md` line 34) — the supervisor evaluates the criteria and returns `terminate`, which exits to `run.completed`. This RFC does not add a mechanism; it names the pattern.
+- **"≤ N iterations"** is RFC 0058's `maxLoopIterations`, bounding the §B counter. On breach: `cap.breached { kind: 'loop-iterations', limit: N, observed: N+1 }` + `loop_limit_exceeded`. **Correction to RFC 0058:** that bound gates on `capabilities.multiAgent.executionModel.supported` (orchestrator turns exist at `version >= 1`), NOT a nonexistent `capabilities.agents.loop.supported` — RFC 0058's run-options row + shape scenario must be updated to this reference (tracked in this RFC's gap register, G1).
+
+**Positive example.** Test-fix loop, `maxLoopIterations: 20`, `version: 5`. Turns 1–3 each emit `runOrchestrator.decided { iteration: N }`; turn 3's supervisor sees tests green, returns `terminate` → `run.completed`. Each turn reloaded the same workspace+memory snapshot deterministically.
+**Negative example.** Same loop, never green → turn 20 runs, turn 21 refused: `cap.breached { kind: 'loop-iterations', limit: 20, observed: 21 }` + `loop_limit_exceeded` (RFC 0058) + terminal `failed`.
 
 ## Compatibility
 
-**Additive.** New optional `agents.loop` sub-block; new `agent.loop.iterated` event consumers MAY ignore. RFC 0037's existing loop behavior is unchanged for hosts that don't advertise `agents.loop` — they keep running the framework loop without the iteration record or stateful-resume guarantee. No existing field, event, or `MUST` changes. No conformance pass invalidated.
+**Additive.** Per `COMPATIBILITY.md` §2.2: one new optional `executionModel.statefulResume` field; one new optional `iteration` field on `runOrchestrator.decided` (its `required` array and `additionalProperties:false` unchanged — an optional property addition is additive, and `version < 5` consumers ignore it); a new `version` rung (the ladder is explicitly extensible). No new event type, no new capability block, no change to the existing loop, the `terminate` exit, or RFC 0039's memory-snapshot rule. No existing field/type/`MUST`/error meaning changes. No existing v1 conformance pass is invalidated.
 
 ## Conformance
 
-- **`agent-loop-shape.test.ts`** — `agents.loop` block validates. (Always runs.)
-- **`agent-loop-iteration-events.test.ts`** — a loop emits one `agent.loop.iterated` per orchestrator turn, monotonic `iteration`. (Gated on `agents.loop.supported`.)
-- **`agent-loop-terminate.test.ts`** — a supervisor `terminate` exits the loop to `run.completed` with no further iterations. (Gated.)
-- **`agent-loop-stateful-resume.test.ts`** — a loop suspended mid-iteration resumes at *i+1* with counter + snapshot intact. (Gated on `agents.loop.statefulResume`.)
-- **`agent-loop-state-snapshot-determinism.test.ts`** — replaying a loop reloads identical workspace/memory snapshots per iteration. (Gated; composes with the RFC 0041 replay-determinism suite.)
+Existing coverage: `multi-agent-handoff-state-machine.test.ts` (RFC 0037 loop + handoff), the RFC 0039 memory-lifecycle scenarios. New scenarios:
+
+- **`agent-loop-version5-shape.test.ts`** — `executionModel.statefulResume` validates as boolean when present; `runOrchestrator.decided.iteration` is an integer ≥ 1 when the host advertises `version >= 5`. (Always-on shape.)
+- **`agent-loop-iteration-monotonic.test.ts`** — across a multi-turn loop, `iteration` increments 1,2,3… exactly once per `runOrchestrator.decided`. (Gated on `executionModel.version >= 5`.)
+- **`agent-loop-workspace-snapshot.test.ts`** — a workspace `PUT` during turn *i* is invisible to turn *i*'s snapshot, visible to turn *i+1*. (Gated on `version >= 5` AND `host.workspace.supported`.)
+- **`agent-loop-stateful-resume.test.ts`** — a loop suspended on `clarify` resumes at the same iteration with snapshot lineage intact. (Gated on `statefulResume`.)
+- The loop-bound breach itself is covered by RFC 0058's `run-execution-bounds-shape.test.ts` (re-pointed to the `executionModel` gate per §E / G1).
+
+No new fixture beyond the existing `conformance-multi-agent-handoff` family + RFC 0058's `conformance-run-duration-breach` sibling for the loop bound.
 
 ## Alternatives considered
 
-1. **Leave it to RFC 0037 + a host convention.** Rejected — 0037 explicitly defers iteration semantics; without a wire contract, "iterate until X, ≤ N times" is non-portable and unobservable, and replay can't verify iteration parity.
-2. **Model the loop as recursive sub-workflows (RFC 0007).** Rejected — recursion via dispatch loses a single run's identity and event log continuity; the `/loop` pattern is one run that re-enters, not N child runs. (Sub-dispatch remains available for *fan-out*, governed by RFC 0063.)
-3. **A separate `Agent` top-level entity distinct from `Run`.** Considered as the larger architectural move; deferred — a loop is expressible as a `Run` with a re-entrant lifecycle, and introducing a second long-lived entity is a v2-scale change. This RFC keeps the loop inside the run abstraction.
+1. **A parallel `agents.loop` capability block + `agent.loop.iterated` event** (the author's first draft). Rejected — it duplicates the `multiAgent.executionModel` version ladder and the per-turn `runOrchestrator.decided` event. The execution loop, its versioning, and its per-iteration event already exist; adding a second surface fragments the contract and the conformance gating. Reusing the ladder + the existing event (plus one additive `iteration` field) is the lower-surface-area path, exactly as RFC 0039/0040/0041 extended the same loop.
+2. **Model the loop as recursive `core.subWorkflow` dispatch (RFC 0007).** Rejected — recursion via dispatch loses single-run identity + event-log continuity; the `/loop` pattern is one run re-entering, which RFC 0037's loop already is. (Sub-dispatch fan-out remains governed by RFC 0063.)
+3. **A separate long-lived `Agent` entity distinct from `Run`.** Deferred — a stateful loop is expressible as a `Run` under the existing execution model; a second long-lived entity is a v2-scale change.
 
 ## Unresolved questions
 
-1. **Transcript window.** How much event-log tail is "recent transcript" — a fixed event count, a token budget, or host-advertised? Proposed host-advertised `loop.transcriptWindow`. Resolve before Active.
-2. **Memory-merge semantics.** When iteration *i* writes memory and *i+1* reads, is it a full reload or an incremental merge? Proposed full reload of the as-of snapshot (deterministic); the merge is the host's storage detail. Confirm against RFC 0039 memory-lifecycle.
-3. **Loop + heartbeat advance.** Should a heartbeat (0060) be able to advance a *suspended* loop, or only enqueue a fresh loop run? Proposed: enqueue only. Decide with 0060.
+1. **Transcript window.** Is "recent transcript" a fixed event count, a token budget, or host-advertised? Proposed host-advertised `executionModel.transcriptWindow`. Resolve before Active.
+2. **Workspace write visibility vs. memory write visibility.** RFC 0039 already pins memory write/read ordering across turns; confirm RFC 0059 workspace writes follow the identical "visible next turn, never retroactively" rule with no new race window when both are written in one turn. Confirm with 0059.
+3. **`statefulResume` vs. plain re-entrancy.** RFC 0037's loop is already re-entrant for replay; is `statefulResume` a *distinct* claim, or implied? Proposed distinct — re-entrancy is about deterministic replay of a completed prefix; stateful resume is about a *live* HITL suspend preserving the counter. Confirm the two are separable in conformance.
 
 ## Implementation notes (non-normative)
 
-- `apps/workflow-engine`: the executor drain loop already re-enters; add the per-iteration counter, the three-snapshot reload at iteration start, and the `agent.loop.iterated` append. Depends on RFC 0058 (counter/bound) and RFC 0059 (workspace) landing first. Effort: medium.
+- Sequence after RFC 0058 (bound — landed) and alongside RFC 0059 (workspace — Draft). `apps/workflow-engine`'s executor already re-enters and emits `runOrchestrator.decided`; the v5 work is: add the `iteration` counter, load the workspace snapshot at turn start (when 0059 lands), and preserve the counter across the existing suspend/resume path. Effort: medium.
+- **Companion fix to RFC 0058 (G1):** re-point `maxLoopIterations`'s gate from `capabilities.agents.loop.supported` to `capabilities.multiAgent.executionModel.supported` in `run-options.md`, the RFC, and `run-execution-bounds-shape.test.ts`. Small; do it when this RFC's framing is accepted.
+- No new SECURITY invariant (the loop's BYOK/CTI/SR-1 invariants are inherited from RFC 0037/0039/0059, unchanged).
 
 ## Acceptance criteria
 
-- [ ] `multi-agent-execution.md` promotes the loop to the named bounded stateful lifecycle (retains `Status` header, bumps date).
-- [ ] `agents.loop` block + `agent.loop.iterated` (AsyncAPI + payload schema).
-- [ ] Conformance: shape always-on; iteration/terminate/resume/determinism capability-gated.
+- [ ] `multi-agent-execution.md` gains a `version >= 5` section (per-iteration inputs + iteration counter + stateful resume), retaining its `Status` header.
+- [ ] `multiAgent.executionModel.statefulResume` (schema) + optional `iteration` on `runOrchestratorDecided` (schema).
+- [ ] Conformance: shape always-on; iteration/workspace-snapshot/stateful-resume capability-gated.
+- [ ] RFC 0058 gating reference corrected to `multiAgent.executionModel.supported` (G1).
 - [ ] CHANGELOG entry under `[1.1.4 — unreleased]`.
-- [ ] Composes cleanly with RFC 0058 bounds + RFC 0059 workspace + RFC 0041 replay determinism (cross-checked in review).
+- [ ] Composes cleanly with RFC 0058 bound + RFC 0059 workspace + RFC 0039 memory snapshot + RFC 0041 replay determinism (cross-checked).
 
 ## References
 
-- [`RFCS/0037`](./0037-multi-agent-execution-model.md) (multi-agent execution) — the orchestrator turn this wraps; closes its loop-iteration gap.
-- [`RFCS/0058-run-execution-bounds.md`](./0058-run-execution-bounds.md) — `maxLoopIterations` + the `cap.breached { kind: 'loop-iterations' }` exit surface.
-- [`RFCS/0059-agent-workspace.md`](./0059-agent-workspace.md) / [`RFCS/0004-memory-layer.md`](./0004-memory-layer.md) — per-iteration state snapshots.
+- [`spec/v1/multi-agent-execution.md`](../spec/v1/multi-agent-execution.md) §"Execution loop" — the loop this promotes to stateful (lines 20–46).
+- [`RFCS/0037-multi-agent-execution-model.md`](./0037-multi-agent-execution-model.md) — the version ladder (`Accepted`).
+- [`RFCS/0058-run-execution-bounds.md`](./0058-run-execution-bounds.md) — `maxLoopIterations`, bounding the §B counter.
+- [`RFCS/0059-agent-workspace.md`](./0059-agent-workspace.md) / [`RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md`](./0039-multi-agent-confidence-and-memory-lifecycle.md) — the per-iteration workspace + memory snapshots.
 - Claude Code `/loop`, agentic test-repair loops (prior art).
