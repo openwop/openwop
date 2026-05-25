@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### `@openwop/openwop-conformance` 1.5.0 → 1.6.0 — ships the RFC 0045–0054 cohort scenarios (2026-05-25)
+
+Cut the conformance suite minor release so adopting hosts can pin a published version carrying the MyndHyve protocol-extension cohort scenarios and report pass for graduation. Triggered by MyndHyve shipping 8 of the 10 RFCs (advertise + behavioral seams) and asking for a pinnable suite. `conformance/package.json` 1.5.0 → 1.6.0; `scripts/openwop-check-publish-metadata.sh` `EXPECTED_CONFORMANCE_VERSION` synced; `conformance/CHANGELOG.md` [1.6.0] enumerates the per-RFC scenarios; `docs/PROTOCOL-STATUS.md` regenerated. The actual `npm publish` is the release-manager step (this lands the release-ready bump). Independent of the SDK version line (still 1.1.x).
+
 ### RFC 0053 dead-letter routing & failure sinks — completes the MyndHyve batch (2026-05-25)
 
 A run-level dead-letter sink: a run/node that exhausts its retry policy (RFC 0009) lands in a durable, inspectable sink and stays fork-eligible (RFC 0011), instead of being logged and lost. **Completes the MyndHyve protocol-extension batch (RFCs 0045–0054) on the openwop side.** RFC 0053 stays `Draft`. All additive.
