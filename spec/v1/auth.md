@@ -60,6 +60,8 @@ An OpenWOP-compliant server MUST support the following scope vocabulary at minim
 | `packs:yank` | Mark a published node-pack version yanked (advisory; existing pins keep resolving) |
 | `packs:yank-revert` | Reinstate a yanked node-pack version (super-admin) |
 | `audit:read` | Verify audit-log integrity via `GET /v1/audit/verify`. Gated on the `openwop-audit-log-integrity` profile per `auth-profiles.md`. |
+| `workspace:read` | Read agent-workspace files via `GET /v1/host/workspace/files[/{path}]`. Gated on `capabilities.workspace.supported` (RFC 0059). |
+| `workspace:write` | Create/replace/delete agent-workspace files via `PUT`/`DELETE /v1/host/workspace/files/{path}`. Gated on `capabilities.workspace.supported` (RFC 0059). |
 
 A server MAY define additional scopes for non-protocol surfaces (e.g., `canvas-types:list`, `projects:list` for platform-level keys). Such extensions MUST NOT shadow the names above.
 

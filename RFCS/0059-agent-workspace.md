@@ -4,7 +4,7 @@
 |---|---|
 | **RFC** | 0059 |
 | **Title** | A `host.workspace` capability — a versioned, atomic, tenant·workspace-scoped file store for an agent's persistent *ground-truth* artifacts (identity / directives / memory-index), loaded as a read snapshot at run start, complementing the transactional `MemoryAdapter` (RFC 0004) with a durable file layer |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-25 |
 | **Updated** | 2026-05-25 |
@@ -25,24 +25,25 @@ The spec is the right place because "what file does the agent treat as authorita
 
 ## Proposal
 
-### §A — `capabilities.schema.json`: `host.workspace` block (additive)
+### §A — `capabilities.schema.json`: `workspace` block (additive)
+
+Per the corpus convention every host capability is a **flat `capabilities.<name>` sibling** (`feedback`, `deadLetter`, `oauth`, …) — there is no nested `capabilities.host` object — so the block is `capabilities.workspace` (the prose name "host.workspace" is the conceptual label, mirroring "host.feedback"/etc.):
 
 ```diff
-   "host": {
-     "properties": {
-+      "workspace": {
-+        "type": "object",
-+        "description": "RFC 0059. Versioned, tenant·workspace-scoped ground-truth file store. Scopes to the RFC 0048 owner triple.",
-+        "required": ["supported"],
-+        "additionalProperties": false,
-+        "properties": {
-+          "supported": { "type": "boolean" },
-+          "versioned": { "type": "boolean", "description": "Each write bumps a monotonic version; prior versions are retrievable." },
-+          "maxFileBytes": { "type": "integer", "minimum": 1, "description": "Per-file byte ceiling; writes beyond it return `workspace_too_large`." },
-+          "maxFiles": { "type": "integer", "minimum": 1, "description": "Per-workspace file-count ceiling." }
-+        }
+   "properties": {
++    "workspace": {
++      "type": "object",
++      "description": "RFC 0059. Versioned, tenant·workspace-scoped ground-truth file store. Scopes to the RFC 0048 owner triple.",
++      "required": ["supported"],
++      "additionalProperties": false,
++      "properties": {
++        "supported": { "type": "boolean" },
++        "versioned": { "type": "boolean", "description": "Each write bumps a monotonic version; prior versions are retrievable." },
++        "maxFileBytes": { "type": "integer", "minimum": 1, "description": "Per-file byte ceiling; writes beyond it return `workspace_too_large`." },
++        "maxFiles": { "type": "integer", "minimum": 1, "description": "Per-workspace file-count ceiling." },
++        "maxVersions": { "type": "integer", "minimum": 1, "description": "When `versioned`, retained historical versions (latest always retained)." }
 +      }
-     }
++    }
    }
 ```
 
@@ -122,6 +123,10 @@ Per `docs/autonomous-agent-runtime-plan.md` §8 — Unresolved questions resolve
 2. **Version retention** → latest version is the MUST; `versioned: true` hosts retain ≥ an advertised `maxVersions` (history best-effort).
 3. **Memory-index coupling (with RFC 0062)** → the index is a workspace file `MEMORY-INDEX.json` (machine-loaded, normative); an optional human-editable `.md` sibling MAY accompany it.
 
+## Status history
+
+- **2026-05-25 — Draft → Active.** The wire surface landed atomically per the repo's Active bar: `capabilities.workspace` block + `workspace-file.schema.json` + `workspace-file-create.schema.json`, the `workspace.updated` RunEvent (`run-event-payloads.schema.json` + `run-event.schema.json` enum), the four `/v1/host/workspace/files[/{path}]` OpenAPI endpoints, the AsyncAPI `workspace.updated` message, the `spec/v1/agent-workspace.md` prose doc (§C/§D/§E), `workspace_conflict` + `workspace_too_large` error codes, all three reference SDKs, and the always-on `workspace-capability-shape.test.ts` conformance scenario. `Active → Accepted` awaits reference-host *enforcement* (CRUD/ETag/snapshot behavior + the `workspace-cross-tenant-isolation` SECURITY invariant and its conformance test, which land at the implementation milestone with the `WorkspaceAdapter` wiring).
+
 ## Implementation notes (non-normative)
 
 - `apps/workflow-engine`: today memory is tenant-scoped only (`host/inMemorySurfaces.ts`) and `RunRecord` carries no `owner.workspace` (RFC 0048 optional, unpopulated). This RFC's reference wiring is the first surface to require workspace-scoped storage; sequence it after the app populates the RFC 0048 owner triple.
@@ -129,12 +134,12 @@ Per `docs/autonomous-agent-runtime-plan.md` §8 — Unresolved questions resolve
 
 ## Acceptance criteria
 
-- [ ] `spec/v1/agent-workspace.md` merged with the endpoint + snapshot + invariant contract.
-- [ ] `host.workspace` block + `workspace-file.schema.json` + OpenAPI endpoints + `workspace.updated` (AsyncAPI).
-- [ ] `workspace_conflict` + `workspace_too_large` registered in `rest-endpoints.md`.
-- [ ] Conformance: shape always-on; CRUD/ETag/isolation/snapshot capability-gated.
-- [ ] `workspace-cross-tenant-isolation` invariant + public test land in `SECURITY/invariants.yaml` at implementation (not at Draft).
-- [ ] CHANGELOG entry under `[1.1.4 — unreleased]`.
+- [x] `spec/v1/agent-workspace.md` merged with the endpoint + snapshot + invariant contract.
+- [x] `host.workspace` block + `workspace-file.schema.json` + OpenAPI endpoints + `workspace.updated` (AsyncAPI).
+- [x] `workspace_conflict` + `workspace_too_large` registered in `rest-endpoints.md`.
+- [x] Conformance: shape always-on. (CRUD/ETag/isolation/snapshot capability-gated scenarios land at the implementation milestone.)
+- [ ] `workspace-cross-tenant-isolation` invariant + public test land in `SECURITY/invariants.yaml` at implementation (not at Active).
+- [x] CHANGELOG entry under `[1.1.4 — unreleased]`.
 
 ## References
 

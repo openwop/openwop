@@ -11,6 +11,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0059 (agent workspace) — Milestone 1: schema + spec prose; promoted Draft → `Active` (2026-05-25)
+
+Lands the additive `host.workspace` capability — a versioned, atomic, tenant·workspace-scoped (RFC 0048) ground-truth file store, complementing the transactional `MemoryAdapter` (RFC 0004) with a durable, path-addressable file layer. The wire surface landed atomically across:
+
+- **Schema:** `capabilities.workspace` block (`{supported, versioned, maxFileBytes, maxFiles, maxVersions}`); new `workspace-file.schema.json` + `workspace-file-create.schema.json`; a content-free `workspace.updated` RunEvent payload (`run-event-payloads.schema.json#$defs.workspaceUpdated` + the `run-event.schema.json` `RunEventType` enum) — no `eventLogSchemaVersion` bump.
+- **API:** four `/v1/host/workspace/files[/{path}]` endpoints (`listWorkspaceFiles` / `getWorkspaceFile` / `putWorkspaceFile` honoring `If-Match` with `409 workspace_conflict` + `413 workspace_too_large` / `deleteWorkspaceFile`), each `501`-gated on `capabilities.workspace.supported`; AsyncAPI `workspace.updated` message on the `updates` + `debug` channels.
+- **Spec:** new `spec/v1/agent-workspace.md` (`DRAFT v1.x`) with the §C endpoints, §D run-snapshot exposure, and §E invariants (WCT-1 cross-tenant + WSR-1 secret-redaction as normative prose); `workspace_conflict` + `workspace_too_large` registered in `rest-endpoints.md`.
+- **SDK:** `listFiles`/`getFile`/`putFile`/`deleteFile` (TS), `list_workspace_files`/`get_workspace_file`/`put_workspace_file`/`delete_workspace_file` (Python), `ListWorkspaceFiles`/`GetWorkspaceFile`/`PutWorkspaceFile`/`DeleteWorkspaceFile` (Go) — null/false-on-404/501 + `If-Match` support, mirroring the annotation methods.
+- **Conformance:** always-on `workspace-capability-shape.test.ts` (+1 scenario file; suite 247 → 248); coverage.md row added.
+
+Behavioral conformance (CRUD/ETag/cross-tenant-isolation/run-snapshot) and the `workspace-cross-tenant-isolation` SECURITY invariant + its public test land at the implementation milestone (Milestone 2), not at Active. README counts re-synced (Active 8 → 9, Draft 12 → 11). Additive; no breaking change.
+
 ### RFC 0057 (memory write-attribution) — §D replay-stability: backend guard + conformance (2026-05-25)
 
 Closes a `/code-review` finding: the reference backend's at-completion run-summary write was unguarded against replay, so a `replay`-mode fork that re-executed to completion would mint a new `memoryId` and re-emit `memory.written` — contrary to RFC 0057 §D ("MUST NOT regenerate `memoryId`"). The executor now **skips** the run-summary write (and its `memory.written` emit) when `run.forkMode === 'replay'`; `branch`-mode forks (genuinely new runs) still write + attribute their own. Added the always-relevant §D distinction + a non-normative implementation note to the RFC, and a new `memory-attribution-replay-stable.test.ts` conformance scenario (gated; asserts a replay introduces no `memory.written` with a new `memoryId`) — passes against the reference backend. Scenario count 246 → 247. Additive; no wire-shape change.

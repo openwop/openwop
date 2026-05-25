@@ -1018,6 +1018,19 @@
       },
       "additionalProperties": false
     },
+    "workspace": {
+      "type": "object",
+      "description": "RFC 0059 (`Active`). Versioned, tenant·workspace-scoped ground-truth file store (the `host.workspace` capability). Scopes to the RFC 0048 owner triple. Atomic, optimistically-concurrent writes (`If-Match` ETag); a read snapshot is exposed to every run at `run.started` (deterministic for replay). Complements the transactional `MemoryAdapter` (RFC 0004) with a durable, path-addressable file layer. Endpoints (`/v1/host/workspace/files[/{path}]`) are gated on `supported: true`; unsupported hosts return `501 capability_not_provided`. SECURITY invariants `workspace-cross-tenant-isolation` (WCT-1) + the WSR-1 secret-redaction MUST land with their conformance tests at implementation (RFC 0059 §E).",
+      "required": ["supported"],
+      "properties": {
+        "supported": { "type": "boolean", "description": "Host implements the RFC 0059 workspace file store + endpoints + `workspace.updated` event." },
+        "versioned": { "type": "boolean", "description": "Each write bumps a monotonic `version`; prior versions are retrievable via `GET …/files/{path}?version=N`. Latest-version retrieval is the MUST regardless; history is best-effort up to `maxVersions`." },
+        "maxFileBytes": { "type": "integer", "minimum": 1, "description": "Per-file byte ceiling; writes beyond it return `workspace_too_large`." },
+        "maxFiles": { "type": "integer", "minimum": 1, "description": "Per-workspace file-count ceiling." },
+        "maxVersions": { "type": "integer", "minimum": 1, "description": "When `versioned: true`, the number of historical versions a host advertises it will retain (history best-effort beyond the mandatory latest)." }
+      },
+      "additionalProperties": false
+    },
     "sql": {
       "type": "object",
       "description": "RFC 0018 (`Active`). SQL database adapter with parametric-only enforcement. Hosts MUST reject non-parametric queries that inline user input (`sql-parametric-only` invariant — guards against SQL injection across every workflow).",

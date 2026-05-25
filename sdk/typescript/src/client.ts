@@ -24,6 +24,8 @@ import {
   type ForkRunResponse,
   type Annotation,
   type CreateAnnotationRequest,
+  type WorkspaceFile,
+  type PutWorkspaceFileRequest,
   type GetPromptRequest,
   type InterruptByTokenInspection,
   type DebugBundle,
@@ -551,6 +553,94 @@ export class OpenwopClient {
         method: 'GET',
         path: `/v1/audit/verify?${search.toString()}`,
       });
+    },
+  };
+
+  // ── Agent workspace files (RFC 0059; gated on capabilities.workspace) ──
+  readonly workspace = {
+    /**
+     * RFC 0059 — list workspace file metadata (no bodies) for the caller's
+     * `{tenant, workspace}`. Optional `prefix` filters the flat `path`
+     * namespace. Returns `null` when the host doesn't advertise
+     * `capabilities.workspace.supported` (501), so callers can branch on
+     * capability discovery without try/catch.
+     */
+    listFiles: async (opts: { prefix?: string } = {}): Promise<readonly WorkspaceFile[] | null> => {
+      const search = new URLSearchParams();
+      if (opts.prefix !== undefined) search.set('prefix', opts.prefix);
+      const qs = search.toString();
+      try {
+        const res = await this.#request<{ files: WorkspaceFile[] }>({
+          method: 'GET',
+          path: `/v1/host/workspace/files${qs ? `?${qs}` : ''}`,
+        });
+        return res.files;
+      } catch (err) {
+        if (err instanceof Error && /\b501\b/.test(err.message)) return null;
+        throw err;
+      }
+    },
+
+    /**
+     * RFC 0059 — read one workspace file. Pass `version` for a historical
+     * snapshot when `capabilities.workspace.versioned`. Returns `null` when
+     * the file is absent (404) or the host doesn't advertise the capability
+     * (501).
+     */
+    getFile: async (path: string, opts: { version?: number } = {}): Promise<WorkspaceFile | null> => {
+      const search = new URLSearchParams();
+      if (opts.version !== undefined) search.set('version', String(opts.version));
+      const qs = search.toString();
+      try {
+        return await this.#request<WorkspaceFile>({
+          method: 'GET',
+          path: `/v1/host/workspace/files/${encodeURIComponent(path)}${qs ? `?${qs}` : ''}`,
+        });
+      } catch (err) {
+        if (err instanceof Error && /\b(404|501)\b/.test(err.message)) return null;
+        throw err;
+      }
+    },
+
+    /**
+     * RFC 0059 — atomic create/replace of a workspace file. Pass `ifMatch`
+     * (the file's current `etag`) for optimistic concurrency; a stale token
+     * throws a `WopError` with status `409` (`workspace_conflict`). Content
+     * beyond `capabilities.workspace.maxFileBytes` throws `413`
+     * (`workspace_too_large`). Returns the persisted `WorkspaceFile`.
+     */
+    putFile: (
+      path: string,
+      body: PutWorkspaceFileRequest,
+      opts: MutationOptions & { ifMatch?: string } = {},
+    ): Promise<WorkspaceFile> => {
+      const headers = this.#mutationHeaders(opts);
+      if (opts.ifMatch !== undefined) headers['If-Match'] = opts.ifMatch;
+      return this.#request<WorkspaceFile>({
+        method: 'PUT',
+        path: `/v1/host/workspace/files/${encodeURIComponent(path)}`,
+        body,
+        headers,
+      });
+    },
+
+    /**
+     * RFC 0059 — delete a workspace file. Returns `true` on success (`204`),
+     * `false` when the file is absent (404) or the host doesn't advertise the
+     * capability (501).
+     */
+    deleteFile: async (path: string, opts: MutationOptions = {}): Promise<boolean> => {
+      try {
+        await this.#request<void>({
+          method: 'DELETE',
+          path: `/v1/host/workspace/files/${encodeURIComponent(path)}`,
+          headers: this.#mutationHeaders(opts),
+        });
+        return true;
+      } catch (err) {
+        if (err instanceof Error && /\b(404|501)\b/.test(err.message)) return false;
+        throw err;
+      }
     },
   };
 

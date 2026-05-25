@@ -339,6 +339,32 @@ type ListAnnotationsResponse struct {
 	Annotations []Annotation `json:"annotations"`
 }
 
+// WorkspaceFile mirrors workspace-file.schema.json (RFC 0059) — a versioned,
+// tenant·workspace-scoped ground-truth file. The list endpoint returns this
+// shape minus Content (metadata only).
+type WorkspaceFile struct {
+	Path        string `json:"path"`
+	Content     string `json:"content"`
+	ContentType string `json:"contentType,omitempty"`
+	Version     int    `json:"version"`
+	ETag        string `json:"etag,omitempty"`
+	UpdatedAt   string `json:"updatedAt"`
+}
+
+// PutWorkspaceFileRequest is the PUT /v1/host/workspace/files/{path} body per
+// workspace-file-create.schema.json (RFC 0059). Path is URL-bound; the host
+// assigns version/etag/updatedAt. Optimistic concurrency is expressed via the
+// If-Match header (PutWorkspaceFileOptions.IfMatch), not a body field.
+type PutWorkspaceFileRequest struct {
+	Content     string `json:"content"`
+	ContentType string `json:"contentType,omitempty"`
+}
+
+// ListWorkspaceFilesResponse mirrors the 200 listWorkspaceFiles payload.
+type ListWorkspaceFilesResponse struct {
+	Files []WorkspaceFile `json:"files"`
+}
+
 // RunAncestryParent is the populated branch of RunAncestryResponse.Parent —
 // names the run's immediate dispatcher per RFC 0040 §C. WellKnownURL is
 // set only when the parent is on a different host (callers walk the
