@@ -41,12 +41,16 @@ function useHostAdvertisedModelCapabilities(): Set<string> | null {
 
 export function Inspector() {
   const selectedNodeId = useBuilderStore((s) => s.selectedNodeId);
+  const selectedNodeIds = useBuilderStore((s) => s.selectedNodeIds);
   const selectedEdgeId = useBuilderStore((s) => s.selectedEdgeId);
   const node = useBuilderStore((s) => s.nodes.find((n) => n.id === selectedNodeId) ?? null);
   const edge = useBuilderStore((s) => s.edges.find((e) => e.id === selectedEdgeId) ?? null);
   const advertised = useHostAdvertisedModelCapabilities();
 
   if (edge) return <EdgeInspector edge={edge} />;
+  // More than one node selected → group actions (single-node config is
+  // ambiguous across heterogeneous kinds, so we expose batch ops instead).
+  if (selectedNodeIds.length > 1) return <MultiSelectInspector ids={selectedNodeIds} />;
   if (!node) return <WorkflowInspector />;
   const entry = catalogEntry(node.kind);
   if (!entry) {
@@ -293,6 +297,65 @@ const CONDITION_OPS: { value: EdgeCondition['op']; label: string; needsValue: bo
   { value: 'exists', label: 'exists', needsValue: false },
   { value: 'contains', label: 'contains', needsValue: true },
 ];
+
+function MultiSelectInspector({ ids }: { ids: string[] }) {
+  const cloneNodes = useBuilderStore.getState().cloneNodes;
+  const alignNodes = useBuilderStore.getState().alignNodes;
+  const removeNode = useBuilderStore.getState().removeNode;
+  const setSelection = useBuilderStore.getState().setSelection;
+  const deleteAll = () => {
+    // Snapshot ids — removeNode mutates selectedNodeIds as it goes.
+    for (const id of [...ids]) removeNode(id);
+    setSelection([]);
+  };
+  return (
+    <aside className="builder-inspector">
+      <h3 className="builder-inspector-title">{ids.length} nodes selected</h3>
+      <p className="muted builder-inspector-desc">
+        Batch actions apply to every selected node. Select a single node to edit
+        its configuration.
+      </p>
+
+      <div className="builder-inspector-divider" />
+      <div className="builder-inspector-section-label">Arrange</div>
+      <div className="form-row builder-inspector-btn-row">
+        <button className="secondary" onClick={() => alignNodes(ids, 'left')}>
+          Align left
+        </button>
+        <button className="secondary" onClick={() => alignNodes(ids, 'top')}>
+          Align top
+        </button>
+      </div>
+      <div className="form-row builder-inspector-btn-row">
+        <button
+          className="secondary"
+          disabled={ids.length < 3}
+          onClick={() => alignNodes(ids, 'distribute-h')}
+        >
+          Distribute ↔
+        </button>
+        <button
+          className="secondary"
+          disabled={ids.length < 3}
+          onClick={() => alignNodes(ids, 'distribute-v')}
+        >
+          Distribute ↕
+        </button>
+      </div>
+      <div className="muted builder-inspector-help">
+        Distribute evens out the gaps between three or more nodes.
+      </div>
+
+      <div className="builder-inspector-divider" />
+      <button className="secondary" onClick={() => cloneNodes(ids)}>
+        Duplicate all ({ids.length})
+      </button>
+      <button className="secondary" onClick={deleteAll} style={{ marginTop: 8 }}>
+        Delete all ({ids.length})
+      </button>
+    </aside>
+  );
+}
 
 function EdgeInspector({ edge }: { edge: BuilderEdge }) {
   const rule = edge.triggerRule ?? 'all_success';

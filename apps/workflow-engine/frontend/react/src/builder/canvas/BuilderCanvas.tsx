@@ -56,14 +56,15 @@ function BuilderCanvasInner() {
 
   const builderNodes = useBuilderStore((s) => s.nodes);
   const builderEdges = useBuilderStore((s) => s.edges);
-  const selectedNodeId = useBuilderStore((s) => s.selectedNodeId);
+  const selectedNodeIds = useBuilderStore((s) => s.selectedNodeIds);
   const overlay = useBuilderStore((s) => s.overlay);
   const addNode = useBuilderStore((s) => s.addNode);
   const updateNode = useBuilderStore((s) => s.updateNode);
   const removeNode = useBuilderStore((s) => s.removeNode);
   const addEdge = useBuilderStore((s) => s.addEdge);
   const removeEdge = useBuilderStore((s) => s.removeEdge);
-  const selectNode = useBuilderStore((s) => s.selectNode);
+  const setSelection = useBuilderStore((s) => s.setSelection);
+  const selectedSet = useMemo(() => new Set(selectedNodeIds), [selectedNodeIds]);
 
   // Canvas keyboard shortcuts: ⌘/Ctrl+D duplicate, ⌘/Ctrl+C copy,
   // ⌘/Ctrl+V paste the selected node. (Delete/Backspace is handled by
@@ -81,15 +82,17 @@ function BuilderCanvasInner() {
       const key = e.key.toLowerCase();
       if (key !== 'c' && key !== 'v' && key !== 'd') return;
       const st = useBuilderStore.getState();
-      const sel = st.selectedNodeId ? st.nodes.find((n) => n.id === st.selectedNodeId) ?? null : null;
+      const ids = st.selectedNodeIds;
+      const primary = st.selectedNodeId ? st.nodes.find((n) => n.id === st.selectedNodeId) ?? null : null;
       const OFFSET = 32;
-      if (key === 'd' && sel) {
+      if (key === 'd' && ids.length > 0) {
         e.preventDefault();
-        st.cloneNode(sel, { x: sel.position.x + OFFSET, y: sel.position.y + OFFSET });
-      } else if (key === 'c' && sel) {
+        st.cloneNodes(ids); // group-aware duplicate (1+ nodes)
+      } else if (key === 'c' && primary) {
         e.preventDefault();
-        nodeClipboard = { kind: sel.kind, name: sel.name, config: { ...sel.config } };
+        nodeClipboard = { kind: primary.kind, name: primary.name, config: { ...primary.config } };
       } else if (key === 'v' && nodeClipboard) {
+        const sel = primary;
         e.preventDefault();
         const pos = sel
           ? { x: sel.position.x + OFFSET, y: sel.position.y + OFFSET }
@@ -108,9 +111,9 @@ function BuilderCanvasInner() {
         type: 'builder',
         position: n.position,
         data: { kind: n.kind, name: n.name, runStatus: overlay?.nodeStatus[n.id] },
-        selected: n.id === selectedNodeId,
+        selected: selectedSet.has(n.id),
       })),
-    [builderNodes, selectedNodeId, overlay],
+    [builderNodes, selectedSet, overlay],
   );
 
   const rfEdges: Edge[] = useMemo(
@@ -129,23 +132,22 @@ function BuilderCanvasInner() {
     (changes: NodeChange[]) => {
       // Drive position + selection from xyflow events.
       const applied = applyNodeChanges(changes, rfNodes);
+      let selectionChanged = false;
       for (const change of changes) {
         if (change.type === 'position' && change.position && !change.dragging) {
           updateNode(change.id, { position: change.position });
         }
-        if (change.type === 'select') {
-          if (change.selected) selectNode(change.id);
-          else if (selectedNodeId === change.id) selectNode(null);
-        }
-        if (change.type === 'remove') {
-          removeNode(change.id);
-        }
+        if (change.type === 'select') selectionChanged = true;
+        if (change.type === 'remove') removeNode(change.id);
       }
-      // applied is only used to satisfy xyflow's internal state expectations
-      // when we drive selection — actual state lives in the zustand store.
-      void applied;
+      // Derive the FULL multi-selection from xyflow's applied state — this
+      // handles single click, shift-click (add/remove), and box-select
+      // (multiple select changes in one batch) uniformly.
+      if (selectionChanged) {
+        setSelection(applied.filter((n) => n.selected).map((n) => n.id));
+      }
     },
-    [rfNodes, updateNode, removeNode, selectNode, selectedNodeId],
+    [rfNodes, updateNode, removeNode, setSelection],
   );
 
   const onEdgesChange = useCallback(
@@ -167,9 +169,9 @@ function BuilderCanvasInner() {
     [selectEdge],
   );
   const onPaneClick = useCallback(() => {
-    selectNode(null);
+    setSelection([]);
     selectEdge(null);
-  }, [selectNode, selectEdge]);
+  }, [setSelection, selectEdge]);
 
   const onConnect = useCallback(
     (conn: Connection) => {
