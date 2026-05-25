@@ -124,5 +124,43 @@ describe.skipIf(HTTP_SKIP)('media-url-inline-cap: advertisement shape (RFC 0055 
     ).toBe(404);
   });
 
-  it.todo('a run that emitted media.image lists the asset by reference in its debug bundle');
+  it('a media.* payload in a run debug bundle is referenced by URL, not inlined (RFC 0055 §C rule 3)', async () => {
+    // RFC 0055 §C rule 3: asset URLs are part of a run's debug-bundle manifest
+    // BY REFERENCE, never by inlining the binary. Gated on a host that both
+    // serves media (advertises aiProviders.maxInlineMediaBytes) and exports
+    // debug bundles (capabilities.debugBundle.supported). Soft-skips otherwise
+    // — and on the reference host, which exports debug bundles but has no node
+    // that emits a media.* envelope into a run (so no media payload appears).
+    const disc = await driver.get('/.well-known/openwop');
+    if (disc.status !== 200) return;
+    const caps = (disc.json as {
+      capabilities?: { aiProviders?: { maxInlineMediaBytes?: unknown }; debugBundle?: { supported?: unknown } };
+    }).capabilities;
+    if (caps?.aiProviders?.maxInlineMediaBytes === undefined || caps.debugBundle?.supported !== true) {
+      return; // host doesn't serve media + export debug bundles — contract not exercisable
+    }
+    // Find a recent run and inspect its debug bundle for any media.* event.
+    const runs = await driver.get('/v1/runs?limit=20');
+    if (runs.status !== 200) return;
+    const runIds = ((runs.json as { runs?: { runId?: string }[] }).runs ?? [])
+      .map((r) => r.runId)
+      .filter((id): id is string => typeof id === 'string');
+    for (const runId of runIds) {
+      const bundle = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/debug-bundle`);
+      if (bundle.status !== 200) continue;
+      const events = (bundle.json as { events?: { type?: string; payload?: { url?: unknown; base64?: unknown } }[] }).events ?? [];
+      for (const ev of events) {
+        if (typeof ev.type === 'string' && ev.type.startsWith('media.')) {
+          // The §C rule-3 contract: served by URL, not inlined binary.
+          expect(
+            typeof ev.payload?.url === 'string' && ev.payload?.base64 === undefined,
+            driver.describe('ai-envelope.md §"Media reference payloads"', 'a media.* payload in a debug bundle MUST be a URL reference, never inlined binary'),
+          ).toBe(true);
+          return; // asserted one — contract proven
+        }
+      }
+    }
+    // No media.* payload surfaced in any recent run's debug bundle on this
+    // host — nothing to assert (the contract holds vacuously).
+  });
 });
