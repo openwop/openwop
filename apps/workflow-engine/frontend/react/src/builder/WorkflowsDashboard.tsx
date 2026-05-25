@@ -79,9 +79,11 @@ export function WorkflowsDashboard() {
   const [version, setVersion] = useState(0);
   const refresh = () => setVersion((v) => v + 1);
 
-  // First-visit seed: every premade template lands in "Your workflows"
-  // so the dashboard isn't empty on day one. Subsequent visits no-op
-  // (a `seeded` flag is persisted alongside) — if the user deletes
+  // First-visit seed: every built-in (non-pack) premade template lands
+  // in "Your workflows" so the dashboard isn't empty on day one. Pack-
+  // dependent templates (requiresTypeIds) are deliberately excluded from
+  // the seed — see the seed effect below. Subsequent visits no-op (a
+  // `seeded` flag is persisted alongside) — if the user deletes
   // everything, we honor that intent and don't re-seed.
   // Pull the dynamic (pack) catalog so pack-dependent templates can be
   // gated on what the connected host actually has installed.
