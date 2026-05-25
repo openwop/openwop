@@ -11,6 +11,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0045/0046/0047/0048/0049/0051/0052/0053 promoted Active → Accepted — MyndHyve cohort LIVE on production (2026-05-25)
+
+The 8-RFC MyndHyve protocol-extension cohort graduates `Active → Accepted` on a verified non-steward conformance run, per `RFCS/0001` §"Promotion to Accepted". MyndHyve's `workflow-runtime` advertises all five capability blocks (`credentials`, `oauth`, `authorization`, `scheduling`, `deadLetter`) plus the identity-triple + approval-gate surfaces live on `https://api.myndhyve.ai/.well-known/openwop` (independently curl-verified 2026-05-25), and the published `@openwop/openwop-conformance@1.6.0` suite reports **28 PASS / 0 FAIL** across the cohort.
+
+- **Evidence:** revision `workflow-runtime-00211-69w`, commit `85275cdf87972e02c2e588cba481415f3e0edb15`, suite `@openwop/openwop-conformance@1.6.0`, target `https://api.myndhyve.ai/.well-known/openwop`. Per-RFC adoption write-up in `docs/openwop-adoption/0045-0054-cohort-summary.md`; verified rows added to `INTEROP-MATRIX.md`.
+- Each RFC's `Status` flips `Active → Accepted` with the verified evidence in its `Updated` field.
+- **RFC 0050 (SAML/SCIM) + 0054 (run-diff) stay `Draft`** — MyndHyve opted out of both; neither contributes to this graduation (0050's synthetic-IdP fixture remains bundled, awaiting any host wiring a SAML ACS; 0054 awaits a time-travel-debug UI).
+- **Counts synced:** README RFC-status `Accepted` 37 → 45, `Active` 12 → 4 (Draft 8 + 57 total unchanged); `docs/PROTOCOL-STATUS.md` regenerated; `docs/myndhyve-rfc-adoption-handoff.md` target URL corrected to the bare host. All additive.
+
 ### `apps/workflow-engine` — notification system replaces approval inbox (2026-05-25)
 
 App-tier only (no spec / schema / conformance change). The standalone HITL approval `/inbox` becomes one filter of a generalized notification surface modeled on the myndhyve notification system. Backend adds a `notifications` table (Postgres v6 / sqlite v8), REST CRUD + SSE stream at `/v1/notifications`, and emits a notification when a HITL interrupt opens or a run fails. Frontend adds a header bell with unread badge, a right-side `NotificationPanel` drawer, and migrates `/inbox` to filter the notification list by action-needed types (preserving the inline `RenderInterrupt` resolve form).

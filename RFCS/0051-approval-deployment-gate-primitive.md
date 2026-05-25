@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0051 |
 | **Title** | `core.openwop.governance.approvalGate` — a first-class, role-bound, audited interrupt node for approvals and deployment promotions, composing the existing interrupt-profile machinery (quorum, auth-required) with RFC 0049 authorization and the audit log |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-24 |
-| **Updated** | 2026-05-25 (Draft → Active: MyndHyve non-steward implementation landed — advertise + behavioral seams shipped per `docs/openwop-adoption/0045-0054-cohort-summary.md` (MyndHyve, 2026-05-25). Active → Accepted is gated on the published `@openwop/openwop-conformance@1.6.0` conformance run against `api.myndhyve.ai/workflow-runtime` reporting pass, per `RFCS/0001` §"Promotion to Accepted".) |
+| **Updated** | 2026-05-25 (Draft → Active → **Accepted** — MyndHyve workflow-runtime advertises the capability live on `https://api.myndhyve.ai/.well-known/openwop` (curl-verified 2026-05-25) and the cohort conformance scenarios pass against it: `@openwop/openwop-conformance@1.6.0`, revision `workflow-runtime-00211-69w`, commit `85275cdf87972e02c2e588cba481415f3e0edb15`, 28 PASS / 0 FAIL across RFCs 0045/0046/0047/0048/0049/0051/0052/0053. Implementation per `docs/openwop-adoption/0045-0054-cohort-summary.md`; promoted per `RFCS/0001` §"Promotion to Accepted".) |
 | **Affects** | new `core.openwop.governance` pack (`approvalGate` node) · `schemas/run-event-payloads.schema.json` (additive `approval.*` events) · `spec/v1/interrupt-profiles.md` (composes quorum + auth-required) · RFC 0049 (role binding) · RFC 0009/0010 (audit log) · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
