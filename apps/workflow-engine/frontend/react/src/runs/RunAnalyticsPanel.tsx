@@ -33,8 +33,9 @@ export function RunAnalyticsPanel({ events }: Props) {
     const sorted = [...events].sort((a, b) => a.sequence - b.sequence);
     const first = sorted[0];
     const terminal = sorted.find((e) => TERMINAL_TYPES.includes(e.type));
+    const last = sorted[sorted.length - 1];
     const start = first ? Date.parse(first.timestamp) : NaN;
-    const end = terminal ? Date.parse(terminal.timestamp) : Date.parse(sorted[sorted.length - 1]!.timestamp);
+    const end = terminal ? Date.parse(terminal.timestamp) : last ? Date.parse(last.timestamp) : NaN;
     const durationMs = Number.isFinite(start) && Number.isFinite(end) ? Math.max(0, end - start) : null;
 
     const outcome = terminal ? terminal.type.replace('run.', '') : 'running';

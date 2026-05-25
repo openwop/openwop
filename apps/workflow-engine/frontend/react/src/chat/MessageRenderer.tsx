@@ -260,9 +260,15 @@ function AudioAttachment({ mimeType, dataBase64, durationSeconds }: AudioProps):
 }
 
 /** Resolve a media part to a renderable src: host-served URL (RFC 0055 §C
- *  preferred) or an inline data URI. Returns null when neither is present. */
+ *  preferred) or an inline data URI. Returns null when neither is present.
+ *
+ *  The untrusted `url` field is restricted to http(s)/blob — media content
+ *  is LLM-influenced, and an unsanitized `javascript:` URL in the file-chip
+ *  anchor would be a DOM-XSS vector (the app's other links are sanitized by
+ *  react-markdown; this raw element is not). Inline `data:` is only ever
+ *  produced from our own base64 below, never accepted from `url`. */
 function mediaSrc(mimeType: string, url?: string, dataBase64?: string): string | null {
-  if (url) return url;
+  if (url) return /^(https?|blob):/i.test(url.trim()) ? url : null;
   if (dataBase64) return `data:${mimeType};base64,${dataBase64}`;
   return null;
 }
@@ -291,7 +297,7 @@ function FileAttachment({ mimeType, url, dataBase64, name }: { mimeType: string;
   return (
     <a
       href={href}
-      download={name ?? true}
+      download={name ?? ''}
       target="_blank"
       rel="noreferrer"
       style={{ display: 'inline-flex', alignItems: 'center', gap: 8, margin: '6px 0', padding: '6px 10px', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 8, fontSize: 12, textDecoration: 'none', color: 'var(--color-text)' }}

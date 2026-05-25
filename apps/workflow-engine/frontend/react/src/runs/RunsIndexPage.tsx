@@ -197,8 +197,11 @@ function RunsSummary({ runs }: { runs: RunListItem[] }) {
     const total = runs.length;
     const n = (pred: (st: string) => boolean) => runs.filter((r) => pred(r.status)).length;
     const durations = runs
-      .filter((r) => r.status === 'completed' && r.startedAt && r.completedAt)
-      .map((r) => Date.parse(r.completedAt as string) - Date.parse(r.startedAt as string))
+      .flatMap((r) =>
+        r.status === 'completed' && r.startedAt && r.completedAt
+          ? [Date.parse(r.completedAt) - Date.parse(r.startedAt)]
+          : [],
+      )
       .filter((d) => Number.isFinite(d) && d >= 0);
     const meanMs = durations.length ? durations.reduce((a, b) => a + b, 0) / durations.length : null;
     return {

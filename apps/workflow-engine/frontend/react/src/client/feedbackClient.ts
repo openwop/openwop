@@ -20,7 +20,7 @@ export interface FeedbackCapability {
 export async function getFeedbackCapability(): Promise<FeedbackCapability | null> {
   try {
     const caps = await getCapabilities();
-    const fb = (caps as Record<string, unknown>).feedback;
+    const fb: unknown = caps.feedback;
     if (fb && typeof fb === 'object' && (fb as { supported?: unknown }).supported === true) {
       return fb as FeedbackCapability;
     }

@@ -142,7 +142,6 @@ export function CommandCenterPage() {
  */
 function RunWatch({ runId, fallbackStatus }: { runId: string; fallbackStatus?: string }) {
   const [events, setEvents] = useState<RunEventDoc[]>([]);
-  const [terminalStatus, setTerminalStatus] = useState<string | null>(null);
   const [streamError, setStreamError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -163,9 +162,6 @@ function RunWatch({ runId, fallbackStatus }: { runId: string; fallbackStatus?: s
           if (prev.some((e) => e.sequence === ev.sequence)) return prev;
           return [...prev, ev].sort((a, b) => a.sequence - b.sequence);
         });
-        if (['run.completed', 'run.failed', 'run.cancelled'].includes(ev.type)) {
-          setTerminalStatus(ev.type.replace('run.', ''));
-        }
       },
       onError: () => setStreamError('Event stream connection error (reconnecting)'),
     });
@@ -176,7 +172,11 @@ function RunWatch({ runId, fallbackStatus }: { runId: string; fallbackStatus?: s
     };
   }, [runId]);
 
-  const status = terminalStatus ?? fallbackStatus ?? 'running';
+  // Derive status from the event log (seeded + live), so an already-finished
+  // run selected from a stale rail entry still reads its true terminal state
+  // rather than defaulting to "running".
+  const terminalEvent = events.find((e) => ['run.completed', 'run.failed', 'run.cancelled'].includes(e.type));
+  const status = (terminalEvent ? terminalEvent.type.slice('run.'.length) : fallbackStatus) ?? 'running';
   const live = !TERMINAL.includes(status);
   const hasActivity = events.some((e) => e.type.startsWith('agent.') || e.type.startsWith('runOrchestrator.') || e.type.startsWith('core.workflowChain.'));
 
