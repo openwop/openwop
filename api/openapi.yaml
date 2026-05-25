@@ -544,7 +544,7 @@ paths:
         '403':
           description: |
             Caller lacks `runs:read` on `{runId}` and/or on `against`
-            (`run_forbidden`); composes with RFC 0048 cross-workspace
+            (`forbidden`); composes with RFC 0048 cross-workspace
             isolation.
           content:
             application/json:

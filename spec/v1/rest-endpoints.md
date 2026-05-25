@@ -180,7 +180,7 @@ Replay of a run that was paused mid-execution re-folds `run.paused` and `run.res
 
 A read-only, deterministic, replay-aware structured diff of two runs — typically a run and its `:fork` replay. The response body conforms to [`run-diff-response.schema.json`](../../schemas/run-diff-response.schema.json): `{ a, b, divergedAtSeq, eventDiffs[], stateDiff, truncated? }`.
 
-- The caller MUST hold `runs:read` on **both** `{runId}` and `against`; a caller lacking read on either receives `403 run_forbidden` (composing with RFC 0048 cross-workspace isolation).
+- The caller MUST hold `runs:read` on **both** `{runId}` and `against`; a caller lacking read on either receives `403 forbidden` (composing with RFC 0048 cross-workspace isolation).
 - Both runs SHOULD be terminal. A host MAY diff in-flight prefixes and, when it does, MUST set `truncated: true`.
 - The diff MUST be a **pure function** of the two runs' event logs: given the same two logs, every conformant host MUST return the same `divergedAtSeq` and the same ordered `eventDiffs`. Sequence alignment is by event `seq`; the first `seq` whose event differs by canonical comparison (excluding non-deterministic transport metadata) sets `divergedAtSeq`. Identical logs MUST yield `divergedAtSeq: null` and an empty `eventDiffs`. This aligns with the determinism contract and the `replay.diverged` event in [`replay.md`](./replay.md).
 - The endpoint is OPTIONAL; a host that does not implement it MUST return `404` for the path (and MAY omit it from its OpenAPI). Clients discover support via the endpoint manifest.
