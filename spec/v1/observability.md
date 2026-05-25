@@ -192,6 +192,7 @@ An OpenWOP-compliant server emits run-lifecycle events through the event log (`G
 | `channel.written` | Channel write succeeds | `debug` | SHOULD (if channels supported) |
 | `run.replay.started` | Replay/fork is initiated | `info` | SHOULD (if `openwop-replay`) |
 | `memory.compacted` | A `MemoryAdapter` compaction run completes (RFC 0012) | `info` | SHOULD (if `capabilities.memory.compaction.supported: true`) |
+| `memory.written` | A run writes a memory entry; attributes it to the node/agent (identifiers only, never content) (RFC 0057) | `info` | MUST (if `capabilities.memory.attribution.emitsWriteEvents: true`) |
 
 **Severity vocabulary.** OpenWOP adopts the standard four-tier severity model: `debug` / `info` / `warn` / `error`. Severities are advisory — observability platforms apply their own escalation rules — but the defaults above let a downstream consumer treat unrecognized events with conservative severity policy.
 

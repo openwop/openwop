@@ -1374,3 +1374,27 @@ invariants:
       RFC 0056 §E. Annotation signal.correction and note are untrusted user
       content; secret-shaped material MUST be redacted under SR-1 before
       persistence, listing, and debug-bundle export.
+
+  - id: memory-attribution-no-content
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/memory-attribution-no-content.test.ts
+    note: |
+      RFC 0057 §C. A memory.written event payload MUST NOT carry the memory
+      entry content or any BYOK-resolved secret material — identifiers
+      (memoryRef, memoryId, nodeId, agentId) and non-secret tags only. The
+      entry content is served by the read-side (MemoryAdapter.get), already
+      SR-1-redacted; the event MUST NOT duplicate it onto the event log.
+
+  - id: memory-attribution-tenant-scoped
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/invariants.yaml
+    tests:
+      - conformance/src/scenarios/memory-attribution-tenant-scoped.test.ts
+    note: |
+      RFC 0057 §C. memory.written events appear only on the run event stream
+      of the tenant that owns the run; no memoryRef/memoryId for one tenant's
+      run is disclosed on another tenant's stream. Mirrors CTI-1.
