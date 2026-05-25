@@ -107,6 +107,12 @@ export function MessageRenderer({ content, markdown = false }: RendererProps): J
             />
           );
         }
+        if (part.type === 'image') {
+          return <ImageAttachment key={i} mimeType={part.mimeType} url={part.url} dataBase64={part.dataBase64} alt={part.alt} />;
+        }
+        if (part.type === 'file') {
+          return <FileAttachment key={i} mimeType={part.mimeType} url={part.url} dataBase64={part.dataBase64} name={part.name} />;
+        }
         return null;
       })}
     </>
@@ -250,5 +256,48 @@ function AudioAttachment({ mimeType, dataBase64, durationSeconds }: AudioProps):
         style={{ flex: 1, minWidth: 0, height: 28 }}
       />
     </div>
+  );
+}
+
+/** Resolve a media part to a renderable src: host-served URL (RFC 0055 §C
+ *  preferred) or an inline data URI. Returns null when neither is present. */
+function mediaSrc(mimeType: string, url?: string, dataBase64?: string): string | null {
+  if (url) return url;
+  if (dataBase64) return `data:${mimeType};base64,${dataBase64}`;
+  return null;
+}
+
+/** RFC 0055 media.image — inline image with `alt` wired for screen readers. */
+function ImageAttachment({ mimeType, url, dataBase64, alt }: { mimeType: string; url?: string; dataBase64?: string; alt?: string }): JSX.Element | null {
+  const src = useMemo(() => mediaSrc(mimeType, url, dataBase64), [mimeType, url, dataBase64]);
+  if (!src) return null;
+  return (
+    <figure style={{ margin: '6px 0' }}>
+      <img
+        src={src}
+        alt={alt ?? ''}
+        loading="lazy"
+        style={{ maxWidth: '100%', maxHeight: 360, borderRadius: 8, border: '1px solid var(--color-border)', display: 'block' }}
+      />
+      {alt && <figcaption style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 2 }}>{alt}</figcaption>}
+    </figure>
+  );
+}
+
+/** RFC 0055 media.file — download chip for non-renderable assets. */
+function FileAttachment({ mimeType, url, dataBase64, name }: { mimeType: string; url?: string; dataBase64?: string; name?: string }): JSX.Element | null {
+  const href = useMemo(() => mediaSrc(mimeType, url, dataBase64), [mimeType, url, dataBase64]);
+  if (!href) return null;
+  return (
+    <a
+      href={href}
+      download={name ?? true}
+      target="_blank"
+      rel="noreferrer"
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 8, margin: '6px 0', padding: '6px 10px', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 8, fontSize: 12, textDecoration: 'none', color: 'var(--color-text)' }}
+    >
+      <span aria-hidden="true">📎</span>
+      <span>{name ?? mimeType}</span>
+    </a>
   );
 }
