@@ -219,23 +219,23 @@ async function loadPackSchema(name, version, schemaRef) {
   if (offlineIndex) {
     const dir = offlineIndex.replace(/\/v1\/index\.json$/, '');
     const tarballPath = `${dir}/v1/packs/${name}/-/${version}.tgz`;
-    if (!existsSync(tarballPath)) return null;
+    if (!existsSync(tarballPath)) return { schema: null };
     try {
       const bytes = readTarballFile(readFileSync(tarballPath), schemaRef);
-      if (!bytes) return null;
-      return JSON.parse(bytes.toString('utf8'));
+      if (!bytes) return { schema: null };
+      return { schema: JSON.parse(bytes.toString('utf8')) };
     } catch (e) {
-      return null;
+      return { schema: null, parseError: e.message };
     }
   }
   const filename = schemaRef.replace(/^schemas\//, '');
   const url = `${registry.replace(/\/$/, '')}/v1/packs/${name}/${version}/${filename}`;
   try {
-    const res = await fetch(url, { redirect: 'follow' });
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
+    const res = await fetchWithTimeout(url, { redirect: 'follow' });
+    if (!res.ok) return { schema: null };
+    return { schema: await res.json() };
+  } catch (e) {
+    return { schema: null, parseError: e.message };
   }
 }
 
