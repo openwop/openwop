@@ -22,6 +22,7 @@ A maintainer is expected to:
 4. **Disclose conflicts.** Any commercial relationship, funding source, or employment that could bias a decision is disclosed in the PR or RFC thread. Recusal is the default for direct conflicts.
 5. **Honor compatibility.** Apply `COMPATIBILITY.md` strictly. v1.x stays additive-only by default; safety/security breaks follow the §3 process; v2 is the parallel track for everything else.
 6. **Update governance docs in lockstep.** Changes to maintainer status (additions, removals, role changes) update this file via PR. Changes to `GOVERNANCE.md` decision rules go through the RFC process.
+7. **Uphold registry policy.** Maintainers acting as registry approvers apply the submission, trust-tier, and signing rules in [`RFCS/0043-registry-and-extension-policy.md`](./RFCS/0043-registry-and-extension-policy.md) §B (indexed at [`docs/governance/registry-policy.md`](./docs/governance/registry-policy.md)) — including the registry-root-key rotation dual-control requirement (§B.4).
 
 ## Promotion process
 

@@ -18,6 +18,8 @@ This document is the answer.
 
 Any field, event type, span name, or capability that doesn't match one of the canonical prefixes below is a **host extension**. Hosts MAY add them. Clients MUST tolerate them being missing or unrecognized.
 
+> The formal namespace-reservation, trust-tier, and name-reservation policy these prefixes draw from is **[RFC 0043 — Registry and extension-policy](../../RFCS/0043-registry-and-extension-policy.md)** (§A namespaces, §C name reservation); this section is the wire-level summary. See [`docs/governance/registry-policy.md`](../../docs/governance/registry-policy.md) for the one-stop index.
+
 ### Canonical prefixes (protocol-owned)
 
 | Prefix | Owner | Examples |

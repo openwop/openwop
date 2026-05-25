@@ -211,11 +211,11 @@ The audit-friendly equivalent of "conformance" for this RFC is a **policy-audit 
 
 ## Acceptance criteria
 
-- [ ] Spec text cross-links landed in `host-extensions.md`, `registry-operations.md`, `GOVERNANCE.md`, `RFCS/0038-working-group-charter.md`, `MAINTAINERS.md`.
-- [ ] NEW `docs/governance/registry-policy.md` lands as a one-stop policy index pointing at this RFC.
-- [ ] CHANGELOG entry under `[Unreleased]` referencing this RFC.
+- [x] Spec text cross-links landed in `host-extensions.md`, `registry-operations.md`, `GOVERNANCE.md`, `RFCS/0038-working-group-charter.md`, `MAINTAINERS.md`. *(2026-05-25)*
+- [x] NEW `docs/governance/registry-policy.md` lands as a one-stop policy index pointing at this RFC. *(2026-05-25)*
+- [x] CHANGELOG entry under `[Unreleased]` referencing this RFC. *(2026-05-25)*
 - [ ] 7-day public comment window closes without unresolved objections (additive policy).
-- [ ] Working group, when formed, ratifies the policy (gated on `GOVERNANCE.md` tripwire — this is a future-action gate, not a blocker for landing the Draft).
+- [ ] Working group, when formed, ratifies the policy (gated on `GOVERNANCE.md` tripwire — this is a future-action gate, not a blocker for landing the Draft). **← the only remaining gate; flips `Draft` → `Accepted`.**
 
 ## References
 

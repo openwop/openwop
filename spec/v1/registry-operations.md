@@ -12,6 +12,8 @@ This doc is the operator's normative reference. An OpenWOP-compliant registry im
 
 The planned hosted reference registry at `packs.openwop.dev` implements these flows when it launches; third-party registry implementations (private mirrors, enterprise self-host) MUST do the same to remain compatible.
 
+> **Policy layer.** This doc is the *operational* reference (the how). The *policy* above it — submission gates, trust tiers, name reservation, IPR — is **[RFC 0043 — Registry and extension-policy](../../RFCS/0043-registry-and-extension-policy.md)** §B; the one-stop index is [`docs/governance/registry-policy.md`](../../docs/governance/registry-policy.md).
+
 ---
 
 ## Submission flow

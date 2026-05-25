@@ -11,6 +11,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0043 implemented (Draft) — registry/extension policy now auditable (2026-05-25)
+
+Lands RFC 0043's landable acceptance criteria so the registry, namespace, name-reservation, and IPR policy is auditable today (the RFC stays `Draft`; promotion to `Accepted` is gated on the `GOVERNANCE.md` working-group tripwire — ≥3 orgs + ≥2 non-steward hosts — and is not a code task). `additive` policy text, no wire-shape change.
+
+- **NEW `docs/governance/registry-policy.md`** — one-stop policy index mapping each topic (namespaces, trust tiers, submission, deprecation/yank, key rotation, name reservation, IPR) to its RFC 0043 section + operational reference.
+- **Cross-links landed** per RFC 0043 §E: `host-extensions.md` (§A/§C summary footer), `registry-operations.md` (policy-layer header), `RFCS/0038` (WG inherits §B/§C on ratification), `GOVERNANCE.md` §"Path to working group" (RFC 0043 ratification on WG activation), `MAINTAINERS.md` (registry-approver expectation + §B.4 key-rotation dual control).
+- RFC 0043 acceptance criteria 1–3 checked; only the comment window + WG ratification remain.
+
 ### Tier-2 (RFC 0048–0051) code-review follow-ups — gate request-event routing + doc polish (2026-05-25)
 
 Resolves findings from a `/code-review` pass over Tier-2. No wire-shape change.

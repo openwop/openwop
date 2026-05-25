@@ -35,6 +35,11 @@ The OpenWOP Working Group (WG) consists of:
 
 The WG replaces the GOVERNANCE.md "lead-maintainer tiebreaker" rule.
 
+On ratification, the WG inherits responsibility for the registry and
+extension policies defined in [`RFCS/0043-registry-and-extension-policy.md`](./0043-registry-and-extension-policy.md)
+— its first ballot is to ratify RFC 0043 §B/§C verbatim or amend (RFC 0043 §B.2
+trust tiers, §C name reservation, §B.4 registry-root-key rotation).
+
 ### §B — Election rules
 
 1. **Steering Committee election cadence:** annual.
