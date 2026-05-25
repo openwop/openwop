@@ -257,6 +257,22 @@
   color: var(--ink-3);
   border: 1px solid var(--rule);
 }
+/* RFC 0055 §A — per-model capability pills under the model picker. */
+.model-cap-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.model-cap-pill {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 2px;
+  background: var(--paper-2);
+  color: var(--ink-3);
+  border: 1px solid var(--rule);
+  white-space: nowrap;
+}
 .env-chip-toggle {
   font-family: var(--mono);
   font-size: 10.5px;
