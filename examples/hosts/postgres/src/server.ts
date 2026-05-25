@@ -223,6 +223,11 @@ const CLAIM_TTL_MS = Number(process.env.OPENWOP_CLAIM_TTL_MS ?? 30_000);
 // via env.
 const MAX_INFLIGHT = Number(process.env.OPENWOP_MAX_INFLIGHT ?? 100);
 const RETRY_AFTER_SECONDS = Number(process.env.OPENWOP_RETRY_AFTER_SECONDS ?? 1);
+// RFC 0058 — host wall-clock ceiling advertised as
+// `capabilities.limits.maxRunDurationMs`. A caller's `runTimeoutMs` resolves
+// to `min(runTimeoutMs, MAX_RUN_DURATION_MS)`; the ceiling always applies even
+// when the caller omits `runTimeoutMs`. Default 1h.
+const MAX_RUN_DURATION_MS = Number(process.env.OPENWOP_MAX_RUN_DURATION_MS ?? 3_600_000);
 // Event retention: rows older than this window get swept. 410 Gone on
 // expired-run GETs per production-profile.md §"Event retention".
 // Default 7 days; reference impl prefers explicit operator config.
@@ -690,6 +695,24 @@ async function setRunTerminal(
   );
 }
 
+// RFC 0058 — finalize a run that breached its wall-clock deadline. Per
+// `run-options.md` §"Reserved keys" (`runTimeoutMs`) + `capabilities.md`
+// §"Engine-enforced limits": emit `cap.breached { kind: 'run-duration' }` so
+// the breach is distinguishable on the wire from an application failure, then
+// transition to `failed` with `error.code = 'run_timeout'`. `observed` is the
+// measured elapsed wall-clock (> `limit`, the resolved deadline).
+async function failRunDuration(runId: string, limitMs: number, elapsedMs: number): Promise<void> {
+  await appendEvent(runId, 'cap.breached', {
+    data: { kind: 'run-duration', limit: limitMs, observed: elapsedMs },
+  });
+  const error = {
+    code: 'run_timeout',
+    message: `Run exceeded its wall-clock deadline (RFC 0058 runTimeoutMs): observed ${elapsedMs}ms vs limit ${limitMs}ms.`,
+  };
+  await appendEvent(runId, 'run.failed', { data: error });
+  await setRunTerminal(runId, 'failed', error);
+}
+
 /**
  * Cancel a run from inside the host (cascade from parent, internal error,
  * etc.). For a suspended run we drive directly to terminal `cancelled`
@@ -933,14 +956,32 @@ async function executeNode(
       //      `delayMs`; the test passes `inputs.delaySeconds` to keep
       //      the run alive long enough for pause/cancel to land).
       //   3. Fallback: 100ms.
-      const declaredMs = resolveInputAsNumber(node.inputs.delayMs, inputs, -1);
-      const delayMs = (() => {
-        if (declaredMs >= 0) return declaredMs;
+      // Precedence (unchanged for the delaySeconds path): an explicit
+      // `inputs.delaySeconds` override wins (pause-resume / cancellation
+      // tests rely on it). Otherwise resolve the node's `delayMs` — a
+      // variable ref in the fixtures — against the run's VARIABLE bag
+      // (seeded from `variables[].defaultValue`), not just run inputs.
+      // RFC 0058's `conformance-run-duration-breach` sets `delayMs=30000`
+      // there so the run outlives a small `runTimeoutMs`; resolving only
+      // against inputs (empty) previously collapsed it to the 100ms
+      // fallback and the wall-clock bound never tripped.
+      const delayMs = await (async (): Promise<number> => {
         const supplied = inputs['delaySeconds'];
         if (typeof supplied === 'number' && supplied > 0) {
           return Math.floor(supplied * 1000);
         }
-        return 100;
+        const q = await querier();
+        const vr = await q.query<{ variables_json: Record<string, unknown> | null }>(
+          'SELECT variables_json FROM runs WHERE run_id = $1',
+          [runId],
+        );
+        const vars = (vr.rows[0]?.variables_json ?? {}) as Record<string, unknown>;
+        // Resolve the variable ref against variable defaults overlaid with
+        // run inputs — an explicit `inputs.delayMs` (e.g. streamReconnect's
+        // `delayMs: 2000`) overrides the `defaultValue` seed; a fixture that
+        // relies on the seed alone (run-duration-breach's 30000) still gets it.
+        const declared = resolveInputAsNumber(node.inputs.delayMs, { ...vars, ...inputs }, -1);
+        return declared >= 0 ? declared : 100;
       })();
       try {
         await sleep(delayMs, signal);
@@ -2201,6 +2242,26 @@ async function runWorkflowClaimed(runId: string): Promise<void> {
   const aborter = new AbortController();
   runningAborters.set(runId, aborter);
 
+  // RFC 0058 — arm the wall-clock deadline. Resolved bound is
+  // `min(runTimeoutMs, MAX_RUN_DURATION_MS)`; the host ceiling always applies
+  // even when the caller omits `runTimeoutMs`. When the timer fires we set
+  // `timedOut` and abort the shared run signal — that interrupts a sleeping
+  // node (e.g. core.delay), surfacing as a `cancelled` node outcome which the
+  // loop re-attributes to the run-duration breach (the `timedOut` guard after
+  // executeNode + in catch). Declared out here so catch/finally can see them.
+  const runTimeoutRaw = (row.configurable_json ?? {}) as { runTimeoutMs?: unknown };
+  const rt = runTimeoutRaw.runTimeoutMs;
+  const resolvedTimeoutMs =
+    typeof rt === 'number' && Number.isInteger(rt) && rt > 0
+      ? Math.min(rt, MAX_RUN_DURATION_MS)
+      : MAX_RUN_DURATION_MS;
+  const runStartMs = Date.now();
+  let timedOut = false;
+  const timeoutTimer = setTimeout(() => {
+    timedOut = true;
+    aborter.abort();
+  }, resolvedTimeoutMs);
+
   try {
     // First-run vs resume detection: if `run.started` is already in the
     // log, this is a resume (from pause or, eventually, restart). Emit
@@ -2277,6 +2338,13 @@ async function runWorkflowClaimed(runId: string): Promise<void> {
       }
 
       const outcome = await executeNode(runId, node, inputs, aborter.signal);
+      // RFC 0058 — the wall-clock deadline fired mid-node (the abort
+      // surfaced as a `cancelled`/`failed` node outcome). Re-attribute to
+      // the run-duration breach rather than a caller cancel.
+      if (timedOut) {
+        await failRunDuration(runId, resolvedTimeoutMs, Date.now() - runStartMs);
+        return;
+      }
       if (outcome === 'loopback') {
         // RFC 0007 §D `next-worker`: dispatch routes control back to
         // the upstream orchestrator-supervisor. Advance i to (target-1)
@@ -2358,11 +2426,19 @@ async function runWorkflowClaimed(runId: string): Promise<void> {
       await setRunTerminal(runId, 'completed', null);
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    const error = { code: 'internal', message };
-    await appendEvent(runId, 'run.failed', { data: error });
-    await setRunTerminal(runId, 'failed', error);
+    // RFC 0058 — if the deadline fired and the abort propagated as a
+    // thrown error (rather than a `cancelled` node outcome), attribute it
+    // to the run-duration breach instead of a generic internal error.
+    if (timedOut) {
+      await failRunDuration(runId, resolvedTimeoutMs, Date.now() - runStartMs);
+    } else {
+      const message = err instanceof Error ? err.message : String(err);
+      const error = { code: 'internal', message };
+      await appendEvent(runId, 'run.failed', { data: error });
+      await setRunTerminal(runId, 'failed', error);
+    }
   } finally {
+    clearTimeout(timeoutTimer);
     runningAborters.delete(runId);
   }
 }
@@ -2627,6 +2703,10 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
         schemaRounds: 0,
         envelopesPerTurn: 0,
         maxNodeExecutions: 1000,
+        // RFC 0058 — the host enforces this wall-clock ceiling on every run
+        // (see runWorkflowClaimed). Advertising it lets clients pre-flight a
+        // `runTimeoutMs` and pins the upper bound the value clamps to.
+        maxRunDurationMs: MAX_RUN_DURATION_MS,
       },
       supportedTransports: ['rest'],
       fixtures: advertisedFixtures,

@@ -498,6 +498,30 @@ function setRunTerminal(
   }
 }
 
+// RFC 0058 — host wall-clock ceiling advertised as
+// `capabilities.limits.maxRunDurationMs`. A caller's `runTimeoutMs` resolves to
+// `min(runTimeoutMs, MAX_RUN_DURATION_MS)`; the ceiling always applies even
+// when the caller omits `runTimeoutMs`. Default 1h.
+const MAX_RUN_DURATION_MS = Number(process.env.OPENWOP_MAX_RUN_DURATION_MS ?? 3_600_000);
+
+// RFC 0058 — finalize a run that breached its wall-clock deadline. Per
+// `run-options.md` §"Reserved keys" (`runTimeoutMs`) + `capabilities.md`
+// §"Engine-enforced limits": emit `cap.breached { kind: 'run-duration' }` so
+// the breach is distinguishable on the wire from an application failure, then
+// transition to `failed` with `error.code = 'run_timeout'`. `observed` is the
+// measured elapsed wall-clock (> `limit`, the resolved deadline).
+function failRunDuration(runId: string, limitMs: number, elapsedMs: number): void {
+  appendEvent(runId, 'cap.breached', {
+    data: { kind: 'run-duration', limit: limitMs, observed: elapsedMs },
+  });
+  const error = {
+    code: 'run_timeout',
+    message: `Run exceeded its wall-clock deadline (RFC 0058 runTimeoutMs): observed ${elapsedMs}ms vs limit ${limitMs}ms.`,
+  };
+  appendEvent(runId, 'run.failed', { data: error });
+  setRunTerminal(runId, 'failed', error);
+}
+
 /**
  * Cancel a run from inside the host (cascade from parent, etc.). For a
  * suspended run we drive directly to terminal `cancelled` (no executor
@@ -784,7 +808,12 @@ async function executeNode(
       // Config wins when both present.
       const cfgDelay = node.config?.ms ?? node.config?.delayMs;
       const cfgMs = typeof cfgDelay === 'number' ? cfgDelay : null;
-      const delayMs = cfgMs ?? resolveInputAsNumber(node.inputs.delayMs, inputs, 100);
+      // RFC 0058 — resolve the delayMs variable ref against variable defaults
+      // overlaid with run inputs (inputs override the `defaultValue` seed). The
+      // run-duration-breach fixture relies on the seeded default (30000) so the
+      // run outlives a small runTimeoutMs; streamReconnect passes inputs.delayMs.
+      const delayMs =
+        cfgMs ?? resolveInputAsNumber(node.inputs.delayMs, { ...loadRunVariables(runId), ...inputs }, 100);
       try {
         await sleep(delayMs, signal);
       } catch {
@@ -1466,6 +1495,28 @@ async function runWorkflow(runId: string): Promise<void> {
   runningAborters.set(runId, aborter);
   startHeartbeat(runId);
 
+  // RFC 0058 — arm the wall-clock deadline. Resolved bound is
+  // `min(runTimeoutMs, MAX_RUN_DURATION_MS)`; the host ceiling always applies
+  // even when the caller omits `runTimeoutMs`. When the timer fires we set
+  // `timedOut` and abort the shared run signal — that interrupts a sleeping
+  // node (e.g. core.delay), surfacing as a `cancelled` node outcome which the
+  // loop re-attributes to the run-duration breach (the `timedOut` guards
+  // after executeNode + in catch). Declared out here so catch/finally see them.
+  const rtParsed = row.configurable_json
+    ? (JSON.parse(row.configurable_json) as { runTimeoutMs?: unknown })
+    : {};
+  const rt = rtParsed.runTimeoutMs;
+  const resolvedTimeoutMs =
+    typeof rt === 'number' && Number.isInteger(rt) && rt > 0
+      ? Math.min(rt, MAX_RUN_DURATION_MS)
+      : MAX_RUN_DURATION_MS;
+  const runStartMs = Date.now();
+  let timedOut = false;
+  const timeoutTimer = setTimeout(() => {
+    timedOut = true;
+    aborter.abort();
+  }, resolvedTimeoutMs);
+
   try {
     // `run.started` is emitted only on FIRST execution. If we're
     // resuming an orphaned run, the prior process already wrote
@@ -1532,6 +1583,13 @@ async function runWorkflow(runId: string): Promise<void> {
       }
 
       const outcome = await executeNode(runId, node, inputs, aborter.signal);
+      // RFC 0058 — the wall-clock deadline fired mid-node (the abort surfaced
+      // as a `cancelled`/`failed` node outcome). Re-attribute to the
+      // run-duration breach rather than a caller cancel.
+      if (timedOut) {
+        failRunDuration(runId, resolvedTimeoutMs, Date.now() - runStartMs);
+        return;
+      }
       if (outcome === 'loopback') {
         // RFC 0007 §D `next-worker` — dispatch routes control back to
         // the upstream orchestrator-supervisor. The dispatch handler
@@ -1606,11 +1664,19 @@ async function runWorkflow(runId: string): Promise<void> {
       setRunTerminal(runId, 'completed', null);
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    const error = { code: 'internal', message };
-    appendEvent(runId, 'run.failed', { data: error });
-    setRunTerminal(runId, 'failed', error);
+    // RFC 0058 — if the deadline fired and the abort propagated as a thrown
+    // error (rather than a `cancelled` node outcome), attribute it to the
+    // run-duration breach instead of a generic internal error.
+    if (timedOut) {
+      failRunDuration(runId, resolvedTimeoutMs, Date.now() - runStartMs);
+    } else {
+      const message = err instanceof Error ? err.message : String(err);
+      const error = { code: 'internal', message };
+      appendEvent(runId, 'run.failed', { data: error });
+      setRunTerminal(runId, 'failed', error);
+    }
   } finally {
+    clearTimeout(timeoutTimer);
     runningAborters.delete(runId);
     stopHeartbeat(runId);
   }
@@ -1763,6 +1829,10 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
       schemaRounds: 0,
       envelopesPerTurn: 0,
       maxNodeExecutions: 1000,
+      // RFC 0058 — the host enforces this wall-clock ceiling on every run
+      // (see runWorkflow). Advertising it lets clients pre-flight a
+      // `runTimeoutMs` and pins the upper bound the value clamps to.
+      maxRunDurationMs: MAX_RUN_DURATION_MS,
     },
     supportedTransports: ['rest'],
     debugBundle: { supported: true },
