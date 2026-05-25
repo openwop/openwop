@@ -23,6 +23,7 @@ import {
   sbomUrlFor,
   type PackIndexEntry,
   type PackDetail,
+  type PackVersionRecord,
 } from './registryClient.js';
 
 interface Props {
@@ -211,10 +212,67 @@ function PackDetailView({ name, installedTypeIds }: { name: string; installedTyp
         </details>
       )}
 
+      <InstallGuidance detail={detail} latest={latest} installedTypeIds={installedTypeIds} />
+    </div>
+  );
+}
+
+/** Turns the "not installed" dead-end into actionable operator guidance:
+ *  the exact `OPENWOP_INSTALL_PACKS=<name>@<version>` line to set + restart.
+ *  (On-demand install from the browser is deferred behind a trust-tier +
+ *  auth model — RFC 0043; see plans/pack-install-rfc0043-multitenancy.md.) */
+function InstallGuidance({
+  detail,
+  latest,
+  installedTypeIds,
+}: {
+  detail: PackDetail;
+  latest: PackVersionRecord | undefined;
+  installedTypeIds: ReadonlySet<string>;
+}) {
+  const [copied, setCopied] = useState(false);
+  const installedCount = detail.typeIds.filter((t) => installedTypeIds.has(t)).length;
+  const allInstalled = detail.typeIds.length > 0 && installedCount === detail.typeIds.length;
+  if (allInstalled) {
+    return (
       <p className="muted pack-detail-install-note">
-        Nodes from installed packs are draggable in the palette. To add a not-yet-installed pack,
-        an operator configures it on the host (<code>OPENWOP_INSTALL_PACKS</code>) — the registry
-        is read-only discovery here.
+        ✓ All of this pack&apos;s nodes are installed — drag them onto the canvas from the palette.
+      </p>
+    );
+  }
+  const installLine = `OPENWOP_INSTALL_PACKS=${detail.name}@${latest?.version ?? detail.latest}`;
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(installLine);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = installLine;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch { /* ignore */ }
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+  return (
+    <div className="pack-detail-install-note">
+      <p className="muted" style={{ marginBottom: 4 }}>
+        {installedCount > 0
+          ? `${installedCount}/${detail.typeIds.length} of this pack's nodes are installed.`
+          : 'Not installed on this host.'}{' '}
+        The browser is read-only discovery — to add it, an operator sets this on the host env and restarts:
+      </p>
+      <div className="pack-install-cmd">
+        <code>{installLine}</code>
+        <button type="button" className="secondary" onClick={copy} title="Copy the install env line">
+          {copied ? 'Copied' : 'Copy'}
+        </button>
+      </div>
+      <p className="muted" style={{ fontSize: 11, marginTop: 4 }}>
+        On-demand install from the browser is deferred behind a trust-tier + auth model (RFC 0043).
       </p>
     </div>
   );

@@ -1301,6 +1301,16 @@ pre {
 .pack-versions ul { list-style: none; margin: 4px 0; padding: 0; }
 .pack-versions li { display: flex; align-items: center; gap: 6px; padding: 2px 0; font-size: 12px; }
 .pack-detail-install-note { font-size: 11px; margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--rule); }
+.pack-install-cmd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: color-mix(in oklch, var(--ink) 5%, transparent);
+  border-radius: 4px;
+}
+.pack-install-cmd code { flex: 1; font-size: 11px; word-break: break-all; }
+.pack-install-cmd button { padding: 2px 10px; font-size: 11px; min-height: 0; flex-shrink: 0; }
 
 /* MCP tools list (RFC 0020 tools/list) */
 .mcp-tool-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
