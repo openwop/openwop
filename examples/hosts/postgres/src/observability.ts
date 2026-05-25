@@ -226,6 +226,20 @@ export function startNodeSpan(
   activeSpans.set(`${runId}:${nodeId}`, span);
 }
 
+/** Append attributes to an in-flight node span (RFC 0026 cost attribution
+ *  writes the sanitized `openwop.cost.*` set here so an OTel collector
+ *  scrape sees them). No-op when tracing is disabled or the span is gone. */
+export function addNodeSpanAttributes(
+  runId: string,
+  nodeId: string,
+  attrs: Record<string, string | number | boolean>,
+): void {
+  if (!enabled) return;
+  const span = activeSpans.get(`${runId}:${nodeId}`);
+  if (!span) return;
+  for (const [k, v] of Object.entries(attrs)) span.attributes.push(attr(k, v));
+}
+
 export function endNodeSpan(runId: string, nodeId: string, outcome: string): void {
   if (!enabled) return;
   const key = `${runId}:${nodeId}`;

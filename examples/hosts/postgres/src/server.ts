@@ -57,10 +57,12 @@ import {
   endRunSpan,
   startNodeSpan,
   endNodeSpan,
+  addNodeSpanAttributes,
   recordRunDuration,
   parseTraceparent,
   recordInboundTraceContext,
 } from './observability.js';
+import { sanitizeCostAttrs, applyCostRollup, snapshotCostRollup } from './cost.js';
 import {
   setupInterruptSchema,
   createInterrupt,
@@ -2054,6 +2056,22 @@ async function executeNode(
       }
     }
 
+    case 'conformance.cost.emit': {
+      // RFC 0026 — fixture producer. Sanitize the declared cost attrs
+      // (allowlist drops non-`openwop.cost.*` keys + the credential-shaped
+      // canary), write them onto the node span (for an OTel scrape), and
+      // fold the snapshot subset into the per-run rollup so
+      // `metrics.openwopCost` surfaces on the run snapshot.
+      const cfg = (node.config ?? {}) as { attrs?: unknown };
+      const attrs = cfg.attrs && typeof cfg.attrs === 'object' && !Array.isArray(cfg.attrs)
+        ? (cfg.attrs as Record<string, unknown>)
+        : {};
+      const sanitized = sanitizeCostAttrs(attrs);
+      addNodeSpanAttributes(runId, node.id, sanitized);
+      applyCostRollup(runId, sanitized);
+      break;
+    }
+
     default:
       await appendEvent(runId, 'node.failed', {
         nodeId: node.id,
@@ -3121,6 +3139,9 @@ async function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: st
     ...(currentNodeId ? { currentNodeId } : {}),
     ...(interrupt ? { interrupt } : {}),
     ...(childRuns.length > 0 ? { childRuns } : {}),
+    // RFC 0026 — per-run cost rollup (run-snapshot.schema.json
+    // §metrics.openwopCost). Omitted when no cost was recorded.
+    ...(snapshotCostRollup(runId) ? { metrics: { openwopCost: snapshotCostRollup(runId) } } : {}),
   });
 }
 
