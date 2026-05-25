@@ -711,6 +711,11 @@ pre {
   border: 1px solid var(--clay-rule);
 }
 
+.alert.success {
+  background: color-mix(in oklch, var(--color-success) 10%, transparent);
+  border: 1px solid var(--color-success);
+}
+
 .muted {
   color: var(--color-text-muted);
 }
@@ -1614,6 +1619,29 @@ pre {
 .builder-node-selected {
   outline: 2px solid var(--clay);
   outline-offset: -1px;
+}
+
+/* Author-time capability gap: this host can't run the node kind. Amber
+ * ring + slight dim so the unrunnable node reads at a glance. */
+.builder-node-warn {
+  box-shadow: 0 0 0 1px var(--color-warning), 0 1px 3px var(--ink-shadow);
+  opacity: 0.82;
+}
+
+.builder-node-warn-badge {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background: var(--color-warning);
+  color: var(--paper);
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  font-weight: 700;
+  box-shadow: 0 1px 3px var(--ink-shadow);
 }
 
 .builder-node-header {

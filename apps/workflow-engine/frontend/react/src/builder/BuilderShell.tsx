@@ -65,6 +65,8 @@ export function BuilderShell({ onNewWorkflow }: Props) {
   // Pre-flight issues found on the last Run click. When non-null the
   // user must confirm ("Run anyway") or cancel before the run fires.
   const [preflight, setPreflight] = useState<PreflightIssue[] | null>(null);
+  // Success summary from the last Validate click; null when none/cleared.
+  const [validateOk, setValidateOk] = useState<string | null>(null);
 
   // Subscribe to the overlaid run's SSE stream and fold each event into
   // the store so the canvas paints node status live. Re-subscribes when
@@ -83,8 +85,51 @@ export function BuilderShell({ onNewWorkflow }: Props) {
     return () => sub.close();
   }, [overlayRunId]);
 
+  // Dry-run validation: the same gates Run applies — graph serialization
+  // (empty graph / cycles / orphan edges via SerializeError), default-inputs
+  // JSON parse, and the host-capability pre-flight — but with no network
+  // work. Surfaces "build → run → cryptic failure" problems at author time.
+  function onValidate() {
+    setError(null);
+    setPreflight(null);
+    setValidateOk(null);
+    const snap = useBuilderStore.getState().snapshot();
+    try {
+      serializeWithIdMap(snap);
+    } catch (err) {
+      if (err instanceof SerializeError) {
+        setError(err.message);
+        if (err.nodeId) useBuilderStore.getState().selectNode(err.nodeId);
+      } else {
+        setError(err instanceof Error ? err.message : String(err));
+      }
+      return;
+    }
+    const raw = snap.defaultInputs?.trim();
+    if (raw) {
+      try {
+        JSON.parse(raw);
+      } catch {
+        setError('Default inputs is not valid JSON.');
+        return;
+      }
+    }
+    const issues = collectPreflightIssues(snap.nodes);
+    if (issues.length > 0) {
+      setPreflight(issues);
+      return;
+    }
+    const nN = snap.nodes.length;
+    const eN = snap.edges.length;
+    setValidateOk(
+      `Valid — ${nN} node${nN === 1 ? '' : 's'}, ${eN} edge${eN === 1 ? '' : 's'}. ` +
+        `No cycles, default inputs parse, and the host can run every node.`,
+    );
+  }
+
   async function onRun(force = false) {
     setError(null);
+    setValidateOk(null);
     const snap0 = useBuilderStore.getState().snapshot();
     // Pre-flight host-capability check before doing any network work.
     if (!force) {
@@ -249,11 +294,24 @@ export function BuilderShell({ onNewWorkflow }: Props) {
           }}
         />
         <button className="secondary" onClick={onNewWorkflow}>New</button>
+        <button
+          className="secondary"
+          onClick={onValidate}
+          disabled={running}
+          title="Check the workflow for cycles, invalid inputs, and missing host capabilities — without running it"
+        >
+          Validate
+        </button>
         <button onClick={() => onRun()} disabled={running}>
           {running ? 'Running…' : 'Run'}
         </button>
       </div>
       {error && <div className="alert error builder-toolbar-error">{error}</div>}
+      {validateOk && (
+        <div className="alert success builder-toolbar-error" role="status">
+          ✓ {validateOk}
+        </div>
+      )}
       {preflight && (
         <div className="alert warning builder-toolbar-error">
           <strong>Host can&apos;t run {preflight.length} node{preflight.length === 1 ? '' : 's'}.</strong>{' '}
