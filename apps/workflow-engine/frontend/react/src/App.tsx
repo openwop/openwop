@@ -4,6 +4,7 @@ import { RunsIndexPage } from './runs/RunsIndexPage.js';
 import { NetworkPanel } from './devtools/NetworkPanel.js';
 import { installNetworkRecorder } from './devtools/networkRecorder.js';
 import { RunDetailPage } from './runs/RunDetailPage.js';
+import { CommandCenterPage } from './runs/CommandCenterPage.js';
 import { HitlInboxPage } from './runs/HitlInboxPage.js';
 import { RunComparePage } from './runs/RunComparePage.js';
 import { CapabilitiesPanel } from './discovery/CapabilitiesPanel.js';
@@ -52,6 +53,7 @@ export function App() {
           <NavLink to="/prompts">Prompts</NavLink>
           <NavLink to="/keys">Keys</NavLink>
           <NavLink to="/runs">Runs</NavLink>
+          <NavLink to="/mission">Mission Control</NavLink>
           <NavLink to="/inbox">Inbox</NavLink>
           <NavLink to="/capabilities">Capabilities</NavLink>
         </nav>
@@ -85,6 +87,7 @@ export function App() {
           <Route path="/chat" element={<Navigate to="/" replace />} />
           <Route path="/runs" element={<RunsIndexPage />} />
           <Route path="/runs/:runId" element={<RunDetailPage />} />
+          <Route path="/mission" element={<CommandCenterPage />} />
           <Route path="/inbox" element={<HitlInboxPage />} />
           <Route path="/compare" element={<RunComparePage />} />
           <Route path="/capabilities" element={<CapabilitiesPanel />} />
