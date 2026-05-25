@@ -21,7 +21,7 @@ Closes RFC 0055 end-to-end on the reference host. §A (capability vocabulary) + 
 
 ### RFCs 0058–0064 — autonomous-agent-runtime cohort filed (`Draft`, 2026-05-25)
 
-Seven additive RFCs filed from the `apps/workflow-engine` demo-app gap audit against the proposed autonomous-agent-runtime feature set. All `additive`, all capability-gated; spec/schema/conformance/SDK/host work tracked in [`plans/autonomous-agent-runtime.md`](./plans/autonomous-agent-runtime.md). No normative wire shape changes yet (Draft) — README RFC counts synced to 64 / Draft (15); `docs/PROTOCOL-STATUS.md` regenerated.
+Seven additive RFCs filed from the `apps/workflow-engine` demo-app gap audit against the proposed autonomous-agent-runtime feature set. All `additive`, all capability-gated; spec/schema/conformance/SDK/host work tracked in `plans/autonomous-agent-runtime.md` (a local, gitignored planning doc). No normative wire shape changes yet (Draft) — README RFC counts synced to 64 / Draft (15); `docs/PROTOCOL-STATUS.md` regenerated.
 
 - **RFC 0058** run execution bounds — `runTimeoutMs` + `maxLoopIterations` reserved keys, `limits.{maxRunDurationMs,maxLoopIterations}`, `run.terminated` event, `run_timeout` / `loop_limit_exceeded` codes (closes the no-per-run-timeout gap; `recursionLimit` only counts nodes).
 - **RFC 0059** agent workspace — `host.workspace`: versioned, atomic, tenant·workspace-scoped ground-truth file store + `workspace.updated`; new durable layer beside `MemoryAdapter`.
