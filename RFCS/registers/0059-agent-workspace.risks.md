@@ -1,0 +1,10 @@
+# RFC 0059 — Risk Register
+
+Companion to [`RFCS/0059-agent-workspace.md`](../0059-agent-workspace.md). Likelihood × Impact (H/M/L).
+
+| ID | Risk | Likelihood | Impact | Score | Mitigation | Owner | Status |
+|---|---|---|---|---|---|---|---|
+| R1 | A host implements `host.workspace` naively and leaks files across `{tenant, workspace}` (WCT-1 violation). | L | H | Med | WCT-1 protocol-tier invariant `workspace-cross-tenant-isolation` + `workspace-cross-tenant-isolation.test.ts` land WITH the implementation (not at Draft); mirrors CTI-1. | Security Architect | Open |
+| R2 | A workspace write echoes a BYOK secret in file content (WSR-1). | L | H | Med | WSR-1 reuses the SR-1 redaction mechanism; conformance composes with the redaction suite. | Security Architect | Open |
+| R3 | Confusion with existing storage capabilities (fs/blob/kv) leads a host to advertise the wrong one. | M | L | Low | The RFC's Alternatives section + the audit explicitly distinguish workspace (versioned, ETag, snapshot, workspace-scoped) from all five existing stores. | Spec Architect | Open |
+| R4 | RFC 0062 + RFC 0061 depend on 0059 for the index file + per-iteration snapshot; if 0059 stalls, both are partially dormant. | M | L | Low | Both deps are explicitly conditional on `host.workspace.supported`; neither hard-requires 0059. | Spec Architect | Open |

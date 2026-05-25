@@ -36,7 +36,26 @@ type CapabilitiesLimits struct {
 	SchemaRounds        int  `json:"schemaRounds"`
 	EnvelopesPerTurn    int  `json:"envelopesPerTurn"`
 	MaxNodeExecutions   *int `json:"maxNodeExecutions,omitempty"`
+	MaxRunDurationMs    *int `json:"maxRunDurationMs,omitempty"`  // RFC 0058
+	MaxLoopIterations   *int `json:"maxLoopIterations,omitempty"` // RFC 0058
 }
+
+// CapBreachedKind is the `kind` discriminator on a cap.breached event payload
+// (run-event-payloads.schema.json#capBreached): the four engine kinds, the
+// RFC 0008 §K wasm-* runtime caps, and the RFC 0058 run-scoped bounds.
+type CapBreachedKind string
+
+const (
+	CapBreachedClarification  CapBreachedKind = "clarification"
+	CapBreachedSchema         CapBreachedKind = "schema"
+	CapBreachedEnvelopes      CapBreachedKind = "envelopes"
+	CapBreachedNodeExecutions CapBreachedKind = "node-executions"
+	CapBreachedWasmMemory     CapBreachedKind = "wasm-memory"
+	CapBreachedWasmFuel       CapBreachedKind = "wasm-fuel"
+	CapBreachedWasmExecTime   CapBreachedKind = "wasm-execution-time"
+	CapBreachedRunDuration    CapBreachedKind = "run-duration"
+	CapBreachedLoopIterations CapBreachedKind = "loop-iterations"
+)
 
 // Capabilities mirrors `schemas/capabilities.schema.json`.
 type Capabilities struct {
@@ -83,12 +102,14 @@ type RunSnapshot struct {
 // RunConfigurable carries per-run overrides. Reserved keys are typed;
 // unknown keys live in `Extras`. See run-options.md.
 type RunConfigurable struct {
-	RecursionLimit  *int              `json:"recursionLimit,omitempty"`
-	Model           string            `json:"model,omitempty"`
-	Temperature     *float64          `json:"temperature,omitempty"`
-	MaxTokens       *int              `json:"maxTokens,omitempty"`
-	PromptOverrides map[string]string `json:"promptOverrides,omitempty"`
-	Extras          map[string]any    `json:"-"`
+	RecursionLimit    *int              `json:"recursionLimit,omitempty"`
+	RunTimeoutMs      *int              `json:"runTimeoutMs,omitempty"`      // RFC 0058
+	MaxLoopIterations *int              `json:"maxLoopIterations,omitempty"` // RFC 0058
+	Model             string            `json:"model,omitempty"`
+	Temperature       *float64          `json:"temperature,omitempty"`
+	MaxTokens         *int              `json:"maxTokens,omitempty"`
+	PromptOverrides   map[string]string `json:"promptOverrides,omitempty"`
+	Extras            map[string]any    `json:"-"`
 }
 
 // MarshalJSON folds Extras into the same JSON object so the wire shape
@@ -97,6 +118,12 @@ func (c RunConfigurable) MarshalJSON() ([]byte, error) {
 	out := make(map[string]any, 5+len(c.Extras))
 	if c.RecursionLimit != nil {
 		out["recursionLimit"] = *c.RecursionLimit
+	}
+	if c.RunTimeoutMs != nil {
+		out["runTimeoutMs"] = *c.RunTimeoutMs
+	}
+	if c.MaxLoopIterations != nil {
+		out["maxLoopIterations"] = *c.MaxLoopIterations
 	}
 	if c.Model != "" {
 		out["model"] = c.Model
@@ -310,6 +337,32 @@ type CreateAnnotationRequest struct {
 // ListAnnotationsResponse mirrors the 200 listAnnotations payload.
 type ListAnnotationsResponse struct {
 	Annotations []Annotation `json:"annotations"`
+}
+
+// WorkspaceFile mirrors workspace-file.schema.json (RFC 0059) — a versioned,
+// tenant·workspace-scoped ground-truth file. The list endpoint returns this
+// shape minus Content (metadata only).
+type WorkspaceFile struct {
+	Path        string `json:"path"`
+	Content     string `json:"content"`
+	ContentType string `json:"contentType,omitempty"`
+	Version     int    `json:"version"`
+	ETag        string `json:"etag,omitempty"`
+	UpdatedAt   string `json:"updatedAt"`
+}
+
+// PutWorkspaceFileRequest is the PUT /v1/host/workspace/files/{path} body per
+// workspace-file-create.schema.json (RFC 0059). Path is URL-bound; the host
+// assigns version/etag/updatedAt. Optimistic concurrency is expressed via the
+// If-Match header (PutWorkspaceFileOptions.IfMatch), not a body field.
+type PutWorkspaceFileRequest struct {
+	Content     string `json:"content"`
+	ContentType string `json:"contentType,omitempty"`
+}
+
+// ListWorkspaceFilesResponse mirrors the 200 listWorkspaceFiles payload.
+type ListWorkspaceFilesResponse struct {
+	Files []WorkspaceFile `json:"files"`
 }
 
 // RunAncestryParent is the populated branch of RunAncestryResponse.Parent —
@@ -572,6 +625,8 @@ var RunErrorCodes = []string{
 	"node_execution_failed",
 	"external_call_failed",
 	"recursion_limit_exceeded",
+	"run_timeout",
+	"loop_limit_exceeded",
 	"capability_not_provided",
 
 	// Approval

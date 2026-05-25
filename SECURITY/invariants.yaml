@@ -339,6 +339,22 @@ invariants:
       Defense-in-depth advisory. Workflow validation SHOULD reject
       credential-shaped strings in declared inputs. Not a hard MUST.
 
+  - id: heartbeat-state-no-secret
+    tier: advisory
+    severity: low
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests: []
+    note: |
+      RFC 0060. The `from`/`to` predicate-state tokens on a
+      `heartbeat.stateChanged` event (and any host-persisted heartbeat
+      state) SHOULD NOT carry secret or external-content material — only
+      the minimal state needed to detect a transition. Advisory, not a
+      hard MUST: heartbeat state is host-internal and not BYOK-resolved,
+      so the leak surface is low; promote to protocol-tier with a public
+      test if a host ever sources predicate state from a credentialed
+      external read. The schema (`heartbeat-state-changed.schema.json`)
+      states the constraint in its `from`/`to` descriptions.
+
   # ===== Prompt Injection =====
 
   - id: prompt-injection-input-marker

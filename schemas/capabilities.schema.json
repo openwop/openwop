@@ -44,6 +44,16 @@
           "type": "integer",
           "minimum": 1,
           "description": "Engine-side ceiling on total node executions per run. Acts as the upper bound for `RunOptions.configurable.recursionLimit`. Optional in v1; hosts that advertise it MUST enforce it."
+        },
+        "maxRunDurationMs": {
+          "type": "integer",
+          "minimum": 1000,
+          "description": "RFC 0058. Engine-side wall-clock ceiling per run (milliseconds). Upper bound for `RunOptions.configurable.runTimeoutMs`. Breach emits `cap.breached { kind: 'run-duration' }` + error `run_timeout`. Optional; hosts that advertise it MUST enforce it."
+        },
+        "maxLoopIterations": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "RFC 0058. Authoritative engine-side ceiling on agent-loop iterations. Upper bound for `RunOptions.configurable.maxLoopIterations`. Breach emits `cap.breached { kind: 'loop-iterations' }` + error `loop_limit_exceeded`. Optional; hosts that advertise it MUST enforce it."
         }
       },
       "additionalProperties": false,
@@ -998,6 +1008,17 @@
       },
       "additionalProperties": false
     },
+    "heartbeat": {
+      "type": "object",
+      "description": "RFC 0060 (`Draft`). System-managed, predicate-gated polling: a short-interval, runtime-bounded evaluation of an idempotent predicate that emits state-change events and conditionally enqueues a run, rather than re-running an agent blindly. Composes with `scheduling` (RFC 0052) for the once-per-tick interval substrate; the controlled, request-shaped exception to openwop's poll-free design (`positioning.md`).",
+      "required": ["supported"],
+      "properties": {
+        "supported": { "type": "boolean" },
+        "minIntervalSec": { "type": "integer", "minimum": 1, "description": "Smallest interval the host honors; requests below it clamp up." },
+        "maxRuntimeMs": { "type": "integer", "minimum": 1, "description": "Per-tick predicate-evaluation budget; bounded above by `capabilities.limits.maxRunDurationMs` (RFC 0058) as the hard ceiling. Over-budget evaluation is terminated and reported as `heartbeat.evaluated { status: 'timeout' }`." }
+      },
+      "additionalProperties": false
+    },
     "deadLetter": {
       "type": "object",
       "description": "RFC 0053 (`Draft`). Run-level dead-letter sink for terminally-failed runs/nodes. On retry exhaustion (RFC 0009), the run is routed to a durable, inspectable sink and a `run.dead_lettered` event is emitted; dead-lettered runs remain fork-eligible (RFC 0011) for the retention window. Distinct from `queueBus.deadLetterSupported`, which dead-letters transport *messages*, not *runs*.",
@@ -1005,6 +1026,19 @@
       "properties": {
         "supported": { "type": "boolean" },
         "retentionDays": { "type": "integer", "minimum": 1, "description": "Days a dead-lettered run is retained for inspection/fork before purge." }
+      },
+      "additionalProperties": false
+    },
+    "workspace": {
+      "type": "object",
+      "description": "RFC 0059 (`Active`). Versioned, tenant·workspace-scoped ground-truth file store (the `host.workspace` capability). Scopes to the RFC 0048 owner triple. Atomic, optimistically-concurrent writes (`If-Match` ETag); a read snapshot is exposed to every run at `run.started` (deterministic for replay). Complements the transactional `MemoryAdapter` (RFC 0004) with a durable, path-addressable file layer. Endpoints (`/v1/host/workspace/files[/{path}]`) are gated on `supported: true`; unsupported hosts return `501 capability_not_provided`. SECURITY invariants `workspace-cross-tenant-isolation` (WCT-1) + the WSR-1 secret-redaction MUST land with their conformance tests at implementation (RFC 0059 §E).",
+      "required": ["supported"],
+      "properties": {
+        "supported": { "type": "boolean", "description": "Host implements the RFC 0059 workspace file store + endpoints + `workspace.updated` event." },
+        "versioned": { "type": "boolean", "description": "Each write bumps a monotonic `version`; prior versions are retrievable via `GET …/files/{path}?version=N`. Latest-version retrieval is the MUST regardless; history is best-effort up to `maxVersions`." },
+        "maxFileBytes": { "type": "integer", "minimum": 1, "description": "Per-file byte ceiling; writes beyond it return `workspace_too_large`." },
+        "maxFiles": { "type": "integer", "minimum": 1, "description": "Per-workspace file-count ceiling." },
+        "maxVersions": { "type": "integer", "minimum": 1, "description": "When `versioned: true`, the number of historical versions a host advertises it will retain (history best-effort beyond the mandatory latest)." }
       },
       "additionalProperties": false
     },

@@ -13,6 +13,8 @@
 | **Supersedes** | — |
 | **Superseded by** | — |
 
+> **Amended (additive) 2026-05-25:** RFC 0064 (tool invocation hooks) extends the `agent.toolCalled` / `agent.toolReturned` events with optional `argsHash` / `principal` / `transport` (on `toolCalled`) + `status` / `durationMs` (on `toolReturned`) fields. The events are `additionalProperties: true`, `required` is unchanged, and `agentId` **stays required** (non-agent egress emits under the reserved synthetic agent id `core.system`). Non-breaking per `COMPATIBILITY.md` §2.1; no `eventLogSchemaVersion` bump.
+
 ## Summary
 
 Introduce a protocol-level `AgentRef` wire shape and a closed set of five `agent.*` reasoning events (`agent.reasoned`, `agent.toolCalled`, `agent.toolReturned`, `agent.handoff`, `agent.decided`). `AgentRef` identifies which agent took which turn inside a run; the five events expose agent decision-making to observers, debuggers, and replay without prescribing the agent runtime. The shape is additive to v1: pre-RFC-0002 runs simply omit the agent fields and continue to fold correctly.

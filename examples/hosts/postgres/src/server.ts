@@ -64,6 +64,17 @@ import {
 } from './observability.js';
 import { sanitizeCostAttrs, applyCostRollup, snapshotCostRollup } from './cost.js';
 import {
+  evaluateModelCapabilityGate,
+  buildInsufficientPayload,
+  buildSubstitutedPayload,
+  aggregateAdvertisedCapabilities,
+  FIXTURE_NODE_MODEL_CAPABILITIES,
+  ACTIVE_PROVIDER,
+  ACTIVE_MODEL,
+  SUPPORTED_PROVIDERS,
+  SUBSTITUTION_SUPPORTED,
+} from './modelCapability.js';
+import {
   setupInterruptSchema,
   createInterrupt,
   getInterrupt,
@@ -841,6 +852,41 @@ async function executeNode(
       });
       return 'failed';
     }
+  }
+
+  // RFC 0031 §B — model-capability gate. A node declaring
+  // `requiredModelCapabilities` the active model doesn't advertise is
+  // refused at dispatch with `model.capability.insufficient` (emitted
+  // BEFORE node.failed per §D) + `capability_not_provided`. Runs before
+  // node.started so the node never executes (no node.completed / provider
+  // / envelope events). substitutionSupported is false, so a declared
+  // fallbackModel does not trigger substitution.
+  const requiredModelCaps = FIXTURE_NODE_MODEL_CAPABILITIES[node.typeId];
+  if (requiredModelCaps && requiredModelCaps.length > 0) {
+    const outcome = evaluateModelCapabilityGate({
+      module: { requiredModelCapabilities: requiredModelCaps },
+      activeProvider: ACTIVE_PROVIDER,
+      activeModel: ACTIVE_MODEL,
+      substitutionSupported: SUBSTITUTION_SUPPORTED,
+      supportedProviders: SUPPORTED_PROVIDERS,
+    });
+    if (outcome.route === 'refuse') {
+      await appendEvent(runId, 'model.capability.insufficient', {
+        nodeId: node.id,
+        data: buildInsufficientPayload(outcome, node.id, ACTIVE_PROVIDER, ACTIVE_MODEL),
+      });
+      await appendEvent(runId, 'node.failed', {
+        nodeId: node.id,
+        data: { code: 'capability_not_provided' },
+      });
+      runFailureErrors.set(runId, {
+        code: 'capability_not_provided',
+        message: `Node "${node.id}" model capabilities not satisfied: missing ${outcome.missingCapabilities.join(', ')}.`,
+      });
+      return 'failed';
+    }
+    // route 'dispatch' | 'substitute' → fall through (the reference host
+    // advertises substitutionSupported:false, so 'substitute' won't arise here).
   }
 
   await appendEvent(runId, 'node.started', { nodeId: node.id });
@@ -2713,6 +2759,16 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
         // `OPENWOP_AI_POLICY_<PROVIDER>` env vars; resolver-outage
         // failures fail-open to `optional`.
         aiProviders: REFERENCE_AI_PROVIDERS_CAPABILITY,
+        // RFC 0031 §E — the host honors `NodeModule.requiredModelCapabilities`
+        // at dispatch (model-capability gate in executeNode) and emits
+        // `model.capability.insufficient`. No substitution posture
+        // (substitutionSupported: false). `advertised` is the union of the
+        // host's providers' verified capabilities.
+        modelCapabilities: {
+          supported: true,
+          advertised: aggregateAdvertisedCapabilities(SUPPORTED_PROVIDERS),
+          substitutionSupported: SUBSTITUTION_SUPPORTED,
+        },
         // Phase H.2 — capabilities.md §`mcpClient` (additive). MCP
         // tool-call surface via HTTP/JSON-RPC transport. Operators
         // configure individual servers via OPENWOP_MCP_SERVER_<ID>
@@ -3344,6 +3400,68 @@ async function handleBulkCancel(req: IncomingMessage, res: ServerResponse): Prom
     }),
   );
   sendJSON(res, 200, { results });
+}
+
+/**
+ * RFC 0031 §B gate exerciser — `POST /v1/host/sample/test/evaluate-model-capability-gate`.
+ * Pure-function exerciser: drives `evaluateModelCapabilityGate` with synthetic
+ * input and returns the routing outcome + the event the host would emit. The
+ * conformance suite uses this to assert the substitute/refuse/dispatch decision
+ * matrix + event payloads (RFC 0031 §D) without a full run. Does NOT emit into
+ * any event log; side-effect-free. Body: { module, activeProvider, activeModel,
+ * substitutionSupported, supportedProviders, nodeId }. Response: { outcome, event }.
+ */
+async function handleEvaluateModelCapabilityGate(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  if (!(await checkAuth(req, res))) return;
+  const bodyText = await readBody(req);
+  let body: {
+    module?: { requiredModelCapabilities?: unknown; fallbackModel?: unknown };
+    activeProvider?: unknown;
+    activeModel?: unknown;
+    substitutionSupported?: unknown;
+    supportedProviders?: unknown;
+    nodeId?: unknown;
+  };
+  try {
+    body = JSON.parse(bodyText) as typeof body;
+  } catch {
+    sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+    return;
+  }
+  if (typeof body.activeProvider !== 'string' || typeof body.activeModel !== 'string') {
+    sendError(res, 400, 'validation_error', 'activeProvider + activeModel MUST be strings.');
+    return;
+  }
+  const requiredCaps = Array.isArray(body.module?.requiredModelCapabilities)
+    ? body.module.requiredModelCapabilities.filter((c): c is string => typeof c === 'string')
+    : [];
+  const fr = body.module?.fallbackModel;
+  const fallback =
+    fr && typeof fr === 'object'
+      && typeof (fr as { provider?: unknown }).provider === 'string'
+      && typeof (fr as { model?: unknown }).model === 'string'
+      ? { provider: (fr as { provider: string }).provider, model: (fr as { model: string }).model }
+      : undefined;
+  const outcome = evaluateModelCapabilityGate({
+    module: { requiredModelCapabilities: requiredCaps, ...(fallback ? { fallbackModel: fallback } : {}) },
+    activeProvider: body.activeProvider,
+    activeModel: body.activeModel,
+    substitutionSupported: body.substitutionSupported === true,
+    supportedProviders: Array.isArray(body.supportedProviders)
+      ? body.supportedProviders.filter((p): p is string => typeof p === 'string')
+      : [],
+  });
+  const nodeId = typeof body.nodeId === 'string' && body.nodeId.length > 0 ? body.nodeId : 'test-node';
+  let event: { type: string; payload: Record<string, unknown> } | null = null;
+  if (outcome.route === 'substitute') {
+    event = { type: 'model.capability.substituted', payload: buildSubstitutedPayload(outcome, nodeId) };
+  } else if (outcome.route === 'refuse') {
+    event = { type: 'model.capability.insufficient', payload: buildInsufficientPayload(outcome, nodeId, body.activeProvider, body.activeModel) };
+  }
+  sendJSON(res, 200, { outcome, event });
 }
 
 /**
@@ -4339,6 +4457,13 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (method === 'POST' && path === '/v1/webhooks') return handleRegisterWebhook(req, res);
   if (method === 'POST' && path === '/v1/runs') return handleCreateRun(req, res);
   if (method === 'POST' && path === '/v1/runs:bulk-cancel') return handleBulkCancel(req, res);
+  // RFC 0031 §B — pure-function exerciser for the model-capability gate's
+  // substitute/refuse/dispatch decision matrix + the emitted event payload.
+  // Always on: side-effect-free (no event-log write, no secrets), so it can
+  // be exercised by the conformance suite without a full run.
+  if (method === 'POST' && path === '/v1/host/sample/test/evaluate-model-capability-gate') {
+    return handleEvaluateModelCapabilityGate(req, res);
+  }
   // RFC 0012 test seams — only enabled when both
   // OPENWOP_MEMORY_COMPACTION=true AND OPENWOP_TEST_TRIGGER_COMPACTION=true.
   // The protocol normates `trigger: 'host-managed'`; these seams let

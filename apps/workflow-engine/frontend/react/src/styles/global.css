@@ -1170,6 +1170,22 @@ pre {
   font-size: 11px;
 }
 
+/* Conformance & profiles card — first-column label width + chip-list layout
+ * for the multi-profile cell. Tokens-driven; no per-row inline styles. */
+.cap-table-label {
+  width: 12rem;
+}
+
+.cap-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.cap-badge-img {
+  vertical-align: middle;
+}
+
 /* ─── xyflow workflow canvas — editorial theming via vendor CSS-variable
  * surface (preferred) + direct selector overrides where needed. Scope is
  * .builder-canvas; documented in DESIGN.app.md §7. */

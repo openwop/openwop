@@ -61,6 +61,8 @@ tags:
     description: Audit-log integrity verification (gated on the `openwop-audit-log-integrity` profile).
   - name: prompts
     description: Prompt-template library — list, fetch, render, mutate (RFC 0028; gated on `capabilities.prompts.*`).
+  - name: host
+    description: Host-capability resources — e.g. the RFC 0059 agent workspace file store (gated on `capabilities.workspace.*`).
   - name: packs-test
     description: |
       RFC 0025 (`Draft`). Test-mode mirror of the production `/v1/packs/*` publish/get/delete/sig surface against
@@ -422,6 +424,146 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '501':
           description: 'Host does not advertise capabilities.feedback.supported (RFC 0056).'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+
+  # ── Agent workspace files (RFC 0059) ─────────────────────────────────
+  # Gated on `capabilities.workspace.supported: true`. A versioned,
+  # tenant·workspace-scoped (RFC 0048) ground-truth file store with atomic,
+  # optimistically-concurrent (`If-Match`) writes. A successful PUT/DELETE
+  # emits a content-free `workspace.updated` event. Hosts without the
+  # advertised capability return `501 capability_not_provided`.
+  /v1/host/workspace/files:
+    get:
+      tags: [host]
+      summary: List workspace file metadata for the caller's tenant·workspace (RFC 0059).
+      description: |
+        Returns file metadata (no bodies) for the caller's `{tenant,
+        workspace}` per RFC 0059 §C. Optional `?prefix=` filters the flat
+        `path` namespace to entries starting with the given prefix.
+      operationId: listWorkspaceFiles
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePrefix'
+      responses:
+        '200':
+          description: Workspace file metadata (tenant·workspace-scoped; bodies omitted).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [files]
+                properties:
+                  files:
+                    type: array
+                    items:
+                      $ref: '../schemas/workspace-file.schema.json'
+                additionalProperties: false
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '501':
+          description: 'Host does not advertise capabilities.workspace.supported (RFC 0059).'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+
+  /v1/host/workspace/files/{path}:
+    get:
+      tags: [host]
+      summary: Read one workspace file (RFC 0059).
+      description: |
+        Returns the `WorkspaceFile` at `path` for the caller's `{tenant,
+        workspace}`. When `capabilities.workspace.versioned: true`, an
+        optional `?version=N` returns the historical snapshot at version N.
+      operationId: getWorkspaceFile
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/WorkspaceVersion'
+      responses:
+        '200':
+          description: The workspace file (current version, or `?version=N` when versioned).
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/workspace-file.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '501':
+          description: 'Host does not advertise capabilities.workspace.supported (RFC 0059).'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+    put:
+      tags: [host]
+      summary: Atomic create/replace of a workspace file (RFC 0059).
+      description: |
+        Atomically creates or replaces the file at `path` per RFC 0059 §C.
+        MUST honor `If-Match: <etag>` — a stale token returns `409
+        workspace_conflict` (`details.currentVersion` carries the live
+        version). On success the host bumps `version`, recomputes `etag`,
+        and emits a `workspace.updated` event. A `content` exceeding
+        `capabilities.workspace.maxFileBytes` returns `workspace_too_large`.
+      operationId: putWorkspaceFile
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/workspace-file-create.schema.json'
+      responses:
+        '200':
+          description: File created or replaced. Returns the persisted WorkspaceFile.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/workspace-file.schema.json'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: 'Stale `If-Match` — the file changed since the supplied etag (`workspace_conflict`).'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '413':
+          description: 'Content exceeds `capabilities.workspace.maxFileBytes` (`workspace_too_large`).'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '501':
+          description: 'Host does not advertise capabilities.workspace.supported (RFC 0059).'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+    delete:
+      tags: [host]
+      summary: Delete a workspace file (RFC 0059).
+      description: |
+        Removes the file at `path` (and, when `versioned: true`, writes a
+        tombstone). Emits a `workspace.updated` event on success.
+      operationId: deleteWorkspaceFile
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '204':
+          description: File deleted.
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '501':
+          description: 'Host does not advertise capabilities.workspace.supported (RFC 0059).'
           content:
             application/json:
               schema:
@@ -1512,6 +1654,43 @@ components:
         Server caches `(tenantId, endpoint, key)` → response for ≥24h.
         Duplicate requests return the cached response with header
         `openwop-Idempotent-Replay: true`.
+
+    WorkspacePath:
+      in: path
+      name: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[A-Za-z0-9][A-Za-z0-9._/-]{0,255}$'
+      description: |
+        RFC 0059 workspace-relative file path. Flat namespace with
+        `/`-in-names; no `..`, no leading `/`. Matches
+        `workspace-file.schema.json#path`.
+
+    WorkspacePrefix:
+      in: query
+      name: prefix
+      required: false
+      schema: { type: string, maxLength: 256 }
+      description: RFC 0059. Optional prefix filter over the flat `path` namespace for `listWorkspaceFiles`.
+
+    WorkspaceVersion:
+      in: query
+      name: version
+      required: false
+      schema: { type: integer, minimum: 1 }
+      description: |
+        RFC 0059. When `capabilities.workspace.versioned: true`, request the
+        historical snapshot at this version. Absent = latest.
+
+    IfMatch:
+      in: header
+      name: If-Match
+      required: false
+      schema: { type: string, maxLength: 255 }
+      description: |
+        RFC 0059 optimistic-concurrency token — the file's current `etag`.
+        A `PUT` carrying a stale `If-Match` returns `409 workspace_conflict`.
 
     PackName:
       in: path

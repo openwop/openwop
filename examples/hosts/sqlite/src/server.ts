@@ -96,6 +96,16 @@ import {
   recordInboundTraceContext,
 } from './observability.js';
 import { sanitizeCostAttrs, applyCostRollup, snapshotCostRollup } from './cost.js';
+import {
+  evaluateModelCapabilityGate,
+  buildInsufficientPayload,
+  aggregateAdvertisedCapabilities,
+  FIXTURE_NODE_MODEL_CAPABILITIES,
+  ACTIVE_PROVIDER,
+  ACTIVE_MODEL,
+  SUPPORTED_PROVIDERS,
+  SUBSTITUTION_SUPPORTED,
+} from './modelCapability.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
@@ -691,6 +701,38 @@ async function executeNode(
     }
   }
 
+  // RFC 0031 §B — model-capability gate. A node declaring
+  // `requiredModelCapabilities` the active model doesn't advertise is
+  // refused at dispatch with `model.capability.insufficient` (emitted
+  // BEFORE node.failed per §D) + `capability_not_provided`. Runs before
+  // node.started so the node never executes. substitutionSupported is
+  // false, so a declared fallbackModel does not trigger substitution.
+  const requiredModelCaps = FIXTURE_NODE_MODEL_CAPABILITIES[node.typeId];
+  if (requiredModelCaps && requiredModelCaps.length > 0) {
+    const outcome = evaluateModelCapabilityGate({
+      module: { requiredModelCapabilities: requiredModelCaps },
+      activeProvider: ACTIVE_PROVIDER,
+      activeModel: ACTIVE_MODEL,
+      substitutionSupported: SUBSTITUTION_SUPPORTED,
+      supportedProviders: SUPPORTED_PROVIDERS,
+    });
+    if (outcome.route === 'refuse') {
+      appendEvent(runId, 'model.capability.insufficient', {
+        nodeId: node.id,
+        data: buildInsufficientPayload(outcome, node.id, ACTIVE_PROVIDER, ACTIVE_MODEL),
+      });
+      appendEvent(runId, 'node.failed', {
+        nodeId: node.id,
+        data: { code: 'capability_not_provided' },
+      });
+      runFailureErrors.set(runId, {
+        code: 'capability_not_provided',
+        message: `Node "${node.id}" model capabilities not satisfied: missing ${outcome.missingCapabilities.join(', ')}.`,
+      });
+      return 'failed';
+    }
+  }
+
   appendEvent(runId, 'node.started', { nodeId: node.id });
   startNodeSpan(runId, node.id, node.typeId);
 
@@ -705,37 +747,6 @@ async function executeNode(
       // are seeded from inputs at run-create, so this is a no-op at the
       // state level — the test asserts the round-trip identity.
       break;
-
-    case 'conformance.modelCapability.insufficient': {
-      // RFC 0031 §B step 4 + §D — this conformance-only typeId declares
-      // `requiredModelCapabilities` the host's active provider cannot
-      // satisfy, with no viable fallback. The host MUST emit
-      // `model.capability.insufficient` BEFORE the node failure, then fail
-      // the run with `capability_not_provided` (capabilities.md
-      // §"Unsupported capability — refusal contract"). The SQLite host
-      // routes no AI and advertises no model capabilities, so this typeId
-      // always takes the refuse branch. No downstream envelope event is
-      // emitted — the node never dispatches to a model (returning here
-      // skips the post-switch `node.completed`).
-      const missingCapabilities = ['nonexistent-capability-9b3f'];
-      appendEvent(runId, 'model.capability.insufficient', {
-        nodeId: node.id,
-        data: {
-          nodeId: node.id,
-          provider: 'none',
-          model: 'none',
-          missingCapabilities,
-          fallbackAttempted: false,
-        },
-      });
-      const err = {
-        code: 'capability_not_provided',
-        message: `model-capability gate (node "${node.id}"): active provider does not satisfy required model capabilities [${missingCapabilities.join(', ')}] and no viable fallback is declared.`,
-      };
-      appendEvent(runId, 'node.failed', { nodeId: node.id, data: err });
-      runFailureErrors.set(runId, err);
-      return 'failed';
-    }
 
     case 'conformance.secret.echo': {
       // openwop-smoke-byok-roundtrip fixture. Resolve a host-provisioned
@@ -1812,6 +1823,17 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
         supported: true,
         scopes: ['tenant', 'user'],
         resolution: 'host-managed',
+      },
+      // RFC 0031 §E — the host honors `NodeModule.requiredModelCapabilities`
+      // at dispatch (model-capability gate in executeNode) and emits
+      // `model.capability.insufficient`. `advertised: []` because this host
+      // routes no AI calls (no `aiProviders` block) — its active model
+      // satisfies NO model capability, so any node requiring one is refused.
+      // No substitution posture.
+      modelCapabilities: {
+        supported: true,
+        advertised: aggregateAdvertisedCapabilities(SUPPORTED_PROVIDERS),
+        substitutionSupported: SUBSTITUTION_SUPPORTED,
       },
       // production-profile.md §Compatibility baseline. The SQLite
       // reference host meets durability + idempotency + audit-log
