@@ -69,17 +69,26 @@ export interface BuilderState {
   setSelection(ids: string[]): void;
   selectEdge(id: string | null): void;
   addNode(kind: string, position: { x: number; y: number }): string;
-  /** Clone a node (duplicate / paste) — new id, copied kind/name/config,
-   *  at `position`. Selects the clone. Returns the new id. */
-  cloneNode(source: Pick<BuilderNode, 'kind' | 'name' | 'config'>, position: { x: number; y: number }): string;
   /** Duplicate every node in `ids` at a +offset; selects the clones. */
   cloneNodes(ids: string[]): void;
+  /** Paste clipboard entries (kind/name/config + dx/dy from the group's
+   *  top-left) anchored at `anchor`; selects the pasted nodes. One undo
+   *  entry. */
+  pasteNodes(
+    entries: { kind: string; name: string; config: Record<string, unknown>; dx: number; dy: number }[],
+    anchor: { x: number; y: number },
+  ): void;
   /** Align / distribute the selected nodes by their top-left positions
    *  (no measured dimensions needed): left edges, top edges, or even
    *  horizontal / vertical spacing. One undo entry. */
   alignNodes(ids: string[], mode: 'left' | 'top' | 'distribute-h' | 'distribute-v'): void;
   updateNode(id: string, patch: Partial<Pick<BuilderNode, 'name' | 'position' | 'config'>>): void;
+  /** Commit final positions for several nodes in one undo entry — used for
+   *  group drag so one gesture is one undo. */
+  moveNodes(moves: { id: string; position: { x: number; y: number } }[]): void;
   removeNode(id: string): void;
+  /** Remove several nodes (and their incident edges) in one undo entry. */
+  removeNodes(ids: string[]): void;
   addEdge(edge: Omit<BuilderEdge, 'id'>): void;
   updateEdge(id: string, patch: Partial<Omit<BuilderEdge, 'id' | 'source' | 'target' | 'sourcePort' | 'targetPort'>>): void;
   removeEdge(id: string): void;
@@ -174,21 +183,6 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     return id;
   },
 
-  cloneNode(source, position) {
-    const id = `n_${crypto.randomUUID().slice(0, 8)}`;
-    const node: BuilderNode = {
-      id,
-      kind: source.kind,
-      name: source.name,
-      position,
-      config: { ...source.config },
-    };
-    pushHistory(set, get);
-    set({ nodes: [...get().nodes, node], selectedNodeId: id, selectedNodeIds: [id] });
-    get().persist();
-    return id;
-  },
-
   cloneNodes(ids) {
     const set0 = new Set(ids);
     const sources = get().nodes.filter((n) => set0.has(n.id));
@@ -200,6 +194,25 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       name: s.name,
       position: { x: s.position.x + OFFSET, y: s.position.y + OFFSET },
       config: { ...s.config },
+    }));
+    pushHistory(set, get);
+    const cloneIds = clones.map((c) => c.id);
+    set({
+      nodes: [...get().nodes, ...clones],
+      selectedNodeIds: cloneIds,
+      selectedNodeId: cloneIds.length === 1 ? cloneIds[0]! : null,
+    });
+    get().persist();
+  },
+
+  pasteNodes(entries, anchor) {
+    if (entries.length === 0) return;
+    const clones: BuilderNode[] = entries.map((e) => ({
+      id: `n_${crypto.randomUUID().slice(0, 8)}`,
+      kind: e.kind,
+      name: e.name,
+      position: { x: anchor.x + e.dx, y: anchor.y + e.dy },
+      config: { ...e.config },
     }));
     pushHistory(set, get);
     const cloneIds = clones.map((c) => c.id);
@@ -257,6 +270,18 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     get().persist();
   },
 
+  moveNodes(moves) {
+    if (moves.length === 0) return;
+    const byId = new Map(moves.map((m) => [m.id, m.position]));
+    pushHistory(set, get);
+    set({
+      nodes: get().nodes.map((n) =>
+        byId.has(n.id) ? { ...n, position: byId.get(n.id)! } : n,
+      ),
+    });
+    get().persist();
+  },
+
   removeNode(id) {
     pushHistory(set, get);
     set({
@@ -264,6 +289,20 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       edges: get().edges.filter((e) => e.source !== id && e.target !== id),
       selectedNodeId: get().selectedNodeId === id ? null : get().selectedNodeId,
       selectedNodeIds: get().selectedNodeIds.filter((x) => x !== id),
+    });
+    get().persist();
+  },
+
+  removeNodes(ids) {
+    if (ids.length === 0) return;
+    const doomed = new Set(ids);
+    pushHistory(set, get);
+    set({
+      nodes: get().nodes.filter((n) => !doomed.has(n.id)),
+      edges: get().edges.filter((e) => !doomed.has(e.source) && !doomed.has(e.target)),
+      selectedNodeId:
+        get().selectedNodeId && doomed.has(get().selectedNodeId!) ? null : get().selectedNodeId,
+      selectedNodeIds: get().selectedNodeIds.filter((x) => !doomed.has(x)),
     });
     get().persist();
   },
