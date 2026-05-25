@@ -1222,6 +1222,17 @@ async function executeNode(
           // each child gets a distinct (parent_run, parent_node, workerIdx)
           // tuple so the per-node lookup matches only the first child and
           // subsequent siblings always create fresh.
+          //
+          // Known limitation (parity with the Postgres reference): the
+          // worker-0 key is `node.id`, so if the SAME dispatch node were
+          // re-entered via loopback on a SEPARATE later `next-worker`
+          // decision, worker-0's lookup would reuse this tick's child
+          // instead of dispatching the new worker. No conformance fixture
+          // exercises this — the §D cross-worker fixture emits a single
+          // `next-worker` decision carrying all workers, and every other
+          // fixture's second decision is `terminate`. A production host
+          // that drives multi-tick worker sequences would key on the
+          // decision/tick index too.
           const childParentNodeId = workerIdx === 0 ? node.id : `${node.id}#${workerIdx}`;
           const existingChild = db
             .prepare('SELECT run_id FROM runs WHERE parent_run_id = ? AND parent_node_id = ?')

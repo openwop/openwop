@@ -4249,6 +4249,12 @@ async function handleEventsPoll(
 // answerable with a 404 that leaks whether the run/artifact exists
 // (cross-tenant existence oracle). Auth first, then a 404
 // `artifact_not_found` for the authenticated caller.
+//
+// `checkAuth` validates the bearer token but does not enforce the
+// `artifacts:read` scope named in rest-endpoints.md §Artifacts —
+// consistent with this host's coarse single-API-key auth model (no
+// endpoint does scope-granular checks). A host with per-scope tokens
+// would additionally assert the `artifacts:read` scope here.
 async function handleGetArtifact(
   req: IncomingMessage,
   res: ServerResponse,
