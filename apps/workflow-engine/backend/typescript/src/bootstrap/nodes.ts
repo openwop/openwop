@@ -33,6 +33,7 @@ import {
 } from '../host/envelopeReliabilityEmit.js';
 import { dispatchSubRun, type SubRunResult } from '../subruns/subRunDispatcher.js';
 import { registerMockAgentNode } from './conformanceMockAgent.js';
+import { storeMediaAsset } from '../host/inMemorySurfaces.js';
 
 const noopNode: NodeModule = {
   typeId: 'core.noop',
@@ -1489,6 +1490,54 @@ function formatSubRunResult(r: SubRunResult): string {
   });
 }
 
+// A 1×1 transparent PNG — the default asset the media-emit demo node serves
+// when the caller supplies no image of its own.
+const DEMO_PNG_1x1_BASE64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+
+/**
+ * RFC 0055 §C demo producer. Stores an image asset in the host's media
+ * store (tenant-scoped capability-token URL) and emits a `media.image`
+ * event referencing it BY URL — never inlining the binary. This is the
+ * "producer" the §C serving + §B rendering rails were built to carry: a
+ * run now has a `media.image` in its event log + debug bundle, served
+ * from `GET /v1/host/sample/assets/{token}`.
+ *
+ * Inputs (all optional): `contentBase64` + `mimeType` to emit a
+ * caller-supplied image; otherwise a 1×1 PNG. The emitted event +
+ * returned outputs carry `meta.rendering: { display: 'image' }` so a
+ * consumer renders it inline.
+ */
+const sampleImageEmitNode: NodeModule = {
+  typeId: 'local.sample.demo.image-emit',
+  version: '0.1.0',
+  async execute(ctx) {
+    const inputs = (ctx.inputs && typeof ctx.inputs === 'object') ? (ctx.inputs as Record<string, unknown>) : {};
+    const contentBase64 = typeof inputs.contentBase64 === 'string' && inputs.contentBase64.length > 0
+      ? inputs.contentBase64
+      : DEMO_PNG_1x1_BASE64;
+    const mimeType = typeof inputs.mimeType === 'string' && inputs.mimeType.length > 0
+      ? inputs.mimeType
+      : 'image/png';
+    const alt = typeof inputs.alt === 'string' ? inputs.alt : 'Demo image (RFC 0055 media.image)';
+
+    const stored = storeMediaAsset(ctx.tenantId, { contentBase64, contentType: mimeType });
+
+    // RFC 0055 §C rule 1 + 3: reference the asset by its tenant-scoped URL,
+    // never inline the binary. The event lands in the run event log + debug
+    // bundle (flipping the §C debug-bundle conformance assertion live).
+    const payload = {
+      url: stored.url,
+      bytes: stored.bytes,
+      mimeType,
+      meta: { rendering: { display: 'image', mimeType, alt } },
+    };
+    await ctx.emit('media.image', payload);
+
+    return { status: 'success', outputs: { image: payload } };
+  },
+};
+
 const sampleUppercaseNode: NodeModule = {
   typeId: 'local.sample.demo.uppercase',
   version: '0.1.0',
@@ -1656,6 +1705,7 @@ export function ensureNodesRegistered(): void {
   registry.register(clarificationGateNode);
   registry.register(interruptNode);
   registry.register(sampleUppercaseNode);
+  registry.register(sampleImageEmitNode);
   registry.register(sampleMockAiNode);
   registry.register(sampleChatResponderNode);
   // RFC 0023 — conformance-only typeId for agent-event emission hooks.

@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### feat(app): media-emitting demo node — closes the RFC 0055 §C loop end-to-end (2026-05-25)
+
+Adds the **producer** the RFC 0055 §C serving + §B rendering rails were built to carry. A new demo node `local.sample.demo.image-emit` stores an image in the host media store and emits a `media.image` event referencing it by tenant-scoped URL (never inlined), so a run now has a `media.image` in its event log + debug bundle, served from `GET /v1/host/sample/assets/{token}`. The builder palette gains the node (static catalog entry); the run-detail event stream renders `media.{image,audio,file}` events inline (thumbnail / audio player / download link, with URL sanitization). New backend test runs the node and asserts the debug bundle carries the media.image by URL + the URL resolves to the PNG — closing the produce → store → serve → debug-bundle loop and giving the §C debug-bundle conformance assertion a real run to activate against. App + sample-host only; no protocol-corpus change. Backend 294 tests pass; frontend build clean.
+
 ### RFC 0055 follow-ups — model-capability badge (§A) + debug-bundle media-reference assertion (§C) (2026-05-25)
 
 Closes the two deferred RFC 0055 follow-ups. **§A:** the builder model picker (`ModelPickerInput`) now renders per-model capability pills (📷 Vision / 🛠 Tools / ⌗ Structured) for the selected model from `providers.json`, so a user sees whether the chosen model supports vision before relying on it. **§C:** the debug-bundle `it.todo` in `media-url-inline-cap.test.ts` is replaced by a live capability-gated assertion of RFC 0055 §C rule 3 — a `media.*` payload appearing in a run's debug bundle MUST be a URL reference, never inlined binary; gated on `aiProviders.maxInlineMediaBytes` + `debugBundle.supported`, soft-skips on hosts (incl. the reference host) that don't emit media into runs. App + conformance only; `openwop:check` 9/9. All additive.

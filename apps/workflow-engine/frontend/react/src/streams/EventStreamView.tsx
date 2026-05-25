@@ -1,8 +1,50 @@
 import type { RunEventDoc } from '@openwop/openwop';
+import { config } from '../client/config.js';
 
 interface Props {
   events: readonly RunEventDoc[];
   onForkFrom?: (sequence: number) => void;
+}
+
+/** Resolve a host-served asset URL (RFC 0055 §C — relative `/v1/host/...`)
+ *  against the API base. Only http(s) / `/`-relative pass; an LLM-influenced
+ *  `javascript:`/`data:` URL is refused (this renders into a live <img>). */
+function resolveAssetUrl(url: unknown): string | null {
+  if (typeof url !== 'string' || url.length === 0) return null;
+  const u = url.trim();
+  if (u.startsWith('/')) return `${config.baseUrl}${u}`;
+  return /^https?:\/\//i.test(u) ? u : null;
+}
+
+/** RFC 0055 §C — render a `media.{image,audio,file}` event's referenced asset
+ *  inline so the run's emitted media is actually visible, not just JSON. */
+function MediaEventPreview({ type, payload }: { type: string; payload: unknown }): JSX.Element | null {
+  const p = (payload && typeof payload === 'object' ? payload : {}) as {
+    url?: unknown;
+    mimeType?: unknown;
+    meta?: { rendering?: { alt?: unknown } };
+  };
+  const src = resolveAssetUrl(p.url);
+  if (!src) return null;
+  const alt = typeof p.meta?.rendering?.alt === 'string' ? p.meta.rendering.alt : 'emitted media';
+  if (type === 'media.image') {
+    return (
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        style={{ display: 'block', marginTop: 4, maxWidth: 200, maxHeight: 160, borderRadius: 4, border: '1px solid var(--color-border)' }}
+      />
+    );
+  }
+  if (type === 'media.audio') {
+    return <audio controls preload="none" src={src} style={{ display: 'block', marginTop: 4, height: 28 }} />;
+  }
+  return (
+    <a href={src} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 4, fontSize: 12 }}>
+      📎 download asset
+    </a>
+  );
 }
 
 export function EventStreamView({ events, onForkFrom }: Props) {
@@ -32,6 +74,9 @@ export function EventStreamView({ events, onForkFrom }: Props) {
               <summary className="muted">payload</summary>
               <pre>{JSON.stringify(ev.payload, null, 2)}</pre>
             </details>
+          )}
+          {typeof ev.type === 'string' && ev.type.startsWith('media.') && (
+            <MediaEventPreview type={ev.type} payload={ev.payload} />
           )}
         </div>
       ))}
