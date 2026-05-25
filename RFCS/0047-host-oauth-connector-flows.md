@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0047 |
 | **Title** | `host.oauth` capability — the host performs the OAuth 2.0 authorization-code + refresh dance on a user's behalf and persists the result as a `host.credentials` entry, so a connector pack declares only *which provider + scopes* it needs, not *how* the token is obtained |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-24 |
-| **Updated** | 2026-05-24 |
+| **Updated** | 2026-05-25 (Draft → Active: MyndHyve non-steward implementation landed — advertise + behavioral seams shipped per `docs/openwop-adoption/0045-0054-cohort-summary.md` (MyndHyve, 2026-05-25). Active → Accepted is gated on the published `@openwop/openwop-conformance@1.6.0` conformance run against `api.myndhyve.ai/workflow-runtime` reporting pass, per `RFCS/0001` §"Promotion to Accepted".) |
 | **Affects** | `schemas/capabilities.schema.json` (additive `host.oauth` block) · `schemas/node-pack-manifest.schema.json` (additive node `auth` declaration) · `spec/v1/auth.md` (closes the OAuth authorization-code "Open spec gap") · `spec/v1/host-capabilities.md` (new §host.oauth) · `schemas/run-event-payloads.schema.json` (additive `connector.authorized` / `connector.auth_expired` events) · `SECURITY/invariants.yaml` (token redaction folded into `credential-payload-redaction`) · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |

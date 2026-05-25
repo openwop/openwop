@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0046 |
 | **Title** | `host.credentials` capability — a portable credential resolution + lifecycle contract (store-at-rest, workspace sharing, two-key-overlap rotation, redaction-everywhere) |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-24 |
-| **Updated** | 2026-05-24 |
+| **Updated** | 2026-05-25 (Draft → Active: MyndHyve non-steward implementation landed — advertise + behavioral seams shipped per `docs/openwop-adoption/0045-0054-cohort-summary.md` (MyndHyve, 2026-05-25). Active → Accepted is gated on the published `@openwop/openwop-conformance@1.6.0` conformance run against `api.myndhyve.ai/workflow-runtime` reporting pass, per `RFCS/0001` §"Promotion to Accepted".) |
 | **Affects** | `schemas/capabilities.schema.json` (additive `host.credentials` block; additive `workspace` value in `secrets.scopes` enum) · `schemas/credential-reference.schema.json` (new — the wire shape of a *reference*, never the secret) · `schemas/node-pack-manifest.schema.json` (additive `requiredCredentials[]` node block, sibling to existing `requiresSecrets[]`) · `spec/v1/host-capabilities.md` (new §host.credentials) · `spec/v1/run-options.md` (the `ai.credentialRef` reserved-key annex is generalized) · `SECURITY/invariants.yaml` (new `credential-payload-redaction` invariant) · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
