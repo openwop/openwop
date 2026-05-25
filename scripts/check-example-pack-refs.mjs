@@ -208,6 +208,37 @@ async function loadPackSchema(name, version, schemaRef) {
   }
 }
 
+/**
+ * Fetch a schema file referenced by configSchemaRef / inputSchemaRef
+ * (e.g., "schemas/chat-completion.config.json"). In offline mode the
+ * source is the in-tree tarball at registry/v1/packs/{name}/-/{version}.tgz;
+ * in live mode it's the derived mirror at
+ *   /v1/packs/{name}/{version}/<schema-basename>
+ */
+async function loadPackSchema(name, version, schemaRef) {
+  if (offlineIndex) {
+    const dir = offlineIndex.replace(/\/v1\/index\.json$/, '');
+    const tarballPath = `${dir}/v1/packs/${name}/-/${version}.tgz`;
+    if (!existsSync(tarballPath)) return null;
+    try {
+      const bytes = readTarballFile(readFileSync(tarballPath), schemaRef);
+      if (!bytes) return null;
+      return JSON.parse(bytes.toString('utf8'));
+    } catch (e) {
+      return null;
+    }
+  }
+  const filename = schemaRef.replace(/^schemas\//, '');
+  const url = `${registry.replace(/\/$/, '')}/v1/packs/${name}/${version}/${filename}`;
+  try {
+    const res = await fetch(url, { redirect: 'follow' });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
 async function buildPackResolver(topIndex) {
   const known = new Set((topIndex.packs ?? []).map((p) => p.name));
   const detailCache = new Map();
