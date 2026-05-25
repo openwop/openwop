@@ -27,6 +27,10 @@ Out of scope: `client/registryClient.ts` would need a separate SDK instance poin
 
 App-only; no protocol-corpus change.
 
+### RFC 0057 (memory write-attribution) — §D replay-stability: backend guard + conformance (2026-05-25)
+
+Closes a `/code-review` finding: the reference backend's at-completion run-summary write was unguarded against replay, so a `replay`-mode fork that re-executed to completion would mint a new `memoryId` and re-emit `memory.written` — contrary to RFC 0057 §D ("MUST NOT regenerate `memoryId`"). The executor now **skips** the run-summary write (and its `memory.written` emit) when `run.forkMode === 'replay'`; `branch`-mode forks (genuinely new runs) still write + attribute their own. Added the always-relevant §D distinction + a non-normative implementation note to the RFC, and a new `memory-attribution-replay-stable.test.ts` conformance scenario (gated; asserts a replay introduces no `memory.written` with a new `memoryId`) — passes against the reference backend. Scenario count 246 → 247. Additive; no wire-shape change.
+
 ### RFCs 0058–0064 — Phase-0 architect decision batch resolved; RFC 0058 promoted Draft → `Active` (2026-05-25)
 
 Closes the architect Phase-0 decision batch (`docs/autonomous-agent-runtime-plan.md` §8.3) — the only gate to `Draft → Active` for the autonomous-agent-runtime cohort. No wire-shape change (decisions + status only):
