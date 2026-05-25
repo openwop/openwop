@@ -11,6 +11,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0045/0046/0047/0048/0049/0051/0052/0053 promoted Draft → Active — MyndHyve cohort adoption (2026-05-25)
+
+8 of the 10 MyndHyve protocol-extension RFCs graduate `Draft → Active` on MyndHyve's non-steward implementation (advertise + behavioral seams shipped per their `docs/openwop-adoption/0045-0054-cohort-summary.md`, 2026-05-25). Each RFC's `Status` flips to `Active` with the adoption evidence in its `Updated` field; wire shapes are now locked for these surfaces per `RFCS/0001`.
+
+- **Active → Accepted is explicitly NOT done here** — it stays gated on the published `@openwop/openwop-conformance@1.6.0` suite (PR #135, release-ready; needs `npm publish`) running against `api.myndhyve.ai/workflow-runtime` and reporting pass, per `RFCS/0001` §"Promotion to Accepted" (this repo graduates on the verified conformance run, not the advance report). The Accepted batch flip + INTEROP-MATRIX advertisement rows land when that green run is reported + verified.
+- **RFC 0050 (SAML/SCIM) + 0054 (run-diff) stay `Draft`** — MyndHyve opted out (0050: zero SSO infra/customer pull, though the synthetic-IdP fixture is now bundled; 0054: substrate exists, no UI demand). Narrowed promotion paths recorded in each RFC.
+- **Counts synced:** README RFC-status `Active` 4 → 12, `Draft` 15 → 7 (Accepted 37 unchanged; 56 total); `docs/PROTOCOL-STATUS.md` regenerated.
+
 ### RFC 0050 — bundled synthetic SAML IdP fixture (closes the deferred conformance gap) (2026-05-25)
 
 Lands the synthetic SAML IdP harness MyndHyve flagged as a graduation blocker for RFC 0050. `conformance/src/lib/saml-idp.ts` (hermetic, `node:crypto` RSA-SHA256, no deps) mints a valid assertion + the six negatives (`alg-none`, `bad-signature`, `unsigned`, `expired`, `not-yet-valid`, `signature-wrapping`); its `verify()` implements the RFC 0050 §A MUST list. `auth-saml-profile.test.ts` now runs the **1-positive + 6-negative reference suite server-free** (a real SAML validation reference), in addition to the existing env-gated host-ACS path. RFC 0050 acceptance updated; the remaining `Active → Accepted` gate is a host wiring its SAML ACS to the `auth/saml/validate` seam. Lands in the unpublished `@openwop/openwop-conformance@1.6.0` (no new scenario file; no version re-bump). All additive.
