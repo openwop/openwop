@@ -1267,7 +1267,7 @@
           "type": "array",
           "items": { "type": "string", "minLength": 1 },
           "uniqueItems": true,
-          "description": "Auth profiles the host claims. Canonical ids: `openwop-audit-log-integrity` (auth-profiles.md §Audit-log integrity), `openwop-auth-api-key-rotation`, `openwop-auth-oauth2-client-credentials`, `openwop-auth-oidc-user-bearer`, `openwop-auth-mtls`. Clients SHOULD tolerate unknown profile ids."
+          "description": "Auth profiles the host claims. Canonical ids: `openwop-audit-log-integrity` (auth-profiles.md §Audit-log integrity), `openwop-auth-api-key-rotation`, `openwop-auth-oauth2-client-credentials`, `openwop-auth-oidc-user-bearer`, `openwop-auth-mtls`, `openwop-auth-saml` + `openwop-auth-scim` + `openwop-auth-ldap` (RFC 0050 enterprise identity). Clients SHOULD tolerate unknown profile ids."
         },
         "rotation": {
           "type": "object",

@@ -107,6 +107,48 @@ This is distinct from `openwop-auth-oauth2-client-credentials` (which authentica
 
 ---
 
+### `openwop-auth-saml` (RFC 0050)
+
+The host validates SAML 2.0 assertions from an enterprise IdP and maps the asserted subject + attributes onto an RFC 0048 `principal` (and, where present, group attributes onto RFC 0049 roles). For deployments whose enterprise SSO is SAML rather than OIDC. Composes with — and is distinct from — `openwop-auth-oidc-user-bearer`: SAML's assertion/signature model (XML-DSig) differs structurally from OIDC's JWT bearer.
+
+**Requirements:**
+
+- The host MUST validate the assertion's XML signature against the IdP's configured certificate. Unsigned assertions MUST be rejected.
+- The host MUST reject `alg:none` / absent-algorithm assertions (mirroring the OIDC `alg:none` rejection), and MUST reject XML signature-wrapping — the signed element MUST be the same element whose contents are consumed.
+- The host MUST enforce the assertion validity window (`NotBefore` / `NotOnOrAfter`); assertions outside the window MUST be rejected.
+- The host MUST map asserted attributes onto an RFC 0048 `principal` (opaque, non-PII per `auth.md` §"Identity claims") and, where group attributes are present, onto RFC 0049 roles.
+- The host MUST surface failures via the canonical envelope: `unauthenticated` for bad/absent signature, `alg:none`, expired/not-yet-valid windows, or wrapping; `forbidden` for assertion-valid-but-scope-insufficient.
+
+**Discovery shape:** `capabilities.auth.profiles[]` includes `openwop-auth-saml`.
+
+**Conformance gaps to close:** a synthetic SAML IdP harness (deterministic signed assertions + the negative variants below) so the suite can verify validation without a real IdP. Until it ships, `auth-saml-profile.test.ts` verifies the advertisement shape and gates the assertion-validation behavior (1 positive + ≥6 negatives: bad signature, `alg:none`, absent signature, `NotOnOrAfter` expiry, `NotBefore` not-yet-valid, signature-wrapping) on an operator-supplied synthetic IdP.
+
+---
+
+### `openwop-auth-scim` (RFC 0050)
+
+The host exposes SCIM 2.0 provisioning endpoints (`/scim/v2/Users`, `/scim/v2/Groups`) that sync external IdP users/groups onto RFC 0048 principals + RFC 0049 roles, so enterprise lifecycle (joiner/mover/leaver) flows through the standard provisioning protocol rather than bespoke host APIs.
+
+**Requirements:**
+
+- The host MUST expose `/scim/v2/Users` and `/scim/v2/Groups` and, on provisioning operations, upsert RFC 0048 principals and RFC 0049 roles: `POST`/`PUT`/`PATCH /Users` ⇒ principal create/update; `POST`/`PUT`/`PATCH /Groups` ⇒ role-membership sync (a SCIM group maps to an RFC 0049 role).
+- The host MUST treat `DELETE /Users/{id}` (or `active: false`) as a **deactivation**: a deactivated principal's subsequent authorization decisions MUST deny (fail-closed, composing with RFC 0049 §C).
+- The host MUST authenticate SCIM requests (bearer token per the IdP's SCIM client config) and MUST NOT expose provisioning to unauthenticated callers.
+
+**Discovery shape:** `capabilities.auth.profiles[]` includes `openwop-auth-scim`.
+
+**Conformance gaps to close:** a synthetic SCIM client harness; until it ships, `auth-scim-profile.test.ts` verifies the advertisement shape and gates the user+group provisioning roundtrip (→ principal/role assertion; deactivate ⇒ subsequent deny) on an operator-supplied SCIM endpoint.
+
+---
+
+### `openwop-auth-ldap` (RFC 0050, optional)
+
+An optional directory-bind variant for hosts with on-prem LDAP/Active Directory: bind-and-search authentication mapping a DN onto an RFC 0048 `principal` and LDAP groups onto RFC 0049 roles. **Lower priority** than SAML/SCIM — included for completeness; most enterprise demand is SAML/SCIM. A host advertising `openwop-auth-ldap` MUST map the bound DN to an opaque, non-PII `principal` and enforce openwop scopes on top of directory-group membership.
+
+**Discovery shape:** `capabilities.auth.profiles[]` includes `openwop-auth-ldap`.
+
+---
+
 ## Discovery guidance
 
 As of RFC 0010 (2026-05-11), auth-profile metadata has a **formal schema location** at `capabilities.auth.*` in `schemas/capabilities.schema.json`. Hosts SHOULD advertise auth-profile claims and metadata here. The `extensions.auth.*` location below remains valid for historical reasons; clients MUST prefer `capabilities.auth.*` when both are present.

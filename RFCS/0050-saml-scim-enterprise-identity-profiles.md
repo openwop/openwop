@@ -90,12 +90,14 @@ New fixture: a synthetic SAML IdP (deterministic signed assertions, including th
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (this file).
-- [ ] `openwop-auth-saml` + `openwop-auth-scim` (+ optional `openwop-auth-ldap`) profiles in `spec/v1/auth-profiles.md`.
-- [ ] Reserved `saml`/`scim`/`ldap` values pinned for `auth.profiles` in `capabilities.schema.json`.
-- [ ] SAML (1 positive + ≥6 negatives) + SCIM conformance scenarios + synthetic-IdP fixture.
-- [ ] CHANGELOG entry under `[Unreleased]`.
-- [ ] A non-steward host advertises `saml` and/or `scim` and passes the negative suite.
+- [x] Spec text merged (this file).
+- [x] `openwop-auth-saml` + `openwop-auth-scim` + optional `openwop-auth-ldap` profiles in `spec/v1/auth-profiles.md`.
+- [x] Reserved `openwop-auth-saml`/`-scim`/`-ldap` profile ids pinned in the `capabilities.auth.profiles` schema description.
+- [~] Conformance — `auth-saml-profile.test.ts` + `auth-scim-profile.test.ts` landed (profile-advertisement shape always; behavioral assertion-validation / provisioning opt-in via `OPENWOP_TEST_SAML_IDP_URL` / `OPENWOP_TEST_SCIM_URL` + the `auth/saml/validate` + `auth/scim/provision` seams, registered in `host-sample-test-seams.md` §"Open seams"). The full SAML 1-positive-+-6-negatives suite + a bundled synthetic-IdP XML-DSig harness are deferred (mirrors the `auth-mtls` / OIDC opt-in precedent — no synthetic IdP is bundled yet).
+- [x] CHANGELOG entry under `[Unreleased]`.
+- [ ] A non-steward host advertises `openwop-auth-saml` and/or `-scim` and passes the negative suite.
+
+**Implementation note (2026-05-25):** Profile prose (`auth-profiles.md`) + the reserved `auth.profiles` ids + the two opt-in conformance scenarios + the two seams landed on `main`. Maps onto the RFC 0048 `principal` + RFC 0049 roles already on `main`; extends the RFC 0010 auth-profile family. Status stays `Draft`. The behavioral SAML negative suite is gated on a synthetic-IdP harness that is not yet bundled (the same gap RFC 0010's OIDC profile noted) — opt-in via env until it ships.
 
 ## References
 
