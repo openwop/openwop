@@ -239,6 +239,19 @@ async function loadPackSchema(name, version, schemaRef) {
   }
 }
 
+async function loadPackVersion(name, version) {
+  if (offlineIndex) {
+    const dir = offlineIndex.replace(/\/v1\/index\.json$/, '');
+    const path = `${dir}/v1/packs/${name}/-/${version}.json`;
+    if (!existsSync(path)) return null;
+    return JSON.parse(readFileSync(path, 'utf8'));
+  }
+  const url = `${registry.replace(/\/$/, '')}/v1/packs/${name}/-/${version}.json`;
+  const res = await fetch(url, { redirect: 'follow' });
+  if (!res.ok) return null;
+  return res.json();
+}
+
 async function buildPackResolver(topIndex) {
   const known = new Set((topIndex.packs ?? []).map((p) => p.name));
   const detailCache = new Map();
