@@ -11,6 +11,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0045 connector pack manifest — completes Tier-1 of the MyndHyve protocol-extension batch (2026-05-25)
+
+Third and final step of the Tier-1 critical path (depends on RFC 0046 + 0047, both on `main`). Lands the optional `connector` manifest block — the n8n/Make-style *trigger + action + auth + pagination* bundle, expressed manifest-first. This is the leverage point: it lets MyndHyve re-emit its 38 host-locked `vendor.myndhyve.*` integration packs as portable, registry-installable connectors. RFC 0045 stays `Draft`. All additive (optional block; packs without it are unchanged plain node packs).
+
+- **Schema:** optional top-level `connector` block + `Connector` / `ConnectorAuth` $defs in `node-pack-manifest.schema.json`. A connector declares `{ id, displayName, auth, actions: [{ typeId, displayName, idempotent?, rateLimit?, paginated? }], triggers: [] }`. `ConnectorAuth` is a `oneOf` over the RFC 0047 OAuth2 `NodeAuth` and an RFC 0046 `{ type: 'credential', key, scope? }` stored-credential reference.
+- **Spec:** `node-packs.md` §Connectors — action contract (actions are existing nodes annotated with scheduler hints; every `actions[].typeId` + `triggers[]` MUST resolve to a `nodes[].typeId`, else `connector_action_unresolved`), idempotency/rate-limit hint semantics, auth + capability gating, registry discovery facet.
+- **Conformance:** `connector-manifest-validity.test.ts` (server-free, always runs) — §A schema validity of the `connector` block (both ConnectorAuth variants, positive + negatives) + §B action/trigger typeId-resolution semantics. Behavioral idempotency-hint + rate-limit scenarios + a synthetic connector fixture deferred until a host advertises a connector.
+- **Counts synced:** conformance scenario files 214→215; README + conformance README + `coverage.md` updated; `docs/PROTOCOL-STATUS.md` regenerated. (No new schema file, no new invariant.)
+
+**Tier 1 complete on the openwop side:** `host.credentials` (0046) + `host.oauth` (0047) + connector manifest (0045) now give a host the full portable contract; `Accepted` for each is gated on MyndHyve wiring the implementation.
+
 ### RFC 0047 `host.oauth` — spec + schema + connector events + shape/redaction conformance landed (2026-05-25)
 
 Second step on the Tier-1 critical path (depends on RFC 0046, already on `main`). Lands the openwop-side `host.oauth` contract: the host performs the OAuth 2.0 authorization-code + refresh dance on a user's behalf for connector nodes, stores the token as a `host.credentials` entry, and resolves it into the node sandbox as a bearer token. RFC 0047 stays `Draft`. All additive.

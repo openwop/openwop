@@ -108,13 +108,15 @@ New fixture: a minimal synthetic connector pack (`conformance.connector.echo`) w
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (this file).
-- [ ] `connector` block in `node-pack-manifest.schema.json`.
-- [ ] `spec/v1/node-packs.md` §"Connectors" section.
-- [ ] Registry index + `packs.openwop.dev` render the connector facet.
-- [ ] Three conformance scenarios + synthetic connector fixture.
-- [ ] CHANGELOG entry under `[Unreleased]`.
+- [x] Spec text merged (this file).
+- [x] `connector` block (+ `Connector` / `ConnectorAuth` $defs) in `node-pack-manifest.schema.json`.
+- [x] `spec/v1/node-packs.md` §"Connectors" section.
+- [ ] Registry index + `packs.openwop.dev` render the connector facet. (Deferred — data-only registry-build follow-up; no wire-contract change.)
+- [~] Conformance — `connector-manifest-validity.test.ts` (server-free: §A schema validity of the `connector` block + both ConnectorAuth variants + §B action/trigger typeId-resolution semantics, positive + negatives). The behavioral idempotency-hint + rate-limit-honored scenarios + a synthetic connector pack fixture are deferred until a host advertises a connector.
+- [x] CHANGELOG entry under `[Unreleased]`.
 - [ ] A non-steward host publishes at least one connector pack that installs + runs on a second host (directly advances the GOVERNANCE.md federation tripwire).
+
+**Implementation note (2026-05-25):** Manifest schema + §Connectors spec + the server-free manifest-validity scenario landed on `main`, completing the **Tier-1** openwop-side contract (0046 credentials + 0047 oauth + 0045 connector). Status stays `Draft`; the federation-advancing acceptance item is gated on MyndHyve re-emitting a `vendor.myndhyve.*` pack with a `connector` block.
 
 ## References
 

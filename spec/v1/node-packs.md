@@ -360,6 +360,40 @@ A NodeModule whose execution involves emitting a structured envelope via an LLM 
 
 ---
 
+## Connectors (RFC 0045)
+
+A pack MAY declare itself a **connector** — a named integration exposing typed **actions** (and reusing the existing trigger model) — via an optional top-level `connector` block (`Connector` in `node-pack-manifest.schema.json`). This is the n8n/Make-style *trigger + action + auth + pagination* bundle, expressed manifest-first rather than as a code SDK. Packs without a `connector` block remain plain node packs; the block is purely additive.
+
+```jsonc
+{
+  "name": "vendor.acme.salesforce",
+  "nodes": [ /* the action + trigger NodeModules */ ],
+  "connector": {
+    "id": "salesforce",
+    "displayName": "Salesforce",
+    "auth": { "type": "oauth2", "provider": "salesforce", "scopes": ["api", "refresh_token"] },
+    "actions": [
+      { "typeId": "vendor.acme.salesforce.upsert", "displayName": "Upsert Record", "idempotent": true, "rateLimit": { "requests": 100, "perSeconds": 60 } },
+      { "typeId": "vendor.acme.salesforce.query", "displayName": "SOQL Query", "paginated": true }
+    ],
+    "triggers": ["vendor.acme.salesforce.onRecordChange"]
+  }
+}
+```
+
+**Action contract (normative).**
+
+1. An **action** is a normal side-effectful node already defined in the pack's `nodes[]`; the connector block adds metadata, it does not introduce a new execution kind. Every `connector.actions[].typeId` MUST resolve to a real `nodes[].typeId` in the same manifest — a manifest whose action references an unknown typeId is invalid and MUST be rejected with `connector_action_unresolved`. The same resolution requirement applies to every entry in `connector.triggers[]`.
+2. `idempotent: true` is a hint the host scheduler MAY use to retry the action on transient failure without an idempotency key; `idempotent: false` (or absent) means the host MUST NOT auto-retry without one (composes with `idempotency.md`).
+3. `rateLimit` is advertised metadata the host scheduler SHOULD honor when dispatching the action; it does not change the node's wire shape.
+4. **Triggers** reuse the existing trigger model unchanged; the connector block only references their typeIds.
+
+**Auth.** `connector.auth` is a `ConnectorAuth`: either an RFC 0047 OAuth2 declaration (`{ type: 'oauth2', provider, scopes[] }`, routed through `host.oauth`) or an RFC 0046 stored-credential reference (`{ type: 'credential', key, scope? }`, resolved by `host.credentials`). A connector declaring `auth: { type: 'oauth2' }` transitively requires `capabilities.oauth.supported`; one declaring `auth: { type: 'credential' }` requires `capabilities.credentials.supported`. Hosts lacking the required capability refuse to register the pack.
+
+**Discovery.** Connectors surface in the `registry/` index and on `packs.openwop.dev` as a distinct artifact facet, so the (future App-layer) connector marketplace has data to render. This is data-only — no new endpoint; the existing registry pack index gains a `connector` facet.
+
+---
+
 ## Runtime formats
 
 The `runtime.language` field declares how the engine loads the pack:
