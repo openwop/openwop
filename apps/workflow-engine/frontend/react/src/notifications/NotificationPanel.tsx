@@ -17,6 +17,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useNotificationStore } from './notificationStore.js';
+import { NotificationPreferencesPanel } from './NotificationPreferencesPanel.js';
 import type { Notification, NotificationType } from './types.js';
 
 type Tab = 'all' | 'unread' | 'archived';
@@ -52,6 +53,8 @@ export function NotificationPanel(): JSX.Element | null {
   const desktopPermission = useNotificationStore((s) => s.desktopPermission);
   const requestDesktopPermission = useNotificationStore((s) => s.requestDesktopPermission);
   const syncDesktopPermission = useNotificationStore((s) => s.syncDesktopPermission);
+  const preferencesOpen = useNotificationStore((s) => s.preferencesOpen);
+  const openPreferences = useNotificationStore((s) => s.openPreferences);
 
   const [tab, setTab] = useState<Tab>('all');
   // Track viewport width so the panel switches between right-side
@@ -142,16 +145,35 @@ export function NotificationPanel(): JSX.Element | null {
               </span>
             )}
           </h2>
-          <button
-            type="button"
-            className="secondary"
-            onClick={closePanel}
-            aria-label="Close notifications"
-          >
-            ✕
-          </button>
+          <div style={{ display: 'flex', gap: 4 }}>
+            <button
+              type="button"
+              className="secondary"
+              onClick={openPreferences}
+              aria-label="Notification preferences"
+              title="Notification preferences"
+              style={{ fontSize: 14 }}
+            >
+              ⚙
+            </button>
+            <button
+              type="button"
+              className="secondary"
+              onClick={closePanel}
+              aria-label="Close notifications"
+            >
+              ✕
+            </button>
+          </div>
         </header>
 
+        {/* Preferences subdrawer takes over the panel body when open —
+            replaces actions/tabs/list with the prefs UI. The header
+            stays put so the close button is always reachable. */}
+        {preferencesOpen && <NotificationPreferencesPanel />}
+
+        {!preferencesOpen && (
+          <>
         {/* Desktop-notifications affordance. The browser's
             `requestPermission()` MUST be called inside a user gesture
             (a click handler), so this lives behind a button — auto-
@@ -266,6 +288,8 @@ export function NotificationPanel(): JSX.Element | null {
             />
           ))}
         </div>
+          </>
+        )}
       </aside>
     </>
   );
