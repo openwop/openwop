@@ -18,6 +18,7 @@ import type {
   IdempotencyRecord,
   InterruptRecord,
   NotificationRecord,
+  PushSubscriptionRecord,
   RunRecord,
   WebhookSubscriptionRecord,
 } from '../../types.js';
@@ -636,6 +637,7 @@ export function openSqliteStorage(dbPath: string): Storage {
         const wr = db.prepare(`DELETE FROM workflows WHERE tenant_id = ?`).run(tid);
         const sr = db.prepare(`DELETE FROM byok_tenant_secrets WHERE tenant_id = ?`).run(tid);
         const nr = db.prepare(`DELETE FROM notifications WHERE tenant_id = ?`).run(tid);
+        const pr = db.prepare(`DELETE FROM push_subscriptions WHERE tenant_id = ?`).run(tid);
         return {
           runs: Number(rr.changes ?? 0),
           events,
@@ -643,6 +645,7 @@ export function openSqliteStorage(dbPath: string): Storage {
           workflows: Number(wr.changes ?? 0),
           secrets: Number(sr.changes ?? 0),
           notifications: Number(nr.changes ?? 0),
+          pushSubscriptions: Number(pr.changes ?? 0),
         };
       });
       return deleteTxn(tenantId);
@@ -893,9 +896,71 @@ export function openSqliteStorage(dbPath: string): Storage {
       return r.changes;
     },
 
+    async insertPushSubscription(record) {
+      // ON CONFLICT(endpoint) — same-browser re-subscribe updates the
+      // keys + user-agent without a duplicate row. Mirrors postgres.
+      db.prepare(
+        `INSERT INTO push_subscriptions (
+          subscription_id, tenant_id, endpoint, p256dh_key, auth_key,
+          user_agent, created_at, last_used_at
+        ) VALUES (?,?,?,?,?,?,?,?)
+        ON CONFLICT(endpoint) DO UPDATE SET
+          p256dh_key = excluded.p256dh_key,
+          auth_key = excluded.auth_key,
+          user_agent = excluded.user_agent,
+          tenant_id = excluded.tenant_id`,
+      ).run(
+        record.subscriptionId, record.tenantId, record.endpoint,
+        record.p256dhKey, record.authKey,
+        record.userAgent ?? null,
+        record.createdAt, record.lastUsedAt ?? null,
+      );
+    },
+
+    async listPushSubscriptions(tenantId) {
+      const rows = db.prepare(
+        `SELECT * FROM push_subscriptions WHERE tenant_id = ? ORDER BY created_at DESC`,
+      ).all(tenantId) as Array<Record<string, unknown>>;
+      return rows.map(rowToPushSubscriptionSqlite);
+    },
+
+    async getPushSubscriptionByEndpoint(endpoint) {
+      const row = db.prepare(
+        `SELECT * FROM push_subscriptions WHERE endpoint = ?`,
+      ).get(endpoint) as Record<string, unknown> | undefined;
+      return row ? rowToPushSubscriptionSqlite(row) : null;
+    },
+
+    async deletePushSubscription(subscriptionId) {
+      const r = db.prepare(
+        `DELETE FROM push_subscriptions WHERE subscription_id = ?`,
+      ).run(subscriptionId);
+      return r.changes > 0;
+    },
+
+    async deleteAllTenantPushSubscriptions(tenantId) {
+      const r = db.prepare(
+        `DELETE FROM push_subscriptions WHERE tenant_id = ?`,
+      ).run(tenantId);
+      return r.changes;
+    },
+
     async close() {
       db.close();
     },
+  };
+}
+
+function rowToPushSubscriptionSqlite(r: Record<string, unknown>): PushSubscriptionRecord {
+  return {
+    subscriptionId: r.subscription_id as string,
+    tenantId: r.tenant_id as string,
+    endpoint: r.endpoint as string,
+    p256dhKey: r.p256dh_key as string,
+    authKey: r.auth_key as string,
+    userAgent: (r.user_agent as string | null) ?? undefined,
+    createdAt: r.created_at as string,
+    lastUsedAt: (r.last_used_at as string | null) ?? undefined,
   };
 }
 

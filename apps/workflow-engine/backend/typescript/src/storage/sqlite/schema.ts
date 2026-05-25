@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 8;
+export const LATEST_SCHEMA_VERSION = 9;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -278,6 +278,26 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
         ON notifications (tenant_id, created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_notifications_tenant_status
         ON notifications (tenant_id, status, created_at DESC);
+    `);
+  },
+  9: (db) => {
+    // Web Push subscriptions — mirrors the postgres schema v7. See
+    // ../postgres/schema.ts:235 for the rationale; same column shape.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS push_subscriptions (
+        subscription_id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        endpoint TEXT NOT NULL,
+        p256dh_key TEXT NOT NULL,
+        auth_key TEXT NOT NULL,
+        user_agent TEXT,
+        created_at TEXT NOT NULL,
+        last_used_at TEXT
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_push_subs_endpoint
+        ON push_subscriptions (endpoint);
+      CREATE INDEX IF NOT EXISTS idx_push_subs_tenant
+        ON push_subscriptions (tenant_id, created_at DESC);
     `);
   },
 };

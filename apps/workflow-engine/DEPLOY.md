@@ -359,9 +359,16 @@ gcloud run deploy openwop-app-backend \
   --memory=512Mi --cpu=1 --concurrency=80 --max-instances=10 \
   --port=8080 --timeout=300 \
   --env-vars-file=/tmp/openwop-p3-env.yaml \
-  --set-secrets='OPENWOP_SESSION_SECRET=openwop-session-secret:latest,OPENWOP_ADMIN_TOKEN=openwop-admin-token:latest,OPENWOP_STORAGE_DSN=openwop-storage-dsn:latest' \
+  --set-secrets='OPENWOP_SESSION_SECRET=openwop-session-secret:latest,OPENWOP_ADMIN_TOKEN=openwop-admin-token:latest,OPENWOP_STORAGE_DSN=openwop-storage-dsn:latest,OPENWOP_VAPID_PUBLIC_KEY=openwop-vapid-public-key:latest,OPENWOP_VAPID_PRIVATE_KEY=openwop-vapid-private-key:latest' \
   --add-cloudsql-instances=openwop-dev:us-central1:openwop-app-pg
 ```
+
+**Web Push (PR #174)** binds two additional secrets:
+`OPENWOP_VAPID_PUBLIC_KEY` + `OPENWOP_VAPID_PRIVATE_KEY`. Generate the
+keypair once at bootstrap with `npx web-push generate-vapid-keys
+--json`, then load each value into Secret Manager as in §5. Absent
+env vars → push fanout no-ops gracefully (the FE just hides the
+"Enable background push" affordance via the `/config` endpoint).
 
 Where `/tmp/openwop-p3-env.yaml` contains:
 

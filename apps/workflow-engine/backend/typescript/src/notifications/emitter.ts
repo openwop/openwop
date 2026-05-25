@@ -22,6 +22,7 @@
 import { randomBytes } from 'node:crypto';
 import type { Storage } from '../storage/storage.js';
 import type { NotificationRecord } from '../types.js';
+import { pushNotification } from './webPush.js';
 
 let backend: Storage | null = null;
 const subscribers = new Set<(n: NotificationRecord) => void>();
@@ -59,6 +60,11 @@ export function getNotificationEmitter() {
       for (const sub of subscribers) {
         try { sub(record); } catch { /* subscriber failures don't abort the emit */ }
       }
+      // Fan out to every Web Push subscription owned by the tenant.
+      // Best-effort + concurrent — push delivery latency must not
+      // block the emit return. `pushNotification` swallows per-sub
+      // errors and prunes 404/410 endpoints on its own.
+      void pushNotification(b, record);
       return record;
     },
     subscribe(fn: (n: NotificationRecord) => void): () => void {
