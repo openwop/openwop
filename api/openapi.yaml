@@ -361,6 +361,72 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
 
+  # ── Run feedback / annotations (RFC 0056) ────────────────────────────
+  # Gated on `capabilities.feedback.supported: true`. Annotations are a
+  # per-run side-resource (NOT replayable run-event-log entries); recording
+  # one also emits a live `run.annotated` SSE notification. Hosts without
+  # the advertised capability return `501 capability_not_provided`.
+  /v1/runs/{runId}/annotations:
+    post:
+      tags: [runs]
+      summary: Record a non-blocking quality annotation on a run (RFC 0056).
+      operationId: createAnnotation
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/annotation-create.schema.json'
+      responses:
+        '201':
+          description: Annotation recorded. Returns the persisted annotation.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/annotation.schema.json'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '501':
+          description: 'Host does not advertise capabilities.feedback.supported (RFC 0056).'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+    get:
+      tags: [runs]
+      summary: List the annotations recorded on a run (RFC 0056).
+      operationId: listAnnotations
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+      responses:
+        '200':
+          description: Annotations for the run (tenant-scoped).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [annotations]
+                properties:
+                  annotations:
+                    type: array
+                    items:
+                      $ref: '../schemas/annotation.schema.json'
+                additionalProperties: false
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '501':
+          description: 'Host does not advertise capabilities.feedback.supported (RFC 0056).'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+
   /v1/runs:bulk-cancel:
     post:
       tags: [runs]

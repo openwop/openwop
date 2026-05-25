@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/annotation.schema.json",
+  "title": "Annotation",
+  "description": "RFC 0056. A non-blocking human/agent quality signal attached to a run, event, or node — a side-resource, NOT a replayable run-event-log entry. Recorded via `POST /v1/runs/{runId}/annotations`, listed via `GET`, and surfaced live via the `run.annotated` SSE notification. `signal.correction` and `note` are untrusted user content (SECURITY invariant `annotation-content-redaction`).",
+  "type": "object",
+  "required": ["annotationId", "target", "signal", "actor", "createdAt"],
+  "properties": {
+    "annotationId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Host-assigned unique identifier for this annotation."
+    },
+    "target": {
+      "type": "object",
+      "required": ["runId"],
+      "properties": {
+        "runId": { "type": "string", "minLength": 1 },
+        "eventId": { "type": "string", "description": "Optional — anchors the annotation to one RunEvent." },
+        "nodeId": { "type": "string", "description": "Optional — anchors the annotation to one node." }
+      },
+      "additionalProperties": false
+    },
+    "signal": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["rating", "correction", "label", "flag"] },
+        "rating": { "type": "integer", "minimum": 1, "maximum": 5, "description": "Required iff `kind` is `rating`." },
+        "label": { "type": "string", "description": "Required iff `kind` is `label`." },
+        "correction": { "type": "string", "description": "Corrected text/value iff `kind` is `correction`. Untrusted user content." }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        { "if": { "properties": { "kind": { "const": "rating" } } }, "then": { "required": ["rating"] } },
+        { "if": { "properties": { "kind": { "const": "label" } } }, "then": { "required": ["label"] } },
+        { "if": { "properties": { "kind": { "const": "correction" } } }, "then": { "required": ["correction"] } }
+      ]
+    },
+    "actor": {
+      "type": "object",
+      "required": ["principalRef"],
+      "properties": {
+        "principalRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque principal identifier — a principal per RFC 0048 (Draft, referenced non-normatively) or an AgentRef per RFC 0002 when a supervisor agent annotates. String-typed so RFC 0056 does not depend on RFC 0048 reaching Accepted."
+        }
+      },
+      "additionalProperties": false
+    },
+    "note": { "type": "string", "description": "Optional free-text reviewer note. Untrusted user content." },
+    "createdAt": { "type": "string", "format": "date-time", "description": "ISO 8601 timestamp the host recorded the annotation." }
+  },
+  "additionalProperties": false
+}

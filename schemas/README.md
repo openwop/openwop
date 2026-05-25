@@ -11,6 +11,8 @@
 | `envelopes/schema.request.schema.json` | `ai-envelope.md` §"Universal kinds" | FINAL v1.1 — LLM asks the engine for a kind's JSON Schema. Counts against `Capabilities.limits.schemaRounds`. |
 | `envelopes/schema.response.schema.json` | `ai-envelope.md` §"Universal kinds" | FINAL v1.1 — side-channel ack for `schema.request`. Never surfaces to users. |
 | `envelopes/error.schema.json` | `ai-envelope.md` §"Universal kinds" | FINAL v1.1 — LLM's deliberate error report. Distinct from `error-envelope.schema.json` (host HTTP errors). |
+| `annotation.schema.json` | `RFCS/0056` + `observability.md` | RFC 0056 (`Draft`) — a non-blocking human/agent quality signal (rating / correction / label / flag) attached to a run, event, or node. A side-resource (not a replayable run-event-log entry); response of `POST/GET /v1/runs/{runId}/annotations` + payload of the `run.annotated` SSE notification. |
+| `annotation-create.schema.json` | `RFCS/0056` | RFC 0056 (`Draft`) — request body for `POST /v1/runs/{runId}/annotations` (host assigns `annotationId`/`createdAt`/`actor`; binds `target.runId` to the path). |
 | `audit-verify-result.schema.json` | `auth-profiles.md` §`openwop-audit-log-integrity` | Response payload from `GET /v1/audit/verify` — chain-validity verdict + checkpoints + anomalies |
 | `capabilities.schema.json` | `capabilities.md` | `/.well-known/openwop` response — protocolVersion + supportedEnvelopes + schemaVersions + limits + optional v1 discovery surface |
 | `channel-written-payload.schema.json` | `channels-and-reducers.md` §Channel write event | Payload of the `channel.written` RunEvent — write input + reducer name |

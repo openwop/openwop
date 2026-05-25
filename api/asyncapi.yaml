@@ -79,6 +79,7 @@ channels:
       runCancelled:      { $ref: '#/components/messages/RunCancelled' }
       runPaused:         { $ref: '#/components/messages/RunPaused' }
       runResumed:        { $ref: '#/components/messages/RunResumed' }
+      runAnnotated:      { $ref: '#/components/messages/RunAnnotated' }
       nodeCompleted:     { $ref: '#/components/messages/NodeCompleted' }
       nodeFailed:        { $ref: '#/components/messages/NodeFailed' }
       nodeSkipped:       { $ref: '#/components/messages/NodeSkipped' }
@@ -153,7 +154,8 @@ channels:
       runId:
         $ref: '#/components/parameters/RunId'
     messages:
-      anyRunEvent: { $ref: '#/components/messages/AnyRunEvent' }
+      anyRunEvent:  { $ref: '#/components/messages/AnyRunEvent' }
+      runAnnotated: { $ref: '#/components/messages/RunAnnotated' }
 
 # ─────────────────────────────────────────────────────────────────────────────
 # OPERATIONS — consumer-side (receive)
@@ -310,6 +312,14 @@ components:
       payload:
         $ref: '#/components/schemas/RunEventDoc'
 
+    RunAnnotated:
+      name: run.annotated
+      title: Run annotated (RFC 0056)
+      summary: A non-blocking quality annotation was recorded for the run. Live notification ONLY — NOT a replayable run-event-log entry; its payload is an Annotation (not a RunEventDoc), so it is excluded from fork/replay (RFC 0056 §B/§D).
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Annotation'
+
     # ── Node-lifecycle ───────────────────────────────────────────────────
     NodeCompleted:
       name: node.completed
@@ -453,6 +463,12 @@ components:
     # `GET /v1/runs/{runId}/events/poll`) and offline replay tools.
     RunEventDoc:
       $ref: '../schemas/run-event.schema.json'
+
+    # RFC 0056. The run.annotated notification carries an Annotation —
+    # NOT a RunEventDoc — because annotations are a side-resource, not
+    # replayable run-event-log entries (RFC 0056 §B/§D).
+    Annotation:
+      $ref: '../schemas/annotation.schema.json'
 
     StateSnapshotPayload:
       # S1 closure (2026-04-27): reuse the canonical RunSnapshot
