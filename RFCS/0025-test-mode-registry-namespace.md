@@ -8,14 +8,14 @@
 | **Author(s)** | OpenWOP Working Group |
 | **Created** | 2026-05-19 |
 | **Updated** | 2026-05-25 |
-| **Affects** | `spec/v1/node-packs.md` (new §"Test-mode registry namespace") · `schemas/capabilities.schema.json` (new `packs.testMode` block) · `api/openapi.yaml` (new `/v1/packs-test/*` endpoints) · `conformance/src/scenarios/pack-registry-publish.test.ts` (26 todos → behavioral) |
+| **Affects** | `spec/v1/node-packs.md` (new §"Test-mode registry namespace") · `schemas/capabilities.schema.json` (new `packs.testMode` block) · `api/openapi.yaml` (new `/v1/packs-test/*` endpoints) · `conformance/src/scenarios/pack-registry-publish.test.ts` (25 todos → behavioral; the `manifest_mismatch` aggregate folds the granular `manifest_name_mismatch` + `manifest_version_mismatch` pair) · `conformance/src/scenarios/pack-registry-isolation.test.ts` (new — anchors §C point 1) |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
 | **Superseded by** | — |
 
 ## Summary
 
-Adds an optional `/v1/packs-test/*` registry namespace that mirrors the production `/v1/packs/*` PUT/GET/DELETE surface against an isolated catalog, gated behind a new optional `capabilities.packs.testMode` advertisement. Lets the conformance suite exercise the documented 19-code publish error catalog (`invalid_pack_name`, `invalid_pack_scope`, `tarball_too_large`, `manifest_mismatch`, …) without `packs:publish` scope on the real registry — closes the 26-`it.todo()` gap in `conformance/src/scenarios/pack-registry-publish.test.ts`.
+Adds an optional `/v1/packs-test/*` registry namespace that mirrors the production `/v1/packs/*` PUT/GET/DELETE surface against an isolated catalog, gated behind a new optional `capabilities.packs.testMode` advertisement. Lets the conformance suite exercise the documented 19-code publish error catalog (`invalid_pack_name`, `invalid_pack_scope`, `tarball_too_large`, `manifest_mismatch`, …) without `packs:publish` scope on the real registry — closes the 25-`it.todo()` gap in `conformance/src/scenarios/pack-registry-publish.test.ts` (the `manifest_mismatch` aggregate scenario covers both that code and the granular `manifest_name_mismatch` / `manifest_version_mismatch` pair).
 
 ## Motivation
 
@@ -88,7 +88,7 @@ A host advertising `packs.testMode.supported: true` MUST:
 
 ### §D Conformance scope
 
-The 26 scenarios in `pack-registry-publish.test.ts` are all `it.todo()` today. This RFC converts them to behavioral assertions that:
+The 25 scenarios in `pack-registry-publish.test.ts` are all `it.todo()` today. This RFC converts them to behavioral assertions that:
 
 - Soft-skip when `capabilities.packs.testMode.supported !== true`
 - Use `/v1/packs-test/*` instead of `/v1/packs/*` for every assertion
@@ -118,15 +118,15 @@ The 19-code catalog covered:
 
 ## Conformance
 
-- 26 existing `it.todo()` scenarios in `pack-registry-publish.test.ts` convert to behavioral assertions against `/v1/packs-test/*`. Each soft-skips when the host doesn't advertise `packs.testMode.supported: true`.
-- A new `pack-registry-isolation.test.ts` scenario (added in the impl PR, not this RFC) verifies that a pack PUT'd via test namespace does NOT appear in production-namespace listings — anchors the isolation invariant.
+- 25 existing `it.todo()` scenarios in `pack-registry-publish.test.ts` convert to behavioral assertions against `/v1/packs-test/*`. Each soft-skips when the host doesn't advertise `packs.testMode.supported: true`. (The original RFC drafted "26 scenarios" anticipating a separate test for the granular `manifest_name_mismatch` + `manifest_version_mismatch` pair; the implementation folded both into the aggregate `manifest_mismatch` scenario since either error-code family is spec-conformant per §C.)
+- `pack-registry-isolation.test.ts` (added in this RFC's implementation) verifies that a pack PUT'd via test namespace does NOT appear in production-namespace listings — anchors the §C point 1 isolation invariant.
 
 ## Alternatives considered
 
 1. **Super-admin scope for the conformance suite.** Rejected — gives the suite the power to mutate the real catalog. Non-starter for any registry shared across operators.
 2. **Mock the error catalog at the SDK level.** Rejected — would assert SDK error-mapping rather than host implementation. Misses cross-host divergence (the load-bearing problem).
 3. **Embed the test catalog inside the production namespace via a magic name prefix (e.g. `test.*`).** Rejected — magic prefixes leak into discovery listings and confuse third-party clients. A separate namespace is cleaner.
-4. **Do nothing.** Rejected — leaves 26 conformance scenarios as documentation-only `it.todo()` forever. The error catalog stays untested across hosts; divergence ships silently.
+4. **Do nothing.** Rejected — leaves 25 conformance scenarios as documentation-only `it.todo()` forever. The error catalog stays untested across hosts; divergence ships silently.
 
 ## Unresolved questions
 
@@ -147,7 +147,7 @@ The 19-code catalog covered:
 - [x] `spec/v1/node-packs.md` gains §"Test-mode registry namespace" referencing this RFC
 - [x] `api/openapi.yaml` declares the 4 new endpoints with all 19 error responses
 - [x] Reference impl at `apps/workflow-engine/.../routes/packs-test.ts` (in-memory)
-- [x] 26 scenarios in `pack-registry-publish.test.ts` converted to behavioral (each soft-skips when the seam isn't advertised)
+- [x] 25 scenarios in `pack-registry-publish.test.ts` converted to behavioral (each soft-skips when the seam isn't advertised); `pack-registry-isolation.test.ts` anchors the §C point 1 invariant
 - [x] `npm run openwop:check` 9/9 green
 - [x] CHANGELOG entry under `[Unreleased]`
 

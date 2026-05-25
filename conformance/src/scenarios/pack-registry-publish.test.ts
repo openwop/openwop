@@ -1,7 +1,7 @@
 /**
  * Pack-registry publish scenarios — `node-packs.md` §"PUT /v1/packs/{name}/-/{version}.tgz".
  *
- * Status: BEHAVIORAL (soft-skip). Per RFC 0025 (`Draft` 2026-05-19),
+ * Status: BEHAVIORAL (soft-skip). Per RFC 0025 (`Active` 2026-05-19),
  * the conformance suite drives the documented 19-code error catalog
  * via the test-mode mirror namespace `/v1/packs-test/*`, gated on
  * `capabilities.packs.testMode.supported: true`. Each scenario soft-
