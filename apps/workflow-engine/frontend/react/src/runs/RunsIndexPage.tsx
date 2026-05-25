@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { createRun, listMyRuns, type RunListItem } from '../client/runsClient.js';
-import { getFeedbackCapability, listAnnotations } from '../client/feedbackClient.js';
+import type { Annotation } from '../client/feedbackClient.js';
+import { useRunAnnotations, reviewOf, needsReview, reviewReason } from './useRunAnnotations.js';
 import { formatDuration } from './format.js';
 import { listSavedWorkflows } from '../builder/persistence/localStore.js';
 import { serializeWorkflow, SerializeError } from '../builder/schema/serialize.js';
@@ -31,6 +32,19 @@ export function RunsIndexPage() {
   const [runs, setRuns] = useState<RunListItem[]>([]);
   const [runsLoading, setRunsLoading] = useState(false);
   const [runsError, setRunsError] = useState<string | null>(null);
+
+  // §C3 — annotation-driven review queue. One capability-gated fan-out shared
+  // by the flagged filter (here) and the §C2 quality rollup (RunsSummary).
+  const runIds = useMemo(() => runs.map((r) => r.runId), [runs]);
+  const { byRun, feedbackOn } = useRunAnnotations(runIds);
+  const [reviewOnly, setReviewOnly] = useState(false);
+  const isFlagged = (runId: string) => needsReview(reviewOf(byRun.get(runId) ?? []));
+  const flaggedCount = useMemo(
+    () => runs.filter((r) => isFlagged(r.runId)).length,
+    // isFlagged closes over byRun; recompute when either the run set or its annotations change
+    [runs, byRun],
+  );
+  const visibleRuns = reviewOnly ? runs.filter((r) => isFlagged(r.runId)) : runs;
 
   async function refreshRuns() {
     setRunsLoading(true);
@@ -120,23 +134,34 @@ export function RunsIndexPage() {
         </form>
       </div>
 
-      <RunsSummary runs={runs} />
+      <RunsSummary runs={runs} annotationsByRun={byRun} />
 
       <div className="card">
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-          <h2 style={{ margin: 0 }}>Recent runs</h2>
-          <button
-            type="button"
-            className="button-secondary"
-            onClick={refreshRuns}
-            disabled={runsLoading}
-          >
-            {runsLoading ? 'Loading…' : 'Refresh'}
-          </button>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+          <h2 style={{ margin: 0 }}>{reviewOnly ? 'Flagged for review' : 'Recent runs'}</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* §C3 — flagged review queue. Only offered when the host advertises
+                feedback; mirrors the inbox tab pattern. */}
+            {feedbackOn && (
+              <div className="segmented" role="group" aria-label="Filter runs">
+                <button type="button" aria-pressed={!reviewOnly} onClick={() => setReviewOnly(false)}>
+                  All
+                </button>
+                <button type="button" aria-pressed={reviewOnly} onClick={() => setReviewOnly(true)} title="Runs flagged, low-rated, or corrected">
+                  🚩 Flagged{flaggedCount > 0 ? ` (${flaggedCount})` : ''}
+                </button>
+              </div>
+            )}
+            <button type="button" className="button-secondary" onClick={refreshRuns} disabled={runsLoading}>
+              {runsLoading ? 'Loading…' : 'Refresh'}
+            </button>
+          </div>
         </div>
         {runsError ? <div className="alert error">{runsError}</div> : null}
         {!runsLoading && runs.length === 0 ? (
           <p className="muted">No runs yet. Create one above to get started.</p>
+        ) : reviewOnly && visibleRuns.length === 0 ? (
+          <p className="muted">No runs flagged for review. Thumbs-down, flag, or correct a run to add it here.</p>
         ) : (
           <div className="table-scroll">
             <table className="runs-table">
@@ -149,21 +174,35 @@ export function RunsIndexPage() {
                 </tr>
               </thead>
               <tbody>
-                {runs.map((r) => (
-                  <tr
-                    key={r.runId}
-                    onClick={() => nav(`/runs/${r.runId}`)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    {/* The run id is a real link so the row is keyboard-
-                        navigable (tab + Enter); the row onClick stays for
-                        mouse convenience and targets the same route. */}
-                    <td><Link to={`/runs/${r.runId}`} onClick={(e) => e.stopPropagation()}><code>{r.runId.slice(0, 8)}…</code></Link></td>
-                    <td>{r.workflowId}</td>
-                    <td><StatusBadge status={r.status} /></td>
-                    <td className="muted">{r.startedAt ? new Date(r.startedAt).toLocaleString() : '—'}</td>
-                  </tr>
-                ))}
+                {visibleRuns.map((r) => {
+                  const flagged = isFlagged(r.runId);
+                  return (
+                    <tr
+                      key={r.runId}
+                      onClick={() => nav(`/runs/${r.runId}`)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {/* The run id is a real link so the row is keyboard-
+                          navigable (tab + Enter); the row onClick stays for
+                          mouse convenience and targets the same route. */}
+                      <td>
+                        <Link to={`/runs/${r.runId}`} onClick={(e) => e.stopPropagation()}><code>{r.runId.slice(0, 8)}…</code></Link>
+                        {flagged && (
+                          <span
+                            className="status-badge status-error"
+                            style={{ marginLeft: 6, fontSize: 10 }}
+                            title={`Flagged for review: ${reviewReason(reviewOf(byRun.get(r.runId) ?? []))}`}
+                          >
+                            🚩 review
+                          </span>
+                        )}
+                      </td>
+                      <td>{r.workflowId}</td>
+                      <td><StatusBadge status={r.status} /></td>
+                      <td className="muted">{r.startedAt ? new Date(r.startedAt).toLocaleString() : '—'}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -201,62 +240,53 @@ interface QualityRollup {
 
 /**
  * §A2 tenant rollup — outcome distribution + mean completed-run duration
- * over the runs already in hand (no extra fetch). §C2 adds the *quality*
- * dimension (mean rating, correction/flag rate, most-corrected nodes) by
- * fanning out one `GET /v1/runs/{id}/annotations` per listed run — gated on
- * `capabilities.feedback`, so it's a no-op against a host without feedback.
+ * over the runs already in hand. §C2 adds the *quality* dimension (mean
+ * rating, correction/flag rate, most-corrected nodes) over the shared
+ * annotation map fetched once by `useRunAnnotations` — empty (so the quality
+ * block is hidden) against a host that doesn't advertise feedback.
  */
-function RunsSummary({ runs }: { runs: RunListItem[] }) {
-  // §C2 — bounded annotation aggregation across the runs already listed.
-  const [quality, setQuality] = useState<QualityRollup | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const cap = await getFeedbackCapability();
-      if (cancelled || !cap || runs.length === 0) {
-        if (!cancelled) setQuality(null);
-        return;
-      }
-      const lists = await Promise.all(runs.map((r) => listAnnotations(r.runId)));
-      if (cancelled) return;
-      const ratings: number[] = [];
-      let runsAnnotated = 0;
-      let runsCorrected = 0;
-      let runsFlagged = 0;
-      const correctedNodes = new Map<string, number>();
-      for (const anns of lists) {
-        if (anns.length > 0) runsAnnotated += 1;
-        let hasCorrection = false;
-        let hasFlag = false;
-        for (const a of anns) {
-          if (a.signal.kind === 'rating' && typeof a.signal.rating === 'number') {
-            ratings.push(a.signal.rating);
-          } else if (a.signal.kind === 'correction') {
-            hasCorrection = true;
-            if (a.target.nodeId) correctedNodes.set(a.target.nodeId, (correctedNodes.get(a.target.nodeId) ?? 0) + 1);
-          } else if (a.signal.kind === 'flag') {
-            hasFlag = true;
-          }
+function RunsSummary({
+  runs,
+  annotationsByRun,
+}: {
+  runs: RunListItem[];
+  annotationsByRun: Map<string, readonly Annotation[]>;
+}) {
+  // §C2 — quality rollup derived from the shared annotation map.
+  const quality = useMemo<QualityRollup | null>(() => {
+    if (runs.length === 0) return null;
+    const ratings: number[] = [];
+    let runsAnnotated = 0;
+    let runsCorrected = 0;
+    let runsFlagged = 0;
+    const correctedNodes = new Map<string, number>();
+    for (const r of runs) {
+      const anns = annotationsByRun.get(r.runId) ?? [];
+      if (anns.length > 0) runsAnnotated += 1;
+      let hasCorrection = false;
+      let hasFlag = false;
+      for (const a of anns) {
+        if (a.signal.kind === 'rating' && typeof a.signal.rating === 'number') {
+          ratings.push(a.signal.rating);
+        } else if (a.signal.kind === 'correction') {
+          hasCorrection = true;
+          if (a.target.nodeId) correctedNodes.set(a.target.nodeId, (correctedNodes.get(a.target.nodeId) ?? 0) + 1);
+        } else if (a.signal.kind === 'flag') {
+          hasFlag = true;
         }
-        if (hasCorrection) runsCorrected += 1;
-        if (hasFlag) runsFlagged += 1;
       }
-      if (runsAnnotated === 0) {
-        setQuality(null);
-        return;
-      }
-      setQuality({
-        runsAnnotated,
-        meanRating: ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null,
-        correctionRate: runsCorrected / runs.length,
-        flagRate: runsFlagged / runs.length,
-        topCorrected: [...correctedNodes.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3),
-      });
-    })();
-    return () => {
-      cancelled = true;
+      if (hasCorrection) runsCorrected += 1;
+      if (hasFlag) runsFlagged += 1;
+    }
+    if (runsAnnotated === 0) return null;
+    return {
+      runsAnnotated,
+      meanRating: ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null,
+      correctionRate: runsCorrected / runs.length,
+      flagRate: runsFlagged / runs.length,
+      topCorrected: [...correctedNodes.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3),
     };
-  }, [runs]);
+  }, [runs, annotationsByRun]);
 
   const s = useMemo(() => {
     if (runs.length === 0) return null;
