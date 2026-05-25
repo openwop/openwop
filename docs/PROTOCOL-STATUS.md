@@ -12,7 +12,7 @@
 | OpenAPI operations | 37 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 252 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 65 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 66 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
 
@@ -24,15 +24,15 @@
 |---|---:|
 | Accepted | 45 |
 | Active | 10 |
-| Draft | 10 |
+| Draft | 11 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
+| RFC 0066 | `x-openwop-form` vendor extension on pack `configSchema` for picker-grade UX hints | Draft |
 | RFC 0065 | Workflow node primary-output annotation | Draft |
 | RFC 0064 | A `host.toolHooks` capability - additive authorization + timing + content-free-argument fields on the existing `agent.toolCalled` / `agent.toolReturned` events (RFC 0002), fail-closed per-tool authorization via RFC 0049 scopes (reusing the `forbidden` error + the `authorization-fail-closed` invariant), and optional per-tool rate limiting (reusing `rate_limited`) - generalizing the MCP bridges into one auditable, least-privilege tool surface without inventing parallel events | Draft |
 | RFC 0063 | An optional `outputAttestation` config on `core.subWorkflow` - a content checksum surfaced on the child's terminal event, plus an optional `requireApproval` gate that suspends via an `approval` interrupt (RFC 0051) *before* `outputMapping` merges a child's outputs into the parent, so a parent can verify and approve sub-agent artifacts rather than merging them blindly | Draft |
 | RFC 0062 | A `memory.distillation` capability - scheduled, token-budgeted background compaction runs reusing RFC 0012's `memory.compacted` event (with an additive optional `distillation` sub-object), writing a stable archive + a memory-index workspace file; composing RFC 0012 (compaction) + RFC 0052 (scheduling) + RFC 0004 (memory) into the "dream" pattern | Draft |
-| RFC 0061 | Promote the RFC 0037 execution loop to a *stateful* lifecycle at `multiAgent.executionModel.version: 5` - per-iteration workspace snapshot (RFC 0059) as a deterministic input, an observable iteration counter on `runOrchestrator.decided` that `maxLoopIterations` (RFC 0058) bounds, and a stateful-resume guarantee across HITL suspends - without inventing a parallel loop surface | Draft |
 
 ## SDK Helper Coverage
 
@@ -72,7 +72,7 @@
 
 ## Active Follow-Ups
 
-- 10 RFCs still `Draft` (RFC 0038, RFC 0042, RFC 0043, RFC 0050, RFC 0054, RFC 0061, RFC 0062, RFC 0063, RFC 0064, RFC 0065) — advance with schema/conformance proof or defer.
+- 11 RFCs still `Draft` (RFC 0038, RFC 0042, RFC 0043, RFC 0050, RFC 0054, RFC 0061, RFC 0062, RFC 0063, RFC 0064, RFC 0065, RFC 0066) — advance with schema/conformance proof or defer.
 - 10 RFCs `Active` (RFC 0025, RFC 0029, RFC 0035, RFC 0036, RFC 0055, RFC 0056, RFC 0057, RFC 0058, RFC 0059, RFC 0060) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.

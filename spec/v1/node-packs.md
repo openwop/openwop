@@ -358,6 +358,46 @@ A NodeModule whose execution involves emitting a structured envelope via an LLM 
 
 **Engine semantics.** Before dispatching a node with `requiredModelCapabilities`, the engine MUST follow the four-step dispatch flow in `host-capabilities.md` §"Model-capability declarations." Failures terminate the run with `error.code = capability_not_provided` (existing error code; reused for model-capability gating per RFC 0031 §F).
 
+### `x-openwop-form` UX hints on `configSchema` properties (RFC 0066, `Draft`)
+
+A pack `configSchema` property MAY carry an `x-openwop-form` annotation hinting to **rendering consumers** (builder apps, low-code editors) that the field should bind to a specific picker UX — model picker, provider picker, credential picker, prompt picker — instead of the schema-default text/select rendering. Hosts MUST NOT read `x-openwop-form`; it has zero effect on host-side validation. The pack `configSchema` itself remains the authoritative validator for what the host accepts.
+
+**Vocabulary** (per [RFC 0066](../../RFCS/0066-x-openwop-form-vendor-extension.md) §A):
+
+| `kind` | Wire-store shape | Renderer behavior |
+|---|---|---|
+| `text` | `string` | Plain `<input>`. Equivalent to no extension. |
+| `textarea` | `string` | Multi-line `<textarea>`. |
+| `string-list` | `string[]` | One-per-line textarea round-tripping to `string[]`. |
+| `prompt-picker` | `string` (`PromptRef` per RFC 0027) | Dropdown from the prompt library; honors `promptKind` filter. |
+| `provider-picker` | `string` | Dropdown from `capabilities.aiProviders.supported`. |
+| `model-picker` | `string` | Dropdown from `capabilities.aiProviders.supportedModels[provider]`; reads sibling via `dependsOn`. |
+| `credential-picker` | `string` (`<provider>:<name>`) | Dropdown filtered by `provider` literal OR by sibling provider via `dependsOn`. |
+
+**Optional sub-fields.** `dependsOn` names a sibling property whose current value drives the picker's option set. `provider` (and the legacy alias `credentialProvider`) filters a `credential-picker` when no `dependsOn` is set. `promptKind` constrains a `prompt-picker` to one of `system` / `user` / `few-shot` / `schema-hint`.
+
+**Renderers MUST**:
+
+1. Treat unknown `kind` values as if `x-openwop-form` were absent (forward-compat with future vocabulary additions).
+2. When the sibling field named by `dependsOn` changes value, CLEAR the dependent field so stale `{provider: anthropic, model: gpt-5}` configurations don't survive a swap.
+3. Treat a `dependsOn` to a non-existent or non-sibling property as if `x-openwop-form` were absent (graceful fallback, not a hard error).
+
+**Renderers MUST NOT** use `x-openwop-form` to bypass `configSchema` validation. The picker constrains *what the user can pick*; the schema constrains *what the host will accept*. Both apply.
+
+**Example** (`core.ai.chatCompletion` config annotated for picker UX):
+
+```jsonc
+{
+  "properties": {
+    "provider": { "type": "string", "x-openwop-form": { "kind": "provider-picker" } },
+    "model":    { "type": "string", "x-openwop-form": { "kind": "model-picker",   "dependsOn": "provider" } },
+    "credentialRef": { "type": "string", "x-openwop-form": { "kind": "credential-picker", "dependsOn": "provider" } }
+  }
+}
+```
+
+Pack-author opt-in costs nothing for consumers that don't implement RFC 0066: the `x-*` prefix is the standard JSON Schema vendor-extension convention, accepted by every conformant validator and ignored by every renderer that doesn't recognize the key.
+
 ---
 
 ## Connectors (RFC 0045)

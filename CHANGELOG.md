@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0066 (`x-openwop-form` vendor extension on pack `configSchema`) — filed `Draft` (2026-05-25)
+
+New RFC reserving the `x-openwop-form` advisory annotation on pack-manifest `configSchema` properties so pack authors can opt their nodes into picker-grade UX (model / provider / credential / prompt pickers + cross-field cascades) that the static reference-app catalog already provides for built-in nodes. Motivated by the architect audit on `plans/app-buildable-now-on-existing-protocol.md` item #11 — item split into 11a (shipped: JSON-Schema validation-hint surfacing + array<string> rendering) and 11b (this RFC; picker UX for pack-installed nodes).
+
+Spec text added to `spec/v1/node-packs.md` §"`x-openwop-form` UX hints on `configSchema` properties (RFC 0066, Draft)" — vocabulary table for the seven `kind` values, normative MUSTs on the unknown-`kind` fallback + `dependsOn` cascade-clear + non-bypass of `configSchema` validation, positive example using `core.ai.chatCompletion`.
+
+Hosts MUST NOT read `x-openwop-form`; it's a consumer-side rendering hint. The `configSchema` itself remains the authoritative validator for what the host accepts. **Pure additive** per `COMPATIBILITY.md §2.1`: pack-author opt-in, no required field, no host change, no SDK change, no schema bump (the `x-*` prefix is the standard JSON Schema vendor-extension convention, accepted by every conformant validator and ignored by every renderer that doesn't recognize the key).
+
+Path-to-Active is the 7-day comment window. Path-to-Accepted requires the spec text merged + the new shape-conformance scenario green + a non-steward pack author publishing a pack that exercises the extension (cohort precedent). Reference-app implementation (Phase 2) ships after Draft → Active.
+
 ### RFC 0059 (agent workspace) — Milestone 1: schema + spec prose; promoted Draft → `Active` (2026-05-25)
 
 Lands the additive `host.workspace` capability — a versioned, atomic, tenant·workspace-scoped (RFC 0048) ground-truth file store, complementing the transactional `MemoryAdapter` (RFC 0004) with a durable, path-addressable file layer. The wire surface landed atomically across:
