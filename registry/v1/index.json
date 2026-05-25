@@ -1309,6 +1309,15 @@
       "yanked": false
     },
     {
+      "name": "vendor.myndhyve.market-intel-opportunity-scoring",
+      "latestVersion": "1.0.0",
+      "description": "MyndHyve market-intel.opportunity-scoring — score and rank communities AND messaging angles on a 5-dimension scale (volume / intensity / commercialIntent / clarity / uniqueness, weighted total) given a VoC corpus + community metadata. Composable primitive slotting between voc-extraction (aggregator) and ad-angles (downstream). Source-side this prompt is used inside the market-intel.research orchestrator; published here as a standalone typeId so workflow authors can compose it directly. Fourth marketIntel pack of the Stage 5 cohort.",
+      "license": "Apache-2.0",
+      "tags": [],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
       "name": "vendor.myndhyve.market-intel-voc",
       "kind": "node",
       "latestVersion": "1.0.0",
