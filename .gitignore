@@ -193,3 +193,13 @@ docker-compose.override.yml
 .claude/sessions/
 .claude/logs/
 /data/
+
+# ── Per-developer planning notes ─────────────────────────────────────────────
+# `plans/` is the staging area for working roadmaps, gap analyses, and
+# protocol-extension sketches that may or may not promote to an RFC.
+# Existing files committed to plans/ stay tracked (gitignore doesn't
+# untrack); this rule prevents NEW planning docs from accumulating as
+# untracked working-tree noise. To commit a new plan deliberately, use
+# `git add -f plans/<file>.md`.
+plans/*.md
+
