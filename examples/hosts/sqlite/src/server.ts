@@ -706,6 +706,37 @@ async function executeNode(
       // state level — the test asserts the round-trip identity.
       break;
 
+    case 'conformance.modelCapability.insufficient': {
+      // RFC 0031 §B step 4 + §D — this conformance-only typeId declares
+      // `requiredModelCapabilities` the host's active provider cannot
+      // satisfy, with no viable fallback. The host MUST emit
+      // `model.capability.insufficient` BEFORE the node failure, then fail
+      // the run with `capability_not_provided` (capabilities.md
+      // §"Unsupported capability — refusal contract"). The SQLite host
+      // routes no AI and advertises no model capabilities, so this typeId
+      // always takes the refuse branch. No downstream envelope event is
+      // emitted — the node never dispatches to a model (returning here
+      // skips the post-switch `node.completed`).
+      const missingCapabilities = ['nonexistent-capability-9b3f'];
+      appendEvent(runId, 'model.capability.insufficient', {
+        nodeId: node.id,
+        data: {
+          nodeId: node.id,
+          provider: 'none',
+          model: 'none',
+          missingCapabilities,
+          fallbackAttempted: false,
+        },
+      });
+      const err = {
+        code: 'capability_not_provided',
+        message: `model-capability gate (node "${node.id}"): active provider does not satisfy required model capabilities [${missingCapabilities.join(', ')}] and no viable fallback is declared.`,
+      };
+      appendEvent(runId, 'node.failed', { nodeId: node.id, data: err });
+      runFailureErrors.set(runId, err);
+      return 'failed';
+    }
+
     case 'conformance.secret.echo': {
       // openwop-smoke-byok-roundtrip fixture. Resolve a host-provisioned
       // secret by id, then emit `{ secretSha256, secretLength }` into

@@ -4242,6 +4242,23 @@ async function handleEventsPoll(
   });
 }
 
+// rest-endpoints.md §"GET /v1/runs/{runId}/artifacts/{artifactId}".
+// This host does not persist run artifacts, but the endpoint still MUST
+// reject unauthenticated requests with a canonical 401 BEFORE any
+// existence check — otherwise a missing Authorization header would be
+// answerable with a 404 that leaks whether the run/artifact exists
+// (cross-tenant existence oracle). Auth first, then a 404
+// `artifact_not_found` for the authenticated caller.
+async function handleGetArtifact(
+  req: IncomingMessage,
+  res: ServerResponse,
+  runId: string,
+  artifactId: string,
+): Promise<void> {
+  if (!(await checkAuth(req, res))) return;
+  sendError(res, 404, 'artifact_not_found', `No artifact "${artifactId}" on run "${runId}".`);
+}
+
 // ─── Router ──────────────────────────────────────────────────────────────────
 
 const RUN_ID_PATTERN = /^\/v1\/runs\/([^/]+)$/;
@@ -4249,6 +4266,7 @@ const RUN_CANCEL_PATTERN = /^\/v1\/runs\/([^/]+)\/cancel$/;
 const RUN_EVENTS_POLL_PATTERN = /^\/v1\/runs\/([^/]+)\/events\/poll$/;
 const RUN_EVENTS_SSE_PATTERN = /^\/v1\/runs\/([^/]+)\/events$/;
 const RUN_DEBUG_BUNDLE_PATTERN = /^\/v1\/runs\/([^/]+)\/debug-bundle$/;
+const RUN_ARTIFACT_PATTERN = /^\/v1\/runs\/([^/]+)\/artifacts\/([^/]+)$/;
 const RUN_PAUSE_PATTERN = /^\/v1\/runs\/([^/]+):pause$/;
 const RUN_RESUME_PATTERN = /^\/v1\/runs\/([^/]+):resume$/;
 const RUN_INTERRUPT_PATTERN = /^\/v1\/runs\/([^/]+)\/interrupts\/([^/]+)$/;
@@ -4335,6 +4353,8 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (m && method === 'GET') return handleEventsSse(req, res, m[1]!);
   m = RUN_DEBUG_BUNDLE_PATTERN.exec(path);
   if (m && method === 'GET') return handleDebugBundle(req, res, m[1]!, url);
+  m = RUN_ARTIFACT_PATTERN.exec(path);
+  if (m && method === 'GET') return handleGetArtifact(req, res, m[1]!, m[2]!);
   m = RUN_PAUSE_PATTERN.exec(path);
   if (m && method === 'POST') return handlePauseRun(req, res, m[1]!);
   m = RUN_RESUME_PATTERN.exec(path);
