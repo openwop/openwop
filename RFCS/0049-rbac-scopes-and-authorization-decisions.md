@@ -128,14 +128,16 @@ An absent or unseeded role MUST deny (`allowed: false`), never default-allow. Ad
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (this file).
-- [ ] `authorization.roles` advertisement in `capabilities.schema.json`.
-- [ ] `authorization.decided` event in `run-event-payloads.schema.json`.
-- [ ] `authorization-fail-closed` invariant in `SECURITY/invariants.yaml` with its test.
-- [ ] Role→scope binding + scope-grammar reuse documented in `spec/v1/auth.md`.
-- [ ] Four conformance scenarios (shape, scope-match, fail-closed, denial-audited).
-- [ ] CHANGELOG entry under `[Unreleased]`.
-- [ ] A non-steward host advertises `authorization.roles` and passes the fail-closed + denial-audited scenarios.
+- [x] Spec text merged (this file).
+- [x] `authorization` block (top-level, per the schema convention) with `roles` + `failClosed` in `capabilities.schema.json`.
+- [x] `authorization.decided` event in `run-event-payloads.schema.json` (+ `RunEventType` enum entry).
+- [x] `authorization-fail-closed` invariant in `SECURITY/invariants.yaml` with its test.
+- [x] Role→scope binding + scope-grammar reuse documented in `spec/v1/auth.md` §"Role-based authorization (RFC 0049)".
+- [~] Conformance — 2 of 4 landed: `authorization-roles-shape.test.ts` (shape, always runs) + `authorization-fail-closed.test.ts` (fail-closed MUST-NOT, capability-gated, `authorization/decide` seam soft-skips). The scope-match matrix + denial-audited scenarios are deferred until a host advertises `authorization`.
+- [x] CHANGELOG entry under `[Unreleased]`.
+- [ ] A non-steward host advertises `authorization` and passes the fail-closed + denial-audited scenarios.
+
+**Implementation note (2026-05-25):** Capability block (top-level `capabilities.authorization`, per the schema convention) + `authorization.decided` event + the `authorization-fail-closed` invariant + the `auth.md` §"Role-based authorization" section + the two shape/fail-closed scenarios landed on `main`. Binds to the RFC 0048 `principal`/`workspace` already on `main`. Status stays `Draft`.
 
 ## References
 

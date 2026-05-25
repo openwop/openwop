@@ -104,6 +104,16 @@ The protocol does not prescribe *how* a host derives these (API key, OIDC token,
 
 RBAC (RFC 0049), enterprise SSO/provisioning (RFC 0050), and approval gates (RFC 0051) all bind to this triple.
 
+## Role-based authorization (RFC 0049)
+
+A host MAY advertise `capabilities.authorization` to bind an RFC 0048 `principal`'s **role** to **scopes** and make authorization decisions observable, auditable, and conformance-testable. This reuses the existing API-key **scope grammar** (the §Authorization scope vocabulary above) — roles resolve *to* scopes; no new grammar is introduced.
+
+- **Role → scope binding.** The host advertises its role catalog as `capabilities.authorization.roles: [{ role, scopes[] }]`. A request is authorized when **any** of the principal's role-derived scopes matches the required scope, applying the same scope-match semantics the host already uses for API keys (per-segment wildcards + verb implication). A principal's role is resolved per `(principal, workspace)` — the same role may differ across workspaces.
+- **Fail-closed (normative).** An absent, unseeded, or unresolvable role MUST deny (a cache miss or resolver error ⇒ `allowed: false`); the host MUST NOT default-allow under any error condition. `capabilities.authorization.failClosed` is `const: true`. This is the SECURITY invariant `authorization-fail-closed`.
+- **Decision event.** The host SHOULD emit `authorization.decided { principal, action, resource, allowed, reason }` (per `run-event-payloads.schema.json`) on a decision; every **deny** SHOULD be emitted and SHOULD feed the audit log (the RFC 0009/0010 audit-log integrity profile). The event is redaction-safe — `principal` is an opaque id and `reason` carries no credential material.
+
+A denied REST action returns the existing `forbidden` envelope; the `authorization.decided { allowed: false }` event is the observable, auditable record of *why*.
+
 ## Error response shape
 
 Auth failures use the standard JSON-RPC 2.0 error shape on JSON-RPC transports, and the following on REST:

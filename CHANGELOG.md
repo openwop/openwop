@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0049 RBAC scopes & authorization decisions — Tier-2 step 2 (2026-05-25)
+
+Binds the RFC 0048 `principal`'s role to scopes (reusing the API-key scope grammar) and makes authorization decisions observable, auditable, and conformance-testable — including a normative fail-closed default. RFC 0049 stays `Draft`. All additive.
+
+- **Schema:** new top-level `capabilities.authorization` block (`supported` / `failClosed` const-true / `roles: [{ role, scopes[] }]`) in `capabilities.schema.json`; new `authorization.decided` event (`{ principal, action, resource, allowed, reason }`) in `run-event-payloads.schema.json` + the `RunEventType` enum (`run-event.schema.json`).
+- **Spec:** `auth.md` §"Role-based authorization (RFC 0049)" — role→scope binding reusing the API-key scope-match semantics, the fail-closed MUST (absent/unseeded role ⇒ deny; never default-allow), and the redaction-safe `authorization.decided` event feeding the RFC 0009/0010 audit log.
+- **SECURITY:** new protocol-tier invariant `authorization-fail-closed`.
+- **Conformance:** `authorization-roles-shape.test.ts` (advertisement shape, always runs) + `authorization-fail-closed.test.ts` (fail-closed MUST-NOT, capability-gated, `POST /v1/host/sample/authorization/decide` seam soft-skips). Scope-match + denial-audited scenarios deferred to a host. The `POST /v1/host/sample/authorization/decide` seam is registered in `host-sample-test-seams.md` §"Open seams".
+- **Counts synced:** invariants 91→92 / protocol-tier 60→61, conformance scenario files 218→220, `RunEventType` variants 66→67; `PROTOCOL-STATUS.md` regenerated; README + conformance README + `coverage.md` updated.
+
 ### RFC 0046/0047/0048 code-review follow-ups — test-seam registry + principal opacity (2026-05-25)
 
 Resolves findings from a `/code-review` pass over RFC 0048 (and the Tier-1 seams). No wire-shape change.

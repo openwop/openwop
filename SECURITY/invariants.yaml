@@ -1156,6 +1156,23 @@ invariants:
       against any host advertising `capabilities.credentials.supported`;
       skips cleanly otherwise.
 
+  # ===== RFC 0049 RBAC fail-closed =====
+
+  - id: authorization-fail-closed
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/authorization-fail-closed.test.ts
+    note: |
+      RFC 0049 §C: hosts advertising `capabilities.authorization.supported`
+      MUST deny when a principal's role is absent, unseeded, or unresolvable
+      (a cache miss / resolver error ⇒ deny). The decision MUST NOT
+      default-allow under any error condition; `capabilities.authorization.
+      failClosed` is `const: true`. A deny SHOULD emit an `authorization.
+      decided { allowed: false }` event. Tested against any host advertising
+      `capabilities.authorization.supported`; skips cleanly otherwise.
+
   # ===== RFC 0016 host.tableStorage cross-tenant isolation =====
 
   - id: table-cross-tenant-isolation

@@ -128,7 +128,8 @@
         "core.workflowChain.event",
         "core.workflowChain.confidence-escalated",
         "connector.authorized",
-        "connector.auth_expired"
+        "connector.auth_expired",
+        "authorization.decided"
       ]
     }
   }
