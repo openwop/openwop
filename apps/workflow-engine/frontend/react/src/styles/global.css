@@ -1481,6 +1481,14 @@ pre {
 .cc-attention { font-family: var(--mono); font-size: 11px; color: var(--color-warning); }
 .cc-live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-success); flex-shrink: 0; }
 
+/* Run analytics (RunAnalyticsPanel + RunsIndexPage rollup) — §A2. Stat grid. */
+.run-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(116px, 1fr)); gap: var(--space-3); margin: 0; }
+.run-stat { display: flex; flex-direction: column; gap: 2px; margin: 0; }
+.run-stat-label { margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); }
+.run-stat-value { margin: 0; font-size: 20px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.run-stat--warn .run-stat-value { color: var(--color-warning); }
+.run-stat--danger .run-stat-value { color: var(--color-danger); }
+
 /* Stack the rail above the detail on narrow viewports (sets up §A7 mobile). */
 @media (max-width: 720px) {
   .command-center { flex-direction: column; }

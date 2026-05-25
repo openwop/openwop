@@ -9,6 +9,7 @@ import { RunTimeline } from './RunTimeline.js';
 import { RunAgentTrace } from './RunAgentTrace.js';
 import { RunHandoffMap } from './RunHandoffMap.js';
 import { RunCostPanel } from './RunCostPanel.js';
+import { RunAnalyticsPanel } from './RunAnalyticsPanel.js';
 import { RunOpsPanel } from './RunOpsPanel.js';
 import { RenderInterrupt } from '../interrupts/RenderInterrupt.js';
 
@@ -154,6 +155,7 @@ export function RunDetailPage() {
         }}
       />
 
+      <RunAnalyticsPanel events={events} />
       <RunCostPanel events={events} />
       <RunHandoffMap events={events} />
       <RunAgentTrace events={events} />
