@@ -88,7 +88,7 @@ Publication condition: each pack listed above moves from "in-tree" to "published
 - RFC 0012 (Memory Compaction Profile) — `Accepted` 2026-05-15; review the SR-1 carry-forward invariant (§D) end-to-end (the host's `applyCompactionRedaction` re-applies the BYOK redaction harness to summarization output before persistence; failure mode is silent leakage of secrets the summarizer hallucinated).
 - RFC 0013 (Workflow-chain packs) — `Accepted` 2026-05-18; in scope. Review the signed-pack expansion semantics + cross-tenant pack-loading isolation.
 - RFCs 0014–0024 + 0026 — all `Accepted`; capability-surface RFCs (host.fs / host.kvStorage / host.tableStorage / host.queueBus / host.sql / host.blobStorage / host.mcp.serverMount / AI envelope primitive / dispatch input-output mapping / conformance agent-event emitters / reasoning streaming / provider-usage events) are in scope per the post-2026-05-15 expansion.
-- RFC 0025 (Test-mode registry namespace) — `Draft`; conformance-only, out of scope.
+- RFC 0025 (Test-mode registry namespace) — `Active` 2026-05-25; conformance-only mirror surface, out of scope (the test-mode catalog is isolated from production per RFC 0025 §C and the reference impl env-gates the surface off by default).
 - RFCs 0027–0033 (prompt templates / library endpoints / override hierarchy / envelope reasoning / envelope variants + model capabilities / envelope reliability events / envelope completion contract) — `Active`; in scope as gated extensions. Review the BYOK redaction carry-forward across reasoning field + envelope acceptor + downstream projections.
 
 ### 2.1.1 Steward pre-audit publication decision (2026-05-17)

@@ -89,7 +89,7 @@ The plan calls these out explicitly — none can be moved by repo-side mechanica
 
 | RFC | Status | Why open |
 |---|---|---|
-| 0025 (Test-mode registry namespace) | `Draft` | Conformance-only typeId namespace; non-production. Pending non-steward adoption signal before promotion. |
+| 0025 (Test-mode registry namespace) | `Active` | Schema + spec + OpenAPI + reference impl + conformance wiring landed 2026-05-25 (PR #102). 26 publish-error-catalog scenarios in `pack-registry-publish.test.ts` soft-skip on absent `capabilities.packs.testMode.supported: true` advertisement; reference workflow-engine advertises when env-gated. Path-to-`Accepted` requires a second host advertising the capability. |
 | 0028, 0029 (Prompt library endpoints / override hierarchy) | `Active` | 7-day comment window closed 2026-05-27; awaiting cross-host advertisement evidence per RFCS/0001 §"Promotion to Accepted." |
 | 0034 (OTel collector test seam) | `Active` | Schema + spec prose + reference impl landed 2026-05-21; awaiting a non-steward host wiring the seam to graduate. |
 | 0035 (Sandbox execution contract) | `Active` | Spec + schema + 8 conformance scenarios landed 2026-05-21. 7-of-8 SECURITY tier graduation **reverted 2026-05-22** (commit `5864a2f`) — scenarios were vacuous (`expect(true).toBe(true)` placeholders) until a sandbox-executing reference host wires real behavioral probes. Path-to-`Accepted` is unchanged: first sandbox-executing host advertises + scenarios grow real assertions + 7 of 8 invariants re-graduate. |
