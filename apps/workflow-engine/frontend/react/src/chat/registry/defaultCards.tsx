@@ -79,18 +79,34 @@ function ApprovalCard({ payload, onAction, isLoading }: CardProps): JSX.Element 
                       type="button"
                       style={{ fontSize: 11, padding: '2px 10px' }}
                       disabled={isLoading}
-                      // Resume value is the bare option content so
-                      // downstream nodes consuming the approval node's
-                      // output read the selected text directly on their
-                      // input port. The executor stores `{output:
-                      // <content>}`; uppercase/chat/etc. see it as
-                      // `inputs.text`/`inputs.prompt`/etc. via the
-                      // generic input-fallback walk. Audit metadata
-                      // (which option was picked, comment) lands in
-                      // the surrounding `node.interrupt.resolved`
-                      // event payload — not lost, just separated from
-                      // the data-flow channel.
-                      onClick={() => onAction('resolve', opt.content)}
+                      // Resume payload shape is wedged between two
+                      // constraints:
+                      //   1. BE `validateResumeValue` (routes/interrupts.ts
+                      //      §approval) REQUIRES `resumeValue.action`
+                      //      to be one of `data.actions` (`approve` /
+                      //      `reject`). A bare string is rejected with
+                      //      400 and the workflow stays suspended.
+                      //   2. Downstream consumers read the approval
+                      //      node's output as `{output: <resumeValue>}`
+                      //      via the standard edge path. We want the
+                      //      *picked content* to be what the next
+                      //      uppercase / chat / final-format node sees
+                      //      on its input port.
+                      // Solution: send `{action: 'approve', content,
+                      // selectedKey, ...}`. `action` satisfies #1;
+                      // `content` is the nested key the executor's
+                      // findFirstStringValue() walks last (`['prompt',
+                      // 'text', 'message', 'content', 'completion']`),
+                      // so downstream nodes pull the picked text out
+                      // automatically. `selectedKey` rides along for
+                      // audit / debugging.
+                      onClick={() => onAction('resolve', {
+                        action: 'approve',
+                        content: opt.content,
+                        selectedKey: opt.key,
+                        selectedLabel: opt.label,
+                        ...(comment ? { comment } : {}),
+                      })}
                     >
                       Pick this
                     </button>

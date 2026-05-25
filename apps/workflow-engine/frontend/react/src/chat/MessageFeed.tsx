@@ -79,11 +79,14 @@ export function MessageFeed({
                 {...(onFeedback ? { onFeedback } : {})}
                 {...(onReconfigureBYOK ? { onReconfigureBYOK } : {})}
               />}
-          {/* Inline interrupt card only for chat-turn (assistant) bubbles.
-              workflow_run interrupts surface in the right-side progress
-              panel instead, so the chat thread doesn't double-render the
-              approval / clarification card. */}
-          {m.activeInterrupt && m.role !== 'workflow_run' && (
+          {/* Inline interrupt card — renders below the bubble for
+              every message kind (chat-turn AND workflow_run). The
+              right-side WorkflowProgressPanel is for *tracking* the
+              run's overall shape (step list, status, outputs); the
+              chat thread is where the user takes the action. Keeping
+              the approval / clarification card here means the user
+              doesn't have to swivel between two surfaces to respond. */}
+          {m.activeInterrupt && (
             <div style={{ marginLeft: 12, marginRight: 'max(0px, calc(100% - var(--max-bubble-width, 75ch) - 12px))' }}>
               <CardHost
                 cardType={`interrupt.${m.activeInterrupt.kind}`}

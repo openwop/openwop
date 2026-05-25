@@ -20,7 +20,6 @@
 
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { CardHost } from '../registry/CardHost.js';
 import { StepList, STATUS_COLORS, STATUS_LABELS } from './StepList.js';
 import { formatElapsed } from './formatters.js';
 import type { ChatMessage } from '../hooks/useChatSession.js';
@@ -32,13 +31,10 @@ interface Props {
   /** Currently-focused workflow_run message id. When the session has
    *  >1 workflow_run messages the panel renders a run-switcher header. */
   focusedMessageId: string | null;
-  tenantId: string;
   /** Switch the focused run via the run-switcher. */
   onFocus: (messageId: string) => void;
   /** Close the panel (chevron or Esc). */
   onClose: () => void;
-  /** Resolve the focused run's active interrupt. */
-  onResolveInterrupt: (messageId: string, value: unknown) => Promise<void>;
   /** Cancel an in-flight workflow_run. */
   onCancel: (messageId: string) => Promise<void>;
   /** True when the viewport is narrow — render as full-screen overlay. */
@@ -48,10 +44,8 @@ interface Props {
 export function WorkflowProgressPanel({
   workflowRunMessages,
   focusedMessageId,
-  tenantId,
   onFocus,
   onClose,
-  onResolveInterrupt,
   onCancel,
   isMobile,
 }: Props): JSX.Element {
@@ -127,8 +121,6 @@ export function WorkflowProgressPanel({
           )}
           {focused && <FocusedRunView
             message={focused}
-            tenantId={tenantId}
-            onResolveInterrupt={onResolveInterrupt}
             onCancel={onCancel}
           />}
         </>
@@ -208,13 +200,9 @@ function RunSwitcher({
 
 function FocusedRunView({
   message,
-  tenantId,
-  onResolveInterrupt,
   onCancel,
 }: {
   message: ChatMessage;
-  tenantId: string;
-  onResolveInterrupt: (messageId: string, value: unknown) => Promise<void>;
   onCancel: (messageId: string) => Promise<void>;
 }): JSX.Element | null {
   const run = message.workflowRun;
@@ -295,23 +283,23 @@ function FocusedRunView({
         )}
       </div>
 
-      {/* Active interrupt — rendered through the registry so any
-          registered card type (approval / clarification / refinement /
-          cancellation / vendor) works. */}
+      {/* Active interrupt pointer — the actual approval / clarification
+          card renders inline in the chat thread (MessageFeed below the
+          workflow_run bubble). The panel is for *tracking* the run's
+          shape, not for taking the action — splitting "see progress"
+          from "respond to a prompt" would force the user to swivel
+          between two surfaces every gate. Show a short pointer here
+          so users who are watching the panel know where to look. */}
       {message.activeInterrupt && (
-        <div>
-          <CardHost
-            cardType={`interrupt.${message.activeInterrupt.kind}`}
-            payload={message.activeInterrupt}
-            context={{
-              runId: run.runId ?? '',
-              nodeId: message.activeInterrupt.nodeId,
-              tenantId,
-            }}
-            onAction={async (_actionId, payload) => {
-              await onResolveInterrupt(message.id, payload);
-            }}
-          />
+        <div style={{
+          padding: '8px 10px',
+          background: 'var(--clay-wash, #f3e0d4)',
+          color: 'var(--clay)',
+          border: '1px solid var(--clay-rule, #d9b9a3)',
+          borderRadius: 6,
+          fontSize: 12,
+        }}>
+          ⏸ Awaiting your input — see the {message.activeInterrupt.kind} card in the chat ↑
         </div>
       )}
 

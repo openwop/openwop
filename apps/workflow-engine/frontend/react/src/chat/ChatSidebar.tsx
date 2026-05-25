@@ -307,10 +307,8 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
         <WorkflowProgressPanel
           workflowRunMessages={workflowRunMessages}
           focusedMessageId={focusedWorkflowMessageId}
-          tenantId={tenantId}
           onFocus={(id) => setFocusedWorkflowMessageId(id)}
           onClose={() => setProgressOpen(false)}
-          onResolveInterrupt={resolveInterrupt}
           onCancel={cancelWorkflowRun}
           isMobile={isMobile}
         />
