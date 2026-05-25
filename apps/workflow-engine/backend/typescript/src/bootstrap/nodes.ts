@@ -1504,9 +1504,9 @@ const DEMO_PNG_1x1_BASE64 =
  * from `GET /v1/host/sample/assets/{token}`.
  *
  * Inputs (all optional): `contentBase64` + `mimeType` to emit a
- * caller-supplied image; otherwise a 1×1 PNG. The emitted event +
- * returned outputs carry `meta.rendering: { display: 'image' }` so a
- * consumer renders it inline.
+ * caller-supplied image; otherwise a 1×1 PNG. The emitted payload conforms
+ * to `schemas/envelopes/media.image.schema.json` (`{ url, bytes, mimeType,
+ * alt }`) — `alt` carries the accessibility text a consumer renders.
  */
 const sampleImageEmitNode: NodeModule = {
   typeId: 'local.sample.demo.image-emit',
@@ -1524,14 +1524,10 @@ const sampleImageEmitNode: NodeModule = {
     const stored = storeMediaAsset(ctx.tenantId, { contentBase64, contentType: mimeType });
 
     // RFC 0055 §C rule 1 + 3: reference the asset by its tenant-scoped URL,
-    // never inline the binary. The event lands in the run event log + debug
+    // never inline the binary. Payload conforms to the media.image schema
+    // (url/bytes/mimeType/alt). The event lands in the run event log + debug
     // bundle (flipping the §C debug-bundle conformance assertion live).
-    const payload = {
-      url: stored.url,
-      bytes: stored.bytes,
-      mimeType,
-      meta: { rendering: { display: 'image', mimeType, alt } },
-    };
+    const payload = { url: stored.url, bytes: stored.bytes, mimeType, alt };
     await ctx.emit('media.image', payload);
 
     return { status: 'success', outputs: { image: payload } };

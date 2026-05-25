@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### fix(app)+spec(rfc-0055): media-node code-review fixes — schema-conformant payload + a11y `alt` (2026-05-25)
+
+Addresses the #169 code-review findings. **(1)** The demo media-emit node emitted a `media.image` payload with a nested `meta.rendering` key that `schemas/envelopes/media.image.schema.json` rejects (`additionalProperties:false`); the producer now emits a payload that conforms to the published per-kind schema. To keep the accessibility text, **`alt` is added as an optional field to the three `media.{image,audio,file}` schemas** (additive — a11y-positive; images SHOULD carry alt) + noted in `ai-envelope.md` §"Media reference payloads", and the node emits `alt` at the payload top level. The run-detail media renderer reads `payload.alt`. **(2)** `nodeCatalog` accent `var(--color-clay, #b5651d)` (undefined token → hardcoded fallback) → `var(--clay)`. **(3)** catalog badge emoji → single letter, matching convention. App + additive schema only; `openwop:check` 9/9.
+
 ### feat(app): media-emitting demo node — closes the RFC 0055 §C loop end-to-end (2026-05-25)
 
 Adds the **producer** the RFC 0055 §C serving + §B rendering rails were built to carry. A new demo node `local.sample.demo.image-emit` stores an image in the host media store and emits a `media.image` event referencing it by tenant-scoped URL (never inlined), so a run now has a `media.image` in its event log + debug bundle, served from `GET /v1/host/sample/assets/{token}`. The builder palette gains the node (static catalog entry); the run-detail event stream renders `media.{image,audio,file}` events inline (thumbnail / audio player / download link, with URL sanitization). New backend test runs the node and asserts the debug bundle carries the media.image by URL + the URL resolves to the PNG — closing the produce → store → serve → debug-bundle loop and giving the §C debug-bundle conformance assertion a real run to activate against. App + sample-host only; no protocol-corpus change. Backend 294 tests pass; frontend build clean.

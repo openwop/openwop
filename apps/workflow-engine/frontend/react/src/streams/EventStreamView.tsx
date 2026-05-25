@@ -22,11 +22,11 @@ function MediaEventPreview({ type, payload }: { type: string; payload: unknown }
   const p = (payload && typeof payload === 'object' ? payload : {}) as {
     url?: unknown;
     mimeType?: unknown;
-    meta?: { rendering?: { alt?: unknown } };
+    alt?: unknown;
   };
   const src = resolveAssetUrl(p.url);
   if (!src) return null;
-  const alt = typeof p.meta?.rendering?.alt === 'string' ? p.meta.rendering.alt : 'emitted media';
+  const alt = typeof p.alt === 'string' ? p.alt : 'emitted media';
   if (type === 'media.image') {
     return (
       <img
