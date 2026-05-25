@@ -15,11 +15,15 @@
  * `payload.outputs.output` as the resumeValue. We just present it.
  */
 
+import { BanIcon, CheckIcon, XIcon } from './icons/index.js';
+import { isRecord } from './lib/typeGuards.js';
 import type { InterruptHistoryEntry } from './types.js';
 
 interface Props {
   entry: InterruptHistoryEntry;
 }
+
+type IconKind = 'check' | 'x' | 'ban';
 
 const KIND_VERB: Record<string, string> = {
   approval: 'Approved',
@@ -29,12 +33,12 @@ const KIND_VERB: Record<string, string> = {
   'external-event': 'Received',
 };
 
-const KIND_ICON: Record<string, string> = {
-  approval: '✓',
-  clarification: '✓',
-  refinement: '✓',
-  cancellation: '⊘',
-  'external-event': '✓',
+const KIND_ICON: Record<string, IconKind> = {
+  approval: 'check',
+  clarification: 'check',
+  refinement: 'check',
+  cancellation: 'ban',
+  'external-event': 'check',
 };
 
 const KIND_COLOR: Record<string, string> = {
@@ -45,9 +49,16 @@ const KIND_COLOR: Record<string, string> = {
   'external-event': 'var(--color-accent)',
 };
 
+function StatusIcon({ kind, color }: { kind: IconKind; color: string }): JSX.Element {
+  const style = { color };
+  if (kind === 'check') return <CheckIcon size={14} style={style} />;
+  if (kind === 'x') return <XIcon size={14} style={style} />;
+  return <BanIcon size={14} style={style} />;
+}
+
 export function HitlDecisionCard({ entry }: Props): JSX.Element {
   const verb = KIND_VERB[entry.kind] ?? 'Resolved';
-  const icon = KIND_ICON[entry.kind] ?? '✓';
+  const icon = KIND_ICON[entry.kind] ?? 'check';
   const color = KIND_COLOR[entry.kind] ?? 'var(--color-success)';
 
   // Surface the user's choice when the resumeValue has the canonical
@@ -60,25 +71,33 @@ export function HitlDecisionCard({ entry }: Props): JSX.Element {
   // we surface that distinctly so the user sees they rejected, not
   // "Approved" (which would be misleading).
   const effectiveVerb = rejected ? 'Rejected' : verb;
-  const effectiveIcon = rejected ? '✗' : icon;
+  const effectiveIcon: IconKind = rejected ? 'x' : icon;
   const effectiveColor = rejected ? 'var(--color-danger)' : color;
+
+  // ARIA landmark label so screen-reader users can navigate the row
+  // as a single coherent unit ("HITL decision: Approved Clarity critic")
+  // rather than reading each chunk independently.
+  const ariaLabel = `HITL decision: ${effectiveVerb}${decisionLabel ? `, ${decisionLabel}` : ''}`;
 
   return (
     <div
+      role="status"
+      aria-label={ariaLabel}
       style={{
         marginTop: 8,
         padding: '10px 14px',
         borderRadius: 10,
         background: `color-mix(in oklch, ${effectiveColor} 8%, transparent)`,
-        border: `1px solid color-mix(in oklch, ${effectiveColor} 30%, var(--color-border))`,
+        // Rejection state uses a 2px border for non-color differentiation;
+        // success / muted states use 1px. Pairs the color cue with a
+        // line-weight cue so high-contrast users still see the distinction.
+        border: `${rejected ? 2 : 1}px solid color-mix(in oklch, ${effectiveColor} 40%, var(--color-border))`,
         fontSize: 13,
         lineHeight: 1.4,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-        <span aria-hidden="true" style={{ color: effectiveColor, fontWeight: 700 }}>
-          {effectiveIcon}
-        </span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <StatusIcon kind={effectiveIcon} color={effectiveColor} />
         <strong style={{ color: effectiveColor }}>{effectiveVerb}</strong>
         {decisionLabel && (
           <span style={{ color: 'var(--color-text)' }}>{decisionLabel}</span>
@@ -122,14 +141,13 @@ function parseResumeValue(value: unknown): {
   comment: string | null;
   rejected: boolean;
 } {
-  if (value == null || typeof value !== 'object') {
+  if (!isRecord(value)) {
     return { decisionLabel: null, comment: null, rejected: false };
   }
-  const v = value as Record<string, unknown>;
-  const rejected = v.action === 'reject';
-  const selectedKey = typeof v.selectedKey === 'string' ? v.selectedKey : null;
-  const content = typeof v.content === 'string' ? v.content : null;
-  const comment = typeof v.comment === 'string' && v.comment.length > 0 ? v.comment : null;
+  const rejected = value.action === 'reject';
+  const selectedKey = typeof value.selectedKey === 'string' ? value.selectedKey : null;
+  const content = typeof value.content === 'string' ? value.content : null;
+  const comment = typeof value.comment === 'string' && value.comment.length > 0 ? value.comment : null;
 
   // Approval: prefer the user's pick (e.g., "Clarity critic") over the
   // raw `content`, which is the nested-key value the FE walked the

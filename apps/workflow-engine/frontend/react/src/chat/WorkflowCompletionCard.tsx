@@ -24,9 +24,10 @@
  */
 
 import { Link } from 'react-router-dom';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { getSavedWorkflow } from '../builder/persistence/localStore.js';
 import { formatElapsed } from './workflowProgress/formatters.js';
+import { AlertIcon, BanIcon, CheckIcon } from './icons/index.js';
 import type { WorkflowRunState } from './types.js';
 
 interface Props {
@@ -38,15 +39,18 @@ interface Props {
 }
 
 export function WorkflowCompletionCard({ run, onPreviewArtifact }: Props): JSX.Element | null {
-  // Only render once the run reaches a terminal state. Returning null
-  // for non-terminal states keeps the caller able to mount this
-  // unconditionally and let the component decide visibility.
-  if (run.status !== 'completed' && run.status !== 'failed' && run.status !== 'cancelled') {
-    return null;
-  }
-
+  // Hooks MUST come before any conditional return — Rules of Hooks.
+  // The previous shape early-returned on non-terminal states and then
+  // called hooks below, which throws "Rendered more hooks than during
+  // the previous render" the first time a workflow_run flips terminal.
+  // Both hooks are cheap during the running phase (no work done, just
+  // initial-state reads), so the render-time cost of always calling
+  // them is negligible.
   const terminals = useTerminalNodes(run);
   const elapsed = useElapsedSince(run.startedAt);
+
+  const isTerminal = run.status === 'completed' || run.status === 'failed' || run.status === 'cancelled';
+  if (!isTerminal) return null;
 
   const stepCount = run.totalNodes > 0
     ? `${run.completedNodeIds.length}/${run.totalNodes} steps`
@@ -54,7 +58,7 @@ export function WorkflowCompletionCard({ run, onPreviewArtifact }: Props): JSX.E
 
   if (run.status === 'failed') {
     return (
-      <CompletionShell tone="danger" icon="!" title="Workflow failed">
+      <CompletionShell tone="danger" iconKind="alert" title="Workflow failed">
         <Meta items={[stepCount, elapsed]} />
         {run.error && (
           <div
@@ -77,7 +81,7 @@ export function WorkflowCompletionCard({ run, onPreviewArtifact }: Props): JSX.E
 
   if (run.status === 'cancelled') {
     return (
-      <CompletionShell tone="muted" icon="⊘" title="Workflow cancelled">
+      <CompletionShell tone="muted" iconKind="ban" title="Workflow cancelled">
         <Meta items={[stepCount, elapsed]} />
         {run.runId && (
           <Actions>
@@ -92,7 +96,7 @@ export function WorkflowCompletionCard({ run, onPreviewArtifact }: Props): JSX.E
 
   // status === 'completed'
   return (
-    <CompletionShell tone="success" icon="✓" title="Workflow completed">
+    <CompletionShell tone="success" iconKind="check" title="Workflow completed">
       <Meta items={[stepCount, elapsed]} />
       <Actions>
         {terminals.length > 0
@@ -136,6 +140,17 @@ interface Terminal {
  * localStorage and we want to memoize the result.
  */
 function useTerminalNodes(run: WorkflowRunState): Terminal[] {
+  // Memo key is a stable string hash of the inputs that actually
+  // matter — using the raw `run.nodeNames` / `run.nodeOutputs` object
+  // references would invalidate on every SSE event (the session
+  // reducer spreads a fresh object each time), defeating the cache.
+  const memoKey = useMemo(
+    () => `${run.workflowId}::${run.status}::${run.completedNodeIds.join(',')}`,
+    [run.workflowId, run.status, run.completedNodeIds],
+  );
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- memoKey
+  // captures every input that the memo body reads; depending on the
+  // raw refs would cause spurious invalidations per the comment above.
   return useMemo(() => {
     const saved = getSavedWorkflow(run.workflowId);
     if (!saved) return [];
@@ -154,14 +169,20 @@ function useTerminalNodes(run: WorkflowRunState): Terminal[] {
       if (!run.completedNodeIds.includes(backendNodeId)) continue;
       const output = run.nodeOutputs[backendNodeId];
       if (output == null) continue;
+      // `n.config?.name` is `unknown` until proven otherwise — narrow
+      // via typeof, don't cast. Operator precedence with `??` matters
+      // here: `(x as string) ?? y` would coerce `undefined` to `string`
+      // and never reach the fallback.
+      const namedLabel = typeof n.config?.name === 'string' ? n.config.name : null;
+      const label = namedLabel ?? n.kind ?? backendNodeId.slice(0, 8);
       terminals.push({
         nodeId: backendNodeId,
-        label: n.config?.name as string ?? n.kind ?? backendNodeId.slice(0, 8),
+        label,
         output,
       });
     }
     return terminals;
-  }, [run.workflowId, run.completedNodeIds, run.nodeOutputs, run.nodeNames]);
+  }, [memoKey]);
 }
 
 /**
@@ -180,45 +201,53 @@ function lookupBackendNodeId(builderNodeId: string, run: WorkflowRunState): stri
 }
 
 function useElapsedSince(startedAt: string): string {
-  // Snapshot at mount — terminal runs don't keep ticking, so this is
-  // a single read. `formatElapsed` (in workflowProgress/formatters.ts)
-  // takes the start-time ISO string and reads `Date.now()` itself.
+  // Snapshot at mount — terminal runs don't keep ticking, so a single
+  // read is sufficient. The render cost is paid even while the run is
+  // still mid-flight (the parent calls this unconditionally now to
+  // satisfy Rules of Hooks), but `formatElapsed` is a constant-time
+  // string format so the overhead is negligible.
   const [text] = useState(() => formatElapsed(startedAt));
-  // Re-snapshot when startedAt changes (e.g., the message remounts
-  // because chat session id changed). Cheap.
-  useEffect(() => {
-    /* no-op — kept for ESLint exhaustive-deps satisfaction */
-  }, [startedAt]);
   return text;
 }
 
 interface ShellProps {
   tone: 'success' | 'danger' | 'muted';
-  icon: string;
+  iconKind: 'check' | 'alert' | 'ban';
   title: string;
   children: React.ReactNode;
 }
 
-function CompletionShell({ tone, icon, title, children }: ShellProps): JSX.Element {
+function CompletionShell({ tone, iconKind, title, children }: ShellProps): JSX.Element {
   const color = tone === 'success'
     ? 'var(--color-success)'
     : tone === 'danger'
       ? 'var(--color-danger)'
       : 'var(--color-text-muted)';
+  // Danger uses a 2px border for non-color differentiation so users
+  // with limited color discrimination still see the failure call-out.
+  const borderWidth = tone === 'danger' ? 2 : 1;
+  // ARIA landmark label so SR users can navigate the row as a unit.
+  const ariaLabel = `Workflow run: ${title}`;
   return (
     <div
+      role="status"
+      aria-label={ariaLabel}
       style={{
         marginTop: 8,
         padding: '10px 14px',
         borderRadius: 10,
         background: `color-mix(in oklch, ${color} 8%, transparent)`,
-        border: `1px solid color-mix(in oklch, ${color} 30%, var(--color-border))`,
+        border: `${borderWidth}px solid color-mix(in oklch, ${color} 40%, var(--color-border))`,
         fontSize: 13,
         lineHeight: 1.4,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-        <span aria-hidden="true" style={{ color, fontWeight: 700 }}>{icon}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ color, display: 'inline-flex' }}>
+          {iconKind === 'check' && <CheckIcon size={14} />}
+          {iconKind === 'alert' && <AlertIcon size={14} />}
+          {iconKind === 'ban' && <BanIcon size={14} />}
+        </span>
         <strong style={{ color }}>{title}</strong>
       </div>
       {children}

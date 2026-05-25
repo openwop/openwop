@@ -44,23 +44,43 @@ export function sanitizeFreeText(s: string): string {
  * write so a HITL `comment` field carrying a pasted key gets scrubbed
  * before it lands in the `node.completed` event payload.
  *
+ * Signature is `unknown → unknown` — callers know the shape they're
+ * passing and re-narrow at the use site. A generic `<T>(value: T): T`
+ * version would require `as unknown as T` escapes on every return
+ * branch (string-replace, map, fresh object) which the project's
+ * code-review skill bans across production code. Keeping the
+ * signature honest at the price of one narrowing per call site is
+ * the right trade.
+ *
  * Preserves shape: arrays stay arrays, objects keep their keys, numbers
  * + booleans + nulls pass through unchanged. Cycles aren't handled —
  * call sites pass JSON-shaped payloads, not arbitrary graph values.
  */
-export function sanitizeFreeTextDeep<T>(value: T): T {
+export function sanitizeFreeTextDeep(value: unknown): unknown {
   if (typeof value === 'string') {
-    return sanitizeFreeText(value) as unknown as T;
+    return sanitizeFreeText(value);
   }
   if (Array.isArray(value)) {
-    return value.map((v) => sanitizeFreeTextDeep(v)) as unknown as T;
+    return value.map((v) => sanitizeFreeTextDeep(v));
   }
-  if (value !== null && typeof value === 'object') {
+  if (isPlainRecord(value)) {
     const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+    for (const [k, v] of Object.entries(value)) {
       out[k] = sanitizeFreeTextDeep(v);
     }
-    return out as unknown as T;
+    return out;
   }
   return value;
+}
+
+/**
+ * Local type guard — narrows `unknown` to `Record<string, unknown>`.
+ *
+ * Without this, the recursive walk above needs an `as Record<string,
+ * unknown>` at the `Object.entries` call to get a typed iteration —
+ * which the project's code-review skill bans. The guard's predicate
+ * `v is Record<string, unknown>` flows the type through naturally.
+ */
+function isPlainRecord(v: unknown): v is Record<string, unknown> {
+  return v !== null && typeof v === 'object' && !Array.isArray(v);
 }

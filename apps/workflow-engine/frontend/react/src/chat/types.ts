@@ -38,6 +38,15 @@ export interface Citation {
  *  the chat_sessions table — survives reload as long as the chat
  *  session does. The BE event log remains the source of truth; this
  *  is a render-time index.
+ *
+ *  **Storage-footprint note (LOW priority, future compaction):**
+ *  every resolved interrupt carries the full `resumeValue` payload
+ *  (approval card `comment`, refinement form free-text, etc.). Triple-
+ *  AI's one-gate flow is fine; workflows with many HITL gates will
+ *  bloat session storage. If a future workflow pattern lights this
+ *  up, compaction strategy is: keep the canonical decision shape
+ *  (`{decisionLabel, comment, rejected}`) extracted at resolve time
+ *  and drop the raw resumeValue once a retention window passes.
  */
 export interface InterruptHistoryEntry {
   /** Stable BE-side id; re-renders keep React keys stable. */

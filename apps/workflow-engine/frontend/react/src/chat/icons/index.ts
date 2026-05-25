@@ -6,6 +6,9 @@
  * Add a new icon by creating `<Name>Icon.tsx` and re-exporting here.
  */
 
+export { AlertIcon } from './AlertIcon.js';
+export { BanIcon } from './BanIcon.js';
+export { CheckIcon } from './CheckIcon.js';
 export { GlobeIcon } from './GlobeIcon.js';
 export { MicIcon } from './MicIcon.js';
 export { SendIcon } from './SendIcon.js';
@@ -14,3 +17,4 @@ export { SparklesIcon } from './SparklesIcon.js';
 export { StopIcon } from './StopIcon.js';
 export { ThumbsDownIcon } from './ThumbsDownIcon.js';
 export { ThumbsUpIcon } from './ThumbsUpIcon.js';
+export { XIcon } from './XIcon.js';

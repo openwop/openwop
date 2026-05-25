@@ -14,9 +14,11 @@
  * For now "Open run" remains a sibling link on the completion card.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { XIcon } from './icons/index.js';
+import { isRecord } from './lib/typeGuards.js';
 
 interface Props {
   open: boolean;
@@ -26,14 +28,52 @@ interface Props {
   onClose: () => void;
 }
 
+/** Selector matching every focusable element inside the dialog. Used
+ *  for the focus trap that keeps Tab inside the modal when open. */
+const FOCUSABLE_SELECTOR = [
+  'button:not([disabled])',
+  '[href]',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+  'details > summary',
+].join(', ');
+
 export function ArtifactPreviewModal({ open, nodeId, label, output, onClose }: Props): JSX.Element | null {
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  // Snapshot of what had focus when the modal opened, so we can
+  // restore focus there on close. Without this, dismissing the modal
+  // strands focus on `<body>` and SR users lose their place.
+  const triggerRef = useRef<Element | null>(null);
+
   useEffect(() => {
     if (!open) return;
+    triggerRef.current = document.activeElement;
+    // Move focus into the dialog on the next tick so the dialog is
+    // already in the DOM. The header H2 isn't focusable; the first
+    // button (the close ✕) is the right initial target.
+    const handle = requestAnimationFrame(() => {
+      const first = dialogRef.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+      first?.focus();
+    });
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key === 'Tab') trapTab(e, dialogRef.current);
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      cancelAnimationFrame(handle);
+      window.removeEventListener('keydown', onKey);
+      // Return focus to the element that opened the modal. Guarded
+      // by an `instanceof HTMLElement` check because the snapshot
+      // could be e.g. an SVG element that doesn't support `.focus()`.
+      const t = triggerRef.current;
+      if (t instanceof HTMLElement) t.focus();
+    };
   }, [open, onClose]);
 
   if (!open) return null;
@@ -42,37 +82,56 @@ export function ArtifactPreviewModal({ open, nodeId, label, output, onClose }: P
   const rawJson = JSON.stringify(output, null, 2);
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="artifact-preview-heading"
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 60,
-        padding: 24,
-      }}
-    >
+    <>
+      {/* Backdrop is a sibling rather than the dialog itself — clicking
+          the dialog used to close because the outer dialog div was the
+          click target. Splitting makes the close-on-overlay semantics
+          unambiguous and lets the dialog be a true focus container. */}
       <div
-        onClick={(e) => e.stopPropagation()}
+        onClick={onClose}
+        aria-hidden="true"
         style={{
-          background: 'var(--color-surface)',
-          color: 'var(--color-text)',
-          borderRadius: 12,
-          maxWidth: 820,
-          width: '100%',
-          maxHeight: '85vh',
+          position: 'fixed',
+          inset: 0,
+          background: 'var(--color-modal-backdrop, rgba(0, 0, 0, 0.5))',
+          zIndex: 60,
+        }}
+      />
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="artifact-preview-heading"
+        style={{
+          position: 'fixed',
+          inset: 0,
           display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '0 10px 40px rgba(0,0,0,0.25)',
-          border: '1px solid var(--color-border)',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 61,
+          padding: 24,
+          // pointer-events:none lets clicks outside the inner card pass
+          // through to the backdrop (which closes), without `onClick` on
+          // the dialog div itself (which would have closed when the user
+          // clicked anywhere inside the content area).
+          pointerEvents: 'none',
         }}
       >
+        <div
+          style={{
+            pointerEvents: 'auto',
+            background: 'var(--color-surface)',
+            color: 'var(--color-text)',
+            borderRadius: 12,
+            maxWidth: 820,
+            width: '100%',
+            maxHeight: '85vh',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: 'var(--shadow-modal, 0 10px 40px rgba(0,0,0,0.25))',
+            border: '1px solid var(--color-border)',
+          }}
+        >
         <header
           style={{
             display: 'flex',
@@ -93,9 +152,9 @@ export function ArtifactPreviewModal({ open, nodeId, label, output, onClose }: P
             className="secondary"
             onClick={onClose}
             aria-label="Close preview"
-            style={{ marginLeft: 'auto' }}
+            style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center' }}
           >
-            ✕
+            <XIcon size={14} />
           </button>
         </header>
         <div
@@ -132,7 +191,7 @@ export function ArtifactPreviewModal({ open, nodeId, label, output, onClose }: P
               className="muted"
               style={{ fontSize: 12, cursor: 'pointer', marginBottom: 8 }}
             >
-              Raw output
+              Raw output JSON
             </summary>
             <pre
               style={{
@@ -154,8 +213,34 @@ export function ArtifactPreviewModal({ open, nodeId, label, output, onClose }: P
           </details>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
+}
+
+/**
+ * Trap Tab inside the dialog. Standard pattern: collect focusable
+ * elements, wrap forward at last → first, wrap backward at first →
+ * last. Without this, `aria-modal="true"` is a lie — users can Tab
+ * out of the modal into the page underneath.
+ */
+function trapTab(e: KeyboardEvent, container: HTMLDivElement | null): void {
+  if (!container) return;
+  const focusables = container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+  if (focusables.length === 0) {
+    e.preventDefault();
+    return;
+  }
+  const first = focusables[0]!;
+  const last = focusables[focusables.length - 1]!;
+  const active = document.activeElement;
+  if (e.shiftKey && active === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && active === last) {
+    e.preventDefault();
+    first.focus();
+  }
 }
 
 /**
@@ -175,13 +260,17 @@ export function ArtifactPreviewModal({ open, nodeId, label, output, onClose }: P
  */
 function pickPrimaryView(output: unknown): { body: string | null; format: 'markdown' | 'text' } {
   if (typeof output === 'string') return { body: output, format: 'text' };
-  if (output == null || typeof output !== 'object') return { body: null, format: 'text' };
-  const v = output as Record<string, unknown>;
-  if (typeof v.markdown === 'string') return { body: v.markdown, format: 'markdown' };
-  if (typeof v.md === 'string') return { body: v.md, format: 'markdown' };
-  if (typeof v.published === 'string') return { body: v.published, format: 'markdown' };
-  if (typeof v.response === 'string') return { body: v.response, format: 'text' };
-  if (typeof v.output === 'string') return { body: v.output, format: 'text' };
-  if (typeof v.text === 'string') return { body: v.text, format: 'text' };
+  if (!isRecord(output)) return { body: null, format: 'text' };
+  // The convention is informal — node authors emit their primary
+  // artifact under one of these well-known keys. A future RFC may
+  // formalize this via a "primary output" annotation on the node
+  // schema; until then the FE walks priority order and degrades to
+  // the raw-JSON details block when nothing matches.
+  if (typeof output.markdown === 'string') return { body: output.markdown, format: 'markdown' };
+  if (typeof output.md === 'string') return { body: output.md, format: 'markdown' };
+  if (typeof output.published === 'string') return { body: output.published, format: 'markdown' };
+  if (typeof output.response === 'string') return { body: output.response, format: 'text' };
+  if (typeof output.output === 'string') return { body: output.output, format: 'text' };
+  if (typeof output.text === 'string') return { body: output.text, format: 'text' };
   return { body: null, format: 'text' };
 }
