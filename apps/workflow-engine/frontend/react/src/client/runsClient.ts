@@ -11,6 +11,7 @@ import type {
   Capabilities,
   CreateRunRequest,
   CreateRunResponse,
+  DebugBundle,
   ForkRunRequest,
   ForkRunResponse,
   MutationOptions,
@@ -111,12 +112,12 @@ export async function forkRun(runId: string, req: ForkRunRequest): Promise<ForkR
  *  `capabilities.debugBundle.supported: true`; we throw a typed error
  *  in that case so the calling button can surface a "not supported"
  *  message instead of saving a `null.json` file. */
-export async function getDebugBundle(runId: string): Promise<Record<string, unknown>> {
+export async function getDebugBundle(runId: string): Promise<DebugBundle> {
   const bundle = await client.runs.debugBundle(runId);
   if (bundle === null) {
     throw new Error('Debug-bundle download is not supported by this host (capabilities.debugBundle.supported is not advertised).');
   }
-  return bundle as unknown as Record<string, unknown>;
+  return bundle;
 }
 
 export async function pollEvents(runId: string, lastSequence = 0): Promise<PollEventsResponse> {

@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### fix(app): code-review follow-ups on the SDK-migration PR (2026-05-25)
+
+Five findings from a `/code-review` pass over PRs #188 + #193 (SDK-migration close-out). All app-only; no protocol-corpus change. Frontend `tsc --noEmit` clean.
+
+- **`client/runsClient.ts`** — `getDebugBundle` was using the banned `as unknown as` cast (per the code-review skill's quality gate). Imports the SDK's `DebugBundle` type directly and returns it; the only consumer (`RunDetailPage.tsx`) just `JSON.stringify`s the result, so no behavior change.
+- **`client/streamsClient.ts`** — `subscribeBearer` declared + received `idleMs`/`absoluteMs` parameters that were never referenced in the body (the actual timer arming uses closures captured in `subscribeToRun`'s scope). Asymmetric signature with cookie-mode. Dropped them from both the call site and the parameter type.
+- **`client/interruptsClient.ts`** — the re-exported `InterruptInspection` type is now the SDK's `InterruptByTokenInspection`. This narrows the kind union (drops `'refinement'` / `'cancellation'`) and removes the prior `resolved: boolean` field. **No current in-app consumer reads either** (grep is clean), so zero runtime impact; the change aligns the consumer-side surface with the SDK's authoritative type. Future code that needs `resolved` or those kinds should source them from the run-event log instead of the inspection envelope.
+- **`discovery/CapabilitiesPanel.tsx`** — moved six new inline `style={{...}}` instances on the Conformance & profiles card to new `.cap-table-label` / `.cap-chip-list` / `.cap-badge-img` classes in `styles/global.css` (token-driven via `var(--space-1)`); dropped a couple of inline rules that were already in `.cap-table th, .cap-table td` / `.cap-table code`.
+- **`discovery/CapabilitiesPanel.tsx` + `client/config.ts`** — badge `<img src>` and the leaderboard `<a href>` were hard-coded to `https://openwop.dev/...`. Now resolve against a new `config.siteBaseUrl` (env: `VITE_OPENWOP_SITE_URL`, default `https://openwop.dev`) so an air-gapped / fork deployment can point at its own copies. The badge SVGs ship in this repo's `public/badge/` for same-origin serving.
+
 ### feat(app): finish the SDK migration of the reference frontend (2026-05-25)
 
 Closes item #22 ("Replace hand-rolled fetch with the published SDK") from `plans/app-buildable-now-on-existing-protocol.md`. The reference app had drifted on three surfaces where the published `@openwop/openwop` SDK already exposed a helper (per `sdk/PARITY.md`):
