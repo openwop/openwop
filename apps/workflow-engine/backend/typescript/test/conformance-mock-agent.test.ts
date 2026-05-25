@@ -153,8 +153,8 @@ describe('core.conformance.mock-agent', () => {
       expect(events[1].type).toBe('agent.toolReturned');
       expect(events[2].type).toBe('agent.toolCalled');
       expect(events[3].type).toBe('agent.toolReturned');
-      expect((events[0].payload as { toolId: string }).toolId).toBe('first');
-      expect((events[2].payload as { toolId: string }).toolId).toBe('second');
+      expect((events[0].payload as { toolName: string }).toolName).toBe('first');
+      expect((events[2].payload as { toolName: string }).toolName).toBe('second');
     });
 
     it('pairs toolCalled/toolReturned: returned.causationId === called.eventId (RFC 0002 §B strict)', async () => {
@@ -188,7 +188,7 @@ describe('core.conformance.mock-agent', () => {
   });
 
   describe('mockHandoff', () => {
-    it('emits agent.handoff with from = nodes[].agent and to.agentId = toAgentId', async () => {
+    it('emits agent.handoff with canonical fromAgentId/toAgentId strings (schema §agentHandoff)', async () => {
       const { ctx, events } = makeCtx({
         config: {
           mockHandoff: { toAgentId: 'next-agent', reason: 'demo' },
@@ -200,13 +200,13 @@ describe('core.conformance.mock-agent', () => {
       expect(events[0].type).toBe('agent.handoff');
       const payload = events[0].payload as {
         agentId: string;
-        from: { agentId: string };
-        to: { agentId: string };
+        fromAgentId: string;
+        toAgentId: string;
         reason: string;
       };
       expect(payload.agentId).toBe('agent-foo');
-      expect(payload.from.agentId).toBe('agent-foo');
-      expect(payload.to.agentId).toBe('next-agent');
+      expect(payload.fromAgentId).toBe('agent-foo');
+      expect(payload.toAgentId).toBe('next-agent');
       expect(payload.reason).toBe('demo');
     });
   });

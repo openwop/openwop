@@ -49,7 +49,14 @@ const MAP: readonly MapEntry[] = [
 
   // ── core.openwop.rag ─────────────────────────────────────────────
   // Vector ops route through host.db.vector. Loaders need outbound
-  // HTTP/fs but no dedicated surface.
+  // HTTP/fs but no dedicated surface. upsert/query (and the retrievers,
+  // which delegate to vector-query) ALSO embed via ctx.callAI.embeddings
+  // → host.aiProviders; vector-delete (by id/filter) does not embed.
+  // Longest-prefix-first resolution means these specific entries win
+  // over the broad `core.rag.vector-` below.
+  { prefix: 'core.rag.vector-upsert', surfaces: ['host.db.vector', 'host.aiProviders'] },
+  { prefix: 'core.rag.vector-query', surfaces: ['host.db.vector', 'host.aiProviders'] },
+  { prefix: 'core.rag.retriever-', surfaces: ['host.db.vector', 'host.aiProviders'] },
   { prefix: 'core.rag.vector-', surfaces: ['host.db.vector'] },
 
   // ── core.openwop.mcp ─────────────────────────────────────────────
