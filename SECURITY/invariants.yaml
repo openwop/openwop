@@ -1173,7 +1173,7 @@ invariants:
       decided { allowed: false }` event. Tested against any host advertising
       `capabilities.authorization.supported`; skips cleanly otherwise.
 
-  # ===== RFC 0028 Tier-2 prompt mutation workspace-membership =====
+  # ===== RFC 0028 Tier-2 prompt workspace-membership (read + write) =====
 
   - id: prompt-mutation-workspace-membership-enforced
     tier: protocol
@@ -1182,16 +1182,21 @@ invariants:
     tests:
       - conformance/src/scenarios/prompt-mutation-workspace-membership-enforced.test.ts
     note: |
-      `prompts.md` §"Discovery & distribution" §"REST endpoints" §"Authorization":
-      hosts advertising `capabilities.prompts.mutableLibrary: true` MUST verify
-      that the authenticated principal is a member of the target workspace
-      before honoring any `POST` / `PUT` / `DELETE` to a workspace-scoped
-      `/v1/prompts*` resource. A `workspaceId` carried in the request body, URL,
-      or query string MUST NOT be trusted as authorization on its own — the
-      host MUST resolve membership from the authenticated identity (per RFC
-      0048 §D and `auth.md` §"Identity claims"), independent of the
-      caller-supplied workspace identifier. Non-members MUST be rejected
-      fail-closed (typically `403`) before any write proceeds.
+      `prompts.md` §"Discovery & distribution" §"REST endpoints" §"Workspace
+      membership on workspace-scoped reads and writes": hosts advertising
+      `capabilities.prompts.mutableLibrary: true` MUST verify that the
+      authenticated principal is a member of the target workspace before
+      honoring any `POST` / `PUT` / `DELETE` to a workspace-scoped
+      `/v1/prompts*` resource. A `workspaceId` carried in the request body,
+      URL, or query string MUST NOT be trusted as authorization on its own
+      — the host MUST resolve membership from the authenticated identity
+      (per RFC 0048 §D and `auth.md` §"Identity claims"), independent of
+      the caller-supplied workspace identifier. Non-members MUST be
+      rejected fail-closed (typically `403`) before any write proceeds.
+      Canonical envelope on 403: `error: "workspace_membership_required"`
+      per `rest-endpoints.md` §"Common error codes" (T1 canonicalization,
+      2026-05-25). Other refusal codes (401, 404, 5xx) are acceptable but
+      the envelope shape is NOT constrained for those.
 
       This invariant was filed post-RFC-0028 promotion (2026-05-25) following
       a self-disclosed adopter vulnerability in which a host's mutating
@@ -1204,6 +1209,43 @@ invariants:
       it drives a POST with a workspaceId the conformance principal cannot
       possibly be a member of and asserts the host refuses (NOT a 2xx; any
       4xx/5xx refusal is acceptable — silent success is the failure mode).
+      On a 403 specifically, the canonical error envelope is pinned.
+
+  - id: prompt-read-workspace-membership-enforced
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/prompt-read-workspace-membership-enforced.test.ts
+    note: |
+      `prompts.md` §"Discovery & distribution" §"REST endpoints" §"Workspace
+      membership on workspace-scoped reads and writes": hosts advertising
+      `capabilities.prompts.supported: true` MUST verify the authenticated
+      principal's workspace membership BEFORE returning any workspace-scoped
+      content via `GET /v1/prompts?workspaceId=`, `GET /v1/prompts/{templateId}`
+      (when the host derives a workspace from the templateId), or
+      `POST /v1/prompts:render` (when `workspaceId` is in the request body).
+      A 200 response containing another workspace's templates is a
+      cross-tenant data leak with the same blast radius as a cross-tenant
+      write — sensitive prompt text, model hints, and variable schemas can
+      carry intellectual property, customer data, or operational secrets.
+      The read-side invariant is symmetric to the write-side. Same canonical
+      refusal envelope (`error: "workspace_membership_required"` on 403).
+
+      Filed as a sister invariant to `prompt-mutation-workspace-membership-
+      enforced` in the same 2026-05-25 RFC 0028 Tier-2 post-promotion
+      strengthening pass, per MyndHyve's relay green-light noting that
+      read-only hosts that expose `?workspaceId=` are NOT exempt from the
+      symmetric authz invariant just because they don't write. The
+      conformance scenario gates on `prompts.supported: true` (broader than
+      `mutableLibrary` to catch read-only hosts) and self-skips hosts that
+      don't recognize `?workspaceId=` via response-shape detection (the
+      scenario interprets a 200 without the documented `templates[]` field
+      as "no workspace-scoped read surface, out of scope"). On 200 WITH
+      `templates: []` it PASSes (correct null result for a random nonexistent
+      workspace); on 200 WITH non-empty `templates[]` it FAILs (the random
+      workspaceId can't legitimately contain authorized content — any
+      content returned is a cross-tenant leak).
 
   # ===== RFC 0016 host.tableStorage cross-tenant isolation =====
 

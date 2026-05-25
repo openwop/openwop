@@ -96,11 +96,31 @@ describe.skipIf(HTTP_SKIP)(
       expect(
         res.status,
         driver.describe(
-          'spec/v1/prompts.md §Workspace membership on workspace-scoped writes',
+          'spec/v1/prompts.md §Workspace membership on workspace-scoped reads and writes',
           `mutating /v1/prompts MUST refuse a write to a non-member workspace; ` +
             `got ${res.status} ${res.text.slice(0, 200)}`,
         ),
       ).toBeGreaterThanOrEqual(400);
+
+      // T1 canonicalization (2026-05-25): when the host CHOOSES 403 to
+      // signal the authz boundary, the response envelope MUST carry
+      // `error: "workspace_membership_required"` per rest-endpoints.md
+      // §"Common error codes". Hosts that refuse with other codes
+      // (401 if they treat the failure as authentication-level, 404 to
+      // avoid existence disclosure, 5xx on infra failure) have the
+      // refusal accepted above but the envelope shape is NOT constrained
+      // by this scenario — the canonical envelope is conditional on the
+      // 403 status code, not a forced upgrade.
+      if (res.status === 403) {
+        const body = res.json as { error?: unknown } | null;
+        expect(
+          body?.error,
+          driver.describe(
+            'spec/v1/rest-endpoints.md §Common error codes — workspace_membership_required',
+            `403 refusal of a workspace-scoped mutation MUST carry error: "workspace_membership_required"; got error: ${JSON.stringify(body?.error)}`,
+          ),
+        ).toBe('workspace_membership_required');
+      }
     });
   },
 );

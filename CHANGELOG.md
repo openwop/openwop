@@ -37,6 +37,25 @@ Gives the `schedule` trigger a portable, durable, once-per-tick execution contra
 - **Conformance:** `scheduling-capability-shape.test.ts` (advertisement shape, always runs) + `scheduling-cron-fires-once.test.ts` (once-per-tick + missed-tick MUST-NOT, capability-gated, `POST /v1/host/sample/scheduling/tick` seam soft-skips, registered in `host-sample-test-seams.md`). Delayed-horizon + calendar scenarios deferred.
 - **Counts synced:** conformance scenario files → 227; README + conformance README + `coverage.md` updated; `docs/PROTOCOL-STATUS.md` regenerated. (No new schema file, no new invariant, no new event.)
 
+### RFC 0028 Tier-2 post-promotion T1 + T2 — canonical `workspace_membership_required` envelope + read-side sister scenario (2026-05-25)
+
+Two same-day tightenings landed in response to MyndHyve's green-light relay on the original RFC 0028 Tier-2 workspace-membership invariant. Combined into one commit — shared threat model, shared normative paragraph location, shared conformance-gate pattern.
+
+**T1 — canonicalize `workspace_membership_required` as the 403 envelope error code.**
+
+- `spec/v1/rest-endpoints.md` §"Common error codes" gains a new `workspace_membership_required` entry right after `run_forbidden`. Documents the canonical envelope `{ "error": "workspace_membership_required", "message": "<diagnostic>" }` and the cross-reference to both prompts.md and the conformance invariants.
+- `conformance/src/scenarios/prompt-mutation-workspace-membership-enforced.test.ts` strengthened to assert `error === "workspace_membership_required"` ONLY when the host's refusal status is 403. Hosts that refuse with other 4xx/5xx codes (401, 404, 5xx) have their envelope shape unconstrained. Canonical-on-403 is a strengthening, not a forced upgrade — hosts that prefer other status codes remain conformant.
+
+**T2 — read-side sister scenario.**
+
+- `spec/v1/prompts.md` §"Discovery & distribution" §"REST endpoints" §"Workspace membership on workspace-scoped writes" renamed and extended to §"Workspace membership on workspace-scoped reads and writes". Read paths are NOT exempt from the workspace-membership invariant just because they don't write — a `GET /v1/prompts?workspaceId=<not-mine>` that returns another workspace's templates is a cross-tenant data leak with the same blast radius. Added explicit normative coverage of `GET /v1/prompts?workspaceId=`, `GET /v1/prompts/{templateId}` (when workspace is derived), and `POST /v1/prompts:render` (when workspaceId is in the body).
+- `conformance/src/scenarios/prompt-read-workspace-membership-enforced.test.ts` (NEW) — gates on `capabilities.prompts.supported: true` (broader than `mutableLibrary` per MyndHyve's preferred Option B gating; read-only hosts that expose `?workspaceId=` aren't exempt from the symmetric authz invariant). Drives `GET /v1/prompts?workspaceId=<random-non-member>` and interprets the response: 4xx PASS with canonical envelope check on 403; 200 with empty `templates[]` PASS as the correct null result for a random nonexistent workspace; 200 with non-empty `templates[]` FAIL as a cross-tenant leak; 200 without `templates[]` field SKIP via response-shape detection (host doesn't expose workspace-scoped reads — out of scope). Self-skipping via response shape avoids inventing a new capability field just for this gating concern.
+- NEW protocol-tier SECURITY invariant `prompt-read-workspace-membership-enforced` in `SECURITY/invariants.yaml`, sibling to the existing `prompt-mutation-workspace-membership-enforced` write-side invariant.
+- `prompts.md` §"Security invariants" now lists both invariants and points at the normative paragraph for the full text.
+- `RFCS/0028` appended §"Post-promotion tightening (2026-05-25, T1 + T2)" documenting both changes + the MyndHyve adoption-note pattern paraphrased from their corrected `routes/prompts.ts` comment block (Admin SDK bypasses Firestore rules; the application-tier membership check is mandatory; same anti-pattern applies to Supabase service-role keys, Convex-equivalent admin clients, raw Postgres with a server-side connection).
+
+**Counts synced:** SECURITY invariants 93 → 94 / protocol-tier 62 → 63 (+1 via `prompt-read-workspace-membership-enforced`); conformance scenario files +1. MyndHyve confirms `workflow-runtime-00208-km5` passes both probes (write + read) with no code changes — both paths already return 403 with `error: "workspace_membership_required"`. No wire-shape change; no RFC status change.
+
 ### Tier-2 (RFC 0048–0051) code-review follow-ups — gate request-event routing + doc polish (2026-05-25)
 
 Resolves findings from a `/code-review` pass over Tier-2. No wire-shape change.
