@@ -32,7 +32,7 @@ export interface Queryable {
   ): Promise<{ rows: R[] }>;
 }
 
-export const LATEST_SCHEMA_VERSION = 5;
+export const LATEST_SCHEMA_VERSION = 6;
 
 const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
   1: async (client) => {
@@ -218,6 +218,37 @@ const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
       );
       CREATE INDEX IF NOT EXISTS idx_chat_messages_session
         ON chat_messages (session_id, created_at);
+    `);
+  },
+  6: async (client) => {
+    // Per-tenant notification inbox (PR #143). Backs the bell + panel
+    // surface in the FE app. The `metadata` column is a free-form JSONB
+    // payload — `kind`, `resumeSchema` digest, originating event-log
+    // sequence, etc. The `(tenant_id, status, created_at DESC)` index
+    // covers the panel's "unread first" listing.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        notification_id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        type TEXT NOT NULL,
+        priority TEXT NOT NULL DEFAULT 'normal',
+        status TEXT NOT NULL DEFAULT 'unread',
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        run_id TEXT,
+        workflow_id TEXT,
+        node_id TEXT,
+        interrupt_id TEXT,
+        action_url TEXT,
+        metadata JSONB,
+        created_at TIMESTAMPTZ NOT NULL,
+        read_at TIMESTAMPTZ,
+        archived_at TIMESTAMPTZ
+      );
+      CREATE INDEX IF NOT EXISTS idx_notifications_tenant_created
+        ON notifications (tenant_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_notifications_tenant_status
+        ON notifications (tenant_id, status, created_at DESC);
     `);
   },
 };

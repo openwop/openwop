@@ -138,6 +138,54 @@ export interface InternalCreateRunRequest extends CreateRunRequest {
 }
 
 /**
+ * Notification surface (PR #143).
+ *
+ * Persisted per-tenant inbox of action-needed signals. Each row is one
+ * notification. The wire shape mirrors this almost exactly, modulo the
+ * snake_case → camelCase translation done by the row mapper.
+ *
+ * `type` is a dotted-namespace string. Today's emitters use:
+ *   - `workflow.approval_needed` — HITL interrupt opened (action: resume the run)
+ *   - `workflow.input_needed`    — clarification/refinement interrupt
+ *   - `workflow.failed`          — run terminated with an error
+ *   - `system.alert`             — operator-level signal
+ *
+ * The set is open — clients render unknown types via a generic shape.
+ */
+export type NotificationType =
+  | 'workflow.approval_needed'
+  | 'workflow.input_needed'
+  | 'workflow.failed'
+  | 'workflow.completed'
+  | 'system.alert';
+
+export type NotificationPriority = 'low' | 'normal' | 'high' | 'urgent';
+
+export type NotificationStatus = 'unread' | 'read' | 'archived';
+
+export interface NotificationRecord {
+  notificationId: string;
+  tenantId: string;
+  type: NotificationType | string;
+  priority: NotificationPriority;
+  status: NotificationStatus;
+  title: string;
+  message: string;
+  /** Workflow-run pointer when the notification is run-scoped. */
+  runId?: string;
+  workflowId?: string;
+  nodeId?: string;
+  interruptId?: string;
+  /** SPA deep-link the notification clicks through to. */
+  actionUrl?: string;
+  /** Arbitrary per-type payload — kind, resumeSchema digest, etc. */
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  readAt?: string;
+  archivedAt?: string;
+}
+
+/**
  * Canonical openwop error codes used inside the sample. Wire shape is
  * `ErrorEnvelope`; the route handlers map host-internal exceptions to
  * these codes via `mapErrorToEnvelope()`.

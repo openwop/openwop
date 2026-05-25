@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 7;
+export const LATEST_SCHEMA_VERSION = 8;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -237,6 +237,35 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
       );
       CREATE INDEX IF NOT EXISTS idx_chat_messages_session
         ON chat_messages (session_id, created_at);
+    `);
+  },
+  8: (db) => {
+    // Per-tenant notification inbox (PR #143). Mirrors the postgres
+    // schema v6 — same column shape so the row mappers stay parallel.
+    // sqlite has no JSONB; `metadata` is TEXT carrying a JSON string.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        notification_id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        type TEXT NOT NULL,
+        priority TEXT NOT NULL DEFAULT 'normal',
+        status TEXT NOT NULL DEFAULT 'unread',
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        run_id TEXT,
+        workflow_id TEXT,
+        node_id TEXT,
+        interrupt_id TEXT,
+        action_url TEXT,
+        metadata TEXT,
+        created_at TEXT NOT NULL,
+        read_at TEXT,
+        archived_at TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_notifications_tenant_created
+        ON notifications (tenant_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_notifications_tenant_status
+        ON notifications (tenant_id, status, created_at DESC);
     `);
   },
 };

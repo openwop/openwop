@@ -180,6 +180,13 @@ async function makeStorage(): Promise<Storage> {
     deleteChatSession: async () => false,
     listChatSessionMessages: async () => [],
     appendChatMessage: async () => { throw new Error('not exercised'); },
+    insertNotification: async () => { throw new Error('not exercised'); },
+    listNotifications: async () => [],
+    getNotification: async () => null,
+    updateNotificationStatus: async () => null,
+    markAllNotificationsRead: async () => 0,
+    deleteNotification: async () => false,
+    deleteAllTenantNotifications: async () => 0,
     close: async () => { await pool.end(); },
   };
 }

@@ -19,6 +19,8 @@ import type {
   EventRecord,
   IdempotencyRecord,
   InterruptRecord,
+  NotificationRecord,
+  NotificationStatus,
   RunRecord,
   WebhookSubscriptionRecord,
 } from '../types.js';
@@ -237,6 +239,46 @@ export interface Storage {
   /** Append a single message. Caller updates `chat_sessions.message_count`
    *  via `updateChatSession()` in the same logical operation. */
   appendChatMessage(record: ChatMessageRecord): Promise<void>;
+
+  // ── notifications (PR #143) ──
+  /**
+   * Per-tenant inbox of action-needed signals. Emitted by the executor
+   * + suspend manager when a HITL interrupt opens, a run fails, etc.
+   * The /v1/notifications routes back the bell + panel in the FE app.
+   *
+   * Status lifecycle: `unread` → `read` (via updateNotificationStatus)
+   *                          → `archived` (via updateNotificationStatus)
+   *                          → deleted (via deleteNotification).
+   * `read_at` / `archived_at` columns are set by the storage adapter on
+   * transition; callers pass the target status.
+   */
+  insertNotification(record: NotificationRecord): Promise<void>;
+  listNotifications(filter: {
+    tenantId: string;
+    status?: NotificationStatus | readonly NotificationStatus[];
+    /** Exclude `archived` rows by default — the inbox view doesn't
+     *  surface them. Pass `includeArchived: true` from the Archived tab. */
+    includeArchived?: boolean;
+    /** Oldest-first when true; default newest-first. */
+    ascending?: boolean;
+    limit?: number;
+  }): Promise<readonly NotificationRecord[]>;
+  getNotification(notificationId: string): Promise<NotificationRecord | null>;
+  /**
+   * Move a notification to a new status. The adapter sets `read_at` /
+   * `archived_at` automatically based on the target status. Returns
+   * the updated record, or null if the row was absent.
+   */
+  updateNotificationStatus(
+    notificationId: string,
+    status: NotificationStatus,
+    now: string,
+  ): Promise<NotificationRecord | null>;
+  /** Mark every unread row for the tenant as read. Returns the count touched. */
+  markAllNotificationsRead(tenantId: string, now: string): Promise<number>;
+  deleteNotification(notificationId: string): Promise<boolean>;
+  /** Drop every notification owned by a tenant (used by account-delete). */
+  deleteAllTenantNotifications(tenantId: string): Promise<number>;
 
   // ── lifecycle ──
   close(): Promise<void>;

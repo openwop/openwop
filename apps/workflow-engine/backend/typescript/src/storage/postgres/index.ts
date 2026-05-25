@@ -33,6 +33,7 @@ import type {
   ChatSessionRecord,
   EventRecord,
   InterruptRecord,
+  NotificationRecord,
   RunRecord,
   WebhookSubscriptionRecord,
 } from '../../types.js';
@@ -92,6 +93,27 @@ function rowToInterrupt(r: Row): InterruptRecord {
     createdAt: (r.created_at as Date).toISOString(),
     resolvedAt: r.resolved_at ? (r.resolved_at as Date).toISOString() : undefined,
     resolvedValue: r.resolved_value ?? undefined,
+  };
+}
+
+function rowToNotification(r: Row): NotificationRecord {
+  return {
+    notificationId: r.notification_id as string,
+    tenantId: r.tenant_id as string,
+    type: r.type as string,
+    priority: r.priority as NotificationRecord['priority'],
+    status: r.status as NotificationRecord['status'],
+    title: r.title as string,
+    message: r.message as string,
+    runId: (r.run_id as string | null) ?? undefined,
+    workflowId: (r.workflow_id as string | null) ?? undefined,
+    nodeId: (r.node_id as string | null) ?? undefined,
+    interruptId: (r.interrupt_id as string | null) ?? undefined,
+    actionUrl: (r.action_url as string | null) ?? undefined,
+    metadata: (r.metadata as Record<string, unknown> | null) ?? undefined,
+    createdAt: (r.created_at as Date).toISOString(),
+    readAt: r.read_at ? (r.read_at as Date).toISOString() : undefined,
+    archivedAt: r.archived_at ? (r.archived_at as Date).toISOString() : undefined,
   };
 }
 
@@ -774,6 +796,108 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
       } finally {
         client.release();
       }
+    },
+
+    async insertNotification(record) {
+      await pool.query(
+        `INSERT INTO notifications (
+          notification_id, tenant_id, type, priority, status,
+          title, message, run_id, workflow_id, node_id,
+          interrupt_id, action_url, metadata,
+          created_at, read_at, archived_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
+        [
+          record.notificationId, record.tenantId, record.type, record.priority, record.status,
+          record.title, record.message,
+          record.runId ?? null, record.workflowId ?? null, record.nodeId ?? null,
+          record.interruptId ?? null, record.actionUrl ?? null, record.metadata ?? null,
+          record.createdAt, record.readAt ?? null, record.archivedAt ?? null,
+        ],
+      );
+    },
+
+    async listNotifications({ tenantId, status, includeArchived, ascending, limit = 100 }) {
+      const wantStatuses: readonly string[] | null = status
+        ? (Array.isArray(status) ? status : [status as string])
+        : null;
+      // Default: hide archived rows from the inbox view. The Archived
+      // tab passes `includeArchived: true` to opt in.
+      const params: unknown[] = [tenantId];
+      let where = `tenant_id = $1`;
+      if (wantStatuses && wantStatuses.length > 0) {
+        const placeholders = wantStatuses.map((_, i) => `$${params.length + i + 1}`).join(', ');
+        where += ` AND status IN (${placeholders})`;
+        for (const s of wantStatuses) params.push(s);
+      } else if (!includeArchived) {
+        where += ` AND status <> 'archived'`;
+      }
+      params.push(limit);
+      const order = ascending ? 'ASC' : 'DESC';
+      const { rows } = await pool.query<Row>(
+        `SELECT * FROM notifications WHERE ${where}
+          ORDER BY created_at ${order}
+          LIMIT $${params.length}`,
+        params,
+      );
+      return rows.map(rowToNotification);
+    },
+
+    async getNotification(notificationId) {
+      const { rows } = await pool.query<Row>(
+        `SELECT * FROM notifications WHERE notification_id = $1`,
+        [notificationId],
+      );
+      return rows[0] ? rowToNotification(rows[0]) : null;
+    },
+
+    async updateNotificationStatus(notificationId, status, now) {
+      // `read_at` and `archived_at` are set on transition. Re-reading or
+      // re-archiving an already-archived row is a no-op for the timestamp
+      // (COALESCE keeps the first transition's timestamp).
+      const readAt = status === 'read' ? now : null;
+      const archivedAt = status === 'archived' ? now : null;
+      const { rows } = await pool.query<Row>(
+        `UPDATE notifications
+            SET status = $1,
+                read_at = CASE WHEN $2::timestamptz IS NOT NULL
+                                THEN COALESCE(read_at, $2)
+                                ELSE read_at END,
+                archived_at = CASE WHEN $3::timestamptz IS NOT NULL
+                                    THEN COALESCE(archived_at, $3)
+                                    ELSE archived_at END
+          WHERE notification_id = $4
+          RETURNING *`,
+        [status, readAt, archivedAt, notificationId],
+      );
+      return rows[0] ? rowToNotification(rows[0]) : null;
+    },
+
+    async markAllNotificationsRead(tenantId, now) {
+      const r = await pool.query(
+        `UPDATE notifications
+            SET status = 'read',
+                read_at = COALESCE(read_at, $2)
+          WHERE tenant_id = $1
+            AND status = 'unread'`,
+        [tenantId, now],
+      );
+      return r.rowCount ?? 0;
+    },
+
+    async deleteNotification(notificationId) {
+      const r = await pool.query(
+        `DELETE FROM notifications WHERE notification_id = $1`,
+        [notificationId],
+      );
+      return (r.rowCount ?? 0) > 0;
+    },
+
+    async deleteAllTenantNotifications(tenantId) {
+      const r = await pool.query(
+        `DELETE FROM notifications WHERE tenant_id = $1`,
+        [tenantId],
+      );
+      return r.rowCount ?? 0;
     },
 
     async close() {

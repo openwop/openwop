@@ -17,6 +17,7 @@ import type {
   EventRecord,
   IdempotencyRecord,
   InterruptRecord,
+  NotificationRecord,
   RunRecord,
   WebhookSubscriptionRecord,
 } from '../../types.js';
@@ -780,8 +781,124 @@ export function openSqliteStorage(dbPath: string): Storage {
       })();
     },
 
+    async insertNotification(record) {
+      db.prepare(
+        `INSERT INTO notifications (
+          notification_id, tenant_id, type, priority, status,
+          title, message, run_id, workflow_id, node_id,
+          interrupt_id, action_url, metadata,
+          created_at, read_at, archived_at
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      ).run(
+        record.notificationId, record.tenantId, record.type, record.priority, record.status,
+        record.title, record.message,
+        record.runId ?? null, record.workflowId ?? null, record.nodeId ?? null,
+        record.interruptId ?? null, record.actionUrl ?? null,
+        record.metadata ? JSON.stringify(record.metadata) : null,
+        record.createdAt, record.readAt ?? null, record.archivedAt ?? null,
+      );
+    },
+
+    async listNotifications({ tenantId, status, includeArchived, ascending, limit = 100 }) {
+      const wantStatuses: readonly string[] | null = status
+        ? (Array.isArray(status) ? status : [status as string])
+        : null;
+      const conditions: string[] = ['tenant_id = ?'];
+      const params: unknown[] = [tenantId];
+      if (wantStatuses && wantStatuses.length > 0) {
+        conditions.push(`status IN (${wantStatuses.map(() => '?').join(', ')})`);
+        for (const s of wantStatuses) params.push(s);
+      } else if (!includeArchived) {
+        conditions.push(`status <> 'archived'`);
+      }
+      params.push(limit);
+      const order = ascending ? 'ASC' : 'DESC';
+      const rows = db.prepare(
+        `SELECT * FROM notifications WHERE ${conditions.join(' AND ')}
+          ORDER BY created_at ${order} LIMIT ?`,
+      ).all(...params) as Array<Record<string, unknown>>;
+      return rows.map(rowToNotificationSqlite);
+    },
+
+    async getNotification(notificationId) {
+      const row = db.prepare(
+        `SELECT * FROM notifications WHERE notification_id = ?`,
+      ).get(notificationId) as Record<string, unknown> | undefined;
+      return row ? rowToNotificationSqlite(row) : null;
+    },
+
+    async updateNotificationStatus(notificationId, status, now) {
+      // Mirror the Postgres semantics: read_at / archived_at are set
+      // once at first transition and preserved afterward (COALESCE).
+      const readAt = status === 'read' ? now : null;
+      const archivedAt = status === 'archived' ? now : null;
+      db.prepare(
+        `UPDATE notifications
+            SET status = ?,
+                read_at = CASE WHEN ? IS NOT NULL THEN COALESCE(read_at, ?) ELSE read_at END,
+                archived_at = CASE WHEN ? IS NOT NULL THEN COALESCE(archived_at, ?) ELSE archived_at END
+          WHERE notification_id = ?`,
+      ).run(status, readAt, readAt, archivedAt, archivedAt, notificationId);
+      const row = db.prepare(
+        `SELECT * FROM notifications WHERE notification_id = ?`,
+      ).get(notificationId) as Record<string, unknown> | undefined;
+      return row ? rowToNotificationSqlite(row) : null;
+    },
+
+    async markAllNotificationsRead(tenantId, now) {
+      const r = db.prepare(
+        `UPDATE notifications
+            SET status = 'read',
+                read_at = COALESCE(read_at, ?)
+          WHERE tenant_id = ?
+            AND status = 'unread'`,
+      ).run(now, tenantId);
+      return r.changes;
+    },
+
+    async deleteNotification(notificationId) {
+      const r = db.prepare(
+        `DELETE FROM notifications WHERE notification_id = ?`,
+      ).run(notificationId);
+      return r.changes > 0;
+    },
+
+    async deleteAllTenantNotifications(tenantId) {
+      const r = db.prepare(
+        `DELETE FROM notifications WHERE tenant_id = ?`,
+      ).run(tenantId);
+      return r.changes;
+    },
+
     async close() {
       db.close();
     },
+  };
+}
+
+function rowToNotificationSqlite(r: Record<string, unknown>): NotificationRecord {
+  // sqlite stores metadata as a JSON string; parse opportunistically and
+  // fall back to undefined on malformed data rather than crashing the list.
+  let metadata: Record<string, unknown> | undefined;
+  if (typeof r.metadata === 'string' && r.metadata.length > 0) {
+    try { metadata = JSON.parse(r.metadata); } catch { metadata = undefined; }
+  }
+  return {
+    notificationId: r.notification_id as string,
+    tenantId: r.tenant_id as string,
+    type: r.type as string,
+    priority: r.priority as NotificationRecord['priority'],
+    status: r.status as NotificationRecord['status'],
+    title: r.title as string,
+    message: r.message as string,
+    runId: (r.run_id as string | null) ?? undefined,
+    workflowId: (r.workflow_id as string | null) ?? undefined,
+    nodeId: (r.node_id as string | null) ?? undefined,
+    interruptId: (r.interrupt_id as string | null) ?? undefined,
+    actionUrl: (r.action_url as string | null) ?? undefined,
+    metadata,
+    createdAt: r.created_at as string,
+    readAt: (r.read_at as string | null) ?? undefined,
+    archivedAt: (r.archived_at as string | null) ?? undefined,
   };
 }
