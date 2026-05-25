@@ -117,7 +117,11 @@ export function serializeWorkflow(wf: SavedWorkflow): BackendWorkflowDefinition 
     }
   }
 
-  // Topological sort + cycle detection.
+  // Topological sort serves two purposes here: cycle detection (a
+  // cycle returns `{cycleNodeId}` instead of an order) and as the
+  // historical source of the nodeId index. Keep the cycle check;
+  // drop the topo order as the index source — see the comment on
+  // `backendNodes` below for why.
   const sortResult = topoSort(wf.nodes, wf.edges);
   if ('cycleNodeId' in sortResult) {
     throw new SerializeError(
@@ -125,7 +129,6 @@ export function serializeWorkflow(wf: SavedWorkflow): BackendWorkflowDefinition 
       sortResult.cycleNodeId,
     );
   }
-  const ordered = sortResult.order;
 
   // Reachability check: every node MUST be reachable from at least one source
   // (a node with no incoming edges). Topo-sort returning order.length ===
@@ -162,10 +165,25 @@ export function serializeWorkflow(wf: SavedWorkflow): BackendWorkflowDefinition 
     }
   }
 
-  // Map builder nodes → backend nodes via the catalog. Backend nodeId pattern
-  // is [a-zA-Z0-9_-]{1,64}; we synthesize from the catalog kind + position
-  // index so a saved+reloaded workflow produces stable identifiers.
-  const backendNodes: BackendNode[] = ordered.map((n, i) => {
+  // Map builder nodes → backend nodes via the catalog. Backend nodeId
+  // pattern is [a-zA-Z0-9_-]{1,64}; we synthesize from the catalog
+  // kind + the FE-authored position. We deliberately DO NOT use the
+  // topological ordering as the index source: topo position is
+  // unstable across fan-out branch interleavings, so a workflow
+  // displayed as
+  //   1 Start · 2 Prepare · 3 Critic 1 · 4 Summary 1 · 5 Critic 2 ...
+  // would serialize Critic 1 as `chat_2` (FE index) under FE-order
+  // but as `chat_2` OR `chat_3` (etc.) under topo-order — the BE
+  // scheduler interleaves Critic 1 with Critic 2 / Critic 3 since
+  // all three are simultaneously ready after Prepare completes. The
+  // bubble's step list (`useChatSession.ts`'s `nodeNames` map) keys
+  // off FE position; if serialize.ts uses a different position the
+  // bubble misses the corresponding `node.completed` event and rows
+  // never tick over to ✓. The BE scheduler does its own topo sort
+  // from edges, so pre-sorted node order in the payload is purely
+  // informational — preserving FE order costs nothing on the runtime
+  // and fixes the step-list drift.
+  const backendNodes: BackendNode[] = wf.nodes.map((n, i) => {
     const entry = catalogEntry(n.kind);
     if (!entry) {
       throw new SerializeError(`Unknown node kind "${n.kind}".`, n.id);
@@ -181,7 +199,7 @@ export function serializeWorkflow(wf: SavedWorkflow): BackendWorkflowDefinition 
 
   // Build a map from builder-node-id → backend-node-id so edges resolve.
   const builderIdToBackend = new Map<string, string>(
-    ordered.map((n, i) => [n.id, backendNodes[i]!.nodeId]),
+    wf.nodes.map((n, i) => [n.id, backendNodes[i]!.nodeId]),
   );
 
   const backendEdges: BackendEdge[] = wf.edges.map((e) => {
