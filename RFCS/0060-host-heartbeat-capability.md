@@ -75,9 +75,11 @@ This is what prevents notification spam: the action is gated on a *transition*, 
 ## Conformance
 
 - **`heartbeat-capability-shape.test.ts`** — block validates; `minIntervalSec`/`maxRuntimeMs` positive. (Always runs.)
-- **`heartbeat-fires-once-per-tick.test.ts`** — a tick produces exactly one `heartbeat.evaluated`; an overlapping tick while evaluating is skipped. (Gated; uses the RFC 0052 `scheduling/tick` seam.)
+- **`heartbeat-fires-once-per-tick.test.ts`** — a tick produces exactly one `heartbeat.evaluated`; an overlapping tick while evaluating is skipped. (Gated on `capabilities.heartbeat.supported` + the heartbeat tick seam.)
 - **`heartbeat-idempotent-no-spam.test.ts`** — two ticks at unchanged state produce zero enqueued runs and zero `stateChanged`; the transitioning tick produces exactly one. (Gated; backs the anti-spam guarantee.)
 - **`heartbeat-runtime-bound.test.ts`** — a predicate exceeding `maxRuntimeMs` is terminated and reported `status: 'timeout'`. (Gated.)
+
+The three gated scenarios drive the **heartbeat tick seam** `POST /v1/host/sample/heartbeat/tick` (request `{ heartbeatId, observedState, simulateSlowMs? }` → `{ evaluated, stateChanged, enqueuedRuns }`), specified in [`host-sample-test-seams.md`](../spec/v1/host-sample-test-seams.md) §"Open seams". A host advertising `capabilities.heartbeat.supported: true` wires the seam to light them up; they soft-skip on `404` until then.
 
 ## Alternatives considered
 
