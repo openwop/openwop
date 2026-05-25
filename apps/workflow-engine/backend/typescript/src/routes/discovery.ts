@@ -151,7 +151,12 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
     // The 4 universal kinds are always advertised because the host
     // implements the AIEnvelopeAcceptor (host/envelopeAcceptor.ts) which
     // validates them against schemas/envelopes/<kind>.schema.json.
-    supportedEnvelopes: [...universalEnvelopeKinds()],
+    // RFC 0055 §C: the three OPTIONAL media.* kinds are advertised because
+    // the host ships their per-kind schemas + serves their assets
+    // (routes/mediaAssets.ts). They are NOT universal (not in
+    // universalEnvelopeKinds()) — a consumer that doesn't recognize them
+    // falls back to raw rendering.
+    supportedEnvelopes: [...universalEnvelopeKinds(), 'media.image', 'media.audio', 'media.file'],
     schemaVersions: {
       runEvent: 1,
       capabilities: 1,
@@ -162,6 +167,10 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       'schema.request': 1,
       'schema.response': 1,
       error: 1,
+      // RFC 0055 §C media kinds (v1).
+      'media.image': 1,
+      'media.audio': 1,
+      'media.file': 1,
     },
     limits: {
       // Per capabilities.md §3 (CapabilityLimiter shape) — non-negative integers.
