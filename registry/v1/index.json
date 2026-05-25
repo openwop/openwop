@@ -623,6 +623,15 @@
       "yanked": false
     },
     {
+      "name": "vendor.myndhyve.ads-copy-generate",
+      "latestVersion": "1.0.0",
+      "description": "MyndHyve ads.copy.generate — AI-powered multi-variant ad copy generation with per-placement adaptation (truncation to caller-supplied text limits). Routes the AI call through ctx.callAI; replaces the source PlatformSpecRegistry read with caller-supplied inputs.placementTextLimits (resolve upstream from vendor.myndhyve.ads-platforms OR host.adPlatformSpecs).",
+      "license": "Apache-2.0",
+      "tags": [],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
       "name": "vendor.myndhyve.ads-creative-validate",
       "kind": "node",
       "latestVersion": "1.0.0",
