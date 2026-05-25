@@ -15,7 +15,12 @@ import type { OpenInterrupt } from '../client/interruptsClient.js';
  *  message has a single text part — equivalent to `content: string`. */
 export type ContentPart =
   | { type: 'text'; text: string }
-  | { type: 'audio'; mimeType: string; dataBase64: string; durationSeconds?: number };
+  | { type: 'audio'; mimeType: string; dataBase64: string; durationSeconds?: number }
+  // RFC 0055 media.* — host-served `url` preferred; inline `dataBase64`
+  // permitted under the host's maxInlineMediaBytes cap. `alt` carries
+  // meta.rendering.alt for accessibility (§A7 / §B1).
+  | { type: 'image'; mimeType: string; url?: string; dataBase64?: string; alt?: string }
+  | { type: 'file'; mimeType: string; url?: string; dataBase64?: string; name?: string };
 
 /** A normalized citation surfaced from a provider's web-search tool result. */
 export interface Citation {
