@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
   "title": "RunEventPayloads",
-  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n66 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n67 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
   "type": "object",
   "$defs": {
     "_typeIndex": {
@@ -75,7 +75,22 @@
         "core.workflowChain.event":  { "$ref": "#/$defs/coreWorkflowChainEvent" },
         "core.workflowChain.confidence-escalated": { "$ref": "#/$defs/coreWorkflowChainConfidenceEscalated" },
         "connector.authorized":      { "$ref": "#/$defs/connectorAuthorized" },
-        "connector.auth_expired":    { "$ref": "#/$defs/connectorAuthExpired" }
+        "connector.auth_expired":    { "$ref": "#/$defs/connectorAuthExpired" },
+        "authorization.decided":     { "$ref": "#/$defs/authorizationDecided" }
+      }
+    },
+
+    "authorizationDecided": {
+      "description": "RFC 0049 — emitted on a role-based authorization decision (allow or deny). Redaction-safe: `principal` is an opaque RFC 0048 id; `reason` carries no credential material. Every deny SHOULD be emitted and SHOULD feed the audit log (RFC 0009/0010). MUST NOT be emitted unless `capabilities.authorization.supported: true`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["principal", "action", "resource", "allowed"],
+      "properties": {
+        "principal": { "type": "string", "minLength": 1, "description": "Opaque RFC 0048 principal id — never PII." },
+        "action": { "type": "string", "minLength": 1, "description": "The attempted action, e.g. `runs:cancel`." },
+        "resource": { "type": "string", "minLength": 1, "description": "The target, e.g. a runId or workflowId." },
+        "allowed": { "type": "boolean" },
+        "reason": { "type": "string", "description": "Human-readable, redaction-safe — no credential material." }
       }
     },
 

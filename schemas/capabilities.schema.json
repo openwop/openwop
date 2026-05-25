@@ -444,6 +444,29 @@
       },
       "additionalProperties": false
     },
+    "authorization": {
+      "type": "object",
+      "description": "RFC 0049 (`Draft`). Maps an RFC 0048 principal's role to scopes (reusing the API-key scope grammar in `auth.md`) and surfaces authorization decisions as `authorization.decided` events. Fail-closed: an absent/unseeded role denies (SECURITY invariant `authorization-fail-closed`).",
+      "required": ["supported"],
+      "properties": {
+        "supported": { "type": "boolean", "description": "Host implements the role→scope authorization-decision contract." },
+        "failClosed": { "const": true, "description": "Absent/unseeded role denies; resolver errors deny. MUST be true when present — see SECURITY invariant `authorization-fail-closed`." },
+        "roles": {
+          "type": "array",
+          "description": "Role catalog. A principal's role resolves to this scope set; a request is authorized when any role-derived scope matches the required scope per the API-key scope-match semantics.",
+          "items": {
+            "type": "object",
+            "required": ["role", "scopes"],
+            "properties": {
+              "role": { "type": "string", "minLength": 1 },
+              "scopes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "runtimeCapabilities": {
       "type": "array",
       "items": { "type": "string", "minLength": 1 },
