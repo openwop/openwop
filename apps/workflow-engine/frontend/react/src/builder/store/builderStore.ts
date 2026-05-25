@@ -82,7 +82,7 @@ export interface BuilderState {
    *  (no measured dimensions needed): left edges, top edges, or even
    *  horizontal / vertical spacing. One undo entry. */
   alignNodes(ids: string[], mode: 'left' | 'top' | 'distribute-h' | 'distribute-v'): void;
-  updateNode(id: string, patch: Partial<Pick<BuilderNode, 'name' | 'position' | 'config'>>): void;
+  updateNode(id: string, patch: Partial<Pick<BuilderNode, 'name' | 'position' | 'config' | 'outputRole'>>): void;
   /** Commit final positions for several nodes in one undo entry — used for
    *  group drag so one gesture is one undo. */
   moveNodes(moves: { id: string; position: { x: number; y: number } }[]): void;
@@ -263,6 +263,12 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
               ...(patch.name !== undefined ? { name: patch.name } : {}),
               ...(patch.position !== undefined ? { position: patch.position } : {}),
               ...(patch.config !== undefined ? { config: patch.config } : {}),
+              // `in patch` (not `!== undefined`) so callers can CLEAR
+              // the annotation by passing `outputRole: undefined`.
+              // `name` / `position` / `config` never get cleared in
+              // practice; `outputRole` does (the Inspector's "(none)"
+              // option) so it needs the in-check.
+              ...('outputRole' in patch ? { outputRole: patch.outputRole } : {}),
             }
           : n,
       ),

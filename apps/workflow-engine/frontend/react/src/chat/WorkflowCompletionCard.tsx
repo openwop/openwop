@@ -197,6 +197,14 @@ interface Terminal {
  *
  * Hooked rather than computed inline because `getSavedWorkflow` reads
  * localStorage and we want to memoize the result.
+ *
+ * RFC 0065 note: `outputRole` flows through the entire round-trip —
+ * `BuilderNode.outputRole` is preserved in the localStorage
+ * SavedWorkflow AND forwarded by `builder/schema/serialize.ts` to the
+ * BE `BackendNode` shape on workflow registration / run dispatch.
+ * This hook reads from `getSavedWorkflow()` (localStorage) for the
+ * fast path; a future cross-device path would re-fetch the BE
+ * workflow definition and read the same field server-side.
  */
 function useTerminalNodes(run: WorkflowRunState): Terminal[] {
   // Memo key is a stable string hash of the inputs that actually
@@ -244,12 +252,17 @@ function useTerminalNodes(run: WorkflowRunState): Terminal[] {
     // RFC 0065 — if at least one terminal is tagged `primary`, narrow
     // the surfaced list to JUST the primary one. Per the RFC, the
     // tiebreaker for multiple primaries is lexicographic node id —
-    // deterministic + reproducible across implementations.
+    // **Unicode code-point order** (NOT `localeCompare`, which uses
+    // the host's default ICU collation and can diverge across
+    // implementations for non-ASCII ids). The schema pins ids to
+    // `[a-zA-Z0-9._-]` so the two coincide today; the explicit
+    // ordering makes the RFC's "reproducible across implementations"
+    // promise honest if the regex ever loosens.
     const primaries = terminals.filter((t) => t.isPrimary);
-    if (primaries.length > 0) {
-      primaries.sort((a, b) => a.nodeId.localeCompare(b.nodeId));
-      return [primaries[0]!];
-    }
+    const [primary] = primaries.sort((a, b) =>
+      a.nodeId < b.nodeId ? -1 : a.nodeId > b.nodeId ? 1 : 0,
+    );
+    if (primary) return [primary];
     // Fallback (v1 convention): show every terminal as a separate
     // "View output" link.
     return terminals;

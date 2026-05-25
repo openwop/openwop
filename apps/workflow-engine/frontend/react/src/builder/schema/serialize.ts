@@ -26,6 +26,12 @@ export interface BackendNode {
   nodeId: string;
   typeId: string;
   config?: Record<string, unknown>;
+  /** RFC 0065 — author hint that this terminal node's output is the
+   *  workflow's primary deliverable. Forwarded verbatim to the BE
+   *  workflow-definition row so consumers (chat-surface, run-detail,
+   *  third-party hosts) can pick the canonical artifact deterministically.
+   *  Engine MUST NOT depend on the value (advisory). */
+  outputRole?: 'primary' | 'secondary';
 }
 
 export interface BackendEdge {
@@ -212,6 +218,7 @@ export function serializeWithIdMap(wf: SavedWorkflow): SerializeResult {
       nodeId,
       typeId: entry.typeId,
       ...(Object.keys(n.config).length > 0 ? { config: n.config } : {}),
+      ...(n.outputRole !== undefined ? { outputRole: n.outputRole } : {}),
     };
   });
 
