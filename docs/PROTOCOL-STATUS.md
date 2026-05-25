@@ -12,7 +12,7 @@
 | OpenAPI operations | 33 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 240 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 57 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 64 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
 
@@ -24,15 +24,15 @@
 |---|---:|
 | Accepted | 45 |
 | Active | 6 |
-| Draft | 6 |
+| Draft | 13 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
-| RFC 0057 | An optional `memory.attribution` capability + additive `memory.written` RunEvent carrying `{ memoryRef, memoryId, nodeId?, agentId? }`, so a consumer can see which node wrote which memory entry during a run - making per-node memory provenance observable on the wire without exposing memory content | Draft |
-| RFC 0056 | An optional `host.feedback` capability + a per-run annotation store exposed via `POST/GET /v1/runs/{runId}/annotations` + a live `run.annotated` SSE notification, so a human (or supervisor agent) can attach a portable quality signal - rating / correction / label / flag - to a run, event, or node, feeding analytics, the HITL inbox, and review. Annotations are a side-resource, **not** replayable run-event-log entries. | Active |
-| RFC 0055 | Promote RFC 0031's reserved `vision-input` / `audio` model-capability identifiers into a formal vocabulary, and add an optional `meta.rendering` hint + `media.*` URL-reference convention to the AI envelope, so an LLM node can emit images / audio / files / structured cards that any consumer renders portably | Active |
-| RFC 0054 | A read-only `GET /v1/runs/{runId}:diff?against={otherRunId}` endpoint returning a deterministic, replay-aware structured diff of two runs' event sequences and terminal states - the protocol surface behind run-vs-fork comparison | Draft |
-| RFC 0053 | A `host.deadLetter` capability + `run.dead_lettered` event - terminally-failed runs/nodes land in a durable, inspectable sink that stays fork-eligible, so a poisoned run can be examined and replayed rather than silently lost | Accepted |
+| RFC 0064 | A `host.toolHooks` capability - content-free `tool.invoked` / `tool.returned` lifecycle events around every external tool/MCP call, fail-closed per-tool authorization scopes (`tool_forbidden`), and optional per-tool rate limiting - generalizing the MCP-specific bridges into one auditable, least-privilege tool surface | Draft |
+| RFC 0063 | An optional `outputAttestation` config on `core.subWorkflow` - a content checksum surfaced on the child's terminal event, plus an optional `requireApproval` gate that suspends via an `approval` interrupt (RFC 0051) *before* `outputMapping` merges a child's outputs into the parent, so a parent can verify and approve sub-agent artifacts rather than merging them blindly | Draft |
+| RFC 0062 | A `memory.distillation` capability - scheduled, token-budgeted background compaction runs that read transactional memory, distill it under an explicit budget, write a stable archive + a retrievable memory-index manifest, and emit `memory.distilled`; composing RFC 0012 (compaction) + RFC 0052 (scheduling) + RFC 0004 (memory) into the "dream" pattern | Draft |
+| RFC 0061 | An `agents.loop` capability formalizing a re-entrant, stateful agent loop - each iteration loads workspace + memory + recent transcript, runs the orchestrator turn, persists deltas, appends a deterministic `agent.loop.iterated` event, and continues until an acceptance predicate, `maxLoopIterations`, or a suspend; the keystone tying RFC 0037 / 0058 / 0059 / 0004 into a portable autonomous-runtime contract | Draft |
+| RFC 0060 | A `host.heartbeat` capability - a system-managed, short-interval, runtime-bounded evaluation of an *idempotent predicate* that emits state-change events and conditionally enqueues a run, rather than blindly re-running an agent; the controlled, request-shaped exception to openwop's poll-free design | Draft |
 
 ## SDK Helper Coverage
 
@@ -72,7 +72,7 @@
 
 ## Active Follow-Ups
 
-- 6 RFCs still `Draft` (RFC 0038, RFC 0042, RFC 0043, RFC 0050, RFC 0054, RFC 0057) — advance with schema/conformance proof or defer.
+- 13 RFCs still `Draft` (RFC 0038, RFC 0042, RFC 0043, RFC 0050, RFC 0054, RFC 0057, RFC 0058, RFC 0059, RFC 0060, RFC 0061, RFC 0062, RFC 0063, RFC 0064) — advance with schema/conformance proof or defer.
 - 6 RFCs `Active` (RFC 0025, RFC 0029, RFC 0035, RFC 0036, RFC 0055, RFC 0056) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.

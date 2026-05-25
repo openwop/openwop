@@ -11,6 +11,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFCs 0058–0064 — autonomous-agent-runtime cohort filed (`Draft`, 2026-05-25)
+
+Seven additive RFCs filed from the `apps/workflow-engine` demo-app gap audit against the proposed autonomous-agent-runtime feature set. All `additive`, all capability-gated; spec/schema/conformance/SDK/host work tracked in [`plans/autonomous-agent-runtime.md`](./plans/autonomous-agent-runtime.md). No normative wire shape changes yet (Draft) — README RFC counts synced to 64 / Draft (13).
+
+- **RFC 0058** run execution bounds — `runTimeoutMs` + `maxLoopIterations` reserved keys, `limits.{maxRunDurationMs,maxLoopIterations}`, surfaced through **two new `cap.breached` kinds** (`run-duration`, `loop-iterations`) reusing the unified engine-enforced-limit event rather than a new event type, + `run_timeout` / `loop_limit_exceeded` codes (closes the no-per-run-timeout gap; `recursionLimit` only counts nodes).
+- **RFC 0059** agent workspace — `host.workspace`: versioned, atomic, tenant·workspace-scoped ground-truth file store + `workspace.updated`; new durable layer beside `MemoryAdapter`.
+- **RFC 0060** host heartbeat — `host.heartbeat`: predicate-gated, runtime-bounded, idempotent poller emitting `heartbeat.evaluated` / `stateChanged` (anti-spam); composes RFC 0052; `positioning.md` bounded-exception note.
+- **RFC 0061** agent loop lifecycle — `agents.loop`: re-entrant stateful loop loading workspace+memory+transcript per iteration, run-until-`terminate`/`maxLoopIterations`, `agent.loop.iterated`; closes RFC 0037's loop-iteration gap.
+- **RFC 0062** scheduled memory distillation ("dreams") — `memory.distillation`: token-budgeted scheduled compaction (`distillation.tokenBudget` reserved key) + memory-index manifest + `memory.distilled`; composes RFC 0012 + 0052 + 0059.
+- **RFC 0063** sub-run output attestation & merge gating — optional `core.subWorkflow.outputAttestation` (checksum + RFC 0051 approval before `outputMapping` merge, fail-closed); `subRun.attested`.
+- **RFC 0064** tool invocation hooks & per-tool authorization — `host.toolHooks`: content-free `tool.invoked` / `tool.returned`, fail-closed per-tool RBAC (`tool_forbidden`), per-tool rate limiting; generalizes the MCP bridges.
+
 ### RFC 0055 follow-ups — model-capability badge (§A) + debug-bundle media-reference assertion (§C) (2026-05-25)
 
 Closes the two deferred RFC 0055 follow-ups. **§A:** the builder model picker (`ModelPickerInput`) now renders per-model capability pills (📷 Vision / 🛠 Tools / ⌗ Structured) for the selected model from `providers.json`, so a user sees whether the chosen model supports vision before relying on it. **§C:** the debug-bundle `it.todo` in `media-url-inline-cap.test.ts` is replaced by a live capability-gated assertion of RFC 0055 §C rule 3 — a `media.*` payload appearing in a run's debug bundle MUST be a URL reference, never inlined binary; gated on `aiProviders.maxInlineMediaBytes` + `debugBundle.supported`, soft-skips on hosts (incl. the reference host) that don't emit media into runs. App + conformance only; `openwop:check` 9/9. All additive.
