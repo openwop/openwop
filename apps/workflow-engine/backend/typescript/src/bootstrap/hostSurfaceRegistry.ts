@@ -40,6 +40,7 @@ export type HostSurfaceName =
   | 'host.db.vector'
   | 'host.messaging'
   | 'host.observability'
+  | 'host.memory'
   | 'host.mcp'
   | 'host.aiProviders'
   | 'host.interrupts'

@@ -25,6 +25,7 @@
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, normalize, resolve, sep } from 'node:path';
+import { randomUUID } from 'node:crypto';
 import Database from 'better-sqlite3';
 import { createLogger } from '../observability/logger.js';
 import { registerHostSurface } from '../bootstrap/hostSurfaceRegistry.js';
@@ -843,6 +844,9 @@ const _busState = new TenantMap<BusMessage[]>();
 const _vectorState = new TenantMap<Map<string, VectorEntry>>();
 const _searchState = new TenantMap<Map<string, SearchDoc>>();
 const _sqlPool = new Map<string, Database.Database>();
+// RFC 0004 memory: tenant → memoryRef → entries. Host-internal write side
+// (run-summary on completion); read side exposed via GET /v1/host/sample/memory.
+const _memoryState = new TenantMap<MemoryRow[]>();
 
 let _fsRoot: string | null = null;
 let _initialized = false;
@@ -873,8 +877,97 @@ export function initInMemorySurfaces(deps: { dataDir: string }): void {
   registerHostSurface({ name: 'host.db.search', supported: true, implementation: 'naive-bag-of-words', note: 'Token-frequency relevance score. Real impls use Elasticsearch / OpenSearch / Meilisearch / Typesense.' });
   registerHostSurface({ name: 'host.messaging', supported: true, implementation: inmem });
   registerHostSurface({ name: 'host.observability', supported: true, implementation: 'structured-logger', note: 'Routes through the workflow-engine logger.' });
+  registerHostSurface({ name: 'host.memory', supported: true, implementation: inmem, note: 'Demo only. RFC 0004 read-side (list/get); host writes a run-summary on completion. Restarts wipe state.' });
 
   _initialized = true;
+}
+
+// ───────────────────────────────────────────────────────────────────
+// RFC 0004 memory (host-internal write side + read side)
+//
+// The wire contract (agent-memory.md) is read-only: `list(memoryRef,
+// options)` + `get(memoryRef, memoryId)`. Writes are host-internal — for
+// the demo the host writes a run-summary entry on completion (the
+// "session-end write" the spec sanctions). Tenant-scoped per CTI-1;
+// content is plain (no BYOK secrets flow through summaries, so SR-1 holds
+// trivially here).
+// ───────────────────────────────────────────────────────────────────
+
+/** One stored memory entry (matches schemas/memory-entry.schema.json). */
+export interface MemoryRow {
+  id: string;
+  content: string;
+  tags: string[];
+  createdAt: string;
+  /** RFC 0004 TTL — entries past this MUST NOT surface in list/get. */
+  expiresAt?: string;
+}
+
+export interface MemoryListOpts {
+  limit?: number;
+  tag?: string;
+}
+
+/** The demo's single per-tenant memoryRef. Real hosts derive memoryRefs
+ *  from agent manifests (RFC 0004 §C); the sample uses one shared ref so
+ *  the ledger shows a tenant's accumulating run history. */
+export const MEMORY_DEMO_REF = 'tenant-memory';
+
+const MEMORY_HARD_MAX = 500;
+
+function memoryBucket(tenantId: string): Map<string, MemoryRow[]> {
+  return _memoryState.bucket(tenantId);
+}
+
+function notExpired(row: MemoryRow, nowMs: number): boolean {
+  if (!row.expiresAt) return true;
+  const t = Date.parse(row.expiresAt);
+  return !Number.isFinite(t) || t > nowMs;
+}
+
+/** Host-internal write. Appends a tenant-scoped entry under `memoryRef`. */
+export function writeMemoryEntry(
+  tenantId: string,
+  memoryRef: string,
+  input: { content: string; tags?: string[]; ttlSeconds?: number },
+): MemoryRow {
+  if (!_initialized) throw new Error('initInMemorySurfaces() must be called first');
+  const now = Date.now();
+  const row: MemoryRow = {
+    id: `mem_${randomUUID().slice(0, 12)}`,
+    content: input.content,
+    tags: input.tags ?? [],
+    createdAt: new Date(now).toISOString(),
+    ...(typeof input.ttlSeconds === 'number' && input.ttlSeconds > 0
+      ? { expiresAt: new Date(now + input.ttlSeconds * 1000).toISOString() }
+      : {}),
+  };
+  const bucket = memoryBucket(tenantId);
+  const entries = bucket.get(memoryRef) ?? [];
+  entries.push(row);
+  bucket.set(memoryRef, entries);
+  return row;
+}
+
+/** RFC 0004 read side. Tenant-scoped; TTL-filtered; newest first. */
+export function listMemoryEntries(
+  tenantId: string,
+  memoryRef: string,
+  opts: MemoryListOpts = {},
+): MemoryRow[] {
+  const now = Date.now();
+  const all = (memoryBucket(tenantId).get(memoryRef) ?? []).filter((r) => notExpired(r, now));
+  const tagged = opts.tag ? all.filter((r) => r.tags.includes(opts.tag!)) : all;
+  const sorted = [...tagged].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const limit = Math.min(opts.limit ?? MEMORY_HARD_MAX, MEMORY_HARD_MAX);
+  return sorted.slice(0, limit);
+}
+
+/** RFC 0004 read side. Single tenant-scoped entry, or null when absent/expired. */
+export function getMemoryEntry(tenantId: string, memoryRef: string, memoryId: string): MemoryRow | null {
+  const now = Date.now();
+  const row = (memoryBucket(tenantId).get(memoryRef) ?? []).find((r) => r.id === memoryId);
+  return row && notExpired(row, now) ? row : null;
 }
 
 /** Build a per-run scoped surface bundle. Inject into NodeContext at

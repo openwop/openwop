@@ -61,7 +61,7 @@ import type { RunRecord } from '../types.js';
 import type { ProviderPolicyResolver } from '../host/index.js';
 import { createAiProvidersAdapter, AiProviderError, type AiProviderErrorCode } from '../aiProviders/aiProvidersHost.js';
 import { classifyDispatchError } from '../observability/errorRecovery.js';
-import { buildHostSurfaceBundle } from '../host/inMemorySurfaces.js';
+import { buildHostSurfaceBundle, writeMemoryEntry, MEMORY_DEMO_REF } from '../host/inMemorySurfaces.js';
 import { notifyRunTerminal } from './runLifecycle.js';
 import { emitRunFailureNotification } from '../notifications/notify.js';
 import { snapshotRunVariables } from '../host/variablesRuntime.js';
@@ -947,6 +947,20 @@ async function finalizeRun(input: {
       payload: stripSecretsFromPersisted({ output }),
     });
     await storage.updateRun(run.runId, { status: 'completed', completedAt: new Date().toISOString() });
+    // RFC 0004 demo: the host writes a run-summary to the tenant's memory on
+    // completion (the "session-end write" the spec sanctions). Best-effort —
+    // a memory write must never fail the run.
+    try {
+      const preview = JSON.stringify(output ?? null);
+      writeMemoryEntry(run.tenantId, MEMORY_DEMO_REF, {
+        content:
+          `Run ${run.runId} of "${run.workflowId}" completed` +
+          (preview && preview !== 'null' ? ` → ${preview.slice(0, 280)}` : '.'),
+        tags: ['run-summary', `run-id:${run.runId}`, `workflow:${run.workflowId}`],
+      });
+    } catch {
+      /* memory is a demo surface; never block run completion */
+    }
     clearRunSecrets(run.runId);
     notifyRunTerminal(run.runId);
     return { status: 'completed' };

@@ -13,6 +13,7 @@ import { RunCostPanel } from './RunCostPanel.js';
 import { RunAnalyticsPanel } from './RunAnalyticsPanel.js';
 import { RunFeedback } from './RunFeedback.js';
 import { RunOpsPanel } from './RunOpsPanel.js';
+import { RunMemoryPanel } from './RunMemoryPanel.js';
 import { RenderInterrupt } from '../interrupts/RenderInterrupt.js';
 
 export function RunDetailPage() {
@@ -184,6 +185,7 @@ export function RunDetailPage() {
       <RunHandoffMap events={events} />
       <RunAgentTrace events={events} />
       <RunOpsPanel runId={runId} events={events} />
+      <RunMemoryPanel runId={runId} status={snapshot?.status} />
 
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
