@@ -1291,6 +1291,15 @@
       "yanked": false
     },
     {
+      "name": "vendor.myndhyve.market-intel-ad-angles",
+      "latestVersion": "1.0.0",
+      "description": "MyndHyve market-intel.ad-angles — generates 5-10 ad-angle briefs from VoC research + ICP/product context via one AI call. Each brief carries angleName, segment, corePain, promise, mechanism, proof requirements, objections to handle, 3-5 hook variants, recommended CTA, source quotes, and a 5-dimension score (volume / intensity / commercialIntent / clarity / uniqueness + weighted total). Briefs are sorted by total score descending. Second marketIntel pack of the Stage 5 cohort.",
+      "license": "Apache-2.0",
+      "tags": [],
+      "deprecated": false,
+      "yanked": false
+    },
+    {
       "name": "vendor.myndhyve.market-intel-voc",
       "kind": "node",
       "latestVersion": "1.0.0",
