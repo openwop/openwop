@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### feat(host-postgres): RFC 0031 gate-decision test seam — flips the synthetic model-capability assertions live (2026-05-25)
+
+Adds `POST /v1/host/sample/test/evaluate-model-capability-gate` to the Postgres reference host — a pure-function exerciser for the RFC 0031 §B gate's substitute/refuse/dispatch decision matrix + emitted event payloads (no event-log write, no secrets; always-on). This flips the previously-soft-skipping synthetic assertions in `model-capability-insufficient.test.ts` (4 refuse cases) and `model-capability-substituted.test.ts` (substitute/refuse/dispatch) from 404-skip → live against Postgres. New `test/model-capability-gate-seam.test.ts` (PGlite) exercises all five outcomes (refuse ×3, substitute, dispatch). Postgres-only: the seam belongs on a host with a real provider-capability map — the SQLite host routes no AI (empty map, can only refuse), so it correctly does NOT expose the seam and keeps soft-skipping the synthetic cases. Host-only; no protocol-corpus change.
+
 ### RFC 0057 (memory write-attribution) — SDK typed event helpers (TS/Python/Go) (2026-05-25)
 
 All three reference SDKs gain a typed `memory.written` event helper, joining the RFC 0024 `agent.*` event-helper family at full parity: TS `isMemoryWritten` + `MemoryWrittenPayload`; Python `is_memory_written` + `memory_written_payload` + `MemoryWrittenPayload`; Go `IsMemoryWritten` + `UnmarshalMemoryWritten` + `MemoryWrittenPayload`. Typed event-type predicates sit outside the headline net-surface count (they narrow payloads rather than wrap endpoints) but are kept symmetric across all three — see `sdk/PARITY.md`. tsc + go vet/gofmt + ruff clean.
