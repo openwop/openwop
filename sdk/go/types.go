@@ -153,16 +153,16 @@ type CancelRunResponse struct {
 // masked/omitted/hashed values as the spec-canonical content per
 // RedactionMode — they are NOT placeholders for missing data.
 type DebugBundle struct {
-	BundleVersion    string                   `json:"bundleVersion"`
-	GeneratedAt      string                   `json:"generatedAt"`
-	Host             map[string]any           `json:"host"`
-	Run              map[string]any           `json:"run"`
-	Events           []map[string]any         `json:"events"`
-	RedactionApplied bool                     `json:"redactionApplied"`
+	BundleVersion    string           `json:"bundleVersion"`
+	GeneratedAt      string           `json:"generatedAt"`
+	Host             map[string]any   `json:"host"`
+	Run              map[string]any   `json:"run"`
+	Events           []map[string]any `json:"events"`
+	RedactionApplied bool             `json:"redactionApplied"`
 	// RedactionMode is one of "mask" / "omit" / "hash" / "passthrough".
-	RedactionMode    string                   `json:"redactionMode"`
-	Truncated        bool                     `json:"truncated,omitempty"`
-	TruncatedReason  string                   `json:"truncatedReason,omitempty"`
+	RedactionMode   string `json:"redactionMode"`
+	Truncated       bool   `json:"truncated,omitempty"`
+	TruncatedReason string `json:"truncatedReason,omitempty"`
 }
 
 // DebugBundleOptions carries query parameters for GetDebugBundle.
