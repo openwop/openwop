@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — RFC 0054: Run diff &amp; execution comparison</title>
+  <meta name="description" content="Add a read-only endpoint, GET /v1/runs/{runId}:diff?against={otherRunId}, that returns a deterministic, replay-aware structured diff of two runs (typically a run and its RFC 0011 fork): { divergedAtSeq, eventDiffs[], stateDiff }. The diff is a pure…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0054-run-diff-and-execution-comparison.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — RFC 0054: Run diff &amp; execution comparison"/>
+  <meta property="og:description" content="Add a read-only endpoint, GET /v1/runs/{runId}:diff?against={otherRunId}, that returns a deterministic, replay-aware structured diff of two runs (typically a run and its RFC 0011 fork): { divergedAtSeq, eventDiffs[], stateDiff }. The diff is a pure…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0054-run-diff-and-execution-comparison.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — RFC 0054: Run diff &amp; execution comparison"/>
+  <meta name="twitter:description" content="Add a read-only endpoint, GET /v1/runs/{runId}:diff?against={otherRunId}, that returns a deterministic, replay-aware structured diff of two runs (typically a run and its RFC 0011 fork): { divergedAtSeq, eventDiffs[], stateDiff }. The diff is a pure…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "RFC 0054: Run diff & execution comparison",
+  "description": "Add a read-only endpoint, GET /v1/runs/{runId}:diff?against={otherRunId}, that returns a deterministic, replay-aware structured diff of two runs (typically a run and its RFC 0011 fork): { divergedAtSeq, eventDiffs[], stateDiff }. The diff is a pure…",
+  "url": "https://openwop.dev/rfcs/0054-run-diff-and-execution-comparison.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  }
+}</script>
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>RFC 0054: Run diff &amp; execution comparison</h1>
+      <p class="lede">Add a read-only endpoint, GET /v1/runs/{runId}:diff?against={otherRunId}, that returns a deterministic, replay-aware structured diff of two runs (typically a run and its RFC 0011 fork): { divergedAtSeq, eventDiffs[], stateDiff }. The diff is a pure…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-endpoint-additive-in-rest-endpoints-md-openapi">§A — Endpoint (additive, in rest-endpoints.md + OpenAPI)</a></li>
+      <li class="toc-sub"><a href="#b-run-diff-response-schema-json-new">§B — run-diff-response.schema.json (new)</a></li>
+      <li class="toc-sub"><a href="#c-determinism-normative">§C — Determinism (normative)</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0054</td></tr>
+<tr><td><strong>Title</strong></td><td>A read-only <code>GET /v1/runs/{runId}:diff?against={otherRunId}</code> endpoint returning a deterministic, replay-aware structured diff of two runs' event sequences and terminal states — the protocol surface behind run-vs-fork comparison</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Draft</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-24</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-24</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>spec/v1/rest-endpoints.md</code> (new read endpoint) · <code>api/</code> OpenAPI (additive path) · <code>schemas/run-diff-response.schema.json</code> (new) · <code>spec/v1/replay.md</code> (aligns with <code>replay.diverged</code> / determinism) · RFC 0011 (fork) composition · new conformance scenarios</td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Add a read-only endpoint, <code>GET /v1/runs/{runId}:diff?against={otherRunId}</code>, that returns a deterministic, replay-aware structured diff of two runs (typically a run and its RFC 0011 fork): <code>{ divergedAtSeq, eventDiffs[], stateDiff }</code>. The diff is a pure function of the two event logs, aligning with the determinism guarantees and the <code>replay.diverged</code> event in <code>spec/v1/replay.md</code>. This gives MyndHyve's workflow studio (and any host's time-travel debugging UI) a portable, certifiable comparison surface instead of host-private diffing.</p>
+<h2 id="motivation">Motivation</h2>
+<p>MyndHyve's workflow studio and debugging flows want to <strong>compare two runs</strong> — most often an original vs a forked replay (the "execution diffing" gap from the analysis). RFC 0011 fork creates a new run, and <code>spec/v1/replay.md</code> already emits a <code>replay.diverged { originalEventId, replayEventId, divergencePoint }</code> event when a replay fork diverges — but there is <strong>no endpoint</strong> to retrieve a structured diff of two event logs / terminal states. So any comparison UI is host-private and uncertifiable, and an A2A peer or external tool can't request "how do these two runs differ?".</p>
+<p>The spec is the right place because the diff must be <strong>deterministic and replay-aware</strong>: two conformant hosts asked to diff the same pair of event logs must return the same <code>divergedAtSeq</code>. That is an interop guarantee that builds directly on the determinism contract already in <code>replay.md</code> — not an implementation choice.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-endpoint-additive-in-rest-endpoints-md-openapi">§A — Endpoint (additive, in <code>rest-endpoints.md</code> + OpenAPI)</h3>
+<p>Mirrors the corpus <code>:verb</code> action-endpoint convention (<code>POST /v1/runs/{runId}:fork</code>, <code>:pause</code>):</p>
+<table>
+<thead><tr><th>Method</th><th>Path</th><th>Auth</th><th>Scope</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td><code>GET</code></td><td><code>/v1/runs/{runId}:diff?against={otherRunId}</code></td><td>API key</td><td><code>runs:read</code></td><td>Structured diff of two runs</td></tr>
+</tbody></table>
+<p><code>runs:read</code> on <strong>both</strong> runs is required (a caller lacking read on <code>against</code> gets <code>run_forbidden</code>, composing with RFC 0048 cross-workspace isolation). Both runs MUST be terminal (or the host MAY diff in-flight prefixes and mark <code>truncated: true</code>).</p>
+<h3 id="b-run-diff-response-schema-json-new">§B — <code>run-diff-response.schema.json</code> (new)</h3>
+<pre class="lang-json"><code>{
+  &quot;$schema&quot;: &quot;https://json-schema.org/draft/2020-12/schema&quot;,
+  &quot;$id&quot;: &quot;https://openwop.dev/schemas/run-diff-response.schema.json&quot;,
+  &quot;title&quot;: &quot;RunDiffResponse&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [&quot;a&quot;, &quot;b&quot;, &quot;eventDiffs&quot;, &quot;stateDiff&quot;],
+  &quot;properties&quot;: {
+    &quot;a&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;The {runId} run.&quot; },
+    &quot;b&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;The {against} run.&quot; },
+    &quot;divergedAtSeq&quot;: { &quot;type&quot;: [&quot;integer&quot;, &quot;null&quot;], &quot;minimum&quot;: 0, &quot;description&quot;: &quot;Event sequence number at which the two logs first diverge; null if identical. Aligns with `replay.diverged.divergencePoint`.&quot; },
+    &quot;eventDiffs&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;required&quot;: [&quot;seq&quot;, &quot;op&quot;],
+        &quot;properties&quot;: {
+          &quot;seq&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 0 },
+          &quot;op&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;added&quot;, &quot;removed&quot;, &quot;changed&quot;] },
+          &quot;aEvent&quot;: { &quot;type&quot;: &quot;object&quot; },
+          &quot;bEvent&quot;: { &quot;type&quot;: &quot;object&quot; }
+        },
+        &quot;additionalProperties&quot;: false
+      }
+    },
+    &quot;stateDiff&quot;: { &quot;type&quot;: &quot;object&quot;, &quot;description&quot;: &quot;Diff of terminal RunSnapshot states (status, variables, channels) — redaction-safe.&quot; },
+    &quot;truncated&quot;: { &quot;type&quot;: &quot;boolean&quot;, &quot;description&quot;: &quot;True if either run was in-flight and only a prefix was compared.&quot; }
+  },
+  &quot;additionalProperties&quot;: false
+}</code></pre>
+<h3 id="c-determinism-normative">§C — Determinism (normative)</h3>
+<p>The diff MUST be a <strong>pure function</strong> of the two runs' event logs: given the same two logs, every conformant host returns the same <code>divergedAtSeq</code> and the same ordered <code>eventDiffs</code>. Sequence alignment is by event <code>seq</code>; the first <code>seq</code> whose event differs (by canonical comparison, excluding non-deterministic transport metadata like wall-clock receipt time) sets <code>divergedAtSeq</code>. Identical logs ⇒ <code>divergedAtSeq: null</code> and empty <code>eventDiffs</code>. This aligns with the determinism scoring + <code>replay.diverged</code> contract in <code>spec/v1/replay.md</code>.</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong> New read-only endpoint; new response schema; no change to any existing endpoint or event. Hosts that don't implement it return <code>404</code> for the path (or omit it from their OpenAPI); clients discover support via the capability/endpoint manifest. No existing conformance pass is invalidated.</p>
+<p><strong>Depends on RFC 0011</strong> (fork — the primary source of a run pair to diff). Independent of Tiers 1–2.</p>
+<h2 id="conformance">Conformance</h2>
+<ul>
+<li><strong><code>run-diff-identical.test.ts</code></strong> — diffing a run against itself (or an identical replay) ⇒ <code>divergedAtSeq: null</code>, empty <code>eventDiffs</code>. (Gated on the endpoint being advertised.)</li>
+<li><strong><code>run-diff-fork-divergence.test.ts</code></strong> — fork a run, force divergence after seq N ⇒ <code>divergedAtSeq === N</code>; <code>eventDiffs</code> start at N. (Gated on endpoint ∧ fork support.)</li>
+<li><strong><code>run-diff-state-shape.test.ts</code></strong> — <code>stateDiff</code> reflects terminal-state differences (status/variables) and is redaction-safe. (Gated.)</li>
+<li><strong><code>run-diff-authz.test.ts</code></strong> — a caller lacking <code>runs:read</code> on <code>against</code> gets <code>run_forbidden</code>. (Gated; composes with RFC 0048.)</li>
+</ul>
+<p>New fixture: a base run + a deterministically-divergent fork, catalogued in <code>fixtures.md</code>.</p>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Path-style <code>GET /v1/runs/{a}/diff/{b}</code>.</strong> Rejected for consistency — the corpus uses the <code>:verb</code> action convention (<code>:fork</code>, <code>:pause</code>); a query-param <code>against</code> keeps <code>{runId}</code> the primary resource and matches the existing style. (Noted as the original proposal in <code>plans/myndhyve-protocol-extension-rfcs.md</code>.) 2. <strong>Emit the diff as an event rather than a read endpoint.</strong> Rejected — a diff is a derived, on-demand query over two existing logs, not a run-lifecycle fact; an event would force the host to compute and persist diffs nobody requested. 3. <strong>Leave diffing to clients (return raw event logs, let the UI diff).</strong> Rejected — without a normative, deterministic <code>divergedAtSeq</code>, two tools would disagree on where runs diverged, and the comparison wouldn't be certifiable or portable.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. <strong>Cross-host diff.</strong> Can <code>against</code> reference a run on a <em>different</em> host (federated diff)? Out of scope for v1 (both runs are same-host); revisit with A2A if pulled. 2. <strong>Semantic vs structural event comparison.</strong> Should <code>changed</code> distinguish "same event, different payload" from "different event type"? The <code>op</code> enum is coarse; a richer classification may be wanted. Start coarse; refine if the studio UX needs it. 3. <strong>Which metadata is excluded from comparison.</strong> §C excludes "non-deterministic transport metadata" — the exact exclusion list (event ids? timestamps?) must be pinned against <code>replay.md</code>'s determinism caveats before Active.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>Endpoint + schema (§A, §B) land on <code>Active</code> promotion with the conformance scenarios; the OpenAPI path is added under <code>api/</code>.</li>
+<li>Reference-adopter target: MyndHyve's workflow studio renders the diff for run-vs-fork comparison and feeds its time-travel debugging UI.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[ ] Spec text merged (this file).</li>
+<li>[ ] Endpoint in <code>spec/v1/rest-endpoints.md</code> + the <code>api/</code> OpenAPI path.</li>
+<li>[ ] <code>run-diff-response.schema.json</code> added.</li>
+<li>[ ] Determinism contract aligned with <code>spec/v1/replay.md</code>.</li>
+<li>[ ] Four conformance scenarios (identical, fork-divergence, state-shape, authz).</li>
+<li>[ ] CHANGELOG entry under <code>[Unreleased]</code>.</li>
+<li>[ ] A non-steward host implements the endpoint and passes identical + fork-divergence.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="./0011-auth-scoped-discovery.md"><code>RFCS/0011-auth-scoped-discovery.md</code></a> — fork (the primary source of a diffable run pair).</li>
+<li><a href="../spec/v1/replay.md"><code>spec/v1/replay.md</code></a> — the <code>replay.diverged</code> event + determinism contract <code>divergedAtSeq</code> aligns with.</li>
+<li><a href="../spec/v1/rest-endpoints.md"><code>spec/v1/rest-endpoints.md</code></a> — the <code>:verb</code> endpoint convention this mirrors.</li>
+<li><a href="./0048-tenant-workspace-principal-identity-model.md"><code>RFCS/0048-tenant-workspace-principal-identity-model.md</code></a> — cross-workspace read isolation the authz scenario composes with.</li>
+</ul><footer class="doc-edit"><a href="https://github.com/openwop/openwop/edit/main/RFCS/0054-run-diff-and-execution-comparison.md" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>

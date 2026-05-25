@@ -197,6 +197,7 @@
       <li class="toc-top"><a href="#privacy-and-replay">Privacy and replay</a></li>
       <li class="toc-top"><a href="#determinism-scoring">Determinism scoring</a></li>
       <li class="toc-top"><a href="#cross-region-replay-rfc-0036">Cross-region replay (RFC 0036)</a></li>
+      <li class="toc-top"><a href="#annotations-and-fork-rfc-0056">Annotations and fork (RFC 0056)</a></li>
       <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
       <li class="toc-top"><a href="#references">References</a></li>
     </ul>
@@ -412,6 +413,8 @@ Idempotency-Key: &amp;lt;UUID&amp;gt;  (RECOMMENDED)</code></pre>
 <p>Specifically, the fork&#39;s <code>RunSnapshot.status</code>, <code>RunSnapshot.variables</code>, and the projected event log up to <code>fromSeq</code> MUST be byte-equivalent across regions. Per-region wall-clock fields in subsequent events MAY differ (e.g., timestamps embedded in <code>RunEventDoc.observedAt</code>, ULID component-T entropy in newly-generated event IDs); a bit-equivalent total comparison is NOT required and is not implementable in the presence of per-region clocks.</p>
 <p>Hosts that advertise one of the two capabilities but not the other retain the existing single-region replay contract per <code>## Determinism scoring</code> above. Hosts that advertise neither are silently single-region; the cross-region claim does not apply.</p>
 <hr/>
+<h2 id="annotations-and-fork-rfc-0056">Annotations and fork (RFC 0056)</h2>
+<p>RFC 0056 annotations are a per-run side-resource, <strong>not</strong> event-log entries — so they sit entirely outside the fork/replay model. A fork inherits <strong>zero</strong> annotations (it is a new run with no human judgments yet) and MAY carry a back-reference to the source. <code>run.annotated</code> is a live SSE notification, never a persisted/replayed event. This is deliberate: a replayable annotation event would be copied into forks (which replay source events <code>&amp;lt; fromSeq</code>), contradicting its side-resource semantics. See <a href="../../RFCS/0056-run-feedback-and-annotation-event.md"><code>RFCS/0056</code></a> §D.</p>
 <h2 id="open-spec-gaps">Open spec gaps</h2>
 <table>
 <thead><tr><th>#</th><th>Gap</th><th>Owner</th></tr></thead>

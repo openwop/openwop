@@ -71,6 +71,7 @@
         "run.paused",
         "run.resumed",
         "run.restored-from-snapshot",
+        "run.dead_lettered",
         "node.started",
         "node.completed",
         "node.failed",
@@ -82,6 +83,9 @@
         "node.cancelled",
         "approval.requested",
         "approval.received",
+        "approval.granted",
+        "approval.rejected",
+        "approval.overridden",
         "clarification.requested",
         "clarification.resolved",
         "interrupt.requested",
@@ -126,7 +130,10 @@
         "conversation.closed",
         "memory.compacted",
         "core.workflowChain.event",
-        "core.workflowChain.confidence-escalated"
+        "core.workflowChain.confidence-escalated",
+        "connector.authorized",
+        "connector.auth_expired",
+        "authorization.decided"
       ]
     }
   }

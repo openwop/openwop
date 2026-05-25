@@ -370,15 +370,123 @@
           "type": "array",
           "items": {
             "type": "string",
-            "enum": ["tenant", "user", "run"]
+            "enum": ["tenant", "user", "run", "workspace"]
           },
           "uniqueItems": true,
-          "description": "Subset of scopes the host implements. Tenant-scoped secrets are workspace-shared; user-scoped are per-end-user; run-scoped are ephemeral per-run."
+          "description": "Subset of scopes the host implements. Tenant-scoped secrets are workspace-shared; user-scoped are per-end-user; run-scoped are ephemeral per-run; `workspace` (RFC 0046/0048) is the explicit sub-tenant scope. Appended `workspace` is additive — hosts that omit it are unaffected."
         },
         "resolution": {
           "type": "string",
           "enum": ["host-managed"],
           "description": "Resolution mode. v1.x supports only `host-managed` (clients reference stored secrets via opaque ids); reserved for future modes."
+        }
+      },
+      "additionalProperties": false
+    },
+    "credentials": {
+      "type": "object",
+      "description": "RFC 0046 (`Draft`). Portable credential resolution + lifecycle contract — sibling to `secrets`, first-class store-at-rest + workspace sharing + two-key-overlap rotation. A pack references a credential by `{ ref, scope }` (see `credential-reference.schema.json`); the host resolves it into the node sandbox ONLY — never into inputs, persisted variables, channels, any run.* event payload, the debug bundle, or replay state (SECURITY invariant `credential-payload-redaction`). Supersedes the informal BYOK annex; the `secrets` advertisement stays valid.",
+      "required": ["supported"],
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Host implements the host.credentials resolution + lifecycle contract."
+        },
+        "scopes": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["user", "workspace", "tenant"] },
+          "uniqueItems": true,
+          "description": "Subset of resolution scopes the host implements. `workspace` is the RFC 0048 sub-tenant; `tenant` and `user` align with the `secrets.scopes` vocabulary."
+        },
+        "encryptionAtRest": {
+          "type": "boolean",
+          "description": "Host encrypts stored credential material at rest."
+        },
+        "rotation": {
+          "type": "string",
+          "enum": ["none", "two-key-overlap"],
+          "description": "`two-key-overlap`: old + new credential both resolve as valid during a grace window, then the old fails with `credential_not_found` (mirrors `openwop-auth-api-key-rotation`). `none`: no rotation surface."
+        },
+        "sharing": {
+          "type": "boolean",
+          "description": "A single stored credential can be referenced by many workflows within a scope (e.g. a workspace-shared key) without copying material between references."
+        }
+      },
+      "additionalProperties": false
+    },
+    "feedback": {
+      "type": "object",
+      "description": "RFC 0056 (`Draft`). Non-blocking human/agent quality signals (rating / correction / label / flag) attached to a run, event, or node. Annotations are a per-run side-resource recorded via `POST /v1/runs/{runId}/annotations`, listed via `GET`, and surfaced live via the `run.annotated` SSE notification — they are NOT entries in the replayable run event log (see RFC 0056 §B/§D). Hosts that do not advertise `supported: true` return `501 capability_not_provided` on the annotation endpoints.",
+      "required": ["supported"],
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Host implements the RFC 0056 annotation side-store + endpoints + `run.annotated` notification."
+        },
+        "targets": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["run", "event", "node"] },
+          "uniqueItems": true,
+          "description": "Which annotation-target granularities the host accepts. Absent = `run` only."
+        },
+        "signals": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["rating", "correction", "label", "flag"] },
+          "uniqueItems": true,
+          "description": "Which signal kinds the host accepts. Absent = all four."
+        }
+      },
+      "additionalProperties": false
+    },
+    "oauth": {
+      "type": "object",
+      "description": "RFC 0047 (`Draft`). Host performs OAuth 2.0 grants (authorization-code + refresh) on a user's behalf for connector nodes, stores the acquired token as a `host.credentials` (RFC 0046) entry, refreshes it transparently, and resolves it into the node sandbox as a bearer token. Token material NEVER crosses the wire (SECURITY invariant `credential-payload-redaction`). Distinct from `auth` host-authentication profiles (RFC 0010 = who is the caller; this = what third-party token a node holds).",
+      "required": ["supported"],
+      "properties": {
+        "supported": { "type": "boolean", "description": "Host implements the host.oauth third-party token acquisition + refresh contract." },
+        "grants": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["authorization_code", "client_credentials", "refresh_token"] },
+          "uniqueItems": true,
+          "description": "OAuth 2.0 grant types the host performs on a node's behalf."
+        },
+        "providers": {
+          "type": "array",
+          "description": "Provider catalog the host can acquire tokens for. A connector node's `auth.provider` MUST match an `id` here.",
+          "items": {
+            "type": "object",
+            "required": ["id"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1, "description": "Stable provider id, e.g. `slack`, `google`." },
+              "authUrl": { "type": "string", "format": "uri", "description": "Authorization endpoint." },
+              "tokenUrl": { "type": "string", "format": "uri", "description": "Token endpoint." },
+              "scopesSupported": { "type": "array", "items": { "type": "string" }, "description": "Scopes this provider exposes." }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "authorization": {
+      "type": "object",
+      "description": "RFC 0049 (`Draft`). Maps an RFC 0048 principal's role to scopes (reusing the API-key scope grammar in `auth.md`) and surfaces authorization decisions as `authorization.decided` events. Fail-closed: an absent/unseeded role denies (SECURITY invariant `authorization-fail-closed`).",
+      "required": ["supported"],
+      "properties": {
+        "supported": { "type": "boolean", "description": "Host implements the role→scope authorization-decision contract." },
+        "failClosed": { "const": true, "description": "Absent/unseeded role denies; resolver errors deny. MUST be true when present — see SECURITY invariant `authorization-fail-closed`." },
+        "roles": {
+          "type": "array",
+          "description": "Role catalog. A principal's role resolves to this scope set; a request is authorized when any role-derived scope matches the required scope per the API-key scope-match semantics.",
+          "items": {
+            "type": "object",
+            "required": ["role", "scopes"],
+            "properties": {
+              "role": { "type": "string", "minLength": 1 },
+              "scopes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+            },
+            "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false
@@ -514,7 +622,7 @@
             "pattern": "^([a-z][a-z0-9-]*|x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*)$"
           },
           "uniqueItems": true,
-          "description": "Capability identifiers the host's active model advertises. Clients MAY introspect this at install time to determine whether their NodeModules' `requiredModelCapabilities` are satisfiable without fallback. Spec-reserved identifiers per RFC 0031 §C: `structured-output`, `discriminator-enum`, `long-context`, `reasoning` (model-native thinking-tokens), `function-calling`. Host-private extensions MUST prefix with `x-host-<host>-`."
+          "description": "Capability identifiers the host's active model advertises. Clients MAY introspect this at install time to determine whether their NodeModules' `requiredModelCapabilities` are satisfiable without fallback. Spec-reserved identifiers per RFC 0031 §C + RFC 0055: `structured-output`, `discriminator-enum`, `long-context`, `reasoning` (model-native thinking-tokens), `function-calling`, `vision-input` (model accepts image content in the prompt), `audio-input` (model accepts audio content), `audio-output` (model emits audio content), `image-output` (model emits images directly in its completion, distinct from the host-side `aiProviders.imageGeneration` tool surface). This is an open, pattern-validated registry — NOT a closed enum; growth requires an RFC. Host-private extensions MUST prefix with `x-host-<host>-`."
         },
         "substitutionSupported": {
           "type": "boolean",
@@ -573,6 +681,12 @@
             }
           },
           "additionalProperties": false
+        },
+        "maxInlineMediaBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 262144,
+          "description": "RFC 0055 §C rule 2 — optional cap (bytes) on inline base64 in `media.*` envelope payloads. A `media.{image,audio,file}` asset above this size MUST be served by a tenant-scoped `url` reference rather than inlined (bounds event-log + replay-payload size). Default 256 KiB (262144) when absent. A host MAY set 0 to force URL references for all emitted media."
         }
       },
       "additionalProperties": false
@@ -855,6 +969,29 @@
       },
       "additionalProperties": false
     },
+    "scheduling": {
+      "type": "object",
+      "description": "RFC 0052 (`Draft`). Time-based run initiation behind the `schedule` trigger — gives the trigger a portable, durable, once-per-tick execution contract. Composes with `queueBus` (RFC 0017) where the host backs scheduling with a queue; orthogonal to the in-DAG `core.control.delay` primitive (which delays a node mid-run, not run initiation).",
+      "required": ["supported"],
+      "properties": {
+        "supported": { "type": "boolean" },
+        "cron": { "type": "boolean", "description": "Host honors cron-expression schedules." },
+        "delayed": { "type": "boolean", "description": "Host honors one-shot delayed execution." },
+        "calendar": { "type": "boolean", "description": "Host honors calendar-reference schedules." },
+        "maxFutureHorizon": { "type": "string", "description": "ISO-8601 duration (e.g. `P90D`); the farthest-future a run may be scheduled. Schedules beyond it MUST be rejected with `schedule_horizon_exceeded`." }
+      },
+      "additionalProperties": false
+    },
+    "deadLetter": {
+      "type": "object",
+      "description": "RFC 0053 (`Draft`). Run-level dead-letter sink for terminally-failed runs/nodes. On retry exhaustion (RFC 0009), the run is routed to a durable, inspectable sink and a `run.dead_lettered` event is emitted; dead-lettered runs remain fork-eligible (RFC 0011) for the retention window. Distinct from `queueBus.deadLetterSupported`, which dead-letters transport *messages*, not *runs*.",
+      "required": ["supported"],
+      "properties": {
+        "supported": { "type": "boolean" },
+        "retentionDays": { "type": "integer", "minimum": 1, "description": "Days a dead-lettered run is retained for inspection/fork before purge." }
+      },
+      "additionalProperties": false
+    },
     "sql": {
       "type": "object",
       "description": "RFC 0018 (`Active`). SQL database adapter with parametric-only enforcement. Hosts MUST reject non-parametric queries that inline user input (`sql-parametric-only` invariant — guards against SQL injection across every workflow).",
@@ -936,6 +1073,44 @@
         }
       },
       "required": ["supported"],
+      "additionalProperties": false
+    },
+    "packs": {
+      "type": "object",
+      "description": "RFC 0025 (`Active`). Pack-registry surface advertisement. The baseline `/v1/packs/*` read surface (per `spec/v1/node-packs.md` §\"Registry HTTP API\") is unconditional for hosts that ship a pack catalog and does NOT require a capability flag; this object carries optional sub-blocks (currently the test-mode mirror namespace). Hosts that don't expose any optional pack-registry sub-block MAY omit this block entirely.",
+      "properties": {
+        "testMode": {
+          "type": "object",
+          "description": "RFC 0025 §A. Optional `/v1/packs-test/*` mirror surface that exposes the production publish/get/delete/sig contract against an isolated catalog. Lets the conformance suite (`pack-registry-publish.test.ts`) exercise the documented 19-code publish error catalog without `packs:publish` scope on the real registry. Hosts that advertise `supported: true` MUST honor the §C isolation guarantees and MUST surface the same error envelopes and HTTP statuses as the production `/v1/packs/*` surface.",
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Host exposes `/v1/packs-test/*` per RFC 0025 §B. When `true`, the conformance suite drives publish-error-catalog assertions through the test namespace; when `false` or absent, the 26 scenarios in `pack-registry-publish.test.ts` soft-skip cleanly."
+            },
+            "isolated": {
+              "type": "boolean",
+              "description": "RFC 0025 §C point 1. MUST be `true` when `supported` is `true` — guarantees the test catalog is persisted distinctly from the production catalog and that a pack PUT'd via `/v1/packs-test/*` MUST NOT appear in `/v1/packs/*` listings."
+            },
+            "catalogResetEndpoint": {
+              "type": "string",
+              "description": "RFC 0025 §C point 4. Optional URL path (e.g. `/v1/packs-test/reset`) that clears the entire test catalog. When advertised, conformance-suite teardown SHOULD call it; the endpoint MUST be idempotent. Hosts MAY omit; in that case the suite leaves disposable timestamped pack names in place and relies on the next host restart to clear in-memory state.",
+              "pattern": "^/"
+            },
+            "scopes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["core", "vendor", "community", "private", "local"]
+              },
+              "uniqueItems": true,
+              "minItems": 1,
+              "description": "RFC 0025 §A. Which namespace scopes the test catalog accepts in pack names. Public test catalogs SHOULD refuse `private` and `local` (matching the production-registry rule for `packs.openwop.dev`); private dev catalogs MAY accept all five. When omitted, the test catalog defaults to the same scope set as the production namespace it mirrors."
+            }
+          },
+          "required": ["supported"],
+          "additionalProperties": false
+        }
+      },
       "additionalProperties": false
     },
     "mcp": {
@@ -1145,7 +1320,7 @@
           "type": "array",
           "items": { "type": "string", "minLength": 1 },
           "uniqueItems": true,
-          "description": "Auth profiles the host claims. Canonical ids: `openwop-audit-log-integrity` (auth-profiles.md §Audit-log integrity), `openwop-auth-api-key-rotation`, `openwop-auth-oauth2-client-credentials`, `openwop-auth-oidc-user-bearer`, `openwop-auth-mtls`. Clients SHOULD tolerate unknown profile ids."
+          "description": "Auth profiles the host claims. Canonical ids: `openwop-audit-log-integrity` (auth-profiles.md §Audit-log integrity), `openwop-auth-api-key-rotation`, `openwop-auth-oauth2-client-credentials`, `openwop-auth-oidc-user-bearer`, `openwop-auth-mtls`, `openwop-auth-saml` + `openwop-auth-scim` + `openwop-auth-ldap` (RFC 0050 enterprise identity). Clients SHOULD tolerate unknown profile ids."
         },
         "rotation": {
           "type": "object",

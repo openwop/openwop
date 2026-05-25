@@ -11,12 +11,18 @@
 | `envelopes/schema.request.schema.json` | `ai-envelope.md` §"Universal kinds" | FINAL v1.1 — LLM asks the engine for a kind's JSON Schema. Counts against `Capabilities.limits.schemaRounds`. |
 | `envelopes/schema.response.schema.json` | `ai-envelope.md` §"Universal kinds" | FINAL v1.1 — side-channel ack for `schema.request`. Never surfaces to users. |
 | `envelopes/error.schema.json` | `ai-envelope.md` §"Universal kinds" | FINAL v1.1 — LLM's deliberate error report. Distinct from `error-envelope.schema.json` (host HTTP errors). |
+| `envelopes/media.image.schema.json` | `ai-envelope.md` §"Media reference payloads" | RFC 0055 §C — optional `media.image` payload; tenant-scoped URL ref or inline base64 below `maxInlineMediaBytes`. |
+| `envelopes/media.audio.schema.json` | `ai-envelope.md` §"Media reference payloads" | RFC 0055 §C — optional `media.audio` payload; URL ref or inline base64 + optional `durationSeconds`. |
+| `envelopes/media.file.schema.json` | `ai-envelope.md` §"Media reference payloads" | RFC 0055 §C — optional `media.file` payload; downloadable asset by URL ref or inline base64 + optional `name`. |
+| `annotation.schema.json` | `RFCS/0056` + `observability.md` | RFC 0056 (`Draft`) — a non-blocking human/agent quality signal (rating / correction / label / flag) attached to a run, event, or node. A side-resource (not a replayable run-event-log entry); response of `POST/GET /v1/runs/{runId}/annotations` + payload of the `run.annotated` SSE notification. |
+| `annotation-create.schema.json` | `RFCS/0056` | RFC 0056 (`Draft`) — request body for `POST /v1/runs/{runId}/annotations` (host assigns `annotationId`/`createdAt`/`actor`; binds `target.runId` to the path). |
 | `audit-verify-result.schema.json` | `auth-profiles.md` §`openwop-audit-log-integrity` | Response payload from `GET /v1/audit/verify` — chain-validity verdict + checkpoints + anomalies |
 | `capabilities.schema.json` | `capabilities.md` | `/.well-known/openwop` response — protocolVersion + supportedEnvelopes + schemaVersions + limits + optional v1 discovery surface |
 | `channel-written-payload.schema.json` | `channels-and-reducers.md` §Channel write event | Payload of the `channel.written` RunEvent — write input + reducer name |
 | `conversation-event.schema.json` | `channels-and-reducers.md` + conversation RFC | Multi-turn conversation event shape for orchestrator-driven HITL flows |
 | `conversation-turn.schema.json` | `channels-and-reducers.md` + conversation RFC | Conversation turn shape for user/agent/system messages |
 | `core-conformance-mock-agent-config.schema.json` | `node-packs.md` + RFC 0023 | Config shape for the conformance-only `core.conformance.mock-agent` typeId — drives `agent.*` event emission on cue (`mockReasoning` / `mockToolCalls` / `mockHandoff` / `mockDecision` / `mockConfidence`). Hosts MUST refuse this typeId for production tenants unless `capabilities.conformance.mockAgent` is advertised. |
+| `credential-reference.schema.json` | `host-capabilities.md` §host.credentials + RFC 0046 | Opaque `{ ref, scope }` handle to a host-stored credential — the only credential artifact on the wire; never carries key material |
 | `debug-bundle.schema.json` | `debug-bundle.md` | Portable run diagnostic export from `GET /v1/runs/{runId}/debug-bundle` |
 | `dispatch-config.schema.json` | `node-packs.md` + dispatch RFC | Configuration shape for `core.dispatch` / sub-workflow routing |
 | `error-envelope.schema.json` | `rest-endpoints.md` + `auth.md` | Canonical `{error, message, details?}` shape returned on every non-2xx |
@@ -31,6 +37,7 @@
 | `registry-version-manifest.schema.json` | `registry-operations.md` | Registry-augmented version manifest served at `GET /v1/packs/{name}/-/{version}.json`. Extends the bare pack-manifest contract with registry-side metadata (integrity hash, signing-block polymorphism, lifecycle flags). Enforced by the `Validate version manifests against registry-version-manifest schema` step in `.github/workflows/registry-publish.yml`. |
 | `orchestrator-decision.schema.json` | `node-packs.md` + orchestrator RFC | Decision output shape for orchestrator routing nodes |
 | `run-ancestry-response.schema.json` | `multi-agent-execution.md` + RFC 0040 | Response body for `GET /v1/runs/{runId}/ancestry` — names the run's immediate parent in the cross-host composition chain (or `parent: null` for top-level runs). Capability-gated on `capabilities.multiAgent.executionModel.crossHostCausation.ancestryEndpointSupported`. |
+| `run-diff-response.schema.json` | `rest-endpoints.md` + RFC 0054 | Response body for `GET /v1/runs/{runId}:diff?against={otherRunId}` — deterministic, replay-aware structured diff of two runs (`divergedAtSeq` + `eventDiffs[]` + `stateDiff`). |
 | `run-event-payloads.schema.json` | `run-event.schema.json` §RunEventType | Per-RunEventType payload contracts, indexed by `$defs.<typeId>` for opt-in strict validation |
 | `run-event.schema.json` | `version-negotiation.md` + `RunEventDoc` | Event log envelope + event type enum |
 | `run-options.schema.json` | `run-options.md` | Per-run input overlay (configurable + tags + metadata) on `POST /v1/runs` |

@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — RFC 0056: Run feedback &amp; annotation event (`run.annotated`)</title>
+  <meta name="description" content="OpenWOP can observe what an agent did (reasoning events, cost, interrupts) but has no portable way to record whether a human judged it good — a thumbs-up/down, a correction, a label, a &quot;flag for review.&quot; This RFC adds an optional host.feedback…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0056-run-feedback-and-annotation-event.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — RFC 0056: Run feedback &amp; annotation event (`run.annotated`)"/>
+  <meta property="og:description" content="OpenWOP can observe what an agent did (reasoning events, cost, interrupts) but has no portable way to record whether a human judged it good — a thumbs-up/down, a correction, a label, a &quot;flag for review.&quot; This RFC adds an optional host.feedback…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0056-run-feedback-and-annotation-event.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — RFC 0056: Run feedback &amp; annotation event (`run.annotated`)"/>
+  <meta name="twitter:description" content="OpenWOP can observe what an agent did (reasoning events, cost, interrupts) but has no portable way to record whether a human judged it good — a thumbs-up/down, a correction, a label, a &quot;flag for review.&quot; This RFC adds an optional host.feedback…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "RFC 0056: Run feedback & annotation event (`run.annotated`)",
+  "description": "OpenWOP can observe what an agent did (reasoning events, cost, interrupts) but has no portable way to record whether a human judged it good — a thumbs-up/down, a correction, a label, a \"flag for review.\" This RFC adds an optional host.feedback…",
+  "url": "https://openwop.dev/rfcs/0056-run-feedback-and-annotation-event.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  }
+}</script>
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>RFC 0056: Run feedback &amp; annotation event (`run.annotated`)</h1>
+      <p class="lede">OpenWOP can observe what an agent did (reasoning events, cost, interrupts) but has no portable way to record whether a human judged it good — a thumbs-up/down, a correction, a label, a &quot;flag for review.&quot; This RFC adds an optional host.feedback…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-host-feedback-capability-block-additive">§A — host.feedback capability block (additive)</a></li>
+      <li class="toc-sub"><a href="#b-annotation-shape-run-annotated-stream-notification-additive">§B — Annotation shape + run.annotated stream notification (additive)</a></li>
+      <li class="toc-sub"><a href="#c-endpoints-capability-gated-on-host-feedback-supported">§C — Endpoints (capability-gated on host.feedback.supported)</a></li>
+      <li class="toc-sub"><a href="#d-fork-replay-export-semantics">§D — Fork / replay / export semantics</a></li>
+      <li class="toc-sub"><a href="#e-security-additive-invariants">§E — Security (additive invariants)</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0056</td></tr>
+<tr><td><strong>Title</strong></td><td>An optional <code>host.feedback</code> capability + a per-run annotation store exposed via <code>POST/GET /v1/runs/{runId}/annotations</code> + a live <code>run.annotated</code> SSE notification, so a human (or supervisor agent) can attach a portable quality signal — rating / correction / label / flag — to a run, event, or node, feeding analytics, the HITL inbox, and review. Annotations are a side-resource, <strong>not</strong> replayable run-event-log entries.</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Draft</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-25</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-25</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>schemas/capabilities.schema.json</code> (additive <code>host.feedback</code> block) · new <code>schemas/annotation.schema.json</code> · <code>api/openapi.yaml</code> (two new capability-gated operations) · <code>api/asyncapi.yaml</code> (<code>run.annotated</code> stream message) · <code>spec/v1/observability.md</code> (annotation as a quality-signal surface) · <code>spec/v1/replay.md</code> + <code>spec/v1/debug-bundle.md</code> (fork/export semantics) · <code>SECURITY/invariants.yaml</code> (cross-tenant + redaction invariants) · new conformance scenarios. <strong><code>run.annotated</code> is a live SSE notification only — it is NOT added to <code>schemas/run-event.schema.json</code>'s replayable <code>RunEventType</code> enum (see §B/§D).</strong></td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>OpenWOP can observe <em>what an agent did</em> (reasoning events, cost, interrupts) but has no portable way to record <em>whether a human judged it good</em> — a thumbs-up/down, a correction, a label, a "flag for review." This RFC adds an optional <code>host.feedback</code> capability, a <strong>per-run annotation store</strong> exposed via two capability-gated endpoints (record + list), and a <strong>live <code>run.annotated</code> SSE notification</strong> so dashboards update in real time. Annotations are a <strong>side-resource — deliberately NOT entries in the replayable run event log</strong> — so they never collide with fork/replay semantics (a fork copies source events <code>&lt; fromSeq</code> per <code>replay.md</code>, which would otherwise contradict §D "not copied into a fork"; see §B/§D). Because the shape is portable, a debugger / analytics consumer / HITL inbox on one host can read feedback captured by another — turning per-app, throwaway thumbs-up buttons into a portable quality signal that feeds analytics (intervention rate, correction rate) and review queues. Everything is advertisement-gated and the stream message is ignorable by existing consumers.</p>
+<h2 id="motivation">Motivation</h2>
+<p>The reference app — and any serious agent UI — wants three things OpenWOP can't currently express portably:</p>
+<p>1. <strong>A quality loop.</strong> A user reads an agent's output and wants to rate it or correct it. Today that signal, if captured at all, lives in app-private storage and never reaches the run's event log, so it can't be replayed, exported, or read by another tool. 2. <strong>Real analytics.</strong> The PRD's "agent analytics" (accuracy, intervention rate) need a signal. <em>Intervention rate</em> is partly derivable from interrupt events, but <em>correction rate</em> and <em>quality rating</em> are not emitted anywhere. Without a standard event, every host computes different, incomparable numbers. 3. <strong>A review trail.</strong> A HITL reviewer wants to flag a run for follow-up or label a node's output ("hallucinated", "off-brand"). That belongs next to the run, durably, and should survive fork/replay so the reviewer's note travels with the artifact being debugged.</p>
+<p>This is squarely an <strong>observability + HITL</strong> concern — both core OpenWOP domains (<code>observability.md</code>, <code>interrupt.md</code>). The interop argument is the same one that justified the canonical <code>interrupt</code> shape: a feedback signal is only useful if any consumer can read it the same way. A host-private feedback table fails that test; a <code>run.annotated</code> event passes it. This is distinct from an <code>interrupt</code> (which <em>blocks</em> a run awaiting a decision) — an annotation is <strong>non-blocking</strong> and may be attached during or after a run, including to a terminal run.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-host-feedback-capability-block-additive">§A — <code>host.feedback</code> capability block (additive)</h3>
+<pre class="lang-diff"><code>   &quot;host&quot;: {
+     &quot;properties&quot;: {
++      &quot;feedback&quot;: {
++        &quot;type&quot;: &quot;object&quot;,
++        &quot;description&quot;: &quot;RFC 0056. Non-blocking human/agent quality signals attached to a run, event, or node.&quot;,
++        &quot;properties&quot;: {
++          &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
++          &quot;targets&quot;: {
++            &quot;type&quot;: &quot;array&quot;,
++            &quot;items&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;run&quot;, &quot;event&quot;, &quot;node&quot;] },
++            &quot;description&quot;: &quot;Which granularities a feedback signal may target.&quot;
++          },
++          &quot;signals&quot;: {
++            &quot;type&quot;: &quot;array&quot;,
++            &quot;items&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;rating&quot;, &quot;correction&quot;, &quot;label&quot;, &quot;flag&quot;] },
++            &quot;description&quot;: &quot;Which signal kinds the host accepts.&quot;
++          }
++        },
++        &quot;required&quot;: [&quot;supported&quot;],
++        &quot;additionalProperties&quot;: false
++      }
+     }
+   }</code></pre>
+<h3 id="b-annotation-shape-run-annotated-stream-notification-additive">§B — <code>Annotation</code> shape + <code>run.annotated</code> stream notification (additive)</h3>
+<p>New <code>schemas/annotation.schema.json</code>:</p>
+<pre class="lang-json"><code>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [&quot;annotationId&quot;, &quot;target&quot;, &quot;signal&quot;, &quot;actor&quot;, &quot;createdAt&quot;],
+  &quot;properties&quot;: {
+    &quot;annotationId&quot;: { &quot;type&quot;: &quot;string&quot; },
+    &quot;target&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [&quot;runId&quot;],
+      &quot;properties&quot;: {
+        &quot;runId&quot;:   { &quot;type&quot;: &quot;string&quot; },
+        &quot;eventId&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Optional — anchors the annotation to one RunEvent.&quot; },
+        &quot;nodeId&quot;:  { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Optional — anchors the annotation to one node.&quot; }
+      },
+      &quot;additionalProperties&quot;: false
+    },
+    &quot;signal&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [&quot;kind&quot;],
+      &quot;properties&quot;: {
+        &quot;kind&quot;:   { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;rating&quot;, &quot;correction&quot;, &quot;label&quot;, &quot;flag&quot;] },
+        &quot;rating&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 1, &quot;maximum&quot;: 5, &quot;description&quot;: &quot;Required iff kind=rating.&quot; },
+        &quot;label&quot;:  { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Required iff kind=label.&quot; },
+        &quot;correction&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Corrected text/value iff kind=correction. Treated as untrusted user content.&quot; }
+      },
+      &quot;additionalProperties&quot;: false
+    },
+    &quot;actor&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [&quot;principalRef&quot;],
+      &quot;properties&quot;: { &quot;principalRef&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Opaque principal identifier — a principal per RFC 0048 (Draft, referenced non-normatively) or an AgentRef per RFC 0002 when a supervisor agent annotates. Typed as a plain string so this RFC does NOT depend on RFC 0048 reaching Accepted.&quot; } }
+    },
+    &quot;note&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Optional free-text note. Untrusted user content.&quot; },
+    &quot;createdAt&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;date-time&quot; }
+  },
+  &quot;additionalProperties&quot;: false
+}</code></pre>
+<p>Annotations persist in a <strong>per-run side-store keyed by <code>runId</code></strong> (the <code>POST/GET .../annotations</code> endpoints in §C are its read/write surface). When one is recorded, the host emits a <strong><code>run.annotated</code> SSE notification</strong> carrying the <code>Annotation</code> in its payload, on the <code>updates</code> + <code>debug</code> stream modes, so live consumers (the HITL inbox, a dashboard) update in real time.</p>
+<p><code>run.annotated</code> is a <strong>live stream message, NOT a persisted <code>RunEvent</code></strong> — it is deliberately <strong>not</strong> added to <code>run-event.schema.json</code>'s <code>RunEventType</code> enum and never enters the replayable event log. This is the load-bearing design choice: a fork copies source event-log entries for sequences <code>&lt; fromSeq</code> (<code>replay.md</code>), so a replayable annotation event would be copied into forks — directly contradicting §D — and would also mean appending events to a <em>terminal</em> run's immutable log. Keeping annotations off the event log resolves both. (Producer-side: an AsyncAPI <code>RunAnnotated</code> message references <code>annotation.schema.json</code>.)</p>
+<h3 id="c-endpoints-capability-gated-on-host-feedback-supported">§C — Endpoints (capability-gated on <code>host.feedback.supported</code>)</h3>
+<ul>
+<li><code>POST /v1/runs/{runId}/annotations</code> — record an annotation. Validates against <code>annotation.schema.json</code>, enforces tenant scope, emits <code>run.annotated</code>, returns the persisted <code>Annotation</code>. MUST accept annotations on a <strong>terminal</strong> run (feedback is frequently post-hoc).</li>
+<li><code>GET /v1/runs/{runId}/annotations</code> — list annotations for a run, tenant-scoped.</li>
+</ul>
+<p>Hosts that don't advertise <code>host.feedback.supported</code> MUST return <code>501 capability_not_provided</code> (the honest signal, per <code>capabilities.md</code>), not a 404.</p>
+<h3 id="d-fork-replay-export-semantics">§D — Fork / replay / export semantics</h3>
+<p>Because annotations live in a per-run side-store (§B), they sit cleanly outside fork/replay:</p>
+<ul>
+<li><strong>Fork</strong> (<code>replay.md</code>): a fork replays/copies source <em>event-log</em> entries for sequences <code>&lt; fromSeq</code>. Annotations are not event-log entries, so a fork inherently starts with <strong>zero</strong> annotations (a fork is a new run with no human judgments yet). A fork MAY carry a back-reference to the source so a reviewer can navigate to "the feedback that motivated this fork."</li>
+<li><strong>Replay</strong>: there is nothing to replay — <code>run.annotated</code> is a live SSE notification, not a persisted event, so it never appears in a replayed event stream and triggers no node execution. This avoids both appending to a terminal run's immutable log and the §D-vs-fork contradiction a replayable annotation event would create.</li>
+<li><strong>Debug bundle</strong> (<code>debug-bundle.md</code>): the host reads the annotation side-store and includes a run's annotations in the export, so a flagged run travels with its reviewer notes.</li>
+</ul>
+<h3 id="e-security-additive-invariants">§E — Security (additive invariants)</h3>
+<ul>
+<li><code>annotation-cross-tenant-isolation</code> (protocol-tier) — an annotation is visible only within its run's tenant; a cross-tenant <code>GET</code> MUST NOT return it. Mirrors CTI-1.</li>
+<li><code>annotation-content-redaction</code> (protocol-tier) — <code>signal.correction</code> and <code>note</code> are <strong>untrusted user content</strong>: they are wrapped per the prompt-injection trust discipline if ever fed back into a prompt, and any secret-shaped material is redacted under SR-1 before persistence/export.</li>
+<li>Recording an annotation is <strong>audit-logged</strong> (<code>auth.md</code>) with the acting principal.</li>
+</ul>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong> New optional capability block; a new <strong>SSE stream message</strong> (<code>run.annotated</code>) consumers ignore if unrecognized (additive stream messages are backward-safe per <code>COMPATIBILITY.md</code> §2.1) — deliberately <strong>not</strong> added to the replayable <code>RunEventType</code> enum, so the event-log wire shape and fork/replay semantics are untouched; two new endpoints that only exist behind the advertised capability and otherwise return the spec'd <code>501</code>; one new side-resource schema (<code>annotation.schema.json</code>). No change to any existing event, endpoint, or schema. A host that doesn't advertise <code>host.feedback</code> is bit-for-bit unchanged and keeps its existing conformance pass. The two new SECURITY invariants are additive (they constrain a new surface, not an existing one).</p>
+<h2 id="conformance">Conformance</h2>
+<ul>
+<li><strong><code>feedback-capability-shape.test.ts</code></strong> — the <code>host.feedback</code> block validates; <code>targets</code>/<code>signals</code> are subsets of the enums. (Always runs.)</li>
+<li><strong><code>feedback-record-and-list.test.ts</code></strong> — <code>POST</code> an annotation, observe a <code>run.annotated</code> event on the stream, <code>GET</code> it back. (Gated on <code>host.feedback.supported</code>.)</li>
+<li><strong><code>feedback-on-terminal-run.test.ts</code></strong> — an annotation on a completed run is accepted (proves non-blocking, post-hoc). (Gated.)</li>
+<li><strong><code>feedback-cross-tenant-isolation.test.ts</code></strong> — tenant B cannot read tenant A's annotations (<code>annotation-cross-tenant-isolation</code>). (Gated.)</li>
+<li><strong><code>feedback-correction-redaction.test.ts</code></strong> — a <code>correction</code>/<code>note</code> containing a secret-shaped token is redacted in persistence + debug-bundle export (<code>annotation-content-redaction</code>). (Gated.)</li>
+<li><strong><code>feedback-fork-not-copied.test.ts</code></strong> — forking an annotated run yields a fork with zero annotations + an optional source back-reference. (Gated on <code>host.feedback</code> + <code>replay</code>.)</li>
+<li><strong><code>feedback-unsupported-501.test.ts</code></strong> — a host not advertising <code>host.feedback</code> returns <code>501 capability_not_provided</code> on <code>POST .../annotations</code>. (Always runs.)</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Model feedback as a fifth <code>interrupt</code> kind.</strong> Rejected — interrupts <strong>block</strong> a run awaiting a decision and have a signed-token resume contract. Feedback is non-blocking, frequently post-terminal, and may be attached to a run that has long since finished. Overloading <code>interrupt</code> would muddy a clean, locked primitive. 2. <strong>Leave feedback to each app (do nothing).</strong> Rejected — app-private feedback can't be replayed, exported, cross-read by a debugger, or aggregated into comparable analytics across hosts. The whole value is portability; a private table has none. 3. <strong>A generic <code>metadata</code> write on the run.</strong> Rejected — <code>run-options.md</code> metadata is author-time configuration, not an ordered, actor-attributed, audited event stream. Quality signals need provenance (who), ordering (when, on the event timeline), and a typed signal vocabulary so analytics can aggregate them — none of which free-form metadata gives. 4. <strong>Bundle this into RFC 0054 (run-diff).</strong> Rejected — run-diff <em>compares</em> runs; it doesn't <em>capture</em> human judgment. They compose (diff two runs, then annotate which is better) but are orthogonal surfaces.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. <strong>Annotation mutability.</strong> Can a rating be changed or retracted, or are annotations append-only with a superseding annotation? Append-only is simpler and audit-honest; confirm before Active. 2. <strong>Agent-authored annotations.</strong> §B allows an <code>AgentRef</code> actor so a supervisor/judge agent can annotate a worker's output (LLM-as-judge). Should agent-authored annotations carry a <code>confidence</code> field tying into RFC 0039's confidence semantics? Likely yes; decide before Active. 3. <strong>Aggregation surface.</strong> Should the host expose an aggregate (<code>GET /v1/feedback/summary?workflowId=…</code>) or is per-run listing enough, with aggregation left to consumers? Defer the aggregate until an analytics adopter needs server-side rollups.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>Schema additions (§A, §B) + endpoints (§C) land on <code>Active</code> promotion with the conformance scenarios.</li>
+<li>Reference-app payoff (drives <code>plans/app-ux-enhancements.md</code>): thumbs-up/down + "suggest a correction" on chat bubbles and run-detail nodes; the HITL inbox gains a "flagged" filter; the run analytics panel computes correction-rate / mean-rating / flag-rate from <code>run.annotated</code> events instead of inventing app-local state.</li>
+<li>Reference-host target: <code>examples/hosts/postgres</code> persists annotations in a tenant-scoped table; the in-memory demo host persists them in the run doc (wiped on restart, acceptable for the sample).</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[ ] Spec text merged (this file + <code>observability.md</code> §"Quality signals" + replay/debug-bundle clauses).</li>
+<li>[ ] <code>host.feedback</code> in <code>capabilities.schema.json</code>; <code>run.annotated</code> <code>RunAnnotated</code> message in <code>api/asyncapi.yaml</code> (NOT in <code>run-event.schema.json</code>'s <code>RunEventType</code> enum); new <code>annotation.schema.json</code>; per-run annotation side-store.</li>
+<li>[ ] Two operations in <code>api/openapi.yaml</code> with <code>501</code> documented for the unadvertised case.</li>
+<li>[ ] Two SECURITY invariants (<code>annotation-cross-tenant-isolation</code>, <code>annotation-content-redaction</code>) with public conformance tests.</li>
+<li>[ ] Seven conformance scenarios.</li>
+<li>[ ] CHANGELOG entry under <code>[Unreleased]</code>.</li>
+<li>[ ] A host advertises <code>host.feedback</code> and passes record/list + cross-tenant + redaction + terminal-run + fork-not-copied.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="../spec/v1/observability.md"><code>spec/v1/observability.md</code></a> — the quality-signal surface this extends.</li>
+<li><a href="../spec/v1/interrupt.md"><code>spec/v1/interrupt.md</code></a> — the blocking-HITL primitive this is deliberately distinct from.</li>
+<li><a href="../spec/v1/replay.md"><code>spec/v1/replay.md</code></a> + <a href="../spec/v1/debug-bundle.md"><code>spec/v1/debug-bundle.md</code></a> — fork/export semantics.</li>
+<li><a href="./0048-tenant-workspace-principal-identity-model.md"><code>RFCS/0048-tenant-workspace-principal-identity-model.md</code></a> — the <code>principalRef</code> actor identity (Draft).</li>
+<li><a href="./0039-multi-agent-confidence-and-memory-lifecycle.md"><code>RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md</code></a> — confidence semantics for agent-authored annotations (OQ#2).</li>
+<li><a href="./0054-run-diff-and-execution-comparison.md"><code>RFCS/0054-run-diff-and-execution-comparison.md</code></a> — the orthogonal run-comparison surface it composes with (Draft).</li>
+<li><a href="../plans/app-ux-enhancements.md"><code>plans/app-ux-enhancements.md</code></a> — the reference-app UX work this unblocks.</li>
+</ul><footer class="doc-edit"><a href="https://github.com/openwop/openwop/edit/main/RFCS/0056-run-feedback-and-annotation-event.md" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>

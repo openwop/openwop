@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — RFC 0053: Dead-letter routing &amp; failure sinks</title>
+  <meta name="description" content="Add a host.deadLetter capability — { supported, retentionDays } — and a run.dead_lettered { runId, nodeId, reason, attempts } event so a run (or node) that exhausts its retries lands in a durable, inspectable sink instead of being logged and lost. A…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0053-dead-letter-routing-and-failure-sinks.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — RFC 0053: Dead-letter routing &amp; failure sinks"/>
+  <meta property="og:description" content="Add a host.deadLetter capability — { supported, retentionDays } — and a run.dead_lettered { runId, nodeId, reason, attempts } event so a run (or node) that exhausts its retries lands in a durable, inspectable sink instead of being logged and lost. A…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0053-dead-letter-routing-and-failure-sinks.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — RFC 0053: Dead-letter routing &amp; failure sinks"/>
+  <meta name="twitter:description" content="Add a host.deadLetter capability — { supported, retentionDays } — and a run.dead_lettered { runId, nodeId, reason, attempts } event so a run (or node) that exhausts its retries lands in a durable, inspectable sink instead of being logged and lost. A…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "RFC 0053: Dead-letter routing & failure sinks",
+  "description": "Add a host.deadLetter capability — { supported, retentionDays } — and a run.dead_lettered { runId, nodeId, reason, attempts } event so a run (or node) that exhausts its retries lands in a durable, inspectable sink instead of being logged and lost. A…",
+  "url": "https://openwop.dev/rfcs/0053-dead-letter-routing-and-failure-sinks.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  }
+}</script>
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>RFC 0053: Dead-letter routing &amp; failure sinks</h1>
+      <p class="lede">Add a host.deadLetter capability — { supported, retentionDays } — and a run.dead_lettered { runId, nodeId, reason, attempts } event so a run (or node) that exhausts its retries lands in a durable, inspectable sink instead of being logged and lost. A…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-capabilities-schema-json-host-deadletter-block-additive">§A — capabilities.schema.json: host.deadLetter block (additive)</a></li>
+      <li class="toc-sub"><a href="#b-run-dead-lettered-event-additive">§B — run.dead_lettered event (additive)</a></li>
+      <li class="toc-sub"><a href="#c-contract-normative-when-host-deadletter-supported-true">§C — Contract (normative, when host.deadLetter.supported: true)</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0053</td></tr>
+<tr><td><strong>Title</strong></td><td>A <code>host.deadLetter</code> capability + <code>run.dead_lettered</code> event — terminally-failed runs/nodes land in a durable, inspectable sink that stays fork-eligible, so a poisoned run can be examined and replayed rather than silently lost</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-24</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-25 (Draft → Active → <strong>Accepted</strong> — MyndHyve workflow-runtime advertises the capability live on <code>https://api.myndhyve.ai/.well-known/openwop</code> (curl-verified 2026-05-25) and the cohort conformance scenarios pass against it: <code>@openwop/openwop-conformance@1.6.0</code>, revision <code>workflow-runtime-00211-69w</code>, commit <code>85275cdf87972e02c2e588cba481415f3e0edb15</code>, 28 PASS / 0 FAIL across RFCs 0045/0046/0047/0048/0049/0051/0052/0053. Implementation per <code>docs/openwop-adoption/0045-0054-cohort-summary.md</code>; promoted per <code>RFCS/0001</code> §"Promotion to Accepted".)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>schemas/capabilities.schema.json</code> (additive <code>host.deadLetter</code> block) · <code>schemas/run-event-payloads.schema.json</code> (additive <code>run.dead_lettered</code> event) · <code>spec/v1/host-capabilities.md</code> (new §host.deadLetter) · RFC 0009 (retry) + RFC 0011 (fork/replay) composition · new conformance scenarios</td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Add a <code>host.deadLetter</code> capability — <code>{ supported, retentionDays }</code> — and a <code>run.dead_lettered { runId, nodeId, reason, attempts }</code> event so a run (or node) that exhausts its retries lands in a durable, inspectable sink instead of being logged and lost. A dead-lettered run remains <strong>fork-eligible</strong> (RFC 0011), so it can be inspected and replayed/retried. This composes with the existing retry (RFC 0009) and fork/replay (RFC 0011) machinery and is distinct from RFC 0017's <code>queueBus.deadLetterSupported</code> (which dead-letters <em>queue messages</em>, not <em>runs</em>).</p>
+<h2 id="motivation">Motivation</h2>
+<p>When a MyndHyve workflow node exhausts its retries, the failure is logged but there is no portable <strong>dead-letter sink</strong> — no standard place a poisoned run lands for inspection and replay. openwop has retry policies (RFC 0009) and idempotency, and RFC 0017's <code>queueBus</code> can dead-letter <em>transport messages</em>, but there is no run-level DLQ surface: "this run died terminally, here's where it went, and you can fork it from there." Reliability at production scale (Bryce's campaigns) needs this, and without it any DLQ MyndHyve builds is host-private and uncertifiable — a federated peer can't discover that a dispatched sub-workflow dead-lettered.</p>
+<p>The spec is the right place because dead-lettering is the terminal half of the retry/replay contract that already lives in the protocol (RFC 0009/0011): a terminally-failed run's disposition (where it lands, how long it's retained, that it stays fork-eligible) is an interop guarantee, not implementation detail.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-capabilities-schema-json-host-deadletter-block-additive">§A — <code>capabilities.schema.json</code>: <code>host.deadLetter</code> block (additive)</h3>
+<pre class="lang-diff"><code>   &quot;host&quot;: {
+     &quot;properties&quot;: {
++      &quot;deadLetter&quot;: {
++        &quot;type&quot;: &quot;object&quot;,
++        &quot;description&quot;: &quot;RFC 0053. Run-level dead-letter sink for terminally-failed runs/nodes. Distinct from queueBus.deadLetterSupported (which dead-letters transport messages). Dead-lettered runs remain fork-eligible (RFC 0011).&quot;,
++        &quot;properties&quot;: {
++          &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
++          &quot;retentionDays&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 1, &quot;description&quot;: &quot;Days a dead-lettered run is retained for inspection/fork before purge.&quot; }
++        },
++        &quot;required&quot;: [&quot;supported&quot;],
++        &quot;additionalProperties&quot;: false
++      }
+     }
+   }</code></pre>
+<h3 id="b-run-dead-lettered-event-additive">§B — <code>run.dead_lettered</code> event (additive)</h3>
+<p>Add to <code>run-event-payloads.schema.json</code>:</p>
+<pre class="lang-json"><code>&quot;run.dead_lettered&quot;: {
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [&quot;runId&quot;, &quot;reason&quot;, &quot;attempts&quot;],
+  &quot;properties&quot;: {
+    &quot;runId&quot;: { &quot;type&quot;: &quot;string&quot; },
+    &quot;nodeId&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;The node whose retry exhaustion dead-lettered the run; absent for run-level failures.&quot; },
+    &quot;reason&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Redaction-safe terminal-failure reason.&quot; },
+    &quot;attempts&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 1, &quot;description&quot;: &quot;Total attempts made before dead-lettering.&quot; }
+  }
+}</code></pre>
+<h3 id="c-contract-normative-when-host-deadletter-supported-true">§C — Contract (normative, when <code>host.deadLetter.supported: true</code>)</h3>
+<p>A host advertising <code>host.deadLetter.supported: true</code> MUST:</p>
+<p>1. On retry exhaustion (per the RFC 0009 retry policy), route the run/node to the dead-letter sink and emit <code>run.dead_lettered</code>. The run's terminal <code>RunSnapshot.status</code> reflects failure; the run is <strong>not</strong> purged before <code>retentionDays</code>. 2. Keep the dead-lettered run <strong>fork-eligible</strong> per RFC 0011 — it can be forked/replayed (e.g. after the underlying cause is fixed) for the retention window. 3. Purge the run after <code>retentionDays</code>; a fork attempt on a purged run returns the existing RFC 0011 not-found error.</p>
+<p><code>run.dead_lettered</code> carries no credential or payload material beyond a redaction-safe <code>reason</code> (composes with the RFC 0046 redaction invariant where credentials were in scope).</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong> New optional capability block; new event consumers can ignore; no required-field change. Hosts without <code>host.deadLetter.supported</code> are unaffected (they continue to fail runs as today, with no sink). No existing conformance pass is invalidated.</p>
+<p><strong>Composes with RFC 0009</strong> (retry exhaustion is the trigger) and <strong>RFC 0011</strong> (dead-lettered runs are fork-eligible). Independent of Tiers 1–2 and of RFC 0017's transport-level dead-lettering.</p>
+<h2 id="conformance">Conformance</h2>
+<ul>
+<li><strong><code>deadletter-capability-shape.test.ts</code></strong> — <code>host.deadLetter</code> block validates; <code>retentionDays ≥ 1</code>. (Always runs.)</li>
+<li><strong><code>deadletter-retry-exhaustion.test.ts</code></strong> — a node that exhausts its RFC 0009 retry policy emits <code>run.dead_lettered</code> with the correct <code>attempts</code>; the run is not purged. (Gated on <code>host.deadLetter.supported</code>.)</li>
+<li><strong><code>deadletter-fork-replayable.test.ts</code></strong> — a dead-lettered run is forkable per RFC 0011 within the retention window. (Gated on <code>host.deadLetter.supported</code> ∧ fork support.)</li>
+<li><strong><code>deadletter-retention.test.ts</code></strong> — after <code>retentionDays</code> the run is purged; a fork attempt returns not-found. (Gated; may use a clock seam.)</li>
+</ul>
+<p>New fixture: a workflow node that deterministically exhausts a short retry policy, catalogued in <code>fixtures.md</code>.</p>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Reuse RFC 0017's <code>queueBus.deadLetterSupported</code>.</strong> Rejected — that dead-letters <em>transport messages</em> on a queue backend, not <em>runs</em> in the engine. A run-level DLQ has different semantics (fork-eligibility, run retention) and must exist on hosts with no queue bus at all. 2. <strong>Make dead-lettering implicit (no event, just a terminal status).</strong> Rejected — without an event, a federated peer or a dispatching parent can't discover that a sub-workflow dead-lettered, and conformance can't assert it happened. The event is the observable contract. 3. <strong>Auto-retry dead-lettered runs on a schedule.</strong> Rejected for v1 — automatic re-drive risks re-poisoning; keeping dead-lettered runs <em>fork-eligible</em> (operator-driven replay) is safer. Auto-redrive can be a later opt-in.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. <strong>Sink scoping.</strong> Should the dead-letter sink be scoped per RFC 0048 workspace (so a workspace only sees its own dead-lettered runs)? Likely yes; align with RFC 0048 owner-scoping before Active. 2. <strong>Partial dead-lettering.</strong> A run with one dead node but otherwise-complete branches — is the <em>run</em> dead-lettered or just the <em>node</em>? The <code>nodeId</code> field allows node-level, but the run-status semantics need pinning before Active. 3. <strong>Max attempts surfacing.</strong> Should <code>attempts</code> reconcile with the RFC 0009 retry-policy <code>maxAttempts</code> (always equal at dead-letter)? Confirm the relationship before Active.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>Schema diffs (§A, §B) land on <code>Active</code> promotion with the conformance scenarios.</li>
+<li>Reference-adopter target: MyndHyve adds a DLQ sink keyed by workspace and surfaces it in the Active Runs dashboard / workflow studio.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[x] Spec text merged (this file).</li>
+<li>[x] <code>deadLetter</code> block (top-level, per the schema convention) in <code>capabilities.schema.json</code>.</li>
+<li>[x] <code>run.dead_lettered</code> event in <code>run-event-payloads.schema.json</code> (+ <code>RunEventType</code> enum).</li>
+<li>[x] <code>spec/v1/host-capabilities.md</code> §host.deadLetter section.</li>
+<li>[~] Conformance — 2 of 4 landed: <code>deadletter-capability-shape.test.ts</code> (shape, always runs) + <code>deadletter-retry-exhaustion.test.ts</code> (retry-exhaustion → <code>run.dead_lettered</code> + fork-eligibility, capability-gated, <code>deadletter/exhaust</code> seam soft-skips — registered in <code>host-sample-test-seams.md</code>). The retention-purge scenario (needs a clock seam) is deferred.</li>
+<li>[x] CHANGELOG entry under <code>[Unreleased]</code>.</li>
+<li>[ ] A non-steward host advertises <code>host.deadLetter</code> and passes retry-exhaustion + fork-replayable.</li>
+</ul>
+<p><strong>Implementation note (2026-05-25):</strong> Capability block (top-level <code>capabilities.deadLetter</code>) + <code>run.dead_lettered</code> event + <code>§host.deadLetter</code> contract + the two scenarios + the <code>deadletter/exhaust</code> seam landed on <code>main</code>. Composes with RFC 0009 retry + RFC 0011 fork; distinct from <code>queueBus.deadLetterSupported</code> (transport-level). No new SECURITY invariant. Status stays <code>Draft</code>. <strong>Completes the MyndHyve protocol-extension batch (RFCs 0045–0054) on the openwop side.</strong></p>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="./0009-production-profile-conformance.md"><code>RFCS/0009-production-profile-conformance.md</code></a> — the retry policy whose exhaustion triggers dead-lettering.</li>
+<li><a href="./0011-auth-scoped-discovery.md"><code>RFCS/0011-auth-scoped-discovery.md</code></a> — fork/replay eligibility (dead-lettered runs stay forkable).</li>
+<li><a href="./0017-host-queue-bus-capability.md"><code>RFCS/0017-host-queue-bus-capability.md</code></a> — <code>queueBus.deadLetterSupported</code> (transport-level DLQ, distinct from this run-level sink).</li>
+<li>AWS SQS dead-letter queues, Temporal failed-workflow retention (prior art).</li>
+</ul><footer class="doc-edit"><a href="https://github.com/openwop/openwop/edit/main/RFCS/0053-dead-letter-routing-and-failure-sinks.md" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>

@@ -75,6 +75,34 @@
           "type": "string",
           "maxLength": 256,
           "description": "Optional human-readable label for ops dashboards (e.g., `\"Draft PRD #2\"`). Never used for routing; never persisted into event payloads in a security-relevant way. (in-flight)"
+        },
+        "rendering": {
+          "type": "object",
+          "description": "RFC 0055. Optional hint for how a consumer SHOULD render this envelope's payload. Non-normative w.r.t. payload validation; a consumer that doesn't recognize the hint (or a `display` value) MUST fall back to its default rendering (text / raw JSON). Carries no secret material (SR-1 applies as for the rest of `meta`).",
+          "properties": {
+            "display": {
+              "type": "string",
+              "enum": ["markdown", "code", "card", "image", "audio", "file"],
+              "description": "Renderer family the producer suggests."
+            },
+            "mimeType": {
+              "type": "string",
+              "description": "IANA media type when `display` is `image`/`audio`/`file`."
+            },
+            "lang": {
+              "type": "string",
+              "description": "Language tag when `display` is `code` (e.g. `ts`, `python`)."
+            },
+            "alt": {
+              "type": "string",
+              "description": "Text alternative for accessibility when `display` is `image`/`audio`/`file`. SHOULD be present for those families."
+            },
+            "title": {
+              "type": "string",
+              "description": "Optional caption / card header."
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false,

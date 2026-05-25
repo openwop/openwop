@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — RFC 0049: RBAC scopes &amp; authorization decisions</title>
+  <meta name="description" content="Bind the RFC 0048 principal&#39;s role to scopes (reusing openwop&#39;s existing API-key scope grammar in spec/v1/auth.md) and standardize an authorization.decided { principal, action, resource, allowed, reason } event so denials are observable, auditable,…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0049-rbac-scopes-and-authorization-decisions.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — RFC 0049: RBAC scopes &amp; authorization decisions"/>
+  <meta property="og:description" content="Bind the RFC 0048 principal&#39;s role to scopes (reusing openwop&#39;s existing API-key scope grammar in spec/v1/auth.md) and standardize an authorization.decided { principal, action, resource, allowed, reason } event so denials are observable, auditable,…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0049-rbac-scopes-and-authorization-decisions.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — RFC 0049: RBAC scopes &amp; authorization decisions"/>
+  <meta name="twitter:description" content="Bind the RFC 0048 principal&#39;s role to scopes (reusing openwop&#39;s existing API-key scope grammar in spec/v1/auth.md) and standardize an authorization.decided { principal, action, resource, allowed, reason } event so denials are observable, auditable,…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "RFC 0049: RBAC scopes & authorization decisions",
+  "description": "Bind the RFC 0048 principal's role to scopes (reusing openwop's existing API-key scope grammar in spec/v1/auth.md) and standardize an authorization.decided { principal, action, resource, allowed, reason } event so denials are observable, auditable,…",
+  "url": "https://openwop.dev/rfcs/0049-rbac-scopes-and-authorization-decisions.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  }
+}</script>
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>RFC 0049: RBAC scopes &amp; authorization decisions</h1>
+      <p class="lede">Bind the RFC 0048 principal&#39;s role to scopes (reusing openwop&#39;s existing API-key scope grammar in spec/v1/auth.md) and standardize an authorization.decided { principal, action, resource, allowed, reason } event so denials are observable, auditable,…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-role-scope-binding-additive-advertisement">§A — Role→scope binding (additive advertisement)</a></li>
+      <li class="toc-sub"><a href="#b-authorization-decided-event-additive-redaction-safe">§B — authorization.decided event (additive, redaction-safe)</a></li>
+      <li class="toc-sub"><a href="#c-fail-closed-must-normative-security-invariant">§C — Fail-closed MUST (normative) + SECURITY invariant</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0049</td></tr>
+<tr><td><strong>Title</strong></td><td>A portable role→scope binding (reusing the existing API-key scope grammar) plus a standardized, redaction-safe <code>authorization.decided</code> event, with a normative <strong>fail-closed</strong> default — so a host's RBAC becomes observable, auditable, and conformance-testable</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-24</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-25 (Draft → Active → <strong>Accepted</strong> — MyndHyve workflow-runtime advertises the capability live on <code>https://api.myndhyve.ai/.well-known/openwop</code> (curl-verified 2026-05-25) and the cohort conformance scenarios pass against it: <code>@openwop/openwop-conformance@1.6.0</code>, revision <code>workflow-runtime-00211-69w</code>, commit <code>85275cdf87972e02c2e588cba481415f3e0edb15</code>, 28 PASS / 0 FAIL across RFCs 0045/0046/0047/0048/0049/0051/0052/0053. Implementation per <code>docs/openwop-adoption/0045-0054-cohort-summary.md</code>; promoted per <code>RFCS/0001</code> §"Promotion to Accepted".)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>schemas/capabilities.schema.json</code> (additive <code>authorization.roles</code> advertisement) · <code>schemas/run-event-payloads.schema.json</code> (additive <code>authorization.decided</code> event) · <code>spec/v1/auth.md</code> (role→scope binding; the scope grammar this reuses) · RFC 0009/0010 (feeds the audit-log integrity profile) · <code>SECURITY/invariants.yaml</code> (new <code>authorization-fail-closed</code> invariant) · new conformance scenarios</td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Bind the RFC 0048 principal's <strong>role</strong> to <strong>scopes</strong> (reusing openwop's existing API-key scope grammar in <code>spec/v1/auth.md</code>) and standardize an <code>authorization.decided { principal, action, resource, allowed, reason }</code> event so denials are observable, auditable, and conformance-testable — including a normative <strong>fail-closed</strong> default: an absent or unseeded role denies. This makes a host's RBAC (which is otherwise invisible above the protocol) a certifiable surface and feeds the existing audit-log integrity profile (RFC 0009/0010).</p>
+<h2 id="motivation">Motivation</h2>
+<p>MyndHyve enforces workspace roles (<code>owner</code>/<code>admin</code>/<code>editor</code>/<code>viewer</code>) and CMS RBAC entirely host-side, <strong>fail-closed</strong> — a cache miss returns <code>{ allowed: false }</code>. openwop has a scope vocabulary for API keys (the scope table in <code>spec/v1/auth.md</code>: <code>manifest:read</code>, <code>runs:create</code>, <code>runs:read</code>, <code>runs:cancel</code>, …, matched by the host's authorization layer) but no contract tying <strong>roles → scopes → a decision on a run or node</strong>. So MyndHyve's RBAC is invisible to the protocol: a federated peer can't tell why a request was denied, and conformance can't assert that an unauthorized principal <em>is</em> denied — or that denial is fail-closed rather than fail-open.</p>
+<p>The spec is the right place because authorization decisions are an interop and audit concern: cross-host workflows and the audit-log integrity profile (RFC 0009/0010) need a portable decision shape, and the fail-closed default is exactly the kind of safety invariant that should be hoisted and certified rather than re-implemented per host.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-role-scope-binding-additive-advertisement">§A — Role→scope binding (additive advertisement)</h3>
+<p>Advertise the host's role catalog in capabilities:</p>
+<pre class="lang-diff"><code>   &quot;properties&quot;: {
++    &quot;authorization&quot;: {
++      &quot;type&quot;: &quot;object&quot;,
++      &quot;description&quot;: &quot;RFC 0049. Maps RFC 0048 principal roles to scopes, reusing the API-key scope grammar (`spec/v1/auth.md`).&quot;,
++      &quot;properties&quot;: {
++        &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
++        &quot;failClosed&quot;: { &quot;type&quot;: &quot;boolean&quot;, &quot;const&quot;: true, &quot;description&quot;: &quot;Absent/unseeded role denies. MUST be true — see SECURITY invariant `authorization-fail-closed`.&quot; },
++        &quot;roles&quot;: {
++          &quot;type&quot;: &quot;array&quot;,
++          &quot;items&quot;: {
++            &quot;type&quot;: &quot;object&quot;,
++            &quot;required&quot;: [&quot;role&quot;, &quot;scopes&quot;],
++            &quot;properties&quot;: {
++              &quot;role&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;minLength&quot;: 1 },
++              &quot;scopes&quot;: { &quot;type&quot;: &quot;array&quot;, &quot;items&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;minLength&quot;: 1 }, &quot;uniqueItems&quot;: true }
++            },
++            &quot;additionalProperties&quot;: false
++          }
++        }
++      },
++      &quot;required&quot;: [&quot;supported&quot;],
++      &quot;additionalProperties&quot;: false
++    }
+   }</code></pre>
+<p>Scope matching reuses the existing API-key scope grammar (a request is authorized when <strong>any</strong> of the principal's role-derived scopes matches the required scope, including the established per-segment wildcard + verb-implication rules the host's authorization layer already applies to API keys). This RFC adds no new grammar — it reuses what API keys already match against, now sourced from a role instead of a key.</p>
+<h3 id="b-authorization-decided-event-additive-redaction-safe">§B — <code>authorization.decided</code> event (additive, redaction-safe)</h3>
+<p>Add to <code>run-event-payloads.schema.json</code>:</p>
+<pre class="lang-json"><code>&quot;authorization.decided&quot;: {
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [&quot;principal&quot;, &quot;action&quot;, &quot;resource&quot;, &quot;allowed&quot;],
+  &quot;properties&quot;: {
+    &quot;principal&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Opaque RFC 0048 principal id — never PII.&quot; },
+    &quot;action&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;The attempted action, e.g. `runs:cancel`.&quot; },
+    &quot;resource&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;The target, e.g. a runId or workflowId.&quot; },
+    &quot;allowed&quot;: { &quot;type&quot;: &quot;boolean&quot; },
+    &quot;reason&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Human-readable, redaction-safe — no credential material.&quot; }
+  }
+}</code></pre>
+<p>Every decision (allow <strong>and</strong> deny) MAY be emitted; every <strong>deny</strong> SHOULD be emitted and SHOULD feed the audit log per the RFC 0009/0010 audit-log integrity profile.</p>
+<h3 id="c-fail-closed-must-normative-security-invariant">§C — Fail-closed MUST (normative) + SECURITY invariant</h3>
+<p>An absent or unseeded role MUST deny (<code>allowed: false</code>), never default-allow. Add to <code>SECURITY/invariants.yaml</code>:</p>
+<pre class="lang-yaml"><code>- id: authorization-fail-closed
+  tier: protocol
+  severity: critical
+  threat_model: SECURITY/threat-model-secret-leakage.md
+  tests:
+    - conformance/src/scenarios/authorization-fail-closed.test.ts
+  note: |
+    RFC 0049 §C: hosts advertising `capabilities.authorization.supported` MUST deny when
+    a principal&#39;s role is absent, unseeded, or unresolvable (cache miss ⇒ deny). The
+    decision MUST NOT default-allow under any error condition. `authorization.failClosed`
+    is `const: true`.</code></pre>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong> New optional capability block; new optional event; no required-field change. Hosts without <code>authorization.supported</code> are unaffected; consumers ignore an <code>authorization.decided</code> event they don't understand. The scope grammar is reused unchanged, so no existing API-key authorization behavior shifts.</p>
+<p><strong>Depends on RFC 0048</strong> (the <code>principal</code> the role binds to). Reuses the existing scope vocabulary (<code>spec/v1/auth.md</code>) and the audit profile (RFC 0009/0010).</p>
+<h2 id="conformance">Conformance</h2>
+<ul>
+<li><strong><code>authorization-roles-shape.test.ts</code></strong> — the <code>authorization.roles</code> advertisement validates; scopes are well-formed. (Always runs.)</li>
+<li><strong><code>authorization-scope-match.test.ts</code></strong> — a scope-match matrix: each role's derived scopes allow exactly the actions they should and deny the rest. (Gated on <code>authorization.supported</code>.)</li>
+<li><strong><code>authorization-fail-closed.test.ts</code></strong> — an absent/unseeded role denies; a forced resolver error denies (never opens). (Gated; backs §C.)</li>
+<li><strong><code>authorization-denial-audited.test.ts</code></strong> — a deny emits an <code>authorization.decided { allowed: false }</code> and a corresponding audit-log entry. (Gated on <code>authorization.supported</code> ∧ the audit-log profile.)</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Invent a fresh permission DSL for roles.</strong> Rejected — openwop already has a scope grammar that API keys match against; a second grammar would drift from the first and double the conformance surface. Roles should resolve <em>to</em> existing scopes. 2. <strong>Put the full RBAC policy (role assignments, resource ACLs) on the wire.</strong> Rejected — assignment is host-internal state; the protocol's job is the <em>decision shape</em> and the <em>fail-closed invariant</em>, not the policy store. (Same boundary RFC 0046 drew for credential storage.) 3. <strong>Make denial events optional with no audit link.</strong> Rejected — an unauditable denial defeats the enterprise/governance use case (MyndHyve's CMS audit trail). Tying deny to the existing audit profile is the point.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. <strong>Role hierarchy / inheritance.</strong> <code>admin</code> ⊇ <code>editor</code> ⊇ <code>viewer</code> is common. Should the advertisement express inheritance, or must each role enumerate its full scope set? Start with full enumeration (simpler to certify); add inheritance if an adopter pulls. 2. <strong>Resource-scoped roles.</strong> A principal might be <code>editor</code> in workspace A and <code>viewer</code> in workspace B. The role binding is per-(principal, workspace) — should the event carry the workspace context explicitly? Likely yes; align with RFC 0048's <code>owner.workspace</code>. Resolve before Active. 3. <strong>Allow-event volume.</strong> Emitting <code>authorization.decided</code> for every allow could be noisy. Should allows be sampled while denies are always emitted? Operator-tunable; defer the normative stance.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>Schema diffs (§A, §B) + the invariant (§C) land on <code>Active</code> promotion with the conformance scenarios.</li>
+<li>Reference-adopter target: MyndHyve's <code>RBACService</code> (local-mode, fail-closed) and <code>RoleSeedService</code> become the resolver behind the contract; CMS audit events (<code>cms.page.force_published</code>, etc.) map onto <code>authorization.decided</code> + the audit log they already feed.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[x] Spec text merged (this file).</li>
+<li>[x] <code>authorization</code> block (top-level, per the schema convention) with <code>roles</code> + <code>failClosed</code> in <code>capabilities.schema.json</code>.</li>
+<li>[x] <code>authorization.decided</code> event in <code>run-event-payloads.schema.json</code> (+ <code>RunEventType</code> enum entry).</li>
+<li>[x] <code>authorization-fail-closed</code> invariant in <code>SECURITY/invariants.yaml</code> with its test.</li>
+<li>[x] Role→scope binding + scope-grammar reuse documented in <code>spec/v1/auth.md</code> §"Role-based authorization (RFC 0049)".</li>
+<li>[~] Conformance — 2 of 4 landed: <code>authorization-roles-shape.test.ts</code> (shape, always runs) + <code>authorization-fail-closed.test.ts</code> (fail-closed MUST-NOT, capability-gated, <code>authorization/decide</code> seam soft-skips). The scope-match matrix + denial-audited scenarios are deferred until a host advertises <code>authorization</code>.</li>
+<li>[x] CHANGELOG entry under <code>[Unreleased]</code>.</li>
+<li>[ ] A non-steward host advertises <code>authorization</code> and passes the fail-closed + denial-audited scenarios.</li>
+</ul>
+<p><strong>Implementation note (2026-05-25):</strong> Capability block (top-level <code>capabilities.authorization</code>, per the schema convention) + <code>authorization.decided</code> event + the <code>authorization-fail-closed</code> invariant + the <code>auth.md</code> §"Role-based authorization" section + the two shape/fail-closed scenarios landed on <code>main</code>. Binds to the RFC 0048 <code>principal</code>/<code>workspace</code> already on <code>main</code>. Status stays <code>Draft</code>.</p>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="./0048-tenant-workspace-principal-identity-model.md"><code>RFCS/0048-tenant-workspace-principal-identity-model.md</code></a> — the <code>principal</code>/<code>workspace</code> the role binds to (hard dependency).</li>
+<li><a href="./0009-production-profile-conformance.md"><code>RFCS/0009-production-profile-conformance.md</code></a> · <a href="./0010-auth-profile-conformance.md"><code>0010</code></a> — the audit-log integrity profile denials feed.</li>
+<li><a href="../spec/v1/auth.md"><code>spec/v1/auth.md</code></a> — the scope table + API-key scope grammar this RFC reuses.</li>
+<li><a href="./0051-approval-deployment-gate-primitive.md"><code>RFCS/0051-approval-deployment-gate-primitive.md</code></a> — binds approvals to the roles defined here.</li>
+</ul><footer class="doc-edit"><a href="https://github.com/openwop/openwop/edit/main/RFCS/0049-rbac-scopes-and-authorization-decisions.md" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>

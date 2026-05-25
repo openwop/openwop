@@ -23,7 +23,6 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { driver } from '../lib/driver.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 
 function compileEnvelope(): ReturnType<Ajv2020['compile']> {
@@ -58,7 +57,7 @@ describe('envelope-rendering-hint: meta.rendering shape (RFC 0055 §B)', () => {
     const ok = validate(env);
     expect(
       ok,
-      driver.describe('ai-envelope.md §"Rendering hints"', `meta.rendering MUST validate; errors: ${JSON.stringify(validate.errors)}`),
+      'ai-envelope.md §"Rendering hints": ' + `meta.rendering MUST validate; errors: ${JSON.stringify(validate.errors)}`,
     ).toBe(true);
   });
 
@@ -66,7 +65,7 @@ describe('envelope-rendering-hint: meta.rendering shape (RFC 0055 §B)', () => {
     const ok = validate(baseEnvelope);
     expect(
       ok,
-      driver.describe('ai-envelope.md §"Rendering hints"', 'meta.rendering MUST be optional — envelopes omitting it still validate'),
+      'ai-envelope.md §"Rendering hints": ' + 'meta.rendering MUST be optional — envelopes omitting it still validate',
     ).toBe(true);
   });
 
@@ -78,7 +77,7 @@ describe('envelope-rendering-hint: meta.rendering shape (RFC 0055 §B)', () => {
     const ok = validate(env);
     expect(
       ok,
-      driver.describe('ai-envelope.md §"Rendering hints"', 'display is a closed enum — unknown families MUST be rejected'),
+      'ai-envelope.md §"Rendering hints": ' + 'display is a closed enum — unknown families MUST be rejected',
     ).toBe(false);
   });
 
@@ -90,7 +89,7 @@ describe('envelope-rendering-hint: meta.rendering shape (RFC 0055 §B)', () => {
     const ok = validate(env);
     expect(
       ok,
-      driver.describe('ai-envelope.md §"Rendering hints"', 'rendering is additionalProperties:false'),
+      'ai-envelope.md §"Rendering hints": ' + 'rendering is additionalProperties:false',
     ).toBe(false);
   });
 });

@@ -63,29 +63,56 @@ export function ModelPickerInput({ value, onChange, providerId, required }: Prop
     );
   }
 
+  const selectedModel = value ? models.find((m) => m.id === value) : undefined;
+
   return (
-    <select
-      value={value ?? ''}
-      required={required}
-      onChange={(e) => {
-        const next = e.target.value;
-        if (next === '__custom__') {
-          // Sentinel — flip to custom-mode by writing an empty-but-
-          // defined string that the `declared` check will treat as
-          // "custom mode active." The user then types the id.
-          onChange('');
-          return;
-        }
-        onChange(next || undefined);
-      }}
-    >
-      <option value="">{required ? 'Pick a model…' : '(use run-time inputs)'}</option>
-      {models.map((m) => (
-        <option key={m.id} value={m.id}>
-          {m.label}{m.recommended ? ' (recommended)' : ''}
-        </option>
+    <>
+      <select
+        value={value ?? ''}
+        required={required}
+        onChange={(e) => {
+          const next = e.target.value;
+          if (next === '__custom__') {
+            // Sentinel — flip to custom-mode by writing an empty-but-
+            // defined string that the `declared` check will treat as
+            // "custom mode active." The user then types the id.
+            onChange('');
+            return;
+          }
+          onChange(next || undefined);
+        }}
+      >
+        <option value="">{required ? 'Pick a model…' : '(use run-time inputs)'}</option>
+        {models.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.label}{m.recommended ? ' (recommended)' : ''}
+          </option>
+        ))}
+        <option value="__custom__">Other… (fine-tune / snapshot / beta)</option>
+      </select>
+      {selectedModel && <ModelCapabilityBadges capabilities={selectedModel.capabilities} />}
+    </>
+  );
+}
+
+const CAP_BADGE: Record<string, { glyph: string; label: string }> = {
+  // RFC 0055 §A — surface what the chosen model can do (esp. vision) so the
+  // user knows before relying on it. `text` is universal, so it's omitted.
+  vision: { glyph: '📷', label: 'Vision' },
+  tools: { glyph: '🛠', label: 'Tools' },
+  structured: { glyph: '⌗', label: 'Structured' },
+};
+
+function ModelCapabilityBadges({ capabilities }: { capabilities: readonly string[] }): JSX.Element | null {
+  const shown = capabilities.filter((c) => c in CAP_BADGE);
+  if (shown.length === 0) return null;
+  return (
+    <div className="model-cap-badges" role="list" aria-label="Model capabilities">
+      {shown.map((c) => (
+        <span key={c} className="model-cap-pill" role="listitem" title={`This model supports ${CAP_BADGE[c]!.label.toLowerCase()}`}>
+          <span aria-hidden="true">{CAP_BADGE[c]!.glyph}</span> {CAP_BADGE[c]!.label}
+        </span>
       ))}
-      <option value="__custom__">Other… (fine-tune / snapshot / beta)</option>
-    </select>
+    </div>
   );
 }

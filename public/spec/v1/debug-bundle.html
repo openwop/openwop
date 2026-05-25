@@ -182,6 +182,7 @@
       <li class="toc-top"><a href="#authorization-and-scoping">Authorization and scoping</a></li>
       <li class="toc-top"><a href="#bundle-size-limits">Bundle size limits</a></li>
       <li class="toc-top"><a href="#why-this-isn-t-compressed-by-the-protocol">Why this isn&#39;t compressed by the protocol</a></li>
+      <li class="toc-top"><a href="#annotations-rfc-0056">Annotations (RFC 0056)</a></li>
       <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
       <li class="toc-top"><a href="#references">References</a></li>
     </ul>
@@ -333,6 +334,8 @@
 <h2 id="why-this-isn-t-compressed-by-the-protocol">Why this isn't compressed by the protocol</h2>
 <p>A bundle is JSON. Hosts MAY use HTTP-level compression (<code>Content-Encoding: gzip</code>) per standard HTTP. The protocol doesn't mandate it; the JSON itself is verifiable plain-text.</p>
 <hr/>
+<h2 id="annotations-rfc-0056">Annotations (RFC 0056)</h2>
+<p>When a host advertises <code>capabilities.feedback.supported</code>, a run's debug bundle SHOULD include the run's annotations — read from the side-store, already secret-redacted per the <code>annotation-content-redaction</code> invariant — so a flagged run travels with its reviewer notes. See <a href="../../RFCS/0056-run-feedback-and-annotation-event.md"><code>RFCS/0056</code></a> §D.</p>
 <h2 id="open-spec-gaps">Open spec gaps</h2>
 <table>
 <thead><tr><th>ID</th><th>Description</th></tr></thead>

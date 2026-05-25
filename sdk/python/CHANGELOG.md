@@ -1,5 +1,9 @@
 # `openwop-client` Changelog
 
+## [1.0 — additions] — 2026-05-25 — feedback annotation helpers (RFC 0056)
+
+- **Two new client methods.** `client.create_annotation(run_id, body, idempotency_key=...)` calls `POST /v1/runs/{id}/annotations` to record a non-blocking quality annotation; `client.list_annotations(run_id)` calls `GET /v1/runs/{id}/annotations` and returns `None` when the host doesn't advertise `capabilities.feedback` (404/501). New exported frozen dataclasses: `Annotation`, `CreateAnnotationRequest` (signal carried as `dict[str, Any]` to match the open `annotation.schema.json` signal shape).
+
 ## [1.0 — additions] — 2026-05-19 — typed `agent.*` event helpers (RFC 0024)
 
 - **New module** `openwop_client.events` exposing six `TypedDict` payload classes — `AgentReasonedPayload`, `AgentReasoningDeltaPayload`, `AgentToolCalledPayload`, `AgentToolReturnedPayload`, `AgentHandoffPayload`, `AgentDecidedPayload` — mirroring the canonical `schemas/run-event-payloads.schema.json` $defs.

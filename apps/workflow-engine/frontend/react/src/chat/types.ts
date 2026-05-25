@@ -29,6 +29,35 @@ export interface Citation {
   snippet?: string;
 }
 
+/** Open + resolved interrupt history for a workflow run. Captured
+ *  by the SSE event handler so the post-resolution decision card can
+ *  derive what the human chose without a separate fetch. Both states
+ *  live in one record so the FE can render either inline.
+ *
+ *  Persisted alongside the workflow_run message via localStorage +
+ *  the chat_sessions table — survives reload as long as the chat
+ *  session does. The BE event log remains the source of truth; this
+ *  is a render-time index.
+ */
+export interface InterruptHistoryEntry {
+  /** Stable BE-side id; re-renders keep React keys stable. */
+  interruptId: string;
+  /** Node where the interrupt opened. */
+  nodeId: string;
+  /** Resume kind per `interrupt-profiles.md` (RFC 0005). Defaults to
+   *  `'approval'` when the kind isn't observable (e.g., reload arrives
+   *  with the interrupt already resolved and `listOpenInterrupts`
+   *  omits resolved rows). */
+  kind: 'approval' | 'clarification' | 'refinement' | 'cancellation' | 'external-event' | string;
+  /** ISO timestamp of when the interrupt opened. */
+  openedAt: string;
+  /** ISO timestamp of when the interrupt resolved. Absent while open. */
+  resolvedAt?: string;
+  /** The user's resume payload. Shape varies by kind; the decision
+   *  card renders it defensively via type-guards rather than asserting. */
+  resumeValue?: unknown;
+}
+
 /** State attached to a `workflow_run` chat message. Tracks the
  *  workflow execution lifecycle for direct `@mention` dispatch
  *  (bypassing the LLM tool-calling path). */
@@ -55,6 +84,11 @@ export interface WorkflowRunState {
    *  terminal `run.failed` event but tracks per-node failures here for
    *  future UI use and progress-bar accuracy. */
   failedNodeIds: string[];
+  /** Resolved + currently-open interrupts in the order they appeared.
+   *  Feeds the persistent `HitlDecisionCard` rendered inline once the
+   *  user has resolved an interrupt — without this, the FE forgets
+   *  what the human chose as soon as `activeInterrupt` flips to null. */
+  interruptHistory?: InterruptHistoryEntry[];
   /** Friendly name of the most recently started node. */
   currentNodeName: string | null;
   /** Map of backend nodeId → friendly name from the builder graph.

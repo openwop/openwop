@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — RFC 0055: Multimodal envelope variants &amp; rendering hints (extend RFC 0031)</title>
+  <meta name="description" content="RFC 0031 §C reserved vision-input, audio-output, and code-execution as future model-capability identifiers but never defined them, and the AI envelope (ai-envelope.md) has no portable way to say &quot;this payload is an image / an audio clip / a…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0055-multimodal-envelope-variants-and-rendering-hints.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — RFC 0055: Multimodal envelope variants &amp; rendering hints (extend RFC 0031)"/>
+  <meta property="og:description" content="RFC 0031 §C reserved vision-input, audio-output, and code-execution as future model-capability identifiers but never defined them, and the AI envelope (ai-envelope.md) has no portable way to say &quot;this payload is an image / an audio clip / a…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0055-multimodal-envelope-variants-and-rendering-hints.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — RFC 0055: Multimodal envelope variants &amp; rendering hints (extend RFC 0031)"/>
+  <meta name="twitter:description" content="RFC 0031 §C reserved vision-input, audio-output, and code-execution as future model-capability identifiers but never defined them, and the AI envelope (ai-envelope.md) has no portable way to say &quot;this payload is an image / an audio clip / a…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "RFC 0055: Multimodal envelope variants & rendering hints (extend RFC 0031)",
+  "description": "RFC 0031 §C reserved vision-input, audio-output, and code-execution as future model-capability identifiers but never defined them, and the AI envelope (ai-envelope.md) has no portable way to say \"this payload is an image / an audio clip / a…",
+  "url": "https://openwop.dev/rfcs/0055-multimodal-envelope-variants-and-rendering-hints.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  }
+}</script>
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>RFC 0055: Multimodal envelope variants &amp; rendering hints (extend RFC 0031)</h1>
+      <p class="lede">RFC 0031 §C reserved vision-input, audio-output, and code-execution as future model-capability identifiers but never defined them, and the AI envelope (ai-envelope.md) has no portable way to say &quot;this payload is an image / an audio clip / a…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-aiproviders-modelcapabilities-identifier-vocabulary-extends-rfc-0031-c">§A — aiProviders.modelCapabilities identifier vocabulary (extends RFC 0031 §C)</a></li>
+      <li class="toc-sub"><a href="#b-meta-rendering-hint-on-the-ai-envelope-additive-optional">§B — meta.rendering hint on the AI envelope (additive, optional)</a></li>
+      <li class="toc-sub"><a href="#c-media-url-reference-payload-convention-normative-when-display-is-image-audio-file">§C — media.* URL-reference payload convention (normative when display is image/audio/file)</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0055</td></tr>
+<tr><td><strong>Title</strong></td><td>Promote RFC 0031's reserved <code>vision-input</code> / <code>audio</code> model-capability identifiers into a formal vocabulary, and add an optional <code>meta.rendering</code> hint + <code>media.*</code> URL-reference convention to the AI envelope, so an LLM node can emit images / audio / files / structured cards that any consumer renders portably</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Draft</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-25</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-25</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>spec/v1/ai-envelope.md</code> (new §"Rendering hints" + §"Media reference payloads" + 3 universal kinds) · <code>spec/v1/structured-output-subset.md</code> (informative cross-ref) · <code>schemas/ai-envelope.schema.json</code> (optional <code>rendering</code> on the <code>EnvelopeMeta</code> $def) · <strong>3 new <code>schemas/envelopes/media.{image,audio,file}.schema.json</code></strong> + their <code>supportedEnvelopes</code>/<code>schemaVersions</code> advertisement · <code>schemas/capabilities.schema.json</code> (prose-registry extension to <code>modelCapabilities.advertised</code> — <strong>NOT</strong> an enum — + optional <code>aiProviders.maxInlineMediaBytes</code>) · RFC 0031 §C (registry table) · <code>spec/v1/host-capabilities.md</code> (§"Model-capability declarations" registry + media URL convention) · <code>SECURITY/invariants.yaml</code> (<code>media-asset-url-tenant-scoped</code>) · new conformance scenarios</td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>RFC 0031 §C reserved <code>vision-input</code>, <code>audio-output</code>, and <code>code-execution</code> as future model-capability identifiers but never defined them, and the AI envelope (<code>ai-envelope.md</code>) has no portable way to say "this payload is an image / an audio clip / a renderable card" — so every host and consumer invents its own convention and the reference app's chat surface can only render text and reasoning. This RFC (1) promotes a small, fixed set of model-capability identifiers into a formal vocabulary so packs can gate on them and consumers can know what the active model can consume/emit, and (2) adds an <strong>optional</strong> <code>meta.rendering</code> hint plus a <code>media.<em></code> URL-reference payload convention to the envelope so emitted rich content renders consistently across any consumer. It deliberately does <strong>not</strong> add a real-time audio/video/screen/cursor </em>transport* — that is media plumbing OpenWOP composes with rather than owns (see Alternatives §4). Everything here is advertisement- or <code>meta</code>-level and ignorable by existing clients.</p>
+<h2 id="motivation">Motivation</h2>
+<p>Two concrete pains, both visible in the corpus today:</p>
+<p>1. <strong>Capability vocabulary is half-defined.</strong> RFC 0031 §C's open question #1 named <code>vision-input</code> / <code>audio-output</code> / <code>code-execution</code> as "identifiers that will materialize" and punted on whether they go through a full RFC. They have now materialized: every major provider ships vision input and several ship audio I/O, and <code>core.openwop.ai</code> pack authors have no portable string to gate on (<code>peerDependencies.aiProviders.modelCapabilities</code>). Without a fixed vocabulary, a pack that needs vision has to hard-code provider names, which is exactly the anti-pattern RFC 0031 §"Alternatives" rejected.</p>
+<p>2. <strong>The envelope can't describe how to render its payload.</strong> <code>ai-envelope.md</code> defines <code>type</code> / <code>payload</code> / <code>meta</code> / <code>partial</code>, and <code>structured-output-subset.md</code> covers JSON-schema portability — but nothing tells a consumer "render this <code>payload.url</code> as an inline image" vs. "render this object as a card" vs. "this is base64 audio." The reference app's <code>MessageRenderer</code> / <code>EnvelopeInspector</code> (<code>apps/workflow-engine/frontend/react/src/chat/</code>) therefore special-cases text + reasoning and drops everything else to a raw JSON dump. Any other consumer (a debugger, a mobile client, a third-party host's UI) faces the same wall. A rendering hint is an <strong>interop</strong> concern — two consumers reading the same envelope should render it the same way — which is why it belongs in the spec, not in each app.</p>
+<p>The host <em>generation</em> side already exists and already chose the right shape: <code>host-capabilities.md</code> §host.aiProviders defines <code>ctx.callImageGenerator</code> / <code>ctx.callVideoGenerator</code> returning a <strong>host-served URL</strong> ("videos are too large for inline base64", <code>host-capabilities.md:119</code>). This RFC carries that same URL-reference discipline into the <em>envelope</em> so an LLM-emitted image rides the same rails as a host-generated one.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-aiproviders-modelcapabilities-identifier-vocabulary-extends-rfc-0031-c">§A — <code>aiProviders.modelCapabilities</code> identifier vocabulary (extends RFC 0031 §C)</h3>
+<p>Promote the following identifiers from "reserved/illustrative" to the formal <strong>reserved registry</strong> a host advertises and a pack may gate on.</p>
+<p><strong>Schema reality (corrected from this RFC's first draft via the <code>/architect</code> pass).</strong> <code>capabilities.schema.json</code> does <strong>not</strong> define <code>modelCapabilities</code> as a JSON <code>enum</code>. <code>modelCapabilities.advertised</code> is an <strong>open, pattern-validated <code>string[]</code></strong> (<code>^([a-z][a-z0-9-]<em>|x-host-[a-z][a-z0-9-]</em>-[a-z][a-z0-9-]<em>)$</code>); the reserved identifiers live in <strong>prose</strong> (the field <code>description</code> + the RFC 0031 §C registry table). Therefore §A is a <strong>prose-registry extension, not a schema-enum change</strong> — the existing <code>pattern</code> already validates <code>vision-input</code> / <code>audio-input</code> / <code>audio-output</code> / <code>image-output</code>. Converting <code>advertised.items</code> to a closed <code>enum</code> is <strong>forbidden</strong>: it would reject every <code>x-host-</em></code> identifier and any other pattern-valid string a host already advertises — a value-space narrowing, which is <strong>breaking</strong> per <code>COMPATIBILITY.md</code> §2.2.</p>
+<p>The four new reserved identifiers are registered in three prose locations — (a) the <code>advertised</code> <code>description</code> in <code>schemas/capabilities.schema.json</code>, (b) the RFC 0031 §C registry table, (c) <code>host-capabilities.md</code> §"Model-capability declarations":</p>
+<pre class="lang-diff"><code>       &quot;advertised&quot;: {
+         &quot;type&quot;: &quot;array&quot;,
+         &quot;items&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;pattern&quot;: &quot;^([a-z][a-z0-9-]*|x-host-...)${content}quot; },
+-        &quot;description&quot;: &quot;... Spec-reserved identifiers per RFC 0031 §C: structured-output, discriminator-enum, long-context, reasoning, function-calling. ...&quot;
++        &quot;description&quot;: &quot;... Spec-reserved identifiers per RFC 0031 §C + RFC 0055: structured-output, discriminator-enum, long-context, reasoning, function-calling, vision-input, audio-input, audio-output, image-output. ...&quot;
+       }</code></pre>
+<p>Growth of the reserved registry still requires an RFC (single-steward bootstrap rule, per RFC 0031 §C answer to OQ#1) — but it is registry/prose growth, never an enum edit.</p>
+<p>Semantics (normative, when advertised):</p>
+<ul>
+<li><code>vision-input</code> — the active model accepts image content in the prompt. A pack declaring <code>peerDependencies.aiProviders.modelCapabilities: [&quot;vision-input&quot;]</code> MUST refuse to register on a host that does not advertise it, with the existing <code>host_capability_missing</code> discipline.</li>
+<li><code>audio-input</code> / <code>audio-output</code> — the model accepts / emits audio content.</li>
+<li><code>image-output</code> — the model emits images directly in its completion (distinct from the host-side <code>aiProviders.imageGeneration</code> generation surface, which is a separate tool call).</li>
+</ul>
+<p><code>code-execution</code> from RFC 0031 §C is <strong>intentionally left out</strong> of this registry — it is a sandbox/runtime concern that belongs with RFC 0035, not the model-capability vocabulary.</p>
+<h3 id="b-meta-rendering-hint-on-the-ai-envelope-additive-optional">§B — <code>meta.rendering</code> hint on the AI envelope (additive, optional)</h3>
+<p>Add an optional <code>rendering</code> object as a <strong>property on the <code>EnvelopeMeta</code> <code>$def</code></strong> in <code>ai-envelope.schema.json</code>. <strong>Schema reality (corrected via <code>/architect</code>):</strong> the envelope's <code>meta</code> is <code>$ref → #/$defs/EnvelopeMeta</code>, and <code>EnvelopeMeta</code> is <code>additionalProperties: false</code> with <code>required: [&quot;source&quot;, &quot;ts&quot;]</code> — so <code>rendering</code> must be added as an explicit, <strong>optional</strong> property (it cannot just "appear" under an open object; the original <code>additionalProperties: true</code> diff was wrong). It is a <strong>hint</strong>, not a contract: it never changes <code>payload</code> validation, and a consumer that doesn't recognize it MUST fall back to its default rendering (today: text / raw-JSON). Adding one optional property to a <code>required</code>-bounded <code>additionalProperties:false</code> $def is additive — existing envelopes (which omit it) still validate.</p>
+<pre class="lang-diff"><code>   &quot;$defs&quot;: {
+     &quot;EnvelopeMeta&quot;: {
+       &quot;type&quot;: &quot;object&quot;,
+       &quot;required&quot;: [&quot;source&quot;, &quot;ts&quot;],
+       &quot;properties&quot;: {
+         &quot;source&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;ai-generation&quot;, &quot;user&quot;, &quot;system&quot;] },
+         &quot;ts&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;date-time&quot; },
++        &quot;rendering&quot;: {
++          &quot;type&quot;: &quot;object&quot;,
++          &quot;description&quot;: &quot;RFC 0055. Optional hint for how a consumer SHOULD render this envelope&#39;s payload. Non-normative w.r.t. payload validation; unknown values fall back to default rendering.&quot;,
++          &quot;properties&quot;: {
++            &quot;display&quot;:  { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;markdown&quot;, &quot;code&quot;, &quot;card&quot;, &quot;image&quot;, &quot;audio&quot;, &quot;file&quot;], &quot;description&quot;: &quot;Renderer family the producer suggests.&quot; },
++            &quot;mimeType&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;IANA media type when display is image/audio/file.&quot; },
++            &quot;lang&quot;:     { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Language tag when display: code.&quot; },
++            &quot;alt&quot;:      { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Text alternative for a11y when display is image/audio/file. SHOULD be present.&quot; },
++            &quot;title&quot;:    { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;Optional caption / card header.&quot; }
++          },
++          &quot;additionalProperties&quot;: false
++        }
+       },
+       &quot;additionalProperties&quot;: false
+     }
+   }</code></pre>
+<p>Behavior:</p>
+<ul>
+<li>A producer (LLM node / host) MAY set <code>meta.rendering</code>. It MUST NOT be required for any payload to validate.</li>
+<li>A consumer SHOULD honor <code>display</code> when it recognizes the value and MUST degrade gracefully otherwise. <code>alt</code> SHOULD be rendered for assistive technologies whenever <code>display</code> is <code>image</code>/<code>audio</code>/<code>file</code>.</li>
+<li><code>meta.rendering</code> carries <strong>no secret material</strong> and is subject to the same SR-1 redaction discipline as the rest of <code>meta</code>.</li>
+</ul>
+<h3 id="c-media-url-reference-payload-convention-normative-when-display-is-image-audio-file">§C — <code>media.*</code> URL-reference payload convention (normative when <code>display</code> is image/audio/file)</h3>
+<p>When <code>meta.rendering.display</code> is <code>image</code>, <code>audio</code>, or <code>file</code>, the payload SHOULD reference the asset by a host-served URL rather than inlining large binaries — mirroring the existing <code>ctx.callVideoGenerator</code> contract (<code>host-capabilities.md</code>):</p>
+<pre class="lang-json"><code>{
+  &quot;type&quot;: &quot;media.image&quot;,
+  &quot;schemaVersion&quot;: &quot;1.0&quot;,
+  &quot;envelopeId&quot;: &quot;env_abc&quot;,
+  &quot;correlationId&quot;: &quot;run_123:node_render&quot;,
+  &quot;payload&quot;: { &quot;url&quot;: &quot;https://host.example/v1/runs/run_123/assets/img_9.png&quot;, &quot;bytes&quot;: 184320 },
+  &quot;meta&quot;: { &quot;rendering&quot;: { &quot;display&quot;: &quot;image&quot;, &quot;mimeType&quot;: &quot;image/png&quot;, &quot;alt&quot;: &quot;Q3 revenue bar chart&quot; } }
+}</code></pre>
+<p>Normative rules:</p>
+<p>1. A host that serves asset URLs MUST scope them to the run's tenant and MUST NOT make them globally guessable (capability-token or signed-URL discipline; reuse the interrupt signed-token recipe). 2. Inline base64 is permitted only below a host-advertised cap (<code>aiProviders.maxInlineMediaBytes</code>, default 256 KiB); above it the host MUST use a URL reference. This bounds event-log bloat and keeps replay payloads portable. 3. Asset URLs are part of a run's debug-bundle manifest (<code>debug-bundle.md</code>) by reference, never by inlining the binary. 4. Rule 1 is enforced by a new protocol-tier SECURITY invariant <strong><code>media-asset-url-tenant-scoped</code></strong> (<code>SECURITY/invariants.yaml</code>), tested by <code>media-url-inline-cap.test.ts</code>. 5. <strong>Asset retention (resolves Unresolved Q2):</strong> a host MUST retain a <code>media.*</code> asset at least as long as the emitting run's event-log retention (<code>replay.md</code>), so a forked/replayed run can still resolve the URL. The event payload (a URL string) replays deterministically; this rule keeps the referenced asset available.</p>
+<p><strong>Universal-kind machinery (corrected via <code>/architect</code>).</strong> <code>media.image</code> / <code>media.audio</code> / <code>media.file</code> are new <strong>universal envelope kinds</strong> — and per <code>ai-envelope.schema.json</code> the <code>payload</code> is "selected by the <code>type</code> discriminator and validated against a per-kind schema at <code>schemas/envelopes/{type}.schema.json</code>," advertised via <code>Capabilities.supportedEnvelopes</code> + per-kind <code>Capabilities.schemaVersions</code>. So §C is <strong>not prose-only</strong>: it requires three new payload schemas <code>schemas/envelopes/media.{image,audio,file}.schema.json</code> (the <code>{ url?, base64?, bytes, … }</code> shape), their registration in <code>supportedEnvelopes</code>, and <code>schemaVersions</code> entries. Vendor-namespaced kinds remain available for anything richer.</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong> Three independent additive moves, each backward-safe:</p>
+<ul>
+<li>§A extends the <strong>open, pattern-validated reserved registry</strong> by four prose identifiers — <strong>no schema enum exists or is introduced</strong> (introducing one would narrow the value space = breaking; see §A). The existing <code>pattern</code> already accepts them; existing hosts/packs are unaffected. Additive per <code>COMPATIBILITY.md</code> §2.1.</li>
+<li>§B adds <strong>one optional property (<code>rendering</code>) to the <code>EnvelopeMeta</code> <code>$def</code></strong> (<code>additionalProperties:false</code>, <code>required:[source,ts]</code>). Optional ⇒ existing envelopes that omit it still validate; existing consumers ignore it. Additive.</li>
+<li>§C adds <strong>three new universal envelope kinds</strong> with their own per-kind payload schemas + <code>supportedEnvelopes</code>/<code>schemaVersions</code> advertisement (consumers that don't recognize the kind fall back to raw rendering), an <strong>optional</strong> <code>aiProviders.maxInlineMediaBytes</code> advertisement (default 256 KiB), and one new protocol-tier SECURITY invariant. All additive — a host that emits no <code>media.*</code> kind is unaffected.</li>
+</ul>
+<p>No existing v1.x conformance pass is invalidated: a host that advertises none of the new identifiers, never sets <code>meta.rendering</code>, and never emits a <code>media.*</code> kind behaves exactly as before.</p>
+<h2 id="conformance">Conformance</h2>
+<ul>
+<li><strong><code>envelope-rendering-hint-shape.test.ts</code></strong> — <code>meta.rendering</code> validates against the schema; an envelope with no <code>meta.rendering</code> still validates (proves optionality). (Always runs.)</li>
+<li><strong><code>envelope-rendering-hint-ignored.test.ts</code></strong> — a consumer fixture given a <code>display</code> value it doesn't recognize falls back to default rendering without error. (Always runs.)</li>
+<li><strong><code>model-capability-vision-gate.test.ts</code></strong> — a pack declaring <code>modelCapabilities: [&quot;vision-input&quot;]</code> registers on a host advertising it and refuses with <code>host_capability_missing</code> on one that doesn't. (Gated on <code>aiProviders.supported</code>.)</li>
+<li><strong><code>media-url-inline-cap.test.ts</code></strong> — an emitted asset above <code>maxInlineMediaBytes</code> is served by URL, not inlined; the URL is tenant-scoped and not present in a cross-tenant view. (Gated on a host that advertises media emission.)</li>
+<li><strong><code>media-url-debug-bundle-reference.test.ts</code></strong> — a run that emitted a <code>media.image</code> lists the asset by reference (not inline binary) in its debug bundle. (Gated on <code>debugBundle.supported</code>.)</li>
+</ul>
+<p>New fixture: a <code>conformance.media.emit</code> fixture node that emits one <code>media.image</code> URL envelope + one inline-under-cap <code>media.audio</code> envelope, so the rendering/cap assertions have a deterministic producer.</p>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Define each rendering family as its own envelope schema rather than a <code>meta</code> hint.</strong> Rejected — payload shapes vary per provider and per pack; forcing a fixed schema per display family would either be too narrow (breaks the next provider) or balloon into a parallel type system. A hint over an open <code>meta</code> keeps the payload free and the rendering portable. The hint is advisory by design. 2. <strong>Leave rendering entirely to each consumer (do nothing).</strong> Rejected — that is the status quo, and it means the reference app, a debugger, and a mobile client each guess differently at the same envelope. Cross-consumer rendering consistency is an interop property; interop properties are why the spec exists. 3. <strong>Open the <code>modelCapabilities</code> enum (free strings).</strong> Rejected — free strings defeat gating (a pack can't reliably match <code>&quot;vision&quot;</code> vs <code>&quot;vision-input&quot;</code> vs <code>&quot;image-understanding&quot;</code>). RFC 0031 already chose a closed vocabulary; this RFC extends it under the same rule. 4. <strong>Add a real-time audio/video/screen-capture/cursor streaming transport.</strong> Rejected as <strong>out of charter.</strong> OpenWOP streams <em>events</em> (SSE / <code>RunEvent</code>), not media frames; live media transport is the kind of plumbing OpenWOP composes with (WebRTC, host media servers) rather than standardizes, consistent with the README "What OpenWOP is not" boundary and the A2A/MCP delegation pattern. This RFC covers <em>emitted multimodal artifacts</em>, which are envelope content, not a new transport.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. <strong>Default <code>maxInlineMediaBytes</code>.</strong> 256 KiB is a starting point chosen to keep event logs replay-friendly. Should it be lower (replay payload size) or higher (fewer round-trips for small images)? Resolve before Active with one adopter's real asset-size distribution. 2. <strong>Asset retention / GC.</strong> ~~Open~~ <strong>Resolved</strong> (via <code>/architect</code>): §C rule 5 now requires a host to retain a <code>media.<em></code> asset at least as long as the emitting run's event-log retention, so a forked/replayed run resolves the URL. Remaining sub-question: GC granularity (per-asset TTL vs. tied to run-log GC) — host-impl detail, not wire. 3. <strong><code>audio-input</code> ingestion shape.</strong> This RFC defines the </em>advertisement<em> for <code>audio-input</code> but not the inbound audio payload shape (how a workflow input carries audio). Defer the input shape to a follow-up unless an adopter needs audio </em>ingestion* (vs. emission) immediately.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>Schema diffs (§A, §B) + the new universal kinds land on <code>Active</code> promotion with the conformance scenarios.</li>
+<li>Reference-app payoff (drives the companion app work in <code>plans/app-ux-enhancements.md</code>): <code>MessageRenderer</code> switches on <code>meta.rendering.display</code> to render images / audio players / code blocks / cards inline; <code>EnvelopeInspector</code> shows the hint; the BYOK/model picker surfaces <code>modelCapabilities</code> so users see whether the chosen model supports vision before they attach an image.</li>
+<li>Reference-host target: <code>examples/hosts/postgres</code> advertises <code>maxInlineMediaBytes</code> + serves tenant-scoped asset URLs; the in-memory demo host can advertise inline-only (cap = 0 forces URL, or a small cap) to exercise both paths.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[ ] Spec text merged (this file + <code>ai-envelope.md</code> §"Rendering hints" + §"Media reference payloads").</li>
+<li>[ ] <code>rendering</code> optional property on the <code>EnvelopeMeta</code> $def in <code>ai-envelope.schema.json</code>; four new identifiers in the <code>modelCapabilities.advertised</code> <strong>prose registry</strong> (no enum); optional <code>maxInlineMediaBytes</code> in <code>capabilities.schema.json</code>.</li>
+<li>[ ] <code>media.image</code> / <code>media.audio</code> / <code>media.file</code> documented as universal kinds <strong>with</strong> <code>schemas/envelopes/media.{image,audio,file}.schema.json</code> + <code>supportedEnvelopes</code>/<code>schemaVersions</code> advertisement.</li>
+<li>[ ] <code>media-asset-url-tenant-scoped</code> protocol-tier invariant in <code>SECURITY/invariants.yaml</code> + its conformance test.</li>
+<li>[ ] Five conformance scenarios + <code>conformance.media.emit</code> fixture node.</li>
+<li>[ ] CHANGELOG entry under <code>[Unreleased]</code>.</li>
+<li>[ ] A host advertises a <code>modelCapabilities</code> superset including <code>vision-input</code> and serves a tenant-scoped media URL passing <code>media-url-inline-cap</code> + <code>media-url-debug-bundle-reference</code>.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="./0031-envelope-variants-and-model-capabilities.md"><code>RFCS/0031-envelope-variants-and-model-capabilities.md</code></a> — the capability-identifier vocabulary this extends (§C, OQ#1).</li>
+<li><a href="../spec/v1/ai-envelope.md"><code>spec/v1/ai-envelope.md</code></a> — the envelope this annotates.</li>
+<li><a href="../spec/v1/structured-output-subset.md"><code>spec/v1/structured-output-subset.md</code></a> — companion JSON-schema portability reference.</li>
+<li><a href="../spec/v1/host-capabilities.md"><code>spec/v1/host-capabilities.md</code></a> §host.aiProviders — the existing <code>ctx.callImageGenerator</code> / <code>ctx.callVideoGenerator</code> URL-reference convention this mirrors.</li>
+<li><a href="../spec/v1/debug-bundle.md"><code>spec/v1/debug-bundle.md</code></a> — asset-by-reference export.</li>
+<li><a href="../plans/app-ux-enhancements.md"><code>plans/app-ux-enhancements.md</code></a> — the reference-app UX work this unblocks.</li>
+</ul><footer class="doc-edit"><a href="https://github.com/openwop/openwop/edit/main/RFCS/0055-multimodal-envelope-variants-and-rendering-hints.md" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>

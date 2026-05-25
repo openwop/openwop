@@ -183,6 +183,7 @@
       <li class="toc-sub"><a href="#optional-fields">Optional fields</a></li>
       <li class="toc-sub"><a href="#per-node-requiressecrets">Per-node requiresSecrets[]</a></li>
       <li class="toc-sub"><a href="#model-capability-declarations-on-nodemodules">Model-capability declarations on NodeModules</a></li>
+      <li class="toc-top"><a href="#connectors-rfc-0045">Connectors (RFC 0045)</a></li>
       <li class="toc-top"><a href="#runtime-formats">Runtime formats</a></li>
       <li class="toc-sub"><a href="#wasm-runtime">WASM runtime</a></li>
       <li class="toc-top"><a href="#distribution">Distribution</a></li>
@@ -198,6 +199,7 @@
       <li class="toc-sub"><a href="#put-v1-packs-name-version-tgz">PUT /v1/packs/{name}/-/{version}.tgz</a></li>
       <li class="toc-sub"><a href="#delete-v1-packs-name-version">DELETE /v1/packs/{name}/-/{version}</a></li>
       <li class="toc-sub"><a href="#get-v1-packs-search-q-term">GET /v1/packs/-/search?q=&lt;term&gt;</a></li>
+      <li class="toc-sub"><a href="#test-mode-registry-namespace">Test-mode registry namespace</a></li>
       <li class="toc-sub"><a href="#optional-registry-endpoints">Optional registry endpoints</a></li>
       <li class="toc-top"><a href="#trust-model">Trust model</a></li>
       <li class="toc-top"><a href="#engine-integration">Engine integration</a></li>
@@ -460,6 +462,27 @@
 <p><strong>Conformance.</strong> A NodeModule that declares <code>requiredModelCapabilities</code> but is loaded by a host that does NOT advertise <code>capabilities.modelCapabilities.supported: true</code> is treated as opaque metadata — the host dispatches normally without checking. Hosts that advertise <code>supported: true</code> MUST honor the dispatch flow normated in <code>host-capabilities.md</code> §"Model-capability declarations" + §"Dispatch flow (normative)" + emit the appropriate <code>model.capability.*</code> events per <code>run-event-payloads.schema.json</code> §<code>modelCapabilitySubstituted</code> / §<code>modelCapabilityInsufficient</code>.</p>
 <p><strong>Engine semantics.</strong> Before dispatching a node with <code>requiredModelCapabilities</code>, the engine MUST follow the four-step dispatch flow in <code>host-capabilities.md</code> §"Model-capability declarations." Failures terminate the run with <code>error.code = capability_not_provided</code> (existing error code; reused for model-capability gating per RFC 0031 §F).</p>
 <hr/>
+<h2 id="connectors-rfc-0045">Connectors (RFC 0045)</h2>
+<p>A pack MAY declare itself a <strong>connector</strong> — a named integration exposing typed <strong>actions</strong> (and reusing the existing trigger model) — via an optional top-level <code>connector</code> block (<code>Connector</code> in <code>node-pack-manifest.schema.json</code>). This is the n8n/Make-style <em>trigger + action + auth + pagination</em> bundle, expressed manifest-first rather than as a code SDK. Packs without a <code>connector</code> block remain plain node packs; the block is purely additive.</p>
+<pre class="lang-jsonc"><code>{
+  &quot;name&quot;: &quot;vendor.acme.salesforce&quot;,
+  &quot;nodes&quot;: [ /* the action + trigger NodeModules */ ],
+  &quot;connector&quot;: {
+    &quot;id&quot;: &quot;salesforce&quot;,
+    &quot;displayName&quot;: &quot;Salesforce&quot;,
+    &quot;auth&quot;: { &quot;type&quot;: &quot;oauth2&quot;, &quot;provider&quot;: &quot;salesforce&quot;, &quot;scopes&quot;: [&quot;api&quot;, &quot;refresh_token&quot;] },
+    &quot;actions&quot;: [
+      { &quot;typeId&quot;: &quot;vendor.acme.salesforce.upsert&quot;, &quot;displayName&quot;: &quot;Upsert Record&quot;, &quot;idempotent&quot;: true, &quot;rateLimit&quot;: { &quot;requests&quot;: 100, &quot;perSeconds&quot;: 60 } },
+      { &quot;typeId&quot;: &quot;vendor.acme.salesforce.query&quot;, &quot;displayName&quot;: &quot;SOQL Query&quot;, &quot;paginated&quot;: true }
+    ],
+    &quot;triggers&quot;: [&quot;vendor.acme.salesforce.onRecordChange&quot;]
+  }
+}</code></pre>
+<p><strong>Action contract (normative).</strong></p>
+<p>1. An <strong>action</strong> is a normal side-effectful node already defined in the pack's <code>nodes[]</code>; the connector block adds metadata, it does not introduce a new execution kind. Every <code>connector.actions[].typeId</code> MUST resolve to a real <code>nodes[].typeId</code> in the same manifest — a manifest whose action references an unknown typeId is invalid and MUST be rejected with <code>connector_action_unresolved</code>. The same resolution requirement applies to every entry in <code>connector.triggers[]</code>. 2. <code>idempotent: true</code> is a hint the host scheduler MAY use to retry the action on transient failure without an idempotency key; <code>idempotent: false</code> (or absent) means the host MUST NOT auto-retry without one (composes with <code>idempotency.md</code>). 3. <code>rateLimit</code> is advertised metadata the host scheduler SHOULD honor when dispatching the action; it does not change the node's wire shape. 4. <strong>Triggers</strong> reuse the existing trigger model unchanged; the connector block only references their typeIds.</p>
+<p><strong>Auth.</strong> <code>connector.auth</code> is a <code>ConnectorAuth</code>: either an RFC 0047 OAuth2 declaration (<code>{ type: &#39;oauth2&#39;, provider, scopes[] }</code>, routed through <code>host.oauth</code>) or an RFC 0046 stored-credential reference (<code>{ type: &#39;credential&#39;, key, scope? }</code>, resolved by <code>host.credentials</code>). A connector declaring <code>auth: { type: &#39;oauth2&#39; }</code> transitively requires <code>capabilities.oauth.supported</code>; one declaring <code>auth: { type: &#39;credential&#39; }</code> requires <code>capabilities.credentials.supported</code>. Hosts lacking the required capability refuse to register the pack.</p>
+<p><strong>Discovery.</strong> Connectors surface in the <code>registry/</code> index and on <code>packs.openwop.dev</code> as a distinct artifact facet, so the (future App-layer) connector marketplace has data to render. This is data-only — no new endpoint; the existing registry pack index gains a <code>connector</code> facet.</p>
+<hr/>
 <h2 id="runtime-formats">Runtime formats</h2>
 <p>The <code>runtime.language</code> field declares how the engine loads the pack:</p>
 <table>
@@ -610,6 +633,23 @@ pack.json.sig              (detached signature over pack.json)</code></pre>
 </ul>
 <h3 id="get-v1-packs-search-q-lt-term-gt"><code>GET /v1/packs/-/search?q=&amp;lt;term&amp;gt;</code></h3>
 <p>Full-text search across name + description + keywords. Returns paginated results.</p>
+<h3 id="test-mode-registry-namespace">Test-mode registry namespace</h3>
+<p>Per <a href="../../RFCS/0025-test-mode-registry-namespace.md">RFC 0025</a>, hosts MAY expose an optional <code>/v1/packs-test/*</code> mirror surface that mirrors the production <code>PUT</code> / <code>GET</code> / <code>DELETE</code> / <code>.sig</code> endpoints against an <strong>isolated</strong> catalog. This lets the conformance suite exercise the 19-code publish error catalog above without <code>packs:publish</code> scope on the real registry.</p>
+<p><strong>Capability gate.</strong> A host advertises the mirror via <code>capabilities.packs.testMode.supported: true</code> (see <code>capabilities.schema.json</code> §<code>packs.testMode</code>). When absent or <code>false</code>, the 26 conformance scenarios in <code>pack-registry-publish.test.ts</code> soft-skip; when <code>true</code>, every scenario asserts against the test namespace instead of the production one.</p>
+<p><strong>Mirrored endpoints.</strong> The following paths MUST behave identically to their <code>/v1/packs/*</code> counterparts — same request envelopes, response shapes, status codes, and error code vocabulary:</p>
+<table>
+<thead><tr><th>Test endpoint</th><th>Mirror of</th></tr></thead>
+<tbody>
+<tr><td><code>PUT /v1/packs-test/{name}/-/{version}.tgz</code></td><td><code>PUT /v1/packs/{name}/-/{version}.tgz</code></td></tr>
+<tr><td><code>GET /v1/packs-test/{name}/-/{version}.tgz</code></td><td><code>GET /v1/packs/{name}/-/{version}.tgz</code></td></tr>
+<tr><td><code>DELETE /v1/packs-test/{name}/-/{version}</code></td><td><code>DELETE /v1/packs/{name}/-/{version}</code></td></tr>
+<tr><td><code>GET /v1/packs-test/{name}/-/{version}.sig</code></td><td><code>GET /v1/packs/{name}/-/{version}.sig</code></td></tr>
+</tbody></table>
+<p>All 19 publish error codes documented in <code>PUT /v1/packs/{name}/-/{version}.tgz</code> above (<code>invalid_pack_scope</code>, <code>invalid_pack_name</code>, <code>invalid_version</code>, <code>invalid_body</code>, the eight <code>tarball_*</code> codes, <code>invalid_manifest</code>, <code>manifest_mismatch</code> (or granular pair), <code>pack_integrity_failure</code>, <code>unsupported_runtime</code>, <code>forbidden</code>, <code>conflict</code>, <code>unpublish_window_expired</code>) MUST be surfaced verbatim. Scenarios authored against the test namespace prove the production-namespace contract.</p>
+<p><strong>Isolation guarantees (RFC 0025 §C).</strong> A host advertising <code>packs.testMode.supported: true</code> MUST:</p>
+<p>1. Persist every test-namespace pack to a catalog distinct from the production catalog. A pack PUT'd to the test namespace MUST NOT appear in the corresponding production-namespace listing. 2. Refuse test-namespace traffic when the implementation's test-mode env-gate is unset (the env-gate name is implementation-defined; conformance only verifies the runtime behavior). The host boot log SHOULD warn when the surface is exposed. 3. NOT serve the test-namespace catalog from any production discovery endpoint (<code>GET /v1/packs</code>, <code>GET /v1/packs/{name}</code>, <code>GET /v1/packs/-/search</code>). Test-catalog packs MUST NOT appear in production registry listings. 4. Honor <code>catalogResetEndpoint</code> when advertised — calling it MUST clear the entire test catalog (the conformance suite's teardown hook).</p>
+<p><strong>Scope acceptance.</strong> <code>packs.testMode.scopes</code> declares which namespace scopes the test catalog accepts. Public test catalogs SHOULD refuse <code>private</code> and <code>local</code> (matching the production rule for <code>packs.openwop.dev</code>); private dev catalogs MAY accept all five. Hosts MAY omit <code>scopes</code> to default to the same acceptance set as the production namespace they mirror.</p>
+<p><strong>Implementer note (non-normative).</strong> A minimal implementation uses an in-memory <code>Map&amp;lt;(name, version), { tarball, sha256, signature? }&amp;gt;</code> env-gated on a single boolean. The validation pipeline runs checks in order (URL → body → tarball-extraction → manifest → integrity → auth/conflict); first-failing-check wins, matching the production publish handler's check order.</p>
 <h3 id="optional-registry-endpoints">Optional registry endpoints</h3>
 <p>Two additional <code>GET</code> surfaces are defined for hosts that expose a public pack-discovery layer:</p>
 <table>

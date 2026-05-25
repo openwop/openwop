@@ -21,10 +21,13 @@
  * forking this file need to thread these through.
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MessageBubble } from './MessageBubble.js';
 import { WorkflowRunBubble } from './WorkflowRunBubble.js';
 import { CardHost } from './registry/CardHost.js';
+import { HitlDecisionCard } from './HitlDecisionCard.js';
+import { WorkflowCompletionCard } from './WorkflowCompletionCard.js';
+import { ArtifactPreviewModal } from './ArtifactPreviewModal.js';
 import type { ChatMessage } from './hooks/useChatSession.js';
 
 function runIdFor(m: ChatMessage): string {
@@ -68,6 +71,15 @@ export function MessageFeed({
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages]);
 
+  // Artifact preview modal state. Single global instance so multiple
+  // completion cards in history (one per past workflow run in this
+  // session) share the same modal without each component owning one.
+  const [preview, setPreview] = useState<{
+    nodeId: string;
+    label: string;
+    output: unknown;
+  } | null>(null);
+
   return (
     <div style={{
       flex: 1, overflowY: 'auto', padding: 'var(--chat-feed-pad, 16px)',
@@ -110,9 +122,41 @@ export function MessageFeed({
               />
             </div>
           )}
+          {/* Persistent HITL decision artifacts — one per resolved
+              interrupt. Survives `activeInterrupt` flipping to null.
+              Renders only the resolved entries; an open interrupt is
+              still shown above via the interactive CardHost. */}
+          {m.workflowRun?.interruptHistory?.filter((h) => h.resolvedAt).map((entry) => (
+            <div
+              key={`decision-${entry.interruptId}`}
+              style={{ marginLeft: 12, marginRight: 'max(0px, calc(100% - var(--max-bubble-width, 75ch) - 12px))' }}
+            >
+              <HitlDecisionCard entry={entry} />
+            </div>
+          ))}
+          {/* Workflow-completion artifact — renders once the run
+              reaches a terminal state. Each terminal node surfaces a
+              View button that opens the shared preview modal. */}
+          {m.role === 'workflow_run' && m.workflowRun && (
+            <div style={{ marginLeft: 12, marginRight: 'max(0px, calc(100% - var(--max-bubble-width, 75ch) - 12px))' }}>
+              <WorkflowCompletionCard
+                run={m.workflowRun}
+                onPreviewArtifact={(nodeId, output, label) =>
+                  setPreview({ nodeId, output, label })
+                }
+              />
+            </div>
+          )}
         </div>
       ))}
       <div ref={endRef} />
+      <ArtifactPreviewModal
+        open={preview !== null}
+        nodeId={preview?.nodeId ?? ''}
+        label={preview?.label ?? ''}
+        output={preview?.output}
+        onClose={() => setPreview(null)}
+      />
     </div>
   );
 }
