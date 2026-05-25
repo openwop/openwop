@@ -939,6 +939,19 @@
       },
       "additionalProperties": false
     },
+    "scheduling": {
+      "type": "object",
+      "description": "RFC 0052 (`Draft`). Time-based run initiation behind the `schedule` trigger — gives the trigger a portable, durable, once-per-tick execution contract. Composes with `queueBus` (RFC 0017) where the host backs scheduling with a queue; orthogonal to the in-DAG `core.control.delay` primitive (which delays a node mid-run, not run initiation).",
+      "required": ["supported"],
+      "properties": {
+        "supported": { "type": "boolean" },
+        "cron": { "type": "boolean", "description": "Host honors cron-expression schedules." },
+        "delayed": { "type": "boolean", "description": "Host honors one-shot delayed execution." },
+        "calendar": { "type": "boolean", "description": "Host honors calendar-reference schedules." },
+        "maxFutureHorizon": { "type": "string", "description": "ISO-8601 duration (e.g. `P90D`); the farthest-future a run may be scheduled. Schedules beyond it MUST be rejected with `schedule_horizon_exceeded`." }
+      },
+      "additionalProperties": false
+    },
     "sql": {
       "type": "object",
       "description": "RFC 0018 (`Active`). SQL database adapter with parametric-only enforcement. Hosts MUST reject non-parametric queries that inline user input (`sql-parametric-only` invariant — guards against SQL injection across every workflow).",

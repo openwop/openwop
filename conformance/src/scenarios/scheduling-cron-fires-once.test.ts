@@ -1,0 +1,66 @@
+/**
+ * scheduling-cron-fires-once — RFC 0052 §B behavioral verification.
+ *
+ * Status: DRAFT. RFC 0052 (scheduling & time-based triggers) is `Draft`.
+ *
+ * Capability-gated: skips when the host does not advertise
+ * `capabilities.scheduling.supported = true`.
+ *
+ * What this scenario asserts (via the optional
+ * `POST /v1/host/sample/scheduling/tick` test seam, which advances a
+ * deterministic clock and reports the runs a cron schedule produced):
+ *   1. Once-per-tick — a single cron tick produces exactly one run; no
+ *      duplicate concurrent firing (RFC 0052 §B.2).
+ *   2. Missed-tick policy — a host-down-across-a-tick window applies the
+ *      advertised policy (fire-once-on-recovery OR skip), never a backlog
+ *      flood (RFC 0052 §B.4).
+ *
+ * Hosts without the seam soft-skip the behavioral probes (404). Horizon
+ * rejection (`schedule_horizon_exceeded`) is covered by the shape +
+ * error-code contract; behavioral horizon assertion is part of the deferred
+ * delayed-execution scenario.
+ *
+ * @see RFCS/0052-scheduling-and-time-based-triggers.md
+ * @see spec/v1/host-capabilities.md §host.scheduling
+ */
+
+import { describe, it, expect } from 'vitest';
+import { driver } from '../lib/driver.js';
+
+interface DiscoveryDoc {
+  capabilities?: { scheduling?: { supported?: boolean; cron?: boolean } };
+}
+
+async function readScheduling(): Promise<{ supported?: boolean; cron?: boolean } | null> {
+  const res = await driver.get('/.well-known/openwop');
+  return (res.json as DiscoveryDoc | undefined)?.capabilities?.scheduling ?? null;
+}
+
+describe('scheduling-cron-fires-once: once-per-tick + missed-tick (RFC 0052 §B)', () => {
+  it('a single cron tick produces exactly one run', async () => {
+    const sched = await readScheduling();
+    if (!sched?.supported || sched.cron !== true) return; // capability-gated
+    const res = await driver.post('/v1/host/sample/scheduling/tick', { scenario: 'single-tick' });
+    if (res.status === 404) return; // seam unwired — soft-skip
+    const body = res.json as { runsFired?: number } | undefined;
+    expect(
+      body?.runsFired,
+      driver.describe('RFC 0052 §B.2', 'a single cron tick MUST fire exactly one run (no duplicate concurrent firing)'),
+    ).toBe(1);
+  });
+
+  it('a missed-tick window does not produce a backlog flood', async () => {
+    const sched = await readScheduling();
+    if (!sched?.supported || sched.cron !== true) return; // capability-gated
+    const res = await driver.post('/v1/host/sample/scheduling/tick', { scenario: 'missed-window', missedTicks: 5 });
+    if (res.status === 404) return; // seam unwired — soft-skip
+    const body = res.json as { runsFired?: number } | undefined;
+    expect(
+      typeof body?.runsFired === 'number' && body.runsFired <= 1,
+      driver.describe(
+        'RFC 0052 §B.4',
+        `a missed-tick window MUST apply the advertised policy (fire-once-on-recovery or skip), never N backlogged runs; got runsFired=${body?.runsFired}`,
+      ),
+    ).toBe(true);
+  });
+});
