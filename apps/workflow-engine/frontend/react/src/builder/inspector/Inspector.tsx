@@ -270,9 +270,11 @@ function ConfigInput({
       ) : field.kind === 'textarea' ? (
         <textarea
           rows={3}
-          value={typeof value === 'string' ? value : ''}
+          value={textareaValue(value)}
           placeholder={field.placeholder}
           required={field.required}
+          {...(field.minLength !== undefined ? { minLength: field.minLength } : {})}
+          {...(field.maxLength !== undefined ? { maxLength: field.maxLength } : {})}
           onChange={(e) => onChange(e.target.value)}
         />
       ) : field.kind === 'number' ? (
@@ -281,6 +283,9 @@ function ConfigInput({
           value={typeof value === 'number' ? value : ''}
           placeholder={field.placeholder}
           required={field.required}
+          {...(field.min !== undefined ? { min: field.min } : {})}
+          {...(field.max !== undefined ? { max: field.max } : {})}
+          {...(field.step !== undefined ? { step: field.step } : {})}
           onChange={(e) => onChange(e.target.value === '' ? undefined : Number(e.target.value))}
         />
       ) : field.kind === 'select' ? (
@@ -294,17 +299,101 @@ function ConfigInput({
             <option key={o.value} value={o.value}>{o.label}</option>
           ))}
         </select>
+      ) : field.kind === 'string-list' ? (
+        <StringListInput
+          value={Array.isArray(value) ? (value as unknown[]).filter((v) => typeof v === 'string') as string[] : []}
+          onChange={(next) => onChange(next.length === 0 ? undefined : next)}
+          placeholder={field.placeholder}
+          maxItems={field.maxItems}
+        />
       ) : (
         <input
           value={typeof value === 'string' ? value : ''}
           placeholder={field.placeholder}
           required={field.required}
+          {...(field.minLength !== undefined ? { minLength: field.minLength } : {})}
+          {...(field.maxLength !== undefined ? { maxLength: field.maxLength } : {})}
+          {...(field.pattern !== undefined ? { pattern: field.pattern } : {})}
           onChange={(e) => onChange(e.target.value)}
         />
       )}
       {field.help && <div className="muted builder-inspector-help">{field.help}</div>}
     </div>
   );
+}
+
+/** Stringify a textarea value. Pack `configSchema`s with `default` set to
+ *  an object/array (collapsed to `kind: 'textarea'` by the JSON-Schema
+ *  converter) come through as the raw default rather than a pre-stringified
+ *  blob — pretty-print it so the user sees readable JSON instead of
+ *  `[object Object]`. */
+function textareaValue(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (value === undefined || value === null) return '';
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+}
+
+/** One-per-line textarea that round-trips to `string[]`. Used for
+ *  JSON-Schema `{ type: 'array', items: { type: 'string' } }` configs
+ *  like `stopSequences` — far less hostile than a raw-JSON textarea
+ *  for the (common) case of a small list of plain strings.
+ *
+ *  Blank lines are stripped (a trailing newline while typing doesn't
+ *  add an empty entry); when the parsed list would exceed `maxItems`,
+ *  the input clamps to the first `maxItems` entries and surfaces a
+ *  warning via the help row above. */
+function StringListInput({
+  value,
+  onChange,
+  placeholder,
+  maxItems,
+}: {
+  value: readonly string[];
+  onChange: (next: string[]) => void;
+  placeholder?: string | undefined;
+  maxItems?: number | undefined;
+}): JSX.Element {
+  const [draft, setDraft] = useState<string>(value.join('\n'));
+  // Reset the draft when the store-side value changes from somewhere
+  // other than this input (e.g., reset, import, multi-select edit).
+  // The check avoids clobbering the user's in-progress edits.
+  useEffect(() => {
+    const parsedDraft = draft.split('\n').map((s) => s.trim()).filter((s) => s.length > 0);
+    if (parsedDraft.join('') !== [...value].join('')) {
+      setDraft(value.join('\n'));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+  const overLimit = maxItems !== undefined && countNonBlankLines(draft) > maxItems;
+  return (
+    <>
+      <textarea
+        rows={Math.min(6, Math.max(2, value.length + 1))}
+        value={draft}
+        placeholder={placeholder ?? 'One per line'}
+        onChange={(e) => {
+          const next = e.target.value;
+          setDraft(next);
+          const parsed = next.split('\n').map((s) => s.trim()).filter((s) => s.length > 0);
+          const clamped = maxItems !== undefined ? parsed.slice(0, maxItems) : parsed;
+          onChange(clamped);
+        }}
+      />
+      {overLimit ? (
+        <div className="muted builder-inspector-help" role="status">
+          ⚠ Only the first {maxItems} entries are kept (host limit).
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+function countNonBlankLines(s: string): number {
+  return s.split('\n').filter((line) => line.trim().length > 0).length;
 }
 
 const TRIGGER_RULE_OPTIONS: { value: EdgeTriggerRule; label: string; help: string }[] = [

@@ -11,9 +11,14 @@
  */
 
 import { useSyncExternalStore } from 'react';
-import { NODE_CATALOG, type ConfigField, type NodeCatalogEntry } from './nodeCatalog.js';
+import { NODE_CATALOG, type NodeCatalogEntry } from './nodeCatalog.js';
+import { configFieldsFromSchema } from './configFieldsFromSchema.js';
 import type { NodeCategory } from '../schema/workflow.js';
 import { authedHeaders, config, fetchOpts } from '../../client/config.js';
+
+// Re-exported for backward compat — `configFieldsFromSchema` used to live
+// in this file but moved to its own module for unit testability.
+export { configFieldsFromSchema };
 
 interface ServerCatalogNode {
   typeId: string;
@@ -218,52 +223,3 @@ function badgeFor(label: string, typeId: string): string {
   return letter ? letter.toUpperCase() : '?';
 }
 
-/**
- * JSON-Schema → ConfigField[] mapping. Reads top-level `properties`
- * and creates one ConfigField per prop. Type inference:
- *   - boolean        → checkbox
- *   - number/integer → number input
- *   - object/array   → JSON textarea
- *   - everything else → plain text
- * Required fields surface via `field.required` so the inspector can
- * decorate them (red asterisk + `required` attribute on the input).
- */
-function configFieldsFromSchema(schema: unknown): ConfigField[] {
-  if (!schema || typeof schema !== 'object') return [];
-  const s = schema as Record<string, unknown>;
-  const props = s.properties as Record<string, unknown> | undefined;
-  if (!props) return [];
-  const required = new Set<string>(Array.isArray(s.required) ? (s.required as string[]) : []);
-  const fields: ConfigField[] = [];
-  for (const [key, raw] of Object.entries(props)) {
-    if (!raw || typeof raw !== 'object') continue;
-    const ps = raw as Record<string, unknown>;
-    const type = Array.isArray(ps.type) ? (ps.type[0] as string) : (ps.type as string | undefined);
-    // A scalar `enum` becomes a dropdown; otherwise infer by type.
-    const enumVals = Array.isArray(ps.enum)
-      ? (ps.enum as unknown[]).filter((v) => typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean')
-      : null;
-    let kind: ConfigField['kind'] = 'text';
-    if (enumVals && enumVals.length > 0 && type !== 'object' && type !== 'array') kind = 'select';
-    else if (type === 'boolean') kind = 'checkbox';
-    else if (type === 'number' || type === 'integer') kind = 'number';
-    else if (type === 'object' || type === 'array') kind = 'textarea';
-    const labelBase = (ps.title as string | undefined) ?? key;
-    const def = ps.default;
-    fields.push({
-      key,
-      label: labelBase,
-      kind,
-      required: required.has(key),
-      defaultValue:
-        typeof def === 'string' || typeof def === 'number' || typeof def === 'boolean'
-          ? def
-          : undefined,
-      help: typeof ps.description === 'string' ? ps.description : undefined,
-      ...(kind === 'select' && enumVals
-        ? { options: enumVals.map((v) => ({ value: String(v), label: String(v) })) }
-        : {}),
-    });
-  }
-  return fields;
-}

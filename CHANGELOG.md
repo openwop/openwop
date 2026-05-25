@@ -11,6 +11,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### feat(app): item #11a — JSON-Schema validation-hint surfacing + array<string> rendering (2026-05-25)
+
+Architect audit (against `plans/app-buildable-now-on-existing-protocol.md` item #11) found the pack-manifest JSON-Schema → form pipeline already shipped (frontend `configFieldsFromSchema` + `Inspector.tsx` + boot-time `loadDynamicCatalog()` merging pack-served nodes into the catalog). Item #11 split into **11a (this entry; no RFC needed)** and **11b (pending RFC for picker UX via `x-openwop-form` vendor extension)** — see the plan doc for the split rationale.
+
+This entry ships 11a: extend the converter + renderer to honor JSON-Schema 2020-12 keywords the original pass ignored. App-only; no protocol-corpus change. Frontend `tsc --noEmit` clean.
+
+- **`configFieldsFromSchema` extracted to its own module** (`apps/workflow-engine/frontend/react/src/builder/palette/configFieldsFromSchema.ts`) so it's unit-testable without the React store wiring. `catalogRegistry.ts` re-exports for back-compat; no call-site change.
+- **Number inputs** forward `minimum` / `maximum` / `multipleOf` → HTML5 `min` / `max` / `step`. Integer fields default `step` to `1`.
+- **Text inputs** forward `minLength` / `maxLength` / `pattern` → HTML5 `minlength` / `maxlength` / `pattern`. Textareas forward length hints only (HTML5 has no `pattern` on textarea).
+- **New `string-list` ConfigField kind** for `array` of `items: { type: 'string' }` — one-per-line textarea that round-trips to `string[]`, honors `maxItems` (clamps + warns at the help row), and surfaces `items.pattern` in help text. Replaces the prior raw-JSON-textarea fallback for the common stop-sequence / tag-list shape (e.g., `core.ai.chatCompletion`'s `stopSequences`).
+- **`default` values for `array<string>` and `object` shapes** are now carried through unchanged; the renderer pretty-prints object/array defaults into the textarea (previously silently dropped).
+- **`ConfigField` interface extended** with optional `min` / `max` / `step` / `minLength` / `maxLength` / `pattern` / `maxItems` validation-hint fields + the new `string-list` kind + a wider `defaultValue` type covering `string[]` / `Record<string, unknown>` / `unknown[]`.
+- **Unit test surface** at `apps/workflow-engine/frontend/react/src/builder/palette/__tests__/configFieldsFromSchema.test.ts` — vitest-style, 25+ cases, including the production `core.ai.chatCompletion` configSchema as a regression fixture. The frontend doesn't currently ship a test runner; the file is excluded from `tsc --noEmit` and becomes auto-running the moment `vitest` is added as a frontend devDep (one `npm install` + `"test": "vitest run"` script away — documented at the top of the test file).
+
+**Validation hints are advisory UX only** — the host MUST still validate the persisted workflow against the authoritative pack manifest schema. The Inspector's HTML5 attribute forwarding catches obvious typos at edit time but is not a substitute for backend validation.
+
 ### RFC 0060 — document the heartbeat tick seam; code-review follow-ups (2026-05-25)
 
 Closes a `/code-review` finding on RFC 0060: the three gated `heartbeat-*.test.ts` scenarios drove a `POST /v1/host/sample/heartbeat/tick` seam that was undocumented (and the RFC §D text mis-cited the RFC 0052 `scheduling/tick` seam) — so they could never be wired by a willing host (the "looks-like-coverage-but-never-runs" trap). Added the **heartbeat tick seam** to `host-sample-test-seams.md` §"Open seams" (path + `{ heartbeatId, observedState, simulateSlowMs? }` → `{ evaluated, stateChanged, enqueuedRuns }` shape + capability gate), reconciled the RFC §D conformance text to cite it, and `lib/heartbeat.ts` already matches. Also added an advisory-tier SECURITY invariant `heartbeat-state-no-secret` (the `heartbeat.stateChanged` `from`/`to` SHOULD NOT carry secret material; advisory since heartbeat state is host-internal, not BYOK-resolved) and dropped a defensive parenthetical from the README Active-RFC list. Invariant count 99 → 100 (advisory 1 → 2). Docs/spec only; no wire-shape change.
