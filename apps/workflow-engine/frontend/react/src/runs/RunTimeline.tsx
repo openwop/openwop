@@ -20,6 +20,9 @@ import type { RunEventDoc } from '@openwop/openwop';
 interface Props {
   events: readonly RunEventDoc[];
   onForkFrom?: (sequence: number) => void;
+  /** §A4 playhead — fires the selected segment's last sequence (or null on
+   *  deselect) so a parent can drive synchronized inspector panels. */
+  onSelectSeq?: (seq: number | null) => void;
 }
 
 type SegStatus = 'running' | 'completed' | 'failed' | 'suspended';
@@ -134,7 +137,7 @@ function fmtDuration(ms: number): string {
   return `${m}m ${s}s`;
 }
 
-export function RunTimeline({ events, onForkFrom }: Props) {
+export function RunTimeline({ events, onForkFrom, onSelectSeq }: Props) {
   const { lanes, minMs, maxMs } = useMemo(() => buildSegments(events), [events]);
   const [selected, setSelected] = useState<{ nodeId: string; startSeq: number } | null>(null);
 
@@ -181,7 +184,13 @@ export function RunTimeline({ events, onForkFrom }: Props) {
                       background: SEG_COLOR[seg.status],
                       animation: seg.status === 'running' ? 'openwop-pulse 1.2s ease-in-out infinite' : 'none',
                     }}
-                    onClick={() => setSelected(isSel ? null : { nodeId: seg.nodeId, startSeq: seg.startSeq })}
+                    onClick={() => {
+                      const next = isSel ? null : { nodeId: seg.nodeId, startSeq: seg.startSeq };
+                      setSelected(next);
+                      onSelectSeq?.(next ? seg.lastSeq : null);
+                    }}
+                    aria-pressed={isSel}
+                    aria-label={`${seg.nodeId}, ${seg.status}, ${dur} — select to inspect this step`}
                     title={`${seg.nodeId} — ${seg.status} — ${dur}`}
                   >
                     <span className="run-timeline-bar-dur">{dur}</span>

@@ -53,6 +53,6 @@ export async function recordAnnotation(runId: string, input: AnnotationInput): P
   if (!res.ok) {
     // 501 capability_not_provided is the spec'd honest response when a host
     // doesn't advertise host.feedback; surface a readable message either way.
-    throw new Error(res.status === 501 ? 'Host does not support feedback (RFC 0056)' : `Feedback failed (${res.status})`);
+    throw new Error(res.status === 501 ? 'This host does not support feedback yet.' : `Feedback failed (${res.status})`);
   }
 }
