@@ -81,3 +81,44 @@ Status stays `Draft` per the RFC 0052 precedent (landing the implementation does
 1. `/prd <slug>` per RFC for the five-architect pass — start with 0058 (foundation, done) and 0061 (keystone).
 2. Open the 7 PRs in waves.
 3. Land demo-app reference wiring in parallel — per-run timeout (0058) is the quickest credibility win.
+
+---
+
+## 8. Findings close-out plan (architect review, 2026-05-25)
+
+All seven RFCs have completed the five-architect pass; findings live in `RFCS/registers/00NN-*.{gaps,risks}.md` (14 files). The architect passes produced **five reframes** (0058 `cap.breached`, 0061 `executionModel v5`, 0062 `memory.compacted`, 0063 `output.harvested` attestation, 0064 extend `agent.tool*`) + one knock-on correction (0058 gate). After the reframes there are **no open CRITICAL findings** — every change is additive, and the wire-shape-duplication risks that were the only critical-adjacent issues are closed. This section consolidates the remaining findings and sequences their close-out.
+
+### 8.1 Consolidated findings (deduplicated across the 14 registers)
+
+| # | Theme | Severity | Source registers | Disposition |
+|---|---|---|---|---|
+| A | **Additive-extension sign-offs** — four reframes add optional fields to events owned by *Accepted* RFCs: `memory.compacted`+`distillation` (0012), `coreWorkflowChainEvent`+`attestation` (0037), `runOrchestratorDecided`+`iteration` (0037), `agentToolCalled`/`agentToolReturned`+fields (0002). | HIGH | 0061 G·, 0062 G1, 0063 G1, 0064 G1 | Additive per `COMPATIBILITY.md` §2.1; needs a one-line amendment note + Compatibility-maintainer sign-off on each owning RFC. |
+| B | **Canonical-serialization unification** — 0063 checksum + 0064 `argsHash` MUST reuse the RFC 8785 JCS recipe already pinned in `replay.md` (RFC 0041). | HIGH | 0063 G2, 0064 G5 | Pin once in `replay.md`; cross-reference from 0063/0064. |
+| C | **New vs. reused error codes** — register `token_budget_exceeded` (0062, genuinely new — currently SDK-vocab-only), `workspace_conflict`/`workspace_too_large` (0059); 0064 *reuses* `forbidden`+`rate_limited` (no new code). | MEDIUM | 0062 G2, 0059 (acceptance), 0064 G2 | Register the genuinely-new codes in `rest-endpoints.md` at implementation. |
+| D | **"Decide before Active" knobs** — directory semantics (0059 G1), version retention (0059 G2), transcript window (0061 G3), prior-state token (0060 G2), backpressure (0060 G3), token tolerance (0062 G3), archive retention (0062 G6), index format (0062 G4 / 0059 G3), batch approval (0063 G3), `requiredScopes` location (0064 G3 / RFC 0045), non-agent `agentId` convention (0064 G4). | MEDIUM | all gaps registers | A batch of ~11 maintainer decisions; none block `Draft`, all block the relevant RFC's `Active`. |
+| E | **SECURITY invariants to land with tests** — `workspace-cross-tenant-isolation` (0059), `subrun-merge-approval-fail-closed` (0063). 0064 reuses RFC 0049's `authorization-fail-closed`; 0062 reuses RFC 0012's SR-1. | HIGH (at impl) | 0059 R1, 0063 R2 | Each protocol-tier MUST-NOT lands its `invariants.yaml` row + public conformance test in the *same* PR as the implementation — never at Draft. |
+| F | **Cross-RFC sequencing** — 0061 needs 0059 (workspace snapshot)+0058 (done); 0062 needs 0059 (index file)+0052+0012; 0060 needs 0052 (tick). | MEDIUM | 0061 G7, 0062 G5, 0060 (compose) | Encoded in the Wave A/B/C order (§3). |
+| G | **Spec-text + doc-surfacing landing** — new docs `agent-workspace.md` (0059), `tool-hooks.md`/mcp-integration ext (0064); edits to `multi-agent-execution.md` (0061 v5 + extend the version table — 0061 G6; 0063 attestation phase; 0064 authz), `agent-memory.md` (0062), `host-capabilities.md` (0060), `positioning.md` bounded-exception note (0060 G1), `capabilities.md`; README doc-index; INTEROP-MATRIX. | MEDIUM | 0060 G1, 0061 G6, per-RFC acceptance | Lands per RFC at Active→implementation. |
+| H | **Reference-host enforcement (Draft→Accepted gate)** — behavior conformance scenarios soft-skip until a host *enforces* each surface (0058 timeout, 0059 workspace CRUD, 0060 heartbeat, 0061 loop, 0062 distillation, 0063 approval gate, 0064 tool authz). | HIGH (for Accepted) | all RFCs' acceptance | Wire one reference host per surface; flip scenarios from soft-skip to live. |
+
+### 8.2 Phased close-out
+
+**Phase 0 — Decision batch (no code; unblocks Active).** Resolve themes A, B, and the ~11 D-knobs as a single maintainer decision pass. Deliverable: a short decisions note appended to each RFC's "Unresolved questions" marking each resolved, plus the one-line additive-extension amendment on RFCs 0002/0012/0037. **Gate:** bootstrap one-approval review (`GOVERNANCE.md`); no `openwop:check` impact (prose only).
+
+**Phase 1 — Comment windows + Active promotion.** Open the cohort PR (below); each RFC gets its 7-day additive comment window (`RFCS/README.md` §Process). Promote `Draft → Active` per RFC as its Phase-0 decisions land. **Gate:** comment window closed + two-maintainer rule once a second org is on `MAINTAINERS.md` (one-approval during bootstrap). README RFC-status counts move Draft→Active as each flips (the `protocol:status` gate enforces the counts).
+
+**Phase 2 — Wire-artifact implementation, in dependency waves** (the landed-0058 pattern): per RFC, **spec text → schema → OpenAPI/AsyncAPI → conformance (shape always-on + gated behavior) → SDK → CHANGELOG**, addressing themes C, F, G.
+- **Wave A:** RFC 0059 (workspace) + the RFC 0052 scheduler app-wiring (no new RFC). *(0058 wire surface already landed.)*
+- **Wave B:** RFC 0061 (loop, needs 0059), RFC 0060 (heartbeat, needs 0052), RFC 0062 (dreams, needs 0059+0052+0012).
+- **Wave C:** RFC 0063 (sub-run gating), RFC 0064 (tool hooks).
+- **Gate per RFC:** `npm run openwop:check` 9/9; fixture catalog⟷JSON sync; vendored-fixture sync into `apps/workflow-engine`.
+
+**Phase 3 — SECURITY invariants + reference-host enforcement → Accepted.** Land theme E (the two new invariants + their tests) and theme H (wire one reference host per surface; flip behavior scenarios from soft-skip to live; update each host's `conformance.md` + `INTEROP-MATRIX.md`). **Gate:** `scripts/check-security-invariants.sh` (every protocol-tier MUST-NOT has a public test) + honest host advertisement. Promote `Active → Accepted`.
+
+### 8.3 Decision batch checklist (Phase 0 — copy into the cohort PR)
+
+- [ ] **A.** Confirm additive-optional-field extensions are non-breaking on `memory.compacted` (0012), `coreWorkflowChainEvent` + `runOrchestratorDecided` (0037), `agentToolCalled`/`agentToolReturned` (0002); add a one-line amendment note to each.
+- [ ] **B.** Pin RFC 8785 JCS as the canonical-serialization recipe for checksums (0063) + `argsHash` (0064), cross-referencing `replay.md` (0041).
+- [ ] **D1–D11.** Resolve the ~11 "decide before Active" knobs (directory semantics, version retention, transcript window, prior-state token, backpressure, token tolerance, archive retention, index format, batch approval, `requiredScopes` location, non-agent `agentId`).
+- [ ] **C.** Confirm `token_budget_exceeded` is the only genuinely-new error code (0064 reuses `forbidden`/`rate_limited`); `workspace_conflict`/`workspace_too_large` for 0059.
+- [ ] **E.** Confirm the two new protocol-tier invariants (0059 WCT-1, 0063 fail-closed) + that 0064 reuses RFC 0049's `authorization-fail-closed` (no new invariant).
