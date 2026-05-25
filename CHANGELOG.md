@@ -11,6 +11,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0028 promoted Active → Accepted — Tier-2 prompt-pack advertise live on MyndHyve (2026-05-25)
+
+MyndHyve workflow-runtime advertises `capabilities.prompts.{supported: true, templateKinds: ["system", "user", "few-shot", "schema-hint"], observability: "full", packsSupported: true, mutableLibrary: true, library: {id: "myndhyve-system", renderEndpoint: "/v1/prompts:render", maxRenderRequestBytes: 65536}}` live on `https://myndhyve.ai/.well-known/openwop` (verified 2026-05-25 via direct curl).
+
+The README RFC index path-to-Accepted criterion for RFC 0028 — "MyndHyve Tier-1 advertises `packsSupported: false, mutableLibrary: false`; path-to-Accepted requires both `true`" — is satisfied at the wire. A parallel session on the openwop side shipped the host-side `kind: "prompt"` pack ingest + `packsSupported: true` advertise + the real `library` block end-to-end during the same conformance window that closed RFC 0041.
+
+Per the bootstrap-phase rule (advertisement + scenarios pass-modulo-honest-skip), the Tier-2 path-to-Accepted bar is met. RFC 0029 stays Active — MyndHyve's discovery still shows `agents: {}` (empty) and no `prompts.agentBindings`; promotion gates on a future `agentBindings: true` signal once the host-side agent identity work ships.
+
+Same docs-sync pass folds in **RFC 0049's SECURITY invariant addition** that landed upstream while my RFC 0041 promotion commit was rebasing: 91 invariants → 92 / 60 protocol-tier → 61 / +1 line for `authorization-fail-closed` — these were dropped from the README by my `--theirs` resolution during the second rebase and are reinstated here.
+
+Counts: **RFCs Accepted 36 → 37; Active 5 → 4.**
+
 ### RFC 0049 RBAC scopes & authorization decisions — Tier-2 step 2 (2026-05-25)
 
 Binds the RFC 0048 `principal`'s role to scopes (reusing the API-key scope grammar) and makes authorization decisions observable, auditable, and conformance-testable — including a normative fail-closed default. RFC 0049 stays `Draft`. All additive.

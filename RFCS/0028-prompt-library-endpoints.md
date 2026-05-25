@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0028 |
 | **Title** | Prompt Library Endpoints (`/v1/prompts/*`) and Prompt Pack Kind (`kind: "prompt"`) |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | OpenWOP Working Group |
 | **Created** | 2026-05-19 |
-| **Updated** | 2026-05-20 (Draft → Active — see [Status history](#status-history) below). |
+| **Updated** | 2026-05-25 (Active → Accepted: MyndHyve workflow-runtime advertises `capabilities.prompts.{supported: true, packsSupported: true, mutableLibrary: true, library: {id: "myndhyve-system", renderEndpoint: "/v1/prompts:render", maxRenderRequestBytes: 65536}}` live on `https://myndhyve.ai/.well-known/openwop` — verified 2026-05-25 via direct curl. A parallel session on the MyndHyve side shipped the host-side `kind: "prompt"` pack ingest + `packsSupported: true` advertise + the real `library` block end-to-end during the same conformance window that closed RFC 0041. Per the bootstrap-phase rule (advertisement + scenarios pass-modulo-honest-skip), the Tier-2 path-to-Accepted criterion — "MyndHyve Tier-1 advertises `packsSupported: false, mutableLibrary: false`; path-to-Accepted requires both `true`" per the README RFC index — is satisfied at the wire. Prior 2026-05-20 (Draft → Active — see [Status history](#status-history) below). |
 | **Affects** | `spec/v1/prompts.md` (extends §"Discovery & distribution") · `spec/v1/registry-operations.md` (adds prompt-pack flow) · `api/openapi.yaml` (adds 6 operations under `/v1/prompts*`) · `schemas/prompt-pack-manifest.schema.json` (NEW) · `schemas/capabilities.schema.json` (extends `prompts` block with `packsSupported`, `mutableLibrary`, `library`) · 5 new conformance scenarios · CHANGELOG |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
