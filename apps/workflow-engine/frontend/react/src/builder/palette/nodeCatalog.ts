@@ -12,7 +12,10 @@ export interface ConfigField {
   label: string;
   /** Renders as the matching HTML control. 'textarea' is used for
    *  free-form text + any object/array JSON the user has to
-   *  hand-author. 'checkbox' renders a boolean toggle.
+   *  hand-author. 'checkbox' renders a boolean toggle. 'string-list'
+   *  renders a one-per-line textarea that serializes to `string[]`
+   *  (for JSON-Schema `{ type: 'array', items: { type: 'string' } }`
+   *  shapes like `stopSequences`).
    *  'prompt-picker' stores a stringy PromptRef (`prompt:templateId@version`)
    *  per RFC 0027 and renders a dropdown sourced from the prompt library.
    *  'credential-picker' stores a credentialRef (e.g., `anthropic:prod`)
@@ -24,6 +27,7 @@ export interface ConfigField {
     | 'textarea'
     | 'checkbox'
     | 'select'
+    | 'string-list'
     | 'prompt-picker'
     | 'credential-picker'
     | 'provider-picker'
@@ -32,12 +36,33 @@ export interface ConfigField {
   /** For `kind: 'select'` (e.g. a JSON-Schema `enum`), the allowed
    *  values rendered as a dropdown. */
   options?: readonly { value: string; label: string }[];
-  /** Default value used when a node of this kind is created. */
-  defaultValue?: string | number | boolean;
+  /** Default value used when a node of this kind is created. The
+   *  shape depends on `kind`: scalar for text/number/checkbox/select,
+   *  `string[]` for string-list, `unknown` (rendered as pretty-printed
+   *  JSON in the textarea) for object/array shapes routed through
+   *  `kind: 'textarea'`. */
+  defaultValue?: string | number | boolean | readonly string[] | unknown;
   /** Help text shown beneath the input. */
   help?: string;
   /** When true, the inspector marks the field as required. */
   required?: boolean;
+  /** JSON-Schema-derived validation hints. The Inspector forwards
+   *  these to the matching HTML5 input attributes
+   *  (`min` / `max` / `minlength` / `maxlength` / `pattern` / `step`)
+   *  so the browser does the first-pass validation client-side. The
+   *  backend MUST still validate the persisted workflow against the
+   *  authoritative pack manifest schema — these hints are UX, not the
+   *  contract. */
+  min?: number;
+  max?: number;
+  step?: number;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: string;
+  /** For `kind: 'string-list'`, mirrors JSON-Schema `maxItems`. The
+   *  Inspector blocks adding more entries when the line count would
+   *  exceed it; rendered as a help-text hint. */
+  maxItems?: number;
   /** For `kind: 'prompt-picker'`, constrains the picker to a single
    *  PromptTemplate kind (`system` / `user` / `few-shot` / `schema-hint`).
    *  Omitted = no filter. */

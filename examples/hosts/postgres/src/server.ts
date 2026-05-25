@@ -896,6 +896,33 @@ async function executeNode(
     case 'core.noop':
       break;
 
+    case 'core.identity': {
+      // node-packs.md §"core.identity": echo-input primitive — passes
+      // each named input port to a same-named output port unchanged.
+      // The RFC 0022 dispatch/subWorkflow child fixtures use it as a
+      // noop body, and conformance-identity (identity-passthrough.test.ts)
+      // asserts inputs.{var} round-trips to RunSnapshot.variables.{var}.
+      // This host seeds variables_json from workflow.variables[].defaultValue
+      // only (see seedVariablesFromWorkflow), NOT from run inputs, so the
+      // passthrough explicitly folds the run inputs into the variable bag.
+      const q = await querier();
+      await withTransaction(q, async () => {
+        const res = await q.query<{ variables_json: Record<string, unknown> | null }>(
+          'SELECT variables_json FROM runs WHERE run_id = $1',
+          [runId],
+        );
+        const current = (res.rows[0]?.variables_json ?? {}) as Record<string, unknown>;
+        for (const [key, value] of Object.entries(inputs)) {
+          current[key] = value;
+        }
+        await q.query('UPDATE runs SET variables_json = $1 WHERE run_id = $2', [
+          JSON.stringify(current),
+          runId,
+        ]);
+      });
+      break;
+    }
+
     case 'core.delay': {
       // Resolve effective delay duration. Precedence:
       //   1. Node spec declares delayMs (possibly via variable
@@ -4333,6 +4360,29 @@ async function handleEventsPoll(
   });
 }
 
+// rest-endpoints.md §"GET /v1/runs/{runId}/artifacts/{artifactId}".
+// This host does not persist run artifacts, but the endpoint still MUST
+// reject unauthenticated requests with a canonical 401 BEFORE any
+// existence check — otherwise a missing Authorization header would be
+// answerable with a 404 that leaks whether the run/artifact exists
+// (cross-tenant existence oracle). Auth first, then a 404
+// `artifact_not_found` for the authenticated caller.
+//
+// `checkAuth` validates the bearer token but does not enforce the
+// `artifacts:read` scope named in rest-endpoints.md §Artifacts —
+// consistent with this host's coarse single-API-key auth model (no
+// endpoint does scope-granular checks). A host with per-scope tokens
+// would additionally assert the `artifacts:read` scope here.
+async function handleGetArtifact(
+  req: IncomingMessage,
+  res: ServerResponse,
+  runId: string,
+  artifactId: string,
+): Promise<void> {
+  if (!(await checkAuth(req, res))) return;
+  sendError(res, 404, 'artifact_not_found', `No artifact "${artifactId}" on run "${runId}".`);
+}
+
 // ─── Router ──────────────────────────────────────────────────────────────────
 
 const RUN_ID_PATTERN = /^\/v1\/runs\/([^/]+)$/;
@@ -4340,6 +4390,7 @@ const RUN_CANCEL_PATTERN = /^\/v1\/runs\/([^/]+)\/cancel$/;
 const RUN_EVENTS_POLL_PATTERN = /^\/v1\/runs\/([^/]+)\/events\/poll$/;
 const RUN_EVENTS_SSE_PATTERN = /^\/v1\/runs\/([^/]+)\/events$/;
 const RUN_DEBUG_BUNDLE_PATTERN = /^\/v1\/runs\/([^/]+)\/debug-bundle$/;
+const RUN_ARTIFACT_PATTERN = /^\/v1\/runs\/([^/]+)\/artifacts\/([^/]+)$/;
 const RUN_PAUSE_PATTERN = /^\/v1\/runs\/([^/]+):pause$/;
 const RUN_RESUME_PATTERN = /^\/v1\/runs\/([^/]+):resume$/;
 const RUN_INTERRUPT_PATTERN = /^\/v1\/runs\/([^/]+)\/interrupts\/([^/]+)$/;
@@ -4433,6 +4484,8 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (m && method === 'GET') return handleEventsSse(req, res, m[1]!);
   m = RUN_DEBUG_BUNDLE_PATTERN.exec(path);
   if (m && method === 'GET') return handleDebugBundle(req, res, m[1]!, url);
+  m = RUN_ARTIFACT_PATTERN.exec(path);
+  if (m && method === 'GET') return handleGetArtifact(req, res, m[1]!, m[2]!);
   m = RUN_PAUSE_PATTERN.exec(path);
   if (m && method === 'POST') return handlePauseRun(req, res, m[1]!);
   m = RUN_RESUME_PATTERN.exec(path);

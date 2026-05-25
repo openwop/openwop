@@ -1,5 +1,24 @@
 # Conformance runs — 2026-05-23 (suite v1.5.0 post Phase 4 close-out)
 
+> ## Update 2026-05-25 — Postgres + SQLite re-measurement + RFC 0022 root-cause correction
+>
+> Re-ran the **Postgres** and **SQLite** hosts against the current `conformance/` suite after closing RFC 0022 on both. (`in-memory`, `python`, and `workflow-engine` were **not** re-measured and remain as of 2026-05-23.)
+>
+> | Host | 2026-05-23 | 2026-05-25 (post main-merge) | Remaining failures |
+> |---|---|---|---|
+> | Postgres | 6 failed | **1 failed** / 1674 passed / 118 skipped (of 1793) | `run-execution-bounds-shape` only — see RFC 0058 note below. All RFC 0022 / artifact-auth / model-capability failures closed. |
+> | SQLite | 7 failed | **1 failed** / 1688 passed / 104 skipped (of 1793) | `run-execution-bounds-shape` only — same RFC 0058 gap. |
+>
+> **RFC 0058 (run-execution-bounds) — new, shared, out of this branch's scope.** Merging `main` grew the suite 1745 → 1793 (RFC 0058/0059/0060 scenarios). `run-execution-bounds-shape.test.ts` now fails identically on both reference hosts because neither yet enforces `configurable.runTimeoutMs` (RFC 0058 §"run-duration breach"). It is unrelated to the RFC 0022 / artifact-auth / model-capability work on this branch and is left for the RFC 0058 host-wiring track.
+>
+> **The RFC 0022 diagnosis below was wrong on both hosts — but for different reasons.**
+> - **Postgres:** RFC 0022's mapping logic and the `config.mockDispatchPlan` supervisor-mock both already shipped. The real cause was that this host never registered the canonical **`core.identity`** node (`spec/v1/node-packs.md` §`core.identity`), which every RFC 0022 child fixture uses as its noop body. The children failed `unsupported_node_type`, cascading their parents to `failed`. Registering `core.identity` (a passthrough that folds run inputs into the variable bag) closed all four RFC 0022 failures **plus** a 5th, uncounted `identity-passthrough.test.ts` failure. The RFC 0026 cost-attribution and RFC 0031 model-capability failures the prior taxonomy listed for Postgres had already closed independently (no longer reproduce).
+> - **SQLite:** the supervisor-mock gap was **real** here — SQLite's `core.orchestrator.supervisor` emitted a single hard-coded decision and had no `mockDispatchPlan`, its `core.dispatch` honored only `nextWorkerIds[0]` with no mapping fields, and its `core.subWorkflow` had `outputMapping` but no `inputMapping`. The RFC 0022 port added `mockDispatchPlan`, sequential multi-worker dispatch with all four mapping fields (`inputMapping` / `outputMapping` / `perWorker{Input,Output}Mappings`), subWorkflow `inputMapping`, top-level `defaultValue` seeding of run variables, and the `capabilities.agents.dispatchMapping` + `capabilities.subWorkflow.inputMapping` advertisements. The refusal + mid-run-mutation negative paths soft-skip (SQLite exposes no capability-toggle / variable-mutation test seam).
+>
+> **Two pre-existing, non-RFC-0022 failures were also closed in the same pass:**
+> - **Postgres `artifact-auth`:** the unauthenticated artifact `GET` returned 404 instead of 401 (no artifact route existed → fell to the catch-all 404, which skips auth). Added an `/v1/runs/{runId}/artifacts/{artifactId}` route that runs `checkAuth` **before** any existence check (401 `unauthenticated` for missing auth; 404 `artifact_not_found` for an authenticated caller, since the host persists no artifacts) — closes the cross-tenant existence-oracle gap.
+> - **SQLite `model-capability-insufficient`:** SQLite advertised the `conformance-model-capability-insufficient` fixture (its filter is prefix-only) but had no handler for the `conformance.modelCapability.insufficient` typeId → `unsupported_node_type`. Added the RFC 0031 §B step 4 / §D refusal: emit `model.capability.insufficient` BEFORE `node.failed`, then fail with `capability_not_provided` (no downstream envelope event). This is the first reference host to demonstrate the RFC 0031 refusal end-to-end (Postgres soft-skips by not advertising the fixture — its `SUPPORTED_NODE_TYPES` filter excludes the typeId).
+
 > Re-measurement triggered by the 2026-05-22 → 2026-05-23 Phase 4 close-out which landed 5 new behavioral scenarios (+31 tests). Supersedes the same-day 2026-05-22 snapshot at `docs/CONFORMANCE-RUNS-2026-05.md`.
 >
 > All measurements taken 2026-05-23 against `@openwop/openwop-conformance@1.5.0` (215 test files / 1595 tests) using `--no-file-parallelism`. The "215 test files" count includes 5 lib-level helper tests beyond the 210 in `src/scenarios/`.
