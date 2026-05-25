@@ -212,23 +212,45 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
 
     async appendEvent(input) {
       const eventId = input.eventId || randomUUID();
-      // Single round-trip: compute next sequence + insert atomically.
-      const { rows } = await pool.query<Row>(
-        `WITH next AS (
-           SELECT COALESCE(MAX(sequence), 0) + 1 AS seq FROM events WHERE run_id = $1
-         )
-         INSERT INTO events (event_id, run_id, sequence, type, node_id, payload, timestamp, causation_id)
-         SELECT $2, $1, next.seq, $3, $4, $5, $6, $7 FROM next
-         RETURNING event_id, run_id, sequence, type, node_id, payload, timestamp, causation_id`,
-        [
-          input.runId, eventId, input.type, input.nodeId ?? null,
-          input.payload ?? null, input.timestamp, input.causationId ?? null,
-        ],
-      );
-      // INSERT … RETURNING always emits exactly one row on success;
-      // pg surfaces SQL errors as a thrown rejection, not an empty
-      // result set. The `!` encodes that post-condition.
-      return rowToEvent(rows[0]!);
+      // Serialize per-run via a transaction-scoped advisory lock so
+      // concurrent appends can't both read MAX(sequence) before either
+      // INSERTs. Without this, parallel critic dispatches (Triple-AI
+      // fan-out: 3 chat-responder nodes each emitting reasoning.delta
+      // + node.message + node.completed events concurrently) race on
+      // sequence-assignment and one INSERT loses to the unique
+      // constraint `events_run_id_sequence_key`, crashing the run
+      // with "inline dispatch failed" — observed 2026-05-25 against
+      // run 31c2b04c-… (only chat_2 + chat_6 completed; chat_4 never
+      // started because the executor crashed in mid-emit).
+      //
+      // pg_advisory_xact_lock takes two int4 keys; we partition the
+      // 64-bit hashtext namespace into (run_id-hash, scope-tag). The
+      // scope tag (1 = events.append) lets us add other per-run
+      // serialized regions later without aliasing.
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query('SELECT pg_advisory_xact_lock(hashtext($1), 1)', [input.runId]);
+        const { rows } = await client.query<Row>(
+          `WITH next AS (
+             SELECT COALESCE(MAX(sequence), 0) + 1 AS seq FROM events WHERE run_id = $1
+           )
+           INSERT INTO events (event_id, run_id, sequence, type, node_id, payload, timestamp, causation_id)
+           SELECT $2, $1, next.seq, $3, $4, $5, $6, $7 FROM next
+           RETURNING event_id, run_id, sequence, type, node_id, payload, timestamp, causation_id`,
+          [
+            input.runId, eventId, input.type, input.nodeId ?? null,
+            input.payload ?? null, input.timestamp, input.causationId ?? null,
+          ],
+        );
+        await client.query('COMMIT');
+        return rowToEvent(rows[0]!);
+      } catch (err) {
+        await client.query('ROLLBACK').catch(() => { /* connection already broken */ });
+        throw err;
+      } finally {
+        client.release();
+      }
     },
 
     async listEvents(runId, opts = {}) {
