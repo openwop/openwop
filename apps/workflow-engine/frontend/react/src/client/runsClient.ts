@@ -104,6 +104,20 @@ export async function forkRun(runId: string, req: ForkRunRequest): Promise<ForkR
   return client.runs.fork(runId, req);
 }
 
+/** Fetch the debug bundle for a run per `spec/v1/debug-bundle.md`. The SDK
+ *  doesn't expose this surface yet; raw fetch reuses the app's auth
+ *  headers. Returns the parsed JSON `{ runId, workflowId, status, events,
+ *  truncated, ... }`. */
+export async function getDebugBundle(runId: string): Promise<Record<string, unknown>> {
+  const res = await fetch(`${config.baseUrl}/v1/runs/${encodeURIComponent(runId)}/debug-bundle`, {
+    method: 'GET',
+    headers: { ...authedHeaders(), Accept: 'application/json' },
+    credentials: config.authMode === 'cookie' ? 'include' : 'same-origin',
+  });
+  if (!res.ok) throw new Error(`Debug-bundle fetch failed (${res.status})`);
+  return (await res.json()) as Record<string, unknown>;
+}
+
 export async function pollEvents(runId: string, lastSequence = 0): Promise<PollEventsResponse> {
   return client.runs.pollEvents(runId, { lastSequence });
 }

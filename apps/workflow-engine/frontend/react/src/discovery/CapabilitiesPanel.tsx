@@ -47,9 +47,18 @@ interface ModelCapabilitiesAd {
   advertised?: string[];
 }
 
+interface ImplementationAd {
+  name?: string;
+  version?: string;
+  vendor?: string;
+}
+
 interface Caps {
+  implementation?: ImplementationAd;
   capabilities?: {
     hostSurfaces?: HostSurfaceAd[];
+    profiles?: string[];
+    auth?: { profiles?: string[] };
     envelopes?: {
       reasoning?: EnvelopeReasoningAd;
       reliability?: EnvelopeReliabilityAd;
@@ -57,6 +66,28 @@ interface Caps {
     };
     modelCapabilities?: ModelCapabilitiesAd;
   };
+}
+
+/** Reference-host badge filenames published at openwop.dev/badge/<host>.svg.
+ *  Map common implementation-name fragments to a published badge so a host
+ *  that identifies as one of the references gets its credibility surface
+ *  inline. Out-of-tree hosts (e.g. MyndHyve workflow-runtime) fall through
+ *  to the generic "see leaderboard" affordance. */
+const KNOWN_BADGE_HOSTS: ReadonlyArray<{ match: RegExp; file: string; label: string }> = [
+  { match: /postgres/i, file: 'postgres.svg', label: 'Postgres reference host' },
+  { match: /sqlite/i, file: 'sqlite.svg', label: 'SQLite reference host' },
+  { match: /python/i, file: 'python-in-memory.svg', label: 'Python in-memory reference host' },
+  { match: /in.?memory|workflow.?engine/i, file: 'in-memory.svg', label: 'In-memory reference host' },
+];
+
+function matchBadgeFor(implName?: string): { url: string; label: string } | null {
+  if (!implName) return null;
+  for (const entry of KNOWN_BADGE_HOSTS) {
+    if (entry.match.test(implName)) {
+      return { url: `https://openwop.dev/badge/${entry.file}`, label: entry.label };
+    }
+  }
+  return null;
 }
 
 interface CatalogResp {
@@ -281,6 +312,79 @@ export function CapabilitiesPanel() {
           !error && <div className="muted">Loading…</div>
         )}
       </div>
+
+      <ConformanceProfilesCard caps={caps} />
     </section>
+  );
+}
+
+/** Per `plans/app-buildable-now-on-existing-protocol.md` §21 — render the
+ *  connected host's implementation identity + advertised profile set + a
+ *  conformance-badge affordance. The badge is embedded when the implementation
+ *  name matches a published reference-host badge (openwop.dev/badge/*.svg);
+ *  out-of-tree hosts get a leaderboard link instead. Always shows the
+ *  Implementation row so an operator can copy the exact `{name, version, vendor}`
+ *  for a bug report. */
+function ConformanceProfilesCard({ caps }: { caps: Caps | null }): JSX.Element {
+  const impl = caps?.implementation ?? {};
+  const interruptProfiles = caps?.capabilities?.profiles ?? [];
+  const authProfiles = caps?.capabilities?.auth?.profiles ?? [];
+  const allProfiles = [...new Set([...interruptProfiles, ...authProfiles])].sort();
+  const badge = matchBadgeFor(impl.name);
+  return (
+    <div className="card">
+      <h2>Conformance &amp; profiles</h2>
+      <p className="muted">
+        The connected host's identity + every profile it advertises through{' '}
+        <code>capabilities.profiles[]</code> and <code>capabilities.auth.profiles[]</code>{' '}
+        — the surfaces an external implementer can rely on. See the{' '}
+        <a href="https://openwop.dev/conformance/" target="_blank" rel="noreferrer">
+          openwop.dev conformance leaderboard
+        </a>{' '}
+        for the cross-host pass-rate matrix.
+      </p>
+      <table className="cap-table">
+        <tbody>
+          <tr>
+            <th style={{ textAlign: 'left', width: '12rem' }}>Implementation</th>
+            <td>
+              {impl.name ? <code>{impl.name}</code> : <span className="muted">—</span>}
+              {impl.version ? <> <span className="muted">v{impl.version}</span></> : null}
+              {impl.vendor ? <> <span className="muted">· {impl.vendor}</span></> : null}
+            </td>
+          </tr>
+          <tr>
+            <th style={{ textAlign: 'left' }}>Profiles claimed ({allProfiles.length})</th>
+            <td>
+              {allProfiles.length === 0 ? (
+                <span className="muted">none advertised</span>
+              ) : (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  {allProfiles.map((p) => (
+                    <code key={p} style={{ fontSize: 11 }}>{p}</code>
+                  ))}
+                </div>
+              )}
+            </td>
+          </tr>
+          <tr>
+            <th style={{ textAlign: 'left' }}>Reference-host badge</th>
+            <td>
+              {badge ? (
+                <a href="https://openwop.dev/conformance/" target="_blank" rel="noreferrer" title={badge.label}>
+                  <img src={badge.url} alt={`${badge.label} conformance badge`} style={{ verticalAlign: 'middle' }} />
+                </a>
+              ) : (
+                <span className="muted">
+                  No published badge for this implementation. Hosts that match a reference (in-memory, sqlite, postgres, python) get one inline; see the{' '}
+                  <a href="https://openwop.dev/conformance/" target="_blank" rel="noreferrer">leaderboard</a>{' '}
+                  for all published hosts.
+                </span>
+              )}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   );
 }

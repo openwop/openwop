@@ -1,10 +1,10 @@
 # app.openwop.dev — Features Buildable Now on Existing Protocol
 
-> **Status: substantially executed (audit 2026-05-25)** — ~54 frontend commits landed against this backlog in the ~28 hours after authoring. Per-item markers added inline below: **✅ done · 🟡 partial · ❌ not shipped · ❓ not verified** (~16 ✅ · 5 🟡 · 2 ❌ · 2 ❓ across the 25 items).
+> **Status: substantially executed (audit 2026-05-25)** — ~54 frontend commits landed against this backlog in the ~28 hours after authoring, plus 2 follow-up wins shipped on this branch (items 14 + 21). Per-item markers added inline below: **✅ done · 🟡 partial · ❌ not shipped · ❓ not verified** (~19 ✅ · 5 🟡 · 0 ❌ · 1 ❓ across the 25 items).
 >
 > **Pivot to follow-up plan.** The work expanded substantially beyond this backlog into a parallel track tracked at [`plans/app-ux-enhancements.md`](./app-ux-enhancements.md) (§A1–A7) — Mission Control / Command Center page (§A1), per-run health analytics (§A2), memory ledger (§A3, paired with RFC 0057), debugging-studio playhead (§A4), canonical workflow import + validate-button (§A5), the in-builder pack-drop ("A6 use in builder"), and the accessibility / mobile / i18n pass (§A7). The notification-system rewrite (Web Push + OS notifications + preferences + quiet hours + flagged review queue) replaced the originally-planned item 8 "HITL inbox" with something materially bigger. Multimodal rendering (RFC 0055 §C consumer) + feedback annotations (RFC 0056 consumer) shipped despite neither RFC existing when this plan was authored.
 >
-> **Remaining clearly-open items.** From the original list: **#14** (debug-bundle download — single-button UI on shipped protocol surface), **#21** (in-app conformance / interop badge — credibility surface), **#23** (SSE stream-mode switcher — small but visible), and the SDK-migration finish of **#22** (`streamsClient.ts` / `runsClient.ts` are still hand-rolled). Lower-priority unverified: **#11** (auto-generated JSON-Schema → config-form), **#13** (audit-log viewer with `verify()` button), **#16** (A2A-peer-side of MCP+A2A browser — MCP half shipped).
+> **Remaining open work.** Lower-priority unverified: **#11** (auto-generated JSON-Schema → config-form — `builder/inspector/Inspector.tsx` may already do this; not audited deeply), **#13** (audit-log viewer with `verify()` button — `RunOpsPanel.tsx` references audit/integrity but no dedicated viewer page found), **#16** (A2A-peer-side of MCP+A2A browser — MCP half shipped via `mcp/McpToolsPanel.tsx`; A2A peer discovery UI not built), **#22** (`runsClient.ts` is on the SDK except for host-extension `deleteRun` / `getDebugBundle`; `streamsClient.ts` uses native `EventSource` since the SDK doesn't expose SSE for browsers — defensible choice rather than drift), **#20** (chain-pack export shipped; PR-to-registry submission UX still not in-app).
 >
 > **Body preserved.** Item descriptions, protocol-surface citations, and the "why now" framing are kept as-authored for traceability; markers were added to each section heading. Where the body's "App adds" text predicts work that has since shipped, the description still reads as future tense — read the marker first.
 
@@ -80,7 +80,7 @@ The gap analysis found the protocol/runtime is ~65% `Done` while the app is an e
 - **Protocol surface:** audit-log-integrity profile — append-only, signed, tamper-detectable; SDK `verify()` on all 3 SDKs — RFC 0009/0010 (Done). `audit-checkpoint-export.test.ts`.
 - **App adds:** a per-run/per-workspace audit timeline with a "Verify integrity" button that runs the SDK `verify()` and shows the Merkle/signature result; export checkpoint.
 
-## ❓ 14. Debug-bundle download
+## ✅ 14. Debug-bundle download *(shipped in this branch — "Download bundle" button on `RunDetailPage.tsx` → `getDebugBundle()` in `runsClient.ts` → `GET /v1/runs/{runId}/debug-bundle` → file saved as `openwop-run-{runId}.json`)*
 - **Protocol surface:** production-profile debug bundle with truncation behavior — RFC 0009 (`debug-bundle-truncation.test.ts`, Done).
 - **App adds:** a one-click "Download debug bundle" on any run for support/triage.
 
@@ -112,7 +112,7 @@ The gap analysis found the protocol/runtime is ~65% `Done` while the app is an e
 - **Protocol surface:** workflow-chain packs + registry publishing — RFC 0013 (Accepted); PUBLISHING.md flow.
 - **App adds:** "Publish to registry" from a built workflow (PR-based publish flow exists); the app provides the authoring → manifest → submit UX.
 
-## ❌ 21. Conformance / interop badge surfacing
+## ✅ 21. Conformance / interop badge surfacing *(shipped in this branch — new "Conformance & profiles" card on `CapabilitiesPanel.tsx` shows the connected host's `implementation.{name, version, vendor}` + the union of `capabilities.profiles[]` and `capabilities.auth.profiles[]` + an inline `openwop.dev/badge/<host>.svg` when the implementation matches a reference host, else a leaderboard link)*
 - **Protocol surface:** INTEROP-MATRIX.md per-host pass/fail + suite version; site leaderboard started in `site/`.
 - **App adds:** show the connected host's conformance badge + which profiles it passes, inline in the app (credibility + capability transparency).
 
@@ -120,7 +120,7 @@ The gap analysis found the protocol/runtime is ~65% `Done` while the app is an e
 - **Protocol surface:** `@openwop/openwop` TS SDK, 32 wire-surface helpers, full parity (PARITY.md, Done).
 - **App adds:** migrate `streamsClient.ts`/`runsClient.ts` to the SDK so the app stays wire-correct automatically as the SDK tracks the spec. Reduces drift risk.
 
-## ❌ 23. Stream-mode switcher
+## ✅ 23. Stream-mode switcher *(shipped — `<select>` for `updates`/`values`/`messages`/`debug` at `runs/RunDetailPage.tsx:270`; re-subscribes the SSE on change)*
 - **Protocol surface:** 4 SSE modes (`values`/`updates`/`messages`/`debug`) — RFC 0002 (Done).
 - **App adds:** a toggle to switch the event view between modes (e.g. `messages` for a chat view, `debug` for triage). The client already supports Last-Event-ID resume.
 
