@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### `@openwop/openwop-conformance` 1.6.0 → 1.6.1 — fix stale `secrets.scopes` allowlist in `redaction.test.ts` (2026-05-25)
+
+Patch release fixing a self-contradiction MyndHyve surfaced during the 1.6.0 cohort run: `redaction.test.ts:103` hardcoded the `secrets.scopes` allowlist as `['tenant', 'user', 'run']`, but the same release's `capabilities.schema.json` enumerates `["tenant", "user", "run", "workspace"]` (`workspace` is the RFC 0046/0048 sub-tenant scope, additive). A host honestly advertising a `workspace`-scoped secret was wrongly failed. The allowlist now tracks the schema enum; schema + RFC 0046 §A were already canonical, so this is a test-only correction. Three version anchors synced (`conformance/package.json`, `scripts/openwop-check-publish-metadata.sh`, `scripts/check-npm-pack-contents.sh`); `conformance/CHANGELOG.md` [1.6.1] added. Does **not** affect the cohort graduation (the bug is unrelated to any of the 8 RFCs' gates). All additive.
+
 ### RFC 0045/0046/0047/0048/0049/0051/0052/0053 promoted Active → Accepted — MyndHyve cohort LIVE on production (2026-05-25)
 
 The 8-RFC MyndHyve protocol-extension cohort graduates `Active → Accepted` on a verified non-steward conformance run, per `RFCS/0001` §"Promotion to Accepted". MyndHyve's `workflow-runtime` advertises all five capability blocks (`credentials`, `oauth`, `authorization`, `scheduling`, `deadLetter`) plus the identity-triple + approval-gate surfaces live on `https://api.myndhyve.ai/.well-known/openwop` (independently curl-verified 2026-05-25), and the published `@openwop/openwop-conformance@1.6.0` suite reports **28 PASS / 0 FAIL** across the cohort.

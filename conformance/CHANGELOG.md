@@ -1,5 +1,13 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [1.6.1] — 2026-05-25
+
+Patch — fixes a stale allowlist in `redaction.test.ts` that contradicted the same release's `capabilities.schema.json`. Reported by MyndHyve against the 1.6.0 cohort run.
+
+### Fixed
+
+- **`redaction.test.ts:103`** — the `secrets.scopes` member check hardcoded `['tenant', 'user', 'run']`, omitting `'workspace'`. The canonical `secrets.scopes` enum in `capabilities.schema.json` is `["tenant", "user", "run", "workspace"]` (`workspace` is the RFC 0046/0048 sub-tenant scope, additive). A host honestly advertising `secrets.scopes: ['workspace', …]` (e.g. MyndHyve `workflow-runtime`) wrongly failed the scenario. The allowlist now tracks the schema enum. No wire-shape change; the schema and RFC 0046 §A were already canonical — only the test was stale.
+
 ## [1.6.0] — 2026-05-25
 
 Minor bump per `PUBLISHING.md` §"Versioning alignment" — ships the conformance scenarios for the **MyndHyve protocol-extension cohort (RFCs 0045–0054)** so adopting hosts can pin the released suite, run it against their deployment, and report pass for `Draft → Active → Accepted` graduation (per `RFCS/0001-rfc-process.md` §"Promotion to Accepted"). All additive — every new scenario is capability-gated and soft-skips against a host that doesn't advertise the surface, so existing v1.0-only hosts pass unchanged.
