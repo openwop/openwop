@@ -103,6 +103,7 @@ The capability advertisement is a CLAIM. Hosts that advertise long-term memory M
 - **Authorization granularity within tenant** — silence intentional. CTI-1 is the only normative isolation surface; per-user RBAC within a tenant is host-internal.
 - **Content size cap / tags cardinality cap** — host-internal.
 - **Bulk-ops API** (`MemoryAdapter.listAll`, `MemoryAdapter.deleteAll`) — deferred. v1.0 read surface is per-`memoryRef` `list/get` only.
+- **Per-node write attribution** — the event log carries no signal for *which node wrote which entry* (memory access is kept internal to nodes by design, for replay determinism). An additive, content-free `memory.written` RunEvent is proposed in [`RFCS/0057`](../../RFCS/0057-memory-write-attribution-event.md) (capability-gated `memory.attribution`), making provenance observable without exposing entry content.
 
 ## References
 

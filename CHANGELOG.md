@@ -15,6 +15,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 App-tier only (no spec / schema / conformance change). The standalone HITL approval `/inbox` becomes one filter of a generalized notification surface modeled on the myndhyve notification system. Backend adds a `notifications` table (Postgres v6 / sqlite v8), REST CRUD + SSE stream at `/v1/notifications`, and emits a notification when a HITL interrupt opens or a run fails. Frontend adds a header bell with unread badge, a right-side `NotificationPanel` drawer, and migrates `/inbox` to filter the notification list by action-needed types (preserving the inline `RenderInterrupt` resolve form).
 
+### RFC 0057 — memory write-attribution event (`memory.written`), Draft (2026-05-25)
+
+Proposes an additive, capability-gated (`memory.attribution`) `memory.written` RunEvent carrying **identifiers only** (`{ memoryRef, memoryId, nodeId?, agentId?, tags? }`, never content), so a consumer can attribute per-node memory provenance on the wire — closing the `agent-memory.md` "which node wrote which entry" gap that the reference app's memory ledger (app-ux §A3) surfaces. Stays `Draft`; the event is content-free (SR-1 trivial) and a recorded fact re-emitted on replay (no new non-determinism). Two SECURITY invariants (`memory-attribution-no-content`, `memory-attribution-tenant-scoped`) + capability-gated conformance scenarios specified for the Active landing. Counts synced: README RFC status 56 → 57 total, `Draft` 7 → 8; `docs/PROTOCOL-STATUS.md` regenerated; `agent-memory.md` §"Open spec gaps" backlinks the RFC. All additive.
+
 ### RFC 0045/0046/0047/0048/0049/0051/0052/0053 promoted Draft → Active — MyndHyve cohort adoption (2026-05-25)
 
 8 of the 10 MyndHyve protocol-extension RFCs graduate `Draft → Active` on MyndHyve's non-steward implementation (advertise + behavioral seams shipped per their `docs/openwop-adoption/0045-0054-cohort-summary.md`, 2026-05-25). Each RFC's `Status` flips to `Active` with the adoption evidence in its `Updated` field; wire shapes are now locked for these surfaces per `RFCS/0001`.
