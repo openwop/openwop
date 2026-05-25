@@ -69,7 +69,8 @@
       "description": "Optional agent manifests shipped alongside this pack. Each entry is an AgentManifest (see agent-manifest.schema.json + RFC 0003 §`agents[]` extension). Pure-agent packs MUST set `runtime.language: 'remote'` — agents are interpreted by the host, not bundled as executable artifacts. Mixed packs (nodes + agents) declare the runtime that loads the node implementations; agents remain host-interpreted."
     },
     "runtime": { "$ref": "#/$defs/Runtime" },
-    "signing": { "$ref": "#/$defs/Signing" }
+    "signing": { "$ref": "#/$defs/Signing" },
+    "connector": { "$ref": "#/$defs/Connector" }
   },
   "additionalProperties": false,
   "$defs": {
@@ -269,6 +270,62 @@
           "type": "array",
           "items": { "type": "string" },
           "description": "OAuth scopes the node requires; each MUST be in the provider's advertised `scopesSupported`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ConnectorAuth": {
+      "description": "RFC 0045. The auth declaration shared by a connector's actions. Either an RFC 0047 OAuth2 declaration or an RFC 0046 stored-credential reference.",
+      "oneOf": [
+        { "$ref": "#/$defs/NodeAuth" },
+        {
+          "type": "object",
+          "required": ["type", "key"],
+          "properties": {
+            "type": { "type": "string", "enum": ["credential"], "description": "Static stored-credential auth via the RFC 0046 host.credentials resolver." },
+            "key": { "type": "string", "minLength": 1, "description": "CredentialRequirement key the host resolves into the node sandbox." },
+            "scope": { "type": "string", "enum": ["user", "workspace", "tenant"], "description": "Resolution scope; MUST match a scope in `capabilities.credentials.scopes`." }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Connector": {
+      "type": "object",
+      "required": ["id", "displayName"],
+      "description": "RFC 0045. Declares this pack a named connector — a typed integration exposing actions (and reusing the existing trigger model). Optional; packs without it remain plain node packs. Actions are normal side-effectful nodes from this pack's `nodes[]` annotated with scheduler hints; the connector block adds metadata, not a new execution kind.",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9.-]*$", "description": "Stable connector id, e.g. `salesforce`." },
+        "displayName": { "type": "string", "minLength": 1 },
+        "auth": { "$ref": "#/$defs/ConnectorAuth", "description": "RFC 0047/0046 auth declaration shared by the connector's actions." },
+        "actions": {
+          "type": "array",
+          "description": "Typed actions the connector exposes. Each `typeId` MUST resolve to a node typeId defined in this pack's `nodes[]` (validation error `connector_action_unresolved` otherwise).",
+          "items": {
+            "type": "object",
+            "required": ["typeId", "displayName"],
+            "properties": {
+              "typeId": { "type": "string", "minLength": 1, "description": "MUST match a `nodes[].typeId` in this manifest." },
+              "displayName": { "type": "string", "minLength": 1 },
+              "idempotent": { "type": "boolean", "description": "Action is safe to auto-retry without an idempotency key. Absent/false ⇒ the host MUST NOT auto-retry without one (composes with idempotency.md)." },
+              "rateLimit": {
+                "type": "object",
+                "properties": {
+                  "requests": { "type": "integer", "minimum": 1 },
+                  "perSeconds": { "type": "integer", "minimum": 1 }
+                },
+                "additionalProperties": false,
+                "description": "Advertised rate-limit hint the host scheduler SHOULD honor. Does not change the node's wire shape."
+              },
+              "paginated": { "type": "boolean", "description": "Action returns paginated results." }
+            },
+            "additionalProperties": false
+          }
+        },
+        "triggers": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "typeIds of triggers (from the existing trigger model) this connector exposes. Each MUST resolve to a node/trigger typeId in this pack."
         }
       },
       "additionalProperties": false
