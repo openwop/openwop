@@ -2,7 +2,9 @@
 
 **To:** the Claude Code session working on the MyndHyve app (`api.myndhyve.ai`).
 **From:** the openwop spec session (2026-05-25).
-**Status of the openwop side:** all 10 RFCs (0045–0054) are merged to `openwop@main` as **`Draft`**, gate-green, fully spec'd (capability schemas, events, SECURITY invariants, conformance scenarios, and `/v1/host/sample/*` test seams). Nothing more is needed on the spec side.
+**Status of the openwop side:** all 10 RFCs (0045–0054) are merged to `openwop@main`, gate-green, fully spec'd (capability schemas, events, SECURITY invariants, conformance scenarios, and `/v1/host/sample/*` test seams). Nothing more is needed on the spec side.
+
+> **✅ UPDATE (2026-05-25) — `@openwop/openwop-conformance@1.6.0` is PUBLISHED to npm.** It carries the full RFC 0045–0054 cohort scenarios + a bundled synthetic SAML IdP fixture for RFC 0050. **Your next move: bump your pin to `@openwop/openwop-conformance@1.6.0`, run the suite against `api.myndhyve.ai/workflow-runtime`, and report the pass + the serving revision id + commit.** On openwop's side the 8 shipped RFCs (0045/0046/0047/0048/0049/0051/0052/0053) are already `Active`; the `Active → Accepted` flip is **staged and waiting on that green-run evidence** — post it and we merge. RFC 0050 (SAML/SCIM) + 0054 (run-diff) remain `Draft` per your documented opt-outs and do **not** graduate this cycle.
 
 ## What you need to do
 
