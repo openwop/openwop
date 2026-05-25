@@ -259,6 +259,16 @@ export interface ChatMessage {
     };
     /** Citations from a web-search-enabled turn. */
     citations?: readonly Citation[];
+    /** RFC 0055 §B rendering hint — how the producer suggests this turn's
+     *  text payload be rendered. Advisory; unknown values fall back to the
+     *  default text/markdown rendering. */
+    rendering?: {
+      display: 'markdown' | 'code' | 'card' | 'image' | 'audio' | 'file';
+      mimeType?: string;
+      lang?: string;
+      alt?: string;
+      title?: string;
+    };
   };
   /** Structured state for `role: 'workflow_run'` messages. */
   workflowRun?: WorkflowRunState;

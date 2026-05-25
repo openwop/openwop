@@ -79,6 +79,15 @@ export function parseSegments(content: string): readonly Segment[] {
   return segments;
 }
 
+/** RFC 0055 §B rendering hint (carried on the assistant turn's meta). */
+interface RenderingHint {
+  display: 'markdown' | 'code' | 'card' | 'image' | 'audio' | 'file';
+  mimeType?: string;
+  lang?: string;
+  alt?: string;
+  title?: string;
+}
+
 interface RendererProps {
   content: string | readonly ContentPart[];
   /** Render text segments through `react-markdown` + `remark-gfm`.
@@ -86,11 +95,27 @@ interface RendererProps {
    *  user's `**hello**` doesn't suddenly render bold. Assistant turns
    *  pass `true` from MessageBubble. */
   markdown?: boolean;
+  /** RFC 0055 §B hint for how to render string content. Advisory — an
+   *  unrecognized `display` falls back to the default text rendering.
+   *  Only consulted for string content; `image`/`audio`/`file` payloads
+   *  arrive as `ContentPart[]` and render via their own branches. */
+  rendering?: RenderingHint;
 }
 
-export function MessageRenderer({ content, markdown = false }: RendererProps): JSX.Element {
+export function MessageRenderer({ content, markdown = false, rendering }: RendererProps): JSX.Element {
   if (typeof content === 'string') {
-    return <TextWithCodeBlocks content={content} markdown={markdown} />;
+    // RFC 0055 §B: honor the producer's rendering hint for string content.
+    // Unrecognized / media families degrade gracefully to default text.
+    switch (rendering?.display) {
+      case 'code':
+        return <CodeBlock source={content} language={rendering.lang} />;
+      case 'card':
+        return <RenderingCard title={rendering.title}>{content}</RenderingCard>;
+      case 'markdown':
+        return <TextWithCodeBlocks content={content} markdown />;
+      default:
+        return <TextWithCodeBlocks content={content} markdown={markdown} />;
+    }
   }
   // ContentPart[] — multi-modal user (or future assistant) message.
   return (
@@ -150,6 +175,39 @@ function MarkdownText({ content }: { content: string }): JSX.Element {
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={CHAT_MD_COMPONENTS}>
         {content}
       </ReactMarkdown>
+    </div>
+  );
+}
+
+/** RFC 0055 §B `display: card` — a titled container around the (markdown)
+ *  body, for structured/summary payloads the producer wants set apart. */
+function RenderingCard({ title, children }: { title?: string; children: string }): JSX.Element {
+  return (
+    <div
+      style={{
+        margin: '8px 0',
+        borderRadius: 8,
+        border: '1px solid var(--color-border)',
+        background: 'var(--color-surface)',
+        overflow: 'hidden',
+      }}
+    >
+      {title && (
+        <div
+          style={{
+            padding: '6px 10px',
+            borderBottom: '1px solid var(--color-border)',
+            fontSize: 12,
+            fontWeight: 600,
+            color: 'var(--ink)',
+          }}
+        >
+          {title}
+        </div>
+      )}
+      <div style={{ padding: 10 }}>
+        <MarkdownText content={children} />
+      </div>
     </div>
   );
 }

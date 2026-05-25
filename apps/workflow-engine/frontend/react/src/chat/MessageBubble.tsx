@@ -181,7 +181,7 @@ export function MessageBubble({ message, onRegenerate, onFeedback, onReconfigure
           <ThoughtsDisclosure thoughts={message.thoughts} />
         )}
         {hasContent(message.content)
-          ? <MessageRenderer content={message.content} markdown={!isUser} />
+          ? <MessageRenderer content={message.content} markdown={!isUser} rendering={isUser ? undefined : message.meta?.rendering} />
           : message.isStreaming && !message.thoughts
             ? <span style={{ opacity: 0.6 }}>Thinking…</span>
             : isError
