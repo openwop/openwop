@@ -56,6 +56,8 @@ export function WorkflowCompletionCard({ run, onPreviewArtifact }: Props): JSX.E
     ? `${run.completedNodeIds.length}/${run.totalNodes} steps`
     : `${run.completedNodeIds.length} step${run.completedNodeIds.length === 1 ? '' : 's'}`;
 
+  const unavailable = run.runUnavailable === true;
+
   if (run.status === 'failed') {
     return (
       <CompletionShell tone="danger" iconKind="alert" title="Workflow failed">
@@ -70,9 +72,7 @@ export function WorkflowCompletionCard({ run, onPreviewArtifact }: Props): JSX.E
         )}
         {run.runId && (
           <Actions>
-            <Link to={`/runs/${run.runId}`} style={{ fontSize: 12 }}>
-              Open run →
-            </Link>
+            <OpenRunLink runId={run.runId} unavailable={unavailable} />
           </Actions>
         )}
       </CompletionShell>
@@ -85,9 +85,7 @@ export function WorkflowCompletionCard({ run, onPreviewArtifact }: Props): JSX.E
         <Meta items={[stepCount, elapsed]} />
         {run.runId && (
           <Actions>
-            <Link to={`/runs/${run.runId}`} style={{ fontSize: 12 }}>
-              Open run →
-            </Link>
+            <OpenRunLink runId={run.runId} unavailable={unavailable} />
           </Actions>
         )}
       </CompletionShell>
@@ -101,25 +99,73 @@ export function WorkflowCompletionCard({ run, onPreviewArtifact }: Props): JSX.E
       <Actions>
         {terminals.length > 0
           ? terminals.map((t) => (
-              <button
-                key={t.nodeId}
-                type="button"
-                className="secondary"
-                onClick={() => onPreviewArtifact?.(t.nodeId, t.output, t.label)}
-                disabled={!onPreviewArtifact}
-                style={{ fontSize: 12 }}
-              >
-                {terminals.length > 1 ? `View ${t.label}` : 'View output'} →
-              </button>
+              <span key={t.nodeId} style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => onPreviewArtifact?.(t.nodeId, t.output, t.label)}
+                  disabled={!onPreviewArtifact}
+                  style={{ fontSize: 12 }}
+                >
+                  {terminals.length > 1 ? `View ${t.label}` : 'View output'} →
+                </button>
+                {run.runId && !unavailable && (
+                  // Deep-link companion to the modal-opening View button —
+                  // opens /runs/:runId#node-:nodeId in a new tab so the user
+                  // can inspect the artifact in the full run-detail surface
+                  // (event log, agent trace, etc.) alongside the chat thread.
+                  <a
+                    href={`/runs/${run.runId}#node-${encodeURIComponent(t.nodeId)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Open in run detail (new tab)"
+                    style={{
+                      fontSize: 12,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      textDecoration: 'none',
+                      color: 'var(--color-accent)',
+                      padding: '0 4px',
+                    }}
+                    aria-label={`Open ${t.label} in run detail (new tab)`}
+                  >
+                    ↗
+                  </a>
+                )}
+              </span>
             ))
           : null}
         {run.runId && (
-          <Link to={`/runs/${run.runId}`} style={{ fontSize: 12, alignSelf: 'center' }}>
-            Open run →
-          </Link>
+          <span style={{ alignSelf: 'center' }}>
+            <OpenRunLink runId={run.runId} unavailable={unavailable} />
+          </span>
         )}
       </Actions>
     </CompletionShell>
+  );
+}
+
+/**
+ * Shared "Open run" affordance — renders the link normally when the
+ * run is still on the server, or a muted "(unavailable)" placeholder
+ * when the orphan-detection probe set `runUnavailable: true`.
+ */
+function OpenRunLink({ runId, unavailable }: { runId: string; unavailable: boolean }): JSX.Element {
+  if (unavailable) {
+    return (
+      <span
+        className="muted"
+        style={{ fontSize: 12, fontStyle: 'italic' }}
+        title="Run record no longer available on the server"
+      >
+        Open run (unavailable)
+      </span>
+    );
+  }
+  return (
+    <Link to={`/runs/${runId}`} style={{ fontSize: 12 }}>
+      Open run →
+    </Link>
   );
 }
 

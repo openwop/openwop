@@ -98,6 +98,18 @@ export interface WorkflowRunState {
    *  user has resolved an interrupt — without this, the FE forgets
    *  what the human chose as soon as `activeInterrupt` flips to null. */
   interruptHistory?: InterruptHistoryEntry[];
+  /** True when the BE no longer has a run record for `runId` —
+   *  account deletion, retention sweep, or a fresh database. The
+   *  cards still render from persisted local state, but the
+   *  workflow_run bubble surfaces a muted "(run record no longer
+   *  available)" footer and the "Open run" / "View" action links
+   *  disable themselves to avoid the 404 dead-end.
+   *
+   *  Set by the hydrate-effect probe in `useChatSession` on session
+   *  restore. Persisted alongside the rest of the workflow_run state
+   *  so the determination survives subsequent reloads — no re-probing
+   *  a known-unavailable run. */
+  runUnavailable?: boolean;
   /** Friendly name of the most recently started node. */
   currentNodeName: string | null;
   /** Map of backend nodeId → friendly name from the builder graph.
