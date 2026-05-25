@@ -3,19 +3,19 @@
 | Field | Value |
 |---|---|
 | **RFC** | 0056 |
-| **Title** | An optional `host.feedback` capability + additive `run.annotated` RunEvent + capability-gated `POST/GET /v1/runs/{runId}/annotations`, so a human (or supervisor agent) can attach a portable quality signal — rating / correction / label / flag — to a run, event, or node, feeding analytics, the HITL inbox, and replay |
+| **Title** | An optional `host.feedback` capability + a per-run annotation store exposed via `POST/GET /v1/runs/{runId}/annotations` + a live `run.annotated` SSE notification, so a human (or supervisor agent) can attach a portable quality signal — rating / correction / label / flag — to a run, event, or node, feeding analytics, the HITL inbox, and review. Annotations are a side-resource, **not** replayable run-event-log entries. |
 | **Status** | `Draft` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-25 |
 | **Updated** | 2026-05-25 |
-| **Affects** | `schemas/capabilities.schema.json` (additive `host.feedback` block) · `schemas/run-event.schema.json` (additive `run.annotated` event type) · new `schemas/annotation.schema.json` · `api/openapi.yaml` (two new capability-gated operations) · `spec/v1/observability.md` (annotation as a quality-signal surface) · `spec/v1/replay.md` + `spec/v1/debug-bundle.md` (fork/export semantics) · `SECURITY/invariants.yaml` (cross-tenant + redaction invariants) · new conformance scenarios |
+| **Affects** | `schemas/capabilities.schema.json` (additive `host.feedback` block) · new `schemas/annotation.schema.json` · `api/openapi.yaml` (two new capability-gated operations) · `api/asyncapi.yaml` (`run.annotated` stream message) · `spec/v1/observability.md` (annotation as a quality-signal surface) · `spec/v1/replay.md` + `spec/v1/debug-bundle.md` (fork/export semantics) · `SECURITY/invariants.yaml` (cross-tenant + redaction invariants) · new conformance scenarios. **`run.annotated` is a live SSE notification only — it is NOT added to `schemas/run-event.schema.json`'s replayable `RunEventType` enum (see §B/§D).** |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
 | **Superseded by** | — |
 
 ## Summary
 
-OpenWOP can observe *what an agent did* (reasoning events, cost, interrupts) but has no portable way to record *whether a human judged it good* — a thumbs-up/down, a correction, a label, a "flag for review." This RFC adds an optional `host.feedback` capability, an additive `run.annotated` RunEvent, and two capability-gated endpoints to record and list annotations bound to a run, a specific event, or a node. Because the signal lives on the wire as a standard event, a debugger / analytics consumer / HITL inbox on one host can read feedback captured by another — turning per-app, throwaway thumbs-up buttons into a portable quality signal that feeds analytics (intervention rate, correction rate), replay ("show me corrected runs"), and review queues. Everything is advertisement-gated and the event type is ignorable by existing consumers.
+OpenWOP can observe *what an agent did* (reasoning events, cost, interrupts) but has no portable way to record *whether a human judged it good* — a thumbs-up/down, a correction, a label, a "flag for review." This RFC adds an optional `host.feedback` capability, a **per-run annotation store** exposed via two capability-gated endpoints (record + list), and a **live `run.annotated` SSE notification** so dashboards update in real time. Annotations are a **side-resource — deliberately NOT entries in the replayable run event log** — so they never collide with fork/replay semantics (a fork copies source events `< fromSeq` per `replay.md`, which would otherwise contradict §D "not copied into a fork"; see §B/§D). Because the shape is portable, a debugger / analytics consumer / HITL inbox on one host can read feedback captured by another — turning per-app, throwaway thumbs-up buttons into a portable quality signal that feeds analytics (intervention rate, correction rate) and review queues. Everything is advertisement-gated and the stream message is ignorable by existing consumers.
 
 ## Motivation
 
@@ -57,7 +57,7 @@ This is squarely an **observability + HITL** concern — both core OpenWOP domai
    }
 ```
 
-### §B — `Annotation` shape + `run.annotated` RunEvent (additive)
+### §B — `Annotation` shape + `run.annotated` stream notification (additive)
 
 New `schemas/annotation.schema.json`:
 
@@ -91,7 +91,7 @@ New `schemas/annotation.schema.json`:
     "actor": {
       "type": "object",
       "required": ["principalRef"],
-      "properties": { "principalRef": { "type": "string", "description": "RFC 0048 principal, or an AgentRef (RFC 0002) when a supervisor agent annotates." } }
+      "properties": { "principalRef": { "type": "string", "description": "Opaque principal identifier — a principal per RFC 0048 (Draft, referenced non-normatively) or an AgentRef per RFC 0002 when a supervisor agent annotates. Typed as a plain string so this RFC does NOT depend on RFC 0048 reaching Accepted." } }
     },
     "note": { "type": "string", "description": "Optional free-text note. Untrusted user content." },
     "createdAt": { "type": "string", "format": "date-time" }
@@ -100,7 +100,9 @@ New `schemas/annotation.schema.json`:
 }
 ```
 
-A `run.annotated` RunEvent carries one `Annotation` in its payload. It is emitted onto the run's event stream when an annotation is recorded, so SSE consumers (the HITL inbox, a live dashboard) see it in real time and replay consumers see it in order.
+Annotations persist in a **per-run side-store keyed by `runId`** (the `POST/GET .../annotations` endpoints in §C are its read/write surface). When one is recorded, the host emits a **`run.annotated` SSE notification** carrying the `Annotation` in its payload, on the `updates` + `debug` stream modes, so live consumers (the HITL inbox, a dashboard) update in real time.
+
+`run.annotated` is a **live stream message, NOT a persisted `RunEvent`** — it is deliberately **not** added to `run-event.schema.json`'s `RunEventType` enum and never enters the replayable event log. This is the load-bearing design choice: a fork copies source event-log entries for sequences `< fromSeq` (`replay.md`), so a replayable annotation event would be copied into forks — directly contradicting §D — and would also mean appending events to a *terminal* run's immutable log. Keeping annotations off the event log resolves both. (Producer-side: an AsyncAPI `RunAnnotated` message references `annotation.schema.json`.)
 
 ### §C — Endpoints (capability-gated on `host.feedback.supported`)
 
@@ -111,9 +113,11 @@ Hosts that don't advertise `host.feedback.supported` MUST return `501 capability
 
 ### §D — Fork / replay / export semantics
 
-- **Fork** (`replay.md`): annotations attach to the **source** run and are **not** copied into a fork (a fork is a new run with no human judgments yet). A fork MAY carry a back-reference to the source so a reviewer can navigate to "the feedback that motivated this fork."
-- **Replay**: `run.annotated` events replay in order like any event; they are inert on replay (they record a past human action and trigger no node execution).
-- **Debug bundle** (`debug-bundle.md`): a run's annotations are included in the export so a flagged run travels with its reviewer notes.
+Because annotations live in a per-run side-store (§B), they sit cleanly outside fork/replay:
+
+- **Fork** (`replay.md`): a fork replays/copies source *event-log* entries for sequences `< fromSeq`. Annotations are not event-log entries, so a fork inherently starts with **zero** annotations (a fork is a new run with no human judgments yet). A fork MAY carry a back-reference to the source so a reviewer can navigate to "the feedback that motivated this fork."
+- **Replay**: there is nothing to replay — `run.annotated` is a live SSE notification, not a persisted event, so it never appears in a replayed event stream and triggers no node execution. This avoids both appending to a terminal run's immutable log and the §D-vs-fork contradiction a replayable annotation event would create.
+- **Debug bundle** (`debug-bundle.md`): the host reads the annotation side-store and includes a run's annotations in the export, so a flagged run travels with its reviewer notes.
 
 ### §E — Security (additive invariants)
 
@@ -123,7 +127,7 @@ Hosts that don't advertise `host.feedback.supported` MUST return `501 capability
 
 ## Compatibility
 
-**Additive.** New optional capability block; a new RunEvent type that consumers ignore if unrecognized (additive event types are explicitly backward-safe per `COMPATIBILITY.md` §2.1); two new endpoints that only exist behind the advertised capability and otherwise return the spec'd `501`. No change to any existing event, endpoint, or schema. A host that doesn't advertise `host.feedback` is bit-for-bit unchanged and keeps its existing conformance pass. The two new SECURITY invariants are additive (they constrain a new surface, not an existing one).
+**Additive.** New optional capability block; a new **SSE stream message** (`run.annotated`) consumers ignore if unrecognized (additive stream messages are backward-safe per `COMPATIBILITY.md` §2.1) — deliberately **not** added to the replayable `RunEventType` enum, so the event-log wire shape and fork/replay semantics are untouched; two new endpoints that only exist behind the advertised capability and otherwise return the spec'd `501`; one new side-resource schema (`annotation.schema.json`). No change to any existing event, endpoint, or schema. A host that doesn't advertise `host.feedback` is bit-for-bit unchanged and keeps its existing conformance pass. The two new SECURITY invariants are additive (they constrain a new surface, not an existing one).
 
 ## Conformance
 
@@ -157,7 +161,7 @@ Hosts that don't advertise `host.feedback.supported` MUST return `501 capability
 ## Acceptance criteria
 
 - [ ] Spec text merged (this file + `observability.md` §"Quality signals" + replay/debug-bundle clauses).
-- [ ] `host.feedback` in `capabilities.schema.json`; `run.annotated` in `run-event.schema.json`; new `annotation.schema.json`.
+- [ ] `host.feedback` in `capabilities.schema.json`; `run.annotated` `RunAnnotated` message in `api/asyncapi.yaml` (NOT in `run-event.schema.json`'s `RunEventType` enum); new `annotation.schema.json`; per-run annotation side-store.
 - [ ] Two operations in `api/openapi.yaml` with `501` documented for the unadvertised case.
 - [ ] Two SECURITY invariants (`annotation-cross-tenant-isolation`, `annotation-content-redaction`) with public conformance tests.
 - [ ] Seven conformance scenarios.
