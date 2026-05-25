@@ -330,6 +330,21 @@ A debugger should render all three when present. The `reasoning` field captures 
 
 ---
 
+## Media reference payloads (RFC 0055 §C)
+
+`media.image`, `media.audio`, and `media.file` are **optional, advertised** kinds for an LLM-emitted (or host-emitted) image, audio clip, or downloadable file. They are **not** among the four MUST-recognize universal kinds — a host emits and advertises them only if it produces media; a consumer that doesn't recognize them falls back to raw rendering. They pair with the `meta.rendering.display` hint (§"Rendering hints") for how to render, and carry the asset itself by **host-served URL reference** (preferred) or, below a cap, inline base64.
+
+Per-kind payload schemas live at the canonical location (`schemas/envelopes/media.{image,audio,file}.schema.json`); a host that supports them lists each in `Capabilities.supportedEnvelopes` + `schemaVersions`. The shared payload shape is `{ url?, base64?, bytes, mimeType?, … }` (`bytes` required; `media.audio` adds `durationSeconds?`, `media.file` adds `name?`).
+
+### Asset-URL discipline (normative)
+
+1. A host that serves asset URLs **MUST** scope them to the run's tenant and **MUST NOT** make them globally guessable — use a signed-URL or capability-token recipe (reuse the interrupt signed-token recipe). Enforced by the `media-asset-url-tenant-scoped` SECURITY invariant.
+2. Inline base64 is permitted only at or below the host-advertised cap `capabilities.aiProviders.maxInlineMediaBytes` (default **256 KiB**); above it the host **MUST** use a `url` reference. This bounds event-log bloat and keeps replay payloads portable.
+3. Asset URLs are part of a run's debug-bundle manifest (`debug-bundle.md`) **by reference**, never by inlining the binary.
+4. A host **MUST** retain a `media.*` asset at least as long as the emitting run's event-log retention (`replay.md`), so a forked/replayed run can still resolve the URL. The event payload (a URL string) replays deterministically; this rule keeps the referenced asset available.
+
+---
+
 ## Vendor-namespaced kinds
 
 All non-universal kinds MUST be vendor-namespaced per `host-extensions.md` §"Canonical-prefix table." Core v1 does **not** specify domain-specific kinds (`prd.create`, `theme.create`, `tasks.create`, etc.). A host that wishes to advertise these kinds MUST namespace them — e.g., `vendor.myndhyve.prd.create`, `vendor.myndhyve.theme.create` — and supply the per-kind JSON Schema at the canonical schema location (see §Schema discipline).

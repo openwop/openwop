@@ -681,6 +681,12 @@
             }
           },
           "additionalProperties": false
+        },
+        "maxInlineMediaBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 262144,
+          "description": "RFC 0055 §C rule 2 — optional cap (bytes) on inline base64 in `media.*` envelope payloads. A `media.{image,audio,file}` asset above this size MUST be served by a tenant-scoped `url` reference rather than inlined (bounds event-log + replay-payload size). Default 256 KiB (262144) when absent. A host MAY set 0 to force URL references for all emitted media."
         }
       },
       "additionalProperties": false
