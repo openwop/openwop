@@ -19,6 +19,15 @@ Lands RFC 0043's landable acceptance criteria so the registry, namespace, name-r
 - **Cross-links landed** per RFC 0043 §E: `host-extensions.md` (§A/§C summary footer), `registry-operations.md` (policy-layer header), `RFCS/0038` (WG inherits §B/§C on ratification), `GOVERNANCE.md` §"Path to working group" (RFC 0043 ratification on WG activation), `MAINTAINERS.md` (registry-approver expectation + §B.4 key-rotation dual control).
 - RFC 0043 acceptance criteria 1–3 checked; only the comment window + WG ratification remain.
 
+### RFC 0052 scheduling & time-based triggers — Tier-3 step (2026-05-25)
+
+Gives the `schedule` trigger a portable, durable, once-per-tick execution contract — promoting the scheduling intent behind RFC 0017 (`host.queueBus`) into a conformance-tested surface. RFC 0052 stays `Draft`. All additive.
+
+- **Schema:** new top-level `capabilities.scheduling` block (`supported` / `cron` / `delayed` / `calendar` / `maxFutureHorizon`) in `capabilities.schema.json`.
+- **Spec:** `host-capabilities.md` §host.scheduling — durable scheduled runs, exactly-once-per-tick firing (composes with `idempotency.md`), `maxFutureHorizon` enforcement, documented missed-tick policy (no backlog flood). Orthogonal to the in-DAG `core.control.delay` primitive (unchanged). New `schedule_horizon_exceeded` error code registered in `rest-endpoints.md`.
+- **Conformance:** `scheduling-capability-shape.test.ts` (advertisement shape, always runs) + `scheduling-cron-fires-once.test.ts` (once-per-tick + missed-tick MUST-NOT, capability-gated, `POST /v1/host/sample/scheduling/tick` seam soft-skips, registered in `host-sample-test-seams.md`). Delayed-horizon + calendar scenarios deferred.
+- **Counts synced:** conformance scenario files → 227; README + conformance README + `coverage.md` updated; `docs/PROTOCOL-STATUS.md` regenerated. (No new schema file, no new invariant, no new event.)
+
 ### Tier-2 (RFC 0048–0051) code-review follow-ups — gate request-event routing + doc polish (2026-05-25)
 
 Resolves findings from a `/code-review` pass over Tier-2. No wire-shape change.

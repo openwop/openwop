@@ -96,12 +96,14 @@ New fixture: a deterministic clock seam (reuse the existing test-clock fixture i
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (this file).
-- [ ] `host.scheduling` block in `capabilities.schema.json`.
-- [ ] `spec/v1/host-capabilities.md` §host.scheduling section + the `schedule` trigger execution contract.
-- [ ] Four conformance scenarios (shape, cron-once, horizon, missed-tick) + deterministic clock fixture.
-- [ ] CHANGELOG entry under `[Unreleased]`.
+- [x] Spec text merged (this file).
+- [x] `scheduling` block (top-level, per the schema convention) in `capabilities.schema.json`.
+- [x] `spec/v1/host-capabilities.md` §host.scheduling section + the `schedule` trigger execution contract + the `schedule_horizon_exceeded` error code (registered in `rest-endpoints.md`).
+- [~] Conformance — 2 of 4 landed: `scheduling-capability-shape.test.ts` (shape, always runs) + `scheduling-cron-fires-once.test.ts` (once-per-tick + missed-tick, capability-gated, `scheduling/tick` seam soft-skips — registered in `host-sample-test-seams.md`). The delayed-execution horizon + calendar scenarios + a bundled deterministic-clock fixture are deferred until a scheduling host wires the seam.
+- [x] CHANGELOG entry under `[Unreleased]`.
 - [ ] A non-steward host advertises `host.scheduling` and passes cron-fires-once + missed-tick.
+
+**Implementation note (2026-05-25):** Capability block (top-level `capabilities.scheduling`) + `§host.scheduling` contract + `schedule_horizon_exceeded` error code + the two scenarios + the `scheduling/tick` seam landed on `main`. Composes with RFC 0017 `queueBus`; orthogonal to `core.control.delay` (unchanged). No new SECURITY invariant. Status stays `Draft`.
 
 ## References
 

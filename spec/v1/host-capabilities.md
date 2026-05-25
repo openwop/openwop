@@ -1767,6 +1767,43 @@ A host that advertises `capabilities.sandbox.supported: true` MUST enforce all 8
 
 ---
 
+## §host.scheduling
+
+**Capability flag:** `scheduling.supported: true` *(advertised via top-level `Capabilities.scheduling`; see [capabilities.md §scheduling](capabilities.md#scheduling))* — RFC 0052, `Draft`.
+
+**Used by:** the `schedule` trigger in `core.openwop.triggers` (cron / delayed / calendar). Promotes the scheduling intent behind RFC 0017 (`host.queueBus`) into a portable, conformance-tested execution contract.
+
+Gives the `schedule` trigger **time-based run-initiation semantics**: a cron expression, one-shot delay, or calendar reference produces a durable scheduled run. This is orthogonal to the in-DAG `core.control.delay` primitive (which reads `config.delayMs` and delays a node *within* a run); `host.scheduling` *initiates* runs at a time. It composes with `host.queueBus` (RFC 0017) where a host backs scheduling with a queue, but a host MAY advertise `scheduling` without `queueBus` (e.g. a cron daemon).
+
+**Contract (normative).** A host advertising `scheduling.supported: true` MUST, for a `schedule` trigger configured with a cron expr / `delayMs` / calendar ref:
+
+1. Produce a **durable** scheduled run that survives host restart and fires at the scheduled time.
+2. Fire **exactly once per tick** — a cron tick MUST NOT spawn duplicate concurrent runs (idempotent firing; composes with `idempotency.md`).
+3. Reject a schedule beyond the advertised `maxFutureHorizon` with `schedule_horizon_exceeded`.
+4. Apply a documented **missed-tick policy** — when the host was down across a tick it MUST either fire-once-on-recovery or skip-to-next (advertised so consumers can reason about it); it MUST NOT silently fire N backlogged runs.
+
+**Capability advertisement shape:**
+
+```json
+{
+  "scheduling": {
+    "supported": true,
+    "cron": true,
+    "delayed": true,
+    "calendar": false,
+    "maxFutureHorizon": "P90D"
+  }
+}
+```
+
+**Error codes (additive to `rest-endpoints.md` §"Common error codes"):**
+
+- `schedule_horizon_exceeded` — a `schedule` trigger requested a fire time beyond `capabilities.scheduling.maxFutureHorizon`. `details.maxFutureHorizon` SHOULD echo the advertised cap.
+
+Additive — hosts that omit the block advertise no scheduling; `schedule`-trigger workflows refuse to register against them (peerDependency `scheduling: 'supported'`). Verified by `scheduling-capability-shape.test.ts` (shape, always runs) + `scheduling-cron-fires-once.test.ts` (once-per-tick + missed-tick, capability-gated).
+
+---
+
 ## §host.knowledge
 
 **Capability flag:** `host.knowledge: supported`
