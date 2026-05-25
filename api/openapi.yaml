@@ -509,6 +509,54 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
 
+  /v1/runs/{runId}:diff:
+    get:
+      tags: [runs]
+      summary: |
+        RFC 0054 — return a deterministic, replay-aware structured diff of
+        two runs (typically a run and its RFC 0011 fork): `divergedAtSeq` +
+        ordered `eventDiffs[]` + `stateDiff`. The diff is a pure function of
+        the two event logs (see `replay.md` determinism contract). Requires
+        `runs:read` on BOTH runs. Hosts that don't implement it return 404.
+      operationId: diffRun
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+        - name: against
+          in: query
+          required: true
+          description: The other run id to diff `{runId}` against (the `b` run).
+          schema: { type: string }
+      responses:
+        '200':
+          description: |
+            Structured diff of the two runs. `divergedAtSeq: null` + empty
+            `eventDiffs` when the logs are identical.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/run-diff-response.schema.json'
+        '400':
+          description: Missing or malformed `against` query parameter.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403':
+          description: |
+            Caller lacks `runs:read` on `{runId}` and/or on `against`
+            (`run_forbidden`); composes with RFC 0048 cross-workspace
+            isolation.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: |
+            Either run doesn't exist, OR the host doesn't implement the diff
+            endpoint and treats the path as absent.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
   /v1/runs/{runId}:pause:
     post:
       tags: [runs]

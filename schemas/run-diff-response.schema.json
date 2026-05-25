@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/run-diff-response.schema.json",
+  "title": "RunDiffResponse",
+  "description": "RFC 0054 — deterministic, replay-aware structured diff of two runs' event sequences and terminal states, returned by GET /v1/runs/{runId}:diff?against={otherRunId}. The diff is a pure function of the two event logs (see spec/v1/replay.md determinism contract).",
+  "type": "object",
+  "required": ["a", "b", "eventDiffs", "stateDiff"],
+  "properties": {
+    "a": {
+      "type": "string",
+      "description": "The {runId} run (the path resource)."
+    },
+    "b": {
+      "type": "string",
+      "description": "The {against} run (the query parameter)."
+    },
+    "divergedAtSeq": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Event sequence number at which the two logs first diverge; null if identical. Aligns with replay.diverged.divergencePoint in spec/v1/replay.md."
+    },
+    "eventDiffs": {
+      "type": "array",
+      "description": "Ordered per-sequence differences. Empty when the logs are identical.",
+      "items": {
+        "type": "object",
+        "required": ["seq", "op"],
+        "properties": {
+          "seq": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Event sequence number this diff entry applies to."
+          },
+          "op": {
+            "type": "string",
+            "enum": ["added", "removed", "changed"],
+            "description": "added = present in b only; removed = present in a only; changed = present in both at this seq but differ by canonical comparison."
+          },
+          "aEvent": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "The run-a event at this seq (omitted when op = added). Shape per run-event.schema.json."
+          },
+          "bEvent": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "The run-b event at this seq (omitted when op = removed). Shape per run-event.schema.json."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "stateDiff": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Diff of terminal RunSnapshot states (status, variables, channels) — redaction-safe (never carries credential material)."
+    },
+    "truncated": {
+      "type": "boolean",
+      "description": "True if either run was in-flight and only a prefix was compared."
+    }
+  },
+  "additionalProperties": false
+}
