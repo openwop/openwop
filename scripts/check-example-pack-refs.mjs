@@ -208,50 +208,6 @@ async function loadPackSchema(name, version, schemaRef) {
   }
 }
 
-/**
- * Fetch a schema file referenced by configSchemaRef / inputSchemaRef
- * (e.g., "schemas/chat-completion.config.json"). In offline mode the
- * source is the in-tree tarball at registry/v1/packs/{name}/-/{version}.tgz;
- * in live mode it's the derived mirror at
- *   /v1/packs/{name}/{version}/<schema-basename>
- */
-async function loadPackSchema(name, version, schemaRef) {
-  if (offlineIndex) {
-    const dir = offlineIndex.replace(/\/v1\/index\.json$/, '');
-    const tarballPath = `${dir}/v1/packs/${name}/-/${version}.tgz`;
-    if (!existsSync(tarballPath)) return { schema: null };
-    try {
-      const bytes = readTarballFile(readFileSync(tarballPath), schemaRef);
-      if (!bytes) return { schema: null };
-      return { schema: JSON.parse(bytes.toString('utf8')) };
-    } catch (e) {
-      return { schema: null, parseError: e.message };
-    }
-  }
-  const filename = schemaRef.replace(/^schemas\//, '');
-  const url = `${registry.replace(/\/$/, '')}/v1/packs/${name}/${version}/${filename}`;
-  try {
-    const res = await fetchWithTimeout(url, { redirect: 'follow' });
-    if (!res.ok) return { schema: null };
-    return { schema: await res.json() };
-  } catch (e) {
-    return { schema: null, parseError: e.message };
-  }
-}
-
-async function loadPackVersion(name, version) {
-  if (offlineIndex) {
-    const dir = offlineIndex.replace(/\/v1\/index\.json$/, '');
-    const path = `${dir}/v1/packs/${name}/-/${version}.json`;
-    if (!existsSync(path)) return null;
-    return JSON.parse(readFileSync(path, 'utf8'));
-  }
-  const url = `${registry.replace(/\/$/, '')}/v1/packs/${name}/-/${version}.json`;
-  const res = await fetch(url, { redirect: 'follow' });
-  if (!res.ok) return null;
-  return res.json();
-}
-
 async function buildPackResolver(topIndex) {
   const known = new Set((topIndex.packs ?? []).map((p) => p.name));
   const detailCache = new Map();
