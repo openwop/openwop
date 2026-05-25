@@ -174,6 +174,8 @@
       <li class="toc-sub"><a href="#1-api-keys-machine-callers">1. API keys (machine callers)</a></li>
       <li class="toc-sub"><a href="#2-user-bearer-tokens-human-callers">2. User-bearer tokens (human callers)</a></li>
       <li class="toc-top"><a href="#authorization">Authorization</a></li>
+      <li class="toc-top"><a href="#identity-claims-tenant-workspace-principal-rfc-0048">Identity claims — tenant · workspace · principal (RFC 0048)</a></li>
+      <li class="toc-top"><a href="#role-based-authorization-rfc-0049">Role-based authorization (RFC 0049)</a></li>
       <li class="toc-top"><a href="#error-response-shape">Error response shape</a></li>
       <li class="toc-top"><a href="#rate-limiting">Rate limiting</a></li>
       <li class="toc-top"><a href="#audit">Audit</a></li>
@@ -239,6 +241,31 @@
 <p>1. <strong>Tenant isolation.</strong> A caller authenticated for tenant A MUST NOT be able to read or mutate any resource scoped to tenant B. The server MUST verify resource-tenant binding inside the same transaction or query that fetches the resource. (See <code>idempotency.md</code> for the run-claim transactional check.)</p>
 <p>2. <strong>Scope-resource match.</strong> Even if a key carries <code>runs:read</code>, the server MUST verify that the specific run the caller is requesting belongs to a tenant the key is authorized for.</p>
 <p>3. <strong>Test-mode segregation.</strong> If the server distinguishes live and test keys (recommended), it MUST NOT permit a test key to read or mutate live data, and vice versa. Resources created by test keys MUST be marked as such.</p>
+<h2 id="identity-claims-tenant-workspace-principal-rfc-0048">Identity claims — tenant · workspace · principal (RFC 0048)</h2>
+<p>OpenWOP standardizes a small, explicit <strong>identity triple</strong> the host MAY derive from the caller's credential and carry in the auth context. All three are <strong>optional</strong> — single-tenant hosts emit none of them and are unaffected:</p>
+<table>
+<thead><tr><th>Claim</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>tenant</code></td><td>The top-level isolation boundary (the dimension RFC 0011 already narrows discovery by; now named).</td></tr>
+<tr><td><code>workspace</code></td><td>An <strong>optional</strong> sub-tenant within a tenant — a collaborative scope. A tenant has ≥ 1 workspace.</td></tr>
+<tr><td><code>principal</code></td><td>The <strong>acting identity</strong> (a user or an agent) making the request. Opaque id — never PII.</td></tr>
+</tbody></table>
+<p>The protocol does not prescribe <em>how</em> a host derives these (API key, OIDC token, SAML assertion per RFC 0050, etc.) — only their names and the binding rules below.</p>
+<ul>
+<li><strong>Run ownership.</strong> When a run is created under an identity triple, the host SHOULD record it as <code>RunSnapshot.owner</code> (<code>{ tenant, workspace?, principal? }</code>, per <code>run-snapshot.schema.json</code>) and echo it, redaction-safe, on the <code>run.started</code> event payload.</li>
+<li><strong>Workspace isolation (normative).</strong> Tenant isolation (§Authorization rule 1) extends to workspace granularity: a <code>principal</code> scoped to workspace A MUST NOT read or mutate a run owned by workspace B — within or across tenants. A cross-workspace read MUST fail closed with <code>run_forbidden</code> (never silently return another workspace's data). This is the CTI-style guarantee that makes the <code>workspace</code> claim enforceable rather than advisory.</li>
+<li><strong>Workspace-scoped discovery.</strong> RFC 0011's tenant-narrowing of the <code>/.well-known/openwop</code> capability view extends to workspace granularity: when the caller's context carries a <code>workspace</code> claim, the host MAY present a workspace-scoped subset, and the RFC 0011 authorization-oracle invariant holds at workspace granularity (a workspace-scoped view MUST NOT include an optional capability a strictly-narrower workspace's view lacks). Reuses the <code>capabilities.discovery.authScoped</code> advertisement.</li>
+<li><strong>Identifier opacity (normative).</strong> <code>RunSnapshot.owner</code> is echoed on the <code>run.started</code> event payload (SSE, webhooks, debug bundles) and persisted in the snapshot, and these fields are <strong>not</strong> redaction-gated. Hosts MUST therefore use an <strong>opaque, non-PII identifier</strong> for <code>principal</code> (e.g. a stable internal user/agent id or pseudonymous handle — never a raw email address, legal name, or other personal data); hosts SHOULD do likewise for <code>tenant</code> and <code>workspace</code>. A host that can only key on PII MUST map it to an opaque id before populating <code>owner</code>.</li>
+</ul>
+<p>RBAC (RFC 0049), enterprise SSO/provisioning (RFC 0050), and approval gates (RFC 0051) all bind to this triple.</p>
+<h2 id="role-based-authorization-rfc-0049">Role-based authorization (RFC 0049)</h2>
+<p>A host MAY advertise <code>capabilities.authorization</code> to bind an RFC 0048 <code>principal</code>'s <strong>role</strong> to <strong>scopes</strong> and make authorization decisions observable, auditable, and conformance-testable. This reuses the existing API-key <strong>scope grammar</strong> (the §Authorization scope vocabulary above) — roles resolve <em>to</em> scopes; no new grammar is introduced.</p>
+<ul>
+<li><strong>Role → scope binding.</strong> The host advertises its role catalog as <code>capabilities.authorization.roles: [{ role, scopes[] }]</code>. A request is authorized when <strong>any</strong> of the principal's role-derived scopes matches the required scope, applying the same scope-match semantics the host already uses for API keys (per-segment wildcards + verb implication). A principal's role is resolved per <code>(principal, workspace)</code> — the same principal can hold different roles in different workspaces.</li>
+<li><strong>Fail-closed (normative).</strong> An absent, unseeded, or unresolvable role MUST deny (a cache miss or resolver error ⇒ <code>allowed: false</code>); the host MUST NOT default-allow under any error condition. <code>capabilities.authorization.failClosed</code> is <code>const: true</code>. This is the SECURITY invariant <code>authorization-fail-closed</code>.</li>
+<li><strong>Decision event.</strong> The host SHOULD emit <code>authorization.decided { principal, action, resource, allowed, reason }</code> (per <code>run-event-payloads.schema.json</code>) on a decision; every <strong>deny</strong> SHOULD be emitted and SHOULD feed the audit log (the RFC 0009/0010 audit-log integrity profile). The event is redaction-safe — <code>principal</code> is an opaque id and <code>reason</code> carries no credential material.</li>
+</ul>
+<p>A denied REST action returns the existing <code>forbidden</code> envelope; the <code>authorization.decided { allowed: false }</code> event is the observable, auditable record of <em>why</em>.</p>
 <h2 id="error-response-shape">Error response shape</h2>
 <p>Auth failures use the standard JSON-RPC 2.0 error shape on JSON-RPC transports, and the following on REST:</p>
 <pre class="lang-json"><code>{
@@ -272,6 +299,7 @@
 <tr><td>A2</td><td>✅ Closed as optional profile in <code>auth-profiles.md</code>: mTLS deployment profile.</td><td>conformance minor</td></tr>
 <tr><td>A3</td><td>✅ Closed as optional profile in <code>auth-profiles.md</code>: API-key rotation/grace-period semantics.</td><td>conformance minor</td></tr>
 <tr><td>A4</td><td>Webhook HMAC is now specified in <code>webhooks.md</code>; remaining work is shared auth-profile conformance across REST and webhook verification examples</td><td>conformance minor</td></tr>
+<tr><td>A5</td><td>✅ Closed as optional capability <code>host.oauth</code> (RFC 0047): OAuth 2.0 <strong>authorization-code + refresh</strong> for a node/connector acquiring a third-party token on a user's behalf. Distinct from A1 (client-credentials = host auth); 0047 is third-party delegation — acquired tokens stored as <code>host.credentials</code> (RFC 0046) entries, resolved into the node sandbox only.</td><td>conformance minor</td></tr>
 </tbody></table>
 <h2 id="references">References</h2>
 <ul>

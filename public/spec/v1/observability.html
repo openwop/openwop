@@ -215,6 +215,7 @@
       <li class="toc-sub"><a href="#get-v1-host-sample-test-otel-spans-runid-id">GET /v1/host/sample/test/otel/spans?runId=&lt;id&gt;</a></li>
       <li class="toc-sub"><a href="#post-v1-host-sample-test-debug-bundle-export">POST /v1/host/sample/test/debug-bundle/export</a></li>
       <li class="toc-sub"><a href="#capability-advertisement-normative">Capability advertisement (normative)</a></li>
+      <li class="toc-top"><a href="#quality-signals-rfc-0056">Quality signals (RFC 0056)</a></li>
       <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
       <li class="toc-top"><a href="#references">References</a></li>
     </ul>
@@ -875,6 +876,15 @@ processors:
   }
 }</code></pre>
 <p>A host that advertises <code>testSeams.otelScrape: true</code> but returns 404 / 5xx from the seam is non-conformant. Hosts that do NOT implement the seam MUST omit the field (or set it to <code>false</code>); conformance scenarios skip cleanly when the capability is absent.</p>
+<h2 id="quality-signals-rfc-0056">Quality signals (RFC 0056)</h2>
+<p>Observability above covers <em>what an agent did</em>; <strong>annotations</strong> cover <em>whether a human (or a supervisor agent) judged it good</em>. RFC 0056 defines a non-blocking quality signal — rating / correction / label / flag — attached to a run, event, or node, recorded via <code>POST /v1/runs/{runId}/annotations</code> and surfaced live via the <code>run.annotated</code> SSE notification.</p>
+<p>Annotations are a <strong>per-run side-resource</strong>, NOT entries in the replayable run event log (so they never enter fork/replay; see <code>replay.md</code>). A host that advertises <code>capabilities.feedback.supported: true</code> MUST:</p>
+<ul>
+<li>record annotations tenant-scoped — an annotation is visible only within its run's tenant (SECURITY invariant <code>annotation-cross-tenant-isolation</code>);</li>
+<li>redact secret-shaped material in <code>signal.correction</code> and <code>note</code> before persistence, listing, and export, per SR-1 (SECURITY invariant <code>annotation-content-redaction</code>);</li>
+<li>audit-log each recording with the acting principal (<code>auth.md</code>).</li>
+</ul>
+<p>Consumers derive quality metrics (correction rate, mean rating, flag rate) from this surface; they complement — but are distinct from — the <code>openwop.*</code> telemetry spans/metrics above. See <a href="../../RFCS/0056-run-feedback-and-annotation-event.md"><code>RFCS/0056</code></a>.</p>
 <h2 id="open-spec-gaps">Open spec gaps</h2>
 <table>
 <thead><tr><th>#</th><th>Gap</th><th>Owner</th></tr></thead>

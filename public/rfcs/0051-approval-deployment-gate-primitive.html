@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — RFC 0051: Approval &amp; deployment-gate primitive</title>
+  <meta name="description" content="Add a first-class approval/deployment-gate node, core.openwop.governance.approvalGate — an interrupt node with requiredRole/requiredScope, optional quorum, and a role-gated, audited override path — surfacing its request via the canonical…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0051-approval-deployment-gate-primitive.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — RFC 0051: Approval &amp; deployment-gate primitive"/>
+  <meta property="og:description" content="Add a first-class approval/deployment-gate node, core.openwop.governance.approvalGate — an interrupt node with requiredRole/requiredScope, optional quorum, and a role-gated, audited override path — surfacing its request via the canonical…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0051-approval-deployment-gate-primitive.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — RFC 0051: Approval &amp; deployment-gate primitive"/>
+  <meta name="twitter:description" content="Add a first-class approval/deployment-gate node, core.openwop.governance.approvalGate — an interrupt node with requiredRole/requiredScope, optional quorum, and a role-gated, audited override path — surfacing its request via the canonical…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "RFC 0051: Approval & deployment-gate primitive",
+  "description": "Add a first-class approval/deployment-gate node, core.openwop.governance.approvalGate — an interrupt node with requiredRole/requiredScope, optional quorum, and a role-gated, audited override path — surfacing its request via the canonical…",
+  "url": "https://openwop.dev/rfcs/0051-approval-deployment-gate-primitive.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  }
+}</script>
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>RFC 0051: Approval &amp; deployment-gate primitive</h1>
+      <p class="lede">Add a first-class approval/deployment-gate node, core.openwop.governance.approvalGate — an interrupt node with requiredRole/requiredScope, optional quorum, and a role-gated, audited override path — surfacing its request via the canonical…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-core-openwop-governance-approvalgate-node-normative">§A — core.openwop.governance.approvalGate node (normative)</a></li>
+      <li class="toc-sub"><a href="#b-events-additive-redaction-safe">§B — Events (additive, redaction-safe)</a></li>
+      <li class="toc-sub"><a href="#c-resume-contract">§C — Resume contract</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0051</td></tr>
+<tr><td><strong>Title</strong></td><td><code>core.openwop.governance.approvalGate</code> — a first-class, role-bound, audited interrupt node for approvals and deployment promotions, composing the existing interrupt-profile machinery (quorum, auth-required) with RFC 0049 authorization and the audit log</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-24</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-25 (Draft → Active → <strong>Accepted</strong> — MyndHyve workflow-runtime advertises the capability live on <code>https://api.myndhyve.ai/.well-known/openwop</code> (curl-verified 2026-05-25) and the cohort conformance scenarios pass against it: <code>@openwop/openwop-conformance@1.6.0</code>, revision <code>workflow-runtime-00211-69w</code>, commit <code>85275cdf87972e02c2e588cba481415f3e0edb15</code>, 28 PASS / 0 FAIL across RFCs 0045/0046/0047/0048/0049/0051/0052/0053. Implementation per <code>docs/openwop-adoption/0045-0054-cohort-summary.md</code>; promoted per <code>RFCS/0001</code> §"Promotion to Accepted".)</td></tr>
+<tr><td><strong>Affects</strong></td><td>new <code>core.openwop.governance</code> pack (<code>approvalGate</code> node) · <code>schemas/run-event-payloads.schema.json</code> (additive <code>approval.*</code> events) · <code>spec/v1/interrupt-profiles.md</code> (composes quorum + auth-required) · RFC 0049 (role binding) · RFC 0009/0010 (audit log) · new conformance scenarios</td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>Add a first-class <strong>approval/deployment-gate</strong> node, <code>core.openwop.governance.approvalGate</code> — an interrupt node with <code>requiredRole</code>/<code>requiredScope</code>, optional quorum, and a role-gated, audited <code>override</code> path — surfacing its request via the canonical <code>interrupt.requested</code> (<code>kind: &#39;approval&#39;</code>) event plus three new outcome events <code>approval.granted</code> / <code>approval.rejected</code> / <code>approval.overridden</code>. It composes the existing interrupt-profile machinery (RFC's quorum + auth-required-resume) with RFC 0049 authorization and the RFC 0009/0010 audit log, so "approval as a governed, role-bound, audited gate" — distinct from a generic clarification interrupt — becomes portable and certifiable.</p>
+<h2 id="motivation">Motivation</h2>
+<p>MyndHyve runs an <strong>always-on CMS workflow approval gate</strong>: a page can't publish unless its stage is <code>approved</code>/<code>published</code>, and force-publish is owner/admin-only and audit-logged. It also has generic HITL interrupt nodes. openwop already has interrupt <em>profiles</em> (multi-approver quorum, auth-required resume) but no <strong>first-class approval/deployment gate</strong> that binds to RBAC and emits governance events. So "this gate required an <code>admin</code> and the override was logged" is host-private semantics — an A2A peer sees a generic interrupt, and conformance can't assert that an unauthorized principal is denied at the gate or that an override is audited.</p>
+<p>The spec is the right place because approval/deploy-promote is a governance-interop concern: the role binding (RFC 0049), the audit trail (RFC 0009/0010), and the resume contract (<code>interrupt.md</code>) are all already protocol surfaces — this RFC composes them into one certifiable node rather than letting each host stitch them privately.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-core-openwop-governance-approvalgate-node-normative">§A — <code>core.openwop.governance.approvalGate</code> node (normative)</h3>
+<p>An <strong>interrupt node</strong> (<code>kind: &#39;approval&#39;</code> per <code>spec/v1/interrupt.md</code>) with config:</p>
+<pre class="lang-json"><code>{
+  &quot;requiredRole&quot;: &quot;admin&quot;,
+  &quot;requiredScope&quot;: &quot;deploy:promote&quot;,
+  &quot;quorum&quot;: 2,
+  &quot;override&quot;: { &quot;requiredRole&quot;: &quot;owner&quot;, &quot;audited&quot;: true },
+  &quot;resumeSchema&quot;: { &quot;decision&quot;: &quot;granted | rejected&quot;, &quot;reason&quot;: &quot;string?&quot; }
+}</code></pre>
+<ul>
+<li><code>requiredRole</code> / <code>requiredScope</code> — at least one MUST be present; the resuming principal (RFC 0048) MUST satisfy it per the RFC 0049 decision (fail-closed: an unauthorized or unseeded principal is denied, the run stays suspended).</li>
+<li><code>quorum</code> (optional) — reuses the existing <code>openwop-interrupt-quorum</code> profile: N distinct authorized principals MUST grant before the gate releases.</li>
+<li><code>override</code> (optional) — a role-gated escape hatch (e.g. owner force-publish). Taking it MUST emit <code>approval.overridden</code> and MUST write an audit entry.</li>
+</ul>
+<h3 id="b-events-additive-redaction-safe">§B — Events (additive, redaction-safe)</h3>
+<p><strong>Request.</strong> The gate's <em>request</em> surfaces via the canonical <strong><code>interrupt.requested</code> with <code>kind: &#39;approval&#39;</code></strong> (per <code>interrupt.md</code> — the modern interrupt-primitive event), carrying the gate fields (<code>gateId</code>, <code>requiredRole</code>/<code>requiredScope</code>, <code>quorum</code>) in the interrupt <code>data</code>. The gate does NOT use the legacy <code>approval.requested</code> event (which is the back-compat artifact-approval shape; <code>interrupt.md</code> already directs modern servers to <code>interrupt.requested</code>).</p>
+<p><strong>Outcomes.</strong> Add three new governance events to <code>run-event-payloads.schema.json</code>:</p>
+<ul>
+<li><code>approval.granted</code> → <code>{ gateId, principal, quorumProgress? }</code></li>
+<li><code>approval.rejected</code> → <code>{ gateId, principal, reason? }</code></li>
+<li><code>approval.overridden</code> → <code>{ gateId, principal, reason }</code> — MUST feed the audit log.</li>
+</ul>
+<p>All redaction-safe (opaque principal ids, no credential material).</p>
+<h3 id="c-resume-contract">§C — Resume contract</h3>
+<p>Resume follows the engine interrupt contract (<code>spec/v1/interrupt.md</code>): the resume value is validated against the node's <code>resumeSchema</code>; a malformed resume is rejected with <code>400 INVALID_RESUME_VALUE</code> and the run stays suspended. A reject (<code>decision: &#39;rejected&#39;</code>) loops the run back per the workflow's edges (it does not terminate the run by default).</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong> New optional pack + node; new event types consumers can ignore; composes existing interrupt profiles without changing them. No required-field change; no wire-shape change to the interrupt primitive itself. Hosts without RFC 0049 authorization can't satisfy <code>requiredRole</code>, so the node's <code>peerDependency</code> is <code>authorization: &#39;supported&#39;</code> — it refuses to register otherwise (the <code>core.openwop.files</code>-against-<code>host.fs</code> pattern).</p>
+<p><strong>Depends on RFC 0049</strong> (role binding). Composes with the existing interrupt profiles and the RFC 0009/0010 audit log.</p>
+<h2 id="conformance">Conformance</h2>
+<ul>
+<li><strong><code>approval-gate-grant.test.ts</code></strong> — an authorized principal (satisfying <code>requiredRole</code>/<code>requiredScope</code>) grants; the gate releases; <code>approval.granted</code> is emitted. (Gated on the <code>core.openwop.governance</code> pack + <code>authorization.supported</code>.)</li>
+<li><strong><code>approval-gate-unauthorized.test.ts</code></strong> — an unauthorized principal is denied; the run stays suspended; <code>approval.rejected</code> (or an <code>authorization.decided { allowed:false }</code>) is emitted. Fail-closed. (Gated.)</li>
+<li><strong><code>approval-gate-override-audited.test.ts</code></strong> — taking the <code>override</code> path emits <code>approval.overridden</code> AND writes an audit-log entry. (Gated on <code>authorization.supported</code> ∧ audit profile.)</li>
+<li><strong><code>approval-gate-reject-loopback.test.ts</code></strong> — a reject loops the run back per the workflow edges rather than terminating; a malformed resume → <code>400 INVALID_RESUME_VALUE</code>. (Gated.)</li>
+<li><strong><code>approval-gate-quorum.test.ts</code></strong> — N distinct authorized grants required before release. (Gated on <code>quorum</code> config + the quorum profile.)</li>
+</ul>
+<p>New fixture: a minimal workflow with an <code>approvalGate</code> node + seeded roles, catalogued in <code>fixtures.md</code>.</p>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Use a generic clarification/approval interrupt and let hosts add role checks privately.</strong> Rejected — that is exactly today's state; the role binding and audit trail stay host-private and uncertifiable. The value is the <em>composed, certified</em> gate. 2. <strong>Model the gate as a capability advertisement rather than a node.</strong> Rejected — an approval gate is a point in a workflow DAG, not a host-wide capability; it belongs as a node so workflow authors can place it. The host capability it <em>needs</em> (RFC 0049) is advertised separately. 3. <strong>Bake force-publish/deploy-promote as distinct named nodes.</strong> Rejected — they're the same primitive (role-gated audited release) with different config; one node with <code>override</code> covers approval, force-publish, and deploy-promote without proliferating node types.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. <strong>Time-boxed approvals.</strong> Should the gate support an auto-reject (or auto-grant) on <code>timeoutMs</code> expiry, reusing <code>interrupt.timeoutMs</code>? Likely yes (auto-reject, fail-closed); pin the default before Active. 2. <strong>Quorum + override interaction.</strong> If a quorum is configured, can a single <code>override</code>-role principal bypass the remaining quorum? Probably yes (that's the point of override) but it MUST be audited; confirm before Active. 3. <strong>Delegation.</strong> Can an authorized principal delegate their approval authority? Out of scope for v1; revisit if an adopter pulls.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>The pack + node + events land on <code>Active</code> promotion with the conformance scenarios.</li>
+<li>Reference-adopter target: MyndHyve re-expresses its CMS approval gate + force-publish as this node; <code>cms.page.force_published</code> maps to <code>approval.overridden</code>; its existing approval-gate card (<code>WorkflowCardRenderer</code>) renders the protocol events.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[x] Spec text merged (this file).</li>
+<li>[x] <code>core.openwop.governance.approvalGate</code> node contract defined in <code>spec/v1/interrupt-profiles.md</code> (config + normative requirements; the executable pack is reference-impl work).</li>
+<li>[x] <code>approval.granted</code> / <code>approval.rejected</code> / <code>approval.overridden</code> events in <code>run-event-payloads.schema.json</code> (+ <code>RunEventType</code> enum). The request surfaces via the canonical <code>interrupt.requested</code> (<code>kind: &#39;approval&#39;</code>) event per <code>interrupt.md</code> — NOT the legacy <code>approval.requested</code>.</li>
+<li>[x] Composition with quorum + auth-required profiles documented in <code>spec/v1/interrupt-profiles.md</code>.</li>
+<li>[~] Conformance — 2 of 5 landed: <code>approval-gate-events.test.ts</code> (server-free event-shape) + <code>approval-gate-flow.test.ts</code> (unauthorized-denied + override-audited, capability-gated on <code>authorization.supported</code>, <code>governance/approval-gate</code> seam soft-skips). The grant-releases / reject-loopback / quorum scenarios are deferred until a host registers the gate.</li>
+<li>[x] CHANGELOG entry under <code>[Unreleased]</code>.</li>
+<li>[ ] A non-steward host registers the gate and passes the unauthorized + override-audited scenarios.</li>
+</ul>
+<p><strong>Implementation note (2026-05-25):</strong> The three governance events + the <code>approvalGate</code> node contract (in <code>interrupt-profiles.md</code>, composing the quorum + auth-required profiles with RFC 0049 authorization) + the two scenarios + the <code>governance/approval-gate</code> seam landed on <code>main</code>. the gate's request surfaces via the canonical <code>interrupt.requested</code> (<code>kind: &#39;approval&#39;</code>) event (per <code>interrupt.md</code> modern guidance — not the legacy <code>approval.requested</code>); the three new outcome events are <code>granted</code>/<code>rejected</code>/<code>overridden</code>. No new SECURITY invariant — fail-closed denial reuses RFC 0049's <code>authorization-fail-closed</code>; override-audited is conformance-asserted. Status stays <code>Draft</code>. <strong>Completes Tier 2</strong> of the MyndHyve protocol-extension batch on the openwop side.</p>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="./0049-rbac-scopes-and-authorization-decisions.md"><code>RFCS/0049-rbac-scopes-and-authorization-decisions.md</code></a> — the role binding + fail-closed decision the gate enforces (hard dependency).</li>
+<li><a href="../spec/v1/interrupt-profiles.md"><code>spec/v1/interrupt-profiles.md</code></a> — <code>openwop-interrupt-quorum</code> + <code>openwop-interrupt-auth-required</code>, composed here.</li>
+<li><a href="../spec/v1/interrupt.md"><code>spec/v1/interrupt.md</code></a> — the resume contract + <code>resumeSchema</code> validation (<code>INVALID_RESUME_VALUE</code>).</li>
+<li><a href="./0009-production-profile-conformance.md"><code>RFCS/0009-production-profile-conformance.md</code></a> · <a href="./0010-auth-profile-conformance.md"><code>0010</code></a> — the audit log the override feeds.</li>
+</ul><footer class="doc-edit"><a href="https://github.com/openwop/openwop/edit/main/RFCS/0051-approval-deployment-gate-primitive.md" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>

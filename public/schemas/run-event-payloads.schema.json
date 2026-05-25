@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
   "title": "RunEventPayloads",
-  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n64 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n71 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
   "type": "object",
   "$defs": {
     "_typeIndex": {
@@ -18,6 +18,7 @@
         "run.paused":                { "$ref": "#/$defs/runPaused" },
         "run.resumed":               { "$ref": "#/$defs/runResumed" },
         "run.restored-from-snapshot":{ "$ref": "#/$defs/runRestoredFromSnapshot" },
+        "run.dead_lettered":         { "$ref": "#/$defs/runDeadLettered" },
         "node.started":              { "$ref": "#/$defs/nodeStarted" },
         "node.completed":            { "$ref": "#/$defs/nodeCompleted" },
         "node.failed":               { "$ref": "#/$defs/nodeFailed" },
@@ -29,6 +30,9 @@
         "node.cancelled":            { "$ref": "#/$defs/nodeCancelled" },
         "approval.requested":        { "$ref": "#/$defs/approvalRequested" },
         "approval.received":         { "$ref": "#/$defs/approvalReceived" },
+        "approval.granted":          { "$ref": "#/$defs/approvalGranted" },
+        "approval.rejected":         { "$ref": "#/$defs/approvalRejected" },
+        "approval.overridden":       { "$ref": "#/$defs/approvalOverridden" },
         "clarification.requested":   { "$ref": "#/$defs/clarificationRequested" },
         "clarification.resolved":    { "$ref": "#/$defs/clarificationResolved" },
         "interrupt.requested":       { "$ref": "#/$defs/interruptRequested" },
@@ -73,7 +77,48 @@
         "conversation.closed":       { "$ref": "#/$defs/conversationClosed" },
         "memory.compacted":          { "$ref": "#/$defs/memoryCompacted" },
         "core.workflowChain.event":  { "$ref": "#/$defs/coreWorkflowChainEvent" },
-        "core.workflowChain.confidence-escalated": { "$ref": "#/$defs/coreWorkflowChainConfidenceEscalated" }
+        "core.workflowChain.confidence-escalated": { "$ref": "#/$defs/coreWorkflowChainConfidenceEscalated" },
+        "connector.authorized":      { "$ref": "#/$defs/connectorAuthorized" },
+        "connector.auth_expired":    { "$ref": "#/$defs/connectorAuthExpired" },
+        "authorization.decided":     { "$ref": "#/$defs/authorizationDecided" }
+      }
+    },
+
+    "authorizationDecided": {
+      "description": "RFC 0049 — emitted on a role-based authorization decision (allow or deny). Redaction-safe: `principal` is an opaque RFC 0048 id; `reason` carries no credential material. Every deny SHOULD be emitted and SHOULD feed the audit log (RFC 0009/0010). MUST NOT be emitted unless `capabilities.authorization.supported: true`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["principal", "action", "resource", "allowed"],
+      "properties": {
+        "principal": { "type": "string", "minLength": 1, "description": "Opaque RFC 0048 principal id — never PII." },
+        "action": { "type": "string", "minLength": 1, "description": "The attempted action, e.g. `runs:cancel`." },
+        "resource": { "type": "string", "minLength": 1, "description": "The target, e.g. a runId or workflowId." },
+        "allowed": { "type": "boolean" },
+        "reason": { "type": "string", "description": "Human-readable, redaction-safe — no credential material." }
+      }
+    },
+
+    "connectorAuthorized": {
+      "description": "RFC 0047 — emitted when the host acquires (or re-authorizes) a third-party OAuth token on a user's behalf via the `host.oauth` flow. Redaction-safe: carries the credential REFERENCE (RFC 0046), never token material. MUST NOT be emitted unless `capabilities.oauth.supported: true`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "credentialRef"],
+      "properties": {
+        "provider": { "type": "string", "minLength": 1, "description": "Provider id, matching an advertised `capabilities.oauth.providers[].id` (e.g. `slack`, `google`)." },
+        "credentialRef": { "type": "string", "minLength": 1, "description": "Opaque RFC 0046 credential reference where the acquired token is stored. NEVER the token itself." },
+        "scopes": { "type": "array", "items": { "type": "string" }, "description": "Scopes granted for the acquired token." }
+      }
+    },
+
+    "connectorAuthExpired": {
+      "description": "RFC 0047 — emitted when a stored OAuth token's refresh fails terminally (revoked/expired refresh token). Redaction-safe: no token material. MUST NOT be emitted unless `capabilities.oauth.supported: true`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "credentialRef"],
+      "properties": {
+        "provider": { "type": "string", "minLength": 1, "description": "Provider id, matching an advertised `capabilities.oauth.providers[].id`." },
+        "credentialRef": { "type": "string", "minLength": 1, "description": "Opaque RFC 0046 credential reference for the expired token." },
+        "reason": { "type": "string", "description": "Redaction-safe human-readable reason (e.g. `refresh_token_revoked`)." }
       }
     },
 
@@ -205,6 +250,17 @@
         "inputs":      { "$ref": "#/$defs/_inputsObject" },
         "transport":   { "type": "string", "enum": ["rest", "mcp", "a2a", "ui"] },
         "engineVersion":  { "type": "string" },
+        "owner": {
+          "type": "object",
+          "description": "RFC 0048. Redaction-safe echo of the run's owning identity triple (matches `RunSnapshot.owner`). Optional; single-tenant hosts omit it.",
+          "required": ["tenant"],
+          "properties": {
+            "tenant": { "type": "string", "minLength": 1 },
+            "workspace": { "type": "string", "minLength": 1 },
+            "principal": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
         "tags":     { "type": "array", "items": { "type": "string" } },
         "metadata": { "type": "object" }
       },
@@ -270,6 +326,19 @@
         "engineVersion": { "type": "string" }
       },
       "additionalProperties": true
+    },
+
+    "runDeadLettered": {
+      "description": "RFC 0053 — emitted when a run/node exhausts its retry policy (RFC 0009) and is routed to the durable dead-letter sink. The run remains fork-eligible (RFC 0011) for `capabilities.deadLetter.retentionDays`. Redaction-safe: `reason` carries no credential material. MUST NOT be emitted unless `capabilities.deadLetter.supported: true`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runId", "reason", "attempts"],
+      "properties": {
+        "runId": { "type": "string", "minLength": 1 },
+        "nodeId": { "type": "string", "description": "The node whose retry exhaustion dead-lettered the run; absent for run-level failures." },
+        "reason": { "type": "string", "minLength": 1, "description": "Redaction-safe terminal-failure reason." },
+        "attempts": { "type": "integer", "minimum": 1, "description": "Total attempts made before dead-lettering." }
+      }
     },
 
     "nodeStarted": {
@@ -418,6 +487,39 @@
         "editedArtifactData": { "description": "User-edited artifact bytes when `action: 'edit-accept'`." }
       },
       "additionalProperties": true
+    },
+    "approvalGranted": {
+      "description": "RFC 0051 — emitted when an authorized principal grants a `core.openwop.governance.approvalGate`. Redaction-safe: `principal` is an opaque RFC 0048 id. MUST NOT be emitted unless the gate node is registered (peerDependency `authorization: 'supported'`).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gateId", "principal"],
+      "properties": {
+        "gateId": { "type": "string", "minLength": 1, "description": "Identifier of the approval gate node." },
+        "principal": { "type": "string", "minLength": 1, "description": "Opaque RFC 0048 principal id of the granting actor." },
+        "quorumProgress": { "type": "object", "additionalProperties": false, "properties": { "granted": { "type": "integer", "minimum": 0 }, "required": { "type": "integer", "minimum": 1 } }, "description": "When the gate requires a quorum: grants accumulated vs required." }
+      }
+    },
+    "approvalRejected": {
+      "description": "RFC 0051 — emitted when an authorized principal rejects an approval gate. The run loops back per the workflow edges (does not terminate by default). Redaction-safe.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gateId", "principal"],
+      "properties": {
+        "gateId": { "type": "string", "minLength": 1 },
+        "principal": { "type": "string", "minLength": 1, "description": "Opaque RFC 0048 principal id of the rejecting actor." },
+        "reason": { "type": "string", "description": "Redaction-safe human-readable reason." }
+      }
+    },
+    "approvalOverridden": {
+      "description": "RFC 0051 — emitted when a role-gated `override` path bypasses the gate (e.g. owner force-publish). MUST feed the audit log (RFC 0009/0010). Redaction-safe.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gateId", "principal", "reason"],
+      "properties": {
+        "gateId": { "type": "string", "minLength": 1 },
+        "principal": { "type": "string", "minLength": 1, "description": "Opaque RFC 0048 principal id of the overriding actor (MUST satisfy the override role)." },
+        "reason": { "type": "string", "minLength": 1, "description": "Required, redaction-safe rationale — the audit breadcrumb." }
+      }
     },
     "clarificationRequested": {
       "type": "object",

@@ -213,6 +213,7 @@
 <p><code>node-packs.md</code> defines the pack manifest shape, the registry HTTP API, and the trust-model layers an engine consumer SHOULD support. What it doesn't specify is the <strong>operator side</strong> of the registry — how authors submit new versions, what the registry validates pre-accept, how deprecations work without breaking pinned consumers, how to handle emergency yanks for security issues, and how signing keys rotate over time.</p>
 <p>This doc is the operator's normative reference. An OpenWOP-compliant registry implementation MUST implement the lifecycle flows below; engine consumers MUST tolerate the metadata shapes the flows produce (deprecation flags, yank markers, key-rotation chains).</p>
 <p>The planned hosted reference registry at <code>packs.openwop.dev</code> implements these flows when it launches; third-party registry implementations (private mirrors, enterprise self-host) MUST do the same to remain compatible.</p>
+<blockquote><p><strong>Policy layer.</strong> This doc is the <em>operational</em> reference (the how). The <em>policy</em> above it — submission gates, trust tiers, name reservation, IPR — is <strong><a href="../../RFCS/0043-registry-and-extension-policy.md">RFC 0043 — Registry and extension-policy</a></strong> §B; the one-stop index is <a href="../../docs/governance/registry-policy.md"><code>docs/governance/registry-policy.md</code></a>.</p></blockquote>
 <hr/>
 <h2 id="submission-flow">Submission flow</h2>
 <p>The full author-side workflow for publishing a new pack version.</p>

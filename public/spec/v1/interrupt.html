@@ -189,6 +189,7 @@
       <li class="toc-sub"><a href="#error-responses">Error responses</a></li>
       <li class="toc-top"><a href="#replay-determinism">Replay determinism</a></li>
       <li class="toc-top"><a href="#admin-panel-observability">Admin panel + observability</a></li>
+      <li class="toc-top"><a href="#annotations-are-not-interrupts-rfc-0056">Annotations are not interrupts (RFC 0056)</a></li>
       <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
       <li class="toc-top"><a href="#references">References</a></li>
     </ul>
@@ -455,6 +456,8 @@ payload = JSON({ runId, nodeId, interruptId, expiresAt, intent: &#39;resolve&#39
 <li><code>openwop.interrupt_count</code> — replay-determinism counter</li>
 </ul>
 <hr/>
+<h2 id="annotations-are-not-interrupts-rfc-0056">Annotations are not interrupts (RFC 0056)</h2>
+<p>A run <strong>annotation</strong> (RFC 0056 — rating / correction / label / flag) is distinct from an <code>interrupt</code>. An interrupt <strong>blocks</strong> a run awaiting a human decision and carries a signed-token resume contract; an annotation is <strong>non-blocking</strong>, may be attached during or after a run (including a terminal run), and never gates execution. See <a href="../../RFCS/0056-run-feedback-and-annotation-event.md"><code>RFCS/0056</code></a> and <a href="./observability.md"><code>observability.md</code></a> §"Quality signals".</p>
 <h2 id="open-spec-gaps">Open spec gaps</h2>
 <table>
 <thead><tr><th>#</th><th>Gap</th><th>Owner</th></tr></thead>

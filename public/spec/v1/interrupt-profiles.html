@@ -175,6 +175,7 @@
       <li class="toc-sub"><a href="#openwop-interrupt-auth-required">openwop-interrupt-auth-required</a></li>
       <li class="toc-sub"><a href="#openwop-interrupt-external-event">openwop-interrupt-external-event</a></li>
       <li class="toc-sub"><a href="#openwop-interrupt-cascade-cancel">openwop-interrupt-cascade-cancel</a></li>
+      <li class="toc-sub"><a href="#core-openwop-governance-approvalgate-rfc-0051">core.openwop.governance.approvalGate (RFC 0051)</a></li>
       <li class="toc-top"><a href="#discovery-guidance">Discovery guidance</a></li>
     </ul>
   </aside><article class="spec-doc"><blockquote><p><strong>Status: Stable · v1.1 (2026-05-10).</strong> Optional interrupt-profile annex for hosts that implement stronger human-in-the-loop and external-event flows than the base <code>interrupt.md</code> contract. This document is additive and does not change required v1 interrupt wire shapes. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
@@ -227,6 +228,27 @@
 <li>Cancellation remains idempotent and terminal-state safe.</li>
 </ul>
 <p><strong>Conformance gaps to close:</strong> add parent/child cancellation fixtures building on <code>subworkflow.test.ts</code>.</p>
+<h3 id="core-openwop-governance-approvalgate-rfc-0051"><code>core.openwop.governance.approvalGate</code> (RFC 0051)</h3>
+<p>A first-class, <strong>role-gated, audited</strong> approval/deployment-gate node — distinct from a generic clarification/approval interrupt. It is an interrupt node (<code>kind: &#39;approval&#39;</code> per <code>interrupt.md</code>) that composes the <code>openwop-interrupt-quorum</code> + <code>openwop-interrupt-auth-required</code> profiles above with RFC 0049 authorization, so "approval as a governed gate" (CMS publish, force-publish, deploy-promote) is portable and certifiable. Requires a host advertising <code>capabilities.authorization.supported</code> (peerDependency <code>authorization: &#39;supported&#39;</code>).</p>
+<p><strong>Node config:</strong></p>
+<pre class="lang-jsonc"><code>{
+  &quot;requiredRole&quot;: &quot;admin&quot;,          // at least one of requiredRole / requiredScope MUST be present
+  &quot;requiredScope&quot;: &quot;deploy:promote&quot;,
+  &quot;quorum&quot;: 2,                       // optional — reuses openwop-interrupt-quorum
+  &quot;override&quot;: { &quot;requiredRole&quot;: &quot;owner&quot;, &quot;audited&quot;: true },  // optional role-gated escape hatch
+  &quot;resumeSchema&quot;: { &quot;decision&quot;: &quot;granted | rejected&quot;, &quot;reason&quot;: &quot;string?&quot; }
+}</code></pre>
+<p><strong>Requirements (normative):</strong></p>
+<ul>
+<li>The gate's <strong>request</strong> surfaces via the canonical <code>interrupt.requested</code> event with <code>kind: &#39;approval&#39;</code> (per <code>interrupt.md</code> — the modern interrupt-primitive event), carrying the gate fields (<code>gateId</code>, <code>requiredRole</code>/<code>requiredScope</code>, <code>quorum</code>) in the interrupt <code>data</code>. The gate MUST NOT use the legacy <code>approval.requested</code> event for its request.</li>
+<li>The resuming <code>principal</code> (RFC 0048) MUST satisfy <code>requiredRole</code> / <code>requiredScope</code> per the RFC 0049 decision. An unauthorized or unseeded principal is denied (fail-closed per RFC 0049 §C — <code>authorization-fail-closed</code>); the run stays suspended and the host SHOULD emit <code>authorization.decided { allowed: false }</code>.</li>
+<li>A grant emits <code>approval.granted</code>; when <code>quorum</code> is set, the gate releases only after N distinct authorized grants (each grant carries <code>quorumProgress</code>).</li>
+<li>A reject emits <code>approval.rejected</code> and loops the run back per the workflow's edges — it does NOT terminate the run by default.</li>
+<li>Taking the <code>override</code> path MUST emit <code>approval.overridden { principal, reason }</code> (reason REQUIRED) AND write an audit-log entry (RFC 0009/0010). The overriding principal MUST satisfy <code>override.requiredRole</code>.</li>
+<li>The resume value is validated against <code>resumeSchema</code> per the engine interrupt contract; a malformed resume MUST be rejected with <code>400 INVALID_RESUME_VALUE</code> and the run stays suspended.</li>
+<li>All <code>approval.*</code> events are redaction-safe — <code>principal</code> is an opaque RFC 0048 id; no credential material in <code>reason</code>.</li>
+</ul>
+<p><strong>Conformance gaps to close:</strong> <code>approval-gate-flow.test.ts</code> (capability-gated): role-gated grant releases; unauthorized principal denied (run stays suspended); override emits <code>approval.overridden</code> + an audit entry; reject loops back; quorum requires N grants. Behavioral assertions gate on the <code>POST /v1/host/sample/governance/approval-gate</code> seam and soft-skip until a governance-advertising host wires it.</p>
 <hr/>
 <h2 id="discovery-guidance">Discovery guidance</h2>
 <p>Interrupt-profile details MAY be advertised under <code>extensions.interrupts</code>:</p>

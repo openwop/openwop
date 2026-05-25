@@ -155,6 +155,7 @@
       <li class="toc-sub"><a href="#typescript-reference-sdk-sdk-typescript">TypeScript reference SDK (sdk/typescript/)</a></li>
       <li class="toc-sub"><a href="#reference-applications-apps">Reference applications (apps/)</a></li>
       <li class="toc-top"><a href="#the-ci-gate">The CI gate</a></li>
+      <li class="toc-sub"><a href="#optional-pre-commit-guard">Optional pre-commit guard</a></li>
       <li class="toc-top"><a href="#coordination-with-the-impl-plan">Coordination with the impl plan</a></li>
       <li class="toc-top"><a href="#process">Process</a></li>
       <li class="toc-top"><a href="#sign-your-commits-dco">Sign your commits (DCO)</a></li>
@@ -260,6 +261,10 @@
 <pre class="lang-bash"><code>npm run openwop:check</code></pre>
 <p>Equivalent direct script:</p>
 <pre class="lang-bash"><code>bash scripts/openwop-check.sh</code></pre>
+<h3 id="optional-pre-commit-guard">Optional pre-commit guard</h3>
+<p>Install once per clone to catch the most common author-side slip (staging an RFC change without regenerating <code>docs/PROTOCOL-STATUS.md</code> and <code>README.md</code>):</p>
+<pre class="lang-bash"><code>bash scripts/install-git-hooks.sh</code></pre>
+<p>This symlinks <code>scripts/hooks/pre-commit</code> into <code>.git/hooks/</code>. The hook is fast (<1s) and only fires when staged paths match <code>RFCS/*.md</code>. Heavier validation stays in CI.</p>
 <hr/>
 <h2 id="coordination-with-the-impl-plan">Coordination with the impl plan</h2>
 <p>When a spec PR proposes a change that interacts with a reference implementation:</p>

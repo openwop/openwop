@@ -246,6 +246,7 @@ channels:
       runCancelled:      { $ref: &#39;#/components/messages/RunCancelled&#39; }
       runPaused:         { $ref: &#39;#/components/messages/RunPaused&#39; }
       runResumed:        { $ref: &#39;#/components/messages/RunResumed&#39; }
+      runAnnotated:      { $ref: &#39;#/components/messages/RunAnnotated&#39; }
       nodeCompleted:     { $ref: &#39;#/components/messages/NodeCompleted&#39; }
       nodeFailed:        { $ref: &#39;#/components/messages/NodeFailed&#39; }
       nodeSkipped:       { $ref: &#39;#/components/messages/NodeSkipped&#39; }
@@ -320,7 +321,8 @@ channels:
       runId:
         $ref: &#39;#/components/parameters/RunId&#39;
     messages:
-      anyRunEvent: { $ref: &#39;#/components/messages/AnyRunEvent&#39; }
+      anyRunEvent:  { $ref: &#39;#/components/messages/AnyRunEvent&#39; }
+      runAnnotated: { $ref: &#39;#/components/messages/RunAnnotated&#39; }
 
 # ─────────────────────────────────────────────────────────────────────────────
 # OPERATIONS — consumer-side (receive)
@@ -477,6 +479,14 @@ components:
       payload:
         $ref: &#39;#/components/schemas/RunEventDoc&#39;
 
+    RunAnnotated:
+      name: run.annotated
+      title: Run annotated (RFC 0056)
+      summary: A non-blocking quality annotation was recorded for the run. Live notification ONLY — NOT a replayable run-event-log entry; its payload is an Annotation (not a RunEventDoc), so it is excluded from fork/replay (RFC 0056 §B/§D).
+      contentType: application/json
+      payload:
+        $ref: &#39;#/components/schemas/Annotation&#39;
+
     # ── Node-lifecycle ───────────────────────────────────────────────────
     NodeCompleted:
       name: node.completed
@@ -600,9 +610,14 @@ components:
       summary: |
         Type-erased handler for `debug` mode — discriminate on the
         `type` field per the `RunEventType` enum in the run-event
-        JSON Schema. Includes events filtered out of `updates`:
-        `log.appended`, `variable.changed`, `version.pinned`,
-        `lease.*`, `node.retried`, `replay.diverged`, etc.
+        JSON Schema (the authoritative, exhaustive event list; the
+        named messages above are a curated `updates`-tier subset).
+        Includes events filtered out of `updates`: `log.appended`,
+        `variable.changed`, `version.pinned`, `lease.*`, `node.retried`,
+        `replay.diverged`, `connector.authorized`,
+        `connector.auth_expired` (RFC 0047), `authorization.decided`
+        (RFC 0049), `approval.granted` / `approval.rejected` /
+        `approval.overridden` (RFC 0051), etc.
       contentType: application/json
       payload:
         $ref: &#39;#/components/schemas/RunEventDoc&#39;
@@ -615,6 +630,12 @@ components:
     # `GET /v1/runs/{runId}/events/poll`) and offline replay tools.
     RunEventDoc:
       $ref: &#39;../schemas/run-event.schema.json&#39;
+
+    # RFC 0056. The run.annotated notification carries an Annotation —
+    # NOT a RunEventDoc — because annotations are a side-resource, not
+    # replayable run-event-log entries (RFC 0056 §B/§D).
+    Annotation:
+      $ref: &#39;../schemas/annotation.schema.json&#39;
 
     StateSnapshotPayload:
       # S1 closure (2026-04-27): reuse the canonical RunSnapshot

@@ -3,21 +3,21 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>OpenWOP — RFC 0039: Multi-agent Phase 2 — confidence-threshold escalation + agent memory lifecycle</title>
+  <title>OpenWOP — RFC 0039: Multi-agent execution model `version: 2` — confidence-threshold escalation + agent memory lifecycle</title>
   <meta name="description" content="Multi-Agent Workflow Orchestration Protocol — open, wire-level spec for orchestrating LLM agents, tools, sub-workflows, and humans across interoperable hosts. Durable suspend/resume, replay, version negotiation, observability."/>
   <link rel="canonical" href="https://openwop.dev/rfcs/0039-multi-agent-confidence-and-memory-lifecycle.html"/>
 
   <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
   <meta property="og:type" content="website"/>
   <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
-  <meta property="og:title" content="OpenWOP — RFC 0039: Multi-agent Phase 2 — confidence-threshold escalation + agent memory lifecycle"/>
+  <meta property="og:title" content="OpenWOP — RFC 0039: Multi-agent execution model `version: 2` — confidence-threshold escalation + agent memory lifecycle"/>
   <meta property="og:description" content="Multi-Agent Workflow Orchestration Protocol — open, wire-level spec for orchestrating LLM agents, tools, sub-workflows, and humans across interoperable hosts. Durable suspend/resume, replay, version negotiation, observability."/>
   <meta property="og:url" content="https://openwop.dev/rfcs/0039-multi-agent-confidence-and-memory-lifecycle.html"/>
   <meta property="og:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Twitter card -->
   <meta name="twitter:card" content="summary_large_image"/>
-  <meta name="twitter:title" content="OpenWOP — RFC 0039: Multi-agent Phase 2 — confidence-threshold escalation + agent memory lifecycle"/>
+  <meta name="twitter:title" content="OpenWOP — RFC 0039: Multi-agent execution model `version: 2` — confidence-threshold escalation + agent memory lifecycle"/>
   <meta name="twitter:description" content="Multi-Agent Workflow Orchestration Protocol — open, wire-level spec for orchestrating LLM agents, tools, sub-workflows, and humans across interoperable hosts. Durable suspend/resume, replay, version negotiation, observability."/>
   <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
 
@@ -44,7 +44,7 @@
   <script type="application/ld+json">{
   "@context": "https://schema.org",
   "@type": "TechArticle",
-  "headline": "RFC 0039: Multi-agent Phase 2 — confidence-threshold escalation + agent memory lifecycle",
+  "headline": "RFC 0039: Multi-agent execution model `version: 2` — confidence-threshold escalation + agent memory lifecycle",
   "description": "Multi-Agent Workflow Orchestration Protocol — open, wire-level spec for orchestrating LLM agents, tools, sub-workflows, and humans across interoperable hosts. Durable suspend/resume, replay, version negotiation, observability.",
   "url": "https://openwop.dev/rfcs/0039-multi-agent-confidence-and-memory-lifecycle.html",
   "inLanguage": "en-US",
@@ -163,7 +163,7 @@
 <main class="site-main">
   <div class="wrap">
     <header class="page-header">
-      <h1>RFC 0039: Multi-agent Phase 2 — confidence-threshold escalation + agent memory lifecycle</h1>
+      <h1>RFC 0039: Multi-agent execution model `version: 2` — confidence-threshold escalation + agent memory lifecycle</h1>
       <p class="lede">Multi-Agent Workflow Orchestration Protocol — open, wire-level spec for orchestrating LLM agents, tools, sub-workflows, and humans across interoperable hosts. Durable suspend/resume, replay, version negotiation, observability.</p>
     </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
     <h4>On this page</h4>
@@ -273,7 +273,9 @@
 <li>[x] <code>INTEROP-MATRIX.md</code> updated — see §"Third-party host adoption — RFC 0037 Phase 1 + RFC 0039 Half A + RFC 0044 ... (2026-05-22)".</li>
 <li>[x] CHANGELOG entry under <code>[Unreleased]</code>.</li>
 </ul>
-<p>Path to <code>Active → Accepted</code>: cross-host advertisement evidence per <code>RFCs/0001-rfc-process.md</code> §"Promotion to Accepted." <strong>CLOSED 2026-05-22</strong> — Half A confidence-floor escalation validated cross-host. <strong>Half B strengthening 2026-05-23</strong>: MyndHyve commit <code>a51f7bbd</code> lands the <code>memory.written</code> event + <code>snapshotAtSeq()</code> host implementation + <code>crossChildMemoryConcurrency: &#39;strict&#39;</code> advertisement (verified live on <code>https://api.myndhyve.ai/.well-known/openwop</code>). The <code>replay_memory_snapshot_unavailable</code> 422 wire-route surface is parallel-session-blocked on MyndHyve's side (<code>services/workflow-runtime/src/{index.ts,routes/canonicalRuns.ts}</code> uncommitted lint cleanup) — <code>snapshotAtSeq</code> returns <code>null</code> correctly when no source-run is bound; only the route translation to 422 awaits the parallel commit. When that lands, the <code>multi-agent-memory-lifecycle.test.ts</code> MAE-3 behavioral assertion will exercise end-to-end. Status stays <code>Accepted</code> either way; Half B work is additive.</p>
+<p>Path to <code>Active → Accepted</code>: cross-host advertisement evidence per <code>RFCs/0001-rfc-process.md</code> §"Promotion to Accepted." <strong>CLOSED 2026-05-22</strong> — Half A confidence-floor escalation validated cross-host. <strong>Half B fully wired 2026-05-23/24</strong>: MyndHyve commit <code>a51f7bbd</code> landed the <code>snapshotAtSeq()</code> host implementation + <code>crossChildMemoryConcurrency: &#39;strict&#39;</code> advertisement on 2026-05-23. MyndHyve commit <code>560cfc89</code> (2026-05-23 evening; Cloud Run revision <code>workflow-runtime-00362-yoz</code> now serving 100% on <code>api.myndhyve.ai</code>) closes the remaining <code>replay_memory_snapshot_unavailable</code> 422 wire-route surface. Three coordinated pieces:</p>
+<p>1. <strong>Engine wiring</strong> — <code>runExecutor.ts</code> selects <code>MyndHyveMemoryResolver.forFork(forkedFrom.runId)</code> for replay-mode dispatches, so <code>ctx.memory.snapshotAtSeq()</code> reads the parent run's journal instead of returning <code>null</code>. 2. <strong>Route pre-flight</strong> — new exported helper <code>checkReplayMemorySnapshotPreflight</code> at <code>POST /v1/runs/{runId}:fork</code>. Uses the SAME <code>forFork(sourceRunId)</code> construction the dispatch uses, so the gate truthfully predicts dispatch behavior (no probe-vs-dispatch dishonesty). 3. <strong>Wire-shape envelope locked</strong>:    ``<code>jsonc    {      &quot;error&quot;: &quot;replay_memory_snapshot_unavailable&quot;,      &quot;message&quot;: &quot;&amp;lt;human&amp;gt;&quot;,      &quot;details&quot;: {        &quot;fromSeq&quot;: &amp;lt;number&amp;gt;,        &quot;sourceRunId&quot;: &quot;&amp;lt;string&amp;gt;&quot;,        &quot;reason&quot;: &quot;retention_expired&quot; | &quot;event_log_unavailable&quot;      }    }    </code>`<code>    The </code>reason<code> discriminator splits the two ways the snapshot can be unserveable: </code>retention_expired<code> (source past retention window per host&#39;s </code>retention.ts<code>; journal may be GC&#39;d) vs </code>event_log_unavailable<code> (probe </code>snapshotAtSeq<code> returned </code>null<code> per degraded infra). Matches </code>spec/v1/rest-endpoints.md:314<code> </code>replay_memory_snapshot_unavailable` envelope contract.</p>
+<p>Status stays <code>Accepted</code> (no Status change — Half B was additive on the existing Accepted RFC). The <code>multi-agent-memory-lifecycle.test.ts</code> MAE-3 behavioral assertion is currently <code>it.skip</code> per the parallel-session RFC 0042 §B experimental-tier carve-out for the broader memory-lifecycle surface; lifting that gate is a separate operator-side decision. Live wire is verified — <code>POST /v1/runs/&amp;lt;probe&amp;gt;:fork</code> returns <code>401</code> (route registered + authenticating), distinct from the <code>404</code> it returned pre-<code>560cfc89</code>.</p>
 <h2 id="references">References</h2>
 <ul>
 <li><a href="./0037-multi-agent-execution-model.md"><code>RFCS/0037-multi-agent-execution-model.md</code></a> §"Open spec gaps" MAE-1, MAE-2, MAE-3 (the gaps this RFC closes).</li>

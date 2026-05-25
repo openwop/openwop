@@ -173,6 +173,7 @@
       <li class="toc-top"><a href="#what-an-ai-envelope-is-and-is-not">What an AI Envelope is (and is not)</a></li>
       <li class="toc-top"><a href="#primitive">Primitive</a></li>
       <li class="toc-sub"><a href="#aienvelope-wire-shape">AIEnvelope wire shape</a></li>
+      <li class="toc-top"><a href="#rendering-hints-rfc-0055">Rendering hints (RFC 0055)</a></li>
       <li class="toc-top"><a href="#universal-kinds-normative">Universal kinds (normative)</a></li>
       <li class="toc-sub"><a href="#clarification-request-payload">clarification.request payload</a></li>
       <li class="toc-sub"><a href="#schema-request-payload">schema.request payload</a></li>
@@ -184,6 +185,8 @@
       <li class="toc-sub"><a href="#strict-mode-optional-field-emulation-informative">Strict-mode optional-field emulation (informative)</a></li>
       <li class="toc-sub"><a href="#capability-handshake-reasoning">Capability handshake (reasoning)</a></li>
       <li class="toc-sub"><a href="#relationship-to-other-reasoning-surfaces">Relationship to other reasoning surfaces</a></li>
+      <li class="toc-top"><a href="#media-reference-payloads-rfc-0055-c">Media reference payloads (RFC 0055 §C)</a></li>
+      <li class="toc-sub"><a href="#asset-url-discipline-normative">Asset-URL discipline (normative)</a></li>
       <li class="toc-top"><a href="#vendor-namespaced-kinds">Vendor-namespaced kinds</a></li>
       <li class="toc-top"><a href="#schema-discipline">Schema discipline</a></li>
       <li class="toc-sub"><a href="#canonical-schema-location">Canonical schema location</a></li>
@@ -327,6 +330,24 @@ interface EnvelopeMeta {
    *  Never used for routing; never persisted into event payloads in a
    *  security-relevant way. (in-flight) */
   label?: string;
+
+  /** Optional rendering hint (RFC 0055). Advisory only — never changes
+   *  payload validation; unknown values fall back to default rendering.
+   *  See §&quot;Rendering hints&quot;. (in-flight) */
+  rendering?: RenderingHint;
+}
+
+interface RenderingHint {
+  /** Renderer family the producer suggests. (in-flight) */
+  display?: &#39;markdown&#39; | &#39;code&#39; | &#39;card&#39; | &#39;image&#39; | &#39;audio&#39; | &#39;file&#39;;
+  /** IANA media type when display is image/audio/file. (in-flight) */
+  mimeType?: string;
+  /** Language tag when display: code (e.g. &#39;ts&#39;, &#39;python&#39;). (in-flight) */
+  lang?: string;
+  /** Text alternative for accessibility when display is image/audio/file. (in-flight) */
+  alt?: string;
+  /** Optional caption / card header. (in-flight) */
+  title?: string;
 }
 
 interface PartialInfo {
@@ -344,6 +365,27 @@ type EnvelopeOutcome =
   | { status: &#39;invalid&#39;;  reason: string; details: ValidationDetail[] }
   | { status: &#39;breached&#39;; reason: string; capKind: &#39;envelopes&#39; | &#39;schema&#39; | &#39;clarification&#39; };</code></pre>
 <p><strong>Top-level fields are closed</strong> (<code>additionalProperties: false</code> at the spec level). Vendor-namespaced extensions go inside <code>payload</code> or under <code>meta.&amp;lt;vendor&amp;gt;.&amp;lt;key&amp;gt;</code> per the canonical-prefix table in <code>host-extensions.md</code>.</p>
+<hr/>
+<h2 id="rendering-hints-rfc-0055">Rendering hints (RFC 0055)</h2>
+<p><code>meta.rendering</code> is an <strong>optional, advisory</strong> hint telling a consumer how the producer suggests its <code>payload</code> be rendered. It exists because rendering consistency is an interop property: two consumers reading the same envelope SHOULD render it the same way, rather than each guessing. Without it, a chat UI, a debugger, and a mobile client each special-case text and drop everything else to a raw JSON dump.</p>
+<p>It is a <strong>hint, not a contract</strong>:</p>
+<ul>
+<li>A producer (LLM node / host) MAY set <code>meta.rendering</code>. It MUST NOT be required for any payload to validate — <code>meta.rendering</code> never changes <code>payload</code> validation.</li>
+<li>A consumer SHOULD honor <code>display</code> when it recognizes the value, and MUST degrade gracefully (fall back to its default text / raw-JSON rendering) when <code>meta.rendering</code> is absent or carries a <code>display</code> value it does not recognize.</li>
+<li>When <code>display</code> is <code>image</code>, <code>audio</code>, or <code>file</code>, the consumer SHOULD render <code>alt</code> for assistive technologies, and the producer SHOULD provide it.</li>
+<li><code>meta.rendering</code> carries <strong>no secret material</strong> and is subject to the same SR-1 redaction discipline as the rest of <code>meta</code> (§"Redaction").</li>
+</ul>
+<table>
+<thead><tr><th><code>display</code></th><th>Meaning</th><th>Companion fields</th></tr></thead>
+<tbody>
+<tr><td><code>markdown</code></td><td>Render <code>payload</code> (or its text) as Markdown.</td><td>—</td></tr>
+<tr><td><code>code</code></td><td>Render as a code block.</td><td><code>lang</code></td></tr>
+<tr><td><code>card</code></td><td>Render the structured <code>payload</code> as a titled card.</td><td><code>title</code></td></tr>
+<tr><td><code>image</code></td><td>Payload references/contains an image.</td><td><code>mimeType</code>, <code>alt</code>, <code>title</code></td></tr>
+<tr><td><code>audio</code></td><td>Payload references/contains an audio clip.</td><td><code>mimeType</code>, <code>alt</code>, <code>title</code></td></tr>
+<tr><td><code>file</code></td><td>Payload references/contains a downloadable file.</td><td><code>mimeType</code>, <code>alt</code>, <code>title</code></td></tr>
+</tbody></table>
+<p>The <code>image</code> / <code>audio</code> / <code>file</code> families pair with the <code>media.*</code> payload convention (§"Media reference payloads", RFC 0055 §C) for the asset-URL discipline; a producer MAY also set <code>display: image</code> on a vendor-namespaced payload that carries its own inline data. The hint never overrides the <code>type</code> discriminator — payload shape is still selected and validated by <code>type</code>.</p>
 <hr/>
 <h2 id="universal-kinds-normative">Universal kinds (normative)</h2>
 <p>Every OpenWOP-compliant engine MUST recognize the following four kinds. They are <strong>always allowed</strong> — Envelope Contract gates MUST NOT refuse them, and they MUST NOT be omitted from a host's <code>supportedEnvelopes</code> advertisement.</p>
@@ -433,6 +475,12 @@ type EnvelopeOutcome =
 <li><code>agent.reasoning.delta</code> / <code>agent.reasoned</code> (RFC 0024) — model's thinking-tokens stream (Anthropic extended thinking, Gemini <code>thinkingBudget</code>, OpenAI o-series reasoning).</li>
 </ul>
 <p>A debugger should render all three when present. The <code>reasoning</code> field captures <strong>what the model emitted as part of structured output</strong>; the other two capture <strong>what the host sent</strong> and <strong>the model's interleaved reasoning trace</strong> respectively.</p>
+<hr/>
+<h2 id="media-reference-payloads-rfc-0055-c">Media reference payloads (RFC 0055 §C)</h2>
+<p><code>media.image</code>, <code>media.audio</code>, and <code>media.file</code> are <strong>optional, advertised</strong> kinds for an LLM-emitted (or host-emitted) image, audio clip, or downloadable file. They are <strong>not</strong> among the four MUST-recognize universal kinds — a host emits and advertises them only if it produces media; a consumer that doesn't recognize them falls back to raw rendering. They pair with the <code>meta.rendering.display</code> hint (§"Rendering hints") for how to render, and carry the asset itself by <strong>host-served URL reference</strong> (preferred) or, below a cap, inline base64.</p>
+<p>Per-kind payload schemas live at the canonical location (<code>schemas/envelopes/media.{image,audio,file}.schema.json</code>); a host that supports them lists each in <code>Capabilities.supportedEnvelopes</code> + <code>schemaVersions</code>. The shared payload shape is <code>{ url?, base64?, bytes, mimeType?, … }</code> (<code>bytes</code> required; <code>media.audio</code> adds <code>durationSeconds?</code>, <code>media.file</code> adds <code>name?</code>).</p>
+<h3 id="asset-url-discipline-normative">Asset-URL discipline (normative)</h3>
+<p>1. A host that serves asset URLs <strong>MUST</strong> scope them to the run's tenant and <strong>MUST NOT</strong> make them globally guessable — use a signed-URL or capability-token recipe (reuse the interrupt signed-token recipe). Enforced by the <code>media-asset-url-tenant-scoped</code> SECURITY invariant. 2. Inline base64 is permitted only at or below the host-advertised cap <code>capabilities.aiProviders.maxInlineMediaBytes</code> (default <strong>256 KiB</strong>); above it the host <strong>MUST</strong> use a <code>url</code> reference. This bounds event-log bloat and keeps replay payloads portable. 3. Asset URLs are part of a run's debug-bundle manifest (<code>debug-bundle.md</code>) <strong>by reference</strong>, never by inlining the binary. 4. A host <strong>MUST</strong> retain a <code>media.*</code> asset at least as long as the emitting run's event-log retention (<code>replay.md</code>), so a forked/replayed run can still resolve the URL. The event payload (a URL string) replays deterministically; this rule keeps the referenced asset available.</p>
 <hr/>
 <h2 id="vendor-namespaced-kinds">Vendor-namespaced kinds</h2>
 <p>All non-universal kinds MUST be vendor-namespaced per <code>host-extensions.md</code> §"Canonical-prefix table." Core v1 does <strong>not</strong> specify domain-specific kinds (<code>prd.create</code>, <code>theme.create</code>, <code>tasks.create</code>, etc.). A host that wishes to advertise these kinds MUST namespace them — e.g., <code>vendor.myndhyve.prd.create</code>, <code>vendor.myndhyve.theme.create</code> — and supply the per-kind JSON Schema at the canonical schema location (see §Schema discipline).</p>

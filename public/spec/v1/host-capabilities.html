@@ -192,6 +192,8 @@
       <li class="toc-top"><a href="#host-mcp">§host.mcp</a></li>
       <li class="toc-top"><a href="#host-knowledge">§host.knowledge</a></li>
       <li class="toc-top"><a href="#host-secrets">§host.secrets</a></li>
+      <li class="toc-top"><a href="#host-credentials">§host.credentials</a></li>
+      <li class="toc-top"><a href="#host-oauth">§host.oauth</a></li>
       <li class="toc-top"><a href="#host-fs">§host.fs</a></li>
       <li class="toc-top"><a href="#host-kvstorage">§host.kvStorage</a></li>
       <li class="toc-top"><a href="#host-tablestorage">§host.tableStorage</a></li>
@@ -206,6 +208,12 @@
       <li class="toc-sub"><a href="#capability-advertisement-normative">Capability advertisement (normative)</a></li>
       <li class="toc-sub"><a href="#failure-mode-invariants-normative">Failure-mode invariants (normative)</a></li>
       <li class="toc-sub"><a href="#error-codes-additive-to-rest-endpoints-md-common-error-codes">Error codes (additive to rest-endpoints.md §&quot;Common error codes&quot;)</a></li>
+      <li class="toc-top"><a href="#host-scheduling">§host.scheduling</a></li>
+      <li class="toc-top"><a href="#host-deadletter">§host.deadLetter</a></li>
+      <li class="toc-top"><a href="#host-knowledge">§host.knowledge</a></li>
+      <li class="toc-top"><a href="#host-secrets">§host.secrets</a></li>
+      <li class="toc-top"><a href="#host-knowledge">§host.knowledge</a></li>
+      <li class="toc-top"><a href="#host-secrets">§host.secrets</a></li>
       <li class="toc-top"><a href="#reserved-but-undocumented-surfaces">Reserved-but-undocumented surfaces</a></li>
       <li class="toc-top"><a href="#capability-negotiation">Capability negotiation</a></li>
       <li class="toc-top"><a href="#see-also">See also</a></li>
@@ -1102,7 +1110,7 @@ ctx.mcp.serverStatus({
 <hr/>
 <h2 id="host-knowledge">§host.knowledge</h2>
 <p><strong>Capability flag:</strong> <code>host.knowledge: supported</code></p>
-<p><strong>Used by:</strong> market-intelligence packs, RAG-grounded copy packs, brief-enrichment packs.</p>
+<p><strong>Used by:</strong> <code>vendor.myndhyve.knowledge-tools</code> (the <code>knowledge.retrieve</code> + <code>knowledge.augment-prompt</code> typeIds). Composes downstream of <code>core.openwop.ai</code> consumers for RAG-grounded workflows — see <a href="../../examples/rag-grounded-chat/"><code>examples/rag-grounded-chat/</code></a> for the canonical 2-node reference.</p>
 <p>Knowledge-base retrieval. Routes queries through the host's RAG pipeline (embedding → vector search → optional re-rank). The host owns the corpus, the embedding model, and the access-control boundary; the pack supplies the query.</p>
 <pre class="lang-typescript"><code>ctx.knowledge.retrieve({
   query: string,
@@ -1211,6 +1219,63 @@ ctx.mcp.serverStatus({
   }
 }</code></pre>
 <p><code>resolveInPack</code> is additive — hosts that omit it advertise only the proxy-flow path (clients pass <code>ai.credentialRef</code> to <code>ctx.callAI</code>; pack-side resolution is unavailable). Hosts that advertise it MUST implement all hard rules above.</p>
+<hr/>
+<h2 id="host-credentials">§host.credentials</h2>
+<p><strong>Capability flag:</strong> <code>credentials.supported: true</code> <em>(advertised via top-level <code>Capabilities.credentials</code>; see <a href="capabilities.md#credentials">capabilities.md §credentials</a>)</em> — RFC 0046, <code>Draft</code>.</p>
+<p><strong>Used by:</strong> packs that declare <code>requiredCredentials[]</code> (see <a href="../../schemas/node-pack-manifest.schema.json">node-pack-manifest.schema.json</a>); the RFC 0047 <code>host.oauth</code> flow stores acquired tokens here; RFC 0045 connectors point their <code>auth</code> declarations at it.</p>
+<p>A portable credential <strong>resolution + lifecycle</strong> contract — the first-class sibling to <code>§host.secrets</code>. Where <code>secrets.resolveInPack</code> hands raw plaintext into the pack process for direct external HTTP, <code>host.credentials</code> is the broader surface for <em>storing, sharing, rotating, and resolving</em> a credential by an opaque reference, <strong>without ever putting plaintext on the wire</strong>. A pack references a credential by <code>{ ref, scope }</code> (the <a href="../../schemas/credential-reference.schema.json"><code>credential-reference.schema.json</code></a> wire shape — the reference, never the secret); the host resolves it at node-execution time and injects the material into the node sandbox <strong>only</strong>.</p>
+<p><strong>Resolution contract (normative).</strong> A host advertising <code>credentials.supported: true</code> MUST:</p>
+<p>1. Resolve a <code>{ ref, scope }</code> reference at node-execution time and inject the resolved material into the node sandbox <strong>only</strong>. The resolved value MUST NOT appear in <code>inputs</code>, persisted <code>variables</code>, <code>channels</code>, any <code>run.*</code> event payload, the debug bundle, or replay state (SECURITY invariant <code>credential-payload-redaction</code>). 2. Return a typed error envelope on resolution failure: <code>credential_not_found</code> (unknown ref), <code>credential_forbidden</code> (ref out of the caller's scope — fail-closed), <code>credential_scope_unsupported</code> (scope not in the advertised <code>scopes</code>). 3. When <code>sharing: true</code>, resolve the <strong>same</strong> stored credential for every workflow that references it within the scope, without copying material between references.</p>
+<p><strong>Rotation (when <code>rotation: &quot;two-key-overlap&quot;</code>).</strong> During a grace window the old and new credential both resolve as valid; after the window the old MUST fail with <code>credential_not_found</code>. Redaction (rule 1) MUST hold for both old and new material throughout. This reuses the contract verified for <code>openwop-auth-api-key-rotation</code>.</p>
+<p><strong>Relationship to <code>§host.secrets</code>.</strong> <code>host.credentials</code> supersedes the informal <code>ai.credentialRef</code> / <code>secrets.resolveInPack</code> annex with a first-class store-at-rest + sharing + rotation surface; the <code>secrets</code> advertisement stays valid and is now a special case. A host MAY advertise both.</p>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>credential_not_found</code> — <code>ref</code> doesn't resolve (or old key past the rotation grace window)</li>
+<li><code>credential_forbidden</code> — <code>ref</code> resolvable but out of the caller's <code>{ tenant, workspace, principal }</code> scope (fail-closed; never silently substitute)</li>
+<li><code>credential_scope_unsupported</code> — requested <code>scope</code> not in <code>capabilities.credentials.scopes</code></li>
+<li><code>credential_unavailable</code> — pack declares <code>requiredCredentials[]</code> but the host doesn't advertise <code>credentials.supported</code> (register-time refusal via <code>peerDependencies: { &quot;credentials&quot;: &quot;supported&quot; }</code>)</li>
+</ul>
+<p><strong>Capability advertisement shape:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;credentials&quot;: {
+    &quot;supported&quot;: true,
+    &quot;scopes&quot;: [&quot;user&quot;, &quot;workspace&quot;, &quot;tenant&quot;],
+    &quot;encryptionAtRest&quot;: true,
+    &quot;rotation&quot;: &quot;two-key-overlap&quot;,
+    &quot;sharing&quot;: true
+  }
+}</code></pre>
+<p>Additive — hosts that omit the block ignore it; packs declaring <code>requiredCredentials[]</code> refuse to register against them. Verified by <code>credentials-capability-shape.test.ts</code> (shape, always runs) and <code>credential-payload-redaction.test.ts</code> (adversarial redaction, capability-gated).</p>
+<hr/>
+<h2 id="host-oauth">§host.oauth</h2>
+<p><strong>Capability flag:</strong> <code>oauth.supported: true</code> <em>(advertised via top-level <code>Capabilities.oauth</code>; see <a href="capabilities.md#oauth">capabilities.md §oauth</a>)</em> — RFC 0047, <code>Draft</code>.</p>
+<p><strong>Used by:</strong> connector packs whose nodes declare <code>auth: { type: &#39;oauth2&#39;, provider, scopes[] }</code> (see <a href="../../schemas/node-pack-manifest.schema.json">node-pack-manifest.schema.json</a> <code>NodeAuth</code>). RFC 0045 connectors point their <code>auth</code> declaration here.</p>
+<p>The host performs the OAuth 2.0 <strong>authorization-code + refresh</strong> dance on a user's behalf, so a connector node declares <em>which provider + scopes</em> it needs — not <em>how</em> the token is obtained. This answers "what third-party token does a node hold," distinct from RFC 0010's host-authentication profiles ("who is the caller"). It composes with — and depends on — <a href="#host-credentials">§host.credentials</a>: acquired tokens are stored as <code>host.credentials</code> entries and resolved into the node sandbox as a bearer token, <strong>never crossing the wire</strong>.</p>
+<p><strong>Token lifecycle (normative).</strong> A host advertising <code>oauth.supported: true</code> MUST:</p>
+<p>1. Perform the advertised grant(s). For <code>authorization_code</code>, drive the redirect/callback exchange host-side; the authorization-code, redirect URI, and <code>state</code> parameter MUST NOT enter any run-visible surface. 2. Persist the acquired access + refresh tokens as a <code>host.credentials</code> (RFC 0046) entry (scope <code>user</code> or <code>workspace</code>); the node receives a resolved bearer token <strong>in-sandbox only</strong> — never in <code>inputs</code>, variables, events, debug bundles, or replay state (the <code>credential-payload-redaction</code> invariant covers it). 3. Refresh expired access tokens host-side using the stored refresh token, transparently to the node. On terminal refresh failure (revoked/expired refresh token), emit <code>connector.auth_expired</code> and fail the node with <code>connector_auth_expired</code>.</p>
+<p><strong>Connector-auth declaration.</strong> A node declares <code>auth: { type: &#39;oauth2&#39;, provider, scopes[] }</code>. The host matches <code>provider</code> against an advertised <code>oauth.providers[].id</code> and refuses to register the pack if the provider or a requested scope is not advertised (<code>oauth_provider_unsupported</code> / <code>oauth_scope_unsupported</code>).</p>
+<p><strong>Events (additive, redaction-safe):</strong></p>
+<ul>
+<li><code>connector.authorized</code> → <code>{ provider, credentialRef, scopes }</code> — token first acquired or re-authorized. Carries the credential <strong>reference</strong>, never the token.</li>
+<li><code>connector.auth_expired</code> → <code>{ provider, credentialRef, reason }</code> — refresh failed terminally.</li>
+</ul>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>oauth_provider_unsupported</code> — node's <code>auth.provider</code> not in <code>capabilities.oauth.providers[]</code></li>
+<li><code>oauth_scope_unsupported</code> — a requested scope not in the provider's <code>scopesSupported</code></li>
+<li><code>connector_auth_expired</code> — stored token's refresh failed terminally</li>
+</ul>
+<p><strong>Capability advertisement shape:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;oauth&quot;: {
+    &quot;supported&quot;: true,
+    &quot;grants&quot;: [&quot;authorization_code&quot;, &quot;refresh_token&quot;],
+    &quot;providers&quot;: [
+      { &quot;id&quot;: &quot;slack&quot;, &quot;authUrl&quot;: &quot;https://slack.com/oauth/v2/authorize&quot;, &quot;tokenUrl&quot;: &quot;https://slack.com/api/oauth.v2.access&quot;, &quot;scopesSupported&quot;: [&quot;chat:write&quot;, &quot;channels:read&quot;] }
+    ]
+  }
+}</code></pre>
+<p>Additive — hosts that omit the block advertise no third-party token acquisition; connector packs declaring <code>auth: { type: &#39;oauth2&#39; }</code> refuse to register against them. <strong>Depends on RFC 0046</strong> for token storage + the redaction invariant. Verified by <code>oauth-capability-shape.test.ts</code> (shape, always runs) and <code>oauth-connector-redaction.test.ts</code> (token-material redaction, capability-gated, seam soft-skips).</p>
 <hr/>
 <h2 id="host-fs">§host.fs</h2>
 <p><strong>Capability flag:</strong> <code>fs.supported: true</code> <em>(advertised via top-level <code>Capabilities.fs</code>; see <a href="capabilities.md">capabilities.md</a>)</em></p>
@@ -1546,6 +1611,268 @@ ctx.storage.cache.delete({ key: string }) → Promise&amp;lt;{ deleted: boolean 
 <li><code>sandbox_capability_denied</code> — Sandbox code called a host capability not in <code>allowedHostCalls</code>. <code>details.requestedCapability</code> MUST be set.</li>
 <li><code>sandbox_escape_attempt</code> — Sandbox detected an explicit escape attempt (a syscall from a forbidden list). <code>details.escapeKind</code> SHOULD be set.</li>
 </ul>
+<hr/>
+<h2 id="host-scheduling">§host.scheduling</h2>
+<p><strong>Capability flag:</strong> <code>scheduling.supported: true</code> <em>(advertised via top-level <code>Capabilities.scheduling</code>; see <a href="capabilities.md#scheduling">capabilities.md §scheduling</a>)</em> — RFC 0052, <code>Draft</code>.</p>
+<p><strong>Used by:</strong> the <code>schedule</code> trigger in <code>core.openwop.triggers</code> (cron / delayed / calendar). Promotes the scheduling intent behind RFC 0017 (<code>host.queueBus</code>) into a portable, conformance-tested execution contract.</p>
+<p>Gives the <code>schedule</code> trigger <strong>time-based run-initiation semantics</strong>: a cron expression, one-shot delay, or calendar reference produces a durable scheduled run. This is orthogonal to the in-DAG <code>core.control.delay</code> primitive (which reads <code>config.delayMs</code> and delays a node <em>within</em> a run); <code>host.scheduling</code> <em>initiates</em> runs at a time. It composes with <code>host.queueBus</code> (RFC 0017) where a host backs scheduling with a queue, but a host MAY advertise <code>scheduling</code> without <code>queueBus</code> (e.g. a cron daemon).</p>
+<p><strong>Contract (normative).</strong> A host advertising <code>scheduling.supported: true</code> MUST, for a <code>schedule</code> trigger configured with a cron expr / <code>delayMs</code> / calendar ref:</p>
+<p>1. Produce a <strong>durable</strong> scheduled run that survives host restart and fires at the scheduled time. 2. Fire <strong>exactly once per tick</strong> — a cron tick MUST NOT spawn duplicate concurrent runs (idempotent firing; composes with <code>idempotency.md</code>). 3. Reject a schedule beyond the advertised <code>maxFutureHorizon</code> with <code>schedule_horizon_exceeded</code>. 4. Apply a documented <strong>missed-tick policy</strong> — when the host was down across a tick it MUST either fire-once-on-recovery or skip-to-next (advertised so consumers can reason about it); it MUST NOT silently fire N backlogged runs.</p>
+<p><strong>Capability advertisement shape:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;scheduling&quot;: {
+    &quot;supported&quot;: true,
+    &quot;cron&quot;: true,
+    &quot;delayed&quot;: true,
+    &quot;calendar&quot;: false,
+    &quot;maxFutureHorizon&quot;: &quot;P90D&quot;
+  }
+}</code></pre>
+<p><strong>Error codes (additive to <code>rest-endpoints.md</code> §"Common error codes"):</strong></p>
+<ul>
+<li><code>schedule_horizon_exceeded</code> — a <code>schedule</code> trigger requested a fire time beyond <code>capabilities.scheduling.maxFutureHorizon</code>. <code>details.maxFutureHorizon</code> SHOULD echo the advertised cap.</li>
+</ul>
+<p>Additive — hosts that omit the block advertise no scheduling; <code>schedule</code>-trigger workflows refuse to register against them (peerDependency <code>scheduling: &#39;supported&#39;</code>). Verified by <code>scheduling-capability-shape.test.ts</code> (shape, always runs) + <code>scheduling-cron-fires-once.test.ts</code> (once-per-tick + missed-tick, capability-gated).</p>
+<hr/>
+<h2 id="host-deadletter">§host.deadLetter</h2>
+<p><strong>Capability flag:</strong> <code>deadLetter.supported: true</code> <em>(advertised via top-level <code>Capabilities.deadLetter</code>; see <a href="capabilities.md#deadletter">capabilities.md §deadLetter</a>)</em> — RFC 0053, <code>Draft</code>.</p>
+<p><strong>Used by:</strong> the engine's terminal-failure path. Gives a run/node that exhausts its retry policy a durable, inspectable <strong>sink</strong> instead of being logged and lost — so a poisoned run can be examined and replayed.</p>
+<p>This is the run-level dead-letter surface, <strong>distinct from</strong> <code>queueBus.deadLetterSupported</code> (RFC 0017), which dead-letters transport <em>messages</em> on a queue backend, not <em>runs</em> in the engine. It composes with the retry policy (RFC 0009) and fork/replay (RFC 0011).</p>
+<p><strong>Contract (normative).</strong> A host advertising <code>deadLetter.supported: true</code> MUST:</p>
+<p>1. On retry exhaustion (per the RFC 0009 retry policy), route the run/node to the dead-letter sink and emit <code>run.dead_lettered { runId, nodeId?, reason, attempts }</code>. The run's terminal <code>RunSnapshot.status</code> reflects failure; the run is <strong>not</strong> purged before <code>retentionDays</code>. 2. Keep the dead-lettered run <strong>fork-eligible</strong> per RFC 0011 for the retention window — it can be forked/replayed (e.g. after the underlying cause is fixed). 3. Purge the run after <code>retentionDays</code>; a fork attempt on a purged run returns the existing RFC 0011 not-found error.</p>
+<p><code>run.dead_lettered</code> carries no credential or payload material beyond a redaction-safe <code>reason</code>.</p>
+<p><strong>Capability advertisement shape:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;deadLetter&quot;: {
+    &quot;supported&quot;: true,
+    &quot;retentionDays&quot;: 30
+  }
+}</code></pre>
+<p>Additive — hosts that omit the block continue to fail runs with no sink, unaffected. Verified by <code>deadletter-capability-shape.test.ts</code> (shape, always runs) + <code>deadletter-retry-exhaustion.test.ts</code> (retry-exhaustion → <code>run.dead_lettered</code> + fork-eligibility, capability-gated).</p>
+<hr/>
+<h2 id="host-knowledge">§host.knowledge</h2>
+<p><strong>Capability flag:</strong> <code>host.knowledge: supported</code></p>
+<p><strong>Used by:</strong> market-intelligence packs, RAG-grounded copy packs, brief-enrichment packs.</p>
+<p>Knowledge-base retrieval. Routes queries through the host's RAG pipeline (embedding → vector search → optional re-rank). The host owns the corpus, the embedding model, and the access-control boundary; the pack supplies the query.</p>
+<pre class="lang-typescript"><code>ctx.knowledge.retrieve({
+  query: string,
+  workspaceId?: string,       // omit to use the run&#39;s workspace
+  collectionIds?: string[],   // scope to specific knowledge collections
+  category?: string,          // optional category facet
+  candidateLimit?: number,    // pre-rank candidate pool size; host caps the upper bound
+  resultLimit?: number,       // post-rank returned chunks; host caps the upper bound
+  scoreThreshold?: number,    // minimum relevanceScore (0..1) for inclusion
+}) → Promise&amp;lt;{
+  chunks: Array&amp;lt;{
+    chunkId: string,
+    content: string,                // prepared/cleaned chunk text suitable for prompt insertion
+    rawContent?: string,            // optional verbatim source text (when distinct from content)
+    headingPath: string[],          // section heading trail from the source document
+    pageNumber: number | null,
+    documentTitle: string,
+    assetId: string,                // host-internal id for the source media asset
+    collectionId: string,
+    relevanceScore: number,         // 0..1 — host-normalized post-rank score
+    vectorDistance?: number,        // pre-rank distance; informational only
+  }&amp;gt;,
+  sources: Array&amp;lt;{
+    sourceId: string,               // stable id for citation (de-duplicated across chunks)
+    assetId: string,
+    title: string,
+    headingPath: string[],
+    pageNumber: number | null,
+  }&amp;gt;,
+  latencyMs?: number,
+  hasResults: boolean,
+}&gt;</code></pre>
+<p><strong>Required methods:</strong> <code>retrieve</code>.</p>
+<p><strong>Optional methods (host MAY advertise <code>host.knowledge.embed: supported</code> to expose them):</strong></p>
+<pre class="lang-typescript"><code>ctx.knowledge.embed({
+  texts: string[],
+  model?: string,                   // host-allowed embedding model alias
+}) → Promise&amp;lt;{
+  vectors: number[][],              // one row per input; dimension is host-defined and stable per model
+  model: string,
+  dimension: number,
+}&amp;gt;</code></pre>
+<p><strong>RBAC:</strong></p>
+<ul>
+<li>The host MUST enforce that <code>workspaceId</code> is one the calling run has read access to. Cross-workspace retrieval MUST return <code>403 knowledge_workspace_forbidden</code>.</li>
+<li><code>collectionIds[]</code> MUST be filtered to those visible to the caller; chunks from collections the caller cannot read MUST be omitted, NOT errored on.</li>
+</ul>
+<p><strong>Determinism:</strong></p>
+<ul>
+<li><code>retrieve</code> is NOT pure — corpus and embeddings change over time. Packs SHOULD treat results as an input snapshot for the current run.</li>
+<li>Hosts SHOULD include enough metadata (chunkId, assetId, headingPath, pageNumber) for packs to render citations stably.</li>
+</ul>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>host_capability_missing</code></li>
+<li><code>knowledge_workspace_forbidden</code> — caller cannot read the workspace</li>
+<li><code>knowledge_query_too_long</code> — query exceeds host's embedding-model token limit</li>
+<li><code>knowledge_quota_exhausted</code> — workspace-level retrieval quota tripped</li>
+<li><code>knowledge_collection_not_found</code> — explicit <code>collectionIds[]</code> includes an id that does not exist for this workspace (vs. a no-access filter, which silently skips)</li>
+</ul>
+<hr/>
+<h2 id="host-secrets">§host.secrets</h2>
+<p><strong>Capability flag:</strong> <code>secrets.resolveInPack: supported</code> <em>(advertised via top-level <code>Capabilities.secrets</code>; see <a href="capabilities.md#secrets">capabilities.md §secrets</a>)</em></p>
+<p><strong>Used by:</strong> packs that must call external HTTP APIs requiring stored credentials (e.g., ad-platform APIs, third-party analytics endpoints, vendor-specific SaaS integrations). Current consumers: <code>vendor.myndhyve.ads-publish-meta</code>, <code>vendor.myndhyve.ads-publish-google</code>, <code>vendor.myndhyve.ads-publish-tiktok</code> (the 3 platform-publish packs; the <code>ads.publish.platform</code> umbrella decomposed into platform-specific packs during publish).</p>
+<p>Resolves an opaque, host-issued secret reference into plaintext <strong>inside the pack process</strong>, for the narrow case where a pack needs raw credentials to call an external service that the host doesn't proxy. <strong>This is the highest-risk host capability in the spec</strong> — every related rule below is a hard requirement, not a recommendation.</p>
+<pre class="lang-typescript"><code>ctx.secrets.resolve({
+  ref: string,                       // opaque host-issued credential reference (e.g., &quot;secret:tenant:meta-ads-api-token:v3&quot;)
+  purpose: string,                   // free-form audit string — required (logged by host, NOT by pack)
+}) → Promise&amp;lt;{
+  plaintext: string,                 // raw credential value; consumed and discarded by the pack — NEVER re-emitted
+  expiresAt?: string,                // ISO 8601; pack SHOULD treat as advisory and re-resolve before expiry on long-running calls
+  rotatedAt?: string,                // ISO 8601 of last rotation (advisory; for caches that key on rotation epoch)
+}&amp;gt;</code></pre>
+<p><strong>Required methods:</strong> <code>resolve</code>. Hosts that advertise <code>secrets.resolveInPack: supported</code> MUST implement this method AND comply with the redaction invariants below.</p>
+<p><strong>Hard rules (extending NFR-7 — Sensitive Data Redaction):</strong></p>
+<p>The plaintext returned by <code>ctx.secrets.resolve(...)</code> is the most sensitive value flowing through the pack runtime. Hosts AND packs MUST jointly enforce:</p>
+<table>
+<thead><tr><th>Rule</th><th>Owner</th><th>Detail</th></tr></thead>
+<tbody>
+<tr><td>Plaintext MUST NOT appear in <code>RunEvent</code> payloads</td><td>Host</td><td>Event emitter MUST redact <code>secrets.resolve</code> outputs from every serialized event (including <code>node.input</code> / <code>node.output</code> / <code>node.error</code>).</td></tr>
+<tr><td>Plaintext MUST NOT appear in OTel spans, log lines, or trace exports</td><td>Host</td><td>Tracing adapter MUST scrub. Pack runtime MUST NOT log resolved plaintext via <code>ctx.log</code>.</td></tr>
+<tr><td>Plaintext MUST NOT appear in <code>RunSnapshot</code> exports or replay snapshots</td><td>Host</td><td>Snapshot serializer MUST redact. Replay determinism is preserved by replaying the <em>resolve call</em>, not by snapshotting the plaintext (host resolves freshly from the credential store on replay).</td></tr>
+<tr><td>Plaintext MUST NOT be persisted in pack-side caches across run boundaries</td><td>Pack</td><td>Pack MAY cache within a single <code>ctx.callImageGenerator</code> / <code>fetch()</code> call site for that one invocation. After the call, the plaintext reference MUST be discarded.</td></tr>
+<tr><td>Plaintext MUST NOT be sent to any <code>ctx.*</code> method other than the consuming call (e.g., <code>fetch</code>)</td><td>Pack</td><td>Specifically: never pass to <code>ctx.callAI</code>, <code>ctx.chat.sendMessage</code>, <code>ctx.canvas.write</code>, or any other host method. The resolution is for direct external HTTP only.</td></tr>
+<tr><td><code>purpose</code> field MUST be present and non-empty</td><td>Pack</td><td>Host audit log records <code>{ref, purpose, runId, packName, packVersion, ts}</code> — <code>purpose</code> is the required audit breadcrumb.</td></tr>
+<tr><td>Lint + redaction unit tests</td><td>Host</td><td>Hosts that advertise this capability MUST add CI checks verifying plaintext never appears in serialized output across the surfaces above.</td></tr>
+</tbody></table>
+<p><strong>Determinism note.</strong> <code>ctx.secrets.resolve</code> is non-deterministic by design — the host MAY rotate secrets between runs, MAY return different plaintext on the same <code>ref</code> across runs (rotation), AND MUST NOT snapshot plaintext for replay. Replay-aware hosts SHOULD record only the resolve <em>call site</em> (ref + purpose + ts) and re-resolve from the credential store at replay time. Packs that change behavior based on plaintext content (e.g., parsing a JWT to extract a tenant id) MUST treat the resolved value as run-input that may differ across runs.</p>
+<p><strong>RBAC.</strong> The host MUST enforce that <code>ref</code> resolves only to credentials the calling run has access to. Refs from another workspace's secret namespace MUST fail with <code>secret_access_denied</code>. Hosts MUST NOT silently substitute a different credential if the requested <code>ref</code> is unavailable.</p>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>host_capability_missing</code> — <code>ctx.secrets.resolve</code> absent (workflow-register-time refusal via <code>peerDependencies: { &quot;secrets.resolveInPack&quot;: &quot;supported&quot; }</code> is the correct path; runtime check is defense-in-depth)</li>
+<li><code>secret_not_found</code> — <code>ref</code> doesn't resolve in the host's credential store</li>
+<li><code>secret_access_denied</code> — caller lacks read permission on <code>ref</code> (RBAC denied)</li>
+<li><code>secret_revoked</code> — credential was revoked since last successful resolution (advisory: the host MAY surface this as <code>secret_not_found</code> to avoid leaking lifecycle metadata)</li>
+<li><code>secret_expired</code> — credential is past its expiry and rotation is required</li>
+<li><code>secret_quota_exhausted</code> — host-side rate limit on resolution calls (defense against bulk-leak attacks)</li>
+</ul>
+<p><strong>Capability advertisement shape:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;secrets&quot;: {
+    &quot;supported&quot;: true,
+    &quot;scopes&quot;: [&quot;tenant&quot;, &quot;user&quot;],
+    &quot;resolution&quot;: &quot;host-managed&quot;,
+    &quot;resolveInPack&quot;: &quot;supported&quot;
+  }
+}</code></pre>
+<p><code>resolveInPack</code> is additive — hosts that omit it advertise only the proxy-flow path (clients pass <code>ai.credentialRef</code> to <code>ctx.callAI</code>; pack-side resolution is unavailable). Hosts that advertise it MUST implement all hard rules above.</p>
+<hr/>
+<h2 id="host-knowledge">§host.knowledge</h2>
+<p><strong>Capability flag:</strong> <code>host.knowledge: supported</code></p>
+<p><strong>Used by:</strong> market-intelligence packs, RAG-grounded copy packs, brief-enrichment packs.</p>
+<p>Knowledge-base retrieval. Routes queries through the host's RAG pipeline (embedding → vector search → optional re-rank). The host owns the corpus, the embedding model, and the access-control boundary; the pack supplies the query.</p>
+<pre class="lang-typescript"><code>ctx.knowledge.retrieve({
+  query: string,
+  workspaceId?: string,       // omit to use the run&#39;s workspace
+  collectionIds?: string[],   // scope to specific knowledge collections
+  category?: string,          // optional category facet
+  candidateLimit?: number,    // pre-rank candidate pool size; host caps the upper bound
+  resultLimit?: number,       // post-rank returned chunks; host caps the upper bound
+  scoreThreshold?: number,    // minimum relevanceScore (0..1) for inclusion
+}) → Promise&amp;lt;{
+  chunks: Array&amp;lt;{
+    chunkId: string,
+    content: string,                // prepared/cleaned chunk text suitable for prompt insertion
+    rawContent?: string,            // optional verbatim source text (when distinct from content)
+    headingPath: string[],          // section heading trail from the source document
+    pageNumber: number | null,
+    documentTitle: string,
+    assetId: string,                // host-internal id for the source media asset
+    collectionId: string,
+    relevanceScore: number,         // 0..1 — host-normalized post-rank score
+    vectorDistance?: number,        // pre-rank distance; informational only
+  }&amp;gt;,
+  sources: Array&amp;lt;{
+    sourceId: string,               // stable id for citation (de-duplicated across chunks)
+    assetId: string,
+    title: string,
+    headingPath: string[],
+    pageNumber: number | null,
+  }&amp;gt;,
+  latencyMs?: number,
+  hasResults: boolean,
+}&gt;</code></pre>
+<p><strong>Required methods:</strong> <code>retrieve</code>.</p>
+<p><strong>Optional methods (host MAY advertise <code>host.knowledge.embed: supported</code> to expose them):</strong></p>
+<pre class="lang-typescript"><code>ctx.knowledge.embed({
+  texts: string[],
+  model?: string,                   // host-allowed embedding model alias
+}) → Promise&amp;lt;{
+  vectors: number[][],              // one row per input; dimension is host-defined and stable per model
+  model: string,
+  dimension: number,
+}&amp;gt;</code></pre>
+<p><strong>RBAC:</strong></p>
+<ul>
+<li>The host MUST enforce that <code>workspaceId</code> is one the calling run has read access to. Cross-workspace retrieval MUST return <code>403 knowledge_workspace_forbidden</code>.</li>
+<li><code>collectionIds[]</code> MUST be filtered to those visible to the caller; chunks from collections the caller cannot read MUST be omitted, NOT errored on.</li>
+</ul>
+<p><strong>Determinism:</strong></p>
+<ul>
+<li><code>retrieve</code> is NOT pure — corpus and embeddings change over time. Packs SHOULD treat results as an input snapshot for the current run.</li>
+<li>Hosts SHOULD include enough metadata (chunkId, assetId, headingPath, pageNumber) for packs to render citations stably.</li>
+</ul>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>host_capability_missing</code></li>
+<li><code>knowledge_workspace_forbidden</code> — caller cannot read the workspace</li>
+<li><code>knowledge_query_too_long</code> — query exceeds host's embedding-model token limit</li>
+<li><code>knowledge_quota_exhausted</code> — workspace-level retrieval quota tripped</li>
+<li><code>knowledge_collection_not_found</code> — explicit <code>collectionIds[]</code> includes an id that does not exist for this workspace (vs. a no-access filter, which silently skips)</li>
+</ul>
+<hr/>
+<h2 id="host-secrets">§host.secrets</h2>
+<p><strong>Capability flag:</strong> <code>secrets.resolveInPack: supported</code> <em>(advertised via top-level <code>Capabilities.secrets</code>; see <a href="capabilities.md#secrets">capabilities.md §secrets</a>)</em></p>
+<p><strong>Used by:</strong> packs that must call external HTTP APIs requiring stored credentials (e.g., ad-platform APIs, third-party analytics endpoints, vendor-specific SaaS integrations). Future consumers: <code>vendor.myndhyve.ads-publish-platform</code>, <code>vendor.myndhyve.ads-metrics-import</code>.</p>
+<p>Resolves an opaque, host-issued secret reference into plaintext <strong>inside the pack process</strong>, for the narrow case where a pack needs raw credentials to call an external service that the host doesn't proxy. <strong>This is the highest-risk host capability in the spec</strong> — every related rule below is a hard requirement, not a recommendation.</p>
+<pre class="lang-typescript"><code>ctx.secrets.resolve({
+  ref: string,                       // opaque host-issued credential reference (e.g., &quot;secret:tenant:meta-ads-api-token:v3&quot;)
+  purpose: string,                   // free-form audit string — required (logged by host, NOT by pack)
+}) → Promise&amp;lt;{
+  plaintext: string,                 // raw credential value; consumed and discarded by the pack — NEVER re-emitted
+  expiresAt?: string,                // ISO 8601; pack SHOULD treat as advisory and re-resolve before expiry on long-running calls
+  rotatedAt?: string,                // ISO 8601 of last rotation (advisory; for caches that key on rotation epoch)
+}&amp;gt;</code></pre>
+<p><strong>Required methods:</strong> <code>resolve</code>. Hosts that advertise <code>secrets.resolveInPack: supported</code> MUST implement this method AND comply with the redaction invariants below.</p>
+<p><strong>Hard rules (extending NFR-7 — Sensitive Data Redaction):</strong></p>
+<p>The plaintext returned by <code>ctx.secrets.resolve(...)</code> is the most sensitive value flowing through the pack runtime. Hosts AND packs MUST jointly enforce:</p>
+<table>
+<thead><tr><th>Rule</th><th>Owner</th><th>Detail</th></tr></thead>
+<tbody>
+<tr><td>Plaintext MUST NOT appear in <code>RunEvent</code> payloads</td><td>Host</td><td>Event emitter MUST redact <code>secrets.resolve</code> outputs from every serialized event (including <code>node.input</code> / <code>node.output</code> / <code>node.error</code>).</td></tr>
+<tr><td>Plaintext MUST NOT appear in OTel spans, log lines, or trace exports</td><td>Host</td><td>Tracing adapter MUST scrub. Pack runtime MUST NOT log resolved plaintext via <code>ctx.log</code>.</td></tr>
+<tr><td>Plaintext MUST NOT appear in <code>RunSnapshot</code> exports or replay snapshots</td><td>Host</td><td>Snapshot serializer MUST redact. Replay determinism is preserved by replaying the <em>resolve call</em>, not by snapshotting the plaintext (host resolves freshly from the credential store on replay).</td></tr>
+<tr><td>Plaintext MUST NOT be persisted in pack-side caches across run boundaries</td><td>Pack</td><td>Pack MAY cache within a single <code>ctx.callImageGenerator</code> / <code>fetch()</code> call site for that one invocation. After the call, the plaintext reference MUST be discarded.</td></tr>
+<tr><td>Plaintext MUST NOT be sent to any <code>ctx.*</code> method other than the consuming call (e.g., <code>fetch</code>)</td><td>Pack</td><td>Specifically: never pass to <code>ctx.callAI</code>, <code>ctx.chat.sendMessage</code>, <code>ctx.canvas.write</code>, or any other host method. The resolution is for direct external HTTP only.</td></tr>
+<tr><td><code>purpose</code> field MUST be present and non-empty</td><td>Pack</td><td>Host audit log records <code>{ref, purpose, runId, packName, packVersion, ts}</code> — <code>purpose</code> is the required audit breadcrumb.</td></tr>
+<tr><td>Lint + redaction unit tests</td><td>Host</td><td>Hosts that advertise this capability MUST add CI checks verifying plaintext never appears in serialized output across the surfaces above.</td></tr>
+</tbody></table>
+<p><strong>Determinism note.</strong> <code>ctx.secrets.resolve</code> is non-deterministic by design — the host MAY rotate secrets between runs, MAY return different plaintext on the same <code>ref</code> across runs (rotation), AND MUST NOT snapshot plaintext for replay. Replay-aware hosts SHOULD record only the resolve <em>call site</em> (ref + purpose + ts) and re-resolve from the credential store at replay time. Packs that change behavior based on plaintext content (e.g., parsing a JWT to extract a tenant id) MUST treat the resolved value as run-input that may differ across runs.</p>
+<p><strong>RBAC.</strong> The host MUST enforce that <code>ref</code> resolves only to credentials the calling run has access to. Refs from another workspace's secret namespace MUST fail with <code>secret_access_denied</code>. Hosts MUST NOT silently substitute a different credential if the requested <code>ref</code> is unavailable.</p>
+<p><strong>Failure modes:</strong></p>
+<ul>
+<li><code>host_capability_missing</code> — <code>ctx.secrets.resolve</code> absent (workflow-register-time refusal via <code>peerDependencies: { &quot;secrets.resolveInPack&quot;: &quot;supported&quot; }</code> is the correct path; runtime check is defense-in-depth)</li>
+<li><code>secret_not_found</code> — <code>ref</code> doesn't resolve in the host's credential store</li>
+<li><code>secret_access_denied</code> — caller lacks read permission on <code>ref</code> (RBAC denied)</li>
+<li><code>secret_revoked</code> — credential was revoked since last successful resolution (advisory: the host MAY surface this as <code>secret_not_found</code> to avoid leaking lifecycle metadata)</li>
+<li><code>secret_expired</code> — credential is past its expiry and rotation is required</li>
+<li><code>secret_quota_exhausted</code> — host-side rate limit on resolution calls (defense against bulk-leak attacks)</li>
+</ul>
+<p><strong>Capability advertisement shape:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;secrets&quot;: {
+    &quot;supported&quot;: true,
+    &quot;scopes&quot;: [&quot;tenant&quot;, &quot;user&quot;],
+    &quot;resolution&quot;: &quot;host-managed&quot;,
+    &quot;resolveInPack&quot;: &quot;supported&quot;
+  }
+}</code></pre>
+<p><code>resolveInPack</code> is additive — hosts that omit it advertise only the proxy-flow path (clients pass <code>ai.credentialRef</code> to <code>ctx.callAI</code>; pack-side resolution is unavailable). Hosts that advertise it MUST implement all hard rules above.</p>
 <hr/>
 <h2 id="reserved-but-undocumented-surfaces">Reserved-but-undocumented surfaces</h2>
 <p>The following <code>host.*</code> capability slots are reserved for future surfaces. Hosts MUST NOT advertise them until this spec defines the contract.</p>
