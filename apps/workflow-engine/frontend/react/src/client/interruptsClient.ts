@@ -5,6 +5,7 @@
 
 import { getSdkClient } from './runsClient.js';
 import { authedHeaders, config, fetchOpts } from './config.js';
+import type { InterruptByTokenInspection } from '@openwop/openwop';
 
 export async function resolveByRun(runId: string, nodeId: string, resumeValue: unknown): Promise<void> {
   await getSdkClient().interrupts.resolveByRun(runId, nodeId, { resumeValue });
@@ -14,18 +15,12 @@ export async function resolveByToken(token: string, resumeValue: unknown): Promi
   await getSdkClient().interrupts.resolveByToken(token, { resumeValue });
 }
 
-export interface InterruptInspection {
-  kind: 'approval' | 'clarification' | 'refinement' | 'cancellation' | 'external-event' | 'custom';
-  key: string;
-  resumeSchema?: Record<string, unknown>;
-  data: unknown;
-  resolved: boolean;
-}
+/** Re-exported from the SDK so call sites can import a single name from
+ *  this module without also reaching into `@openwop/openwop` for the type. */
+export type InterruptInspection = InterruptByTokenInspection;
 
 export async function inspectByToken(token: string): Promise<InterruptInspection> {
-  const res = await fetch(`${config.baseUrl}/v1/interrupts/${encodeURIComponent(token)}`);
-  if (!res.ok) throw new Error(`inspect returned ${res.status}`);
-  return res.json();
+  return getSdkClient().interrupts.inspectByToken(token);
 }
 
 export interface OpenInterrupt {

@@ -19,7 +19,7 @@
 
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { config } from '../client/config.js';
+import { getCapabilities } from '../client/runsClient.js';
 import { useAuth } from '../auth/useAuth.js';
 
 const DISMISS_KEY = 'openwop:demo-banner:dismissed';
@@ -48,10 +48,13 @@ export function DemoHostBanner() {
     let aborted = false;
     void (async () => {
       try {
-        const res = await fetch(`${config.baseUrl}/.well-known/openwop`);
-        if (!res.ok) return;
-        const body = (await res.json()) as { capabilities?: { hostSurfaces?: HostSurfaceAd[] } };
-        const surfaces = body.capabilities?.hostSurfaces ?? [];
+        // Routes through the SDK's `client.discovery.capabilities()` per
+        // `sdk/PARITY.md`. The SDK handles auth + cookie credentials
+        // uniformly with the rest of the SPA's client layer.
+        const caps = (await getCapabilities()) as {
+          capabilities?: { hostSurfaces?: HostSurfaceAd[] };
+        };
+        const surfaces = caps?.capabilities?.hostSurfaces ?? [];
         const inmem = surfaces.filter((s) => s.supported && /in-memory|sqlite-in-memory|brute-force/.test(s.implementation ?? '')).length;
         if (!aborted) setInMemoryCount(inmem);
       } catch {
