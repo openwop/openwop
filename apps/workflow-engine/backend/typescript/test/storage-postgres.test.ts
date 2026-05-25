@@ -80,6 +80,8 @@ async function makeStorage(): Promise<Storage> {
     // throw if accessed.
     updateRun: async () => { throw new Error('not exercised'); },
     deleteRun: async () => { throw new Error('not exercised'); },
+    insertAnnotation: async () => { throw new Error('not exercised'); },
+    listAnnotations: async () => [],
     listRuns: async () => [],
     appendEvent: async (input) => {
       const { rows } = await pool.query(

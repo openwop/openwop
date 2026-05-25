@@ -14,6 +14,7 @@
  */
 
 import type {
+  AnnotationRecord,
   ChatMessageRecord,
   ChatSessionRecord,
   EventRecord,
@@ -36,6 +37,10 @@ export interface Storage {
    *  Returns true if a run row existed. Tenant authorization is enforced at
    *  the route, not here. */
   deleteRun(runId: string): Promise<boolean>;
+
+  // ── annotations (RFC 0056 — per-run side-store, NOT the event log) ──
+  insertAnnotation(record: AnnotationRecord): Promise<void>;
+  listAnnotations(runId: string): Promise<readonly AnnotationRecord[]>;
 
   // ── events ──
   /** Atomic append: assigns next sequence per (runId), returns sequence. */

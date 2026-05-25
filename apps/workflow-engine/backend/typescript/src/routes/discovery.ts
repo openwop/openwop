@@ -245,6 +245,14 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       // events 0..fromSeq, but doesn't reconstruct the executor's
       // resume position. Honest advertisement: not yet supported.
       replay: { supported: false, fork: false },
+      // RFC 0056 — run feedback / annotations. The sample persists annotations
+      // in a per-run side-store and serves POST/GET /v1/runs/{runId}/annotations
+      // with secret-pattern + SR-1 redaction of correction/note.
+      feedback: {
+        supported: true,
+        targets: ['run', 'event', 'node'],
+        signals: ['rating', 'correction', 'label', 'flag'],
+      },
       // Phase 1 of the multi-agent shift + RFC 0024 streaming. Sample
       // host emits both `agent.reasoned` (closing) AND
       // `agent.reasoning.delta` (streaming) events from the chat-responder

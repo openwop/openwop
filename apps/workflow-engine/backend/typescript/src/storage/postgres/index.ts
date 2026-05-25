@@ -534,6 +534,7 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
         await client.query(`DELETE FROM events WHERE run_id = $1`, [runId]);
         await client.query(`DELETE FROM interrupts WHERE run_id = $1`, [runId]);
         await client.query(`DELETE FROM invocation_log WHERE run_id = $1`, [runId]);
+        await client.query(`DELETE FROM annotations WHERE run_id = $1`, [runId]);
         const rr = await client.query(`DELETE FROM runs WHERE run_id = $1`, [runId]);
         await client.query('COMMIT');
         return (rr.rowCount ?? 0) > 0;
@@ -543,6 +544,28 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
       } finally {
         client.release();
       }
+    },
+
+    async insertAnnotation(record) {
+      await pool.query(
+        `INSERT INTO annotations (annotation_id, run_id, tenant_id, payload, created_at)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [record.annotationId, record.runId, record.tenantId, JSON.stringify(record.payload), record.createdAt],
+      );
+    },
+
+    async listAnnotations(runId) {
+      const res = await pool.query<{ annotation_id: string; run_id: string; tenant_id: string; payload: unknown; created_at: string }>(
+        `SELECT annotation_id, run_id, tenant_id, payload, created_at FROM annotations WHERE run_id = $1 ORDER BY created_at ASC`,
+        [runId],
+      );
+      return res.rows.map((r) => ({
+        annotationId: r.annotation_id,
+        runId: r.run_id,
+        tenantId: r.tenant_id,
+        payload: r.payload,
+        createdAt: r.created_at,
+      }));
     },
 
     async deleteAllTenantData(tenantId) {

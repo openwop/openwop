@@ -590,10 +590,31 @@ export function openSqliteStorage(dbPath: string): Storage {
         db.prepare(`DELETE FROM events WHERE run_id = ?`).run(rid);
         db.prepare(`DELETE FROM interrupts WHERE run_id = ?`).run(rid);
         db.prepare(`DELETE FROM invocation_log WHERE run_id = ?`).run(rid);
+        db.prepare(`DELETE FROM annotations WHERE run_id = ?`).run(rid);
         const rr = db.prepare(`DELETE FROM runs WHERE run_id = ?`).run(rid);
         return Number(rr.changes ?? 0) > 0;
       });
       return txn(runId);
+    },
+
+    async insertAnnotation(record) {
+      db.prepare(
+        `INSERT INTO annotations (annotation_id, run_id, tenant_id, payload, created_at)
+         VALUES (?, ?, ?, ?, ?)`,
+      ).run(record.annotationId, record.runId, record.tenantId, JSON.stringify(record.payload), record.createdAt);
+    },
+
+    async listAnnotations(runId) {
+      const rows = db
+        .prepare(`SELECT annotation_id, run_id, tenant_id, payload, created_at FROM annotations WHERE run_id = ? ORDER BY created_at ASC`)
+        .all(runId) as Array<{ annotation_id: string; run_id: string; tenant_id: string; payload: string; created_at: string }>;
+      return rows.map((r) => ({
+        annotationId: r.annotation_id,
+        runId: r.run_id,
+        tenantId: r.tenant_id,
+        payload: JSON.parse(r.payload) as unknown,
+        createdAt: r.created_at,
+      }));
     },
 
     async deleteAllTenantData(tenantId) {
