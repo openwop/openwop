@@ -368,6 +368,43 @@ All seams under `/v1/host/sample/*` are conformance-only. Hosts deployed in prod
 
 The host-extension namespace `/v1/host/sample/*` is per `host-extensions.md` §"Canonical prefixes" — it is host-private space and does not affect the v1 wire-shape stability contract.
 
+## Canonical-endpoint conformance hooks
+
+A handful of conformance assertions exercise wire-surface contracts that ride the canonical OpenWOP REST endpoints rather than a dedicated `/v1/host/sample/*` seam. These hooks need an operator-provided seed runId (or equivalent) communicated via an `OPENWOP_TEST_*` environment variable so the conformance driver can target a known refusal-eligible state without smuggling a host-private endpoint.
+
+### 9. `POST /v1/runs/{runId}:fork mode:replay` against a past-retention runId (RFC 0039 §B MAE-3)
+
+The MAE-3 contract is: a fork from a past event-log index MUST either serve memory-as-of that index OR refuse with `422 replay_memory_snapshot_unavailable` per `rest-endpoints.md` §"Common error codes" — silent substitution of current memory is non-conformant.
+
+The conformance driver targets the canonical fork endpoint with `mode: "replay"`. The host's pre-flight order is normative for distinguishing this refusal from neighboring 422s:
+
+1. `checkFromSeqBounds(fromSeq, maxSeq)` runs FIRST and returns `422 invalid_from_seq` for `fromSeq > maxSeq + 1`. An impossible-fromSeq driver hits this gate, NOT MAE-3.
+2. `checkReplayMemorySnapshotPreflight(...)` runs AFTER bounds-check and returns `422 replay_memory_snapshot_unavailable` ONLY when the memory snapshot for an in-bounds fromSeq cannot be served — `details.reason` MUST be one of `{"retention_expired", "event_log_unavailable"}`.
+
+Driving MAE-3 from outside therefore requires an actually-realized refusal-eligible state. Conventions:
+
+| Hook | Env var | Realizes |
+|---|---|---|
+| Past-retention run | `OPENWOP_TEST_EXPIRED_REPLAY_RUN_ID` | A known runId whose event log has aged past the host's retention window; forking with `mode: "replay"` returns `details.reason: "retention_expired"`. Operator provides the runId via env (parallel naming to the existing `OPENWOP_TEST_EXPIRED_RUN_ID` used by `production-retention-expiry`). |
+| Event-log-unavailable run | (host-side fault-injection seam) | Not deterministically reproducible from outside — requires a host-side fault-injection seam to mark a run's event log unavailable. Documented here for completeness; no env-var convention yet. |
+
+Envelope shape (normative; covered behaviorally in `multi-agent-memory-lifecycle.test.ts`):
+
+```json
+{
+  "error": "replay_memory_snapshot_unavailable",
+  "details": {
+    "fromSeq": 0,
+    "sourceRunId": "<runId from the URL>",
+    "reason": "retention_expired"
+  }
+}
+```
+
+`details.reason` MUST be one of `{"retention_expired", "event_log_unavailable"}`. The host MAY add additional optional fields under `details`; `fromSeq` MUST echo the requested fromSeq and `sourceRunId` MUST echo the runId from the URL.
+
+Conformance: `multi-agent-memory-lifecycle.test.ts` (the MAE-3 behavioral assertion soft-skips when `OPENWOP_TEST_EXPIRED_REPLAY_RUN_ID` is unset OR the host does not advertise `multiAgent.executionModel.version >= 2` + `memory.supported: true`).
+
 ## Open seams (light up when fixtures ship)
 
 - **Memory cross-run TTL roundtrip seam** (RFC 0039 MAE-2) — `POST /v1/host/sample/test/memory/cross-run-ttl-roundtrip`. Contract: drive a parent → child → parent memory write/read sequence with controlled wall-clock skew to assert child-write-time TTL anchoring. Behavioral assertion in `multi-agent-memory-lifecycle.test.ts` stays `it.todo` until a memory-advertising Phase 2 host wires the seam.
