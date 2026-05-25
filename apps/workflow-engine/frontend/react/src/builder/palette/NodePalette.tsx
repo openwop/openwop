@@ -19,9 +19,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import type React from 'react';
 import { type NodeCatalogEntry } from './nodeCatalog.js';
-import { loadDynamicCatalog, useCatalog } from './catalogRegistry.js';
+import { loadDynamicCatalog, useCatalog, catalogEntryByTypeId } from './catalogRegistry.js';
 import { PALETTE_MIME } from '../canvas/BuilderCanvas.js';
 import type { NodeCategory } from '../schema/workflow.js';
+import { useBuilderStore } from '../store/builderStore.js';
 import { PackBrowser } from '../../registry/PackBrowser.js';
 
 const CATEGORY_LABELS: Record<NodeCategory, string> = {
@@ -94,6 +95,9 @@ export function NodePalette() {
   const [query, setQuery] = useState('');
   const [browserOpen, setBrowserOpen] = useState(false);
   const installedTypeIds = useMemo(() => new Set(catalog.map((e) => e.typeId)), [catalog]);
+  // §A6 — "use in builder": drop an installed pack node onto the canvas.
+  const addNode = useBuilderStore((s) => s.addNode);
+  const nodeCount = useBuilderStore((s) => s.nodes.length);
   // Track *expanded* sections, not collapsed. Default = empty = everything
   // collapsed. Searching force-expands all sections so matches are visible
   // regardless of saved state (see `searching` checks in the render below).
@@ -236,7 +240,18 @@ export function NodePalette() {
         );
       })}
       {browserOpen && (
-        <PackBrowser installedTypeIds={installedTypeIds} onClose={() => setBrowserOpen(false)} />
+        <PackBrowser
+          installedTypeIds={installedTypeIds}
+          onClose={() => setBrowserOpen(false)}
+          onUseNode={(typeId) => {
+            const entry = catalogEntryByTypeId(typeId);
+            if (!entry) return;
+            // Stagger drops so repeated adds don't stack exactly.
+            const offset = (nodeCount % 6) * 36;
+            addNode(entry.kind, { x: 140 + offset, y: 120 + offset });
+            setBrowserOpen(false);
+          }}
+        />
       )}
     </aside>
   );
