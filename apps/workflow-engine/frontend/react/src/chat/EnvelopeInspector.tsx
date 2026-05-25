@@ -85,6 +85,14 @@ export function EnvelopeInspector({ message }: Props): JSX.Element | null {
       detail: `${message.reasoning.length} chars (RFC 0030 §A carry-reasoning)`,
     });
   }
+  if (message.meta?.rendering) {
+    const r = message.meta.rendering;
+    const extra = [r.lang, r.mimeType, r.title && `“${r.title}”`].filter(Boolean).join(' · ');
+    rows.push({
+      kind: 'meta.rendering',
+      detail: `${r.display}${extra ? ` · ${extra}` : ''} (RFC 0055 §B hint)`,
+    });
+  }
 
   if (message.agentEvents) {
     for (const tc of message.agentEvents.toolCalls) {

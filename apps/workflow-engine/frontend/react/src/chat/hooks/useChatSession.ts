@@ -810,6 +810,28 @@ export function useChatSession(): UseChatSessionResult {
             }
             return undefined;
           })();
+          // RFC 0055 §B: lift the optional `meta.rendering` hint if the
+          // turn surfaced an AI envelope carrying one (envelope.meta.rendering),
+          // or the host lifted it to the outputs root. Validated against the
+          // closed `display` vocabulary; anything else is dropped (the
+          // renderer falls back to default text rendering anyway).
+          const envelopeRendering = ((): NonNullable<ChatMessage['meta']>['rendering'] => {
+            const DISPLAYS = ['markdown', 'code', 'card', 'image', 'audio', 'file'] as const;
+            const envelope = outputs.envelope as Record<string, unknown> | undefined;
+            const envMeta = envelope?.meta as Record<string, unknown> | undefined;
+            const raw = (envMeta?.rendering ?? outputs.rendering) as Record<string, unknown> | undefined;
+            if (!raw || typeof raw !== 'object') return undefined;
+            const display = raw.display;
+            if (typeof display !== 'string' || !(DISPLAYS as readonly string[]).includes(display)) return undefined;
+            const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
+            return {
+              display: display as (typeof DISPLAYS)[number],
+              ...(str(raw.mimeType) ? { mimeType: str(raw.mimeType)! } : {}),
+              ...(str(raw.lang) ? { lang: str(raw.lang)! } : {}),
+              ...(str(raw.alt) ? { alt: str(raw.alt)! } : {}),
+              ...(str(raw.title) ? { title: str(raw.title)! } : {}),
+            };
+          })();
           let finalized: ChatMessage | null = null;
           setSession((s) => {
             const next = s.messages.map((m) => {
@@ -826,6 +848,7 @@ export function useChatSession(): UseChatSessionResult {
                   inputTokens: usage?.inputTokens,
                   outputTokens: usage?.outputTokens,
                   ...(citations && citations.length > 0 ? { citations } : {}),
+                  ...(envelopeRendering ? { rendering: envelopeRendering } : {}),
                 },
               };
               finalized = updated;
