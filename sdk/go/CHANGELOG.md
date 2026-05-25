@@ -1,5 +1,9 @@
 # `openwopclient` Changelog
 
+## [1.0 — additions] — 2026-05-25 — feedback annotation helpers (RFC 0056)
+
+- **Two new client methods.** `client.CreateAnnotation(ctx, runID, body, opts)` calls `POST /v1/runs/{id}/annotations` to record a non-blocking quality annotation; `client.ListAnnotations(ctx, runID)` calls `GET /v1/runs/{id}/annotations` and returns `(nil, nil)` when the host doesn't advertise `capabilities.feedback` (404/501), so callers branch on capability discovery without unwrapping the error envelope. New types: `Annotation`, `CreateAnnotationRequest`, `ListAnnotationsResponse`.
+
 ## [1.0 — additions] — 2026-05-19 — typed `agent.*` event helpers (RFC 0024)
 
 - **New file** `events.go` exposing typed payload structs for the six `agent.*` event types — `AgentReasonedPayload`, `AgentReasoningDeltaPayload`, `AgentToolCalledPayload`, `AgentToolReturnedPayload`, `AgentHandoffPayload`, `AgentDecidedPayload` — mirroring the canonical `schemas/run-event-payloads.schema.json` $defs.

@@ -284,6 +284,35 @@ class ForkRunResponse:
     fromSeq: int | None = None
 
 
+# ── RFC 0056 run feedback / annotations ─────────────────────────────────
+
+
+@dataclass(frozen=True)
+class Annotation:
+    """RFC 0056 persisted annotation (``annotation.schema.json``). A side-
+    resource — not a replayable run-event-log entry. ``signal`` is a dict
+    discriminated by ``kind`` (rating / correction / label / flag)."""
+
+    annotationId: str
+    target: dict[str, str]
+    signal: dict[str, Any]
+    actor: dict[str, str]
+    createdAt: str
+    note: str | None = None
+
+
+@dataclass(frozen=True)
+class CreateAnnotationRequest:
+    """Request body for ``create_annotation`` (``annotation-create.schema.json``).
+    The host assigns ``annotationId`` / ``createdAt`` / ``actor`` and binds
+    ``target.runId``; the client supplies only the signal (+ optional anchor
+    and note)."""
+
+    signal: dict[str, Any]
+    target: dict[str, str] | None = None
+    note: str | None = None
+
+
 # ── RFC 0040 Phase 3 cross-host causation ───────────────────────────────
 
 

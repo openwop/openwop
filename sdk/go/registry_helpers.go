@@ -27,16 +27,16 @@ import (
 // RegistryDiscovery is the public registry's discovery payload at
 // /.well-known/openwop-registry.
 type RegistryDiscovery struct {
-	RegistryVersion         string                   `json:"registryVersion"`
-	ProtocolVersion         string                   `json:"protocolVersion"`
-	Name                    string                   `json:"name,omitempty"`
-	Operator                string                   `json:"operator,omitempty"`
-	URL                     string                   `json:"url,omitempty"`
-	SupportedNamespaces     []string                 `json:"supportedNamespaces"`
-	SupportedSigningMethods []string                 `json:"supportedSigningMethods"`
-	SupportedTrustModes     []string                 `json:"supportedTrustModes,omitempty"`
-	Endpoints               map[string]string        `json:"endpoints"`
-	SigningKeys             []map[string]any         `json:"signingKeys,omitempty"`
+	RegistryVersion         string            `json:"registryVersion"`
+	ProtocolVersion         string            `json:"protocolVersion"`
+	Name                    string            `json:"name,omitempty"`
+	Operator                string            `json:"operator,omitempty"`
+	URL                     string            `json:"url,omitempty"`
+	SupportedNamespaces     []string          `json:"supportedNamespaces"`
+	SupportedSigningMethods []string          `json:"supportedSigningMethods"`
+	SupportedTrustModes     []string          `json:"supportedTrustModes,omitempty"`
+	Endpoints               map[string]string `json:"endpoints"`
+	SigningKeys             []map[string]any  `json:"signingKeys,omitempty"`
 }
 
 // RegistryIndexEntry is one row in the registry-wide index.
@@ -64,9 +64,9 @@ type RegistryPackMetadata struct {
 // RegistryVersionManifest is the response from
 // GET /v1/packs/{name}/-/{version}.json.
 type RegistryVersionManifest struct {
-	Name        string         `json:"name"`
-	Version     string         `json:"version"`
-	Description string         `json:"description,omitempty"`
+	Name        string `json:"name"`
+	Version     string `json:"version"`
+	Description string `json:"description,omitempty"`
 	// Integrity is the SRI hash (sha256-<43-char-b64>=). Caller MUST
 	// verify the downloaded tarball matches before trusting.
 	Integrity string         `json:"integrity,omitempty"`

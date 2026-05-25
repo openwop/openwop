@@ -33,6 +33,8 @@ from .types import (
     ErrorEnvelope,
     ForkRunRequest,
     ForkRunResponse,
+    Annotation,
+    CreateAnnotationRequest,
     InterruptByTokenInspection,
     DebugBundle,
     PauseRunRequest,
@@ -419,6 +421,54 @@ class OpenwopClient:
             eventsUrl=str(d["eventsUrl"]),
             fromSeq=d.get("fromSeq"),
         )
+
+    def create_annotation(
+        self,
+        run_id: str,
+        body: CreateAnnotationRequest,
+        *,
+        idempotency_key: str | None = None,
+    ) -> Annotation:
+        """RFC 0056 — record a non-blocking quality annotation on a run.
+
+        Raises ``WopError`` on non-2xx (501 when the host doesn't advertise
+        ``capabilities.feedback.supported``)."""
+        headers = self._mutation_headers(idempotency_key=idempotency_key)
+        d = self._request_json(
+            "POST",
+            f"/v1/runs/{run_id}/annotations",
+            body=_to_jsonable(body),
+            headers=headers,
+        )
+        return Annotation(
+            annotationId=str(d["annotationId"]),
+            target=dict(d.get("target", {})),
+            signal=dict(d.get("signal", {})),
+            actor=dict(d.get("actor", {})),
+            createdAt=str(d["createdAt"]),
+            note=d.get("note"),
+        )
+
+    def list_annotations(self, run_id: str) -> list[Annotation] | None:
+        """RFC 0056 — list a run's annotations (tenant-scoped). Returns ``None``
+        when the host doesn't advertise ``capabilities.feedback`` (404/501)."""
+        try:
+            d = self._request_json("GET", f"/v1/runs/{run_id}/annotations")
+        except WopError as err:
+            if err.status in (404, 501):
+                return None
+            raise
+        return [
+            Annotation(
+                annotationId=str(a["annotationId"]),
+                target=dict(a.get("target", {})),
+                signal=dict(a.get("signal", {})),
+                actor=dict(a.get("actor", {})),
+                createdAt=str(a["createdAt"]),
+                note=a.get("note"),
+            )
+            for a in d.get("annotations", [])
+        ]
 
     def runs_ancestry(self, run_id: str) -> RunAncestryResponse | None:
         """Fetch the run's immediate parent in the cross-host composition
