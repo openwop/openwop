@@ -18,6 +18,7 @@ import { useBuilderStore } from './store/builderStore.js';
 import { newWorkflowId } from './persistence/localStore.js';
 import { registerWorkflow } from './persistence/registerClient.js';
 import { serializeWithIdMap, SerializeError } from './schema/serialize.js';
+import { fromCanonicalDefinition, looksCanonical } from './schema/deserialize.js';
 import { buildChainPackManifest } from './schema/chainPackManifest.js';
 import { createRun } from '../client/runsClient.js';
 import { subscribeToRun } from '../client/streamsClient.js';
@@ -228,21 +229,42 @@ export function BuilderShell({ onNewWorkflow }: Props) {
     setError(null);
     try {
       const text = await file.text();
-      const parsed = JSON.parse(text) as Partial<SavedWorkflow>;
-      if (!Array.isArray(parsed.nodes) || !Array.isArray(parsed.edges)) {
-        throw new Error('Not an OpenWOP workflow export (missing nodes/edges).');
-      }
+      const raw: unknown = JSON.parse(text);
       const id = newWorkflowId();
-      const imported: SavedWorkflow = {
-        id,
-        name: parsed.name ? `${parsed.name} (imported)` : 'Imported workflow',
-        version: parsed.version ?? '1.0.0',
-        nodes: parsed.nodes,
-        edges: parsed.edges,
-        defaultInputs: parsed.defaultInputs ?? '{}',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      const now = new Date().toISOString();
+      let imported: SavedWorkflow;
+      if (looksCanonical(raw)) {
+        // Canonical WorkflowDefinition (an `examples/*` pipeline, a
+        // chain-pack composition, or this builder's own chain-pack
+        // export) — convert typeIds back to builder kinds.
+        const { name, nodes, edges, defaultInputs } = fromCanonicalDefinition(raw);
+        imported = {
+          id,
+          name: `${name} (imported)`,
+          version: '1.0.0',
+          nodes,
+          edges,
+          defaultInputs,
+          createdAt: now,
+          updatedAt: now,
+        };
+      } else {
+        // Builder SavedWorkflow shape (this builder's "Export" output).
+        const parsed = raw as Partial<SavedWorkflow>;
+        if (!Array.isArray(parsed.nodes) || !Array.isArray(parsed.edges)) {
+          throw new Error('Not an OpenWOP workflow export (missing nodes/edges).');
+        }
+        imported = {
+          id,
+          name: parsed.name ? `${parsed.name} (imported)` : 'Imported workflow',
+          version: parsed.version ?? '1.0.0',
+          nodes: parsed.nodes,
+          edges: parsed.edges,
+          defaultInputs: parsed.defaultInputs ?? '{}',
+          createdAt: now,
+          updatedAt: now,
+        };
+      }
       useBuilderStore.getState().loadFromSaved(imported);
       useBuilderStore.getState().persist();
       nav(`/builder/${id}`);

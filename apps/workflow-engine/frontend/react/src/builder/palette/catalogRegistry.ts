@@ -52,9 +52,18 @@ function getSnapshot(): number {
 }
 
 const STATIC_BY_KIND = new Map(NODE_CATALOG.map((e) => [e.kind, e]));
+const STATIC_BY_TYPEID = new Map(NODE_CATALOG.map((e) => [e.typeId, e]));
 
 export function catalogEntry(kind: string): NodeCatalogEntry | undefined {
   return STATIC_BY_KIND.get(kind) ?? dynamicByKind.get(kind);
+}
+
+/** Reverse lookup by canonical typeId (inverse of `kind`). Dynamic pack
+ *  entries are keyed by typeId already, so this resolves both static and
+ *  pack nodes. Used to import a canonical WorkflowDefinition (which
+ *  references nodes by typeId) back into the builder. */
+export function catalogEntryByTypeId(typeId: string): NodeCatalogEntry | undefined {
+  return STATIC_BY_TYPEID.get(typeId) ?? dynamicByKind.get(typeId);
 }
 
 export function defaultConfigFor(kind: string): Record<string, unknown> {
