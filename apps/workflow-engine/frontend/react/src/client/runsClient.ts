@@ -133,6 +133,42 @@ export async function listMyRuns(opts: { status?: string; limit?: number } = {})
   return body.runs;
 }
 
+export interface MemoryEntry {
+  id: string;
+  content: string;
+  tags: string[];
+  createdAt: string;
+  expiresAt?: string;
+}
+
+/**
+ * List the authenticated tenant's memory entries (RFC 0004 read-side, via
+ * the host-extension `GET /v1/host/sample/memory`). Tenant is derived from
+ * the bearer / cookie server-side (CTI-1). `memoryRef` defaults to the
+ * demo's per-tenant namespace when omitted.
+ */
+export async function listMemory(
+  opts: { memoryRef?: string; tag?: string; limit?: number } = {},
+): Promise<{ memoryRef: string; entries: MemoryEntry[] }> {
+  const params = new URLSearchParams();
+  if (opts.memoryRef) params.set('memoryRef', opts.memoryRef);
+  if (opts.tag) params.set('tag', opts.tag);
+  if (opts.limit) params.set('limit', String(opts.limit));
+  const query = params.toString();
+  const url = `${config.baseUrl}/v1/host/sample/memory${query ? `?${query}` : ''}`;
+  const headers = authedHeaders({ accept: 'application/json' });
+  const includeCreds = config.authMode === 'cookie' || Boolean(headers.authorization);
+  const res = await fetch(url, {
+    method: 'GET',
+    headers,
+    credentials: includeCreds ? 'include' : 'same-origin',
+  });
+  if (!res.ok) {
+    throw new Error(`listMemory failed: ${res.status} ${res.statusText}`);
+  }
+  return (await res.json()) as { memoryRef: string; entries: MemoryEntry[] };
+}
+
 /** Returns the underlying SDK client for surfaces not yet wrapped here. */
 export function getSdkClient(): OpenwopClient {
   return client;
