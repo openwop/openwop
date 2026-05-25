@@ -66,6 +66,7 @@ import { sanitizeCostAttrs, applyCostRollup, snapshotCostRollup } from './cost.j
 import {
   evaluateModelCapabilityGate,
   buildInsufficientPayload,
+  buildSubstitutedPayload,
   aggregateAdvertisedCapabilities,
   FIXTURE_NODE_MODEL_CAPABILITIES,
   ACTIVE_PROVIDER,
@@ -3375,6 +3376,68 @@ async function handleBulkCancel(req: IncomingMessage, res: ServerResponse): Prom
 }
 
 /**
+ * RFC 0031 §B gate exerciser — `POST /v1/host/sample/test/evaluate-model-capability-gate`.
+ * Pure-function exerciser: drives `evaluateModelCapabilityGate` with synthetic
+ * input and returns the routing outcome + the event the host would emit. The
+ * conformance suite uses this to assert the substitute/refuse/dispatch decision
+ * matrix + event payloads (RFC 0031 §D) without a full run. Does NOT emit into
+ * any event log; side-effect-free. Body: { module, activeProvider, activeModel,
+ * substitutionSupported, supportedProviders, nodeId }. Response: { outcome, event }.
+ */
+async function handleEvaluateModelCapabilityGate(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  if (!(await checkAuth(req, res))) return;
+  const bodyText = await readBody(req);
+  let body: {
+    module?: { requiredModelCapabilities?: unknown; fallbackModel?: unknown };
+    activeProvider?: unknown;
+    activeModel?: unknown;
+    substitutionSupported?: unknown;
+    supportedProviders?: unknown;
+    nodeId?: unknown;
+  };
+  try {
+    body = JSON.parse(bodyText) as typeof body;
+  } catch {
+    sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+    return;
+  }
+  if (typeof body.activeProvider !== 'string' || typeof body.activeModel !== 'string') {
+    sendError(res, 400, 'validation_error', 'activeProvider + activeModel MUST be strings.');
+    return;
+  }
+  const requiredCaps = Array.isArray(body.module?.requiredModelCapabilities)
+    ? body.module.requiredModelCapabilities.filter((c): c is string => typeof c === 'string')
+    : [];
+  const fr = body.module?.fallbackModel;
+  const fallback =
+    fr && typeof fr === 'object'
+      && typeof (fr as { provider?: unknown }).provider === 'string'
+      && typeof (fr as { model?: unknown }).model === 'string'
+      ? { provider: (fr as { provider: string }).provider, model: (fr as { model: string }).model }
+      : undefined;
+  const outcome = evaluateModelCapabilityGate({
+    module: { requiredModelCapabilities: requiredCaps, ...(fallback ? { fallbackModel: fallback } : {}) },
+    activeProvider: body.activeProvider,
+    activeModel: body.activeModel,
+    substitutionSupported: body.substitutionSupported === true,
+    supportedProviders: Array.isArray(body.supportedProviders)
+      ? body.supportedProviders.filter((p): p is string => typeof p === 'string')
+      : [],
+  });
+  const nodeId = typeof body.nodeId === 'string' && body.nodeId.length > 0 ? body.nodeId : 'test-node';
+  let event: { type: string; payload: Record<string, unknown> } | null = null;
+  if (outcome.route === 'substitute') {
+    event = { type: 'model.capability.substituted', payload: buildSubstitutedPayload(outcome, nodeId) };
+  } else if (outcome.route === 'refuse') {
+    event = { type: 'model.capability.insufficient', payload: buildInsufficientPayload(outcome, nodeId, body.activeProvider, body.activeModel) };
+  }
+  sendJSON(res, 200, { outcome, event });
+}
+
+/**
  * RFC 0012 test seam — `POST /v1/test/memory/seed`. Plants source
  * entries in the host's `memory_entries` table so a conformance
  * scenario can drive a compaction run synchronously. Body shape:
@@ -4343,6 +4406,13 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (method === 'POST' && path === '/v1/webhooks') return handleRegisterWebhook(req, res);
   if (method === 'POST' && path === '/v1/runs') return handleCreateRun(req, res);
   if (method === 'POST' && path === '/v1/runs:bulk-cancel') return handleBulkCancel(req, res);
+  // RFC 0031 §B — pure-function exerciser for the model-capability gate's
+  // substitute/refuse/dispatch decision matrix + the emitted event payload.
+  // Always on: side-effect-free (no event-log write, no secrets), so it can
+  // be exercised by the conformance suite without a full run.
+  if (method === 'POST' && path === '/v1/host/sample/test/evaluate-model-capability-gate') {
+    return handleEvaluateModelCapabilityGate(req, res);
+  }
   // RFC 0012 test seams — only enabled when both
   // OPENWOP_MEMORY_COMPACTION=true AND OPENWOP_TEST_TRIGGER_COMPACTION=true.
   // The protocol normates `trigger: 'host-managed'`; these seams let
