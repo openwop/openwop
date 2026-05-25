@@ -1583,6 +1583,18 @@ pre {
   text-overflow: ellipsis;
 }
 
+.builder-node-title-input {
+  font: inherit;
+  font-weight: 500;
+  width: 100%;
+  min-width: 0;
+  padding: 0 2px;
+  border: 1px solid var(--clay);
+  border-radius: 2px;
+  background: var(--paper);
+  color: var(--ink);
+}
+
 .builder-node-ports {
   display: flex;
   justify-content: space-between;

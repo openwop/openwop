@@ -12,7 +12,7 @@
  *   BaseNode paints execution state.
  */
 
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Background,
   BackgroundVariant,
@@ -37,6 +37,11 @@ import { BaseNode } from './nodes/BaseNode.js';
 const NODE_TYPES = { builder: BaseNode };
 export const PALETTE_MIME = 'application/openwop-node-kind';
 
+// In-canvas copy/paste clipboard — module-level so it survives across
+// builder mounts (paste into a different workflow works). Holds the
+// node's kind/name/config, not its id/position.
+let nodeClipboard: { kind: string; name: string; config: Record<string, unknown> } | null = null;
+
 export function BuilderCanvas() {
   return (
     <ReactFlowProvider>
@@ -59,6 +64,42 @@ function BuilderCanvasInner() {
   const addEdge = useBuilderStore((s) => s.addEdge);
   const removeEdge = useBuilderStore((s) => s.removeEdge);
   const selectNode = useBuilderStore((s) => s.selectNode);
+
+  // Canvas keyboard shortcuts: ⌘/Ctrl+D duplicate, ⌘/Ctrl+C copy,
+  // ⌘/Ctrl+V paste the selected node. (Delete/Backspace is handled by
+  // xyflow's built-in node-removal → onNodesChange 'remove'.) Reads the
+  // store via getState() to avoid stale-closure deps; runs once.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if (!(e.metaKey || e.ctrlKey)) return;
+      const t = e.target as HTMLElement | null;
+      // Don't hijack copy/paste while the user is typing in a field
+      // (inline node title, inspector inputs, etc.).
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) {
+        return;
+      }
+      const key = e.key.toLowerCase();
+      if (key !== 'c' && key !== 'v' && key !== 'd') return;
+      const st = useBuilderStore.getState();
+      const sel = st.selectedNodeId ? st.nodes.find((n) => n.id === st.selectedNodeId) ?? null : null;
+      const OFFSET = 32;
+      if (key === 'd' && sel) {
+        e.preventDefault();
+        st.cloneNode(sel, { x: sel.position.x + OFFSET, y: sel.position.y + OFFSET });
+      } else if (key === 'c' && sel) {
+        e.preventDefault();
+        nodeClipboard = { kind: sel.kind, name: sel.name, config: { ...sel.config } };
+      } else if (key === 'v' && nodeClipboard) {
+        e.preventDefault();
+        const pos = sel
+          ? { x: sel.position.x + OFFSET, y: sel.position.y + OFFSET }
+          : { x: 160, y: 160 };
+        st.cloneNode(nodeClipboard, pos);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   const rfNodes: Node[] = useMemo(
     () =>
