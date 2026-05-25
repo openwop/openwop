@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0058 |
 | **Title** | Two additive per-run safety bounds — a wall-clock `runTimeoutMs` and a loop-iteration ceiling `maxLoopIterations` — surfaced through two new `cap.breached` kinds (`run-duration`, `loop-iterations`) on the existing unified engine-enforced-limit event, closing the runaway-execution gap that `recursionLimit` (a node-execution count) does not cover |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-25 |
-| **Updated** | 2026-05-25 |
+| **Updated** | 2026-05-25 (Draft → Active — architect Phase-0 clearance per `docs/autonomous-agent-runtime-plan.md` §8 + steward acceptance; the wire surface (schema + spec + conformance + SDK) landed atomically, meeting the repo's Active bar. `Active → Accepted` awaits reference-host *enforcement* of `runTimeoutMs` / `maxLoopIterations` and the behavior conformance scenario flipping from soft-skip to live.) |
 | **Affects** | `spec/v1/run-options.md` (2 reserved keys) · `schemas/capabilities.schema.json` (`limits.maxRunDurationMs`, `limits.maxLoopIterations`) · `schemas/run-event-payloads.schema.json` (`capBreached.kind` enum +2) · `spec/v1/capabilities.md` §"Engine-enforced limits and the `cap.breached` event" · `spec/v1/rest-endpoints.md` (`run_timeout`, `loop_limit_exceeded` error codes) · `spec/v1/multi-agent-execution.md` (loop-iteration definition) · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -113,9 +113,11 @@ New fixture `conformance-run-duration-breach` added to `conformance/fixtures.md`
 
 ## Unresolved questions
 
-1. **Soft vs. hard timeout.** Should `runTimeoutMs` allow an in-flight node to finish (graceful) or hard-cancel mid-node? Proposed: hard-cancel via the existing cancellation path, but flush the event log first (the `cap.breached` + `run.failed` MUST persist). Resolve before Active.
-2. **Iteration definition under nested orchestration.** When a supervisor dispatches a sub-orchestrator (RFC 0007), does the child's loop count against the parent's `maxLoopIterations`? Proposed: no — each run carries its own counter. Confirm against RFC 0037 Phase 2–4 semantics.
-3. **Strict-enum consumers.** Adding `run-duration` / `loop-iterations` to `capBreached.kind` is additive for forward-compatible consumers (string discriminator, `additionalProperties: true`), but a consumer validating against the *old* frozen enum would reject. Is an enum addition a per-event-version concern under `version-negotiation.md`, or is the existing `wasm-*` precedent (no bump) authoritative? Proposed: no bump, per precedent. Confirm with the Compatibility maintainer.
+*Resolved by the Phase-0 architect ruling (2026-05-25); see `docs/autonomous-agent-runtime-plan.md` §8.*
+
+1. **Soft vs. hard timeout** — RESOLVED: hard-cancel via the existing cancellation path; the host MUST flush the `cap.breached` + `run.failed` events to the log before terminating.
+2. **Iteration under nested orchestration** — RESOLVED: each run carries its own loop counter; a child sub-orchestrator's iterations do NOT count against the parent's `maxLoopIterations`.
+3. **Strict-enum consumers / per-event version** — RESOLVED: **no `eventLogSchemaVersion` bump** — the `wasm-*` enum-addition precedent (`capabilities.md §"What this closes"`) is authoritative; the `cap.breached.kind` additions are additive for forward-compatible consumers (`additionalProperties: true`).
 
 ## Implementation notes (non-normative)
 

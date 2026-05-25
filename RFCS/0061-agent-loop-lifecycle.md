@@ -115,6 +115,14 @@ No new fixture beyond the existing `conformance-multi-agent-handoff` family + RF
 2. **Workspace write visibility vs. memory write visibility.** RFC 0039 already pins memory write/read ordering across turns; confirm RFC 0059 workspace writes follow the identical "visible next turn, never retroactively" rule with no new race window when both are written in one turn. Confirm with 0059.
 3. **`statefulResume` vs. plain re-entrancy.** RFC 0037's loop is already re-entrant for replay; is `statefulResume` a *distinct* claim, or implied? Proposed distinct — re-entrancy is about deterministic replay of a completed prefix; stateful resume is about a *live* HITL suspend preserving the counter. Confirm the two are separable in conformance.
 
+## Phase-0 resolution (architect ruling, 2026-05-25)
+
+Per `docs/autonomous-agent-runtime-plan.md` §8 — Unresolved questions resolved (wire shape pinned; Active-ready pending schema + prose):
+
+1. **Transcript window** → host-advertised `executionModel.transcriptWindow` (event count); advertise-and-honor, not a fixed wire constant.
+2. **Memory-merge semantics** → full reload of the as-of-iteration-start snapshot (deterministic); incremental merge is a host storage detail, not wire-visible.
+3. **Loop + heartbeat advance** → a heartbeat (RFC 0060) MAY only enqueue a fresh loop run; it MUST NOT advance a suspended loop. The additive `iteration` field on `runOrchestrator.decided` is confirmed non-breaking (Phase-0 ruling A; `additionalProperties:false` → declared in `properties`, no `eventLogSchemaVersion` bump).
+
 ## Implementation notes (non-normative)
 
 - Sequence after RFC 0058 (bound — landed) and alongside RFC 0059 (workspace — Draft). `apps/workflow-engine`'s executor already re-enters and emits `runOrchestrator.decided`; the v5 work is: add the `iteration` counter, load the workspace snapshot at turn start (when 0059 lands), and preserve the counter across the existing suspend/resume path. Effort: medium.
