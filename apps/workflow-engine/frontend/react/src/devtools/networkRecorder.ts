@@ -9,10 +9,16 @@
  * pages without opening DevTools.
  *
  * Scope notes:
- * - Only captures requests routed through `fetch`. SSE streams via
- *   `subscribeToRun` use fetch + ReadableStream so they're captured
- *   too (we record the initial fetch; SSE events themselves stream
- *   through a separate hook below).
+ * - Only captures requests routed through `fetch`. In **bearer-mode**,
+ *   `subscribeToRun` routes through the SDK's `streamEvents()` which is
+ *   fetch + ReadableStream, so the initial subscribe is captured (the
+ *   long-lived stream's individual events are not surfaced through the
+ *   fetch hook — they're observable separately via a `subscribeToRun`
+ *   callback if a downstream component wires that in). In **cookie-mode**,
+ *   the same `subscribeToRun` falls back to native `EventSource` (since
+ *   the SDK's `streamEvents` doesn't expose a fetch-credentials option to
+ *   carry `openwop.session`), and EventSource subscribes are NOT captured
+ *   by this recorder — they bypass fetch entirely.
  * - Request bodies are recorded only when JSON-ish (avoids logging
  *   binary uploads). Response bodies are truncated to 16KB to keep
  *   localStorage / memory bounded.

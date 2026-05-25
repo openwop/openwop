@@ -9,6 +9,7 @@
  */
 
 import { authedHeaders, config, fetchOpts } from '../client/config.js';
+import { getCapabilities } from '../client/runsClient.js';
 import { SAMPLE_PROMPTS } from './samplePrompts.js';
 import { listUserPrompts } from './userPrompts.js';
 import type { PromptKind, PromptRef, PromptTemplate } from './types.js';
@@ -45,15 +46,13 @@ let cachedSupport: boolean | null = null;
 async function hostSupportsPrompts(): Promise<boolean> {
   if (cachedSupport !== null) return cachedSupport;
   try {
-    const res = await fetch(`${config.baseUrl}/.well-known/openwop`, fetchOpts({
-      headers: authedHeaders(),
-    }));
-    if (!res.ok) {
-      cachedSupport = false;
-      return false;
-    }
-    const body = (await res.json()) as { capabilities?: { prompts?: { supported?: boolean } } };
-    cachedSupport = body.capabilities?.prompts?.supported === true;
+    // Routes through the SDK's `client.discovery.capabilities()` per
+    // `sdk/PARITY.md` (Discovery row, always-on helper). The SDK handles
+    // auth headers + cookie credentials + the response-shape contract.
+    const caps = (await getCapabilities()) as {
+      capabilities?: { prompts?: { supported?: boolean } };
+    };
+    cachedSupport = caps?.capabilities?.prompts?.supported === true;
   } catch {
     cachedSupport = false;
   }

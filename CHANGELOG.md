@@ -11,6 +11,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### feat(app): finish the SDK migration of the reference frontend (2026-05-25)
+
+Closes item #22 ("Replace hand-rolled fetch with the published SDK") from `plans/app-buildable-now-on-existing-protocol.md`. The reference app had drifted on three surfaces where the published `@openwop/openwop` SDK already exposed a helper (per `sdk/PARITY.md`):
+
+- `client/runsClient.ts` — `getDebugBundle()` routed through `client.runs.debugBundle()` (parity row SDK-4, closed 2026-05-15) instead of a hand-rolled fetch added in PR #188.
+- `client/interruptsClient.ts` — `inspectByToken()` routed through `client.interrupts.inspectByToken()` instead of a hand-rolled `GET /v1/interrupts/{token}`.
+- `prompts/promptsClient.ts` + `builder/DemoHostBanner.tsx` — discovery probes routed through the existing `getCapabilities()` (`client.discovery.capabilities()`) instead of hand-rolled `GET /.well-known/openwop`.
+
+Larger win in `client/streamsClient.ts`: bearer-mode SSE now routes through the SDK's `streamEvents()` (fetch + ReadableStream — `sse.ts`), which sets `Authorization: Bearer` as a real header. **Drops the `?apiKey=<key>` URL query-param pattern** the prior EventSource implementation had to use because `EventSource` can't set custom headers — that pattern leaked credentials into browser history, server logs, and shared screenshots. Bearer-mode SSE is now captured by the in-app network recorder (per `devtools/networkRecorder.ts`); cookie-mode SSE stays on native `EventSource` because the SDK's `streamEvents` doesn't expose a `credentials: 'include'` hook for the `openwop.session` cookie. Public API of `subscribeToRun` / `Subscription` / dual idle+absolute timeouts is preserved; the 5 consumer surfaces (chat session, builder live overlay, RunDetailPage timeline, CommandCenter run summary, devtools recorder) are unchanged.
+
+Deferred to next SDK publish: `client/feedbackClient.ts` annotation create/list — the SDK source has `client.runs.{create,list}Annotation()` per `sdk/PARITY.md` 2026-05-25 entry, but the published `@openwop/openwop@1.1.3` doesn't include them yet. Marked with a `TODO` comment for a mechanical swap once the SDK ships.
+
+Out of scope: `client/registryClient.ts` would need a separate SDK instance pointed at the public registry origin (`packs.openwop.dev` vs. the host's `baseUrl`); cleaner refactor for a follow-up.
+
+App-only; no protocol-corpus change.
+
 ### RFC 0057 (memory write-attribution) — reference-host emission; promote Draft → `Active` (2026-05-25)
 
 The workflow-engine **reference backend** (deployed as `app.openwop.dev`) now advertises `capabilities.memory.attribution.{ supported: true, emitsWriteEvents: true }` and emits a content-free `memory.written` RunEvent on its run-summary write (`executor.ts` — identifiers + non-secret tags only; `nodeId` omitted as a host session-end write per RFC 0057 §B). The four `memory-attribution-*.test.ts` scenarios pass against it (verified locally: discovery advertises the block; a completed run emits exactly one `memory.written` with no `content`). With schema + prose + SECURITY + conformance (corpus, prior entry) and a host advertising-and-honoring the capability, **RFC 0057 graduates `Draft → Active`**; `Active → Accepted` awaits a non-steward host. README RFC counts synced (Active 6 → 7, Draft 7 → 6); `docs/PROTOCOL-STATUS.md` regenerated. Additive.
