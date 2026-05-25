@@ -11,6 +11,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### Reference-app UX RFC pair 0055 + 0056 filed as `Draft` (2026-05-25)
+
+Two additive, in-charter RFCs authored to unblock reference-app UX work (see [`plans/app-ux-enhancements.md`](plans/app-ux-enhancements.md)) without touching the frozen v1 wire contract. Both flip `Draft → Active → Accepted` only on maintainer promotion + a host wiring the surface + conformance.
+
+- **[`RFCS/0055`](RFCS/0055-multimodal-envelope-variants-and-rendering-hints.md) — multimodal envelope variants & rendering hints.** Promotes RFC 0031 §C's reserved `vision-input` / `audio-input` / `audio-output` / `image-output` model-capability identifiers into a formal closed vocabulary, adds an **optional** `meta.rendering` hint (`display` ∈ markdown/code/card/image/audio/file + `mimeType`/`lang`/`alt`/`title`) on the AI envelope, and a `media.*` URL-reference payload convention (mirrors the existing `ctx.callVideoGenerator` host-served-URL discipline, bounded by `aiProviders.maxInlineMediaBytes`). Lets an LLM node emit images/audio/files/cards that any consumer renders portably. Explicitly **does not** add a real-time A/V/screen/cursor transport (out of charter — media plumbing OpenWOP composes with, not owns). All additive.
+- **[`RFCS/0056`](RFCS/0056-run-feedback-and-annotation-event.md) — run feedback & annotation event.** New optional `host.feedback` capability, additive `run.annotated` RunEvent + `annotation.schema.json`, and capability-gated `POST/GET /v1/runs/{runId}/annotations` for a portable, non-blocking human/agent quality signal (rating / correction / label / flag) bound to a run, event, or node. Distinct from `interrupt` (non-blocking, post-terminal-eligible). Feeds analytics (correction-rate / mean-rating), the HITL inbox, and replay; survives debug-bundle export; not copied into a fork. Adds two protocol-tier SECURITY invariants (`annotation-cross-tenant-isolation`, `annotation-content-redaction`). All additive.
+- **Doc surfaces synced:** README RFC-status paragraph (54 → 56 RFCs excluding template; Draft 13 → 15), `docs/PROTOCOL-STATUS.md` regenerated via `npm run protocol:status`.
+
 ### RFC 0028 promoted Active → Accepted — Tier-2 prompt-pack advertise live on MyndHyve (2026-05-25)
 
 MyndHyve workflow-runtime advertises `capabilities.prompts.{supported: true, templateKinds: ["system", "user", "few-shot", "schema-hint"], observability: "full", packsSupported: true, mutableLibrary: true, library: {id: "myndhyve-system", renderEndpoint: "/v1/prompts:render", maxRenderRequestBytes: 65536}}` live on `https://myndhyve.ai/.well-known/openwop` (verified 2026-05-25 via direct curl).
