@@ -161,6 +161,11 @@
           "items": { "$ref": "#/$defs/SecretRequirement" },
           "description": "Secrets the node needs to execute. Resolved by the host's secret-resolution adapter at dispatch time. Hosts that don't advertise `Capabilities.secrets.supported` MUST refuse to dispatch a node with non-empty `requiresSecrets` and return `credential_unavailable`."
         },
+        "requiredCredentials": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/CredentialRequirement" },
+          "description": "RFC 0046. Credentials the node needs, resolved by the host's `host.credentials` resolver at dispatch time (distinct from `requiresSecrets`, which targets the informal BYOK annex). Hosts that don't advertise `Capabilities.credentials.supported` MUST refuse to dispatch a node with non-empty `requiredCredentials` and return `credential_unavailable` (peerDependency `credentials: 'supported'`)."
+        },
         "requiredModelCapabilities": {
           "type": "array",
           "items": {
@@ -215,6 +220,28 @@
           "type": "string",
           "enum": ["tenant", "user", "run"],
           "description": "Where the host should look up the secret. MUST match a scope in `Capabilities.secrets.scopes`. Defaults to `tenant` when omitted."
+        }
+      },
+      "additionalProperties": false
+    },
+    "CredentialRequirement": {
+      "type": "object",
+      "required": ["key"],
+      "description": "RFC 0046. A credential the node needs, resolved by the host's `host.credentials` resolver into the node sandbox at dispatch time. The node declares only the requirement; raw key material NEVER reaches the protocol surface (events, logs, traces, replay) per the `credential-payload-redaction` invariant.",
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable identifier the node executor uses to look up the resolved credential (e.g., `'slack-bot-token'`)."
+        },
+        "scope": {
+          "type": "string",
+          "enum": ["user", "workspace", "tenant"],
+          "description": "Resolution scope. MUST match a scope in `Capabilities.credentials.scopes`. Defaults to the host's default scope when omitted."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Optional human-readable label for credential-management UIs."
         }
       },
       "additionalProperties": false

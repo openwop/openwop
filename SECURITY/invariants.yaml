@@ -1135,6 +1135,27 @@ invariants:
       against any host advertising `capabilities.fs.supported`; skips
       cleanly otherwise.
 
+  # ===== RFC 0046 host.credentials redaction =====
+
+  - id: credential-payload-redaction
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/credential-payload-redaction.test.ts
+    note: |
+      RFC 0046 §C.1: hosts advertising `capabilities.credentials.supported`
+      MUST resolve a credential reference (`{ ref, scope }`) into the node
+      sandbox ONLY. Resolved credential material MUST NOT appear in run
+      `inputs`, persisted `variables`, `channels`, any `run.*` event
+      payload, the debug bundle, or replay state. The reference is the
+      only credential artifact permitted on the wire (see
+      `credential-reference.schema.json`). The same MUST-NOT holds for
+      tokens stored via the RFC 0047 `host.oauth` flow and for both old
+      and new material during a `two-key-overlap` rotation window. Tested
+      against any host advertising `capabilities.credentials.supported`;
+      skips cleanly otherwise.
+
   # ===== RFC 0016 host.tableStorage cross-tenant isolation =====
 
   - id: table-cross-tenant-isolation

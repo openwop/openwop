@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0046 `host.credentials` — spec + schema + SECURITY invariant + shape/redaction conformance landed (2026-05-24)
+
+First implementation pass on the Tier-1 critical path of the MyndHyve protocol-extension batch (RFCs 0045–0054). RFC 0046 stays `Draft`; this lands the openwop-side contract so a host can implement against it (`Active`/`Accepted` follow maintainer promotion + a non-steward host wiring the vault). All additive.
+
+- **Schema:** new top-level `capabilities.credentials` block (`supported` / `scopes` / `encryptionAtRest` / `rotation` / `sharing`) in `schemas/capabilities.schema.json`; `workspace` appended to the `secrets.scopes` enum (additive). New `schemas/credential-reference.schema.json` (the opaque `{ ref, scope }` wire shape — never the secret). New `CredentialRequirement` $def + node-level `requiredCredentials[]` in `schemas/node-pack-manifest.schema.json`.
+- **Spec:** `spec/v1/host-capabilities.md` §host.credentials — resolution contract (sandbox-only injection, fail-closed `credential_forbidden`), two-key-overlap rotation, relationship to `§host.secrets`, advertisement shape.
+- **SECURITY:** new protocol-tier invariant `credential-payload-redaction` (sibling to `mcp-toolcall-payload-redaction`) — resolved material MUST NOT appear in inputs, variables, channels, events, debug bundle, or replay state.
+- **Conformance:** `credentials-capability-shape.test.ts` (advertisement shape, always runs) + `credential-payload-redaction.test.ts` (adversarial redaction, capability-gated, `POST /v1/host/sample/credentials/echo` seam soft-skips on 404 — mirrors `fs-path-traversal`). Resolve-roundtrip + rotation-overlap scenarios deferred until a host wires the seam.
+- **Counts synced:** README invariants 90→91 / protocol-tier 59→60, JSON Schemas 32→33, conformance scenario files 210→212; `docs/PROTOCOL-STATUS.md` regenerated; `coverage.md` gains two rows.
+
 ### RFC 0040 promoted Active → Accepted — `version: 3` cross-host causation live on MyndHyve (2026-05-24)
 
 **Milestone — multi-agent execution model Phases 1+2+3 now Accepted end-to-end on a non-steward host.** MyndHyve workflow-runtime advertises `multiAgent.executionModel.{version: 3, crossHostCausation: {supported: true, hostId: 'myndhyve', ancestryEndpointSupported: true}}` live on `https://api.myndhyve.ai/.well-known/openwop` (verified 2026-05-24 via direct curl).

@@ -1193,6 +1193,48 @@ The plaintext returned by `ctx.secrets.resolve(...)` is the most sensitive value
 
 ---
 
+## §host.credentials
+
+**Capability flag:** `credentials.supported: true` *(advertised via top-level `Capabilities.credentials`; see [capabilities.md §credentials](capabilities.md#credentials))* — RFC 0046, `Draft`.
+
+**Used by:** packs that declare `requiredCredentials[]` (see [node-pack-manifest.schema.json](../../schemas/node-pack-manifest.schema.json)); the RFC 0047 `host.oauth` flow stores acquired tokens here; RFC 0045 connectors point their `auth` declarations at it.
+
+A portable credential **resolution + lifecycle** contract — the first-class sibling to `§host.secrets`. Where `secrets.resolveInPack` hands raw plaintext into the pack process for direct external HTTP, `host.credentials` is the broader surface for *storing, sharing, rotating, and resolving* a credential by an opaque reference, **without ever putting plaintext on the wire**. A pack references a credential by `{ ref, scope }` (the [`credential-reference.schema.json`](../../schemas/credential-reference.schema.json) wire shape — the reference, never the secret); the host resolves it at node-execution time and injects the material into the node sandbox **only**.
+
+**Resolution contract (normative).** A host advertising `credentials.supported: true` MUST:
+
+1. Resolve a `{ ref, scope }` reference at node-execution time and inject the resolved material into the node sandbox **only**. The resolved value MUST NOT appear in `inputs`, persisted `variables`, `channels`, any `run.*` event payload, the debug bundle, or replay state (SECURITY invariant `credential-payload-redaction`).
+2. Return a typed error envelope on resolution failure: `credential_not_found` (unknown ref), `credential_forbidden` (ref out of the caller's scope — fail-closed), `credential_scope_unsupported` (scope not in the advertised `scopes`).
+3. When `sharing: true`, resolve the **same** stored credential for every workflow that references it within the scope, without copying material between references.
+
+**Rotation (when `rotation: "two-key-overlap"`).** During a grace window the old and new credential both resolve as valid; after the window the old MUST fail with `credential_not_found`. Redaction (rule 1) MUST hold for both old and new material throughout. This reuses the contract verified for `openwop-auth-api-key-rotation`.
+
+**Relationship to `§host.secrets`.** `host.credentials` supersedes the informal `ai.credentialRef` / `secrets.resolveInPack` annex with a first-class store-at-rest + sharing + rotation surface; the `secrets` advertisement stays valid and is now a special case. A host MAY advertise both.
+
+**Failure modes:**
+- `credential_not_found` — `ref` doesn't resolve (or old key past the rotation grace window)
+- `credential_forbidden` — `ref` resolvable but out of the caller's `{ tenant, workspace, principal }` scope (fail-closed; never silently substitute)
+- `credential_scope_unsupported` — requested `scope` not in `capabilities.credentials.scopes`
+- `credential_unavailable` — pack declares `requiredCredentials[]` but the host doesn't advertise `credentials.supported` (register-time refusal via `peerDependencies: { "credentials": "supported" }`)
+
+**Capability advertisement shape:**
+
+```json
+{
+  "credentials": {
+    "supported": true,
+    "scopes": ["user", "workspace", "tenant"],
+    "encryptionAtRest": true,
+    "rotation": "two-key-overlap",
+    "sharing": true
+  }
+}
+```
+
+Additive — hosts that omit the block ignore it; packs declaring `requiredCredentials[]` refuse to register against them. Verified by `credentials-capability-shape.test.ts` (shape, always runs) and `credential-payload-redaction.test.ts` (adversarial redaction, capability-gated).
+
+---
+
 ## §host.fs
 
 **Capability flag:** `fs.supported: true` *(advertised via top-level `Capabilities.fs`; see [capabilities.md](capabilities.md))*

@@ -179,15 +179,17 @@ New fixtures: a seeded credential entry + the `conformance.credential.echo` node
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (this file).
-- [ ] `host.credentials` block + `workspace` enum value in `capabilities.schema.json`.
-- [ ] `credential-reference.schema.json` added.
-- [ ] `requiredCredentials[]` + `CredentialRequirement` in `node-pack-manifest.schema.json`.
-- [ ] `spec/v1/host-capabilities.md` §host.credentials section.
-- [ ] `credential-payload-redaction` invariant in `SECURITY/invariants.yaml` with its test.
-- [ ] Four conformance scenarios (shape, resolve-roundtrip, redaction, rotation) in `@openwop/openwop-conformance`.
-- [ ] CHANGELOG entry under `[Unreleased]`.
+- [x] Spec text merged (this file).
+- [x] `credentials` block (top-level, per the schema convention) + `workspace` enum value in `capabilities.schema.json`.
+- [x] `credential-reference.schema.json` added.
+- [x] `requiredCredentials[]` + `CredentialRequirement` in `node-pack-manifest.schema.json`.
+- [x] `spec/v1/host-capabilities.md` §host.credentials section.
+- [x] `credential-payload-redaction` invariant in `SECURITY/invariants.yaml` with its test.
+- [~] Conformance scenarios — 2 of 4 landed: `credentials-capability-shape.test.ts` (shape, always runs) + `credential-payload-redaction.test.ts` (adversarial redaction, capability-gated, seam soft-skips). The behavioral resolve-roundtrip + rotation-overlap scenarios are deferred until a host wires the `conformance.credential.echo` seam (same staging pattern as `fs-path-traversal`).
+- [x] CHANGELOG entry under `[Unreleased]`.
 - [ ] A non-steward host advertises `host.credentials` and passes the redaction + rotation scenarios (drives the GOVERNANCE.md second-host tripwire).
+
+**Implementation note (2026-05-24):** Spec + schema + SECURITY invariant + the two shape/redaction scenarios landed on `main`. Per the schema convention, the capability is advertised at top-level `capabilities.credentials` (the §A diff in this RFC showed it nested under `host` for readability; the prose name stays `§host.credentials`). Status stays `Draft` pending maintainer promotion + a non-steward host implementation.
 
 ## References
 
