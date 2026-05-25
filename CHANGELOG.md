@@ -11,6 +11,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0046/0047/0048 code-review follow-ups — test-seam registry + principal opacity (2026-05-25)
+
+Resolves findings from a `/code-review` pass over RFC 0048 (and the Tier-1 seams). No wire-shape change.
+
+- **Test seams registered in `host-sample-test-seams.md` §"Open seams".** The conformance seams introduced this session — `credentials/echo` (RFC 0046), `oauth/connector-echo` (RFC 0047), `identity/owned-run` + `identity/cross-workspace-read` (RFC 0048) — are now documented in the normative `/v1/host/sample/*` seam registry (each with its contract + gating capability + the scenario it unblocks), matching the RFC 0039 memory-seam precedent. Previously they lived only in scenario docstrings + `coverage.md`.
+- **`owner.principal` opacity is now normative.** `auth.md` §"Identity claims" gains an "Identifier opacity (normative)" rule: because `RunSnapshot.owner` is echoed on `run.started` (SSE/webhooks/debug bundles) un-redacted, hosts MUST use an opaque, non-PII identifier for `principal` (SHOULD for `tenant`/`workspace`). Previously advisory prose.
+
 ### RFC 0025 implemented — Test-mode registry namespace `/v1/packs-test/*` lands (2026-05-25)
 
 **Closes the 26-`it.todo()` gap in `conformance/src/scenarios/pack-registry-publish.test.ts`** without requiring the conformance suite to obtain `packs:publish` scope on the real registry. Per RFC 0025 (`Draft`, comment window 2026-05-19 → 2026-05-26):
