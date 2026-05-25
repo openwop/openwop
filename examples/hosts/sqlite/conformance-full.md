@@ -1,6 +1,6 @@
 # Full Conformance Run — SQLite Reference Host
 
-> **Latest measurement is at `examples/hosts/sqlite/conformance.md`** (2026-05-22, suite v1.5.0 — 1486/1564, 95.0%). This file is a historical full-run record from the 2026-05-11 Phase 1 + review-fix cycle, retained for traceability.
+> **Latest measurement is at `examples/hosts/sqlite/conformance.md`** (2026-05-22, `@openwop/openwop-conformance@1.5.0` — 1486/1564, 95.0%). This file is a historical full-run record from the 2026-05-11 Phase 1 + review-fix cycle, retained for traceability.
 >
 > **Run date:** 2026-05-11 (post Phase 1 + review-fix cycle)
 > **Host version:** `openwop-host-sqlite@1.0.0` at commit `9ce5400`

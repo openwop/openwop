@@ -55,7 +55,7 @@ Run before EVERY publish (manual or CI-driven). The checklist is a hard gate; on
 ### All artifacts
 
 - [ ] `npm run openwop:check` passes locally — spec corpus is internally consistent.
-- [ ] **Known follow-up:** pin Redocly + AsyncAPI CLI versions in root release tooling once a Node-compatible pair is selected. Current gate uses `npx` with a writable temp cache; pinning `@redocly/cli@2.30.4` and `@asyncapi/cli@6.0.0` was paused because exact-version `npx -p` resolution hung locally and `@asyncapi/cli@6.0.0` warns that it prefers Node 24.
+- [ ] Repo-root validator CLIs are installed from pinned devDependencies (`@redocly/cli@2.31.4`, `@asyncapi/cli@4.1.1`); `scripts/openwop-check.sh` invokes the local bins directly, not `npx -y`, and uses `--legacy-peer-deps` for that root-only install to avoid AsyncAPI Studio's React peer-resolution loop.
 - [ ] CHANGELOG entry exists at the canonical doc (e.g., `CHANGELOG.md` for spec releases; per-package CHANGELOG for SDK-only patches).
 - [ ] Version field in the package manifest matches the git tag.
 - [ ] License is `Apache-2.0` and `LICENSE` file is present in the published artifact.

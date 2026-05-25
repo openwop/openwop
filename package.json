@@ -14,5 +14,9 @@
     "site:build": "bash scripts/build-site.sh",
     "site:deploy": "bash scripts/build-site.sh && firebase deploy --only hosting:docs",
     "og-cover:build": "node scripts/generate-og-cover.mjs"
+  },
+  "devDependencies": {
+    "@asyncapi/cli": "4.1.1",
+    "@redocly/cli": "2.31.4"
   }
 }

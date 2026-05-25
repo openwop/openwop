@@ -12,7 +12,7 @@
 | OpenAPI operations | 26 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 210 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 44 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 54 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
 
@@ -24,15 +24,15 @@
 |---|---:|
 | Accepted | 34 |
 | Active | 6 |
-| Draft | 4 |
+| Draft | 14 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
-| RFC 0044 | `multiAgent.executionModel.confidenceEscalationInterruptKind` capability advertisement - supports canonical (`clarification` / `approval`) and vendor-extension (`x-host-<host>-<kind>`) interrupt-kind names without forcing cross-cutting rename on hosts with entrenched kinds | Accepted |
-| RFC 0043 | Registry submission policy, extension namespace rules, profile/event/capability name reservation, and IPR posture | Draft |
-| RFC 0042 | Experimental capability tier - optional `tier` field on capability advertisements + sunset rule + derived `openwop-experimental` profile | Draft |
-| RFC 0041 | Multi-agent execution model Phase 4: LLM cache-key recipe normation + envelope-refusal recovery in replay context + determinism vs idempotency contract | Active |
-| RFC 0040 | Multi-agent execution model Phase 3: cross-host causation linking + W3C tracecontext propagation across composition boundaries + cross-host run-ID resolution | Active |
+| RFC 0054 | A read-only `GET /v1/runs/{runId}:diff?against={otherRunId}` endpoint returning a deterministic, replay-aware structured diff of two runs' event sequences and terminal states - the protocol surface behind run-vs-fork comparison | Draft |
+| RFC 0053 | A `host.deadLetter` capability + `run.dead_lettered` event - terminally-failed runs/nodes land in a durable, inspectable sink that stays fork-eligible, so a poisoned run can be examined and replayed rather than silently lost | Draft |
+| RFC 0052 | A `host.scheduling` capability (cron / delayed / calendar) wiring the `schedule` trigger to a portable, durable execution contract - promoting the still-Draft scheduling intent behind RFC 0017's `host.queueBus` into a conformance-tested surface | Draft |
+| RFC 0051 | `core.openwop.governance.approvalGate` - a first-class, role-bound, audited interrupt node for approvals and deployment promotions, composing the existing interrupt-profile machinery (quorum, auth-required) with RFC 0049 authorization and the audit log | Draft |
+| RFC 0050 | Two new entries in the auth-profile family - a SAML assertion-validation profile and a SCIM provisioning profile (LDAP as an optional directory-bind variant) - that sync external IdP users/groups onto RFC 0048 principals + RFC 0049 roles, with `alg:none` rejection mirroring the OIDC work | Draft |
 
 ## SDK Helper Coverage
 
@@ -72,7 +72,7 @@
 
 ## Active Follow-Ups
 
-- 4 RFCs still `Draft` (RFC 0025, RFC 0038, RFC 0042, RFC 0043) — advance with schema/conformance proof or defer.
+- 14 RFCs still `Draft` (RFC 0025, RFC 0038, RFC 0042, RFC 0043, RFC 0045, RFC 0046, RFC 0047, RFC 0048, RFC 0049, RFC 0050, RFC 0051, RFC 0052, RFC 0053, RFC 0054) — advance with schema/conformance proof or defer.
 - 6 RFCs `Active` (RFC 0028, RFC 0029, RFC 0035, RFC 0036, RFC 0040, RFC 0041) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.

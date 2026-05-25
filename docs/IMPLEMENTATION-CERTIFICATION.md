@@ -116,7 +116,7 @@ Hosts MAY display a conformance badge linking to their `conformance.md`. Canonic
 https://openwop.dev/badges/<hostId>/<suite-version>.svg
 ```
 
-Until the hosted leaderboard ships, hosts MAY produce a static SVG and host it in their own repo per the convention in `site/scripts/build-host-badges.mjs`.
+Until the hosted leaderboard ships, hosts MAY produce a static SVG and host it in their own repo per the badge-generation convention embedded in `site/src/build.mjs`.
 
 ---
 

@@ -2,6 +2,15 @@
  * Scrollable message feed with auto-scroll-to-bottom on new content.
  * Each assistant bubble renders any attached interrupt card via the
  * registry below itself.
+ *
+ * **Prop change 2026-05-24** — `workflow_run` progress UI moved out of
+ * the chat bubble into the right-side `WorkflowProgressPanel`. Props
+ * were renamed accordingly: `onCancelWorkflowRun` removed (cancel now
+ * lives on the panel); added `onOpenWorkflowProgress` (callback to
+ * focus a run + open the panel) and `focusedWorkflowMessageId`
+ * (mirrors panel state so the bubble's "View progress" link can flip
+ * to "Showing in panel"). Adopters with a vendor fork of MessageFeed
+ * need to thread the new props through.
  */
 
 import { useEffect, useRef } from 'react';
@@ -22,8 +31,10 @@ interface Props {
   messages: readonly ChatMessage[];
   tenantId: string;
   onResolveInterrupt: (messageId: string, value: unknown) => Promise<void>;
-  /** Cancel an in-flight workflow_run by chat-message id. */
-  onCancelWorkflowRun: (messageId: string) => Promise<void>;
+  /** Open the workflow-progress side panel + focus the bubble's run. */
+  onOpenWorkflowProgress: (messageId: string) => void;
+  /** Workflow-run message id currently shown in the side panel, if any. */
+  focusedWorkflowMessageId: string | null;
   /** Re-run the prior user message for this assistant bubble. */
   onRegenerate?: (messageId: string) => void;
   /** Record / clear 👍 / 👎 on an assistant bubble. */
@@ -36,7 +47,8 @@ export function MessageFeed({
   messages,
   tenantId,
   onResolveInterrupt,
-  onCancelWorkflowRun,
+  onOpenWorkflowProgress,
+  focusedWorkflowMessageId,
   onRegenerate,
   onFeedback,
   onReconfigureBYOK,
@@ -56,14 +68,22 @@ export function MessageFeed({
       {messages.map((m) => (
         <div key={m.id}>
           {m.role === 'workflow_run'
-            ? <WorkflowRunBubble message={m} onCancel={() => onCancelWorkflowRun(m.id)} />
+            ? <WorkflowRunBubble
+                message={m}
+                onOpenProgress={onOpenWorkflowProgress}
+                isFocusedInPanel={m.id === focusedWorkflowMessageId}
+              />
             : <MessageBubble
                 message={m}
                 {...(onRegenerate ? { onRegenerate } : {})}
                 {...(onFeedback ? { onFeedback } : {})}
                 {...(onReconfigureBYOK ? { onReconfigureBYOK } : {})}
               />}
-          {m.activeInterrupt && (
+          {/* Inline interrupt card only for chat-turn (assistant) bubbles.
+              workflow_run interrupts surface in the right-side progress
+              panel instead, so the chat thread doesn't double-render the
+              approval / clarification card. */}
+          {m.activeInterrupt && m.role !== 'workflow_run' && (
             <div style={{ marginLeft: 12, marginRight: 'max(0px, calc(100% - var(--max-bubble-width, 75ch) - 12px))' }}>
               <CardHost
                 cardType={`interrupt.${m.activeInterrupt.kind}`}

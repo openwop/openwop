@@ -24,6 +24,13 @@ interface Props {
   /** When set, render a hamburger-style history toggle in the header. */
   onToggleHistory?: () => void;
   historyOpen?: boolean;
+  /** When set, render a right-side workflow-progress panel toggle. */
+  onToggleProgress?: () => void;
+  progressOpen?: boolean;
+  /** Number of workflow_run messages in the session — small badge on
+   *  the progress toggle button so users with multiple in-flight runs
+   *  see at a glance how many the panel covers. */
+  progressBadgeCount?: number;
 }
 
 export function ChatHeader({
@@ -38,6 +45,9 @@ export function ChatHeader({
   toolsEnabled,
   onToggleHistory,
   historyOpen,
+  onToggleProgress,
+  progressOpen,
+  progressBadgeCount = 0,
 }: Props): JSX.Element {
   const totalCost = sessionCostUsd(session);
   const messageCount = session.messages.length;
@@ -121,6 +131,39 @@ export function ChatHeader({
           >
             Σ {formatUsd(totalCost)}
           </span>
+        )}
+        {onToggleProgress && (
+          <button
+            type="button"
+            className="secondary"
+            onClick={onToggleProgress}
+            aria-label={progressOpen ? 'Close workflow progress panel' : 'Open workflow progress panel'}
+            aria-pressed={progressOpen}
+            title="Workflow progress"
+            style={{
+              padding: '2px 8px',
+              fontSize: 11,
+              minHeight: 0,
+              height: 24,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            <span aria-hidden>≡</span>
+            {progressBadgeCount > 0 && (
+              <span style={{
+                fontSize: 10,
+                minWidth: 14,
+                padding: '0 4px',
+                borderRadius: 8,
+                background: 'var(--color-accent, var(--clay))',
+                color: 'white',
+                textAlign: 'center',
+                lineHeight: '14px',
+              }}>{progressBadgeCount}</span>
+            )}
+          </button>
         )}
         {messageCount > 0 && (
           <button type="button" className="secondary" onClick={onNewChat} style={{ fontSize: 11 }} aria-label="New chat">

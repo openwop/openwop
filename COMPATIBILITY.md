@@ -1,14 +1,14 @@
-# openwop Compatibility Commitment
+# OpenWOP Compatibility Commitment
 
 > **Status:** v1 — applies to the locked v1 contract and all subsequent v1.x releases.
 
-This document defines what openwop guarantees about backward compatibility, when those guarantees can be relaxed, and how implementers should pin against the spec.
+This document defines what OpenWOP guarantees about backward compatibility, when those guarantees can be relaxed, and how implementers should pin against the spec.
 
 The TL;DR: **v1.x is additive-only, with one explicit exception for safety and security fixes.** Everything else that would break a v1 conformance pass goes to v2.
 
 ## 1. Versioning model
 
-openwop uses three independent version axes:
+OpenWOP uses three independent version axes:
 
 | Axis | Range | Bump rule |
 |---|---|---|
