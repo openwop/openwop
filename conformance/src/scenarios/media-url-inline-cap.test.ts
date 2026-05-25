@@ -48,7 +48,7 @@ describe('media-url-inline-cap: media payload schemas compile + round-trip (RFC 
     it(`envelopes/${kind}.schema.json compiles under Ajv2020`, () => {
       expect(
         compile(kind),
-        driver.describe('ai-envelope.md §"Media reference payloads"', `${kind} payload schema MUST compile`),
+        `ai-envelope.md §"Media reference payloads": ${kind} payload schema MUST compile`,
       ).toBeTypeOf('function');
     });
   }
@@ -69,10 +69,7 @@ describe('media-url-inline-cap: media payload schemas compile + round-trip (RFC 
 
   it('rejects a payload missing required bytes', () => {
     const ok = compile('media.file')({ url: 'https://host.example/v1/runs/run_1/assets/report.pdf' });
-    expect(
-      ok,
-      driver.describe('ai-envelope.md §"Media reference payloads"', '`bytes` is required'),
-    ).toBe(false);
+    expect(ok, 'ai-envelope.md §"Media reference payloads": `bytes` is required').toBe(false);
   });
 
   it('rejects an unknown property (additionalProperties:false)', () => {
@@ -97,9 +94,35 @@ describe.skipIf(HTTP_SKIP)('media-url-inline-cap: advertisement shape (RFC 0055 
     ).toBe(true);
   });
 
-  // Behavioral assertions for `media-asset-url-tenant-scoped` — pending a
-  // reference host that serves tenant-scoped asset URLs (greenfield).
-  it.todo('an emitted asset above maxInlineMediaBytes is served by URL, not inlined');
-  it.todo('a media asset URL minted for tenant A does not resolve for tenant B');
+  // Behavioral assertions for `media-asset-url-tenant-scoped`. Driven via the
+  // reference host's media-asset seam (store: POST /v1/host/sample/media/put,
+  // env-gated; serve: GET /v1/host/sample/assets/{token}, public token-auth).
+  // Soft-skip (return) when the host doesn't expose the store seam (404).
+  const PNG_1x1 =
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+
+  it('a stored media asset is served by a tenant-scoped URL, not inlined', async () => {
+    const stored = await driver.post('/v1/host/sample/media/put', { contentBase64: PNG_1x1, contentType: 'image/png' });
+    if (stored.status === 404) return; // store seam disabled — soft-skip
+    expect(stored.status, 'media store MUST return 201').toBe(201);
+    const body = stored.json as { url?: string; bytes?: number };
+    expect(
+      typeof body.url === 'string' && /\/v1\/host\/sample\/assets\//.test(body.url!),
+      driver.describe('ai-envelope.md §"Media reference payloads"', 'asset MUST be served by a URL reference, not inlined'),
+    ).toBe(true);
+    const served = await driver.get(body.url!);
+    expect(served.status, 'the asset URL MUST resolve').toBe(200);
+  });
+
+  it('an unminted/guessed asset token does not resolve (media-asset-url-tenant-scoped)', async () => {
+    // Probe whether the serve route exists at all; soft-skip if not.
+    const probe = await driver.get('/v1/host/sample/assets/probe-never-minted-token');
+    if (probe.status === 404 && !process.env.OPENWOP_BASE_URL) return;
+    expect(
+      probe.status,
+      driver.describe('SECURITY/invariants.yaml#media-asset-url-tenant-scoped', 'a token not held by the caller (unguessable 256-bit) MUST NOT resolve'),
+    ).toBe(404);
+  });
+
   it.todo('a run that emitted media.image lists the asset by reference in its debug bundle');
 });
