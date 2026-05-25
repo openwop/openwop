@@ -338,6 +338,33 @@ class CreateAnnotationRequest:
     note: str | None = None
 
 
+# ── RFC 0059 agent workspace ────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class WorkspaceFile:
+    """RFC 0059 versioned, tenant·workspace-scoped ground-truth file
+    (``workspace-file.schema.json``). The ``list`` endpoint returns this shape
+    minus ``content`` (metadata only)."""
+
+    path: str
+    content: str
+    version: int
+    updatedAt: str
+    contentType: str | None = None
+    etag: str | None = None
+
+
+@dataclass(frozen=True)
+class PutWorkspaceFileRequest:
+    """Request body for ``put_workspace_file`` (``workspace-file-create.schema.json``).
+    ``path`` is URL-bound; the host assigns ``version`` / ``etag`` / ``updatedAt``.
+    Optimistic concurrency is expressed via the ``If-Match`` header, not the body."""
+
+    content: str
+    contentType: str | None = None
+
+
 # ── RFC 0040 Phase 3 cross-host causation ───────────────────────────────
 
 

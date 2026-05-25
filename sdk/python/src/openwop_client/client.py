@@ -12,7 +12,7 @@ import json
 from dataclasses import asdict, is_dataclass
 from typing import Any, Iterator, Literal, Sequence, cast
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
 from .errors import WopError
@@ -35,6 +35,8 @@ from .types import (
     ForkRunResponse,
     Annotation,
     CreateAnnotationRequest,
+    WorkspaceFile,
+    PutWorkspaceFileRequest,
     InterruptByTokenInspection,
     DebugBundle,
     PauseRunRequest,
@@ -68,6 +70,18 @@ def _to_jsonable(obj: Any) -> Any:
     if isinstance(obj, list):
         return [_to_jsonable(v) for v in obj]
     return obj
+
+
+def _to_workspace_file(d: dict[str, Any]) -> WorkspaceFile:
+    """Map a workspace-file.schema.json response dict into a WorkspaceFile."""
+    return WorkspaceFile(
+        path=str(d["path"]),
+        content=str(d.get("content", "")),
+        version=int(d["version"]),
+        updatedAt=str(d["updatedAt"]),
+        contentType=d.get("contentType"),
+        etag=d.get("etag"),
+    )
 
 
 def _capabilities_from_dict(d: dict[str, Any]) -> Capabilities:
@@ -471,6 +485,86 @@ class OpenwopClient:
             )
             for a in d.get("annotations", [])
         ]
+
+    def list_workspace_files(
+        self, *, prefix: str | None = None
+    ) -> list[WorkspaceFile] | None:
+        """RFC 0059 — list workspace file metadata (no bodies) for the caller's
+        ``{tenant, workspace}``. ``prefix`` filters the flat ``path`` namespace.
+        Returns ``None`` when the host doesn't advertise
+        ``capabilities.workspace.supported`` (501)."""
+        path = "/v1/host/workspace/files"
+        if prefix is not None:
+            path += "?prefix=" + quote(prefix, safe="")
+        try:
+            d = self._request_json("GET", path)
+        except WopError as err:
+            if err.status == 501:
+                return None
+            raise
+        return [_to_workspace_file(f) for f in d.get("files", [])]
+
+    def get_workspace_file(
+        self, file_path: str, *, version: int | None = None
+    ) -> WorkspaceFile | None:
+        """RFC 0059 — read one workspace file. Pass ``version`` for a historical
+        snapshot when ``capabilities.workspace.versioned``. Returns ``None`` when
+        the file is absent (404) or the capability is unadvertised (501)."""
+        path = "/v1/host/workspace/files/" + quote(file_path, safe="")
+        if version is not None:
+            path += "?version=" + str(version)
+        try:
+            d = self._request_json("GET", path)
+        except WopError as err:
+            if err.status in (404, 501):
+                return None
+            raise
+        return _to_workspace_file(d)
+
+    def put_workspace_file(
+        self,
+        file_path: str,
+        body: PutWorkspaceFileRequest,
+        *,
+        if_match: str | None = None,
+        idempotency_key: str | None = None,
+    ) -> WorkspaceFile:
+        """RFC 0059 — atomic create/replace of a workspace file. Pass ``if_match``
+        (the file's current ``etag``) for optimistic concurrency; a stale token
+        raises ``WopError`` with status 409 (``workspace_conflict``). Content beyond
+        ``capabilities.workspace.maxFileBytes`` raises 413 (``workspace_too_large``)."""
+        headers = self._mutation_headers(idempotency_key=idempotency_key)
+        if if_match is not None:
+            headers["If-Match"] = if_match
+        d = self._request_json(
+            "PUT",
+            "/v1/host/workspace/files/" + quote(file_path, safe=""),
+            body=_to_jsonable(body),
+            headers=headers,
+        )
+        return _to_workspace_file(d)
+
+    def delete_workspace_file(
+        self,
+        file_path: str,
+        *,
+        idempotency_key: str | None = None,
+    ) -> bool:
+        """RFC 0059 — delete a workspace file. Returns ``True`` on success (204),
+        ``False`` when the file is absent (404) or the capability is
+        unadvertised (501)."""
+        headers = self._mutation_headers(idempotency_key=idempotency_key)
+        try:
+            self._request_json(
+                "DELETE",
+                "/v1/host/workspace/files/" + quote(file_path, safe=""),
+                headers=headers,
+            )
+            return True
+        except WopError as err:
+            if err.status in (404, 501):
+                return False
+            raise
 
     def runs_ancestry(self, run_id: str) -> RunAncestryResponse | None:
         """Fetch the run's immediate parent in the cross-host composition

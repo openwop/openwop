@@ -4,7 +4,7 @@
 |---|---|
 | **RFC** | 0064 |
 | **Title** | A `host.toolHooks` capability — additive authorization + timing + content-free-argument fields on the existing `agent.toolCalled` / `agent.toolReturned` events (RFC 0002), fail-closed per-tool authorization via RFC 0049 scopes (reusing the `forbidden` error + the `authorization-fail-closed` invariant), and optional per-tool rate limiting (reusing `rate_limited`) — generalizing the MCP bridges into one auditable, least-privilege tool surface without inventing parallel events |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-25 |
 | **Updated** | 2026-05-25 |
@@ -102,6 +102,8 @@ Tool credentials resolve via RFC 0046 `host.credentials` (opaque refs, host-dere
 - **`tool-hooks-authorization-fail-closed.test.ts`** — a principal lacking a tool's scope gets `agent.toolReturned { status: 'forbidden' }` + `forbidden` (403) and the tool is never invoked; an unevaluable authorization also denies. (Gated on `perToolAuthorization`; verifies the per-tool application of RFC 0049's `authorization-fail-closed`.)
 - **`tool-hooks-rate-limit.test.ts`** — exhausting a `(principal, tool)` bucket → `agent.toolReturned { status: 'rate_limited' }` + `rate_limited` (429) while a different tool/principal proceeds. (Gated on `perToolRateLimit`.)
 - **`tool-hooks-secret-redaction.test.ts`** — a tool arg containing a resolved secret is redacted before hashing; the raw value never appears in any event. (Gated; composes with the redaction suite.)
+
+The four gated scenarios drive the **tool-hooks invoke seam** `POST /v1/host/sample/toolhooks/invoke` (request `{ principal, toolName, requiredScopes?, args?, simulateRateLimitExhausted? }` → `{ toolCalled, toolReturned }`), specified in [`host-sample-test-seams.md`](../spec/v1/host-sample-test-seams.md) §"Open seams". A host advertising `capabilities.toolHooks.supported: true` wires it to light them up; they soft-skip on `404` until then.
 
 ## Alternatives considered
 

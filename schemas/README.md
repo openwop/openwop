@@ -49,6 +49,8 @@
 | `suspend-request.schema.json` | `interrupt.md` | `InterruptPayload` with 8 `kind` discriminators (approval, clarification, external-event, custom, conversation.start, conversation.exchange, conversation.close, low-confidence) |
 | `workflow-chain-pack-manifest.schema.json` | `workflow-chain-packs.md` + RFC 0013 | Manifest for workflow-chain packs (`kind: "workflow-chain"`) — pre-configured DAG fragments expanded inline at workflow-author time. Peer to `node-pack-manifest.schema.json`; disjoint via the `kind` discriminator. |
 | `workflow-definition.schema.json` | `channels-and-reducers.md` + `node-packs.md` | DAG of nodes + edges + triggers + variables + channels |
+| `workspace-file.schema.json` | `agent-workspace.md` + `RFCS/0059` | RFC 0059 — a versioned workspace file (`{path, content, version, etag, updatedAt}`); response of `GET/PUT /v1/host/workspace/files/{path}`. |
+| `workspace-file-create.schema.json` | `agent-workspace.md` + `RFCS/0059` | RFC 0059 — `PUT /v1/host/workspace/files/{path}` request body (content + optional contentType; path from the URL, version/etag host-assigned). |
 
 ## Validating against the schemas
 

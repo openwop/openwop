@@ -309,6 +309,26 @@ export interface CreateAnnotationRequest {
   note?: string;
 }
 
+/** RFC 0059 versioned, tenant·workspace-scoped ground-truth file
+ *  (`workspace-file.schema.json`). The `list` endpoint returns this shape
+ *  minus `content` (metadata only). */
+export interface WorkspaceFile {
+  path: string;
+  content: string;
+  contentType?: string;
+  version: number;
+  etag?: string;
+  updatedAt: string;
+}
+
+/** RFC 0059 request body for `putWorkspaceFile` (`workspace-file-create.schema.json`).
+ *  `path` is URL-bound; the host assigns `version`/`etag`/`updatedAt`.
+ *  Optimistic concurrency is expressed via the `If-Match` header, not the body. */
+export interface PutWorkspaceFileRequest {
+  content: string;
+  contentType?: string;
+}
+
 /**
  * Response from `GET /v1/runs/{runId}/ancestry` — RFC 0040 §C cross-host
  * composition parent. `parent: null` for top-level runs (not dispatched
