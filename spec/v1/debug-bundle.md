@@ -193,6 +193,10 @@ A bundle is JSON. Hosts MAY use HTTP-level compression (`Content-Encoding: gzip`
 
 ---
 
+## Annotations (RFC 0056)
+
+When a host advertises `capabilities.feedback.supported`, a run's debug bundle SHOULD include the run's annotations — read from the side-store, already secret-redacted per the `annotation-content-redaction` invariant — so a flagged run travels with its reviewer notes. See [`RFCS/0056`](../../RFCS/0056-run-feedback-and-annotation-event.md) §D.
+
 ## Open spec gaps
 
 | ID | Description |

@@ -345,6 +345,10 @@ Hosts that advertise one of the two capabilities but not the other retain the ex
 
 ---
 
+## Annotations and fork (RFC 0056)
+
+RFC 0056 annotations are a per-run side-resource, **not** event-log entries — so they sit entirely outside the fork/replay model. A fork inherits **zero** annotations (it is a new run with no human judgments yet) and MAY carry a back-reference to the source. `run.annotated` is a live SSE notification, never a persisted/replayed event. This is deliberate: a replayable annotation event would be copied into forks (which replay source events `< fromSeq`), contradicting its side-resource semantics. See [`RFCS/0056`](../../RFCS/0056-run-feedback-and-annotation-event.md) §D.
+
 ## Open spec gaps
 
 | # | Gap | Owner |
