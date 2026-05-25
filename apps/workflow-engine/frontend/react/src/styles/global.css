@@ -685,9 +685,14 @@ pre {
 
 .button-row {
   display: flex;
+  flex-wrap: wrap; /* §A7: action rows wrap instead of overflowing on narrow viewports */
   gap: var(--space-2);
   margin-top: var(--space-3);
 }
+
+/* §A7: keep wide tables (runs index) horizontally scrollable on small
+   screens rather than forcing the layout to overflow the viewport. */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
 .alert {
   padding: var(--space-3);

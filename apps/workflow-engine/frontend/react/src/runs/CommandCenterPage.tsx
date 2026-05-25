@@ -99,7 +99,7 @@ export function CommandCenterPage() {
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
           <h2 style={{ margin: 0 }}>Mission Control</h2>
-          <span className="muted" style={{ fontSize: 12 }}>
+          <span className="muted" style={{ fontSize: 12 }} aria-live="polite">
             {runs.length} active{runs.some((r) => needsAttention(r.status)) ? ` · ${runs.filter((r) => needsAttention(r.status)).length} need attention` : ''}
           </span>
         </div>
@@ -136,7 +136,7 @@ export function CommandCenterPage() {
                     </span>
                     <span className="cc-run-wf" title={r.workflowId}>{r.workflowId}</span>
                     {needsAttention(r.status) && (
-                      <span className="cc-attention">⚠ awaiting human input</span>
+                      <span className="cc-attention"><span aria-hidden="true">⚠ </span>awaiting human input</span>
                     )}
                   </button>
                   <div className="cc-run-actions">

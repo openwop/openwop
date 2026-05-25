@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { createRun, listMyRuns, type RunListItem } from '../client/runsClient.js';
 import { formatDuration } from './format.js';
 import { listSavedWorkflows } from '../builder/persistence/localStore.js';
@@ -137,30 +137,35 @@ export function RunsIndexPage() {
         {!runsLoading && runs.length === 0 ? (
           <p className="muted">No runs yet. Create one above to get started.</p>
         ) : (
-          <table className="runs-table">
-            <thead>
-              <tr>
-                <th>Run</th>
-                <th>Workflow</th>
-                <th>Status</th>
-                <th>Started</th>
-              </tr>
-            </thead>
-            <tbody>
-              {runs.map((r) => (
-                <tr
-                  key={r.runId}
-                  onClick={() => nav(`/runs/${r.runId}`)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <td><code>{r.runId.slice(0, 8)}…</code></td>
-                  <td>{r.workflowId}</td>
-                  <td><StatusBadge status={r.status} /></td>
-                  <td className="muted">{r.startedAt ? new Date(r.startedAt).toLocaleString() : '—'}</td>
+          <div className="table-scroll">
+            <table className="runs-table">
+              <thead>
+                <tr>
+                  <th>Run</th>
+                  <th>Workflow</th>
+                  <th>Status</th>
+                  <th>Started</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {runs.map((r) => (
+                  <tr
+                    key={r.runId}
+                    onClick={() => nav(`/runs/${r.runId}`)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {/* The run id is a real link so the row is keyboard-
+                        navigable (tab + Enter); the row onClick stays for
+                        mouse convenience and targets the same route. */}
+                    <td><Link to={`/runs/${r.runId}`} onClick={(e) => e.stopPropagation()}><code>{r.runId.slice(0, 8)}…</code></Link></td>
+                    <td>{r.workflowId}</td>
+                    <td><StatusBadge status={r.status} /></td>
+                    <td className="muted">{r.startedAt ? new Date(r.startedAt).toLocaleString() : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
