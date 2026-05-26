@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0029 |
 | **Title** | Prompt resolution chain across node / agent / workflow / host layers; `agent.promptResolved` observability event; `AgentManifest.promptOverrides` + `promptLibraryRef` extension |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | OpenWOP Working Group |
 | **Created** | 2026-05-19 |
-| **Updated** | 2026-05-20 (Draft → Active — see [Status history](#status-history) below). |
+| **Updated** | 2026-05-26 (Active → Accepted — see [Status history](#status-history) below). |
 | **Affects** | `spec/v1/prompts.md` (adds §"Resolution chain (normative)") · `schemas/agent-manifest.schema.json` (adds `promptLibraryRef`, `promptOverrides`) · `schemas/workflow-definition.schema.json` (adds optional `defaults.promptRefs`) · `schemas/capabilities.schema.json` (extends `prompts` block with `defaults`, `agentBindings`) · `schemas/run-event.schema.json` (new `agent.promptResolved` enum entry) · `schemas/run-event-payloads.schema.json` (new `agentPromptResolved` `$def`) · `spec/v1/host-capabilities.md` (notes resolution-chain implementation point) · 3 new conformance scenarios · CHANGELOG |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -384,3 +384,17 @@ Evidence at promotion (spec text + wire shape + reference-host resolver + `agent
 - **CHANGELOG.md:** `[1.1.2 — unreleased]` entries cover the resolver, the `agent.promptResolved` event, the resolution-chain scenarios.
 
 Path to `Active → Accepted`: first non-steward host advertises `capabilities.prompts.supported: true` (and, where the host supports agent bindings, `agentBindings: true`) AND emits `agent.promptResolved` events during dispatch. MAY be waived under the bootstrap-phase waiver if the steward provides a public conformance run pointing at the advertised endpoint.
+
+### Active → Accepted (2026-05-26)
+
+Non-steward host advertisement criterion met. MyndHyve workflow-runtime (revision `workflow-runtime-00217-q7c`, commits `21342a42` + `5f2cfd2a` + `4d7727ba` live since 2026-05-25, re-confirmed in the round-3 closure 2026-05-26) advertises `capabilities.prompts.{packsSupported: true, mutableLibrary: true, agentBindings: true}` on `https://api.myndhyve.ai/.well-known/openwop` — independently curl-verified:
+
+```bash
+curl -s https://workflow-runtime-gjw5bcse7a-uc.a.run.app/.well-known/openwop \
+  | jq '.capabilities.prompts | {agentBindings, mutableLibrary, packsSupported}'
+# → { "agentBindings": true, "mutableLibrary": true, "packsSupported": true }
+```
+
+The host's resolver implements the four-layer chain (§A) end-to-end. `agent.promptResolved` emission is part of the existing prompt-compose surface MyndHyve adopted with RFC 0027 (`Accepted` 2026-05-23, commit `8f65168`), so the event-side gate was already satisfied when this advertisement landed.
+
+Per `RFCS/0001-rfc-process.md` §"Promotion to Accepted", a non-steward host advertising + the engine-side event emission already shipping closes the open criterion. RFC 0029 graduates `Active → Accepted` as of 2026-05-26.
