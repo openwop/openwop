@@ -11,6 +11,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### feat(host-postgres)+feat(host-sqlite): implement RFC 0056 run feedback/annotations (2026-05-26)
+
+Ports the RFC 0056 run feedback/annotation surface from the in-memory reference to the Postgres + SQLite hosts (previously only in-memory implemented it, so the seven `feedback-*` conformance scenarios soft-skipped on PG/SQLite). Each host now advertises `capabilities.feedback { supported: true, targets: ['run'], signals: ['rating','correction','label','flag'] }` and serves `POST /v1/runs/{runId}/annotations` (record → 201 with the persisted annotation) + `GET /v1/runs/{runId}/annotations` (list). Annotations are a per-run side-store (a new `annotations` table, not the replayable event log), so a fork starts with zero annotations (§D) and a list is inherently run-scoped (§E / CTI-1). Untrusted free-text (`signal.correction`, `note`, and every string-valued signal field) is secret-shape-scrubbed before persistence per the `annotation-content-redaction` SECURITY invariant (§E / SR-1); unknown `signal` keys are rejected (`additionalProperties:false`). All 7 `feedback-*` scenarios now pass on both hosts; full suites green (Postgres 1700/0/118, SQLite 1714/0/104). Host-only; no protocol-corpus change (the wire surface — openapi `recordAnnotation`/`listAnnotations`, asyncapi `run.annotated`, `capabilities.feedback`, `annotation.schema.json` — already landed with RFC 0056). The optional `run.annotated` SSE notification is not yet emitted (matches the in-memory reference; no scenario exercises it).
 ### docs(rfc-0064): /code-review follow-ups on the M2 enforcement (2026-05-25)
 
 Two findings from a `/code-review` pass over the RFC 0064 M2 commit. Docs + one code comment; no schema, behavior, or wire-shape change.

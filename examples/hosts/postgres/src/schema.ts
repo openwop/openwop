@@ -140,5 +140,18 @@ export async function setupSchema(q: Querier): Promise<void> {
   `);
   await q.query(`CREATE INDEX IF NOT EXISTS idx_idem_stored_at ON idempotency(stored_at);`);
 
+  // RFC 0056 run feedback/annotations. A per-run side-store, NOT part of the
+  // replayable event log — so a fork (new run_id) starts with zero annotations
+  // without any copy logic (§D), and the list is inherently run-scoped (§E CTI-1).
+  await q.query(`
+    CREATE TABLE IF NOT EXISTS annotations (
+      annotation_id TEXT PRIMARY KEY,
+      run_id TEXT NOT NULL,
+      data_json JSONB NOT NULL,
+      created_at TEXT NOT NULL
+    );
+  `);
+  await q.query(`CREATE INDEX IF NOT EXISTS idx_annotations_run ON annotations(run_id, created_at);`);
+
   await setVersion(q, LATEST_SCHEMA_VERSION);
 }

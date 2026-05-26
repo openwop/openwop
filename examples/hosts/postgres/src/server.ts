@@ -2715,6 +2715,13 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
       fixtures: advertisedFixtures,
       debugBundle: { supported: true },
       capabilities: {
+        // RFC 0056 — non-blocking run feedback/annotations. Run-level only;
+        // annotations are a per-run side-store (not the replayable event log).
+        feedback: {
+          supported: true,
+          targets: ['run'],
+          signals: ['rating', 'correction', 'label', 'flag'],
+        },
         // RFC 0058 — engine-enforced run bounds. Advertised under
         // `capabilities.limits` (the schema-canonical + conformance-read
         // location) so clients can pre-flight a `runTimeoutMs` against the
@@ -4474,8 +4481,114 @@ async function handleGetArtifact(
   sendError(res, 404, 'artifact_not_found', `No artifact "${artifactId}" on run "${runId}".`);
 }
 
+// ─── RFC 0056 run feedback / annotations ─────────────────────────────────────
+
+// Secret-shaped redaction for untrusted annotation free-text (SR-1, RFC 0056
+// §E + SECURITY invariant `annotation-content-redaction`). Mirrors the
+// in-memory + SQLite reference pattern set so cross-host behavior is identical.
+const ANNOTATION_SECRET_SHAPED = [
+  /\bsk-[A-Za-z0-9_-]{6,}/g, // OpenAI-style `sk-` keys
+  /\b(?:AKIA|ASIA)[A-Z0-9]{12,}/g, // AWS access key IDs
+  /\bxox[baprs]-[A-Za-z0-9-]{8,}/g, // Slack tokens
+  /\bgh[pousr]_[A-Za-z0-9]{16,}/g, // GitHub tokens
+  /\bey[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g, // JWTs
+];
+function scrubAnnotationText(value: string): string {
+  let out = value;
+  for (const re of ANNOTATION_SECRET_SHAPED) out = out.replace(re, '[redacted]');
+  return out;
+}
+
+async function handleCreateAnnotation(req: IncomingMessage, res: ServerResponse, runId: string): Promise<void> {
+  if (!(await checkAuth(req, res))) return;
+  if (!(await loadRun(runId))) {
+    sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
+    return;
+  }
+  const bodyText = await readBody(req);
+  let body: { signal?: Record<string, unknown>; target?: { eventId?: unknown; nodeId?: unknown }; note?: unknown };
+  try {
+    body = JSON.parse(bodyText) as typeof body;
+  } catch {
+    sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+    return;
+  }
+  const signal = body.signal;
+  if (typeof signal !== 'object' || signal === null || Array.isArray(signal)) {
+    sendError(res, 400, 'validation_error', 'signal: object is required.');
+    return;
+  }
+  const kind = signal['kind'];
+  if (kind !== 'rating' && kind !== 'correction' && kind !== 'label' && kind !== 'flag') {
+    sendError(res, 400, 'validation_error', 'signal.kind MUST be one of rating|correction|label|flag.');
+    return;
+  }
+  const rating = signal['rating'];
+  if (kind === 'rating' && (typeof rating !== 'number' || !Number.isInteger(rating) || rating < 1 || rating > 5)) {
+    sendError(res, 400, 'validation_error', 'signal.rating: integer 1..5 is required when kind is rating.');
+    return;
+  }
+  if (kind === 'label' && typeof signal['label'] !== 'string') {
+    sendError(res, 400, 'validation_error', 'signal.label: string is required when kind is label.');
+    return;
+  }
+  if (kind === 'correction' && typeof signal['correction'] !== 'string') {
+    sendError(res, 400, 'validation_error', 'signal.correction: string is required when kind is correction.');
+    return;
+  }
+  // annotation.schema.json declares signal with additionalProperties:false —
+  // reject unknown keys rather than persist an un-scrubbed extra field.
+  const ALLOWED_SIGNAL_KEYS = new Set(['kind', 'rating', 'label', 'correction']);
+  for (const key of Object.keys(signal)) {
+    if (!ALLOWED_SIGNAL_KEYS.has(key)) {
+      sendError(res, 400, 'validation_error', `signal.${key}: unknown field (signal allows kind|rating|label|correction).`);
+      return;
+    }
+  }
+  // SR-1: scrub EVERY string-valued signal field + note before persistence.
+  const storedSignal: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(signal)) {
+    storedSignal[key] = typeof value === 'string' ? scrubAnnotationText(value) : value;
+  }
+  const annotation = {
+    annotationId: `ann-${randomUUID()}`,
+    target: {
+      runId,
+      ...(typeof body.target?.eventId === 'string' ? { eventId: body.target.eventId } : {}),
+      ...(typeof body.target?.nodeId === 'string' ? { nodeId: body.target.nodeId } : {}),
+    },
+    signal: storedSignal,
+    // Single-API-key host: opaque principal ref, never the credential itself.
+    actor: { principalRef: 'apikey:postgres' },
+    ...(typeof body.note === 'string' ? { note: scrubAnnotationText(body.note) } : {}),
+    createdAt: new Date().toISOString(),
+  };
+  const q = await querier();
+  await q.query(
+    'INSERT INTO annotations (annotation_id, run_id, data_json, created_at) VALUES ($1, $2, $3::JSONB, $4)',
+    [annotation.annotationId, runId, JSON.stringify(annotation), annotation.createdAt],
+  );
+  sendJSON(res, 201, annotation);
+}
+
+async function handleListAnnotations(req: IncomingMessage, res: ServerResponse, runId: string): Promise<void> {
+  if (!(await checkAuth(req, res))) return;
+  if (!(await loadRun(runId))) {
+    sendError(res, 404, 'run_not_found', `Unknown runId: ${runId}`);
+    return;
+  }
+  // Run-scoped query → inherently isolated to this run (RFC 0056 §E / CTI-1).
+  const q = await querier();
+  const r = await q.query<{ data_json: unknown }>(
+    'SELECT data_json FROM annotations WHERE run_id = $1 ORDER BY created_at ASC, annotation_id ASC',
+    [runId],
+  );
+  sendJSON(res, 200, { annotations: r.rows.map((row) => row.data_json) });
+}
+
 // ─── Router ──────────────────────────────────────────────────────────────────
 
+const RUN_ANNOTATIONS_PATTERN = /^\/v1\/runs\/([^/]+)\/annotations$/; // RFC 0056
 const RUN_ID_PATTERN = /^\/v1\/runs\/([^/]+)$/;
 const RUN_CANCEL_PATTERN = /^\/v1\/runs\/([^/]+)\/cancel$/;
 const RUN_EVENTS_POLL_PATTERN = /^\/v1\/runs\/([^/]+)\/events\/poll$/;
@@ -4575,6 +4688,9 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (m && method === 'GET') return handleEventsSse(req, res, m[1]!);
   m = RUN_DEBUG_BUNDLE_PATTERN.exec(path);
   if (m && method === 'GET') return handleDebugBundle(req, res, m[1]!, url);
+  m = RUN_ANNOTATIONS_PATTERN.exec(path); // RFC 0056 — run feedback
+  if (m && method === 'POST') return handleCreateAnnotation(req, res, m[1]!);
+  if (m && method === 'GET') return handleListAnnotations(req, res, m[1]!);
   m = RUN_ARTIFACT_PATTERN.exec(path);
   if (m && method === 'GET') return handleGetArtifact(req, res, m[1]!, m[2]!);
   m = RUN_PAUSE_PATTERN.exec(path);
