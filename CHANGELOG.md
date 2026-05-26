@@ -20,6 +20,10 @@ Four findings from a `/code-review` pass over the RFC 0063 M2 commit. Docs only;
 - **conformance.md** measurement-header annotation extended to include the RFC 0063 enforcement landing.
 - **INTEROP-MATRIX** in-memory row records the new `capabilities.agents.subRunAttestation` advertisement.
 
+### docs(spec): fix duplicate `### 9` heading in host-sample-test-seams.md (RFC 0061 /code-review follow-up) (2026-05-26)
+
+Two seams shared the heading number `### 9.` — the RFC 0059-M2 "Workspace cross-owner driver" (inserted at 9, referenced as `§9` in `CHANGELOG.md` / `RFCS/0059` / the in-memory `conformance.md`) and the older RFC 0039 "`POST /v1/runs/{runId}:fork mode:replay`" fork seam. Surfaced during the RFC 0061 `/code-review`; confirmed pre-existing (a parallel session's RFC 0059-M2 reused the number). Renumbered the fork seam to `### 10.` — it is referenced by number nowhere, and the workspace `§9` cross-refs stay correct. Prose-only; no schema, wire-shape, or seam-contract change.
+
 ### RFC 0063 (core.subWorkflow output attestation) — Milestone 2: reference-host enforcement; promote Active → `Accepted` (2026-05-25)
 
 The in-memory reference host now implements the RFC 0063 verify-before-merge surface end-to-end, taking it from `Active` to **`Accepted`**. It advertises `capabilities.agents.subRunAttestation: true` and implements the documented `POST /v1/host/sample/subrun/attest` seam (`host-sample-test-seams.md`):
