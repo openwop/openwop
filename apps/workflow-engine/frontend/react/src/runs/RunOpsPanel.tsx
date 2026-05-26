@@ -12,6 +12,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { AuditVerifyResult, RunEventDoc } from '@openwop/openwop';
 import { getSdkClient, getCapabilities } from '../client/runsClient.js';
 import { authedHeaders, config, fetchOpts } from '../client/config.js';
@@ -93,6 +94,16 @@ export function RunOpsPanel({ runId, events }: Props) {
           <button type="button" className="secondary" onClick={onVerify} disabled={verifying}>
             {verifying ? 'Verifying…' : 'Verify audit integrity'}
           </button>
+        )}
+        {auditProfile && (
+          <Link
+            to={`/runs/${runId}/audit`}
+            className="secondary"
+            style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
+            title="Full audit-log timeline + checkpoint export"
+          >
+            View full audit log →
+          </Link>
         )}
       </div>
       {auditProfile === false && (
