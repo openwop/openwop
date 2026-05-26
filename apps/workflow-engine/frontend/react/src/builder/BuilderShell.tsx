@@ -147,6 +147,11 @@ export function BuilderShell({ onNewWorkflow }: Props) {
 
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The Publish-to-registry helper. Non-null when the user has clicked
+  // "Publish to registry…" — stores the proposed pack slug + manifest
+  // size + GitHub registry URL so the inline checklist can render
+  // without re-deriving on every render.
+  const [publishHelp, setPublishHelp] = useState<{ slug: string; size: number; manifestJson: string } | null>(null);
   // Pre-flight issues found on the last Run click. When non-null the
   // user must confirm ("Run anyway") or cancel before the run fires.
   // `caps` are per-node missing host surfaces; `limits` are graph-shape
@@ -320,6 +325,35 @@ export function BuilderShell({ onNewWorkflow }: Props) {
     }
   }
 
+  // Publish-to-registry helper. Registry submission is a PR-based flow
+  // per `PUBLISHING.md` + `spec/v1/registry-operations.md` — there's no
+  // in-app push for trust + provenance reasons (Ed25519 signing happens
+  // at PR-merge time by the registry maintainers, not in the browser).
+  // This action materializes the manifest + opens a checklist with the
+  // canonical GitHub registry directory URL so the operator can finish
+  // the submission with one click into the registry.
+  function onPublishToRegistry() {
+    setError(null);
+    try {
+      const snap = useBuilderStore.getState().snapshot();
+      const manifest = buildChainPackManifest(snap);
+      const manifestJson = JSON.stringify(manifest, null, 2);
+      // Strip `community.local.` prefix from the manifest name to get
+      // the final slug; the registry directory uses the bare slug as
+      // the per-pack directory name (see existing entries under
+      // `registry/packs/<slug>/`).
+      const slug = manifest.name.replace(/^community\.local\./, '');
+      setPublishHelp({ slug, size: manifestJson.length, manifestJson });
+    } catch (err) {
+      if (err instanceof SerializeError) {
+        setError(err.message);
+        if (err.nodeId) useBuilderStore.getState().selectNode(err.nodeId);
+      } else {
+        setError(err instanceof Error ? err.message : String(err));
+      }
+    }
+  }
+
   // Import portable JSON. Mints a fresh workflow id so importing never
   // clobbers the workflow currently open, then navigates into it.
   async function onImportFile(file: File) {
@@ -396,6 +430,13 @@ export function BuilderShell({ onNewWorkflow }: Props) {
         </button>
         <button
           className="secondary"
+          onClick={onPublishToRegistry}
+          title="Publish this workflow as a chain pack on packs.openwop.dev (walks through the PR-based submission flow)"
+        >
+          Publish to registry…
+        </button>
+        <button
+          className="secondary"
           onClick={() => importInputRef.current?.click()}
           title="Import a workflow from JSON (opens as a new workflow)"
         >
@@ -429,6 +470,61 @@ export function BuilderShell({ onNewWorkflow }: Props) {
       {validateOk && (
         <div className="alert success builder-toolbar-error" role="status">
           ✓ {validateOk}
+        </div>
+      )}
+      {publishHelp && (
+        <div className="alert builder-toolbar-error" style={{ background: '#eff6ff', border: '1px solid #bfdbfe' }}>
+          <strong>Publish <code>{publishHelp.slug}</code> to packs.openwop.dev</strong>
+          <p style={{ fontSize: 12, margin: '4px 0 8px' }} className="muted">
+            Registry submission is PR-based ({(publishHelp.size / 1024).toFixed(1)} KB manifest).
+            In-browser publishing is intentionally off — Ed25519 signing happens at PR-merge time by the
+            registry maintainers, per <code>PUBLISHING.md</code> + <code>spec/v1/registry-operations.md</code>.
+          </p>
+          <ol style={{ fontSize: 12, marginTop: 0, paddingLeft: 18 }}>
+            <li>
+              <button
+                type="button"
+                className="linklike"
+                onClick={() => {
+                  const blob = new Blob([publishHelp.manifestJson], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `${publishHelp.slug}.manifest.json`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                }}
+              >
+                Download <code>manifest.json</code>
+              </button>{' '}
+              (you may want to rename <code>{publishHelp.slug}</code> + replace fully-bound values with{' '}
+              <code>{'{{params.*}}'}</code> placeholders before submitting).
+            </li>
+            <li>
+              Fork{' '}
+              <a href="https://github.com/openwop/openwop" target="_blank" rel="noreferrer">openwop/openwop</a>{' '}
+              and add the manifest at{' '}
+              <code>registry/packs/{publishHelp.slug}/manifest.json</code>{' '}
+              — see{' '}
+              <a href="https://github.com/openwop/openwop/tree/main/registry/packs" target="_blank" rel="noreferrer">
+                existing entries
+              </a>{' '}
+              for the directory shape.
+            </li>
+            <li>
+              Run <code>npm run openwop:check</code> locally to validate (the 9-step gate includes pack-manifest +
+              signature checks).
+            </li>
+            <li>
+              Open a PR; the maintainers run signing + final validation at merge time, then the pack appears at{' '}
+              <a href="https://packs.openwop.dev" target="_blank" rel="noreferrer">packs.openwop.dev</a>.
+            </li>
+          </ol>
+          <div className="button-row">
+            <button type="button" className="secondary" onClick={() => setPublishHelp(null)}>Close</button>
+          </div>
         </div>
       )}
       {preflight && (
