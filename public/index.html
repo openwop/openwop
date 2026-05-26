@@ -608,51 +608,11 @@
   </div>
 </section>
 
-<!-- ─────────────────────── WHAT'S NEW IN v1.1.4 ─────────────────────── -->
-<section class="block ships" id="whats-new">
-  <div class="wrap">
-    <div class="block-head">
-      <div class="label"><span class="marker"><span class="dot"></span>§ 01.5 / What's new in v1.1.4 (2026-05-26)</span></div>
-      <h2>Non-steward adoption, <em>live in production</em>.</h2>
-      <p class="block-lede">
-        v1.1.4 is the first release with concrete non-steward production adoption to point at — the protocol's vendor-neutrality stops being a stated commitment and starts being a measured one.
-      </p>
-    </div>
-    <div class="ships-grid">
-      <a class="ship" href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">
-        <div class="ship-num">8 / 8</div>
-        <div class="ship-label">MyndHyve protocol-extension cohort live</div>
-        <div class="ship-detail">RFCs 0045–0049 + 0051–0053 — <code>host.credentials</code>, <code>host.oauth</code>, identity triple, RBAC scopes, approval gate, scheduling, dead-letter — all <code>Accepted</code> via 28 PASS / 0 FAIL on <code>api.myndhyve.ai</code> (revision <code>00211-69w</code>, suite <code>v1.6.0</code>). Multi-agent execution model <code>version: 1-4</code> ladder closed end-to-end on a non-steward host.</div>
-      </a>
-      <a class="ship" href="/rfcs/">
-        <div class="ship-num">5 / 7</div>
-        <div class="ship-label">autonomous-agent-runtime cohort already Accepted</div>
-        <div class="ship-detail">RFCs 0058–0064 filed Draft; 0059 (<code>host.workspace</code>) · 0060 (<code>host.heartbeat</code>) · 0062 (<code>memory.distillation</code>) · 0063 (<code>core.subWorkflow.outputAttestation</code>) · 0064 (<code>host.toolHooks</code>) graduated Draft → Active → <code>Accepted</code> in the same cycle via in-memory M2 host enforcement. RFCs 0058 + 0061 (<code>executionModel.version: 5</code>) at <code>Active</code> pending second-host enforcement.</div>
-      </a>
-      <a class="ship" href="https://packs.openwop.dev/vendor.myndhyve.brand">
-        <div class="ship-num">1st</div>
-        <div class="ship-label">non-steward <code>x-openwop-form</code> pack</div>
-        <div class="ship-detail"><code>vendor.myndhyve.brand@1.1.0</code> pilots RFC 0066 — pack-manifest <code>configSchema</code> picker UX hints (<code>provider-picker</code> + <code>model-picker { dependsOn: ["provider"] }</code>) on the <code>brand.persona.discover</code> node. First non-steward host adopting the advisory annotation — RFC 0066 path-to-<code>Accepted</code> unlocks at re-pin.</div>
-      </a>
-      <a class="ship" href="https://github.com/openwop/openwop/blob/main/SECURITY/invariants.yaml">
-        <div class="ship-num">102</div>
-        <div class="ship-label">SECURITY invariants (+8 this cycle)</div>
-        <div class="ship-detail">70 protocol-tier (each with at least one public test in <code>conformance/src/scenarios/</code>) · 30 reference-impl · 2 advisory. New: <code>authorization-fail-closed</code>, <code>prompt-{mutation,read}-workspace-membership-enforced</code>, <code>media-asset-url-tenant-scoped</code>, <code>memory-attribution-{no-content,tenant-scoped}</code>, <code>workspace-cross-tenant-isolation</code>, <code>subrun-merge-approval-fail-closed</code>.</div>
-      </a>
-    </div>
-  </div>
-</section>
-
 <!-- ─────────────────────── PICK YOUR PATH ─────────────────────── -->
 <section class="block paths" id="paths">
   <div class="wrap">
     <div class="block-head">
       <div class="label"><span class="marker"><span class="dot"></span>§ 02 / Where to start</span></div>
-      <!-- §02 keeps its number even after the §01.5 insertion above —
-           §01.5 reads as an addendum to §01 (running today + what just landed),
-           not as a top-level outline step. The "Where to start" path-pick
-           remains the second major thing a visitor does. -->
-
       <h2>Pick your <em>path</em>.</h2>
       <p class="block-lede">
         OpenWOP is a protocol with four common entry points. Each card lists the real specs and tools the role uses; nothing routes off into vapor.
