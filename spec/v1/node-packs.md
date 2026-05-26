@@ -125,6 +125,32 @@ Hosts that want to carry additional fields (e.g., aggregate `childOutcome` enum,
 
 **Conformance:** `conformance/src/scenarios/subworkflow.test.ts` and the `conformance-subworkflow-parent`/`conformance-subworkflow-child` fixtures exercise the contract end-to-end.
 
+#### `outputAttestation` — verify-before-merge (RFC 0063, `Active`)
+
+**Why this exists.** `outputMapping` merges a child's outputs into the parent the instant the child reaches `completed`, with no integrity check and no gate. For autonomous fan-out — a supervisor dispatching N workers whose artifacts are merged back — blind merge means one compromised or hallucinated child artifact silently enters the parent's state. `outputAttestation` adds opt-in *verification before merge*: a content checksum the parent can verify, and an optional approval gate that suspends before the merge.
+
+**Capability flag:** `capabilities.agents.subRunAttestation: true` (RFC 0063). Hosts that omit / `false` this flag treat `outputAttestation` as inert — blind merge, exactly today's behavior — and MUST NOT refuse a workflow that carries the block (it is forward-compatible advisory config, unlike `inputMapping`).
+
+**Config shape (additive, all fields optional):**
+
+```json
+{
+  "outputMapping": { "<parentVar>": "<childVar>" },
+  "outputAttestation": {
+    "checksum": true,
+    "algorithm": "sha256",
+    "requireApproval": false,
+    "principalScope": ["report:write"]
+  }
+}
+```
+
+- **§B — checksum (when `checksum: true`).** After the child reaches a terminal status and its outputs are harvested but **before** `outputMapping` is applied, the host MUST (1) compute a checksum over the child's harvested output object using RFC 8785 JCS canonicalization + SHA-256 — the same recipe pinned for replay cache keys in [`replay.md`](./replay.md) (RFC 0041) — so the digest is host-independent and a parent can verify a child that ran on a different host (RFC 0040); (2) surface it as the additive optional `attestation { checksum, algorithm }` object on the existing `core.workflowChain.event { phase: 'output.harvested' }` (RFC 0037 — no new event type; that phase *is* the merge point) AND under the sub-workflow node's `node.completed` `data.outputs.attestation.checksum`; (3) apply `outputMapping` as today. The checksum is **advisory for verification** — the parent or a downstream node MAY compare it against an expected value and fail the parent on divergence; the host MUST NOT itself reject on a checksum mismatch (that is policy, expressed as a parent node).
+- **§C — approval gate (when `requireApproval: true`).** After harvest and **before** `outputMapping`, the host MUST suspend the parent via an `approval` interrupt (RFC 0051; see [`interrupt.md`](./interrupt.md)) carrying the child's outputs as the artifact (`actions: ['accept', 'reject', 'edit', 'ask']`). The merge proceeds **only** on `accept` (merge the child outputs unchanged) or `edit-accept` (merge the approver's `editedArtifactData`). On `reject` the host MUST NOT merge and MUST surface per the node's `onChildFailure` policy (`fail-parent` or `absorb`). This MUST **fail closed**: if the run terminates or the interrupt expires without an `accept`/`edit-accept`, the outputs MUST NOT be merged. (Backed by the proposed protocol-tier SECURITY invariant `subrun-merge-approval-fail-closed`, which lands with its public conformance test at reference-host implementation, not at `Active`.) One `approval` interrupt per child for v1; batched fan-out approval is a later optional optimization.
+- **§D — `principalScope` (optional).** When present, narrows the child run's effective scopes to the named RFC 0049 scopes — a child dispatched to "write a report" MAY be denied "delete data" even though the parent principal holds it. This references RFC 0049 scopes and defines no new ones; it reaffirms and tightens the existing tenant-inheritance isolation.
+
+**Compatibility.** Additive — an absent `outputAttestation` is identical to today's blind merge; the `attestation` field is an additive optional property on the existing `output.harvested` phase (its `required` array is unchanged; consumers ignore it); the gate reuses RFC 0051's `approval` interrupt with no new kind. **Conformance:** `subrun-attestation-shape.test.ts` (always-on where `core.subWorkflow` is supported) + `subrun-checksum-stable.test.ts` / `subrun-approval-gate.test.ts` / `subrun-approval-fail-closed.test.ts` (gated on `agents.subRunAttestation` + the sub-run attestation seam in [`host-sample-test-seams.md`](./host-sample-test-seams.md) §"Open seams"; soft-skip until a host wires it).
+
 ### Versioning
 
 Pack versions follow [Semantic Versioning 2.0.0](https://semver.org/) (`MAJOR.MINOR.PATCH[-PRERELEASE][+BUILD]`). Workflow definitions pin pack versions via the same range syntax as npm (`^1.2.3`, `~1.2.0`, `>=1.0 <2.0.0`).

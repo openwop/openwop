@@ -4,7 +4,7 @@
 |---|---|
 | **RFC** | 0063 |
 | **Title** | An optional `outputAttestation` config on `core.subWorkflow` — a content checksum surfaced on the child's terminal event, plus an optional `requireApproval` gate that suspends via an `approval` interrupt (RFC 0051) *before* `outputMapping` merges a child's outputs into the parent, so a parent can verify and approve sub-agent artifacts rather than merging them blindly |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-25 |
 | **Updated** | 2026-05-25 |
@@ -78,6 +78,8 @@ This MUST **fail-closed**: if the run terminates or the interrupt expires withou
 - **`subrun-checksum-stable.test.ts`** — a child's checksum is byte-stable for identical outputs and host-independent (matches the canonical-JSON recipe). (Gated on `agents.subRunAttestation`.)
 - **`subrun-approval-gate.test.ts`** — `requireApproval: true` suspends before merge; `accept` merges, `reject` does not. (Gated.)
 - **`subrun-approval-fail-closed.test.ts`** — a parent that terminates without approval does not merge the child outputs. (Gated; backs the invariant.)
+
+The three gated scenarios drive the **sub-run attestation seam** `POST /v1/host/sample/subrun/attest` (request `{ childOutputs, outputAttestation: { checksum?, algorithm?, requireApproval?, principalScope? }, approvalAction? }` → `{ attestation, harvestedEvent, merged, mergedValues? }`), specified in [`host-sample-test-seams.md`](../spec/v1/host-sample-test-seams.md) §"Open seams". A host advertising `capabilities.agents.subRunAttestation: true` wires it to light them up; they soft-skip on `404` until then.
 
 ## Alternatives considered
 

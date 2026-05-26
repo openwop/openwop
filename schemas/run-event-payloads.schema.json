@@ -163,6 +163,24 @@
           "items": { "type": "string" },
           "description": "On phase `output.harvested`: which parent-variable keys were populated by the dispatch config's outputMapping per RFC 0022 §A. SHOULD be present; conformance asserts presence when outputMapping is non-empty."
         },
+        "attestation": {
+          "type": "object",
+          "description": "RFC 0063 (when `capabilities.agents.subRunAttestation: true` AND the `core.subWorkflow` node sets `outputAttestation.checksum: true`). A content checksum over the child's harvested output object, computed BEFORE `outputMapping` is applied so the parent (or a downstream node) can verify integrity — host-independent because the recipe is RFC 8785 JCS canonicalization + SHA-256 (the `replay.md` recipe, RFC 0041), enabling verification of a child that ran on a different host (RFC 0040). Advisory: the host does NOT itself reject on checksum mismatch; that is parent policy.",
+          "additionalProperties": false,
+          "required": ["checksum", "algorithm"],
+          "properties": {
+            "checksum": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Lowercase hex digest of the canonicalized harvested-output object. Content-free: a hash, never the outputs themselves."
+            },
+            "algorithm": {
+              "type": "string",
+              "enum": ["sha256"],
+              "description": "Hash algorithm. `sha256` is the only v1 value; the enum reserves the axis for a future agility migration without a wire-shape break."
+            }
+          }
+        },
         "error": {
           "$ref": "#/$defs/_errorObject",
           "description": "On phases `dispatch.failed` / `child.failed` / `child.cancelled`: the canonical error envelope."
