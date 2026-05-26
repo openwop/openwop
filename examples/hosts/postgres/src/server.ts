@@ -228,6 +228,8 @@ const RETRY_AFTER_SECONDS = Number(process.env.OPENWOP_RETRY_AFTER_SECONDS ?? 1)
 // to `min(runTimeoutMs, MAX_RUN_DURATION_MS)`; the ceiling always applies even
 // when the caller omits `runTimeoutMs`. Default 1h.
 const MAX_RUN_DURATION_MS = Number(process.env.OPENWOP_MAX_RUN_DURATION_MS ?? 3_600_000);
+// RFC 0057 — memory ref the host writes its session-end run-summary into.
+const RUN_SUMMARY_MEMORY_REF = 'run-summaries';
 // Event retention: rows older than this window get swept. 410 Gone on
 // expired-run GETs per production-profile.md §"Event retention".
 // Default 7 days; reference impl prefers explicit operator config.
@@ -2429,6 +2431,33 @@ async function runWorkflowClaimed(runId: string): Promise<void> {
       // the advanced cursor (past the drained node).
       return;
     } else {
+      // RFC 0057 §A/§B — attribute a content-free, session-end memory write.
+      // The host writes a run-summary to the tenant's memory on completion (the
+      // "session-end write" the spec sanctions) and records it on the event log
+      // via `memory.written` (identifiers + non-secret tags only; no content,
+      // no nodeId per §B — a host write, not a node write). The memoryId is
+      // deterministic on runId so the recorded fact stays replay-stable (§D):
+      // re-reading the log yields the same id, never a freshly minted one.
+      // Emitted BEFORE `run.completed` so the terminal event remains LAST in
+      // the stream (eventOrdering invariant). Best-effort — a memory write
+      // MUST NOT fail the run.
+      try {
+        const q = await querier();
+        const memoryId = `mem-${runId}-summary`;
+        const tags = ['run-summary', `run-id:${runId}`, `workflow:${row.workflow_id}`];
+        await writeMemoryEntry(q, {
+          tenantId: 'tenant:default',
+          memoryRef: RUN_SUMMARY_MEMORY_REF,
+          memoryId,
+          content: `Run ${runId} of "${row.workflow_id}" completed.`,
+          tags,
+        });
+        await appendEvent(runId, 'memory.written', {
+          data: { memoryRef: RUN_SUMMARY_MEMORY_REF, memoryId, tags },
+        });
+      } catch {
+        /* memory is a best-effort host surface; never block run completion */
+      }
       await appendEvent(runId, 'run.completed');
       await setRunTerminal(runId, 'completed', null);
     }
@@ -2823,9 +2852,13 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
         // (session-end triggers, feedback promotion). TTL enforced
         // server-side; CTI-1 cross-tenant isolation upheld via
         // tenant_id filtering on every query.
-        memory: MEMORY_COMPACTION_ENABLED
-          ? { ...REFERENCE_MEMORY_CAPABILITY, compaction: REFERENCE_COMPACTION_CAPABILITY }
-          : REFERENCE_MEMORY_CAPABILITY,
+        // RFC 0057 §A — the host attributes its session-end memory writes via
+        // the content-free `memory.written` event (see runWorkflowClaimed).
+        memory: {
+          ...REFERENCE_MEMORY_CAPABILITY,
+          attribution: { supported: true, emitsWriteEvents: true },
+          ...(MEMORY_COMPACTION_ENABLED ? { compaction: REFERENCE_COMPACTION_CAPABILITY } : {}),
+        },
         // Phase I.2 — capabilities.md §`agents`. Multi-Agent Shift
         // Phase 1-6 advertisement. Host emits the canonical event
         // shapes (agent.reasoned/toolCalled/toolReturned/handoff/
