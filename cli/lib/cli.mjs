@@ -159,6 +159,8 @@ export async function runCli(argv, options = {}) {
         return await runRuns(ctx, commandArgs);
       case 'chat':
         return await runChat(ctx, commandArgs);
+      case 'memory':
+        return await runMemory(ctx, commandArgs);
       case 'conformance':
         return await runConformance(ctx, commandArgs);
       case 'onboard':
@@ -319,6 +321,7 @@ function showHelp(io, command) {
     capabilities: CAPABILITIES_HELP,
     caps: CAPABILITIES_HELP,
     conformance: CONFORMANCE_HELP,
+    memory: MEMORY_HELP,
   };
   write(io.stdout, map[command] ?? ROOT_HELP);
   return 0;
@@ -2018,6 +2021,168 @@ async function runConformance(ctx, argv) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// `openwop memory ...` — read the demo MemoryAdapter ledger (RFC 0004)
+//
+// Backed by the host-extension routes:
+//   GET    /v1/host/sample/memory[?memoryRef=&tag=&limit=]
+//   GET    /v1/host/sample/memory/:memoryId[?memoryRef=]
+//   DELETE /v1/host/sample/memory/:memoryId[?memoryRef=]
+//
+// CTI-1: the backend scopes every read/delete to the caller's principal
+// (`req.tenantId`), NEVER a query value, so the CLI cannot cross a tenant
+// boundary. We pass `--memory-ref` (the agent-derived ref) but never a
+// tenantId — tenant selection is the API key's job (--api-key / OPENWOP_API_KEY).
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function runMemory(ctx, argv) {
+  const sub = argv[0] ?? 'list';
+  const args = argv.slice(['list', 'search', 'get', 'delete', 'rm'].includes(sub) ? 1 : 0);
+  if (sub === '--help' || sub === '-h') {
+    write(ctx.io.stdout, MEMORY_HELP);
+    return 0;
+  }
+  switch (sub) {
+    case 'list':
+      return runMemoryList(ctx, args);
+    case 'search':
+      return runMemorySearch(ctx, args);
+    case 'get':
+      return runMemoryGet(ctx, args);
+    case 'delete':
+    case 'rm':
+      return runMemoryDelete(ctx, args);
+    default:
+      throw new CliError(`Unknown memory command: ${sub}\nRun \`openwop memory --help\` for usage.`);
+  }
+}
+
+function memoryQuery(options) {
+  const query = new URLSearchParams();
+  if (options.memoryRef) query.set('memoryRef', options.memoryRef);
+  if (options.tag) query.set('tag', options.tag);
+  if (options.limit) query.set('limit', options.limit);
+  return query;
+}
+
+function memoryRows(entries) {
+  return entries.map((e) => ({
+    id: e.id,
+    createdAt: e.createdAt ?? '',
+    tags: Array.isArray(e.tags) ? e.tags.join(',') : '',
+    content: truncate(String(e.content ?? ''), 60),
+  }));
+}
+
+function truncate(text, max) {
+  const oneLine = text.replace(/\s+/g, ' ');
+  return oneLine.length > max ? `${oneLine.slice(0, max - 1)}…` : oneLine;
+}
+
+async function runMemoryList(ctx, argv) {
+  const { options } = parseOptions(argv, {
+    bool: ['--help'],
+    value: ['--memory-ref', '--tag', '--limit'],
+  });
+  if (options.help) {
+    write(ctx.io.stdout, MEMORY_HELP);
+    return 0;
+  }
+  const query = memoryQuery(options);
+  const path = `/v1/host/sample/memory${query.size ? `?${query.toString()}` : ''}`;
+  const res = await requestJson(ctx, path);
+  if (ctx.json) {
+    writeJson(ctx.io.stdout, res.body);
+    return 0;
+  }
+  const entries = Array.isArray(res.body?.entries) ? res.body.entries : [];
+  writeLine(ctx.io.stdout, `memoryRef: ${res.body?.memoryRef ?? '(default)'}`);
+  writeLine(ctx.io.stdout, entries.length
+    ? formatTable(memoryRows(entries), ['id', 'createdAt', 'tags', 'content'])
+    : 'No memory entries.');
+  return 0;
+}
+
+async function runMemorySearch(ctx, argv) {
+  const { options, positionals } = parseOptions(argv, {
+    bool: ['--help'],
+    value: ['--memory-ref', '--tag', '--limit', '--query'],
+  });
+  if (options.help) {
+    write(ctx.io.stdout, MEMORY_HELP);
+    return 0;
+  }
+  const term = String(options.query ?? positionals[0] ?? '').toLowerCase();
+  if (!term && !options.tag) {
+    write(ctx.io.stdout, 'Usage: openwop memory search <text> [--tag t] [--memory-ref ref] [--limit n] [--json]\n');
+    return 2;
+  }
+  // The host route filters by tag server-side; free-text search is client-side
+  // over the tenant-scoped result set (the route returns no full-text index).
+  const query = memoryQuery(options);
+  const path = `/v1/host/sample/memory${query.size ? `?${query.toString()}` : ''}`;
+  const res = await requestJson(ctx, path);
+  let entries = Array.isArray(res.body?.entries) ? res.body.entries : [];
+  if (term) {
+    entries = entries.filter((e) =>
+      String(e.content ?? '').toLowerCase().includes(term)
+      || (Array.isArray(e.tags) && e.tags.some((t) => String(t).toLowerCase().includes(term))));
+  }
+  if (ctx.json) {
+    writeJson(ctx.io.stdout, { memoryRef: res.body?.memoryRef, entries });
+    return 0;
+  }
+  writeLine(ctx.io.stdout, `memoryRef: ${res.body?.memoryRef ?? '(default)'}`);
+  writeLine(ctx.io.stdout, entries.length
+    ? formatTable(memoryRows(entries), ['id', 'createdAt', 'tags', 'content'])
+    : 'No matching memory entries.');
+  return 0;
+}
+
+async function runMemoryGet(ctx, argv) {
+  const { options, positionals } = parseOptions(argv, {
+    bool: ['--help'],
+    value: ['--memory-ref'],
+  });
+  if (options.help || positionals.length !== 1) {
+    write(ctx.io.stdout, 'Usage: openwop memory get <memoryId> [--memory-ref ref] [--json]\n');
+    return options.help ? 0 : 2;
+  }
+  const query = options.memoryRef ? `?memoryRef=${encodeURIComponent(options.memoryRef)}` : '';
+  const res = await requestJson(ctx, `/v1/host/sample/memory/${encodeURIComponent(positionals[0])}${query}`);
+  if (ctx.json) {
+    writeJson(ctx.io.stdout, res.body);
+    return 0;
+  }
+  const entry = res.body?.entry ?? {};
+  writeLine(ctx.io.stdout, `memoryRef: ${res.body?.memoryRef ?? '(default)'}`);
+  writeLine(ctx.io.stdout, `id: ${entry.id ?? positionals[0]}`);
+  writeLine(ctx.io.stdout, `createdAt: ${entry.createdAt ?? ''}`);
+  if (entry.expiresAt) writeLine(ctx.io.stdout, `expiresAt: ${entry.expiresAt}`);
+  writeLine(ctx.io.stdout, `tags: ${Array.isArray(entry.tags) ? entry.tags.join(', ') : ''}`);
+  writeLine(ctx.io.stdout, `content: ${entry.content ?? ''}`);
+  return 0;
+}
+
+async function runMemoryDelete(ctx, argv) {
+  const { options, positionals } = parseOptions(argv, {
+    bool: ['--help'],
+    value: ['--memory-ref'],
+  });
+  if (options.help || positionals.length !== 1) {
+    write(ctx.io.stdout, 'Usage: openwop memory delete <memoryId> [--memory-ref ref] [--json]\n');
+    return options.help ? 0 : 2;
+  }
+  const query = options.memoryRef ? `?memoryRef=${encodeURIComponent(options.memoryRef)}` : '';
+  const res = await requestJson(ctx, `/v1/host/sample/memory/${encodeURIComponent(positionals[0])}${query}`, { method: 'DELETE' });
+  if (ctx.json) {
+    writeJson(ctx.io.stdout, res.body);
+    return 0;
+  }
+  writeLine(ctx.io.stdout, `${res.body?.removed ? 'Deleted' : 'No matching entry'}: ${res.body?.memoryId ?? positionals[0]}`);
+  return 0;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Onboarding wizard — `openwop onboard`
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -2995,6 +3160,10 @@ Commands:
   runs create         Create a run
   runs list           List recent runs
   chat                Interactive streaming chat REPL over a workflow
+  memory list         List demo MemoryAdapter entries (tenant-scoped)
+  memory search       Search memory entries by text or tag
+  memory get          Show one memory entry
+  memory delete       Delete one memory entry
   conformance         Run the OpenWOP conformance CLI from this repo
 
 Examples:
@@ -3175,6 +3344,23 @@ Examples:
   openwop chat sample.chat.turn
   openwop chat sample.chat.turn --inputs-json '{"credentialRef":"anthropic-default"}'
   openwop chat sample.chat.turn --no-stream --json
+`;
+
+const MEMORY_HELP = `Usage:
+  openwop memory list [--memory-ref ref] [--tag t] [--limit n] [--json]
+  openwop memory search <text> [--query text] [--tag t] [--memory-ref ref] [--limit n] [--json]
+  openwop memory get <memoryId> [--memory-ref ref] [--json]
+  openwop memory delete <memoryId> [--memory-ref ref] [--json]
+
+Reads the demo MemoryAdapter ledger (RFC 0004) via the host-extension routes
+under /v1/host/sample/memory. Every read and delete is tenant-scoped to the
+caller's API key on the host (CTI-1) — the CLI never sends a tenantId and cannot
+cross tenant boundaries. Select the tenant with --api-key / OPENWOP_API_KEY.
+
+  --memory-ref ref   The agent-derived memoryRef (default: the demo's tenant-memory).
+  --tag t            Server-side tag filter (also matched by \`search\`).
+  --query / <text>   Free-text filter applied client-side over content + tags.
+  --limit n          Cap the number of entries the host returns.
 `;
 
 const CONFORMANCE_HELP = `Usage: openwop conformance [--offline] [--filter pattern]

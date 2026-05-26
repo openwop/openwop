@@ -1,17 +1,20 @@
 /**
  * Host-extension read routes for the demo MemoryAdapter (RFC 0004).
  *
- *   GET /v1/host/sample/memory[?memoryRef=&tag=&limit=]   → { memoryRef, entries }
- *   GET /v1/host/sample/memory/:memoryId[?memoryRef=]     → { memoryRef, entry }
+ *   GET    /v1/host/sample/memory[?memoryRef=&tag=&limit=]  → { memoryRef, entries }
+ *   GET    /v1/host/sample/memory/:memoryId[?memoryRef=]    → { memoryRef, entry }
+ *   DELETE /v1/host/sample/memory/:memoryId[?memoryRef=]    → { memoryRef, memoryId, removed }
  *
- * Read-only, per the agent-memory.md wire contract (writes are
- * host-internal — the executor writes a run-summary on completion).
+ * Reads are per the agent-memory.md wire contract (host-internal writes — the
+ * executor writes a run-summary on completion). DELETE is a demo-only host
+ * convenience (it is NOT part of the normative agent-memory wire contract) that
+ * backs `openwop memory delete` and the frontend inspector.
  * Tenant-scoped from `req.tenantId` (the auth middleware), never the
  * query/body, per the CTI-1 cross-tenant isolation invariant.
  */
 
 import type { Express } from 'express';
-import { getMemoryEntry, listMemoryEntries, MEMORY_DEMO_REF } from '../host/inMemorySurfaces.js';
+import { getMemoryEntry, listMemoryEntries, removeMemoryEntry, MEMORY_DEMO_REF } from '../host/inMemorySurfaces.js';
 import { createLogger } from '../observability/logger.js';
 
 const log = createLogger('routes.memory');
@@ -48,6 +51,17 @@ export function registerMemoryRoutes(app: Express): void {
       return;
     }
     res.status(200).json({ memoryRef, entry });
+  });
+
+  app.delete('/v1/host/sample/memory/:memoryId', (req, res) => {
+    const tenantId = req.tenantId ?? 'default';
+    const memoryRef = resolveRef(req.query.memoryRef);
+    const removed = removeMemoryEntry(tenantId, memoryRef, req.params.memoryId);
+    if (!removed) {
+      res.status(404).json({ error: 'not_found', message: 'memory entry not found' });
+      return;
+    }
+    res.status(200).json({ memoryRef, memoryId: req.params.memoryId, removed: true });
   });
 
   log.info('memory read routes registered (GET /v1/host/sample/memory)');

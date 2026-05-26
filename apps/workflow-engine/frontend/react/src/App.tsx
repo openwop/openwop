@@ -17,6 +17,7 @@ import { PrivacyPage } from './PrivacyPage.js';
 import { NotFoundPage } from './NotFoundPage.js';
 import { PromptLibraryPage } from './prompts/PromptLibraryPage.js';
 import { KeysPage } from './byok/KeysPage.js';
+import { MemoryInspectorPage } from './memory/MemoryInspectorPage.js';
 import { SignInButton } from './auth/SignInButton.js';
 import { NotificationBell } from './notifications/NotificationBell.js';
 import { NotificationPanel } from './notifications/NotificationPanel.js';
@@ -68,6 +69,7 @@ export function App() {
           <NavLink to="/prompts">Prompts</NavLink>
           <NavLink to="/keys">Keys</NavLink>
           <NavLink to="/runs">Runs</NavLink>
+          <NavLink to="/memory">Memory</NavLink>
           <NavLink to="/mission">Mission Control</NavLink>
           <NavLink to="/inbox">Inbox</NavLink>
           <NavLink to="/capabilities">Capabilities</NavLink>
@@ -112,6 +114,7 @@ export function App() {
           <Route path="/builder/:workflowId" element={<BuilderTab />} />
           <Route path="/prompts" element={<PromptLibraryPage />} />
           <Route path="/keys" element={<KeysPage />} />
+          <Route path="/memory" element={<MemoryInspectorPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           {/* Catch-all: the SPA host rewrites every path to index.html, so an
               unmatched URL must resolve here rather than render a blank main. */}

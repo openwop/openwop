@@ -1284,3 +1284,130 @@ describe('doctor — daemon + provider rows', () => {
     assert.match(daemon.message, /stale PID file/);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// `openwop memory ...` — reads the demo MemoryAdapter ledger (RFC 0004).
+// CTI-1: the CLI never sends a tenantId; tenant scoping is the host's job from
+// the API key. These tests assert the CLI passes only memoryRef/tag/limit and
+// the Bearer token, never a tenant query param.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MEM_ENTRIES = [
+  { id: 'mem_aaa', content: 'Run summary alpha', tags: ['run-summary', 'run-id:r1'], createdAt: '2026-05-26T10:00:00.000Z' },
+  { id: 'mem_bbb', content: 'note about beta widget', tags: ['note'], createdAt: '2026-05-26T09:00:00.000Z' },
+];
+
+describe('memory subcommand', () => {
+  it('list sends only auth + memoryRef/limit (never a tenantId) and renders a table', async () => {
+    const cap = capture();
+    let observed = null;
+    let authHeader = null;
+    const fetchImpl = async (url, init) => {
+      const u = new URL(url);
+      observed = u;
+      authHeader = init?.headers?.authorization;
+      if (u.pathname === '/v1/host/sample/memory') {
+        return new Response(JSON.stringify({ memoryRef: 'tenant-memory', entries: MEM_ENTRIES }), { status: 200 });
+      }
+      throw new Error(`unexpected: ${u.pathname}`);
+    };
+    const code = await runCli(
+      ['memory', 'list', '--memory-ref', 'tenant-memory', '--limit', '10', '--base-url', 'http://mock.local', '--api-key', 'tok-1'],
+      { io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {} },
+    );
+    assert.equal(code, 0);
+    assert.equal(observed.searchParams.get('memoryRef'), 'tenant-memory');
+    assert.equal(observed.searchParams.get('limit'), '10');
+    assert.equal(observed.searchParams.get('tenantId'), null, 'CTI-1: CLI must not send tenantId');
+    assert.equal(observed.searchParams.get('scopeId'), null, 'CTI-1: CLI must not send scopeId');
+    assert.equal(authHeader, 'Bearer tok-1');
+    assert.match(cap.stdout, /memoryRef: tenant-memory/);
+    assert.match(cap.stdout, /mem_aaa/);
+    assert.match(cap.stdout, /run-summary/);
+  });
+
+  it('list emits raw JSON with --json', async () => {
+    const cap = capture();
+    const fetchImpl = async () =>
+      new Response(JSON.stringify({ memoryRef: 'tenant-memory', entries: MEM_ENTRIES }), { status: 200 });
+    const code = await runCli(['memory', 'list', '--json', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    const parsed = JSON.parse(cap.stdout);
+    assert.equal(parsed.entries.length, 2);
+    assert.equal(parsed.entries[0].id, 'mem_aaa');
+  });
+
+  it('search filters client-side over content + tags', async () => {
+    const cap = capture();
+    const fetchImpl = async () =>
+      new Response(JSON.stringify({ memoryRef: 'tenant-memory', entries: MEM_ENTRIES }), { status: 200 });
+    const code = await runCli(['memory', 'search', 'beta', '--json', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    const parsed = JSON.parse(cap.stdout);
+    assert.equal(parsed.entries.length, 1);
+    assert.equal(parsed.entries[0].id, 'mem_bbb');
+  });
+
+  it('search forwards --tag as a server-side query param', async () => {
+    const cap = capture();
+    let observed = null;
+    const fetchImpl = async (url) => {
+      observed = new URL(url);
+      return new Response(JSON.stringify({ memoryRef: 'tenant-memory', entries: [MEM_ENTRIES[0]] }), { status: 200 });
+    };
+    const code = await runCli(['memory', 'search', '--tag', 'run-summary', '--json', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    assert.equal(observed.searchParams.get('tag'), 'run-summary');
+  });
+
+  it('get fetches one entry by id and prints its content', async () => {
+    const cap = capture();
+    let observed = null;
+    const fetchImpl = async (url) => {
+      observed = new URL(url);
+      return new Response(JSON.stringify({ memoryRef: 'tenant-memory', entry: MEM_ENTRIES[0] }), { status: 200 });
+    };
+    const code = await runCli(['memory', 'get', 'mem_aaa', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    assert.equal(observed.pathname, '/v1/host/sample/memory/mem_aaa');
+    assert.match(cap.stdout, /id: mem_aaa/);
+    assert.match(cap.stdout, /content: Run summary alpha/);
+  });
+
+  it('delete issues a DELETE and reports removal', async () => {
+    const cap = capture();
+    let method = null;
+    let observed = null;
+    const fetchImpl = async (url, init) => {
+      method = init?.method;
+      observed = new URL(url);
+      return new Response(JSON.stringify({ memoryRef: 'tenant-memory', memoryId: 'mem_bbb', removed: true }), { status: 200 });
+    };
+    const code = await runCli(['memory', 'delete', 'mem_bbb', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    assert.equal(method, 'DELETE');
+    assert.equal(observed.pathname, '/v1/host/sample/memory/mem_bbb');
+    assert.match(cap.stdout, /Deleted: mem_bbb/);
+  });
+
+  it('get propagates a 404 as exit 2', async () => {
+    const cap = capture();
+    const fetchImpl = async () =>
+      new Response(JSON.stringify({ error: 'not_found', message: 'memory entry not found' }), { status: 404 });
+    const code = await runCli(['memory', 'get', 'nope', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 2);
+    assert.match(cap.stderr, /HTTP 404/);
+  });
+});
