@@ -236,6 +236,14 @@ db.exec(`
   -- memory.written event. The RFC 0004 read-side (list/get/TTL) is NOT
   -- implemented, so discovery advertises memory.supported false +
   -- memory.attribution only (mirroring the workflow-engine sample).
+  --
+  -- NO tenant_id column: there is no read path, and memory_id is globally
+  -- unique (mem-<runId>-summary), so cross-tenant exposure (CTI-1) is not
+  -- reachable today. A FUTURE read-side (list/get) MUST first add tenant_id
+  -- + filter every query by it to uphold CTI-1 (see the Postgres host, whose
+  -- PK is (tenant_id, memory_ref, memory_id)). Rows accumulate one-per-run
+  -- with no sweeper — acceptable for an ephemeral reference host (matches the
+  -- annotations table above).
   CREATE TABLE IF NOT EXISTS memory_entries (
     memory_ref TEXT NOT NULL,
     memory_id TEXT NOT NULL,
@@ -473,6 +481,10 @@ const RUN_SUMMARY_MEMORY_REF = 'run-summaries';
 // SR-1: callers MUST pass content with secret material already substituted
 // to `[REDACTED:<id>]`; the host's session-end summary is host-generated and
 // carries no credential material, so no resolver runs here.
+// Scope: the only caller is the session-end run-summary write, which passes a
+// short fixed string — so this minimal helper intentionally omits the
+// `MAX_ENTRY_SIZE_BYTES` cap the Postgres host enforces. A future caller that
+// persists caller-supplied content MUST add that size cap here.
 function writeMemoryEntry(memoryRef: string, memoryId: string, content: string, tags: readonly string[]): void {
   db.prepare(
     `INSERT INTO memory_entries (memory_ref, memory_id, content, tags_json, created_at)
