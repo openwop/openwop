@@ -1822,6 +1822,8 @@ A heartbeat binds a **predicate** (a node/workflow designated as the heartbeat h
 
 Gating action on a *transition* (computed against persisted prior state) — not on the tick itself — is what prevents notification spam.
 
+**First tick (no persisted prior state).** The first evaluation of a `heartbeatId` has no prior state to compare against. The host MUST treat this as a transition (`changed: true`) — establishing the baseline by emitting `heartbeat.stateChanged { from: {}, to: <observed> }` and enqueuing if requested — rather than silently seeding the baseline. This keeps the first non-empty observation actionable (an inbox first seen at `unread: 3` MUST notify) and makes the transition rule total over the lifetime of a `heartbeatId`. A host that loses persisted prior state (e.g. an in-memory host across a restart) therefore re-fires the next tick as a first tick; durable hosts SHOULD persist prior state to avoid a post-restart re-notification.
+
 **Capability advertisement shape:**
 
 ```json

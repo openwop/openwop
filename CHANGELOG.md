@@ -11,6 +11,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### docs(rfc-0060): /code-review follow-ups on the M2 enforcement (2026-05-25)
+
+Five findings from a `/code-review` pass over the RFC 0060 M2 commit. Docs/spec-prose only; no schema, host-code, or wire-shape change.
+
+- **RFC 0060 Phase-0 scope note.** The Phase-0 resolution named two advertised knobs — `heartbeat.maxStateBytes` (prior-state size cap) + `heartbeat.maxPendingEnqueued` (backpressure pause MUST) — that never landed in `capabilities.schema.json` and aren't host-enforced. Added a scope note that they are **deferred to a follow-up** (meaningful only once a host wires a durable interval + real run-enqueue substrate; additive when they land), so the `Accepted` flip covers the once-per-tick / bounded / idempotent / emit-on-transition contract without overclaiming.
+- **First-tick semantics (spec clarification).** `host-capabilities.md §host.heartbeat` now states normatively that a heartbeat's first tick (no persisted prior state) MUST be treated as a transition (`changed: true`, baseline emitted via `from: {}`) — making the §B.5 transition rule total and keeping a first non-empty observation actionable. Includes the durable-vs-in-memory restart-re-notification note (a host that loses prior state re-fires the next tick as a first tick; durable hosts SHOULD persist).
+- **In-memory `conformance.md`** measurement-header annotation extended to cover the RFC 0059 + 0060 enforcement landings (the counts predate them; conservative).
+- **INTEROP-MATRIX** in-memory row records the new `capabilities.workspace` (RFC 0059) + `capabilities.heartbeat` (RFC 0060) advertisements.
+
 ### RFC 0060 (host.heartbeat) — Milestone 2: reference-host enforcement; promote Active → `Accepted` (2026-05-25)
 
 The in-memory reference host now implements the RFC 0060 heartbeat surface end-to-end, taking it from `Active` to **`Accepted`**. It advertises `capabilities.heartbeat { supported: true, minIntervalSec: 1, maxRuntimeMs: 5000 }` and implements the documented `POST /v1/host/sample/heartbeat/tick` seam (`host-sample-test-seams.md`):
