@@ -216,6 +216,20 @@ The conformance suite's `experimentalGate()` helper (`conformance/src/lib/behavi
 
 **Not in this cohort:** RFC 0050 (SAML/SCIM) + RFC 0054 (run-diff) remain `Draft` — MyndHyve documented opt-outs (no SSO infra/UI demand; the RFC 0050 synthetic-IdP fixture is bundled). They graduate when a different non-steward host advertises them or MyndHyve's internal demand triggers implementation.
 
+## Capability adoption — round 3 (MyndHyve) — ✅ VERIFIED 2026-05-26
+
+> **✅ VERIFIED 2026-05-26 (openwop-side curl).** From MyndHyve's round-3 closure: 3 of the 10 then-Active RFCs are advertised live and **promoted `Active → Accepted`** per `RFCS/0001` §"Promotion to Accepted" (non-steward-advertisement gate). **Evidence:** host `MyndHyve workflow-runtime`, Cloud Run revision `workflow-runtime-00217-q7c`; discovery `https://workflow-runtime-gjw5bcse7a-uc.a.run.app/.well-known/openwop`; independently curl-verified by the openwop session 2026-05-26 (the advertised values below are quoted from that response).
+
+| RFC | Capability advertised (curl-verified live) | Promotion impact |
+|---|---|---|
+| 0029 prompt agentBindings | `capabilities.prompts.agentBindings: true` (+ emits `agent.promptResolved`) | **Accepted** ✅ — closes the sole remaining "first non-steward advertisement" criterion |
+| 0055 multimodal envelopes | `aiProviders.maxInlineMediaBytes: 10485760` + `aiProviders.modelCapabilities.advertised: ['vision-input','image-output']` | **Accepted** ✅ — `audio-*` honestly omitted (no audio pipeline) |
+| 0057 memory write-attribution | `capabilities.memory.attribution.{supported: true, emitsWriteEvents: true}` (dual-emits canonical `memory.written` + vendor `x-host-myndhyve-memory-written` for MAE-3) | **Accepted** ✅ — SHOULD-tier `nodeId` not yet threaded (permitted) |
+
+**Honest correction — RFC 0058 did NOT graduate.** MyndHyve's round-3 report listed 0058 (run execution bounds) as shipped, but the openwop-side curl shows `limits.maxRunDurationMs` and `limits.maxLoopIterations` are **both absent** (`null`) — neither of RFC 0058's two normative fields is advertised. What MyndHyve advertises (`limits.maxNodeExecutions: 100`, emitting `cap.breached { kind: 'node-executions' }`) is the **pre-existing recursionLimit bound** (a distinct engine cap.breached kind that predates RFC 0058 and maps to `recursion_limit_exceeded`), not RFC 0058's `run-duration` / `loop-iterations` surface. MyndHyve's own "honest omissions" note confirms `maxRunDurationMs` is omitted. **RFC 0058 stays `Active`** pending a host advertising + enforcing `runTimeoutMs` and/or `maxLoopIterations`.
+
+**Deferred / opt-out (MyndHyve round-3):** 0056 feedback, 0061 stateful agent-loop, 0062 distillation deferred (criteria documented); 0025 test-mode-registry, 0035 sandbox, 0036 multi-region opt-out (single-region / no-untrusted-packs / canonical-publish rationale, same pattern as round-1 0050/0054).
+
 ## Reading Rows
 
 - **Compatibility profile claim** is derived from `/.well-known/openwop` according to `spec/v1/profiles.md`.

@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0029 |
 | **Title** | Prompt resolution chain across node / agent / workflow / host layers; `agent.promptResolved` observability event; `AgentManifest.promptOverrides` + `promptLibraryRef` extension |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | OpenWOP Working Group |
 | **Created** | 2026-05-19 |
-| **Updated** | 2026-05-20 (Draft → Active — see [Status history](#status-history) below). |
+| **Updated** | 2026-05-26 (Active → **Accepted** — the first-non-steward-advertisement criterion is met: MyndHyve `workflow-runtime` advertises `capabilities.prompts.agentBindings: true` live on `https://workflow-runtime-gjw5bcse7a-uc.a.run.app/.well-known/openwop` (openwop-side curl-verified 2026-05-26, revision `workflow-runtime-00217-q7c`) and emits `agent.promptResolved` per their round-3 closure; the reference host already passes the three `prompt-resolution-chain-*` scenarios. 2026-05-20 (Draft → Active — see [Status history](#status-history) below).) |
 | **Affects** | `spec/v1/prompts.md` (adds §"Resolution chain (normative)") · `schemas/agent-manifest.schema.json` (adds `promptLibraryRef`, `promptOverrides`) · `schemas/workflow-definition.schema.json` (adds optional `defaults.promptRefs`) · `schemas/capabilities.schema.json` (extends `prompts` block with `defaults`, `agentBindings`) · `schemas/run-event.schema.json` (new `agent.promptResolved` enum entry) · `schemas/run-event-payloads.schema.json` (new `agentPromptResolved` `$def`) · `spec/v1/host-capabilities.md` (notes resolution-chain implementation point) · 3 new conformance scenarios · CHANGELOG |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
