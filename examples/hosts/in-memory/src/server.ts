@@ -1138,6 +1138,10 @@ async function handleToolHooksInvoke(req: IncomingMessage, res: ServerResponse):
   }
   const principal = typeof body.principal === 'string' ? body.principal : 'core.system';
   const requiredScopes = Array.isArray(body.requiredScopes) ? body.requiredScopes : [];
+  // `body.toolName` is accepted for request-shape fidelity but unused by this
+  // simulation: the rate-limit is a pass-through flag, not a real per-
+  // `(principal, toolName)` token bucket. A production host keys a real bucket
+  // on `(principal, toolName)`.
 
   // §B — the content-free audit fields on `agent.toolCalled`. `argsHash` is the
   // JCS+SHA-256 of the args AFTER SR-1 redaction (a resolved secret is replaced
