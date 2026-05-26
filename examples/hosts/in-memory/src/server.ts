@@ -113,6 +113,10 @@ interface Run {
   // abort from a caller-driven cancel (both fire `abortController`).
   runTimeoutMs: number | null;
   timedOut: boolean;
+  // RFC 0059 §D — immutable read snapshot of the run-owner's workspace, taken
+  // at run start (metadata only). Replay-deterministic: a run observes the same
+  // workspace state for its whole duration regardless of later writes.
+  workspaceSnapshot: Array<{ path: string; version: number }>;
 }
 
 // RFC 0056 — a quality annotation is a per-run SIDE-RESOURCE, deliberately
@@ -639,6 +643,337 @@ function pruneIdempotencyCache(): void {
   }
 }
 
+// ─── RFC 0059 — host.workspace (versioned tenant·workspace file store) ───────
+//
+// A durable, path-addressable ground-truth file layer complementing the
+// transactional MemoryAdapter (RFC 0004). Every file is owned by a
+// {tenant, workspace} triple (RFC 0048). This single-API-key host binds the
+// production §C endpoints to one authenticated owner (DEFAULT_WORKSPACE_OWNER);
+// the documented test seam (`host-sample-test-seams.md` §9) drives explicit
+// owners so the WCT-1 cross-workspace-isolation invariant is exercisable.
+
+const WORKSPACE_MAX_FILE_BYTES = 1_048_576; // 1 MiB
+const WORKSPACE_MAX_FILES = 256;
+const WORKSPACE_MAX_VERSIONS = 20;
+const WORKSPACE_PATH_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._/-]{0,255}$/;
+const DEFAULT_WORKSPACE_OWNER = { tenant: 'single-tenant', workspace: 'default' } as const;
+
+interface WorkspaceVersion {
+  content: string;
+  contentType: string;
+  version: number;
+  etag: string;
+  updatedAt: string;
+  deleted: boolean; // tombstone — a deleted path keeps its history (versioned)
+}
+
+// owner key (`tenant workspace`) → path → version history (oldest..latest).
+const workspaceStore = new Map<string, Map<string, WorkspaceVersion[]>>();
+
+function workspaceOwnerFiles(tenant: string, workspace: string): Map<string, WorkspaceVersion[]> {
+  const key = `${tenant} ${workspace}`;
+  let files = workspaceStore.get(key);
+  if (!files) {
+    files = new Map();
+    workspaceStore.set(key, files);
+  }
+  return files;
+}
+
+function workspaceEtag(path: string, version: number): string {
+  // Opaque, deterministic per (path, version) — sufficient for If-Match.
+  return `"${createHash('sha256').update(`${path}:${version}`).digest('hex').slice(0, 16)}"`;
+}
+
+function workspaceLatestLive(history: WorkspaceVersion[] | undefined): WorkspaceVersion | undefined {
+  if (history === undefined || history.length === 0) return undefined;
+  const last = history[history.length - 1]!;
+  return last.deleted ? undefined : last;
+}
+
+function toWorkspaceFile(path: string, v: WorkspaceVersion): Record<string, unknown> {
+  return {
+    path,
+    content: v.content,
+    contentType: v.contentType,
+    version: v.version,
+    etag: v.etag,
+    updatedAt: v.updatedAt,
+  };
+}
+
+type WorkspaceOpResult =
+  | { ok: true; status: number; body: unknown }
+  | { ok: false; status: number; code: string; message: string; extra?: Record<string, unknown> };
+
+// Core CRUD over the store, ALWAYS owner-scoped: a caller can only ever
+// address its own {tenant, workspace} (WCT-1). Shared verbatim by the §C
+// endpoints (bound to DEFAULT_WORKSPACE_OWNER) and the test seam (explicit
+// owner). Routing isolation by the owner key — never trusting a caller hint
+// to widen scope — is what makes WCT-1 hold.
+function workspaceListOp(tenant: string, workspace: string, prefix: string | null): WorkspaceOpResult {
+  const files = workspaceOwnerFiles(tenant, workspace);
+  const out: Record<string, unknown>[] = [];
+  for (const [path, history] of files) {
+    const live = workspaceLatestLive(history);
+    if (live === undefined) continue;
+    if (prefix !== null && prefix !== '' && !path.startsWith(prefix)) continue;
+    const { content: _content, ...metadata } = toWorkspaceFile(path, live); // list omits bodies
+    void _content;
+    out.push(metadata);
+  }
+  out.sort((a, b) => String(a.path).localeCompare(String(b.path)));
+  return { ok: true, status: 200, body: { files: out } };
+}
+
+function workspaceGetOp(
+  tenant: string,
+  workspace: string,
+  path: string,
+  version: number | null,
+): WorkspaceOpResult {
+  if (!WORKSPACE_PATH_PATTERN.test(path)) {
+    return { ok: false, status: 400, code: 'validation_error', message: 'Invalid workspace path.' };
+  }
+  const history = workspaceOwnerFiles(tenant, workspace).get(path);
+  if (version !== null) {
+    const v = history?.find((h) => h.version === version && !h.deleted);
+    if (v === undefined) {
+      return { ok: false, status: 404, code: 'not_found', message: 'No such workspace file version.' };
+    }
+    return { ok: true, status: 200, body: toWorkspaceFile(path, v) };
+  }
+  const live = workspaceLatestLive(history);
+  if (live === undefined) {
+    return { ok: false, status: 404, code: 'not_found', message: 'No such workspace file.' };
+  }
+  return { ok: true, status: 200, body: toWorkspaceFile(path, live) };
+}
+
+function workspacePutOp(
+  tenant: string,
+  workspace: string,
+  path: string,
+  content: unknown,
+  contentType: unknown,
+  ifMatch: string | null,
+): WorkspaceOpResult {
+  if (!WORKSPACE_PATH_PATTERN.test(path)) {
+    return { ok: false, status: 400, code: 'validation_error', message: 'Invalid workspace path.' };
+  }
+  if (typeof content !== 'string') {
+    return { ok: false, status: 400, code: 'validation_error', message: 'content MUST be a string.' };
+  }
+  if (Buffer.byteLength(content, 'utf8') > WORKSPACE_MAX_FILE_BYTES) {
+    return {
+      ok: false,
+      status: 413,
+      code: 'workspace_too_large',
+      message: `content exceeds maxFileBytes (${WORKSPACE_MAX_FILE_BYTES}).`,
+    };
+  }
+  const files = workspaceOwnerFiles(tenant, workspace);
+  const history = files.get(path);
+  const live = workspaceLatestLive(history);
+
+  // Optimistic concurrency: a supplied If-Match MUST equal the current live
+  // etag, else 409 workspace_conflict with details.currentVersion.
+  if (ifMatch !== null) {
+    const currentEtag = live?.etag ?? null;
+    if (currentEtag !== ifMatch) {
+      return {
+        ok: false,
+        status: 409,
+        code: 'workspace_conflict',
+        message: 'If-Match etag does not match the current version.',
+        extra: { details: { currentVersion: live?.version ?? 0 } },
+      };
+    }
+  }
+
+  // File-count ceiling applies only when introducing a NEW live path.
+  if (live === undefined) {
+    let liveCount = 0;
+    for (const h of files.values()) if (workspaceLatestLive(h) !== undefined) liveCount++;
+    if (liveCount >= WORKSPACE_MAX_FILES) {
+      return {
+        ok: false,
+        status: 413,
+        code: 'workspace_too_large',
+        message: `workspace already holds maxFiles (${WORKSPACE_MAX_FILES}).`,
+      };
+    }
+  }
+
+  const prevVersion = history !== undefined && history.length > 0 ? history[history.length - 1]!.version : 0;
+  const version = prevVersion + 1;
+  const v: WorkspaceVersion = {
+    // WSR-1 (RFC 0059 §E): redact BYOK-resolved plaintext on write, reusing
+    // the SR-1 mechanism. A subsequent GET/list never surfaces the plaintext.
+    content: scrubSecretShaped(content),
+    contentType: typeof contentType === 'string' ? contentType : 'text/markdown',
+    version,
+    etag: workspaceEtag(path, version),
+    updatedAt: new Date().toISOString(),
+    deleted: false,
+  };
+  const newHistory = history ?? [];
+  newHistory.push(v);
+  // Latest is the MUST; history retained best-effort up to maxVersions.
+  while (newHistory.length > WORKSPACE_MAX_VERSIONS) newHistory.shift();
+  files.set(path, newHistory);
+  return { ok: true, status: 200, body: toWorkspaceFile(path, v) };
+}
+
+function workspaceDeleteOp(tenant: string, workspace: string, path: string): WorkspaceOpResult {
+  if (!WORKSPACE_PATH_PATTERN.test(path)) {
+    return { ok: false, status: 400, code: 'validation_error', message: 'Invalid workspace path.' };
+  }
+  const files = workspaceOwnerFiles(tenant, workspace);
+  const history = files.get(path);
+  const live = workspaceLatestLive(history);
+  if (live === undefined) {
+    return { ok: false, status: 404, code: 'not_found', message: 'No such workspace file.' };
+  }
+  // Write a tombstone version (history preserved when versioned).
+  const version = live.version + 1;
+  history!.push({
+    content: '',
+    contentType: live.contentType,
+    version,
+    etag: workspaceEtag(path, version),
+    updatedAt: new Date().toISOString(),
+    deleted: true,
+  });
+  while (history!.length > WORKSPACE_MAX_VERSIONS) history!.shift();
+  return { ok: true, status: 204, body: null };
+}
+
+// §C endpoints — bound to the single authenticated owner. `{path}` is the
+// percent-decoded remainder after `/v1/host/workspace/files/`.
+function handleWorkspaceList(req: IncomingMessage, res: ServerResponse, url: URL): void {
+  if (!checkAuth(req, res)) return;
+  const r = workspaceListOp(
+    DEFAULT_WORKSPACE_OWNER.tenant,
+    DEFAULT_WORKSPACE_OWNER.workspace,
+    url.searchParams.get('prefix'),
+  );
+  if (!r.ok) return void sendError(res, r.status, r.code, r.message, r.extra);
+  sendJSON(res, r.status, r.body);
+}
+
+function handleWorkspaceGet(req: IncomingMessage, res: ServerResponse, rawPath: string, url: URL): void {
+  if (!checkAuth(req, res)) return;
+  const versionParam = url.searchParams.get('version');
+  const version = versionParam !== null ? Number(versionParam) : null;
+  if (version !== null && !Number.isInteger(version)) {
+    return void sendError(res, 400, 'validation_error', 'version MUST be an integer.');
+  }
+  const r = workspaceGetOp(
+    DEFAULT_WORKSPACE_OWNER.tenant,
+    DEFAULT_WORKSPACE_OWNER.workspace,
+    decodeURIComponent(rawPath),
+    version,
+  );
+  if (!r.ok) return void sendError(res, r.status, r.code, r.message, r.extra);
+  sendJSON(res, r.status, r.body);
+}
+
+async function handleWorkspacePut(req: IncomingMessage, res: ServerResponse, rawPath: string): Promise<void> {
+  if (!checkAuth(req, res)) return;
+  const bodyText = await readBody(req);
+  let parsed: { content?: unknown; contentType?: unknown };
+  try {
+    parsed = JSON.parse(bodyText) as typeof parsed;
+  } catch {
+    return void sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+  }
+  const ifMatchHeader = req.headers['if-match'];
+  const ifMatch = typeof ifMatchHeader === 'string' ? ifMatchHeader : null;
+  const r = workspacePutOp(
+    DEFAULT_WORKSPACE_OWNER.tenant,
+    DEFAULT_WORKSPACE_OWNER.workspace,
+    decodeURIComponent(rawPath),
+    parsed.content,
+    parsed.contentType,
+    ifMatch,
+  );
+  if (!r.ok) return void sendError(res, r.status, r.code, r.message, r.extra);
+  sendJSON(res, r.status, r.body);
+}
+
+function handleWorkspaceDelete(req: IncomingMessage, res: ServerResponse, rawPath: string): void {
+  if (!checkAuth(req, res)) return;
+  const r = workspaceDeleteOp(
+    DEFAULT_WORKSPACE_OWNER.tenant,
+    DEFAULT_WORKSPACE_OWNER.workspace,
+    decodeURIComponent(rawPath),
+  );
+  if (!r.ok) return void sendError(res, r.status, r.code, r.message, r.extra);
+  res.writeHead(r.status).end(); // 204 No Content
+}
+
+// Test seam (host-sample-test-seams.md §9) — drives workspace CRUD against an
+// EXPLICIT {tenant, workspace} owner so the WCT-1 cross-workspace-isolation
+// invariant is exercisable on this single-credential host (mirrors the
+// blob/kv/table cross-tenant seams on the persistent hosts).
+async function handleWorkspaceSeam(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (!checkAuth(req, res)) return;
+  const bodyText = await readBody(req);
+  let body: {
+    tenant?: unknown;
+    workspace?: unknown;
+    op?: unknown;
+    path?: unknown;
+    content?: unknown;
+    contentType?: unknown;
+    ifMatch?: unknown;
+    prefix?: unknown;
+    version?: unknown;
+  };
+  try {
+    body = JSON.parse(bodyText) as typeof body;
+  } catch {
+    return void sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+  }
+  const tenant = typeof body.tenant === 'string' ? body.tenant : DEFAULT_WORKSPACE_OWNER.tenant;
+  const workspace = typeof body.workspace === 'string' ? body.workspace : DEFAULT_WORKSPACE_OWNER.workspace;
+  const path = typeof body.path === 'string' ? body.path : '';
+  const ifMatch = typeof body.ifMatch === 'string' ? body.ifMatch : null;
+  let r: WorkspaceOpResult;
+  switch (body.op) {
+    case 'list':
+      r = workspaceListOp(tenant, workspace, typeof body.prefix === 'string' ? body.prefix : null);
+      break;
+    case 'get':
+      r = workspaceGetOp(tenant, workspace, path, typeof body.version === 'number' ? body.version : null);
+      break;
+    case 'put':
+      r = workspacePutOp(tenant, workspace, path, body.content, body.contentType, ifMatch);
+      break;
+    case 'delete':
+      r = workspaceDeleteOp(tenant, workspace, path);
+      break;
+    default:
+      return void sendError(res, 400, 'validation_error', 'op MUST be one of list|get|put|delete.');
+  }
+  if (!r.ok) return void sendError(res, r.status, r.code, r.message, r.extra);
+  sendJSON(res, r.status, r.body ?? { ok: true });
+}
+
+// §D — snapshot of the run-owner's workspace taken at run.started, immutable
+// for the run's duration (replay-deterministic). Metadata only (no bodies).
+function workspaceSnapshotFor(tenant: string, workspace: string): Array<{ path: string; version: number }> {
+  const files = workspaceOwnerFiles(tenant, workspace);
+  const snapshot: Array<{ path: string; version: number }> = [];
+  for (const [path, history] of files) {
+    const live = workspaceLatestLive(history);
+    if (live !== undefined) snapshot.push({ path, version: live.version });
+  }
+  snapshot.sort((a, b) => a.path.localeCompare(b.path));
+  return snapshot;
+}
+
 // ─── Route handlers ──────────────────────────────────────────────────────────
 
 function handleOpenApi(_req: IncomingMessage, res: ServerResponse): void {
@@ -711,6 +1046,17 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
     supported: true,
     targets: ['run'],
     signals: ['rating', 'correction', 'label', 'flag'],
+  };
+
+  // RFC 0059 — advertise the versioned tenant·workspace file store. The host
+  // honors §C (CRUD + If-Match), §D (run-start read snapshot), and §E WCT-1
+  // (cross-workspace isolation) / WSR-1 (SR-1 redaction on write) end-to-end.
+  capabilities.workspace = {
+    supported: true,
+    versioned: true,
+    maxFileBytes: WORKSPACE_MAX_FILE_BYTES,
+    maxFiles: WORKSPACE_MAX_FILES,
+    maxVersions: WORKSPACE_MAX_VERSIONS,
   };
 
   const payload = {
@@ -851,6 +1197,12 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
     abortController: new AbortController(),
     runTimeoutMs: resolvedRunTimeoutMs,
     timedOut: false,
+    // RFC 0059 §D — capture the owner's workspace as of run start (immutable
+    // for the run). This single-tenant host owns one workspace.
+    workspaceSnapshot: workspaceSnapshotFor(
+      DEFAULT_WORKSPACE_OWNER.tenant,
+      DEFAULT_WORKSPACE_OWNER.workspace,
+    ),
   };
   runs.set(runId, run);
 
@@ -913,6 +1265,8 @@ function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: string):
     startedAt: run.startedAt,
     endedAt: run.endedAt,
     ...(run.error ? { error: run.error } : {}),
+    // RFC 0059 §D — the workspace read snapshot the run observed at start.
+    workspace: run.workspaceSnapshot,
   };
   sendJSON(res, 200, snapshot);
 }
@@ -1232,6 +1586,8 @@ const RUN_EVENTS_POLL_PATTERN = /^\/v1\/runs\/([^/]+)\/events\/poll$/;
 const RUN_EVENTS_SSE_PATTERN = /^\/v1\/runs\/([^/]+)\/events$/;
 const RUN_DEBUG_BUNDLE_PATTERN = /^\/v1\/runs\/([^/]+)\/debug-bundle$/;
 const RUN_ANNOTATIONS_PATTERN = /^\/v1\/runs\/([^/]+)\/annotations$/; // RFC 0056
+const WORKSPACE_FILES_PATTERN = /^\/v1\/host\/workspace\/files$/; // RFC 0059 list
+const WORKSPACE_FILE_PATTERN = /^\/v1\/host\/workspace\/files\/(.+)$/; // RFC 0059 one file
 
 /**
  * RFC 0013 Phase 3 — workflow-chain pack expansion endpoint.
@@ -1359,6 +1715,21 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   }
   if (method === 'POST' && path === '/v1/host/sample/workflow-chain:expand') {
     return handleExpandWorkflowChain(req, res);
+  }
+  // RFC 0059 — host.workspace §C endpoints + the cross-workspace-isolation seam.
+  if (method === 'POST' && path === '/v1/host/sample/workspace/op') {
+    return handleWorkspaceSeam(req, res);
+  }
+  if (WORKSPACE_FILES_PATTERN.test(path) && method === 'GET') {
+    return handleWorkspaceList(req, res, url);
+  }
+  {
+    const wm = WORKSPACE_FILE_PATTERN.exec(path);
+    if (wm) {
+      if (method === 'GET') return handleWorkspaceGet(req, res, wm[1]!, url);
+      if (method === 'PUT') return handleWorkspacePut(req, res, wm[1]!);
+      if (method === 'DELETE') return handleWorkspaceDelete(req, res, wm[1]!);
+    }
   }
 
   let m = RUN_EVENTS_POLL_PATTERN.exec(path);

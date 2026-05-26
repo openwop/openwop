@@ -1074,6 +1074,24 @@ invariants:
       partition messages by tenant. A consumer for tenant A MUST NOT receive
       messages published by tenant B, even on the same logical topic.
 
+  # ===== RFC 0059 host.workspace cross-tenant·workspace isolation =====
+
+  - id: workspace-cross-tenant-isolation
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/workspace-cross-tenant-isolation.test.ts
+    note: |
+      RFC 0059 §E WCT-1: hosts advertising `capabilities.workspace.supported`
+      MUST scope every file to a single `{tenant, workspace}` (RFC 0048). No
+      `get` or `list` against a workspace owned by `{T, W}` MAY return a file
+      owned by `{T′, W′} ≠ {T, W}`, regardless of the caller's permissions
+      elsewhere. The owner binding MUST come from the authenticated identity,
+      not caller-supplied scope hints (fail-closed); errors MUST NOT leak the
+      existence of another owner's file (`404` over `403`). Mirrors
+      `agent-memory-cti-1` / `kv-cross-tenant-isolation`.
+
   # ===== RFC 0018 host.sql parametric-only =====
 
   - id: sql-parametric-only

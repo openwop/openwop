@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0059 (agent workspace) — Milestone 2: reference-host enforcement; promote Active → `Accepted` (2026-05-25)
+
+The in-memory reference host now implements `host.workspace` end-to-end, taking RFC 0059 from `Active` to **`Accepted`**. It advertises `capabilities.workspace { supported, versioned, maxFileBytes: 1048576, maxFiles: 256, maxVersions: 20 }` and honors:
+
+- **§C endpoints** — `GET /v1/host/workspace/files` (list, metadata only, `?prefix=`), `GET …/files/{path}` (`?version=N`), `PUT …/files/{path}` (atomic create/replace, monotonic `version`, recomputed `etag`, `If-Match` → `409 workspace_conflict` with `details.currentVersion`, `content` > `maxFileBytes` → `413 workspace_too_large`), `DELETE …/files/{path}` (tombstone). Run inputs already seed from variable defaults (RFC 0058 M2).
+- **§D run-start snapshot** — an immutable workspace read snapshot is captured at run creation and exposed on the run snapshot (`GET /v1/runs/{runId}` → `workspace: [{ path, version }]`), replay-deterministic.
+- **§E invariants** — **WCT-1** (cross-owner isolation): every file is scoped to its `{tenant, workspace}` owner; a `get`/`list` under a different owner fails closed (404, no existence leak). Registered as the protocol-tier `workspace-cross-tenant-isolation` invariant in `SECURITY/invariants.yaml` (invariant count 100 → 101) with `workspace-cross-tenant-isolation.test.ts` as its public test. **WSR-1** (secret redaction): writes pass through the host's `scrubSecretShaped()` (SR-1).
+
+A documented test seam `POST /v1/host/sample/workspace/op` (`host-sample-test-seams.md` §9) drives CRUD against an explicit owner so WCT-1 is exercisable on this single-credential host (mirrors the blob/kv/queue cross-tenant seams). Two new conformance scenarios — `workspace-behavior.test.ts` (CRUD/ETag/too-large/snapshot via the §C endpoints) and `workspace-cross-tenant-isolation.test.ts` (WCT-1) — are live + green (suite 261 → 263). Additive; no existing wire-shape change.
+
 ### docs(capabilities): add the `#### memory.distillation` reference subsection (RFC 0062 /code-review follow-up) (2026-05-25)
 
 `capabilities.md` §`memory` maintains a per-sub-block advertisement reference (it has a detailed `#### memory.compaction` subsection), but RFC 0062 landed the `memory.distillation` schema block + the `agent-memory.md` run contract without the parallel `capabilities.md` subsection — so a host author reading the advertisement reference found `memory`/`memory.compaction` but not `memory.distillation`. Adds `#### memory.distillation (RFC 0062, Active)` mirroring the compaction entry (Why-this-exists, advertisement JSON example, per-field bullets, token-budget + SR-1 normative note pointing at `agent-memory.md` §"Scheduled distillation"). Prose-only; no schema or wire-shape change.
@@ -22,6 +32,7 @@ Wire surface for the autonomous-agent-runtime cohort's scheduled, token-budgeted
 ### feat(host-postgres)+feat(host-sqlite): enforce RFC 0058 `runTimeoutMs` (run-duration bound) (2026-05-25)
 
 Both reference hosts now enforce the RFC 0058 wall-clock run bound, closing the `run-execution-bounds-shape` conformance failure that landed when the suite grew to include RFC 0058. Each host arms a per-run deadline = `min(configurable.runTimeoutMs, MAX_RUN_DURATION_MS)` (host ceiling, default 1h, advertised as `capabilities.limits.maxRunDurationMs`) at `run.started`; when it fires the host aborts the in-flight node and emits `cap.breached { kind: 'run-duration', limit, observed }` (observed = measured elapsed wall-clock, strictly > limit) then transitions to `failed` with `error.code = 'run_timeout'` — distinguishable on the wire from an application failure per `capabilities.md` §"Engine-enforced limits". The deadline-abort is re-attributed from the node's `cancelled` outcome to the run-duration breach. Also fixes `core.delay` resolution on both hosts to resolve its `delayMs` variable ref against the run's variable bag (defaultValue seed) overlaid with run inputs — the `conformance-run-duration-breach` fixture relies on the seeded `delayMs: 30000` default (previously collapsed to the 100ms fallback, so the bound never tripped); explicit `inputs.delayMs` (e.g. streamReconnect's `2000`) still overrides. Complements the in-memory host's RFC 0058 enforcement (separate work). The `maxLoopIterations` half of RFC 0058 is gated on `agents.loop.supported` (RFC 0061), which neither host advertises. Host-only; no protocol-corpus change.
+
 ### RFC 0058 M2 — /code-review follow-ups on the in-memory host enforcement (2026-05-25)
 
 Five findings from a `/code-review` pass over the RFC 0058 M2 commit. Host + conformance only; no protocol-corpus change.
