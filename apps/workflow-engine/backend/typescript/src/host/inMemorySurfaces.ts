@@ -29,6 +29,7 @@ import { randomUUID, randomBytes } from 'node:crypto';
 import Database from 'better-sqlite3';
 import { createLogger } from '../observability/logger.js';
 import { registerHostSurface } from '../bootstrap/hostSurfaceRegistry.js';
+import { redactForCompaction } from '../byok/textRedaction.js';
 
 const log = createLogger('host.inMemorySurfaces');
 
@@ -968,6 +969,87 @@ export function getMemoryEntry(tenantId: string, memoryRef: string, memoryId: st
   const now = Date.now();
   const row = (memoryBucket(tenantId).get(memoryRef) ?? []).find((r) => r.id === memoryId);
   return row && notExpired(row, now) ? row : null;
+}
+
+// ───────────────────────────────────────────────────────────────────
+// RFC 0012 memory compaction (host-managed + client-requested)
+//
+// Compaction collapses many short-lived `longTerm` entries into one
+// distilled entry. Derived content is routed through the BYOK redaction
+// harness (`redactForCompaction`) so SR-1 carry-forward holds — a distilled
+// archive MUST NOT re-expose a source-side leak (RFC 0012 §D). The distilled
+// entry carries a `compacted-from:<id>` provenance tag (§C). These helpers
+// back the `/v1/test/memory/{seed,compact}` conformance seam.
+// ───────────────────────────────────────────────────────────────────
+
+/** Host-internal write with a caller-supplied id (compaction seed seam). */
+export function seedMemoryEntry(
+  tenantId: string,
+  memoryRef: string,
+  input: { id: string; content: string; tags?: string[] },
+): MemoryRow {
+  if (!_initialized) throw new Error('initInMemorySurfaces() must be called first');
+  const row: MemoryRow = {
+    id: input.id,
+    content: input.content,
+    tags: input.tags ?? [],
+    createdAt: new Date().toISOString(),
+  };
+  const bucket = memoryBucket(tenantId);
+  const entries = bucket.get(memoryRef) ?? [];
+  entries.push(row);
+  bucket.set(memoryRef, entries);
+  return row;
+}
+
+export interface CompactionResult {
+  /** Id of the distilled entry. */
+  outputId: string;
+  /** Number of source entries collapsed. */
+  sourceCount: number;
+  /** Exhaustive source ids (RFC 0012 §B: omit upstream when > 100). */
+  sourceIds: string[];
+  /** UTF-8 byte size of the distilled content. */
+  byteSize: number;
+  /** The persisted distilled content, SR-1-redacted (non-wire; for the
+   *  seam's §D verification — the wire `memory.compacted` event omits it). */
+  outputContent: string;
+}
+
+/**
+ * Collapse every live entry under `(tenantId, memoryRef)` into a single
+ * SR-1-redacted distilled entry, replacing the sources. Returns null when
+ * there is nothing to compact.
+ */
+export function compactMemory(tenantId: string, memoryRef: string): CompactionResult | null {
+  if (!_initialized) throw new Error('initInMemorySurfaces() must be called first');
+  const bucket = memoryBucket(tenantId);
+  const now = Date.now();
+  const sources = (bucket.get(memoryRef) ?? []).filter((r) => notExpired(r, now));
+  if (sources.length === 0) return null;
+
+  const sourceIds = sources.map((r) => r.id);
+  // §D: redact derived content through the BYOK harness — never echo a
+  // source-side leak, never silently strip it.
+  const outputContent = redactForCompaction(sources.map((r) => r.content).join('\n'));
+  const compactionId = `cmp_${randomUUID().slice(0, 12)}`;
+  const outputId = `mem_${randomUUID().slice(0, 12)}`;
+  const archive: MemoryRow = {
+    id: outputId,
+    content: outputContent,
+    // §C provenance tag — lets consumers detect compacted entries without
+    // the event stream. Shape: `compacted-from:<id>` (no whitespace).
+    tags: [`compacted-from:${compactionId}`, 'compacted'],
+    createdAt: new Date(now).toISOString(),
+  };
+  bucket.set(memoryRef, [archive]);
+  return {
+    outputId,
+    sourceCount: sourceIds.length,
+    sourceIds,
+    byteSize: Buffer.byteLength(outputContent, 'utf8'),
+    outputContent,
+  };
 }
 
 // ───────────────────────────────────────────────────────────────────

@@ -453,7 +453,15 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       // (GET /v1/host/sample/memory). RFC 0057: it DOES attribute those
       // writes via the content-free `memory.written` event, so it advertises
       // attribution independently of the adapter contract.
-      memory: { supported: false, attribution: { supported: true, emitsWriteEvents: true } },
+      // RFC 0012 — compaction is advertised independently of the adapter
+      // contract: the host distills its internal longTerm entries into one
+      // SR-1-redacted archive and emits `memory.compacted`. Driven by the
+      // gated `/v1/test/memory/{seed,compact}` seam (memoryCompactionSeam.ts).
+      memory: {
+        supported: false,
+        attribution: { supported: true, emitsWriteEvents: true },
+        compaction: { supported: true, trigger: 'both' },
+      },
       // RFC 0023 §B.2 — capabilities.conformance.mockAgent. Reference
       // host registers core.conformance.mock-agent unconditionally
       // (see bootstrap/conformanceMockAgent.ts). Production deployments
