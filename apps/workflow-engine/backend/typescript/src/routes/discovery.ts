@@ -29,6 +29,20 @@ import { getEnvelopeReliabilityConfig } from '../host/envelopeReliabilityConfig.
 export const CROSS_HOST_CAUSATION_HOST_ID =
   process.env.OPENWOP_CROSS_HOST_CAUSATION_HOST_ID ?? 'openwop-workflow-engine';
 
+/**
+ * RFC 0040 Phase 3 gate. Single source of truth shared by the discovery
+ * advertisement (`crossHostCausation` + `version >= 3`) and the
+ * `GET /v1/runs/{runId}/ancestry` endpoint gate, so the two never drift. The
+ * ladder is additive — `phase4` implies `phase3` (a `version: 4` host MUST
+ * implement Phase 3 too, per `capabilities.schema.json §...version`).
+ */
+export function isPhase3Enabled(): boolean {
+  return (
+    process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_3 === 'true' ||
+    process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_4 === 'true'
+  );
+}
+
 interface Deps {
   storage: Storage;
   config: AppConfig;
@@ -529,7 +543,7 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
             // escalation (Phase 2) and replay determinism (Phase 4); a
             // `version: 4` advertisement is only honest when Phase 3 is
             // implemented too (the ancestry endpoint + crossHostCausation).
-            const phase3 = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_3 === 'true' || phase4;
+            const phase3 = isPhase3Enabled();
             const phase2 = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_2 === 'true' || phase3;
             const floorRaw = process.env.OPENWOP_MULTI_AGENT_CONFIDENCE_FLOOR;
             const floor = (() => {
