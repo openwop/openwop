@@ -11,6 +11,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### docs(rfc-0062): /code-review follow-ups on the M2 enforcement (2026-05-26)
+
+Two findings from a `/code-review` pass over the RFC 0062 M2 commit. Docs + one code comment; no schema, behavior, or wire-shape change.
+
+- **server.ts** comment noting `memoryRef` + `includeSecretCanary` are accepted for request-shape fidelity but **unused** — the seam distills `sources` directly and SR-1 scrubbing is **unconditional** (a redacted secret is always scrubbed, not gated on the flag, which is the more-correct posture).
+- **conformance.md** note that the advertised `tokenizerName: 'claude'` is **nominal**: the reference host's budget is a tokenizer-agnostic `ceil(len/4)` estimate (a best-effort approximation within the capability's stated ±10% tolerance for common prose, not a real claude tokenizer). Resolves the internal discrepancy between the advertisement and the "≈ length/4" note; a production host counts against the named tokenizer.
+
 ### docs+conformance: MyndHyve round-3 — graduate RFC 0029 + 0055 + 0057 Active → `Accepted`; RFC 0058 honest non-graduation (2026-05-26)
 
 MyndHyve's round-3 closure advertises three of the then-Active RFCs live on `workflow-runtime-00217-q7c`. Each meets its own "first non-steward host advertises the surface" Accepted criterion (`RFCS/0001` §"Promotion to Accepted"), **openwop-side curl-verified** against `https://workflow-runtime-gjw5bcse7a-uc.a.run.app/.well-known/openwop` 2026-05-26:
