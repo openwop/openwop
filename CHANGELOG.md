@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### docs: close the RFC 0058 round-3 loop — MyndHyve retraction + agreed graduation path (2026-05-26)
+
+MyndHyve acknowledged the round-3 0058 conflation (their `maxNodeExecutions` recursionLimit bound ≠ RFC 0058's wall-clock/loop surface) and **retracted** the claim (their commit `11cacfe6b`): 0058 moved to deferred with the two fields shown `null`, plus a `discovery.test.ts` drift-gate asserting `maxRunDurationMs`/`maxLoopIterations` stay absent until host-level enforcement lands. The `INTEROP-MATRIX.md` §"round 3" 0058 note gains a "loop closed" paragraph recording the retraction + the jointly-agreed graduation path (promote per-run `maxWallClockMs` → host-level `runTimeoutMs` ceiling + `maxRunDurationMs` advertisement + `cap.breached { kind: 'run-duration' }`; wall-clock arm first, `maxLoopIterations` arm after RFC 0061). RFC 0058 stays `Active` — no openwop status change. Docs-only.
+
 ### docs(rfc-0062): /code-review follow-ups on the M2 enforcement (2026-05-26)
 
 Two findings from a `/code-review` pass over the RFC 0062 M2 commit. Docs + one code comment; no schema, behavior, or wire-shape change.
