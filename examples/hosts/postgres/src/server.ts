@@ -2703,15 +2703,19 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
         schemaRounds: 0,
         envelopesPerTurn: 0,
         maxNodeExecutions: 1000,
-        // RFC 0058 — the host enforces this wall-clock ceiling on every run
-        // (see runWorkflowClaimed). Advertising it lets clients pre-flight a
-        // `runTimeoutMs` and pins the upper bound the value clamps to.
-        maxRunDurationMs: MAX_RUN_DURATION_MS,
       },
       supportedTransports: ['rest'],
       fixtures: advertisedFixtures,
       debugBundle: { supported: true },
       capabilities: {
+        // RFC 0058 — engine-enforced run bounds. Advertised under
+        // `capabilities.limits` (the schema-canonical + conformance-read
+        // location) so clients can pre-flight a `runTimeoutMs` against the
+        // host ceiling the value clamps to. The host enforces this on every
+        // run (see runWorkflowClaimed).
+        limits: {
+          maxRunDurationMs: MAX_RUN_DURATION_MS,
+        },
         auth: {
           profiles,
           auditLogIntegrity: {
