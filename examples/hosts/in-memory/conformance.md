@@ -7,7 +7,7 @@
 > **Prior measurements:** 2026-05-22 against suite v1.4.0 — 1439/1558 (92.4%); 2026-05-18 against suite v1.1.1 — 135/193 (retained below for historical context; suite scenario count grew from 193 → 1558 → 1564).
 >
 > **Host version:** `openwop-host-in-memory@1.1.1`
-> **Conformance suite:** `@openwop/openwop-conformance@1.5.0` (latest run)
+> **Conformance suite:** `@openwop/openwop-conformance@1.5.0` (last full re-measurement; the current suite is `@openwop/openwop-conformance@1.6.1` — the additive RFC 0058/0059/0060/0062/0063/0064 wire + behavior scenarios in 1.6.x are exercised by the RFC-specific evidence sections below rather than re-summarized in this banner)
 > **Profile claim:** `openwop-core` + `openwop-stream-poll` + `openwop-stream-sse`
 > **Capability claim (RFC 0013):** `workflowChainPacks.supported: true` — host advertises the chain-expansion capability under `/.well-known/openwop` and serves the vendor-prefixed expansion endpoint `POST /v1/host/sample/workflow-chain:expand`. Mounted on top of `OPENWOP_PACK_REGISTRY_DIR` (defaults to the in-tree `examples/packs/`).
 > **Capability claim (RFC 0056):** `feedback.{supported: true, targets: ["run"], signals: ["rating", "correction", "label", "flag"]}` — host serves `POST/GET /v1/runs/{runId}/annotations` backed by a per-run annotation side-store (not a RunEvent). See the RFC 0056 evidence section below.

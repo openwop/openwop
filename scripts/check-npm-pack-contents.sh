@@ -95,7 +95,7 @@ function assertIncludes(packageName, paths, requiredPaths) {
 const tsPack = readPack(typescriptPath);
 const tsFiles = filePaths(tsPack);
 assert(tsPack.name === '@openwop/openwop', `unexpected TypeScript package name: ${tsPack.name}`);
-assert(tsPack.version === '1.1.3', `unexpected TypeScript package version: ${tsPack.version}`);
+assert(tsPack.version === '1.1.4', `unexpected TypeScript package version: ${tsPack.version}`);
 assertNoCommonLeaks(tsPack.name, tsFiles);
 assertAllowedRoots(tsPack.name, tsFiles, new Set(['LICENSE', 'README.md', 'dist', 'package.json', 'src']));
 assertIncludes(tsPack.name, tsFiles, [
@@ -120,7 +120,7 @@ assert(
 // @openwop/openwop-conformance tracks its own minor cadence per
 // PUBLISHING.md §"Versioning alignment"; bump alongside the
 // EXPECTED_CONFORMANCE_VERSION in openwop-check-publish-metadata.sh.
-assert(conformancePack.version === '1.6.1', `unexpected conformance package version: ${conformancePack.version}`);
+assert(conformancePack.version === '1.7.0', `unexpected conformance package version: ${conformancePack.version}`);
 assertNoCommonLeaks(conformancePack.name, conformanceFiles);
 assertAllowedRoots(
   conformancePack.name,
