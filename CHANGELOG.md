@@ -11,6 +11,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### fix(conformance): RFC 0061 — lift the executionModel version guard to [1, 5] + document the M2-host requirement (2026-05-26)
+
+RFC 0061 M1 bumped `capabilities.schema.json §multiAgent.executionModel.version` to `maximum: 5` and added `agent-loop-version5-shape.test.ts` (which asserts `version ∈ [1, 5]`), but left `multi-agent-handoff-state-machine.test.ts` asserting `version ∈ [1, 4]` — so a host legitimately advertising `version: 5` (the very thing RFC 0061 enables) would **fail** that scenario. Corrects the handoff scenario's range guard + docstring to `[1, 5]`, matching the schema and the version-5 shape scenario.
+
+Also adds an implementation note to RFC 0061 recording that its **reference-host enforcement (`Active → Accepted`) requires an execution-model host, not the in-memory reference host**: `version: 5` is the top of the RFC 0037→0041 ladder (a host advertising it MUST implement phases 1..5 additively), so advertising `executionModel.supported` activates the ~15 ladder scenarios the linear-walk in-memory host doesn't implement — unlike the standalone RFC 0058/0059/0060/0063/0064 capabilities. The v5 loop + the `POST /v1/host/sample/agentloop/run` seam belong on `apps/workflow-engine` or a non-steward host already on the ladder. RFC 0061 stays `Active`. Conformance/docs only; no schema or wire-shape change.
+
 ### docs: create the referenced `docs/openwop-adoption/0045-0054-cohort-summary.md` (resolve a dangling cross-doc reference) (2026-05-26)
 
 11 places (`README.md`, `CHANGELOG.md`, `INTEROP-MATRIX.md`, `docs/myndhyve-rfc-adoption-handoff.md`, `plans/myndhyve-protocol-extension-rfcs.md`, and RFCs 0045–0053) referenced `docs/openwop-adoption/0045-0054-cohort-summary.md` as an openwop-local artifact (the README pairs it with `INTEROP-MATRIX.md`), but the file was never created — a dangling reference the spec-gate link checker missed because every mention is a prose backtick, not a Markdown link. Creates that consolidation doc as an **index** (canonical per-row evidence stays in `INTEROP-MATRIX.md`) recording the 8-RFC cohort's `Active → Accepted` graduation. The sibling `docs/openwop-adoption/0037-multi-agent-phase-1.md` + `0044-vendor-kind-mapping.md` references are explicitly **MyndHyve-repo** paths (attested with MyndHyve commit SHAs), not openwop-local, and are left as-is. Docs-only; no schema or wire-shape change.
