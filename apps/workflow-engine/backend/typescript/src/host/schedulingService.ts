@@ -33,6 +33,10 @@ export interface ScheduledJob {
   cronExpr: string;
   /** Monotonic tick index this job last fired at; null until first fire. */
   lastFiredTick: number | null;
+  /** workflowId a tick fires (informational for the CRUD surface). */
+  workflowId?: string;
+  /** ISO-8601 registration timestamp (informational). */
+  createdAt?: string;
 }
 
 const jobs = new Map<string, ScheduledJob>();
@@ -50,7 +54,7 @@ export interface ScheduleHorizonError {
 /** Register (or replace) a scheduled job. Rejects schedules whose first
  *  fire is beyond `maxFutureHorizon` with `schedule_horizon_exceeded`. */
 export function registerJob(
-  input: { jobId: string; cronExpr: string; firstFireAtMs?: number },
+  input: { jobId: string; cronExpr: string; firstFireAtMs?: number; workflowId?: string },
   nowMs: number = Date.now(),
 ): { ok: true; job: ScheduledJob } | { ok: false; error: ScheduleHorizonError } {
   if (input.firstFireAtMs !== undefined && input.firstFireAtMs - nowMs > MAX_FUTURE_HORIZON_MS) {
@@ -62,13 +66,40 @@ export function registerJob(
       },
     };
   }
-  const job: ScheduledJob = { jobId: input.jobId, cronExpr: input.cronExpr, lastFiredTick: null };
+  const job: ScheduledJob = {
+    jobId: input.jobId,
+    cronExpr: input.cronExpr,
+    lastFiredTick: null,
+    ...(input.workflowId !== undefined ? { workflowId: input.workflowId } : {}),
+    createdAt: new Date(nowMs).toISOString(),
+  };
   jobs.set(input.jobId, job);
   return { ok: true, job };
 }
 
 export function listJobs(): ScheduledJob[] {
   return [...jobs.values()];
+}
+
+/** Fetch a single job by id, or undefined when none is registered. */
+export function getJob(jobId: string): ScheduledJob | undefined {
+  return jobs.get(jobId);
+}
+
+/** Remove a job. Returns true when a job was actually deleted. */
+export function deleteJob(jobId: string): boolean {
+  return jobs.delete(jobId);
+}
+
+/**
+ * Manually fire a registered job (operator-initiated "trigger now"). Honors
+ * §B.2 fire-once-per-tick: a manual trigger advances the clock by one tick
+ * and fires the job once. Throws when the job is not registered so the route
+ * can map it to a 404.
+ */
+export function triggerJob(jobId: string): { ok: true; result: TickResult } | { ok: false } {
+  if (!jobs.has(jobId)) return { ok: false };
+  return { ok: true, result: singleTick(jobId) };
 }
 
 function ensureJob(jobId: string): ScheduledJob {
