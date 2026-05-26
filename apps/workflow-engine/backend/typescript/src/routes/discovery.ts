@@ -219,6 +219,16 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       perToolAuthorization: true,
       perToolRateLimit: true,
     },
+    // RFC 0052 — time-based run initiation behind the `schedule`/`cron`
+    // triggers. Once-per-tick + missed-tick policy enforced by
+    // host/schedulingService.ts; driven by the
+    // POST /v1/host/sample/scheduling/tick seam. `delayed`/`calendar` are
+    // honestly absent (the deterministic-clock seam covers cron only).
+    scheduling: {
+      supported: true,
+      cron: true,
+      maxFutureHorizon: 'P30D',
+    },
     supportedTransports: ['rest', 'sse'],
     stream: { modes: ['values', 'updates', 'messages', 'debug'] },
     // Conformance fixtures loaded from in-tree `conformance/fixtures/`

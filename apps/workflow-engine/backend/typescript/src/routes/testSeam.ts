@@ -56,6 +56,7 @@ import {
 } from '../host/capabilityOverlay.js';
 import { computeLLMCacheKey } from '../providers/llmCacheKey.js';
 import { evaluateToolHook, type ToolHookRequest } from '../host/toolHooks.js';
+import { singleTick, missedWindow } from '../host/schedulingService.js';
 import { OpenwopError } from '../types.js';
 import { createLogger } from '../observability/logger.js';
 
@@ -875,6 +876,24 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
       toolReturned: result.toolReturned,
       ...(result.errorCode ? { error: { code: result.errorCode } } : {}),
     });
+  });
+
+  // RFC 0052 — scheduling tick seam. Advances the deterministic scheduler
+  // clock and reports the runs a cron schedule produced. Drives
+  // scheduling-cron-fires-once (once-per-tick + missed-tick policy).
+  //
+  //   POST /v1/host/sample/scheduling/tick
+  //   Body: { scenario: 'single-tick' | 'missed-window', missedTicks? }
+  //   Response: { runsFired: number }
+  app.post('/v1/host/sample/scheduling/tick', (req, res) => {
+    const body = (req.body ?? {}) as { scenario?: unknown; missedTicks?: unknown };
+    if (body.scenario === 'missed-window') {
+      const n = typeof body.missedTicks === 'number' ? body.missedTicks : 1;
+      res.status(200).json(missedWindow(n));
+      return;
+    }
+    // 'single-tick' (default): one wake-up fires the cron job exactly once.
+    res.status(200).json(singleTick());
   });
 
   // RFC 0032 / 0033 — mock-AI provider program seam.
