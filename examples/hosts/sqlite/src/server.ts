@@ -230,6 +230,20 @@ db.exec(`
     created_at TEXT NOT NULL
   );
   CREATE INDEX IF NOT EXISTS idx_annotations_run ON annotations(run_id, created_at);
+
+  -- RFC 0057 minimal memory write-store. Write-side only: the host writes a
+  -- content-free run-summary here on completion and attributes it via the
+  -- memory.written event. The RFC 0004 read-side (list/get/TTL) is NOT
+  -- implemented, so discovery advertises memory.supported false +
+  -- memory.attribution only (mirroring the workflow-engine sample).
+  CREATE TABLE IF NOT EXISTS memory_entries (
+    memory_ref TEXT NOT NULL,
+    memory_id TEXT NOT NULL,
+    content TEXT NOT NULL,
+    tags_json TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (memory_ref, memory_id)
+  );
 `);
 
 // Idempotent migration: older DBs may lack newer columns on `runs`.
@@ -449,6 +463,23 @@ interface EventRow {
 
 function loadRun(runId: string): RunRow | null {
   return (stmts.getRun.get(runId) as RunRow | undefined) ?? null;
+}
+
+// RFC 0057 — memory ref the host writes its session-end run-summary into.
+const RUN_SUMMARY_MEMORY_REF = 'run-summaries';
+
+// RFC 0057 minimal write-side. Persists a memory entry (write-only — no
+// protocol read-side; see the `memory.supported: false` advertisement).
+// SR-1: callers MUST pass content with secret material already substituted
+// to `[REDACTED:<id>]`; the host's session-end summary is host-generated and
+// carries no credential material, so no resolver runs here.
+function writeMemoryEntry(memoryRef: string, memoryId: string, content: string, tags: readonly string[]): void {
+  db.prepare(
+    `INSERT INTO memory_entries (memory_ref, memory_id, content, tags_json, created_at)
+     VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT (memory_ref, memory_id) DO UPDATE SET
+       content = excluded.content, tags_json = excluded.tags_json`,
+  ).run(memoryRef, memoryId, content, JSON.stringify(tags), new Date().toISOString());
 }
 
 function appendEvent(
@@ -1678,6 +1709,29 @@ async function runWorkflow(runId: string): Promise<void> {
       appendEvent(runId, 'run.cancelled');
       setRunTerminal(runId, 'cancelled', null);
     } else {
+      // RFC 0057 §A/§B — attribute a content-free, session-end memory write.
+      // The host writes a run-summary to its memory store on completion and
+      // records it on the event log via `memory.written` (identifiers +
+      // non-secret tags only; no content, no nodeId per §B — a host write, not
+      // a node write). The memoryId is deterministic on runId so the recorded
+      // fact stays replay-stable (§D). Emitted BEFORE `run.completed` so the
+      // terminal event remains LAST in the stream (eventOrdering invariant).
+      // Best-effort — a memory write MUST NOT fail the run.
+      try {
+        const memoryId = `mem-${runId}-summary`;
+        const tags = ['run-summary', `run-id:${runId}`, `workflow:${row.workflow_id}`];
+        writeMemoryEntry(
+          RUN_SUMMARY_MEMORY_REF,
+          memoryId,
+          `Run ${runId} of "${row.workflow_id}" completed.`,
+          tags,
+        );
+        appendEvent(runId, 'memory.written', {
+          data: { memoryRef: RUN_SUMMARY_MEMORY_REF, memoryId, tags },
+        });
+      } catch {
+        /* memory is a best-effort host surface; never block run completion */
+      }
       appendEvent(runId, 'run.completed');
       setRunTerminal(runId, 'completed', null);
     }
@@ -1852,6 +1906,11 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
     debugBundle: { supported: true },
     fixtures: advertisedFixtures,
     capabilities: {
+      // RFC 0057 — the host attributes its session-end memory writes via the
+      // content-free `memory.written` event (see runWorkflow). Write-side only:
+      // the RFC 0004 read-side (list/get/TTL) is not implemented, so
+      // `supported: false` while `attribution.emitsWriteEvents: true`.
+      memory: { supported: false, attribution: { supported: true, emitsWriteEvents: true } },
       // RFC 0056 — non-blocking run feedback/annotations. Run-level only;
       // annotations are a per-run side-store (not the replayable event log).
       feedback: {
