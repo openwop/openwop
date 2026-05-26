@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0062 |
 | **Title** | A `memory.distillation` capability — scheduled, token-budgeted background compaction runs reusing RFC 0012's `memory.compacted` event (with an additive optional `distillation` sub-object), writing a stable archive + a memory-index workspace file; composing RFC 0012 (compaction) + RFC 0052 (scheduling) + RFC 0004 (memory) into the "dream" pattern |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-25 |
-| **Updated** | 2026-05-25 |
+| **Updated** | 2026-05-25 (Active → Accepted — Milestone 2: the in-memory reference host advertises `capabilities.memory.distillation` and implements the `POST /v1/host/sample/memory/distill` seam end-to-end — §B budgeted run (`tokensUsed ≤ tokenBudget`; an un-meetable budget fails atomically with `token_budget_exceeded`, no partial archive), a byte-stable JCS+SHA-256 archive checksum, a retrievable `MEMORY-INDEX.json` workspace file (composing RFC 0059) on `indexEmitted`, and SR-1 carry-forward (a redacted secret never re-enters the archive). The `memory.compacted` event carries the additive `distillation` sub-object — no new event type. All five `distillation-*.test.ts` scenarios are live + green. No new SECURITY invariant (SR-1 holds at the RFC 0012 layer).) |
 | **Affects** | `schemas/capabilities.schema.json` (`memory.distillation` sub-block, nested under `memory`) · `spec/v1/agent-memory.md` (distillation contract) · `spec/v1/run-options.md` (reserved key `distillation.tokenBudget`) · `schemas/run-event-payloads.schema.json` (additive optional `distillation` sub-object on `memoryCompacted`) · `spec/v1/rest-endpoints.md` (register `token_budget_exceeded`) · `RFCS/0012` (reuses `memory.compacted`) · `RFCS/0052` (scheduling trigger) · `RFCS/0059` (memory-index as a workspace file) · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -131,11 +131,11 @@ Per `docs/autonomous-agent-runtime-plan.md` §8 — Unresolved questions resolve
 
 ## Acceptance criteria
 
-- [ ] `agent-memory.md` distillation section (budget + stable archive + index + scheduled-trigger binding) + `distillation.tokenBudget` reserved key in `run-options.md` + `token_budget_exceeded` registered in `rest-endpoints.md`.
-- [ ] `memory.distillation` block (schema) + additive optional `distillation` sub-object on `memoryCompacted` (run-event-payloads schema). No new event type.
-- [ ] Conformance: shape always-on; budget/archive/index/secret-carryforward capability-gated.
-- [ ] CHANGELOG entry under `[1.1.4 — unreleased]`.
-- [ ] A host runs a scheduled distillation within budget + updates a retrievable index, or the RFC defers reference-host wiring.
+- [x] `agent-memory.md` distillation section (budget + stable archive + index + scheduled-trigger binding) + `distillation.tokenBudget` reserved key in `run-options.md` + `token_budget_exceeded` registered in `rest-endpoints.md`.
+- [x] `memory.distillation` block (schema) + additive optional `distillation` sub-object on `memoryCompacted` (run-event-payloads schema). No new event type.
+- [x] Conformance: shape always-on; budget/archive/index/secret-carryforward capability-gated — all five `distillation-*.test.ts` scenarios live + green against the in-memory host.
+- [x] CHANGELOG entry under `[1.1.4 — unreleased]`.
+- [x] **Milestone 2 — reference-host enforcement (`Active → Accepted`).** The in-memory reference host (`examples/hosts/in-memory`) advertises `capabilities.memory.distillation { supported, maxTokenBudget, scheduled: false, indexEmitted: true, tokenizerName, archiveRetention }` and implements the `POST /v1/host/sample/memory/distill` seam: §B runs a budgeted distillation (`tokensUsed ≤ tokenBudget`; a budget below the corpus minimum fails atomically with `token_budget_exceeded` and writes no partial archive), produces a byte-stable JCS+SHA-256 `archiveChecksum` (same sources ⇒ same digest), writes a content-free `MEMORY-INDEX.json` workspace file via the RFC 0059 store on `indexEmitted`, and SR-1-scrubs the corpus before archiving so a redacted secret never re-appears. The `memory.compacted` event carries the additive `distillation` sub-object — no new event type, no new SECURITY invariant (SR-1 holds at the RFC 0012 layer). **On-demand only:** `scheduled: false` (no `capabilities.scheduling` on this host — a scheduled trigger composes RFC 0052 on a scheduling host); the host has no production `MemoryAdapter`, so distillation is seam-demonstrated.
 
 ## References
 
