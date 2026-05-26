@@ -347,7 +347,15 @@ async function executeNode(
       try {
         await sleep(delayMs, run.abortController.signal);
       } catch {
-        // Aborted via cancel.
+        // Aborted. Distinguish a caller cancel from the RFC 0058 wall-clock
+        // deadline (both fire `abortController`) so the node-level outcome
+        // agrees with the run's terminal state: a timed-out node `failed`,
+        // a cancelled node `cancelled`. The loop's `run.timedOut` check then
+        // emits the run-level `cap.breached` + `run.failed { run_timeout }`.
+        if (run.timedOut) {
+          appendEvent(run, 'node.failed', { nodeId: node.id, data: { code: 'run_timeout' } });
+          return 'failed';
+        }
         appendEvent(run, 'node.cancelled', { nodeId: node.id });
         return 'cancelled';
       }
@@ -474,6 +482,10 @@ async function runWorkflow(run: Run): Promise<void> {
     run.timedOut = true;
     run.abortController.abort();
   }, deadlineMs);
+  // Don't let a pending deadline timer hold the event loop open; the HTTP
+  // server keeps the process alive, and the timer is always cleared in the
+  // `finally` below once the run settles.
+  timeoutTimer.unref();
 
   try {
     for (const node of workflow.nodes) {
@@ -754,24 +766,26 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
   // RFC 0058 — resolve the per-run wall-clock bound. Per `run-options.md`
   // §"Reserved keys", out-of-range `runTimeoutMs` is rejected at run-create
   // (400, never at runtime); an in-range value is clamped to the advertised
-  // host ceiling via `min(runTimeoutMs, maxRunDurationMs)`.
+  // host ceiling via `min(runTimeoutMs, maxRunDurationMs)`. The spec types the
+  // key as `number`, so a fractional value is accepted and floored to integer
+  // ms — `cap.breached.limit` is an integer per `run-event-payloads.schema.json`.
   let resolvedRunTimeoutMs: number | null = null;
   const rawRunTimeoutMs = parsed.configurable?.runTimeoutMs;
   if (rawRunTimeoutMs !== undefined) {
     if (
       typeof rawRunTimeoutMs !== 'number' ||
-      !Number.isInteger(rawRunTimeoutMs) ||
+      !Number.isFinite(rawRunTimeoutMs) ||
       rawRunTimeoutMs < 1
     ) {
       sendError(
         res,
         400,
         'validation_error',
-        'configurable.runTimeoutMs MUST be a positive integer (milliseconds).',
+        'configurable.runTimeoutMs MUST be a positive number (milliseconds).',
       );
       return;
     }
-    resolvedRunTimeoutMs = Math.min(rawRunTimeoutMs, MAX_RUN_DURATION_MS);
+    resolvedRunTimeoutMs = Math.min(Math.floor(rawRunTimeoutMs), MAX_RUN_DURATION_MS);
   }
 
   const workflow = workflows.get(parsed.workflowId);
@@ -1074,10 +1088,10 @@ function handleEventsPoll(
 
   // Serialize each record in the canonical `run-event.schema.json` envelope
   // (`eventId` / `sequence` / `payload`). The host's internal `RunEvent` uses
-  // `seq` / `data`; emitting the canonical keys aligns the poll path with the
-  // schema (and the black-box conformance scenarios that read `.payload` /
-  // `.sequence`). The legacy `seq` / `data` aliases are retained for
-  // forward/backward tolerance with consumers that read either.
+  // `seq` / `data`; this maps to the canonical keys so the poll path matches
+  // the schema exactly (`additionalProperties: false`) — no legacy `seq` /
+  // `data` aliases, which the schema forbids. Conformance readers tolerate
+  // both via `sequence ?? seq` / `payload ?? data`.
   const events = filtered.map((e) => ({
     eventId: `${e.runId}-${e.seq}`,
     runId: e.runId,
@@ -1086,9 +1100,6 @@ function handleEventsPoll(
     payload: e.data ?? null,
     timestamp: e.timestamp,
     ...(e.nodeId !== undefined ? { nodeId: e.nodeId } : {}),
-    // Legacy aliases (pre-canonical consumers):
-    seq: e.seq,
-    ...(e.data !== undefined ? { data: e.data } : {}),
   }));
 
   sendJSON(res, 200, {

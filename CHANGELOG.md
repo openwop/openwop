@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0058 M2 — /code-review follow-ups on the in-memory host enforcement (2026-05-25)
+
+Five findings from a `/code-review` pass over the RFC 0058 M2 commit. Host + conformance only; no protocol-corpus change.
+
+- **Poll envelope is now schema-clean.** Dropped the transitional `seq` / `data` legacy aliases from the `/v1/runs/{runId}/events/poll` response — they violated `run-event.schema.json` (`additionalProperties: false`). The two conformance readers that consumed `data` (`replayDeterminism`, `replay-fork-arbitrary` `structuralShape`) now read `payload ?? data` (canonical-first with legacy fallback — strictly more tolerant, so the still-legacy sqlite/postgres/python hosts stay green). The in-memory poll path now emits exactly `eventId` / `runId` / `type` / `sequence` / `payload` / `timestamp` (+ optional `nodeId`).
+- **`runTimeoutMs` honors its `number` type.** Validation relaxed from integer-only to any positive finite number, floored to integer ms internally (`cap.breached.limit` is an integer per `run-event-payloads.schema.json`).
+- **Mid-node timeout emits `node.failed { run_timeout }`** (was `node.cancelled`), so the node-level outcome agrees with the run's terminal `failed`.
+- **Deadline timer `.unref()`'d** so a pending run-timeout never holds the event loop open (the HTTP server keeps the process alive; the timer is always cleared on settle).
+- **`conformance.md` measurement header annotated** as predating this enforcement (counts not re-measured; conservative).
+
 ### RFC 0058 (run execution bounds) — Milestone 2: reference-host `runTimeoutMs` enforcement (2026-05-25)
 
 The in-memory reference host (`examples/hosts/in-memory`) now **enforces the wall-clock `runTimeoutMs` bound**: it advertises `capabilities.limits.maxRunDurationMs` (600000), resolves + clamps `RunOptions.configurable.runTimeoutMs` to that ceiling at run-create (rejecting out-of-range with `400 validation_error`), and arms a per-run deadline timer in `runWorkflow` that emits `cap.breached { kind: 'run-duration', limit, observed }` then transitions the run to `failed` with `error.code = 'run_timeout'`. The `run-execution-bounds-shape.test.ts` `run-duration` behavior block flips from soft-skip to **live + green** (3/3). To make the breach observable to the black-box suite, the `/v1/runs/{runId}/events/poll` path moved to the canonical `run-event.schema.json` envelope (`eventId` / `sequence` / `payload`; legacy `seq` / `data` retained as aliases — zero-regression superset). The host now also seeds run inputs from workflow `variables[].defaultValue`. **`maxLoopIterations` enforcement remains deferred to RFC 0061** (no reference host runs the RFC 0037 orchestrator loop). RFC 0058 stays `Active`; `Active → Accepted` awaits the loop-iteration half. Additive; no wire-shape change to existing surfaces.
