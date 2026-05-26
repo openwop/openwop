@@ -11,6 +11,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### feat(host-sqlite): implement RFC 0057 memory write-attribution (2026-05-26)
+
+Follows the Postgres landing — SQLite now also emits `memory.written`. Adds a minimal write-side memory store (`memory_entries` table + a `writeMemoryEntry` helper; no protocol read-side) so the host can attribute its session-end run-summary write. On completion the host writes a content-free run-summary and records it on the run event log as `memory.written { memoryRef, memoryId, tags }` — identifiers + non-secret tags only, no `content`, no `nodeId` (host write, not node write) per RFC 0057 §B/§C — emitted **before** `run.completed` so the terminal event stays last (eventOrdering invariant). The `memoryId` is deterministic on `runId` → replay-stable (§D). Advertises `memory: { supported: false, attribution: { supported: true, emitsWriteEvents: true } }` (attribution-only; the RFC 0004 read-side list/get/TTL is not implemented, mirroring the workflow-engine sample's stance — so the `agentMemory*` read scenarios continue to soft-skip). All five `memory-attribution-*` scenarios now run + pass; full SQLite suite green (1716/0/104). Host-only; no protocol-corpus change.
 ### feat(app)+docs: RFC 0040 Phase 3 cross-host causation on workflow-engine; corrected RFC 0061/0058 M2-host finding (2026-05-26)
 
 Implements the architect-plan **Phase 0** (the prerequisite for RFC 0061's `version: 5`) and records the **corrected M2-host finding** the deeper executor read surfaced.
