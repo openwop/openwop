@@ -1,5 +1,8 @@
 # ── Node / TypeScript ────────────────────────────────────────────────────────
-node_modules/
+# No trailing slash: also ignores an accidental `node_modules` *symlink*
+# (a trailing-slash pattern matches only directories, which let a stray
+# self-referential symlink slip into git history once).
+node_modules
 dist/
 *.tsbuildinfo
 
