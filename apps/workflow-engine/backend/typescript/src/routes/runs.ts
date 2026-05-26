@@ -27,6 +27,7 @@ import { seedRunVariables, snapshotRunVariables } from '../host/variablesRuntime
 import { getChildParentNodeId } from '../executor/subWorkflowDispatcher.js';
 import { snapshotCostRollup } from '../observability/costEmitter.js';
 import { executeRun } from '../executor/executor.js';
+import { CROSS_HOST_CAUSATION_HOST_ID } from './discovery.js';
 import { getEventLog } from '../executor/eventLog.js';
 import { stripSecretsFromPersisted } from '../byok/ephemeralRunSecrets.js';
 import { createLogger } from '../observability/logger.js';
@@ -431,6 +432,49 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
       error: 'not_found',
       message: `artifact '${decodeURIComponent(m[2] ?? '')}' not found on run '${decodeURIComponent(m[1] ?? '')}'`,
     });
+  });
+
+  // RFC 0040 §C — cross-host run-ancestry endpoint. Opt-in within Phase 3:
+  // served ONLY when this host advertises
+  // `crossHostCausation.ancestryEndpointSupported: true` (gated on the
+  // OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_3 / _PHASE_4 envs, matching
+  // discovery.ts); returns 404 otherwise. Returns the cross-host parent chain
+  // per `run-ancestry-response.schema.json`: a top-level run → `parent: null`;
+  // a dispatched/sub-workflow child → `parent: { runId, hostId, cause }`. This
+  // single-host reference app never sets `wellKnownUrl` (same-host parents
+  // only); a real cross-host deployer sets it for off-host parents.
+  app.get('/v1/runs/:runId/ancestry', async (req, res, next) => {
+    try {
+      const phase3 =
+        process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_3 === 'true' ||
+        process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_4 === 'true';
+      if (!phase3) {
+        // Capability not advertised — the endpoint is opt-in even within
+        // Phase 3 (RFC 0040 §C). 404 regardless of run existence.
+        throw new OpenwopError('not_found', 'run-ancestry endpoint not enabled', 404);
+      }
+      const run = await storage.getRun(req.params.runId);
+      if (!run) throw new OpenwopError('run_not_found', `run ${req.params.runId} not found`, 404);
+      const parent =
+        run.parentRunId !== undefined && run.parentRunId !== null
+          ? {
+              runId: run.parentRunId,
+              // Same-host parent on this single-host reference app: hostId
+              // equals our own, and `wellKnownUrl` is omitted (off-host
+              // parents would set it). `core.subWorkflow` + `core.dispatch`
+              // are the same-host composition causes per the schema enum.
+              hostId: CROSS_HOST_CAUSATION_HOST_ID,
+              cause: 'core.subWorkflow' as const,
+            }
+          : null;
+      res.status(200).json({
+        runId: run.runId,
+        hostId: CROSS_HOST_CAUSATION_HOST_ID,
+        parent,
+      });
+    } catch (err) {
+      next(err);
+    }
   });
 
   // Bulk-cancel per `rest-endpoints.md §"POST /v1/runs:bulk-cancel"`.

@@ -21,6 +21,14 @@ import { getEnvelopeReasoningConfig } from '../host/envelopeReasoningConfig.js';
 import { getModelCapabilityGateConfig } from '../host/modelCapabilityGateConfig.js';
 import { getEnvelopeReliabilityConfig } from '../host/envelopeReliabilityConfig.js';
 
+/**
+ * RFC 0040 §D — this host's stable cross-host-causation `hostId`. Advertised in
+ * `crossHostCausation.hostId` and echoed by `GET /v1/runs/{runId}/ancestry`
+ * (the two MUST match). A real multi-host deployment overrides via env.
+ */
+export const CROSS_HOST_CAUSATION_HOST_ID =
+  process.env.OPENWOP_CROSS_HOST_CAUSATION_HOST_ID ?? 'openwop-workflow-engine';
+
 interface Deps {
   storage: Storage;
   config: AppConfig;
@@ -512,25 +520,45 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       // scenarios soft-skip on absence per the existing convention.
       ...(process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL === 'true'
         ? (() => {
-            const phase2 = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_2 === 'true';
             const phase4 = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_4 === 'true';
+            // The execution-model ladder is ADDITIVE: a host advertising
+            // version N MUST implement phases 1..N (capabilities.schema.json
+            // §multiAgent.executionModel.version). So a higher phase implies
+            // every lower phase — phase4 ⇒ phase3 ⇒ phase2 ⇒ phase1. RFC 0040
+            // Phase 3 (cross-host causation) is the rung between confidence
+            // escalation (Phase 2) and replay determinism (Phase 4); a
+            // `version: 4` advertisement is only honest when Phase 3 is
+            // implemented too (the ancestry endpoint + crossHostCausation).
+            const phase3 = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_3 === 'true' || phase4;
+            const phase2 = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_2 === 'true' || phase3;
             const floorRaw = process.env.OPENWOP_MULTI_AGENT_CONFIDENCE_FLOOR;
             const floor = (() => {
               const parsed = floorRaw === undefined ? 0.5 : Number(floorRaw);
               if (!Number.isFinite(parsed) || parsed < 0.5 || parsed > 1.0) return 0.5;
               return parsed;
             })();
-            // Phase 4 builds on Phase 2 (which builds on Phase 1) — phase4
-            // implies phase2 + phase1. Version advertisement is the
-            // ceiling of phases the host implements per
-            // RFCS/0037-multi-agent-execution-model.md §"Phases".
-            const version = phase4 ? 4 : phase2 ? 2 : 1;
+            // Version advertisement is the ceiling of phases the host
+            // implements per RFCS/0037-multi-agent-execution-model.md §"Phases".
+            const version = phase4 ? 4 : phase3 ? 3 : phase2 ? 2 : 1;
             return {
               multiAgent: {
                 executionModel: {
                   supported: true,
                   version,
                   ...(phase2 ? { confidenceEscalationFloor: floor } : {}),
+                  // RFC 0040 §D — cross-host causation. A host advertising
+                  // version >= 3 MUST advertise this sub-block with
+                  // `supported: true` + a stable `hostId`; this host also
+                  // serves `GET /v1/runs/{runId}/ancestry` (Phase-3 §C).
+                  ...(phase3
+                    ? {
+                        crossHostCausation: {
+                          supported: true,
+                          hostId: CROSS_HOST_CAUSATION_HOST_ID,
+                          ancestryEndpointSupported: true,
+                        },
+                      }
+                    : {}),
                   // RFC 0041 §D — replayDeterminism advertisement. Hosts
                   // advertising `version: 4` MUST advertise this sub-block
                   // with `supported: true` and

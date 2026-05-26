@@ -11,6 +11,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### feat(app)+docs: RFC 0040 Phase 3 cross-host causation on workflow-engine; corrected RFC 0061/0058 M2-host finding (2026-05-26)
+
+Implements the architect-plan **Phase 0** (the prerequisite for RFC 0061's `version: 5`) and records the **corrected M2-host finding** the deeper executor read surfaced.
+
+- **`apps/workflow-engine` — RFC 0040 Phase 3 (cross-host causation).** The reference app now advertises `capabilities.multiAgent.executionModel.{version: 3, crossHostCausation: {supported: true, hostId, ancestryEndpointSupported: true}}` under a new `OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_3` env (the ladder is additive — `phase4` ⇒ `phase3` ⇒ `phase2`), and serves `GET /v1/runs/{runId}/ancestry` (`run-ancestry-response.schema.json` shape: `parent: null` for a top-level run, `{ runId, hostId, cause }` for a same-host child). This closes the **version-3 ladder rung the prior `version: 4` advertisement skipped** (it advertised `replayDeterminism` (Phase 4) without `crossHostCausation` (Phase 3) — an additive-ladder honesty gap). Discovery + ancestry behavior verified directly (matches the `cross-host-causation-shape` + `cross-host-ancestry-endpoint` repo dev-suite scenarios; the app's vendored conformance pkg predates them). App-only; no protocol-corpus wire change.
+- **Corrected RFC 0061/0058 M2-host finding.** A deeper read of the workflow-engine executor refuted the architect review's premise that v5 is "a one-phase extension": the executor is **single-pass `core.dispatch`** (consumes a supervisor's `decisions[]` array in **one** node execution), **NOT a re-entrant agent loop**. RFC 0061's core model (per-iteration snapshot inputs §C, suspend-and-resume-at-same-iteration §D) is re-entrant; advertising `version: 5` + `statefulResume` on a single-pass host would be the in-memory host's overclaim one rung higher. RFC 0061 §Implementation-notes + RFC 0058's `maxLoopIterations` deferral now record that **M2 requires a genuine re-entrant agent-loop host** — either a workflow-engine executor rearchitecture or a non-steward runtime already running re-entrant loops (MyndHyve at `version: 4` → `5`). **RFC 0061 + the `maxLoopIterations` half of RFC 0058 stay `Active`.** Docs-only.
+
 ### docs(rfc-0062): /code-review follow-ups on the M2 enforcement (2026-05-26)
 
 Two findings from a `/code-review` pass over the RFC 0062 M2 commit. Docs + one code comment; no schema, behavior, or wire-shape change.
