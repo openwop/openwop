@@ -11,6 +11,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0062 (memory.distillation — "dreams") — Milestone 2: reference-host enforcement; promote Active → `Accepted` (2026-05-26)
+
+The in-memory reference host now implements the RFC 0062 distillation surface end-to-end, taking it from `Active` to **`Accepted`**. It advertises `capabilities.memory.distillation { supported: true, maxTokenBudget: 100000, scheduled: false, indexEmitted: true, tokenizerName: "claude", archiveRetention: "P30D" }` and implements the documented `POST /v1/host/sample/memory/distill` seam:
+
+- **§B budgeted run** — `tokensUsed` (≈ scrubbed-corpus length / 4, floored ≥ 16) MUST be `≤ tokenBudget` (clamped to `maxTokenBudget`); a budget below the corpus minimum returns **`422 token_budget_exceeded` with no partial archive** (atomic).
+- **Byte-stable archive** — `archiveChecksum` is the JCS+SHA-256 of the SR-1-scrubbed sources; identical sources ⇒ identical digest (host-independent).
+- **Memory index** — on `indexEmitted`, a content-free `MEMORY-INDEX.json` manifest (`{ version, archiveChecksum, entryCount, updatedAt }` — no raw source content) is written to the run-owner's workspace via the RFC 0059 store and returned as `indexFile`.
+- **SR-1 carry-forward** — the corpus is scrubbed **before** archiving/hashing, so a redacted secret never re-appears in the archive, checksum, index, or event.
+
+The `memory.compacted` event carries the additive `distillation { tokenBudget, tokensUsed, indexUpdated }` sub-object — **no new event type, error code, or SECURITY invariant** (SR-1 holds at the RFC 0012 layer). Composes RFC 0012 (compaction) + 0052 (scheduling, not advertised here) + 0059 (workspace index — the real store landed earlier this cycle). All five `distillation-*.test.ts` scenarios are live + green (no new scenarios; the M1 set flips from soft-skip to enforced). Seam-demonstrated: this host has no production `MemoryAdapter`, and `scheduled: false`. RFC 0062 `Active → Accepted` (Accepted 49 → 50, Active 10 → 9). **This completes the autonomous-agent-runtime cohort's reference-host enforcement on the in-memory host** — only RFC 0061 (the stateful `version: 5` orchestrator loop, which requires an execution-model host) remains `Active`. Additive; no existing wire-shape change.
+
 ### fix(conformance): RFC 0061 — lift the executionModel version guard to [1, 5] + document the M2-host requirement (2026-05-26)
 
 RFC 0061 M1 bumped `capabilities.schema.json §multiAgent.executionModel.version` to `maximum: 5` and added `agent-loop-version5-shape.test.ts` (which asserts `version ∈ [1, 5]`), but left `multi-agent-handoff-state-machine.test.ts` asserting `version ∈ [1, 4]` — so a host legitimately advertising `version: 5` (the very thing RFC 0061 enables) would **fail** that scenario. Corrects the handoff scenario's range guard + docstring to `[1, 5]`, matching the schema and the version-5 shape scenario.
