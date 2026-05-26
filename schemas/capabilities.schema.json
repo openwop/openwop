@@ -812,6 +812,11 @@
             }
           },
           "additionalProperties": false
+        },
+        "subRunAttestation": {
+          "type": "boolean",
+          "default": false,
+          "description": "RFC 0063 (`Active`). When `true`, host honors the optional `outputAttestation` block on `core.subWorkflow`: computes a content checksum (RFC 8785 JCS + SHA-256, the `replay.md` recipe) over a child's harvested outputs and surfaces it as the additive optional `attestation` object on the existing `core.workflowChain.event { phase: 'output.harvested' }` (RFC 0037) BEFORE applying `outputMapping`; when the config sets `requireApproval: true`, suspends the parent via an `approval` interrupt (RFC 0051) before merge and fails closed (no `accept`/`edit-accept` ⇒ no merge). Reuses RFC 0051's `approval` kind + RFC 0049 scopes for `principalScope` — no new interrupt kind, event type, or error code. Hosts that omit / `false` this flag treat `outputAttestation` as inert (blind merge, today's behavior)."
         }
       },
       "additionalProperties": true
@@ -1021,7 +1026,7 @@
     },
     "toolHooks": {
       "type": "object",
-      "description": "RFC 0060 sibling — RFC 0064 (`Draft`). Per-tool authorization + rate limiting + content-free tool-call audit fields, layered on the existing `agent.toolCalled` / `agent.toolReturned` events (RFC 0002). Generalizes the MCP-specific bridges across transports (mcp / http / native). Reuses RFC 0049's `forbidden` error + `authorization-fail-closed` invariant and the existing `rate_limited` error — no new event type, error code, or invariant.",
+      "description": "RFC 0064 (`Active`) — sibling of `heartbeat`. Per-tool authorization + rate limiting + content-free tool-call audit fields, layered on the existing `agent.toolCalled` / `agent.toolReturned` events (RFC 0002). Generalizes the MCP-specific bridges across transports (mcp / http / native). Reuses RFC 0049's `forbidden` error + `authorization-fail-closed` invariant and the existing `rate_limited` error — no new event type, error code, or invariant.",
       "required": ["supported"],
       "additionalProperties": false,
       "properties": {

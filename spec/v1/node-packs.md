@@ -125,6 +125,32 @@ Hosts that want to carry additional fields (e.g., aggregate `childOutcome` enum,
 
 **Conformance:** `conformance/src/scenarios/subworkflow.test.ts` and the `conformance-subworkflow-parent`/`conformance-subworkflow-child` fixtures exercise the contract end-to-end.
 
+#### `outputAttestation` — verify-before-merge (RFC 0063, `Active`)
+
+**Why this exists.** `outputMapping` merges a child's outputs into the parent the instant the child reaches `completed`, with no integrity check and no gate. For autonomous fan-out — a supervisor dispatching N workers whose artifacts are merged back — blind merge means one compromised or hallucinated child artifact silently enters the parent's state. `outputAttestation` adds opt-in *verification before merge*: a content checksum the parent can verify, and an optional approval gate that suspends before the merge.
+
+**Capability flag:** `capabilities.agents.subRunAttestation: true` (RFC 0063). Hosts that omit / `false` this flag treat `outputAttestation` as inert — blind merge, exactly today's behavior — and MUST NOT refuse a workflow that carries the block (it is forward-compatible advisory config, unlike `inputMapping`).
+
+**Config shape (additive, all fields optional):**
+
+```json
+{
+  "outputMapping": { "<parentVar>": "<childVar>" },
+  "outputAttestation": {
+    "checksum": true,
+    "algorithm": "sha256",
+    "requireApproval": false,
+    "principalScope": ["report:write"]
+  }
+}
+```
+
+- **§B — checksum (when `checksum: true`).** After the child reaches a terminal status and its outputs are harvested but **before** `outputMapping` is applied, the host MUST (1) compute a checksum over the child's harvested output object using RFC 8785 JCS canonicalization + SHA-256 — the same recipe pinned for replay cache keys in [`replay.md`](./replay.md) (RFC 0041) — so the digest is host-independent and a parent can verify a child that ran on a different host (RFC 0040); (2) surface it as the additive optional `attestation { checksum, algorithm }` object on the existing `core.workflowChain.event { phase: 'output.harvested' }` (RFC 0037 — no new event type; that phase *is* the merge point) AND under the sub-workflow node's `node.completed` `data.outputs.attestation.checksum`; (3) apply `outputMapping` as today. The checksum is **advisory for verification** — the parent or a downstream node MAY compare it against an expected value and fail the parent on divergence; the host MUST NOT itself reject on a checksum mismatch (that is policy, expressed as a parent node).
+- **§C — approval gate (when `requireApproval: true`).** After harvest and **before** `outputMapping`, the host MUST suspend the parent via an `approval` interrupt (RFC 0051; see [`interrupt.md`](./interrupt.md)) carrying the child's outputs as the artifact (`actions: ['accept', 'reject', 'edit', 'ask']`). The merge proceeds **only** on `accept` (merge the child outputs unchanged) or `edit-accept` (merge the approver's `editedArtifactData`). On `reject` the host MUST NOT merge and MUST surface per the node's `onChildFailure` policy (`fail-parent` or `absorb`). This MUST **fail closed**: if the run terminates or the interrupt expires without an `accept`/`edit-accept`, the outputs MUST NOT be merged. (Backed by the proposed protocol-tier SECURITY invariant `subrun-merge-approval-fail-closed`, which lands with its public conformance test at reference-host implementation, not at `Active`.) One `approval` interrupt per child for v1; batched fan-out approval is a later optional optimization.
+- **§D — `principalScope` (optional).** When present, narrows the child run's effective scopes to the named RFC 0049 scopes — a child dispatched to "write a report" MAY be denied "delete data" even though the parent principal holds it. This references RFC 0049 scopes and defines no new ones; it reaffirms and tightens the existing tenant-inheritance isolation.
+
+**Compatibility.** Additive — an absent `outputAttestation` is identical to today's blind merge; the `attestation` field is an additive optional property on the existing `output.harvested` phase (its `required` array is unchanged; consumers ignore it); the gate reuses RFC 0051's `approval` interrupt with no new kind. **Conformance:** `subrun-attestation-shape.test.ts` (always-on where `core.subWorkflow` is supported) + `subrun-checksum-stable.test.ts` / `subrun-approval-gate.test.ts` / `subrun-approval-fail-closed.test.ts` (gated on `agents.subRunAttestation` + the sub-run attestation seam in [`host-sample-test-seams.md`](./host-sample-test-seams.md) §"Open seams"; soft-skip until a host wires it).
+
 ### Versioning
 
 Pack versions follow [Semantic Versioning 2.0.0](https://semver.org/) (`MAJOR.MINOR.PATCH[-PRERELEASE][+BUILD]`). Workflow definitions pin pack versions via the same range syntax as npm (`^1.2.3`, `~1.2.0`, `>=1.0 <2.0.0`).
@@ -357,6 +383,46 @@ A NodeModule whose execution involves emitting a structured envelope via an LLM 
 **Conformance.** A NodeModule that declares `requiredModelCapabilities` but is loaded by a host that does NOT advertise `capabilities.modelCapabilities.supported: true` is treated as opaque metadata — the host dispatches normally without checking. Hosts that advertise `supported: true` MUST honor the dispatch flow normated in `host-capabilities.md` §"Model-capability declarations" + §"Dispatch flow (normative)" + emit the appropriate `model.capability.*` events per `run-event-payloads.schema.json` §`modelCapabilitySubstituted` / §`modelCapabilityInsufficient`.
 
 **Engine semantics.** Before dispatching a node with `requiredModelCapabilities`, the engine MUST follow the four-step dispatch flow in `host-capabilities.md` §"Model-capability declarations." Failures terminate the run with `error.code = capability_not_provided` (existing error code; reused for model-capability gating per RFC 0031 §F).
+
+### `x-openwop-form` UX hints on `configSchema` properties (RFC 0066, `Draft`)
+
+A pack `configSchema` property MAY carry an `x-openwop-form` annotation hinting to **rendering consumers** (builder apps, low-code editors) that the field should bind to a specific picker UX — model picker, provider picker, credential picker, prompt picker — instead of the schema-default text/select rendering. Hosts MUST NOT read `x-openwop-form`; it has zero effect on host-side validation. The pack `configSchema` itself remains the authoritative validator for what the host accepts.
+
+**Vocabulary** (per [RFC 0066](../../RFCS/0066-x-openwop-form-vendor-extension.md) §A):
+
+| `kind` | Wire-store shape | Renderer behavior |
+|---|---|---|
+| `text` | `string` | Plain `<input>`. Equivalent to no extension. |
+| `textarea` | `string` | Multi-line `<textarea>`. |
+| `string-list` | `string[]` | One-per-line textarea round-tripping to `string[]`. |
+| `prompt-picker` | `string` (`PromptRef` per RFC 0027) | Dropdown from the prompt library; honors `promptKind` filter. |
+| `provider-picker` | `string` | Dropdown from `capabilities.aiProviders.supported`. |
+| `model-picker` | `string` | Dropdown from `capabilities.aiProviders.supportedModels[provider]`; reads sibling via `dependsOn`. |
+| `credential-picker` | `string` (`<provider>:<name>`) | Dropdown filtered by `provider` literal OR by sibling provider via `dependsOn`. |
+
+**Optional sub-fields.** `dependsOn` names a sibling property whose current value drives the picker's option set. `provider` (and the legacy alias `credentialProvider`) filters a `credential-picker` when no `dependsOn` is set. `promptKind` constrains a `prompt-picker` to one of `system` / `user` / `few-shot` / `schema-hint`.
+
+**Renderers MUST**:
+
+1. Treat unknown `kind` values as if `x-openwop-form` were absent (forward-compat with future vocabulary additions).
+2. When the sibling field named by `dependsOn` changes value, CLEAR the dependent field so stale `{provider: anthropic, model: gpt-5}` configurations don't survive a swap.
+3. Treat a `dependsOn` to a non-existent or non-sibling property as if `x-openwop-form` were absent (graceful fallback, not a hard error).
+
+**Renderers MUST NOT** use `x-openwop-form` to bypass `configSchema` validation. The picker constrains *what the user can pick*; the schema constrains *what the host will accept*. Both apply.
+
+**Example** (`core.ai.chatCompletion` config annotated for picker UX):
+
+```jsonc
+{
+  "properties": {
+    "provider": { "type": "string", "x-openwop-form": { "kind": "provider-picker" } },
+    "model":    { "type": "string", "x-openwop-form": { "kind": "model-picker",   "dependsOn": "provider" } },
+    "credentialRef": { "type": "string", "x-openwop-form": { "kind": "credential-picker", "dependsOn": "provider" } }
+  }
+}
+```
+
+Pack-author opt-in costs nothing for consumers that don't implement RFC 0066: the `x-*` prefix is the standard JSON Schema vendor-extension convention, accepted by every conformant validator and ignored by every renderer that doesn't recognize the key.
 
 ---
 

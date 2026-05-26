@@ -107,6 +107,12 @@ interface Run {
   error: { code: string; message: string } | null;
   cancelRequested: boolean;
   abortController: AbortController;
+  // RFC 0058 — resolved per-run wall-clock deadline (ms), already clamped to
+  // `capabilities.limits.maxRunDurationMs`. `null` ⇒ only the host ceiling
+  // (always applied) bounds the run. `timedOut` distinguishes a deadline-driven
+  // abort from a caller-driven cancel (both fire `abortController`).
+  runTimeoutMs: number | null;
+  timedOut: boolean;
 }
 
 // RFC 0056 — a quality annotation is a per-run SIDE-RESOURCE, deliberately
@@ -283,6 +289,29 @@ function buildWasmBridge(run: Run): WasmHostBridge {
 
 // ─── Workflow execution ──────────────────────────────────────────────────────
 
+// RFC 0058 — engine-side wall-clock ceiling this host enforces and advertises
+// as `capabilities.limits.maxRunDurationMs`. A caller's `runTimeoutMs` is
+// resolved as `min(runTimeoutMs, MAX_RUN_DURATION_MS)`; the ceiling always
+// applies even when the caller omits `runTimeoutMs`.
+const MAX_RUN_DURATION_MS = 600_000; // 10 minutes
+
+// RFC 0058 — finalize a run that breached its wall-clock deadline. Per
+// `run-options.md` §"Reserved keys" (`runTimeoutMs`): emit `cap.breached`
+// with `kind: 'run-duration'` so the breach is distinguishable on the wire
+// from an application failure, then transition to `failed` with `run_timeout`.
+function failRunDuration(run: Run, limitMs: number, elapsedMs: number): void {
+  appendEvent(run, 'cap.breached', {
+    data: { kind: 'run-duration', limit: limitMs, observed: elapsedMs },
+  });
+  run.status = 'failed';
+  run.error = {
+    code: 'run_timeout',
+    message: `Run exceeded its wall-clock deadline (RFC 0058 runTimeoutMs): observed ${elapsedMs}ms vs limit ${limitMs}ms.`,
+  };
+  appendEvent(run, 'run.failed', { data: run.error });
+  run.endedAt = new Date().toISOString();
+}
+
 function appendEvent(run: Run, type: string, opts: { nodeId?: string; data?: unknown } = {}): void {
   const event: RunEvent = {
     seq: run.events.length,
@@ -318,7 +347,15 @@ async function executeNode(
       try {
         await sleep(delayMs, run.abortController.signal);
       } catch {
-        // Aborted via cancel.
+        // Aborted. Distinguish a caller cancel from the RFC 0058 wall-clock
+        // deadline (both fire `abortController`) so the node-level outcome
+        // agrees with the run's terminal state: a timed-out node `failed`,
+        // a cancelled node `cancelled`. The loop's `run.timedOut` check then
+        // emits the run-level `cap.breached` + `run.failed { run_timeout }`.
+        if (run.timedOut) {
+          appendEvent(run, 'node.failed', { nodeId: node.id, data: { code: 'run_timeout' } });
+          return 'failed';
+        }
         appendEvent(run, 'node.cancelled', { nodeId: node.id });
         return 'cancelled';
       }
@@ -433,36 +470,67 @@ async function runWorkflow(run: Run): Promise<void> {
   run.status = 'running';
   appendEvent(run, 'run.started');
 
-  for (const node of workflow.nodes) {
+  // RFC 0058 — arm the wall-clock deadline. The resolved bound (clamped to
+  // MAX_RUN_DURATION_MS at run-create) is always present because the host
+  // ceiling applies even when the caller omits `runTimeoutMs`. The timer
+  // aborts in-flight work; `timedOut` lets the loop attribute the abort to the
+  // deadline rather than a caller cancel. `observed` is measured, not the
+  // limit, per `cap.breached` semantics (limit=resolvedMs, observed=elapsedMs).
+  const startMs = Date.now();
+  const deadlineMs = run.runTimeoutMs ?? MAX_RUN_DURATION_MS;
+  const timeoutTimer = setTimeout(() => {
+    run.timedOut = true;
+    run.abortController.abort();
+  }, deadlineMs);
+  // Don't let a pending deadline timer hold the event loop open; the HTTP
+  // server keeps the process alive, and the timer is always cleared in the
+  // `finally` below once the run settles.
+  timeoutTimer.unref();
+
+  try {
+    for (const node of workflow.nodes) {
+      if (run.timedOut) {
+        failRunDuration(run, deadlineMs, Date.now() - startMs);
+        return;
+      }
+      if (run.cancelRequested) {
+        run.status = 'cancelled';
+        appendEvent(run, 'run.cancelled');
+        run.endedAt = new Date().toISOString();
+        return;
+      }
+      const outcome = await executeNode(run, node);
+      // A deadline that fired mid-node aborts the node (surfacing as
+      // 'cancelled'); re-attribute it to the run-duration breach here.
+      if (run.timedOut) {
+        failRunDuration(run, deadlineMs, Date.now() - startMs);
+        return;
+      }
+      if (outcome === 'failed') {
+        run.status = 'failed';
+        appendEvent(run, 'run.failed', { data: run.error });
+        run.endedAt = new Date().toISOString();
+        return;
+      }
+      if (outcome === 'cancelled') {
+        run.status = 'cancelled';
+        appendEvent(run, 'run.cancelled');
+        run.endedAt = new Date().toISOString();
+        return;
+      }
+    }
+
     if (run.cancelRequested) {
       run.status = 'cancelled';
       appendEvent(run, 'run.cancelled');
-      run.endedAt = new Date().toISOString();
-      return;
+    } else {
+      run.status = 'completed';
+      appendEvent(run, 'run.completed');
     }
-    const outcome = await executeNode(run, node);
-    if (outcome === 'failed') {
-      run.status = 'failed';
-      appendEvent(run, 'run.failed', { data: run.error });
-      run.endedAt = new Date().toISOString();
-      return;
-    }
-    if (outcome === 'cancelled') {
-      run.status = 'cancelled';
-      appendEvent(run, 'run.cancelled');
-      run.endedAt = new Date().toISOString();
-      return;
-    }
+    run.endedAt = new Date().toISOString();
+  } finally {
+    clearTimeout(timeoutTimer);
   }
-
-  if (run.cancelRequested) {
-    run.status = 'cancelled';
-    appendEvent(run, 'run.cancelled');
-  } else {
-    run.status = 'completed';
-    appendEvent(run, 'run.completed');
-  }
-  run.endedAt = new Date().toISOString();
 }
 
 function resolveInputAsNumber(
@@ -659,6 +727,10 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
       schemaRounds: 0,
       envelopesPerTurn: 0,
       maxNodeExecutions: 1000,
+      // RFC 0058 — the host enforces this wall-clock ceiling on every run
+      // (see runWorkflow). Advertising it lets clients pre-flight a
+      // `runTimeoutMs` and pins the upper bound the value clamps to.
+      maxRunDurationMs: MAX_RUN_DURATION_MS,
     },
     supportedTransports: ['rest'],
     debugBundle: {
@@ -674,9 +746,13 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
   if (!checkAuth(req, res)) return;
 
   const bodyText = await readBody(req);
-  let parsed: { workflowId?: string; inputs?: Record<string, unknown> };
+  let parsed: {
+    workflowId?: string;
+    inputs?: Record<string, unknown>;
+    configurable?: Record<string, unknown>;
+  };
   try {
-    parsed = JSON.parse(bodyText) as { workflowId?: string; inputs?: Record<string, unknown> };
+    parsed = JSON.parse(bodyText) as typeof parsed;
   } catch {
     sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
     return;
@@ -685,6 +761,31 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
   if (typeof parsed.workflowId !== 'string') {
     sendError(res, 400, 'validation_error', 'workflowId MUST be a string.');
     return;
+  }
+
+  // RFC 0058 — resolve the per-run wall-clock bound. Per `run-options.md`
+  // §"Reserved keys", out-of-range `runTimeoutMs` is rejected at run-create
+  // (400, never at runtime); an in-range value is clamped to the advertised
+  // host ceiling via `min(runTimeoutMs, maxRunDurationMs)`. The spec types the
+  // key as `number`, so a fractional value is accepted and floored to integer
+  // ms — `cap.breached.limit` is an integer per `run-event-payloads.schema.json`.
+  let resolvedRunTimeoutMs: number | null = null;
+  const rawRunTimeoutMs = parsed.configurable?.runTimeoutMs;
+  if (rawRunTimeoutMs !== undefined) {
+    if (
+      typeof rawRunTimeoutMs !== 'number' ||
+      !Number.isFinite(rawRunTimeoutMs) ||
+      rawRunTimeoutMs < 1
+    ) {
+      sendError(
+        res,
+        400,
+        'validation_error',
+        'configurable.runTimeoutMs MUST be a positive number (milliseconds).',
+      );
+      return;
+    }
+    resolvedRunTimeoutMs = Math.min(Math.floor(rawRunTimeoutMs), MAX_RUN_DURATION_MS);
   }
 
   const workflow = workflows.get(parsed.workflowId);
@@ -728,7 +829,15 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
   }
 
   const runId = `run-${randomUUID()}`;
-  const inputs = parsed.inputs ?? {};
+  // Seed inputs from the workflow's declared variable defaults, then let
+  // caller-supplied inputs override them. The host previously ignored
+  // `variables[].defaultValue`, so an un-supplied variable silently fell back
+  // to a node-local literal — masking a fixture's intended parameters.
+  const inputs: Record<string, unknown> = {};
+  for (const variable of workflow.variables ?? []) {
+    if (variable.defaultValue !== undefined) inputs[variable.name] = variable.defaultValue;
+  }
+  Object.assign(inputs, parsed.inputs ?? {});
   const run: Run = {
     runId,
     workflowId: parsed.workflowId,
@@ -740,6 +849,8 @@ async function handleCreateRun(req: IncomingMessage, res: ServerResponse): Promi
     error: null,
     cancelRequested: false,
     abortController: new AbortController(),
+    runTimeoutMs: resolvedRunTimeoutMs,
+    timedOut: false,
   };
   runs.set(runId, run);
 
@@ -972,8 +1083,24 @@ function handleEventsPoll(
 
   const sinceParam = url.searchParams.get('since');
   const since = sinceParam !== null ? Number(sinceParam) : -1;
-  const events = run.events.filter((e) => e.seq > since);
-  const lastSeq = events.length > 0 ? events[events.length - 1]!.seq : since;
+  const filtered = run.events.filter((e) => e.seq > since);
+  const lastSeq = filtered.length > 0 ? filtered[filtered.length - 1]!.seq : since;
+
+  // Serialize each record in the canonical `run-event.schema.json` envelope
+  // (`eventId` / `sequence` / `payload`). The host's internal `RunEvent` uses
+  // `seq` / `data`; this maps to the canonical keys so the poll path matches
+  // the schema exactly (`additionalProperties: false`) — no legacy `seq` /
+  // `data` aliases, which the schema forbids. Conformance readers tolerate
+  // both via `sequence ?? seq` / `payload ?? data`.
+  const events = filtered.map((e) => ({
+    eventId: `${e.runId}-${e.seq}`,
+    runId: e.runId,
+    type: e.type,
+    sequence: e.seq,
+    payload: e.data ?? null,
+    timestamp: e.timestamp,
+    ...(e.nodeId !== undefined ? { nodeId: e.nodeId } : {}),
+  }));
 
   sendJSON(res, 200, {
     runId,

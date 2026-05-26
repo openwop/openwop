@@ -60,7 +60,9 @@ function structuralShape(events: readonly RawEvent[]): Array<{ type: unknown; no
   return events.map((e) => ({
     type: e.type,
     nodeId: e.nodeId ?? null,
-    data: e.data ?? null,
+    // Canonical `payload` (run-event.schema.json) with the legacy `data`
+    // field as a fallback for hosts that haven't migrated their envelope.
+    data: e.payload ?? e.data ?? null,
   }));
 }
 
