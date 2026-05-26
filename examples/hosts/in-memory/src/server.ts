@@ -1172,6 +1172,96 @@ async function handleToolHooksInvoke(req: IncomingMessage, res: ServerResponse):
   sendJSON(res, 200, { toolCalled, toolReturned });
 }
 
+// ─── RFC 0062 — scheduled memory distillation ("dreams") ─────────────────────
+//
+// A budgeted compaction (RFC 0012) that writes a byte-stable archive and a
+// retrievable `MEMORY-INDEX.json` workspace file (RFC 0059), emitting the
+// existing `memory.compacted` event with an additive `distillation` sub-object
+// — no parallel event. Composes RFC 0012 + 0052 + 0059. SR-1 carry-forward
+// (RFC 0012 §D) holds: a redacted secret is scrubbed before archiving + never
+// re-exposed. The cross-host driver is the `POST /v1/host/sample/memory/distill`
+// seam.
+
+const DISTILLATION_MAX_TOKEN_BUDGET = 100_000;
+
+async function handleMemoryDistill(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (!checkAuth(req, res)) return;
+  const bodyText = await readBody(req);
+  let body: {
+    memoryRef?: unknown;
+    tokenBudget?: unknown;
+    sources?: unknown;
+    indexEmitted?: unknown;
+    includeSecretCanary?: unknown;
+  };
+  try {
+    body = JSON.parse(bodyText) as typeof body;
+  } catch {
+    return void sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+  }
+  const sources = Array.isArray(body.sources) ? body.sources : ['distill-default-1', 'distill-default-2'];
+
+  // SR-1 carry-forward: scrub the corpus BEFORE archiving / hashing, so a
+  // resolved secret never enters the archive, its checksum, or the event.
+  const scrubbedCorpus = scrubSecretShaped(stableStringify(sources));
+
+  // Budget resolution: clamp to the advertised ceiling. `tokensUsed` is a
+  // deterministic estimate of the scrubbed corpus (~4 chars/token, floored).
+  // A budget below the corpus minimum fails CLOSED with no partial archive.
+  const budget = Math.min(
+    typeof body.tokenBudget === 'number' && body.tokenBudget > 0 ? body.tokenBudget : DISTILLATION_MAX_TOKEN_BUDGET,
+    DISTILLATION_MAX_TOKEN_BUDGET,
+  );
+  const tokensUsed = Math.max(16, Math.ceil(scrubbedCorpus.length / 4));
+  if (budget < tokensUsed) {
+    return void sendError(
+      res,
+      422,
+      'token_budget_exceeded',
+      `Distillation needs ~${tokensUsed} tokens but the resolved budget is ${budget}; no partial archive written (atomic).`,
+    );
+  }
+
+  // Byte-stable archive checksum: a deterministic function of the scrubbed
+  // sources (same sources ⇒ same digest, host-independent).
+  const archiveChecksum = createHash('sha256').update(scrubbedCorpus).digest('hex');
+
+  // §B index: when requested, write a content-free `MEMORY-INDEX.json` manifest
+  // to the run-owner's workspace (RFC 0059) — metadata only, no raw source
+  // content (so no secret can ride the index).
+  const indexEmitted = body.indexEmitted === true;
+  let indexFile: Record<string, unknown> | undefined;
+  if (indexEmitted) {
+    const manifest = {
+      version: 1,
+      archiveChecksum,
+      entryCount: sources.length,
+      updatedAt: new Date().toISOString(),
+    };
+    const r = workspacePutOp(
+      DEFAULT_WORKSPACE_OWNER.tenant,
+      DEFAULT_WORKSPACE_OWNER.workspace,
+      'MEMORY-INDEX.json',
+      JSON.stringify(manifest),
+      'application/json',
+      null,
+    );
+    if (r.ok) indexFile = manifest;
+  }
+
+  sendJSON(res, 200, {
+    // The existing RFC 0012 `memory.compacted` event, extended with the
+    // additive RFC 0062 `distillation` sub-object — no new event type.
+    event: {
+      type: 'memory.compacted',
+      distillation: { tokenBudget: budget, tokensUsed, indexUpdated: indexEmitted },
+    },
+    archiveChecksum,
+    indexUpdated: indexEmitted,
+    ...(indexFile !== undefined ? { indexFile } : {}),
+  });
+}
+
 // ─── Route handlers ──────────────────────────────────────────────────────────
 
 function handleOpenApi(_req: IncomingMessage, res: ServerResponse): void {
@@ -1282,6 +1372,22 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
     prePostEvents: true,
     perToolAuthorization: true,
     perToolRateLimit: true,
+  };
+
+  // RFC 0062 — scheduled, token-budgeted memory distillation ("dreams"). A
+  // budgeted compaction that writes a byte-stable archive + a retrievable
+  // `MEMORY-INDEX.json` workspace file (RFC 0059), exercised via the
+  // memory-distillation seam. Nested under `memory` (no base MemoryAdapter
+  // claimed — only the distillation sub-block).
+  capabilities.memory = {
+    distillation: {
+      supported: true,
+      maxTokenBudget: DISTILLATION_MAX_TOKEN_BUDGET,
+      scheduled: false,
+      indexEmitted: true,
+      tokenizerName: 'claude',
+      archiveRetention: 'P30D',
+    },
   };
 
   const payload = {
@@ -1953,6 +2059,9 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   }
   if (method === 'POST' && path === '/v1/host/sample/toolhooks/invoke') {
     return handleToolHooksInvoke(req, res);
+  }
+  if (method === 'POST' && path === '/v1/host/sample/memory/distill') {
+    return handleMemoryDistill(req, res);
   }
   if (WORKSPACE_FILES_PATTERN.test(path) && method === 'GET') {
     return handleWorkspaceList(req, res, url);
