@@ -88,9 +88,10 @@ export function registerMemoryCompactionSeamRoutes(app: Express): void {
         memoryRef: body.memoryRef,
         outputId: result.outputId,
         sourceCount: result.sourceCount,
-        // Host advertises trigger:'both'; a wire-driven compaction is
-        // client-requested, but 'both' is the advertised, schema-valid value.
-        trigger: 'both',
+        // The host advertises trigger:'both' (it can do host-managed OR
+        // client-requested); THIS compaction was invoked via the seam, so the
+        // event honestly reports the actual trigger of this run.
+        trigger: 'client-requested',
         byteSize: result.byteSize,
         // RFC 0012 §B: exhaustive when ≤ 100 sources; omit otherwise.
         ...(result.sourceIds.length <= 100 ? { sourceIds: result.sourceIds } : {}),

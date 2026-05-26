@@ -99,9 +99,20 @@ export function resetToolHookBuckets(): void {
   buckets.clear();
 }
 
+/** Evict expired buckets so the map can't grow unbounded across distinct
+ *  (principal, tool) pairs. Cheap O(n) sweep, triggered only past a size
+ *  threshold so the hot path stays O(1). */
+function sweepExpired(now: number): void {
+  if (buckets.size < 1024) return;
+  for (const [k, v] of buckets) {
+    if (now >= v.resetAt) buckets.delete(k);
+  }
+}
+
 function consumeToken(key: string, now: number): boolean {
   let b = buckets.get(key);
   if (!b || now >= b.resetAt) {
+    sweepExpired(now);
     b = { tokens: BUCKET_CAPACITY, resetAt: now + BUCKET_WINDOW_MS };
     buckets.set(key, b);
   }

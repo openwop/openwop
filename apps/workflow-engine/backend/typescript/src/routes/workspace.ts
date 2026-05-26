@@ -122,9 +122,21 @@ export function registerWorkspaceRoutes(app: Express): void {
     applyOp(res, ownerOf(req), { kind: 'delete', path: req.params.path });
   });
 
-  // RFC 0059 §E WCT-1 cross-owner seam — owner from the body so a single
-  // credential can drive distinct `{tenant, workspace}` pairs. Vendor-
-  // namespaced under /v1/host/sample/* per host-extensions.md.
+  log.info('workspace CRUD routes registered (RFC 0059 §C: /v1/host/workspace/files)');
+
+  // RFC 0059 §E WCT-1 cross-owner seam — owner from the BODY so a single
+  // conformance credential can drive distinct `{tenant, workspace}` pairs.
+  // SECURITY: because the owner is caller-supplied (not the authenticated
+  // identity), this seam bypasses the WCT-1 owner binding and MUST NOT be
+  // exposed in production — it is gated on OPENWOP_TEST_SEAM_ENABLED (OFF by
+  // default). The real CRUD endpoints above derive the owner from
+  // req.tenantId and are always safe to expose. Vendor-namespaced under
+  // /v1/host/sample/* per host-extensions.md.
+  if (process.env.OPENWOP_TEST_SEAM_ENABLED !== 'true') {
+    log.info('workspace cross-owner seam disabled (set OPENWOP_TEST_SEAM_ENABLED=true to enable)');
+    return;
+  }
+  log.warn('workspace cross-owner seam ENABLED — /v1/host/sample/workspace/op accepts a body-supplied owner. NEVER enable in production.');
   app.post('/v1/host/sample/workspace/op', (req, res) => {
     const body = (req.body ?? {}) as {
       tenant?: unknown;
@@ -169,6 +181,4 @@ export function registerWorkspaceRoutes(app: Express): void {
         res.status(400).json({ error: 'validation_error', details: { message: 'op must be list|get|put|delete' } });
     }
   });
-
-  log.info('workspace routes registered (RFC 0059: /v1/host/workspace/files + cross-owner seam)');
 }
