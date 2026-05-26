@@ -11,6 +11,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### docs+conformance: MyndHyve round-3 — graduate RFC 0029 + 0055 + 0057 Active → `Accepted`; RFC 0058 honest non-graduation (2026-05-26)
+
+MyndHyve's round-3 closure advertises three of the then-Active RFCs live on `workflow-runtime-00217-q7c`. Each meets its own "first non-steward host advertises the surface" Accepted criterion (`RFCS/0001` §"Promotion to Accepted"), **openwop-side curl-verified** against `https://workflow-runtime-gjw5bcse7a-uc.a.run.app/.well-known/openwop` 2026-05-26:
+
+- **RFC 0029** — `capabilities.prompts.agentBindings: true` (+ `agent.promptResolved` emission). Closes its sole remaining acceptance box.
+- **RFC 0055** — `aiProviders.maxInlineMediaBytes: 10485760` + `aiProviders.modelCapabilities.advertised: ['vision-input','image-output']`. `audio-*` honestly omitted (no audio pipeline) — correct reserved-identifier discipline.
+- **RFC 0057** — `capabilities.memory.attribution.{supported: true, emitsWriteEvents: true}`; dual-emits canonical content-free `memory.written` + a vendor `x-host-myndhyve-memory-written` (MAE-3 reverse-projection). SHOULD-tier `nodeId` not yet threaded (permitted by §B).
+
+Status flipped on each RFC; `INTEROP-MATRIX.md` §"round 3" records the verified rows; README Active 9 → 6 / Accepted 50 → 53.
+
+**Honest non-graduation — RFC 0058 stays `Active`.** MyndHyve's report listed 0058 as shipped, but the curl shows `limits.maxRunDurationMs` + `maxLoopIterations` are **both absent**; their `maxNodeExecutions` / `cap.breached { kind: 'node-executions' }` is the **pre-existing recursionLimit bound** (a distinct engine kind predating RFC 0058, → `recursion_limit_exceeded`), not RFC 0058's `run-duration` / `loop-iterations` surface. No RFC 0058 field is advertised, so it does not graduate; relayed to MyndHyve.
+
+MyndHyve round-3 also **deferred** 0056/0061/0062 (criteria documented) and **opted out** of 0025/0035/0036 (single-region / no-untrusted-packs / canonical-publish — same pattern as round-1 0050/0054). No openwop-side change for those. Docs/conformance-evidence only; no schema or wire-shape change.
+
 ### feat(host-postgres): implement RFC 0057 memory write-attribution (2026-05-26)
 
 Makes the Postgres host the first reference **example** host to emit `memory.written` (the workflow-engine sample already did). On run completion the host writes a content-free run-summary into its memory store (`writeMemoryEntry`, the spec-sanctioned session-end write) and records it on the run event log as `memory.written { memoryRef, memoryId, tags }` — identifiers + non-secret tags only, no `content`, no `nodeId` (a host write, not a node write) per RFC 0057 §B/§C. The `memoryId` is deterministic on `runId`, so the recorded fact stays replay-stable (§D). The event is emitted **before** `run.completed` so the terminal event remains last in the stream (eventOrdering invariant). The host now advertises `capabilities.memory.attribution { supported: true, emitsWriteEvents: true }`. All five `memory-attribution-*` scenarios — shape, emits-on-write, no-content (SECURITY `memory-attribution-no-content`), tenant-scoped (SECURITY `memory-attribution-tenant-scoped`), replay-stable — now run + pass (previously soft-skipped). Full suite green (1702/0/118); host-only, no protocol-corpus change (the RFC 0057 wire surface already landed). SQLite is intentionally **not** included — it has no memory subsystem, so advertising `emitsWriteEvents` there would attribute a write that never happens; it would need a memory adapter first.
