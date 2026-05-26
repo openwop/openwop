@@ -1238,6 +1238,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/authorization-fail-closed.test.ts
+      - conformance/src/scenarios/tool-hooks-authorization-fail-closed.test.ts
     note: |
       RFC 0049 §C: hosts advertising `capabilities.authorization.supported`
       MUST deny when a principal's role is absent, unseeded, or unresolvable

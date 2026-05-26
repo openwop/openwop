@@ -157,33 +157,13 @@ function ClientOnlyNode({ nodeId, selected, accent, badge }: {
   return (
     <div
       className={`builder-node builder-node-client-only${selected ? ' builder-node-selected' : ''}`}
-      style={{
-        background: '#fef9c3',
-        border: '1px solid #fde047',
-        borderLeftColor: accent,
-        borderLeftWidth: 3,
-        minWidth: 160,
-        maxWidth: 280,
-        padding: 8,
-        boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
-        fontFamily: 'system-ui, sans-serif',
-      }}
+      style={{ borderLeftColor: accent }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-        <span style={{ fontSize: 14 }}>{badge}</span>
-        <span className="muted" style={{ fontSize: 11 }}>{node.name}</span>
+      <div className="builder-node-client-only__head">
+        <span className="builder-node-client-only__badge">{badge}</span>
+        <span className="muted builder-node-client-only__name">{node.name}</span>
       </div>
-      <div
-        style={{
-          whiteSpace: 'pre-wrap',
-          overflowWrap: 'anywhere',
-          fontSize: 13,
-          lineHeight: 1.4,
-          color: '#451a03',
-          fontStyle: content ? 'normal' : 'italic',
-          minHeight: 20,
-        }}
-      >
+      <div className={`builder-node-client-only__body${content ? '' : ' builder-node-client-only__body--empty'}`}>
         {content || 'Empty note — edit in the Inspector →'}
       </div>
     </div>

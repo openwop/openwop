@@ -403,7 +403,7 @@ The host-extension namespace `/v1/host/sample/*` is per `host-extensions.md` §"
 
 A handful of conformance assertions exercise wire-surface contracts that ride the canonical OpenWOP REST endpoints rather than a dedicated `/v1/host/sample/*` seam. These hooks need an operator-provided seed runId (or equivalent) communicated via an `OPENWOP_TEST_*` environment variable so the conformance driver can target a known refusal-eligible state without smuggling a host-private endpoint.
 
-### 9. `POST /v1/runs/{runId}:fork mode:replay` against a past-retention runId (RFC 0039 §B MAE-3)
+### 10. `POST /v1/runs/{runId}:fork mode:replay` against a past-retention runId (RFC 0039 §B MAE-3)
 
 The MAE-3 contract is: a fork from a past event-log index MUST either serve memory-as-of that index OR refuse with `422 replay_memory_snapshot_unavailable` per `rest-endpoints.md` §"Common error codes" — silent substitution of current memory is non-conformant.
 

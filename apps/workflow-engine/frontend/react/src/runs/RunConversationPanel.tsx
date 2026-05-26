@@ -46,13 +46,12 @@ interface ConversationView {
 }
 
 interface Props {
-  runId: string;
   events: readonly RunEventDoc[];
   activeInterrupt: OpenInterrupt | null;
   onResolved(): void;
 }
 
-export function RunConversationPanel({ runId: _runId, events, activeInterrupt, onResolved }: Props) {
+export function RunConversationPanel({ events, activeInterrupt, onResolved }: Props) {
   const conversations = useMemo(() => groupConversations(events), [events]);
   // Suppress the panel entirely when the host hasn't surfaced any
   // conversation events. Keeps RunDetailPage uncluttered for the common
@@ -91,9 +90,9 @@ function ConversationCard({
   // other kinds (approval / clarification / etc.) don't apply here.
   const interruptForThis = matchInterrupt(activeInterrupt, conversationId);
   return (
-    <div className="conversation-card" style={{ borderTop: '1px solid #e5e7eb', paddingTop: 12, marginTop: 12 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-        <strong style={{ fontFamily: 'monospace', fontSize: 12 }}>{conversationId}</strong>
+    <div className="conversation-card">
+      <div className="conversation-card__head">
+        <strong className="conversation-card__id">{conversationId}</strong>
         {agentId && <span className="muted" style={{ fontSize: 12 }}>agent <code>{agentId}</code></span>}
         {capabilities.length > 0 && (
           <span className="muted" style={{ fontSize: 12 }}>
@@ -102,21 +101,14 @@ function ConversationCard({
         )}
         {closed && <span className="badge" style={{ background: '#10b981', color: '#fff', fontSize: 11 }}>closed</span>}
       </div>
-      <ol style={{ listStyle: 'none', padding: 0, margin: '8px 0' }}>
+      <ol className="conversation-turn-list">
         {turns.map((t) => (
-          <li key={t.messageId} style={{
-            display: 'flex',
-            gap: 8,
-            padding: '6px 8px',
-            background: t.role === 'user' ? '#f3f4f6' : t.role === 'agent' ? '#eef2ff' : '#fef3c7',
-            borderRadius: 6,
-            marginBottom: 4,
-          }}>
-            <span style={{ fontWeight: 600, minWidth: 60, fontSize: 12 }}>
+          <li key={t.messageId} className={`conversation-turn conversation-turn--${t.role}`}>
+            <span className="conversation-turn__role">
               {t.role}
               <span className="muted" style={{ fontSize: 11 }}> #{t.turnIndex}</span>
             </span>
-            <span style={{ flex: 1, fontSize: 13, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+            <span className="conversation-turn__content">
               {renderContent(t.content)}
             </span>
           </li>
@@ -176,7 +168,7 @@ function ResumeForm({
 
   if (kind === 'conversation.close') {
     return (
-      <div className="alert" style={{ background: '#f9fafb', border: '1px solid #e5e7eb', padding: 10, borderRadius: 6 }}>
+      <div className="alert conversation-close-banner">
         <strong style={{ fontSize: 13 }}>Confirm close</strong>
         <p className="muted" style={{ fontSize: 12, margin: '4px 0' }}>
           The agent is asking to close this conversation. Confirm to emit <code>conversation.closed</code>.
@@ -202,9 +194,19 @@ function ResumeForm({
           setError('Resume value is not valid JSON (the suspend declared an outcomeSchema, so the value MUST be a JSON document).');
           return;
         }
+        // Best-effort client-side outcomeSchema check — only the
+        // top-level `type` discriminator (cheap, no Ajv dep). The host
+        // is the authority and may reject with `400 INVALID_RESUME_VALUE`
+        // for deeper schema constraints; this just catches the obvious
+        // wrong-shape case (user typed an object when a string was
+        // expected, etc.) without waiting for the round-trip.
+        if (hasSchema) {
+          const mismatch = topLevelTypeMismatch(payload, data?.outcomeSchema);
+          if (mismatch) { setError(mismatch); return; }
+        }
         void submit(payload);
       }}
-      style={{ marginTop: 8 }}
+      className="conversation-resume-form"
     >
       {prompt && (
         <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>
@@ -235,7 +237,7 @@ function ResumeForm({
 function groupConversations(events: readonly RunEventDoc[]): ConversationView[] {
   const map = new Map<string, ConversationView>();
   for (const ev of events) {
-    const payload = (ev as { payload?: unknown }).payload;
+    const payload = ev.payload;
     if (!payload || typeof payload !== 'object') continue;
     const p = payload as Record<string, unknown>;
     const cid = typeof p.conversationId === 'string' ? p.conversationId : null;
@@ -320,4 +322,30 @@ function safeParseJson(text: string): unknown {
   } catch {
     return SAFE_PARSE_INVALID;
   }
+}
+
+/** Returns null if the value's JS top-level type matches `schema.type`
+ *  (a single string or an array). Returns a human-readable message
+ *  otherwise. Skips deeper validation (`properties`, `items`, etc.) —
+ *  the host is the schema authority. JSON Schema 2020-12 §6.1.1 type
+ *  names: "string" / "number" / "integer" / "boolean" / "object" /
+ *  "array" / "null". */
+function topLevelTypeMismatch(value: unknown, schema: Record<string, unknown> | undefined): string | null {
+  if (!schema) return null;
+  const t = schema.type;
+  const allowed: string[] = typeof t === 'string' ? [t] : Array.isArray(t) ? t.filter((s) => typeof s === 'string') : [];
+  if (allowed.length === 0) return null;
+  const actual = jsonTypeOf(value);
+  if (allowed.includes(actual)) return null;
+  if (actual === 'number' && allowed.includes('integer') && Number.isInteger(value)) return null;
+  return `Resume value top-level type is "${actual}"; the outcomeSchema requires ${allowed.map((s) => `"${s}"`).join(' or ')}.`;
+}
+
+function jsonTypeOf(v: unknown): 'string' | 'number' | 'integer' | 'boolean' | 'object' | 'array' | 'null' {
+  if (v === null) return 'null';
+  if (Array.isArray(v)) return 'array';
+  const t = typeof v;
+  if (t === 'string' || t === 'boolean') return t;
+  if (t === 'number') return Number.isInteger(v) ? 'integer' : 'number';
+  return 'object';
 }

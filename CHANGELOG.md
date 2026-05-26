@@ -14,6 +14,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 ### feat(host-postgres)+feat(host-sqlite): implement RFC 0056 run feedback/annotations (2026-05-26)
 
 Ports the RFC 0056 run feedback/annotation surface from the in-memory reference to the Postgres + SQLite hosts (previously only in-memory implemented it, so the seven `feedback-*` conformance scenarios soft-skipped on PG/SQLite). Each host now advertises `capabilities.feedback { supported: true, targets: ['run'], signals: ['rating','correction','label','flag'] }` and serves `POST /v1/runs/{runId}/annotations` (record → 201 with the persisted annotation) + `GET /v1/runs/{runId}/annotations` (list). Annotations are a per-run side-store (a new `annotations` table, not the replayable event log), so a fork starts with zero annotations (§D) and a list is inherently run-scoped (§E / CTI-1). Untrusted free-text (`signal.correction`, `note`, and every string-valued signal field) is secret-shape-scrubbed before persistence per the `annotation-content-redaction` SECURITY invariant (§E / SR-1); unknown `signal` keys are rejected (`additionalProperties:false`). All 7 `feedback-*` scenarios now pass on both hosts; full suites green (Postgres 1700/0/118, SQLite 1714/0/104). Host-only; no protocol-corpus change (the wire surface — openapi `recordAnnotation`/`listAnnotations`, asyncapi `run.annotated`, `capabilities.feedback`, `annotation.schema.json` — already landed with RFC 0056). The optional `run.annotated` SSE notification is not yet emitted (matches the in-memory reference; no scenario exercises it).
+### docs(rfc-0064): /code-review follow-ups on the M2 enforcement (2026-05-25)
+
+Two findings from a `/code-review` pass over the RFC 0064 M2 commit. Docs + one code comment; no schema, behavior, or wire-shape change.
+
+- **conformance.md — seam-demonstration honesty.** Documented that the in-memory host has no production agent-tool-calling runtime, so the toolHooks contract is exercised entirely via the seam: the fail-closed authorization (unevaluable scope → `forbidden`; no resolver, so scoped tools are never granted) and the SR-1-redacted `argsHash` are real logic, but **`perToolRateLimit` is a simulation hint, not a real token bucket** — the host keeps no per-`(principal, tool)` bucket state and returns `rate_limited` only on the seam's `simulateRateLimitExhausted`. Keeps the production discovery advertisement from reading as "this host rate-limits real tool calls."
+- **server.ts** comment noting `toolName` is accepted for request-shape fidelity but unused by the simulation (a production host keys a real bucket on `(principal, toolName)`).
+
+### RFC 0064 (host.toolHooks) — Milestone 2: reference-host enforcement; promote Active → `Accepted` (2026-05-25)
+
+The in-memory reference host now implements the RFC 0064 tool-invocation-hooks surface end-to-end, taking it from `Active` to **`Accepted`**. It advertises `capabilities.toolHooks { supported: true, prePostEvents: true, perToolAuthorization: true, perToolRateLimit: true }` and implements the documented `POST /v1/host/sample/toolhooks/invoke` seam:
+
+- **§B content-free audit** — `agent.toolCalled` carries `argsHash` (= SHA-256 of the **SR-1-redacted** JCS serialization of the args; a resolved secret is scrubbed before hashing, so the plaintext never enters the hash input or any emitted field) + `principal` + `transport`; `agent.toolReturned` carries `status` + (on `ok`) a non-negative `durationMs`.
+- **§C per-tool authorization (fail-closed)** — a non-empty `requiredScopes` is unevaluable on this non-RBAC host, so `status: 'forbidden'` and the tool never runs (no `durationMs`). This is the per-tool application of RFC 0049's `authorization-fail-closed` invariant; `tool-hooks-authorization-fail-closed.test.ts` is added to that invariant's test set (**no new invariant**).
+- **§D per-tool rate limit** — `simulateRateLimitExhausted` yields `status: 'rate_limited'`.
+
+All five `tool-hooks-*.test.ts` scenarios (shape always-on + content-free / authorization-fail-closed / rate-limit / secret-redaction) are live + green (no new scenarios; the M1 set flips from soft-skip to enforced). Reuses RFC 0002 events + RFC 0049 `forbidden` + the existing `rate_limited` — **no new event type, error code, or invariant**. RFC 0064 `Active → Accepted` (Accepted 48 → 49, Active 11 → 10). **This completes the entire autonomous-agent-runtime cohort's reference-host enforcement** (0058 runTimeoutMs + 0059 + 0060 + 0063 + 0064; the 0061 stateful loop + 0062 distillation remain Active pending their host wiring). Additive; no existing wire-shape change.
+
+### docs(rfc-0063): /code-review follow-ups on the M2 enforcement (2026-05-25)
+
+Four findings from a `/code-review` pass over the RFC 0063 M2 commit. Docs only; no schema, host-code, or wire-shape change.
+
+- **§D `principalScope` scoped out for this host.** `examples/hosts/in-memory/conformance.md` now states that RFC 0063 §D (narrow the approval to RFC 0049 scopes) is accepted-but-not-enforced on this non-RBAC host and is exercised on an RFC-0049-capable host — the `Accepted` claim covers §B (checksum) + §C (the `subrun-merge-approval-fail-closed` merge gate).
+- **Checksum canonicalization note.** Documented that the host's `stableStringify`-based checksum is effectively RFC-8785-conformant for JSON-representable values (RFC 8785's number/string rules are defined in ECMAScript terms); a production cross-host deployment with exotic numeric forms SHOULD pin a vetted RFC 8785 library.
+- **conformance.md** measurement-header annotation extended to include the RFC 0063 enforcement landing.
+- **INTEROP-MATRIX** in-memory row records the new `capabilities.agents.subRunAttestation` advertisement.
+
+### docs(spec): fix duplicate `### 9` heading in host-sample-test-seams.md (RFC 0061 /code-review follow-up) (2026-05-26)
+
+Two seams shared the heading number `### 9.` — the RFC 0059-M2 "Workspace cross-owner driver" (inserted at 9, referenced as `§9` in `CHANGELOG.md` / `RFCS/0059` / the in-memory `conformance.md`) and the older RFC 0039 "`POST /v1/runs/{runId}:fork mode:replay`" fork seam. Surfaced during the RFC 0061 `/code-review`; confirmed pre-existing (a parallel session's RFC 0059-M2 reused the number). Renumbered the fork seam to `### 10.` — it is referenced by number nowhere, and the workspace `§9` cross-refs stay correct. Prose-only; no schema, wire-shape, or seam-contract change.
 
 ### RFC 0063 (core.subWorkflow output attestation) — Milestone 2: reference-host enforcement; promote Active → `Accepted` (2026-05-25)
 
