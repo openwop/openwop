@@ -511,12 +511,19 @@ const MAX_RUN_DURATION_MS = Number(process.env.OPENWOP_MAX_RUN_DURATION_MS ?? 3_
 // transition to `failed` with `error.code = 'run_timeout'`. `observed` is the
 // measured elapsed wall-clock (> `limit`, the resolved deadline).
 function failRunDuration(runId: string, limitMs: number, elapsedMs: number): void {
+  // The deadline timer firing proves the run genuinely exceeded `limitMs`, so
+  // `observed` MUST be strictly greater than `limitMs` (run-event-payloads
+  // §capBreached). Integer-millisecond measurement (`Date.now() - runStartMs`)
+  // occasionally reads exactly `limitMs` at the boundary even though real
+  // elapsed is fractionally past it; floor to `limitMs + 1` to honor the
+  // strict-exceedance invariant without misreporting (true elapsed > limit).
+  const observed = Math.max(elapsedMs, limitMs + 1);
   appendEvent(runId, 'cap.breached', {
-    data: { kind: 'run-duration', limit: limitMs, observed: elapsedMs },
+    data: { kind: 'run-duration', limit: limitMs, observed },
   });
   const error = {
     code: 'run_timeout',
-    message: `Run exceeded its wall-clock deadline (RFC 0058 runTimeoutMs): observed ${elapsedMs}ms vs limit ${limitMs}ms.`,
+    message: `Run exceeded its wall-clock deadline (RFC 0058 runTimeoutMs): observed ${observed}ms vs limit ${limitMs}ms.`,
   };
   appendEvent(runId, 'run.failed', { data: error });
   setRunTerminal(runId, 'failed', error);

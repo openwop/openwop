@@ -300,13 +300,19 @@ const MAX_RUN_DURATION_MS = 600_000; // 10 minutes
 // with `kind: 'run-duration'` so the breach is distinguishable on the wire
 // from an application failure, then transition to `failed` with `run_timeout`.
 function failRunDuration(run: Run, limitMs: number, elapsedMs: number): void {
+  // The deadline timer firing proves the run genuinely exceeded `limitMs`, so
+  // `observed` MUST be strictly greater than `limitMs` (run-event-payloads
+  // §capBreached). Integer-millisecond measurement occasionally reads exactly
+  // `limitMs` at the boundary even though real elapsed is fractionally past
+  // it; floor to `limitMs + 1` to honor the strict-exceedance invariant.
+  const observed = Math.max(elapsedMs, limitMs + 1);
   appendEvent(run, 'cap.breached', {
-    data: { kind: 'run-duration', limit: limitMs, observed: elapsedMs },
+    data: { kind: 'run-duration', limit: limitMs, observed },
   });
   run.status = 'failed';
   run.error = {
     code: 'run_timeout',
-    message: `Run exceeded its wall-clock deadline (RFC 0058 runTimeoutMs): observed ${elapsedMs}ms vs limit ${limitMs}ms.`,
+    message: `Run exceeded its wall-clock deadline (RFC 0058 runTimeoutMs): observed ${observed}ms vs limit ${limitMs}ms.`,
   };
   appendEvent(run, 'run.failed', { data: run.error });
   run.endedAt = new Date().toISOString();
