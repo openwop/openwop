@@ -15,6 +15,7 @@ import { RunAnalyticsPanel } from './RunAnalyticsPanel.js';
 import { RunFeedback } from './RunFeedback.js';
 import { RunOpsPanel } from './RunOpsPanel.js';
 import { RunMemoryPanel } from './RunMemoryPanel.js';
+import { RunConversationPanel } from './RunConversationPanel.js';
 import { RenderInterrupt } from '../interrupts/RenderInterrupt.js';
 
 export function RunDetailPage() {
@@ -261,6 +262,16 @@ export function RunDetailPage() {
       <RunCostPanel events={events} />
       <RunHandoffMap events={events} />
       <RunAgentTrace events={events} />
+      <RunConversationPanel
+        runId={runId}
+        events={events}
+        activeInterrupt={activeInterrupt}
+        onResolved={async () => {
+          const snap = await getRun(runId);
+          setSnapshot(snap);
+          await refreshInterrupts();
+        }}
+      />
       <RunOpsPanel runId={runId} events={events} />
       <RunMemoryPanel runId={runId} status={snapshot?.status} />
 
