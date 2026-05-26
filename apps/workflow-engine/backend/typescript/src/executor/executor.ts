@@ -97,6 +97,12 @@ export interface ExecuteRunResult {
  * Emit the canonical terminal-failure event sequence: `node.failed`
  * (when a node was active) → `run.failed` → update run record.
  */
+/** RFC 0058 — host wall-clock ceiling per run, in milliseconds. Advertised
+ *  as `capabilities.limits.maxRunDurationMs` (`routes/discovery.ts`) and used
+ *  as the upper bound when resolving `RunOptions.configurable.runTimeoutMs`
+ *  below. MUST equal the advertised value (advertise/enforce must agree). */
+export const RUN_DURATION_CEILING_MS = 600_000;
+
 async function emitTerminalFailure(input: {
   storage: Storage;
   runId: string;
@@ -829,6 +835,42 @@ async function executeRunBody(input: ExecuteRunBodyInput): Promise<ExecuteRunRes
     ? recursionLimitRaw
     : Number.POSITIVE_INFINITY;
 
+  /** Per RFC 0058 — wall-clock run bound. The effective deadline is
+   *  `min(configurable.runTimeoutMs, host ceiling)`; the host ceiling always
+   *  applies once advertised (`run-options.md §runTimeoutMs`: "Absent ⇒ only
+   *  the host ceiling applies"). Measured from drain start ≈ `run.started`;
+   *  time a run spends suspended for human input does not count against it
+   *  (the clock is re-anchored when the executor re-enters on resume). On
+   *  breach we emit `cap.breached {kind:'run-duration'}` then `run.failed`
+   *  with `error.code:'run_timeout'`, mirroring the node-executions path. */
+  const runTimeoutRaw = (run.configurable as Record<string, unknown> | undefined)?.runTimeoutMs;
+  const requestedTimeoutMs = typeof runTimeoutRaw === 'number' && runTimeoutRaw > 0 ? runTimeoutRaw : undefined;
+  const effectiveTimeoutMs = requestedTimeoutMs !== undefined
+    ? Math.min(requestedTimeoutMs, RUN_DURATION_CEILING_MS)
+    : RUN_DURATION_CEILING_MS;
+  const runStartMs = Date.now();
+  const runDeadlineAt = runStartMs + effectiveTimeoutMs;
+  const breachRunDuration = async (): Promise<ExecuteRunResult> => {
+    const observed = Date.now() - runStartMs;
+    // Per RFC 0058 §C the breach event PRECEDES run.failed (same ordering the
+    // node-executions breach relies on). `limit` = resolved ms, `observed` =
+    // elapsed ms; both recorded so replay/:fork reuse them verbatim.
+    await eventLog.append({
+      runId: run.runId,
+      type: 'cap.breached',
+      payload: { kind: 'run-duration', limit: effectiveTimeoutMs, observed },
+    });
+    await emitTerminalFailure({
+      storage,
+      runId: run.runId,
+      error: {
+        code: 'run_timeout',
+        message: `Run exceeded effective runTimeoutMs=${effectiveTimeoutMs}ms (elapsed ${observed}ms).`,
+      },
+    });
+    return { status: 'failed' };
+  };
+
   function launch(nodeId: string): void {
     const nodeRef = nodeById.get(nodeId);
     const task = (async () => {
@@ -904,6 +946,9 @@ async function executeRunBody(input: ExecuteRunBodyInput): Promise<ExecuteRunRes
    * can run without external input.
    */
   while (true) {
+    // RFC 0058 — trip the wall-clock bound before scheduling more work.
+    if (Date.now() >= runDeadlineAt) return await breachRunDuration();
+
     const slots = Math.max(0, maxConcurrency - inflight.size);
     const batch = slots > 0 ? popReady(slots, snapshot) : [];
 
@@ -926,8 +971,18 @@ async function executeRunBody(input: ExecuteRunBodyInput): Promise<ExecuteRunRes
       // No newly-ready nodes; wait for one in-flight node to settle so we
       // can re-evaluate readiness. Promise.race resolves as soon as any
       // pending task settles (Note: .finally already removed it from the
-      // set by the time we re-enter the loop).
-      await Promise.race(inflight);
+      // set by the time we re-enter the loop). RFC 0058: race that wait
+      // against the remaining deadline so a single long-running node can't
+      // blow past the wall-clock bound unbounded.
+      const remaining = Math.max(0, runDeadlineAt - Date.now());
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const deadlineHit = new Promise<true>((resolve) => {
+        timer = setTimeout(() => resolve(true), remaining);
+      });
+      const settled = Promise.race(inflight).then(() => false as const);
+      const timedOut = await Promise.race([settled, deadlineHit]);
+      if (timer) clearTimeout(timer);
+      if (timedOut) return await breachRunDuration();
       continue;
     }
 

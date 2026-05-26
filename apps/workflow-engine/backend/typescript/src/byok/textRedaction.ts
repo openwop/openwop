@@ -74,6 +74,27 @@ export function sanitizeFreeTextDeep(value: unknown): unknown {
 }
 
 /**
+ * RFC 0012 §D — SR-1 carry-forward redaction for compaction-derived
+ * content. When many short-lived MemoryEntry rows collapse into one
+ * distilled entry, source-side leak signatures MUST be re-substituted with
+ * the canonical `[REDACTED:<id>]` placeholder — never echoed verbatim, never
+ * silently stripped (stripping loses audit signal). This converts the two
+ * non-canonical source forms seen in practice plus the standard flat-string
+ * key shapes:
+ *   - `[BYOK:<id>]`        → `[REDACTED:byok]`        (BYOK ephemeral ref echo)
+ *   - `<REDACTED:<id>>`    → `[REDACTED:<id>]`        (upstream non-canonical marker)
+ *   - `sk-*` / `xai-*` / `Bearer *` / 32+hex via `sanitizeFreeText`.
+ *
+ * @see SECURITY/invariants.yaml `memory-compaction-sr-1-carry-forward`
+ */
+export function redactForCompaction(content: string): string {
+  const remarked = content
+    .replace(/\[BYOK:[^\]]*\]/g, '[REDACTED:byok]')
+    .replace(/<REDACTED:([^>]*)>/g, (_m, id: string) => `[REDACTED:${id.length > 0 ? id : 'source'}]`);
+  return sanitizeFreeText(remarked);
+}
+
+/**
  * Local type guard — narrows `unknown` to `Record<string, unknown>`.
  *
  * Without this, the recursive walk above needs an `as Record<string,

@@ -160,6 +160,16 @@ export function registerDiscoveryRoutes(app: Express, _deps: Deps): void {
 }
 
 function buildAdvertisement(config: AppConfig): Record<string, unknown> {
+  // Honest advertise/enforce parity (capabilities.md): seam-only capabilities
+  // are advertised ONLY when their (test-seam) implementation is reachable. A
+  // default deploy claims only the production-wired surface — runTimeoutMs +
+  // workspace (real executor wiring / real CRUD endpoints). This mirrors the
+  // existing multiAgent/sandbox env-gating convention (a not-fully-wired
+  // capability OMITS itself by default rather than over-claim in
+  // /.well-known/openwop).
+  const seamEnabled = process.env.OPENWOP_TEST_SEAM_ENABLED === 'true';
+  const compactionEnabled = process.env.OPENWOP_TEST_TRIGGER_COMPACTION === 'true';
+  const phase5 = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_5 === 'true';
   return {
     protocolVersion: '1.1',
     implementation: {
@@ -200,6 +210,56 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       schemaRounds: 3,
       envelopesPerTurn: 32,
       maxNodeExecutions: 1000,
+      // RFC 0058 — wall-clock ceiling per run; upper bound for
+      // RunOptions.configurable.runTimeoutMs. Breach emits
+      // cap.breached{kind:'run-duration'} + error run_timeout. MUST equal
+      // RUN_DURATION_CEILING_MS in executor/executor.ts (advertise/enforce
+      // must agree).
+      maxRunDurationMs: 600_000,
+      // RFC 0058 + RFC 0061 — ceiling on agent-loop iterations (orchestrator
+      // turns). Advertised ONLY under phase5, when host/agentLoop.ts's
+      // re-entrant loop (the surface that actually counts turns + breaches
+      // cap.breached{kind:'loop-iterations'}) is advertised. The linear-walk
+      // executeRun path does not count orchestrator turns, so claiming this
+      // unconditionally would over-advertise an unenforced bound.
+      ...(phase5 ? { maxLoopIterations: 100 } : {}),
+    },
+    // RFC 0064 — per-tool authorization + rate-limit + content-free audit.
+    // This host demonstrates the contract through the
+    // `POST /v1/host/sample/toolhooks/invoke` seam (host/toolHooks.ts); the
+    // live MCP `tools/call` path is not yet hooked. So advertise ONLY when
+    // the seam is reachable (OPENWOP_TEST_SEAM_ENABLED) — never over-claim
+    // toolHooks on a production deploy where no path emits the events.
+    ...(seamEnabled
+      ? {
+          toolHooks: {
+            supported: true,
+            prePostEvents: true,
+            perToolAuthorization: true,
+            perToolRateLimit: true,
+          },
+        }
+      : {}),
+    // RFC 0052 — time-based run initiation. The once-per-tick + missed-tick
+    // policy is demonstrated through the deterministic-clock
+    // `POST /v1/host/sample/scheduling/tick` seam (host/schedulingService.ts);
+    // no clock yet fires real runs from the trigger node. Advertise ONLY when
+    // the seam is reachable. `delayed`/`calendar` honestly absent.
+    ...(seamEnabled
+      ? {
+          scheduling: {
+            supported: true,
+            cron: true,
+            maxFutureHorizon: 'P30D',
+          },
+        }
+      : {}),
+    // RFC 0059 — durable, {tenant, workspace}-scoped file layer (host/
+    // workspaceStore.ts). §C CRUD + If-Match/etag + maxFileBytes, §E WCT-1
+    // owner isolation + WSR-1 SR-1 redaction. Not `versioned` (latest-only).
+    workspace: {
+      supported: true,
+      maxFileBytes: 65_536,
     },
     supportedTransports: ['rest', 'sse'],
     stream: { modes: ['values', 'updates', 'messages', 'debug'] },
@@ -435,7 +495,17 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       // (GET /v1/host/sample/memory). RFC 0057: it DOES attribute those
       // writes via the content-free `memory.written` event, so it advertises
       // attribution independently of the adapter contract.
-      memory: { supported: false, attribution: { supported: true, emitsWriteEvents: true } },
+      // RFC 0012 — compaction. The host distills its internal longTerm
+      // entries into one SR-1-redacted archive + emits `memory.compacted`,
+      // but the ONLY trigger is the `/v1/test/memory/{seed,compact}` seam
+      // (gated on OPENWOP_TEST_TRIGGER_COMPACTION) — there is no automatic
+      // host-managed or production client trigger. So advertise compaction
+      // ONLY when that seam is reachable, never on a default deploy.
+      memory: {
+        supported: false,
+        attribution: { supported: true, emitsWriteEvents: true },
+        ...(compactionEnabled ? { compaction: { supported: true, trigger: 'both' } } : {}),
+      },
       // RFC 0023 §B.2 — capabilities.conformance.mockAgent. Reference
       // host registers core.conformance.mock-agent unconditionally
       // (see bootstrap/conformanceMockAgent.ts). Production deployments
@@ -534,7 +604,14 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       // scenarios soft-skip on absence per the existing convention.
       ...(process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL === 'true'
         ? (() => {
-            const phase4 = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_4 === 'true';
+            // RFC 0061 — version 5 (stateful agent-loop lifecycle). Ladder is
+            // additive: phase5 ⇒ phase4 ⇒ … ⇒ phase1. A `version: 5`
+            // advertisement is only honest when the re-entrant loop with the
+            // observable per-turn `iteration` counter (host/agentLoop.ts) +
+            // statefulResume are implemented.
+            // `phase5` is hoisted at the buildAdvertisement scope (also gates
+            // limits.maxLoopIterations); reuse it here.
+            const phase4 = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_4 === 'true' || phase5;
             // The execution-model ladder is ADDITIVE: a host advertising
             // version N MUST implement phases 1..N (capabilities.schema.json
             // §multiAgent.executionModel.version). So a higher phase implies
@@ -553,7 +630,7 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
             })();
             // Version advertisement is the ceiling of phases the host
             // implements per RFCS/0037-multi-agent-execution-model.md §"Phases".
-            const version = phase4 ? 4 : phase3 ? 3 : phase2 ? 2 : 1;
+            const version = phase5 ? 5 : phase4 ? 4 : phase3 ? 3 : phase2 ? 2 : 1;
             return {
               multiAgent: {
                 executionModel: {
@@ -588,6 +665,10 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
                         },
                       }
                     : {}),
+                  // RFC 0061 §A/§D — version 5: a clarify/escalate suspend
+                  // resumes the loop at the same iteration with the snapshot
+                  // lineage + iteration counter intact (host/agentLoop.ts).
+                  ...(phase5 ? { statefulResume: true } : {}),
                 },
               },
             };
