@@ -477,7 +477,11 @@ export function BuilderShell({ onNewWorkflow }: Props) {
         </div>
       )}
       {publishHelp && (
-        <div className="alert builder-toolbar-error" style={{ background: '#eff6ff', border: '1px solid #bfdbfe' }}>
+        <div
+          className="alert alert--publish builder-toolbar-error"
+          role="status"
+          aria-live="polite"
+        >
           <strong>Publish <code>{publishHelp.slug}</code> to packs.openwop.dev</strong>
           <p style={{ fontSize: 12, margin: '4px 0 8px' }} className="muted">
             Registry submission is PR-based ({(publishHelp.size / 1024).toFixed(1)} KB manifest).
