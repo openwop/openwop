@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0057 |
 | **Title** | An optional `memory.attribution` capability + additive `memory.written` RunEvent carrying `{ memoryRef, memoryId, nodeId?, agentId? }`, so a consumer can see which node wrote which memory entry during a run — making per-node memory provenance observable on the wire without exposing memory content |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-25 |
-| **Updated** | 2026-05-25 |
+| **Updated** | 2026-05-26 (Active → **Accepted** — non-steward host advertises it: MyndHyve `workflow-runtime` advertises `capabilities.memory.attribution.{supported: true, emitsWriteEvents: true}` live on `https://workflow-runtime-gjw5bcse7a-uc.a.run.app/.well-known/openwop` (openwop-side curl-verified 2026-05-26, revision `workflow-runtime-00217-q7c`) and dual-emits the canonical content-free `memory.written` (honoring `memory-attribution-no-content`) alongside a vendor `x-host-myndhyve-memory-written` variant retained for MAE-3 reverse-projection. Honest omission: the SHOULD-tier `nodeId` field is not yet threaded through MyndHyve's `ServerMemoryWriteInput` — permitted by RFC 0057 §B ("writes with no node attribution"), not blocking. 2026-05-25 (Draft → Active).) |
 | **Affects** | `schemas/capabilities.schema.json` (additive `memory.attribution` block) · `schemas/run-event.schema.json` (additive `memory.written` event type) · `spec/v1/agent-memory.md` (write-attribution as an observability surface; closes an Open spec gap) · `spec/v1/observability.md` (event vocabulary row) · `spec/v1/replay.md` (the event is a recorded fact, re-emitted from the log) · `SECURITY/invariants.yaml` (no-content / SR-1 + CTI-1 invariants) · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |

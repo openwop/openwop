@@ -14,6 +14,37 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 ### feat(host-sqlite): implement RFC 0057 memory write-attribution (2026-05-26)
 
 Follows the Postgres landing — SQLite now also emits `memory.written`. Adds a minimal write-side memory store (`memory_entries` table + a `writeMemoryEntry` helper; no protocol read-side) so the host can attribute its session-end run-summary write. On completion the host writes a content-free run-summary and records it on the run event log as `memory.written { memoryRef, memoryId, tags }` — identifiers + non-secret tags only, no `content`, no `nodeId` (host write, not node write) per RFC 0057 §B/§C — emitted **before** `run.completed` so the terminal event stays last (eventOrdering invariant). The `memoryId` is deterministic on `runId` → replay-stable (§D). Advertises `memory: { supported: false, attribution: { supported: true, emitsWriteEvents: true } }` (attribution-only; the RFC 0004 read-side list/get/TTL is not implemented, mirroring the workflow-engine sample's stance — so the `agentMemory*` read scenarios continue to soft-skip). All five `memory-attribution-*` scenarios now run + pass; full SQLite suite green (1716/0/104). Host-only; no protocol-corpus change.
+### feat(app)+docs: RFC 0040 Phase 3 cross-host causation on workflow-engine; corrected RFC 0061/0058 M2-host finding (2026-05-26)
+
+Implements the architect-plan **Phase 0** (the prerequisite for RFC 0061's `version: 5`) and records the **corrected M2-host finding** the deeper executor read surfaced.
+
+- **`apps/workflow-engine` — RFC 0040 Phase 3 (cross-host causation).** The reference app now advertises `capabilities.multiAgent.executionModel.{version: 3, crossHostCausation: {supported: true, hostId, ancestryEndpointSupported: true}}` under a new `OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_3` env (the ladder is additive — `phase4` ⇒ `phase3` ⇒ `phase2`), and serves `GET /v1/runs/{runId}/ancestry` (`run-ancestry-response.schema.json` shape: `parent: null` for a top-level run, `{ runId, hostId, cause }` for a same-host child). This closes the **version-3 ladder rung the prior `version: 4` advertisement skipped** (it advertised `replayDeterminism` (Phase 4) without `crossHostCausation` (Phase 3) — an additive-ladder honesty gap). Discovery + ancestry behavior verified directly (matches the `cross-host-causation-shape` + `cross-host-ancestry-endpoint` repo dev-suite scenarios; the app's vendored conformance pkg predates them). App-only; no protocol-corpus wire change.
+- **Corrected RFC 0061/0058 M2-host finding.** A deeper read of the workflow-engine executor refuted the architect review's premise that v5 is "a one-phase extension": the executor is **single-pass `core.dispatch`** (consumes a supervisor's `decisions[]` array in **one** node execution), **NOT a re-entrant agent loop**. RFC 0061's core model (per-iteration snapshot inputs §C, suspend-and-resume-at-same-iteration §D) is re-entrant; advertising `version: 5` + `statefulResume` on a single-pass host would be the in-memory host's overclaim one rung higher. RFC 0061 §Implementation-notes + RFC 0058's `maxLoopIterations` deferral now record that **M2 requires a genuine re-entrant agent-loop host** — either a workflow-engine executor rearchitecture or a non-steward runtime already running re-entrant loops (MyndHyve at `version: 4` → `5`). **RFC 0061 + the `maxLoopIterations` half of RFC 0058 stay `Active`.** Docs-only.
+
+### docs: close the RFC 0058 round-3 loop — MyndHyve retraction + agreed graduation path (2026-05-26)
+
+MyndHyve acknowledged the round-3 0058 conflation (their `maxNodeExecutions` recursionLimit bound ≠ RFC 0058's wall-clock/loop surface) and **retracted** the claim (their commit `11cacfe6b`): 0058 moved to deferred with the two fields shown `null`, plus a `discovery.test.ts` drift-gate asserting `maxRunDurationMs`/`maxLoopIterations` stay absent until host-level enforcement lands. The `INTEROP-MATRIX.md` §"round 3" 0058 note gains a "loop closed" paragraph recording the retraction + the jointly-agreed graduation path (promote per-run `maxWallClockMs` → host-level `runTimeoutMs` ceiling + `maxRunDurationMs` advertisement + `cap.breached { kind: 'run-duration' }`; wall-clock arm first, `maxLoopIterations` arm after RFC 0061). RFC 0058 stays `Active` — no openwop status change. Docs-only.
+
+### docs(rfc-0062): /code-review follow-ups on the M2 enforcement (2026-05-26)
+
+Two findings from a `/code-review` pass over the RFC 0062 M2 commit. Docs + one code comment; no schema, behavior, or wire-shape change.
+
+- **server.ts** comment noting `memoryRef` + `includeSecretCanary` are accepted for request-shape fidelity but **unused** — the seam distills `sources` directly and SR-1 scrubbing is **unconditional** (a redacted secret is always scrubbed, not gated on the flag, which is the more-correct posture).
+- **conformance.md** note that the advertised `tokenizerName: 'claude'` is **nominal**: the reference host's budget is a tokenizer-agnostic `ceil(len/4)` estimate (a best-effort approximation within the capability's stated ±10% tolerance for common prose, not a real claude tokenizer). Resolves the internal discrepancy between the advertisement and the "≈ length/4" note; a production host counts against the named tokenizer.
+
+### docs+conformance: MyndHyve round-3 — graduate RFC 0029 + 0055 + 0057 Active → `Accepted`; RFC 0058 honest non-graduation (2026-05-26)
+
+MyndHyve's round-3 closure advertises three of the then-Active RFCs live on `workflow-runtime-00217-q7c`. Each meets its own "first non-steward host advertises the surface" Accepted criterion (`RFCS/0001` §"Promotion to Accepted"), **openwop-side curl-verified** against `https://workflow-runtime-gjw5bcse7a-uc.a.run.app/.well-known/openwop` 2026-05-26:
+
+- **RFC 0029** — `capabilities.prompts.agentBindings: true` (+ `agent.promptResolved` emission). Closes its sole remaining acceptance box.
+- **RFC 0055** — `aiProviders.maxInlineMediaBytes: 10485760` + `aiProviders.modelCapabilities.advertised: ['vision-input','image-output']`. `audio-*` honestly omitted (no audio pipeline) — correct reserved-identifier discipline.
+- **RFC 0057** — `capabilities.memory.attribution.{supported: true, emitsWriteEvents: true}`; dual-emits canonical content-free `memory.written` + a vendor `x-host-myndhyve-memory-written` (MAE-3 reverse-projection). SHOULD-tier `nodeId` not yet threaded (permitted by §B).
+
+Status flipped on each RFC; `INTEROP-MATRIX.md` §"round 3" records the verified rows; README Active 9 → 6 / Accepted 50 → 53.
+
+**Honest non-graduation — RFC 0058 stays `Active`.** MyndHyve's report listed 0058 as shipped, but the curl shows `limits.maxRunDurationMs` + `maxLoopIterations` are **both absent**; their `maxNodeExecutions` / `cap.breached { kind: 'node-executions' }` is the **pre-existing recursionLimit bound** (a distinct engine kind predating RFC 0058, → `recursion_limit_exceeded`), not RFC 0058's `run-duration` / `loop-iterations` surface. No RFC 0058 field is advertised, so it does not graduate; relayed to MyndHyve.
+
+MyndHyve round-3 also **deferred** 0056/0061/0062 (criteria documented) and **opted out** of 0025/0035/0036 (single-region / no-untrusted-packs / canonical-publish — same pattern as round-1 0050/0054). No openwop-side change for those. Docs/conformance-evidence only; no schema or wire-shape change.
 
 ### feat(host-postgres): implement RFC 0057 memory write-attribution (2026-05-26)
 
