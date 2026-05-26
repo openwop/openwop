@@ -4,7 +4,7 @@
 |---|---|
 | **RFC** | 0062 |
 | **Title** | A `memory.distillation` capability — scheduled, token-budgeted background compaction runs reusing RFC 0012's `memory.compacted` event (with an additive optional `distillation` sub-object), writing a stable archive + a memory-index workspace file; composing RFC 0012 (compaction) + RFC 0052 (scheduling) + RFC 0004 (memory) into the "dream" pattern |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-25 |
 | **Updated** | 2026-05-25 |
@@ -101,6 +101,8 @@ A distillation run — whether scheduled (RFC 0052 `schedule` trigger targeting 
 - **`distillation-stable-archive.test.ts`** — same source set + budget ⇒ byte-stable archive. (Gated.)
 - **`distillation-index-roundtrip.test.ts`** — after distillation the memory-index workspace file is retrievable + a `workspace.updated` event fired. (Gated on `indexEmitted` + `host.workspace.supported`.)
 - **`distillation-secret-carryforward.test.ts`** — a redacted secret in source memory stays redacted in the archive (SR-1). (Gated; composes with the redaction suite.)
+
+The four gated scenarios drive the **memory-distillation seam** `POST /v1/host/sample/memory/distill` (request `{ memoryRef, tokenBudget?, sources?, indexEmitted?, includeSecretCanary? }` → `{ event, archiveChecksum, indexUpdated, indexFile? }`), specified in [`host-sample-test-seams.md`](../spec/v1/host-sample-test-seams.md) §"Open seams". A host advertising `capabilities.memory.distillation.supported: true` wires it to light them up; they soft-skip on `404` until then.
 
 ## Alternatives considered
 

@@ -867,6 +867,20 @@
           "if": { "properties": { "supported": { "const": true } }, "required": ["supported"] },
           "then": { "required": ["supported", "trigger"] }
         },
+        "distillation": {
+          "type": "object",
+          "description": "RFC 0062 (`Active`). Scheduled, token-budgeted background compaction — the 'dream' pattern — built on compaction (RFC 0012) + scheduling (RFC 0052) + the workspace index (RFC 0059). A distillation run IS a compaction run with a mandatory token budget, an optional schedule, and a retrieval index wrapped around it; it reuses the `memory.compacted` event (extended with the additive optional `distillation` sub-object) rather than a parallel `memory.distilled` event. SR-1 carry-forward (RFC 0012 §D) holds — a distilled archive MUST NOT re-expose a redacted secret. Hosts that omit this block keep plain on-demand compaction (RFC 0012) or no memory.",
+          "required": ["supported"],
+          "additionalProperties": false,
+          "properties": {
+            "supported": { "type": "boolean", "description": "REQUIRED when the sub-block is present. When `true`, host honors the `distillation.tokenBudget` reserved run-option key, runs budgeted distillation over `longTerm` memory, writes a stable archive, and emits `memory.compacted` with the `distillation` sub-object." },
+            "maxTokenBudget": { "type": "integer", "minimum": 1, "description": "Largest per-run distillation token budget the host honors. A supplied `distillation.tokenBudget` is clamped to this; absent ⇒ the host defaults to this." },
+            "scheduled": { "type": "boolean", "description": "When `true`, host can initiate distillation on a schedule (requires `capabilities.scheduling`, RFC 0052). Distillation MAY also run on-demand without scheduling." },
+            "indexEmitted": { "type": "boolean", "description": "When `true`, host writes a retrievable memory-index manifest (`MEMORY-INDEX.json`, a workspace file per RFC 0059) after distillation; updating it emits `workspace.updated`." },
+            "tokenizerName": { "type": "string", "description": "Identifier of the tokenizer the budget is counted against (e.g. `claude`, `gpt-4`). The budget is best-effort-honest per this tokenizer (±10% conformance tolerance), not byte-exact." },
+            "archiveRetention": { "type": "string", "description": "ISO-8601 duration (e.g. `P30D`) the distilled archives persist before GC. Recursive distillation (distilling prior archives) is allowed; each level re-checks SR-1." }
+          }
+        },
         "attribution": {
           "type": "object",
           "description": "RFC 0057 Memory write-attribution. Hosts that emit per-node memory provenance on the run event log MAY advertise here. Advertising `emitsWriteEvents: true` commits the host to emit a `memory.written` RunEvent for every memory write a run makes (identifiers only, never content), and implies the SECURITY invariants `memory-attribution-no-content` + `memory-attribution-tenant-scoped`.",

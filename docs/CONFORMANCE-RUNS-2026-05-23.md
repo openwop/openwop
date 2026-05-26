@@ -4,12 +4,12 @@
 >
 > Re-ran the **Postgres** and **SQLite** hosts against the current `conformance/` suite after closing RFC 0022 on both. (`in-memory`, `python`, and `workflow-engine` were **not** re-measured and remain as of 2026-05-23.)
 >
-> | Host | 2026-05-23 | 2026-05-25 (post main-merge) | Remaining failures |
+> | Host | 2026-05-23 | 2026-05-25 (RFC 0058 enforced) | Remaining failures |
 > |---|---|---|---|
-> | Postgres | 6 failed | **1 failed** / 1674 passed / 118 skipped (of 1793) | `run-execution-bounds-shape` only — see RFC 0058 note below. All RFC 0022 / artifact-auth / model-capability failures closed. |
-> | SQLite | 7 failed | **1 failed** / 1688 passed / 104 skipped (of 1793) | `run-execution-bounds-shape` only — same RFC 0058 gap. |
+> | Postgres | 6 failed | **0 failed** (of ~1798) | All closed — RFC 0022 ×4, artifact-auth, model-capability, and RFC 0058 `run-execution-bounds` (note below). |
+> | SQLite | 7 failed | **0 failed** (of ~1798) | All closed — same set plus the RFC 0058 run-bound. |
 >
-> **RFC 0058 (run-execution-bounds) — new, shared, out of this branch's scope.** Merging `main` grew the suite 1745 → 1793 (RFC 0058/0059/0060 scenarios). `run-execution-bounds-shape.test.ts` now fails identically on both reference hosts because neither yet enforces `configurable.runTimeoutMs` (RFC 0058 §"run-duration breach"). It is unrelated to the RFC 0022 / artifact-auth / model-capability work on this branch and is left for the RFC 0058 host-wiring track.
+> **RFC 0058 (run-execution-bounds) — now enforced on both hosts (2026-05-25).** Merging `main` grew the suite (RFC 0058/0059/0060 scenarios), surfacing `run-execution-bounds-shape.test.ts` because neither reference host enforced `configurable.runTimeoutMs`. Both hosts now arm a per-run wall-clock deadline (`min(runTimeoutMs, maxRunDurationMs)`), emit `cap.breached { kind: 'run-duration', limit, observed }` + `error.code = 'run_timeout'` on breach, and advertise `capabilities.limits.maxRunDurationMs` (the schema-canonical location). Complements the in-memory host's RFC 0058 work (separate). A handful of `@timing-sensitive` scenarios still flake under full-suite parallelism (pass in isolation).
 >
 > **The RFC 0022 diagnosis below was wrong on both hosts — but for different reasons.**
 > - **Postgres:** RFC 0022's mapping logic and the `config.mockDispatchPlan` supervisor-mock both already shipped. The real cause was that this host never registered the canonical **`core.identity`** node (`spec/v1/node-packs.md` §`core.identity`), which every RFC 0022 child fixture uses as its noop body. The children failed `unsupported_node_type`, cascading their parents to `failed`. Registering `core.identity` (a passthrough that folds run inputs into the variable bag) closed all four RFC 0022 failures **plus** a 5th, uncounted `identity-passthrough.test.ts` failure. The RFC 0026 cost-attribution and RFC 0031 model-capability failures the prior taxonomy listed for Postgres had already closed independently (no longer reproduce).

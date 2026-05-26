@@ -11,7 +11,7 @@
 | JSON Schemas | 40 | `schemas/*.schema.json` |
 | OpenAPI operations | 37 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 263 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 268 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 66 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
@@ -23,8 +23,8 @@
 | Status | Count |
 |---|---:|
 | Accepted | 46 |
-| Active | 11 |
-| Draft | 9 |
+| Active | 12 |
+| Draft | 8 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
@@ -32,7 +32,7 @@
 | RFC 0065 | Workflow node primary-output annotation | Draft |
 | RFC 0064 | A `host.toolHooks` capability - additive authorization + timing + content-free-argument fields on the existing `agent.toolCalled` / `agent.toolReturned` events (RFC 0002), fail-closed per-tool authorization via RFC 0049 scopes (reusing the `forbidden` error + the `authorization-fail-closed` invariant), and optional per-tool rate limiting (reusing `rate_limited`) - generalizing the MCP bridges into one auditable, least-privilege tool surface without inventing parallel events | Active |
 | RFC 0063 | An optional `outputAttestation` config on `core.subWorkflow` - a content checksum surfaced on the child's terminal event, plus an optional `requireApproval` gate that suspends via an `approval` interrupt (RFC 0051) *before* `outputMapping` merges a child's outputs into the parent, so a parent can verify and approve sub-agent artifacts rather than merging them blindly | Active |
-| RFC 0062 | A `memory.distillation` capability - scheduled, token-budgeted background compaction runs reusing RFC 0012's `memory.compacted` event (with an additive optional `distillation` sub-object), writing a stable archive + a memory-index workspace file; composing RFC 0012 (compaction) + RFC 0052 (scheduling) + RFC 0004 (memory) into the "dream" pattern | Draft |
+| RFC 0062 | A `memory.distillation` capability - scheduled, token-budgeted background compaction runs reusing RFC 0012's `memory.compacted` event (with an additive optional `distillation` sub-object), writing a stable archive + a memory-index workspace file; composing RFC 0012 (compaction) + RFC 0052 (scheduling) + RFC 0004 (memory) into the "dream" pattern | Active |
 
 ## SDK Helper Coverage
 
@@ -46,8 +46,8 @@
 
 | Host | Passed | Failed | Skipped | Todo | Total | Pass rate |
 |---|---:|---:|---:|---:|---:|---|
-| Postgres reference | 1477 | 6 | 98 | 14 | 1595 | 92.6% total; ~99.6% of non-skipped (measured 2026-05-23 against suite v1.5.0 via pglite + OPENWOP_WEBHOOK_ALLOW_PRIVATE=true). Superseded 2026-05-25 (post main-merge): 1674 passed / 1 failed (of 1793). The RFC 0022 (×4 - a missing core.identity node), cost-attribution, RFC 0031 model-capability, and artifact-auth (404-vs-401, fixed via an auth-before-existence route) failures are all closed. The lone remaining failure is the new RFC 0058 run-execution-bounds-shape scenario (host doesn't yet enforce runTimeoutMs; shared with SQLite; separate track). See the 2026-05-25 update in docs/CONFORMANCE-RUNS-2026-05-23.md. |
-| SQLite reference | 1490 | 7 | 84 | 14 | 1595 | 93.4% total. Superseded 2026-05-25 (post main-merge): 1688 passed / 1 failed (of 1793) - RFC 0022 dispatch/subWorkflow mapping ported + passing, cost-attribution closed (#183), and the model-capability-insufficient RFC 0031 refusal handled by the #189 gate. The lone remaining failure is the new RFC 0058 run-execution-bounds-shape scenario (same gap as Postgres). See the 2026-05-25 update in docs/CONFORMANCE-RUNS-2026-05-23.md. |
+| Postgres reference | 1477 | 6 | 98 | 14 | 1595 | 92.6% total; ~99.6% of non-skipped (measured 2026-05-23 against suite v1.5.0 via pglite + OPENWOP_WEBHOOK_ALLOW_PRIVATE=true). Superseded 2026-05-25: 0 deterministic failures. The RFC 0022 (×4 - a missing core.identity node), cost-attribution, RFC 0031 model-capability, artifact-auth (404-vs-401), and RFC 0058 run-execution-bounds (runTimeoutMs now enforced -> cap.breached{run-duration} + run_timeout) failures are all closed. A few @timing-sensitive scenarios flake under full-suite parallelism (pass in isolation). See the 2026-05-25 update in docs/CONFORMANCE-RUNS-2026-05-23.md. |
+| SQLite reference | 1490 | 7 | 84 | 14 | 1595 | 93.4% total. Superseded 2026-05-25: 0 deterministic failures - RFC 0022 mapping ported, cost-attribution closed (#183), model-capability via the #189 gate, and RFC 0058 run-execution-bounds now enforced (runTimeoutMs -> cap.breached{run-duration} + run_timeout). See the 2026-05-25 update in docs/CONFORMANCE-RUNS-2026-05-23.md. |
 | In-memory reference | 1449 | 48 | 84 | 14 | 1595 | 90.8% total |
 | Python reference | 1391 | 60 | 130 | 14 | 1595 | 87.2% total; 100% of applicable when scoped to the host's claimed openwop-core + openwop-stream-poll + openwop-stream-sse profile set (the floor for cross-language parity) |
 | Workflow-engine reference (exhaustive-mode, post prompt-templates bundled-path bugfix: 2026-05-23) | 1525 | 2 | 56 | 14 | 1597 | 95.5% total (re-measured 2026-05-23 with OPENWOP_RATELIMIT_DISABLED=true + all Phase 4 + sandbox + multi-region + cross-engine + secret-leakage seams enabled). Prior snapshots (same-day delta): 1291 / 129 / 161 / 14 / 1595 = 80.9% (pre-d09d99c, crash-polluted); 1521 / 6 / 56 / 14 / 1597 = 95.4% (post-d09d99c, but before the promptStore.ts + promptCompose.ts bundled-path follow-up landed). The same bundled-path pattern that caused envelopeAcceptor.ts to crash also caused promptStore.ts's FIXTURES_DIR to resolve to apps/conformance-fixtures/prompt-templates (doesn't exist) under the bundled tree -> host-built-in templates never loaded -> getTemplate('conformance.prompt.writer-system') returned undefined -> prompt.composed event silently never emitted -> 4 conformance assertions failed. Both bugs share the shared _repoPath.ts:locateRepoDir() helper introduced 2026-05-23. Closes 22 behavioral assertions across the 5 new Phase 4 scenarios end-to-end (multi-region 6 + cross-engine 4 + sandbox 9 + secret-leakage 3). |
@@ -72,8 +72,8 @@
 
 ## Active Follow-Ups
 
-- 9 RFCs still `Draft` (RFC 0038, RFC 0042, RFC 0043, RFC 0050, RFC 0054, RFC 0061, RFC 0062, RFC 0065, RFC 0066) — advance with schema/conformance proof or defer.
-- 11 RFCs `Active` (RFC 0025, RFC 0029, RFC 0035, RFC 0036, RFC 0055, RFC 0056, RFC 0057, RFC 0058, RFC 0060, RFC 0063, RFC 0064) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 8 RFCs still `Draft` (RFC 0038, RFC 0042, RFC 0043, RFC 0050, RFC 0054, RFC 0061, RFC 0065, RFC 0066) — advance with schema/conformance proof or defer.
+- 12 RFCs `Active` (RFC 0025, RFC 0029, RFC 0035, RFC 0036, RFC 0055, RFC 0056, RFC 0057, RFC 0058, RFC 0060, RFC 0062, RFC 0063, RFC 0064) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.

@@ -1300,7 +1300,18 @@
         "sourceIds":   { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "Ids of entries collapsed into outputId. Hosts MAY omit when sourceCount > 100; the `compacted-from:<runId>` tag convention (RFC 0012 §C) becomes the authoritative provenance signal. When present, MUST be exhaustive within the array (no 'and N more' semantics)." },
         "sourceCount": { "type": "integer", "minimum": 1, "description": "Total source entries collapsed, including any not enumerated in `sourceIds`." },
         "trigger":     { "type": "string", "enum": ["host-managed", "client-requested", "both"], "description": "Matches `capabilities.memory.compaction.trigger`; indicates which trigger path drove this run. v1.x normates only `host-managed`." },
-        "byteSize":    { "type": "integer", "minimum": 0, "description": "Byte size of the resulting MemoryEntry.content." }
+        "byteSize":    { "type": "integer", "minimum": 0, "description": "Byte size of the resulting MemoryEntry.content." },
+        "distillation": {
+          "type": "object",
+          "description": "RFC 0062 (when `capabilities.memory.distillation.supported: true`). Present when this compaction is part of a budgeted distillation run (a scheduled or on-demand 'dream'). Absent for a plain RFC 0012 compaction. Carries the token-budget accounting + whether the memory index was refreshed — not a parallel `memory.distilled` event.",
+          "additionalProperties": false,
+          "required": ["tokenBudget", "tokensUsed"],
+          "properties": {
+            "tokenBudget":  { "type": "integer", "minimum": 1, "description": "Effective per-run budget honored (≤ advertised `maxTokenBudget`), counted against the advertised `tokenizerName`." },
+            "tokensUsed":   { "type": "integer", "minimum": 0, "description": "Total input+output tokens the distillation consumed, best-effort-honest per the advertised tokenizer (±10% tolerance). MUST be ≤ `tokenBudget` on a successful run." },
+            "indexUpdated": { "type": "boolean", "description": "Whether this run refreshed the memory-index workspace file (`MEMORY-INDEX.json`, RFC 0059). When `true`, a `workspace.updated` event was also emitted for that path." }
+          }
+        }
       },
       "additionalProperties": true
     },
