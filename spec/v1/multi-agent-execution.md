@@ -1,6 +1,6 @@
 # openwop Spec v1 — Multi-Agent Execution Model
 
-> **Status: DRAFT v1.x (filed via [RFC 0037](../../RFCS/0037-multi-agent-execution-model.md), 2026-05-21).** First installment of a four-version execution-model formalization. This document lands the **execution-loop framework + planner→worker handoff state machine** at `multiAgent.executionModel.version: 1`. Subsequent versions land as additive RFCs: [RFC 0039](../../RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md) at `version: 2` (confidence escalation + agent-memory lifecycle), [RFC 0040](../../RFCS/0040-multi-agent-cross-host-causation.md) at `version: 3` (cross-host causation), and [RFC 0041](../../RFCS/0041-multi-agent-replay-under-nondeterminism.md) at `version: 4` (replay determinism under nondeterministic models). The open-gaps table at the bottom tracks each version's follow-ups. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: DRAFT v1.x (filed via [RFC 0037](../../RFCS/0037-multi-agent-execution-model.md), 2026-05-21).** First installment of a five-version execution-model formalization. This document lands the **execution-loop framework + planner→worker handoff state machine** at `multiAgent.executionModel.version: 1`. Subsequent versions land as additive RFCs: [RFC 0039](../../RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md) at `version: 2` (confidence escalation + agent-memory lifecycle), [RFC 0040](../../RFCS/0040-multi-agent-cross-host-causation.md) at `version: 3` (cross-host causation), [RFC 0041](../../RFCS/0041-multi-agent-replay-under-nondeterminism.md) at `version: 4` (replay determinism under nondeterministic models), and [RFC 0061](../../RFCS/0061-agent-loop-lifecycle.md) at `version: 5` (stateful agent-loop lifecycle — per-iteration snapshot inputs, the observable `iteration` counter, stateful HITL resume). The open-gaps table at the bottom tracks each version's follow-ups. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ## Why this exists
 
@@ -149,6 +149,24 @@ The normative contracts live in [`replay.md`](./replay.md) §"Replay determinism
 - §B — Envelope-refusal recovery: replay-time refusal-divergence MUST emit `replay.divergedAtRefusal` and fail with `error.code: "replay_diverged_at_refusal"`. Silent substitution is non-conformant.
 - §C — Observable-output-sequence determinism: the contract is byte-equivalence at the event-log + RunSnapshot boundary, NOT bit-equivalent execution of underlying tool calls. Hosts cache the observable result, not just the tool-call bytes.
 
+## Stateful agent-loop lifecycle (RFC 0061, normative — `version >= 5`)
+
+Per [RFC 0061](../../RFCS/0061-agent-loop-lifecycle.md). Applies only when the host advertises `capabilities.multiAgent.executionModel.version >= 5`. This promotes the §"Execution loop" framework (already re-entrant + replay-deterministic) to a *stateful* lifecycle — it adds no new loop, event type, or `terminate` exit; it pins what each iteration reloads, makes the iteration count observable + bounded, and guarantees a HITL suspend resumes mid-loop without losing progress.
+
+**Iteration counter (normative).** A `version >= 5` host MUST set `runOrchestrator.decided.iteration` (additive optional field, `run-event-payloads.schema.json`) on every orchestrator turn — 1-based, monotonic, incrementing by exactly 1 per turn. This is the observable quantity `maxLoopIterations` (RFC 0058) bounds; a breach emits `cap.breached { kind: 'loop-iterations', limit: N, observed: N+1 }` + `loop_limit_exceeded`. Hosts on `version < 5` omit the field; consumers ignore it per the forward-compatibility contract.
+
+**Per-iteration state inputs (normative).** On entering orchestrator turn *i*, a `version >= 5` host MUST treat the following as the iteration's deterministic inputs, reproducible on replay:
+
+1. **Memory snapshot** — as-of the iteration's event-log index, per §"Replay carry-forward (MAE-3)" (already required at `version >= 2` + `memory.supported`). Restated here as a loop input; unchanged.
+2. **Workspace snapshot** — when `host.workspace.supported` ([RFC 0059](../../RFCS/0059-agent-workspace.md)), the workspace read snapshot as-of turn *i* per RFC 0059 §D. A `version >= 5` host WITHOUT `host.workspace` simply has no workspace input — the workspace is optional and the loop still runs.
+3. **Recent transcript** — the event-log tail, bounded by the host-advertised `executionModel.transcriptWindow` (event count) when present.
+
+Writes a turn produces (memory writes, RFC 0059 workspace `PUT`s) MUST become visible to turn *i+1*, never retroactively to turn *i* — the existing snapshot-immutability rule from §"Execution loop". This holds identically for memory and workspace writes made in the same turn.
+
+**Stateful resume (normative, when `executionModel.statefulResume: true`).** The loop already suspends on `clarify`/`escalate` (§"Execution loop"). A host advertising `statefulResume: true` MUST, on resume, continue at the **same iteration** — the `iteration` counter MUST NOT reset or skip — with the same memory + workspace snapshot lineage, so a human-in-the-loop interrupt mid-loop does not lose progress. This is a distinct claim from replay re-entrancy (deterministic replay of a completed prefix); stateful resume concerns a *live* suspend preserving the counter. A heartbeat (RFC 0060) MAY only enqueue a fresh loop run; it MUST NOT advance a suspended loop.
+
+**Acceptance + bound (existing surfaces, restated).** "Run until acceptance criteria met" is the existing `terminate` decision (§"Execution loop") — the supervisor evaluates the criteria and returns `terminate`, exiting to `run.completed`; RFC 0061 adds no mechanism, it names the pattern. "≤ N iterations" is RFC 0058's `maxLoopIterations`, bounding the iteration counter above; that bound gates on `capabilities.multiAgent.executionModel.supported` (orchestrator turns exist at `version >= 1`).
+
 ## Capability advertisement (normative)
 
 ```jsonc
@@ -167,7 +185,9 @@ The normative contracts live in [`replay.md`](./replay.md) §"Replay determinism
 | Field | Type | Description |
 |---|---|---|
 | `supported` | `boolean` | When `true`, the host implements the execution loop + handoff state machine above. Conformance scenarios gating on this flag run unconditionally on advertising hosts. |
-| `version` | `integer ≥ 1` | Profile version. `1` = handoff state machine (this document — RFC 0037, execution-loop framework + planner→worker handoff). Future versions: `2` = RFC 0039 (confidence escalation + agent-memory lifecycle), `3` = RFC 0040 (cross-host causation), `4` = RFC 0041 (replay determinism under nondeterminism). A host advertising `version: N` MUST implement all versions 1..N. |
+| `version` | `integer 1–5` | Profile version. `1` = handoff state machine (this document — RFC 0037, execution-loop framework + planner→worker handoff). `2` = RFC 0039 (confidence escalation + agent-memory lifecycle), `3` = RFC 0040 (cross-host causation), `4` = RFC 0041 (replay determinism under nondeterminism), `5` = RFC 0061 (stateful agent-loop lifecycle — per-iteration snapshot inputs, the `iteration` counter, stateful resume). A host advertising `version: N` MUST implement all versions 1..N. |
+| `statefulResume` | `boolean` | RFC 0061 (`version >= 5`). When `true`, a `clarify`/`escalate` HITL suspend resumes the loop at the same iteration with the snapshot lineage + counter intact. See §"Stateful agent-loop lifecycle". |
+| `transcriptWindow` | `integer ≥ 1` | RFC 0061 (`version >= 5`). Host-advertised count of recent event-log entries fed each orchestrator turn as the transcript input. Absent ⇒ unbounded on the wire. |
 
 Hosts that do NOT advertise this capability MAY implement RFCs 0006/0007/0022 individually with implementation flexibility on the integration semantics; conformance scenarios gating on this flag soft-skip on absence per the existing capability-gating convention.
 

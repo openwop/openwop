@@ -543,8 +543,8 @@
             "version": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 4,
-              "description": "Profile version. 1 = Phase 1 (execution-loop framework + planner→worker handoff). 2 = Phase 2 (confidence-floor escalation + agent-memory lifecycle, RFC 0039). 3 = Phase 3 (cross-host causation, follow-up RFC). 4 = Phase 4 (replay determinism under nondeterministic models, follow-up RFC). A host advertising `version: N` MUST implement all phases 1..N additively."
+              "maximum": 5,
+              "description": "Profile version. 1 = Phase 1 (execution-loop framework + planner→worker handoff). 2 = Phase 2 (confidence-floor escalation + agent-memory lifecycle, RFC 0039). 3 = Phase 3 (cross-host causation, RFC 0040). 4 = Phase 4 (replay determinism under nondeterministic models, RFC 0041). 5 = Phase 5 (stateful agent-loop lifecycle — per-iteration workspace+memory snapshot inputs, the observable `iteration` counter on `runOrchestrator.decided`, and stateful HITL resume, RFC 0061). A host advertising `version: N` MUST implement all phases 1..N additively."
             },
             "confidenceEscalationFloor": {
               "type": "number",
@@ -610,6 +610,15 @@
                   "description": "Host emits `replay.divergedAtRefusal` events + fails replay with `error.code: replay_diverged_at_refusal` per RFC 0041 §B. Hosts advertising `version: 4` MUST set this to `true`."
                 }
               }
+            },
+            "statefulResume": {
+              "type": "boolean",
+              "description": "RFC 0061 (`version >= 5`). When `true`, a `clarify`/`escalate` HITL suspend resumes the execution loop at the SAME iteration — the `runOrchestrator.decided.iteration` counter does not reset or skip — with the per-iteration memory (RFC 0039 MAE-3) + workspace (RFC 0059) snapshot lineage intact, so a mid-loop human interrupt does not lose progress. A distinct claim from plain replay re-entrancy (deterministic replay of a completed prefix); this is about a LIVE suspend preserving the counter. Omitted by hosts on `version < 5`."
+            },
+            "transcriptWindow": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "RFC 0061 (`version >= 5`). Host-advertised count of recent event-log entries the host feeds each orchestrator turn as the iteration's transcript input (§C input 3). Advertise-and-honor; not a fixed wire constant. Absent ⇒ the host does not bound the transcript window on the wire."
             }
           }
         }
