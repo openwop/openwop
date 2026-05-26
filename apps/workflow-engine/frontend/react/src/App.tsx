@@ -4,6 +4,7 @@ import { RunsIndexPage } from './runs/RunsIndexPage.js';
 import { NetworkPanel } from './devtools/NetworkPanel.js';
 import { installNetworkRecorder } from './devtools/networkRecorder.js';
 import { RunDetailPage } from './runs/RunDetailPage.js';
+import { RunAuditPage } from './runs/RunAuditPage.js';
 import { CommandCenterPage } from './runs/CommandCenterPage.js';
 import { NotificationsPage } from './notifications/NotificationsPage.js';
 import { RunComparePage } from './runs/RunComparePage.js';
@@ -102,6 +103,7 @@ export function App() {
           <Route path="/chat" element={<Navigate to="/" replace />} />
           <Route path="/runs" element={<RunsIndexPage />} />
           <Route path="/runs/:runId" element={<RunDetailPage />} />
+          <Route path="/runs/:runId/audit" element={<RunAuditPage />} />
           <Route path="/mission" element={<CommandCenterPage />} />
           <Route path="/inbox" element={<NotificationsPage />} />
           <Route path="/compare" element={<RunComparePage />} />
