@@ -10,7 +10,7 @@
  * Asserts (Phase 1 — execution-loop + handoff state machine per spec/v1/multi-agent-execution.md):
  *
  *   1. Advertisement shape: when capabilities.multiAgent.executionModel.supported
- *      is present, version MUST be integer in [1, 4]; supported MUST be boolean.
+ *      is present, version MUST be integer in [1, 5]; supported MUST be boolean.
  *
  *   2. Behavioral (gated on supported: true + fixture availability): a
  *      supervisor → next-worker → child-completed run emits the 4 expected
@@ -80,10 +80,10 @@ describe.skipIf(HTTP_SKIP)('multi-agent-handoff-state-machine: advertisement sha
     ).toBe('number');
     const v = executionModel.version as number;
     expect(
-      Number.isInteger(v) && v >= 1 && v <= 4,
+      Number.isInteger(v) && v >= 1 && v <= 5,
       driver.describe(
         'RFCS/0037-multi-agent-execution-model.md §C',
-        'version MUST be an integer in [1, 4] (1 = Phase 1 only; Phases 2-4 lift the ceiling additively)',
+        'version MUST be an integer in [1, 5] (1 = Phase 1 only; Phases 2-5 lift the ceiling additively — Phase 5 = RFC 0061 stateful agent-loop lifecycle, matching `capabilities.schema.json` §multiAgent.executionModel.version maximum)',
       ),
     ).toBe(true);
   });
