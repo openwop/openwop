@@ -26,7 +26,19 @@ export async function inspectByToken(token: string): Promise<InterruptInspection
 export interface OpenInterrupt {
   interruptId: string;
   nodeId: string;
-  kind: 'approval' | 'clarification' | 'refinement' | 'cancellation';
+  /** Open-ended per `spec/v1/interrupt.md` so new kinds (e.g. `low-confidence`,
+   *  `conversation.start` / `.exchange` / `.close`) reach the frontend without
+   *  a coordinated SDK + host bump. Consumers narrow as needed. */
+  kind:
+    | 'approval'
+    | 'clarification'
+    | 'refinement'
+    | 'cancellation'
+    | 'low-confidence'
+    | 'conversation.start'
+    | 'conversation.exchange'
+    | 'conversation.close'
+    | (string & {});
   token: string;
   data: unknown;
   resumeSchema?: Record<string, unknown>;
