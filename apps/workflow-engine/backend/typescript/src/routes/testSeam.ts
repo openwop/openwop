@@ -55,6 +55,7 @@ import {
   resolveCapabilityFlag,
 } from '../host/capabilityOverlay.js';
 import { computeLLMCacheKey } from '../providers/llmCacheKey.js';
+import { evaluateToolHook, type ToolHookRequest } from '../host/toolHooks.js';
 import { OpenwopError } from '../types.js';
 import { createLogger } from '../observability/logger.js';
 
@@ -817,6 +818,63 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
     }
     setCapabilityOverlay(body.name, value);
     res.status(200).json({ overlay: snapshotCapabilityOverlay(), set: { name: body.name, value: value ?? null } });
+  });
+
+  // RFC 0064 — tool-hooks invoke seam. Drives the conformance scenarios
+  // tool-hooks-{content-free, authorization-fail-closed, rate-limit,
+  // secret-redaction} against the host's `evaluateToolHook()` evaluator.
+  // The seam stands in for a live MCP `tools/call`: it runs the same
+  // pre/post hook pair (argsHash + per-tool authz + rate limit) and returns
+  // the additive `agent.toolCalled` / `agent.toolReturned` fields the host
+  // would emit. Per-tool authorization is fail-closed (RFC 0049 `forbidden`).
+  //
+  //   POST /v1/host/sample/toolhooks/invoke
+  //   Body: { principal, toolName, requiredScopes?, grantedScopes?, args?,
+  //           transport?, simulateRateLimitExhausted? }
+  //   Response: { toolCalled, toolReturned } (+ { error: { code } } on
+  //             forbidden/rate_limited; HTTP 403/429 respectively).
+  app.post('/v1/host/sample/toolhooks/invoke', (req, res) => {
+    const body = (req.body ?? {}) as {
+      principal?: unknown;
+      toolName?: unknown;
+      requiredScopes?: unknown;
+      grantedScopes?: unknown;
+      args?: unknown;
+      transport?: unknown;
+      simulateRateLimitExhausted?: unknown;
+    };
+    if (typeof body.principal !== 'string' || body.principal.length === 0) {
+      res.status(400).json({ error: { code: 'invalid_argument', message: 'principal required' } });
+      return;
+    }
+    if (typeof body.toolName !== 'string' || body.toolName.length === 0) {
+      res.status(400).json({ error: { code: 'invalid_argument', message: 'toolName required' } });
+      return;
+    }
+    const hookReq: ToolHookRequest = { principal: body.principal, toolName: body.toolName };
+    if (Array.isArray(body.requiredScopes)) {
+      hookReq.requiredScopes = body.requiredScopes.filter((s): s is string => typeof s === 'string');
+    }
+    if (Array.isArray(body.grantedScopes)) {
+      hookReq.grantedScopes = body.grantedScopes.filter((s): s is string => typeof s === 'string');
+    }
+    if (body.args !== undefined) hookReq.args = body.args;
+    if (body.transport === 'mcp' || body.transport === 'http' || body.transport === 'native') {
+      hookReq.transport = body.transport;
+    }
+    if (body.simulateRateLimitExhausted === true) hookReq.simulateRateLimitExhausted = true;
+
+    const started = Date.now();
+    const result = evaluateToolHook(hookReq);
+    // Report the real (tiny) measured duration for an executed call.
+    if (result.toolReturned.status === 'ok') {
+      result.toolReturned.durationMs = Math.max(0, Date.now() - started);
+    }
+    res.status(result.httpStatus).json({
+      toolCalled: result.toolCalled,
+      toolReturned: result.toolReturned,
+      ...(result.errorCode ? { error: { code: result.errorCode } } : {}),
+    });
   });
 
   // RFC 0032 / 0033 — mock-AI provider program seam.

@@ -208,6 +208,17 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       // is a linear-walk DAG with no orchestrator turns to count (RFC 0061).
       maxRunDurationMs: 600_000,
     },
+    // RFC 0064 — per-tool authorization + rate-limit + content-free audit
+    // on the MCP tool path. `agent.toolCalled` gains argsHash/principal/
+    // transport; `agent.toolReturned` gains status/durationMs. Authorization
+    // is fail-closed (reuses RFC 0049 `forbidden`). Driven by the
+    // `POST /v1/host/sample/toolhooks/invoke` seam (testSeam.ts).
+    toolHooks: {
+      supported: true,
+      prePostEvents: true,
+      perToolAuthorization: true,
+      perToolRateLimit: true,
+    },
     supportedTransports: ['rest', 'sse'],
     stream: { modes: ['values', 'updates', 'messages', 'debug'] },
     // Conformance fixtures loaded from in-tree `conformance/fixtures/`
