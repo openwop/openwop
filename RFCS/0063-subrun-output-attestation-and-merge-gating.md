@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0063 |
 | **Title** | An optional `outputAttestation` config on `core.subWorkflow` — a content checksum surfaced on the child's terminal event, plus an optional `requireApproval` gate that suspends via an `approval` interrupt (RFC 0051) *before* `outputMapping` merges a child's outputs into the parent, so a parent can verify and approve sub-agent artifacts rather than merging them blindly |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-25 |
-| **Updated** | 2026-05-25 |
+| **Updated** | 2026-05-25 (Active → Accepted — Milestone 2: the in-memory reference host advertises `capabilities.agents.subRunAttestation` and implements the `POST /v1/host/sample/subrun/attest` seam end-to-end — §B byte-stable JCS+SHA-256 `attestation` checksum (key-order-invariant), §C merge gate that merges only on `accept`/`edit-accept` and fails CLOSED on `reject`/absent/expired; the `subrun-merge-approval-fail-closed` invariant landed in `SECURITY/invariants.yaml` with `subrun-approval-fail-closed.test.ts` as its public test; all four conformance scenarios are live + green.) |
 | **Affects** | `spec/v1/node-packs.md` (`core.subWorkflow` config) · `schemas/capabilities.schema.json` (`agents.subRunAttestation`) · `schemas/run-event-payloads.schema.json` (additive optional `attestation` on `coreWorkflowChainEvent`, phase `output.harvested`) · `RFCS/0007` (dispatch) · `RFCS/0051` (approval gate, reused) · `RFCS/0049` (RBAC scope narrowing) · new conformance scenarios · proposed SECURITY invariant `subrun-merge-approval-fail-closed` (lands at implementation) |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -107,11 +107,12 @@ Per `docs/autonomous-agent-runtime-plan.md` §8 — Unresolved questions resolve
 
 ## Acceptance criteria
 
-- [ ] `node-packs.md` `core.subWorkflow` `outputAttestation` section.
-- [ ] `agents.subRunAttestation` capability + additive optional `attestation` object on `coreWorkflowChainEvent` (run-event-payloads schema). No new event type.
-- [ ] Conformance: shape always-on; checksum/approval/fail-closed capability-gated.
-- [ ] `subrun-merge-approval-fail-closed` invariant + public test land in `SECURITY/invariants.yaml` at implementation.
-- [ ] CHANGELOG entry under `[1.1.4 — unreleased]`.
+- [x] `node-packs.md` `core.subWorkflow` `outputAttestation` section.
+- [x] `agents.subRunAttestation` capability + additive optional `attestation` object on `coreWorkflowChainEvent` (run-event-payloads schema). No new event type.
+- [x] Conformance: shape always-on; checksum/approval/fail-closed capability-gated — all four `subrun-*.test.ts` scenarios live + green against the in-memory host.
+- [x] `subrun-merge-approval-fail-closed` invariant + public test landed in `SECURITY/invariants.yaml` (protocol-tier), with `subrun-approval-fail-closed.test.ts` as its public test.
+- [x] CHANGELOG entry under `[1.1.4 — unreleased]`.
+- [x] **Milestone 2 — reference-host enforcement (`Active → Accepted`).** The in-memory reference host (`examples/hosts/in-memory`) advertises `capabilities.agents.subRunAttestation: true` and implements the `POST /v1/host/sample/subrun/attest` seam (`host-sample-test-seams.md`): §B surfaces a byte-stable `attestation { checksum: <JCS+SHA-256 of childOutputs>, algorithm: 'sha256' }` (key-order-invariant via the host's `stableStringify`) on the harvested-output shape; §C merges the child outputs only on `approvalAction` `accept`/`edit-accept` and fails CLOSED (`merged: false`, no `mergedValues`) on `reject`/absent/expired when `requireApproval: true`. Reuses RFC 0051 `approval` + RFC 0049 scopes — no new interrupt kind, event type, or error code.
 
 ## References
 

@@ -1052,6 +1052,65 @@ async function handleHeartbeatTick(req: IncomingMessage, res: ServerResponse): P
   });
 }
 
+// ─── RFC 0063 — core.subWorkflow output attestation + merge gating ───────────
+//
+// Verify-before-merge: a parent computes a byte-stable checksum of a child's
+// outputs (RFC 8785 JCS-style canonical JSON + SHA-256, so a cross-host child
+// verifies) and — when `requireApproval` is set — suspends via an RFC 0051
+// approval interrupt BEFORE `outputMapping`, merging ONLY on accept and failing
+// CLOSED on reject / absent / expired. The cross-host driver is the documented
+// `POST /v1/host/sample/subrun/attest` seam.
+
+// Canonical checksum of a child's outputs: `stableStringify` gives the
+// JCS-style key-order-invariant serialization (RFC 8785 spirit; the v1 recipe
+// in replay.md), hashed with SHA-256. Identical content → identical digest,
+// independent of host or key order.
+function subRunChecksum(childOutputs: unknown): string {
+  return createHash('sha256').update(stableStringify(childOutputs)).digest('hex');
+}
+
+async function handleSubRunAttest(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (!checkAuth(req, res)) return;
+  const bodyText = await readBody(req);
+  let body: {
+    childOutputs?: unknown;
+    outputAttestation?: { checksum?: unknown; algorithm?: unknown; requireApproval?: unknown };
+    approvalAction?: unknown;
+  };
+  try {
+    body = JSON.parse(bodyText) as typeof body;
+  } catch {
+    return void sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+  }
+  const childOutputs = body.childOutputs ?? {};
+  const spec = body.outputAttestation ?? {};
+
+  // §B — surface a checksum + algorithm on the harvested-output attestation
+  // when the parent requested one.
+  const attestation: { checksum?: string; algorithm?: string } =
+    spec.checksum === true ? { checksum: subRunChecksum(childOutputs), algorithm: 'sha256' } : {};
+
+  // §C — merge gate. `requireApproval` suspends before `outputMapping`; the
+  // merge proceeds ONLY on an explicit accept (or edit-accept), and fails
+  // CLOSED for reject / absent / expired (the no-approval default merges).
+  const merged =
+    spec.requireApproval === true
+      ? body.approvalAction === 'accept' || body.approvalAction === 'edit-accept'
+      : true;
+
+  sendJSON(res, 200, {
+    attestation,
+    // The shape the host would surface on the existing RFC 0037
+    // `core.workflowChain.event { phase: 'output.harvested' }` (no new event).
+    harvestedEvent: {
+      phase: 'output.harvested',
+      ...(attestation.checksum !== undefined ? { attestation } : {}),
+    },
+    merged,
+    ...(merged ? { mergedValues: childOutputs } : {}),
+  });
+}
+
 // ─── Route handlers ──────────────────────────────────────────────────────────
 
 function handleOpenApi(_req: IncomingMessage, res: ServerResponse): void {
@@ -1145,6 +1204,13 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
     supported: true,
     minIntervalSec: HEARTBEAT_MIN_INTERVAL_SEC,
     maxRuntimeMs: HEARTBEAT_MAX_RUNTIME_MS,
+  };
+
+  // RFC 0063 — verify-before-merge on sub-workflow outputs. The host computes
+  // a byte-stable JCS+SHA-256 checksum of a child's outputs and fails closed on
+  // an unapproved merge (exercised via the sub-run attestation seam).
+  capabilities.agents = {
+    subRunAttestation: true,
   };
 
   const payload = {
@@ -1810,6 +1876,9 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   }
   if (method === 'POST' && path === '/v1/host/sample/heartbeat/tick') {
     return handleHeartbeatTick(req, res);
+  }
+  if (method === 'POST' && path === '/v1/host/sample/subrun/attest') {
+    return handleSubRunAttest(req, res);
   }
   if (WORKSPACE_FILES_PATTERN.test(path) && method === 'GET') {
     return handleWorkspaceList(req, res, url);
