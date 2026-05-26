@@ -4,7 +4,7 @@
 |---|---|
 | **RFC** | 0061 |
 | **Title** | Promote the RFC 0037 execution loop to a *stateful* lifecycle at `multiAgent.executionModel.version: 5` — per-iteration workspace snapshot (RFC 0059) as a deterministic input, an observable iteration counter on `runOrchestrator.decided` that `maxLoopIterations` (RFC 0058) bounds, and a stateful-resume guarantee across HITL suspends — without inventing a parallel loop surface |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-25 |
 | **Updated** | 2026-05-25 |
@@ -100,6 +100,8 @@ Existing coverage: `multi-agent-handoff-state-machine.test.ts` (RFC 0037 loop + 
 - **`agent-loop-workspace-snapshot.test.ts`** — a workspace `PUT` during turn *i* is invisible to turn *i*'s snapshot, visible to turn *i+1*. (Gated on `version >= 5` AND `host.workspace.supported`.)
 - **`agent-loop-stateful-resume.test.ts`** — a loop suspended on `clarify` resumes at the same iteration with snapshot lineage intact. (Gated on `statefulResume`.)
 - The loop-bound breach itself is covered by RFC 0058's `run-execution-bounds-shape.test.ts` (re-pointed to the `executionModel` gate per §E / G1).
+
+The three gated scenarios drive the **agent-loop seam** `POST /v1/host/sample/agentloop/run` (request `{ turns, workspaceWriteAtTurn?, suspendAtTurn?, resume? }` → `{ decisions, workspaceVisible?, resumedIteration? }`), specified in [`host-sample-test-seams.md`](../spec/v1/host-sample-test-seams.md) §"Open seams". A host advertising `multiAgent.executionModel.version >= 5` wires it to light them up; they soft-skip on `404` until then. **G1 status:** the `maxLoopIterations` gating reference is already `capabilities.multiAgent.executionModel.supported` in `run-options.md`, the RFC 0058 text, and `run-execution-bounds-shape.test.ts` — no `agents.loop.supported` reference exists in the corpus, so the §E correction is already satisfied (no RFC 0058 change needed).
 
 No new fixture beyond the existing `conformance-multi-agent-handoff` family + RFC 0058's `conformance-run-duration-breach` sibling for the loop bound.
 
