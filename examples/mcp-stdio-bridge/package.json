@@ -1,6 +1,6 @@
 {
   "name": "@openwop/example-mcp-stdio-bridge",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "private": true,
   "description": "HTTP shim that lets the openwop MCP conformance probe exercise stdio-transport MCP servers. Spawns the configured stdio command as a child process, forwards JSON-RPC requests over stdin, correlates responses by id, returns them as application/json — the probe's content-negotiated default. Per-session child processes are kept alive across requests so MCP initialize state survives.",
   "type": "module",
