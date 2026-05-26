@@ -202,6 +202,18 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
     configFields: [],
   },
   {
+    kind: 'memory-write',
+    typeId: 'local.sample.demo.memory-write',
+    label: 'Write memory (RFC 0057)',
+    description: 'Writes a tenant memory entry and emits a node-attributed memory.written event. Demonstrates the RFC 0057 write-attribution rail — the entry shows up in the run\'s memory ledger tagged with the writing node, and the timeline marks the write.',
+    category: 'data',
+    badge: 'M',
+    accent: 'var(--clay)',
+    inputs: [{ name: 'note', type: 'string' }],
+    outputs: [{ name: 'memoryId', type: 'string' }],
+    configFields: [],
+  },
+  {
     kind: 'approval',
     typeId: 'core.approvalGate',
     label: 'Approval Gate',

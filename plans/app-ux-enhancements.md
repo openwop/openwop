@@ -51,6 +51,7 @@ These need **zero** new wire surface. They compose existing events, endpoints, a
 **Why:** the PRD's "memory visualization" (Neo4j/D3 graph) is over-built for what the protocol exposes. A truthful, useful version is a *memory ledger* keyed off the read-side that already exists. A force-directed graph can come later if relationships are ever modeled.
 **How:** new `runs/RunMemoryPanel.tsx` consuming the host's memory list/get; annotate `RunTimeline` nodes with memory read/write markers.
 **Depends on:** nothing (RFC 0004 read-side is shipped). **Effort:** M. **Scope honestly** — label it "memory ledger," not "knowledge graph."
+**Status:** ✅ shipped. `RunMemoryPanel` ledger + per-node write attribution from RFC 0057 `memory.written` (capability-gated on `memory.attribution.emitsWriteEvents`, `run-id:` tag fallback; entry content read from the SR-1-redacted read-side); `RunTimeline` memory-write markers (#192); demo producer `local.sample.demo.memory-write` emits the node-attributed event end-to-end.
 
 ### A4 — Deepen the Debugging Studio (finish PRD §7.4)
 **What:** turn the existing reasoning/envelope/network surfaces into a coherent "DevTools": step-through a replayed run event-by-event (scrub the timeline), with synchronized panels — current envelope (`EnvelopeInspector`), reasoning (`ReasoningDisclosure`), the packet that carried it (`NetworkPanel`), and channel state at that step.

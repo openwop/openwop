@@ -1431,6 +1431,19 @@ pre {
   background: color-mix(in oklch, var(--color-warning) 16%, transparent);
   border: 1px solid var(--color-warning);
 }
+/* RFC 0057 — per-node write attribution badge on the memory ledger. */
+.memory-wrote-badge {
+  display: inline-block;
+  margin-right: 6px;
+  font-family: var(--mono, monospace);
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: color-mix(in oklch, var(--clay) 14%, transparent);
+  border: 1px solid color-mix(in oklch, var(--clay) 60%, transparent);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
 
 /* Agent reasoning / tool-call trace (RFC 0002 §B / RFC 0024) */
 .agent-trace {

@@ -272,7 +272,7 @@ export function RunDetailPage() {
         }}
       />
       <RunOpsPanel runId={runId} events={events} />
-      <RunMemoryPanel runId={runId} status={snapshot?.status} />
+      <RunMemoryPanel runId={runId} events={events} status={snapshot?.status} />
 
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
