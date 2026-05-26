@@ -57,6 +57,7 @@ import {
 import { computeLLMCacheKey } from '../providers/llmCacheKey.js';
 import { evaluateToolHook, type ToolHookRequest } from '../host/toolHooks.js';
 import { singleTick, missedWindow } from '../host/schedulingService.js';
+import { runAgentLoop, type AgentLoopRequest } from '../host/agentLoop.js';
 import { OpenwopError } from '../types.js';
 import { createLogger } from '../observability/logger.js';
 
@@ -894,6 +895,31 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
     }
     // 'single-tick' (default): one wake-up fires the cron job exactly once.
     res.status(200).json(singleTick());
+  });
+
+  // RFC 0061 — agent-loop run seam. Drives a bounded, stateful orchestrator
+  // loop and returns the ordered runOrchestrator.decided payloads (each with
+  // the §B `iteration` counter), the maxLoopIterations bound result (§E /
+  // RFC 0058), and the resumed iteration (§D). Drives
+  // agent-loop-iteration-monotonic + agent-loop-stateful-resume.
+  //
+  //   POST /v1/host/sample/agentloop/run
+  //   Body: { turns, maxLoopIterations?, suspendAtTurn?, resume? }
+  //   Response: { decisions: [{ agentId, decision, iteration }], bound?, resumedIteration? }
+  app.post('/v1/host/sample/agentloop/run', (req, res) => {
+    const body = (req.body ?? {}) as {
+      turns?: unknown;
+      maxLoopIterations?: unknown;
+      suspendAtTurn?: unknown;
+      resume?: unknown;
+    };
+    const loopReq: AgentLoopRequest = {
+      turns: typeof body.turns === 'number' ? body.turns : 1,
+    };
+    if (typeof body.maxLoopIterations === 'number') loopReq.maxLoopIterations = body.maxLoopIterations;
+    if (typeof body.suspendAtTurn === 'number') loopReq.suspendAtTurn = body.suspendAtTurn;
+    if (body.resume === true) loopReq.resume = true;
+    res.status(200).json(runAgentLoop(loopReq));
   });
 
   // RFC 0032 / 0033 — mock-AI provider program seam.

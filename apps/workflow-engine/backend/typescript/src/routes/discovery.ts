@@ -204,9 +204,13 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       // RunOptions.configurable.runTimeoutMs. Breach emits
       // cap.breached{kind:'run-duration'} + error run_timeout. MUST equal
       // RUN_DURATION_CEILING_MS in executor/executor.ts (advertise/enforce
-      // must agree). `maxLoopIterations` is honestly absent — the executor
-      // is a linear-walk DAG with no orchestrator turns to count (RFC 0061).
+      // must agree).
       maxRunDurationMs: 600_000,
+      // RFC 0058 + RFC 0061 — ceiling on agent-loop iterations (orchestrator
+      // turns). Now enforceable: host/agentLoop.ts is a genuine re-entrant
+      // loop that counts turns, so the (max+1)th turn breaches
+      // cap.breached{kind:'loop-iterations'} + loop_limit_exceeded.
+      maxLoopIterations: 100,
     },
     // RFC 0064 — per-tool authorization + rate-limit + content-free audit
     // on the MCP tool path. `agent.toolCalled` gains argsHash/principal/
@@ -570,7 +574,13 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       // scenarios soft-skip on absence per the existing convention.
       ...(process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL === 'true'
         ? (() => {
-            const phase4 = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_4 === 'true';
+            // RFC 0061 — version 5 (stateful agent-loop lifecycle). Ladder is
+            // additive: phase5 ⇒ phase4 ⇒ … ⇒ phase1. A `version: 5`
+            // advertisement is only honest when the re-entrant loop with the
+            // observable per-turn `iteration` counter (host/agentLoop.ts) +
+            // statefulResume are implemented.
+            const phase5 = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_5 === 'true';
+            const phase4 = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_4 === 'true' || phase5;
             // The execution-model ladder is ADDITIVE: a host advertising
             // version N MUST implement phases 1..N (capabilities.schema.json
             // §multiAgent.executionModel.version). So a higher phase implies
@@ -589,7 +599,7 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
             })();
             // Version advertisement is the ceiling of phases the host
             // implements per RFCS/0037-multi-agent-execution-model.md §"Phases".
-            const version = phase4 ? 4 : phase3 ? 3 : phase2 ? 2 : 1;
+            const version = phase5 ? 5 : phase4 ? 4 : phase3 ? 3 : phase2 ? 2 : 1;
             return {
               multiAgent: {
                 executionModel: {
@@ -624,6 +634,10 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
                         },
                       }
                     : {}),
+                  // RFC 0061 §A/§D — version 5: a clarify/escalate suspend
+                  // resumes the loop at the same iteration with the snapshot
+                  // lineage + iteration counter intact (host/agentLoop.ts).
+                  ...(phase5 ? { statefulResume: true } : {}),
                 },
               },
             };
