@@ -480,6 +480,37 @@ Optional sub-block. Hosts that distill many short-lived `MemoryEntry` rows into 
 
 **SR-1 carry-forward (normative).** Hosts advertising `memory.compaction.supported: true` MUST route compacted entry content through the same BYOK redaction harness applied to a fresh `put`. Per RFC 0012 §D, the fact that source entries were SR-1-compliant at original `put` time is NOT evidence to skip redaction on derived content — summarization models can introduce secret-shaped substrings not present in any source. See `SECURITY/invariants.yaml` row `memory-compaction-sr-1-carry-forward`.
 
+#### `memory.distillation` (RFC 0062, `Active`)
+
+**Why this exists.** A "dream" is a periodic background run that distills recent transactional memory into long-term artifacts under an explicit token budget, then refreshes a retrieval index the next session loads at startup. openwop already had the halves — `memory.compaction` (RFC 0012) defines host-managed distillation + the `memory.compacted` event, and `scheduling` (RFC 0052) defines scheduled run initiation — but nothing bound them, pinned a *token budget*, or defined the *index* that closes the loop back to startup. Distillation composes them; it reuses the `memory.compacted` event (extended with an additive optional `distillation` sub-object) rather than minting a parallel `memory.distilled` event.
+
+Optional sub-block. Hosts that omit it keep plain on-demand compaction (`memory.compaction`) or no memory; clients MUST NOT infer distillation from entry counts. The run contract — read snapshot → mandatory token budget → RFC 0012 distill with SR-1 carry-forward → byte-stable archive → `MEMORY-INDEX.json` workspace file → extended `memory.compacted` — is normative in [`agent-memory.md`](./agent-memory.md) §"Scheduled distillation".
+
+```json
+"memory": {
+  "supported": true,
+  "maxEntrySizeBytes": 65536,
+  "ttlSupported": true,
+  "distillation": {
+    "supported": true,
+    "maxTokenBudget": 8000,
+    "scheduled": true,
+    "indexEmitted": true,
+    "tokenizerName": "claude",
+    "archiveRetention": "P30D"
+  }
+}
+```
+
+- `supported` (boolean, REQUIRED when the sub-block is present) — when `true`, host honors the `distillation.tokenBudget` reserved run-option key (`run-options.md`), runs budgeted distillation over `longTerm` memory, writes a stable archive, and emits `memory.compacted` with the `distillation` sub-object.
+- `maxTokenBudget` (integer, OPTIONAL) — largest per-run distillation token budget the host honors. A supplied `distillation.tokenBudget` is clamped to this; absent ⇒ the host defaults to this.
+- `scheduled` (boolean, OPTIONAL) — when `true`, host can initiate distillation on a schedule (requires `capabilities.scheduling`, RFC 0052). Distillation MAY also run on-demand without scheduling.
+- `indexEmitted` (boolean, OPTIONAL) — when `true`, host writes a retrievable memory-index manifest (`MEMORY-INDEX.json`, a workspace file per RFC 0059) after distillation; updating it emits `workspace.updated`.
+- `tokenizerName` (string, OPTIONAL) — identifier of the tokenizer the budget is counted against (e.g. `claude`, `gpt-4`). The budget is best-effort-honest per this tokenizer (±10% conformance tolerance), not byte-exact.
+- `archiveRetention` (string, OPTIONAL) — ISO-8601 duration (e.g. `P30D`) the distilled archives persist before GC. Recursive distillation (distilling prior archives) is allowed; each level re-checks SR-1.
+
+**Token budget + SR-1 (normative).** A distillation run MUST stay within its effective `tokenBudget` (`min(distillation.tokenBudget, maxTokenBudget)`, defaulting to `maxTokenBudget` when absent); a source set that cannot be distilled within the budget MUST fail with `token_budget_exceeded` (`rest-endpoints.md`) and write no partial archive (atomic). SR-1 carry-forward (RFC 0012 §D) holds through distillation — a distilled archive MUST NOT re-expose a secret the sources had redacted; this reuses the `memory-compaction-sr-1-carry-forward` invariant, so distillation adds no new invariant.
+
 ### `runs.pauseResume` (Track 13)
 
 ```json

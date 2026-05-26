@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0059 |
 | **Title** | A `host.workspace` capability — a versioned, atomic, tenant·workspace-scoped file store for an agent's persistent *ground-truth* artifacts (identity / directives / memory-index), loaded as a read snapshot at run start, complementing the transactional `MemoryAdapter` (RFC 0004) with a durable file layer |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-25 |
-| **Updated** | 2026-05-25 |
+| **Updated** | 2026-05-25 (Active → Accepted — Milestone 2: the in-memory reference host implements `capabilities.workspace` end-to-end (§C CRUD + `If-Match`, §D run-start snapshot, §E WCT-1 isolation + WSR-1 SR-1 redaction); the `workspace-cross-tenant-isolation` invariant landed in `SECURITY/invariants.yaml` with its public conformance test, and the `workspace-behavior` + `workspace-cross-tenant-isolation` scenarios are live + green.) |
 | **Affects** | `schemas/capabilities.schema.json` (`host.workspace` block) · new `schemas/workspace-file.schema.json` · `api/openapi.yaml` (workspace file endpoints) · `api/asyncapi.yaml` (`workspace.updated` event) · new `spec/v1/agent-workspace.md` · `spec/v1/profiles.md` (predicate) · `RFCS/0048` (identity triple this scopes to) · new conformance scenarios · proposed SECURITY invariant `workspace-cross-tenant-isolation` (lands at implementation) |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -137,9 +137,10 @@ Per `docs/autonomous-agent-runtime-plan.md` §8 — Unresolved questions resolve
 - [x] `spec/v1/agent-workspace.md` merged with the endpoint + snapshot + invariant contract.
 - [x] `host.workspace` block + `workspace-file.schema.json` + OpenAPI endpoints + `workspace.updated` (AsyncAPI).
 - [x] `workspace_conflict` + `workspace_too_large` registered in `rest-endpoints.md`.
-- [x] Conformance: shape always-on. (CRUD/ETag/isolation/snapshot capability-gated scenarios land at the implementation milestone.)
-- [ ] `workspace-cross-tenant-isolation` invariant + public test land in `SECURITY/invariants.yaml` at implementation (not at Active).
+- [x] Conformance: shape always-on, plus the capability-gated behavior scenarios — `workspace-behavior.test.ts` (CRUD/ETag/`workspace_too_large`/§D snapshot via the §C endpoints) and `workspace-cross-tenant-isolation.test.ts` (WCT-1) — landed live + green at the implementation milestone (M2).
+- [x] `workspace-cross-tenant-isolation` invariant + public test landed in `SECURITY/invariants.yaml` (protocol-tier) at implementation, with `workspace-cross-tenant-isolation.test.ts` as its public test.
 - [x] CHANGELOG entry under `[1.1.4 — unreleased]`.
+- [x] **Milestone 2 — reference-host enforcement (`Active → Accepted`).** The in-memory reference host (`examples/hosts/in-memory`) advertises `capabilities.workspace.supported` and implements §C (4 endpoints, versioned store, `If-Match` → `409 workspace_conflict`, `maxFileBytes` → `workspace_too_large`), §D (immutable run-start read snapshot on the run snapshot), and §E (WCT-1 owner-scoped isolation + WSR-1 SR-1 redaction on write). The cross-owner WCT-1 driver is the documented `POST /v1/host/sample/workspace/op` seam (`host-sample-test-seams.md` §9). WSR-1 reuses the host's existing `scrubSecretShaped()` (SR-1) — note this host has no BYOK vault, so redaction is structural; a BYOK-resolving host exercises the full plaintext path.
 
 ## References
 

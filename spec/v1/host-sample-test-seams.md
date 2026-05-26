@@ -358,6 +358,37 @@ Synthetic misbehaving-pack typeIds the conformance suite exercises:
 
 Conformance: `sandbox-mvp-behavior.test.ts` (10 assertions covering 5 escape kinds + timeout + memory + cross-pack isolation + capability-gate + 2 well-behaved baselines).
 
+### 9. Workspace cross-owner driver — `POST /v1/host/sample/workspace/op` (RFC 0059)
+
+| Field | Value |
+|---|---|
+| Method + path | `POST /v1/host/sample/workspace/op` |
+| Capability gate | `capabilities.workspace.supported: true` (RFC 0059 §A) |
+| Env gate (reference impl) | none (the in-memory host enables it unconditionally; production hosts gate per the §"Production safety" rule below) |
+| Introduced | RFC 0059 §E — drives `host.workspace` CRUD against an EXPLICIT `{tenant, workspace}` owner so the `workspace-cross-tenant-isolation` (WCT-1) invariant is exercisable on a single-credential host (mirrors the blob/kv/queue/table cross-tenant seams) |
+
+The production §C endpoints (`/v1/host/workspace/files`) bind every request to one authenticated owner, so a single-credential host cannot demonstrate cross-owner isolation through them. This seam takes the `{tenant, workspace}` owner in the body — letting a conformance scenario write as owner A and attempt a read as owner B — and routes through the SAME owner-scoped store the §C endpoints use. The host MUST still scope strictly by the supplied owner triple (WCT-1); the seam only supplies the triple that production resolves from the authenticated identity.
+
+```
+POST /v1/host/sample/workspace/op
+  Body: {
+    tenant: string,            // owner tenant (RFC 0048)
+    workspace: string,         // owner workspace
+    op: 'list' | 'get' | 'put' | 'delete',
+    path?: string,             // required for get/put/delete
+    content?: string,          // required for put
+    contentType?: string,      // optional for put
+    ifMatch?: string,          // optional optimistic-concurrency token for put
+    prefix?: string,           // optional filter for list
+    version?: number,          // optional historical read for get
+  }
+  Returns: the same body/status as the matching §C endpoint
+           (200 WorkspaceFile | 200 { files } | 204 | 404 not_found
+            | 409 workspace_conflict | 413 workspace_too_large)
+```
+
+Conformance: `workspace-cross-tenant-isolation.test.ts` (WCT-1 — write as owner A, then assert a different workspace AND a different tenant both fail closed on `get`/`list`, while the owner still reads its own file).
+
 ## Production safety (normative)
 
 All seams under `/v1/host/sample/*` are conformance-only. Hosts deployed in production:
@@ -420,6 +451,7 @@ Conformance: `multi-agent-memory-lifecycle.test.ts` (the MAE-3 behavioral assert
 - **Heartbeat tick seam** (RFC 0060) — `POST /v1/host/sample/heartbeat/tick`. Gated on `capabilities.heartbeat.supported`. Contract: evaluate a heartbeat predicate once for a request `{ heartbeatId, observedState, simulateSlowMs? }` (`simulateSlowMs` asks the predicate to overrun `maxRuntimeMs`, exercising the §B.2 timeout path) and return `{ evaluated: HeartbeatEvaluated[], stateChanged: HeartbeatStateChanged[], enqueuedRuns: number }` — exactly one `evaluated` per tick (§B.1); `stateChanged` + `enqueuedRuns` non-empty/non-zero ONLY when `observedState` differs from the prior tick's persisted state (§B.5, the anti-spam guarantee); `evaluated[].status === "timeout"` when `simulateSlowMs` exceeds the budget (§B.2). `heartbeat-fires-once-per-tick.test.ts` / `heartbeat-idempotent-no-spam.test.ts` / `heartbeat-runtime-bound.test.ts` drive these; soft-skip on `404` until a heartbeat host wires the seam.
 - **Tool-hooks invoke seam** (RFC 0064) — `POST /v1/host/sample/toolhooks/invoke`. Gated on `capabilities.toolHooks.supported`. Contract: evaluate the per-tool authorization + rate-limit gate for one call `{ principal, toolName, requiredScopes?, args?, simulateRateLimitExhausted? }` and return the `{ toolCalled, toolReturned }` payload pair the host would emit (the additive RFC 0064 fields on the existing `agent.toolCalled` / `agent.toolReturned` events). `toolReturned.status` MUST be `forbidden` when the principal lacks a `requiredScopes` entry (or authz is unevaluable — fail-closed, RFC 0049), `rate_limited` when `simulateRateLimitExhausted`, else `ok` with a non-negative `durationMs`; `toolCalled.argsHash` MUST be a secret-redacted (SR-1) JCS+SHA-256 hash carrying no raw secret material. `tool-hooks-content-free.test.ts` / `tool-hooks-authorization-fail-closed.test.ts` / `tool-hooks-rate-limit.test.ts` / `tool-hooks-secret-redaction.test.ts` drive these; soft-skip on `404` until a tool-hooks host wires the seam.
 - **Sub-run attestation seam** (RFC 0063) — `POST /v1/host/sample/subrun/attest`. Gated on `capabilities.agents.subRunAttestation`. Contract: drive one sub-workflow harvest-then-merge for a request `{ childOutputs, outputAttestation: { checksum?, algorithm?, requireApproval?, principalScope? }, approvalAction? }` and return `{ attestation, harvestedEvent, merged, mergedValues? }` — the `attestation { checksum, algorithm }` the host would surface on `core.workflowChain.event { phase: 'output.harvested' }`, whether the merge proceeded, and the merged values. The `checksum` MUST be the RFC 8785 JCS + SHA-256 digest of `childOutputs` (byte-stable for identical inputs, host-independent). When `requireApproval: true`, `merged` MUST be `true` only for `approvalAction` `accept`/`edit-accept` and MUST be `false` (fail-closed) for `reject` or an absent/expired approval. `subrun-checksum-stable.test.ts` / `subrun-approval-gate.test.ts` / `subrun-approval-fail-closed.test.ts` drive these; soft-skip on `404` until a sub-run-attestation host wires the seam.
+- **Memory-distillation seam** (RFC 0062) — `POST /v1/host/sample/memory/distill`. Gated on `capabilities.memory.distillation.supported`. Contract: run one budgeted distillation for a request `{ memoryRef, tokenBudget?, sources?, indexEmitted?, includeSecretCanary? }` and return `{ event, archiveChecksum, indexUpdated, indexFile? }` — the `memory.compacted` event the host would emit (carrying the additive `distillation { tokenBudget, tokensUsed, indexUpdated }` sub-object) plus the stable archive's checksum. `event.distillation.tokensUsed` MUST be ≤ the resolved `tokenBudget`; an un-meetable budget MUST return `token_budget_exceeded` with no partial archive (atomic). The same `sources` + `tokenBudget` MUST yield an identical `archiveChecksum` (byte-stable). When `indexEmitted`, a `MEMORY-INDEX.json` workspace file MUST be retrievable and a `workspace.updated` event fired. When `includeSecretCanary`, a redacted secret in the sources MUST stay redacted in the archive (SR-1). `distillation-token-budget.test.ts` / `distillation-stable-archive.test.ts` / `distillation-index-roundtrip.test.ts` / `distillation-secret-carryforward.test.ts` drive these; soft-skip on `404` until a distillation host wires the seam.
 - **Dead-letter exhaustion seam** (RFC 0053) — `POST /v1/host/sample/deadletter/exhaust`. Gated on `capabilities.deadLetter.supported`. Contract: drive a node that deterministically exhausts a short retry policy for a named `scenario` (`exhaust-retries`, `fork-after-dead-letter`); the host returns `{ event, forkEligible }` — the `run.dead_lettered` event (carrying `attempts`) and whether the dead-lettered run is forkable. `deadletter-retry-exhaustion.test.ts` drives both; soft-skips on `404` until a dead-letter host wires the seam. (Retention-purge scenario deferred — needs a clock seam.)
 
 ## Open spec gaps

@@ -96,6 +96,23 @@ Hosts that implement long-term memory advertise via `capabilities.agents.memoryB
 
 The capability advertisement is a CLAIM. Hosts that advertise long-term memory MUST honor CTI-1 + SR-1 + TTL contracts end-to-end. Conformance scenarios skip cleanly when the advertisement is absent.
 
+## Scheduled distillation — "dreams" (RFC 0062, `Active`)
+
+**Why this exists.** A "dream" is a periodic background run that distills recent transactional memory into long-term artifacts under an explicit token budget, then refreshes a retrieval index the next session loads at startup. openwop already has the halves — RFC 0012 defines host-managed *compaction* (lossy distillation + the `memory.compacted` event) and RFC 0052 defines *scheduled* run initiation — but nothing binds them, pins a token budget, or defines the index. Distillation composes them; it does **not** invent a parallel event.
+
+**Capability flag:** `capabilities.memory.distillation.supported: true` (nested under `memory`; see `capabilities.md` §`memory`). A host advertising it MUST honor the following contract; hosts that omit the block keep plain on-demand compaction (RFC 0012) or no memory, and the distillation conformance scenarios skip cleanly.
+
+**Distillation run contract (normative, when `memory.distillation.supported: true`).** A distillation run — scheduled (RFC 0052 `schedule` trigger targeting the distillation handler) or on-demand — MUST:
+
+1. **Read** the source `memoryRef`'s entries via the RFC 0004 read snapshot (deterministic input).
+2. **Apply a token budget.** A `tokenBudget` (≤ advertised `maxTokenBudget`) is supplied via the `run-options.md` reserved key `distillation.tokenBudget` and clamped to `maxTokenBudget`; absent ⇒ the host MUST default to `maxTokenBudget`. The budget caps *input + output* token accounting against the advertised `tokenizerName` (best-effort-honest, ±10% conformance tolerance). If the source cannot be meaningfully distilled within the budget, the run MUST fail with `token_budget_exceeded` (see [`rest-endpoints.md`](./rest-endpoints.md)) and write **no partial archive** (atomic).
+3. **Distill** via the RFC 0012 compaction mechanism, carrying SR-1 forward — a distilled archive MUST NOT re-expose a secret the sources had redacted.
+4. **Write a stable archive.** The distilled output MUST be an immutable, addressable artifact, byte-stable for a given source set + budget (reproducible + auditable).
+5. **Update the memory-index manifest** when `indexEmitted: true` — a retrievable `MEMORY-INDEX.json` the next session loads at startup, stored as a workspace file (RFC 0059); updating it emits `workspace.updated`, not a bespoke index event. An optional human-editable `.md` sibling MAY accompany it; the JSON is normative.
+6. **Emit the existing `memory.compacted` event** (RFC 0012) extended with the additive optional `distillation { tokenBudget, tokensUsed, indexUpdated }` sub-object. The `trigger` field stays within RFC 0012's closed enum — a scheduled distillation is `host-managed` (the host owns the schedule); its distillation nature is evident from the `distillation` sub-object, not a new `trigger` value.
+
+Recursive distillation (distilling prior archives) is allowed; each level MUST re-check SR-1. Archives persist for the advertised `archiveRetention` (ISO-8601 duration) before GC. CTI-1 tenant isolation holds for the archive and index exactly as for any memory write.
+
 ## Open spec gaps
 
 - **Cross-host `memoryRef` portability** — v1.x silent. A `memoryRef` minted by host A is NOT guaranteed resolvable by host B; future spec amendments MAY normate a portable encoding if implementer demand surfaces.
