@@ -1580,6 +1580,49 @@ const sampleMemoryWriteNode: NodeModule = {
   },
 };
 
+/**
+ * Gap D-4 — `core.web.search` (core.openwop.web-search pack).
+ *
+ * Protocol-layer, capability-advertised search node — NOT a host-side
+ * `exec` tool. The canonical pack implementation
+ * (`packs/core.openwop.web-search/index.mjs`) delegates to the host's
+ * `ctx.webSearch(...)` surface. This reference host does NOT advertise
+ * `host.webSearch` (see routes/discovery.ts), so this in-process
+ * registration mirrors the pack's stub branch: it returns a DETERMINISTIC
+ * fixture result derived purely from the query, tagged `stub: true`, so
+ * `sample.web.research` runs end-to-end and replays deterministically
+ * without provisioning a real search provider. A production deployer wires
+ * a real `host.webSearch` and ships the published pack instead.
+ */
+const webSearchNode: NodeModule = {
+  typeId: 'core.web.search',
+  version: '1.0.0',
+  async execute(ctx) {
+    const inputs = (ctx.inputs && typeof ctx.inputs === 'object') ? (ctx.inputs as Record<string, unknown>) : {};
+    const config = (ctx.config ?? {}) as { maxResults?: unknown };
+    const query = typeof inputs.query === 'string' && inputs.query.length > 0
+      ? inputs.query
+      : findFirstStringValue(inputs);
+    if (!query) {
+      return { status: 'failure', error: { code: 'invalid_request', message: 'core.web.search requires a non-empty `query` input' } };
+    }
+    const n = typeof config.maxResults === 'number' && config.maxResults > 0
+      ? Math.min(50, Math.floor(config.maxResults))
+      : 5;
+    const slug = query.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 64) || 'query';
+    const results = Array.from({ length: n }, (_unused, i) => ({
+      url: `https://example.com/${slug}/result-${i + 1}`,
+      title: `${query} — reference result ${i + 1}`,
+      snippet: `Deterministic demo snippet ${i + 1} for "${query}". The demo backend stubs live web search so replays stay deterministic.`,
+      rank: i + 1,
+    }));
+    return {
+      status: 'success',
+      outputs: { results, engine: 'stub', query, totalResults: results.length, stub: true },
+    };
+  },
+};
+
 const sampleUppercaseNode: NodeModule = {
   typeId: 'local.sample.demo.uppercase',
   version: '0.1.0',
@@ -1746,6 +1789,7 @@ export function ensureNodesRegistered(): void {
   registry.register(approvalGateNode);
   registry.register(clarificationGateNode);
   registry.register(interruptNode);
+  registry.register(webSearchNode);
   registry.register(sampleUppercaseNode);
   registry.register(sampleImageEmitNode);
   registry.register(sampleMemoryWriteNode);

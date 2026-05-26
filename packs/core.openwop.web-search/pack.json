@@ -1,0 +1,45 @@
+{
+  "name": "core.openwop.web-search",
+  "version": "1.0.0",
+  "description": "Spec-canonical web-search pack. A single capability-advertised search node that routes through the host's `host.webSearch` adapter (search API + scraping policy + rate-limit + cache layer). When the host does not advertise the surface — as in the OpenWOP demo backend — the node returns a deterministic fixture result so replay determinism holds. This is a PROTOCOL-LAYER node pack (capability-advertised), NOT a host-side exec tool.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.web-search",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "web",
+    "search",
+    "research",
+    "tool"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "host.webSearch": "optional"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "core.web.search",
+      "version": "1.0.0",
+      "label": "Web Search",
+      "description": "Issues a search query through the host's `host.webSearch` adapter (Google CSE / Bing / Brave / etc.) and returns ranked results with title + url + snippet. Side-effectful (external call costs money + is rate-limited) + cacheable (engine Layer-2 caches by query+filters). When the host does not advertise `host.webSearch`, the node returns a deterministic fixture result tagged `stub: true` so demos and replay stay deterministic without a real provider.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/search.config.json",
+      "inputSchemaRef": "schemas/search.input.json",
+      "outputSchemaRef": "schemas/search.output.json"
+    }
+  ]
+}
