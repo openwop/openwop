@@ -20,7 +20,7 @@
  * 500'ing on the `audit.verify` call.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import type { AuditVerifyResult, RunEventDoc } from '@openwop/openwop';
 import { getSdkClient, getCapabilities, pollEvents } from '../client/runsClient.js';
@@ -32,6 +32,12 @@ export function RunAuditPage() {
   const [result, setResult] = useState<AuditVerifyResult | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The largest `toSeq` we've already verified. We auto-re-verify on
+  // every increase so a run that extends after page load gets re-verified
+  // without a manual button press, but we DON'T re-verify when state
+  // updates that leave `lastSeq` unchanged (e.g., the verify call
+  // returning, which would otherwise loop). The button always re-runs.
+  const lastVerifiedSeqRef = useRef<number>(-1);
 
   // Gate the page on the host advertising openwop-audit-log-integrity.
   // Without the profile the audit.verify endpoint 404s, so it's better
@@ -65,9 +71,14 @@ export function RunAuditPage() {
     if (auditProfile !== true) return;
     setVerifying(true);
     setError(null);
+    // Remember the seq we're verifying at *call* time so a `lastSeq`
+    // change during the in-flight request doesn't make the auto-verify
+    // effect think we're still behind.
+    const targetSeq = lastSeq;
     try {
-      const r = await getSdkClient().audit.verify(0, lastSeq);
+      const r = await getSdkClient().audit.verify(0, targetSeq);
       setResult(r);
+      lastVerifiedSeqRef.current = targetSeq;
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -75,12 +86,21 @@ export function RunAuditPage() {
     }
   }, [auditProfile, lastSeq]);
 
-  // Auto-verify once we have both the profile gate result and the events.
+  // Auto-verify on first load AND whenever lastSeq grows past the
+  // largest seq we've already verified — so a long-running run that
+  // emits more events while the page is open gets re-verified without
+  // a manual button press. The ref-based gate avoids re-entrancy (the
+  // verify result itself doesn't trigger another call).
   useEffect(() => {
-    if (auditProfile === true && lastSeq > 0 && result === null && !verifying) {
+    if (
+      auditProfile === true &&
+      lastSeq > 0 &&
+      lastSeq > lastVerifiedSeqRef.current &&
+      !verifying
+    ) {
       void runVerify();
     }
-  }, [auditProfile, lastSeq, result, verifying, runVerify]);
+  }, [auditProfile, lastSeq, verifying, runVerify]);
 
   function onDownload() {
     if (!result) return;
@@ -97,7 +117,7 @@ export function RunAuditPage() {
 
   return (
     <section className="card">
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
+      <div className="audit-page__head">
         <h1 style={{ flex: 1, margin: 0 }}>Audit log — <code style={{ fontSize: 14 }}>{runId}</code></h1>
         <Link to={`/runs/${runId}`} className="linklike" style={{ fontSize: 13 }}>← Back to run</Link>
       </div>
@@ -157,11 +177,11 @@ export function RunAuditPage() {
               </div>
 
               {result.anomalies.length > 0 && (
-                <div className="card" style={{ borderColor: '#fecaca', background: '#fef2f2', marginBottom: 12 }}>
+                <div className="card audit-anomaly-card">
                   <h2 style={{ fontSize: 16, marginTop: 0 }}>Anomalies</h2>
-                  <table style={{ width: '100%', fontSize: 12, fontFamily: 'monospace' }}>
+                  <table className="audit-anomaly-table">
                     <thead>
-                      <tr style={{ textAlign: 'left' }}>
+                      <tr>
                         <th>at seq</th>
                         <th>expected prevHash</th>
                         <th>actual prevHash</th>
@@ -169,10 +189,10 @@ export function RunAuditPage() {
                     </thead>
                     <tbody>
                       {result.anomalies.map((a) => (
-                        <tr key={a.atSeq} style={{ borderTop: '1px solid #fecaca' }}>
+                        <tr key={a.atSeq}>
                           <td>{a.atSeq}</td>
-                          <td style={{ overflowWrap: 'anywhere', paddingRight: 8 }}>{a.expectedPrevHash}</td>
-                          <td style={{ overflowWrap: 'anywhere' }}>{a.actualPrevHash}</td>
+                          <td className="audit-anomaly-table__hash">{a.expectedPrevHash}</td>
+                          <td className="audit-anomaly-table__hash">{a.actualPrevHash}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -191,28 +211,18 @@ export function RunAuditPage() {
                     events); short or in-progress runs may not have one yet.
                   </p>
                 ) : (
-                  <ol style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                  <ol className="audit-checkpoint-list">
                     {result.checkpoints.map((c) => (
-                      <li
-                        key={c.atSequence}
-                        style={{
-                          borderTop: '1px solid #e5e7eb',
-                          padding: '8px 0',
-                          display: 'grid',
-                          gridTemplateColumns: '90px 1fr',
-                          gap: 8,
-                          fontSize: 12,
-                        }}
-                      >
+                      <li key={c.atSequence} className="audit-checkpoint-row">
                         <span className="muted">seq {c.atSequence}</span>
                         <div>
-                          <div style={{ fontFamily: 'monospace', overflowWrap: 'anywhere' }}>
+                          <div className="audit-checkpoint-row__field">
                             <strong>checkpoint:</strong> {c.checkpoint}
                           </div>
-                          <div style={{ fontFamily: 'monospace', overflowWrap: 'anywhere', marginTop: 2 }}>
+                          <div className="audit-checkpoint-row__field">
                             <strong>merkleRoot:</strong> {c.merkleRoot}
                           </div>
-                          <div style={{ fontFamily: 'monospace', overflowWrap: 'anywhere', marginTop: 2 }}>
+                          <div className="audit-checkpoint-row__field">
                             <strong>signature:</strong> {c.signature}
                           </div>
                         </div>

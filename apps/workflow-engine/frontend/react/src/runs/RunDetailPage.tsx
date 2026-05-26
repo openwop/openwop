@@ -263,7 +263,6 @@ export function RunDetailPage() {
       <RunHandoffMap events={events} />
       <RunAgentTrace events={events} />
       <RunConversationPanel
-        runId={runId}
         events={events}
         activeInterrupt={activeInterrupt}
         onResolved={async () => {
