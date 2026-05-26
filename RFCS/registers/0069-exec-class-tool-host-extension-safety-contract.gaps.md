@@ -1,0 +1,8 @@
+# RFC 0069 — Gap register
+
+| ID | Section | Question / Missing Input | Owner | Resolution Path | Blocks |
+|---|---|---|---|---|---|
+| G1 | Unresolved #1 | Denylist vs allowlist mechanism for the structural conformance assertion | Conformance Architect | Closed denylist for `Draft` (low false-positive); revisit before `Active` | `Active` |
+| G2 | Unresolved #2 | Boundary between exec-class (host-extension-only) and a constrained manifest-declared command connector (potentially protocol-tier under RFC 0045) | Spec Architect | Proposed: caller/model-supplied command ⇒ exec-class; manifest-declared host-resolved action ⇒ connector. Confirm with implementer | `Active` |
+| G3 | Unresolved #3 | Whether "untrusted content MUST NOT be shell-interpolated" should be a MUST for hosts advertising an exec extension | Security Architect | Keep SHOULD at `Draft`; consider MUST mapping onto existing prompt-injection invariant before `Active` | `Active` |
+| G4 | Proposal §A | Exact placement of the new section within `host-extensions.md` (under "What hosts MUST NOT do" vs standalone) | Spec Architect | Editorial; resolved at implementation | none |
