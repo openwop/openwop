@@ -83,6 +83,17 @@ export function ToolCallCard({ call }: { call: AgentToolCall }): JSX.Element {
           🔧
         </span>
         <span style={{ fontWeight: 600 }}>{call.toolName}</span>
+        {call.agentId && (
+          // RFC 0040 cross-host causation — surface which agent issued the
+          // call. Mono-font chip matches the HandoffIndicator idiom.
+          <span
+            className="muted"
+            style={{ fontFamily: 'var(--mono)', fontSize: 10 }}
+            title={`Called by ${call.agentId}`}
+          >
+            @{call.agentId}
+          </span>
+        )}
         <span
           className="muted"
           style={{ marginLeft: 'auto', fontVariantNumeric: 'tabular-nums', fontSize: 11 }}

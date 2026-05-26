@@ -1411,3 +1411,132 @@ describe('memory subcommand', () => {
     assert.match(cap.stderr, /HTTP 404/);
   });
 });
+
+describe('runs ancestry command', () => {
+  it('walks the parent chain and renders a table root-first', async () => {
+    const cap = capture();
+    const ancestry = {
+      'run-child': { runId: 'run-child', hostId: 'h1', parent: { runId: 'run-parent', hostId: 'h1', cause: 'core.subWorkflow' } },
+      'run-parent': { runId: 'run-parent', hostId: 'h1', parent: null },
+    };
+    const fetchImpl = async (url) => {
+      const m = /\/v1\/runs\/([^/]+)\/ancestry$/.exec(new URL(url).pathname);
+      const body = ancestry[decodeURIComponent(m[1])];
+      return new Response(JSON.stringify(body), { status: 200 });
+    };
+    const code = await runCli(['runs', 'ancestry', 'run-child', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    // root (depth 0) appears before the child (depth 1).
+    const rootIdx = cap.stdout.indexOf('run-parent');
+    const childIdx = cap.stdout.indexOf('run-child');
+    assert.ok(rootIdx !== -1 && childIdx !== -1 && rootIdx < childIdx);
+    assert.match(cap.stdout, /core\.subWorkflow/);
+    assert.match(cap.stdout, /\(root\)/);
+  });
+
+  it('emits the full chain as JSON', async () => {
+    const cap = capture();
+    const fetchImpl = async (url) => {
+      const m = /\/v1\/runs\/([^/]+)\/ancestry$/.exec(new URL(url).pathname);
+      const id = decodeURIComponent(m[1]);
+      const body = id === 'top'
+        ? { runId: 'top', hostId: 'h1', parent: null }
+        : { runId: id, hostId: 'h1', parent: { runId: 'top', hostId: 'h1', cause: 'core.dispatch' } };
+      return new Response(JSON.stringify(body), { status: 200 });
+    };
+    const code = await runCli(['--json', 'runs', 'ancestry', 'leaf', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    const parsed = JSON.parse(cap.stdout);
+    assert.equal(parsed.runId, 'leaf');
+    assert.equal(parsed.chain.length, 2);
+    assert.equal(parsed.chain[0].runId, 'leaf');
+    assert.equal(parsed.chain[1].runId, 'top');
+  });
+
+  it('reports a clear message when the endpoint is not enabled (404)', async () => {
+    const cap = capture();
+    const fetchImpl = async () =>
+      new Response(JSON.stringify({ error: 'not_found', message: 'run-ancestry endpoint not enabled' }), { status: 404 });
+    const code = await runCli(['runs', 'ancestry', 'run-x', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 2);
+    assert.match(cap.stderr, /ancestry unavailable/);
+    assert.match(cap.stderr, /endpoint not enabled/);
+  });
+
+  it('stops at a cross-host parent that carries a wellKnownUrl', async () => {
+    const cap = capture();
+    let calls = 0;
+    const fetchImpl = async (url) => {
+      calls++;
+      return new Response(JSON.stringify({
+        runId: 'leaf', hostId: 'h1',
+        parent: { runId: 'remote', hostId: 'h2', cause: 'core.dispatch', wellKnownUrl: 'https://other.example/.well-known/openwop' },
+      }), { status: 200 });
+    };
+    const code = await runCli(['--json', 'runs', 'ancestry', 'leaf', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    // Only the requested run is fetched; the off-host parent is recorded, not walked.
+    assert.equal(calls, 1);
+    const parsed = JSON.parse(cap.stdout);
+    assert.equal(parsed.chain.length, 1);
+    assert.equal(parsed.chain[0].parent.runId, 'remote');
+  });
+});
+
+describe('agents command', () => {
+  const inventory = {
+    agents: [
+      { agentId: 'core.orchestrator.supervisor', role: 'supervisor', label: 'Supervisor', nodeTypeId: 'core.orchestrator.supervisor', available: true, rfcs: ['RFC 0037'], reasoning: { verbosity: 'full', streaming: true } },
+      { agentId: 'core.dispatch', role: 'dispatch', label: 'Dispatch loop', nodeTypeId: 'core.dispatch', available: true, rfcs: ['RFC 0040'], reasoning: { verbosity: 'full', streaming: true } },
+    ],
+    reasoning: { verbosity: 'full', streaming: true },
+  };
+
+  it('lists agent roles as a table', async () => {
+    const cap = capture();
+    const fetchImpl = async (url) => {
+      assert.equal(new URL(url).pathname, '/v1/host/sample/agents');
+      return new Response(JSON.stringify(inventory), { status: 200 });
+    };
+    const code = await runCli(['agents', 'list', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    assert.match(cap.stdout, /core\.orchestrator\.supervisor\s+supervisor/);
+    assert.match(cap.stdout, /core\.dispatch\s+dispatch/);
+  });
+
+  it('info renders one agent and supports --json', async () => {
+    const cap = capture();
+    const fetchImpl = async (url) => {
+      assert.equal(new URL(url).pathname, '/v1/host/sample/agents/core.dispatch');
+      return new Response(JSON.stringify(inventory.agents[1]), { status: 200 });
+    };
+    const code = await runCli(['--json', 'agents', 'info', 'core.dispatch', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    const parsed = JSON.parse(cap.stdout);
+    assert.equal(parsed.agentId, 'core.dispatch');
+    assert.equal(parsed.role, 'dispatch');
+  });
+
+  it('surfaces a 404 for an unknown agent id', async () => {
+    const cap = capture();
+    const fetchImpl = async () =>
+      new Response(JSON.stringify({ error: 'not_found', message: "agent 'nope' is not present on this host" }), { status: 404 });
+    const code = await runCli(['agents', 'info', 'nope', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 2);
+    assert.match(cap.stderr, /HTTP 404/);
+  });
+});
