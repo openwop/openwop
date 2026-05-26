@@ -209,6 +209,8 @@
       <li class="toc-sub"><a href="#failure-mode-invariants-normative">Failure-mode invariants (normative)</a></li>
       <li class="toc-sub"><a href="#error-codes-additive-to-rest-endpoints-md-common-error-codes">Error codes (additive to rest-endpoints.md §&quot;Common error codes&quot;)</a></li>
       <li class="toc-top"><a href="#host-scheduling">§host.scheduling</a></li>
+      <li class="toc-top"><a href="#host-heartbeat">§host.heartbeat</a></li>
+      <li class="toc-top"><a href="#host-toolhooks">§host.toolHooks</a></li>
       <li class="toc-top"><a href="#host-deadletter">§host.deadLetter</a></li>
       <li class="toc-top"><a href="#host-knowledge">§host.knowledge</a></li>
       <li class="toc-top"><a href="#host-secrets">§host.secrets</a></li>
@@ -1634,18 +1636,58 @@ ctx.storage.cache.delete({ key: string }) → Promise&amp;lt;{ deleted: boolean 
 </ul>
 <p>Additive — hosts that omit the block advertise no scheduling; <code>schedule</code>-trigger workflows refuse to register against them (peerDependency <code>scheduling: &#39;supported&#39;</code>). Verified by <code>scheduling-capability-shape.test.ts</code> (shape, always runs) + <code>scheduling-cron-fires-once.test.ts</code> (once-per-tick + missed-tick, capability-gated).</p>
 <hr/>
+<h2 id="host-heartbeat">§host.heartbeat</h2>
+<p><strong>Capability flag:</strong> <code>heartbeat.supported: true</code> <em>(advertised via top-level <code>Capabilities.heartbeat</code>; see <a href="capabilities.md#heartbeat">capabilities.md §heartbeat</a>)</em> — RFC 0060, <code>Draft</code>.</p>
+<p><strong>Used by:</strong> system-managed, predicate-gated polling — the controlled, request-shaped exception to openwop's poll-free design (<code>positioning.md</code>). Composes on <code>host.scheduling</code> (RFC 0052) for the once-per-tick interval substrate.</p>
+<p>A heartbeat binds a <strong>predicate</strong> (a node/workflow designated as the heartbeat handler) to an interval. It wakes on a short interval to inspect external state (an inbox, a queue, a sensor) and acts <em>only</em> when an idempotent predicate transitions — enqueuing a run or notifying a human — rather than re-running the agent blindly every tick. <code>host.scheduling</code> answers "when"; <code>host.heartbeat</code> answers "evaluate cheaply, and act only on change." A host MAY advertise <code>scheduling</code> without <code>heartbeat</code>; a host advertising <code>heartbeat</code> SHOULD also advertise <code>scheduling</code> (the tick source) and, if it does not, MUST document its own interval substrate.</p>
+<p><strong>Contract (normative).</strong> On each tick, a host advertising <code>heartbeat.supported: true</code> MUST:</p>
+<p>1. <strong>Fire exactly once per tick</strong> — no overlapping evaluations of the same heartbeat; if a prior tick's evaluation is still running, the host MUST skip (not queue) the new tick (composes with <code>idempotency.md</code> + RFC 0052's once-per-tick rule). 2. <strong>Bound the evaluation</strong> to <code>maxRuntimeMs</code> (hard-ceilinged by <code>capabilities.limits.maxRunDurationMs</code>, RFC 0058); an over-budget predicate MUST be terminated and reported <code>heartbeat.evaluated { status: &quot;timeout&quot; }</code>, never left running. 3. <strong>Be idempotent</strong> — the predicate receives the prior tick's emitted state (an opaque host-persisted token) and MUST be a pure function of observed external state + prior state. The host MUST NOT perform a side effect directly; the predicate's <em>output</em> drives action. 4. <strong>Emit <code>heartbeat.evaluated</code></strong> every tick — <code>{ heartbeatId, status: &quot;ok&quot; | &quot;timeout&quot; | &quot;error&quot;, changed: boolean }</code>. 5. <strong>On a state transition only</strong>, emit <code>heartbeat.stateChanged { heartbeatId, from, to }</code> and — if the predicate requests it — enqueue a run via the existing <code>POST /v1/runs</code> path. An unchanged tick MUST NOT enqueue a run or emit <code>heartbeat.stateChanged</code>.</p>
+<p>Gating action on a <em>transition</em> (computed against persisted prior state) — not on the tick itself — is what prevents notification spam.</p>
+<p><strong>First tick (no persisted prior state).</strong> The first evaluation of a <code>heartbeatId</code> has no prior state to compare against. The host MUST treat this as a transition (<code>changed: true</code>) — establishing the baseline by emitting <code>heartbeat.stateChanged { from: {}, to: &amp;lt;observed&amp;gt; }</code> and enqueuing if requested — rather than silently seeding the baseline. This keeps the first non-empty observation actionable (an inbox first seen at <code>unread: 3</code> MUST notify) and makes the transition rule total over the lifetime of a <code>heartbeatId</code>. A host that loses persisted prior state (e.g. an in-memory host across a restart) therefore re-fires the next tick as a first tick; durable hosts SHOULD persist prior state to avoid a post-restart re-notification.</p>
+<p><strong>Capability advertisement shape:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;heartbeat&quot;: {
+    &quot;supported&quot;: true,
+    &quot;minIntervalSec&quot;: 900,
+    &quot;maxRuntimeMs&quot;: 5000
+  }
+}</code></pre>
+<p><strong>Events</strong> (advertised in <code>api/asyncapi.yaml</code>; heartbeat-scoped, NOT run-event-log entries):</p>
+<ul>
+<li><code>heartbeat.evaluated</code> — <code>{ heartbeatId, status, changed }</code>, emitted every tick (observability).</li>
+<li><code>heartbeat.stateChanged</code> — <code>{ heartbeatId, from, to }</code>, emitted only on a predicate-state transition.</li>
+</ul>
+<p>Additive — hosts that omit the block advertise no heartbeat. Verified by <code>heartbeat-capability-shape.test.ts</code> (shape, always runs) + <code>heartbeat-fires-once-per-tick.test.ts</code> / <code>heartbeat-idempotent-no-spam.test.ts</code> / <code>heartbeat-runtime-bound.test.ts</code> (capability-gated).</p>
+<hr/>
+<h2 id="host-toolhooks">§host.toolHooks</h2>
+<p><strong>Capability flag:</strong> <code>toolHooks.supported: true</code> <em>(advertised via top-level <code>Capabilities.toolHooks</code>; see <a href="capabilities.md#toolhooks">capabilities.md §toolHooks</a>)</em> — RFC 0064, <code>Active</code>.</p>
+<p><strong>Used by:</strong> per-tool authorization + rate limiting + a content-free tool-call audit trail, layered on the existing <code>agent.toolCalled</code> / <code>agent.toolReturned</code> events (RFC 0002). Generalizes the MCP-specific bridges across transports (<code>mcp</code> / <code>http</code> / <code>native</code>) — see <a href="mcp-integration.md">mcp-integration.md</a>. Reuses RFC 0049's <code>forbidden</code> error + <code>authorization-fail-closed</code> invariant and the existing <code>rate_limited</code> error; <strong>no new event type, error code, or SECURITY invariant</strong>.</p>
+<p><strong>Content-free audit (normative, when <code>prePostEvents: true</code>).</strong> For every external tool call, the host MUST populate the additive fields on the existing <code>callId</code>-paired events: <code>agent.toolCalled</code> gains <code>argsHash</code> (SHA-256 over RFC 8785 JCS-canonicalized args with resolved secrets <strong>already redacted</strong> per SR-1 — raw key material MUST NOT enter the hash input), <code>principal</code> (the RFC 0048 id; <code>core.system</code> for non-agent host egress — <code>agentId</code> stays REQUIRED, so non-agent calls use the reserved synthetic agent id), and <code>transport</code>; <code>agent.toolReturned</code> gains <code>status</code> (<code>ok</code>/<code>error</code>/<code>forbidden</code>/<code>rate_limited</code>) and <code>durationMs</code> (recorded, re-emitted verbatim on replay/<code>:fork</code>, never recomputed — <code>replay.md</code>).</p>
+<p><strong>Per-tool authorization (normative, when <code>perToolAuthorization: true</code>).</strong> A tool declares required scopes (<code>actions[].requiredScopes[]</code> in its connector/mount manifest, per RFC 0045). Before invoking, the host MUST check the run principal's RFC 0049 scopes and <strong>fail closed</strong>: if the principal lacks a scope <strong>or authorization cannot be evaluated</strong>, the host MUST NOT invoke the tool, MUST emit <code>agent.toolReturned { status: &#39;forbidden&#39; }</code>, and MUST surface the existing <code>forbidden</code> (403) error with <code>details.scope: &#39;tool&#39;</code> + <code>details.toolName</code> + <code>details.requiredScopes</code>. Absence of a decision is denial — this is the per-tool application of RFC 0049's <code>authorization-fail-closed</code> invariant.</p>
+<p><strong>Per-tool rate limiting (normative, when <code>perToolRateLimit: true</code>).</strong> The host MUST apply a token bucket keyed on <code>(principal, toolName)</code>; on exhaustion it MUST NOT invoke the tool, emits <code>agent.toolReturned { status: &#39;rate_limited&#39; }</code>, and surfaces the existing <code>rate_limited</code> (429, <code>Retry-After</code>) error with <code>details.scope: &#39;tool&#39;</code> — distinct from the HTTP-inbound limiter (unchanged), same envelope.</p>
+<p><strong>Capability advertisement shape:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;toolHooks&quot;: {
+    &quot;supported&quot;: true,
+    &quot;prePostEvents&quot;: true,
+    &quot;perToolAuthorization&quot;: true,
+    &quot;perToolRateLimit&quot;: false
+  }
+}</code></pre>
+<p>Additive — hosts that omit the block behave exactly as today (the <code>agent.toolCalled</code>/<code>agent.toolReturned</code> <code>required</code> arrays + <code>callId</code> pairing are unchanged; <code>version &amp;lt; toolHooks</code> consumers ignore the new fields). Verified by <code>tool-hooks-shape.test.ts</code> (shape, always runs) + <code>tool-hooks-content-free.test.ts</code> / <code>tool-hooks-authorization-fail-closed.test.ts</code> / <code>tool-hooks-rate-limit.test.ts</code> / <code>tool-hooks-secret-redaction.test.ts</code> (capability-gated).</p>
+<hr/>
 <h2 id="host-deadletter">§host.deadLetter</h2>
 <p><strong>Capability flag:</strong> <code>deadLetter.supported: true</code> <em>(advertised via top-level <code>Capabilities.deadLetter</code>; see <a href="capabilities.md#deadletter">capabilities.md §deadLetter</a>)</em> — RFC 0053, <code>Draft</code>.</p>
-<p><strong>Used by:</strong> the engine's terminal-failure path. Gives a run/node that exhausts its retry policy a durable, inspectable <strong>sink</strong> instead of being logged and lost — so a poisoned run can be examined and replayed.</p>
+<p><strong>Used by:</strong> the engine&#39;s terminal-failure path. Gives a run/node that exhausts its retry policy a durable, inspectable <strong>sink</strong> instead of being logged and lost — so a poisoned run can be examined and replayed.</p>
 <p>This is the run-level dead-letter surface, <strong>distinct from</strong> <code>queueBus.deadLetterSupported</code> (RFC 0017), which dead-letters transport <em>messages</em> on a queue backend, not <em>runs</em> in the engine. It composes with the retry policy (RFC 0009) and fork/replay (RFC 0011).</p>
 <p><strong>Contract (normative).</strong> A host advertising <code>deadLetter.supported: true</code> MUST:</p>
-<p>1. On retry exhaustion (per the RFC 0009 retry policy), route the run/node to the dead-letter sink and emit <code>run.dead_lettered { runId, nodeId?, reason, attempts }</code>. The run's terminal <code>RunSnapshot.status</code> reflects failure; the run is <strong>not</strong> purged before <code>retentionDays</code>. 2. Keep the dead-lettered run <strong>fork-eligible</strong> per RFC 0011 for the retention window — it can be forked/replayed (e.g. after the underlying cause is fixed). 3. Purge the run after <code>retentionDays</code>; a fork attempt on a purged run returns the existing RFC 0011 not-found error.</p>
+<p>1. On retry exhaustion (per the RFC 0009 retry policy), route the run/node to the dead-letter sink and emit <code>run.dead_lettered { runId, nodeId?, reason, attempts }</code>. The run&#39;s terminal <code>RunSnapshot.status</code> reflects failure; the run is <strong>not</strong> purged before <code>retentionDays</code>. 2. Keep the dead-lettered run <strong>fork-eligible</strong> per RFC 0011 for the retention window — it can be forked/replayed (e.g. after the underlying cause is fixed). 3. Purge the run after <code>retentionDays</code>; a fork attempt on a purged run returns the existing RFC 0011 not-found error.</p>
 <p><code>run.dead_lettered</code> carries no credential or payload material beyond a redaction-safe <code>reason</code>.</p>
 <p><strong>Capability advertisement shape:</strong></p>
 <pre class="lang-json"><code>{
-  &quot;deadLetter&quot;: {
-    &quot;supported&quot;: true,
-    &quot;retentionDays&quot;: 30
+  &amp;quot;deadLetter&amp;quot;: {
+    &amp;quot;supported&amp;quot;: true,
+    &amp;quot;retentionDays&amp;quot;: 30
   }
 }</code></pre>
 <p>Additive — hosts that omit the block continue to fail runs with no sink, unaffected. Verified by <code>deadletter-capability-shape.test.ts</code> (shape, always runs) + <code>deadletter-retry-exhaustion.test.ts</code> (retry-exhaustion → <code>run.dead_lettered</code> + fork-eligibility, capability-gated).</p>
@@ -1653,10 +1695,10 @@ ctx.storage.cache.delete({ key: string }) → Promise&amp;lt;{ deleted: boolean 
 <h2 id="host-knowledge">§host.knowledge</h2>
 <p><strong>Capability flag:</strong> <code>host.knowledge: supported</code></p>
 <p><strong>Used by:</strong> market-intelligence packs, RAG-grounded copy packs, brief-enrichment packs.</p>
-<p>Knowledge-base retrieval. Routes queries through the host's RAG pipeline (embedding → vector search → optional re-rank). The host owns the corpus, the embedding model, and the access-control boundary; the pack supplies the query.</p>
+<p>Knowledge-base retrieval. Routes queries through the host&#39;s RAG pipeline (embedding → vector search → optional re-rank). The host owns the corpus, the embedding model, and the access-control boundary; the pack supplies the query.</p>
 <pre class="lang-typescript"><code>ctx.knowledge.retrieve({
   query: string,
-  workspaceId?: string,       // omit to use the run&#39;s workspace
+  workspaceId?: string,       // omit to use the run&amp;#39;s workspace
   collectionIds?: string[],   // scope to specific knowledge collections
   category?: string,          // optional category facet
   candidateLimit?: number,    // pre-rank candidate pool size; host caps the upper bound

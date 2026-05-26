@@ -200,6 +200,7 @@
       <li class="toc-top"><a href="#engine-enforced-limits-and-the-cap-breached-event-closes-cc-1-spec-side">Engine-enforced limits and the cap.breached event (closes CC-1 spec-side)</a></li>
       <li class="toc-sub"><a href="#cap-breached-payload">cap.breached payload</a></li>
       <li class="toc-sub"><a href="#resolution-recursionlimit-maxnodeexecutions">Resolution: recursionLimit + maxNodeExecutions</a></li>
+      <li class="toc-sub"><a href="#resolution-run-duration-loop-iterations-rfc-0058">Resolution: run-duration + loop-iterations (RFC 0058)</a></li>
       <li class="toc-sub"><a href="#what-this-closes">What this closes</a></li>
       <li class="toc-sub"><a href="#industry-standard-alignment">Industry-standard alignment</a></li>
       <li class="toc-sub"><a href="#conformance-fixture">Conformance fixture</a></li>
@@ -563,6 +564,31 @@ interface CapabilityLimits {
 <li><code>maxOutputBytes</code> (integer, OPTIONAL) — informational ceiling on the distilled entry size. SHOULD be <code>≤ memory.maxEntrySizeBytes</code>.</li>
 </ul>
 <p><strong>SR-1 carry-forward (normative).</strong> Hosts advertising <code>memory.compaction.supported: true</code> MUST route compacted entry content through the same BYOK redaction harness applied to a fresh <code>put</code>. Per RFC 0012 §D, the fact that source entries were SR-1-compliant at original <code>put</code> time is NOT evidence to skip redaction on derived content — summarization models can introduce secret-shaped substrings not present in any source. See <code>SECURITY/invariants.yaml</code> row <code>memory-compaction-sr-1-carry-forward</code>.</p>
+<h4 id="memory-distillation-rfc-0062-active"><code>memory.distillation</code> (RFC 0062, <code>Active</code>)</h4>
+<p><strong>Why this exists.</strong> A "dream" is a periodic background run that distills recent transactional memory into long-term artifacts under an explicit token budget, then refreshes a retrieval index the next session loads at startup. openwop already had the halves — <code>memory.compaction</code> (RFC 0012) defines host-managed distillation + the <code>memory.compacted</code> event, and <code>scheduling</code> (RFC 0052) defines scheduled run initiation — but nothing bound them, pinned a <em>token budget</em>, or defined the <em>index</em> that closes the loop back to startup. Distillation composes them; it reuses the <code>memory.compacted</code> event (extended with an additive optional <code>distillation</code> sub-object) rather than minting a parallel <code>memory.distilled</code> event.</p>
+<p>Optional sub-block. Hosts that omit it keep plain on-demand compaction (<code>memory.compaction</code>) or no memory; clients MUST NOT infer distillation from entry counts. The run contract — read snapshot → mandatory token budget → RFC 0012 distill with SR-1 carry-forward → byte-stable archive → <code>MEMORY-INDEX.json</code> workspace file → extended <code>memory.compacted</code> — is normative in <a href="./agent-memory.md"><code>agent-memory.md</code></a> §"Scheduled distillation".</p>
+<pre class="lang-json"><code>&quot;memory&quot;: {
+  &quot;supported&quot;: true,
+  &quot;maxEntrySizeBytes&quot;: 65536,
+  &quot;ttlSupported&quot;: true,
+  &quot;distillation&quot;: {
+    &quot;supported&quot;: true,
+    &quot;maxTokenBudget&quot;: 8000,
+    &quot;scheduled&quot;: true,
+    &quot;indexEmitted&quot;: true,
+    &quot;tokenizerName&quot;: &quot;claude&quot;,
+    &quot;archiveRetention&quot;: &quot;P30D&quot;
+  }
+}</code></pre>
+<ul>
+<li><code>supported</code> (boolean, REQUIRED when the sub-block is present) — when <code>true</code>, host honors the <code>distillation.tokenBudget</code> reserved run-option key (<code>run-options.md</code>), runs budgeted distillation over <code>longTerm</code> memory, writes a stable archive, and emits <code>memory.compacted</code> with the <code>distillation</code> sub-object.</li>
+<li><code>maxTokenBudget</code> (integer, OPTIONAL) — largest per-run distillation token budget the host honors. A supplied <code>distillation.tokenBudget</code> is clamped to this; absent ⇒ the host defaults to this.</li>
+<li><code>scheduled</code> (boolean, OPTIONAL) — when <code>true</code>, host can initiate distillation on a schedule (requires <code>capabilities.scheduling</code>, RFC 0052). Distillation MAY also run on-demand without scheduling.</li>
+<li><code>indexEmitted</code> (boolean, OPTIONAL) — when <code>true</code>, host writes a retrievable memory-index manifest (<code>MEMORY-INDEX.json</code>, a workspace file per RFC 0059) after distillation; updating it emits <code>workspace.updated</code>.</li>
+<li><code>tokenizerName</code> (string, OPTIONAL) — identifier of the tokenizer the budget is counted against (e.g. <code>claude</code>, <code>gpt-4</code>). The budget is best-effort-honest per this tokenizer (±10% conformance tolerance), not byte-exact.</li>
+<li><code>archiveRetention</code> (string, OPTIONAL) — ISO-8601 duration (e.g. <code>P30D</code>) the distilled archives persist before GC. Recursive distillation (distilling prior archives) is allowed; each level re-checks SR-1.</li>
+</ul>
+<p><strong>Token budget + SR-1 (normative).</strong> A distillation run MUST stay within its effective <code>tokenBudget</code> (<code>min(distillation.tokenBudget, maxTokenBudget)</code>, defaulting to <code>maxTokenBudget</code> when absent); a source set that cannot be distilled within the budget MUST fail with <code>token_budget_exceeded</code> (<code>rest-endpoints.md</code>) and write no partial archive (atomic). SR-1 carry-forward (RFC 0012 §D) holds through distillation — a distilled archive MUST NOT re-expose a secret the sources had redacted; this reuses the <code>memory-compaction-sr-1-carry-forward</code> invariant, so distillation adds no new invariant.</p>
 <h3 id="runs-pauseresume-track-13"><code>runs.pauseResume</code> (Track 13)</h3>
 <pre class="lang-json"><code>&quot;runs&quot;: {
   &quot;pauseResume&quot;: {
@@ -643,20 +669,27 @@ interface CapabilityLimits {
 <p><code>conversationCapabilityNegotiation.test.ts</code> exercises the refusal contract for <code>core.conversationGate</code> against hosts that do not advertise <code>conversationPrimitive: true</code>. Analogous scenarios for the other gated typeIds ship as their gating capabilities migrate to general advertisement.</p>
 <hr/>
 <h2 id="engine-enforced-limits-and-the-cap-breached-event-closes-cc-1-spec-side">Engine-enforced limits and the <code>cap.breached</code> event (closes CC-1 spec-side)</h2>
-<p>The four <code>Capabilities.limits</code> fields (<code>clarificationRounds</code>, <code>schemaRounds</code>, <code>envelopesPerTurn</code>, <code>maxNodeExecutions</code>) are engine-enforced — the server MUST emit a <code>cap.breached</code> event AND fail the run / node when an attempted operation would exceed the configured ceiling. All four kinds share the same event surface (<code>run-event-payloads.schema.json#$defs.capBreached</code>) so consumers handle one event with a <code>kind</code> discriminator instead of N parallel surfaces.</p>
+<p>The <code>Capabilities.limits</code> fields (<code>clarificationRounds</code>, <code>schemaRounds</code>, <code>envelopesPerTurn</code>, <code>maxNodeExecutions</code>, and — per RFC 0058 — <code>maxRunDurationMs</code>, <code>maxLoopIterations</code>) are engine-enforced — the server MUST emit a <code>cap.breached</code> event AND fail the run / node when an attempted operation would exceed the configured ceiling. All kinds share the same event surface (<code>run-event-payloads.schema.json#$defs.capBreached</code>) so consumers handle one event with a <code>kind</code> discriminator instead of N parallel surfaces.</p>
 <h3 id="cap-breached-payload"><code>cap.breached</code> payload</h3>
 <table>
 <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
 <tbody>
-<tr><td><code>kind</code></td><td>string</td><td>One of <code>clarification</code>, <code>schema</code>, <code>envelopes</code>, <code>node-executions</code>.</td></tr>
-<tr><td><code>limit</code></td><td>integer</td><td>The ceiling that was tripped (server-resolved value — see §Resolution below).</td></tr>
-<tr><td><code>observed</code></td><td>integer</td><td>The observed value at the moment of trip. Always strictly greater than <code>limit</code>.</td></tr>
-<tr><td><code>nodeId</code></td><td>string (optional)</td><td>Set for node-scoped limits (<code>clarification</code>, <code>schema</code>). Absent for run-scoped (<code>envelopes</code>, <code>node-executions</code>).</td></tr>
+<tr><td><code>kind</code></td><td>string</td><td>One of <code>clarification</code>, <code>schema</code>, <code>envelopes</code>, <code>node-executions</code>; <code>wasm-memory</code> / <code>wasm-fuel</code> / <code>wasm-execution-time</code> (RFC 0008 §K); <code>run-duration</code> / <code>loop-iterations</code> (RFC 0058).</td></tr>
+<tr><td><code>limit</code></td><td>integer</td><td>The ceiling that was tripped (server-resolved value — see §Resolution below). For <code>run-duration</code> this is the resolved timeout in milliseconds; for <code>loop-iterations</code> the resolved iteration ceiling.</td></tr>
+<tr><td><code>observed</code></td><td>integer</td><td>The observed value at the moment of trip. Always strictly greater than <code>limit</code>. For <code>run-duration</code> the elapsed milliseconds; for <code>loop-iterations</code> the iteration count. MUST be recorded in the event and reused on replay / <code>:fork</code> — never recomputed from a live clock or counter (<code>replay.md</code>).</td></tr>
+<tr><td><code>nodeId</code></td><td>string (optional)</td><td>Set for node-scoped limits (<code>clarification</code>, <code>schema</code>). Absent for run-scoped limits (<code>envelopes</code>, <code>node-executions</code>, <code>run-duration</code>, <code>loop-iterations</code>).</td></tr>
 </tbody></table>
 <h3 id="resolution-recursionlimit-maxnodeexecutions">Resolution: <code>recursionLimit</code> + <code>maxNodeExecutions</code></h3>
 <p>For the <code>node-executions</code> kind specifically (which is the runtime invariant for <code>recursionLimit</code>):</p>
 <p>1. The server resolves the effective limit as <code>min(RunOptions.configurable.recursionLimit, Capabilities.limits.maxNodeExecutions)</code>. If the caller didn't supply <code>configurable.recursionLimit</code>, the server uses <code>maxNodeExecutions</code> directly. 2. The server validates the caller's supplied value at run-create time via the <code>validateRecursionLimit()</code> helper documented in <code>run-options.md</code>. Out-of-range values return <code>400 validation_error</code> BEFORE the run starts — never at runtime. 3. The server maintains a per-run <code>nodeExecutionCount</code> counter, incremented on every node-state transition into <code>started</code>. 4. When <code>nodeExecutionCount &gt; resolvedLimit</code>, the server:    - Emits <code>cap.breached</code> with <code>kind: &#39;node-executions&#39;</code>, <code>limit: resolvedLimit</code>, <code>observed: nodeExecutionCount</code>.    - Transitions the run to <code>failed</code>.    - Sets <code>RunSnapshot.error.code = &#39;recursion_limit_exceeded&#39;</code> and <code>RunSnapshot.error.message</code> to a human-readable description.    - Stops scheduling further nodes.</p>
 <p>The other three kinds follow analogous patterns (per <code>clarification</code> / <code>schema</code> / <code>envelopes</code> semantics in §In-package shape above), differing only in <em>what</em> gets counted and <em>which counter</em> resets when.</p>
+<h3 id="resolution-run-duration-loop-iterations-rfc-0058">Resolution: <code>run-duration</code> + <code>loop-iterations</code> (RFC 0058)</h3>
+<p>Two run-scoped bounds follow the same resolve-at-create, enforce-at-runtime, emit-<code>cap.breached</code> pattern:</p>
+<ul>
+<li><strong><code>run-duration</code></strong> — the server resolves <code>min(RunOptions.configurable.runTimeoutMs, Capabilities.limits.maxRunDurationMs)</code> (measured from <code>run.started</code>), validates the caller's value at run-create (<code>400 validation_error</code> if out of range), and on expiry emits <code>cap.breached { kind: &#39;run-duration&#39;, limit: &amp;lt;resolvedMs&amp;gt;, observed: &amp;lt;elapsedMs&amp;gt; }</code>, transitions the run to <code>failed</code> with <code>error.code = &#39;run_timeout&#39;</code>, and stops scheduling.</li>
+<li><strong><code>loop-iterations</code></strong> — for hosts advertising <code>multiAgent.executionModel.supported</code> (the execution loop, RFC 0037; orchestrator turns are the counted iterations), the server resolves <code>min(RunOptions.configurable.maxLoopIterations, Capabilities.limits.maxLoopIterations)</code>, counts one increment per orchestrator turn, and on exceedance emits <code>cap.breached { kind: &#39;loop-iterations&#39;, limit: &amp;lt;resolvedMax&amp;gt;, observed: &amp;lt;iterationCount&amp;gt; }</code>, transitions to <code>failed</code> with <code>error.code = &#39;loop_limit_exceeded&#39;</code>, and stops scheduling.</li>
+</ul>
+<p>Both are run-scoped (no <code>nodeId</code>). Adding these two kinds to the <code>capBreached.kind</code> enum is additive — no <code>eventLogSchemaVersion</code> bump — exactly as RFC 0008 §K added the <code>wasm-*</code> kinds.</p>
 <h3 id="what-this-closes">What this closes</h3>
 <ul>
 <li><strong>CC-1</strong>: the <code>recursionLimit</code> runtime invariant. Validation and runtime enforcement are expressed as a unified <code>cap.breached</code> emission rather than a separate event class. No <code>eventLogSchemaVersion</code> bump required — <code>cap.breached</code> already exists with <code>node-executions</code> in its <code>kind</code> enum (per <code>run-event-payloads.schema.json</code> and the <code>openwop.cap_kind</code> OTel attribute in <code>observability.md</code>).</li>
@@ -669,7 +702,7 @@ interface CapabilityLimits {
 <li>Temporal / Cadence: cap exceedance folds under <code>WorkflowExecutionTimedOut</code> / <code>ActivityTaskFailed</code> with reason discriminator.</li>
 <li>AWS Step Functions: <code>ExecutionFailed</code> with <code>error: &quot;States.Runtime&quot;</code> covers all runtime caps.</li>
 </ul>
-<p>openwop follows the same pattern: <code>cap.breached</code> with a <code>kind</code> discriminator covers all four engine-enforced caps.</p>
+<p>openwop follows the same pattern: <code>cap.breached</code> with a <code>kind</code> discriminator covers all engine-enforced caps — the four core kinds, the RFC 0008 <code>wasm-*</code> runtime caps, and the RFC 0058 <code>run-duration</code> / <code>loop-iterations</code> bounds.</p>
 <h3 id="conformance-fixture">Conformance fixture</h3>
 <p><code>conformance-cap-breach</code> (specced in <code>conformance/fixtures.md</code>) exercises the path end-to-end: 10 sequential noop nodes + <code>configurable.recursionLimit: 5</code> → terminal <code>failed</code> + <code>cap.breached</code> event with <code>kind: &#39;node-executions&#39;</code>.</p>
 <hr/>

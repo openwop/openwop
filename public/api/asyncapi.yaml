@@ -54,6 +54,23 @@ servers:
 # ─────────────────────────────────────────────────────────────────────────────
 channels:
 
+  heartbeatEvents:
+    address: /heartbeats/{heartbeatId}/events
+    title: Heartbeat evaluation events (RFC 0060)
+    summary: Per-tick heartbeat evaluation + state-change notifications.
+    description: |
+      RFC 0060 `host.heartbeat`. Heartbeat-scoped (NOT a run-event
+      stream): a host advertising `capabilities.heartbeat.supported: true`
+      emits `heartbeat.evaluated` every tick and `heartbeat.stateChanged`
+      only on a predicate-state transition. Both are observability-only;
+      consumers MAY ignore them.
+    parameters:
+      heartbeatId:
+        description: Host-assigned heartbeat identifier.
+    messages:
+      heartbeatEvaluated:    { $ref: '#/components/messages/HeartbeatEvaluated' }
+      heartbeatStateChanged: { $ref: '#/components/messages/HeartbeatStateChanged' }
+
   runEventsUpdates:
     address: /runs/{runId}/events
     title: SSE — updates mode (default)
@@ -80,6 +97,7 @@ channels:
       runPaused:         { $ref: '#/components/messages/RunPaused' }
       runResumed:        { $ref: '#/components/messages/RunResumed' }
       runAnnotated:      { $ref: '#/components/messages/RunAnnotated' }
+      workspaceUpdated:  { $ref: '#/components/messages/WorkspaceUpdated' }
       nodeCompleted:     { $ref: '#/components/messages/NodeCompleted' }
       nodeFailed:        { $ref: '#/components/messages/NodeFailed' }
       nodeSkipped:       { $ref: '#/components/messages/NodeSkipped' }
@@ -156,6 +174,7 @@ channels:
     messages:
       anyRunEvent:  { $ref: '#/components/messages/AnyRunEvent' }
       runAnnotated: { $ref: '#/components/messages/RunAnnotated' }
+      workspaceUpdated: { $ref: '#/components/messages/WorkspaceUpdated' }
 
 # ─────────────────────────────────────────────────────────────────────────────
 # OPERATIONS — consumer-side (receive)
@@ -320,6 +339,32 @@ components:
       payload:
         $ref: '#/components/schemas/Annotation'
 
+    WorkspaceUpdated:
+      name: workspace.updated
+      title: Workspace file updated (RFC 0059)
+      summary: A workspace file was created, replaced, or deleted via the host.workspace store. Content-free — carries the file path + resulting version only (the body is served by the read-side, SR-1-redacted). A replayable run-event-log entry (re-read from the log on replay, never regenerated); gated on capabilities.workspace.supported.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/WorkspaceUpdatedPayload'
+
+    # RFC 0060. Heartbeat-scoped observability events — NOT RunEventDocs,
+    # NOT replayable run-event-log entries. Emitted on the heartbeat channel.
+    HeartbeatEvaluated:
+      name: heartbeat.evaluated
+      title: Heartbeat evaluated (RFC 0060)
+      summary: A heartbeat predicate was evaluated this tick (status + changed flag). Heartbeat-scoped observability.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HeartbeatEvaluated'
+
+    HeartbeatStateChanged:
+      name: heartbeat.stateChanged
+      title: Heartbeat state changed (RFC 0060)
+      summary: A heartbeat predicate's state transitioned; emitted ONLY on change (never on an unchanged tick). Heartbeat-scoped.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HeartbeatStateChanged'
+
     # ── Node-lifecycle ───────────────────────────────────────────────────
     NodeCompleted:
       name: node.completed
@@ -469,6 +514,18 @@ components:
     # replayable run-event-log entries (RFC 0056 §B/§D).
     Annotation:
       $ref: '../schemas/annotation.schema.json'
+
+    # RFC 0059. The workspace.updated event payload — content-free
+    # {path, version}. Definition lives at
+    # run-event-payloads.schema.json#$defs.workspaceUpdated so the SSE
+    # consumer + run-event log share one shape contract.
+    WorkspaceUpdatedPayload:
+      $ref: '../schemas/run-event-payloads.schema.json#/$defs/workspaceUpdated'
+    # RFC 0060 heartbeat events (heartbeat-scoped; see host-capabilities.md §host.heartbeat).
+    HeartbeatEvaluated:
+      $ref: '../schemas/heartbeat-evaluated.schema.json'
+    HeartbeatStateChanged:
+      $ref: '../schemas/heartbeat-state-changed.schema.json'
 
     StateSnapshotPayload:
       # S1 closure (2026-04-27): reuse the canonical RunSnapshot

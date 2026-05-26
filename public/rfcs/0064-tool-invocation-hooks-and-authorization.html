@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — RFC 0064: Tool invocation hooks &amp; per-tool authorization (`host.toolHooks`)</title>
+  <meta name="description" content="openwop already has a tool-call lifecycle: agent.toolCalled / agent.toolReturned (RFC 0002), paired by callId. What it lacks is (a) a content-free variant safe for SIEM ingestion (today agent.toolCalled.inputs carries the full args), (b) per-tool…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0064-tool-invocation-hooks-and-authorization.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — RFC 0064: Tool invocation hooks &amp; per-tool authorization (`host.toolHooks`)"/>
+  <meta property="og:description" content="openwop already has a tool-call lifecycle: agent.toolCalled / agent.toolReturned (RFC 0002), paired by callId. What it lacks is (a) a content-free variant safe for SIEM ingestion (today agent.toolCalled.inputs carries the full args), (b) per-tool…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0064-tool-invocation-hooks-and-authorization.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — RFC 0064: Tool invocation hooks &amp; per-tool authorization (`host.toolHooks`)"/>
+  <meta name="twitter:description" content="openwop already has a tool-call lifecycle: agent.toolCalled / agent.toolReturned (RFC 0002), paired by callId. What it lacks is (a) a content-free variant safe for SIEM ingestion (today agent.toolCalled.inputs carries the full args), (b) per-tool…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "RFC 0064: Tool invocation hooks & per-tool authorization (`host.toolHooks`)",
+  "description": "openwop already has a tool-call lifecycle: agent.toolCalled / agent.toolReturned (RFC 0002), paired by callId. What it lacks is (a) a content-free variant safe for SIEM ingestion (today agent.toolCalled.inputs carries the full args), (b) per-tool…",
+  "url": "https://openwop.dev/rfcs/0064-tool-invocation-hooks-and-authorization.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  }
+}</script>
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>RFC 0064: Tool invocation hooks &amp; per-tool authorization (`host.toolHooks`)</h1>
+      <p class="lede">openwop already has a tool-call lifecycle: agent.toolCalled / agent.toolReturned (RFC 0002), paired by callId. What it lacks is (a) a content-free variant safe for SIEM ingestion (today agent.toolCalled.inputs carries the full args), (b) per-tool…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-capabilities-schema-json-host-toolhooks-block-additive">§A — capabilities.schema.json: host.toolHooks block (additive)</a></li>
+      <li class="toc-sub"><a href="#b-additive-fields-on-the-existing-tool-call-events-normative-when-prepostevents-true">§B — additive fields on the existing tool-call events (normative, when prePostEvents: true)</a></li>
+      <li class="toc-sub"><a href="#c-per-tool-authorization-normative-when-pertoolauthorization-true">§C — per-tool authorization (normative, when perToolAuthorization: true)</a></li>
+      <li class="toc-sub"><a href="#d-per-tool-rate-limiting-normative-when-pertoolratelimit-true">§D — per-tool rate limiting (normative, when perToolRateLimit: true)</a></li>
+      <li class="toc-sub"><a href="#e-credentials-normative">§E — credentials (normative)</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#phase-0-resolution-architect-ruling-2026-05-25">Phase-0 resolution (architect ruling, 2026-05-25)</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0064</td></tr>
+<tr><td><strong>Title</strong></td><td>A <code>host.toolHooks</code> capability — additive authorization + timing + content-free-argument fields on the existing <code>agent.toolCalled</code> / <code>agent.toolReturned</code> events (RFC 0002), fail-closed per-tool authorization via RFC 0049 scopes (reusing the <code>forbidden</code> error + the <code>authorization-fail-closed</code> invariant), and optional per-tool rate limiting (reusing <code>rate_limited</code>) — generalizing the MCP bridges into one auditable, least-privilege tool surface without inventing parallel events</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-25</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-25 (Active → Accepted — Milestone 2: the in-memory reference host advertises <code>capabilities.toolHooks { supported, prePostEvents, perToolAuthorization, perToolRateLimit }</code> and implements the <code>POST /v1/host/sample/toolhooks/invoke</code> seam end-to-end — §B content-free <code>agent.toolCalled.argsHash</code> (SR-1-redacted JCS+SHA-256) + <code>agent.toolReturned.status</code>/<code>durationMs</code>; §C per-tool authorization fails closed (<code>forbidden</code>) on a lacked/unevaluable scope (per-tool application of RFC 0049's <code>authorization-fail-closed</code>); §D per-<code>(principal, tool)</code> rate limit yields <code>rate_limited</code>. All five <code>tool-hooks-*.test.ts</code> scenarios are live + green. Reuses RFC 0049 <code>forbidden</code> + <code>rate_limited</code> — no new event type, error code, or invariant.)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>schemas/capabilities.schema.json</code> (<code>host.toolHooks</code> block) · <code>schemas/run-event-payloads.schema.json</code> (additive optional fields on <code>agentToolCalled</code> / <code>agentToolReturned</code>) · <code>spec/v1/mcp-integration.md</code> (per-tool authorization + rate-limit prose) · <code>RFCS/0002</code> (the tool-call events this extends) · <code>RFCS/0046</code> (credential resolution) · <code>RFCS/0049</code> (RBAC scopes + the <code>forbidden</code> error + <code>authorization-fail-closed</code> invariant, reused) · new conformance scenarios</td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>openwop already has a tool-call lifecycle: <code>agent.toolCalled</code> / <code>agent.toolReturned</code> (RFC 0002), paired by <code>callId</code>. What it lacks is (a) a <em>content-free</em> variant safe for SIEM ingestion (today <code>agent.toolCalled.inputs</code> carries the full args), (b) <em>per-tool authorization</em> (a run that may call <code>search</code> can also call <code>delete</code> if both are mounted), and (c) <em>per-tool rate limiting</em> (today's limiter is HTTP-inbound only). This RFC adds an additive <code>host.toolHooks</code> capability that <strong>extends the existing <code>agent.toolCalled</code> / <code>agent.toolReturned</code> events</strong> with optional <code>argsHash</code> / <code>principal</code> / <code>transport</code> / <code>status</code> / <code>durationMs</code> fields, enforces fail-closed per-tool scopes via <strong>RFC 0049</strong> (reusing the <code>forbidden</code> error + the existing <code>authorization-fail-closed</code> invariant), and applies per-<code>(principal,tool)</code> rate limiting (reusing <code>rate_limited</code>) — rather than inventing parallel <code>tool.invoked</code> / <code>tool.returned</code> events or a <code>tool_forbidden</code> error.</p>
+<h2 id="motivation">Motivation</h2>
+<p>The feature set's tool-hooks acceptance criterion: "external calls are logged, rate-limited, and require explicit credentials," with least privilege. The pieces are uneven: credential injection works (BYOK <code>ctx.secrets</code>), tool calls already emit <code>agent.toolCalled</code> / <code>agent.toolReturned</code>, and rate limiting exists — but only at the inbound HTTP layer (per-IP / per-session), not per <em>tool</em>; the existing tool events carry full args (not SIEM-safe) and no authorization outcome; and there is no per-tool authorization between "tool is mounted" and "this principal may call it." For autonomous agents that call many tools per loop iteration (RFC 0061), "which tool, by which principal, how often, allowed?" must be first-class.</p>
+<p>The spec is the right place because the tool-call audit record + authorization decision are cross-host security guarantees — an agent moved between hosts must be subject to the same per-tool authorization, and a SIEM consuming events from multiple hosts needs one stable shape (which <code>agent.toolCalled</code> / <code>agent.toolReturned</code> already are).</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-capabilities-schema-json-host-toolhooks-block-additive">§A — <code>capabilities.schema.json</code>: <code>host.toolHooks</code> block (additive)</h3>
+<pre class="lang-diff"><code>   &quot;host&quot;: {
+     &quot;properties&quot;: {
++      &quot;toolHooks&quot;: {
++        &quot;type&quot;: &quot;object&quot;,
++        &quot;description&quot;: &quot;RFC 0064. Per-tool authorization + rate limiting + content-free tool-call audit fields, layered on the existing agent.toolCalled/agent.toolReturned events. Generalizes the MCP-specific bridges.&quot;,
++        &quot;required&quot;: [&quot;supported&quot;],
++        &quot;additionalProperties&quot;: false,
++        &quot;properties&quot;: {
++          &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot; },
++          &quot;prePostEvents&quot;: { &quot;type&quot;: &quot;boolean&quot;, &quot;description&quot;: &quot;Host populates argsHash/principal/transport on agent.toolCalled + status/durationMs on agent.toolReturned for every external tool call.&quot; },
++          &quot;perToolAuthorization&quot;: { &quot;type&quot;: &quot;boolean&quot;, &quot;description&quot;: &quot;Host enforces per-tool scopes against the run principal (RFC 0049), fail-closed.&quot; },
++          &quot;perToolRateLimit&quot;: { &quot;type&quot;: &quot;boolean&quot;, &quot;description&quot;: &quot;Host applies a per-(principal,tool) rate limit.&quot; }
++        }
++      }
+     }
+   }</code></pre>
+<h3 id="b-additive-fields-on-the-existing-tool-call-events-normative-when-prepostevents-true">§B — additive fields on the existing tool-call events (normative, when <code>prePostEvents: true</code>)</h3>
+<p>For <strong>every</strong> external tool call (MCP <code>tools/call</code>, a node's HTTP/API egress, an agent tool invocation), the host extends the existing <code>agent.toolCalled</code> / <code>agent.toolReturned</code> events (RFC 0002, paired by <code>callId</code>) — no new event type:</p>
+<pre class="lang-diff"><code>   &quot;agentToolCalled&quot;: {
+     &quot;required&quot;: [&quot;agentId&quot;, &quot;toolName&quot;, &quot;callId&quot;],
+     &quot;properties&quot;: {
+       &quot;inputs&quot;: { &quot;...&quot;: &quot;RFC 0002, unchanged — full args (omit when emitting content-free)&quot; },
++      &quot;argsHash&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;RFC 0064. SHA-256 of canonicalized args with resolved secrets redacted; the SIEM-safe alternative to `inputs`.&quot; },
++      &quot;principal&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;RFC 0064. RFC 0048 principal id the call is attributed to.&quot; },
++      &quot;transport&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;mcp&quot;, &quot;http&quot;, &quot;native&quot;], &quot;description&quot;: &quot;RFC 0064. How the tool was reached.&quot; }
+     }
+   }
+   &quot;agentToolReturned&quot;: {
+     &quot;required&quot;: [&quot;agentId&quot;, &quot;toolName&quot;, &quot;callId&quot;],
+     &quot;properties&quot;: {
++      &quot;status&quot;:     { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;ok&quot;, &quot;error&quot;, &quot;forbidden&quot;, &quot;rate_limited&quot;], &quot;description&quot;: &quot;RFC 0064. Tool-hooks outcome.&quot; },
++      &quot;durationMs&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 0, &quot;description&quot;: &quot;RFC 0064. Wall-clock duration; recorded in the event, reused on replay/`:fork`, MUST NOT be recomputed from a clock (`replay.md`). Absent when the call never started (forbidden/rate_limited).&quot; }
+     }
+   }</code></pre>
+<p><code>argsHash</code> is over canonicalized args with resolved secrets <strong>already redacted</strong> (SR-1) — raw key material MUST NOT enter the hash input. This mirrors the content-free pattern of RFC 0057.</p>
+<h3 id="c-per-tool-authorization-normative-when-pertoolauthorization-true">§C — per-tool authorization (normative, when <code>perToolAuthorization: true</code>)</h3>
+<p>A tool declares required scopes (in its manifest / mount config). Before invoking it the host MUST check the run principal's RFC 0049 scopes and <strong>fail-closed</strong>, reusing RFC 0049's decision surface:</p>
+<ul>
+<li>Principal holds all required scopes → invoke; emit <code>agent.toolCalled</code> then <code>agent.toolReturned { status: &#39;ok&#39; }</code>.</li>
+<li>Principal lacks a scope, <strong>or authorization cannot be evaluated</strong> → do NOT invoke; emit <code>agent.toolReturned { status: &#39;forbidden&#39; }</code>; surface the existing <strong><code>forbidden</code></strong> error (403) with <code>details.scope: &#39;tool&#39;</code> + <code>details.toolName</code> + <code>details.requiredScopes</code>. Absence of a decision MUST be treated as denial.</li>
+</ul>
+<p>This is already covered by RFC 0049's <strong><code>authorization-fail-closed</code></strong> protocol-tier invariant (<code>SECURITY/invariants.yaml</code>) — per-tool authorization is one more resource-gated action under it. <strong>No new invariant</strong>; a new conformance scenario verifies the per-tool application.</p>
+<h3 id="d-per-tool-rate-limiting-normative-when-pertoolratelimit-true">§D — per-tool rate limiting (normative, when <code>perToolRateLimit: true</code>)</h3>
+<p>The host MUST apply a token bucket keyed on <code>(principal, toolName)</code>. On exhaustion it MUST NOT invoke the tool; it emits <code>agent.toolReturned { status: &#39;rate_limited&#39; }</code> and surfaces the existing <strong><code>rate_limited</code></strong> error (429, <code>Retry-After</code>) with <code>details.scope: &#39;tool&#39;</code> — distinct from the existing HTTP-inbound limiter (unchanged), but the same error envelope.</p>
+<h3 id="e-credentials-normative">§E — credentials (normative)</h3>
+<p>Tool credentials resolve via RFC 0046 <code>host.credentials</code> (opaque refs, host-dereferenced). Raw key material MUST NOT cross into the <code>argsHash</code> input pre-redaction — args are redacted (SR-1) <em>before</em> hashing.</p>
+<p><strong>Positive example.</strong> Loop iteration calls <code>web.search</code>; principal holds <code>web:read</code>. → <code>agent.toolCalled { toolName: &#39;web.search&#39;, argsHash, principal, transport: &#39;mcp&#39; }</code> → call → <code>agent.toolReturned { status: &#39;ok&#39;, durationMs: 412 }</code>. <strong>Negative example.</strong> Same loop calls <code>db.delete</code>; principal lacks <code>db:write</code>. → no invocation → <code>agent.toolReturned { status: &#39;forbidden&#39; }</code> + <code>forbidden</code> (403, <code>details.scope: &#39;tool&#39;</code>). The destructive call never reaches the tool.</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong> New optional capability; five new optional fields on two <em>existing</em> events (their <code>required</code> arrays + <code>callId</code> pairing unchanged; <code>version &lt; toolHooks</code> consumers ignore them). No new event type, no new error code (reuses <code>forbidden</code> + <code>rate_limited</code>), no new SECURITY invariant (reuses RFC 0049's <code>authorization-fail-closed</code>). Existing MCP <code>tools/call</code>, the HTTP rate limiter, credential resolution, and the run-global trust boundary are unchanged. Hosts that don't advertise <code>host.toolHooks</code> behave exactly as today. No conformance pass invalidated.</p>
+<h2 id="conformance">Conformance</h2>
+<ul>
+<li><strong><code>tool-hooks-shape.test.ts</code></strong> — block validates; the additive <code>agent.toolCalled</code>/<code>agent.toolReturned</code> fields validate. (Always-on.)</li>
+<li><strong><code>tool-hooks-content-free.test.ts</code></strong> — when <code>prePostEvents</code>, a tool call's <code>agent.toolCalled</code> carries <code>argsHash</code> (raw args absent if content-free) + <code>agent.toolReturned</code> carries <code>status</code> + <code>durationMs</code>. (Gated on <code>prePostEvents</code>.)</li>
+<li><strong><code>tool-hooks-authorization-fail-closed.test.ts</code></strong> — a principal lacking a tool's scope gets <code>agent.toolReturned { status: &#39;forbidden&#39; }</code> + <code>forbidden</code> (403) and the tool is never invoked; an unevaluable authorization also denies. (Gated on <code>perToolAuthorization</code>; verifies the per-tool application of RFC 0049's <code>authorization-fail-closed</code>.)</li>
+<li><strong><code>tool-hooks-rate-limit.test.ts</code></strong> — exhausting a <code>(principal, tool)</code> bucket → <code>agent.toolReturned { status: &#39;rate_limited&#39; }</code> + <code>rate_limited</code> (429) while a different tool/principal proceeds. (Gated on <code>perToolRateLimit</code>.)</li>
+<li><strong><code>tool-hooks-secret-redaction.test.ts</code></strong> — a tool arg containing a resolved secret is redacted before hashing; the raw value never appears in any event. (Gated; composes with the redaction suite.)</li>
+</ul>
+<p>The four gated scenarios drive the <strong>tool-hooks invoke seam</strong> <code>POST /v1/host/sample/toolhooks/invoke</code> (request <code>{ principal, toolName, requiredScopes?, args?, simulateRateLimitExhausted? }</code> → <code>{ toolCalled, toolReturned }</code>), specified in <a href="../spec/v1/host-sample-test-seams.md"><code>host-sample-test-seams.md</code></a> §"Open seams". A host advertising <code>capabilities.toolHooks.supported: true</code> wires it to light them up; they soft-skip on <code>404</code> until then.</p>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>New <code>tool.invoked</code> / <code>tool.returned</code> events + a <code>tool_forbidden</code> error + a <code>tool-authorization-fail-closed</code> invariant</strong> (the author's first draft). Rejected on all three counts — they duplicate the existing <code>agent.toolCalled</code> / <code>agent.toolReturned</code> events (RFC 0002), the existing <code>forbidden</code> error (RFC 0049), and the existing <code>authorization-fail-closed</code> invariant (RFC 0049). Extending the existing events + reusing the existing error/invariant is the lower-surface-area path (the RFC 0058 <code>cap.breached</code> precedent). 2. <strong>Per-tool RBAC inside RFC 0049 only, no audit fields.</strong> Rejected — authorization without the content-free audit fields leaves the feature set's "logged" criterion unmet; the two belong together on the existing events. 3. <strong>MCP-only hooks (extend the existing bridges).</strong> Rejected — tools reach external systems via more than MCP (node HTTP egress, agent tool calls); the <code>transport</code> field makes the existing events transport-agnostic.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. <strong>Where tools declare required scopes.</strong> MCP tool manifest, node-pack manifest, or host mount policy? Proposed: the mount/manifest carries <code>requiredScopes[]</code>; resolve the exact field with RFC 0045 connector-manifest. Resolve before Active. 2. <strong><code>argsHash</code> determinism.</strong> Same canonical-JSON recipe (RFC 8785 JCS) as RFC 0041 replay keys / RFC 0063 checksums, so a hash is comparable across hosts? Proposed yes. Confirm. 3. <strong>Non-agent tool calls.</strong> <code>agent.toolCalled</code> is named "agent.<em>" but the <code>transport: &#39;native&#39;</code>/<code>&#39;http&#39;</code> values cover non-agent egress. Confirm reusing the <code>agent.</em></code> events for non-agent tool calls is acceptable, or whether a <code>principal</code>-only (no <code>agentId</code>) emission needs an <code>agentId</code> convention (e.g. a synthetic system agent). Resolve before Active.</p>
+<h2 id="phase-0-resolution-architect-ruling-2026-05-25">Phase-0 resolution (architect ruling, 2026-05-25)</h2>
+<p>Per <code>docs/autonomous-agent-runtime-plan.md</code> §8 — Unresolved questions resolved (wire shape pinned; Active-ready pending schema + prose):</p>
+<p>1. <strong>Where tools declare <code>requiredScopes</code></strong> → in the connector/tool mount manifest (<code>actions[].requiredScopes[]</code>), aligned with RFC 0045 connector-manifest. 2. <strong><code>argsHash</code> determinism</strong> → reuse the RFC 8785 JCS recipe (<code>replay.md §B</code>) over redacted args, then SHA-256 (ruling B) — same recipe as RFC 0063 checksums. 3. <strong>Non-agent tool calls</strong> → emit under a reserved synthetic agent id <code>core.system</code>; <strong><code>agentId</code> stays <code>required</code></strong> on <code>agent.toolCalled</code>/<code>agent.toolReturned</code> (making it optional would be a breaking change to an Accepted RFC 0002 event — ruling D11/A); the <code>transport</code> field disambiguates the source.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li><code>apps/workflow-engine</code>: wrap the MCP dispatch path (<code>mcpServerRouter.ts</code>) + the provider/egress path with authorize → emit <code>agent.toolCalled</code> → invoke → emit <code>agent.toolReturned { status, durationMs }</code>; reuse the RFC 0049 authorization layer (already emits <code>authorization.decided</code> on denial) and the <code>ephemeralRunSecrets</code> view for redaction. Effort: medium.</li>
+<li>No new SECURITY invariant (RFC 0049's <code>authorization-fail-closed</code> covers per-tool authz).</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[x] <code>host-capabilities.md §host.toolHooks</code> with the per-tool authorization + rate-limit + content-free-audit contract.</li>
+<li>[x] <code>host.toolHooks</code> block + additive optional fields on <code>agentToolCalled</code> / <code>agentToolReturned</code> (run-event-payloads schema). No new event type, no new error code.</li>
+<li>[x] Conformance: shape always-on; content-free/authorization/rate-limit/redaction capability-gated; the authorization scenario verifies per-tool application of RFC 0049's <code>authorization-fail-closed</code> — all five <code>tool-hooks-*.test.ts</code> scenarios live + green against the in-memory host.</li>
+<li>[x] CHANGELOG entry under <code>[1.1.4 — unreleased]</code>.</li>
+<li>[x] <strong>Milestone 2 — reference-host enforcement (<code>Active → Accepted</code>).</strong> The in-memory reference host (<code>examples/hosts/in-memory</code>) advertises <code>capabilities.toolHooks { supported, prePostEvents, perToolAuthorization, perToolRateLimit }</code> and implements the <code>POST /v1/host/sample/toolhooks/invoke</code> seam: §B emits <code>agent.toolCalled.argsHash</code> (the SR-1-redacted JCS+SHA-256 of the args — a resolved secret is scrubbed before hashing) + <code>agent.toolReturned.status</code>/<code>durationMs</code>; §C fails closed (<code>status: &#39;forbidden&#39;</code>, no <code>durationMs</code>, tool never invoked) on a lacked/unevaluable scope — the per-tool application of RFC 0049's <code>authorization-fail-closed</code> (no new invariant; <code>tool-hooks-authorization-fail-closed.test.ts</code> is added to that invariant's test set); §D yields <code>status: &#39;rate_limited&#39;</code> on an exhausted <code>(principal, tool)</code> bucket. Reuses RFC 0049 <code>forbidden</code> + <code>rate_limited</code> — no new event type or error code.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="./0002-agent-identity-and-reasoning-events.md"><code>RFCS/0002-agent-identity-and-reasoning-events.md</code></a> — the <code>agent.toolCalled</code> / <code>agent.toolReturned</code> events this extends.</li>
+<li><a href="../spec/v1/mcp-integration.md"><code>spec/v1/mcp-integration.md</code></a> — the MCP tool surface this generalizes.</li>
+<li><a href="./0046-host-credentials-capability.md"><code>RFCS/0046</code></a> — credential resolution for tool calls.</li>
+<li><a href="./0049-rbac-scopes-and-authorization-decisions.md"><code>RFCS/0049</code></a> — the scopes per-tool authorization checks; the reused <code>forbidden</code> error + <code>authorization-fail-closed</code> invariant.</li>
+<li><a href="./0057-memory-write-attribution-event.md"><code>RFCS/0057-memory-write-attribution-event.md</code></a> — the content-free attribution pattern reused for <code>argsHash</code>.</li>
+<li><a href="../spec/v1/replay.md"><code>spec/v1/replay.md</code></a> — <code>durationMs</code> recorded, not recomputed at fork.</li>
+</ul><footer class="doc-edit"><a href="https://github.com/openwop/openwop/edit/main/RFCS/0064-tool-invocation-hooks-and-authorization.md" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>

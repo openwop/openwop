@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — RFC 0063: Sub-run output attestation &amp; merge gating (`core.subWorkflow.outputAttestation`)</title>
+  <meta name="description" content="openwop sub-workflows (core.subWorkflow / RFC 0007 dispatch) already spawn isolated, tenant-scoped child runs with inputMapping / outputMapping and depth/cycle caps. What they lack is verification before merge: the parent applies outputMapping…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0063-subrun-output-attestation-and-merge-gating.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — RFC 0063: Sub-run output attestation &amp; merge gating (`core.subWorkflow.outputAttestation`)"/>
+  <meta property="og:description" content="openwop sub-workflows (core.subWorkflow / RFC 0007 dispatch) already spawn isolated, tenant-scoped child runs with inputMapping / outputMapping and depth/cycle caps. What they lack is verification before merge: the parent applies outputMapping…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0063-subrun-output-attestation-and-merge-gating.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — RFC 0063: Sub-run output attestation &amp; merge gating (`core.subWorkflow.outputAttestation`)"/>
+  <meta name="twitter:description" content="openwop sub-workflows (core.subWorkflow / RFC 0007 dispatch) already spawn isolated, tenant-scoped child runs with inputMapping / outputMapping and depth/cycle caps. What they lack is verification before merge: the parent applies outputMapping…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "RFC 0063: Sub-run output attestation & merge gating (`core.subWorkflow.outputAttestation`)",
+  "description": "openwop sub-workflows (core.subWorkflow / RFC 0007 dispatch) already spawn isolated, tenant-scoped child runs with inputMapping / outputMapping and depth/cycle caps. What they lack is verification before merge: the parent applies outputMapping…",
+  "url": "https://openwop.dev/rfcs/0063-subrun-output-attestation-and-merge-gating.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  }
+}</script>
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>RFC 0063: Sub-run output attestation &amp; merge gating (`core.subWorkflow.outputAttestation`)</h1>
+      <p class="lede">openwop sub-workflows (core.subWorkflow / RFC 0007 dispatch) already spawn isolated, tenant-scoped child runs with inputMapping / outputMapping and depth/cycle caps. What they lack is verification before merge: the parent applies outputMapping…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-core-subworkflow-config-extension-node-packs-md-additive">§A — core.subWorkflow config extension (node-packs.md, additive)</a></li>
+      <li class="toc-sub"><a href="#b-checksum-normative-when-checksum-true">§B — checksum (normative, when checksum: true)</a></li>
+      <li class="toc-sub"><a href="#c-approval-gate-normative-when-requireapproval-true">§C — approval gate (normative, when requireApproval: true)</a></li>
+      <li class="toc-sub"><a href="#d-permission-narrowing-optional">§D — permission narrowing (optional)</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#phase-0-resolution-architect-ruling-2026-05-25">Phase-0 resolution (architect ruling, 2026-05-25)</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0063</td></tr>
+<tr><td><strong>Title</strong></td><td>An optional <code>outputAttestation</code> config on <code>core.subWorkflow</code> — a content checksum surfaced on the child's terminal event, plus an optional <code>requireApproval</code> gate that suspends via an <code>approval</code> interrupt (RFC 0051) <em>before</em> <code>outputMapping</code> merges a child's outputs into the parent, so a parent can verify and approve sub-agent artifacts rather than merging them blindly</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-25</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-25 (Active → Accepted — Milestone 2: the in-memory reference host advertises <code>capabilities.agents.subRunAttestation</code> and implements the <code>POST /v1/host/sample/subrun/attest</code> seam end-to-end — §B byte-stable JCS+SHA-256 <code>attestation</code> checksum (key-order-invariant), §C merge gate that merges only on <code>accept</code>/<code>edit-accept</code> and fails CLOSED on <code>reject</code>/absent/expired; the <code>subrun-merge-approval-fail-closed</code> invariant landed in <code>SECURITY/invariants.yaml</code> with <code>subrun-approval-fail-closed.test.ts</code> as its public test; all four conformance scenarios are live + green.)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>spec/v1/node-packs.md</code> (<code>core.subWorkflow</code> config) · <code>schemas/capabilities.schema.json</code> (<code>agents.subRunAttestation</code>) · <code>schemas/run-event-payloads.schema.json</code> (additive optional <code>attestation</code> on <code>coreWorkflowChainEvent</code>, phase <code>output.harvested</code>) · <code>RFCS/0007</code> (dispatch) · <code>RFCS/0051</code> (approval gate, reused) · <code>RFCS/0049</code> (RBAC scope narrowing) · new conformance scenarios · proposed SECURITY invariant <code>subrun-merge-approval-fail-closed</code> (lands at implementation)</td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>openwop sub-workflows (<code>core.subWorkflow</code> / RFC 0007 dispatch) already spawn isolated, tenant-scoped child runs with <code>inputMapping</code> / <code>outputMapping</code> and depth/cycle caps. What they lack is <em>verification before merge</em>: the parent applies <code>outputMapping</code> directly on the child's terminal, with no checksum and no approval gate. This RFC adds an optional <code>outputAttestation</code> block on <code>core.subWorkflow</code>: when <code>checksum: true</code> the host computes and surfaces a content hash of the child's harvested outputs on the existing <code>core.workflowChain.event { phase: &#39;output.harvested&#39; }</code> (RFC 0037) via an additive optional <code>attestation</code> field — not a new event — so the parent can verify integrity; when <code>requireApproval: true</code> the host MUST suspend via an <code>approval</code> interrupt (RFC 0051) <em>before</em> merging, so a human or policy gate accepts/rejects/edits the sub-agent's artifact. Both are additive and opt-in — existing sub-workflows are unchanged.</p>
+<h2 id="motivation">Motivation</h2>
+<p>The feature set's sub-agent acceptance criterion is explicit: "each sub-agent has isolated permissions, and <strong>parent can verify checksums and approvals before merging</strong>." The isolation half exists (the <code>apps/workflow-engine</code> dispatcher inherits <code>tenantId</code> to prevent cross-tenant escalation). The verification half does not: <code>subWorkflowDispatcher.ts</code> copies child outputs into parent variables the instant the child reaches <code>completed</code>, with no integrity check and no gate. For autonomous fan-out — a supervisor dispatching N workers whose outputs are then merged — blind merge means a single compromised or hallucinated child artifact silently enters the parent's state.</p>
+<p>The spec is the right place because "what exactly was merged, and was it approved" is an auditability + safety guarantee for multi-agent orchestration, and the checksum must be computed the same way across hosts for a parent to verify a child that ran on a <em>different</em> host (RFC 0040 cross-host causation).</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-core-subworkflow-config-extension-node-packs-md-additive">§A — <code>core.subWorkflow</code> config extension (<code>node-packs.md</code>, additive)</h3>
+<pre class="lang-diff"><code>   {
+     &quot;workflowId&quot;: &quot;&amp;lt;child&amp;gt;&quot;,
+     &quot;inputMapping&quot;: { &quot;...&quot;: &quot;...&quot; },
+     &quot;outputMapping&quot;: { &quot;...&quot;: &quot;...&quot; },
++    &quot;outputAttestation&quot;: {
++      &quot;checksum&quot;: true,
++      &quot;algorithm&quot;: &quot;sha256&quot;,
++      &quot;requireApproval&quot;: false,
++      &quot;principalScope&quot;: [&quot;report:write&quot;]
++    }
+   }</code></pre>
+<p>All fields optional; an absent <code>outputAttestation</code> is exactly today's behavior.</p>
+<h3 id="b-checksum-normative-when-checksum-true">§B — checksum (normative, when <code>checksum: true</code>)</h3>
+<p>After the child reaches a terminal status and its outputs are harvested but <strong>before</strong> <code>outputMapping</code> is applied, the host MUST:</p>
+<p>1. Compute a canonical hash (default <code>sha256</code>) over the child's harvested output object, using the canonical-JSON serialization already defined for replay (<code>spec/v1/</code> replay rules), so the hash is host-independent. 2. Surface it as an additive optional <code>attestation { checksum, algorithm }</code> object on the existing <code>core.workflowChain.event { phase: &#39;output.harvested&#39; }</code> (RFC 0037 — the event already fires at exactly this transition, carrying <code>harvestedKeys[]</code>), AND on the sub-workflow node's <code>node.completed</code> data (<code>outputs.attestation.checksum</code>). No new event type: the <code>output.harvested</code> phase <em>is</em> the merge point. 3. Apply <code>outputMapping</code> as today. The checksum is <em>advisory for verification</em> — the parent (or a downstream node) MAY compare it against an expected value and fail the parent if it diverges; the host does not itself reject on checksum (that is policy, expressed as a parent node).</p>
+<h3 id="c-approval-gate-normative-when-requireapproval-true">§C — approval gate (normative, when <code>requireApproval: true</code>)</h3>
+<p>When <code>requireApproval: true</code>, the host MUST, after harvest and <strong>before</strong> <code>outputMapping</code>, suspend the parent via an <code>approval</code> interrupt (RFC 0051) carrying the child's outputs as the artifact (<code>actions: [&#39;accept&#39;, &#39;reject&#39;, &#39;edit&#39;, &#39;ask&#39;]</code>). The merge proceeds <strong>only</strong> on <code>accept</code> or <code>edit-accept</code>:</p>
+<ul>
+<li><code>accept</code> → apply <code>outputMapping</code> with the child's outputs unchanged.</li>
+<li><code>edit-accept</code> → apply <code>outputMapping</code> with the approver's <code>editedArtifactData</code>.</li>
+<li><code>reject</code> → do not merge; surface per the node's <code>onChildFailure</code> policy (<code>fail-parent</code> or <code>absorb</code>).</li>
+</ul>
+<p>This MUST <strong>fail-closed</strong>: if the run terminates or the interrupt expires without an <code>accept</code>/<code>edit-accept</code>, the outputs MUST NOT be merged. (Proposed protocol-tier SECURITY invariant <code>subrun-merge-approval-fail-closed</code>, landing with its conformance test at implementation.)</p>
+<h3 id="d-permission-narrowing-optional">§D — permission narrowing (optional)</h3>
+<p><code>principalScope</code> (when present) narrows the child run's effective scopes to the named RFC 0049 scopes — a child dispatched to "write a report" can be denied "delete data" even though the parent principal holds it. Reaffirms and tightens the existing tenant-inheritance isolation.</p>
+<p><strong>Positive example.</strong> Supervisor dispatches a research worker with <code>{ checksum: true, requireApproval: true }</code>. Child completes → <code>core.workflowChain.event { phase: &#39;output.harvested&#39;, attestation: { checksum: &#39;sha256:ab…&#39; } }</code> → parent suspends with an approval interrupt → operator <code>accept</code> → <code>outputMapping</code> merges. Audit log shows the checksum and the approver. <strong>Negative example.</strong> Same, operator never responds and the run is cancelled → outputs are <strong>not</strong> merged (fail-closed); parent surfaces the child as unmerged.</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong> <code>outputAttestation</code> is an optional config block; absent ⇒ identical to today's blind merge. The <code>attestation</code> field is an additive optional property on the existing <code>core.workflowChain.event</code> <code>output.harvested</code> phase (RFC 0037; its <code>required</code> array is unchanged, consumers ignore the field). The approval gate reuses the existing RFC 0051 interrupt machinery — no new interrupt kind. No existing <code>core.subWorkflow</code> field, the <code>outputMapping</code> contract, or any <code>MUST</code> changes for workflows that don't opt in. No conformance pass invalidated.</p>
+<h2 id="conformance">Conformance</h2>
+<ul>
+<li><strong><code>subrun-attestation-shape.test.ts</code></strong> — <code>outputAttestation</code> config validates. (Always runs where <code>core.subWorkflow</code> is supported.)</li>
+<li><strong><code>subrun-checksum-stable.test.ts</code></strong> — a child's checksum is byte-stable for identical outputs and host-independent (matches the canonical-JSON recipe). (Gated on <code>agents.subRunAttestation</code>.)</li>
+<li><strong><code>subrun-approval-gate.test.ts</code></strong> — <code>requireApproval: true</code> suspends before merge; <code>accept</code> merges, <code>reject</code> does not. (Gated.)</li>
+<li><strong><code>subrun-approval-fail-closed.test.ts</code></strong> — a parent that terminates without approval does not merge the child outputs. (Gated; backs the invariant.)</li>
+</ul>
+<p>The three gated scenarios drive the <strong>sub-run attestation seam</strong> <code>POST /v1/host/sample/subrun/attest</code> (request <code>{ childOutputs, outputAttestation: { checksum?, algorithm?, requireApproval?, principalScope? }, approvalAction? }</code> → <code>{ attestation, harvestedEvent, merged, mergedValues? }</code>), specified in <a href="../spec/v1/host-sample-test-seams.md"><code>host-sample-test-seams.md</code></a> §"Open seams". A host advertising <code>capabilities.agents.subRunAttestation: true</code> wires it to light them up; they soft-skip on <code>404</code> until then.</p>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Tell authors to insert a separate <code>core.interrupt</code> node after the sub-workflow.</strong> Rejected — that gates <em>after</em> the merge already happened (the child outputs are in parent variables before the manual interrupt runs), so it can't prevent a bad artifact from entering parent state; the gate must be <em>intrinsic</em> to the merge step. 2. <strong>Always checksum + always require approval.</strong> Rejected — most sub-workflows are trusted internal fan-out where a mandatory gate would break automation; opt-in keeps the common case zero-friction. 3. <strong>A bespoke "merge approval" interrupt kind.</strong> Rejected — RFC 0051's <code>approval</code> kind with <code>edit</code>/<code>reject</code> already models exactly this; a new kind would duplicate it.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. <strong>Checksum canonicalization source.</strong> Confirm the canonical-JSON recipe reused here is the same one RFC 0041 pins for replay cache keys, so a cross-host child's checksum verifies. Resolve before Active. 2. <strong>Partial fan-out approval.</strong> When a supervisor dispatches N children with <code>requireApproval</code>, is it N interrupts or one batched approval? Proposed: one interrupt per child for v1; batching is a later optimization. Decide before Active. 3. <strong><code>principalScope</code> vs. RFC 0049.</strong> Is scope narrowing expressed here or purely in RFC 0049's RBAC surface? Proposed: this references RFC 0049 scopes, doesn't define new ones. Confirm.</p>
+<h2 id="phase-0-resolution-architect-ruling-2026-05-25">Phase-0 resolution (architect ruling, 2026-05-25)</h2>
+<p>Per <code>docs/autonomous-agent-runtime-plan.md</code> §8 — Unresolved questions resolved (wire shape pinned; Active-ready pending schema + prose):</p>
+<p>1. <strong>Checksum canonicalization</strong> → reuse the RFC 8785 JCS recipe pinned in <code>replay.md §&quot;LLM cache-key recipe&quot; §B</code> (+ the no-JCS fallback) then SHA-256 — no new recipe (ruling B). Guarantees cross-host verification. 2. <strong>Partial fan-out approval</strong> → one <code>approval</code> interrupt per child for v1; batching is a later optional optimization. 3. <strong><code>principalScope</code> vs RFC 0049</strong> → references RFC 0049 scopes only; defines no new scopes. The additive <code>attestation</code> field on <code>core.workflowChain.event</code> is confirmed non-breaking (ruling A; <code>additionalProperties:false</code> → declared in <code>properties</code>).</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li><code>apps/workflow-engine</code>: <code>subWorkflowDispatcher.ts</code> (<code>outputMapping</code> at the harvest step) is the single insertion point — compute checksum + populate the <code>output.harvested</code> event's <code>attestation</code> field; if <code>requireApproval</code>, route through the existing suspend/interrupt path before the mapping copy. Effort: small–medium.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[x] <code>node-packs.md</code> <code>core.subWorkflow</code> <code>outputAttestation</code> section.</li>
+<li>[x] <code>agents.subRunAttestation</code> capability + additive optional <code>attestation</code> object on <code>coreWorkflowChainEvent</code> (run-event-payloads schema). No new event type.</li>
+<li>[x] Conformance: shape always-on; checksum/approval/fail-closed capability-gated — all four <code>subrun-*.test.ts</code> scenarios live + green against the in-memory host.</li>
+<li>[x] <code>subrun-merge-approval-fail-closed</code> invariant + public test landed in <code>SECURITY/invariants.yaml</code> (protocol-tier), with <code>subrun-approval-fail-closed.test.ts</code> as its public test.</li>
+<li>[x] CHANGELOG entry under <code>[1.1.4 — unreleased]</code>.</li>
+<li>[x] <strong>Milestone 2 — reference-host enforcement (<code>Active → Accepted</code>).</strong> The in-memory reference host (<code>examples/hosts/in-memory</code>) advertises <code>capabilities.agents.subRunAttestation: true</code> and implements the <code>POST /v1/host/sample/subrun/attest</code> seam (<code>host-sample-test-seams.md</code>): §B surfaces a byte-stable <code>attestation { checksum: &amp;lt;JCS+SHA-256 of childOutputs&amp;gt;, algorithm: &#39;sha256&#39; }</code> (key-order-invariant via the host's <code>stableStringify</code>) on the harvested-output shape; §C merges the child outputs only on <code>approvalAction</code> <code>accept</code>/<code>edit-accept</code> and fails CLOSED (<code>merged: false</code>, no <code>mergedValues</code>) on <code>reject</code>/absent/expired when <code>requireApproval: true</code>. Reuses RFC 0051 <code>approval</code> + RFC 0049 scopes — no new interrupt kind, event type, or error code.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="./0007-dispatch.md"><code>RFCS/0007-dispatch.md</code></a> — sub-workflow / dispatch this extends.</li>
+<li><a href="./0051-approval-deployment-gate-primitive.md"><code>RFCS/0051-approval-deployment-gate-primitive.md</code></a> — the approval interrupt reused for the merge gate.</li>
+<li><a href="./0049-rbac-scopes-and-authorization-decisions.md"><code>RFCS/0049</code></a> — the scopes <code>principalScope</code> narrows to.</li>
+<li><a href="../spec/v1/interrupt.md"><code>spec/v1/interrupt.md</code></a> — <code>approval</code> kind shape + resume actions.</li>
+</ul><footer class="doc-edit"><a href="https://github.com/openwop/openwop/edit/main/RFCS/0063-subrun-output-attestation-and-merge-gating.md" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>

@@ -199,6 +199,7 @@
 <tr><td><strong>Supersedes</strong></td><td>—</td></tr>
 <tr><td><strong>Superseded by</strong></td><td>—</td></tr>
 </tbody></table>
+<blockquote><p><strong>Amended (additive) 2026-05-25:</strong> RFC 0062 (scheduled memory distillation) reuses the <code>memory.compacted</code> event with an optional <code>distillation</code> sub-object (<code>{ tokenBudget, tokensUsed, indexUpdated }</code>). The event is <code>additionalProperties: true</code>; <code>required</code> and the <code>trigger</code> enum are <strong>unchanged</strong> — a scheduled distillation emits <code>trigger: &quot;host-managed&quot;</code>. Non-breaking per <code>COMPATIBILITY.md</code> §2.1.</p></blockquote>
 <h2 id="summary">Summary</h2>
 <p>Define an optional capability profile that lets a host advertise it runs background <strong>memory compaction</strong> — periodic distillation of many short-lived <code>MemoryEntry</code> rows into fewer long-lived ones — and emit a canonical <code>memory.compacted</code> audit event when it does so. The profile standardizes only the wire surface: capability shape, event vocabulary, and an SR-1 carry-forward invariant. The compaction algorithm (summarization model, embedding scheme, token budgets, scheduling cadence) remains a host implementation choice.</p>
 <h2 id="motivation">Motivation</h2>

@@ -192,10 +192,10 @@
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0029</td></tr>
 <tr><td><strong>Title</strong></td><td>Prompt resolution chain across node / agent / workflow / host layers; <code>agent.promptResolved</code> observability event; <code>AgentManifest.promptOverrides</code> + <code>promptLibraryRef</code> extension</td></tr>
-<tr><td><strong>Status</strong></td><td><code>Active</code></td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
 <tr><td><strong>Author(s)</strong></td><td>OpenWOP Working Group</td></tr>
 <tr><td><strong>Created</strong></td><td>2026-05-19</td></tr>
-<tr><td><strong>Updated</strong></td><td>2026-05-20 (Draft → Active — see <a href="#status-history">Status history</a> below).</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-26 (Active → <strong>Accepted</strong> — the first-non-steward-advertisement criterion is met: MyndHyve <code>workflow-runtime</code> advertises <code>capabilities.prompts.agentBindings: true</code> live on <code>https://workflow-runtime-gjw5bcse7a-uc.a.run.app/.well-known/openwop</code> (openwop-side curl-verified 2026-05-26, revision <code>workflow-runtime-00217-q7c</code>) and emits <code>agent.promptResolved</code> per their round-3 closure; the reference host already passes the three <code>prompt-resolution-chain-*</code> scenarios. 2026-05-20 (Draft → Active — see <a href="#status-history">Status history</a> below).)</td></tr>
 <tr><td><strong>Affects</strong></td><td><code>spec/v1/prompts.md</code> (adds §"Resolution chain (normative)") · <code>schemas/agent-manifest.schema.json</code> (adds <code>promptLibraryRef</code>, <code>promptOverrides</code>) · <code>schemas/workflow-definition.schema.json</code> (adds optional <code>defaults.promptRefs</code>) · <code>schemas/capabilities.schema.json</code> (extends <code>prompts</code> block with <code>defaults</code>, <code>agentBindings</code>) · <code>schemas/run-event.schema.json</code> (new <code>agent.promptResolved</code> enum entry) · <code>schemas/run-event-payloads.schema.json</code> (new <code>agentPromptResolved</code> <code>$def</code>) · <code>spec/v1/host-capabilities.md</code> (notes resolution-chain implementation point) · 3 new conformance scenarios · CHANGELOG</td></tr>
 <tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
 <tr><td><strong>Supersedes</strong></td><td>—</td></tr>

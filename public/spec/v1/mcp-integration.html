@@ -354,6 +354,7 @@ edges:
 <li>A conformance scenario that drives an MCP round-trip without depending on a specific MCP server, using a synthetic MCP-server fixture.</li>
 <li>A worked node-pack example showing an LLM-using-tools node that integrates MCP.</li>
 </ul>
+<p><strong>Per-tool authorization, rate limiting, and a content-free tool-call audit trail</strong> across transports (<code>mcp</code> / <code>http</code> / <code>native</code>) are specified by RFC 0064 (<code>host.toolHooks</code>) — see <a href="host-capabilities.md#hosttoolhooks">host-capabilities.md §host.toolHooks</a>. It layers <code>argsHash</code> / <code>principal</code> / <code>transport</code> / <code>status</code> / <code>durationMs</code> onto the existing <code>agent.toolCalled</code> / <code>agent.toolReturned</code> events and reuses RFC 0049's <code>forbidden</code> + <code>authorization-fail-closed</code> for the per-tool gate, rather than minting an MCP-specific surface.</p>
 <hr/>
 <h2 id="see-also">See also</h2>
 <ul>

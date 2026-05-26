@@ -4,21 +4,21 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>OpenWOP — RFCs</title>
-  <meta name="description" content="58 numbered RFCs covering the additive evolution of the OpenWOP v1 protocol. Each RFC documents motivation, proposed wire surface, compatibility classification, conformance plan, and acceptance gate."/>
+  <meta name="description" content="67 numbered RFCs covering the additive evolution of the OpenWOP v1 protocol. Each RFC documents motivation, proposed wire surface, compatibility classification, conformance plan, and acceptance gate."/>
   <link rel="canonical" href="https://openwop.dev/rfcs/"/>
 
   <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
   <meta property="og:type" content="website"/>
   <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
   <meta property="og:title" content="OpenWOP — RFCs"/>
-  <meta property="og:description" content="58 numbered RFCs covering the additive evolution of the OpenWOP v1 protocol. Each RFC documents motivation, proposed wire surface, compatibility classification, conformance plan, and acceptance gate."/>
+  <meta property="og:description" content="67 numbered RFCs covering the additive evolution of the OpenWOP v1 protocol. Each RFC documents motivation, proposed wire surface, compatibility classification, conformance plan, and acceptance gate."/>
   <meta property="og:url" content="https://openwop.dev/rfcs/"/>
   <meta property="og:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Twitter card -->
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:title" content="OpenWOP — RFCs"/>
-  <meta name="twitter:description" content="58 numbered RFCs covering the additive evolution of the OpenWOP v1 protocol. Each RFC documents motivation, proposed wire surface, compatibility classification, conformance plan, and acceptance gate."/>
+  <meta name="twitter:description" content="67 numbered RFCs covering the additive evolution of the OpenWOP v1 protocol. Each RFC documents motivation, proposed wire surface, compatibility classification, conformance plan, and acceptance gate."/>
   <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Icons / theme -->
@@ -140,15 +140,15 @@
   <div class="wrap">
     <header class="page-header">
     <h1>OpenWOP RFCs</h1>
-    <p class="lede">57 RFCs governing additive evolution of the v1 protocol. Status legend: Draft (open comment window) → Active (accepted; impl follows) → Accepted (in-tree reference impl + conformance scenarios) → Withdrawn / Superseded.</p>
+    <p class="lede">66 RFCs governing additive evolution of the v1 protocol. Status legend: Draft (open comment window) → Active (accepted; impl follows) → Accepted (in-tree reference impl + conformance scenarios) → Withdrawn / Superseded.</p>
     <p class="meta"><strong>v1.1 is the stable wire contract.</strong> RFCs at Draft or Active target <strong>v1.2</strong> (additive) unless the RFC is explicitly labelled Safety fix per <a href="https://github.com/openwop/openwop/blob/main/COMPATIBILITY.md">COMPATIBILITY.md §3</a>. No RFC may land a breaking change inside v1.x.</p>
   </header>
   <div class="rfc-filter">
     <div class="rfc-chips" role="group" aria-label="Filter RFCs by status">
-    <button class="rfc-chip is-active" type="button" data-rfc-status="all">All <span class="rfc-chip-count">57</span></button>
-    <button class="rfc-chip" type="button" data-rfc-status="Draft">Draft <span class="rfc-chip-count">8</span></button>
-    <button class="rfc-chip" type="button" data-rfc-status="Active">Active <span class="rfc-chip-count">4</span></button>
-    <button class="rfc-chip" type="button" data-rfc-status="Accepted">Accepted <span class="rfc-chip-count">45</span></button>
+    <button class="rfc-chip is-active" type="button" data-rfc-status="all">All <span class="rfc-chip-count">66</span></button>
+    <button class="rfc-chip" type="button" data-rfc-status="Draft">Draft <span class="rfc-chip-count">7</span></button>
+    <button class="rfc-chip" type="button" data-rfc-status="Active">Active <span class="rfc-chip-count">6</span></button>
+    <button class="rfc-chip" type="button" data-rfc-status="Accepted">Accepted <span class="rfc-chip-count">53</span></button>
   </div>
     <label class="rfc-search-wrap">
       <span class="visually-hidden">Search RFCs</span>
@@ -298,10 +298,10 @@
       <td><span class="rfc-topic-tag">Composition</span></td>
       <td>Accepted</td>
     </tr>
-<tr data-rfc-status="Active" data-rfc-topic="Agent" data-rfc-title="rfc 0029: prompt override hierarchy + `agent.promptresolved` event">
+<tr data-rfc-status="Accepted" data-rfc-topic="Agent" data-rfc-title="rfc 0029: prompt override hierarchy + `agent.promptresolved` event">
       <td><a href="./0029-prompt-override-hierarchy.html">RFC 0029: Prompt Override Hierarchy + `agent.promptResolved` event</a></td>
       <td><span class="rfc-topic-tag">Agent</span></td>
-      <td>Active</td>
+      <td>Accepted</td>
     </tr>
 <tr data-rfc-status="Accepted" data-rfc-topic="Agent" data-rfc-title="rfc 0030: envelope `reasoning` field + tier 1 structured-output subset (informative)">
       <td><a href="./0030-envelope-reasoning-and-tier-one-subset.html">RFC 0030: Envelope `reasoning` field + Tier 1 Structured-Output Subset (informative)</a></td>
@@ -428,19 +428,64 @@
       <td><span class="rfc-topic-tag">Other</span></td>
       <td>Draft</td>
     </tr>
-<tr data-rfc-status="Draft" data-rfc-topic="Envelope" data-rfc-title="rfc 0055: multimodal envelope variants &amp; rendering hints (extend rfc 0031)">
+<tr data-rfc-status="Accepted" data-rfc-topic="Envelope" data-rfc-title="rfc 0055: multimodal envelope variants &amp; rendering hints (extend rfc 0031)">
       <td><a href="./0055-multimodal-envelope-variants-and-rendering-hints.html">RFC 0055: Multimodal envelope variants &amp; rendering hints (extend RFC 0031)</a></td>
       <td><span class="rfc-topic-tag">Envelope</span></td>
-      <td>Draft</td>
+      <td>Accepted</td>
     </tr>
-<tr data-rfc-status="Draft" data-rfc-topic="Other" data-rfc-title="rfc 0056: run feedback &amp; annotation event (`run.annotated`)">
+<tr data-rfc-status="Active" data-rfc-topic="Other" data-rfc-title="rfc 0056: run feedback &amp; annotation event (`run.annotated`)">
       <td><a href="./0056-run-feedback-and-annotation-event.html">RFC 0056: Run feedback &amp; annotation event (`run.annotated`)</a></td>
       <td><span class="rfc-topic-tag">Other</span></td>
-      <td>Draft</td>
+      <td>Active</td>
     </tr>
-<tr data-rfc-status="Draft" data-rfc-topic="Agent" data-rfc-title="rfc 0057: memory write-attribution event (`memory.written`)">
+<tr data-rfc-status="Accepted" data-rfc-topic="Agent" data-rfc-title="rfc 0057: memory write-attribution event (`memory.written`)">
       <td><a href="./0057-memory-write-attribution-event.html">RFC 0057: Memory write-attribution event (`memory.written`)</a></td>
       <td><span class="rfc-topic-tag">Agent</span></td>
+      <td>Accepted</td>
+    </tr>
+<tr data-rfc-status="Active" data-rfc-topic="Other" data-rfc-title="rfc 0058: run execution bounds (`runtimeoutms` + `maxloopiterations`)">
+      <td><a href="./0058-run-execution-bounds.html">RFC 0058: Run execution bounds (`runTimeoutMs` + `maxLoopIterations`)</a></td>
+      <td><span class="rfc-topic-tag">Other</span></td>
+      <td>Active</td>
+    </tr>
+<tr data-rfc-status="Accepted" data-rfc-topic="Agent" data-rfc-title="rfc 0059: agent workspace (`host.workspace`)">
+      <td><a href="./0059-agent-workspace.html">RFC 0059: Agent workspace (`host.workspace`)</a></td>
+      <td><span class="rfc-topic-tag">Agent</span></td>
+      <td>Accepted</td>
+    </tr>
+<tr data-rfc-status="Accepted" data-rfc-topic="Other" data-rfc-title="rfc 0060: host heartbeat capability (`host.heartbeat`)">
+      <td><a href="./0060-host-heartbeat-capability.html">RFC 0060: Host heartbeat capability (`host.heartbeat`)</a></td>
+      <td><span class="rfc-topic-tag">Other</span></td>
+      <td>Accepted</td>
+    </tr>
+<tr data-rfc-status="Active" data-rfc-topic="Agent" data-rfc-title="rfc 0061: stateful agent-loop lifecycle (`multiagent.executionmodel.version: 5`)">
+      <td><a href="./0061-agent-loop-lifecycle.html">RFC 0061: Stateful agent-loop lifecycle (`multiAgent.executionModel.version: 5`)</a></td>
+      <td><span class="rfc-topic-tag">Agent</span></td>
+      <td>Active</td>
+    </tr>
+<tr data-rfc-status="Accepted" data-rfc-topic="Agent" data-rfc-title="rfc 0062: scheduled memory distillation — &quot;dreams&quot; (`memory.distillation`)">
+      <td><a href="./0062-scheduled-memory-distillation.html">RFC 0062: Scheduled memory distillation — &quot;dreams&quot; (`memory.distillation`)</a></td>
+      <td><span class="rfc-topic-tag">Agent</span></td>
+      <td>Accepted</td>
+    </tr>
+<tr data-rfc-status="Accepted" data-rfc-topic="Other" data-rfc-title="rfc 0063: sub-run output attestation &amp; merge gating (`core.subworkflow.outputattestation`)">
+      <td><a href="./0063-subrun-output-attestation-and-merge-gating.html">RFC 0063: Sub-run output attestation &amp; merge gating (`core.subWorkflow.outputAttestation`)</a></td>
+      <td><span class="rfc-topic-tag">Other</span></td>
+      <td>Accepted</td>
+    </tr>
+<tr data-rfc-status="Accepted" data-rfc-topic="Other" data-rfc-title="rfc 0064: tool invocation hooks &amp; per-tool authorization (`host.toolhooks`)">
+      <td><a href="./0064-tool-invocation-hooks-and-authorization.html">RFC 0064: Tool invocation hooks &amp; per-tool authorization (`host.toolHooks`)</a></td>
+      <td><span class="rfc-topic-tag">Other</span></td>
+      <td>Accepted</td>
+    </tr>
+<tr data-rfc-status="Draft" data-rfc-topic="Composition" data-rfc-title="rfc 0065: workflow node primary-output annotation">
+      <td><a href="./0065-workflow-node-primary-output-annotation.html">RFC 0065: Workflow node primary-output annotation</a></td>
+      <td><span class="rfc-topic-tag">Composition</span></td>
+      <td>Draft</td>
+    </tr>
+<tr data-rfc-status="Draft" data-rfc-topic="Composition" data-rfc-title="rfc 0066: `x-openwop-form` vendor extension on pack `configschema`">
+      <td><a href="./0066-x-openwop-form-vendor-extension.html">RFC 0066: `x-openwop-form` Vendor Extension on Pack `configSchema`</a></td>
+      <td><span class="rfc-topic-tag">Composition</span></td>
       <td>Draft</td>
     </tr>
     </tbody>
