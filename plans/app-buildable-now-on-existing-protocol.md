@@ -1,10 +1,17 @@
 # app.openwop.dev — Features Buildable Now on Existing Protocol
 
-> **Status: substantially executed (audit 2026-05-25)** — ~54 frontend commits landed against this backlog in the ~28 hours after authoring, plus 3 follow-up wins shipped on the closure branches (items 14, 21, and 22). Per-item markers added inline below: **✅ done · 🟡 partial · ❌ not shipped · ❓ not verified** (~20 ✅ · 5 🟡 · 0 ❌ · 0 ❓ across the 25 items).
+> **Status: closed (audit 2026-05-25, closure round 2026-05-25)** — ~54 frontend commits landed against this backlog in the ~28 hours after authoring, then a closure pass shipped the last open items. Per-item markers added inline below: **✅ done · 🟡 partial · ❌ not shipped · ❓ not verified**. Final tally: **23 ✅ · 2 🟡 · 0 ❌ · 0 ❓** across the 25 items, with both `🟡`s structurally unblockable from the openwop side (see "Remaining open work" below).
+>
+> **Closure round (2026-05-25):** PR #213 (item 12 — engine-limit pre-flight extension), PR #217 (item 15 — multi-turn conversation panel), PR #221 (item 13 — dedicated audit-log viewer page), PR #222 (item 25 — sticky-note canvas annotations via the new `clientOnly: true` catalog flag), PR #224 (items 16 + 20 — A2A peer placeholder + Publish-to-registry helper). Item 1 (live execution overlay) was re-audited and confirmed shipped in PR #210-era work (`BaseNode.tsx` `RUN_STATUS_META` + glow + pulse + className route through `applyRunEvent`).
 >
 > **Pivot to follow-up plan.** The work expanded substantially beyond this backlog into a parallel track tracked at [`plans/app-ux-enhancements.md`](./app-ux-enhancements.md) (§A1–A7) — Mission Control / Command Center page (§A1), per-run health analytics (§A2), memory ledger (§A3, paired with RFC 0057), debugging-studio playhead (§A4), canonical workflow import + validate-button (§A5), the in-builder pack-drop ("A6 use in builder"), and the accessibility / mobile / i18n pass (§A7). The notification-system rewrite (Web Push + OS notifications + preferences + quiet hours + flagged review queue) replaced the originally-planned item 8 "HITL inbox" with something materially bigger. Multimodal rendering (RFC 0055 §C consumer) + feedback annotations (RFC 0056 consumer) shipped despite neither RFC existing when this plan was authored.
 >
-> **Remaining open work.** Lower-priority unverified: **#11** (auto-generated JSON-Schema → config-form — `builder/inspector/Inspector.tsx` may already do this; not audited deeply), **#13** (audit-log viewer with `verify()` button — `RunOpsPanel.tsx` references audit/integrity but no dedicated viewer page found), **#16** (A2A-peer-side of MCP+A2A browser — MCP half shipped via `mcp/McpToolsPanel.tsx`; A2A peer discovery UI not built), **#20** (chain-pack export shipped; PR-to-registry submission UX still not in-app). Plus two narrow follow-ups under the now-finished **#22**: `feedbackClient` annotations migrate once the next SDK ships (per the in-file TODO + `sdk/PARITY.md` 2026-05-25 entry), and `registryClient` needs a second SDK instance pointed at the registry origin.
+> **Remaining open work (`🟡`, structurally unblockable from the openwop side).** Both items below depend on non-steward host adoption that this repo can't unilaterally drive — request issued at [`docs/myndhyve-round-2-handoff.md`](../docs/myndhyve-round-2-handoff.md):
+>
+>   - **#11b** — `x-openwop-form` consumer is shipped (`builder/inspector/Inspector.tsx` + `builder/palette/configFieldsFromSchema.ts`, PRs #204/#205). RFC 0066 is `Draft`; path-to-`Accepted` requires a non-steward host advertising a pack with `x-openwop-form` annotations. Tracked at `docs/KNOWN-LIMITS.md` "RFCs not yet `Accepted`" → row 0066.
+>   - **#16 (A2A half) + #25 (grouping)** — both deferred for the right reason. A2A: `spec/v1/a2a-integration.md` is FINAL but the `capabilities.a2a` advertisement shape is still a candidate; the reference host doesn't expose itself as an A2A agent; nothing to enumerate. Grouping: xyflow parent-node + drag-into-group is a multi-PR surface that's not required for current use cases. Both are captured as placeholders in the shipped UIs (#16 via `A2APeerPanel` rendered alongside `McpToolsPanel`; #25 noted in the PR #222 commit body).
+>
+> Plus two narrow follow-ups under the now-finished **#22**: `feedbackClient` annotations migrate once the next SDK ships (per the in-file TODO + `sdk/PARITY.md` 2026-05-25 entry), and `registryClient` needs a second SDK instance pointed at the registry origin.
 >
 > **Body preserved.** Item descriptions, protocol-surface citations, and the "why now" framing are kept as-authored for traceability; markers were added to each section heading. Where the body's "App adds" text predicts work that has since shipped, the description still reads as future tense — read the marker first.
 
@@ -22,7 +29,7 @@ The gap analysis found the protocol/runtime is ~65% `Done` while the app is an e
 
 # TIER 1 — Highest leverage (protocol is fully shipped; app exposes little or none of it)
 
-## 🟡 1. Live execution overlay on the canvas
+## ✅ 1. Live execution overlay on the canvas *(audit 2026-05-25: shipped — `BaseNode.tsx` renders `RUN_STATUS_META` color glow + `openwop-pulse` animation + `builder-node-run-<status>` className; `applyRunEvent` in `builderStore.ts` routes `node.{started,completed,failed,suspended}` events into `RunOverlay.nodeStatus`; subscribed in `BuilderShell.tsx` via `subscribeToRun`)*
 - **Protocol surface:** SSE event stream, 4 modes (`values`/`updates`/`messages`/`debug`), `node:started`/`node:completed`/`node:failed` events — RFC 0002 stream-modes (Done). Backend `routes/streams.ts`.
 - **App adds:** color/animate canvas nodes by live status as events arrive; pulse the active node, mark completed/failed. The app already *receives* these events into `EventStreamView` as a text list — it just doesn't paint them onto the graph.
 - **Why now:** turns the static builder into a live execution view with zero backend work.
@@ -86,11 +93,11 @@ Pure renderer/converter extension. Surfaces JSON-Schema 2020-12 keywords that th
 
 Static-catalog AI nodes get model/provider/credential pickers + cross-field dependency cascades (e.g., changing provider clears the model). Pack-served nodes can't reach picker-grade UX today because JSON Schema alone can't express "this string is a model id whose options depend on the sibling `provider` field." Pursuing as a new RFC that reserves the `x-openwop-form` namespace on pack `configSchema`s, mirroring the existing `ConfigField.kind` / `dependsOn` / `credentialProvider` vocabulary. Additive per `COMPATIBILITY.md §2.1`; pack authors opt in; existing manifests work unchanged via the pure-schema fallback shipped in 11a.
 
-## ✅ 12. Workflow validation against host capabilities (pre-flight)
+## ✅ 12. Workflow validation against host capabilities (pre-flight) *(closure PR #213 added engine-limit pre-flight against advertised `capabilities.limits.maxNodeExecutions` + `maxRunDurationMs` + `maxLoopIterations` on top of the existing per-node `missingHostSurfaces` check; Validate-OK message now reports advertised limits the run will execute under)*
 - **Protocol surface:** cap-breach enforcement + `RunOptions.configurable` limits — RFC 0009 (`cap-breach.test.ts`, Done).
 - **App adds:** before run, validate the graph against advertised limits (recursion, envelopes/turn, max node executions) and flag nodes that need an unadvertised capability. Catches failures at author time instead of run time.
 
-## 🟡 13. Audit-log viewer with verification
+## ✅ 13. Audit-log viewer with verification *(closure PR #221 added `runs/RunAuditPage.tsx` at route `/runs/:runId/audit` — auto-runs `client.audit.verify(0, lastSeq)` on mount, prominent chain-valid banner, per-checkpoint timeline with full merkleRoot/signature/checkpoint strings, per-anomaly table with full hashes, re-verify button, "Download checkpoints (JSON)" for offline re-verification via `scripts/verify-audit-checkpoints.mjs`, "View full audit log →" link added to `RunOpsPanel`. Capability-gated on `openwop-audit-log-integrity` profile.)*
 - **Protocol surface:** audit-log-integrity profile — append-only, signed, tamper-detectable; SDK `verify()` on all 3 SDKs — RFC 0009/0010 (Done). `audit-checkpoint-export.test.ts`.
 - **App adds:** a per-run/per-workspace audit timeline with a "Verify integrity" button that runs the SDK `verify()` and shows the Merkle/signature result; export checkpoint.
 
@@ -98,11 +105,11 @@ Static-catalog AI nodes get model/provider/credential pickers + cross-field depe
 - **Protocol surface:** production-profile debug bundle with truncation behavior — RFC 0009 (`debug-bundle-truncation.test.ts`, Done).
 - **App adds:** a one-click "Download debug bundle" on any run for support/triage.
 
-## ✅ 15. Conversation (multi-turn) UI
+## ✅ 15. Conversation (multi-turn) UI *(closure PR #217 added `runs/RunConversationPanel.tsx` consuming `conversation.opened` / `conversation.exchanged` / `conversation.closed` events per `schemas/conversation-event.schema.json`, with an inline resume form for `conversation.exchange` / `conversation.close` interrupts via the token-scoped resolve endpoint. Forward-compat: the panel returns `null` until a host advertises `capabilities.conversationPrimitive: true` — request issued at `docs/myndhyve-round-2-handoff.md` §1.)*
 - **Protocol surface:** `core.conversationGate` lifecycle (`open`/`exchange`/`close`) — RFC 0005 (Accepted).
 - **App adds:** a proper multi-turn conversation panel bound to `(runId, conversationId)`, distinct from one-shot chat. The sample-chat plans reference this; the gate primitive is shipped.
 
-## 🟡 16. MCP tool & A2A peer browser *(MCP half shipped as `mcp/McpToolsPanel.tsx`; A2A peer browser not found)*
+## 🟡 16. MCP tool & A2A peer browser *(MCP half shipped as `mcp/McpToolsPanel.tsx`; A2A half — closure PR #224 added `peers/A2APeerPanel.tsx` rendered right below McpToolsPanel on `/capabilities` as a forward-compat placeholder. Cannot enumerate today because `capabilities.a2a` shape is still a candidate in `spec/v1/a2a-integration.md` §"Capability advertisement", the reference host doesn't expose an Agent Card, and no `core.a2a.*` NodeModule is registered. Request issued at `docs/myndhyve-round-2-handoff.md` §3 for a non-steward host to publish an A2A AgentCard — converts the placeholder into a real peer browser.)*
 - **Protocol surface:** `core.mcp.toolCall` over HTTP/JSON-RPC (RFC 0020, Done; real-impl interop verified) + `a2a` task roundtrip (RFC 0007, Done; verified vs A2A SDK 0.3.13).
 - **App adds:** list MCP server tools available to the host, let users drop a `mcp.toolCall` node and pick a tool; configure A2A peer dispatch. The packs + roundtrip are proven; there's no discovery UI.
 
@@ -122,7 +129,7 @@ Static-catalog AI nodes get model/provider/credential pickers + cross-field depe
 - **Protocol surface:** open execution schemas — `run-event-payloads.schema.json`, `orchestrator-decision.schema.json`, workflow-definition schema (RFC 0037 §1, Done).
 - **App adds:** export a built workflow as portable JSON and re-import; foundation for sharing.
 
-## 🟡 20. Publish a workflow as a chain pack *(export shipped as manifest JSON; the PR-to-registry submission UX is not in-app yet)*
+## ✅ 20. Publish a workflow as a chain pack *(closure PR #224 added "Publish to registry…" button next to "Export chain pack". Opens an inline checklist banner with proposed pack slug, manifest size, one-click manifest.json download, link to fork `openwop/openwop` and add the manifest at `registry/packs/<slug>/manifest.json`, local `npm run openwop:check` validation step, PR-open step + resulting `packs.openwop.dev` URL. In-browser pushing intentionally NOT added — Ed25519 signing happens at PR-merge time by the registry maintainers per `PUBLISHING.md` + `spec/v1/registry-operations.md`.)*
 - **Protocol surface:** workflow-chain packs + registry publishing — RFC 0013 (Accepted); PUBLISHING.md flow.
 - **App adds:** "Publish to registry" from a built workflow (PR-based publish flow exists); the app provides the authoring → manifest → submit UX.
 
@@ -142,7 +149,7 @@ Static-catalog AI nodes get model/provider/credential pickers + cross-field depe
 - **Protocol surface:** fork creates a new run from any `seq` — RFC 0011 (Done). *Full structured diff needs RFC 0054 (not yet filed).*
 - **App adds:** a client-side side-by-side of two runs' event lists + terminal states (a run and its fork). Honest scope: this is the 80% achievable today; the deterministic `GET /v1/runs/{a}/diff/{b}` endpoint is the proper backend (see RFC 0054 in the extension doc).
 
-## ✅ 25. Builder polish — pure app, no protocol dependency (fast wins) *(multi-select, alignment/distribution, batch undo, inline title edit, copy/paste, aria-labels all shipped across PRs #121/#124/#129/#133; minimap + grouping/subgraphs + sticky notes + grid-snapping not verified)*
+## ✅ 25. Builder polish — pure app, no protocol dependency (fast wins) *(multi-select, alignment/distribution, batch undo, inline title edit, copy/paste, aria-labels all shipped across PRs #121/#124/#129/#133. Re-audit 2026-05-25: minimap is already shipped (`<MiniMap pannable zoomable>` in `BuilderCanvas.tsx`), grid-snap is already shipped (`snapToGrid snapGrid={[20, 20]}`). Closure PR #222 added sticky-note canvas annotations via a new `clientOnly: true` `NodeCatalogEntry` flag — annotation nodes are stripped from the serialized `BackendWorkflowDefinition` by `serializeWithIdMap`, skipped by `collectLimitIssues` against `maxNodeExecutions`, and render via a dedicated `ClientOnlyNode` branch in `BaseNode.tsx`. Grouping/subgraphs deferred — xyflow parent-node + drag-into-group is a multi-PR surface not required by current users.)*
 These need only React Flow / store work; listed for completeness since they're the most visible gaps in Phase 2:
 - **Minimap** — `<Minimap>` from `@xyflow/react` (not currently imported).
 - **Multi-select** — currently `selectedNodeId` is single; add selection set + range select.
