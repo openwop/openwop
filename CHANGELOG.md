@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0060 (host.heartbeat) — Milestone 2: reference-host enforcement; promote Active → `Accepted` (2026-05-25)
+
+The in-memory reference host now implements the RFC 0060 heartbeat surface end-to-end, taking it from `Active` to **`Accepted`**. It advertises `capabilities.heartbeat { supported: true, minIntervalSec: 1, maxRuntimeMs: 5000 }` and implements the documented `POST /v1/host/sample/heartbeat/tick` seam (`host-sample-test-seams.md`):
+
+- **§B.1** — exactly one `heartbeat.evaluated { heartbeatId, status, changed }` per tick.
+- **§B.5 (anti-spam, the keystone)** — `heartbeat.stateChanged { heartbeatId, from, to }` + `enqueuedRuns: 1` are emitted **only** when `observedState` differs from the persisted prior tick (value-based comparison via a stable stringify); an unchanged tick emits neither. Action is gated on a state *transition*, not on the tick.
+- **§B.2** — `simulateSlowMs` exceeding `maxRuntimeMs` terminates the evaluation and reports `status: 'timeout'` (no transition, no enqueue).
+
+All four conformance scenarios — `heartbeat-{capability-shape, fires-once-per-tick, idempotent-no-spam, runtime-bound}.test.ts` — are live + green against the host (no new scenarios; the M1 set flips from soft-skip to enforced). RFC 0060 `Active → Accepted` (Accepted 46 → 47, Active 12 → 11). Additive; no existing wire-shape change.
+
 ### fix(hosts): RFC 0058 `cap.breached{run-duration}` `observed` must strictly exceed `limit` (2026-05-26)
 
 Fixes a measurement-boundary flake in the RFC 0058 run-duration breach across all three reference hosts (in-memory, Postgres, SQLite). Each host computed `observed` as `Date.now() - runStartMs`; at the deadline boundary that integer-millisecond read occasionally lands exactly on `limitMs` (e.g. `observed=1000, limit=1000`), failing `run-execution-bounds-shape.test.ts`'s assertion that `observed` strictly exceeds `limit`. The deadline timer firing proves the run genuinely exceeded the bound (real elapsed is fractionally past it), so `failRunDuration` now floors `observed` to `max(elapsed, limitMs + 1)` — honoring the strict-exceedance invariant without misreporting. Surfaced as a ~1-in-N flake under full-suite parallelism (the test passed in isolation); root-caused to the host boundary, not test timing, so the conformance scenario is unchanged. Verified: full suite green ×3 on SQLite, ×2 on Postgres; the breach now consistently emits `observed ≥ limit+1`. Host-only; no protocol-corpus change.

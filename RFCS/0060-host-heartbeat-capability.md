@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0060 |
 | **Title** | A `host.heartbeat` capability — a system-managed, short-interval, runtime-bounded evaluation of an *idempotent predicate* that emits state-change events and conditionally enqueues a run, rather than blindly re-running an agent; the controlled, request-shaped exception to openwop's poll-free design |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-25 |
-| **Updated** | 2026-05-25 |
+| **Updated** | 2026-05-25 (Active → Accepted — Milestone 2: the in-memory reference host advertises `capabilities.heartbeat` and implements the `POST /v1/host/sample/heartbeat/tick` seam end-to-end — one `heartbeat.evaluated` per tick (§B.1), `heartbeat.stateChanged` + an enqueued run ONLY on a state transition (§B.5 anti-spam), `status: 'timeout'` on an over-budget evaluation (§B.2); all four conformance scenarios incl. the `idempotent-no-spam` keystone are live + green.) |
 | **Affects** | `schemas/capabilities.schema.json` (`host.heartbeat` block) · `spec/v1/host-capabilities.md` (new §host.heartbeat) · `api/asyncapi.yaml` (`heartbeat.evaluated`, `heartbeat.stateChanged` events) · `spec/v1/positioning.md` (note the bounded exception) · `RFCS/0052` (composes with `host.scheduling`) · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -107,12 +107,12 @@ Per `docs/autonomous-agent-runtime-plan.md` §8 — Unresolved questions resolve
 
 ## Acceptance criteria
 
-- [ ] `spec/v1/host-capabilities.md` §host.heartbeat + the once-per-tick / idempotent / bounded / emit-on-change contract.
-- [ ] `host.heartbeat` block + `heartbeat.evaluated` / `heartbeat.stateChanged` (AsyncAPI).
-- [ ] `positioning.md` bounded-exception note.
-- [ ] Conformance: shape always-on; behavior capability-gated (anti-spam scenario is the keystone).
-- [ ] CHANGELOG entry under `[1.1.4 — unreleased]`.
-- [ ] A host advertises `host.heartbeat` and passes idempotent-no-spam, or the RFC defers reference-host wiring.
+- [x] `spec/v1/host-capabilities.md` §host.heartbeat + the once-per-tick / idempotent / bounded / emit-on-change contract.
+- [x] `host.heartbeat` block + `heartbeat.evaluated` / `heartbeat.stateChanged` (AsyncAPI).
+- [x] `positioning.md` bounded-exception note.
+- [x] Conformance: shape always-on; behavior capability-gated (anti-spam scenario is the keystone) — all four scenarios live + green against the in-memory host.
+- [x] CHANGELOG entry under `[1.1.4 — unreleased]`.
+- [x] **Milestone 2 — reference-host enforcement (`Active → Accepted`).** The in-memory reference host (`examples/hosts/in-memory`) advertises `capabilities.heartbeat { supported, minIntervalSec: 1, maxRuntimeMs: 5000 }` and implements the `POST /v1/host/sample/heartbeat/tick` seam (`host-sample-test-seams.md`): one `heartbeat.evaluated { heartbeatId, status, changed }` per tick (§B.1); `heartbeat.stateChanged { heartbeatId, from, to }` + `enqueuedRuns: 1` ONLY on a state transition vs. the persisted prior tick (§B.5 anti-spam, the keystone scenario); `status: 'timeout'` when `simulateSlowMs` exceeds `maxRuntimeMs` (§B.2). `heartbeat-{capability-shape,fires-once-per-tick,idempotent-no-spam,runtime-bound}.test.ts` all green.
 
 ## References
 
