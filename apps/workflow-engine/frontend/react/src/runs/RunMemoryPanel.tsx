@@ -2,22 +2,33 @@
  * Memory ledger (app-ux §A3).
  *
  * Read-only view of the tenant's RFC 0004 memory entries (host-extension
- * GET /v1/host/sample/memory). Entries this run contributed — the host
- * writes a run-summary on completion — are highlighted via their
- * `run-id:<runId>` tag, so the panel ties the accumulating tenant memory
- * back to the run you're looking at.
+ * GET /v1/host/sample/memory), tied to the run you're looking at.
  *
- * Honest scope: the wire carries no per-node read/write attribution
- * (agent-memory.md keeps memory access internal to nodes for replay
- * determinism), so this is a *ledger*, not a per-node memory graph. A
- * `[REDACTED:…]` SR-1 marker is surfaced as a badge when present.
+ * Attribution (RFC 0057). When the host advertises
+ * `capabilities.memory.attribution.emitsWriteEvents`, this panel reads the
+ * run's `memory.written` events to determine — *authoritatively* — which
+ * entries this run wrote and which node wrote each one, replacing the older
+ * `run-id:<runId>` tag heuristic (kept as the fallback for hosts that don't
+ * advertise attribution). The event is content-free by invariant
+ * (`memory-attribution-no-content`): it carries `{ memoryRef, memoryId,
+ * nodeId?, agentId?, tags? }` only, never the entry content — so we read the
+ * content from the read-side (already SR-1-redacted) and use the event purely
+ * to attribute it. A `[REDACTED:…]` SR-1 marker is surfaced as a badge.
+ *
+ * Companion to the RunTimeline memory-write markers (#192), which read the
+ * same `memory.written` events to mark *where* a write happened; this marks
+ * *which entries* a run wrote and by which node.
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { listMemory, type MemoryEntry } from '../client/runsClient.js';
+import type { RunEventDoc } from '@openwop/openwop';
+import { listMemory, getCapabilities, type MemoryEntry } from '../client/runsClient.js';
 
 interface Props {
   runId: string;
+  /** The run's event log (from RunDetailPage). `memory.written` events here
+   *  drive authoritative write-attribution when the host advertises it. */
+  events: readonly RunEventDoc[];
   /** Refetch when the run reaches a terminal status (the run-summary is
    *  written on completion, so it only exists once the run finishes). */
   status?: string;
@@ -25,13 +36,45 @@ interface Props {
 
 const TERMINAL = new Set(['completed', 'failed', 'cancelled']);
 
+interface WriteAttribution {
+  nodeId?: string;
+  agentId?: string;
+}
+
 function isRedacted(content: string): boolean {
   return /\[REDACTED:[^\]]*\]/.test(content);
 }
 
-export function RunMemoryPanel({ runId, status }: Props) {
+// Fold the run's `memory.written` events (RFC 0057) into a memoryId → who-wrote
+// map. The events passed in are already scoped to this run, so every entry is a
+// write this run made. `nodeId` is read from the canonical payload (RFC 0057
+// §B SHOULD) with the event envelope's `nodeId` as a fallback.
+function buildAttribution(events: readonly RunEventDoc[]): Map<string, WriteAttribution> {
+  const byMemoryId = new Map<string, WriteAttribution>();
+  for (const ev of events) {
+    if (ev.type !== 'memory.written') continue;
+    const p = (ev.payload && typeof ev.payload === 'object' ? ev.payload : {}) as {
+      memoryId?: unknown;
+      nodeId?: unknown;
+      agentId?: unknown;
+    };
+    if (typeof p.memoryId !== 'string') continue;
+    const nodeId = typeof p.nodeId === 'string' ? p.nodeId : ev.nodeId;
+    const attr: WriteAttribution = {};
+    if (nodeId) attr.nodeId = nodeId;
+    if (typeof p.agentId === 'string') attr.agentId = p.agentId;
+    byMemoryId.set(p.memoryId, attr);
+  }
+  return byMemoryId;
+}
+
+export function RunMemoryPanel({ runId, events, status }: Props) {
   const [entries, setEntries] = useState<MemoryEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // null = not yet known; consume the attribution events only once we've
+  // confirmed the host advertises them, so non-advertising hosts keep the
+  // tag-heuristic behaviour rather than silently showing zero writes.
+  const [attributionAdvertised, setAttributionAdvertised] = useState<boolean | null>(null);
   const terminal = status ? TERMINAL.has(status) : false;
 
   useEffect(() => {
@@ -49,11 +92,41 @@ export function RunMemoryPanel({ runId, status }: Props) {
     // Refetch when the run finishes so the on-completion run-summary appears.
   }, [runId, terminal]);
 
+  useEffect(() => {
+    let cancelled = false;
+    getCapabilities()
+      .then((caps) => {
+        if (cancelled) return;
+        const attribution = (
+          caps as { capabilities?: { memory?: { attribution?: { emitsWriteEvents?: unknown } } } }
+        ).capabilities?.memory?.attribution;
+        setAttributionAdvertised(attribution?.emitsWriteEvents === true);
+      })
+      .catch(() => {
+        // Discovery failed — fall back to the tag heuristic.
+        if (!cancelled) setAttributionAdvertised(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const attribution = useMemo(() => buildAttribution(events), [events]);
+
   const thisRunTag = `run-id:${runId}`;
+  // Authoritative when the host advertises attribution AND we've actually
+  // received write events for this run; otherwise the tag heuristic.
+  const useEvents = attributionAdvertised === true && attribution.size > 0;
+  const mineFor = (e: MemoryEntry): boolean =>
+    useEvents ? attribution.has(e.id) : e.tags.includes(thisRunTag);
+
   const { fromThisRun, total } = useMemo(() => {
     const list = entries ?? [];
-    return { fromThisRun: list.filter((e) => e.tags.includes(thisRunTag)).length, total: list.length };
-  }, [entries, thisRunTag]);
+    const count = list.filter((e) =>
+      useEvents ? attribution.has(e.id) : e.tags.includes(thisRunTag),
+    ).length;
+    return { fromThisRun: count, total: list.length };
+  }, [entries, useEvents, attribution, thisRunTag]);
 
   // Nothing to show and no error → the host doesn't expose memory, or it's
   // empty. Stay quiet rather than render an empty card.
@@ -71,7 +144,10 @@ export function RunMemoryPanel({ runId, status }: Props) {
         )}
       </div>
       <p className="muted" style={{ fontSize: 12, marginTop: 2 }}>
-        Tenant memory (RFC 0004 read-side). Entries this run wrote are highlighted.
+        Tenant memory (RFC 0004 read-side).{' '}
+        {useEvents
+          ? 'Entries this run wrote are highlighted and attributed to the node that wrote them (RFC 0057).'
+          : 'Entries this run wrote are highlighted.'}
       </p>
       {error ? (
         <div className="alert error">{error}</div>
@@ -86,13 +162,22 @@ export function RunMemoryPanel({ runId, status }: Props) {
           </thead>
           <tbody>
             {(entries ?? []).map((e) => {
-              const mine = e.tags.includes(thisRunTag);
+              const mine = mineFor(e);
+              const attr = attribution.get(e.id);
               return (
                 <tr key={e.id} className={mine ? 'memory-row-mine' : undefined}>
                   <td>
                     {isRedacted(e.content) && (
                       <span className="memory-redacted-badge" title="Contains host-redacted secret material (SR-1)">
                         🔒 redacted
+                      </span>
+                    )}
+                    {attr?.nodeId && (
+                      <span
+                        className="memory-wrote-badge"
+                        title={`Written by node ${attr.nodeId}${attr.agentId ? ` (agent ${attr.agentId})` : ''} — RFC 0057 memory.written`}
+                      >
+                        ✎ {attr.nodeId}
                       </span>
                     )}
                     <span className="memory-content">{e.content}</span>

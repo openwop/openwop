@@ -33,7 +33,7 @@ import {
 } from '../host/envelopeReliabilityEmit.js';
 import { dispatchSubRun, type SubRunResult } from '../subruns/subRunDispatcher.js';
 import { registerMockAgentNode } from './conformanceMockAgent.js';
-import { storeMediaAsset } from '../host/inMemorySurfaces.js';
+import { storeMediaAsset, writeMemoryEntry, MEMORY_DEMO_REF } from '../host/inMemorySurfaces.js';
 
 const noopNode: NodeModule = {
   typeId: 'core.noop',
@@ -1534,6 +1534,52 @@ const sampleImageEmitNode: NodeModule = {
   },
 };
 
+/**
+ * Demo node: write a memory entry mid-run and attribute it (RFC 0057).
+ *
+ * The host's only other memory write is the session-end run-summary
+ * (executor.ts), which is a host write and carries no `nodeId`. This node
+ * is the *node-attributed* counterpart: executing it writes a tenant memory
+ * entry and emits a `memory.written` RunEvent carrying the node that caused
+ * the write — turning the flat memory ledger (app-ux §A3) into a per-node
+ * memory trail. It gives the RunTimeline memory-write markers (#192, which
+ * read `memory.written`) a node-attributed event to render, and mirrors
+ * `local.sample.demo.image-emit` (the RFC 0055 §C "close the loop" node).
+ *
+ * `ctx.emit` stamps the envelope `nodeId`; we ALSO put `nodeId` in the
+ * payload per RFC 0057 §B (SHOULD) so a consumer reading the canonical
+ * payload shape (`run-event-payloads.schema.json#/$defs/memoryWritten`)
+ * gets the attribution without inspecting the envelope. The event is
+ * content-free (identifiers + non-secret tags only — never the entry
+ * content; the read-side serves that, SR-1-redacted). The host advertises
+ * `capabilities.memory.attribution.emitsWriteEvents` (discovery.ts).
+ *
+ * Input (optional): `note` — the text to store. Defaults to a demo string.
+ */
+const sampleMemoryWriteNode: NodeModule = {
+  typeId: 'local.sample.demo.memory-write',
+  version: '0.1.0',
+  async execute(ctx) {
+    const inputs = (ctx.inputs && typeof ctx.inputs === 'object') ? (ctx.inputs as Record<string, unknown>) : {};
+    const note = typeof inputs.note === 'string' && inputs.note.length > 0
+      ? inputs.note
+      : `Demo memory entry written by node ${ctx.nodeId}`;
+    const tags = ['demo-write', `node:${ctx.nodeId}`, `run-id:${ctx.runId}`];
+    const row = writeMemoryEntry(ctx.tenantId, MEMORY_DEMO_REF, { content: note, tags });
+    // RFC 0057 §B — attribute the write on the event log, content-free
+    // (identifiers + non-secret tags; never the entry content). `nodeId` is
+    // included in the payload per the SHOULD; `ctx.emit` also stamps it on
+    // the event envelope.
+    await ctx.emit('memory.written', {
+      memoryRef: MEMORY_DEMO_REF,
+      memoryId: row.id,
+      nodeId: ctx.nodeId,
+      tags,
+    });
+    return { status: 'success', outputs: { memoryId: row.id, memoryRef: MEMORY_DEMO_REF } };
+  },
+};
+
 const sampleUppercaseNode: NodeModule = {
   typeId: 'local.sample.demo.uppercase',
   version: '0.1.0',
@@ -1702,6 +1748,7 @@ export function ensureNodesRegistered(): void {
   registry.register(interruptNode);
   registry.register(sampleUppercaseNode);
   registry.register(sampleImageEmitNode);
+  registry.register(sampleMemoryWriteNode);
   registry.register(sampleMockAiNode);
   registry.register(sampleChatResponderNode);
   // RFC 0023 — conformance-only typeId for agent-event emission hooks.
