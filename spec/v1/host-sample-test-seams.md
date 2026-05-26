@@ -358,6 +358,37 @@ Synthetic misbehaving-pack typeIds the conformance suite exercises:
 
 Conformance: `sandbox-mvp-behavior.test.ts` (10 assertions covering 5 escape kinds + timeout + memory + cross-pack isolation + capability-gate + 2 well-behaved baselines).
 
+### 9. Workspace cross-owner driver — `POST /v1/host/sample/workspace/op` (RFC 0059)
+
+| Field | Value |
+|---|---|
+| Method + path | `POST /v1/host/sample/workspace/op` |
+| Capability gate | `capabilities.workspace.supported: true` (RFC 0059 §A) |
+| Env gate (reference impl) | none (the in-memory host enables it unconditionally; production hosts gate per the §"Production safety" rule below) |
+| Introduced | RFC 0059 §E — drives `host.workspace` CRUD against an EXPLICIT `{tenant, workspace}` owner so the `workspace-cross-tenant-isolation` (WCT-1) invariant is exercisable on a single-credential host (mirrors the blob/kv/queue/table cross-tenant seams) |
+
+The production §C endpoints (`/v1/host/workspace/files`) bind every request to one authenticated owner, so a single-credential host cannot demonstrate cross-owner isolation through them. This seam takes the `{tenant, workspace}` owner in the body — letting a conformance scenario write as owner A and attempt a read as owner B — and routes through the SAME owner-scoped store the §C endpoints use. The host MUST still scope strictly by the supplied owner triple (WCT-1); the seam only supplies the triple that production resolves from the authenticated identity.
+
+```
+POST /v1/host/sample/workspace/op
+  Body: {
+    tenant: string,            // owner tenant (RFC 0048)
+    workspace: string,         // owner workspace
+    op: 'list' | 'get' | 'put' | 'delete',
+    path?: string,             // required for get/put/delete
+    content?: string,          // required for put
+    contentType?: string,      // optional for put
+    ifMatch?: string,          // optional optimistic-concurrency token for put
+    prefix?: string,           // optional filter for list
+    version?: number,          // optional historical read for get
+  }
+  Returns: the same body/status as the matching §C endpoint
+           (200 WorkspaceFile | 200 { files } | 204 | 404 not_found
+            | 409 workspace_conflict | 413 workspace_too_large)
+```
+
+Conformance: `workspace-cross-tenant-isolation.test.ts` (WCT-1 — write as owner A, then assert a different workspace AND a different tenant both fail closed on `get`/`list`, while the owner still reads its own file).
+
 ## Production safety (normative)
 
 All seams under `/v1/host/sample/*` are conformance-only. Hosts deployed in production:

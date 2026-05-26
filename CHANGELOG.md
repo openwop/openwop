@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0059 (agent workspace) — Milestone 2: reference-host enforcement; promote Active → `Accepted` (2026-05-25)
+
+The in-memory reference host now implements `host.workspace` end-to-end, taking RFC 0059 from `Active` to **`Accepted`**. It advertises `capabilities.workspace { supported, versioned, maxFileBytes: 1048576, maxFiles: 256, maxVersions: 20 }` and honors:
+
+- **§C endpoints** — `GET /v1/host/workspace/files` (list, metadata only, `?prefix=`), `GET …/files/{path}` (`?version=N`), `PUT …/files/{path}` (atomic create/replace, monotonic `version`, recomputed `etag`, `If-Match` → `409 workspace_conflict` with `details.currentVersion`, `content` > `maxFileBytes` → `413 workspace_too_large`), `DELETE …/files/{path}` (tombstone). Run inputs already seed from variable defaults (RFC 0058 M2).
+- **§D run-start snapshot** — an immutable workspace read snapshot is captured at run creation and exposed on the run snapshot (`GET /v1/runs/{runId}` → `workspace: [{ path, version }]`), replay-deterministic.
+- **§E invariants** — **WCT-1** (cross-owner isolation): every file is scoped to its `{tenant, workspace}` owner; a `get`/`list` under a different owner fails closed (404, no existence leak). Registered as the protocol-tier `workspace-cross-tenant-isolation` invariant in `SECURITY/invariants.yaml` (invariant count 100 → 101) with `workspace-cross-tenant-isolation.test.ts` as its public test. **WSR-1** (secret redaction): writes pass through the host's `scrubSecretShaped()` (SR-1).
+
+A documented test seam `POST /v1/host/sample/workspace/op` (`host-sample-test-seams.md` §9) drives CRUD against an explicit owner so WCT-1 is exercisable on this single-credential host (mirrors the blob/kv/queue cross-tenant seams). Two new conformance scenarios — `workspace-behavior.test.ts` (CRUD/ETag/too-large/snapshot via the §C endpoints) and `workspace-cross-tenant-isolation.test.ts` (WCT-1) — are live + green (suite 261 → 263). Additive; no existing wire-shape change.
+
 ### RFC 0058 M2 — /code-review follow-ups on the in-memory host enforcement (2026-05-25)
 
 Five findings from a `/code-review` pass over the RFC 0058 M2 commit. Host + conformance only; no protocol-corpus change.
