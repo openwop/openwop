@@ -102,7 +102,7 @@
       "programmingLanguage": ["TypeScript", "Python", "Go"],
       "license": "https://www.apache.org/licenses/LICENSE-2.0",
       "author": { "@id": "https://openwop.dev/#organization" },
-      "version": "1.1"
+      "version": "1.1.4"
     }
   ]
 }
@@ -204,7 +204,7 @@
   <div class="wrap hero-grid">
     <div class="hero-text">
       <div class="eyebrow">
-        <span class="v">v1.1</span>
+        <span class="v">v1.1.4</span>
         <span>Workflow Orchestration Protocol — Core Specification</span>
       </div>
 
@@ -587,7 +587,7 @@
       <a class="ship" href="/conformance/">
         <div class="ship-num">5</div>
         <div class="ship-label">hosts measured</div>
-        <div class="ship-detail">4 reference <span class="ship-sep">·</span> 1 sibling project (<code>vendor.myndhyve</code>) — conformance suite v1.1</div>
+        <div class="ship-detail">4 reference <span class="ship-sep">·</span> 1 non-steward host live in production (<code>api.myndhyve.ai</code>, 28/0 against suite v1.7.0)</div>
       </a>
       <a class="ship" href="https://github.com/openwop/openwop/tree/main/sdk">
         <div class="ship-num">3</div>
@@ -595,14 +595,49 @@
         <div class="ship-detail">TypeScript on npm <span class="ship-sep">·</span> Python on PyPI <span class="ship-sep">·</span> Go module</div>
       </a>
       <a class="ship" href="/spec/v1/">
-        <div class="ship-num">37</div>
+        <div class="ship-num">40</div>
         <div class="ship-label">spec documents</div>
         <div class="ship-detail">REST <span class="ship-sep">·</span> SSE <span class="ship-sep">·</span> signed webhooks <span class="ship-sep">·</span> BYOK <span class="ship-sep">·</span> replay <span class="ship-sep">·</span> node packs</div>
       </a>
       <a class="ship" href="/spec/v1/">
-        <div class="ship-num">v1.1</div>
+        <div class="ship-num">v1.1.4</div>
         <div class="ship-label">stable · additive</div>
         <div class="ship-detail">Apache 2.0 <span class="ship-sep">·</span> additive-only evolution under <code>COMPATIBILITY.md</code></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────── WHAT'S NEW IN v1.1.4 ─────────────────────── -->
+<section class="block ships" id="whats-new">
+  <div class="wrap">
+    <div class="block-head">
+      <div class="label"><span class="marker"><span class="dot"></span>§ 01.5 / What's new in v1.1.4 (2026-05-26)</span></div>
+      <h2>Non-steward adoption, <em>live in production</em>.</h2>
+      <p class="block-lede">
+        v1.1.4 is the first release with concrete non-steward production adoption to point at — the protocol's vendor-neutrality stops being a stated commitment and starts being a measured one.
+      </p>
+    </div>
+    <div class="ships-grid">
+      <a class="ship" href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">
+        <div class="ship-num">8 / 8</div>
+        <div class="ship-label">MyndHyve protocol-extension cohort live</div>
+        <div class="ship-detail">RFCs 0045–0049 + 0051–0053 — <code>host.credentials</code>, <code>host.oauth</code>, identity triple, RBAC scopes, approval gate, scheduling, dead-letter — all <code>Accepted</code> via 28 PASS / 0 FAIL on <code>api.myndhyve.ai</code> (revision <code>00211-69w</code>, suite <code>v1.6.0</code>). Multi-agent execution model <code>version: 1-4</code> ladder closed end-to-end on a non-steward host.</div>
+      </a>
+      <a class="ship" href="/rfcs/">
+        <div class="ship-num">5 / 7</div>
+        <div class="ship-label">autonomous-agent-runtime cohort already Accepted</div>
+        <div class="ship-detail">RFCs 0058–0064 filed Draft; 0059 (<code>host.workspace</code>) · 0060 (<code>host.heartbeat</code>) · 0062 (<code>memory.distillation</code>) · 0063 (<code>core.subWorkflow.outputAttestation</code>) · 0064 (<code>host.toolHooks</code>) graduated Draft → Active → <code>Accepted</code> in the same cycle via in-memory M2 host enforcement. RFCs 0058 + 0061 (<code>executionModel.version: 5</code>) at <code>Active</code> pending second-host enforcement.</div>
+      </a>
+      <a class="ship" href="https://packs.openwop.dev/vendor.myndhyve.brand">
+        <div class="ship-num">1st</div>
+        <div class="ship-label">non-steward <code>x-openwop-form</code> pack</div>
+        <div class="ship-detail"><code>vendor.myndhyve.brand@1.1.0</code> pilots RFC 0066 — pack-manifest <code>configSchema</code> picker UX hints (<code>provider-picker</code> + <code>model-picker { dependsOn: ["provider"] }</code>) on the <code>brand.persona.discover</code> node. First non-steward host adopting the advisory annotation — RFC 0066 path-to-<code>Accepted</code> unlocks at re-pin.</div>
+      </a>
+      <a class="ship" href="https://github.com/openwop/openwop/blob/main/SECURITY/invariants.yaml">
+        <div class="ship-num">102</div>
+        <div class="ship-label">SECURITY invariants (+8 this cycle)</div>
+        <div class="ship-detail">70 protocol-tier (each with at least one public test in <code>conformance/src/scenarios/</code>) · 30 reference-impl · 2 advisory. New: <code>authorization-fail-closed</code>, <code>prompt-{mutation,read}-workspace-membership-enforced</code>, <code>media-asset-url-tenant-scoped</code>, <code>memory-attribution-{no-content,tenant-scoped}</code>, <code>workspace-cross-tenant-isolation</code>, <code>subrun-merge-approval-fail-closed</code>.</div>
       </a>
     </div>
   </div>
@@ -613,6 +648,11 @@
   <div class="wrap">
     <div class="block-head">
       <div class="label"><span class="marker"><span class="dot"></span>§ 02 / Where to start</span></div>
+      <!-- §02 keeps its number even after the §01.5 insertion above —
+           §01.5 reads as an addendum to §01 (running today + what just landed),
+           not as a top-level outline step. The "Where to start" path-pick
+           remains the second major thing a visitor does. -->
+
       <h2>Pick your <em>path</em>.</h2>
       <p class="block-lede">
         OpenWOP is a protocol with four common entry points. Each card lists the real specs and tools the role uses; nothing routes off into vapor.
@@ -1530,7 +1570,7 @@
           <p class="row-summary">1.1.x (v1 stable)</p>
           <details class="row-detail">
             <summary>What this means</summary>
-            <p>v1.0 wire contract frozen 2026-05-08 · v1.1.0 released 2026-05-12 as an additive update. Current work expands behavior coverage without breaking required fields, event payloads, endpoint contracts, or package names. The active surface now includes auth profiles, gRPC transport, WASM pack execution, multi-agent identity and reasoning, memory, orchestrator dispatch, and fixture-backed host behavior.</p>
+            <p>v1.0 wire contract frozen 2026-05-08 · v1.1.0 released 2026-05-12 · v1.1.4 released 2026-05-26 (MyndHyve protocol-extension cohort live in production + autonomous-agent-runtime cohort + 19 RFC graduations). Current work expands behavior coverage without breaking required fields, event payloads, endpoint contracts, or package names. The active surface now includes auth profiles, gRPC transport, WASM pack execution, multi-agent identity and reasoning, memory, orchestrator dispatch, agent workspace, host heartbeat, sub-workflow output attestation, tool-invocation hooks, and fixture-backed host behavior.</p>
           </details>
         </div>
       </div>
@@ -1637,11 +1677,11 @@
     </div>
 
     <div class="proof-stats" aria-label="OpenWOP repository evidence snapshot">
-      <div><span>159</span><small>scenario files</small></div>
+      <div><span>272</span><small>scenario files</small></div>
       <div><span>62</span><small>indexed packs</small></div>
-      <div><span>82</span><small>signed pack versions</small></div>
+      <div><span>83</span><small>signed pack versions</small></div>
       <div><span>4</span><small>reference hosts</small></div>
-      <div><span>27</span><small>JSON schemas</small></div>
+      <div><span>40</span><small>JSON schemas</small></div>
     </div>
 
     <div class="proof-grid">
@@ -1700,11 +1740,11 @@
           Model Context Protocol exposes tools, resources, and prompts to LLM apps.
           OpenWOP sits at the workflow layer: starting runs, pausing them for humans,
           streaming events, replaying history, and validating host behavior.
-          The two compose: v1.1 hosts can advertise an MCP client capability and
+          The two compose: v1.1+ hosts can advertise an MCP client capability and
           route an LLM through the <code>core.mcp.toolCall</code> node, with MCP content
           carried under an untrusted trust-boundary per the OpenWOP threat model.
         </p>
-        <div class="quote">MCP standardizes tool access. OpenWOP standardizes durable workflow execution. A v1.1 host can call the former from inside the latter.</div>
+        <div class="quote">MCP standardizes tool access. OpenWOP standardizes durable workflow execution. A v1.1+ host can call the former from inside the latter.</div>
       </div>
 
       <div class="compare-card">
@@ -1959,7 +1999,7 @@
       <div class="pack">
         <div class="tag"><span>04 · pkg.go.dev</span><a class="view" href="https://pkg.go.dev/github.com/openwop/openwop/sdk/go">view</a></div>
         <div class="name">openwop/sdk/go</div>
-        <p>Go reference SDK. Single module, no external deps. Run client, SSE consumer, typed errors. Pinned at <code>v1.1.0</code>.</p>
+        <p>Go reference SDK. Single module, no external deps. Run client, SSE consumer, typed errors. Pinned at <code>v1.1.4</code>.</p>
         <div class="install"><span class="p">$</span>go get github.com/openwop/openwop/sdk/go</div>
       </div>
     </div>
