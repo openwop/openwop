@@ -200,6 +200,13 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       schemaRounds: 3,
       envelopesPerTurn: 32,
       maxNodeExecutions: 1000,
+      // RFC 0058 — wall-clock ceiling per run; upper bound for
+      // RunOptions.configurable.runTimeoutMs. Breach emits
+      // cap.breached{kind:'run-duration'} + error run_timeout. MUST equal
+      // RUN_DURATION_CEILING_MS in executor/executor.ts (advertise/enforce
+      // must agree). `maxLoopIterations` is honestly absent — the executor
+      // is a linear-walk DAG with no orchestrator turns to count (RFC 0061).
+      maxRunDurationMs: 600_000,
     },
     supportedTransports: ['rest', 'sse'],
     stream: { modes: ['values', 'updates', 'messages', 'debug'] },
