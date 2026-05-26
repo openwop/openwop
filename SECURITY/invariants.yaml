@@ -1092,6 +1092,26 @@ invariants:
       existence of another owner's file (`404` over `403`). Mirrors
       `agent-memory-cti-1` / `kv-cross-tenant-isolation`.
 
+  # ===== RFC 0063 core.subWorkflow output-merge approval fail-closed =====
+
+  - id: subrun-merge-approval-fail-closed
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/subrun-approval-fail-closed.test.ts
+    note: |
+      RFC 0063 §C: when a `core.subWorkflow` declares `outputAttestation.
+      requireApproval: true`, the host MUST suspend via an RFC 0051 `approval`
+      interrupt BEFORE `outputMapping` and merge the child's outputs into the
+      parent ONLY on an explicit `accept` / `edit-accept`. A `reject`, an
+      absent response, or an expired approval MUST fail closed — the child
+      outputs MUST NOT be merged and the parent's variables MUST remain at
+      their pre-merge state. Reuses RFC 0051's `approval` kind + RFC 0049
+      scopes; no new interrupt kind or error code. Verified against any host
+      advertising `capabilities.agents.subRunAttestation`; skips cleanly
+      otherwise.
+
   # ===== RFC 0018 host.sql parametric-only =====
 
   - id: sql-parametric-only

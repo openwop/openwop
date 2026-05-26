@@ -11,6 +11,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0063 (core.subWorkflow output attestation) — Milestone 2: reference-host enforcement; promote Active → `Accepted` (2026-05-25)
+
+The in-memory reference host now implements the RFC 0063 verify-before-merge surface end-to-end, taking it from `Active` to **`Accepted`**. It advertises `capabilities.agents.subRunAttestation: true` and implements the documented `POST /v1/host/sample/subrun/attest` seam (`host-sample-test-seams.md`):
+
+- **§B checksum** — `attestation { checksum, algorithm: 'sha256' }` where `checksum` is the byte-stable JCS+SHA-256 digest of `childOutputs` (key-order-invariant via the host's `stableStringify`, host-independent), surfaced on the existing RFC 0037 `core.workflowChain.event { phase: 'output.harvested' }` shape — **no new event type**.
+- **§C merge gate** — when `outputAttestation.requireApproval: true`, the merge proceeds (`merged: true` + `mergedValues`) **only** on `approvalAction` `accept`/`edit-accept` and **fails closed** (`merged: false`, no `mergedValues`) on `reject` / absent / expired; the no-approval default merges. Reuses RFC 0051 `approval` + RFC 0049 scopes — no new interrupt kind or error code.
+
+Registered the protocol-tier **`subrun-merge-approval-fail-closed`** SECURITY invariant (invariants 101 → 102; protocol-tier 69 → 70) with `subrun-approval-fail-closed.test.ts` as its public test. All four `subrun-*.test.ts` scenarios (shape always-on + checksum-stable / approval-gate / approval-fail-closed) are live + green (no new scenarios; the M1 set flips from soft-skip to enforced). RFC 0063 `Active → Accepted` (Accepted 47 → 48, Active 11 → 10). Additive; no existing wire-shape change.
+
 ### docs(rfc-0060): /code-review follow-ups on the M2 enforcement (2026-05-25)
 
 Five findings from a `/code-review` pass over the RFC 0060 M2 commit. Docs/spec-prose only; no schema, host-code, or wire-shape change.
