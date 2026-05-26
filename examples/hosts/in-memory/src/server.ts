@@ -1199,6 +1199,11 @@ async function handleMemoryDistill(req: IncomingMessage, res: ServerResponse): P
   } catch {
     return void sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
   }
+  // `body.memoryRef` + `body.includeSecretCanary` are accepted for request-
+  // shape fidelity but unused: this seam distills `sources` directly, and SR-1
+  // scrubbing below is UNCONDITIONAL (a redacted secret is always scrubbed,
+  // not gated on `includeSecretCanary`). A production host resolves `memoryRef`
+  // against its MemoryAdapter.
   const sources = Array.isArray(body.sources) ? body.sources : ['distill-default-1', 'distill-default-2'];
 
   // SR-1 carry-forward: scrub the corpus BEFORE archiving / hashing, so a
