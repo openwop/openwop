@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0058 M2 — /code-review follow-ups on the in-memory host enforcement (2026-05-25)
+
+Five findings from a `/code-review` pass over the RFC 0058 M2 commit. Host + conformance only; no protocol-corpus change.
+
+- **Poll envelope is now schema-clean.** Dropped the transitional `seq` / `data` legacy aliases from the `/v1/runs/{runId}/events/poll` response — they violated `run-event.schema.json` (`additionalProperties: false`). The two conformance readers that consumed `data` (`replayDeterminism`, `replay-fork-arbitrary` `structuralShape`) now read `payload ?? data` (canonical-first with legacy fallback — strictly more tolerant, so the still-legacy sqlite/postgres/python hosts stay green). The in-memory poll path now emits exactly `eventId` / `runId` / `type` / `sequence` / `payload` / `timestamp` (+ optional `nodeId`).
+- **`runTimeoutMs` honors its `number` type.** Validation relaxed from integer-only to any positive finite number, floored to integer ms internally (`cap.breached.limit` is an integer per `run-event-payloads.schema.json`).
+- **Mid-node timeout emits `node.failed { run_timeout }`** (was `node.cancelled`), so the node-level outcome agrees with the run's terminal `failed`.
+- **Deadline timer `.unref()`'d** so a pending run-timeout never holds the event loop open (the HTTP server keeps the process alive; the timer is always cleared on settle).
+- **`conformance.md` measurement header annotated** as predating this enforcement (counts not re-measured; conservative).
+
 ### RFC 0063 (`core.subWorkflow.outputAttestation`) — wire surface landed; promote Draft → `Active` (2026-05-25)
 
 Wire surface for the autonomous-agent-runtime cohort's verify-before-merge guarantee on sub-workflows — an opt-in checksum + approval gate so a parent can verify sub-agent artifacts rather than merging them blindly: additive `agents.subRunAttestation` capability flag; an additive optional `attestation { checksum, algorithm }` object on the **existing** `core.workflowChain.event { phase: 'output.harvested' }` (RFC 0037) — declared in `properties` since that `$def` is `additionalProperties:false`, no new event type; the normative `outputAttestation` section on `core.subWorkflow` in `node-packs.md` (§B checksum via the RFC 8785 JCS + SHA-256 recipe pinned in `replay.md`, so a cross-host child verifies; §C `requireApproval` suspends via an RFC 0051 `approval` interrupt **before** `outputMapping` and **fails closed**; §D `principalScope` narrows to RFC 0049 scopes); the sub-run attestation invoke seam in `host-sample-test-seams.md`. Four conformance scenarios (`subrun-attestation-shape` always-on + `-checksum-stable`/`-approval-gate`/`-approval-fail-closed` gated on the seam). **Reuses RFC 0051's `approval` kind + RFC 0049 scopes — no new interrupt kind, event type, or error code.** The proposed protocol-tier SECURITY invariant `subrun-merge-approval-fail-closed` lands with its public test at reference-host implementation, not at `Active`. **RFC 0063 graduates `Draft → Active`**; `Active → Accepted` awaits a host wiring the gate. Additive; no existing wire-shape change.

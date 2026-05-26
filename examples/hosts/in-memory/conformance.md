@@ -2,6 +2,8 @@
 
 > **Latest measurement:** **2026-05-22 against `@openwop/openwop-conformance@1.5.0` — 1445 passed / 48 failed / 55 skipped / 16 todo of 1564 tests (92.4%)**. See `docs/CONFORMANCE-RUNS-2026-05.md` for the per-failure-topic taxonomy and `INTEROP-MATRIX.md` for the cross-host comparison. Failures decompose into ~10 real bugs (canonical `RunEventDoc` shape carry-forward on event emission paths; events/poll forward-compat tolerance) and ~38 honest non-claims (scenarios outside the claimed `openwop-core` + `openwop-stream-poll` + `openwop-stream-sse` profile set).
 >
+> **⚠️ This measurement predates the RFC 0058 enforcement commit (2026-05-25).** Two of the listed "real bugs" are now partly resolved: the **events/poll** path emits the canonical `eventId` / `sequence` / `payload` envelope (run-duration breach + RFC 0058 §"Run execution bounds" below), and run-creation now seeds workflow `variables[].defaultValue`. The pass/fail counts above have **not** been re-measured against the current host — they are conservative (expect the canonical-poll-envelope fixes to lift `run-execution-bounds-shape` and several event-reading scenarios). The SSE + debug-bundle paths remain on the legacy `seq` / `data` shape (candidate #1).
+>
 > **Prior measurements:** 2026-05-22 against suite v1.4.0 — 1439/1558 (92.4%); 2026-05-18 against suite v1.1.1 — 135/193 (retained below for historical context; suite scenario count grew from 193 → 1558 → 1564).
 >
 > **Host version:** `openwop-host-in-memory@1.1.1`
@@ -122,7 +124,7 @@ The interop matrix in `INTEROP-MATRIX.md` cross-tabulates this host with other p
 
 ## Known v1.x Expansion Candidates
 
-1. **Event-shape gap (`seq` → `eventId` + `sequence`).** The **`/v1/runs/{runId}/events/poll`** path now emits the spec-canonical envelope (`eventId` / `sequence` / `payload`, with `seq` / `data` retained as aliases) — landed alongside RFC 0058 enforcement so `cap.breached` payloads are readable by black-box scenarios. The SSE path + the debug-bundle path still use the legacy `seq` / `data` shape; moving them to canonical names will lift `version-negotiation.test.ts` 1/4 → 4/4.
+1. **Event-shape gap (`seq` → `eventId` + `sequence`).** The **`/v1/runs/{runId}/events/poll`** path now emits the spec-canonical envelope (`eventId` / `sequence` / `payload`) **exactly** — no legacy `seq` / `data` aliases, so the response satisfies `run-event.schema.json` (`additionalProperties: false`). Landed alongside RFC 0058 enforcement so `cap.breached` payloads are readable by black-box scenarios; conformance readers tolerate both shapes via `sequence ?? seq` / `payload ?? data`. The **SSE path + the debug-bundle path still use the legacy `seq` / `data` shape**; moving them to canonical names will lift `version-negotiation.test.ts` 1/4 → 4/4.
 2. **SSE buffering (`bufferMs`).** Implement query-param-driven backlog buffering before terminal close. Lifts `stream-modes-buffer.test.ts` 1/4 → 4/4.
 3. **Array `streamMode` parameter.** Accept `?streamMode=poll,sse` and dispatch deterministically. Lifts `stream-modes-mixed.test.ts` 2/4 → 4/4.
 4. **Identity passthrough.** Mount `inputs.*` into `variables.*` in the snapshot.
