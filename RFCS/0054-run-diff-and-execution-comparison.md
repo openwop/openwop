@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0054 |
 | **Title** | A read-only `GET /v1/runs/{runId}:diff?against={otherRunId}` endpoint returning a deterministic, replay-aware structured diff of two runs' event sequences and terminal states — the protocol surface behind run-vs-fork comparison |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-24 |
-| **Updated** | 2026-05-24 |
+| **Updated** | 2026-05-26 (Draft → Active — the full wire surface landed atomically on `main` via PR #108 (`schemas/run-diff-response.schema.json` + the `GET /v1/runs/{runId}:diff` OpenAPI path + `rest-endpoints.md` §:diff prose + `sdk/typescript` `runs.diff()` + `RunDiffResponse` + `conformance/src/scenarios/run-diff.test.ts` + reference-host endpoint), but the Status was left `Draft`; this promotion reflects that completion. The three Unresolved questions are resolved below; UQ3's exclusion list is now pinned normatively in `rest-endpoints.md` §:diff. `Active → Accepted` awaits a non-steward host advertising the endpoint + passing the identical + fork-divergence scenarios.) |
 | **Affects** | `spec/v1/rest-endpoints.md` (new read endpoint) · `api/` OpenAPI (additive path) · `schemas/run-diff-response.schema.json` (new) · `spec/v1/replay.md` (aligns with `replay.diverged` / determinism) · RFC 0011 (fork) composition · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -100,6 +100,12 @@ New fixture: a base run + a deterministically-divergent fork, catalogued in `fix
 2. **Semantic vs structural event comparison.** Should `changed` distinguish "same event, different payload" from "different event type"? The `op` enum is coarse; a richer classification may be wanted. Start coarse; refine if the studio UX needs it.
 3. **Which metadata is excluded from comparison.** §C excludes "non-deterministic transport metadata" — the exact exclusion list (event ids? timestamps?) must be pinned against `replay.md`'s determinism caveats before Active.
 
+### Resolution (2026-05-26, at Active promotion)
+
+1. **Cross-host diff** → **resolved: out of scope for v1.** Both runs are same-host; `against` resolves on the receiving host. Federated/A2A diff is deferred (revisit only if A2A demand surfaces). No wire change reserved — a future cross-host variant would be additive.
+2. **Coarse `op` enum** → **resolved: keep coarse (`added`/`removed`/`changed`) for v1.** A richer per-field classification is a backward-compatible refinement (additional optional fields on the `eventDiffs[]` item) if the studio UX needs it; the coarse enum is sufficient for the run-vs-fork comparison this RFC targets.
+3. **Excluded-metadata list** → **resolved + pinned normatively.** The comparison key is `(seq, type, JCS(payload-minus-excluded))`; the excluded set — `eventId`, `runId`, `causationId`, `correlationId`, wall-clock `ts`, and transport metadata (`traceparent`, delivery headers) — is now enumerated in [`rest-endpoints.md`](../spec/v1/rest-endpoints.md) §"`GET /v1/runs/{runId}:diff`" (run-scoped/non-deterministic fields that would otherwise make every cross-run diff report total divergence). Run-scoped ids carried in the observable payload for replay (`memoryId`, `childRunId`) are compared as-is — re-minting them is a genuine divergence.
+
 ## Implementation notes (non-normative)
 
 - Endpoint + schema (§A, §B) land on `Active` promotion with the conformance scenarios; the OpenAPI path is added under `api/`.
@@ -107,13 +113,14 @@ New fixture: a base run + a deterministically-divergent fork, catalogued in `fix
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (this file).
-- [ ] Endpoint in `spec/v1/rest-endpoints.md` + the `api/` OpenAPI path.
-- [ ] `run-diff-response.schema.json` added.
-- [ ] Determinism contract aligned with `spec/v1/replay.md`.
-- [ ] Four conformance scenarios (identical, fork-divergence, state-shape, authz).
-- [ ] CHANGELOG entry under `[Unreleased]`.
-- [ ] A non-steward host implements the endpoint and passes identical + fork-divergence.
+- [x] Spec text merged (this file).
+- [x] Endpoint in `spec/v1/rest-endpoints.md` + the `api/` OpenAPI path (`diffRun`).
+- [x] `run-diff-response.schema.json` added (+ listed in `schemas/README.md`).
+- [x] Determinism contract aligned with `spec/v1/replay.md` (excluded-field list pinned in `rest-endpoints.md` §:diff).
+- [x] Four conformance scenarios (identical, fork-divergence, state-shape, authz/access-boundary) in `conformance/src/scenarios/run-diff.test.ts` + `coverage.md` row.
+- [x] CHANGELOG entry.
+- [x] TS SDK: `OpenwopClient` `runs.diff()` + `RunDiffResponse` type.
+- [ ] A non-steward host implements the endpoint and passes identical + fork-divergence. **(Path to `Accepted`.)**
 
 ## References
 

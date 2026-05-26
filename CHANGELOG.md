@@ -9,6 +9,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [1.1.5 — unreleased]
+
+### docs(rfc-0054): promote run-diff Draft → `Active` + pin the canonical-comparison exclusion list (2026-05-26)
+
+RFC 0054's full wire surface (the read-only `GET /v1/runs/{runId}:diff?against={otherRunId}` endpoint + `run-diff-response.schema.json` + `rest-endpoints.md` §:diff + TS SDK `runs.diff()` / `RunDiffResponse` + `conformance/src/scenarios/run-diff.test.ts` + reference-host endpoint) had landed atomically on `main` via PR #108 but the RFC was left `Draft` — a languishing-Draft-with-complete-impl drift. Promotes RFC 0054 `Draft → Active` and resolves its three Unresolved questions: (1) cross-host diff out-of-scope for v1; (2) the coarse `op` enum (`added`/`removed`/`changed`) kept, richer classification deferred as a backward-compatible refinement; (3) **the canonical-comparison exclusion list is now pinned normatively** in `rest-endpoints.md` §:diff — the comparison key is `(seq, type, JCS(payload-minus-excluded))` with `eventId`/`runId`/`causationId`/`correlationId`/wall-clock `ts`/transport metadata excluded (run-scoped/non-deterministic fields that would otherwise make every cross-run diff report total divergence; `memoryId`/`childRunId` in the observable payload are compared as-is). README Active 6 → 7 / Draft 7 → 6; this supersedes + retires the stale `feat/rfc-0054-run-diff` branch. Additive; no schema or wire-shape change (the surface was already on `main`).
+
 ## [1.1.4] — 2026-05-26 — MyndHyve cohort live + autonomous-agent-runtime cohort + 19 RFC graduations
 
 Closes the first full week of post-1.1.3 cross-host adoption: the 8-RFC MyndHyve protocol-extension cohort + the 5-RFC autonomous-agent-runtime cohort all reach `Accepted` on production non-steward implementations, the multi-agent execution-model `version: 1-4` ladder closes end-to-end, and three rounds of MyndHyve advertisement land RFCs 0028 / 0029 / 0040 / 0041 / 0055 / 0057. All wire shapes additive per `COMPATIBILITY.md` §2.1.
