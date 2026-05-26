@@ -101,6 +101,8 @@ Per `docs/autonomous-agent-runtime-plan.md` §8 — Unresolved questions resolve
 2. **Backpressure** → advertise `heartbeat.maxPendingEnqueued`; the host MUST pause emission past it.
 3. **Interaction with RFC 0061 agent loop** → a heartbeat MAY only *enqueue a fresh run*; it MUST NOT advance a suspended loop in place.
 
+> **Scope note (2026-05-25, at M2 `Accepted`).** The `Accepted` wire surface ships the minimal `capabilities.heartbeat { supported, minIntervalSec, maxRuntimeMs }` block (the `idempotency` + `runtime-bound` + `anti-spam` core, conformance-verified). The two advertised knobs from resolutions (1) and (2) — **`heartbeat.maxStateBytes`** (prior-state size cap) and **`heartbeat.maxPendingEnqueued`** (the backpressure pause-emission MUST) — are **deferred to a follow-up**: they are not yet in `capabilities.schema.json` and not yet enforced by a reference host, because they only become meaningful once a host wires a durable interval + real run-enqueue substrate (RFC 0052). Both are purely additive when they land (new optional `heartbeat.*` fields). Resolution (3) is a behavioral constraint with no wire surface and holds today. `Accepted` therefore covers the once-per-tick / bounded / idempotent / emit-on-transition contract end-to-end, not the two deferred operational knobs.
+
 ## Implementation notes (non-normative)
 
 - `apps/workflow-engine`: build on the RFC 0052 tick seam; the predicate is an ordinary workflow whose output carries `{ changed, enqueue?, notify? }`. Persist prior-state per `heartbeatId`. No new SECURITY invariant at Draft.
