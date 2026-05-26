@@ -11,6 +11,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### docs(rfc-0064): /code-review follow-ups on the M2 enforcement (2026-05-25)
+
+Two findings from a `/code-review` pass over the RFC 0064 M2 commit. Docs + one code comment; no schema, behavior, or wire-shape change.
+
+- **conformance.md — seam-demonstration honesty.** Documented that the in-memory host has no production agent-tool-calling runtime, so the toolHooks contract is exercised entirely via the seam: the fail-closed authorization (unevaluable scope → `forbidden`; no resolver, so scoped tools are never granted) and the SR-1-redacted `argsHash` are real logic, but **`perToolRateLimit` is a simulation hint, not a real token bucket** — the host keeps no per-`(principal, tool)` bucket state and returns `rate_limited` only on the seam's `simulateRateLimitExhausted`. Keeps the production discovery advertisement from reading as "this host rate-limits real tool calls."
+- **server.ts** comment noting `toolName` is accepted for request-shape fidelity but unused by the simulation (a production host keys a real bucket on `(principal, toolName)`).
+
 ### RFC 0064 (host.toolHooks) — Milestone 2: reference-host enforcement; promote Active → `Accepted` (2026-05-25)
 
 The in-memory reference host now implements the RFC 0064 tool-invocation-hooks surface end-to-end, taking it from `Active` to **`Accepted`**. It advertises `capabilities.toolHooks { supported: true, prePostEvents: true, perToolAuthorization: true, perToolRateLimit: true }` and implements the documented `POST /v1/host/sample/toolhooks/invoke` seam:
