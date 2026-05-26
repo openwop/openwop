@@ -1080,6 +1080,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/vendor.myndhyve.brand@1.1.0",
+      "type": "library",
+      "name": "vendor.myndhyve.brand",
+      "version": "1.1.0",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/vendor.myndhyve.brand/-/1.1.0.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "ab63ce282dc844ef8e827bc804184dd712de7c5f345d2252e42a265de1da1512"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/vendor.myndhyve.campaign-sequence-integration@1.0.0",
       "type": "library",
       "name": "vendor.myndhyve.campaign-sequence-integration",
