@@ -33,6 +33,15 @@ function BaseNodeImpl({ id, data, selected }: NodeProps) {
   if (!entry) {
     return <div className="builder-node builder-node-unknown">Unknown: {d.kind}</div>;
   }
+  // Client-only nodes (sticky notes, future annotations) get a distinct
+  // render: no ports, no run status (they never execute), no missing-
+  // capability warnings (preflight skips them), and the prominent
+  // content is the config string set on the node itself. The Inspector
+  // still drives the configField so authors edit content via the same
+  // textarea pattern as any other node.
+  if (entry.clientOnly) {
+    return <ClientOnlyNode nodeId={id} selected={Boolean(selected)} accent={entry.accent} badge={entry.badge} />;
+  }
   const runMeta = d.runStatus ? RUN_STATUS_META[d.runStatus] : null;
   // Author-time capability gap: the connected host doesn't advertise a
   // surface this node kind needs (catalog `missingHostSurfaces`, server-
@@ -126,6 +135,56 @@ function BaseNodeImpl({ id, data, selected }: NodeProps) {
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Canvas annotation (sticky note, etc). The content lives on the node's
+// `config.content` field and is edited in the Inspector; here we just
+// surface it on the canvas so the annotation is readable in context.
+// Pale-yellow paper, italic body, no port handles. Click on the body to
+// select the node so the Inspector opens (matches BaseNode click target).
+function ClientOnlyNode({ nodeId, selected, accent, badge }: {
+  nodeId: string;
+  selected: boolean;
+  accent: string;
+  badge: string;
+}) {
+  const node = useBuilderStore((s) => s.nodes.find((n) => n.id === nodeId) ?? null);
+  if (!node) return null;
+  const content = (node.config['content'] as string | undefined) ?? '';
+  return (
+    <div
+      className={`builder-node builder-node-client-only${selected ? ' builder-node-selected' : ''}`}
+      style={{
+        background: '#fef9c3',
+        border: '1px solid #fde047',
+        borderLeftColor: accent,
+        borderLeftWidth: 3,
+        minWidth: 160,
+        maxWidth: 280,
+        padding: 8,
+        boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
+        fontFamily: 'system-ui, sans-serif',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+        <span style={{ fontSize: 14 }}>{badge}</span>
+        <span className="muted" style={{ fontSize: 11 }}>{node.name}</span>
+      </div>
+      <div
+        style={{
+          whiteSpace: 'pre-wrap',
+          overflowWrap: 'anywhere',
+          fontSize: 13,
+          lineHeight: 1.4,
+          color: '#451a03',
+          fontStyle: content ? 'normal' : 'italic',
+          minHeight: 20,
+        }}
+      >
+        {content || 'Empty note — edit in the Inspector →'}
       </div>
     </div>
   );

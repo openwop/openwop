@@ -101,18 +101,22 @@ function collectPreflightIssues(nodes: ReadonlyArray<{ id: string; kind: string;
  *  knowable, so this is intentionally conservative — false negatives
  *  on those are acceptable; false positives would be worse. */
 function collectLimitIssues(
-  nodes: ReadonlyArray<{ id: string }>,
+  nodes: ReadonlyArray<{ id: string; kind: string }>,
   limits: HostLimits | null,
 ): LimitIssue[] {
   if (!limits) return [];
   const issues: LimitIssue[] = [];
+  // Client-only annotations (sticky notes, etc.) are stripped from the
+  // backend definition by `serializeWithIdMap`, so they don't count
+  // against the per-run node-execution ceiling.
+  const executableCount = nodes.filter((n) => !catalogEntry(n.kind)?.clientOnly).length;
   const cap = limits.maxNodeExecutions;
-  if (typeof cap === 'number' && nodes.length > cap) {
+  if (typeof cap === 'number' && executableCount > cap) {
     issues.push({
       kind: 'maxNodeExecutions',
       advertised: cap,
-      actual: nodes.length,
-      message: `Workflow has ${nodes.length} nodes; the host caps a run at ${cap} node executions. The run will breach the engine ceiling and fail (cap.breached → HOST_CAPABILITY_MISSING).`,
+      actual: executableCount,
+      message: `Workflow has ${executableCount} executable nodes; the host caps a run at ${cap} node executions. The run will breach the engine ceiling and fail (cap.breached → HOST_CAPABILITY_MISSING).`,
     });
   }
   return issues;
