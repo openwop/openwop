@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { generateKeyPairSync, sign as ed25519Sign, createHash } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
 import { afterEach, beforeEach, describe, it } from 'node:test';
-import { configPathFor, consumeSse, extractAssistantText, extractGlobalOptions, formatTable, readConfigSafe, renderEvent, runCli, saveConfig, streamRunEvents, submitTurn, summarizeCapabilities } from '../lib/cli.mjs';
+import { buildServiceInstallPlan, configPathFor, consumeSse, daemonLogPath, daemonPidPath, extractAssistantText, extractGlobalOptions, formatTable, processAlive, readConfigSafe, readDaemonRecord, renderEvent, runCli, saveConfig, streamRunEvents, submitTurn, summarizeCapabilities } from '../lib/cli.mjs';
 function byteStream(chunks) {
   const encoder = new TextEncoder();
   let i = 0;
@@ -1087,5 +1087,200 @@ describe('packs yank', () => {
     });
     assert.equal(code, 2);
     assert.match(cap.stderr, /not found/);
+  });
+});
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Demo lifecycle — stop / logs / install (C-1, C-2). PID + log files live under
+// OPENWOP_CONFIG_HOME/.openwop/ so tests never touch the real ~/.openwop/.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function writePidRecord(home, record) {
+  const path = daemonPidPath({ OPENWOP_CONFIG_HOME: home });
+  mkdirSync(join(home, '.openwop'), { recursive: true });
+  writeFileSync(path, JSON.stringify(record), 'utf8');
+}
+
+describe('demo stop', () => {
+  const getTmp = withTempHome();
+
+  it('reports nothing to stop when no PID file exists', async () => {
+    const cap = capture();
+    const code = await runCli(['demo', 'stop'], {
+      io: cap.io,
+      fetchImpl: async () => { throw new Error('fetch must not run'); },
+      cwd: process.cwd(),
+      repoRoot: process.cwd(),
+      env: { OPENWOP_CONFIG_HOME: getTmp() },
+    });
+    assert.equal(code, 0);
+    assert.match(cap.stdout, /nothing to stop/i);
+  });
+
+  it('clears a stale PID file when the process is not alive', async () => {
+    const home = getTmp();
+    // PID 2^31-1 is effectively guaranteed not to exist.
+    writePidRecord(home, { pid: 2147483646, startedAt: new Date().toISOString() });
+    const cap = capture();
+    const code = await runCli(['demo', 'stop'], {
+      io: cap.io,
+      fetchImpl: async () => { throw new Error('fetch must not run'); },
+      cwd: process.cwd(),
+      repoRoot: process.cwd(),
+      env: { OPENWOP_CONFIG_HOME: home },
+    });
+    assert.equal(code, 0);
+    assert.match(cap.stdout, /stale PID file|not running/i);
+    assert.equal(readDaemonRecord({ OPENWOP_CONFIG_HOME: home }), null);
+  });
+});
+
+describe('processAlive', () => {
+  it('returns true for the current process and false for an impossible pid', () => {
+    assert.equal(processAlive(process.pid), true);
+    assert.equal(processAlive(2147483646), false);
+    assert.equal(processAlive(0), false);
+    assert.equal(processAlive(-1), false);
+  });
+});
+
+describe('demo logs', () => {
+  const getTmp = withTempHome();
+
+  it('exits 2 with guidance when no log file exists', async () => {
+    const cap = capture();
+    const code = await runCli(['demo', 'logs'], {
+      io: cap.io,
+      fetchImpl: async () => { throw new Error('fetch must not run'); },
+      cwd: process.cwd(),
+      repoRoot: process.cwd(),
+      env: { OPENWOP_CONFIG_HOME: getTmp() },
+    });
+    assert.equal(code, 2);
+    assert.match(cap.stderr, /No log file/);
+  });
+
+  it('prints the tail of an existing log file', async () => {
+    const home = getTmp();
+    mkdirSync(join(home, '.openwop'), { recursive: true });
+    const logPath = daemonLogPath({ OPENWOP_CONFIG_HOME: home });
+    writeFileSync(logPath, 'line-1\nline-2\nline-3\n', 'utf8');
+    const cap = capture();
+    const code = await runCli(['demo', 'logs', '--lines', '2'], {
+      io: cap.io,
+      fetchImpl: async () => { throw new Error('fetch must not run'); },
+      cwd: process.cwd(),
+      repoRoot: process.cwd(),
+      env: { OPENWOP_CONFIG_HOME: home },
+    });
+    assert.equal(code, 0);
+    assert.match(cap.stdout, /line-3/);
+    assert.match(cap.stdout, /line-2/);
+  });
+});
+
+describe('demo install (service plan)', () => {
+  const root = '/tmp/openwop-fake-root';
+  const baseInput = {
+    root,
+    backendPort: 8080,
+    label: 'dev.openwop.demo',
+    apiKey: 'sample-token',
+    env: { HOME: '/home/tester' },
+    uninstall: false,
+  };
+
+  it('builds a launchd LaunchAgent plist on macOS', () => {
+    const plan = buildServiceInstallPlan({ ...baseInput, platform: 'darwin' });
+    assert.equal(plan.manager, 'launchd LaunchAgent');
+    assert.match(plan.path, /Library\/LaunchAgents\/dev\.openwop\.demo\.plist$/);
+    assert.match(plan.contents, /<key>Label<\/key>/);
+    assert.match(plan.contents, /dev\.openwop\.demo/);
+    assert.match(plan.contents, /<string>8080<\/string>/);
+    assert.match(plan.activate, /launchctl load/);
+  });
+
+  it('builds a systemd user unit on Linux', () => {
+    const plan = buildServiceInstallPlan({ ...baseInput, platform: 'linux' });
+    assert.equal(plan.manager, 'systemd user unit');
+    assert.match(plan.path, /\.config\/systemd\/user\/dev\.openwop\.demo\.service$/);
+    assert.match(plan.contents, /\[Service\]/);
+    assert.match(plan.contents, /Environment=PORT=8080/);
+    assert.match(plan.activate, /systemctl --user/);
+  });
+
+  it('returns an unsupported plan with a Scheduled-Task recipe on Windows', () => {
+    const plan = buildServiceInstallPlan({ ...baseInput, platform: 'win32' });
+    assert.equal(plan.unsupported, true);
+    assert.match(plan.guidance, /schtasks \/Create/);
+    assert.match(plan.guidance, /dev\.openwop\.demo/);
+  });
+
+  it('demo install --dry-run prints the plan without writing a file', async () => {
+    const cap = capture();
+    const code = await runCli(['demo', 'install', '--dry-run', '--json'], {
+      io: cap.io,
+      fetchImpl: async () => { throw new Error('fetch must not run'); },
+      cwd: process.cwd(),
+      repoRoot: root,
+      env: { HOME: '/home/tester' },
+    });
+    assert.equal(code, 0);
+    const parsed = JSON.parse(cap.stdout);
+    assert.equal(parsed.action, 'install');
+    assert.ok(parsed.path, 'plan has a target path');
+  });
+});
+
+describe('doctor — daemon + provider rows', () => {
+  const getTmp = withTempHome();
+
+  it('adds a daemon row from /v1/host/sample/daemon-status and provider rows from BYOK', async () => {
+    const cap = capture();
+    const fetchImpl = async (url) => {
+      const path = new URL(url).pathname;
+      if (path === '/health') return new Response(JSON.stringify({ status: 'ok' }), { status: 200 });
+      if (path === '/v1/host/sample/daemon-status') {
+        return new Response(JSON.stringify({ pid: 4242, uptimeSeconds: 12, startTime: '2026-05-26T00:00:00.000Z' }), { status: 200 });
+      }
+      if (path === '/v1/host/sample/byok/secrets') {
+        return new Response(JSON.stringify({ secrets: ['anthropic-default', 'openai-default'] }), { status: 200 });
+      }
+      return new Response('{}', { status: 404 });
+    };
+    const code = await runCli(['doctor', '--json', '--base-url', 'http://mock.local'], {
+      io: cap.io,
+      fetchImpl,
+      cwd: '/tmp',
+      env: { OPENWOP_CONFIG_HOME: getTmp() },
+    });
+    const parsed = JSON.parse(cap.stdout);
+    const byName = new Map(parsed.checks.map((c) => [c.name, c]));
+    assert.ok(byName.has('daemon'));
+    assert.match(byName.get('daemon').message, /pid 4242/);
+    assert.equal(byName.get('daemon').status, 'ok');
+    assert.ok(byName.has('provider anthropic-default'));
+    assert.ok(byName.has('provider openai-default'));
+    // demo health unreachable rows don't fail the run; repo=fail does → exit 1.
+    assert.equal(code, 1);
+  });
+
+  it('falls back to a stale-PID daemon warning when the route is unreachable', async () => {
+    const home = getTmp();
+    writePidRecord(home, { pid: 2147483646, startedAt: new Date().toISOString() });
+    const cap = capture();
+    const fetchImpl = async () => { throw new Error('connect refused'); };
+    await runCli(['doctor', '--json', '--base-url', 'http://127.0.0.1:0'], {
+      io: cap.io,
+      fetchImpl,
+      cwd: '/tmp',
+      env: { OPENWOP_CONFIG_HOME: home },
+    });
+    const parsed = JSON.parse(cap.stdout);
+    const daemon = parsed.checks.find((c) => c.name === 'daemon');
+    assert.ok(daemon);
+    assert.equal(daemon.status, 'warn');
+    assert.match(daemon.message, /stale PID file/);
   });
 });
