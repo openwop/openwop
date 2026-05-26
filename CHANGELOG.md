@@ -21,6 +21,9 @@ The in-memory reference host now implements the RFC 0060 heartbeat surface end-t
 
 All four conformance scenarios — `heartbeat-{capability-shape, fires-once-per-tick, idempotent-no-spam, runtime-bound}.test.ts` — are live + green against the host (no new scenarios; the M1 set flips from soft-skip to enforced). RFC 0060 `Active → Accepted` (Accepted 46 → 47, Active 12 → 11). Additive; no existing wire-shape change.
 
+### fix(hosts): RFC 0058 `cap.breached{run-duration}` `observed` must strictly exceed `limit` (2026-05-26)
+
+Fixes a measurement-boundary flake in the RFC 0058 run-duration breach across all three reference hosts (in-memory, Postgres, SQLite). Each host computed `observed` as `Date.now() - runStartMs`; at the deadline boundary that integer-millisecond read occasionally lands exactly on `limitMs` (e.g. `observed=1000, limit=1000`), failing `run-execution-bounds-shape.test.ts`'s assertion that `observed` strictly exceeds `limit`. The deadline timer firing proves the run genuinely exceeded the bound (real elapsed is fractionally past it), so `failRunDuration` now floors `observed` to `max(elapsed, limitMs + 1)` — honoring the strict-exceedance invariant without misreporting. Surfaced as a ~1-in-N flake under full-suite parallelism (the test passed in isolation); root-caused to the host boundary, not test timing, so the conformance scenario is unchanged. Verified: full suite green ×3 on SQLite, ×2 on Postgres; the breach now consistently emits `observed ≥ limit+1`. Host-only; no protocol-corpus change.
 ### RFC 0059 (agent workspace) — Milestone 2: reference-host enforcement; promote Active → `Accepted` (2026-05-25)
 
 The in-memory reference host now implements `host.workspace` end-to-end, taking RFC 0059 from `Active` to **`Accepted`**. It advertises `capabilities.workspace { supported, versioned, maxFileBytes: 1048576, maxFiles: 256, maxVersions: 20 }` and honors:
