@@ -3,7 +3,27 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, it } from 'node:test';
-import { configPathFor, extractGlobalOptions, formatTable, readConfigSafe, runCli, saveConfig, summarizeCapabilities } from '../lib/cli.mjs';
+import { configPathFor, consumeSse, extractAssistantText, extractGlobalOptions, formatTable, readConfigSafe, renderEvent, runCli, saveConfig, streamRunEvents, submitTurn, summarizeCapabilities } from '../lib/cli.mjs';
+
+/** Build a web ReadableStream of UTF-8 bytes from a list of string chunks. */
+function byteStream(chunks) {
+  const encoder = new TextEncoder();
+  let i = 0;
+  return new ReadableStream({
+    pull(controller) {
+      if (i < chunks.length) {
+        controller.enqueue(encoder.encode(chunks[i++]));
+      } else {
+        controller.close();
+      }
+    },
+  });
+}
+
+/** Minimal ctx for the stream helpers (no real network). */
+function streamCtx(fetchImpl, overrides = {}) {
+  return { baseUrl: 'http://mock.local', apiKey: 'k', fetchImpl, json: false, ...overrides };
+}
 
 function capture() {
   let stdout = '';
@@ -554,5 +574,211 @@ describe('config subcommand', () => {
     assert.equal(code, 0);
     const config = readConfigSafe(configPathFor(undefined, { OPENWOP_CONFIG_HOME: getTmp() }));
     assert.ok(!('defaultModel' in config));
+  });
+});
+
+describe('chat — arg parsing', () => {
+  it('prints help and exits 0 with --help', async () => {
+    const cap = capture();
+    const code = await runCli(['chat', '--help'], {
+      io: cap.io,
+      fetchImpl: async () => { throw new Error('fetch must not run'); },
+      cwd: process.cwd(),
+      repoRoot: process.cwd(),
+      env: {},
+    });
+    assert.equal(code, 0);
+    assert.match(cap.stdout, /Interactive streaming chat REPL/);
+  });
+
+  it('exits 2 when no workflowId is given', async () => {
+    const cap = capture();
+    const code = await runCli(['chat'], {
+      io: cap.io,
+      fetchImpl: async () => { throw new Error('fetch must not run'); },
+      cwd: process.cwd(),
+      repoRoot: process.cwd(),
+      env: {},
+    });
+    assert.equal(code, 2);
+  });
+});
+
+describe('chat — event rendering', () => {
+  it('renders assistant text from node.completed output ports', () => {
+    const line = renderEvent({ type: 'node.completed', nodeId: 'respond', payload: { outputs: { reply: 'hello there' } } });
+    assert.equal(line, 'assistant> hello there');
+  });
+
+  it('renders run.completed reply and lifecycle markers', () => {
+    assert.equal(renderEvent({ type: 'run.started' }), '· run started');
+    assert.equal(renderEvent({ type: 'run.completed', payload: { output: 'final answer' } }), 'assistant> final answer');
+    assert.equal(renderEvent({ type: 'node.failed', nodeId: 'respond', payload: { error: { message: 'boom' } } }), '! node.failed respond: boom');
+  });
+
+  it('extracts assistant text from a messages array', () => {
+    const text = extractAssistantText({
+      type: 'run.completed',
+      payload: { messages: [{ role: 'user', content: 'hi' }, { role: 'assistant', content: 'hi back' }] },
+    });
+    assert.equal(text, 'hi back');
+  });
+
+  it('returns null for events with no surfaceable text', () => {
+    assert.equal(extractAssistantText({ type: 'node.started', payload: {} }), null);
+    assert.equal(renderEvent(null), null);
+  });
+});
+
+describe('chat — SSE parsing', () => {
+  it('decodes frames split across chunk boundaries', async () => {
+    const frames = [];
+    // The `data:` line is split across two byte chunks to exercise buffering.
+    await consumeSse(
+      byteStream(['id: 1\nevent: run.started\ndata: {"ty', 'pe":"run.started"}\n\n: heartbeat\n\nevent: run.completed\ndata: {"type":"run.completed"}\n\n']),
+      (f) => frames.push(f),
+    );
+    assert.equal(frames.length, 2);
+    assert.equal(frames[0].event, 'run.started');
+    assert.deepEqual(JSON.parse(frames[0].data), { type: 'run.started' });
+    assert.equal(frames[1].event, 'run.completed');
+  });
+});
+
+describe('chat — streamRunEvents', () => {
+  it('consumes an SSE stream and stops at the terminal event', async () => {
+    const events = [];
+    const sse = [
+      'event: run.started\ndata: {"type":"run.started","sequence":0}\n\n',
+      'event: node.completed\ndata: {"type":"node.completed","sequence":1,"payload":{"output":"hi"}}\n\n',
+      'event: run.completed\ndata: {"type":"run.completed","sequence":2}\n\n',
+    ];
+    const fetchImpl = async (url) => {
+      assert.match(new URL(url).pathname, /\/events$/);
+      return new Response(byteStream(sse), {
+        status: 200,
+        headers: { 'content-type': 'text/event-stream' },
+      });
+    };
+    await streamRunEvents(streamCtx(fetchImpl), 'r-1', { onEvent: (e) => events.push(e) });
+    assert.deepEqual(events.map((e) => e.type), ['run.started', 'node.completed', 'run.completed']);
+    assert.equal(extractAssistantText(events[1]), 'hi');
+  });
+
+  it('falls back to the poll endpoint when SSE returns JSON', async () => {
+    const events = [];
+    let polls = 0;
+    const fetchImpl = async (url) => {
+      const path = new URL(url).pathname;
+      if (path.endsWith('/events')) {
+        // SSE not supported — answer with JSON, no event-stream content type.
+        return new Response(JSON.stringify({ events: [], isComplete: false }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      if (path.endsWith('/events/poll')) {
+        polls += 1;
+        if (polls === 1) {
+          return new Response(JSON.stringify({
+            events: [{ type: 'run.started', sequence: 0 }, { type: 'node.completed', sequence: 1, payload: { output: 'yo' } }],
+            isComplete: false,
+          }), { status: 200, headers: { 'content-type': 'application/json' } });
+        }
+        return new Response(JSON.stringify({
+          events: [{ type: 'run.completed', sequence: 2 }],
+          isComplete: true,
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+      throw new Error(`unexpected: ${path}`);
+    };
+    await streamRunEvents(streamCtx(fetchImpl), 'r-2', { onEvent: (e) => events.push(e), timeoutMs: 5000 });
+    assert.deepEqual(events.map((e) => e.type), ['run.started', 'node.completed', 'run.completed']);
+    assert.equal(polls, 2);
+  });
+});
+
+describe('chat — submitTurn', () => {
+  it('POSTs a run with the messages array and returns the runId', async () => {
+    let posted = null;
+    const fetchImpl = async (url, init) => {
+      assert.equal(new URL(url).pathname, '/v1/runs');
+      assert.equal(init.method, 'POST');
+      posted = JSON.parse(init.body);
+      return new Response(JSON.stringify({ runId: 'run-xyz', status: 'pending' }), { status: 201 });
+    };
+    const runId = await submitTurn(streamCtx(fetchImpl), {
+      workflowId: 'sample.chat.turn',
+      inputs: { messages: [{ role: 'user', content: 'hi' }] },
+    });
+    assert.equal(runId, 'run-xyz');
+    assert.equal(posted.workflowId, 'sample.chat.turn');
+    assert.deepEqual(posted.inputs.messages, [{ role: 'user', content: 'hi' }]);
+  });
+});
+
+describe('chat — REPL loop', () => {
+  it('runs one turn over SSE then exits gracefully on EOF', async () => {
+    const cap = capture();
+    const turns = ['hello', null]; // second read is EOF
+    let t = 0;
+    const readTurn = async () => turns[t++];
+    let createdBody = null;
+    const fetchImpl = async (url, init) => {
+      const path = new URL(url).pathname;
+      if (path === '/v1/runs' && init?.method === 'POST') {
+        createdBody = JSON.parse(init.body);
+        return new Response(JSON.stringify({ runId: 'r-9', status: 'pending' }), { status: 201 });
+      }
+      if (path.endsWith('/events')) {
+        return new Response(byteStream([
+          'event: node.completed\ndata: {"type":"node.completed","sequence":1,"payload":{"output":"hi human"}}\n\n',
+          'event: run.completed\ndata: {"type":"run.completed","sequence":2}\n\n',
+        ]), { status: 200, headers: { 'content-type': 'text/event-stream' } });
+      }
+      throw new Error(`unexpected: ${path}`);
+    };
+    const code = await runCli(['chat', 'sample.chat.turn'], {
+      io: cap.io,
+      fetchImpl,
+      cwd: process.cwd(),
+      repoRoot: process.cwd(),
+      env: {},
+      readTurn,
+    });
+    assert.equal(code, 0);
+    assert.deepEqual(createdBody.inputs.messages, [{ role: 'user', content: 'hello' }]);
+    assert.match(cap.stdout, /assistant> hi human/);
+  });
+
+  it('emits raw JSON events with --json and exits on /exit', async () => {
+    const cap = capture();
+    const turns = ['ping', '/exit'];
+    let t = 0;
+    const readTurn = async () => turns[t++];
+    const fetchImpl = async (url, init) => {
+      const path = new URL(url).pathname;
+      if (path === '/v1/runs' && init?.method === 'POST') {
+        return new Response(JSON.stringify({ runId: 'r-j', status: 'pending' }), { status: 201 });
+      }
+      if (path.endsWith('/events')) {
+        return new Response(byteStream([
+          'event: run.completed\ndata: {"type":"run.completed","sequence":1,"payload":{"output":"pong"}}\n\n',
+        ]), { status: 200, headers: { 'content-type': 'text/event-stream' } });
+      }
+      throw new Error(`unexpected: ${path}`);
+    };
+    const code = await runCli(['--json', 'chat', 'sample.chat.turn'], {
+      io: cap.io,
+      fetchImpl,
+      cwd: process.cwd(),
+      repoRoot: process.cwd(),
+      env: {},
+      readTurn,
+    });
+    assert.equal(code, 0);
+    // --json mode prints the raw event record, not the pretty "assistant>" line.
+    assert.match(cap.stdout, /"type": "run.completed"/);
+    assert.doesNotMatch(cap.stdout, /assistant>/);
   });
 });

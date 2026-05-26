@@ -47,6 +47,22 @@ openwop providers test anthropic
 
 `providers add` POSTs to `/v1/host/sample/byok/secrets`; `remove` DELETEs; `list` and `test` read.
 
+## Chat
+
+`openwop chat <workflowId>` opens an interactive streaming REPL. Each message you type creates a run for the workflow carrying the running conversation as a `messages` array, then streams that run's events to the terminal as they arrive.
+
+```bash
+openwop chat sample.chat.turn
+openwop chat sample.chat.turn --inputs-json '{"credentialRef":"anthropic-default"}'
+openwop chat sample.chat.turn --no-stream --json
+```
+
+- **Streaming** — prefers Server-Sent Events (`GET /v1/runs/{runId}/events`). When the host does not stream (it answers with JSON or a non-streamable body), the CLI falls back to polling `GET /v1/runs/{runId}/events/poll`.
+- **Turns** — type a line and press Enter. Conversation history is threaded across turns; the assistant's reply is fed back as context. Use `--no-history` to send only the latest turn.
+- **Quitting** — `/exit`, `/quit`, or Ctrl-D (EOF).
+- **`--json`** — emits raw event records (one JSON object per event) instead of the pretty `assistant>` rendering.
+- Extra per-turn inputs (`--input k=v`, `--inputs-json`) ride along on every run, so you can pin a `credentialRef`, model, or other configurable input.
+
 ## Config
 
 `~/.openwop/config.json` (or `$OPENWOP_CONFIG_HOME/.openwop/`) stores the host URL, default provider, default model, and credential ref. **API keys are never stored locally.**
