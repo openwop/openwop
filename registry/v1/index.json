@@ -623,15 +623,6 @@
       "yanked": false
     },
     {
-      "name": "vendor.myndhyve.ads-copy-generate",
-      "latestVersion": "1.0.0",
-      "description": "MyndHyve ads.copy.generate — AI-powered multi-variant ad copy generation with per-placement adaptation (truncation to caller-supplied text limits). Routes the AI call through ctx.callAI; replaces the source PlatformSpecRegistry read with caller-supplied inputs.placementTextLimits (resolve upstream from vendor.myndhyve.ads-platforms OR host.adPlatformSpecs).",
-      "license": "Apache-2.0",
-      "tags": [],
-      "deprecated": false,
-      "yanked": false
-    },
-    {
       "name": "vendor.myndhyve.ads-creative-validate",
       "kind": "node",
       "latestVersion": "1.0.0",
@@ -643,15 +634,6 @@
       ],
       "nodeCount": 1,
       "agentCount": 0,
-      "deprecated": false,
-      "yanked": false
-    },
-    {
-      "name": "vendor.myndhyve.ads-creative-validate",
-      "latestVersion": "1.0.0",
-      "description": "MyndHyve ads.creative.validate — full compliance scanner combining built-in policy text rules, placement text-length checks, AND asset-format checks (image/video dimensions, file sizes, durations). Caller supplies placement spec data via inputs (resolve upstream from vendor.myndhyve.ads-platforms OR host.adPlatformSpecs).",
-      "license": "Apache-2.0",
-      "tags": [],
       "deprecated": false,
       "yanked": false
     },
@@ -701,24 +683,6 @@
       "yanked": false
     },
     {
-      "name": "vendor.myndhyve.ads-image-generate",
-      "latestVersion": "1.0.0",
-      "description": "MyndHyve ads.image.generate — generate ad creative images via the host's ctx.callImageGenerator (host.aiProviders.imageGeneration sub-capability from spec PR #48). Batches N prompts through one host call each, computes per-placement dimensions from caller-supplied placementSpec, applies platform/style/brand-color prompt enhancement, and aggregates safety-filter stats. First consumer of the new sub-capability.",
-      "license": "Apache-2.0",
-      "tags": [],
-      "deprecated": false,
-      "yanked": false
-    },
-    {
-      "name": "vendor.myndhyve.ads-metrics-import",
-      "latestVersion": "1.0.0",
-      "description": "MyndHyve ads.metrics.import — pure-logic aggregation of ad metric snapshots. Caller supplies snapshots[]; pack filters by platformAdIds + optional platform/dateRange, validates each entry, and computes weighted aggregations (overallCtr / overallCpc / overallRoas / overallConversionRate + per-platform breakdown). Mirrors source AdMetricsService.getAggregatedMetrics math. No host capabilities required.",
-      "license": "Apache-2.0",
-      "tags": [],
-      "deprecated": false,
-      "yanked": false
-    },
-    {
       "name": "vendor.myndhyve.ads-platforms",
       "kind": "node",
       "latestVersion": "1.0.0",
@@ -764,15 +728,6 @@
       "yanked": false
     },
     {
-      "name": "vendor.myndhyve.ads-publish-google",
-      "latestVersion": "1.0.0",
-      "description": "MyndHyve ads.publish.google — publish an ad to Google Ads API v18 (Search + Display). Symmetric companion to ads-publish-meta. Resolves 2 secrets (OAuth + developer-token) via ctx.secrets.resolve, then runs the 4-step publish pipeline (budget → campaign → ad-group → ad) with best-effort REMOVE-rollback. Supports 6 bidding strategies + 6 channel types + responsive_search & responsive_display ad formats.",
-      "license": "Apache-2.0",
-      "tags": [],
-      "deprecated": false,
-      "yanked": false
-    },
-    {
       "name": "vendor.myndhyve.ads-publish-meta",
       "kind": "node",
       "latestVersion": "1.0.0",
@@ -799,24 +754,6 @@
       ],
       "nodeCount": 1,
       "agentCount": 0,
-      "deprecated": false,
-      "yanked": false
-    },
-    {
-      "name": "vendor.myndhyve.ads-publish-meta",
-      "latestVersion": "1.0.0",
-      "description": "MyndHyve ads.publish.meta — publish an ad to Meta Marketing API v21.0 (Facebook/Instagram). First consumer of the secrets.resolveInPack sub-capability (spec PR #52). Resolves OAuth token via ctx.secrets.resolve, then runs the 4-step publish pipeline (creative → campaign → ad set → ad) with best-effort rollback on failure. Validates all 6 Meta enums (objective, status, bidStrategy, billingEvent, targeting flexible-spec, placements) pre-flight. Maps Meta API errors to retryable/non-retryable per spec failure-mode glossary.",
-      "license": "Apache-2.0",
-      "tags": [],
-      "deprecated": false,
-      "yanked": false
-    },
-    {
-      "name": "vendor.myndhyve.ads-publish-tiktok",
-      "latestVersion": "1.0.0",
-      "description": "MyndHyve ads.publish.tiktok — publish an ad to TikTok Marketing API v1.3. Third + final platform-publish pack of the Stage 5 cohort. Single OAuth secret (Access-Token header, not Bearer); TikTok envelope { code, message, data } where code !== 0 means business error even on HTTP 200; optional image upload by URL before ad creation. 3-step pipeline (campaign → adgroup → ad; no separate budget). No rollback per TikTok API semantics (no hard-delete via this surface); partialState surfaced for manual cleanup.",
-      "license": "Apache-2.0",
-      "tags": [],
       "deprecated": false,
       "yanked": false
     },
@@ -866,15 +803,6 @@
       ],
       "nodeCount": 1,
       "agentCount": 0,
-      "deprecated": false,
-      "yanked": false
-    },
-    {
-      "name": "vendor.myndhyve.ads-video-generate",
-      "latestVersion": "1.0.0",
-      "description": "MyndHyve ads.video.generate — generate ad creative videos via the host's ctx.callVideoGenerator (aiProviders.videoGeneration sub-capability from spec PR #53). Symmetric companion to ads-image-generate but adapted for video (single video per call, host hides async polling internally, typical 30-120s latency). Caller-supplied placementSpec.videoSpec replaces source's PlatformSpecRegistry lookup.",
-      "license": "Apache-2.0",
-      "tags": [],
       "deprecated": false,
       "yanked": false
     },
@@ -938,18 +866,9 @@
       "yanked": false
     },
     {
-      "name": "vendor.myndhyve.app-builder",
-      "latestVersion": "1.0.0",
-      "description": "MyndHyve App Builder typeIds — app-builder.per-screen (single-task screen generation: chat-send → typed-envelope-await with bounded retry) + app-builder.iterate-tasks (multi-task serial loop over feature tasks with task-level failure isolation). Both consume host.chat + host.aiEnvelope.await. Host concerns (progress cards, telemetry, pilot materializer) intentionally NOT in pack — pack returns categorized task results that host MAY render however it wishes.",
-      "license": "Apache-2.0",
-      "tags": [],
-      "deprecated": false,
-      "yanked": false
-    },
-    {
       "name": "vendor.myndhyve.brand",
       "kind": "node",
-      "latestVersion": "1.0.0",
+      "latestVersion": "1.1.0",
       "description": "MyndHyve brand-workflow pack. 14 nodes — 8 theme (analyze/discovery/generate/implement/publish/review/templates/validate) + 6 persona (discover/generate/keywordStrategy/publish/review/validate). Each is an AI-driven envelope-emitting node anchored on the brand canvas type. Routes through ctx.brand.* + ctx.aiEnvelope.generate.",
       "license": "Apache-2.0",
       "tags": [],
@@ -1125,15 +1044,6 @@
       "yanked": false
     },
     {
-      "name": "vendor.myndhyve.knowledge-tools",
-      "latestVersion": "1.0.0",
-      "description": "MyndHyve knowledge-tools — first reference consumer of the v1 host.knowledge surface. Two typeIds: (1) knowledge.retrieve — thin pass-through over ctx.knowledge.retrieve with optional score-floor filtering; (2) knowledge.augment-prompt — composition primitive that retrieves + renders a Sources block + builds an augmented user message + emits a citation list. Host advertises host.knowledge: supported per spec/v1/host-capabilities.md §host.knowledge.",
-      "license": "Apache-2.0",
-      "tags": [],
-      "deprecated": false,
-      "yanked": false
-    },
-    {
       "name": "vendor.myndhyve.landing-page",
       "kind": "node",
       "latestVersion": "1.0.0",
@@ -1291,42 +1201,6 @@
       "yanked": false
     },
     {
-      "name": "vendor.myndhyve.market-intel-ad-angles",
-      "latestVersion": "1.0.0",
-      "description": "MyndHyve market-intel.ad-angles — generates 5-10 ad-angle briefs from VoC research + ICP/product context via one AI call. Each brief carries angleName, segment, corePain, promise, mechanism, proof requirements, objections to handle, 3-5 hook variants, recommended CTA, source quotes, and a 5-dimension score (volume / intensity / commercialIntent / clarity / uniqueness + weighted total). Briefs are sorted by total score descending. Second marketIntel pack of the Stage 5 cohort.",
-      "license": "Apache-2.0",
-      "tags": [],
-      "deprecated": false,
-      "yanked": false
-    },
-    {
-      "name": "vendor.myndhyve.market-intel-discovery",
-      "latestVersion": "1.0.0",
-      "description": "MyndHyve market-intel.ai-discovery — AI-powered source-discovery via one ctx.callAI. Given a topic + optional industry/audience/platforms, returns relevant URLs, communities (with platform / relevanceScore / estimatedPostCount), and search queries. Replaces the manual URL-input step of the marketIntel research pipeline. Third marketIntel pack of the Stage 5 cohort.",
-      "license": "Apache-2.0",
-      "tags": [],
-      "deprecated": false,
-      "yanked": false
-    },
-    {
-      "name": "vendor.myndhyve.market-intel-opportunity-scoring",
-      "latestVersion": "1.0.0",
-      "description": "MyndHyve market-intel.opportunity-scoring — score and rank communities AND messaging angles on a 5-dimension scale (volume / intensity / commercialIntent / clarity / uniqueness, weighted total) given a VoC corpus + community metadata. Composable primitive slotting between voc-extraction (aggregator) and ad-angles (downstream). Source-side this prompt is used inside the market-intel.research orchestrator; published here as a standalone typeId so workflow authors can compose it directly. Fourth marketIntel pack of the Stage 5 cohort.",
-      "license": "Apache-2.0",
-      "tags": [],
-      "deprecated": false,
-      "yanked": false
-    },
-    {
-      "name": "vendor.myndhyve.market-intel-thread-triage",
-      "latestVersion": "1.0.0",
-      "description": "MyndHyve market-intel.thread-triage — cost-aware pre-filter for VoC extraction. Triages candidate threads into priority tiers (critical/high/medium/low/skip), predicts VoC value + intent stages + tag types, estimates extraction tokens per thread, and builds an extraction queue within token budget. Sits between ai-discovery and voc-extraction in the canonical pipeline. Sixth marketIntel pack of the Stage 5 cohort.",
-      "license": "Apache-2.0",
-      "tags": [],
-      "deprecated": false,
-      "yanked": false
-    },
-    {
       "name": "vendor.myndhyve.market-intel-voc",
       "kind": "node",
       "latestVersion": "1.0.0",
@@ -1338,15 +1212,6 @@
       ],
       "nodeCount": 1,
       "agentCount": 0,
-      "deprecated": false,
-      "yanked": false
-    },
-    {
-      "name": "vendor.myndhyve.market-intel-voc",
-      "latestVersion": "1.0.0",
-      "description": "MyndHyve market-intel.voc-extraction — extract Voice of Customer records (verbatim quotes + tagType + intentStage + confidence + rationale) from a single piece of content via a single AI call. First marketIntel pack of the Stage 5 cohort. Schema validation strips invalid records with per-record warnings; output preserves source structure (records + summary + warnings).",
-      "license": "Apache-2.0",
-      "tags": [],
       "deprecated": false,
       "yanked": false
     },
