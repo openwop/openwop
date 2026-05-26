@@ -27,7 +27,7 @@ import { seedRunVariables, snapshotRunVariables } from '../host/variablesRuntime
 import { getChildParentNodeId } from '../executor/subWorkflowDispatcher.js';
 import { snapshotCostRollup } from '../observability/costEmitter.js';
 import { executeRun } from '../executor/executor.js';
-import { CROSS_HOST_CAUSATION_HOST_ID } from './discovery.js';
+import { CROSS_HOST_CAUSATION_HOST_ID, isPhase3Enabled } from './discovery.js';
 import { getEventLog } from '../executor/eventLog.js';
 import { stripSecretsFromPersisted } from '../byok/ephemeralRunSecrets.js';
 import { createLogger } from '../observability/logger.js';
@@ -445,10 +445,7 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
   // only); a real cross-host deployer sets it for off-host parents.
   app.get('/v1/runs/:runId/ancestry', async (req, res, next) => {
     try {
-      const phase3 =
-        process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_3 === 'true' ||
-        process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_4 === 'true';
-      if (!phase3) {
+      if (!isPhase3Enabled()) {
         // Capability not advertised — the endpoint is opt-in even within
         // Phase 3 (RFC 0040 §C). 404 regardless of run existence.
         throw new OpenwopError('not_found', 'run-ancestry endpoint not enabled', 404);
@@ -461,9 +458,19 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
               runId: run.parentRunId,
               // Same-host parent on this single-host reference app: hostId
               // equals our own, and `wellKnownUrl` is omitted (off-host
-              // parents would set it). `core.subWorkflow` + `core.dispatch`
-              // are the same-host composition causes per the schema enum.
+              // parents would set it).
               hostId: CROSS_HOST_CAUSATION_HOST_ID,
+              // LIMITATION: `cause` is reported as the nominal same-host value
+              // `core.subWorkflow`. `RunRecord` (src/executor/types.ts) tracks
+              // only `parentRunId` and does not retain which composition
+              // primitive created the child — both the `core.subWorkflow` and
+              // `core.dispatch` dispatchers set `parentRunId` identically. The
+              // schema enum (`run-ancestry-response.schema.json`) also admits
+              // `core.dispatch`; distinguishing the two on the wire requires
+              // persisting the composition mechanism on `RunRecord`, deferred
+              // to a follow-up. Both values denote same-host composition, so
+              // the nominal value is accurate at the cross-host boundary this
+              // endpoint exists to serve.
               cause: 'core.subWorkflow' as const,
             }
           : null;
