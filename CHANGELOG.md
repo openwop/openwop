@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0064 (host.toolHooks) — Milestone 2: reference-host enforcement; promote Active → `Accepted` (2026-05-25)
+
+The in-memory reference host now implements the RFC 0064 tool-invocation-hooks surface end-to-end, taking it from `Active` to **`Accepted`**. It advertises `capabilities.toolHooks { supported: true, prePostEvents: true, perToolAuthorization: true, perToolRateLimit: true }` and implements the documented `POST /v1/host/sample/toolhooks/invoke` seam:
+
+- **§B content-free audit** — `agent.toolCalled` carries `argsHash` (= SHA-256 of the **SR-1-redacted** JCS serialization of the args; a resolved secret is scrubbed before hashing, so the plaintext never enters the hash input or any emitted field) + `principal` + `transport`; `agent.toolReturned` carries `status` + (on `ok`) a non-negative `durationMs`.
+- **§C per-tool authorization (fail-closed)** — a non-empty `requiredScopes` is unevaluable on this non-RBAC host, so `status: 'forbidden'` and the tool never runs (no `durationMs`). This is the per-tool application of RFC 0049's `authorization-fail-closed` invariant; `tool-hooks-authorization-fail-closed.test.ts` is added to that invariant's test set (**no new invariant**).
+- **§D per-tool rate limit** — `simulateRateLimitExhausted` yields `status: 'rate_limited'`.
+
+All five `tool-hooks-*.test.ts` scenarios (shape always-on + content-free / authorization-fail-closed / rate-limit / secret-redaction) are live + green (no new scenarios; the M1 set flips from soft-skip to enforced). Reuses RFC 0002 events + RFC 0049 `forbidden` + the existing `rate_limited` — **no new event type, error code, or invariant**. RFC 0064 `Active → Accepted` (Accepted 48 → 49, Active 11 → 10). **This completes the entire autonomous-agent-runtime cohort's reference-host enforcement** (0058 runTimeoutMs + 0059 + 0060 + 0063 + 0064; the 0061 stateful loop + 0062 distillation remain Active pending their host wiring). Additive; no existing wire-shape change.
+
 ### docs(rfc-0063): /code-review follow-ups on the M2 enforcement (2026-05-25)
 
 Four findings from a `/code-review` pass over the RFC 0063 M2 commit. Docs only; no schema, host-code, or wire-shape change.
