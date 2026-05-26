@@ -11,6 +11,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### docs(rfc-0063): /code-review follow-ups on the M2 enforcement (2026-05-25)
+
+Four findings from a `/code-review` pass over the RFC 0063 M2 commit. Docs only; no schema, host-code, or wire-shape change.
+
+- **§D `principalScope` scoped out for this host.** `examples/hosts/in-memory/conformance.md` now states that RFC 0063 §D (narrow the approval to RFC 0049 scopes) is accepted-but-not-enforced on this non-RBAC host and is exercised on an RFC-0049-capable host — the `Accepted` claim covers §B (checksum) + §C (the `subrun-merge-approval-fail-closed` merge gate).
+- **Checksum canonicalization note.** Documented that the host's `stableStringify`-based checksum is effectively RFC-8785-conformant for JSON-representable values (RFC 8785's number/string rules are defined in ECMAScript terms); a production cross-host deployment with exotic numeric forms SHOULD pin a vetted RFC 8785 library.
+- **conformance.md** measurement-header annotation extended to include the RFC 0063 enforcement landing.
+- **INTEROP-MATRIX** in-memory row records the new `capabilities.agents.subRunAttestation` advertisement.
+
 ### RFC 0063 (core.subWorkflow output attestation) — Milestone 2: reference-host enforcement; promote Active → `Accepted` (2026-05-25)
 
 The in-memory reference host now implements the RFC 0063 verify-before-merge surface end-to-end, taking it from `Active` to **`Accepted`**. It advertises `capabilities.agents.subRunAttestation: true` and implements the documented `POST /v1/host/sample/subrun/attest` seam (`host-sample-test-seams.md`):
