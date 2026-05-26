@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0064 |
 | **Title** | A `host.toolHooks` capability — additive authorization + timing + content-free-argument fields on the existing `agent.toolCalled` / `agent.toolReturned` events (RFC 0002), fail-closed per-tool authorization via RFC 0049 scopes (reusing the `forbidden` error + the `authorization-fail-closed` invariant), and optional per-tool rate limiting (reusing `rate_limited`) — generalizing the MCP bridges into one auditable, least-privilege tool surface without inventing parallel events |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-25 |
-| **Updated** | 2026-05-25 |
+| **Updated** | 2026-05-25 (Active → Accepted — Milestone 2: the in-memory reference host advertises `capabilities.toolHooks { supported, prePostEvents, perToolAuthorization, perToolRateLimit }` and implements the `POST /v1/host/sample/toolhooks/invoke` seam end-to-end — §B content-free `agent.toolCalled.argsHash` (SR-1-redacted JCS+SHA-256) + `agent.toolReturned.status`/`durationMs`; §C per-tool authorization fails closed (`forbidden`) on a lacked/unevaluable scope (per-tool application of RFC 0049's `authorization-fail-closed`); §D per-`(principal, tool)` rate limit yields `rate_limited`. All five `tool-hooks-*.test.ts` scenarios are live + green. Reuses RFC 0049 `forbidden` + `rate_limited` — no new event type, error code, or invariant.) |
 | **Affects** | `schemas/capabilities.schema.json` (`host.toolHooks` block) · `schemas/run-event-payloads.schema.json` (additive optional fields on `agentToolCalled` / `agentToolReturned`) · `spec/v1/mcp-integration.md` (per-tool authorization + rate-limit prose) · `RFCS/0002` (the tool-call events this extends) · `RFCS/0046` (credential resolution) · `RFCS/0049` (RBAC scopes + the `forbidden` error + `authorization-fail-closed` invariant, reused) · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -132,10 +132,11 @@ Per `docs/autonomous-agent-runtime-plan.md` §8 — Unresolved questions resolve
 
 ## Acceptance criteria
 
-- [ ] `mcp-integration.md` (or a short `spec/v1/tool-hooks.md`) with the per-tool authorization + rate-limit + content-free-audit contract.
-- [ ] `host.toolHooks` block + additive optional fields on `agentToolCalled` / `agentToolReturned` (run-event-payloads schema). No new event type, no new error code.
-- [ ] Conformance: shape always-on; content-free/authorization/rate-limit/redaction capability-gated; the authorization scenario verifies per-tool application of RFC 0049's `authorization-fail-closed`.
-- [ ] CHANGELOG entry under `[1.1.4 — unreleased]`.
+- [x] `host-capabilities.md §host.toolHooks` with the per-tool authorization + rate-limit + content-free-audit contract.
+- [x] `host.toolHooks` block + additive optional fields on `agentToolCalled` / `agentToolReturned` (run-event-payloads schema). No new event type, no new error code.
+- [x] Conformance: shape always-on; content-free/authorization/rate-limit/redaction capability-gated; the authorization scenario verifies per-tool application of RFC 0049's `authorization-fail-closed` — all five `tool-hooks-*.test.ts` scenarios live + green against the in-memory host.
+- [x] CHANGELOG entry under `[1.1.4 — unreleased]`.
+- [x] **Milestone 2 — reference-host enforcement (`Active → Accepted`).** The in-memory reference host (`examples/hosts/in-memory`) advertises `capabilities.toolHooks { supported, prePostEvents, perToolAuthorization, perToolRateLimit }` and implements the `POST /v1/host/sample/toolhooks/invoke` seam: §B emits `agent.toolCalled.argsHash` (the SR-1-redacted JCS+SHA-256 of the args — a resolved secret is scrubbed before hashing) + `agent.toolReturned.status`/`durationMs`; §C fails closed (`status: 'forbidden'`, no `durationMs`, tool never invoked) on a lacked/unevaluable scope — the per-tool application of RFC 0049's `authorization-fail-closed` (no new invariant; `tool-hooks-authorization-fail-closed.test.ts` is added to that invariant's test set); §D yields `status: 'rate_limited'` on an exhausted `(principal, tool)` bucket. Reuses RFC 0049 `forbidden` + `rate_limited` — no new event type or error code.
 
 ## References
 

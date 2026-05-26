@@ -1111,6 +1111,63 @@ async function handleSubRunAttest(req: IncomingMessage, res: ServerResponse): Pr
   });
 }
 
+// ─── RFC 0064 — host.toolHooks (per-tool authz + rate limit + content-free audit) ─
+//
+// Per-tool authorization (RFC 0049, fail-closed) + per-(principal, tool) rate
+// limiting + a content-free tool-call audit trail, layered on the existing
+// `agent.toolCalled` / `agent.toolReturned` events (RFC 0002) — no new event
+// type or error code. The cross-host driver is the documented
+// `POST /v1/host/sample/toolhooks/invoke` seam.
+
+const TOOLHOOKS_TRANSPORT = 'native';
+
+async function handleToolHooksInvoke(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (!checkAuth(req, res)) return;
+  const bodyText = await readBody(req);
+  let body: {
+    principal?: unknown;
+    toolName?: unknown;
+    requiredScopes?: unknown;
+    args?: unknown;
+    simulateRateLimitExhausted?: unknown;
+  };
+  try {
+    body = JSON.parse(bodyText) as typeof body;
+  } catch {
+    return void sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+  }
+  const principal = typeof body.principal === 'string' ? body.principal : 'core.system';
+  const requiredScopes = Array.isArray(body.requiredScopes) ? body.requiredScopes : [];
+
+  // §B — the content-free audit fields on `agent.toolCalled`. `argsHash` is the
+  // JCS+SHA-256 of the args AFTER SR-1 redaction (a resolved secret is replaced
+  // before hashing, so neither the hash input nor any emitted field carries the
+  // plaintext).
+  const argsHash = createHash('sha256')
+    .update(scrubSecretShaped(stableStringify(body.args ?? {})))
+    .digest('hex');
+  const toolCalled = { argsHash, principal, transport: TOOLHOOKS_TRANSPORT };
+
+  // §C — per-tool authorization, fail-closed (RFC 0049). This host has no role/
+  // scope resolver, so any required scope is unevaluable ⇒ deny. §D — per-tool
+  // rate limit. Either gate prevents the tool from running (no `durationMs`).
+  let status: 'ok' | 'forbidden' | 'rate_limited';
+  if (requiredScopes.length > 0) {
+    status = 'forbidden';
+  } else if (body.simulateRateLimitExhausted === true) {
+    status = 'rate_limited';
+  } else {
+    status = 'ok';
+  }
+
+  const toolReturned: { status: string; durationMs?: number } = { status };
+  // §B — a completed call records a non-negative duration; a call that never
+  // started (forbidden / rate_limited) records none.
+  if (status === 'ok') toolReturned.durationMs = 0;
+
+  sendJSON(res, 200, { toolCalled, toolReturned });
+}
+
 // ─── Route handlers ──────────────────────────────────────────────────────────
 
 function handleOpenApi(_req: IncomingMessage, res: ServerResponse): void {
@@ -1211,6 +1268,16 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
   // an unapproved merge (exercised via the sub-run attestation seam).
   capabilities.agents = {
     subRunAttestation: true,
+  };
+
+  // RFC 0064 — per-tool authorization (fail-closed, RFC 0049) + rate limiting +
+  // content-free tool-call audit, layered on agent.toolCalled / agent.toolReturned
+  // (exercised via the tool-hooks invoke seam).
+  capabilities.toolHooks = {
+    supported: true,
+    prePostEvents: true,
+    perToolAuthorization: true,
+    perToolRateLimit: true,
   };
 
   const payload = {
@@ -1879,6 +1946,9 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   }
   if (method === 'POST' && path === '/v1/host/sample/subrun/attest') {
     return handleSubRunAttest(req, res);
+  }
+  if (method === 'POST' && path === '/v1/host/sample/toolhooks/invoke') {
+    return handleToolHooksInvoke(req, res);
   }
   if (WORKSPACE_FILES_PATTERN.test(path) && method === 'GET') {
     return handleWorkspaceList(req, res, url);
