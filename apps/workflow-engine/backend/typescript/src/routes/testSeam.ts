@@ -912,6 +912,7 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
       maxLoopIterations?: unknown;
       suspendAtTurn?: unknown;
       resume?: unknown;
+      workspaceWriteAtTurn?: unknown;
     };
     const loopReq: AgentLoopRequest = {
       turns: typeof body.turns === 'number' ? body.turns : 1,
@@ -919,6 +920,7 @@ export function registerTestSeamRoutes(app: Express, deps: { storage: Storage })
     if (typeof body.maxLoopIterations === 'number') loopReq.maxLoopIterations = body.maxLoopIterations;
     if (typeof body.suspendAtTurn === 'number') loopReq.suspendAtTurn = body.suspendAtTurn;
     if (body.resume === true) loopReq.resume = true;
+    if (typeof body.workspaceWriteAtTurn === 'number') loopReq.workspaceWriteAtTurn = body.workspaceWriteAtTurn;
     res.status(200).json(runAgentLoop(loopReq));
   });
 

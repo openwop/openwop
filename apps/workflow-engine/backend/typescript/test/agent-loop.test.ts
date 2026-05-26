@@ -58,3 +58,14 @@ describe('RFC 0061 §D — stateful resume', () => {
     expect(r.resumedIteration).toBeUndefined();
   });
 });
+
+describe('RFC 0061 §C — per-iteration workspace snapshot immutability', () => {
+  it('a turn-i write is invisible to turn i, visible to turn i+1', () => {
+    const r = runAgentLoop({ turns: 2, workspaceWriteAtTurn: 1 });
+    expect(r.workspaceVisible).toEqual({ atWriteTurn: false, atNextTurn: true });
+  });
+
+  it('no workspaceVisible report when no write is requested', () => {
+    expect(runAgentLoop({ turns: 2 }).workspaceVisible).toBeUndefined();
+  });
+});

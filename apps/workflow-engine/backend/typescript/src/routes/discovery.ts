@@ -233,6 +233,13 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       cron: true,
       maxFutureHorizon: 'P30D',
     },
+    // RFC 0059 — durable, {tenant, workspace}-scoped file layer (host/
+    // workspaceStore.ts). §C CRUD + If-Match/etag + maxFileBytes, §E WCT-1
+    // owner isolation + WSR-1 SR-1 redaction. Not `versioned` (latest-only).
+    workspace: {
+      supported: true,
+      maxFileBytes: 65_536,
+    },
     supportedTransports: ['rest', 'sse'],
     stream: { modes: ['values', 'updates', 'messages', 'debug'] },
     // Conformance fixtures loaded from in-tree `conformance/fixtures/`

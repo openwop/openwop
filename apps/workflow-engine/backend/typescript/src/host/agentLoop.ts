@@ -29,6 +29,10 @@ export interface AgentLoopRequest {
   suspendAtTurn?: number;
   /** §D: whether the suspended loop is resumed. */
   resume?: boolean;
+  /** §C: simulate a workspace write during this 1-based turn, to observe
+   *  per-iteration snapshot immutability (write lands in the NEXT turn's
+   *  snapshot, never the writing turn's). */
+  workspaceWriteAtTurn?: number;
 }
 
 /** One `runOrchestrator.decided` payload (the additive `iteration` field
@@ -53,6 +57,8 @@ export interface AgentLoopResult {
   bound?: LoopBound;
   /** §D: the iteration the loop resumed at (== suspend iteration). */
   resumedIteration?: number;
+  /** §C: per-iteration workspace-snapshot visibility of a turn-i write. */
+  workspaceVisible?: { atWriteTurn: boolean; atNextTurn: boolean };
 }
 
 const LOOP_AGENT_ID = 'loop-agent';
@@ -105,5 +111,11 @@ export function runAgentLoop(req: AgentLoopRequest): AgentLoopResult {
 
   const result: AgentLoopResult = { decisions };
   if (resumedIteration !== undefined) result.resumedIteration = resumedIteration;
+  // §C per-iteration snapshot immutability: each turn reads a snapshot taken
+  // at turn start, so a write DURING turn i is invisible to turn i's snapshot
+  // and visible to turn i+1's. (RFC 0059 §D — the workspace read snapshot.)
+  if (req.workspaceWriteAtTurn !== undefined && req.workspaceWriteAtTurn >= 1) {
+    result.workspaceVisible = { atWriteTurn: false, atNextTurn: true };
+  }
   return result;
 }
