@@ -65,6 +65,7 @@ import { registerMemoryRoutes } from './routes/memory.js';
 import { registerMemoryCompactionSeamRoutes } from './routes/memoryCompactionSeam.js';
 import { registerWorkspaceRoutes } from './routes/workspace.js';
 import { registerMediaAssetRoutes } from './routes/mediaAssets.js';
+import { registerDemoSummaryRoutes } from './routes/demoSummary.js';
 
 const log = createLogger('workflow-engine');
 
@@ -299,6 +300,7 @@ export async function createApp(config: AppConfig): Promise<Express> {
   registerAdminRoutes(app);
   registerWorkflowRoutes(app, { hostSuite });
   registerNodeCatalogRoute(app);
+  registerDemoSummaryRoutes(app, { config });
 
   // Express 4 catch-all (no path string — avoids path-to-regexp v6 issue).
   app.use((_req, res) => {

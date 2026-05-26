@@ -114,6 +114,9 @@ export function registerDiscoveryRoutes(app: Express, _deps: Deps): void {
         '/v1/host/sample/runs/{runId}/interrupts': {
           get: { summary: 'List open interrupts for a run (authed; returns tokens)', tags: ['sample-extension'] },
         },
+        '/v1/host/sample/demo-summary': {
+          get: { summary: 'Summarize demo-app readiness for CLI and diagnostics', tags: ['sample-extension'] },
+        },
         '/v1/host/sample/chat/sessions': {
           get: { summary: 'List chat sessions for the calling tenant', tags: ['sample-extension'] },
           post: { summary: 'Create a new chat session', tags: ['sample-extension'] },

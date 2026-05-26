@@ -56,6 +56,15 @@ A deployable reference application demonstrating the full vertical slice of an O
 
 ## Quickstart
 
+The repo-local CLI can check and launch the full demo:
+
+```bash
+node cli/openwop.mjs doctor
+node cli/openwop.mjs demo start
+```
+
+Manual startup still works:
+
 ```bash
 # Terminal 1 — backend
 cd apps/workflow-engine/backend/typescript
