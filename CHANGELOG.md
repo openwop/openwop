@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.4 — unreleased] — docs-sync drift cleanup
 
+### RFC 0060 (host.heartbeat) — Milestone 2: reference-host enforcement; promote Active → `Accepted` (2026-05-25)
+
+The in-memory reference host now implements the RFC 0060 heartbeat surface end-to-end, taking it from `Active` to **`Accepted`**. It advertises `capabilities.heartbeat { supported: true, minIntervalSec: 1, maxRuntimeMs: 5000 }` and implements the documented `POST /v1/host/sample/heartbeat/tick` seam (`host-sample-test-seams.md`):
+
+- **§B.1** — exactly one `heartbeat.evaluated { heartbeatId, status, changed }` per tick.
+- **§B.5 (anti-spam, the keystone)** — `heartbeat.stateChanged { heartbeatId, from, to }` + `enqueuedRuns: 1` are emitted **only** when `observedState` differs from the persisted prior tick (value-based comparison via a stable stringify); an unchanged tick emits neither. Action is gated on a state *transition*, not on the tick.
+- **§B.2** — `simulateSlowMs` exceeding `maxRuntimeMs` terminates the evaluation and reports `status: 'timeout'` (no transition, no enqueue).
+
+All four conformance scenarios — `heartbeat-{capability-shape, fires-once-per-tick, idempotent-no-spam, runtime-bound}.test.ts` — are live + green against the host (no new scenarios; the M1 set flips from soft-skip to enforced). RFC 0060 `Active → Accepted` (Accepted 46 → 47, Active 12 → 11). Additive; no existing wire-shape change.
+
 ### RFC 0059 (agent workspace) — Milestone 2: reference-host enforcement; promote Active → `Accepted` (2026-05-25)
 
 The in-memory reference host now implements `host.workspace` end-to-end, taking RFC 0059 from `Active` to **`Accepted`**. It advertises `capabilities.workspace { supported, versioned, maxFileBytes: 1048576, maxFiles: 256, maxVersions: 20 }` and honors:

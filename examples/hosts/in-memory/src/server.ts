@@ -974,6 +974,78 @@ function workspaceSnapshotFor(tenant: string, workspace: string): Array<{ path: 
   return snapshot;
 }
 
+// ─── RFC 0060 — host.heartbeat (predicate-gated polling) ─────────────────────
+//
+// System-managed, runtime-bounded evaluation of an idempotent predicate that
+// emits state-change events and conditionally enqueues a run — rather than
+// re-running an agent blindly. The anti-spam guarantee (§B.5): action is gated
+// on a state *transition*, not on the tick. The cross-host driver is the
+// documented `POST /v1/host/sample/heartbeat/tick` seam.
+
+const HEARTBEAT_MIN_INTERVAL_SEC = 1;
+const HEARTBEAT_MAX_RUNTIME_MS = 5_000;
+
+// heartbeatId → the last tick's persisted predicate state (the transition
+// detector). Opaque, host-defined; carries no secret material (§B payload).
+const heartbeatState = new Map<string, Record<string, unknown>>();
+
+// Stable stringify (sorted keys) so a transition is detected by VALUE, not by
+// incidental key order across ticks.
+function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
+  const obj = value as Record<string, unknown>;
+  const keys = Object.keys(obj).sort();
+  return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify(obj[k])}`).join(',')}}`;
+}
+
+async function handleHeartbeatTick(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (!checkAuth(req, res)) return;
+  const bodyText = await readBody(req);
+  let body: { heartbeatId?: unknown; observedState?: unknown; simulateSlowMs?: unknown };
+  try {
+    body = JSON.parse(bodyText) as typeof body;
+  } catch {
+    return void sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+  }
+  if (typeof body.heartbeatId !== 'string' || body.heartbeatId.length === 0) {
+    return void sendError(res, 400, 'validation_error', 'heartbeatId MUST be a non-empty string.');
+  }
+  const heartbeatId = body.heartbeatId;
+  const observedState =
+    body.observedState !== null && typeof body.observedState === 'object'
+      ? (body.observedState as Record<string, unknown>)
+      : {};
+
+  // §B.2 — `simulateSlowMs` over the budget terminates the evaluation; report
+  // `status: 'timeout'`. A terminated evaluation neither transitions nor
+  // enqueues (it never completed), so the prior state is left untouched.
+  const simulateSlowMs = typeof body.simulateSlowMs === 'number' ? body.simulateSlowMs : 0;
+  if (simulateSlowMs > HEARTBEAT_MAX_RUNTIME_MS) {
+    return void sendJSON(res, 200, {
+      evaluated: [{ heartbeatId, status: 'timeout', changed: false }],
+      stateChanged: [],
+      enqueuedRuns: 0,
+    });
+  }
+
+  // §B.5 — a transition is `observedState` differing from the prior tick's
+  // persisted state. Only a transition emits `heartbeat.stateChanged` +
+  // enqueues a run; an unchanged tick does neither (anti-spam).
+  const prior = heartbeatState.get(heartbeatId);
+  const changed = prior === undefined || stableStringify(prior) !== stableStringify(observedState);
+  heartbeatState.set(heartbeatId, observedState);
+
+  sendJSON(res, 200, {
+    // §B.1 — exactly one `heartbeat.evaluated` per tick.
+    evaluated: [{ heartbeatId, status: 'ok', changed }],
+    stateChanged: changed
+      ? [{ heartbeatId, from: prior ?? {}, to: observedState }]
+      : [],
+    enqueuedRuns: changed ? 1 : 0,
+  });
+}
+
 // ─── Route handlers ──────────────────────────────────────────────────────────
 
 function handleOpenApi(_req: IncomingMessage, res: ServerResponse): void {
@@ -1057,6 +1129,16 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
     maxFileBytes: WORKSPACE_MAX_FILE_BYTES,
     maxFiles: WORKSPACE_MAX_FILES,
     maxVersions: WORKSPACE_MAX_VERSIONS,
+  };
+
+  // RFC 0060 — predicate-gated heartbeat polling. The host evaluates an
+  // idempotent predicate once per tick (via the documented tick seam),
+  // emitting state-change events only on a transition (§B.5 anti-spam) and
+  // terminating over-budget evaluations as `timeout` (§B.2).
+  capabilities.heartbeat = {
+    supported: true,
+    minIntervalSec: HEARTBEAT_MIN_INTERVAL_SEC,
+    maxRuntimeMs: HEARTBEAT_MAX_RUNTIME_MS,
   };
 
   const payload = {
@@ -1719,6 +1801,9 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   // RFC 0059 — host.workspace §C endpoints + the cross-workspace-isolation seam.
   if (method === 'POST' && path === '/v1/host/sample/workspace/op') {
     return handleWorkspaceSeam(req, res);
+  }
+  if (method === 'POST' && path === '/v1/host/sample/heartbeat/tick') {
+    return handleHeartbeatTick(req, res);
   }
   if (WORKSPACE_FILES_PATTERN.test(path) && method === 'GET') {
     return handleWorkspaceList(req, res, url);
