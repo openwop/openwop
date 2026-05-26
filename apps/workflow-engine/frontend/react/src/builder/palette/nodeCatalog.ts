@@ -115,6 +115,12 @@ export interface NodeCatalogEntry {
    *  either substitute (RFC 0031 §B step 3) or refuse with
    *  `model.capability.insufficient` (step 4). */
   requiredModelCapabilities?: readonly string[];
+  /** Client-only canvas decoration — sticky notes, swimlane headers, etc.
+   *  Persists to localStorage with the rest of the workflow but is stripped
+   *  by `serializeWithIdMap` before the definition reaches the backend.
+   *  Has no inputs/outputs, no execution semantics, and no preflight
+   *  capability gating. Distinct CSS hook via `.builder-node-client-only`. */
+  clientOnly?: boolean;
 }
 
 // ─── Catalog defaults discipline ──────────────────────────────────────
@@ -280,6 +286,31 @@ export const NODE_CATALOG: readonly NodeCatalogEntry[] = [
       },
     ],
     requiredModelCapabilities: ['structured-output'],
+  },
+  {
+    // Sticky note — canvas annotation, persists to localStorage, never
+    // executes. `clientOnly: true` strips it from the serialized definition
+    // sent to the backend, so it doesn't need a corresponding NodeModule
+    // and won't trip the serializer's reachability check.
+    kind: 'sticky-note',
+    typeId: 'local.sticky-note',
+    label: 'Sticky note',
+    description: 'A canvas annotation for documentation. Never executes; not sent to the backend.',
+    category: 'control',
+    badge: '📝',
+    accent: 'var(--ink-3)',
+    inputs: [],
+    outputs: [],
+    configFields: [
+      {
+        key: 'content',
+        label: 'Note',
+        kind: 'textarea',
+        defaultValue: 'New note',
+        help: 'Visible on the canvas; reviewers / collaborators see it but it never runs.',
+      },
+    ],
+    clientOnly: true,
   },
 ];
 

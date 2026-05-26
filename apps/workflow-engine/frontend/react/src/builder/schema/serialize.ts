@@ -126,6 +126,25 @@ export function serializeWorkflow(wf: SavedWorkflow): BackendWorkflowDefinition 
 }
 
 export function serializeWithIdMap(wf: SavedWorkflow): SerializeResult {
+  // Strip client-only nodes (sticky notes, future annotation kinds) before
+  // any validation: they have no inputs/outputs by construction, so the
+  // reachability check below would flag them as orphans. They persist on
+  // the builder canvas + in localStorage; they just don't reach the
+  // backend definition or the runtime executor.
+  const executableNodes = wf.nodes.filter((n) => !catalogEntry(n.kind)?.clientOnly);
+  const executableEdges = wf.edges; // Edges can't touch sticky notes — they have no ports.
+  if (executableNodes.length === 0) {
+    throw new SerializeError(
+      wf.nodes.length === 0
+        ? 'Workflow has no nodes.'
+        : 'Workflow has no executable nodes — every node is a client-only annotation (e.g. sticky notes).',
+    );
+  }
+  const wfExec: SavedWorkflow = { ...wf, nodes: executableNodes, edges: executableEdges };
+  return serializeExecutable(wfExec);
+}
+
+function serializeExecutable(wf: SavedWorkflow): SerializeResult {
   if (wf.nodes.length === 0) {
     throw new SerializeError('Workflow has no nodes.');
   }
