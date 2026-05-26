@@ -3,9 +3,18 @@
  *   1. Node selected → name + per-kind config fields from the catalog
  *   2. Edge selected → trigger rule + condition predicate (DAG fan-in)
  *   3. Nothing selected → workflow-level fields (name + default inputs JSON)
+ *
+ * Local helpers:
+ *   - `textareaValue` — pretty-prints a stored JSON-or-string value so the
+ *     `textarea` kind round-trips object defaults without losing formatting.
+ *   - `StringListInput` — newline-separated editor for `string-list` fields;
+ *     parses on blur, decorates `maxItems` overflow with a warning, and uses
+ *     a last-known-external-value ref so external resets reseed the draft
+ *     without clobbering in-progress edits.
+ *   - `countNonBlankLines` — shared utility for the `maxItems` UX hint.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useBuilderStore } from '../store/builderStore.js';
 import { catalogEntry } from '../palette/catalogRegistry.js';
 import { type ConfigField } from '../palette/nodeCatalog.js';
@@ -359,14 +368,18 @@ function StringListInput({
 }): JSX.Element {
   const [draft, setDraft] = useState<string>(value.join('\n'));
   // Reset the draft when the store-side value changes from somewhere
-  // other than this input (e.g., reset, import, multi-select edit).
-  // The check avoids clobbering the user's in-progress edits.
+  // OTHER than this input (e.g., reset, import, multi-select edit).
+  // We compare the new external value against the last-known external
+  // value via a ref — so an external change reseeds the draft, but the
+  // user's in-progress edits don't (we don't read `draft` here, so the
+  // exhaustive-deps lint is honest without suppression).
+  const lastExternalRef = useRef<string>(value.join('\n'));
   useEffect(() => {
-    const parsedDraft = draft.split('\n').map((s) => s.trim()).filter((s) => s.length > 0);
-    if (parsedDraft.join('') !== [...value].join('')) {
-      setDraft(value.join('\n'));
+    const next = value.join('\n');
+    if (next !== lastExternalRef.current) {
+      lastExternalRef.current = next;
+      setDraft(next);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
   const overLimit = maxItems !== undefined && countNonBlankLines(draft) > maxItems;
   return (
