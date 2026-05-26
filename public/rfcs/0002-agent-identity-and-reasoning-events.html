@@ -199,6 +199,7 @@
 <tr><td><strong>Supersedes</strong></td><td>—</td></tr>
 <tr><td><strong>Superseded by</strong></td><td>—</td></tr>
 </tbody></table>
+<blockquote><p><strong>Amended (additive) 2026-05-25:</strong> RFC 0064 (tool invocation hooks) extends the <code>agent.toolCalled</code> / <code>agent.toolReturned</code> events with optional <code>argsHash</code> / <code>principal</code> / <code>transport</code> (on <code>toolCalled</code>) + <code>status</code> / <code>durationMs</code> (on <code>toolReturned</code>) fields. The events are <code>additionalProperties: true</code>, <code>required</code> is unchanged, and <code>agentId</code> <strong>stays required</strong> (non-agent egress emits under the reserved synthetic agent id <code>core.system</code>). Non-breaking per <code>COMPATIBILITY.md</code> §2.1; no <code>eventLogSchemaVersion</code> bump.</p></blockquote>
 <h2 id="summary">Summary</h2>
 <p>Introduce a protocol-level <code>AgentRef</code> wire shape and a closed set of five <code>agent.*</code> reasoning events (<code>agent.reasoned</code>, <code>agent.toolCalled</code>, <code>agent.toolReturned</code>, <code>agent.handoff</code>, <code>agent.decided</code>). <code>AgentRef</code> identifies which agent took which turn inside a run; the five events expose agent decision-making to observers, debuggers, and replay without prescribing the agent runtime. The shape is additive to v1: pre-RFC-0002 runs simply omit the agent fields and continue to fold correctly.</p>
 <h2 id="motivation">Motivation</h2>

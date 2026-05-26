@@ -225,6 +225,8 @@
 <tr><td><code>packs:yank</code></td><td>Mark a published node-pack version yanked (advisory; existing pins keep resolving)</td></tr>
 <tr><td><code>packs:yank-revert</code></td><td>Reinstate a yanked node-pack version (super-admin)</td></tr>
 <tr><td><code>audit:read</code></td><td>Verify audit-log integrity via <code>GET /v1/audit/verify</code>. Gated on the <code>openwop-audit-log-integrity</code> profile per <code>auth-profiles.md</code>.</td></tr>
+<tr><td><code>workspace:read</code></td><td>Read agent-workspace files via <code>GET /v1/host/workspace/files[/{path}]</code>. Gated on <code>capabilities.workspace.supported</code> (RFC 0059).</td></tr>
+<tr><td><code>workspace:write</code></td><td>Create/replace/delete agent-workspace files via <code>PUT</code>/<code>DELETE /v1/host/workspace/files/{path}</code>. Gated on <code>capabilities.workspace.supported</code> (RFC 0059).</td></tr>
 </tbody></table>
 <p>A server MAY define additional scopes for non-protocol surfaces (e.g., <code>canvas-types:list</code>, <code>projects:list</code> for platform-level keys). Such extensions MUST NOT shadow the names above.</p>
 <p>A key MAY hold any subset of scopes. The server MUST enforce scope checks at the endpoint level, not at the resource level — i.e., <code>runs:cancel</code> does not imply <code>runs:read</code>.</p>

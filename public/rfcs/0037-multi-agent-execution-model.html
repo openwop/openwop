@@ -196,6 +196,7 @@
 <tr><td><strong>Supersedes</strong></td><td>—</td></tr>
 <tr><td><strong>Superseded by</strong></td><td>—</td></tr>
 </tbody></table>
+<blockquote><p><strong>Amended (additive) 2026-05-25:</strong> RFC 0061 adds <code>multiAgent.executionModel.version: 5</code> (stateful agent-loop lifecycle) + an optional <code>iteration</code> field on <code>runOrchestrator.decided</code>; RFC 0063 adds an optional <code>attestation</code> field on <code>core.workflowChain.event</code> (<code>output.harvested</code> phase). Both events are <code>additionalProperties: false</code>, so the new fields are declared in <code>properties</code>; <code>required</code> arrays are unchanged and there is <strong>no <code>eventLogSchemaVersion</code> bump</strong>. Non-breaking per <code>COMPATIBILITY.md</code> §2.1.</p></blockquote>
 <h2 id="summary">Summary</h2>
 <p>Specify the <strong>formal interoperable execution model</strong> for multi-agent workflows: planner→worker handoff state machine, confidence-threshold semantics, agent memory lifecycle across sub-runs, cross-host causation linking, and replay determinism under nondeterministic model emissions. Today these surfaces are partially covered by RFCs 0002 (identities/reasoning events), 0006 (orchestrator/supervisor), 0007 (dispatch), 0022 (input/output mapping), 0024 (reasoning streaming), and 0026 (provider usage) — but no single doc gives the <strong>execution model</strong> as a portable contract. This is the largest single open RFC at standardization scale.</p>
 <h2 id="motivation">Motivation</h2>

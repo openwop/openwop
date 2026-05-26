@@ -251,7 +251,7 @@
 <li><strong>You need a durable-execution runtime with deep production maturity TODAY.</strong> Temporal has a decade of production hardening; openwop has months. Run openwop on top of Temporal where you can.</li>
 <li><strong>You're running a single-host application that doesn't need cross-host portability.</strong> A framework (LangGraph, LangChain) is lower-overhead than implementing a protocol.</li>
 <li><strong>Your enterprise compliance posture requires BPMN + an OMG-recognized standardization body.</strong> openwop's governance is documented but not yet at OMG-class neutrality.</li>
-<li><strong>You need scheduled/cron-driven execution.</strong> openwop is request-driven; scheduling is a host concern, not protocol-defined.</li>
+<li><strong>You need scheduled/cron-driven execution.</strong> openwop is request-driven; scheduling is a host concern. (Qualified: RFC 0052 <code>host.scheduling</code> and RFC 0060 <code>host.heartbeat</code> make <em>bounded, predicate-gated, system-managed</em> time-based initiation an accepted host capability — distinct from an agent running an unbounded background loop on its own clock, which remains out of scope.)</li>
 </ul>
 <hr/>
 <h2 id="how-openwop-integrates-with-the-alternatives">How openwop integrates with the alternatives</h2>

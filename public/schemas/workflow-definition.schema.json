@@ -138,6 +138,11 @@
         },
         "credentialsRef": { "type": "string" },
         "settings": { "type": "object" },
+        "outputRole": {
+          "type": "string",
+          "enum": ["primary", "secondary"],
+          "description": "RFC 0065 — author hint that this terminal node's output is the workflow's primary deliverable (`primary`) or an auxiliary output (`secondary`). Advisory: hosts MUST execute the workflow identically regardless of value. Tooling MAY use the hint to pick which of N terminal nodes' outputs to surface as the run's canonical artifact. Unknown values + absent values fall back to default behavior (show all terminal outputs)."
+        },
         "disabled": { "type": "boolean", "default": false },
         "notes": { "type": "string" },
         "groupId": { "type": "string" },

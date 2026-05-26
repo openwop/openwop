@@ -129,6 +129,8 @@
         "conversation.exchanged",
         "conversation.closed",
         "memory.compacted",
+        "memory.written",
+        "workspace.updated",
         "core.workflowChain.event",
         "core.workflowChain.confidence-escalated",
         "connector.authorized",

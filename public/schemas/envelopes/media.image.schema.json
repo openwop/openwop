@@ -23,6 +23,10 @@
     "mimeType": {
       "type": "string",
       "description": "IANA media type (e.g. `image/png`, `image/jpeg`, `image/webp`). SHOULD match `meta.rendering.mimeType`."
+    },
+    "alt": {
+      "type": "string",
+      "description": "Text alternative for accessibility (RFC 0055 §B). SHOULD be present so a consumer can describe the image to assistive technology; mirrors `meta.rendering.alt` when the producer also sets the rendering hint."
     }
   },
   "additionalProperties": false

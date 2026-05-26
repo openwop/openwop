@@ -27,6 +27,10 @@
     "name": {
       "type": "string",
       "description": "Optional suggested filename for download (e.g. `q3-report.pdf`)."
+    },
+    "alt": {
+      "type": "string",
+      "description": "Text alternative / label for accessibility (RFC 0055 §B); mirrors `meta.rendering.alt` when the producer also sets the rendering hint."
     }
   },
   "additionalProperties": false
