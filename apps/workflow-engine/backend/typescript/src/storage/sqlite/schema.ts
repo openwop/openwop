@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 10;
+export const LATEST_SCHEMA_VERSION = 11;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -355,6 +355,54 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
       );
       CREATE INDEX IF NOT EXISTS idx_messaging_sessions_tenant
         ON messaging_sessions (tenant_id, last_inbound_at DESC);
+    `);
+  },
+  11: (db) => {
+    // Messaging policies / routing rules / identities / delivery log
+    // (demo host-extension; NON-normative). Mirrors ../postgres/schema.ts.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS messaging_policies (
+        connector_id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        dm_policy TEXT NOT NULL,
+        group_policy TEXT NOT NULL,
+        require_mention INTEGER NOT NULL DEFAULT 0,
+        updated_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS messaging_routing_rules (
+        rule_id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        channel TEXT,
+        pattern TEXT NOT NULL,
+        workflow_id TEXT NOT NULL,
+        priority INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_messaging_routing_tenant
+        ON messaging_routing_rules (tenant_id, priority DESC);
+      CREATE TABLE IF NOT EXISTS messaging_identities (
+        identity_id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        display_name TEXT,
+        peers TEXT NOT NULL DEFAULT '[]',
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_messaging_identities_tenant
+        ON messaging_identities (tenant_id);
+      CREATE TABLE IF NOT EXISTS messaging_delivery_log (
+        log_id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        relay_id TEXT,
+        channel TEXT NOT NULL,
+        direction TEXT NOT NULL,
+        conversation_id TEXT NOT NULL,
+        status TEXT NOT NULL,
+        detail TEXT,
+        at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_messaging_delivery_log_tenant
+        ON messaging_delivery_log (tenant_id, at DESC);
     `);
   },
 };

@@ -73,6 +73,54 @@ export interface MessagingSessionRecord {
   lastRunId?: string;
 }
 
+export type DmPolicy = 'pairing' | 'allowlist' | 'open' | 'disabled';
+export type GroupPolicy = 'allowlist' | 'open' | 'disabled';
+
+/** Per-connector access policy (who may DM / activate in groups). */
+export interface MessagingPolicyRecord {
+  connectorId: string;
+  tenantId: string;
+  dmPolicy: DmPolicy;
+  groupPolicy: GroupPolicy;
+  requireMention: boolean;
+  updatedAt: string;
+}
+
+/** A routing rule mapping an inbound match → bound workflow. */
+export interface MessagingRoutingRuleRecord {
+  ruleId: string;
+  tenantId: string;
+  channel?: RelayChannel;
+  /** Match the conversationId/peerId against `pattern` (substring; '*' = any). */
+  pattern: string;
+  workflowId: string;
+  priority: number;
+  createdAt: string;
+}
+
+/** A cross-channel identity linking platform peers to one logical person. */
+export interface MessagingIdentityRecord {
+  identityId: string;
+  tenantId: string;
+  displayName?: string;
+  peers: ReadonlyArray<{ channel: RelayChannel; peerId: string }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** One delivery-log row (inbound ingested or outbound delivered/queued). */
+export interface DeliveryLogRecord {
+  logId: string;
+  tenantId: string;
+  relayId?: string;
+  channel: RelayChannel;
+  direction: 'inbound' | 'outbound';
+  conversationId: string;
+  status: string;
+  detail?: string;
+  at: string;
+}
+
 /**
  * The inbound → run bridge seam. Injected from index.ts where the run
  * pipeline is available. When absent, inbound is recorded but no run created.

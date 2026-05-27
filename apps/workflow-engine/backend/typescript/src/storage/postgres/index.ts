@@ -40,7 +40,11 @@ import type {
 } from '../../types.js';
 import type {
   ChatEgressEnvelope,
+  DeliveryLogRecord,
   MessagingConnectorRecord,
+  MessagingIdentityRecord,
+  MessagingPolicyRecord,
+  MessagingRoutingRuleRecord,
   MessagingSessionRecord,
   RelayDeviceRecord,
 } from '../../messaging/types.js';
@@ -1125,6 +1129,88 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
       return (r.rowCount ?? 0) > 0;
     },
 
+    async upsertMessagingPolicy(record) {
+      await pool.query(
+        `INSERT INTO messaging_policies (connector_id, tenant_id, dm_policy, group_policy, require_mention, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6)
+         ON CONFLICT (connector_id) DO UPDATE SET
+           tenant_id=EXCLUDED.tenant_id, dm_policy=EXCLUDED.dm_policy, group_policy=EXCLUDED.group_policy,
+           require_mention=EXCLUDED.require_mention, updated_at=EXCLUDED.updated_at`,
+        [record.connectorId, record.tenantId, record.dmPolicy, record.groupPolicy, record.requireMention, record.updatedAt],
+      );
+    },
+    async getMessagingPolicy(connectorId) {
+      const { rows } = await pool.query<Row>(`SELECT * FROM messaging_policies WHERE connector_id = $1`, [connectorId]);
+      return rows[0] ? rowToPolicyPg(rows[0]) : null;
+    },
+    async upsertMessagingRoutingRule(record) {
+      await pool.query(
+        `INSERT INTO messaging_routing_rules (rule_id, tenant_id, channel, pattern, workflow_id, priority, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7)
+         ON CONFLICT (rule_id) DO UPDATE SET
+           tenant_id=EXCLUDED.tenant_id, channel=EXCLUDED.channel, pattern=EXCLUDED.pattern,
+           workflow_id=EXCLUDED.workflow_id, priority=EXCLUDED.priority`,
+        [record.ruleId, record.tenantId, record.channel ?? null, record.pattern, record.workflowId, record.priority, record.createdAt],
+      );
+    },
+    async listMessagingRoutingRules(tenantId) {
+      const { rows } = tenantId === undefined
+        ? await pool.query<Row>(`SELECT * FROM messaging_routing_rules ORDER BY priority DESC, created_at ASC`)
+        : await pool.query<Row>(`SELECT * FROM messaging_routing_rules WHERE tenant_id = $1 ORDER BY priority DESC, created_at ASC`, [tenantId]);
+      return rows.map(rowToRoutingRulePg);
+    },
+    async deleteMessagingRoutingRule(ruleId) {
+      const r = await pool.query(`DELETE FROM messaging_routing_rules WHERE rule_id = $1`, [ruleId]);
+      return (r.rowCount ?? 0) > 0;
+    },
+    async upsertMessagingIdentity(record) {
+      await pool.query(
+        `INSERT INTO messaging_identities (identity_id, tenant_id, display_name, peers, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6)
+         ON CONFLICT (identity_id) DO UPDATE SET
+           tenant_id=EXCLUDED.tenant_id, display_name=EXCLUDED.display_name,
+           peers=EXCLUDED.peers, updated_at=EXCLUDED.updated_at`,
+        [record.identityId, record.tenantId, record.displayName ?? null, JSON.stringify(record.peers), record.createdAt, record.updatedAt],
+      );
+    },
+    async getMessagingIdentity(identityId) {
+      const { rows } = await pool.query<Row>(`SELECT * FROM messaging_identities WHERE identity_id = $1`, [identityId]);
+      return rows[0] ? rowToIdentityPg(rows[0]) : null;
+    },
+    async listMessagingIdentities(tenantId) {
+      const { rows } = tenantId === undefined
+        ? await pool.query<Row>(`SELECT * FROM messaging_identities ORDER BY created_at ASC`)
+        : await pool.query<Row>(`SELECT * FROM messaging_identities WHERE tenant_id = $1 ORDER BY created_at ASC`, [tenantId]);
+      return rows.map(rowToIdentityPg);
+    },
+    async deleteMessagingIdentity(identityId) {
+      const r = await pool.query(`DELETE FROM messaging_identities WHERE identity_id = $1`, [identityId]);
+      return (r.rowCount ?? 0) > 0;
+    },
+    async appendDeliveryLog(record) {
+      await pool.query(
+        `INSERT INTO messaging_delivery_log (log_id, tenant_id, relay_id, channel, direction, conversation_id, status, detail, at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [record.logId, record.tenantId, record.relayId ?? null, record.channel, record.direction, record.conversationId, record.status, record.detail ?? null, record.at],
+      );
+    },
+    async listDeliveryLog(filter) {
+      const clauses: string[] = [];
+      const params: unknown[] = [];
+      if (filter.tenantId !== undefined) { params.push(filter.tenantId); clauses.push(`tenant_id = $${params.length}`); }
+      if (filter.channel !== undefined) { params.push(filter.channel); clauses.push(`channel = $${params.length}`); }
+      if (filter.direction !== undefined) { params.push(filter.direction); clauses.push(`direction = $${params.length}`); }
+      if (filter.status !== undefined) { params.push(filter.status); clauses.push(`status = $${params.length}`); }
+      const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+      const limit = Math.max(1, Math.min(filter.limit ?? 100, 1000));
+      params.push(limit);
+      const { rows } = await pool.query<Row>(
+        `SELECT * FROM messaging_delivery_log ${where} ORDER BY at DESC LIMIT $${params.length}`,
+        params,
+      );
+      return rows.map(rowToDeliveryLogPg);
+    },
+
     async close() {
       await pool.end();
     },
@@ -1184,5 +1270,55 @@ function rowToSessionPg(r: Row): MessagingSessionRecord {
     lastInboundAt: r.last_inbound_at as string,
     messageCount: Number(r.message_count),
     lastRunId: (r.last_run_id as string | null) ?? undefined,
+  };
+}
+
+function rowToPolicyPg(r: Row): MessagingPolicyRecord {
+  return {
+    connectorId: r.connector_id as string,
+    tenantId: r.tenant_id as string,
+    dmPolicy: r.dm_policy as MessagingPolicyRecord['dmPolicy'],
+    groupPolicy: r.group_policy as MessagingPolicyRecord['groupPolicy'],
+    requireMention: Boolean(r.require_mention),
+    updatedAt: r.updated_at as string,
+  };
+}
+
+function rowToRoutingRulePg(r: Row): MessagingRoutingRuleRecord {
+  return {
+    ruleId: r.rule_id as string,
+    tenantId: r.tenant_id as string,
+    channel: (r.channel as MessagingRoutingRuleRecord['channel'] | null) ?? undefined,
+    pattern: r.pattern as string,
+    workflowId: r.workflow_id as string,
+    priority: Number(r.priority),
+    createdAt: r.created_at as string,
+  };
+}
+
+function rowToIdentityPg(r: Row): MessagingIdentityRecord {
+  let peers: MessagingIdentityRecord['peers'] = [];
+  try { peers = JSON.parse((r.peers as string) || '[]'); } catch { peers = []; }
+  return {
+    identityId: r.identity_id as string,
+    tenantId: r.tenant_id as string,
+    displayName: (r.display_name as string | null) ?? undefined,
+    peers,
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
+  };
+}
+
+function rowToDeliveryLogPg(r: Row): DeliveryLogRecord {
+  return {
+    logId: r.log_id as string,
+    tenantId: r.tenant_id as string,
+    relayId: (r.relay_id as string | null) ?? undefined,
+    channel: r.channel as DeliveryLogRecord['channel'],
+    direction: r.direction as DeliveryLogRecord['direction'],
+    conversationId: r.conversation_id as string,
+    status: r.status as string,
+    detail: (r.detail as string | null) ?? undefined,
+    at: r.at as string,
   };
 }

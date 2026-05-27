@@ -24,7 +24,11 @@ import type {
 } from '../../types.js';
 import type {
   ChatEgressEnvelope,
+  DeliveryLogRecord,
   MessagingConnectorRecord,
+  MessagingIdentityRecord,
+  MessagingPolicyRecord,
+  MessagingRoutingRuleRecord,
   MessagingSessionRecord,
   RelayDeviceRecord,
 } from '../../messaging/types.js';
@@ -1055,6 +1059,76 @@ export function openSqliteStorage(dbPath: string): Storage {
       return r.changes > 0;
     },
 
+    async upsertMessagingPolicy(record) {
+      db.prepare(
+        `INSERT INTO messaging_policies (connector_id, tenant_id, dm_policy, group_policy, require_mention, updated_at)
+         VALUES (?,?,?,?,?,?)
+         ON CONFLICT(connector_id) DO UPDATE SET
+           dm_policy=excluded.dm_policy, group_policy=excluded.group_policy,
+           require_mention=excluded.require_mention, updated_at=excluded.updated_at`,
+      ).run(record.connectorId, record.tenantId, record.dmPolicy, record.groupPolicy, record.requireMention ? 1 : 0, record.updatedAt);
+    },
+    async getMessagingPolicy(connectorId) {
+      const row = db.prepare(`SELECT * FROM messaging_policies WHERE connector_id = ?`).get(connectorId) as Record<string, unknown> | undefined;
+      return row ? rowToPolicySqlite(row) : null;
+    },
+    async upsertMessagingRoutingRule(record) {
+      db.prepare(
+        `INSERT INTO messaging_routing_rules (rule_id, tenant_id, channel, pattern, workflow_id, priority, created_at)
+         VALUES (?,?,?,?,?,?,?)
+         ON CONFLICT(rule_id) DO UPDATE SET
+           channel=excluded.channel, pattern=excluded.pattern, workflow_id=excluded.workflow_id, priority=excluded.priority`,
+      ).run(record.ruleId, record.tenantId, record.channel ?? null, record.pattern, record.workflowId, record.priority, record.createdAt);
+    },
+    async listMessagingRoutingRules(tenantId) {
+      const rows = tenantId === undefined
+        ? db.prepare(`SELECT * FROM messaging_routing_rules ORDER BY priority DESC, created_at ASC`).all() as Array<Record<string, unknown>>
+        : db.prepare(`SELECT * FROM messaging_routing_rules WHERE tenant_id = ? ORDER BY priority DESC, created_at ASC`).all(tenantId) as Array<Record<string, unknown>>;
+      return rows.map(rowToRoutingRuleSqlite);
+    },
+    async deleteMessagingRoutingRule(ruleId) {
+      return db.prepare(`DELETE FROM messaging_routing_rules WHERE rule_id = ?`).run(ruleId).changes > 0;
+    },
+    async upsertMessagingIdentity(record) {
+      db.prepare(
+        `INSERT INTO messaging_identities (identity_id, tenant_id, display_name, peers, created_at, updated_at)
+         VALUES (?,?,?,?,?,?)
+         ON CONFLICT(identity_id) DO UPDATE SET
+           display_name=excluded.display_name, peers=excluded.peers, updated_at=excluded.updated_at`,
+      ).run(record.identityId, record.tenantId, record.displayName ?? null, JSON.stringify(record.peers ?? []), record.createdAt, record.updatedAt);
+    },
+    async getMessagingIdentity(identityId) {
+      const row = db.prepare(`SELECT * FROM messaging_identities WHERE identity_id = ?`).get(identityId) as Record<string, unknown> | undefined;
+      return row ? rowToIdentitySqlite(row) : null;
+    },
+    async listMessagingIdentities(tenantId) {
+      const rows = tenantId === undefined
+        ? db.prepare(`SELECT * FROM messaging_identities ORDER BY created_at ASC`).all() as Array<Record<string, unknown>>
+        : db.prepare(`SELECT * FROM messaging_identities WHERE tenant_id = ? ORDER BY created_at ASC`).all(tenantId) as Array<Record<string, unknown>>;
+      return rows.map(rowToIdentitySqlite);
+    },
+    async deleteMessagingIdentity(identityId) {
+      return db.prepare(`DELETE FROM messaging_identities WHERE identity_id = ?`).run(identityId).changes > 0;
+    },
+    async appendDeliveryLog(record) {
+      db.prepare(
+        `INSERT INTO messaging_delivery_log (log_id, tenant_id, relay_id, channel, direction, conversation_id, status, detail, at)
+         VALUES (?,?,?,?,?,?,?,?,?)`,
+      ).run(record.logId, record.tenantId, record.relayId ?? null, record.channel, record.direction, record.conversationId, record.status, record.detail ?? null, record.at);
+    },
+    async listDeliveryLog({ tenantId, channel, direction, status, limit = 100 }) {
+      const conds: string[] = [];
+      const params: unknown[] = [];
+      if (tenantId !== undefined) { conds.push('tenant_id = ?'); params.push(tenantId); }
+      if (channel) { conds.push('channel = ?'); params.push(channel); }
+      if (direction) { conds.push('direction = ?'); params.push(direction); }
+      if (status) { conds.push('status = ?'); params.push(status); }
+      const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+      params.push(Math.min(limit, 1000));
+      const rows = db.prepare(`SELECT * FROM messaging_delivery_log ${where} ORDER BY at DESC LIMIT ?`).all(...params) as Array<Record<string, unknown>>;
+      return rows.map(rowToDeliveryLogSqlite);
+    },
+
     async close() {
       db.close();
     },
@@ -1113,6 +1187,56 @@ function rowToSessionSqlite(r: Record<string, unknown>): MessagingSessionRecord 
     lastInboundAt: r.last_inbound_at as string,
     messageCount: Number(r.message_count),
     lastRunId: (r.last_run_id as string | null) ?? undefined,
+  };
+}
+
+function rowToPolicySqlite(r: Record<string, unknown>): MessagingPolicyRecord {
+  return {
+    connectorId: r.connector_id as string,
+    tenantId: r.tenant_id as string,
+    dmPolicy: r.dm_policy as MessagingPolicyRecord['dmPolicy'],
+    groupPolicy: r.group_policy as MessagingPolicyRecord['groupPolicy'],
+    requireMention: Boolean(r.require_mention),
+    updatedAt: r.updated_at as string,
+  };
+}
+
+function rowToRoutingRuleSqlite(r: Record<string, unknown>): MessagingRoutingRuleRecord {
+  return {
+    ruleId: r.rule_id as string,
+    tenantId: r.tenant_id as string,
+    channel: (r.channel as MessagingRoutingRuleRecord['channel'] | null) ?? undefined,
+    pattern: r.pattern as string,
+    workflowId: r.workflow_id as string,
+    priority: Number(r.priority),
+    createdAt: r.created_at as string,
+  };
+}
+
+function rowToIdentitySqlite(r: Record<string, unknown>): MessagingIdentityRecord {
+  let peers: MessagingIdentityRecord['peers'] = [];
+  try { peers = JSON.parse((r.peers as string) || '[]'); } catch { peers = []; }
+  return {
+    identityId: r.identity_id as string,
+    tenantId: r.tenant_id as string,
+    displayName: (r.display_name as string | null) ?? undefined,
+    peers,
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
+  };
+}
+
+function rowToDeliveryLogSqlite(r: Record<string, unknown>): DeliveryLogRecord {
+  return {
+    logId: r.log_id as string,
+    tenantId: r.tenant_id as string,
+    relayId: (r.relay_id as string | null) ?? undefined,
+    channel: r.channel as DeliveryLogRecord['channel'],
+    direction: r.direction as DeliveryLogRecord['direction'],
+    conversationId: r.conversation_id as string,
+    status: r.status as string,
+    detail: (r.detail as string | null) ?? undefined,
+    at: r.at as string,
   };
 }
 
