@@ -5,10 +5,13 @@
  * existing core.dispatch/orchestrator loop, enforcing toolAllowlist (RFC 0002
  * §A14) and confidence escalation (§F).
  *
- * Gated on the capability + the host dispatch seam; soft-skips when either is
- * absent (a v1.0-only host passes the locked-core suite unaffected).
+ * The inventory leg is exercised against the NORMATIVE `GET /v1/agents` surface
+ * (RFC 0072 §A), so it runs black-box against any conformant host. The dispatch
+ * leg uses the sample-extension seam and soft-skips on hosts that don't expose
+ * it (full black-box dispatch is the sequenced executor-integration tier). Both
+ * legs gate on `capabilities.agents.manifestRuntime.supported`.
  *
- * @see RFCS/0070-agent-manifest-runtime.md
+ * @see RFCS/0070-agent-manifest-runtime.md, RFCS/0072-agent-inventory-and-dispatch.md
  */
 
 import { describe, it, expect } from 'vitest';
