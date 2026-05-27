@@ -1,7 +1,9 @@
 /**
  * Webhook routes:
+ *   GET    /v1/webhooks                — list subscriptions (refs only; no secret)
  *   POST   /v1/webhooks                — register subscription
  *   DELETE /v1/webhooks/{subscriptionId} — unregister
+ *   POST   /v1/webhooks/{subscriptionId}/test — fire a signed test delivery
  *
  * Delivery is HMAC-SHA256-signed per spec/v1/webhooks.md §"Signature
  * recipe". The sample fires deliveries inline via `setImmediate` —
@@ -45,6 +47,25 @@ export function registerWebhookRoutes(app: Express, deps: Deps): void {
     deliverToSubscribers(storage, event).catch((err) => {
       log.warn('webhook fanout error', { error: err instanceof Error ? err.message : String(err) });
     });
+  });
+
+  // List subscriptions. Secret is NEVER returned — only refs + metadata, so a
+  // leaked list response can't be replayed to forge a signed delivery.
+  app.get('/v1/webhooks', async (_req, res, next) => {
+    try {
+      const subs = await storage.listWebhooks({});
+      res.status(200).json({
+        subscriptions: subs.map((s) => ({
+          subscriptionId: s.subscriptionId,
+          url: s.url,
+          events: s.events,
+          ...(s.tags ? { tags: s.tags } : {}),
+          createdAt: s.createdAt,
+        })),
+      });
+    } catch (err) {
+      next(err);
+    }
   });
 
   app.post('/v1/webhooks', async (req, res, next) => {
@@ -103,6 +124,41 @@ export function registerWebhookRoutes(app: Express, deps: Deps): void {
       }
       await storage.deleteWebhook(req.params.subscriptionId);
       res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Fire a synthetic, HMAC-signed `webhook.test` delivery to the subscription's
+  // URL so an operator can verify reachability + signature handling end-to-end.
+  // Delivery is fire-and-forget (same setImmediate path as live fanout); the
+  // 202 means "test delivery dispatched", not "endpoint acknowledged".
+  app.post('/v1/webhooks/:subscriptionId/test', async (req, res, next) => {
+    try {
+      const sub = await storage.getWebhook(req.params.subscriptionId);
+      if (!sub) {
+        throw new OpenwopError(
+          'subscription_not_found',
+          `Webhook subscription ${req.params.subscriptionId} not found.`,
+          404,
+          { subscriptionId: req.params.subscriptionId },
+        );
+      }
+      const testEvent: EventRecord = {
+        eventId: randomUUID(),
+        runId: 'webhook-test',
+        sequence: 0,
+        type: 'webhook.test',
+        payload: { message: 'OpenWOP webhook test delivery', subscriptionId: sub.subscriptionId },
+        timestamp: new Date().toISOString(),
+      };
+      setImmediate(() => deliverOne(sub, testEvent).catch(() => undefined));
+      res.status(202).json({
+        subscriptionId: sub.subscriptionId,
+        url: sub.url,
+        dispatched: true,
+        eventType: 'webhook.test',
+      });
     } catch (err) {
       next(err);
     }

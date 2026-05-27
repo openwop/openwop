@@ -1540,3 +1540,202 @@ describe('agents command', () => {
     assert.match(cap.stderr, /HTTP 404/);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// webhooks subcommand (C-9). The /v1/webhooks endpoints are mocked.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('webhooks subcommand', () => {
+  it('list renders a table of subscriptions', async () => {
+    const cap = capture();
+    const fetchImpl = async (url) => {
+      assert.equal(new URL(url).pathname, '/v1/webhooks');
+      return new Response(JSON.stringify({
+        subscriptions: [
+          { subscriptionId: 'sub-1', url: 'https://example.com/hook', events: ['run.completed'], createdAt: '2026-05-26T00:00:00Z' },
+        ],
+      }), { status: 200 });
+    };
+    const code = await runCli(['webhooks', 'list', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    assert.match(cap.stdout, /sub-1/);
+    assert.match(cap.stdout, /run\.completed/);
+  });
+
+  it('list prints a friendly message when there are no subscriptions', async () => {
+    const cap = capture();
+    const fetchImpl = async () => new Response(JSON.stringify({ subscriptions: [] }), { status: 200 });
+    const code = await runCli(['webhooks', 'list', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    assert.match(cap.stdout, /No webhook subscriptions/);
+  });
+
+  it('add POSTs url + events and surfaces the returned secret', async () => {
+    const cap = capture();
+    let posted = null;
+    const fetchImpl = async (url, init) => {
+      const path = new URL(url).pathname;
+      if (path === '/v1/webhooks' && init?.method === 'POST') {
+        posted = JSON.parse(init.body);
+        return new Response(JSON.stringify({ subscriptionId: 'sub-9', url: posted.url, events: posted.events, secret: 'shh-123' }), { status: 201 });
+      }
+      throw new Error(`unexpected: ${path}`);
+    };
+    const code = await runCli(
+      ['webhooks', 'add', 'https://example.com/hook', '--event', 'run.completed', '--event', 'run.failed'],
+      { io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {} },
+    );
+    assert.equal(code, 0);
+    assert.deepEqual(posted.events, ['run.completed', 'run.failed']);
+    assert.equal(posted.url, 'https://example.com/hook');
+    assert.match(cap.stdout, /Registered webhook sub-9/);
+    assert.match(cap.stdout, /shh-123/);
+  });
+
+  it('add fails (exit 2) when no --event is given', async () => {
+    const cap = capture();
+    const code = await runCli(
+      ['webhooks', 'add', 'https://example.com/hook'],
+      { io: cap.io, fetchImpl: async () => { throw new Error('fetch must not run'); }, cwd: process.cwd(), repoRoot: process.cwd(), env: {} },
+    );
+    assert.equal(code, 2);
+    assert.match(cap.stderr, /--event/);
+  });
+
+  it('remove DELETEs the subscription by id', async () => {
+    const cap = capture();
+    let deleted = null;
+    const fetchImpl = async (url, init) => {
+      if (init?.method === 'DELETE') {
+        deleted = new URL(url).pathname;
+        return new Response(null, { status: 204 });
+      }
+      throw new Error('unexpected');
+    };
+    const code = await runCli(['webhooks', 'remove', 'sub-1', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    assert.equal(deleted, '/v1/webhooks/sub-1');
+  });
+
+  it('test POSTs to the {id}/test endpoint and reports dispatch', async () => {
+    const cap = capture();
+    let hit = null;
+    const fetchImpl = async (url, init) => {
+      hit = { path: new URL(url).pathname, method: init?.method };
+      return new Response(JSON.stringify({ subscriptionId: 'sub-1', url: 'https://example.com/hook', dispatched: true, eventType: 'webhook.test' }), { status: 202 });
+    };
+    const code = await runCli(['webhooks', 'test', 'sub-1', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    assert.equal(hit.path, '/v1/webhooks/sub-1/test');
+    assert.equal(hit.method, 'POST');
+    assert.match(cap.stdout, /Test delivery dispatched/);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// cron subcommand (C-6, RFC 0052). The sample scheduler CRUD route is mocked.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('cron subcommand', () => {
+  it('list renders a table of scheduled jobs', async () => {
+    const cap = capture();
+    const fetchImpl = async (url) => {
+      assert.equal(new URL(url).pathname, '/v1/host/sample/scheduler/jobs');
+      return new Response(JSON.stringify({
+        jobs: [{ jobId: 'job-1', cronExpr: '*/5 * * * *', workflowId: 'wf-a', lastFiredTick: 3 }],
+      }), { status: 200 });
+    };
+    const code = await runCli(['cron', 'list', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    assert.match(cap.stdout, /job-1/);
+    assert.match(cap.stdout, /\*\/5 \* \* \* \*/);
+    assert.match(cap.stdout, /wf-a/);
+  });
+
+  it('list prints a friendly message when there are no jobs', async () => {
+    const cap = capture();
+    const fetchImpl = async () => new Response(JSON.stringify({ jobs: [] }), { status: 200 });
+    const code = await runCli(['cron', 'list', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    assert.match(cap.stdout, /No scheduled jobs/);
+  });
+
+  it('add POSTs cronExpr + workflow and prints the created job', async () => {
+    const cap = capture();
+    let posted = null;
+    const fetchImpl = async (url, init) => {
+      const path = new URL(url).pathname;
+      if (path === '/v1/host/sample/scheduler/jobs' && init?.method === 'POST') {
+        posted = JSON.parse(init.body);
+        return new Response(JSON.stringify({ jobId: 'job-7', cronExpr: posted.cronExpr, workflowId: posted.workflowId, lastFiredTick: null }), { status: 201 });
+      }
+      throw new Error(`unexpected: ${path}`);
+    };
+    const code = await runCli(
+      ['cron', 'add', '0 9 * * *', '--workflow', 'wf-a', '--job-id', 'job-7'],
+      { io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {} },
+    );
+    assert.equal(code, 0);
+    assert.equal(posted.cronExpr, '0 9 * * *');
+    assert.equal(posted.workflowId, 'wf-a');
+    assert.equal(posted.jobId, 'job-7');
+    assert.match(cap.stdout, /Scheduled job job-7/);
+  });
+
+  it('add surfaces a schedule_horizon_exceeded rejection as a 4xx error (exit 2)', async () => {
+    const cap = capture();
+    const fetchImpl = async () =>
+      new Response(JSON.stringify({ error: 'schedule_horizon_exceeded', message: 'beyond maxFutureHorizon' }), { status: 400 });
+    const code = await runCli(
+      ['cron', 'add', '0 9 * * *', '--first-fire-at-ms', '99999999999999'],
+      { io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {} },
+    );
+    assert.equal(code, 2);
+    assert.match(cap.stderr, /beyond maxFutureHorizon/);
+  });
+
+  it('remove DELETEs the job by id', async () => {
+    const cap = capture();
+    let deleted = null;
+    const fetchImpl = async (url, init) => {
+      if (init?.method === 'DELETE') {
+        deleted = new URL(url).pathname;
+        return new Response(JSON.stringify({ removed: true, jobId: 'job-1' }), { status: 200 });
+      }
+      throw new Error('unexpected');
+    };
+    const code = await runCli(['cron', 'remove', 'job-1', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    assert.equal(deleted, '/v1/host/sample/scheduler/jobs/job-1');
+  });
+
+  it('trigger POSTs to the {id}/trigger endpoint and reports runs fired', async () => {
+    const cap = capture();
+    let hit = null;
+    const fetchImpl = async (url, init) => {
+      hit = { path: new URL(url).pathname, method: init?.method };
+      return new Response(JSON.stringify({ jobId: 'job-1', runsFired: 1, lastFiredTick: 4 }), { status: 200 });
+    };
+    const code = await runCli(['cron', 'trigger', 'job-1', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    assert.equal(hit.path, '/v1/host/sample/scheduler/jobs/job-1/trigger');
+    assert.equal(hit.method, 'POST');
+    assert.match(cap.stdout, /Fired job-1 — 1 run/);
+  });
+});

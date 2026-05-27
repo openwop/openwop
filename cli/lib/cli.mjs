@@ -173,6 +173,11 @@ export async function runCli(argv, options = {}) {
         return await runAgents(ctx, commandArgs);
       case 'config':
         return await runConfig(ctx, commandArgs);
+      case 'webhooks':
+      case 'webhook':
+        return await runWebhooks(ctx, commandArgs);
+      case 'cron':
+        return await runCron(ctx, commandArgs);
       default:
         throw new CliError(`Unknown command: ${command}\nRun \`openwop --help\` for usage.`);
     }
@@ -327,6 +332,9 @@ function showHelp(io, command) {
     caps: CAPABILITIES_HELP,
     conformance: CONFORMANCE_HELP,
     memory: MEMORY_HELP,
+    webhooks: WEBHOOKS_HELP,
+    webhook: WEBHOOKS_HELP,
+    cron: CRON_HELP,
   };
   write(io.stdout, map[command] ?? ROOT_HELP);
   return 0;
@@ -2740,6 +2748,220 @@ async function runConfig(ctx, argv) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// `openwop webhooks ...` — manage webhook subscriptions (C-9)
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function runWebhooks(ctx, argv) {
+  const sub = argv[0] ?? 'list';
+  const args = argv.slice(['list', 'add', 'remove', 'rm', 'test'].includes(sub) ? 1 : 0);
+  if (sub === '--help' || sub === '-h') {
+    write(ctx.io.stdout, WEBHOOKS_HELP);
+    return 0;
+  }
+  switch (sub) {
+    case 'list':
+      return await runWebhooksList(ctx, args);
+    case 'add':
+      return await runWebhooksAdd(ctx, args);
+    case 'remove':
+    case 'rm':
+      return await runWebhooksRemove(ctx, args);
+    case 'test':
+      return await runWebhooksTest(ctx, args);
+    default:
+      throw new CliError(`Unknown webhooks command: ${sub}\nRun \`openwop webhooks --help\` for usage.`);
+  }
+}
+
+async function runWebhooksList(ctx, argv) {
+  const { options } = parseOptions(argv, { bool: ['--help'] });
+  if (options.help) {
+    write(ctx.io.stdout, WEBHOOKS_HELP);
+    return 0;
+  }
+  const res = await requestJson(ctx, '/v1/webhooks');
+  if (ctx.json) {
+    writeJson(ctx.io.stdout, res.body);
+    return 0;
+  }
+  const subscriptions = Array.isArray(res.body?.subscriptions) ? res.body.subscriptions : [];
+  if (subscriptions.length === 0) {
+    writeLine(ctx.io.stdout, 'No webhook subscriptions. Add one with `openwop webhooks add <url> --event <type>`.');
+    return 0;
+  }
+  const rows = subscriptions.map((s) => ({
+    subscriptionId: s.subscriptionId,
+    url: s.url,
+    events: Array.isArray(s.events) ? s.events.join(',') : '',
+    createdAt: s.createdAt ?? '',
+  }));
+  writeLine(ctx.io.stdout, formatTable(rows, ['subscriptionId', 'url', 'events', 'createdAt']));
+  return 0;
+}
+
+async function runWebhooksAdd(ctx, argv) {
+  const { options, positionals } = parseOptions(argv, {
+    bool: ['--help'],
+    value: ['--secret'],
+    multi: ['--event', '--tag'],
+  });
+  if (options.help || positionals.length !== 1) {
+    write(ctx.io.stdout, 'Usage: openwop webhooks add <url> --event <type> [--event <type> ...] [--tag t] [--secret s] [--json]\n');
+    return options.help ? 0 : 2;
+  }
+  const events = options.event ?? [];
+  if (events.length === 0) {
+    throw new CliError('At least one --event <type> is required.');
+  }
+  const body = {
+    url: positionals[0],
+    events,
+    ...(options.tag ? { tags: options.tag } : {}),
+    ...(options.secret ? { secret: options.secret } : {}),
+  };
+  const res = await requestJson(ctx, '/v1/webhooks', { method: 'POST', body });
+  if (ctx.json) {
+    writeJson(ctx.io.stdout, res.body);
+    return 0;
+  }
+  writeLine(ctx.io.stdout, `✓ Registered webhook ${res.body.subscriptionId} → ${res.body.url}`);
+  if (res.body.secret) {
+    writeLine(ctx.io.stdout, `  Signing secret (shown once): ${res.body.secret}`);
+  }
+  return 0;
+}
+
+async function runWebhooksRemove(ctx, argv) {
+  const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
+  if (options.help || positionals.length !== 1) {
+    write(ctx.io.stdout, 'Usage: openwop webhooks remove <subscriptionId> [--json]\n');
+    return options.help ? 0 : 2;
+  }
+  await requestJson(ctx, `/v1/webhooks/${encodeURIComponent(positionals[0])}`, { method: 'DELETE' });
+  if (ctx.json) writeJson(ctx.io.stdout, { removed: positionals[0] });
+  else writeLine(ctx.io.stdout, `✓ Removed webhook ${positionals[0]}`);
+  return 0;
+}
+
+async function runWebhooksTest(ctx, argv) {
+  const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
+  if (options.help || positionals.length !== 1) {
+    write(ctx.io.stdout, 'Usage: openwop webhooks test <subscriptionId> [--json]\n');
+    return options.help ? 0 : 2;
+  }
+  const res = await requestJson(ctx, `/v1/webhooks/${encodeURIComponent(positionals[0])}/test`, { method: 'POST', body: {} });
+  if (ctx.json) {
+    writeJson(ctx.io.stdout, res.body);
+    return 0;
+  }
+  writeLine(ctx.io.stdout, `✓ Test delivery dispatched to ${res.body.url} (event ${res.body.eventType}).`);
+  return 0;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// `openwop cron ...` — manage scheduled jobs (C-6, RFC 0052)
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function runCron(ctx, argv) {
+  const sub = argv[0] ?? 'list';
+  const args = argv.slice(['list', 'add', 'remove', 'rm', 'trigger'].includes(sub) ? 1 : 0);
+  if (sub === '--help' || sub === '-h') {
+    write(ctx.io.stdout, CRON_HELP);
+    return 0;
+  }
+  switch (sub) {
+    case 'list':
+      return await runCronList(ctx, args);
+    case 'add':
+      return await runCronAdd(ctx, args);
+    case 'remove':
+    case 'rm':
+      return await runCronRemove(ctx, args);
+    case 'trigger':
+      return await runCronTrigger(ctx, args);
+    default:
+      throw new CliError(`Unknown cron command: ${sub}\nRun \`openwop cron --help\` for usage.`);
+  }
+}
+
+async function runCronList(ctx, argv) {
+  const { options } = parseOptions(argv, { bool: ['--help'] });
+  if (options.help) {
+    write(ctx.io.stdout, CRON_HELP);
+    return 0;
+  }
+  const res = await requestJson(ctx, '/v1/host/sample/scheduler/jobs');
+  if (ctx.json) {
+    writeJson(ctx.io.stdout, res.body);
+    return 0;
+  }
+  const jobs = Array.isArray(res.body?.jobs) ? res.body.jobs : [];
+  if (jobs.length === 0) {
+    writeLine(ctx.io.stdout, 'No scheduled jobs. Add one with `openwop cron add "<cronExpr>" --workflow <id>`.');
+    return 0;
+  }
+  const rows = jobs.map((j) => ({
+    jobId: j.jobId,
+    cronExpr: j.cronExpr,
+    workflowId: j.workflowId ?? '',
+    lastFiredTick: j.lastFiredTick ?? '-',
+  }));
+  writeLine(ctx.io.stdout, formatTable(rows, ['jobId', 'cronExpr', 'workflowId', 'lastFiredTick']));
+  return 0;
+}
+
+async function runCronAdd(ctx, argv) {
+  const { options, positionals } = parseOptions(argv, {
+    bool: ['--help'],
+    value: ['--workflow', '--job-id', '--first-fire-at-ms'],
+  });
+  if (options.help || positionals.length !== 1) {
+    write(ctx.io.stdout, 'Usage: openwop cron add "<cronExpr>" [--workflow <id>] [--job-id <id>] [--first-fire-at-ms <ms>] [--json]\n');
+    return options.help ? 0 : 2;
+  }
+  const body = {
+    cronExpr: positionals[0],
+    ...(options.jobId ? { jobId: options.jobId } : {}),
+    ...(options.workflow ? { workflowId: options.workflow } : {}),
+    ...(options.firstFireAtMs !== undefined ? { firstFireAtMs: Number(options.firstFireAtMs) } : {}),
+  };
+  const res = await requestJson(ctx, '/v1/host/sample/scheduler/jobs', { method: 'POST', body });
+  if (ctx.json) {
+    writeJson(ctx.io.stdout, res.body);
+    return 0;
+  }
+  writeLine(ctx.io.stdout, `✓ Scheduled job ${res.body.jobId} (${res.body.cronExpr})`);
+  return 0;
+}
+
+async function runCronRemove(ctx, argv) {
+  const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
+  if (options.help || positionals.length !== 1) {
+    write(ctx.io.stdout, 'Usage: openwop cron remove <jobId> [--json]\n');
+    return options.help ? 0 : 2;
+  }
+  const res = await requestJson(ctx, `/v1/host/sample/scheduler/jobs/${encodeURIComponent(positionals[0])}`, { method: 'DELETE' });
+  if (ctx.json) writeJson(ctx.io.stdout, res.body);
+  else writeLine(ctx.io.stdout, `✓ Removed scheduled job ${positionals[0]}`);
+  return 0;
+}
+
+async function runCronTrigger(ctx, argv) {
+  const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
+  if (options.help || positionals.length !== 1) {
+    write(ctx.io.stdout, 'Usage: openwop cron trigger <jobId> [--json]\n');
+    return options.help ? 0 : 2;
+  }
+  const res = await requestJson(ctx, `/v1/host/sample/scheduler/jobs/${encodeURIComponent(positionals[0])}/trigger`, { method: 'POST', body: {} });
+  if (ctx.json) {
+    writeJson(ctx.io.stdout, res.body);
+    return 0;
+  }
+  writeLine(ctx.io.stdout, `✓ Fired ${positionals[0]} — ${res.body.runsFired} run(s) (tick ${res.body.lastFiredTick}).`);
+  return 0;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Config file + path utilities
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -3310,6 +3532,14 @@ Commands:
   runs ancestry       Show a run's cross-host parent chain (RFC 0040)
   agents list         List agent-attributed node roles on the host
   agents info         Show one agent role's details
+  webhooks list       List webhook subscriptions
+  webhooks add        Register a webhook subscription
+  webhooks remove     Delete a webhook subscription
+  webhooks test       Fire a signed test delivery
+  cron list           List scheduled (cron) jobs
+  cron add            Schedule a cron job
+  cron remove         Delete a scheduled job
+  cron trigger        Fire a scheduled job once now
   conformance         Run the OpenWOP conformance CLI from this repo
 
 Examples:
@@ -3581,4 +3811,41 @@ const CONFIG_HELP = `Usage:
 
 Reads and writes ~/.openwop/config.json (or OPENWOP_CONFIG_HOME/.openwop/ when set).
 Dotted keys traverse nested objects (e.g., \`openwop config get host.baseUrl\`).
+`;
+
+const WEBHOOKS_HELP = `Usage:
+  openwop webhooks list [--json]
+  openwop webhooks add <url> --event <type> [--event <type> ...] [--tag t] [--secret s] [--json]
+  openwop webhooks remove <subscriptionId> [--json]
+  openwop webhooks test <subscriptionId> [--json]
+
+Manage HMAC-signed webhook subscriptions on the configured host (POST/GET/DELETE
+/v1/webhooks per spec/v1/webhooks.md).
+
+  add     Registers a subscription. Supply --event one or more times. When you
+          omit --secret, the host generates one and returns it ONCE in the add
+          response — store it to verify delivery signatures.
+  test    Fires a synthetic, signed \`webhook.test\` delivery to the
+          subscription URL so you can confirm reachability + signature handling.
+          A 202 means the delivery was dispatched, not that the endpoint acked.
+
+Note: \`list\` never returns the signing secret.
+`;
+
+const CRON_HELP = `Usage:
+  openwop cron list [--json]
+  openwop cron add "<cronExpr>" [--workflow <id>] [--job-id <id>] [--first-fire-at-ms <ms>] [--json]
+  openwop cron remove <jobId> [--json]
+  openwop cron trigger <jobId> [--json]
+
+Manage scheduled (cron) jobs on the configured host via the RFC 0052 sample
+scheduler CRUD (/v1/host/sample/scheduler/jobs). This is a sample-extension
+surface — not part of the normative OpenWOP wire contract.
+
+  add      Registers a job. --job-id is optional (the host assigns a UUID when
+           omitted). A --first-fire-at-ms beyond the host's maxFutureHorizon is
+           rejected with schedule_horizon_exceeded (RFC 0052 §B.3).
+  trigger  Fires the job once now. Honors RFC 0052 §B.2 fire-once-per-tick: a
+           single trigger advances the scheduler clock one tick and produces
+           exactly one run.
 `;

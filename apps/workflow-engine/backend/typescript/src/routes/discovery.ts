@@ -78,8 +78,12 @@ export function registerDiscoveryRoutes(app: Express, _deps: Deps): void {
         '/v1/runs/{runId}/events/poll': { get: { summary: 'Poll events (long-poll alternative to SSE)' } },
         '/v1/runs/{runId}/interrupts/{nodeId}': { post: { summary: 'Resolve a node-scoped interrupt' } },
         '/v1/interrupts/{token}': { post: { summary: 'Resolve an interrupt by signed token' } },
-        '/v1/webhooks': { post: { summary: 'Register a webhook subscription' } },
+        '/v1/webhooks': {
+          get: { summary: 'List webhook subscriptions (refs only; no secret)' },
+          post: { summary: 'Register a webhook subscription' },
+        },
         '/v1/webhooks/{subscriptionId}': { delete: { summary: 'Delete a webhook subscription' } },
+        '/v1/webhooks/{subscriptionId}/test': { post: { summary: 'Fire a signed test delivery to a webhook subscription' } },
         '/v1/packs': { get: { summary: 'List installed packs' } },
 
         // RFC 0028 — prompt library. The reference host serves all
@@ -119,6 +123,16 @@ export function registerDiscoveryRoutes(app: Express, _deps: Deps): void {
         },
         '/v1/host/sample/daemon-status': {
           get: { summary: 'Report demo-backend pid / startTime / uptimeSeconds / lastHeartbeat for CLI lifecycle commands', tags: ['sample-extension'] },
+        },
+        '/v1/host/sample/scheduler/jobs': {
+          get: { summary: 'List scheduled cron jobs (RFC 0052 sample CRUD)', tags: ['sample-extension'] },
+          post: { summary: 'Register a scheduled cron job; rejects beyond maxFutureHorizon with schedule_horizon_exceeded (RFC 0052 §B)', tags: ['sample-extension'] },
+        },
+        '/v1/host/sample/scheduler/jobs/{jobId}': {
+          delete: { summary: 'Remove a scheduled cron job (RFC 0052 sample CRUD)', tags: ['sample-extension'] },
+        },
+        '/v1/host/sample/scheduler/jobs/{jobId}/trigger': {
+          post: { summary: 'Fire a scheduled job once now (RFC 0052 §B.2 fire-once-per-tick)', tags: ['sample-extension'] },
         },
         '/v1/host/sample/chat/sessions': {
           get: { summary: 'List chat sessions for the calling tenant', tags: ['sample-extension'] },
