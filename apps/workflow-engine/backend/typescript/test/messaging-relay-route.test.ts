@@ -321,6 +321,29 @@ describe('messaging relay-gateway — delivery log', () => {
     const outbound = await get('/logs?direction=outbound', OP);
     expect(outbound.body.entries.some((e: any) => e.status === 'queued')).toBe(true);
   });
+
+  it('clamps ?limit — positive bounds, and rejects negative/non-numeric without dumping or erroring', async () => {
+    const { relayId } = await activeRelay('signal');
+    // Seed three outbound entries.
+    for (let i = 0; i < 3; i++) {
+      await post('/relay/enqueue', OP, { relayId, conversationId: 'climit', text: `m${i}` });
+    }
+
+    const one = await get('/logs?limit=1', OP);
+    expect(one.status).toBe(200);
+    expect(one.body.entries).toHaveLength(1);
+
+    // SQLite treats a negative LIMIT as unbounded; the clamp must coerce -1 to
+    // the default (100), NOT return the whole table and NOT error.
+    const neg = await get('/logs?limit=-1', OP);
+    expect(neg.status).toBe(200);
+    expect(neg.body.entries.length).toBeLessThanOrEqual(100);
+
+    // Non-numeric limit must not reach the driver as NaN (would 500).
+    const nan = await get('/logs?limit=abc', OP);
+    expect(nan.status).toBe(200);
+    expect(Array.isArray(nan.body.entries)).toBe(true);
+  });
 });
 
 describe('messaging relay-gateway — notify', () => {

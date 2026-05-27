@@ -562,7 +562,7 @@ export function registerMessagingRoutes(app: Express, deps: Deps): void {
         ...(optionalString(req.query.channel) ? { channel: assertChannel(req.query.channel) } : {}),
         ...(optionalString(req.query.direction) ? { direction: assertDirection(req.query.direction) } : {}),
         ...(optionalString(req.query.status) ? { status: String(req.query.status) } : {}),
-        ...(optionalString(req.query.limit) ? { limit: Number(req.query.limit) } : {}),
+        ...(optionalString(req.query.limit) ? { limit: clampLimit(req.query.limit) } : {}),
       };
       const entries = await storage.listDeliveryLog(filter);
       res.json({ entries });
@@ -724,6 +724,18 @@ function requireString(raw: unknown, field: string): string {
 
 function optionalString(raw: unknown): string | undefined {
   return typeof raw === 'string' && raw.length > 0 ? raw : undefined;
+}
+
+/**
+ * Coerce a `?limit=` query value to a sane positive integer in [1, 1000].
+ * Non-numeric / non-positive inputs fall back to the default (100) — important
+ * because SQLite treats a negative LIMIT as "unbounded", so an unclamped
+ * `?limit=-1` would otherwise dump the whole table on the sqlite/memory host.
+ */
+function clampLimit(raw: unknown, fallback = 100): number {
+  const n = Math.floor(Number(raw));
+  if (!Number.isFinite(n) || n < 1) return fallback;
+  return Math.min(n, 1000);
 }
 
 /** Host default policy: DM pairing required, groups allowlist-only, mention required. */

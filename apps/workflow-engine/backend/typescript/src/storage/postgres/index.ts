@@ -1202,7 +1202,9 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
       if (filter.direction !== undefined) { params.push(filter.direction); clauses.push(`direction = $${params.length}`); }
       if (filter.status !== undefined) { params.push(filter.status); clauses.push(`status = $${params.length}`); }
       const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
-      const limit = Math.max(1, Math.min(filter.limit ?? 100, 1000));
+      // Clamp to [1, 1000]; coerce a non-finite limit (e.g. NaN) to the default.
+      const rawLimit = filter.limit ?? 100;
+      const limit = Number.isFinite(rawLimit) && rawLimit >= 1 ? Math.min(Math.floor(rawLimit), 1000) : 100;
       params.push(limit);
       const { rows } = await pool.query<Row>(
         `SELECT * FROM messaging_delivery_log ${where} ORDER BY at DESC LIMIT $${params.length}`,
