@@ -680,3 +680,36 @@ func parseEnvelope(raw []byte) *ErrorEnvelope {
 	}
 	return &env
 }
+
+// ListAgents returns the manifest agents this host has installed (RFC 0072 §A).
+// Read-only; returns (nil, nil) when the host doesn't advertise
+// capabilities.agents.manifestRuntime (the endpoint 404s). Dispatch is not here:
+// a manifest agent runs as a CreateRun whose workflow node pins it via
+// WorkflowNode.agent (RFC 0072 §B).
+func (c *OpenwopClient) ListAgents(ctx context.Context) (*AgentInventoryResponse, error) {
+	var out AgentInventoryResponse
+	err := c.requestJSON(ctx, http.MethodGet, "/v1/agents", nil, nil, true, &out)
+	if err != nil {
+		var werr *WopError
+		if errors.As(err, &werr) && (werr.Status == 404 || werr.Status == 501) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetAgent returns one installed manifest agent's inventory entry, or (nil, nil)
+// when absent / the capability is unadvertised (404) (RFC 0072 §A).
+func (c *OpenwopClient) GetAgent(ctx context.Context, agentID string) (*AgentInventoryEntry, error) {
+	var out AgentInventoryEntry
+	err := c.requestJSON(ctx, http.MethodGet, "/v1/agents/"+url.PathEscape(agentID), nil, nil, true, &out)
+	if err != nil {
+		var werr *WopError
+		if errors.As(err, &werr) && (werr.Status == 404 || werr.Status == 501) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &out, nil
+}
