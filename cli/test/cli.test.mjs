@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { generateKeyPairSync, sign as ed25519Sign, createHash } from 'node:crypto';
+import { gzipSync } from 'node:zlib';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 import { configPathFor, consumeSse, extractAssistantText, extractGlobalOptions, formatTable, readConfigSafe, renderEvent, runCli, saveConfig, streamRunEvents, submitTurn, summarizeCapabilities } from '../lib/cli.mjs';
-
-/** Build a web ReadableStream of UTF-8 bytes from a list of string chunks. */
 function byteStream(chunks) {
   const encoder = new TextEncoder();
   let i = 0;
@@ -780,5 +780,312 @@ describe('chat — REPL loop', () => {
     // --json mode prints the raw event record, not the pretty "assistant>" line.
     assert.match(cap.stdout, /"type": "run.completed"/);
     assert.doesNotMatch(cap.stdout, /assistant>/);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// packs subcommand (gap 6 / item C-5). Mocks the read-only signed registry —
+// /v1/index.json, /v1/packs/{name}/index.json, the version manifest, the
+// signed .tgz + detached .sig, and the publisher /keys/{keyId}.pub. The
+// install happy-path exercises real Ed25519 verification against a tarball
+// signed in-test (method 'manual' = signature over the pack.json bytes).
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Minimal RFC 8785-style canonical JSON (matches build-pack-tarball.mjs).
+function canonical(value) {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return '[' + value.map(canonical).join(',') + ']';
+  return '{' + Object.keys(value).sort().map((k) => JSON.stringify(k) + ':' + canonical(value[k])).join(',') + '}';
+}
+
+// Minimal deterministic USTAR + gzip (mirrors the production writer).
+function tarGz(entries) {
+  const header = (name, size) => {
+    const buf = Buffer.alloc(512, 0);
+    const oct = (n, len, off) => buf.write(n.toString(8).padStart(len - 1, '0') + '\0', off, len, 'ascii');
+    buf.write(name, 0, 100, 'ascii');
+    oct(0o644, 8, 100); oct(0, 8, 108); oct(0, 8, 116); oct(size, 12, 124); oct(0, 12, 136);
+    for (let i = 148; i < 156; i++) buf[i] = 0x20;
+    buf[156] = 0x30;
+    buf.write('ustar\0', 257, 6, 'ascii'); buf.write('00', 263, 2, 'ascii');
+    let s = 0; for (let i = 0; i < 512; i++) s += buf[i];
+    oct(s, 8, 148);
+    return buf;
+  };
+  const chunks = [];
+  for (const { name, content } of entries) {
+    chunks.push(header(name, content.length), content);
+    const pad = 512 - (content.length % 512);
+    if (pad !== 512) chunks.push(Buffer.alloc(pad, 0));
+  }
+  chunks.push(Buffer.alloc(1024, 0));
+  const gz = gzipSync(Buffer.concat(chunks), { level: 9 });
+  gz[4] = 0; gz[5] = 0; gz[6] = 0; gz[7] = 0; gz[9] = 0xff;
+  return gz;
+}
+
+// Build a signed-pack registry fixture: returns {tgz, sig, pubPem, manifest, index, packIndex}.
+function buildSignedPackFixture(name = 'community.test.demo', version = '0.2.0', keyId = 'test-key-1') {
+  const { publicKey, privateKey } = generateKeyPairSync('ed25519');
+  const baseManifest = {
+    name, version,
+    description: 'A test pack for CLI install verification.',
+    license: 'MIT',
+    author: 'Test',
+    nodes: [{ typeId: `${name}.echo`, version }],
+    signing: { method: 'manual', publicKeyRef: keyId, signatureRef: 'keys/pack.json.sig' },
+    publishedAt: '2026-05-26T00:00:00Z',
+    deprecated: false,
+    yanked: false,
+  };
+  // method 'manual' signs the canonical pack.json bytes embedded in the tarball.
+  const canonicalBytes = Buffer.from(canonical(baseManifest), 'utf8');
+  const sig = ed25519Sign(null, canonicalBytes, privateKey);
+  const entries = [
+    { name: 'keys/pack.json.sig', content: sig },
+    { name: 'pack.json', content: canonicalBytes },
+  ].sort((a, b) => (a.name < b.name ? -1 : 1));
+  const tgz = tarGz(entries);
+  const integrity = 'sha256-' + createHash('sha256').update(tgz).digest('base64');
+  const manifest = { ...baseManifest, signing: { ...baseManifest.signing, keyId }, integrity };
+  return {
+    tgz, sig,
+    pubPem: publicKey.export({ type: 'spki', format: 'pem' }),
+    manifest,
+    keyId, name, version, integrity,
+    packIndex: {
+      name, kind: 'node', latest: version, license: 'MIT', author: 'Test',
+      description: baseManifest.description,
+      versions: [{ version, signingKeyId: keyId, integrity, yanked: false, deprecated: false }],
+    },
+    index: {
+      registryVersion: '1.0.0', packCount: 1,
+      packs: [{ name, kind: 'node', latestVersion: version, description: baseManifest.description, license: 'MIT', tags: ['test'], typeIds: [`${name}.echo`], deprecated: false, yanked: false }],
+    },
+  };
+}
+
+// Registry fetch mock driven by a fixture.
+function registryFetch(fx) {
+  return async (url) => {
+    const u = new URL(url);
+    const p = u.pathname;
+    const enc = encodeURIComponent(fx.name);
+    if (p === '/v1/index.json') return new Response(JSON.stringify(fx.index), { status: 200 });
+    if (p === `/v1/packs/${enc}/index.json`) return new Response(JSON.stringify(fx.packIndex), { status: 200 });
+    if (p === `/v1/packs/${enc}/-/${fx.version}.json`) return new Response(JSON.stringify(fx.manifest), { status: 200 });
+    if (p === `/v1/packs/${enc}/-/${fx.version}.tgz`) return new Response(fx.tgz, { status: 200 });
+    if (p === `/v1/packs/${enc}/-/${fx.version}.sig`) return new Response(fx.sig, { status: 200 });
+    if (p === `/keys/${fx.keyId}.pub`) return new Response(fx.pubPem, { status: 200 });
+    return new Response(JSON.stringify({ message: 'not_found' }), { status: 404 });
+  };
+}
+
+describe('packs search', () => {
+  it('filters the registry index by query and prints a table', async () => {
+    const fx = buildSignedPackFixture();
+    const cap = capture();
+    const code = await runCli(['packs', 'search', 'test', '--registry-url', 'http://registry.local'], {
+      io: cap.io, fetchImpl: registryFetch(fx), cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    assert.match(cap.stdout, /community\.test\.demo/);
+    assert.match(cap.stdout, /0\.2\.0/);
+  });
+
+  it('emits JSON with a total when --json is set', async () => {
+    const fx = buildSignedPackFixture();
+    const cap = capture();
+    const code = await runCli(['--json', 'packs', 'search', '--registry-url', 'http://registry.local'], {
+      io: cap.io, fetchImpl: registryFetch(fx), cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    const parsed = JSON.parse(cap.stdout);
+    assert.equal(parsed.total, 1);
+    assert.equal(parsed.packs[0].name, 'community.test.demo');
+  });
+
+  it('reports no matches for a query that hits nothing', async () => {
+    const fx = buildSignedPackFixture();
+    const cap = capture();
+    const code = await runCli(['packs', 'search', 'zzz-nomatch', '--registry-url', 'http://registry.local'], {
+      io: cap.io, fetchImpl: registryFetch(fx), cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    assert.match(cap.stdout, /No packs match/);
+  });
+});
+
+describe('packs info', () => {
+  it('prints pack metadata and version table', async () => {
+    const fx = buildSignedPackFixture();
+    const cap = capture();
+    const code = await runCli(['packs', 'info', 'community.test.demo', '--registry-url', 'http://registry.local'], {
+      io: cap.io, fetchImpl: registryFetch(fx), cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    assert.match(cap.stdout, /Name:\s+community\.test\.demo/);
+    assert.match(cap.stdout, /test-key-1/);
+  });
+
+  it('fetches the version manifest when --version is given (JSON)', async () => {
+    const fx = buildSignedPackFixture();
+    const cap = capture();
+    const code = await runCli(['--json', 'packs', 'info', 'community.test.demo', '--version', '0.2.0', '--registry-url', 'http://registry.local'], {
+      io: cap.io, fetchImpl: registryFetch(fx), cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    const parsed = JSON.parse(cap.stdout);
+    assert.equal(parsed.requestedVersion.version, '0.2.0');
+    assert.equal(parsed.requestedVersion.signing.keyId, 'test-key-1');
+  });
+
+  it('requires a pack name', async () => {
+    const cap = capture();
+    const code = await runCli(['packs', 'info'], {
+      io: cap.io, fetchImpl: async () => { throw new Error('no fetch'); }, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 2);
+    assert.match(cap.stderr, /requires a pack name/);
+  });
+});
+
+describe('packs install', () => {
+  let tmp;
+  beforeEach(() => { tmp = mkdtempSync(join(tmpdir(), 'openwop-packs-')); });
+  afterEach(() => { rmSync(tmp, { recursive: true, force: true }); });
+
+  it('downloads, integrity-checks, signature-verifies, and writes the tarball', async () => {
+    const fx = buildSignedPackFixture();
+    const cap = capture();
+    const code = await runCli(
+      ['--json', 'packs', 'install', 'community.test.demo@0.2.0', '--dir', tmp, '--registry-url', 'http://registry.local'],
+      { io: cap.io, fetchImpl: registryFetch(fx), cwd: process.cwd(), repoRoot: process.cwd(), env: {} },
+    );
+    assert.equal(code, 0);
+    const parsed = JSON.parse(cap.stdout);
+    assert.equal(parsed.name, 'community.test.demo');
+    assert.equal(parsed.version, '0.2.0');
+    assert.match(parsed.signature, /^verified/);
+    assert.equal(parsed.integrity, fx.integrity);
+    // Tarball written to <dir>/<name>/<version>/<version>.tgz.
+    const written = readFileSync(join(tmp, 'community.test.demo', '0.2.0', '0.2.0.tgz'));
+    assert.equal(written.length, fx.tgz.length);
+  });
+
+  it('resolves the latest version when none is given', async () => {
+    const fx = buildSignedPackFixture();
+    const cap = capture();
+    const code = await runCli(
+      ['--json', 'packs', 'install', 'community.test.demo', '--dir', tmp, '--registry-url', 'http://registry.local'],
+      { io: cap.io, fetchImpl: registryFetch(fx), cwd: process.cwd(), repoRoot: process.cwd(), env: {} },
+    );
+    assert.equal(code, 0);
+    assert.equal(JSON.parse(cap.stdout).version, '0.2.0');
+  });
+
+  it('fails (exit 1) when the signature does not verify', async () => {
+    const fx = buildSignedPackFixture();
+    // Corrupt the signature so Ed25519 verification fails.
+    fx.sig = Buffer.from(fx.sig); fx.sig[0] ^= 0xff;
+    const cap = capture();
+    const code = await runCli(
+      ['packs', 'install', 'community.test.demo@0.2.0', '--dir', tmp, '--registry-url', 'http://registry.local'],
+      { io: cap.io, fetchImpl: registryFetch(fx), cwd: process.cwd(), repoRoot: process.cwd(), env: {} },
+    );
+    assert.equal(code, 1);
+    assert.match(cap.stderr, /Signature verification FAILED/);
+  });
+
+  it('fails (exit 1) on an integrity mismatch', async () => {
+    const fx = buildSignedPackFixture();
+    fx.manifest = { ...fx.manifest, integrity: 'sha256-WRONGWRONGWRONG=' };
+    const cap = capture();
+    const code = await runCli(
+      ['packs', 'install', 'community.test.demo@0.2.0', '--dir', tmp, '--no-verify', '--registry-url', 'http://registry.local'],
+      { io: cap.io, fetchImpl: registryFetch(fx), cwd: process.cwd(), repoRoot: process.cwd(), env: {} },
+    );
+    assert.equal(code, 1);
+    assert.match(cap.stderr, /Integrity mismatch/);
+  });
+
+  it('refuses to install a yanked version', async () => {
+    const fx = buildSignedPackFixture();
+    fx.manifest = { ...fx.manifest, yanked: true };
+    const cap = capture();
+    const code = await runCli(
+      ['packs', 'install', 'community.test.demo@0.2.0', '--dir', tmp, '--registry-url', 'http://registry.local'],
+      { io: cap.io, fetchImpl: registryFetch(fx), cwd: process.cwd(), repoRoot: process.cwd(), env: {} },
+    );
+    assert.equal(code, 1);
+    assert.match(cap.stderr, /yanked/);
+  });
+});
+
+describe('packs publish', () => {
+  let tmp;
+  beforeEach(() => { tmp = mkdtempSync(join(tmpdir(), 'openwop-publish-')); });
+  afterEach(() => { rmSync(tmp, { recursive: true, force: true }); });
+
+  it('packages + signs a local pack dir into a tarball + sig', async () => {
+    // Lay down a minimal pack source dir + an Ed25519 PEM private key.
+    const packDir = join(tmp, 'pack');
+    mkdirSync(packDir, { recursive: true });
+    writeFileSync(join(packDir, 'pack.json'), JSON.stringify({ name: 'community.test.pub', version: '1.0.0', nodes: [] }, null, 2));
+    const { privateKey } = generateKeyPairSync('ed25519');
+    const keyPath = join(tmp, 'key.pem');
+    writeFileSync(keyPath, privateKey.export({ type: 'pkcs8', format: 'pem' }));
+    const outDir = join(tmp, 'out');
+    const cap = capture();
+    const code = await runCli(
+      ['--json', 'packs', 'publish', packDir, '--key', keyPath, '--key-id', 'test-key-1', '--out', outDir],
+      { io: cap.io, fetchImpl: async () => { throw new Error('publish must not fetch'); }, cwd: process.cwd(), repoRoot: process.cwd(), env: {} },
+    );
+    assert.equal(code, 0);
+    const parsed = JSON.parse(cap.stdout);
+    assert.equal(parsed.name, 'community.test.pub');
+    assert.equal(parsed.keyId, 'test-key-1');
+    assert.equal(parsed.writeApi, false);
+    // Artifacts exist.
+    assert.ok(readFileSync(join(outDir, 'community.test.pub-1.0.0.tgz')).length > 0);
+    assert.equal(readFileSync(join(outDir, 'community.test.pub-1.0.0.sig')).length, 64);
+  });
+
+  it('requires a pack.json in the target dir', async () => {
+    const cap = capture();
+    const code = await runCli(['packs', 'publish', tmp], {
+      io: cap.io, fetchImpl: async () => { throw new Error('no fetch'); }, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 2);
+    assert.match(cap.stderr, /No pack\.json/);
+  });
+});
+
+describe('packs yank', () => {
+  let tmp;
+  beforeEach(() => { tmp = mkdtempSync(join(tmpdir(), 'openwop-yank-')); });
+  afterEach(() => { rmSync(tmp, { recursive: true, force: true }); });
+
+  it('flips yanked:true in a local registry-checkout manifest', async () => {
+    const manifestDir = join(tmp, 'registry', 'v1', 'packs', 'community.test.demo', '-');
+    mkdirSync(manifestDir, { recursive: true });
+    const mfPath = join(manifestDir, '0.2.0.json');
+    writeFileSync(mfPath, JSON.stringify({ name: 'community.test.demo', version: '0.2.0', yanked: false }, null, 2));
+    const cap = capture();
+    const code = await runCli(['packs', 'yank', 'community.test.demo@0.2.0'], {
+      io: cap.io, fetchImpl: async () => { throw new Error('no fetch'); }, cwd: process.cwd(), repoRoot: tmp, env: {},
+    });
+    assert.equal(code, 0);
+    assert.match(cap.stdout, /Yanked community\.test\.demo@0\.2\.0/);
+    assert.equal(JSON.parse(readFileSync(mfPath, 'utf8')).yanked, true);
+  });
+
+  it('errors when the version manifest is not in the local checkout', async () => {
+    const cap = capture();
+    const code = await runCli(['packs', 'yank', 'community.test.demo', '--version', '9.9.9'], {
+      io: cap.io, fetchImpl: async () => { throw new Error('no fetch'); }, cwd: process.cwd(), repoRoot: tmp, env: {},
+    });
+    assert.equal(code, 2);
+    assert.match(cap.stderr, /not found/);
   });
 });
