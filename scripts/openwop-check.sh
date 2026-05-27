@@ -74,7 +74,10 @@ echo "[2/9] Conformance suite (typecheck + server-free scenarios)..."
   npx vitest run \
     src/scenarios/fixtures-valid.test.ts \
     src/scenarios/spec-corpus-validity.test.ts \
-    src/scenarios/ai-envelope-shape.test.ts
+    src/scenarios/ai-envelope-shape.test.ts \
+    src/scenarios/artifact-type-pack-manifest-validation.test.ts \
+    src/scenarios/artifact-schema-compile-bounded.test.ts \
+    src/scenarios/chat-card-pack-manifest-validation.test.ts
 )
 echo
 

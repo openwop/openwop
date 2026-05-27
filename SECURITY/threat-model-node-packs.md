@@ -140,6 +140,11 @@ Host loads pack module in `vm.createContext` with no built-in `require`, no netw
 | `node-pack-sandbox-isolated-context` | Sandbox context MUST be reset between invocations; cross-invocation global state MUST NOT leak. |
 | `node-pack-output-untrusted` | Pack output MUST be treated as untrusted content; downstream prompt-injection invariants apply. |
 | `node-pack-no-decidedby-emit` | Pack output MUST NOT influence the `decidedBy` field on any persisted approval / refine event. |
+| `artifact-schema-compile-bounded` | Hosts MUST bound compilation of third-party artifact schemas shipped by artifact-type packs (`kind: "artifact-type"`, RFC 0071) — rejecting schemas that exceed host limits on serialized byte size, `$ref` nesting depth, and total keyword/subschema count, and compiling under a wall-clock timeout — so a schema bomb (`$ref` recursion, keyword explosion, oversized payload, catastrophic-backtracking `pattern`) cannot cause denial of service. Over-bounds packs are rejected at registry `PUT`/install with `pack_validation_failed`. The artifact-schema analog of the tarball/manifest size caps above. |
+
+### Distributed artifact schemas (T6)
+
+Artifact-type packs (RFC 0071) extend the supply-chain surface: in addition to a runtime artifact, an artifact-type pack ships one or more **JSON Schemas** (`artifactTypes[].schemaRef`) that the engine compiles and runs at install + artifact-validation time. An attacker who can publish (or compromise the publisher of) such a pack can ship a *schema bomb* — pathological `$ref` recursion, keyword-count explosion, an oversized document, or a catastrophic-backtracking `pattern` — that exhausts CPU or memory when the engine compiles it. This is mitigated by `artifact-schema-compile-bounded`: the same bounded-input discipline already applied to tarballs and manifests (`node-pack-*-size-cap`), extended to the compiled schema. The server-free conformance floor (`artifact-schema-compile-bounded.test.ts`) asserts the contract is present and that a reference finite bound catches the bomb classes.
 
 ## 6. Residual risks
 
