@@ -223,6 +223,82 @@ describe('runs create --wait', () => {
   });
 });
 
+describe('runs events / annotations / debug-bundle', () => {
+  function ctxOpts(cap, fetchImpl, extra = {}) {
+    return { io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {}, ...extra };
+  }
+
+  it('events poll forwards --since as lastSequence and tabulates events', async () => {
+    const cap = capture();
+    let seenQuery = '';
+    const fetchImpl = async (url) => {
+      const u = new URL(url);
+      seenQuery = u.search;
+      assert.equal(u.pathname, '/v1/runs/r-1/events/poll');
+      return new Response(JSON.stringify({ events: [{ sequence: 4, type: 'node.completed', nodeId: 'n1', timestamp: 't' }], isComplete: true }), { status: 200 });
+    };
+    const code = await runCli(['runs', 'events', 'r-1', '--since', '3'], ctxOpts(cap, fetchImpl));
+    assert.equal(code, 0, cap.stderr);
+    assert.match(seenQuery, /lastSequence=3/);
+    assert.match(cap.stdout, /node\.completed/);
+    assert.match(cap.stdout, /run complete/);
+  });
+
+  it('annotations lists, and annotate posts a rating signal', async () => {
+    const cap = capture();
+    let posted;
+    const fetchImpl = async (url, init) => {
+      const path = new URL(url).pathname;
+      if (path === '/v1/runs/r-1/annotations' && (init?.method ?? 'GET') === 'GET') {
+        return new Response(JSON.stringify({ annotations: [{ annotationId: 'a1', signal: { kind: 'rating', rating: 5 }, note: 'good', createdAt: 't' }] }), { status: 200 });
+      }
+      if (path === '/v1/runs/r-1/annotations' && init?.method === 'POST') {
+        posted = JSON.parse(init.body);
+        return new Response(JSON.stringify({ annotationId: 'a2', signal: posted.signal }), { status: 201 });
+      }
+      throw new Error(`unexpected fetch: ${path}`);
+    };
+    let code = await runCli(['runs', 'annotations', 'r-1'], ctxOpts(cap, fetchImpl));
+    assert.equal(code, 0, cap.stderr);
+    assert.match(cap.stdout, /a1.*rating.*5/);
+
+    const cap2 = capture();
+    code = await runCli(['runs', 'annotate', 'r-1', '--rating', '5', '--note', 'nice'], ctxOpts(cap2, fetchImpl));
+    assert.equal(code, 0, cap2.stderr);
+    assert.equal(posted.signal.kind, 'rating');
+    assert.equal(posted.signal.rating, 5);
+    assert.equal(posted.note, 'nice');
+    assert.match(cap2.stdout, /Annotation a2 \(rating\)/);
+  });
+
+  it('annotate requires a signal kind', async () => {
+    const cap = capture();
+    const code = await runCli(['runs', 'annotate', 'r-1'], ctxOpts(cap, async () => { throw new Error('no fetch'); }));
+    assert.equal(code, 2);
+    assert.match(cap.stderr, /one of --rating, --label, --correction, or --flag is required/);
+  });
+
+  it('debug-bundle writes to --out and reports the event count', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'owop-bundle-'));
+    const out = join(dir, 'bundle.json');
+    try {
+      const cap = capture();
+      const fetchImpl = async (url) => {
+        assert.equal(new URL(url).pathname, '/v1/runs/r-1/debug-bundle');
+        return new Response(JSON.stringify({ runId: 'r-1', workflowId: 'wf', status: 'completed', events: [{ sequence: 1, type: 'run.created' }], truncated: false }), { status: 200 });
+      };
+      const code = await runCli(['runs', 'debug-bundle', 'r-1', '--out', out], ctxOpts(cap, fetchImpl));
+      assert.equal(code, 0, cap.stderr);
+      assert.match(cap.stdout, /Wrote debug bundle for r-1/);
+      const saved = JSON.parse(readFileSync(out, 'utf8'));
+      assert.equal(saved.runId, 'r-1');
+      assert.equal(saved.events.length, 1);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
 describe('media commands', () => {
   it('generate-image POSTs the prompt and prints the stub asset table', async () => {
     const cap = capture();

@@ -1430,7 +1430,7 @@ async function runWorkflowsDelete(ctx: Ctx, argv) {
 
 async function runRuns(ctx: Ctx, argv) {
   const sub = argv[0] ?? 'list';
-  const args = argv.slice(['list', 'create', 'get', 'cancel', 'ancestry'].includes(sub) ? 1 : 0);
+  const args = argv.slice(['list', 'create', 'get', 'cancel', 'ancestry', 'events', 'annotations', 'annotate', 'debug-bundle'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
     write(ctx.io.stdout, RUNS_HELP);
     return 0;
@@ -1446,6 +1446,14 @@ async function runRuns(ctx: Ctx, argv) {
       return runRunsCancel(ctx, args);
     case 'ancestry':
       return runRunsAncestry(ctx, args);
+    case 'events':
+      return runRunsEvents(ctx, args);
+    case 'annotations':
+      return runRunsAnnotations(ctx, args);
+    case 'annotate':
+      return runRunsAnnotate(ctx, args);
+    case 'debug-bundle':
+      return runRunsDebugBundle(ctx, args);
     default:
       throw new CliError(`Unknown runs command: ${sub}`);
   }
@@ -1540,6 +1548,106 @@ async function runRunsCancel(ctx: Ctx, argv) {
   const res = await requestJson(ctx, `/v1/runs/${encodeURIComponent(positionals[0])}/cancel`, { method: 'POST', body });
   if (ctx.json) writeJson(ctx.io.stdout, res.body);
   else writeLine(ctx.io.stdout, `Cancelled ${positionals[0]}`);
+  return 0;
+}
+
+async function runRunsEvents(ctx: Ctx, argv) {
+  const { options, positionals } = parseOptions(argv, { bool: ['--help'], value: ['--since', '--limit'] });
+  if (options.help || positionals.length !== 1) {
+    write(ctx.io.stdout, 'Usage: openwop runs events <runId> [--since <sequence>] [--limit <n>] [--json]\n');
+    return options.help ? 0 : 2;
+  }
+  const query = new URLSearchParams();
+  if (options.since !== undefined) query.set('lastSequence', String(options.since));
+  if (options.limit !== undefined) query.set('limit', String(options.limit));
+  const qs = query.toString();
+  const res = await requestJson(ctx, `/v1/runs/${encodeURIComponent(positionals[0])}/events/poll${qs ? `?${qs}` : ''}`);
+  if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+  const events = Array.isArray(res.body?.events) ? res.body.events : [];
+  if (events.length === 0) { writeLine(ctx.io.stdout, 'No events.'); return 0; }
+  writeLine(ctx.io.stdout, formatTable(
+    events.map((e) => ({ seq: String(e.sequence), type: e.type, nodeId: e.nodeId ?? '', timestamp: e.timestamp ?? '' })),
+    ['seq', 'type', 'nodeId', 'timestamp'],
+  ));
+  if (res.body?.isComplete) writeLine(ctx.io.stdout, '(run complete)');
+  return 0;
+}
+
+async function runRunsAnnotations(ctx: Ctx, argv) {
+  const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
+  if (options.help || positionals.length !== 1) {
+    write(ctx.io.stdout, 'Usage: openwop runs annotations <runId> [--json]\n');
+    return options.help ? 0 : 2;
+  }
+  const res = await requestJson(ctx, `/v1/runs/${encodeURIComponent(positionals[0])}/annotations`);
+  if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+  const annotations = Array.isArray(res.body?.annotations) ? res.body.annotations : [];
+  if (annotations.length === 0) { writeLine(ctx.io.stdout, 'No annotations. Add one with `openwop runs annotate <runId> --rating 5`.'); return 0; }
+  writeLine(ctx.io.stdout, formatTable(
+    annotations.map((a) => ({
+      annotationId: a.annotationId,
+      kind: a.signal?.kind ?? '',
+      detail: a.signal?.rating ?? a.signal?.label ?? a.signal?.correction ?? '',
+      note: a.note ?? '',
+      createdAt: a.createdAt ?? '',
+    })),
+    ['annotationId', 'kind', 'detail', 'note', 'createdAt'],
+  ));
+  return 0;
+}
+
+async function runRunsAnnotate(ctx: Ctx, argv) {
+  const { options, positionals } = parseOptions(argv, {
+    bool: ['--help', '--flag'],
+    value: ['--rating', '--label', '--correction', '--note', '--event-id', '--node-id'],
+  });
+  if (options.help || positionals.length !== 1) {
+    write(ctx.io.stdout, 'Usage: openwop runs annotate <runId> (--rating 1-5 | --label <text> | --correction <text> | --flag) [--note text] [--event-id id] [--node-id id] [--json]\n');
+    return options.help ? 0 : 2;
+  }
+  // Exactly one signal kind.
+  const signal: Record<string, unknown> = {};
+  if (options.rating !== undefined) { signal.kind = 'rating'; signal.rating = Number(options.rating); }
+  else if (options.label !== undefined) { signal.kind = 'label'; signal.label = options.label; }
+  else if (options.correction !== undefined) { signal.kind = 'correction'; signal.correction = options.correction; }
+  else if (options.flag) { signal.kind = 'flag'; }
+  else throw new CliError('one of --rating, --label, --correction, or --flag is required.');
+
+  const target: Record<string, unknown> = {};
+  if (options.eventId) target.eventId = options.eventId;
+  if (options.nodeId) target.nodeId = options.nodeId;
+  const body = {
+    signal,
+    ...(Object.keys(target).length ? { target } : {}),
+    ...(options.note ? { note: options.note } : {}),
+  };
+  const res = await requestJson(ctx, `/v1/runs/${encodeURIComponent(positionals[0])}/annotations`, { method: 'POST', body });
+  if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+  writeLine(ctx.io.stdout, `✓ Annotation ${res.body.annotationId} (${res.body.signal?.kind}) on ${positionals[0]}`);
+  return 0;
+}
+
+async function runRunsDebugBundle(ctx: Ctx, argv) {
+  const { options, positionals } = parseOptions(argv, { bool: ['--help'], value: ['--max-events', '--out'] });
+  if (options.help || positionals.length !== 1) {
+    write(ctx.io.stdout, 'Usage: openwop runs debug-bundle <runId> [--max-events <n>] [--out <file>] [--json]\n');
+    return options.help ? 0 : 2;
+  }
+  const query = new URLSearchParams();
+  if (options.maxEvents !== undefined) query.set('maxEvents', String(options.maxEvents));
+  const qs = query.toString();
+  const res = await requestJson(ctx, `/v1/runs/${encodeURIComponent(positionals[0])}/debug-bundle${qs ? `?${qs}` : ''}`);
+  if (options.out) {
+    writeFileSync(options.out, JSON.stringify(res.body, null, 2) + '\n', 'utf8');
+    if (!ctx.quiet) writeLine(ctx.io.stdout, `✓ Wrote debug bundle for ${res.body.runId} → ${options.out} (${(res.body.events ?? []).length} events${res.body.truncated ? ', truncated' : ''})`);
+    return 0;
+  }
+  if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+  writeLine(ctx.io.stdout, `runId: ${res.body.runId}`);
+  writeLine(ctx.io.stdout, `workflowId: ${res.body.workflowId}`);
+  writeLine(ctx.io.stdout, `status: ${res.body.status}`);
+  writeLine(ctx.io.stdout, `events: ${(res.body.events ?? []).length}${res.body.truncated ? ' (truncated)' : ''}`);
+  writeLine(ctx.io.stdout, 'Pass --out <file> to save the full bundle, or --json to print it.');
   return 0;
 }
 
@@ -3166,6 +3274,10 @@ Commands:
   workflows register  Register a workflow JSON file with the demo app
   runs create         Create a run
   runs list           List recent runs
+  runs events         Poll a run's events (JSON)
+  runs annotate       Attach a review signal (rating/label/correction/flag)
+  runs annotations    List a run's annotations
+  runs debug-bundle   Export a run's event bundle (--out to save)
   chat                Interactive streaming chat REPL over a workflow
   memory list         List demo MemoryAdapter entries (tenant-scoped)
   memory search       Search memory entries by text or tag
@@ -3337,6 +3449,15 @@ const RUNS_HELP = `Usage:
   openwop runs get <runId> [--json]
   openwop runs cancel <runId> [--reason text] [--json]
   openwop runs ancestry <runId> [--json]
+  openwop runs events <runId> [--since <sequence>] [--limit n] [--json]
+  openwop runs annotations <runId> [--json]
+  openwop runs annotate <runId> (--rating 1-5 | --label t | --correction t | --flag) [--note t] [--event-id id] [--node-id id]
+  openwop runs debug-bundle <runId> [--max-events n] [--out file] [--json]
+
+\`runs events\` polls GET /v1/runs/{runId}/events/poll (JSON, not SSE); --since N
+returns events with sequence > N. \`runs annotate\` posts a review signal
+(rating/label/correction/flag) and \`runs annotations\` lists them. \`runs
+debug-bundle\` exports a run's full event bundle — pass --out to save it to a file.
 
 The \`runs ancestry\` command walks the RFC 0040 cross-host parent chain from the
 requested run up to its top-level root (each run has one parent, so the ancestry
