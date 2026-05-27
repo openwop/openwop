@@ -117,6 +117,9 @@ export function registerDiscoveryRoutes(app: Express, _deps: Deps): void {
         '/v1/host/sample/demo-summary': {
           get: { summary: 'Summarize demo-app readiness for CLI and diagnostics', tags: ['sample-extension'] },
         },
+        '/v1/host/sample/daemon-status': {
+          get: { summary: 'Report demo-backend pid / startTime / uptimeSeconds / lastHeartbeat for CLI lifecycle commands', tags: ['sample-extension'] },
+        },
         '/v1/host/sample/chat/sessions': {
           get: { summary: 'List chat sessions for the calling tenant', tags: ['sample-extension'] },
           post: { summary: 'Create a new chat session', tags: ['sample-extension'] },

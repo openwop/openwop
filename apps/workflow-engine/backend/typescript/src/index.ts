@@ -66,6 +66,7 @@ import { registerMemoryCompactionSeamRoutes } from './routes/memoryCompactionSea
 import { registerWorkspaceRoutes } from './routes/workspace.js';
 import { registerMediaAssetRoutes } from './routes/mediaAssets.js';
 import { registerDemoSummaryRoutes } from './routes/demoSummary.js';
+import { registerDaemonStatusRoutes } from './routes/daemonStatus.js';
 
 const log = createLogger('workflow-engine');
 
@@ -88,6 +89,9 @@ export function loadConfigFromEnv(): AppConfig {
 }
 
 export async function createApp(config: AppConfig): Promise<Express> {
+  // Captured at boot so the daemon-status route can report a stable
+  // start time even if process.uptime() drifts under heavy load.
+  const startTimeMs = Date.now();
   // OTel must initialize before any spans are created downstream.
   createTracer({
     serviceName: config.serviceName,
@@ -301,6 +305,7 @@ export async function createApp(config: AppConfig): Promise<Express> {
   registerWorkflowRoutes(app, { hostSuite });
   registerNodeCatalogRoute(app);
   registerDemoSummaryRoutes(app, { config });
+  registerDaemonStatusRoutes(app, { config, startTimeMs });
 
   // Express 4 catch-all (no path string — avoids path-to-regexp v6 issue).
   app.use((_req, res) => {

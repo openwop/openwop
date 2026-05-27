@@ -1,5 +1,8 @@
 import { spawn, spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import {
+  chmodSync, createReadStream, existsSync, mkdirSync, openSync,
+  readFileSync, readdirSync, rmSync, statSync, watch, writeFileSync,
+} from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join, relative, resolve as resolvePath } from 'node:path';
@@ -363,6 +366,38 @@ async function runDoctor(ctx, argv) {
   if (health.ok) checks.push(ok('demo health', `${ctx.baseUrl}/health responded`));
   else checks.push(warn('demo health', `demo is not reachable at ${ctx.baseUrl} (${health.message})`));
 
+  // Daemon-status row — prefer the live D-1 route; fall back to the PID file.
+  const daemon = await safeRequest(ctx, '/v1/host/sample/daemon-status');
+  if (daemon.ok && daemon.body) {
+    const b = daemon.body;
+    checks.push(ok('daemon', `pid ${b.pid ?? '?'}, up ${b.uptimeSeconds ?? '?'}s (since ${b.startTime ?? '?'})`));
+  } else {
+    const record = readDaemonRecord(ctx.env);
+    if (record && record.pid && processAlive(record.pid)) {
+      checks.push(warn('daemon', `PID file says pid ${record.pid} is running but ${ctx.baseUrl}/v1/host/sample/daemon-status is unreachable`));
+    } else if (record && record.pid) {
+      checks.push(warn('daemon', `stale PID file (pid ${record.pid} not running); run \`openwop demo stop\` to clear it`));
+    } else {
+      checks.push(warn('daemon', 'no demo backend daemon detected; start one with `openwop demo start --detach`'));
+    }
+  }
+
+  // Provider-reachability rows — one per stored BYOK credential ref.
+  const byok = await safeRequest(ctx, '/v1/host/sample/byok/secrets');
+  if (byok.ok) {
+    const secrets = Array.isArray(byok.body?.secrets) ? byok.body.secrets : [];
+    if (secrets.length === 0) {
+      checks.push(warn('providers', 'no BYOK credentials stored; run `openwop onboard` or `openwop providers add <provider>`'));
+    } else {
+      for (const secret of secrets) {
+        const ref = typeof secret === 'string' ? secret : secret.credentialRef;
+        checks.push(ok(`provider ${ref}`, 'credential stored on the host'));
+      }
+    }
+  } else {
+    checks.push(warn('providers', `could not list BYOK credentials (${byok.error})`));
+  }
+
   if (ctx.json) {
     writeJson(ctx.io.stdout, { checks });
   } else {
@@ -384,6 +419,14 @@ async function runDemo(ctx, argv) {
       return runDemoStatus(ctx, args);
     case 'start':
       return runDemoStart(ctx, args);
+    case 'stop':
+      return runDemoStop(ctx, args);
+    case 'restart':
+      return runDemoRestart(ctx, args);
+    case 'logs':
+      return runDemoLogs(ctx, args);
+    case 'install':
+      return runDemoInstall(ctx, args);
     case 'urls':
       return runDemoUrls(ctx, args);
     default:
@@ -470,7 +513,7 @@ async function runDemoUrls(ctx, argv) {
 
 async function runDemoStart(ctx, argv) {
   const { options } = parseOptions(argv, {
-    bool: ['--help', '--backend-only', '--frontend-only', '--install', '--dry-run'],
+    bool: ['--help', '--backend-only', '--frontend-only', '--install', '--dry-run', '--detach'],
     value: ['--backend-port', '--frontend-port'],
   });
   if (options.help) {
@@ -513,6 +556,50 @@ async function runDemoStart(ctx, argv) {
     }
   }
 
+  // Refuse to start a second instance over a still-running one.
+  const existing = readDaemonRecord(ctx.env);
+  if (existing && processAlive(existing.pid)) {
+    throw new CliError(`A demo backend is already running (pid ${existing.pid}). Run \`openwop demo stop\` first or \`openwop demo restart\`.`);
+  }
+
+  const logPath = daemonLogPath(ctx.env);
+
+  // Detached mode: spawn the backend as a background process, write a PID
+  // file + log file, and return immediately so `stop`/`restart`/`logs`
+  // can manage it later. Only the backend is daemonized; the frontend is
+  // a dev tool meant to run in the foreground.
+  if (options.detach) {
+    if (!startBackend) {
+      throw new CliError('--detach manages the backend; combine it without --frontend-only.');
+    }
+    mkdirSync(dirname(logPath), { recursive: true });
+    const out = openSync(logPath, 'a');
+    const err = openSync(logPath, 'a');
+    const child = spawn(npmCommand(), ['run', 'dev'], {
+      cwd: backend,
+      env: { ...ctx.env, PORT: String(backendPort), OPENWOP_API_KEY: apiKey },
+      stdio: ['ignore', out, err],
+      detached: true,
+    });
+    child.unref();
+    writeDaemonRecord(ctx.env, {
+      pid: child.pid,
+      startedAt: new Date().toISOString(),
+      backendPort,
+      baseUrl: `http://localhost:${backendPort}`,
+      logPath,
+      cwd: backend,
+    });
+    if (ctx.json) {
+      writeJson(ctx.io.stdout, { pid: child.pid, backendPort, logPath, detached: true });
+    } else {
+      writeLine(ctx.io.stdout, `Started OpenWOP demo backend (pid ${child.pid}) at http://localhost:${backendPort}`);
+      writeLine(ctx.io.stdout, `Logs: ${logPath}`);
+      writeLine(ctx.io.stdout, 'Manage it with `openwop demo status|logs|stop|restart`.');
+    }
+    return 0;
+  }
+
   writeLine(ctx.io.stdout, `Starting OpenWOP demo backend at http://localhost:${backendPort}`);
   if (startFrontend) writeLine(ctx.io.stdout, `Starting OpenWOP demo frontend at http://localhost:${frontendPort}`);
   writeLine(ctx.io.stdout, 'Press Ctrl-C to stop.');
@@ -529,9 +616,29 @@ async function runDemoStart(ctx, argv) {
           }),
     };
     const child = spawn(command.cmd, command.args, { cwd: command.cwd, env, stdio: ['inherit', 'pipe', 'pipe'] });
-    child.stdout.on('data', (chunk) => prefixChunk(ctx.io.stdout, command.label, chunk));
-    child.stderr.on('data', (chunk) => prefixChunk(ctx.io.stderr, command.label, chunk));
+    // Mirror the backend's stdout/stderr into the daemon log file so
+    // `openwop demo logs` works even for a foreground start.
+    const logStream = command.label === 'backend' ? openLogStream(logPath) : null;
+    child.stdout.on('data', (chunk) => {
+      prefixChunk(ctx.io.stdout, command.label, chunk);
+      if (logStream !== null) writeLog(logStream, chunk);
+    });
+    child.stderr.on('data', (chunk) => {
+      prefixChunk(ctx.io.stderr, command.label, chunk);
+      if (logStream !== null) writeLog(logStream, chunk);
+    });
     child.on('error', (err) => writeLine(ctx.io.stderr, `${command.label}: ${err.message}`));
+    if (command.label === 'backend' && child.pid) {
+      writeDaemonRecord(ctx.env, {
+        pid: child.pid,
+        startedAt: new Date().toISOString(),
+        backendPort,
+        baseUrl: `http://localhost:${backendPort}`,
+        logPath,
+        cwd: backend,
+        foreground: true,
+      });
+    }
     return { ...command, child };
   });
 
@@ -539,6 +646,7 @@ async function runDemoStart(ctx, argv) {
     for (const { child } of children) {
       if (!child.killed) child.kill('SIGTERM');
     }
+    clearDaemonRecord(ctx.env);
   };
   process.once('SIGINT', stop);
   process.once('SIGTERM', stop);
@@ -557,6 +665,190 @@ async function runDemoStart(ctx, argv) {
     }
   });
   return exitCode;
+}
+
+async function runDemoStop(ctx, argv) {
+  const { options } = parseOptions(argv, {
+    bool: ['--help', '--force'],
+    value: ['--timeout-ms'],
+  });
+  if (options.help) {
+    write(ctx.io.stdout, DEMO_STOP_HELP);
+    return 0;
+  }
+  const record = readDaemonRecord(ctx.env);
+  if (!record || !record.pid) {
+    writeLine(ctx.io.stdout, 'No demo backend PID file found; nothing to stop.');
+    return 0;
+  }
+  if (!processAlive(record.pid)) {
+    clearDaemonRecord(ctx.env);
+    writeLine(ctx.io.stdout, `Process ${record.pid} is not running; cleared stale PID file.`);
+    return 0;
+  }
+
+  const signal = options.force ? 'SIGKILL' : 'SIGTERM';
+  try {
+    process.kill(record.pid, signal);
+  } catch (err) {
+    if (err && err.code === 'EPERM') {
+      throw new CliError(`Not permitted to signal pid ${record.pid}. It may belong to another user.`);
+    }
+    throw new CliError(`Failed to signal pid ${record.pid}: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  // Wait for the process to actually exit (unless we already SIGKILLed).
+  const timeoutMs = Number(options.timeoutMs ?? 5000);
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline && processAlive(record.pid)) {
+    await sleep(150);
+  }
+  if (processAlive(record.pid) && !options.force) {
+    process.kill(record.pid, 'SIGKILL');
+    await sleep(150);
+  }
+
+  clearDaemonRecord(ctx.env);
+  if (ctx.json) writeJson(ctx.io.stdout, { stopped: record.pid, signal });
+  else writeLine(ctx.io.stdout, `Stopped demo backend (pid ${record.pid}) with ${signal}.`);
+  return 0;
+}
+
+async function runDemoRestart(ctx, argv) {
+  const { options } = parseOptions(argv, {
+    bool: ['--help'],
+    value: ['--backend-port'],
+  });
+  if (options.help) {
+    write(ctx.io.stdout, DEMO_RESTART_HELP);
+    return 0;
+  }
+  // restart = stop + detached start. Preserve the prior backend port unless
+  // the caller overrides it.
+  const prior = readDaemonRecord(ctx.env);
+  const stopCode = await runDemoStop(ctx, []);
+  if (stopCode !== 0) return stopCode;
+  const startArgs = ['--detach', '--backend-only'];
+  const port = options.backendPort ?? (prior ? String(prior.backendPort) : undefined);
+  if (port) startArgs.push('--backend-port', port);
+  return runDemoStart(ctx, startArgs);
+}
+
+async function runDemoLogs(ctx, argv) {
+  const { options } = parseOptions(argv, {
+    bool: ['--help', '--follow'],
+    value: ['--lines'],
+  });
+  if (options.help) {
+    write(ctx.io.stdout, DEMO_LOGS_HELP);
+    return 0;
+  }
+  const logPath = (readDaemonRecord(ctx.env)?.logPath) ?? daemonLogPath(ctx.env);
+  if (!existsSync(logPath)) {
+    writeLine(ctx.io.stderr, `No log file at ${logPath}. Start the demo with \`openwop demo start --detach\`.`);
+    return 2;
+  }
+
+  const lineCount = Number(options.lines ?? 50);
+  const existing = readFileSync(logPath, 'utf8');
+  const lines = existing.split('\n');
+  const tail = lines.slice(Math.max(0, lines.length - lineCount - 1));
+  write(ctx.io.stdout, tail.join('\n'));
+  if (tail.length && !tail[tail.length - 1].endsWith('\n')) writeLine(ctx.io.stdout, '');
+
+  if (!options.follow) return 0;
+
+  // Follow mode: stream new bytes appended after the current end of file.
+  let offset = Buffer.byteLength(existing, 'utf8');
+  return await new Promise((resolve) => {
+    const emit = () => {
+      let size;
+      try { size = statSync(logPath).size; } catch { return; }
+      if (size < offset) offset = 0; // truncated / rotated
+      if (size === offset) return;
+      const stream = createReadStream(logPath, { start: offset, end: size - 1, encoding: 'utf8' });
+      stream.on('data', (chunk) => write(ctx.io.stdout, chunk));
+      stream.on('end', () => { offset = size; });
+    };
+    const watcher = watch(logPath, { persistent: true }, emit);
+    const finish = () => {
+      watcher.close();
+      resolve(0);
+    };
+    process.once('SIGINT', finish);
+    process.once('SIGTERM', finish);
+  });
+}
+
+async function runDemoInstall(ctx, argv) {
+  const { options } = parseOptions(argv, {
+    bool: ['--help', '--dry-run', '--uninstall'],
+    value: ['--backend-port', '--label'],
+  });
+  if (options.help) {
+    write(ctx.io.stdout, DEMO_INSTALL_HELP);
+    return 0;
+  }
+  const root = requireRepoRoot(ctx);
+  const backendPort = Number(options.backendPort ?? ctx.env.PORT ?? 8080);
+  const label = options.label ?? 'dev.openwop.demo';
+  const plan = buildServiceInstallPlan({
+    platform: process.platform,
+    root,
+    backendPort,
+    label,
+    apiKey: ctx.apiKey ?? DEFAULT_API_KEY,
+    env: ctx.env,
+    uninstall: Boolean(options.uninstall),
+  });
+
+  if (plan.unsupported) {
+    // Windows + any other platform: print clear guidance, no file write.
+    if (ctx.json) writeJson(ctx.io.stdout, { platform: process.platform, supported: false, guidance: plan.guidance });
+    else { writeLine(ctx.io.stdout, plan.guidance); }
+    return 0;
+  }
+
+  if (options.dryRun || ctx.json) {
+    if (ctx.json) {
+      writeJson(ctx.io.stdout, {
+        platform: process.platform,
+        action: options.uninstall ? 'uninstall' : 'install',
+        path: plan.path,
+        manager: plan.manager,
+        activate: plan.activate,
+        contents: plan.uninstall ? undefined : plan.contents,
+      });
+    } else {
+      writeLine(ctx.io.stdout, `Would write ${plan.manager} unit to:`);
+      writeLine(ctx.io.stdout, `  ${plan.path}`);
+      if (!plan.uninstall) {
+        writeLine(ctx.io.stdout, '--- file contents ---');
+        write(ctx.io.stdout, plan.contents.endsWith('\n') ? plan.contents : `${plan.contents}\n`);
+        writeLine(ctx.io.stdout, '--- end ---');
+      }
+      writeLine(ctx.io.stdout, `Activate with: ${plan.activate}`);
+    }
+    return 0;
+  }
+
+  if (plan.uninstall) {
+    if (existsSync(plan.path)) {
+      rmSync(plan.path);
+      writeLine(ctx.io.stdout, `Removed ${plan.path}`);
+    } else {
+      writeLine(ctx.io.stdout, `No unit file at ${plan.path}; nothing to remove.`);
+    }
+    writeLine(ctx.io.stdout, `Deactivate any running instance with: ${plan.deactivate}`);
+    return 0;
+  }
+
+  mkdirSync(dirname(plan.path), { recursive: true });
+  writeFileSync(plan.path, plan.contents.endsWith('\n') ? plan.contents : `${plan.contents}\n`, 'utf8');
+  try { chmodSync(plan.path, 0o644); } catch { /* best-effort */ }
+  writeLine(ctx.io.stdout, `Wrote ${plan.manager} unit to ${plan.path}`);
+  writeLine(ctx.io.stdout, `Activate with: ${plan.activate}`);
+  return 0;
 }
 
 async function runHealth(ctx, argv) {
@@ -2199,6 +2491,180 @@ function unsetByPath(obj, path) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Demo daemon lifecycle — PID file + log file under ~/.openwop/
+// (honors OPENWOP_CONFIG_HOME exactly like configPathFor).
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function openwopHomeDir(env = process.env) {
+  const home = env.OPENWOP_CONFIG_HOME ?? homedir();
+  return join(home, '.openwop');
+}
+
+export function daemonPidPath(env = process.env) {
+  return join(openwopHomeDir(env), 'demo-backend.pid.json');
+}
+
+export function daemonLogPath(env = process.env) {
+  return join(openwopHomeDir(env), 'demo-backend.log');
+}
+
+export function readDaemonRecord(env = process.env) {
+  try {
+    const path = daemonPidPath(env);
+    if (!existsSync(path)) return null;
+    return JSON.parse(readFileSync(path, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+function writeDaemonRecord(env, record) {
+  const path = daemonPidPath(env);
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, `${JSON.stringify(record, null, 2)}\n`, 'utf8');
+  try { chmodSync(path, 0o600); } catch { /* best-effort on Windows */ }
+}
+
+function clearDaemonRecord(env) {
+  try {
+    const path = daemonPidPath(env);
+    if (existsSync(path)) rmSync(path);
+  } catch { /* best-effort */ }
+}
+
+export function processAlive(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    // Signal 0 performs error checking without delivering a signal.
+    process.kill(pid, 0);
+    return true;
+  } catch (err) {
+    // ESRCH: no such process. EPERM: exists but not ours → still alive.
+    return err && err.code === 'EPERM';
+  }
+}
+
+function openLogStream(path) {
+  try {
+    mkdirSync(dirname(path), { recursive: true });
+    return openSync(path, 'a');
+  } catch {
+    return null;
+  }
+}
+
+function writeLog(fd, chunk) {
+  try {
+    writeFileSync(fd, chunk);
+  } catch { /* best-effort; never crash the dev loop over a log write */ }
+}
+
+// Build a per-platform service-install plan. Pure (no fs side effects) so it
+// can be unit-tested and dry-run printed. Returns either an `unsupported`
+// plan with guidance text, or a writable plan with path/contents/activate.
+export function buildServiceInstallPlan(input) {
+  const { platform, root, backendPort, label, apiKey, env, uninstall } = input;
+  const nodeBin = process.execPath;
+  const backendDir = join(root, 'apps/workflow-engine/backend/typescript');
+  const home = env.HOME ?? homedir();
+  const npm = platform === 'win32' ? 'npm.cmd' : 'npm';
+
+  if (platform === 'darwin') {
+    const path = join(home, 'Library/LaunchAgents', `${label}.plist`);
+    const contents = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">',
+      '<plist version="1.0">',
+      '<dict>',
+      '  <key>Label</key>',
+      `  <string>${label}</string>`,
+      '  <key>ProgramArguments</key>',
+      '  <array>',
+      `    <string>${npm}</string>`,
+      '    <string>run</string>',
+      '    <string>dev</string>',
+      '  </array>',
+      '  <key>WorkingDirectory</key>',
+      `  <string>${backendDir}</string>`,
+      '  <key>EnvironmentVariables</key>',
+      '  <dict>',
+      '    <key>PORT</key>',
+      `    <string>${backendPort}</string>`,
+      '    <key>OPENWOP_API_KEY</key>',
+      `    <string>${apiKey}</string>`,
+      '  </dict>',
+      '  <key>RunAtLoad</key>',
+      '  <true/>',
+      '  <key>KeepAlive</key>',
+      '  <true/>',
+      '  <key>StandardOutPath</key>',
+      `  <string>${daemonLogPath(env)}</string>`,
+      '  <key>StandardErrorPath</key>',
+      `  <string>${daemonLogPath(env)}</string>`,
+      '</dict>',
+      '</plist>',
+    ].join('\n');
+    return {
+      manager: 'launchd LaunchAgent',
+      path,
+      contents,
+      uninstall: Boolean(uninstall),
+      activate: `launchctl load -w ${path}`,
+      deactivate: `launchctl unload -w ${path}`,
+    };
+  }
+
+  if (platform === 'linux') {
+    const path = join(home, '.config/systemd/user', `${label}.service`);
+    const contents = [
+      '[Unit]',
+      'Description=OpenWOP workflow-engine demo backend',
+      'After=network.target',
+      '',
+      '[Service]',
+      'Type=simple',
+      `WorkingDirectory=${backendDir}`,
+      `Environment=PORT=${backendPort}`,
+      `Environment=OPENWOP_API_KEY=${apiKey}`,
+      `ExecStart=${npm} run dev`,
+      'Restart=on-failure',
+      '',
+      '[Install]',
+      'WantedBy=default.target',
+    ].join('\n');
+    return {
+      manager: 'systemd user unit',
+      path,
+      contents,
+      uninstall: Boolean(uninstall),
+      activate: `systemctl --user daemon-reload && systemctl --user enable --now ${label}.service`,
+      deactivate: `systemctl --user disable --now ${label}.service`,
+    };
+  }
+
+  // Windows + anything else: no file is written. Give a concrete recipe.
+  const guidance = platform === 'win32'
+    ? [
+        'Automatic service install is not wired for Windows yet.',
+        'Create a Scheduled Task that runs the demo backend at logon:',
+        '',
+        `  schtasks /Create /TN "${label}" /SC ONLOGON /TR ^`,
+        `    "cmd /c cd /d ${backendDir} && set PORT=${backendPort}&& set OPENWOP_API_KEY=${apiKey}&& ${npm} run dev"`,
+        '',
+        'Remove it later with:',
+        `  schtasks /Delete /TN "${label}" /F`,
+        '',
+        `(Node runtime: ${nodeBin})`,
+      ].join('\n')
+    : [
+        `Automatic service install is not supported on platform "${platform}".`,
+        'Run the backend under your platform process manager with:',
+        `  cd ${backendDir} && PORT=${backendPort} OPENWOP_API_KEY=${apiKey} ${npm} run dev`,
+      ].join('\n');
+  return { unsupported: true, guidance };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Interactive prompt helpers (Node stdlib only)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -2509,7 +2975,11 @@ Commands:
   config get|set|unset  Read or modify ~/.openwop/config.json
   doctor              Check local prerequisites and demo reachability
   demo status         Inspect the workflow-engine demo app
-  demo start          Start the demo backend and frontend
+  demo start          Start the demo backend and frontend (--detach to background)
+  demo stop           Stop the tracked demo backend
+  demo restart        Restart the demo backend
+  demo logs           Tail the demo backend log (--follow to stream)
+  demo install        Install a managed service (LaunchAgent / systemd / Scheduled Task)
   demo urls           Print local demo URLs
   health              Probe /health and /readiness
   capabilities        Summarize /.well-known/openwop
@@ -2542,15 +3012,26 @@ Examples:
 
 const DOCTOR_HELP = `Usage: openwop doctor [--json]
 
-Checks Node/npm, local demo app dependencies, repository layout, and whether the demo backend is reachable.
+Checks Node/npm, local demo app dependencies, repository layout, whether the demo
+backend is reachable, the demo daemon status (via /v1/host/sample/daemon-status or
+the ~/.openwop/ PID file), and reachability of each stored BYOK provider credential.
 `;
 
 const DEMO_HELP = `Usage:
   openwop demo status [--json]
-  openwop demo start [--backend-only|--frontend-only] [--install] [--backend-port 8080] [--frontend-port 5173]
+  openwop demo start [--backend-only|--frontend-only] [--detach] [--install] [--backend-port 8080] [--frontend-port 5173]
+  openwop demo stop [--force] [--timeout-ms 5000]
+  openwop demo restart [--backend-port 8080]
+  openwop demo logs [--follow] [--lines 50]
+  openwop demo install [--dry-run] [--uninstall] [--backend-port 8080] [--label dev.openwop.demo]
   openwop demo urls [--frontend-port 5173]
 
 The demo commands are tuned for apps/workflow-engine: a TypeScript backend on port 8080 and a Vite frontend on port 5173.
+
+Lifecycle commands (stop/restart/logs) track the backend process via a PID file
+under ~/.openwop/ (honors OPENWOP_CONFIG_HOME). Use \`demo start --detach\` to run
+the backend in the background; a plain \`demo start\` runs in the foreground but
+still writes the PID + log file so stop/logs work from another shell.
 `;
 
 const DEMO_STATUS_HELP = `Usage: openwop demo status [--base-url url] [--api-key key] [--json]
@@ -2563,10 +3044,40 @@ const DEMO_START_HELP = `Usage: openwop demo start [options]
 Options:
   --backend-only          Start only the backend
   --frontend-only         Start only the frontend
+  --detach                Run the backend in the background (writes a PID file); returns immediately
   --install               Run npm install before starting selected services
   --backend-port <port>   Backend port (default: 8080)
   --frontend-port <port>  Frontend port (default: 5173)
   --dry-run               Print the commands without starting services
+`;
+
+const DEMO_STOP_HELP = `Usage: openwop demo stop [--force] [--timeout-ms 5000] [--json]
+
+Reads the PID file under ~/.openwop/ and signals the demo backend (SIGTERM, then
+SIGKILL after --timeout-ms). --force sends SIGKILL immediately. Clears the PID file.
+`;
+
+const DEMO_RESTART_HELP = `Usage: openwop demo restart [--backend-port 8080] [--json]
+
+Stops the tracked demo backend, then starts a fresh one detached. Reuses the prior
+backend port unless --backend-port is given.
+`;
+
+const DEMO_LOGS_HELP = `Usage: openwop demo logs [--follow] [--lines 50]
+
+Prints the tail of the demo backend log file (~/.openwop/demo-backend.log).
+--follow streams new lines until interrupted. --lines sets how many trailing lines to show.
+`;
+
+const DEMO_INSTALL_HELP = `Usage: openwop demo install [--dry-run] [--uninstall] [--backend-port 8080] [--label dev.openwop.demo]
+
+Writes a managed-service definition for the demo backend, chosen by platform:
+  macOS    LaunchAgent plist under ~/Library/LaunchAgents/
+  Linux    systemd user unit under ~/.config/systemd/user/
+  Windows  prints a Scheduled-Task recipe (no file is written)
+
+--dry-run prints the target path and full file contents without writing.
+--uninstall removes a previously written unit file.
 `;
 
 const DEMO_URLS_HELP = `Usage: openwop demo urls [--frontend-port 5173] [--json]
