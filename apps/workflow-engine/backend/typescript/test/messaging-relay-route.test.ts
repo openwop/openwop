@@ -4,35 +4,40 @@
  * connector CRUD over HTTP, plus device-token auth and tenant scoping.
  */
 
-import { describe, expect, it, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import http from 'node:http';
 import { createApp } from '../src/index.js';
-import { resetMessagingState } from '../src/routes/messaging.js';
 
-const PORT = 18261;
-const BASE = `http://127.0.0.1:${PORT}/v1/host/sample/messaging`;
 const OP = { authorization: 'Bearer sample-token', 'content-type': 'application/json' };
 
 let server: http.Server;
+let BASE = '';
+// Unique port per test: the self-HTTP bridge captures config.port, so it must
+// match the listening port; a distinct port per test also avoids close/
+// re-listen races and stale detached pollers hitting a reused port.
+let portCounter = 18290;
 
-beforeAll(async () => {
+// Fresh in-memory SQLite per test → durable-but-isolated relay state (replaces
+// the old module-Map reset; the gateway is now Storage-backed).
+beforeEach(async () => {
   process.env.OPENWOP_STORAGE_DSN = 'memory://';
   process.env.OPENWOP_AUTH_DISABLE_COOKIES = 'true';
-  // The bridge self-polls /v1/runs and the test polls /device/outbound;
-  // both share the per-IP (127.0.0.1) sliding window. Disable for the suite.
+  // The bridge self-polls /v1/runs and the test polls /device/outbound; both
+  // share the per-IP (127.0.0.1) sliding window. Disable for the suite.
   process.env.OPENWOP_RATELIMIT_DISABLED = 'true';
+  const port = portCounter++;
   const app = await createApp({
-    port: PORT,
+    port,
     storageDsn: 'memory://',
     serviceName: 'test',
     serviceVersion: '0.0.1',
     enableConsoleTracer: false,
   });
-  await new Promise<void>((res) => { server = app.listen(PORT, res); });
+  await new Promise<void>((res) => { server = app.listen(port, res); });
+  BASE = `http://127.0.0.1:${port}/v1/host/sample/messaging`;
 });
 
-afterAll(async () => { await new Promise<void>((res) => server.close(() => res())); });
-beforeEach(() => resetMessagingState());
+afterEach(async () => { await new Promise<void>((res) => server.close(() => res())); });
 
 async function post(path: string, headers: Record<string, string>, body?: unknown) {
   const res = await fetch(`${BASE}${path}`, {

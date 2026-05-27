@@ -32,7 +32,7 @@ export interface Queryable {
   ): Promise<{ rows: R[] }>;
 }
 
-export const LATEST_SCHEMA_VERSION = 7;
+export const LATEST_SCHEMA_VERSION = 8;
 
 const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
   1: async (client) => {
@@ -295,6 +295,65 @@ const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
         ON push_subscriptions (endpoint);
       CREATE INDEX IF NOT EXISTS idx_push_subs_tenant
         ON push_subscriptions (tenant_id, created_at DESC);
+    `);
+  },
+  8: async (client) => {
+    // Messaging relay-gateway (demo host-extension; NON-normative). Mirrors
+    // ../sqlite/schema.ts migration 10. TEXT timestamps (ISO strings) for
+    // string-identity with the sqlite backend + the ChatEgressEnvelope shape.
+    // Device tokens persisted as SHA-256 hash only.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS relay_devices (
+        relay_id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        channel TEXT NOT NULL,
+        device_name TEXT,
+        status TEXT NOT NULL,
+        device_token_hash TEXT,
+        token_expires_at TEXT,
+        activation_code TEXT,
+        activation_expires_at TEXT,
+        registered_at TEXT NOT NULL,
+        last_heartbeat_at TEXT,
+        last_reported_status TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_relay_devices_token
+        ON relay_devices (device_token_hash);
+      CREATE TABLE IF NOT EXISTS relay_outbound (
+        egress_id TEXT PRIMARY KEY,
+        relay_id TEXT NOT NULL,
+        channel TEXT NOT NULL,
+        conversation_id TEXT NOT NULL,
+        text TEXT NOT NULL,
+        reply_to_message_id TEXT,
+        enqueued_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_relay_outbound_relay
+        ON relay_outbound (relay_id, enqueued_at ASC);
+      CREATE TABLE IF NOT EXISTS messaging_connectors (
+        connector_id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        channel TEXT NOT NULL,
+        display_name TEXT NOT NULL,
+        enabled BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_messaging_connectors_tenant
+        ON messaging_connectors (tenant_id);
+      CREATE TABLE IF NOT EXISTS messaging_sessions (
+        session_key TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        channel TEXT NOT NULL,
+        conversation_id TEXT NOT NULL,
+        peer_id TEXT NOT NULL,
+        peer_display TEXT,
+        last_inbound_at TEXT NOT NULL,
+        message_count INTEGER NOT NULL DEFAULT 0,
+        last_run_id TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_messaging_sessions_tenant
+        ON messaging_sessions (tenant_id, last_inbound_at DESC);
     `);
   },
 };

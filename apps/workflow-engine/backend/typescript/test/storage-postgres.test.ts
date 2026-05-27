@@ -194,6 +194,21 @@ async function makeStorage(): Promise<Storage> {
     getPushSubscriptionByEndpoint: async () => null,
     deletePushSubscription: async () => false,
     deleteAllTenantPushSubscriptions: async () => 0,
+    // messaging relay-gateway — not exercised by this schema round-trip test
+    upsertRelayDevice: async () => { throw new Error('not exercised'); },
+    getRelayDevice: async () => null,
+    getRelayDeviceByTokenHash: async () => null,
+    enqueueRelayOutbound: async () => { throw new Error('not exercised'); },
+    listRelayOutbound: async () => [],
+    ackRelayOutbound: async () => 0,
+    deleteRelayOutbound: async () => { throw new Error('not exercised'); },
+    upsertMessagingConnector: async () => { throw new Error('not exercised'); },
+    getMessagingConnector: async () => null,
+    listMessagingConnectors: async () => [],
+    upsertMessagingSession: async () => { throw new Error('not exercised'); },
+    getMessagingSession: async () => null,
+    listMessagingSessions: async () => [],
+    deleteMessagingSession: async () => false,
     close: async () => { await pool.end(); },
   };
 }

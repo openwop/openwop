@@ -7,13 +7,11 @@
  * Other hosts MAY add their own under their own vendor prefix; nothing here
  * is part of the protocol wire surface.
  *
- * Architecture (distributed-relay pattern): the openwop CLI owns the
- * platform connection (signal-cli / Baileys / iMessage) and runs as a local
- * relay device. It registers once, exchanges an activation code for a
- * tenant-scoped device token, then runs two loops — heartbeat (keepalive)
- * and outbound poller (pull). Inbound platform messages are POSTed here and
- * bridged to a workflow run; outbound replies are queued per relay and
- * pulled + acked by the device.
+ * Architecture (distributed-relay pattern): the openwop CLI owns the platform
+ * connection and runs as a local relay device. It registers once, exchanges
+ * an activation code for a device token, then heartbeats + pulls outbound.
+ * Inbound platform messages are POSTed here and bridged to a workflow run;
+ * outbound replies are queued per relay and pulled + acked by the device.
  *
  *   Device lifecycle (operator bearer):
  *     POST   .../relay/register             — issue relayId + activation code
@@ -26,182 +24,86 @@
  *     POST   .../device/ack                 — acknowledge delivered egress
  *   Outbound enqueue (operator bearer / bridge):
  *     POST   .../relay/enqueue              — queue an egress for a relay
- *   Connectors (operator bearer):
- *     GET    .../connectors                 — list
- *     POST   .../connectors                 — upsert
- *     GET    .../connectors/:id             — get
- *     POST   .../connectors/:id/enable      — enable
- *     POST   .../connectors/:id/disable     — disable
- *     POST   .../connectors/:id/test        — synthetic delivery probe
- *   Sessions (operator bearer):
- *     GET    .../sessions                   — list
- *     GET    .../sessions/:key              — inspect
- *     DELETE .../sessions/:key              — close + delete
+ *   Connectors (operator bearer):  GET|POST .../connectors[/:id[/enable|disable|test]]
+ *   Sessions (operator bearer):    GET .../sessions[/:key]; DELETE .../sessions/:key
  *
- * State is module-scoped and in-process (demo-grade, non-durable) — the same
- * posture as the test-seam routes. Consequences a real host MUST address by
- * backing this with `Storage`: device tokens + outbound queues + sessions are
- * lost on restart (devices must re-`activate`), and the state is shared across
- * `createApp` instances in one process. `resetMessagingState()` clears it
- * between tests.
+ * State is durable in `Storage` (relay_devices / relay_outbound /
+ * messaging_connectors / messaging_sessions across sqlite + postgres) so the
+ * gateway is correct across a multi-instance / restarting host. Device tokens
+ * are persisted as a SHA-256 hash only; the plaintext is returned once at
+ * activation. Tenant scope follows the same wildcard/`?tenantId` rules as the
+ * notification routes.
  */
 
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type { Express, Request } from 'express';
 import { OpenwopError } from '../types.js';
+import type { Storage } from '../storage/storage.js';
+import {
+  RELAY_CHANNELS,
+  type ChatEgressEnvelope,
+  type ChatIngressEnvelope,
+  type MessagingBridge,
+  type RelayChannel,
+  type RelayDeviceRecord,
+} from '../messaging/types.js';
 
 const BASE = '/v1/host/sample/messaging';
-
-const RELAY_CHANNELS = ['whatsapp', 'signal', 'imessage'] as const;
-export type RelayChannel = (typeof RELAY_CHANNELS)[number];
 
 const DEVICE_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ACTIVATION_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const HEARTBEAT_INTERVAL_SECONDS = 30;
 const OUTBOUND_POLL_INTERVAL_SECONDS = 5;
 
-/** Canonical inbound envelope (platform → host). Demo-app shape, not wire spec. */
-export interface ChatIngressEnvelope {
-  channel: RelayChannel;
-  platformMessageId: string;
-  conversationId: string;
-  peerId: string;
-  peerDisplay?: string;
-  text: string;
-  media?: ReadonlyArray<{ url: string; mimeType?: string }>;
-  timestamp: string;
-}
-
-/** Canonical outbound envelope (host → platform). */
-export interface ChatEgressEnvelope {
-  egressId: string;
-  relayId: string;
-  channel: RelayChannel;
-  conversationId: string;
-  text: string;
-  media?: ReadonlyArray<{ url: string; mimeType?: string }>;
-  replyToMessageId?: string;
-  enqueuedAt: string;
-}
-
-interface RelayDevice {
-  relayId: string;
-  tenantId: string;
-  channel: RelayChannel;
-  deviceName?: string;
-  status: 'registered' | 'active' | 'revoked';
-  deviceToken?: string;
-  tokenExpiresAt?: string;
-  activationCode?: string;
-  activationExpiresAt?: string;
-  registeredAt: string;
-  lastHeartbeatAt?: string;
-  lastReportedStatus?: string;
-}
-
-interface Connector {
-  connectorId: string;
-  tenantId: string;
-  channel: RelayChannel;
-  displayName: string;
-  enabled: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface MessagingSession {
-  sessionKey: string;
-  tenantId: string;
-  channel: RelayChannel;
-  conversationId: string;
-  peerId: string;
-  peerDisplay?: string;
-  lastInboundAt: string;
-  messageCount: number;
-  lastRunId?: string;
-}
-
-/**
- * The inbound → run bridge seam. Injected from index.ts where the run
- * pipeline (storage + hostSuite) is available. When absent, inbound
- * messages are recorded but no run is created (transport-only mode).
- */
-export interface MessagingBridge {
-  onInbound(params: {
-    device: { relayId: string; tenantId: string; channel: RelayChannel };
-    envelope: ChatIngressEnvelope;
-    sessionKey: string;
-  }): Promise<{ runId?: string } | void>;
-}
-
-interface MessagingState {
-  devices: Map<string, RelayDevice>;
-  tokens: Map<string, string>; // deviceToken → relayId
-  outbound: Map<string, ChatEgressEnvelope[]>; // relayId → queue
-  connectors: Map<string, Connector>;
-  sessions: Map<string, MessagingSession>;
-}
-
-const state: MessagingState = {
-  devices: new Map(),
-  tokens: new Map(),
-  outbound: new Map(),
-  connectors: new Map(),
-  sessions: new Map(),
-};
-
-/** Test helper — clears all relay state. */
-export function resetMessagingState(): void {
-  state.devices.clear();
-  state.tokens.clear();
-  state.outbound.clear();
-  state.connectors.clear();
-  state.sessions.clear();
+function hashToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
 }
 
 interface Deps {
+  storage: Storage;
   bridge?: MessagingBridge;
 }
 
-export function registerMessagingRoutes(app: Express, deps: Deps = {}): void {
-  const { bridge } = deps;
+export function registerMessagingRoutes(app: Express, deps: Deps): void {
+  const { storage, bridge } = deps;
 
   // ---- Device lifecycle (operator bearer) ----
 
-  app.post(`${BASE}/relay/register`, (req, res, next) => {
+  app.post(`${BASE}/relay/register`, async (req, res, next) => {
     try {
       const tenantId = resolveTenant(req);
       const channel = assertChannel((req.body ?? {}).channel);
       const deviceName = optionalString((req.body ?? {}).deviceName);
       const now = Date.now();
-      const device: RelayDevice = {
+      const activationCode = randomUUID().replace(/-/g, '').slice(0, 12);
+      const record: RelayDeviceRecord = {
         relayId: `relay_${randomUUID()}`,
         tenantId,
         channel,
         ...(deviceName ? { deviceName } : {}),
         status: 'registered',
-        activationCode: randomUUID().replace(/-/g, '').slice(0, 12),
+        activationCode,
         activationExpiresAt: new Date(now + ACTIVATION_TTL_MS).toISOString(),
         registeredAt: new Date(now).toISOString(),
       };
-      state.devices.set(device.relayId, device);
+      await storage.upsertRelayDevice(record);
       res.status(201).json({
-        relayId: device.relayId,
-        channel: device.channel,
-        activationCode: device.activationCode,
-        activationExpiresAt: device.activationExpiresAt,
+        relayId: record.relayId,
+        channel: record.channel,
+        activationCode,
+        activationExpiresAt: record.activationExpiresAt,
       });
     } catch (err) {
       next(err);
     }
   });
 
-  app.post(`${BASE}/relay/activate`, (req, res, next) => {
+  app.post(`${BASE}/relay/activate`, async (req, res, next) => {
     try {
       const body = req.body ?? {};
       const relayId = requireString(body.relayId, 'relayId');
       const activationCode = requireString(body.activationCode, 'activationCode');
-      const device = state.devices.get(relayId);
+      const device = await storage.getRelayDevice(relayId);
       if (!device || device.status === 'revoked') {
         throw new OpenwopError('not_found', 'relay not found', 404);
       }
@@ -214,17 +116,19 @@ export function registerMessagingRoutes(app: Express, deps: Deps = {}): void {
       }
       const deviceToken = `dtok_${randomUUID().replace(/-/g, '')}`;
       const tokenExpiresAt = new Date(Date.now() + DEVICE_TOKEN_TTL_MS).toISOString();
-      device.status = 'active';
-      device.deviceToken = deviceToken;
-      device.tokenExpiresAt = tokenExpiresAt;
-      delete device.activationCode;
-      delete device.activationExpiresAt;
-      state.tokens.set(deviceToken, relayId);
-      if (!state.outbound.has(relayId)) state.outbound.set(relayId, []);
+      const updated: RelayDeviceRecord = {
+        ...device,
+        status: 'active',
+        deviceTokenHash: hashToken(deviceToken),
+        tokenExpiresAt,
+      };
+      delete updated.activationCode;
+      delete updated.activationExpiresAt;
+      await storage.upsertRelayDevice(updated);
       res.json({
         relayId,
         channel: device.channel,
-        deviceToken,
+        deviceToken, // returned once; only the hash is persisted
         tokenExpiresAt,
         heartbeatIntervalSeconds: HEARTBEAT_INTERVAL_SECONDS,
         outboundPollIntervalSeconds: OUTBOUND_POLL_INTERVAL_SECONDS,
@@ -234,36 +138,36 @@ export function registerMessagingRoutes(app: Express, deps: Deps = {}): void {
     }
   });
 
-  app.post(`${BASE}/relay/revoke`, (req, res, next) => {
+  app.post(`${BASE}/relay/revoke`, async (req, res, next) => {
     try {
       const tenantId = resolveTenant(req);
       const relayId = requireString((req.body ?? {}).relayId, 'relayId');
-      const device = state.devices.get(relayId);
+      const device = await storage.getRelayDevice(relayId);
       if (!device || (device.tenantId !== tenantId && !isWildcard(req))) {
         throw new OpenwopError('not_found', 'relay not found', 404);
       }
-      if (device.deviceToken) state.tokens.delete(device.deviceToken);
-      device.status = 'revoked';
-      delete device.deviceToken;
-      delete device.tokenExpiresAt;
-      state.outbound.delete(relayId);
+      const revoked: RelayDeviceRecord = { ...device, status: 'revoked' };
+      delete revoked.deviceTokenHash;
+      delete revoked.tokenExpiresAt;
+      await storage.upsertRelayDevice(revoked);
+      await storage.deleteRelayOutbound(relayId);
       res.json({ relayId, revoked: true });
     } catch (err) {
       next(err);
     }
   });
 
-  // ---- Device loop (x-openwop-device-token; bearer-public per allowlist) ----
-  // Grouped under `${BASE}/device/` so the device token is the sole
-  // credential — same pattern as token-authed /v1/interrupts and
-  // /v1/host/sample/assets (see PUBLIC_PATH_PREFIXES in middleware/auth.ts).
+  // ---- Device loop (x-openwop-device-token; bearer-public per auth allowlist) ----
 
-  app.post(`${BASE}/device/heartbeat`, (req, res, next) => {
+  app.post(`${BASE}/device/heartbeat`, async (req, res, next) => {
     try {
-      const device = requireDevice(req);
-      device.lastHeartbeatAt = new Date().toISOString();
+      const device = await requireDevice(req, storage);
       const reported = optionalString((req.body ?? {}).status);
-      if (reported) device.lastReportedStatus = reported;
+      await storage.upsertRelayDevice({
+        ...device,
+        lastHeartbeatAt: new Date().toISOString(),
+        ...(reported ? { lastReportedStatus: reported } : {}),
+      });
       res.json({
         ok: true,
         serverTime: new Date().toISOString(),
@@ -277,11 +181,11 @@ export function registerMessagingRoutes(app: Express, deps: Deps = {}): void {
 
   app.post(`${BASE}/device/inbound`, async (req, res, next) => {
     try {
-      const device = requireDevice(req);
+      const device = await requireDevice(req, storage);
       const envelope = parseIngress(req.body, device.channel);
       const sessionKey = `${device.channel}:${envelope.conversationId}`;
-      const existing = state.sessions.get(sessionKey);
-      const session: MessagingSession = {
+      const existing = await storage.getMessagingSession(sessionKey);
+      await storage.upsertMessagingSession({
         sessionKey,
         tenantId: device.tenantId,
         channel: device.channel,
@@ -291,8 +195,7 @@ export function registerMessagingRoutes(app: Express, deps: Deps = {}): void {
         lastInboundAt: envelope.timestamp,
         messageCount: (existing?.messageCount ?? 0) + 1,
         ...(existing?.lastRunId ? { lastRunId: existing.lastRunId } : {}),
-      };
-      state.sessions.set(sessionKey, session);
+      });
 
       let runId: string | undefined;
       if (bridge) {
@@ -303,7 +206,8 @@ export function registerMessagingRoutes(app: Express, deps: Deps = {}): void {
         });
         if (result && result.runId) {
           runId = result.runId;
-          session.lastRunId = runId;
+          const s = await storage.getMessagingSession(sessionKey);
+          if (s) await storage.upsertMessagingSession({ ...s, lastRunId: runId });
         }
       }
       res.status(202).json({ accepted: true, sessionKey, ...(runId ? { runId } : {}) });
@@ -312,29 +216,25 @@ export function registerMessagingRoutes(app: Express, deps: Deps = {}): void {
     }
   });
 
-  app.get(`${BASE}/device/outbound`, (req, res, next) => {
+  app.get(`${BASE}/device/outbound`, async (req, res, next) => {
     try {
-      const device = requireDevice(req);
+      const device = await requireDevice(req, storage);
       const limit = Math.min(Number(req.query.limit) || 50, 200);
-      const queue = state.outbound.get(device.relayId) ?? [];
-      res.json({ relayId: device.relayId, messages: queue.slice(0, limit) });
+      const messages = await storage.listRelayOutbound(device.relayId, limit);
+      res.json({ relayId: device.relayId, messages });
     } catch (err) {
       next(err);
     }
   });
 
-  app.post(`${BASE}/device/ack`, (req, res, next) => {
+  app.post(`${BASE}/device/ack`, async (req, res, next) => {
     try {
-      const device = requireDevice(req);
+      const device = await requireDevice(req, storage);
       const egressIds = (req.body ?? {}).egressIds;
       if (!Array.isArray(egressIds)) {
         throw new OpenwopError('invalid_request', 'egressIds[] is required', 400);
       }
-      const ackSet = new Set(egressIds.map(String));
-      const queue = state.outbound.get(device.relayId) ?? [];
-      const remaining = queue.filter((m) => !ackSet.has(m.egressId));
-      const acked = queue.length - remaining.length;
-      state.outbound.set(device.relayId, remaining);
+      const acked = await storage.ackRelayOutbound(device.relayId, egressIds.map(String));
       res.json({ acked });
     } catch (err) {
       next(err);
@@ -343,16 +243,16 @@ export function registerMessagingRoutes(app: Express, deps: Deps = {}): void {
 
   // ---- Outbound enqueue (operator bearer / inbound bridge) ----
 
-  app.post(`${BASE}/relay/enqueue`, (req, res, next) => {
+  app.post(`${BASE}/relay/enqueue`, async (req, res, next) => {
     try {
       const tenantId = resolveTenant(req);
       const body = req.body ?? {};
       const relayId = requireString(body.relayId, 'relayId');
-      const device = state.devices.get(relayId);
+      const device = await storage.getRelayDevice(relayId);
       if (!device || (device.tenantId !== tenantId && !isWildcard(req))) {
         throw new OpenwopError('not_found', 'relay not found', 404);
       }
-      const egress = enqueueOutbound(relayId, {
+      const egress = await enqueueOutbound(storage, relayId, {
         channel: device.channel,
         conversationId: requireString(body.conversationId, 'conversationId'),
         text: requireString(body.text, 'text'),
@@ -366,24 +266,24 @@ export function registerMessagingRoutes(app: Express, deps: Deps = {}): void {
 
   // ---- Connectors (operator bearer) ----
 
-  app.get(`${BASE}/connectors`, (req, res, next) => {
+  app.get(`${BASE}/connectors`, async (req, res, next) => {
     try {
-      const connectors = filterByTenant(req, [...state.connectors.values()]);
+      const connectors = await storage.listMessagingConnectors(listTenantFilter(req));
       res.json({ connectors });
     } catch (err) {
       next(err);
     }
   });
 
-  app.post(`${BASE}/connectors`, (req, res, next) => {
+  app.post(`${BASE}/connectors`, async (req, res, next) => {
     try {
       const tenantId = resolveTenant(req);
       const body = req.body ?? {};
       const channel = assertChannel(body.channel);
       const connectorId = optionalString(body.connectorId) ?? `conn_${channel}_${tenantId}`;
       const now = new Date().toISOString();
-      const existing = state.connectors.get(connectorId);
-      const connector: Connector = {
+      const existing = await storage.getMessagingConnector(connectorId);
+      const connector = {
         connectorId,
         tenantId,
         channel,
@@ -392,47 +292,46 @@ export function registerMessagingRoutes(app: Express, deps: Deps = {}): void {
         createdAt: existing?.createdAt ?? now,
         updatedAt: now,
       };
-      state.connectors.set(connectorId, connector);
+      await storage.upsertMessagingConnector(connector);
       res.status(existing ? 200 : 201).json(connector);
     } catch (err) {
       next(err);
     }
   });
 
-  app.get(`${BASE}/connectors/:id`, (req, res, next) => {
+  app.get(`${BASE}/connectors/:id`, async (req, res, next) => {
     try {
-      res.json(getConnectorOr404(req));
+      res.json(await getConnectorOr404(req, storage));
     } catch (err) {
       next(err);
     }
   });
 
-  app.post(`${BASE}/connectors/:id/enable`, (req, res, next) => {
+  app.post(`${BASE}/connectors/:id/enable`, async (req, res, next) => {
     try {
-      const c = getConnectorOr404(req);
-      c.enabled = true;
-      c.updatedAt = new Date().toISOString();
-      res.json(c);
+      const c = await getConnectorOr404(req, storage);
+      const updated = { ...c, enabled: true, updatedAt: new Date().toISOString() };
+      await storage.upsertMessagingConnector(updated);
+      res.json(updated);
     } catch (err) {
       next(err);
     }
   });
 
-  app.post(`${BASE}/connectors/:id/disable`, (req, res, next) => {
+  app.post(`${BASE}/connectors/:id/disable`, async (req, res, next) => {
     try {
-      const c = getConnectorOr404(req);
-      c.enabled = false;
-      c.updatedAt = new Date().toISOString();
-      res.json(c);
+      const c = await getConnectorOr404(req, storage);
+      const updated = { ...c, enabled: false, updatedAt: new Date().toISOString() };
+      await storage.upsertMessagingConnector(updated);
+      res.json(updated);
     } catch (err) {
       next(err);
     }
   });
 
-  app.post(`${BASE}/connectors/:id/test`, (req, res, next) => {
+  app.post(`${BASE}/connectors/:id/test`, async (req, res, next) => {
     try {
-      const c = getConnectorOr404(req);
-      // Synthetic probe — a real connector would round-trip the platform.
+      const c = await getConnectorOr404(req, storage);
       res.json({
         connectorId: c.connectorId,
         channel: c.channel,
@@ -448,27 +347,27 @@ export function registerMessagingRoutes(app: Express, deps: Deps = {}): void {
 
   // ---- Sessions (operator bearer) ----
 
-  app.get(`${BASE}/sessions`, (req, res, next) => {
+  app.get(`${BASE}/sessions`, async (req, res, next) => {
     try {
-      const sessions = filterByTenant(req, [...state.sessions.values()]);
+      const sessions = await storage.listMessagingSessions(listTenantFilter(req));
       res.json({ sessions });
     } catch (err) {
       next(err);
     }
   });
 
-  app.get(`${BASE}/sessions/:key`, (req, res, next) => {
+  app.get(`${BASE}/sessions/:key`, async (req, res, next) => {
     try {
-      res.json(getSessionOr404(req));
+      res.json(await getSessionOr404(req, storage));
     } catch (err) {
       next(err);
     }
   });
 
-  app.delete(`${BASE}/sessions/:key`, (req, res, next) => {
+  app.delete(`${BASE}/sessions/:key`, async (req, res, next) => {
     try {
-      const s = getSessionOr404(req);
-      state.sessions.delete(s.sessionKey);
+      const s = await getSessionOr404(req, storage);
+      await storage.deleteMessagingSession(s.sessionKey);
       res.json({ sessionKey: s.sessionKey, deleted: true });
     } catch (err) {
       next(err);
@@ -477,10 +376,11 @@ export function registerMessagingRoutes(app: Express, deps: Deps = {}): void {
 }
 
 /** Enqueue an outbound egress for a relay. Used by /relay/enqueue and the bridge. */
-export function enqueueOutbound(
+export async function enqueueOutbound(
+  storage: Storage,
   relayId: string,
   fields: { channel: RelayChannel; conversationId: string; text: string; replyToMessageId?: string },
-): ChatEgressEnvelope {
+): Promise<ChatEgressEnvelope> {
   const egress: ChatEgressEnvelope = {
     egressId: `egr_${randomUUID()}`,
     relayId,
@@ -490,9 +390,7 @@ export function enqueueOutbound(
     ...(fields.replyToMessageId ? { replyToMessageId: fields.replyToMessageId } : {}),
     enqueuedAt: new Date().toISOString(),
   };
-  const queue = state.outbound.get(relayId) ?? [];
-  queue.push(egress);
-  state.outbound.set(relayId, queue);
+  await storage.enqueueRelayOutbound(egress);
   return egress;
 }
 
@@ -504,28 +402,26 @@ function isWildcard(req: Request): boolean {
 
 function resolveTenant(req: Request): string {
   if (isWildcard(req)) {
-    return typeof req.query.tenantId === 'string' && req.query.tenantId.length > 0
-      ? req.query.tenantId
-      : (typeof (req.body ?? {}).tenantId === 'string' && req.body.tenantId.length > 0 ? req.body.tenantId : 'default');
+    if (typeof req.query.tenantId === 'string' && req.query.tenantId.length > 0) return req.query.tenantId;
+    const bodyTenant = (req.body ?? {}).tenantId;
+    return typeof bodyTenant === 'string' && bodyTenant.length > 0 ? bodyTenant : 'default';
   }
   return req.tenantId ?? 'default';
 }
 
-function filterByTenant<T extends { tenantId: string }>(req: Request, rows: T[]): T[] {
+/** Tenant filter for list endpoints: undefined = all (wildcard, no ?tenantId). */
+function listTenantFilter(req: Request): string | undefined {
   if (isWildcard(req)) {
-    const requested = typeof req.query.tenantId === 'string' ? req.query.tenantId : undefined;
-    return requested ? rows.filter((r) => r.tenantId === requested) : rows;
+    return typeof req.query.tenantId === 'string' ? req.query.tenantId : undefined;
   }
-  const tenantId = req.tenantId;
-  return rows.filter((r) => r.tenantId === tenantId);
+  return req.tenantId;
 }
 
-function requireDevice(req: Request): RelayDevice {
+async function requireDevice(req: Request, storage: Storage): Promise<RelayDeviceRecord> {
   const token = req.header('x-openwop-device-token');
   if (!token) throw new OpenwopError('unauthenticated', 'x-openwop-device-token header required', 401);
-  const relayId = state.tokens.get(token);
-  const device = relayId ? state.devices.get(relayId) : undefined;
-  if (!device || device.status !== 'active' || device.deviceToken !== token) {
+  const device = await storage.getRelayDeviceByTokenHash(hashToken(token));
+  if (!device || device.status !== 'active') {
     throw new OpenwopError('unauthenticated', 'invalid or revoked device token', 401);
   }
   if (device.tokenExpiresAt && Date.parse(device.tokenExpiresAt) < Date.now()) {
@@ -534,19 +430,17 @@ function requireDevice(req: Request): RelayDevice {
   return device;
 }
 
-function getConnectorOr404(req: Request): Connector {
-  const c = state.connectors.get(req.params.id);
-  if (!c) throw new OpenwopError('not_found', 'connector not found', 404);
-  if (c.tenantId !== resolveTenant(req) && !isWildcard(req)) {
+async function getConnectorOr404(req: Request, storage: Storage) {
+  const c = await storage.getMessagingConnector(req.params.id);
+  if (!c || (c.tenantId !== resolveTenant(req) && !isWildcard(req))) {
     throw new OpenwopError('not_found', 'connector not found', 404);
   }
   return c;
 }
 
-function getSessionOr404(req: Request): MessagingSession {
-  const s = state.sessions.get(req.params.key);
-  if (!s) throw new OpenwopError('not_found', 'session not found', 404);
-  if (s.tenantId !== resolveTenant(req) && !isWildcard(req)) {
+async function getSessionOr404(req: Request, storage: Storage) {
+  const s = await storage.getMessagingSession(req.params.key);
+  if (!s || (s.tenantId !== resolveTenant(req) && !isWildcard(req))) {
     throw new OpenwopError('not_found', 'session not found', 404);
   }
   return s;

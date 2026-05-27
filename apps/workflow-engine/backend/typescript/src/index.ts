@@ -324,7 +324,9 @@ export async function createApp(config: AppConfig): Promise<Express> {
   // (default deterministic `sample.demo.uppercase`; override via
   // OPENWOP_MESSAGING_WORKFLOW_ID) and enqueues the reply as outbound egress.
   registerMessagingRoutes(app, {
+    storage,
     bridge: createSelfHttpBridge({
+      storage,
       baseUrl: `http://127.0.0.1:${config.port}`,
       bearer: process.env.OPENWOP_API_KEY ?? 'sample-token',
       defaultWorkflowId: process.env.OPENWOP_MESSAGING_WORKFLOW_ID ?? 'sample.demo.uppercase',
