@@ -1,3 +1,4 @@
+// Run via `npm test` (builds dist/ first) — these import the esbuild bundle at ../dist/cli.js.
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -5,7 +6,7 @@ import { join } from 'node:path';
 import { generateKeyPairSync, sign as ed25519Sign, createHash } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
 import { afterEach, beforeEach, describe, it } from 'node:test';
-import { buildServiceInstallPlan, configPathFor, consumeSse, daemonLogPath, daemonPidPath, extractAssistantText, extractGlobalOptions, formatTable, processAlive, readConfigSafe, readDaemonRecord, renderEvent, runCli, saveConfig, streamRunEvents, submitTurn, summarizeCapabilities } from '../lib/cli.mjs';
+import { buildServiceInstallPlan, configPathFor, consumeSse, daemonLogPath, daemonPidPath, extractAssistantText, extractGlobalOptions, formatTable, processAlive, readConfigSafe, readDaemonRecord, renderEvent, runCli, saveConfig, streamRunEvents, submitTurn, summarizeCapabilities } from '../dist/cli.js';
 function byteStream(chunks) {
   const encoder = new TextEncoder();
   let i = 0;

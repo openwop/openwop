@@ -10,6 +10,12 @@ import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import { createHash, createPrivateKey, createPublicKey, generateKeyPairSync, sign as ed25519Sign, verify as ed25519Verify } from 'node:crypto';
 import { gunzipSync, gzipSync } from 'node:zlib';
+import { getChannelPlugin } from './channels/registry.js';
+import type { ChannelPlugin, InboundMessage, RelayChannel } from './channels/types.js';
+// Re-export the channel surface so the test suite (which imports the built
+// dist/cli.js bundle) can reach the pure normalizers + the registry.
+export { parseSignalEnvelope, parseImessageRow, parseWhatsappMessage } from './channels/normalize.js';
+export { getChannelPlugin } from './channels/registry.js';
 
 export const VERSION = '0.1.0';
 export const DEFAULT_BASE_URL = 'http://localhost:8080';
@@ -71,7 +77,8 @@ export const HOST_PRESETS = [
 ];
 
 class CliError extends Error {
-  constructor(message, code = 2) {
+  code: number;
+  constructor(message: string, code = 2) {
     super(message);
     this.name = 'CliError';
     this.code = code;
@@ -79,7 +86,9 @@ class CliError extends Error {
 }
 
 class HttpError extends Error {
-  constructor(message, status, body) {
+  status: number;
+  body: unknown;
+  constructor(message: string, status: number, body: unknown) {
     super(message);
     this.name = 'HttpError';
     this.status = status;
@@ -87,7 +96,12 @@ class HttpError extends Error {
   }
 }
 
-export async function runCli(argv, options = {}) {
+/** Narrow an unknown caught value to a printable message (strict catch vars). */
+function errText(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
+export async function runCli(argv: string[], options: any = {}): Promise<number> {
   const io = options.io ?? {
     stdout: process.stdout,
     stderr: process.stderr,
@@ -203,8 +217,8 @@ export async function runCli(argv, options = {}) {
       return err.code;
     }
     if (err instanceof HttpError) {
-      const bodyMessage = err.body && typeof err.body === 'object' && typeof err.body.message === 'string'
-        ? `: ${err.body.message}`
+      const bodyMessage = err.body && typeof err.body === 'object' && typeof (err.body as { message?: string }).message === 'string'
+        ? `: ${(err.body as { message?: string }).message}`
         : '';
       writeLine(io.stderr, `openwop: HTTP ${err.status}${bodyMessage}`);
       if (options.debugErrors) writeLine(io.stderr, String(err.stack ?? err));
@@ -226,7 +240,7 @@ export function extractGlobalOptions(argv, env = process.env) {
     help: false,
     version: false,
   };
-  const args = [];
+  const args: string[] = [];
   let seenCommand = false;
 
   for (let i = 0; i < argv.length; i++) {
@@ -269,12 +283,15 @@ export function extractGlobalOptions(argv, env = process.env) {
   return { globals, args };
 }
 
-function parseOptions(argv, spec = {}) {
+function parseOptions(
+  argv: string[],
+  spec: { bool?: string[]; value?: string[]; multi?: string[] } = {},
+): { options: Record<string, any>; positionals: string[] } {
   const bools = new Set(spec.bool ?? []);
   const values = new Set(spec.value ?? []);
   const multi = new Set(spec.multi ?? []);
-  const options = {};
-  const positionals = [];
+  const options: Record<string, any> = {};
+  const positionals: string[] = [];
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i] ?? '';
@@ -372,7 +389,7 @@ async function runDoctor(ctx, argv) {
     return 0;
   }
 
-  const checks = [];
+  const checks: Array<{ status: string; name: string; message: string }> = [];
   const node = parseNodeVersion(process.versions.node);
   if (node.major >= 22) {
     checks.push(ok('node', `Node ${process.versions.node} is ready for the demo backend`));
@@ -460,7 +477,7 @@ async function runDoctor(ctx, argv) {
   return checks.some((c) => c.status === 'fail') ? 1 : 0;
 }
 
-async function runDemo(ctx, argv) {
+async function runDemo(ctx: any, argv: string[]): Promise<number> {
   const sub = argv[0];
   const args = argv.slice(1);
   if (!sub || sub === '--help' || sub === '-h') {
@@ -487,7 +504,7 @@ async function runDemo(ctx, argv) {
   }
 }
 
-async function runDemoStatus(ctx, argv) {
+async function runDemoStatus(ctx: any, argv: string[]): Promise<number> {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, DEMO_STATUS_HELP);
@@ -564,7 +581,7 @@ async function runDemoUrls(ctx, argv) {
   return 0;
 }
 
-async function runDemoStart(ctx, argv) {
+async function runDemoStart(ctx: any, argv: string[]): Promise<number> {
   const { options } = parseOptions(argv, {
     bool: ['--help', '--backend-only', '--frontend-only', '--install', '--dry-run', '--detach'],
     value: ['--backend-port', '--frontend-port'],
@@ -586,7 +603,7 @@ async function runDemoStart(ctx, argv) {
     throw new CliError('Choose at least one service to start.');
   }
 
-  const commands = [];
+  const commands: any[] = [];
   if (startBackend) commands.push({ label: 'backend', cwd: backend, cmd: npmCommand(), args: ['run', 'dev'] });
   if (startFrontend) commands.push({
     label: 'frontend',
@@ -704,7 +721,7 @@ async function runDemoStart(ctx, argv) {
   process.once('SIGINT', stop);
   process.once('SIGTERM', stop);
 
-  const exitCode = await new Promise((resolve) => {
+  const exitCode = await new Promise<number>((resolve) => {
     let settled = false;
     for (const { label, child } of children) {
       child.on('exit', (code, signal) => {
@@ -720,7 +737,7 @@ async function runDemoStart(ctx, argv) {
   return exitCode;
 }
 
-async function runDemoStop(ctx, argv) {
+async function runDemoStop(ctx: any, argv: string[]): Promise<number> {
   const { options } = parseOptions(argv, {
     bool: ['--help', '--force'],
     value: ['--timeout-ms'],
@@ -744,7 +761,7 @@ async function runDemoStop(ctx, argv) {
   try {
     process.kill(record.pid, signal);
   } catch (err) {
-    if (err && err.code === 'EPERM') {
+    if (err && (err as NodeJS.ErrnoException).code === 'EPERM') {
       throw new CliError(`Not permitted to signal pid ${record.pid}. It may belong to another user.`);
     }
     throw new CliError(`Failed to signal pid ${record.pid}: ${err instanceof Error ? err.message : String(err)}`);
@@ -767,7 +784,7 @@ async function runDemoStop(ctx, argv) {
   return 0;
 }
 
-async function runDemoRestart(ctx, argv) {
+async function runDemoRestart(ctx: any, argv: string[]): Promise<number> {
   const { options } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--backend-port'],
@@ -787,7 +804,7 @@ async function runDemoRestart(ctx, argv) {
   return runDemoStart(ctx, startArgs);
 }
 
-async function runDemoLogs(ctx, argv) {
+async function runDemoLogs(ctx: any, argv: string[]): Promise<number> {
   const { options } = parseOptions(argv, {
     bool: ['--help', '--follow'],
     value: ['--lines'],
@@ -860,6 +877,11 @@ async function runDemoInstall(ctx, argv) {
     if (ctx.json) writeJson(ctx.io.stdout, { platform: process.platform, supported: false, guidance: plan.guidance });
     else { writeLine(ctx.io.stdout, plan.guidance); }
     return 0;
+  }
+  // Past the unsupported branch a writable plan always carries path + contents;
+  // assert it so strictNullChecks narrows them to string for the writes below.
+  if (!plan.path || plan.contents === undefined) {
+    throw new CliError('Service-install plan is incomplete (no path/contents).');
   }
 
   if (options.dryRun || ctx.json) {
@@ -1312,7 +1334,7 @@ async function runPacksPublish(ctx, argv) {
 
   // Load (or, for dev, generate) the Ed25519 private key.
   let privateKey;
-  let ephemeralPublicB64 = null;
+  let ephemeralPublicB64: string | null = null;
   if (options.key) {
     privateKey = createPrivateKey({ key: readFileSync(resolvePath(ctx.cwd, options.key), 'utf8'), format: 'pem' });
   } else {
@@ -1465,7 +1487,7 @@ function extractPackJsonBytes(tarballBytes) {
 function walkPackDir(packDir) {
   const ALLOWED_TOPS = new Set(['pack.json', 'README.md', 'LICENSE', 'index.mjs']);
   const ALLOWED_DIRS = new Set(['schemas', 'keys']);
-  const entries = [];
+  const entries: any[] = [];
   for (const entry of readdirSync(packDir).sort()) {
     const full = join(packDir, entry);
     const st = statSync(full);
@@ -1507,7 +1529,7 @@ function buildUstarGzip(entries) {
     writeOctal(chksum, 8, 148);
     return buf;
   };
-  const chunks = [];
+  const chunks: Uint8Array[] = [];
   for (const { name, content } of entries) {
     chunks.push(ustarHeader(name, content.length));
     chunks.push(content);
@@ -1783,7 +1805,7 @@ async function runChat(ctx, argv) {
       continue;
     }
 
-    const assistantParts = [];
+    const assistantParts: string[] = [];
     const onEvent = (ev) => {
       if (ctx.json) {
         writeJson(ctx.io.stdout, ev);
@@ -1834,7 +1856,7 @@ export async function submitTurn(ctx, { workflowId, inputs, tenantId, scopeId })
  * Calls `onEvent(eventRecord)` once per event in sequence order and resolves
  * when a terminal event is seen or the poll endpoint reports completion.
  */
-export async function streamRunEvents(ctx, runId, { onEvent, useStream = true, timeoutMs = 120000 } = {}) {
+export async function streamRunEvents(ctx: any, runId: string, { onEvent, useStream = true, timeoutMs = 120000 }: { onEvent?: (e: any) => void; useStream?: boolean; timeoutMs?: number } = {}) {
   if (useStream) {
     try {
       const handled = await streamViaSse(ctx, runId, onEvent);
@@ -1848,7 +1870,7 @@ export async function streamRunEvents(ctx, runId, { onEvent, useStream = true, t
 
 async function streamViaSse(ctx, runId, onEvent) {
   const url = new URL(`/v1/runs/${encodeURIComponent(runId)}/events`, ctx.baseUrl);
-  const headers = { accept: 'text/event-stream' };
+  const headers: Record<string, string> = { accept: 'text/event-stream' };
   if (ctx.apiKey) headers.authorization = `Bearer ${ctx.apiKey}`;
   const res = await ctx.fetchImpl(url, { method: 'GET', headers });
   if (!res.ok) throw new HttpError(`HTTP ${res.status}`, res.status, null);
@@ -1881,8 +1903,8 @@ export async function consumeSse(stream, onFrame) {
   let buffer = '';
   const flushFrame = (block) => {
     if (!block.trim()) return;
-    const frame = {};
-    const dataLines = [];
+    const frame: Record<string, string> = {};
+    const dataLines: string[] = [];
     for (const rawLine of block.split('\n')) {
       const line = rawLine.replace(/\r$/, '');
       if (line === '' || line.startsWith(':')) continue; // blank or comment/heartbeat
@@ -2059,7 +2081,7 @@ async function runRunsAncestry(ctx, argv) {
   // same-host `parent.runId` until `parent === null`. A depth cap guards
   // against a malformed cycle. The endpoint is opt-in (Phase 3) and returns
   // 404 when not advertised — surface that as a clear message.
-  const chain = [];
+  const chain: any[] = [];
   let current = encodeURIComponent(positionals[0]);
   const MAX_DEPTH = 64;
   for (let depth = 0; depth < MAX_DEPTH; depth++) {
@@ -2069,8 +2091,8 @@ async function runRunsAncestry(ctx, argv) {
     } catch (err) {
       if (err instanceof HttpError && err.status === 404) {
         // Distinguish "endpoint not enabled" from "run not found" via the body.
-        const detail = err.body && typeof err.body === 'object' && typeof err.body.message === 'string'
-          ? err.body.message
+        const detail = err.body && typeof err.body === 'object' && typeof (err.body as { message?: string }).message === 'string'
+          ? (err.body as { message?: string }).message
           : 'not found';
         throw new CliError(`runs ancestry unavailable: ${detail} (the ancestry endpoint is opt-in; the host must advertise crossHostCausation.ancestryEndpointSupported).`, 2);
       }
@@ -2575,7 +2597,9 @@ async function resolveBaseUrl(ctx, options, existing, interactive) {
     if (!url) throw new CliError('Base URL is required');
     return normalizeBaseUrl(url);
   }
-  return HOST_PRESETS.find((h) => h.key === choice).url;
+  const preset = HOST_PRESETS.find((h) => h.key === choice);
+  if (!preset) throw new CliError(`Unknown host choice: ${choice}`);
+  return preset.url;
 }
 
 async function resolveProvider(ctx, options, existing, interactive) {
@@ -2883,7 +2907,7 @@ async function runAgentsRun(ctx, argv) {
     return options.help ? 0 : 2;
   }
   const agentId = positionals[0];
-  const body = {};
+  const body: Record<string, any> = {};
   if (options['task-json'] !== undefined) {
     try {
       body.task = JSON.parse(options['task-json']);
@@ -3474,7 +3498,7 @@ async function runRelayStatus(ctx, argv) {
     });
     online = res.body?.ok === true;
   } catch (err) {
-    detail = err instanceof HttpError ? `HTTP ${err.status}` : String(err.message ?? err);
+    detail = err instanceof HttpError ? `HTTP ${err.status}` : errText(err);
   }
   if (ctx.json) {
     writeJson(ctx.io.stdout, { configured: true, relayId: relay.relayId, channel: relay.channel, online, ...(detail ? { detail } : {}) });
@@ -3502,8 +3526,44 @@ function readRelayRecord(env) {
   } catch { return null; }
 }
 
+/**
+ * Start streaming inbound platform messages → POST /device/inbound (B4). The
+ * channel plugin owns the platform connection (signal-cli / chat.db / Baileys);
+ * `ctx.relayPlugin` lets tests inject a fake. Returns a stop function (or
+ * undefined when the channel's tooling isn't available — fail-closed, logged).
+ */
+export async function startInboundReceive(
+  ctx: any,
+  relay: { channel: RelayChannel; deviceToken: string },
+  deviceHeaders: Record<string, string>,
+): Promise<(() => void) | undefined> {
+  const plugin: ChannelPlugin = ctx.relayPlugin ?? getChannelPlugin(relay.channel);
+  const avail = plugin.isAvailable(ctx.env);
+  if (!avail.available) {
+    writeLine(ctx.io.stderr, `inbound receive skipped: ${avail.detail}`);
+    return undefined;
+  }
+  try {
+    const stop = await plugin.startReceive(async (msg: InboundMessage) => {
+      try {
+        await requestJson(ctx, `${MESSAGING_BASE}/device/inbound`, {
+          method: 'POST', auth: false, headers: deviceHeaders, body: msg,
+        });
+        writeLine(ctx.io.stdout, `← [${relay.channel}] ${msg.conversationId}: ${msg.text}`);
+      } catch (err) {
+        writeLine(ctx.io.stderr, `inbound forward failed: ${errText(err)}`);
+      }
+    }, { env: ctx.env });
+    writeLine(ctx.io.stdout, `Inbound receive active for ${relay.channel}.`);
+    return stop;
+  } catch (err) {
+    writeLine(ctx.io.stderr, `inbound receive unavailable: ${errText(err)}`);
+    return undefined;
+  }
+}
+
 async function runRelayStart(ctx, argv) {
-  const { options } = parseOptions(argv, { bool: ['--help', '--once', '--daemon'], value: ['--interval'] });
+  const { options } = parseOptions(argv, { bool: ['--help', '--once', '--daemon', '--no-receive'], value: ['--interval'] });
   if (options.help) { write(ctx.io.stdout, RELAY_HELP); return 0; }
   const relay = loadRelayConfig(ctx);
   if (!relay.relayId || !relay.deviceToken) {
@@ -3548,10 +3608,10 @@ async function runRelayStart(ctx, argv) {
     });
     const out = await requestJson(ctx, `${MESSAGING_BASE}/device/outbound`, { auth: false, headers: deviceHeaders });
     const messages = Array.isArray(out.body?.messages) ? out.body.messages : [];
-    const delivered = [];
+    const delivered: string[] = [];
     for (const egress of messages) {
       try { await deliver(egress); delivered.push(egress.egressId); }
-      catch (err) { writeLine(ctx.io.stderr, `delivery failed for ${egress.egressId}: ${err.message ?? err}`); }
+      catch (err) { writeLine(ctx.io.stderr, `delivery failed for ${egress.egressId}: ${errText(err)}`); }
     }
     if (delivered.length > 0) {
       await requestJson(ctx, `${MESSAGING_BASE}/device/ack`, {
@@ -3568,12 +3628,16 @@ async function runRelayStart(ctx, argv) {
     return 0;
   }
 
+  // Inbound (B4): stream platform messages → POST /device/inbound.
+  const stopReceive = options.noReceive ? undefined : await startInboundReceive(ctx, relay, deviceHeaders);
+
   const intervalMs = Math.max(1000, (Number(options.interval) || 5) * 1000);
   writeLine(ctx.io.stdout, `Relay bridge running for ${relay.relayId} (${relay.channel}). Poll every ${intervalMs / 1000}s. Ctrl+C to stop.`);
+  process.once('SIGINT', () => { try { stopReceive?.(); } catch { /* ignore */ } process.exit(0); });
   // eslint-disable-next-line no-constant-condition
   while (true) {
     try { await cycle(); }
-    catch (err) { writeLine(ctx.io.stderr, `bridge cycle error: ${err.message ?? err}`); }
+    catch (err) { writeLine(ctx.io.stderr, `bridge cycle error: ${errText(err)}`); }
     await new Promise((r) => setTimeout(r, intervalMs));
   }
 }
@@ -3924,7 +3988,7 @@ export function processAlive(pid) {
     return true;
   } catch (err) {
     // ESRCH: no such process. EPERM: exists but not ours → still alive.
-    return err && err.code === 'EPERM';
+    return !!(err && (err as NodeJS.ErrnoException).code === 'EPERM');
   }
 }
 
@@ -4067,7 +4131,7 @@ async function promptChoice(ctx, label, choices) {
   return choices[idx].key;
 }
 
-async function promptText(ctx, prompt, defaultValue = '') {
+async function promptText(ctx: any, prompt: string, defaultValue = ''): Promise<string> {
   ctx.io.stdout.write(prompt);
   const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: false });
   return new Promise((resolve) => {
@@ -4155,9 +4219,9 @@ async function waitForRun(ctx, runId, timeoutMs) {
   throw new CliError(`Timed out waiting for run ${runId} after ${timeoutMs}ms`, 1);
 }
 
-async function requestJson(ctx, path, options = {}) {
+async function requestJson(ctx: any, path: string, options: any = {}) {
   const url = new URL(path, ctx.baseUrl);
-  const headers = {
+  const headers: Record<string, string> = {
     accept: 'application/json',
     ...(options.body !== undefined ? { 'content-type': 'application/json' } : {}),
     ...(options.headers ?? {}),
@@ -4782,10 +4846,12 @@ The relay device owns the platform connection (signal-cli / WhatsApp / iMessage)
 and bridges it to the OpenWOP host. \`setup\` registers + activates a device and
 stores its token in ~/.openwop/config.json under \`relay\`.
 
-  start   Runs the bridge loop: heartbeat + poll outbound + deliver + ack.
-          --daemon backgrounds it (pid + logs under ~/.openwop/); --once runs a
-          single cycle (e.g. in tests). Native delivery via signal-cli /
-          AppleScript when present, else printed to the console.
+  start   Runs the bridge loop: heartbeat + poll outbound + deliver + ack, AND
+          streams inbound platform messages → the host (--no-receive disables
+          inbound; --once runs one outbound cycle, no receive). --daemon
+          backgrounds it (pid + logs under ~/.openwop/). Inbound + delivery use
+          the channel plugin (signal-cli / chat.db / Baileys) when its tooling
+          is present, else inbound is skipped and delivery prints to console.
   stop    Stops the background relay daemon and clears its pid record.
   logs    Print (or -f follow) the background relay daemon log.
   send    Operator-side: queue an outbound message for the relay to deliver.

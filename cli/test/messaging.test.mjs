@@ -1,9 +1,10 @@
+// Run via `npm test` (builds dist/ first) — these import the esbuild bundle at ../dist/cli.js.
 import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, it } from 'node:test';
-import { readConfigSafe, configPathFor, runCli } from '../lib/cli.mjs';
+import { readConfigSafe, configPathFor, runCli } from '../dist/cli.js';
 
 function capture() {
   let stdout = '';
@@ -180,7 +181,7 @@ describe('messaging connectors (CLI)', () => {
   });
 });
 
-import { detectChannelAvailability } from '../lib/cli.mjs';
+import { detectChannelAvailability } from '../dist/cli.js';
 
 describe('channel availability detection', () => {
   it('reports whatsapp as unavailable in the core CLI', () => {

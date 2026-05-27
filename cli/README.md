@@ -10,19 +10,25 @@ One-line install (detects the OS, ensures Node 22+, installs the package, then o
 curl -fsSL https://openwop.dev/install.sh | bash
 ```
 
-Or directly: `npm i -g @openwop/cli` (needs Node 22+), then `openwop onboard`. From a repo clone, run `node cli/openwop.mjs <command>`.
+Or directly: `npm i -g @openwop/cli` (needs Node 22+), then `openwop onboard`.
+
+From a repo clone the CLI is a TypeScript package — build it once, then run the bundled entry (or `npm run cli -- <command>` from the repo root, which builds first):
+
+```bash
+npm --prefix cli install && npm --prefix cli run build   # → cli/dist/openwop.js
+```
 
 ## Quick start
 
 ```bash
-node cli/openwop.mjs --help
-node cli/openwop.mjs doctor                 # check prerequisites
-node cli/openwop.mjs onboard                # guided setup (host + provider + key + model)
-node cli/openwop.mjs demo start             # boot local backend + frontend (optional)
-node cli/openwop.mjs demo status
-node cli/openwop.mjs catalog nodes --search ai
-node cli/openwop.mjs runs create sample.demo.uppercase --input text=hello --wait
-node cli/openwop.mjs packs search ads        # browse the signed pack registry
+node cli/dist/openwop.js --help
+node cli/dist/openwop.js doctor                 # check prerequisites
+node cli/dist/openwop.js onboard                # guided setup (host + provider + key + model)
+node cli/dist/openwop.js demo start             # boot local backend + frontend (optional)
+node cli/dist/openwop.js demo status
+node cli/dist/openwop.js catalog nodes --search ai
+node cli/dist/openwop.js runs create sample.demo.uppercase --input text=hello --wait
+node cli/dist/openwop.js packs search ads        # browse the signed pack registry
 ```
 
 ## Onboarding
@@ -110,7 +116,7 @@ How it works: the relay device owns the platform connection and bridges it to th
 - **iMessage** needs macOS (Messages signed in + Full Disk Access for `chat.db`).
 - **WhatsApp** ships with the channel build (Baileys), not the core CLI.
 
-When a channel's tooling isn't present, `relay start` prints outbound to the console instead of silently dropping it.
+`relay start` also **receives**: each channel plugin streams inbound platform messages and forwards them to the host's `/device/inbound` (which runs the bound workflow and queues a reply). Signal uses `signal-cli ... receive`, iMessage polls `chat.db` by ROWID, WhatsApp binds Baileys `messages.upsert`. Disable inbound with `--no-receive`. When a channel's tooling isn't present, inbound is skipped and outbound prints to the console instead of silently dropping it.
 
 The relay **device token** is a host credential, so it is stored separately from `config.json` in `~/.openwop/relay-credentials.json` (mode `0600`), not in your main config. Revoke it any time with `openwop relay revoke`.
 
