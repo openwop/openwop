@@ -39,8 +39,11 @@
  *     DELETE .../sessions/:key              — close + delete
  *
  * State is module-scoped and in-process (demo-grade, non-durable) — the same
- * posture as the test-seam routes. A real host would back this with storage.
- * `resetMessagingState()` clears it between tests.
+ * posture as the test-seam routes. Consequences a real host MUST address by
+ * backing this with `Storage`: device tokens + outbound queues + sessions are
+ * lost on restart (devices must re-`activate`), and the state is shared across
+ * `createApp` instances in one process. `resetMessagingState()` clears it
+ * between tests.
  */
 
 import { randomUUID } from 'node:crypto';

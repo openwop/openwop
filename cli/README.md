@@ -112,6 +112,8 @@ How it works: the relay device owns the platform connection and bridges it to th
 
 When a channel's tooling isn't present, `relay start` prints outbound to the console instead of silently dropping it.
 
+The relay **device token** is a host credential, so it is stored separately from `config.json` in `~/.openwop/relay-credentials.json` (mode `0600`), not in your main config. Revoke it any time with `openwop relay revoke`.
+
 ## Operator surfaces
 
 Beyond runs/workflows/catalog, the CLI surfaces the host's operator endpoints: `agents`, `memory`, `media`, `webhooks`, `chat`, plus `notifications` (inbox), `interrupts` (list/resolve human-in-the-loop pauses), and `prompts` (RFC 0029 library list/get/render). Every command supports `--json`.

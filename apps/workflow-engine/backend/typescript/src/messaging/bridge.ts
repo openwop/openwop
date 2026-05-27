@@ -10,15 +10,34 @@
  * Inbound stays fast: the run is created synchronously (so the device gets a
  * runId back), and the poll-to-completion + outbound enqueue runs detached.
  * This matches the relay pattern — the device pulls the reply on a later
- * outbound poll.
+ * outbound poll. Detached replies are capped (OPENWOP_MESSAGING_MAX_INFLIGHT)
+ * so an inbound burst can't spawn unbounded pollers.
  *
  * NON-normative: this lives entirely in the demo app's host-extension layer.
+ *
+ * Production-hardening notes (demo-grade as written):
+ *  - Credential: runs are created with a single host bearer (a wildcard
+ *    principal in the demo). The run's tenant comes from `device.tenantId`,
+ *    bound at relay-registration time (NOT from the inbound message), so
+ *    inbound content cannot redirect a run into another tenant. A real
+ *    multi-tenant host MUST swap the wildcard bearer for a per-tenant scoped
+ *    credential before advertising this beyond the demo.
+ *  - Rate limit: the poll loop self-fetches over loopback, so all
+ *    messaging-driven run traffic shares the 127.0.0.1 IP bucket
+ *    (ipRateLimitMiddleware). A real host SHOULD exempt loopback/self-traffic
+ *    or give the bridge a dedicated quota.
  */
 
 import { enqueueOutbound, type MessagingBridge } from '../routes/messaging.js';
 import { createLogger } from '../observability/logger.js';
 
 const log = createLogger('messaging.bridge');
+
+// Backpressure: cap concurrent detached reply pollers so an inbound burst
+// can't spawn unbounded timers. Beyond the cap the run is still created
+// (the device got its runId); only the auto-reply poll is skipped.
+const MAX_INFLIGHT = Number(process.env.OPENWOP_MESSAGING_MAX_INFLIGHT) || 50;
+let inflight = 0;
 
 export interface SelfHttpBridgeConfig {
   /** The host's own base URL, e.g. http://127.0.0.1:8080 */
@@ -59,12 +78,19 @@ export function createSelfHttpBridge(cfg: SelfHttpBridgeConfig): MessagingBridge
       const runId = created.runId;
       if (!runId) return;
 
+      if (inflight >= MAX_INFLIGHT) {
+        log.warn('bridge at max in-flight replies; run created but auto-reply poll skipped', { runId, inflight, max: MAX_INFLIGHT });
+        return { runId };
+      }
       // Detached: poll to terminal, extract reply, enqueue outbound.
+      inflight++;
       void completeAndReply({
         fetchImpl, headers, baseUrl: cfg.baseUrl, pollIntervalMs, timeoutMs,
         runId, relayId: device.relayId, channel: device.channel,
         conversationId: envelope.conversationId, replyToMessageId: envelope.platformMessageId,
-      }).catch((err) => log.error('inbound bridge reply failed', { runId, error: String(err?.message ?? err) }));
+      })
+        .catch((err) => log.error('inbound bridge reply failed', { runId, error: String(err?.message ?? err) }))
+        .finally(() => { inflight--; });
 
       return { runId };
     },

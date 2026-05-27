@@ -3204,15 +3204,31 @@ const MESSAGING_BASE = '/v1/host/sample/messaging';
 const DEVICE_TOKEN_HEADER = 'x-openwop-device-token';
 const RELAY_CHANNELS = ['whatsapp', 'signal', 'imessage'];
 
+// The relay record carries the device token — a bearer-equivalent host
+// credential. It is kept OUT of config.json (which holds only non-secret
+// settings + BYOK refs) and written to a dedicated 0600 file, preserving the
+// CLI's "no secrets in config.json" posture (see cli/README §Config).
+function relayCredsPath(env) {
+  return join(openwopHomeDir(env), 'relay-credentials.json');
+}
+
 function loadRelayConfig(ctx) {
-  const config = readConfigSafe(configPathFor(undefined, ctx.env)) ?? {};
-  return config.relay ?? {};
+  try {
+    const p = relayCredsPath(ctx.env);
+    if (existsSync(p)) return JSON.parse(readFileSync(p, 'utf8'));
+  } catch { /* unreadable/corrupt → treat as unconfigured */ }
+  return {};
 }
 
 function saveRelayConfig(ctx, relay) {
-  const configPath = configPathFor(undefined, ctx.env);
-  const existing = readConfigSafe(configPath) ?? {};
-  saveConfig(configPath, mergeConfig(existing, { relay }));
+  const p = relayCredsPath(ctx.env);
+  mkdirSync(dirname(p), { recursive: true });
+  if (!relay || Object.keys(relay).length === 0) {
+    try { if (existsSync(p)) rmSync(p); } catch { /* best-effort */ }
+    return;
+  }
+  writeFileSync(p, `${JSON.stringify(relay, null, 2)}\n`, 'utf8');
+  try { chmodSync(p, 0o600); } catch { /* best-effort on Windows */ }
 }
 
 async function runMessaging(ctx, argv) {

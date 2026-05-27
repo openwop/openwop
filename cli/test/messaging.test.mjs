@@ -102,15 +102,24 @@ function opts(fetchImpl, cap) {
   return { io: cap.io, fetchImpl, env: { OPENWOP_CONFIG_HOME: configHome }, cwd: process.cwd(), repoRoot: process.cwd() };
 }
 
+// Relay device creds live in a dedicated 0600 file, NOT config.json.
+function readRelayCreds() {
+  const p = join(configHome, '.openwop', 'relay-credentials.json');
+  return existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : {};
+}
+
 describe('relay device lifecycle (CLI)', () => {
   it('setup registers + activates and stores the device token in config', async () => {
     const cap = capture();
     const code = await runCli(['relay', 'setup', '--channel', 'signal', '--name', 'mac'], opts(relayServer(), cap));
     assert.equal(code, 0, cap.stderr);
     assert.match(cap.stdout, /registered \+ activated/);
-    const cfg = readConfigSafe(configPathFor(undefined, { OPENWOP_CONFIG_HOME: configHome }));
-    assert.equal(cfg.relay.channel, 'signal');
-    assert.match(cfg.relay.deviceToken, /^dtok_/);
+    const creds = readRelayCreds();
+    assert.equal(creds.channel, 'signal');
+    assert.match(creds.deviceToken, /^dtok_/);
+    // The device token (a host credential) must NOT land in config.json.
+    const cfg = readConfigSafe(configPathFor(undefined, { OPENWOP_CONFIG_HOME: configHome })) ?? {};
+    assert.equal(cfg.relay, undefined, 'device token must not be written to config.json');
   });
 
   it('rejects an unknown channel before any network call', async () => {
@@ -124,10 +133,10 @@ describe('relay device lifecycle (CLI)', () => {
     const fetchImpl = relayServer();
     // setup
     await runCli(['relay', 'setup', '--channel', 'signal'], opts(fetchImpl, capture()));
-    const cfg = readConfigSafe(configPathFor(undefined, { OPENWOP_CONFIG_HOME: configHome }));
+    const creds = readRelayCreds();
     // operator queues a message
     const sendCap = capture();
-    await runCli(['relay', 'send', '--relay-id', cfg.relay.relayId, '--conversation', 'c1', '--text', 'hello world'], opts(fetchImpl, sendCap));
+    await runCli(['relay', 'send', '--relay-id', creds.relayId, '--conversation', 'c1', '--text', 'hello world'], opts(fetchImpl, sendCap));
     assert.match(sendCap.stdout, /Queued egress/);
     // one bridge cycle delivers it (console delivery prints the text)
     const startCap = capture();
