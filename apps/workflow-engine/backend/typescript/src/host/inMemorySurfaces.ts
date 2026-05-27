@@ -971,6 +971,26 @@ export function getMemoryEntry(tenantId: string, memoryRef: string, memoryId: st
   return row && notExpired(row, now) ? row : null;
 }
 
+/**
+ * Host-internal delete. Removes a tenant-scoped entry under `memoryRef`.
+ * Returns true when an entry was removed, false when none matched.
+ *
+ * Tenant-scoped exactly like the read side — the caller passes the
+ * principal-derived `tenantId`, never a query value, so a delete can never
+ * cross a tenant boundary (CTI-1). Demo-only convenience for the CLI/inspector;
+ * the agent-memory wire contract keeps writes/deletes host-internal.
+ */
+export function removeMemoryEntry(tenantId: string, memoryRef: string, memoryId: string): boolean {
+  const bucket = memoryBucket(tenantId);
+  const entries = bucket.get(memoryRef);
+  if (!entries) return false;
+  const idx = entries.findIndex((r) => r.id === memoryId);
+  if (idx === -1) return false;
+  entries.splice(idx, 1);
+  bucket.set(memoryRef, entries);
+  return true;
+}
+
 // ───────────────────────────────────────────────────────────────────
 // RFC 0012 memory compaction (host-managed + client-requested)
 //

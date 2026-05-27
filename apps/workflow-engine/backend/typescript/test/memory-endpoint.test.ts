@@ -101,4 +101,35 @@ describe('memory ledger read-side', () => {
     expect(mem.status).toBe(200);
     for (const e of mem.body.entries) expect(e.tags).toContain('run-summary');
   });
+
+  it('deletes a tenant-scoped entry (demo DELETE route)', async () => {
+    // Grab an existing entry, delete it, and confirm it's gone.
+    const before = await jsonFetch<MemoryListBody>('/v1/host/sample/memory');
+    expect(before.body.entries.length).toBeGreaterThan(0);
+    const target = before.body.entries[0]!;
+
+    const del = await jsonFetch<{ memoryRef: string; memoryId: string; removed: boolean }>(
+      `/v1/host/sample/memory/${target.id}`,
+      { method: 'DELETE' },
+    );
+    expect(del.status).toBe(200);
+    expect(del.body.removed).toBe(true);
+    expect(del.body.memoryId).toBe(target.id);
+
+    const after = await jsonFetch<MemoryListBody>('/v1/host/sample/memory');
+    expect(after.body.entries.find((e) => e.id === target.id)).toBeUndefined();
+  });
+
+  it('returns 404 deleting a missing entry', async () => {
+    const del = await jsonFetch<{ error: string }>('/v1/host/sample/memory/mem_does_not_exist', {
+      method: 'DELETE',
+    });
+    expect(del.status).toBe(404);
+    expect(del.body.error).toBe('not_found');
+  });
+
+  it('requires auth to delete', async () => {
+    const res = await fetch(`${BASE}/v1/host/sample/memory/whatever`, { method: 'DELETE' });
+    expect(res.status).toBe(401);
+  });
 });
