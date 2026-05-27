@@ -281,6 +281,22 @@ The published `agent-manifest-runtime.test.ts` helper read `discoveryDoc.capabil
 
 **Resolution — [RFC 0073](RFCS/0073-capability-document-root-layout.md) (`Draft`, openwop-side, NOT a MyndHyve mirror):** `capabilities.md` §"Document-root layout" now states the root placement as a normative `MUST` and marks the `capabilities` wrapper a deprecated v1.x-window legacy shape; a shared `conformance/src/lib/discovery-capabilities.ts` accessor reads root-first with wrapper-fallback; the agent-cohort readers (`agentRuntime` / `agentLoop` / `distillation` / `subRunAttestation` / `approval-gate-flow` / `ai-envelope-shape`) are migrated onto it — so the RFC 0070 scenario now **grades** MyndHyve (root) and the reference hosts (nested mirror) alike, no soft-skip. The primary reference host (`apps/.../discovery.ts`) emits families at the root (canonical) + a deprecated nested mirror. **Phase 2b complete (#279 + the tail):** all **78/78** capability-gated conformance scenarios now read via the root-first accessor. **Phase 3 complete:** all four reference hosts (`apps/.../discovery.ts`, `examples/hosts/{in-memory,sqlite,postgres,python}`) emit families at the document root (canonical) + a deprecated nested `capabilities` mirror for the v1.x window — so the profile machinery (`profiles.ts`, which reads root) grades them correctly over a live URL, closing the latent honesty gap where root-read profiles (`openwop-secrets`, `openwop-provider-policy`) were unverifiable against the previously nested-only shape. **Remaining (RFC 0073 Phase 4):** drop the accessor's wrapper fallback + the host mirrors one minor release after all hosts are confirmed root-serving.
 
+## Capability adoption — RFC 0074 tenant-scoped manifest-agent inventory — ✅ ACCEPTED (2026-05-27)
+
+[RFC 0074](RFCS/0074-tenant-scoped-agent-inventory.md) (amends RFC 0072 §A) graduated `Active → Accepted` on the **multi-tenant non-steward host MyndHyve** (`workflow-runtime-00398-vup`), the first multi-tenant second implementation of the agent-runtime surface. The additive `capabilities.agents.manifestRuntime.installScope` (default `'host'` = RFC 0072 verbatim) lets a host declare that `GET /v1/agents` is scoped to the authenticated principal's RFC 0048 owner triple rather than host-global.
+
+**Steward-corroborated live (2026-05-27):** `GET https://workflow-runtime-gjw5bcse7a-uc.a.run.app/.well-known/openwop` advertises `agents.manifestRuntime: { supported: true, handoffValidation: true, installScope: "tenant" }` at the **document root** (also corroborating RFC 0073 root placement).
+
+**Two-principal authed proof (same `agentId`, reported by the host operator — conformance keys are tenant-private):**
+- **Principal A** (`ws-openwop-conformance`, pack approved) → `GET /v1/agents` `200 { total: 1, agents: [private.myndhyve.conformance-agent.reviewer] }`.
+- **Principal B** (`ws-openwop-conformance-b`, no approval) → `GET /v1/agents` `200 { agents: [], total: 0 }`; `GET /v1/agents/{agentId}` → `404 not_found` — cross-tenant, no disclosure.
+
+That is RFC 0074 §A end-to-end on a real multi-tenant host (via MyndHyve's workspace-scoped `MyndHyveAgentPackResolver`: approval → version/yank → SRI → Ed25519 gate → resolve `agents[]`, registry global-cache + query-layer scoping). Dispatch unchanged (RFC 0072 §B, owner-triple `POST /v1/runs`).
+
+**Two openwop-side findings surfaced during the proof (neither blocks 0074; both tracked):**
+1. **Core agent-pack prompt omission** — all three published `core.openwop.agents.*` packs ship without their `systemPromptRef` body in the tarball, so an RFC 0003 §C fail-loud resolver rejects them. The proof therefore used a complete private pack (`private.myndhyve.conformance-agent`). `core.openwop.agents.deep-research` is mirrored + approved for A but inert (skipped). **openwop publishing defect — republish the core agent packs with their prompt bodies.**
+2. **Registry signer-metadata drift** — 81 published pack-version `index.json`s declare `signingKeyId: openwop-registry-root` while the tarball is actually signed by the real publisher key (`openwop-team-1` for core, `myndhyve-internal-1` for vendor, `community-openwop-team-demo-1` for the demo). Strict consumers keying off the catalog field would reject correctly-signed packs; no consistency guard exists. **Separate openwop consistency-guard PR.**
+
 ## Reading Rows
 
 - **Compatibility profile claim** is derived from `/.well-known/openwop` according to `spec/v1/profiles.md`.
