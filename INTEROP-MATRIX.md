@@ -248,6 +248,16 @@ The conformance suite's `experimentalGate()` helper (`conformance/src/lib/behavi
 | 0068 memory consolidation + commitments | `agents.memoryConsolidation` + `agents.commitments` + `agent.memory.consolidated` / `commitment.fired` events | `memory-consolidation-shape.test.ts` (always-on) + `memory-consolidation-idempotent.test.ts` / `commitment-fired.test.ts` (gated, seam soft-skip) | No host advertises either capability yet — replay-determinism Unresolved #1 to close before `Active` |
 | 0069 exec-class tool safety contract | normative MUST-NOT (no protocol-tier exec) + `exec-must-not-be-protocol-tier` invariant | `exec-not-protocol-tier.test.ts` (always-on, server-free structural) | Satisfied by the corpus itself; no host advertisement applies (codifies an exclusion) |
 
+## Capability adoption — RFC 0070 agent-manifest runtime — 🟡 STEWARD REFERENCE HOST ONLY (filed 2026-05-26)
+
+> RFC 0070 (`Draft`) adds `capabilities.agents.manifestRuntime` — the floor that makes RFC 0003's packaged agent manifests runnable. Unlike the 0067–0069 cohort, the steward **workflow-engine** reference host implements + advertises it now (loads pack `agents[]` into an AgentRegistry + dispatches over HTTP), closing RFC 0003's long-open "reference host installs and resolves at least one agent pack" criterion. Remaining for the portability receipt: a SECOND, cross-language host (the **Python** reference host) running the same signed agent pack — the immediate follow-on — and a non-steward host for `Active`.
+
+| Host | `agents.manifestRuntime` | Evidence | Status |
+|---|---|---|---|
+| workflow-engine (steward reference) | `{ supported: true, handoffValidation: true }` | `agent-dispatch-route.test.ts` (boots the host; lists + dispatches `core.openwop.agents.supervisor.default` over HTTP with attributed events + §F escalation) | ✅ advertises + dispatches end-to-end |
+| Python reference host | — | — | ⏳ cross-language portability proof (immediate follow-on) |
+| non-steward host | — | — | ⏳ required for `Draft → Active` |
+
 ## Reading Rows
 
 - **Compatibility profile claim** is derived from `/.well-known/openwop` according to `spec/v1/profiles.md`.

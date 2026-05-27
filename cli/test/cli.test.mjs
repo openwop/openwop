@@ -1575,16 +1575,17 @@ describe('runs ancestry command', () => {
   });
 });
 
-describe('agents command', () => {
+describe('agents command (RFC 0070 manifest agents)', () => {
   const inventory = {
     agents: [
-      { agentId: 'core.orchestrator.supervisor', role: 'supervisor', label: 'Supervisor', nodeTypeId: 'core.orchestrator.supervisor', available: true, rfcs: ['RFC 0037'], reasoning: { verbosity: 'full', streaming: true } },
-      { agentId: 'core.dispatch', role: 'dispatch', label: 'Dispatch loop', nodeTypeId: 'core.dispatch', available: true, rfcs: ['RFC 0040'], reasoning: { verbosity: 'full', streaming: true } },
+      { agentId: 'core.openwop.agents.supervisor.default', persona: 'Supervisor', label: 'Supervisor', modelClass: 'reasoning', packName: 'core.openwop.agents.supervisor', packVersion: '1.0.0', toolAllowlist: [], hasHandoffSchemas: true, confidenceThreshold: 0.75 },
+      { agentId: 'core.openwop.agents.code-reviewer.default', persona: 'Code Reviewer', label: 'Code Reviewer', modelClass: 'coding', packName: 'core.openwop.agents.code-reviewer', packVersion: '1.0.0', toolAllowlist: ['openwop:fs.read'], hasHandoffSchemas: true, confidenceThreshold: 0.7 },
     ],
-    reasoning: { verbosity: 'full', streaming: true },
+    total: 2,
+    runtime: { manifestRuntime: true },
   };
 
-  it('lists agent roles as a table', async () => {
+  it('lists installed manifest agents as a table', async () => {
     const cap = capture();
     const fetchImpl = async (url) => {
       assert.equal(new URL(url).pathname, '/v1/host/sample/agents');
@@ -1594,29 +1595,66 @@ describe('agents command', () => {
       io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
     });
     assert.equal(code, 0);
-    assert.match(cap.stdout, /core\.orchestrator\.supervisor\s+supervisor/);
-    assert.match(cap.stdout, /core\.dispatch\s+dispatch/);
+    assert.match(cap.stdout, /core\.openwop\.agents\.supervisor\.default\s+Supervisor\s+reasoning/);
+    assert.match(cap.stdout, /core\.openwop\.agents\.code-reviewer\.default\s+Code Reviewer\s+coding/);
   });
 
-  it('info renders one agent and supports --json', async () => {
+  it('info renders one agent manifest and supports --json', async () => {
     const cap = capture();
     const fetchImpl = async (url) => {
-      assert.equal(new URL(url).pathname, '/v1/host/sample/agents/core.dispatch');
+      assert.equal(new URL(url).pathname, '/v1/host/sample/agents/core.openwop.agents.code-reviewer.default');
       return new Response(JSON.stringify(inventory.agents[1]), { status: 200 });
     };
-    const code = await runCli(['--json', 'agents', 'info', 'core.dispatch', '--base-url', 'http://mock.local'], {
+    const code = await runCli(['--json', 'agents', 'info', 'core.openwop.agents.code-reviewer.default', '--base-url', 'http://mock.local'], {
       io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
     });
     assert.equal(code, 0);
     const parsed = JSON.parse(cap.stdout);
-    assert.equal(parsed.agentId, 'core.dispatch');
-    assert.equal(parsed.role, 'dispatch');
+    assert.equal(parsed.agentId, 'core.openwop.agents.code-reviewer.default');
+    assert.equal(parsed.modelClass, 'coding');
+  });
+
+  it('run dispatches an agent turn and exits 0 on completion', async () => {
+    const cap = capture();
+    const fetchImpl = async (url, init) => {
+      assert.equal(new URL(url).pathname, '/v1/host/sample/agents/core.openwop.agents.code-reviewer.default/dispatch');
+      assert.equal(init.method, 'POST');
+      const body = JSON.parse(init.body);
+      assert.deepEqual(body.availableTools, ['openwop:fs.read', 'openwop:shell.exec']);
+      return new Response(JSON.stringify({
+        agentId: 'core.openwop.agents.code-reviewer.default', persona: 'Code Reviewer',
+        status: 'completed', toolSurface: ['openwop:fs.read'], confidence: 0.9, threshold: 0.7,
+        events: [{ type: 'agent.reasoned', agentId: 'x', summary: 's' }, { type: 'agent.decided', agentId: 'x', decision: 'final', confidence: 0.9 }],
+        result: { summary: 'ok' },
+      }), { status: 200 });
+    };
+    const code = await runCli([
+      'agents', 'run', 'core.openwop.agents.code-reviewer.default',
+      '--task-json', '{"diff":"x"}', '--tool', 'openwop:fs.read', '--tool', 'openwop:shell.exec',
+      '--base-url', 'http://mock.local',
+    ], { io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {} });
+    assert.equal(code, 0);
+    assert.match(cap.stdout, /status: completed/);
+    assert.match(cap.stdout, /toolSurface: openwop:fs\.read/); // shell.exec filtered out server-side
+  });
+
+  it('run exits 3 when the agent escalates', async () => {
+    const cap = capture();
+    const fetchImpl = async () => new Response(JSON.stringify({
+      agentId: 'a', persona: 'A', status: 'escalated', toolSurface: [], confidence: 0.4, threshold: 0.75,
+      events: [{ type: 'agent.decided', agentId: 'a', decision: 'escalate', confidence: 0.4 }],
+    }), { status: 200 });
+    const code = await runCli(['agents', 'run', 'a', '--base-url', 'http://mock.local'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 3);
+    assert.match(cap.stdout, /status: escalated/);
   });
 
   it('surfaces a 404 for an unknown agent id', async () => {
     const cap = capture();
     const fetchImpl = async () =>
-      new Response(JSON.stringify({ error: 'not_found', message: "agent 'nope' is not present on this host" }), { status: 404 });
+      new Response(JSON.stringify({ error: 'not_found', message: "agent 'nope' is not installed on this host" }), { status: 404 });
     const code = await runCli(['agents', 'info', 'nope', '--base-url', 'http://mock.local'], {
       io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
     });

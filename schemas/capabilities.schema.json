@@ -843,6 +843,23 @@
           "type": "boolean",
           "description": "Phase 6. When `true`, host advertises that it implements the `core.dispatch` Core typeId AND honors the conservative-path commitment CP-2 (`core.dispatch` MUST NOT mutate the run's DAG mid-run). Implies (but does NOT require) `agents.orchestrator: true`."
         },
+        "manifestRuntime": {
+          "type": "object",
+          "description": "RFC 0070. Agent-manifest runtime floor — the minimal tier that makes a published agent pack (RFC 0003) runnable. When `supported: true`, the host implements RFC 0003 `installAgents`: it loads each installed pack's `agents[]` into an in-process AgentRegistry, resolves `systemPromptRef` + `handoff.*SchemaRef` from the tarball at install (RFC 0003 §C/§D), and can DISPATCH a manifest agent on the existing `core.dispatch`/orchestrator loop (RFC 0007/0037/0061). Does NOT imply swarm/consensus (`host.agentRuntime`), long-term memory (`agents.memoryBackends`), or crews beyond `agents.dispatch`. A host advertising `host.agentRuntime: supported` is treated as also satisfying this flag (RFC 0070 §B). Hosts that omit this block do not instantiate manifest agents (today's default).",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "REQUIRED when the block is present. When `true`, the host loads + dispatches pack-declared manifest agents. A host with `supported: true` MUST enforce each dispatched agent's `toolAllowlist` (RFC 0002 §A14) and MUST NOT leak BYOK plaintext into `agent.*` events or handoff payloads (SR-1)."
+            },
+            "handoffValidation": {
+              "type": "boolean",
+              "default": false,
+              "description": "When `true`, the host validates inbound task payloads against the agent's `handoff.taskSchemaRef` before dispatch and outbound results against `handoff.returnSchemaRef` before persistence (RFC 0003 §D). When `false`/absent, manifests carrying `handoff` schemas are dispatched with opaque payloads."
+            }
+          }
+        },
         "dispatchMapping": {
           "type": "boolean",
           "default": false,

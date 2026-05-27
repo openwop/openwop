@@ -377,6 +377,11 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       agents: {
         supported: true,
         reasoning: { verbosity: 'full', tokenLimit: 512, streaming: true },
+        // RFC 0070 — this host loads pack `agents[]` into an AgentRegistry
+        // (RFC 0003 installAgents) and dispatches a manifest agent via the
+        // floor seam (`POST /v1/host/sample/agents/{agentId}/dispatch`),
+        // enforcing toolAllowlist (§A14) + handoff schema validation (§D).
+        manifestRuntime: { supported: true, handoffValidation: true },
       },
       // RFC 0026 — `provider.usage` event support. Reference host emits
       // one `provider.usage` event per real LLM dispatch from
