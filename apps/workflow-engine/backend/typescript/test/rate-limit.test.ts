@@ -42,6 +42,9 @@ describe('P0.4 rate limit', () => {
   beforeEach(async () => {
     _resetRateLimitState();
     process.env.OPENWOP_RATELIMIT_DISABLED = '';
+    // These tests drive the limiter over loopback, so opt out of the bridge
+    // loopback-self exemption (otherwise every test request would be exempt).
+    process.env.OPENWOP_RATELIMIT_TRUST_LOOPBACK = 'false';
     process.env.OPENWOP_RATELIMIT_IP_REQS_PER_MIN = '5';
     process.env.OPENWOP_RATELIMIT_SESSION_RUNS_PER_MIN = '3';
     process.env.OPENWOP_RATELIMIT_SESSION_RUNS_PER_DAY = '100';
@@ -186,5 +189,25 @@ describe('P0.4 rate limit', () => {
       const r = await fetch(`http://127.0.0.1:${port}/ping`);
       expect(r.status).toBe(200);
     }
+  });
+
+  it('loopback self-traffic (no XFF) is exempt; a spoofed XFF is NOT', async () => {
+    // Enable the loopback-self exemption (limit is 5/min).
+    process.env.OPENWOP_RATELIMIT_TRUST_LOOPBACK = '';
+    _resetRateLimitState();
+    // Direct loopback, no X-Forwarded-For → exempt: well past the limit, all 200.
+    for (let i = 0; i < 12; i++) {
+      const r = await fetch(`http://127.0.0.1:${port}/ping`);
+      expect(r.status).toBe(200);
+    }
+    // A spoofed `X-Forwarded-For: 127.0.0.1` must NOT bypass — presence of XFF
+    // disqualifies the loopback-self check, so the limiter applies.
+    _resetRateLimitState();
+    let sawLimit = false;
+    for (let i = 0; i < 8; i++) {
+      const r = await fetch(`http://127.0.0.1:${port}/ping`, { headers: { 'x-forwarded-for': '127.0.0.1' } });
+      if (r.status === 429) { sawLimit = true; break; }
+    }
+    expect(sawLimit).toBe(true);
   });
 });

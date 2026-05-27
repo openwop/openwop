@@ -88,6 +88,18 @@ function pruneWindow(times: number[], windowMs: number, now: number): number[] {
   return i === 0 ? times : times.slice(i);
 }
 
+/**
+ * True only for a genuine direct loopback connection (no proxy hop). Requires
+ * the absence of X-Forwarded-For — behind a trusted L7 proxy real traffic
+ * always carries XFF, so this can't be reached by spoofing the header. Used to
+ * exempt the messaging bridge's self-fetches from the per-IP limiter.
+ */
+function isLoopbackSelf(req: Request): boolean {
+  if (req.header('x-forwarded-for')) return false;
+  const addr = req.socket.remoteAddress ?? '';
+  return addr === '127.0.0.1' || addr === '::1' || addr === '::ffff:127.0.0.1';
+}
+
 function clientIp(req: Request): string {
   // Honor X-Forwarded-For when running behind Cloud Run's HTTP load
   // balancer; first hop in the chain is the client. Fall back to
@@ -131,6 +143,16 @@ function rejectRateLimited(
 export function ipRateLimitMiddleware(): RequestHandler {
   return (req, res, next) => {
     if (process.env.OPENWOP_RATELIMIT_DISABLED === 'true') { next(); return; }
+    // Exempt genuine loopback self-traffic (the messaging bridge self-fetches
+    // /v1/runs over 127.0.0.1) so all messaging-driven runs don't share one IP
+    // bucket. Keyed on the SOCKET address with NO X-Forwarded-For: behind a L7
+    // proxy (Cloud Run) real traffic always carries XFF, so a spoofed
+    // `X-Forwarded-For: 127.0.0.1` can't bypass — only a direct loopback
+    // connection qualifies. Opt out with OPENWOP_RATELIMIT_TRUST_LOOPBACK=false.
+    if (process.env.OPENWOP_RATELIMIT_TRUST_LOOPBACK !== 'false' && isLoopbackSelf(req)) {
+      next();
+      return;
+    }
     const limits = loadLimits();
     if (limits.ipReqsPerMin === 0) { next(); return; }
     const ip = clientIp(req);

@@ -328,7 +328,11 @@ export async function createApp(config: AppConfig): Promise<Express> {
     bridge: createSelfHttpBridge({
       storage,
       baseUrl: `http://127.0.0.1:${config.port}`,
-      bearer: process.env.OPENWOP_API_KEY ?? 'sample-token',
+      // Prefer a dedicated, tenant-scopable bridge credential; fall back to the
+      // host bearer for the demo. A real multi-tenant host SHOULD set
+      // OPENWOP_MESSAGING_BRIDGE_TOKEN to a scoped credential (the run's tenant
+      // still comes from the registered device, not the inbound message).
+      bearer: process.env.OPENWOP_MESSAGING_BRIDGE_TOKEN ?? process.env.OPENWOP_API_KEY ?? 'sample-token',
       defaultWorkflowId: process.env.OPENWOP_MESSAGING_WORKFLOW_ID ?? 'sample.demo.uppercase',
     }),
   });

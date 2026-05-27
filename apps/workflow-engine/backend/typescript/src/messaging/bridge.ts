@@ -15,17 +15,16 @@
  *
  * NON-normative: this lives entirely in the demo app's host-extension layer.
  *
- * Production-hardening notes (demo-grade as written):
- *  - Credential: runs are created with a single host bearer (a wildcard
- *    principal in the demo). The run's tenant comes from `device.tenantId`,
- *    bound at relay-registration time (NOT from the inbound message), so
- *    inbound content cannot redirect a run into another tenant. A real
- *    multi-tenant host MUST swap the wildcard bearer for a per-tenant scoped
- *    credential before advertising this beyond the demo.
- *  - Rate limit: the poll loop self-fetches over loopback, so all
- *    messaging-driven run traffic shares the 127.0.0.1 IP bucket
- *    (ipRateLimitMiddleware). A real host SHOULD exempt loopback/self-traffic
- *    or give the bridge a dedicated quota.
+ * Production-hardening (addressed):
+ *  - Credential: the bridge bearer is `cfg.bearer`, wired from
+ *    OPENWOP_MESSAGING_BRIDGE_TOKEN (falling back to the host bearer for the
+ *    demo) so a real host can supply a scoped credential. The run's tenant
+ *    comes from `device.tenantId`, bound at relay-registration time (NOT from
+ *    the inbound message), so inbound content cannot redirect a run into
+ *    another tenant.
+ *  - Rate limit: the poll loop self-fetches over loopback;
+ *    ipRateLimitMiddleware exempts genuine loopback-self traffic (socket addr,
+ *    no XFF) so messaging-driven runs don't share one IP bucket.
  */
 
 import { enqueueOutbound } from '../routes/messaging.js';
