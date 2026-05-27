@@ -15,7 +15,7 @@ Reads and writes ~/.openwop/config.json (or OPENWOP_CONFIG_HOME/.openwop/ when s
 Dotted keys traverse nested objects (e.g., \`openwop config get host.baseUrl\`).
 `;
 
-export async function runConfig(ctx: Ctx, argv) {
+export async function runConfig(ctx: Ctx, argv: string[]) {
   const sub = argv[0] ?? 'file';
   const args = argv.slice(['file', 'get', 'set', 'unset'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {

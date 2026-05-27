@@ -15,7 +15,7 @@ export const RELAY_CHANNELS = ['whatsapp', 'signal', 'imessage'];
 // credential. It is kept OUT of config.json (which holds only non-secret
 // settings + BYOK refs) and written to a dedicated 0600 file, preserving the
 // CLI's "no secrets in config.json" posture (see cli/README §Config).
-export function relayCredsPath(env) {
+export function relayCredsPath(env: any) {
   return join(openwopHomeDir(env), 'relay-credentials.json');
 }
 
@@ -27,7 +27,7 @@ export function loadRelayConfig(ctx: Ctx) {
   return {};
 }
 
-export function saveRelayConfig(ctx: Ctx, relay) {
+export function saveRelayConfig(ctx: Ctx, relay: any) {
   const p = relayCredsPath(ctx.env);
   mkdirSync(dirname(p), { recursive: true });
   if (!relay || Object.keys(relay).length === 0) {
@@ -38,15 +38,15 @@ export function saveRelayConfig(ctx: Ctx, relay) {
   try { chmodSync(p, 0o600); } catch { /* best-effort on Windows */ }
 }
 
-export function assertRelayChannel(channel) {
+export function assertRelayChannel(channel: any) {
   if (!RELAY_CHANNELS.includes(channel)) {
     throw new CliError(`--channel must be one of: ${RELAY_CHANNELS.join(', ')}`);
   }
 }
 
-export function relayPidPath(env) { return join(openwopHomeDir(env), 'relay.pid.json'); }
-export function relayLogPath(env) { return join(openwopHomeDir(env), 'relay.log'); }
-export function readRelayRecord(env) {
+export function relayPidPath(env: any) { return join(openwopHomeDir(env), 'relay.pid.json'); }
+export function relayLogPath(env: any) { return join(openwopHomeDir(env), 'relay.log'); }
+export function readRelayRecord(env: any) {
   try {
     const p = relayPidPath(env);
     return existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : null;
@@ -59,7 +59,7 @@ export function readRelayRecord(env) {
  * closed rather than pretend a channel works. Phase 3 channel plugins reuse
  * this before attempting platform I/O.
  */
-export function detectChannelAvailability(channel, env = process.env) {
+export function detectChannelAvailability(channel: any, env = process.env) {
   switch (channel) {
     case 'signal': {
       const probe = spawnSync('signal-cli', ['--version'], { encoding: 'utf8' });
@@ -90,27 +90,27 @@ export function detectChannelAvailability(channel, env = process.env) {
  * otherwise fall back to console delivery so the bridge stays observable and
  * never silently drops a message. Tests inject ctx.relayDeliver to bypass this.
  */
-export function makeChannelDeliver(channel, ctx) {
+export function makeChannelDeliver(channel: any, ctx: any) {
   const avail = detectChannelAvailability(channel, ctx.env);
   if (!avail.available) {
     let warned = false;
-    return (egress) => {
+    return (egress: any) => {
       if (!warned) { writeLine(ctx.io.stderr, `channel ${channel} unavailable (${avail.detail}); printing instead.`); warned = true; }
       writeLine(ctx.io.stdout, `→ [${channel}] ${egress.conversationId}: ${egress.text}`);
     };
   }
   if (channel === 'signal') {
-    return (egress) => {
+    return (egress: any) => {
       const r = spawnSync('signal-cli', ['send', '-m', egress.text, egress.conversationId], { encoding: 'utf8' });
       if (r.status !== 0) throw new Error(`signal-cli send failed: ${(r.stderr || '').trim() || r.status}`);
     };
   }
   if (channel === 'imessage') {
-    return (egress) => {
+    return (egress: any) => {
       const script = `tell application "Messages" to send ${JSON.stringify(egress.text)} to buddy ${JSON.stringify(egress.conversationId)} of (service 1 whose service type is iMessage)`;
       const r = spawnSync('osascript', ['-e', script], { encoding: 'utf8' });
       if (r.status !== 0) throw new Error(`osascript send failed: ${(r.stderr || '').trim() || r.status}`);
     };
   }
-  return (egress) => writeLine(ctx.io.stdout, `→ [${channel}] ${egress.conversationId}: ${egress.text}`);
+  return (egress: any) => writeLine(ctx.io.stdout, `→ [${channel}] ${egress.conversationId}: ${egress.text}`);
 }

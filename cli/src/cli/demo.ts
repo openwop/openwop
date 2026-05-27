@@ -161,7 +161,7 @@ export async function runDemoStatus(ctx: Ctx, argv: string[]): Promise<number> {
   return health.ok && readiness.ok ? 0 : 1;
 }
 
-async function runDemoUrls(ctx: Ctx, argv) {
+async function runDemoUrls(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--frontend-port'],
@@ -330,7 +330,7 @@ async function runDemoStart(ctx: Ctx, argv: string[]): Promise<number> {
   const exitCode = await new Promise<number>((resolve) => {
     let settled = false;
     for (const { label, child } of children) {
-      child.on('exit', (code, signal) => {
+      child.on('exit', (code: any, signal: any) => {
         if (settled) return;
         settled = true;
         if (signal) writeLine(ctx.io.stderr, `${label} stopped by ${signal}`);
@@ -456,7 +456,7 @@ async function runDemoLogs(ctx: Ctx, argv: string[]): Promise<number> {
   });
 }
 
-async function runDemoInstall(ctx: Ctx, argv) {
+async function runDemoInstall(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, {
     bool: ['--help', '--dry-run', '--uninstall'],
     value: ['--backend-port', '--label'],

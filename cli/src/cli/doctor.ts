@@ -17,7 +17,7 @@ backend is reachable, the demo daemon status (via /v1/host/sample/daemon-status 
 the ~/.openwop/ PID file), and reachability of each stored BYOK provider credential.
 `;
 
-export async function runDoctor(ctx: Ctx, argv) {
+export async function runDoctor(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, DOCTOR_HELP);

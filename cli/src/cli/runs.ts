@@ -42,7 +42,7 @@ Input parsing for \`runs create\`:
                     --timeout-ms (default 30000) elapses. Exit 0 only on \`completed\`.
 `;
 
-export async function runRuns(ctx: Ctx, argv) {
+export async function runRuns(ctx: Ctx, argv: string[]) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'create', 'get', 'cancel', 'ancestry', 'events', 'annotations', 'annotate', 'debug-bundle'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -73,7 +73,7 @@ export async function runRuns(ctx: Ctx, argv) {
   }
 }
 
-async function runRunsList(ctx: Ctx, argv) {
+async function runRunsList(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--status', '--limit', '--tenant-id'],
@@ -92,7 +92,7 @@ async function runRunsList(ctx: Ctx, argv) {
     writeJson(ctx.io.stdout, res.body);
     return 0;
   }
-  const rows = (res.body.runs ?? []).map((r) => ({
+  const rows = (res.body.runs ?? []).map((r: any) => ({
     runId: r.runId,
     workflowId: r.workflowId,
     status: r.status,
@@ -102,7 +102,7 @@ async function runRunsList(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runRunsCreate(ctx: Ctx, argv) {
+async function runRunsCreate(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help', '--wait'],
     value: ['--tenant-id', '--scope-id', '--inputs-json', '--timeout-ms'],
@@ -133,7 +133,7 @@ async function runRunsCreate(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runRunsGet(ctx: Ctx, argv) {
+async function runRunsGet(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop runs get <runId> [--json]\n');
@@ -149,7 +149,7 @@ async function runRunsGet(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runRunsCancel(ctx: Ctx, argv) {
+async function runRunsCancel(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--reason'],
@@ -165,7 +165,7 @@ async function runRunsCancel(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runRunsEvents(ctx: Ctx, argv) {
+async function runRunsEvents(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'], value: ['--since', '--limit'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop runs events <runId> [--since <sequence>] [--limit <n>] [--json]\n');
@@ -180,14 +180,14 @@ async function runRunsEvents(ctx: Ctx, argv) {
   const events = Array.isArray(res.body?.events) ? res.body.events : [];
   if (events.length === 0) { writeLine(ctx.io.stdout, 'No events.'); return 0; }
   writeLine(ctx.io.stdout, formatTable(
-    events.map((e) => ({ seq: String(e.sequence), type: e.type, nodeId: e.nodeId ?? '', timestamp: e.timestamp ?? '' })),
+    events.map((e: any) => ({ seq: String(e.sequence), type: e.type, nodeId: e.nodeId ?? '', timestamp: e.timestamp ?? '' })),
     ['seq', 'type', 'nodeId', 'timestamp'],
   ));
   if (res.body?.isComplete) writeLine(ctx.io.stdout, '(run complete)');
   return 0;
 }
 
-async function runRunsAnnotations(ctx: Ctx, argv) {
+async function runRunsAnnotations(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop runs annotations <runId> [--json]\n');
@@ -198,7 +198,7 @@ async function runRunsAnnotations(ctx: Ctx, argv) {
   const annotations = Array.isArray(res.body?.annotations) ? res.body.annotations : [];
   if (annotations.length === 0) { writeLine(ctx.io.stdout, 'No annotations. Add one with `openwop runs annotate <runId> --rating 5`.'); return 0; }
   writeLine(ctx.io.stdout, formatTable(
-    annotations.map((a) => ({
+    annotations.map((a: any) => ({
       annotationId: a.annotationId,
       kind: a.signal?.kind ?? '',
       detail: a.signal?.rating ?? a.signal?.label ?? a.signal?.correction ?? '',
@@ -210,7 +210,7 @@ async function runRunsAnnotations(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runRunsAnnotate(ctx: Ctx, argv) {
+async function runRunsAnnotate(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help', '--flag'],
     value: ['--rating', '--label', '--correction', '--note', '--event-id', '--node-id'],
@@ -241,7 +241,7 @@ async function runRunsAnnotate(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runRunsDebugBundle(ctx: Ctx, argv) {
+async function runRunsDebugBundle(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'], value: ['--max-events', '--out'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop runs debug-bundle <runId> [--max-events <n>] [--out <file>] [--json]\n');
@@ -265,7 +265,7 @@ async function runRunsDebugBundle(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runRunsAncestry(ctx: Ctx, argv) {
+async function runRunsAncestry(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop runs ancestry <runId> [--json]\n');
@@ -324,7 +324,7 @@ async function runRunsAncestry(ctx: Ctx, argv) {
   return 0;
 }
 
-async function waitForRun(ctx: Ctx, runId, timeoutMs) {
+async function waitForRun(ctx: Ctx, runId: any, timeoutMs: any) {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
     const res = await requestJson(ctx, `/v1/runs/${encodeURIComponent(runId)}`);

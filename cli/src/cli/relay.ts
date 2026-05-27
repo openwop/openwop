@@ -44,7 +44,7 @@ stores its token in ~/.openwop/config.json under \`relay\`.
   status  Probes the host with a heartbeat to confirm the token is live.
 `;
 
-export async function runRelay(ctx: Ctx, argv) {
+export async function runRelay(ctx: Ctx, argv: string[]) {
   const sub = argv[0];
   if (!sub || sub === '--help' || sub === '-h') {
     write(ctx.io.stdout, RELAY_HELP);
@@ -66,7 +66,7 @@ export async function runRelay(ctx: Ctx, argv) {
   }
 }
 
-async function runRelayRegister(ctx: Ctx, argv) {
+async function runRelayRegister(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, { value: ['--channel', '--name'] });
   if (!options.channel) throw new CliError('--channel is required (one of: ' + RELAY_CHANNELS.join(', ') + ').');
   assertRelayChannel(options.channel);
@@ -78,7 +78,7 @@ async function runRelayRegister(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runRelayActivate(ctx: Ctx, argv) {
+async function runRelayActivate(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, { value: ['--relay-id', '--code'] });
   if (!options.relayId || !options.code) throw new CliError('--relay-id and --code are required.');
   const res = await requestJson(ctx, `${MESSAGING_BASE}/relay/activate`, {
@@ -97,7 +97,7 @@ async function runRelayActivate(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runRelaySetup(ctx: Ctx, argv) {
+async function runRelaySetup(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, { value: ['--channel', '--name'] });
   if (!options.channel) throw new CliError('--channel is required (one of: ' + RELAY_CHANNELS.join(', ') + ').');
   assertRelayChannel(options.channel);
@@ -122,7 +122,7 @@ async function runRelaySetup(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runRelayRevoke(ctx: Ctx, argv) {
+async function runRelayRevoke(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, { value: ['--relay-id'] });
   const relayId = options.relayId ?? loadRelayConfig(ctx).relayId;
   if (!relayId) throw new CliError('No relay to revoke. Pass --relay-id or run `openwop relay setup` first.');
@@ -133,7 +133,7 @@ async function runRelayRevoke(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runRelaySend(ctx: Ctx, argv) {
+async function runRelaySend(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, { value: ['--relay-id', '--conversation', '--text', '--reply-to'] });
   const relayId = options.relayId ?? loadRelayConfig(ctx).relayId;
   if (!relayId) throw new CliError('No relay configured. Pass --relay-id or run `openwop relay setup` first.');
@@ -150,7 +150,7 @@ async function runRelaySend(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runRelayStatus(ctx: Ctx, argv) {
+async function runRelayStatus(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) { write(ctx.io.stdout, RELAY_HELP); return 0; }
   const relay = loadRelayConfig(ctx);
@@ -213,7 +213,7 @@ export async function startInboundReceive(
   }
 }
 
-async function runRelayStart(ctx: Ctx, argv) {
+async function runRelayStart(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, { bool: ['--help', '--once', '--daemon', '--no-receive'], value: ['--interval'] });
   if (options.help) { write(ctx.io.stdout, RELAY_HELP); return 0; }
   const relay = loadRelayConfig(ctx);
@@ -292,7 +292,7 @@ async function runRelayStart(ctx: Ctx, argv) {
   }
 }
 
-async function runRelayStop(ctx: Ctx, argv) {
+async function runRelayStop(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) { write(ctx.io.stdout, RELAY_HELP); return 0; }
   const record = readRelayRecord(ctx.env);
@@ -310,7 +310,7 @@ async function runRelayStop(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runRelayLogs(ctx: Ctx, argv) {
+async function runRelayLogs(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, { bool: ['--help', '--follow', '-f'] });
   if (options.help) { write(ctx.io.stdout, RELAY_HELP); return 0; }
   const logPath = readRelayRecord(ctx.env)?.logPath ?? relayLogPath(ctx.env);

@@ -10,7 +10,7 @@ export const CATALOG_HELP = `Usage:
   openwop catalog packs [--json]
 `;
 
-export async function runCatalog(ctx: Ctx, argv) {
+export async function runCatalog(ctx: Ctx, argv: string[]) {
   const sub = argv[0] ?? 'nodes';
   const args = argv.slice(sub === 'nodes' || sub === 'packs' ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -27,7 +27,7 @@ export async function runCatalog(ctx: Ctx, argv) {
   }
 }
 
-async function runCatalogNodes(ctx: Ctx, argv) {
+async function runCatalogNodes(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--limit', '--search'],
@@ -40,14 +40,14 @@ async function runCatalogNodes(ctx: Ctx, argv) {
   let nodes = Array.isArray(res.body.nodes) ? res.body.nodes : [];
   if (options.search) {
     const q = String(options.search).toLowerCase();
-    nodes = nodes.filter((n) => String(n.typeId ?? '').toLowerCase().includes(q) || String(n.label ?? '').toLowerCase().includes(q));
+    nodes = nodes.filter((n: any) => String(n.typeId ?? '').toLowerCase().includes(q) || String(n.label ?? '').toLowerCase().includes(q));
   }
   const limit = Number(options.limit ?? 30);
   if (ctx.json) {
     writeJson(ctx.io.stdout, { nodes });
     return 0;
   }
-  const rows = nodes.slice(0, limit).map((n) => ({
+  const rows = nodes.slice(0, limit).map((n: any) => ({
     typeId: n.typeId,
     source: n.source,
     category: n.category,
@@ -58,7 +58,7 @@ async function runCatalogNodes(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runCatalogPacks(ctx: Ctx, argv = []) {
+async function runCatalogPacks(ctx: Ctx, argv: string[] = []) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, CATALOG_HELP);
@@ -69,7 +69,7 @@ async function runCatalogPacks(ctx: Ctx, argv = []) {
     writeJson(ctx.io.stdout, res.body);
     return 0;
   }
-  const rows = (res.body.packs ?? []).map((p) => ({ name: p.name, nodes: Array.isArray(p.nodes) ? p.nodes.length : 0 }));
+  const rows = (res.body.packs ?? []).map((p: any) => ({ name: p.name, nodes: Array.isArray(p.nodes) ? p.nodes.length : 0 }));
   writeLine(ctx.io.stdout, formatTable(rows, ['name', 'nodes']));
   return 0;
 }

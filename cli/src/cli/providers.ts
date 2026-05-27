@@ -17,7 +17,7 @@ export const PROVIDERS_HELP = `Usage:
 Provider must be one of: anthropic, openai, google, minimax.
 `;
 
-export async function runProviders(ctx: Ctx, argv) {
+export async function runProviders(ctx: Ctx, argv: string[]) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'add', 'remove', 'rm', 'test'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -39,7 +39,7 @@ export async function runProviders(ctx: Ctx, argv) {
   }
 }
 
-async function runProvidersList(ctx: Ctx, argv) {
+async function runProvidersList(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, PROVIDERS_HELP);
@@ -55,7 +55,7 @@ async function runProvidersList(ctx: Ctx, argv) {
     writeLine(ctx.io.stdout, 'No credentials stored. Run `openwop onboard` or `openwop providers add <provider>`.');
     return 0;
   }
-  const rows = secrets.map((s) => ({
+  const rows = secrets.map((s: any) => ({
     credentialRef: typeof s === 'string' ? s : s.credentialRef,
     createdAt: typeof s === 'object' ? (s.createdAt ?? '') : '',
   }));
@@ -63,7 +63,7 @@ async function runProvidersList(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runProvidersAdd(ctx: Ctx, argv) {
+async function runProvidersAdd(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--provider-key', '--api-key-env', '--model', '--credential-ref'],
@@ -73,7 +73,7 @@ async function runProvidersAdd(ctx: Ctx, argv) {
     return options.help ? 0 : 2;
   }
   const provider = positionals[0];
-  if (!PROVIDER_CATALOG[provider]) {
+  if (!(PROVIDER_CATALOG as Record<string, any>)[provider]) {
     throw new CliError(`Unknown provider: ${provider}. Must be one of: ${Object.keys(PROVIDER_CATALOG).join(', ')}`);
   }
   const interactive = Boolean(process.stdin.isTTY);
@@ -86,7 +86,7 @@ async function runProvidersAdd(ctx: Ctx, argv) {
   // Update local config with the default provider/model if not yet set.
   const configPath = configPathFor(undefined, ctx.env);
   const existing = readConfigSafe(configPath);
-  const recommended = PROVIDER_CATALOG[provider].models.find((m) => m.recommended) ?? PROVIDER_CATALOG[provider].models[0];
+  const recommended = (PROVIDER_CATALOG as Record<string, any>)[provider].models.find((m: any) => m.recommended) ?? (PROVIDER_CATALOG as Record<string, any>)[provider].models[0];
   saveConfig(configPath, mergeConfig(existing, {
     version: 1,
     host: existing?.host ?? { baseUrl: ctx.baseUrl, apiKey: ctx.apiKey },
@@ -103,7 +103,7 @@ async function runProvidersAdd(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runProvidersRemove(ctx: Ctx, argv) {
+async function runProvidersRemove(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--credential-ref'],
@@ -120,7 +120,7 @@ async function runProvidersRemove(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runProvidersTest(ctx: Ctx, argv) {
+async function runProvidersTest(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--credential-ref'],

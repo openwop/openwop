@@ -220,8 +220,8 @@ export async function runCli(argv: string[], options: any = {}): Promise<number>
   }
 }
 
-function showHelp(io, command) {
-  const map = {
+function showHelp(io: any, command: any) {
+  const map: Record<string, string> = {
     demo: DEMO_HELP,
     runs: RUNS_HELP,
     run: RUNS_HELP,

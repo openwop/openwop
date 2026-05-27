@@ -15,7 +15,7 @@ Dispatch a one-off notification through the demo host
 receipt; wiring a real provider (SES / Twilio) is a host concern.
 `;
 
-export async function runNotify(ctx: Ctx, argv) {
+export async function runNotify(ctx: Ctx, argv: string[]) {
   const kind = argv[0];
   if (!kind || kind === '--help' || kind === '-h') {
     write(ctx.io.stdout, NOTIFY_HELP);

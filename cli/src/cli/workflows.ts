@@ -14,7 +14,7 @@ export const WORKFLOWS_HELP = `Usage:
   openwop workflows delete <workflowId> [--json]
 `;
 
-export async function runWorkflows(ctx: Ctx, argv) {
+export async function runWorkflows(ctx: Ctx, argv: string[]) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'get', 'register', 'delete', 'rm'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -36,7 +36,7 @@ export async function runWorkflows(ctx: Ctx, argv) {
   }
 }
 
-async function runWorkflowsList(ctx: Ctx, argv) {
+async function runWorkflowsList(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, WORKFLOWS_HELP);
@@ -48,12 +48,12 @@ async function runWorkflowsList(ctx: Ctx, argv) {
     return 0;
   }
   const workflows = res.body.workflows ?? [];
-  const rows = workflows.map((w) => ({ workflowId: w.workflowId, nodes: Array.isArray(w.nodes) ? w.nodes.length : 0 }));
+  const rows = workflows.map((w: any) => ({ workflowId: w.workflowId, nodes: Array.isArray(w.nodes) ? w.nodes.length : 0 }));
   writeLine(ctx.io.stdout, rows.length ? formatTable(rows, ['workflowId', 'nodes']) : 'No registered sample workflows.');
   return 0;
 }
 
-async function runWorkflowsGet(ctx: Ctx, argv) {
+async function runWorkflowsGet(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop workflows get <workflowId> [--json]\n');
@@ -70,7 +70,7 @@ async function runWorkflowsGet(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runWorkflowsRegister(ctx: Ctx, argv) {
+async function runWorkflowsRegister(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop workflows register <workflow.json> [--json]\n');
@@ -84,7 +84,7 @@ async function runWorkflowsRegister(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runWorkflowsDelete(ctx: Ctx, argv) {
+async function runWorkflowsDelete(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop workflows delete <workflowId> [--json]\n');

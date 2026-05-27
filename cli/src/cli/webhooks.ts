@@ -24,7 +24,7 @@ Manage HMAC-signed webhook subscriptions on the configured host (POST/GET/DELETE
 Note: \`list\` never returns the signing secret.
 `;
 
-export async function runWebhooks(ctx: Ctx, argv) {
+export async function runWebhooks(ctx: Ctx, argv: string[]) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'add', 'remove', 'rm', 'test'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -46,7 +46,7 @@ export async function runWebhooks(ctx: Ctx, argv) {
   }
 }
 
-async function runWebhooksList(ctx: Ctx, argv) {
+async function runWebhooksList(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, WEBHOOKS_HELP);
@@ -62,7 +62,7 @@ async function runWebhooksList(ctx: Ctx, argv) {
     writeLine(ctx.io.stdout, 'No webhook subscriptions. Add one with `openwop webhooks add <url> --event <type>`.');
     return 0;
   }
-  const rows = subscriptions.map((s) => ({
+  const rows = subscriptions.map((s: any) => ({
     subscriptionId: s.subscriptionId,
     url: s.url,
     events: Array.isArray(s.events) ? s.events.join(',') : '',
@@ -72,7 +72,7 @@ async function runWebhooksList(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runWebhooksAdd(ctx: Ctx, argv) {
+async function runWebhooksAdd(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--secret'],
@@ -104,7 +104,7 @@ async function runWebhooksAdd(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runWebhooksRemove(ctx: Ctx, argv) {
+async function runWebhooksRemove(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop webhooks remove <subscriptionId> [--json]\n');
@@ -116,7 +116,7 @@ async function runWebhooksRemove(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runWebhooksTest(ctx: Ctx, argv) {
+async function runWebhooksTest(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop webhooks test <subscriptionId> [--json]\n');

@@ -31,7 +31,7 @@ Examples:
   openwop agents run core.openwop.agents.code-reviewer.default --task-json '{"diff":"..."}' --tool openwop:fs.read
 `;
 
-export async function runAgents(ctx: Ctx, argv) {
+export async function runAgents(ctx: Ctx, argv: string[]) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'info', 'run'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -50,7 +50,7 @@ export async function runAgents(ctx: Ctx, argv) {
   }
 }
 
-async function runAgentsList(ctx: Ctx, argv) {
+async function runAgentsList(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, AGENTS_HELP);
@@ -66,7 +66,7 @@ async function runAgentsList(ctx: Ctx, argv) {
     writeLine(ctx.io.stdout, 'No manifest agents are installed on this host (no pack agents[] loaded into the AgentRegistry).');
     return 0;
   }
-  const rows = agents.map((a) => ({
+  const rows = agents.map((a: any) => ({
     agentId: a.agentId,
     persona: a.label ?? a.persona,
     modelClass: a.modelClass,
@@ -77,7 +77,7 @@ async function runAgentsList(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runAgentsInfo(ctx: Ctx, argv) {
+async function runAgentsInfo(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop agents info <agentId> [--json]\n');
@@ -104,7 +104,7 @@ async function runAgentsInfo(ctx: Ctx, argv) {
 }
 
 // `openwop agents run <agentId>` — dispatch one manifest-agent turn (RFC 0070).
-async function runAgentsRun(ctx: Ctx, argv) {
+async function runAgentsRun(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help', '--no-validate'],
     value: ['--task-json', '--threshold'],

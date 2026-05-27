@@ -9,7 +9,7 @@ export const HEALTH_HELP = `Usage: openwop health [--base-url url] [--json]
 Probes /health and /readiness on the configured host. Exit 0 when both respond; otherwise 1.
 `;
 
-export async function runHealth(ctx: Ctx, argv) {
+export async function runHealth(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, HEALTH_HELP);

@@ -24,7 +24,7 @@ surface — not part of the normative OpenWOP wire contract.
 `;
 
 
-export async function runCron(ctx: Ctx, argv) {
+export async function runCron(ctx: Ctx, argv: string[]) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'add', 'remove', 'rm', 'trigger'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -46,7 +46,7 @@ export async function runCron(ctx: Ctx, argv) {
   }
 }
 
-async function runCronList(ctx: Ctx, argv) {
+async function runCronList(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, CRON_HELP);
@@ -62,7 +62,7 @@ async function runCronList(ctx: Ctx, argv) {
     writeLine(ctx.io.stdout, 'No scheduled jobs. Add one with `openwop cron add "<cronExpr>" --workflow <id>`.');
     return 0;
   }
-  const rows = jobs.map((j) => ({
+  const rows = jobs.map((j: any) => ({
     jobId: j.jobId,
     cronExpr: j.cronExpr,
     workflowId: j.workflowId ?? '',
@@ -72,7 +72,7 @@ async function runCronList(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runCronAdd(ctx: Ctx, argv) {
+async function runCronAdd(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--workflow', '--job-id', '--first-fire-at-ms'],
@@ -96,7 +96,7 @@ async function runCronAdd(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runCronRemove(ctx: Ctx, argv) {
+async function runCronRemove(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop cron remove <jobId> [--json]\n');
@@ -108,7 +108,7 @@ async function runCronRemove(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runCronTrigger(ctx: Ctx, argv) {
+async function runCronTrigger(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop cron trigger <jobId> [--json]\n');

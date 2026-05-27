@@ -13,7 +13,7 @@ export const CONFORMANCE_HELP = `Usage: openwop conformance [--offline] [--filte
 Runs the in-repo @openwop/openwop-conformance CLI. Without --offline it targets the configured --base-url.
 `;
 
-export async function runConformance(ctx: Ctx, argv) {
+export async function runConformance(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, {
     bool: ['--help', '--offline'],
     value: ['--filter'],

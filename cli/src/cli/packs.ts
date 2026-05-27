@@ -40,7 +40,7 @@ separate surface from the host --base-url.
             build-index.mjs rerun. Run from inside the repo.
 `;
 
-export async function runPacks(ctx: Ctx, argv) {
+export async function runPacks(ctx: Ctx, argv: string[]) {
   const sub = argv[0];
   const args = argv.slice(1);
   if (!sub || sub === '--help' || sub === '-h') {
@@ -63,11 +63,11 @@ export async function runPacks(ctx: Ctx, argv) {
   }
 }
 
-function registryUrlFor(options, env) {
+function registryUrlFor(options: any, env: any) {
   return normalizeBaseUrl(options.registryUrl ?? env.OPENWOP_REGISTRY_URL ?? DEFAULT_REGISTRY_URL);
 }
 
-async function registryJson(ctx: Ctx, registryUrl, path) {
+async function registryJson(ctx: Ctx, registryUrl: any, path: any) {
   const url = new URL(path, registryUrl + '/');
   const res = await ctx.fetchImpl(url, { method: 'GET', headers: { accept: 'application/json' } });
   const text = await res.text();
@@ -76,7 +76,7 @@ async function registryJson(ctx: Ctx, registryUrl, path) {
   return body;
 }
 
-async function registryBytes(ctx: Ctx, registryUrl, path) {
+async function registryBytes(ctx: Ctx, registryUrl: any, path: any) {
   const url = new URL(path, registryUrl + '/');
   const res = await ctx.fetchImpl(url, { method: 'GET', headers: { accept: 'application/octet-stream' } });
   if (!res.ok) {
@@ -86,7 +86,7 @@ async function registryBytes(ctx: Ctx, registryUrl, path) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-async function runPacksSearch(ctx: Ctx, argv) {
+async function runPacksSearch(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--registry-url', '--limit'],
@@ -103,7 +103,7 @@ async function runPacksSearch(ctx: Ctx, argv) {
   // catalog — so the index is the authoritative search source.)
   const index = await registryJson(ctx, registryUrl, '/v1/index.json');
   const packs = Array.isArray(index?.packs) ? index.packs : [];
-  const matched = packs.filter((p) => {
+  const matched = packs.filter((p: any) => {
     if (!query) return true;
     const haystack = [p.name, p.description, ...(p.tags ?? []), ...(p.typeIds ?? [])]
       .filter(Boolean).join(' ').toLowerCase();
@@ -118,7 +118,7 @@ async function runPacksSearch(ctx: Ctx, argv) {
     writeLine(ctx.io.stdout, query ? `No packs match "${positionals[0]}".` : 'Registry is empty.');
     return 0;
   }
-  const rows = matched.slice(0, limit).map((p) => ({
+  const rows = matched.slice(0, limit).map((p: any) => ({
     name: p.name,
     version: p.latestVersion ?? '',
     kind: p.kind ?? 'node',
@@ -132,7 +132,7 @@ async function runPacksSearch(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runPacksInfo(ctx: Ctx, argv) {
+async function runPacksInfo(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--registry-url', '--version'],
@@ -173,7 +173,7 @@ async function runPacksInfo(ctx: Ctx, argv) {
   const versions = Array.isArray(pack.versions) ? pack.versions : [];
   if (versions.length > 0) {
     writeLine(ctx.io.stdout, lines.join('\n'));
-    const rows = versions.map((v) => ({
+    const rows = versions.map((v: any) => ({
       version: v.version,
       keyId: v.signingKeyId ?? '',
       flags: v.yanked ? 'yanked' : v.deprecated ? 'deprecated' : '',
@@ -186,7 +186,7 @@ async function runPacksInfo(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runPacksInstall(ctx: Ctx, argv) {
+async function runPacksInstall(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help', '--no-verify'],
     value: ['--registry-url', '--version', '--dir'],
@@ -281,7 +281,7 @@ async function runPacksInstall(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runPacksPublish(ctx: Ctx, argv) {
+async function runPacksPublish(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--key', '--key-id', '--out'],
@@ -383,7 +383,7 @@ async function runPacksPublish(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runPacksYank(ctx: Ctx, argv) {
+async function runPacksYank(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help', '--undo'],
     value: ['--version'],
@@ -430,11 +430,11 @@ async function runPacksYank(ctx: Ctx, argv) {
   return 0;
 }
 
-function canonicalJsonStringify(value) {
+function canonicalJsonStringify(value: any): string {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
   if (Array.isArray(value)) return '[' + value.map(canonicalJsonStringify).join(',') + ']';
   const keys = Object.keys(value).sort();
-  return '{' + keys.map((k) => JSON.stringify(k) + ':' + canonicalJsonStringify(value[k])).join(',') + '}';
+  return '{' + keys.map((k: string) => JSON.stringify(k) + ':' + canonicalJsonStringify(value[k])).join(',') + '}';
 }
 
 function configHomeDir(env = process.env) {
@@ -442,7 +442,7 @@ function configHomeDir(env = process.env) {
   return join(base, '.openwop');
 }
 
-function extractPackJsonBytes(tarballBytes) {
+function extractPackJsonBytes(tarballBytes: any) {
   const decompressed = gunzipSync(tarballBytes);
   const BLOCK = 512;
   for (let off = 0; off + BLOCK <= decompressed.length; ) {
@@ -464,7 +464,7 @@ function extractPackJsonBytes(tarballBytes) {
   throw new CliError('pack.json not found in tarball.', 1);
 }
 
-function walkPackDir(packDir) {
+function walkPackDir(packDir: any) {
   const ALLOWED_TOPS = new Set(['pack.json', 'README.md', 'LICENSE', 'index.mjs']);
   const ALLOWED_DIRS = new Set(['schemas', 'keys']);
   const entries: any[] = [];
@@ -485,10 +485,10 @@ function walkPackDir(packDir) {
   return entries;
 }
 
-function buildUstarGzip(entries) {
-  const ustarHeader = (name, size) => {
+function buildUstarGzip(entries: any) {
+  const ustarHeader = (name: any, size: any) => {
     const buf = Buffer.alloc(512, 0);
-    const writeOctal = (n, len, offset) => {
+    const writeOctal = (n: any, len: any, offset: any) => {
       const s = n.toString(8).padStart(len - 1, '0') + '\0';
       buf.write(s, offset, len, 'ascii');
     };

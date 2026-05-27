@@ -37,7 +37,7 @@ Examples:
   openwop onboard --reset
 `;
 
-export async function runOnboard(ctx: Ctx, argv) {
+export async function runOnboard(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, {
     bool: ['--help', '--non-interactive', '--reset', '--skip-test', '--no-test'],
     value: [

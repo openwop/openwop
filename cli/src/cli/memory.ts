@@ -22,7 +22,7 @@ cross tenant boundaries. Select the tenant with --api-key / OPENWOP_API_KEY.
   --limit n          Cap the number of entries the host returns.
 `;
 
-export async function runMemory(ctx: Ctx, argv) {
+export async function runMemory(ctx: Ctx, argv: string[]) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'search', 'get', 'delete', 'rm'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -44,7 +44,7 @@ export async function runMemory(ctx: Ctx, argv) {
   }
 }
 
-function memoryQuery(options) {
+function memoryQuery(options: any) {
   const query = new URLSearchParams();
   if (options.memoryRef) query.set('memoryRef', options.memoryRef);
   if (options.tag) query.set('tag', options.tag);
@@ -52,8 +52,8 @@ function memoryQuery(options) {
   return query;
 }
 
-function memoryRows(entries) {
-  return entries.map((e) => ({
+function memoryRows(entries: any) {
+  return entries.map((e: any) => ({
     id: e.id,
     createdAt: e.createdAt ?? '',
     tags: Array.isArray(e.tags) ? e.tags.join(',') : '',
@@ -61,12 +61,12 @@ function memoryRows(entries) {
   }));
 }
 
-function truncate(text, max) {
+function truncate(text: any, max: any) {
   const oneLine = text.replace(/\s+/g, ' ');
   return oneLine.length > max ? `${oneLine.slice(0, max - 1)}…` : oneLine;
 }
 
-async function runMemoryList(ctx: Ctx, argv) {
+async function runMemoryList(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--memory-ref', '--tag', '--limit'],
@@ -90,7 +90,7 @@ async function runMemoryList(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runMemorySearch(ctx: Ctx, argv) {
+async function runMemorySearch(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--memory-ref', '--tag', '--limit', '--query'],
@@ -111,9 +111,9 @@ async function runMemorySearch(ctx: Ctx, argv) {
   const res = await requestJson(ctx, path);
   let entries = Array.isArray(res.body?.entries) ? res.body.entries : [];
   if (term) {
-    entries = entries.filter((e) =>
+    entries = entries.filter((e: any) =>
       String(e.content ?? '').toLowerCase().includes(term)
-      || (Array.isArray(e.tags) && e.tags.some((t) => String(t).toLowerCase().includes(term))));
+      || (Array.isArray(e.tags) && e.tags.some((t: any) => String(t).toLowerCase().includes(term))));
   }
   if (ctx.json) {
     writeJson(ctx.io.stdout, { memoryRef: res.body?.memoryRef, entries });
@@ -126,7 +126,7 @@ async function runMemorySearch(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runMemoryGet(ctx: Ctx, argv) {
+async function runMemoryGet(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--memory-ref'],
@@ -151,7 +151,7 @@ async function runMemoryGet(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runMemoryDelete(ctx: Ctx, argv) {
+async function runMemoryDelete(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--memory-ref'],

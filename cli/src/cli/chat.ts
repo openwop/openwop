@@ -33,7 +33,7 @@ Examples:
   openwop chat sample.chat.turn --no-stream --json
 `;
 
-export async function runChat(ctx: Ctx, argv) {
+export async function runChat(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help', '--no-stream', '--no-history'],
     value: ['--tenant-id', '--scope-id', '--inputs-json', '--timeout-ms', '--role'],
@@ -86,7 +86,7 @@ export async function runChat(ctx: Ctx, argv) {
     }
 
     const assistantParts: string[] = [];
-    const onEvent = (ev) => {
+    const onEvent = (ev: any) => {
       if (ctx.json) {
         writeJson(ctx.io.stdout, ev);
       } else {

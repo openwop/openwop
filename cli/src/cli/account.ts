@@ -16,7 +16,7 @@ the KMS-wrapped DEKs become unrecoverable. Without --confirm you'll be asked
 to confirm interactively.
 `;
 
-export async function runAccount(ctx: Ctx, argv) {
+export async function runAccount(ctx: Ctx, argv: string[]) {
   const sub = argv[0];
   if (!sub || sub === '--help' || sub === '-h') {
     write(ctx.io.stdout, ACCOUNT_HELP);

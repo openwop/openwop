@@ -33,7 +33,7 @@ Register a local channel relay with \`openwop relay setup\`. Send a one-off
 email/SMS with \`openwop notify <email|sms>\`.
 `;
 
-export async function runMessaging(ctx: Ctx, argv) {
+export async function runMessaging(ctx: Ctx, argv: string[]) {
   const sub = argv[0];
   if (!sub || sub === '--help' || sub === '-h') {
     write(ctx.io.stdout, MESSAGING_HELP);
@@ -60,7 +60,7 @@ export async function runMessaging(ctx: Ctx, argv) {
   }
 }
 
-async function runMessagingConnectors(ctx: Ctx, argv) {
+async function runMessagingConnectors(ctx: Ctx, argv: string[]) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'get', 'add', 'enable', 'disable', 'test'].includes(sub) ? 1 : 0);
   switch (sub) {
@@ -73,7 +73,7 @@ async function runMessagingConnectors(ctx: Ctx, argv) {
         return 0;
       }
       writeLine(ctx.io.stdout, formatTable(
-        connectors.map((c) => ({ connectorId: c.connectorId, channel: c.channel, enabled: String(c.enabled), displayName: c.displayName ?? '' })),
+        connectors.map((c: any) => ({ connectorId: c.connectorId, channel: c.channel, enabled: String(c.enabled), displayName: c.displayName ?? '' })),
         ['connectorId', 'channel', 'enabled', 'displayName'],
       ));
       return 0;
@@ -117,7 +117,7 @@ async function runMessagingConnectors(ctx: Ctx, argv) {
   }
 }
 
-async function runMessagingSessions(ctx: Ctx, argv) {
+async function runMessagingSessions(ctx: Ctx, argv: string[]) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'inspect', 'close'].includes(sub) ? 1 : 0);
   switch (sub) {
@@ -127,7 +127,7 @@ async function runMessagingSessions(ctx: Ctx, argv) {
       const sessions = Array.isArray(res.body?.sessions) ? res.body.sessions : [];
       if (sessions.length === 0) { writeLine(ctx.io.stdout, 'No messaging sessions yet.'); return 0; }
       writeLine(ctx.io.stdout, formatTable(
-        sessions.map((s) => ({ sessionKey: s.sessionKey, channel: s.channel, peer: s.peerDisplay ?? s.peerId, messages: String(s.messageCount), lastInboundAt: s.lastInboundAt ?? '' })),
+        sessions.map((s: any) => ({ sessionKey: s.sessionKey, channel: s.channel, peer: s.peerDisplay ?? s.peerId, messages: String(s.messageCount), lastInboundAt: s.lastInboundAt ?? '' })),
         ['sessionKey', 'channel', 'peer', 'messages', 'lastInboundAt'],
       ));
       return 0;
@@ -150,7 +150,7 @@ async function runMessagingSessions(ctx: Ctx, argv) {
   }
 }
 
-async function runMessagingPolicies(ctx: Ctx, argv) {
+async function runMessagingPolicies(ctx: Ctx, argv: string[]) {
   const sub = argv[0] ?? 'get';
   const args = argv.slice(['get', 'set'].includes(sub) ? 1 : 0);
   switch (sub) {
@@ -181,7 +181,7 @@ async function runMessagingPolicies(ctx: Ctx, argv) {
   }
 }
 
-async function runMessagingRouting(ctx: Ctx, argv) {
+async function runMessagingRouting(ctx: Ctx, argv: string[]) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'add', 'remove'].includes(sub) ? 1 : 0);
   switch (sub) {
@@ -191,7 +191,7 @@ async function runMessagingRouting(ctx: Ctx, argv) {
       const rules = Array.isArray(res.body?.rules) ? res.body.rules : [];
       if (rules.length === 0) { writeLine(ctx.io.stdout, 'No routing rules. Add one with `openwop messaging routing add --pattern "*" --workflow <id>`.'); return 0; }
       writeLine(ctx.io.stdout, formatTable(
-        rules.map((r) => ({ ruleId: r.ruleId, channel: r.channel ?? '(any)', pattern: r.pattern, workflowId: r.workflowId, priority: String(r.priority) })),
+        rules.map((r: any) => ({ ruleId: r.ruleId, channel: r.channel ?? '(any)', pattern: r.pattern, workflowId: r.workflowId, priority: String(r.priority) })),
         ['ruleId', 'channel', 'pattern', 'workflowId', 'priority'],
       ));
       return 0;
@@ -224,7 +224,7 @@ async function runMessagingRouting(ctx: Ctx, argv) {
   }
 }
 
-async function runMessagingIdentity(ctx: Ctx, argv) {
+async function runMessagingIdentity(ctx: Ctx, argv: string[]) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'show', 'create', 'link', 'unlink', 'delete'].includes(sub) ? 1 : 0);
   switch (sub) {
@@ -234,7 +234,7 @@ async function runMessagingIdentity(ctx: Ctx, argv) {
       const identities = Array.isArray(res.body?.identities) ? res.body.identities : [];
       if (identities.length === 0) { writeLine(ctx.io.stdout, 'No identities. Create one with `openwop messaging identity create --name Alice --peer signal:+1555…`.'); return 0; }
       writeLine(ctx.io.stdout, formatTable(
-        identities.map((i) => ({ identityId: i.identityId, displayName: i.displayName ?? '', peers: (i.peers ?? []).map((p) => `${p.channel}:${p.peerId}`).join(', ') })),
+        identities.map((i: any) => ({ identityId: i.identityId, displayName: i.displayName ?? '', peers: (i.peers ?? []).map((p: any) => `${p.channel}:${p.peerId}`).join(', ') })),
         ['identityId', 'displayName', 'peers'],
       ));
       return 0;
@@ -293,7 +293,7 @@ async function runMessagingIdentity(ctx: Ctx, argv) {
   }
 }
 
-async function runMessagingLogs(ctx: Ctx, argv) {
+async function runMessagingLogs(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, { value: ['--channel', '--direction', '--status', '--limit'] });
   const query = new URLSearchParams();
   if (options.channel) query.set('channel', options.channel);
@@ -306,7 +306,7 @@ async function runMessagingLogs(ctx: Ctx, argv) {
   const entries = Array.isArray(res.body?.entries) ? res.body.entries : [];
   if (entries.length === 0) { writeLine(ctx.io.stdout, 'No delivery-log entries.'); return 0; }
   writeLine(ctx.io.stdout, formatTable(
-    entries.map((e) => ({ at: e.at, direction: e.direction, channel: e.channel, conversationId: e.conversationId, status: e.status, detail: e.detail ?? '' })),
+    entries.map((e: any) => ({ at: e.at, direction: e.direction, channel: e.channel, conversationId: e.conversationId, status: e.status, detail: e.detail ?? '' })),
     ['at', 'direction', 'channel', 'conversationId', 'status', 'detail'],
   ));
   return 0;

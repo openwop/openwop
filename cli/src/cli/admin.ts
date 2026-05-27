@@ -17,7 +17,7 @@ gated — pass the host's OPENWOP_ADMIN_TOKEN via --api-key. Without --confirm
 the destructive POST asks for confirmation.
 `;
 
-export async function runAdmin(ctx: Ctx, argv) {
+export async function runAdmin(ctx: Ctx, argv: string[]) {
   const sub = argv[0];
   if (!sub || sub === '--help' || sub === '-h') {
     write(ctx.io.stdout, ADMIN_HELP);

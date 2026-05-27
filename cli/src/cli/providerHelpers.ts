@@ -7,7 +7,7 @@ import { promptChoice, promptText, promptYesNo, readSecret } from '../prompt.js'
 import { DEFAULT_BASE_URL, PROVIDER_CATALOG, HOST_PRESETS } from '../constants.js';
 import { normalizeBaseUrl } from './shared.js';
 
-export async function resolveBaseUrl(ctx: Ctx, options, existing, interactive) {
+export async function resolveBaseUrl(ctx: Ctx, options: any, existing: any, interactive: any) {
   if (options.baseUrlChoice) {
     const preset = HOST_PRESETS.find((h) => h.key === options.baseUrlChoice);
     if (!preset) throw new CliError(`--base-url-choice must be one of: ${HOST_PRESETS.map((h) => h.key).join(', ')}`);
@@ -35,9 +35,9 @@ export async function resolveBaseUrl(ctx: Ctx, options, existing, interactive) {
   return preset.url;
 }
 
-export async function resolveProvider(ctx: Ctx, options, existing, interactive) {
+export async function resolveProvider(ctx: Ctx, options: any, existing: any, interactive: any) {
   if (options.provider) {
-    if (!PROVIDER_CATALOG[options.provider]) {
+    if (!(PROVIDER_CATALOG as Record<string, any>)[options.provider]) {
       throw new CliError(`Unknown provider: ${options.provider}. Must be one of: ${Object.keys(PROVIDER_CATALOG).join(', ')}`);
     }
     return options.provider;
@@ -58,8 +58,8 @@ export async function resolveProvider(ctx: Ctx, options, existing, interactive) 
   return choice === 'skip' ? null : choice;
 }
 
-export async function resolveApiKey(ctx: Ctx, options, provider, interactive) {
-  const spec = PROVIDER_CATALOG[provider];
+export async function resolveApiKey(ctx: Ctx, options: any, provider: any, interactive: any) {
+  const spec = (PROVIDER_CATALOG as Record<string, any>)[provider];
   if (options.providerKey) return options.providerKey;
   if (options.apiKeyEnv) {
     const value = ctx.env[options.apiKeyEnv];
@@ -81,16 +81,16 @@ export async function resolveApiKey(ctx: Ctx, options, provider, interactive) {
   return key;
 }
 
-export async function resolveModel(ctx: Ctx, options, provider, existing, interactive) {
-  const spec = PROVIDER_CATALOG[provider];
+export async function resolveModel(ctx: Ctx, options: any, provider: any, existing: any, interactive: any) {
+  const spec = (PROVIDER_CATALOG as Record<string, any>)[provider];
   if (options.model) return options.model;
-  const recommended = spec.models.find((m) => m.recommended) ?? spec.models[0];
+  const recommended = spec.models.find((m: any) => m.recommended) ?? spec.models[0];
   if (!interactive) {
     if (existing?.defaultModel) return existing.defaultModel;
     return recommended.id;
   }
   const choices = [
-    ...spec.models.map((m) => ({ key: m.id, label: m.label, recommended: m.recommended })),
+    ...spec.models.map((m: any) => ({ key: m.id, label: m.label, recommended: m.recommended })),
     { key: 'custom', label: 'Custom (type a model id)' },
   ];
   const choice = await promptChoice(ctx, 'Pick a model:', choices);
@@ -102,11 +102,11 @@ export async function resolveModel(ctx: Ctx, options, provider, existing, intera
   return choice;
 }
 
-export async function testProviderConnection(ctx: Ctx, credentialRef) {
+export async function testProviderConnection(ctx: Ctx, credentialRef: any) {
   try {
     const res = await requestJson(ctx, '/v1/host/sample/byok/secrets');
     const secrets = Array.isArray(res.body?.secrets) ? res.body.secrets : [];
-    const found = secrets.some((s) => (typeof s === 'string' ? s === credentialRef : s.credentialRef === credentialRef));
+    const found = secrets.some((s: any) => (typeof s === 'string' ? s === credentialRef : s.credentialRef === credentialRef));
     if (!found) return { ok: false, message: `BYOK list did not include \`${credentialRef}\`` };
     return { ok: true };
   } catch (err) {

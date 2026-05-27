@@ -22,21 +22,21 @@ export function readDaemonRecord(env = process.env) {
   }
 }
 
-export function writeDaemonRecord(env, record) {
+export function writeDaemonRecord(env: any, record: any) {
   const path = daemonPidPath(env);
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `${JSON.stringify(record, null, 2)}\n`, 'utf8');
   try { chmodSync(path, 0o600); } catch { /* best-effort on Windows */ }
 }
 
-export function clearDaemonRecord(env) {
+export function clearDaemonRecord(env: any) {
   try {
     const path = daemonPidPath(env);
     if (existsSync(path)) rmSync(path);
   } catch { /* best-effort */ }
 }
 
-export function processAlive(pid) {
+export function processAlive(pid: any) {
   if (!Number.isInteger(pid) || pid <= 0) return false;
   try {
     // Signal 0 performs error checking without delivering a signal.
@@ -48,7 +48,7 @@ export function processAlive(pid) {
   }
 }
 
-export function openLogStream(path) {
+export function openLogStream(path: any) {
   try {
     mkdirSync(dirname(path), { recursive: true });
     return openSync(path, 'a');
@@ -57,7 +57,7 @@ export function openLogStream(path) {
   }
 }
 
-export function writeLog(fd, chunk) {
+export function writeLog(fd: any, chunk: any) {
   try {
     writeFileSync(fd, chunk);
   } catch { /* best-effort; never crash the dev loop over a log write */ }
@@ -66,7 +66,7 @@ export function writeLog(fd, chunk) {
 // Build a per-platform service-install plan. Pure (no fs side effects) so it
 // can be unit-tested and dry-run printed. Returns either an `unsupported`
 // plan with guidance text, or a writable plan with path/contents/activate.
-export function buildServiceInstallPlan(input) {
+export function buildServiceInstallPlan(input: any) {
   const { platform, root, backendPort, label, apiKey, env, uninstall } = input;
   const nodeBin = process.execPath;
   const backendDir = join(root, 'apps/workflow-engine/backend/typescript');
