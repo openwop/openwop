@@ -108,7 +108,21 @@ openwop relay send --conversation +15551234 --text "hi"   # operator-side: queue
 openwop relay status                         # probe the device token against the host
 openwop messaging connectors list|add|enable|disable|test
 openwop messaging sessions list|inspect|close
+openwop messaging policy   get|set <connectorId>          # DM/group access + require-mention
+openwop messaging routing  list|add|remove                # inbound match → bound workflow
+openwop messaging identity list|show|create|link|unlink|delete   # cross-channel peer linking
+openwop messaging logs     [--channel c] [--direction inbound|outbound] [--status s] [--limit n]
+openwop notify email --to a@b.dev --text "hi" [--subject S]      # one-off dispatch
+openwop notify sms   --to +15551234 --text "pong"
 ```
+
+The operator subcommands manage the gateway beyond device wiring:
+
+- **policy** — per-connector access: `set <id> --dm <pairing|allowlist|open|disabled> --group <allowlist|open|disabled> --require-mention <true|false>`. `get` returns the host default (DM pairing, groups allowlist-only, mention required) when none is stored.
+- **routing** — `add --pattern "*" --workflow <id> [--channel c] [--priority n]` binds matching inbound conversations to a workflow; higher priority wins. `remove <ruleId>` deletes one.
+- **identity** — links platform peers across channels into one logical person: `create --name N --peer <channel>:<peerId>`, `link <id> --peer …` (merges, de-duped), `unlink <id> --peer …`, `delete <id>`.
+- **logs** — queries the delivery log (inbound ingested / outbound queued), filterable by channel, direction, status; `--limit` is clamped to `[1, 1000]`.
+- **notify** — a one-off email/SMS dispatch (`POST …/messaging/notify`). The reference app returns a **synthetic receipt**; wiring a real provider (SES / Twilio) is a host concern.
 
 How it works: the relay device owns the platform connection and bridges it to the host. Inbound messages POST to the host, which runs the bound workflow (default `sample.demo.uppercase`; override with `OPENWOP_MESSAGING_WORKFLOW_ID`) and queues the reply; the device pulls + delivers it. `doctor` reports per-channel readiness:
 
@@ -120,9 +134,34 @@ How it works: the relay device owns the platform connection and bridges it to th
 
 The relay **device token** is a host credential, so it is stored separately from `config.json` in `~/.openwop/relay-credentials.json` (mode `0600`), not in your main config. Revoke it any time with `openwop relay revoke`.
 
+## Runs
+
+Beyond `runs create` / `list` / `get` / `cancel`, the CLI surfaces a run's full inspection + review surface:
+
+```bash
+openwop runs events <runId> [--since <seq>] [--limit n]   # JSON event poll (GET .../events/poll)
+openwop runs annotations <runId>                          # list review signals
+openwop runs annotate <runId> --rating 5 [--note "great"] # attach a rating/label/correction/flag
+openwop runs annotate <runId> --label triage --event-id <id>
+openwop runs debug-bundle <runId> [--max-events n] [--out bundle.json]
+openwop runs ancestry <runId>                             # RFC 0040 cross-host parent chain
+```
+
+`runs events --since N` maps to the spec-canonical `lastSequence` query param (events with `sequence > N`). `runs annotate` posts exactly one signal kind (`--rating 1-5` | `--label` | `--correction` | `--flag`), validated client-side. `runs debug-bundle --out <file>` saves the full event bundle to disk.
+
 ## Operator surfaces
 
 Beyond runs/workflows/catalog, the CLI surfaces the host's operator endpoints: `agents`, `memory`, `media`, `webhooks`, `chat`, plus `notifications` (inbox), `interrupts` (list/resolve human-in-the-loop pauses), and `prompts` (RFC 0029 library list/get/render). Every command supports `--json`.
+
+Two maintenance commands guard destructive operations behind a confirmation prompt (default *no*, bypass with `--confirm`):
+
+```bash
+openwop account delete                 # irreversibly wipe ALL data for the signed-in account
+openwop admin cleanup                   # wipe expired ephemeral secrets for idle tenants
+openwop admin cleanup --status          # read-only liveness probe
+```
+
+`account delete` requires a signed-in user (OIDC bearer). `admin` routes are gated by the host's `OPENWOP_ADMIN_TOKEN` — pass it via `--api-key`.
 
 ## Config
 
