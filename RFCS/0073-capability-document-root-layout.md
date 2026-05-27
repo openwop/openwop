@@ -201,19 +201,24 @@ waiver for this corpus the additive-clarification window is waived
 
 - **#276** landed Phase 1 (prose) + Phase 2 (accessor + agent-cohort helper
   migration) + Phase 3 for the primary reference host (`apps/.../discovery.ts`).
-- **Phase 2b (in progress):** migrate the remaining capability-gated *scenarios*
-  onto `capabilityFamily()`. As of 2026-05-27, **62 of ~78** are migrated (prompt /
-  multi-agent / envelope / auth / memory / scheduling / workspace / replay /
-  observability families). The remaining ~16 are deep-typed cast-form readers
-  (wasm `nodePackRuntimes`, `memory.compaction`, `auth` audit-log, `httpClient`,
-  `runs.pauseResume`) + a few multi-line cast accesses; each needs a per-family
-  generic. Safe + incremental — the root-first fallback keeps unmigrated readers
-  green against nested hosts.
-- **Follow-up (tracked here):** finish Phase 2b; migrate `examples/hosts/{sqlite,postgres,python}`
-  discovery shapes to root (each with the same deprecated mirror), refresh their
-  `conformance.md` evidence + `INTEROP-MATRIX.md` rows — this also closes a latent
-  honesty gap where those hosts claim root-read profiles (`openwop-secrets`,
-  `openwop-provider-policy`) while serving the families nested.
+- **Phase 2b COMPLETE (#279 + tail):** all **78/78** capability-gated scenarios
+  read via `capabilityFamily()` (root-first, deprecated-wrapper fallback). Shallow
+  boolean reads use the default generic; deep chains carry an explicit per-family
+  generic (reusing each file's named interface where present — e.g.
+  `capabilityFamily<AuthCaps>(...)`); multi-family casts split into one call per
+  family. No `as any`.
+- **Phase 3 COMPLETE:** all four reference hosts (`apps/.../discovery.ts`,
+  `examples/hosts/{in-memory,sqlite,postgres,python}`) emit families at the document
+  root (canonical) via `{ ...advertisement, ...advertisement.capabilities }` (TS) /
+  `{**payload, **payload["capabilities"]}` (Python), retaining the nested
+  `capabilities` object as a DEPRECATED v1.x-window mirror — non-breaking for
+  existing consumers + the hosts' own (nested-reading) tests. This closes the latent
+  honesty gap where the hosts' root-read profile claims (`openwop-secrets`,
+  `openwop-provider-policy`) were unverifiable against their previously nested-only
+  shape.
+- **Phase 4 (remaining):** one minor release after all hosts are confirmed
+  root-serving, drop the accessor's wrapper fallback + the host mirrors, and decide
+  whether to tighten `capabilities.schema.json` to forbid the wrapper (Unresolved Q2).
 - **Separate gap (not this RFC):** `replay`, `interrupts`, `stream`, `runs`,
   `webhooks` are referenced by hosts/profiles but are not yet root properties in
   `capabilities.schema.json` (tolerated only by `additionalProperties: true`).
@@ -224,10 +229,10 @@ waiver for this corpus the additive-clarification window is waived
 - [x] Spec text merged (`capabilities.md` §"Document-root layout").
 - [x] No schema change required (schema already root-shaped) — documented.
 - [x] Conformance suite reads root-first via one shared accessor; wrapper readers migrated.
-- [ ] CHANGELOG entry under `[Unreleased]`.
-- [ ] Primary reference host emits families at the root.
-- [ ] RFC 0070's `agent-manifest-runtime` scenario exercised (not soft-skipped) against a root-serving host.
-- [ ] Follow-up filed for the remaining three reference hosts.
+- [x] CHANGELOG entry under `[Unreleased]`.
+- [x] All four reference hosts emit families at the document root (+ deprecated mirror).
+- [x] All 78 capability-gated scenarios read via the root-first accessor, so RFC 0070's `agent-manifest-runtime` scenario (and the rest) grade a root-serving host instead of soft-skipping.
+- [ ] Phase 4: drop the wrapper fallback + host mirrors (one minor release after all hosts confirmed root-serving).
 
 ## References
 

@@ -407,6 +407,12 @@ def make_handler(state: _State) -> type[BaseHTTPRequestHandler]:
                     if _fixture_is_executable(wf, wf_id)
                 ),
             }
+            # RFC 0073 — capability families are document-root properties of the
+            # discovery response (capabilities.schema.json roots agents/secrets/etc.;
+            # there is no `capabilities` wrapper property). Emit them at the root
+            # canonically + retain the nested `capabilities` object as a DEPRECATED
+            # v1.x-window mirror (see spec/v1/capabilities.md §"Document-root layout").
+            payload = {**payload, **payload["capabilities"]}
             self._send_json(200, payload, {"Cache-Control": "public, max-age=300"})
 
         def _handle_openapi(self) -> None:

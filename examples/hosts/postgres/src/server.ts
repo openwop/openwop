@@ -2722,10 +2722,7 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
   if (MTLS_ENABLED) {
     profiles.push('openwop-auth-mtls');
   }
-  sendJSON(
-    res,
-    200,
-    {
+  const advertisement = {
       protocolVersion: '1.0',
       implementation: {
         name: 'openwop-host-postgres',
@@ -2992,7 +2989,16 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
           },
         },
       },
-    },
+  };
+  // RFC 0073 — capability families are document-root properties of the discovery
+  // response (capabilities.schema.json roots agents/secrets/etc.; no `capabilities`
+  // wrapper property). Emit them at the root canonically + retain the nested
+  // `capabilities` object as a DEPRECATED v1.x-window mirror (see
+  // spec/v1/capabilities.md §"Document-root layout").
+  sendJSON(
+    res,
+    200,
+    { ...advertisement, ...advertisement.capabilities },
     { 'Cache-Control': 'public, max-age=300' },
   );
 }

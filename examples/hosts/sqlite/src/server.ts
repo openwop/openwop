@@ -1899,7 +1899,7 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
   const principal = principalFor(req);
   const isTenant2 = principal === 'tenant2';
 
-  sendJSON(res, 200, {
+  const advertisement = {
     protocolVersion: '1.0',
     implementation: {
       name: 'openwop-host-sqlite',
@@ -2082,7 +2082,13 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
         signedCallbackTokens: true,
       },
     },
-  }, { 'Cache-Control': 'public, max-age=300' });
+  };
+  // RFC 0073 — capability families are document-root properties of the discovery
+  // response (capabilities.schema.json roots agents/secrets/etc.; no `capabilities`
+  // wrapper property). Emit them at the root canonically, and retain the nested
+  // `capabilities` object as a DEPRECATED backward-compat mirror for the v1.x window
+  // (removed once consumers migrate — see spec/v1/capabilities.md §"Document-root layout").
+  sendJSON(res, 200, { ...advertisement, ...advertisement.capabilities }, { 'Cache-Control': 'public, max-age=300' });
 }
 
 function handleOpenApi(_req: IncomingMessage, res: ServerResponse): void {
