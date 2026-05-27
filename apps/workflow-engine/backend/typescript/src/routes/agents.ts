@@ -28,6 +28,7 @@ interface AgentInventoryEntry {
   hasHandoffSchemas: boolean;
   memoryShape?: ResolvedAgentManifest['memoryShape'];
   confidenceThreshold?: number;
+  degraded?: string[];
 }
 
 function toEntry(a: ResolvedAgentManifest): AgentInventoryEntry {
@@ -43,17 +44,32 @@ function toEntry(a: ResolvedAgentManifest): AgentInventoryEntry {
     hasHandoffSchemas: Boolean(a.handoff?.taskSchema || a.handoff?.returnSchema),
     memoryShape: a.memoryShape,
     confidenceThreshold: a.confidence?.defaultThreshold,
+    degraded: a.degraded && a.degraded.length > 0 ? a.degraded : undefined,
   };
 }
 
 export function registerAgentRoutes(app: Express): void {
-  // List installed manifest agents (registry-backed, RFC 0070).
+  // RFC 0072 §A — NORMATIVE read-only inventory (matches agent-inventory-response.schema.json).
+  // Gated on capabilities.agents.manifestRuntime; this host advertises it.
+  app.get('/v1/agents', (_req, res) => {
+    const agents = getAgentRegistry().list().map(toEntry);
+    res.json({ agents, total: agents.length });
+  });
+  app.get('/v1/agents/:agentId', (req, res) => {
+    const a = getAgentRegistry().get(req.params.agentId);
+    if (!a) {
+      res.status(404).json({ error: 'not_found', message: `agent '${req.params.agentId}' is not installed on this host` });
+      return;
+    }
+    res.json(toEntry(a));
+  });
+
+  // Sample-extension aliases (RFC 0070 convenience; non-normative). The list
+  // form additionally reports the host's runtime posture for the CLI.
   app.get('/v1/host/sample/agents', (_req, res) => {
     const agents = getAgentRegistry().list().map(toEntry);
     res.json({ agents, total: agents.length, runtime: { manifestRuntime: true } });
   });
-
-  // One agent's manifest details.
   app.get('/v1/host/sample/agents/:agentId', (req, res) => {
     const a = getAgentRegistry().get(req.params.agentId);
     if (!a) {

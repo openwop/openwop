@@ -43,6 +43,21 @@ describe('RFC 0070 — host loads + dispatches a manifest agent over HTTP', () =
     expect(doc?.capabilities?.agents?.manifestRuntime?.supported).toBe(true);
   });
 
+  it('serves the NORMATIVE inventory GET /v1/agents (RFC 0072 §A)', async () => {
+    const list = await (await fetch(`${BASE}/v1/agents`, { headers: H })).json() as {
+      agents?: Array<{ agentId?: string }>; total?: number;
+    };
+    expect(Array.isArray(list.agents)).toBe(true);
+    expect(list.total).toBe(list.agents?.length);
+    expect((list.agents ?? []).some((a) => a.agentId === SUPERVISOR)).toBe(true);
+    // GET /v1/agents/{agentId}
+    const one = await fetch(`${BASE}/v1/agents/${encodeURIComponent(SUPERVISOR)}`, { headers: H });
+    expect(one.status).toBe(200);
+    expect(((await one.json()) as { agentId?: string }).agentId).toBe(SUPERVISOR);
+    // 404 for unknown
+    expect((await fetch(`${BASE}/v1/agents/core.nope.absent`, { headers: H })).status).toBe(404);
+  });
+
   it('serves the registry-backed inventory including the installed agent', async () => {
     const body = await (await fetch(`${BASE}/v1/host/sample/agents`, { headers: H })).json() as {
       runtime?: { manifestRuntime?: boolean }; agents?: Array<{ agentId?: string }>;

@@ -41,6 +41,10 @@ export interface ResolvedAgentManifest {
   /** The pack this agent was loaded from. */
   packName: string;
   packVersion: string;
+  /** RFC 0072 §C — capability keys this agent's pack declared as
+   *  `peerDependenciesMeta.optional` that this host does NOT satisfy, so they
+   *  are inert for this installation. Absent/empty ⇒ full declared capability. */
+  degraded?: string[];
 }
 
 /** A pre-compiled handoff-schema validator (closes over an Ajv ValidateFunction
