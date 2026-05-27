@@ -4,14 +4,16 @@
 |---|---|
 | **RFC** | 0074 |
 | **Title** | Tenant-Scoped Manifest-Agent Inventory |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-27 |
-| **Updated** | 2026-05-27 |
+| **Updated** | 2026-05-27 (graduated `Active → Accepted` — see below) |
 | **Affects** | `schemas/capabilities.schema.json` (`agents.manifestRuntime` block), `schemas/agent-inventory-response.schema.json` (RFC 0072), `spec/v1/node-packs.md`, `spec/v1/host-capabilities.md`, `api/openapi.yaml` (`GET /v1/agents` auth/scope note), `conformance/src/scenarios/agent-manifest-runtime.test.ts`, `CHANGELOG.md`, `INTEROP-MATRIX.md` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` |
 | **Supersedes** | — |
 | **Superseded by** | — |
+
+> **Graduated `Active → Accepted` 2026-05-27** on the multi-tenant non-steward host MyndHyve (`workflow-runtime-00398-vup`). Steward-corroborated live: `GET /.well-known/openwop` advertises `agents.manifestRuntime.installScope: 'tenant'` at the document root. Two-principal authed proof (same `agentId`): Principal A (workspace `ws-openwop-conformance`, pack approved) → `GET /v1/agents` `{ total: 1, agents: [private.myndhyve.conformance-agent.reviewer] }`; Principal B (`ws-openwop-conformance-b`, no approval) → `{ agents: [], total: 0 }` and `GET /v1/agents/{agentId}` → `404 not_found` — cross-tenant, no disclosure. That is the §A scoping contract end-to-end on a real multi-tenant host. (Proof used a complete private pack because all three published `core.openwop.agents.*` packs currently omit their `systemPromptRef` body from the tarball — an openwop publishing defect the resolver correctly fail-loud-rejects per RFC 0003 §C; tracked separately, not a 0074 concern.) See `INTEROP-MATRIX.md` §"RFC 0074".
 
 ## Summary
 
@@ -143,7 +145,7 @@ Negative — advertising `'tenant'` but serving a host-global list (violates §B
 - [x] `api/openapi.yaml` `GET /v1/agents` + `/{agentId}` note auth-derived scoping + the `'tenant'` `404` semantics.
 - [x] `agent-manifest-runtime.test.ts` gains the `installScope` branch (host-global ≥1 vs tenant principal-scoped, empty-allowed per Q3); the ≥1 MUST is relaxed for tenant scope.
 - [x] CHANGELOG entry under `[Unreleased]`.
-- [ ] **(Active → Accepted gate)** A `'tenant'`-scoped reference or second host serves principal-scoped `GET /v1/agents` (with the two-principal cross-tenant `404` proof) and passes the scenario — the planned MyndHyve `MyndHyveAgentPackResolver` slice. Strengthens the already-`Accepted` RFC 0070's conformance evidence on a multi-tenant host.
+- [x] **(Active → Accepted gate — MET 2026-05-27)** MyndHyve (`workflow-runtime-00398-vup`), via its workspace-scoped `MyndHyveAgentPackResolver`, serves principal-scoped `GET /v1/agents` with the two-principal cross-tenant `404` proof (A → 1 agent; B → empty + `404`). Strengthens the already-`Accepted` RFC 0070's conformance evidence on a multi-tenant host.
 
 ## References
 
