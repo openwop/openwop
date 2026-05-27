@@ -114,4 +114,15 @@ describe('category: chat-card-pack manifest validation', () => {
       'chat-card-packs.md §"Input fields": a vendor.<org>.<kind> input type extension MUST validate (other hosts ignore it)',
     ).toBe(true);
   });
+
+  it('positive: the full portable inputs[].type subset validates (G9, incl. multiselect + file)', () => {
+    for (const t of ['text', 'longtext', 'number', 'boolean', 'select', 'multiselect', 'file', 'artifact-ref']) {
+      const m = validManifest();
+      m.cards[0]!.inputs[0]!.type = t;
+      expect(
+        validate(m),
+        `chat-card-packs.md §"Input fields": portable inputs[].type "${t}" MUST validate (G9 resolved 2026-05-27)`,
+      ).toBe(true);
+    }
+  });
 });

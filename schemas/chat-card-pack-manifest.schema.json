@@ -131,8 +131,8 @@
         "id": { "type": "string", "minLength": 1, "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$" },
         "type": {
           "type": "string",
-          "description": "Closed portable subset OR a `vendor.<org>.<kind>` / `x-<kind>` host extension other hosts ignore. Host-specific widget kinds (canvas-reference, collection-reference, i18n keys) are out of scope per positioning.md.",
-          "pattern": "^(text|longtext|number|boolean|select|artifact-ref|vendor\\.[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*|x-[a-z][a-z0-9-]*)$"
+          "description": "Closed portable subset OR a `vendor.<org>.<kind>` / `x-<kind>` host extension other hosts ignore. The portable subset (G9, resolved 2026-05-27 against MyndHyve's `CardFieldType`): `text`, `longtext`, `number`, `boolean`, `select`, `multiselect`, `file`, `artifact-ref`. MyndHyve maps `textarea`→`longtext` and `toggle`→`boolean`; its product-specific kinds (`canvas-reference`, `collection-reference`, `color`) are host extensions (`vendor.myndhyve.*`), not portable.",
+          "pattern": "^(text|longtext|number|boolean|select|multiselect|file|artifact-ref|vendor\\.[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*|x-[a-z][a-z0-9-]*)$"
         },
         "label": { "type": "string" },
         "required": { "type": "boolean" },
