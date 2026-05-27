@@ -51,6 +51,18 @@ async function get(path: string, headers: Record<string, string>) {
   const res = await fetch(`${BASE}${path}`, { headers });
   return { status: res.status, body: (await res.json().catch(() => ({}))) as Record<string, any> };
 }
+async function put(path: string, headers: Record<string, string>, body?: unknown) {
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'PUT',
+    headers,
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+  });
+  return { status: res.status, body: (await res.json().catch(() => ({}))) as Record<string, any> };
+}
+async function del(path: string, headers: Record<string, string>) {
+  const res = await fetch(`${BASE}${path}`, { method: 'DELETE', headers });
+  return { status: res.status, body: (await res.json().catch(() => ({}))) as Record<string, any> };
+}
 
 async function activeRelay(channel = 'signal') {
   const reg = await post('/relay/register', OP, { channel });
@@ -206,5 +218,122 @@ describe('messaging relay-gateway — connectors', () => {
     // wildcard operator scoping by ?tenantId — connector lives under 'default'
     const other = await get('/connectors?tenantId=someone-else', OP);
     expect(other.body.connectors.length).toBe(0);
+  });
+});
+
+describe('messaging relay-gateway — access policy', () => {
+  it('returns host-default policy then accepts a PUT override', async () => {
+    const created = await post('/connectors', OP, { channel: 'signal' });
+    const id = created.body.connectorId;
+
+    const def = await get(`/connectors/${id}/policy`, OP);
+    expect(def.status).toBe(200);
+    expect(def.body.dmPolicy).toBe('pairing');
+    expect(def.body.groupPolicy).toBe('allowlist');
+    expect(def.body.requireMention).toBe(true);
+
+    const upd = await put(`/connectors/${id}/policy`, OP, { dmPolicy: 'open', requireMention: false });
+    expect(upd.status).toBe(200);
+    expect(upd.body.dmPolicy).toBe('open');
+    expect(upd.body.groupPolicy).toBe('allowlist'); // untouched
+    expect(upd.body.requireMention).toBe(false);
+
+    // persisted
+    const after = await get(`/connectors/${id}/policy`, OP);
+    expect(after.body.dmPolicy).toBe('open');
+
+    const bad = await put(`/connectors/${id}/policy`, OP, { dmPolicy: 'nonsense' });
+    expect(bad.status).toBe(400);
+  });
+});
+
+describe('messaging relay-gateway — routing rules', () => {
+  it('add → list (priority order) → delete', async () => {
+    const r1 = await post('/routing', OP, { pattern: '*', workflowId: 'wf.fallback', priority: 0 });
+    expect(r1.status).toBe(201);
+    expect(r1.body.ruleId).toMatch(/^route_/);
+    const r2 = await post('/routing', OP, { channel: 'signal', pattern: 'support', workflowId: 'wf.support', priority: 10 });
+    expect(r2.status).toBe(201);
+
+    const list = await get('/routing', OP);
+    expect(list.body.rules).toHaveLength(2);
+    expect(list.body.rules[0].workflowId).toBe('wf.support'); // higher priority first
+
+    const gone = await del(`/routing/${r1.body.ruleId}`, OP);
+    expect(gone.body.deleted).toBe(true);
+    expect((await get('/routing', OP)).body.rules).toHaveLength(1);
+
+    const miss = await del('/routing/route_missing', OP);
+    expect(miss.status).toBe(404);
+  });
+
+  it('rejects an unknown channel and a missing workflowId', async () => {
+    expect((await post('/routing', OP, { channel: 'telegram', pattern: '*', workflowId: 'w' })).status).toBe(400);
+    expect((await post('/routing', OP, { pattern: '*' })).status).toBe(400);
+  });
+});
+
+describe('messaging relay-gateway — cross-channel identities', () => {
+  it('create → link more peers → unlink one → list → delete', async () => {
+    const created = await post('/identities', OP, {
+      displayName: 'Alice',
+      peers: [{ channel: 'signal', peerId: '+15551234' }],
+    });
+    expect(created.status).toBe(201);
+    const id = created.body.identityId;
+    expect(created.body.peers).toHaveLength(1);
+
+    // link mode (identityId present) merges, de-duping
+    const linked = await post('/identities', OP, {
+      identityId: id,
+      peers: [{ channel: 'whatsapp', peerId: 'wa-1' }, { channel: 'signal', peerId: '+15551234' }],
+    });
+    expect(linked.status).toBe(200);
+    expect(linked.body.peers).toHaveLength(2);
+
+    // unlink one peer via query params
+    const unlinked = await del(`/identities/${id}?channel=whatsapp&peerId=wa-1`, OP);
+    expect(unlinked.status).toBe(200);
+    expect(unlinked.body.peers).toHaveLength(1);
+
+    const list = await get('/identities', OP);
+    expect(list.body.identities).toHaveLength(1);
+
+    const gone = await del(`/identities/${id}`, OP);
+    expect(gone.body.deleted).toBe(true);
+    expect((await get(`/identities/${id}`, OP)).status).toBe(404);
+  });
+});
+
+describe('messaging relay-gateway — delivery log', () => {
+  it('records inbound + outbound entries and filters by direction', async () => {
+    const { relayId, deviceToken } = await activeRelay('signal');
+    const dev = { 'x-openwop-device-token': deviceToken, 'content-type': 'application/json' };
+
+    await post('/device/inbound', dev, { platformMessageId: 'm1', conversationId: 'c1', peerId: 'p', text: 'hi' });
+    await post('/relay/enqueue', OP, { relayId, conversationId: 'c1', text: 'reply' });
+
+    const all = await get('/logs', OP);
+    expect(all.body.entries.length).toBeGreaterThanOrEqual(2);
+
+    const inbound = await get('/logs?direction=inbound', OP);
+    expect(inbound.body.entries.every((e: any) => e.direction === 'inbound')).toBe(true);
+    const outbound = await get('/logs?direction=outbound', OP);
+    expect(outbound.body.entries.some((e: any) => e.status === 'queued')).toBe(true);
+  });
+});
+
+describe('messaging relay-gateway — notify', () => {
+  it('accepts an email/sms dispatch and rejects an unknown kind', async () => {
+    const email = await post('/notify', OP, { kind: 'email', to: 'a@b.dev', subject: 'Hi', text: 'body' });
+    expect(email.status).toBe(202);
+    expect(email.body.notifyId).toMatch(/^ntf_/);
+    expect(email.body.status).toBe('accepted');
+
+    const sms = await post('/notify', OP, { kind: 'sms', to: '+15550000', text: 'pong' });
+    expect(sms.status).toBe(202);
+
+    expect((await post('/notify', OP, { kind: 'carrier-pigeon', to: 'x', text: 'y' })).status).toBe(400);
+    expect((await post('/notify', OP, { kind: 'email', to: 'x' })).status).toBe(400); // missing text
   });
 });
