@@ -176,7 +176,16 @@ function buildUstarGzip(entries) {
 // ─── pack walk ───────────────────────────────────────────────────────
 
 const ALLOWED_TOPS = new Set(['pack.json', 'README.md', 'LICENSE', 'index.mjs']);
-const ALLOWED_DIRS = new Set(['schemas', 'keys']);
+// Per-dir bundled file extensions. `prompts/` carries agent `systemPromptRef`
+// bodies (.md/.txt) — RFC 0003 §C requires a manifest's referenced prompt to ship
+// inside the tarball, so an installing host can resolve it (a missing prompt is a
+// fail-loud reject). Previously `prompts/` was excluded entirely AND the file-ext
+// filter only allowed .json/.pem/.sig, so prompt bodies were silently dropped.
+const ALLOWED_DIR_EXTS = {
+  schemas: ['.json'],
+  keys: ['.pem', '.sig'],
+  prompts: ['.md', '.txt'],
+};
 
 function walkPack(packDir) {
   const entries = [];
@@ -187,15 +196,31 @@ function walkPack(packDir) {
       if (!ALLOWED_TOPS.has(name)) continue;
       entries.push({ name, content: readFileSync(full) });
     } else if (st.isDirectory()) {
-      if (!ALLOWED_DIRS.has(name)) continue;
+      const exts = ALLOWED_DIR_EXTS[name];
+      if (!exts) continue;
       for (const f of readdirSync(full).sort()) {
-        if (!f.endsWith('.json') && !f.endsWith('.pem') && !f.endsWith('.sig')) continue;
+        if (!exts.some((e) => f.endsWith(e))) continue;
         entries.push({ name: `${name}/${f}`, content: readFileSync(join(full, f)) });
       }
     }
   }
   entries.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
   return entries;
+}
+
+/** RFC 0003 §C — every agent `systemPromptRef` declared in the manifest MUST resolve
+ *  to a file bundled in the tarball. Build-time fail-loud so a prompt-less pack can
+ *  never be published again. Returns the list of unresolved refs (empty = OK). */
+function unresolvedPromptRefs(manifest, entryNames) {
+  const have = new Set(entryNames);
+  const missing = [];
+  for (const agent of manifest.agents ?? []) {
+    const ref = agent.systemPromptRef;
+    if (typeof ref === 'string' && ref.length > 0 && !have.has(ref)) {
+      missing.push(`${agent.id ?? agent.agentId ?? '<agent>'} → systemPromptRef "${ref}"`);
+    }
+  }
+  return missing;
 }
 
 // ─── ed25519 ─────────────────────────────────────────────────────────
@@ -319,6 +344,18 @@ function buildPack(packName, args) {
     // node:crypto Ed25519 signature format.
     entries.push({ name: 'keys/pack.json.sig', content: sig });
     entries.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+  }
+
+  // RFC 0003 §C — fail loud if a declared systemPromptRef isn't in the tarball,
+  // rather than silently shipping a pack an installing host will reject.
+  const missingPrompts = unresolvedPromptRefs(manifest, entries.map((e) => e.name));
+  if (missingPrompts.length > 0) {
+    fail(
+      `✗ ${packName}@${manifest.version} — systemPromptRef not bundled (RFC 0003 §C): ` +
+        missingPrompts.join('; ') +
+        '. Ensure the prompt file exists under prompts/ in the pack dir.',
+    );
+    return false;
   }
 
   const tgz = buildUstarGzip(entries);

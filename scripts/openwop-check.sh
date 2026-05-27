@@ -156,6 +156,12 @@ node "$SPEC_ROOT/scripts/check-backend-dep-graph.mjs"
 # catalog named a different key than the real signer, which a strict consumer would
 # reject (cf. the 2026-05-27 81-version openwop-registry-root drift).
 node "$SPEC_ROOT/scripts/check-registry-signer-consistency.mjs"
+# Agent-pack prompt bundling — every agent `systemPromptRef` in a source pack.json
+# MUST resolve to a prompts/*.md|.txt file the tarball bundler ships (RFC 0003 §C).
+# Catches the class where a declared prompt is missing or parked outside prompts/,
+# so an installing host fail-loud-rejects the pack (cf. the 2026-05-27 core agent
+# packs that shipped without their systemPromptRef body).
+node "$SPEC_ROOT/scripts/check-pack-prompt-refs.mjs"
 # Workflow-engine sample bundles a vendored copy of conformance/fixtures/
 # into its Docker image (apps/workflow-engine/conformance-fixtures/, per
 # the Dockerfile + scripts/sync-fixtures.sh). Catch silent drift: if the
