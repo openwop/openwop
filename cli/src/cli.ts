@@ -51,6 +51,10 @@ import { runHealth, HEALTH_HELP } from './cli/health.js';
 import { runCapabilities, CAPABILITIES_HELP, summarizeCapabilities } from './cli/capabilities.js';
 import { runMemory, MEMORY_HELP } from './cli/memory.js';
 import { runMedia, MEDIA_HELP } from './cli/media.js';
+import {
+  buildInputs, parseInputValue, parseNodeVersion, defaultApiKeyFor,
+  normalizeBaseUrl, npmCommand, ok, warn, fail, formatCheckTable,
+} from './cli/shared.js';
 // Public surface re-exported for the test suite + bin (they import the bundle).
 export { VERSION, DEFAULT_BASE_URL, DEFAULT_REGISTRY_URL, PROVIDER_CATALOG, HOST_PRESETS };
 export { submitTurn, streamRunEvents, consumeSse, renderEvent, extractAssistantText };
@@ -3219,28 +3223,6 @@ function makeChannelDeliver(channel, ctx) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 
-function buildInputs(options) {
-  const fromJson = options.inputsJson ? JSON.parse(options.inputsJson) : {};
-  if (fromJson === null || typeof fromJson !== 'object' || Array.isArray(fromJson)) {
-    throw new CliError('--inputs-json must be a JSON object');
-  }
-  const inputs = { ...fromJson };
-  for (const pair of options.input ?? []) {
-    const eq = pair.indexOf('=');
-    if (eq <= 0) throw new CliError(`--input must be key=value, got: ${pair}`);
-    inputs[pair.slice(0, eq)] = parseInputValue(pair.slice(eq + 1));
-  }
-  return inputs;
-}
-
-function parseInputValue(value) {
-  try {
-    return JSON.parse(value);
-  } catch {
-    return value;
-  }
-}
-
 async function waitForRun(ctx: Ctx, runId, timeoutMs) {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
@@ -3249,50 +3231,6 @@ async function waitForRun(ctx: Ctx, runId, timeoutMs) {
     await sleep(250);
   }
   throw new CliError(`Timed out waiting for run ${runId} after ${timeoutMs}ms`, 1);
-}
-
-function parseNodeVersion(version) {
-  const [major, minor, patch] = version.split('.').map((v) => Number(v));
-  return { major: major || 0, minor: minor || 0, patch: patch || 0 };
-}
-
-function defaultApiKeyFor(baseUrl) {
-  try {
-    const host = new URL(baseUrl).hostname;
-    if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return DEFAULT_API_KEY;
-  } catch {
-    return undefined;
-  }
-  return undefined;
-}
-
-function normalizeBaseUrl(value) {
-  if (!value) return DEFAULT_BASE_URL;
-  return value.endsWith('/') ? value.slice(0, -1) : value;
-}
-
-function npmCommand() {
-  return process.platform === 'win32' ? 'npm.cmd' : 'npm';
-}
-
-
-function ok(name, message) {
-  return { status: 'ok', name, message };
-}
-
-function warn(name, message) {
-  return { status: 'warn', name, message };
-}
-
-function fail(name, message) {
-  return { status: 'fail', name, message };
-}
-
-function formatCheckTable(checks) {
-  return formatTable(
-    checks.map((c) => ({ status: c.status.toUpperCase(), check: c.name, message: c.message })),
-    ['status', 'check', 'message'],
-  );
 }
 
 const ROOT_HELP = `openwop - operate OpenWOP hosts and the workflow-engine demo app
