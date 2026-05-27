@@ -204,6 +204,32 @@ invariants:
       envelope payloads, not on parsing-error diagnostics). Gate
       timing: lands alongside reference-host emission.
 
+  - id: artifact-schema-compile-bounded
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-node-packs.md
+    tests:
+      - conformance/src/scenarios/artifact-schema-compile-bounded.test.ts
+    note: |
+      RFC 0071 §"Bounded schema compilation". Artifact-type packs
+      (`kind: "artifact-type"`) ship third-party JSON Schemas that the
+      engine compiles (Ajv) at install + validation time. A host MUST
+      bound that compilation — rejecting schemas that exceed host limits
+      on serialized byte size, `$ref` nesting depth, and total
+      keyword/subschema count, and compiling under a wall-clock timeout —
+      so a malicious or malformed pack cannot cause denial of service
+      (schema bombs: pathological `$ref` recursion, keyword-count
+      explosion, oversized payloads, catastrophic-backtracking `pattern`s).
+      Rejection returns `pack_validation_failed`. This is the artifact-
+      schema analog of the node-pack supply-chain controls. Server-free
+      floor: `artifact-schema-compile-bounded.test.ts` asserts the
+      normative contract is present in the corpus AND that a reference
+      finite bound rejects $ref-depth / keyword-count / size bombs while
+      admitting benign schemas. The behavioral end-to-end form (host
+      rejects an over-bounds pack at registry `PUT`) is capability-gated
+      on `host.artifactTypes.supported` and `host-pending` until a
+      reference host lands.
+
   - id: secret-leakage-eventlog-variable
     tier: reference-impl
     severity: high
