@@ -39,7 +39,7 @@
       "tarballUrl": "/v1/packs/core.openwop.storage/-/1.0.0.tgz",
       "signatureUrl": "/v1/packs/core.openwop.storage/-/1.0.0.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "openwop-team-1",
       "integrity": "sha256-cq3BVSzw9vj8p9XFWZ4scqUmc8mr6EHwe604NEjcAG0=",
       "deprecated": false,
       "yanked": false

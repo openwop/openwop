@@ -25,7 +25,7 @@
       "tarballUrl": "/v1/packs/vendor.myndhyve.chat/-/1.0.0.tgz",
       "signatureUrl": "/v1/packs/vendor.myndhyve.chat/-/1.0.0.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "myndhyve-internal-1",
       "integrity": "sha256-48v24mtbDkl4GmigWJeTUZWY7LI9y3DT5HdVUB40Peg=",
       "deprecated": false,
       "yanked": false

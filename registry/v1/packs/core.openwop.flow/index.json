@@ -48,7 +48,7 @@
       "tarballUrl": "/v1/packs/core.openwop.flow/-/1.0.1.tgz",
       "signatureUrl": "/v1/packs/core.openwop.flow/-/1.0.1.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "openwop-team-1",
       "integrity": "sha256-NjzWLbrRNyHjyLCbb2dLSMKFx/YD5fFTLcwrwUJ3wdU=",
       "deprecated": false,
       "yanked": false
@@ -60,7 +60,7 @@
       "tarballUrl": "/v1/packs/core.openwop.flow/-/1.1.0.tgz",
       "signatureUrl": "/v1/packs/core.openwop.flow/-/1.1.0.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "openwop-team-1",
       "integrity": "sha256-/Hg0elK31l5mdntaWT6UzZ7N3P0NIedrpI0i9u0JIls=",
       "deprecated": false,
       "yanked": false

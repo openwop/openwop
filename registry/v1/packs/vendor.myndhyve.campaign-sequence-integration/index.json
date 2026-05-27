@@ -22,7 +22,7 @@
       "tarballUrl": "/v1/packs/vendor.myndhyve.campaign-sequence-integration/-/1.0.0.tgz",
       "signatureUrl": "/v1/packs/vendor.myndhyve.campaign-sequence-integration/-/1.0.0.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "myndhyve-internal-1",
       "integrity": "sha256-NgupCLZ5suyT8fpCjZiC49qlUgM0/OaEjo1sDsbUtdY=",
       "deprecated": false,
       "yanked": true
@@ -34,7 +34,7 @@
       "tarballUrl": "/v1/packs/vendor.myndhyve.campaign-sequence-integration/-/1.0.1.tgz",
       "signatureUrl": "/v1/packs/vendor.myndhyve.campaign-sequence-integration/-/1.0.1.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "myndhyve-internal-1",
       "integrity": "sha256-9RE2dvLOHrBeY52DvVLPpqUxjbqn+t2lc0ExJub4Dss=",
       "deprecated": false,
       "yanked": false

@@ -57,7 +57,7 @@
       "tarballUrl": "/v1/packs/core.openwop.data/-/1.0.0.tgz",
       "signatureUrl": "/v1/packs/core.openwop.data/-/1.0.0.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "openwop-team-1",
       "integrity": "sha256-cfqQOCvEdasokswYBWk4uHeJhxsvfbmGu/9MTXqvSw4=",
       "deprecated": false,
       "yanked": false
@@ -69,7 +69,7 @@
       "tarballUrl": "/v1/packs/core.openwop.data/-/1.1.0.tgz",
       "signatureUrl": "/v1/packs/core.openwop.data/-/1.1.0.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "openwop-team-1",
       "integrity": "sha256-PL5IQD4Jrt9lnb2WXmVqqmVT2EhpSwotuV/kwoXwa9w=",
       "deprecated": false,
       "yanked": false
@@ -81,7 +81,7 @@
       "tarballUrl": "/v1/packs/core.openwop.data/-/1.2.0.tgz",
       "signatureUrl": "/v1/packs/core.openwop.data/-/1.2.0.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "openwop-team-1",
       "integrity": "sha256-nwZRZZsnsmEdLO0A8L2PWzRJAbeqiuvi869bHR+Sv4M=",
       "deprecated": false,
       "yanked": false
@@ -93,7 +93,7 @@
       "tarballUrl": "/v1/packs/core.openwop.data/-/1.2.1.tgz",
       "signatureUrl": "/v1/packs/core.openwop.data/-/1.2.1.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "openwop-team-1",
       "integrity": "sha256-7nbbBEf0y0hCaCsLP46Bks3flax8LSKd8tt8i+p5ZBY=",
       "deprecated": false,
       "yanked": false
