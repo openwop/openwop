@@ -20,10 +20,11 @@ interface AgentInventory {
   total?: number;
 }
 
-/** GET the registry-backed manifest-agent inventory; null when the seam is absent. */
+/** GET the NORMATIVE manifest-agent inventory (RFC 0072 §A `GET /v1/agents`);
+ *  null when the host doesn't advertise the capability (404/405/501). */
 export async function listManifestAgents(): Promise<AgentInventory | null> {
-  const res = await driver.get('/v1/host/sample/agents');
-  if (res.status === 404 || res.status === 405) return null;
+  const res = await driver.get('/v1/agents');
+  if (res.status === 404 || res.status === 405 || res.status === 501) return null;
   return (res.json as AgentInventory | undefined) ?? {};
 }
 

@@ -652,3 +652,27 @@ func IsRunErrorCode(value string) bool {
 	}
 	return false
 }
+
+// AgentInventoryEntry is one installed manifest agent as projected by
+// GET /v1/agents / GET /v1/agents/{agentId} (RFC 0072 §A). Read-only — never
+// carries the system-prompt body, resolved handoff schemas, or credentials (SR-1).
+type AgentInventoryEntry struct {
+	AgentID             string   `json:"agentId"`
+	Persona             string   `json:"persona"`
+	Label               string   `json:"label"`
+	Description         string   `json:"description,omitempty"`
+	ModelClass          string   `json:"modelClass"`
+	PackName            string   `json:"packName"`
+	PackVersion         string   `json:"packVersion"`
+	ToolAllowlist       []string `json:"toolAllowlist"`
+	HasHandoffSchemas   bool     `json:"hasHandoffSchemas"`
+	ConfidenceThreshold *float64 `json:"confidenceThreshold,omitempty"`
+	// Degraded lists optional capability tiers this host does not satisfy (RFC 0072 §C).
+	Degraded []string `json:"degraded,omitempty"`
+}
+
+// AgentInventoryResponse is the GET /v1/agents body (RFC 0072 §A).
+type AgentInventoryResponse struct {
+	Agents []AgentInventoryEntry `json:"agents"`
+	Total  int                   `json:"total"`
+}

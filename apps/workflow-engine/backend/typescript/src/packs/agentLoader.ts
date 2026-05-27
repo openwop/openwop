@@ -88,10 +88,52 @@ function readUtf8(abs: string, kind: string): string {
  * (bad ref, traversal, malformed handoff schema) are skipped with a logged
  * error — one bad agent MUST NOT block the rest of the pack.
  */
-export function loadAgentsFromManifest(packDir: string): ResolvedAgentManifest[] {
+export interface DependencyDisposition {
+  /** Required peer-deps the host does not satisfy — install MUST refuse (RFC 0072 §C). */
+  refused: string[];
+  /** Optional peer-deps the host does not satisfy — install degraded + surface (RFC 0072 §C). */
+  degraded: string[];
+}
+
+/**
+ * RFC 0072 §C — classify a pack's `peerDependencies` against host capability
+ * satisfaction. A bare entry is **required** (→ `refused` if unmet); an entry
+ * marked `peerDependenciesMeta[cap].optional: true` **degrades** if unmet. Pure
+ * + host-agnostic: the caller supplies `hostSatisfies`.
+ */
+export function resolveDependencyDisposition(
+  peerDependencies: Record<string, unknown> | undefined,
+  peerDependenciesMeta: Record<string, { optional?: boolean } | undefined> | undefined,
+  hostSatisfies: (cap: string) => boolean,
+): DependencyDisposition {
+  const refused: string[] = [];
+  const degraded: string[] = [];
+  for (const cap of Object.keys(peerDependencies ?? {})) {
+    if (hostSatisfies(cap)) continue;
+    if (peerDependenciesMeta?.[cap]?.optional === true) degraded.push(cap);
+    else refused.push(cap);
+  }
+  return { refused, degraded };
+}
+
+export interface LoadAgentsOptions {
+  /** When provided, RFC 0072 §C disposition is computed against this predicate:
+   *  optional-unmet peer-deps populate each agent's `degraded[]`. */
+  hostSatisfies?: (cap: string) => boolean;
+  /** When true (and `hostSatisfies` provided), a pack with a required-unmet peer
+   *  dependency is refused (no agents loaded) per RFC 0072 §C. Default false —
+   *  the bootstrap eager pass loads regardless, pending the pack peerDep migration. */
+  strict?: boolean;
+}
+
+export function loadAgentsFromManifest(packDir: string, opts: LoadAgentsOptions = {}): ResolvedAgentManifest[] {
   const manifestPath = join(packDir, 'pack.json');
   if (!existsSync(manifestPath)) return [];
-  let manifest: { name?: string; version?: string; agents?: RawAgentManifest[] };
+  let manifest: {
+    name?: string; version?: string; agents?: RawAgentManifest[];
+    peerDependencies?: Record<string, unknown>;
+    peerDependenciesMeta?: Record<string, { optional?: boolean } | undefined>;
+  };
   try {
     manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
   } catch (err) {
@@ -102,6 +144,18 @@ export function loadAgentsFromManifest(packDir: string): ResolvedAgentManifest[]
 
   const packName = typeof manifest.name === 'string' ? manifest.name : packDir;
   const packVersion = typeof manifest.version === 'string' ? manifest.version : '0.0.0';
+
+  // RFC 0072 §C — classify peer-dependencies when a host predicate is supplied.
+  let degradedCaps: string[] = [];
+  if (opts.hostSatisfies) {
+    const disp = resolveDependencyDisposition(manifest.peerDependencies, manifest.peerDependenciesMeta, opts.hostSatisfies);
+    degradedCaps = disp.degraded;
+    if (opts.strict && disp.refused.length > 0) {
+      log.warn('refusing pack — required peer-dependencies unmet (RFC 0072 §C)', { packName, refused: disp.refused });
+      return [];
+    }
+  }
+
   const registry = getAgentRegistry();
   const loaded: ResolvedAgentManifest[] = [];
   // Fresh Ajv per pack-load: handoff schema files within a pack carry distinct
@@ -166,6 +220,7 @@ export function loadAgentsFromManifest(packDir: string): ResolvedAgentManifest[]
         description: typeof raw.description === 'string' ? raw.description : undefined,
         packName,
         packVersion,
+        degraded: degradedCaps.length > 0 ? [...degradedCaps] : undefined,
       };
       registry.register(resolved);
       loaded.push(resolved);

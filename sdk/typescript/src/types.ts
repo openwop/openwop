@@ -1027,3 +1027,30 @@ function extractTraceId(traceparent: string): string | undefined {
   if (!traceId || !/^[0-9a-f]{32}$/i.test(traceId)) return undefined;
   return traceId;
 }
+
+/**
+ * One installed manifest agent, as projected by `GET /v1/agents` /
+ * `GET /v1/agents/{agentId}` (RFC 0072 §A). Read-only — never carries the
+ * system-prompt body, resolved handoff schemas, or credential material (SR-1).
+ */
+export interface AgentInventoryEntry {
+  agentId: string;
+  persona: string;
+  label: string;
+  description?: string;
+  modelClass: string;
+  packName: string;
+  packVersion: string;
+  toolAllowlist: string[];
+  hasHandoffSchemas: boolean;
+  memoryShape?: { scratchpad?: boolean; conversation?: boolean; longTerm?: boolean };
+  confidenceThreshold?: number;
+  /** RFC 0072 §C — optional capability tiers this host does not satisfy, inert here. */
+  degraded?: string[];
+}
+
+/** Response body for `GET /v1/agents` (RFC 0072 §A). */
+export interface AgentInventoryResponse {
+  agents: AgentInventoryEntry[];
+  total: number;
+}
