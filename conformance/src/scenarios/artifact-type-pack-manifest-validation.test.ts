@@ -126,4 +126,15 @@ describe('category: artifact-type-pack manifest validation', () => {
     const errs = failsWith(manifest, 'pattern');
     expect(errs.length, 'artifact-type-packs.md: exportFormats identifiers are lowercase core ids OR vendor.*/x- extensions').toBeGreaterThan(0);
   });
+
+  it('positive: the validation field accepts "open"/"closed" and rejects other values (RFC 0075)', () => {
+    for (const v of ['open', 'closed']) {
+      const m = validManifest();
+      (m.artifactTypes[0] as Record<string, unknown>).validation = v;
+      expect(validate(m), `artifact-type-packs.md §validation: "${v}" MUST validate (RFC 0075)`).toBe(true);
+    }
+    const bad = validManifest();
+    (bad.artifactTypes[0] as Record<string, unknown>).validation = 'lenient';
+    expect(failsWith(bad, 'enum').length, 'validation MUST be open|closed').toBeGreaterThan(0);
+  });
 });

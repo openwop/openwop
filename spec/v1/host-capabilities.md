@@ -345,9 +345,9 @@ ctx.canvas.crossInvoke({
 
 ## §host.artifactTypes
 
-**Capability flag:** `host.artifactTypes: { supported, store, render, export[] }`
+**Capability flag:** `host.artifactTypes: { supported, store, render, export[], types? }`
 
-**Used by:** artifact-type packs (`kind: "artifact-type"`, RFC 0071 — see [`artifact-type-packs.md`](./artifact-type-packs.md)).
+**Used by:** artifact-type packs (`kind: "artifact-type"`, RFC 0071; amended by RFC 0075 — see [`artifact-type-packs.md`](./artifact-type-packs.md)).
 
 Unlike most `host.*` capabilities, this one adds **no `ctx.artifactTypes.*` method**: it is an advertisement that changes how the host treats the artifact references already on the wire (`nodes[].artifact.typeId`, `WorkflowNode.artifactType`, `artifact.created.artifactType`). The facets are negotiated together, not dispatched independently:
 
@@ -361,10 +361,26 @@ Unlike most `host.*` capabilities, this one adds **no `ctx.artifactTypes.*` meth
 ```
 
 **Behavior (normative):**
-- When `supported`, the host validates an artifact whose type matches an installed artifact-type pack's `artifactTypeId` against that pack's schema before emitting `artifact.created` (and sets `registered: true`); unregistered types are accepted unvalidated with `registered: false` (the permanent first-class tier). See `artifact-type-packs.md` §"Binding the existing artifact surfaces".
+- When `supported`, the host validates an artifact whose type matches a **registered** type — either an installed pack's `artifactTypeId` (`registrationSource: "pack"`) or a **host-native** type it validates against a host-known schema (`registrationSource: "host"`, RFC 0075) — against that type's schema before emitting `artifact.created` (and sets `registered: true` + `registrationSource`); unregistered types are accepted unvalidated with `registered: false` (the permanent first-class tier). See `artifact-type-packs.md` §"Binding the existing artifact surfaces".
 - A host advertising `store: true` MUST persist registered artifacts and emit `artifact.created`.
 - A host advertising `render: false` for a type it can `store` MUST still accept and store the artifact and MUST NOT fail the run for lack of a renderer — the cross-host store-without-render negotiation guarantee.
 - The host MUST bound third-party schema compilation per `artifact-type-packs.md` §"Bounded schema compilation" (`artifact-schema-compile-bounded` invariant).
+
+**Per-type facets (`types`, RFC 0075).** Capability is per-type. A host MAY declare a `types` map keyed by `artifactTypeId`; each entry overrides the global object and carries `{ validated, validation, schemaVersion, store, render, export }`. The global object is the fallback for any type not listed (`types` absent ⇒ host-global semantics; any facet absent ⇒ the global default — additive).
+
+```jsonc
+"host.artifactTypes": {
+  "supported": true, "store": true, "render": true, "export": ["pdf"],
+  "types": {
+    "vendor.myndhyve.prd":   { "validated": true,  "validation": "open",   "schemaVersion": 1, "render": true },
+    "vendor.acme.cad.model": { "validated": false, "store": true, "render": false }
+  }
+}
+```
+
+- `validated` (RFC 0075) is the **runtime validation guarantee** (`true` ⇒ the host validates this type before emit, so emits `registered: true`). `schemaVersions["…"]` is only a **version *declaration***; the two are decoupled so a host can declare known versions without obligating per-type validation.
+- `validation` (`"open"`/`"closed"`) mirrors `ArtifactType.validation`, surfacing schema strictness in discovery so a consumer needn't fetch the schema to know whether to expect a closed-world shape (default `"open"` per `COMPATIBILITY.md` §2.1).
+- A host emitting `registered: true` for a host-native (no-pack) type MUST serve its canonical schema URL (`artifact-type-packs.md` §"Schema distribution", P1-3) so the claim is downstream-verifiable.
 
 A pack MAY declare `peerDependencies: { "host.artifactTypes": "supported" }`; the registry refuses registration against a host that does not advertise it.
 
