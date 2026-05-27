@@ -21,6 +21,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 async function isMcpClientSupported(): Promise<boolean> {
   const disco = await driver.get('/.well-known/openwop');
@@ -37,11 +38,11 @@ describe('mcp-toolcall-redaction: capability advertisement contract', () => {
       return;
     }
     const disco = await driver.get('/.well-known/openwop');
-    const cap = (disco.json as {
+    const cap = capabilityFamily((disco.json as {
       capabilities?: {
         mcpClient?: { supported?: boolean; transports?: unknown; trustBoundary?: string };
       };
-    }).capabilities?.mcpClient;
+    }), 'mcpClient');
 
     expect(cap?.supported, driver.describe(
       'host-capabilities.md §host.mcp',

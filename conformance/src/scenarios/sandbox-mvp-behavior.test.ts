@@ -37,6 +37,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -66,7 +67,7 @@ async function isSandboxAdvertised(): Promise<boolean> {
   try {
     const res = await driver.get('/.well-known/openwop');
     if (res.status !== 200) return false;
-    return (res.json as DiscoveryDoc).capabilities?.sandbox?.supported === true;
+    return capabilityFamily((res.json as DiscoveryDoc), 'sandbox')?.supported === true;
   } catch {
     return false;
   }

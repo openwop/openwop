@@ -34,6 +34,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const WORKFLOW_ID = 'conformance-prompt-all-four-kinds';
 const SKIP_NO_FIXTURE = !isFixtureAdvertised(WORKFLOW_ID);
@@ -64,7 +65,7 @@ async function readDiscovery(): Promise<DiscoveryDoc | null> {
 }
 
 function promptsSupported(d: DiscoveryDoc | null): boolean {
-  return d?.capabilities?.prompts?.supported === true;
+  return capabilityFamily(d, 'prompts')?.supported === true;
 }
 
 async function readAllEvents(runId: string): Promise<RunEventDoc[]> {

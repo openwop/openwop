@@ -33,6 +33,7 @@ import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { createSyntheticOIDCIssuer } from '../lib/oidc-issuer.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface OAuth2Caps {
   supported?: boolean;
@@ -51,7 +52,7 @@ const FIXTURE = 'conformance-noop';
 
 async function readAuthCaps(): Promise<AuthCaps | undefined> {
   const disco = await driver.get('/.well-known/openwop');
-  return (disco.json as { capabilities?: { auth?: AuthCaps } }).capabilities?.auth;
+  return capabilityFamily((disco.json as { capabilities?: { auth?: AuthCaps } }), 'auth');
 }
 
 function isProfileAdvertised(auth: AuthCaps | undefined): boolean {

@@ -26,6 +26,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryDoc {
   capabilities?: { scheduling?: { supported?: boolean; cron?: boolean } };
@@ -33,7 +34,7 @@ interface DiscoveryDoc {
 
 async function readScheduling(): Promise<{ supported?: boolean; cron?: boolean } | null> {
   const res = await driver.get('/.well-known/openwop');
-  return (res.json as DiscoveryDoc | undefined)?.capabilities?.scheduling ?? null;
+  return capabilityFamily((res.json as DiscoveryDoc | undefined), 'scheduling') ?? null;
 }
 
 describe('scheduling-cron-fires-once: once-per-tick + missed-tick (RFC 0052 §B)', () => {

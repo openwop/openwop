@@ -21,6 +21,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryCredentials {
   supported?: boolean;
@@ -42,7 +43,7 @@ const VALID_ROTATION: ReadonlySet<string> = new Set(['none', 'two-key-overlap'])
 async function readCredentials(): Promise<DiscoveryCredentials | null> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
-  return body?.capabilities?.credentials ?? null;
+  return capabilityFamily(body, 'credentials') ?? null;
 }
 
 describe('credentials-capability-shape: advertisement shape (RFC 0046 §A)', () => {

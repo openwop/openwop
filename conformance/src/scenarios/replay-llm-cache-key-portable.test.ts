@@ -53,6 +53,7 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { expectedCacheKey, callCacheKeySeam as callSeam } from '../lib/llm-cache-key-recipe.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -167,7 +168,7 @@ describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: non-recipe-field inva
 describe.skipIf(HTTP_SKIP)('replay-llm-cache-key-portable: Phase 4 advertisement alignment (RFC 0041 §D)', () => {
   it('hosts advertising version: 4 MUST advertise replayDeterminism.llmCacheKeyRecipe', async (ctx) => {
     const d = await readDiscovery();
-    const em = d?.capabilities?.multiAgent?.executionModel;
+    const em = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel;
     const version = em?.version;
     if (typeof version !== 'number' || version < 4) {
       ctx.skip(); // pre-Phase-4 or no multiAgent advertisement

@@ -45,6 +45,7 @@ import { driver } from '../lib/driver.js';
 import { loadEnv } from '../lib/env.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface MtlsCaps {
   supported?: boolean;
@@ -74,7 +75,7 @@ interface HttpsResponse {
 
 async function readAuthCaps(): Promise<AuthCaps | undefined> {
   const disco = await driver.get('/.well-known/openwop');
-  return (disco.json as { capabilities?: { auth?: AuthCaps } }).capabilities?.auth;
+  return capabilityFamily((disco.json as { capabilities?: { auth?: AuthCaps } }), 'auth');
 }
 
 function isProfileAdvertised(auth: AuthCaps | undefined): boolean {

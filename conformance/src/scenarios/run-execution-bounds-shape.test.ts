@@ -31,6 +31,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryLimits {
   maxRunDurationMs?: number;
@@ -52,7 +53,7 @@ const TIMEOUT_FIXTURE = 'conformance-run-duration-breach';
 async function readLimits(): Promise<DiscoveryLimits | null> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
-  return body?.capabilities?.limits ?? null;
+  return capabilityFamily(body, 'limits') ?? null;
 }
 
 describe('run-execution-bounds-shape: advertisement shape (RFC 0058)', () => {

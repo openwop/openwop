@@ -26,6 +26,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryCredentials {
   supported?: boolean;
@@ -43,7 +44,7 @@ const CANARY = 'OPENWOP_CRED_CANARY_4f1c8a2e9b';
 async function readCredentials(): Promise<DiscoveryCredentials | null> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
-  return body?.capabilities?.credentials ?? null;
+  return capabilityFamily(body, 'credentials') ?? null;
 }
 
 describe('credential-payload-redaction: advertisement shape (RFC 0046 §A)', () => {

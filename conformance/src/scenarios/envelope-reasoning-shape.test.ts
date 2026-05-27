@@ -32,6 +32,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { driver } from '../lib/driver.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -163,7 +164,7 @@ describe.skipIf(HTTP_SKIP)('envelope-reasoning-shape: capabilities.envelopes adv
   it('capabilities.envelopes.reasoning (when present) conforms to RFC 0030 §C', async () => {
     const d = await readDiscovery();
     if (d === null) return;
-    const reasoning = d.capabilities?.envelopes?.reasoning;
+    const reasoning = capabilityFamily<{ reasoning?: Record<string, unknown>; tierOneSubsetCompliance?: unknown; reliability?: { completion?: Record<string, unknown> } & Record<string, unknown> }>(d, 'envelopes')?.reasoning;
     if (reasoning === undefined) return; // optional block; host MAY omit
     expect(
       typeof reasoning.supported,
@@ -180,7 +181,7 @@ describe.skipIf(HTTP_SKIP)('envelope-reasoning-shape: capabilities.envelopes adv
   it('capabilities.envelopes.tierOneSubsetCompliance (when present) conforms to RFC 0030 §B', async () => {
     const d = await readDiscovery();
     if (d === null) return;
-    const compliance = d.capabilities?.envelopes?.tierOneSubsetCompliance;
+    const compliance = capabilityFamily<{ reasoning?: Record<string, unknown>; tierOneSubsetCompliance?: unknown; reliability?: { completion?: Record<string, unknown> } & Record<string, unknown> }>(d, 'envelopes')?.tierOneSubsetCompliance;
     if (compliance === undefined) return; // optional; host MAY omit
     expect(
       ['strict', 'warn', 'off'],

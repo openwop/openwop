@@ -48,6 +48,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -81,7 +82,7 @@ describe.skipIf(HTTP_SKIP)('multi-agent-memory-lifecycle: advertisement shape (R
       ctx.skip();
       return;
     }
-    const ccmc = d.capabilities?.multiAgent?.executionModel?.crossChildMemoryConcurrency;
+    const ccmc = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.crossChildMemoryConcurrency;
     if (ccmc === undefined) {
       ctx.skip(); // optional advertisement â€” host hasn't opted in
       return;
@@ -135,8 +136,8 @@ describe.skipIf(HTTP_SKIP)('multi-agent-memory-lifecycle: behavioral (RFC 0039 Â
       ctx.skip();
       return;
     }
-    const v = d.capabilities?.multiAgent?.executionModel?.version;
-    const memorySupported = d.capabilities?.memory?.supported;
+    const v = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.version;
+    const memorySupported = capabilityFamily<{ supported?: unknown }>(d, 'memory')?.supported;
     const phase2OrLater = typeof v === 'number' && v >= 2;
     const expiredRunId = process.env.OPENWOP_TEST_EXPIRED_REPLAY_RUN_ID;
     if (!phase2OrLater || memorySupported !== true || !expiredRunId) {

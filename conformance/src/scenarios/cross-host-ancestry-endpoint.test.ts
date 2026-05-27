@@ -35,6 +35,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -65,7 +66,7 @@ async function readDiscovery(): Promise<DiscoveryDoc | null> {
 describe.skipIf(HTTP_SKIP)('cross-host-ancestry-endpoint: behavioral (RFC 0040 ยงC)', () => {
   it('hosts advertising ancestryEndpointSupported MUST serve GET /v1/runs/{runId}/ancestry with the documented shape on a top-level run', async (ctx) => {
     const d = await readDiscovery();
-    const chc = d?.capabilities?.multiAgent?.executionModel?.crossHostCausation;
+    const chc = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.crossHostCausation;
     if (chc?.ancestryEndpointSupported !== true) {
       ctx.skip();
       return;
@@ -112,7 +113,7 @@ describe.skipIf(HTTP_SKIP)('cross-host-ancestry-endpoint: behavioral (RFC 0040 ย
 
   it('hosts advertising crossHostCausation.supported but NOT ancestryEndpointSupported MUST return 404 from the ancestry endpoint', async (ctx) => {
     const d = await readDiscovery();
-    const chc = d?.capabilities?.multiAgent?.executionModel?.crossHostCausation;
+    const chc = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.crossHostCausation;
     if (chc?.supported !== true) {
       ctx.skip();
       return;

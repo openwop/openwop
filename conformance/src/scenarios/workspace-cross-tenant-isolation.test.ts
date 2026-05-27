@@ -20,6 +20,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryDoc {
   capabilities?: { workspace?: { supported?: boolean } };
@@ -28,7 +29,7 @@ interface DiscoveryDoc {
 async function workspaceSupported(): Promise<boolean> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
-  return body?.capabilities?.workspace?.supported === true;
+  return capabilityFamily(body, 'workspace')?.supported === true;
 }
 
 function seam(args: Record<string, unknown>) {

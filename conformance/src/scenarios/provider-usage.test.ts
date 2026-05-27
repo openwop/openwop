@@ -26,6 +26,7 @@ import { join } from 'node:path';
 import { driver } from '../lib/driver.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -36,7 +37,7 @@ interface DiscoveryDoc {
 async function readProviderUsageCap(): Promise<{ supported?: boolean; costEstimates?: boolean; currency?: string } | null> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
-  const cap = body?.capabilities?.providerUsage;
+  const cap = capabilityFamily(body, 'providerUsage');
   return cap && typeof cap === 'object' ? cap : null;
 }
 

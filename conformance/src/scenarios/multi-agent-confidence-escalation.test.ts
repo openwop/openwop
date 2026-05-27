@@ -50,6 +50,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { pollUntilTerminal } from '../lib/polling.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const FIXTURE = 'conformance-multi-agent-confidence-escalation';
@@ -84,7 +85,7 @@ describe.skipIf(HTTP_SKIP)('multi-agent-confidence-escalation: capability shape 
   it('confidenceEscalationFloor (when advertised) MUST be in [0.5, 1.0]', async () => {
     const d = await readDiscovery();
     if (d === null) return;
-    const em = d.capabilities?.multiAgent?.executionModel;
+    const em = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel;
     if (em === undefined) return;
     const floor = em.confidenceEscalationFloor;
     if (floor === undefined) return;
@@ -101,8 +102,8 @@ describe.skipIf(HTTP_SKIP)('multi-agent-confidence-escalation: capability shape 
 describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-confidence-escalation: behavioral (RFC 0039 §A)', () => {
   it('happy-path: low-confidence decision → confidence-escalated event + clarification interrupt + zero dispatch events', async () => {
     const d = await readDiscovery();
-    const supported = d?.capabilities?.multiAgent?.executionModel?.supported === true;
-    const versionRaw = d?.capabilities?.multiAgent?.executionModel?.version;
+    const supported = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.supported === true;
+    const versionRaw = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.version;
     const version = typeof versionRaw === 'number' ? versionRaw : 0;
     if (!supported || version < 2) return; // soft-skip — `version: 1` hosts pass via this absence
 
@@ -125,7 +126,7 @@ describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-confidence-escalation: behavioral 
     // status — the host's own interrupt.md mapping determines the suffix).
     // When the host does NOT advertise the field, fall back to the canonical
     // either-status check.
-    const advertisedKind = d?.capabilities?.multiAgent?.executionModel?.confidenceEscalationInterruptKind;
+    const advertisedKind = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.confidenceEscalationInterruptKind;
     const isVendorKind = typeof advertisedKind === 'string' && /^x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*$/.test(advertisedKind);
     const isCanonicalKind = advertisedKind === 'clarification' || advertisedKind === 'approval';
 

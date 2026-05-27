@@ -34,6 +34,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { pollUntilTerminal } from '../lib/polling.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -62,7 +63,7 @@ describe.skipIf(HTTP_SKIP)('multi-agent-handoff-state-machine: advertisement sha
   it('capabilities.multiAgent.executionModel (when present) conforms to RFC 0037 §C', async () => {
     const d = await readDiscovery();
     if (d === null) return; // discovery unavailable — skip
-    const executionModel = d.capabilities?.multiAgent?.executionModel;
+    const executionModel = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel;
     if (executionModel === undefined) return; // host doesn't advertise — soft-skip
     expect(
       typeof executionModel.supported,
@@ -104,7 +105,7 @@ const BEHAVIORAL_SKIP = HTTP_SKIP || !isFixtureAdvertised(PARENT_FIXTURE) || !is
 describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-handoff-state-machine: behavioral 4-event causation chain (RFC 0037 §"Handoff state machine")', () => {
   it('happy-path: dispatch.began → dispatch.succeeded → child.completed → output.harvested fire in causation order', async () => {
     const d = await readDiscovery();
-    const advertised = d?.capabilities?.multiAgent?.executionModel?.supported === true;
+    const advertised = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.supported === true;
     if (!advertised) return; // soft-skip — host honest about not implementing
 
     const create = await driver.post('/v1/runs', { workflowId: PARENT_FIXTURE });

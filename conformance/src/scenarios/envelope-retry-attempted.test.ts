@@ -59,7 +59,7 @@ describe.skipIf(HTTP_SKIP)('envelope-retry-attempted: advertisement shape (RFC 0
   it('capabilities.envelopes.reliability (when present) conforms to RFC 0032 §C', async () => {
     const d = await readDiscovery();
     if (d === null) return;
-    const reliability = d.capabilities?.envelopes?.reliability;
+    const reliability = capabilityFamily<{ reasoning?: Record<string, unknown>; tierOneSubsetCompliance?: unknown; reliability?: { completion?: Record<string, unknown> } & Record<string, unknown> }>(d, 'envelopes')?.reliability;
     if (reliability === undefined) return;
     expect(typeof reliability.supported, 'reliability.supported MUST be boolean').toBe('boolean');
     if (reliability.events !== undefined) {
@@ -114,6 +114,7 @@ describe.skipIf(HTTP_SKIP)('envelope-retry-attempted: advertisement shape (RFC 0
 
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const FIXTURE = 'conformance-envelope-retry-attempted';
 const NODE_ID = 'structured-call';

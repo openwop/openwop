@@ -64,7 +64,7 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: seam emission (RFC 0032 §B.
   it('accepts a well-formed `envelope.refusal` payload + writes it to the test event log', async () => {
     const d = await readDiscovery();
     if (d === null) return;
-    const reliability = d.capabilities?.envelopes?.reliability;
+    const reliability = capabilityFamily<{ reasoning?: Record<string, unknown>; tierOneSubsetCompliance?: unknown; reliability?: { completion?: Record<string, unknown> } & Record<string, unknown> }>(d, 'envelopes')?.reliability;
     if (!reliability || reliability.supported !== true) return;
     if (!Array.isArray(reliability.events) || !(reliability.events as unknown[]).includes('envelope.refusal')) return;
 
@@ -154,7 +154,7 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: advertisement contract (RFC 
   it('capabilities.envelopes.reliability (when supported: true with non-empty events[]) MUST list both MUST-tier events', async () => {
     const d = await readDiscovery();
     if (d === null) return;
-    const reliability = d.capabilities?.envelopes?.reliability;
+    const reliability = capabilityFamily<{ reasoning?: Record<string, unknown>; tierOneSubsetCompliance?: unknown; reliability?: { completion?: Record<string, unknown> } & Record<string, unknown> }>(d, 'envelopes')?.reliability;
     if (!reliability || reliability.supported !== true) return;
     // Hosts running the legacy undifferentiated retry loop advertise
     // `events: []` (per the OPENWOP_ENVELOPE_RELIABILITY_END_TO_END=false
@@ -190,6 +190,7 @@ describe.skipIf(HTTP_SKIP)('envelope-refusal-shape: advertisement contract (RFC 
 
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const E2E_FIXTURE = 'conformance-envelope-refusal';
 const E2E_NODE_ID = 'structured-call';

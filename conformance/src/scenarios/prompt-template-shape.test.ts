@@ -33,6 +33,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { driver } from '../lib/driver.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const PROMPT_KIND_VALUES = ['system', 'user', 'few-shot', 'schema-hint'] as const;
 
@@ -326,7 +327,7 @@ describe.skipIf(HTTP_SKIP)('prompt-template-shape: capabilities.prompts advertis
   it('capabilities.prompts (when present) carries the optional shape per RFC 0027 §D', async () => {
     const d = await readDiscovery();
     if (d === null) return;
-    const prompts = d.capabilities?.prompts;
+    const prompts = capabilityFamily(d, 'prompts');
     if (prompts === undefined) return; // optional block; host MAY omit
     expect(
       typeof prompts.supported,

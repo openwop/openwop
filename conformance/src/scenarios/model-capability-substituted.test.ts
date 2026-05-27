@@ -17,6 +17,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -64,7 +65,7 @@ describe.skipIf(HTTP_SKIP)('model-capability-substituted: advertisement shape (R
   it('capabilities.modelCapabilities (when present) conforms to RFC 0031 §E', async () => {
     const d = await readDiscovery();
     if (d === null) return;
-    const mc = d.capabilities?.modelCapabilities;
+    const mc = capabilityFamily(d, 'modelCapabilities');
     if (mc === undefined) return;
     expect(
       typeof mc.supported,

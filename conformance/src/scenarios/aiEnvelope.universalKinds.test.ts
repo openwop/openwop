@@ -166,6 +166,7 @@ describe('aiEnvelope.universalKinds: behavioral accept via /v1/host/sample/envel
 
 // E.1 engine-projection via the test-only event-log seam.
 import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 describe('aiEnvelope.universalKinds: engine projection via event-log seam', () => {
   it('clarification.request MUST be lifted to interrupt.requested { kind: "clarification" } per interrupt.md', async () => {
@@ -254,7 +255,7 @@ describe('aiEnvelope.universalKinds: schema.response counter-policy advertisemen
     // advertising a policy field use a documented value.
     const res = await driver.get('/.well-known/openwop');
     const body = res.json as { capabilities?: { aiEnvelope?: { schemaResponseCounterPolicy?: string } } } | undefined;
-    const policy = body?.capabilities?.aiEnvelope?.schemaResponseCounterPolicy;
+    const policy = capabilityFamily<{ schemaResponseCounterPolicy?: string }>(body, 'aiEnvelope')?.schemaResponseCounterPolicy;
     if (policy === undefined) return; // no policy advertised — host MAY omit
     expect(
       ['counted', 'exempt'].includes(policy),

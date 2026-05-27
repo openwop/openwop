@@ -26,6 +26,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const ORDERING_MODELS = new Set(['lamport', 'vector-clock', 'global-sequencer']);
@@ -55,7 +56,7 @@ describe.skipIf(HTTP_SKIP)('cross-engine-append-ordering: advertisement shape (R
   it('capabilities.eventLog.crossEngineOrdering (when present) conforms to RFC 0036 §B', async () => {
     const d = await readDiscovery();
     if (d === null) return;
-    const ceo = d.capabilities?.eventLog?.crossEngineOrdering;
+    const ceo = capabilityFamily<{ crossEngineOrdering?: { supported?: unknown; orderingModel?: unknown } }>(d, 'eventLog')?.crossEngineOrdering;
     if (ceo === undefined) return; // host doesn't advertise — soft-skip
 
     expect(

@@ -20,6 +20,7 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { createSyntheticSamlIdp, type SamlVariant } from '../lib/saml-idp.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const SAML_PROFILE = 'openwop-auth-saml';
 
@@ -35,7 +36,7 @@ interface DiscoveryDoc {
 async function readProfiles(): Promise<string[] | null> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
-  return body?.capabilities?.auth?.profiles ?? body?.extensions?.auth?.profiles ?? null;
+  return capabilityFamily<{ profiles?: string[] }>(body, 'auth')?.profiles ?? body?.extensions?.auth?.profiles ?? null;
 }
 
 describe('auth-saml-profile: advertisement shape (RFC 0050)', () => {

@@ -41,6 +41,7 @@
 import { describe, it, expect } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -71,7 +72,7 @@ describe.skipIf(HTTP_SKIP)(
         ctx.skip();
         return;
       }
-      const mutableLibrary = d.capabilities?.prompts?.mutableLibrary;
+      const mutableLibrary = capabilityFamily(d, 'prompts')?.mutableLibrary;
       if (mutableLibrary !== true) {
         ctx.skip();
         return;

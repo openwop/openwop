@@ -27,6 +27,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryFs {
   supported?: boolean;
@@ -43,7 +44,7 @@ interface DiscoveryDoc {
 async function readFs(): Promise<DiscoveryFs | null> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
-  return body?.capabilities?.fs ?? null;
+  return capabilityFamily(body, 'fs') ?? null;
 }
 
 const PATH_REJECTION_CODES: ReadonlySet<string> = new Set([

@@ -26,6 +26,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -45,7 +46,7 @@ async function readSandboxCaps(): Promise<SandboxCaps | null> {
   try {
     const res = await driver.get('/.well-known/openwop');
     if (res.status !== 200) return null;
-    return (res.json as DiscoveryDoc).capabilities?.sandbox ?? null;
+    return capabilityFamily((res.json as DiscoveryDoc), 'sandbox') ?? null;
   } catch {
     return null;
   }

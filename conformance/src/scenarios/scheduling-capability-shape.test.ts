@@ -20,6 +20,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryScheduling {
   supported?: boolean;
@@ -39,7 +40,7 @@ const ISO_DURATION = /^P(?:\d+Y)?(?:\d+M)?(?:\d+W)?(?:\d+D)?(?:T(?:\d+H)?(?:\d+M
 async function readScheduling(): Promise<DiscoveryScheduling | null> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
-  return body?.capabilities?.scheduling ?? null;
+  return capabilityFamily(body, 'scheduling') ?? null;
 }
 
 describe('scheduling-capability-shape: advertisement shape (RFC 0052 §A)', () => {
