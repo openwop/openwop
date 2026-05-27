@@ -84,7 +84,12 @@
         "schemaVersion": {
           "type": "integer",
           "minimum": 0,
-          "description": "Non-negative integer artifact-schema version, parallel to the per-kind integer in `capabilities.schemaVersions`. Absent ⇒ treated as 0. Bumped when the artifact schema changes shape."
+          "description": "Non-negative integer artifact-schema version, parallel to the per-kind integer in `capabilities.schemaVersions`. Absent ⇒ treated as 0. Bumped when the artifact schema changes shape. A version *declaration*, not a validation guarantee (RFC 0075 / P1-2)."
+        },
+        "validation": {
+          "type": "string",
+          "enum": ["open", "closed"],
+          "description": "RFC 0075. Strictness contract of the artifact's `schemaRef` schema. `closed` ⇒ closed-world (`additionalProperties: false`); a consumer MAY rely on the absence of unknown fields. `open` (recommended for AI/LLM-produced artifacts) ⇒ the schema tolerates extra fields to absorb model drift; consumers MUST ignore unknown fields per COMPATIBILITY.md §2.1. Absent ⇒ `open` (the forward-compatible default). The `additionalProperties:false` requirement on `schemaRef` was relaxed MUST → SHOULD by RFC 0075: a closed-world artifact contract contradicts the protocol's own forward-compat mandate and the first AI-native adopter cannot meet it."
         },
         "displayName": {
           "type": "string",

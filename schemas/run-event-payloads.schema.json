@@ -608,7 +608,8 @@
         "nodeId":       { "type": "string" },
         "version":      { "type": "string" },
         "summary":      { "type": "string" },
-        "registered":   { "type": "boolean", "description": "RFC 0071. True when `artifactType` resolves to an `artifactTypeId` of an installed artifact-type pack (and the payload was validated against its schema); false for unregistered/host-local types accepted without schema validation. Optional; absent ⇒ treat as true, preserving pre-RFC-0071 semantics. See artifact-type-packs.md §\"Binding the existing artifact surfaces\"." }
+        "registered":   { "type": "boolean", "description": "RFC 0071. True when `artifactType` resolves to a registered artifact type (pack- or host-registered) and the payload was validated against its schema; false for unregistered/host-local types accepted without schema validation. Optional; absent ⇒ treat as true, preserving pre-RFC-0071 semantics. See artifact-type-packs.md §\"Binding the existing artifact surfaces\"." },
+        "registrationSource": { "type": "string", "enum": ["pack", "host"], "description": "RFC 0075. Provenance of a registered type: `pack` (matches an installed artifact-type pack) or `host` (a host-native type the host validates against a host-known schema, independent of any pack — e.g. an AI host's built-in artifact types). Optional; meaningful only when `registered: true`. Absent ⇒ unspecified provenance (existing semantics)." }
       },
       "additionalProperties": true
     },
