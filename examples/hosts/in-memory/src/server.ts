@@ -1267,6 +1267,142 @@ async function handleMemoryDistill(req: IncomingMessage, res: ServerResponse): P
   });
 }
 
+// ─── RFC 0071 + RFC 0075 (P2-1) — store-only artifact-type seam ───────────────
+//
+// A store-only host: it persists artifacts of registered types but renders
+// nothing (`host.artifactTypes.render: false`). This exists to exercise the
+// store-without-render negotiation guarantee end-to-end — the path a
+// render-everything host (e.g. MyndHyve) can only honestly soft-skip. Drives
+// the documented POST /v1/host/sample/artifacttypes/{install,produce} seam.
+
+interface InstalledArtifactType {
+  schema: Record<string, unknown>;
+  registrationSource: 'pack' | 'host';
+}
+const artifactTypeRegistry = new Map<string, InstalledArtifactType>();
+// RFC 0075 R1 — bound third-party artifact-schema "compilation" (this host
+// hand-rolls a subset validator, so the only DoS axis is raw size).
+const ARTIFACT_SCHEMA_MAX_BYTES = 64 * 1024;
+
+/**
+ * Minimal validator over the artifact-schema subset the conformance pack uses
+ * (`type: object`, `required[]`, `properties{ type }`, `additionalProperties`).
+ * A production engine compiles with Ajv; the zero-dep reference host hand-rolls
+ * the subset. Honors the `validation: "open"` (additionalProperties absent/true)
+ * vs `"closed"` (additionalProperties:false) strictness from RFC 0075 P0-2.
+ */
+function validateArtifactPayload(schema: Record<string, unknown>, payload: unknown): boolean {
+  if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) return false;
+  const obj = payload as Record<string, unknown>;
+  const props = (schema.properties && typeof schema.properties === 'object'
+    ? schema.properties
+    : {}) as Record<string, { type?: string }>;
+  const required = Array.isArray(schema.required) ? (schema.required as string[]) : [];
+  for (const r of required) if (!(r in obj)) return false;
+  if (schema.additionalProperties === false) {
+    for (const k of Object.keys(obj)) if (!(k in props)) return false;
+  }
+  for (const [k, v] of Object.entries(obj)) {
+    const t = props[k]?.type;
+    if (t === 'string' && typeof v !== 'string') return false;
+    if (t === 'number' && typeof v !== 'number') return false;
+    if (t === 'boolean' && typeof v !== 'boolean') return false;
+    if (t === 'array' && !Array.isArray(v)) return false;
+  }
+  return true;
+}
+
+async function handleArtifactTypeInstall(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (!checkAuth(req, res)) return;
+  const bodyText = await readBody(req);
+  let body: { manifest?: Record<string, unknown>; schemas?: Record<string, unknown> };
+  try {
+    body = JSON.parse(bodyText) as typeof body;
+  } catch {
+    return void sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+  }
+  const manifest = body.manifest;
+  if (
+    !manifest ||
+    typeof manifest !== 'object' ||
+    manifest.kind !== 'artifact-type' ||
+    !Array.isArray(manifest.artifactTypes)
+  ) {
+    return void sendError(res, 400, 'pack_kind_invalid', 'manifest MUST be kind:"artifact-type" with a non-empty artifactTypes[].');
+  }
+  const schemas = (body.schemas ?? {}) as Record<string, unknown>;
+  const installed: string[] = [];
+  for (const at of manifest.artifactTypes as Array<Record<string, unknown>>) {
+    const id = at?.artifactTypeId;
+    if (typeof id !== 'string') continue;
+    const schema = schemas[id];
+    if (!schema || typeof schema !== 'object') {
+      return void sendError(res, 400, 'pack_validation_failed', `no schema supplied for ${id}.`);
+    }
+    if (Buffer.byteLength(JSON.stringify(schema), 'utf8') > ARTIFACT_SCHEMA_MAX_BYTES) {
+      return void sendError(res, 400, 'pack_validation_failed', `schema for ${id} exceeds the size bound.`);
+    }
+    artifactTypeRegistry.set(id, { schema: schema as Record<string, unknown>, registrationSource: 'pack' });
+    installed.push(id);
+  }
+  sendJSON(res, 200, { installed: true, artifactTypeIds: installed });
+}
+
+async function handleArtifactTypeProduce(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (!checkAuth(req, res)) return;
+  const bodyText = await readBody(req);
+  let body: { artifactTypeId?: unknown; payload?: unknown };
+  try {
+    body = JSON.parse(bodyText) as typeof body;
+  } catch {
+    return void sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+  }
+  if (typeof body.artifactTypeId !== 'string') {
+    return void sendError(res, 400, 'validation_error', 'artifactTypeId MUST be a string.');
+  }
+  const id = body.artifactTypeId;
+  const artifactId = randomUUID();
+  const entry = artifactTypeRegistry.get(id);
+
+  // Unregistered tier (permanent first-class): accept + store unvalidated; registered:false.
+  if (!entry) {
+    return void sendJSON(res, 200, {
+      artifactId,
+      registered: false,
+      validated: false,
+      stored: true,
+      rendered: false,
+      runStatus: 'completed',
+      artifactCreated: { artifactType: id, registered: false },
+    });
+  }
+
+  const validated = validateArtifactPayload(entry.schema, body.payload);
+  if (!validated) {
+    // Registered + schema-invalid: MUST NOT emit artifact.created; the run fails.
+    return void sendJSON(res, 200, {
+      artifactId,
+      registered: false,
+      validated: false,
+      stored: false,
+      rendered: false,
+      runStatus: 'failed',
+    });
+  }
+
+  // Registered + valid: persist, complete the run, render NOTHING (render:false).
+  // This is the store-without-render guarantee — no renderer, run still completes.
+  sendJSON(res, 200, {
+    artifactId,
+    registered: true,
+    validated: true,
+    stored: true,
+    rendered: false,
+    runStatus: 'completed',
+    artifactCreated: { artifactType: id, registered: true, registrationSource: entry.registrationSource },
+  });
+}
+
 // ─── Route handlers ──────────────────────────────────────────────────────────
 
 function handleOpenApi(_req: IncomingMessage, res: ServerResponse): void {
@@ -1393,6 +1529,21 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
       tokenizerName: 'claude',
       archiveRetention: 'P30D',
     },
+  };
+
+  // RFC 0071 + RFC 0075 (P2-1) — store-only artifact-type host. Advertises
+  // `store: true, render: false` so the cross-host store-without-render
+  // negotiation guarantee (artifact-type-packs.md §host.artifactTypes) is
+  // exercised end-to-end: this reference host PERSISTS artifacts of registered
+  // types + emits artifact.created, but renders nothing — a produce of a
+  // registered, schema-valid artifact completes the run WITHOUT a renderer.
+  // Exercised via the documented POST /v1/host/sample/artifacttypes/{install,produce}
+  // seam. MyndHyve (render:true) can only honestly soft-skip this path.
+  capabilities['host.artifactTypes'] = {
+    supported: true,
+    store: true,
+    render: false,
+    export: [],
   };
 
   const payload = {
@@ -2067,6 +2218,12 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   }
   if (method === 'POST' && path === '/v1/host/sample/memory/distill') {
     return handleMemoryDistill(req, res);
+  }
+  if (method === 'POST' && path === '/v1/host/sample/artifacttypes/install') {
+    return handleArtifactTypeInstall(req, res);
+  }
+  if (method === 'POST' && path === '/v1/host/sample/artifacttypes/produce') {
+    return handleArtifactTypeProduce(req, res);
   }
   if (WORKSPACE_FILES_PATTERN.test(path) && method === 'GET') {
     return handleWorkspaceList(req, res, url);
