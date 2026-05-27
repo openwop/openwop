@@ -14,6 +14,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 ### docs(rfc-0071): graduate Phase 1 (artifact-type packs) Active → Accepted on MyndHyve production adoption (2026-05-27)
 
 RFC 0071 **Phase 1 (artifact-type packs) graduates to `Accepted`** — first non-steward host to advertise + honor `host.artifactTypes`. MyndHyve `workflow-runtime` (Cloud Run rev `workflow-runtime-00396-cuj`, 100% traffic) serves `capabilities["host.artifactTypes"]: {supported,store,render,export}` **unconditionally** (Slice B — env gate dropped) with all 16 `vendor.myndhyve.*` `schemaVersions` and a live `WorkflowNode.artifactType` validate-before-emit binding; **steward-curl-verified** at `https://api.myndhyve.ai/.well-known/openwop` (2026-05-27). The `artifact-type-pack-install` + `artifact-type-store-without-render` scenarios pass (15 tests; store-without-render soft-skips honestly since MyndHyve renders every type). `spec/v1/artifact-type-packs.md` promoted DRAFT → FINAL (README 35 → 36 FINAL / 7 → 6 DRAFT); the `artifact-schema-compile-bounded` (R1) invariant is enforced. **RFC 0071 overall `Status` stays `Active`** because Phase 2 (chat card packs, `kind: "card"`) remains `Draft` (gated on R2 host-pass + G9). INTEROP-MATRIX §"RFC 0071 Phase 1" + `docs/openwop-adoption/0071-artifact-type-packs-myndhyve-adoption-evidence.md` record the steward verdict; no RFC-level Active/Accepted count change (RFC 0071 stays Active).
+### feat(cli,app): messaging relay-gateway + expanded operator CLI surface (2026-05-27)
+
+Ports chat-messaging capabilities into the CLI + demo app as a **host-extension** layer (NOT normative wire — openwop stays channel-agnostic; nothing added to `spec/v1/` or normative `schemas/`).
+
+- **App** — new `/v1/host/sample/messaging` relay-gateway (`routes/messaging.ts`): device lifecycle (register/activate/revoke), device loop (heartbeat/inbound/outbound/ack) authed by a per-device token (added to the auth `PUBLIC_PATH_PREFIXES`, like `/v1/interrupts/{token}`), connectors + sessions CRUD. Inbound→run bridge (`messaging/bridge.ts`) maps an inbound message to a workflow run (default `sample.demo.uppercase`; override `OPENWOP_MESSAGING_WORKFLOW_ID`) and enqueues the reply as outbound egress, reusing the run pipeline via self-HTTP. Module-scoped demo state; no Storage migration, no advertised capability (so no RFC).
+- **CLI** — `openwop relay {setup,register,activate,status,send,start,revoke}` (the `start` bridge loop heartbeats, pulls outbound, delivers, acks; native delivery via `signal-cli`/AppleScript when present, console fallback otherwise), `openwop messaging {connectors,sessions}`, channel-availability detection + `doctor` relay/channel readiness rows, and a `curl … | bash` one-line installer (`cli/install.sh`).
+- **CLI operator surface** — adds `notifications`, `interrupts`, and `prompts` command groups over existing host endpoints.
+
+Tests: backend relay + bridge suite (vitest, 374 backend pass); CLI suite 113 `node --test` pass.
 
 ### docs(rfc-0070): graduate Active → Accepted on MyndHyve production adoption (2026-05-27)
 

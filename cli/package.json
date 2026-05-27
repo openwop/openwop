@@ -10,6 +10,7 @@
   "files": [
     "openwop.mjs",
     "lib",
+    "install.sh",
     "README.md"
   ],
   "scripts": {
