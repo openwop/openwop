@@ -168,6 +168,9 @@ export async function runCli(argv, options = {}) {
       case 'providers':
       case 'provider':
         return await runProviders(ctx, commandArgs);
+      case 'agents':
+      case 'agent':
+        return await runAgents(ctx, commandArgs);
       case 'config':
         return await runConfig(ctx, commandArgs);
       default:
@@ -315,6 +318,8 @@ function showHelp(io, command) {
     onboard: ONBOARD_HELP,
     providers: PROVIDERS_HELP,
     provider: PROVIDERS_HELP,
+    agents: AGENTS_HELP,
+    agent: AGENTS_HELP,
     config: CONFIG_HELP,
     doctor: DOCTOR_HELP,
     health: HEALTH_HELP,
@@ -1556,7 +1561,7 @@ async function runWorkflowsDelete(ctx, argv) {
 
 async function runRuns(ctx, argv) {
   const sub = argv[0] ?? 'list';
-  const args = argv.slice(['list', 'create', 'get', 'cancel'].includes(sub) ? 1 : 0);
+  const args = argv.slice(['list', 'create', 'get', 'cancel', 'ancestry'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
     write(ctx.io.stdout, RUNS_HELP);
     return 0;
@@ -1570,6 +1575,8 @@ async function runRuns(ctx, argv) {
       return runRunsGet(ctx, args);
     case 'cancel':
       return runRunsCancel(ctx, args);
+    case 'ancestry':
+      return runRunsAncestry(ctx, args);
     default:
       throw new CliError(`Unknown runs command: ${sub}`);
   }
@@ -1993,6 +2000,65 @@ function defaultReadTurn(ctx) {
     rl.once('line', onLine);
     rl.once('close', onClose);
   });
+}
+
+async function runRunsAncestry(ctx, argv) {
+  const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
+  if (options.help || positionals.length !== 1) {
+    write(ctx.io.stdout, 'Usage: openwop runs ancestry <runId> [--json]\n');
+    return options.help ? 0 : 2;
+  }
+  // RFC 0040 §C — GET /v1/runs/{runId}/ancestry. Each run carries a single
+  // cross-host parent link (`parent`), so the ancestry is a linear chain.
+  // Walk it from the requested run up to the top-level root, following the
+  // same-host `parent.runId` until `parent === null`. A depth cap guards
+  // against a malformed cycle. The endpoint is opt-in (Phase 3) and returns
+  // 404 when not advertised — surface that as a clear message.
+  const chain = [];
+  let current = encodeURIComponent(positionals[0]);
+  const MAX_DEPTH = 64;
+  for (let depth = 0; depth < MAX_DEPTH; depth++) {
+    let res;
+    try {
+      res = await requestJson(ctx, `/v1/runs/${current}/ancestry`);
+    } catch (err) {
+      if (err instanceof HttpError && err.status === 404) {
+        // Distinguish "endpoint not enabled" from "run not found" via the body.
+        const detail = err.body && typeof err.body === 'object' && typeof err.body.message === 'string'
+          ? err.body.message
+          : 'not found';
+        throw new CliError(`runs ancestry unavailable: ${detail} (the ancestry endpoint is opt-in; the host must advertise crossHostCausation.ancestryEndpointSupported).`, 2);
+      }
+      throw err;
+    }
+    chain.push(res.body);
+    const parent = res.body.parent;
+    if (!parent || typeof parent.runId !== 'string') break;
+    // A cross-host parent (with wellKnownUrl) can't be walked over this host;
+    // record the link and stop.
+    if (parent.wellKnownUrl) break;
+    current = encodeURIComponent(parent.runId);
+  }
+
+  if (ctx.json) {
+    writeJson(ctx.io.stdout, { runId: positionals[0], chain });
+    return 0;
+  }
+
+  // Render the chain root → requested run as a table, oldest ancestor first.
+  const ordered = [...chain].reverse();
+  const rows = ordered.map((node, i) => {
+    const parent = node.parent;
+    return {
+      depth: ordered.length - 1 - i,
+      runId: node.runId,
+      hostId: node.hostId ?? '',
+      parentRunId: parent && typeof parent.runId === 'string' ? parent.runId : '(root)',
+      cause: parent && typeof parent.cause === 'string' ? parent.cause : '',
+    };
+  });
+  writeLine(ctx.io.stdout, formatTable(rows, ['depth', 'runId', 'hostId', 'parentRunId', 'cause']));
+  return 0;
 }
 
 async function runConformance(ctx, argv) {
@@ -2539,6 +2605,83 @@ async function runProvidersTest(ctx, argv) {
   }
   writeLine(ctx.io.stdout, `✗ ${provider}: ${res.message}`);
   return 1;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// `openwop agents ...`
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// OpenWOP has no normative `/v1/agents` surface — "agents" are an identity
+// attached to the agent-attributed node types a host runs (supervisor /
+// dispatch / chat-responder per the RFC 0037 / 0040 multi-agent model). The
+// demo backend exposes a read-only inventory at the sample-extension route
+// `/v1/host/sample/agents`; these commands render it.
+
+async function runAgents(ctx, argv) {
+  const sub = argv[0] ?? 'list';
+  const args = argv.slice(['list', 'info'].includes(sub) ? 1 : 0);
+  if (sub === '--help' || sub === '-h') {
+    write(ctx.io.stdout, AGENTS_HELP);
+    return 0;
+  }
+  switch (sub) {
+    case 'list':
+      return await runAgentsList(ctx, args);
+    case 'info':
+      return await runAgentsInfo(ctx, args);
+    default:
+      throw new CliError(`Unknown agents command: ${sub}\nRun \`openwop agents --help\` for usage.`);
+  }
+}
+
+async function runAgentsList(ctx, argv) {
+  const { options } = parseOptions(argv, { bool: ['--help'] });
+  if (options.help) {
+    write(ctx.io.stdout, AGENTS_HELP);
+    return 0;
+  }
+  const res = await requestJson(ctx, '/v1/host/sample/agents');
+  if (ctx.json) {
+    writeJson(ctx.io.stdout, res.body);
+    return 0;
+  }
+  const agents = Array.isArray(res.body?.agents) ? res.body.agents : [];
+  if (agents.length === 0) {
+    writeLine(ctx.io.stdout, 'No agent-attributed node types are registered on this host.');
+    return 0;
+  }
+  const rows = agents.map((a) => ({
+    agentId: a.agentId,
+    role: a.role,
+    label: a.label,
+    available: a.available ? 'yes' : 'no',
+  }));
+  writeLine(ctx.io.stdout, formatTable(rows, ['agentId', 'role', 'label', 'available']));
+  return 0;
+}
+
+async function runAgentsInfo(ctx, argv) {
+  const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
+  if (options.help || positionals.length !== 1) {
+    write(ctx.io.stdout, 'Usage: openwop agents info <agentId> [--json]\n');
+    return options.help ? 0 : 2;
+  }
+  const agentId = encodeURIComponent(positionals[0]);
+  const res = await requestJson(ctx, `/v1/host/sample/agents/${agentId}`);
+  if (ctx.json) {
+    writeJson(ctx.io.stdout, res.body);
+    return 0;
+  }
+  const a = res.body ?? {};
+  writeLine(ctx.io.stdout, `agentId: ${a.agentId ?? positionals[0]}`);
+  writeLine(ctx.io.stdout, `role: ${a.role ?? 'unknown'}`);
+  writeLine(ctx.io.stdout, `label: ${a.label ?? ''}`);
+  writeLine(ctx.io.stdout, `nodeTypeId: ${a.nodeTypeId ?? ''}`);
+  writeLine(ctx.io.stdout, `available: ${a.available ? 'yes' : 'no'}`);
+  if (a.reasoning) writeLine(ctx.io.stdout, `reasoning: verbosity=${a.reasoning.verbosity}, streaming=${a.reasoning.streaming}`);
+  if (Array.isArray(a.rfcs) && a.rfcs.length) writeLine(ctx.io.stdout, `rfcs: ${a.rfcs.join(', ')}`);
+  if (a.description) writeLine(ctx.io.stdout, `description: ${a.description}`);
+  return 0;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -3164,6 +3307,9 @@ Commands:
   memory search       Search memory entries by text or tag
   memory get          Show one memory entry
   memory delete       Delete one memory entry
+  runs ancestry       Show a run's cross-host parent chain (RFC 0040)
+  agents list         List agent-attributed node roles on the host
+  agents info         Show one agent role's details
   conformance         Run the OpenWOP conformance CLI from this repo
 
 Examples:
@@ -3306,6 +3452,13 @@ const RUNS_HELP = `Usage:
   openwop runs create <workflowId> [--input k=v] [--inputs-json JSON] [--tenant-id id] [--wait] [--json]
   openwop runs get <runId> [--json]
   openwop runs cancel <runId> [--reason text] [--json]
+  openwop runs ancestry <runId> [--json]
+
+The \`runs ancestry\` command walks the RFC 0040 cross-host parent chain from the
+requested run up to its top-level root (each run has one parent, so the ancestry
+is linear). The endpoint is opt-in: the host must advertise
+\`crossHostCausation.ancestryEndpointSupported\` or the command reports it as
+unavailable.
 
 Input parsing for \`runs create\`:
   --input k=v       Each value is JSON.parse'd first; on parse failure it falls back to a string.
@@ -3403,6 +3556,21 @@ const PROVIDERS_HELP = `Usage:
   openwop providers test <provider> [--credential-ref REF]
 
 Provider must be one of: anthropic, openai, google, minimax.
+`;
+
+const AGENTS_HELP = `Usage:
+  openwop agents list [--json]
+  openwop agents info <agentId> [--json]
+
+OpenWOP has no normative agents endpoint. In the multi-agent execution model
+(RFC 0037 / 0040), an agent is an identity attached to the agent-attributed node
+types the host can run — the supervisor, the dispatch loop, and the chat
+responder. These commands render the demo backend's read-only inventory at the
+sample-extension route /v1/host/sample/agents.
+
+Examples:
+  openwop agents list
+  openwop agents info core.orchestrator.supervisor --json
 `;
 
 const CONFIG_HELP = `Usage:
