@@ -184,6 +184,15 @@ export async function runCli(argv, options = {}) {
         return await runMessaging(ctx, commandArgs);
       case 'relay':
         return await runRelay(ctx, commandArgs);
+      case 'notifications':
+      case 'notification':
+        return await runNotifications(ctx, commandArgs);
+      case 'interrupts':
+      case 'interrupt':
+        return await runInterrupts(ctx, commandArgs);
+      case 'prompts':
+      case 'prompt':
+        return await runPrompts(ctx, commandArgs);
       default:
         throw new CliError(`Unknown command: ${command}\nRun \`openwop --help\` for usage.`);
     }
@@ -344,6 +353,12 @@ function showHelp(io, command) {
     cron: CRON_HELP,
     messaging: MESSAGING_HELP,
     relay: RELAY_HELP,
+    notifications: NOTIFICATIONS_HELP,
+    notification: NOTIFICATIONS_HELP,
+    interrupts: INTERRUPTS_HELP,
+    interrupt: INTERRUPTS_HELP,
+    prompts: PROMPTS_HELP,
+    prompt: PROMPTS_HELP,
   };
   write(io.stdout, map[command] ?? ROOT_HELP);
   return 0;
@@ -3496,6 +3511,142 @@ async function runRelayStart(ctx, argv) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// `openwop notifications ...` — notification inbox (sample-extension).
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function runNotifications(ctx, argv) {
+  const sub = argv[0] ?? 'list';
+  if (sub === '--help' || sub === '-h') { write(ctx.io.stdout, NOTIFICATIONS_HELP); return 0; }
+  const base = '/v1/host/sample/notifications';
+  const rest = argv.slice(1);
+  switch (sub) {
+    case 'list': {
+      const { options } = parseOptions(rest, { bool: ['--archived'], value: ['--status', '--limit'] });
+      const q = new URLSearchParams();
+      if (options.status) q.set('status', options.status);
+      if (options.archived) q.set('includeArchived', 'true');
+      if (options.limit) q.set('limit', options.limit);
+      const res = await requestJson(ctx, `${base}${q.toString() ? `?${q}` : ''}`);
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      const items = Array.isArray(res.body?.notifications) ? res.body.notifications : [];
+      if (items.length === 0) { writeLine(ctx.io.stdout, 'No notifications.'); return 0; }
+      writeLine(ctx.io.stdout, formatTable(
+        items.map((n) => ({ id: n.notificationId, status: n.status, priority: n.priority ?? '', title: n.title ?? '', createdAt: n.createdAt ?? '' })),
+        ['id', 'status', 'priority', 'title', 'createdAt'],
+      ));
+      return 0;
+    }
+    case 'read': case 'unread': case 'archive': {
+      if (rest.length !== 1) { write(ctx.io.stdout, `Usage: openwop notifications ${sub} <id> [--json]\n`); return 2; }
+      const res = await requestJson(ctx, `${base}/${encodeURIComponent(rest[0])}/${sub}`, { method: 'POST', body: {} });
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      writeLine(ctx.io.stdout, `✓ ${rest[0]} → ${res.body.status}`);
+      return 0;
+    }
+    case 'mark-all-read': {
+      const res = await requestJson(ctx, `${base}:mark-all-read`, { method: 'POST', body: {} });
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      writeLine(ctx.io.stdout, `✓ Marked ${res.body.updated} notification(s) read.`);
+      return 0;
+    }
+    case 'delete': case 'rm': {
+      if (rest.length !== 1) { write(ctx.io.stdout, 'Usage: openwop notifications delete <id> [--json]\n'); return 2; }
+      const res = await requestJson(ctx, `${base}/${encodeURIComponent(rest[0])}`, { method: 'DELETE' });
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      writeLine(ctx.io.stdout, `✓ Deleted ${rest[0]}`);
+      return 0;
+    }
+    default:
+      throw new CliError(`Unknown notifications command: ${sub}\nRun \`openwop notifications --help\` for usage.`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// `openwop interrupts ...` — list open interrupts for a run; resolve by token.
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function runInterrupts(ctx, argv) {
+  const sub = argv[0];
+  if (!sub || sub === '--help' || sub === '-h') { write(ctx.io.stdout, INTERRUPTS_HELP); return sub ? 0 : 2; }
+  const rest = argv.slice(1);
+  switch (sub) {
+    case 'list': {
+      if (rest.length !== 1) { write(ctx.io.stdout, 'Usage: openwop interrupts list <runId> [--json]\n'); return 2; }
+      const res = await requestJson(ctx, `/v1/host/sample/runs/${encodeURIComponent(rest[0])}/interrupts`);
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      const items = Array.isArray(res.body?.interrupts) ? res.body.interrupts : [];
+      if (items.length === 0) { writeLine(ctx.io.stdout, `No open interrupts for run ${rest[0]}.`); return 0; }
+      writeLine(ctx.io.stdout, formatTable(
+        items.map((i) => ({ nodeId: i.nodeId, kind: i.kind, token: i.token, createdAt: i.createdAt ?? '' })),
+        ['nodeId', 'kind', 'token', 'createdAt'],
+      ));
+      return 0;
+    }
+    case 'resolve': {
+      const { options, positionals } = parseOptions(rest, { value: ['--data-json'] });
+      if (positionals.length !== 1) { write(ctx.io.stdout, "Usage: openwop interrupts resolve <token> [--data-json '{...}'] [--json]\n"); return 2; }
+      let body = {};
+      if (options.dataJson) {
+        try { body = JSON.parse(options.dataJson); } catch { throw new CliError('--data-json must be valid JSON.'); }
+      }
+      const res = await requestJson(ctx, `/v1/interrupts/${encodeURIComponent(positionals[0])}`, { method: 'POST', body });
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      writeLine(ctx.io.stdout, `✓ Resolved interrupt — run ${res.body.runId} node ${res.body.nodeId} (${res.body.status ?? 'running'})`);
+      return 0;
+    }
+    default:
+      throw new CliError(`Unknown interrupts command: ${sub}\nRun \`openwop interrupts --help\` for usage.`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// `openwop prompts ...` — prompt-library list/get/render (RFC 0029).
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function runPrompts(ctx, argv) {
+  const sub = argv[0] ?? 'list';
+  if (sub === '--help' || sub === '-h') { write(ctx.io.stdout, PROMPTS_HELP); return 0; }
+  const rest = argv.slice(1);
+  switch (sub) {
+    case 'list': {
+      const { options } = parseOptions(rest, { value: ['--kind', '--tag', '--limit'] });
+      const q = new URLSearchParams();
+      if (options.kind) q.set('kind', options.kind);
+      if (options.tag) q.set('tag', options.tag);
+      if (options.limit) q.set('limit', options.limit);
+      const res = await requestJson(ctx, `/v1/prompts${q.toString() ? `?${q}` : ''}`);
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      const items = Array.isArray(res.body?.items) ? res.body.items : [];
+      if (items.length === 0) { writeLine(ctx.io.stdout, 'No prompt templates.'); return 0; }
+      writeLine(ctx.io.stdout, formatTable(
+        items.map((t) => ({ templateId: t.templateId, kind: t.kind ?? '', modelClass: t.modelClass ?? '', source: t.source ?? '' })),
+        ['templateId', 'kind', 'modelClass', 'source'],
+      ));
+      return 0;
+    }
+    case 'get': {
+      if (rest.length !== 1) { write(ctx.io.stdout, 'Usage: openwop prompts get <templateId> [--json]\n'); return 2; }
+      const res = await requestJson(ctx, `/v1/prompts/${encodeURIComponent(rest[0])}`);
+      writeJson(ctx.io.stdout, res.body);
+      return 0;
+    }
+    case 'render': {
+      const { options, positionals } = parseOptions(rest, { value: ['--variables-json'] });
+      if (positionals.length !== 1) { write(ctx.io.stdout, "Usage: openwop prompts render <ref> [--variables-json '{...}'] [--json]\n"); return 2; }
+      let variables = {};
+      if (options.variablesJson) {
+        try { variables = JSON.parse(options.variablesJson); } catch { throw new CliError('--variables-json must be valid JSON.'); }
+      }
+      const res = await requestJson(ctx, '/v1/prompts:render', { method: 'POST', body: { ref: positionals[0], variables } });
+      writeJson(ctx.io.stdout, res.body);
+      return 0;
+    }
+    default:
+      throw new CliError(`Unknown prompts command: ${sub}\nRun \`openwop prompts --help\` for usage.`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Config file + path utilities
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -4080,6 +4231,12 @@ Commands:
   relay start         Run the relay bridge loop (heartbeat/poll/deliver/ack)
   relay send          Queue an outbound message for a relay
   relay status        Probe the relay device token against the host
+  notifications list  List notification inbox entries (tenant-scoped)
+  notifications read  Mark a notification read/unread/archived
+  interrupts list     List a run's open (HITL) interrupts
+  interrupts resolve  Resolve an interrupt by token
+  prompts list        Browse the host prompt library
+  prompts render      Render a prompt template with variables
   media generate-image  Generate an image via the demo media route (stubbed)
   media transcribe    Transcribe an audio file (stubbed)
   media synthesize    Synthesize speech from text (stubbed)
@@ -4457,4 +4614,32 @@ stores its token in ~/.openwop/config.json under \`relay\`.
           message to stdout (use --once for a single cycle, e.g. in tests).
   send    Operator-side: queue an outbound message for the relay to deliver.
   status  Probes the host with a heartbeat to confirm the token is live.
+`;
+
+const NOTIFICATIONS_HELP = `Usage:
+  openwop notifications list [--status <s>] [--archived] [--limit n] [--json]
+  openwop notifications read|unread|archive <id> [--json]
+  openwop notifications mark-all-read [--json]
+  openwop notifications delete <id> [--json]
+
+Operate the demo notification inbox (/v1/host/sample/notifications) — a
+sample-extension surface, tenant-scoped, not part of the normative wire.
+`;
+
+const INTERRUPTS_HELP = `Usage:
+  openwop interrupts list <runId> [--json]
+  openwop interrupts resolve <token> [--data-json '{...}'] [--json]
+
+List a run's open interrupts (human-in-the-loop / approval pauses) and resolve
+one by its capability token. \`--data-json\` is the resume payload (validated
+against the interrupt's resumeSchema by the host).
+`;
+
+const PROMPTS_HELP = `Usage:
+  openwop prompts list [--kind k] [--tag t] [--limit n] [--json]
+  openwop prompts get <templateId> [--json]
+  openwop prompts render <ref> [--variables-json '{...}'] [--json]
+
+Browse + render the host's prompt library (RFC 0029, /v1/prompts). \`render\`
+resolves a PromptRef (templateId[@version]) against the supplied variables.
 `;
