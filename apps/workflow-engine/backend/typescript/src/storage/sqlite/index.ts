@@ -22,6 +22,12 @@ import type {
   RunRecord,
   WebhookSubscriptionRecord,
 } from '../../types.js';
+import type {
+  ChatEgressEnvelope,
+  MessagingConnectorRecord,
+  MessagingSessionRecord,
+  RelayDeviceRecord,
+} from '../../messaging/types.js';
 import type { Storage } from '../storage.js';
 import { applyMigrations } from './schema.js';
 
@@ -945,9 +951,168 @@ export function openSqliteStorage(dbPath: string): Storage {
       return r.changes;
     },
 
+    // ── messaging relay-gateway (demo host-extension) ──
+    async upsertRelayDevice(record) {
+      db.prepare(
+        `INSERT INTO relay_devices (
+          relay_id, tenant_id, channel, device_name, status,
+          device_token_hash, token_expires_at, activation_code, activation_expires_at,
+          registered_at, last_heartbeat_at, last_reported_status
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+        ON CONFLICT(relay_id) DO UPDATE SET
+          channel=excluded.channel, device_name=excluded.device_name, status=excluded.status,
+          device_token_hash=excluded.device_token_hash, token_expires_at=excluded.token_expires_at,
+          activation_code=excluded.activation_code, activation_expires_at=excluded.activation_expires_at,
+          last_heartbeat_at=excluded.last_heartbeat_at, last_reported_status=excluded.last_reported_status`,
+      ).run(
+        record.relayId, record.tenantId, record.channel, record.deviceName ?? null, record.status,
+        record.deviceTokenHash ?? null, record.tokenExpiresAt ?? null,
+        record.activationCode ?? null, record.activationExpiresAt ?? null,
+        record.registeredAt, record.lastHeartbeatAt ?? null, record.lastReportedStatus ?? null,
+      );
+    },
+    async getRelayDevice(relayId) {
+      const row = db.prepare(`SELECT * FROM relay_devices WHERE relay_id = ?`).get(relayId) as Record<string, unknown> | undefined;
+      return row ? rowToRelayDeviceSqlite(row) : null;
+    },
+    async getRelayDeviceByTokenHash(tokenHash) {
+      const row = db.prepare(
+        `SELECT * FROM relay_devices WHERE device_token_hash = ? AND status = 'active'`,
+      ).get(tokenHash) as Record<string, unknown> | undefined;
+      return row ? rowToRelayDeviceSqlite(row) : null;
+    },
+    async enqueueRelayOutbound(record) {
+      db.prepare(
+        `INSERT INTO relay_outbound (egress_id, relay_id, channel, conversation_id, text, reply_to_message_id, enqueued_at)
+         VALUES (?,?,?,?,?,?,?)`,
+      ).run(
+        record.egressId, record.relayId, record.channel, record.conversationId,
+        record.text, record.replyToMessageId ?? null, record.enqueuedAt,
+      );
+    },
+    async listRelayOutbound(relayId, limit) {
+      const rows = db.prepare(
+        `SELECT * FROM relay_outbound WHERE relay_id = ? ORDER BY enqueued_at ASC, egress_id ASC LIMIT ?`,
+      ).all(relayId, limit) as Array<Record<string, unknown>>;
+      return rows.map(rowToEgressSqlite);
+    },
+    async ackRelayOutbound(relayId, egressIds) {
+      if (egressIds.length === 0) return 0;
+      const placeholders = egressIds.map(() => '?').join(', ');
+      const r = db.prepare(
+        `DELETE FROM relay_outbound WHERE relay_id = ? AND egress_id IN (${placeholders})`,
+      ).run(relayId, ...egressIds);
+      return r.changes;
+    },
+    async deleteRelayOutbound(relayId) {
+      db.prepare(`DELETE FROM relay_outbound WHERE relay_id = ?`).run(relayId);
+    },
+    async upsertMessagingConnector(record) {
+      db.prepare(
+        `INSERT INTO messaging_connectors (connector_id, tenant_id, channel, display_name, enabled, created_at, updated_at)
+         VALUES (?,?,?,?,?,?,?)
+         ON CONFLICT(connector_id) DO UPDATE SET
+           channel=excluded.channel, display_name=excluded.display_name, enabled=excluded.enabled, updated_at=excluded.updated_at`,
+      ).run(
+        record.connectorId, record.tenantId, record.channel, record.displayName,
+        record.enabled ? 1 : 0, record.createdAt, record.updatedAt,
+      );
+    },
+    async getMessagingConnector(connectorId) {
+      const row = db.prepare(`SELECT * FROM messaging_connectors WHERE connector_id = ?`).get(connectorId) as Record<string, unknown> | undefined;
+      return row ? rowToConnectorSqlite(row) : null;
+    },
+    async listMessagingConnectors(tenantId) {
+      const rows = tenantId === undefined
+        ? db.prepare(`SELECT * FROM messaging_connectors ORDER BY created_at ASC`).all() as Array<Record<string, unknown>>
+        : db.prepare(`SELECT * FROM messaging_connectors WHERE tenant_id = ? ORDER BY created_at ASC`).all(tenantId) as Array<Record<string, unknown>>;
+      return rows.map(rowToConnectorSqlite);
+    },
+    async upsertMessagingSession(record) {
+      db.prepare(
+        `INSERT INTO messaging_sessions (session_key, tenant_id, channel, conversation_id, peer_id, peer_display, last_inbound_at, message_count, last_run_id)
+         VALUES (?,?,?,?,?,?,?,?,?)
+         ON CONFLICT(session_key) DO UPDATE SET
+           peer_id=excluded.peer_id, peer_display=excluded.peer_display,
+           last_inbound_at=excluded.last_inbound_at, message_count=excluded.message_count, last_run_id=excluded.last_run_id`,
+      ).run(
+        record.sessionKey, record.tenantId, record.channel, record.conversationId, record.peerId,
+        record.peerDisplay ?? null, record.lastInboundAt, record.messageCount, record.lastRunId ?? null,
+      );
+    },
+    async getMessagingSession(sessionKey) {
+      const row = db.prepare(`SELECT * FROM messaging_sessions WHERE session_key = ?`).get(sessionKey) as Record<string, unknown> | undefined;
+      return row ? rowToSessionSqlite(row) : null;
+    },
+    async listMessagingSessions(tenantId) {
+      const rows = tenantId === undefined
+        ? db.prepare(`SELECT * FROM messaging_sessions ORDER BY last_inbound_at DESC`).all() as Array<Record<string, unknown>>
+        : db.prepare(`SELECT * FROM messaging_sessions WHERE tenant_id = ? ORDER BY last_inbound_at DESC`).all(tenantId) as Array<Record<string, unknown>>;
+      return rows.map(rowToSessionSqlite);
+    },
+    async deleteMessagingSession(sessionKey) {
+      const r = db.prepare(`DELETE FROM messaging_sessions WHERE session_key = ?`).run(sessionKey);
+      return r.changes > 0;
+    },
+
     async close() {
       db.close();
     },
+  };
+}
+
+function rowToRelayDeviceSqlite(r: Record<string, unknown>): RelayDeviceRecord {
+  return {
+    relayId: r.relay_id as string,
+    tenantId: r.tenant_id as string,
+    channel: r.channel as RelayDeviceRecord['channel'],
+    deviceName: (r.device_name as string | null) ?? undefined,
+    status: r.status as RelayDeviceRecord['status'],
+    deviceTokenHash: (r.device_token_hash as string | null) ?? undefined,
+    tokenExpiresAt: (r.token_expires_at as string | null) ?? undefined,
+    activationCode: (r.activation_code as string | null) ?? undefined,
+    activationExpiresAt: (r.activation_expires_at as string | null) ?? undefined,
+    registeredAt: r.registered_at as string,
+    lastHeartbeatAt: (r.last_heartbeat_at as string | null) ?? undefined,
+    lastReportedStatus: (r.last_reported_status as string | null) ?? undefined,
+  };
+}
+
+function rowToEgressSqlite(r: Record<string, unknown>): ChatEgressEnvelope {
+  return {
+    egressId: r.egress_id as string,
+    relayId: r.relay_id as string,
+    channel: r.channel as ChatEgressEnvelope['channel'],
+    conversationId: r.conversation_id as string,
+    text: r.text as string,
+    replyToMessageId: (r.reply_to_message_id as string | null) ?? undefined,
+    enqueuedAt: r.enqueued_at as string,
+  };
+}
+
+function rowToConnectorSqlite(r: Record<string, unknown>): MessagingConnectorRecord {
+  return {
+    connectorId: r.connector_id as string,
+    tenantId: r.tenant_id as string,
+    channel: r.channel as MessagingConnectorRecord['channel'],
+    displayName: r.display_name as string,
+    enabled: Boolean(r.enabled),
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
+  };
+}
+
+function rowToSessionSqlite(r: Record<string, unknown>): MessagingSessionRecord {
+  return {
+    sessionKey: r.session_key as string,
+    tenantId: r.tenant_id as string,
+    channel: r.channel as MessagingSessionRecord['channel'],
+    conversationId: r.conversation_id as string,
+    peerId: r.peer_id as string,
+    peerDisplay: (r.peer_display as string | null) ?? undefined,
+    lastInboundAt: r.last_inbound_at as string,
+    messageCount: Number(r.message_count),
+    lastRunId: (r.last_run_id as string | null) ?? undefined,
   };
 }
 

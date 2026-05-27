@@ -323,10 +323,23 @@ export async function createApp(config: AppConfig): Promise<Express> {
   // Inbound chat → workflow run bridge. Binds inbound messages to a workflow
   // (default deterministic `sample.demo.uppercase`; override via
   // OPENWOP_MESSAGING_WORKFLOW_ID) and enqueues the reply as outbound egress.
+  // Defense-in-depth: warn loudly if a production deploy left the bridge on the
+  // wildcard demo bearer instead of a scoped OPENWOP_MESSAGING_BRIDGE_TOKEN.
+  if (process.env.NODE_ENV === 'production' && !process.env.OPENWOP_MESSAGING_BRIDGE_TOKEN) {
+    log.warn('messaging_bridge_unscoped_credential', {
+      detail: 'OPENWOP_MESSAGING_BRIDGE_TOKEN is unset; the inbound→run bridge is using the host bearer. Set a tenant-scoped credential for production.',
+    });
+  }
   registerMessagingRoutes(app, {
+    storage,
     bridge: createSelfHttpBridge({
+      storage,
       baseUrl: `http://127.0.0.1:${config.port}`,
-      bearer: process.env.OPENWOP_API_KEY ?? 'sample-token',
+      // Prefer a dedicated, tenant-scopable bridge credential; fall back to the
+      // host bearer for the demo. A real multi-tenant host SHOULD set
+      // OPENWOP_MESSAGING_BRIDGE_TOKEN to a scoped credential (the run's tenant
+      // still comes from the registered device, not the inbound message).
+      bearer: process.env.OPENWOP_MESSAGING_BRIDGE_TOKEN ?? process.env.OPENWOP_API_KEY ?? 'sample-token',
       defaultWorkflowId: process.env.OPENWOP_MESSAGING_WORKFLOW_ID ?? 'sample.demo.uppercase',
     }),
   });

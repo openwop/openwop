@@ -38,6 +38,12 @@ import type {
   RunRecord,
   WebhookSubscriptionRecord,
 } from '../../types.js';
+import type {
+  ChatEgressEnvelope,
+  MessagingConnectorRecord,
+  MessagingSessionRecord,
+  RelayDeviceRecord,
+} from '../../messaging/types.js';
 import type { Storage } from '../storage.js';
 import { applyMigrations } from './schema.js';
 
@@ -1018,9 +1024,165 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
       return r.rowCount ?? 0;
     },
 
+    // ── messaging relay-gateway (demo host-extension) ──
+    async upsertRelayDevice(record) {
+      await pool.query(
+        `INSERT INTO relay_devices (
+          relay_id, tenant_id, channel, device_name, status,
+          device_token_hash, token_expires_at, activation_code, activation_expires_at,
+          registered_at, last_heartbeat_at, last_reported_status
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+        ON CONFLICT (relay_id) DO UPDATE SET
+          channel=EXCLUDED.channel, device_name=EXCLUDED.device_name, status=EXCLUDED.status,
+          device_token_hash=EXCLUDED.device_token_hash, token_expires_at=EXCLUDED.token_expires_at,
+          activation_code=EXCLUDED.activation_code, activation_expires_at=EXCLUDED.activation_expires_at,
+          last_heartbeat_at=EXCLUDED.last_heartbeat_at, last_reported_status=EXCLUDED.last_reported_status`,
+        [
+          record.relayId, record.tenantId, record.channel, record.deviceName ?? null, record.status,
+          record.deviceTokenHash ?? null, record.tokenExpiresAt ?? null,
+          record.activationCode ?? null, record.activationExpiresAt ?? null,
+          record.registeredAt, record.lastHeartbeatAt ?? null, record.lastReportedStatus ?? null,
+        ],
+      );
+    },
+    async getRelayDevice(relayId) {
+      const { rows } = await pool.query<Row>(`SELECT * FROM relay_devices WHERE relay_id = $1`, [relayId]);
+      return rows[0] ? rowToRelayDevicePg(rows[0]) : null;
+    },
+    async getRelayDeviceByTokenHash(tokenHash) {
+      const { rows } = await pool.query<Row>(
+        `SELECT * FROM relay_devices WHERE device_token_hash = $1 AND status = 'active'`,
+        [tokenHash],
+      );
+      return rows[0] ? rowToRelayDevicePg(rows[0]) : null;
+    },
+    async enqueueRelayOutbound(record) {
+      await pool.query(
+        `INSERT INTO relay_outbound (egress_id, relay_id, channel, conversation_id, text, reply_to_message_id, enqueued_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+        [record.egressId, record.relayId, record.channel, record.conversationId, record.text, record.replyToMessageId ?? null, record.enqueuedAt],
+      );
+    },
+    async listRelayOutbound(relayId, limit) {
+      const { rows } = await pool.query<Row>(
+        `SELECT * FROM relay_outbound WHERE relay_id = $1 ORDER BY enqueued_at ASC, egress_id ASC LIMIT $2`,
+        [relayId, limit],
+      );
+      return rows.map(rowToEgressPg);
+    },
+    async ackRelayOutbound(relayId, egressIds) {
+      if (egressIds.length === 0) return 0;
+      const r = await pool.query(
+        `DELETE FROM relay_outbound WHERE relay_id = $1 AND egress_id = ANY($2::text[])`,
+        [relayId, [...egressIds]],
+      );
+      return r.rowCount ?? 0;
+    },
+    async deleteRelayOutbound(relayId) {
+      await pool.query(`DELETE FROM relay_outbound WHERE relay_id = $1`, [relayId]);
+    },
+    async upsertMessagingConnector(record) {
+      await pool.query(
+        `INSERT INTO messaging_connectors (connector_id, tenant_id, channel, display_name, enabled, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7)
+         ON CONFLICT (connector_id) DO UPDATE SET
+           channel=EXCLUDED.channel, display_name=EXCLUDED.display_name, enabled=EXCLUDED.enabled, updated_at=EXCLUDED.updated_at`,
+        [record.connectorId, record.tenantId, record.channel, record.displayName, record.enabled, record.createdAt, record.updatedAt],
+      );
+    },
+    async getMessagingConnector(connectorId) {
+      const { rows } = await pool.query<Row>(`SELECT * FROM messaging_connectors WHERE connector_id = $1`, [connectorId]);
+      return rows[0] ? rowToConnectorPg(rows[0]) : null;
+    },
+    async listMessagingConnectors(tenantId) {
+      const { rows } = tenantId === undefined
+        ? await pool.query<Row>(`SELECT * FROM messaging_connectors ORDER BY created_at ASC`)
+        : await pool.query<Row>(`SELECT * FROM messaging_connectors WHERE tenant_id = $1 ORDER BY created_at ASC`, [tenantId]);
+      return rows.map(rowToConnectorPg);
+    },
+    async upsertMessagingSession(record) {
+      await pool.query(
+        `INSERT INTO messaging_sessions (session_key, tenant_id, channel, conversation_id, peer_id, peer_display, last_inbound_at, message_count, last_run_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+         ON CONFLICT (session_key) DO UPDATE SET
+           peer_id=EXCLUDED.peer_id, peer_display=EXCLUDED.peer_display,
+           last_inbound_at=EXCLUDED.last_inbound_at, message_count=EXCLUDED.message_count, last_run_id=EXCLUDED.last_run_id`,
+        [record.sessionKey, record.tenantId, record.channel, record.conversationId, record.peerId, record.peerDisplay ?? null, record.lastInboundAt, record.messageCount, record.lastRunId ?? null],
+      );
+    },
+    async getMessagingSession(sessionKey) {
+      const { rows } = await pool.query<Row>(`SELECT * FROM messaging_sessions WHERE session_key = $1`, [sessionKey]);
+      return rows[0] ? rowToSessionPg(rows[0]) : null;
+    },
+    async listMessagingSessions(tenantId) {
+      const { rows } = tenantId === undefined
+        ? await pool.query<Row>(`SELECT * FROM messaging_sessions ORDER BY last_inbound_at DESC`)
+        : await pool.query<Row>(`SELECT * FROM messaging_sessions WHERE tenant_id = $1 ORDER BY last_inbound_at DESC`, [tenantId]);
+      return rows.map(rowToSessionPg);
+    },
+    async deleteMessagingSession(sessionKey) {
+      const r = await pool.query(`DELETE FROM messaging_sessions WHERE session_key = $1`, [sessionKey]);
+      return (r.rowCount ?? 0) > 0;
+    },
+
     async close() {
       await pool.end();
     },
   };
   return impl;
+}
+
+function rowToRelayDevicePg(r: Row): RelayDeviceRecord {
+  return {
+    relayId: r.relay_id as string,
+    tenantId: r.tenant_id as string,
+    channel: r.channel as RelayDeviceRecord['channel'],
+    deviceName: (r.device_name as string | null) ?? undefined,
+    status: r.status as RelayDeviceRecord['status'],
+    deviceTokenHash: (r.device_token_hash as string | null) ?? undefined,
+    tokenExpiresAt: (r.token_expires_at as string | null) ?? undefined,
+    activationCode: (r.activation_code as string | null) ?? undefined,
+    activationExpiresAt: (r.activation_expires_at as string | null) ?? undefined,
+    registeredAt: r.registered_at as string,
+    lastHeartbeatAt: (r.last_heartbeat_at as string | null) ?? undefined,
+    lastReportedStatus: (r.last_reported_status as string | null) ?? undefined,
+  };
+}
+
+function rowToEgressPg(r: Row): ChatEgressEnvelope {
+  return {
+    egressId: r.egress_id as string,
+    relayId: r.relay_id as string,
+    channel: r.channel as ChatEgressEnvelope['channel'],
+    conversationId: r.conversation_id as string,
+    text: r.text as string,
+    replyToMessageId: (r.reply_to_message_id as string | null) ?? undefined,
+    enqueuedAt: r.enqueued_at as string,
+  };
+}
+
+function rowToConnectorPg(r: Row): MessagingConnectorRecord {
+  return {
+    connectorId: r.connector_id as string,
+    tenantId: r.tenant_id as string,
+    channel: r.channel as MessagingConnectorRecord['channel'],
+    displayName: r.display_name as string,
+    enabled: Boolean(r.enabled),
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
+  };
+}
+
+function rowToSessionPg(r: Row): MessagingSessionRecord {
+  return {
+    sessionKey: r.session_key as string,
+    tenantId: r.tenant_id as string,
+    channel: r.channel as MessagingSessionRecord['channel'],
+    conversationId: r.conversation_id as string,
+    peerId: r.peer_id as string,
+    peerDisplay: (r.peer_display as string | null) ?? undefined,
+    lastInboundAt: r.last_inbound_at as string,
+    messageCount: Number(r.message_count),
+    lastRunId: (r.last_run_id as string | null) ?? undefined,
+  };
 }

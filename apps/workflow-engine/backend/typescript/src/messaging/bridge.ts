@@ -15,20 +15,21 @@
  *
  * NON-normative: this lives entirely in the demo app's host-extension layer.
  *
- * Production-hardening notes (demo-grade as written):
- *  - Credential: runs are created with a single host bearer (a wildcard
- *    principal in the demo). The run's tenant comes from `device.tenantId`,
- *    bound at relay-registration time (NOT from the inbound message), so
- *    inbound content cannot redirect a run into another tenant. A real
- *    multi-tenant host MUST swap the wildcard bearer for a per-tenant scoped
- *    credential before advertising this beyond the demo.
- *  - Rate limit: the poll loop self-fetches over loopback, so all
- *    messaging-driven run traffic shares the 127.0.0.1 IP bucket
- *    (ipRateLimitMiddleware). A real host SHOULD exempt loopback/self-traffic
- *    or give the bridge a dedicated quota.
+ * Production-hardening (addressed):
+ *  - Credential: the bridge bearer is `cfg.bearer`, wired from
+ *    OPENWOP_MESSAGING_BRIDGE_TOKEN (falling back to the host bearer for the
+ *    demo) so a real host can supply a scoped credential. The run's tenant
+ *    comes from `device.tenantId`, bound at relay-registration time (NOT from
+ *    the inbound message), so inbound content cannot redirect a run into
+ *    another tenant.
+ *  - Rate limit: the poll loop self-fetches over loopback;
+ *    ipRateLimitMiddleware exempts genuine loopback-self traffic (socket addr,
+ *    no XFF) so messaging-driven runs don't share one IP bucket.
  */
 
-import { enqueueOutbound, type MessagingBridge } from '../routes/messaging.js';
+import { enqueueOutbound } from '../routes/messaging.js';
+import type { MessagingBridge } from './types.js';
+import type { Storage } from '../storage/storage.js';
 import { createLogger } from '../observability/logger.js';
 
 const log = createLogger('messaging.bridge');
@@ -40,6 +41,8 @@ const MAX_INFLIGHT = Number(process.env.OPENWOP_MESSAGING_MAX_INFLIGHT) || 50;
 let inflight = 0;
 
 export interface SelfHttpBridgeConfig {
+  /** Durable store for the outbound queue the reply is enqueued onto. */
+  storage: Storage;
   /** The host's own base URL, e.g. http://127.0.0.1:8080 */
   baseUrl: string;
   /** Operator bearer used to create runs (the demo stub accepts any non-empty token). */
@@ -85,7 +88,7 @@ export function createSelfHttpBridge(cfg: SelfHttpBridgeConfig): MessagingBridge
       // Detached: poll to terminal, extract reply, enqueue outbound.
       inflight++;
       void completeAndReply({
-        fetchImpl, headers, baseUrl: cfg.baseUrl, pollIntervalMs, timeoutMs,
+        storage: cfg.storage, fetchImpl, headers, baseUrl: cfg.baseUrl, pollIntervalMs, timeoutMs,
         runId, relayId: device.relayId, channel: device.channel,
         conversationId: envelope.conversationId, replyToMessageId: envelope.platformMessageId,
       })
@@ -98,6 +101,7 @@ export function createSelfHttpBridge(cfg: SelfHttpBridgeConfig): MessagingBridge
 }
 
 interface ReplyArgs {
+  storage: Storage;
   fetchImpl: typeof fetch;
   headers: Record<string, string>;
   baseUrl: string;
@@ -133,7 +137,7 @@ async function completeAndReply(a: ReplyArgs): Promise<void> {
   }
   const reply = text ?? (status === 'completed' ? '(no text output)' : `Run ${status}.`);
 
-    enqueueOutbound(a.relayId, {
+  await enqueueOutbound(a.storage, a.relayId, {
     channel: a.channel,
     conversationId: a.conversationId,
     text: reply,

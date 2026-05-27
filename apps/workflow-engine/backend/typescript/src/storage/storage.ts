@@ -26,6 +26,12 @@ import type {
   RunRecord,
   WebhookSubscriptionRecord,
 } from '../types.js';
+import type {
+  ChatEgressEnvelope,
+  MessagingConnectorRecord,
+  MessagingSessionRecord,
+  RelayDeviceRecord,
+} from '../messaging/types.js';
 
 export interface Storage {
   // ── runs ──
@@ -308,6 +314,28 @@ export interface Storage {
   /** Drop every subscription owned by a tenant — wired into the
    *  account-delete cascade. */
   deleteAllTenantPushSubscriptions(tenantId: string): Promise<number>;
+
+  // ── messaging relay-gateway (demo host-extension; NON-normative) ──
+  // Device tokens are persisted as a SHA-256 hash only (see RelayDeviceRecord).
+  upsertRelayDevice(record: RelayDeviceRecord): Promise<void>;
+  getRelayDevice(relayId: string): Promise<RelayDeviceRecord | null>;
+  /** Look up an active device by the SHA-256 hash of its presented token. */
+  getRelayDeviceByTokenHash(tokenHash: string): Promise<RelayDeviceRecord | null>;
+  /** Append an egress to a relay's outbound queue. */
+  enqueueRelayOutbound(record: ChatEgressEnvelope): Promise<void>;
+  /** Pull pending egress for a relay, oldest first. */
+  listRelayOutbound(relayId: string, limit: number): Promise<readonly ChatEgressEnvelope[]>;
+  /** Delete acked egress rows; returns the count removed. */
+  ackRelayOutbound(relayId: string, egressIds: readonly string[]): Promise<number>;
+  /** Drop a relay's whole queue (on revoke). */
+  deleteRelayOutbound(relayId: string): Promise<void>;
+  upsertMessagingConnector(record: MessagingConnectorRecord): Promise<void>;
+  getMessagingConnector(connectorId: string): Promise<MessagingConnectorRecord | null>;
+  listMessagingConnectors(tenantId: string | undefined): Promise<readonly MessagingConnectorRecord[]>;
+  upsertMessagingSession(record: MessagingSessionRecord): Promise<void>;
+  getMessagingSession(sessionKey: string): Promise<MessagingSessionRecord | null>;
+  listMessagingSessions(tenantId: string | undefined): Promise<readonly MessagingSessionRecord[]>;
+  deleteMessagingSession(sessionKey: string): Promise<boolean>;
 
   // ── lifecycle ──
   close(): Promise<void>;
