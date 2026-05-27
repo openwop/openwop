@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.web-search/1.0.0/search.input.json",
+  "title": "WebSearchInput",
+  "type": "object",
+  "required": ["query"],
+  "properties": {
+    "query": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "description": "The search query."
+    },
+    "siteFilter": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Optional domain allow-list. When set, results from other domains are filtered out (host MAY translate to an engine-specific `site:` operator)."
+    }
+  },
+  "additionalProperties": false
+}

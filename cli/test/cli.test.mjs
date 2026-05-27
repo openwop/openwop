@@ -222,6 +222,90 @@ describe('runs create --wait', () => {
   });
 });
 
+describe('media commands', () => {
+  it('generate-image POSTs the prompt and prints the stub asset table', async () => {
+    const cap = capture();
+    let posted;
+    const fetchImpl = async (url, init) => {
+      const path = new URL(url).pathname;
+      if (path === '/v1/host/sample/media/generate-image' && init?.method === 'POST') {
+        posted = JSON.parse(init.body);
+        return new Response(JSON.stringify({ url: '/v1/host/sample/assets/tok', bytes: 70, contentType: 'image/png', stub: true }), { status: 201 });
+      }
+      throw new Error(`unexpected fetch: ${path}`);
+    };
+    const code = await runCli(['media', 'generate-image', 'a red bicycle'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    assert.equal(posted.prompt, 'a red bicycle');
+    assert.match(cap.stdout, /image\/png/);
+    assert.match(cap.stdout, /stub\s+true/);
+  });
+
+  it('generate-image --output downloads the asset bytes to a file', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'openwop-media-'));
+    const outPath = join(dir, 'bike.png');
+    const cap = capture();
+    const pngBytes = Buffer.from('iVBORw0KGgo=', 'base64');
+    const fetchImpl = async (url, init) => {
+      const path = new URL(url).pathname;
+      if (path === '/v1/host/sample/media/generate-image' && init?.method === 'POST') {
+        return new Response(JSON.stringify({ url: '/v1/host/sample/assets/tok', bytes: pngBytes.length, contentType: 'image/png', stub: true }), { status: 201 });
+      }
+      if (path === '/v1/host/sample/assets/tok') {
+        return new Response(pngBytes, { status: 200 });
+      }
+      throw new Error(`unexpected fetch: ${path}`);
+    };
+    try {
+      const code = await runCli(['media', 'generate-image', 'cat', '--output', outPath], {
+        io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+      });
+      assert.equal(code, 0);
+      assert.deepEqual(readFileSync(outPath), pngBytes);
+      assert.match(cap.stdout, /Wrote asset to/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('synthesize emits machine JSON with --json', async () => {
+    const cap = capture();
+    const fetchImpl = async (url, init) => {
+      const path = new URL(url).pathname;
+      if (path === '/v1/host/sample/media/synthesize' && init?.method === 'POST') {
+        return new Response(JSON.stringify({ url: '/v1/host/sample/assets/w', bytes: 44, contentType: 'audio/wav', voice: 'default', stub: true }), { status: 201 });
+      }
+      throw new Error(`unexpected fetch: ${path}`);
+    };
+    const code = await runCli(['--json', 'media', 'synthesize', 'hello world'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 0);
+    const parsed = JSON.parse(cap.stdout);
+    assert.equal(parsed.contentType, 'audio/wav');
+    assert.equal(parsed.stub, true);
+  });
+
+  it('media with no subcommand prints usage and exits 2', async () => {
+    const cap = capture();
+    const code = await runCli(['media'], {
+      io: cap.io, fetchImpl: async () => { throw new Error('unused'); }, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 2);
+    assert.match(cap.stdout, /openwop media generate-image/);
+  });
+
+  it('generate-image with no prompt exits 2', async () => {
+    const cap = capture();
+    const code = await runCli(['media', 'generate-image'], {
+      io: cap.io, fetchImpl: async () => { throw new Error('unused'); }, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.equal(code, 2);
+  });
+});
+
 describe('error paths', () => {
   it('exits 2 on a 4xx response (user-fixable)', async () => {
     const cap = capture();

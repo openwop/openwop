@@ -284,6 +284,43 @@ export function createHostAdapterSuite(deps: { storage: Storage }): HostAdapterS
             },
           };
         }
+        // Gap D-4 — web-research sample. Chains the `core.web.search`
+        // node (core.openwop.web-search pack; deterministic stub in the
+        // demo since the host does not advertise host.webSearch) into a
+        // deterministic mock summarizer. Demonstrates the search-tool
+        // family on the PROTOCOL layer (node pack), not a host-side exec.
+        // Runs end-to-end with no BYOK provider and replays deterministically.
+        if (workflowId === 'sample.web.research') {
+          return {
+            workflowId,
+            definition: {
+              workflowId,
+              nodes: [
+                {
+                  nodeId: 'search',
+                  typeId: 'core.web.search',
+                  config: { maxResults: 3 },
+                  inputs: { query: { type: 'variable', variableName: 'query' } },
+                },
+                {
+                  nodeId: 'summarize',
+                  typeId: 'local.sample.demo.mock-ai',
+                  outputRole: 'primary',
+                },
+              ],
+              edges: [{ edgeId: 'e1', sourceNodeId: 'search', targetNodeId: 'summarize' }],
+              variables: [
+                {
+                  name: 'query',
+                  type: 'string',
+                  description: 'The research question to search the web for.',
+                  required: true,
+                  defaultValue: 'open workflow orchestration protocol',
+                },
+              ],
+            },
+          };
+        }
         if (workflowId === 'sample.chat.turn') {
           return {
             workflowId,
