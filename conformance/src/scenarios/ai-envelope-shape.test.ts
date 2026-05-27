@@ -23,15 +23,10 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 
-interface DiscoveryDoc {
-  capabilities?: {
-    aiProviders?: { supported?: unknown };
-    supportedEnvelopes?: unknown;
-  };
-  supportedEnvelopes?: unknown;
-}
+type DiscoveryDoc = Record<string, unknown>;
 
 const UNIVERSAL_KINDS = [
   'clarification.request',
@@ -47,19 +42,19 @@ async function readDiscovery(): Promise<DiscoveryDoc | null> {
 }
 
 function aiProvidersSupported(d: DiscoveryDoc | null): boolean {
-  if (!d?.capabilities?.aiProviders?.supported) return false;
+  // Root-first per RFC 0073; `capabilities.aiProviders` is the deprecated wrapper shape.
+  const ap = capabilityFamily<{ supported?: unknown }>(d ?? undefined, 'aiProviders');
+  if (!ap?.supported) return false;
   // aiProviders.supported can be `true` or an array per the capabilities schema.
-  const v = d.capabilities.aiProviders.supported;
+  const v = ap.supported;
   return v === true || (Array.isArray(v) && v.length > 0);
 }
 
 function supportedEnvelopes(d: DiscoveryDoc | null): string[] {
-  // supportedEnvelopes is at the top level per the capabilities schema, but
-  // some hosts nest it under capabilities — tolerate both.
-  const top = d?.supportedEnvelopes;
-  const nested = d?.capabilities?.supportedEnvelopes;
-  const raw = Array.isArray(top) ? top : Array.isArray(nested) ? nested : [];
-  return raw.filter((s): s is string => typeof s === 'string');
+  // supportedEnvelopes is a document-root field per capabilities.md §"Document-root
+  // layout" (RFC 0073); a `capabilities.*` wrapper is the deprecated fallback.
+  const raw = capabilityFamily<unknown>(d ?? undefined, 'supportedEnvelopes');
+  return Array.isArray(raw) ? raw.filter((s): s is string => typeof s === 'string') : [];
 }
 
 // HTTP-driven blocks soft-skip when no base URL is configured (gate's
@@ -76,9 +71,10 @@ describe.skipIf(HTTP_SKIP)('ai-envelope-shape: advertisement contract (RFC 0021 
     for (const k of env) {
       expect(typeof k, driver.describe('capabilities.md §supportedEnvelopes', 'each entry MUST be a string')).toBe('string');
     }
-    // Re-affirm shape: array if present.
-    if (d.capabilities?.supportedEnvelopes !== undefined) {
-      expect(Array.isArray(d.capabilities.supportedEnvelopes), 'supportedEnvelopes MUST be an array').toBe(true);
+    // Re-affirm shape: array if present (root-first per RFC 0073).
+    const advertised = capabilityFamily<unknown>(d, 'supportedEnvelopes');
+    if (advertised !== undefined) {
+      expect(Array.isArray(advertised), 'supportedEnvelopes MUST be an array').toBe(true);
     }
   });
 });

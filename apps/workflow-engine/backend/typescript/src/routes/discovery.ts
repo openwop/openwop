@@ -190,7 +190,7 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
   const seamEnabled = process.env.OPENWOP_TEST_SEAM_ENABLED === 'true';
   const compactionEnabled = process.env.OPENWOP_TEST_TRIGGER_COMPACTION === 'true';
   const phase5 = process.env.OPENWOP_MULTI_AGENT_EXECUTION_MODEL_PHASE_5 === 'true';
-  return {
+  const advertisement = {
     protocolVersion: '1.1',
     implementation: {
       name: config.serviceName,
@@ -798,4 +798,12 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       'sample.notes': 'This is the openwop reference application sample. Not production-hardened.',
     },
   };
+  // RFC 0073 — capability families are document-root properties of the
+  // discovery response (capabilities.schema.json roots agents/secrets/etc.;
+  // there is no `capabilities` wrapper property). Emit them at the root
+  // canonically, and retain the nested `capabilities` object as a DEPRECATED
+  // backward-compat mirror for the v1.x migration window (removed once
+  // consumers migrate — see spec/v1/capabilities.md §"Document-root layout").
+  // No family key collides with a root field, so the spread is order-safe.
+  return { ...advertisement, ...advertisement.capabilities };
 }

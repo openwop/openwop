@@ -4,18 +4,14 @@
  * `../lib/subRunAttestation.js`.
  */
 import { driver } from './driver.js';
+import { readCapabilityFamily } from './discovery-capabilities.js';
 
-interface DiscoveryDoc {
-  capabilities?: { agents?: Record<string, unknown> };
-}
-
-/** Reads `capabilities.agents.subRunAttestation` from discovery; null when
- *  the host advertises no `agents` block (treated as no support). */
+/** Reads `agents.subRunAttestation` from discovery (root-first per RFC 0073);
+ *  null when the host advertises no `agents` block (treated as no support). */
 export async function readSubRunAttestationCap(): Promise<boolean | null> {
-  const res = await driver.get('/.well-known/openwop');
-  const agents = (res.json as DiscoveryDoc | undefined)?.capabilities?.agents;
+  const agents = await readCapabilityFamily<Record<string, unknown>>('agents');
   if (!agents || typeof agents !== 'object') return null;
-  const flag = (agents as Record<string, unknown>)['subRunAttestation'];
+  const flag = agents['subRunAttestation'];
   return flag === undefined ? null : flag === true;
 }
 
