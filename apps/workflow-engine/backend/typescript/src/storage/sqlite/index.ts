@@ -1124,7 +1124,10 @@ export function openSqliteStorage(dbPath: string): Storage {
       if (direction) { conds.push('direction = ?'); params.push(direction); }
       if (status) { conds.push('status = ?'); params.push(status); }
       const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
-      params.push(Math.min(limit, 1000));
+      // Clamp to [1, 1000]: SQLite reads a negative LIMIT as "unbounded", so a
+      // negative/NaN value must never reach the query.
+      const lim = Number.isFinite(limit) && limit >= 1 ? Math.min(Math.floor(limit), 1000) : 100;
+      params.push(lim);
       const rows = db.prepare(`SELECT * FROM messaging_delivery_log ${where} ORDER BY at DESC LIMIT ?`).all(...params) as Array<Record<string, unknown>>;
       return rows.map(rowToDeliveryLogSqlite);
     },

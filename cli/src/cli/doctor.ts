@@ -7,7 +7,7 @@ import { parseOptions } from '../options.js';
 import { probeEndpoint, safeRequest } from '../api.js';
 import { readDaemonRecord, processAlive } from '../daemon.js';
 import { demoProjects } from '../repo.js';
-import { ok, warn, fail, formatCheckTable, parseNodeVersion, npmCommand } from './shared.js';
+import { ok, warn, fail, formatCheckTable, parseNodeVersion, npmCommand, type CheckResult } from './shared.js';
 import { loadRelayConfig, detectChannelAvailability } from './relayShared.js';
 
 export const DOCTOR_HELP = `Usage: openwop doctor [--json]
@@ -24,7 +24,7 @@ export async function runDoctor(ctx: Ctx, argv: string[]) {
     return 0;
   }
 
-  const checks: Array<{ status: string; name: string; message: string }> = [];
+  const checks: CheckResult[] = [];
   const node = parseNodeVersion(process.versions.node);
   if (node.major >= 22) {
     checks.push(ok('node', `Node ${process.versions.node} is ready for the demo backend`));

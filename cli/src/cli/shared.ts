@@ -58,21 +58,28 @@ export function npmCommand() {
 
 // ── doctor / readiness check result builders ──
 
-export function ok(name: any, message: any) {
+export type CheckStatus = 'ok' | 'warn' | 'fail';
+export interface CheckResult {
+  status: CheckStatus;
+  name: string;
+  message: string;
+}
+
+export function ok(name: string, message: string): CheckResult {
   return { status: 'ok', name, message };
 }
 
-export function warn(name: any, message: any) {
+export function warn(name: string, message: string): CheckResult {
   return { status: 'warn', name, message };
 }
 
-export function fail(name: any, message: any) {
+export function fail(name: string, message: string): CheckResult {
   return { status: 'fail', name, message };
 }
 
-export function formatCheckTable(checks: any) {
+export function formatCheckTable(checks: CheckResult[]): string {
   return formatTable(
-    checks.map((c: any) => ({ status: c.status.toUpperCase(), check: c.name, message: c.message })),
+    checks.map((c) => ({ status: c.status.toUpperCase(), check: c.name, message: c.message })),
     ['status', 'check', 'message'],
   );
 }
