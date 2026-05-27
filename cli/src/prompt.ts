@@ -4,13 +4,13 @@ import { createInterface } from 'node:readline';
 import { CliError } from './errors.js';
 import { write, writeLine } from './io.js';
 
-export async function promptChoice(ctx: Ctx, label, choices) {
+export async function promptChoice(ctx: Ctx, label: any, choices: any) {
   writeLine(ctx.io.stdout, label);
-  choices.forEach((c, i) => {
+  choices.forEach((c: any, i: any) => {
     const tag = c.recommended ? ' (recommended)' : '';
     writeLine(ctx.io.stdout, `  ${i + 1}) ${c.label}${tag}`);
   });
-  const defaultIdx = Math.max(0, choices.findIndex((c) => c.recommended));
+  const defaultIdx = Math.max(0, choices.findIndex((c: any) => c.recommended));
   const answer = await promptText(ctx, `Choice [${defaultIdx + 1}]: `, '');
   const idx = answer.trim() === '' ? defaultIdx : Number(answer.trim()) - 1;
   if (!Number.isInteger(idx) || idx < 0 || idx >= choices.length) {
@@ -30,14 +30,14 @@ export async function promptText(ctx: Ctx, prompt: string, defaultValue = ''): P
   });
 }
 
-export async function promptYesNo(ctx: Ctx, label, defaultYes = true) {
+export async function promptYesNo(ctx: Ctx, label: any, defaultYes = true) {
   const hint = defaultYes ? '[Y/n]' : '[y/N]';
   const answer = (await promptText(ctx, `${label} ${hint} `, '')).trim().toLowerCase();
   if (answer === '') return defaultYes;
   return answer === 'y' || answer === 'yes';
 }
 
-export async function readSecret(ctx: Ctx, prompt) {
+export async function readSecret(ctx: Ctx, prompt: any) {
   ctx.io.stdout.write(prompt);
   const stdin = process.stdin;
   // Pipe / non-TTY: read one line normally so `echo KEY | openwop ...` works.
@@ -62,7 +62,7 @@ export async function readSecret(ctx: Ctx, prompt) {
       stdin.pause();
       ctx.io.stdout.write('\n');
     };
-    const onData = (chunk) => {
+    const onData = (chunk: any) => {
       for (const ch of chunk) {
         const code = ch.charCodeAt(0);
         if (code === 0x0d || code === 0x0a) { cleanup(); resolve(value); return; }

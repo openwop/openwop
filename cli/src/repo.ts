@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve as resolvePath } from 'node:path';
 import { CliError } from './errors.js';
 
-export function findRepoRoot(startDir) {
+export function findRepoRoot(startDir: any) {
   let dir = resolvePath(startDir);
   while (true) {
     const pkg = join(dir, 'package.json');
@@ -33,7 +33,7 @@ export function requireRepoRoot(ctx: Ctx) {
   throw new CliError('This command needs to run from inside the OpenWOP repository checkout.');
 }
 
-export function demoProjects(root) {
+export function demoProjects(root: any) {
   if (!root) return [];
   return [
     project(root, 'backend', 'apps/workflow-engine/backend/typescript'),
@@ -41,7 +41,7 @@ export function demoProjects(root) {
   ];
 }
 
-export function project(root, name, relativeDir) {
+export function project(root: any, name: any, relativeDir: any) {
   const dir = join(root, relativeDir);
   return {
     name,

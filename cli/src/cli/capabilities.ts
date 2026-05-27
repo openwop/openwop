@@ -10,7 +10,7 @@ Reads /.well-known/openwop and prints the implementation, protocol version, and 
 `;
 
 
-export async function runCapabilities(ctx: Ctx, argv) {
+export async function runCapabilities(ctx: Ctx, argv: string[]) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, CAPABILITIES_HELP);
@@ -25,7 +25,7 @@ export async function runCapabilities(ctx: Ctx, argv) {
   return 0;
 }
 
-export function summarizeCapabilities(caps) {
+export function summarizeCapabilities(caps: any) {
   const capabilities = caps.capabilities && typeof caps.capabilities === 'object' ? Object.keys(caps.capabilities) : [];
   const impl = caps.implementation ?? {};
   const lines = [

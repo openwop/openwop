@@ -29,7 +29,7 @@ Examples:
 `;
 
 
-export async function runMedia(ctx: Ctx, argv) {
+export async function runMedia(ctx: Ctx, argv: string[]) {
   const sub = argv[0];
   const args = argv.slice(1);
   if (!sub || sub === '--help' || sub === '-h') {
@@ -48,7 +48,7 @@ export async function runMedia(ctx: Ctx, argv) {
   }
 }
 
-async function runMediaGenerateImage(ctx: Ctx, argv) {
+async function runMediaGenerateImage(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--prompt', '--output'],
@@ -78,7 +78,7 @@ async function runMediaGenerateImage(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runMediaTranscribe(ctx: Ctx, argv) {
+async function runMediaTranscribe(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--file', '--language'],
@@ -113,7 +113,7 @@ async function runMediaTranscribe(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runMediaSynthesize(ctx: Ctx, argv) {
+async function runMediaSynthesize(ctx: Ctx, argv: string[]) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--text', '--voice', '--output'],
@@ -147,7 +147,7 @@ async function runMediaSynthesize(ctx: Ctx, argv) {
 /** Fetch a media-asset URL (relative to the host base URL) and write the
  *  raw bytes to `outPath`. The asset serve route is token-authed (the URL
  *  IS the credential) so no Authorization header is required. */
-async function downloadAsset(ctx: Ctx, assetUrl, outPath) {
+async function downloadAsset(ctx: Ctx, assetUrl: any, outPath: any) {
   if (typeof assetUrl !== 'string' || assetUrl.length === 0) {
     throw new CliError('media response did not include an asset URL to download');
   }
