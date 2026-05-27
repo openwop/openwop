@@ -38,9 +38,12 @@ import { runInterrupts, INTERRUPTS_HELP } from './cli/interrupts.js';
 import { runPrompts, PROMPTS_HELP } from './cli/prompts.js';
 import { runWebhooks, WEBHOOKS_HELP } from './cli/webhooks.js';
 import { runCron, CRON_HELP } from './cli/cron.js';
+import { runHealth, HEALTH_HELP } from './cli/health.js';
+import { runCapabilities, CAPABILITIES_HELP, summarizeCapabilities } from './cli/capabilities.js';
 // Public surface re-exported for the test suite + bin (they import the bundle).
 export { VERSION, DEFAULT_BASE_URL, DEFAULT_REGISTRY_URL, PROVIDER_CATALOG, HOST_PRESETS };
 export { submitTurn, streamRunEvents, consumeSse, renderEvent, extractAssistantText };
+export { summarizeCapabilities };
 export { formatTable };
 export { extractGlobalOptions };
 export { configPathFor, readConfigSafe, saveConfig, openwopHomeDir };
@@ -756,53 +759,6 @@ async function runDemoInstall(ctx, argv) {
   writeLine(ctx.io.stdout, `Wrote ${plan.manager} unit to ${plan.path}`);
   writeLine(ctx.io.stdout, `Activate with: ${plan.activate}`);
   return 0;
-}
-
-async function runHealth(ctx, argv) {
-  const { options } = parseOptions(argv, { bool: ['--help'] });
-  if (options.help) {
-    write(ctx.io.stdout, HEALTH_HELP);
-    return 0;
-  }
-  const health = await requestJson(ctx, '/health', { auth: false });
-  const readiness = await requestJson(ctx, '/readiness', { auth: false });
-  const payload = { health: health.body, readiness: readiness.body };
-  if (ctx.json) writeJson(ctx.io.stdout, payload);
-  else {
-    writeLine(ctx.io.stdout, `health: ${health.body.status ?? 'unknown'}`);
-    writeLine(ctx.io.stdout, `readiness: ${readiness.body.status ?? 'unknown'}`);
-  }
-  return 0;
-}
-
-async function runCapabilities(ctx, argv) {
-  const { options } = parseOptions(argv, { bool: ['--help'] });
-  if (options.help) {
-    write(ctx.io.stdout, CAPABILITIES_HELP);
-    return 0;
-  }
-  const res = await requestJson(ctx, '/.well-known/openwop', { auth: false });
-  if (ctx.json) {
-    writeJson(ctx.io.stdout, res.body);
-    return 0;
-  }
-  write(ctx.io.stdout, summarizeCapabilities(res.body));
-  return 0;
-}
-
-export function summarizeCapabilities(caps) {
-  const capabilities = caps.capabilities && typeof caps.capabilities === 'object' ? Object.keys(caps.capabilities) : [];
-  const impl = caps.implementation ?? {};
-  const lines = [
-    `Implementation: ${impl.name ?? 'unknown'} ${impl.version ?? ''}`.trim(),
-    `Protocol: ${caps.protocolVersion ?? 'unknown'}`,
-    `Transports: ${(caps.supportedTransports ?? []).join(', ') || 'unknown'}`,
-    `Stream modes: ${caps.stream?.modes?.join(', ') ?? 'unknown'}`,
-    `Fixtures: ${Array.isArray(caps.fixtures) ? caps.fixtures.length : 0}`,
-    `Capability blocks: ${capabilities.join(', ') || 'none'}`,
-    '',
-  ];
-  return lines.join('\n');
 }
 
 async function runCatalog(ctx, argv) {
@@ -3663,16 +3619,6 @@ Writes a managed-service definition for the demo backend, chosen by platform:
 `;
 
 const DEMO_URLS_HELP = `Usage: openwop demo urls [--frontend-port 5173] [--json]
-`;
-
-const HEALTH_HELP = `Usage: openwop health [--base-url url] [--json]
-
-Probes /health and /readiness on the configured host. Exit 0 when both respond; otherwise 1.
-`;
-
-const CAPABILITIES_HELP = `Usage: openwop capabilities [--base-url url] [--json]
-
-Reads /.well-known/openwop and prints the implementation, protocol version, and advertised capability blocks. Use --json to inspect the raw discovery document.
 `;
 
 const CATALOG_HELP = `Usage:
