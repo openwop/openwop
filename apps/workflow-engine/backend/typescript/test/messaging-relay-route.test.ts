@@ -18,6 +18,9 @@ let server: http.Server;
 beforeAll(async () => {
   process.env.OPENWOP_STORAGE_DSN = 'memory://';
   process.env.OPENWOP_AUTH_DISABLE_COOKIES = 'true';
+  // The bridge self-polls /v1/runs and the test polls /device/outbound;
+  // both share the per-IP (127.0.0.1) sliding window. Disable for the suite.
+  process.env.OPENWOP_RATELIMIT_DISABLED = 'true';
   const app = await createApp({
     port: PORT,
     storageDsn: 'memory://',
@@ -144,6 +147,36 @@ describe('messaging relay-gateway — device lifecycle', () => {
     const del = await fetch(`${BASE}/sessions/imessage:conv`, { method: 'DELETE', headers: OP });
     expect(del.status).toBe(200);
     expect((await get('/sessions/imessage:conv', OP)).status).toBe(404);
+    expect(relayId).toMatch(/^relay_/);
+  });
+});
+
+describe('messaging relay-gateway — inbound→run bridge', () => {
+  it('inbound message drives a run and the reply lands on the outbound queue', async () => {
+    const { relayId, deviceToken } = await activeRelay('signal');
+    const dev = { 'x-openwop-device-token': deviceToken, 'content-type': 'application/json' };
+
+    const inbound = await post('/device/inbound', dev, {
+      platformMessageId: 'pm1',
+      conversationId: 'conv-bridge',
+      peerId: 'p1',
+      text: 'hello bridge',
+    });
+    expect(inbound.status).toBe(202);
+    expect(inbound.body.runId).toBeTruthy(); // bridge created a run
+
+    // Poll the device outbound queue until the bridge enqueues the reply.
+    let reply: any;
+    for (let i = 0; i < 60; i++) {
+      await new Promise((r) => setTimeout(r, 50));
+      const out = await get('/device/outbound', dev);
+      if (out.body.messages.length > 0) { reply = out.body.messages[0]; break; }
+    }
+    expect(reply, 'bridge should enqueue an outbound reply').toBeTruthy();
+    expect(reply.conversationId).toBe('conv-bridge');
+    // sample.demo.uppercase uppercases the inbound text
+    expect(reply.text).toBe('HELLO BRIDGE');
+    expect(reply.replyToMessageId).toBe('pm1');
     expect(relayId).toMatch(/^relay_/);
   });
 });

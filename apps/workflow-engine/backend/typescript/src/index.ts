@@ -70,6 +70,7 @@ import { registerDemoSummaryRoutes } from './routes/demoSummary.js';
 import { registerDaemonStatusRoutes } from './routes/daemonStatus.js';
 import { registerAgentRoutes } from './routes/agents.js';
 import { registerMessagingRoutes } from './routes/messaging.js';
+import { createSelfHttpBridge } from './messaging/bridge.js';
 import { registerSchedulerRoutes } from './routes/scheduler.js';
 
 const log = createLogger('workflow-engine');
@@ -319,7 +320,16 @@ export async function createApp(config: AppConfig): Promise<Express> {
   registerDaemonStatusRoutes(app, { config, startTimeMs });
   registerAgentRoutes(app);
   registerSchedulerRoutes(app);
-  registerMessagingRoutes(app);
+  // Inbound chat → workflow run bridge. Binds inbound messages to a workflow
+  // (default deterministic `sample.demo.uppercase`; override via
+  // OPENWOP_MESSAGING_WORKFLOW_ID) and enqueues the reply as outbound egress.
+  registerMessagingRoutes(app, {
+    bridge: createSelfHttpBridge({
+      baseUrl: `http://127.0.0.1:${config.port}`,
+      bearer: process.env.OPENWOP_API_KEY ?? 'sample-token',
+      defaultWorkflowId: process.env.OPENWOP_MESSAGING_WORKFLOW_ID ?? 'sample.demo.uppercase',
+    }),
+  });
 
   // Express 4 catch-all (no path string — avoids path-to-regexp v6 issue).
   app.use((_req, res) => {
