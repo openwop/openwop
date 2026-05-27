@@ -248,6 +248,18 @@ The conformance suite's `experimentalGate()` helper (`conformance/src/lib/behavi
 | 0068 memory consolidation + commitments | `agents.memoryConsolidation` + `agents.commitments` + `agent.memory.consolidated` / `commitment.fired` events | `memory-consolidation-shape.test.ts` (always-on) + `memory-consolidation-idempotent.test.ts` / `commitment-fired.test.ts` (gated, seam soft-skip) | No host advertises either capability yet — replay-determinism Unresolved #1 to close before `Active` |
 | 0069 exec-class tool safety contract | normative MUST-NOT (no protocol-tier exec) + `exec-must-not-be-protocol-tier` invariant | `exec-not-protocol-tier.test.ts` (always-on, server-free structural) | Satisfied by the corpus itself; no host advertisement applies (codifies an exclusion) |
 
+## Capability adoption — RFC 0071 artifact-type packs (Phase 1) — ⏳ NO ADOPTION YET (Active 2026-05-26)
+
+> RFC 0071 Phase 1 (`kind: "artifact-type"` packs) is `Active` (comment window waived). No host advertises `host.artifactTypes` yet; the manifest-validation + bounded-compilation scenarios are always-on server-free, the install + store-without-render scenarios soft-skip until a host wires the seam. Migration request to MyndHyve — the natural acceptance host, since this generalizes its downstream Canvas Type model — at [`docs/openwop-adoption/0071-artifact-type-packs-migration-request.md`](./docs/openwop-adoption/0071-artifact-type-packs-migration-request.md).
+
+| Host | `host.artifactTypes.supported` | `store` | `render` | `export[]` | Conformance | Adoption status |
+|---|---|---|---|---|---|---|
+| in-memory | — | — | — | — | manifest-validation + compile-bounded pass (server-free); behavioral host-pending | Not advertised — reference-host store-side impl deferred per acceptance criteria |
+| sqlite | — | — | — | — | (same) | Not advertised |
+| postgres | — | — | — | — | (same) | Not advertised |
+| python | — | — | — | — | (same) | Not advertised |
+| MyndHyve (`workflow-runtime`) | — | — | — | — | migration requested | 📤 Requested 2026-05-26 — maps existing `ArtifactTypeDefinition` / Canvas Types onto the wire; advertising + passing the 2 behavioral scenarios is the `Active → Accepted` gate |
+
 ## Reading Rows
 
 - **Compatibility profile claim** is derived from `/.well-known/openwop` according to `spec/v1/profiles.md`.
