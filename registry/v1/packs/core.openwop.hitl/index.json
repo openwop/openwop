@@ -22,7 +22,7 @@
       "tarballUrl": "/v1/packs/core.openwop.hitl/-/1.0.0.tgz",
       "signatureUrl": "/v1/packs/core.openwop.hitl/-/1.0.0.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "openwop-team-1",
       "integrity": "sha256-RILBImw5zwRt6itXWCLe8ULivXg6obUw5WiLul9HNEs=",
       "deprecated": false,
       "yanked": false

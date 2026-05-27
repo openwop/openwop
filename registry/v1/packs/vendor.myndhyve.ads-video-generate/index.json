@@ -20,7 +20,7 @@
       "tarballUrl": "/v1/packs/vendor.myndhyve.ads-video-generate/-/1.0.0.tgz",
       "signatureUrl": "/v1/packs/vendor.myndhyve.ads-video-generate/-/1.0.0.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "myndhyve-internal-1",
       "integrity": "sha256-1V4fP2BRujESAXJy06eI2ZM1ndOJKvKfNK+dtoWA1VQ=",
       "deprecated": false,
       "yanked": false

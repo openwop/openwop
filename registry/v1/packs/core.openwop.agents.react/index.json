@@ -20,7 +20,7 @@
       "tarballUrl": "/v1/packs/core.openwop.agents.react/-/1.0.0.tgz",
       "signatureUrl": "/v1/packs/core.openwop.agents.react/-/1.0.0.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "openwop-team-1",
       "integrity": "sha256-Y95qx5AnW7xPVGurpG5pH7jw+w0W+ioWqe6ZZPNDMYM=",
       "deprecated": false,
       "yanked": false

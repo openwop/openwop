@@ -23,7 +23,7 @@
       "tarballUrl": "/v1/packs/vendor.myndhyve.ads-studio-core/-/1.0.0.tgz",
       "signatureUrl": "/v1/packs/vendor.myndhyve.ads-studio-core/-/1.0.0.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "myndhyve-internal-1",
       "integrity": "sha256-V2ozu/2AlROufZFEC0u1eVcmALbEhyPpJX83C+pzsWA=",
       "deprecated": false,
       "yanked": false

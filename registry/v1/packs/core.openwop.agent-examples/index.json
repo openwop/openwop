@@ -21,7 +21,7 @@
       "tarballUrl": "/v1/packs/core.openwop.agent-examples/-/1.0.0.tgz",
       "signatureUrl": "/v1/packs/core.openwop.agent-examples/-/1.0.0.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "openwop-team-1",
       "integrity": "sha256-OvcPLr9HBXZ2yoDLGua/sOBjzAdrO+unMCoflkRtNgQ=",
       "deprecated": false,
       "yanked": false

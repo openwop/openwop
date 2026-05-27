@@ -33,7 +33,7 @@
       "tarballUrl": "/v1/packs/vendor.myndhyve.brand/-/1.0.0.tgz",
       "signatureUrl": "/v1/packs/vendor.myndhyve.brand/-/1.0.0.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "myndhyve-internal-1",
       "integrity": "sha256-Y2MRneL1+fc+ra07N+ba1G4lDk/BNK7P7dIt+kuqEeg=",
       "deprecated": false,
       "yanked": false
@@ -45,7 +45,7 @@
       "tarballUrl": "/v1/packs/vendor.myndhyve.brand/-/1.1.0.tgz",
       "signatureUrl": "/v1/packs/vendor.myndhyve.brand/-/1.1.0.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "myndhyve-internal-1",
       "integrity": "sha256-dPq/Quoi7lhGDELAOlmhkMxYn3KplfdOdw49IiCrI1c=",
       "deprecated": false,
       "yanked": false

@@ -20,7 +20,7 @@
       "tarballUrl": "/v1/packs/core.openwop.agents.deep-research/-/1.0.0.tgz",
       "signatureUrl": "/v1/packs/core.openwop.agents.deep-research/-/1.0.0.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "openwop-team-1",
       "integrity": "sha256-9KIVJeEsM5LTFmjqLGxMavw3Rh1eSDZI8+ybehmAsV4=",
       "deprecated": false,
       "yanked": false

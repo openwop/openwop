@@ -150,6 +150,12 @@ node "$SPEC_ROOT/scripts/check-required-properties-defined.mjs"
 # class of bug where local hoisting masks a missing dep that breaks Cloud
 # Run's `npm ci`-isolated install (cf. ajv-formats / 2026-05-21 deploy thrash).
 node "$SPEC_ROOT/scripts/check-backend-dep-graph.mjs"
+# Registry signer-metadata consistency — every published pack version's catalog
+# index.json `signingKeyId` MUST match the per-version manifest `signing.publicKeyRef`
+# (the key that actually signed the tarball). Catches the class of drift where the
+# catalog named a different key than the real signer, which a strict consumer would
+# reject (cf. the 2026-05-27 81-version openwop-registry-root drift).
+node "$SPEC_ROOT/scripts/check-registry-signer-consistency.mjs"
 # Workflow-engine sample bundles a vendored copy of conformance/fixtures/
 # into its Docker image (apps/workflow-engine/conformance-fixtures/, per
 # the Dockerfile + scripts/sync-fixtures.sh). Catch silent drift: if the

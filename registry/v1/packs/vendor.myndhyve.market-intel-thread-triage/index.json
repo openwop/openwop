@@ -20,7 +20,7 @@
       "tarballUrl": "/v1/packs/vendor.myndhyve.market-intel-thread-triage/-/1.0.0.tgz",
       "signatureUrl": "/v1/packs/vendor.myndhyve.market-intel-thread-triage/-/1.0.0.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "myndhyve-internal-1",
       "integrity": "sha256-wzYPKu4uHWSvG2R6uTo7JoYMkW/46pAGSW6jExTPo6g=",
       "deprecated": false,
       "yanked": false

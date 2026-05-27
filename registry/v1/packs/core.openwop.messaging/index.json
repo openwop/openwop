@@ -26,7 +26,7 @@
       "tarballUrl": "/v1/packs/core.openwop.messaging/-/1.0.0.tgz",
       "signatureUrl": "/v1/packs/core.openwop.messaging/-/1.0.0.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "openwop-team-1",
       "integrity": "sha256-vYHVupO8Qf4OEO39GY8JmF5dH46xSdWMHB/fkQXO99g=",
       "deprecated": false,
       "yanked": false

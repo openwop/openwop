@@ -20,7 +20,7 @@
       "tarballUrl": "/v1/packs/vendor.myndhyve.market-intel-discovery/-/1.0.0.tgz",
       "signatureUrl": "/v1/packs/vendor.myndhyve.market-intel-discovery/-/1.0.0.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "myndhyve-internal-1",
       "integrity": "sha256-Ctr5nYleESXwrDEfJyOJihGyc4As7p4vLOu7f7If65g=",
       "deprecated": false,
       "yanked": false

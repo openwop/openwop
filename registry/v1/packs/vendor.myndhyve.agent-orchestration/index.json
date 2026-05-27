@@ -31,7 +31,7 @@
       "tarballUrl": "/v1/packs/vendor.myndhyve.agent-orchestration/-/1.0.0.tgz",
       "signatureUrl": "/v1/packs/vendor.myndhyve.agent-orchestration/-/1.0.0.sig",
       "signingMethod": "manual",
-      "signingKeyId": "openwop-registry-root",
+      "signingKeyId": "myndhyve-internal-1",
       "integrity": "sha256-z5Mjanb4Cya26Ic/eze6jpQNFwL+FPNLlM8vf6eeNiY=",
       "deprecated": false,
       "yanked": false
