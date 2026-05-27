@@ -668,13 +668,26 @@
           "type": "array",
           "items": { "type": "string", "minLength": 1 },
           "uniqueItems": true,
-          "description": "Provider ids the host's AI-proxy can route to. Conventional ids: `anthropic`, `openai`, `gemini`, `mistral`, `cohere`, `vertex`, `bedrock`. Hosts MAY add vendor-prefixed extensions."
+          "description": "Provider ids the host's AI-proxy can route to. Conventional ids (RFC 0067 §C recommended vocabulary — advisory, not a closed set): `anthropic`, `openai`, `gemini`, `vertex`, `bedrock`, `mistral`, `cohere`, `openrouter`, `litellm`, `together`, `huggingface`, `qwen`, `ollama`, `vllm`. Hosts MAY add vendor-prefixed extensions; clients MUST tolerate unknown ids."
         },
         "byok": {
           "type": "array",
           "items": { "type": "string", "minLength": 1 },
           "uniqueItems": true,
           "description": "Subset of `supported` for which BYOK is permitted. Empty array → all calls use platform-managed keys; non-empty → clients MAY pass `ai.credentialRef` in `RunOptions.configurable` for matching providers."
+        },
+        "authModes": {
+          "type": "object",
+          "description": "RFC 0067 (`Draft`). Optional per-provider advertisement of HOW the host expects a provider's credential to be supplied. Keys are provider ids appearing in `supported`; values are the auth modes the host honors for that provider. Absent ⇒ no advertisement: a provider in `byok` defaults to `apiKey` semantics (client passes `ai.credentialRef`); a provider in `supported` but not in `byok` defaults to `none` (platform-managed). This map only DESCRIBES the supply mechanism — `oauth-pkce`/`oauth-device` flow mechanics compose RFC 0047 `host.oauth` and resolve credentials by `ref` (RFC 0046), never on `ai.credentialRef`. A provider with `apiKey` MUST appear in `byok`; a provider whose modes are exactly `[\"none\"]` MUST NOT appear in `byok`. Consumers MUST ignore an auth mode they don't recognize rather than reject the discovery doc.",
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": ["apiKey", "oauth-pkce", "oauth-device", "none"]
+            }
+          }
         },
         "policies": {
           "type": "object",
@@ -786,6 +799,41 @@
           "items": { "type": "string", "enum": ["long-term"] },
           "uniqueItems": true,
           "description": "Optional list of memory backends (Phase 3). `long-term` means the host implements `ExecutionHost.memory` against a durable store with the SR-1 redaction invariant intact end-to-end. Hosts that don't wire `MemoryAdapter` omit this field."
+        },
+        "memoryConsolidation": {
+          "type": "object",
+          "description": "RFC 0068 (`Draft`). Background reconciliation of LONG-TERM memory (merge/dedup/supersede/strengthen) — distinct from RFC 0062 token-budgeted distillation of TRANSACTIONAL memory. A host advertising this emits `agent.memory.consolidated` (content-free) after a consolidation pass. Requires `agents.memoryBackends` to include `long-term`. SR-1 carry-forward + CTI-1 (RFC 0004) hold across the pass. Hosts that omit this block do not consolidate; the conformance scenarios skip cleanly.",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "REQUIRED when the block is present. When `true`, the host performs background consolidation over long-term memory and emits `agent.memory.consolidated`."
+            },
+            "schedule": {
+              "type": "string",
+              "enum": ["host-managed", "scheduled", "on-demand"],
+              "description": "How a consolidation pass is initiated. `host-managed`: a host-internal cadence clients do not control (default when absent and supported:true). `scheduled`: bound to a `capabilities.scheduling` (RFC 0052) trigger. `on-demand`: the host runs a pass when explicitly requested. A host MAY honor more than one path but advertises the primary."
+            }
+          }
+        },
+        "commitments": {
+          "type": "object",
+          "description": "RFC 0068 (`Draft`). Inferred STANDING commitments — durable, memory-derived intentions the host promotes into a time- or predicate-gated arm that fires a run later, without a fresh user turn. When an arm fires the host emits `commitment.fired` (content-free — the intention text lives in SR-1-redacted memory). Composes RFC 0052 (time arms) / RFC 0060 (predicate arms) for the fire substrate. Hosts that omit this block do not infer commitments; the conformance scenario skips cleanly.",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "REQUIRED when the block is present. When `true`, the host infers standing commitments from memory and emits `commitment.fired` when one fires."
+            },
+            "fireConditions": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["time", "predicate"] },
+              "uniqueItems": true,
+              "description": "Which fire-condition kinds the host supports. `time` composes RFC 0052 scheduling; `predicate` composes RFC 0060 heartbeat. Absent ⇒ `['time']`."
+            }
+          }
         },
         "orchestrator": {
           "type": "boolean",

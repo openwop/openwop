@@ -113,6 +113,36 @@ The capability advertisement is a CLAIM. Hosts that advertise long-term memory M
 
 Recursive distillation (distilling prior archives) is allowed; each level MUST re-check SR-1. Archives persist for the advertised `archiveRetention` (ISO-8601 duration) before GC. CTI-1 tenant isolation holds for the archive and index exactly as for any memory write.
 
+## Background consolidation (RFC 0068, `Draft`)
+
+**Why this exists.** Distillation (RFC 0062) is a *forward funnel* — it collapses recent *transactional* memory into long-term artifacts under a mandatory token budget. It does not address the *standing* problem: a long-term corpus that, over months, accumulates near-duplicate facts, superseded preferences, and contradictions. **Consolidation** is a *reconciliation* pass *within* long-term memory — merge duplicates, supersede stale facts, strengthen corroborated ones — and is not budget-driven. The two are semantically distinct observable behaviors; consolidation emits its own content-free `agent.memory.consolidated` event rather than reusing `memory.compacted`, so an observer can tell "I distilled today's transcript" apart from "I reconciled the standing corpus."
+
+**Capability flag:** `capabilities.agents.memoryConsolidation.supported: true` (see `capabilities.md` §`agents`). Requires `agents.memoryBackends` to include `long-term`. Hosts that omit the block do not consolidate; the consolidation conformance scenarios skip cleanly.
+
+**Consolidation contract (normative, when `agents.memoryConsolidation.supported: true`).** A consolidation pass MUST:
+
+1. Operate over a single `memoryRef`'s long-term entries — a pass MUST NOT read or write entries of another tenant (CTI-1).
+2. Be **idempotent over a stable corpus** — running a pass twice over an unchanged corpus MUST NOT further reduce `outputCount` (a no-op second pass). This bounds runaway consolidation and is the testable surface.
+3. Route every derived/merged entry's content through the same BYOK redaction harness applied to a fresh `put` (SR-1 carry-forward) — a merged summary can introduce secret-shaped substrings not present in any source, exactly as RFC 0012 §D / RFC 0062 establish for compaction.
+4. Emit `agent.memory.consolidated` with `inputCount`/`outputCount`/`memoryRef` after the pass.
+
+Consolidation is a read-modify-write of long-term memory; it is NOT a token-budgeted distillation of transactional memory (that is RFC 0062, which emits `memory.compacted`). A host MAY implement both; they are independent capabilities. Whether deterministic replay (`replay.md`, RFC 0041) holds through a consolidation pass is an open question carried in RFC 0068 §"Unresolved questions" — the working stance is that consolidation is a host-managed mutation a run sees only via the deterministic read-snapshot, so `agent.memory.consolidated` is an observability event, not a replay input.
+
+## Inferred commitments (RFC 0068, `Draft`)
+
+**Why this exists.** A long-running agent forms *standing intentions* ("follow up next Monday", "remind me when the invoice clears") that should fire later without a fresh user turn. Scheduling (RFC 0052) and heartbeat (RFC 0060) can *fire* an arm on a clock or a predicate, but neither models a commitment *inferred from memory* — with the memory provenance that makes it auditable and tenant-bound. An **inferred standing commitment** is a host-derived, durable intention with a fire condition (time or predicate) and a memory provenance; when it fires it MUST be observable but content-free.
+
+**Capability flag:** `capabilities.agents.commitments.supported: true` (see `capabilities.md` §`agents`). Hosts that omit the block do not infer commitments; the conformance scenario skips cleanly.
+
+**Commitment contract (normative, when `agents.commitments.supported: true`).** A host:
+
+1. MUST bind each commitment to the `memoryRef` it was inferred from; the commitment, the fired event, and any enqueued run MUST share that memory's tenant (CTI-1).
+2. MUST fire each commitment **at most once per satisfied condition** — a `time` commitment fires once per scheduled instant (reusing RFC 0052's once-per-tick guarantee); a `predicate` commitment fires once per state transition (reusing RFC 0060's anti-spam semantics). A host MUST NOT re-fire a commitment on replay.
+3. MUST emit `commitment.fired` (content-free) when a commitment fires, and MUST NOT place the inferred intention text or any secret-bearing payload on the event (the read-side serves it SR-1-redacted).
+4. MAY enqueue a run when a commitment fires; when it does, the run inherits the source memory's tenant and the `enqueuedRunId` is reported on the event.
+
+Both events (`agent.memory.consolidated`, `commitment.fired`) are defined in `schemas/run-event-payloads.schema.json` and are additive RunEventTypes — consumers that don't recognize them fold best-effort per `observability.md §"Forward-compat"`.
+
 ## Open spec gaps
 
 - **Cross-host `memoryRef` portability** — v1.x silent. A `memoryRef` minted by host A is NOT guaranteed resolvable by host B; future spec amendments MAY normate a portable encoding if implementer demand surfaces.

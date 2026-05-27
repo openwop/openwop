@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
   "title": "RunEventPayloads",
-  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n73 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n75 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
   "type": "object",
   "$defs": {
     "_typeIndex": {
@@ -77,6 +77,8 @@
         "conversation.closed":       { "$ref": "#/$defs/conversationClosed" },
         "memory.compacted":          { "$ref": "#/$defs/memoryCompacted" },
         "memory.written":            { "$ref": "#/$defs/memoryWritten" },
+        "agent.memory.consolidated": { "$ref": "#/$defs/agentMemoryConsolidated" },
+        "commitment.fired":          { "$ref": "#/$defs/commitmentFired" },
         "workspace.updated":         { "$ref": "#/$defs/workspaceUpdated" },
         "core.workflowChain.event":  { "$ref": "#/$defs/coreWorkflowChainEvent" },
         "core.workflowChain.confidence-escalated": { "$ref": "#/$defs/coreWorkflowChainConfidenceEscalated" },
@@ -1326,6 +1328,32 @@
         "nodeId":    { "type": "string", "minLength": 1, "description": "SHOULD — the node whose execution caused the write. Omitted only for writes with no node attribution (e.g. host session-end auto-memory)." },
         "agentId":   { "type": "string", "minLength": 1, "description": "MAY — the agent identity (AgentRef per RFC 0002) behind the write, when known." },
         "tags":      { "type": "array", "items": { "type": "string" }, "description": "MAY — the entry's non-secret labels. MUST NOT carry secret material (the no-content invariant covers payload bodies)." }
+      },
+      "additionalProperties": true
+    },
+    "agentMemoryConsolidated": {
+      "type": "object",
+      "description": "RFC 0068 (`Draft`). Emitted by a host advertising `capabilities.agents.memoryConsolidation.supported: true` after a background consolidation pass over LONG-TERM memory (merge/dedup/supersede/strengthen). Content-free: identifiers + counts only — entry content is served by the SR-1-redacted read-side (`MemoryAdapter.get`). On replay the event is re-read from the log, never regenerated. Distinct from RFC 0062 `memory.compacted` (token-budgeted distillation of transactional memory). SR-1 carry-forward (RFC 0004) + CTI-1 apply to the consolidated entries.",
+      "required": ["memoryRef", "inputCount", "outputCount"],
+      "properties": {
+        "memoryRef":   { "type": "string", "minLength": 1, "description": "Opaque MemoryAdapter handle (RFC 0004 §C) the consolidation pass operated over. Bounds the pass to a single memory scope (CTI-1)." },
+        "inputCount":  { "type": "integer", "minimum": 0, "description": "Long-term entries considered by the pass." },
+        "outputCount": { "type": "integer", "minimum": 0, "description": "Long-term entries remaining after the pass. MUST be <= inputCount for a pass that only merges/dedups; a strengthen-only pass MAY leave outputCount == inputCount." },
+        "mergedIds":   { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "MAY — ids of entries collapsed/superseded by the pass. Hosts MAY omit when inputCount is large; consumers MUST tolerate absence." },
+        "trigger":     { "type": "string", "enum": ["host-managed", "scheduled", "on-demand"], "description": "MAY — which initiation path drove this pass (mirrors `agents.memoryConsolidation.schedule`)." }
+      },
+      "additionalProperties": true
+    },
+    "commitmentFired": {
+      "type": "object",
+      "description": "RFC 0068 (`Draft`). Emitted by a host advertising `capabilities.agents.commitments.supported: true` when an inferred standing commitment fires. Content-free: identifiers + condition kind only — the intention text lives in SR-1-redacted memory (`MemoryAdapter.get(memoryRef, memoryId)`). The fired arm composes RFC 0052 (time) or RFC 0060 (predicate). On replay the event is re-read from the log, never regenerated (the host MUST NOT re-infer or re-fire a commitment at replay time). CTI-1: the commitment, its memory provenance, and any run it enqueues MUST share the source memory's tenant.",
+      "required": ["commitmentId", "memoryRef", "condition"],
+      "properties": {
+        "commitmentId":  { "type": "string", "minLength": 1, "description": "Host-issued, stable id for the inferred commitment. Correlates repeated observability across re-evaluations of the same commitment." },
+        "memoryRef":     { "type": "string", "minLength": 1, "description": "Opaque MemoryAdapter handle of the memory scope the commitment was inferred from (provenance + CTI-1 tenant binding)." },
+        "memoryId":      { "type": "string", "minLength": 1, "description": "MAY — id of the source `MemoryEntry` the commitment was inferred from, when a single entry is attributable. Resolvable via `MemoryAdapter.get`; content is read SR-1-redacted from the read-side." },
+        "condition":     { "type": "string", "enum": ["time", "predicate"], "description": "Which fire-condition kind triggered. `time` composes RFC 0052; `predicate` composes RFC 0060." },
+        "enqueuedRunId": { "type": "string", "minLength": 1, "description": "MAY — id of the run the fired commitment enqueued, when the host initiates one. Absent when the commitment fires as a notification without a run." }
       },
       "additionalProperties": true
     },

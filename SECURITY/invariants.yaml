@@ -533,6 +533,29 @@ invariants:
     note: |
       Webhook deliveries fire from declared workflow events only.
 
+  - id: exec-must-not-be-protocol-tier
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/exec-not-protocol-tier.test.ts
+    note: |
+      RFC 0069. Arbitrary-command (`exec`-class) execution MUST NOT be a
+      protocol-tier capability. The protocol defines NO exec-class tool
+      under a protocol-owned namespace (`core.*` / `openwop.*`), NO
+      exec capability flag in `capabilities.schema.json`, and NO
+      exec-class entry in the canonical event/error vocabulary. A host
+      that needs exec exposes it ONLY under a named host-extension scope
+      (`x-host-<vendor>-exec`) with host-owned sandboxing + allowlist +
+      approval-gating + audit, per `host-extensions.md` §"exec-class tools".
+      This invariant guards against an independent implementer reading
+      the protocol's silence as permission to ship a `core.exec` RCE
+      primitive other hosts would treat as canonical. The conformance
+      scenario asserts the protocol's OWN surface (the published `core.*`
+      node catalog / capability schema property names / canonical
+      vocabularies) contains no exec-class primitive — a structural
+      assertion against the spec corpus, not a host behavior.
+
   # ===== Node Packs =====
 
   - id: node-pack-manifest-name-match

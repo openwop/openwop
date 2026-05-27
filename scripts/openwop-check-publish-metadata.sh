@@ -25,7 +25,7 @@ EXPECTED_V1_VERSION="1.1.4"
 # stay locked to EXPECTED_V1_VERSION until the next coordinated spec-
 # corpus release. Bump this when the next `openwop-conformance/v*` tag
 # rolls.
-EXPECTED_CONFORMANCE_VERSION="1.7.0"
+EXPECTED_CONFORMANCE_VERSION="1.8.0"
 fail=0
 
 err() { echo "  FAIL: $*" >&2; fail=1; }
@@ -199,9 +199,9 @@ for FILE in \
   "$SPEC_ROOT/conformance/package.json" \
   "$SPEC_ROOT/sdk/python/pyproject.toml" \
   "$SPEC_ROOT/PUBLISHING.md"; do
-  if grep -qE "G10 phase 2|deferred work|first .*publication|Development Status :: 3 - Alpha|1\\.8\\.0|1\\.18\\.6|1\\.19\\.1|v19" "$FILE"; then
+  if grep -qE "G10 phase 2|deferred work|first .*publication|Development Status :: 3 - Alpha|1\\.18\\.6|1\\.19\\.1|v19" "$FILE"; then
     err "$FILE contains stale non-v1.0 release posture language."
-    grep -nE "G10 phase 2|deferred work|first .*publication|Development Status :: 3 - Alpha|1\\.8\\.0|1\\.18\\.6|1\\.19\\.1|v19" "$FILE" >&2
+    grep -nE "G10 phase 2|deferred work|first .*publication|Development Status :: 3 - Alpha|1\\.18\\.6|1\\.19\\.1|v19" "$FILE" >&2
   else
     ok "$FILE has v1.0 production-release posture."
   fi

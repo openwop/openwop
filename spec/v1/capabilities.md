@@ -243,6 +243,43 @@ Companion to `secrets`. Advertises which AI providers the host's AI-proxy can ro
 
 **Server semantics.** Servers reject `ai.credentialRef` for providers NOT in `byok` with `credential_forbidden`. Servers reject unknown `provider` ids with `validation_error`.
 
+#### `aiProviders.authModes` — BYOK auth-mode contract (RFC 0067, `Draft`)
+
+`supported` and `byok` say *which* providers the host routes to and *which* permit BYOK, but not *how* a client is expected to supply a provider's credential. As the catalog grows beyond API-key providers (OAuth-backed providers, local Ollama/vLLM endpoints, platform-managed providers) the supply mechanism diverges. The optional `authModes` map advertises it so a client can pre-flight the credential UX without trial-and-error.
+
+```json
+"aiProviders": {
+  "supported": ["anthropic", "openai", "vertex", "ollama"],
+  "byok": ["anthropic", "openai"],
+  "authModes": {
+    "anthropic": ["apiKey"],
+    "openai": ["apiKey"],
+    "vertex": ["oauth-pkce"],
+    "ollama": ["none"]
+  }
+}
+```
+
+**Field shape:** `authModes` is an OPTIONAL object whose keys are provider ids (each MUST appear in `supported`) and whose values are non-empty, unique arrays of auth modes drawn from the closed enum `["apiKey", "oauth-pkce", "oauth-device", "none"]`.
+
+| Mode | Meaning | Credential supply |
+|---|---|---|
+| `apiKey` | Host accepts a stored API-key credential. | Client passes `RunOptions.configurable.ai.credentialRef` (today's BYOK path). Provider MUST appear in `byok`. |
+| `oauth-pkce` | Host acquires a token via an OAuth 2.0 authorization-code + PKCE flow it owns (RFC 0047 `host.oauth`). | Client references the host-stored credential by `ref` (RFC 0046); the PKCE flow is host-driven; key material is NEVER passed on `ai.credentialRef`. |
+| `oauth-device` | Host acquires a token via an OAuth 2.0 device-authorization flow it owns. | Same as `oauth-pkce`. |
+| `none` | Provider needs no caller-supplied credential. | A local provider (Ollama / vLLM at a host-configured endpoint) or one served entirely from platform-managed keys. Provider MUST NOT appear in `byok`. |
+
+**Auth-mode contract (normative when `authModes` is advertised):**
+
+1. Every key in `authModes` MUST also appear in `aiProviders.supported`.
+2. A provider whose mode array includes `apiKey` MUST also appear in `aiProviders.byok` (`apiKey` *is* the BYOK path; the two advertisements MUST agree).
+3. A provider whose mode array is exactly `["none"]` MUST NOT appear in `aiProviders.byok`. A provider MAY advertise `["apiKey", "none"]` (BYOK permitted with a platform-managed fallback) and MUST then appear in `byok`.
+4. A provider advertising `oauth-pkce` or `oauth-device` SHOULD also advertise `capabilities.oauth` (RFC 0047) with a matching provider `id`; the OAuth flow itself is governed by RFC 0047. The credential is referenced by `ref` (RFC 0046), never passed as key material.
+5. Absent `authModes`, the default contract is unchanged: a provider in `byok` behaves as `apiKey`; a provider in `supported` but not in `byok` behaves as `none`. Clients MUST tolerate the field's absence and apply this default.
+6. `authModes` advertises *capability*, not a per-run *requirement* — per-provider policy enforcement remains `aiProviders.policies`. A client MUST NOT infer a policy mode from an auth mode, and MUST ignore an auth mode it does not recognize rather than reject the discovery document.
+
+**Provider-name vocabulary (non-normative).** `supported` stays an open `string[]`. To reduce cross-host id drift, hosts SHOULD use the recommended ids in `schemas/capabilities.schema.json` §`aiProviders.supported` when routing to a known provider (`anthropic`, `openai`, `gemini`, `vertex`, `bedrock`, `mistral`, `cohere`, `openrouter`, `litellm`, `together`, `huggingface`, `qwen`, `ollama`, `vllm`). The list is advisory; a host MAY advertise any vendor-prefixed extension id, and clients MUST tolerate unknown ids. Aggregators (`openrouter`, `litellm`) front many upstream models disambiguated by `RunOptions.configurable.ai.model` (host-interpreted); this spec does not normate a model-id grammar.
+
 ### `aiProviders.policies`
 
 Additive companion to `aiProviders`. Lets a host advertise which **policy modes** it implements for per-provider gating. Hosts that omit this field implement no enforcement (clients see only `optional` semantics).

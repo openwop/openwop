@@ -130,6 +130,8 @@
         "conversation.closed",
         "memory.compacted",
         "memory.written",
+        "agent.memory.consolidated",
+        "commitment.fired",
         "workspace.updated",
         "core.workflowChain.event",
         "core.workflowChain.confidence-escalated",

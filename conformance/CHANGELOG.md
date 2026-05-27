@@ -1,5 +1,15 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [1.8.0] — 2026-05-26
+
+Minor bump — ships the conformance scenarios for the **spec-gap Draft cohort (RFCs 0067 / 0068 / 0069)**. All additive: every behavioral scenario is capability-gated and soft-skips against a host that doesn't advertise the surface (or doesn't wire the seam), and the always-on scenarios are server-free schema/corpus assertions. Existing v1.0-only hosts pass unchanged. (1.7.0 was the lockstep version bumped in the v1.1.4 release without its own scenario delta; this entry resumes the scenario-delta narrative.)
+
+### Added — RFC 0067 / 0068 / 0069 scenarios
+
+- **RFC 0067** (provider-catalog conventions) — `byok-auth-modes.test.ts` (always-on schema-shape of `aiProviders.authModes` + the four-mode enum; discovery-gated §B auth-mode-contract cross-field checks — every `authModes` key in `supported`, every `apiKey` provider in `byok`, every `["none"]` provider absent from `byok`, `oauth-*` providers aligned to `capabilities.oauth.providers[]`).
+- **RFC 0068** (memory consolidation + standing commitments) — `memory-consolidation-shape.test.ts` (always-on; the `agents.memoryConsolidation`/`agents.commitments` capability blocks + the `agent.memory.consolidated`/`commitment.fired` payload $defs, incl. the negative that `commitment.fired` without `memoryRef` is rejected), `memory-consolidation-idempotent.test.ts` (gated on `agents.memoryConsolidation.supported`; §D `outputCount ≤ inputCount` + the no-op-second-pass idempotence MUST + SR-1 carry-forward, via the `/v1/host/sample/memory/consolidate` seam), `commitment-fired.test.ts` (gated on `agents.commitments.supported`; content-free `commitment.fired` with `memoryRef` provenance + fire-once + the no-intention-text assertion, via the `/v1/host/sample/commitment/fire` seam).
+- **RFC 0069** (exec-class tool host-extension safety contract) — `exec-not-protocol-tier.test.ts` (always-on, server-free structural assertion that no `core.*`/`openwop.*` identifier, no `capabilities.schema.json` property, and no RunEventType denotes arbitrary command execution; positive control allows `vendor.*`/`x-host-*-exec`). Backs the new protocol-tier SECURITY invariant `exec-must-not-be-protocol-tier`.
+
 ## [1.6.1] — 2026-05-25
 
 Patch — fixes a stale allowlist in `redaction.test.ts` that contradicted the same release's `capabilities.schema.json`. Reported by MyndHyve against the 1.6.0 cohort run.

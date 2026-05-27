@@ -1,0 +1,9 @@
+# RFC 0068 — Gap register
+
+| ID | Section | Question / Missing Input | Owner | Resolution Path | Blocks |
+|---|---|---|---|---|---|
+| G1 | Unresolved #1 | Replay determinism through a consolidation pass (RFC 0041 §C) — the keystone open question | Security/Compatibility Architect | Confirm consolidation is a host-managed mutation seen only via the deterministic read-snapshot, before `Active` | `Active` |
+| G2 | Unresolved #2 | Idempotence tolerance for strengthen-only passes (`inputCount == outputCount` exact vs ±) | Spec Architect | Decide before `Active`; exact for merge/dedup | `Active` |
+| G3 | Unresolved #3 | Whether `commitment.inferred` + `commitment.cancelled` lifecycle events are needed for v1.x | Spec Architect | `fired`-only at `Draft`; add in follow-up if an implementer needs full audit | `Accepted` |
+| G4 | Unresolved #4 | Consolidation + RFC 0057 `memory.written` interaction (emit both? what `nodeId`?) | Conformance Architect | Proposed: emit both when both advertised; confirm `nodeId` convention | `Active` |
+| G5 | Conformance | No reference host has a production MemoryAdapter to behaviorally implement consolidation/commitments | Conformance Architect | Behavioral assertions soft-skip; shape ships now; Postgres host is natural first implementer | `Accepted` |

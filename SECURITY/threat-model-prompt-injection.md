@@ -110,6 +110,13 @@ MCP tool returns content; content is fed back as the next LLM turn.
 |---|---|---|---|
 | Authority bypass | LLM output includes a URL the host fetches | Hosts MUST NOT auto-fetch URLs from envelope content; URL fetches happen only via declared `external-api` nodes with explicit allowlists | `prompt-injection-no-auto-fetch` |
 | Authority bypass | LLM output triggers a webhook delivery | Webhooks fire only on declared `webhook.deliver` events from the workflow definition, not from LLM-content-derived URLs | `prompt-injection-webhook-host-only` |
+| Remote code execution | LLM output or untrusted input is executed as a host command (`exec`-class tool) | The protocol defines NO `exec`-class tool; arbitrary command execution is host-extension-only (`x-host-<vendor>-exec`) with host-owned sandboxing/allowlist/approval per `host-extensions.md` §"`exec`-class tools" (RFC 0069) | `exec-must-not-be-protocol-tier` |
+
+### 4.7 `exec` tools (arbitrary command execution) — RFC 0069
+
+`exec`-class execution — running a caller- or model-supplied command, shell string, script, or binary — is the highest-severity surface a workflow runtime can expose. A protocol-tier `exec` tool would turn a prompt-injection foothold (§4.1–§4.5) or an input-validation lapse into remote code execution on the host, and a shared exec surface is a cross-tenant blast radius (openwop is multi-tenant via `tenantId`/`scopeId`). It also directly contradicts the sandbox invariant set (`node-pack-sandbox-no-process`, RFC 0035 §A) that forbids sandboxed pack code from spawning host processes.
+
+openwop's mitigation is **structural**: the protocol defines no `exec`-class tool under any protocol-owned namespace (`core.*`, `openwop.*`) and no `exec` capability flag. A host that needs exec exposes it only under a named host-extension scope (`x-host-<vendor>-exec`) and owns the safety controls end-to-end — sandboxing, command allowlisting (no shell interpolation of untrusted content), human approval gating (RFC 0051), and audit — per [`spec/v1/host-extensions.md`](../spec/v1/host-extensions.md) §"`exec`-class tools". The `exec-must-not-be-protocol-tier` invariant (§5) makes the exclusion enforceable: a conformance scenario asserts the protocol corpus itself defines no exec-class primitive, so silence cannot be read as permission to ship a `core.exec` RCE primitive other hosts would treat as canonical.
 
 ## 5. Invariants (MUST NOT)
 
@@ -128,6 +135,7 @@ MCP tool returns content; content is fed back as the next LLM turn.
 | `prompt-injection-tenant-host-derived` | `tenantId` / `workspaceId` on persisted records MUST be derived from the auth principal, NOT accepted from envelope or LLM-supplied fields. |
 | `prompt-injection-no-auto-fetch` | Hosts MUST NOT fetch URLs that appear in LLM envelope content; URL fetches are restricted to declared `external-api`-class nodes with explicit allowlists. |
 | `prompt-injection-webhook-host-only` | Webhook deliveries MUST fire only from declared `webhook.deliver` workflow events; LLM-content-derived URLs MUST NOT trigger webhook fan-out. |
+| `exec-must-not-be-protocol-tier` | Arbitrary-command (`exec`-class) execution MUST NOT be exposed under any protocol-owned namespace (`core.*`, `openwop.*`) or `capabilities.*` flag; it lives only in named host-extension scopes (`x-host-<vendor>-exec`) whose safety controls the host owns end-to-end. |
 
 ## 6. Residual risks
 
