@@ -43,10 +43,20 @@ import {
   RELAY_CHANNELS,
   type ChatEgressEnvelope,
   type ChatIngressEnvelope,
+  type DmPolicy,
+  type GroupPolicy,
   type MessagingBridge,
+  type MessagingIdentityRecord,
+  type MessagingPolicyRecord,
+  type MessagingRoutingRuleRecord,
   type RelayChannel,
   type RelayDeviceRecord,
 } from '../messaging/types.js';
+
+const DM_POLICIES: readonly DmPolicy[] = ['pairing', 'allowlist', 'open', 'disabled'];
+const GROUP_POLICIES: readonly GroupPolicy[] = ['allowlist', 'open', 'disabled'];
+const NOTIFY_KINDS = ['email', 'sms'] as const;
+type NotifyKind = (typeof NOTIFY_KINDS)[number];
 
 const BASE = '/v1/host/sample/messaging';
 
@@ -210,6 +220,17 @@ export function registerMessagingRoutes(app: Express, deps: Deps): void {
           if (s) await storage.upsertMessagingSession({ ...s, lastRunId: runId });
         }
       }
+      await storage.appendDeliveryLog({
+        logId: `dlv_${randomUUID()}`,
+        tenantId: device.tenantId,
+        relayId: device.relayId,
+        channel: device.channel,
+        direction: 'inbound',
+        conversationId: envelope.conversationId,
+        status: runId ? 'bridged' : 'ingested',
+        ...(runId ? { detail: `run ${runId}` } : {}),
+        at: new Date().toISOString(),
+      });
       res.status(202).json({ accepted: true, sessionKey, ...(runId ? { runId } : {}) });
     } catch (err) {
       next(err);
@@ -373,6 +394,210 @@ export function registerMessagingRoutes(app: Express, deps: Deps): void {
       next(err);
     }
   });
+
+  // ---- Access policy (operator bearer) ----
+  // Who may DM / activate in groups, per connector. Absent = host default
+  // (DM pairing required, groups allowlist-only, mention required).
+
+  app.get(`${BASE}/connectors/:id/policy`, async (req, res, next) => {
+    try {
+      const c = await getConnectorOr404(req, storage);
+      const policy = (await storage.getMessagingPolicy(c.connectorId)) ?? defaultPolicy(c.connectorId, c.tenantId);
+      res.json(policy);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.put(`${BASE}/connectors/:id/policy`, async (req, res, next) => {
+    try {
+      const c = await getConnectorOr404(req, storage);
+      const body = req.body ?? {};
+      const existing = await storage.getMessagingPolicy(c.connectorId);
+      const base = existing ?? defaultPolicy(c.connectorId, c.tenantId);
+      const policy: MessagingPolicyRecord = {
+        connectorId: c.connectorId,
+        tenantId: c.tenantId,
+        dmPolicy: body.dmPolicy === undefined ? base.dmPolicy : assertDmPolicy(body.dmPolicy),
+        groupPolicy: body.groupPolicy === undefined ? base.groupPolicy : assertGroupPolicy(body.groupPolicy),
+        requireMention: typeof body.requireMention === 'boolean' ? body.requireMention : base.requireMention,
+        updatedAt: new Date().toISOString(),
+      };
+      await storage.upsertMessagingPolicy(policy);
+      res.json(policy);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ---- Routing rules (operator bearer) ----
+  // Map an inbound match (channel + substring pattern) → a bound workflow.
+  // Higher priority wins; '*' pattern matches any conversation/peer.
+
+  app.get(`${BASE}/routing`, async (req, res, next) => {
+    try {
+      const rules = await storage.listMessagingRoutingRules(listTenantFilter(req));
+      res.json({ rules });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post(`${BASE}/routing`, async (req, res, next) => {
+    try {
+      const tenantId = resolveTenant(req);
+      const body = req.body ?? {};
+      const rule: MessagingRoutingRuleRecord = {
+        ruleId: optionalString(body.ruleId) ?? `route_${randomUUID()}`,
+        tenantId,
+        ...(body.channel === undefined ? {} : { channel: assertChannel(body.channel) }),
+        pattern: requireString(body.pattern, 'pattern'),
+        workflowId: requireString(body.workflowId, 'workflowId'),
+        priority: typeof body.priority === 'number' ? body.priority : 0,
+        createdAt: new Date().toISOString(),
+      };
+      await storage.upsertMessagingRoutingRule(rule);
+      res.status(201).json(rule);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.delete(`${BASE}/routing/:ruleId`, async (req, res, next) => {
+    try {
+      // Scope the delete to the caller's tenant unless wildcard.
+      const found = await getRoutingRuleOr404(req, storage);
+      await storage.deleteMessagingRoutingRule(found.ruleId);
+      res.json({ ruleId: found.ruleId, deleted: true });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ---- Cross-channel identities (operator bearer) ----
+  // Link platform peers across channels to one logical person.
+
+  app.get(`${BASE}/identities`, async (req, res, next) => {
+    try {
+      const identities = await storage.listMessagingIdentities(listTenantFilter(req));
+      res.json({ identities });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post(`${BASE}/identities`, async (req, res, next) => {
+    try {
+      const tenantId = resolveTenant(req);
+      const body = req.body ?? {};
+      const identityId = optionalString(body.identityId);
+      const peers = parsePeers(body.peers);
+      const now = new Date().toISOString();
+      if (identityId) {
+        // Link mode: merge peers into an existing identity.
+        const existing = await storage.getMessagingIdentity(identityId);
+        if (!existing || (existing.tenantId !== tenantId && !isWildcard(req))) {
+          throw new OpenwopError('not_found', 'identity not found', 404);
+        }
+        const merged = mergePeers(existing.peers, peers);
+        const updated: MessagingIdentityRecord = {
+          ...existing,
+          ...(optionalString(body.displayName) ? { displayName: String(body.displayName) } : {}),
+          peers: merged,
+          updatedAt: now,
+        };
+        await storage.upsertMessagingIdentity(updated);
+        res.json(updated);
+        return;
+      }
+      const identity: MessagingIdentityRecord = {
+        identityId: `idn_${randomUUID()}`,
+        tenantId,
+        ...(optionalString(body.displayName) ? { displayName: String(body.displayName) } : {}),
+        peers,
+        createdAt: now,
+        updatedAt: now,
+      };
+      await storage.upsertMessagingIdentity(identity);
+      res.status(201).json(identity);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.get(`${BASE}/identities/:id`, async (req, res, next) => {
+    try {
+      res.json(await getIdentityOr404(req, storage));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Unlink a single peer (?channel=&peerId=) or delete the whole identity.
+  app.delete(`${BASE}/identities/:id`, async (req, res, next) => {
+    try {
+      const identity = await getIdentityOr404(req, storage);
+      const channel = optionalString(req.query.channel);
+      const peerId = optionalString(req.query.peerId);
+      if (channel && peerId) {
+        const peers = identity.peers.filter((p) => !(p.channel === channel && p.peerId === peerId));
+        const updated: MessagingIdentityRecord = { ...identity, peers, updatedAt: new Date().toISOString() };
+        await storage.upsertMessagingIdentity(updated);
+        res.json(updated);
+        return;
+      }
+      await storage.deleteMessagingIdentity(identity.identityId);
+      res.json({ identityId: identity.identityId, deleted: true });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ---- Delivery log (operator bearer) ----
+
+  app.get(`${BASE}/logs`, async (req, res, next) => {
+    try {
+      const filter: Parameters<Storage['listDeliveryLog']>[0] = {
+        tenantId: listTenantFilter(req),
+        ...(optionalString(req.query.channel) ? { channel: assertChannel(req.query.channel) } : {}),
+        ...(optionalString(req.query.direction) ? { direction: assertDirection(req.query.direction) } : {}),
+        ...(optionalString(req.query.status) ? { status: String(req.query.status) } : {}),
+        ...(optionalString(req.query.limit) ? { limit: Number(req.query.limit) } : {}),
+      };
+      const entries = await storage.listDeliveryLog(filter);
+      res.json({ entries });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ---- One-off notifications (operator bearer) ----
+  // Demo stub: email / SMS dispatch. Returns a synthetic receipt — wiring an
+  // actual provider (SES / Twilio) is a host concern, intentionally out of
+  // scope for the reference app.
+
+  app.post(`${BASE}/notify`, async (req, res, next) => {
+    try {
+      const tenantId = resolveTenant(req);
+      const body = req.body ?? {};
+      const kind = assertNotifyKind(body.kind);
+      const to = requireString(body.to, 'to');
+      const text = requireString(body.text, 'text');
+      res.status(202).json({
+        notifyId: `ntf_${randomUUID()}`,
+        tenantId,
+        kind,
+        to,
+        ...(optionalString(body.subject) ? { subject: String(body.subject) } : {}),
+        textLength: text.length,
+        status: 'accepted',
+        detail: `synthetic ${kind} dispatch accepted; no provider configured`,
+        acceptedAt: new Date().toISOString(),
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
 }
 
 /** Enqueue an outbound egress for a relay. Used by /relay/enqueue and the bridge. */
@@ -391,6 +616,22 @@ export async function enqueueOutbound(
     enqueuedAt: new Date().toISOString(),
   };
   await storage.enqueueRelayOutbound(egress);
+  // Best-effort delivery-log entry (queued). tenantId is resolved from the
+  // owning device; if the device is gone we skip the log rather than fail.
+  const device = await storage.getRelayDevice(relayId);
+  if (device) {
+    await storage.appendDeliveryLog({
+      logId: `dlv_${randomUUID()}`,
+      tenantId: device.tenantId,
+      relayId,
+      channel: egress.channel,
+      direction: 'outbound',
+      conversationId: egress.conversationId,
+      status: 'queued',
+      detail: `egress ${egress.egressId}`,
+      at: egress.enqueuedAt,
+    });
+  }
   return egress;
 }
 
@@ -483,4 +724,73 @@ function requireString(raw: unknown, field: string): string {
 
 function optionalString(raw: unknown): string | undefined {
   return typeof raw === 'string' && raw.length > 0 ? raw : undefined;
+}
+
+/** Host default policy: DM pairing required, groups allowlist-only, mention required. */
+function defaultPolicy(connectorId: string, tenantId: string): MessagingPolicyRecord {
+  return {
+    connectorId,
+    tenantId,
+    dmPolicy: 'pairing',
+    groupPolicy: 'allowlist',
+    requireMention: true,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function assertDmPolicy(raw: unknown): DmPolicy {
+  if (typeof raw === 'string' && (DM_POLICIES as readonly string[]).includes(raw)) return raw as DmPolicy;
+  throw new OpenwopError('invalid_request', `dmPolicy must be one of ${DM_POLICIES.join(', ')}`, 400, { allowed: DM_POLICIES });
+}
+
+function assertGroupPolicy(raw: unknown): GroupPolicy {
+  if (typeof raw === 'string' && (GROUP_POLICIES as readonly string[]).includes(raw)) return raw as GroupPolicy;
+  throw new OpenwopError('invalid_request', `groupPolicy must be one of ${GROUP_POLICIES.join(', ')}`, 400, { allowed: GROUP_POLICIES });
+}
+
+function assertDirection(raw: unknown): 'inbound' | 'outbound' {
+  if (raw === 'inbound' || raw === 'outbound') return raw;
+  throw new OpenwopError('invalid_request', "direction must be 'inbound' or 'outbound'", 400);
+}
+
+function assertNotifyKind(raw: unknown): NotifyKind {
+  if (typeof raw === 'string' && (NOTIFY_KINDS as readonly string[]).includes(raw)) return raw as NotifyKind;
+  throw new OpenwopError('invalid_request', `kind must be one of ${NOTIFY_KINDS.join(', ')}`, 400, { allowed: NOTIFY_KINDS });
+}
+
+/** Parse + validate a peers array: [{ channel, peerId }]. */
+function parsePeers(raw: unknown): MessagingIdentityRecord['peers'] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((p): p is { channel: unknown; peerId: unknown } => !!p && typeof p === 'object')
+    .map((p) => ({ channel: assertChannel(p.channel), peerId: requireString(p.peerId, 'peerId') }));
+}
+
+/** Merge new peers into existing, de-duped by (channel, peerId). */
+function mergePeers(
+  existing: MessagingIdentityRecord['peers'],
+  incoming: MessagingIdentityRecord['peers'],
+): MessagingIdentityRecord['peers'] {
+  const seen = new Set(existing.map((p) => `${p.channel} ${p.peerId}`));
+  const merged = [...existing];
+  for (const p of incoming) {
+    const key = `${p.channel} ${p.peerId}`;
+    if (!seen.has(key)) { seen.add(key); merged.push(p); }
+  }
+  return merged;
+}
+
+async function getRoutingRuleOr404(req: Request, storage: Storage): Promise<MessagingRoutingRuleRecord> {
+  const rules = await storage.listMessagingRoutingRules(listTenantFilter(req));
+  const found = rules.find((r) => r.ruleId === req.params.ruleId);
+  if (!found) throw new OpenwopError('not_found', 'routing rule not found', 404);
+  return found;
+}
+
+async function getIdentityOr404(req: Request, storage: Storage): Promise<MessagingIdentityRecord> {
+  const i = await storage.getMessagingIdentity(req.params.id);
+  if (!i || (i.tenantId !== resolveTenant(req) && !isWildcard(req))) {
+    throw new OpenwopError('not_found', 'identity not found', 404);
+  }
+  return i;
 }

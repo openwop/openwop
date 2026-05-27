@@ -28,7 +28,11 @@ import type {
 } from '../types.js';
 import type {
   ChatEgressEnvelope,
+  DeliveryLogRecord,
   MessagingConnectorRecord,
+  MessagingIdentityRecord,
+  MessagingPolicyRecord,
+  MessagingRoutingRuleRecord,
   MessagingSessionRecord,
   RelayDeviceRecord,
 } from '../messaging/types.js';
@@ -336,6 +340,24 @@ export interface Storage {
   getMessagingSession(sessionKey: string): Promise<MessagingSessionRecord | null>;
   listMessagingSessions(tenantId: string | undefined): Promise<readonly MessagingSessionRecord[]>;
   deleteMessagingSession(sessionKey: string): Promise<boolean>;
+  // policies (per-connector access control) / routing / identity / delivery log
+  upsertMessagingPolicy(record: MessagingPolicyRecord): Promise<void>;
+  getMessagingPolicy(connectorId: string): Promise<MessagingPolicyRecord | null>;
+  upsertMessagingRoutingRule(record: MessagingRoutingRuleRecord): Promise<void>;
+  listMessagingRoutingRules(tenantId: string | undefined): Promise<readonly MessagingRoutingRuleRecord[]>;
+  deleteMessagingRoutingRule(ruleId: string): Promise<boolean>;
+  upsertMessagingIdentity(record: MessagingIdentityRecord): Promise<void>;
+  getMessagingIdentity(identityId: string): Promise<MessagingIdentityRecord | null>;
+  listMessagingIdentities(tenantId: string | undefined): Promise<readonly MessagingIdentityRecord[]>;
+  deleteMessagingIdentity(identityId: string): Promise<boolean>;
+  appendDeliveryLog(record: DeliveryLogRecord): Promise<void>;
+  listDeliveryLog(filter: {
+    tenantId: string | undefined;
+    channel?: string;
+    direction?: 'inbound' | 'outbound';
+    status?: string;
+    limit?: number;
+  }): Promise<readonly DeliveryLogRecord[]>;
 
   // ── lifecycle ──
   close(): Promise<void>;

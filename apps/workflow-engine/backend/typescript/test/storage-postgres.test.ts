@@ -209,6 +209,17 @@ async function makeStorage(): Promise<Storage> {
     getMessagingSession: async () => null,
     listMessagingSessions: async () => [],
     deleteMessagingSession: async () => false,
+    upsertMessagingPolicy: async () => { throw new Error('not exercised'); },
+    getMessagingPolicy: async () => null,
+    upsertMessagingRoutingRule: async () => { throw new Error('not exercised'); },
+    listMessagingRoutingRules: async () => [],
+    deleteMessagingRoutingRule: async () => false,
+    upsertMessagingIdentity: async () => { throw new Error('not exercised'); },
+    getMessagingIdentity: async () => null,
+    listMessagingIdentities: async () => [],
+    deleteMessagingIdentity: async () => false,
+    appendDeliveryLog: async () => { throw new Error('not exercised'); },
+    listDeliveryLog: async () => [],
     close: async () => { await pool.end(); },
   };
 }
