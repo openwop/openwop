@@ -635,12 +635,14 @@ ctx.webResearch.research({
 
 **Used by:** `vendor.myndhyve.agent-orchestration` (the `agent.*` typeIds)
 
-Operates on RFC 0007 / 0008 / 0011 protocol primitives — spawn, delegate, consensus, message-send, skill-invoke, swarm-execute.
+This is the heavyweight **swarm/consensus superset**. The minimal tier that makes a published agent pack runnable is `capabilities.agents.manifestRuntime` (RFC 0070) — loading a pack's `agents[]` into an `AgentRegistry` (RFC 0003) and dispatching one on the existing `core.dispatch`/orchestrator loop. A host advertising `host.agentRuntime: supported` **implies** `agents.manifestRuntime` (RFC 0070 §B), since `spawn({ manifestId })` instantiates a manifest agent. Hosts that only need single-agent / crew dispatch advertise the floor and omit this section.
+
+Operates on RFC 0002 / 0003 / 0007 protocol primitives — spawn, delegate, consensus, message-send, skill-invoke, swarm-execute.
 
 ```typescript
 ctx.agentRuntime.spawn({
-  manifestId?: string,           // RFC 0008 AgentManifest reference
-  agentRef?: AgentRef,           // RFC 0007 inline definition
+  manifestId?: string,           // RFC 0003 AgentManifest reference
+  agentRef?: AgentRef,           // RFC 0002 AgentRef inline definition
   config?: Record<string, unknown>,
   idempotencyKey: string,
 }) → Promise<{ agentInstanceId: string, spawnedAt: string }>

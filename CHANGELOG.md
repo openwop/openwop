@@ -11,6 +11,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.5 — unreleased]
 
+### feat(rfc): file RFC 0070 — agent-manifest runtime capability + begin the runtime build (2026-05-26)
+
+Files RFC 0070 (`Draft`, additive) and begins implementing the agent-manifest **runtime floor** so OpenWOP's ~31 packaged agent manifests (RFC 0003) become runnable rather than inert. RFC 0003 already specifies agent-pack install, `systemPromptRef`/handoff resolution (§C/§D), and `installAgents` on an `AgentRegistry` (§ImplNotes); RFC 0070 adds the missing **capability flag** + gating + degradation contract.
+
+- **New capability `capabilities.agents.manifestRuntime`** (`{ supported, handoffValidation? }`) — "this host loads pack `agents[]` into an `AgentRegistry` and dispatches them on the existing `core.dispatch`/orchestrator loop (RFC 0007/0037/0061), enforcing `toolAllowlist` (RFC 0002 §A14) + BYOK redaction (SR-1)." Added into the already-`additionalProperties: true` `agents` block — additive, no existing field changes.
+- **`host.agentRuntime` ⇒ `agents.manifestRuntime`** (RFC 0070 §B): the six-method swarm superset implies the floor, so floor-tier pack peer-dependencies resolve on both minimal and swarm hosts.
+- **`node-packs.md` §dependency-resolution**: agent packs SHOULD depend on `agents.manifestRuntime` for single/crew dispatch and `host.agentRuntime` only for swarm/consensus; graceful-degradation ladder (install-degraded-and-advertise, or refuse with `pack_peer_dependency_missing`) for unmet tiers.
+- **`host-capabilities.md §host.agentRuntime` cross-ref fix**: `AgentManifest` is RFC 0003 (was mis-cited as RFC 0008/WASM-ABI), `AgentRef` is RFC 0002; positions `manifestRuntime` as the floor and `host.agentRuntime` as the optional superset.
+
+README RFC counts: total 69 → 70, Draft 9 → 10. Implements the floor (AgentRegistry + loader + single-agent dispatch + registry-backed CLI inventory + conformance + one reference host running a manifest agent — closing RFC 0003's long-open reference-host acceptance criterion); crews / long-term memory / swarm / cross-host / the 21-pack peerDep migration are sequenced tier-ups. See `docs/OPENWOP-AGENT-RUNTIME-ANALYSIS.md`.
+
 ### feat(rfc): file RFCs 0067 / 0068 / 0069 — spec-gap Draft cohort (2026-05-26)
 
 Files three additive `Draft` RFCs from `docs/OPENWOP-FEATURE-GAP-ANALYSIS.md` (RFC rows). All additive per `COMPATIBILITY.md` §2.1; no existing required field, event, error code, or endpoint changes.
