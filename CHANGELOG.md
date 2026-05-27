@@ -22,6 +22,14 @@ Continues RFC 0073's conformance migration: 62 of the ~78 capability-gated scena
 ### feat(rfc-0071): promote Phase 2 (chat card packs) Draft → Active — G9 resolved (2026-05-27)
 
 RFC 0071 **Phase 2 (chat card packs, `kind: "card"`) promoted Draft → `Active`** — design locked. **G9 resolved:** the portable `inputs[].type` subset finalized against MyndHyve's authoritative `CardFieldType` (read from their source — 11 values; every one maps to the portable subset or a `vendor.myndhyve.*` extension). The enum widened from the initial draft to `text|longtext|number|boolean|select|multiselect|file|artifact-ref` (added `multiselect` + `file`; `textarea`→`longtext`, `toggle`→`boolean`; `color`/`canvas-reference`/`collection-reference` are host extensions). `chat-card-pack-manifest.schema.json` pattern + `chat-card-packs.md` §"Input fields" (with the MyndHyve mapping table) updated; `chat-card-pack-manifest-validation.test.ts` gains a positive case over the full subset. **R2 surface** (`chat-card-input-trust-boundary` invariant + `chat-card-pack-execution.test.ts` + the normative untrusted-input MUST) was already landed. `Phase 2 → Accepted` (and `chat-card-packs.md` DRAFT → FINAL) awaits a host implementing `host.chat.cardPacks` + passing the R2 execution proof end-to-end. RFC 0071 overall `Status` stays `Active` (Phase 1 Accepted + Phase 2 Active; graduates to Accepted when both phases are). Additive; no count change (no new doc/schema/scenario file/invariant). INTEROP-MATRIX §"RFC 0071" records Phase 2 Active.
+### feat(app): messaging relay-gateway productionization — durable Storage + bridge hardening (2026-05-27)
+
+Productionizes the demo messaging relay-gateway (PR #277 follow-up) for a multi-instance host. NON-normative (demo `Storage` only — not the `RunEventLogIO`/`SuspendIO` contracts in `storage-adapters.md`); no wire/schema/capability change.
+
+- **Durable state (correctness fix):** relay devices / outbound queue / connectors / sessions move from in-process `Map`s to `Storage` (sqlite migration 10 + postgres migration 8; `memory://` rides sqlite). On a multi-instance host the in-memory design split-brained — a reply queued on instance A was invisible to a device polling instance B. Device tokens are now persisted as a **SHA-256 hash** only (plaintext returned once at activation).
+- **Bridge hardening:** `ipRateLimitMiddleware` exempts genuine loopback self-traffic (socket address, no `X-Forwarded-For`, so a spoofed XFF can't bypass) so messaging-driven runs don't share the `127.0.0.1` bucket; opt out with `OPENWOP_RATELIMIT_TRUST_LOOPBACK=false`. The inbound→run bridge reads `OPENWOP_MESSAGING_BRIDGE_TOKEN` for a tenant-scopable credential (tenant still bound at relay registration).
+
+Backend suite 375 pass; tsc + build + dep-graph clean.
 
 ### spec(rfc-0073): capability families are document-root properties of `/.well-known/openwop` (2026-05-27)
 
