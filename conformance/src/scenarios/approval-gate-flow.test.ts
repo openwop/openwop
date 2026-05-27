@@ -22,14 +22,12 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
-
-interface DiscoveryDoc {
-  capabilities?: { authorization?: { supported?: boolean } };
-}
+import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 
 async function authorizationSupported(): Promise<boolean> {
-  const res = await driver.get('/.well-known/openwop');
-  return (res.json as DiscoveryDoc | undefined)?.capabilities?.authorization?.supported === true;
+  // Root-first per RFC 0073 (`capabilities.authorization` is the deprecated wrapper shape).
+  const authz = await readCapabilityFamily<{ supported?: unknown }>('authorization');
+  return authz?.supported === true;
 }
 
 describe('approval-gate-flow: role-gated, audited approval (RFC 0051 §A)', () => {

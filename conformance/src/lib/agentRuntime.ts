@@ -3,16 +3,14 @@
  * Lives in lib/ (not a *.test.ts) so scenarios import it via `../lib/agentRuntime.js`.
  */
 import { driver } from './driver.js';
+import { readCapabilityFamily } from './discovery-capabilities.js';
 
-interface DiscoveryDoc {
-  capabilities?: { agents?: { manifestRuntime?: Record<string, unknown> } };
-}
-
-/** Reads `capabilities.agents.manifestRuntime` from discovery; null when unadvertised. */
+/** Reads `agents.manifestRuntime` from discovery (root-first per RFC 0073);
+ *  null when unadvertised. */
 export async function readManifestRuntimeCap(): Promise<Record<string, unknown> | null> {
-  const res = await driver.get('/.well-known/openwop');
-  const mr = (res.json as DiscoveryDoc | undefined)?.capabilities?.agents?.manifestRuntime;
-  return mr && typeof mr === 'object' ? mr : null;
+  const agents = await readCapabilityFamily<{ manifestRuntime?: unknown }>('agents');
+  const mr = agents?.manifestRuntime;
+  return mr && typeof mr === 'object' ? (mr as Record<string, unknown>) : null;
 }
 
 interface AgentInventory {

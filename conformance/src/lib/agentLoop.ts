@@ -4,16 +4,13 @@
  * (not a *.test.ts) so scenarios import it via `../lib/agentLoop.js`.
  */
 import { driver } from './driver.js';
+import { readCapabilityFamily } from './discovery-capabilities.js';
 
-interface DiscoveryDoc {
-  capabilities?: { multiAgent?: { executionModel?: Record<string, unknown> }; workspace?: { supported?: unknown } };
-}
-
-/** Reads `capabilities.multiAgent.executionModel` from discovery; null when the
- *  host advertises no execution model (treated as no support). */
+/** Reads `multiAgent.executionModel` from discovery (root-first per RFC 0073);
+ *  null when the host advertises no execution model (treated as no support). */
 export async function readExecutionModelCap(): Promise<Record<string, unknown> | null> {
-  const res = await driver.get('/.well-known/openwop');
-  const em = (res.json as DiscoveryDoc | undefined)?.capabilities?.multiAgent?.executionModel;
+  const ma = await readCapabilityFamily<{ executionModel?: unknown }>('multiAgent');
+  const em = ma?.executionModel;
   return em && typeof em === 'object' ? (em as Record<string, unknown>) : null;
 }
 
@@ -22,10 +19,10 @@ export function isVersion5(em: Record<string, unknown> | null): boolean {
   return typeof em?.version === 'number' && (em.version as number) >= 5;
 }
 
-/** True when the host advertises `capabilities.workspace.supported: true`. */
+/** True when the host advertises `workspace.supported: true` (root-first per RFC 0073). */
 export async function hasWorkspace(): Promise<boolean> {
-  const res = await driver.get('/.well-known/openwop');
-  return (res.json as DiscoveryDoc | undefined)?.capabilities?.workspace?.supported === true;
+  const ws = await readCapabilityFamily<{ supported?: unknown }>('workspace');
+  return ws?.supported === true;
 }
 
 interface LoopResult {
