@@ -4,6 +4,7 @@
 
 | Schema | Source spec | Coverage |
 |---|---|---|
+| `agent-inventory-response.schema.json` | `node-packs.md` + RFC 0072 | RFC 0072 §A — read projection of installed manifest agents (`GET /v1/agents` body + `$defs.AgentInventoryEntry`); no system prompt / handoff schemas / credentials (SR-1) |
 | `agent-manifest.schema.json` | `node-packs.md` + agent-pack RFCs | Agent manifest entries distributed alongside node-pack manifests |
 | `agent-ref.schema.json` | `agent-memory.md` + agent-identity RFC | Multi-Agent Shift Phase 1 — slim runtime AgentRef projection carried on `RunSnapshot.agent` / `runOrchestrator`, `WorkflowNode.agent?`, and `agent.*` event payloads |
 | `ai-envelope.schema.json` | `ai-envelope.md` | FINAL v1.1 — inbound LLM-emission envelope. Top-level shape (`type` / `schemaVersion` / `envelopeId` / `correlationId` / `payload` / `meta` / `partial`). Per-kind payload schemas under `envelopes/`. Distinct from `RunEventDoc` (outbound) and `error-envelope.schema.json` (host HTTP errors). |

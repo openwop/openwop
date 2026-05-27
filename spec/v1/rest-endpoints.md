@@ -40,6 +40,8 @@ Every OpenWOP-compliant server MUST expose:
 | `GET` | `/v1/runs/{runId}/events` | API key | `runs:read` | SSE event stream (resumable via `Last-Event-ID`) |
 | `GET` | `/v1/runs/{runId}/events/poll` | API key | `runs:read` | Long-poll fallback for non-SSE clients |
 | `GET` | `/v1/runs/{runId}/ancestry` | API key | `runs:read` | RFC 0040 cross-host composition parent (capability-gated; 404 when unadvertised) |
+| `GET` | `/v1/agents` | API key | `runs:read` | RFC 0072 §A manifest-agent inventory (capability-gated on `agents.manifestRuntime`; 404 when unadvertised) |
+| `GET` | `/v1/agents/{agentId}` | API key | `runs:read` | RFC 0072 §A one manifest agent's inventory entry; 404 when absent/unadvertised |
 | `GET` | `/v1/runs/{runId}:diff` | API key | `runs:read` | RFC 0054 deterministic structured diff of two runs (`?against={otherRunId}`; `runs:read` on both; 404 when unimplemented) |
 | `POST` | `/v1/runs/{runId}/cancel` | API key | `runs:cancel` | Cancel an in-flight run |
 | `POST` | `/v1/runs:bulk-cancel` | API key | `runs:cancel` | Bulk cancel a set of in-flight runs |

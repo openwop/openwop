@@ -486,6 +486,29 @@ class OpenwopClient:
             for a in d.get("annotations", [])
         ]
 
+    def agents_list(self) -> dict[str, Any] | None:
+        """RFC 0072 §A — list installed manifest agents (``{agents, total}``).
+        Read-only; returns ``None`` when the host doesn't advertise
+        ``capabilities.agents.manifestRuntime`` (the endpoint 404s). Dispatch is
+        not here: a manifest agent runs as a ``runs.create`` whose workflow node
+        pins it via ``WorkflowNode.agent`` (RFC 0072 §B)."""
+        try:
+            return self._request_json("GET", "/v1/agents")
+        except WopError as err:
+            if err.status in (404, 501):
+                return None
+            raise
+
+    def agents_get(self, agent_id: str) -> dict[str, Any] | None:
+        """RFC 0072 §A — one installed manifest agent's inventory entry, or
+        ``None`` when absent / the capability is unadvertised (404)."""
+        try:
+            return self._request_json("GET", f"/v1/agents/{agent_id}")
+        except WopError as err:
+            if err.status in (404, 501):
+                return None
+            raise
+
     def list_workspace_files(
         self, *, prefix: str | None = None
     ) -> list[WorkspaceFile] | None:

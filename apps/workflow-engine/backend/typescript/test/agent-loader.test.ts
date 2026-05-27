@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { loadAgentsFromManifest } from '../src/packs/agentLoader.js';
+import { loadAgentsFromManifest, resolveDependencyDisposition } from '../src/packs/agentLoader.js';
 import { getAgentRegistry } from '../src/executor/agentRegistry.js';
 
 // test/ → typescript → backend → workflow-engine → apps → repo root (5 up).
@@ -50,5 +50,69 @@ describe('agentLoader — RFC 0070 / RFC 0003 §C/§D manifest resolution', () =
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe('resolveDependencyDisposition — RFC 0072 §C', () => {
+  const sat = (have: string[]) => (cap: string) => have.includes(cap);
+
+  it('a bare (required) peer-dep that is unmet is refused', () => {
+    const d = resolveDependencyDisposition(
+      { 'agents.manifestRuntime': 'supported', 'host.agentRuntime': 'supported' },
+      undefined,
+      sat(['agents.manifestRuntime']),
+    );
+    expect(d.refused).toEqual(['host.agentRuntime']);
+    expect(d.degraded).toEqual([]);
+  });
+
+  it('an optional peer-dep that is unmet degrades (not refused)', () => {
+    const d = resolveDependencyDisposition(
+      { 'agents.manifestRuntime': 'supported', 'agents.memoryBackends': 'supported' },
+      { 'agents.memoryBackends': { optional: true } },
+      sat(['agents.manifestRuntime']),
+    );
+    expect(d.refused).toEqual([]);
+    expect(d.degraded).toEqual(['agents.memoryBackends']);
+  });
+
+  it('all-satisfied ⇒ neither refused nor degraded', () => {
+    const d = resolveDependencyDisposition(
+      { 'agents.manifestRuntime': 'supported' }, { 'agents.manifestRuntime': { optional: true } },
+      sat(['agents.manifestRuntime']),
+    );
+    expect(d).toEqual({ refused: [], degraded: [] });
+  });
+});
+
+describe('loadAgentsFromManifest — RFC 0072 §C degraded[] + strict refuse', () => {
+  beforeEach(() => getAgentRegistry()._resetForTest());
+
+  function seedPack(peerDependencies: Record<string, string>, meta?: Record<string, { optional?: boolean }>): string {
+    const dir = mkdtempSync(join(tmpdir(), 'agentpack72-'));
+    writeFileSync(join(dir, 'pack.json'), JSON.stringify({
+      name: 'local.test.tiers', version: '1.0.0', nodes: [],
+      peerDependencies, ...(meta ? { peerDependenciesMeta: meta } : {}),
+      agents: [{ agentId: 'local.test.tiers.worker', persona: 'W', modelClass: 'general', systemPrompt: 'x' }],
+    }));
+    return dir;
+  }
+
+  it('surfaces an unmet optional tier in the agent inventory degraded[]', () => {
+    const dir = seedPack(
+      { 'agents.manifestRuntime': 'supported', 'agents.memoryBackends': 'supported' },
+      { 'agents.memoryBackends': { optional: true } },
+    );
+    const loaded = loadAgentsFromManifest(dir, { hostSatisfies: (c) => c === 'agents.manifestRuntime' });
+    expect(loaded[0].degraded).toEqual(['agents.memoryBackends']);
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('strict mode refuses a pack with a required-unmet tier (no agents loaded)', () => {
+    const dir = seedPack({ 'agents.manifestRuntime': 'supported', 'host.agentRuntime': 'supported' });
+    const loaded = loadAgentsFromManifest(dir, { hostSatisfies: (c) => c === 'agents.manifestRuntime', strict: true });
+    expect(loaded).toEqual([]);
+    expect(getAgentRegistry().has('local.test.tiers.worker')).toBe(false);
+    rmSync(dir, { recursive: true, force: true });
   });
 });

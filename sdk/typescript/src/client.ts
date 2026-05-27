@@ -49,6 +49,8 @@ import {
   type RunDiffResponse,
   type RunEventDoc,
   type RunSnapshot,
+  type AgentInventoryEntry,
+  type AgentInventoryResponse,
 } from './types.js';
 
 export interface OpenwopClientOptions {
@@ -325,6 +327,34 @@ export class OpenwopClient {
      */
     events: (runId: string, opts: EventsStreamOptions = {}): AsyncGenerator<RunEventDoc, void, void> =>
       streamEvents({ baseUrl: this.#baseUrl, apiKey: this.#apiKey }, runId, opts),
+  };
+
+  // ── Manifest-agent inventory (RFC 0072 §A) ───────────────────────────
+  // Read-only. Gated on `capabilities.agents.manifestRuntime`; both methods
+  // return `null` when the host doesn't advertise it (the endpoints 404).
+  // Dispatch is not here: a manifest agent runs as a `runs.create` whose
+  // workflow node pins it via `WorkflowNode.agent` (RFC 0072 §B).
+  readonly agents = {
+    list: async (): Promise<AgentInventoryResponse | null> => {
+      try {
+        return await this.#request<AgentInventoryResponse>({ method: 'GET', path: '/v1/agents' });
+      } catch (err) {
+        if (err instanceof Error && /\b404\b/.test(err.message)) return null;
+        throw err;
+      }
+    },
+
+    get: async (agentId: string): Promise<AgentInventoryEntry | null> => {
+      try {
+        return await this.#request<AgentInventoryEntry>({
+          method: 'GET',
+          path: `/v1/agents/${encodeURIComponent(agentId)}`,
+        });
+      } catch (err) {
+        if (err instanceof Error && /\b404\b/.test(err.message)) return null;
+        throw err;
+      }
+    },
   };
 
   // ── HITL interrupts (run-scoped + signed-token) ──────────────────────
