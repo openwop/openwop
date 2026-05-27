@@ -11,6 +11,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.5 — unreleased]
 
+### feat(rfc): file RFC 0072 — agent inventory + dispatch normative surface (amends 0070) (2026-05-26)
+
+Files RFC 0072 (`Draft`, additive) resolving RFC 0070's three Unresolved questions on the universal-adoptability criterion (per the architect review):
+
+- **§A normative agent inventory** — `GET /v1/agents` + `GET /v1/agents/{agentId}` promoted from the sample-extension namespace to a **normative, capability-gated** surface (served iff `agents.manifestRuntime.supported`). New `agent-inventory-response.schema.json`; the portable "enumerate any conformant host's runnable agents" surface, and the black-box hook the `Active → Accepted` path needs.
+- **§B dispatch is a run** — the normative dispatch path is `WorkflowNode.agent` (RFC 0002) + `POST /v1/runs`, **not** a bespoke endpoint, so dispatch inherits replay/fork/idempotency/observability. Optional `agentId` on run-create is a MAY convenience.
+- **§C per-dependency degradation** — replaces RFC 0070 §D's host-global degrade-vs-refuse with pack-author-declared `peerDependenciesMeta` (`{ "<cap>": { optional: true } }`): bare entry = required (refuse if unmet), `optional: true` = degrade-if-unmet + surface `degraded[]` on the inventory entry. Default `required` (backward-compatible). Adds `peerDependenciesMeta` to `node-pack-manifest.schema.json`.
+- **§D** — records that the floor's safety guarantees (`toolAllowlist` §A14, `systemPromptRef` §C, SR-1) stay **mandatory**, not advertised sub-flags.
+
+`OpenwopClient.agents.{list,get}` across all three SDKs; conformance retargets the inventory leg to the normative endpoint (suite 1.9.0 → 1.10.0). README RFC counts: total 70 → 71, Draft 9 → 10. Full black-box dispatch conformance (executor runs a manifest agent as a node) is the sequenced follow-on tier; the in-memory reference host serving the inventory follows the workflow-engine steward host.
+
 ### feat(rfc): promote RFC 0070 Draft → Active + agent-runtime code-review fixes (2026-05-26)
 
 Promotes **RFC 0070 (`Draft → Active`)** — the wire surface landed (#268), the reference workflow-engine host implements + advertises `agents.manifestRuntime` and dispatches a manifest agent end-to-end, and the steward waived the 7-day comment window. README RFC counts: Active 5 → 6, Draft 10 → 9. `Active → Accepted` awaits a non-steward host advertising the flag.
