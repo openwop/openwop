@@ -857,6 +857,12 @@
               "type": "boolean",
               "default": false,
               "description": "When `true`, the host validates inbound task payloads against the agent's `handoff.taskSchemaRef` before dispatch and outbound results against `handoff.returnSchemaRef` before persistence (RFC 0003 §D). When `false`/absent, manifests carrying `handoff` schemas are dispatched with opaque payloads."
+            },
+            "installScope": {
+              "type": "string",
+              "enum": ["host", "tenant"],
+              "default": "host",
+              "description": "RFC 0074. Scope at which manifest agents are installed/approved and therefore enumerated by GET /v1/agents. 'host' (default): a single host-global inventory; the endpoint returns the same set for every caller (RFC 0072's original behavior). 'tenant': agents are installed per tenant·workspace (RFC 0048 owner triple); GET /v1/agents returns ONLY the agents available to the authenticated principal's workspace, and an unapproved/unknown agent 404s — the surface never discloses another tenant's inventory. Does not change dispatch (RFC 0072 §B, owner-triple-scoped POST /v1/runs) or any floor safety guarantee (toolAllowlist/systemPromptRef/SR-1 stay mandatory regardless of scope)."
             }
           }
         },
