@@ -56,7 +56,22 @@
     "peerDependencies": {
       "type": "object",
       "additionalProperties": { "type": "string" },
-      "description": "Engine-supplied capabilities the pack consumes (e.g., a particular AI provider extension). Resolved against `Capabilities` at register time."
+      "description": "Engine-supplied capabilities the pack consumes (e.g., a particular AI provider extension). Resolved against `Capabilities` at register time. Each entry is REQUIRED by default — an unmet entry fails install with `pack_peer_dependency_missing` — unless marked optional in `peerDependenciesMeta` (RFC 0072 §C)."
+    },
+    "peerDependenciesMeta": {
+      "type": "object",
+      "description": "Per-peer-dependency metadata (RFC 0072 §C). Keys mirror `peerDependencies` keys. Marking an entry `optional: true` makes it degrade-if-unmet instead of refuse-if-unmet: a host that does not satisfy it MUST install the pack with that capability inert AND surface it in the affected agents' inventory `degraded[]` (RFC 0072 §A); it MUST NOT silently ignore the declared dependency. Default (absent entry) is required. Packs published before RFC 0072 validate unchanged.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "optional": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true, an unmet peer dependency degrades (inert + surfaced in `degraded[]`) rather than failing install."
+          }
+        }
+      }
     },
     "nodes": {
       "type": "array",
