@@ -1,11 +1,22 @@
 /**
- * CLI-friendly agent-inventory endpoint.
+ * CLI-friendly agent-inventory endpoint (INTERIM, read-only).
  *
  * Namespace: sample-extension under `/v1/host/sample/*`; this is NOT part
- * of the normative OpenWOP wire contract. OpenWOP has no `/v1/agents`
- * surface — "agents" are not a first-class registry. In the multi-agent
- * execution model (RFC 0037 / 0039 / 0040), an agent is an *identity*
- * attached to the agent-attributed node types the host can run:
+ * of the normative OpenWOP wire contract.
+ *
+ * IMPORTANT — this is a placeholder, not the intended end state. Agents ARE
+ * a first-class OpenWOP surface: RFC 0003 + `schemas/agent-manifest.schema.json`
+ * define the `AgentManifest`, ~31 of which ship across `packs/core.openwop.agents.*`,
+ * and `host.agentRuntime` is a FINAL capability in `spec/v1/host-capabilities.md`.
+ * What this demo host lacks is the *runtime* that consumes them — nothing loads
+ * pack `agents[]` into an AgentRegistry (the pack loaders read only `manifest.nodes`),
+ * and `host.agentRuntime` is neither present in `capabilities.schema.json` nor
+ * advertised/implemented here. So this route cannot yet list installed manifest
+ * agents. See docs/OPENWOP-AGENT-RUNTIME-ANALYSIS.md + OPENWOP-AGENT-RUNTIME-HANDOFF.md.
+ *
+ * As an interim, it derives a read-only inventory from the agent-attributed
+ * node roles the host can actually run today (RFC 0037 / 0039 / 0040, where an
+ * agent is an *identity* stamped on events emitted by a node):
  *   - `core.orchestrator.supervisor` — the supervising agent that emits
  *     `runOrchestratorDecided` decisions (RFC 0022 §A / RFC 0006 §B).
  *   - `core.dispatch` — drives the per-decision sub-agent dispatch loop
@@ -13,12 +24,8 @@
  *   - `vendor.openwop-sample.chat-responder` — the managed-provider chat
  *     agent that emits `agent.reasoned` / `agent.reasoning.delta`.
  *
- * This route derives a small, read-only inventory of those agent roles
- * from the live node registry plus the host's advertised `agents`
- * reasoning posture, giving `openwop agents {list,info}` something stable
- * to render without inventing a new normative surface. Absent any of the
- * agent-attributed node types (e.g. a host that registered none), the
- * inventory is simply shorter.
+ * This gives `openwop agents {list,info}` something stable to render. It is to
+ * be REPLACED by a registry-backed inventory once the agent runtime is built.
  */
 
 import type { Express } from 'express';
