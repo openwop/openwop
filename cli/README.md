@@ -2,6 +2,16 @@
 
 The OpenWOP CLI is the local control plane for the `apps/workflow-engine` demo app and a lightweight client for OpenWOP-compatible hosts.
 
+## Install
+
+One-line install (detects the OS, ensures Node 22+, installs the package, then onboards):
+
+```bash
+curl -fsSL https://openwop.dev/install.sh | bash
+```
+
+Or directly: `npm i -g @openwop/cli` (needs Node 22+), then `openwop onboard`. From a repo clone, run `node cli/openwop.mjs <command>`.
+
 ## Quick start
 
 ```bash
@@ -80,6 +90,33 @@ These talk to the signed node-pack registry — a **separate surface** from the 
 - **install** downloads `/v1/packs/{name}/-/{version}.tgz`, checks its `sha256` against the manifest `integrity`, and verifies the detached Ed25519 `.sig` against the publisher key at `/keys/{keyId}.pub` (matching `signing.method` — `ed25519` signs the tarball, `manual` signs the in-tarball `pack.json`). Skip verification with `--no-verify`. Artifacts land under `~/.openwop/packs/{name}/{version}/` (override with `--dir`). Yanked versions are refused.
 - **publish** — the reference registry has **no write API** (`writeApi.supported=false`; publish is a GitHub pull request). This command performs the local **packaging + Ed25519 signing** flow (mirrors `scripts/build-pack-tarball.mjs --signed`): it emits a deterministic signed `.tgz`, a 64-byte `.sig`, and a sidecar manifest into `dist/packs/` (override with `--out`), ready to commit and PR. The private key comes from `--key <pem>`, else `~/.openwop-keys/{keyId}.private.pem`; if neither exists an ephemeral key is generated and its public half printed for pre-registration.
 - **yank** edits a **local registry checkout** — flips `"yanked": true` in the version manifest (`--undo` reverses), so the change is ready to commit, rerun `registry/scripts/build-index.mjs`, and PR. Run it from inside the repo.
+
+## Messaging & relay
+
+Connect chat channels (Signal / WhatsApp / iMessage) to the host so inbound messages drive workflow runs and replies are delivered back. Channels are a **host-extension** surface (`/v1/host/sample/messaging`), not part of the normative OpenWOP wire — the protocol stays channel-agnostic.
+
+```bash
+openwop relay setup --channel signal        # register + activate a device, store its token
+openwop relay start                          # bridge loop: heartbeat → poll outbound → deliver → ack
+openwop relay send --conversation +15551234 --text "hi"   # operator-side: queue an outbound
+openwop relay status                         # probe the device token against the host
+openwop messaging connectors list|add|enable|disable|test
+openwop messaging sessions list|inspect|close
+```
+
+How it works: the relay device owns the platform connection and bridges it to the host. Inbound messages POST to the host, which runs the bound workflow (default `sample.demo.uppercase`; override with `OPENWOP_MESSAGING_WORKFLOW_ID`) and queues the reply; the device pulls + delivers it. `doctor` reports per-channel readiness:
+
+- **Signal** needs [`signal-cli`](https://github.com/AsamK/signal-cli) on `PATH`.
+- **iMessage** needs macOS (Messages signed in + Full Disk Access for `chat.db`).
+- **WhatsApp** ships with the channel build (Baileys), not the core CLI.
+
+When a channel's tooling isn't present, `relay start` prints outbound to the console instead of silently dropping it.
+
+The relay **device token** is a host credential, so it is stored separately from `config.json` in `~/.openwop/relay-credentials.json` (mode `0600`), not in your main config. Revoke it any time with `openwop relay revoke`.
+
+## Operator surfaces
+
+Beyond runs/workflows/catalog, the CLI surfaces the host's operator endpoints: `agents`, `memory`, `media`, `webhooks`, `chat`, plus `notifications` (inbox), `interrupts` (list/resolve human-in-the-loop pauses), and `prompts` (RFC 0029 library list/get/render). Every command supports `--json`.
 
 ## Config
 
