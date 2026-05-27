@@ -1,13 +1,15 @@
-# RFC 0070: Artifact-Type Packs and AI Chat Card Packs
+# RFC 0071: Artifact-Type Packs and AI Chat Card Packs
 
 | Field | Value |
 |---|---|
-| **RFC** | 0070 |
+| **RFC** | 0071 |
 | **Title** | Artifact-Type Packs and AI Chat Card Packs |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-26 |
 | **Updated** | 2026-05-26 |
+
+> **Promotion note (2026-05-26):** Maintainer **waived the 7-day comment window** (`RFCS/README.md` §Process). The architect pass resolved all six original design questions (see §"Resolved design decisions") and the Phase-1 wire surface (`artifact-type-packs.md` + `artifact-type-pack-manifest.schema.json` + `node-packs.md` prose + `artifact.created.registered` + `§host.artifactTypes`) landed atomically, so **Phase 1 is `Active`** (wire shapes locked; conformance + reference-host implementation pending per the acceptance criteria). `Active → Accepted` for Phase 1 requires the R1 `artifact-schema-compile-bounded` invariant + test and the three conformance scenarios. **Phase 2 (chat card packs, `kind: "card"`) remains `Draft`** within this RFC pending G9 + R2.
 | **Affects** | new `spec/v1/artifact-type-packs.md` (Phase 1), new `spec/v1/chat-card-packs.md` (Phase 2), `spec/v1/node-packs.md` (§"Manifest format" kind prose + `PackNode.artifact` prose), `spec/v1/host-capabilities.md` (§host.chat, new §host.artifactTypes), `spec/v1/capabilities.md`; new `schemas/artifact-type-pack-manifest.schema.json`, new `schemas/chat-card-pack-manifest.schema.json`, `schemas/run-event-payloads.schema.json`, `schemas/capabilities.schema.json`; `api/openapi.yaml`, `api/asyncapi.yaml`; conformance scenarios |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 |
 | **Supersedes** | — |
@@ -147,18 +149,26 @@ All behavior scenarios use `describe.skipIf(!driver.capabilities.<flag>)` per `c
 3. **One combined "canvas-type" pack** porting MyndHyve's full manifest (node + card + canvas + viewers). *Rejected:* violates `positioning.md` ("openwop is the wire contract … not a renderer"); imports UI-coupled single-adopter React/Fabric.js concepts; unbounded conformance burden.
 4. **Fold cards into the existing `prompt` pack kind.** *Considered, deferred to Q4:* prompt packs distribute reusable prompt fragments; cards are prompt + typed-output-artifact + input contract. Possibly unifiable, but conflating now risks overloading `prompt-pack-manifest.schema.json`.
 
-## Unresolved questions
+## Resolved design decisions
 
-1. **Schema home.** Artifact JSON Schema in-tarball (`schemaRef`, drafted) vs. host-served `{HostBase}/schemas/artifacts/{K}` referenced by URL. Distribution-verifiability vs. host-authority.
-2. **Capability shape.** `host.artifactTypes` single capability with `store|render|export` sub-flags (drafted) vs. three dotted capabilities (`host.artifactTypes.store`, etc.), matching `host.canvas.create`/`host.canvas.crossInvoke`.
-3. **Escape-hatch permanence.** Permanently allow free-string tags (the `local.*` analog) vs. deprecate in v2 once registration is the norm. Affects whether `registered: false` is transitional or permanent.
-4. **Card kind vs. prompt kind.** Distinct `card` kind vs. extension of `prompt`.
-5. **Versioning axis.** Integer `schemaVersion` (envelope `schemaVersions` precedent, drafted) vs. semver for artifact types. Interacts with `schemaVersions{}` advertisement.
-6. **`exportFormats` vocabulary.** Free list (drafted) vs. controlled vocabulary so two hosts agree `"pptx"` means the same.
+The architect pass resolved all six original open questions, optimizing for low-friction adoption and consistency with existing corpus idioms. Each is now baked into the Phase 1 spec/schema:
+
+1. **Schema home → in-tarball source of truth + optional host-served mirror.** The schema travels in the signed tarball at `schemaRef` (offline-verifiable, no host infra required to publish — matching node packs' `*SchemaRef`); a host that installs the pack and renders SHOULD *additionally* serve it at `{HostBase}/schemas/artifacts/{artifactTypeId}.schema.json` for runtime discovery by non-installing consumers (the envelope canonical-URL convention). Both copies MUST be byte-identical. Best of both: verifiable distribution *and* frictionless resolution, neither forced.
+2. **Capability shape → single `host.artifactTypes` object** with `store` / `render` / `export[]` facets, not dotted sub-capabilities. `export` carries a list (impossible as a boolean dotted key), and the facets are negotiated together rather than dispatched as independent methods (the distinction that justifies `host.canvas.create`'s dotted form).
+3. **Unregistered types → permanent first-class tier.** Free-string `artifactType` is the `local.*`-scope analog and the adoption on-ramp; `registered: false` is a permanent, honest signal, not a transitional wart. Registration governs whether a shape is bound to a distributed contract — never a precondition for producing artifacts.
+4. **Card kind → distinct `kind: "card"`.** A prompt pack distributes reusable prompt fragments surfaced via `GET /v1/prompts`; a card is a higher-order composite (input contract + prompt + output-artifact binding) consumed via `WorkflowNode.cardType` / `ctx.chat.emitCard`. A card MAY *reference* a prompt-pack template (composition over absorption), keeping the surfaces clean and DRY.
+5. **Versioning axis → integer `schemaVersion`** on the artifact type, riding the existing `capabilities.schemaVersions: Record<string, number>` advertisement; the *pack* keeps SemVer. This is the exact envelope split; semver minor/patch is meaningless for a wire schema.
+6. **`exportFormats` → reserved core identifier set + `vendor.*`/`x-` extension.** A core vocabulary (`pdf`, `pptx`, `docx`, `md`, `html`, `png`, `svg`, `csv`, `json`, `step`, `stl`, …) carries interoperable meaning; domain formats extend via prefixed identifiers. Mirrors the `requiredModelCapabilities` idiom — interop without a codec spec.
+
+## Remaining open items (gate Phase-1 `Active`)
+
+1. **R1 — bounded artifact-schema compilation.** Distributed schemas are attacker-controllable input the engine compiles (Ajv). Before `Active`: bound schema byte-size, `$ref` depth, and keyword count at registry `PUT` and at install; compile under a timeout; reject catastrophic-backtracking `pattern`s. Land a protocol-tier `artifact-schema-compile-bounded` MUST-NOT in `SECURITY/invariants.yaml` + a public conformance test (`scripts/check-security-invariants.sh` gate). Extends `SECURITY/threat-model-node-packs.md`.
+2. **R2 — card-input trust boundary (Phase 2).** Card `prompt.template` interpolates workflow inputs; those derive `EnvelopeMeta.contentTrust: 'untrusted'` and MUST propagate through `ctx.aiEnvelope.generate`. Document in `SECURITY/threat-model-prompt-injection.md` + assert trust-tag propagation in `chat-card-pack-execution`.
+3. **G9 — portable card input-field subset.** Confirm the `inputs[].type` closed enum (`text|longtext|number|boolean|select|artifact-ref`) against MyndHyve's field types before Phase 2 schema freeze.
 
 ## Implementation notes (non-normative)
 
-- **Sequencing:** Phase 1 is independently shippable and should reach `Accepted` before Phase 2 (whose `outputArtifactType` references Phase 1's registry). `/plan 0070` produced two milestone tracks.
+- **Sequencing:** Phase 1 is independently shippable and should reach `Accepted` before Phase 2 (whose `outputArtifactType` references Phase 1's registry). `/plan 0071` produced two milestone tracks.
 - **Reuse, don't reinvent:** registry `PUT` already validates per-`kind` and emits `pack_kind_invalid`; adding two kinds = two new manifest schemas + registry recognizing two new `kind` values. `node-pack-manifest.schema.json` is untouched. Signing (Ed25519) and naming are inherited.
 - **Gate (`scripts/openwop-check.sh`):** new RFC + two spec docs + two schemas trigger **step 7** (`generate-protocol-status.mjs --check`): update `README.md` corpus + RFC counts, then `npm run protocol:status`. **Step 9** (`check-security-invariants.sh`) fires if a new MUST-NOT lands (see Risk R1). OpenAPI/AsyncAPI (steps 5–6) need the new manifest component(s).
 - **Security:** distributed artifact/output schemas are attacker-compilable input (Ajv) — bound size/`$ref`-depth at registry `PUT`, add a protocol-tier MUST-NOT invariant + public test (R1). Card prompt templates are a prompt-injection surface — mandate `contentTrust='untrusted'` propagation (R2).
@@ -180,4 +190,4 @@ All behavior scenarios use `describe.skipIf(!driver.capabilities.<flag>)` per `c
 - Related RFCs: RFC 0013 (workflow-chain packs — pack-kind precedent), RFC 0028 (prompt packs — third-kind precedent), RFC 0055 (`meta.rendering` — vocabulary reused), RFC 0065 (`outputRole`), RFC 0066 (`x-openwop-form` — advisory-UI-hint precedent).
 - Prior art: MyndHyve `CanvasManifest`/`CardTemplateDefinition`/`ArtifactTypeDefinition`; OpenWOP demo app `chat/registry/CardHost.tsx`; npm pack-kind / Helm chart-type discriminators; MCP resource typing.
 - Research: `docs/OPENWOP-CANVAS-TYPE-PACKS-RESEARCH.md`.
-- Companion registers: `RFCS/registers/0070-artifact-type-and-chat-card-packs.gaps.md`, `RFCS/registers/0070-artifact-type-and-chat-card-packs.risks.md`.
+- Companion registers: `RFCS/registers/0071-artifact-type-and-chat-card-packs.gaps.md`, `RFCS/registers/0071-artifact-type-and-chat-card-packs.risks.md`.

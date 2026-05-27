@@ -608,7 +608,7 @@
         "nodeId":       { "type": "string" },
         "version":      { "type": "string" },
         "summary":      { "type": "string" },
-        "registered":   { "type": "boolean", "description": "RFC 0070. True when `artifactType` resolves to an `artifactTypeId` of an installed artifact-type pack (and the payload was validated against its schema); false for unregistered/host-local types accepted without schema validation. Optional; absent ⇒ treat as true, preserving pre-RFC-0070 semantics. See artifact-type-packs.md §\"Binding the existing artifact surfaces\"." }
+        "registered":   { "type": "boolean", "description": "RFC 0071. True when `artifactType` resolves to an `artifactTypeId` of an installed artifact-type pack (and the payload was validated against its schema); false for unregistered/host-local types accepted without schema validation. Optional; absent ⇒ treat as true, preserving pre-RFC-0071 semantics. See artifact-type-packs.md §\"Binding the existing artifact surfaces\"." }
       },
       "additionalProperties": true
     },

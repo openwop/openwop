@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/artifact-type-pack-manifest.schema.json",
   "title": "ArtifactTypePackManifest",
-  "description": "Manifest for a published OpenWOP artifact-type pack — `pack.json` at the pack root with `kind: \"artifact-type\"`. Peer to `node-pack-manifest.schema.json` (RFC 0003), `workflow-chain-pack-manifest.schema.json` (RFC 0013), and `prompt-pack-manifest.schema.json` (RFC 0028); disjoint from all three via the `kind` discriminator. See `spec/v1/artifact-type-packs.md` for the canonical contract and RFC 0070 for the rationale.\n\nArtifact-type packs distribute typed artifact definitions — the JSON Schema, rendering hint, lifecycle, and export-format hints for the rich outputs workflow nodes produce — via the same signed-tarball + Ed25519 + SRI pipeline that already serves node, workflow-chain, and prompt packs. When a host installs an artifact-type pack and advertises `host.artifactTypes: { supported: true }`, it validates produced artifacts of the declared `artifactTypeId`s against their `schemaRef` before emitting `artifact.created`.",
+  "description": "Manifest for a published OpenWOP artifact-type pack — `pack.json` at the pack root with `kind: \"artifact-type\"`. Peer to `node-pack-manifest.schema.json` (RFC 0003), `workflow-chain-pack-manifest.schema.json` (RFC 0013), and `prompt-pack-manifest.schema.json` (RFC 0028); disjoint from all three via the `kind` discriminator. See `spec/v1/artifact-type-packs.md` for the canonical contract and RFC 0071 for the rationale.\n\nArtifact-type packs distribute typed artifact definitions — the JSON Schema, rendering hint, lifecycle, and export-format hints for the rich outputs workflow nodes produce — via the same signed-tarball + Ed25519 + SRI pipeline that already serves node, workflow-chain, and prompt packs. When a host installs an artifact-type pack and advertises `host.artifactTypes: { supported: true }`, it validates produced artifacts of the declared `artifactTypeId`s against their `schemaRef` before emitting `artifact.created`.",
   "type": "object",
   "required": ["name", "version", "kind", "engines", "artifactTypes"],
   "additionalProperties": false,
@@ -93,9 +93,14 @@
         "rendering": { "$ref": "#/$defs/RenderingHint" },
         "exportFormats": {
           "type": "array",
-          "items": { "type": "string", "minLength": 1, "maxLength": 64 },
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^([a-z][a-z0-9]*|vendor\\.[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*|x-[a-z][a-z0-9-]*)$"
+          },
           "uniqueItems": true,
-          "description": "Export-format identifiers (hints) a renderer MAY offer (e.g., `pdf`, `pptx`, `stl`). Advisory: this spec assigns no byte-level meaning to any identifier."
+          "description": "Export-format identifiers (hints) a renderer MAY offer. Spec-reserved core identifiers carry interoperable meaning (the lowercase file-extension / common name): `pdf`, `pptx`, `docx`, `xlsx`, `md`, `html`, `txt`, `csv`, `json`, `png`, `svg`, `jpeg`, `step`, `stl`, `dxf`. Domain-specific formats outside the core set MUST be `vendor.<org>.<format>`- or `x-<format>`-prefixed (mirrors the `requiredModelCapabilities` reserved-core + extension idiom). Advisory: this spec assigns no byte-level production semantics to any identifier — it standardizes the identifier so two hosts agree what `pptx` names, not how the bytes are produced."
         },
         "syncOn": {
           "type": "string",

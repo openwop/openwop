@@ -1,6 +1,6 @@
 # openwop Spec v1 — Artifact-Type Packs
 
-> **Status: DRAFT (2026-05-26).** Phase 1 of [RFC 0070 — Artifact-Type Packs and AI Chat Card Packs](../../RFCS/0070-artifact-type-and-chat-card-packs.md). Specifies a new pack kind that publishes **typed artifact definitions** — the schema, rendering hint, lifecycle, and export-format hints for the rich outputs workflow nodes produce (documents, slides, app designs, CAD drawings). Promotes to FINAL when (a) the reference host implements `host.artifactTypes` store-side and (b) the manifest-validation + install + store-without-render conformance scenarios pass. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
+> **Status: DRAFT (2026-05-26).** Phase 1 of [RFC 0071 — Artifact-Type Packs and AI Chat Card Packs](../../RFCS/0071-artifact-type-and-chat-card-packs.md). Specifies a new pack kind that publishes **typed artifact definitions** — the schema, rendering hint, lifecycle, and export-format hints for the rich outputs workflow nodes produce (documents, slides, app designs, CAD drawings). Promotes to FINAL when (a) the reference host implements `host.artifactTypes` store-side and (b) the manifest-validation + install + store-without-render conformance scenarios pass. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
 
 ---
 
@@ -71,20 +71,30 @@ A manifest with `kind: "artifact-type"` validates against [`artifact-type-pack-m
 | `schemaVersion` | SHOULD | Non-negative integer, parallel to the per-kind integer in `capabilities.schemaVersions` (`capabilities.md`). Absent ⇒ treated as `0`. Bumped when the artifact schema changes shape. |
 | `displayName` | MAY | Human-readable label for management UIs. Non-normative. |
 | `rendering` | MAY | Advisory `RenderingHint`. When present it MUST reuse the vocabulary defined in `ai-envelope.md` §"Rendering hints": a closed `display` enum (`markdown` / `code` / `image` / `audio` / `file`; `card` is reserved for envelopes and SHOULD NOT be used for durable artifacts), plus optional `mimeType`, `lang`, `alt`, `title`. It is advisory only — consumers MUST degrade gracefully when they do not recognize a value and MUST NOT treat `rendering` as a validation input. |
-| `exportFormats` | MAY | List of export-format **identifiers** (hints) a renderer MAY offer (e.g., `"pdf"`, `"pptx"`, `"stl"`). This spec assigns no byte-level meaning to any identifier; producing bytes is a host concern. |
+| `exportFormats` | MAY | List of export-format **identifiers** (hints) a renderer MAY offer. Spec-reserved core identifiers carry interoperable meaning (the lowercase file-extension / common name): `pdf`, `pptx`, `docx`, `xlsx`, `md`, `html`, `txt`, `csv`, `json`, `png`, `svg`, `jpeg`, `step`, `stl`, `dxf`. Identifiers outside the core set MUST be `vendor.<org>.<format>`- or `x-<format>`-prefixed (the same reserved-core + extension idiom as `requiredModelCapabilities` in `node-packs.md`). This spec assigns no byte-level *production* semantics to any identifier — it standardizes the identifier so two hosts agree what `pptx` names, not how the bytes are produced. |
 | `syncOn` | SHOULD | When the host registers the artifact as durable: `"completion"` (on node completion), `"approval"` (after a HITL gate resolves), or `"manual"` (host-triggered). Default `"completion"`. Carries the same meaning as `nodes[].artifact.syncOn`. |
 | `supportsCheckpoint` | MAY | `true` if the artifact participates in checkpoint/resume. Mirrors `nodes[].artifact.supportsCheckpoint`. |
 | `versionable` | MAY | `true` if the host SHOULD retain prior versions of the artifact. Non-normative storage hint. |
 | `diffable` | MAY | `true` if the artifact's schema supports structural diffing (informs run-diff tooling, `rest-endpoints.md` §:diff). Non-normative. |
+
+### Schema distribution — source of truth and runtime mirror
+
+The artifact's JSON Schema travels **inside the signed pack tarball** at `schemaRef` — this is the normative source of truth. It is covered by the pack's Ed25519 signature and SRI hash (`node-packs.md` §signing, §"Content addressing"), so a consumer that installs the pack can verify the schema offline, exactly as it already does for a node's `configSchemaRef` / `inputSchemaRef` / `outputSchemaRef`. No host infrastructure is required to *publish* an artifact type — an author drops a schema file in the tarball and signs it.
+
+For *runtime* discovery by consumers that have not installed the pack (a peer host forwarding an artifact, a UI resolving a stored artifact's shape), a host that has installed an artifact-type pack and advertises `host.artifactTypes` **SHOULD** additionally serve each registered type's schema at the canonical URL `{HostBase}/schemas/artifacts/{artifactTypeId}.schema.json` (the artifact analog of the envelope convention in `ai-envelope.md` §"Canonical schema location"), with `Content-Type: application/schema+json`. The schema's `$id` MUST be that canonical URL. The in-tarball copy and the host-served copy MUST be byte-identical for a given `(artifactTypeId, schemaVersion)`. This gives both verifiable offline distribution (the pack) and frictionless runtime resolution (the URL) without forcing either on an adopter who only needs one.
+
+### Bounded schema compilation (normative)
+
+Because `schemaRef` schemas are third-party-authored and the engine compiles them (e.g., Ajv) at install and at validation time, a host MUST bound that compilation so a malicious or malformed pack cannot cause denial of service. At registry `PUT` and at pack install, a host MUST reject an artifact schema that exceeds host bounds on serialized byte size, `$ref` nesting depth, and total keyword/subschema count, and MUST compile under a wall-clock timeout. A host SHOULD reject schemas containing a regular-expression `pattern` it cannot evaluate in linear time (catastrophic-backtracking defense). Rejection returns `pack_validation_failed` (structural mismatches use `pack_kind_invalid`). This is the artifact-schema analog of the node-pack supply-chain controls in [`SECURITY/threat-model-node-packs.md`](../../SECURITY/threat-model-node-packs.md), enforced by the protocol-tier `artifact-schema-compile-bounded` invariant (RFC 0071 risk R1).
 
 ## Binding the existing artifact surfaces
 
 The protocol already carries three artifact references that, until now, lacked a registry to resolve against. When a host advertises `host.artifactTypes` (below), it MUST treat them as follows:
 
 - A `nodes[].artifact.typeId` (node-pack manifest), a `WorkflowNode.artifactType` (workflow definition), or an `artifact.created.artifactType` (run event) value that **matches an `artifactTypeId` of an installed artifact-type pack** is *registered*. Before emitting `artifact.created` for a registered type, the host MUST validate the artifact payload against the type's `schemaRef`; on failure it MUST NOT emit `artifact.created` and MUST surface the validation error.
-- A value that matches **no** installed artifact type is *unregistered*. Unregistered values remain valid — the host MUST NOT reject them and MUST NOT schema-validate them. This is the deliberate escape hatch for in-development and host-local artifact types, mirroring the `local.*` pack scope. The host SHOULD set `artifact.created.registered: false` for these and SHOULD log an unresolved-artifact-type warning (a typo'd `artifactTypeId` otherwise fails silent).
+- A value that matches **no** installed artifact type is *unregistered*. Unregistered values remain valid — the host MUST NOT reject them and MUST NOT schema-validate them. This is a **permanent, first-class tier**, not a transitional allowance: it is the artifact-type analog of the `local.*` pack scope, and it is the on-ramp that lets any node emit a typed artifact (a prototype's `"prd"`, a host-private type) without first publishing and signing a pack. Registration governs *whether an artifact's shape is bound to a distributed contract*; it is never a precondition for producing artifacts. The host SHOULD set `artifact.created.registered: false` for unregistered types — a stable, honest signal consumers and tooling can act on (e.g., warn on a typo'd `artifactTypeId` that was meant to resolve) — and SHOULD log an unresolved-artifact-type warning.
 
-A host that does **not** advertise `host.artifactTypes` treats every `artifactType` as today: an opaque string, never schema-validated. The `registered` field defaults to `true`, preserving the pre-RFC-0070 semantics in which every artifact was effectively accepted without registry validation.
+A host that does **not** advertise `host.artifactTypes` treats every `artifactType` as today: an opaque string, never schema-validated. The `registered` field defaults to `true`, preserving the pre-RFC-0071 semantics in which every artifact was effectively accepted without registry validation.
 
 ## Host capability — `host.artifactTypes`
 
@@ -120,19 +130,28 @@ A pack MAY declare `peerDependencies: { "host.artifactTypes": "supported" }`; th
 
 **Store-without-render (negotiation).** A host advertising `host.artifactTypes: { supported: true, store: true, render: false }` runs a workflow whose terminal node declares `artifact.typeId: "vendor.acme.cad.model"`. The host validates the payload against the registered schema, persists it, emits `artifact.created` with `registered: true`, and completes the run — it does not fail for lack of a CAD renderer.
 
+## Resolved design decisions
+
+The RFC 0071 architect pass resolved the design questions this doc was drafted against, optimizing for low-friction, widely-adoptable wire shapes consistent with the existing corpus:
+
+| Decision | Resolution | Grounding |
+|---|---|---|
+| Schema home | **In-tarball `schemaRef` is the signed source of truth; the host SHOULD additionally serve it at `{HostBase}/schemas/artifacts/{artifactTypeId}.schema.json`.** | Matches node packs' in-tarball `*SchemaRef` (offline-verifiable, no host infra to publish) + the envelope canonical-URL convention (runtime discovery). See §"Schema distribution". |
+| Capability shape | **Single `host.artifactTypes` object with `store` / `render` / `export[]` facets** (not dotted sub-capabilities). | `export` carries a list; the facets are negotiated together, not dispatched as separate methods (unlike `host.canvas.create`). |
+| Versioning axis | **Integer `schemaVersion` on the artifact type (riding `capabilities.schemaVersions{}`); the *pack* keeps SemVer.** | Exactly the envelope split (`schemaVersions: Record<string, number>`); semver's minor/patch is meaningless for a wire schema. |
+| `exportFormats` | **Reserved core identifier set + `vendor.*`/`x-` extension.** | Mirrors the `requiredModelCapabilities` reserved-core + extension idiom; gives interop without a codec spec. |
+| Unregistered types | **Permanent first-class tier** (`registered: false`), not a transitional escape hatch. | The adoption on-ramp; the `local.*`-scope analog. |
+
 ## Open spec gaps
 
 | Gap | Tracking |
 |---|---|
-| Whether the artifact schema lives in-tarball (`schemaRef`, specified here) or is host-served and referenced by URL. | RFC 0070 Unresolved Q1 |
-| Whether `host.artifactTypes` stays a single capability with sub-flags or splits into dotted `host.artifactTypes.{store,render,export}`. | RFC 0070 Unresolved Q2 |
-| Whether `schemaVersion` (integer) or pack-style semver is the right versioning axis for an artifact type. | RFC 0070 Unresolved Q5 |
-| Whether `exportFormats` identifiers are free or drawn from a controlled vocabulary. | RFC 0070 Unresolved Q6 |
-| Chat card packs (`kind: "card"`), which produce artifacts of these types via prompts. | RFC 0070 Phase 2 / `chat-card-packs.md` (pending) |
+| Chat card packs (`kind: "card"`), which produce artifacts of these types via prompts. | RFC 0071 Phase 2 / `chat-card-packs.md` (pending) |
+| Bounded-compilation limits for distributed artifact schemas (schema-bomb / ReDoS defense) — the protocol-tier invariant + conformance test that gates this surface to `Active`. | RFC 0071 risk R1 / `SECURITY/invariants.yaml` |
 
 ## References
 
-- [RFC 0070 — Artifact-Type Packs and AI Chat Card Packs](../../RFCS/0070-artifact-type-and-chat-card-packs.md)
+- [RFC 0071 — Artifact-Type Packs and AI Chat Card Packs](../../RFCS/0071-artifact-type-and-chat-card-packs.md)
 - [`node-packs.md`](./node-packs.md) — pack identity, naming, distribution, signing, registry API, the `kind` discriminator.
 - [`ai-envelope.md`](./ai-envelope.md) — the `RenderingHint` vocabulary reused here; the `{HostBase}/schemas/envelopes/{K}` convention paralleled by `schemas/artifacts/{artifactTypeId}`.
 - [`host-capabilities.md`](./host-capabilities.md) — the `host.*` contract pattern; §host.artifactTypes.

@@ -1,6 +1,8 @@
-# RFC 0070 — Gap Register
+# RFC 0071 — Gap Register
 
 Open questions, deferred decisions, and missing inputs beyond the in-template Unresolved questions. Each gap has an owner and a resolution path. Gaps with no path are promoted to the Risk register.
+
+> **Architect-pass resolutions (2026-05-26):** **G1 RESOLVED** — in-tarball `schemaRef` source of truth + optional host-served `{HostBase}/schemas/artifacts/{id}` mirror (byte-identical). **G2 RESOLVED** — single `host.artifactTypes` object with `store`/`render`/`export[]` facets (not dotted; `export` needs a list). **G3 RESOLVED** — integer `schemaVersion` riding `capabilities.schemaVersions{}`; pack stays SemVer. **G4 RESOLVED** — distinct `kind: "card"`; a card MAY reference a prompt-pack template (composition). **G5 RESOLVED** — `exportFormats` reserved-core vocabulary + `vendor.*`/`x-` extension. **Escape-hatch RESOLVED** — unregistered types are a permanent first-class tier. **Still open:** G7 (R1 bounded-schema-compilation invariant — gates `Active`), G8 (R2 card-input trust boundary — gates Phase 2 `Active`), G9 (portable card field subset), G10/G11/G12 (impl-time), G6 (no reference host — defer per acceptance clause).
 
 | ID | Section | Question / Missing Input | Owner | Resolution Path | Blocks |
 |---|---|---|---|---|---|
@@ -16,4 +18,4 @@ Open questions, deferred decisions, and missing inputs beyond the in-template Un
 | G10 | Compatibility | `artifact.created.registered` default `true` assumes "unregistered behaves as today." Confirm no existing consumer infers schema-validity from event presence. | Compatibility Architect | Audit demo app + MyndHyve `artifact.created` consumers | Schema delta sign-off |
 | G11 | Process | README corpus counts (`N prose specs`, `N JSON Schemas`, `Draft (N)`) must sync or `openwop:check` step 7 fails. Two new spec docs + two schemas + one RFC. | Implementer | Run `npm run protocol:status`; update README counts in the impl PR | Green gate at implementation time |
 | G12 | Phase2 binding | Relationship between a card's `outputArtifactType` and `WorkflowNode.cardType`/`artifactType` when a node both *runs* a card and *produces* its artifact — annotated with one, the other, or both? | Spec Architect | Worked example in `chat-card-packs.md`; align with RFC 0065 `outputRole` | Phase 2 prose clarity |
-| G13 | Numbering | RFC renumbered 0067 → **0070** (0067–0069 were taken on origin/main; local base was 23 commits stale). Registers relocated to `RFCS/registers/` per origin/main convention. | Implementer | Resolved during implementation | — (closed) |
+| G13 | Numbering | RFC renumbered 0067 → 0070 → **0071** — 0067–0069 were taken when the worktree was cut (stale local base), then 0070 was claimed mid-session by a parallel session (`agent-manifest-runtime`). Registers relocated to `RFCS/registers/` per origin/main convention. | Implementer | Resolved during implementation | — (closed) |

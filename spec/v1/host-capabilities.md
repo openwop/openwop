@@ -343,6 +343,33 @@ ctx.canvas.crossInvoke({
 
 ---
 
+## §host.artifactTypes
+
+**Capability flag:** `host.artifactTypes: { supported, store, render, export[] }`
+
+**Used by:** artifact-type packs (`kind: "artifact-type"`, RFC 0071 — see [`artifact-type-packs.md`](./artifact-type-packs.md)).
+
+Unlike most `host.*` capabilities, this one adds **no `ctx.artifactTypes.*` method**: it is an advertisement that changes how the host treats the artifact references already on the wire (`nodes[].artifact.typeId`, `WorkflowNode.artifactType`, `artifact.created.artifactType`). The facets are negotiated together, not dispatched independently:
+
+```jsonc
+"host.artifactTypes": {
+  "supported": true,
+  "store":  true,           // persists registered artifacts + emits artifact.created
+  "render": false,          // advisory; the spec defines no rendering surface
+  "export": ["pdf"]         // export-format identifiers the host can materialize
+}
+```
+
+**Behavior (normative):**
+- When `supported`, the host validates an artifact whose type matches an installed artifact-type pack's `artifactTypeId` against that pack's schema before emitting `artifact.created` (and sets `registered: true`); unregistered types are accepted unvalidated with `registered: false` (the permanent first-class tier). See `artifact-type-packs.md` §"Binding the existing artifact surfaces".
+- A host advertising `store: true` MUST persist registered artifacts and emit `artifact.created`.
+- A host advertising `render: false` for a type it can `store` MUST still accept and store the artifact and MUST NOT fail the run for lack of a renderer — the cross-host store-without-render negotiation guarantee.
+- The host MUST bound third-party schema compilation per `artifact-type-packs.md` §"Bounded schema compilation" (`artifact-schema-compile-bounded` invariant).
+
+A pack MAY declare `peerDependencies: { "host.artifactTypes": "supported" }`; the registry refuses registration against a host that does not advertise it.
+
+---
+
 ## §host.chat
 
 **Capability flag:** `host.chat: supported`
