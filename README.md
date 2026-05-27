@@ -354,7 +354,7 @@ See [CHANGELOG.md](./CHANGELOG.md) — `[1] — 2026-05-08 — OpenWOP v1 FINAL 
 - [**RFC 0054**](./RFCS/0054-run-diff-and-execution-comparison.md) — Run diff & execution comparison (`Draft`). Read-only `GET /v1/runs/{runId}:diff?against={otherRunId}` returning a deterministic, replay-aware structured diff. MyndHyve opted out.
 
 **v1 Foundation (2026-04-27):**
-Current generated state: 42 prose specs (35 FINAL + 7 DRAFT) · 42 JSON Schemas · 37 OpenAPI operations · AsyncAPI 3.1 · 282 conformance scenario files · 3 reference SDKs. See [docs/PROTOCOL-STATUS.md](./docs/PROTOCOL-STATUS.md) for the machine-generated snapshot.
+Current generated state: 42 prose specs (35 FINAL + 7 DRAFT) · 42 JSON Schemas · 37 OpenAPI operations · AsyncAPI 3.1 · 283 conformance scenario files · 3 reference SDKs. See [docs/PROTOCOL-STATUS.md](./docs/PROTOCOL-STATUS.md) for the machine-generated snapshot.
 
 - **Protocol corpus** — Normative REST, SSE, discovery, auth, idempotency, replay/fork, interruption, observability, node-pack, host-extension, and version-negotiation contracts are frozen for v1.
 - **Machine-readable contracts** — OpenAPI 3.1, AsyncAPI 3.1, and JSON Schemas are bundled and cross-validated by the conformance corpus.
