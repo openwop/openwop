@@ -170,3 +170,39 @@ describe('messaging connectors (CLI)', () => {
     assert.match(testCap.stdout, /✓ conn_signal/);
   });
 });
+
+import { detectChannelAvailability } from '../lib/cli.mjs';
+
+describe('channel availability detection', () => {
+  it('reports whatsapp as unavailable in the core CLI', () => {
+    const r = detectChannelAvailability('whatsapp', {});
+    assert.equal(r.available, false);
+    assert.match(r.detail, /baileys|channel build/i);
+  });
+  it('gates imessage on macOS (forceable via env)', () => {
+    assert.equal(detectChannelAvailability('imessage', { OPENWOP_FORCE_PLATFORM: 'darwin' }).available, true);
+    assert.equal(detectChannelAvailability('imessage', { OPENWOP_FORCE_PLATFORM: 'linux' }).available, false);
+  });
+  it('reports an unknown channel', () => {
+    assert.equal(detectChannelAvailability('telegram', {}).available, false);
+  });
+});
+
+describe('doctor surfaces relay readiness', () => {
+  it('warns when no relay configured, reports when configured', async () => {
+    // no relay yet
+    const cap1 = capture();
+    await runCli(['doctor', '--json', '--base-url', 'http://127.0.0.1:0'], opts(async () => { throw new Error('offline'); }, cap1));
+    const doc1 = JSON.parse(cap1.stdout);
+    assert.ok(doc1.checks.some((c) => c.name === 'relay' && /no messaging relay/.test(c.message)));
+
+    // configure a relay, then doctor should report it + channel readiness
+    await runCli(['relay', 'setup', '--channel', 'imessage'], opts(relayServer(), capture()));
+    const cap2 = capture();
+    await runCli(['doctor', '--json', '--base-url', 'http://127.0.0.1:0'],
+      { ...opts(async () => { throw new Error('offline'); }, cap2), env: { OPENWOP_CONFIG_HOME: configHome, OPENWOP_FORCE_PLATFORM: 'darwin' } });
+    const doc2 = JSON.parse(cap2.stdout);
+    assert.ok(doc2.checks.some((c) => c.name === 'relay' && /imessage relay relay_/.test(c.message)));
+    assert.ok(doc2.checks.some((c) => c.name === 'channel imessage'));
+  });
+});
