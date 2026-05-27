@@ -26,6 +26,7 @@ import { ensureNotificationEmitterInstalled } from './bootstrap/notifications.js
 import { ensureInvocationLogInstalled } from './bootstrap/invocationLog.js';
 import { ensureRuntimeCapabilityRegistryInstalled } from './bootstrap/runtimeCapabilityRegistry.js';
 import { ensureNodePackResolverInstalled } from './bootstrap/nodePackResolver.js';
+import { ensureAgentPackResolverInstalled } from './bootstrap/agentPackResolver.js';
 import { ensureRegistryPacksInstalled } from './bootstrap/installRegistryPacks.js';
 import { ensureLocalPacksMounted } from './bootstrap/mountLocalPacks.js';
 import { loadPromptPacks, defaultPromptPackRoots } from './host/promptPackLoader.js';
@@ -217,6 +218,13 @@ export async function createApp(config: AppConfig): Promise<Express> {
     process.env.OPENWOP_INSTALL_PACKS = 'none';
   }
   await ensureRegistryPacksInstalled();
+
+  // RFC 0070: load pack-declared manifest agents into the AgentRegistry
+  // (the RFC 0003 `installAgents` step). Runs after local mount + registry
+  // install so every on-disk pack's `agents[]` is resolvable. Agent-only
+  // packs (nodes: []) have no node typeId to lazily trigger, so this eager
+  // pass is what makes them dispatchable + visible in the inventory.
+  ensureAgentPackResolverInstalled(storage);
 
   // RFC 0028 §B prompt-pack boot-time loader. Scans the in-tree
   // `examples/packs/` plus any operator-managed dir
