@@ -1,3 +1,4 @@
+import type { Ctx } from '../context.js';
 /** `openwop media ...` — generate-image / transcribe / synthesize via core.openwop.ai. */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve as resolvePath } from 'node:path';
@@ -28,7 +29,7 @@ Examples:
 `;
 
 
-export async function runMedia(ctx, argv) {
+export async function runMedia(ctx: Ctx, argv) {
   const sub = argv[0];
   const args = argv.slice(1);
   if (!sub || sub === '--help' || sub === '-h') {
@@ -47,7 +48,7 @@ export async function runMedia(ctx, argv) {
   }
 }
 
-async function runMediaGenerateImage(ctx, argv) {
+async function runMediaGenerateImage(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--prompt', '--output'],
@@ -77,7 +78,7 @@ async function runMediaGenerateImage(ctx, argv) {
   return 0;
 }
 
-async function runMediaTranscribe(ctx, argv) {
+async function runMediaTranscribe(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--file', '--language'],
@@ -112,7 +113,7 @@ async function runMediaTranscribe(ctx, argv) {
   return 0;
 }
 
-async function runMediaSynthesize(ctx, argv) {
+async function runMediaSynthesize(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--text', '--voice', '--output'],
@@ -146,7 +147,7 @@ async function runMediaSynthesize(ctx, argv) {
 /** Fetch a media-asset URL (relative to the host base URL) and write the
  *  raw bytes to `outPath`. The asset serve route is token-authed (the URL
  *  IS the credential) so no Authorization header is required. */
-async function downloadAsset(ctx, assetUrl, outPath) {
+async function downloadAsset(ctx: Ctx, assetUrl, outPath) {
   if (typeof assetUrl !== 'string' || assetUrl.length === 0) {
     throw new CliError('media response did not include an asset URL to download');
   }

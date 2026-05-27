@@ -1,3 +1,4 @@
+import type { Ctx } from '../context.js';
 /** `openwop cron ...` — manage RFC 0052 scheduled jobs (sample-extension). */
 import { requestJson } from '../api.js';
 import { CliError } from '../errors.js';
@@ -23,7 +24,7 @@ surface — not part of the normative OpenWOP wire contract.
 `;
 
 
-export async function runCron(ctx, argv) {
+export async function runCron(ctx: Ctx, argv) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'add', 'remove', 'rm', 'trigger'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -45,7 +46,7 @@ export async function runCron(ctx, argv) {
   }
 }
 
-async function runCronList(ctx, argv) {
+async function runCronList(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, CRON_HELP);
@@ -71,7 +72,7 @@ async function runCronList(ctx, argv) {
   return 0;
 }
 
-async function runCronAdd(ctx, argv) {
+async function runCronAdd(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--workflow', '--job-id', '--first-fire-at-ms'],
@@ -95,7 +96,7 @@ async function runCronAdd(ctx, argv) {
   return 0;
 }
 
-async function runCronRemove(ctx, argv) {
+async function runCronRemove(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop cron remove <jobId> [--json]\n');
@@ -107,7 +108,7 @@ async function runCronRemove(ctx, argv) {
   return 0;
 }
 
-async function runCronTrigger(ctx, argv) {
+async function runCronTrigger(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop cron trigger <jobId> [--json]\n');

@@ -1,3 +1,4 @@
+import type { Ctx } from '../context.js';
 /** `openwop interrupts ...` — list open interrupts for a run; resolve by token. */
 
 import { requestJson } from '../api.js';
@@ -14,7 +15,7 @@ one by its capability token. \`--data-json\` is the resume payload (validated
 against the interrupt's resumeSchema by the host).
 `;
 
-export async function runInterrupts(ctx: any, argv: string[]): Promise<number> {
+export async function runInterrupts(ctx: Ctx, argv: string[]): Promise<number> {
   const sub = argv[0];
   if (!sub || sub === '--help' || sub === '-h') { write(ctx.io.stdout, INTERRUPTS_HELP); return sub ? 0 : 2; }
   const rest = argv.slice(1);

@@ -1,3 +1,4 @@
+import type { Ctx } from './context.js';
 /** Repo-root discovery + demo project paths (run-from-checkout commands). */
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve as resolvePath } from 'node:path';
@@ -27,7 +28,7 @@ export function findRepoRoot(startDir) {
   }
 }
 
-export function requireRepoRoot(ctx) {
+export function requireRepoRoot(ctx: Ctx) {
   if (ctx.repoRoot) return ctx.repoRoot;
   throw new CliError('This command needs to run from inside the OpenWOP repository checkout.');
 }

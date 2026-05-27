@@ -1,3 +1,4 @@
+import type { Ctx } from '../context.js';
 /** `openwop webhooks ...` — manage HMAC-signed webhook subscriptions. */
 import { requestJson } from '../api.js';
 import { CliError } from '../errors.js';
@@ -23,7 +24,7 @@ Manage HMAC-signed webhook subscriptions on the configured host (POST/GET/DELETE
 Note: \`list\` never returns the signing secret.
 `;
 
-export async function runWebhooks(ctx, argv) {
+export async function runWebhooks(ctx: Ctx, argv) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'add', 'remove', 'rm', 'test'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -45,7 +46,7 @@ export async function runWebhooks(ctx, argv) {
   }
 }
 
-async function runWebhooksList(ctx, argv) {
+async function runWebhooksList(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, WEBHOOKS_HELP);
@@ -71,7 +72,7 @@ async function runWebhooksList(ctx, argv) {
   return 0;
 }
 
-async function runWebhooksAdd(ctx, argv) {
+async function runWebhooksAdd(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--secret'],
@@ -103,7 +104,7 @@ async function runWebhooksAdd(ctx, argv) {
   return 0;
 }
 
-async function runWebhooksRemove(ctx, argv) {
+async function runWebhooksRemove(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop webhooks remove <subscriptionId> [--json]\n');
@@ -115,7 +116,7 @@ async function runWebhooksRemove(ctx, argv) {
   return 0;
 }
 
-async function runWebhooksTest(ctx, argv) {
+async function runWebhooksTest(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop webhooks test <subscriptionId> [--json]\n');

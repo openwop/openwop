@@ -1,3 +1,4 @@
+import type { Ctx } from '../context.js';
 /** `openwop memory ...` — demo MemoryAdapter list/search/get/delete. */
 import { requestJson } from '../api.js';
 import { CliError } from '../errors.js';
@@ -21,7 +22,7 @@ cross tenant boundaries. Select the tenant with --api-key / OPENWOP_API_KEY.
   --limit n          Cap the number of entries the host returns.
 `;
 
-export async function runMemory(ctx, argv) {
+export async function runMemory(ctx: Ctx, argv) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'search', 'get', 'delete', 'rm'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -65,7 +66,7 @@ function truncate(text, max) {
   return oneLine.length > max ? `${oneLine.slice(0, max - 1)}…` : oneLine;
 }
 
-async function runMemoryList(ctx, argv) {
+async function runMemoryList(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--memory-ref', '--tag', '--limit'],
@@ -89,7 +90,7 @@ async function runMemoryList(ctx, argv) {
   return 0;
 }
 
-async function runMemorySearch(ctx, argv) {
+async function runMemorySearch(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--memory-ref', '--tag', '--limit', '--query'],
@@ -125,7 +126,7 @@ async function runMemorySearch(ctx, argv) {
   return 0;
 }
 
-async function runMemoryGet(ctx, argv) {
+async function runMemoryGet(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--memory-ref'],
@@ -150,7 +151,7 @@ async function runMemoryGet(ctx, argv) {
   return 0;
 }
 
-async function runMemoryDelete(ctx, argv) {
+async function runMemoryDelete(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--memory-ref'],

@@ -1,3 +1,4 @@
+import type { Ctx } from '../context.js';
 /** `openwop capabilities` — read + summarize /.well-known/openwop. */
 import { requestJson } from '../api.js';
 import { write, writeJson } from '../io.js';
@@ -9,7 +10,7 @@ Reads /.well-known/openwop and prints the implementation, protocol version, and 
 `;
 
 
-export async function runCapabilities(ctx, argv) {
+export async function runCapabilities(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, CAPABILITIES_HELP);

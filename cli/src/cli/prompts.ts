@@ -1,3 +1,4 @@
+import type { Ctx } from '../context.js';
 /** `openwop prompts ...` — prompt-library list/get/render (RFC 0029). */
 
 import { requestJson } from '../api.js';
@@ -14,7 +15,7 @@ Browse + render the host's prompt library (RFC 0029, /v1/prompts). \`render\`
 resolves a PromptRef (templateId[@version]) against the supplied variables.
 `;
 
-export async function runPrompts(ctx: any, argv: string[]): Promise<number> {
+export async function runPrompts(ctx: Ctx, argv: string[]): Promise<number> {
   const sub = argv[0] ?? 'list';
   if (sub === '--help' || sub === '-h') { write(ctx.io.stdout, PROMPTS_HELP); return 0; }
   const rest = argv.slice(1);

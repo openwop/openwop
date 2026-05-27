@@ -1,3 +1,4 @@
+import type { Ctx } from '../context.js';
 /** `openwop notifications ...` — notification inbox (sample-extension). */
 
 import { requestJson } from '../api.js';
@@ -15,7 +16,7 @@ Operate the demo notification inbox (/v1/host/sample/notifications) — a
 sample-extension surface, tenant-scoped, not part of the normative wire.
 `;
 
-export async function runNotifications(ctx: any, argv: string[]): Promise<number> {
+export async function runNotifications(ctx: Ctx, argv: string[]): Promise<number> {
   const sub = argv[0] ?? 'list';
   if (sub === '--help' || sub === '-h') { write(ctx.io.stdout, NOTIFICATIONS_HELP); return 0; }
   const base = '/v1/host/sample/notifications';

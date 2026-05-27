@@ -1,3 +1,4 @@
+import type { Ctx } from './context.js';
 /** Host HTTP client — typed-ish wrapper over ctx.fetchImpl with bearer + JSON. */
 
 import { HttpError } from './errors.js';
@@ -10,7 +11,7 @@ export interface RequestOptions {
 }
 
 /** Perform a JSON request against `ctx.baseUrl`; throws HttpError on non-2xx. */
-export async function requestJson(ctx: any, path: string, options: RequestOptions = {}): Promise<{ status: number; headers: Headers; body: any }> {
+export async function requestJson(ctx: Ctx, path: string, options: RequestOptions = {}): Promise<{ status: number; headers: Headers; body: any }> {
   const url = new URL(path, ctx.baseUrl);
   const headers: Record<string, string> = {
     accept: 'application/json',
@@ -34,7 +35,7 @@ export async function requestJson(ctx: any, path: string, options: RequestOption
 }
 
 /** requestJson that never throws — returns {ok,...} for diagnostics (doctor). */
-export async function safeRequest(ctx: any, path: string, options: RequestOptions = {}): Promise<any> {
+export async function safeRequest(ctx: Ctx, path: string, options: RequestOptions = {}): Promise<any> {
   try {
     const res = await requestJson(ctx, path, options);
     return { ok: true, path, status: res.status, body: res.body };
@@ -44,7 +45,7 @@ export async function safeRequest(ctx: any, path: string, options: RequestOption
 }
 
 /** Unauthenticated reachability probe — returns {ok, message}. */
-export async function probeEndpoint(ctx: any, path: string): Promise<{ ok: boolean; message: string }> {
+export async function probeEndpoint(ctx: Ctx, path: string): Promise<{ ok: boolean; message: string }> {
   try {
     const res = await requestJson(ctx, path, { auth: false });
     return { ok: true, message: String(res.status) };

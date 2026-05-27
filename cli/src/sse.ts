@@ -1,3 +1,4 @@
+import type { Ctx } from './context.js';
 /** Run-event streaming + REPL rendering — SSE with JSON-poll fallback. */
 
 import { createInterface } from 'node:readline';
@@ -8,7 +9,7 @@ import { sleep } from './util.js';
 const CHAT_TERMINAL_EVENT_TYPES = new Set(['run.completed', 'run.failed', 'run.cancelled']);
 
 /** Create a run and return its runId (throws if the response omits one). */
-export async function submitTurn(ctx: any, { workflowId, inputs, tenantId, scopeId }: any): Promise<string> {
+export async function submitTurn(ctx: Ctx, { workflowId, inputs, tenantId, scopeId }: any): Promise<string> {
   const body = {
     workflowId,
     ...(tenantId ? { tenantId } : {}),
@@ -28,7 +29,7 @@ export async function submitTurn(ctx: any, { workflowId, inputs, tenantId, scope
  * Calls `onEvent(eventRecord)` once per event in sequence order and resolves
  * when a terminal event is seen or the poll endpoint reports completion.
  */
-export async function streamRunEvents(ctx: any, runId: string, { onEvent, useStream = true, timeoutMs = 120000 }: { onEvent?: (e: any) => void; useStream?: boolean; timeoutMs?: number } = {}) {
+export async function streamRunEvents(ctx: Ctx, runId: string, { onEvent, useStream = true, timeoutMs = 120000 }: { onEvent?: (e: any) => void; useStream?: boolean; timeoutMs?: number } = {}) {
   if (useStream) {
     try {
       const handled = await streamViaSse(ctx, runId, onEvent);
@@ -40,7 +41,7 @@ export async function streamRunEvents(ctx: any, runId: string, { onEvent, useStr
   await streamViaPoll(ctx, runId, onEvent, timeoutMs);
 }
 
-async function streamViaSse(ctx: any, runId: string, onEvent: any) {
+async function streamViaSse(ctx: Ctx, runId: string, onEvent: any) {
   const url = new URL(`/v1/runs/${encodeURIComponent(runId)}/events`, ctx.baseUrl);
   const headers: Record<string, string> = { accept: 'text/event-stream' };
   if (ctx.apiKey) headers.authorization = `Bearer ${ctx.apiKey}`;
@@ -105,7 +106,7 @@ export async function consumeSse(stream: any, onFrame: any) {
   }
 }
 
-async function streamViaPoll(ctx: any, runId: string, onEvent: any, timeoutMs: number) {
+async function streamViaPoll(ctx: Ctx, runId: string, onEvent: any, timeoutMs: number) {
   const started = Date.now();
   let lastSequence = -1;
   while (Date.now() - started < timeoutMs) {
@@ -223,7 +224,7 @@ function safeParseJson(text: string): any {
  * Default stdin line reader for the REPL. Resolves with each line, or null on
  * EOF (Ctrl-D). Uses readline so piped input and TTY input both work.
  */
-export function defaultReadTurn(ctx: any): (prompt: string) => Promise<string | null> {
+export function defaultReadTurn(ctx: Ctx): (prompt: string) => Promise<string | null> {
   const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: Boolean(process.stdin.isTTY) });
   let closed = false;
   rl.on('close', () => { closed = true; });

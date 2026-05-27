@@ -1,3 +1,4 @@
+import type { Ctx } from './context.js';
 import { spawn, spawnSync } from 'node:child_process';
 import {
   chmodSync, createReadStream, existsSync, mkdirSync, openSync,
@@ -227,7 +228,7 @@ function showHelp(io, command) {
   return 0;
 }
 
-async function runDoctor(ctx, argv) {
+async function runDoctor(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, DOCTOR_HELP);
@@ -322,7 +323,7 @@ async function runDoctor(ctx, argv) {
   return checks.some((c) => c.status === 'fail') ? 1 : 0;
 }
 
-async function runDemo(ctx: any, argv: string[]): Promise<number> {
+async function runDemo(ctx: Ctx, argv: string[]): Promise<number> {
   const sub = argv[0];
   const args = argv.slice(1);
   if (!sub || sub === '--help' || sub === '-h') {
@@ -349,7 +350,7 @@ async function runDemo(ctx: any, argv: string[]): Promise<number> {
   }
 }
 
-async function runDemoStatus(ctx: any, argv: string[]): Promise<number> {
+async function runDemoStatus(ctx: Ctx, argv: string[]): Promise<number> {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, DEMO_STATUS_HELP);
@@ -400,7 +401,7 @@ async function runDemoStatus(ctx: any, argv: string[]): Promise<number> {
   return health.ok && readiness.ok ? 0 : 1;
 }
 
-async function runDemoUrls(ctx, argv) {
+async function runDemoUrls(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--frontend-port'],
@@ -426,7 +427,7 @@ async function runDemoUrls(ctx, argv) {
   return 0;
 }
 
-async function runDemoStart(ctx: any, argv: string[]): Promise<number> {
+async function runDemoStart(ctx: Ctx, argv: string[]): Promise<number> {
   const { options } = parseOptions(argv, {
     bool: ['--help', '--backend-only', '--frontend-only', '--install', '--dry-run', '--detach'],
     value: ['--backend-port', '--frontend-port'],
@@ -582,7 +583,7 @@ async function runDemoStart(ctx: any, argv: string[]): Promise<number> {
   return exitCode;
 }
 
-async function runDemoStop(ctx: any, argv: string[]): Promise<number> {
+async function runDemoStop(ctx: Ctx, argv: string[]): Promise<number> {
   const { options } = parseOptions(argv, {
     bool: ['--help', '--force'],
     value: ['--timeout-ms'],
@@ -629,7 +630,7 @@ async function runDemoStop(ctx: any, argv: string[]): Promise<number> {
   return 0;
 }
 
-async function runDemoRestart(ctx: any, argv: string[]): Promise<number> {
+async function runDemoRestart(ctx: Ctx, argv: string[]): Promise<number> {
   const { options } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--backend-port'],
@@ -649,7 +650,7 @@ async function runDemoRestart(ctx: any, argv: string[]): Promise<number> {
   return runDemoStart(ctx, startArgs);
 }
 
-async function runDemoLogs(ctx: any, argv: string[]): Promise<number> {
+async function runDemoLogs(ctx: Ctx, argv: string[]): Promise<number> {
   const { options } = parseOptions(argv, {
     bool: ['--help', '--follow'],
     value: ['--lines'],
@@ -695,7 +696,7 @@ async function runDemoLogs(ctx: any, argv: string[]): Promise<number> {
   });
 }
 
-async function runDemoInstall(ctx, argv) {
+async function runDemoInstall(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, {
     bool: ['--help', '--dry-run', '--uninstall'],
     value: ['--backend-port', '--label'],
@@ -771,7 +772,7 @@ async function runDemoInstall(ctx, argv) {
   return 0;
 }
 
-async function runCatalog(ctx, argv) {
+async function runCatalog(ctx: Ctx, argv) {
   const sub = argv[0] ?? 'nodes';
   const args = argv.slice(sub === 'nodes' || sub === 'packs' ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -788,7 +789,7 @@ async function runCatalog(ctx, argv) {
   }
 }
 
-async function runCatalogNodes(ctx, argv) {
+async function runCatalogNodes(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--limit', '--search'],
@@ -819,7 +820,7 @@ async function runCatalogNodes(ctx, argv) {
   return 0;
 }
 
-async function runCatalogPacks(ctx, argv = []) {
+async function runCatalogPacks(ctx: Ctx, argv = []) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, CATALOG_HELP);
@@ -849,7 +850,7 @@ async function runCatalogPacks(ctx, argv = []) {
 //   GET /keys/{keyId}.pub                     publisher public key (PEM)
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function runPacks(ctx, argv) {
+async function runPacks(ctx: Ctx, argv) {
   const sub = argv[0];
   const args = argv.slice(1);
   if (!sub || sub === '--help' || sub === '-h') {
@@ -878,7 +879,7 @@ function registryUrlFor(options, env) {
 }
 
 /** GET + JSON-parse a registry path (no auth — the registry is public read-only). */
-async function registryJson(ctx, registryUrl, path) {
+async function registryJson(ctx: Ctx, registryUrl, path) {
   const url = new URL(path, registryUrl + '/');
   const res = await ctx.fetchImpl(url, { method: 'GET', headers: { accept: 'application/json' } });
   const text = await res.text();
@@ -888,7 +889,7 @@ async function registryJson(ctx, registryUrl, path) {
 }
 
 /** GET raw bytes (tarball / signature / public key) from the registry. */
-async function registryBytes(ctx, registryUrl, path) {
+async function registryBytes(ctx: Ctx, registryUrl, path) {
   const url = new URL(path, registryUrl + '/');
   const res = await ctx.fetchImpl(url, { method: 'GET', headers: { accept: 'application/octet-stream' } });
   if (!res.ok) {
@@ -898,7 +899,7 @@ async function registryBytes(ctx, registryUrl, path) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-async function runPacksSearch(ctx, argv) {
+async function runPacksSearch(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--registry-url', '--limit'],
@@ -944,7 +945,7 @@ async function runPacksSearch(ctx, argv) {
   return 0;
 }
 
-async function runPacksInfo(ctx, argv) {
+async function runPacksInfo(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--registry-url', '--version'],
@@ -998,7 +999,7 @@ async function runPacksInfo(ctx, argv) {
   return 0;
 }
 
-async function runPacksInstall(ctx, argv) {
+async function runPacksInstall(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help', '--no-verify'],
     value: ['--registry-url', '--version', '--dir'],
@@ -1093,7 +1094,7 @@ async function runPacksInstall(ctx, argv) {
   return 0;
 }
 
-async function runPacksPublish(ctx, argv) {
+async function runPacksPublish(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--key', '--key-id', '--out'],
@@ -1195,7 +1196,7 @@ async function runPacksPublish(ctx, argv) {
   return 0;
 }
 
-async function runPacksYank(ctx, argv) {
+async function runPacksYank(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help', '--undo'],
     value: ['--version'],
@@ -1341,7 +1342,7 @@ function buildUstarGzip(entries) {
   return gz;
 }
 
-async function runWorkflows(ctx, argv) {
+async function runWorkflows(ctx: Ctx, argv) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'get', 'register', 'delete', 'rm'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -1363,7 +1364,7 @@ async function runWorkflows(ctx, argv) {
   }
 }
 
-async function runWorkflowsList(ctx, argv) {
+async function runWorkflowsList(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, WORKFLOWS_HELP);
@@ -1380,7 +1381,7 @@ async function runWorkflowsList(ctx, argv) {
   return 0;
 }
 
-async function runWorkflowsGet(ctx, argv) {
+async function runWorkflowsGet(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop workflows get <workflowId> [--json]\n');
@@ -1397,7 +1398,7 @@ async function runWorkflowsGet(ctx, argv) {
   return 0;
 }
 
-async function runWorkflowsRegister(ctx, argv) {
+async function runWorkflowsRegister(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop workflows register <workflow.json> [--json]\n');
@@ -1411,7 +1412,7 @@ async function runWorkflowsRegister(ctx, argv) {
   return 0;
 }
 
-async function runWorkflowsDelete(ctx, argv) {
+async function runWorkflowsDelete(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop workflows delete <workflowId> [--json]\n');
@@ -1424,7 +1425,7 @@ async function runWorkflowsDelete(ctx, argv) {
   return 0;
 }
 
-async function runRuns(ctx, argv) {
+async function runRuns(ctx: Ctx, argv) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'create', 'get', 'cancel', 'ancestry'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -1447,7 +1448,7 @@ async function runRuns(ctx, argv) {
   }
 }
 
-async function runRunsList(ctx, argv) {
+async function runRunsList(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--status', '--limit', '--tenant-id'],
@@ -1476,7 +1477,7 @@ async function runRunsList(ctx, argv) {
   return 0;
 }
 
-async function runRunsCreate(ctx, argv) {
+async function runRunsCreate(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help', '--wait'],
     value: ['--tenant-id', '--scope-id', '--inputs-json', '--timeout-ms'],
@@ -1507,7 +1508,7 @@ async function runRunsCreate(ctx, argv) {
   return 0;
 }
 
-async function runRunsGet(ctx, argv) {
+async function runRunsGet(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop runs get <runId> [--json]\n');
@@ -1523,7 +1524,7 @@ async function runRunsGet(ctx, argv) {
   return 0;
 }
 
-async function runRunsCancel(ctx, argv) {
+async function runRunsCancel(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--reason'],
@@ -1550,7 +1551,7 @@ async function runRunsCancel(ctx, argv) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 
-async function runChat(ctx, argv) {
+async function runChat(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help', '--no-stream', '--no-history'],
     value: ['--tenant-id', '--scope-id', '--inputs-json', '--timeout-ms', '--role'],
@@ -1634,7 +1635,7 @@ async function runChat(ctx, argv) {
  * builds. Returns the new runId.
  */
 
-async function runRunsAncestry(ctx, argv) {
+async function runRunsAncestry(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop runs ancestry <runId> [--json]\n');
@@ -1706,7 +1707,7 @@ const CONFORMANCE_HELP = `Usage: openwop conformance [--offline] [--filter patte
 Runs the in-repo @openwop/openwop-conformance CLI. Without --offline it targets the configured --base-url.
 `;
 
-async function runConformance(ctx, argv) {
+async function runConformance(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, {
     bool: ['--help', '--offline'],
     value: ['--filter'],
@@ -1749,7 +1750,7 @@ async function runConformance(ctx, argv) {
 // Onboarding wizard — `openwop onboard`
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function runOnboard(ctx, argv) {
+async function runOnboard(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, {
     bool: ['--help', '--non-interactive', '--reset', '--skip-test', '--no-test'],
     value: [
@@ -1868,7 +1869,7 @@ async function runOnboard(ctx, argv) {
   return 0;
 }
 
-async function resolveBaseUrl(ctx, options, existing, interactive) {
+async function resolveBaseUrl(ctx: Ctx, options, existing, interactive) {
   if (options.baseUrlChoice) {
     const preset = HOST_PRESETS.find((h) => h.key === options.baseUrlChoice);
     if (!preset) throw new CliError(`--base-url-choice must be one of: ${HOST_PRESETS.map((h) => h.key).join(', ')}`);
@@ -1896,7 +1897,7 @@ async function resolveBaseUrl(ctx, options, existing, interactive) {
   return preset.url;
 }
 
-async function resolveProvider(ctx, options, existing, interactive) {
+async function resolveProvider(ctx: Ctx, options, existing, interactive) {
   if (options.provider) {
     if (!PROVIDER_CATALOG[options.provider]) {
       throw new CliError(`Unknown provider: ${options.provider}. Must be one of: ${Object.keys(PROVIDER_CATALOG).join(', ')}`);
@@ -1919,7 +1920,7 @@ async function resolveProvider(ctx, options, existing, interactive) {
   return choice === 'skip' ? null : choice;
 }
 
-async function resolveApiKey(ctx, options, provider, interactive) {
+async function resolveApiKey(ctx: Ctx, options, provider, interactive) {
   const spec = PROVIDER_CATALOG[provider];
   if (options.providerKey) return options.providerKey;
   if (options.apiKeyEnv) {
@@ -1942,7 +1943,7 @@ async function resolveApiKey(ctx, options, provider, interactive) {
   return key;
 }
 
-async function resolveModel(ctx, options, provider, existing, interactive) {
+async function resolveModel(ctx: Ctx, options, provider, existing, interactive) {
   const spec = PROVIDER_CATALOG[provider];
   if (options.model) return options.model;
   const recommended = spec.models.find((m) => m.recommended) ?? spec.models[0];
@@ -1963,7 +1964,7 @@ async function resolveModel(ctx, options, provider, existing, interactive) {
   return choice;
 }
 
-async function testProviderConnection(ctx, credentialRef) {
+async function testProviderConnection(ctx: Ctx, credentialRef) {
   try {
     const res = await requestJson(ctx, '/v1/host/sample/byok/secrets');
     const secrets = Array.isArray(res.body?.secrets) ? res.body.secrets : [];
@@ -1979,7 +1980,7 @@ async function testProviderConnection(ctx, credentialRef) {
 // `openwop providers ...`
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function runProviders(ctx, argv) {
+async function runProviders(ctx: Ctx, argv) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'add', 'remove', 'rm', 'test'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -2001,7 +2002,7 @@ async function runProviders(ctx, argv) {
   }
 }
 
-async function runProvidersList(ctx, argv) {
+async function runProvidersList(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, PROVIDERS_HELP);
@@ -2025,7 +2026,7 @@ async function runProvidersList(ctx, argv) {
   return 0;
 }
 
-async function runProvidersAdd(ctx, argv) {
+async function runProvidersAdd(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--provider-key', '--api-key-env', '--model', '--credential-ref'],
@@ -2065,7 +2066,7 @@ async function runProvidersAdd(ctx, argv) {
   return 0;
 }
 
-async function runProvidersRemove(ctx, argv) {
+async function runProvidersRemove(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--credential-ref'],
@@ -2082,7 +2083,7 @@ async function runProvidersRemove(ctx, argv) {
   return 0;
 }
 
-async function runProvidersTest(ctx, argv) {
+async function runProvidersTest(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--credential-ref'],
@@ -2117,7 +2118,7 @@ async function runProvidersTest(ctx, argv) {
 // `POST /v1/host/sample/agents/{agentId}/dispatch` (toolAllowlist-filtered,
 // handoff-validated, confidence-escalating per RFC 0002 §A14/§F).
 
-async function runAgents(ctx, argv) {
+async function runAgents(ctx: Ctx, argv) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'info', 'run'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -2136,7 +2137,7 @@ async function runAgents(ctx, argv) {
   }
 }
 
-async function runAgentsList(ctx, argv) {
+async function runAgentsList(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, AGENTS_HELP);
@@ -2163,7 +2164,7 @@ async function runAgentsList(ctx, argv) {
   return 0;
 }
 
-async function runAgentsInfo(ctx, argv) {
+async function runAgentsInfo(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop agents info <agentId> [--json]\n');
@@ -2190,7 +2191,7 @@ async function runAgentsInfo(ctx, argv) {
 }
 
 // `openwop agents run <agentId>` — dispatch one manifest-agent turn (RFC 0070).
-async function runAgentsRun(ctx, argv) {
+async function runAgentsRun(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help', '--no-validate'],
     value: ['--task-json', '--threshold'],
@@ -2247,7 +2248,7 @@ async function runAgentsRun(ctx, argv) {
 // `openwop config ...`
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function runConfig(ctx, argv) {
+async function runConfig(ctx: Ctx, argv) {
   const sub = argv[0] ?? 'file';
   const args = argv.slice(['file', 'get', 'set', 'unset'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -2320,7 +2321,7 @@ function relayCredsPath(env) {
   return join(openwopHomeDir(env), 'relay-credentials.json');
 }
 
-function loadRelayConfig(ctx) {
+function loadRelayConfig(ctx: Ctx) {
   try {
     const p = relayCredsPath(ctx.env);
     if (existsSync(p)) return JSON.parse(readFileSync(p, 'utf8'));
@@ -2328,7 +2329,7 @@ function loadRelayConfig(ctx) {
   return {};
 }
 
-function saveRelayConfig(ctx, relay) {
+function saveRelayConfig(ctx: Ctx, relay) {
   const p = relayCredsPath(ctx.env);
   mkdirSync(dirname(p), { recursive: true });
   if (!relay || Object.keys(relay).length === 0) {
@@ -2339,7 +2340,7 @@ function saveRelayConfig(ctx, relay) {
   try { chmodSync(p, 0o600); } catch { /* best-effort on Windows */ }
 }
 
-async function runMessaging(ctx, argv) {
+async function runMessaging(ctx: Ctx, argv) {
   const sub = argv[0];
   if (!sub || sub === '--help' || sub === '-h') {
     write(ctx.io.stdout, MESSAGING_HELP);
@@ -2356,7 +2357,7 @@ async function runMessaging(ctx, argv) {
   }
 }
 
-async function runMessagingConnectors(ctx, argv) {
+async function runMessagingConnectors(ctx: Ctx, argv) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'get', 'add', 'enable', 'disable', 'test'].includes(sub) ? 1 : 0);
   switch (sub) {
@@ -2413,7 +2414,7 @@ async function runMessagingConnectors(ctx, argv) {
   }
 }
 
-async function runMessagingSessions(ctx, argv) {
+async function runMessagingSessions(ctx: Ctx, argv) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'inspect', 'close'].includes(sub) ? 1 : 0);
   switch (sub) {
@@ -2450,7 +2451,7 @@ async function runMessagingSessions(ctx, argv) {
 // Relay device — register/activate a local channel relay, run the bridge loop.
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function runRelay(ctx, argv) {
+async function runRelay(ctx: Ctx, argv) {
   const sub = argv[0];
   if (!sub || sub === '--help' || sub === '-h') {
     write(ctx.io.stdout, RELAY_HELP);
@@ -2478,7 +2479,7 @@ function assertRelayChannel(channel) {
   }
 }
 
-async function runRelayRegister(ctx, argv) {
+async function runRelayRegister(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { value: ['--channel', '--name'] });
   if (!options.channel) throw new CliError('--channel is required (one of: ' + RELAY_CHANNELS.join(', ') + ').');
   assertRelayChannel(options.channel);
@@ -2490,7 +2491,7 @@ async function runRelayRegister(ctx, argv) {
   return 0;
 }
 
-async function runRelayActivate(ctx, argv) {
+async function runRelayActivate(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { value: ['--relay-id', '--code'] });
   if (!options.relayId || !options.code) throw new CliError('--relay-id and --code are required.');
   const res = await requestJson(ctx, `${MESSAGING_BASE}/relay/activate`, {
@@ -2509,7 +2510,7 @@ async function runRelayActivate(ctx, argv) {
   return 0;
 }
 
-async function runRelaySetup(ctx, argv) {
+async function runRelaySetup(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { value: ['--channel', '--name'] });
   if (!options.channel) throw new CliError('--channel is required (one of: ' + RELAY_CHANNELS.join(', ') + ').');
   assertRelayChannel(options.channel);
@@ -2534,7 +2535,7 @@ async function runRelaySetup(ctx, argv) {
   return 0;
 }
 
-async function runRelayRevoke(ctx, argv) {
+async function runRelayRevoke(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { value: ['--relay-id'] });
   const relayId = options.relayId ?? loadRelayConfig(ctx).relayId;
   if (!relayId) throw new CliError('No relay to revoke. Pass --relay-id or run `openwop relay setup` first.');
@@ -2545,7 +2546,7 @@ async function runRelayRevoke(ctx, argv) {
   return 0;
 }
 
-async function runRelaySend(ctx, argv) {
+async function runRelaySend(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { value: ['--relay-id', '--conversation', '--text', '--reply-to'] });
   const relayId = options.relayId ?? loadRelayConfig(ctx).relayId;
   if (!relayId) throw new CliError('No relay configured. Pass --relay-id or run `openwop relay setup` first.');
@@ -2562,7 +2563,7 @@ async function runRelaySend(ctx, argv) {
   return 0;
 }
 
-async function runRelayStatus(ctx, argv) {
+async function runRelayStatus(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) { write(ctx.io.stdout, RELAY_HELP); return 0; }
   const relay = loadRelayConfig(ctx);
@@ -2646,7 +2647,7 @@ export async function startInboundReceive(
   }
 }
 
-async function runRelayStart(ctx, argv) {
+async function runRelayStart(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { bool: ['--help', '--once', '--daemon', '--no-receive'], value: ['--interval'] });
   if (options.help) { write(ctx.io.stdout, RELAY_HELP); return 0; }
   const relay = loadRelayConfig(ctx);
@@ -2718,15 +2719,14 @@ async function runRelayStart(ctx, argv) {
   const intervalMs = Math.max(1000, (Number(options.interval) || 5) * 1000);
   writeLine(ctx.io.stdout, `Relay bridge running for ${relay.relayId} (${relay.channel}). Poll every ${intervalMs / 1000}s. Ctrl+C to stop.`);
   process.once('SIGINT', () => { try { stopReceive?.(); } catch { /* ignore */ } process.exit(0); });
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
+  for (;;) {
     try { await cycle(); }
     catch (err) { writeLine(ctx.io.stderr, `bridge cycle error: ${errText(err)}`); }
     await new Promise((r) => setTimeout(r, intervalMs));
   }
 }
 
-async function runRelayStop(ctx, argv) {
+async function runRelayStop(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) { write(ctx.io.stdout, RELAY_HELP); return 0; }
   const record = readRelayRecord(ctx.env);
@@ -2744,7 +2744,7 @@ async function runRelayStop(ctx, argv) {
   return 0;
 }
 
-async function runRelayLogs(ctx, argv) {
+async function runRelayLogs(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { bool: ['--help', '--follow', '-f'] });
   if (options.help) { write(ctx.io.stdout, RELAY_HELP); return 0; }
   const logPath = readRelayRecord(ctx.env)?.logPath ?? relayLogPath(ctx.env);
@@ -2855,7 +2855,7 @@ function parseInputValue(value) {
   }
 }
 
-async function waitForRun(ctx, runId, timeoutMs) {
+async function waitForRun(ctx: Ctx, runId, timeoutMs) {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
     const res = await requestJson(ctx, `/v1/runs/${encodeURIComponent(runId)}`);

@@ -1,9 +1,10 @@
+import type { Ctx } from './context.js';
 /** Interactive prompt helpers (Node stdlib readline + raw-mode secret input). */
 import { createInterface } from 'node:readline';
 import { CliError } from './errors.js';
 import { write, writeLine } from './io.js';
 
-export async function promptChoice(ctx, label, choices) {
+export async function promptChoice(ctx: Ctx, label, choices) {
   writeLine(ctx.io.stdout, label);
   choices.forEach((c, i) => {
     const tag = c.recommended ? ' (recommended)' : '';
@@ -18,7 +19,7 @@ export async function promptChoice(ctx, label, choices) {
   return choices[idx].key;
 }
 
-export async function promptText(ctx: any, prompt: string, defaultValue = ''): Promise<string> {
+export async function promptText(ctx: Ctx, prompt: string, defaultValue = ''): Promise<string> {
   ctx.io.stdout.write(prompt);
   const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: false });
   return new Promise((resolve) => {
@@ -29,19 +30,19 @@ export async function promptText(ctx: any, prompt: string, defaultValue = ''): P
   });
 }
 
-export async function promptYesNo(ctx, label, defaultYes = true) {
+export async function promptYesNo(ctx: Ctx, label, defaultYes = true) {
   const hint = defaultYes ? '[Y/n]' : '[y/N]';
   const answer = (await promptText(ctx, `${label} ${hint} `, '')).trim().toLowerCase();
   if (answer === '') return defaultYes;
   return answer === 'y' || answer === 'yes';
 }
 
-export async function readSecret(ctx, prompt) {
+export async function readSecret(ctx: Ctx, prompt) {
   ctx.io.stdout.write(prompt);
   const stdin = process.stdin;
   // Pipe / non-TTY: read one line normally so `echo KEY | openwop ...` works.
   if (!stdin.isTTY) {
-    const rl = createInterface({ input: stdin, output: ctx.io.stdout, terminal: false });
+    const rl = createInterface({ input: stdin, output: process.stdout, terminal: false });
     return new Promise((resolve) => {
       rl.once('line', (line) => {
         rl.close();
