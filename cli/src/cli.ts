@@ -10,6 +10,12 @@ import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import { createHash, createPrivateKey, createPublicKey, generateKeyPairSync, sign as ed25519Sign, verify as ed25519Verify } from 'node:crypto';
 import { gunzipSync, gzipSync } from 'node:zlib';
+import { getChannelPlugin } from './channels/registry.js';
+import type { ChannelPlugin, InboundMessage, RelayChannel } from './channels/types.js';
+// Re-export the channel surface so the test suite (which imports the built
+// dist/cli.js bundle) can reach the pure normalizers + the registry.
+export { parseSignalEnvelope, parseImessageRow, parseWhatsappMessage } from './channels/normalize.js';
+export { getChannelPlugin } from './channels/registry.js';
 
 export const VERSION = '0.1.0';
 export const DEFAULT_BASE_URL = 'http://localhost:8080';
@@ -3508,8 +3514,44 @@ function readRelayRecord(env) {
   } catch { return null; }
 }
 
+/**
+ * Start streaming inbound platform messages → POST /device/inbound (B4). The
+ * channel plugin owns the platform connection (signal-cli / chat.db / Baileys);
+ * `ctx.relayPlugin` lets tests inject a fake. Returns a stop function (or
+ * undefined when the channel's tooling isn't available — fail-closed, logged).
+ */
+export async function startInboundReceive(
+  ctx: any,
+  relay: { channel: RelayChannel; deviceToken: string },
+  deviceHeaders: Record<string, string>,
+): Promise<(() => void) | undefined> {
+  const plugin: ChannelPlugin = ctx.relayPlugin ?? getChannelPlugin(relay.channel);
+  const avail = plugin.isAvailable(ctx.env);
+  if (!avail.available) {
+    writeLine(ctx.io.stderr, `inbound receive skipped: ${avail.detail}`);
+    return undefined;
+  }
+  try {
+    const stop = await plugin.startReceive(async (msg: InboundMessage) => {
+      try {
+        await requestJson(ctx, `${MESSAGING_BASE}/device/inbound`, {
+          method: 'POST', auth: false, headers: deviceHeaders, body: msg,
+        });
+        writeLine(ctx.io.stdout, `← [${relay.channel}] ${msg.conversationId}: ${msg.text}`);
+      } catch (err) {
+        writeLine(ctx.io.stderr, `inbound forward failed: ${err.message ?? err}`);
+      }
+    }, { env: ctx.env });
+    writeLine(ctx.io.stdout, `Inbound receive active for ${relay.channel}.`);
+    return stop;
+  } catch (err) {
+    writeLine(ctx.io.stderr, `inbound receive unavailable: ${err.message ?? err}`);
+    return undefined;
+  }
+}
+
 async function runRelayStart(ctx, argv) {
-  const { options } = parseOptions(argv, { bool: ['--help', '--once', '--daemon'], value: ['--interval'] });
+  const { options } = parseOptions(argv, { bool: ['--help', '--once', '--daemon', '--no-receive'], value: ['--interval'] });
   if (options.help) { write(ctx.io.stdout, RELAY_HELP); return 0; }
   const relay = loadRelayConfig(ctx);
   if (!relay.relayId || !relay.deviceToken) {
@@ -3574,8 +3616,12 @@ async function runRelayStart(ctx, argv) {
     return 0;
   }
 
+  // Inbound (B4): stream platform messages → POST /device/inbound.
+  const stopReceive = options.noReceive ? undefined : await startInboundReceive(ctx, relay, deviceHeaders);
+
   const intervalMs = Math.max(1000, (Number(options.interval) || 5) * 1000);
   writeLine(ctx.io.stdout, `Relay bridge running for ${relay.relayId} (${relay.channel}). Poll every ${intervalMs / 1000}s. Ctrl+C to stop.`);
+  process.on('SIGINT', () => { try { stopReceive?.(); } catch { /* ignore */ } process.exit(0); });
   // eslint-disable-next-line no-constant-condition
   while (true) {
     try { await cycle(); }
@@ -4788,10 +4834,12 @@ The relay device owns the platform connection (signal-cli / WhatsApp / iMessage)
 and bridges it to the OpenWOP host. \`setup\` registers + activates a device and
 stores its token in ~/.openwop/config.json under \`relay\`.
 
-  start   Runs the bridge loop: heartbeat + poll outbound + deliver + ack.
-          --daemon backgrounds it (pid + logs under ~/.openwop/); --once runs a
-          single cycle (e.g. in tests). Native delivery via signal-cli /
-          AppleScript when present, else printed to the console.
+  start   Runs the bridge loop: heartbeat + poll outbound + deliver + ack, AND
+          streams inbound platform messages → the host (--no-receive disables
+          inbound; --once runs one outbound cycle, no receive). --daemon
+          backgrounds it (pid + logs under ~/.openwop/). Inbound + delivery use
+          the channel plugin (signal-cli / chat.db / Baileys) when its tooling
+          is present, else inbound is skipped and delivery prints to console.
   stop    Stops the background relay daemon and clears its pid record.
   logs    Print (or -f follow) the background relay daemon log.
   send    Operator-side: queue an outbound message for the relay to deliver.

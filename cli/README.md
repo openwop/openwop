@@ -116,7 +116,7 @@ How it works: the relay device owns the platform connection and bridges it to th
 - **iMessage** needs macOS (Messages signed in + Full Disk Access for `chat.db`).
 - **WhatsApp** ships with the channel build (Baileys), not the core CLI.
 
-When a channel's tooling isn't present, `relay start` prints outbound to the console instead of silently dropping it.
+`relay start` also **receives**: each channel plugin streams inbound platform messages and forwards them to the host's `/device/inbound` (which runs the bound workflow and queues a reply). Signal uses `signal-cli ... receive`, iMessage polls `chat.db` by ROWID, WhatsApp binds Baileys `messages.upsert`. Disable inbound with `--no-receive`. When a channel's tooling isn't present, inbound is skipped and outbound prints to the console instead of silently dropping it.
 
 The relay **device token** is a host credential, so it is stored separately from `config.json` in `~/.openwop/relay-credentials.json` (mode `0600`), not in your main config. Revoke it any time with `openwop relay revoke`.
 
