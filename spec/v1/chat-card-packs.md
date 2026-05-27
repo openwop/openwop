@@ -1,6 +1,6 @@
 # openwop Spec v1 — AI Chat Card Packs
 
-> **Status: DRAFT (2026-05-26).** Phase 2 of [RFC 0071 — Artifact-Type Packs and AI Chat Card Packs](../../RFCS/0071-artifact-type-and-chat-card-packs.md). Specifies a pack kind that distributes **AI chat cards** — a prompt template bound to a typed output artifact. Depends on Phase 1 (artifact-type packs) for the `outputArtifactType` linkage. Phase 2 stays `Draft` within the RFC pending the R2 prompt-injection trust-boundary conformance proof and G9 (confirming the portable input-field subset). Promotes when (a) a host implements `host.chat.cardPacks` and (b) the manifest-validation + execution conformance scenarios pass. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
+> **Status: DRAFT (2026-05-27) — Phase 2 promoted to `Active` within RFC 0071.** Phase 2 of [RFC 0071 — Artifact-Type Packs and AI Chat Card Packs](../../RFCS/0071-artifact-type-and-chat-card-packs.md). Specifies a pack kind that distributes **AI chat cards** — a prompt template bound to a typed output artifact. Depends on Phase 1 (artifact-type packs, `Accepted`) for the `outputArtifactType` linkage. **Phase 2 is `Active`:** its design is locked — G9 (the portable `inputs[].type` subset) is resolved against MyndHyve's authoritative `CardFieldType` (see §"Input fields"), and the R2 trust-boundary surface (the `chat-card-input-trust-boundary` invariant + `chat-card-pack-execution.test.ts` + the normative MUST below) has landed. This doc promotes DRAFT → FINAL and Phase 2 → `Accepted` when a host implements `host.chat.cardPacks` and passes the execution scenario (the R2 host-pass) end-to-end. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
 
 ---
 
@@ -78,7 +78,25 @@ Chat card packs are the fifth pack `kind`, peer to `node`, `workflow-chain`, `pr
 
 ### Input fields — a closed portable subset
 
-`inputs[].type` is a **closed enum**: `text`, `longtext`, `number`, `boolean`, `select`, `artifact-ref`. These are the host-agnostic field kinds. Host-specific widget kinds — MyndHyve's `canvas-reference` / `collection-reference`, i18n key references, validation widgets — are **out of scope** (host-UI concerns per `positioning.md`). A host MAY extend `inputs[].type` with a `vendor.<org>.<kind>`- or `x-<kind>`-prefixed value that other hosts MUST ignore (degrade to a plain text input).
+`inputs[].type` is a **closed enum** of host-agnostic field kinds: `text`, `longtext`, `number`, `boolean`, `select`, `multiselect`, `file`, `artifact-ref`. A host MAY extend `inputs[].type` with a `vendor.<org>.<kind>`- or `x-<kind>`-prefixed value that other hosts MUST ignore (degrade to a plain text input).
+
+The subset is **named by data kind, not widget** (so a non-MyndHyve host renders `boolean` as whatever toggle/checkbox it likes). It was resolved (G9) against MyndHyve's authoritative `CardFieldType`, which every adopter maps onto the portable subset plus host extensions:
+
+| MyndHyve `CardFieldType` | openwop `inputs[].type` |
+|---|---|
+| `text` | `text` |
+| `textarea` | `longtext` |
+| `number` | `number` |
+| `toggle` | `boolean` |
+| `select` | `select` |
+| `multiselect` | `multiselect` |
+| `file` | `file` |
+| `artifact-reference` | `artifact-ref` |
+| `color` | `vendor.myndhyve.color` (host extension) |
+| `canvas-reference` | `vendor.myndhyve.canvas-reference` (host extension) |
+| `collection-reference` | `vendor.myndhyve.collection-reference` (host extension) |
+
+The three product-specific kinds (`color`, `canvas-reference`, `collection-reference`) stay host extensions — they presuppose MyndHyve's canvas/collection model, a host-UI concern per `positioning.md`. i18n key references and client-side validation widgets are likewise out of scope.
 
 ```jsonc
 { "id": "spec", "type": "text", "label": "Part spec", "required": true }
@@ -86,7 +104,7 @@ Chat card packs are the fifth pack `kind`, peer to `node`, `workflow-chain`, `pr
 { "id": "base", "type": "artifact-ref", "label": "Base model" }   // references an existing artifact
 ```
 
-> **G9 (open):** the closed enum above is a best-guess minimal portable subset of MyndHyve's field types; it is confirmed against the adopter before the Phase-2 schema freezes.
+> **G9 (resolved 2026-05-27):** the portable subset is confirmed against MyndHyve's authoritative `CardFieldType` (11 values) — every one maps onto the portable enum or a `vendor.myndhyve.*` extension per the table above. The enum was widened from the initial draft to add `multiselect` and `file`.
 
 ## Card execution (normative)
 
@@ -99,7 +117,7 @@ When a host advertises `host.chat.cardPacks: supported` and a registered card is
 
 ### Trust boundary (normative — R2)
 
-Card inputs frequently derive from workflow run input or prior LLM output, which is **untrusted**. A host MUST treat any `prompt.template` / `systemPrompt` segment interpolated from a card input as `untrusted` content: the composed envelope MUST carry `meta.contentTrust: "untrusted"` (propagated per `ai-envelope.md` §"Trust boundary") unless the host can assert the input is host-trusted. This prevents a card input from smuggling instructions that exfiltrate or coerce the structured output. The injection threat and this mitigation are documented in `SECURITY/threat-model-prompt-injection.md`; the conformance proof (`chat-card-pack-execution.test.ts` asserts trust-tag propagation) is the Phase-2 `Active` gate.
+Card inputs frequently derive from workflow run input or prior LLM output, which is **untrusted**. A host MUST treat any `prompt.template` / `systemPrompt` segment interpolated from a card input as `untrusted` content: the composed envelope MUST carry `meta.contentTrust: "untrusted"` (propagated per `ai-envelope.md` §"Trust boundary") unless the host can assert the input is host-trusted. This prevents a card input from smuggling instructions that exfiltrate or coerce the structured output. The injection threat and this mitigation are documented in `SECURITY/threat-model-prompt-injection.md` (invariant `chat-card-input-trust-boundary`); `chat-card-pack-execution.test.ts` asserts trust-tag propagation. The invariant + scenario are landed (Phase 2 `Active`); a host passing the scenario end-to-end is the Phase-2 `Accepted` (host-pass) gate.
 
 ## Binding `WorkflowNode.cardType` and `ctx.chat.emitCard`
 
@@ -115,8 +133,8 @@ A `WorkflowNode.cardType` value (and the `cardType` argument to `ctx.chat.emitCa
 
 | Gap | Tracking |
 |---|---|
-| Confirm the closed `inputs[].type` subset against MyndHyve's field types before schema freeze. | RFC 0071 G9 |
-| The `chat-card-pack-execution.test.ts` trust-tag-propagation conformance proof (R2) — the Phase-2 `Active` gate. | RFC 0071 R2 / `SECURITY/threat-model-prompt-injection.md` |
+| ~~Confirm the closed `inputs[].type` subset against MyndHyve's field types~~ — **resolved (G9, 2026-05-27)**; subset finalized + `multiselect`/`file` added. | RFC 0071 G9 ✅ |
+| A host passing `chat-card-pack-execution.test.ts` (R2 trust-tag propagation) end-to-end — the Phase-2 **`Accepted` (host-pass)** gate. The invariant + scenario are landed; awaits a host implementing `host.chat.cardPacks`. | RFC 0071 R2 / `SECURITY/threat-model-prompt-injection.md` |
 | Whether a card may be a thin reference to a `prompt`-pack template vs. always inlining `prompt.template`. | RFC 0071 (composition) |
 
 ## References
