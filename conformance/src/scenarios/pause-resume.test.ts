@@ -19,6 +19,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 import { pollUntilStatus, pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 
@@ -235,9 +236,8 @@ describe.skipIf(SKIP)('pause/resume: drainPolicy discrimination per capabilities
   it('every drainPolicy advertised by the host is accepted on :pause', async () => {
     const disco = await driver.get('/.well-known/openwop');
     const drainPolicies =
-      (disco.json as {
-        capabilities?: { runs?: { pauseResume?: { drainPolicies?: string[] } } };
-      }).capabilities?.runs?.pauseResume?.drainPolicies ?? [];
+      capabilityFamily<{ pauseResume?: { drainPolicies?: string[] } }>(disco.json, 'runs')
+        ?.pauseResume?.drainPolicies ?? [];
     if (drainPolicies.length === 0) {
       // eslint-disable-next-line no-console
       console.warn('[pause-resume] host advertises no drainPolicies; skipping policy-discrimination subtest');

@@ -40,6 +40,7 @@ import { driver } from '../lib/driver.js';
 import { loadEnv } from '../lib/env.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface BackpressureCaps {
   supported?: boolean;
@@ -54,8 +55,7 @@ interface ProductionCaps {
 
 async function readProductionCaps(): Promise<ProductionCaps | undefined> {
   const disco = await driver.get('/.well-known/openwop');
-  return (disco.json as { capabilities?: { production?: ProductionCaps } })
-    .capabilities?.production;
+  return capabilityFamily<ProductionCaps>(disco.json, 'production');
 }
 
 function isProfileAdvertised(prod: ProductionCaps | undefined): boolean {

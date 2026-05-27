@@ -20,12 +20,13 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 async function isHttpClientSupported(): Promise<boolean> {
   const disco = await driver.get('/.well-known/openwop');
-  const caps = (disco.json as { capabilities?: { httpClient?: { supported?: boolean } } })
-    .capabilities;
-  return caps?.httpClient?.supported === true;
+  return (
+    capabilityFamily<{ supported?: boolean }>(disco.json, 'httpClient')?.supported === true
+  );
 }
 
 describe('http-client-ssrf: capability advertisement contract', () => {
@@ -36,16 +37,12 @@ describe('http-client-ssrf: capability advertisement contract', () => {
       return;
     }
     const disco = await driver.get('/.well-known/openwop');
-    const cap = (disco.json as {
-      capabilities?: {
-        httpClient?: {
-          supported?: boolean;
-          ssrfGuard?: boolean;
-          maxResponseBodyBytes?: number;
-          methods?: unknown;
-        };
-      };
-    }).capabilities?.httpClient;
+    const cap = capabilityFamily<{
+      supported?: boolean;
+      ssrfGuard?: boolean;
+      maxResponseBodyBytes?: number;
+      methods?: unknown;
+    }>(disco.json, 'httpClient');
 
     expect(cap?.supported, driver.describe(
       'capabilities.md §httpClient',
