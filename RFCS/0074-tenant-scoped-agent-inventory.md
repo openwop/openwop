@@ -4,7 +4,7 @@
 |---|---|
 | **RFC** | 0074 |
 | **Title** | Tenant-Scoped Manifest-Agent Inventory |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-27 |
 | **Updated** | 2026-05-27 |
@@ -138,12 +138,12 @@ Negative — advertising `'tenant'` but serving a host-global list (violates §B
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (this file + §A/§B in `host-capabilities.md`/`capabilities.md` + the `node-packs.md` cross-reference that agent availability inherits per-workspace pack approval).
-- [ ] `installScope` added to `agents.manifestRuntime` in `capabilities.schema.json`.
-- [ ] `api/openapi.yaml` `GET /v1/agents` notes auth-derived scoping + the `'tenant'` `404` semantics.
-- [ ] `agent-manifest-runtime.test.ts` gains the `installScope` branch (host-global vs principal-scoped + cross-tenant `404`).
-- [ ] CHANGELOG entry under `[Unreleased]`.
-- [ ] A `'tenant'`-scoped reference or second host serves principal-scoped `GET /v1/agents` and passes the scenario (so the inventory leg passes black-box on a multi-tenant host, strengthening the already-`Accepted` RFC 0070's conformance evidence).
+- [x] Spec text merged (this file + the `node-packs.md` §"Inventory scope" normative clause + the `host-capabilities.md` cross-reference).
+- [x] `installScope` added to `agents.manifestRuntime` in `capabilities.schema.json`.
+- [x] `api/openapi.yaml` `GET /v1/agents` + `/{agentId}` note auth-derived scoping + the `'tenant'` `404` semantics.
+- [x] `agent-manifest-runtime.test.ts` gains the `installScope` branch (host-global ≥1 vs tenant principal-scoped, empty-allowed per Q3); the ≥1 MUST is relaxed for tenant scope.
+- [x] CHANGELOG entry under `[Unreleased]`.
+- [ ] **(Active → Accepted gate)** A `'tenant'`-scoped reference or second host serves principal-scoped `GET /v1/agents` (with the two-principal cross-tenant `404` proof) and passes the scenario — the planned MyndHyve `MyndHyveAgentPackResolver` slice. Strengthens the already-`Accepted` RFC 0070's conformance evidence on a multi-tenant host.
 
 ## References
 

@@ -730,6 +730,13 @@ paths:
         system-prompt body, resolved handoff schemas, or credential material (SR-1).
         Dispatch is not a bespoke endpoint: a manifest agent is invoked as a run
         whose node pins it via `WorkflowNode.agent` + `POST /v1/runs` (RFC 0072 §B).
+        RFC 0074 — the result is scoped to the authenticated principal's owner
+        triple (RFC 0048). When `capabilities.agents.manifestRuntime.installScope`
+        is `'tenant'`, only the agents available to the caller's tenant·workspace
+        are returned (an agent another workspace installed is absent, never
+        disclosed); when `'host'` (default) the inventory is host-global as in
+        RFC 0072. A `'tenant'`-scoped host MUST reject unauthenticated/unscoped
+        requests per its standard auth contract rather than fall back to a global list.
       operationId: listAgents
       responses:
         '200':
@@ -754,7 +761,11 @@ paths:
       summary: |
         RFC 0072 §A — return one installed manifest agent's inventory entry, or
         404 when no such agent is installed (or the host doesn't advertise
-        `capabilities.agents.manifestRuntime`).
+        `capabilities.agents.manifestRuntime`). RFC 0074 — resolved within the
+        authenticated principal's owner triple (RFC 0048): on an
+        `installScope: 'tenant'` host an agent the caller's workspace has not
+        approved 404s identically to "not installed", so the surface never
+        discloses another tenant's inventory.
       operationId: getAgent
       parameters:
         - in: path

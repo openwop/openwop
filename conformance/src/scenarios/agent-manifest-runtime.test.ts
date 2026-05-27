@@ -23,13 +23,36 @@ describe('agent-manifest-runtime (RFC 0070)', () => {
     const cap = await readManifestRuntimeCap();
     if (cap?.supported !== true) return; // unadvertised — soft-skip
 
+    // RFC 0074 §B — installScope governs how GET /v1/agents is scoped.
+    const installScope = typeof cap.installScope === 'string' ? cap.installScope : 'host';
+    expect(
+      installScope === 'host' || installScope === 'tenant',
+      driver.describe('RFC 0074 §B', "agents.manifestRuntime.installScope (when present) MUST be 'host' or 'tenant'"),
+    ).toBe(true);
+
     const inv = await listManifestAgents();
     if (inv === null) return; // seam absent — soft-skip
     const agents = inv.agents ?? [];
     expect(
-      Array.isArray(agents) && agents.length > 0,
-      driver.describe('RFC 0070 §A', 'a manifestRuntime host MUST surface ≥1 installed manifest agent'),
+      Array.isArray(agents),
+      driver.describe('RFC 0072 §A', 'GET /v1/agents MUST return an agents[] array'),
     ).toBe(true);
+
+    if (installScope === 'host') {
+      // Host-global inventory (RFC 0072 §A): a manifestRuntime host MUST surface ≥1 agent.
+      expect(
+        agents.length > 0,
+        driver.describe('RFC 0070 §A', 'a host-scoped manifestRuntime host MUST surface ≥1 installed manifest agent'),
+      ).toBe(true);
+    } else if (agents.length === 0) {
+      // RFC 0074 §A + Unresolved Q3 — tenant-scoped: GET /v1/agents is the
+      // authenticated principal's workspace set, which MAY be empty (the workspace
+      // approved no agent packs) while manifestRuntime is advertised host-wide.
+      // Empty is conformant; the cross-tenant no-disclosure 404 is covered by the
+      // owner-triple isolation harness (RFC 0048/0059), not re-probed here. Nothing
+      // to dispatch.
+      return;
+    }
 
     const agentId = agents[0]?.agentId;
     if (typeof agentId !== 'string') return;

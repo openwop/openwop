@@ -664,7 +664,7 @@ ctx.webResearch.research({
 
 **Used by:** `vendor.myndhyve.agent-orchestration` (the `agent.*` typeIds)
 
-This is the heavyweight **swarm/consensus superset**. The minimal tier that makes a published agent pack runnable is `capabilities.agents.manifestRuntime` (RFC 0070) — loading a pack's `agents[]` into an `AgentRegistry` (RFC 0003) and dispatching one on the existing `core.dispatch`/orchestrator loop. A host advertising `host.agentRuntime: supported` **implies** `agents.manifestRuntime` (RFC 0070 §B), since `spawn({ manifestId })` instantiates a manifest agent. Hosts that only need single-agent / crew dispatch advertise the floor and omit this section.
+This is the heavyweight **swarm/consensus superset**. The minimal tier that makes a published agent pack runnable is `capabilities.agents.manifestRuntime` (RFC 0070) — loading a pack's `agents[]` into an `AgentRegistry` (RFC 0003) and dispatching one on the existing `core.dispatch`/orchestrator loop. A host advertising `host.agentRuntime: supported` **implies** `agents.manifestRuntime` (RFC 0070 §B), since `spawn({ manifestId })` instantiates a manifest agent. Hosts that only need single-agent / crew dispatch advertise the floor and omit this section. A multi-tenant host additionally advertises `agents.manifestRuntime.installScope: 'tenant'` (RFC 0074) so `GET /v1/agents` is scoped to the caller's owner triple (default `'host'` = host-global, RFC 0072 §A behavior); see `node-packs.md` §"Inventory scope".
 
 Operates on RFC 0002 / 0003 / 0007 protocol primitives — spawn, delegate, consensus, message-send, skill-invoke, swarm-execute.
 
