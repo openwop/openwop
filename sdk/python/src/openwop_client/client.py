@@ -18,6 +18,7 @@ from urllib.request import Request, urlopen
 from .errors import WopError
 from .sse import stream_events
 from .types import (
+    AgentInventoryEntry,
     AuditVerifyAnomaly,
     AuditVerifyCheckpoint,
     AuditVerifyResult,
@@ -107,6 +108,23 @@ def _capabilities_from_dict(d: dict[str, Any]) -> Capabilities:
         configurable=d.get("configurable"),
         observability=d.get("observability"),
         minClientVersion=d.get("minClientVersion"),
+    )
+
+
+def _agent_inventory_entry_from_dict(d: dict[str, Any]) -> AgentInventoryEntry:
+    return AgentInventoryEntry(
+        agentId=str(d["agentId"]),
+        persona=str(d.get("persona", "")),
+        label=str(d.get("label", d.get("persona", ""))),
+        modelClass=str(d.get("modelClass", "")),
+        packName=str(d.get("packName", "")),
+        packVersion=str(d.get("packVersion", "")),
+        toolAllowlist=list(d.get("toolAllowlist", [])),
+        hasHandoffSchemas=bool(d.get("hasHandoffSchemas", False)),
+        description=d.get("description"),
+        memoryShape=d.get("memoryShape"),
+        confidenceThreshold=d.get("confidenceThreshold"),
+        degraded=d.get("degraded"),
     )
 
 
@@ -486,28 +504,30 @@ class OpenwopClient:
             for a in d.get("annotations", [])
         ]
 
-    def agents_list(self) -> dict[str, Any] | None:
-        """RFC 0072 §A — list installed manifest agents (``{agents, total}``).
-        Read-only; returns ``None`` when the host doesn't advertise
+    def agents_list(self) -> list[AgentInventoryEntry] | None:
+        """RFC 0072 §A — list installed manifest agents. Read-only; returns
+        ``None`` when the host doesn't advertise
         ``capabilities.agents.manifestRuntime`` (the endpoint 404s). Dispatch is
         not here: a manifest agent runs as a ``runs.create`` whose workflow node
         pins it via ``WorkflowNode.agent`` (RFC 0072 §B)."""
         try:
-            return self._request_json("GET", "/v1/agents")
+            d = self._request_json("GET", "/v1/agents")
         except WopError as err:
             if err.status in (404, 501):
                 return None
             raise
+        return [_agent_inventory_entry_from_dict(a) for a in d.get("agents", [])]
 
-    def agents_get(self, agent_id: str) -> dict[str, Any] | None:
+    def agents_get(self, agent_id: str) -> AgentInventoryEntry | None:
         """RFC 0072 §A — one installed manifest agent's inventory entry, or
         ``None`` when absent / the capability is unadvertised (404)."""
         try:
-            return self._request_json("GET", f"/v1/agents/{agent_id}")
+            d = self._request_json("GET", f"/v1/agents/{agent_id}")
         except WopError as err:
             if err.status in (404, 501):
                 return None
             raise
+        return _agent_inventory_entry_from_dict(d)
 
     def list_workspace_files(
         self, *, prefix: str | None = None

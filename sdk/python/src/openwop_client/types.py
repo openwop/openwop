@@ -619,3 +619,24 @@ def is_run_error_code(value: object) -> bool:
     """Return True when ``value`` is a known canonical run-document error code."""
 
     return isinstance(value, str) and value in RUN_ERROR_CODES
+
+
+@dataclass(frozen=True)
+class AgentInventoryEntry:
+    """RFC 0072 §A — one installed manifest agent, as projected by
+    ``GET /v1/agents`` / ``GET /v1/agents/{agentId}``. Read-only — never carries
+    the system-prompt body, resolved handoff schemas, or credentials (SR-1)."""
+
+    agentId: str
+    persona: str
+    label: str
+    modelClass: str
+    packName: str
+    packVersion: str
+    toolAllowlist: list[str]
+    hasHandoffSchemas: bool
+    description: str | None = None
+    memoryShape: dict[str, bool] | None = None
+    confidenceThreshold: float | None = None
+    # RFC 0072 §C — optional capability tiers this host does not satisfy, inert here.
+    degraded: list[str] | None = None

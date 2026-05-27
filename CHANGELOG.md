@@ -11,6 +11,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.5 — unreleased]
 
+### fix(app,sdk): RFC 0072 code-review follow-ups (2026-05-27)
+
+Implementation-only polish from the senior code review of #272 (no spec/schema/wire change):
+- The workflow-engine eager agent loader now runs the RFC 0072 §C disposition live — passes a `hostSatisfies` predicate (the host's floor-tier satisfied caps) so each agent's `degraded[]` is computed at boot (non-empty once a pack declares an unmet `peerDependenciesMeta.optional` tier; the eager pass stays non-strict pending the 21-pack peerDep migration).
+- Python SDK `agents_list`/`agents_get` now return a typed frozen `AgentInventoryEntry` (parity with the TS/Go typed shapes) instead of raw dicts.
+- `routes/agents.ts`: documented the §A conditional-serving contract (auth-gated; this host advertises `manifestRuntime` unconditionally so the route is always live; a gating host MUST 404 when unadvertised).
+
 ### feat(rfc-0071): chat card packs (Phase 2) — Draft spec + schema (2026-05-26)
 
 Lands the **Phase 2 (AI chat card packs)** wire surface for [RFC 0071](RFCS/0071-artifact-type-and-chat-card-packs.md), as DRAFT: new `spec/v1/chat-card-packs.md` + `schemas/chat-card-pack-manifest.schema.json` (`kind: "card"`, the fifth pack kind). A card is a distributable `(typed inputs + prompt template) → ctx.aiEnvelope.generate → typed artifact` composite — generalizing MyndHyve's `CardTemplateDefinition` and the demo app's chat-card registry. Reuses the Phase-1 `outputArtifactType` binding; `inputs[].type` is a closed portable enum (`text`/`longtext`/`number`/`boolean`/`select`/`artifact-ref`) with a `vendor.*`/`x-` host-extension escape (MyndHyve's canvas/collection-reference widgets stay host-side per `positioning.md`). Adds the §host.chat `cardPacks` sub-flag (card execution + the **untrusted-input trust-boundary MUST**, R2), names the `card` kind in `node-packs.md`, and a server-free `chat-card-pack-manifest-validation.test.ts` (7 cases). **Phase 2 stays `Draft`** within the RFC: the `chat-card-pack-execution.test.ts` trust-tag-propagation proof (R2) + G9 (confirm the input-field subset with MyndHyve) are its `Active` gates. Additive; reuses ai-envelope + artifact-type + host.chat primitives, no new event type.
