@@ -55,6 +55,13 @@ import {
   buildInputs, parseInputValue, parseNodeVersion, defaultApiKeyFor,
   normalizeBaseUrl, npmCommand, ok, warn, fail, formatCheckTable,
 } from './cli/shared.js';
+import { runConfig, CONFIG_HELP } from './cli/config.js';
+import { runCatalog, CATALOG_HELP } from './cli/catalog.js';
+import { runWorkflows, WORKFLOWS_HELP } from './cli/workflows.js';
+import { runAgents, AGENTS_HELP } from './cli/agents.js';
+import { runConformance, CONFORMANCE_HELP } from './cli/conformance.js';
+import { runAccount, ACCOUNT_HELP } from './cli/account.js';
+import { runAdmin, ADMIN_HELP } from './cli/admin.js';
 // Public surface re-exported for the test suite + bin (they import the bundle).
 export { VERSION, DEFAULT_BASE_URL, DEFAULT_REGISTRY_URL, PROVIDER_CATALOG, HOST_PRESETS };
 export { submitTurn, streamRunEvents, consumeSse, renderEvent, extractAssistantText };
@@ -785,70 +792,6 @@ async function runDemoInstall(ctx: Ctx, argv) {
   return 0;
 }
 
-async function runCatalog(ctx: Ctx, argv) {
-  const sub = argv[0] ?? 'nodes';
-  const args = argv.slice(sub === 'nodes' || sub === 'packs' ? 1 : 0);
-  if (sub === '--help' || sub === '-h') {
-    write(ctx.io.stdout, CATALOG_HELP);
-    return 0;
-  }
-  switch (sub) {
-    case 'nodes':
-      return runCatalogNodes(ctx, args);
-    case 'packs':
-      return runCatalogPacks(ctx, args);
-    default:
-      throw new CliError(`Unknown catalog command: ${sub}`);
-  }
-}
-
-async function runCatalogNodes(ctx: Ctx, argv) {
-  const { options } = parseOptions(argv, {
-    bool: ['--help'],
-    value: ['--limit', '--search'],
-  });
-  if (options.help) {
-    write(ctx.io.stdout, CATALOG_HELP);
-    return 0;
-  }
-  const res = await requestJson(ctx, '/v1/host/sample/node-catalog');
-  let nodes = Array.isArray(res.body.nodes) ? res.body.nodes : [];
-  if (options.search) {
-    const q = String(options.search).toLowerCase();
-    nodes = nodes.filter((n) => String(n.typeId ?? '').toLowerCase().includes(q) || String(n.label ?? '').toLowerCase().includes(q));
-  }
-  const limit = Number(options.limit ?? 30);
-  if (ctx.json) {
-    writeJson(ctx.io.stdout, { nodes });
-    return 0;
-  }
-  const rows = nodes.slice(0, limit).map((n) => ({
-    typeId: n.typeId,
-    source: n.source,
-    category: n.category,
-    runnable: Array.isArray(n.missingHostSurfaces) && n.missingHostSurfaces.length > 0 ? 'no' : 'yes',
-  }));
-  writeLine(ctx.io.stdout, formatTable(rows, ['typeId', 'source', 'category', 'runnable']));
-  if (nodes.length > rows.length) writeLine(ctx.io.stdout, `... ${nodes.length - rows.length} more. Use --limit ${nodes.length} or --json.`);
-  return 0;
-}
-
-async function runCatalogPacks(ctx: Ctx, argv = []) {
-  const { options } = parseOptions(argv, { bool: ['--help'] });
-  if (options.help) {
-    write(ctx.io.stdout, CATALOG_HELP);
-    return 0;
-  }
-  const res = await requestJson(ctx, '/v1/packs', { auth: false });
-  if (ctx.json) {
-    writeJson(ctx.io.stdout, res.body);
-    return 0;
-  }
-  const rows = (res.body.packs ?? []).map((p) => ({ name: p.name, nodes: Array.isArray(p.nodes) ? p.nodes.length : 0 }));
-  writeLine(ctx.io.stdout, formatTable(rows, ['name', 'nodes']));
-  return 0;
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // packs — operate the signed node-pack registry (gap 6 / item C-5).
 //
@@ -1355,89 +1298,6 @@ function buildUstarGzip(entries) {
   return gz;
 }
 
-async function runWorkflows(ctx: Ctx, argv) {
-  const sub = argv[0] ?? 'list';
-  const args = argv.slice(['list', 'get', 'register', 'delete', 'rm'].includes(sub) ? 1 : 0);
-  if (sub === '--help' || sub === '-h') {
-    write(ctx.io.stdout, WORKFLOWS_HELP);
-    return 0;
-  }
-  switch (sub) {
-    case 'list':
-      return runWorkflowsList(ctx, args);
-    case 'get':
-      return runWorkflowsGet(ctx, args);
-    case 'register':
-      return runWorkflowsRegister(ctx, args);
-    case 'delete':
-    case 'rm':
-      return runWorkflowsDelete(ctx, args);
-    default:
-      throw new CliError(`Unknown workflows command: ${sub}`);
-  }
-}
-
-async function runWorkflowsList(ctx: Ctx, argv) {
-  const { options } = parseOptions(argv, { bool: ['--help'] });
-  if (options.help) {
-    write(ctx.io.stdout, WORKFLOWS_HELP);
-    return 0;
-  }
-  const res = await requestJson(ctx, '/v1/host/sample/workflows');
-  if (ctx.json) {
-    writeJson(ctx.io.stdout, res.body);
-    return 0;
-  }
-  const workflows = res.body.workflows ?? [];
-  const rows = workflows.map((w) => ({ workflowId: w.workflowId, nodes: Array.isArray(w.nodes) ? w.nodes.length : 0 }));
-  writeLine(ctx.io.stdout, rows.length ? formatTable(rows, ['workflowId', 'nodes']) : 'No registered sample workflows.');
-  return 0;
-}
-
-async function runWorkflowsGet(ctx: Ctx, argv) {
-  const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
-  if (options.help || positionals.length !== 1) {
-    write(ctx.io.stdout, 'Usage: openwop workflows get <workflowId> [--json]\n');
-    return options.help ? 0 : 2;
-  }
-  const workflowId = encodeURIComponent(positionals[0]);
-  const res = await requestJson(ctx, `/v1/workflows/${workflowId}`);
-  if (ctx.json) writeJson(ctx.io.stdout, res.body);
-  else {
-    writeLine(ctx.io.stdout, `workflowId: ${res.body.workflowId ?? positionals[0]}`);
-    writeLine(ctx.io.stdout, `nodes: ${Array.isArray(res.body.nodes) ? res.body.nodes.length : 0}`);
-    if (Array.isArray(res.body.edges)) writeLine(ctx.io.stdout, `edges: ${res.body.edges.length}`);
-  }
-  return 0;
-}
-
-async function runWorkflowsRegister(ctx: Ctx, argv) {
-  const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
-  if (options.help || positionals.length !== 1) {
-    write(ctx.io.stdout, 'Usage: openwop workflows register <workflow.json> [--json]\n');
-    return options.help ? 0 : 2;
-  }
-  const file = resolvePath(ctx.cwd, positionals[0]);
-  const body = JSON.parse(await readFile(file, 'utf8'));
-  const res = await requestJson(ctx, '/v1/host/sample/workflows', { method: 'POST', body });
-  if (ctx.json) writeJson(ctx.io.stdout, res.body);
-  else writeLine(ctx.io.stdout, `Registered workflow ${res.body.workflowId} (${res.body.nodeCount} nodes)`);
-  return 0;
-}
-
-async function runWorkflowsDelete(ctx: Ctx, argv) {
-  const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
-  if (options.help || positionals.length !== 1) {
-    write(ctx.io.stdout, 'Usage: openwop workflows delete <workflowId> [--json]\n');
-    return options.help ? 0 : 2;
-  }
-  const workflowId = encodeURIComponent(positionals[0]);
-  const res = await requestJson(ctx, `/v1/host/sample/workflows/${workflowId}`, { method: 'DELETE' });
-  if (ctx.json) writeJson(ctx.io.stdout, res.body);
-  else writeLine(ctx.io.stdout, `${res.body.removed ? 'Deleted' : 'No matching workflow'}: ${res.body.workflowId}`);
-  return 0;
-}
-
 async function runRuns(ctx: Ctx, argv) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'create', 'get', 'cancel', 'ancestry', 'events', 'annotations', 'annotate', 'debug-bundle'].includes(sub) ? 1 : 0);
@@ -1823,35 +1683,7 @@ async function runRunsAncestry(ctx: Ctx, argv) {
 // so these produce deterministic fixture assets — real, downloadable, but
 // not a live generation. Responses are tagged `stub: true`.
 
-const CONFORMANCE_HELP = `Usage: openwop conformance [--offline] [--filter pattern]
 
-Runs the in-repo @openwop/openwop-conformance CLI. Without --offline it targets the configured --base-url.
-`;
-
-async function runConformance(ctx: Ctx, argv) {
-  const { options } = parseOptions(argv, {
-    bool: ['--help', '--offline'],
-    value: ['--filter'],
-  });
-  if (options.help) {
-    write(ctx.io.stdout, CONFORMANCE_HELP);
-    return 0;
-  }
-  const root = requireRepoRoot(ctx);
-  const args = ['run', 'cli', '--'];
-  if (options.offline) {
-    args.push('--offline');
-  } else {
-    args.push('--base-url', ctx.baseUrl, '--api-key', ctx.apiKey ?? DEFAULT_API_KEY);
-  }
-  if (options.filter) args.push('--filter', options.filter);
-  const result = spawnSync(npmCommand(), args, {
-    cwd: join(root, 'conformance'),
-    stdio: 'inherit',
-    env: ctx.env,
-  });
-  return result.status ?? 1;
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // `openwop memory ...` — read the demo MemoryAdapter ledger (RFC 0004)
@@ -2239,189 +2071,9 @@ async function runProvidersTest(ctx: Ctx, argv) {
 // `POST /v1/host/sample/agents/{agentId}/dispatch` (toolAllowlist-filtered,
 // handoff-validated, confidence-escalating per RFC 0002 §A14/§F).
 
-async function runAgents(ctx: Ctx, argv) {
-  const sub = argv[0] ?? 'list';
-  const args = argv.slice(['list', 'info', 'run'].includes(sub) ? 1 : 0);
-  if (sub === '--help' || sub === '-h') {
-    write(ctx.io.stdout, AGENTS_HELP);
-    return 0;
-  }
-  switch (sub) {
-    case 'list':
-      return await runAgentsList(ctx, args);
-    case 'info':
-      return await runAgentsInfo(ctx, args);
-    case 'run':
-      return await runAgentsRun(ctx, args);
-    default:
-      throw new CliError(`Unknown agents command: ${sub}\nRun \`openwop agents --help\` for usage.`);
-  }
-}
-
-async function runAgentsList(ctx: Ctx, argv) {
-  const { options } = parseOptions(argv, { bool: ['--help'] });
-  if (options.help) {
-    write(ctx.io.stdout, AGENTS_HELP);
-    return 0;
-  }
-  const res = await requestJson(ctx, '/v1/host/sample/agents');
-  if (ctx.json) {
-    writeJson(ctx.io.stdout, res.body);
-    return 0;
-  }
-  const agents = Array.isArray(res.body?.agents) ? res.body.agents : [];
-  if (agents.length === 0) {
-    writeLine(ctx.io.stdout, 'No manifest agents are installed on this host (no pack agents[] loaded into the AgentRegistry).');
-    return 0;
-  }
-  const rows = agents.map((a) => ({
-    agentId: a.agentId,
-    persona: a.label ?? a.persona,
-    modelClass: a.modelClass,
-    pack: a.packName,
-    tools: Array.isArray(a.toolAllowlist) ? String(a.toolAllowlist.length) : '0',
-  }));
-  writeLine(ctx.io.stdout, formatTable(rows, ['agentId', 'persona', 'modelClass', 'pack', 'tools']));
-  return 0;
-}
-
-async function runAgentsInfo(ctx: Ctx, argv) {
-  const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
-  if (options.help || positionals.length !== 1) {
-    write(ctx.io.stdout, 'Usage: openwop agents info <agentId> [--json]\n');
-    return options.help ? 0 : 2;
-  }
-  const agentId = encodeURIComponent(positionals[0]);
-  const res = await requestJson(ctx, `/v1/host/sample/agents/${agentId}`);
-  if (ctx.json) {
-    writeJson(ctx.io.stdout, res.body);
-    return 0;
-  }
-  const a = res.body ?? {};
-  writeLine(ctx.io.stdout, `agentId: ${a.agentId ?? positionals[0]}`);
-  writeLine(ctx.io.stdout, `persona: ${a.persona ?? ''}`);
-  if (a.label && a.label !== a.persona) writeLine(ctx.io.stdout, `label: ${a.label}`);
-  writeLine(ctx.io.stdout, `modelClass: ${a.modelClass ?? ''}`);
-  writeLine(ctx.io.stdout, `pack: ${a.packName ?? ''}@${a.packVersion ?? ''}`);
-  if (Array.isArray(a.toolAllowlist)) writeLine(ctx.io.stdout, `toolAllowlist: ${a.toolAllowlist.length ? a.toolAllowlist.join(', ') : '(none)'}`);
-  writeLine(ctx.io.stdout, `handoffSchemas: ${a.hasHandoffSchemas ? 'yes' : 'no'}`);
-  if (typeof a.confidenceThreshold === 'number') writeLine(ctx.io.stdout, `confidenceThreshold: ${a.confidenceThreshold}`);
-  if (a.memoryShape) writeLine(ctx.io.stdout, `memoryShape: ${Object.entries(a.memoryShape).filter(([, v]) => v).map(([k]) => k).join(', ') || '(none)'}`);
-  if (a.description) writeLine(ctx.io.stdout, `description: ${a.description}`);
-  return 0;
-}
-
-// `openwop agents run <agentId>` — dispatch one manifest-agent turn (RFC 0070).
-async function runAgentsRun(ctx: Ctx, argv) {
-  const { options, positionals } = parseOptions(argv, {
-    bool: ['--help', '--no-validate'],
-    value: ['--task-json', '--threshold'],
-    multi: ['--tool'],
-  });
-  if (options.help || positionals.length !== 1) {
-    write(ctx.io.stdout, 'Usage: openwop agents run <agentId> [--task-json \'{...}\'] [--tool <id>]... [--threshold <n>] [--no-validate] [--json]\n');
-    return options.help ? 0 : 2;
-  }
-  const agentId = positionals[0];
-  const body: Record<string, any> = {};
-  if (options['task-json'] !== undefined) {
-    try {
-      body.task = JSON.parse(options['task-json']);
-    } catch {
-      throw new CliError('--task-json must be valid JSON', 2);
-    }
-  }
-  if (Array.isArray(options.tool) && options.tool.length) body.availableTools = options.tool;
-  if (options.threshold !== undefined) {
-    const t = Number(options.threshold);
-    if (!Number.isFinite(t) || t < 0 || t > 1) {
-      throw new CliError('--threshold must be a number between 0 and 1', 2);
-    }
-    body.confidenceThreshold = t;
-  }
-  if (options['no-validate']) body.validateHandoff = false;
-
-  const res = await requestJson(ctx, `/v1/host/sample/agents/${encodeURIComponent(agentId)}/dispatch`, {
-    method: 'POST',
-    body,
-  });
-  if (ctx.json) {
-    writeJson(ctx.io.stdout, res.body);
-    return 0;
-  }
-  const r = res.body ?? {};
-  writeLine(ctx.io.stdout, `agent: ${r.agentId ?? agentId} (${r.persona ?? ''})`);
-  writeLine(ctx.io.stdout, `status: ${r.status ?? 'unknown'}`);
-  writeLine(ctx.io.stdout, `confidence: ${r.confidence} (threshold ${r.threshold})`);
-  if (Array.isArray(r.toolSurface)) writeLine(ctx.io.stdout, `toolSurface: ${r.toolSurface.length ? r.toolSurface.join(', ') : '(none)'}`);
-  if (Array.isArray(r.events)) {
-    for (const e of r.events) {
-      writeLine(ctx.io.stdout, `  · ${e.type}${e.decision ? ` [${e.decision}]` : ''}${e.summary ? `: ${e.summary}` : ''}`);
-    }
-  }
-  if (r.error) writeLine(ctx.io.stdout, `error: ${r.error.code} — ${r.error.message}`);
-  if (r.result !== undefined) writeLine(ctx.io.stdout, `result: ${JSON.stringify(r.result)}`);
-  // Non-zero exit when the agent did not complete, so scripts can branch.
-  return r.status === 'completed' ? 0 : (r.status === 'escalated' ? 3 : 1);
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // `openwop config ...`
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function runConfig(ctx: Ctx, argv) {
-  const sub = argv[0] ?? 'file';
-  const args = argv.slice(['file', 'get', 'set', 'unset'].includes(sub) ? 1 : 0);
-  if (sub === '--help' || sub === '-h') {
-    write(ctx.io.stdout, CONFIG_HELP);
-    return 0;
-  }
-  switch (sub) {
-    case 'file':
-      writeLine(ctx.io.stdout, configPathFor(undefined, ctx.env));
-      return 0;
-    case 'get': {
-      const configPath = configPathFor(undefined, ctx.env);
-      const config = readConfigSafe(configPath) ?? {};
-      if (args.length === 0) {
-        if (ctx.json) writeJson(ctx.io.stdout, config);
-        else writeLine(ctx.io.stdout, JSON.stringify(config, null, 2));
-        return 0;
-      }
-      const value = getByPath(config, args[0]);
-      if (value === undefined) {
-        writeLine(ctx.io.stderr, `(unset: ${args[0]})`);
-        return 1;
-      }
-      if (ctx.json) writeJson(ctx.io.stdout, value);
-      else writeLine(ctx.io.stdout, typeof value === 'string' ? value : JSON.stringify(value));
-      return 0;
-    }
-    case 'set': {
-      if (args.length !== 2) throw new CliError('Usage: openwop config set <key> <value>');
-      const configPath = configPathFor(undefined, ctx.env);
-      const config = readConfigSafe(configPath) ?? {};
-      setByPath(config, args[0], parseInputValue(args[1]));
-      saveConfig(configPath, config);
-      writeLine(ctx.io.stdout, `set ${args[0]} = ${args[1]}`);
-      return 0;
-    }
-    case 'unset': {
-      if (args.length !== 1) throw new CliError('Usage: openwop config unset <key>');
-      const configPath = configPathFor(undefined, ctx.env);
-      const config = readConfigSafe(configPath) ?? {};
-      unsetByPath(config, args[0]);
-      saveConfig(configPath, config);
-      writeLine(ctx.io.stdout, `unset ${args[0]}`);
-      return 0;
-    }
-    default:
-      throw new CliError(`Unknown config command: ${sub}`);
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// `openwop webhooks ...` — manage webhook subscriptions (C-9)
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2783,59 +2435,12 @@ async function runNotify(ctx: Ctx, argv) {
 // account — tenant self-service (hard-delete all data for the signed-in user).
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function runAccount(ctx: Ctx, argv) {
-  const sub = argv[0];
-  if (!sub || sub === '--help' || sub === '-h') {
-    write(ctx.io.stdout, ACCOUNT_HELP);
-    return sub ? 0 : 2;
-  }
-  if (sub !== 'delete') throw new CliError(`Unknown account command: ${sub}\nRun \`openwop account --help\` for usage.`);
-
-  const { options } = parseOptions(argv.slice(1), { bool: ['--confirm', '--yes'] });
-  // Destructive + irreversible: wipes ALL data for the signed-in tenant and
-  // orphans the KMS-wrapped DEKs. Require an explicit confirmation.
-  if (!options.confirm && !options.yes) {
-    const ok = await promptYesNo(ctx, 'Permanently delete ALL data for the signed-in account? This cannot be undone.', false);
-    if (!ok) { writeLine(ctx.io.stdout, 'Aborted.'); return 1; }
-  }
-  const res = await requestJson(ctx, '/v1/host/sample/account', { method: 'DELETE' });
-  if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
-  const counts = Object.entries(res.body).filter(([k]) => k !== 'deleted').map(([k, v]) => `${k}=${v}`).join(' ');
-  writeLine(ctx.io.stdout, `✓ Account deleted${counts ? ` (${counts})` : ''}`);
-  return 0;
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // admin — operator maintenance (ephemeral-secret cleanup). Admin-token gated:
 // pass the host's OPENWOP_ADMIN_TOKEN via --api-key.
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function runAdmin(ctx: Ctx, argv) {
-  const sub = argv[0];
-  if (!sub || sub === '--help' || sub === '-h') {
-    write(ctx.io.stdout, ADMIN_HELP);
-    return sub ? 0 : 2;
-  }
-  if (sub !== 'cleanup') throw new CliError(`Unknown admin command: ${sub}\nRun \`openwop admin --help\` for usage.`);
-
-  const { options } = parseOptions(argv.slice(1), { bool: ['--status', '--confirm', '--yes'] });
-  if (options.status) {
-    const res = await requestJson(ctx, '/v1/host/sample/admin/cleanup/status');
-    if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
-    const oldest = res.body.oldestActivityMs == null ? 'n/a' : `${Math.round(res.body.oldestActivityMs / 1000)}s ago`;
-    writeLine(ctx.io.stdout, `trackedTenants=${res.body.trackedTenants} oldestActivity=${oldest}`);
-    return 0;
-  }
-  // The POST wipes expired ephemeral secrets for inactive tenants — confirm.
-  if (!options.confirm && !options.yes) {
-    const ok = await promptYesNo(ctx, 'Run cleanup now? This wipes ephemeral secrets for tenants idle past the window.', false);
-    if (!ok) { writeLine(ctx.io.stdout, 'Aborted.'); return 1; }
-  }
-  const res = await requestJson(ctx, '/v1/host/sample/admin/cleanup', { method: 'POST', body: {} });
-  if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
-  writeLine(ctx.io.stdout, `✓ Cleanup ran — activeTenants=${res.body.activeTenants} wipedSecrets=${res.body.wipedSecrets} window=${Math.round((res.body.windowMs ?? 0) / 3_600_000)}h`);
-  return 0;
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Relay device — register/activate a local channel relay, run the bridge loop.
@@ -3408,10 +3013,6 @@ Writes a managed-service definition for the demo backend, chosen by platform:
 const DEMO_URLS_HELP = `Usage: openwop demo urls [--frontend-port 5173] [--json]
 `;
 
-const CATALOG_HELP = `Usage:
-  openwop catalog nodes [--search text] [--limit n] [--json]
-  openwop catalog packs [--json]
-`;
 
 const PACKS_HELP = `Usage:
   openwop packs search [query] [--registry-url url] [--limit n] [--json]
@@ -3440,12 +3041,6 @@ separate surface from the host --base-url.
             build-index.mjs rerun. Run from inside the repo.
 `;
 
-const WORKFLOWS_HELP = `Usage:
-  openwop workflows list [--json]
-  openwop workflows get <workflowId> [--json]
-  openwop workflows register <workflow.json> [--json]
-  openwop workflows delete <workflowId> [--json]
-`;
 
 const RUNS_HELP = `Usage:
   openwop runs list [--status status] [--limit n] [--tenant-id id] [--json]
@@ -3545,41 +3140,7 @@ const PROVIDERS_HELP = `Usage:
 Provider must be one of: anthropic, openai, google, minimax.
 `;
 
-const AGENTS_HELP = `Usage:
-  openwop agents list [--json]
-  openwop agents info <agentId> [--json]
-  openwop agents run <agentId> [--task-json '{...}'] [--tool <id>]... [--threshold <n>] [--no-validate] [--json]
 
-Manifest agents (RFC 0070). The host loads pack agents[] (RFC 0003) into an
-AgentRegistry and advertises capabilities.agents.manifestRuntime. 'list'/'info'
-render that registry-backed inventory; 'run' dispatches one agent turn via
-POST /v1/host/sample/agents/{agentId}/dispatch — the tool surface is filtered to
-the agent's toolAllowlist (RFC 0002 §A14), task/return payloads are validated
-against the agent's handoff schemas (RFC 0003 §D, unless --no-validate), and a
-sub-threshold decision escalates rather than proceeding (RFC 0002 §F).
-
-  --task-json J   Inbound task payload (validated against handoff.taskSchemaRef).
-  --tool <id>     A tool the host offers this turn (repeatable); kept only if allowlisted.
-  --threshold <n> Per-run confidence threshold override (default: the agent's).
-  --no-validate   Dispatch with opaque payloads (skip handoff schema validation).
-
-'run' exits 0 (completed), 3 (escalated), or 1 (failed) so scripts can branch.
-
-Examples:
-  openwop agents list
-  openwop agents info core.openwop.agents.supervisor.default --json
-  openwop agents run core.openwop.agents.code-reviewer.default --task-json '{"diff":"..."}' --tool openwop:fs.read
-`;
-
-const CONFIG_HELP = `Usage:
-  openwop config file
-  openwop config get [key]
-  openwop config set <key> <value>
-  openwop config unset <key>
-
-Reads and writes ~/.openwop/config.json (or OPENWOP_CONFIG_HOME/.openwop/ when set).
-Dotted keys traverse nested objects (e.g., \`openwop config get host.baseUrl\`).
-`;
 
 const MESSAGING_HELP = `Usage:
   openwop messaging connectors list|get|add|enable|disable|test [...]
@@ -3617,26 +3178,7 @@ Dispatch a one-off notification through the demo host
 receipt; wiring a real provider (SES / Twilio) is a host concern.
 `;
 
-const ACCOUNT_HELP = `Usage:
-  openwop account delete [--confirm] [--json]
 
-Permanently delete ALL data for the signed-in account (DELETE
-/v1/host/sample/account). Requires a signed-in user (OIDC Bearer) — the host
-rejects non-user principals. This is irreversible: tenant rows are wiped and
-the KMS-wrapped DEKs become unrecoverable. Without --confirm you'll be asked
-to confirm interactively.
-`;
-
-const ADMIN_HELP = `Usage:
-  openwop admin cleanup [--confirm] [--json]
-  openwop admin cleanup --status [--json]
-
-Operator maintenance for the demo host. \`cleanup\` POSTs to
-/v1/host/sample/admin/cleanup, wiping ephemeral secrets for tenants idle past
-the cleanup window; \`--status\` is a read-only liveness probe. Admin-token
-gated — pass the host's OPENWOP_ADMIN_TOKEN via --api-key. Without --confirm
-the destructive POST asks for confirmation.
-`;
 
 const RELAY_HELP = `Usage:
   openwop relay setup --channel <signal|whatsapp|imessage> [--name n]
