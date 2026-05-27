@@ -259,7 +259,7 @@ Values are semver ranges per [semver.org](https://semver.org/) (`X.Y.Z` exact, `
 
 A pack's manifest is a JSON file named `pack.json` at the pack root. Schema: `schemas/node-pack-manifest.schema.json`.
 
-> **Pack kinds.** Two pack kinds share the `pack.json` filename and are distinguished by an optional top-level `kind` field. Node packs (described in this document) use `kind: "node"` or omit the field entirely. **Workflow-chain packs** — registry-distributed pre-configured DAG fragments that the host editor expands inline at workflow-author time — use `kind: "workflow-chain"` and validate against [`workflow-chain-pack-manifest.schema.json`](../../schemas/workflow-chain-pack-manifest.schema.json). See [`workflow-chain-packs.md`](./workflow-chain-packs.md) (closes RFC 0013 Phase 1). Manifests MUST have exactly one of `nodes[]` (kind=node) OR `chains[]` (kind=workflow-chain); mixing is rejected with `pack_kind_invalid`.
+> **Pack kinds.** Several pack kinds share the `pack.json` filename and are distinguished by an optional top-level `kind` field, each validating against its own manifest schema. Node packs (described in this document) use `kind: "node"` or omit the field entirely. **Workflow-chain packs** — registry-distributed pre-configured DAG fragments that the host editor expands inline at workflow-author time — use `kind: "workflow-chain"` and validate against [`workflow-chain-pack-manifest.schema.json`](../../schemas/workflow-chain-pack-manifest.schema.json); see [`workflow-chain-packs.md`](./workflow-chain-packs.md) (RFC 0013 Phase 1). **Prompt packs** use `kind: "prompt"` and validate against [`prompt-pack-manifest.schema.json`](../../schemas/prompt-pack-manifest.schema.json); see [`prompts.md`](./prompts.md) (RFC 0028). **Artifact-type packs** — typed definitions of the rich artifacts nodes produce (documents, slides, CAD drawings) — use `kind: "artifact-type"` and validate against [`artifact-type-pack-manifest.schema.json`](../../schemas/artifact-type-pack-manifest.schema.json); see [`artifact-type-packs.md`](./artifact-type-packs.md) (RFC 0070 Phase 1). A manifest MUST declare the content of exactly one kind — `nodes[]` (kind=node) XOR `chains[]` (kind=workflow-chain) XOR `prompts[]` (kind=prompt) XOR `artifactTypes[]` (kind=artifact-type); mixing is rejected with `pack_kind_invalid`.
 
 ```json
 {
@@ -354,6 +354,26 @@ The host's `SecretResolver.resolveSecret(ctx)` returns an opaque `ResolvedSecret
 1. Verify each entry's `kind` and `scope` against `Capabilities.secrets`. Mismatch → terminal `failed` with `error.code = credential_unavailable`.
 2. If `kind = 'ai-provider'`, verify `provider` is in `Capabilities.aiProviders.supported` AND (for BYOK runs) that the run's `RunOptions.configurable.ai.credentialRef` references a stored credential of the right provider.
 3. Call `SecretResolver.resolveSecret({ id, kind, provider, scope, runId, tenantId, userId })` and pass the opaque ref to the executor via the engine's existing context plumbing.
+
+### Per-node `artifact`
+
+A node MAY declare an optional `nodes[].artifact` block stating that the node produces a typed, durable artifact (a PRD, slide deck, CAD model). The block binds the node's output to an artifact type defined by an installed **artifact-type pack** (`artifact-type-packs.md`, RFC 0070).
+
+```json
+"artifact": {
+  "typeId": "vendor.acme.cad.model",
+  "syncOn": "completion",
+  "supportsCheckpoint": true
+}
+```
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `typeId` | string | no | Reverse-DNS `artifactTypeId` the node produces. When it matches an `artifactTypeId` of an installed artifact-type pack on a host advertising `host.artifactTypes`, the host MUST validate the produced artifact against that type's schema before emitting `artifact.created` (see `artifact-type-packs.md` §"Binding the existing artifact surfaces"). When it matches none, it is an unregistered type and MUST NOT be schema-validated. |
+| `syncOn` | enum | no (default `completion`) | When the host registers the artifact as durable: `completion` / `approval` / `manual`. |
+| `supportsCheckpoint` | boolean | no | `true` if the artifact participates in checkpoint/resume. |
+
+`nodes[].artifact.typeId` is the pack-manifest counterpart of the per-instance `WorkflowNode.artifactType` field in `workflow-definition.schema.json`: the pack declares the *default* artifact type a node produces; a workflow author MAY override per-instance. Hosts that do not advertise `host.artifactTypes` MAY ignore the block entirely — it carries no execution requirement beyond the validation the capability gates.
 
 ---
 
