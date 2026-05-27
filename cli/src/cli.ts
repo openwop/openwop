@@ -1,3 +1,4 @@
+import type { Ctx } from './context.js';
 import { spawn, spawnSync } from 'node:child_process';
 import {
   chmodSync, createReadStream, existsSync, mkdirSync, openSync,
@@ -17,89 +18,46 @@ import type { ChannelPlugin, InboundMessage, RelayChannel } from './channels/typ
 export { parseSignalEnvelope, parseImessageRow, parseWhatsappMessage } from './channels/normalize.js';
 export { getChannelPlugin } from './channels/registry.js';
 
-export const VERSION = '0.1.0';
-export const DEFAULT_BASE_URL = 'http://localhost:8080';
-// Canonical signed node-pack registry. Distinct from the host --base-url
-// (the workflow-engine demo): the demo only knows its in-process nodes and
-// returns 404 for tarballs, whereas the file-backed registry at this URL
-// serves the full catalog + signed .tgz + .sig + public keys. Overridable
-// per `packs` command via --registry-url or OPENWOP_REGISTRY_URL.
-export const DEFAULT_REGISTRY_URL = 'https://packs.openwop.dev';
-const DEFAULT_API_KEY = 'sample-token';
-const TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled']);
-
-// Provider catalog — mirrors the four backend dispatchers in
-// `apps/workflow-engine/backend/typescript/src/providers/dispatch.ts`.
-// Adding a provider here requires backend support; this is not a free-form
-// list. `envVar` is the conventional env var the wizard auto-detects.
-export const PROVIDER_CATALOG = {
-  anthropic: {
-    label: 'Anthropic (Claude)',
-    envVar: 'ANTHROPIC_API_KEY',
-    models: [
-      { id: 'claude-opus-4-7', label: 'claude-opus-4-7 (most capable)' },
-      { id: 'claude-sonnet-4-6', label: 'claude-sonnet-4-6 (balanced)', recommended: true },
-      { id: 'claude-haiku-4-5', label: 'claude-haiku-4-5 (fastest)' },
-    ],
-  },
-  openai: {
-    label: 'OpenAI',
-    envVar: 'OPENAI_API_KEY',
-    models: [
-      { id: 'gpt-4o', label: 'gpt-4o (most capable)', recommended: true },
-      { id: 'gpt-4-turbo', label: 'gpt-4-turbo' },
-      { id: 'gpt-4o-mini', label: 'gpt-4o-mini (fastest)' },
-    ],
-  },
-  google: {
-    label: 'Google (Gemini)',
-    envVar: 'GOOGLE_API_KEY',
-    models: [
-      { id: 'gemini-2.0-flash', label: 'gemini-2.0-flash (balanced)', recommended: true },
-      { id: 'gemini-1.5-pro', label: 'gemini-1.5-pro' },
-    ],
-  },
-  minimax: {
-    label: 'MiniMax',
-    envVar: 'MINIMAX_API_KEY',
-    models: [
-      { id: 'minimax-text-01', label: 'minimax-text-01', recommended: true },
-    ],
-  },
-};
-
-// Host presets surfaced as the first onboarding choice. `url` is what gets
-// written to the config; `label` is what the user sees. The "custom" option
-// is appended at prompt time.
-export const HOST_PRESETS = [
-  { key: 'shared', label: 'Shared demo at https://app.openwop.dev/api (recommended for trying things out)', url: 'https://app.openwop.dev/api' },
-  { key: 'local', label: 'Local demo at http://localhost:8080 (run `openwop demo start` to launch)', url: 'http://localhost:8080' },
-];
-
-class CliError extends Error {
-  code: number;
-  constructor(message: string, code = 2) {
-    super(message);
-    this.name = 'CliError';
-    this.code = code;
-  }
-}
-
-class HttpError extends Error {
-  status: number;
-  body: unknown;
-  constructor(message: string, status: number, body: unknown) {
-    super(message);
-    this.name = 'HttpError';
-    this.status = status;
-    this.body = body;
-  }
-}
-
-/** Narrow an unknown caught value to a printable message (strict catch vars). */
-function errText(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
-}
+// ── Foundational layer (extracted from the former monolith) ──
+import { CliError, HttpError, errText } from './errors.js';
+import {
+  VERSION, DEFAULT_BASE_URL, DEFAULT_REGISTRY_URL, DEFAULT_API_KEY,
+  TERMINAL_STATUSES, PROVIDER_CATALOG, HOST_PRESETS,
+} from './constants.js';
+import { write, writeLine, writeJson, formatTable, prefixChunk } from './io.js';
+import { extractGlobalOptions, parseOptions, splitFlag, takeValue, toOptionName } from './options.js';
+import {
+  configPathFor, readConfigSafe, saveConfig, mergeConfig,
+  getByPath, setByPath, unsetByPath, openwopHomeDir,
+} from './config.js';
+import { requestJson, safeRequest, probeEndpoint, parseJsonResponse } from './api.js';
+import { sleep } from './util.js';
+import {
+  daemonPidPath, daemonLogPath, readDaemonRecord, writeDaemonRecord,
+  clearDaemonRecord, processAlive, openLogStream, writeLog, buildServiceInstallPlan,
+} from './daemon.js';
+export { daemonPidPath, daemonLogPath, readDaemonRecord, processAlive, buildServiceInstallPlan };
+import { promptChoice, promptText, promptYesNo, readSecret } from './prompt.js';
+import { findRepoRoot, requireRepoRoot, demoProjects, project } from './repo.js';
+export { findRepoRoot };
+import { submitTurn, streamRunEvents, consumeSse, renderEvent, extractAssistantText, defaultReadTurn } from './sse.js';
+// Command groups (src/cli/<group>.ts).
+import { runNotifications, NOTIFICATIONS_HELP } from './cli/notifications.js';
+import { runInterrupts, INTERRUPTS_HELP } from './cli/interrupts.js';
+import { runPrompts, PROMPTS_HELP } from './cli/prompts.js';
+import { runWebhooks, WEBHOOKS_HELP } from './cli/webhooks.js';
+import { runCron, CRON_HELP } from './cli/cron.js';
+import { runHealth, HEALTH_HELP } from './cli/health.js';
+import { runCapabilities, CAPABILITIES_HELP, summarizeCapabilities } from './cli/capabilities.js';
+import { runMemory, MEMORY_HELP } from './cli/memory.js';
+import { runMedia, MEDIA_HELP } from './cli/media.js';
+// Public surface re-exported for the test suite + bin (they import the bundle).
+export { VERSION, DEFAULT_BASE_URL, DEFAULT_REGISTRY_URL, PROVIDER_CATALOG, HOST_PRESETS };
+export { submitTurn, streamRunEvents, consumeSse, renderEvent, extractAssistantText };
+export { summarizeCapabilities };
+export { formatTable };
+export { extractGlobalOptions };
+export { configPathFor, readConfigSafe, saveConfig, openwopHomeDir };
 
 export async function runCli(argv: string[], options: any = {}): Promise<number> {
   const io = options.io ?? {
@@ -230,118 +188,6 @@ export async function runCli(argv: string[], options: any = {}): Promise<number>
   }
 }
 
-export function extractGlobalOptions(argv, env = process.env) {
-  const globals = {
-    baseUrl: undefined,
-    apiKey: undefined,
-    json: false,
-    quiet: false,
-    verbose: false,
-    help: false,
-    version: false,
-  };
-  const args: string[] = [];
-  let seenCommand = false;
-
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i] ?? '';
-    const { flag, value } = splitFlag(arg);
-
-    if (flag === '--base-url') {
-      globals.baseUrl = value ?? takeValue(argv, ++i, '--base-url');
-      continue;
-    }
-    if (flag === '--api-key') {
-      globals.apiKey = value ?? takeValue(argv, ++i, '--api-key');
-      continue;
-    }
-    if (arg === '--json') {
-      globals.json = true;
-      continue;
-    }
-    if (arg === '--quiet') {
-      globals.quiet = true;
-      continue;
-    }
-    if (arg === '--verbose') {
-      globals.verbose = true;
-      continue;
-    }
-    if ((arg === '--help' || arg === '-h') && !seenCommand) {
-      globals.help = true;
-      continue;
-    }
-    if (arg === '--version' && !seenCommand) {
-      globals.version = true;
-      continue;
-    }
-
-    args.push(arg);
-    if (!arg.startsWith('-')) seenCommand = true;
-  }
-
-  return { globals, args };
-}
-
-function parseOptions(
-  argv: string[],
-  spec: { bool?: string[]; value?: string[]; multi?: string[] } = {},
-): { options: Record<string, any>; positionals: string[] } {
-  const bools = new Set(spec.bool ?? []);
-  const values = new Set(spec.value ?? []);
-  const multi = new Set(spec.multi ?? []);
-  const options: Record<string, any> = {};
-  const positionals: string[] = [];
-
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i] ?? '';
-    if (!arg.startsWith('-') || arg === '-') {
-      positionals.push(arg);
-      continue;
-    }
-    const { flag, value } = splitFlag(arg);
-    if (bools.has(flag)) {
-      options[toOptionName(flag)] = true;
-      continue;
-    }
-    if (values.has(flag) || multi.has(flag)) {
-      const resolved = value ?? takeValue(argv, ++i, flag);
-      const name = toOptionName(flag);
-      if (multi.has(flag)) {
-        options[name] = [...(options[name] ?? []), resolved];
-      } else {
-        options[name] = resolved;
-      }
-      continue;
-    }
-    if (flag === '--help' || flag === '-h') {
-      options.help = true;
-      continue;
-    }
-    throw new CliError(`Unknown option: ${flag}`);
-  }
-
-  return { options, positionals };
-}
-
-function splitFlag(arg) {
-  const eq = arg.indexOf('=');
-  if (eq === -1) return { flag: arg, value: undefined };
-  return { flag: arg.slice(0, eq), value: arg.slice(eq + 1) };
-}
-
-function takeValue(argv, index, flag) {
-  const value = argv[index];
-  if (value === undefined || value.startsWith('-')) {
-    throw new CliError(`${flag} requires a value`);
-  }
-  return value;
-}
-
-function toOptionName(flag) {
-  return flag.replace(/^--?/, '').replace(/-([a-z])/g, (_, c) => c.toUpperCase());
-}
-
 function showHelp(io, command) {
   const map = {
     demo: DEMO_HELP,
@@ -382,7 +228,7 @@ function showHelp(io, command) {
   return 0;
 }
 
-async function runDoctor(ctx, argv) {
+async function runDoctor(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, DOCTOR_HELP);
@@ -477,7 +323,7 @@ async function runDoctor(ctx, argv) {
   return checks.some((c) => c.status === 'fail') ? 1 : 0;
 }
 
-async function runDemo(ctx: any, argv: string[]): Promise<number> {
+async function runDemo(ctx: Ctx, argv: string[]): Promise<number> {
   const sub = argv[0];
   const args = argv.slice(1);
   if (!sub || sub === '--help' || sub === '-h') {
@@ -504,7 +350,7 @@ async function runDemo(ctx: any, argv: string[]): Promise<number> {
   }
 }
 
-async function runDemoStatus(ctx: any, argv: string[]): Promise<number> {
+async function runDemoStatus(ctx: Ctx, argv: string[]): Promise<number> {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, DEMO_STATUS_HELP);
@@ -555,7 +401,7 @@ async function runDemoStatus(ctx: any, argv: string[]): Promise<number> {
   return health.ok && readiness.ok ? 0 : 1;
 }
 
-async function runDemoUrls(ctx, argv) {
+async function runDemoUrls(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--frontend-port'],
@@ -581,7 +427,7 @@ async function runDemoUrls(ctx, argv) {
   return 0;
 }
 
-async function runDemoStart(ctx: any, argv: string[]): Promise<number> {
+async function runDemoStart(ctx: Ctx, argv: string[]): Promise<number> {
   const { options } = parseOptions(argv, {
     bool: ['--help', '--backend-only', '--frontend-only', '--install', '--dry-run', '--detach'],
     value: ['--backend-port', '--frontend-port'],
@@ -737,7 +583,7 @@ async function runDemoStart(ctx: any, argv: string[]): Promise<number> {
   return exitCode;
 }
 
-async function runDemoStop(ctx: any, argv: string[]): Promise<number> {
+async function runDemoStop(ctx: Ctx, argv: string[]): Promise<number> {
   const { options } = parseOptions(argv, {
     bool: ['--help', '--force'],
     value: ['--timeout-ms'],
@@ -784,7 +630,7 @@ async function runDemoStop(ctx: any, argv: string[]): Promise<number> {
   return 0;
 }
 
-async function runDemoRestart(ctx: any, argv: string[]): Promise<number> {
+async function runDemoRestart(ctx: Ctx, argv: string[]): Promise<number> {
   const { options } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--backend-port'],
@@ -804,7 +650,7 @@ async function runDemoRestart(ctx: any, argv: string[]): Promise<number> {
   return runDemoStart(ctx, startArgs);
 }
 
-async function runDemoLogs(ctx: any, argv: string[]): Promise<number> {
+async function runDemoLogs(ctx: Ctx, argv: string[]): Promise<number> {
   const { options } = parseOptions(argv, {
     bool: ['--help', '--follow'],
     value: ['--lines'],
@@ -837,7 +683,7 @@ async function runDemoLogs(ctx: any, argv: string[]): Promise<number> {
       if (size < offset) offset = 0; // truncated / rotated
       if (size === offset) return;
       const stream = createReadStream(logPath, { start: offset, end: size - 1, encoding: 'utf8' });
-      stream.on('data', (chunk) => write(ctx.io.stdout, chunk));
+      stream.on('data', (chunk) => write(ctx.io.stdout, String(chunk)));
       stream.on('end', () => { offset = size; });
     };
     const watcher = watch(logPath, { persistent: true }, emit);
@@ -850,7 +696,7 @@ async function runDemoLogs(ctx: any, argv: string[]): Promise<number> {
   });
 }
 
-async function runDemoInstall(ctx, argv) {
+async function runDemoInstall(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, {
     bool: ['--help', '--dry-run', '--uninstall'],
     value: ['--backend-port', '--label'],
@@ -926,54 +772,7 @@ async function runDemoInstall(ctx, argv) {
   return 0;
 }
 
-async function runHealth(ctx, argv) {
-  const { options } = parseOptions(argv, { bool: ['--help'] });
-  if (options.help) {
-    write(ctx.io.stdout, HEALTH_HELP);
-    return 0;
-  }
-  const health = await requestJson(ctx, '/health', { auth: false });
-  const readiness = await requestJson(ctx, '/readiness', { auth: false });
-  const payload = { health: health.body, readiness: readiness.body };
-  if (ctx.json) writeJson(ctx.io.stdout, payload);
-  else {
-    writeLine(ctx.io.stdout, `health: ${health.body.status ?? 'unknown'}`);
-    writeLine(ctx.io.stdout, `readiness: ${readiness.body.status ?? 'unknown'}`);
-  }
-  return 0;
-}
-
-async function runCapabilities(ctx, argv) {
-  const { options } = parseOptions(argv, { bool: ['--help'] });
-  if (options.help) {
-    write(ctx.io.stdout, CAPABILITIES_HELP);
-    return 0;
-  }
-  const res = await requestJson(ctx, '/.well-known/openwop', { auth: false });
-  if (ctx.json) {
-    writeJson(ctx.io.stdout, res.body);
-    return 0;
-  }
-  write(ctx.io.stdout, summarizeCapabilities(res.body));
-  return 0;
-}
-
-export function summarizeCapabilities(caps) {
-  const capabilities = caps.capabilities && typeof caps.capabilities === 'object' ? Object.keys(caps.capabilities) : [];
-  const impl = caps.implementation ?? {};
-  const lines = [
-    `Implementation: ${impl.name ?? 'unknown'} ${impl.version ?? ''}`.trim(),
-    `Protocol: ${caps.protocolVersion ?? 'unknown'}`,
-    `Transports: ${(caps.supportedTransports ?? []).join(', ') || 'unknown'}`,
-    `Stream modes: ${caps.stream?.modes?.join(', ') ?? 'unknown'}`,
-    `Fixtures: ${Array.isArray(caps.fixtures) ? caps.fixtures.length : 0}`,
-    `Capability blocks: ${capabilities.join(', ') || 'none'}`,
-    '',
-  ];
-  return lines.join('\n');
-}
-
-async function runCatalog(ctx, argv) {
+async function runCatalog(ctx: Ctx, argv) {
   const sub = argv[0] ?? 'nodes';
   const args = argv.slice(sub === 'nodes' || sub === 'packs' ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -990,7 +789,7 @@ async function runCatalog(ctx, argv) {
   }
 }
 
-async function runCatalogNodes(ctx, argv) {
+async function runCatalogNodes(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--limit', '--search'],
@@ -1021,7 +820,7 @@ async function runCatalogNodes(ctx, argv) {
   return 0;
 }
 
-async function runCatalogPacks(ctx, argv = []) {
+async function runCatalogPacks(ctx: Ctx, argv = []) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, CATALOG_HELP);
@@ -1051,7 +850,7 @@ async function runCatalogPacks(ctx, argv = []) {
 //   GET /keys/{keyId}.pub                     publisher public key (PEM)
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function runPacks(ctx, argv) {
+async function runPacks(ctx: Ctx, argv) {
   const sub = argv[0];
   const args = argv.slice(1);
   if (!sub || sub === '--help' || sub === '-h') {
@@ -1080,7 +879,7 @@ function registryUrlFor(options, env) {
 }
 
 /** GET + JSON-parse a registry path (no auth — the registry is public read-only). */
-async function registryJson(ctx, registryUrl, path) {
+async function registryJson(ctx: Ctx, registryUrl, path) {
   const url = new URL(path, registryUrl + '/');
   const res = await ctx.fetchImpl(url, { method: 'GET', headers: { accept: 'application/json' } });
   const text = await res.text();
@@ -1090,7 +889,7 @@ async function registryJson(ctx, registryUrl, path) {
 }
 
 /** GET raw bytes (tarball / signature / public key) from the registry. */
-async function registryBytes(ctx, registryUrl, path) {
+async function registryBytes(ctx: Ctx, registryUrl, path) {
   const url = new URL(path, registryUrl + '/');
   const res = await ctx.fetchImpl(url, { method: 'GET', headers: { accept: 'application/octet-stream' } });
   if (!res.ok) {
@@ -1100,7 +899,7 @@ async function registryBytes(ctx, registryUrl, path) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-async function runPacksSearch(ctx, argv) {
+async function runPacksSearch(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--registry-url', '--limit'],
@@ -1146,7 +945,7 @@ async function runPacksSearch(ctx, argv) {
   return 0;
 }
 
-async function runPacksInfo(ctx, argv) {
+async function runPacksInfo(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--registry-url', '--version'],
@@ -1200,7 +999,7 @@ async function runPacksInfo(ctx, argv) {
   return 0;
 }
 
-async function runPacksInstall(ctx, argv) {
+async function runPacksInstall(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help', '--no-verify'],
     value: ['--registry-url', '--version', '--dir'],
@@ -1295,7 +1094,7 @@ async function runPacksInstall(ctx, argv) {
   return 0;
 }
 
-async function runPacksPublish(ctx, argv) {
+async function runPacksPublish(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--key', '--key-id', '--out'],
@@ -1397,7 +1196,7 @@ async function runPacksPublish(ctx, argv) {
   return 0;
 }
 
-async function runPacksYank(ctx, argv) {
+async function runPacksYank(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help', '--undo'],
     value: ['--version'],
@@ -1543,7 +1342,7 @@ function buildUstarGzip(entries) {
   return gz;
 }
 
-async function runWorkflows(ctx, argv) {
+async function runWorkflows(ctx: Ctx, argv) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'get', 'register', 'delete', 'rm'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -1565,7 +1364,7 @@ async function runWorkflows(ctx, argv) {
   }
 }
 
-async function runWorkflowsList(ctx, argv) {
+async function runWorkflowsList(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, WORKFLOWS_HELP);
@@ -1582,7 +1381,7 @@ async function runWorkflowsList(ctx, argv) {
   return 0;
 }
 
-async function runWorkflowsGet(ctx, argv) {
+async function runWorkflowsGet(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop workflows get <workflowId> [--json]\n');
@@ -1599,7 +1398,7 @@ async function runWorkflowsGet(ctx, argv) {
   return 0;
 }
 
-async function runWorkflowsRegister(ctx, argv) {
+async function runWorkflowsRegister(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop workflows register <workflow.json> [--json]\n');
@@ -1613,7 +1412,7 @@ async function runWorkflowsRegister(ctx, argv) {
   return 0;
 }
 
-async function runWorkflowsDelete(ctx, argv) {
+async function runWorkflowsDelete(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop workflows delete <workflowId> [--json]\n');
@@ -1626,7 +1425,7 @@ async function runWorkflowsDelete(ctx, argv) {
   return 0;
 }
 
-async function runRuns(ctx, argv) {
+async function runRuns(ctx: Ctx, argv) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'create', 'get', 'cancel', 'ancestry'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -1649,7 +1448,7 @@ async function runRuns(ctx, argv) {
   }
 }
 
-async function runRunsList(ctx, argv) {
+async function runRunsList(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--status', '--limit', '--tenant-id'],
@@ -1678,7 +1477,7 @@ async function runRunsList(ctx, argv) {
   return 0;
 }
 
-async function runRunsCreate(ctx, argv) {
+async function runRunsCreate(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help', '--wait'],
     value: ['--tenant-id', '--scope-id', '--inputs-json', '--timeout-ms'],
@@ -1709,7 +1508,7 @@ async function runRunsCreate(ctx, argv) {
   return 0;
 }
 
-async function runRunsGet(ctx, argv) {
+async function runRunsGet(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop runs get <runId> [--json]\n');
@@ -1725,7 +1524,7 @@ async function runRunsGet(ctx, argv) {
   return 0;
 }
 
-async function runRunsCancel(ctx, argv) {
+async function runRunsCancel(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--reason'],
@@ -1751,9 +1550,8 @@ async function runRunsCancel(ctx, argv) {
 // to the JSON poll endpoint (GET .../events/poll) when SSE is unavailable.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CHAT_TERMINAL_EVENT_TYPES = new Set(['run.completed', 'run.failed', 'run.cancelled']);
 
-async function runChat(ctx, argv) {
+async function runChat(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help', '--no-stream', '--no-history'],
     value: ['--tenant-id', '--scope-id', '--inputs-json', '--timeout-ms', '--role'],
@@ -1836,240 +1634,8 @@ async function runChat(ctx, argv) {
  * Create a run for one chat turn. Mirrors the POST body that `runs create`
  * builds. Returns the new runId.
  */
-export async function submitTurn(ctx, { workflowId, inputs, tenantId, scopeId }) {
-  const body = {
-    workflowId,
-    ...(tenantId ? { tenantId } : {}),
-    ...(scopeId ? { scopeId } : {}),
-    inputs: inputs ?? {},
-  };
-  const res = await requestJson(ctx, '/v1/runs', { method: 'POST', body });
-  if (!res.body || typeof res.body.runId !== 'string') {
-    throw new CliError('Run create response did not include a runId');
-  }
-  return res.body.runId;
-}
 
-/**
- * Stream a run's events. Prefers SSE; on any SSE failure (non-streamable
- * body, non-2xx, or transport error) falls back to the JSON poll endpoint.
- * Calls `onEvent(eventRecord)` once per event in sequence order and resolves
- * when a terminal event is seen or the poll endpoint reports completion.
- */
-export async function streamRunEvents(ctx: any, runId: string, { onEvent, useStream = true, timeoutMs = 120000 }: { onEvent?: (e: any) => void; useStream?: boolean; timeoutMs?: number } = {}) {
-  if (useStream) {
-    try {
-      const handled = await streamViaSse(ctx, runId, onEvent);
-      if (handled) return;
-    } catch {
-      // Fall through to polling.
-    }
-  }
-  await streamViaPoll(ctx, runId, onEvent, timeoutMs);
-}
-
-async function streamViaSse(ctx, runId, onEvent) {
-  const url = new URL(`/v1/runs/${encodeURIComponent(runId)}/events`, ctx.baseUrl);
-  const headers: Record<string, string> = { accept: 'text/event-stream' };
-  if (ctx.apiKey) headers.authorization = `Bearer ${ctx.apiKey}`;
-  const res = await ctx.fetchImpl(url, { method: 'GET', headers });
-  if (!res.ok) throw new HttpError(`HTTP ${res.status}`, res.status, null);
-  const ct = res.headers?.get?.('content-type') ?? '';
-  if (!ct.includes('text/event-stream') || !res.body || typeof res.body.getReader !== 'function') {
-    // Server answered with JSON (or a non-streamable body) — let the
-    // caller fall back to polling rather than mis-parsing.
-    return false;
-  }
-  await consumeSse(res.body, (frame) => {
-    if (frame.data === undefined) return;
-    const ev = safeParseJson(frame.data);
-    if (frame.event === 'batch' && Array.isArray(ev)) {
-      for (const one of ev) onEvent(one);
-    } else if (ev && typeof ev === 'object') {
-      onEvent(ev);
-    }
-  });
-  return true;
-}
-
-/**
- * Decode a web ReadableStream of SSE bytes into frames. Exported for tests so
- * the line-buffering / multi-line `data:` accumulation can be exercised
- * without a live socket. `onFrame` receives `{ event, data, id }`.
- */
-export async function consumeSse(stream, onFrame) {
-  const reader = stream.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  const flushFrame = (block) => {
-    if (!block.trim()) return;
-    const frame: Record<string, string> = {};
-    const dataLines: string[] = [];
-    for (const rawLine of block.split('\n')) {
-      const line = rawLine.replace(/\r$/, '');
-      if (line === '' || line.startsWith(':')) continue; // blank or comment/heartbeat
-      const idx = line.indexOf(':');
-      const field = idx === -1 ? line : line.slice(0, idx);
-      const value = idx === -1 ? '' : line.slice(idx + 1).replace(/^ /, '');
-      if (field === 'data') dataLines.push(value);
-      else if (field === 'event') frame.event = value;
-      else if (field === 'id') frame.id = value;
-    }
-    if (dataLines.length > 0) frame.data = dataLines.join('\n');
-    if (frame.data !== undefined || frame.event !== undefined) onFrame(frame);
-  };
-  while (true) {
-    const { value, done } = await reader.read();
-    if (value) buffer += decoder.decode(value, { stream: true });
-    let sep;
-    while ((sep = buffer.indexOf('\n\n')) !== -1) {
-      flushFrame(buffer.slice(0, sep));
-      buffer = buffer.slice(sep + 2);
-    }
-    if (done) {
-      flushFrame(buffer);
-      break;
-    }
-  }
-}
-
-async function streamViaPoll(ctx, runId, onEvent, timeoutMs) {
-  const started = Date.now();
-  let lastSequence = -1;
-  while (Date.now() - started < timeoutMs) {
-    const query = lastSequence >= 0 ? `?lastSequence=${lastSequence}` : '';
-    const res = await requestJson(ctx, `/v1/runs/${encodeURIComponent(runId)}/events/poll${query}`);
-    const events = Array.isArray(res.body?.events) ? res.body.events : [];
-    for (const ev of events) {
-      onEvent(ev);
-      if (typeof ev.sequence === 'number' && ev.sequence > lastSequence) lastSequence = ev.sequence;
-    }
-    const sawTerminal = events.some((ev) => CHAT_TERMINAL_EVENT_TYPES.has(ev.type));
-    if (res.body?.isComplete === true || sawTerminal) return;
-    await sleep(250);
-  }
-  throw new CliError(`Timed out streaming run ${runId} after ${timeoutMs}ms`, 1);
-}
-
-/**
- * Pretty-print one event record for the REPL. Returns null for events that
- * carry no useful surface (so the loop can skip them). Exported for tests.
- */
-export function renderEvent(ev) {
-  if (!ev || typeof ev !== 'object') return null;
-  const type = String(ev.type ?? 'event');
-  const node = ev.nodeId ? ` ${ev.nodeId}` : '';
-  switch (type) {
-    case 'run.started':
-      return '· run started';
-    case 'node.started':
-      return `·${node} running`;
-    case 'node.completed': {
-      const reply = extractAssistantText(ev);
-      return reply ? `assistant> ${reply}` : `·${node} done`;
-    }
-    case 'run.completed': {
-      const reply = extractAssistantText(ev);
-      return reply ? `assistant> ${reply}` : '· run completed';
-    }
-    case 'node.failed':
-    case 'run.failed': {
-      const msg = errorMessageOf(ev);
-      return `! ${type}${node}${msg ? `: ${msg}` : ''}`;
-    }
-    case 'run.cancelled':
-      return '· run cancelled';
-    default:
-      return `· ${type}`;
-  }
-}
-
-/**
- * Pull assistant-visible text out of an event payload. Handles the common
- * shapes the sample chat node emits: a `messages` array, an `output`/`result`
- * string, or a nested `content` field. Exported for tests.
- */
-export function extractAssistantText(ev) {
-  const payload = ev && typeof ev === 'object' ? ev.payload : undefined;
-  if (!payload || typeof payload !== 'object') return null;
-  const candidates = [payload.output, payload.result, payload.text, payload.content, payload.message];
-  for (const c of candidates) {
-    const t = coerceText(c);
-    if (t) return t;
-  }
-  // `outputs` keyed by port name (node.completed shape).
-  if (payload.outputs && typeof payload.outputs === 'object') {
-    for (const v of Object.values(payload.outputs)) {
-      const t = coerceText(v);
-      if (t) return t;
-    }
-  }
-  // A chat `messages` array — return the last assistant turn.
-  if (Array.isArray(payload.messages)) {
-    for (let i = payload.messages.length - 1; i >= 0; i--) {
-      const m = payload.messages[i];
-      if (m && m.role === 'assistant') {
-        const t = coerceText(m.content);
-        if (t) return t;
-      }
-    }
-  }
-  return null;
-}
-
-function coerceText(value) {
-  if (typeof value === 'string') return value.length > 0 ? value : null;
-  if (value && typeof value === 'object') {
-    if (typeof value.text === 'string') return value.text;
-    if (typeof value.content === 'string') return value.content;
-    // Anthropic-style content blocks: [{type:'text', text:'...'}]
-    if (Array.isArray(value)) {
-      const joined = value.map((b) => (b && typeof b.text === 'string' ? b.text : '')).join('');
-      return joined.length > 0 ? joined : null;
-    }
-  }
-  return null;
-}
-
-function errorMessageOf(ev) {
-  const payload = ev && typeof ev === 'object' ? ev.payload : undefined;
-  if (payload && typeof payload === 'object') {
-    if (payload.error && typeof payload.error === 'object' && typeof payload.error.message === 'string') {
-      return payload.error.message;
-    }
-    if (typeof payload.message === 'string') return payload.message;
-  }
-  return '';
-}
-
-function safeParseJson(text) {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Default stdin line reader for the REPL. Resolves with each line, or null on
- * EOF (Ctrl-D). Uses readline so piped input and TTY input both work; the
- * prompt is written to stdout first.
- */
-function defaultReadTurn(ctx) {
-  const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: Boolean(process.stdin.isTTY) });
-  let closed = false;
-  rl.on('close', () => { closed = true; });
-  return (prompt) => new Promise((resolve) => {
-    if (closed) { resolve(null); return; }
-    if (!ctx.json) ctx.io.stdout.write(prompt);
-    const onLine = (line) => { rl.removeListener('close', onClose); resolve(line); };
-    const onClose = () => { rl.removeListener('line', onLine); resolve(null); };
-    rl.once('line', onLine);
-    rl.once('close', onClose);
-  });
-}
-
-async function runRunsAncestry(ctx, argv) {
+async function runRunsAncestry(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop runs ancestry <runId> [--json]\n');
@@ -2135,136 +1701,13 @@ async function runRunsAncestry(ctx, argv) {
 // calls (it honestly advertises aiProviders.imageGeneration: supported:false)
 // so these produce deterministic fixture assets — real, downloadable, but
 // not a live generation. Responses are tagged `stub: true`.
-async function runMedia(ctx, argv) {
-  const sub = argv[0];
-  const args = argv.slice(1);
-  if (!sub || sub === '--help' || sub === '-h') {
-    write(ctx.io.stdout, MEDIA_HELP);
-    return sub ? 0 : 2;
-  }
-  switch (sub) {
-    case 'generate-image':
-      return runMediaGenerateImage(ctx, args);
-    case 'transcribe':
-      return runMediaTranscribe(ctx, args);
-    case 'synthesize':
-      return runMediaSynthesize(ctx, args);
-    default:
-      throw new CliError(`Unknown media command: ${sub}\nRun \`openwop media --help\` for usage.`);
-  }
-}
 
-async function runMediaGenerateImage(ctx, argv) {
-  const { options, positionals } = parseOptions(argv, {
-    bool: ['--help'],
-    value: ['--prompt', '--output'],
-  });
-  const prompt = options.prompt ?? positionals.join(' ');
-  if (options.help || !prompt) {
-    write(ctx.io.stdout, 'Usage: openwop media generate-image <prompt> [--output path] [--json]\n');
-    return options.help ? 0 : 2;
-  }
-  const res = await requestJson(ctx, '/v1/host/sample/media/generate-image', {
-    method: 'POST',
-    body: { prompt },
-  });
-  if (options.output) await downloadAsset(ctx, res.body.url, options.output);
-  if (ctx.json) {
-    writeJson(ctx.io.stdout, res.body);
-    return 0;
-  }
-  writeLine(ctx.io.stdout, formatTable(
-    [{ field: 'contentType', value: res.body.contentType ?? '' },
-     { field: 'bytes', value: String(res.body.bytes ?? '') },
-     { field: 'url', value: res.body.url ?? '' },
-     { field: 'stub', value: String(res.body.stub ?? false) }],
-    ['field', 'value'],
-  ));
-  if (options.output) writeLine(ctx.io.stdout, `Wrote asset to ${options.output}`);
-  return 0;
-}
+const CONFORMANCE_HELP = `Usage: openwop conformance [--offline] [--filter pattern]
 
-async function runMediaTranscribe(ctx, argv) {
-  const { options, positionals } = parseOptions(argv, {
-    bool: ['--help'],
-    value: ['--file', '--language'],
-  });
-  const filePath = options.file ?? positionals[0];
-  if (options.help || !filePath) {
-    write(ctx.io.stdout, 'Usage: openwop media transcribe <audio-file> [--language en] [--json]\n');
-    return options.help ? 0 : 2;
-  }
-  let audioBase64;
-  try {
-    audioBase64 = readFileSync(resolvePath(ctx.cwd, filePath)).toString('base64');
-  } catch (err) {
-    throw new CliError(`Cannot read audio file ${filePath}: ${err instanceof Error ? err.message : String(err)}`);
-  }
-  const res = await requestJson(ctx, '/v1/host/sample/media/transcribe', {
-    method: 'POST',
-    body: { audioBase64, ...(options.language ? { language: options.language } : {}) },
-  });
-  if (ctx.json) {
-    writeJson(ctx.io.stdout, res.body);
-    return 0;
-  }
-  writeLine(ctx.io.stdout, formatTable(
-    [{ field: 'language', value: res.body.language ?? '' },
-     { field: 'bytes', value: String(res.body.bytes ?? '') },
-     { field: 'stub', value: String(res.body.stub ?? false) }],
-    ['field', 'value'],
-  ));
-  writeLine(ctx.io.stdout, '');
-  writeLine(ctx.io.stdout, res.body.text ?? '');
-  return 0;
-}
+Runs the in-repo @openwop/openwop-conformance CLI. Without --offline it targets the configured --base-url.
+`;
 
-async function runMediaSynthesize(ctx, argv) {
-  const { options, positionals } = parseOptions(argv, {
-    bool: ['--help'],
-    value: ['--text', '--voice', '--output'],
-  });
-  const text = options.text ?? positionals.join(' ');
-  if (options.help || !text) {
-    write(ctx.io.stdout, 'Usage: openwop media synthesize <text> [--voice name] [--output path] [--json]\n');
-    return options.help ? 0 : 2;
-  }
-  const res = await requestJson(ctx, '/v1/host/sample/media/synthesize', {
-    method: 'POST',
-    body: { text, ...(options.voice ? { voice: options.voice } : {}) },
-  });
-  if (options.output) await downloadAsset(ctx, res.body.url, options.output);
-  if (ctx.json) {
-    writeJson(ctx.io.stdout, res.body);
-    return 0;
-  }
-  writeLine(ctx.io.stdout, formatTable(
-    [{ field: 'contentType', value: res.body.contentType ?? '' },
-     { field: 'bytes', value: String(res.body.bytes ?? '') },
-     { field: 'voice', value: res.body.voice ?? '' },
-     { field: 'url', value: res.body.url ?? '' },
-     { field: 'stub', value: String(res.body.stub ?? false) }],
-    ['field', 'value'],
-  ));
-  if (options.output) writeLine(ctx.io.stdout, `Wrote asset to ${options.output}`);
-  return 0;
-}
-
-/** Fetch a media-asset URL (relative to the host base URL) and write the
- *  raw bytes to `outPath`. The asset serve route is token-authed (the URL
- *  IS the credential) so no Authorization header is required. */
-async function downloadAsset(ctx, assetUrl, outPath) {
-  if (typeof assetUrl !== 'string' || assetUrl.length === 0) {
-    throw new CliError('media response did not include an asset URL to download');
-  }
-  const url = new URL(assetUrl, ctx.baseUrl);
-  const res = await ctx.fetchImpl(url, { method: 'GET', headers: { accept: 'application/octet-stream' } });
-  if (!res.ok) throw new HttpError(`HTTP ${res.status}`, res.status, null);
-  const buf = Buffer.from(await res.arrayBuffer());
-  writeFileSync(resolvePath(ctx.cwd, outPath), buf);
-}
-
-async function runConformance(ctx, argv) {
+async function runConformance(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, {
     bool: ['--help', '--offline'],
     value: ['--filter'],
@@ -2303,159 +1746,11 @@ async function runConformance(ctx, argv) {
 // tenantId — tenant selection is the API key's job (--api-key / OPENWOP_API_KEY).
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function runMemory(ctx, argv) {
-  const sub = argv[0] ?? 'list';
-  const args = argv.slice(['list', 'search', 'get', 'delete', 'rm'].includes(sub) ? 1 : 0);
-  if (sub === '--help' || sub === '-h') {
-    write(ctx.io.stdout, MEMORY_HELP);
-    return 0;
-  }
-  switch (sub) {
-    case 'list':
-      return runMemoryList(ctx, args);
-    case 'search':
-      return runMemorySearch(ctx, args);
-    case 'get':
-      return runMemoryGet(ctx, args);
-    case 'delete':
-    case 'rm':
-      return runMemoryDelete(ctx, args);
-    default:
-      throw new CliError(`Unknown memory command: ${sub}\nRun \`openwop memory --help\` for usage.`);
-  }
-}
-
-function memoryQuery(options) {
-  const query = new URLSearchParams();
-  if (options.memoryRef) query.set('memoryRef', options.memoryRef);
-  if (options.tag) query.set('tag', options.tag);
-  if (options.limit) query.set('limit', options.limit);
-  return query;
-}
-
-function memoryRows(entries) {
-  return entries.map((e) => ({
-    id: e.id,
-    createdAt: e.createdAt ?? '',
-    tags: Array.isArray(e.tags) ? e.tags.join(',') : '',
-    content: truncate(String(e.content ?? ''), 60),
-  }));
-}
-
-function truncate(text, max) {
-  const oneLine = text.replace(/\s+/g, ' ');
-  return oneLine.length > max ? `${oneLine.slice(0, max - 1)}…` : oneLine;
-}
-
-async function runMemoryList(ctx, argv) {
-  const { options } = parseOptions(argv, {
-    bool: ['--help'],
-    value: ['--memory-ref', '--tag', '--limit'],
-  });
-  if (options.help) {
-    write(ctx.io.stdout, MEMORY_HELP);
-    return 0;
-  }
-  const query = memoryQuery(options);
-  const path = `/v1/host/sample/memory${query.size ? `?${query.toString()}` : ''}`;
-  const res = await requestJson(ctx, path);
-  if (ctx.json) {
-    writeJson(ctx.io.stdout, res.body);
-    return 0;
-  }
-  const entries = Array.isArray(res.body?.entries) ? res.body.entries : [];
-  writeLine(ctx.io.stdout, `memoryRef: ${res.body?.memoryRef ?? '(default)'}`);
-  writeLine(ctx.io.stdout, entries.length
-    ? formatTable(memoryRows(entries), ['id', 'createdAt', 'tags', 'content'])
-    : 'No memory entries.');
-  return 0;
-}
-
-async function runMemorySearch(ctx, argv) {
-  const { options, positionals } = parseOptions(argv, {
-    bool: ['--help'],
-    value: ['--memory-ref', '--tag', '--limit', '--query'],
-  });
-  if (options.help) {
-    write(ctx.io.stdout, MEMORY_HELP);
-    return 0;
-  }
-  const term = String(options.query ?? positionals[0] ?? '').toLowerCase();
-  if (!term && !options.tag) {
-    write(ctx.io.stdout, 'Usage: openwop memory search <text> [--tag t] [--memory-ref ref] [--limit n] [--json]\n');
-    return 2;
-  }
-  // The host route filters by tag server-side; free-text search is client-side
-  // over the tenant-scoped result set (the route returns no full-text index).
-  const query = memoryQuery(options);
-  const path = `/v1/host/sample/memory${query.size ? `?${query.toString()}` : ''}`;
-  const res = await requestJson(ctx, path);
-  let entries = Array.isArray(res.body?.entries) ? res.body.entries : [];
-  if (term) {
-    entries = entries.filter((e) =>
-      String(e.content ?? '').toLowerCase().includes(term)
-      || (Array.isArray(e.tags) && e.tags.some((t) => String(t).toLowerCase().includes(term))));
-  }
-  if (ctx.json) {
-    writeJson(ctx.io.stdout, { memoryRef: res.body?.memoryRef, entries });
-    return 0;
-  }
-  writeLine(ctx.io.stdout, `memoryRef: ${res.body?.memoryRef ?? '(default)'}`);
-  writeLine(ctx.io.stdout, entries.length
-    ? formatTable(memoryRows(entries), ['id', 'createdAt', 'tags', 'content'])
-    : 'No matching memory entries.');
-  return 0;
-}
-
-async function runMemoryGet(ctx, argv) {
-  const { options, positionals } = parseOptions(argv, {
-    bool: ['--help'],
-    value: ['--memory-ref'],
-  });
-  if (options.help || positionals.length !== 1) {
-    write(ctx.io.stdout, 'Usage: openwop memory get <memoryId> [--memory-ref ref] [--json]\n');
-    return options.help ? 0 : 2;
-  }
-  const query = options.memoryRef ? `?memoryRef=${encodeURIComponent(options.memoryRef)}` : '';
-  const res = await requestJson(ctx, `/v1/host/sample/memory/${encodeURIComponent(positionals[0])}${query}`);
-  if (ctx.json) {
-    writeJson(ctx.io.stdout, res.body);
-    return 0;
-  }
-  const entry = res.body?.entry ?? {};
-  writeLine(ctx.io.stdout, `memoryRef: ${res.body?.memoryRef ?? '(default)'}`);
-  writeLine(ctx.io.stdout, `id: ${entry.id ?? positionals[0]}`);
-  writeLine(ctx.io.stdout, `createdAt: ${entry.createdAt ?? ''}`);
-  if (entry.expiresAt) writeLine(ctx.io.stdout, `expiresAt: ${entry.expiresAt}`);
-  writeLine(ctx.io.stdout, `tags: ${Array.isArray(entry.tags) ? entry.tags.join(', ') : ''}`);
-  writeLine(ctx.io.stdout, `content: ${entry.content ?? ''}`);
-  return 0;
-}
-
-async function runMemoryDelete(ctx, argv) {
-  const { options, positionals } = parseOptions(argv, {
-    bool: ['--help'],
-    value: ['--memory-ref'],
-  });
-  if (options.help || positionals.length !== 1) {
-    write(ctx.io.stdout, 'Usage: openwop memory delete <memoryId> [--memory-ref ref] [--json]\n');
-    return options.help ? 0 : 2;
-  }
-  const query = options.memoryRef ? `?memoryRef=${encodeURIComponent(options.memoryRef)}` : '';
-  const res = await requestJson(ctx, `/v1/host/sample/memory/${encodeURIComponent(positionals[0])}${query}`, { method: 'DELETE' });
-  if (ctx.json) {
-    writeJson(ctx.io.stdout, res.body);
-    return 0;
-  }
-  writeLine(ctx.io.stdout, `${res.body?.removed ? 'Deleted' : 'No matching entry'}: ${res.body?.memoryId ?? positionals[0]}`);
-  return 0;
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Onboarding wizard — `openwop onboard`
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function runOnboard(ctx, argv) {
+async function runOnboard(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, {
     bool: ['--help', '--non-interactive', '--reset', '--skip-test', '--no-test'],
     value: [
@@ -2574,7 +1869,7 @@ async function runOnboard(ctx, argv) {
   return 0;
 }
 
-async function resolveBaseUrl(ctx, options, existing, interactive) {
+async function resolveBaseUrl(ctx: Ctx, options, existing, interactive) {
   if (options.baseUrlChoice) {
     const preset = HOST_PRESETS.find((h) => h.key === options.baseUrlChoice);
     if (!preset) throw new CliError(`--base-url-choice must be one of: ${HOST_PRESETS.map((h) => h.key).join(', ')}`);
@@ -2602,7 +1897,7 @@ async function resolveBaseUrl(ctx, options, existing, interactive) {
   return preset.url;
 }
 
-async function resolveProvider(ctx, options, existing, interactive) {
+async function resolveProvider(ctx: Ctx, options, existing, interactive) {
   if (options.provider) {
     if (!PROVIDER_CATALOG[options.provider]) {
       throw new CliError(`Unknown provider: ${options.provider}. Must be one of: ${Object.keys(PROVIDER_CATALOG).join(', ')}`);
@@ -2625,7 +1920,7 @@ async function resolveProvider(ctx, options, existing, interactive) {
   return choice === 'skip' ? null : choice;
 }
 
-async function resolveApiKey(ctx, options, provider, interactive) {
+async function resolveApiKey(ctx: Ctx, options, provider, interactive) {
   const spec = PROVIDER_CATALOG[provider];
   if (options.providerKey) return options.providerKey;
   if (options.apiKeyEnv) {
@@ -2648,7 +1943,7 @@ async function resolveApiKey(ctx, options, provider, interactive) {
   return key;
 }
 
-async function resolveModel(ctx, options, provider, existing, interactive) {
+async function resolveModel(ctx: Ctx, options, provider, existing, interactive) {
   const spec = PROVIDER_CATALOG[provider];
   if (options.model) return options.model;
   const recommended = spec.models.find((m) => m.recommended) ?? spec.models[0];
@@ -2669,7 +1964,7 @@ async function resolveModel(ctx, options, provider, existing, interactive) {
   return choice;
 }
 
-async function testProviderConnection(ctx, credentialRef) {
+async function testProviderConnection(ctx: Ctx, credentialRef) {
   try {
     const res = await requestJson(ctx, '/v1/host/sample/byok/secrets');
     const secrets = Array.isArray(res.body?.secrets) ? res.body.secrets : [];
@@ -2685,7 +1980,7 @@ async function testProviderConnection(ctx, credentialRef) {
 // `openwop providers ...`
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function runProviders(ctx, argv) {
+async function runProviders(ctx: Ctx, argv) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'add', 'remove', 'rm', 'test'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -2707,7 +2002,7 @@ async function runProviders(ctx, argv) {
   }
 }
 
-async function runProvidersList(ctx, argv) {
+async function runProvidersList(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, PROVIDERS_HELP);
@@ -2731,7 +2026,7 @@ async function runProvidersList(ctx, argv) {
   return 0;
 }
 
-async function runProvidersAdd(ctx, argv) {
+async function runProvidersAdd(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--provider-key', '--api-key-env', '--model', '--credential-ref'],
@@ -2771,7 +2066,7 @@ async function runProvidersAdd(ctx, argv) {
   return 0;
 }
 
-async function runProvidersRemove(ctx, argv) {
+async function runProvidersRemove(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--credential-ref'],
@@ -2788,7 +2083,7 @@ async function runProvidersRemove(ctx, argv) {
   return 0;
 }
 
-async function runProvidersTest(ctx, argv) {
+async function runProvidersTest(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--credential-ref'],
@@ -2823,7 +2118,7 @@ async function runProvidersTest(ctx, argv) {
 // `POST /v1/host/sample/agents/{agentId}/dispatch` (toolAllowlist-filtered,
 // handoff-validated, confidence-escalating per RFC 0002 §A14/§F).
 
-async function runAgents(ctx, argv) {
+async function runAgents(ctx: Ctx, argv) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'info', 'run'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -2842,7 +2137,7 @@ async function runAgents(ctx, argv) {
   }
 }
 
-async function runAgentsList(ctx, argv) {
+async function runAgentsList(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, AGENTS_HELP);
@@ -2869,7 +2164,7 @@ async function runAgentsList(ctx, argv) {
   return 0;
 }
 
-async function runAgentsInfo(ctx, argv) {
+async function runAgentsInfo(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
   if (options.help || positionals.length !== 1) {
     write(ctx.io.stdout, 'Usage: openwop agents info <agentId> [--json]\n');
@@ -2896,7 +2191,7 @@ async function runAgentsInfo(ctx, argv) {
 }
 
 // `openwop agents run <agentId>` — dispatch one manifest-agent turn (RFC 0070).
-async function runAgentsRun(ctx, argv) {
+async function runAgentsRun(ctx: Ctx, argv) {
   const { options, positionals } = parseOptions(argv, {
     bool: ['--help', '--no-validate'],
     value: ['--task-json', '--threshold'],
@@ -2953,7 +2248,7 @@ async function runAgentsRun(ctx, argv) {
 // `openwop config ...`
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function runConfig(ctx, argv) {
+async function runConfig(ctx: Ctx, argv) {
   const sub = argv[0] ?? 'file';
   const args = argv.slice(['file', 'get', 'set', 'unset'].includes(sub) ? 1 : 0);
   if (sub === '--help' || sub === '-h') {
@@ -3008,216 +2303,6 @@ async function runConfig(ctx, argv) {
 // `openwop webhooks ...` — manage webhook subscriptions (C-9)
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function runWebhooks(ctx, argv) {
-  const sub = argv[0] ?? 'list';
-  const args = argv.slice(['list', 'add', 'remove', 'rm', 'test'].includes(sub) ? 1 : 0);
-  if (sub === '--help' || sub === '-h') {
-    write(ctx.io.stdout, WEBHOOKS_HELP);
-    return 0;
-  }
-  switch (sub) {
-    case 'list':
-      return await runWebhooksList(ctx, args);
-    case 'add':
-      return await runWebhooksAdd(ctx, args);
-    case 'remove':
-    case 'rm':
-      return await runWebhooksRemove(ctx, args);
-    case 'test':
-      return await runWebhooksTest(ctx, args);
-    default:
-      throw new CliError(`Unknown webhooks command: ${sub}\nRun \`openwop webhooks --help\` for usage.`);
-  }
-}
-
-async function runWebhooksList(ctx, argv) {
-  const { options } = parseOptions(argv, { bool: ['--help'] });
-  if (options.help) {
-    write(ctx.io.stdout, WEBHOOKS_HELP);
-    return 0;
-  }
-  const res = await requestJson(ctx, '/v1/webhooks');
-  if (ctx.json) {
-    writeJson(ctx.io.stdout, res.body);
-    return 0;
-  }
-  const subscriptions = Array.isArray(res.body?.subscriptions) ? res.body.subscriptions : [];
-  if (subscriptions.length === 0) {
-    writeLine(ctx.io.stdout, 'No webhook subscriptions. Add one with `openwop webhooks add <url> --event <type>`.');
-    return 0;
-  }
-  const rows = subscriptions.map((s) => ({
-    subscriptionId: s.subscriptionId,
-    url: s.url,
-    events: Array.isArray(s.events) ? s.events.join(',') : '',
-    createdAt: s.createdAt ?? '',
-  }));
-  writeLine(ctx.io.stdout, formatTable(rows, ['subscriptionId', 'url', 'events', 'createdAt']));
-  return 0;
-}
-
-async function runWebhooksAdd(ctx, argv) {
-  const { options, positionals } = parseOptions(argv, {
-    bool: ['--help'],
-    value: ['--secret'],
-    multi: ['--event', '--tag'],
-  });
-  if (options.help || positionals.length !== 1) {
-    write(ctx.io.stdout, 'Usage: openwop webhooks add <url> --event <type> [--event <type> ...] [--tag t] [--secret s] [--json]\n');
-    return options.help ? 0 : 2;
-  }
-  const events = options.event ?? [];
-  if (events.length === 0) {
-    throw new CliError('At least one --event <type> is required.');
-  }
-  const body = {
-    url: positionals[0],
-    events,
-    ...(options.tag ? { tags: options.tag } : {}),
-    ...(options.secret ? { secret: options.secret } : {}),
-  };
-  const res = await requestJson(ctx, '/v1/webhooks', { method: 'POST', body });
-  if (ctx.json) {
-    writeJson(ctx.io.stdout, res.body);
-    return 0;
-  }
-  writeLine(ctx.io.stdout, `✓ Registered webhook ${res.body.subscriptionId} → ${res.body.url}`);
-  if (res.body.secret) {
-    writeLine(ctx.io.stdout, `  Signing secret (shown once): ${res.body.secret}`);
-  }
-  return 0;
-}
-
-async function runWebhooksRemove(ctx, argv) {
-  const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
-  if (options.help || positionals.length !== 1) {
-    write(ctx.io.stdout, 'Usage: openwop webhooks remove <subscriptionId> [--json]\n');
-    return options.help ? 0 : 2;
-  }
-  await requestJson(ctx, `/v1/webhooks/${encodeURIComponent(positionals[0])}`, { method: 'DELETE' });
-  if (ctx.json) writeJson(ctx.io.stdout, { removed: positionals[0] });
-  else writeLine(ctx.io.stdout, `✓ Removed webhook ${positionals[0]}`);
-  return 0;
-}
-
-async function runWebhooksTest(ctx, argv) {
-  const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
-  if (options.help || positionals.length !== 1) {
-    write(ctx.io.stdout, 'Usage: openwop webhooks test <subscriptionId> [--json]\n');
-    return options.help ? 0 : 2;
-  }
-  const res = await requestJson(ctx, `/v1/webhooks/${encodeURIComponent(positionals[0])}/test`, { method: 'POST', body: {} });
-  if (ctx.json) {
-    writeJson(ctx.io.stdout, res.body);
-    return 0;
-  }
-  writeLine(ctx.io.stdout, `✓ Test delivery dispatched to ${res.body.url} (event ${res.body.eventType}).`);
-  return 0;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// `openwop cron ...` — manage scheduled jobs (C-6, RFC 0052)
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function runCron(ctx, argv) {
-  const sub = argv[0] ?? 'list';
-  const args = argv.slice(['list', 'add', 'remove', 'rm', 'trigger'].includes(sub) ? 1 : 0);
-  if (sub === '--help' || sub === '-h') {
-    write(ctx.io.stdout, CRON_HELP);
-    return 0;
-  }
-  switch (sub) {
-    case 'list':
-      return await runCronList(ctx, args);
-    case 'add':
-      return await runCronAdd(ctx, args);
-    case 'remove':
-    case 'rm':
-      return await runCronRemove(ctx, args);
-    case 'trigger':
-      return await runCronTrigger(ctx, args);
-    default:
-      throw new CliError(`Unknown cron command: ${sub}\nRun \`openwop cron --help\` for usage.`);
-  }
-}
-
-async function runCronList(ctx, argv) {
-  const { options } = parseOptions(argv, { bool: ['--help'] });
-  if (options.help) {
-    write(ctx.io.stdout, CRON_HELP);
-    return 0;
-  }
-  const res = await requestJson(ctx, '/v1/host/sample/scheduler/jobs');
-  if (ctx.json) {
-    writeJson(ctx.io.stdout, res.body);
-    return 0;
-  }
-  const jobs = Array.isArray(res.body?.jobs) ? res.body.jobs : [];
-  if (jobs.length === 0) {
-    writeLine(ctx.io.stdout, 'No scheduled jobs. Add one with `openwop cron add "<cronExpr>" --workflow <id>`.');
-    return 0;
-  }
-  const rows = jobs.map((j) => ({
-    jobId: j.jobId,
-    cronExpr: j.cronExpr,
-    workflowId: j.workflowId ?? '',
-    lastFiredTick: j.lastFiredTick ?? '-',
-  }));
-  writeLine(ctx.io.stdout, formatTable(rows, ['jobId', 'cronExpr', 'workflowId', 'lastFiredTick']));
-  return 0;
-}
-
-async function runCronAdd(ctx, argv) {
-  const { options, positionals } = parseOptions(argv, {
-    bool: ['--help'],
-    value: ['--workflow', '--job-id', '--first-fire-at-ms'],
-  });
-  if (options.help || positionals.length !== 1) {
-    write(ctx.io.stdout, 'Usage: openwop cron add "<cronExpr>" [--workflow <id>] [--job-id <id>] [--first-fire-at-ms <ms>] [--json]\n');
-    return options.help ? 0 : 2;
-  }
-  const body = {
-    cronExpr: positionals[0],
-    ...(options.jobId ? { jobId: options.jobId } : {}),
-    ...(options.workflow ? { workflowId: options.workflow } : {}),
-    ...(options.firstFireAtMs !== undefined ? { firstFireAtMs: Number(options.firstFireAtMs) } : {}),
-  };
-  const res = await requestJson(ctx, '/v1/host/sample/scheduler/jobs', { method: 'POST', body });
-  if (ctx.json) {
-    writeJson(ctx.io.stdout, res.body);
-    return 0;
-  }
-  writeLine(ctx.io.stdout, `✓ Scheduled job ${res.body.jobId} (${res.body.cronExpr})`);
-  return 0;
-}
-
-async function runCronRemove(ctx, argv) {
-  const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
-  if (options.help || positionals.length !== 1) {
-    write(ctx.io.stdout, 'Usage: openwop cron remove <jobId> [--json]\n');
-    return options.help ? 0 : 2;
-  }
-  const res = await requestJson(ctx, `/v1/host/sample/scheduler/jobs/${encodeURIComponent(positionals[0])}`, { method: 'DELETE' });
-  if (ctx.json) writeJson(ctx.io.stdout, res.body);
-  else writeLine(ctx.io.stdout, `✓ Removed scheduled job ${positionals[0]}`);
-  return 0;
-}
-
-async function runCronTrigger(ctx, argv) {
-  const { options, positionals } = parseOptions(argv, { bool: ['--help'] });
-  if (options.help || positionals.length !== 1) {
-    write(ctx.io.stdout, 'Usage: openwop cron trigger <jobId> [--json]\n');
-    return options.help ? 0 : 2;
-  }
-  const res = await requestJson(ctx, `/v1/host/sample/scheduler/jobs/${encodeURIComponent(positionals[0])}/trigger`, { method: 'POST', body: {} });
-  if (ctx.json) {
-    writeJson(ctx.io.stdout, res.body);
-    return 0;
-  }
-  writeLine(ctx.io.stdout, `✓ Fired ${positionals[0]} — ${res.body.runsFired} run(s) (tick ${res.body.lastFiredTick}).`);
-  return 0;
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Messaging relay-gateway (demo host-extension — /v1/host/sample/messaging).
 // Operator endpoints use the host bearer; the device loop authenticates with
@@ -3236,7 +2321,7 @@ function relayCredsPath(env) {
   return join(openwopHomeDir(env), 'relay-credentials.json');
 }
 
-function loadRelayConfig(ctx) {
+function loadRelayConfig(ctx: Ctx) {
   try {
     const p = relayCredsPath(ctx.env);
     if (existsSync(p)) return JSON.parse(readFileSync(p, 'utf8'));
@@ -3244,7 +2329,7 @@ function loadRelayConfig(ctx) {
   return {};
 }
 
-function saveRelayConfig(ctx, relay) {
+function saveRelayConfig(ctx: Ctx, relay) {
   const p = relayCredsPath(ctx.env);
   mkdirSync(dirname(p), { recursive: true });
   if (!relay || Object.keys(relay).length === 0) {
@@ -3255,7 +2340,7 @@ function saveRelayConfig(ctx, relay) {
   try { chmodSync(p, 0o600); } catch { /* best-effort on Windows */ }
 }
 
-async function runMessaging(ctx, argv) {
+async function runMessaging(ctx: Ctx, argv) {
   const sub = argv[0];
   if (!sub || sub === '--help' || sub === '-h') {
     write(ctx.io.stdout, MESSAGING_HELP);
@@ -3272,7 +2357,7 @@ async function runMessaging(ctx, argv) {
   }
 }
 
-async function runMessagingConnectors(ctx, argv) {
+async function runMessagingConnectors(ctx: Ctx, argv) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'get', 'add', 'enable', 'disable', 'test'].includes(sub) ? 1 : 0);
   switch (sub) {
@@ -3329,7 +2414,7 @@ async function runMessagingConnectors(ctx, argv) {
   }
 }
 
-async function runMessagingSessions(ctx, argv) {
+async function runMessagingSessions(ctx: Ctx, argv) {
   const sub = argv[0] ?? 'list';
   const args = argv.slice(['list', 'inspect', 'close'].includes(sub) ? 1 : 0);
   switch (sub) {
@@ -3366,7 +2451,7 @@ async function runMessagingSessions(ctx, argv) {
 // Relay device — register/activate a local channel relay, run the bridge loop.
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function runRelay(ctx, argv) {
+async function runRelay(ctx: Ctx, argv) {
   const sub = argv[0];
   if (!sub || sub === '--help' || sub === '-h') {
     write(ctx.io.stdout, RELAY_HELP);
@@ -3394,7 +2479,7 @@ function assertRelayChannel(channel) {
   }
 }
 
-async function runRelayRegister(ctx, argv) {
+async function runRelayRegister(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { value: ['--channel', '--name'] });
   if (!options.channel) throw new CliError('--channel is required (one of: ' + RELAY_CHANNELS.join(', ') + ').');
   assertRelayChannel(options.channel);
@@ -3406,7 +2491,7 @@ async function runRelayRegister(ctx, argv) {
   return 0;
 }
 
-async function runRelayActivate(ctx, argv) {
+async function runRelayActivate(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { value: ['--relay-id', '--code'] });
   if (!options.relayId || !options.code) throw new CliError('--relay-id and --code are required.');
   const res = await requestJson(ctx, `${MESSAGING_BASE}/relay/activate`, {
@@ -3425,7 +2510,7 @@ async function runRelayActivate(ctx, argv) {
   return 0;
 }
 
-async function runRelaySetup(ctx, argv) {
+async function runRelaySetup(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { value: ['--channel', '--name'] });
   if (!options.channel) throw new CliError('--channel is required (one of: ' + RELAY_CHANNELS.join(', ') + ').');
   assertRelayChannel(options.channel);
@@ -3450,7 +2535,7 @@ async function runRelaySetup(ctx, argv) {
   return 0;
 }
 
-async function runRelayRevoke(ctx, argv) {
+async function runRelayRevoke(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { value: ['--relay-id'] });
   const relayId = options.relayId ?? loadRelayConfig(ctx).relayId;
   if (!relayId) throw new CliError('No relay to revoke. Pass --relay-id or run `openwop relay setup` first.');
@@ -3461,7 +2546,7 @@ async function runRelayRevoke(ctx, argv) {
   return 0;
 }
 
-async function runRelaySend(ctx, argv) {
+async function runRelaySend(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { value: ['--relay-id', '--conversation', '--text', '--reply-to'] });
   const relayId = options.relayId ?? loadRelayConfig(ctx).relayId;
   if (!relayId) throw new CliError('No relay configured. Pass --relay-id or run `openwop relay setup` first.');
@@ -3478,7 +2563,7 @@ async function runRelaySend(ctx, argv) {
   return 0;
 }
 
-async function runRelayStatus(ctx, argv) {
+async function runRelayStatus(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) { write(ctx.io.stdout, RELAY_HELP); return 0; }
   const relay = loadRelayConfig(ctx);
@@ -3562,7 +2647,7 @@ export async function startInboundReceive(
   }
 }
 
-async function runRelayStart(ctx, argv) {
+async function runRelayStart(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { bool: ['--help', '--once', '--daemon', '--no-receive'], value: ['--interval'] });
   if (options.help) { write(ctx.io.stdout, RELAY_HELP); return 0; }
   const relay = loadRelayConfig(ctx);
@@ -3634,15 +2719,14 @@ async function runRelayStart(ctx, argv) {
   const intervalMs = Math.max(1000, (Number(options.interval) || 5) * 1000);
   writeLine(ctx.io.stdout, `Relay bridge running for ${relay.relayId} (${relay.channel}). Poll every ${intervalMs / 1000}s. Ctrl+C to stop.`);
   process.once('SIGINT', () => { try { stopReceive?.(); } catch { /* ignore */ } process.exit(0); });
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
+  for (;;) {
     try { await cycle(); }
     catch (err) { writeLine(ctx.io.stderr, `bridge cycle error: ${errText(err)}`); }
     await new Promise((r) => setTimeout(r, intervalMs));
   }
 }
 
-async function runRelayStop(ctx, argv) {
+async function runRelayStop(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) { write(ctx.io.stdout, RELAY_HELP); return 0; }
   const record = readRelayRecord(ctx.env);
@@ -3660,7 +2744,7 @@ async function runRelayStop(ctx, argv) {
   return 0;
 }
 
-async function runRelayLogs(ctx, argv) {
+async function runRelayLogs(ctx: Ctx, argv) {
   const { options } = parseOptions(argv, { bool: ['--help', '--follow', '-f'] });
   if (options.help) { write(ctx.io.stdout, RELAY_HELP); return 0; }
   const logPath = readRelayRecord(ctx.env)?.logPath ?? relayLogPath(ctx.env);
@@ -3743,449 +2827,11 @@ function makeChannelDeliver(channel, ctx) {
   return (egress) => writeLine(ctx.io.stdout, `→ [${channel}] ${egress.conversationId}: ${egress.text}`);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// `openwop notifications ...` — notification inbox (sample-extension).
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function runNotifications(ctx, argv) {
-  const sub = argv[0] ?? 'list';
-  if (sub === '--help' || sub === '-h') { write(ctx.io.stdout, NOTIFICATIONS_HELP); return 0; }
-  const base = '/v1/host/sample/notifications';
-  const rest = argv.slice(1);
-  switch (sub) {
-    case 'list': {
-      const { options } = parseOptions(rest, { bool: ['--archived'], value: ['--status', '--limit'] });
-      const q = new URLSearchParams();
-      if (options.status) q.set('status', options.status);
-      if (options.archived) q.set('includeArchived', 'true');
-      if (options.limit) q.set('limit', options.limit);
-      const res = await requestJson(ctx, `${base}${q.toString() ? `?${q}` : ''}`);
-      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
-      const items = Array.isArray(res.body?.notifications) ? res.body.notifications : [];
-      if (items.length === 0) { writeLine(ctx.io.stdout, 'No notifications.'); return 0; }
-      writeLine(ctx.io.stdout, formatTable(
-        items.map((n) => ({ id: n.notificationId, status: n.status, priority: n.priority ?? '', title: n.title ?? '', createdAt: n.createdAt ?? '' })),
-        ['id', 'status', 'priority', 'title', 'createdAt'],
-      ));
-      return 0;
-    }
-    case 'read': case 'unread': case 'archive': {
-      if (rest.length !== 1) { write(ctx.io.stdout, `Usage: openwop notifications ${sub} <id> [--json]\n`); return 2; }
-      const res = await requestJson(ctx, `${base}/${encodeURIComponent(rest[0])}/${sub}`, { method: 'POST', body: {} });
-      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
-      writeLine(ctx.io.stdout, `✓ ${rest[0]} → ${res.body.status}`);
-      return 0;
-    }
-    case 'mark-all-read': {
-      const res = await requestJson(ctx, `${base}:mark-all-read`, { method: 'POST', body: {} });
-      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
-      writeLine(ctx.io.stdout, `✓ Marked ${res.body.updated} notification(s) read.`);
-      return 0;
-    }
-    case 'delete': case 'rm': {
-      if (rest.length !== 1) { write(ctx.io.stdout, 'Usage: openwop notifications delete <id> [--json]\n'); return 2; }
-      const res = await requestJson(ctx, `${base}/${encodeURIComponent(rest[0])}`, { method: 'DELETE' });
-      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
-      writeLine(ctx.io.stdout, `✓ Deleted ${rest[0]}`);
-      return 0;
-    }
-    default:
-      throw new CliError(`Unknown notifications command: ${sub}\nRun \`openwop notifications --help\` for usage.`);
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// `openwop interrupts ...` — list open interrupts for a run; resolve by token.
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function runInterrupts(ctx, argv) {
-  const sub = argv[0];
-  if (!sub || sub === '--help' || sub === '-h') { write(ctx.io.stdout, INTERRUPTS_HELP); return sub ? 0 : 2; }
-  const rest = argv.slice(1);
-  switch (sub) {
-    case 'list': {
-      if (rest.length !== 1) { write(ctx.io.stdout, 'Usage: openwop interrupts list <runId> [--json]\n'); return 2; }
-      const res = await requestJson(ctx, `/v1/host/sample/runs/${encodeURIComponent(rest[0])}/interrupts`);
-      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
-      const items = Array.isArray(res.body?.interrupts) ? res.body.interrupts : [];
-      if (items.length === 0) { writeLine(ctx.io.stdout, `No open interrupts for run ${rest[0]}.`); return 0; }
-      writeLine(ctx.io.stdout, formatTable(
-        items.map((i) => ({ nodeId: i.nodeId, kind: i.kind, token: i.token, createdAt: i.createdAt ?? '' })),
-        ['nodeId', 'kind', 'token', 'createdAt'],
-      ));
-      return 0;
-    }
-    case 'resolve': {
-      const { options, positionals } = parseOptions(rest, { value: ['--data-json'] });
-      if (positionals.length !== 1) { write(ctx.io.stdout, "Usage: openwop interrupts resolve <token> [--data-json '{...}'] [--json]\n"); return 2; }
-      let body = {};
-      if (options.dataJson) {
-        try { body = JSON.parse(options.dataJson); } catch { throw new CliError('--data-json must be valid JSON.'); }
-      }
-      const res = await requestJson(ctx, `/v1/interrupts/${encodeURIComponent(positionals[0])}`, { method: 'POST', body });
-      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
-      writeLine(ctx.io.stdout, `✓ Resolved interrupt — run ${res.body.runId} node ${res.body.nodeId} (${res.body.status ?? 'running'})`);
-      return 0;
-    }
-    default:
-      throw new CliError(`Unknown interrupts command: ${sub}\nRun \`openwop interrupts --help\` for usage.`);
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// `openwop prompts ...` — prompt-library list/get/render (RFC 0029).
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function runPrompts(ctx, argv) {
-  const sub = argv[0] ?? 'list';
-  if (sub === '--help' || sub === '-h') { write(ctx.io.stdout, PROMPTS_HELP); return 0; }
-  const rest = argv.slice(1);
-  switch (sub) {
-    case 'list': {
-      const { options } = parseOptions(rest, { value: ['--kind', '--tag', '--limit'] });
-      const q = new URLSearchParams();
-      if (options.kind) q.set('kind', options.kind);
-      if (options.tag) q.set('tag', options.tag);
-      if (options.limit) q.set('limit', options.limit);
-      const res = await requestJson(ctx, `/v1/prompts${q.toString() ? `?${q}` : ''}`);
-      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
-      const items = Array.isArray(res.body?.items) ? res.body.items : [];
-      if (items.length === 0) { writeLine(ctx.io.stdout, 'No prompt templates.'); return 0; }
-      writeLine(ctx.io.stdout, formatTable(
-        items.map((t) => ({ templateId: t.templateId, kind: t.kind ?? '', modelClass: t.modelClass ?? '', source: t.source ?? '' })),
-        ['templateId', 'kind', 'modelClass', 'source'],
-      ));
-      return 0;
-    }
-    case 'get': {
-      if (rest.length !== 1) { write(ctx.io.stdout, 'Usage: openwop prompts get <templateId> [--json]\n'); return 2; }
-      const res = await requestJson(ctx, `/v1/prompts/${encodeURIComponent(rest[0])}`);
-      writeJson(ctx.io.stdout, res.body);
-      return 0;
-    }
-    case 'render': {
-      const { options, positionals } = parseOptions(rest, { value: ['--variables-json'] });
-      if (positionals.length !== 1) { write(ctx.io.stdout, "Usage: openwop prompts render <ref> [--variables-json '{...}'] [--json]\n"); return 2; }
-      let variables = {};
-      if (options.variablesJson) {
-        try { variables = JSON.parse(options.variablesJson); } catch { throw new CliError('--variables-json must be valid JSON.'); }
-      }
-      const res = await requestJson(ctx, '/v1/prompts:render', { method: 'POST', body: { ref: positionals[0], variables } });
-      writeJson(ctx.io.stdout, res.body);
-      return 0;
-    }
-    default:
-      throw new CliError(`Unknown prompts command: ${sub}\nRun \`openwop prompts --help\` for usage.`);
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Config file + path utilities
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function configPathFor(profile, env = process.env) {
-  // OPENWOP_CONFIG_HOME overrides the parent dir (useful for tests).
-  const home = env.OPENWOP_CONFIG_HOME ?? homedir();
-  const dir = profile ? `.openwop-${profile}` : '.openwop';
-  return join(home, dir, 'config.json');
-}
-
-export function readConfigSafe(path) {
-  try {
-    if (!existsSync(path)) return null;
-    return JSON.parse(readFileSync(path, 'utf8'));
-  } catch {
-    return null;
-  }
-}
-
-export function saveConfig(path, config) {
-  mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
-  try { chmodSync(path, 0o600); } catch { /* best-effort on Windows */ }
-}
-
-function mergeConfig(existing, next) {
-  const base = existing ?? {};
-  return {
-    ...base,
-    ...next,
-    host: { ...(base.host ?? {}), ...(next.host ?? {}) },
-  };
-}
-
-function getByPath(obj, path) {
-  return path.split('.').reduce((acc, key) => (acc == null ? acc : acc[key]), obj);
-}
-
-function setByPath(obj, path, value) {
-  const parts = path.split('.');
-  let cur = obj;
-  for (let i = 0; i < parts.length - 1; i++) {
-    if (typeof cur[parts[i]] !== 'object' || cur[parts[i]] === null) cur[parts[i]] = {};
-    cur = cur[parts[i]];
-  }
-  cur[parts[parts.length - 1]] = value;
-}
-
-function unsetByPath(obj, path) {
-  const parts = path.split('.');
-  let cur = obj;
-  for (let i = 0; i < parts.length - 1; i++) {
-    if (typeof cur[parts[i]] !== 'object' || cur[parts[i]] === null) return;
-    cur = cur[parts[i]];
-  }
-  delete cur[parts[parts.length - 1]];
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Demo daemon lifecycle — PID file + log file under ~/.openwop/
-// (honors OPENWOP_CONFIG_HOME exactly like configPathFor).
-// ─────────────────────────────────────────────────────────────────────────────
-
-export function openwopHomeDir(env = process.env) {
-  const home = env.OPENWOP_CONFIG_HOME ?? homedir();
-  return join(home, '.openwop');
-}
-
-export function daemonPidPath(env = process.env) {
-  return join(openwopHomeDir(env), 'demo-backend.pid.json');
-}
-
-export function daemonLogPath(env = process.env) {
-  return join(openwopHomeDir(env), 'demo-backend.log');
-}
-
-export function readDaemonRecord(env = process.env) {
-  try {
-    const path = daemonPidPath(env);
-    if (!existsSync(path)) return null;
-    return JSON.parse(readFileSync(path, 'utf8'));
-  } catch {
-    return null;
-  }
-}
-
-function writeDaemonRecord(env, record) {
-  const path = daemonPidPath(env);
-  mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, `${JSON.stringify(record, null, 2)}\n`, 'utf8');
-  try { chmodSync(path, 0o600); } catch { /* best-effort on Windows */ }
-}
-
-function clearDaemonRecord(env) {
-  try {
-    const path = daemonPidPath(env);
-    if (existsSync(path)) rmSync(path);
-  } catch { /* best-effort */ }
-}
-
-export function processAlive(pid) {
-  if (!Number.isInteger(pid) || pid <= 0) return false;
-  try {
-    // Signal 0 performs error checking without delivering a signal.
-    process.kill(pid, 0);
-    return true;
-  } catch (err) {
-    // ESRCH: no such process. EPERM: exists but not ours → still alive.
-    return !!(err && (err as NodeJS.ErrnoException).code === 'EPERM');
-  }
-}
-
-function openLogStream(path) {
-  try {
-    mkdirSync(dirname(path), { recursive: true });
-    return openSync(path, 'a');
-  } catch {
-    return null;
-  }
-}
-
-function writeLog(fd, chunk) {
-  try {
-    writeFileSync(fd, chunk);
-  } catch { /* best-effort; never crash the dev loop over a log write */ }
-}
-
-// Build a per-platform service-install plan. Pure (no fs side effects) so it
-// can be unit-tested and dry-run printed. Returns either an `unsupported`
-// plan with guidance text, or a writable plan with path/contents/activate.
-export function buildServiceInstallPlan(input) {
-  const { platform, root, backendPort, label, apiKey, env, uninstall } = input;
-  const nodeBin = process.execPath;
-  const backendDir = join(root, 'apps/workflow-engine/backend/typescript');
-  const home = env.HOME ?? homedir();
-  const npm = platform === 'win32' ? 'npm.cmd' : 'npm';
-
-  if (platform === 'darwin') {
-    const path = join(home, 'Library/LaunchAgents', `${label}.plist`);
-    const contents = [
-      '<?xml version="1.0" encoding="UTF-8"?>',
-      '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">',
-      '<plist version="1.0">',
-      '<dict>',
-      '  <key>Label</key>',
-      `  <string>${label}</string>`,
-      '  <key>ProgramArguments</key>',
-      '  <array>',
-      `    <string>${npm}</string>`,
-      '    <string>run</string>',
-      '    <string>dev</string>',
-      '  </array>',
-      '  <key>WorkingDirectory</key>',
-      `  <string>${backendDir}</string>`,
-      '  <key>EnvironmentVariables</key>',
-      '  <dict>',
-      '    <key>PORT</key>',
-      `    <string>${backendPort}</string>`,
-      '    <key>OPENWOP_API_KEY</key>',
-      `    <string>${apiKey}</string>`,
-      '  </dict>',
-      '  <key>RunAtLoad</key>',
-      '  <true/>',
-      '  <key>KeepAlive</key>',
-      '  <true/>',
-      '  <key>StandardOutPath</key>',
-      `  <string>${daemonLogPath(env)}</string>`,
-      '  <key>StandardErrorPath</key>',
-      `  <string>${daemonLogPath(env)}</string>`,
-      '</dict>',
-      '</plist>',
-    ].join('\n');
-    return {
-      manager: 'launchd LaunchAgent',
-      path,
-      contents,
-      uninstall: Boolean(uninstall),
-      activate: `launchctl load -w ${path}`,
-      deactivate: `launchctl unload -w ${path}`,
-    };
-  }
-
-  if (platform === 'linux') {
-    const path = join(home, '.config/systemd/user', `${label}.service`);
-    const contents = [
-      '[Unit]',
-      'Description=OpenWOP workflow-engine demo backend',
-      'After=network.target',
-      '',
-      '[Service]',
-      'Type=simple',
-      `WorkingDirectory=${backendDir}`,
-      `Environment=PORT=${backendPort}`,
-      `Environment=OPENWOP_API_KEY=${apiKey}`,
-      `ExecStart=${npm} run dev`,
-      'Restart=on-failure',
-      '',
-      '[Install]',
-      'WantedBy=default.target',
-    ].join('\n');
-    return {
-      manager: 'systemd user unit',
-      path,
-      contents,
-      uninstall: Boolean(uninstall),
-      activate: `systemctl --user daemon-reload && systemctl --user enable --now ${label}.service`,
-      deactivate: `systemctl --user disable --now ${label}.service`,
-    };
-  }
-
-  // Windows + anything else: no file is written. Give a concrete recipe.
-  const guidance = platform === 'win32'
-    ? [
-        'Automatic service install is not wired for Windows yet.',
-        'Create a Scheduled Task that runs the demo backend at logon:',
-        '',
-        `  schtasks /Create /TN "${label}" /SC ONLOGON /TR ^`,
-        `    "cmd /c cd /d ${backendDir} && set PORT=${backendPort}&& set OPENWOP_API_KEY=${apiKey}&& ${npm} run dev"`,
-        '',
-        'Remove it later with:',
-        `  schtasks /Delete /TN "${label}" /F`,
-        '',
-        `(Node runtime: ${nodeBin})`,
-      ].join('\n')
-    : [
-        `Automatic service install is not supported on platform "${platform}".`,
-        'Run the backend under your platform process manager with:',
-        `  cd ${backendDir} && PORT=${backendPort} OPENWOP_API_KEY=${apiKey} ${npm} run dev`,
-      ].join('\n');
-  return { unsupported: true, guidance };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Interactive prompt helpers (Node stdlib only)
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function promptChoice(ctx, label, choices) {
-  writeLine(ctx.io.stdout, label);
-  choices.forEach((c, i) => {
-    const tag = c.recommended ? ' (recommended)' : '';
-    writeLine(ctx.io.stdout, `  ${i + 1}) ${c.label}${tag}`);
-  });
-  const defaultIdx = Math.max(0, choices.findIndex((c) => c.recommended));
-  const answer = await promptText(ctx, `Choice [${defaultIdx + 1}]: `, '');
-  const idx = answer.trim() === '' ? defaultIdx : Number(answer.trim()) - 1;
-  if (!Number.isInteger(idx) || idx < 0 || idx >= choices.length) {
-    throw new CliError(`Invalid choice: ${answer}`);
-  }
-  return choices[idx].key;
-}
-
-async function promptText(ctx: any, prompt: string, defaultValue = ''): Promise<string> {
-  ctx.io.stdout.write(prompt);
-  const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: false });
-  return new Promise((resolve) => {
-    rl.once('line', (line) => {
-      rl.close();
-      resolve(line.length > 0 ? line : defaultValue);
-    });
-  });
-}
-
-async function promptYesNo(ctx, label, defaultYes = true) {
-  const hint = defaultYes ? '[Y/n]' : '[y/N]';
-  const answer = (await promptText(ctx, `${label} ${hint} `, '')).trim().toLowerCase();
-  if (answer === '') return defaultYes;
-  return answer === 'y' || answer === 'yes';
-}
-
-async function readSecret(ctx, prompt) {
-  ctx.io.stdout.write(prompt);
-  const stdin = process.stdin;
-  // Pipe / non-TTY: read one line normally so `echo KEY | openwop ...` works.
-  if (!stdin.isTTY) {
-    const rl = createInterface({ input: stdin, output: ctx.io.stdout, terminal: false });
-    return new Promise((resolve) => {
-      rl.once('line', (line) => {
-        rl.close();
-        resolve(line);
-      });
-    });
-  }
-  // TTY: raw-mode keypress loop with no echo + Ctrl-C support + backspace.
-  return new Promise((resolve, reject) => {
-    stdin.setRawMode(true);
-    stdin.resume();
-    stdin.setEncoding('utf8');
-    let value = '';
-    const cleanup = () => {
-      stdin.removeListener('data', onData);
-      stdin.setRawMode(false);
-      stdin.pause();
-      ctx.io.stdout.write('\n');
-    };
-    const onData = (chunk) => {
-      for (const ch of chunk) {
-        const code = ch.charCodeAt(0);
-        if (code === 0x0d || code === 0x0a) { cleanup(); resolve(value); return; }
-        if (code === 0x03) { cleanup(); reject(new CliError('Aborted')); return; }
-        if (code === 0x7f || code === 0x08) { value = value.slice(0, -1); continue; }
-        if (code >= 0x20) value += ch;
-      }
-    };
-    stdin.on('data', onData);
-  });
-}
 
 function buildInputs(options) {
   const fromJson = options.inputsJson ? JSON.parse(options.inputsJson) : {};
@@ -4209,7 +2855,7 @@ function parseInputValue(value) {
   }
 }
 
-async function waitForRun(ctx, runId, timeoutMs) {
+async function waitForRun(ctx: Ctx, runId, timeoutMs) {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
     const res = await requestJson(ctx, `/v1/runs/${encodeURIComponent(runId)}`);
@@ -4217,103 +2863,6 @@ async function waitForRun(ctx, runId, timeoutMs) {
     await sleep(250);
   }
   throw new CliError(`Timed out waiting for run ${runId} after ${timeoutMs}ms`, 1);
-}
-
-async function requestJson(ctx: any, path: string, options: any = {}) {
-  const url = new URL(path, ctx.baseUrl);
-  const headers: Record<string, string> = {
-    accept: 'application/json',
-    ...(options.body !== undefined ? { 'content-type': 'application/json' } : {}),
-    ...(options.headers ?? {}),
-  };
-  if (options.auth !== false && ctx.apiKey) {
-    headers.authorization = `Bearer ${ctx.apiKey}`;
-  }
-  const res = await ctx.fetchImpl(url, {
-    method: options.method ?? 'GET',
-    headers,
-    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-  });
-  const text = await res.text();
-  const body = text.length > 0 ? parseJsonResponse(text) : null;
-  if (!res.ok) {
-    throw new HttpError(`HTTP ${res.status}`, res.status, body);
-  }
-  return { status: res.status, headers: res.headers, body };
-}
-
-async function safeRequest(ctx, path, options = {}) {
-  try {
-    const res = await requestJson(ctx, path, options);
-    return { ok: true, path, status: res.status, body: res.body };
-  } catch (err) {
-    return { ok: false, path, error: err instanceof Error ? err.message : String(err) };
-  }
-}
-
-async function probeEndpoint(ctx, path) {
-  try {
-    const res = await requestJson(ctx, path, { auth: false });
-    return { ok: true, message: String(res.status) };
-  } catch (err) {
-    return { ok: false, message: err instanceof Error ? err.message : String(err) };
-  }
-}
-
-function parseJsonResponse(text) {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { raw: text };
-  }
-}
-
-export function findRepoRoot(startDir) {
-  let dir = resolvePath(startDir);
-  while (true) {
-    const pkg = join(dir, 'package.json');
-    if (existsSync(pkg)) {
-      try {
-        const parsed = JSON.parse(readFileSync(pkg, 'utf8'));
-        if (
-          parsed.name === 'openwop-spec-corpus' &&
-          existsSync(join(dir, 'apps/workflow-engine')) &&
-          existsSync(join(dir, 'conformance'))
-        ) {
-          return dir;
-        }
-      } catch {
-        // Keep walking.
-      }
-    }
-    const parent = dirname(dir);
-    if (parent === dir) return null;
-    dir = parent;
-  }
-}
-
-function requireRepoRoot(ctx) {
-  if (ctx.repoRoot) return ctx.repoRoot;
-  throw new CliError('This command needs to run from inside the OpenWOP repository checkout.');
-}
-
-function demoProjects(root) {
-  if (!root) return [];
-  return [
-    project(root, 'backend', 'apps/workflow-engine/backend/typescript'),
-    project(root, 'frontend', 'apps/workflow-engine/frontend/react'),
-  ];
-}
-
-function project(root, name, relativeDir) {
-  const dir = join(root, relativeDir);
-  return {
-    name,
-    relativeDir,
-    dir,
-    packageJson: join(dir, 'package.json'),
-    nodeModules: join(dir, 'node_modules'),
-  };
 }
 
 function parseNodeVersion(version) {
@@ -4340,9 +2889,6 @@ function npmCommand() {
   return process.platform === 'win32' ? 'npm.cmd' : 'npm';
 }
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 function ok(name, message) {
   return { status: 'ok', name, message };
@@ -4361,42 +2907,6 @@ function formatCheckTable(checks) {
     checks.map((c) => ({ status: c.status.toUpperCase(), check: c.name, message: c.message })),
     ['status', 'check', 'message'],
   );
-}
-
-export function formatTable(rows, columns) {
-  if (rows.length === 0) return '';
-  const widths = {};
-  for (const column of columns) {
-    widths[column] = Math.max(
-      column.length,
-      ...rows.map((row) => String(row[column] ?? '').length),
-    );
-  }
-  const line = (row) => columns.map((column) => String(row[column] ?? '').padEnd(widths[column])).join('  ').trimEnd();
-  return [
-    line(Object.fromEntries(columns.map((column) => [column, column]))),
-    columns.map((column) => '-'.repeat(widths[column])).join('  '),
-    ...rows.map(line),
-  ].join('\n');
-}
-
-function prefixChunk(stream, label, chunk) {
-  const text = chunk.toString();
-  for (const line of text.split(/\r?\n/)) {
-    if (line.length > 0) writeLine(stream, `[${label}] ${line}`);
-  }
-}
-
-function write(stream, text) {
-  stream.write(text);
-}
-
-function writeLine(stream, text) {
-  stream.write(`${text}\n`);
-}
-
-function writeJson(stream, value) {
-  writeLine(stream, JSON.stringify(value, null, 2));
 }
 
 const ROOT_HELP = `openwop - operate OpenWOP hosts and the workflow-engine demo app
@@ -4563,16 +3073,6 @@ Writes a managed-service definition for the demo backend, chosen by platform:
 const DEMO_URLS_HELP = `Usage: openwop demo urls [--frontend-port 5173] [--json]
 `;
 
-const HEALTH_HELP = `Usage: openwop health [--base-url url] [--json]
-
-Probes /health and /readiness on the configured host. Exit 0 when both respond; otherwise 1.
-`;
-
-const CAPABILITIES_HELP = `Usage: openwop capabilities [--base-url url] [--json]
-
-Reads /.well-known/openwop and prints the implementation, protocol version, and advertised capability blocks. Use --json to inspect the raw discovery document.
-`;
-
 const CATALOG_HELP = `Usage:
   openwop catalog nodes [--search text] [--limit n] [--json]
   openwop catalog packs [--json]
@@ -4664,49 +3164,6 @@ Examples:
   openwop chat sample.chat.turn --no-stream --json
 `;
 
-const MEMORY_HELP = `Usage:
-  openwop memory list [--memory-ref ref] [--tag t] [--limit n] [--json]
-  openwop memory search <text> [--query text] [--tag t] [--memory-ref ref] [--limit n] [--json]
-  openwop memory get <memoryId> [--memory-ref ref] [--json]
-  openwop memory delete <memoryId> [--memory-ref ref] [--json]
-
-Reads the demo MemoryAdapter ledger (RFC 0004) via the host-extension routes
-under /v1/host/sample/memory. Every read and delete is tenant-scoped to the
-caller's API key on the host (CTI-1) — the CLI never sends a tenantId and cannot
-cross tenant boundaries. Select the tenant with --api-key / OPENWOP_API_KEY.
-
-  --memory-ref ref   The agent-derived memoryRef (default: the demo's tenant-memory).
-  --tag t            Server-side tag filter (also matched by \`search\`).
-  --query / <text>   Free-text filter applied client-side over content + tags.
-  --limit n          Cap the number of entries the host returns.
-`;
-
-const CONFORMANCE_HELP = `Usage: openwop conformance [--offline] [--filter pattern]
-
-Runs the in-repo @openwop/openwop-conformance CLI. Without --offline it targets the configured --base-url.
-`;
-
-const MEDIA_HELP = `Usage:
-  openwop media generate-image <prompt> [--output path] [--json]
-  openwop media transcribe <audio-file> [--language en] [--json]
-  openwop media synthesize <text> [--voice name] [--output path] [--json]
-
-Exercises the host's core.openwop.ai media node family (image-generate,
-audio-transcribe, audio-synthesize) through the demo backend's sample media
-routes. --output writes the returned binary asset (PNG / WAV) to a file.
-
-Note: the demo backend STUBS the actual provider calls — it advertises
-aiProviders.imageGeneration: supported:false and wires no live media
-provider — so results are deterministic fixture assets tagged \`stub: true\`,
-not live generations. A production host with a wired provider returns real
-media at the same endpoints.
-
-Examples:
-  openwop media generate-image "a red bicycle" --output bike.png
-  openwop media transcribe clip.wav --language en
-  openwop media synthesize "hello world" --output hello.wav --json
-`;
-
 const ONBOARD_HELP = `Usage: openwop onboard [options]
 
 Guided first-run setup. Walks through host URL, AI provider, API key, and model
@@ -4780,43 +3237,6 @@ Reads and writes ~/.openwop/config.json (or OPENWOP_CONFIG_HOME/.openwop/ when s
 Dotted keys traverse nested objects (e.g., \`openwop config get host.baseUrl\`).
 `;
 
-const WEBHOOKS_HELP = `Usage:
-  openwop webhooks list [--json]
-  openwop webhooks add <url> --event <type> [--event <type> ...] [--tag t] [--secret s] [--json]
-  openwop webhooks remove <subscriptionId> [--json]
-  openwop webhooks test <subscriptionId> [--json]
-
-Manage HMAC-signed webhook subscriptions on the configured host (POST/GET/DELETE
-/v1/webhooks per spec/v1/webhooks.md).
-
-  add     Registers a subscription. Supply --event one or more times. When you
-          omit --secret, the host generates one and returns it ONCE in the add
-          response — store it to verify delivery signatures.
-  test    Fires a synthetic, signed \`webhook.test\` delivery to the
-          subscription URL so you can confirm reachability + signature handling.
-          A 202 means the delivery was dispatched, not that the endpoint acked.
-
-Note: \`list\` never returns the signing secret.
-`;
-
-const CRON_HELP = `Usage:
-  openwop cron list [--json]
-  openwop cron add "<cronExpr>" [--workflow <id>] [--job-id <id>] [--first-fire-at-ms <ms>] [--json]
-  openwop cron remove <jobId> [--json]
-  openwop cron trigger <jobId> [--json]
-
-Manage scheduled (cron) jobs on the configured host via the RFC 0052 sample
-scheduler CRUD (/v1/host/sample/scheduler/jobs). This is a sample-extension
-surface — not part of the normative OpenWOP wire contract.
-
-  add      Registers a job. --job-id is optional (the host assigns a UUID when
-           omitted). A --first-fire-at-ms beyond the host's maxFutureHorizon is
-           rejected with schedule_horizon_exceeded (RFC 0052 §B.3).
-  trigger  Fires the job once now. Honors RFC 0052 §B.2 fire-once-per-tick: a
-           single trigger advances the scheduler clock one tick and produces
-           exactly one run.
-`;
-
 const MESSAGING_HELP = `Usage:
   openwop messaging connectors list|get|add|enable|disable|test [...]
   openwop messaging sessions   list|inspect|close [...]
@@ -4858,30 +3278,3 @@ stores its token in ~/.openwop/config.json under \`relay\`.
   status  Probes the host with a heartbeat to confirm the token is live.
 `;
 
-const NOTIFICATIONS_HELP = `Usage:
-  openwop notifications list [--status <s>] [--archived] [--limit n] [--json]
-  openwop notifications read|unread|archive <id> [--json]
-  openwop notifications mark-all-read [--json]
-  openwop notifications delete <id> [--json]
-
-Operate the demo notification inbox (/v1/host/sample/notifications) — a
-sample-extension surface, tenant-scoped, not part of the normative wire.
-`;
-
-const INTERRUPTS_HELP = `Usage:
-  openwop interrupts list <runId> [--json]
-  openwop interrupts resolve <token> [--data-json '{...}'] [--json]
-
-List a run's open interrupts (human-in-the-loop / approval pauses) and resolve
-one by its capability token. \`--data-json\` is the resume payload (validated
-against the interrupt's resumeSchema by the host).
-`;
-
-const PROMPTS_HELP = `Usage:
-  openwop prompts list [--kind k] [--tag t] [--limit n] [--json]
-  openwop prompts get <templateId> [--json]
-  openwop prompts render <ref> [--variables-json '{...}'] [--json]
-
-Browse + render the host's prompt library (RFC 0029, /v1/prompts). \`render\`
-resolves a PromptRef (templateId[@version]) against the supplied variables.
-`;
