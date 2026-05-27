@@ -96,6 +96,11 @@ class HttpError extends Error {
   }
 }
 
+/** Narrow an unknown caught value to a printable message (strict catch vars). */
+function errText(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 export async function runCli(argv: string[], options: any = {}): Promise<number> {
   const io = options.io ?? {
     stdout: process.stdout,
@@ -212,8 +217,8 @@ export async function runCli(argv: string[], options: any = {}): Promise<number>
       return err.code;
     }
     if (err instanceof HttpError) {
-      const bodyMessage = err.body && typeof err.body === 'object' && typeof (err.body as any).message === 'string'
-        ? `: ${(err.body as any).message}`
+      const bodyMessage = err.body && typeof err.body === 'object' && typeof (err.body as { message?: string }).message === 'string'
+        ? `: ${(err.body as { message?: string }).message}`
         : '';
       writeLine(io.stderr, `openwop: HTTP ${err.status}${bodyMessage}`);
       if (options.debugErrors) writeLine(io.stderr, String(err.stack ?? err));
@@ -235,7 +240,7 @@ export function extractGlobalOptions(argv, env = process.env) {
     help: false,
     version: false,
   };
-  const args = [];
+  const args: string[] = [];
   let seenCommand = false;
 
   for (let i = 0; i < argv.length; i++) {
@@ -286,7 +291,7 @@ function parseOptions(
   const values = new Set(spec.value ?? []);
   const multi = new Set(spec.multi ?? []);
   const options: Record<string, any> = {};
-  const positionals = [];
+  const positionals: string[] = [];
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i] ?? '';
@@ -384,7 +389,7 @@ async function runDoctor(ctx, argv) {
     return 0;
   }
 
-  const checks = [];
+  const checks: Array<{ status: string; name: string; message: string }> = [];
   const node = parseNodeVersion(process.versions.node);
   if (node.major >= 22) {
     checks.push(ok('node', `Node ${process.versions.node} is ready for the demo backend`));
@@ -598,7 +603,7 @@ async function runDemoStart(ctx: any, argv: string[]): Promise<number> {
     throw new CliError('Choose at least one service to start.');
   }
 
-  const commands = [];
+  const commands: any[] = [];
   if (startBackend) commands.push({ label: 'backend', cwd: backend, cmd: npmCommand(), args: ['run', 'dev'] });
   if (startFrontend) commands.push({
     label: 'frontend',
@@ -756,7 +761,7 @@ async function runDemoStop(ctx: any, argv: string[]): Promise<number> {
   try {
     process.kill(record.pid, signal);
   } catch (err) {
-    if (err && err.code === 'EPERM') {
+    if (err && (err as NodeJS.ErrnoException).code === 'EPERM') {
       throw new CliError(`Not permitted to signal pid ${record.pid}. It may belong to another user.`);
     }
     throw new CliError(`Failed to signal pid ${record.pid}: ${err instanceof Error ? err.message : String(err)}`);
@@ -872,6 +877,11 @@ async function runDemoInstall(ctx, argv) {
     if (ctx.json) writeJson(ctx.io.stdout, { platform: process.platform, supported: false, guidance: plan.guidance });
     else { writeLine(ctx.io.stdout, plan.guidance); }
     return 0;
+  }
+  // Past the unsupported branch a writable plan always carries path + contents;
+  // assert it so strictNullChecks narrows them to string for the writes below.
+  if (!plan.path || plan.contents === undefined) {
+    throw new CliError('Service-install plan is incomplete (no path/contents).');
   }
 
   if (options.dryRun || ctx.json) {
@@ -1324,7 +1334,7 @@ async function runPacksPublish(ctx, argv) {
 
   // Load (or, for dev, generate) the Ed25519 private key.
   let privateKey;
-  let ephemeralPublicB64 = null;
+  let ephemeralPublicB64: string | null = null;
   if (options.key) {
     privateKey = createPrivateKey({ key: readFileSync(resolvePath(ctx.cwd, options.key), 'utf8'), format: 'pem' });
   } else {
@@ -1477,7 +1487,7 @@ function extractPackJsonBytes(tarballBytes) {
 function walkPackDir(packDir) {
   const ALLOWED_TOPS = new Set(['pack.json', 'README.md', 'LICENSE', 'index.mjs']);
   const ALLOWED_DIRS = new Set(['schemas', 'keys']);
-  const entries = [];
+  const entries: any[] = [];
   for (const entry of readdirSync(packDir).sort()) {
     const full = join(packDir, entry);
     const st = statSync(full);
@@ -1519,7 +1529,7 @@ function buildUstarGzip(entries) {
     writeOctal(chksum, 8, 148);
     return buf;
   };
-  const chunks = [];
+  const chunks: Uint8Array[] = [];
   for (const { name, content } of entries) {
     chunks.push(ustarHeader(name, content.length));
     chunks.push(content);
@@ -1795,7 +1805,7 @@ async function runChat(ctx, argv) {
       continue;
     }
 
-    const assistantParts = [];
+    const assistantParts: string[] = [];
     const onEvent = (ev) => {
       if (ctx.json) {
         writeJson(ctx.io.stdout, ev);
@@ -1894,7 +1904,7 @@ export async function consumeSse(stream, onFrame) {
   const flushFrame = (block) => {
     if (!block.trim()) return;
     const frame: Record<string, string> = {};
-    const dataLines = [];
+    const dataLines: string[] = [];
     for (const rawLine of block.split('\n')) {
       const line = rawLine.replace(/\r$/, '');
       if (line === '' || line.startsWith(':')) continue; // blank or comment/heartbeat
@@ -2071,7 +2081,7 @@ async function runRunsAncestry(ctx, argv) {
   // same-host `parent.runId` until `parent === null`. A depth cap guards
   // against a malformed cycle. The endpoint is opt-in (Phase 3) and returns
   // 404 when not advertised — surface that as a clear message.
-  const chain = [];
+  const chain: any[] = [];
   let current = encodeURIComponent(positionals[0]);
   const MAX_DEPTH = 64;
   for (let depth = 0; depth < MAX_DEPTH; depth++) {
@@ -2081,8 +2091,8 @@ async function runRunsAncestry(ctx, argv) {
     } catch (err) {
       if (err instanceof HttpError && err.status === 404) {
         // Distinguish "endpoint not enabled" from "run not found" via the body.
-        const detail = err.body && typeof err.body === 'object' && typeof (err.body as any).message === 'string'
-          ? (err.body as any).message
+        const detail = err.body && typeof err.body === 'object' && typeof (err.body as { message?: string }).message === 'string'
+          ? (err.body as { message?: string }).message
           : 'not found';
         throw new CliError(`runs ancestry unavailable: ${detail} (the ancestry endpoint is opt-in; the host must advertise crossHostCausation.ancestryEndpointSupported).`, 2);
       }
@@ -2587,7 +2597,9 @@ async function resolveBaseUrl(ctx, options, existing, interactive) {
     if (!url) throw new CliError('Base URL is required');
     return normalizeBaseUrl(url);
   }
-  return HOST_PRESETS.find((h) => h.key === choice).url;
+  const preset = HOST_PRESETS.find((h) => h.key === choice);
+  if (!preset) throw new CliError(`Unknown host choice: ${choice}`);
+  return preset.url;
 }
 
 async function resolveProvider(ctx, options, existing, interactive) {
@@ -3486,7 +3498,7 @@ async function runRelayStatus(ctx, argv) {
     });
     online = res.body?.ok === true;
   } catch (err) {
-    detail = err instanceof HttpError ? `HTTP ${err.status}` : String(err.message ?? err);
+    detail = err instanceof HttpError ? `HTTP ${err.status}` : errText(err);
   }
   if (ctx.json) {
     writeJson(ctx.io.stdout, { configured: true, relayId: relay.relayId, channel: relay.channel, online, ...(detail ? { detail } : {}) });
@@ -3539,13 +3551,13 @@ export async function startInboundReceive(
         });
         writeLine(ctx.io.stdout, `← [${relay.channel}] ${msg.conversationId}: ${msg.text}`);
       } catch (err) {
-        writeLine(ctx.io.stderr, `inbound forward failed: ${err.message ?? err}`);
+        writeLine(ctx.io.stderr, `inbound forward failed: ${errText(err)}`);
       }
     }, { env: ctx.env });
     writeLine(ctx.io.stdout, `Inbound receive active for ${relay.channel}.`);
     return stop;
   } catch (err) {
-    writeLine(ctx.io.stderr, `inbound receive unavailable: ${err.message ?? err}`);
+    writeLine(ctx.io.stderr, `inbound receive unavailable: ${errText(err)}`);
     return undefined;
   }
 }
@@ -3596,10 +3608,10 @@ async function runRelayStart(ctx, argv) {
     });
     const out = await requestJson(ctx, `${MESSAGING_BASE}/device/outbound`, { auth: false, headers: deviceHeaders });
     const messages = Array.isArray(out.body?.messages) ? out.body.messages : [];
-    const delivered = [];
+    const delivered: string[] = [];
     for (const egress of messages) {
       try { await deliver(egress); delivered.push(egress.egressId); }
-      catch (err) { writeLine(ctx.io.stderr, `delivery failed for ${egress.egressId}: ${err.message ?? err}`); }
+      catch (err) { writeLine(ctx.io.stderr, `delivery failed for ${egress.egressId}: ${errText(err)}`); }
     }
     if (delivered.length > 0) {
       await requestJson(ctx, `${MESSAGING_BASE}/device/ack`, {
@@ -3621,11 +3633,11 @@ async function runRelayStart(ctx, argv) {
 
   const intervalMs = Math.max(1000, (Number(options.interval) || 5) * 1000);
   writeLine(ctx.io.stdout, `Relay bridge running for ${relay.relayId} (${relay.channel}). Poll every ${intervalMs / 1000}s. Ctrl+C to stop.`);
-  process.on('SIGINT', () => { try { stopReceive?.(); } catch { /* ignore */ } process.exit(0); });
+  process.once('SIGINT', () => { try { stopReceive?.(); } catch { /* ignore */ } process.exit(0); });
   // eslint-disable-next-line no-constant-condition
   while (true) {
     try { await cycle(); }
-    catch (err) { writeLine(ctx.io.stderr, `bridge cycle error: ${err.message ?? err}`); }
+    catch (err) { writeLine(ctx.io.stderr, `bridge cycle error: ${errText(err)}`); }
     await new Promise((r) => setTimeout(r, intervalMs));
   }
 }
@@ -3976,7 +3988,7 @@ export function processAlive(pid) {
     return true;
   } catch (err) {
     // ESRCH: no such process. EPERM: exists but not ours → still alive.
-    return err && err.code === 'EPERM';
+    return !!(err && (err as NodeJS.ErrnoException).code === 'EPERM');
   }
 }
 

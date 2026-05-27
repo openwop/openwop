@@ -100,8 +100,12 @@ const whatsappPlugin: ChannelPlugin = {
   async deliver() { throw new Error('WhatsApp delivery requires the Baileys channel build (not bundled).'); },
   async startReceive(onInbound, opts = {}) {
     // Lazy-load Baileys; absent by default (heavy optional dep).
+    // Optional heavy dep — not bundled. A variable specifier keeps tsc from
+    // trying to resolve the (absent) module at build time; it's `any` because
+    // Baileys ships no types we depend on.
     let baileys: any;
-    try { baileys = await import('@whiskeysockets/baileys' as any); }
+    const baileysPkg = '@whiskeysockets/baileys';
+    try { baileys = await import(baileysPkg); }
     catch { throw new Error('WhatsApp receive requires @whiskeysockets/baileys — install it in the CLI build.'); }
     const { makeWASocket, useMultiFileAuthState } = baileys;
     const { state, saveCreds } = await useMultiFileAuthState(`${process.env.HOME}/.openwop/whatsapp-auth`);

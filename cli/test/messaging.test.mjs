@@ -1,3 +1,4 @@
+// Run via `npm test` (builds dist/ first) — these import the esbuild bundle at ../dist/cli.js.
 import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';

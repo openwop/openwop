@@ -10,13 +10,31 @@
 
 import type { InboundMessage } from './types.js';
 
+interface SignalEnvelope {
+  source?: string;
+  sourceNumber?: string;
+  sourceUuid?: string;
+  sourceName?: string;
+  timestamp?: number;
+  dataMessage?: { message?: unknown; groupInfo?: { groupId?: string } };
+}
+interface SignalRaw { envelope?: SignalEnvelope; params?: { envelope?: SignalEnvelope } }
+
+interface WaMessage {
+  key?: { remoteJid?: string; fromMe?: boolean; id?: string; participant?: string };
+  message?: { conversation?: string; extendedTextMessage?: { text?: string } };
+  pushName?: string;
+  messageTimestamp?: number | string;
+}
+
 /**
  * signal-cli `receive --json` / JSON-RPC envelope. Shape (subset):
  *   { envelope: { source, sourceName, timestamp, dataMessage: { message, groupInfo? } } }
  * Group messages route on the groupId; DMs route on the source number.
  */
 export function parseSignalEnvelope(raw: unknown): InboundMessage | null {
-  const env = (raw as any)?.envelope ?? (raw as any)?.params?.envelope;
+  const r = raw as SignalRaw;
+  const env = r?.envelope ?? r?.params?.envelope;
   if (!env || typeof env !== 'object') return null;
   const data = env.dataMessage;
   if (!data || typeof data.message !== 'string' || data.message.length === 0) return null;
@@ -68,7 +86,7 @@ export function parseImessageRow(row: Record<string, unknown>): InboundMessage |
  *     pushName?, messageTimestamp? }
  */
 export function parseWhatsappMessage(raw: unknown): InboundMessage | null {
-  const m = raw as any;
+  const m = raw as WaMessage;
   if (!m?.key || m.key.fromMe) return null;
   const remoteJid: string | undefined = m.key.remoteJid;
   if (!remoteJid) return null;

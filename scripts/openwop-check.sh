@@ -186,7 +186,14 @@ echo
 # build (esbuild) + typecheck (tsc --noEmit) + run its node:test suite against
 # the bundle. Closes the historical "CLI tests not in the gate" gap.
 echo "[10/10] CLI package (build + typecheck + tests)..."
-( cd "$(dirname "$0")/../cli" && npm install --no-audit --no-fund --silent && npm run typecheck && npm test >/dev/null )
+(
+  cd "$(dirname "$0")/../cli"
+  if [ ! -d node_modules ]; then
+    echo "  installing CLI deps (one-time)..."
+    npm ci --no-audit --no-fund --silent 2>/dev/null || npm install --no-audit --no-fund --silent
+  fi
+  npm run typecheck && npm test >/dev/null
+)
 echo
 
 echo "=== openwop:check OK — spec corpus is internally consistent ==="
