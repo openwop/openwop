@@ -46,6 +46,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -79,7 +80,7 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: advertisement shape (R
       ctx.skip();
       return;
     }
-    const rd = d.capabilities?.multiAgent?.executionModel?.replayDeterminism;
+    const rd = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.replayDeterminism;
     if (rd === undefined) {
       ctx.skip(); // optional advertisement â€” host hasn't opted in
       return;
@@ -94,7 +95,7 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: advertisement shape (R
     ).toBe('boolean');
 
     if (rd.supported === true) {
-      const version = d.capabilities?.multiAgent?.executionModel?.version as number | undefined;
+      const version = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.version as number | undefined;
       expect(
         typeof version === 'number' && version >= 4,
         driver.describe(
@@ -170,7 +171,7 @@ describe.skipIf(HTTP_SKIP)('replay-divergence-at-refusal: behavioral (RFC 0041 Â
 
   async function gateOnPhase4(ctx: { skip: () => void }): Promise<boolean> {
     const d = await readDiscovery();
-    const rd = d?.capabilities?.multiAgent?.executionModel?.replayDeterminism;
+    const rd = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.replayDeterminism;
     if (rd?.supported !== true || rd?.refusalDivergenceEmission !== true) {
       ctx.skip();
       return false;

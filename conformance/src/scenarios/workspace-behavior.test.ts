@@ -22,6 +22,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryWorkspace {
   supported?: boolean;
@@ -33,7 +34,7 @@ interface DiscoveryDoc {
 
 async function workspaceCap(): Promise<DiscoveryWorkspace | null> {
   const res = await driver.get('/.well-known/openwop');
-  const ws = (res.json as DiscoveryDoc | undefined)?.capabilities?.workspace;
+  const ws = capabilityFamily((res.json as DiscoveryDoc | undefined), 'workspace');
   return ws?.supported === true ? ws : null;
 }
 

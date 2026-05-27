@@ -18,6 +18,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryOAuthProvider {
   id?: string;
@@ -47,7 +48,7 @@ const VALID_GRANTS: ReadonlySet<string> = new Set([
 async function readOAuth(): Promise<DiscoveryOAuth | null> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
-  return body?.capabilities?.oauth ?? null;
+  return capabilityFamily(body, 'oauth') ?? null;
 }
 
 describe('oauth-capability-shape: advertisement shape (RFC 0047 §A)', () => {

@@ -54,7 +54,7 @@ describe('aiEnvelope.schemaDrift: advertisement shape (FINAL v1.1)', () => {
     if (!(await isEnvelopeContractsAdvertised())) return; // not opted in — skip
     const res = await driver.get('/.well-known/openwop');
     const body = res.json as { schemaVersions?: Record<string, number>; capabilities?: { schemaVersions?: Record<string, number> } } | undefined;
-    const versions = body?.schemaVersions ?? body?.capabilities?.schemaVersions ?? {};
+    const versions = body?.schemaVersions ?? capabilityFamily(body, 'schemaVersions') ?? {};
     expect(
       Object.keys(versions).length > 0,
       driver.describe(
@@ -189,6 +189,7 @@ describe('aiEnvelope.schemaDrift: behavioral strictness gate (FINAL v1.1)', () =
 // E.2 OTel scrape seam.
 import { queryTestSpans, isOtelSeamAvailable } from '../lib/otel-scrape.js';
 import { resetTestSeam } from '../lib/event-log-query.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 describe('aiEnvelope.schemaDrift: OTel drift attribute projection (E.2)', () => {
   it('below-floor + strictness:warn → OTel span MUST carry envelope_schema_version_drift attribute', async () => {

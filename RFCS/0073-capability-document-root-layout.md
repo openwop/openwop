@@ -199,9 +199,17 @@ waiver for this corpus the additive-clarification window is waived
 
 ## Implementation notes (non-normative)
 
-- This PR lands Phase 1 (prose) + Phase 2 (accessor + helper migration) + Phase 3
-  for the primary reference host (`apps/.../discovery.ts`).
-- **Follow-up (tracked here):** migrate `examples/hosts/{sqlite,postgres,python}`
+- **#276** landed Phase 1 (prose) + Phase 2 (accessor + agent-cohort helper
+  migration) + Phase 3 for the primary reference host (`apps/.../discovery.ts`).
+- **Phase 2b (in progress):** migrate the remaining capability-gated *scenarios*
+  onto `capabilityFamily()`. As of 2026-05-27, **62 of ~78** are migrated (prompt /
+  multi-agent / envelope / auth / memory / scheduling / workspace / replay /
+  observability families). The remaining ~16 are deep-typed cast-form readers
+  (wasm `nodePackRuntimes`, `memory.compaction`, `auth` audit-log, `httpClient`,
+  `runs.pauseResume`) + a few multi-line cast accesses; each needs a per-family
+  generic. Safe + incremental — the root-first fallback keeps unmigrated readers
+  green against nested hosts.
+- **Follow-up (tracked here):** finish Phase 2b; migrate `examples/hosts/{sqlite,postgres,python}`
   discovery shapes to root (each with the same deprecated mirror), refresh their
   `conformance.md` evidence + `INTEROP-MATRIX.md` rows — this also closes a latent
   honesty gap where those hosts claim root-read profiles (`openwop-secrets`,

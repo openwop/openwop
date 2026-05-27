@@ -32,6 +32,7 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -59,7 +60,7 @@ async function readDiscovery(): Promise<DiscoveryDoc | null> {
 }
 
 function promptsSupportFull(d: DiscoveryDoc | null): boolean {
-  const p = d?.capabilities?.prompts;
+  const p = capabilityFamily(d, 'prompts');
   if (!p) return false;
   return p.supported === true && p.observability === 'full';
 }

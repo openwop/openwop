@@ -47,6 +47,7 @@ import {
   createSyntheticOIDCIssuer,
   type SyntheticOIDCIssuer,
 } from '../lib/oidc-issuer.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface OIDCCaps {
   supported?: boolean;
@@ -66,7 +67,7 @@ const FIXTURE = 'conformance-noop';
 
 async function readAuthCaps(): Promise<AuthCaps | undefined> {
   const disco = await driver.get('/.well-known/openwop');
-  return (disco.json as { capabilities?: { auth?: AuthCaps } }).capabilities?.auth;
+  return capabilityFamily((disco.json as { capabilities?: { auth?: AuthCaps } }), 'auth');
 }
 
 function isProfileAdvertised(auth: AuthCaps | undefined): boolean {

@@ -55,6 +55,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const BYOK_WORKFLOW_ID = 'openwop-smoke-byok-roundtrip';
@@ -99,8 +100,8 @@ describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
         return;
       }
       const d = await readDiscovery();
-      const secretsOk = d?.capabilities?.secrets?.supported === true;
-      const seamOk = d?.capabilities?.observability?.testSeams?.otelScrape === true;
+      const secretsOk = capabilityFamily<{ supported?: unknown }>(d, 'secrets')?.supported === true;
+      const seamOk = capabilityFamily<{ testSeams?: Record<string, unknown> }>(d, 'observability')?.testSeams?.otelScrape === true;
       if (!secretsOk || !seamOk) {
         ctx.skip();
         return;
@@ -168,8 +169,8 @@ describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
         return;
       }
       const d = await readDiscovery();
-      const secretsOk = d?.capabilities?.secrets?.supported === true;
-      const seamOk = d?.capabilities?.observability?.testSeams?.debugBundleExport === true;
+      const secretsOk = capabilityFamily<{ supported?: unknown }>(d, 'secrets')?.supported === true;
+      const seamOk = capabilityFamily<{ testSeams?: Record<string, unknown> }>(d, 'observability')?.testSeams?.debugBundleExport === true;
       if (!secretsOk || !seamOk) {
         ctx.skip();
         return;
@@ -209,11 +210,11 @@ describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
   () => {
     it('when secrets.supported is true, observability.testSeams advertisements MUST be boolean if present', async (ctx) => {
       const d = await readDiscovery();
-      if (d?.capabilities?.secrets?.supported !== true) {
+      if (capabilityFamily<{ supported?: unknown }>(d, 'secrets')?.supported !== true) {
         ctx.skip();
         return;
       }
-      const seams = d?.capabilities?.observability?.testSeams;
+      const seams = capabilityFamily<{ testSeams?: Record<string, unknown> }>(d, 'observability')?.testSeams;
       if (seams === undefined) {
         ctx.skip(); // host honest about not exposing the seams — Drift #17 path
         return;

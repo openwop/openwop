@@ -30,6 +30,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { driver } from '../lib/driver.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const MEDIA_KINDS = ['media.image', 'media.audio', 'media.file'] as const;
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
@@ -86,7 +87,7 @@ describe.skipIf(HTTP_SKIP)('media-url-inline-cap: advertisement shape (RFC 0055 
   it('aiProviders.maxInlineMediaBytes is a non-negative integer when advertised', async () => {
     const res = await driver.get('/.well-known/openwop');
     if (res.status !== 200) return;
-    const cap = (res.json as DiscoveryDoc).capabilities?.aiProviders?.maxInlineMediaBytes;
+    const cap = capabilityFamily((res.json as DiscoveryDoc), 'aiProviders')?.maxInlineMediaBytes;
     if (cap === undefined) return; // optional — soft-skip when absent
     expect(
       Number.isInteger(cap) && (cap as number) >= 0,

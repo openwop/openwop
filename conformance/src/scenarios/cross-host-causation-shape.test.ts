@@ -27,6 +27,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -63,7 +64,7 @@ describe.skipIf(HTTP_SKIP)('cross-host-causation-shape: advertisement shape (RFC
       ctx.skip();
       return;
     }
-    const chc = d.capabilities?.multiAgent?.executionModel?.crossHostCausation;
+    const chc = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.crossHostCausation;
     if (chc === undefined) {
       ctx.skip(); // host doesn't advertise — soft-skip
       return;
@@ -78,7 +79,7 @@ describe.skipIf(HTTP_SKIP)('cross-host-causation-shape: advertisement shape (RFC
     ).toBe('boolean');
 
     if (chc.supported === true) {
-      const version = d.capabilities?.multiAgent?.executionModel?.version as number | undefined;
+      const version = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel?.version as number | undefined;
       expect(
         typeof version === 'number' && version >= 3,
         driver.describe(

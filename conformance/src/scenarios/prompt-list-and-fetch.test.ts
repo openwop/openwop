@@ -34,6 +34,7 @@ import { join } from 'node:path';
 import { driver } from '../lib/driver.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -65,7 +66,7 @@ async function readDiscovery(): Promise<DiscoveryDoc | null> {
 }
 
 function endpointsSupported(d: DiscoveryDoc | null): boolean {
-  return d?.capabilities?.prompts?.endpointsSupported === true;
+  return capabilityFamily(d, 'prompts')?.endpointsSupported === true;
 }
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;

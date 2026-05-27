@@ -31,6 +31,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const NODE_ID = 'structured-call';
@@ -91,7 +92,7 @@ describe.skipIf(HTTP_SKIP)('envelope-completion-distinguishes-truncation: advert
   it('capabilities.envelopes.reliability.completion (when present) conforms to RFC 0033 §E', async () => {
     const d = await readDiscovery();
     if (d === null) return;
-    const completion = d.capabilities?.envelopes?.reliability?.completion;
+    const completion = capabilityFamily<{ reasoning?: Record<string, unknown>; tierOneSubsetCompliance?: unknown; reliability?: { completion?: Record<string, unknown> } & Record<string, unknown> }>(d, 'envelopes')?.reliability?.completion;
     if (completion === undefined) return;
     expect(
       typeof completion.distinguishesTruncation,
@@ -114,7 +115,7 @@ describe.skipIf(HTTP_SKIP)('envelope-completion-distinguishes-truncation: trunca
   it('truncation: emits envelope.truncated + envelope.retry.attempted with reason: "truncation"', async () => {
     if (!isFixtureAdvertised(TRUNCATED_FIXTURE)) return;
     const d = await readDiscovery();
-    if (d?.capabilities?.envelopes?.reliability?.completion?.distinguishesTruncation !== true) return;
+    if (capabilityFamily<{ reasoning?: Record<string, unknown>; tierOneSubsetCompliance?: unknown; reliability?: { completion?: Record<string, unknown> } & Record<string, unknown> }>(d, 'envelopes')?.reliability?.completion?.distinguishesTruncation !== true) return;
     const seed = await programMock([
       { stopReason: 'max_tokens', content: '{"partial' },
       { stopReason: 'end_turn', content: '{"valid":true}' },
@@ -139,7 +140,7 @@ describe.skipIf(HTTP_SKIP)('envelope-completion-distinguishes-truncation: trunca
   it('truncation: retry budget strictly greater than initial (RFC 0033 §B truncationBudgetMultiplier)', async () => {
     if (!isFixtureAdvertised(TRUNCATED_FIXTURE)) return;
     const d = await readDiscovery();
-    if (d?.capabilities?.envelopes?.reliability?.completion?.distinguishesTruncation !== true) return;
+    if (capabilityFamily<{ reasoning?: Record<string, unknown>; tierOneSubsetCompliance?: unknown; reliability?: { completion?: Record<string, unknown> } & Record<string, unknown> }>(d, 'envelopes')?.reliability?.completion?.distinguishesTruncation !== true) return;
     const seed = await programMock([
       { stopReason: 'max_tokens', content: '{"partial' },
       { stopReason: 'end_turn', content: '{"valid":true}' },

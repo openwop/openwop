@@ -23,6 +23,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryWorkspace {
   supported?: boolean;
@@ -39,7 +40,7 @@ interface DiscoveryDoc {
 async function readWorkspace(): Promise<DiscoveryWorkspace | null> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
-  return body?.capabilities?.workspace ?? null;
+  return capabilityFamily(body, 'workspace') ?? null;
 }
 
 const POSITIVE_INT_FIELDS = ['maxFileBytes', 'maxFiles', 'maxVersions'] as const;

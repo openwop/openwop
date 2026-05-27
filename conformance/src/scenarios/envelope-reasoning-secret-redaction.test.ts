@@ -35,6 +35,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -97,8 +98,8 @@ describe.skipIf(HTTP_SKIP)('envelope-reasoning-secret-redaction: advertisement s
   it('hosts advertising envelope reasoning + BYOK honor SR-1 carry-forward for the reasoning field', async () => {
     const d = await readDiscovery();
     if (d === null) return;
-    const reasoning = d.capabilities?.envelopes?.reasoning?.supported;
-    const secrets = d.capabilities?.secrets?.supported;
+    const reasoning = capabilityFamily<{ reasoning?: Record<string, unknown>; tierOneSubsetCompliance?: unknown; reliability?: { completion?: Record<string, unknown> } & Record<string, unknown> }>(d, 'envelopes')?.reasoning?.supported;
+    const secrets = capabilityFamily<{ supported?: unknown }>(d, 'secrets')?.supported;
     if (reasoning !== true || secrets !== true) return; // soft-skip when either is absent
     // The contract is invariant-based, not capability-flag-based — the
     // advertisement-shape check here just confirms both surfaces are claimed.
@@ -257,7 +258,7 @@ describe.skipIf(HTTP_SKIP)('envelope-reasoning-secret-redaction: downstream-proj
     // RFC 0034 §B: gate on capabilities.observability.testSeams.otelScrape.
     // Hosts that don't advertise it soft-skip; hosts that DO advertise MUST serve a valid response.
     const d = await readDiscovery();
-    const otelScrapeAdvertised = d?.capabilities?.observability?.testSeams?.otelScrape === true;
+    const otelScrapeAdvertised = capabilityFamily<{ testSeams?: Record<string, unknown> }>(d, 'observability')?.testSeams?.otelScrape === true;
     if (!otelScrapeAdvertised) return; // soft-skip — host honest about not implementing per RFC 0034 §A
 
     const r = await acceptForRun(
@@ -291,7 +292,7 @@ describe.skipIf(HTTP_SKIP)('envelope-reasoning-secret-redaction: downstream-proj
   it("debug-bundle export MUST NOT include plaintext `secret:`-prefixed substrings from envelope.reasoning", async () => {
     // RFC 0034 §B: gate on capabilities.observability.testSeams.debugBundleExport.
     const d = await readDiscovery();
-    const debugBundleAdvertised = d?.capabilities?.observability?.testSeams?.debugBundleExport === true;
+    const debugBundleAdvertised = capabilityFamily<{ testSeams?: Record<string, unknown> }>(d, 'observability')?.testSeams?.debugBundleExport === true;
     if (!debugBundleAdvertised) return; // soft-skip — host honest about not implementing per RFC 0034 §A
 
     const r = await acceptForRun(

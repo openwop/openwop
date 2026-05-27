@@ -34,6 +34,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { driver } from '../lib/driver.js';
 import { SCHEMAS_DIR } from '../lib/paths.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -179,9 +180,9 @@ describe.skipIf(HTTP_SKIP)('envelope-tier-one-subset-static (RFC 0030 §B)', () 
   it('hosts advertising tierOneSubsetCompliance: "strict" have payload schemas that satisfy the Tier-1 intersection', async () => {
     const d = await readDiscovery();
     if (d === null) return; // host unreachable; soft-skip
-    const compliance = d.capabilities?.envelopes?.tierOneSubsetCompliance;
+    const compliance = capabilityFamily(d, 'envelopes')?.tierOneSubsetCompliance;
     if (compliance !== 'strict') return; // gated on "strict" only
-    const advertised = (d.capabilities?.supportedEnvelopes ?? []) as string[];
+    const advertised = (capabilityFamily(d, 'supportedEnvelopes') ?? []) as string[];
     if (advertised.length === 0) return;
 
     const violationsByKind: Record<string, Violation[]> = {};

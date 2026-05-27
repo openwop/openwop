@@ -26,6 +26,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryOAuth {
   supported?: boolean;
@@ -42,7 +43,7 @@ const TOKEN_CANARY = 'OPENWOP_OAUTH_CANARY_b7d3e1a9c2';
 async function readOAuth(): Promise<DiscoveryOAuth | null> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
-  return body?.capabilities?.oauth ?? null;
+  return capabilityFamily(body, 'oauth') ?? null;
 }
 
 describe('oauth-connector-redaction: advertisement shape (RFC 0047 §A)', () => {

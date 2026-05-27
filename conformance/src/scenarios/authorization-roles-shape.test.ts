@@ -20,6 +20,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryRole {
   role?: string;
@@ -41,7 +42,7 @@ interface DiscoveryDoc {
 async function readAuthorization(): Promise<DiscoveryAuthorization | null> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
-  return body?.capabilities?.authorization ?? null;
+  return capabilityFamily(body, 'authorization') ?? null;
 }
 
 describe('authorization-roles-shape: advertisement shape (RFC 0049 §A)', () => {

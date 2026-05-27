@@ -31,6 +31,7 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryDoc {
   capabilities?: {
@@ -60,7 +61,7 @@ async function readDiscovery(): Promise<DiscoveryDoc | null> {
 }
 
 function promptsSupported(d: DiscoveryDoc | null): boolean {
-  return d?.capabilities?.prompts?.supported === true;
+  return capabilityFamily(d, 'prompts')?.supported === true;
 }
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;

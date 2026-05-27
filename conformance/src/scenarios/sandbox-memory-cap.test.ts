@@ -15,6 +15,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -26,7 +27,7 @@ async function readSandbox(): Promise<{ supported: boolean; memoryLimitBytes?: n
   try {
     const r = await driver.get('/.well-known/openwop');
     if (r.status !== 200) return null;
-    const sb = (r.json as D).capabilities?.sandbox;
+    const sb = capabilityFamily((r.json as D), 'sandbox');
     if (!sb || sb.supported !== true) return null;
     return {
       supported: true,

@@ -29,6 +29,7 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { experimentalGate } from '../lib/behavior-gate.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
@@ -57,7 +58,7 @@ async function readDiscovery(): Promise<DiscoveryDoc | null> {
 describe.skipIf(HTTP_SKIP)('experimental-tier-shape: §A schema discipline (RFC 0042 §A)', () => {
   it('multiAgent.executionModel.tier (when present) MUST be one of {stable, experimental}', async (ctx) => {
     const d = await readDiscovery();
-    const em = d?.capabilities?.multiAgent?.executionModel;
+    const em = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel;
     if (em === undefined) {
       ctx.skip();
       return;
@@ -77,7 +78,7 @@ describe.skipIf(HTTP_SKIP)('experimental-tier-shape: §A schema discipline (RFC 
 
   it('when tier === "experimental", experimentalUntil MUST be present + valid date', async (ctx) => {
     const d = await readDiscovery();
-    const em = d?.capabilities?.multiAgent?.executionModel;
+    const em = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel;
     if (em === undefined || em.tier !== 'experimental') {
       ctx.skip();
       return;
@@ -112,7 +113,7 @@ describe.skipIf(HTTP_SKIP)('experimental-tier-shape: §A schema discipline (RFC 
 
   it('experimentalUntil MUST be ≤ 365 days in the future (sunset bound)', async (ctx) => {
     const d = await readDiscovery();
-    const em = d?.capabilities?.multiAgent?.executionModel;
+    const em = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel;
     if (em === undefined || em.tier !== 'experimental') {
       ctx.skip();
       return;
@@ -135,7 +136,7 @@ describe.skipIf(HTTP_SKIP)('experimental-tier-shape: §A schema discipline (RFC 
 
   it('sunset detection: experimentalUntil in the past is non-conformant', async (ctx) => {
     const d = await readDiscovery();
-    const em = d?.capabilities?.multiAgent?.executionModel;
+    const em = capabilityFamily<{ executionModel?: { [k: string]: unknown; crossHostCausation?: Record<string, unknown>; replayDeterminism?: Record<string, unknown> } }>(d, 'multiAgent')?.executionModel;
     if (em === undefined || em.tier !== 'experimental') {
       ctx.skip();
       return;

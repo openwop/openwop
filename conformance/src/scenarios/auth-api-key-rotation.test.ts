@@ -28,6 +28,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface RotationCaps {
   supported?: boolean;
@@ -45,7 +46,7 @@ const CANARY = 'hk_openwop_canary_d1d2d3d4_NOT_A_REAL_KEY';
 
 async function readAuthCaps(): Promise<AuthCaps | undefined> {
   const disco = await driver.get('/.well-known/openwop');
-  return (disco.json as { capabilities?: { auth?: AuthCaps } }).capabilities?.auth;
+  return capabilityFamily((disco.json as { capabilities?: { auth?: AuthCaps } }), 'auth');
 }
 
 function isProfileAdvertised(auth: AuthCaps | undefined): boolean {

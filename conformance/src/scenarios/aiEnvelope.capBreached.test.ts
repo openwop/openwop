@@ -33,7 +33,7 @@ interface DiscoveryDoc {
 async function readLimits(): Promise<Record<string, number> | null> {
   const res = await driver.get('/.well-known/openwop');
   const body = res.json as DiscoveryDoc | undefined;
-  const limits = body?.limits ?? body?.capabilities?.limits ?? null;
+  const limits = body?.limits ?? capabilityFamily(body, 'limits') ?? null;
   return limits && typeof limits === 'object' ? (limits as Record<string, number>) : null;
 }
 
@@ -166,6 +166,7 @@ describe('aiEnvelope.capBreached: behavioral cap enforcement (FINAL v1.1)', () =
 // node.failed per capabilities.md §"Engine-enforced limits". Tests
 // soft-skip on HTTP 404 when the seam isn't exposed.
 import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 describe('aiEnvelope.capBreached: engine projection via event-log seam (capabilities.md §"cap.breached")', () => {
   it('breached outcome projects to cap.breached { kind: "envelopes" } event with causationId chain', async () => {

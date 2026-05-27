@@ -23,6 +23,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface DiscoveryDoc {
   capabilities?: { deadLetter?: { supported?: boolean } };
@@ -30,7 +31,7 @@ interface DiscoveryDoc {
 
 async function deadLetterSupported(): Promise<boolean> {
   const res = await driver.get('/.well-known/openwop');
-  return (res.json as DiscoveryDoc | undefined)?.capabilities?.deadLetter?.supported === true;
+  return capabilityFamily((res.json as DiscoveryDoc | undefined), 'deadLetter')?.supported === true;
 }
 
 describe('deadletter-retry-exhaustion: retry exhaustion → dead-lettered + fork-eligible (RFC 0053 §C)', () => {
