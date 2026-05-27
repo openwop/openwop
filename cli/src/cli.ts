@@ -36,6 +36,9 @@ import {
   clearDaemonRecord, processAlive, openLogStream, writeLog, buildServiceInstallPlan,
 } from './daemon.js';
 export { daemonPidPath, daemonLogPath, readDaemonRecord, processAlive, buildServiceInstallPlan };
+import { promptChoice, promptText, promptYesNo, readSecret } from './prompt.js';
+import { findRepoRoot, requireRepoRoot, demoProjects, project } from './repo.js';
+export { findRepoRoot };
 import { submitTurn, streamRunEvents, consumeSse, renderEvent, extractAssistantText, defaultReadTurn } from './sse.js';
 // Command groups (src/cli/<group>.ts).
 import { runNotifications, NOTIFICATIONS_HELP } from './cli/notifications.js';
@@ -2830,77 +2833,6 @@ function makeChannelDeliver(channel, ctx) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 
-async function promptChoice(ctx, label, choices) {
-  writeLine(ctx.io.stdout, label);
-  choices.forEach((c, i) => {
-    const tag = c.recommended ? ' (recommended)' : '';
-    writeLine(ctx.io.stdout, `  ${i + 1}) ${c.label}${tag}`);
-  });
-  const defaultIdx = Math.max(0, choices.findIndex((c) => c.recommended));
-  const answer = await promptText(ctx, `Choice [${defaultIdx + 1}]: `, '');
-  const idx = answer.trim() === '' ? defaultIdx : Number(answer.trim()) - 1;
-  if (!Number.isInteger(idx) || idx < 0 || idx >= choices.length) {
-    throw new CliError(`Invalid choice: ${answer}`);
-  }
-  return choices[idx].key;
-}
-
-async function promptText(ctx: any, prompt: string, defaultValue = ''): Promise<string> {
-  ctx.io.stdout.write(prompt);
-  const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: false });
-  return new Promise((resolve) => {
-    rl.once('line', (line) => {
-      rl.close();
-      resolve(line.length > 0 ? line : defaultValue);
-    });
-  });
-}
-
-async function promptYesNo(ctx, label, defaultYes = true) {
-  const hint = defaultYes ? '[Y/n]' : '[y/N]';
-  const answer = (await promptText(ctx, `${label} ${hint} `, '')).trim().toLowerCase();
-  if (answer === '') return defaultYes;
-  return answer === 'y' || answer === 'yes';
-}
-
-async function readSecret(ctx, prompt) {
-  ctx.io.stdout.write(prompt);
-  const stdin = process.stdin;
-  // Pipe / non-TTY: read one line normally so `echo KEY | openwop ...` works.
-  if (!stdin.isTTY) {
-    const rl = createInterface({ input: stdin, output: ctx.io.stdout, terminal: false });
-    return new Promise((resolve) => {
-      rl.once('line', (line) => {
-        rl.close();
-        resolve(line);
-      });
-    });
-  }
-  // TTY: raw-mode keypress loop with no echo + Ctrl-C support + backspace.
-  return new Promise((resolve, reject) => {
-    stdin.setRawMode(true);
-    stdin.resume();
-    stdin.setEncoding('utf8');
-    let value = '';
-    const cleanup = () => {
-      stdin.removeListener('data', onData);
-      stdin.setRawMode(false);
-      stdin.pause();
-      ctx.io.stdout.write('\n');
-    };
-    const onData = (chunk) => {
-      for (const ch of chunk) {
-        const code = ch.charCodeAt(0);
-        if (code === 0x0d || code === 0x0a) { cleanup(); resolve(value); return; }
-        if (code === 0x03) { cleanup(); reject(new CliError('Aborted')); return; }
-        if (code === 0x7f || code === 0x08) { value = value.slice(0, -1); continue; }
-        if (code >= 0x20) value += ch;
-      }
-    };
-    stdin.on('data', onData);
-  });
-}
-
 function buildInputs(options) {
   const fromJson = options.inputsJson ? JSON.parse(options.inputsJson) : {};
   if (fromJson === null || typeof fromJson !== 'object' || Array.isArray(fromJson)) {
@@ -2931,54 +2863,6 @@ async function waitForRun(ctx, runId, timeoutMs) {
     await sleep(250);
   }
   throw new CliError(`Timed out waiting for run ${runId} after ${timeoutMs}ms`, 1);
-}
-
-export function findRepoRoot(startDir) {
-  let dir = resolvePath(startDir);
-  while (true) {
-    const pkg = join(dir, 'package.json');
-    if (existsSync(pkg)) {
-      try {
-        const parsed = JSON.parse(readFileSync(pkg, 'utf8'));
-        if (
-          parsed.name === 'openwop-spec-corpus' &&
-          existsSync(join(dir, 'apps/workflow-engine')) &&
-          existsSync(join(dir, 'conformance'))
-        ) {
-          return dir;
-        }
-      } catch {
-        // Keep walking.
-      }
-    }
-    const parent = dirname(dir);
-    if (parent === dir) return null;
-    dir = parent;
-  }
-}
-
-function requireRepoRoot(ctx) {
-  if (ctx.repoRoot) return ctx.repoRoot;
-  throw new CliError('This command needs to run from inside the OpenWOP repository checkout.');
-}
-
-function demoProjects(root) {
-  if (!root) return [];
-  return [
-    project(root, 'backend', 'apps/workflow-engine/backend/typescript'),
-    project(root, 'frontend', 'apps/workflow-engine/frontend/react'),
-  ];
-}
-
-function project(root, name, relativeDir) {
-  const dir = join(root, relativeDir);
-  return {
-    name,
-    relativeDir,
-    dir,
-    packageJson: join(dir, 'package.json'),
-    nodeModules: join(dir, 'node_modules'),
-  };
 }
 
 function parseNodeVersion(version) {
