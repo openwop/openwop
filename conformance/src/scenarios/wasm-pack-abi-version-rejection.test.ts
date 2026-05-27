@@ -26,6 +26,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const MISBEHAVING_PACK_NAME = 'vendor.openwop.misbehaving-abi';
 const WELL_BEHAVED_PACK_NAME = 'vendor.openwop.rust-hello';
@@ -34,9 +35,7 @@ describe('wasm-pack-abi-version-rejection: host advertises supported ABI version
   it('abiVersions[] contains positive integers; loader rejects unsupported versions', async () => {
     const disco = await driver.get('/.well-known/openwop');
     const wasm =
-      (disco.json as {
-        capabilities?: { nodePackRuntimes?: { wasm?: { supported?: boolean; abiVersions?: unknown } } };
-      }).capabilities?.nodePackRuntimes?.wasm;
+      capabilityFamily<{ wasm?: Record<string, unknown> }>(disco.json, 'nodePackRuntimes')?.wasm;
 
     if (!wasm?.supported) return;
 
@@ -62,13 +61,7 @@ describe('wasm-pack-abi-version-rejection: positive path via misbehaving pack', 
   it('misbehaving-abi pack (declares ABI 999) MUST NOT appear in loadedPacks[]', async () => {
     const disco = await driver.get('/.well-known/openwop');
     const wasm =
-      (disco.json as {
-        capabilities?: {
-          nodePackRuntimes?: {
-            wasm?: { supported?: boolean; loadedPacks?: unknown };
-          };
-        };
-      }).capabilities?.nodePackRuntimes?.wasm;
+      capabilityFamily<{ wasm?: Record<string, unknown> }>(disco.json, 'nodePackRuntimes')?.wasm;
 
     if (!wasm?.supported) return;
 

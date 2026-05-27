@@ -20,6 +20,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const ALLOWED = new Set(['single-region', 'best-effort', 'strict']);
 const REQUIRED_METRICS_WHEN_MULTI_REGION = [
@@ -40,9 +41,7 @@ interface ObservabilityCaps {
 describe('multi-region-idempotency: capability shape', () => {
   it('idempotency.crossRegion (when advertised) MUST be one of the closed enum', async () => {
     const disco = await driver.get('/.well-known/openwop');
-    const idem =
-      (disco.json as { capabilities?: { idempotency?: IdempotencyCaps } }).capabilities
-        ?.idempotency;
+    const idem = capabilityFamily<IdempotencyCaps>(disco.json, 'idempotency');
 
     if (!idem || idem.crossRegion === undefined) {
       // eslint-disable-next-line no-console
@@ -67,16 +66,16 @@ describe('multi-region-idempotency: capability shape', () => {
 
   it('multi-region hosts SHOULD expose the cross-region conflict counter per §"Operator surface"', async () => {
     const disco = await driver.get('/.well-known/openwop');
-    const caps = (disco.json as { capabilities?: { idempotency?: IdempotencyCaps; observability?: ObservabilityCaps } })
-      .capabilities;
-    const crossRegion = caps?.idempotency?.crossRegion;
+    const idem = capabilityFamily<IdempotencyCaps>(disco.json, 'idempotency');
+    const observability = capabilityFamily<ObservabilityCaps>(disco.json, 'observability');
+    const crossRegion = idem?.crossRegion;
 
     if (crossRegion !== 'best-effort' && crossRegion !== 'strict') {
       // Single-region hosts have no conflicts to count — skip.
       return;
     }
 
-    const advertised = new Set(caps?.observability?.metrics?.names ?? []);
+    const advertised = new Set(observability?.metrics?.names ?? []);
     for (const name of REQUIRED_METRICS_WHEN_MULTI_REGION) {
       expect(advertised.has(name), driver.describe(
         'idempotency.md §"Operator surface"',
@@ -103,9 +102,10 @@ interface MultiRegionCaps {
 describe('multi-region-idempotency: granular multiRegion advertisement shape (RFC 0036 §A)', () => {
   it('capabilities.idempotency.multiRegion (when present) conforms to RFC 0036 §A', async () => {
     const disco = await driver.get('/.well-known/openwop');
-    const idem =
-      (disco.json as { capabilities?: { idempotency?: IdempotencyCaps & { multiRegion?: MultiRegionCaps } } })
-        .capabilities?.idempotency;
+    const idem = capabilityFamily<IdempotencyCaps & { multiRegion?: MultiRegionCaps }>(
+      disco.json,
+      'idempotency',
+    );
     const mr = idem?.multiRegion;
     if (mr === undefined) return; // host doesn't advertise the granular block — soft-skip
 

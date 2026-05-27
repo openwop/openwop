@@ -20,6 +20,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const MEMORY_REF = 'mem_tenant:default_agent:conformance-rfc0012-tag_longTerm';
 const COMPACTED_FROM_RE = /^compacted-from:[^\s:][^\s]*$/;
@@ -34,7 +35,7 @@ interface MemoryListResponse {
 
 async function isCompactionAdvertised(): Promise<boolean> {
   const disco = await driver.get('/.well-known/openwop');
-  const memory = (disco.json as { capabilities?: { memory?: MemoryCaps } }).capabilities?.memory;
+  const memory = capabilityFamily<MemoryCaps>(disco.json, 'memory');
   return memory?.compaction?.supported === true;
 }
 

@@ -16,14 +16,14 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const FIXTURE = 'conformance-wasm-pack-roundtrip';
 
 async function isWasmSupported(): Promise<boolean> {
   const disco = await driver.get('/.well-known/openwop');
   return Boolean(
-    (disco.json as { capabilities?: { nodePackRuntimes?: { wasm?: { supported?: boolean } } } })
-      .capabilities?.nodePackRuntimes?.wasm?.supported,
+    capabilityFamily<{ wasm?: { supported?: boolean } }>(disco.json, 'nodePackRuntimes')?.wasm?.supported,
   );
 }
 

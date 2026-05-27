@@ -31,6 +31,7 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface RetentionCaps {
   supported?: boolean;
@@ -45,8 +46,7 @@ interface ProductionCaps {
 
 async function readProductionCaps(): Promise<ProductionCaps | undefined> {
   const disco = await driver.get('/.well-known/openwop');
-  return (disco.json as { capabilities?: { production?: ProductionCaps } })
-    .capabilities?.production;
+  return capabilityFamily<ProductionCaps>(disco.json, 'production');
 }
 
 function isProfileAdvertised(prod: ProductionCaps | undefined): boolean {

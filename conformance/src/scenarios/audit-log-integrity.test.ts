@@ -18,6 +18,7 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { behaviorGate } from '../lib/behavior-gate.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 interface AuditIntegrityCaps {
   hashChain?: boolean;
@@ -34,7 +35,7 @@ interface AuthCaps {
 
 async function isProfileAdvertised(): Promise<boolean> {
   const disco = await driver.get('/.well-known/openwop');
-  const auth = (disco.json as { capabilities?: { auth?: AuthCaps } }).capabilities?.auth ?? {};
+  const auth = capabilityFamily<AuthCaps>(disco.json, 'auth') ?? {};
   return Array.isArray(auth.profiles) && auth.profiles.includes('openwop-audit-log-integrity');
 }
 
@@ -46,7 +47,7 @@ describe('audit-log-integrity: profile shape', () => {
 
     const disco = await driver.get('/.well-known/openwop');
     const integrity =
-      (disco.json as { capabilities?: { auth?: AuthCaps } }).capabilities?.auth
+      capabilityFamily<AuthCaps>(disco.json, 'auth')
         ?.auditLogIntegrity ?? {};
 
     expect(integrity.hashChain, driver.describe(

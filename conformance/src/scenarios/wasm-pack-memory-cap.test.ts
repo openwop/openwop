@@ -26,6 +26,7 @@ import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const CAP_BREACH_FIXTURE = 'conformance-wasm-pack-memory-cap-breach';
 
@@ -33,9 +34,7 @@ describe('wasm-pack-memory-cap: host advertises maxMemoryBytes', () => {
   it('capabilities.nodePackRuntimes.wasm.maxMemoryBytes is a plausible number', async () => {
     const disco = await driver.get('/.well-known/openwop');
     const wasm =
-      (disco.json as {
-        capabilities?: { nodePackRuntimes?: { wasm?: { supported?: boolean; maxMemoryBytes?: unknown } } };
-      }).capabilities?.nodePackRuntimes?.wasm;
+      capabilityFamily<{ wasm?: Record<string, unknown> }>(disco.json, 'nodePackRuntimes')?.wasm;
 
     if (!wasm?.supported) return;
 
@@ -64,9 +63,7 @@ describe('wasm-pack-memory-cap: positive path via misbehaving pack', () => {
     }
     const disco = await driver.get('/.well-known/openwop');
     const wasm =
-      (disco.json as {
-        capabilities?: { nodePackRuntimes?: { wasm?: { supported?: boolean } } };
-      }).capabilities?.nodePackRuntimes?.wasm;
+      capabilityFamily<{ wasm?: Record<string, unknown> }>(disco.json, 'nodePackRuntimes')?.wasm;
     if (!wasm?.supported) return;
 
     const create = await driver.post('/v1/runs', {

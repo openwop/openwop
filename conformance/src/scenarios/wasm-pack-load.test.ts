@@ -15,6 +15,7 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
+import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const FIXTURE = 'conformance-wasm-pack-roundtrip';
 
@@ -28,8 +29,7 @@ interface WasmCaps {
 async function getWasmCaps(): Promise<WasmCaps | null> {
   const disco = await driver.get('/.well-known/openwop');
   const caps =
-    (disco.json as { capabilities?: { nodePackRuntimes?: { wasm?: WasmCaps } } })
-      .capabilities?.nodePackRuntimes?.wasm ?? null;
+    capabilityFamily<{ wasm?: WasmCaps }>(disco.json, 'nodePackRuntimes')?.wasm ?? null;
   return caps;
 }
 
