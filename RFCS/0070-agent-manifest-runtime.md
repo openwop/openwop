@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0070 |
 | **Title** | Agent Manifest Runtime Capability (`agents.manifestRuntime`) |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-26 |
-| **Updated** | 2026-05-26 |
+| **Updated** | 2026-05-26 (Draft → Active: the wire surface — `capabilities.agents.manifestRuntime` flag + cross-ref fix + degradation prose — landed atomically (#268); the reference **workflow-engine** host implements + advertises it and dispatches a manifest agent end-to-end; steward waived the 7-day comment window. `Active → Accepted` awaits a non-steward host advertising `agents.manifestRuntime`.) |
 | **Affects** | `schemas/capabilities.schema.json`, `spec/v1/host-capabilities.md`, `spec/v1/node-packs.md`, `conformance/src/scenarios/agent-manifest-runtime.test.ts`, `CHANGELOG.md`, `INTEROP-MATRIX.md` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` |
 | **Supersedes** | — |

@@ -37,14 +37,18 @@ afterAll(async () => { await new Promise<void>((res) => server.close(() => res()
 
 describe('RFC 0070 — host loads + dispatches a manifest agent over HTTP', () => {
   it('advertises capabilities.agents.manifestRuntime', async () => {
-    const doc = await (await fetch(`${BASE}/.well-known/openwop`, { headers: H })).json();
+    const doc = await (await fetch(`${BASE}/.well-known/openwop`, { headers: H })).json() as {
+      capabilities?: { agents?: { manifestRuntime?: { supported?: boolean } } };
+    };
     expect(doc?.capabilities?.agents?.manifestRuntime?.supported).toBe(true);
   });
 
   it('serves the registry-backed inventory including the installed agent', async () => {
-    const body = await (await fetch(`${BASE}/v1/host/sample/agents`, { headers: H })).json();
+    const body = await (await fetch(`${BASE}/v1/host/sample/agents`, { headers: H })).json() as {
+      runtime?: { manifestRuntime?: boolean }; agents?: Array<{ agentId?: string }>;
+    };
     expect(body.runtime?.manifestRuntime).toBe(true);
-    expect((body.agents ?? []).some((a: { agentId?: string }) => a.agentId === SUPERVISOR)).toBe(true);
+    expect((body.agents ?? []).some((a) => a.agentId === SUPERVISOR)).toBe(true);
   });
 
   it('dispatches the agent end-to-end with attributed events', async () => {
@@ -52,17 +56,17 @@ describe('RFC 0070 — host loads + dispatches a manifest agent over HTTP', () =
       method: 'POST', headers: H, body: JSON.stringify({ task: {}, validateHandoff: false }),
     });
     expect(res.status).toBe(200);
-    const r = await res.json();
+    const r = await res.json() as { status?: string; events?: Array<{ type?: string; agentId?: string }> };
     expect(r.status).toBe('completed');
-    expect(r.events.map((e: { type: string }) => e.type)).toEqual(['agent.reasoned', 'agent.decided']);
-    expect(r.events.every((e: { agentId: string }) => e.agentId === SUPERVISOR)).toBe(true);
+    expect((r.events ?? []).map((e) => e.type)).toEqual(['agent.reasoned', 'agent.decided']);
+    expect((r.events ?? []).every((e) => e.agentId === SUPERVISOR)).toBe(true);
   });
 
   it('escalates a sub-threshold dispatch (RFC 0002 §F)', async () => {
     const res = await fetch(`${BASE}/v1/host/sample/agents/${encodeURIComponent(SUPERVISOR)}/dispatch`, {
       method: 'POST', headers: H, body: JSON.stringify({ task: {}, validateHandoff: false, simulateConfidence: 0.01, confidenceThreshold: 0.99 }),
     });
-    const r = await res.json();
+    const r = await res.json() as { status?: string; result?: unknown };
     expect(r.status).toBe('escalated');
     expect(r.result).toBeUndefined();
   });

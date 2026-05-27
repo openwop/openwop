@@ -11,6 +11,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.5 — unreleased]
 
+### feat(rfc): promote RFC 0070 Draft → Active + agent-runtime code-review fixes (2026-05-26)
+
+Promotes **RFC 0070 (`Draft → Active`)** — the wire surface landed (#268), the reference workflow-engine host implements + advertises `agents.manifestRuntime` and dispatches a manifest agent end-to-end, and the steward waived the 7-day comment window. README RFC counts: Active 5 → 6, Draft 10 → 9. `Active → Accepted` awaits a non-steward host advertising the flag.
+
+Code-review fixes on the floor implementation:
+- **Conformance:** dropped the §F escalation assertion from `agent-manifest-runtime.test.ts` — it relied on the non-normative `simulateConfidence` host hook and would wrongly fail a conformant peer that doesn't expose it. Escalation stays covered in the reference-host tests.
+- **Dispatch:** handoff validators are now **pre-compiled once at load** (`agentLoader.ts`) instead of per-dispatch on a shared Ajv — eliminates the cross-pack `$id` recompile collision and validates the schema is a valid JSON Schema 2020-12 doc at load (RFC 0003 §D). `agentDispatch.ts` uses the pre-compiled validators.
+- **Loader:** enforce RFC 0003 §B namespace scoping (skip an agent whose `agentId` is outside the pack namespace); `stubFromSchema` recurses into required object properties so non-trivial return schemas validate.
+- **Backend tests:** typed the `agent-dispatch-route.test.ts` `res.json()` accesses (latent strict-tsc errors in the backend-test surface, not covered by the `openwop:check` SDK/conformance TS gate).
+- **CLI:** `agents run --threshold` rejects non-numeric / out-of-range values.
+
 ### feat(rfc): file RFC 0070 — agent-manifest runtime capability + begin the runtime build (2026-05-26)
 
 Files RFC 0070 (`Draft`, additive) and begins implementing the agent-manifest **runtime floor** so OpenWOP's ~31 packaged agent manifests (RFC 0003) become runnable rather than inert. RFC 0003 already specifies agent-pack install, `systemPromptRef`/handoff resolution (§C/§D), and `installAgents` on an `AgentRegistry` (§ImplNotes); RFC 0070 adds the missing **capability flag** + gating + degradation contract.

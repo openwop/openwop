@@ -23,10 +23,7 @@
  * @see RFCS/0070-agent-manifest-runtime.md
  */
 
-import Ajv2020 from 'ajv/dist/2020.js';
 import { getAgentRegistry, type ResolvedAgentManifest } from '../executor/agentRegistry.js';
-
-const ajv = new Ajv2020({ allErrors: true, strict: false });
 
 export class AgentNotFoundError extends Error {
   constructor(public agentId: string) {
@@ -83,13 +80,21 @@ function filterTools(available: string[], allowlist: string[] | undefined): stri
 /** Build a minimal value satisfying a (simple) JSON Schema 2020-12 object so the
  *  deterministic turn can produce a return-schema-conformant result. Covers the
  *  common top-level `required` + `type` shape; anything richer falls back to {}. */
-function stubFromSchema(schema: unknown): unknown {
-  if (!schema || typeof schema !== 'object') return { ok: true };
-  const s = schema as { type?: string; required?: string[]; properties?: Record<string, { type?: string }> };
+function stubFromSchema(schema: unknown, depth = 0): unknown {
+  if (!schema || typeof schema !== 'object' || depth > 8) return { ok: true };
+  const s = schema as {
+    type?: string; required?: string[];
+    properties?: Record<string, unknown>; items?: unknown;
+  };
   if (s.type && s.type !== 'object') return stubScalar(s.type);
   const out: Record<string, unknown> = {};
   for (const key of s.required ?? []) {
-    out[key] = stubScalar(s.properties?.[key]?.type);
+    const propSchema = s.properties?.[key] as { type?: string } | undefined;
+    // Recurse into required object properties so nested `required` constraints
+    // are satisfied (not just top-level scalars).
+    out[key] = propSchema?.type === 'object'
+      ? stubFromSchema(propSchema, depth + 1)
+      : stubScalar(propSchema?.type);
   }
   return out;
 }
@@ -124,10 +129,12 @@ export function runAgentDispatch(req: AgentDispatchRequest): AgentDispatchResult
     status, toolSurface, confidence, threshold, events: [], ...extra,
   });
 
-  // §D inbound task validation (RFC 0003 §D), gated on handoffValidation.
-  if (validate && agent.handoff?.taskSchema) {
-    if (!validateAgainst(agent.handoff.taskSchema, req.task)) {
-      return base('failed', { error: { code: 'task_schema_violation', message: ajvErrors() } });
+  // §D inbound task validation (RFC 0003 §D), gated on handoffValidation. Uses
+  // the validator pre-compiled at load — no per-dispatch Ajv recompile.
+  if (validate && agent.handoff?.validateTask) {
+    const r = agent.handoff.validateTask(req.task);
+    if (!r.ok) {
+      return base('failed', { error: { code: 'task_schema_violation', message: r.errors ?? 'task schema validation failed' } });
     }
   }
 
@@ -144,30 +151,17 @@ export function runAgentDispatch(req: AgentDispatchRequest): AgentDispatchResult
   }
 
   // Produce a deterministic result; when a return schema is declared, make it
-  // conform (and validate, RFC 0003 §D).
+  // conform (and validate via the pre-compiled validator, RFC 0003 §D).
   const result = agent.handoff?.returnSchema ? stubFromSchema(agent.handoff.returnSchema) : { ok: true, agentId: agent.agentId };
-  if (validate && agent.handoff?.returnSchema && !validateAgainst(agent.handoff.returnSchema, result)) {
-    events.push({ type: 'agent.decided', agentId: agent.agentId, decision: 'final', confidence });
-    return base('failed', { events, error: { code: 'return_schema_violation', message: ajvErrors() } });
+  if (validate && agent.handoff?.validateReturn) {
+    const r = agent.handoff.validateReturn(result);
+    if (!r.ok) {
+      events.push({ type: 'agent.decided', agentId: agent.agentId, decision: 'final', confidence });
+      return base('failed', { events, error: { code: 'return_schema_violation', message: r.errors ?? 'return schema validation failed' } });
+    }
   }
   events.push({ type: 'agent.decided', agentId: agent.agentId, decision: 'final', confidence });
   return base('completed', { events, result });
-}
-
-let lastErrors = '';
-function validateAgainst(schema: unknown, value: unknown): boolean {
-  try {
-    const fn = ajv.compile(schema as object);
-    const ok = fn(value) as boolean;
-    lastErrors = ok ? '' : ajv.errorsText(fn.errors, { separator: '; ' });
-    return ok;
-  } catch (err) {
-    lastErrors = err instanceof Error ? err.message : String(err);
-    return false;
-  }
-}
-function ajvErrors(): string {
-  return lastErrors || 'schema validation failed';
 }
 
 /** Read-only inventory of installed manifest agents (registry-backed). */

@@ -2858,7 +2858,13 @@ async function runAgentsRun(ctx, argv) {
     }
   }
   if (Array.isArray(options.tool) && options.tool.length) body.availableTools = options.tool;
-  if (options.threshold !== undefined) body.confidenceThreshold = Number(options.threshold);
+  if (options.threshold !== undefined) {
+    const t = Number(options.threshold);
+    if (!Number.isFinite(t) || t < 0 || t > 1) {
+      throw new CliError('--threshold must be a number between 0 and 1', 2);
+    }
+    body.confidenceThreshold = t;
+  }
   if (options['no-validate']) body.validateHandoff = false;
 
   const res = await requestJson(ctx, `/v1/host/sample/agents/${encodeURIComponent(agentId)}/dispatch`, {
