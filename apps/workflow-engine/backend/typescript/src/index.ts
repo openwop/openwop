@@ -69,6 +69,7 @@ import { registerMediaAssetRoutes } from './routes/mediaAssets.js';
 import { registerDemoSummaryRoutes } from './routes/demoSummary.js';
 import { registerDaemonStatusRoutes } from './routes/daemonStatus.js';
 import { registerAgentRoutes } from './routes/agents.js';
+import { registerMessagingRoutes } from './routes/messaging.js';
 import { registerSchedulerRoutes } from './routes/scheduler.js';
 
 const log = createLogger('workflow-engine');
@@ -318,6 +319,7 @@ export async function createApp(config: AppConfig): Promise<Express> {
   registerDaemonStatusRoutes(app, { config, startTimeMs });
   registerAgentRoutes(app);
   registerSchedulerRoutes(app);
+  registerMessagingRoutes(app);
 
   // Express 4 catch-all (no path string — avoids path-to-regexp v6 issue).
   app.use((_req, res) => {
