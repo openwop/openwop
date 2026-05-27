@@ -95,6 +95,7 @@ When a host advertises `host.chat.cardPacks: supported` and a registered card is
 1. The host MUST substitute the mapped `inputs` into `prompt.template` (and `systemPrompt`) per `placeholderMapping`.
 2. The host MUST route the call through `ctx.aiEnvelope.generate(...)` (`host-capabilities.md` §host.aiEnvelope).
 3. If `outputArtifactType` is present, the host MUST validate the LLM output against that registered artifact type's schema before emitting `artifact.created` (the Phase-1 binding; `registered: true` when validated).
+4. When a card declares **no** `outputArtifactType`, the card is a prompt-only step: the host returns the validated LLM result to the chat surface (and MAY validate it against `outputSchemaRef` if present) but MUST NOT emit an `artifact.created` event for it — nothing is registered as a durable artifact.
 
 ### Trust boundary (normative — R2)
 

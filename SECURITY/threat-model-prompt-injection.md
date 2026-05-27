@@ -125,6 +125,7 @@ openwop's mitigation is **structural**: the protocol defines no `exec`-class too
 | `prompt-injection-input-marker` | User-supplied workflow inputs MUST be wrapped in `<UNTRUSTED>` markers before reaching the LLM prompt context. |
 | `prompt-injection-kb-marker` | Knowledge-base / RAG retrieved content MUST be wrapped in `<UNTRUSTED>` markers. |
 | `prompt-injection-artifact-marker` | Prior-artifact content interpolated into a later prompt MUST be wrapped in `<UNTRUSTED>` markers. |
+| `chat-card-input-trust-boundary` | A chat card pack (`kind: "card"`, RFC 0071 Phase 2) prompt segment interpolated from a card input MUST carry `meta.contentTrust: "untrusted"` on the composed AI envelope unless the host can assert the input is host-trusted — card inputs commonly derive from untrusted run input / prior LLM output. Verified by `chat-card-pack-execution.test.ts` (host-pending; Phase 2 `Active` gate). |
 | `prompt-injection-refine-quorum` | Refine resume MUST reset the upstream approval gate's quorum; the same gate MUST re-run with the new artifact. |
 | `prompt-injection-decidedby-host-only` | The `decidedBy` field on approval/refine resume MUST be populated by the host's auth layer, NOT accepted from the client. |
 | `prompt-injection-mcp-marker` | MCP tool responses MUST be wrapped in `<UNTRUSTED tool="...">` markers in the next LLM turn. |

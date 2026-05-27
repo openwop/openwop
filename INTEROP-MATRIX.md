@@ -259,6 +259,15 @@ The conformance suite's `experimentalGate()` helper (`conformance/src/lib/behavi
 | postgres | — | — | — | — | (same) | Not advertised |
 | python | — | — | — | — | (same) | Not advertised |
 | MyndHyve (`workflow-runtime`) | — | — | — | — | migration requested | 📤 Requested 2026-05-26 — maps existing `ArtifactTypeDefinition` / Canvas Types onto the wire; advertising + passing the 2 behavioral scenarios is the `Active → Accepted` gate |
+## Capability adoption — RFC 0070 agent-manifest runtime — 🟡 ACTIVE, STEWARD REFERENCE HOST ONLY (2026-05-26)
+
+> RFC 0070 (`Active` 2026-05-26 — Draft → Active with the 7-day comment window waived by the steward) adds `capabilities.agents.manifestRuntime` — the floor that makes RFC 0003's packaged agent manifests runnable. Unlike the 0067–0069 cohort, the steward **workflow-engine** reference host implements + advertises it now (loads pack `agents[]` into an AgentRegistry + dispatches over HTTP), closing RFC 0003's long-open "reference host installs and resolves at least one agent pack" criterion. Remaining for the portability receipt: a SECOND, cross-language host (the **Python** reference host) running the same signed agent pack — the immediate follow-on — and a non-steward host advertising the flag for `Active → Accepted`.
+
+| Host | `agents.manifestRuntime` | Evidence | Status |
+|---|---|---|---|
+| workflow-engine (steward reference) | `{ supported: true, handoffValidation: true }` | `agent-dispatch-route.test.ts` (boots the host; lists + dispatches `core.openwop.agents.supervisor.default` over HTTP with attributed events + §F escalation) | ✅ advertises + dispatches end-to-end |
+| Python reference host | — | — | ⏳ cross-language portability proof (immediate follow-on) |
+| non-steward host | — | — | ⏳ required for `Draft → Active` |
 
 ## Reading Rows
 

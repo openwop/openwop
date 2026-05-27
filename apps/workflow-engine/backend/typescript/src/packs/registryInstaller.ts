@@ -77,7 +77,10 @@ interface InstallMarker {
  *  (READMEs, LICENSEs, CHANGELOGs) is skipped to keep the install dir
  *  free of files that aren't load-bearing. */
 const ALLOWED_FILES = new Set(['pack.json', 'index.mjs']);
-const ALLOWED_SUBDIRS = new Set(['schemas', 'keys']);
+// `prompts` added for RFC 0070 / RFC 0003 §C: agent manifests carry
+// `systemPromptRef` (e.g. `prompts/supervisor.md`) which the AgentRegistry
+// loader resolves from the installed pack dir at load time.
+const ALLOWED_SUBDIRS = new Set(['schemas', 'keys', 'prompts']);
 
 export async function installPackFromRegistry(
   target: InstallTarget,

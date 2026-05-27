@@ -86,7 +86,7 @@
         },
         "outputArtifactType": {
           "type": "string",
-          "description": "A registered `artifactTypeId` (RFC 0071 Phase 1) the card produces. When present, the host MUST validate the LLM output against that artifact type's schema and emit `artifact.created`.",
+          "description": "A registered `artifactTypeId` (RFC 0071 Phase 1) the card produces. When present, the host MUST validate the LLM output against that artifact type's schema and emit `artifact.created`. Registered-only by design: unlike a bare node `WorkflowNode.artifactType` (where the unregistered free-string tier is permanently valid), a card's product is always a contract-bound artifact, so this MUST be a reverse-DNS registered id. Omit the field for a prompt-only card that produces no durable artifact.",
           "pattern": "^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$"
         },
         "outputSchemaRef": {

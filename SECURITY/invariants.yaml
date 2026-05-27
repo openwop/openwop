@@ -230,6 +230,27 @@ invariants:
       on `host.artifactTypes.supported` and `host-pending` until a
       reference host lands.
 
+  - id: chat-card-input-trust-boundary
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/chat-card-pack-execution.test.ts
+    note: |
+      RFC 0071 Phase 2 §"Trust boundary". A chat card pack (`kind: "card"`)
+      composes a prompt by substituting card inputs into `prompt.template` /
+      `systemPrompt`. Card inputs frequently derive from workflow run input or
+      prior LLM output, which is untrusted. A host MUST treat any prompt
+      segment interpolated from a card input as untrusted content: the composed
+      AI envelope MUST carry `meta.contentTrust: "untrusted"` (propagated per
+      `ai-envelope.md` §"Trust boundary") unless the host can assert the input
+      is host-trusted. This prevents a card input from smuggling instructions
+      that exfiltrate or coerce the structured output (the RFC 0071 R2 threat).
+      Verified by `chat-card-pack-execution.test.ts`, which asserts trust-tag
+      propagation through the documented `POST /v1/host/sample/cardpacks/execute`
+      seam; capability-gated on `host.chat.cardPacks.supported` and host-pending
+      until a host wires card execution (Phase 2 `Active` gate).
+
   - id: secret-leakage-eventlog-variable
     tier: reference-impl
     severity: high
