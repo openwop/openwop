@@ -50,7 +50,10 @@ function toEntry(a: ResolvedAgentManifest): AgentInventoryEntry {
 
 export function registerAgentRoutes(app: Express): void {
   // RFC 0072 §A — NORMATIVE read-only inventory (matches agent-inventory-response.schema.json).
-  // Gated on capabilities.agents.manifestRuntime; this host advertises it.
+  // Auth-gated (registered after authMiddleware in index.ts). This host advertises
+  // capabilities.agents.manifestRuntime UNCONDITIONALLY (discovery.ts), so the route
+  // is always live; a host that gates the advertisement MUST 404 these endpoints when
+  // it does not advertise the capability (RFC 0072 §A: "MUST serve iff advertised").
   app.get('/v1/agents', (_req, res) => {
     const agents = getAgentRegistry().list().map(toEntry);
     res.json({ agents, total: agents.length });
