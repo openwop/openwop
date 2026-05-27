@@ -206,3 +206,33 @@ describe('doctor surfaces relay readiness', () => {
     assert.ok(doc2.checks.some((c) => c.name === 'channel imessage'));
   });
 });
+
+import { existsSync, readFileSync } from 'node:fs';
+
+describe('relay daemon lifecycle (CLI)', () => {
+  it('start --daemon spawns a detached process and records a pid; stop clears it', async () => {
+    const fetchImpl = relayServer();
+    await runCli(['relay', 'setup', '--channel', 'signal', '--base-url', 'http://127.0.0.1:0'], opts(fetchImpl, capture()));
+    const startCap = capture();
+    const code = await runCli(['relay', 'start', '--daemon', '--base-url', 'http://127.0.0.1:0'], opts(fetchImpl, startCap));
+    assert.equal(code, 0, startCap.stderr);
+    assert.match(startCap.stdout, /started in background \(pid \d+/);
+    const recordPath = join(configHome, '.openwop', 'relay.pid.json');
+    assert.ok(existsSync(recordPath), 'relay pid record written');
+    const rec = JSON.parse(readFileSync(recordPath, 'utf8'));
+    assert.equal(rec.channel, 'signal');
+    assert.ok(Number.isInteger(rec.pid));
+
+    const stopCap = capture();
+    await runCli(['relay', 'stop'], opts(fetchImpl, stopCap));
+    assert.match(stopCap.stdout, /Stopped relay daemon|Cleared stale relay/);
+    assert.ok(!existsSync(recordPath), 'pid record cleared after stop');
+  });
+
+  it('stop with no daemon is a no-op', async () => {
+    const cap = capture();
+    const code = await runCli(['relay', 'stop'], opts(relayServer(), cap));
+    assert.equal(code, 0);
+    assert.match(cap.stdout, /No relay daemon recorded/);
+  });
+});

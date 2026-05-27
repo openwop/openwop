@@ -7,6 +7,7 @@ import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join, relative, resolve as resolvePath } from 'node:path';
 import { createInterface } from 'node:readline';
+import { fileURLToPath } from 'node:url';
 import { createHash, createPrivateKey, createPublicKey, generateKeyPairSync, sign as ed25519Sign, verify as ed25519Verify } from 'node:crypto';
 import { gunzipSync, gzipSync } from 'node:zlib';
 
@@ -3340,6 +3341,8 @@ async function runRelay(ctx, argv) {
     case 'send': return await runRelaySend(ctx, args);
     case 'status': return await runRelayStatus(ctx, args);
     case 'start': return await runRelayStart(ctx, args);
+    case 'stop': return await runRelayStop(ctx, args);
+    case 'logs': return await runRelayLogs(ctx, args);
     default:
       throw new CliError(`Unknown relay command: ${sub}\nRun \`openwop relay --help\` for usage.`);
   }
@@ -3474,12 +3477,51 @@ async function runRelayStatus(ctx, argv) {
  * plugins); the default "console" delivery prints the egress, which makes the
  * transport loop observable and testable without platform credentials.
  */
+function relayPidPath(env) { return join(openwopHomeDir(env), 'relay.pid.json'); }
+function relayLogPath(env) { return join(openwopHomeDir(env), 'relay.log'); }
+function readRelayRecord(env) {
+  try {
+    const p = relayPidPath(env);
+    return existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : null;
+  } catch { return null; }
+}
+
 async function runRelayStart(ctx, argv) {
-  const { options } = parseOptions(argv, { bool: ['--help', '--once'], value: ['--interval'] });
+  const { options } = parseOptions(argv, { bool: ['--help', '--once', '--daemon'], value: ['--interval'] });
   if (options.help) { write(ctx.io.stdout, RELAY_HELP); return 0; }
   const relay = loadRelayConfig(ctx);
   if (!relay.relayId || !relay.deviceToken) {
     throw new CliError('No relay configured. Run `openwop relay setup --channel <signal|whatsapp|imessage>` first.');
+  }
+
+  // Daemonize: re-spawn `relay start` (foreground) detached, log to a file,
+  // and record the pid. Mirrors `demo start --detach`.
+  if (options.daemon) {
+    const existing = readRelayRecord(ctx.env);
+    if (existing && processAlive(existing.pid)) {
+      throw new CliError(`Relay already running (pid ${existing.pid}). Stop it with \`openwop relay stop\`.`);
+    }
+    const logPath = relayLogPath(ctx.env);
+    const fd = openLogStream(logPath);
+    const entry = fileURLToPath(new URL('../openwop.mjs', import.meta.url));
+    const childArgs = [entry, '--base-url', relay.baseUrl ?? ctx.baseUrl, 'relay', 'start'];
+    if (options.interval) childArgs.push('--interval', String(options.interval));
+    const child = spawn(process.execPath, childArgs, {
+      cwd: ctx.cwd ?? process.cwd(),
+      env: ctx.env,
+      stdio: ['ignore', fd ?? 'ignore', fd ?? 'ignore'],
+      detached: true,
+    });
+    child.unref();
+    const record = { pid: child.pid, relayId: relay.relayId, channel: relay.channel, baseUrl: relay.baseUrl ?? ctx.baseUrl, logPath, startedAt: new Date().toISOString() };
+    mkdirSync(dirname(relayPidPath(ctx.env)), { recursive: true });
+    writeFileSync(relayPidPath(ctx.env), `${JSON.stringify(record, null, 2)}\n`, 'utf8');
+    if (ctx.json) writeJson(ctx.io.stdout, record);
+    else {
+      writeLine(ctx.io.stdout, `✓ Relay bridge started in background (pid ${child.pid}, ${relay.channel} ${relay.relayId}).`);
+      writeLine(ctx.io.stdout, `  Logs: ${logPath} — follow with \`openwop relay logs -f\`, stop with \`openwop relay stop\`.`);
+    }
+    return 0;
   }
   const deviceHeaders = { [DEVICE_TOKEN_HEADER]: relay.deviceToken };
   const deliver = ctx.relayDeliver ?? makeChannelDeliver(relay.channel, ctx);
@@ -3518,6 +3560,41 @@ async function runRelayStart(ctx, argv) {
     catch (err) { writeLine(ctx.io.stderr, `bridge cycle error: ${err.message ?? err}`); }
     await new Promise((r) => setTimeout(r, intervalMs));
   }
+}
+
+async function runRelayStop(ctx, argv) {
+  const { options } = parseOptions(argv, { bool: ['--help'] });
+  if (options.help) { write(ctx.io.stdout, RELAY_HELP); return 0; }
+  const record = readRelayRecord(ctx.env);
+  if (!record || !record.pid) {
+    writeLine(ctx.io.stdout, 'No relay daemon recorded.');
+    return ctx.json ? (writeJson(ctx.io.stdout, { stopped: false }), 0) : 0;
+  }
+  let stopped = false;
+  if (processAlive(record.pid)) {
+    try { process.kill(record.pid); stopped = true; } catch { /* already gone */ }
+  }
+  try { if (existsSync(relayPidPath(ctx.env))) rmSync(relayPidPath(ctx.env)); } catch { /* best-effort */ }
+  if (ctx.json) writeJson(ctx.io.stdout, { stopped, pid: record.pid });
+  else writeLine(ctx.io.stdout, stopped ? `✓ Stopped relay daemon (pid ${record.pid}).` : `Cleared stale relay record (pid ${record.pid} was not running).`);
+  return 0;
+}
+
+async function runRelayLogs(ctx, argv) {
+  const { options } = parseOptions(argv, { bool: ['--help', '--follow', '-f'] });
+  if (options.help) { write(ctx.io.stdout, RELAY_HELP); return 0; }
+  const logPath = readRelayRecord(ctx.env)?.logPath ?? relayLogPath(ctx.env);
+  if (!existsSync(logPath)) {
+    writeLine(ctx.io.stdout, `No relay logs at ${logPath}. Start the daemon with \`openwop relay start --daemon\`.`);
+    return 0;
+  }
+  if (options.follow || options.f) {
+    // Defer to `tail -f` for follow mode (best-effort; falls back to a dump).
+    const r = spawnSync('tail', ['-f', logPath], { stdio: 'inherit' });
+    if (r.status === 0 || r.signal) return 0;
+  }
+  write(ctx.io.stdout, readFileSync(logPath, 'utf8'));
+  return 0;
 }
 
 /**
@@ -4304,7 +4381,9 @@ Commands:
   messaging connectors  Manage messaging relay connectors
   messaging sessions  List/inspect/close messaging sessions
   relay setup         Register + activate a local channel relay
-  relay start         Run the relay bridge loop (heartbeat/poll/deliver/ack)
+  relay start         Run the relay bridge loop (--daemon to background)
+  relay stop          Stop the background relay daemon
+  relay logs          Print/follow the relay daemon log
   relay send          Queue an outbound message for a relay
   relay status        Probe the relay device token against the host
   notifications list  List notification inbox entries (tenant-scoped)
@@ -4678,7 +4757,9 @@ const RELAY_HELP = `Usage:
   openwop relay activate --relay-id <id> --code <activationCode>
   openwop relay status
   openwop relay send --conversation <id> --text <msg> [--relay-id <id>]
-  openwop relay start [--once] [--interval <seconds>]
+  openwop relay start [--daemon] [--once] [--interval <seconds>]
+  openwop relay stop
+  openwop relay logs [-f]
   openwop relay revoke [--relay-id <id>]
 
 The relay device owns the platform connection (signal-cli / WhatsApp / iMessage)
@@ -4686,8 +4767,11 @@ and bridges it to the OpenWOP host. \`setup\` registers + activates a device and
 stores its token in ~/.openwop/config.json under \`relay\`.
 
   start   Runs the bridge loop: heartbeat + poll outbound + deliver + ack.
-          Until a channel plugin is configured, delivery prints each outbound
-          message to stdout (use --once for a single cycle, e.g. in tests).
+          --daemon backgrounds it (pid + logs under ~/.openwop/); --once runs a
+          single cycle (e.g. in tests). Native delivery via signal-cli /
+          AppleScript when present, else printed to the console.
+  stop    Stops the background relay daemon and clears its pid record.
+  logs    Print (or -f follow) the background relay daemon log.
   send    Operator-side: queue an outbound message for the relay to deliver.
   status  Probes the host with a heartbeat to confirm the token is live.
 `;
