@@ -17,89 +17,24 @@ import type { ChannelPlugin, InboundMessage, RelayChannel } from './channels/typ
 export { parseSignalEnvelope, parseImessageRow, parseWhatsappMessage } from './channels/normalize.js';
 export { getChannelPlugin } from './channels/registry.js';
 
-export const VERSION = '0.1.0';
-export const DEFAULT_BASE_URL = 'http://localhost:8080';
-// Canonical signed node-pack registry. Distinct from the host --base-url
-// (the workflow-engine demo): the demo only knows its in-process nodes and
-// returns 404 for tarballs, whereas the file-backed registry at this URL
-// serves the full catalog + signed .tgz + .sig + public keys. Overridable
-// per `packs` command via --registry-url or OPENWOP_REGISTRY_URL.
-export const DEFAULT_REGISTRY_URL = 'https://packs.openwop.dev';
-const DEFAULT_API_KEY = 'sample-token';
-const TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled']);
-
-// Provider catalog — mirrors the four backend dispatchers in
-// `apps/workflow-engine/backend/typescript/src/providers/dispatch.ts`.
-// Adding a provider here requires backend support; this is not a free-form
-// list. `envVar` is the conventional env var the wizard auto-detects.
-export const PROVIDER_CATALOG = {
-  anthropic: {
-    label: 'Anthropic (Claude)',
-    envVar: 'ANTHROPIC_API_KEY',
-    models: [
-      { id: 'claude-opus-4-7', label: 'claude-opus-4-7 (most capable)' },
-      { id: 'claude-sonnet-4-6', label: 'claude-sonnet-4-6 (balanced)', recommended: true },
-      { id: 'claude-haiku-4-5', label: 'claude-haiku-4-5 (fastest)' },
-    ],
-  },
-  openai: {
-    label: 'OpenAI',
-    envVar: 'OPENAI_API_KEY',
-    models: [
-      { id: 'gpt-4o', label: 'gpt-4o (most capable)', recommended: true },
-      { id: 'gpt-4-turbo', label: 'gpt-4-turbo' },
-      { id: 'gpt-4o-mini', label: 'gpt-4o-mini (fastest)' },
-    ],
-  },
-  google: {
-    label: 'Google (Gemini)',
-    envVar: 'GOOGLE_API_KEY',
-    models: [
-      { id: 'gemini-2.0-flash', label: 'gemini-2.0-flash (balanced)', recommended: true },
-      { id: 'gemini-1.5-pro', label: 'gemini-1.5-pro' },
-    ],
-  },
-  minimax: {
-    label: 'MiniMax',
-    envVar: 'MINIMAX_API_KEY',
-    models: [
-      { id: 'minimax-text-01', label: 'minimax-text-01', recommended: true },
-    ],
-  },
-};
-
-// Host presets surfaced as the first onboarding choice. `url` is what gets
-// written to the config; `label` is what the user sees. The "custom" option
-// is appended at prompt time.
-export const HOST_PRESETS = [
-  { key: 'shared', label: 'Shared demo at https://app.openwop.dev/api (recommended for trying things out)', url: 'https://app.openwop.dev/api' },
-  { key: 'local', label: 'Local demo at http://localhost:8080 (run `openwop demo start` to launch)', url: 'http://localhost:8080' },
-];
-
-class CliError extends Error {
-  code: number;
-  constructor(message: string, code = 2) {
-    super(message);
-    this.name = 'CliError';
-    this.code = code;
-  }
-}
-
-class HttpError extends Error {
-  status: number;
-  body: unknown;
-  constructor(message: string, status: number, body: unknown) {
-    super(message);
-    this.name = 'HttpError';
-    this.status = status;
-    this.body = body;
-  }
-}
-
-/** Narrow an unknown caught value to a printable message (strict catch vars). */
-function errText(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
-}
+// ── Foundational layer (extracted from the former monolith) ──
+import { CliError, HttpError, errText } from './errors.js';
+import {
+  VERSION, DEFAULT_BASE_URL, DEFAULT_REGISTRY_URL, DEFAULT_API_KEY,
+  TERMINAL_STATUSES, PROVIDER_CATALOG, HOST_PRESETS,
+} from './constants.js';
+import { write, writeLine, writeJson, formatTable, prefixChunk } from './io.js';
+import { extractGlobalOptions, parseOptions, splitFlag, takeValue, toOptionName } from './options.js';
+import {
+  configPathFor, readConfigSafe, saveConfig, mergeConfig,
+  getByPath, setByPath, unsetByPath, openwopHomeDir,
+} from './config.js';
+import { requestJson, safeRequest, probeEndpoint, parseJsonResponse } from './api.js';
+// Public surface re-exported for the test suite + bin (they import the bundle).
+export { VERSION, DEFAULT_BASE_URL, DEFAULT_REGISTRY_URL, PROVIDER_CATALOG, HOST_PRESETS };
+export { formatTable };
+export { extractGlobalOptions };
+export { configPathFor, readConfigSafe, saveConfig, openwopHomeDir };
 
 export async function runCli(argv: string[], options: any = {}): Promise<number> {
   const io = options.io ?? {
@@ -228,118 +163,6 @@ export async function runCli(argv: string[], options: any = {}): Promise<number>
     if (options.debugErrors) writeLine(io.stderr, String(err instanceof Error ? err.stack : err));
     return 1;
   }
-}
-
-export function extractGlobalOptions(argv, env = process.env) {
-  const globals = {
-    baseUrl: undefined,
-    apiKey: undefined,
-    json: false,
-    quiet: false,
-    verbose: false,
-    help: false,
-    version: false,
-  };
-  const args: string[] = [];
-  let seenCommand = false;
-
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i] ?? '';
-    const { flag, value } = splitFlag(arg);
-
-    if (flag === '--base-url') {
-      globals.baseUrl = value ?? takeValue(argv, ++i, '--base-url');
-      continue;
-    }
-    if (flag === '--api-key') {
-      globals.apiKey = value ?? takeValue(argv, ++i, '--api-key');
-      continue;
-    }
-    if (arg === '--json') {
-      globals.json = true;
-      continue;
-    }
-    if (arg === '--quiet') {
-      globals.quiet = true;
-      continue;
-    }
-    if (arg === '--verbose') {
-      globals.verbose = true;
-      continue;
-    }
-    if ((arg === '--help' || arg === '-h') && !seenCommand) {
-      globals.help = true;
-      continue;
-    }
-    if (arg === '--version' && !seenCommand) {
-      globals.version = true;
-      continue;
-    }
-
-    args.push(arg);
-    if (!arg.startsWith('-')) seenCommand = true;
-  }
-
-  return { globals, args };
-}
-
-function parseOptions(
-  argv: string[],
-  spec: { bool?: string[]; value?: string[]; multi?: string[] } = {},
-): { options: Record<string, any>; positionals: string[] } {
-  const bools = new Set(spec.bool ?? []);
-  const values = new Set(spec.value ?? []);
-  const multi = new Set(spec.multi ?? []);
-  const options: Record<string, any> = {};
-  const positionals: string[] = [];
-
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i] ?? '';
-    if (!arg.startsWith('-') || arg === '-') {
-      positionals.push(arg);
-      continue;
-    }
-    const { flag, value } = splitFlag(arg);
-    if (bools.has(flag)) {
-      options[toOptionName(flag)] = true;
-      continue;
-    }
-    if (values.has(flag) || multi.has(flag)) {
-      const resolved = value ?? takeValue(argv, ++i, flag);
-      const name = toOptionName(flag);
-      if (multi.has(flag)) {
-        options[name] = [...(options[name] ?? []), resolved];
-      } else {
-        options[name] = resolved;
-      }
-      continue;
-    }
-    if (flag === '--help' || flag === '-h') {
-      options.help = true;
-      continue;
-    }
-    throw new CliError(`Unknown option: ${flag}`);
-  }
-
-  return { options, positionals };
-}
-
-function splitFlag(arg) {
-  const eq = arg.indexOf('=');
-  if (eq === -1) return { flag: arg, value: undefined };
-  return { flag: arg.slice(0, eq), value: arg.slice(eq + 1) };
-}
-
-function takeValue(argv, index, flag) {
-  const value = argv[index];
-  if (value === undefined || value.startsWith('-')) {
-    throw new CliError(`${flag} requires a value`);
-  }
-  return value;
-}
-
-function toOptionName(flag) {
-  return flag.replace(/^--?/, '').replace(/-([a-z])/g, (_, c) => c.toUpperCase());
 }
 
 function showHelp(io, command) {
@@ -837,7 +660,7 @@ async function runDemoLogs(ctx: any, argv: string[]): Promise<number> {
       if (size < offset) offset = 0; // truncated / rotated
       if (size === offset) return;
       const stream = createReadStream(logPath, { start: offset, end: size - 1, encoding: 'utf8' });
-      stream.on('data', (chunk) => write(ctx.io.stdout, chunk));
+      stream.on('data', (chunk) => write(ctx.io.stdout, String(chunk)));
       stream.on('end', () => { offset = size; });
     };
     const watcher = watch(logPath, { persistent: true }, emit);
@@ -3883,70 +3706,6 @@ async function runPrompts(ctx, argv) {
 // Config file + path utilities
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function configPathFor(profile, env = process.env) {
-  // OPENWOP_CONFIG_HOME overrides the parent dir (useful for tests).
-  const home = env.OPENWOP_CONFIG_HOME ?? homedir();
-  const dir = profile ? `.openwop-${profile}` : '.openwop';
-  return join(home, dir, 'config.json');
-}
-
-export function readConfigSafe(path) {
-  try {
-    if (!existsSync(path)) return null;
-    return JSON.parse(readFileSync(path, 'utf8'));
-  } catch {
-    return null;
-  }
-}
-
-export function saveConfig(path, config) {
-  mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
-  try { chmodSync(path, 0o600); } catch { /* best-effort on Windows */ }
-}
-
-function mergeConfig(existing, next) {
-  const base = existing ?? {};
-  return {
-    ...base,
-    ...next,
-    host: { ...(base.host ?? {}), ...(next.host ?? {}) },
-  };
-}
-
-function getByPath(obj, path) {
-  return path.split('.').reduce((acc, key) => (acc == null ? acc : acc[key]), obj);
-}
-
-function setByPath(obj, path, value) {
-  const parts = path.split('.');
-  let cur = obj;
-  for (let i = 0; i < parts.length - 1; i++) {
-    if (typeof cur[parts[i]] !== 'object' || cur[parts[i]] === null) cur[parts[i]] = {};
-    cur = cur[parts[i]];
-  }
-  cur[parts[parts.length - 1]] = value;
-}
-
-function unsetByPath(obj, path) {
-  const parts = path.split('.');
-  let cur = obj;
-  for (let i = 0; i < parts.length - 1; i++) {
-    if (typeof cur[parts[i]] !== 'object' || cur[parts[i]] === null) return;
-    cur = cur[parts[i]];
-  }
-  delete cur[parts[parts.length - 1]];
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Demo daemon lifecycle — PID file + log file under ~/.openwop/
-// (honors OPENWOP_CONFIG_HOME exactly like configPathFor).
-// ─────────────────────────────────────────────────────────────────────────────
-
-export function openwopHomeDir(env = process.env) {
-  const home = env.OPENWOP_CONFIG_HOME ?? homedir();
-  return join(home, '.openwop');
-}
 
 export function daemonPidPath(env = process.env) {
   return join(openwopHomeDir(env), 'demo-backend.pid.json');
@@ -4219,55 +3978,6 @@ async function waitForRun(ctx, runId, timeoutMs) {
   throw new CliError(`Timed out waiting for run ${runId} after ${timeoutMs}ms`, 1);
 }
 
-async function requestJson(ctx: any, path: string, options: any = {}) {
-  const url = new URL(path, ctx.baseUrl);
-  const headers: Record<string, string> = {
-    accept: 'application/json',
-    ...(options.body !== undefined ? { 'content-type': 'application/json' } : {}),
-    ...(options.headers ?? {}),
-  };
-  if (options.auth !== false && ctx.apiKey) {
-    headers.authorization = `Bearer ${ctx.apiKey}`;
-  }
-  const res = await ctx.fetchImpl(url, {
-    method: options.method ?? 'GET',
-    headers,
-    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-  });
-  const text = await res.text();
-  const body = text.length > 0 ? parseJsonResponse(text) : null;
-  if (!res.ok) {
-    throw new HttpError(`HTTP ${res.status}`, res.status, body);
-  }
-  return { status: res.status, headers: res.headers, body };
-}
-
-async function safeRequest(ctx, path, options = {}) {
-  try {
-    const res = await requestJson(ctx, path, options);
-    return { ok: true, path, status: res.status, body: res.body };
-  } catch (err) {
-    return { ok: false, path, error: err instanceof Error ? err.message : String(err) };
-  }
-}
-
-async function probeEndpoint(ctx, path) {
-  try {
-    const res = await requestJson(ctx, path, { auth: false });
-    return { ok: true, message: String(res.status) };
-  } catch (err) {
-    return { ok: false, message: err instanceof Error ? err.message : String(err) };
-  }
-}
-
-function parseJsonResponse(text) {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { raw: text };
-  }
-}
-
 export function findRepoRoot(startDir) {
   let dir = resolvePath(startDir);
   while (true) {
@@ -4361,42 +4071,6 @@ function formatCheckTable(checks) {
     checks.map((c) => ({ status: c.status.toUpperCase(), check: c.name, message: c.message })),
     ['status', 'check', 'message'],
   );
-}
-
-export function formatTable(rows, columns) {
-  if (rows.length === 0) return '';
-  const widths = {};
-  for (const column of columns) {
-    widths[column] = Math.max(
-      column.length,
-      ...rows.map((row) => String(row[column] ?? '').length),
-    );
-  }
-  const line = (row) => columns.map((column) => String(row[column] ?? '').padEnd(widths[column])).join('  ').trimEnd();
-  return [
-    line(Object.fromEntries(columns.map((column) => [column, column]))),
-    columns.map((column) => '-'.repeat(widths[column])).join('  '),
-    ...rows.map(line),
-  ].join('\n');
-}
-
-function prefixChunk(stream, label, chunk) {
-  const text = chunk.toString();
-  for (const line of text.split(/\r?\n/)) {
-    if (line.length > 0) writeLine(stream, `[${label}] ${line}`);
-  }
-}
-
-function write(stream, text) {
-  stream.write(text);
-}
-
-function writeLine(stream, text) {
-  stream.write(`${text}\n`);
-}
-
-function writeJson(stream, value) {
-  writeLine(stream, JSON.stringify(value, null, 2));
 }
 
 const ROOT_HELP = `openwop - operate OpenWOP hosts and the workflow-engine demo app
