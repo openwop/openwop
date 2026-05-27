@@ -260,7 +260,7 @@ The conformance suite's `experimentalGate()` helper (`conformance/src/lib/behavi
 
 | Host | `host.artifactTypes.supported` | `store` | `render` | `export[]` | Conformance | Adoption status |
 |---|---|---|---|---|---|---|
-| in-memory | — | — | — | — | manifest-validation + compile-bounded pass (server-free); behavioral host-pending | Not advertised — reference-host store-side impl deferred per acceptance criteria |
+| in-memory | `true` | `true` | **`false`** | `[]` | `artifact-type-pack-install` + `artifact-type-store-without-render` PASS (+ server-free floors) | ✅ **Store-only reference host (RFC 0075 P2-1).** Advertises `host.artifactTypes { store:true, render:false }` + the `/v1/host/sample/artifacttypes/{install,produce}` seam, so the **store-without-render negotiation is verified end-to-end** — a registered, schema-valid artifact is stored and the run completes with `rendered:false`. This is the path a render-everything host (MyndHyve) can only soft-skip. |
 | sqlite | — | — | — | — | (same) | Not advertised |
 | postgres | — | — | — | — | (same) | Not advertised |
 | python | — | — | — | — | (same) | Not advertised |
