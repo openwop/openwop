@@ -24,12 +24,17 @@ export interface ResolvedAgentManifest {
   toolAllowlist?: string[];
   memoryShape?: { scratchpad?: boolean; conversation?: boolean; longTerm?: boolean };
   confidence?: { defaultThreshold?: number };
-  /** Resolved handoff JSON Schemas (parsed) + their provenance refs. */
+  /** Resolved handoff JSON Schemas (parsed) + their provenance refs + the
+   *  validators pre-compiled at load (RFC 0003 §D "MAY pre-compile"). Pre-
+   *  compiling avoids per-dispatch recompilation and the shared-Ajv `$id`
+   *  collision that a long-lived instance hits across packs. */
   handoff?: {
     taskSchemaRef?: string;
     returnSchemaRef?: string;
     taskSchema?: unknown;
     returnSchema?: unknown;
+    validateTask?: AgentSchemaValidator;
+    validateReturn?: AgentSchemaValidator;
   };
   label?: string;
   description?: string;
@@ -37,6 +42,11 @@ export interface ResolvedAgentManifest {
   packName: string;
   packVersion: string;
 }
+
+/** A pre-compiled handoff-schema validator (closes over an Ajv ValidateFunction
+ *  produced at load). Returns a structured result so the dispatch path can cite
+ *  the violation without re-touching Ajv. */
+export type AgentSchemaValidator = (value: unknown) => { ok: boolean; errors?: string };
 
 type AgentPackResolver = (agentId: string) => Promise<unknown>;
 

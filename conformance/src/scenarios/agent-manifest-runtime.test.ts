@@ -50,24 +50,10 @@ describe('agent-manifest-runtime (RFC 0070)', () => {
     ).toBe(true);
   });
 
-  it('§F escalates a sub-threshold decision instead of proceeding', async () => {
-    const cap = await readManifestRuntimeCap();
-    if (cap?.supported !== true) return;
-    const inv = await listManifestAgents();
-    if (inv === null) return;
-    const agentId = inv.agents?.[0]?.agentId;
-    if (typeof agentId !== 'string') return;
-
-    // Drive a below-threshold confidence; the host MUST escalate (RFC 0002 §F).
-    const res = await dispatchAgent(agentId, { task: {}, validateHandoff: false, simulateConfidence: 0.01, confidenceThreshold: 0.99 });
-    if (res === null) return;
-    expect(
-      res.status === 'escalated',
-      driver.describe('RFC 0002 §F', 'a confidence below threshold MUST escalate, not proceed'),
-    ).toBe(true);
-    expect(
-      res.result === undefined || res.result === null,
-      driver.describe('RFC 0002 §F', 'an escalated turn MUST NOT produce a final result'),
-    ).toBe(true);
-  });
+  // NOTE: RFC 0002 §F confidence escalation is NOT asserted here. Forcing a
+  // sub-threshold decision black-box would require a non-normative test hook
+  // (the reference host's `simulateConfidence`); a conformant host need not
+  // expose one, so asserting it here would wrongly fail conformant peers.
+  // Escalation is covered against the reference host in
+  // apps/workflow-engine/backend/typescript/test/{agents,agent-dispatch-route}.test.ts.
 });

@@ -17,10 +17,28 @@
 
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join, isAbsolute, normalize, relative } from 'node:path';
-import { getAgentRegistry, type ResolvedAgentManifest } from '../executor/agentRegistry.js';
+import Ajv2020, { type ValidateFunction } from 'ajv/dist/2020.js';
+import { getAgentRegistry, type ResolvedAgentManifest, type AgentSchemaValidator } from '../executor/agentRegistry.js';
 import { createLogger } from '../observability/logger.js';
 
 const log = createLogger('packs.agentLoader');
+
+/** Compile a handoff JSON Schema into a validator at load (RFC 0003 §D). Throws
+ *  if the schema is not a valid JSON Schema 2020-12 document (so the agent is
+ *  skipped at load rather than failing opaquely at dispatch). `ajv` is fresh per
+ *  pack-load, so a `$id` reused across packs never collides on a shared instance. */
+function compileValidator(ajv: Ajv2020, schema: unknown, kind: string): AgentSchemaValidator {
+  let fn: ValidateFunction;
+  try {
+    fn = ajv.compile(schema as object);
+  } catch (err) {
+    throw new Error(`${kind} is not a valid JSON Schema 2020-12 document: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  return (value: unknown) => {
+    const ok = fn(value) as boolean;
+    return ok ? { ok: true } : { ok: false, errors: ajv.errorsText(fn.errors, { separator: '; ' }) };
+  };
+}
 
 interface RawAgentManifest {
   agentId?: unknown;
@@ -86,11 +104,21 @@ export function loadAgentsFromManifest(packDir: string): ResolvedAgentManifest[]
   const packVersion = typeof manifest.version === 'string' ? manifest.version : '0.0.0';
   const registry = getAgentRegistry();
   const loaded: ResolvedAgentManifest[] = [];
+  // Fresh Ajv per pack-load: handoff schema files within a pack carry distinct
+  // `$id`s, and a per-load instance means a `$id` reused across two packs never
+  // collides on a shared registry (the documented Ajv `compile` gotcha).
+  const ajv = new Ajv2020({ allErrors: true, strict: false });
 
   for (const raw of manifest.agents) {
     try {
       if (typeof raw.agentId !== 'string' || typeof raw.persona !== 'string' || typeof raw.modelClass !== 'string') {
         throw new Error('agent manifest missing required agentId / persona / modelClass');
+      }
+      // RFC 0003 §B — an agent's agentId MUST share the pack's namespace tier.
+      // Registries enforce this on submission; a host defensively skips a
+      // mismatched agent rather than installing a misattributed identity.
+      if (typeof manifest.name === 'string' && raw.agentId !== packName && !raw.agentId.startsWith(`${packName}.`)) {
+        throw new Error(`agentId '${raw.agentId}' is outside pack namespace '${packName}' (RFC 0003 §B)`);
       }
 
       // §C system prompt — inline XOR ref (schema enforces; we resolve the ref).
@@ -105,7 +133,9 @@ export function loadAgentsFromManifest(packDir: string): ResolvedAgentManifest[]
         throw new Error('agent manifest has neither systemPrompt nor systemPromptRef');
       }
 
-      // §D handoff schema refs — resolve + parse (valid JSON 2020-12 doc).
+      // §D handoff schema refs — resolve + parse + pre-compile a validator at
+      // load (RFC 0003 §D: refs MUST be valid JSON Schema 2020-12 docs;
+      // compileValidator throws here if not, so the agent is skipped at load).
       let handoff: ResolvedAgentManifest['handoff'];
       if (raw.handoff && typeof raw.handoff === 'object') {
         handoff = {};
@@ -113,10 +143,12 @@ export function loadAgentsFromManifest(packDir: string): ResolvedAgentManifest[]
         if (typeof h.taskSchemaRef === 'string') {
           handoff.taskSchemaRef = h.taskSchemaRef;
           handoff.taskSchema = JSON.parse(readUtf8(resolveRef(packDir, h.taskSchemaRef, 'handoff.taskSchemaRef'), 'handoff.taskSchemaRef'));
+          handoff.validateTask = compileValidator(ajv, handoff.taskSchema, 'handoff.taskSchemaRef');
         }
         if (typeof h.returnSchemaRef === 'string') {
           handoff.returnSchemaRef = h.returnSchemaRef;
           handoff.returnSchema = JSON.parse(readUtf8(resolveRef(packDir, h.returnSchemaRef, 'handoff.returnSchemaRef'), 'handoff.returnSchemaRef'));
+          handoff.validateReturn = compileValidator(ajv, handoff.returnSchema, 'handoff.returnSchemaRef');
         }
       }
 
