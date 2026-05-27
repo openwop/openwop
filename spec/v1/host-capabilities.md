@@ -414,6 +414,8 @@ ctx.chat.updateCard({
 
 **Required methods:** `sendMessage`. `emitCard` + `updateCard` required when the host advertises `host.chat.cards: supported`.
 
+**`host.chat.cardPacks` (RFC 0071 Phase 2).** An additive sub-flag: a host advertising `host.chat.cardPacks: supported` resolves **registered chat-card definitions** (from installed `kind: "card"` packs — see [`chat-card-packs.md`](./chat-card-packs.md)) and executes them per that doc's §"Card execution": substitute the card's typed `inputs` into its `prompt.template`, route through `ctx.aiEnvelope.generate`, and (when the card declares an `outputArtifactType`) validate the result against the registered artifact type's schema before emitting `artifact.created`. A `WorkflowNode.cardType` (or `ctx.chat.emitCard` `cardType`) value SHOULD then reference a registered `cardTypeId`; existing free-form `cardType` strings remain valid. Card-input-derived prompt segments are `untrusted` and MUST propagate `meta.contentTrust: "untrusted"` per `chat-card-packs.md` §"Trust boundary". Requires `host.aiEnvelope: supported`.
+
 **Failure modes:**
 - `host_capability_missing` — `ctx.chat` absent
 - `chat_session_not_found` — sessionId doesn't resolve
