@@ -79,6 +79,12 @@ const PUBLIC_PATH_PREFIXES = [
   // bearer/cookie. The store path (POST /v1/host/sample/media/put) is NOT
   // under this prefix and stays authenticated.
   '/v1/host/sample/assets',
+  // Demo messaging relay device-loop (heartbeat/inbound/outbound/ack) is
+  // authed by the per-device token in the `x-openwop-device-token` header
+  // — the device token is the credential, like /v1/interrupts/{token}. The
+  // operator endpoints (register/activate/revoke/enqueue, connectors,
+  // sessions) are NOT under /device and stay bearer-authed.
+  '/v1/host/sample/messaging/device',
   // Admin endpoints do their own constant-time check against
   // OPENWOP_ADMIN_TOKEN (separate from OPENWOP_API_KEYS so the
   // session/bearer paths can't confuse the two). Bypassing the

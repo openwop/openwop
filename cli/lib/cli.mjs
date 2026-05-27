@@ -7,6 +7,7 @@ import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join, relative, resolve as resolvePath } from 'node:path';
 import { createInterface } from 'node:readline';
+import { fileURLToPath } from 'node:url';
 import { createHash, createPrivateKey, createPublicKey, generateKeyPairSync, sign as ed25519Sign, verify as ed25519Verify } from 'node:crypto';
 import { gunzipSync, gzipSync } from 'node:zlib';
 
@@ -180,6 +181,19 @@ export async function runCli(argv, options = {}) {
         return await runWebhooks(ctx, commandArgs);
       case 'cron':
         return await runCron(ctx, commandArgs);
+      case 'messaging':
+        return await runMessaging(ctx, commandArgs);
+      case 'relay':
+        return await runRelay(ctx, commandArgs);
+      case 'notifications':
+      case 'notification':
+        return await runNotifications(ctx, commandArgs);
+      case 'interrupts':
+      case 'interrupt':
+        return await runInterrupts(ctx, commandArgs);
+      case 'prompts':
+      case 'prompt':
+        return await runPrompts(ctx, commandArgs);
       default:
         throw new CliError(`Unknown command: ${command}\nRun \`openwop --help\` for usage.`);
     }
@@ -338,6 +352,14 @@ function showHelp(io, command) {
     webhooks: WEBHOOKS_HELP,
     webhook: WEBHOOKS_HELP,
     cron: CRON_HELP,
+    messaging: MESSAGING_HELP,
+    relay: RELAY_HELP,
+    notifications: NOTIFICATIONS_HELP,
+    notification: NOTIFICATIONS_HELP,
+    interrupts: INTERRUPTS_HELP,
+    interrupt: INTERRUPTS_HELP,
+    prompts: PROMPTS_HELP,
+    prompt: PROMPTS_HELP,
   };
   write(io.stdout, map[command] ?? ROOT_HELP);
   return 0;
@@ -415,6 +437,18 @@ async function runDoctor(ctx, argv) {
     }
   } else {
     checks.push(warn('providers', `could not list BYOK credentials (${byok.error})`));
+  }
+
+  // Messaging relay readiness — only meaningful once a relay is configured.
+  const relay = loadRelayConfig(ctx);
+  if (relay.relayId && relay.channel) {
+    checks.push(ok('relay', `${relay.channel} relay ${relay.relayId} configured (host ${relay.baseUrl ?? ctx.baseUrl})`));
+    const avail = detectChannelAvailability(relay.channel, ctx.env);
+    checks.push(avail.available
+      ? ok(`channel ${relay.channel}`, avail.detail)
+      : warn(`channel ${relay.channel}`, avail.detail));
+  } else {
+    checks.push(warn('relay', 'no messaging relay configured; run `openwop relay setup --channel <signal|whatsapp|imessage>`'));
   }
 
   if (ctx.json) {
@@ -3161,6 +3195,627 @@ async function runCronTrigger(ctx, argv) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Messaging relay-gateway (demo host-extension — /v1/host/sample/messaging).
+// Operator endpoints use the host bearer; the device loop authenticates with
+// the per-device token in the x-openwop-device-token header.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MESSAGING_BASE = '/v1/host/sample/messaging';
+const DEVICE_TOKEN_HEADER = 'x-openwop-device-token';
+const RELAY_CHANNELS = ['whatsapp', 'signal', 'imessage'];
+
+// The relay record carries the device token — a bearer-equivalent host
+// credential. It is kept OUT of config.json (which holds only non-secret
+// settings + BYOK refs) and written to a dedicated 0600 file, preserving the
+// CLI's "no secrets in config.json" posture (see cli/README §Config).
+function relayCredsPath(env) {
+  return join(openwopHomeDir(env), 'relay-credentials.json');
+}
+
+function loadRelayConfig(ctx) {
+  try {
+    const p = relayCredsPath(ctx.env);
+    if (existsSync(p)) return JSON.parse(readFileSync(p, 'utf8'));
+  } catch { /* unreadable/corrupt → treat as unconfigured */ }
+  return {};
+}
+
+function saveRelayConfig(ctx, relay) {
+  const p = relayCredsPath(ctx.env);
+  mkdirSync(dirname(p), { recursive: true });
+  if (!relay || Object.keys(relay).length === 0) {
+    try { if (existsSync(p)) rmSync(p); } catch { /* best-effort */ }
+    return;
+  }
+  writeFileSync(p, `${JSON.stringify(relay, null, 2)}\n`, 'utf8');
+  try { chmodSync(p, 0o600); } catch { /* best-effort on Windows */ }
+}
+
+async function runMessaging(ctx, argv) {
+  const sub = argv[0];
+  if (!sub || sub === '--help' || sub === '-h') {
+    write(ctx.io.stdout, MESSAGING_HELP);
+    return sub ? 0 : 2;
+  }
+  const args = argv.slice(1);
+  switch (sub) {
+    case 'connectors':
+      return await runMessagingConnectors(ctx, args);
+    case 'sessions':
+      return await runMessagingSessions(ctx, args);
+    default:
+      throw new CliError(`Unknown messaging command: ${sub}\nRun \`openwop messaging --help\` for usage.`);
+  }
+}
+
+async function runMessagingConnectors(ctx, argv) {
+  const sub = argv[0] ?? 'list';
+  const args = argv.slice(['list', 'get', 'add', 'enable', 'disable', 'test'].includes(sub) ? 1 : 0);
+  switch (sub) {
+    case 'list': {
+      const res = await requestJson(ctx, `${MESSAGING_BASE}/connectors`);
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      const connectors = Array.isArray(res.body?.connectors) ? res.body.connectors : [];
+      if (connectors.length === 0) {
+        writeLine(ctx.io.stdout, 'No connectors. Add one with `openwop messaging connectors add --channel signal`.');
+        return 0;
+      }
+      writeLine(ctx.io.stdout, formatTable(
+        connectors.map((c) => ({ connectorId: c.connectorId, channel: c.channel, enabled: String(c.enabled), displayName: c.displayName ?? '' })),
+        ['connectorId', 'channel', 'enabled', 'displayName'],
+      ));
+      return 0;
+    }
+    case 'get': {
+      if (args.length !== 1) { write(ctx.io.stdout, 'Usage: openwop messaging connectors get <connectorId> [--json]\n'); return 2; }
+      const res = await requestJson(ctx, `${MESSAGING_BASE}/connectors/${encodeURIComponent(args[0])}`);
+      writeJson(ctx.io.stdout, res.body);
+      return 0;
+    }
+    case 'add': {
+      const { options } = parseOptions(args, { value: ['--channel', '--display-name', '--connector-id'] });
+      if (!options.channel) throw new CliError('--channel is required (one of: ' + RELAY_CHANNELS.join(', ') + ').');
+      const body = {
+        channel: options.channel,
+        ...(options.displayName ? { displayName: options.displayName } : {}),
+        ...(options.connectorId ? { connectorId: options.connectorId } : {}),
+      };
+      const res = await requestJson(ctx, `${MESSAGING_BASE}/connectors`, { method: 'POST', body });
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      writeLine(ctx.io.stdout, `✓ Connector ${res.body.connectorId} (${res.body.channel}) — enabled=${res.body.enabled}`);
+      return 0;
+    }
+    case 'enable':
+    case 'disable': {
+      if (args.length !== 1) { write(ctx.io.stdout, `Usage: openwop messaging connectors ${sub} <connectorId> [--json]\n`); return 2; }
+      const res = await requestJson(ctx, `${MESSAGING_BASE}/connectors/${encodeURIComponent(args[0])}/${sub}`, { method: 'POST', body: {} });
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      writeLine(ctx.io.stdout, `✓ Connector ${res.body.connectorId} enabled=${res.body.enabled}`);
+      return 0;
+    }
+    case 'test': {
+      if (args.length !== 1) { write(ctx.io.stdout, 'Usage: openwop messaging connectors test <connectorId> [--json]\n'); return 2; }
+      const res = await requestJson(ctx, `${MESSAGING_BASE}/connectors/${encodeURIComponent(args[0])}/test`, { method: 'POST', body: {} });
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      writeLine(ctx.io.stdout, `${res.body.ok ? '✓' : '✗'} ${res.body.connectorId}: ${res.body.detail}`);
+      return res.body.ok ? 0 : 1;
+    }
+    default:
+      throw new CliError(`Unknown connectors command: ${sub}`);
+  }
+}
+
+async function runMessagingSessions(ctx, argv) {
+  const sub = argv[0] ?? 'list';
+  const args = argv.slice(['list', 'inspect', 'close'].includes(sub) ? 1 : 0);
+  switch (sub) {
+    case 'list': {
+      const res = await requestJson(ctx, `${MESSAGING_BASE}/sessions`);
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      const sessions = Array.isArray(res.body?.sessions) ? res.body.sessions : [];
+      if (sessions.length === 0) { writeLine(ctx.io.stdout, 'No messaging sessions yet.'); return 0; }
+      writeLine(ctx.io.stdout, formatTable(
+        sessions.map((s) => ({ sessionKey: s.sessionKey, channel: s.channel, peer: s.peerDisplay ?? s.peerId, messages: String(s.messageCount), lastInboundAt: s.lastInboundAt ?? '' })),
+        ['sessionKey', 'channel', 'peer', 'messages', 'lastInboundAt'],
+      ));
+      return 0;
+    }
+    case 'inspect': {
+      if (args.length !== 1) { write(ctx.io.stdout, 'Usage: openwop messaging sessions inspect <sessionKey> [--json]\n'); return 2; }
+      const res = await requestJson(ctx, `${MESSAGING_BASE}/sessions/${encodeURIComponent(args[0])}`);
+      writeJson(ctx.io.stdout, res.body);
+      return 0;
+    }
+    case 'close': {
+      if (args.length !== 1) { write(ctx.io.stdout, 'Usage: openwop messaging sessions close <sessionKey> [--json]\n'); return 2; }
+      await requestJson(ctx, `${MESSAGING_BASE}/sessions/${encodeURIComponent(args[0])}`, { method: 'DELETE' });
+      if (ctx.json) writeJson(ctx.io.stdout, { closed: args[0] });
+      else writeLine(ctx.io.stdout, `✓ Closed session ${args[0]}`);
+      return 0;
+    }
+    default:
+      throw new CliError(`Unknown sessions command: ${sub}`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Relay device — register/activate a local channel relay, run the bridge loop.
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function runRelay(ctx, argv) {
+  const sub = argv[0];
+  if (!sub || sub === '--help' || sub === '-h') {
+    write(ctx.io.stdout, RELAY_HELP);
+    return sub ? 0 : 2;
+  }
+  const args = argv.slice(1);
+  switch (sub) {
+    case 'register': return await runRelayRegister(ctx, args);
+    case 'activate': return await runRelayActivate(ctx, args);
+    case 'setup': return await runRelaySetup(ctx, args);
+    case 'revoke': return await runRelayRevoke(ctx, args);
+    case 'send': return await runRelaySend(ctx, args);
+    case 'status': return await runRelayStatus(ctx, args);
+    case 'start': return await runRelayStart(ctx, args);
+    case 'stop': return await runRelayStop(ctx, args);
+    case 'logs': return await runRelayLogs(ctx, args);
+    default:
+      throw new CliError(`Unknown relay command: ${sub}\nRun \`openwop relay --help\` for usage.`);
+  }
+}
+
+function assertRelayChannel(channel) {
+  if (!RELAY_CHANNELS.includes(channel)) {
+    throw new CliError(`--channel must be one of: ${RELAY_CHANNELS.join(', ')}`);
+  }
+}
+
+async function runRelayRegister(ctx, argv) {
+  const { options } = parseOptions(argv, { value: ['--channel', '--name'] });
+  if (!options.channel) throw new CliError('--channel is required (one of: ' + RELAY_CHANNELS.join(', ') + ').');
+  assertRelayChannel(options.channel);
+  const body = { channel: options.channel, ...(options.name ? { deviceName: options.name } : {}) };
+  const res = await requestJson(ctx, `${MESSAGING_BASE}/relay/register`, { method: 'POST', body });
+  if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+  writeLine(ctx.io.stdout, `✓ Registered relay ${res.body.relayId} (${res.body.channel})`);
+  writeLine(ctx.io.stdout, `  Activate with: openwop relay activate --relay-id ${res.body.relayId} --code ${res.body.activationCode}`);
+  return 0;
+}
+
+async function runRelayActivate(ctx, argv) {
+  const { options } = parseOptions(argv, { value: ['--relay-id', '--code'] });
+  if (!options.relayId || !options.code) throw new CliError('--relay-id and --code are required.');
+  const res = await requestJson(ctx, `${MESSAGING_BASE}/relay/activate`, {
+    method: 'POST',
+    body: { relayId: options.relayId, activationCode: options.code },
+  });
+  saveRelayConfig(ctx, {
+    relayId: res.body.relayId,
+    channel: res.body.channel,
+    deviceToken: res.body.deviceToken,
+    tokenExpiresAt: res.body.tokenExpiresAt,
+    baseUrl: ctx.baseUrl,
+  });
+  if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+  writeLine(ctx.io.stdout, `✓ Activated relay ${res.body.relayId} — device token stored in config.`);
+  return 0;
+}
+
+async function runRelaySetup(ctx, argv) {
+  const { options } = parseOptions(argv, { value: ['--channel', '--name'] });
+  if (!options.channel) throw new CliError('--channel is required (one of: ' + RELAY_CHANNELS.join(', ') + ').');
+  assertRelayChannel(options.channel);
+  const reg = await requestJson(ctx, `${MESSAGING_BASE}/relay/register`, {
+    method: 'POST',
+    body: { channel: options.channel, ...(options.name ? { deviceName: options.name } : {}) },
+  });
+  const act = await requestJson(ctx, `${MESSAGING_BASE}/relay/activate`, {
+    method: 'POST',
+    body: { relayId: reg.body.relayId, activationCode: reg.body.activationCode },
+  });
+  saveRelayConfig(ctx, {
+    relayId: act.body.relayId,
+    channel: act.body.channel,
+    deviceToken: act.body.deviceToken,
+    tokenExpiresAt: act.body.tokenExpiresAt,
+    baseUrl: ctx.baseUrl,
+  });
+  if (ctx.json) { writeJson(ctx.io.stdout, act.body); return 0; }
+  writeLine(ctx.io.stdout, `✓ Relay ${act.body.relayId} (${act.body.channel}) registered + activated.`);
+  writeLine(ctx.io.stdout, `  Start the bridge with: openwop relay start`);
+  return 0;
+}
+
+async function runRelayRevoke(ctx, argv) {
+  const { options } = parseOptions(argv, { value: ['--relay-id'] });
+  const relayId = options.relayId ?? loadRelayConfig(ctx).relayId;
+  if (!relayId) throw new CliError('No relay to revoke. Pass --relay-id or run `openwop relay setup` first.');
+  const res = await requestJson(ctx, `${MESSAGING_BASE}/relay/revoke`, { method: 'POST', body: { relayId } });
+  if (!options.relayId) saveRelayConfig(ctx, {});
+  if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+  writeLine(ctx.io.stdout, `✓ Revoked relay ${relayId}`);
+  return 0;
+}
+
+async function runRelaySend(ctx, argv) {
+  const { options } = parseOptions(argv, { value: ['--relay-id', '--conversation', '--text', '--reply-to'] });
+  const relayId = options.relayId ?? loadRelayConfig(ctx).relayId;
+  if (!relayId) throw new CliError('No relay configured. Pass --relay-id or run `openwop relay setup` first.');
+  if (!options.conversation || !options.text) throw new CliError('--conversation and --text are required.');
+  const body = {
+    relayId,
+    conversationId: options.conversation,
+    text: options.text,
+    ...(options.replyTo ? { replyToMessageId: options.replyTo } : {}),
+  };
+  const res = await requestJson(ctx, `${MESSAGING_BASE}/relay/enqueue`, { method: 'POST', body });
+  if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+  writeLine(ctx.io.stdout, `✓ Queued egress ${res.body.egressId} → conversation ${res.body.conversationId}`);
+  return 0;
+}
+
+async function runRelayStatus(ctx, argv) {
+  const { options } = parseOptions(argv, { bool: ['--help'] });
+  if (options.help) { write(ctx.io.stdout, RELAY_HELP); return 0; }
+  const relay = loadRelayConfig(ctx);
+  if (!relay.relayId) {
+    writeLine(ctx.io.stdout, 'No relay configured. Run `openwop relay setup --channel <signal|whatsapp|imessage>`.');
+    return ctx.json ? (writeJson(ctx.io.stdout, { configured: false }), 0) : 1;
+  }
+  // A heartbeat doubles as a liveness probe against the host.
+  let online = false;
+  let detail = '';
+  try {
+    const res = await requestJson(ctx, `${MESSAGING_BASE}/device/heartbeat`, {
+      method: 'POST',
+      auth: false,
+      headers: { [DEVICE_TOKEN_HEADER]: relay.deviceToken },
+      body: { status: 'status-probe' },
+    });
+    online = res.body?.ok === true;
+  } catch (err) {
+    detail = err instanceof HttpError ? `HTTP ${err.status}` : String(err.message ?? err);
+  }
+  if (ctx.json) {
+    writeJson(ctx.io.stdout, { configured: true, relayId: relay.relayId, channel: relay.channel, online, ...(detail ? { detail } : {}) });
+    return online ? 0 : 1;
+  }
+  writeLine(ctx.io.stdout, `relayId:  ${relay.relayId}`);
+  writeLine(ctx.io.stdout, `channel:  ${relay.channel}`);
+  writeLine(ctx.io.stdout, `host:     ${relay.baseUrl ?? ctx.baseUrl}`);
+  writeLine(ctx.io.stdout, `status:   ${online ? 'online (host reachable, token valid)' : `offline${detail ? ` — ${detail}` : ''}`}`);
+  return online ? 0 : 1;
+}
+
+/**
+ * The relay bridge loop: heartbeat + poll outbound + deliver + ack. Channel
+ * delivery is pluggable via `deliver` (Phase 3 injects signal/whatsapp/imessage
+ * plugins); the default "console" delivery prints the egress, which makes the
+ * transport loop observable and testable without platform credentials.
+ */
+function relayPidPath(env) { return join(openwopHomeDir(env), 'relay.pid.json'); }
+function relayLogPath(env) { return join(openwopHomeDir(env), 'relay.log'); }
+function readRelayRecord(env) {
+  try {
+    const p = relayPidPath(env);
+    return existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : null;
+  } catch { return null; }
+}
+
+async function runRelayStart(ctx, argv) {
+  const { options } = parseOptions(argv, { bool: ['--help', '--once', '--daemon'], value: ['--interval'] });
+  if (options.help) { write(ctx.io.stdout, RELAY_HELP); return 0; }
+  const relay = loadRelayConfig(ctx);
+  if (!relay.relayId || !relay.deviceToken) {
+    throw new CliError('No relay configured. Run `openwop relay setup --channel <signal|whatsapp|imessage>` first.');
+  }
+
+  // Daemonize: re-spawn `relay start` (foreground) detached, log to a file,
+  // and record the pid. Mirrors `demo start --detach`.
+  if (options.daemon) {
+    const existing = readRelayRecord(ctx.env);
+    if (existing && processAlive(existing.pid)) {
+      throw new CliError(`Relay already running (pid ${existing.pid}). Stop it with \`openwop relay stop\`.`);
+    }
+    const logPath = relayLogPath(ctx.env);
+    const fd = openLogStream(logPath);
+    const entry = fileURLToPath(new URL('../openwop.mjs', import.meta.url));
+    const childArgs = [entry, '--base-url', relay.baseUrl ?? ctx.baseUrl, 'relay', 'start'];
+    if (options.interval) childArgs.push('--interval', String(options.interval));
+    const child = spawn(process.execPath, childArgs, {
+      cwd: ctx.cwd ?? process.cwd(),
+      env: ctx.env,
+      stdio: ['ignore', fd ?? 'ignore', fd ?? 'ignore'],
+      detached: true,
+    });
+    child.unref();
+    const record = { pid: child.pid, relayId: relay.relayId, channel: relay.channel, baseUrl: relay.baseUrl ?? ctx.baseUrl, logPath, startedAt: new Date().toISOString() };
+    mkdirSync(dirname(relayPidPath(ctx.env)), { recursive: true });
+    writeFileSync(relayPidPath(ctx.env), `${JSON.stringify(record, null, 2)}\n`, 'utf8');
+    if (ctx.json) writeJson(ctx.io.stdout, record);
+    else {
+      writeLine(ctx.io.stdout, `✓ Relay bridge started in background (pid ${child.pid}, ${relay.channel} ${relay.relayId}).`);
+      writeLine(ctx.io.stdout, `  Logs: ${logPath} — follow with \`openwop relay logs -f\`, stop with \`openwop relay stop\`.`);
+    }
+    return 0;
+  }
+  const deviceHeaders = { [DEVICE_TOKEN_HEADER]: relay.deviceToken };
+  const deliver = ctx.relayDeliver ?? makeChannelDeliver(relay.channel, ctx);
+
+  async function cycle() {
+    await requestJson(ctx, `${MESSAGING_BASE}/device/heartbeat`, {
+      method: 'POST', auth: false, headers: deviceHeaders, body: { status: 'connected' },
+    });
+    const out = await requestJson(ctx, `${MESSAGING_BASE}/device/outbound`, { auth: false, headers: deviceHeaders });
+    const messages = Array.isArray(out.body?.messages) ? out.body.messages : [];
+    const delivered = [];
+    for (const egress of messages) {
+      try { await deliver(egress); delivered.push(egress.egressId); }
+      catch (err) { writeLine(ctx.io.stderr, `delivery failed for ${egress.egressId}: ${err.message ?? err}`); }
+    }
+    if (delivered.length > 0) {
+      await requestJson(ctx, `${MESSAGING_BASE}/device/ack`, {
+        method: 'POST', auth: false, headers: deviceHeaders, body: { egressIds: delivered },
+      });
+    }
+    return delivered.length;
+  }
+
+  if (options.once) {
+    const n = await cycle();
+    if (ctx.json) writeJson(ctx.io.stdout, { delivered: n });
+    else writeLine(ctx.io.stdout, `Bridge cycle complete — delivered ${n} message(s).`);
+    return 0;
+  }
+
+  const intervalMs = Math.max(1000, (Number(options.interval) || 5) * 1000);
+  writeLine(ctx.io.stdout, `Relay bridge running for ${relay.relayId} (${relay.channel}). Poll every ${intervalMs / 1000}s. Ctrl+C to stop.`);
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    try { await cycle(); }
+    catch (err) { writeLine(ctx.io.stderr, `bridge cycle error: ${err.message ?? err}`); }
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+}
+
+async function runRelayStop(ctx, argv) {
+  const { options } = parseOptions(argv, { bool: ['--help'] });
+  if (options.help) { write(ctx.io.stdout, RELAY_HELP); return 0; }
+  const record = readRelayRecord(ctx.env);
+  if (!record || !record.pid) {
+    writeLine(ctx.io.stdout, 'No relay daemon recorded.');
+    return ctx.json ? (writeJson(ctx.io.stdout, { stopped: false }), 0) : 0;
+  }
+  let stopped = false;
+  if (processAlive(record.pid)) {
+    try { process.kill(record.pid); stopped = true; } catch { /* already gone */ }
+  }
+  try { if (existsSync(relayPidPath(ctx.env))) rmSync(relayPidPath(ctx.env)); } catch { /* best-effort */ }
+  if (ctx.json) writeJson(ctx.io.stdout, { stopped, pid: record.pid });
+  else writeLine(ctx.io.stdout, stopped ? `✓ Stopped relay daemon (pid ${record.pid}).` : `Cleared stale relay record (pid ${record.pid} was not running).`);
+  return 0;
+}
+
+async function runRelayLogs(ctx, argv) {
+  const { options } = parseOptions(argv, { bool: ['--help', '--follow', '-f'] });
+  if (options.help) { write(ctx.io.stdout, RELAY_HELP); return 0; }
+  const logPath = readRelayRecord(ctx.env)?.logPath ?? relayLogPath(ctx.env);
+  if (!existsSync(logPath)) {
+    writeLine(ctx.io.stdout, `No relay logs at ${logPath}. Start the daemon with \`openwop relay start --daemon\`.`);
+    return 0;
+  }
+  if (options.follow || options.f) {
+    // Defer to `tail -f` for follow mode (best-effort; falls back to a dump).
+    const r = spawnSync('tail', ['-f', logPath], { stdio: 'inherit' });
+    if (r.status === 0 || r.signal) return 0;
+  }
+  write(ctx.io.stdout, readFileSync(logPath, 'utf8'));
+  return 0;
+}
+
+/**
+ * Detect whether a messaging channel can run on this host. Pure-ish (only
+ * probes the environment) so doctor + relay can report readiness and fail
+ * closed rather than pretend a channel works. Phase 3 channel plugins reuse
+ * this before attempting platform I/O.
+ */
+export function detectChannelAvailability(channel, env = process.env) {
+  switch (channel) {
+    case 'signal': {
+      const probe = spawnSync('signal-cli', ['--version'], { encoding: 'utf8' });
+      if (probe.status === 0) {
+        return { channel, available: true, detail: (probe.stdout || '').trim() || 'signal-cli present' };
+      }
+      return { channel, available: false, detail: 'signal-cli not found on PATH — install signal-cli (https://github.com/AsamK/signal-cli)' };
+    }
+    case 'imessage': {
+      if ((env.OPENWOP_FORCE_PLATFORM ?? process.platform) === 'darwin') {
+        return { channel, available: true, detail: 'macOS detected — requires Messages signed in + Full Disk Access for chat.db' };
+      }
+      return { channel, available: false, detail: 'iMessage requires macOS (Messages.app + chat.db); not available on this platform' };
+    }
+    case 'whatsapp': {
+      // Baileys is a heavy native-ish dep, not bundled in the stdlib CLI; the
+      // WhatsApp plugin ships with the channel build (TS migration phase).
+      return { channel, available: false, detail: 'WhatsApp requires the @openwop/cli channel build (@whiskeysockets/baileys); not bundled in the core CLI' };
+    }
+    default:
+      return { channel, available: false, detail: `unknown channel: ${channel}` };
+  }
+}
+
+/**
+ * Build the outbound-delivery function for a channel. When the channel's
+ * platform tooling is present, deliver natively (signal-cli / AppleScript);
+ * otherwise fall back to console delivery so the bridge stays observable and
+ * never silently drops a message. Tests inject ctx.relayDeliver to bypass this.
+ */
+function makeChannelDeliver(channel, ctx) {
+  const avail = detectChannelAvailability(channel, ctx.env);
+  if (!avail.available) {
+    let warned = false;
+    return (egress) => {
+      if (!warned) { writeLine(ctx.io.stderr, `channel ${channel} unavailable (${avail.detail}); printing instead.`); warned = true; }
+      writeLine(ctx.io.stdout, `→ [${channel}] ${egress.conversationId}: ${egress.text}`);
+    };
+  }
+  if (channel === 'signal') {
+    // signal-cli send -m <text> <recipient>. conversationId is the recipient
+    // (phone number or group id) the inbound message arrived on.
+    return (egress) => {
+      const r = spawnSync('signal-cli', ['send', '-m', egress.text, egress.conversationId], { encoding: 'utf8' });
+      if (r.status !== 0) throw new Error(`signal-cli send failed: ${(r.stderr || '').trim() || r.status}`);
+    };
+  }
+  if (channel === 'imessage') {
+    // AppleScript send via Messages.app (basic text; iMessage service).
+    return (egress) => {
+      const script = `tell application "Messages" to send ${JSON.stringify(egress.text)} to buddy ${JSON.stringify(egress.conversationId)} of (service 1 whose service type is iMessage)`;
+      const r = spawnSync('osascript', ['-e', script], { encoding: 'utf8' });
+      if (r.status !== 0) throw new Error(`osascript send failed: ${(r.stderr || '').trim() || r.status}`);
+    };
+  }
+  // Should be unreachable (whatsapp reports unavailable above).
+  return (egress) => writeLine(ctx.io.stdout, `→ [${channel}] ${egress.conversationId}: ${egress.text}`);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// `openwop notifications ...` — notification inbox (sample-extension).
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function runNotifications(ctx, argv) {
+  const sub = argv[0] ?? 'list';
+  if (sub === '--help' || sub === '-h') { write(ctx.io.stdout, NOTIFICATIONS_HELP); return 0; }
+  const base = '/v1/host/sample/notifications';
+  const rest = argv.slice(1);
+  switch (sub) {
+    case 'list': {
+      const { options } = parseOptions(rest, { bool: ['--archived'], value: ['--status', '--limit'] });
+      const q = new URLSearchParams();
+      if (options.status) q.set('status', options.status);
+      if (options.archived) q.set('includeArchived', 'true');
+      if (options.limit) q.set('limit', options.limit);
+      const res = await requestJson(ctx, `${base}${q.toString() ? `?${q}` : ''}`);
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      const items = Array.isArray(res.body?.notifications) ? res.body.notifications : [];
+      if (items.length === 0) { writeLine(ctx.io.stdout, 'No notifications.'); return 0; }
+      writeLine(ctx.io.stdout, formatTable(
+        items.map((n) => ({ id: n.notificationId, status: n.status, priority: n.priority ?? '', title: n.title ?? '', createdAt: n.createdAt ?? '' })),
+        ['id', 'status', 'priority', 'title', 'createdAt'],
+      ));
+      return 0;
+    }
+    case 'read': case 'unread': case 'archive': {
+      if (rest.length !== 1) { write(ctx.io.stdout, `Usage: openwop notifications ${sub} <id> [--json]\n`); return 2; }
+      const res = await requestJson(ctx, `${base}/${encodeURIComponent(rest[0])}/${sub}`, { method: 'POST', body: {} });
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      writeLine(ctx.io.stdout, `✓ ${rest[0]} → ${res.body.status}`);
+      return 0;
+    }
+    case 'mark-all-read': {
+      const res = await requestJson(ctx, `${base}:mark-all-read`, { method: 'POST', body: {} });
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      writeLine(ctx.io.stdout, `✓ Marked ${res.body.updated} notification(s) read.`);
+      return 0;
+    }
+    case 'delete': case 'rm': {
+      if (rest.length !== 1) { write(ctx.io.stdout, 'Usage: openwop notifications delete <id> [--json]\n'); return 2; }
+      const res = await requestJson(ctx, `${base}/${encodeURIComponent(rest[0])}`, { method: 'DELETE' });
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      writeLine(ctx.io.stdout, `✓ Deleted ${rest[0]}`);
+      return 0;
+    }
+    default:
+      throw new CliError(`Unknown notifications command: ${sub}\nRun \`openwop notifications --help\` for usage.`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// `openwop interrupts ...` — list open interrupts for a run; resolve by token.
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function runInterrupts(ctx, argv) {
+  const sub = argv[0];
+  if (!sub || sub === '--help' || sub === '-h') { write(ctx.io.stdout, INTERRUPTS_HELP); return sub ? 0 : 2; }
+  const rest = argv.slice(1);
+  switch (sub) {
+    case 'list': {
+      if (rest.length !== 1) { write(ctx.io.stdout, 'Usage: openwop interrupts list <runId> [--json]\n'); return 2; }
+      const res = await requestJson(ctx, `/v1/host/sample/runs/${encodeURIComponent(rest[0])}/interrupts`);
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      const items = Array.isArray(res.body?.interrupts) ? res.body.interrupts : [];
+      if (items.length === 0) { writeLine(ctx.io.stdout, `No open interrupts for run ${rest[0]}.`); return 0; }
+      writeLine(ctx.io.stdout, formatTable(
+        items.map((i) => ({ nodeId: i.nodeId, kind: i.kind, token: i.token, createdAt: i.createdAt ?? '' })),
+        ['nodeId', 'kind', 'token', 'createdAt'],
+      ));
+      return 0;
+    }
+    case 'resolve': {
+      const { options, positionals } = parseOptions(rest, { value: ['--data-json'] });
+      if (positionals.length !== 1) { write(ctx.io.stdout, "Usage: openwop interrupts resolve <token> [--data-json '{...}'] [--json]\n"); return 2; }
+      let body = {};
+      if (options.dataJson) {
+        try { body = JSON.parse(options.dataJson); } catch { throw new CliError('--data-json must be valid JSON.'); }
+      }
+      const res = await requestJson(ctx, `/v1/interrupts/${encodeURIComponent(positionals[0])}`, { method: 'POST', body });
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      writeLine(ctx.io.stdout, `✓ Resolved interrupt — run ${res.body.runId} node ${res.body.nodeId} (${res.body.status ?? 'running'})`);
+      return 0;
+    }
+    default:
+      throw new CliError(`Unknown interrupts command: ${sub}\nRun \`openwop interrupts --help\` for usage.`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// `openwop prompts ...` — prompt-library list/get/render (RFC 0029).
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function runPrompts(ctx, argv) {
+  const sub = argv[0] ?? 'list';
+  if (sub === '--help' || sub === '-h') { write(ctx.io.stdout, PROMPTS_HELP); return 0; }
+  const rest = argv.slice(1);
+  switch (sub) {
+    case 'list': {
+      const { options } = parseOptions(rest, { value: ['--kind', '--tag', '--limit'] });
+      const q = new URLSearchParams();
+      if (options.kind) q.set('kind', options.kind);
+      if (options.tag) q.set('tag', options.tag);
+      if (options.limit) q.set('limit', options.limit);
+      const res = await requestJson(ctx, `/v1/prompts${q.toString() ? `?${q}` : ''}`);
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      const items = Array.isArray(res.body?.items) ? res.body.items : [];
+      if (items.length === 0) { writeLine(ctx.io.stdout, 'No prompt templates.'); return 0; }
+      writeLine(ctx.io.stdout, formatTable(
+        items.map((t) => ({ templateId: t.templateId, kind: t.kind ?? '', modelClass: t.modelClass ?? '', source: t.source ?? '' })),
+        ['templateId', 'kind', 'modelClass', 'source'],
+      ));
+      return 0;
+    }
+    case 'get': {
+      if (rest.length !== 1) { write(ctx.io.stdout, 'Usage: openwop prompts get <templateId> [--json]\n'); return 2; }
+      const res = await requestJson(ctx, `/v1/prompts/${encodeURIComponent(rest[0])}`);
+      writeJson(ctx.io.stdout, res.body);
+      return 0;
+    }
+    case 'render': {
+      const { options, positionals } = parseOptions(rest, { value: ['--variables-json'] });
+      if (positionals.length !== 1) { write(ctx.io.stdout, "Usage: openwop prompts render <ref> [--variables-json '{...}'] [--json]\n"); return 2; }
+      let variables = {};
+      if (options.variablesJson) {
+        try { variables = JSON.parse(options.variablesJson); } catch { throw new CliError('--variables-json must be valid JSON.'); }
+      }
+      const res = await requestJson(ctx, '/v1/prompts:render', { method: 'POST', body: { ref: positionals[0], variables } });
+      writeJson(ctx.io.stdout, res.body);
+      return 0;
+    }
+    default:
+      throw new CliError(`Unknown prompts command: ${sub}\nRun \`openwop prompts --help\` for usage.`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Config file + path utilities
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -3739,6 +4394,20 @@ Commands:
   cron add            Schedule a cron job
   cron remove         Delete a scheduled job
   cron trigger        Fire a scheduled job once now
+  messaging connectors  Manage messaging relay connectors
+  messaging sessions  List/inspect/close messaging sessions
+  relay setup         Register + activate a local channel relay
+  relay start         Run the relay bridge loop (--daemon to background)
+  relay stop          Stop the background relay daemon
+  relay logs          Print/follow the relay daemon log
+  relay send          Queue an outbound message for a relay
+  relay status        Probe the relay device token against the host
+  notifications list  List notification inbox entries (tenant-scoped)
+  notifications read  Mark a notification read/unread/archived
+  interrupts list     List a run's open (HITL) interrupts
+  interrupts resolve  Resolve an interrupt by token
+  prompts list        Browse the host prompt library
+  prompts render      Render a prompt template with variables
   media generate-image  Generate an image via the demo media route (stubbed)
   media transcribe    Transcribe an audio file (stubbed)
   media synthesize    Synthesize speech from text (stubbed)
@@ -4082,4 +4751,71 @@ surface — not part of the normative OpenWOP wire contract.
   trigger  Fires the job once now. Honors RFC 0052 §B.2 fire-once-per-tick: a
            single trigger advances the scheduler clock one tick and produces
            exactly one run.
+`;
+
+const MESSAGING_HELP = `Usage:
+  openwop messaging connectors list|get|add|enable|disable|test [...]
+  openwop messaging sessions   list|inspect|close [...]
+
+Operate the demo host's messaging relay-gateway (/v1/host/sample/messaging) —
+a host-extension surface, NOT part of the normative OpenWOP wire contract.
+
+  connectors add --channel <signal|whatsapp|imessage> [--display-name n]
+  connectors enable|disable|test <connectorId>
+  sessions inspect|close <sessionKey>
+
+Register a local channel relay with \`openwop relay setup\`.
+`;
+
+const RELAY_HELP = `Usage:
+  openwop relay setup --channel <signal|whatsapp|imessage> [--name n]
+  openwop relay register --channel <ch> [--name n]
+  openwop relay activate --relay-id <id> --code <activationCode>
+  openwop relay status
+  openwop relay send --conversation <id> --text <msg> [--relay-id <id>]
+  openwop relay start [--daemon] [--once] [--interval <seconds>]
+  openwop relay stop
+  openwop relay logs [-f]
+  openwop relay revoke [--relay-id <id>]
+
+The relay device owns the platform connection (signal-cli / WhatsApp / iMessage)
+and bridges it to the OpenWOP host. \`setup\` registers + activates a device and
+stores its token in ~/.openwop/config.json under \`relay\`.
+
+  start   Runs the bridge loop: heartbeat + poll outbound + deliver + ack.
+          --daemon backgrounds it (pid + logs under ~/.openwop/); --once runs a
+          single cycle (e.g. in tests). Native delivery via signal-cli /
+          AppleScript when present, else printed to the console.
+  stop    Stops the background relay daemon and clears its pid record.
+  logs    Print (or -f follow) the background relay daemon log.
+  send    Operator-side: queue an outbound message for the relay to deliver.
+  status  Probes the host with a heartbeat to confirm the token is live.
+`;
+
+const NOTIFICATIONS_HELP = `Usage:
+  openwop notifications list [--status <s>] [--archived] [--limit n] [--json]
+  openwop notifications read|unread|archive <id> [--json]
+  openwop notifications mark-all-read [--json]
+  openwop notifications delete <id> [--json]
+
+Operate the demo notification inbox (/v1/host/sample/notifications) — a
+sample-extension surface, tenant-scoped, not part of the normative wire.
+`;
+
+const INTERRUPTS_HELP = `Usage:
+  openwop interrupts list <runId> [--json]
+  openwop interrupts resolve <token> [--data-json '{...}'] [--json]
+
+List a run's open interrupts (human-in-the-loop / approval pauses) and resolve
+one by its capability token. \`--data-json\` is the resume payload (validated
+against the interrupt's resumeSchema by the host).
+`;
+
+const PROMPTS_HELP = `Usage:
+  openwop prompts list [--kind k] [--tag t] [--limit n] [--json]
+  openwop prompts get <templateId> [--json]
+  openwop prompts render <ref> [--variables-json '{...}'] [--json]
+
+Browse + render the host's prompt library (RFC 0029, /v1/prompts). \`render\`
+resolves a PromptRef (templateId[@version]) against the supplied variables.
 `;

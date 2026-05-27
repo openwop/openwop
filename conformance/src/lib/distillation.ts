@@ -4,16 +4,13 @@
  * via `../lib/distillation.js`.
  */
 import { driver } from './driver.js';
+import { readCapabilityFamily } from './discovery-capabilities.js';
 
-interface DiscoveryDoc {
-  capabilities?: { memory?: { distillation?: Record<string, unknown> } };
-}
-
-/** Reads `capabilities.memory.distillation` from discovery; null when the host
- *  advertises no distillation sub-block (treated as no support). */
+/** Reads `memory.distillation` from discovery (root-first per RFC 0073); null
+ *  when the host advertises no distillation sub-block (treated as no support). */
 export async function readDistillationCap(): Promise<Record<string, unknown> | null> {
-  const res = await driver.get('/.well-known/openwop');
-  const d = (res.json as DiscoveryDoc | undefined)?.capabilities?.memory?.distillation;
+  const memory = await readCapabilityFamily<{ distillation?: unknown }>('memory');
+  const d = memory?.distillation;
   return d && typeof d === 'object' ? (d as Record<string, unknown>) : null;
 }
 

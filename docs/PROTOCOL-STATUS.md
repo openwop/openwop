@@ -12,7 +12,7 @@
 | OpenAPI operations | 39 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 284 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 72 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 73 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
 
@@ -24,15 +24,15 @@
 |---|---:|
 | Accepted | 56 |
 | Active | 6 |
-| Draft | 10 |
+| Draft | 11 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
+| RFC 0073 | Capability families are document-root properties of `/.well-known/openwop` | Draft |
 | RFC 0072 | Agent Inventory + Dispatch Normative Surface | Draft |
 | RFC 0071 | Artifact-Type Packs and AI Chat Card Packs | Active |
 | RFC 0070 | Agent Manifest Runtime Capability (`agents.manifestRuntime`) | Accepted |
 | RFC 0069 | A normative carve-out: arbitrary-command (`exec`-class) execution MUST NOT be a protocol-tier capability - it lives only in named host-extension scopes (`x-host-<vendor>-exec`) whose safety controls the host owns end-to-end. Codifies an existing exclusion; no host wire shape changes. | Draft |
-| RFC 0068 | Background memory consolidation (merge/dedup/strengthen of long-term entries) + inferred standing commitments - two additive optional capabilities (`agents.memoryConsolidation` + `agents.commitments`) with their own content-free observability events (`agent.memory.consolidated` + `commitment.fired`), distinct from RFC 0062 token-budgeted distillation | Draft |
 
 ## SDK Helper Coverage
 
@@ -72,7 +72,7 @@
 
 ## Active Follow-Ups
 
-- 10 RFCs still `Draft` (RFC 0038, RFC 0042, RFC 0043, RFC 0050, RFC 0065, RFC 0066, RFC 0067, RFC 0068, RFC 0069, RFC 0072) — advance with schema/conformance proof or defer.
+- 11 RFCs still `Draft` (RFC 0038, RFC 0042, RFC 0043, RFC 0050, RFC 0065, RFC 0066, RFC 0067, RFC 0068, RFC 0069, RFC 0072, RFC 0073) — advance with schema/conformance proof or defer.
 - 6 RFCs `Active` (RFC 0025, RFC 0035, RFC 0036, RFC 0054, RFC 0056, RFC 0071) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
