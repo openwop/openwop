@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/vendor.myndhyve.brand/1.0.0/theme.analyze.output.json",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.brand/1.1.0/theme.analyze.output.json",
   "title": "theme.analyzeOutput",
   "type": "object",
   "required": ["envelopeType", "payload"],
