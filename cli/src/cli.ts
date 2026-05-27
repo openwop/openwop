@@ -168,6 +168,10 @@ export async function runCli(argv: string[], options: any = {}): Promise<number>
         return await runPrompts(ctx, commandArgs);
       case 'notify':
         return await runNotify(ctx, commandArgs);
+      case 'account':
+        return await runAccount(ctx, commandArgs);
+      case 'admin':
+        return await runAdmin(ctx, commandArgs);
       default:
         throw new CliError(`Unknown command: ${command}\nRun \`openwop --help\` for usage.`);
     }
@@ -226,6 +230,8 @@ function showHelp(io, command) {
     prompts: PROMPTS_HELP,
     prompt: PROMPTS_HELP,
     notify: NOTIFY_HELP,
+    account: ACCOUNT_HELP,
+    admin: ADMIN_HELP,
   };
   write(io.stdout, map[command] ?? ROOT_HELP);
   return 0;
@@ -2770,6 +2776,64 @@ async function runNotify(ctx: Ctx, argv) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// account — tenant self-service (hard-delete all data for the signed-in user).
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function runAccount(ctx: Ctx, argv) {
+  const sub = argv[0];
+  if (!sub || sub === '--help' || sub === '-h') {
+    write(ctx.io.stdout, ACCOUNT_HELP);
+    return sub ? 0 : 2;
+  }
+  if (sub !== 'delete') throw new CliError(`Unknown account command: ${sub}\nRun \`openwop account --help\` for usage.`);
+
+  const { options } = parseOptions(argv.slice(1), { bool: ['--confirm', '--yes'] });
+  // Destructive + irreversible: wipes ALL data for the signed-in tenant and
+  // orphans the KMS-wrapped DEKs. Require an explicit confirmation.
+  if (!options.confirm && !options.yes) {
+    const ok = await promptYesNo(ctx, 'Permanently delete ALL data for the signed-in account? This cannot be undone.', false);
+    if (!ok) { writeLine(ctx.io.stdout, 'Aborted.'); return 1; }
+  }
+  const res = await requestJson(ctx, '/v1/host/sample/account', { method: 'DELETE' });
+  if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+  const counts = Object.entries(res.body).filter(([k]) => k !== 'deleted').map(([k, v]) => `${k}=${v}`).join(' ');
+  writeLine(ctx.io.stdout, `✓ Account deleted${counts ? ` (${counts})` : ''}`);
+  return 0;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// admin — operator maintenance (ephemeral-secret cleanup). Admin-token gated:
+// pass the host's OPENWOP_ADMIN_TOKEN via --api-key.
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function runAdmin(ctx: Ctx, argv) {
+  const sub = argv[0];
+  if (!sub || sub === '--help' || sub === '-h') {
+    write(ctx.io.stdout, ADMIN_HELP);
+    return sub ? 0 : 2;
+  }
+  if (sub !== 'cleanup') throw new CliError(`Unknown admin command: ${sub}\nRun \`openwop admin --help\` for usage.`);
+
+  const { options } = parseOptions(argv.slice(1), { bool: ['--status', '--confirm', '--yes'] });
+  if (options.status) {
+    const res = await requestJson(ctx, '/v1/host/sample/admin/cleanup/status');
+    if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+    const oldest = res.body.oldestActivityMs == null ? 'n/a' : `${Math.round(res.body.oldestActivityMs / 1000)}s ago`;
+    writeLine(ctx.io.stdout, `trackedTenants=${res.body.trackedTenants} oldestActivity=${oldest}`);
+    return 0;
+  }
+  // The POST wipes expired ephemeral secrets for inactive tenants — confirm.
+  if (!options.confirm && !options.yes) {
+    const ok = await promptYesNo(ctx, 'Run cleanup now? This wipes ephemeral secrets for tenants idle past the window.', false);
+    if (!ok) { writeLine(ctx.io.stdout, 'Aborted.'); return 1; }
+  }
+  const res = await requestJson(ctx, '/v1/host/sample/admin/cleanup', { method: 'POST', body: {} });
+  if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+  writeLine(ctx.io.stdout, `✓ Cleanup ran — activeTenants=${res.body.activeTenants} wipedSecrets=${res.body.wipedSecrets} window=${Math.round((res.body.windowMs ?? 0) / 3_600_000)}h`);
+  return 0;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Relay device — register/activate a local channel relay, run the bridge loop.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -3301,6 +3365,8 @@ Commands:
   messaging identity  Link platform peers into one cross-channel identity
   messaging logs      Query the messaging delivery log
   notify email|sms    Dispatch a one-off email/SMS notification
+  account delete      Permanently delete all data for the signed-in account
+  admin cleanup       Wipe expired ephemeral secrets (--status for read-only)
   relay setup         Register + activate a local channel relay
   relay start         Run the relay bridge loop (--daemon to background)
   relay stop          Stop the background relay daemon
@@ -3611,6 +3677,27 @@ const NOTIFY_HELP = `Usage:
 Dispatch a one-off notification through the demo host
 (/v1/host/sample/messaging/notify). The reference app returns a synthetic
 receipt; wiring a real provider (SES / Twilio) is a host concern.
+`;
+
+const ACCOUNT_HELP = `Usage:
+  openwop account delete [--confirm] [--json]
+
+Permanently delete ALL data for the signed-in account (DELETE
+/v1/host/sample/account). Requires a signed-in user (OIDC Bearer) — the host
+rejects non-user principals. This is irreversible: tenant rows are wiped and
+the KMS-wrapped DEKs become unrecoverable. Without --confirm you'll be asked
+to confirm interactively.
+`;
+
+const ADMIN_HELP = `Usage:
+  openwop admin cleanup [--confirm] [--json]
+  openwop admin cleanup --status [--json]
+
+Operator maintenance for the demo host. \`cleanup\` POSTs to
+/v1/host/sample/admin/cleanup, wiping ephemeral secrets for tenants idle past
+the cleanup window; \`--status\` is a read-only liveness probe. Admin-token
+gated — pass the host's OPENWOP_ADMIN_TOKEN via --api-key. Without --confirm
+the destructive POST asks for confirmation.
 `;
 
 const RELAY_HELP = `Usage:

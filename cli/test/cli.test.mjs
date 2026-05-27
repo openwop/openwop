@@ -299,6 +299,62 @@ describe('runs events / annotations / debug-bundle', () => {
   });
 });
 
+describe('account / admin commands', () => {
+  function ctxOpts(cap, fetchImpl, extra = {}) {
+    return { io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {}, ...extra };
+  }
+
+  it('account delete --confirm issues a DELETE and reports counts', async () => {
+    const cap = capture();
+    let method;
+    const fetchImpl = async (url, init) => {
+      assert.equal(new URL(url).pathname, '/v1/host/sample/account');
+      method = init?.method;
+      return new Response(JSON.stringify({ deleted: true, runs: 3, secrets: 1 }), { status: 200 });
+    };
+    const code = await runCli(['account', 'delete', '--confirm'], ctxOpts(cap, fetchImpl));
+    assert.equal(code, 0, cap.stderr);
+    assert.equal(method, 'DELETE');
+    assert.match(cap.stdout, /Account deleted .*runs=3/);
+  });
+
+  it('account rejects an unknown subcommand', async () => {
+    const cap = capture();
+    const code = await runCli(['account', 'frobnicate'], ctxOpts(cap, async () => { throw new Error('no fetch'); }));
+    assert.equal(code, 2);
+    assert.match(cap.stderr, /Unknown account command/);
+  });
+
+  it('admin cleanup --status is read-only (GET)', async () => {
+    const cap = capture();
+    let method, path;
+    const fetchImpl = async (url, init) => {
+      path = new URL(url).pathname;
+      method = init?.method ?? 'GET';
+      return new Response(JSON.stringify({ ok: true, trackedTenants: 4, oldestActivityMs: 5000 }), { status: 200 });
+    };
+    const code = await runCli(['admin', 'cleanup', '--status'], ctxOpts(cap, fetchImpl));
+    assert.equal(code, 0, cap.stderr);
+    assert.equal(path, '/v1/host/sample/admin/cleanup/status');
+    assert.equal(method, 'GET');
+    assert.match(cap.stdout, /trackedTenants=4 oldestActivity=5s ago/);
+  });
+
+  it('admin cleanup --confirm POSTs and reports the wipe', async () => {
+    const cap = capture();
+    let method;
+    const fetchImpl = async (url, init) => {
+      assert.equal(new URL(url).pathname, '/v1/host/sample/admin/cleanup');
+      method = init?.method;
+      return new Response(JSON.stringify({ ok: true, activeTenants: 2, wipedSecrets: 7, windowMs: 86400000 }), { status: 200 });
+    };
+    const code = await runCli(['admin', 'cleanup', '--confirm'], ctxOpts(cap, fetchImpl));
+    assert.equal(code, 0, cap.stderr);
+    assert.equal(method, 'POST');
+    assert.match(cap.stdout, /Cleanup ran — activeTenants=2 wipedSecrets=7 window=24h/);
+  });
+});
+
 describe('media commands', () => {
   it('generate-image POSTs the prompt and prints the stub asset table', async () => {
     const cap = capture();
