@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0070 |
 | **Title** | Agent Manifest Runtime Capability (`agents.manifestRuntime`) |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-26 |
-| **Updated** | 2026-05-26 (Draft → Active: the wire surface — `capabilities.agents.manifestRuntime` flag + cross-ref fix + degradation prose — landed atomically (#268); the reference **workflow-engine** host implements + advertises it and dispatches a manifest agent end-to-end; steward waived the 7-day comment window. `Active → Accepted` awaits a non-steward host advertising `agents.manifestRuntime`.) |
+| **Updated** | 2026-05-27 (**Active → Accepted**: the non-steward **MyndHyve workflow-runtime** serves `agents.manifestRuntime: { supported: true, handoffValidation: true }` end-to-end in production — Cloud Run revision `workflow-runtime-00394-jun` at 100% traffic — with the inventory seam returning the installed agent and the dispatch seam completing with `toolSurface` filtered to the allowlist (`['read_file']`, §A14) and emitting attributed `agent.reasoned` + `agent.decided`; existing `dispatch`/`orchestrator` flags + the parallel RFC 0071 `host.artifactTypes` carried forward (no rollback). **Caveat:** the published conformance scenario soft-skips against MyndHyve due to a pre-existing discovery-layout divergence (the suite + reference host read `discoveryDoc.capabilities.agents.*`; MyndHyve serves `agents` at the document root per `capabilities.schema.json`'s root placement) — a maintainer-level reconciliation tracked separately, not specific to RFC 0070. Earlier 2026-05-26: Draft → Active when the wire surface landed (#268) + steward comment-window waiver.) |
 | **Affects** | `schemas/capabilities.schema.json`, `spec/v1/host-capabilities.md`, `spec/v1/node-packs.md`, `conformance/src/scenarios/agent-manifest-runtime.test.ts`, `CHANGELOG.md`, `INTEROP-MATRIX.md` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` |
 | **Supersedes** | — |

@@ -11,6 +11,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.5 — unreleased]
 
+### docs(rfc-0070): graduate Active → Accepted on MyndHyve production adoption (2026-05-27)
+
+The non-steward **MyndHyve workflow-runtime** serves `capabilities.agents.manifestRuntime: { supported: true, handoffValidation: true }` end-to-end in production (Cloud Run rev `workflow-runtime-00394-jun`, 100% traffic): inventory seam returns the installed agent; dispatch seam completes with `toolSurface` allowlist-filtered (§A14) + attributed `agent.reasoned`/`agent.decided`; existing flags + RFC 0071 `host.artifactTypes` carried forward (no rollback). That meets RFC 0070's `Active → Accepted` gate (non-steward host advertises + dispatches end-to-end). RFC 0070 Status → `Accepted`; README Accepted 55 → 56 / Active 7 → 6; PROTOCOL-STATUS regenerated; INTEROP-MATRIX §"RFC 0070" records the evidence.
+
+**Caveat (tracked, not a defect):** the published conformance scenario *soft-skips* against MyndHyve due to a pre-existing discovery-layout divergence — the suite helper + reference host read `discoveryDoc.capabilities.agents.*` (nested), but `capabilities.schema.json` places `agents` at the document root (no `capabilities` wrapper; `additionalProperties: true`), which is where MyndHyve serves it. The Accepted gate is met in substance (manually verified). The spec-correct fix is openwop-side (align the conformance helpers + reference-host discovery to the schema's root placement) and spans the whole `agents.*` family — a maintainer-level reconciliation, NOT done here. See INTEROP-MATRIX §"RFC 0070" ⚠️ note.
+
 ### fix(app,sdk): RFC 0072 code-review follow-ups (2026-05-27)
 
 Implementation-only polish from the senior code review of #272 (no spec/schema/wire change):
