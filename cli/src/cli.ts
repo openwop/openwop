@@ -71,7 +71,8 @@ export const HOST_PRESETS = [
 ];
 
 class CliError extends Error {
-  constructor(message, code = 2) {
+  code: number;
+  constructor(message: string, code = 2) {
     super(message);
     this.name = 'CliError';
     this.code = code;
@@ -79,7 +80,9 @@ class CliError extends Error {
 }
 
 class HttpError extends Error {
-  constructor(message, status, body) {
+  status: number;
+  body: unknown;
+  constructor(message: string, status: number, body: unknown) {
     super(message);
     this.name = 'HttpError';
     this.status = status;
@@ -87,7 +90,7 @@ class HttpError extends Error {
   }
 }
 
-export async function runCli(argv, options = {}) {
+export async function runCli(argv: string[], options: any = {}): Promise<number> {
   const io = options.io ?? {
     stdout: process.stdout,
     stderr: process.stderr,
@@ -203,8 +206,8 @@ export async function runCli(argv, options = {}) {
       return err.code;
     }
     if (err instanceof HttpError) {
-      const bodyMessage = err.body && typeof err.body === 'object' && typeof err.body.message === 'string'
-        ? `: ${err.body.message}`
+      const bodyMessage = err.body && typeof err.body === 'object' && typeof (err.body as any).message === 'string'
+        ? `: ${(err.body as any).message}`
         : '';
       writeLine(io.stderr, `openwop: HTTP ${err.status}${bodyMessage}`);
       if (options.debugErrors) writeLine(io.stderr, String(err.stack ?? err));
@@ -269,11 +272,14 @@ export function extractGlobalOptions(argv, env = process.env) {
   return { globals, args };
 }
 
-function parseOptions(argv, spec = {}) {
+function parseOptions(
+  argv: string[],
+  spec: { bool?: string[]; value?: string[]; multi?: string[] } = {},
+): { options: Record<string, any>; positionals: string[] } {
   const bools = new Set(spec.bool ?? []);
   const values = new Set(spec.value ?? []);
   const multi = new Set(spec.multi ?? []);
-  const options = {};
+  const options: Record<string, any> = {};
   const positionals = [];
 
   for (let i = 0; i < argv.length; i++) {
@@ -460,7 +466,7 @@ async function runDoctor(ctx, argv) {
   return checks.some((c) => c.status === 'fail') ? 1 : 0;
 }
 
-async function runDemo(ctx, argv) {
+async function runDemo(ctx: any, argv: string[]): Promise<number> {
   const sub = argv[0];
   const args = argv.slice(1);
   if (!sub || sub === '--help' || sub === '-h') {
@@ -487,7 +493,7 @@ async function runDemo(ctx, argv) {
   }
 }
 
-async function runDemoStatus(ctx, argv) {
+async function runDemoStatus(ctx: any, argv: string[]): Promise<number> {
   const { options } = parseOptions(argv, { bool: ['--help'] });
   if (options.help) {
     write(ctx.io.stdout, DEMO_STATUS_HELP);
@@ -564,7 +570,7 @@ async function runDemoUrls(ctx, argv) {
   return 0;
 }
 
-async function runDemoStart(ctx, argv) {
+async function runDemoStart(ctx: any, argv: string[]): Promise<number> {
   const { options } = parseOptions(argv, {
     bool: ['--help', '--backend-only', '--frontend-only', '--install', '--dry-run', '--detach'],
     value: ['--backend-port', '--frontend-port'],
@@ -704,7 +710,7 @@ async function runDemoStart(ctx, argv) {
   process.once('SIGINT', stop);
   process.once('SIGTERM', stop);
 
-  const exitCode = await new Promise((resolve) => {
+  const exitCode = await new Promise<number>((resolve) => {
     let settled = false;
     for (const { label, child } of children) {
       child.on('exit', (code, signal) => {
@@ -720,7 +726,7 @@ async function runDemoStart(ctx, argv) {
   return exitCode;
 }
 
-async function runDemoStop(ctx, argv) {
+async function runDemoStop(ctx: any, argv: string[]): Promise<number> {
   const { options } = parseOptions(argv, {
     bool: ['--help', '--force'],
     value: ['--timeout-ms'],
@@ -767,7 +773,7 @@ async function runDemoStop(ctx, argv) {
   return 0;
 }
 
-async function runDemoRestart(ctx, argv) {
+async function runDemoRestart(ctx: any, argv: string[]): Promise<number> {
   const { options } = parseOptions(argv, {
     bool: ['--help'],
     value: ['--backend-port'],
@@ -787,7 +793,7 @@ async function runDemoRestart(ctx, argv) {
   return runDemoStart(ctx, startArgs);
 }
 
-async function runDemoLogs(ctx, argv) {
+async function runDemoLogs(ctx: any, argv: string[]): Promise<number> {
   const { options } = parseOptions(argv, {
     bool: ['--help', '--follow'],
     value: ['--lines'],
@@ -1834,7 +1840,7 @@ export async function submitTurn(ctx, { workflowId, inputs, tenantId, scopeId })
  * Calls `onEvent(eventRecord)` once per event in sequence order and resolves
  * when a terminal event is seen or the poll endpoint reports completion.
  */
-export async function streamRunEvents(ctx, runId, { onEvent, useStream = true, timeoutMs = 120000 } = {}) {
+export async function streamRunEvents(ctx: any, runId: string, { onEvent, useStream = true, timeoutMs = 120000 }: { onEvent?: (e: any) => void; useStream?: boolean; timeoutMs?: number } = {}) {
   if (useStream) {
     try {
       const handled = await streamViaSse(ctx, runId, onEvent);
@@ -1848,7 +1854,7 @@ export async function streamRunEvents(ctx, runId, { onEvent, useStream = true, t
 
 async function streamViaSse(ctx, runId, onEvent) {
   const url = new URL(`/v1/runs/${encodeURIComponent(runId)}/events`, ctx.baseUrl);
-  const headers = { accept: 'text/event-stream' };
+  const headers: Record<string, string> = { accept: 'text/event-stream' };
   if (ctx.apiKey) headers.authorization = `Bearer ${ctx.apiKey}`;
   const res = await ctx.fetchImpl(url, { method: 'GET', headers });
   if (!res.ok) throw new HttpError(`HTTP ${res.status}`, res.status, null);
@@ -1881,7 +1887,7 @@ export async function consumeSse(stream, onFrame) {
   let buffer = '';
   const flushFrame = (block) => {
     if (!block.trim()) return;
-    const frame = {};
+    const frame: Record<string, string> = {};
     const dataLines = [];
     for (const rawLine of block.split('\n')) {
       const line = rawLine.replace(/\r$/, '');
@@ -2069,8 +2075,8 @@ async function runRunsAncestry(ctx, argv) {
     } catch (err) {
       if (err instanceof HttpError && err.status === 404) {
         // Distinguish "endpoint not enabled" from "run not found" via the body.
-        const detail = err.body && typeof err.body === 'object' && typeof err.body.message === 'string'
-          ? err.body.message
+        const detail = err.body && typeof err.body === 'object' && typeof (err.body as any).message === 'string'
+          ? (err.body as any).message
           : 'not found';
         throw new CliError(`runs ancestry unavailable: ${detail} (the ancestry endpoint is opt-in; the host must advertise crossHostCausation.ancestryEndpointSupported).`, 2);
       }
@@ -2883,7 +2889,7 @@ async function runAgentsRun(ctx, argv) {
     return options.help ? 0 : 2;
   }
   const agentId = positionals[0];
-  const body = {};
+  const body: Record<string, any> = {};
   if (options['task-json'] !== undefined) {
     try {
       body.task = JSON.parse(options['task-json']);
@@ -4067,7 +4073,7 @@ async function promptChoice(ctx, label, choices) {
   return choices[idx].key;
 }
 
-async function promptText(ctx, prompt, defaultValue = '') {
+async function promptText(ctx: any, prompt: string, defaultValue = ''): Promise<string> {
   ctx.io.stdout.write(prompt);
   const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: false });
   return new Promise((resolve) => {
@@ -4155,9 +4161,9 @@ async function waitForRun(ctx, runId, timeoutMs) {
   throw new CliError(`Timed out waiting for run ${runId} after ${timeoutMs}ms`, 1);
 }
 
-async function requestJson(ctx, path, options = {}) {
+async function requestJson(ctx: any, path: string, options: any = {}) {
   const url = new URL(path, ctx.baseUrl);
-  const headers = {
+  const headers: Record<string, string> = {
     accept: 'application/json',
     ...(options.body !== undefined ? { 'content-type': 'application/json' } : {}),
     ...(options.headers ?? {}),

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { runCli } from '../lib/cli.mjs';
+import { runCli } from '../dist/cli.js';
 
 function capture() {
   let stdout = '';

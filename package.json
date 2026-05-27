@@ -5,13 +5,14 @@
   "description": "OpenWOP v1.0 protocol specification corpus and release tooling.",
   "license": "Apache-2.0",
   "bin": {
-    "openwop": "cli/openwop.mjs"
+    "openwop": "cli/dist/openwop.js"
   },
   "scripts": {
-    "cli": "node cli/openwop.mjs",
-    "cli:test": "node --test cli/test/*.test.mjs",
-    "demo:doctor": "node cli/openwop.mjs doctor",
-    "demo:start": "node cli/openwop.mjs demo start",
+    "cli:build": "npm --prefix cli install --no-audit --no-fund --silent && npm --prefix cli run build",
+    "cli": "npm run cli:build && node cli/dist/openwop.js",
+    "cli:test": "npm run cli:build && node --test cli/test/*.test.mjs",
+    "demo:doctor": "npm run cli:build && node cli/dist/openwop.js doctor",
+    "demo:start": "npm run cli:build && node cli/dist/openwop.js demo start",
     "protocol:status": "node scripts/generate-protocol-status.mjs --write",
     "protocol:status:check": "node scripts/generate-protocol-status.mjs --check",
     "openwop:check": "bash scripts/openwop-check.sh",
