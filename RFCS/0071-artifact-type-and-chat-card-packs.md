@@ -9,6 +9,8 @@
 | **Created** | 2026-05-26 |
 | **Updated** | 2026-05-26 |
 
+> **Phase 1 ACCEPTED (2026-05-27).** RFC 0071 **Phase 1 (artifact-type packs) graduated to `Accepted`** on MyndHyve's production adoption — the first non-steward host to advertise + honor `host.artifactTypes`. Steward-curl-verified at `https://api.myndhyve.ai/.well-known/openwop` (2026-05-27, revision `workflow-runtime-00396-cuj`): `capabilities["host.artifactTypes"]: {supported,store,render,export}` is served **unconditionally** (env gate dropped) with all 16 `vendor.myndhyve.*` `schemaVersions`, backed by a live `WorkflowNode.artifactType` validate-before-emit binding; the install + store-without-render + manifest-validation + bounded-compile conformance scenarios pass. [`spec/v1/artifact-type-packs.md`](../spec/v1/artifact-type-packs.md) is promoted DRAFT → FINAL; the R1 `artifact-schema-compile-bounded` invariant is enforced. **The RFC's overall `Status` stays `Active` because Phase 2 (chat card packs, `kind: "card"`) remains `Draft`** (gated on R2 + G9). Evidence: [`docs/openwop-adoption/0071-artifact-type-packs-myndhyve-adoption-evidence.md`](../docs/openwop-adoption/0071-artifact-type-packs-myndhyve-adoption-evidence.md).
+>
 > **Promotion note (2026-05-26):** Maintainer **waived the 7-day comment window** (`RFCS/README.md` §Process). The architect pass resolved all six original design questions (see §"Resolved design decisions") and the Phase-1 wire surface (`artifact-type-packs.md` + `artifact-type-pack-manifest.schema.json` + `node-packs.md` prose + `artifact.created.registered` + `§host.artifactTypes`) landed atomically, so **Phase 1 is `Active`** (wire shapes locked; conformance + reference-host implementation pending per the acceptance criteria). `Active → Accepted` for Phase 1 requires the R1 `artifact-schema-compile-bounded` invariant + test and the three conformance scenarios. **Phase 2 (chat card packs, `kind: "card"`) remains `Draft`** within this RFC pending G9 + R2.
 | **Affects** | new `spec/v1/artifact-type-packs.md` (Phase 1), new `spec/v1/chat-card-packs.md` (Phase 2), `spec/v1/node-packs.md` (§"Manifest format" kind prose + `PackNode.artifact` prose), `spec/v1/host-capabilities.md` (§host.chat, new §host.artifactTypes), `spec/v1/capabilities.md`; new `schemas/artifact-type-pack-manifest.schema.json`, new `schemas/chat-card-pack-manifest.schema.json`, `schemas/run-event-payloads.schema.json`, `schemas/capabilities.schema.json`; `api/openapi.yaml`, `api/asyncapi.yaml`; conformance scenarios |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 |
@@ -177,11 +179,13 @@ The architect pass resolved all six original open questions, optimizing for low-
 
 ## Acceptance criteria
 
-- [ ] Spec text merged: `artifact-type-packs.md`, `chat-card-packs.md`, §host.artifactTypes + §host.chat.cardPacks, `node-packs.md` `PackNode.artifact` prose.
-- [ ] Schemas merged: `artifact-type-pack-manifest.schema.json`, `chat-card-pack-manifest.schema.json`, `run-event-payloads.schema.json` (`registered`), `capabilities.schema.json` (new flags); OpenAPI/AsyncAPI updated.
-- [ ] ≥1 conformance scenario per phase incl. the `store-without-render` negotiation scenario.
-- [ ] CHANGELOG entry under the spec-minor heading.
-- [ ] A reference host implements `host.artifactTypes` store-side and passes the new scenarios, OR the RFC explicitly defers reference-host implementation.
+- [x] Spec text merged: `artifact-type-packs.md` (**FINAL**), `chat-card-packs.md` (DRAFT, Phase 2), §host.artifactTypes + §host.chat.cardPacks, `node-packs.md` `PackNode.artifact` prose. (#270)
+- [x] Schemas merged: `artifact-type-pack-manifest.schema.json`, `chat-card-pack-manifest.schema.json`, `run-event-payloads.schema.json` (`registered`). (`host.*` capabilities advertise via the discovery open-set, not `capabilities.schema.json` — see `host-capabilities.md` §"The contract pattern"; no OpenAPI/AsyncAPI change — packs reuse the existing registry endpoints.)
+- [x] ≥1 conformance scenario per phase incl. the `store-without-render` negotiation scenario. (4 Phase-1 + 2 Phase-2 scenarios)
+- [x] CHANGELOG entry under the spec-minor heading.
+- [x] **Phase 1:** the non-steward MyndHyve `workflow-runtime` host implements `host.artifactTypes` store-side + passes the scenarios (steward production-curl-verified 2026-05-27) — **Phase 1 `Accepted`**.
+
+**Remaining for the RFC overall (keeps `Status: Active`): Phase 2 (`kind: "card"`) → Active** needs the R2 `chat-card-input-trust-boundary` proof passing against a host + G9 (confirm the `inputs[].type` subset with MyndHyve).
 
 ## References
 
