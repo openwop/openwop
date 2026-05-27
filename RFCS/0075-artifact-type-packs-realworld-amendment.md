@@ -99,7 +99,7 @@ No existing required field, type, event-shape, or error code changes. Spec **min
 - [x] Conformance: `validation`-field positive case; `registrationSource` enum round-trip.
 - [x] CHANGELOG entry.
 - [ ] **P2-1** store-only reference host exercises store-without-render end-to-end (follow-on).
-- [ ] MyndHyve serves its host-native schema URLs + advertises `validation: "open"` (host-side, P1-3 close-out).
+- [x] MyndHyve serves its host-native schema URLs + advertises `validation: "open"` (host-side, P1-3 close-out) — shipped on rev `workflow-runtime-00398-vup`, steward curl-verified 2026-05-27 (all 7 schema URLs resolve; `registered:true` downstream-resolvable). G3 closed.
 
 ## References
 

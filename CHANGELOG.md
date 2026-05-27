@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.5 — unreleased]
 
+### docs(rfc-0075): close G3 / §P1-3 — MyndHyve host-native schema URLs live + steward-verified (2026-05-27)
+
+MyndHyve shipped the RFC 0075 §P1-3/G3 host-side close-out to production (rev `workflow-runtime-00398-vup`, 100% traffic) and the steward independently curl-verified `api.myndhyve.ai`: `host.artifactTypes.types[]` advertises all **7** reconciled types as `{validated:true, validation:"open", schemaVersion:1, registrationSource:"host"}` (16→7 drift closed), and **all 7 `GET /schemas/artifacts/vendor.myndhyve.{prd,theme,screen,personas,brandResearch,moodboard,componentLibrary}.schema.json` resolve `200 application/schema+json` with `$id` == canonical URL**. The P1-3 hole is plugged: MyndHyve's Phase-1 `registered:true` is now **downstream-resolvable** (a consumer can fetch the shape of every emitted registered artifact), not just spec'd. RFC 0075 G3 closed + host-side acceptance criterion ticked; evidence doc + INTEROP-MATRIX (rev → `00398-vup`) updated. Docs-only; no wire/count change. Closes the last MyndHyve-side item of the RFC 0071 + 0075 arc.
+
 ### feat(rfc-0075): artifact-type packs real-world adoption amendment (amends RFC 0071 Phase 1) (2026-05-27)
 
 Files RFC 0075 (`Active`, additive) folding in the gaps MyndHyve surfaced as the first AI-native host to adopt RFC 0071 Phase 1 — the spec assumed deterministic producers distributing signed packs; the first adopter is an AI host with built-in artifact types and no packs.
