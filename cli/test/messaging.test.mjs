@@ -406,6 +406,13 @@ describe('channel availability detection', () => {
   it('reports an unknown channel', () => {
     assert.equal(detectChannelAvailability('telegram', {}).available, false);
   });
+  it('knows about discord (delegates to the plugin, not "unknown channel")', () => {
+    // doctor's readiness row must recognize discord now that it's a channel.
+    const r = detectChannelAvailability('discord', { OPENWOP_DISCORD_BOT_TOKEN: 't' });
+    assert.equal(r.available, false); // discord.js not installed in the core build
+    assert.doesNotMatch(r.detail, /unknown channel/);
+    assert.match(r.detail, /discord\.js/);
+  });
 });
 
 describe('doctor surfaces relay readiness', () => {

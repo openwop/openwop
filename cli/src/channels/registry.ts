@@ -36,12 +36,18 @@ function signalAvailable(env: NodeJS.ProcessEnv): ChannelAvailability {
   return { channel: 'signal', available: false, detail: 'signal-cli not found on PATH — install from https://github.com/AsamK/signal-cli (or set OPENWOP_SIGNAL_DAEMON_URL)' };
 }
 
+/** Join a path onto a base URL, preserving any base path prefix (unlike an
+ * absolute-path URL, which would discard `http://host/prefix`). */
+function joinUrl(base: string, path: string): URL {
+  return new URL(path.replace(/^\//, ''), base.endsWith('/') ? base : `${base}/`);
+}
+
 /**
  * POST one JSON-RPC call to a signal-cli `daemon --http` endpoint and return
  * the parsed result. Used for daemon-mode delivery.
  */
 async function signalDaemonRpc(baseUrl: string, method: string, params: Record<string, unknown>): Promise<unknown> {
-  const res = await fetch(new URL('/api/v1/rpc', baseUrl), {
+  const res = await fetch(joinUrl(baseUrl, 'api/v1/rpc'), {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method, params }),
@@ -90,7 +96,7 @@ const signalPlugin: ChannelPlugin = {
       const run = async () => {
         while (!stopped) {
           try {
-            const res = await fetch(new URL(eventsPath, daemon), {
+            const res = await fetch(joinUrl(daemon, eventsPath), {
               headers: { accept: 'text/event-stream' },
               signal: ctrl.signal,
             });
@@ -186,26 +192,41 @@ const imessagePlugin: ChannelPlugin = {
 const WA_PKG = '@whiskeysockets/baileys';
 
 // A single shared WhatsApp Web (Baileys) connection so deliver() and
-// startReceive() use the same socket + auth session. Lazily created.
-let waConn: { sock: any } | undefined;
+// startReceive() use the same socket + auth session. We cache the in-flight
+// PROMISE (not just the resolved socket) so two near-simultaneous callers
+// (first deliver + first startReceive) can't each spawn a second login.
+let waConnP: Promise<any> | undefined;
 
 async function getWaSocket(env: NodeJS.ProcessEnv): Promise<any> {
-  if (waConn) return waConn.sock;
-  // Optional heavy dep — a variable specifier keeps tsc/esbuild from resolving
-  // the (possibly absent) module at build time; it's `any` (Baileys ships its
-  // own types we don't pin here).
-  let baileys: any;
-  try { baileys = await import(WA_PKG); }
-  catch { throw new Error(`WhatsApp requires ${WA_PKG} — install it (\`npm i -g ${WA_PKG}\`) or in the CLI channel build.`); }
-  const { makeWASocket, useMultiFileAuthState } = baileys.default ?? baileys;
-  const authDir = env.OPENWOP_WHATSAPP_AUTH_DIR || `${env.HOME}/.openwop/whatsapp-auth`;
-  const { state, saveCreds } = await useMultiFileAuthState(authDir);
-  // printQRInTerminal: scan once to link the device (multi-device session
-  // persists in authDir thereafter, like `openclaw channels login` QR flow).
-  const sock = makeWASocket({ auth: state, printQRInTerminal: true });
-  sock.ev.on('creds.update', saveCreds);
-  waConn = { sock };
-  return sock;
+  if (!waConnP) {
+    waConnP = (async () => {
+      // Optional heavy dep — a variable specifier keeps tsc/esbuild from
+      // resolving the (possibly absent) module at build time; `any` (Baileys
+      // ships its own types we don't pin here).
+      let baileys: any;
+      try { baileys = await import(WA_PKG); }
+      catch { throw new Error(`WhatsApp requires ${WA_PKG} — install it (\`npm i -g ${WA_PKG}\`) or in the CLI channel build.`); }
+      const { makeWASocket, useMultiFileAuthState } = baileys.default ?? baileys;
+      const authDir = env.OPENWOP_WHATSAPP_AUTH_DIR || `${env.HOME}/.openwop/whatsapp-auth`;
+      const { state, saveCreds } = await useMultiFileAuthState(authDir);
+      // printQRInTerminal: scan once to link (multi-device session persists in
+      // authDir thereafter, like a channels-login QR flow).
+      const sock = makeWASocket({ auth: state, printQRInTerminal: true });
+      sock.ev.on('creds.update', saveCreds);
+      // The socket connects asynchronously; wait for `connection: 'open'`
+      // before returning so the first deliver() doesn't send on a dead socket.
+      // (Intermediate 'connecting'/'close' during the QR dance are ignored; a
+      // stuck pairing is bounded by the timeout.)
+      await new Promise<void>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('WhatsApp connection timed out (scan the QR within 90s, or check the linked session)')), 90_000);
+        sock.ev.on('connection.update', (u: any) => {
+          if (u?.connection === 'open') { clearTimeout(timer); resolve(); }
+        });
+      });
+      return sock;
+    })().catch((err) => { waConnP = undefined; throw err; }); // allow retry after failure
+  }
+  return waConnP;
 }
 
 const whatsappPlugin: ChannelPlugin = {
@@ -250,7 +271,7 @@ const whatsappPlugin: ChannelPlugin = {
     return () => {
       try { sock.ev.off?.('messages.upsert', handler); } catch { /* ignore */ }
       try { sock.end?.(); } catch { /* ignore */ }
-      waConn = undefined;
+      waConnP = undefined;
     };
   },
 };
@@ -258,31 +279,36 @@ const whatsappPlugin: ChannelPlugin = {
 const DISCORD_PKG = 'discord.js';
 
 // Shared discord.js Gateway client (bot) so deliver() + startReceive() share
-// one connection. Lazily created; the bot token comes from the environment.
-let discordConn: { client: any; djs: any; botId?: string } | undefined;
+// one connection. Cache the in-flight PROMISE (not just the resolved conn) so
+// concurrent first callers can't each log in a second client.
+let discordConnP: Promise<{ client: any; djs: any; botId?: string }> | undefined;
 
 async function getDiscordClient(env: NodeJS.ProcessEnv): Promise<{ client: any; djs: any; botId?: string }> {
-  if (discordConn) return discordConn;
-  const token = env.OPENWOP_DISCORD_BOT_TOKEN;
-  if (!token) throw new Error('OPENWOP_DISCORD_BOT_TOKEN (a Discord bot token) is required for Discord.');
-  let djs: any;
-  try { djs = await import(DISCORD_PKG); }
-  catch { throw new Error(`Discord requires ${DISCORD_PKG} — install it (\`npm i -g ${DISCORD_PKG}\`) or in the CLI channel build.`); }
-  const { Client, GatewayIntentBits } = djs;
-  const client = new Client({
-    intents: [
-      GatewayIntentBits.Guilds,
-      GatewayIntentBits.GuildMessages,
-      GatewayIntentBits.MessageContent,
-      GatewayIntentBits.DirectMessages,
-      GatewayIntentBits.GuildMessageReactions,
-    ],
-  });
-  const ready = new Promise<void>((resolve) => { client.once('clientReady', resolve); client.once('ready', resolve); });
-  await client.login(token);
-  await ready;
-  discordConn = { client, djs, botId: client.user?.id };
-  return discordConn;
+  if (!discordConnP) {
+    discordConnP = (async () => {
+      const token = env.OPENWOP_DISCORD_BOT_TOKEN;
+      if (!token) throw new Error('OPENWOP_DISCORD_BOT_TOKEN (a Discord bot token) is required for Discord.');
+      let djs: any;
+      try { djs = await import(DISCORD_PKG); }
+      catch { throw new Error(`Discord requires ${DISCORD_PKG} — install it (\`npm i -g ${DISCORD_PKG}\`) or in the CLI channel build.`); }
+      const { Client, GatewayIntentBits } = djs;
+      const client = new Client({
+        intents: [
+          GatewayIntentBits.Guilds,
+          GatewayIntentBits.GuildMessages,
+          GatewayIntentBits.MessageContent,
+          GatewayIntentBits.DirectMessages,
+          GatewayIntentBits.GuildMessageReactions,
+        ],
+      });
+      // 'ready' (discord.js v14) / 'clientReady' (v15) — register both.
+      const ready = new Promise<void>((resolve) => { client.once('clientReady', resolve); client.once('ready', resolve); });
+      await client.login(token);
+      await ready;
+      return { client, djs, botId: client.user?.id };
+    })().catch((err) => { discordConnP = undefined; throw err; }); // allow retry after failure
+  }
+  return discordConnP;
 }
 
 /** Build discord.js action rows from envelope-v2 components (reply→button, link→link button). */
@@ -353,7 +379,7 @@ const discordPlugin: ChannelPlugin = {
     return () => {
       try { client.off('messageCreate', onMessage); client.off('interactionCreate', onInteraction); } catch { /* ignore */ }
       try { client.destroy?.(); } catch { /* ignore */ }
-      discordConn = undefined;
+      discordConnP = undefined;
     };
   },
 };
