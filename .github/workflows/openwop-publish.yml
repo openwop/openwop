@@ -8,7 +8,7 @@
 #
 #   Tag pattern              Triggers              Use case
 #   -----------------        ----------------      -----------------------
-#   v*                       all 4 publish jobs    Corpus-aligned release
+#   v*                       all 5 publish jobs    Corpus-aligned release
 #                                                  (spec patch/minor/major)
 #   openwop/v*                   publish-ts-client     SDK-only patch (TS)
 #   openwop-conformance/v*       publish-conformance   Scenario addition / suite
@@ -18,6 +18,15 @@
 #                                                  doubles as the Go subdir
 #                                                  module-discovery tag
 #                                                  required by proxy.golang.org
+#   cli/v*                       publish-cli           CLI-only release. The CLI
+#                                                  is independently versioned
+#                                                  (currently 0.x) and ships
+#                                                  separately from the spec
+#                                                  corpus, so a corpus-aligned
+#                                                  v* release also bumps it
+#                                                  but on its own cadence
+#                                                  between releases this is
+#                                                  the per-package tag.
 #
 # Push the most specific tag for the change. Per-package tags keep
 # unrelated package versions stable (no phantom bumps).
@@ -35,6 +44,7 @@ on:
       - 'openwop-conformance/v*'
       - 'openwop-client/v*'
       - 'sdk/go/v*'
+      - 'cli/v*'
 
 jobs:
   # H2 from code review: validate the tag matches a known SemVer pattern
@@ -59,7 +69,9 @@ jobs:
             openwop-client/v[0-9]*.[0-9]*.[0-9]*|\
             openwop-client/v[0-9]*.[0-9]*.[0-9]*-*|\
             sdk/go/v[0-9]*.[0-9]*.[0-9]*|\
-            sdk/go/v[0-9]*.[0-9]*.[0-9]*-*)
+            sdk/go/v[0-9]*.[0-9]*.[0-9]*-*|\
+            cli/v[0-9]*.[0-9]*.[0-9]*|\
+            cli/v[0-9]*.[0-9]*.[0-9]*-*)
               echo "tag '$tag' matches expected SemVer pattern"
               ;;
             *)
@@ -70,6 +82,7 @@ jobs:
               echo "  openwop-conformance/vX.Y.Z[-prerelease]       (conformance only)"
               echo "  openwop-client/vX.Y.Z[-prerelease]            (Python SDK only)"
               echo "  sdk/go/vX.Y.Z[-prerelease]                (Go SDK only)"
+              echo "  cli/vX.Y.Z[-prerelease]                       (CLI only)"
               exit 1
               ;;
           esac
@@ -190,3 +203,32 @@ jobs:
           # github.ref_name is the bare tag (e.g. 'sdk/go/v1.0.0' or 'v1.0.0').
           # Strip any subdir prefix so `go get @<VERSION>` looks right in logs.
           VERSION: ${{ github.ref_name }}
+
+  publish-cli:
+    needs: preflight
+    if: |
+      startsWith(github.ref, 'refs/tags/v') ||
+      startsWith(github.ref, 'refs/tags/cli/v')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+      # OIDC trusted publishers require npm 11.5.1+; Node 24 ships with a
+      # compatible version but upgrade defensively to match the other jobs.
+      - run: npm install -g npm@latest
+      - run: cd cli && npm ci
+      - run: cd cli && npm run build
+      # OIDC-authenticated publish — npm 11.5.1+ accepts the OIDC token from
+      # `permissions: id-token: write` automatically. No NODE_AUTH_TOKEN needed.
+      # Trusted-publisher config: npmjs.com/package/@openwop/cli/access.
+      # First publish: the maintainer must register this workflow as a
+      # trusted publisher on npmjs.com (Settings → Trusted Publishers, or
+      # via "Publish package" → "Trusted Publisher") before the first tag
+      # push. After that, subsequent `cli/vX.Y.Z` tag pushes auto-publish.
+      - run: cd cli && npm publish --access public --provenance
