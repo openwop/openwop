@@ -1,6 +1,6 @@
 {
   "name": "core.openwop.agents.deep-research",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Long-horizon research agent. Plans, dispatches sub-investigations, retrieves from RAG + web, writes up findings. Mirrors LangGraph Deep Agents (planner + subagents + filesystem). Pure-agent pack.",
   "author": "OpenWOP Working Group",
   "license": "Apache-2.0",

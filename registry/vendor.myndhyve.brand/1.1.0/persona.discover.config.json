@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.brand/1.1.0/persona.discover.config.json",
+  "title": "persona.discoverConfig",
+  "type": "object",
+  "properties": {
+    "provider": {
+      "type": "string",
+      "description": "AI provider id (e.g. openai, anthropic). Hosts SHOULD resolve via their configured provider registry.",
+      "x-openwop-form": { "kind": "provider-picker" }
+    },
+    "model": {
+      "type": "string",
+      "description": "Model id within the selected provider. Picker MUST cascade-clear when provider changes (per RFC 0066).",
+      "x-openwop-form": { "kind": "model-picker", "dependsOn": ["provider"] }
+    },
+    "temperature": { "type": "number", "minimum": 0, "maximum": 2 }
+  },
+  "additionalProperties": false
+}

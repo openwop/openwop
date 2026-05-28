@@ -95,7 +95,7 @@
     {
       "name": "core.openwop.agents.deep-research",
       "kind": "node",
-      "latestVersion": "1.0.0",
+      "latestVersion": "1.0.1",
       "description": "Long-horizon research agent. Plans, dispatches sub-investigations, retrieves from RAG + web, writes up findings. Mirrors LangGraph Deep Agents (planner + subagents + filesystem). Pure-agent pack.",
       "license": "Apache-2.0",
       "tags": [],
@@ -110,7 +110,7 @@
     {
       "name": "core.openwop.agents.react",
       "kind": "node",
-      "latestVersion": "1.0.0",
+      "latestVersion": "1.0.1",
       "description": "Canonical ReAct (Reason + Act) loop agent. Pure-agent pack — ships one agent manifest with a configurable toolAllowlist. Composes via RFC 0007 dispatch and consumes host.aiProviders + host.agentRuntime. The 'hello world' of openwop agents.",
       "license": "Apache-2.0",
       "tags": [],
@@ -125,7 +125,7 @@
     {
       "name": "core.openwop.agents.supervisor",
       "kind": "node",
-      "latestVersion": "1.0.0",
+      "latestVersion": "1.0.1",
       "description": "Multi-agent supervisor. Routes user tasks to specialized subagents via RFC 0007 dispatch + RFC 0006 orchestrator semantics. Mirrors LangGraph Supervisor and CrewAI's hierarchical-process pattern. Pure-agent pack.",
       "license": "Apache-2.0",
       "tags": [],

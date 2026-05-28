@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.brand/1.0.0/persona.validate.input.json",
+  "title": "persona.validateInput",
+  "type": "object",
+  "required": ["artifactId"],
+  "properties": {
+    "artifactId": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.brand/1.0.0/theme.implement.input.json",
+  "title": "theme.implementInput",
+  "type": "object",
+  "required": ["brandId", "payload"],
+  "properties": {
+    "brandId": { "type": "string", "minLength": 1 },
+    "payload": { "description": "Artifact body — theme or persona payload." },
+    "targetCanvasId": { "type": "string", "description": "For implement nodes: canvas to apply to." }
+  },
+  "additionalProperties": false
+}
