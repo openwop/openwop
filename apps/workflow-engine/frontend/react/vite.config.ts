@@ -28,7 +28,6 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
-    plugins: [react()],
     server: {
       port: 5173,
       strictPort: false,
@@ -59,6 +58,28 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+    // The SDK's main barrel re-exports `verifyWebhookSignature` /
+    // `signWebhookDelivery` from `./webhook-helpers.js`, which imports
+    // `node:crypto`. Even though every frontend import from `@openwop/openwop`
+    // is `import type {…}` (no runtime symbols needed), rollup's static
+    // analysis pulls the whole barrel including the HMAC helpers, then
+    // vite externalizes `node:crypto` and the build dies on unresolved
+    // `createHmac` named export. A custom plugin short-circuits the load
+    // step for any path ending in `webhook-helpers.js` and returns an
+    // empty module — the frontend never executes the HMAC code path.
+    plugins: [
+      react(),
+      {
+        name: 'openwop-stub-webhook-helpers',
+        enforce: 'pre',
+        load(id) {
+          if (/[/\\]@openwop[/\\]openwop[/\\]dist[/\\]webhook-helpers\.js$/.test(id)) {
+            return 'export {};';
+          }
+          return null;
+        },
+      },
+    ],
     build: {
       outDir: 'dist',
       sourcemap: true,
