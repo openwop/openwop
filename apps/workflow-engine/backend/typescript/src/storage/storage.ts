@@ -34,6 +34,7 @@ import type {
   MessagingPolicyRecord,
   MessagingRoutingRuleRecord,
   MessagingSessionRecord,
+  MessagingTurnRecord,
   RelayDeviceRecord,
 } from '../messaging/types.js';
 
@@ -358,6 +359,9 @@ export interface Storage {
     status?: string;
     limit?: number;
   }): Promise<readonly DeliveryLogRecord[]>;
+  appendMessagingTurn(record: MessagingTurnRecord): Promise<void>;
+  /** Return the most-recent `limit` turns for a session, oldest → newest. */
+  listMessagingTurns(sessionKey: string, limit: number): Promise<readonly MessagingTurnRecord[]>;
 
   // ── lifecycle ──
   close(): Promise<void>;

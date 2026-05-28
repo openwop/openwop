@@ -446,9 +446,15 @@ describe('messaging bridge — selectWorkflowByRules (pure)', () => {
 import { createSelfHttpBridge } from '../src/messaging/bridge.js';
 
 /** Build a fake Storage that exposes only the methods the bridge touches. */
-function mockStorage(rules: any[]) {
+function mockStorage(rules: any[], seedTurns: any[] = []) {
+  const turns: any[] = [...seedTurns];
   return {
     listMessagingRoutingRules: async () => rules,
+    // Phase B: turn history seam.
+    listMessagingTurns: async (sessionKey: string, limit: number) =>
+      turns.filter((t) => t.sessionKey === sessionKey).slice(-Math.max(1, limit)),
+    appendMessagingTurn: async (t: any) => { turns.push(t); },
+    _turns: turns as any[],
     // The detached completeAndReply path polls + enqueues; we never let it
     // complete because the spy fetchImpl returns a non-terminal status forever.
     getRelayDevice: async () => null,
@@ -482,6 +488,38 @@ describe('messaging bridge — routing wiring (unit)', () => {
     expect(res && (res as any).runId).toBe('r-1');
     expect(capturedBody.workflowId).toBe('wf.routed');
     expect(capturedBody.tenantId).toBe('t');
+  });
+
+  it('threads prior turns into messages[] (Phase B: chat-style continuity)', async () => {
+    let bodies: any[] = [];
+    const fetchImpl: any = async (url: string, init?: any) => {
+      if (String(url).endsWith('/v1/runs') && init?.method === 'POST') {
+        bodies.push(JSON.parse(init.body as string));
+        return new Response(JSON.stringify({ runId: `r-${bodies.length}` }), { status: 201, headers: { 'content-type': 'application/json' } });
+      }
+      return new Response(JSON.stringify({ status: 'running' }), { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+    // Seed a prior assistant turn so the second inbound sees [user, assistant, user].
+    const store = mockStorage([], [
+      { turnId: 't0u', sessionKey: 'signal:c1', tenantId: 't', role: 'user', content: 'first', at: '2026-05-27T00:00:00Z' },
+      { turnId: 't0a', sessionKey: 'signal:c1', tenantId: 't', role: 'assistant', content: 'first-reply', at: '2026-05-27T00:00:01Z' },
+    ]);
+    const bridge = createSelfHttpBridge({
+      storage: store, baseUrl: 'http://test', bearer: 'x', defaultWorkflowId: 'wf.default', fetchImpl,
+    });
+    await bridge.onInbound({
+      device: { relayId: 'rl', tenantId: 't', channel: 'signal' },
+      envelope: { channel: 'signal', platformMessageId: 'm2', conversationId: 'c1', peerId: 'p', text: 'second', timestamp: '2026-05-27T00:00:02Z' } as any,
+      sessionKey: 'signal:c1',
+    });
+    expect(bodies[0].inputs.messages).toEqual([
+      { role: 'user', content: 'first' },
+      { role: 'assistant', content: 'first-reply' },
+      { role: 'user', content: 'second' },
+    ]);
+    // The new inbound user turn was persisted (prior-2 + new-1 = 3 user/assistant rows + the new user).
+    const userTurns = (store._turns as any[]).filter((t) => t.role === 'user');
+    expect(userTurns.map((t) => t.content)).toEqual(['first', 'second']);
   });
 
   it('falls back to the default workflow when no rule matches (backward-compat)', async () => {

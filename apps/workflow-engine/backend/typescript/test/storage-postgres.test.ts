@@ -220,6 +220,8 @@ async function makeStorage(): Promise<Storage> {
     deleteMessagingIdentity: async () => false,
     appendDeliveryLog: async () => { throw new Error('not exercised'); },
     listDeliveryLog: async () => [],
+    appendMessagingTurn: async () => { throw new Error('not exercised'); },
+    listMessagingTurns: async () => [],
     close: async () => { await pool.end(); },
   };
 }

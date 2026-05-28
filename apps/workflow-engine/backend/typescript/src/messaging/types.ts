@@ -181,6 +181,22 @@ export interface DeliveryLogRecord {
 }
 
 /**
+ * One turn in a messaging conversation thread — inbound user message or the
+ * assistant reply produced by the bound workflow/agent. Threaded into the
+ * next inbound run's `messages[]` so messaging gets chat-style continuity.
+ */
+export interface MessagingTurnRecord {
+  turnId: string;
+  sessionKey: string;
+  tenantId: string;
+  role: 'user' | 'assistant';
+  content: string;
+  /** The run (or agent dispatch) that produced an assistant turn. */
+  runId?: string;
+  at: string;
+}
+
+/**
  * The inbound → run bridge seam. Injected from index.ts where the run
  * pipeline is available. When absent, inbound is recorded but no run created.
  */

@@ -46,6 +46,7 @@ import type {
   MessagingPolicyRecord,
   MessagingRoutingRuleRecord,
   MessagingSessionRecord,
+  MessagingTurnRecord,
   RelayDeviceRecord,
 } from '../../messaging/types.js';
 import { egressExtraJson, applyEgressExtra } from '../../messaging/types.js';
@@ -1214,6 +1215,25 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
       return rows.map(rowToDeliveryLogPg);
     },
 
+    async appendMessagingTurn(record) {
+      await pool.query(
+        `INSERT INTO messaging_turns (turn_id, session_key, tenant_id, role, content, run_id, at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+        [record.turnId, record.sessionKey, record.tenantId, record.role, record.content, record.runId ?? null, record.at],
+      );
+    },
+    async listMessagingTurns(sessionKey, limit) {
+      const lim = Number.isFinite(limit) && limit >= 1 ? Math.min(Math.floor(limit), 1000) : 100;
+      // Fetch the most-recent N then return them oldest → newest (for messages[]).
+      const { rows } = await pool.query<Row>(
+        `SELECT * FROM (
+           SELECT * FROM messaging_turns WHERE session_key = $1 ORDER BY at DESC, turn_id DESC LIMIT $2
+         ) t ORDER BY at ASC, turn_id ASC`,
+        [sessionKey, lim],
+      );
+      return rows.map(rowToTurnPg);
+    },
+
     async close() {
       await pool.end();
     },
@@ -1309,6 +1329,18 @@ function rowToIdentityPg(r: Row): MessagingIdentityRecord {
     peers,
     createdAt: r.created_at as string,
     updatedAt: r.updated_at as string,
+  };
+}
+
+function rowToTurnPg(r: Row): MessagingTurnRecord {
+  return {
+    turnId: r.turn_id as string,
+    sessionKey: r.session_key as string,
+    tenantId: r.tenant_id as string,
+    role: r.role as MessagingTurnRecord['role'],
+    content: r.content as string,
+    runId: (r.run_id as string | null) ?? undefined,
+    at: r.at as string,
   };
 }
 

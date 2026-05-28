@@ -27,6 +27,7 @@
  *    no XFF) so messaging-driven runs don't share one IP bucket.
  */
 
+import { randomUUID } from 'node:crypto';
 import { enqueueOutbound } from '../routes/messaging.js';
 import type { ChatIngressEnvelope, MessagingBridge, MessagingRoutingRuleRecord, RelayChannel, RelayDeviceRecord } from './types.js';
 import type { Storage } from '../storage/storage.js';
@@ -38,6 +39,9 @@ const log = createLogger('messaging.bridge');
 // can't spawn unbounded timers. Beyond the cap the run is still created
 // (the device got its runId); only the auto-reply poll is skipped.
 const MAX_INFLIGHT = Number(process.env.OPENWOP_MESSAGING_MAX_INFLIGHT) || 50;
+// How many prior turns to thread into the next inbound run's messages[]. Caps
+// per-run payload growth; older turns stay in storage for audit.
+const HISTORY_LIMIT = Math.max(1, Number(process.env.OPENWOP_MESSAGING_HISTORY_LIMIT) || 20);
 let inflight = 0;
 
 export interface SelfHttpBridgeConfig {
@@ -61,11 +65,31 @@ export function createSelfHttpBridge(cfg: SelfHttpBridgeConfig): MessagingBridge
   const headers = { authorization: `Bearer ${cfg.bearer}`, 'content-type': 'application/json' };
 
   return {
-    async onInbound({ device, envelope }) {
+    async onInbound({ device, envelope, sessionKey }) {
       // Consult the operator-configured routing rules first; fall back to the
       // single default workflow when no rule matches (preserves prior behavior).
       const rules = await cfg.storage.listMessagingRoutingRules(device.tenantId);
       const workflowId = selectWorkflowByRules(rules, device, envelope) ?? cfg.defaultWorkflowId;
+
+      // Thread prior turns into messages[] so messaging gets chat-style
+      // continuity. Each inbound run sees the recent conversation; the
+      // assistant reply is persisted detached on run completion.
+      const prior = await cfg.storage.listMessagingTurns(sessionKey, HISTORY_LIMIT);
+      const messages = [
+        ...prior.map((t) => ({ role: t.role, content: t.content })),
+        { role: 'user', content: envelope.text },
+      ];
+      // Persist the inbound user turn before creating the run (so a crash
+      // mid-run leaves the user message in the thread, not lost).
+      await cfg.storage.appendMessagingTurn({
+        turnId: `t_${randomUUID()}`,
+        sessionKey,
+        tenantId: device.tenantId,
+        role: 'user',
+        content: envelope.text,
+        at: envelope.timestamp,
+      });
+
       const createRes = await fetchImpl(`${cfg.baseUrl}/v1/runs`, {
         method: 'POST',
         headers,
@@ -74,7 +98,7 @@ export function createSelfHttpBridge(cfg: SelfHttpBridgeConfig): MessagingBridge
           tenantId: device.tenantId,
           // Send both shapes so either a `text` workflow (uppercase/echo) or a
           // `messages` chat workflow can consume the inbound turn.
-          inputs: { text: envelope.text, messages: [{ role: 'user', content: envelope.text }] },
+          inputs: { text: envelope.text, messages },
         }),
       });
       if (!createRes.ok) {
@@ -95,6 +119,7 @@ export function createSelfHttpBridge(cfg: SelfHttpBridgeConfig): MessagingBridge
         storage: cfg.storage, fetchImpl, headers, baseUrl: cfg.baseUrl, pollIntervalMs, timeoutMs,
         runId, relayId: device.relayId, channel: device.channel,
         conversationId: envelope.conversationId, replyToMessageId: envelope.platformMessageId,
+        sessionKey, tenantId: device.tenantId,
       })
         .catch((err) => log.error('inbound bridge reply failed', { runId, error: String(err?.message ?? err) }))
         .finally(() => { inflight--; });
@@ -141,6 +166,8 @@ interface ReplyArgs {
   channel: RelayChannel;
   conversationId: string;
   replyToMessageId: string;
+  sessionKey: string;
+  tenantId: string;
 }
 
 const TERMINAL = new Set(['completed', 'failed', 'cancelled']);
@@ -172,6 +199,21 @@ async function completeAndReply(a: ReplyArgs): Promise<void> {
     text: reply,
     replyToMessageId: a.replyToMessageId,
   });
+
+  // Persist the assistant turn so the NEXT inbound on this session can thread
+  // it into messages[]. Skip when there's nothing useful to remember (the
+  // synthetic "(no text output)" or non-completed fallback strings).
+  if (status === 'completed' && text && text.length > 0) {
+    await a.storage.appendMessagingTurn({
+      turnId: `t_${randomUUID()}`,
+      sessionKey: a.sessionKey,
+      tenantId: a.tenantId,
+      role: 'assistant',
+      content: text,
+      runId: a.runId,
+      at: new Date().toISOString(),
+    });
+  }
 }
 
 /** Walk events newest-first; return the first node/run output that carries text. */

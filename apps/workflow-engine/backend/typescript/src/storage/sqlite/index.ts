@@ -30,6 +30,7 @@ import type {
   MessagingPolicyRecord,
   MessagingRoutingRuleRecord,
   MessagingSessionRecord,
+  MessagingTurnRecord,
   RelayDeviceRecord,
 } from '../../messaging/types.js';
 import { egressExtraJson, applyEgressExtra } from '../../messaging/types.js';
@@ -1133,6 +1134,28 @@ export function openSqliteStorage(dbPath: string): Storage {
       return rows.map(rowToDeliveryLogSqlite);
     },
 
+    async appendMessagingTurn(record) {
+      db.prepare(
+        `INSERT INTO messaging_turns (turn_id, session_key, tenant_id, role, content, run_id, at)
+         VALUES (?,?,?,?,?,?,?)`,
+      ).run(
+        record.turnId, record.sessionKey, record.tenantId, record.role, record.content,
+        record.runId ?? null, record.at,
+      );
+    },
+    async listMessagingTurns(sessionKey, limit) {
+      // Clamp to [1,1000] (negative LIMIT is unbounded in SQLite).
+      const lim = Number.isFinite(limit) && limit >= 1 ? Math.min(Math.floor(limit), 1000) : 100;
+      // Get the N MOST RECENT turns, then return them oldest → newest so a
+      // caller can append them to messages[] in conversation order.
+      const rows = db.prepare(
+        `SELECT * FROM (
+           SELECT * FROM messaging_turns WHERE session_key = ? ORDER BY at DESC, turn_id DESC LIMIT ?
+         ) ORDER BY at ASC, turn_id ASC`,
+      ).all(sessionKey, lim) as Array<Record<string, unknown>>;
+      return rows.map(rowToTurnSqlite);
+    },
+
     async close() {
       db.close();
     },
@@ -1227,6 +1250,18 @@ function rowToIdentitySqlite(r: Record<string, unknown>): MessagingIdentityRecor
     peers,
     createdAt: r.created_at as string,
     updatedAt: r.updated_at as string,
+  };
+}
+
+function rowToTurnSqlite(r: Record<string, unknown>): MessagingTurnRecord {
+  return {
+    turnId: r.turn_id as string,
+    sessionKey: r.session_key as string,
+    tenantId: r.tenant_id as string,
+    role: r.role as MessagingTurnRecord['role'],
+    content: r.content as string,
+    runId: (r.run_id as string | null) ?? undefined,
+    at: r.at as string,
   };
 }
 
