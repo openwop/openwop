@@ -106,6 +106,37 @@ function classifyProviderStatus(provider: string, status: number): ClassifiedErr
 
 /** Map an `AiProviderError` code to a classification. */
 function classifyAiProviderError(err: AiProviderError): ClassifiedError {
+  // Managed-provider codes (`providers/managedProvider.ts`) reach this
+  // classifier via the deliberate `as AiProviderErrorCode` cast in
+  // `executor.ts:emitTerminalFailure` — the executor wraps the
+  // terminal `{code, message}` into an AiProviderError so all run-
+  // failed events get the same classifier output. The codes are not
+  // in the `AiProviderErrorCode` union (they originate outside the
+  // aiProviders host), so handle them explicitly here before the
+  // typed switch; without this, every free-tier sign-in failure
+  // renders as the generic "Something went wrong" default arm.
+  const codeString = err.code as string;
+  if (codeString === 'sign_in_required') {
+    return {
+      category: 'auth',
+      action: 'reconfigure',
+      userMessage: 'Sign in to use the free tier.',
+    };
+  }
+  if (codeString === 'daily_limit_reached') {
+    return {
+      category: 'rate_limit',
+      action: 'wait',
+      userMessage: 'You have hit the free-tier daily limit. It resets at 00:00 UTC, or add your own API key to keep going.',
+    };
+  }
+  if (codeString === 'managed_unavailable') {
+    return {
+      category: 'network',
+      action: 'retry',
+      userMessage: 'The free tier is temporarily unavailable. Retry, or add your own API key to keep going.',
+    };
+  }
   switch (err.code) {
     case 'provider_not_supported':
     case 'model_not_supported':

@@ -15,6 +15,39 @@ describe('classifyDispatchError — AiProviderError codes', () => {
     expect(r.userMessage).toMatch(/BYOK/i);
   });
 
+  // Managed-provider codes flow through the same classifier via the
+  // deliberate cast in executor.ts:emitTerminalFailure. Without explicit
+  // cases they would render as the generic "Something went wrong"
+  // default — which is wrong for user-actionable errors like
+  // sign-in-required and daily-cap.
+  it('sign_in_required → auth / reconfigure with sign-in message', () => {
+    const r = classifyDispatchError(
+      new AiProviderError('sign_in_required' as never, 'Sign in to use the free tier.'),
+    );
+    expect(r.category).toBe('auth');
+    expect(r.action).toBe('reconfigure');
+    expect(r.userMessage).toMatch(/sign in/i);
+    expect(r.userMessage).not.toMatch(/something went wrong/i);
+  });
+
+  it('daily_limit_reached → rate_limit / wait with cap-explanation', () => {
+    const r = classifyDispatchError(
+      new AiProviderError('daily_limit_reached' as never, 'cap hit'),
+    );
+    expect(r.category).toBe('rate_limit');
+    expect(r.action).toBe('wait');
+    expect(r.userMessage).toMatch(/daily limit/i);
+  });
+
+  it('managed_unavailable → network / retry', () => {
+    const r = classifyDispatchError(
+      new AiProviderError('managed_unavailable' as never, 'no key'),
+    );
+    expect(r.category).toBe('network');
+    expect(r.action).toBe('retry');
+    expect(r.userMessage).toMatch(/temporarily unavailable/i);
+  });
+
   it('provider_rate_limited → rate_limit / wait + retryAfterMs', () => {
     const r = classifyDispatchError(new AiProviderError('provider_rate_limited', '429'));
     expect(r.category).toBe('rate_limit');

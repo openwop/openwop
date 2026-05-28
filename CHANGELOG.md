@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### fix(host-sample): signed-in users no longer hit `sign_in_required` on the free tier (2026-05-28)
+
+Workflow-engine reference host: a signed-in browser could still land at the managed-provider dispatch boundary as `anon:*` and fail with `sign_in_required` mid-run, even after a successful Firebase Auth sign-in. Three contributing defects, all host-internal (no protocol/schema impact):
+
+- `middleware/auth.ts` OIDC verify success branch now reissues the session cookie as `tier: 'user'` keyed to the OIDC-derived `tenantId`. Previously the cookie path and the bearer path disagreed about identity — any subsequent request that dropped the `Authorization` header fell back to the still-anon cookie. Idempotent: a cookie that already matches isn't reissued.
+- `routes/runs.ts` `POST /v1/runs` now preflights for `managed:*` credentialRefs vs an `anon:*` caller and returns `401 sign_in_required` at create-time instead of letting the run partially execute and fail at the first managed chat node. Symmetrical with the existing capability-gated typeId refusal.
+- `observability/errorRecovery.ts` `classifyDispatchError` gains explicit handling for `sign_in_required`, `daily_limit_reached`, and `managed_unavailable` so the `run.failed` envelope's `userMessage` is user-actionable (`"Sign in to use the free tier."`) instead of the generic `"Something went wrong. Check the server logs."` default.
+
+Tests: new `auth-oidc-cookie-promotion.test.ts` covers anon→user reissue + idempotent steady-state + bearer-only cookie minting; new `run-managed-anon-preflight.test.ts` covers 401 on anon×managed + non-managed pass-through + user×managed pass-through; `error-recovery.test.ts` extended for the three managed-provider codes. Existing `managed-provider.test.ts:115` (anon → `sign_in_required` at dispatch) intentionally preserved — the dispatch-level gate is unchanged. `OpenwopErrorCode` union additively gains `sign_in_required`.
+
 ### fix(sdk-ts): capability-absent fallback uses WopError.status, not message regex (2026-05-28)
 
 Eleven SDK methods that document a "host doesn't advertise this capability → return null/false" fallback (`runs.{debugBundle,listAnnotations,ancestry,diff}`, `agents.{list,get}`, `userAgents.{listAvailablePacks,delete}`, `workspace.*`, plus the `runs.poll` 501 branch) were testing the error condition with `/\b404\b/.test(err.message)`. Because `WopError.message` is built from the host's envelope `message` field (`types.ts:1005`), a 404 whose envelope carried no "404" substring (e.g., the workflow-engine catch-all's `"No route matches this request."`) slipped past the regex and threw to the caller instead of returning the documented sentinel — surfacing as "Couldn't load pack list" on signed-in users hitting a host on an older deploy.
