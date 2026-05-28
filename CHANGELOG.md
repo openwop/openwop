@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.5 — unreleased]
 
+### docs(rfc-0071): record Phase 2 Slice-A milestone (MyndHyve host.chat.cardPacks live) — Active, not yet Accepted (2026-05-27)
+
+MyndHyve shipped Phase 2 Slice A to production (rev `workflow-runtime-00400-biw`) and the steward curl-verified `api.myndhyve.ai`: `host.chat: {supported, cards, cardPacks}` is advertised (no regression — `host.artifactTypes` 7-type facets + schema URLs + `agents.manifestRuntime` intact), and the `chat-card-pack-execution` R2 trust-tag proof passes (validate-before-emit + `contentTrust:"untrusted"`). **Steward verdict: verified Slice-A milestone, NOT Accepted** — the execute seam *synthesizes* output; the real `ctx.aiEnvelope.generate` + `CardTemplateDefinition` path (Slice B) isn't wired, so advertising `host.chat.cardPacks` on production is seam-backed, not yet production-honest. Same bar held for Phase 1 (Accepted required the real binding, not the conformance seam). RFC 0071 Phase 2 stays `Active`; `chat-card-packs.md` stays DRAFT; `Phase 2 → Accepted` (graduating RFC 0071 overall) awaits Slice B. INTEROP-MATRIX §"RFC 0071 Phase 2" updated (MyndHyve row → Slice-A milestone). Docs-only.
+
 ### fix(app): clamp messaging delivery-log `?limit` + type the doctor `CheckResult` (2026-05-27)
 
 Code-review follow-up to the messaging/CLI work below. `GET /v1/host/sample/messaging/logs?limit=` was passed straight through as `Number(...)`: SQLite reads a negative `LIMIT` as "unbounded", so `?limit=-1` dumped the whole delivery-log table on the sqlite/`memory://` host while Postgres clamped to 1, and `?limit=abc` reached the driver as `NaN` → 500. Added a `clampLimit()` in the route (integer in `[1, 1000]`, non-finite → default 100) and hardened both storage backends to match (defense-in-depth, since `listDeliveryLog` is callable directly) + a regression test. Also replaced the `: any` params on the CLI doctor check builders with an exported `CheckResult` type. NON-normative (demo app + CLI); no wire/schema/capability change.
