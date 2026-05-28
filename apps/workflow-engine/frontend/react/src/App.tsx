@@ -14,6 +14,7 @@ import { BuilderTab } from './builder/BuilderTab.js';
 import { WorkflowsDashboard } from './builder/WorkflowsDashboard.js';
 import { DemoHostBanner } from './builder/DemoHostBanner.js';
 import { PrivacyPage } from './PrivacyPage.js';
+import { CliPage } from './CliPage.js';
 import { NotFoundPage } from './NotFoundPage.js';
 import { PromptLibraryPage } from './prompts/PromptLibraryPage.js';
 import { KeysPage } from './byok/KeysPage.js';
@@ -73,6 +74,7 @@ export function App() {
           <NavLink to="/mission">Mission Control</NavLink>
           <NavLink to="/inbox">Inbox</NavLink>
           <NavLink to="/capabilities">Capabilities</NavLink>
+          <NavLink to="/cli">CLI</NavLink>
         </nav>
         <div className="app-header-spacer" />
         <button
@@ -116,6 +118,7 @@ export function App() {
           <Route path="/keys" element={<KeysPage />} />
           <Route path="/memory" element={<MemoryInspectorPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/cli" element={<CliPage />} />
           {/* Catch-all: the SPA host rewrites every path to index.html, so an
               unmatched URL must resolve here rather than render a blank main. */}
           <Route path="*" element={<NotFoundPage />} />
