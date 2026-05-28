@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.ai/1.1.2/embeddings.config.json",
+  "title": "EmbeddingsConfig",
+  "type": "object",
+  "required": [
+    "provider",
+    "model"
+  ],
+  "properties": {
+    "provider": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Embeddings model id (e.g., `text-embedding-3-small`, `voyage-3`, `text-embedding-005`)."
+    },
+    "dimensions": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 32768,
+      "description": "Optional truncation/reduction. Hosts that route to providers supporting variable-dimension embeddings (OpenAI v3, Voyage) honour this; providers with fixed dimensions return `dimensions_not_supported`."
+    }
+  },
+  "additionalProperties": false
+}

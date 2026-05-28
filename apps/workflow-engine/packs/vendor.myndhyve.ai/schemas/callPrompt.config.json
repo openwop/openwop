@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ai/1.0.0/callPrompt.config.json",
+  "title": "CallPromptConfig",
+  "type": "object",
+  "required": ["promptId", "envelopeType"],
+  "properties": {
+    "promptId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable identifier in the host's prompt library (e.g., 'prd-author-v3'). Host resolves to the prompt text at dispatch via ctx.promptLibrary.get(promptId)."
+    },
+    "envelopeType": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9._-]*\\.[a-z][a-zA-Z0-9._-]*$" },
+    "provider": { "type": "string" },
+    "model": { "type": "string" },
+    "temperature": { "type": "number", "minimum": 0, "maximum": 2 }
+  },
+  "additionalProperties": false
+}

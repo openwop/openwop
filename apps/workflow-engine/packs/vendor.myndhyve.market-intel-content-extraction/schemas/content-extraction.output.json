@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-content-extraction/1.0.0/content-extraction.output.json",
+  "title": "MarketIntelContentExtractionOutput",
+  "type": "object",
+  "required": ["title", "content", "author", "publishedAt", "contentType", "engagement", "tags", "summary", "relevantQuotes", "url", "wasTruncated", "warnings", "success"],
+  "properties": {
+    "title": { "type": "string" },
+    "content": { "type": "string" },
+    "author": { "type": ["string", "null"] },
+    "publishedAt": { "type": ["string", "null"], "description": "ISO 8601 date string; invalid input is dropped to null with a warning." },
+    "contentType": { "type": "string", "enum": ["discussion", "article", "review", "question", "comment_thread", "documentation", "other"] },
+    "engagement": {
+      "type": "object",
+      "required": ["upvotes", "comments", "views", "shares"],
+      "properties": {
+        "upvotes": { "type": ["integer", "null"] },
+        "comments": { "type": ["integer", "null"] },
+        "views": { "type": ["integer", "null"] },
+        "shares": { "type": ["integer", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "tags": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "summary": { "type": "string" },
+    "relevantQuotes": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 5 },
+      "description": "Quotes shorter than 5 chars are dropped with a count-warning."
+    },
+    "url": { "type": "string" },
+    "wasTruncated": { "type": "boolean" },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "model": { "type": "string" },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "promptTokens": { "type": "integer" },
+        "completionTokens": { "type": "integer" }
+      },
+      "additionalProperties": true
+    },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

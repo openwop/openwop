@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.invoice-extractor/1.0.0/invoice-extractor.return.schema.json",
+  "title": "InvoiceExtractorReturn",
+  "type": "object",
+  "oneOf": [
+    {
+      "required": [
+        "invoice",
+        "fieldConfidence",
+        "anomalies",
+        "overallConfidence"
+      ],
+      "properties": {
+        "invoice": {
+          "type": "object",
+          "properties": {
+            "vendor": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "address": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "taxId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "contactEmail": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            },
+            "invoiceNumber": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "invoiceDate": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "dueDate": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "lineItems": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "number"
+                  },
+                  "unitPrice": {
+                    "type": "number"
+                  },
+                  "lineTotal": {
+                    "type": "number"
+                  },
+                  "taxRate": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "subtotal": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "tax": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "amount": {
+                  "type": "number"
+                },
+                "rate": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "breakdown": {
+                  "type": "array"
+                }
+              },
+              "additionalProperties": false
+            },
+            "total": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "currency": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "paymentTerms": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "paymentInstructions": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Redacted to last-4 of account if applicable."
+            }
+          },
+          "additionalProperties": false
+        },
+        "fieldConfidence": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "anomalies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "code"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "math_mismatch",
+                  "missing_required_field",
+                  "duplicate_invoice_number",
+                  "suspicious_vendor",
+                  "currency_mismatch"
+                ]
+              },
+              "detail": {
+                "type": "string",
+                "maxLength": 500
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "overallConfidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "required": [
+        "stoppedReason"
+      ],
+      "properties": {
+        "stoppedReason": {
+          "type": "string",
+          "enum": [
+            "not_an_invoice",
+            "ocr_failed",
+            "refused"
+          ]
+        },
+        "detail": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

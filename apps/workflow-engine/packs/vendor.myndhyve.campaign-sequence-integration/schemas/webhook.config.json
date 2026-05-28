@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence-integration/1.0.1/webhook.config.json",
+  "title": "CampaignSequenceWebhookConfig",
+  "type": "object",
+  "properties": {
+    "timeoutMs": {
+      "type": "integer",
+      "minimum": 1000,
+      "maximum": 60000,
+      "default": 30000,
+      "description": "Per-request timeout (ms). Bounded; the executor never blocks indefinitely."
+    },
+    "userAgent": {
+      "type": "string",
+      "default": "openwop-campaign-sequence/1.0",
+      "description": "User-Agent header sent with the request."
+    }
+  },
+  "additionalProperties": true
+}

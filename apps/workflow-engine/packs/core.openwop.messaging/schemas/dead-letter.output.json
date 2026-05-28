@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.messaging/1.0.0/dead-letter.output.json",
+  "title": "MqDeadLetterOutput",
+  "type": "object",
+  "properties": {
+    "routed": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

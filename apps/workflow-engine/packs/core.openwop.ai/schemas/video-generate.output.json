@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.ai/1.1.2/video-generate.output.json",
+  "title": "AiVideoGenerateOutput",
+  "type": "object",
+  "required": [
+    "videoBase64"
+  ],
+  "properties": {
+    "videoBase64": {
+      "type": "string"
+    },
+    "contentType": {
+      "type": "string"
+    },
+    "durationSec": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

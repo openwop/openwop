@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "assigneeId": { "type": "string" },
+    "cursor": { "type": "integer", "minimum": 0 },
+    "nextCursor": { "type": "integer", "minimum": 0 },
+    "success": { "type": "boolean" },
+    "error": { "type": "string" }
+  },
+  "required": ["assigneeId", "cursor", "nextCursor", "success"],
+  "additionalProperties": false
+}

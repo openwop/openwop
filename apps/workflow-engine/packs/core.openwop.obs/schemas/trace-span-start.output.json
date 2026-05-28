@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.obs/1.0.0/trace-span-start.output.json",
+  "title": "TraceSpanStartOutput",
+  "type": "object",
+  "required": [
+    "spanHandle",
+    "name"
+  ],
+  "properties": {
+    "spanHandle": {},
+    "name": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

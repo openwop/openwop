@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.app-builder/1.0.0/per-screen.input.json",
+  "title": "AppBuilderPerScreenInput",
+  "type": "object",
+  "required": ["task"],
+  "properties": {
+    "task": {
+      "type": "object",
+      "required": ["title"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "acceptance": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "prd": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "PRD artifact for product context. Optional but recommended."
+    },
+    "theme": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Design system / theme tokens for visual consistency."
+    },
+    "taskIndex": { "type": "integer", "minimum": 0, "description": "Position in iteration sequence (0-based). Defaults to 0." },
+    "totalTasks": { "type": "integer", "minimum": 1, "description": "Total tasks in iteration. Defaults to 1." }
+  },
+  "additionalProperties": true
+}

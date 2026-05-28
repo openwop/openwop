@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.skills-bridge/1.0.0/adapter.task.schema.json",
+  "title": "SkillsAdapterTask",
+  "type": "object",
+  "required": ["skill", "input"],
+  "properties": {
+    "skill": {
+      "type": "object",
+      "required": ["systemPrompt"],
+      "description": "Skill descriptor — either the AgentManifest emitted by core.skills-bridge.convert, or an inline shape with at least a systemPrompt.",
+      "properties": {
+        "persona": { "type": "string" },
+        "systemPrompt": { "type": "string", "minLength": 1 },
+        "toolAllowlist": { "type": "array", "items": { "type": "string" } },
+        "modelClass": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "input": {
+      "description": "Per-run input — whatever the source skill expected as its user message / payload."
+    },
+    "contextNotes": { "type": "string", "maxLength": 5000 }
+  },
+  "additionalProperties": false
+}

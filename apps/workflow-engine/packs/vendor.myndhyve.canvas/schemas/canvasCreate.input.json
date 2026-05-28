@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.canvas/1.0.0/canvasCreate.input.json",
+  "title": "CanvasCreateInput",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string", "minLength": 1, "maxLength": 200, "description": "Human-readable canvas name." },
+    "initialState": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Optional initial state seed. Canvas-type-specific."
+    },
+    "metadata": { "type": "object", "additionalProperties": true, "description": "Optional metadata (tags, source workflow, etc.)." }
+  },
+  "additionalProperties": false
+}

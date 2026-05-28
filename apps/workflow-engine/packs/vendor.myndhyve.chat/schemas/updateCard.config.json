@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.chat/1.0.0/updateCard.config.json",
+  "title": "ChatUpdateCardConfig",
+  "type": "object",
+  "required": ["cardId"],
+  "properties": {
+    "cardId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Card to patch. Must match a cardId previously emitted (typically via core.chat.progressCard)."
+    },
+    "patchType": {
+      "type": "string",
+      "enum": ["merge", "replace"],
+      "default": "merge",
+      "description": "How inputs.patch is applied. `merge` = shallow merge (later wins); `replace` = overwrite entire card payload."
+    }
+  },
+  "additionalProperties": false
+}

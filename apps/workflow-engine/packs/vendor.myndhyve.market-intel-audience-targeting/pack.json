@@ -1,0 +1,36 @@
+{
+  "name": "vendor.myndhyve.market-intel-audience-targeting",
+  "version": "1.0.0",
+  "description": "MyndHyve market-intel.audience-targeting — generate per-platform paid-media targeting packs (interests + keywords + community placements + audience definitions) for 6 ad platforms (meta / google / linkedin / tiktok / reddit / x) from market-research data (communities + angles). One AI call. Outputs cross-platform insights + testing sequence (phased) + budget allocation. Seventh marketIntel pack of the Stage 5 cohort.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/market-intel-audience-targeting",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["vendor", "myndhyve", "market-intel", "audience-targeting", "paid-media", "ads"],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders": "supported"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "market-intel.audience-targeting",
+      "version": "1.0.0",
+      "label": "Build Audience Targeting Packs",
+      "description": "Single AI call. Inputs: communities + angles + icpContext + productContext + targetPlatforms[] (1..6 of meta/google/linkedin/tiktok/reddit/x) + optional competitors. Outputs: platformPacks[] (per platform: interests + keywords + community placements + audiences + notes) + crossPlatformInsights + testingSequence (phased) + budgetAllocation. Soft validation: invalid entries dropped per-target; invalid platforms rejected before AI call.",
+      "category": "data",
+      "role": "action",
+      "capabilities": ["side-effectful"],
+      "configSchemaRef": "schemas/audience-targeting.config.json",
+      "inputSchemaRef": "schemas/audience-targeting.input.json",
+      "outputSchemaRef": "schemas/audience-targeting.output.json"
+    }
+  ]
+}

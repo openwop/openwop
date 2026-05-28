@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.brand/1.1.0/persona.review.config.json",
+  "title": "persona.reviewConfig",
+  "type": "object",
+  "required": ["reviewerRole"],
+  "properties": {
+    "reviewerRole": { "type": "string", "minLength": 1, "description": "RBAC role required to approve (e.g., 'brand-admin', 'creative-director')." },
+    "timeoutMs": { "type": "integer", "minimum": 1000, "maximum": 2592000000 }
+  },
+  "additionalProperties": false
+}

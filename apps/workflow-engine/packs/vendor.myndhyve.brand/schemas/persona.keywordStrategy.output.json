@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.brand/1.1.0/persona.keywordStrategy.output.json",
+  "title": "persona.keywordStrategyOutput",
+  "type": "object",
+  "required": ["envelopeType", "payload"],
+  "properties": {
+    "envelopeType": { "type": "string" },
+    "payload": { "description": "Envelope payload — envelopeType-specific." },
+    "envelopeId": { "type": "string" },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "inputTokens": { "type": "integer", "minimum": 0 },
+        "outputTokens": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "model": { "type": "string" }
+  },
+  "additionalProperties": false
+}

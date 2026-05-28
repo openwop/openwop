@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.kanban/1.0.0/board.review.output.json",
+  "title": "BoardReviewOutput",
+  "type": "object",
+  "required": ["boardId", "totalTasks", "columnCounts", "atRiskTasks"],
+  "properties": {
+    "boardId": { "type": "string" },
+    "boardName": { "type": "string" },
+    "totalTasks": { "type": "integer", "minimum": 0 },
+    "columnCounts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 },
+      "description": "Per-column task counts keyed by column id."
+    },
+    "atRiskTasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["taskId", "title"],
+        "properties": {
+          "taskId": { "type": "string" },
+          "title": { "type": "string" },
+          "dueDate": { "type": "string", "format": "date-time" },
+          "assignee": { "type": "string" },
+          "daysOverdue": { "type": "integer" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "reviewedAt": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

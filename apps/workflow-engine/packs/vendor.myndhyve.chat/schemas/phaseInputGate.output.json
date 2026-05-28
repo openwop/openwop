@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.chat/1.0.0/phaseInputGate.output.json",
+  "title": "ChatPhaseInputGateOutput",
+  "type": "object",
+  "required": ["phaseId", "respondedAt"],
+  "properties": {
+    "phaseId": { "type": "string" },
+    "answers": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "User-supplied answers, validated against config.answerSchema by the host before resume."
+    },
+    "respondent": { "type": "string", "description": "Identifier of the user who responded (host-defined: uid, email, etc.). Absent for system-generated resumes." },
+    "respondedAt": { "type": "string", "format": "date-time" },
+    "timedOut": { "type": "boolean", "description": "true when the gate resolved via timeout (config.timeoutMs) rather than user response. When true, `answers` is absent." }
+  },
+  "additionalProperties": false
+}

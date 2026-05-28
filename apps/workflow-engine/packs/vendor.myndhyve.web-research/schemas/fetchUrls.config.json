@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.web-research/1.0.0/fetchUrls.config.json",
+  "title": "FetchUrlsConfig",
+  "type": "object",
+  "properties": {
+    "concurrency": { "type": "integer", "minimum": 1, "maximum": 20, "default": 5 },
+    "perRequestTimeoutMs": { "type": "integer", "minimum": 1000, "maximum": 60000, "default": 15000 },
+    "respectRobotsTxt": { "type": "boolean", "default": true, "description": "When true, hosts that disallow scraping via robots.txt are skipped (returned with status 0 + error: 'robots_disallowed')." },
+    "maxBodyBytes": { "type": "integer", "minimum": 1024, "maximum": 10485760, "default": 1048576, "description": "Per-URL body size cap. Bodies exceeding are truncated; flagged with truncated:true in output." },
+    "extractReadable": { "type": "boolean", "default": true, "description": "When true, host runs HTML readability extraction (Mozilla Readability or similar) and returns `extractedText`. When false, returns raw body." }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ai/1.0.0/callPrompt.output.json",
+  "title": "CallPromptOutput",
+  "type": "object",
+  "required": ["envelopeType", "payload", "promptVersion"],
+  "properties": {
+    "envelopeType": { "type": "string" },
+    "payload": { "description": "Envelope payload (envelopeType-specific)." },
+    "envelopeId": { "type": "string" },
+    "promptVersion": { "type": "string", "description": "Resolved prompt-library version (host pins at dispatch). Surfaces for replay-determinism + audit." },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "inputTokens": { "type": "integer", "minimum": 0 },
+        "outputTokens": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "model": { "type": "string" }
+  },
+  "additionalProperties": false
+}

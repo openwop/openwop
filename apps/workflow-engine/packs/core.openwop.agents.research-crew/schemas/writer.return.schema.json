@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.research-crew/1.0.0/writer.return.schema.json",
+  "title": "ResearchWriterReturn",
+  "type": "object",
+  "oneOf": [
+    {
+      "required": ["report", "findings", "sources"],
+      "properties": {
+        "report": { "type": "string", "minLength": 1 },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["claim"],
+            "properties": {
+              "claim": { "type": "string" },
+              "supportingSources": { "type": "array", "items": { "type": "string" } },
+              "confidence": { "type": "string", "enum": ["high", "medium", "low"] }
+            },
+            "additionalProperties": false
+          }
+        },
+        "openQuestions": { "type": "array", "items": { "type": "string" } },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id"],
+            "properties": {
+              "id": { "type": "string" },
+              "citedFor": { "type": "array", "items": { "type": "string" } }
+            },
+            "additionalProperties": false
+          }
+        },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    },
+    {
+      "required": ["stoppedReason"],
+      "properties": {
+        "stoppedReason": { "type": "string", "enum": ["insufficient_evidence", "refused"] },
+        "detail": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.files/1.0.0/archive-create.config.json",
+  "title": "ArchiveCreateConfig",
+  "type": "object",
+  "required": [
+    "format"
+  ],
+  "properties": {
+    "format": {
+      "type": "string",
+      "enum": [
+        "zip",
+        "tar",
+        "tar-gz"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

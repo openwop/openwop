@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents/1.0.1/run.config.json",
+  "title": "AgentRunConfig",
+  "type": "object",
+  "properties": {
+    "maxSteps": {
+      "type": "integer",
+      "default": 10
+    },
+    "strategy": {
+      "type": "string",
+      "enum": [
+        "tools",
+        "react",
+        "plan-execute"
+      ],
+      "default": "tools"
+    },
+    "systemPrompt": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

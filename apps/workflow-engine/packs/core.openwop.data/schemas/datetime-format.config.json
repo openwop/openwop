@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/datetime-format.config.json",
+  "title": "DatetimeFormatConfig",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "string",
+      "enum": [
+        "iso",
+        "rfc2822",
+        "epoch-ms",
+        "epoch-s",
+        "locale"
+      ],
+      "default": "iso"
+    },
+    "timezone": {
+      "type": "string"
+    },
+    "locale": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-policy/1.0.0/policy-check.output.json",
+  "title": "AdsPolicyCheckOutput",
+  "type": "object",
+  "required": ["riskFlags", "disclaimers", "isCompliant", "rulesEvaluated", "success"],
+  "properties": {
+    "riskFlags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["status", "message"],
+        "properties": {
+          "rule": { "type": "string" },
+          "category": { "type": "string" },
+          "status": { "type": "string", "enum": ["pass", "fail", "warning"] },
+          "message": { "type": "string" },
+          "autoResolvable": { "type": "boolean" }
+        },
+        "additionalProperties": true
+      },
+      "description": "All fail + warning checks (policy + caller-supplied trust)."
+    },
+    "disclaimers": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Messages for autoResolvable flags — useful when surfacing suggested fixes to the user."
+    },
+    "isCompliant": {
+      "type": "boolean",
+      "description": "True when no fail-severity flags. Warnings don't block."
+    },
+    "rulesEvaluated": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of policy rules + placement-length rules + trust-guardrail rules considered."
+    },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

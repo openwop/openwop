@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.a2a/1.1.0/push-send.input.json",
+  "title": "A2aPushSendInput",
+  "type": "object",
+  "required": [
+    "configId",
+    "event"
+  ],
+  "properties": {
+    "configId": {
+      "type": "string"
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

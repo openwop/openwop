@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.1.1/expose-prompt.config.json",
+  "title": "McpExposePromptConfig",
+  "type": "object",
+  "required": [
+    "name",
+    "template"
+  ],
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "template": {
+      "type": "string"
+    },
+    "arguments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-voc/1.0.0/voc-extraction.input.json",
+  "title": "MarketIntelVocExtractionInput",
+  "type": "object",
+  "required": ["content", "icpContext", "productContext"],
+  "properties": {
+    "content": { "type": "string", "minLength": 1, "description": "Raw content to extract VoC from (forum thread body, review text, transcript, etc.)." },
+    "sourceUrl": { "type": "string", "description": "URL of the content source (for traceability + cited in summary)." },
+    "sourceTitle": { "type": "string", "description": "Title of the content (thread title, article title, etc.)." },
+    "platform": { "type": "string", "description": "Source platform tag (reddit / quora / g2 / capterra / forum / blog / etc.)." },
+    "community": { "type": "string", "description": "Community / subreddit / forum identifier within the platform." },
+    "icpContext": {
+      "type": "object",
+      "required": ["roles", "industry", "problems", "outcomes"],
+      "properties": {
+        "roles": { "type": "array", "items": { "type": "string" } },
+        "industry": { "type": "string" },
+        "problems": { "type": "array", "items": { "type": "string" } },
+        "outcomes": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "productContext": {
+      "type": "object",
+      "required": ["name", "category", "differentiators"],
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "differentiators": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "maxRecords": { "type": "integer", "minimum": 1, "maximum": 50, "description": "Upper bound on records the AI is asked to return. Defaults to 15." }
+  },
+  "additionalProperties": true
+}

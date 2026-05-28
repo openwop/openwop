@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "winningOptionId": { "type": "string" },
+    "winningValue": {},
+    "voteCounts": { "type": "object", "additionalProperties": { "type": "number" } },
+    "quorumMet": { "type": "boolean" },
+    "margin": { "type": "number" },
+    "voteCount": { "type": "integer", "minimum": 0 },
+    "success": { "type": "boolean" },
+    "error": { "type": "string" }
+  },
+  "required": ["winningOptionId", "voteCounts", "quorumMet", "margin", "voteCount", "success"],
+  "additionalProperties": false
+}

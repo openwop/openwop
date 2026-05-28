@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.3/totp-generate.config.json",
+  "title": "TotpGenerateConfig",
+  "type": "object",
+  "properties": {
+    "algorithm": {
+      "type": "string",
+      "enum": [
+        "sha1",
+        "sha256",
+        "sha512"
+      ],
+      "default": "sha1"
+    },
+    "digits": {
+      "type": "integer",
+      "enum": [
+        6,
+        7,
+        8
+      ],
+      "default": 6
+    },
+    "stepSeconds": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 30
+    },
+    "secretEncoding": {
+      "type": "string",
+      "enum": [
+        "utf8",
+        "hex",
+        "base64",
+        "base32"
+      ],
+      "default": "base32"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.data-integration/1.0.0/source.a2a.output.json",
+  "title": "DataSourceA2AOutput",
+  "type": "object",
+  "required": ["taskState"],
+  "properties": {
+    "result": { "description": "Peer agent's task result." },
+    "taskState": { "type": "string", "enum": ["completed", "failed", "cancelled", "timeout"] },
+    "error": { "type": "object", "additionalProperties": true, "description": "Set when taskState !== 'completed'." },
+    "peerId": { "type": "string" },
+    "taskId": { "type": "string", "description": "Peer-side task identifier (for trace correlation)." }
+  },
+  "additionalProperties": false
+}

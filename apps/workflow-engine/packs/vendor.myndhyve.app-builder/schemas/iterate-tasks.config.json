@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.app-builder/1.0.0/iterate-tasks.config.json",
+  "title": "AppBuilderIterateTasksConfig",
+  "type": "object",
+  "properties": {
+    "expectedEnvelopeType": { "type": "string", "description": "Envelope type to wait for per task. Defaults to 'screen.emit'." },
+    "taskTimeoutMs": { "type": "integer", "minimum": 1000, "description": "Per-task timeout in ms. Defaults to 180000." },
+    "taskRetryCount": { "type": "integer", "minimum": 0, "description": "Per-task additional attempts on timeout. Defaults to 0." },
+    "failOnAnyTaskError": { "type": "boolean", "description": "When true, the iteration aborts after the first task failure (remaining tasks marked skipped). Defaults to false (task-level failure isolation)." }
+  },
+  "additionalProperties": true
+}

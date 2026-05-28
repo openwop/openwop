@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.chat/1.0.0/sendMessage.config.json",
+  "title": "ChatSendMessageConfig",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": ["agent", "system", "user"],
+      "default": "agent",
+      "description": "Who the message appears to be from. `agent` is typical for workflow output; `system` for diagnostic / status; `user` is rare (programmatic user messages, e.g., scripted prompts)."
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Optional chat session override. When unset, posts to the run's default session (ctx.chatSessionId)."
+    }
+  },
+  "additionalProperties": false
+}

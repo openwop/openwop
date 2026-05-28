@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.data-integration/1.0.0/source.mcp.input.json",
+  "title": "DataSourceMCPInput",
+  "type": "object",
+  "properties": {
+    "args": { "type": "object", "additionalProperties": true, "description": "Tool args (only relevant for operation.kind='tool')." }
+  },
+  "additionalProperties": false
+}

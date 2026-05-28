@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "artifactId": { "type": "string" },
+    "artifactTypeId": { "type": "string" },
+    "action": { "type": "string" },
+    "artifactData": { "type": "object", "additionalProperties": true }
+  },
+  "required": ["artifactId", "artifactTypeId", "action", "artifactData"],
+  "additionalProperties": false
+}

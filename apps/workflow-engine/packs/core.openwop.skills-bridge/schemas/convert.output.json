@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.skills-bridge/1.0.0/convert.output.json",
+  "title": "SkillsBridgeConvertOutput",
+  "type": "object",
+  "required": ["agentManifest", "warnings"],
+  "properties": {
+    "agentManifest": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "description": "AgentManifest object matching schemas/agent-manifest.schema.json. Downstream nodes / workflows can pass this to a host's agent-registry write surface to register the imported skill as a callable agent.",
+          "additionalProperties": true
+        }
+      ]
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "additionalProperties": false
+}

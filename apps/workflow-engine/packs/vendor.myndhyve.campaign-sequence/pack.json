@@ -1,0 +1,54 @@
+{
+  "name": "vendor.myndhyve.campaign-sequence",
+  "version": "1.0.0",
+  "description": "MyndHyve campaign-sequence step executors — three pure-control nodes (wait, tag, condition) lifted from src/canvas-types/campaign-studio/sequences/sequenceStepModules.ts. Self-contained: only ctx.inputs + ctx.log; no host capabilities required beyond core NodeContext. The integration siblings (email, sms, webhook) ship in a follow-up pack once openwop NodeContext extensions for host.email / host.sms / host.http land.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/campaign-sequence",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["vendor", "myndhyve", "campaign", "sequence", "control"],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "campaign.sequence.wait",
+      "version": "1.0.0",
+      "label": "Sequence Wait",
+      "description": "Completes a wait step whose due time was scheduled by enrollment state. Pure passthrough — the host's enrollment scheduler decides WHEN to fire the node; this executor signals completion.",
+      "category": "control",
+      "role": "action",
+      "configSchemaRef": "schemas/wait.config.json",
+      "inputSchemaRef": "schemas/wait.input.json",
+      "outputSchemaRef": "schemas/wait.output.json"
+    },
+    {
+      "typeId": "campaign.sequence.tag",
+      "version": "1.0.0",
+      "label": "Sequence Tag",
+      "description": "Applies a sequence tag action. Validates that step.tagAction and step.tagName are set; emits a debug log; returns success. The actual tag-application side-effect is the responsibility of an upstream/downstream host node that reads the enrollment record.",
+      "category": "data",
+      "role": "action",
+      "configSchemaRef": "schemas/tag.config.json",
+      "inputSchemaRef": "schemas/tag.input.json",
+      "outputSchemaRef": "schemas/tag.output.json"
+    },
+    {
+      "typeId": "campaign.sequence.condition",
+      "version": "1.0.0",
+      "label": "Sequence Condition",
+      "description": "Evaluates enrollment data against step.conditions[] and returns the nextStepId for the matching branch (step.yesNextStepId or step.noNextStepId). Pure function — only reads ctx.inputs. Supports 17 condition operators (equals, contains, greater_than, matches_regex, etc.) and AND/OR logic via step.conditionLogic.",
+      "category": "control",
+      "role": "gate",
+      "configSchemaRef": "schemas/condition.config.json",
+      "inputSchemaRef": "schemas/condition.input.json",
+      "outputSchemaRef": "schemas/condition.output.json"
+    }
+  ]
+}

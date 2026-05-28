@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.ai/1.1.2/chat-completion.input.json",
+  "title": "ChatCompletionInput",
+  "type": "object",
+  "required": [
+    "messages"
+  ],
+  "properties": {
+    "messages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "role",
+          "content"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant",
+              "system"
+            ]
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "description": "Conversation messages in turn order. The final message MUST be role=user (the host MAY relax this for completion-only providers but conformance MUST emit `role: 'user'` last). System messages MAY appear anywhere but typically at the start; hosts MAY merge them into config.systemPrompt internally."
+    }
+  },
+  "additionalProperties": false
+}

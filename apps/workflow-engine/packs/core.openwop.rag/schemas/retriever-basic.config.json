@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.rag/1.0.1/retriever-basic.config.json",
+  "title": "RetrieverBasicConfig",
+  "type": "object",
+  "required": [
+    "collection"
+  ],
+  "properties": {
+    "collection": {
+      "type": "string"
+    },
+    "topK": {
+      "type": "integer",
+      "default": 5
+    }
+  },
+  "additionalProperties": false
+}

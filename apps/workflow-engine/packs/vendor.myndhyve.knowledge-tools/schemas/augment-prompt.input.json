@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.knowledge-tools/1.0.0/augment-prompt.input.json",
+  "title": "KnowledgeAugmentPromptInput",
+  "type": "object",
+  "required": ["userMessage"],
+  "properties": {
+    "userMessage": { "type": "string", "minLength": 1, "description": "The user message to ground. Becomes the 'User question:' section of the augmented prompt." },
+    "retrievalQuery": { "type": "string", "description": "Override the retrieval query. Defaults to userMessage when omitted." },
+    "workspaceId": { "type": "string" },
+    "collectionIds": { "type": "array", "items": { "type": "string" } },
+    "category": { "type": "string" },
+    "candidateLimit": { "type": "integer", "minimum": 1 },
+    "resultLimit": { "type": "integer", "minimum": 1 },
+    "scoreThreshold": { "type": "number", "minimum": 0, "maximum": 1 }
+  },
+  "additionalProperties": true
+}

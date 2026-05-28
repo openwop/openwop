@@ -1,0 +1,23 @@
+{
+  "name": "vendor.myndhyve.ads-tools",
+  "version": "1.0.0",
+  "description": "MyndHyve Ads Studio tools — 2 pure-logic executors (ads.brief.extract, ads.tracking.link) lifted from src/canvas-types/campaign-studio/ads-studio/. Both are deterministic — no AI calls, no host capabilities. brief.extract derives an AdBrief from caller-supplied page sections; tracking.link builds UTM-tagged per-platform URLs with click-ID macros.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/ads-tools",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["vendor", "myndhyve", "ads", "campaign", "tracking", "utm", "brief"],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    { "typeId": "ads.brief.extract", "version": "1.0.0", "label": "Extract Ads Brief from Page", "description": "Derive an AdBrief from page sections — extracts headlines/descriptions/CTAs/bullets/testimonials/stats by section type, dedupes, infers selling points + tone, generates default angles. Page sections + title/description supplied as inputs (host-agnostic).", "category": "data", "role": "action", "configSchemaRef": "schemas/brief-extract.config.json", "inputSchemaRef": "schemas/brief-extract.input.json", "outputSchemaRef": "schemas/brief-extract.output.json" },
+    { "typeId": "ads.tracking.link", "version": "1.0.0", "label": "Build Tracking Links", "description": "Build UTM-tagged tracking URLs with platform-specific click ID macros. Supports meta/google/tiktok/linkedin/x/pinterest/snapchat/reddit/amazon. Multi-platform batch mode emits one link per platform.", "category": "data", "role": "action", "configSchemaRef": "schemas/tracking-link.config.json", "inputSchemaRef": "schemas/tracking-link.input.json", "outputSchemaRef": "schemas/tracking-link.output.json" }
+  ]
+}

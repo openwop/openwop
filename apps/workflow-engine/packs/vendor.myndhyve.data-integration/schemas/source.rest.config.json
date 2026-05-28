@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.data-integration/1.0.0/source.rest.config.json",
+  "title": "DataSourceRestConfig",
+  "type": "object",
+  "required": ["sourceId"],
+  "properties": {
+    "sourceId": { "type": "string", "minLength": 1, "description": "Host-registered REST data-source id (e.g., 'salesforce-prod'). Maps to URL + auth + headers." },
+    "method": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"], "default": "GET" },
+    "path": { "type": "string", "description": "Path appended to source baseURL. Supports `{{var}}` substitution from inputs.params." },
+    "paginate": { "type": "boolean", "default": false, "description": "When true, follows pagination per the source's host-defined pagination strategy and returns all pages aggregated." }
+  },
+  "additionalProperties": false
+}

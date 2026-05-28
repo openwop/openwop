@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.document-author/1.0.0/document-author.task.schema.json",
+  "title": "DocumentAuthorTask",
+  "type": "object",
+  "required": [
+    "format",
+    "brief",
+    "outputPath"
+  ],
+  "properties": {
+    "format": {
+      "type": "string",
+      "enum": [
+        "pdf",
+        "docx",
+        "xlsx",
+        "pptx",
+        "md"
+      ]
+    },
+    "brief": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100000
+    },
+    "outputPath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "templatePath": {
+      "type": "string"
+    },
+    "sourceData": {
+      "additionalProperties": true
+    },
+    "style": {
+      "type": "string",
+      "enum": [
+        "formal",
+        "casual",
+        "technical"
+      ],
+      "default": "formal"
+    }
+  },
+  "additionalProperties": false
+}

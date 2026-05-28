@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.knowledge-tools/1.0.0/retrieve.output.json",
+  "title": "KnowledgeRetrieveOutput",
+  "type": "object",
+  "required": ["chunks", "sources", "hasResults", "success"],
+  "properties": {
+    "chunks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["chunkId", "content", "assetId", "collectionId", "relevanceScore"],
+        "properties": {
+          "chunkId": { "type": "string" },
+          "content": { "type": "string" },
+          "rawContent": { "type": "string" },
+          "headingPath": { "type": "array", "items": { "type": "string" } },
+          "pageNumber": { "type": ["integer", "null"] },
+          "documentTitle": { "type": "string" },
+          "assetId": { "type": "string" },
+          "collectionId": { "type": "string" },
+          "relevanceScore": { "type": "number" },
+          "vectorDistance": { "type": "number" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["sourceId", "assetId", "title"],
+        "properties": {
+          "sourceId": { "type": "string" },
+          "assetId": { "type": "string" },
+          "title": { "type": "string" },
+          "headingPath": { "type": "array", "items": { "type": "string" } },
+          "pageNumber": { "type": ["integer", "null"] }
+        },
+        "additionalProperties": true
+      }
+    },
+    "hasResults": { "type": "boolean" },
+    "latencyMs": { "type": "number" },
+    "droppedByScoreFloor": { "type": "integer", "minimum": 0 },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

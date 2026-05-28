@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.1.0/error.output.json",
+  "title": "ErrorOutput",
+  "type": "object",
+  "required": [
+    "failedRunId"
+  ],
+  "properties": {
+    "failedRunId": {
+      "type": "string"
+    },
+    "workflowId": {
+      "type": "string"
+    },
+    "failedNodeId": {
+      "type": "string"
+    },
+    "errorEnvelope": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

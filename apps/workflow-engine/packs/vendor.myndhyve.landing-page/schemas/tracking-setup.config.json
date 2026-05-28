@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.landing-page/1.0.0/tracking-setup.config.json",
+  "title": "Landing-tracking-setup-config",
+  "type": "object",
+  "properties": {
+    "provider": { "type": "string", "description": "AI provider id override (anthropic/openai/google). When omitted the host's default routes the call." },
+    "model": { "type": "string", "description": "Model id override. When omitted the host's default for the chosen provider is used." }
+  },
+  "additionalProperties": true
+}

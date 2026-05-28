@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence-integration/1.0.1/email.output.json",
+  "title": "CampaignSequenceEmailOutput",
+  "type": "object",
+  "required": [
+    "success"
+  ],
+  "properties": {
+    "success": {
+      "type": "boolean"
+    },
+    "error": {
+      "type": "string"
+    },
+    "nextStepId": {
+      "type": "string"
+    },
+    "messageId": {
+      "type": "string",
+      "description": "Provider message id when the host's adapter returns one."
+    }
+  },
+  "additionalProperties": true
+}

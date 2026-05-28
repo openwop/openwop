@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-export/1.0.0/export-pack.config.json",
+  "title": "AdsExportPackConfig",
+  "type": "object",
+  "properties": {
+    "maxItemsPerPack": { "type": "integer", "minimum": 1, "default": 50 },
+    "maxTotalAssetSize": { "type": "integer", "minimum": 1, "default": 524288000, "description": "Bytes. Default 500 MiB." },
+    "manifestVersion": { "type": "string", "default": "1.0.0" },
+    "emitJson": { "type": "boolean", "default": false, "description": "When true, output includes `json` field with pretty-printed JSON string." },
+    "emitCsv": { "type": "boolean", "default": false, "description": "When true, output includes `csv` field with CSV rows (ad-id, ad-name, placement, headline, description, body_text, cta_text, asset_url, asset_type, tracking_url, platform)." }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.examples/1.0.0/coin-flip.output.json",
+  "title": "CoinFlipNodeOutput",
+  "description": "Output for core.openwop.examples.coin-flip. Closed enum result.",
+  "type": "object",
+  "required": ["result"],
+  "properties": {
+    "result": {
+      "type": "string",
+      "enum": ["heads", "tails"],
+      "description": "Closed-enum outcome derived from the seed."
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.a2a/1.1.0/send-and-stream.output.json",
+  "title": "SendAndStreamOutput",
+  "type": "object",
+  "required": [
+    "terminal",
+    "events",
+    "eventCount"
+  ],
+  "properties": {
+    "terminal": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "eventCount": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

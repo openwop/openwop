@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "sourceArtifact": { "type": "object", "additionalProperties": true },
+    "targetArtifact": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": false
+}

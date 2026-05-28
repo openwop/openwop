@@ -1,0 +1,36 @@
+{
+  "name": "vendor.myndhyve.ads-publish-meta",
+  "version": "1.0.0",
+  "description": "MyndHyve ads.publish.meta — publish an ad to Meta Marketing API v21.0 (Facebook/Instagram). First consumer of the secrets.resolveInPack sub-capability (spec PR #52). Resolves OAuth token via ctx.secrets.resolve, then runs the 4-step publish pipeline (creative → campaign → ad set → ad) with best-effort rollback on failure. Validates all 6 Meta enums (objective, status, bidStrategy, billingEvent, targeting flexible-spec, placements) pre-flight. Maps Meta API errors to retryable/non-retryable per spec failure-mode glossary.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/ads-publish-meta",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["vendor", "myndhyve", "ads", "publish", "meta", "facebook", "instagram", "marketing-api"],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "secrets.resolveInPack": "supported"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "ads.publish.meta",
+      "version": "1.0.0",
+      "label": "Publish Ad to Meta",
+      "description": "Single typeId. Inputs: credentialRef (opaque OAuth token ref) + adAccountId + pageId + campaign + adSet + creative + ad. Resolves token via ctx.secrets.resolve(ref, purpose), then sequentially uploads creative → creates campaign → creates ad set → creates ad. Best-effort rollback on partial failure (campaign cascade-deletes ad set + ad; orphan creative deleted separately when ad creation failed). Returns all 4 entity IDs + publishedStatus + publishedAt. Maps Meta API errors to META_RATE_LIMIT / META_AUTH_EXPIRED / META_PERMISSION_DENIED / META_INVALID_PARAMS / META_SERVER_ERROR / META_PUBLISH_FAILED with retryable flag per spec failure-mode glossary.",
+      "category": "data",
+      "role": "action",
+      "capabilities": ["side-effectful"],
+      "configSchemaRef": "schemas/publish-meta.config.json",
+      "inputSchemaRef": "schemas/publish-meta.input.json",
+      "outputSchemaRef": "schemas/publish-meta.output.json"
+    }
+  ]
+}

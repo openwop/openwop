@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.rag/1.0.1/loader-github.config.json",
+  "title": "LoaderGithubConfig",
+  "type": "object",
+  "required": [
+    "repo"
+  ],
+  "properties": {
+    "repo": {
+      "type": "string"
+    },
+    "ref": {
+      "type": "string"
+    },
+    "glob": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

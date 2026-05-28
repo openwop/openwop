@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.app-builder/1.0.0/iterate-tasks.input.json",
+  "title": "AppBuilderIterateTasksInput",
+  "type": "object",
+  "properties": {
+    "planArtifact": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Plan artifact from upstream plan-generation. Robust to 4 shapes: canonical PlanModel ({steps:[]}), AI default ({tasks:[]}), AI-confused envelope ({'tasks.create':[]}), AI-nested phase wrapper ({'tasks.create':{phases:[{tasks:[]}]}}). Empty/missing plan → 0 tasks, status:success, tasksProcessed:0."
+    },
+    "prdArtifact": { "type": "object", "additionalProperties": true },
+    "themeArtifact": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": true
+}

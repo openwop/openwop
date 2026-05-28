@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/string-regex-replace.config.json",
+  "title": "StringRegexReplaceConfig",
+  "type": "object",
+  "required": [
+    "pattern"
+  ],
+  "properties": {
+    "pattern": {
+      "type": "string"
+    },
+    "flags": {
+      "type": "string"
+    },
+    "replacement": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

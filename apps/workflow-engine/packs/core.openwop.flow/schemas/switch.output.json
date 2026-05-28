@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.1.0/switch.output.json",
+  "title": "SwitchOutput",
+  "type": "object",
+  "required": [
+    "label",
+    "matched",
+    "value"
+  ],
+  "properties": {
+    "label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "matched": {
+      "type": "boolean"
+    },
+    "value": {}
+  },
+  "additionalProperties": false
+}

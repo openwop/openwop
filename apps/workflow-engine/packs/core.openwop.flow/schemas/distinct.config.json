@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.1.0/distinct.config.json",
+  "title": "DistinctConfig",
+  "type": "object",
+  "properties": {
+    "path": {
+      "type": "string",
+      "description": "Optional key path for the dedupe key; full-item canonical when absent."
+    }
+  },
+  "additionalProperties": false
+}

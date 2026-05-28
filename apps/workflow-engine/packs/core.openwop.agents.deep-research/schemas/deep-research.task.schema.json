@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.deep-research/1.0.0/deep-research.task.schema.json",
+  "title": "DeepResearchTask",
+  "type": "object",
+  "required": ["question"],
+  "properties": {
+    "question": { "type": "string", "minLength": 1, "maxLength": 4000 },
+    "depth": {
+      "type": "string",
+      "enum": ["shallow", "medium", "deep"],
+      "default": "medium"
+    },
+    "maxToolCalls": {
+      "type": "integer",
+      "minimum": 3,
+      "maximum": 50,
+      "default": 12
+    },
+    "sources": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "maxItems": 20,
+      "description": "Preferred source domains, URLs, or RAG document IDs."
+    },
+    "context": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": false
+}

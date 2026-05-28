@@ -1,0 +1,47 @@
+{
+  "name": "core.openwop.agents.long-doc-summarizer",
+  "version": "1.0.0",
+  "description": "Long-document summarizer using map-reduce. Splits input into chunks, summarizes each, then synthesizes a final summary. Handles documents that exceed any single LLM's context window. Pure-agent pack.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.agents.long-doc-summarizer",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["core", "agents", "summarization", "map-reduce", "pattern"],
+  "engines": {
+    "openwop": ">=1.1.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders": "supported",
+    "host.agentRuntime": "supported"
+  },
+  "agents": [
+    {
+      "agentId": "core.openwop.agents.long-doc-summarizer.default",
+      "persona": "Long Doc Summarizer",
+      "label": "Long Document Summarizer Agent",
+      "description": "Map-reduce summarizer. Splits input into chunks via openwop:core.flow.split-in-batches, summarizes each chunk independently, then synthesizes a final summary. Handles inputs beyond a single LLM context window.",
+      "modelClass": "writing",
+      "systemPromptRef": "prompts/long-doc-summarizer.md",
+      "toolAllowlist": [
+        "openwop:core.flow.split-in-batches",
+        "openwop:core.flow.aggregate-text"
+      ],
+      "memoryShape": {
+        "scratchpad": true,
+        "conversation": false,
+        "longTerm": false
+      },
+      "handoff": {
+        "taskSchemaRef": "schemas/long-doc-summarizer.task.schema.json",
+        "returnSchemaRef": "schemas/long-doc-summarizer.return.schema.json"
+      },
+      "confidence": {
+        "defaultThreshold": 0.7
+      }
+    }
+  ],
+  "runtime": {
+    "language": "remote",
+    "entry": "pack.json"
+  }
+}

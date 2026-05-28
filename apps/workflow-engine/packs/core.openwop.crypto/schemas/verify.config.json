@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.3/verify.config.json",
+  "title": "VerifyConfig",
+  "type": "object",
+  "properties": {
+    "algorithm": {
+      "type": "string",
+      "enum": [
+        "ed25519",
+        "rs256",
+        "ps256",
+        "es256"
+      ],
+      "default": "ed25519"
+    },
+    "inputEncoding": {
+      "type": "string",
+      "enum": [
+        "utf8",
+        "hex",
+        "base64",
+        "base64url"
+      ]
+    },
+    "signatureEncoding": {
+      "type": "string",
+      "enum": [
+        "hex",
+        "base64",
+        "base64url"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

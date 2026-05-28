@@ -1,0 +1,52 @@
+{
+  "name": "core.openwop.skills-bridge",
+  "version": "1.0.0",
+  "description": "Hybrid pack bridging Anthropic / OpenAI Agent Skills (SKILL.md format, open standard since Dec 2025) to openwop AgentManifests. One converter node + one adapter agent. Positions openwop as the orchestration layer above the Skills standard rather than in competition.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.skills-bridge",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["core", "skills-bridge", "interop", "anthropic", "openai", "skill-md"],
+  "engines": { "openwop": ">=1.1.0 <2.0.0" },
+  "peerDependencies": {
+    "aiProviders": "supported",
+    "host.agentRuntime": "supported"
+  },
+  "nodes": [
+    {
+      "typeId": "core.skills-bridge.convert",
+      "version": "1.0.0",
+      "label": "Skills-Bridge — Convert SKILL.md → AgentManifest",
+      "description": "Parses a SKILL.md folder (Anthropic / OpenAI Agent Skills format) and emits an openwop AgentManifest object. Pure transform — no I/O beyond reading the supplied folder contents from the input port.",
+      "category": "data",
+      "role": "pure",
+      "capabilities": ["cacheable"],
+      "configSchemaRef": "schemas/convert.config.json",
+      "inputSchemaRef": "schemas/convert.input.json",
+      "outputSchemaRef": "schemas/convert.output.json"
+    }
+  ],
+  "agents": [
+    {
+      "agentId": "core.openwop.skills-bridge.adapter",
+      "persona": "Skills Adapter",
+      "label": "Skills Adapter Agent",
+      "description": "Adapter persona that, when given a SKILL.md-style skill descriptor + per-run inputs, executes the skill the way an Anthropic or OpenAI runtime would — but inside an openwop dispatch. Useful for skill-format portability without re-authoring as native openwop agent packs.",
+      "modelClass": "general",
+      "systemPromptRef": "prompts/adapter.md",
+      "toolAllowlist": [],
+      "memoryShape": { "scratchpad": true, "conversation": false, "longTerm": false },
+      "handoff": {
+        "taskSchemaRef": "schemas/adapter.task.schema.json",
+        "returnSchemaRef": "schemas/adapter.return.schema.json"
+      },
+      "confidence": { "defaultThreshold": 0.7 }
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  }
+}

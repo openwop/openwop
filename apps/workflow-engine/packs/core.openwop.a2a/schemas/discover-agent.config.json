@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.a2a/1.1.0/discover-agent.config.json",
+  "title": "DiscoverAgentConfig",
+  "type": "object",
+  "required": [
+    "baseUrl"
+  ],
+  "properties": {
+    "baseUrl": {
+      "type": "string",
+      "format": "uri"
+    },
+    "extended": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "additionalProperties": false
+}

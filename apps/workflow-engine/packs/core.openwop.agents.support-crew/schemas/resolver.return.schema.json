@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.support-crew/1.0.0/resolver.return.schema.json",
+  "title": "SupportCrewResolverReturn",
+  "type": "object",
+  "oneOf": [
+    {
+      "required": ["answer", "citations"],
+      "properties": {
+        "answer": { "type": "string", "minLength": 1 },
+        "citations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["sourceId"],
+            "properties": {
+              "sourceId": { "type": "string" },
+              "quote": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "suggestedActions": { "type": "array", "items": { "type": "string" } },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    },
+    {
+      "required": ["escalation"],
+      "properties": {
+        "escalation": {
+          "type": "object",
+          "required": ["reason"],
+          "properties": {
+            "reason": { "type": "string", "minLength": 1 },
+            "suggestedSpecialist": { "type": "string" },
+            "partialContext": {
+              "type": "object",
+              "properties": {
+                "draftAnswer": { "type": "string" },
+                "retrievalAttempts": { "type": "integer" },
+                "weakestEvidence": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.1.0/schedule.output.json",
+  "title": "ScheduleTriggerOutput",
+  "type": "object",
+  "required": [
+    "firedAt",
+    "cron"
+  ],
+  "properties": {
+    "firedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp when the schedule fired (in UTC; not config.timezone — apply tz conversion downstream)."
+    },
+    "scheduledFor": {
+      "type": "string",
+      "format": "date-time",
+      "description": "The cron expression's intended fire time. Differs from firedAt if the host was offline + fired catch-up under missedFirePolicy."
+    },
+    "cron": {
+      "type": "string",
+      "description": "Echo of the cron expression that matched."
+    },
+    "timezone": {
+      "type": "string",
+      "description": "Echo of config.timezone."
+    },
+    "isCatchUp": {
+      "type": "boolean",
+      "description": "true when this fire is a catch-up under missedFirePolicy (not a real-time fire)."
+    }
+  },
+  "additionalProperties": false
+}

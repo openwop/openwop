@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.files/1.0.0/ftp.config.json",
+  "title": "FtpConfig",
+  "type": "object",
+  "required": [
+    "host",
+    "operation"
+  ],
+  "properties": {
+    "host": {
+      "type": "string"
+    },
+    "port": {
+      "type": "integer"
+    },
+    "operation": {
+      "type": "string",
+      "enum": [
+        "get",
+        "put",
+        "list",
+        "delete"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

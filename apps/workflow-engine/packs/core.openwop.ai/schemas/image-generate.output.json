@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.ai/1.1.2/image-generate.output.json",
+  "title": "AiImageGenerateOutput",
+  "type": "object",
+  "required": [
+    "images"
+  ],
+  "properties": {
+    "images": {
+      "type": "array",
+      "items": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "GenImg",
+        "type": "object",
+        "required": [
+          "contentBase64"
+        ],
+        "properties": {
+          "contentBase64": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "width": {
+            "type": "integer"
+          },
+          "height": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

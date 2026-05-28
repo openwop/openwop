@@ -1,0 +1,32 @@
+{
+  "name": "vendor.myndhyve.ads-metrics-import",
+  "version": "1.0.0",
+  "description": "MyndHyve ads.metrics.import — pure-logic aggregation of ad metric snapshots. Caller supplies snapshots[]; pack filters by platformAdIds + optional platform/dateRange, validates each entry, and computes weighted aggregations (overallCtr / overallCpc / overallRoas / overallConversionRate + per-platform breakdown). Mirrors source AdMetricsService.getAggregatedMetrics math. No host capabilities required.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/ads-metrics-import",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["vendor", "myndhyve", "ads", "metrics", "aggregation"],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "ads.metrics.import",
+      "version": "1.0.0",
+      "label": "Aggregate Ad Metrics",
+      "description": "Inputs: snapshots[] (caller-supplied; from a platform-fetch node OR persistent store), platformAdIds[] (required filter), platform (optional filter), dateRange (optional exact-match filter — same key shape as source cache). Outputs: snapshots[] (filtered), aggregated (totalSpend/Impressions/Clicks/Conversions/ConversionValue + overall CTR/CPC/ROAS/ConversionRate + byPlatform map). Soft validation: invalid snapshots dropped with per-snapshot warnings; missing platformAdIds → INVALID_INPUTS pre-flight.",
+      "category": "data",
+      "role": "action",
+      "configSchemaRef": "schemas/metrics-import.config.json",
+      "inputSchemaRef": "schemas/metrics-import.input.json",
+      "outputSchemaRef": "schemas/metrics-import.output.json"
+    }
+  ]
+}

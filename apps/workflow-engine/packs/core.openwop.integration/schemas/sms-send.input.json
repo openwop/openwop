@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.integration/1.1.0/sms-send.input.json",
+  "title": "SmsSendInput",
+  "type": "object",
+  "required": [
+    "to",
+    "text"
+  ],
+  "properties": {
+    "to": {
+      "type": "string"
+    },
+    "text": {
+      "type": "string"
+    },
+    "from": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.agent-orchestration/1.0.0/spawn.config.json",
+  "title": "AgentSpawnConfig",
+  "type": "object",
+  "required": ["agentRef"],
+  "properties": {
+    "agentRef": {
+      "type": "object",
+      "required": ["agentId"],
+      "properties": {
+        "agentId": { "type": "string", "minLength": 1, "description": "Agent identifier — either an AgentManifest agentId (RFC 0008) or a host-internal AgentRef." },
+        "version": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "session": { "type": "string", "description": "Optional session ID to associate the spawned instance with. Useful for chat-driven workflows where the agent persists across nodes." }
+  },
+  "additionalProperties": false
+}

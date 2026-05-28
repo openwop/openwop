@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "winnerId": { "type": "string" },
+    "winnerResult": {},
+    "durationMs": { "type": "number", "minimum": 0 },
+    "success": { "type": "boolean" },
+    "error": { "type": "string" }
+  },
+  "required": ["winnerId", "durationMs", "success"],
+  "additionalProperties": false
+}

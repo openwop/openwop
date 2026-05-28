@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/array-chunk.input.json",
+  "title": "ArrayChunkInput",
+  "type": "object",
+  "required": [
+    "array"
+  ],
+  "properties": {
+    "array": {
+      "type": "array"
+    }
+  },
+  "additionalProperties": false
+}

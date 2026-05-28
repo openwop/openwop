@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.ai/1.1.2/classify.output.json",
+  "title": "AiClassifyOutput",
+  "type": "object",
+  "required": [
+    "label"
+  ],
+  "properties": {
+    "label": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "number"
+    },
+    "allScores": {
+      "type": "array"
+    }
+  },
+  "additionalProperties": false
+}

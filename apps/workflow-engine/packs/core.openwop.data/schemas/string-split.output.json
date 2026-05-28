@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/string-split.output.json",
+  "title": "StringSplitOutput",
+  "type": "object",
+  "required": [
+    "parts"
+  ],
+  "properties": {
+    "parts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

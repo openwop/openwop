@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.examples/1.0.0/echo.config.json",
+  "title": "EchoNodeConfig",
+  "description": "Config for core.openwop.examples.echo. No tunables — echo is intentionally trivial. Schema is locked to {} (no properties, additionalProperties: false) so workflow authors can't accidentally pass config that future versions might interpret.",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/array-group-by.config.json",
+  "title": "ArrayGroupByConfig",
+  "type": "object",
+  "required": [
+    "keyPath",
+    "aggregations"
+  ],
+  "properties": {
+    "keyPath": {
+      "type": "string",
+      "description": "Dot-notation path to the group key. Items where the path resolves to undefined/null land in the `key: null` bucket."
+    },
+    "aggregations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "title": "Aggregation",
+        "required": [
+          "outputKey",
+          "op"
+        ],
+        "properties": {
+          "outputKey": {
+            "type": "string",
+            "description": "Output column name within each group row. MUST NOT be `key` or `count` (reserved)."
+          },
+          "op": {
+            "type": "string",
+            "enum": [
+              "sum",
+              "count",
+              "avg",
+              "min",
+              "max",
+              "first",
+              "last",
+              "array"
+            ],
+            "description": "Aggregation operation. `count` ignores `path` and counts group members; `array` collects every value at `path` into an array (preserves duplicates); others reduce."
+          },
+          "path": {
+            "type": "string",
+            "description": "Dot-notation path to the value being aggregated. Required for sum/avg/min/max/first/last/array; ignored for count."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

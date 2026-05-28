@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.1.1/provide-roots.input.json",
+  "title": "McpProvideRootsInput",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}

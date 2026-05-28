@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.hitl/1.0.0/approval-request.config.json",
+  "title": "ApprovalRequestConfig",
+  "type": "object",
+  "properties": {
+    "approvers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "quorum": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "deadlineSeconds": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false
+}

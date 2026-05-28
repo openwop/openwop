@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-publish-google/1.0.0/publish-google.output.json",
+  "title": "AdsPublishGoogleOutput",
+  "type": "object",
+  "required": ["platform", "customerId", "budgetResourceName", "campaignResourceName", "adGroupResourceName", "adGroupAdResourceName", "publishedStatus", "publishedAt", "success"],
+  "properties": {
+    "platform": { "type": "string", "const": "google" },
+    "customerId": { "type": "string", "description": "Dash-stripped customer id (10 digits)." },
+    "budgetResourceName": { "type": "string", "description": "customers/{id}/campaignBudgets/{budgetId}" },
+    "campaignResourceName": { "type": "string", "description": "customers/{id}/campaigns/{campaignId}" },
+    "adGroupResourceName": { "type": "string", "description": "customers/{id}/adGroups/{adGroupId}" },
+    "adGroupAdResourceName": { "type": "string", "description": "customers/{id}/adGroupAds/{adGroupId}~{adId}" },
+    "publishedStatus": { "type": "string", "enum": ["ENABLED", "PAUSED", "REMOVED"] },
+    "publishedAt": { "type": "string" },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

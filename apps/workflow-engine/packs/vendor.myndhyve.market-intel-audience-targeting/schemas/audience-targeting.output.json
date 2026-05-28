@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-audience-targeting/1.0.0/audience-targeting.output.json",
+  "title": "MarketIntelAudienceTargetingOutput",
+  "type": "object",
+  "required": ["platformPacks", "crossPlatformInsights", "testingSequence", "budgetAllocation", "warnings", "platformCount", "success"],
+  "properties": {
+    "platformPacks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["platform", "interests", "keywords", "communities", "audiences", "notes"],
+        "properties": {
+          "platform": { "type": "string", "enum": ["meta", "google", "linkedin", "tiktok", "reddit", "x"] },
+          "interests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["interest", "platform", "category", "audienceSize", "alignedAngles"],
+              "properties": {
+                "interest": { "type": "string" },
+                "platform": { "type": "string" },
+                "category": { "type": "string" },
+                "rationale": { "type": "string" },
+                "audienceSize": { "type": "string", "enum": ["small", "medium", "large"] },
+                "alignedAngles": { "type": "array", "items": { "type": "string" } }
+              },
+              "additionalProperties": true
+            }
+          },
+          "keywords": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["keyword", "platform", "matchType", "volumeEstimate", "intent", "related"],
+              "properties": {
+                "keyword": { "type": "string" },
+                "platform": { "type": "string" },
+                "matchType": { "type": "string", "enum": ["broad", "phrase", "exact"] },
+                "volumeEstimate": { "type": "string", "enum": ["low", "medium", "high"] },
+                "intent": { "type": "string", "enum": ["low", "medium", "high"] },
+                "related": { "type": "array", "items": { "type": "string" } }
+              },
+              "additionalProperties": true
+            }
+          },
+          "communities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["community", "platform", "estimatedReach", "recommendedAngles", "contentRecommendations"],
+              "properties": {
+                "community": { "type": "string" },
+                "platform": { "type": "string" },
+                "rationale": { "type": "string" },
+                "estimatedReach": { "type": "string", "enum": ["small", "medium", "large"] },
+                "recommendedAngles": { "type": "array", "items": { "type": "string" } },
+                "contentRecommendations": { "type": "array", "items": { "type": "string" } }
+              },
+              "additionalProperties": true
+            }
+          },
+          "audiences": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["type", "name", "platform", "useCases"],
+              "properties": {
+                "type": { "type": "string", "enum": ["lookalike", "custom", "retargeting", "seed"] },
+                "name": { "type": "string" },
+                "platform": { "type": "string" },
+                "source": { "type": "string" },
+                "configuration": { "type": "string" },
+                "useCases": { "type": "array", "items": { "type": "string" } }
+              },
+              "additionalProperties": true
+            }
+          },
+          "notes": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": true
+      }
+    },
+    "crossPlatformInsights": {
+      "type": "object",
+      "required": ["primaryAudience", "secondaryAudiences", "exclusionRecommendations", "scalingPath"],
+      "properties": {
+        "primaryAudience": { "type": "string" },
+        "secondaryAudiences": { "type": "array", "items": { "type": "string" } },
+        "exclusionRecommendations": { "type": "array", "items": { "type": "string" } },
+        "scalingPath": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "testingSequence": {
+      "type": "array",
+      "description": "Sorted by phase ascending. Entries with invalid platform OR missing fields dropped.",
+      "items": {
+        "type": "object",
+        "required": ["phase", "platform", "targetingType", "rationale"],
+        "properties": {
+          "phase": { "type": "integer", "minimum": 1 },
+          "platform": { "type": "string", "enum": ["meta", "google", "linkedin", "tiktok", "reddit", "x"] },
+          "targetingType": { "type": "string" },
+          "rationale": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "budgetAllocation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["platform", "percentage", "rationale"],
+        "properties": {
+          "platform": { "type": "string", "enum": ["meta", "google", "linkedin", "tiktok", "reddit", "x"] },
+          "percentage": { "type": "number", "minimum": 0, "maximum": 100 },
+          "rationale": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "platformCount": { "type": "integer", "minimum": 0 },
+    "model": { "type": "string" },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "promptTokens": { "type": "integer" },
+        "completionTokens": { "type": "integer" }
+      },
+      "additionalProperties": true
+    },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

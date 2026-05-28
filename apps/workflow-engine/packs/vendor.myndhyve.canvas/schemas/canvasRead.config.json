@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.canvas/1.0.0/canvasRead.config.json",
+  "title": "CanvasReadConfig",
+  "type": "object",
+  "properties": {
+    "fields": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Optional projection — dot-notation field paths the workflow needs. When set, the host's canvas adapter returns only these paths (reduces wire weight + side-effect surface). When unset, full canvas state is returned."
+    },
+    "consistency": {
+      "type": "string",
+      "enum": ["strong", "eventual"],
+      "default": "strong",
+      "description": "Read consistency. `strong` waits for any in-flight writes on the canvas to commit before reading. `eventual` reads from replica with potentially stale data — faster but workflow MUST tolerate."
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-platforms/1.0.0/platform-specs.config.json",
+  "title": "AdsPlatformSpecsConfig",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": true,
+  "description": "No required config. Selection comes from inputs.platforms + inputs.placements."
+}

@@ -102,8 +102,16 @@ function scanLocalAgentPacks(): AgentPackSummary[] {
   const packDir = resolveDefaultPackDir();
   let entries: string[] = [];
   try {
+    // Accept both real directories AND symlinks pointing at one.
+    // `mountLocalPacks.ts` installs every `core.openwop.*` pack as a
+    // symlink into the runtime pack dir, and `Dirent.isDirectory()`
+    // returns `false` for symlinks even when their target IS a
+    // directory — so a `d.isDirectory()`-only filter silently drops
+    // every mounted pack. The agents-tab "Install from registry" page
+    // was rendering empty for that reason on the Cloud Run revision
+    // even after the packs/ COPY landed.
     entries = readdirSync(packDir, { withFileTypes: true })
-      .filter((d) => d.isDirectory() && d.name.startsWith('core.openwop.agents.'))
+      .filter((d) => (d.isDirectory() || d.isSymbolicLink()) && d.name.startsWith('core.openwop.agents.'))
       .map((d) => d.name);
   } catch {
     // No packs dir on disk — return empty rather than 500. The UI

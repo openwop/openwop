@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/number-format.config.json",
+  "title": "NumberFormatConfig",
+  "type": "object",
+  "properties": {
+    "locale": {
+      "type": "string"
+    },
+    "minimumFractionDigits": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "maximumFractionDigits": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "style": {
+      "type": "string",
+      "enum": [
+        "decimal",
+        "currency",
+        "percent",
+        "unit"
+      ]
+    },
+    "currency": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

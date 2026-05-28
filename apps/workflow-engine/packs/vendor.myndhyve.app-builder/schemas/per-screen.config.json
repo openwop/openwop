@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.app-builder/1.0.0/per-screen.config.json",
+  "title": "AppBuilderPerScreenConfig",
+  "type": "object",
+  "properties": {
+    "expectedEnvelopeType": { "type": "string", "description": "Envelope type to wait for. Defaults to 'screen.emit'. Matched strictly per host.aiEnvelope semantics." },
+    "taskTimeoutMs": { "type": "integer", "minimum": 1000, "description": "Per-task timeout in ms. Defaults to 180000 (3 min)." },
+    "taskRetryCount": { "type": "integer", "minimum": 0, "description": "Additional attempts on timeout (NOT on other errors). Defaults to 0 (no retry)." }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.a2a/1.1.0/server-trigger.config.json",
+  "title": "A2aServerTriggerConfig",
+  "type": "object",
+  "properties": {
+    "path": {
+      "type": "string"
+    },
+    "transport": {
+      "type": "string",
+      "enum": [
+        "http",
+        "grpc"
+      ],
+      "default": "http"
+    }
+  },
+  "additionalProperties": false
+}

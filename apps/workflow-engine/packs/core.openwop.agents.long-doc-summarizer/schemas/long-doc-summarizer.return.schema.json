@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.long-doc-summarizer/1.0.0/long-doc-summarizer.return.schema.json",
+  "title": "LongDocSummarizerReturn",
+  "type": "object",
+  "required": [
+    "summary",
+    "chunkSummaries"
+  ],
+  "properties": {
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "chunkSummaries": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tokenCounts": {
+      "type": "object",
+      "properties": {
+        "inputChars": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "summaryChars": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "chunks": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  },
+  "additionalProperties": false
+}

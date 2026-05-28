@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.files/1.0.0/write.config.json",
+  "title": "FileWriteConfig",
+  "type": "object",
+  "properties": {
+    "encoding": {
+      "type": "string",
+      "enum": [
+        "base64",
+        "utf8"
+      ],
+      "default": "base64"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "overwrite",
+        "create-only",
+        "append"
+      ],
+      "default": "overwrite"
+    }
+  },
+  "additionalProperties": false
+}

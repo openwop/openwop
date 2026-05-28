@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-publish-meta/1.0.0/publish-meta.input.json",
+  "title": "AdsPublishMetaInput",
+  "type": "object",
+  "required": ["credentialRef", "adAccountId", "pageId", "campaign", "adSet", "creative", "ad"],
+  "properties": {
+    "credentialRef": { "type": "string", "minLength": 1, "description": "Opaque secret reference for the Meta OAuth access token. Resolved via ctx.secrets.resolve(ref, purpose)." },
+    "adAccountId": { "type": "string", "minLength": 1, "description": "Meta ad account id (without the 'act_' prefix; pack adds it)." },
+    "pageId": { "type": "string", "minLength": 1, "description": "Facebook page id that owns the ad." },
+    "campaign": {
+      "type": "object",
+      "required": ["name", "objective"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "objective": { "type": "string", "enum": ["OUTCOME_AWARENESS", "OUTCOME_ENGAGEMENT", "OUTCOME_LEADS", "OUTCOME_SALES", "OUTCOME_TRAFFIC", "OUTCOME_APP_PROMOTION"] },
+        "status": { "type": "string", "enum": ["ACTIVE", "PAUSED"], "description": "Defaults to PAUSED (safe default — no auto-spend)." },
+        "specialAdCategories": { "type": "array", "items": { "type": "string" } },
+        "dailyBudget": { "type": "number", "minimum": 0, "description": "USD (pack converts to Meta's cents-integer)." },
+        "lifetimeBudget": { "type": "number", "minimum": 0 },
+        "bidStrategy": { "type": "string", "enum": ["LOWEST_COST_WITHOUT_CAP", "LOWEST_COST_WITH_BID_CAP", "COST_CAP"] }
+      },
+      "additionalProperties": true
+    },
+    "adSet": {
+      "type": "object",
+      "required": ["name", "billingEvent", "optimizationGoal"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "billingEvent": { "type": "string", "enum": ["IMPRESSIONS", "LINK_CLICKS", "APP_INSTALLS"] },
+        "optimizationGoal": { "type": "string", "minLength": 1, "description": "Free-form (Meta has many; pack forwards verbatim)." },
+        "status": { "type": "string", "enum": ["ACTIVE", "PAUSED"] },
+        "dailyBudget": { "type": "number", "minimum": 0 },
+        "lifetimeBudget": { "type": "number", "minimum": 0 },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "targeting": {
+          "type": "object",
+          "properties": {
+            "geoLocations": { "type": "object", "additionalProperties": true },
+            "ageMin": { "type": "integer", "minimum": 13, "maximum": 99 },
+            "ageMax": { "type": "integer", "minimum": 13, "maximum": 99 },
+            "genders": { "type": "array", "items": { "type": "integer" } },
+            "interests": { "type": "array", "items": { "type": "object", "required": ["id", "name"] } },
+            "behaviors": { "type": "array", "items": { "type": "object", "required": ["id", "name"] } },
+            "customAudiences": { "type": "array", "items": { "type": "object", "required": ["id"] } },
+            "excludedCustomAudiences": { "type": "array", "items": { "type": "object", "required": ["id"] } }
+          },
+          "additionalProperties": true
+        },
+        "placements": {
+          "type": "object",
+          "properties": {
+            "devicePlatforms": { "type": "array", "items": { "type": "string", "enum": ["mobile", "desktop"] } },
+            "publisherPlatforms": { "type": "array", "items": { "type": "string", "enum": ["facebook", "instagram", "audience_network", "messenger"] } },
+            "facebookPositions": { "type": "array", "items": { "type": "string" } },
+            "instagramPositions": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    },
+    "creative": {
+      "type": "object",
+      "required": ["name"],
+      "description": "Either videoId OR linkUrl required (pre-flight enforced).",
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "title": { "type": "string" },
+        "body": { "type": "string" },
+        "linkUrl": { "type": "string", "description": "For link/image ads." },
+        "imageHash": { "type": "string", "description": "Meta-side image hash (from prior /adimages upload)." },
+        "videoId": { "type": "string", "description": "For video ads (from prior /advideos upload)." },
+        "callToAction": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string" },
+            "value": { "type": "object", "additionalProperties": true }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "ad": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["ACTIVE", "PAUSED"] },
+        "trackingSpecs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["action_type"],
+            "properties": {
+              "action_type": { "type": "array", "items": { "type": "string" } },
+              "fbPixel": { "type": "array", "items": { "type": "string" } }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.3/sign.input.json",
+  "title": "SignInput",
+  "type": "object",
+  "required": [
+    "data",
+    "privateKeyPem"
+  ],
+  "properties": {
+    "data": {
+      "type": "string"
+    },
+    "privateKeyPem": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

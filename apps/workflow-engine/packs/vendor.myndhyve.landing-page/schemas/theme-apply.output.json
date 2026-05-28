@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.landing-page/1.0.0/theme-apply.output.json",
+  "title": "LandingThemeApplyOutput",
+  "type": "object",
+  "required": ["styledPage", "styledVariants", "appliedStyles", "success"],
+  "properties": {
+    "styledPage": { "type": "object", "additionalProperties": true },
+    "styledVariants": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "appliedStyles": { "type": "object", "additionalProperties": true },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

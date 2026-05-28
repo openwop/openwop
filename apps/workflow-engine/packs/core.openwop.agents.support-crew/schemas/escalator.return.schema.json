@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.support-crew/1.0.0/escalator.return.schema.json",
+  "title": "SupportCrewEscalatorReturn",
+  "type": "object",
+  "required": ["escalationPacket"],
+  "properties": {
+    "escalationPacket": {
+      "type": "object",
+      "required": ["summary", "whyEscalated", "suggestedSpecialist", "ticketRef"],
+      "properties": {
+        "summary": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "context": { "type": "string", "maxLength": 5000 },
+        "whyEscalated": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "suggestedSpecialist": { "type": "string", "minLength": 1 },
+        "suggestedNextActions": { "type": "array", "items": { "type": "string" } },
+        "ticketRef": {
+          "type": "object",
+          "required": ["subject"],
+          "properties": {
+            "subject": { "type": "string" },
+            "key": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "customerSignals": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,36 @@
+{
+  "name": "vendor.myndhyve.market-intel-discovery",
+  "version": "1.0.0",
+  "description": "MyndHyve market-intel.ai-discovery — AI-powered source-discovery via one ctx.callAI. Given a topic + optional industry/audience/platforms, returns relevant URLs, communities (with platform / relevanceScore / estimatedPostCount), and search queries. Replaces the manual URL-input step of the marketIntel research pipeline. Third marketIntel pack of the Stage 5 cohort.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/market-intel-discovery",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["vendor", "myndhyve", "market-intel", "discovery", "research", "voc"],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders": "supported"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "market-intel.ai-discovery",
+      "version": "1.0.0",
+      "label": "AI Source Discovery",
+      "description": "Single AI call. Inputs: topic (required) + industry / audience / platforms / minUrls / minCommunities / minQueries (all optional). Returns sources (URL array) + communities (sorted by relevanceScore desc) + searchQueries. URLs filtered to http(s):// OR reddit-style 'r/<name>'; invalid entries dropped with warnings.",
+      "category": "data",
+      "role": "action",
+      "capabilities": ["side-effectful"],
+      "configSchemaRef": "schemas/ai-discovery.config.json",
+      "inputSchemaRef": "schemas/ai-discovery.input.json",
+      "outputSchemaRef": "schemas/ai-discovery.output.json"
+    }
+  ]
+}

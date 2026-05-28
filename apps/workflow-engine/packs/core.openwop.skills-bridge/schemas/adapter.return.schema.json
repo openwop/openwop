@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.skills-bridge/1.0.0/adapter.return.schema.json",
+  "title": "SkillsAdapterReturn",
+  "type": "object",
+  "required": ["output"],
+  "properties": {
+    "output": { "description": "Whatever the source skill would have produced." },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Issues encountered (vendor-specific calls skipped, tool not found, etc.)."
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+  },
+  "additionalProperties": false
+}

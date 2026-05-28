@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-studio-core/1.0.0/winner-synthesize.input.json",
+  "title": "AdsWinnerSynthesizeInput",
+  "type": "object",
+  "required": ["testResults", "variantPlanId", "platforms"],
+  "properties": {
+    "testResults": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["testId", "totalImpressions", "totalClicks", "totalConversions", "totalSpend", "recommendation"],
+        "properties": {
+          "testId": { "type": "string" },
+          "winner": {
+            "type": "object",
+            "properties": {
+              "variantId": { "type": "string" },
+              "variantName": { "type": "string" },
+              "improvement": { "type": "number" },
+              "confidence": { "type": "number" }
+            },
+            "additionalProperties": true
+          },
+          "totalImpressions": { "type": "number", "minimum": 0 },
+          "totalClicks": { "type": "number", "minimum": 0 },
+          "totalConversions": { "type": "number", "minimum": 0 },
+          "totalSpend": { "type": "number", "minimum": 0 },
+          "recommendation": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "variantPlanId": { "type": "string" },
+    "platforms": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "AdPlatform[] — `meta`, `google-ads`, `tiktok`, etc. The first entry is used as primaryPlatform for next-test suggestions."
+    },
+    "dimensionPriority": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["copy", "creative", "targeting", "combined"] },
+      "default": ["copy", "creative", "targeting", "combined"]
+    }
+  },
+  "additionalProperties": true
+}

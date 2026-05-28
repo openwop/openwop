@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.data-integration/1.0.0/source.mcp.config.json",
+  "title": "DataSourceMCPConfig",
+  "type": "object",
+  "required": ["serverId", "operation"],
+  "properties": {
+    "serverId": { "type": "string", "minLength": 1, "description": "Registered MCP server id." },
+    "operation": {
+      "type": "object",
+      "required": ["kind"],
+      "oneOf": [
+        {
+          "properties": {
+            "kind": { "const": "tool" },
+            "toolName": { "type": "string", "minLength": 1 }
+          },
+          "required": ["kind", "toolName"]
+        },
+        {
+          "properties": {
+            "kind": { "const": "resource" },
+            "uri": { "type": "string", "minLength": 1 }
+          },
+          "required": ["kind", "uri"]
+        }
+      ]
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.agent-orchestration/1.0.0/skill.output.json",
+  "title": "AgentSkillOutput",
+  "type": "object",
+  "required": ["result", "isError", "durationMs"],
+  "properties": {
+    "result": {},
+    "isError": { "type": "boolean", "description": "true when the skill reported a domain error (not a transport error — those throw). Workflow authors branch on this to handle skill-side failures." },
+    "durationMs": { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": false
+}

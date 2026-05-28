@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.integration/1.1.0/chat-message-generic.input.json",
+  "title": "ChatMessageGenericInput",
+  "type": "object",
+  "required": [
+    "channel",
+    "text",
+    "conversationId"
+  ],
+  "properties": {
+    "channel": {
+      "type": "string"
+    },
+    "text": {
+      "type": "string"
+    },
+    "conversationId": {
+      "type": "string"
+    },
+    "threadId": {
+      "type": "string"
+    },
+    "media": {
+      "type": "array"
+    }
+  },
+  "additionalProperties": false
+}

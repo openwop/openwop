@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.1.0/if.output.json",
+  "title": "IfOutput",
+  "type": "object",
+  "required": [
+    "branch",
+    "matched",
+    "value"
+  ],
+  "properties": {
+    "branch": {
+      "type": "string",
+      "enum": [
+        "then",
+        "else"
+      ]
+    },
+    "matched": {
+      "type": "boolean"
+    },
+    "value": {}
+  },
+  "additionalProperties": false
+}

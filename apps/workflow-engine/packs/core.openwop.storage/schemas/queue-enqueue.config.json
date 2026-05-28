@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.storage/1.0.0/queue-enqueue.config.json",
+  "title": "QueueEnqueueConfig",
+  "type": "object",
+  "required": [
+    "queue"
+  ],
+  "properties": {
+    "queue": {
+      "type": "string"
+    },
+    "delaySeconds": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

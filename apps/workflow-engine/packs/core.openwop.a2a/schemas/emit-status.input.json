@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.a2a/1.1.0/emit-status.input.json",
+  "title": "A2aEmitStatusInput",
+  "type": "object",
+  "required": [
+    "taskId",
+    "status"
+  ],
+  "properties": {
+    "taskId": {
+      "type": "string"
+    },
+    "status": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "final": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.landing-page/1.0.0/structure-create.output.json",
+  "title": "LandingStructureCreateOutput",
+  "type": "object",
+  "required": ["pageId", "page", "sections", "layoutConfig", "success"],
+  "properties": {
+    "pageId": { "type": "string" },
+    "page": { "type": "object", "additionalProperties": true },
+    "sections": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "layoutConfig": { "type": "object", "additionalProperties": true },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

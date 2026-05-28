@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.landing-page/1.0.0/content-generate.input.json",
+  "title": "LandingContentGenerateInput",
+  "type": "object",
+  "properties": {
+    "blueprintId": { "type": "string", "description": "Optional blueprint id propagated into the AI user-prompt." },
+    "personaIds": { "type": "array", "items": { "type": "string" }, "description": "Optional target persona ids — surfaced to the LLM for tone calibration." },
+    "messagePillars": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["angle", "promise", "proof"],
+        "properties": {
+          "angle": { "type": "string" },
+          "promise": { "type": "string" },
+          "proof": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "offer": { "type": "object", "additionalProperties": true },
+    "themeId": { "type": "string" }
+  },
+  "additionalProperties": true
+}

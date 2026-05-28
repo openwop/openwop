@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.files/1.0.0/image-format-convert.config.json",
+  "title": "ImageFormatConvertConfig",
+  "type": "object",
+  "required": [
+    "to"
+  ],
+  "properties": {
+    "to": {
+      "type": "string",
+      "enum": [
+        "jpeg",
+        "png",
+        "webp",
+        "avif"
+      ]
+    },
+    "quality": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

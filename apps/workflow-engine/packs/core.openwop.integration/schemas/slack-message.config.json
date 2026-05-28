@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.integration/1.1.0/slack-message.config.json",
+  "title": "SlackMessageConfig",
+  "type": "object",
+  "required": [
+    "channel"
+  ],
+  "properties": {
+    "channel": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Slack channel ID (preferred — `C0123456789`) or name (`#general` — host resolves to ID). IDs are stable across renames; names are not."
+    },
+    "workspace": {
+      "type": "string",
+      "description": "When the host's Slack adapter is configured for multiple workspaces, the workspace identifier. Defaults to the host's primary workspace."
+    },
+    "asUser": {
+      "type": "string",
+      "description": "Optional user-impersonation identifier — post as a specific user. Requires host-side OAuth flow + chat:write:user scope. When unset, posts as the host's bot user."
+    }
+  },
+  "additionalProperties": false
+}

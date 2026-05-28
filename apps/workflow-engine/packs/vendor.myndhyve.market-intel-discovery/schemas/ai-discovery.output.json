@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-discovery/1.0.0/ai-discovery.output.json",
+  "title": "MarketIntelAiDiscoveryOutput",
+  "type": "object",
+  "required": ["sources", "communities", "searchQueries", "warnings", "success"],
+  "properties": {
+    "sources": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Discovered URLs. Each entry is either a full http(s):// URL OR a reddit-style 'r/<subreddit>' identifier (the source guidance allows both)."
+    },
+    "communities": {
+      "type": "array",
+      "description": "Sorted by relevanceScore descending.",
+      "items": {
+        "type": "object",
+        "required": ["platform", "name", "url", "relevanceScore"],
+        "properties": {
+          "platform": { "type": "string", "enum": ["reddit", "hackernews", "stackexchange", "quora", "twitter", "other"] },
+          "name": { "type": "string", "minLength": 1 },
+          "url": { "type": "string", "minLength": 1 },
+          "relevanceScore": { "type": "number", "minimum": 0, "maximum": 1 },
+          "estimatedPostCount": { "type": ["number", "null"] },
+          "description": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "searchQueries": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "model": { "type": "string" },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "promptTokens": { "type": "integer" },
+        "completionTokens": { "type": "integer" }
+      },
+      "additionalProperties": true
+    },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

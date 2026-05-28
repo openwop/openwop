@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.a2a/1.1.0/multi-turn-coordinator.input.json",
+  "title": "MultiTurnCoordinatorInput",
+  "type": "object",
+  "required": [
+    "task"
+  ],
+  "properties": {
+    "task": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "contextId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "history": {
+          "type": "array"
+        },
+        "artifacts": {
+          "type": "array"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

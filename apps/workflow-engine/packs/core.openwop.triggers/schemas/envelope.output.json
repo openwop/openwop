@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.1.0/envelope.output.json",
+  "title": "EnvelopeTriggerOutput",
+  "type": "object",
+  "required": [
+    "envelopeType",
+    "payload",
+    "firedAt"
+  ],
+  "properties": {
+    "envelopeType": {
+      "type": "string"
+    },
+    "payload": {
+      "description": "Envelope payload (validated by the host against config.payloadSchema when set)."
+    },
+    "envelopeId": {
+      "type": "string",
+      "description": "Host-assigned envelope identifier."
+    },
+    "sourceRunId": {
+      "type": "string",
+      "description": "When the envelope was emitted by a parent run, this is the parent's runId. Absent for externally-published envelopes."
+    },
+    "firedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

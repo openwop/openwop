@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.api-designer/1.0.0/api-designer.return.schema.json",
+  "title": "ApiDesignerReturn",
+  "type": "object",
+  "required": [
+    "document",
+    "target",
+    "validationStatus"
+  ],
+  "properties": {
+    "document": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target": {
+      "type": "string",
+      "enum": [
+        "openapi",
+        "asyncapi",
+        "json-schema"
+      ]
+    },
+    "outputPath": {
+      "type": "string"
+    },
+    "validationStatus": {
+      "type": "object",
+      "required": [
+        "valid"
+      ],
+      "properties": {
+        "valid": {
+          "type": "boolean"
+        },
+        "attempts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "stoppedReason": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "completed_with_concerns",
+        "validation_failed",
+        "refused"
+      ]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  },
+  "additionalProperties": false
+}

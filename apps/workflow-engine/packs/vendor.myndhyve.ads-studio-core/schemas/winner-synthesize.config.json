@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-studio-core/1.0.0/winner-synthesize.config.json",
+  "title": "AdsWinnerSynthesizeConfig",
+  "type": "object",
+  "properties": {
+    "emitMarkdown": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, the executor also returns `report` as a generated markdown summary."
+    }
+  },
+  "additionalProperties": true
+}

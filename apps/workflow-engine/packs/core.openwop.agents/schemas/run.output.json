@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents/1.0.1/run.output.json",
+  "title": "AgentRunOutput",
+  "type": "object",
+  "required": [
+    "result"
+  ],
+  "properties": {
+    "result": {},
+    "finalMessage": {
+      "type": "string"
+    },
+    "steps": {
+      "type": "array"
+    },
+    "toolCalls": {
+      "type": "array"
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "finishReason": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

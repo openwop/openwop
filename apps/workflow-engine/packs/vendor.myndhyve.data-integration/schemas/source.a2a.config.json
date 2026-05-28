@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.data-integration/1.0.0/source.a2a.config.json",
+  "title": "DataSourceA2AConfig",
+  "type": "object",
+  "required": ["peerId", "taskType"],
+  "properties": {
+    "peerId": { "type": "string", "minLength": 1, "description": "Registered A2A peer agent id (per spec/v1/a2a-integration.md)." },
+    "taskType": { "type": "string", "minLength": 1, "description": "Task discriminator the peer agent advertises." },
+    "timeoutMs": { "type": "integer", "minimum": 1000, "maximum": 600000, "default": 30000 }
+  },
+  "additionalProperties": false
+}

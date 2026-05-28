@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/datetime-diff.config.json",
+  "title": "DatetimeDiffConfig",
+  "type": "object",
+  "properties": {
+    "unit": {
+      "type": "string",
+      "enum": [
+        "ms",
+        "s",
+        "m",
+        "h",
+        "d",
+        "w"
+      ],
+      "default": "s"
+    }
+  },
+  "additionalProperties": false
+}

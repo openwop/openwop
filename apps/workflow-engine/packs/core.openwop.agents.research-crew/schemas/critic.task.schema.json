@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.research-crew/1.0.0/critic.task.schema.json",
+  "title": "ResearchCriticTask",
+  "type": "object",
+  "required": ["originalGoal", "evidence"],
+  "properties": {
+    "originalGoal": { "type": "string", "minLength": 1 },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["subQuestion", "sources"],
+        "properties": {
+          "subQuestion": { "type": "string" },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["sourceId"],
+              "properties": {
+                "sourceId": { "type": "string" },
+                "excerpt": { "type": "string" },
+                "relevance": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

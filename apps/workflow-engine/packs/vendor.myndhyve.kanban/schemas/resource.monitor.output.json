@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.kanban/1.0.0/resource.monitor.output.json",
+  "title": "ResourceMonitorOutput",
+  "type": "object",
+  "required": ["boardId", "assigneeLoad", "wipBreaches", "overdueTasks"],
+  "properties": {
+    "boardId": { "type": "string" },
+    "assigneeLoad": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["activeTaskCount"],
+        "properties": {
+          "activeTaskCount": { "type": "integer", "minimum": 0 },
+          "overAllocated": { "type": "boolean" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "wipBreaches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["columnId", "limit", "current"],
+        "properties": {
+          "columnId": { "type": "string" },
+          "limit": { "type": "integer" },
+          "current": { "type": "integer" }
+        }
+      }
+    },
+    "overdueTasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["taskId", "daysOverdue"],
+        "properties": {
+          "taskId": { "type": "string" },
+          "title": { "type": "string" },
+          "assignee": { "type": "string" },
+          "daysOverdue": { "type": "integer" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "monitoredAt": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

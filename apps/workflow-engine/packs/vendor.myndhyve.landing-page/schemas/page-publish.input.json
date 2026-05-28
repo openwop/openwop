@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.landing-page/1.0.0/page-publish.input.json",
+  "title": "LandingPagePublishInput",
+  "type": "object",
+  "required": ["pageId", "page", "approved"],
+  "properties": {
+    "pageId": { "type": "string", "minLength": 1 },
+    "page": {
+      "type": "object",
+      "required": ["slug"],
+      "properties": { "slug": { "type": "string" } },
+      "additionalProperties": true
+    },
+    "variants": { "type": "array", "items": { "type": "object", "additionalProperties": true }, "maxItems": 10 },
+    "approved": { "type": "boolean", "description": "Required true. Executor refuses with `code: PAGE_NOT_APPROVED` when false." },
+    "trackingConfig": { "type": "object", "additionalProperties": true },
+    "customDomain": { "type": "string", "description": "Optional override. Defaults to `pages.myndhyve.ai`." }
+  },
+  "additionalProperties": true
+}

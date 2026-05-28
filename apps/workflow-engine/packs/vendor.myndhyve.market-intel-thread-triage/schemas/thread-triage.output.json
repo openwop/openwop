@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-thread-triage/1.0.0/thread-triage.output.json",
+  "title": "MarketIntelThreadTriageOutput",
+  "type": "object",
+  "required": ["triagedThreads", "extractionQueue", "skippedThreads", "diversityAnalysis", "summary", "warnings", "success"],
+  "properties": {
+    "triagedThreads": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "url", "title", "priority", "predictedVoCValue", "predictedIntentStages", "predictedTagTypes", "triageRationale", "estimatedExtractionTokens", "extractionRisk"],
+        "properties": {
+          "id": { "type": "string" },
+          "url": { "type": "string" },
+          "title": { "type": "string" },
+          "priority": { "type": "string", "enum": ["critical", "high", "medium", "low", "skip"] },
+          "predictedVoCValue": { "type": "number", "minimum": 0, "maximum": 1 },
+          "predictedIntentStages": { "type": "array", "items": { "type": "string", "enum": ["ready_now", "researching", "problem_aware", "unaware"] } },
+          "predictedTagTypes": { "type": "array", "items": { "type": "string", "enum": ["pain", "desire", "objection", "trigger", "alternative"] } },
+          "triageRationale": { "type": "string" },
+          "estimatedExtractionTokens": { "type": "integer", "minimum": 0 },
+          "extractionRisk": { "type": "string", "enum": ["low", "medium", "high"] },
+          "extractionRiskReason": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "extractionQueue": {
+      "type": "array",
+      "description": "Thread ids selected for extraction, ordered by priority. Falls back to non-skip threads sorted by predictedVoCValue desc when AI omits.",
+      "items": { "type": "string" }
+    },
+    "skippedThreads": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "reason"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "reason": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "diversityAnalysis": {
+      "type": "object",
+      "required": ["intentCoverage", "platformCoverage", "problemCoverage"],
+      "properties": {
+        "intentCoverage": { "type": "object", "additionalProperties": { "type": "number" } },
+        "platformCoverage": { "type": "object", "additionalProperties": { "type": "number" } },
+        "problemCoverage": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "summary": {
+      "type": "object",
+      "description": "Rebuilt from validated triagedThreads + extractionQueue; AI-claimed totals are ignored.",
+      "required": ["totalCandidates", "totalSelected", "totalSkipped", "estimatedTotalTokens", "avgPredictedVoCValue"],
+      "properties": {
+        "totalCandidates": { "type": "integer", "minimum": 0 },
+        "totalSelected": { "type": "integer", "minimum": 0 },
+        "totalSkipped": { "type": "integer", "minimum": 0 },
+        "estimatedTotalTokens": { "type": "integer", "minimum": 0 },
+        "avgPredictedVoCValue": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "model": { "type": "string" },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "promptTokens": { "type": "integer" },
+        "completionTokens": { "type": "integer" }
+      },
+      "additionalProperties": true
+    },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,120 @@
+{
+  "name": "core.openwop.agents.research-crew",
+  "version": "1.0.0",
+  "description": "Multi-agent research crew. 4 specialists — planner / retriever / critic / writer — bundled into one pack for dispatch via RFC 0006 orchestrator. Mirrors CrewAI's sequential/hierarchical crew templates.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.agents.research-crew",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "agents",
+    "crew",
+    "multi-agent",
+    "research",
+    "pattern"
+  ],
+  "engines": {
+    "openwop": ">=1.1.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders": "supported",
+    "host.agentRuntime": "supported",
+    "openwop.agents.memoryBackends": ">=longTerm"
+  },
+  "agents": [
+    {
+      "agentId": "core.openwop.agents.research-crew.planner",
+      "persona": "Research Planner",
+      "label": "Research Planner",
+      "description": "Decomposes the research goal into a sub-question DAG, assigns each sub-question to the retriever and synthesizes a research plan for the critic + writer to follow.",
+      "modelClass": "reasoning",
+      "systemPromptRef": "prompts/planner.md",
+      "toolAllowlist": [],
+      "memoryShape": {
+        "scratchpad": true,
+        "conversation": true,
+        "longTerm": false
+      },
+      "handoff": {
+        "taskSchemaRef": "schemas/planner.task.schema.json",
+        "returnSchemaRef": "schemas/planner.return.schema.json"
+      },
+      "confidence": {
+        "defaultThreshold": 0.7
+      }
+    },
+    {
+      "agentId": "core.openwop.agents.research-crew.retriever",
+      "persona": "Research Retriever",
+      "label": "Research Retriever",
+      "description": "Executes targeted retrievals per sub-question — RAG + web fetch + web research. Returns evidence with source + relevance + retrieval timestamp.",
+      "modelClass": "research",
+      "systemPromptRef": "prompts/retriever.md",
+      "toolAllowlist": [
+        "openwop:core.openwop.http.fetch",
+        "openwop:core.rag.retriever-basic",
+        "openwop:core.rag.retriever-contextual-compression",
+        "openwop:ai.research.web"
+      ],
+      "memoryShape": {
+        "scratchpad": true,
+        "conversation": false,
+        "longTerm": true
+      },
+      "handoff": {
+        "taskSchemaRef": "schemas/retriever.task.schema.json",
+        "returnSchemaRef": "schemas/retriever.return.schema.json"
+      },
+      "confidence": {
+        "defaultThreshold": 0.7
+      }
+    },
+    {
+      "agentId": "core.openwop.agents.research-crew.critic",
+      "persona": "Research Critic",
+      "label": "Research Critic",
+      "description": "Reviews retrieved evidence for source quality, contradictions, gaps. Flags weak claims and demands re-retrieval before the writer drafts.",
+      "modelClass": "reasoning",
+      "systemPromptRef": "prompts/critic.md",
+      "toolAllowlist": [],
+      "memoryShape": {
+        "scratchpad": true,
+        "conversation": false,
+        "longTerm": false
+      },
+      "handoff": {
+        "taskSchemaRef": "schemas/critic.task.schema.json",
+        "returnSchemaRef": "schemas/critic.return.schema.json"
+      },
+      "confidence": {
+        "defaultThreshold": 0.75
+      }
+    },
+    {
+      "agentId": "core.openwop.agents.research-crew.writer",
+      "persona": "Research Writer",
+      "label": "Research Writer",
+      "description": "Synthesizes critic-approved evidence into a structured findings report with inline citations + open-questions list.",
+      "modelClass": "writing",
+      "systemPromptRef": "prompts/writer.md",
+      "toolAllowlist": [],
+      "memoryShape": {
+        "scratchpad": true,
+        "conversation": false,
+        "longTerm": false
+      },
+      "handoff": {
+        "taskSchemaRef": "schemas/writer.task.schema.json",
+        "returnSchemaRef": "schemas/writer.return.schema.json"
+      },
+      "confidence": {
+        "defaultThreshold": 0.7
+      }
+    }
+  ],
+  "runtime": {
+    "language": "remote",
+    "entry": "pack.json"
+  }
+}

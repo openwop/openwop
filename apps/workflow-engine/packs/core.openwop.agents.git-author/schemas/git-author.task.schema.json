@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.git-author/1.0.0/git-author.task.schema.json",
+  "title": "GitAuthorTask",
+  "type": "object",
+  "required": [
+    "shape",
+    "diff"
+  ],
+  "properties": {
+    "shape": {
+      "type": "string",
+      "enum": [
+        "commit-message",
+        "pr-title",
+        "pr-body",
+        "release-notes",
+        "changelog-entry"
+      ]
+    },
+    "diff": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000000
+    },
+    "repoUrl": {
+      "type": "string",
+      "format": "uri"
+    },
+    "recentMessagesCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "default": 10
+    },
+    "context": {
+      "type": "string",
+      "maxLength": 5000
+    }
+  },
+  "additionalProperties": false
+}

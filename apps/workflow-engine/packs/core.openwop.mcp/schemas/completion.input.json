@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.1.1/completion.input.json",
+  "title": "McpCompletionInput",
+  "type": "object",
+  "required": [
+    "ref",
+    "argument"
+  ],
+  "properties": {
+    "ref": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "argument": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
