@@ -1,10 +1,10 @@
 /**
  * Active-agents side panel (phase D1).
  *
- * Sibling to `WorkflowProgressPanel` on the right-hand-rail of the
- * chat. Lists the agents currently active in this chat — the user
- * @-mentions an agent (`@code-reviewer …`) and that adds it here
- * + switches the conversation through it. Click any row to switch
+ * Rendered inside `LeftRail` as one of the three tab panels. Lists the
+ * agents currently active in this chat — the user @-mentions an agent
+ * (`@code-reviewer …`) and that adds it here + switches the
+ * conversation through it. Click any row to switch
  * the currently-routing agent without re-typing. Click × to remove
  * an agent from the lineup. The default OpenWOP Assistant is always
  * first and is not removable.
@@ -58,8 +58,6 @@ interface Props {
   onRemove: (agentId: string) => void;
   /** Close the panel chevron / Esc. */
   onClose: () => void;
-  /** True when narrow viewport — full-screen overlay. */
-  isMobile: boolean;
 }
 
 export function ActiveAgentsPanel({
@@ -68,7 +66,6 @@ export function ActiveAgentsPanel({
   onSwitch,
   onRemove,
   onClose,
-  isMobile,
 }: Props): JSX.Element {
   const headingId = 'active-agents-panel-heading';
   return (
@@ -77,15 +74,11 @@ export function ActiveAgentsPanel({
       tabIndex={-1}
       onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
       style={{
-        width: isMobile ? '100%' : 280,
+        width: '100%',
         height: '100%',
-        borderLeft: isMobile ? 'none' : '1px solid var(--color-border)',
         background: 'var(--color-surface)',
         display: 'flex',
         flexDirection: 'column',
-        position: isMobile ? 'absolute' : 'relative',
-        inset: isMobile ? 0 : 'auto',
-        zIndex: isMobile ? 20 : 'auto',
       }}
       aria-labelledby={headingId}
     >
