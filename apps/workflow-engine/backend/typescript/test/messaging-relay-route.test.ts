@@ -493,6 +493,36 @@ describe('messaging relay-gateway — policy enforcement (Phase C)', () => {
     expect(connectorId).toMatch(/^conn_/);
   });
 
+  it('PUT /policy with requireMention:true but no bot-id env returns a warning (operator tripwire)', async () => {
+    const c = await post('/connectors', OP, { channel: 'signal' });
+    expect(c.status).toBe(201);
+    delete process.env.OPENWOP_MESSAGING_BOT_ID_SIGNAL;
+    delete process.env.OPENWOP_MESSAGING_BOT_NAME;
+    const put = await fetch(`${BASE}/connectors/${c.body.connectorId}/policy`, {
+      method: 'PUT', headers: OP,
+      body: JSON.stringify({ requireMention: true }),
+    });
+    const body = await put.json() as any;
+    expect(body.requireMention).toBe(true);
+    expect(body.warning).toMatch(/OPENWOP_MESSAGING_BOT_ID_SIGNAL|OPENWOP_MESSAGING_BOT_NAME/);
+  });
+
+  it('PUT /policy with requireMention:true AND bot-id env set returns NO warning', async () => {
+    const c = await post('/connectors', OP, { channel: 'signal' });
+    process.env.OPENWOP_MESSAGING_BOT_ID_SIGNAL = 'bot-x';
+    try {
+      const put = await fetch(`${BASE}/connectors/${c.body.connectorId}/policy`, {
+        method: 'PUT', headers: OP,
+        body: JSON.stringify({ requireMention: true }),
+      });
+      const body = await put.json() as any;
+      expect(body.requireMention).toBe(true);
+      expect(body.warning).toBeUndefined();
+    } finally {
+      delete process.env.OPENWOP_MESSAGING_BOT_ID_SIGNAL;
+    }
+  });
+
   it('no connector for (tenant, channel) → no enforcement (backward-compat)', async () => {
     // Note: no /connectors POST → enforcement is skipped, behavior unchanged.
     const { deviceToken } = await activeRelay('signal');
@@ -562,9 +592,9 @@ function mockStorage(rules: any[], seedTurns: any[] = [], identities: any[] = []
   const turns: any[] = [...seedTurns];
   return {
     listMessagingRoutingRules: async () => rules,
-    // Phase B: turn history seam.
-    listMessagingTurns: async (sessionKey: string, limit: number) =>
-      turns.filter((t) => t.sessionKey === sessionKey).slice(-Math.max(1, limit)),
+    // Phase B: turn history seam (tenantId filter is defense-in-depth).
+    listMessagingTurns: async (sessionKey: string, limit: number, tenantId: string) =>
+      turns.filter((t) => t.sessionKey === sessionKey && t.tenantId === tenantId).slice(-Math.max(1, limit)),
     appendMessagingTurn: async (t: any) => { turns.push(t); },
     // Phase E: identities + sessions seam.
     listMessagingIdentities: async () => identities,
@@ -705,6 +735,51 @@ describe('messaging bridge — routing wiring (unit)', () => {
     expect(dispatchPost).toBeTruthy();
     expect(dispatchPost.url).toContain('/agents/core.openwop.agents.assistant/dispatch');
     expect(dispatchPost.body.task.text).toBe('hi');
+  });
+
+  it('agent dispatch is bounded by a timeout (no inbound hang on a slow agent)', async () => {
+    let enqueued: any;
+    // fetchImpl for /dispatch hangs until the AbortController aborts; the
+    // request body capture proves we actually called dispatch, the
+    // OutboundEnqueue capture proves the timeout path enqueues a notice.
+    const fetchImpl: any = async (url: string, init?: any) => {
+      const u = String(url);
+      if (u.endsWith('/dispatch')) {
+        // Hang until the signal aborts; throw the abort error fetch would throw.
+        return new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => {
+            const e: any = new Error('aborted'); e.name = 'AbortError'; reject(e);
+          });
+        });
+      }
+      return new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+    // Capture enqueueOutbound via a storage stub that records the enqueue call.
+    const store = {
+      ...mockStorage([{ ruleId: 'r1', tenantId: 't', pattern: '*', agentId: 'a1', priority: 5, createdAt: '2026-01-01T00:00:00Z' }]),
+      getRelayDevice: async () => ({ relayId: 'rl', tenantId: 't', channel: 'signal' } as any),
+      enqueueRelayOutbound: async (e: any) => { enqueued = e; },
+    };
+    const prev = process.env.OPENWOP_MESSAGING_AGENT_DISPATCH_TIMEOUT_MS;
+    process.env.OPENWOP_MESSAGING_AGENT_DISPATCH_TIMEOUT_MS = '50';
+    try {
+      const bridge = createSelfHttpBridge({
+        storage: store, baseUrl: 'http://test', bearer: 'x', defaultWorkflowId: 'wf.default', fetchImpl,
+      });
+      const start = Date.now();
+      await bridge.onInbound({
+        device: { relayId: 'rl', tenantId: 't', channel: 'signal' },
+        envelope: { channel: 'signal', platformMessageId: 'm1', conversationId: 'c1', peerId: 'p', text: 'hi', timestamp: '2026-05-27T00:00:00Z' } as any,
+        sessionKey: 'signal:c1',
+      });
+      // Bounded by 50ms (+a little slack), NOT the natural 5min request budget.
+      expect(Date.now() - start).toBeLessThan(2000);
+      expect(enqueued).toBeTruthy();
+      expect(String(enqueued.text)).toMatch(/timed out/i);
+    } finally {
+      if (prev === undefined) delete process.env.OPENWOP_MESSAGING_AGENT_DISPATCH_TIMEOUT_MS;
+      else process.env.OPENWOP_MESSAGING_AGENT_DISPATCH_TIMEOUT_MS = prev;
+    }
   });
 
   it('falls back to the default workflow when no rule matches (backward-compat)', async () => {

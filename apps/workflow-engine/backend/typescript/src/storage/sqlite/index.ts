@@ -1149,16 +1149,19 @@ export function openSqliteStorage(dbPath: string): Storage {
         record.runId ?? null, record.at,
       );
     },
-    async listMessagingTurns(sessionKey, limit) {
+    async listMessagingTurns(sessionKey, limit, tenantId) {
       // Clamp to [1,1000] (negative LIMIT is unbounded in SQLite).
       const lim = Number.isFinite(limit) && limit >= 1 ? Math.min(Math.floor(limit), 1000) : 100;
       // Get the N MOST RECENT turns, then return them oldest → newest so a
-      // caller can append them to messages[] in conversation order.
+      // caller can append them to messages[] in conversation order. The
+      // tenant_id filter is defense-in-depth (sessionKey alone could collide).
       const rows = db.prepare(
         `SELECT * FROM (
-           SELECT * FROM messaging_turns WHERE session_key = ? ORDER BY at DESC, turn_id DESC LIMIT ?
+           SELECT * FROM messaging_turns
+            WHERE session_key = ? AND tenant_id = ?
+            ORDER BY at DESC, turn_id DESC LIMIT ?
          ) ORDER BY at ASC, turn_id ASC`,
-      ).all(sessionKey, lim) as Array<Record<string, unknown>>;
+      ).all(sessionKey, tenantId, lim) as Array<Record<string, unknown>>;
       return rows.map(rowToTurnSqlite);
     },
 
