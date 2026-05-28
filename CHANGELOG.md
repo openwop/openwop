@@ -11,6 +11,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### fix(sdk-ts): capability-absent fallback uses WopError.status, not message regex (2026-05-28)
+
+Eleven SDK methods that document a "host doesn't advertise this capability → return null/false" fallback (`runs.{debugBundle,listAnnotations,ancestry,diff}`, `agents.{list,get}`, `userAgents.{listAvailablePacks,delete}`, `workspace.*`, plus the `runs.poll` 501 branch) were testing the error condition with `/\b404\b/.test(err.message)`. Because `WopError.message` is built from the host's envelope `message` field (`types.ts:1005`), a 404 whose envelope carried no "404" substring (e.g., the workflow-engine catch-all's `"No route matches this request."`) slipped past the regex and threw to the caller instead of returning the documented sentinel — surfacing as "Couldn't load pack list" on signed-in users hitting a host on an older deploy.
+
+Fix routes every site through `err instanceof WopError && err.status === 404` (and `=== 501` where applicable) so the actual HTTP status — which `WopError` carries verbatim — is the load-bearing signal. New `capability-absent-fallback.test.ts` reproduces the bug shape directly (404 with no status substring in the envelope, plus the false-positive case where a 400 message *contains* "404"). No wire-shape impact.
+
 ### feat(app,sdk,host-sample): Agents tab + chat mention-symbol swap (2026-05-28)
 
 Sample-app (workflow-engine) gains a full **Agents tab** (`/agents`) at app.openwop.dev — list, detail, author-from-scratch form (`POST /v1/host/sample/agents`), install-from-registry browser (`GET/POST /v1/host/sample/registry/agent-packs`), and fork-existing flow. Header restructured into four submenu slots — **Chat · Build ▾ · Operate ▾ · Settings ▾** (CLI item now lives under Settings) — matching the marketing site's `.nav-dropdown` pattern.
