@@ -13,7 +13,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { createRequire } from 'node:module';
 import type { ChannelAvailability, ChannelPlugin, InboundMessage, OutboundMessage, RelayChannel } from './types.js';
-import { parseImessageRow, parseSignalEnvelope, parseWhatsappMessage } from './normalize.js';
+import { parseImessageRow, parseSignalEnvelope, parseWhatsappMessage, parseDiscordMessage } from './normalize.js';
 
 const IS_DARWIN = process.platform === 'darwin';
 // Named `_require` so it doesn't clash with the esbuild bundle banner's own
@@ -255,10 +255,114 @@ const whatsappPlugin: ChannelPlugin = {
   },
 };
 
+const DISCORD_PKG = 'discord.js';
+
+// Shared discord.js Gateway client (bot) so deliver() + startReceive() share
+// one connection. Lazily created; the bot token comes from the environment.
+let discordConn: { client: any; djs: any; botId?: string } | undefined;
+
+async function getDiscordClient(env: NodeJS.ProcessEnv): Promise<{ client: any; djs: any; botId?: string }> {
+  if (discordConn) return discordConn;
+  const token = env.OPENWOP_DISCORD_BOT_TOKEN;
+  if (!token) throw new Error('OPENWOP_DISCORD_BOT_TOKEN (a Discord bot token) is required for Discord.');
+  let djs: any;
+  try { djs = await import(DISCORD_PKG); }
+  catch { throw new Error(`Discord requires ${DISCORD_PKG} — install it (\`npm i -g ${DISCORD_PKG}\`) or in the CLI channel build.`); }
+  const { Client, GatewayIntentBits } = djs;
+  const client = new Client({
+    intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.MessageContent,
+      GatewayIntentBits.DirectMessages,
+      GatewayIntentBits.GuildMessageReactions,
+    ],
+  });
+  const ready = new Promise<void>((resolve) => { client.once('clientReady', resolve); client.once('ready', resolve); });
+  await client.login(token);
+  await ready;
+  discordConn = { client, djs, botId: client.user?.id };
+  return discordConn;
+}
+
+/** Build discord.js action rows from envelope-v2 components (reply→button, link→link button). */
+function buildDiscordComponents(djs: any, components: NonNullable<OutboundMessage['components']>): unknown[] {
+  const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = djs;
+  const row = new ActionRowBuilder();
+  for (const c of components.slice(0, 5)) {
+    const b = new ButtonBuilder().setLabel(c.label);
+    if (c.style === 'link' && c.url) b.setStyle(ButtonStyle.Link).setURL(c.url);
+    else b.setStyle(ButtonStyle.Primary).setCustomId(c.id);
+    row.addComponents(b);
+  }
+  return [row];
+}
+
+const discordPlugin: ChannelPlugin = {
+  channel: 'discord',
+  isAvailable: (env = process.env) => {
+    if (!depInstalled(DISCORD_PKG)) {
+      return { channel: 'discord', available: false, detail: `Discord needs ${DISCORD_PKG} (optional dep): \`npm i -g ${DISCORD_PKG}\`` };
+    }
+    if (!env.OPENWOP_DISCORD_BOT_TOKEN) {
+      return { channel: 'discord', available: false, detail: 'discord.js present but OPENWOP_DISCORD_BOT_TOKEN is unset' };
+    }
+    return { channel: 'discord', available: true, detail: 'discord.js present + bot token set (Gateway)' };
+  },
+  async deliver(msg: OutboundMessage) {
+    const { client, djs } = await getDiscordClient(process.env);
+    const channel = await client.channels.fetch(msg.conversationId);
+    if (!channel || typeof channel.send !== 'function') throw new Error(`Discord channel ${msg.conversationId} is not sendable`);
+    if (msg.reactions && msg.reactions.length && msg.replyToMessageId) {
+      const target = await channel.messages.fetch(msg.replyToMessageId).catch(() => null);
+      if (target) for (const e of msg.reactions) await target.react(e);
+      if (!msg.text && !(msg.media && msg.media.length) && !(msg.components && msg.components.length)) return;
+    }
+    const payload: Record<string, unknown> = {};
+    if (msg.text) payload.content = msg.text;
+    if (msg.media && msg.media.length) payload.files = msg.media.map((a) => a.url);
+    if (msg.components && msg.components.length) payload.components = buildDiscordComponents(djs, msg.components);
+    if (msg.replyToMessageId) payload.reply = { messageReference: msg.replyToMessageId };
+    await channel.send(payload);
+  },
+  async startReceive(onInbound, opts = {}) {
+    const { client, botId } = await getDiscordClient(opts.env ?? process.env);
+    const onMessage = async (m: any) => {
+      if (m?.author?.id === botId) return; // skip our own sends
+      const msg = parseDiscordMessage(m);
+      if (msg) await onInbound(msg);
+    };
+    // Button clicks arrive as interactions → forward as an inbound command.
+    const onInteraction = async (i: any) => {
+      if (typeof i?.isButton === 'function' && i.isButton()) {
+        await onInbound({
+          platformMessageId: String(i.id),
+          conversationId: String(i.channelId),
+          peerId: String(i.user?.id ?? ''),
+          ...(i.user?.username ? { peerDisplay: i.user.username } : {}),
+          text: String(i.customId ?? ''),
+          timestamp: new Date().toISOString(),
+          kind: 'command',
+          command: { name: String(i.customId ?? '') },
+        });
+        try { await i.deferUpdate?.(); } catch { /* ignore */ }
+      }
+    };
+    client.on('messageCreate', onMessage);
+    client.on('interactionCreate', onInteraction);
+    return () => {
+      try { client.off('messageCreate', onMessage); client.off('interactionCreate', onInteraction); } catch { /* ignore */ }
+      try { client.destroy?.(); } catch { /* ignore */ }
+      discordConn = undefined;
+    };
+  },
+};
+
 const PLUGINS: Record<RelayChannel, ChannelPlugin> = {
   signal: signalPlugin,
   imessage: imessagePlugin,
   whatsapp: whatsappPlugin,
+  discord: discordPlugin,
 };
 
 export function getChannelPlugin(channel: RelayChannel): ChannelPlugin {

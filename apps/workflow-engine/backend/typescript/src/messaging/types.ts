@@ -4,7 +4,7 @@
  * route handlers can import them without a cycle (routes → storage → types).
  */
 
-export const RELAY_CHANNELS = ['whatsapp', 'signal', 'imessage'] as const;
+export const RELAY_CHANNELS = ['whatsapp', 'signal', 'imessage', 'discord'] as const;
 export type RelayChannel = (typeof RELAY_CHANNELS)[number];
 
 /** A media attachment carried in either direction. */

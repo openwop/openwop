@@ -115,6 +115,58 @@ export function parseWhatsappMessage(raw: unknown): InboundMessage | null {
   };
 }
 
+interface DiscordMessageLike {
+  id?: string;
+  content?: string;
+  channelId?: string;
+  guildId?: string | null;
+  author?: { id?: string; username?: string; bot?: boolean };
+  createdTimestamp?: number;
+  reference?: { messageId?: string } | null;
+  attachments?: Iterable<{ url?: string; contentType?: string; name?: string }> | { values?: () => Iterable<{ url?: string; contentType?: string; name?: string }> };
+}
+
+/**
+ * A discord.js Message → canonical InboundMessage. conversationId is the
+ * channelId (DMs have one too); peerId/peerDisplay come from the author; the
+ * guildId rides in channelMeta. Bot messages (incl. our own) are dropped — the
+ * plugin also filters on the bot's user id, but this is a pure backstop.
+ * `attachments` may be a discord.js Collection (has .values()) or a plain array.
+ */
+export function parseDiscordMessage(raw: unknown): InboundMessage | null {
+  const m = raw as DiscordMessageLike;
+  if (!m || m.author?.bot) return null;
+  const channelId = m.channelId;
+  const authorId = m.author?.id;
+  if (!channelId || !authorId) return null;
+  const text = typeof m.content === 'string' ? m.content : '';
+  // Collect attachments from a Collection (.values()) or an array.
+  const attIter = m.attachments && typeof (m.attachments as { values?: unknown }).values === 'function'
+    ? (m.attachments as { values: () => Iterable<{ url?: string; contentType?: string; name?: string }> }).values()
+    : (m.attachments as Iterable<{ url?: string; contentType?: string; name?: string }> | undefined);
+  const media: InboundMessage['media'] = [];
+  if (attIter) {
+    for (const a of attIter) {
+      if (a && typeof a.url === 'string') {
+        media.push({ url: a.url, ...(a.contentType ? { mimeType: a.contentType } : {}), ...(a.name ? { filename: a.name } : {}) });
+      }
+    }
+  }
+  if (text.length === 0 && media.length === 0) return null;
+  const ts = typeof m.createdTimestamp === 'number' ? m.createdTimestamp : Date.now();
+  return {
+    platformMessageId: String(m.id ?? `${channelId}:${ts}`),
+    conversationId: channelId,
+    peerId: authorId,
+    ...(m.author?.username ? { peerDisplay: m.author.username } : {}),
+    text,
+    timestamp: new Date(ts).toISOString(),
+    ...(media.length ? { media } : {}),
+    ...(m.reference?.messageId ? { quotedMessageId: m.reference.messageId } : {}),
+    ...(m.guildId ? { channelMeta: { guildId: m.guildId } } : {}),
+  };
+}
+
 /**
  * Apple Core Data timestamp → ISO string. Modern macOS stores `message.date`
  * as nanoseconds since 2001-01-01 UTC; pre-High-Sierra stored seconds. Detect

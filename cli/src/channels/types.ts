@@ -8,7 +8,7 @@
  * forwarding logic is unit-testable without a live platform.
  */
 
-export type RelayChannel = 'whatsapp' | 'signal' | 'imessage';
+export type RelayChannel = 'whatsapp' | 'signal' | 'imessage' | 'discord';
 
 /** A media attachment carried in either direction. */
 export interface ChannelAttachment {

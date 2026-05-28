@@ -28,7 +28,7 @@
  */
 
 import { enqueueOutbound } from '../routes/messaging.js';
-import type { MessagingBridge } from './types.js';
+import type { MessagingBridge, RelayChannel } from './types.js';
 import type { Storage } from '../storage/storage.js';
 import { createLogger } from '../observability/logger.js';
 
@@ -109,7 +109,7 @@ interface ReplyArgs {
   timeoutMs: number;
   runId: string;
   relayId: string;
-  channel: 'whatsapp' | 'signal' | 'imessage';
+  channel: RelayChannel;
   conversationId: string;
   replyToMessageId: string;
 }

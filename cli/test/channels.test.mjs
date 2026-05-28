@@ -5,6 +5,7 @@ import {
   parseSignalEnvelope,
   parseImessageRow,
   parseWhatsappMessage,
+  parseDiscordMessage,
   decodeAttributedBodyHex,
   getChannelPlugin,
   startInboundReceive,
@@ -76,6 +77,26 @@ describe('channel normalizers (B4 parsing core)', () => {
     assert.equal(m.peerDisplay, 'Grace');
     assert.equal(parseWhatsappMessage({ key: { remoteJid: '1@x', fromMe: true }, message: { conversation: 'mine' } }), null);
   });
+
+  it('discord: message → InboundMessage (guild meta, attachments Collection); bot skipped', () => {
+    // attachments as a discord.js-style Collection (has .values()).
+    const attachments = { values: () => [{ url: 'https://cdn/x.png', contentType: 'image/png', name: 'x.png' }] };
+    const m = parseDiscordMessage({
+      id: '999', content: 'hey bot', channelId: 'chan-1', guildId: 'guild-1',
+      author: { id: 'u-1', username: 'Ada', bot: false },
+      createdTimestamp: 1716800000000, reference: { messageId: 'm-parent' }, attachments,
+    });
+    assert.equal(m.conversationId, 'chan-1');
+    assert.equal(m.peerId, 'u-1');
+    assert.equal(m.peerDisplay, 'Ada');
+    assert.equal(m.text, 'hey bot');
+    assert.equal(m.quotedMessageId, 'm-parent');
+    assert.deepEqual(m.channelMeta, { guildId: 'guild-1' });
+    assert.equal(m.media[0].filename, 'x.png');
+    // bot author dropped; empty (no text, no media) dropped.
+    assert.equal(parseDiscordMessage({ id: '1', content: 'x', channelId: 'c', author: { id: 'b', bot: true } }), null);
+    assert.equal(parseDiscordMessage({ id: '2', content: '', channelId: 'c', author: { id: 'u' }, attachments: [] }), null);
+  });
 });
 
 describe('channel registry + availability', () => {
@@ -90,6 +111,20 @@ describe('channel registry + availability', () => {
     const a = getChannelPlugin('signal').isAvailable({ OPENWOP_SIGNAL_DAEMON_URL: 'http://127.0.0.1:8080' });
     assert.equal(a.available, true);
     assert.match(a.detail, /daemon/);
+  });
+
+  it('discord: registered; unavailable without discord.js / token', () => {
+    const p = getChannelPlugin('discord');
+    assert.equal(p.channel, 'discord');
+    // discord.js not installed in the core CLI build → unavailable with a hint.
+    assert.equal(p.isAvailable({ OPENWOP_DISCORD_BOT_TOKEN: 't' }).available, false);
+  });
+
+  it('discord: deliver() attempts discord.js (clean error, not a hard stub)', async () => {
+    await assert.rejects(
+      getChannelPlugin('discord').deliver({ conversationId: 'chan', text: 'hi' }),
+      /OPENWOP_DISCORD_BOT_TOKEN|discord\.js/,
+    );
   });
 
   it('whatsapp: deliver() attempts Baileys (clean install error, not a hard stub)', async () => {
