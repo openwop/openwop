@@ -1304,7 +1304,20 @@ export function useChatSession(): UseChatSessionResult {
         content: `Workflow "${entry.displayName}" was deleted. Pick another from the dashboard or remove the mention.`,
         createdAt: new Date().toISOString(),
       };
-      setSession((s) => ({ ...s, messages: [...s.messages, userMsg, msg] }));
+      // Title-on-first-message + write-through, mirroring `send()` at
+      // line 562-572 — without this, an @mention is the only chat
+      // entry-point that leaves the session unpersisted, so the
+      // history drawer keeps showing "New chat — 0 messages" forever
+      // even after the workflow completes.
+      const userText = typeof userMsg.content === 'string' ? userMsg.content : `@${entry.slug}`;
+      const deletedTitle = session.messages.length === 0 ? userText.slice(0, 60) : session.title;
+      setSession((s) => ({
+        ...s,
+        title: s.messages.length === 0 ? userText.slice(0, 60) : s.title,
+        messages: [...s.messages, userMsg, msg],
+      }));
+      void persistMessage(session.id, deletedTitle, userMsg);
+      void persistMessage(session.id, deletedTitle, msg);
       return;
     }
 
@@ -1364,7 +1377,31 @@ export function useChatSession(): UseChatSessionResult {
       createdAt: startedAt,
       workflowRun: initial,
     };
-    setSession((s) => ({ ...s, messages: [...s.messages, userMsg, runMsg] }));
+    // Title-on-first-message + write-through, mirroring `send()` at
+    // line 562-572. Without this, the @mention chat path is the only
+    // entry-point that never persists, so the history drawer always
+    // shows "New chat — 0 messages" for chats that only contain
+    // workflow runs.
+    //
+    // We compute `nextTitle` synchronously from the same closure-time
+    // `session` that `setSession` will read, so the persist call sees
+    // the same value the local state lands on. `userMsg.content` is
+    // always a plain string for @mentions (no attachments are
+    // composed into a mention dispatch), but the `ChatMessage.content`
+    // union is `string | ContentPart[]` — narrow it explicitly so the
+    // `title: string` field stays typed.
+    const userText = typeof userMsg.content === 'string' ? userMsg.content : `@${entry.slug}`;
+    const nextTitle = session.messages.length === 0 ? userText.slice(0, 60) : session.title;
+    setSession((s) => ({
+      ...s,
+      title: s.messages.length === 0 ? userText.slice(0, 60) : s.title,
+      messages: [...s.messages, userMsg, runMsg],
+    }));
+    void persistMessage(session.id, nextTitle, userMsg);
+    // The workflow_run message persists at terminal (run.completed /
+    // failed / cancelled) below — its `workflowRun` state grows
+    // throughout the run, so we want the final shape on disk, not the
+    // empty "starting…" snapshot.
 
     let runId: string;
     try {
@@ -1390,11 +1427,26 @@ export function useChatSession(): UseChatSessionResult {
       runId = created.runId;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      updateWorkflowRun(runMsgId, (prev) => ({
-        ...prev,
-        status: 'failed',
-        error: { code: 'dispatch_failed', message: msg },
-      }));
+      let finalizedFailed: ChatMessage | null = null;
+      setSession((s) => {
+        const next = s.messages.map((m) => {
+          if (m.id !== runMsgId || !m.workflowRun) return m;
+          const updated: ChatMessage = {
+            ...m,
+            workflowRun: {
+              ...m.workflowRun,
+              status: 'failed',
+              error: { code: 'dispatch_failed', message: msg },
+            },
+          };
+          finalizedFailed = updated;
+          return updated;
+        });
+        return { ...s, messages: next };
+      });
+      // Persist the dispatch-failed run-bubble so the drawer shows
+      // *something* even when /v1/runs never produced a runId.
+      if (finalizedFailed) void persistMessage(session.id, nextTitle, finalizedFailed);
       setError(msg);
       return;
     }
@@ -1408,10 +1460,14 @@ export function useChatSession(): UseChatSessionResult {
         const nodeId = ev.nodeId ?? (typeof payload.nodeId === 'string' ? payload.nodeId : undefined);
 
         if (ev.type === 'node.started' && nodeId) {
-          updateWorkflowRun(runMsgId, (prev) => ({
-            ...prev,
-            currentNodeName: prev.nodeNames[nodeId] ?? nodeId,
-          }));
+          updateWorkflowRun(runMsgId, (prev) => {
+            const running = prev.runningNodeIds ?? [];
+            return {
+              ...prev,
+              currentNodeName: prev.nodeNames[nodeId] ?? nodeId,
+              runningNodeIds: running.includes(nodeId) ? running : [...running, nodeId],
+            };
+          });
         } else if (ev.type === 'node.completed' && nodeId) {
           // Capture the node's outputs so the bubble can render them
           // inline. The arbiter approval card needs to see what the
@@ -1422,9 +1478,11 @@ export function useChatSession(): UseChatSessionResult {
             : undefined;
           updateWorkflowRun(runMsgId, (prev) => {
             if (prev.completedNodeIds.includes(nodeId)) return prev;
+            const running = (prev.runningNodeIds ?? []).filter((id) => id !== nodeId);
             return {
               ...prev,
               completedNodeIds: [...prev.completedNodeIds, nodeId],
+              runningNodeIds: running,
               ...(outputs ? { nodeOutputs: { ...prev.nodeOutputs, [nodeId]: outputs } } : {}),
             };
           });
@@ -1439,6 +1497,7 @@ export function useChatSession(): UseChatSessionResult {
               : {
                   ...prev,
                   failedNodeIds: [...prev.failedNodeIds, nodeId],
+                  runningNodeIds: (prev.runningNodeIds ?? []).filter((id) => id !== nodeId),
                   currentNodeName: prev.currentNodeName === (prev.nodeNames[nodeId] ?? nodeId)
                     ? null
                     : prev.currentNodeName,
@@ -1467,6 +1526,18 @@ export function useChatSession(): UseChatSessionResult {
           // decision card has the `kind` + opened-at after resolution —
           // `activeInterrupt` flips to null at resolve time and would
           // otherwise lose the history.
+          // Drop the suspended node from the "actively running" set so
+          // its row renders the ⏸ paused chip instead of a spinner —
+          // the StepList already special-cases suspended via
+          // `activeInterrupt.nodeId`, but `runningNodeIds` needs to
+          // agree or both states fight each other on the same row.
+          if (nodeId) {
+            updateWorkflowRun(runMsgId, (prev) => {
+              const running = prev.runningNodeIds ?? [];
+              if (!running.includes(nodeId)) return prev;
+              return { ...prev, runningNodeIds: running.filter((id) => id !== nodeId) };
+            });
+          }
           if (active && nodeId) {
             const openedAt = active.createdAt;
             const kind = active.kind;
@@ -1514,22 +1585,66 @@ export function useChatSession(): UseChatSessionResult {
           }
         } else if (ev.type === 'run.completed') {
           const outputs = (payload.outputs as Record<string, unknown>) ?? undefined;
-          updateWorkflowRun(runMsgId, (prev) => ({
-            ...prev,
-            status: 'completed',
-            ...(outputs ? { outputs } : {}),
-          }));
+          // Inline setSession (rather than updateWorkflowRun) so we
+          // can capture the finalized message and write it through to
+          // the BE in the same step — without this, an @mention chat
+          // session is never persisted and the history drawer keeps
+          // showing "New chat — 0 messages" even after completion.
+          let finalized: ChatMessage | null = null;
+          setSession((s) => {
+            const next = s.messages.map((m) => {
+              if (m.id !== runMsgId || !m.workflowRun) return m;
+              const updated: ChatMessage = {
+                ...m,
+                workflowRun: {
+                  ...m.workflowRun,
+                  status: 'completed',
+                  ...(outputs ? { outputs } : {}),
+                },
+              };
+              finalized = updated;
+              return updated;
+            });
+            return { ...s, messages: next };
+          });
+          if (finalized) void persistMessage(session.id, nextTitle, finalized);
           closeWorkflowSub(runMsgId);
         } else if (ev.type === 'run.failed') {
           const err = (payload.error as Record<string, string>) ?? { code: 'unknown', message: 'unknown failure' };
-          updateWorkflowRun(runMsgId, (prev) => ({
-            ...prev,
-            status: 'failed',
-            error: { code: err.code ?? 'unknown', message: err.message ?? 'unknown failure' },
-          }));
+          let finalized: ChatMessage | null = null;
+          setSession((s) => {
+            const next = s.messages.map((m) => {
+              if (m.id !== runMsgId || !m.workflowRun) return m;
+              const updated: ChatMessage = {
+                ...m,
+                workflowRun: {
+                  ...m.workflowRun,
+                  status: 'failed',
+                  error: { code: err.code ?? 'unknown', message: err.message ?? 'unknown failure' },
+                },
+              };
+              finalized = updated;
+              return updated;
+            });
+            return { ...s, messages: next };
+          });
+          if (finalized) void persistMessage(session.id, nextTitle, finalized);
           closeWorkflowSub(runMsgId);
         } else if (ev.type === 'run.cancelled') {
-          updateWorkflowRun(runMsgId, (prev) => ({ ...prev, status: 'cancelled' }));
+          let finalized: ChatMessage | null = null;
+          setSession((s) => {
+            const next = s.messages.map((m) => {
+              if (m.id !== runMsgId || !m.workflowRun) return m;
+              const updated: ChatMessage = {
+                ...m,
+                workflowRun: { ...m.workflowRun, status: 'cancelled' },
+              };
+              finalized = updated;
+              return updated;
+            });
+            return { ...s, messages: next };
+          });
+          if (finalized) void persistMessage(session.id, nextTitle, finalized);
           closeWorkflowSub(runMsgId);
         }
       },
@@ -1537,7 +1652,7 @@ export function useChatSession(): UseChatSessionResult {
       onTimeout: () => { /* idle timeout — leave bubble as-is */ },
     });
     workflowSubsRef.current.set(runMsgId, sub);
-  }, [session.id, updateWorkflowRun]);
+  }, [session.id, session.title, session.messages.length, updateWorkflowRun, persistMessage]);
 
   const cancelWorkflowRun = useCallback(async (messageId: string) => {
     const msg = session.messages.find((m) => m.id === messageId);

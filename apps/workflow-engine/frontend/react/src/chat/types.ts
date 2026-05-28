@@ -112,6 +112,18 @@ export interface WorkflowRunState {
   runUnavailable?: boolean;
   /** Friendly name of the most recently started node. */
   currentNodeName: string | null;
+  /** Node ids that have emitted `node.started` but not yet
+   *  `node.completed` / `node.failed` / `node.suspended`. A workflow
+   *  can have several nodes running in parallel (fan-out branches in
+   *  the screenshot below: Brand-review running alongside the legal-
+   *  review interrupt + the compliance branch). `currentNodeName`
+   *  only tracks the most-recent start, so it can't drive the per-
+   *  step "running" affordance on its own — this set does.
+   *
+   *  Optional so previously-persisted runs that predate this field
+   *  hydrate cleanly; the StepList falls back to a `currentNodeName`
+   *  match when `runningNodeIds` is absent. */
+  runningNodeIds?: string[];
   /** Map of backend nodeId → friendly name from the builder graph.
    *  Empty for sample workflows where we don't have the SavedWorkflow. */
   nodeNames: Record<string, string>;
