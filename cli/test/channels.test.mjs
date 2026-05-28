@@ -85,6 +85,43 @@ describe('channel registry + availability', () => {
     assert.equal(getChannelPlugin('imessage').isAvailable({ OPENWOP_FORCE_PLATFORM: 'darwin' }).available, true);
     assert.throws(() => getChannelPlugin('telegram'));
   });
+
+  it('signal: daemon URL makes it available without the local binary', () => {
+    const a = getChannelPlugin('signal').isAvailable({ OPENWOP_SIGNAL_DAEMON_URL: 'http://127.0.0.1:8080' });
+    assert.equal(a.available, true);
+    assert.match(a.detail, /daemon/);
+  });
+});
+
+describe('signal daemon transport (SSE receive)', () => {
+  it('parses SSE frames from the signal-cli daemon and forwards normalized messages', async () => {
+    // Stream two SSE frames: a JSON-RPC `receive` notification + a noise frame.
+    const frames = [
+      'data: ' + JSON.stringify({ jsonrpc: '2.0', method: 'receive', params: { envelope: { source: '+15551234', sourceName: 'Ada', timestamp: 1716800000000, dataMessage: { message: 'via daemon' } } } }) + '\n\n',
+      'data: ' + JSON.stringify({ jsonrpc: '2.0', method: 'receive', params: { envelope: { source: '+1', receiptMessage: {} } } }) + '\n\n',
+    ];
+    const enc = new TextEncoder();
+    const body = new ReadableStream({
+      start(c) { for (const f of frames) c.enqueue(enc.encode(f)); c.close(); },
+    });
+    const origFetch = globalThis.fetch;
+    globalThis.fetch = async () => new Response(body, { status: 200, headers: { 'content-type': 'text/event-stream' } });
+    try {
+      const got = [];
+      const done = new Promise((resolve) => {
+        const onInbound = async (m) => { got.push(m); resolve(); };
+        getChannelPlugin('signal')
+          .startReceive(onInbound, { env: { OPENWOP_SIGNAL_DAEMON_URL: 'http://127.0.0.1:8080' } })
+          .then((stop) => { setTimeout(stop, 60); });
+      });
+      await Promise.race([done, new Promise((r) => setTimeout(r, 500))]);
+      assert.equal(got.length, 1, 'one deliverable message (receipt skipped)');
+      assert.equal(got[0].text, 'via daemon');
+      assert.equal(got[0].peerId, '+15551234');
+    } finally {
+      globalThis.fetch = origFetch;
+    }
+  });
 });
 
 describe('startInboundReceive forwards normalized messages to /device/inbound (B4 wiring)', () => {

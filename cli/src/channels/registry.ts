@@ -17,9 +17,29 @@ import { parseImessageRow, parseSignalEnvelope, parseWhatsappMessage } from './n
 const IS_DARWIN = process.platform === 'darwin';
 
 function signalAvailable(env: NodeJS.ProcessEnv): ChannelAvailability {
+  // Daemon mode: a configured signal-cli HTTP daemon makes the channel usable
+  // without the local binary on PATH (it can run on another host).
+  if (env.OPENWOP_SIGNAL_DAEMON_URL) {
+    return { channel: 'signal', available: true, detail: `signal-cli daemon ${env.OPENWOP_SIGNAL_DAEMON_URL}` };
+  }
   const probe = spawnSync('signal-cli', ['--version'], { encoding: 'utf8' });
   if (probe.status === 0) return { channel: 'signal', available: true, detail: (probe.stdout || '').trim() || 'signal-cli present' };
-  return { channel: 'signal', available: false, detail: 'signal-cli not found on PATH — install from https://github.com/AsamK/signal-cli' };
+  return { channel: 'signal', available: false, detail: 'signal-cli not found on PATH — install from https://github.com/AsamK/signal-cli (or set OPENWOP_SIGNAL_DAEMON_URL)' };
+}
+
+/**
+ * POST one JSON-RPC call to a signal-cli `daemon --http` endpoint and return
+ * the parsed result. Used for daemon-mode delivery.
+ */
+async function signalDaemonRpc(baseUrl: string, method: string, params: Record<string, unknown>): Promise<unknown> {
+  const res = await fetch(new URL('/api/v1/rpc', baseUrl), {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method, params }),
+  });
+  const body = await res.json().catch(() => ({})) as { error?: { message?: string } };
+  if (!res.ok || body.error) throw new Error(`signal-cli daemon ${method} failed: ${body.error?.message ?? `HTTP ${res.status}`}`);
+  return body;
 }
 
 const signalPlugin: ChannelPlugin = {
@@ -27,16 +47,77 @@ const signalPlugin: ChannelPlugin = {
   isAvailable: (env = process.env) => signalAvailable(env),
   async deliver(msg: OutboundMessage) {
     const account = process.env.OPENWOP_SIGNAL_ACCOUNT;
-    const args = [...(account ? ['-a', account] : []), 'send', '-m', msg.text, msg.conversationId.replace(/^group:/, '')];
+    const daemon = process.env.OPENWOP_SIGNAL_DAEMON_URL;
+    const group = msg.conversationId.startsWith('group:') ? msg.conversationId.slice('group:'.length) : undefined;
+    if (daemon) {
+      // Daemon JSON-RPC `send`: recipients[] for DMs, groupId for groups.
+      await signalDaemonRpc(daemon, 'send', {
+        ...(account ? { account } : {}),
+        ...(group ? { groupId: group } : { recipient: [msg.conversationId] }),
+        message: msg.text,
+      });
+      return;
+    }
+    const args = [...(account ? ['-a', account] : []), 'send', '-m', msg.text, group ?? msg.conversationId];
     const r = spawnSync('signal-cli', args, { encoding: 'utf8' });
     if (r.status !== 0) throw new Error(`signal-cli send failed: ${(r.stderr || '').trim() || r.status}`);
   },
   async startReceive(onInbound, opts = {}) {
     const env = opts.env ?? process.env;
+    const daemon = env.OPENWOP_SIGNAL_DAEMON_URL;
+    const forward = async (payload: unknown) => {
+      const msg = parseSignalEnvelope(payload);
+      if (msg) await onInbound(msg);
+    };
+
+    // Daemon mode: stream the SSE event feed (each `data:` line is a JSON-RPC
+    // `receive` notification). Robust to the daemon being unreachable — it
+    // reconnects with backoff. This is the production transport; the spawn
+    // loop below is the local-binary fallback.
+    if (daemon) {
+      const eventsPath = env.OPENWOP_SIGNAL_EVENTS_PATH || '/api/v1/events';
+      let stopped = false;
+      const ctrl = new AbortController();
+      const run = async () => {
+        while (!stopped) {
+          try {
+            const res = await fetch(new URL(eventsPath, daemon), {
+              headers: { accept: 'text/event-stream' },
+              signal: ctrl.signal,
+            });
+            if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            let buf = '';
+            for (;;) {
+              const { value, done } = await reader.read();
+              if (done) break;
+              buf += decoder.decode(value, { stream: true });
+              // SSE frames are separated by a blank line; each carries `data:`.
+              let sep: number;
+              while ((sep = buf.indexOf('\n\n')) >= 0) {
+                const frame = buf.slice(0, sep); buf = buf.slice(sep + 2);
+                for (const line of frame.split('\n')) {
+                  if (!line.startsWith('data:')) continue;
+                  const data = line.slice(5).trim();
+                  if (!data) continue;
+                  try { await forward(JSON.parse(data)); } catch { /* skip malformed frame */ }
+                }
+              }
+            }
+          } catch {
+            if (stopped) return;
+          }
+          if (!stopped) await new Promise((r) => setTimeout(r, 2000)); // reconnect backoff
+        }
+      };
+      void run();
+      return () => { stopped = true; ctrl.abort(); };
+    }
+
+    // Fallback: spawn `signal-cli -a <acct> receive --json` on a re-spawn loop.
     const account = env.OPENWOP_SIGNAL_ACCOUNT;
-    if (!account) throw new Error('OPENWOP_SIGNAL_ACCOUNT (the registered Signal number) is required for receive.');
-    // Poll: `signal-cli -a <acct> receive --json` drains pending messages and
-    // exits; re-run on an interval. Each stdout line is one JSON-RPC message.
+    if (!account) throw new Error('OPENWOP_SIGNAL_ACCOUNT (the registered Signal number) is required for receive, or set OPENWOP_SIGNAL_DAEMON_URL.');
     let stopped = false;
     const tick = () => {
       if (stopped) return;
@@ -44,10 +125,7 @@ const signalPlugin: ChannelPlugin = {
       const rl = createInterface({ input: child.stdout });
       rl.on('line', async (line) => {
         if (!line.trim()) return;
-        try {
-          const msg = parseSignalEnvelope(JSON.parse(line));
-          if (msg) await onInbound(msg);
-        } catch { /* skip malformed line */ }
+        try { await forward(JSON.parse(line)); } catch { /* skip malformed line */ }
       });
       child.on('exit', () => { if (!stopped) setTimeout(tick, 1000); });
     };
