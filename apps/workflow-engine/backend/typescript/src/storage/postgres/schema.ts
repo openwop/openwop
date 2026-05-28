@@ -32,7 +32,7 @@ export interface Queryable {
   ): Promise<{ rows: R[] }>;
 }
 
-export const LATEST_SCHEMA_VERSION = 9;
+export const LATEST_SCHEMA_VERSION = 10;
 
 const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
   1: async (client) => {
@@ -403,6 +403,11 @@ const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
       CREATE INDEX IF NOT EXISTS idx_messaging_delivery_log_tenant
         ON messaging_delivery_log (tenant_id, at DESC);
     `);
+  },
+  10: async (client) => {
+    // Envelope v2: rich outbound fields (media/components/reactions) as a JSON
+    // blob so they survive the relay outbound queue. Mirrors sqlite mig 12.
+    await client.query(`ALTER TABLE relay_outbound ADD COLUMN IF NOT EXISTS extra TEXT;`);
   },
 };
 

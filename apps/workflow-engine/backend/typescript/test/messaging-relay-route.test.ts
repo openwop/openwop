@@ -360,3 +360,50 @@ describe('messaging relay-gateway — notify', () => {
     expect((await post('/notify', OP, { kind: 'email', to: 'x' })).status).toBe(400); // missing text
   });
 });
+
+describe('messaging relay-gateway — envelope v2', () => {
+  it('round-trips outbound media/components/reactions through the queue (extra column)', async () => {
+    const { relayId, deviceToken } = await activeRelay('signal');
+    const dev = { 'x-openwop-device-token': deviceToken, 'content-type': 'application/json' };
+
+    const enq = await post('/relay/enqueue', OP, {
+      relayId,
+      conversationId: 'c-v2',
+      text: 'pick one',
+      replyToMessageId: 'm-parent',
+      media: [{ url: 'https://x/y.png', mimeType: 'image/png', filename: 'y.png' }],
+      components: [{ id: 'yes', label: 'Yes', style: 'reply' }, { id: 'docs', label: 'Docs', style: 'link', url: 'https://o' }],
+      reactions: ['👍'],
+    });
+    expect(enq.status).toBe(201);
+    expect(enq.body.components).toHaveLength(2);
+
+    // Pull from the device queue — the v2 fields must survive persistence.
+    const out = await get('/device/outbound', dev);
+    expect(out.status).toBe(200);
+    const m = out.body.messages.find((x: any) => x.conversationId === 'c-v2');
+    expect(m).toBeTruthy();
+    expect(m.text).toBe('pick one');
+    expect(m.media[0]).toMatchObject({ url: 'https://x/y.png', filename: 'y.png' });
+    expect(m.components.map((c: any) => c.id)).toEqual(['yes', 'docs']);
+    expect(m.reactions).toEqual(['👍']);
+  });
+
+  it('accepts inbound v2 kinds (reaction/command) without rejecting them', async () => {
+    const { deviceToken } = await activeRelay('signal');
+    const dev = { 'x-openwop-device-token': deviceToken, 'content-type': 'application/json' };
+
+    const reaction = await post('/device/inbound', dev, {
+      platformMessageId: 'r1', conversationId: 'cv2', peerId: 'p', text: '',
+      kind: 'reaction', reaction: { emoji: '❤️', targetMessageId: 'm9' },
+    });
+    expect(reaction.status).toBe(202);
+
+    const command = await post('/device/inbound', dev, {
+      platformMessageId: 'cmd1', conversationId: 'cv2', peerId: 'p', text: '/help',
+      kind: 'command', command: { name: 'help', args: 'verbose' },
+      channelMeta: { guildId: 'g1', threadId: 't1' },
+    });
+    expect(command.status).toBe(202);
+  });
+});

@@ -15,7 +15,7 @@ import { getChannelPlugin } from './channels/registry.js';
 import type { ChannelPlugin, InboundMessage, RelayChannel } from './channels/types.js';
 // Re-export the channel surface so the test suite (which imports the built
 // dist/cli.js bundle) can reach the pure normalizers + the registry.
-export { parseSignalEnvelope, parseImessageRow, parseWhatsappMessage } from './channels/normalize.js';
+export { parseSignalEnvelope, parseImessageRow, parseWhatsappMessage, parseDiscordMessage, decodeAttributedBodyHex } from './channels/normalize.js';
 export { getChannelPlugin } from './channels/registry.js';
 
 // ── Foundational layer (extracted from the former monolith) ──

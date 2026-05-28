@@ -4,8 +4,26 @@
  * route handlers can import them without a cycle (routes → storage → types).
  */
 
-export const RELAY_CHANNELS = ['whatsapp', 'signal', 'imessage'] as const;
+export const RELAY_CHANNELS = ['whatsapp', 'signal', 'imessage', 'discord'] as const;
 export type RelayChannel = (typeof RELAY_CHANNELS)[number];
+
+/** A media attachment carried in either direction. */
+export interface ChatAttachment {
+  url: string;
+  mimeType?: string;
+  filename?: string;
+}
+
+/** Inbound event kind (envelope v2); plain `message` is the default. */
+export type ChatInboundKind = 'message' | 'reaction' | 'edit' | 'command';
+
+/** An interactive component offered with an outbound message (quick-reply / link button). */
+export interface ChatOutboundComponent {
+  id: string;
+  label: string;
+  style?: 'reply' | 'link';
+  url?: string;
+}
 
 /** Canonical inbound envelope (platform → host). Request-shaped, not stored as-is. */
 export interface ChatIngressEnvelope {
@@ -15,8 +33,15 @@ export interface ChatIngressEnvelope {
   peerId: string;
   peerDisplay?: string;
   text: string;
-  media?: ReadonlyArray<{ url: string; mimeType?: string }>;
+  media?: ReadonlyArray<ChatAttachment>;
   timestamp: string;
+  // ── envelope v2 (all additive/optional; a message-only host ignores them) ──
+  kind?: ChatInboundKind;
+  quotedMessageId?: string;
+  reaction?: { emoji: string; targetMessageId: string };
+  command?: { name: string; args?: string };
+  /** Opaque per-channel metadata (guildId/threadId/…); never interpreted by the protocol. */
+  channelMeta?: Record<string, unknown>;
 }
 
 /** Canonical outbound envelope (host → platform). Persisted in the outbound queue. */
@@ -26,9 +51,43 @@ export interface ChatEgressEnvelope {
   channel: RelayChannel;
   conversationId: string;
   text: string;
-  media?: ReadonlyArray<{ url: string; mimeType?: string }>;
+  media?: ReadonlyArray<ChatAttachment>;
   replyToMessageId?: string;
   enqueuedAt: string;
+  // ── envelope v2 (all additive/optional) ──
+  components?: ReadonlyArray<ChatOutboundComponent>;
+  /** Emoji to react with on `replyToMessageId` instead of sending a message. */
+  reactions?: ReadonlyArray<string>;
+}
+
+/**
+ * Serialize the envelope-v2 outbound fields (media/components/reactions) to a
+ * JSON string for the `relay_outbound.extra` column, or null when none are
+ * present. The core columns (text, replyToMessageId, …) stay first-class; only
+ * the rich, sparsely-used fields ride in the blob so the queue stays simple.
+ */
+export function egressExtraJson(record: ChatEgressEnvelope): string | null {
+  const extra: Record<string, unknown> = {};
+  if (record.media && record.media.length) extra.media = record.media;
+  if (record.components && record.components.length) extra.components = record.components;
+  if (record.reactions && record.reactions.length) extra.reactions = record.reactions;
+  return Object.keys(extra).length ? JSON.stringify(extra) : null;
+}
+
+/** Re-attach the envelope-v2 fields parsed from a `relay_outbound.extra` blob. */
+export function applyEgressExtra(base: ChatEgressEnvelope, extra: string | null | undefined): ChatEgressEnvelope {
+  if (!extra) return base;
+  try {
+    const e = JSON.parse(extra) as Partial<ChatEgressEnvelope>;
+    return {
+      ...base,
+      ...(e.media ? { media: e.media } : {}),
+      ...(e.components ? { components: e.components } : {}),
+      ...(e.reactions ? { reactions: e.reactions } : {}),
+    };
+  } catch {
+    return base;
+  }
 }
 
 /**

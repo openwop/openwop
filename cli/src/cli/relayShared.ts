@@ -6,10 +6,12 @@ import { dirname, join } from 'node:path';
 import { CliError } from '../errors.js';
 import { writeLine } from '../io.js';
 import { openwopHomeDir } from '../config.js';
+import { getChannelPlugin } from '../channels/registry.js';
+import type { OutboundMessage } from '../channels/types.js';
 
 export const MESSAGING_BASE = '/v1/host/sample/messaging';
 export const DEVICE_TOKEN_HEADER = 'x-openwop-device-token';
-export const RELAY_CHANNELS = ['whatsapp', 'signal', 'imessage'];
+export const RELAY_CHANNELS = ['whatsapp', 'signal', 'imessage', 'discord'];
 
 // The relay record carries the device token — a bearer-equivalent host
 // credential. It is kept OUT of config.json (which holds only non-secret
@@ -84,33 +86,35 @@ export function detectChannelAvailability(channel: any, env = process.env) {
   }
 }
 
+/** Map a pulled outbound egress (envelope v2) to the plugin OutboundMessage shape. */
+function egressToOutbound(egress: any): OutboundMessage {
+  return {
+    conversationId: egress.conversationId,
+    text: egress.text ?? '',
+    ...(egress.replyToMessageId ? { replyToMessageId: egress.replyToMessageId } : {}),
+    ...(egress.media ? { media: egress.media } : {}),
+    ...(egress.components ? { components: egress.components } : {}),
+    ...(egress.reactions ? { reactions: egress.reactions } : {}),
+  };
+}
+
 /**
- * Build the outbound-delivery function for a channel. When the channel's
- * platform tooling is present, deliver natively (signal-cli / AppleScript);
- * otherwise fall back to console delivery so the bridge stays observable and
- * never silently drops a message. Tests inject ctx.relayDeliver to bypass this.
+ * Build the outbound-delivery function for a channel. Delegates to the channel
+ * plugin's `deliver()` (signal-cli/daemon, Baileys, discord.js, AppleScript)
+ * when the platform tooling is present; otherwise falls back to console
+ * delivery so the bridge stays observable and never silently drops a message.
+ * Tests inject ctx.relayDeliver to bypass this entirely.
  */
 export function makeChannelDeliver(channel: any, ctx: any) {
-  const avail = detectChannelAvailability(channel, ctx.env);
-  if (!avail.available) {
+  let plugin: ReturnType<typeof getChannelPlugin> | undefined;
+  try { plugin = getChannelPlugin(channel); } catch { plugin = undefined; }
+  const avail = plugin ? plugin.isAvailable(ctx.env) : { available: false, detail: `unknown channel ${channel}` };
+  if (!plugin || !avail.available) {
     let warned = false;
-    return (egress: any) => {
+    return async (egress: any) => {
       if (!warned) { writeLine(ctx.io.stderr, `channel ${channel} unavailable (${avail.detail}); printing instead.`); warned = true; }
       writeLine(ctx.io.stdout, `→ [${channel}] ${egress.conversationId}: ${egress.text}`);
     };
   }
-  if (channel === 'signal') {
-    return (egress: any) => {
-      const r = spawnSync('signal-cli', ['send', '-m', egress.text, egress.conversationId], { encoding: 'utf8' });
-      if (r.status !== 0) throw new Error(`signal-cli send failed: ${(r.stderr || '').trim() || r.status}`);
-    };
-  }
-  if (channel === 'imessage') {
-    return (egress: any) => {
-      const script = `tell application "Messages" to send ${JSON.stringify(egress.text)} to buddy ${JSON.stringify(egress.conversationId)} of (service 1 whose service type is iMessage)`;
-      const r = spawnSync('osascript', ['-e', script], { encoding: 'utf8' });
-      if (r.status !== 0) throw new Error(`osascript send failed: ${(r.stderr || '').trim() || r.status}`);
-    };
-  }
-  return (egress: any) => writeLine(ctx.io.stdout, `→ [${channel}] ${egress.conversationId}: ${egress.text}`);
+  return async (egress: any) => { await plugin!.deliver(egressToOutbound(egress)); };
 }
