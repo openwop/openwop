@@ -32,8 +32,11 @@ import type {
   MessagingConnectorRecord,
   MessagingIdentityRecord,
   MessagingPolicyRecord,
+  MessagingAllowlistEntry,
+  MessagingPairingRecord,
   MessagingRoutingRuleRecord,
   MessagingSessionRecord,
+  MessagingTurnRecord,
   RelayDeviceRecord,
 } from '../messaging/types.js';
 
@@ -358,6 +361,19 @@ export interface Storage {
     status?: string;
     limit?: number;
   }): Promise<readonly DeliveryLogRecord[]>;
+  appendMessagingTurn(record: MessagingTurnRecord): Promise<void>;
+  /** Return the most-recent `limit` turns for a session, oldest → newest. */
+  listMessagingTurns(sessionKey: string, limit: number): Promise<readonly MessagingTurnRecord[]>;
+
+  // ── pairing + allowlist (per-connector access gates) ──
+  appendMessagingPairing(record: MessagingPairingRecord): Promise<void>;
+  getMessagingPairingByCode(connectorId: string, code: string): Promise<MessagingPairingRecord | null>;
+  listMessagingPairings(connectorId: string | undefined): Promise<readonly MessagingPairingRecord[]>;
+  deleteMessagingPairing(pairingId: string): Promise<boolean>;
+  addMessagingAllowlist(entry: MessagingAllowlistEntry): Promise<void>;
+  getMessagingAllowlist(connectorId: string, channel: string, peerId: string): Promise<MessagingAllowlistEntry | null>;
+  listMessagingAllowlist(connectorId: string | undefined): Promise<readonly MessagingAllowlistEntry[]>;
+  deleteMessagingAllowlist(connectorId: string, channel: string, peerId: string): Promise<boolean>;
 
   // ── lifecycle ──
   close(): Promise<void>;

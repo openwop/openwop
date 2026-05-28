@@ -32,7 +32,7 @@ export interface Queryable {
   ): Promise<{ rows: R[] }>;
 }
 
-export const LATEST_SCHEMA_VERSION = 10;
+export const LATEST_SCHEMA_VERSION = 13;
 
 const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
   1: async (client) => {
@@ -408,6 +408,56 @@ const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
     // Envelope v2: rich outbound fields (media/components/reactions) as a JSON
     // blob so they survive the relay outbound queue. Mirrors sqlite mig 12.
     await client.query(`ALTER TABLE relay_outbound ADD COLUMN IF NOT EXISTS extra TEXT;`);
+  },
+  11: async (client) => {
+    // Per-session turn history for chat-style continuity. Mirrors sqlite mig 13.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS messaging_turns (
+        turn_id TEXT PRIMARY KEY,
+        session_key TEXT NOT NULL,
+        tenant_id TEXT NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        run_id TEXT,
+        at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_messaging_turns_session
+        ON messaging_turns (session_key, at);
+    `);
+  },
+  12: async (client) => {
+    // Per-connector access gates: pairing + allowlist. Mirrors sqlite mig 14.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS messaging_pairings (
+        pairing_id TEXT PRIMARY KEY,
+        connector_id TEXT NOT NULL,
+        tenant_id TEXT NOT NULL,
+        channel TEXT NOT NULL,
+        peer_id TEXT NOT NULL,
+        code TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_messaging_pairings_lookup
+        ON messaging_pairings (connector_id, code);
+      CREATE INDEX IF NOT EXISTS idx_messaging_pairings_peer
+        ON messaging_pairings (connector_id, channel, peer_id);
+      CREATE TABLE IF NOT EXISTS messaging_allowlist (
+        entry_id TEXT PRIMARY KEY,
+        connector_id TEXT NOT NULL,
+        tenant_id TEXT NOT NULL,
+        channel TEXT NOT NULL,
+        peer_id TEXT NOT NULL,
+        added_at TEXT NOT NULL,
+        UNIQUE (connector_id, channel, peer_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_messaging_allowlist_connector
+        ON messaging_allowlist (connector_id);
+    `);
+  },
+  13: async (client) => {
+    // Routing rules may bind to an agent instead of a workflow. Mirrors sqlite mig 15.
+    await client.query(`ALTER TABLE messaging_routing_rules ADD COLUMN IF NOT EXISTS agent_id TEXT;`);
   },
 };
 

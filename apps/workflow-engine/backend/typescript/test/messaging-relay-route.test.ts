@@ -407,3 +407,326 @@ describe('messaging relay-gateway — envelope v2', () => {
     expect(command.status).toBe(202);
   });
 });
+
+describe('messaging relay-gateway — policy enforcement (Phase C)', () => {
+  async function setupConnectorWithPolicy(channel = 'signal', dmPolicy = 'pairing', requireMention = false) {
+    const c = await post('/connectors', OP, { channel });
+    expect(c.status).toBe(201);
+    await post(`/connectors/${c.body.connectorId}/enable`, OP, {});
+    const put = await fetch(`${BASE}/connectors/${c.body.connectorId}/policy`, {
+      method: 'PUT', headers: OP,
+      body: JSON.stringify({ dmPolicy, requireMention }),
+    });
+    expect(put.status).toBe(200);
+    return c.body.connectorId as string;
+  }
+
+  it('dmPolicy=pairing: unknown peer is dropped with a pairing code; approve unblocks the next inbound', async () => {
+    const connectorId = await setupConnectorWithPolicy('signal', 'pairing', false);
+    const { deviceToken } = await activeRelay('signal');
+    const dev = { 'x-openwop-device-token': deviceToken, 'content-type': 'application/json' };
+
+    // 1) Unknown peer → no run, pairing payload returned, outbound code-reply queued.
+    const first = await post('/device/inbound', dev, {
+      platformMessageId: 'p1', conversationId: 'dm-1', peerId: 'peer-unknown', text: 'hello',
+    });
+    expect(first.status).toBe(202);
+    expect(first.body.accepted).toBe(false);
+    expect(first.body.pairing).toBeTruthy();
+    expect(first.body.pairing.code).toMatch(/^[A-Z2-9]{6}$/);
+    expect(first.body.runId).toBeUndefined();
+
+    // 2) Operator approves → allowlist row written, pairing removed.
+    const approve = await post('/pairing/approve', OP, { connectorId, code: first.body.pairing.code });
+    expect(approve.status).toBe(200);
+    expect(approve.body.approved).toBe(true);
+
+    // 3) Same peer → now allowed; the bridge runs the workflow.
+    const second = await post('/device/inbound', dev, {
+      platformMessageId: 'p2', conversationId: 'dm-1', peerId: 'peer-unknown', text: 'follow-up',
+    });
+    expect(second.status).toBe(202);
+    expect(second.body.accepted).toBe(true);
+    expect(second.body.runId).toBeTruthy();
+
+    // The (channel, peerId) is now on the allowlist.
+    const al = await get(`/allowlist?connectorId=${encodeURIComponent(connectorId)}`, OP);
+    expect(al.body.entries.some((e: any) => e.peerId === 'peer-unknown')).toBe(true);
+  });
+
+  it('dmPolicy=disabled drops every DM; the bridge is not invoked', async () => {
+    await setupConnectorWithPolicy('signal', 'disabled', false);
+    const { deviceToken } = await activeRelay('signal');
+    const dev = { 'x-openwop-device-token': deviceToken, 'content-type': 'application/json' };
+    const res = await post('/device/inbound', dev, {
+      platformMessageId: 'd1', conversationId: 'dm-z', peerId: 'p', text: 'x',
+    });
+    expect(res.status).toBe(202);
+    expect(res.body.accepted).toBe(false);
+    expect(res.body.dropped).toBe('disabled');
+    expect(res.body.runId).toBeUndefined();
+  });
+
+  it('requireMention drops DMs that do not mention the bot id', async () => {
+    const connectorId = await setupConnectorWithPolicy('signal', 'open', true);
+    // Allow open + requireMention: only @-mentioned messages pass.
+    const { deviceToken } = await activeRelay('signal');
+    const dev = { 'x-openwop-device-token': deviceToken, 'content-type': 'application/json' };
+
+    process.env.OPENWOP_MESSAGING_BOT_ID_SIGNAL = 'bot-1';
+    try {
+      const noMention = await post('/device/inbound', dev, {
+        platformMessageId: 'n1', conversationId: 'dm-m', peerId: 'p', text: 'hey there',
+      });
+      expect(noMention.body.accepted).toBe(false);
+      expect(noMention.body.dropped).toBe('no-mention');
+
+      const mentioned = await post('/device/inbound', dev, {
+        platformMessageId: 'n2', conversationId: 'dm-m', peerId: 'p', text: 'hey bot',
+        mentions: ['bot-1'],
+      });
+      expect(mentioned.body.accepted).toBe(true);
+      expect(mentioned.body.runId).toBeTruthy();
+    } finally {
+      delete process.env.OPENWOP_MESSAGING_BOT_ID_SIGNAL;
+    }
+    expect(connectorId).toMatch(/^conn_/);
+  });
+
+  it('no connector for (tenant, channel) → no enforcement (backward-compat)', async () => {
+    // Note: no /connectors POST → enforcement is skipped, behavior unchanged.
+    const { deviceToken } = await activeRelay('signal');
+    const dev = { 'x-openwop-device-token': deviceToken, 'content-type': 'application/json' };
+    const res = await post('/device/inbound', dev, {
+      platformMessageId: 'b1', conversationId: 'dm-b', peerId: 'p', text: 'still allowed',
+    });
+    expect(res.status).toBe(202);
+    expect(res.body.accepted).toBe(true);
+  });
+});
+
+describe('messaging relay-gateway — allowlist CRUD', () => {
+  it('add → list → delete', async () => {
+    const c = await post('/connectors', OP, { channel: 'signal' });
+    const connectorId = c.body.connectorId;
+    const add = await post('/allowlist', OP, { connectorId, channel: 'signal', peerId: '+15551111' });
+    expect(add.status).toBe(201);
+    const list = await get(`/allowlist?connectorId=${encodeURIComponent(connectorId)}`, OP);
+    expect(list.body.entries.length).toBe(1);
+    const del = await fetch(`${BASE}/allowlist?connectorId=${encodeURIComponent(connectorId)}&channel=signal&peerId=${encodeURIComponent('+15551111')}`, { method: 'DELETE', headers: OP });
+    expect(del.status).toBe(200);
+    const after = await get(`/allowlist?connectorId=${encodeURIComponent(connectorId)}`, OP);
+    expect(after.body.entries.length).toBe(0);
+  });
+});
+
+import { selectWorkflowByRules } from '../src/messaging/bridge.js';
+
+describe('messaging bridge — selectWorkflowByRules (pure)', () => {
+  const dev = { channel: 'signal' as const };
+  const env = (conversationId: string, peerId: string) => ({ conversationId, peerId });
+  const rule = (over: Partial<any> = {}) => ({
+    ruleId: 'r', tenantId: 't', pattern: '*', workflowId: 'wf.default', priority: 0,
+    createdAt: '2026-01-01T00:00:00Z', ...over,
+  });
+
+  it("no rules → undefined (bridge falls back to default)", () => {
+    expect(selectWorkflowByRules([], dev, env('any', 'p'))).toBeUndefined();
+  });
+  it("'*' matches everything", () => {
+    expect(selectWorkflowByRules([rule({ workflowId: 'wf.A' })], dev, env('c', 'p'))).toBe('wf.A');
+  });
+  it('substring matches conversationId OR peerId', () => {
+    expect(selectWorkflowByRules([rule({ pattern: 'supp', workflowId: 'wf.S' })], dev, env('support-room', 'p'))).toBe('wf.S');
+    expect(selectWorkflowByRules([rule({ pattern: 'ada', workflowId: 'wf.S' })], dev, env('c', 'ada-peer'))).toBe('wf.S');
+    expect(selectWorkflowByRules([rule({ pattern: 'nope', workflowId: 'wf.S' })], dev, env('c', 'p'))).toBeUndefined();
+  });
+  it('channel filter rejects mismatches and accepts unset', () => {
+    expect(selectWorkflowByRules([rule({ channel: 'whatsapp', workflowId: 'wf.W' })], dev, env('*', '*'))).toBeUndefined();
+    expect(selectWorkflowByRules([rule({ channel: 'signal', workflowId: 'wf.S' })], dev, env('*', '*'))).toBe('wf.S');
+    expect(selectWorkflowByRules([rule({ workflowId: 'wf.U' })], dev, env('*', '*'))).toBe('wf.U');
+  });
+  it('priority desc, then earliest createdAt', () => {
+    const r1 = rule({ ruleId: 'r1', priority: 1, workflowId: 'wf.low', createdAt: '2026-01-01T00:00:00Z' });
+    const r2 = rule({ ruleId: 'r2', priority: 10, workflowId: 'wf.hi',  createdAt: '2026-01-02T00:00:00Z' });
+    const r3 = rule({ ruleId: 'r3', priority: 10, workflowId: 'wf.tie', createdAt: '2026-01-01T00:00:00Z' });
+    expect(selectWorkflowByRules([r1, r2], dev, env('c', 'p'))).toBe('wf.hi');
+    expect(selectWorkflowByRules([r2, r3], dev, env('c', 'p'))).toBe('wf.tie'); // tie → earliest createdAt
+  });
+});
+
+import { createSelfHttpBridge } from '../src/messaging/bridge.js';
+
+/** Build a fake Storage that exposes only the methods the bridge touches. */
+function mockStorage(rules: any[], seedTurns: any[] = [], identities: any[] = [], sessions: any[] = []) {
+  const turns: any[] = [...seedTurns];
+  return {
+    listMessagingRoutingRules: async () => rules,
+    // Phase B: turn history seam.
+    listMessagingTurns: async (sessionKey: string, limit: number) =>
+      turns.filter((t) => t.sessionKey === sessionKey).slice(-Math.max(1, limit)),
+    appendMessagingTurn: async (t: any) => { turns.push(t); },
+    // Phase E: identities + sessions seam.
+    listMessagingIdentities: async () => identities,
+    listMessagingSessions: async () => sessions,
+    _turns: turns as any[],
+    // The detached completeAndReply path polls + enqueues; we never let it
+    // complete because the spy fetchImpl returns a non-terminal status forever.
+    getRelayDevice: async () => null,
+    enqueueRelayOutbound: async () => {},
+    appendDeliveryLog: async () => {},
+  } as any;
+}
+
+describe('messaging bridge — routing wiring (unit)', () => {
+  it('passes the rule-resolved workflowId on POST /v1/runs', async () => {
+    let capturedBody: any;
+    const fetchImpl: any = async (url: string, init?: any) => {
+      if (String(url).endsWith('/v1/runs') && init?.method === 'POST') {
+        capturedBody = JSON.parse(init.body as string);
+        return new Response(JSON.stringify({ runId: 'r-1' }), { status: 201, headers: { 'content-type': 'application/json' } });
+      }
+      // Detached poll loop — keep it pending forever (test ends first).
+      return new Response(JSON.stringify({ status: 'running' }), { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+    const bridge = createSelfHttpBridge({
+      storage: mockStorage([
+        { ruleId: 'r1', tenantId: 't', pattern: 'pick-me', workflowId: 'wf.routed', priority: 5, createdAt: '2026-01-01T00:00:00Z' },
+      ]),
+      baseUrl: 'http://test', bearer: 'x', defaultWorkflowId: 'wf.default', fetchImpl,
+    });
+    const res = await bridge.onInbound({
+      device: { relayId: 'rl', tenantId: 't', channel: 'signal' },
+      envelope: { channel: 'signal', platformMessageId: 'm1', conversationId: 'pick-me-room', peerId: 'p', text: 'hi', timestamp: '2026-05-27T00:00:00Z' } as any,
+      sessionKey: 'signal:pick-me-room',
+    });
+    expect(res && (res as any).runId).toBe('r-1');
+    expect(capturedBody.workflowId).toBe('wf.routed');
+    expect(capturedBody.tenantId).toBe('t');
+  });
+
+  it('threads prior turns into messages[] (Phase B: chat-style continuity)', async () => {
+    let bodies: any[] = [];
+    const fetchImpl: any = async (url: string, init?: any) => {
+      if (String(url).endsWith('/v1/runs') && init?.method === 'POST') {
+        bodies.push(JSON.parse(init.body as string));
+        return new Response(JSON.stringify({ runId: `r-${bodies.length}` }), { status: 201, headers: { 'content-type': 'application/json' } });
+      }
+      return new Response(JSON.stringify({ status: 'running' }), { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+    // Seed a prior assistant turn so the second inbound sees [user, assistant, user].
+    const store = mockStorage([], [
+      { turnId: 't0u', sessionKey: 'signal:c1', tenantId: 't', role: 'user', content: 'first', at: '2026-05-27T00:00:00Z' },
+      { turnId: 't0a', sessionKey: 'signal:c1', tenantId: 't', role: 'assistant', content: 'first-reply', at: '2026-05-27T00:00:01Z' },
+    ]);
+    const bridge = createSelfHttpBridge({
+      storage: store, baseUrl: 'http://test', bearer: 'x', defaultWorkflowId: 'wf.default', fetchImpl,
+    });
+    await bridge.onInbound({
+      device: { relayId: 'rl', tenantId: 't', channel: 'signal' },
+      envelope: { channel: 'signal', platformMessageId: 'm2', conversationId: 'c1', peerId: 'p', text: 'second', timestamp: '2026-05-27T00:00:02Z' } as any,
+      sessionKey: 'signal:c1',
+    });
+    expect(bodies[0].inputs.messages).toEqual([
+      { role: 'user', content: 'first' },
+      { role: 'assistant', content: 'first-reply' },
+      { role: 'user', content: 'second' },
+    ]);
+    // The new inbound user turn was persisted (prior-2 + new-1 = 3 user/assistant rows + the new user).
+    const userTurns = (store._turns as any[]).filter((t) => t.role === 'user');
+    expect(userTurns.map((t) => t.content)).toEqual(['first', 'second']);
+  });
+
+  it('cross-channel identity merges history across linked peers (Phase E)', async () => {
+    let postBody: any;
+    const fetchImpl: any = async (url: string, init?: any) => {
+      if (String(url).endsWith('/v1/runs') && init?.method === 'POST') {
+        postBody = JSON.parse(init.body as string);
+        return new Response(JSON.stringify({ runId: 'r-1' }), { status: 201, headers: { 'content-type': 'application/json' } });
+      }
+      return new Response(JSON.stringify({ status: 'running' }), { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+    // Identity links signal:+15551111 ↔ discord:user-X.
+    const identity = {
+      identityId: 'idn1', tenantId: 't', displayName: 'Ada',
+      peers: [{ channel: 'signal', peerId: '+15551111' }, { channel: 'discord', peerId: 'user-X' }],
+      createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z',
+    };
+    const sessions = [
+      { sessionKey: 'signal:c-sig', tenantId: 't', channel: 'signal', conversationId: 'c-sig', peerId: '+15551111', lastInboundAt: '2026-05-27T00:00:00Z', messageCount: 1 },
+      { sessionKey: 'discord:c-dis', tenantId: 't', channel: 'discord', conversationId: 'c-dis', peerId: 'user-X', lastInboundAt: '2026-05-27T00:00:02Z', messageCount: 1 },
+    ];
+    const seedTurns = [
+      { turnId: 'ts1', sessionKey: 'signal:c-sig', tenantId: 't', role: 'user', content: 'said on signal', at: '2026-05-27T00:00:00Z' },
+      { turnId: 'ts2', sessionKey: 'signal:c-sig', tenantId: 't', role: 'assistant', content: 'replied on signal', at: '2026-05-27T00:00:01Z' },
+    ];
+    const bridge = createSelfHttpBridge({
+      storage: mockStorage([], seedTurns, [identity], sessions),
+      baseUrl: 'http://test', bearer: 'x', defaultWorkflowId: 'wf.default', fetchImpl,
+    });
+    // Inbound on Discord from the linked peer — its history should include the prior Signal turns.
+    await bridge.onInbound({
+      device: { relayId: 'rl', tenantId: 't', channel: 'discord' },
+      envelope: { channel: 'discord', platformMessageId: 'm-d1', conversationId: 'c-dis', peerId: 'user-X', text: 'now on discord', timestamp: '2026-05-27T00:00:03Z' } as any,
+      sessionKey: 'discord:c-dis',
+    });
+    expect(postBody.inputs.messages.map((m: any) => m.content)).toEqual([
+      'said on signal', 'replied on signal', 'now on discord',
+    ]);
+  });
+
+  it('rule with agentId dispatches the agent instead of POST /v1/runs (Phase D)', async () => {
+    let runPost: any;
+    let dispatchPost: any;
+    const fetchImpl: any = async (url: string, init?: any) => {
+      const u = String(url);
+      if (u.endsWith('/v1/runs') && init?.method === 'POST') {
+        runPost = JSON.parse(init.body as string);
+        return new Response('{}', { status: 201, headers: { 'content-type': 'application/json' } });
+      }
+      if (u.includes('/v1/host/sample/agents/') && u.endsWith('/dispatch') && init?.method === 'POST') {
+        dispatchPost = { url: u, body: JSON.parse(init.body as string) };
+        return new Response(JSON.stringify({ status: 'completed', result: { text: 'AGENT REPLY' } }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+      return new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+    const bridge = createSelfHttpBridge({
+      storage: mockStorage([
+        { ruleId: 'r1', tenantId: 't', pattern: '*', agentId: 'core.openwop.agents.assistant', priority: 9, createdAt: '2026-01-01T00:00:00Z' },
+      ]),
+      baseUrl: 'http://test', bearer: 'x', defaultWorkflowId: 'wf.default', fetchImpl,
+    });
+    await bridge.onInbound({
+      device: { relayId: 'rl', tenantId: 't', channel: 'signal' },
+      envelope: { channel: 'signal', platformMessageId: 'm1', conversationId: 'c1', peerId: 'p', text: 'hi', timestamp: '2026-05-27T00:00:00Z' } as any,
+      sessionKey: 'signal:c1',
+    });
+    expect(runPost, 'should NOT POST /v1/runs when bound to an agent').toBeUndefined();
+    expect(dispatchPost).toBeTruthy();
+    expect(dispatchPost.url).toContain('/agents/core.openwop.agents.assistant/dispatch');
+    expect(dispatchPost.body.task.text).toBe('hi');
+  });
+
+  it('falls back to the default workflow when no rule matches (backward-compat)', async () => {
+    let capturedBody: any;
+    const fetchImpl: any = async (url: string, init?: any) => {
+      if (String(url).endsWith('/v1/runs') && init?.method === 'POST') {
+        capturedBody = JSON.parse(init.body as string);
+        return new Response(JSON.stringify({ runId: 'r-2' }), { status: 201, headers: { 'content-type': 'application/json' } });
+      }
+      return new Response(JSON.stringify({ status: 'running' }), { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+    const bridge = createSelfHttpBridge({
+      storage: mockStorage([
+        { ruleId: 'r1', tenantId: 't', pattern: 'support', channel: 'whatsapp', workflowId: 'wf.support', priority: 5, createdAt: '2026-01-01T00:00:00Z' },
+      ]),
+      baseUrl: 'http://test', bearer: 'x', defaultWorkflowId: 'wf.default', fetchImpl,
+    });
+    await bridge.onInbound({
+      device: { relayId: 'rl', tenantId: 't', channel: 'signal' }, // wrong channel for the rule
+      envelope: { channel: 'signal', platformMessageId: 'm1', conversationId: 'support-room', peerId: 'p', text: 'hi', timestamp: '2026-05-27T00:00:00Z' } as any,
+      sessionKey: 'signal:support-room',
+    });
+    expect(capturedBody.workflowId).toBe('wf.default');
+  });
+});

@@ -28,8 +28,11 @@ import type {
   MessagingConnectorRecord,
   MessagingIdentityRecord,
   MessagingPolicyRecord,
+  MessagingAllowlistEntry,
+  MessagingPairingRecord,
   MessagingRoutingRuleRecord,
   MessagingSessionRecord,
+  MessagingTurnRecord,
   RelayDeviceRecord,
 } from '../../messaging/types.js';
 import { egressExtraJson, applyEgressExtra } from '../../messaging/types.js';
@@ -1075,11 +1078,15 @@ export function openSqliteStorage(dbPath: string): Storage {
     },
     async upsertMessagingRoutingRule(record) {
       db.prepare(
-        `INSERT INTO messaging_routing_rules (rule_id, tenant_id, channel, pattern, workflow_id, priority, created_at)
-         VALUES (?,?,?,?,?,?,?)
+        `INSERT INTO messaging_routing_rules (rule_id, tenant_id, channel, pattern, workflow_id, agent_id, priority, created_at)
+         VALUES (?,?,?,?,?,?,?,?)
          ON CONFLICT(rule_id) DO UPDATE SET
-           channel=excluded.channel, pattern=excluded.pattern, workflow_id=excluded.workflow_id, priority=excluded.priority`,
-      ).run(record.ruleId, record.tenantId, record.channel ?? null, record.pattern, record.workflowId, record.priority, record.createdAt);
+           channel=excluded.channel, pattern=excluded.pattern,
+           workflow_id=excluded.workflow_id, agent_id=excluded.agent_id, priority=excluded.priority`,
+      ).run(
+        record.ruleId, record.tenantId, record.channel ?? null, record.pattern,
+        record.workflowId ?? null, record.agentId ?? null, record.priority, record.createdAt,
+      );
     },
     async listMessagingRoutingRules(tenantId) {
       const rows = tenantId === undefined
@@ -1131,6 +1138,69 @@ export function openSqliteStorage(dbPath: string): Storage {
       params.push(lim);
       const rows = db.prepare(`SELECT * FROM messaging_delivery_log ${where} ORDER BY at DESC LIMIT ?`).all(...params) as Array<Record<string, unknown>>;
       return rows.map(rowToDeliveryLogSqlite);
+    },
+
+    async appendMessagingTurn(record) {
+      db.prepare(
+        `INSERT INTO messaging_turns (turn_id, session_key, tenant_id, role, content, run_id, at)
+         VALUES (?,?,?,?,?,?,?)`,
+      ).run(
+        record.turnId, record.sessionKey, record.tenantId, record.role, record.content,
+        record.runId ?? null, record.at,
+      );
+    },
+    async listMessagingTurns(sessionKey, limit) {
+      // Clamp to [1,1000] (negative LIMIT is unbounded in SQLite).
+      const lim = Number.isFinite(limit) && limit >= 1 ? Math.min(Math.floor(limit), 1000) : 100;
+      // Get the N MOST RECENT turns, then return them oldest → newest so a
+      // caller can append them to messages[] in conversation order.
+      const rows = db.prepare(
+        `SELECT * FROM (
+           SELECT * FROM messaging_turns WHERE session_key = ? ORDER BY at DESC, turn_id DESC LIMIT ?
+         ) ORDER BY at ASC, turn_id ASC`,
+      ).all(sessionKey, lim) as Array<Record<string, unknown>>;
+      return rows.map(rowToTurnSqlite);
+    },
+
+    async appendMessagingPairing(record) {
+      db.prepare(
+        `INSERT INTO messaging_pairings (pairing_id, connector_id, tenant_id, channel, peer_id, code, expires_at, created_at)
+         VALUES (?,?,?,?,?,?,?,?)`,
+      ).run(record.pairingId, record.connectorId, record.tenantId, record.channel, record.peerId, record.code, record.expiresAt, record.createdAt);
+    },
+    async getMessagingPairingByCode(connectorId, code) {
+      const row = db.prepare(`SELECT * FROM messaging_pairings WHERE connector_id = ? AND code = ?`).get(connectorId, code) as Record<string, unknown> | undefined;
+      return row ? rowToPairingSqlite(row) : null;
+    },
+    async listMessagingPairings(connectorId) {
+      const rows = connectorId === undefined
+        ? db.prepare(`SELECT * FROM messaging_pairings ORDER BY created_at DESC`).all()
+        : db.prepare(`SELECT * FROM messaging_pairings WHERE connector_id = ? ORDER BY created_at DESC`).all(connectorId);
+      return (rows as Array<Record<string, unknown>>).map(rowToPairingSqlite);
+    },
+    async deleteMessagingPairing(pairingId) {
+      const info = db.prepare(`DELETE FROM messaging_pairings WHERE pairing_id = ?`).run(pairingId);
+      return info.changes > 0;
+    },
+    async addMessagingAllowlist(entry) {
+      db.prepare(
+        `INSERT OR IGNORE INTO messaging_allowlist (entry_id, connector_id, tenant_id, channel, peer_id, added_at)
+         VALUES (?,?,?,?,?,?)`,
+      ).run(entry.entryId, entry.connectorId, entry.tenantId, entry.channel, entry.peerId, entry.addedAt);
+    },
+    async getMessagingAllowlist(connectorId, channel, peerId) {
+      const row = db.prepare(`SELECT * FROM messaging_allowlist WHERE connector_id = ? AND channel = ? AND peer_id = ?`).get(connectorId, channel, peerId) as Record<string, unknown> | undefined;
+      return row ? rowToAllowlistSqlite(row) : null;
+    },
+    async listMessagingAllowlist(connectorId) {
+      const rows = connectorId === undefined
+        ? db.prepare(`SELECT * FROM messaging_allowlist ORDER BY added_at DESC`).all()
+        : db.prepare(`SELECT * FROM messaging_allowlist WHERE connector_id = ? ORDER BY added_at DESC`).all(connectorId);
+      return (rows as Array<Record<string, unknown>>).map(rowToAllowlistSqlite);
+    },
+    async deleteMessagingAllowlist(connectorId, channel, peerId) {
+      const info = db.prepare(`DELETE FROM messaging_allowlist WHERE connector_id = ? AND channel = ? AND peer_id = ?`).run(connectorId, channel, peerId);
+      return info.changes > 0;
     },
 
     async close() {
@@ -1211,7 +1281,8 @@ function rowToRoutingRuleSqlite(r: Record<string, unknown>): MessagingRoutingRul
     tenantId: r.tenant_id as string,
     channel: (r.channel as MessagingRoutingRuleRecord['channel'] | null) ?? undefined,
     pattern: r.pattern as string,
-    workflowId: r.workflow_id as string,
+    ...(r.workflow_id ? { workflowId: r.workflow_id as string } : {}),
+    ...(r.agent_id ? { agentId: r.agent_id as string } : {}),
     priority: Number(r.priority),
     createdAt: r.created_at as string,
   };
@@ -1227,6 +1298,42 @@ function rowToIdentitySqlite(r: Record<string, unknown>): MessagingIdentityRecor
     peers,
     createdAt: r.created_at as string,
     updatedAt: r.updated_at as string,
+  };
+}
+
+function rowToPairingSqlite(r: Record<string, unknown>): MessagingPairingRecord {
+  return {
+    pairingId: r.pairing_id as string,
+    connectorId: r.connector_id as string,
+    tenantId: r.tenant_id as string,
+    channel: r.channel as MessagingPairingRecord['channel'],
+    peerId: r.peer_id as string,
+    code: r.code as string,
+    expiresAt: r.expires_at as string,
+    createdAt: r.created_at as string,
+  };
+}
+
+function rowToAllowlistSqlite(r: Record<string, unknown>): MessagingAllowlistEntry {
+  return {
+    entryId: r.entry_id as string,
+    connectorId: r.connector_id as string,
+    tenantId: r.tenant_id as string,
+    channel: r.channel as MessagingAllowlistEntry['channel'],
+    peerId: r.peer_id as string,
+    addedAt: r.added_at as string,
+  };
+}
+
+function rowToTurnSqlite(r: Record<string, unknown>): MessagingTurnRecord {
+  return {
+    turnId: r.turn_id as string,
+    sessionKey: r.session_key as string,
+    tenantId: r.tenant_id as string,
+    role: r.role as MessagingTurnRecord['role'],
+    content: r.content as string,
+    runId: (r.run_id as string | null) ?? undefined,
+    at: r.at as string,
   };
 }
 

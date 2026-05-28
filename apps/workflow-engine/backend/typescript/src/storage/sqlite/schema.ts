@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 12;
+export const LATEST_SCHEMA_VERSION = 15;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -409,6 +409,60 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
     // Envelope v2: carry rich outbound fields (media/components/reactions) as a
     // JSON blob so they survive the relay outbound queue. Mirrors postgres mig 10.
     db.exec(`ALTER TABLE relay_outbound ADD COLUMN extra TEXT;`);
+  },
+  13: (db) => {
+    // Per-session turn history so messaging gets chat-style continuity: each
+    // inbound run threads the recent prior turns into `messages[]`, and the
+    // assistant reply is persisted on run completion. Mirrors postgres mig 11.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS messaging_turns (
+        turn_id TEXT PRIMARY KEY,
+        session_key TEXT NOT NULL,
+        tenant_id TEXT NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        run_id TEXT,
+        at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_messaging_turns_session
+        ON messaging_turns (session_key, at);
+    `);
+  },
+  14: (db) => {
+    // Per-connector access gates: pairing requests (short-lived) + allowlist
+    // (approved peers). Mirrors postgres mig 12.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS messaging_pairings (
+        pairing_id TEXT PRIMARY KEY,
+        connector_id TEXT NOT NULL,
+        tenant_id TEXT NOT NULL,
+        channel TEXT NOT NULL,
+        peer_id TEXT NOT NULL,
+        code TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_messaging_pairings_lookup
+        ON messaging_pairings (connector_id, code);
+      CREATE INDEX IF NOT EXISTS idx_messaging_pairings_peer
+        ON messaging_pairings (connector_id, channel, peer_id);
+      CREATE TABLE IF NOT EXISTS messaging_allowlist (
+        entry_id TEXT PRIMARY KEY,
+        connector_id TEXT NOT NULL,
+        tenant_id TEXT NOT NULL,
+        channel TEXT NOT NULL,
+        peer_id TEXT NOT NULL,
+        added_at TEXT NOT NULL,
+        UNIQUE (connector_id, channel, peer_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_messaging_allowlist_connector
+        ON messaging_allowlist (connector_id);
+    `);
+  },
+  15: (db) => {
+    // Routing rules may bind to an agent (RFC 0070 dispatch) instead of a
+    // workflow. Mutex enforced at the route handler. Mirrors postgres mig 13.
+    db.exec(`ALTER TABLE messaging_routing_rules ADD COLUMN agent_id TEXT;`);
   },
 };
 

@@ -13,6 +13,8 @@ export const MESSAGING_HELP = `Usage:
   openwop messaging routing    list|add|remove [...]
   openwop messaging identity   list|show|create|link|unlink|delete [...]
   openwop messaging logs       [--channel c] [--direction inbound|outbound] [--status s] [--limit n]
+  openwop messaging pairing    list|approve [--connector id] [--code c]
+  openwop messaging allowlist  list|add|remove --connector id --channel ch --peer-id p
 
 Operate the demo host's messaging relay-gateway (/v1/host/sample/messaging) —
 a host-extension surface, NOT part of the normative OpenWOP wire contract.
@@ -23,7 +25,7 @@ a host-extension surface, NOT part of the normative OpenWOP wire contract.
   policy set <connectorId> --dm <pairing|allowlist|open|disabled>
                            --group <allowlist|open|disabled>
                            --require-mention <true|false>
-  routing add --pattern "*" --workflow <id> [--channel c] [--priority n]
+  routing add --pattern "*" (--workflow <id> | --agent <agentId>) [--channel c] [--priority n]
   routing remove <ruleId>
   identity create --name N --peer <channel>:<peerId> [--peer ...]
   identity link <identityId> --peer <channel>:<peerId>
@@ -55,8 +57,91 @@ export async function runMessaging(ctx: Ctx, argv: string[]) {
       return await runMessagingIdentity(ctx, args);
     case 'logs':
       return await runMessagingLogs(ctx, args);
+    case 'pairing':
+      return await runMessagingPairing(ctx, args);
+    case 'allowlist':
+      return await runMessagingAllowlist(ctx, args);
     default:
       throw new CliError(`Unknown messaging command: ${sub}\nRun \`openwop messaging --help\` for usage.`);
+  }
+}
+
+async function runMessagingPairing(ctx: Ctx, argv: string[]) {
+  const sub = argv[0] ?? 'list';
+  const args = argv.slice(['list', 'approve'].includes(sub) ? 1 : 0);
+  switch (sub) {
+    case 'list': {
+      const { options } = parseOptions(args, { value: ['--connector'] });
+      const qs = options.connector ? `?connectorId=${encodeURIComponent(options.connector)}` : '';
+      const res = await requestJson(ctx, `${MESSAGING_BASE}/pairing${qs}`);
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      const pairings = Array.isArray(res.body?.pairings) ? res.body.pairings : [];
+      if (pairings.length === 0) { writeLine(ctx.io.stdout, 'No pending pairing requests.'); return 0; }
+      writeLine(ctx.io.stdout, formatTable(
+        pairings.map((p: any) => ({ connectorId: p.connectorId, channel: p.channel, peerId: p.peerId, code: p.code, expiresAt: p.expiresAt })),
+        ['connectorId', 'channel', 'peerId', 'code', 'expiresAt'],
+      ));
+      return 0;
+    }
+    case 'approve': {
+      const { options } = parseOptions(args, { value: ['--connector', '--code'] });
+      if (!options.connector || !options.code) throw new CliError('--connector and --code are required.');
+      const res = await requestJson(ctx, `${MESSAGING_BASE}/pairing/approve`, {
+        method: 'POST',
+        body: { connectorId: options.connector, code: options.code },
+      });
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      writeLine(ctx.io.stdout, `✓ Approved ${res.body.channel}:${res.body.peerId} on ${res.body.connectorId}`);
+      return 0;
+    }
+    default:
+      throw new CliError(`Unknown pairing command: ${sub}`);
+  }
+}
+
+async function runMessagingAllowlist(ctx: Ctx, argv: string[]) {
+  const sub = argv[0] ?? 'list';
+  const args = argv.slice(['list', 'add', 'remove'].includes(sub) ? 1 : 0);
+  switch (sub) {
+    case 'list': {
+      const { options } = parseOptions(args, { value: ['--connector'] });
+      const qs = options.connector ? `?connectorId=${encodeURIComponent(options.connector)}` : '';
+      const res = await requestJson(ctx, `${MESSAGING_BASE}/allowlist${qs}`);
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      const entries = Array.isArray(res.body?.entries) ? res.body.entries : [];
+      if (entries.length === 0) { writeLine(ctx.io.stdout, 'No allowlist entries.'); return 0; }
+      writeLine(ctx.io.stdout, formatTable(
+        entries.map((e: any) => ({ connectorId: e.connectorId, channel: e.channel, peerId: e.peerId, addedAt: e.addedAt })),
+        ['connectorId', 'channel', 'peerId', 'addedAt'],
+      ));
+      return 0;
+    }
+    case 'add': {
+      const { options } = parseOptions(args, { value: ['--connector', '--channel', '--peer-id'] });
+      if (!options.connector || !options.channel || !options.peerId) {
+        throw new CliError('--connector, --channel, and --peer-id are required.');
+      }
+      const res = await requestJson(ctx, `${MESSAGING_BASE}/allowlist`, {
+        method: 'POST',
+        body: { connectorId: options.connector, channel: options.channel, peerId: options.peerId },
+      });
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      writeLine(ctx.io.stdout, `✓ Allowlisted ${res.body.channel}:${res.body.peerId} on ${res.body.connectorId}`);
+      return 0;
+    }
+    case 'remove': {
+      const { options } = parseOptions(args, { value: ['--connector', '--channel', '--peer-id'] });
+      if (!options.connector || !options.channel || !options.peerId) {
+        throw new CliError('--connector, --channel, and --peer-id are required.');
+      }
+      const qs = new URLSearchParams({ connectorId: options.connector, channel: options.channel, peerId: options.peerId });
+      const res = await requestJson(ctx, `${MESSAGING_BASE}/allowlist?${qs}`, { method: 'DELETE' });
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      writeLine(ctx.io.stdout, res.body.removed ? `✓ Removed ${res.body.channel}:${res.body.peerId}` : `(no entry for ${res.body.channel}:${res.body.peerId})`);
+      return res.body.removed ? 0 : 1;
+    }
+    default:
+      throw new CliError(`Unknown allowlist command: ${sub}`);
   }
 }
 
@@ -191,25 +276,32 @@ async function runMessagingRouting(ctx: Ctx, argv: string[]) {
       const rules = Array.isArray(res.body?.rules) ? res.body.rules : [];
       if (rules.length === 0) { writeLine(ctx.io.stdout, 'No routing rules. Add one with `openwop messaging routing add --pattern "*" --workflow <id>`.'); return 0; }
       writeLine(ctx.io.stdout, formatTable(
-        rules.map((r: any) => ({ ruleId: r.ruleId, channel: r.channel ?? '(any)', pattern: r.pattern, workflowId: r.workflowId, priority: String(r.priority) })),
-        ['ruleId', 'channel', 'pattern', 'workflowId', 'priority'],
+        rules.map((r: any) => ({
+          ruleId: r.ruleId, channel: r.channel ?? '(any)', pattern: r.pattern,
+          target: r.workflowId ? `wf:${r.workflowId}` : `agent:${r.agentId}`,
+          priority: String(r.priority),
+        })),
+        ['ruleId', 'channel', 'pattern', 'target', 'priority'],
       ));
       return 0;
     }
     case 'add': {
-      const { options } = parseOptions(args, { value: ['--channel', '--pattern', '--workflow', '--priority', '--rule-id'] });
+      const { options } = parseOptions(args, { value: ['--channel', '--pattern', '--workflow', '--agent', '--priority', '--rule-id'] });
       if (!options.pattern) throw new CliError('--pattern is required (use "*" to match any).');
-      if (!options.workflow) throw new CliError('--workflow is required (the workflowId to bind).');
+      if (!options.workflow && !options.agent) throw new CliError('one of --workflow or --agent is required.');
+      if (options.workflow && options.agent) throw new CliError('--workflow and --agent are mutually exclusive.');
       const body = {
         ...(options.channel ? { channel: options.channel } : {}),
         pattern: options.pattern,
-        workflowId: options.workflow,
+        ...(options.workflow ? { workflowId: options.workflow } : {}),
+        ...(options.agent ? { agentId: options.agent } : {}),
         ...(options.priority !== undefined ? { priority: Number(options.priority) } : {}),
         ...(options.ruleId ? { ruleId: options.ruleId } : {}),
       };
       const res = await requestJson(ctx, `${MESSAGING_BASE}/routing`, { method: 'POST', body });
       if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
-      writeLine(ctx.io.stdout, `✓ Rule ${res.body.ruleId} — ${res.body.channel ?? '(any)'}/${res.body.pattern} → ${res.body.workflowId} (priority ${res.body.priority})`);
+      const target = res.body.workflowId ? `workflow ${res.body.workflowId}` : `agent ${res.body.agentId}`;
+      writeLine(ctx.io.stdout, `✓ Rule ${res.body.ruleId} — ${res.body.channel ?? '(any)'}/${res.body.pattern} → ${target} (priority ${res.body.priority})`);
       return 0;
     }
     case 'remove': {

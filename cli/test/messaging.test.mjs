@@ -309,11 +309,21 @@ describe('messaging routing (CLI)', () => {
     assert.match(rmCap.stdout, /Removed routing rule/);
   });
 
-  it('rejects a routing add missing --workflow', async () => {
+  it('rejects a routing add with neither --workflow nor --agent', async () => {
     const cap = capture();
     const code = await runCli(['messaging', 'routing', 'add', '--pattern', '*'], opts(relayServer(), cap));
     assert.equal(code, 2);
-    assert.match(cap.stderr, /--workflow is required/);
+    assert.match(cap.stderr, /one of --workflow or --agent/);
+  });
+
+  it('rejects a routing add with BOTH --workflow and --agent (mutually exclusive)', async () => {
+    const cap = capture();
+    const code = await runCli(
+      ['messaging', 'routing', 'add', '--pattern', '*', '--workflow', 'w', '--agent', 'a'],
+      opts(relayServer(), cap),
+    );
+    assert.equal(code, 2);
+    assert.match(cap.stderr, /mutually exclusive/);
   });
 });
 
