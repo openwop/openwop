@@ -39,6 +39,7 @@ import {
 } from '../byok/encryption.js';
 import { createLogger } from '../observability/logger.js';
 import type { Storage } from '../storage/storage.js';
+import { listManagedProviderIds } from './catalog.js';
 import { dispatchChat, type ChatMessage, type ProviderId } from './dispatch.js';
 
 const log = createLogger('providers.managed');
@@ -319,6 +320,70 @@ export async function dispatchManagedChat(
     ...(result.usage ? { usage: result.usage } : {}),
     ...(result.finishReason ? { finishReason: result.finishReason } : {}),
   };
+}
+
+export interface ManagedProviderStatus {
+  /** providers.json id, e.g. 'openwop-free'. */
+  providerId: string;
+  /** True when a server-held key is seeded AND decryptable — i.e. a
+   *  managed dispatch for this provider will get past `resolveManagedKey`.
+   *  False is the silent-degrade failure mode: the tier is advertised to
+   *  users but every call would fail with `managed_unavailable`. */
+  ready: boolean;
+  /** Human-readable reason when `ready` is false; empty string when ready. */
+  detail: string;
+}
+
+/**
+ * Readiness check for managed providers, surfaced via GET /readiness.
+ *
+ * For each provider advertised with `managed: true` in providers.json,
+ * report whether its server-held key is actually seeded + decryptable.
+ * This guards the exact failure that was previously invisible until a
+ * user ran a workflow: the key was never seeded (env absent at boot, or
+ * a dropped/unmounted secret on redeploy), `bootstrapManagedProvider`
+ * logged a single info line and degraded quietly, and every "Try it
+ * free" call failed with `managed_unavailable`. Reporting it here turns
+ * that into a deploy-time signal.
+ *
+ * Read-only and idempotent — reuses the same decrypt path (+ cache) as
+ * dispatch, so it introduces no new key exposure beyond what a normal
+ * managed call already does.
+ */
+export async function getManagedProviderStatuses(): Promise<ManagedProviderStatus[]> {
+  const targets = getTargets();
+  const statuses: ManagedProviderStatus[] = [];
+  for (const providerId of listManagedProviderIds()) {
+    const target = targets[providerId];
+    if (!target) {
+      statuses.push({
+        providerId,
+        ready: false,
+        detail:
+          'advertised as managed in providers.json but no server-side dispatch target is configured',
+      });
+      continue;
+    }
+    if (!storageRef || !masterKeyPathRef) {
+      statuses.push({
+        providerId,
+        ready: false,
+        detail: 'managed-provider store not configured (configureManagedProvider was not called)',
+      });
+      continue;
+    }
+    const key = await resolveManagedKey(target.storageRef);
+    statuses.push(
+      key
+        ? { providerId, ready: true, detail: '' }
+        : {
+            providerId,
+            ready: false,
+            detail: `no server-held key seeded — set ${target.envKeyName} and restart`,
+          },
+    );
+  }
+  return statuses;
 }
 
 /** Test affordance — drop in-process caches without touching storage. */

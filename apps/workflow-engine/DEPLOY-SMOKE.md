@@ -14,6 +14,16 @@ rm -f $CJAR
 # 0. Liveness probe (the canonical "is the backend up" check)
 curl -sI "$BASE/health" | head -1   # HTTP/2 200 expected
 
+# 0.5 Readiness — downstream-dependency health, not just liveness.
+# 200 {"status":"ready"} when every managed ("Try it free") tier
+# advertised in providers.json has its server-held key seeded; 503
+# {"status":"degraded", checks:{managedProviders:[...]}} when one
+# doesn't (dropped/unmounted secret, missing env at boot). This is the
+# step that catches a MINIMAX_API_KEY that never reached the runtime
+# before a user hits it and gets `managed_unavailable`.
+curl -s -o /tmp/readiness.json -w "readiness HTTP %{http_code}\n" "$BASE/readiness"
+python3 -c "import json; d=json.load(open('/tmp/readiness.json')); print('status:', d['status']); [print(' -', p['providerId'], p['ready'], p['detail']) for p in d.get('checks',{}).get('managedProviders',[])]"
+
 # 1. Well-known capabilities (no auth)
 curl -s "$BASE/.well-known/openwop" | \
   python3 -c "import json,sys; d=json.load(sys.stdin); print('protocol:', d['protocolVersion']); print('surfaces:', len(d['capabilities']['hostSurfaces'])); print('aiProviders:', d['capabilities']['aiProviders']['supported'])"

@@ -23,6 +23,7 @@ import {
   bootstrapManagedProvider,
   configureManagedProvider,
   dispatchManagedChat,
+  getManagedProviderStatuses,
   isManagedCredentialRef,
   ManagedProviderError,
   managedProviderIdFromRef,
@@ -358,6 +359,36 @@ describe('dispatchManagedChat — system prompt injection', () => {
     expect(result.completion).toBe('visible answer');
     expect(result.completion).not.toContain('think');
     expect(result.completion).not.toContain('scratchpad');
+  });
+});
+
+describe('getManagedProviderStatuses — readiness probe', () => {
+  it('reports openwop-free as NOT ready when no key is seeded', async () => {
+    // No MINIMAX_API_KEY (deleted in beforeEach) → key never seeded.
+    // This is the silent-degrade regression: tier advertised, key absent.
+    const statuses = await getManagedProviderStatuses();
+    const free = statuses.find((s) => s.providerId === 'openwop-free');
+    expect(free).toBeTruthy();
+    expect(free!.ready).toBe(false);
+    // Detail names the env var an operator must set, so the readiness
+    // payload is self-explanatory at deploy time.
+    expect(free!.detail).toContain('MINIMAX_API_KEY');
+  });
+
+  it('reports openwop-free as ready once the key is seeded', async () => {
+    process.env.MINIMAX_API_KEY = 'sk-ready';
+    await bootstrapManagedProvider();
+
+    const statuses = await getManagedProviderStatuses();
+    const free = statuses.find((s) => s.providerId === 'openwop-free');
+    expect(free!.ready).toBe(true);
+    expect(free!.detail).toBe('');
+  });
+
+  it('only reports providers advertised as managed in providers.json', async () => {
+    const statuses = await getManagedProviderStatuses();
+    // providers.json advertises exactly one managed tier today.
+    expect(statuses.map((s) => s.providerId)).toEqual(['openwop-free']);
   });
 });
 
