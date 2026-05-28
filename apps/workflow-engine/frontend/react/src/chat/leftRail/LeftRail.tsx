@@ -17,20 +17,23 @@
  * the rail owns chrome.
  */
 
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { SessionHistoryDrawer } from '../SessionHistoryDrawer.js';
 import { WorkflowProgressPanel } from '../workflowProgress/WorkflowProgressPanel.js';
 import { ActiveAgentsPanel } from '../activeAgents/ActiveAgentsPanel.js';
+import { ClockIcon, WorkflowIcon } from '../icons/index.js';
 
 export type LeftRailTab = 'history' | 'progress' | 'agents';
 
 interface TabDescriptor {
   id: LeftRailTab;
   label: string;
-  /** Single-character glyph used in both the open tab strip and the
-   *  collapsed-rail header button. Kept small to match the rest of
-   *  the chat header's icon vocabulary (☰ / ≡ / ◉). */
-  icon: string;
+  /** Tab glyph — either a single Unicode char (≡ / ◉) or a small
+   *  inline-SVG component from `../icons` (e.g. `<ClockIcon />` for
+   *  History). The rest of the chat header still uses character
+   *  glyphs; mixing is fine because both render inside the same
+   *  flex span. */
+  icon: ReactNode;
   /** Optional small numeric badge — total workflow runs / activated
    *  agents. Omitted for History (sessions aren't a per-session count
    *  the user needs surfaced on the tab). */
@@ -68,8 +71,8 @@ export function LeftRail({
   if (activeTab === null) return null;
 
   const tabs: TabDescriptor[] = [
-    { id: 'history', label: 'History', icon: '☰' },
-    { id: 'progress', label: 'Progress', icon: '≡', badge: progressBadgeCount },
+    { id: 'history', label: 'History', icon: <ClockIcon size={13} /> },
+    { id: 'progress', label: 'Workflow', icon: <WorkflowIcon size={13} />, badge: progressBadgeCount },
     { id: 'agents', label: 'Agents', icon: '◉', badge: agentsBadgeCount },
   ];
 
