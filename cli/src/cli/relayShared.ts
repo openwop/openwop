@@ -1,6 +1,5 @@
 import type { Ctx } from '../context.js';
 /** Shared constants + helpers for the messaging/relay command groups (and doctor). */
-import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, chmodSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { CliError } from '../errors.js';
@@ -56,33 +55,17 @@ export function readRelayRecord(env: any) {
 }
 
 /**
- * Detect whether a messaging channel can run on this host. Pure-ish (only
- * probes the environment) so doctor + relay can report readiness and fail
- * closed rather than pretend a channel works. Phase 3 channel plugins reuse
- * this before attempting platform I/O.
+ * Detect whether a messaging channel can run on this host (used by `doctor`'s
+ * relay-readiness row). Delegates to the channel plugin's own `isAvailable` so
+ * there is ONE availability source — adding a channel can't leave this behind
+ * (previously this switch lagged and reported a configured Discord relay as
+ * "unknown channel"). Unknown channels fail closed.
  */
 export function detectChannelAvailability(channel: any, env = process.env) {
-  switch (channel) {
-    case 'signal': {
-      const probe = spawnSync('signal-cli', ['--version'], { encoding: 'utf8' });
-      if (probe.status === 0) {
-        return { channel, available: true, detail: (probe.stdout || '').trim() || 'signal-cli present' };
-      }
-      return { channel, available: false, detail: 'signal-cli not found on PATH — install signal-cli (https://github.com/AsamK/signal-cli)' };
-    }
-    case 'imessage': {
-      if ((env.OPENWOP_FORCE_PLATFORM ?? process.platform) === 'darwin') {
-        return { channel, available: true, detail: 'macOS detected — requires Messages signed in + Full Disk Access for chat.db' };
-      }
-      return { channel, available: false, detail: 'iMessage requires macOS (Messages.app + chat.db); not available on this platform' };
-    }
-    case 'whatsapp': {
-      // Baileys is a heavy native-ish dep, not bundled in the stdlib CLI; the
-      // WhatsApp plugin ships with the channel build (TS migration phase).
-      return { channel, available: false, detail: 'WhatsApp requires the @openwop/cli channel build (@whiskeysockets/baileys); not bundled in the core CLI' };
-    }
-    default:
-      return { channel, available: false, detail: `unknown channel: ${channel}` };
+  try {
+    return getChannelPlugin(channel).isAvailable(env);
+  } catch {
+    return { channel, available: false, detail: `unknown channel: ${channel}` };
   }
 }
 
