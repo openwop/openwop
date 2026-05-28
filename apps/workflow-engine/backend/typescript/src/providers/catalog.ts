@@ -74,6 +74,18 @@ export function getProviderConfig(id: string): ProviderConfig | null {
 }
 
 /**
+ * Provider ids advertised with `managed: true` in providers.json — the
+ * "Try it free"-style tiers whose key the operator holds server-side.
+ * The readiness probe cross-references these against the actually-seeded
+ * managed keys so an advertised-but-unconfigured tier (dropped/unmounted
+ * secret, missing env at boot) is caught at deploy time rather than on
+ * the first user run. See managedProvider.ts:getManagedProviderStatuses.
+ */
+export function listManagedProviderIds(): readonly string[] {
+  return CATALOG.providers.filter((p) => p.managed === true).map((p) => p.id);
+}
+
+/**
  * Return the default model id for a provider — first `recommended: true`,
  * else first model. Used by the chat responder node when inputs.model
  * isn't supplied.
