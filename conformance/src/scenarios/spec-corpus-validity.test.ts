@@ -384,16 +384,32 @@ function extractReadmeDocumentIndex(readme: string): string {
   return readme.slice(start, end);
 }
 
-function listMarkdownFilesRecursive(dir: string): string[] {
+function listMarkdownFilesRecursive(dir: string, repoRoot: string = dir): string[] {
   const ignoredDirs = new Set(['.git', 'node_modules', 'dist']);
+  // Repo-relative directory paths to prune. These are subtrees whose
+  // content shouldn't be link-checked because either (a) they're
+  // generated build output (`site/out`) or (b) they're a vendored
+  // mirror of a canonical source whose READMEs use links relative to
+  // the canonical path, not the vendored path:
+  //
+  //  - `apps/workflow-engine/packs/` mirrors repo-root `packs/`, synced
+  //    via `apps/workflow-engine/scripts/sync-packs.sh` so the Cloud
+  //    Run image's `apps/workflow-engine/` build context can ship them.
+  //    Pack READMEs use `../../RFCS/...` / `../../spec/v1/...` links
+  //    that resolve from the canonical location (which this walker
+  //    DOES check) but break from the deeper vendored path. The
+  //    canonical copies are authoritative; the vendored copies are
+  //    byte-for-byte identical via cp -R.
+  const prunedRepoRelative = new Set(['site/out', 'apps/workflow-engine/packs']);
   const files: string[] = [];
 
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     if (entry.isDirectory()) {
       if (ignoredDirs.has(entry.name)) continue;
       const child = join(dir, entry.name);
-      if (relative(dir, child).startsWith('site/out')) continue;
-      files.push(...listMarkdownFilesRecursive(child));
+      const repoRelChild = relative(repoRoot, child);
+      if (prunedRepoRelative.has(repoRelChild)) continue;
+      files.push(...listMarkdownFilesRecursive(child, repoRoot));
       continue;
     }
     if (entry.isFile() && entry.name.endsWith('.md')) {
