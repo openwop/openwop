@@ -278,6 +278,7 @@ export function registerMessagingRoutes(app: Express, deps: Deps): void {
         conversationId: requireString(body.conversationId, 'conversationId'),
         text: requireString(body.text, 'text'),
         ...(optionalString(body.replyToMessageId) ? { replyToMessageId: String(body.replyToMessageId) } : {}),
+        ...parseEgressExtras(body),
       });
       res.status(201).json(egress);
     } catch (err) {
@@ -604,7 +605,15 @@ export function registerMessagingRoutes(app: Express, deps: Deps): void {
 export async function enqueueOutbound(
   storage: Storage,
   relayId: string,
-  fields: { channel: RelayChannel; conversationId: string; text: string; replyToMessageId?: string },
+  fields: {
+    channel: RelayChannel;
+    conversationId: string;
+    text: string;
+    replyToMessageId?: string;
+    media?: ChatEgressEnvelope['media'];
+    components?: ChatEgressEnvelope['components'];
+    reactions?: ChatEgressEnvelope['reactions'];
+  },
 ): Promise<ChatEgressEnvelope> {
   const egress: ChatEgressEnvelope = {
     egressId: `egr_${randomUUID()}`,
@@ -613,6 +622,9 @@ export async function enqueueOutbound(
     conversationId: fields.conversationId,
     text: fields.text,
     ...(fields.replyToMessageId ? { replyToMessageId: fields.replyToMessageId } : {}),
+    ...(fields.media && fields.media.length ? { media: fields.media } : {}),
+    ...(fields.components && fields.components.length ? { components: fields.components } : {}),
+    ...(fields.reactions && fields.reactions.length ? { reactions: fields.reactions } : {}),
     enqueuedAt: new Date().toISOString(),
   };
   await storage.enqueueRelayOutbound(egress);
@@ -709,10 +721,53 @@ function parseIngress(raw: unknown, channel: RelayChannel): ChatIngressEnvelope 
   };
   if (Array.isArray(body.media)) {
     envelope.media = body.media
-      .filter((m): m is { url: string; mimeType?: string } => !!m && typeof (m as { url?: unknown }).url === 'string')
-      .map((m) => ({ url: m.url, ...(m.mimeType ? { mimeType: m.mimeType } : {}) }));
+      .filter((m): m is { url: string; mimeType?: string; filename?: string } => !!m && typeof (m as { url?: unknown }).url === 'string')
+      .map((m) => ({ url: m.url, ...(m.mimeType ? { mimeType: m.mimeType } : {}), ...(m.filename ? { filename: m.filename } : {}) }));
+  }
+  // ── envelope v2 passthrough (all optional; unknown kinds tolerated) ──
+  const kind = optionalString(body.kind);
+  if (kind === 'reaction' || kind === 'edit' || kind === 'command' || kind === 'message') envelope.kind = kind;
+  if (optionalString(body.quotedMessageId)) envelope.quotedMessageId = String(body.quotedMessageId);
+  const reaction = body.reaction as { emoji?: unknown; targetMessageId?: unknown } | undefined;
+  if (reaction && typeof reaction.emoji === 'string' && typeof reaction.targetMessageId === 'string') {
+    envelope.reaction = { emoji: reaction.emoji, targetMessageId: reaction.targetMessageId };
+  }
+  const command = body.command as { name?: unknown; args?: unknown } | undefined;
+  if (command && typeof command.name === 'string') {
+    envelope.command = { name: command.name, ...(typeof command.args === 'string' ? { args: command.args } : {}) };
+  }
+  if (body.channelMeta && typeof body.channelMeta === 'object' && !Array.isArray(body.channelMeta)) {
+    envelope.channelMeta = body.channelMeta as Record<string, unknown>;
   }
   return envelope;
+}
+
+/** Parse the optional envelope-v2 outbound fields (media/components/reactions) off a request body. */
+function parseEgressExtras(body: Record<string, unknown>): {
+  media?: ChatEgressEnvelope['media'];
+  components?: ChatEgressEnvelope['components'];
+  reactions?: ChatEgressEnvelope['reactions'];
+} {
+  const out: {
+    media?: ChatEgressEnvelope['media'];
+    components?: ChatEgressEnvelope['components'];
+    reactions?: ChatEgressEnvelope['reactions'];
+  } = {};
+  if (Array.isArray(body.media)) {
+    out.media = body.media
+      .filter((m): m is { url: string; mimeType?: string; filename?: string } => !!m && typeof (m as { url?: unknown }).url === 'string')
+      .map((m) => ({ url: m.url, ...(m.mimeType ? { mimeType: m.mimeType } : {}), ...(m.filename ? { filename: m.filename } : {}) }));
+  }
+  if (Array.isArray(body.components)) {
+    out.components = body.components
+      .filter((c): c is { id: string; label: string; style?: 'reply' | 'link'; url?: string } =>
+        !!c && typeof (c as { id?: unknown }).id === 'string' && typeof (c as { label?: unknown }).label === 'string')
+      .map((c) => ({ id: c.id, label: c.label, ...(c.style ? { style: c.style } : {}), ...(c.url ? { url: c.url } : {}) }));
+  }
+  if (Array.isArray(body.reactions)) {
+    out.reactions = body.reactions.filter((r): r is string => typeof r === 'string');
+  }
+  return out;
 }
 
 function requireString(raw: unknown, field: string): string {

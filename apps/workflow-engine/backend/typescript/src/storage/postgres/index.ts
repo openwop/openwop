@@ -48,6 +48,7 @@ import type {
   MessagingSessionRecord,
   RelayDeviceRecord,
 } from '../../messaging/types.js';
+import { egressExtraJson, applyEgressExtra } from '../../messaging/types.js';
 import type { Storage } from '../storage.js';
 import { applyMigrations } from './schema.js';
 
@@ -1062,9 +1063,9 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
     },
     async enqueueRelayOutbound(record) {
       await pool.query(
-        `INSERT INTO relay_outbound (egress_id, relay_id, channel, conversation_id, text, reply_to_message_id, enqueued_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-        [record.egressId, record.relayId, record.channel, record.conversationId, record.text, record.replyToMessageId ?? null, record.enqueuedAt],
+        `INSERT INTO relay_outbound (egress_id, relay_id, channel, conversation_id, text, reply_to_message_id, enqueued_at, extra)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [record.egressId, record.relayId, record.channel, record.conversationId, record.text, record.replyToMessageId ?? null, record.enqueuedAt, egressExtraJson(record)],
       );
     },
     async listRelayOutbound(relayId, limit) {
@@ -1238,7 +1239,7 @@ function rowToRelayDevicePg(r: Row): RelayDeviceRecord {
 }
 
 function rowToEgressPg(r: Row): ChatEgressEnvelope {
-  return {
+  return applyEgressExtra({
     egressId: r.egress_id as string,
     relayId: r.relay_id as string,
     channel: r.channel as ChatEgressEnvelope['channel'],
@@ -1246,7 +1247,7 @@ function rowToEgressPg(r: Row): ChatEgressEnvelope {
     text: r.text as string,
     replyToMessageId: (r.reply_to_message_id as string | null) ?? undefined,
     enqueuedAt: r.enqueued_at as string,
-  };
+  }, r.extra as string | null | undefined);
 }
 
 function rowToConnectorPg(r: Row): MessagingConnectorRecord {

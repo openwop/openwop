@@ -32,6 +32,7 @@ import type {
   MessagingSessionRecord,
   RelayDeviceRecord,
 } from '../../messaging/types.js';
+import { egressExtraJson, applyEgressExtra } from '../../messaging/types.js';
 import type { Storage } from '../storage.js';
 import { applyMigrations } from './schema.js';
 
@@ -987,11 +988,11 @@ export function openSqliteStorage(dbPath: string): Storage {
     },
     async enqueueRelayOutbound(record) {
       db.prepare(
-        `INSERT INTO relay_outbound (egress_id, relay_id, channel, conversation_id, text, reply_to_message_id, enqueued_at)
-         VALUES (?,?,?,?,?,?,?)`,
+        `INSERT INTO relay_outbound (egress_id, relay_id, channel, conversation_id, text, reply_to_message_id, enqueued_at, extra)
+         VALUES (?,?,?,?,?,?,?,?)`,
       ).run(
         record.egressId, record.relayId, record.channel, record.conversationId,
-        record.text, record.replyToMessageId ?? null, record.enqueuedAt,
+        record.text, record.replyToMessageId ?? null, record.enqueuedAt, egressExtraJson(record),
       );
     },
     async listRelayOutbound(relayId, limit) {
@@ -1156,7 +1157,7 @@ function rowToRelayDeviceSqlite(r: Record<string, unknown>): RelayDeviceRecord {
 }
 
 function rowToEgressSqlite(r: Record<string, unknown>): ChatEgressEnvelope {
-  return {
+  return applyEgressExtra({
     egressId: r.egress_id as string,
     relayId: r.relay_id as string,
     channel: r.channel as ChatEgressEnvelope['channel'],
@@ -1164,7 +1165,7 @@ function rowToEgressSqlite(r: Record<string, unknown>): ChatEgressEnvelope {
     text: r.text as string,
     replyToMessageId: (r.reply_to_message_id as string | null) ?? undefined,
     enqueuedAt: r.enqueued_at as string,
-  };
+  }, r.extra as string | null | undefined);
 }
 
 function rowToConnectorSqlite(r: Record<string, unknown>): MessagingConnectorRecord {

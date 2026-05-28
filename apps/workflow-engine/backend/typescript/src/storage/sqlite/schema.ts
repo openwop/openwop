@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 11;
+export const LATEST_SCHEMA_VERSION = 12;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -404,6 +404,11 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
       CREATE INDEX IF NOT EXISTS idx_messaging_delivery_log_tenant
         ON messaging_delivery_log (tenant_id, at DESC);
     `);
+  },
+  12: (db) => {
+    // Envelope v2: carry rich outbound fields (media/components/reactions) as a
+    // JSON blob so they survive the relay outbound queue. Mirrors postgres mig 10.
+    db.exec(`ALTER TABLE relay_outbound ADD COLUMN extra TEXT;`);
   },
 };
 
