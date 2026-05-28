@@ -499,7 +499,9 @@ describe('base URL precedence', () => {
     await runCli(['--base-url', 'https://example.dev/api', 'health', '--json'], {
       io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
     });
-    assert.match(observedUrl, /^https:\/\/example\.dev\/api\/health/);
+    // health probes /readiness then /health; what matters is the /api prefix
+    // survives in whichever endpoint the request ends up hitting.
+    assert.match(observedUrl, /^https:\/\/example\.dev\/api\//);
   });
 
   it('uses OPENWOP_BASE_URL when --base-url is absent', async () => {
