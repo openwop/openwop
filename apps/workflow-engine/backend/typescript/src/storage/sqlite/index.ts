@@ -61,12 +61,14 @@ export function openSqliteStorage(dbPath: string): Storage {
       run_id, workflow_id, tenant_id, scope_id, status,
       inputs, metadata, configurable, callback_url,
       idempotency_key, parent_run_id, parent_seq, fork_mode,
-      created_at, updated_at, completed_at, error_code, error_message, current_node_id
+      created_at, updated_at, completed_at, error_code, error_message,
+      current_node_id, scheduler_snapshot
     ) VALUES (
       @runId, @workflowId, @tenantId, @scopeId, @status,
       @inputs, @metadata, @configurable, @callbackUrl,
       @idempotencyKey, @parentRunId, @parentSeq, @forkMode,
-      @createdAt, @updatedAt, @completedAt, @errorCode, @errorMessage, @currentNodeId
+      @createdAt, @updatedAt, @completedAt, @errorCode, @errorMessage,
+      @currentNodeId, @schedulerSnapshot
     )
   `);
 
@@ -309,6 +311,12 @@ export function openSqliteStorage(dbPath: string): Storage {
       updatedAt: row.updated_at,
       completedAt: row.completed_at ?? undefined,
       currentNodeId: row.current_node_id ?? undefined,
+      // Per-run scheduler snapshot for DAG-aware resume — see schema
+      // migration v17. Stored as opaque text (JSON-encoded
+      // `SerializedSnapshot` from executor.ts) and surfaced raw so
+      // the resume path can JSON.parse it without round-tripping
+      // through a typed shape.
+      schedulerSnapshot: (row.scheduler_snapshot as string | null) ?? undefined,
       ...(row.error_code
         ? { error: { code: row.error_code, message: row.error_message ?? '' } }
         : {}),
@@ -396,6 +404,7 @@ export function openSqliteStorage(dbPath: string): Storage {
         errorCode: run.error?.code ?? null,
         errorMessage: run.error?.message ?? null,
         currentNodeId: run.currentNodeId ?? null,
+        schedulerSnapshot: run.schedulerSnapshot ?? null,
       });
     },
 
@@ -419,7 +428,8 @@ export function openSqliteStorage(dbPath: string): Storage {
           completed_at = @completedAt,
           error_code = @errorCode,
           error_message = @errorMessage,
-          current_node_id = @currentNodeId
+          current_node_id = @currentNodeId,
+          scheduler_snapshot = @schedulerSnapshot
         WHERE run_id = @runId
       `);
       updateStmt.run({
@@ -434,6 +444,7 @@ export function openSqliteStorage(dbPath: string): Storage {
         errorCode: merged.error?.code ?? null,
         errorMessage: merged.error?.message ?? null,
         currentNodeId: merged.currentNodeId ?? null,
+        schedulerSnapshot: merged.schedulerSnapshot ?? null,
       });
     },
 

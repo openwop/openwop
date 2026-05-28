@@ -378,7 +378,12 @@ describe('Postgres storage (pg-mem)', () => {
     // parity discipline: every method on Storage MUST behave the same
     // across adapters.
     const now = new Date().toISOString();
-    const record = {
+    // No `as const` — `toolAllowlist: string[]` on UserAgentRecord is
+    // mutable; a readonly tuple literal won't satisfy it. (This test
+    // shipped under PR #314 with `as const`; the corpus gate caught
+    // it post-merge during the parallel-resume-race rebase. Fixing
+    // inline here since we're already touching the file.)
+    const record: import('../src/types.js').UserAgentRecord = {
       agentId: 'user.acme.reviewer',
       tenantId: 'acme',
       persona: 'Code Reviewer',
@@ -390,7 +395,7 @@ describe('Postgres storage (pg-mem)', () => {
       memoryShape: { scratchpad: true, conversation: false, longTerm: false },
       confidenceThreshold: 0.7,
       createdAt: now,
-    } as const;
+    };
     await storage.insertUserAgent(record);
 
     const got = await storage.getUserAgent('user.acme.reviewer');

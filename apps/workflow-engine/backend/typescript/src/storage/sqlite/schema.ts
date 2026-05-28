@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 16;
+export const LATEST_SCHEMA_VERSION = 17;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -503,6 +503,24 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
       );
       CREATE INDEX IF NOT EXISTS idx_user_agents_tenant
         ON user_agents (tenant_id, created_at DESC);
+    `);
+  },
+  17: (db) => {
+    // Per-run serialized scheduler snapshot for DAG-aware resume.
+    // Mirrors the postgres `scheduler_snapshot` column (postgres
+    // schema already has it). Without this, `persistSnapshot` in
+    // executor.ts silently dropped the snapshot on the sqlite path
+    // (the in-memory DSN used by the public demo), and every resume
+    // fell back to the legacy `resumeFromNodeIndex` path. That path
+    // marks every node before the resume index as `completed` and
+    // the resume target as `ready` — semantics that work for purely
+    // linear workflows but corrupt any DAG with parallel suspends
+    // (the other suspended branches get re-launched, suspend again,
+    // and the original interrupts pile up). Real symptom: 4 parallel
+    // approval nodes, user approves all 4, only the last one
+    // actually drives the run forward.
+    db.exec(`
+      ALTER TABLE runs ADD COLUMN scheduler_snapshot TEXT;
     `);
   },
 };
