@@ -91,6 +91,16 @@ describe('channel registry + availability', () => {
     assert.equal(a.available, true);
     assert.match(a.detail, /daemon/);
   });
+
+  it('whatsapp: deliver() attempts Baileys (clean install error, not a hard stub)', async () => {
+    // Baileys isn't installed in the core CLI build, so deliver should fail
+    // with a clear "install @whiskeysockets/baileys" message — proving the
+    // path now genuinely loads the lib instead of throwing "not bundled".
+    await assert.rejects(
+      getChannelPlugin('whatsapp').deliver({ conversationId: '1@s.whatsapp.net', text: 'hi' }),
+      /@whiskeysockets\/baileys/,
+    );
+  });
 });
 
 describe('signal daemon transport (SSE receive)', () => {

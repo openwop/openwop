@@ -11,10 +11,19 @@
 
 import { spawn, spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline';
+import { createRequire } from 'node:module';
 import type { ChannelAvailability, ChannelPlugin, InboundMessage, OutboundMessage, RelayChannel } from './types.js';
 import { parseImessageRow, parseSignalEnvelope, parseWhatsappMessage } from './normalize.js';
 
 const IS_DARWIN = process.platform === 'darwin';
+// Named `_require` so it doesn't clash with the esbuild bundle banner's own
+// `require` shim; used only to synchronously detect optional channel deps.
+const _require = createRequire(import.meta.url);
+
+/** True when an optional channel dependency is installed (sync resolve). */
+function depInstalled(pkg: string): boolean {
+  try { _require.resolve(pkg); return true; } catch { return false; }
+}
 
 function signalAvailable(env: NodeJS.ProcessEnv): ChannelAvailability {
   // Daemon mode: a configured signal-cli HTTP daemon makes the channel usable
@@ -174,30 +183,75 @@ const imessagePlugin: ChannelPlugin = {
   },
 };
 
+const WA_PKG = '@whiskeysockets/baileys';
+
+// A single shared WhatsApp Web (Baileys) connection so deliver() and
+// startReceive() use the same socket + auth session. Lazily created.
+let waConn: { sock: any } | undefined;
+
+async function getWaSocket(env: NodeJS.ProcessEnv): Promise<any> {
+  if (waConn) return waConn.sock;
+  // Optional heavy dep — a variable specifier keeps tsc/esbuild from resolving
+  // the (possibly absent) module at build time; it's `any` (Baileys ships its
+  // own types we don't pin here).
+  let baileys: any;
+  try { baileys = await import(WA_PKG); }
+  catch { throw new Error(`WhatsApp requires ${WA_PKG} — install it (\`npm i -g ${WA_PKG}\`) or in the CLI channel build.`); }
+  const { makeWASocket, useMultiFileAuthState } = baileys.default ?? baileys;
+  const authDir = env.OPENWOP_WHATSAPP_AUTH_DIR || `${env.HOME}/.openwop/whatsapp-auth`;
+  const { state, saveCreds } = await useMultiFileAuthState(authDir);
+  // printQRInTerminal: scan once to link the device (multi-device session
+  // persists in authDir thereafter, like `openclaw channels login` QR flow).
+  const sock = makeWASocket({ auth: state, printQRInTerminal: true });
+  sock.ev.on('creds.update', saveCreds);
+  waConn = { sock };
+  return sock;
+}
+
 const whatsappPlugin: ChannelPlugin = {
   channel: 'whatsapp',
-  isAvailable: () => ({ channel: 'whatsapp', available: false, detail: 'WhatsApp needs @whiskeysockets/baileys (optional dep) installed in the CLI build' }),
-  async deliver() { throw new Error('WhatsApp delivery requires the Baileys channel build (not bundled).'); },
+  isAvailable: (env = process.env) =>
+    depInstalled(WA_PKG)
+      ? { channel: 'whatsapp', available: true, detail: 'Baileys present (WhatsApp Web, multi-device)' }
+      : { channel: 'whatsapp', available: false, detail: `WhatsApp needs ${WA_PKG} (optional dep): \`npm i -g ${WA_PKG}\`` },
+  async deliver(msg: OutboundMessage) {
+    const sock = await getWaSocket(process.env);
+    const jid = msg.conversationId;
+    const quoted = msg.replyToMessageId
+      ? { key: { id: msg.replyToMessageId, remoteJid: jid, fromMe: false } }
+      : undefined;
+    // Reactions deliver as Baileys reactions on the target message.
+    if (msg.reactions && msg.reactions.length && msg.replyToMessageId) {
+      for (const emoji of msg.reactions) {
+        await sock.sendMessage(jid, { react: { text: emoji, key: { id: msg.replyToMessageId, remoteJid: jid, fromMe: false } } });
+      }
+      if (!msg.text && !(msg.media && msg.media.length)) return;
+    }
+    // Quick-reply components → appended as text (Baileys interactive buttons are
+    // unreliable across WhatsApp clients; degrade gracefully rather than fail).
+    let text = msg.text;
+    if (msg.components && msg.components.length) {
+      text = [text, ...msg.components.map((c) => `• ${c.label}`)].filter(Boolean).join('\n');
+    }
+    const content: Record<string, unknown> = (msg.media && msg.media.length)
+      ? { image: { url: msg.media[0].url }, ...(text ? { caption: text } : {}) }
+      : { text };
+    await sock.sendMessage(jid, content, quoted ? { quoted } : {});
+  },
   async startReceive(onInbound, opts = {}) {
-    // Lazy-load Baileys; absent by default (heavy optional dep).
-    // Optional heavy dep — not bundled. A variable specifier keeps tsc from
-    // trying to resolve the (absent) module at build time; it's `any` because
-    // Baileys ships no types we depend on.
-    let baileys: any;
-    const baileysPkg = '@whiskeysockets/baileys';
-    try { baileys = await import(baileysPkg); }
-    catch { throw new Error('WhatsApp receive requires @whiskeysockets/baileys — install it in the CLI build.'); }
-    const { makeWASocket, useMultiFileAuthState } = baileys;
-    const { state, saveCreds } = await useMultiFileAuthState(`${process.env.HOME}/.openwop/whatsapp-auth`);
-    const sock = makeWASocket({ auth: state, printQRInTerminal: true });
-    sock.ev.on('creds.update', saveCreds);
-    sock.ev.on('messages.upsert', async (up: any) => {
+    const sock = await getWaSocket(opts.env ?? process.env);
+    const handler = async (up: any) => {
       for (const m of up.messages ?? []) {
         const msg = parseWhatsappMessage(m);
         if (msg) await onInbound(msg);
       }
-    });
-    return () => { try { sock.end?.(); } catch { /* ignore */ } };
+    };
+    sock.ev.on('messages.upsert', handler);
+    return () => {
+      try { sock.ev.off?.('messages.upsert', handler); } catch { /* ignore */ }
+      try { sock.end?.(); } catch { /* ignore */ }
+      waConn = undefined;
+    };
   },
 };
 
