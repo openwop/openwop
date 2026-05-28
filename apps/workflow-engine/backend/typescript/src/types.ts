@@ -276,6 +276,11 @@ export type OpenwopErrorCode =
   | 'credential_required'
   | 'credential_forbidden'
   | 'credential_unavailable'
+  // Managed-provider preflight in POST /v1/runs (routes/runs.ts): an
+  // anon caller submitting a workflow that pins any node to a
+  // `managed:*` credentialRef. Same code the managed dispatch path
+  // emits at chat-node execution time, just surfaced earlier.
+  | 'sign_in_required'
   | 'fork_invalid_seq'
   | 'fork_unsupported_mode'
   | 'rate_limited'

@@ -33,6 +33,7 @@ import { stripSecretsFromPersisted } from '../byok/ephemeralRunSecrets.js';
 import { createLogger } from '../observability/logger.js';
 import { runQuotaMiddleware, reserveConcurrentSlot } from '../middleware/rateLimit.js';
 import { notifyRunTerminal } from '../executor/runLifecycle.js';
+import { isManagedCredentialRef } from '../providers/managedProvider.js';
 
 const log = createLogger('routes.runs');
 
@@ -125,6 +126,24 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
       if (wf) {
         const refusal = capabilityGatedTypeIdRefusal(wf.definition.nodes);
         if (refusal) throw refusal;
+        // Managed-provider preflight: workflows that include any node
+        // pinned to a `managed:*` credentialRef (the "Try it free" tile
+        // and any future managed tile) require a signed-in user — the
+        // managed dispatch path enforces a per-user-tenant daily token
+        // cap which is meaningless for anon tenants. Without this
+        // gate, an anon caller burns workflow-engine cycles on the
+        // preceding non-LLM nodes and only fails mid-execution at the
+        // first managed chat node. Surface the same `sign_in_required`
+        // code at run-create so the UI can prompt for sign-in before
+        // any work is done. Symmetrical with the capability-gated
+        // refusal above.
+        if (tenantId.startsWith('anon:') && hasManagedCredentialRef(wf.definition.nodes)) {
+          throw new OpenwopError(
+            'sign_in_required',
+            'Sign in to use the free tier.',
+            401,
+          );
+        }
         // Per-workflow configurableSchema validation per
         // `run-options.md §"Per-workflow configurableSchema"`: the
         // workflow MAY declare a JSON Schema; when present, the
@@ -958,6 +977,16 @@ function validateAgainstSchema(schema: Record<string, unknown>, value: unknown):
 // Pre-warm the Ajv singleton at module load time so the first
 // request doesn't pay the dynamic-import cost.
 void getRunsAjv().catch(() => { /* swallowed; validateAgainstSchema falls back */ });
+
+function hasManagedCredentialRef(
+  nodes: ReadonlyArray<{ config?: Record<string, unknown> }>,
+): boolean {
+  for (const node of nodes) {
+    const ref = node.config?.['credentialRef'];
+    if (typeof ref === 'string' && isManagedCredentialRef(ref)) return true;
+  }
+  return false;
+}
 
 function capabilityGatedTypeIdRefusal(
   nodes: ReadonlyArray<{ nodeId: string; typeId: string }>,

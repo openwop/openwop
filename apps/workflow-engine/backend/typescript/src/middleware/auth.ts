@@ -338,6 +338,31 @@ export function authMiddleware(): RequestHandler {
             token: bearerToken,
           };
           noteTenantActivity(tenantId);
+          // Promote the session cookie to user-tier so the cookie path
+          // agrees with the bearer path on identity. Without this, any
+          // subsequent request that drops the `Authorization` header
+          // (token-cache race in the SPA, background revalidation,
+          // EventSource without `?apiKey=`) falls back to the still-
+          // anon cookie and lands at managed-dispatch as anon — even
+          // though the user is signed in. Reissues only when the
+          // existing cookie doesn't already match this user, so this
+          // is a no-op on the steady-state hot path.
+          if (!cookiesDisabled) {
+            const existingRaw = readCookie(req.header('cookie'), COOKIE_NAME);
+            const existing = existingRaw ? verifySession(existingRaw) : null;
+            if (!existing || existing.tenantId !== tenantId || existing.tier !== 'user') {
+              const sid = base64urlEncode(randomBytes(18));
+              const now = Math.floor(Date.now() / 1000);
+              const upgraded: SessionPayload = {
+                sid,
+                tenantId,
+                tier: 'user',
+                iat: now,
+                exp: now + COOKIE_TTL_SECONDS,
+              };
+              setSessionCookie(res, signSession(upgraded));
+            }
+          }
           next();
           return;
         } catch (err: unknown) {
