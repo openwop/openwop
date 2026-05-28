@@ -76,7 +76,9 @@ const imessagePlugin: ChannelPlugin = {
     const poll = () => {
       if (stopped) return;
       // Query via the sqlite3 CLI to avoid a native dep; -json gives rows.
-      const sql = `SELECT m.ROWID as ROWID, m.text as text, m.is_from_me as is_from_me, m.date as date, h.id as handle_id_str FROM message m LEFT JOIN handle h ON m.handle_id = h.ROWID WHERE m.ROWID > ${lastRowId} ORDER BY m.ROWID ASC LIMIT 50;`;
+      // hex(attributedBody): modern macOS leaves m.text NULL and stores the body
+      // in the attributedBody BLOB; hex keeps it intact through `sqlite3 -json`.
+      const sql = `SELECT m.ROWID as ROWID, m.text as text, hex(m.attributedBody) as attributed_body_hex, m.is_from_me as is_from_me, m.date as date, h.id as handle_id_str FROM message m LEFT JOIN handle h ON m.handle_id = h.ROWID WHERE m.ROWID > ${lastRowId} ORDER BY m.ROWID ASC LIMIT 50;`;
       const r = spawnSync('sqlite3', ['-json', dbPath, sql], { encoding: 'utf8' });
       if (r.status === 0 && r.stdout.trim()) {
         try {

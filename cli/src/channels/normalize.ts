@@ -61,7 +61,15 @@ export function parseSignalEnvelope(raw: unknown): InboundMessage | null {
  */
 export function parseImessageRow(row: Record<string, unknown>): InboundMessage | null {
   if (Number(row.is_from_me) === 1) return null;
-  const text = typeof row.text === 'string' ? row.text : '';
+  // On modern macOS `message.text` is frequently NULL and the visible body lives
+  // in the `attributedBody` BLOB (a serialized NSAttributedString). The poller
+  // selects it as hex (`hex(attributedBody) AS attributed_body_hex`); fall back
+  // to decoding it when `text` is empty, else most inbound messages parse blank.
+  let text = typeof row.text === 'string' ? row.text : '';
+  if (text.length === 0) {
+    const hex = (row.attributed_body_hex ?? row.attributedBody) as string | undefined;
+    text = decodeAttributedBodyHex(hex) ?? '';
+  }
   if (text.length === 0) return null;
   const handle = (row.handle_id_str ?? row.handle ?? row.sender) as string | undefined;
   if (!handle) return null;
@@ -107,10 +115,42 @@ export function parseWhatsappMessage(raw: unknown): InboundMessage | null {
   };
 }
 
-/** Apple Core Data timestamp (ns since 2001-01-01 UTC) → ISO string. */
+/**
+ * Apple Core Data timestamp → ISO string. Modern macOS stores `message.date`
+ * as nanoseconds since 2001-01-01 UTC; pre-High-Sierra stored seconds. Detect
+ * by magnitude (ns for a recent date is ~1e17; seconds ~5e8) so both decode.
+ */
 function appleNsToIso(raw: unknown): string {
-  const ns = Number(raw);
-  if (!Number.isFinite(ns) || ns <= 0) return new Date().toISOString();
+  const v = Number(raw);
+  if (!Number.isFinite(v) || v <= 0) return new Date().toISOString();
   const APPLE_EPOCH_MS = Date.UTC(2001, 0, 1);
-  return new Date(APPLE_EPOCH_MS + ns / 1_000_000).toISOString();
+  const offsetMs = v > 1e12 ? v / 1_000_000 : v * 1000; // ns vs seconds
+  return new Date(APPLE_EPOCH_MS + offsetMs).toISOString();
+}
+
+/**
+ * Extract the visible text from a hex-encoded `attributedBody` BLOB (a
+ * `streamtyped`-archived NSAttributedString). Heuristic — no NSKeyedUnarchiver
+ * available in Node: locate the `NSString` class marker, then the `+` (0x2B)
+ * value marker, then a length prefix (1 byte; or 0x81 + 2-byte LE; 0x82 +
+ * 4-byte LE for long strings), then read that many UTF-8 bytes. Returns null
+ * when the shape isn't recognized rather than guessing.
+ */
+export function decodeAttributedBodyHex(hex: unknown): string | null {
+  if (typeof hex !== 'string' || hex.length < 4) return null;
+  let buf: Buffer;
+  try { buf = Buffer.from(hex, 'hex'); } catch { return null; }
+  if (buf.length === 0) return null;
+  const marker = buf.indexOf('NSString', 0, 'latin1');
+  if (marker < 0) return null;
+  let i = buf.indexOf(0x2b, marker); // '+' value marker
+  if (i < 0) return null;
+  i += 1;
+  if (i >= buf.length) return null;
+  let len = buf[i]; i += 1;
+  if (len === 0x81) { len = buf[i] | (buf[i + 1] << 8); i += 2; }
+  else if (len === 0x82) { len = buf[i] | (buf[i + 1] << 8) | (buf[i + 2] << 16) | (buf[i + 3] << 24); i += 4; }
+  if (!Number.isFinite(len) || len <= 0 || i + len > buf.length) return null;
+  const text = buf.subarray(i, i + len).toString('utf8');
+  return text.length ? text : null;
 }

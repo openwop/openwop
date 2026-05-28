@@ -5,9 +5,19 @@ import {
   parseSignalEnvelope,
   parseImessageRow,
   parseWhatsappMessage,
+  decodeAttributedBodyHex,
   getChannelPlugin,
   startInboundReceive,
 } from '../dist/cli.js';
+
+/** Build a hex `attributedBody` BLOB: …NSString + <len-prefix> + UTF-8 text. */
+function attributedBodyHex(text) {
+  const t = Buffer.from(text, 'utf8');
+  let prefix;
+  if (t.length < 0x80) prefix = Buffer.from([0x2b, t.length]);
+  else prefix = Buffer.from([0x2b, 0x81, t.length & 0xff, (t.length >> 8) & 0xff]);
+  return Buffer.concat([Buffer.from('streamtyped\x81\xe8\x03\x84\x01\x40\x84\x84\x84NSString', 'latin1'), prefix, t, Buffer.from([0x86])]).toString('hex');
+}
 
 describe('channel normalizers (B4 parsing core)', () => {
   it('signal: DM envelope → InboundMessage', () => {
@@ -33,6 +43,30 @@ describe('channel normalizers (B4 parsing core)', () => {
     assert.equal(m.peerId, '+15559999');
     assert.equal(m.text, 'pong');
     assert.equal(parseImessageRow({ ROWID: 43, text: 'mine', is_from_me: 1, handle_id_str: '+1' }), null);
+  });
+
+  it('imessage: decodes attributedBody when text is NULL (modern macOS)', () => {
+    // text NULL/empty + attributedBody hex → text comes from the BLOB.
+    const m = parseImessageRow({
+      ROWID: 44, text: null, is_from_me: 0, handle_id_str: '+15550000',
+      attributed_body_hex: attributedBodyHex('hello from attributedBody'),
+    });
+    assert.equal(m.text, 'hello from attributedBody');
+    // Long string (>127 bytes) uses the 0x81 2-byte length path.
+    const long = 'x'.repeat(200);
+    assert.equal(decodeAttributedBodyHex(attributedBodyHex(long)), long);
+    // Unrecognized blob → null (we never guess).
+    assert.equal(decodeAttributedBodyHex('00ff00ff'), null);
+    // Still null when neither text nor a decodable body is present.
+    assert.equal(parseImessageRow({ ROWID: 45, text: '', is_from_me: 0, handle_id_str: '+1', attributed_body_hex: 'deadbeef' }), null);
+  });
+
+  it('imessage: Apple ns/seconds date both decode to a 20xx ISO', () => {
+    // ns since 2001 for a 2024-ish date (~7.4e17) and seconds since 2001 (~7.6e8).
+    const ns = parseImessageRow({ ROWID: 46, text: 'a', is_from_me: 0, handle_id_str: '+1', date: 740000000000000000 });
+    assert.match(ns.timestamp, /^20\d\d-/);
+    const secs = parseImessageRow({ ROWID: 47, text: 'b', is_from_me: 0, handle_id_str: '+1', date: 760000000 });
+    assert.match(secs.timestamp, /^20\d\d-/);
   });
 
   it('whatsapp: Baileys message → InboundMessage; fromMe skipped', () => {
