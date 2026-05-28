@@ -28,7 +28,7 @@
  */
 
 import { enqueueOutbound } from '../routes/messaging.js';
-import type { MessagingBridge, RelayChannel } from './types.js';
+import type { ChatIngressEnvelope, MessagingBridge, MessagingRoutingRuleRecord, RelayChannel, RelayDeviceRecord } from './types.js';
 import type { Storage } from '../storage/storage.js';
 import { createLogger } from '../observability/logger.js';
 
@@ -62,11 +62,15 @@ export function createSelfHttpBridge(cfg: SelfHttpBridgeConfig): MessagingBridge
 
   return {
     async onInbound({ device, envelope }) {
+      // Consult the operator-configured routing rules first; fall back to the
+      // single default workflow when no rule matches (preserves prior behavior).
+      const rules = await cfg.storage.listMessagingRoutingRules(device.tenantId);
+      const workflowId = selectWorkflowByRules(rules, device, envelope) ?? cfg.defaultWorkflowId;
       const createRes = await fetchImpl(`${cfg.baseUrl}/v1/runs`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          workflowId: cfg.defaultWorkflowId,
+          workflowId,
           tenantId: device.tenantId,
           // Send both shapes so either a `text` workflow (uppercase/echo) or a
           // `messages` chat workflow can consume the inbound turn.
@@ -98,6 +102,31 @@ export function createSelfHttpBridge(cfg: SelfHttpBridgeConfig): MessagingBridge
       return { runId };
     },
   };
+}
+
+/**
+ * Pick a workflow for an inbound envelope from the operator-configured routing
+ * rules, or undefined when none match (the bridge falls back to its default).
+ *
+ * Match semantics (per `MessagingRoutingRuleRecord`):
+ *   - `rule.channel` unset OR equal to `device.channel`.
+ *   - `rule.pattern` is `*` (any) OR is a substring of `conversationId` OR `peerId`.
+ *   - Tie-break: higher `priority` wins; equal priority → earlier `createdAt`.
+ * Pure function — exported for direct unit testing without the run pipeline.
+ */
+export function selectWorkflowByRules(
+  rules: ReadonlyArray<MessagingRoutingRuleRecord>,
+  device: Pick<RelayDeviceRecord, 'channel'>,
+  envelope: Pick<ChatIngressEnvelope, 'conversationId' | 'peerId'>,
+): string | undefined {
+  const matched = rules.filter((r) => {
+    if (r.channel !== undefined && r.channel !== device.channel) return false;
+    if (r.pattern === '*') return true;
+    return envelope.conversationId.includes(r.pattern) || envelope.peerId.includes(r.pattern);
+  });
+  if (matched.length === 0) return undefined;
+  matched.sort((a, b) => (b.priority - a.priority) || a.createdAt.localeCompare(b.createdAt));
+  return matched[0].workflowId;
 }
 
 interface ReplyArgs {

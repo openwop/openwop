@@ -407,3 +407,103 @@ describe('messaging relay-gateway — envelope v2', () => {
     expect(command.status).toBe(202);
   });
 });
+
+import { selectWorkflowByRules } from '../src/messaging/bridge.js';
+
+describe('messaging bridge — selectWorkflowByRules (pure)', () => {
+  const dev = { channel: 'signal' as const };
+  const env = (conversationId: string, peerId: string) => ({ conversationId, peerId });
+  const rule = (over: Partial<any> = {}) => ({
+    ruleId: 'r', tenantId: 't', pattern: '*', workflowId: 'wf.default', priority: 0,
+    createdAt: '2026-01-01T00:00:00Z', ...over,
+  });
+
+  it("no rules → undefined (bridge falls back to default)", () => {
+    expect(selectWorkflowByRules([], dev, env('any', 'p'))).toBeUndefined();
+  });
+  it("'*' matches everything", () => {
+    expect(selectWorkflowByRules([rule({ workflowId: 'wf.A' })], dev, env('c', 'p'))).toBe('wf.A');
+  });
+  it('substring matches conversationId OR peerId', () => {
+    expect(selectWorkflowByRules([rule({ pattern: 'supp', workflowId: 'wf.S' })], dev, env('support-room', 'p'))).toBe('wf.S');
+    expect(selectWorkflowByRules([rule({ pattern: 'ada', workflowId: 'wf.S' })], dev, env('c', 'ada-peer'))).toBe('wf.S');
+    expect(selectWorkflowByRules([rule({ pattern: 'nope', workflowId: 'wf.S' })], dev, env('c', 'p'))).toBeUndefined();
+  });
+  it('channel filter rejects mismatches and accepts unset', () => {
+    expect(selectWorkflowByRules([rule({ channel: 'whatsapp', workflowId: 'wf.W' })], dev, env('*', '*'))).toBeUndefined();
+    expect(selectWorkflowByRules([rule({ channel: 'signal', workflowId: 'wf.S' })], dev, env('*', '*'))).toBe('wf.S');
+    expect(selectWorkflowByRules([rule({ workflowId: 'wf.U' })], dev, env('*', '*'))).toBe('wf.U');
+  });
+  it('priority desc, then earliest createdAt', () => {
+    const r1 = rule({ ruleId: 'r1', priority: 1, workflowId: 'wf.low', createdAt: '2026-01-01T00:00:00Z' });
+    const r2 = rule({ ruleId: 'r2', priority: 10, workflowId: 'wf.hi',  createdAt: '2026-01-02T00:00:00Z' });
+    const r3 = rule({ ruleId: 'r3', priority: 10, workflowId: 'wf.tie', createdAt: '2026-01-01T00:00:00Z' });
+    expect(selectWorkflowByRules([r1, r2], dev, env('c', 'p'))).toBe('wf.hi');
+    expect(selectWorkflowByRules([r2, r3], dev, env('c', 'p'))).toBe('wf.tie'); // tie → earliest createdAt
+  });
+});
+
+import { createSelfHttpBridge } from '../src/messaging/bridge.js';
+
+/** Build a fake Storage that exposes only the methods the bridge touches. */
+function mockStorage(rules: any[]) {
+  return {
+    listMessagingRoutingRules: async () => rules,
+    // The detached completeAndReply path polls + enqueues; we never let it
+    // complete because the spy fetchImpl returns a non-terminal status forever.
+    getRelayDevice: async () => null,
+    enqueueRelayOutbound: async () => {},
+    appendDeliveryLog: async () => {},
+  } as any;
+}
+
+describe('messaging bridge — routing wiring (unit)', () => {
+  it('passes the rule-resolved workflowId on POST /v1/runs', async () => {
+    let capturedBody: any;
+    const fetchImpl: any = async (url: string, init?: any) => {
+      if (String(url).endsWith('/v1/runs') && init?.method === 'POST') {
+        capturedBody = JSON.parse(init.body as string);
+        return new Response(JSON.stringify({ runId: 'r-1' }), { status: 201, headers: { 'content-type': 'application/json' } });
+      }
+      // Detached poll loop — keep it pending forever (test ends first).
+      return new Response(JSON.stringify({ status: 'running' }), { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+    const bridge = createSelfHttpBridge({
+      storage: mockStorage([
+        { ruleId: 'r1', tenantId: 't', pattern: 'pick-me', workflowId: 'wf.routed', priority: 5, createdAt: '2026-01-01T00:00:00Z' },
+      ]),
+      baseUrl: 'http://test', bearer: 'x', defaultWorkflowId: 'wf.default', fetchImpl,
+    });
+    const res = await bridge.onInbound({
+      device: { relayId: 'rl', tenantId: 't', channel: 'signal' },
+      envelope: { channel: 'signal', platformMessageId: 'm1', conversationId: 'pick-me-room', peerId: 'p', text: 'hi', timestamp: '2026-05-27T00:00:00Z' } as any,
+      sessionKey: 'signal:pick-me-room',
+    });
+    expect(res && (res as any).runId).toBe('r-1');
+    expect(capturedBody.workflowId).toBe('wf.routed');
+    expect(capturedBody.tenantId).toBe('t');
+  });
+
+  it('falls back to the default workflow when no rule matches (backward-compat)', async () => {
+    let capturedBody: any;
+    const fetchImpl: any = async (url: string, init?: any) => {
+      if (String(url).endsWith('/v1/runs') && init?.method === 'POST') {
+        capturedBody = JSON.parse(init.body as string);
+        return new Response(JSON.stringify({ runId: 'r-2' }), { status: 201, headers: { 'content-type': 'application/json' } });
+      }
+      return new Response(JSON.stringify({ status: 'running' }), { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+    const bridge = createSelfHttpBridge({
+      storage: mockStorage([
+        { ruleId: 'r1', tenantId: 't', pattern: 'support', channel: 'whatsapp', workflowId: 'wf.support', priority: 5, createdAt: '2026-01-01T00:00:00Z' },
+      ]),
+      baseUrl: 'http://test', bearer: 'x', defaultWorkflowId: 'wf.default', fetchImpl,
+    });
+    await bridge.onInbound({
+      device: { relayId: 'rl', tenantId: 't', channel: 'signal' }, // wrong channel for the rule
+      envelope: { channel: 'signal', platformMessageId: 'm1', conversationId: 'support-room', peerId: 'p', text: 'hi', timestamp: '2026-05-27T00:00:00Z' } as any,
+      sessionKey: 'signal:support-room',
+    });
+    expect(capturedBody.workflowId).toBe('wf.default');
+  });
+});
