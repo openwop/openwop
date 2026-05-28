@@ -1,9 +1,18 @@
 {
   "name": "@openwop/cli",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "OpenWOP CLI for operating the workflow-engine demo app and OpenWOP-compatible hosts.",
   "license": "Apache-2.0",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openwop/openwop.git",
+    "directory": "cli"
+  },
+  "homepage": "https://app.openwop.dev/cli",
+  "bugs": {
+    "url": "https://github.com/openwop/openwop/issues"
+  },
   "bin": {
     "openwop": "dist/openwop.js"
   },
