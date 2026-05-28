@@ -1,6 +1,6 @@
 {
   "name": "@openwop/openwop-host-postgres",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "private": true,
   "description": "Reference Postgres-backed OpenWOP host. PARTIAL as of 2026-05-11 — basic run lifecycle + audit-log integrity profile (openwop-audit-log-integrity). interrupts, webhooks, observability ports are deferred to follow-up sessions per module. Uses pglite (Postgres-on-WASM) for in-process tests; production deployers point OPENWOP_PG_DSN at a real Postgres.",
   "type": "module",

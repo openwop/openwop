@@ -1,6 +1,6 @@
 {
   "name": "@openwop/openwop-example-streaming-client",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "private": true,
   "description": "OpenWOP SSE event-stream consumer. Connects to a run's event stream and prints each event as it arrives.",
   "type": "module",
