@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.classifier/1.0.0/classifier.return.schema.json",
+  "title": "ClassifierReturn",
+  "type": "object",
+  "required": [
+    "labels",
+    "stoppedReason"
+  ],
+  "properties": {
+    "labels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "confidence",
+          "rationale"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "stoppedReason": {
+      "type": "string",
+      "enum": [
+        "matched",
+        "no_match",
+        "invalid_input",
+        "refused"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.1.0/error-handler-resume.output.json",
+  "title": "ErrorHandlerResumeOutput",
+  "type": "object",
+  "required": [
+    "directive"
+  ],
+  "properties": {
+    "directive": {
+      "type": "string",
+      "const": "resume"
+    },
+    "fallback": {},
+    "upstreamError": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

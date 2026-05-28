@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/string-regex-match.config.json",
+  "title": "StringRegexMatchConfig",
+  "type": "object",
+  "required": [
+    "pattern"
+  ],
+  "properties": {
+    "pattern": {
+      "type": "string"
+    },
+    "flags": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

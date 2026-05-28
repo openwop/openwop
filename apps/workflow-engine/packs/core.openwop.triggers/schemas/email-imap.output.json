@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.1.0/email-imap.output.json",
+  "title": "EmailImapOutput",
+  "type": "object",
+  "required": [
+    "uid",
+    "from"
+  ],
+  "properties": {
+    "uid": {
+      "type": "string"
+    },
+    "from": {
+      "type": "string"
+    },
+    "to": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "subject": {
+      "type": "string"
+    },
+    "text": {
+      "type": "string"
+    },
+    "html": {
+      "type": "string"
+    },
+    "attachments": {
+      "type": "array"
+    },
+    "receivedAt": {
+      "type": "string"
+    },
+    "folder": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

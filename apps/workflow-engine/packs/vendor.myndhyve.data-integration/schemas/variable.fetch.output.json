@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.data-integration/1.0.0/variable.fetch.output.json",
+  "title": "VariableFetchOutput",
+  "type": "object",
+  "required": ["variableName", "found"],
+  "properties": {
+    "variableName": { "type": "string" },
+    "value": { "description": "Variable value; absent when found:false AND no defaultValue configured." },
+    "found": { "type": "boolean" },
+    "usedDefault": { "type": "boolean" }
+  },
+  "additionalProperties": false
+}

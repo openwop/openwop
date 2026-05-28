@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.storage/1.0.0/cache-evict.output.json",
+  "title": "CacheEvictOutput",
+  "type": "object",
+  "required": [
+    "evicted"
+  ],
+  "properties": {
+    "evicted": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

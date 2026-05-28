@@ -1,0 +1,36 @@
+{
+  "name": "vendor.myndhyve.market-intel-content-extraction",
+  "version": "1.0.0",
+  "description": "MyndHyve market-intel.content-extraction — extract structured content from raw HTML via one ctx.callAI. Outputs title, cleaned content, author, publishedAt, contentType, engagement metrics, tags, summary, and relevantQuotes. Sits between host.webResearch.fetchBatch and market-intel.voc-extraction in the canonical pipeline. Fifth marketIntel pack of the Stage 5 cohort.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/market-intel-content-extraction",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["vendor", "myndhyve", "market-intel", "content-extraction", "html", "readability"],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders": "supported"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "market-intel.content-extraction",
+      "version": "1.0.0",
+      "label": "Extract Content from HTML",
+      "description": "Single AI call. Inputs: rawHtml (required, truncated to 50000 chars by default), url (required), optional contentTypeHint. Outputs: title, cleaned content, author, publishedAt (ISO-validated), contentType (one of 7 enum values), engagement (upvotes/comments/views/shares nullable ints), tags, summary, relevantQuotes (≥5 chars each). Soft validation: invalid fields default with warnings; HTML truncation reported as wasTruncated flag.",
+      "category": "data",
+      "role": "action",
+      "capabilities": ["side-effectful"],
+      "configSchemaRef": "schemas/content-extraction.config.json",
+      "inputSchemaRef": "schemas/content-extraction.input.json",
+      "outputSchemaRef": "schemas/content-extraction.output.json"
+    }
+  ]
+}

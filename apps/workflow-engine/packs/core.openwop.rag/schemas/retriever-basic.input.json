@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.rag/1.0.1/retriever-basic.input.json",
+  "title": "RetrieverBasicInput",
+  "type": "object",
+  "required": [
+    "query"
+  ],
+  "properties": {
+    "query": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

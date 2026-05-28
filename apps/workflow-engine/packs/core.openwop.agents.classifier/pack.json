@@ -1,0 +1,43 @@
+{
+  "name": "core.openwop.agents.classifier",
+  "version": "1.0.0",
+  "description": "Fast classification agent. Caller supplies labels + optional rationale schema; agent picks the best-fit label(s). Stateless, single-shot. Pure-agent pack.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.agents.classifier",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["core", "agents", "classification", "labeling", "pattern"],
+  "engines": {
+    "openwop": ">=1.1.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders": "supported"
+  },
+  "agents": [
+    {
+      "agentId": "core.openwop.agents.classifier.default",
+      "persona": "Classifier",
+      "label": "Classifier Agent",
+      "description": "Single-shot text classifier. Caller supplies labels (with descriptions) + multi-label flag; agent returns label(s) with per-label confidence + brief rationale. No tools, no memory.",
+      "modelClass": "classification",
+      "systemPromptRef": "prompts/classifier.md",
+      "toolAllowlist": [],
+      "memoryShape": {
+        "scratchpad": false,
+        "conversation": false,
+        "longTerm": false
+      },
+      "handoff": {
+        "taskSchemaRef": "schemas/classifier.task.schema.json",
+        "returnSchemaRef": "schemas/classifier.return.schema.json"
+      },
+      "confidence": {
+        "defaultThreshold": 0.7
+      }
+    }
+  ],
+  "runtime": {
+    "language": "remote",
+    "entry": "pack.json"
+  }
+}

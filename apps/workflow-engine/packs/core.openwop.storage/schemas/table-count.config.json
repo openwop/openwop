@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.storage/1.0.0/table-count.config.json",
+  "title": "TableCountConfig",
+  "type": "object",
+  "required": [
+    "table"
+  ],
+  "properties": {
+    "table": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

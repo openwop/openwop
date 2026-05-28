@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.a2a/1.1.0/send-and-stream.input.json",
+  "title": "SendAndStreamInput",
+  "type": "object",
+  "required": [
+    "message"
+  ],
+  "properties": {
+    "message": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": [
+            "user",
+            "agent",
+            "system"
+          ]
+        },
+        "parts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "text",
+                  "file",
+                  "data"
+                ]
+              },
+              "text": {
+                "type": "string"
+              },
+              "data": {},
+              "file": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "mediaType": {
+                "type": "string"
+              },
+              "metadata": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "taskId": {
+      "type": "string"
+    },
+    "contextId": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

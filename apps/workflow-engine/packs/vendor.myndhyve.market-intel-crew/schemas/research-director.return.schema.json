@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-crew/1.0.0/research-director.return.schema.json",
+  "title": "ResearchDirectorReturn",
+  "type": "object",
+  "required": [
+    "summary",
+    "voc",
+    "opportunities",
+    "sources",
+    "stepsExecuted"
+  ],
+  "properties": {
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "voc": {
+      "type": "array",
+      "items": {
+        "additionalProperties": true
+      }
+    },
+    "opportunities": {
+      "type": "array",
+      "items": {
+        "additionalProperties": true
+      }
+    },
+    "recommendedAngles": {
+      "type": "array",
+      "items": {
+        "additionalProperties": true
+      }
+    },
+    "audienceTargeting": {
+      "type": "array",
+      "items": {
+        "additionalProperties": true
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "community",
+              "thread",
+              "page",
+              "rag"
+            ]
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "stepsExecuted": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "typeId"
+        ],
+        "properties": {
+          "typeId": {
+            "type": "string"
+          },
+          "input": {
+            "additionalProperties": true
+          },
+          "outputSummary": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  },
+  "additionalProperties": false
+}

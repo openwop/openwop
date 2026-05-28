@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.messaging/1.0.0/consume.config.json",
+  "title": "MqConsumeConfig",
+  "type": "object",
+  "required": [
+    "topic"
+  ],
+  "properties": {
+    "topic": {
+      "type": "string"
+    },
+    "consumerGroup": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

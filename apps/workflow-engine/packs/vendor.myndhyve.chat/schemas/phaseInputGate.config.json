@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.chat/1.0.0/phaseInputGate.config.json",
+  "title": "ChatPhaseInputGateConfig",
+  "type": "object",
+  "required": ["phaseId", "prompt", "answerSchema"],
+  "properties": {
+    "phaseId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable phase identifier (e.g., 'kickoff', 'review'). Used as the suspend resume-key so the host can disambiguate multiple in-flight gates within a run."
+    },
+    "prompt": {
+      "type": "string",
+      "minLength": 1,
+      "description": "User-facing prompt rendered in the gate dialog."
+    },
+    "answerSchema": {
+      "type": "object",
+      "description": "JSON Schema for the answers payload. The host validates the user's response against this schema BEFORE resuming the run; mismatch returns a validation error to the user and the run stays suspended."
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "minimum": 1000,
+      "maximum": 2592000000,
+      "description": "Optional suspend timeout (default: no timeout). Bounded to 30 days. On timeout, the gate resolves with outputs.timedOut=true."
+    }
+  },
+  "additionalProperties": false
+}

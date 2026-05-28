@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.policy-reviewer/1.0.0/policy-reviewer.task.schema.json",
+  "title": "PolicyReviewerTask",
+  "type": "object",
+  "required": [
+    "content",
+    "rules"
+  ],
+  "properties": {
+    "content": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500000
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 500,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "description"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "blocking",
+              "warning",
+              "advisory"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "knowledgeSourceIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

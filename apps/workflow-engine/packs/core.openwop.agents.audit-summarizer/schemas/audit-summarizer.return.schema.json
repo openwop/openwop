@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.audit-summarizer/1.0.0/audit-summarizer.return.schema.json",
+  "title": "AuditSummarizerReturn",
+  "type": "object",
+  "oneOf": [
+    {
+      "required": [
+        "executiveSummary",
+        "anomalies",
+        "periodStats"
+      ],
+      "properties": {
+        "executiveSummary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anomalies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "description",
+              "severity"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "unusual_actor_access",
+                  "off_hours_activity",
+                  "configuration_drift",
+                  "policy_violation",
+                  "volume_anomaly"
+                ]
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000
+              },
+              "logSampleIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "high",
+                  "medium",
+                  "low"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "periodStats": {
+          "type": "object",
+          "properties": {
+            "totalEvents": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "uniqueActors": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "uniqueResources": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "topActions": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            },
+            "topActors": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            }
+          },
+          "additionalProperties": true
+        },
+        "patternShifts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "metric",
+              "current",
+              "baseline",
+              "significance"
+            ],
+            "properties": {
+              "metric": {
+                "type": "string"
+              },
+              "current": {
+                "type": "number"
+              },
+              "baseline": {
+                "type": "number"
+              },
+              "delta": {
+                "type": "number"
+              },
+              "significance": {
+                "type": "string",
+                "enum": [
+                  "high",
+                  "medium",
+                  "low"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "required": [
+        "stoppedReason"
+      ],
+      "properties": {
+        "stoppedReason": {
+          "type": "string",
+          "enum": [
+            "no_parseable_logs",
+            "invalid_input",
+            "refused"
+          ]
+        },
+        "detail": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

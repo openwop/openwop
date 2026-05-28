@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-tools/1.0.0/tracking-link.output.json",
+  "title": "AdsTrackingLinkOutput",
+  "type": "object",
+  "properties": {
+    "link": {
+      "type": "object",
+      "description": "Single-platform mode result. id + destinationUrl + utm + clickIdParam + variantId + fullUrl + platform + createdAt.",
+      "additionalProperties": true
+    },
+    "links": {
+      "type": "array",
+      "description": "Multi-platform mode result. One TrackingLink per requested platform.",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

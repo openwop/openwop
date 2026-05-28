@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.ai/1.1.2/audio-synthesize.output.json",
+  "title": "AiAudioSynthesizeOutput",
+  "type": "object",
+  "required": [
+    "audioBase64"
+  ],
+  "properties": {
+    "audioBase64": {
+      "type": "string"
+    },
+    "contentType": {
+      "type": "string"
+    },
+    "durationMs": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

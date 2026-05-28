@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.kanban/1.0.0/task.decompose.input.json",
+  "title": "TaskDecomposeInput",
+  "type": "object",
+  "required": ["taskId"],
+  "properties": {
+    "taskId": { "type": "string", "minLength": 1 },
+    "context": { "type": "object", "additionalProperties": true, "description": "Additional context for the AI (related artifacts, codebase summaries, etc.)." }
+  },
+  "additionalProperties": false
+}

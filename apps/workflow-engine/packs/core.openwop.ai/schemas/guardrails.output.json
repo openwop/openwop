@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.ai/1.1.2/guardrails.output.json",
+  "title": "AiGuardrailsOutput",
+  "type": "object",
+  "required": [
+    "passed"
+  ],
+  "properties": {
+    "passed": {
+      "type": "boolean"
+    },
+    "violations": {
+      "type": "array"
+    }
+  },
+  "additionalProperties": false
+}

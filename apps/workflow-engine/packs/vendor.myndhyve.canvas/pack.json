@@ -1,0 +1,72 @@
+{
+  "name": "vendor.myndhyve.canvas",
+  "version": "1.0.0",
+  "description": "First vendor-namespace pack. Ships MyndHyve canvas-coordination nodes — canvasRead / canvasWrite / canvasCreate / crossCanvasInvoke — preserving the `core.coordination.*` typeIds in the wild (typeId-preserve strategy from the migration plan §4). The pack itself is MyndHyve-internal: hosts that don't advertise `host.canvas: supported` cannot register it.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/canvas",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["vendor", "myndhyve", "canvas", "coordination"],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "host.canvas": "supported"
+  },
+  "nodes": [
+    {
+      "typeId": "core.coordination.canvasRead",
+      "version": "1.0.0",
+      "label": "Canvas Read",
+      "description": "Reads canvas state by ID. Side-effectful + cacheable — canvas state changes over time, so reads at different points in a run can differ; replay caching pins the value seen at first read.",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/canvasRead.config.json",
+      "inputSchemaRef": "schemas/canvasRead.input.json",
+      "outputSchemaRef": "schemas/canvasRead.output.json"
+    },
+    {
+      "typeId": "core.coordination.canvasWrite",
+      "version": "1.0.0",
+      "label": "Canvas Write",
+      "description": "Mutates canvas state. Side-effectful — applies the mutation atomically via the host's canvas adapter. Deterministic Idempotency-Key derivation prevents duplicate writes on replay.",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/canvasWrite.config.json",
+      "inputSchemaRef": "schemas/canvasWrite.input.json",
+      "outputSchemaRef": "schemas/canvasWrite.output.json"
+    },
+    {
+      "typeId": "core.coordination.canvasCreate",
+      "version": "1.0.0",
+      "label": "Canvas Create",
+      "description": "Creates a new canvas (typed per canvasTypeId — app-builder, slides, cms-builder, etc.). Side-effectful — registers a new canvas with the host; replay returns the originally-created canvasId without re-creating.",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/canvasCreate.config.json",
+      "inputSchemaRef": "schemas/canvasCreate.input.json",
+      "outputSchemaRef": "schemas/canvasCreate.output.json"
+    },
+    {
+      "typeId": "core.coordination.crossCanvasInvoke",
+      "version": "1.0.0",
+      "label": "Cross-Canvas Invoke",
+      "description": "Invokes a workflow on a target canvas (different from the calling run's canvas). Routes through the host's canvas-router with circuit-breaker semantics. Returns the child runId + optionally awaits terminal status.",
+      "category": "coordination",
+      "role": "side-effect",
+      "capabilities": ["cacheable", "side-effectful"],
+      "configSchemaRef": "schemas/crossCanvasInvoke.config.json",
+      "inputSchemaRef": "schemas/crossCanvasInvoke.input.json",
+      "outputSchemaRef": "schemas/crossCanvasInvoke.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  }
+}

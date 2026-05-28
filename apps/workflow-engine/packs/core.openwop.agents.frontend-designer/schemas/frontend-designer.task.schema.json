@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.frontend-designer/1.0.0/frontend-designer.task.schema.json",
+  "title": "FrontendDesignerTask",
+  "type": "object",
+  "required": [
+    "brief",
+    "surfaceType"
+  ],
+  "properties": {
+    "brief": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50000
+    },
+    "surfaceType": {
+      "type": "string",
+      "enum": [
+        "page",
+        "component",
+        "flow",
+        "dashboard"
+      ]
+    },
+    "designSystemPath": {
+      "type": "string"
+    },
+    "knowledgeSourceIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "framework": {
+      "type": "string",
+      "enum": [
+        "react",
+        "html",
+        "vue"
+      ],
+      "default": "react"
+    },
+    "outputPath": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

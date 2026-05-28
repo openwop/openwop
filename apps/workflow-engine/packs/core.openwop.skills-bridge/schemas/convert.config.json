@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.skills-bridge/1.0.0/convert.config.json",
+  "title": "SkillsBridgeConvertConfig",
+  "description": "Configuration for the core.skills-bridge.convert node. No required config; all behavior driven by per-call input.",
+  "type": "object",
+  "properties": {
+    "defaultPackPrefix": {
+      "type": "string",
+      "default": "core.openwop.skills-bridge.imported",
+      "description": "AgentId prefix applied when input.packPrefix is unset."
+    }
+  },
+  "additionalProperties": false
+}

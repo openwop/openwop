@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.1.0/manual.output.json",
+  "title": "ManualOutput",
+  "type": "object",
+  "properties": {
+    "payload": {}
+  },
+  "additionalProperties": false
+}

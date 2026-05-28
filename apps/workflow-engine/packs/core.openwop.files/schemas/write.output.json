@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.files/1.0.0/write.output.json",
+  "title": "FileWriteOutput",
+  "type": "object",
+  "properties": {
+    "bytes": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

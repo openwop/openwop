@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.1.1/invoke-tool.output.json",
+  "title": "InvokeToolOutput",
+  "type": "object",
+  "required": ["result", "isError"],
+  "properties": {
+    "result": {
+      "description": "Tool's result. Shape entirely determined by the tool. Per MCP convention, structured results are objects; text-only results are strings."
+    },
+    "isError": {
+      "type": "boolean",
+      "description": "MCP-protocol-level `isError` flag from the server (`tools/call` result). `true` means the tool ran but reported a domain error (e.g., 'file not found') — this is NOT a transport error and the node still returns `status: success`. Workflow authors branch on `isError` to handle tool-side failures."
+    },
+    "untrustedContent": {
+      "type": "boolean",
+      "description": "Whether the host marked this result as untrusted-origin content per SECURITY/threat-model-prompt-injection.md (`prompt-injection-mcp-marker`). When `true`, downstream LLM nodes MUST wrap the result in untrusted markers before passing to the model."
+    },
+    "markedContent": {
+      "type": "string",
+      "description": "Convenience field present iff (a) the host's MCP client flagged the response as untrusted OR (b) the run is operating under `ctx.trustBoundary === 'untrusted'` (every inbound MCP-server-mount tools/call). The string is the tool's result wrapped in `<UNTRUSTED tool=\"<name>\">...</UNTRUSTED>` per the `prompt-injection-mcp-marker` invariant. Downstream chat-completion nodes can pipe this directly into a user message."
+    },
+    "durationMs": { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.rag/1.0.1/retriever-multi-query.input.json",
+  "title": "RetrieverMultiQueryInput",
+  "type": "object",
+  "required": [
+    "query"
+  ],
+  "properties": {
+    "query": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "canvasTypeId": { "type": "string" },
+    "name": { "type": "string" },
+    "type": { "type": "string" },
+    "status": { "type": "string" },
+    "designSystemId": { "type": "string" },
+    "extraSettings": { "type": "object", "additionalProperties": true }
+  },
+  "required": ["canvasTypeId", "name"],
+  "additionalProperties": true
+}

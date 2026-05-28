@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.ai/1.1.2/classify.input.json",
+  "title": "AiClassifyInput",
+  "type": "object",
+  "required": [
+    "text"
+  ],
+  "properties": {
+    "text": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

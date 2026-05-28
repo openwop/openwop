@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.files/1.0.0/archive-create.input.json",
+  "title": "ArchiveCreateInput",
+  "type": "object",
+  "required": [
+    "entries"
+  ],
+  "properties": {
+    "entries": {
+      "type": "array",
+      "items": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "Entry",
+        "type": "object",
+        "required": [
+          "path",
+          "contentBase64"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "contentBase64": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

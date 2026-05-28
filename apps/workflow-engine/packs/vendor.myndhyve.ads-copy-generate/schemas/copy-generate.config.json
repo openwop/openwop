@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-copy-generate/1.0.0/copy-generate.config.json",
+  "title": "AdsCopyGenerateConfig",
+  "type": "object",
+  "properties": {
+    "provider": { "type": "string", "description": "AI provider id override (anthropic/openai/google). When omitted the host's default routes the call." },
+    "model": { "type": "string", "description": "Model id override. When omitted the host's default for the chosen provider is used." },
+    "temperature": { "type": "number", "minimum": 0, "maximum": 2, "description": "AI sampling temperature. Defaults to 0.8 — higher = more creative variation across the angle set." },
+    "maxTokens": { "type": "integer", "minimum": 256, "description": "Max output tokens for the AI call. Defaults to 4096; raise if variantCount × per-variant text is large." }
+  },
+  "additionalProperties": true
+}

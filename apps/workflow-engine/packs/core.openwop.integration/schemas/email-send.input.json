@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.integration/1.1.0/email-send.input.json",
+  "title": "EmailSendInput",
+  "type": "object",
+  "required": [
+    "to",
+    "subject"
+  ],
+  "properties": {
+    "to": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "email"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "email"
+          },
+          "minItems": 1,
+          "maxItems": 50
+        }
+      ],
+      "description": "Recipient address or list. Hosts MAY cap the per-message recipient count below 50."
+    },
+    "cc": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "email"
+      },
+      "maxItems": 20
+    },
+    "bcc": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "email"
+      },
+      "maxItems": 20
+    },
+    "subject": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 998
+    },
+    "text": {
+      "type": "string",
+      "description": "Plain-text body. At least one of text/html MUST be present."
+    },
+    "html": {
+      "type": "string",
+      "description": "HTML body. At least one of text/html MUST be present."
+    }
+  },
+  "additionalProperties": false,
+  "anyOf": [
+    {
+      "required": [
+        "text"
+      ]
+    },
+    {
+      "required": [
+        "html"
+      ]
+    }
+  ]
+}

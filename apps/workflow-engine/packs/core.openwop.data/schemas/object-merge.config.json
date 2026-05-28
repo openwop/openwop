@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/object-merge.config.json",
+  "title": "ObjectMergeConfig",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false,
+  "description": "No tunables. Merge semantics are fixed: shallow merge where `override` wins on key collision. For deep merge or different collision strategies, ship a separate node typeId."
+}

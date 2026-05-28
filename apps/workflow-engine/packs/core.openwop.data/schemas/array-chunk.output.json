@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/array-chunk.output.json",
+  "title": "ArrayChunkOutput",
+  "type": "object",
+  "required": [
+    "chunks",
+    "chunkCount"
+  ],
+  "properties": {
+    "chunks": {
+      "type": "array",
+      "items": {
+        "type": "array"
+      }
+    },
+    "chunkCount": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

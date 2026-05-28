@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.landing-page/1.0.0/content-generate.output.json",
+  "title": "LandingContentGenerateOutput",
+  "type": "object",
+  "required": ["content", "headlines", "sections", "ctaVariants", "seoMetadata", "success"],
+  "properties": {
+    "content": { "type": "object", "additionalProperties": true },
+    "headlines": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "sections": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "ctaVariants": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "seoMetadata": { "type": "object", "additionalProperties": true },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

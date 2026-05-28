@@ -1,0 +1,441 @@
+{
+  "name": "core.openwop.flow",
+  "version": "1.1.0",
+  "description": "Spec-canonical flow-control primitives. 25 nodes covering branching, merging, iteration, aggregation, batching, sorting, deduplication, repetition, suspension, sub-workflow invocation, and Make-style error handlers. Pure or suspending — no external I/O. Zero npm deps. Engine >=1.0.0 <2.0.0.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.flow",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "flow",
+    "control",
+    "branching",
+    "merging",
+    "iteration",
+    "aggregation"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "nodes": [
+    {
+      "typeId": "core.flow.if",
+      "version": "1.0.0",
+      "label": "If",
+      "description": "Two-branch conditional. Evaluates a simple expression `{path, op, value}` against the input and routes to `then` or `else`. Ops: eq, neq, lt, lte, gt, gte, in, contains, starts-with, ends-with, regex, exists, not-exists, truthy, falsy.",
+      "category": "flow",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/if.config.json",
+      "inputSchemaRef": "schemas/if.input.json",
+      "outputSchemaRef": "schemas/if.output.json"
+    },
+    {
+      "typeId": "core.flow.switch",
+      "version": "1.0.0",
+      "label": "Switch",
+      "description": "N-way value-table lookup. Maps an input value to one of N output labels via an exact-match table, with optional `default` label.",
+      "category": "flow",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/switch.config.json",
+      "inputSchemaRef": "schemas/switch.input.json",
+      "outputSchemaRef": "schemas/switch.output.json"
+    },
+    {
+      "typeId": "core.flow.router",
+      "version": "1.0.0",
+      "label": "Router",
+      "description": "Fan-out to labelled branches, each with its own predicate. Evaluates routes top-to-bottom. First-match-wins or all-match modes. Optional default route.",
+      "category": "flow",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/router.config.json",
+      "inputSchemaRef": "schemas/router.input.json",
+      "outputSchemaRef": "schemas/router.output.json"
+    },
+    {
+      "typeId": "core.flow.filter",
+      "version": "1.0.0",
+      "label": "Filter",
+      "description": "Predicate-based drop. Same predicate shape as `core.flow.if`. Items matching pass through; items failing are dropped (returns `passed: false`).",
+      "category": "flow",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/filter.config.json",
+      "inputSchemaRef": "schemas/filter.input.json",
+      "outputSchemaRef": "schemas/filter.output.json"
+    },
+    {
+      "typeId": "core.flow.merge",
+      "version": "1.0.0",
+      "label": "Merge",
+      "description": "Combine N input arrays. Modes: `append` (concat in order), `combine-by-key` (join on a key path), `combine-by-position` (zip), `multiplex` (cartesian product), `choose-branch` (return first non-empty input), `sql-query` (SQL JOIN — requires host.sql per RFC 0018).",
+      "category": "flow",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/merge.config.json",
+      "inputSchemaRef": "schemas/merge.input.json",
+      "outputSchemaRef": "schemas/merge.output.json"
+    },
+    {
+      "typeId": "core.flow.iterator",
+      "version": "1.0.0",
+      "label": "Iterator",
+      "description": "Decomposes an array into one output bundle per element. Downstream nodes run per element. Output includes `index` and `total` for cursor-aware downstream logic.",
+      "category": "flow",
+      "role": "pure",
+      "capabilities": [
+        "cacheable",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/iterator.config.json",
+      "inputSchemaRef": "schemas/iterator.input.json",
+      "outputSchemaRef": "schemas/iterator.output.json"
+    },
+    {
+      "typeId": "core.flow.aggregate-array",
+      "version": "1.0.0",
+      "label": "Aggregate (Array)",
+      "description": "Inverse of iterator: collapse N input bundles into one bundle whose payload is the array of values.",
+      "category": "flow",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/aggregate-array.config.json",
+      "inputSchemaRef": "schemas/aggregate-array.input.json",
+      "outputSchemaRef": "schemas/aggregate-array.output.json"
+    },
+    {
+      "typeId": "core.flow.aggregate-numeric",
+      "version": "1.0.0",
+      "label": "Aggregate (Numeric)",
+      "description": "Reduce a numeric field across an array. Operations: sum, count, avg, min, max. NaN-skipping. Empty input returns `null`.",
+      "category": "flow",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/aggregate-numeric.config.json",
+      "inputSchemaRef": "schemas/aggregate-numeric.input.json",
+      "outputSchemaRef": "schemas/aggregate-numeric.output.json"
+    },
+    {
+      "typeId": "core.flow.aggregate-text",
+      "version": "1.0.0",
+      "label": "Aggregate (Text)",
+      "description": "Concatenate a string field across an array with a separator. Optional per-element template substitution.",
+      "category": "flow",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/aggregate-text.config.json",
+      "inputSchemaRef": "schemas/aggregate-text.input.json",
+      "outputSchemaRef": "schemas/aggregate-text.output.json"
+    },
+    {
+      "typeId": "core.flow.aggregate-table",
+      "version": "1.0.0",
+      "label": "Aggregate (Table)",
+      "description": "Materialize bundles into a 2D table: ordered `columns[]` configuration + `rows[]` output. Useful upstream of CSV emit or BI sinks.",
+      "category": "flow",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/aggregate-table.config.json",
+      "inputSchemaRef": "schemas/aggregate-table.input.json",
+      "outputSchemaRef": "schemas/aggregate-table.output.json"
+    },
+    {
+      "typeId": "core.flow.split-in-batches",
+      "version": "1.0.0",
+      "label": "Split In Batches",
+      "description": "Chunk an array into batches of N. Returns the current batch + `done` flag + `remaining` count. Workflows loop on this node by feeding the `remaining` array back in.",
+      "category": "flow",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/split-in-batches.config.json",
+      "inputSchemaRef": "schemas/split-in-batches.input.json",
+      "outputSchemaRef": "schemas/split-in-batches.output.json"
+    },
+    {
+      "typeId": "core.flow.sort",
+      "version": "1.0.0",
+      "label": "Sort",
+      "description": "Sort an array by one or more key paths. Stable. Direction per-key. Numeric, string, or natural compare.",
+      "category": "flow",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/sort.config.json",
+      "inputSchemaRef": "schemas/sort.input.json",
+      "outputSchemaRef": "schemas/sort.output.json"
+    },
+    {
+      "typeId": "core.flow.limit",
+      "version": "1.0.0",
+      "label": "Limit",
+      "description": "Return the first N items of an array. Optional `offset` for skip-then-take. No-ops on shorter arrays.",
+      "category": "flow",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/limit.config.json",
+      "inputSchemaRef": "schemas/limit.input.json",
+      "outputSchemaRef": "schemas/limit.output.json"
+    },
+    {
+      "typeId": "core.flow.distinct",
+      "version": "1.0.0",
+      "label": "Distinct",
+      "description": "Drop duplicates by key path (or full-element JSON canonicalization when path absent). Preserves first-occurrence order.",
+      "category": "flow",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/distinct.config.json",
+      "inputSchemaRef": "schemas/distinct.input.json",
+      "outputSchemaRef": "schemas/distinct.output.json"
+    },
+    {
+      "typeId": "core.flow.compare-datasets",
+      "version": "1.0.0",
+      "label": "Compare Datasets",
+      "description": "Diff two arrays by primary-key path. Returns four arrays: `addedIn2`, `removedFrom1`, `changed` (with `before`/`after`), `unchanged`.",
+      "category": "flow",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/compare-datasets.config.json",
+      "inputSchemaRef": "schemas/compare-datasets.input.json",
+      "outputSchemaRef": "schemas/compare-datasets.output.json"
+    },
+    {
+      "typeId": "core.flow.repeater",
+      "version": "1.0.0",
+      "label": "Repeater",
+      "description": "Generate N bundles with an incrementing counter `i` (start, step, count). Source-style node — emits without an input.",
+      "category": "flow",
+      "role": "pure",
+      "capabilities": [
+        "cacheable",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/repeater.config.json",
+      "inputSchemaRef": "schemas/repeater.input.json",
+      "outputSchemaRef": "schemas/repeater.output.json"
+    },
+    {
+      "typeId": "core.flow.noop",
+      "version": "1.0.0",
+      "label": "No-op",
+      "description": "Pass-through placeholder. Returns its input unchanged. Useful as a labelled join point in a graph.",
+      "category": "flow",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/noop.config.json",
+      "inputSchemaRef": "schemas/noop.input.json",
+      "outputSchemaRef": "schemas/noop.output.json"
+    },
+    {
+      "typeId": "core.flow.stop-and-error",
+      "version": "1.0.0",
+      "label": "Stop And Error",
+      "description": "Aborts the workflow with a structured error envelope (code + message + details). Side-effecting: terminates the run.",
+      "category": "flow",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/stop-and-error.config.json",
+      "inputSchemaRef": "schemas/stop-and-error.input.json",
+      "outputSchemaRef": "schemas/stop-and-error.output.json"
+    },
+    {
+      "typeId": "core.flow.wait",
+      "version": "1.0.0",
+      "label": "Wait",
+      "description": "Suspend the run. Modes: `duration` (seconds, ≤86400), `until` (ISO-8601 timestamp), `webhook` (external HTTP callback signed per webhooks.md). Resumes via the existing interrupt mechanism (interrupt.md).",
+      "category": "flow",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/wait.config.json",
+      "inputSchemaRef": "schemas/wait.input.json",
+      "outputSchemaRef": "schemas/wait.output.json"
+    },
+    {
+      "typeId": "core.flow.sub-workflow-invoke",
+      "version": "1.0.0",
+      "label": "Invoke Sub-Workflow",
+      "description": "Synchronously invoke another workflow. Delegates to reserved `core.subWorkflow` typeId per node-packs.md. Inputs forwarded; sub-workflow outputs returned. Failures propagate.",
+      "category": "flow",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful",
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/sub-workflow-invoke.config.json",
+      "inputSchemaRef": "schemas/sub-workflow-invoke.input.json",
+      "outputSchemaRef": "schemas/sub-workflow-invoke.output.json"
+    },
+    {
+      "typeId": "core.flow.error-handler-resume",
+      "version": "1.0.0",
+      "label": "Error Handler — Resume",
+      "description": "When attached to an upstream node's error route, substitute a fallback bundle and continue. Make.com semantics.",
+      "category": "flow",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/error-handler-resume.config.json",
+      "inputSchemaRef": "schemas/error-handler-resume.input.json",
+      "outputSchemaRef": "schemas/error-handler-resume.output.json"
+    },
+    {
+      "typeId": "core.flow.error-handler-ignore",
+      "version": "1.0.0",
+      "label": "Error Handler — Ignore",
+      "description": "Silently drop the failed bundle and continue. Make.com semantics.",
+      "category": "flow",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/error-handler-ignore.config.json",
+      "inputSchemaRef": "schemas/error-handler-ignore.input.json",
+      "outputSchemaRef": "schemas/error-handler-ignore.output.json"
+    },
+    {
+      "typeId": "core.flow.error-handler-break",
+      "version": "1.0.0",
+      "label": "Error Handler — Break",
+      "description": "Stop the run and mark it incomplete so it can be reprocessed (retry semantics owned by the host). Make.com semantics.",
+      "category": "flow",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/error-handler-break.config.json",
+      "inputSchemaRef": "schemas/error-handler-break.input.json",
+      "outputSchemaRef": "schemas/error-handler-break.output.json"
+    },
+    {
+      "typeId": "core.flow.error-handler-commit",
+      "version": "1.0.0",
+      "label": "Error Handler — Commit",
+      "description": "Stop the run and commit transactional side effects upstream (DB writes, data-store mutations). Hosts without transactional adapters treat as Break.",
+      "category": "flow",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/error-handler-commit.config.json",
+      "inputSchemaRef": "schemas/error-handler-commit.input.json",
+      "outputSchemaRef": "schemas/error-handler-commit.output.json"
+    },
+    {
+      "typeId": "core.flow.error-handler-rollback",
+      "version": "1.0.0",
+      "label": "Error Handler — Rollback",
+      "description": "Stop the run and request rollback of transactional side effects upstream. Non-transactional side effects (sent emails, posted webhooks) cannot be undone.",
+      "category": "flow",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/error-handler-rollback.config.json",
+      "inputSchemaRef": "schemas/error-handler-rollback.input.json",
+      "outputSchemaRef": "schemas/error-handler-rollback.output.json"
+    },
+    {
+      "typeId": "core.conditional",
+      "version": "1.0.0",
+      "label": "Conditional (alias)",
+      "description": "Reserved alias of core.flow.if (per node-packs.md §Reserved Core typeIds). Same runtime behavior; preserves the reserved name for spec compliance.",
+      "category": "flow",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/if.config.json",
+      "inputSchemaRef": "schemas/if.input.json",
+      "outputSchemaRef": "schemas/if.output.json"
+    },
+    {
+      "typeId": "core.delay",
+      "version": "1.0.0",
+      "label": "Delay (alias)",
+      "description": "Reserved alias of core.flow.wait. Same runtime behavior; preserves the reserved name for spec compliance.",
+      "category": "flow",
+      "role": "side-effect",
+      "capabilities": [
+        "side-effectful",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/wait.config.json",
+      "inputSchemaRef": "schemas/wait.input.json",
+      "outputSchemaRef": "schemas/wait.output.json"
+    },
+    {
+      "typeId": "core.loop",
+      "version": "1.0.0",
+      "label": "Loop (alias)",
+      "description": "Reserved alias of core.flow.iterator. Same runtime behavior; preserves the reserved name for spec compliance.",
+      "category": "flow",
+      "role": "pure",
+      "capabilities": [
+        "cacheable",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/iterator.config.json",
+      "inputSchemaRef": "schemas/iterator.input.json",
+      "outputSchemaRef": "schemas/iterator.output.json"
+    },
+    {
+      "typeId": "core.parallel",
+      "version": "1.0.0",
+      "label": "Parallel (alias)",
+      "description": "Reserved alias of core.flow.router (fan-out). Same runtime behavior; preserves the reserved name for spec compliance.",
+      "category": "flow",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/router.config.json",
+      "inputSchemaRef": "schemas/router.input.json",
+      "outputSchemaRef": "schemas/router.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  }
+}

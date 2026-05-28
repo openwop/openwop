@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "assigneeId": { "type": "string" },
+    "matchScore": { "type": "number", "minimum": 0 },
+    "success": { "type": "boolean" },
+    "error": { "type": "string" }
+  },
+  "required": ["assigneeId", "matchScore", "success"],
+  "additionalProperties": false
+}

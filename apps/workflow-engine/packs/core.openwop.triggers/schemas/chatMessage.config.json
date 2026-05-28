@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "intent": { "type": "string", "description": "Intent matcher (regex, keyword, or LLM classification name)" },
+    "channels": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.knowledge-tools/1.0.0/retrieve.config.json",
+  "title": "KnowledgeRetrieveConfig",
+  "type": "object",
+  "properties": {
+    "candidateLimit": { "type": "integer", "minimum": 1 },
+    "resultLimit": { "type": "integer", "minimum": 1 },
+    "scoreThreshold": { "type": "number", "minimum": 0, "maximum": 1, "description": "Host-side minimum relevanceScore." },
+    "scoreFloor": { "type": "number", "minimum": 0, "maximum": 1, "description": "Caller-side floor applied after retrieval. Distinct from scoreThreshold: scoreThreshold is enforced by the host inside the retrieval call; scoreFloor is enforced by this pack on the returned set (useful when you want a stricter floor than the host enforces by default)." }
+  },
+  "additionalProperties": true
+}

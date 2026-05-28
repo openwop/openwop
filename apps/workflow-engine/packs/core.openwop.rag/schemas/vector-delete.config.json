@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.rag/1.0.1/vector-delete.config.json",
+  "title": "RagVectorDeleteConfig",
+  "type": "object",
+  "required": [
+    "collection"
+  ],
+  "properties": {
+    "collection": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

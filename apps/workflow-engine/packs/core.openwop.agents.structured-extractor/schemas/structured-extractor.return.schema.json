@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.structured-extractor/1.0.0/structured-extractor.return.schema.json",
+  "title": "StructuredExtractorReturn",
+  "type": "object",
+  "oneOf": [
+    {
+      "required": [
+        "extracted",
+        "confidence",
+        "fixAttempts"
+      ],
+      "properties": {
+        "extracted": {
+          "description": "Value matching the task's outputSchema. Host validates before persistence."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "fixAttempts": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "required": [
+        "error"
+      ],
+      "properties": {
+        "error": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "enum": [
+                "schema_violation",
+                "extraction_failed",
+                "invalid_input"
+              ]
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000
+            },
+            "validationErrors": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

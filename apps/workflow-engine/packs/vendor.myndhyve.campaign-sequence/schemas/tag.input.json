@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence/1.0.0/tag.input.json",
+  "title": "CampaignSequenceTagInput",
+  "type": "object",
+  "required": ["step"],
+  "properties": {
+    "step": {
+      "type": "object",
+      "required": ["tagAction", "tagName"],
+      "properties": {
+        "tagAction": {
+          "type": "string",
+          "description": "Tag-operation verb. Conventional values: 'add', 'remove'."
+        },
+        "tagName": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of the tag to apply."
+        }
+      },
+      "additionalProperties": true
+    },
+    "enrollment": { "type": "object", "additionalProperties": true },
+    "sequence": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": true
+}

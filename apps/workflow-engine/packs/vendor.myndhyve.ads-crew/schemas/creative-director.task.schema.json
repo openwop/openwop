@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-crew/1.0.0/creative-director.task.schema.json",
+  "title": "CreativeDirectorTask",
+  "type": "object",
+  "required": [
+    "mode",
+    "brief"
+  ],
+  "properties": {
+    "mode": {
+      "type": "string",
+      "enum": [
+        "plan",
+        "produce",
+        "publish",
+        "analyze"
+      ]
+    },
+    "brief": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 20000
+    },
+    "platforms": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "meta",
+          "google",
+          "tiktok"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "budget": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "number",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "priorCampaignRef": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

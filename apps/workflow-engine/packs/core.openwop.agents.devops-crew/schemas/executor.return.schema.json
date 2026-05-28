@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.devops-crew/1.0.0/executor.return.schema.json",
+  "title": "DevOpsExecutorReturn",
+  "type": "object",
+  "required": ["stepId", "executionResult", "stoppedReason"],
+  "properties": {
+    "stepId": { "type": "string" },
+    "executionResult": { "type": "string", "enum": ["succeeded", "tool_error", "refused"] },
+    "toolResponse": {},
+    "preCheckResult": { "type": "string", "enum": ["passed", "failed", "not_applicable"] },
+    "stoppedReason": { "type": "string", "enum": ["executed", "refused"] },
+    "stoppedDetail": { "type": "string", "maxLength": 1000 },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+  },
+  "additionalProperties": false
+}

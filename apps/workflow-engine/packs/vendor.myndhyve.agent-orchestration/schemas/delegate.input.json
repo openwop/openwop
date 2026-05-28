@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.agent-orchestration/1.0.0/delegate.input.json",
+  "title": "AgentDelegateInput",
+  "type": "object",
+  "required": ["task"],
+  "properties": {
+    "task": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Task description for the router to match against candidate specialties."
+    },
+    "taskData": { "type": "object", "additionalProperties": true, "description": "Optional structured task payload to forward to the selected agent." }
+  },
+  "additionalProperties": false
+}

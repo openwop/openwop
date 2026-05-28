@@ -1,0 +1,53 @@
+{
+  "name": "vendor.myndhyve.ads-crew",
+  "version": "1.0.0",
+  "description": "MyndHyve Ads Studio creative-director crew. Wraps the 14 vendor.myndhyve.ads-* node typeIds (brief → variants → copy → image → video → validate → export → publish) into a single creative-director agent persona. Vendor showcase agent pack.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/vendor.myndhyve.ads-crew",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["vendor", "myndhyve", "ads", "creative", "crew", "vertical", "showcase"],
+  "engines": { "openwop": ">=1.1.0 <2.0.0" },
+  "peerDependencies": {
+    "aiProviders": "supported",
+    "aiProviders.imageGeneration": "supported",
+    "host.agentRuntime": "supported",
+    "openwop.agents.memoryBackends": ">=longTerm"
+  },
+  "agents": [
+    {
+      "agentId": "vendor.myndhyve.ads-crew.creative-director",
+      "persona": "Creative Director",
+      "label": "Ads Studio Creative Director",
+      "description": "Single chat-driven persona over MyndHyve Ads Studio. Takes a campaign brief and orchestrates ads.brief.{extract,build} → ads.variant.plan → ads.copy.generate → ads.image.generate → ads.creative.validate → ads.tracking.link → ads.export.pack → ads.publish.{meta,google,tiktok}. Tracks campaign artifacts in long-term memory for follow-up + iteration.",
+      "modelClass": "reasoning",
+      "systemPromptRef": "prompts/creative-director.md",
+      "toolAllowlist": [
+        "openwop:ads.brief.extract",
+        "openwop:ads.brief.build",
+        "openwop:ads.variant.plan",
+        "openwop:ads.platform.specs",
+        "openwop:ads.copy.generate",
+        "openwop:ads.image.generate",
+        "openwop:ads.video.generate",
+        "openwop:ads.video.qa",
+        "openwop:ads.policy.check",
+        "openwop:ads.creative.validate",
+        "openwop:ads.tracking.link",
+        "openwop:ads.export.pack",
+        "openwop:ads.publish.meta",
+        "openwop:ads.publish.google",
+        "openwop:ads.publish.tiktok",
+        "openwop:ads.metrics.import",
+        "openwop:ads.winner.synthesize"
+      ],
+      "memoryShape": { "scratchpad": true, "conversation": true, "longTerm": true },
+      "handoff": {
+        "taskSchemaRef": "schemas/creative-director.task.schema.json",
+        "returnSchemaRef": "schemas/creative-director.return.schema.json"
+      },
+      "confidence": { "defaultThreshold": 0.75 }
+    }
+  ],
+  "runtime": { "language": "remote", "entry": "pack.json" }
+}

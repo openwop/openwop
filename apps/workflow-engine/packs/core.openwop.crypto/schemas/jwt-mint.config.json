@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.3/jwt-mint.config.json",
+  "title": "JwtMintConfig",
+  "type": "object",
+  "properties": {
+    "algorithm": {
+      "type": "string",
+      "enum": [
+        "HS256",
+        "HS384",
+        "HS512",
+        "RS256",
+        "PS256",
+        "ES256",
+        "EdDSA"
+      ],
+      "default": "HS256"
+    },
+    "keyEncoding": {
+      "type": "string",
+      "enum": [
+        "utf8",
+        "hex",
+        "base64",
+        "base64url"
+      ]
+    },
+    "ttlSeconds": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 3600
+    },
+    "headerExtras": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

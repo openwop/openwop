@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/array-reduce.config.json",
+  "title": "ArrayReduceConfig",
+  "type": "object",
+  "required": [
+    "op"
+  ],
+  "properties": {
+    "op": {
+      "type": "string",
+      "enum": [
+        "sum",
+        "product",
+        "concat",
+        "count"
+      ]
+    },
+    "initial": {},
+    "path": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

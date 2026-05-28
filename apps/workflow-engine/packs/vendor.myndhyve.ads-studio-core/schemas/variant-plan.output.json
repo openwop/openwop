@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-studio-core/1.0.0/variant-plan.output.json",
+  "title": "AdsVariantPlanOutput",
+  "type": "object",
+  "properties": {
+    "plan": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "The created VariantPlan (mode=create) or the input plan (mode=generate/validate)."
+    },
+    "variants": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true },
+      "description": "GeneratedVariant[] when mode=generate. Each entry has id/axisValues/slug."
+    },
+    "validation": {
+      "type": "object",
+      "properties": {
+        "valid": { "type": "boolean" },
+        "issues": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+        "estimatedVariantCount": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true,
+      "description": "Present when mode=validate (or implicit when create+validateOutput)."
+    }
+  },
+  "additionalProperties": true
+}

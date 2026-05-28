@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.1.0/split-in-batches.output.json",
+  "title": "SplitInBatchesOutput",
+  "type": "object",
+  "required": [
+    "batch",
+    "remaining",
+    "done",
+    "batchSize",
+    "remainingCount"
+  ],
+  "properties": {
+    "batch": {
+      "type": "array"
+    },
+    "remaining": {
+      "type": "array"
+    },
+    "done": {
+      "type": "boolean"
+    },
+    "batchSize": {
+      "type": "integer"
+    },
+    "remainingCount": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

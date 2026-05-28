@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.web-search/1.0.0/search.config.json",
+  "title": "WebSearchConfig",
+  "type": "object",
+  "properties": {
+    "engine": {
+      "type": "string",
+      "description": "Preferred search engine identifier (e.g. `google-cse`, `bing`, `brave`). Advisory — the host MAY route to a different engine. Absent means host default.",
+      "minLength": 1
+    },
+    "maxResults": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50,
+      "default": 5,
+      "description": "Maximum number of results to return."
+    }
+  },
+  "additionalProperties": false
+}

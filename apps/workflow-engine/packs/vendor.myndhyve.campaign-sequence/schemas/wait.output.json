@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence/1.0.0/wait.output.json",
+  "title": "CampaignSequenceWaitOutput",
+  "type": "object",
+  "required": ["success"],
+  "properties": {
+    "success": {
+      "type": "boolean",
+      "description": "Always true for wait — the executor is a pure passthrough."
+    }
+  },
+  "additionalProperties": true
+}

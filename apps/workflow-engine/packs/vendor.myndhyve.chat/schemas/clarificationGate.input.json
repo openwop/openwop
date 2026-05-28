@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "questions": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "type": "string" },
+          { "type": "object", "properties": { "question": { "type": "string" } }, "required": ["question"], "additionalProperties": true }
+        ]
+      }
+    },
+    "contextType": { "type": "string" }
+  },
+  "additionalProperties": true
+}

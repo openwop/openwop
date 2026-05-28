@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.files/1.0.0/from-base64.config.json",
+  "title": "FromBase64Config",
+  "type": "object",
+  "properties": {
+    "outputEncoding": {
+      "type": "string",
+      "enum": [
+        "utf8",
+        "hex"
+      ],
+      "default": "utf8"
+    }
+  },
+  "additionalProperties": false
+}

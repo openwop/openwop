@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.1.0/envelope.config.json",
+  "title": "EnvelopeTriggerConfig",
+  "type": "object",
+  "required": [
+    "envelopeType"
+  ],
+  "properties": {
+    "envelopeType": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[a-z][a-zA-Z0-9._-]*\\.[a-z][a-zA-Z0-9._-]*$",
+      "description": "Dot-separated envelope-type discriminator (e.g., `'prd.create'`, `'theme.update'`). Host's envelope router dispatches when an envelope of this type fires. Pattern enforces `<domain>.<verb>` shape."
+    },
+    "payloadSchema": {
+      "type": "object",
+      "description": "Optional JSON Schema for the envelope payload. When set, the host's envelope router validates incoming envelopes against this schema BEFORE dispatching the workflow. Validation failure does NOT start the workflow; the host emits a routing-error event instead."
+    }
+  },
+  "additionalProperties": false
+}

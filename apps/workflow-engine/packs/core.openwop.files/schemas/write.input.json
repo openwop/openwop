@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.files/1.0.0/write.input.json",
+  "title": "FileWriteInput",
+  "type": "object",
+  "required": [
+    "path",
+    "content"
+  ],
+  "properties": {
+    "path": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

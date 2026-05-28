@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.1.1/invoke-tool.input.json",
+  "title": "InvokeToolInput",
+  "type": "object",
+  "required": [
+    "args"
+  ],
+  "properties": {
+    "args": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Tool arguments. Shape determined by the tool's published `inputSchema` (from list-tools). The host's MCP client forwards verbatim; failure to match the server-side schema returns `mcp_tool_invalid_args`."
+    }
+  },
+  "additionalProperties": false
+}

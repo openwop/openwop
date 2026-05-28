@@ -1,0 +1,109 @@
+{
+  "name": "core.openwop.agents.devops-crew",
+  "version": "1.0.0",
+  "description": "DevOps crew. Planner decomposes runbook → executor runs steps via host.fs + host.queueBus + http → verifier confirms desired state. Gated on host fs + queue capabilities.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.agents.devops-crew",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "agents",
+    "crew",
+    "devops",
+    "ops",
+    "multi-agent",
+    "pattern"
+  ],
+  "engines": {
+    "openwop": ">=1.1.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders": "supported",
+    "host.agentRuntime": "supported",
+    "host.fs": "supported",
+    "host.queueBus": "supported"
+  },
+  "agents": [
+    {
+      "agentId": "core.openwop.agents.devops-crew.planner",
+      "persona": "DevOps Planner",
+      "label": "DevOps Planner",
+      "description": "Reads a runbook or operational goal, decomposes into safe ordered steps (with pre-checks, action, post-checks), flags steps requiring human approval, dispatches executor.",
+      "modelClass": "reasoning",
+      "systemPromptRef": "prompts/planner.md",
+      "toolAllowlist": [
+        "openwop:core.files.read"
+      ],
+      "memoryShape": {
+        "scratchpad": true,
+        "conversation": true,
+        "longTerm": false
+      },
+      "handoff": {
+        "taskSchemaRef": "schemas/planner.task.schema.json",
+        "returnSchemaRef": "schemas/planner.return.schema.json"
+      },
+      "confidence": {
+        "defaultThreshold": 0.8
+      }
+    },
+    {
+      "agentId": "core.openwop.agents.devops-crew.executor",
+      "persona": "DevOps Executor",
+      "label": "DevOps Executor",
+      "description": "Executes one runbook step at a time. Performs fs / queue / http operations as specified by the planner. Halts on first failure or unexpected state.",
+      "modelClass": "coding",
+      "systemPromptRef": "prompts/executor.md",
+      "toolAllowlist": [
+        "openwop:core.files.read",
+        "openwop:core.files.write",
+        "openwop:core.openwop.http.fetch",
+        "openwop:core.messaging.publish",
+        "openwop:core.messaging.consume",
+        "openwop:core.crypto.hash",
+        "openwop:core.crypto.hmac-sign"
+      ],
+      "memoryShape": {
+        "scratchpad": true,
+        "conversation": false,
+        "longTerm": false
+      },
+      "handoff": {
+        "taskSchemaRef": "schemas/executor.task.schema.json",
+        "returnSchemaRef": "schemas/executor.return.schema.json"
+      },
+      "confidence": {
+        "defaultThreshold": 0.85
+      }
+    },
+    {
+      "agentId": "core.openwop.agents.devops-crew.verifier",
+      "persona": "DevOps Verifier",
+      "label": "DevOps Verifier",
+      "description": "Runs read-only checks to confirm that the desired post-state holds after executor steps. Returns pass/fail per check with evidence.",
+      "modelClass": "reasoning",
+      "systemPromptRef": "prompts/verifier.md",
+      "toolAllowlist": [
+        "openwop:core.files.read",
+        "openwop:core.openwop.http.fetch"
+      ],
+      "memoryShape": {
+        "scratchpad": true,
+        "conversation": false,
+        "longTerm": false
+      },
+      "handoff": {
+        "taskSchemaRef": "schemas/verifier.task.schema.json",
+        "returnSchemaRef": "schemas/verifier.return.schema.json"
+      },
+      "confidence": {
+        "defaultThreshold": 0.85
+      }
+    }
+  ],
+  "runtime": {
+    "language": "remote",
+    "entry": "pack.json"
+  }
+}

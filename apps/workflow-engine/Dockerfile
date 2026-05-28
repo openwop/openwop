@@ -109,6 +109,22 @@ RUN if [ "$INCLUDE_CONFORMANCE_FIXTURES" != "true" ]; then \
 # revision fails to start.
 COPY schemas ./schemas
 
+# Local-mount pack source. `bootstrap/mountLocalPacks.ts` symlinks
+# `core.openwop.*` and `vendor.*` packs into the runtime pack dir at
+# boot, and `bootstrap/agentPackResolver.ts::loadAllLocalAgents()`
+# eager-loads every manifest agent into the AgentRegistry so the
+# `/v1/agents` inventory + the Agents-tab Install-from-registry page
+# reflect the local repo's packs. Without this COPY,
+# `resolveLocalPacksDir()` walks up from `/app/lib`, finds no `packs/`
+# dir, and the production revision shows zero agents even though local
+# dev sees ~30.
+#
+# Vendored from repo-root `packs/` via `scripts/sync-packs.sh` (the
+# canonical source is outside this build context). Run sync-packs.sh
+# before `gcloud run deploy` when pack manifests change. Same pattern
+# as `schemas/` + `conformance-fixtures/` above.
+COPY packs ./packs
+
 ENV NODE_ENV=production
 ENV PORT=8080
 

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-ad-angles/1.0.0/ad-angles.input.json",
+  "title": "MarketIntelAdAnglesInput",
+  "type": "object",
+  "required": ["vocQuotes", "icpContext", "productContext"],
+  "properties": {
+    "vocQuotes": {
+      "type": "object",
+      "description": "VoC corpus organized by tag type. At least one bucket must contain ≥1 quote.",
+      "properties": {
+        "pains": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+        "desires": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+        "objections": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+        "triggers": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+        "proofRequests": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+        "alternatives": { "type": "array", "items": { "type": "object", "additionalProperties": true } }
+      },
+      "additionalProperties": true
+    },
+    "topCommunities": {
+      "type": "array",
+      "description": "Scored communities surfaced from opportunity scoring.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "score": { "type": "number" },
+          "themes": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": true
+      }
+    },
+    "icpContext": {
+      "type": "object",
+      "required": ["roles", "industry", "problems", "outcomes"],
+      "properties": {
+        "roles": { "type": "array", "items": { "type": "string" } },
+        "industry": { "type": "string" },
+        "problems": { "type": "array", "items": { "type": "string" } },
+        "outcomes": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "productContext": {
+      "type": "object",
+      "required": ["name", "category", "differentiators", "mechanisms", "proofPoints"],
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "differentiators": { "type": "array", "items": { "type": "string" } },
+        "mechanisms": { "type": "array", "items": { "type": "string" } },
+        "proofPoints": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "competitors": { "type": "array", "items": { "type": "string" } },
+    "targetAngleCount": { "type": "integer", "minimum": 1, "maximum": 20, "description": "Defaults to 8." },
+    "minSourceQuotesPerAngle": { "type": "integer", "minimum": 1, "description": "Defaults to 2 (passed to the AI as a soft constraint; not validation-enforced)." }
+  },
+  "additionalProperties": true
+}

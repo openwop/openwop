@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.files/1.0.0/to-base64.output.json",
+  "title": "ToBase64Output",
+  "type": "object",
+  "required": [
+    "base64"
+  ],
+  "properties": {
+    "base64": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

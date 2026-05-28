@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.web-research/1.0.0/webSearch.config.json",
+  "title": "WebSearchConfig",
+  "type": "object",
+  "properties": {
+    "engine": {
+      "type": "string",
+      "description": "Optional engine hint (`google` / `bing` / `brave` / `perplexity` / `kagi`). When unset, host uses its default-configured engine. Engine must be in `Capabilities.webResearch.engines`."
+    },
+    "maxResults": { "type": "integer", "minimum": 1, "maximum": 50, "default": 10 },
+    "language": { "type": "string", "description": "Result language hint (e.g., `'en'`, `'fr'`, `'ja'`). Host MAY ignore for engines without language gating." },
+    "region": { "type": "string", "description": "Geo-region hint (e.g., `'us'`, `'gb'`, `'jp'`). Host MAY ignore." },
+    "safeSearch": { "type": "string", "enum": ["off", "moderate", "strict"], "default": "moderate" }
+  },
+  "additionalProperties": false
+}

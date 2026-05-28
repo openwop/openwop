@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.brand/1.1.0/persona.validate.config.json",
+  "title": "persona.validateConfig",
+  "type": "object",
+  "properties": {
+    "ruleSet": { "type": "string", "description": "Named rule set the host advertises (e.g., 'WCAG-AA', 'brand-guidelines-v3'). When unset, uses host default." },
+    "failOnWarning": { "type": "boolean", "default": false }
+  },
+  "additionalProperties": false
+}

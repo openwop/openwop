@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/string-format.input.json",
+  "title": "StringFormatInput",
+  "type": "object",
+  "required": [
+    "template"
+  ],
+  "properties": {
+    "template": {
+      "type": "string"
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

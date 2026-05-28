@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.test-author/1.0.0/test-author.task.schema.json",
+  "title": "TestAuthorTask",
+  "type": "object",
+  "required": [
+    "testType",
+    "source"
+  ],
+  "properties": {
+    "testType": {
+      "type": "string",
+      "enum": [
+        "unit",
+        "integration",
+        "e2e"
+      ]
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200000
+    },
+    "framework": {
+      "type": "string",
+      "enum": [
+        "jest",
+        "vitest",
+        "node-test",
+        "pytest",
+        "unittest",
+        "go-test",
+        "testify",
+        "playwright",
+        "cypress"
+      ]
+    },
+    "neighborTestPath": {
+      "type": "string"
+    },
+    "outputPath": {
+      "type": "string"
+    },
+    "coverageTargets": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "maxItems": 50
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.research-crew/1.0.0/planner.return.schema.json",
+  "title": "ResearchPlannerReturn",
+  "type": "object",
+  "required": ["report", "subQuestions", "rounds", "stoppedReason"],
+  "properties": {
+    "report": { "type": "string", "minLength": 1 },
+    "subQuestions": { "type": "array", "items": { "type": "string" } },
+    "rounds": { "type": "integer", "minimum": 1 },
+    "stoppedReason": { "type": "string", "enum": ["approved", "max_rounds", "writer_refused", "underspecified"] },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+  },
+  "additionalProperties": false
+}

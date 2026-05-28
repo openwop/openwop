@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.expense-categorizer/1.0.0/expense-categorizer.task.schema.json",
+  "title": "ExpenseCategorizerTask",
+  "type": "object",
+  "required": [
+    "expense",
+    "chartOfAccounts"
+  ],
+  "properties": {
+    "expense": {
+      "type": "object",
+      "required": [
+        "description",
+        "amount"
+      ],
+      "properties": {
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "amount": {
+          "type": "number"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "hasReceipt": {
+          "type": "boolean"
+        },
+        "miles": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": true
+    },
+    "chartOfAccounts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 500,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "allowedKeywords": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedVendors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "prohibitedVendors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "policy": {
+      "type": "object",
+      "properties": {
+        "perCategoryAmountCaps": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "receiptRequiredAbove": {
+          "type": "number",
+          "minimum": 0
+        },
+        "mileageRate": {
+          "type": "number",
+          "minimum": 0
+        },
+        "prohibitedVendors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

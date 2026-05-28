@@ -1,0 +1,36 @@
+{
+  "name": "vendor.myndhyve.market-intel-opportunity-scoring",
+  "version": "1.0.0",
+  "description": "MyndHyve market-intel.opportunity-scoring — score and rank communities AND messaging angles on a 5-dimension scale (volume / intensity / commercialIntent / clarity / uniqueness, weighted total) given a VoC corpus + community metadata. Composable primitive slotting between voc-extraction (aggregator) and ad-angles (downstream). Source-side this prompt is used inside the market-intel.research orchestrator; published here as a standalone typeId so workflow authors can compose it directly. Fourth marketIntel pack of the Stage 5 cohort.",
+  "author": "MyndHyve",
+  "license": "Apache-2.0",
+  "homepage": "https://myndhyve.ai/packs/market-intel-opportunity-scoring",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["vendor", "myndhyve", "market-intel", "scoring", "ranking", "voc", "communities"],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders": "supported"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "market-intel.opportunity-scoring",
+      "version": "1.0.0",
+      "label": "Score Market Opportunities",
+      "description": "One AI call. Inputs: VoC records (summaries) + communities (with vocCount / avgConfidence / intent+tag distributions / sample quotes) + ICP + product + scoring weights override. Outputs: rankedCommunities (sorted by score.total desc) + rankedAngles (sorted by priority asc) + insights (topOpportunity / marketGaps / competitiveAdvantages / recommendations) + methodology. Soft validation: invalid entries dropped with per-entry warnings; missing fields default to safe values; rankedAngles vs rankedCommunities errors-tolerated independently.",
+      "category": "data",
+      "role": "action",
+      "capabilities": ["side-effectful"],
+      "configSchemaRef": "schemas/opportunity-scoring.config.json",
+      "inputSchemaRef": "schemas/opportunity-scoring.input.json",
+      "outputSchemaRef": "schemas/opportunity-scoring.output.json"
+    }
+  ]
+}

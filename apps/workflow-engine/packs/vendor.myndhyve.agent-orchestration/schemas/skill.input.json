@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.agent-orchestration/1.0.0/skill.input.json",
+  "title": "AgentSkillInput",
+  "type": "object",
+  "properties": {
+    "args": { "type": "object", "additionalProperties": true, "description": "Skill arguments. Shape determined by the skill's published inputSchema." }
+  },
+  "additionalProperties": false
+}

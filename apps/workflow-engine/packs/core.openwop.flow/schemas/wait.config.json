@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.1.0/wait.config.json",
+  "title": "WaitConfig",
+  "type": "object",
+  "required": [
+    "mode"
+  ],
+  "properties": {
+    "mode": {
+      "type": "string",
+      "enum": [
+        "duration",
+        "until",
+        "webhook"
+      ]
+    },
+    "seconds": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 86400,
+      "description": "For `duration` mode."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "For `until` mode."
+    },
+    "signatureHint": {
+      "type": "string",
+      "description": "Optional HMAC hint for `webhook` mode (recipe in webhooks.md)."
+    }
+  },
+  "additionalProperties": false
+}

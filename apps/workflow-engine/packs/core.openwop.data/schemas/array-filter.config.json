@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/array-filter.config.json",
+  "title": "ArrayFilterConfig",
+  "type": "object",
+  "required": [
+    "path",
+    "equals"
+  ],
+  "properties": {
+    "path": {
+      "type": "string",
+      "description": "Dot-notation path into each element. Empty string means 'the element itself'. Missing intermediate keys produce undefined (which doesn't match `equals` unless equals is also null/undefined)."
+    },
+    "equals": {
+      "description": "Strict-equality compare value. JSON.stringify of element[path] must equal JSON.stringify of equals.",
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

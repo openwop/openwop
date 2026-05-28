@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence-integration/1.0.1/email.input.json",
+  "title": "CampaignSequenceEmailInput",
+  "type": "object",
+  "required": [
+    "step",
+    "enrollment",
+    "sequence"
+  ],
+  "properties": {
+    "step": {
+      "type": "object",
+      "required": [
+        "subject"
+      ],
+      "properties": {
+        "subject": {
+          "type": "string",
+          "minLength": 1
+        },
+        "body": {
+          "type": "string"
+        },
+        "templateId": {
+          "type": "string"
+        },
+        "fromName": {
+          "type": "string"
+        },
+        "replyTo": {
+          "type": "string",
+          "format": "email"
+        }
+      },
+      "additionalProperties": true,
+      "description": "SequenceStep record. Must carry a `subject`; remaining fields are passed verbatim to the host's email adapter."
+    },
+    "enrollment": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "sequence": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

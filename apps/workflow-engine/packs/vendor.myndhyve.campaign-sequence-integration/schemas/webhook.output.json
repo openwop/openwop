@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence-integration/1.0.1/webhook.output.json",
+  "title": "CampaignSequenceWebhookOutput",
+  "type": "object",
+  "required": [
+    "success"
+  ],
+  "properties": {
+    "success": {
+      "type": "boolean",
+      "description": "True on 2xx response; false otherwise (including SSRF / scheme / timeout / network errors)."
+    },
+    "error": {
+      "type": "string"
+    },
+    "status": {
+      "type": "integer",
+      "description": "HTTP status when a response was received."
+    }
+  },
+  "additionalProperties": true
+}

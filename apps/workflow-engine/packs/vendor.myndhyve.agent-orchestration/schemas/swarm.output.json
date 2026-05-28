@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.agent-orchestration/1.0.0/swarm.output.json",
+  "title": "AgentSwarmOutput",
+  "type": "object",
+  "required": ["strategy", "succeeded", "failed", "durationMs"],
+  "properties": {
+    "strategy": { "type": "string", "enum": ["map", "map-reduce", "competitive"] },
+    "results": {
+      "type": "array",
+      "description": "Per-agent results (for map / map-reduce; absent for competitive when winner cancels others).",
+      "items": {
+        "type": "object",
+        "required": ["agentInstanceId", "isError"],
+        "properties": {
+          "agentInstanceId": { "type": "string" },
+          "result": {},
+          "isError": { "type": "boolean" },
+          "error": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "reduced": { "description": "For map-reduce: the reducer's output. Absent for map / competitive." },
+    "winner": { "type": "string", "description": "For competitive: winning agentInstanceId. Absent for map / map-reduce." },
+    "succeeded": { "type": "integer", "minimum": 0 },
+    "failed": { "type": "integer", "minimum": 0 },
+    "durationMs": { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": false
+}

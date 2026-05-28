@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.support-triage/1.0.0/support-triage.task.schema.json",
+  "title": "SupportTriageTask",
+  "type": "object",
+  "required": [
+    "subject",
+    "body",
+    "validQueues"
+  ],
+  "properties": {
+    "subject": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "body": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50000
+    },
+    "customerSegment": {
+      "type": "string",
+      "enum": [
+        "enterprise",
+        "mid-market",
+        "smb",
+        "free"
+      ]
+    },
+    "validQueues": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "description"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "skillVocabulary": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "maxItems": 100
+    }
+  },
+  "additionalProperties": false
+}

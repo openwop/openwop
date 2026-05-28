@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "agreement": {},
+    "converged": { "type": "boolean" },
+    "rounds": { "type": "integer", "minimum": 0 },
+    "success": { "type": "boolean" },
+    "error": { "type": "string" }
+  },
+  "required": ["converged", "rounds", "success"],
+  "additionalProperties": false
+}

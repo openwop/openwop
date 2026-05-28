@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-image-generate/1.0.0/image-generate.config.json",
+  "title": "AdsImageGenerateConfig",
+  "type": "object",
+  "properties": {
+    "provider": { "type": "string", "description": "Provider id (gemini / openai / stability / ...). Forwarded to ctx.callImageGenerator; host MAY route to default when omitted." },
+    "model": { "type": "string", "description": "Model id (e.g., 'imagen-3', 'dall-e-3'). Forwarded to ctx.callImageGenerator." },
+    "maxDimension": { "type": "integer", "minimum": 256, "maximum": 4096, "description": "Upper bound on width/height. Defaults to 2048. Host MAY cap further." }
+  },
+  "additionalProperties": true
+}

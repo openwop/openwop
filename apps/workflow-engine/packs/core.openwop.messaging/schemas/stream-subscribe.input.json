@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.messaging/1.0.0/stream-subscribe.input.json",
+  "title": "StreamSubscribeInput",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}

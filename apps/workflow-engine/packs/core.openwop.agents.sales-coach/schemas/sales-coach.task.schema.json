@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.sales-coach/1.0.0/sales-coach.task.schema.json",
+  "title": "SalesCoachTask",
+  "type": "object",
+  "required": [
+    "repId"
+  ],
+  "oneOf": [
+    {
+      "required": [
+        "transcript"
+      ]
+    },
+    {
+      "required": [
+        "summary"
+      ]
+    }
+  ],
+  "properties": {
+    "transcript": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500000
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 10000
+    },
+    "repId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "callMetadata": {
+      "type": "object",
+      "properties": {
+        "durationSec": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "prospectStage": {
+          "type": "string"
+        },
+        "dealValue": {
+          "type": "number"
+        },
+        "callType": {
+          "type": "string",
+          "enum": [
+            "discovery",
+            "demo",
+            "negotiation",
+            "closing",
+            "renewal",
+            "other"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "focusDimensions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "talkRatio",
+          "discoveryDepth",
+          "objectionHandling",
+          "nextStepClarity",
+          "confidenceSignal"
+        ]
+      },
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": false
+}

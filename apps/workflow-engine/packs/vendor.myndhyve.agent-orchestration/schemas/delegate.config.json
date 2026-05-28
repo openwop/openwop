@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.agent-orchestration/1.0.0/delegate.config.json",
+  "title": "AgentDelegateConfig",
+  "type": "object",
+  "required": ["candidates"],
+  "properties": {
+    "candidates": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["agentInstanceId"],
+        "properties": {
+          "agentInstanceId": { "type": "string" },
+          "specialty": { "type": "string", "description": "Free-form specialty hint that helps the router pick." }
+        },
+        "additionalProperties": true
+      },
+      "description": "Pool of agents to choose from. The router (LLM or rule-based, host-defined) picks the best fit."
+    },
+    "escalationThreshold": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Router confidence below which the node suspends for human approval (RFC 0007 §A1 / RFC 0011 §F conservative-path). When unset, falls back to the run's resolved threshold; spec recommends 0.7 as default."
+    }
+  },
+  "additionalProperties": false
+}

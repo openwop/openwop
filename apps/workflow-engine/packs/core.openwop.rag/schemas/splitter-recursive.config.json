@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.rag/1.0.1/splitter-recursive.config.json",
+  "title": "SplitterRecursiveConfig",
+  "type": "object",
+  "properties": {
+    "chunkSize": {
+      "type": "integer",
+      "default": 1000
+    },
+    "chunkOverlap": {
+      "type": "integer",
+      "default": 200
+    },
+    "separators": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

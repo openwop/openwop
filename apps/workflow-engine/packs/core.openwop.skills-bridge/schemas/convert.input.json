@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.skills-bridge/1.0.0/convert.input.json",
+  "title": "SkillsBridgeConvertInput",
+  "type": "object",
+  "required": ["skillMd"],
+  "properties": {
+    "skillMd": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Full SKILL.md file contents (frontmatter YAML + body Markdown)."
+    },
+    "packPrefix": {
+      "type": "string",
+      "minLength": 3,
+      "description": "Override default agentId prefix (e.g., 'community.your-team.imported')."
+    }
+  },
+  "additionalProperties": false
+}

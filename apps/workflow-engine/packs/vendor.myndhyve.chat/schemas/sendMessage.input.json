@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.chat/1.0.0/sendMessage.input.json",
+  "title": "ChatSendMessageInput",
+  "type": "object",
+  "required": ["content"],
+  "properties": {
+    "content": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100000,
+      "description": "Message body. Markdown supported (rendering host-defined)."
+    },
+    "citations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["sourceId"],
+        "properties": {
+          "sourceId": { "type": "string" },
+          "title": { "type": "string" },
+          "url": { "type": "string", "format": "uri" }
+        },
+        "additionalProperties": true
+      },
+      "description": "Optional citations to attach to the message. Hosts render these as footnotes / inline links."
+    }
+  },
+  "additionalProperties": false
+}

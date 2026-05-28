@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents/1.0.1/tool-workflow.output.json",
+  "title": "ToolWorkflowOutput",
+  "type": "object",
+  "required": [
+    "tool"
+  ],
+  "properties": {
+    "tool": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

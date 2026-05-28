@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.rag/1.0.1/loader-github.input.json",
+  "title": "LoaderGithubInput",
+  "type": "object",
+  "properties": {
+    "path": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

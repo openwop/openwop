@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.3/x509-verify-chain.input.json",
+  "title": "X509VerifyChainInput",
+  "type": "object",
+  "required": [
+    "leafPem",
+    "trustRootsPem"
+  ],
+  "properties": {
+    "leafPem": {
+      "type": "string"
+    },
+    "intermediatesPem": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "trustRootsPem": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

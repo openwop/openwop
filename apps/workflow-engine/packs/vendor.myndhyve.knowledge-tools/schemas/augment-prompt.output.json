@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.knowledge-tools/1.0.0/augment-prompt.output.json",
+  "title": "KnowledgeAugmentPromptOutput",
+  "type": "object",
+  "required": ["augmentedUserMessage", "citations", "chunks", "sources", "hasResults", "success"],
+  "properties": {
+    "augmentedUserMessage": { "type": "string", "description": "User message with the Sources block + grounding header prepended. Ready to hand to an AI node as { role: 'user', content: <this string> }." },
+    "sourcesBlock": { "type": "string", "description": "Just the rendered Sources block (no header / no user question). Useful for callers that want to insert it into a system prompt instead." },
+    "citations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["marker", "sourceId"],
+        "properties": {
+          "marker": { "type": "string", "description": "The [#N] marker the AI is instructed to cite." },
+          "sourceId": { "type": "string" },
+          "documentTitle": { "type": "string" },
+          "headingPath": { "type": "array", "items": { "type": "string" } },
+          "pageNumber": { "type": ["integer", "null"] },
+          "relevanceScore": { "type": "number" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "chunks": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "sources": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "hasResults": { "type": "boolean" },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

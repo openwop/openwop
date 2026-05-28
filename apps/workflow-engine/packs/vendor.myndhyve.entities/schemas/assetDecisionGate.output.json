@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "decision": { "type": "string", "enum": ["use-existing", "create-new", "skip"] },
+    "assetId": { "type": "string" },
+    "assetData": { "type": "object", "additionalProperties": true },
+    "autoResolved": { "type": "boolean" },
+    "skipped": { "type": "boolean" }
+  },
+  "required": ["decision", "autoResolved"],
+  "additionalProperties": false
+}

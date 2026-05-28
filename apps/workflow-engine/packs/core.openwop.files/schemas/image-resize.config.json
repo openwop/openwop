@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.files/1.0.0/image-resize.config.json",
+  "title": "ImageResizeConfig",
+  "type": "object",
+  "properties": {
+    "width": {
+      "type": "integer"
+    },
+    "height": {
+      "type": "integer"
+    },
+    "fit": {
+      "type": "string",
+      "enum": [
+        "contain",
+        "cover",
+        "fill",
+        "inside",
+        "outside"
+      ],
+      "default": "inside"
+    }
+  },
+  "additionalProperties": false
+}

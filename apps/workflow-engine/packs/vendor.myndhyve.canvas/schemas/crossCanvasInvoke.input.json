@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.canvas/1.0.0/crossCanvasInvoke.input.json",
+  "title": "CrossCanvasInvokeInput",
+  "type": "object",
+  "properties": {
+    "args": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Arguments passed to the child workflow. Forwarded verbatim to the child run's triggerData.args."
+    }
+  },
+  "additionalProperties": false
+}

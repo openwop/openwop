@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/datetime-diff.input.json",
+  "title": "DatetimeDiffInput",
+  "type": "object",
+  "required": [
+    "a",
+    "b"
+  ],
+  "properties": {
+    "a": {},
+    "b": {}
+  },
+  "additionalProperties": false
+}

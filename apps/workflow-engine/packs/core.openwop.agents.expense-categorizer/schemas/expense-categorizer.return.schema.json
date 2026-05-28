@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.expense-categorizer/1.0.0/expense-categorizer.return.schema.json",
+  "title": "ExpenseCategorizerReturn",
+  "type": "object",
+  "oneOf": [
+    {
+      "required": [
+        "categoryId",
+        "confidence",
+        "rationale",
+        "violations"
+      ],
+      "properties": {
+        "categoryId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "violations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "code"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "out_of_policy_category",
+                  "over_amount_limit",
+                  "missing_receipt_required",
+                  "mileage_rate_mismatch",
+                  "prohibited_vendor"
+                ]
+              },
+              "detail": {
+                "type": "string",
+                "maxLength": 500
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "isCredit": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "required": [
+        "stoppedReason"
+      ],
+      "properties": {
+        "stoppedReason": {
+          "type": "string",
+          "enum": [
+            "no_category_match",
+            "invalid_input",
+            "refused"
+          ]
+        },
+        "detail": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

@@ -1,0 +1,213 @@
+{
+  "name": "core.openwop.triggers",
+  "version": "1.1.0",
+  "description": "Workflow-trigger pack. Sixteen entry-point shapes — original seven (webhook, schedule, event, envelope, chatMessage, canvas, artifact) plus the v1.1 additions (mailhook, email-imap, form, rss, manual, error, sub-workflow, cron-advanced) and the webhook-response action. Trigger nodes are pass-through executors: they forward `ctx.triggerData` (set by the engine when the trigger fires) to outputs.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.triggers",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["core", "triggers", "webhook", "schedule", "event", "envelope", "chat", "canvas", "artifact"],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "nodes": [
+    {
+      "typeId": "core.trigger.webhook",
+      "version": "1.0.0",
+      "label": "Webhook Trigger",
+      "description": "HTTP webhook entry-point. Host's webhook subsystem routes incoming requests at the configured path/secret to this workflow and exposes the body, headers, query, and method via ctx.triggerData. Replay-safe: triggerData is captured at run start and never re-fetched.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": ["cacheable"],
+      "configSchemaRef": "schemas/webhook.config.json",
+      "inputSchemaRef": "schemas/webhook.input.json",
+      "outputSchemaRef": "schemas/webhook.output.json"
+    },
+    {
+      "typeId": "core.trigger.schedule",
+      "version": "1.0.0",
+      "label": "Schedule Trigger",
+      "description": "Cron-style scheduled entry-point. Host's scheduler fires the workflow at config.cron expressions; ctx.triggerData carries the fire timestamp, the matched cron expression, and timezone metadata. Drift / missed-fire handling is host policy.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": ["cacheable"],
+      "configSchemaRef": "schemas/schedule.config.json",
+      "inputSchemaRef": "schemas/schedule.input.json",
+      "outputSchemaRef": "schemas/schedule.output.json"
+    },
+    {
+      "typeId": "core.trigger.event",
+      "version": "1.0.0",
+      "label": "Event Trigger",
+      "description": "Generic event-subscription entry-point. Host's event bus dispatches to the workflow when a matching event name fires; ctx.triggerData carries the event name + payload + source. For envelope-typed events with schema validation, use core.trigger.envelope.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": ["cacheable"],
+      "configSchemaRef": "schemas/event.config.json",
+      "inputSchemaRef": "schemas/event.input.json",
+      "outputSchemaRef": "schemas/event.output.json"
+    },
+    {
+      "typeId": "core.trigger.envelope",
+      "version": "1.0.0",
+      "label": "Envelope Trigger",
+      "description": "Typed-envelope entry-point. Host dispatches when a matching envelope (e.g., from a parent workflow's emit or a typed event publisher) fires. ctx.triggerData carries the envelope's `envelopeType` discriminator + the payload. Workflow authors declare the expected envelope type in config; the host's envelope-routing layer enforces.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": ["cacheable"],
+      "configSchemaRef": "schemas/envelope.config.json",
+      "inputSchemaRef": "schemas/envelope.input.json",
+      "outputSchemaRef": "schemas/envelope.output.json"
+    },
+    {
+      "typeId": "core.trigger.chatMessage",
+      "version": "1.0.0",
+      "label": "Chat Message Trigger",
+      "description": "Chat-message intent-match entry-point. Host's chat router dispatches to the workflow when an inbound message matches the configured intent (regex, keyword, or LLM classification). ctx.triggerData carries channel, message text, conversation id, peer id, and conversation kind (dm | group | thread).",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": ["cacheable"],
+      "configSchemaRef": "schemas/chatMessage.config.json",
+      "inputSchemaRef": "schemas/chatMessage.input.json",
+      "outputSchemaRef": "schemas/chatMessage.output.json"
+    },
+    {
+      "typeId": "core.trigger.canvas",
+      "version": "1.0.0",
+      "label": "Canvas Trigger",
+      "description": "Canvas-event entry-point. Host dispatches when a canvas object is added / modified / removed. ctx.triggerData carries canvasTypeId, canvasEvent, objectId, and eventData. Vendor-namespaced canvas typeIds (MyndHyve app-builder, slides, etc.) flow through this single trigger shape.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": ["cacheable"],
+      "configSchemaRef": "schemas/canvas.config.json",
+      "inputSchemaRef": "schemas/canvas.input.json",
+      "outputSchemaRef": "schemas/canvas.output.json"
+    },
+    {
+      "typeId": "core.trigger.artifact",
+      "version": "1.0.0",
+      "label": "Artifact Trigger",
+      "description": "Artifact-event entry-point. Host dispatches when a workflow artifact (PRD, plan, theme, etc.) is created / updated / deleted. ctx.triggerData carries artifactId, artifactTypeId, action, and artifactData. Used for cross-workflow choreography that reacts to artifact lifecycle.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": ["cacheable"],
+      "configSchemaRef": "schemas/artifact.config.json",
+      "inputSchemaRef": "schemas/artifact.input.json",
+      "outputSchemaRef": "schemas/artifact.output.json"
+    },
+    {
+      "typeId": "core.trigger.webhook-respond",
+      "version": "1.0.0",
+      "label": "Webhook Respond",
+      "description": "Action node paired with `core.trigger.webhook`: emits the synchronous HTTP response for the inbound webhook request. Status, headers, body. The host's webhook subsystem holds the response open until this node fires.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": ["side-effectful"],
+      "configSchemaRef": "schemas/webhook-respond.config.json",
+      "inputSchemaRef": "schemas/webhook-respond.input.json",
+      "outputSchemaRef": "schemas/webhook-respond.output.json"
+    },
+    {
+      "typeId": "core.trigger.mailhook",
+      "version": "1.0.0",
+      "label": "Mailhook Trigger",
+      "description": "Inbound-email entry-point. Host issues a per-workflow mailbox address; messages sent there fire the workflow. ctx.triggerData carries from, to, subject, text, html, attachments, headers.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": ["cacheable"],
+      "configSchemaRef": "schemas/mailhook.config.json",
+      "inputSchemaRef": "schemas/mailhook.input.json",
+      "outputSchemaRef": "schemas/mailhook.output.json"
+    },
+    {
+      "typeId": "core.trigger.email-imap",
+      "version": "1.0.0",
+      "label": "Email IMAP Poll Trigger",
+      "description": "IMAP polling trigger. Host polls a mailbox via IMAP at the configured interval; emits one trigger per new message. Requires `requiresSecrets: imap-credential`.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": ["cacheable"],
+      "configSchemaRef": "schemas/email-imap.config.json",
+      "inputSchemaRef": "schemas/email-imap.input.json",
+      "outputSchemaRef": "schemas/email-imap.output.json"
+    },
+    {
+      "typeId": "core.trigger.form",
+      "version": "1.0.0",
+      "label": "Form Trigger",
+      "description": "Hosted form entry-point. Host renders a public form per the supplied JSON-Schema; submissions fire the workflow. ctx.triggerData carries the submitted values + submitter metadata.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": ["cacheable"],
+      "configSchemaRef": "schemas/form.config.json",
+      "inputSchemaRef": "schemas/form.input.json",
+      "outputSchemaRef": "schemas/form.output.json"
+    },
+    {
+      "typeId": "core.trigger.rss",
+      "version": "1.0.0",
+      "label": "RSS Trigger",
+      "description": "RSS / Atom feed polling trigger. Host polls the feed URL at the configured interval; emits one trigger per new item.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": ["cacheable"],
+      "configSchemaRef": "schemas/rss.config.json",
+      "inputSchemaRef": "schemas/rss.input.json",
+      "outputSchemaRef": "schemas/rss.output.json"
+    },
+    {
+      "typeId": "core.trigger.manual",
+      "version": "1.0.0",
+      "label": "Manual Trigger",
+      "description": "Editor-initiated entry-point. Fires when an operator clicks Run in the editor or invokes `POST /v1/runs` directly. ctx.triggerData carries the operator-supplied input payload.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": ["cacheable"],
+      "configSchemaRef": "schemas/manual.config.json",
+      "inputSchemaRef": "schemas/manual.input.json",
+      "outputSchemaRef": "schemas/manual.output.json"
+    },
+    {
+      "typeId": "core.trigger.error",
+      "version": "1.0.0",
+      "label": "Error Trigger",
+      "description": "Fires when ANY workflow in the host fails. Optional filter by workflow id / error code. ctx.triggerData carries the failed run id, error envelope, failed node id.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": ["cacheable"],
+      "configSchemaRef": "schemas/error.config.json",
+      "inputSchemaRef": "schemas/error.input.json",
+      "outputSchemaRef": "schemas/error.output.json"
+    },
+    {
+      "typeId": "core.trigger.sub-workflow",
+      "version": "1.0.0",
+      "label": "Sub-Workflow Trigger",
+      "description": "Receives invocations from `core.flow.sub-workflow-invoke` (or any host-side equivalent). ctx.triggerData carries the parent runId, parent nodeId, and the inputs passed in.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": ["cacheable"],
+      "configSchemaRef": "schemas/sub-workflow.config.json",
+      "inputSchemaRef": "schemas/sub-workflow.input.json",
+      "outputSchemaRef": "schemas/sub-workflow.output.json"
+    },
+    {
+      "typeId": "core.trigger.cron-advanced",
+      "version": "1.0.0",
+      "label": "Cron (Advanced)",
+      "description": "Scheduled trigger with rrule + timezone + holiday-calendar support. Use `core.trigger.schedule` for plain cron; this is the calendar-aware variant.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": ["cacheable"],
+      "configSchemaRef": "schemas/cron-advanced.config.json",
+      "inputSchemaRef": "schemas/cron-advanced.input.json",
+      "outputSchemaRef": "schemas/cron-advanced.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  }
+}

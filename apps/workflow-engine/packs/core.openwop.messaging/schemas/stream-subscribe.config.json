@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.messaging/1.0.0/stream-subscribe.config.json",
+  "title": "StreamSubscribeConfig",
+  "type": "object",
+  "required": [
+    "stream"
+  ],
+  "properties": {
+    "stream": {
+      "type": "string"
+    },
+    "consumerGroup": {
+      "type": "string"
+    },
+    "fromBeginning": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

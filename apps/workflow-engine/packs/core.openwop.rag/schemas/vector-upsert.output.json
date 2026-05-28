@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.rag/1.0.1/vector-upsert.output.json",
+  "title": "RagVectorUpsertOutput",
+  "type": "object",
+  "required": [
+    "upserted"
+  ],
+  "properties": {
+    "upserted": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

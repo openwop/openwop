@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.examples/1.0.0/delay-with-progress.input.json",
+  "title": "DelayWithProgressNodeInput",
+  "description": "Input for core.openwop.examples.delay-with-progress. No input ports — the node only consumes config.",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}

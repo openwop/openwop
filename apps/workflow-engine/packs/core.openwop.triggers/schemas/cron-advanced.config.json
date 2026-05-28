@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.1.0/cron-advanced.config.json",
+  "title": "CronAdvancedConfig",
+  "type": "object",
+  "properties": {
+    "rrule": {
+      "type": "string"
+    },
+    "cron": {
+      "type": "string"
+    },
+    "timezone": {
+      "type": "string",
+      "default": "UTC"
+    },
+    "holidayCalendar": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

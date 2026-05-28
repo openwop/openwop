@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents/1.0.1/memory-window.config.json",
+  "title": "MemoryWindowConfig",
+  "type": "object",
+  "properties": {
+    "windowSize": {
+      "type": "integer",
+      "default": 10
+    }
+  },
+  "additionalProperties": false
+}

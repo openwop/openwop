@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.3/hmac-sign.input.json",
+  "title": "HmacSignInput",
+  "type": "object",
+  "required": [
+    "key",
+    "data"
+  ],
+  "properties": {
+    "key": {
+      "type": "string"
+    },
+    "data": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

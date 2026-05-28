@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.kanban/1.0.0/timeline.plan.output.json",
+  "title": "TimelinePlanOutput",
+  "type": "object",
+  "required": ["boardId", "schedule", "criticalPath"],
+  "properties": {
+    "boardId": { "type": "string" },
+    "schedule": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["taskId", "startDate", "endDate"],
+        "properties": {
+          "taskId": { "type": "string" },
+          "title": { "type": "string" },
+          "startDate": { "type": "string", "format": "date-time" },
+          "endDate": { "type": "string", "format": "date-time" },
+          "assignee": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "criticalPath": { "type": "array", "items": { "type": "string" }, "description": "taskIds on the critical path." },
+    "projectEndDate": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

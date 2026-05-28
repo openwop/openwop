@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.mcp/1.1.1/read-resource.config.json",
+  "title": "ReadResourceConfig",
+  "type": "object",
+  "required": [
+    "serverId",
+    "uri"
+  ],
+  "properties": {
+    "serverId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "uri": {
+      "type": "string",
+      "minLength": 1,
+      "description": "MCP resource URI as published by the server (e.g., `'file:///workspace/docs/readme.md'`, `'memo://recent'`). Scheme + path are server-defined per MCP `resources/read` semantics."
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 60000,
+      "default": 15000
+    }
+  },
+  "additionalProperties": false
+}

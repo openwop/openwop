@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/datetime-timezone.output.json",
+  "title": "DatetimeTimezoneOutput",
+  "type": "object",
+  "required": [
+    "text",
+    "timezone"
+  ],
+  "properties": {
+    "text": {
+      "type": "string"
+    },
+    "timezone": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

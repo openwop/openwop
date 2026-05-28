@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.messaging/1.0.0/consume.output.json",
+  "title": "MqConsumeOutput",
+  "type": "object",
+  "required": [
+    "payload"
+  ],
+  "properties": {
+    "payload": {},
+    "headers": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "messageId": {
+      "type": "string"
+    },
+    "partition": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

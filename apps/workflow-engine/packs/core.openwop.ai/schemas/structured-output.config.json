@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.ai/1.1.2/structured-output.config.json",
+  "title": "StructuredOutputConfig",
+  "type": "object",
+  "required": [
+    "provider",
+    "model",
+    "outputSchema"
+  ],
+  "properties": {
+    "provider": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1
+    },
+    "systemPrompt": {
+      "type": "string"
+    },
+    "temperature": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 2
+    },
+    "maxTokens": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000
+    },
+    "outputSchema": {
+      "type": "object",
+      "description": "JSON Schema (Draft 2020-12) constraining the LLM's output. The host's structured-output mechanism translates this to the provider-specific format (Anthropic tool use, OpenAI JSON mode, Gemini response_schema). The runtime parses the model's response, validates against this schema, and rejects with `structured_output_invalid` if validation fails after the configured retry budget."
+    },
+    "retryOnInvalidJson": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5,
+      "default": 2,
+      "description": "How many times to retry when the model returns content that doesn't validate against outputSchema. 0 = no retry; first invalid response surfaces as `structured_output_invalid`."
+    }
+  },
+  "additionalProperties": false
+}

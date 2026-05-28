@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.storage/1.0.0/cache-get.output.json",
+  "title": "CacheGetOutput",
+  "type": "object",
+  "required": [
+    "hit"
+  ],
+  "properties": {
+    "hit": {
+      "type": "boolean"
+    },
+    "value": {},
+    "ageMs": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

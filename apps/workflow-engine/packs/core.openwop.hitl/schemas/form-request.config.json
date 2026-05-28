@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.hitl/1.0.0/form-request.config.json",
+  "title": "FormRequestConfig",
+  "type": "object",
+  "required": [
+    "formSchema"
+  ],
+  "properties": {
+    "formSchema": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Flat JSON Schema: object with primitive-typed properties (string/number/integer/boolean/enum, formats email/uri/date/date-time)."
+    },
+    "deadlineSeconds": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.obs/1.0.0/trace-span-end.output.json",
+  "title": "TraceSpanEndOutput",
+  "type": "object",
+  "required": [
+    "ended"
+  ],
+  "properties": {
+    "ended": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

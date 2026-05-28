@@ -1,0 +1,329 @@
+{
+  "name": "core.openwop.storage",
+  "version": "1.0.0",
+  "description": "State primitives — kv / table / cache / blob / queue. Each node gated on its specific host capability block (host.kvStorage, host.tableStorage, host.cache, host.blobStorage, host.queue) per RFCs 0015–0019. Pack delegates to ctx.storage.* host surface. Zero npm deps.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.storage",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "storage",
+    "kv",
+    "table",
+    "cache",
+    "blob",
+    "queue"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "core.storage.kv-get",
+      "version": "1.0.0",
+      "label": "KV Get",
+      "description": "Read a key from host.kvStorage. Returns { value, found, ttlRemainingMs }.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/kv-get.config.json",
+      "inputSchemaRef": "schemas/kv-get.input.json",
+      "outputSchemaRef": "schemas/kv-get.output.json"
+    },
+    {
+      "typeId": "core.storage.kv-set",
+      "version": "1.0.0",
+      "label": "KV Set",
+      "description": "Write a key/value. Optional TTL in seconds.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/kv-set.config.json",
+      "inputSchemaRef": "schemas/kv-set.input.json",
+      "outputSchemaRef": "schemas/kv-set.output.json"
+    },
+    {
+      "typeId": "core.storage.kv-delete",
+      "version": "1.0.0",
+      "label": "KV Delete",
+      "description": "Delete a key. Idempotent.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/kv-delete.config.json",
+      "inputSchemaRef": "schemas/kv-delete.input.json",
+      "outputSchemaRef": "schemas/kv-delete.output.json"
+    },
+    {
+      "typeId": "core.storage.kv-list",
+      "version": "1.0.0",
+      "label": "KV List",
+      "description": "List keys in a namespace, with optional prefix + cursor.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/kv-list.config.json",
+      "inputSchemaRef": "schemas/kv-list.input.json",
+      "outputSchemaRef": "schemas/kv-list.output.json"
+    },
+    {
+      "typeId": "core.storage.kv-atomic-increment",
+      "version": "1.0.0",
+      "label": "KV Atomic Increment",
+      "description": "Atomic counter increment (RFC 0015). Returns the new value.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/kv-atomic-increment.config.json",
+      "inputSchemaRef": "schemas/kv-atomic-increment.input.json",
+      "outputSchemaRef": "schemas/kv-atomic-increment.output.json"
+    },
+    {
+      "typeId": "core.storage.kv-cas",
+      "version": "1.0.0",
+      "label": "KV Compare-And-Swap",
+      "description": "Optimistic concurrency primitive (RFC 0015).",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/kv-cas.config.json",
+      "inputSchemaRef": "schemas/kv-cas.input.json",
+      "outputSchemaRef": "schemas/kv-cas.output.json"
+    },
+    {
+      "typeId": "core.storage.table-insert",
+      "version": "1.0.0",
+      "label": "Table Insert",
+      "description": "Insert a row into a host.tableStorage table.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/table-insert.config.json",
+      "inputSchemaRef": "schemas/table-insert.input.json",
+      "outputSchemaRef": "schemas/table-insert.output.json"
+    },
+    {
+      "typeId": "core.storage.table-update",
+      "version": "1.0.0",
+      "label": "Table Update",
+      "description": "Update rows matching a filter.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/table-update.config.json",
+      "inputSchemaRef": "schemas/table-update.input.json",
+      "outputSchemaRef": "schemas/table-update.output.json"
+    },
+    {
+      "typeId": "core.storage.table-upsert",
+      "version": "1.0.0",
+      "label": "Table Upsert",
+      "description": "Insert if absent, update if present.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/table-upsert.config.json",
+      "inputSchemaRef": "schemas/table-upsert.input.json",
+      "outputSchemaRef": "schemas/table-upsert.output.json"
+    },
+    {
+      "typeId": "core.storage.table-delete",
+      "version": "1.0.0",
+      "label": "Table Delete",
+      "description": "Delete rows matching a filter.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/table-delete.config.json",
+      "inputSchemaRef": "schemas/table-delete.input.json",
+      "outputSchemaRef": "schemas/table-delete.output.json"
+    },
+    {
+      "typeId": "core.storage.table-query",
+      "version": "1.0.0",
+      "label": "Table Query",
+      "description": "Cursor-paginated query.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/table-query.config.json",
+      "inputSchemaRef": "schemas/table-query.input.json",
+      "outputSchemaRef": "schemas/table-query.output.json"
+    },
+    {
+      "typeId": "core.storage.table-count",
+      "version": "1.0.0",
+      "label": "Table Count",
+      "description": "Count rows matching a filter.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/table-count.config.json",
+      "inputSchemaRef": "schemas/table-count.input.json",
+      "outputSchemaRef": "schemas/table-count.output.json"
+    },
+    {
+      "typeId": "core.storage.cache-get",
+      "version": "1.0.0",
+      "label": "Cache Get",
+      "description": "TTL cache read (host.cache).",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/cache-get.config.json",
+      "inputSchemaRef": "schemas/cache-get.input.json",
+      "outputSchemaRef": "schemas/cache-get.output.json"
+    },
+    {
+      "typeId": "core.storage.cache-put",
+      "version": "1.0.0",
+      "label": "Cache Put",
+      "description": "TTL cache write.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/cache-put.config.json",
+      "inputSchemaRef": "schemas/cache-put.input.json",
+      "outputSchemaRef": "schemas/cache-put.output.json"
+    },
+    {
+      "typeId": "core.storage.cache-evict",
+      "version": "1.0.0",
+      "label": "Cache Evict",
+      "description": "Cache eviction by key or namespace.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/cache-evict.config.json",
+      "inputSchemaRef": "schemas/cache-evict.input.json",
+      "outputSchemaRef": "schemas/cache-evict.output.json"
+    },
+    {
+      "typeId": "core.storage.blob-put",
+      "version": "1.0.0",
+      "label": "Blob Put",
+      "description": "Upload binary content to host.blobStorage.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/blob-put.config.json",
+      "inputSchemaRef": "schemas/blob-put.input.json",
+      "outputSchemaRef": "schemas/blob-put.output.json"
+    },
+    {
+      "typeId": "core.storage.blob-get",
+      "version": "1.0.0",
+      "label": "Blob Get",
+      "description": "Download a blob (returns base64).",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/blob-get.config.json",
+      "inputSchemaRef": "schemas/blob-get.input.json",
+      "outputSchemaRef": "schemas/blob-get.output.json"
+    },
+    {
+      "typeId": "core.storage.blob-presign",
+      "version": "1.0.0",
+      "label": "Blob Presign URL",
+      "description": "Generate a time-limited presigned URL.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/blob-presign.config.json",
+      "inputSchemaRef": "schemas/blob-presign.input.json",
+      "outputSchemaRef": "schemas/blob-presign.output.json"
+    },
+    {
+      "typeId": "core.storage.queue-enqueue",
+      "version": "1.0.0",
+      "label": "Queue Enqueue",
+      "description": "Enqueue a job onto host.queue.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/queue-enqueue.config.json",
+      "inputSchemaRef": "schemas/queue-enqueue.input.json",
+      "outputSchemaRef": "schemas/queue-enqueue.output.json"
+    },
+    {
+      "typeId": "core.storage.queue-dequeue",
+      "version": "1.0.0",
+      "label": "Queue Dequeue",
+      "description": "Dequeue one job (blocking up to durationMs).",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/queue-dequeue.config.json",
+      "inputSchemaRef": "schemas/queue-dequeue.input.json",
+      "outputSchemaRef": "schemas/queue-dequeue.output.json"
+    }
+  ]
+}

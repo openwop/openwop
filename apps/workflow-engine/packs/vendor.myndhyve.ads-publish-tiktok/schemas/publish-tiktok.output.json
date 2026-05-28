@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-publish-tiktok/1.0.0/publish-tiktok.output.json",
+  "title": "AdsPublishTiktokOutput",
+  "type": "object",
+  "required": ["platform", "advertiserId", "campaignId", "adGroupId", "adId", "publishedStatus", "publishedAt", "success"],
+  "properties": {
+    "platform": { "type": "string", "const": "tiktok" },
+    "advertiserId": { "type": "string" },
+    "campaignId": { "type": "string" },
+    "adGroupId": { "type": "string" },
+    "adId": { "type": "string" },
+    "uploadedImageId": { "type": ["string", "null"], "description": "Set when pack uploaded image via inputs.imageUploadUrl; null otherwise." },
+    "publishedStatus": { "type": "string", "enum": ["ENABLE", "DISABLE"], "description": "Echoes campaign.operationStatus request value." },
+    "publishedAt": { "type": "string" },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

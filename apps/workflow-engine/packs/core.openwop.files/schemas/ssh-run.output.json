@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.files/1.0.0/ssh-run.output.json",
+  "title": "SshRunOutput",
+  "type": "object",
+  "required": [
+    "exitCode"
+  ],
+  "properties": {
+    "exitCode": {
+      "type": "integer"
+    },
+    "stdout": {
+      "type": "string"
+    },
+    "stderr": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

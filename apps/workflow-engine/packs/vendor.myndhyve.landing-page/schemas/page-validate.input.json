@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.landing-page/1.0.0/page-validate.input.json",
+  "title": "LandingPageValidateInput",
+  "type": "object",
+  "required": ["pageId", "page"],
+  "properties": {
+    "pageId": { "type": "string", "minLength": 1 },
+    "page": {
+      "type": "object",
+      "required": ["sections"],
+      "properties": {
+        "sections": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+        "seo": { "type": "object", "additionalProperties": true }
+      },
+      "additionalProperties": true
+    },
+    "variants": { "type": "array", "items": { "type": "object", "additionalProperties": true }, "maxItems": 10 }
+  },
+  "additionalProperties": true
+}

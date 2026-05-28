@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.support-crew/1.0.0/escalator.task.schema.json",
+  "title": "SupportCrewEscalatorTask",
+  "type": "object",
+  "required": ["ticket", "triageResult", "resolverEscalation"],
+  "properties": {
+    "ticket": {
+      "type": "object",
+      "properties": {
+        "subject": { "type": "string" },
+        "body": { "type": "string" },
+        "key": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "triageResult": { "type": "object", "additionalProperties": true },
+    "resolverEscalation": {
+      "type": "object",
+      "required": ["reason"],
+      "properties": {
+        "reason": { "type": "string" },
+        "suggestedSpecialist": { "type": "string" },
+        "partialContext": { "type": "object", "additionalProperties": true }
+      },
+      "additionalProperties": false
+    },
+    "customerHistory": {
+      "type": "array",
+      "items": { "additionalProperties": true }
+    }
+  },
+  "additionalProperties": false
+}

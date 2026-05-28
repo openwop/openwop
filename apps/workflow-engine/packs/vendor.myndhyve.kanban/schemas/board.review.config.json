@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.kanban/1.0.0/board.review.config.json",
+  "title": "BoardReviewConfig",
+  "type": "object",
+  "properties": {
+    "includeArchived": { "type": "boolean", "default": false },
+    "atRiskThresholdDays": { "type": "integer", "minimum": 0, "default": 3, "description": "Tasks due within this many days are flagged at-risk." }
+  },
+  "additionalProperties": false
+}

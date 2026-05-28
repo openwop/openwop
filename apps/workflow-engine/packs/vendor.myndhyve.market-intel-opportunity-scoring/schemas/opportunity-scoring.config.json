@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-opportunity-scoring/1.0.0/opportunity-scoring.config.json",
+  "title": "MarketIntelOpportunityScoringConfig",
+  "type": "object",
+  "properties": {
+    "provider": { "type": "string" },
+    "model": { "type": "string" },
+    "temperature": { "type": "number", "minimum": 0, "maximum": 2, "description": "Defaults to 0.3 — scoring is precision-oriented." },
+    "maxTokens": { "type": "integer", "minimum": 512, "description": "Defaults to 6000; output carries 2 ranked lists + insights + methodology." }
+  },
+  "additionalProperties": true
+}

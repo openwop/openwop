@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.1.0/stop-and-error.config.json",
+  "title": "StopAndErrorConfig",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "default": "WORKFLOW_STOPPED"
+    },
+    "message": {
+      "type": "string"
+    },
+    "details": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

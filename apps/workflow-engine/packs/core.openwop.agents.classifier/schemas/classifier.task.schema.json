@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.classifier/1.0.0/classifier.task.schema.json",
+  "title": "ClassifierTask",
+  "type": "object",
+  "required": [
+    "input",
+    "labels"
+  ],
+  "properties": {
+    "input": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50000
+    },
+    "labels": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "description"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z][a-zA-Z0-9_.-]*$",
+            "maxLength": 64
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "multiLabel": {
+      "type": "boolean",
+      "default": false
+    },
+    "minConfidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0.5,
+      "description": "Multi-label mode only: per-label inclusion floor."
+    },
+    "language": {
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(-[A-Z]{2})?$",
+      "default": "en"
+    }
+  },
+  "additionalProperties": false
+}

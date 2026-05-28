@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.flow/1.1.0/error-handler-resume.config.json",
+  "title": "ErrorHandlerResumeConfig",
+  "type": "object",
+  "properties": {
+    "fallback": {
+      "description": "Fallback bundle to substitute on upstream failure."
+    }
+  },
+  "additionalProperties": false
+}

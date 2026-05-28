@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.brand/1.1.0/theme.templates.input.json",
+  "title": "theme.templatesInput",
+  "type": "object",
+  "properties": {
+    "brandId": { "type": "string", "minLength": 1, "description": "Optional brand the work is anchored to." },
+    "context": { "type": "object", "additionalProperties": true },
+    "answers": { "type": "object", "additionalProperties": true, "description": "Discovery-questionnaire answers (when applicable)." }
+  },
+  "additionalProperties": false
+}

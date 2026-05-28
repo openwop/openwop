@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.obs/1.0.0/log.output.json",
+  "title": "LogOutput",
+  "type": "object",
+  "required": [
+    "emitted"
+  ],
+  "properties": {
+    "emitted": {
+      "type": "boolean"
+    },
+    "level": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

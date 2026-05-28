@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-audience-targeting/1.0.0/audience-targeting.input.json",
+  "title": "MarketIntelAudienceTargetingInput",
+  "type": "object",
+  "required": ["targetPlatforms", "icpContext", "productContext"],
+  "properties": {
+    "communities": {
+      "type": "array",
+      "description": "Scored communities from opportunity-scoring. Top 10 surfaced in the prompt.",
+      "items": {
+        "type": "object",
+        "required": ["name", "platform", "score", "themes", "dominantIntent", "vocCount"],
+        "properties": {
+          "name": { "type": "string" },
+          "platform": { "type": "string" },
+          "score": { "type": "number" },
+          "themes": { "type": "array", "items": { "type": "string" } },
+          "dominantIntent": { "type": "string", "enum": ["ready_now", "researching", "problem_aware", "unaware"] },
+          "vocCount": { "type": "integer", "minimum": 0 }
+        },
+        "additionalProperties": true
+      }
+    },
+    "angles": {
+      "type": "array",
+      "description": "Top angles from ad-angles or opportunity-scoring. Top 8 surfaced in the prompt.",
+      "items": {
+        "type": "object",
+        "required": ["angleId", "angleName", "segment", "corePain", "themes"],
+        "properties": {
+          "angleId": { "type": "string" },
+          "angleName": { "type": "string" },
+          "segment": { "type": "string", "enum": ["ready_now", "researching", "problem_aware", "unaware"] },
+          "corePain": { "type": "string" },
+          "themes": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": true
+      }
+    },
+    "icpContext": {
+      "type": "object",
+      "required": ["roles", "industry"],
+      "properties": {
+        "roles": { "type": "array", "items": { "type": "string" } },
+        "industry": { "type": "string" },
+        "companySize": { "type": "string" },
+        "seniority": { "type": "array", "items": { "type": "string" } },
+        "geography": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "productContext": {
+      "type": "object",
+      "required": ["name", "category", "keywords"],
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "keywords": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "competitors": { "type": "array", "items": { "type": "string" } },
+    "targetPlatforms": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "enum": ["meta", "google", "linkedin", "tiktok", "reddit", "x"] },
+      "description": "Which ad platforms to generate targeting packs for. Unsupported platforms reject the call before the AI runs."
+    }
+  },
+  "additionalProperties": true
+}

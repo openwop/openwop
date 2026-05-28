@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.1.0/schedule.config.json",
+  "title": "ScheduleTriggerConfig",
+  "type": "object",
+  "required": [
+    "cron"
+  ],
+  "properties": {
+    "cron": {
+      "type": "string",
+      "minLength": 9,
+      "maxLength": 256,
+      "description": "5-field POSIX cron expression OR 6-field (with seconds) — host MAY accept either format. Example: `0 9 * * MON` = every Monday at 09:00. Hosts MUST reject sub-minute schedules in 5-field form."
+    },
+    "timezone": {
+      "type": "string",
+      "default": "UTC",
+      "description": "IANA timezone name (e.g., `'America/New_York'`, `'Asia/Tokyo'`, `'UTC'`). Hosts MUST resolve via the system tz database. Invalid timezones return `invalid_timezone` at workflow-register time."
+    },
+    "missedFirePolicy": {
+      "type": "string",
+      "enum": [
+        "skip",
+        "fire-once",
+        "fire-all"
+      ],
+      "default": "fire-once",
+      "description": "What the host does when the workflow was offline through scheduled fires. `skip` = do nothing. `fire-once` = fire one catch-up run with the LATEST missed timestamp. `fire-all` = fire one run per missed timestamp (bounded; hosts MAY cap to avoid backlog explosion)."
+    }
+  },
+  "additionalProperties": false
+}

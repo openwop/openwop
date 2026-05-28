@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence/1.0.0/wait.input.json",
+  "title": "CampaignSequenceWaitInput",
+  "type": "object",
+  "properties": {
+    "step": {
+      "type": "object",
+      "description": "The SequenceStep record describing the wait. Unused by this executor (the scheduler already decided WHEN to fire); kept for input-shape parity with the other sequence nodes."
+    },
+    "enrollment": {
+      "type": "object",
+      "description": "The SequenceEnrollment record. Unused by this executor; kept for input-shape parity."
+    },
+    "sequence": {
+      "type": "object",
+      "description": "The parent Sequence record. Unused by this executor; kept for input-shape parity."
+    }
+  },
+  "additionalProperties": true
+}

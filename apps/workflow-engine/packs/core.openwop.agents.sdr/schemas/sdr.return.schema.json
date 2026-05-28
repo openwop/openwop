@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.sdr/1.0.0/sdr.return.schema.json",
+  "title": "SdrReturn",
+  "type": "object",
+  "required": [
+    "message",
+    "channel",
+    "tone"
+  ],
+  "properties": {
+    "message": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "subject": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "email",
+        "linkedin",
+        "sms"
+      ]
+    },
+    "tone": {
+      "type": "string",
+      "enum": [
+        "warm",
+        "direct",
+        "consultative",
+        "playful"
+      ]
+    },
+    "personalizedSignals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "followupRecommendation": {
+      "type": "object",
+      "properties": {
+        "in": {
+          "type": "string",
+          "pattern": "^\\+\\d+[dhwm]$"
+        },
+        "trigger": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "stoppedReason": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "refused",
+        "invalid_input"
+      ]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  },
+  "additionalProperties": false
+}

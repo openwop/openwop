@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.brand/1.1.0/persona.publish.config.json",
+  "title": "persona.publishConfig",
+  "type": "object",
+  "properties": {
+    "force": { "type": "boolean", "default": false, "description": "When true, overwrites existing artifact at the target without merge." }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.triggers/1.1.0/webhook.input.json",
+  "title": "WebhookTriggerInput",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false,
+  "description": "Triggers have no upstream inputs — the payload comes from ctx.triggerData populated by the host's webhook subsystem at run start."
+}

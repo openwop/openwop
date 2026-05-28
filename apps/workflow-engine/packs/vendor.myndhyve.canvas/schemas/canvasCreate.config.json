@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.canvas/1.0.0/canvasCreate.config.json",
+  "title": "CanvasCreateConfig",
+  "type": "object",
+  "required": ["canvasTypeId"],
+  "properties": {
+    "canvasTypeId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z][a-zA-Z0-9-]*$",
+      "description": "Canvas type identifier (e.g., `'app-builder'`, `'slides'`, `'cms-builder'`). Must be a canvas type the host advertises. Unknown returns `canvas_type_unknown`."
+    },
+    "projectId": {
+      "type": "string",
+      "description": "Optional parent project. When set, the new canvas is associated with the project. Project-scoped canvases inherit workspace + RBAC from the project."
+    }
+  },
+  "additionalProperties": false
+}

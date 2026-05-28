@@ -155,7 +155,22 @@ Once the service exists (post-§14, with its full secret + env set), the
 **only safe way to ship a code change** is to rebuild the image while
 leaving the running config untouched. `gcloud run deploy` preserves the
 current revision's env vars and secret bindings for any flag you omit —
-so pass **no** `--env-vars-file`, `--set-env-vars`, or `--set-secrets`:
+so pass **no** `--env-vars-file`, `--set-env-vars`, or `--set-secrets`.
+
+**Pre-deploy: sync any out-of-context source.** `gcloud run deploy --source
+apps/workflow-engine` uploads only the contents of `apps/workflow-engine/`.
+Three artifacts that the runtime image needs live at the repo root, outside
+that build context, and have to be vendored into the build context first:
+
+| Repo-root source     | Vendored at                                  | Sync script                                       |
+|----------------------|----------------------------------------------|---------------------------------------------------|
+| `schemas/`           | `apps/workflow-engine/schemas/`              | `bash apps/workflow-engine/scripts/sync-schemas.sh`  |
+| `conformance/fixtures/` | `apps/workflow-engine/conformance-fixtures/` | `bash apps/workflow-engine/scripts/sync-fixtures.sh` |
+| `packs/`             | `apps/workflow-engine/packs/`                | `bash apps/workflow-engine/scripts/sync-packs.sh`    |
+
+The vendored copies are committed to git, so a clean checkout of `origin/main`
+already has them. Re-run the relevant sync script only when the canonical
+source changed since the last commit and the vendored copy is stale.
 
 ```bash
 # From a CLEAN checkout of origin/main — never the shared working tree,

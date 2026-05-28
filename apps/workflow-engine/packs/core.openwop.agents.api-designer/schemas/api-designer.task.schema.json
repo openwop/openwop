@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.api-designer/1.0.0/api-designer.task.schema.json",
+  "title": "ApiDesignerTask",
+  "type": "object",
+  "required": [
+    "target",
+    "brief"
+  ],
+  "properties": {
+    "target": {
+      "type": "string",
+      "enum": [
+        "openapi",
+        "asyncapi",
+        "json-schema"
+      ]
+    },
+    "brief": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50000
+    },
+    "existingPath": {
+      "type": "string"
+    },
+    "outputPath": {
+      "type": "string"
+    },
+    "includeExamples": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "additionalProperties": false
+}

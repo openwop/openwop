@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.ads-export/1.0.0/export-pack.output.json",
+  "title": "AdsExportPackOutput",
+  "type": "object",
+  "required": ["pack", "success"],
+  "properties": {
+    "pack": {
+      "type": "object",
+      "required": ["id", "name", "campaignId", "items", "format", "exportedAt", "exportedBy", "totalAssetSize", "combinationCount"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "campaignId": { "type": "string" },
+        "items": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+        "format": { "type": "string" },
+        "exportedAt": { "type": "string", "format": "date-time" },
+        "exportedBy": { "type": "string" },
+        "totalAssetSize": { "type": "integer", "minimum": 0 },
+        "combinationCount": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "json": { "type": "string", "description": "Pretty-printed JSON of `pack`. Present only when config.emitJson=true." },
+    "csv": { "type": "string", "description": "CSV row representation. Present only when config.emitCsv=true." },
+    "manifest": { "type": "object", "description": "ExportManifest record — present only when input.campaignName is supplied.", "additionalProperties": true },
+    "success": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.campaign-sequence/1.0.0/condition.config.json",
+  "title": "CampaignSequenceConditionConfig",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": true,
+  "description": "No required config. Conditions, logic, and branch targets all come from inputs.step."
+}

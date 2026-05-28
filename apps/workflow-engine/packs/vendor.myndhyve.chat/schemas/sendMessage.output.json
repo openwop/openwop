@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.chat/1.0.0/sendMessage.output.json",
+  "title": "ChatSendMessageOutput",
+  "type": "object",
+  "required": ["messageId", "sentAt"],
+  "properties": {
+    "messageId": { "type": "string", "minLength": 1 },
+    "sentAt": { "type": "string", "format": "date-time" },
+    "idempotencyKey": { "type": "string" }
+  },
+  "additionalProperties": false
+}

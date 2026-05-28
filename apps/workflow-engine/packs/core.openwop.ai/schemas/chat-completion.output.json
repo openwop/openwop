@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.ai/1.1.2/chat-completion.output.json",
+  "title": "ChatCompletionOutput",
+  "type": "object",
+  "required": [
+    "content",
+    "usage",
+    "finishReason"
+  ],
+  "properties": {
+    "content": {
+      "type": "string",
+      "description": "Assistant's text response. Empty string if the model returned no text (rare; some providers return empty content with a non-stop finishReason)."
+    },
+    "usage": {
+      "type": "object",
+      "required": [
+        "inputTokens",
+        "outputTokens"
+      ],
+      "properties": {
+        "inputTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "outputTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "totalTokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Optional — hosts MAY compute as inputTokens + outputTokens, OR return the provider's distinct value (some providers track cached prefix tokens separately)."
+        }
+      },
+      "additionalProperties": true
+    },
+    "finishReason": {
+      "type": "string",
+      "enum": [
+        "stop",
+        "length",
+        "content-filter",
+        "tool-call",
+        "other"
+      ],
+      "description": "Canonical finish reasons. `stop` = natural completion. `length` = maxTokens hit. `content-filter` = provider-side content moderation. `tool-call` = model returned a tool-call (unusual for this node — typically structured-output handles it). `other` = unmapped."
+    },
+    "model": {
+      "type": "string",
+      "description": "Provider-reported actual model that served the request. MAY differ from `config.model` when the provider auto-routes (e.g., `claude-sonnet-latest` resolves to a versioned id)."
+    }
+  },
+  "additionalProperties": false
+}

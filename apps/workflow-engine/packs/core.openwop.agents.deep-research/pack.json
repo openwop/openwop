@@ -1,0 +1,57 @@
+{
+  "name": "core.openwop.agents.deep-research",
+  "version": "1.0.1",
+  "description": "Long-horizon research agent. Plans, dispatches sub-investigations, retrieves from RAG + web, writes up findings. Mirrors LangGraph Deep Agents (planner + subagents + filesystem). Pure-agent pack.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.agents.deep-research",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "agents",
+    "research",
+    "rag",
+    "long-horizon",
+    "pattern"
+  ],
+  "engines": {
+    "openwop": ">=1.1.0 <2.0.0"
+  },
+  "peerDependencies": {
+    "aiProviders": "supported",
+    "host.agentRuntime": "supported",
+    "openwop.agents.memoryBackends": ">=longTerm"
+  },
+  "agents": [
+    {
+      "agentId": "core.openwop.agents.deep-research.default",
+      "persona": "Deep Researcher",
+      "label": "Deep Research Agent",
+      "description": "Plans an investigation, decomposes into sub-questions, retrieves from RAG + web search, evaluates source quality, writes a structured findings report. Persists discovered facts to long-term memory for re-use across runs.",
+      "modelClass": "research",
+      "systemPromptRef": "prompts/deep-research.md",
+      "toolAllowlist": [
+        "openwop:core.openwop.http.fetch",
+        "openwop:core.rag.retriever-basic",
+        "openwop:core.rag.retriever-contextual-compression",
+        "openwop:ai.research.web"
+      ],
+      "memoryShape": {
+        "scratchpad": true,
+        "conversation": false,
+        "longTerm": true
+      },
+      "handoff": {
+        "taskSchemaRef": "schemas/deep-research.task.schema.json",
+        "returnSchemaRef": "schemas/deep-research.return.schema.json"
+      },
+      "confidence": {
+        "defaultThreshold": 0.7
+      }
+    }
+  ],
+  "runtime": {
+    "language": "remote",
+    "entry": "pack.json"
+  }
+}

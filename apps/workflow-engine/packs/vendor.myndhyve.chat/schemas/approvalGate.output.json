@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "decision": { "type": "string", "enum": ["accept", "edit-accept", "refine", "ask", "reject", "timeout"] },
+    "approved": { "type": "boolean" },
+    "feedback": { "type": "string" },
+    "editedArtifact": {},
+    "decidedBy": { "type": "string" },
+    "decidedAt": { "type": "string", "format": "date-time" },
+    "timedOut": { "type": "boolean" }
+  },
+  "required": ["decision", "approved", "decidedAt"],
+  "additionalProperties": false
+}

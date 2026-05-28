@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/object-omit.input.json",
+  "title": "ObjectOmitInput",
+  "type": "object",
+  "required": [
+    "object"
+  ],
+  "properties": {
+    "object": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

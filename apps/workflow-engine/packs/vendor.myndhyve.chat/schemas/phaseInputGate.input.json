@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.chat/1.0.0/phaseInputGate.input.json",
+  "title": "ChatPhaseInputGateInput",
+  "type": "object",
+  "properties": {
+    "context": { "type": "object", "additionalProperties": true, "description": "Optional context object rendered alongside the prompt (e.g., what was generated up to this point)." }
+  },
+  "additionalProperties": false
+}

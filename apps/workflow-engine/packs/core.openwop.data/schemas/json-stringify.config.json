@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.data/1.2.1/json-stringify.config.json",
+  "title": "JsonStringifyConfig",
+  "type": "object",
+  "properties": {
+    "indent": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    }
+  },
+  "additionalProperties": false
+}

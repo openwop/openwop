@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.crypto/1.0.3/aead-encrypt.input.json",
+  "title": "AeadEncryptInput",
+  "type": "object",
+  "required": [
+    "key",
+    "plaintext"
+  ],
+  "properties": {
+    "key": {
+      "type": "string"
+    },
+    "plaintext": {
+      "type": "string"
+    },
+    "aad": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

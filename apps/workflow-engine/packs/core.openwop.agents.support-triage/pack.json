@@ -1,0 +1,30 @@
+{
+  "name": "core.openwop.agents.support-triage",
+  "version": "1.0.0",
+  "description": "Customer support triage agent. Categorizes inbound tickets, routes to the right queue, surfaces severity + customer-segment signals. Pure-agent pack.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.agents.support-triage",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": ["core", "agents", "support", "triage", "classification", "vertical"],
+  "engines": { "openwop": ">=1.1.0 <2.0.0" },
+  "peerDependencies": { "aiProviders": "supported" },
+  "agents": [
+    {
+      "agentId": "core.openwop.agents.support-triage.default",
+      "persona": "Support Triage",
+      "label": "Support Triage Agent",
+      "description": "Reads a support ticket (subject + body + optional customer metadata) and emits a routing decision: queue, severity, customer-segment-aware priority, suggested skill-tags, and a short rationale.",
+      "modelClass": "classification",
+      "systemPromptRef": "prompts/support-triage.md",
+      "toolAllowlist": [],
+      "memoryShape": { "scratchpad": false, "conversation": false, "longTerm": false },
+      "handoff": {
+        "taskSchemaRef": "schemas/support-triage.task.schema.json",
+        "returnSchemaRef": "schemas/support-triage.return.schema.json"
+      },
+      "confidence": { "defaultThreshold": 0.75 }
+    }
+  ],
+  "runtime": { "language": "remote", "entry": "pack.json" }
+}

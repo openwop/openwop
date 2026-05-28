@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.hitl/1.0.0/form-request.input.json",
+  "title": "FormRequestInput",
+  "type": "object",
+  "required": [
+    "prompt"
+  ],
+  "properties": {
+    "prompt": {
+      "type": "string"
+    },
+    "locale": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

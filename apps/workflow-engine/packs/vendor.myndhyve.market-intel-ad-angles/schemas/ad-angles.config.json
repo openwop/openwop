@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.market-intel-ad-angles/1.0.0/ad-angles.config.json",
+  "title": "MarketIntelAdAnglesConfig",
+  "type": "object",
+  "properties": {
+    "provider": { "type": "string", "description": "AI provider override (anthropic / openai / google)." },
+    "model": { "type": "string", "description": "Model id override." },
+    "temperature": { "type": "number", "minimum": 0, "maximum": 2, "description": "Defaults to 0.6 — angle generation rewards creative variation more than VoC extraction does." },
+    "maxTokens": { "type": "integer", "minimum": 512, "description": "Defaults to 6000; ad-angle briefs are substantially larger than VoC records (10 angles × ~500 tokens/angle + summary)." }
+  },
+  "additionalProperties": true
+}
