@@ -155,7 +155,7 @@ export class OpenwopClient {
       } catch (err) {
         // Host doesn't advertise the capability → 404. Surface as null so callers
         // can branch on capability discovery without try/catch.
-        if (err instanceof Error && /\b404\b/.test(err.message)) return null;
+        if (err instanceof WopError && err.status === 404) return null;
         throw err;
       }
     },
@@ -259,7 +259,7 @@ export class OpenwopClient {
         });
         return res.annotations;
       } catch (err) {
-        if (err instanceof Error && /\b(404|501)\b/.test(err.message)) return null;
+        if (err instanceof WopError && (err.status === 404 || err.status === 501)) return null;
         throw err;
       }
     },
@@ -282,7 +282,7 @@ export class OpenwopClient {
           path: `/v1/runs/${encodeURIComponent(runId)}/ancestry`,
         });
       } catch (err) {
-        if (err instanceof Error && /\b404\b/.test(err.message)) return null;
+        if (err instanceof WopError && err.status === 404) return null;
         throw err;
       }
     },
@@ -302,7 +302,7 @@ export class OpenwopClient {
           path: `/v1/runs/${encodeURIComponent(runId)}:diff?against=${encodeURIComponent(against)}`,
         });
       } catch (err) {
-        if (err instanceof Error && /\b404\b/.test(err.message)) return null;
+        if (err instanceof WopError && err.status === 404) return null;
         throw err;
       }
     },
@@ -344,7 +344,7 @@ export class OpenwopClient {
       try {
         return await this.#request<AgentInventoryResponse>({ method: 'GET', path: '/v1/agents' });
       } catch (err) {
-        if (err instanceof Error && /\b404\b/.test(err.message)) return null;
+        if (err instanceof WopError && err.status === 404) return null;
         throw err;
       }
     },
@@ -356,7 +356,7 @@ export class OpenwopClient {
           path: `/v1/agents/${encodeURIComponent(agentId)}`,
         });
       } catch (err) {
-        if (err instanceof Error && /\b404\b/.test(err.message)) return null;
+        if (err instanceof WopError && err.status === 404) return null;
         throw err;
       }
     },
@@ -387,7 +387,7 @@ export class OpenwopClient {
         });
         return true;
       } catch (err) {
-        if (err instanceof Error && /\b404\b/.test(err.message)) return false;
+        if (err instanceof WopError && err.status === 404) return false;
         throw err;
       }
     },
@@ -399,7 +399,7 @@ export class OpenwopClient {
           path: '/v1/host/sample/registry/agent-packs',
         });
       } catch (err) {
-        if (err instanceof Error && /\b404\b/.test(err.message)) return null;
+        if (err instanceof WopError && err.status === 404) return null;
         throw err;
       }
     },
@@ -664,7 +664,7 @@ export class OpenwopClient {
         });
         return res.files;
       } catch (err) {
-        if (err instanceof Error && /\b501\b/.test(err.message)) return null;
+        if (err instanceof WopError && err.status === 501) return null;
         throw err;
       }
     },
@@ -685,7 +685,7 @@ export class OpenwopClient {
           path: `/v1/host/workspace/files/${encodeURIComponent(path)}${qs ? `?${qs}` : ''}`,
         });
       } catch (err) {
-        if (err instanceof Error && /\b(404|501)\b/.test(err.message)) return null;
+        if (err instanceof WopError && (err.status === 404 || err.status === 501)) return null;
         throw err;
       }
     },
@@ -726,7 +726,7 @@ export class OpenwopClient {
         });
         return true;
       } catch (err) {
-        if (err instanceof Error && /\b(404|501)\b/.test(err.message)) return false;
+        if (err instanceof WopError && (err.status === 404 || err.status === 501)) return false;
         throw err;
       }
     },
