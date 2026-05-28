@@ -31,6 +31,13 @@ interface Props {
    *  the progress toggle button so users with multiple in-flight runs
    *  see at a glance how many the panel covers. */
   progressBadgeCount?: number;
+  /** When set, render a right-side active-agents panel toggle. */
+  onToggleAgents?: () => void;
+  agentsOpen?: boolean;
+  /** Number of user-activated agents (excludes the default
+   *  OpenWOP Assistant). Small badge on the toggle so users can see
+   *  the lineup count without opening the panel. */
+  agentsBadgeCount?: number;
 }
 
 export function ChatHeader({
@@ -48,6 +55,9 @@ export function ChatHeader({
   onToggleProgress,
   progressOpen,
   progressBadgeCount = 0,
+  onToggleAgents,
+  agentsOpen,
+  agentsBadgeCount = 0,
 }: Props): JSX.Element {
   const totalCost = sessionCostUsd(session);
   const messageCount = session.messages.length;
@@ -162,6 +172,39 @@ export function ChatHeader({
                 textAlign: 'center',
                 lineHeight: '14px',
               }}>{progressBadgeCount}</span>
+            )}
+          </button>
+        )}
+        {onToggleAgents && (
+          <button
+            type="button"
+            className="secondary"
+            onClick={onToggleAgents}
+            aria-label={agentsOpen ? 'Close active agents panel' : 'Open active agents panel'}
+            aria-pressed={agentsOpen}
+            title="Active agents in this chat"
+            style={{
+              padding: '2px 8px',
+              fontSize: 11,
+              minHeight: 0,
+              height: 24,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            <span aria-hidden>◉</span>
+            {agentsBadgeCount > 0 && (
+              <span style={{
+                fontSize: 10,
+                minWidth: 14,
+                padding: '0 4px',
+                borderRadius: 8,
+                background: 'var(--color-accent, var(--clay))',
+                color: 'white',
+                textAlign: 'center',
+                lineHeight: '14px',
+              }}>{agentsBadgeCount}</span>
             )}
           </button>
         )}

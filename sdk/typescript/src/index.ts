@@ -69,6 +69,21 @@ export type {
   PromptVariable,
   RenderPromptRequest,
   RenderPromptResponse,
+  // RFC 0072 §A — Manifest-agent inventory (GET /v1/agents).
+  // Consumed by the workflow-engine sample app's Agents tab + chat
+  // `@` mention picker (2026-05-28 mention-symbol swap).
+  AgentInventoryEntry,
+  AgentInventoryResponse,
+  // Sample-extension surface — user-authored agents
+  // (`POST /v1/host/sample/agents`) + agent-pack registry browser
+  // (`GET/POST /v1/host/sample/registry/agent-packs`). Non-normative;
+  // wraps host-extension routes the sample app authors against.
+  CreateUserAgentRequest,
+  UserAgentRecord,
+  AgentPackSummary,
+  AgentPackRegistryResponse,
+  InstallAgentPackRequest,
+  InstallAgentPackResponse,
 } from './types.js';
 export { streamEvents } from './sse.js';
 export type { EventsStreamContext, EventsStreamOptions } from './sse.js';

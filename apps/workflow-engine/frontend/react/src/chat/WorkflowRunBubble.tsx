@@ -108,7 +108,7 @@ export function WorkflowRunBubble({ message, onOpenProgress, isFocusedInPanel }:
         </div>
 
         <div className="muted" style={{ marginTop: 4, fontSize: 11, opacity: 0.75, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'baseline' }}>
-          <code>@{run.slug}</code>
+          <code>/{run.slug}</code>
           {run.runId && !run.runUnavailable && (
             <>
               <span>·</span>

@@ -354,7 +354,7 @@ function FocusedRunView({
 
       {/* Footer */}
       <div className="muted" style={{ marginTop: 'auto', fontSize: 11, opacity: 0.75, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'baseline', paddingTop: 8, borderTop: '1px solid var(--color-border)' }}>
-        <code>@{run.slug}</code>
+        <code>/{run.slug}</code>
         {run.runId && (
           <>
             <span>·</span>

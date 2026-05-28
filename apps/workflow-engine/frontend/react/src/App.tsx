@@ -23,6 +23,11 @@ import { SignInButton } from './auth/SignInButton.js';
 import { NotificationBell } from './notifications/NotificationBell.js';
 import { NotificationPanel } from './notifications/NotificationPanel.js';
 import { useNotificationStore } from './notifications/notificationStore.js';
+import { NavDropdown } from './chrome/NavDropdown.js';
+import { AgentsPage } from './agents/AgentsPage.js';
+import { AgentDetailPage } from './agents/AgentDetailPage.js';
+import { AgentNewPage } from './agents/AgentNewPage.js';
+import { AgentInstallPage } from './agents/AgentInstallPage.js';
 
 export function App() {
   const location = useLocation();
@@ -60,21 +65,54 @@ export function App() {
           <span>Open<em>WOP</em> <span className="app-header-sub">workflow engine</span></span>
         </h1>
         <nav>
-          {/* Chat first — the most-used demo entry point. @-mention
-              from chat is how users discover workflow orchestration;
-              putting Chat behind Workflows hides the easy on-ramp.
-              (Reverted from the 2026-05-23 "workflow-first narrative"
-              ordering per user feedback, 2026-05-25.) */}
+          {/* Chat stays top-level — the most-used entry point. The
+              other 8 nav items used to be flat siblings here; they're
+              now grouped into three submenu parents (Build / Operate /
+              Settings) so the bar stays scannable as the surface grows
+              (Agents tab added 2026-05-28). The submenu visual rhythm
+              matches the marketing site's `.nav-dropdown` pattern in
+              public/styles.css — same hover-bridge, caret rotation,
+              and click-toggle behaviour, retokenized onto the app's
+              --clay / --paper palette so the two sites read as one
+              family.
+
+              Ordering rationale:
+                Build    — surfaces you author at (create work)
+                Operate  — surfaces you observe at (watch work happen)
+                Settings — config that doesn't change per session
+
+              Chat first per feedback_chat_first_nav memory. */}
           <NavLink to="/" end>Chat</NavLink>
-          <NavLink to="/builder">Workflows</NavLink>
-          <NavLink to="/prompts">Prompts</NavLink>
-          <NavLink to="/keys">Keys</NavLink>
-          <NavLink to="/runs">Runs</NavLink>
-          <NavLink to="/memory">Memory</NavLink>
-          <NavLink to="/mission">Mission Control</NavLink>
-          <NavLink to="/inbox">Inbox</NavLink>
-          <NavLink to="/capabilities">Capabilities</NavLink>
-          <NavLink to="/cli">CLI</NavLink>
+          <NavDropdown
+            label="Build"
+            items={[
+              { label: 'Workflows', to: '/builder', hint: 'Author + run multi-node graphs' },
+              { label: 'Agents', to: '/agents', hint: 'Persona-driven LLM workers' },
+              { label: 'Prompts', to: '/prompts', hint: 'Reusable templates + variables' },
+            ]}
+          />
+          <NavDropdown
+            label="Operate"
+            items={[
+              { label: 'Runs', to: '/runs', hint: 'Per-run event streams + replay' },
+              { label: 'Inbox', to: '/inbox', hint: 'Notifications + approvals' },
+              { label: 'Mission Control', to: '/mission', hint: 'Live fleet view across runs' },
+              { label: 'Memory', to: '/memory', hint: 'Tenant-attributed memory writes' },
+            ]}
+          />
+          {/* CLI lives in Settings — it's a dev/admin surface
+              adjacent to BYOK keys + capabilities discovery, not an
+              authoring or operate surface. Added during the rebase
+              of `feat/agents-tab` onto `e55ce3cb feat(app): in-app
+              /cli page`. */}
+          <NavDropdown
+            label="Settings"
+            items={[
+              { label: 'Keys', to: '/keys', hint: 'BYOK credentials + provider config' },
+              { label: 'Capabilities', to: '/capabilities', hint: 'What this host advertises' },
+              { label: 'CLI', to: '/cli', hint: 'In-app CLI quickstart + command catalog' },
+            ]}
+          />
         </nav>
         <div className="app-header-spacer" />
         <button
@@ -117,6 +155,12 @@ export function App() {
           <Route path="/prompts" element={<PromptLibraryPage />} />
           <Route path="/keys" element={<KeysPage />} />
           <Route path="/memory" element={<MemoryInspectorPage />} />
+          {/* Agents tab — list + detail + create (E2) + install (E3)
+              + fork (E4 also lands on /agents/new with ?fork= query). */}
+          <Route path="/agents" element={<AgentsPage />} />
+          <Route path="/agents/new" element={<AgentNewPage />} />
+          <Route path="/agents/install" element={<AgentInstallPage />} />
+          <Route path="/agents/:agentId" element={<AgentDetailPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/cli" element={<CliPage />} />
           {/* Catch-all: the SPA host rewrites every path to index.html, so an

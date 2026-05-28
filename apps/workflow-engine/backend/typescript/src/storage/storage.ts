@@ -24,6 +24,7 @@ import type {
   NotificationStatus,
   PushSubscriptionRecord,
   RunRecord,
+  UserAgentRecord,
   WebhookSubscriptionRecord,
 } from '../types.js';
 import type {
@@ -321,6 +322,31 @@ export interface Storage {
   /** Drop every subscription owned by a tenant — wired into the
    *  account-delete cascade. */
   deleteAllTenantPushSubscriptions(tenantId: string): Promise<number>;
+
+  // ── user-authored agents (phase E1, 2026-05-28) ──
+  // Pack-installed agents come through the AgentRegistry from RFC 0003
+  // pack manifests. These rows back `POST /v1/host/sample/agents` —
+  // the Agents-tab authoring form. On boot the app reads every row and
+  // registers it with the AgentRegistry; the existing GET /v1/agents
+  // surface then merges both sources without consumers distinguishing.
+  insertUserAgent(record: UserAgentRecord): Promise<void>;
+  /** List every user-authored agent owned by a tenant. Used by the
+   *  agents-tab list view (filtered to the caller's tenant). */
+  listUserAgents(tenantId: string): Promise<readonly UserAgentRecord[]>;
+  /** Cross-tenant listing — used by the boot-time registry loader so
+   *  every user-authored agent is registered in the process-local
+   *  `AgentRegistry` without first enumerating tenants. The registry
+   *  itself is not tenant-scoped; tenant-isolation lives at the
+   *  storage + route layers. */
+  listAllUserAgents(): Promise<readonly UserAgentRecord[]>;
+  /** Read one user-authored agent. Returns null when not present —
+   *  the agents tab's delete handler uses this to confirm ownership
+   *  before issuing the DELETE. */
+  getUserAgent(agentId: string): Promise<UserAgentRecord | null>;
+  /** Remove one user-authored agent. Returns true when a row was
+   *  removed. Pack-installed agents aren't reachable through this
+   *  surface (different storage). */
+  deleteUserAgent(agentId: string): Promise<boolean>;
 
   // ── messaging relay-gateway (demo host-extension; NON-normative) ──
   // Device tokens are persisted as a SHA-256 hash only (see RelayDeviceRecord).

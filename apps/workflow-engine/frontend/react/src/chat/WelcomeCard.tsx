@@ -130,8 +130,9 @@ export function WelcomeCard({ onPickSuggestion }: Props): JSX.Element {
         Run workflows by name. Chat when you need to.
       </h2>
       <p className="muted" style={{ marginTop: 8, fontSize: 13, maxWidth: 560, lineHeight: 1.5 }}>
-        OpenWOP makes multi-agent orchestration as easy as @-mentioning a workflow.
-        Click one below — each is a real multi-step workflow on the live sample backend.
+        OpenWOP makes multi-agent orchestration as easy as /-mentioning a workflow
+        or @-mentioning an agent. Click one below — each is a real multi-step
+        workflow on the live sample backend.
       </p>
       <div style={{
         display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12,
@@ -146,7 +147,7 @@ export function WelcomeCard({ onPickSuggestion }: Props): JSX.Element {
               className="secondary"
               disabled={!available}
               onClick={() => {
-                if (c.slug) onPickSuggestion(`@${c.slug} ${c.trailing}`);
+                if (c.slug) onPickSuggestion(`/${c.slug} ${c.trailing}`);
               }}
               title={available
                 ? `Pre-fill chat input with @${c.slug}`

@@ -69,6 +69,8 @@ import { registerMediaAssetRoutes } from './routes/mediaAssets.js';
 import { registerDemoSummaryRoutes } from './routes/demoSummary.js';
 import { registerDaemonStatusRoutes } from './routes/daemonStatus.js';
 import { registerAgentRoutes } from './routes/agents.js';
+import { registerUserAgentRoutes, loadUserAgentsIntoRegistry } from './routes/userAgents.js';
+import { registerAgentPackRegistryRoutes } from './routes/agentPackRegistry.js';
 import { registerMessagingRoutes } from './routes/messaging.js';
 import { createSelfHttpBridge } from './messaging/bridge.js';
 import { registerSchedulerRoutes } from './routes/scheduler.js';
@@ -319,6 +321,18 @@ export async function createApp(config: AppConfig): Promise<Express> {
   registerDemoSummaryRoutes(app, { config });
   registerDaemonStatusRoutes(app, { config, startTimeMs });
   registerAgentRoutes(app);
+  registerUserAgentRoutes(app, { storage });
+  registerAgentPackRegistryRoutes(app);
+  // Boot-time hydration of the AgentRegistry from persisted
+  // user-authored rows. Pack-installed agents are registered earlier
+  // in the pack loader; this fold adds any user-authored ones so
+  // `GET /v1/agents` and the chat-tab `@` picker both see them
+  // without per-request lookups.
+  void loadUserAgentsIntoRegistry(storage).catch((err) => {
+    log.error('user_agents_load_failed', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  });
   registerSchedulerRoutes(app);
   // Inbound chat → workflow run bridge. Binds inbound messages to a workflow
   // (default deterministic `sample.demo.uppercase`; override via

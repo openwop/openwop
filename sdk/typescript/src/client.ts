@@ -51,6 +51,11 @@ import {
   type RunSnapshot,
   type AgentInventoryEntry,
   type AgentInventoryResponse,
+  type CreateUserAgentRequest,
+  type UserAgentRecord,
+  type AgentPackRegistryResponse,
+  type InstallAgentPackRequest,
+  type InstallAgentPackResponse,
 } from './types.js';
 
 export interface OpenwopClientOptions {
@@ -354,6 +359,59 @@ export class OpenwopClient {
         if (err instanceof Error && /\b404\b/.test(err.message)) return null;
         throw err;
       }
+    },
+  };
+
+  // ── User-authored agents (sample-extension; non-normative) ───────────
+  // Backs the workflow-engine sample app's Agents tab. Pack-installed
+  // agents come through the `.agents` inventory above (RFC 0072 §A).
+  // These methods wrap the `POST/DELETE /v1/host/sample/agents` +
+  // `GET/POST /v1/host/sample/registry/agent-packs` host extensions.
+  // Returns `null` on 404 (capability absent — matches the `.agents`
+  // surface pattern); throws on other failures.
+  readonly userAgents = {
+    create: async (body: CreateUserAgentRequest, opts: MutationOptions = {}): Promise<UserAgentRecord> => {
+      return await this.#request<UserAgentRecord>({
+        method: 'POST',
+        path: '/v1/host/sample/agents',
+        body,
+        ...(opts.idempotencyKey ? { idempotencyKey: opts.idempotencyKey } : {}),
+      });
+    },
+
+    delete: async (agentId: string): Promise<boolean> => {
+      try {
+        await this.#request<void>({
+          method: 'DELETE',
+          path: `/v1/host/sample/agents/${encodeURIComponent(agentId)}`,
+        });
+        return true;
+      } catch (err) {
+        if (err instanceof Error && /\b404\b/.test(err.message)) return false;
+        throw err;
+      }
+    },
+
+    listAvailablePacks: async (): Promise<AgentPackRegistryResponse | null> => {
+      try {
+        return await this.#request<AgentPackRegistryResponse>({
+          method: 'GET',
+          path: '/v1/host/sample/registry/agent-packs',
+        });
+      } catch (err) {
+        if (err instanceof Error && /\b404\b/.test(err.message)) return null;
+        throw err;
+      }
+    },
+
+    installPack: async (
+      body: InstallAgentPackRequest,
+    ): Promise<InstallAgentPackResponse> => {
+      return await this.#request<InstallAgentPackResponse>({
+        method: 'POST',
+        path: '/v1/host/sample/registry/agent-packs/install',
+        body,
+      });
     },
   };
 

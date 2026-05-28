@@ -26,6 +26,7 @@ import {
 } from '../../client/chatSessionsClient.js';
 import type { BYOKActiveConfig } from '../../byok/lib/useBYOKConfig.js';
 import { useApplyAnimation } from './useApplyAnimation.js';
+import { useActiveAgents, type UseActiveAgentsResult } from '../activeAgents/useActiveAgents.js';
 import { isRecord } from '../lib/typeGuards.js';
 import { getSavedWorkflow } from '../../builder/persistence/localStore.js';
 import { serializeWorkflow } from '../../builder/schema/serialize.js';
@@ -265,6 +266,11 @@ export interface UseChatSessionResult {
   /** Switch the active chat to a persisted session — cancels the in-flight
    *  subscription, loads messages from the BE, replaces local state. */
   loadSessionFromBackend: (sessionId: string) => Promise<void>;
+  /** Active-agents lineup + mutation handlers (phase D1+). The UI
+   *  consumes this through the `<ActiveAgentsPanel>`; the chat
+   *  dispatcher (phase D2) reads `currentAgentId` to route turns; the
+   *  `@`-mention submit path (phase D3) calls `activate`. */
+  activeAgents: UseActiveAgentsResult;
 }
 
 export function useChatSession(): UseChatSessionResult {
@@ -589,6 +595,13 @@ export function useChatSession(): UseChatSessionResult {
             messages: providerMessages,
             webSearch: opts?.webSearch === true,
             ...(opts?.tools && opts.tools.length > 0 ? { tools: opts.tools } : {}),
+            // Active-agent routing (phase D2). When set, the
+            // chat-responder resolves the agent's systemPrompt from
+            // the registry and uses it as the system message. The
+            // FE's caller (ChatSidebar) maps the active-agents panel
+            // state to this id and omits it for the default
+            // OpenWOP Assistant.
+            ...(opts?.activeAgentId ? { agentId: opts.activeAgentId } : {}),
           },
           configurable: {
             credentialRefs: [config.credentialRef],
@@ -1168,6 +1181,16 @@ export function useChatSession(): UseChatSessionResult {
         title: 'Saved chat',
         messages,
         createdAt: persisted[0]?.createdAt ?? new Date().toISOString(),
+        // `activeAgents` deliberately omitted — the BE chat_sessions
+        // table doesn't store the active-agents lineup (the column
+        // would need a v17 migration + a round-trip through
+        // `appendChatMessage` / list-messages). On a cross-device
+        // load the user starts with just the default assistant in
+        // the side panel; the panel footer surfaces this limitation
+        // to the user. Same-device same-browser reloads of the
+        // current session DO survive via `persistSession` →
+        // localStorage. Track this in the `[[activeAgents
+        // persistence]]` follow-up.
       };
       // Mark every loaded id as already-persisted so subsequent appends
       // dedup correctly. The session itself is known to exist in BE
@@ -1249,12 +1272,19 @@ export function useChatSession(): UseChatSessionResult {
   const runWorkflowMention = useCallback(async (entry: WorkflowMentionEntry, trailing?: string) => {
     setError(null);
     // Preserve what the user actually typed so the chat history shows
-    // `@hello-uppercase hello` (their intent) and not just the slug.
+    // `/hello-uppercase hello` (their intent) and not just the slug.
+    //
+    // Symbol: `/` post-2026-05-28 mention-symbol swap. `@` now opens
+    // the agents picker and goes through the agent-activation path
+    // (phase D3), not the workflow dispatch path. Old persisted chat
+    // history keeps showing `@slug` for workflows dispatched before
+    // the swap — acceptable historical artifact; the wire content is
+    // opaque to the BE.
     const trimmedTrailing = trailing?.trim() ?? '';
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
-      content: trimmedTrailing.length > 0 ? `@${entry.slug} ${trimmedTrailing}` : `@${entry.slug}`,
+      content: trimmedTrailing.length > 0 ? `/${entry.slug} ${trimmedTrailing}` : `/${entry.slug}`,
       createdAt: new Date().toISOString(),
     };
     const runMsgId = crypto.randomUUID();
@@ -1294,7 +1324,7 @@ export function useChatSession(): UseChatSessionResult {
         try { inputs = JSON.parse(raw) as Record<string, unknown>; } catch { /* empty */ }
       }
     }
-    // User typed `@<slug> some text` — override the first key of the
+    // User typed `/<slug> some text` — override the first key of the
     // resolved inputs object with that text. Keeps the workflow's
     // remaining defaults (e.g., a `tone` knob, a `length` cap) so the
     // user gets to swap the obvious "what do I send" field without
@@ -1330,7 +1360,7 @@ export function useChatSession(): UseChatSessionResult {
     const runMsg: ChatMessage = {
       id: runMsgId,
       role: 'workflow_run',
-      content: `@${entry.slug} — starting…`,
+      content: `/${entry.slug} — starting…`,
       createdAt: startedAt,
       workflowRun: initial,
     };
@@ -1530,6 +1560,12 @@ export function useChatSession(): UseChatSessionResult {
     }
   }, [session.messages, updateWorkflowRun]);
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks -- the hook
+  // call is unconditional; React rule-of-hooks holds. Placement here
+  // (vs at the top of the function) keeps the active-agents API
+  // logically grouped with the chat-session result it's exposed on.
+  const activeAgents = useActiveAgents(session, setSession);
+
   return {
     session,
     isSending,
@@ -1544,5 +1580,6 @@ export function useChatSession(): UseChatSessionResult {
     regenerate,
     setFeedback,
     loadSessionFromBackend,
+    activeAgents,
   };
 }

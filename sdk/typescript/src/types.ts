@@ -1054,3 +1054,95 @@ export interface AgentInventoryResponse {
   agents: AgentInventoryEntry[];
   total: number;
 }
+
+/* ── User-authored agents (sample-extension; non-normative) ─────────────
+ * Backs the workflow-engine sample app's Agents tab. Pack-installed
+ * agents come through `AgentInventoryEntry` above (RFC 0072 §A
+ * normative inventory). The types below mirror the sample-host
+ * `POST /v1/host/sample/agents` create surface — they're scoped to
+ * the sample-extension and may evolve independently of the
+ * normative agent surface. Future RFC promotion would migrate these
+ * to the normative wire shape.
+ */
+
+/** Body for `POST /v1/host/sample/agents`. The server synthesises
+ *  the agentId as `user.<tenantId>.<persona-slug>`. */
+export interface CreateUserAgentRequest {
+  /** Short name; becomes the `@`-mention slug and chat panel label.
+   *  Required, ≤64 chars. */
+  persona: string;
+  /** Longer display name; defaults to the persona when omitted. */
+  label?: string;
+  description?: string;
+  /** One of: `chat`, `reasoning`, `coding`, `extraction`. */
+  modelClass: string;
+  /** Inline system prompt body; ≤16 000 chars. The sample-host stores
+   *  it directly (no pack-file ref). */
+  systemPrompt: string;
+  /** Capability ids the agent is allowed to call; ≤32 entries. */
+  toolAllowlist?: string[];
+  memoryShape?: {
+    scratchpad?: boolean;
+    conversation?: boolean;
+    longTerm?: boolean;
+  };
+  /** 0.0-1.0; decisions below this are surfaced as low-confidence. */
+  confidenceThreshold?: number;
+}
+
+/** Response body for `POST /v1/host/sample/agents` — shaped to
+ *  match `AgentInventoryEntry` minus normative-only fields, so a
+ *  follow-up `GET /v1/agents` returns a row of the same shape. */
+export interface UserAgentRecord {
+  agentId: string;
+  persona: string;
+  label: string;
+  description?: string;
+  modelClass: string;
+  packName: string;
+  packVersion: string;
+  toolAllowlist: string[];
+  memoryShape: {
+    scratchpad: boolean;
+    conversation: boolean;
+    longTerm: boolean;
+  };
+  confidenceThreshold?: number;
+  hasHandoffSchemas: false;
+}
+
+/** One installable agent-pack summary from the sample host's local
+ *  registry mirror (`GET /v1/host/sample/registry/agent-packs`). */
+export interface AgentPackSummary {
+  /** Pack name, e.g. `core.openwop.agents.code-reviewer`. */
+  name: string;
+  version: string;
+  description?: string;
+  /** Personas declared by the pack's `agents[]` (per RFC 0003). */
+  personas: string[];
+  /** True when at least one of the pack's agents is registered in
+   *  this host's in-process AgentRegistry. */
+  installed: boolean;
+}
+
+export interface AgentPackRegistryResponse {
+  packs: AgentPackSummary[];
+  total: number;
+}
+
+export interface InstallAgentPackRequest {
+  /** Must start with `core.openwop.agents.` — the sample's install
+   *  route filters to that namespace. */
+  name: string;
+  /** Defaults to `1.0.0` when omitted. */
+  version?: string;
+}
+
+export interface InstallAgentPackResponse {
+  name: string;
+  version: string;
+  /** True when the pack was newly installed; false when it was
+   *  already present in the registry. */
+  installed: boolean;
+  alreadyInstalled: boolean;
+}

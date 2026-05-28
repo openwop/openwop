@@ -32,7 +32,7 @@ export interface Queryable {
   ): Promise<{ rows: R[] }>;
 }
 
-export const LATEST_SCHEMA_VERSION = 13;
+export const LATEST_SCHEMA_VERSION = 14;
 
 const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
   1: async (client) => {
@@ -458,6 +458,32 @@ const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
   13: async (client) => {
     // Routing rules may bind to an agent instead of a workflow. Mirrors sqlite mig 15.
     await client.query(`ALTER TABLE messaging_routing_rules ADD COLUMN IF NOT EXISTS agent_id TEXT;`);
+  },
+  14: async (client) => {
+    // User-authored agents — mirrors sqlite mig 16. Backs
+    // `POST /v1/host/sample/agents` (Agents-tab authoring form,
+    // 2026-05-28). Shape parity with sqlite: `tool_allowlist` is
+    // JSONB (postgres prefers it over text); booleans are
+    // bool-typed; `confidence_threshold` is double-precision.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS user_agents (
+        agent_id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        persona TEXT NOT NULL,
+        label TEXT,
+        description TEXT,
+        model_class TEXT NOT NULL,
+        system_prompt TEXT NOT NULL,
+        tool_allowlist JSONB NOT NULL DEFAULT '[]'::jsonb,
+        memory_scratchpad BOOLEAN NOT NULL DEFAULT FALSE,
+        memory_conversation BOOLEAN NOT NULL DEFAULT FALSE,
+        memory_long_term BOOLEAN NOT NULL DEFAULT FALSE,
+        confidence_threshold DOUBLE PRECISION,
+        created_at TIMESTAMPTZ NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_user_agents_tenant
+        ON user_agents (tenant_id, created_at DESC);
+    `);
   },
 };
 

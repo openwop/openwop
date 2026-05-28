@@ -22,6 +22,30 @@ import { applyMigrations } from '../src/storage/postgres/schema.js';
 import type { Storage } from '../src/storage/storage.js';
 import type { RunRecord, EventRecord } from '../src/types.js';
 
+function rowToUserAgentTestImpl(r: Record<string, unknown>): import('../src/types.js').UserAgentRecord {
+  return {
+    agentId: r.agent_id as string,
+    tenantId: r.tenant_id as string,
+    persona: r.persona as string,
+    label: (r.label as string | null) ?? undefined,
+    description: (r.description as string | null) ?? undefined,
+    modelClass: r.model_class as string,
+    systemPrompt: r.system_prompt as string,
+    toolAllowlist: Array.isArray(r.tool_allowlist)
+      ? (r.tool_allowlist as string[])
+      : (typeof r.tool_allowlist === 'string'
+          ? (JSON.parse(r.tool_allowlist) as string[])
+          : []),
+    memoryShape: {
+      scratchpad: r.memory_scratchpad === true,
+      conversation: r.memory_conversation === true,
+      longTerm: r.memory_long_term === true,
+    },
+    confidenceThreshold: (r.confidence_threshold as number | null) ?? undefined,
+    createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at),
+  };
+}
+
 // Build a pg-mem-backed Storage by reusing the same impl as production
 // but with the pool replaced. The production `openPostgresStorage`
 // connects via `pg.Pool`; pg-mem ships a compatible adapter.
@@ -194,6 +218,49 @@ async function makeStorage(): Promise<Storage> {
     getPushSubscriptionByEndpoint: async () => null,
     deletePushSubscription: async () => false,
     deleteAllTenantPushSubscriptions: async () => 0,
+    // Real impls — exercised by the `round-trips user_agents` test
+    // below. Mirror the production postgres adapter shape.
+    insertUserAgent: async (record) => {
+      await pool.query(
+        `INSERT INTO user_agents (
+          agent_id, tenant_id, persona, label, description, model_class,
+          system_prompt, tool_allowlist,
+          memory_scratchpad, memory_conversation, memory_long_term,
+          confidence_threshold, created_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11,$12,$13)`,
+        [
+          record.agentId, record.tenantId, record.persona,
+          record.label ?? null, record.description ?? null, record.modelClass,
+          record.systemPrompt, JSON.stringify(record.toolAllowlist),
+          record.memoryShape.scratchpad,
+          record.memoryShape.conversation,
+          record.memoryShape.longTerm,
+          record.confidenceThreshold ?? null, record.createdAt,
+        ],
+      );
+    },
+    listUserAgents: async (tenantId) => {
+      const r = await pool.query(
+        `SELECT * FROM user_agents WHERE tenant_id = $1 ORDER BY created_at DESC`,
+        [tenantId],
+      );
+      return r.rows.map(rowToUserAgentTestImpl);
+    },
+    listAllUserAgents: async () => {
+      const r = await pool.query(`SELECT * FROM user_agents ORDER BY created_at DESC`);
+      return r.rows.map(rowToUserAgentTestImpl);
+    },
+    getUserAgent: async (agentId) => {
+      const r = await pool.query(
+        `SELECT * FROM user_agents WHERE agent_id = $1`,
+        [agentId],
+      );
+      return r.rows[0] ? rowToUserAgentTestImpl(r.rows[0]) : null;
+    },
+    deleteUserAgent: async (agentId) => {
+      const r = await pool.query(`DELETE FROM user_agents WHERE agent_id = $1`, [agentId]);
+      return (r.rowCount ?? 0) > 0;
+    },
     // messaging relay-gateway — not exercised by this schema round-trip test
     upsertRelayDevice: async () => { throw new Error('not exercised'); },
     getRelayDevice: async () => null,
@@ -302,6 +369,62 @@ describe('Postgres storage (pg-mem)', () => {
     expect(all[0]!.sequence).toBe(1);
     expect(all[1]!.sequence).toBe(2);
     expect(all[1]!.payload).toEqual({ ok: true });
+  });
+
+  it('round-trips user_agents (phase E1 migration v14)', async () => {
+    // Verifies the postgres adapter's insertUserAgent / listUserAgents /
+    // listAllUserAgents / getUserAgent / deleteUserAgent shape matches
+    // the sqlite path exercised end-to-end through the routes. Storage
+    // parity discipline: every method on Storage MUST behave the same
+    // across adapters.
+    const now = new Date().toISOString();
+    const record = {
+      agentId: 'user.acme.reviewer',
+      tenantId: 'acme',
+      persona: 'Code Reviewer',
+      label: 'Diff-aware reviewer',
+      description: 'Reviews diffs for correctness.',
+      modelClass: 'coding',
+      systemPrompt: 'You are a senior code reviewer.',
+      toolAllowlist: ['openwop:core.files.read'],
+      memoryShape: { scratchpad: true, conversation: false, longTerm: false },
+      confidenceThreshold: 0.7,
+      createdAt: now,
+    } as const;
+    await storage.insertUserAgent(record);
+
+    const got = await storage.getUserAgent('user.acme.reviewer');
+    expect(got).not.toBeNull();
+    expect(got!.persona).toBe('Code Reviewer');
+    expect(got!.toolAllowlist).toEqual(['openwop:core.files.read']);
+    expect(got!.memoryShape.scratchpad).toBe(true);
+    expect(got!.memoryShape.conversation).toBe(false);
+    expect(got!.confidenceThreshold).toBe(0.7);
+
+    // Tenant-scoped list returns the row for the owning tenant.
+    const acmeList = await storage.listUserAgents('acme');
+    expect(acmeList).toHaveLength(1);
+    expect(acmeList[0]!.agentId).toBe('user.acme.reviewer');
+
+    // A different tenant sees nothing — this is the storage-layer
+    // half of the cross-tenant isolation invariant (`agent-memory.md`
+    // CTI-1). The route-layer filter in routes/agents.ts is the
+    // other half.
+    const betaList = await storage.listUserAgents('beta');
+    expect(betaList).toHaveLength(0);
+
+    // listAllUserAgents is cross-tenant for the boot-time registry
+    // loader — by design, since the in-process AgentRegistry is
+    // process-local. Tenant-isolation lives at the storage list
+    // (above) + route filter + registry-projection layers.
+    const allList = await storage.listAllUserAgents();
+    expect(allList.length).toBeGreaterThanOrEqual(1);
+    expect(allList.some((r) => r.agentId === 'user.acme.reviewer')).toBe(true);
+
+    const removed = await storage.deleteUserAgent('user.acme.reviewer');
+    expect(removed).toBe(true);
+    expect(await storage.getUserAgent('user.acme.reviewer')).toBeNull();
+    expect(await storage.deleteUserAgent('user.acme.reviewer')).toBe(false);
   });
 
   // Note: `claimIdempotency` round-trips through `INSERT … ON CONFLICT

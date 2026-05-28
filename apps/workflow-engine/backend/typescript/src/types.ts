@@ -219,6 +219,38 @@ export interface PushSubscriptionRecord {
 }
 
 /**
+ * User-authored agent record (phase E1, 2026-05-28).
+ *
+ * Persisted shape backing `POST /v1/host/sample/agents`. On boot the
+ * app reads every row and registers it with the in-process
+ * `AgentRegistry` (RFC 0070); the existing `GET /v1/agents` /
+ * `/v1/agents/:agentId` inventory routes then project both
+ * pack-installed and user-authored agents through the same surface.
+ *
+ * `agentId` shape: `user.<tenantId>.<personaSlug>` — the `user.`
+ * prefix avoids collision with pack ids (always begin with the pack
+ * name). Per-tenant scoping means `user.acme.code-reviewer` and
+ * `user.beta.code-reviewer` can coexist.
+ */
+export interface UserAgentRecord {
+  agentId: string;
+  tenantId: string;
+  persona: string;
+  label?: string;
+  description?: string;
+  modelClass: string;
+  systemPrompt: string;
+  toolAllowlist: string[];
+  memoryShape: {
+    scratchpad: boolean;
+    conversation: boolean;
+    longTerm: boolean;
+  };
+  confidenceThreshold?: number;
+  createdAt: string;
+}
+
+/**
  * Canonical openwop error codes used inside the sample. Wire shape is
  * `ErrorEnvelope`; the route handlers map host-internal exceptions to
  * these codes via `mapErrorToEnvelope()`.

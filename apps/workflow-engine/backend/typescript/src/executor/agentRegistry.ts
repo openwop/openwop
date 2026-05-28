@@ -45,6 +45,21 @@ export interface ResolvedAgentManifest {
    *  `peerDependenciesMeta.optional` that this host does NOT satisfy, so they
    *  are inert for this installation. Absent/empty ⇒ full declared capability. */
   degraded?: string[];
+  /** Owning tenant id for user-authored agents (sample-extension
+   *  `POST /v1/host/sample/agents`, phase E1 2026-05-28). Pack-installed
+   *  agents OMIT this field — they are tenant-agnostic (a host
+   *  loads them once at boot for every tenant to share).
+   *
+   *  When present, the agent is ONLY visible to + dispatchable by
+   *  the owning tenant. Enforces `agent-memory.md` CTI-1 cross-tenant
+   *  isolation: the systemPrompt body is tenant-owned IP (an
+   *  authoring artifact a tenant pays to compose) and MUST NOT leak
+   *  across tenant boundaries via `GET /v1/agents` projections,
+   *  `@`-mention picker results, or chat dispatch resolution.
+   *
+   *  Consumers MUST gate visibility / dispatch on
+   *  `(!ownerTenant || ownerTenant === requestTenant)`. */
+  ownerTenant?: string;
 }
 
 /** A pre-compiled handoff-schema validator (closes over an Ajv ValidateFunction
@@ -62,6 +77,17 @@ export function getAgentRegistry() {
     /** Append-only install of a resolved manifest agent (RFC 0003). */
     register(agent: ResolvedAgentManifest): void {
       inProcess.set(agent.agentId, agent);
+    },
+    /** Drop one agent from the in-process registry. Returns true when
+     *  a row was removed. The pack-loader path is append-only (RFC
+     *  0003), so this is intended only for user-authored agents
+     *  (`DELETE /v1/host/sample/agents/:agentId`, phase E1 2026-05-28).
+     *  Calling on a pack-installed agentId is not blocked here — the
+     *  delete route gates that at the storage layer (a row that
+     *  doesn't exist in `user_agents` returns 404 before we get
+     *  here). */
+    remove(agentId: string): boolean {
+      return inProcess.delete(agentId);
     },
     has(agentId: string): boolean {
       return inProcess.has(agentId);

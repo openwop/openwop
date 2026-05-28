@@ -9,7 +9,9 @@
  * `core.openwop.http` from the published packs.
  */
 
+import { createHash } from 'node:crypto';
 import { getNodeRegistry } from '../executor/nodeRegistry.js';
+import { getAgentRegistry } from '../executor/agentRegistry.js';
 import type { NodeContext, NodeModule } from '../executor/types.js';
 import { emitCost } from '../observability/costEmitter.js';
 import { composePromptTemplate } from '../host/promptCompose.js';
@@ -1178,20 +1180,72 @@ export const sampleChatResponderNode: NodeModule = {
       };
     }
 
-    // Resolve a system message from one of three sources, in precedence
-    // order: (1) `config.systemPrompt` — a literal string the template
-    // or Inspector wires directly (no host-side template registry
-    // needed); (2) `config.systemPromptRef` — an RFC 0027 PromptRef
-    // pointing at a template in the host prompt store; (3) nothing, in
-    // which case the LLM sees only the user turn. The composed body is
-    // prepended as a `role: 'system'` message so the LLM has its role
-    // before reading the user's content.
+    // Resolve a system message from one of four sources, in precedence
+    // order:
+    //   (1) `inputs.agentId` — an active agent from the chat-tab's
+    //       active-agents lineup (phase D2). When set, the chat is
+    //       routing through that agent's persona, so its
+    //       resolvedSystemPrompt overrides the node-level config. The
+    //       agent is read from the in-process AgentRegistry (RFC 0070);
+    //       missing-agent gracefully falls through to (2) so an
+    //       uninstalled agent doesn't break the turn.
+    //   (2) `config.systemPrompt` — a literal string the template
+    //       or Inspector wires directly (no host-side template registry
+    //       needed).
+    //   (3) `config.systemPromptRef` — an RFC 0027 PromptRef pointing
+    //       at a template in the host prompt store.
+    //   (4) nothing — the LLM sees only the user turn.
+    // The composed body is prepended as a `role: 'system'` message so
+    // the LLM has its role before reading the user's content.
     let systemBody: string | null = null;
-    const literalSystem = config['systemPrompt'];
-    if (typeof literalSystem === 'string' && literalSystem.length > 0) {
-      systemBody = literalSystem;
-    } else {
-      systemBody = await resolveAndComposePromptRef(ctx, 'system', config['systemPromptRef'], inputs);
+    const agentIdInput = inputs['agentId'];
+    if (typeof agentIdInput === 'string' && agentIdInput.length > 0) {
+      const agent = getAgentRegistry().get(agentIdInput);
+      // Cross-tenant isolation (CTI-1, agent-memory.md). User-authored
+      // agents carry `ownerTenant`; pack-installed agents don't. The
+      // request that triggered this node carries `ctx.tenantId` (the
+      // executor sets it from the run record). Reject mismatches by
+      // silently falling through to the default system-prompt path —
+      // surfacing a 403 here would leak which agent ids exist in
+      // another tenant.
+      const tenantOk = !agent || !agent.ownerTenant || agent.ownerTenant === ctx.tenantId;
+      if (agent && agent.systemPrompt && tenantOk) {
+        systemBody = agent.systemPrompt;
+        // `vendor.openwop-sample.agent.routed` — vendor-namespaced
+        // per host-extensions.md §"Canonical prefixes" so a future
+        // RFC 0024 `agent.*` event can't collide.
+        //
+        // `systemPromptHash` is a replay-determinism anchor (sha256
+        // truncated to 16 hex chars — enough collision resistance for
+        // drift detection without bloating the event log). User-
+        // authored agent systemPrompts are mutable storage: editing
+        // the agent between an original run and a replay produces
+        // different LLM output. A replay can compare the recorded
+        // hash to the registry's current resolution and emit a
+        // divergence signal when they differ. Pack-installed agents
+        // are immutable post-install so the hash is stable across
+        // replays for them too.
+        const systemPromptHash = createHash('sha256')
+          .update(agent.systemPrompt)
+          .digest('hex')
+          .slice(0, 16);
+        await ctx.emit('vendor.openwop-sample.agent.routed', {
+          agentId: agent.agentId,
+          persona: agent.persona,
+          modelClass: agent.modelClass,
+          source: agent.ownerTenant ? 'user' : 'pack',
+          systemPromptHash,
+          systemPromptLength: agent.systemPrompt.length,
+        });
+      }
+    }
+    if (systemBody === null) {
+      const literalSystem = config['systemPrompt'];
+      if (typeof literalSystem === 'string' && literalSystem.length > 0) {
+        systemBody = literalSystem;
+      } else {
+        systemBody = await resolveAndComposePromptRef(ctx, 'system', config['systemPromptRef'], inputs);
+      }
     }
     if (systemBody !== null) {
       messages = [{ role: 'system', content: systemBody }, ...messages];
