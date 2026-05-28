@@ -1,11 +1,11 @@
 {
   "name": "@openwop/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "OpenWOP CLI for operating the workflow-engine demo app and OpenWOP-compatible hosts.",
   "license": "Apache-2.0",
   "type": "module",
   "bin": {
-    "openwop": "./dist/openwop.js"
+    "openwop": "dist/openwop.js"
   },
   "files": [
     "dist",
@@ -27,8 +27,12 @@
     "discord.js": ">=14"
   },
   "peerDependenciesMeta": {
-    "@whiskeysockets/baileys": { "optional": true },
-    "discord.js": { "optional": true }
+    "@whiskeysockets/baileys": {
+      "optional": true
+    },
+    "discord.js": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=20"
