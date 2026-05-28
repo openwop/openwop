@@ -213,7 +213,7 @@ export async function loadHistoryFor(a: HistoryArgs): Promise<ReadonlyArray<{ ro
 
   // Single-session path: unlinked peer → just this session's turns.
   if (!identity) {
-    const turns = await a.storage.listMessagingTurns(a.sessionKey, a.limit);
+    const turns = await a.storage.listMessagingTurns(a.sessionKey, a.limit, a.tenantId);
     return turns.map((t) => ({ role: t.role, content: t.content, at: t.at }));
   }
 
@@ -227,7 +227,7 @@ export async function loadHistoryFor(a: HistoryArgs): Promise<ReadonlyArray<{ ro
   }
   const merged: Array<{ role: 'user' | 'assistant'; content: string; at: string }> = [];
   for (const sk of linkedKeySet) {
-    const turns = await a.storage.listMessagingTurns(sk, a.limit);
+    const turns = await a.storage.listMessagingTurns(sk, a.limit, a.tenantId);
     for (const t of turns) merged.push({ role: t.role, content: t.content, at: t.at });
   }
   merged.sort((x, y) => x.at.localeCompare(y.at));
@@ -314,15 +314,40 @@ interface AgentDispatchArgs {
  * workflow run. The agent route returns the result synchronously; we extract
  * the reply text, enqueue an outbound reply, and persist the assistant turn
  * keyed to the originating session so the next inbound threads it back in.
+ *
+ * Bound with an AbortController so a slow agent can't stall the inbound HTTP
+ * handler past the host's request budget (override via
+ * OPENWOP_MESSAGING_AGENT_DISPATCH_TIMEOUT_MS; default 30s). On timeout the
+ * bridge enqueues a "(timed out)" reply and persists no assistant turn — the
+ * relay stays observable and the next inbound proceeds.
  */
 async function dispatchToAgent(a: AgentDispatchArgs): Promise<void> {
-  const res = await a.fetchImpl(`${a.baseUrl}/v1/host/sample/agents/${encodeURIComponent(a.agentId)}/dispatch`, {
-    method: 'POST',
-    headers: a.headers,
-    body: JSON.stringify({
-      task: { text: a.envelope.text, messages: a.messages, conversationId: a.envelope.conversationId, channel: a.device.channel },
-    }),
-  });
+  const timeoutMs = Number(process.env.OPENWOP_MESSAGING_AGENT_DISPATCH_TIMEOUT_MS) || 30_000;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let res: Response;
+  try {
+    res = await a.fetchImpl(`${a.baseUrl}/v1/host/sample/agents/${encodeURIComponent(a.agentId)}/dispatch`, {
+      method: 'POST',
+      headers: a.headers,
+      body: JSON.stringify({
+        task: { text: a.envelope.text, messages: a.messages, conversationId: a.envelope.conversationId, channel: a.device.channel },
+      }),
+      signal: controller.signal,
+    });
+  } catch (err: any) {
+    clearTimeout(timer);
+    const aborted = err?.name === 'AbortError' || controller.signal.aborted;
+    log.warn(aborted ? 'agent dispatch timed out' : 'agent dispatch errored', { agentId: a.agentId, timeoutMs, error: String(err?.message ?? err) });
+    await enqueueOutbound(a.storage, a.device.relayId, {
+      channel: a.device.channel,
+      conversationId: a.envelope.conversationId,
+      text: aborted ? `(agent ${a.agentId} timed out after ${Math.round(timeoutMs / 1000)}s)` : `(agent ${a.agentId} error)`,
+      replyToMessageId: a.envelope.platformMessageId,
+    });
+    return;
+  }
+  clearTimeout(timer);
   if (!res.ok) {
     log.warn('agent dispatch failed', { agentId: a.agentId, status: res.status });
     return;

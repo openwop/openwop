@@ -35,7 +35,7 @@
  * notification routes.
  */
 
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomInt, randomUUID } from 'node:crypto';
 import type { Express, Request } from 'express';
 import { OpenwopError } from '../types.js';
 import type { Storage } from '../storage/storage.js';
@@ -453,6 +453,21 @@ export function registerMessagingRoutes(app: Express, deps: Deps): void {
         updatedAt: new Date().toISOString(),
       };
       await storage.upsertMessagingPolicy(policy);
+      // Operator-friendly tripwire: setting requireMention:true with no bot-id
+      // env configured means EVERY inbound on this channel would be dropped
+      // (no plugin yet populates envelope.mentions[]; the text fallback also
+      // needs OPENWOP_MESSAGING_BOT_NAME). Surface it loud in the response so
+      // the operator notices BEFORE production traffic starts disappearing.
+      const mentionUnreachable = policy.requireMention
+        && !process.env[`OPENWOP_MESSAGING_BOT_ID_${c.channel.toUpperCase()}`]
+        && !process.env.OPENWOP_MESSAGING_BOT_NAME;
+      if (mentionUnreachable) {
+        res.json({
+          ...policy,
+          warning: `requireMention:true is set but neither OPENWOP_MESSAGING_BOT_ID_${c.channel.toUpperCase()} nor OPENWOP_MESSAGING_BOT_NAME is configured — every inbound on this channel will be dropped as 'no-mention' until you set one.`,
+        });
+        return;
+      }
       res.json(policy);
     } catch (err) {
       next(err);
@@ -637,8 +652,15 @@ export function registerMessagingRoutes(app: Express, deps: Deps): void {
 
   app.get(`${BASE}/pairing`, async (req, res, next) => {
     try {
-      const connectorId = optionalString(req.query.connectorId);
-      const pairings = await storage.listMessagingPairings(connectorId);
+      const scope = await tenantConnectorScope(storage, req);
+      const requested = optionalString(req.query.connectorId);
+      if (requested && !scope.owns(requested)) {
+        throw new OpenwopError('not_found', 'connector not found', 404);
+      }
+      const all = await storage.listMessagingPairings(requested);
+      // For non-wildcard callers without a connectorId filter, restrict to the
+      // caller's own connectors so listing can't disclose other tenants' codes.
+      const pairings = scope.isWildcard ? all : all.filter((p) => scope.owns(p.connectorId));
       res.json({ pairings });
     } catch (err) {
       next(err);
@@ -675,8 +697,13 @@ export function registerMessagingRoutes(app: Express, deps: Deps): void {
 
   app.get(`${BASE}/allowlist`, async (req, res, next) => {
     try {
-      const connectorId = optionalString(req.query.connectorId);
-      const entries = await storage.listMessagingAllowlist(connectorId);
+      const scope = await tenantConnectorScope(storage, req);
+      const requested = optionalString(req.query.connectorId);
+      if (requested && !scope.owns(requested)) {
+        throw new OpenwopError('not_found', 'connector not found', 404);
+      }
+      const all = await storage.listMessagingAllowlist(requested);
+      const entries = scope.isWildcard ? all : all.filter((e) => scope.owns(e.connectorId));
       res.json({ entries });
     } catch (err) {
       next(err);
@@ -712,6 +739,12 @@ export function registerMessagingRoutes(app: Express, deps: Deps): void {
       const connectorId = requireString(req.query.connectorId, 'connectorId');
       const channel = assertChannel(req.query.channel);
       const peerId = requireString(req.query.peerId, 'peerId');
+      // Tenant ownership check on the connector — otherwise any authenticated
+      // caller could delete another tenant's allowlist row if they guess the id.
+      const scope = await tenantConnectorScope(storage, req);
+      if (!scope.owns(connectorId)) {
+        throw new OpenwopError('not_found', 'connector not found', 404);
+      }
       const removed = await storage.deleteMessagingAllowlist(connectorId, channel, peerId);
       res.json({ removed, connectorId, channel, peerId });
     } catch (err) {
@@ -956,6 +989,22 @@ export function hasBotMention(envelope: ChatIngressEnvelope, channel: RelayChann
   return false;
 }
 
+/**
+ * Build a per-request scope predicate for `connectorId` ownership: wildcard
+ * callers see all connectors; everyone else only their own tenant's. Used by
+ * the pairing + allowlist routes to avoid cross-tenant disclosure / mutation.
+ */
+async function tenantConnectorScope(
+  storage: Storage,
+  req: Request,
+): Promise<{ isWildcard: boolean; owns: (connectorId: string) => boolean }> {
+  if (isWildcard(req)) return { isWildcard: true, owns: () => true };
+  const tenantId = resolveTenant(req);
+  const connectors = await storage.listMessagingConnectors(tenantId);
+  const allowed = new Set(connectors.map((c) => c.connectorId));
+  return { isWildcard: false, owns: (id) => allowed.has(id) };
+}
+
 /** Mint a pairing code for an unknown peer; reuse an unexpired one if it exists. */
 async function mintPairingCode(
   storage: Storage,
@@ -969,10 +1018,19 @@ async function mintPairingCode(
     p.channel === device.channel && p.peerId === envelope.peerId && Date.parse(p.expiresAt) > now,
   );
   if (reusable) return { pairingId: reusable.pairingId, code: reusable.code, expiresAt: reusable.expiresAt };
+  // Best-effort dedup: delete any STALE row for this (connector, channel, peer)
+  // before minting a fresh one. Tightens the TOCTOU window between list+insert.
+  for (const p of existing) {
+    if (p.channel === device.channel && p.peerId === envelope.peerId) {
+      await storage.deleteMessagingPairing(p.pairingId);
+    }
+  }
   // 6-char base32-ish code: alphanum minus look-alikes (no 0/O/1/I).
+  // CSPRNG (not Math.random) — pairing codes are short-lived authorization
+  // tokens, so use the same entropy source the rest of the stack does.
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';
-  for (let i = 0; i < 6; i++) code += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+  for (let i = 0; i < 6; i++) code += alphabet.charAt(randomInt(0, alphabet.length));
   const nowIso = new Date(now).toISOString();
   const expiresAt = new Date(now + PAIRING_TTL_MS).toISOString();
   const record = {

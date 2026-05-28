@@ -362,8 +362,12 @@ export interface Storage {
     limit?: number;
   }): Promise<readonly DeliveryLogRecord[]>;
   appendMessagingTurn(record: MessagingTurnRecord): Promise<void>;
-  /** Return the most-recent `limit` turns for a session, oldest → newest. */
-  listMessagingTurns(sessionKey: string, limit: number): Promise<readonly MessagingTurnRecord[]>;
+  /**
+   * Return the most-recent `limit` turns for a session, oldest → newest.
+   * `tenantId` is required defense-in-depth so a collision of
+   * `${channel}:${conversationId}` across tenants cannot leak turns.
+   */
+  listMessagingTurns(sessionKey: string, limit: number, tenantId: string): Promise<readonly MessagingTurnRecord[]>;
 
   // ── pairing + allowlist (per-connector access gates) ──
   appendMessagingPairing(record: MessagingPairingRecord): Promise<void>;

@@ -1225,14 +1225,17 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
         [record.turnId, record.sessionKey, record.tenantId, record.role, record.content, record.runId ?? null, record.at],
       );
     },
-    async listMessagingTurns(sessionKey, limit) {
+    async listMessagingTurns(sessionKey, limit, tenantId) {
       const lim = Number.isFinite(limit) && limit >= 1 ? Math.min(Math.floor(limit), 1000) : 100;
-      // Fetch the most-recent N then return them oldest → newest (for messages[]).
+      // Fetch the most-recent N then return them oldest → newest (for
+      // messages[]). tenant_id filter is defense-in-depth.
       const { rows } = await pool.query<Row>(
         `SELECT * FROM (
-           SELECT * FROM messaging_turns WHERE session_key = $1 ORDER BY at DESC, turn_id DESC LIMIT $2
+           SELECT * FROM messaging_turns
+            WHERE session_key = $1 AND tenant_id = $2
+            ORDER BY at DESC, turn_id DESC LIMIT $3
          ) t ORDER BY at ASC, turn_id ASC`,
-        [sessionKey, lim],
+        [sessionKey, tenantId, lim],
       );
       return rows.map(rowToTurnPg);
     },
