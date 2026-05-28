@@ -203,6 +203,17 @@ function checkExternalEventCorrelation(
  *  visible during the gate's lifetime, not durable across restarts). */
 const quorumVotes = new Map<string, { accepts: string[]; rejects: string[] }>();
 
+/** Per-run resume serialization queue. See `resolveAndResume` below
+ *  for the race this guards against. Keyed by runId; each entry is
+ *  the tail of a promise chain whose `.then(…)` reads the freshest
+ *  persisted `schedulerSnapshot`, dispatches `executeRun`, and waits
+ *  for that executor to settle before unblocking the next resume.
+ *  In-memory by design — same lifetime as the per-run interrupt
+ *  state and the in-flight HTTP requests; a process restart drains
+ *  the queue, which is fine since each resume reads its snapshot
+ *  fresh anyway. */
+const runResumeChains = new Map<string, Promise<void>>();
+
 /** Accumulate a quorum vote. Returns:
  *   - 'accept-quorum-met' → run can resume with accepted outcome
  *   - 'reject-majority' → gate fails with rejection
@@ -243,6 +254,33 @@ function recordQuorumVote(
 function clearQuorumVotes(interruptId: string): void {
   quorumVotes.delete(interruptId);
 }
+
+/** Test-only seam: awaits the per-run resume chain so a regression
+ *  test can deterministically wait for all chained resumes to settle
+ *  without sleeping. Returns immediately when no resumes are pending
+ *  for `runId`. Not part of the public route surface. */
+export async function __awaitRunResumeChainForTests(runId: string): Promise<void> {
+  // Re-poll: the chain entry mutates as each chained resume settles
+  // and clears itself, so awaiting one entry is not enough — the
+  // .finally() may swap in a fresh tail.
+  for (;;) {
+    const tail = runResumeChains.get(runId);
+    if (!tail) return;
+    await tail;
+    // Loop: a sibling resume scheduled mid-await would have replaced
+    // `tail` in the map. Re-check until the map is empty.
+  }
+}
+
+/** Test-only seam: exports `resolveAndResume` for regression coverage
+ *  of the per-run serialization fix. Production callers go through
+ *  the registered HTTP routes above. */
+export const __resolveAndResumeForTests = (
+  storage: Storage,
+  hostSuite: HostAdapterSuite,
+  interruptId: string,
+  resumeValue: unknown,
+): Promise<void> => resolveAndResume(storage, hostSuite, interruptId, resumeValue);
 
 async function resolveAndResume(
   storage: Storage,
@@ -301,20 +339,64 @@ async function resolveAndResume(
     payload: { interruptId, kind: interrupt.kind },
   });
 
+  // Synchronous validation (preserves the pre-existing 404 / 500
+  // behaviour on the HTTP response path). These reads aren't racy —
+  // they only check existence, not the snapshot. The *snapshot*
+  // read moves into the chained block below.
   const run = await storage.getRun(interrupt.runId);
   if (!run) throw new OpenwopError('run_not_found', `run ${interrupt.runId} missing during resume`, 404);
   const wf = await hostSuite.workflowCatalog.getWorkflow(run.workflowId);
   if (!wf) throw new OpenwopError('workflow_not_found', `workflow ${run.workflowId} not found`, 404);
-
   const nodeIndex = wf.definition.nodes.findIndex((n) => n.nodeId === interrupt.nodeId);
   if (nodeIndex < 0) throw new OpenwopError('internal_error', `suspended node ${interrupt.nodeId} not in workflow`, 500);
 
-  // Resume the DAG scheduler. If a serialized snapshot exists (post-DAG),
-  // hydrate it and mark the suspended node as completed with the resolved
-  // value. If not (legacy linear path), fall back to `resumeFromNodeIndex`
-  // which the executor handles via its implicit-linear chain logic.
-  const serializedSnapshot = run.schedulerSnapshot;
-  setImmediate(() => {
+  // Per-run resume serialization. Concurrent resolves of *parallel*
+  // suspended interrupts (e.g. a fan-out workflow where 4 approval
+  // nodes all suspend on the same run, then the user approves all
+  // four in quick succession) used to race on the persisted
+  // `schedulerSnapshot`:
+  //
+  //   1. Each call read `run.schedulerSnapshot` at API time,
+  //      capturing the same stale snapshot in which *all four*
+  //      approvals are still suspended.
+  //   2. Each call scheduled its own `executeRun` via setImmediate.
+  //      The four executors ran concurrently — each one hydrated
+  //      from the captured stale snapshot, marked *only its own*
+  //      resumed node `completed`, drained, and persisted.
+  //   3. Each persist overwrote the previous one. Net effect: only
+  //      the *last* executor's view (one resume) survived in the
+  //      stored snapshot. The other three resumes emitted
+  //      `node.interrupt.resolved` but never reached `run.resumed`
+  //      / `node.completed` — silently dropped.
+  //
+  // Symptom in the event log: 4 × `node.interrupt.resolved`, but
+  // only 1-2 × `run.resumed` + `node.completed`. The user-facing
+  // chat shows the workflow stuck at "Running" forever.
+  //
+  // Fix: chain the snapshot read + executor dispatch behind any
+  // pending resume on the *same* runId so each resume hydrates from
+  // the freshest persisted snapshot. The HTTP response still
+  // returns immediately (we don't await `next` here) — only the
+  // background executor work serializes.
+  const prevChain = runResumeChains.get(interrupt.runId) ?? Promise.resolve();
+  const next: Promise<void> = prevChain.then(async () => {
+    // Re-read the run AFTER the previous resume's executor has
+    // fully settled and persisted its snapshot. This is what fixes
+    // the race — pre-chain, every concurrent resume read the same
+    // pre-any-resume snapshot.
+    const freshRun = await storage.getRun(interrupt.runId);
+    if (!freshRun) {
+      log.warn('resume skipped — run record vanished between resolve + execute', {
+        runId: interrupt.runId,
+      });
+      return;
+    }
+    // Resume the DAG scheduler. If a serialized snapshot exists
+    // (post-DAG), hydrate it and mark the suspended node as
+    // completed with the resolved value. If not (legacy linear
+    // path), fall back to `resumeFromNodeIndex` which the executor
+    // handles via its implicit-linear chain logic.
+    const serializedSnapshot = freshRun.schedulerSnapshot;
     const resumeOptions =
       typeof serializedSnapshot === 'string'
         ? (() => {
@@ -338,11 +420,22 @@ async function resolveAndResume(
             resumeValue,
             policyResolver: hostSuite.providerPolicyResolver,
           };
-    executeRun(storage, run, wf.definition, resumeOptions).catch((err) => {
-      log.error('resume dispatch failed', {
-        runId: run.runId,
-        error: err instanceof Error ? err.message : String(err),
-      });
+    // AWAIT here — the chain's whole purpose is that the next
+    // resume's snapshot read sees this executor's persist.
+    await executeRun(storage, freshRun, wf.definition, resumeOptions);
+  }).catch((err) => {
+    log.error('resume dispatch failed', {
+      runId: interrupt.runId,
+      error: err instanceof Error ? err.message : String(err),
     });
+  }).finally(() => {
+    // Only clear if we're still the tail — a subsequent resolve may
+    // have chained another resume onto us. Clearing then would
+    // strand the chain entry, and the next concurrent resolve
+    // would start a fresh unserialized chain that races with us.
+    if (runResumeChains.get(interrupt.runId) === next) {
+      runResumeChains.delete(interrupt.runId);
+    }
   });
+  runResumeChains.set(interrupt.runId, next);
 }
