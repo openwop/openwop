@@ -2432,7 +2432,15 @@ pre {
   font-size: 13px;
   cursor: pointer;
 }
-.account-menu-trigger:hover { background: var(--color-surface-2); }
+/* Pin text color on hover — the global `button:hover` rule sets
+ * color to var(--paper) for the default ink-on-paper primary buttons,
+ * and its specificity (button:hover, 0,1,1) beats `.account-menu-trigger`
+ * (0,1,0). Without re-pinning here, the username renders paper-on-paper
+ * against the cream hover background and disappears. */
+.account-menu-trigger:hover {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
 .account-menu-avatar {
   width: 28px; height: 28px; border-radius: 50%;
 }
