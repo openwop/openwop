@@ -608,6 +608,47 @@
   </div>
 </section>
 
+<!-- ─────────────────────── CLI ─────────────────────── -->
+<section class="block cli-cta" id="cli">
+  <div class="wrap">
+    <div class="block-head">
+      <div class="label"><span class="marker"><span class="dot"></span>§ 01.5 / Try it from your terminal</span></div>
+      <h2>Drive any OpenWOP host from a <em>single</em> command.</h2>
+      <p class="block-lede">
+        <code>@openwop/cli</code> is a control-plane CLI for any OpenWOP-compatible host —
+        auth onboarding, capabilities discovery, run submission + SSE streaming,
+        prompts &amp; memory &amp; agents inspection, HITL interrupt resume, and channel
+        messaging (Signal · iMessage · WhatsApp · Discord, all opt-in local adapters).
+        One <code>npm install</code>, no proprietary client.
+      </p>
+    </div>
+    <div class="cli-cta-grid">
+      <div class="cli-cta-install">
+        <pre class="cli-cta-pre"><code>npm install -g @openwop/cli
+export OPENWOP_BASE_URL=https://app.openwop.dev/api
+openwop doctor</code></pre>
+      </div>
+      <div class="cli-cta-meta">
+        <ul class="cli-cta-list">
+          <li><strong>Auth</strong> · <code>onboard</code>, BYOK key issuance.</li>
+          <li><strong>Workflows</strong> · <code>runs create / get / events</code> with <code>values</code>/<code>updates</code>/<code>messages</code>/<code>debug</code> SSE.</li>
+          <li><strong>Agents</strong> · <code>agents list / dispatch</code> against the manifest runtime.</li>
+          <li><strong>HITL</strong> · <code>interrupts list / resume</code> via signed-token callback.</li>
+          <li><strong>Channels</strong> · <code>messaging</code> + <code>relay</code> daemons (non-normative host extension).</li>
+        </ul>
+        <p class="cli-cta-links">
+          <a class="btn btn-ghost" href="https://app.openwop.dev/cli">
+            Command catalog &amp; quickstart <span class="arrow">→</span>
+          </a>
+          <a class="btn btn-ghost" href="https://www.npmjs.com/package/@openwop/cli">
+            <code>@openwop/cli</code> on npm <span class="arrow">↗</span>
+          </a>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ─────────────────────── PICK YOUR PATH ─────────────────────── -->
 <section class="block paths" id="paths">
   <div class="wrap">
