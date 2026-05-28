@@ -1078,11 +1078,15 @@ export function openSqliteStorage(dbPath: string): Storage {
     },
     async upsertMessagingRoutingRule(record) {
       db.prepare(
-        `INSERT INTO messaging_routing_rules (rule_id, tenant_id, channel, pattern, workflow_id, priority, created_at)
-         VALUES (?,?,?,?,?,?,?)
+        `INSERT INTO messaging_routing_rules (rule_id, tenant_id, channel, pattern, workflow_id, agent_id, priority, created_at)
+         VALUES (?,?,?,?,?,?,?,?)
          ON CONFLICT(rule_id) DO UPDATE SET
-           channel=excluded.channel, pattern=excluded.pattern, workflow_id=excluded.workflow_id, priority=excluded.priority`,
-      ).run(record.ruleId, record.tenantId, record.channel ?? null, record.pattern, record.workflowId, record.priority, record.createdAt);
+           channel=excluded.channel, pattern=excluded.pattern,
+           workflow_id=excluded.workflow_id, agent_id=excluded.agent_id, priority=excluded.priority`,
+      ).run(
+        record.ruleId, record.tenantId, record.channel ?? null, record.pattern,
+        record.workflowId ?? null, record.agentId ?? null, record.priority, record.createdAt,
+      );
     },
     async listMessagingRoutingRules(tenantId) {
       const rows = tenantId === undefined
@@ -1277,7 +1281,8 @@ function rowToRoutingRuleSqlite(r: Record<string, unknown>): MessagingRoutingRul
     tenantId: r.tenant_id as string,
     channel: (r.channel as MessagingRoutingRuleRecord['channel'] | null) ?? undefined,
     pattern: r.pattern as string,
-    workflowId: r.workflow_id as string,
+    ...(r.workflow_id ? { workflowId: r.workflow_id as string } : {}),
+    ...(r.agent_id ? { agentId: r.agent_id as string } : {}),
     priority: Number(r.priority),
     createdAt: r.created_at as string,
   };

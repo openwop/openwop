@@ -69,7 +69,7 @@ export function createSelfHttpBridge(cfg: SelfHttpBridgeConfig): MessagingBridge
       // Consult the operator-configured routing rules first; fall back to the
       // single default workflow when no rule matches (preserves prior behavior).
       const rules = await cfg.storage.listMessagingRoutingRules(device.tenantId);
-      const workflowId = selectWorkflowByRules(rules, device, envelope) ?? cfg.defaultWorkflowId;
+      const rule = selectRoutingRule(rules, device, envelope);
 
       // Thread prior turns into messages[] so messaging gets chat-style
       // continuity. Each inbound run sees the recent conversation; the
@@ -90,6 +90,18 @@ export function createSelfHttpBridge(cfg: SelfHttpBridgeConfig): MessagingBridge
         at: envelope.timestamp,
       });
 
+      // Phase D: if the matched rule binds the conversation to an agent (RFC
+      // 0070 dispatch) instead of a workflow, dispatch synchronously and
+      // enqueue the agent's reply text directly — no run pipeline involved.
+      if (rule?.agentId) {
+        await dispatchToAgent({
+          storage: cfg.storage, fetchImpl, baseUrl: cfg.baseUrl, headers,
+          agentId: rule.agentId, device, envelope, sessionKey, messages,
+        });
+        return;
+      }
+
+      const workflowId = rule?.workflowId ?? cfg.defaultWorkflowId;
       const createRes = await fetchImpl(`${cfg.baseUrl}/v1/runs`, {
         method: 'POST',
         headers,
@@ -130,8 +142,10 @@ export function createSelfHttpBridge(cfg: SelfHttpBridgeConfig): MessagingBridge
 }
 
 /**
- * Pick a workflow for an inbound envelope from the operator-configured routing
- * rules, or undefined when none match (the bridge falls back to its default).
+ * Pick the routing rule for an inbound envelope from the operator-configured
+ * rules, or undefined when none match (the bridge falls back to its default
+ * workflow). Returns the full rule so the bridge can inspect both `workflowId`
+ * and `agentId` — exactly one of which is set per rule.
  *
  * Match semantics (per `MessagingRoutingRuleRecord`):
  *   - `rule.channel` unset OR equal to `device.channel`.
@@ -139,11 +153,11 @@ export function createSelfHttpBridge(cfg: SelfHttpBridgeConfig): MessagingBridge
  *   - Tie-break: higher `priority` wins; equal priority → earlier `createdAt`.
  * Pure function — exported for direct unit testing without the run pipeline.
  */
-export function selectWorkflowByRules(
+export function selectRoutingRule(
   rules: ReadonlyArray<MessagingRoutingRuleRecord>,
   device: Pick<RelayDeviceRecord, 'channel'>,
   envelope: Pick<ChatIngressEnvelope, 'conversationId' | 'peerId'>,
-): string | undefined {
+): MessagingRoutingRuleRecord | undefined {
   const matched = rules.filter((r) => {
     if (r.channel !== undefined && r.channel !== device.channel) return false;
     if (r.pattern === '*') return true;
@@ -151,7 +165,16 @@ export function selectWorkflowByRules(
   });
   if (matched.length === 0) return undefined;
   matched.sort((a, b) => (b.priority - a.priority) || a.createdAt.localeCompare(b.createdAt));
-  return matched[0].workflowId;
+  return matched[0];
+}
+
+/** Convenience: extract the bound workflowId from a matched rule (legacy callers). */
+export function selectWorkflowByRules(
+  rules: ReadonlyArray<MessagingRoutingRuleRecord>,
+  device: Pick<RelayDeviceRecord, 'channel'>,
+  envelope: Pick<ChatIngressEnvelope, 'conversationId' | 'peerId'>,
+): string | undefined {
+  return selectRoutingRule(rules, device, envelope)?.workflowId;
 }
 
 interface ReplyArgs {
@@ -211,6 +234,61 @@ async function completeAndReply(a: ReplyArgs): Promise<void> {
       role: 'assistant',
       content: text,
       runId: a.runId,
+      at: new Date().toISOString(),
+    });
+  }
+}
+
+interface AgentDispatchArgs {
+  storage: Storage;
+  fetchImpl: typeof fetch;
+  baseUrl: string;
+  headers: Record<string, string>;
+  agentId: string;
+  device: { relayId: string; tenantId: string; channel: RelayChannel };
+  envelope: ChatIngressEnvelope;
+  sessionKey: string;
+  messages: Array<{ role: string; content: string }>;
+}
+
+/**
+ * Phase D: dispatch the inbound to a manifest agent (RFC 0070) instead of a
+ * workflow run. The agent route returns the result synchronously; we extract
+ * the reply text, enqueue an outbound reply, and persist the assistant turn
+ * keyed to the originating session so the next inbound threads it back in.
+ */
+async function dispatchToAgent(a: AgentDispatchArgs): Promise<void> {
+  const res = await a.fetchImpl(`${a.baseUrl}/v1/host/sample/agents/${encodeURIComponent(a.agentId)}/dispatch`, {
+    method: 'POST',
+    headers: a.headers,
+    body: JSON.stringify({
+      task: { text: a.envelope.text, messages: a.messages, conversationId: a.envelope.conversationId, channel: a.device.channel },
+    }),
+  });
+  if (!res.ok) {
+    log.warn('agent dispatch failed', { agentId: a.agentId, status: res.status });
+    return;
+  }
+  const body = (await res.json()) as { status?: string; result?: { text?: string } | string; text?: string };
+  // Accept a few plausible reply shapes: { result: { text } } | { result: 'string' } | { text }.
+  const text =
+    (typeof body.result === 'object' && body.result && typeof body.result.text === 'string' ? body.result.text : null)
+    ?? (typeof body.result === 'string' ? body.result : null)
+    ?? (typeof body.text === 'string' ? body.text : null);
+  const reply = text && text.length > 0 ? text : `Agent ${a.agentId} produced no text output.`;
+  await enqueueOutbound(a.storage, a.device.relayId, {
+    channel: a.device.channel,
+    conversationId: a.envelope.conversationId,
+    text: reply,
+    replyToMessageId: a.envelope.platformMessageId,
+  });
+  if (text && text.length > 0) {
+    await a.storage.appendMessagingTurn({
+      turnId: `t_${randomUUID()}`,
+      sessionKey: a.sessionKey,
+      tenantId: a.device.tenantId,
+      role: 'assistant',
+      content: text,
       at: new Date().toISOString(),
     });
   }

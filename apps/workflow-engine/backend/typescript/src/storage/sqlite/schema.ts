@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 14;
+export const LATEST_SCHEMA_VERSION = 15;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -458,6 +458,11 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
       CREATE INDEX IF NOT EXISTS idx_messaging_allowlist_connector
         ON messaging_allowlist (connector_id);
     `);
+  },
+  15: (db) => {
+    // Routing rules may bind to an agent (RFC 0070 dispatch) instead of a
+    // workflow. Mutex enforced at the route handler. Mirrors postgres mig 13.
+    db.exec(`ALTER TABLE messaging_routing_rules ADD COLUMN agent_id TEXT;`);
   },
 };
 

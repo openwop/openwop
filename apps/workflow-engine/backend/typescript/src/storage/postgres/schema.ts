@@ -32,7 +32,7 @@ export interface Queryable {
   ): Promise<{ rows: R[] }>;
 }
 
-export const LATEST_SCHEMA_VERSION = 12;
+export const LATEST_SCHEMA_VERSION = 13;
 
 const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
   1: async (client) => {
@@ -454,6 +454,10 @@ const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
       CREATE INDEX IF NOT EXISTS idx_messaging_allowlist_connector
         ON messaging_allowlist (connector_id);
     `);
+  },
+  13: async (client) => {
+    // Routing rules may bind to an agent instead of a workflow. Mirrors sqlite mig 15.
+    await client.query(`ALTER TABLE messaging_routing_rules ADD COLUMN IF NOT EXISTS agent_id TEXT;`);
   },
 };
 

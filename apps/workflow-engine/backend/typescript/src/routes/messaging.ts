@@ -476,12 +476,17 @@ export function registerMessagingRoutes(app: Express, deps: Deps): void {
     try {
       const tenantId = resolveTenant(req);
       const body = req.body ?? {};
+      const wf = optionalString(body.workflowId);
+      const ag = optionalString(body.agentId);
+      if (!wf && !ag) throw new OpenwopError('invalid_request', 'one of workflowId or agentId is required', 400);
+      if (wf && ag) throw new OpenwopError('invalid_request', 'workflowId and agentId are mutually exclusive', 400);
       const rule: MessagingRoutingRuleRecord = {
         ruleId: optionalString(body.ruleId) ?? `route_${randomUUID()}`,
         tenantId,
         ...(body.channel === undefined ? {} : { channel: assertChannel(body.channel) }),
         pattern: requireString(body.pattern, 'pattern'),
-        workflowId: requireString(body.workflowId, 'workflowId'),
+        ...(wf ? { workflowId: wf } : {}),
+        ...(ag ? { agentId: ag } : {}),
         priority: typeof body.priority === 'number' ? body.priority : 0,
         createdAt: new Date().toISOString(),
       };

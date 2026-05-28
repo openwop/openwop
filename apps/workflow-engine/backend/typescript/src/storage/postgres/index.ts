@@ -1149,12 +1149,13 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
     },
     async upsertMessagingRoutingRule(record) {
       await pool.query(
-        `INSERT INTO messaging_routing_rules (rule_id, tenant_id, channel, pattern, workflow_id, priority, created_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7)
+        `INSERT INTO messaging_routing_rules (rule_id, tenant_id, channel, pattern, workflow_id, agent_id, priority, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
          ON CONFLICT (rule_id) DO UPDATE SET
            tenant_id=EXCLUDED.tenant_id, channel=EXCLUDED.channel, pattern=EXCLUDED.pattern,
-           workflow_id=EXCLUDED.workflow_id, priority=EXCLUDED.priority`,
-        [record.ruleId, record.tenantId, record.channel ?? null, record.pattern, record.workflowId, record.priority, record.createdAt],
+           workflow_id=EXCLUDED.workflow_id, agent_id=EXCLUDED.agent_id, priority=EXCLUDED.priority`,
+        [record.ruleId, record.tenantId, record.channel ?? null, record.pattern,
+         record.workflowId ?? null, record.agentId ?? null, record.priority, record.createdAt],
       );
     },
     async listMessagingRoutingRules(tenantId) {
@@ -1365,7 +1366,8 @@ function rowToRoutingRulePg(r: Row): MessagingRoutingRuleRecord {
     tenantId: r.tenant_id as string,
     channel: (r.channel as MessagingRoutingRuleRecord['channel'] | null) ?? undefined,
     pattern: r.pattern as string,
-    workflowId: r.workflow_id as string,
+    ...(r.workflow_id ? { workflowId: r.workflow_id as string } : {}),
+    ...(r.agent_id ? { agentId: r.agent_id as string } : {}),
     priority: Number(r.priority),
     createdAt: r.created_at as string,
   };

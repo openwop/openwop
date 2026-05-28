@@ -152,14 +152,20 @@ export interface MessagingPolicyRecord {
   updatedAt: string;
 }
 
-/** A routing rule mapping an inbound match → bound workflow. */
+/**
+ * A routing rule mapping an inbound match → bound workflow OR agent. Exactly
+ * one of `workflowId` / `agentId` is set; the bridge dispatches accordingly.
+ */
 export interface MessagingRoutingRuleRecord {
   ruleId: string;
   tenantId: string;
   channel?: RelayChannel;
   /** Match the conversationId/peerId against `pattern` (substring; '*' = any). */
   pattern: string;
-  workflowId: string;
+  /** Bind the matched conversation to a workflow (default path). */
+  workflowId?: string;
+  /** OR bind to a manifest agent (RFC 0070 dispatch). Mutex with `workflowId`. */
+  agentId?: string;
   priority: number;
   createdAt: string;
 }

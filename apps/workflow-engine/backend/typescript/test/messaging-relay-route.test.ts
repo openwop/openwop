@@ -634,6 +634,38 @@ describe('messaging bridge — routing wiring (unit)', () => {
     expect(userTurns.map((t) => t.content)).toEqual(['first', 'second']);
   });
 
+  it('rule with agentId dispatches the agent instead of POST /v1/runs (Phase D)', async () => {
+    let runPost: any;
+    let dispatchPost: any;
+    const fetchImpl: any = async (url: string, init?: any) => {
+      const u = String(url);
+      if (u.endsWith('/v1/runs') && init?.method === 'POST') {
+        runPost = JSON.parse(init.body as string);
+        return new Response('{}', { status: 201, headers: { 'content-type': 'application/json' } });
+      }
+      if (u.includes('/v1/host/sample/agents/') && u.endsWith('/dispatch') && init?.method === 'POST') {
+        dispatchPost = { url: u, body: JSON.parse(init.body as string) };
+        return new Response(JSON.stringify({ status: 'completed', result: { text: 'AGENT REPLY' } }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+      return new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+    const bridge = createSelfHttpBridge({
+      storage: mockStorage([
+        { ruleId: 'r1', tenantId: 't', pattern: '*', agentId: 'core.openwop.agents.assistant', priority: 9, createdAt: '2026-01-01T00:00:00Z' },
+      ]),
+      baseUrl: 'http://test', bearer: 'x', defaultWorkflowId: 'wf.default', fetchImpl,
+    });
+    await bridge.onInbound({
+      device: { relayId: 'rl', tenantId: 't', channel: 'signal' },
+      envelope: { channel: 'signal', platformMessageId: 'm1', conversationId: 'c1', peerId: 'p', text: 'hi', timestamp: '2026-05-27T00:00:00Z' } as any,
+      sessionKey: 'signal:c1',
+    });
+    expect(runPost, 'should NOT POST /v1/runs when bound to an agent').toBeUndefined();
+    expect(dispatchPost).toBeTruthy();
+    expect(dispatchPost.url).toContain('/agents/core.openwop.agents.assistant/dispatch');
+    expect(dispatchPost.body.task.text).toBe('hi');
+  });
+
   it('falls back to the default workflow when no rule matches (backward-compat)', async () => {
     let capturedBody: any;
     const fetchImpl: any = async (url: string, init?: any) => {
