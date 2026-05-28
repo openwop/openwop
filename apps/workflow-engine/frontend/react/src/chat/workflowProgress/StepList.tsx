@@ -37,6 +37,22 @@ export function StepList({ run, message }: Props): JSX.Element {
   const [expandedNodeId, setExpandedNodeId] = useState<string | null>(null);
   const completedSet = new Set(run.completedNodeIds);
   const failedSet = new Set(run.failedNodeIds);
+  // Per-node "running" affordance. A node is actively running when the
+  // executor has emitted `node.started` for it and not yet
+  // completed / failed / suspended it. `runningNodeIds` is the
+  // authoritative source; legacy persisted runs predate the field, so
+  // we fall back to a `currentNodeName` match (one spinner at a time,
+  // matching the pre-spinner behaviour).
+  //
+  // Gate on a live run status — once the run is in a terminal state
+  // (completed / failed / cancelled), no node is "still running" even
+  // if cancellation raced ahead of the per-node cleanup events.
+  const runIsLive = run.status === 'running' || run.status === 'pending';
+  const runningSet = new Set(
+    runIsLive
+      ? (run.runningNodeIds ?? [])
+      : [],
+  );
   return (
     <ul style={{
       listStyle: 'none',
@@ -51,18 +67,27 @@ export function StepList({ run, message }: Props): JSX.Element {
         const isCompleted = completedSet.has(nodeId);
         const isFailed = failedSet.has(nodeId);
         const isSuspended = message.activeInterrupt?.nodeId === nodeId;
-        const isCurrent = !isCompleted && !isFailed && !isSuspended &&
-          run.currentNodeName === friendlyName;
-        const isPending = !isCompleted && !isFailed && !isSuspended && !isCurrent;
+        // `runningNodeIds` is the new authoritative source (set by
+        // node.started / cleared by node.completed/failed/suspended);
+        // the `currentNodeName` fallback keeps legacy persisted runs
+        // (no runningNodeIds field) showing the same single-spinner
+        // behaviour they had before this field was added.
+        const isRunning = !isCompleted && !isFailed && !isSuspended && (
+          run.runningNodeIds === undefined
+            ? run.currentNodeName === friendlyName && runIsLive
+            : runningSet.has(nodeId)
+        );
+        const isPending = !isCompleted && !isFailed && !isSuspended && !isRunning;
         const outputs = run.nodeOutputs?.[nodeId];
         const hasOutputs = outputs !== undefined && outputs !== null
           && (typeof outputs !== 'object' || Object.keys(outputs).length > 0);
         const isExpanded = expandedNodeId === nodeId;
 
-        const stateChip = isCompleted ? { label: '✓', color: STATUS_COLORS.completed }
+        const stateChip: { label: string | 'spinner'; color: string } = isCompleted
+          ? { label: '✓', color: STATUS_COLORS.completed }
           : isFailed ? { label: '✕', color: STATUS_COLORS.failed }
           : isSuspended ? { label: '⏸', color: STATUS_COLORS.running }
-          : isCurrent ? { label: '●', color: STATUS_COLORS.running }
+          : isRunning ? { label: 'spinner', color: STATUS_COLORS.running }
           : { label: '○', color: 'var(--ink-3, #8a857a)' };
 
         // A11y wiring for the disclosure pattern. Screen readers
@@ -90,7 +115,7 @@ export function StepList({ run, message }: Props): JSX.Element {
                 gap: 8,
                 padding: '2px 0',
                 opacity: isPending ? 0.55 : 1,
-                fontWeight: isCurrent || isSuspended ? 600 : 400,
+                fontWeight: isRunning || isSuspended ? 600 : 400,
                 cursor: hasOutputs ? 'pointer' : 'default',
               }}
             >
@@ -102,7 +127,7 @@ export function StepList({ run, message }: Props): JSX.Element {
                 fontSize: 11,
                 color: stateChip.color,
               }} aria-hidden>
-                {stateChip.label}
+                {stateChip.label === 'spinner' ? <StepSpinner /> : stateChip.label}
               </span>
               <span style={{
                 width: 22,
@@ -138,7 +163,7 @@ export function StepList({ run, message }: Props): JSX.Element {
                   Awaiting your input ↓
                 </span>
               )}
-              {isCurrent && (
+              {isRunning && (
                 <span style={{ fontSize: 10, color: STATUS_COLORS.running }} aria-hidden>
                   Running…
                 </span>
@@ -165,6 +190,33 @@ export function StepList({ run, message }: Props): JSX.Element {
         );
       })}
     </ul>
+  );
+}
+
+/** Tiny rotating arc rendered in the icon column when a node is
+ *  actively running. Replaces the empty ○ for that row so users can
+ *  tell at a glance which steps are "in flight in the background" vs
+ *  "not yet reached". Inherits its hue from the parent's `color`
+ *  (set to `STATUS_COLORS.running` on the chip wrapper) so theme +
+ *  status colour follow the rest of the panel. Honours
+ *  `prefers-reduced-motion` via the `openwop-spinner-rotate` keyframe
+ *  rule (the keyframe + reduced-motion gate live in
+ *  `styles/global.css`, alongside `openwop-pulse`). */
+function StepSpinner(): JSX.Element {
+  return (
+    <span
+      aria-hidden
+      style={{
+        width: 11,
+        height: 11,
+        border: '1.5px solid color-mix(in oklch, currentColor 25%, transparent)',
+        borderTopColor: 'currentColor',
+        borderRadius: '50%',
+        animation: 'openwop-spinner-rotate 0.8s linear infinite',
+        display: 'inline-block',
+        boxSizing: 'border-box',
+      }}
+    />
   );
 }
 

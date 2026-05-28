@@ -91,6 +91,25 @@
   50%      { box-shadow: 0 0 0 6px color-mix(in oklch, var(--color-danger)  0%, transparent); }
 }
 
+/* Per-step spinner for the Workflow-progress panel — see
+ * `StepSpinner` in chat/workflowProgress/StepList.tsx. Drawn as a
+ * rotating arc (1.5px ring with a single coloured top edge) replacing
+ * the ○ glyph for nodes the executor has emitted `node.started` for
+ * but not yet completed. The element inherits its colour from the
+ * surrounding chip span, so the same keyframe serves whatever the
+ * `STATUS_COLORS.running` token is in the active theme. */
+@keyframes openwop-spinner-rotate {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Freeze rather than hide — users still need the affordance to
+   * distinguish "running" from "not yet started"; a non-spinning
+   * arc keeps that distinction without animation. */
+  [style*="openwop-spinner-rotate"] {
+    animation: none !important;
+  }
+}
+
 /* ─── Message-actions hover reveal ────────────────────────────────────
  * `.message-actions` lives inside each assistant bubble; hidden by
  * default (opacity:0 in inline styles) and revealed when the user
