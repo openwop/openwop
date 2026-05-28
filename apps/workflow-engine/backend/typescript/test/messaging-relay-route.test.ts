@@ -558,7 +558,7 @@ describe('messaging bridge — selectWorkflowByRules (pure)', () => {
 import { createSelfHttpBridge } from '../src/messaging/bridge.js';
 
 /** Build a fake Storage that exposes only the methods the bridge touches. */
-function mockStorage(rules: any[], seedTurns: any[] = []) {
+function mockStorage(rules: any[], seedTurns: any[] = [], identities: any[] = [], sessions: any[] = []) {
   const turns: any[] = [...seedTurns];
   return {
     listMessagingRoutingRules: async () => rules,
@@ -566,6 +566,9 @@ function mockStorage(rules: any[], seedTurns: any[] = []) {
     listMessagingTurns: async (sessionKey: string, limit: number) =>
       turns.filter((t) => t.sessionKey === sessionKey).slice(-Math.max(1, limit)),
     appendMessagingTurn: async (t: any) => { turns.push(t); },
+    // Phase E: identities + sessions seam.
+    listMessagingIdentities: async () => identities,
+    listMessagingSessions: async () => sessions,
     _turns: turns as any[],
     // The detached completeAndReply path polls + enqueues; we never let it
     // complete because the spy fetchImpl returns a non-terminal status forever.
@@ -632,6 +635,44 @@ describe('messaging bridge — routing wiring (unit)', () => {
     // The new inbound user turn was persisted (prior-2 + new-1 = 3 user/assistant rows + the new user).
     const userTurns = (store._turns as any[]).filter((t) => t.role === 'user');
     expect(userTurns.map((t) => t.content)).toEqual(['first', 'second']);
+  });
+
+  it('cross-channel identity merges history across linked peers (Phase E)', async () => {
+    let postBody: any;
+    const fetchImpl: any = async (url: string, init?: any) => {
+      if (String(url).endsWith('/v1/runs') && init?.method === 'POST') {
+        postBody = JSON.parse(init.body as string);
+        return new Response(JSON.stringify({ runId: 'r-1' }), { status: 201, headers: { 'content-type': 'application/json' } });
+      }
+      return new Response(JSON.stringify({ status: 'running' }), { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+    // Identity links signal:+15551111 ↔ discord:user-X.
+    const identity = {
+      identityId: 'idn1', tenantId: 't', displayName: 'Ada',
+      peers: [{ channel: 'signal', peerId: '+15551111' }, { channel: 'discord', peerId: 'user-X' }],
+      createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z',
+    };
+    const sessions = [
+      { sessionKey: 'signal:c-sig', tenantId: 't', channel: 'signal', conversationId: 'c-sig', peerId: '+15551111', lastInboundAt: '2026-05-27T00:00:00Z', messageCount: 1 },
+      { sessionKey: 'discord:c-dis', tenantId: 't', channel: 'discord', conversationId: 'c-dis', peerId: 'user-X', lastInboundAt: '2026-05-27T00:00:02Z', messageCount: 1 },
+    ];
+    const seedTurns = [
+      { turnId: 'ts1', sessionKey: 'signal:c-sig', tenantId: 't', role: 'user', content: 'said on signal', at: '2026-05-27T00:00:00Z' },
+      { turnId: 'ts2', sessionKey: 'signal:c-sig', tenantId: 't', role: 'assistant', content: 'replied on signal', at: '2026-05-27T00:00:01Z' },
+    ];
+    const bridge = createSelfHttpBridge({
+      storage: mockStorage([], seedTurns, [identity], sessions),
+      baseUrl: 'http://test', bearer: 'x', defaultWorkflowId: 'wf.default', fetchImpl,
+    });
+    // Inbound on Discord from the linked peer — its history should include the prior Signal turns.
+    await bridge.onInbound({
+      device: { relayId: 'rl', tenantId: 't', channel: 'discord' },
+      envelope: { channel: 'discord', platformMessageId: 'm-d1', conversationId: 'c-dis', peerId: 'user-X', text: 'now on discord', timestamp: '2026-05-27T00:00:03Z' } as any,
+      sessionKey: 'discord:c-dis',
+    });
+    expect(postBody.inputs.messages.map((m: any) => m.content)).toEqual([
+      'said on signal', 'replied on signal', 'now on discord',
+    ]);
   });
 
   it('rule with agentId dispatches the agent instead of POST /v1/runs (Phase D)', async () => {

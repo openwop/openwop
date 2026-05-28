@@ -74,7 +74,13 @@ export function createSelfHttpBridge(cfg: SelfHttpBridgeConfig): MessagingBridge
       // Thread prior turns into messages[] so messaging gets chat-style
       // continuity. Each inbound run sees the recent conversation; the
       // assistant reply is persisted detached on run completion.
-      const prior = await cfg.storage.listMessagingTurns(sessionKey, HISTORY_LIMIT);
+      // Phase E: if the inbound peer is linked to a cross-channel identity,
+      // merge that identity's other-channel turns in too so a single person
+      // sees one shared thread (e.g. signal:+1 + discord:user → one history).
+      const prior = await loadHistoryFor({
+        storage: cfg.storage, tenantId: device.tenantId, channel: device.channel,
+        peerId: envelope.peerId, sessionKey, limit: HISTORY_LIMIT,
+      });
       const messages = [
         ...prior.map((t) => ({ role: t.role, content: t.content })),
         { role: 'user', content: envelope.text },
@@ -175,6 +181,58 @@ export function selectWorkflowByRules(
   envelope: Pick<ChatIngressEnvelope, 'conversationId' | 'peerId'>,
 ): string | undefined {
   return selectRoutingRule(rules, device, envelope)?.workflowId;
+}
+
+interface HistoryArgs {
+  storage: Storage;
+  tenantId: string;
+  channel: RelayChannel;
+  peerId: string;
+  sessionKey: string;
+  limit: number;
+}
+
+/**
+ * Phase E: collect the recent conversation history for the inbound, optionally
+ * merging cross-channel turns when the peer is linked to a messaging identity.
+ *
+ *   - Resolve identity by scanning `listMessagingIdentities(tenantId)` for one
+ *     whose `peers[]` contains `(channel, peerId)`. Unlinked → only this
+ *     session's history (the prior behavior).
+ *   - If linked: list sessions for the tenant, pick the ones whose
+ *     `(channel, peerId)` matches any linked peer, then `listMessagingTurns`
+ *     on each — merged ascending by `at`, capped at `limit` (most recent).
+ *
+ * Cross-tenant scoping is preserved (we only ever read sessions for
+ * `tenantId`); the identity scan is tenant-bounded too, matching the
+ * existing CTI-1 invariant on the identities surface.
+ */
+export async function loadHistoryFor(a: HistoryArgs): Promise<ReadonlyArray<{ role: 'user' | 'assistant'; content: string; at: string }>> {
+  const identities = await a.storage.listMessagingIdentities(a.tenantId);
+  const identity = identities.find((id) => id.peers.some((p) => p.channel === a.channel && p.peerId === a.peerId));
+
+  // Single-session path: unlinked peer → just this session's turns.
+  if (!identity) {
+    const turns = await a.storage.listMessagingTurns(a.sessionKey, a.limit);
+    return turns.map((t) => ({ role: t.role, content: t.content, at: t.at }));
+  }
+
+  // Linked-identity path: gather session keys across linked peers, then merge.
+  const sessions = await a.storage.listMessagingSessions(a.tenantId);
+  const linkedKeySet = new Set<string>([a.sessionKey]);
+  for (const peer of identity.peers) {
+    for (const s of sessions) {
+      if (s.channel === peer.channel && s.peerId === peer.peerId) linkedKeySet.add(s.sessionKey);
+    }
+  }
+  const merged: Array<{ role: 'user' | 'assistant'; content: string; at: string }> = [];
+  for (const sk of linkedKeySet) {
+    const turns = await a.storage.listMessagingTurns(sk, a.limit);
+    for (const t of turns) merged.push({ role: t.role, content: t.content, at: t.at });
+  }
+  merged.sort((x, y) => x.at.localeCompare(y.at));
+  // Cap to the most-recent `limit`, keep chronological order.
+  return merged.length > a.limit ? merged.slice(merged.length - a.limit) : merged;
 }
 
 interface ReplyArgs {
