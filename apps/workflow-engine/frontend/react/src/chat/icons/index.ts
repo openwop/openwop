@@ -8,6 +8,7 @@
 
 export { AlertIcon } from './AlertIcon.js';
 export { BanIcon } from './BanIcon.js';
+export { BotIcon } from './BotIcon.js';
 export { CheckIcon } from './CheckIcon.js';
 export { ClockIcon } from './ClockIcon.js';
 export { GlobeIcon } from './GlobeIcon.js';
