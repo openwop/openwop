@@ -56,5 +56,7 @@
     "publicKeyRef": "openwop-team-1",
     "signatureRef": "keys/pack.json.sig"
   },
-  "integrity": "sha256-QsSPadxrczrGA3WhY/POb047TZRd41HE/zmAlr8o8bA="
+  "integrity": "sha256-QsSPadxrczrGA3WhY/POb047TZRd41HE/zmAlr8o8bA=",
+  "yanked": true,
+  "yankedReason": "systemPromptRef body omitted from tarball (pre-#295 bundler defect); superseded by 1.0.1"
 }

@@ -244,5 +244,6 @@
     "publicKeyRef": "myndhyve-internal-1",
     "signatureRef": "keys/pack.json.sig"
   },
-  "integrity": "sha256-dPq/Quoi7lhGDELAOlmhkMxYn3KplfdOdw49IiCrI1c="
+  "integrity": "sha256-dPq/Quoi7lhGDELAOlmhkMxYn3KplfdOdw49IiCrI1c=",
+  "publishedAt": "2026-05-25T00:00:00Z"
 }

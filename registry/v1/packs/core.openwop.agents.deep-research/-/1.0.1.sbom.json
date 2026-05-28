@@ -1,0 +1,169 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "bom-ref": "pkg:openwop/core.openwop.agents.deep-research@1.0.1",
+      "type": "library",
+      "name": "core.openwop.agents.deep-research",
+      "version": "1.0.1",
+      "description": "Long-horizon research agent. Plans, dispatches sub-investigations, retrieves from RAG + web, writes up findings. Mirrors LangGraph Deep Agents (planner + subagents + filesystem). Pure-agent pack.",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://openwop.dev/packs/core.openwop.agents.deep-research"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/openwop/openwop"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a50278863890135e7572ca09e17157e9cfea62bf3d0e5c9df26cf955ee7789bb"
+        }
+      ],
+      "purl": "pkg:openwop/core.openwop.agents.deep-research@1.0.1"
+    },
+    "tools": [
+      {
+        "vendor": "openwop",
+        "name": "generate-sbom.mjs",
+        "version": "1"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "file",
+      "name": "LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0cea879ed215e3961316e97ab5e4d7a2b2bca999358668599bd53a1c953bc0d9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "975"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "README.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1452e51ec6a80e22caba9eeb920a9ab3a945c945db22c1bc18c5b0788026c5a7"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "2381"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "keys/pack.json.sig",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "cd2c40661d44691c8e413c9f449284741d3c264d7c42ab2627ca0bfbc7cf7890"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "64"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "pack.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e9439b41ceff64666ec550fa7722d8fa9cf2ef0da70b2330907727459b86b437"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1672"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "prompts/deep-research.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9601310f5dae6d5c508b4b708c49c7ca2c613c9a3150d28a407253fde3727178"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "3280"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/deep-research.return.schema.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d981510964e84dbe471582da95915c889d5611f8881fc80af8be92da30454b0b"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "1648"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/deep-research.task.schema.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b799a1bfe66cdbdd0cb449f37c21c7679ee070f727d1b4d2add3946ef2f556a"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "904"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:openwop/core.openwop.agents.deep-research@1.0.1",
+      "dependsOn": [
+        "host:aiProviders",
+        "host:host.agentRuntime",
+        "host:openwop.agents.memoryBackends"
+      ]
+    }
+  ]
+}

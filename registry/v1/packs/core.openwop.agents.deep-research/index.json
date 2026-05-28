@@ -23,9 +23,21 @@
       "signingKeyId": "openwop-team-1",
       "integrity": "sha256-9KIVJeEsM5LTFmjqLGxMavw3Rh1eSDZI8+ybehmAsV4=",
       "deprecated": false,
+      "yanked": true
+    },
+    {
+      "version": "1.0.1",
+      "publishedAt": "2026-05-27T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.agents.deep-research/-/1.0.1.json",
+      "tarballUrl": "/v1/packs/core.openwop.agents.deep-research/-/1.0.1.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.agents.deep-research/-/1.0.1.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-team-1",
+      "integrity": "sha256-pQJ4hjiQE151csoJ4XFX6c/qYr89Dlyd8mz5Ve53ibs=",
+      "deprecated": false,
       "yanked": false
     }
   ],
-  "latest": "1.0.0",
+  "latest": "1.0.1",
   "deprecated": false
 }

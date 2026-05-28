@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/vendor.myndhyve.brand/1.0.0/theme.publish.config.json",
+  "title": "theme.publishConfig",
+  "type": "object",
+  "properties": {
+    "force": { "type": "boolean", "default": false, "description": "When true, overwrites existing artifact at the target without merge." }
+  },
+  "additionalProperties": false
+}

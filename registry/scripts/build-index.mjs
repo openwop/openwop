@@ -188,7 +188,13 @@ function rebuildPack(packName) {
       tarballUrl: `/v1/packs/${packName}/-/${version}.tgz`,
       signatureUrl: `/v1/packs/${packName}/-/${version}.sig`,
       signingMethod: manifest.signing?.method ?? 'ed25519',
-      signingKeyId: manifest.signing?.keyId ?? 'openwop-registry-root',
+      // The signed manifest records the publisher key as `signing.publicKeyRef`
+      // (node-pack-manifest.schema.json §Signing); `signing.keyId` is a legacy
+      // alias. Read publicKeyRef FIRST — reading only `keyId` made this always
+      // fall through to the hardcoded default, mislabeling every pack's signer
+      // as `openwop-registry-root` (the drift check-registry-signer-consistency
+      // guards). Verified by verify-signatures.mjs against registry/keys/<id>.pub.
+      signingKeyId: manifest.signing?.publicKeyRef ?? manifest.signing?.keyId ?? 'openwop-registry-root',
       integrity: manifest.integrity ?? 'sha256-PENDING-FIRST-BUILD',
       deprecated: Boolean(manifest.deprecated),
       yanked: Boolean(manifest.yanked),
