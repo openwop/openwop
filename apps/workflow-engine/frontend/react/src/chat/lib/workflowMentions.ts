@@ -116,6 +116,26 @@ export function detectMention(text: string): MentionMatch | null {
   return { entry, trailing: trailingRaw.length > 0 ? trailingRaw : null };
 }
 
+/** Slash-prefixed workflow dispatch — the new canonical syntax as of
+ *  the 2026-05-28 mention-symbol swap (`@` moves to agents, `/` becomes
+ *  the unified menu for built-in commands AND workflows). Mirrors
+ *  `detectMention` but on `^/slug` instead of `^@slug`.
+ *
+ *  Order of checks at the submit site: `findCommand(text)` first
+ *  (built-in commands take precedence so a workflow can never shadow
+ *  `/clear`), then this; otherwise the message routes through the
+ *  normal LLM send. */
+export function detectWorkflowSlashMention(text: string): MentionMatch | null {
+  const stripped = text.trim();
+  const match = /^\/([a-z0-9][a-z0-9-]*)(?:\s+(.*))?$/i.exec(stripped);
+  if (!match) return null;
+  const slug = match[1]?.toLowerCase() ?? '';
+  const entry = listWorkflowMentions().find((e) => e.slug === slug);
+  if (!entry) return null;
+  const trailingRaw = (match[2] ?? '').trim();
+  return { entry, trailing: trailingRaw.length > 0 ? trailingRaw : null };
+}
+
 /** Back-compat wrapper for any caller that only wants the bare-mention
  *  signal. Returns the entry only when there's no trailing text. */
 export function detectBareMention(text: string): WorkflowMentionEntry | null {

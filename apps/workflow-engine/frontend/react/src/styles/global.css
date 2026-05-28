@@ -504,6 +504,132 @@ a:visited {
   background: var(--clay-wash);
 }
 
+/* ─── Nav dropdowns ───────────────────────────────────────────────────
+ * Header submenus mirror the marketing site's `.nav-dropdown` pattern
+ * (`public/styles.css:154-224`) but bind to the app's design tokens
+ * (--paper / --rule / --clay / --ink). The React primitive lives in
+ * `chrome/NavDropdown.tsx`. Hover, focus-within, AND `.is-open`
+ * (click-toggled by the component) all reveal the menu so touch +
+ * keyboard users get parity with mouse hover.
+ *
+ * The trigger inherits the same mono-uppercase-11px styling as the
+ * sibling `<a>` nav items so the bar reads as one rhythm regardless
+ * of whether a slot is a leaf link or a submenu parent.
+ */
+.app-header nav .nav-dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+/* 14px invisible hover-bridge under the trigger so the cursor
+ * crossing the 8px gap between trigger and menu doesn't leave the
+ * dropdown bounding box and dismiss the menu. */
+.app-header nav .nav-dropdown::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 14px;
+}
+.app-header nav .nav-dropdown-trigger {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  margin: 0;
+  cursor: pointer;
+  /* Match the mono-uppercase-11px rhythm of sibling `<a>` nav items
+   * so the trigger doesn't visually stand out as "different". */
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: var(--space-1) var(--space-3);
+  border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color .15s ease, background .15s ease;
+}
+.app-header nav .nav-dropdown-trigger:hover,
+.app-header nav .nav-dropdown.is-open > .nav-dropdown-trigger {
+  color: var(--clay);
+}
+/* `.active` is added when any submenu child route is current — same
+ * visual treatment as the leaf `<a>.active` so the user always knows
+ * which section owns the current page. */
+.app-header nav .nav-dropdown.active > .nav-dropdown-trigger {
+  color: var(--ink);
+  background: var(--clay-wash);
+}
+.app-header nav .nav-dropdown-trigger .nav-caret {
+  font-size: 9px;
+  line-height: 1;
+  transform: translateY(1px);
+  transition: transform .15s ease;
+}
+.app-header nav .nav-dropdown.is-open .nav-caret {
+  transform: translateY(1px) rotate(180deg);
+}
+.app-header nav .nav-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 220px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  box-shadow: 0 10px 24px var(--ink-shadow);
+  padding: 6px;
+  display: none;
+  flex-direction: column;
+  z-index: 60;
+}
+.app-header nav .nav-dropdown:hover > .nav-dropdown-menu,
+.app-header nav .nav-dropdown.is-open > .nav-dropdown-menu,
+.app-header nav .nav-dropdown:focus-within > .nav-dropdown-menu {
+  display: flex;
+}
+.app-header nav .nav-dropdown-menu a {
+  /* Override the inherited `nav a` mono-uppercase-11px rhythm — menu
+   * items read better as sentence-case 13px so the persona of a
+   * "Workflows" or "Agents" row is legible at a glance. The trigger
+   * keeps the uppercase mono persona; the items underneath drop it. */
+  font-family: var(--font-sans, inherit);
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+  padding: 8px 12px;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.35;
+  background: transparent;
+}
+.app-header nav .nav-dropdown-menu a:hover,
+.app-header nav .nav-dropdown-menu a:focus-visible {
+  background: var(--paper-2);
+  color: var(--clay);
+  outline: none;
+}
+.app-header nav .nav-dropdown-menu-label {
+  font-weight: 500;
+}
+.app-header nav .nav-dropdown-menu-hint {
+  color: var(--ink-3);
+  font-size: 11.5px;
+  /* Hints disappear on hover so the row feels like one focusable
+   * surface — a separate hint color on a hovered row reads as two
+   * conflicting accents. Keep it readable but de-emphasized. */
+}
+.app-header nav .nav-dropdown-menu a:hover .nav-dropdown-menu-hint,
+.app-header nav .nav-dropdown-menu a:focus-visible .nav-dropdown-menu-hint {
+  color: color-mix(in oklch, var(--clay) 70%, transparent);
+}
+
 .app-main {
   flex: 1;
   padding: var(--space-5);

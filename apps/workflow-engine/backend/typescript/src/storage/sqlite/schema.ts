@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 15;
+export const LATEST_SCHEMA_VERSION = 16;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -463,6 +463,47 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
     // Routing rules may bind to an agent (RFC 0070 dispatch) instead of a
     // workflow. Mutex enforced at the route handler. Mirrors postgres mig 13.
     db.exec(`ALTER TABLE messaging_routing_rules ADD COLUMN agent_id TEXT;`);
+  },
+  16: (db) => {
+    // User-authored agents — backs the Agents-tab "+ Author new" form
+    // (`POST /v1/host/sample/agents`) added 2026-05-28. Pack-installed
+    // agents stay in the registry as today (RFC 0003 §C); these rows
+    // are merged into the same `getAgentRegistry().list()` at boot so
+    // `GET /v1/agents` projects both sources without consumers
+    // distinguishing. The `agent_id` shape for user records is
+    // `user.<tenantId>.<persona-slug>` — the prefix avoids collision
+    // with pack-installed ids (which always begin with their pack
+    // name, never `user.`).
+    //
+    // `tool_allowlist` is JSON-encoded text (sqlite has no JSON
+    // column type); the shape mirrors `ResolvedAgentManifest.toolAllowlist`.
+    // `memory_*` mirror `memoryShape` booleans. `confidence_threshold`
+    // is optional (real, 0.0-1.0).
+    //
+    // `system_prompt` carries the inline body — there's no pack-file
+    // ref for user agents; the form fields the text directly. SR-1
+    // (RFC 0072 §A: system prompts never cross the read API) still
+    // holds: the inventory route projects `systemPromptRef` only, and
+    // for user agents that ref is synthesized but not surfaced.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS user_agents (
+        agent_id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        persona TEXT NOT NULL,
+        label TEXT,
+        description TEXT,
+        model_class TEXT NOT NULL,
+        system_prompt TEXT NOT NULL,
+        tool_allowlist TEXT NOT NULL DEFAULT '[]',
+        memory_scratchpad INTEGER NOT NULL DEFAULT 0,
+        memory_conversation INTEGER NOT NULL DEFAULT 0,
+        memory_long_term INTEGER NOT NULL DEFAULT 0,
+        confidence_threshold REAL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_user_agents_tenant
+        ON user_agents (tenant_id, created_at DESC);
+    `);
   },
 };
 

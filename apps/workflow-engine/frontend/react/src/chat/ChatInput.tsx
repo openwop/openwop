@@ -16,8 +16,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useAudioRecorder, blobToBase64, type RecordedAudio } from './hooks/useAudioRecorder.js';
-import { CommandAutocomplete } from './CommandAutocomplete.js';
-import { WorkflowMentionAutocomplete } from './WorkflowMentionAutocomplete.js';
+import { SlashAutocomplete } from './SlashAutocomplete.js';
+import { AgentMentionAutocomplete } from './AgentMentionAutocomplete.js';
 import { MicIcon, SendIcon, StopIcon } from './icons/index.js';
 import type { ContentPart } from './hooks/useChatSession.js';
 
@@ -91,7 +91,7 @@ export function ChatInput({
   }
 
   function onKey(e: React.KeyboardEvent<HTMLTextAreaElement>): void {
-    // Belt-and-braces: any popover (CommandAutocomplete, the @-mention
+    // Belt-and-braces: any popover (SlashAutocomplete, the @-mention
     // popover, future popovers) should stopPropagation on the native
     // event so React's synthetic handler never sees the key — but if
     // a future popover forgets, the `defaultPrevented` check here is
@@ -121,12 +121,18 @@ export function ChatInput({
 
   return (
     <div style={{ position: 'relative' }}>
-      <CommandAutocomplete
+      {/* Unified slash picker — shows built-in commands AND
+          registered workflows in one menu, grouped under subheads.
+          Replaces the prior CommandAutocomplete after the 2026-05-28
+          mention-symbol swap (`@` is now agents, `/` is unified). */}
+      <SlashAutocomplete
         text={text}
-        onPick={(name) => { setText(name + ' '); taRef.current?.focus(); }}
+        onPick={(newText) => { setText(newText); taRef.current?.focus(); }}
         onDismiss={() => { /* dismiss is implicit on text change */ }}
       />
-      <WorkflowMentionAutocomplete
+      {/* `@` picker — agents only (was workflows pre-2026-05-28).
+          Workflows live under `/` in SlashAutocomplete above. */}
+      <AgentMentionAutocomplete
         text={text}
         cursorPos={cursorPos}
         onPick={(newText, newCursorPos) => {

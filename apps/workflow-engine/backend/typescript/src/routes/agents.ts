@@ -48,19 +48,54 @@ function toEntry(a: ResolvedAgentManifest): AgentInventoryEntry {
   };
 }
 
+/** Cross-tenant isolation filter for user-authored agents (phase E1,
+ *  2026-05-28). Pack-installed agents (no `ownerTenant`) are
+ *  tenant-agnostic — every tenant sees them. User-authored agents
+ *  (a tenant POSTed them via `/v1/host/sample/agents`) carry an
+ *  `ownerTenant` and are only visible to that tenant.
+ *
+ *  `requestTenant` comes from `req.tenantId` populated by the auth
+ *  middleware:
+ *    - `anon:<sid>` for cookie-anon callers
+ *    - `user:<hash>` for OIDC-signed-in callers
+ *    - `undefined` for API-key Bearer callers (the auth middleware
+ *      sets `principal.tenants = ['*']` but doesn't bind `tenantId`;
+ *      the conformance harness + admin tooling reach this path).
+ *      Treated as wildcard-read here, matching the `runs.list` +
+ *      `chat_sessions.list` patterns.
+ *    - `*` is the explicit wildcard from `?tenantId=*` overrides.
+ *
+ *  Wildcard sees everything — that's by-design for the conformance
+ *  suite and admin tooling. Real user sessions (cookie-anon / OIDC)
+ *  carry a concrete tenantId and only see their own user-authored
+ *  agents. */
+function visibleTo(a: ResolvedAgentManifest, requestTenant: string | undefined): boolean {
+  if (!a.ownerTenant) return true;
+  if (requestTenant === undefined || requestTenant === '*') return true;
+  return a.ownerTenant === requestTenant;
+}
+
+interface AgentReqLike { tenantId?: string }
+
 export function registerAgentRoutes(app: Express): void {
   // RFC 0072 §A — NORMATIVE read-only inventory (matches agent-inventory-response.schema.json).
   // Auth-gated (registered after authMiddleware in index.ts). This host advertises
   // capabilities.agents.manifestRuntime UNCONDITIONALLY (discovery.ts), so the route
   // is always live; a host that gates the advertisement MUST 404 these endpoints when
   // it does not advertise the capability (RFC 0072 §A: "MUST serve iff advertised").
-  app.get('/v1/agents', (_req, res) => {
-    const agents = getAgentRegistry().list().map(toEntry);
+  app.get('/v1/agents', (req, res) => {
+    const tenant = (req as AgentReqLike).tenantId;
+    const agents = getAgentRegistry().list()
+      .filter((a) => visibleTo(a, tenant))
+      .map(toEntry);
     res.json({ agents, total: agents.length });
   });
   app.get('/v1/agents/:agentId', (req, res) => {
+    const tenant = (req as AgentReqLike).tenantId;
     const a = getAgentRegistry().get(req.params.agentId);
-    if (!a) {
+    if (!a || !visibleTo(a, tenant)) {
+      // Same 404 for "absent" and "not yours" — never leak that a
+      // cross-tenant agent exists by returning a distinct status.
       res.status(404).json({ error: 'not_found', message: `agent '${req.params.agentId}' is not installed on this host` });
       return;
     }
@@ -69,13 +104,17 @@ export function registerAgentRoutes(app: Express): void {
 
   // Sample-extension aliases (RFC 0070 convenience; non-normative). The list
   // form additionally reports the host's runtime posture for the CLI.
-  app.get('/v1/host/sample/agents', (_req, res) => {
-    const agents = getAgentRegistry().list().map(toEntry);
+  app.get('/v1/host/sample/agents', (req, res) => {
+    const tenant = (req as AgentReqLike).tenantId;
+    const agents = getAgentRegistry().list()
+      .filter((a) => visibleTo(a, tenant))
+      .map(toEntry);
     res.json({ agents, total: agents.length, runtime: { manifestRuntime: true } });
   });
   app.get('/v1/host/sample/agents/:agentId', (req, res) => {
+    const tenant = (req as AgentReqLike).tenantId;
     const a = getAgentRegistry().get(req.params.agentId);
-    if (!a) {
+    if (!a || !visibleTo(a, tenant)) {
       res.status(404).json({ error: 'not_found', message: `agent '${req.params.agentId}' is not installed on this host` });
       return;
     }

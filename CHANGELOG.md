@@ -9,6 +9,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [1.1.6 — unreleased]
+
+### feat(app,sdk,host-sample): Agents tab + chat mention-symbol swap (2026-05-28)
+
+Sample-app (workflow-engine) gains a full **Agents tab** (`/agents`) at app.openwop.dev — list, detail, author-from-scratch form (`POST /v1/host/sample/agents`), install-from-registry browser (`GET/POST /v1/host/sample/registry/agent-packs`), and fork-existing flow. Header restructured into four submenu slots — **Chat · Build ▾ · Operate ▾ · Settings ▾** (CLI item now lives under Settings) — matching the marketing site's `.nav-dropdown` pattern.
+
+Chat mention-symbol swap: `/` is now the unified picker for **built-in commands + workflows** (was commands only); `@` opens the **agents picker** (was workflows). First `@code-reviewer` activates the agent in a new right-side **Active Agents** side panel + switches chat dispatch to it; subsequent `@code-reviewer` just switches. Chat dispatch routes through the active agent's resolved `systemPrompt` from the RFC 0070 `AgentRegistry`.
+
+Cross-tenant + replay-determinism guards: user-authored agents carry `ownerTenant` in `ResolvedAgentManifest`; `GET /v1/agents` filters them per requesting tenant; chat dispatch rejects cross-tenant `inputs.agentId`. A new `vendor.openwop-sample.agent.routed` event records the resolved `systemPromptHash` so replays can detect drift on mutable user-authored systemPrompts. SDK adds `OpenwopClient.userAgents.{create, delete, listAvailablePacks, installPack}` + the supporting types (`CreateUserAgentRequest`, `UserAgentRecord`, `AgentPackSummary`, `AgentPackRegistryResponse`, `InstallAgentPackRequest`, `InstallAgentPackResponse`). Sqlite schema v16 + postgres v14 add `user_agents` table. Tests: `test/user-agents-route.test.ts` (validate, conflict, idempotency, cross-tenant), `test/storage-postgres.test.ts` PG parity round-trip. Conformance corpus untouched.
+
+### feat(sdk-ts): export AgentInventoryEntry + AgentInventoryResponse types (2026-05-28)
+
+Public SDK type-surface now re-exports `AgentInventoryEntry` and `AgentInventoryResponse` so consumers of `OpenwopClient.agents.list/get` can annotate without importing from a deep path. Additive (no break).
+
 ## [1.1.5] — 2026-05-28 — OpenWOP CLI launch + chat-channel parity + agent-runtime arc Accepted
 
 Ships the first public release of the OpenWOP CLI to npm, brings channel messaging (Signal · iMessage · WhatsApp · Discord) to feature parity with the in-app AI chat, and closes the agent-manifest-runtime arc end-to-end on a non-steward host. All wire shapes additive per `COMPATIBILITY.md` §2.1.
@@ -25,6 +39,7 @@ Ships the first public release of the OpenWOP CLI to npm, brings channel messagi
 - **Reference workflow-engine: `/readiness` reports managed-provider health.** When `providers.json` advertises a `managed: true` tier (e.g., `openwop-free`) but its server-held key was never seeded, `/readiness` returns `503 { status: "degraded", checks: { managedProviders: [...] } }` with a per-provider `detail` naming the env var to set. Catches a dropped/unmounted-secret class of outage at deploy time instead of waiting for the first failed run.
 - **Honest deferrals + corrections.** RFC 0054 (run-diff) stays `Active` — graduation to `Accepted` awaits a non-steward host advertising the endpoint. RFC 0072 graduation awaits a second cross-language host. The RFC 0073 wrapper-fallback removal (Phase 4) defers to a future minor. The `v1.1.4` tag from 2026-05-26 silently did not trigger the publish workflow (no run record); this `v1.1.5` corpus-aligned tag catches the TS SDK / Python / Go / conformance up. `DEPLOY.md` §6 corrected — the from-scratch `--env-vars-file` + `--set-secrets` form was a footgun for live redeploys; safe-redeploy recipe documented separately.
 - **Site updates.** Homepage `§01.5 "Try it from your terminal"` card on `openwop.dev` introduces `@openwop/cli` with a dark-bg install snippet + capabilities list + deep-link to the in-app `/cli` command catalog. `PUBLISHING.md` artifact table gains the CLI row noting independent SemVer + `cli/v*` tag pattern.
+
 
 ## [1.1.4] — 2026-05-26 — MyndHyve cohort live + autonomous-agent-runtime cohort + 19 RFC graduations
 

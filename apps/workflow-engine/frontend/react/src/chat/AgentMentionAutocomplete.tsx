@@ -1,35 +1,40 @@
 /**
- * Workflow @-mention autocomplete popover.
+ * Agent @-mention autocomplete popover.
  *
- * Mirrors the slash-command pattern in CommandAutocomplete.tsx but
- * activates anywhere in the textarea (not just at the start) and is
- * cursor-position-aware. Mention mode triggers when the character
- * immediately preceding the cursor is `@`, OR an unbroken token
- * starting with `@` (no whitespace) sits before the cursor and is
- * itself preceded by whitespace or start-of-string.
+ * Replaces the cursor-aware behaviour of the old
+ * `WorkflowMentionAutocomplete` on the `@` trigger, with one
+ * material difference: the popover now lists installed *agents*
+ * (sourced from `GET /v1/agents` via `useAgentMentions()`), not
+ * workflows. Workflows have moved to the unified `/` picker
+ * (`SlashAutocomplete.tsx`) as of the 2026-05-28 mention-symbol swap.
  *
- * Keyboard: ↑↓ navigate, Enter / Tab to apply, Esc dismisses. On
- * apply, the popover hands back the new text + the new cursor
- * position so ChatInput can restore selection in the DOM.
+ * Trigger: when scanning leftward from the cursor we hit `@` before
+ * any whitespace, AND the `@` is preceded by whitespace or
+ * start-of-string. Identical detection rule to the previous workflow
+ * picker — only the data source + display row changes.
+ *
+ * Keyboard: ↑↓ navigate, Enter / Tab to apply, Esc dismisses.
+ *
+ * On apply: rebuilds the textarea text with `@<persona-slug> ` and
+ * hands back the new cursor position so ChatInput can restore DOM
+ * selection. The actual *activation* of the agent (adding it to the
+ * active-agents side panel + switching the currently-routing agent)
+ * lands in phase D3, driven by the submit path's
+ * `detectAgentMention()` check. For phase B2 this picker is purely a
+ * text-insertion affordance.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  filterMentions,
-  listWorkflowMentions,
-  type WorkflowMentionEntry,
-} from './lib/workflowMentions.js';
+  filterAgentMentions,
+  useAgentMentions,
+  type AgentMentionEntry,
+} from './lib/agentMentions.js';
 
 interface Props {
   text: string;
-  /** Current cursor position in the textarea (selectionStart). */
   cursorPos: number;
-  /** Called when the user picks a mention. The popover supplies the
-   *  rebuilt text and the new cursor position; the caller restores
-   *  the DOM selection. */
   onPick: (newText: string, newCursorPos: number) => void;
-  /** Called on Esc. Caller decides what dismissal means (commonly a
-   *  no-op — typing past the mention dismisses naturally). */
   onDismiss: () => void;
 }
 
@@ -40,11 +45,11 @@ interface MentionState {
   query: string;
 }
 
-/** Find an active mention near the cursor, or null if not in mention
- *  mode. The mention is active when, scanning leftward from the
- *  cursor, we hit `@` before any whitespace, AND the `@` is preceded
- *  by whitespace or start-of-string. */
-function detectMention(text: string, cursorPos: number): MentionState | null {
+/** Locate an active mention near the cursor. Symmetric to the
+ *  previous workflow-mention detector — `@` must be preceded by
+ *  whitespace or start-of-string, and there must be no whitespace
+ *  between `@` and the cursor. */
+function detectMentionState(text: string, cursorPos: number): MentionState | null {
   let i = cursorPos - 1;
   while (i >= 0) {
     const ch = text.charAt(i);
@@ -61,20 +66,17 @@ function detectMention(text: string, cursorPos: number): MentionState | null {
   return null;
 }
 
-export function WorkflowMentionAutocomplete({
+export function AgentMentionAutocomplete({
   text,
   cursorPos,
   onPick,
   onDismiss,
 }: Props): JSX.Element | null {
-  // Re-read mentions on every render so newly-saved workflows show up
-  // without needing a route remount. listSavedWorkflows() touches
-  // localStorage on each call but the list is tiny.
-  const entries = listWorkflowMentions();
-  const mention = detectMention(text, cursorPos);
+  const { entries, isLoading, error } = useAgentMentions();
+  const mention = detectMentionState(text, cursorPos);
   const query = mention?.query ?? '';
   const matches = useMemo(
-    () => (mention ? filterMentions(entries, query) : []),
+    () => (mention ? filterAgentMentions(entries, query) : []),
     [entries, mention, query],
   );
 
@@ -84,7 +86,7 @@ export function WorkflowMentionAutocomplete({
   }, [query, mention?.atPos]);
 
   const apply = useCallback(
-    (picked: WorkflowMentionEntry): void => {
+    (picked: AgentMentionEntry): void => {
       if (!mention) return;
       const before = text.substring(0, mention.atPos);
       const after = text.substring(mention.atPos + 1 + query.length);
@@ -97,7 +99,7 @@ export function WorkflowMentionAutocomplete({
   );
 
   useEffect(() => {
-    if (!mention) return;
+    if (!mention) return undefined;
     function onKey(e: KeyboardEvent): void {
       if (matches.length === 0) {
         if (e.key === 'Escape') {
@@ -134,26 +136,40 @@ export function WorkflowMentionAutocomplete({
   }, [mention, matches, selectedIdx, onDismiss, apply]);
 
   const listRef = useRef<HTMLDivElement>(null);
-
   if (!mention) return null;
 
+  // Empty-state branches: distinct copy for "still loading", "host
+  // doesn't have any agents installed", and "user query matches
+  // nothing". Each tells the user something different about how to
+  // recover — generic "no matches" hides the load + zero-installed
+  // cases behind the same text.
+  if (isLoading && entries.length === 0) {
+    return (
+      <EmptyPanel listRef={listRef}>
+        Loading agents…
+      </EmptyPanel>
+    );
+  }
+  if (error) {
+    return (
+      <EmptyPanel listRef={listRef} tone="error">
+        Couldn't load agents: {error}.
+      </EmptyPanel>
+    );
+  }
+  if (entries.length === 0) {
+    return (
+      <EmptyPanel listRef={listRef}>
+        No agents installed yet. Visit the <strong>Agents</strong> tab to
+        install one from the registry or author your own.
+      </EmptyPanel>
+    );
+  }
   if (matches.length === 0) {
     return (
-      <div
-        ref={listRef}
-        style={{
-          position: 'absolute', bottom: '100%', left: 12, right: 12, marginBottom: 8,
-          background: 'var(--color-surface)',
-          border: '1px solid var(--color-border)',
-          borderRadius: 'var(--radius)',
-          padding: 8,
-          fontSize: 12,
-          color: 'var(--color-text-muted)',
-          zIndex: 10,
-        }}
-      >
-        No workflows match <code>@{query}</code>. Save one in the Workflows tab first.
-      </div>
+      <EmptyPanel listRef={listRef}>
+        No agents match <code>@{query}</code>.
+      </EmptyPanel>
     );
   }
 
@@ -161,21 +177,21 @@ export function WorkflowMentionAutocomplete({
     <div
       ref={listRef}
       role="listbox"
-      aria-label="Workflow mentions"
+      aria-label="Agent mentions"
       style={{
         position: 'absolute', bottom: '100%', left: 12, right: 12, marginBottom: 8,
         background: 'var(--color-surface)',
         border: '1px solid var(--color-border)',
         borderRadius: 'var(--radius)',
         padding: 4,
-        maxHeight: 240,
+        maxHeight: 280,
         overflowY: 'auto',
         zIndex: 10,
       }}
     >
       {matches.map((entry, i) => (
-        <MentionRow
-          key={entry.workflowId}
+        <AgentRow
+          key={entry.agentId}
           entry={entry}
           selected={i === selectedIdx}
           onClick={() => apply(entry)}
@@ -191,19 +207,48 @@ export function WorkflowMentionAutocomplete({
           borderTop: '1px solid var(--color-border)',
         }}
       >
-        Tip: enable the <strong>Tools</strong> toggle so the model can invoke the mentioned workflow.
+        Tip: @-mentioning an agent adds it to your active-agents lineup and
+        switches the conversation through it.
       </div>
     </div>
   );
 }
 
-function MentionRow({
+function EmptyPanel({
+  listRef,
+  children,
+  tone = 'muted',
+}: {
+  listRef: React.RefObject<HTMLDivElement>;
+  children: React.ReactNode;
+  tone?: 'muted' | 'error';
+}): JSX.Element {
+  return (
+    <div
+      ref={listRef}
+      style={{
+        position: 'absolute', bottom: '100%', left: 12, right: 12, marginBottom: 8,
+        background: 'var(--color-surface)',
+        border: `1px solid ${tone === 'error' ? 'var(--color-danger)' : 'var(--color-border)'}`,
+        borderRadius: 'var(--radius)',
+        padding: 8,
+        fontSize: 12,
+        color: tone === 'error' ? 'var(--color-danger)' : 'var(--color-text-muted)',
+        zIndex: 10,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function AgentRow({
   entry,
   selected,
   onClick,
   onHover,
 }: {
-  entry: WorkflowMentionEntry;
+  entry: AgentMentionEntry;
   selected: boolean;
   onClick: () => void;
   onHover: () => void;
@@ -224,9 +269,21 @@ function MentionRow({
         gap: 2,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <code style={{ fontWeight: 600, fontSize: 12 }}>@{entry.slug}</code>
         <span className="muted" style={{ fontSize: 11 }}>{entry.displayName}</span>
+        <span
+          style={{
+            fontSize: 10,
+            padding: '1px 6px',
+            borderRadius: 8,
+            background: 'var(--color-surface-2)',
+            color: 'var(--color-text-muted)',
+            fontFamily: 'var(--mono)',
+          }}
+        >
+          {entry.modelClass}
+        </span>
       </div>
       <div className="muted" style={{ fontSize: 11 }}>{entry.description}</div>
     </div>

@@ -20,6 +20,7 @@ import type {
   NotificationRecord,
   PushSubscriptionRecord,
   RunRecord,
+  UserAgentRecord,
   WebhookSubscriptionRecord,
 } from '../../types.js';
 import type {
@@ -349,6 +350,26 @@ export function openSqliteStorage(dbPath: string): Storage {
       events: row.events ? JSON.parse(row.events) : [],
       tags: row.tags ? JSON.parse(row.tags) : undefined,
       secret: row.secret,
+      createdAt: row.created_at,
+    };
+  }
+
+  function rowToUserAgent(row: any): UserAgentRecord {
+    return {
+      agentId: row.agent_id,
+      tenantId: row.tenant_id,
+      persona: row.persona,
+      label: row.label ?? undefined,
+      description: row.description ?? undefined,
+      modelClass: row.model_class,
+      systemPrompt: row.system_prompt,
+      toolAllowlist: row.tool_allowlist ? JSON.parse(row.tool_allowlist) : [],
+      memoryShape: {
+        scratchpad: row.memory_scratchpad === 1,
+        conversation: row.memory_conversation === 1,
+        longTerm: row.memory_long_term === 1,
+      },
+      confidenceThreshold: row.confidence_threshold ?? undefined,
       createdAt: row.created_at,
     };
   }
@@ -957,6 +978,58 @@ export function openSqliteStorage(dbPath: string): Storage {
         `DELETE FROM push_subscriptions WHERE tenant_id = ?`,
       ).run(tenantId);
       return r.changes;
+    },
+
+    // ── user-authored agents (phase E1, 2026-05-28) ──
+    async insertUserAgent(record) {
+      db.prepare(
+        `INSERT INTO user_agents (
+          agent_id, tenant_id, persona, label, description, model_class,
+          system_prompt, tool_allowlist,
+          memory_scratchpad, memory_conversation, memory_long_term,
+          confidence_threshold, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).run(
+        record.agentId,
+        record.tenantId,
+        record.persona,
+        record.label ?? null,
+        record.description ?? null,
+        record.modelClass,
+        record.systemPrompt,
+        JSON.stringify(record.toolAllowlist),
+        record.memoryShape.scratchpad ? 1 : 0,
+        record.memoryShape.conversation ? 1 : 0,
+        record.memoryShape.longTerm ? 1 : 0,
+        record.confidenceThreshold ?? null,
+        record.createdAt,
+      );
+    },
+
+    async listUserAgents(tenantId) {
+      const rows = db.prepare(
+        `SELECT * FROM user_agents WHERE tenant_id = ? ORDER BY created_at DESC`,
+      ).all(tenantId) as Array<Record<string, unknown>>;
+      return rows.map(rowToUserAgent);
+    },
+
+    async listAllUserAgents() {
+      const rows = db.prepare(
+        `SELECT * FROM user_agents ORDER BY created_at DESC`,
+      ).all() as Array<Record<string, unknown>>;
+      return rows.map(rowToUserAgent);
+    },
+
+    async getUserAgent(agentId) {
+      const row = db.prepare(
+        `SELECT * FROM user_agents WHERE agent_id = ?`,
+      ).get(agentId) as Record<string, unknown> | undefined;
+      return row ? rowToUserAgent(row) : null;
+    },
+
+    async deleteUserAgent(agentId) {
+      const r = db.prepare(`DELETE FROM user_agents WHERE agent_id = ?`).run(agentId);
+      return r.changes > 0;
     },
 
     // ── messaging relay-gateway (demo host-extension) ──

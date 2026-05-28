@@ -10,6 +10,7 @@ import { MessageFeed } from './MessageFeed.js';
 import { WelcomeCard } from './WelcomeCard.js';
 import { SessionHistoryDrawer } from './SessionHistoryDrawer.js';
 import { WorkflowProgressPanel } from './workflowProgress/WorkflowProgressPanel.js';
+import { ActiveAgentsPanel, DEFAULT_ASSISTANT_ID } from './activeAgents/ActiveAgentsPanel.js';
 import { useChatSession } from './hooks/useChatSession.js';
 import { useChatSessions } from './hooks/useChatSessions.js';
 import { findCommand } from './registry/CommandRegistry.js';
@@ -18,7 +19,8 @@ import { getProvider } from '../byok/lib/providers.js';
 import type { BYOKActiveConfig } from '../byok/lib/useBYOKConfig.js';
 import type { ContentPart } from './hooks/useChatSession.js';
 import { buildAvailableTools } from './lib/availableTools.js';
-import { detectMention } from './lib/workflowMentions.js';
+import { detectWorkflowSlashMention } from './lib/workflowMentions.js';
+import { detectAgentMention, useAgentMentions } from './lib/agentMentions.js';
 
 // localStorage keys for panel persistence — keeps the user's "open" /
 // "which run is focused" choice across page reloads. Tenant-suffixed
@@ -27,6 +29,7 @@ import { detectMention } from './lib/workflowMentions.js';
 // state leak into their UI.
 const LS_PROGRESS_OPEN_PREFIX = 'openwop.sample.chat.progressPanel.open';
 const LS_PROGRESS_FOCUSED_PREFIX = 'openwop.sample.chat.progressPanel.focusedRunMsgId';
+const LS_AGENTS_OPEN_PREFIX = 'openwop.sample.chat.activeAgentsPanel.open';
 const MOBILE_BREAKPOINT_PX = 720;
 
 function progressOpenKey(tenantId: string): string {
@@ -34,6 +37,9 @@ function progressOpenKey(tenantId: string): string {
 }
 function progressFocusedKey(tenantId: string): string {
   return `${LS_PROGRESS_FOCUSED_PREFIX}:${tenantId}`;
+}
+function agentsOpenKey(tenantId: string): string {
+  return `${LS_AGENTS_OPEN_PREFIX}:${tenantId}`;
 }
 
 function readBoolFromStorage(key: string, fallback: boolean): boolean {
@@ -88,12 +94,19 @@ interface Props {
 }
 
 export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'demo' }: Props): JSX.Element {
-  const { session, isSending, error, send, cancel, emitSystem, reset, resolveInterrupt, runWorkflowMention, cancelWorkflowRun, regenerate, setFeedback, loadSessionFromBackend } = useChatSession();
+  const { session, isSending, error, send, cancel, emitSystem, reset, resolveInterrupt, runWorkflowMention, cancelWorkflowRun, regenerate, setFeedback, loadSessionFromBackend, activeAgents } = useChatSession();
+  // Agent catalog — read once at mount, used by the submit-path's
+  // `@`-mention detection (phase D3). The `AgentMentionAutocomplete`
+  // popover refetches independently; both consumers pay the same
+  // /v1/agents round-trip but cached results bake themselves out in
+  // the SDK fetch layer.
+  const { entries: agentEntries } = useAgentMentions();
   const sessionsCollection = useChatSessions();
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [toolsEnabled, setToolsEnabled] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [progressOpen, setProgressOpen] = useState(() => readBoolFromStorage(progressOpenKey(tenantId), false));
+  const [agentsOpen, setAgentsOpen] = useState(() => readBoolFromStorage(agentsOpenKey(tenantId), false));
   const [focusedWorkflowMessageId, setFocusedWorkflowMessageId] = useState<string | null>(() => {
     try { return localStorage.getItem(progressFocusedKey(tenantId)); } catch { return null; }
   });
@@ -184,6 +197,7 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
   // Persist panel state on every change so reload restores the user's
   // last view.
   useEffect(() => { writeStorage(progressOpenKey(tenantId), progressOpen ? '1' : '0'); }, [tenantId, progressOpen]);
+  useEffect(() => { writeStorage(agentsOpenKey(tenantId), agentsOpen ? '1' : '0'); }, [tenantId, agentsOpen]);
   useEffect(() => { writeStorage(progressFocusedKey(tenantId), focusedWorkflowMessageId); }, [tenantId, focusedWorkflowMessageId]);
 
   const openProgressForRun = useCallback((messageId: string) => {
@@ -213,28 +227,27 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
 
   const disabledReason = isSending ? 'A turn is in flight — wait for the response.' : undefined;
 
-  /** Submit path: intercepts /commands and bare `@mention` workflow
-   *  dispatches via their respective handlers; falls through to send()
-   *  for regular chat (which may still trigger workflow tool-use through
-   *  the Anthropic-only `availableTools` path). */
+  /** Submit path. Dispatch precedence (highest first):
+   *    1. Built-in `/command` (registered in CommandRegistry).
+   *       Always takes precedence over a same-name workflow so a
+   *       workflow can't shadow `/clear` / `/help` / `/stop`.
+   *    2. `/<slug>` workflow mention (canonical workflow syntax).
+   *    3. `@<slug>` agent mention — phase D3 will activate the agent
+   *       in the active-agents side panel; until then the `@` text
+   *       falls through to (4) so the message still sends, just as
+   *       a regular chat turn that happens to mention the agent's
+   *       persona name.
+   *    4. Otherwise fall through to `send()` (regular LLM chat;
+   *       Anthropic tool-use can still dispatch workflows via the
+   *       `availableTools` path on its own).
+   *
+   *  Attachments short-circuit 1-3 (workflow + command + agent
+   *  surfaces are text-only) and route to `send` directly. */
   const onUserSubmit = useCallback(async (text: string, attachments?: readonly ContentPart[]) => {
-    // `@<slug>` (with or without trailing text, no attachments) →
-    // direct workflow dispatch. Avoids the LLM round-trip and works
-    // on every provider. Trailing text after the slug is mapped to
-    // the first input field of the workflow's defaultInputs.
-    if (!attachments) {
-      const match = detectMention(text);
-      if (match) {
-        await runWorkflowMention(match.entry, match.trailing ?? undefined);
-        return;
-      }
-    }
+    // 1. Built-in slash command — registered commands win over
+    //    workflows of the same slug so `/clear` is never overridable.
     const cmd = findCommand(text);
     if (cmd && !attachments) {
-      // Slash commands don't accept attachments — preserve the command's
-      // text-only contract. If you typed a command with audio attached,
-      // we fall through to a regular message (the command name will be
-      // visible in chat for clarity).
       const consumed = await cmd.reg.handler(cmd.args, {
         send: (msg) => send(msg, config),
         reset,
@@ -244,12 +257,61 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
       });
       if (consumed) return;
     }
+    if (!attachments) {
+      // 2. `/<slug>` → workflow dispatch. Only fires when (1) didn't
+      //    match — `findCommand` returned null, so the slash text
+      //    isn't a registered command.
+      const slashMatch = detectWorkflowSlashMention(text);
+      if (slashMatch) {
+        await runWorkflowMention(slashMatch.entry, slashMatch.trailing ?? undefined);
+        return;
+      }
+    }
+    // 3. `@<slug>` agent activation (phase D3). First-time mention
+    //    adds the agent to the lineup AND switches to it; subsequent
+    //    mentions of the same agent just switch. The activation
+    //    mutates session state; we then fall through to (4) so the
+    //    send goes through with the newly-routed agent id.
+    let activeAgentIdForThisTurn: string | undefined;
+    if (!attachments) {
+      const agentMatch = detectAgentMention(text, agentEntries);
+      if (agentMatch) {
+        activeAgentIdForThisTurn = activeAgents.activateAgent(agentMatch.entry);
+        // The mention text stays in the chat as-is — users see
+        // `@code-reviewer ...` in their own message, matching the
+        // group-chat mental model. Trailing text is the actual
+        // turn content; bare `@code-reviewer` (no trailing) sends
+        // an empty turn which is fine — most chat models treat
+        // that as a re-greet from the new persona.
+      }
+    }
+    // 4. Regular chat. Anthropic-side tool-use can still dispatch
+    //    workflows the model decides to invoke based on availableTools.
+    //    Phase D2: thread the currently-routing agent through to the
+    //    chat-responder so the LLM takes on the agent's persona.
+    //
+    //    Precedence on `activeAgentId`:
+    //    - The just-activated agent from step (3) wins, because the
+    //      activation's `setSession` may not have committed before
+    //      this turn dispatches (React state is async). Reading
+    //      `activeAgents.currentAgentId` post-activation can return
+    //      the old value for one render. The explicit return value
+    //      from `activateAgent` dodges that race.
+    //    - Otherwise fall back to the current routing agent.
+    //    - Default to undefined when the assistant is current; the
+    //      chat-responder's default system-prompt path then runs.
+    const activeAgentId =
+      activeAgentIdForThisTurn ??
+      (activeAgents.currentAgentId !== DEFAULT_ASSISTANT_ID
+        ? activeAgents.currentAgentId
+        : undefined);
     await send(text, config, {
       attachments,
       webSearch: webSearchEnabled && supportsWebSearch,
       tools: toolsEnabled && supportsTools ? buildAvailableTools() : undefined,
+      ...(activeAgentId ? { activeAgentId } : {}),
     });
-  }, [send, cancel, reset, emitSystem, config, webSearchEnabled, supportsWebSearch, toolsEnabled, supportsTools, runWorkflowMention]);
+  }, [send, cancel, reset, emitSystem, config, webSearchEnabled, supportsWebSearch, toolsEnabled, supportsTools, runWorkflowMention, activeAgents.currentAgentId, activeAgents.activateAgent, agentEntries]);
 
   return (
     <div style={{
@@ -301,6 +363,9 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
           progressOpen={progressOpen}
           onToggleProgress={() => setProgressOpen((v) => !v)}
           progressBadgeCount={workflowRunMessages.length}
+          agentsOpen={agentsOpen}
+          onToggleAgents={() => setAgentsOpen((v) => !v)}
+          agentsBadgeCount={Math.max(0, activeAgents.lineup.length - 1)}
         />
 
         {session.messages.length === 0 ? (
@@ -330,7 +395,7 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
             onCancel={cancel}
             disabled={isSending}
             disabledReason={disabledReason}
-            placeholder={isSending ? 'Generating… (Esc to stop)' : 'Type @ to run a workflow, / for commands or just chat…'}
+            placeholder={isSending ? 'Generating… (Esc to stop)' : 'Type / for commands + workflows, @ for agents, or just chat…'}
             supportsAudioInput={supportsAudioInput}
           />
         </div>
@@ -342,6 +407,16 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
           onFocus={(id) => setFocusedWorkflowMessageId(id)}
           onClose={() => setProgressOpen(false)}
           onCancel={cancelWorkflowRun}
+          isMobile={isMobile}
+        />
+      )}
+      {agentsOpen && (
+        <ActiveAgentsPanel
+          lineup={activeAgents.lineup}
+          currentAgentId={activeAgents.currentAgentId ?? DEFAULT_ASSISTANT_ID}
+          onSwitch={activeAgents.switchTo}
+          onRemove={activeAgents.remove}
+          onClose={() => setAgentsOpen(false)}
           isMobile={isMobile}
         />
       )}

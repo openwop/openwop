@@ -21,7 +21,7 @@
  * forking this file need to thread these through.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { MessageBubble } from './MessageBubble.js';
 import { WorkflowRunBubble } from './WorkflowRunBubble.js';
 import { CardHost } from './registry/CardHost.js';
@@ -29,6 +29,36 @@ import { HitlDecisionCard } from './HitlDecisionCard.js';
 import { WorkflowCompletionCard } from './WorkflowCompletionCard.js';
 import { ArtifactPreviewModal } from './ArtifactPreviewModal.js';
 import type { ChatMessage } from './hooks/useChatSession.js';
+
+/** Normalize historical `@<slug>` user-message text to `/<slug>` when
+ *  the message is immediately followed by a `workflow_run` bubble.
+ *
+ *  Why this exists: the 2026-05-28 mention-symbol swap moved workflow
+ *  dispatch from `@` to `/`. New chats write `/<slug>` directly (see
+ *  `runWorkflowMention` in `useChatSession.ts`), but chats persisted
+ *  before the swap still have `@<slug>` in their user-message content.
+ *  Without normalization, an old chat reads "I dispatched the
+ *  workflow with `@uppercase`" while a new chat reads "with
+ *  `/uppercase`" — the same surface, two syntaxes.
+ *
+ *  The transformation is purely display-time: the persisted content
+ *  stays as-is on disk (it's an immutable history record). The
+ *  workflow-run bubble it precedes already shows `/slug` from the
+ *  `workflowRun.slug` field via the B3 update.
+ *
+ *  We narrow the transformation to user messages immediately before a
+ *  `workflow_run` so we don't accidentally rewrite an actual `@`-prefixed
+ *  literal in a non-workflow user message. */
+function normalizeWorkflowMentions(messages: readonly ChatMessage[]): readonly ChatMessage[] {
+  return messages.map((m, i) => {
+    if (m.role !== 'user') return m;
+    if (typeof m.content !== 'string') return m;
+    const next = messages[i + 1];
+    if (!next || next.role !== 'workflow_run') return m;
+    if (!/^@[a-z0-9][a-z0-9-]*(\s|$)/i.test(m.content)) return m;
+    return { ...m, content: '/' + m.content.slice(1) };
+  });
+}
 
 function runIdFor(m: ChatMessage): string {
   // `workflow_run` messages carry the dispatched runId on their state.
@@ -66,6 +96,13 @@ export function MessageFeed({
 }: Props): JSX.Element {
   const endRef = useRef<HTMLDivElement>(null);
 
+  // Display-time normalization for the 2026-05-28 mention-symbol swap.
+  // Pre-swap chats have `@<workflow-slug>` in user-message content;
+  // we render them as `/<workflow-slug>` to match the new syntax.
+  // Memoize so we don't rewalk + re-rewrite on every render that
+  // doesn't change messages.
+  const displayMessages = useMemo(() => normalizeWorkflowMentions(messages), [messages]);
+
   // Auto-scroll on new messages OR content change (streaming deltas).
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -85,7 +122,7 @@ export function MessageFeed({
       flex: 1, overflowY: 'auto', padding: 'var(--chat-feed-pad, 16px)',
       display: 'flex', flexDirection: 'column',
     }}>
-      {messages.map((m) => (
+      {displayMessages.map((m) => (
         <div key={m.id}>
           {m.role === 'workflow_run'
             ? <WorkflowRunBubble

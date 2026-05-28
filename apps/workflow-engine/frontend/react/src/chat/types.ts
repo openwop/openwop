@@ -349,6 +349,31 @@ export interface ChatSession {
   title: string;
   messages: ChatMessage[];
   createdAt: string;
+  /** Active-agents lineup for this chat (RFC 0072 §A inventory ids).
+   *  Set by phase D1's `ActiveAgentsPanel` + phase D3's `@`-mention
+   *  activation. The chat dispatcher routes through `activeAgentId`
+   *  when set (phase D2); when null, the default OpenWOP Assistant
+   *  responds. All active agents see the whole shared chat history
+   *  (group-chat model). Optional so legacy persisted sessions
+   *  (pre-2026-05-28) hydrate cleanly. */
+  activeAgents?: {
+    /** Ordered lineup. Stable across renders; oldest activations
+     *  first so the panel reads as a chat-membership log. */
+    lineup: ReadonlyArray<{
+      /** Fully-qualified agent id from RFC 0072 §A inventory. */
+      agentId: string;
+      /** Persona name + persona-slug captured at activation time so
+       *  the panel can render the row even if the agent is later
+       *  uninstalled (the agentId would 404 against /v1/agents). */
+      persona: string;
+      slug: string;
+      modelClass: string;
+      addedAt: string;
+    }>;
+    /** Currently-routing agentId. Null = default OpenWOP Assistant.
+     *  When set, must reference an entry in `lineup`. */
+    currentAgentId: string | null;
+  };
 }
 
 /** Per-turn options for send(). */
@@ -365,4 +390,12 @@ export interface SendOptions {
    *  turns these into Anthropic tool definitions and dispatches the
    *  named workflow on tool_use. */
   tools?: ReadonlyArray<{ workflowId: string; name: string; description: string }>;
+  /** Fully-qualified agent id from RFC 0072 §A inventory when an
+   *  agent is the currently-routing voice for this chat. The
+   *  chat-responder resolves the agent's `systemPrompt` from the
+   *  AgentRegistry and prepends it before the user turn so the LLM
+   *  takes on the agent's persona. Undefined means "default
+   *  OpenWOP Assistant" — the chat-responder's existing system-prompt
+   *  resolution path runs unchanged. */
+  activeAgentId?: string;
 }

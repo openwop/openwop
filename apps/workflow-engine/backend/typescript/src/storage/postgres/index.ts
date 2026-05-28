@@ -36,6 +36,7 @@ import type {
   NotificationRecord,
   PushSubscriptionRecord,
   RunRecord,
+  UserAgentRecord,
   WebhookSubscriptionRecord,
 } from '../../types.js';
 import type {
@@ -142,6 +143,32 @@ function rowToPushSubscription(r: Row): PushSubscriptionRecord {
     userAgent: (r.user_agent as string | null) ?? undefined,
     createdAt: (r.created_at as Date).toISOString(),
     lastUsedAt: r.last_used_at ? (r.last_used_at as Date).toISOString() : undefined,
+  };
+}
+
+function rowToUserAgent(r: Row): UserAgentRecord {
+  return {
+    agentId: r.agent_id as string,
+    tenantId: r.tenant_id as string,
+    persona: r.persona as string,
+    label: (r.label as string | null) ?? undefined,
+    description: (r.description as string | null) ?? undefined,
+    modelClass: r.model_class as string,
+    systemPrompt: r.system_prompt as string,
+    // Postgres returns JSONB as a parsed object/array already — sqlite
+    // returns a string; the two paths converge to a string[] here.
+    toolAllowlist: Array.isArray(r.tool_allowlist)
+      ? (r.tool_allowlist as string[])
+      : (typeof r.tool_allowlist === 'string'
+          ? (JSON.parse(r.tool_allowlist) as string[])
+          : []),
+    memoryShape: {
+      scratchpad: r.memory_scratchpad === true,
+      conversation: r.memory_conversation === true,
+      longTerm: r.memory_long_term === true,
+    },
+    confidenceThreshold: (r.confidence_threshold as number | null) ?? undefined,
+    createdAt: (r.created_at as Date).toISOString(),
   };
 }
 
@@ -1030,6 +1057,64 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
         [tenantId],
       );
       return r.rowCount ?? 0;
+    },
+
+    // ── user-authored agents (phase E1, 2026-05-28) ──
+    async insertUserAgent(record) {
+      await pool.query(
+        `INSERT INTO user_agents (
+          agent_id, tenant_id, persona, label, description, model_class,
+          system_prompt, tool_allowlist,
+          memory_scratchpad, memory_conversation, memory_long_term,
+          confidence_threshold, created_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11,$12,$13)`,
+        [
+          record.agentId,
+          record.tenantId,
+          record.persona,
+          record.label ?? null,
+          record.description ?? null,
+          record.modelClass,
+          record.systemPrompt,
+          JSON.stringify(record.toolAllowlist),
+          record.memoryShape.scratchpad,
+          record.memoryShape.conversation,
+          record.memoryShape.longTerm,
+          record.confidenceThreshold ?? null,
+          record.createdAt,
+        ],
+      );
+    },
+
+    async listUserAgents(tenantId) {
+      const r = await pool.query<Record<string, unknown>>(
+        `SELECT * FROM user_agents WHERE tenant_id = $1 ORDER BY created_at DESC`,
+        [tenantId],
+      );
+      return r.rows.map(rowToUserAgent);
+    },
+
+    async listAllUserAgents() {
+      const r = await pool.query<Record<string, unknown>>(
+        `SELECT * FROM user_agents ORDER BY created_at DESC`,
+      );
+      return r.rows.map(rowToUserAgent);
+    },
+
+    async getUserAgent(agentId) {
+      const r = await pool.query<Record<string, unknown>>(
+        `SELECT * FROM user_agents WHERE agent_id = $1`,
+        [agentId],
+      );
+      return r.rows[0] ? rowToUserAgent(r.rows[0]) : null;
+    },
+
+    async deleteUserAgent(agentId) {
+      const r = await pool.query(
+        `DELETE FROM user_agents WHERE agent_id = $1`,
+        [agentId],
+      );
+      return (r.rowCount ?? 0) > 0;
     },
 
     // ── messaging relay-gateway (demo host-extension) ──
