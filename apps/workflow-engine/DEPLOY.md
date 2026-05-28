@@ -104,6 +104,18 @@ The Dockerfile lives at `apps/workflow-engine/Dockerfile` and expects the
 build context at `apps/workflow-engine/` (so it can COPY both
 `backend/typescript/...` and `providers.json`).
 
+> **⚠️ The command below is the FIRST-TIME / from-scratch bring-up only.**
+> It sets the Phase-1 config (`OPENWOP_STORAGE_DSN: memory://`, just the
+> session + admin secrets). **Do NOT re-run it to ship a code update to an
+> already-live service** — `--env-vars-file` and `--set-secrets` *replace*
+> (not merge), so re-running it wipes everything §14 and later steps added.
+> The live `openwop-app-backend` currently binds **7 secrets** (session,
+> admin, the real `openwop-storage-dsn`, both VAPID keys, `minimax-api-key`,
+> `openwop-messaging-bridge-token`) plus OIDC + KMS env — running the
+> from-scratch command against it would drop the real DB, the managed
+> "Try it free" key, Web Push, and messaging in one shot. To ship new code,
+> use **[Redeploying new code to the live service](#redeploying-new-code-to-the-live-service)** below. `gcloud run services describe openwop-app-backend --region us-central1 --format='value(spec.template.spec.containers[0].env)'` is the source of truth for what's bound.
+
 ```bash
 # Pull latest pack versions from the registry so we always deploy the
 # most recently-patched packs (e.g., http@1.1.2 with the deterministic
@@ -135,6 +147,46 @@ gcloud run deploy openwop-app-backend \
 # Confirm public invocation works (org-policy override from step 3)
 gcloud run services add-iam-policy-binding openwop-app-backend \
   --region=us-central1 --member="allUsers" --role="roles/run.invoker"
+```
+
+### Redeploying new code to the live service
+
+Once the service exists (post-§14, with its full secret + env set), the
+**only safe way to ship a code change** is to rebuild the image while
+leaving the running config untouched. `gcloud run deploy` preserves the
+current revision's env vars and secret bindings for any flag you omit —
+so pass **no** `--env-vars-file`, `--set-env-vars`, or `--set-secrets`:
+
+```bash
+# From a CLEAN checkout of origin/main — never the shared working tree,
+# which may carry another session's uncommitted work into the build
+# context. (e.g. `git worktree add --detach /tmp/owp-deploy origin/main`)
+gcloud run deploy openwop-app-backend \
+  --source apps/workflow-engine \
+  --region us-central1 \
+  --project openwop-dev \
+  --quiet
+```
+
+This builds via Cloud Build and rolls a new revision with the new image
++ the *existing* 7 secrets, OIDC/KMS env, Cloud SQL attachment, resource
+limits, and `--allow-unauthenticated` IAM all carried forward unchanged.
+
+To **add or rotate** a single binding without disturbing the rest, use the
+*merge* flags — `--update-secrets="VAR=secret:latest"` or
+`--update-env-vars=...` — never the `--set-*` (full-replace) forms. This is
+how `MINIMAX_API_KEY` and `OPENWOP_MESSAGING_BRIDGE_TOKEN` were added after
+§14 without a full re-spec. (The §14 `--set-secrets` list is itself now a
+partial snapshot — it predates those two bindings, so re-running §14
+verbatim would also drop them.)
+
+After any deploy, confirm the binding set survived and the managed tier is
+healthy:
+
+```bash
+gcloud run services describe openwop-app-backend --region=us-central1 \
+  --format='value(spec.template.spec.containers[0].env)' | tr ';' '\n' | grep -i secret
+curl -s https://app.openwop.dev/api/readiness   # {"status":"ready",...} — 503 if a managed key is unconfigured
 ```
 
 ### Feature toggle: warm-instance posture
