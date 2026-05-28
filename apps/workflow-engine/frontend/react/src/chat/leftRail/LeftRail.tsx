@@ -21,7 +21,7 @@ import type { ComponentProps, ReactNode } from 'react';
 import { SessionHistoryDrawer } from '../SessionHistoryDrawer.js';
 import { WorkflowProgressPanel } from '../workflowProgress/WorkflowProgressPanel.js';
 import { ActiveAgentsPanel } from '../activeAgents/ActiveAgentsPanel.js';
-import { ClockIcon, WorkflowIcon } from '../icons/index.js';
+import { BotIcon, ClockIcon, WorkflowIcon } from '../icons/index.js';
 
 export type LeftRailTab = 'history' | 'progress' | 'agents';
 
@@ -73,7 +73,7 @@ export function LeftRail({
   const tabs: TabDescriptor[] = [
     { id: 'history', label: 'History', icon: <ClockIcon size={13} /> },
     { id: 'progress', label: 'Workflow', icon: <WorkflowIcon size={13} />, badge: progressBadgeCount },
-    { id: 'agents', label: 'Agents', icon: '◉', badge: agentsBadgeCount },
+    { id: 'agents', label: 'Agents', icon: <BotIcon size={13} />, badge: agentsBadgeCount },
   ];
 
   const close = () => onSelectTab(null);
