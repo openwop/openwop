@@ -21,23 +21,15 @@ interface Props {
   /** When non-null, render a tools toggle button. Anthropic only for v1. */
   onToggleTools: (() => void) | null;
   toolsEnabled: boolean;
-  /** When set, render a hamburger-style history toggle in the header. */
-  onToggleHistory?: () => void;
-  historyOpen?: boolean;
-  /** When set, render a right-side workflow-progress panel toggle. */
-  onToggleProgress?: () => void;
-  progressOpen?: boolean;
-  /** Number of workflow_run messages in the session — small badge on
-   *  the progress toggle button so users with multiple in-flight runs
-   *  see at a glance how many the panel covers. */
-  progressBadgeCount?: number;
-  /** When set, render a right-side active-agents panel toggle. */
-  onToggleAgents?: () => void;
-  agentsOpen?: boolean;
-  /** Number of user-activated agents (excludes the default
-   *  OpenWOP Assistant). Small badge on the toggle so users can see
-   *  the lineup count without opening the panel. */
-  agentsBadgeCount?: number;
+  /** Toggle the left rail (which hosts History / Progress / Agents
+   *  tabs). The single button replaces the three per-panel toggles
+   *  the header used to render. */
+  onToggleRail?: () => void;
+  railOpen?: boolean;
+  /** Sum of workflow_runs + activated agents — surfaced as a badge on
+   *  the rail toggle so the user sees pending work without opening
+   *  the rail. */
+  railBadgeCount?: number;
 }
 
 export function ChatHeader({
@@ -50,14 +42,9 @@ export function ChatHeader({
   webSearchEnabled,
   onToggleTools,
   toolsEnabled,
-  onToggleHistory,
-  historyOpen,
-  onToggleProgress,
-  progressOpen,
-  progressBadgeCount = 0,
-  onToggleAgents,
-  agentsOpen,
-  agentsBadgeCount = 0,
+  onToggleRail,
+  railOpen,
+  railBadgeCount = 0,
 }: Props): JSX.Element {
   const totalCost = sessionCostUsd(session);
   const messageCount = session.messages.length;
@@ -69,17 +56,37 @@ export function ChatHeader({
       gap: 8,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-        {onToggleHistory && (
+        {onToggleRail && (
           <button
             type="button"
             className="secondary"
-            onClick={onToggleHistory}
-            aria-label={historyOpen ? 'Close chat history' : 'Open chat history'}
-            aria-pressed={historyOpen}
-            title="Saved chats"
-            style={{ padding: '2px 8px', fontSize: 11, minHeight: 0, height: 24 }}
+            onClick={onToggleRail}
+            aria-label={railOpen ? 'Close chat tools' : 'Open chat tools'}
+            aria-pressed={railOpen}
+            title="History, workflow progress, and active agents"
+            style={{
+              padding: '2px 8px',
+              fontSize: 11,
+              minHeight: 0,
+              height: 24,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
           >
-            ☰
+            <span aria-hidden>☰</span>
+            {railBadgeCount > 0 && (
+              <span style={{
+                fontSize: 10,
+                minWidth: 14,
+                padding: '0 4px',
+                borderRadius: 8,
+                background: 'var(--color-accent, var(--clay))',
+                color: 'white',
+                textAlign: 'center',
+                lineHeight: '14px',
+              }}>{railBadgeCount}</span>
+            )}
           </button>
         )}
         <ConfiguredProviderCard config={config} onChange={onOpenSettings} onRemoved={onRemoveKey} compact />
@@ -141,72 +148,6 @@ export function ChatHeader({
           >
             Σ {formatUsd(totalCost)}
           </span>
-        )}
-        {onToggleProgress && (
-          <button
-            type="button"
-            className="secondary"
-            onClick={onToggleProgress}
-            aria-label={progressOpen ? 'Close workflow progress panel' : 'Open workflow progress panel'}
-            aria-pressed={progressOpen}
-            title="Workflow progress"
-            style={{
-              padding: '2px 8px',
-              fontSize: 11,
-              minHeight: 0,
-              height: 24,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-            }}
-          >
-            <span aria-hidden>≡</span>
-            {progressBadgeCount > 0 && (
-              <span style={{
-                fontSize: 10,
-                minWidth: 14,
-                padding: '0 4px',
-                borderRadius: 8,
-                background: 'var(--color-accent, var(--clay))',
-                color: 'white',
-                textAlign: 'center',
-                lineHeight: '14px',
-              }}>{progressBadgeCount}</span>
-            )}
-          </button>
-        )}
-        {onToggleAgents && (
-          <button
-            type="button"
-            className="secondary"
-            onClick={onToggleAgents}
-            aria-label={agentsOpen ? 'Close active agents panel' : 'Open active agents panel'}
-            aria-pressed={agentsOpen}
-            title="Active agents in this chat"
-            style={{
-              padding: '2px 8px',
-              fontSize: 11,
-              minHeight: 0,
-              height: 24,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-            }}
-          >
-            <span aria-hidden>◉</span>
-            {agentsBadgeCount > 0 && (
-              <span style={{
-                fontSize: 10,
-                minWidth: 14,
-                padding: '0 4px',
-                borderRadius: 8,
-                background: 'var(--color-accent, var(--clay))',
-                color: 'white',
-                textAlign: 'center',
-                lineHeight: '14px',
-              }}>{agentsBadgeCount}</span>
-            )}
-          </button>
         )}
         {messageCount > 0 && (
           <button type="button" className="secondary" onClick={onNewChat} style={{ fontSize: 11 }} aria-label="New chat">

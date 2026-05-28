@@ -1,7 +1,7 @@
 /**
- * Right-side workflow-progress panel. Slide-out drawer mirroring
- * `SessionHistoryDrawer` on the left, with the chat's per-workflow_run
- * progress UI moved out of the chat bubble.
+ * Workflow-progress panel — rendered inside `LeftRail` as one of the
+ * three tab panels. The rail owns width / border / mobile positioning;
+ * this component fills whatever container it's given.
  *
  * Hosts:
  *   - Run switcher when the session has more than one `workflow_run`
@@ -50,8 +50,6 @@ interface Props {
   onClose: () => void;
   /** Cancel an in-flight workflow_run. */
   onCancel: (messageId: string) => Promise<void>;
-  /** True when the viewport is narrow — render as full-screen overlay. */
-  isMobile: boolean;
 }
 
 export function WorkflowProgressPanel({
@@ -60,7 +58,6 @@ export function WorkflowProgressPanel({
   onFocus,
   onClose,
   onCancel,
-  isMobile,
 }: Props): JSX.Element {
   // Esc closes the panel — but ONLY when focus is inside it. A
   // global `window.keydown` would fight `ChatInput`'s own Esc handling
@@ -86,15 +83,11 @@ export function WorkflowProgressPanel({
       tabIndex={-1}
       onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
       style={{
-        width: isMobile ? '100%' : 360,
+        width: '100%',
         height: '100%',
-        borderLeft: isMobile ? 'none' : '1px solid var(--color-border)',
         background: 'var(--color-surface)',
         display: 'flex',
         flexDirection: 'column',
-        position: isMobile ? 'absolute' : 'relative',
-        inset: isMobile ? 0 : 'auto',
-        zIndex: isMobile ? 20 : 'auto',
       }}
       aria-labelledby={headingId}
     >

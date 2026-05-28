@@ -97,9 +97,8 @@ export function SessionHistoryDrawer({
     <aside
       className="session-history-drawer"
       style={{
-        width: 280,
+        width: '100%',
         height: '100%',
-        borderRight: '1px solid var(--color-border)',
         background: 'var(--color-surface)',
         display: 'flex',
         flexDirection: 'column',

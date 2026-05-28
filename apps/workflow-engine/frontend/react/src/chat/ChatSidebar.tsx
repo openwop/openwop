@@ -8,9 +8,8 @@ import { ChatHeader } from './ChatHeader.js';
 import { ChatInput } from './ChatInput.js';
 import { MessageFeed } from './MessageFeed.js';
 import { WelcomeCard } from './WelcomeCard.js';
-import { SessionHistoryDrawer } from './SessionHistoryDrawer.js';
-import { WorkflowProgressPanel } from './workflowProgress/WorkflowProgressPanel.js';
-import { ActiveAgentsPanel, DEFAULT_ASSISTANT_ID } from './activeAgents/ActiveAgentsPanel.js';
+import { LeftRail, type LeftRailTab } from './leftRail/LeftRail.js';
+import { DEFAULT_ASSISTANT_ID } from './activeAgents/ActiveAgentsPanel.js';
 import { useChatSession } from './hooks/useChatSession.js';
 import { useChatSessions } from './hooks/useChatSessions.js';
 import { findCommand } from './registry/CommandRegistry.js';
@@ -22,33 +21,45 @@ import { buildAvailableTools } from './lib/availableTools.js';
 import { detectWorkflowSlashMention } from './lib/workflowMentions.js';
 import { detectAgentMention, useAgentMentions } from './lib/agentMentions.js';
 
-// localStorage keys for panel persistence — keeps the user's "open" /
-// "which run is focused" choice across page reloads. Tenant-suffixed
-// so two tenants signed in on the same browser (anon → signed-in
-// transition, or a shared-machine demo) don't see each other's panel
-// state leak into their UI.
-const LS_PROGRESS_OPEN_PREFIX = 'openwop.sample.chat.progressPanel.open';
+// localStorage keys for rail persistence — keeps the user's "which
+// tab" / "which run is focused" choice across page reloads.
+// Tenant-suffixed so two tenants signed in on the same browser
+// (anon → signed-in transition, or a shared-machine demo) don't see
+// each other's state leak into their UI.
+const LS_RAIL_TAB_PREFIX = 'openwop.sample.chat.leftRail.activeTab';
 const LS_PROGRESS_FOCUSED_PREFIX = 'openwop.sample.chat.progressPanel.focusedRunMsgId';
-const LS_AGENTS_OPEN_PREFIX = 'openwop.sample.chat.activeAgentsPanel.open';
+// Legacy keys — pre-consolidation, History/Progress/Agents each had
+// their own open boolean. Read once on first mount per tenant to
+// migrate, then removed. Predates the LeftRail consolidation.
+const LS_LEGACY_PROGRESS_OPEN_PREFIX = 'openwop.sample.chat.progressPanel.open';
+const LS_LEGACY_AGENTS_OPEN_PREFIX = 'openwop.sample.chat.activeAgentsPanel.open';
 const MOBILE_BREAKPOINT_PX = 720;
 
-function progressOpenKey(tenantId: string): string {
-  return `${LS_PROGRESS_OPEN_PREFIX}:${tenantId}`;
+function railTabKey(tenantId: string): string {
+  return `${LS_RAIL_TAB_PREFIX}:${tenantId}`;
 }
 function progressFocusedKey(tenantId: string): string {
   return `${LS_PROGRESS_FOCUSED_PREFIX}:${tenantId}`;
 }
-function agentsOpenKey(tenantId: string): string {
-  return `${LS_AGENTS_OPEN_PREFIX}:${tenantId}`;
-}
 
-function readBoolFromStorage(key: string, fallback: boolean): boolean {
+function readRailTabFromStorage(tenantId: string): LeftRailTab | null {
   try {
-    const v = localStorage.getItem(key);
-    if (v === '1') return true;
-    if (v === '0') return false;
-    return fallback;
-  } catch { return fallback; }
+    const v = localStorage.getItem(railTabKey(tenantId));
+    if (v === 'history' || v === 'progress' || v === 'agents') return v;
+    // First mount after upgrade — migrate from the legacy two-boolean
+    // shape. Progress wins over Agents because the auto-open-on-new-
+    // workflow_run behavior makes Progress the more likely "last-open"
+    // panel for active users.
+    const legacyProgress = localStorage.getItem(`${LS_LEGACY_PROGRESS_OPEN_PREFIX}:${tenantId}`);
+    const legacyAgents = localStorage.getItem(`${LS_LEGACY_AGENTS_OPEN_PREFIX}:${tenantId}`);
+    let migrated: LeftRailTab | null = null;
+    if (legacyProgress === '1') migrated = 'progress';
+    else if (legacyAgents === '1') migrated = 'agents';
+    if (legacyProgress !== null) localStorage.removeItem(`${LS_LEGACY_PROGRESS_OPEN_PREFIX}:${tenantId}`);
+    if (legacyAgents !== null) localStorage.removeItem(`${LS_LEGACY_AGENTS_OPEN_PREFIX}:${tenantId}`);
+    if (migrated !== null) localStorage.setItem(railTabKey(tenantId), migrated);
+    return migrated;
+  } catch { return null; }
 }
 
 function writeStorage(key: string, value: string | null): void {
@@ -58,24 +69,29 @@ function writeStorage(key: string, value: string | null): void {
   } catch { /* quota / disabled — ignore */ }
 }
 
-/** Drop tenant-suffixed panel keys that don't match the current
+/** Drop tenant-suffixed rail keys that don't match the current
  *  tenant. Switching identity in the same browser would otherwise
- *  leave the old tenant's entries behind forever — ~2 keys per
- *  switch, no cap. Called once on mount per ChatSidebar instance. */
+ *  leave the old tenant's entries behind forever. Called once on
+ *  mount per ChatSidebar instance. Also sweeps legacy panel-open
+ *  keys for tenants other than the current one (current-tenant
+ *  legacy keys are migrated, not pruned, by `readRailTabFromStorage`). */
 function pruneStalePanelKeys(currentTenantId: string): void {
   try {
     const keep = new Set([
-      progressOpenKey(currentTenantId),
+      railTabKey(currentTenantId),
       progressFocusedKey(currentTenantId),
     ]);
+    const prefixes = [
+      `${LS_RAIL_TAB_PREFIX}:`,
+      `${LS_PROGRESS_FOCUSED_PREFIX}:`,
+      `${LS_LEGACY_PROGRESS_OPEN_PREFIX}:`,
+      `${LS_LEGACY_AGENTS_OPEN_PREFIX}:`,
+    ];
     const toRemove: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (!key) continue;
-      if (
-        (key.startsWith(`${LS_PROGRESS_OPEN_PREFIX}:`) || key.startsWith(`${LS_PROGRESS_FOCUSED_PREFIX}:`))
-        && !keep.has(key)
-      ) {
+      if (prefixes.some((p) => key.startsWith(p)) && !keep.has(key)) {
         toRemove.push(key);
       }
     }
@@ -104,9 +120,15 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
   const sessionsCollection = useChatSessions();
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [toolsEnabled, setToolsEnabled] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [progressOpen, setProgressOpen] = useState(() => readBoolFromStorage(progressOpenKey(tenantId), false));
-  const [agentsOpen, setAgentsOpen] = useState(() => readBoolFromStorage(agentsOpenKey(tenantId), false));
+  const [activeRailTab, setActiveRailTab] = useState<LeftRailTab | null>(
+    () => readRailTabFromStorage(tenantId),
+  );
+  // Track the last non-null tab so the chat-header toggle can reopen
+  // the rail to whichever panel the user was last looking at, rather
+  // than forcing them through a default tab every time.
+  const [lastRailTab, setLastRailTab] = useState<LeftRailTab>(
+    () => readRailTabFromStorage(tenantId) ?? 'history',
+  );
   const [focusedWorkflowMessageId, setFocusedWorkflowMessageId] = useState<string | null>(() => {
     try { return localStorage.getItem(progressFocusedKey(tenantId)); } catch { return null; }
   });
@@ -190,19 +212,25 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
       // arrived in a single tick, e.g., hydration race).
       for (const m of workflowRunMessages) seen.add(m.id);
       setFocusedWorkflowMessageId(newRun.id);
-      setProgressOpen(true);
+      setActiveRailTab('progress');
+      setLastRailTab('progress');
     }
   }, [workflowRunMessages, session.id]);
 
-  // Persist panel state on every change so reload restores the user's
+  // Persist rail state on every change so reload restores the user's
   // last view.
-  useEffect(() => { writeStorage(progressOpenKey(tenantId), progressOpen ? '1' : '0'); }, [tenantId, progressOpen]);
-  useEffect(() => { writeStorage(agentsOpenKey(tenantId), agentsOpen ? '1' : '0'); }, [tenantId, agentsOpen]);
+  useEffect(() => { writeStorage(railTabKey(tenantId), activeRailTab); }, [tenantId, activeRailTab]);
   useEffect(() => { writeStorage(progressFocusedKey(tenantId), focusedWorkflowMessageId); }, [tenantId, focusedWorkflowMessageId]);
+
+  const selectRailTab = useCallback((tab: LeftRailTab | null) => {
+    setActiveRailTab(tab);
+    if (tab !== null) setLastRailTab(tab);
+  }, []);
 
   const openProgressForRun = useCallback((messageId: string) => {
     setFocusedWorkflowMessageId(messageId);
-    setProgressOpen(true);
+    setActiveRailTab('progress');
+    setLastRailTab('progress');
   }, []);
 
   // Per-turn capability hints sourced from providers.json for the active model.
@@ -324,24 +352,40 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
       overflow: 'hidden',
       position: 'relative',
     }}>
-      {historyOpen && (
-        <SessionHistoryDrawer
-          sessions={sessionsCollection.sessions}
-          isLoading={sessionsCollection.isLoading}
-          error={sessionsCollection.error}
-          activeSessionId={session.id}
-          onRefresh={sessionsCollection.refresh}
-          onSelect={(id) => { void loadSessionFromBackend(id); setHistoryOpen(false); }}
-          onRename={sessionsCollection.rename}
-          onDelete={async (id) => {
+      <LeftRail
+        activeTab={activeRailTab}
+        onSelectTab={selectRailTab}
+        isMobile={isMobile}
+        historyProps={{
+          sessions: sessionsCollection.sessions,
+          isLoading: sessionsCollection.isLoading,
+          error: sessionsCollection.error,
+          activeSessionId: session.id,
+          onRefresh: sessionsCollection.refresh,
+          onSelect: (id) => { void loadSessionFromBackend(id); selectRailTab(null); },
+          onRename: sessionsCollection.rename,
+          onDelete: async (id) => {
             await sessionsCollection.remove(id);
-            // If the deleted session is the active one, fall back to a
-            // fresh local chat so the message feed isn't orphaned.
+            // If the deleted session is the active one, fall back to
+            // a fresh local chat so the message feed isn't orphaned.
             if (id === session.id) reset();
-          }}
-          onClose={() => setHistoryOpen(false)}
-        />
-      )}
+          },
+        }}
+        progressProps={{
+          workflowRunMessages,
+          focusedMessageId: focusedWorkflowMessageId,
+          onFocus: (id) => setFocusedWorkflowMessageId(id),
+          onCancel: cancelWorkflowRun,
+        }}
+        agentsProps={{
+          lineup: activeAgents.lineup,
+          currentAgentId: activeAgents.currentAgentId ?? DEFAULT_ASSISTANT_ID,
+          onSwitch: activeAgents.switchTo,
+          onRemove: activeAgents.remove,
+        }}
+        progressBadgeCount={workflowRunMessages.length}
+        agentsBadgeCount={Math.max(0, activeAgents.lineup.length - 1)}
+      />
       <div style={{
         flex: 1,
         display: 'flex',
@@ -358,14 +402,9 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
           onToggleWebSearch={supportsWebSearch ? () => setWebSearchEnabled((v) => !v) : null}
           toolsEnabled={toolsEnabled}
           onToggleTools={supportsTools ? () => setToolsEnabled((v) => !v) : null}
-          historyOpen={historyOpen}
-          onToggleHistory={() => setHistoryOpen((v) => !v)}
-          progressOpen={progressOpen}
-          onToggleProgress={() => setProgressOpen((v) => !v)}
-          progressBadgeCount={workflowRunMessages.length}
-          agentsOpen={agentsOpen}
-          onToggleAgents={() => setAgentsOpen((v) => !v)}
-          agentsBadgeCount={Math.max(0, activeAgents.lineup.length - 1)}
+          railOpen={activeRailTab !== null}
+          onToggleRail={() => selectRailTab(activeRailTab === null ? lastRailTab : null)}
+          railBadgeCount={workflowRunMessages.length + Math.max(0, activeAgents.lineup.length - 1)}
         />
 
         {session.messages.length === 0 ? (
@@ -378,7 +417,7 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
             tenantId={tenantId}
             onResolveInterrupt={resolveInterrupt}
             onOpenWorkflowProgress={openProgressForRun}
-            focusedWorkflowMessageId={progressOpen ? focusedWorkflowMessageId : null}
+            focusedWorkflowMessageId={activeRailTab === 'progress' ? focusedWorkflowMessageId : null}
             onRegenerate={(id) => { void regenerate(id, config); }}
             onFeedback={setFeedback}
             onReconfigureBYOK={onOpenSettings}
@@ -400,26 +439,6 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
           />
         </div>
       </div>
-      {progressOpen && (
-        <WorkflowProgressPanel
-          workflowRunMessages={workflowRunMessages}
-          focusedMessageId={focusedWorkflowMessageId}
-          onFocus={(id) => setFocusedWorkflowMessageId(id)}
-          onClose={() => setProgressOpen(false)}
-          onCancel={cancelWorkflowRun}
-          isMobile={isMobile}
-        />
-      )}
-      {agentsOpen && (
-        <ActiveAgentsPanel
-          lineup={activeAgents.lineup}
-          currentAgentId={activeAgents.currentAgentId ?? DEFAULT_ASSISTANT_ID}
-          onSwitch={activeAgents.switchTo}
-          onRemove={activeAgents.remove}
-          onClose={() => setAgentsOpen(false)}
-          isMobile={isMobile}
-        />
-      )}
     </div>
   );
 }
