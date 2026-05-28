@@ -408,6 +408,118 @@ describe('messaging relay-gateway — envelope v2', () => {
   });
 });
 
+describe('messaging relay-gateway — policy enforcement (Phase C)', () => {
+  async function setupConnectorWithPolicy(channel = 'signal', dmPolicy = 'pairing', requireMention = false) {
+    const c = await post('/connectors', OP, { channel });
+    expect(c.status).toBe(201);
+    await post(`/connectors/${c.body.connectorId}/enable`, OP, {});
+    const put = await fetch(`${BASE}/connectors/${c.body.connectorId}/policy`, {
+      method: 'PUT', headers: OP,
+      body: JSON.stringify({ dmPolicy, requireMention }),
+    });
+    expect(put.status).toBe(200);
+    return c.body.connectorId as string;
+  }
+
+  it('dmPolicy=pairing: unknown peer is dropped with a pairing code; approve unblocks the next inbound', async () => {
+    const connectorId = await setupConnectorWithPolicy('signal', 'pairing', false);
+    const { deviceToken } = await activeRelay('signal');
+    const dev = { 'x-openwop-device-token': deviceToken, 'content-type': 'application/json' };
+
+    // 1) Unknown peer → no run, pairing payload returned, outbound code-reply queued.
+    const first = await post('/device/inbound', dev, {
+      platformMessageId: 'p1', conversationId: 'dm-1', peerId: 'peer-unknown', text: 'hello',
+    });
+    expect(first.status).toBe(202);
+    expect(first.body.accepted).toBe(false);
+    expect(first.body.pairing).toBeTruthy();
+    expect(first.body.pairing.code).toMatch(/^[A-Z2-9]{6}$/);
+    expect(first.body.runId).toBeUndefined();
+
+    // 2) Operator approves → allowlist row written, pairing removed.
+    const approve = await post('/pairing/approve', OP, { connectorId, code: first.body.pairing.code });
+    expect(approve.status).toBe(200);
+    expect(approve.body.approved).toBe(true);
+
+    // 3) Same peer → now allowed; the bridge runs the workflow.
+    const second = await post('/device/inbound', dev, {
+      platformMessageId: 'p2', conversationId: 'dm-1', peerId: 'peer-unknown', text: 'follow-up',
+    });
+    expect(second.status).toBe(202);
+    expect(second.body.accepted).toBe(true);
+    expect(second.body.runId).toBeTruthy();
+
+    // The (channel, peerId) is now on the allowlist.
+    const al = await get(`/allowlist?connectorId=${encodeURIComponent(connectorId)}`, OP);
+    expect(al.body.entries.some((e: any) => e.peerId === 'peer-unknown')).toBe(true);
+  });
+
+  it('dmPolicy=disabled drops every DM; the bridge is not invoked', async () => {
+    await setupConnectorWithPolicy('signal', 'disabled', false);
+    const { deviceToken } = await activeRelay('signal');
+    const dev = { 'x-openwop-device-token': deviceToken, 'content-type': 'application/json' };
+    const res = await post('/device/inbound', dev, {
+      platformMessageId: 'd1', conversationId: 'dm-z', peerId: 'p', text: 'x',
+    });
+    expect(res.status).toBe(202);
+    expect(res.body.accepted).toBe(false);
+    expect(res.body.dropped).toBe('disabled');
+    expect(res.body.runId).toBeUndefined();
+  });
+
+  it('requireMention drops DMs that do not mention the bot id', async () => {
+    const connectorId = await setupConnectorWithPolicy('signal', 'open', true);
+    // Allow open + requireMention: only @-mentioned messages pass.
+    const { deviceToken } = await activeRelay('signal');
+    const dev = { 'x-openwop-device-token': deviceToken, 'content-type': 'application/json' };
+
+    process.env.OPENWOP_MESSAGING_BOT_ID_SIGNAL = 'bot-1';
+    try {
+      const noMention = await post('/device/inbound', dev, {
+        platformMessageId: 'n1', conversationId: 'dm-m', peerId: 'p', text: 'hey there',
+      });
+      expect(noMention.body.accepted).toBe(false);
+      expect(noMention.body.dropped).toBe('no-mention');
+
+      const mentioned = await post('/device/inbound', dev, {
+        platformMessageId: 'n2', conversationId: 'dm-m', peerId: 'p', text: 'hey bot',
+        mentions: ['bot-1'],
+      });
+      expect(mentioned.body.accepted).toBe(true);
+      expect(mentioned.body.runId).toBeTruthy();
+    } finally {
+      delete process.env.OPENWOP_MESSAGING_BOT_ID_SIGNAL;
+    }
+    expect(connectorId).toMatch(/^conn_/);
+  });
+
+  it('no connector for (tenant, channel) → no enforcement (backward-compat)', async () => {
+    // Note: no /connectors POST → enforcement is skipped, behavior unchanged.
+    const { deviceToken } = await activeRelay('signal');
+    const dev = { 'x-openwop-device-token': deviceToken, 'content-type': 'application/json' };
+    const res = await post('/device/inbound', dev, {
+      platformMessageId: 'b1', conversationId: 'dm-b', peerId: 'p', text: 'still allowed',
+    });
+    expect(res.status).toBe(202);
+    expect(res.body.accepted).toBe(true);
+  });
+});
+
+describe('messaging relay-gateway — allowlist CRUD', () => {
+  it('add → list → delete', async () => {
+    const c = await post('/connectors', OP, { channel: 'signal' });
+    const connectorId = c.body.connectorId;
+    const add = await post('/allowlist', OP, { connectorId, channel: 'signal', peerId: '+15551111' });
+    expect(add.status).toBe(201);
+    const list = await get(`/allowlist?connectorId=${encodeURIComponent(connectorId)}`, OP);
+    expect(list.body.entries.length).toBe(1);
+    const del = await fetch(`${BASE}/allowlist?connectorId=${encodeURIComponent(connectorId)}&channel=signal&peerId=${encodeURIComponent('+15551111')}`, { method: 'DELETE', headers: OP });
+    expect(del.status).toBe(200);
+    const after = await get(`/allowlist?connectorId=${encodeURIComponent(connectorId)}`, OP);
+    expect(after.body.entries.length).toBe(0);
+  });
+});
+
 import { selectWorkflowByRules } from '../src/messaging/bridge.js';
 
 describe('messaging bridge — selectWorkflowByRules (pure)', () => {

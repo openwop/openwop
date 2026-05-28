@@ -40,6 +40,13 @@ export interface ChatIngressEnvelope {
   quotedMessageId?: string;
   reaction?: { emoji: string; targetMessageId: string };
   command?: { name: string; args?: string };
+  /**
+   * Per-channel platform IDs of users the inbound message @mentioned (Signal
+   * mentions[].uuid, WhatsApp contextInfo.mentionedJid, Discord mentions, …).
+   * The host's `requireMention` policy gate uses this — channels that can't
+   * populate it (or older clients) cause the gate to fall back to a text check.
+   */
+  mentions?: ReadonlyArray<string>;
   /** Opaque per-channel metadata (guildId/threadId/…); never interpreted by the protocol. */
   channelMeta?: Record<string, unknown>;
 }
@@ -194,6 +201,36 @@ export interface MessagingTurnRecord {
   /** The run (or agent dispatch) that produced an assistant turn. */
   runId?: string;
   at: string;
+}
+
+/**
+ * A pending pairing request: an unknown peer messaged a `dmPolicy: 'pairing'`
+ * connector and the host minted a short code for an operator to approve.
+ * Code-keyed within `(connectorId, code)`; one row per (connector, peer).
+ */
+export interface MessagingPairingRecord {
+  pairingId: string;
+  connectorId: string;
+  tenantId: string;
+  channel: RelayChannel;
+  peerId: string;
+  code: string;
+  /** ISO8601 — pairing requests are short-lived (default 1h) to bound the surface. */
+  expiresAt: string;
+  createdAt: string;
+}
+
+/**
+ * An approved (connector, channel, peer) the host MAY deliver to / receive
+ * from when the connector's dm/group policy is `allowlist` or `pairing`.
+ */
+export interface MessagingAllowlistEntry {
+  entryId: string;
+  connectorId: string;
+  tenantId: string;
+  channel: RelayChannel;
+  peerId: string;
+  addedAt: string;
 }
 
 /**

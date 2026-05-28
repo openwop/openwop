@@ -45,6 +45,8 @@ import type {
   MessagingIdentityRecord,
   MessagingPolicyRecord,
   MessagingRoutingRuleRecord,
+  MessagingAllowlistEntry,
+  MessagingPairingRecord,
   MessagingSessionRecord,
   MessagingTurnRecord,
   RelayDeviceRecord,
@@ -1234,6 +1236,56 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
       return rows.map(rowToTurnPg);
     },
 
+    async appendMessagingPairing(record) {
+      await pool.query(
+        `INSERT INTO messaging_pairings (pairing_id, connector_id, tenant_id, channel, peer_id, code, expires_at, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [record.pairingId, record.connectorId, record.tenantId, record.channel, record.peerId, record.code, record.expiresAt, record.createdAt],
+      );
+    },
+    async getMessagingPairingByCode(connectorId, code) {
+      const { rows } = await pool.query<Row>(`SELECT * FROM messaging_pairings WHERE connector_id = $1 AND code = $2`, [connectorId, code]);
+      return rows[0] ? rowToPairingPg(rows[0]) : null;
+    },
+    async listMessagingPairings(connectorId) {
+      const { rows } = connectorId === undefined
+        ? await pool.query<Row>(`SELECT * FROM messaging_pairings ORDER BY created_at DESC`)
+        : await pool.query<Row>(`SELECT * FROM messaging_pairings WHERE connector_id = $1 ORDER BY created_at DESC`, [connectorId]);
+      return rows.map(rowToPairingPg);
+    },
+    async deleteMessagingPairing(pairingId) {
+      const r = await pool.query(`DELETE FROM messaging_pairings WHERE pairing_id = $1`, [pairingId]);
+      return (r.rowCount ?? 0) > 0;
+    },
+    async addMessagingAllowlist(entry) {
+      await pool.query(
+        `INSERT INTO messaging_allowlist (entry_id, connector_id, tenant_id, channel, peer_id, added_at)
+         VALUES ($1,$2,$3,$4,$5,$6)
+         ON CONFLICT (connector_id, channel, peer_id) DO NOTHING`,
+        [entry.entryId, entry.connectorId, entry.tenantId, entry.channel, entry.peerId, entry.addedAt],
+      );
+    },
+    async getMessagingAllowlist(connectorId, channel, peerId) {
+      const { rows } = await pool.query<Row>(
+        `SELECT * FROM messaging_allowlist WHERE connector_id = $1 AND channel = $2 AND peer_id = $3`,
+        [connectorId, channel, peerId],
+      );
+      return rows[0] ? rowToAllowlistPg(rows[0]) : null;
+    },
+    async listMessagingAllowlist(connectorId) {
+      const { rows } = connectorId === undefined
+        ? await pool.query<Row>(`SELECT * FROM messaging_allowlist ORDER BY added_at DESC`)
+        : await pool.query<Row>(`SELECT * FROM messaging_allowlist WHERE connector_id = $1 ORDER BY added_at DESC`, [connectorId]);
+      return rows.map(rowToAllowlistPg);
+    },
+    async deleteMessagingAllowlist(connectorId, channel, peerId) {
+      const r = await pool.query(
+        `DELETE FROM messaging_allowlist WHERE connector_id = $1 AND channel = $2 AND peer_id = $3`,
+        [connectorId, channel, peerId],
+      );
+      return (r.rowCount ?? 0) > 0;
+    },
+
     async close() {
       await pool.end();
     },
@@ -1329,6 +1381,30 @@ function rowToIdentityPg(r: Row): MessagingIdentityRecord {
     peers,
     createdAt: r.created_at as string,
     updatedAt: r.updated_at as string,
+  };
+}
+
+function rowToPairingPg(r: Row): MessagingPairingRecord {
+  return {
+    pairingId: r.pairing_id as string,
+    connectorId: r.connector_id as string,
+    tenantId: r.tenant_id as string,
+    channel: r.channel as MessagingPairingRecord['channel'],
+    peerId: r.peer_id as string,
+    code: r.code as string,
+    expiresAt: r.expires_at as string,
+    createdAt: r.created_at as string,
+  };
+}
+
+function rowToAllowlistPg(r: Row): MessagingAllowlistEntry {
+  return {
+    entryId: r.entry_id as string,
+    connectorId: r.connector_id as string,
+    tenantId: r.tenant_id as string,
+    channel: r.channel as MessagingAllowlistEntry['channel'],
+    peerId: r.peer_id as string,
+    addedAt: r.added_at as string,
   };
 }
 

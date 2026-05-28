@@ -207,6 +207,34 @@ export function registerMessagingRoutes(app: Express, deps: Deps): void {
         ...(existing?.lastRunId ? { lastRunId: existing.lastRunId } : {}),
       });
 
+      // Per-connector access policy + pairing/allowlist (Phase C). Strictly opt-
+      // in: if no enabled connector exists for (tenant, channel) OR no policy
+      // row is set, behavior is unchanged (open). The gate may decide to drop
+      // the message, mint a pairing code, or pass through to the bridge.
+      const gate = await evaluatePolicyGate(storage, device, envelope);
+      if (gate.action === 'drop') {
+        await storage.appendDeliveryLog({
+          logId: `dlv_${randomUUID()}`, tenantId: device.tenantId, relayId: device.relayId, channel: device.channel,
+          direction: 'inbound', conversationId: envelope.conversationId, status: 'dropped', detail: gate.reason, at: new Date().toISOString(),
+        });
+        res.status(202).json({ accepted: false, sessionKey, dropped: gate.reason });
+        return;
+      }
+      if (gate.action === 'pair') {
+        const pairing = await mintPairingCode(storage, gate.connectorId, device, envelope);
+        await enqueueOutbound(storage, device.relayId, {
+          channel: device.channel,
+          conversationId: envelope.conversationId,
+          text: `Pairing requested. To approve this peer, run:\n  openwop messaging pairing approve --connector ${gate.connectorId} --code ${pairing.code}\n(Expires in 1h.)`,
+        });
+        await storage.appendDeliveryLog({
+          logId: `dlv_${randomUUID()}`, tenantId: device.tenantId, relayId: device.relayId, channel: device.channel,
+          direction: 'inbound', conversationId: envelope.conversationId, status: 'pairing-pending', detail: pairing.pairingId, at: new Date().toISOString(),
+        });
+        res.status(202).json({ accepted: false, sessionKey, pairing: { pairingId: pairing.pairingId, code: pairing.code, expiresAt: pairing.expiresAt } });
+        return;
+      }
+
       let runId: string | undefined;
       if (bridge) {
         const result = await bridge.onInbound({
@@ -599,6 +627,92 @@ export function registerMessagingRoutes(app: Express, deps: Deps): void {
       next(err);
     }
   });
+
+  // ---- Pairing + allowlist (operator bearer) — Phase C ----
+
+  app.get(`${BASE}/pairing`, async (req, res, next) => {
+    try {
+      const connectorId = optionalString(req.query.connectorId);
+      const pairings = await storage.listMessagingPairings(connectorId);
+      res.json({ pairings });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post(`${BASE}/pairing/approve`, async (req, res, next) => {
+    try {
+      const body = req.body ?? {};
+      const connectorId = requireString(body.connectorId, 'connectorId');
+      const code = requireString(body.code, 'code');
+      const pairing = await storage.getMessagingPairingByCode(connectorId, code);
+      if (!pairing || Date.parse(pairing.expiresAt) < Date.now()) {
+        throw new OpenwopError('not_found', 'pairing code not found or expired', 404);
+      }
+      const tenantId = resolveTenant(req);
+      if (pairing.tenantId !== tenantId && !isWildcard(req)) {
+        throw new OpenwopError('not_found', 'pairing code not found or expired', 404);
+      }
+      await storage.addMessagingAllowlist({
+        entryId: `al_${randomUUID()}`,
+        connectorId: pairing.connectorId,
+        tenantId: pairing.tenantId,
+        channel: pairing.channel,
+        peerId: pairing.peerId,
+        addedAt: new Date().toISOString(),
+      });
+      await storage.deleteMessagingPairing(pairing.pairingId);
+      res.json({ approved: true, connectorId: pairing.connectorId, channel: pairing.channel, peerId: pairing.peerId });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.get(`${BASE}/allowlist`, async (req, res, next) => {
+    try {
+      const connectorId = optionalString(req.query.connectorId);
+      const entries = await storage.listMessagingAllowlist(connectorId);
+      res.json({ entries });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post(`${BASE}/allowlist`, async (req, res, next) => {
+    try {
+      const body = req.body ?? {};
+      const connectorId = requireString(body.connectorId, 'connectorId');
+      const channel = assertChannel(body.channel);
+      const peerId = requireString(body.peerId, 'peerId');
+      const c = await storage.getMessagingConnector(connectorId);
+      if (!c) throw new OpenwopError('not_found', 'connector not found', 404);
+      const tenantId = resolveTenant(req);
+      if (c.tenantId !== tenantId && !isWildcard(req)) {
+        throw new OpenwopError('not_found', 'connector not found', 404);
+      }
+      const entry = {
+        entryId: `al_${randomUUID()}`,
+        connectorId, tenantId: c.tenantId, channel, peerId,
+        addedAt: new Date().toISOString(),
+      };
+      await storage.addMessagingAllowlist(entry);
+      res.status(201).json(entry);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.delete(`${BASE}/allowlist`, async (req, res, next) => {
+    try {
+      const connectorId = requireString(req.query.connectorId, 'connectorId');
+      const channel = assertChannel(req.query.channel);
+      const peerId = requireString(req.query.peerId, 'peerId');
+      const removed = await storage.deleteMessagingAllowlist(connectorId, channel, peerId);
+      res.json({ removed, connectorId, channel, peerId });
+    } catch (err) {
+      next(err);
+    }
+  });
 }
 
 /** Enqueue an outbound egress for a relay. Used by /relay/enqueue and the bridge. */
@@ -736,6 +850,9 @@ function parseIngress(raw: unknown, channel: RelayChannel): ChatIngressEnvelope 
   if (command && typeof command.name === 'string') {
     envelope.command = { name: command.name, ...(typeof command.args === 'string' ? { args: command.args } : {}) };
   }
+  if (Array.isArray(body.mentions)) {
+    envelope.mentions = body.mentions.filter((m): m is string => typeof m === 'string' && m.length > 0);
+  }
   if (body.channelMeta && typeof body.channelMeta === 'object' && !Array.isArray(body.channelMeta)) {
     envelope.channelMeta = body.channelMeta as Record<string, unknown>;
   }
@@ -768,6 +885,98 @@ function parseEgressExtras(body: Record<string, unknown>): {
     out.reactions = body.reactions.filter((r): r is string => typeof r === 'string');
   }
   return out;
+}
+
+// ── Phase C: policy/pairing/allowlist helpers ──────────────────────────────
+
+const PAIRING_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+type PolicyGateResult =
+  | { action: 'allow'; connectorId?: string }
+  | { action: 'drop'; connectorId?: string; reason: string }
+  | { action: 'pair'; connectorId: string };
+
+/**
+ * Decide whether an inbound message passes the connector's policy (dm/group
+ * + allowlist + pairing + requireMention). Opt-in by design: if no enabled
+ * connector for (tenant, channel) OR no policy row → action 'allow' (the
+ * legacy pass-through). `evaluatePolicyGate` is exported for direct testing.
+ */
+export async function evaluatePolicyGate(
+  storage: Storage,
+  device: { tenantId: string; channel: RelayChannel },
+  envelope: ChatIngressEnvelope,
+): Promise<PolicyGateResult> {
+  const connectors = await storage.listMessagingConnectors(device.tenantId);
+  const connector = connectors.find((c) => c.channel === device.channel && c.enabled);
+  if (!connector) return { action: 'allow' };
+  const policy = await storage.getMessagingPolicy(connector.connectorId);
+  if (!policy) return { action: 'allow', connectorId: connector.connectorId };
+
+  // Heuristic group detection: channel-native group/chat prefixes, or a Discord
+  // guildId in channelMeta. DMs route on the source number/jid/handle directly.
+  const guild = envelope.channelMeta && (envelope.channelMeta as { guildId?: unknown }).guildId;
+  const isGroup = envelope.conversationId.startsWith('group:')
+    || envelope.conversationId.startsWith('chat:')
+    || typeof guild === 'string';
+  const gate = isGroup ? policy.groupPolicy : policy.dmPolicy;
+  if (gate === 'disabled') return { action: 'drop', connectorId: connector.connectorId, reason: 'disabled' };
+
+  const peerAllowed = (gate === 'allowlist' || gate === 'pairing')
+    ? !!(await storage.getMessagingAllowlist(connector.connectorId, device.channel, envelope.peerId))
+    : true;
+  if (gate === 'allowlist' && !peerAllowed) return { action: 'drop', connectorId: connector.connectorId, reason: 'allowlist-miss' };
+  if (gate === 'pairing' && !peerAllowed) return { action: 'pair', connectorId: connector.connectorId };
+
+  if (policy.requireMention && !hasBotMention(envelope, device.channel)) {
+    return { action: 'drop', connectorId: connector.connectorId, reason: 'no-mention' };
+  }
+  return { action: 'allow', connectorId: connector.connectorId };
+}
+
+/**
+ * Is the bot mentioned in this inbound? Channels populate `envelope.mentions[]`
+ * with platform-native IDs; we compare against the env-configured bot id for
+ * that channel. As a fallback (older clients, channels without native @
+ * support like iMessage), check `text` for `@<botName>` (case-insensitive).
+ * Returns false when nothing is configured — `requireMention` fails closed.
+ */
+export function hasBotMention(envelope: ChatIngressEnvelope, channel: RelayChannel): boolean {
+  const botId = process.env[`OPENWOP_MESSAGING_BOT_ID_${channel.toUpperCase()}`];
+  if (botId && envelope.mentions && envelope.mentions.includes(botId)) return true;
+  const botName = process.env.OPENWOP_MESSAGING_BOT_NAME;
+  if (botName && typeof envelope.text === 'string') {
+    return envelope.text.toLowerCase().includes(`@${botName.toLowerCase()}`);
+  }
+  return false;
+}
+
+/** Mint a pairing code for an unknown peer; reuse an unexpired one if it exists. */
+async function mintPairingCode(
+  storage: Storage,
+  connectorId: string,
+  device: { tenantId: string; channel: RelayChannel; relayId: string },
+  envelope: ChatIngressEnvelope,
+): Promise<{ pairingId: string; code: string; expiresAt: string }> {
+  const now = Date.now();
+  const existing = await storage.listMessagingPairings(connectorId);
+  const reusable = existing.find((p) =>
+    p.channel === device.channel && p.peerId === envelope.peerId && Date.parse(p.expiresAt) > now,
+  );
+  if (reusable) return { pairingId: reusable.pairingId, code: reusable.code, expiresAt: reusable.expiresAt };
+  // 6-char base32-ish code: alphanum minus look-alikes (no 0/O/1/I).
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) code += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+  const nowIso = new Date(now).toISOString();
+  const expiresAt = new Date(now + PAIRING_TTL_MS).toISOString();
+  const record = {
+    pairingId: `pair_${randomUUID()}`,
+    connectorId, tenantId: device.tenantId, channel: device.channel,
+    peerId: envelope.peerId, code, expiresAt, createdAt: nowIso,
+  };
+  await storage.appendMessagingPairing(record);
+  return { pairingId: record.pairingId, code, expiresAt };
 }
 
 function requireString(raw: unknown, field: string): string {

@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 13;
+export const LATEST_SCHEMA_VERSION = 14;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -426,6 +426,37 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
       );
       CREATE INDEX IF NOT EXISTS idx_messaging_turns_session
         ON messaging_turns (session_key, at);
+    `);
+  },
+  14: (db) => {
+    // Per-connector access gates: pairing requests (short-lived) + allowlist
+    // (approved peers). Mirrors postgres mig 12.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS messaging_pairings (
+        pairing_id TEXT PRIMARY KEY,
+        connector_id TEXT NOT NULL,
+        tenant_id TEXT NOT NULL,
+        channel TEXT NOT NULL,
+        peer_id TEXT NOT NULL,
+        code TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_messaging_pairings_lookup
+        ON messaging_pairings (connector_id, code);
+      CREATE INDEX IF NOT EXISTS idx_messaging_pairings_peer
+        ON messaging_pairings (connector_id, channel, peer_id);
+      CREATE TABLE IF NOT EXISTS messaging_allowlist (
+        entry_id TEXT PRIMARY KEY,
+        connector_id TEXT NOT NULL,
+        tenant_id TEXT NOT NULL,
+        channel TEXT NOT NULL,
+        peer_id TEXT NOT NULL,
+        added_at TEXT NOT NULL,
+        UNIQUE (connector_id, channel, peer_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_messaging_allowlist_connector
+        ON messaging_allowlist (connector_id);
     `);
   },
 };

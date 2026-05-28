@@ -222,6 +222,14 @@ async function makeStorage(): Promise<Storage> {
     listDeliveryLog: async () => [],
     appendMessagingTurn: async () => { throw new Error('not exercised'); },
     listMessagingTurns: async () => [],
+    appendMessagingPairing: async () => { throw new Error('not exercised'); },
+    getMessagingPairingByCode: async () => null,
+    listMessagingPairings: async () => [],
+    deleteMessagingPairing: async () => false,
+    addMessagingAllowlist: async () => { throw new Error('not exercised'); },
+    getMessagingAllowlist: async () => null,
+    listMessagingAllowlist: async () => [],
+    deleteMessagingAllowlist: async () => false,
     close: async () => { await pool.end(); },
   };
 }

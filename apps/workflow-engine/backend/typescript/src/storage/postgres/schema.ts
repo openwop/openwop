@@ -32,7 +32,7 @@ export interface Queryable {
   ): Promise<{ rows: R[] }>;
 }
 
-export const LATEST_SCHEMA_VERSION = 11;
+export const LATEST_SCHEMA_VERSION = 12;
 
 const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
   1: async (client) => {
@@ -423,6 +423,36 @@ const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
       );
       CREATE INDEX IF NOT EXISTS idx_messaging_turns_session
         ON messaging_turns (session_key, at);
+    `);
+  },
+  12: async (client) => {
+    // Per-connector access gates: pairing + allowlist. Mirrors sqlite mig 14.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS messaging_pairings (
+        pairing_id TEXT PRIMARY KEY,
+        connector_id TEXT NOT NULL,
+        tenant_id TEXT NOT NULL,
+        channel TEXT NOT NULL,
+        peer_id TEXT NOT NULL,
+        code TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_messaging_pairings_lookup
+        ON messaging_pairings (connector_id, code);
+      CREATE INDEX IF NOT EXISTS idx_messaging_pairings_peer
+        ON messaging_pairings (connector_id, channel, peer_id);
+      CREATE TABLE IF NOT EXISTS messaging_allowlist (
+        entry_id TEXT PRIMARY KEY,
+        connector_id TEXT NOT NULL,
+        tenant_id TEXT NOT NULL,
+        channel TEXT NOT NULL,
+        peer_id TEXT NOT NULL,
+        added_at TEXT NOT NULL,
+        UNIQUE (connector_id, channel, peer_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_messaging_allowlist_connector
+        ON messaging_allowlist (connector_id);
     `);
   },
 };

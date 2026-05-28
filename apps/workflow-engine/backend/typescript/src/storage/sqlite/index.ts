@@ -28,6 +28,8 @@ import type {
   MessagingConnectorRecord,
   MessagingIdentityRecord,
   MessagingPolicyRecord,
+  MessagingAllowlistEntry,
+  MessagingPairingRecord,
   MessagingRoutingRuleRecord,
   MessagingSessionRecord,
   MessagingTurnRecord,
@@ -1156,6 +1158,47 @@ export function openSqliteStorage(dbPath: string): Storage {
       return rows.map(rowToTurnSqlite);
     },
 
+    async appendMessagingPairing(record) {
+      db.prepare(
+        `INSERT INTO messaging_pairings (pairing_id, connector_id, tenant_id, channel, peer_id, code, expires_at, created_at)
+         VALUES (?,?,?,?,?,?,?,?)`,
+      ).run(record.pairingId, record.connectorId, record.tenantId, record.channel, record.peerId, record.code, record.expiresAt, record.createdAt);
+    },
+    async getMessagingPairingByCode(connectorId, code) {
+      const row = db.prepare(`SELECT * FROM messaging_pairings WHERE connector_id = ? AND code = ?`).get(connectorId, code) as Record<string, unknown> | undefined;
+      return row ? rowToPairingSqlite(row) : null;
+    },
+    async listMessagingPairings(connectorId) {
+      const rows = connectorId === undefined
+        ? db.prepare(`SELECT * FROM messaging_pairings ORDER BY created_at DESC`).all()
+        : db.prepare(`SELECT * FROM messaging_pairings WHERE connector_id = ? ORDER BY created_at DESC`).all(connectorId);
+      return (rows as Array<Record<string, unknown>>).map(rowToPairingSqlite);
+    },
+    async deleteMessagingPairing(pairingId) {
+      const info = db.prepare(`DELETE FROM messaging_pairings WHERE pairing_id = ?`).run(pairingId);
+      return info.changes > 0;
+    },
+    async addMessagingAllowlist(entry) {
+      db.prepare(
+        `INSERT OR IGNORE INTO messaging_allowlist (entry_id, connector_id, tenant_id, channel, peer_id, added_at)
+         VALUES (?,?,?,?,?,?)`,
+      ).run(entry.entryId, entry.connectorId, entry.tenantId, entry.channel, entry.peerId, entry.addedAt);
+    },
+    async getMessagingAllowlist(connectorId, channel, peerId) {
+      const row = db.prepare(`SELECT * FROM messaging_allowlist WHERE connector_id = ? AND channel = ? AND peer_id = ?`).get(connectorId, channel, peerId) as Record<string, unknown> | undefined;
+      return row ? rowToAllowlistSqlite(row) : null;
+    },
+    async listMessagingAllowlist(connectorId) {
+      const rows = connectorId === undefined
+        ? db.prepare(`SELECT * FROM messaging_allowlist ORDER BY added_at DESC`).all()
+        : db.prepare(`SELECT * FROM messaging_allowlist WHERE connector_id = ? ORDER BY added_at DESC`).all(connectorId);
+      return (rows as Array<Record<string, unknown>>).map(rowToAllowlistSqlite);
+    },
+    async deleteMessagingAllowlist(connectorId, channel, peerId) {
+      const info = db.prepare(`DELETE FROM messaging_allowlist WHERE connector_id = ? AND channel = ? AND peer_id = ?`).run(connectorId, channel, peerId);
+      return info.changes > 0;
+    },
+
     async close() {
       db.close();
     },
@@ -1250,6 +1293,30 @@ function rowToIdentitySqlite(r: Record<string, unknown>): MessagingIdentityRecor
     peers,
     createdAt: r.created_at as string,
     updatedAt: r.updated_at as string,
+  };
+}
+
+function rowToPairingSqlite(r: Record<string, unknown>): MessagingPairingRecord {
+  return {
+    pairingId: r.pairing_id as string,
+    connectorId: r.connector_id as string,
+    tenantId: r.tenant_id as string,
+    channel: r.channel as MessagingPairingRecord['channel'],
+    peerId: r.peer_id as string,
+    code: r.code as string,
+    expiresAt: r.expires_at as string,
+    createdAt: r.created_at as string,
+  };
+}
+
+function rowToAllowlistSqlite(r: Record<string, unknown>): MessagingAllowlistEntry {
+  return {
+    entryId: r.entry_id as string,
+    connectorId: r.connector_id as string,
+    tenantId: r.tenant_id as string,
+    channel: r.channel as MessagingAllowlistEntry['channel'],
+    peerId: r.peer_id as string,
+    addedAt: r.added_at as string,
   };
 }
 

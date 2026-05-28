@@ -13,6 +13,8 @@ export const MESSAGING_HELP = `Usage:
   openwop messaging routing    list|add|remove [...]
   openwop messaging identity   list|show|create|link|unlink|delete [...]
   openwop messaging logs       [--channel c] [--direction inbound|outbound] [--status s] [--limit n]
+  openwop messaging pairing    list|approve [--connector id] [--code c]
+  openwop messaging allowlist  list|add|remove --connector id --channel ch --peer-id p
 
 Operate the demo host's messaging relay-gateway (/v1/host/sample/messaging) —
 a host-extension surface, NOT part of the normative OpenWOP wire contract.
@@ -55,8 +57,91 @@ export async function runMessaging(ctx: Ctx, argv: string[]) {
       return await runMessagingIdentity(ctx, args);
     case 'logs':
       return await runMessagingLogs(ctx, args);
+    case 'pairing':
+      return await runMessagingPairing(ctx, args);
+    case 'allowlist':
+      return await runMessagingAllowlist(ctx, args);
     default:
       throw new CliError(`Unknown messaging command: ${sub}\nRun \`openwop messaging --help\` for usage.`);
+  }
+}
+
+async function runMessagingPairing(ctx: Ctx, argv: string[]) {
+  const sub = argv[0] ?? 'list';
+  const args = argv.slice(['list', 'approve'].includes(sub) ? 1 : 0);
+  switch (sub) {
+    case 'list': {
+      const { options } = parseOptions(args, { value: ['--connector'] });
+      const qs = options.connector ? `?connectorId=${encodeURIComponent(options.connector)}` : '';
+      const res = await requestJson(ctx, `${MESSAGING_BASE}/pairing${qs}`);
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      const pairings = Array.isArray(res.body?.pairings) ? res.body.pairings : [];
+      if (pairings.length === 0) { writeLine(ctx.io.stdout, 'No pending pairing requests.'); return 0; }
+      writeLine(ctx.io.stdout, formatTable(
+        pairings.map((p: any) => ({ connectorId: p.connectorId, channel: p.channel, peerId: p.peerId, code: p.code, expiresAt: p.expiresAt })),
+        ['connectorId', 'channel', 'peerId', 'code', 'expiresAt'],
+      ));
+      return 0;
+    }
+    case 'approve': {
+      const { options } = parseOptions(args, { value: ['--connector', '--code'] });
+      if (!options.connector || !options.code) throw new CliError('--connector and --code are required.');
+      const res = await requestJson(ctx, `${MESSAGING_BASE}/pairing/approve`, {
+        method: 'POST',
+        body: { connectorId: options.connector, code: options.code },
+      });
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      writeLine(ctx.io.stdout, `✓ Approved ${res.body.channel}:${res.body.peerId} on ${res.body.connectorId}`);
+      return 0;
+    }
+    default:
+      throw new CliError(`Unknown pairing command: ${sub}`);
+  }
+}
+
+async function runMessagingAllowlist(ctx: Ctx, argv: string[]) {
+  const sub = argv[0] ?? 'list';
+  const args = argv.slice(['list', 'add', 'remove'].includes(sub) ? 1 : 0);
+  switch (sub) {
+    case 'list': {
+      const { options } = parseOptions(args, { value: ['--connector'] });
+      const qs = options.connector ? `?connectorId=${encodeURIComponent(options.connector)}` : '';
+      const res = await requestJson(ctx, `${MESSAGING_BASE}/allowlist${qs}`);
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      const entries = Array.isArray(res.body?.entries) ? res.body.entries : [];
+      if (entries.length === 0) { writeLine(ctx.io.stdout, 'No allowlist entries.'); return 0; }
+      writeLine(ctx.io.stdout, formatTable(
+        entries.map((e: any) => ({ connectorId: e.connectorId, channel: e.channel, peerId: e.peerId, addedAt: e.addedAt })),
+        ['connectorId', 'channel', 'peerId', 'addedAt'],
+      ));
+      return 0;
+    }
+    case 'add': {
+      const { options } = parseOptions(args, { value: ['--connector', '--channel', '--peer-id'] });
+      if (!options.connector || !options.channel || !options.peerId) {
+        throw new CliError('--connector, --channel, and --peer-id are required.');
+      }
+      const res = await requestJson(ctx, `${MESSAGING_BASE}/allowlist`, {
+        method: 'POST',
+        body: { connectorId: options.connector, channel: options.channel, peerId: options.peerId },
+      });
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      writeLine(ctx.io.stdout, `✓ Allowlisted ${res.body.channel}:${res.body.peerId} on ${res.body.connectorId}`);
+      return 0;
+    }
+    case 'remove': {
+      const { options } = parseOptions(args, { value: ['--connector', '--channel', '--peer-id'] });
+      if (!options.connector || !options.channel || !options.peerId) {
+        throw new CliError('--connector, --channel, and --peer-id are required.');
+      }
+      const qs = new URLSearchParams({ connectorId: options.connector, channel: options.channel, peerId: options.peerId });
+      const res = await requestJson(ctx, `${MESSAGING_BASE}/allowlist?${qs}`, { method: 'DELETE' });
+      if (ctx.json) { writeJson(ctx.io.stdout, res.body); return 0; }
+      writeLine(ctx.io.stdout, res.body.removed ? `✓ Removed ${res.body.channel}:${res.body.peerId}` : `(no entry for ${res.body.channel}:${res.body.peerId})`);
+      return res.body.removed ? 0 : 1;
+    }
+    default:
+      throw new CliError(`Unknown allowlist command: ${sub}`);
   }
 }
 
