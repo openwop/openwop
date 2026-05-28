@@ -1,6 +1,6 @@
 {
   "name": "@openwop/openwop",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "Production-ready TypeScript reference SDK for OpenWOP v1.0 compliant servers.",
   "repository": {
     "type": "git",

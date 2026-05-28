@@ -1,6 +1,6 @@
 {
   "name": "@openwop/openwop-host-sqlite",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "private": true,
   "description": "Reference SQLite-backed OpenWOP host for conformance demos and build-your-own-host walkthroughs. Demonstrates event-log persistence and claim acquisition.",
   "type": "module",

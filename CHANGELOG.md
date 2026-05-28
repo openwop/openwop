@@ -9,7 +9,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
-## [1.1.5 — unreleased]
+## [1.1.5] — 2026-05-28 — `@openwop/cli` launch + chat-parity hardening + RFC 0071 Accepted overall
+
+Closes the v1.1.4 → v1.1.5 cycle on three top-line stories:
+
+1. **OpenWOP CLI v0.1.0 ships to npm.** `npm install -g @openwop/cli` — a control-plane CLI for any OpenWOP-compatible host (auth onboarding, capabilities, runs + SSE streaming, prompts/memory/agents/interrupts, channel messaging via opt-in Signal / iMessage / WhatsApp / Discord adapters). Operator-side; independently versioned. In-app discovery surface at `app.openwop.dev/cli` + a homepage card link the public to it.
+
+2. **Messaging → AI-chat parity end-to-end.** The relay-gateway lands routing enforcement, conversation-history threading, policy/pairing/allowlist/requireMention enforcement, direct agent dispatch as a routing target, and cross-channel identity unification — bringing the channel-messaging surface to functional parity with the in-app AI chat. Hardened in a follow-up sweep (tenant-scope pairing/allowlist, agent dispatch timeout, CSPRNG pairing codes, requireMention deny-all tripwire, defense-in-depth tenant scoping on `listMessagingTurns`).
+
+3. **RFC 0071 (artifact-type packs + chat card packs) `Accepted` overall.** Phase 1 (artifact-type packs) graduated on MyndHyve Phase-1 adoption; Phase 2 (chat card packs) graduated on the Slice-B real `core.chat.cardExecute` → `ctx.aiEnvelope.generate` binding with `host.aiEnvelope` advertised. `chat-card-packs.md` promoted DRAFT → FINAL.
+
+All wire shapes additive per [`COMPATIBILITY.md`](./COMPATIBILITY.md) §2.1. TS SDK / Python SDK / conformance / examples bump in lockstep; `@openwop/cli@0.1.0` ships on its own SemVer line via new `cli/v*` tag pattern in the publish workflow.
+
+### feat(cli): publish `@openwop/cli@0.1.0` to npm (2026-05-28)
+
+First public release of the OpenWOP CLI to npm — `npm install -g @openwop/cli`. Adds a `publish-cli` job to the existing OIDC publish pipeline (`.github/workflows/openwop-publish.yml`) so the CLI ships via the same trusted-publisher path as the four spec-corpus artifacts (no NPM_TOKEN secret; `--provenance`). New `cli/v*` tag pattern for CLI-only releases; the umbrella `v*` corpus-aligned tag fires `publish-cli` too, so all 5 artifacts (TS SDK + conformance + Python + Go + CLI) ship on a single `v1.1.5` tag push. `PUBLISHING.md` §"Why this exists" artifact table updated. One-time maintainer setup before the first tag push: register the workflow as a trusted publisher on `npmjs.com/package/@openwop/cli`.
+
+### feat(site): homepage CLI card — § 01.5 'Try it from your terminal' (2026-05-28)
+
+New `<section class="block cli-cta">` on the openwop.dev homepage between SHIPPING NOW (§ 01) and PICK YOUR PATH (§ 02): dark-bg install snippet on the left (`npm install -g @openwop/cli` + `OPENWOP_BASE_URL` + `openwop doctor`), 5-row capability list on the right (Auth / Workflows / Agents / HITL / Channels) + two CTAs deep-linking to `app.openwop.dev/cli` and the npm package page. Styled to match the existing `.block` rhythm; two-column grid collapses to one column under 760px. Public-homepage-only change to `public/index.html` + `public/styles.css`.
+
+### feat(app): in-app /cli page — install + quickstart + command catalog (2026-05-28)
+
+New `/cli` route in the `app.openwop.dev` SPA surfaced via a "CLI" NavLink last in the header. Static-content page (no API calls — renders identically against any host): install commands (global `npm install -g` and one-off `npx -y`), how to point the CLI at this host (`OPENWOP_BASE_URL` + `openwop onboard` + `openwop doctor`), a 10-row command-catalog table covering every command group (`runs` / `prompts` / `memory` / `agents` / `interrupts` / `messaging` / `relay` / `notifications`), an opt-in channel-relay section calling out Signal / iMessage / WhatsApp / Discord as local host-extensions under `/v1/host/sample/messaging/*`, and source/issues pointers to npm + GitHub. Non-normative — frontend-only.
+
+### fix(cli): preserve base-URL path prefix when joining request paths (2026-05-28)
+
+`new URL(path, base)` with a leading-slash `path` **resets** `base.pathname` to `/`, so `openwop --base-url https://app.openwop.dev/api capabilities` was hitting the SPA shell at `https://app.openwop.dev/.well-known/openwop` and printing "unknown" for every capability field. Other CLI commands silently worked only because Firebase Hosting happens to also rewrite `/v1/**` and `/api/v1/**` to Cloud Run; `.well-known/openwop` falls through. Fix: `requestJson` joins relative-to-base in `cli/src/api.ts` so the `/api` prefix survives. Regression test in `cli/test/cli.test.mjs` captures the joined URL when `--base-url https://host/api` is passed. NON-normative CLI bug; tsc + 149/149 CLI tests green; live re-verified against `https://app.openwop.dev/api`.
 
 ### docs(rfc-0071): Phase 2 (chat card packs) Active → Accepted — RFC 0071 Accepted overall (2026-05-27)
 

@@ -1,6 +1,6 @@
 {
   "name": "@openwop/example-branching-workflow",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "private": true,
   "description": "DAG-execution demo: parallel paths + fan-in via core.flow.merge. Proves the DAG scheduler runs branches concurrently.",
   "type": "module",

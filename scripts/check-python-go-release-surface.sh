@@ -17,7 +17,7 @@ import pathlib
 import re
 
 root = pathlib.Path(".")
-expected_version = "1.1.4"
+expected_version = "1.1.5"
 pyproject_path = root / "sdk/python/pyproject.toml"
 init_path = root / "sdk/python/src/openwop_client/__init__.py"
 
