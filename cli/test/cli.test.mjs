@@ -486,6 +486,22 @@ describe('error paths', () => {
 });
 
 describe('base URL precedence', () => {
+  it('preserves a base path prefix (https://host/api) when joining a leading-slash path', async () => {
+    // Regression: `new URL('/foo', 'https://host/api')` resets the path to '/foo',
+    // silently dropping the /api prefix and breaking every host that proxies
+    // under one. requestJson now joins relative-to-base so the prefix stays.
+    const cap = capture();
+    let observedUrl = '';
+    const fetchImpl = async (url) => {
+      observedUrl = url.toString();
+      return new Response(JSON.stringify({ status: 'ok' }), { status: 200 });
+    };
+    await runCli(['--base-url', 'https://example.dev/api', 'health', '--json'], {
+      io: cap.io, fetchImpl, cwd: process.cwd(), repoRoot: process.cwd(), env: {},
+    });
+    assert.match(observedUrl, /^https:\/\/example\.dev\/api\/health/);
+  });
+
   it('uses OPENWOP_BASE_URL when --base-url is absent', async () => {
     const cap = capture();
     let observedUrl = '';
