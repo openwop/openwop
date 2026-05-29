@@ -372,7 +372,7 @@ Current generated state: 42 prose specs (37 FINAL + 5 DRAFT) Â· 43 JSON Schema
 If you're new to OpenWOP:
 
 - **[`QUICKSTART.md`](./QUICKSTART.md)** â five-minute hands-on tour: discovery, run creation, streaming.
-- **[`spec/v1/`](./spec/v1/)** â 39 prose specs (35 `FINAL v1`/`v1.1`, 4 `DRAFT v1.x` extensions). Start with `rest-endpoints.md` and `auth.md`.
+- **[`spec/v1/`](./spec/v1/)** â 42 prose specs (35 `FINAL v1`/`v1.1`, 4 `DRAFT v1.x` extensions). Start with `rest-endpoints.md` and `auth.md`.
 - **[`schemas/`](./schemas/)** â JSON Schemas (Draft 2020-12). Compile with Ajv2020.
 
 If you're implementing a host:

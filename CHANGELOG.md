@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### build(protocol-status): `--write` self-heals README corpus counts (kills the giant-status-line merge bottleneck) (2026-05-29)
+
+`scripts/generate-protocol-status.mjs --write` now rewrites the corpus counts embedded in `README.md` prose in addition to regenerating `docs/PROTOCOL-STATUS.md`. Previously `--check` was a one-way guard: it FAILED when README's hand-typed counts (`are \`Accepted\` (N)` / `Active` / `Draft`, `(N RFCs excluding template)`, `N conformance scenario files`, `N prose specs` / `JSON Schemas` / `OpenAPI operations`, `N protocol-tier` / `reference-impl-tier` / `invariants in`) drifted, but a human still retyped them on the single ~15 KB "RFC status" blockquote — making that one line a serialized merge-conflict locus that collided on every parallel RFC status flip (5 of 8 graduations this cycle hit it). `--write` now derives those integers from the same source `--check` validates, rewriting **only** the `\d+` run inside each ASCII-delimited checked pattern — the unchecked `+ NNNN` enumeration, graduation prose, and all non-ASCII bytes are untouched. A status flip is now: edit the RFC's own `| **Status** |` row, then run `--write`; count conflicts on README re-resolve mechanically (`git checkout --theirs README.md && …--write`) with no arithmetic. Idempotent. `--check`'s failure output now points at `--write`. (Self-heal also caught a latent stale "39 → 42 prose specs" count the first-match guard had missed.) No wire-shape / schema / capability change — repo tooling only; `npm run openwop:check` green (10/10).
+
 ### spec(rfc-0079): Credential Provenance + Egress Policy — new Draft RFC (2026-05-29)
 
 Filed **RFC 0079** (`Draft`), the Wave-2 security RFC that answers the credential↔destination-binding question RFC 0076 §B `safeFetch` explicitly parked (*how does a host know a credential attached to egress is allowed for that destination?*). It proposes:
