@@ -132,7 +132,7 @@ Emitted before a tool invocation. Payload:
 
 #### `agent.toolReturned`
 
-Emitted after a tool invocation completes. `causationId` MUST equal the `eventId` of the corresponding `agent.toolCalled`. Payload:
+Emitted after a tool invocation completes. `causationId` MUST equal the `eventId` of the corresponding `agent.toolCalled` — except for a proactive `status: 'forbidden'` / `'rate_limited'` row emitted at agent-loop start before any model call (RFC 0064 §C "forbidden-at-load"), which has no paired `agent.toolCalled` and MAY omit `causationId`. Payload:
 
 ```json
 {

@@ -17,7 +17,8 @@
     "language": "javascript",
     "format": "esm",
     "entry": "./index.mjs",
-    "minRuntimeVersion": "node>=20"
+    "minRuntimeVersion": "node>=20",
+    "requires": ["net.dns", "net.outbound", "crypto"]
   },
   "nodes": [
     {

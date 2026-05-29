@@ -1130,6 +1130,28 @@
         "perToolRateLimit": { "type": "boolean", "description": "Host applies a per-`(principal, tool)` token-bucket rate limit; exhaustion yields `agent.toolReturned { status: 'rate_limited' }` + a `rate_limited` (429) error." }
       }
     },
+    "httpClient": {
+      "type": "object",
+      "description": "Host outbound-HTTP surface. The host's HTTP-client node egress (e.g. `core.http.request`) MUST be SSRF-guarded (`ssrfGuard: true`) with a positive `maxResponseBodyBytes` cap — the `http-client-ssrf-guard` protocol invariant. RFC 0076 §B adds the OPTIONAL `safeFetch` sub-capability: a host-mediated `ctx.http.safeFetch(url, init?)` exposed to pack runtime code, backed by the SAME SSRF guard (resolve→pin→connect, metadata-endpoint blocklist, DNS-rebinding defeat) so packs need not reach for raw DNS/sockets. See `host-capabilities.md` §host.http.",
+      "required": ["supported"],
+      "additionalProperties": false,
+      "properties": {
+        "supported": { "type": "boolean" },
+        "ssrfGuard": { "type": "boolean", "description": "Host rejects egress to loopback / RFC 1918 / link-local / cloud-metadata addresses (resolve→pin→connect). MUST be `true` when `supported` (the `http-client-ssrf-guard` invariant)." },
+        "maxResponseBodyBytes": { "type": "integer", "minimum": 1, "description": "Positive ceiling on a response body the host will buffer. Reused by `safeFetch`." },
+        "requestTimeoutMs": { "type": "integer", "minimum": 1, "description": "Host-enforced per-request wall-clock timeout (also applies to `safeFetch`)." },
+        "methods": { "type": "array", "items": { "type": "string" }, "description": "HTTP methods the client surface accepts (e.g. `GET`, `POST`)." },
+        "safeFetch": {
+          "type": "object",
+          "description": "RFC 0076 §B. Host-provided `ctx.http.safeFetch(url, init?)` for pack runtime code — the pack-facing exposure of the SSRF-guarded client. When advertised, the host MUST apply the §host.http SSRF defense + clamps (incl. refusing `Connection: upgrade`), and — when `toolHooks.prePostEvents` is also advertised — MUST emit the `agent.toolCalled`/`agent.toolReturned` pair (`transport: 'http'`) for each call. A pack that uses `safeFetch` need not declare `net.dns` in `runtime.requires` (the host owns resolution; RFC 0076 §A).",
+          "required": ["supported"],
+          "additionalProperties": false,
+          "properties": {
+            "supported": { "type": "boolean" }
+          }
+        }
+      }
+    },
     "deadLetter": {
       "type": "object",
       "description": "RFC 0053 (`Draft`). Run-level dead-letter sink for terminally-failed runs/nodes. On retry exhaustion (RFC 0009), the run is routed to a durable, inspectable sink and a `run.dead_lettered` event is emitted; dead-lettered runs remain fork-eligible (RFC 0011) for the retention window. Distinct from `queueBus.deadLetterSupported`, which dead-letters transport *messages*, not *runs*.",

@@ -682,6 +682,8 @@ ctx.webResearch.research({
 
 This is the heavyweight **swarm/consensus superset**. The minimal tier that makes a published agent pack runnable is `capabilities.agents.manifestRuntime` (RFC 0070) — loading a pack's `agents[]` into an `AgentRegistry` (RFC 0003) and dispatching one on the existing `core.dispatch`/orchestrator loop. A host advertising `host.agentRuntime: supported` **implies** `agents.manifestRuntime` (RFC 0070 §B), since `spawn({ manifestId })` instantiates a manifest agent. Hosts that only need single-agent / crew dispatch advertise the floor and omit this section. A multi-tenant host additionally advertises `agents.manifestRuntime.installScope: 'tenant'` (RFC 0074) so `GET /v1/agents` is scoped to the caller's owner triple (default `'host'` = host-global, RFC 0072 §A behavior); see `node-packs.md` §"Inventory scope".
 
+**Related: per-tool authorization lives at the top level, not under `agents`.** A host that runs a function-calling loop for manifest agents (the model requesting tools per RFC 0072 §B) advertises per-tool authorization, rate limiting, and the content-free tool-call audit trail via the **top-level** `Capabilities.toolHooks` block — see [§host.toolHooks](#hosttoolhooks) — *not* via a sub-flag of `agents` next to `manifestRuntime`. `toolHooks` is transport- and runtime-agnostic (it covers MCP, HTTP egress, and native tool calls alike), so it is not nested under the agent-runtime tier.
+
 Operates on RFC 0002 / 0003 / 0007 protocol primitives — spawn, delegate, consensus, message-send, skill-invoke, swarm-execute.
 
 ```typescript
@@ -1892,6 +1894,52 @@ Additive — hosts that omit the block advertise no heartbeat. Verified by `hear
 
 ---
 
+## §host.http
+
+**Capability flag:** `capabilities.httpClient.supported: true` — the host's outbound-HTTP surface. RFC 0076 §B (`Active`) adds the OPTIONAL `httpClient.safeFetch` sub-capability.
+
+**Used by:** node egress (`core.http.request`-class nodes) and — when `safeFetch` is advertised — pack runtime code via `ctx.http.safeFetch`.
+
+**SSRF guard (normative — the `http-client-ssrf-guard` invariant).** A host advertising `httpClient` MUST set `ssrfGuard: true` and a positive `maxResponseBodyBytes`. Before connecting, the host MUST resolve the target, **reject** (loopback / RFC 1918 private / link-local / cloud-metadata, e.g. `169.254.169.254`, `metadata.google.internal`) and **pin the resolved IP for the connection** so a re-resolution cannot redirect to a blocked address (DNS-rebinding defeat). This is the existing `http-client-ssrf-guard` protocol-tier invariant (`SECURITY/invariants.yaml`) — **no new invariant**; `safeFetch` is one more surface under it.
+
+### `safeFetch` (RFC 0076 §B — pack-facing, OPTIONAL)
+
+A host MAY advertise `capabilities.httpClient.safeFetch.supported: true` and expose `ctx.http.safeFetch(url, init?)` to pack runtime code — the pack-facing exposure of the SSRF-guarded client, so packs stop reaching for `node:dns` / raw sockets to do their own SSRF defense:
+
+```typescript
+ctx.http.safeFetch(
+  url: string,
+  init?: RequestInit,        // method/headers/body subset, host-clamped
+) → Promise<Response>        // standard fetch Response, or throws ssrf_blocked / fetch_failed
+```
+
+**Behavior (normative, when `safeFetch.supported`):**
+
+- The host MUST apply the §host.http SSRF guard above (resolve→pin→connect; throw `ssrf_blocked` on a blocked address) and MUST enforce `maxResponseBodyBytes` + (when set) `requestTimeoutMs`.
+- The host MUST refuse connection-upgrade attempts (`Connection: upgrade` / a `101` protocol switch) — these escape HTTP into a raw bidirectional socket and defeat the resolve→pin→connect boundary. Body-size / timeout / `Authorization`-forwarding policy are host tuning (the body cap + timeout reuse the `httpClient` fields above; an `Authorization` header a pack did not construct from a host-issued credential SHOULD NOT be forwarded — host policy; see RFC 0076 §B Q5).
+- When `capabilities.toolHooks.prePostEvents: true` is **also** advertised, the host MUST emit the `agent.toolCalled` / `agent.toolReturned` pair (`transport: 'http'`) for every `safeFetch` invocation — centralizing egress in the host must increase auditability, not become a quiet bypass. Sampling belongs at the storage/projection tier; the wire-level emission stays unconditional (RFC 0064 posture).
+- A pack using `safeFetch` does **not** declare `net.dns` in `runtime.requires` for the fetch path (the host owns resolution); a pack that wants to run on hosts lacking the capability MAY feature-detect (`ctx.http?.safeFetch`) and fall back to its own `net.outbound` + `net.dns` path (declaring both). See RFC 0076 §A.
+
+`safeFetch` composes with a deployment-level egress allowlist (e.g. Cloud NAT) as defense-in-depth: the host's resolve→pin→connect guard applies *before* the proxy sees the request.
+
+**Capability advertisement shape:**
+
+```json
+{
+  "httpClient": {
+    "supported": true,
+    "ssrfGuard": true,
+    "maxResponseBodyBytes": 10485760,
+    "requestTimeoutMs": 30000,
+    "safeFetch": { "supported": true }
+  }
+}
+```
+
+Additive — hosts that omit `safeFetch` expose no `ctx.http.safeFetch`; packs feature-detect. Verified by `http-client-ssrf.test.ts` (advertisement contract, capability-gated) + `safefetch-behavior.test.ts` (SSRF block / rebinding / `Connection: upgrade` refusal / audit-when-both, seam-gated; soft-skips on 404 until a `safeFetch` host wires the seam).
+
+---
+
 ## §host.toolHooks
 
 **Capability flag:** `toolHooks.supported: true` *(advertised via top-level `Capabilities.toolHooks`; see [capabilities.md §toolHooks](capabilities.md#toolhooks))* — RFC 0064, `Active`.
@@ -1901,6 +1949,8 @@ Additive — hosts that omit the block advertise no heartbeat. Verified by `hear
 **Content-free audit (normative, when `prePostEvents: true`).** For every external tool call, the host MUST populate the additive fields on the existing `callId`-paired events: `agent.toolCalled` gains `argsHash` (SHA-256 over RFC 8785 JCS-canonicalized args with resolved secrets **already redacted** per SR-1 — raw key material MUST NOT enter the hash input), `principal` (the RFC 0048 id; `core.system` for non-agent host egress — `agentId` stays REQUIRED, so non-agent calls use the reserved synthetic agent id), and `transport`; `agent.toolReturned` gains `status` (`ok`/`error`/`forbidden`/`rate_limited`) and `durationMs` (recorded, re-emitted verbatim on replay/`:fork`, never recomputed — `replay.md`).
 
 **Per-tool authorization (normative, when `perToolAuthorization: true`).** A tool declares required scopes (`actions[].requiredScopes[]` in its connector/mount manifest, per RFC 0045). Before invoking, the host MUST check the run principal's RFC 0049 scopes and **fail closed**: if the principal lacks a scope **or authorization cannot be evaluated**, the host MUST NOT invoke the tool, MUST emit `agent.toolReturned { status: 'forbidden' }`, and MUST surface the existing `forbidden` (403) error with `details.scope: 'tool'` + `details.toolName` + `details.requiredScopes`. Absence of a decision is denial — this is the per-tool application of RFC 0049's `authorization-fail-closed` invariant.
+
+**Forbidden-at-load (clarification).** A host MAY evaluate a manifest agent's `toolAllowlist` (RFC 0072 §D) *proactively at loop start* — before the first model call — and emit `agent.toolReturned { status: 'forbidden' }` for an entry that resolves to no approved pack (unknown typeId, or a pack the workspace has not approved per RFC 0074). Because the model has not requested the tool, **no `agent.toolCalled` precedes this row**: the host MUST synthesize the `callId` (a stable derivation such as `forbidden:<sha256(ref)>` is RECOMMENDED so the row is replay-stable) and **MAY omit `causationId`** — RFC 0002 §B requires `causationId` only to anchor a `toolReturned` to its paired `toolCalled`, and here there is no parent event. A host MUST NOT synthesize a placeholder `agent.toolCalled` *solely* to anchor the chain (it would assert a model request that never happened). Consumers reconstructing the causation graph MUST tolerate a `forbidden`/`rate_limited` `agent.toolReturned` whose `callId` has no matching `agent.toolCalled`.
 
 **Per-tool rate limiting (normative, when `perToolRateLimit: true`).** The host MUST apply a token bucket keyed on `(principal, toolName)`; on exhaustion it MUST NOT invoke the tool, emits `agent.toolReturned { status: 'rate_limited' }`, and surfaces the existing `rate_limited` (429, `Retry-After`) error with `details.scope: 'tool'` — distinct from the HTTP-inbound limiter (unchanged), same envelope.
 
@@ -1918,6 +1968,8 @@ Additive — hosts that omit the block advertise no heartbeat. Verified by `hear
 ```
 
 Additive — hosts that omit the block behave exactly as today (the `agent.toolCalled`/`agent.toolReturned` `required` arrays + `callId` pairing are unchanged; `version < toolHooks` consumers ignore the new fields). Verified by `tool-hooks-shape.test.ts` (shape, always runs) + `tool-hooks-content-free.test.ts` / `tool-hooks-authorization-fail-closed.test.ts` / `tool-hooks-rate-limit.test.ts` / `tool-hooks-secret-redaction.test.ts` (capability-gated).
+
+**Host implementation note — provider tool-name sanitization (non-normative).** openwop tool ids carry `:` and `.` (`<scope>:<tool-id>`, e.g. `openwop:core.openwop.http.fetch`). The major model providers' function-calling APIs (Anthropic, OpenAI, Gemini) restrict tool names to `[A-Za-z0-9_-]` and reject those delimiters, so a host running a function-calling loop MUST map the openwop id to a provider-legal name on the request (a common choice is `:`/`.` → `_`, e.g. `openwop_core_openwop_http_fetch`) and reverse the mapping when matching the model's `tool_use` / `tool_calls` name back to the openwop tool. This mapping is purely a host↔provider adapter concern — it never appears on the openwop wire (the `agent.toolCalled.toolId` / `toolName` fields carry the canonical openwop id), so it is informative, not normative. It is called out here only to save the next implementer the rediscovery: a non-reversible or lossy sanitization (e.g. collapsing two distinct ids to the same provider name) silently breaks dispatch.
 
 ---
 

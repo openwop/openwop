@@ -17,7 +17,8 @@
     "language": "javascript",
     "format": "esm",
     "entry": "./index.mjs",
-    "minRuntimeVersion": "node>=20"
+    "minRuntimeVersion": "node>=20",
+    "requires": ["crypto"]
   },
   "nodes": [
     { "typeId": "landing.content.generate", "version": "1.0.0", "label": "Generate Landing Page Content", "description": "AI-powered headlines, sections, CTA variants, SEO metadata. Falls back to hardcoded defaults on AI failure.", "category": "data", "role": "action", "capabilities": ["side-effectful"], "configSchemaRef": "schemas/content-generate.config.json", "inputSchemaRef": "schemas/content-generate.input.json", "outputSchemaRef": "schemas/content-generate.output.json" },

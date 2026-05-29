@@ -134,6 +134,50 @@ What the registry checks before accepting a submission. An OpenWOP-compliant reg
 
 ---
 
+## Type-ID indexing and cross-namespace exports
+
+A pack's contributed `nodes[].typeId` (and the `agents[]` it ships) **need not** be prefixed by the pack `name`. The manifest schema only *recommends* the prefix (`node-pack-manifest.schema.json` `nodes[].typeId.description`: "The pack's `name` prefix is recommended"); the `typeId` pattern itself permits any reverse-DNS namespace. A pack named `vendor.myndhyve.web-research` may legitimately publish a node typed `ai.research.web`, and an agent's `toolAllowlist` (RFC 0072) may name that typeId with no textual relationship to the providing pack.
+
+This has two operational consequences a registry and its consumers MUST account for:
+
+1. **Prefix-scan discovery is unsound.** A consumer resolving "which pack provides typeId `T`?" MUST NOT assume `T`'s namespace prefix identifies the pack. It MUST consult a typeId→pack reverse mapping derived from the authoritative source — each version manifest's `nodes[].typeId` + `agents[].agentId`. Resolving by string-prefixing the pack name silently fails on cross-namespace exports.
+
+2. **Registries SHOULD denormalize a `publishedTypeIds[]` index.** To let consumers resolve cross-namespace typeIds without fetching and scanning every manifest, a registry SHOULD surface, per pack version, the flat array of typeIds (and agent ids) that version contributes:
+
+   ```json
+   {
+     "name": "vendor.myndhyve.web-research",
+     "version": "1.0.1",
+     "publishedTypeIds": ["ai.research.web"],
+     "publishedAgentIds": []
+   }
+   ```
+
+   `publishedTypeIds[]` is the union of the version manifest's `nodes[].typeId`; `publishedAgentIds[]` is the union of its `agents[].agentId`. Both are a **denormalization** — the manifest remains authoritative; the index is a discovery convenience the registry MUST keep consistent with the manifest it serves. A registry MAY additionally expose a reverse lookup (`GET /v1/packs/-/by-type/{typeId}` → the pack/version that publishes it) built from the same denormalization. Consumers MUST tolerate the fields' absence (older registries omit them) and fall back to manifest inspection.
+
+**Agent-manifest pack dependencies (informative).** Because an agent's `toolAllowlist` may reference cross-namespace typeIds, "which packs must this workspace approve to run this agent?" is not derivable from the agent manifest by inspection alone. A tool that computes the dependency closure — resolve each `toolAllowlist` entry through the `publishedTypeIds[]` index to its providing pack — is the recommended way to present that set to a workspace admin (RFC 0074 approval). The protocol does not yet normate a `packDeps` block on the agent manifest; the reverse index above is the supported resolution path.
+
+---
+
+## Runtime-requirement install gate (RFC 0076)
+
+A pack MAY declare the abstract platform primitives its runtime code exercises via `runtime.requires[]` (see [`node-packs.md` §"Runtime platform requirements"](node-packs.md#runtime-platform-requirements-rfc-0076)). This is a **consumer/host install-time gate**, not a registry-acceptance check: the registry stores the field verbatim (it is part of the validated manifest), and the *host installing the pack into a workspace* enforces it.
+
+**Normative.** A host that gates platform access (a sandbox host) MUST, at install time, intersect a pack's `runtime.requires[]` against the set of primitives its sandbox will grant. If every listed primitive is grantable, install proceeds. If any primitive will **not** be granted, the host MUST refuse install with `pack_runtime_requirement_unmet` and MUST NOT silently install and fail at first invocation. The error reuses the `capability_not_provided` envelope (`capabilities.md`):
+
+```json
+{
+  "error": "pack_runtime_requirement_unmet",
+  "unmet": ["subprocess"],
+  "manifest": "core.openwop.cron@1.0.0",
+  "advice": "operator-facing remediation copy (OPTIONAL)"
+}
+```
+
+`unmet[]` is the subset of `runtime.requires[]` the host refuses; `manifest` is the offending `name@version`; `advice` is OPTIONAL. A host that does not gate platform access MAY skip enforcement but SHOULD project `runtime.requires[]` onto the pack's inventory entry for operator visibility (RFC 0076 §A). This is the runtime-primitive analogue of the host-capability boundary the [§"Host-private marketplace"](#host-private-marketplace-relationship-non-normative-example) example already illustrates with `requires: ['<host>.canvas.write']`.
+
+---
+
 ## Deprecation flow (closes NP4)
 
 Marking a published version deprecated without unpublishing it. Lets pinned consumers continue resolving the version while signaling new consumers to migrate.

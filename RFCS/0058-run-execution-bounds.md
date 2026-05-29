@@ -116,7 +116,7 @@ New fixture `conformance-run-duration-breach` added to `conformance/fixtures.md`
 *Resolved by the Phase-0 architect ruling (2026-05-25); see `docs/autonomous-agent-runtime-plan.md` §8.*
 
 1. **Soft vs. hard timeout** — RESOLVED: hard-cancel via the existing cancellation path; the host MUST flush the `cap.breached` + `run.failed` events to the log before terminating.
-2. **Iteration under nested orchestration** — RESOLVED: each run carries its own loop counter; a child sub-orchestrator's iterations do NOT count against the parent's `maxLoopIterations`.
+2. **Iteration under nested orchestration** — RESOLVED: each run carries its own loop counter; a child sub-orchestrator's iterations do NOT count against the parent's `maxLoopIterations`. **Clarification (2026-05-28, RFC 0072 §B):** the same boundary holds *one level down* — the inner function-calling loop within a single node/agent execution (the model↔tool request rounds of a manifest agent) is **not** an orchestrator turn and is **not** bounded by `maxLoopIterations`; it runs inside one turn under the host's own per-execution cap. The wire bound counts `runOrchestrator.decided` turns only. See `run-options.md` §`maxLoopIterations` ("Scope").
 3. **Strict-enum consumers / per-event version** — RESOLVED: **no `eventLogSchemaVersion` bump** — the `wasm-*` enum-addition precedent (`capabilities.md §"What this closes"`) is authoritative; the `cap.breached.kind` additions are additive for forward-compatible consumers (`additionalProperties: true`).
 
 ## Implementation notes (non-normative)

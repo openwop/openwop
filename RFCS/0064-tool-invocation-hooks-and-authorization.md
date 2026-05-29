@@ -80,6 +80,8 @@ A tool declares required scopes (in its manifest / mount config). Before invokin
 
 This is already covered by RFC 0049's **`authorization-fail-closed`** protocol-tier invariant (`SECURITY/invariants.yaml`) — per-tool authorization is one more resource-gated action under it. **No new invariant**; a new conformance scenario verifies the per-tool application.
 
+**Causation of forbidden-at-load rows (clarification, additive).** A host MAY surface a denial *proactively* — at agent-loop start, before any model call — for a `toolAllowlist` (RFC 0072 §D) entry that resolves to no approved pack. Such a row has no paired `agent.toolCalled` (the model has not requested the tool), so the host MUST synthesize its `callId` (`forbidden:<sha256(ref)>` RECOMMENDED for replay-stability) and **MAY omit `causationId`** — §B's causation requirement (RFC 0002, `causationId` = the paired `agent.toolCalled.eventId`) applies only when a parent event exists. A host MUST NOT mint a placeholder `agent.toolCalled` purely to anchor the chain. This clarifies a case §A–§D did not previously address; it adds no field, error, or invariant. The living statement is in `host-capabilities.md` §host.toolHooks ("Forbidden-at-load").
+
 ### §D — per-tool rate limiting (normative, when `perToolRateLimit: true`)
 
 The host MUST apply a token bucket keyed on `(principal, toolName)`. On exhaustion it MUST NOT invoke the tool; it emits `agent.toolReturned { status: 'rate_limited' }` and surfaces the existing **`rate_limited`** error (429, `Retry-After`) with `details.scope: 'tool'` — distinct from the existing HTTP-inbound limiter (unchanged), but the same error envelope.

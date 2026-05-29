@@ -11,6 +11,40 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### feat(host-in-memory): RFC 0076 §B — reference `ctx.http.safeFetch` implementation (2026-05-29)
+
+The in-memory reference host implements the §B safe-fetch surface: it advertises `capabilities.httpClient { supported, ssrfGuard: true, maxResponseBodyBytes, requestTimeoutMs, methods, safeFetch: { supported: true } }` and serves the `POST /v1/host/sample/http/safe-fetch` seam — SSRF blocklist (loopback / RFC 1918 / link-local / cloud-metadata), DNS-rebinding defeat (pinned-IP model via `simulateRebindTo`), `Connection: upgrade` refusal, and the `agent.toolCalled`/`agent.toolReturned` audit pair (`transport:"http"`) since the host also advertises `toolHooks.prePostEvents`. Reuses the `http-client-ssrf-guard` invariant + `maxResponseBodyBytes` cap — no new invariant. `safefetch-behavior.test.ts` (5/5) + `http-client-ssrf.test.ts` pass under `OPENWOP_REQUIRE_BEHAVIOR=true` against it (steward-verified locally). This satisfies the reference-host half of §B's `Active → Accepted` gate; the consumer half (`core.openwop.http@2.0.0` + a non-steward adopter) remains. RFC 0076 §B acceptance box updated; in-memory `conformance.md` + `coverage.md` reflect the pass.
+
+### docs(spec): RFC 0076 §A graduated `Active → Accepted` (2026-05-29)
+
+§A (`runtime.requires[]` declaration + install-time gate) is verified live on a **non-steward host**: `runtime-requires-install-gate.test.ts` (suite 1.12.0) passes all three behavioral scenarios under `OPENWOP_REQUIRE_BEHAVIOR=true` against MyndHyve `workflow-runtime-00230-zjn` (gate flag on), steward-corroborated by independent seam curls. Pack-side adoption: 6 `vendor.myndhyve.*` packs declare `runtime.requires[]`. RFC Status, README, and `INTEROP-MATRIX.md` updated; §B (`ctx.http.safeFetch`) stays `Active` (reference-impl pending), so RFC 0076 is `Active` overall.
+
+### feat(spec): RFC 0076 §A — `runtime.requires[]` pack platform-requirement gate (Active, 2026-05-29)
+
+RFC 0076 promoted **`Draft → Active`** (steward acceptance, comment window waived per GOVERNANCE.md single-maintainer lazy consensus; wire shapes locked). §A — the `runtime.requires[]` declaration + install-time gate — lands its wire surface:
+
+- `schemas/node-pack-manifest.schema.json` `$defs/Runtime` gains the OPTIONAL `requires` array — an 8-value closed vocabulary (`net.dns`, `net.outbound`, `crypto`, `subprocess`, `fs.read`, `fs.write`, `env.read`, `clock`) carried as `oneOf`/`const`/`description` so each token's gate-reason rides in the schema. Additive: packs that omit it validate unchanged.
+- `node-packs.md` §"Runtime platform requirements" documents the vocabulary, the install-time gate (sandbox host MUST refuse `pack_runtime_requirement_unmet`; non-gating host SHOULD project for visibility), empty-array≡omission, and the vocabulary-versioning rules (coarser-parent breadth + closed-enum version-pinning).
+- `registry-operations.md` §"Runtime-requirement install gate" specifies the host-side gate + the `pack_runtime_requirement_unmet` payload (reuses the `capability_not_provided` envelope).
+
+§B (`ctx.http.safeFetch`) remains a separate `Active → Accepted` track. Still open for §A: conformance scenarios + a second-host adopting the gate (`core.openwop.http` declaring `["net.dns","net.outbound"]`). README RFC counts: Active 6→7, Draft 12→11.
+
+### docs(spec): clarifications from the MyndHyve RFC 0072 §B second-host debrief (2026-05-28)
+
+Four spec clarifications surfaced by MyndHyve's second-host implementation of the RFC 0072 §B function-calling loop. All additive/editorial — no wire-shape change, no new field, error, or invariant:
+
+- **Forbidden-at-load causation (RFC 0064 §C + `host-capabilities.md` §host.toolHooks + RFC 0002).** A host MAY emit `agent.toolReturned { status: 'forbidden' }` *proactively* at agent-loop start for a `toolAllowlist` entry resolving to no approved pack — before any model call. Such a row has no paired `agent.toolCalled`, so the host synthesizes its `callId` (`forbidden:<sha256(ref)>` RECOMMENDED) and MAY omit `causationId`; a host MUST NOT mint a placeholder `agent.toolCalled` to anchor the chain. Consumers MUST tolerate a `forbidden`/`rate_limited` return whose `callId` has no matching call.
+- **Provider tool-name sanitization (`host-capabilities.md` §host.toolHooks, non-normative).** New host-implementation note: openwop tool ids carry `:`/`.`, which Anthropic/OpenAI/Gemini function-calling APIs reject, so a host running a function-calling loop maps the id to a provider-legal name (`:`/`.` → `_`) and reverses on the way back. Adapter-only; never on the openwop wire.
+- **Iteration-cap composition (`run-options.md` §`maxLoopIterations` + RFC 0058 #2).** Clarified that `maxLoopIterations` counts **outer orchestrator turns** only and does **not** bound the **inner function-calling loop within a single node/agent execution** (RFC 0072 §B model↔tool rounds), which runs under the host's own per-execution cap — mirroring the nested-sub-orchestrator isolation already in RFC 0058.
+- **toolHooks placement breadcrumb (`host-capabilities.md` §host.agentRuntime + `node-packs.md`).** Cross-links from the manifest-runtime/dispatch sections to the **top-level** `Capabilities.toolHooks` block, where implementers instinctively (and wrongly) looked under `agents`.
+
+### docs(registry): cross-namespace typeIds + `publishedTypeIds` reverse index (2026-05-28)
+
+`registry-operations.md` gains a "Type-ID indexing and cross-namespace exports" section (with a `node-packs.md` pointer): a pack's `nodes[].typeId` need not be prefixed by the pack `name` (the schema only *recommends* it), so prefix-scan discovery is unsound — consumers MUST resolve typeId→pack via a reverse index, and registries SHOULD denormalize a per-version `publishedTypeIds[]` / `publishedAgentIds[]` index (the term MyndHyve's catalog already relies on). Surfaced by the RFC 0072 §B debrief (finding 3, `core.openwop.agents.deep-research`'s cross-namespace `ai.research.web` tool).
+
+### rfc: RFC 0076 — pack runtime-requirements declaration + host-provided safe-fetch (Draft, 2026-05-28)
+
+Filed from the RFC 0072 §B debrief (finding 1): an additive abstract `runtime.requires[]` vocabulary (`net.dns`, `net.outbound`, `crypto`, `subprocess`, `fs.read`/`fs.write`, `env.read`, `clock`) on the pack manifest so sandbox hosts gate at **install time** (`pack_runtime_requirement_unmet`) instead of trial-load (MyndHyve had to carve `node:dns/promises` out of its sandbox to load `core.openwop.http`), plus an OPTIONAL host-provided `ctx.http.safeFetch(url)` centralizing SSRF defense (resolve→pin→connect, metadata-endpoint blocklist) so packs stop reaching for `node:dns` directly. Additive; Draft. **Rev 2 (same day):** MyndHyve's second-host comment-window review folded in — Q1–Q4 resolved, `env.read` added, §B audit emission MUST when both `toolHooks.prePostEvents` + `safeFetch` advertised, request-init clamps (`Connection: upgrade` refusal), RFC 0069 composition, and an explicit §A-before-§B graduation sequence. **Rev 3 (2026-05-29):** MyndHyve's §A schema-diff review folded in — illustrative diff synced to the live `$defs/Runtime` (additive elision; caught a `wasm-component`/`format`/`minRuntimeVersion` drop-risk), vocabulary moved to `oneOf`/`const`/`description` (JSON Schema carries no `//` comments), empty-array≡omission, coarser-parent-breadth + closed-enum vocabulary-versioning rules, peerDependencies-compose note, Q5 credential-provenance breadcrumb.
 ### fix(packs): bump core.openwop.agents.{deep-research,react,supervisor} source-schema $ids to 1.0.1 (2026-05-29)
 
 - The three agent packs were republished at `1.0.1` (PR #299) but their source schema `$id`s still read `…/1.0.0/…`, tripping the `packs-check` source-schema `$id`-vs-version audit (red on `main`). Bumped the 6 `$id`s to `1.0.1`.

@@ -1,5 +1,24 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [1.12.0] — 2026-05-29
+
+Minor bump — ships the conformance scenario for **RFC 0076 §B** (`ctx.http.safeFetch`), whose wire surface just landed. Additive + seam-gated; existing hosts pass unchanged.
+
+### Added — RFC 0076 §B scenario
+
+- **`safefetch-behavior.test.ts`** (seam-gated, soft-skips when `httpClient.safeFetch` is unadvertised or the seam is unwired) — drives `POST /v1/host/sample/http/safe-fetch`: SSRF block (cloud-metadata + loopback), DNS-rebinding defeat (`simulateRebindTo`), `Connection: upgrade` refusal, and the tool-hooks audit pair (`transport:"http"`) when `toolHooks.prePostEvents` is also advertised. Behavior grade `host-pending`; the SSRF guarantee reuses the existing `http-client-ssrf-guard` invariant (no new invariant). New lib helper `src/lib/safeFetch.ts`.
+- The `httpClient` advertisement contract (`ssrfGuard: true` + positive `maxResponseBodyBytes`) remains covered by the existing `http-client-ssrf.test.ts`; `capabilities.schema.json` now schematizes the `httpClient` block (previously referenced only by the invariant + that test) including the new `httpClient.safeFetch` sub-capability.
+
+## [1.11.0] — 2026-05-29
+
+Minor bump — ships the conformance scenarios for **RFC 0076 §A** (`runtime.requires[]` pack platform-requirement install gate), now `Active`. All additive: the schema-vocabulary scenario is always-on/server-free, and the install-gate behavioral scenarios are seam-gated and soft-skip against a host that doesn't wire the new seam. Existing v1.0-only hosts pass unchanged.
+
+### Added — RFC 0076 §A scenarios
+
+- **`runtime-requires-shape.test.ts`** (always-on, server-free) — validates the `node-pack-manifest.schema.json` `$defs/Runtime.requires` closed vocabulary: every one of the 8 tokens (`net.dns`, `net.outbound`, `crypto`, `subprocess`, `fs.read`, `fs.write`, `env.read`, `clock`) validates; the field is OPTIONAL; an empty array is equivalent to omission; a raw builtin name (`node:dns/promises`) is rejected (→ `invalid_manifest`, the rejection that motivates the abstract vocabulary); duplicates fail `uniqueItems`.
+- **`runtime-requires-install-gate.test.ts`** (seam-gated, soft-skips on 404) — drives `POST /v1/host/sample/packs/install-gate`: install-grant (`requires` ⊆ grant-set ⇒ installed); install-refuse (ungranted primitive ⇒ `pack_runtime_requirement_unmet { unmet, manifest, advice? }`, the `capability_not_provided` envelope); non-sandbox SHOULD-projection (a non-gating host installs and projects `requires[]` onto the inventory entry). Behavior grade `host-pending` — first adopter is MyndHyve's install-time gate against `core.openwop.http` declaring `["net.dns","net.outbound"]`.
+- New seam **`POST /v1/host/sample/packs/install-gate`** documented in `host-sample-test-seams.md` §"Open seams"; new lib helper `src/lib/runtimeRequires.ts`; `coverage.md` rows added.
+
 ## [1.8.0] — 2026-05-26
 
 Minor bump — ships the conformance scenarios for the **spec-gap Draft cohort (RFCs 0067 / 0068 / 0069)**. All additive: every behavioral scenario is capability-gated and soft-skips against a host that doesn't advertise the surface (or doesn't wire the seam), and the always-on scenarios are server-free schema/corpus assertions. Existing v1.0-only hosts pass unchanged. (1.7.0 was the lockstep version bumped in the v1.1.4 release without its own scenario delta; this entry resumes the scenario-delta narrative.)
