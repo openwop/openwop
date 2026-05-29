@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0076): §B (`ctx.http.safeFetch`) graduated `Active → Accepted` — RFC 0076 now `Accepted` overall (2026-05-29)
+
+RFC 0076 §B (host-provided `ctx.http.safeFetch`, advertised under `httpClient.safeFetch`) graduates `Active → Accepted` on a non-steward host. The **§B → Accepted bar** — the durable-emission MUST proven on a real host (`safefetch-live-audit.test.ts`, PR #336) — is met: MyndHyve `workflow-runtime` (`workflow-runtime-00412-xow`) advertises `httpClient.safeFetch.supported: true` + `ssrfGuard: true` + `toolHooks.prePostEvents: true`, and its production `ctx.http.safeFetch` path (exercised via the `POST /v1/host/sample/http/safe-fetch-run` open seam) persists the `agent.toolCalled`/`agent.toolReturned` pair to the **durable run-event log** with `transport: 'http'` and the RFC 0002 §B `causationId` chain (`toolReturned.causationId === toolCalled.eventId`). Steward-verified by independent curl 2026-05-29 (fetched-path run → durable pair + chain; the `status:'error'`/`fetch_failed` is Cloud Run sandbox egress, which the scenario correctly does not gate on — the SSRF guard *passed* the public URL → `outcome:'fetched'`). With §A (`runtime.requires[]`) already Accepted, **RFC 0076 is `Accepted` overall.** No wire-shape change (the §B surface landed at Active, rev 4). RFC counts: Accepted 62 → 63, Active 10 → 9.
+
 ### spec(rfc-0080): Agent Memory Capability Reconciliation — new Draft RFC (2026-05-29)
 
 Filed **RFC 0080** (`Draft`), a Wave-2 editorial/composable reconciliation of openwop's fragmented memory advertisement — split today across `capabilities.memory.{compaction,distillation,attribution}` + `capabilities.agents.{memoryBackends,memoryConsolidation,commitments}` + `agent-memory.md` + `AgentManifest.memoryShape`, with no `read`/`write`/`search`/`retention-forget` dimension and no degraded-status signal. It proposes:
