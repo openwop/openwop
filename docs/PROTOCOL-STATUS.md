@@ -26,13 +26,88 @@
 | Active | 9 |
 | Draft | 7 |
 
-| Latest RFC | Title | Status |
+| RFC | Title | Status |
 |---|---|---|
-| RFC 0080 | Reconcile the fragmented memory advertisement (`capabilities.memory.*` + `capabilities.agents.{memoryBackends,memoryConsolidation,commitments}` + `agent-memory.md` + `AgentManifest.memoryShape`) into one coherent, additive memory-capability model with eight named dimensions, a derived `openwop-memory` profile, and a normative requirement that the agent inventory surface when an agent's requested memory is degraded | Draft |
-| RFC 0079 | A credential-provenance descriptor at the tool/egress boundary (host-issued credentials carry id / issuer / allowed audiences / scopes / expiry / redaction policy / audit-correlation id) + an `egress.decided` policy event (allowed / denied / downgraded / approval-required) + the load-bearing MUST that a host-issued credential is never attached to an egress destination outside its declared audiences - answering the credential-destination-binding question RFC 0076 sectionB parked | Draft |
-| RFC 0078 | An optional, capability-gated `GET /v1/tools` + `GET /v1/tools/{toolId}` projection returning a normative `ToolDescriptor` (stable `toolId`, source, I/O schemas, auth/egress/approval requirements, replay policy, safety tier) across every tool surface (node-pack / workflow / MCP / connector / host-extension), plus an optional tool-session lifecycle - so an agent or builder can discover what tools exist, what they require, and how they are audited, portably | Draft |
-| RFC 0077 | A normative `AgentManifest` -> live-run mapping + an optional `capabilities.agents.liveRuntime` flag + an `agent.invocation.started` / `agent.invocation.completed` event bracket, so a manifest agent executes against live models/tools with one portable, observable event family across all three entry points (workflow node, run API, chat mention) | Active |
+| RFC 0001 | The RFC Process | Accepted |
+| RFC 0002 | Agent Identity and Reasoning Events | Accepted |
+| RFC 0003 | Agent Packs | Accepted |
+| RFC 0004 | Memory Layer | Accepted |
+| RFC 0005 | Multi-Turn Conversation | Accepted |
+| RFC 0006 | Run Orchestrator | Accepted |
+| RFC 0007 | Dispatch (`core.dispatch` Node Pattern) | Accepted |
+| RFC 0008 | WASM ABI for Cross-Language Node Packs | Accepted |
+| RFC 0009 | Production-Profile Conformance | Accepted |
+| RFC 0010 | Auth-Profile Conformance | Accepted |
+| RFC 0011 | Auth-Scoped Discovery Advertisement | Accepted |
+| RFC 0012 | Memory Compaction Profile | Accepted |
+| RFC 0013 | Workflow-chain packs (pre-configured DAG fragments published as registry artifacts) | Accepted |
+| RFC 0014 | host.fs filesystem capability | Accepted |
+| RFC 0015 | host.kvStorage key-value capability | Accepted |
+| RFC 0016 | host.tableStorage structured record store | Accepted |
+| RFC 0017 | host.queueBus inbound queue + stream capability | Accepted |
+| RFC 0018 | Database adapter capabilities (SQL, vector, search) | Accepted |
+| RFC 0019 | Blob storage + TTL cache capabilities | Accepted |
+| RFC 0020 | Host-side MCP server composition | Accepted |
+| RFC 0021 | AI Envelope Primitive - wire shape, universal kinds, Envelope Contract gate | Accepted |
+| RFC 0022 | `core.dispatch` + `core.subWorkflow` runtime variable mapping | Accepted |
+| RFC 0023 | Conformance Agent-Event Emitters | Accepted |
+| RFC 0024 | Streaming `agent.reasoned` Deltas | Accepted |
+| RFC 0025 | Test-mode registry namespace for conformance publish-error catalog | Accepted |
+| RFC 0026 | `provider.usage` event - per-call durable usage record for LLM provider invocations | Accepted |
+| RFC 0027 | Prompt Templates - wire shape for portable, versioned, variable-bound prompts; `capabilities.prompts` block; `prompt.composed` run event | Accepted |
+| RFC 0028 | Prompt Library Endpoints (`/v1/prompts/*`) and Prompt Pack Kind (`kind: "prompt"`) | Accepted |
+| RFC 0029 | Prompt resolution chain across node / agent / workflow / host layers; `agent.promptResolved` observability event; `AgentManifest.promptOverrides` + `promptLibraryRef` extension | Accepted |
+| RFC 0030 | Optional `reasoning` field on envelope payload schemas; informative Tier-1 cross-vendor structured-output compatibility subset | Accepted |
+| RFC 0031 | Discriminated-union pattern for envelope variant payloads (normative); `NodeModule.requiredModelCapabilities` + `NodeModule.fallbackModel`; `model.capability.substituted` + `model.capability.insufficient` events | Accepted |
+| RFC 0032 | Six envelope-reliability `RunEventType` entries; scope clarification of `ai-envelope.md` section"Run event log integration" line 448 MUST NOT | Accepted |
+| RFC 0033 | Envelope-completion criteria; distinguishing truncation from schema-violation in retry routing; truncation-retry cap | Accepted |
+| RFC 0034 | OTel collector test seam + secret-leakage invariant promotion | Accepted |
+| RFC 0035 | Sandbox execution contract for pack-loaded typeIds | Active |
+| RFC 0036 | Multi-region idempotency + cross-engine append-ordering guarantees | Accepted |
+| RFC 0037 | Multi-agent execution model + replay determinism under nondeterministic models | Accepted |
+| RFC 0038 | OpenWOP Working Group charter | Draft |
+| RFC 0039 | Multi-agent execution model Phase 2: confidence-threshold escalation + agent memory lifecycle across sub-runs and replay | Accepted |
+| RFC 0040 | Multi-agent execution model Phase 3: cross-host causation linking + W3C tracecontext propagation across composition boundaries + cross-host run-ID resolution | Accepted |
+| RFC 0041 | Multi-agent execution model Phase 4: LLM cache-key recipe normation + envelope-refusal recovery in replay context + determinism vs idempotency contract | Accepted |
+| RFC 0042 | Experimental capability tier - optional `tier` field on capability advertisements + sunset rule + derived `openwop-experimental` profile | Active |
+| RFC 0043 | Registry submission policy, extension namespace rules, profile/event/capability name reservation, and IPR posture | Draft |
+| RFC 0044 | `multiAgent.executionModel.confidenceEscalationInterruptKind` capability advertisement - supports canonical (`clarification` / `approval`) and vendor-extension (`x-host-<host>-<kind>`) interrupt-kind names without forcing cross-cutting rename on hosts with entrenched kinds | Accepted |
+| RFC 0045 | A manifest-first `connector` block that lets a pack declare itself a named integration exposing typed **actions** (reusing the existing trigger model), each bound to an RFC 0047 `auth` declaration + RFC 0046 `requiredCredentials`, with standardized idempotency / retry / rate-limit metadata - the n8n/Make "connector" abstraction, expressed the openwop way | Accepted |
+| RFC 0046 | `host.credentials` capability - a portable credential resolution + lifecycle contract (store-at-rest, workspace sharing, two-key-overlap rotation, redaction-everywhere) | Accepted |
+| RFC 0047 | `host.oauth` capability - the host performs the OAuth 2.0 authorization-code + refresh dance on a user's behalf and persists the result as a `host.credentials` entry, so a connector pack declares only *which provider + scopes* it needs, not *how* the token is obtained | Accepted |
+| RFC 0048 | Promote the existing tenant dimension to an explicit identity triple - `{ tenant, workspace?, principal }` - threading through auth context, scoped discovery, run ownership, and events, so workspace sub-tenancy and the acting principal become portable wire-level concepts | Accepted |
+| RFC 0049 | A portable role->scope binding (reusing the existing API-key scope grammar) plus a standardized, redaction-safe `authorization.decided` event, with a normative **fail-closed** default - so a host's RBAC becomes observable, auditable, and conformance-testable | Accepted |
+| RFC 0050 | Two new entries in the auth-profile family - a SAML assertion-validation profile and a SCIM provisioning profile (LDAP as an optional directory-bind variant) - that sync external IdP users/groups onto RFC 0048 principals + RFC 0049 roles, with `alg:none` rejection mirroring the OIDC work | Draft |
+| RFC 0051 | `core.openwop.governance.approvalGate` - a first-class, role-bound, audited interrupt node for approvals and deployment promotions, composing the existing interrupt-profile machinery (quorum, auth-required) with RFC 0049 authorization and the audit log | Accepted |
+| RFC 0052 | A `host.scheduling` capability (cron / delayed / calendar) wiring the `schedule` trigger to a portable, durable execution contract - promoting the still-Draft scheduling intent behind RFC 0017's `host.queueBus` into a conformance-tested surface | Accepted |
+| RFC 0053 | A `host.deadLetter` capability + `run.dead_lettered` event - terminally-failed runs/nodes land in a durable, inspectable sink that stays fork-eligible, so a poisoned run can be examined and replayed rather than silently lost | Accepted |
+| RFC 0054 | A read-only `GET /v1/runs/{runId}:diff?against={otherRunId}` endpoint returning a deterministic, replay-aware structured diff of two runs' event sequences and terminal states - the protocol surface behind run-vs-fork comparison | Accepted |
+| RFC 0055 | Promote RFC 0031's reserved `vision-input` / `audio` model-capability identifiers into a formal vocabulary, and add an optional `meta.rendering` hint + `media.*` URL-reference convention to the AI envelope, so an LLM node can emit images / audio / files / structured cards that any consumer renders portably | Accepted |
+| RFC 0056 | An optional `host.feedback` capability + a per-run annotation store exposed via `POST/GET /v1/runs/{runId}/annotations` + a live `run.annotated` SSE notification, so a human (or supervisor agent) can attach a portable quality signal - rating / correction / label / flag - to a run, event, or node, feeding analytics, the HITL inbox, and review. Annotations are a side-resource, **not** replayable run-event-log entries. | Accepted |
+| RFC 0057 | An optional `memory.attribution` capability + additive `memory.written` RunEvent carrying `{ memoryRef, memoryId, nodeId?, agentId? }`, so a consumer can see which node wrote which memory entry during a run - making per-node memory provenance observable on the wire without exposing memory content | Accepted |
+| RFC 0058 | Two additive per-run safety bounds - a wall-clock `runTimeoutMs` and a loop-iteration ceiling `maxLoopIterations` - surfaced through two new `cap.breached` kinds (`run-duration`, `loop-iterations`) on the existing unified engine-enforced-limit event, closing the runaway-execution gap that `recursionLimit` (a node-execution count) does not cover | Accepted |
+| RFC 0059 | A `host.workspace` capability - a versioned, atomic, tenant·workspace-scoped file store for an agent's persistent *ground-truth* artifacts (identity / directives / memory-index), loaded as a read snapshot at run start, complementing the transactional `MemoryAdapter` (RFC 0004) with a durable file layer | Accepted |
+| RFC 0060 | A `host.heartbeat` capability - a system-managed, short-interval, runtime-bounded evaluation of an *idempotent predicate* that emits state-change events and conditionally enqueues a run, rather than blindly re-running an agent; the controlled, request-shaped exception to openwop's poll-free design | Accepted |
+| RFC 0061 | Promote the RFC 0037 execution loop to a *stateful* lifecycle at `multiAgent.executionModel.version: 5` - per-iteration workspace snapshot (RFC 0059) as a deterministic input, an observable iteration counter on `runOrchestrator.decided` that `maxLoopIterations` (RFC 0058) bounds, and a stateful-resume guarantee across HITL suspends - without inventing a parallel loop surface | Accepted |
+| RFC 0062 | A `memory.distillation` capability - scheduled, token-budgeted background compaction runs reusing RFC 0012's `memory.compacted` event (with an additive optional `distillation` sub-object), writing a stable archive + a memory-index workspace file; composing RFC 0012 (compaction) + RFC 0052 (scheduling) + RFC 0004 (memory) into the "dream" pattern | Accepted |
+| RFC 0063 | An optional `outputAttestation` config on `core.subWorkflow` - a content checksum surfaced on the child's terminal event, plus an optional `requireApproval` gate that suspends via an `approval` interrupt (RFC 0051) *before* `outputMapping` merges a child's outputs into the parent, so a parent can verify and approve sub-agent artifacts rather than merging them blindly | Accepted |
+| RFC 0064 | A `host.toolHooks` capability - additive authorization + timing + content-free-argument fields on the existing `agent.toolCalled` / `agent.toolReturned` events (RFC 0002), fail-closed per-tool authorization via RFC 0049 scopes (reusing the `forbidden` error + the `authorization-fail-closed` invariant), and optional per-tool rate limiting (reusing `rate_limited`) - generalizing the MCP bridges into one auditable, least-privilege tool surface without inventing parallel events | Accepted |
+| RFC 0065 | Workflow node primary-output annotation | Active |
+| RFC 0066 | `x-openwop-form` vendor extension on pack `configSchema` for picker-grade UX hints | Active |
+| RFC 0067 | Provider-catalog conventions - a stable provider-name vocabulary and a per-provider BYOK auth-mode enum (`apiKey` / `oauth-pkce` / `oauth-device` / `none`) so clients can pre-flight how a host expects a provider's credential to be supplied | Active |
+| RFC 0068 | Background memory consolidation (merge/dedup/strengthen of long-term entries) + inferred standing commitments - two additive optional capabilities (`agents.memoryConsolidation` + `agents.commitments`) with their own content-free observability events (`agent.memory.consolidated` + `commitment.fired`), distinct from RFC 0062 token-budgeted distillation | Active |
+| RFC 0069 | A normative carve-out: arbitrary-command (`exec`-class) execution MUST NOT be a protocol-tier capability - it lives only in named host-extension scopes (`x-host-<vendor>-exec`) whose safety controls the host owns end-to-end. Codifies an existing exclusion; no host wire shape changes. | Active |
+| RFC 0070 | Agent Manifest Runtime Capability (`agents.manifestRuntime`) | Accepted |
+| RFC 0071 | Artifact-Type Packs and AI Chat Card Packs | Accepted |
+| RFC 0072 | Agent Inventory + Dispatch Normative Surface | Accepted |
+| RFC 0073 | Capability families are document-root properties of `/.well-known/openwop` | Draft |
+| RFC 0074 | Tenant-Scoped Manifest-Agent Inventory | Accepted |
+| RFC 0075 | Artifact-Type Packs - real-world adoption amendment | Active |
 | RFC 0076 | Pack runtime-requirements declaration + host-provided safe-fetch | Accepted |
+| RFC 0077 | A normative `AgentManifest` -> live-run mapping + an optional `capabilities.agents.liveRuntime` flag + an `agent.invocation.started` / `agent.invocation.completed` event bracket, so a manifest agent executes against live models/tools with one portable, observable event family across all three entry points (workflow node, run API, chat mention) | Active |
+| RFC 0078 | An optional, capability-gated `GET /v1/tools` + `GET /v1/tools/{toolId}` projection returning a normative `ToolDescriptor` (stable `toolId`, source, I/O schemas, auth/egress/approval requirements, replay policy, safety tier) across every tool surface (node-pack / workflow / MCP / connector / host-extension), plus an optional tool-session lifecycle - so an agent or builder can discover what tools exist, what they require, and how they are audited, portably | Draft |
+| RFC 0079 | A credential-provenance descriptor at the tool/egress boundary (host-issued credentials carry id / issuer / allowed audiences / scopes / expiry / redaction policy / audit-correlation id) + an `egress.decided` policy event (allowed / denied / downgraded / approval-required) + the load-bearing MUST that a host-issued credential is never attached to an egress destination outside its declared audiences - answering the credential-destination-binding question RFC 0076 sectionB parked | Draft |
+| RFC 0080 | Reconcile the fragmented memory advertisement (`capabilities.memory.*` + `capabilities.agents.{memoryBackends,memoryConsolidation,commitments}` + `agent-memory.md` + `AgentManifest.memoryShape`) into one coherent, additive memory-capability model with eight named dimensions, a derived `openwop-memory` profile, and a normative requirement that the agent inventory surface when an agent's requested memory is degraded | Draft |
 
 ## SDK Helper Coverage
 

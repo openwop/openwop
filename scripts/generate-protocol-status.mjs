@@ -350,9 +350,12 @@ function generateStatus() {
     lines.push(tableRow([status, String(rfcStatusCounts[status])]));
   }
   lines.push('');
-  lines.push('| Latest RFC | Title | Status |');
+  // Full per-RFC status table — the canonical per-RFC list. README links here
+  // instead of carrying a hand-maintained `+ NNNN` enumeration (RFC graduation
+  // history lives in each RFC's `Updated` field + CHANGELOG.md).
+  lines.push('| RFC | Title | Status |');
   lines.push('|---|---|---|');
-  for (const rfc of rfcs.slice(-5).reverse()) {
+  for (const rfc of rfcs) {
     lines.push(tableRow([`RFC ${rfc.id}`, rfc.title, rfc.status]));
   }
   lines.push('');
