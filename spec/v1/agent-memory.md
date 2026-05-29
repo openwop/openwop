@@ -113,7 +113,7 @@ The capability advertisement is a CLAIM. Hosts that advertise long-term memory M
 
 Recursive distillation (distilling prior archives) is allowed; each level MUST re-check SR-1. Archives persist for the advertised `archiveRetention` (ISO-8601 duration) before GC. CTI-1 tenant isolation holds for the archive and index exactly as for any memory write.
 
-## Background consolidation (RFC 0068, `Draft`)
+## Background consolidation (RFC 0068, `Active`)
 
 **Why this exists.** Distillation (RFC 0062) is a *forward funnel* — it collapses recent *transactional* memory into long-term artifacts under a mandatory token budget. It does not address the *standing* problem: a long-term corpus that, over months, accumulates near-duplicate facts, superseded preferences, and contradictions. **Consolidation** is a *reconciliation* pass *within* long-term memory — merge duplicates, supersede stale facts, strengthen corroborated ones — and is not budget-driven. The two are semantically distinct observable behaviors; consolidation emits its own content-free `agent.memory.consolidated` event rather than reusing `memory.compacted`, so an observer can tell "I distilled today's transcript" apart from "I reconciled the standing corpus."
 
@@ -126,9 +126,9 @@ Recursive distillation (distilling prior archives) is allowed; each level MUST r
 3. Route every derived/merged entry's content through the same BYOK redaction harness applied to a fresh `put` (SR-1 carry-forward) — a merged summary can introduce secret-shaped substrings not present in any source, exactly as RFC 0012 §D / RFC 0062 establish for compaction.
 4. Emit `agent.memory.consolidated` with `inputCount`/`outputCount`/`memoryRef` after the pass.
 
-Consolidation is a read-modify-write of long-term memory; it is NOT a token-budgeted distillation of transactional memory (that is RFC 0062, which emits `memory.compacted`). A host MAY implement both; they are independent capabilities. Whether deterministic replay (`replay.md`, RFC 0041) holds through a consolidation pass is an open question carried in RFC 0068 §"Unresolved questions" — the working stance is that consolidation is a host-managed mutation a run sees only via the deterministic read-snapshot, so `agent.memory.consolidated` is an observability event, not a replay input.
+Consolidation is a read-modify-write of long-term memory; it is NOT a token-budgeted distillation of transactional memory (that is RFC 0062, which emits `memory.compacted`). A host MAY implement both; they are independent capabilities. Deterministic replay (`replay.md`, RFC 0041) holds through a consolidation pass by construction: consolidation is a host-managed background mutation **outside the replay envelope** (resolved in RFC 0068 §"Unresolved questions" #1, confirmed against RFC 0041 §C observable-output-sequence determinism). A run sees consolidated memory only via the deterministic read-snapshot the event log records; `agent.memory.consolidated` is an observability event re-read from the log on replay, never regenerated — a host MUST NOT re-run a consolidation pass at replay time, and a run MUST NOT trigger a pass that mutates its own read-snapshot mid-run.
 
-## Inferred commitments (RFC 0068, `Draft`)
+## Inferred commitments (RFC 0068, `Active`)
 
 **Why this exists.** A long-running agent forms *standing intentions* ("follow up next Monday", "remind me when the invoice clears") that should fire later without a fresh user turn. Scheduling (RFC 0052) and heartbeat (RFC 0060) can *fire* an arm on a clock or a predicate, but neither models a commitment *inferred from memory* — with the memory provenance that makes it auditable and tenant-bound. An **inferred standing commitment** is a host-derived, durable intention with a fire condition (time or predicate) and a memory provenance; when it fires it MUST be observable but content-free.
 
