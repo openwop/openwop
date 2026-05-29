@@ -22,8 +22,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 62 |
-| Active | 10 |
+| Accepted | 63 |
+| Active | 9 |
 | Draft | 7 |
 
 | Latest RFC | Title | Status |
@@ -31,7 +31,7 @@
 | RFC 0080 | Reconcile the fragmented memory advertisement (`capabilities.memory.*` + `capabilities.agents.{memoryBackends,memoryConsolidation,commitments}` + `agent-memory.md` + `AgentManifest.memoryShape`) into one coherent, additive memory-capability model with eight named dimensions, a derived `openwop-memory` profile, and a normative requirement that the agent inventory surface when an agent's requested memory is degraded | Draft |
 | RFC 0078 | An optional, capability-gated `GET /v1/tools` + `GET /v1/tools/{toolId}` projection returning a normative `ToolDescriptor` (stable `toolId`, source, I/O schemas, auth/egress/approval requirements, replay policy, safety tier) across every tool surface (node-pack / workflow / MCP / connector / host-extension), plus an optional tool-session lifecycle - so an agent or builder can discover what tools exist, what they require, and how they are audited, portably | Draft |
 | RFC 0077 | A normative `AgentManifest` -> live-run mapping + an optional `capabilities.agents.liveRuntime` flag + an `agent.invocation.started` / `agent.invocation.completed` event bracket, so a manifest agent executes against live models/tools with one portable, observable event family across all three entry points (workflow node, run API, chat mention) | Active |
-| RFC 0076 | Pack runtime-requirements declaration + host-provided safe-fetch | Active |
+| RFC 0076 | Pack runtime-requirements declaration + host-provided safe-fetch | Accepted |
 | RFC 0075 | Artifact-Type Packs - real-world adoption amendment | Active |
 
 ## SDK Helper Coverage
@@ -73,7 +73,7 @@
 ## Active Follow-Ups
 
 - 7 RFCs still `Draft` (RFC 0038, RFC 0043, RFC 0050, RFC 0072, RFC 0073, RFC 0078, RFC 0080) — advance with schema/conformance proof or defer.
-- 10 RFCs `Active` (RFC 0035, RFC 0042, RFC 0065, RFC 0066, RFC 0067, RFC 0068, RFC 0069, RFC 0075, RFC 0076, RFC 0077) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 9 RFCs `Active` (RFC 0035, RFC 0042, RFC 0065, RFC 0066, RFC 0067, RFC 0068, RFC 0069, RFC 0075, RFC 0077) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
