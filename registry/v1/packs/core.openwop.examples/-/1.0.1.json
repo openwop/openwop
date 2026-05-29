@@ -6,7 +6,12 @@
   "license": "Apache-2.0",
   "homepage": "https://openwop.dev/packs/core.openwop.examples",
   "repository": "https://github.com/openwop/openwop",
-  "keywords": ["core", "examples", "reference", "noop"],
+  "keywords": [
+    "core",
+    "examples",
+    "reference",
+    "noop"
+  ],
   "engines": {
     "openwop": ">=1.0.0 <2.0.0"
   },
@@ -18,7 +23,9 @@
       "description": "Returns the input verbatim. Pure / replay-safe / no side effects. Useful as a workflow smoke node and as a sentinel in conformance fixtures.",
       "category": "data",
       "role": "pure",
-      "capabilities": ["cacheable"],
+      "capabilities": [
+        "cacheable"
+      ],
       "configSchemaRef": "schemas/echo.config.json",
       "inputSchemaRef": "schemas/echo.input.json",
       "outputSchemaRef": "schemas/echo.output.json"
@@ -30,7 +37,9 @@
       "description": "Deterministic pseudo-random choice from a seed input. Returns 'heads' or 'tails'. Pure / replay-safe — same seed always returns same result. Demonstrates the cacheable + replay-determinism contracts.",
       "category": "data",
       "role": "pure",
-      "capabilities": ["cacheable"],
+      "capabilities": [
+        "cacheable"
+      ],
       "configSchemaRef": "schemas/coin-flip.config.json",
       "inputSchemaRef": "schemas/coin-flip.input.json",
       "outputSchemaRef": "schemas/coin-flip.output.json"
@@ -42,7 +51,9 @@
       "description": "Sleeps for `config.delayMs` milliseconds, streaming a node.progress event every `config.tickMs` (default 100). Demonstrates the streamable capability + bounded duration. Replay-safe — replays return the cached completed state without re-sleeping.",
       "category": "control",
       "role": "streaming-output",
-      "capabilities": ["streamable"],
+      "capabilities": [
+        "streamable"
+      ],
       "configSchemaRef": "schemas/delay-with-progress.config.json",
       "inputSchemaRef": "schemas/delay-with-progress.input.json",
       "outputSchemaRef": "schemas/delay-with-progress.output.json"
@@ -53,5 +64,11 @@
     "format": "esm",
     "entry": "./index.mjs",
     "minRuntimeVersion": "node>=20"
-  }
+  },
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "openwop-team-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-PHz50j758N2lKMgSrZPU4Z5xTbF6pqUyQcDfKbtcMTc="
 }

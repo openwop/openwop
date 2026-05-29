@@ -468,6 +468,24 @@
       ]
     },
     {
+      "bom-ref": "pkg:openwop/core.openwop.examples@1.0.1",
+      "type": "library",
+      "name": "core.openwop.examples",
+      "version": "1.0.1",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "/v1/packs/core.openwop.examples/-/1.0.1.sbom.json",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "73ecc24fd857d1efa1a2e2ccdad0cb6111cea966f6b7fb5ae5b9b499ad2cd5f4"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "bom-ref": "pkg:openwop/core.openwop.files@1.0.0",
       "type": "library",
       "name": "core.openwop.files",

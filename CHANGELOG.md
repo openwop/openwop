@@ -11,6 +11,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### fix(registry): republish core.openwop.examples@1.0.1 signed; yank unsigned 1.0.0 + rust-hello 1.0.0; add tarball-signature gate (2026-05-29)
+
+- **`core.openwop.examples@1.0.1`** — rebuilt + signed by `openwop-team-1` (the 1.0.0 in-tree tarball shipped with no `signing` block and a detached `.sig` that verified against no registered key). In-tree registry mirror regenerated (`1.0.1.{tgz,sig,json,sbom.json}`); the per-version manifest declares `signing.publicKeyRef: openwop-team-1`, so `build-index.mjs` now records the correct catalog `signingKeyId` (was the legacy `openwop-registry-root` drift). `latestVersion` → `1.0.1`.
+- **Yanked** `core.openwop.examples@1.0.0` and `vendor.openwop.rust-hello@1.0.0` — both shipped unsigned in a signature-required namespace; superseded / pending a signed republish.
+- **New gate `scripts/check-pack-tarball-signatures.mjs`** (wired into `openwop:check`) — cryptographically verifies every non-yanked in-tree tarball's embedded Ed25519 sig against its catalog `signingKeyId` over the EXACT in-tarball `pack.json` octets. Catches what the existing string-compare `check-registry-signer-consistency` is blind to: an unsigned tarball whose catalog still names a signer, and a sig that verifies against no key.
+
+### feat(conformance): RFC 0047 authorization-code roundtrip scenario + synthetic OAuth provider fixture (2026-05-29)
+
+- **`oauth-authorization-code-roundtrip.test.ts`** (new scenario; suite package version bumps in lockstep at the next release) — capability-gated on `capabilities.oauth.supported` + `grants ∋ authorization_code`; drives the `POST /v1/host/sample/oauth/authorize-code-roundtrip` seam (soft-skip on 404, Tier-2 host-pending) against one canonical synthetic provider. Asserts a successful grant returns a credential reference (not the token) and that the authorization code / state / PKCE verifier / acquired access+refresh tokens never appear on any run-visible surface (RFC 0047 §C + §C.2 / `credential-payload-redaction`). Closes the RFC 0047 Tier-2 gap: capability-shape + redaction scenarios existed, but the authorization-code dance itself was unexercised.
+- **`fixtures/oauth-providers/synthetic.json`** — the one canonical synthetic provider (real providers differ only in `authUrl`/`tokenUrl`); carries the canned authorization-code → token exchange + canary values the scenario asserts are redacted.
+
 ### fix(host-sample): code-review follow-ups for PRs #321/#324/#325/#329 (2026-05-28)
 
 Six findings from the senior code review of the five-PR sprint, all host-internal:

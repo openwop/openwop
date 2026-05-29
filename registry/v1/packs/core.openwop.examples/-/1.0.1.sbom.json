@@ -1,0 +1,277 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "bom-ref": "pkg:openwop/core.openwop.examples@1.0.1",
+      "type": "library",
+      "name": "core.openwop.examples",
+      "version": "1.0.1",
+      "description": "Spec-canonical examples pack — three minimal nodes (echo, coin-flip, delay-with-progress) that exercise the core node-pack contract end-to-end. Zero npm deps; runs on any Node 20+ host advertising the openwop-node-packs profile. See docs/PACKS-MVP-PLAN.md.",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://openwop.dev/packs/core.openwop.examples"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/openwop/openwop"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3c7cf9d23ef9f0dda528c812ad93d4e19e714db17aa6a53241c0df29bb5c3137"
+        }
+      ],
+      "purl": "pkg:openwop/core.openwop.examples@1.0.1"
+    },
+    "tools": [
+      {
+        "vendor": "openwop",
+        "name": "generate-sbom.mjs",
+        "version": "1"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "file",
+      "name": "LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0cea879ed215e3961316e97ab5e4d7a2b2bca999358668599bd53a1c953bc0d9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "975"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "README.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "10d7f6f731e38179f24e8e69e78a5f16142f8d2382a93b9a46122556f48af7b2"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "4677"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "index.mjs",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "60461177ec4811493acb96343c2f0a10ea99f232e1bdf1b32e06a9b65ea6e26b"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "4734"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "keys/pack.json.sig",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5352a01f3b71794c836a62658fd9ea97cc8e19979d69b7ce8966adfb7de6f6f6"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "64"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "pack.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "68dd061b08fd91249616c01cb6bd1012487aa03b5ea4138ef010b4a7d33e9e09"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "2350"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/coin-flip.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b657538caae844f63757036c3f6bfde309726a85f06f958e70d1767c77114242"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "446"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/coin-flip.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c2f31fbd134c7c1023501d6797861efbbad1e4a06bb37b87a18498636d9cf58e"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "633"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/coin-flip.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "91f6489ebe8feefcd034bba36e968697830635fffb25daebc805159e3ccc714e"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "517"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/delay-with-progress.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fc19eff6e377cbdd346a96e58593d2c33a8f66d8d334d3847e015c327d40a174"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "873"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/delay-with-progress.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "37f06b478170369893ff0db2a29f5946340a4145baf6de8d0686d5c61931285d"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "398"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/delay-with-progress.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b6a624190585952fcaa8560dbbd97bbe21426166adda32c6d4e6d794e4e7bbbc"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "877"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/echo.config.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "25dc8c631b3f095da39e55a13be65ecfbdb24bb3eda6eb2ab5e9a16306482e1c"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "512"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/echo.input.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5494ffcaca549d4fd2c7951fc472d6e587aeaf8fae3dd4e203a9fceea0583823"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "670"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "name": "schemas/echo.output.json",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e83288a8b57293bcfc3569c48d8a91488386c002cd99e93e9a51b37b136405c3"
+        }
+      ],
+      "properties": [
+        {
+          "name": "openwop:size",
+          "value": "579"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:openwop/core.openwop.examples@1.0.1",
+      "dependsOn": []
+    }
+  ]
+}
