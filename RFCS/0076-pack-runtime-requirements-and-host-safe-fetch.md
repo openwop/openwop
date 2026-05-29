@@ -7,7 +7,7 @@
 | **Status** | `Draft` |
 | **Author(s)** | openwop working group (steward), prompted by the MyndHyve RFC 0072 §B second-host debrief (2026-05-28) |
 | **Created** | 2026-05-28 |
-| **Updated** | 2026-05-28 (rev 2 — MyndHyve second-host comment-window review folded in: Q1–Q4 resolved, `env.read` added, §B audit MUST + request-init clamps + RFC 0069 composition + §A/§B sequencing) |
+| **Updated** | 2026-05-29 (rev 3 — MyndHyve §A schema-diff review folded in: elided additive diff synced to live `$defs/Runtime`, `oneOf`/`const`/`description` vocabulary (no JSON comments), empty-array≡omission, coarser-parent-breadth + closed-enum versioning rules, peerDependencies-compose note, Q5 credential-provenance breadcrumb). Rev 2 (2026-05-28) — second-host comment-window review: Q1–Q4 resolved, `env.read` added, §B audit MUST + request-init clamps + RFC 0069 composition + §A/§B sequencing |
 | **Affects** | `schemas/node-pack-manifest.schema.json` (new optional `runtime.requires[]`), `spec/v1/node-packs.md`, `spec/v1/registry-operations.md` (install-time gate), `spec/v1/host-extensions.md` (`ctx.http.safeFetch`), `spec/v1/capabilities.md` (`host.http.safeFetch` advertisement), `conformance/src/scenarios/*` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` |
 | **Supersedes** | — |
@@ -35,34 +35,36 @@ Separately, finding 1(b): packs that perform SSRF defense by direct DNS (the `co
 
 ### §A — `runtime.requires[]` on the pack manifest (additive)
 
-Add an OPTIONAL `requires` array to the manifest's `runtime` object, drawn from a **controlled, runtime-agnostic vocabulary** of platform primitives — *not* raw Node builtin names (`node:dns/promises` does not translate to the Python / Go / wasm runtimes the spec already supports):
+Add an OPTIONAL `requires` array to the manifest's `$defs/Runtime` object, drawn from a **controlled, runtime-agnostic vocabulary** of platform primitives — *not* raw Node builtin names (`node:dns/promises` does not translate to the Python / Go / wasm runtimes the spec already supports). The diff below is **additive-only** — the `+` lines are the entire change; the surrounding properties (elided with `…`) are unchanged, including `language` (which already carries `wasm-component`, RFC 0008.1), `format`, and `minRuntimeVersion`. JSON Schema is strict JSON, so per-value semantics ride in `oneOf`/`const`/`description` rather than `//` comments:
 
 ```diff
-   "runtime": {
+   "Runtime": {
      "type": "object",
      "required": ["language", "entry"],
      "properties": {
-       "language": { "enum": ["javascript", "python", "go", "wasm", "remote"] },
--      "entry": { "type": "string" }
-+      "entry": { "type": "string" },
+       "language":          { "…": "unchanged (incl. wasm-component, RFC 0008.1)" },
+       "entry":             { "…": "unchanged" },
+       "format":            { "…": "unchanged" },
+       "minRuntimeVersion": { "…": "unchanged" },
 +      "requires": {
 +        "type": "array",
-+        "description": "RFC 0076. Abstract platform primitives the pack's runtime code exercises, for install-time sandbox gating. Runtime-agnostic (not Node builtin names). Absent ⇒ the pack declares no elevated platform needs.",
++        "uniqueItems": true,
++        "description": "RFC 0076. Abstract platform primitives the pack's runtime code exercises, for install-time sandbox gating. Runtime-agnostic (not language builtin names). Absent or [] ⇒ no elevated platform needs.",
 +        "items": {
-+          "enum": [
-+            "net.dns",        // resolves hostnames (e.g. SSRF pre-flight)
-+            "net.outbound",   // opens outbound network connections / fetch
-+            "crypto",         // primitives beyond the standard hashing the host already provides
-+            "subprocess",     // spawns a child process (see RFC 0069 exec-class contract)
-+            "fs.read",        // reads the local filesystem
-+            "fs.write",       // writes the local filesystem
-+            "env.read",       // reads the process environment (may expose deployment secrets if the host does not scrub it)
-+            "clock"           // reads wall-clock time as a *behavioral* input — gated for REPLAY determinism, not access control (a pack that branches on the clock is non-deterministic on replay; replay.md), which is why it stays in the set even though Date.now() is a language global
++          "oneOf": [
++            { "const": "net.dns",      "description": "Resolves hostnames (e.g., SSRF pre-flight)." },
++            { "const": "net.outbound", "description": "Opens outbound network connections / fetch." },
++            { "const": "crypto",       "description": "Primitives beyond the standard hashing the host already provides." },
++            { "const": "subprocess",   "description": "Spawns a child process (composes with the RFC 0069 exec-class contract when the host advertises it)." },
++            { "const": "fs.read",      "description": "Reads the local filesystem." },
++            { "const": "fs.write",     "description": "Writes the local filesystem." },
++            { "const": "env.read",     "description": "Reads the process environment (may expose deployment secrets if the host does not scrub it)." },
++            { "const": "clock",        "description": "Reads wall-clock time as a behavioral input — gated for REPLAY determinism, not access control. A pack that branches on the clock is non-deterministic on replay (replay.md)." }
 +          ]
-+        },
-+        "uniqueItems": true
++        }
 +      }
-     }
+     },
+     "additionalProperties": false
    }
 ```
 
@@ -70,10 +72,15 @@ Add an OPTIONAL `requires` array to the manifest's `runtime` object, drawn from 
 
 **Behavior (normative).**
 
-- A pack MAY declare `runtime.requires[]`. Absent ⇒ the pack asserts no elevated platform needs (today's behavior).
+- A pack MAY declare `runtime.requires[]`. Absent — or an empty array (`runtime.requires: []`) — ⇒ the pack asserts no elevated platform needs (today's behavior); the two are equivalent, and a host MUST NOT read a distinct meaning into the empty array.
 - A host that gates platform access (a sandbox host) MUST evaluate `runtime.requires[]` at **install time**: every listed primitive its sandbox can grant ⇒ install; any primitive it will **not** grant ⇒ the host MUST refuse install with `pack_runtime_requirement_unmet` naming the unmet primitive(s) — the install-time analogue of the dispatch-time `capability_not_provided` (`capabilities.md`). It MUST NOT silently install and fail at first invocation.
 - A host that does **not** gate platform access (grants the runtime's full standard library) MAY ignore the field for *enforcement* — every primitive is already available; there is nothing to refuse. It SHOULD nevertheless **project `runtime.requires[]` onto the pack's inventory/summary entry** (e.g. the pack-summary projection on the `GET /v1/agents` / pack listing) so operators retain visibility into the declared platform footprint at install time. This forward-compatibly prepares the workspace approval ledger for a later migration to a sandbox-enforcing host (which packs to re-evaluate). It carries no execution requirement.
 - `runtime.requires[]` is a **declaration of intent for gating**, not an authorization grant. It does not widen what a pack may do; it lets the host decide *before* load whether it is willing to grant what the pack will attempt. A host MUST still enforce its sandbox at runtime — a pack that declares `net.dns` but attempts `subprocess` is still denied the undeclared primitive.
+
+**Vocabulary versioning (normative).** The vocabulary extends additively (minor version; the `wasm-*` enum-addition precedent). Two rules keep the install gate sound as it refines:
+
+- **Coarser-parent breadth.** When a later revision introduces a finer-grained primitive (e.g. `net.outbound.http` vs `net.outbound.raw`), a host MUST treat the coarser parent (`net.outbound`) as **at-least-as-broad** — a manifest declaring the coarser term implicitly requires every finer sub-token the host might split it into. This prevents a vocabulary refinement from becoming a covert security regression: a host that newly enforces a finer distinction cannot silently accept a coarser declaration it would refuse at the finer grain.
+- **Closed-enum / version-pinned (the safety contract).** Schemas are version-pinned per host. A host validating manifests against schema v*N* MUST refuse a vocabulary token introduced after v*N* with `invalid_manifest`. This is intentional, not a gap: an old host refusing a newer requirement it does not understand **is** the install-time safety contract — a host MUST NOT grant a primitive it has not yet specified.
 
 **Examples.**
 
@@ -100,6 +107,7 @@ Add an OPTIONAL `requires` array to the manifest's `runtime` object, drawn from 
 
 - A host that grants `runtime.requires: ["subprocess"]` **AND** advertises RFC 0069's exec-class contract MUST apply that contract to every subprocess invocation by the pack.
 - A host MAY grant `runtime.requires: ["subprocess"]` **without** RFC 0069 — in which case its sandbox-internal subprocess mechanics are not protocol-specified, and a pack requiring exec-class-grade isolation SHOULD additionally express that dependency via `peerDependencies` (RFC 0072 §C), which fails install closed when unmet.
+- The two gates compose to the **stricter** of the two: `peerDependencies` is install-closed (unmet ⇒ refuse) and `runtime.requires` is install-closed; a pack declaring both `runtime.requires: ["subprocess"]` **and** `peerDependencies: { "host.execClass": "supported" }` opts into both and is refused on a host that grants `subprocess` but does not advertise the exec-class contract. That belt-and-suspenders posture is intentional and pack-author-selected, not a conflict.
 
 ### §B — host-provided `ctx.http.safeFetch` (additive, OPTIONAL host capability)
 
@@ -126,7 +134,7 @@ This composes with — does not replace — RFC 0069's exec-class host-extension
 
 - **Body size** — host-configurable cap (suggest 10 MB default).
 - **Timeout** — host-configurable (suggest 30 s default).
-- **Headers** — MAY be reshaped. A host SHOULD refuse to forward an `Authorization` header the pack did not construct from a credential the host itself issued (RFC 0046 `host.credentials`) rather than from a static manifest string, to prevent a pack exfiltrating a host-issued credential to an arbitrary URL — but enforcement is host policy.
+- **Headers** — MAY be reshaped. A host SHOULD refuse to forward an `Authorization` header the pack did not construct from a credential the host itself issued (RFC 0046 `host.credentials`) rather than from a static manifest string, to prevent a pack exfiltrating a host-issued credential to an arbitrary URL — but enforcement is host policy. *(Promoting this SHOULD → MUST needs credential provenance expressible at the `safeFetch` boundary — see future RFC: credential provenance; tracked as Q5 in Unresolved questions.)*
 
 **Egress-proxy composition (non-normative).** `safeFetch` composes with, and does not preclude, a deployment-level egress allowlist (e.g. Cloud Run behind a serverless VPC connector + Cloud NAT with its own allowlist). The host's resolve→pin→connect SSRF defense applies *before* the egress proxy sees the request; the proxy's allowlist applies after — defense-in-depth, not redundancy.
 
@@ -166,7 +174,7 @@ Both scenario groups soft-skip until the respective capability/seam is advertise
 
 Genuinely still open:
 
-5. **`Authorization`-header forwarding enforcement.** §B currently leaves "refuse forwarding a pack-constructed `Authorization` not derived from a host-issued credential" as host policy (SHOULD). Should a future revision make it a normative MUST once RFC 0046 credential-provenance is expressible at the `safeFetch` boundary? Deferred — needs a way to distinguish a host-issued credential from a static manifest string at call time.
+5. **`Authorization`-header forwarding enforcement (PARKED — own RFC).** §B leaves "refuse forwarding a pack-constructed `Authorization` not derived from a host-issued credential" as host policy (SHOULD). Promoting it to MUST needs credential provenance at the `safeFetch` boundary, distinguishing a host-issued credential from a static manifest string at call time. Two candidate mechanisms, each RFC-worthy on its own (folding either into 0076 would balloon scope): (a) thread provenance through `RequestInit` (intrusive — changes the call signature), or (b) a host-side credential-issuance ledger keyed by call-id. Deferred to a dedicated "credential provenance" RFC; the §B breadcrumb points here.
 
 ## Implementation notes (non-normative)
 
@@ -195,6 +203,7 @@ Two independent tracks (see Implementation notes §"Sequencing").
 
 - MyndHyve RFC 0072 §B second-host debrief, 2026-05-28 (finding 1a/1b) — the implementer pain point that prompted this RFC.
 - MyndHyve RFC 0076 second-host review, 2026-05-28 — Q1–Q4 positions + observations A–D (approval-snapshot, request-init clamping, error payload, egress-proxy) + the §A/§B sequencing recommendation, all folded into rev 2.
+- MyndHyve RFC 0076 §A schema-diff review, 2026-05-29 — five mechanical schema fixes (stale enum/elision, JSON-comment removal via `oneOf`, empty-array equivalence, coarser-parent forward-compat, closed-enum safety) + the peerDependencies-compose note, folded into rev 3. `wasm-component` (RFC 0008.1) drop-risk caught here.
 - RFC 0003 — agent/pack manifest (`runtime` object this extends).
 - RFC 0072 — agent inventory + dispatch (`peerDependencies` / `peerDependenciesMeta`, the adjacent host-capability gate).
 - RFC 0069 — exec-class tool host-extension safety contract (subprocess sandboxing; `safeFetch` is its network analogue).
