@@ -1,0 +1,38 @@
+{
+  "id": "openwop-synthetic-oauth-provider",
+  "description": "RFC 0047 §C — ONE canonical synthetic OAuth provider for proving the host.oauth authorization-code roundtrip end-to-end without a live IdP. A host's host.oauth implementation drives the redirect/callback exchange against `provider.authUrl` + `provider.tokenUrl` (which a conformance test double serves), feeds `exchange.authorizationCode` + `exchange.state` + `exchange.redirectUri`, and MUST receive `exchange.tokenResponse`. The canary token/refresh values let the paired scenario assert RFC 0047 §C.2 redaction (token material never crosses a run-visible surface) and §C (the authorization code, redirect URI, and state never appear on any run-visible surface). One provider is sufficient: all real providers differ ONLY in authUrl/tokenUrl, with no provider-specific grant/exchange quirks on the wire — so a single parameterizable provider exercises the whole roundtrip. A provider-specific quirk fixture is added only if one ever materializes.",
+  "provider": {
+    "id": "synthetic",
+    "authUrl": "https://oauth.synthetic.openwop.test/authorize",
+    "tokenUrl": "https://oauth.synthetic.openwop.test/token",
+    "scopes": ["openwop.read", "openwop.write"]
+  },
+  "grant": "authorization_code",
+  "exchange": {
+    "authorizationCode": "openwop-synthetic-auth-code-1f4b9e",
+    "redirectUri": "https://host.example/openwop/oauth/callback",
+    "state": "openwop-synthetic-state-7c2a8d",
+    "codeVerifier": "openwop-synthetic-pkce-verifier-3e9f1b2c5a7d4e8f0a1b2c3d4e5f6a7b",
+    "tokenResponse": {
+      "access_token": "OPENWOP_OAUTH_TOKEN_CANARY_9d4c1f7a",
+      "token_type": "Bearer",
+      "expires_in": 3600,
+      "refresh_token": "OPENWOP_OAUTH_REFRESH_CANARY_2b8e6a3f",
+      "scope": "openwop.read openwop.write"
+    }
+  },
+  "expectations": {
+    "credentialReferenceReturned": true,
+    "connectorAuthorizedEvent": {
+      "carries": ["provider", "credentialRef", "scopes"],
+      "mustNotCarry": ["access_token", "refresh_token", "code", "state", "redirectUri", "codeVerifier"]
+    },
+    "redactedValuesNeverOnAnyRunSurface": [
+      "OPENWOP_OAUTH_TOKEN_CANARY_9d4c1f7a",
+      "OPENWOP_OAUTH_REFRESH_CANARY_2b8e6a3f",
+      "openwop-synthetic-auth-code-1f4b9e",
+      "openwop-synthetic-state-7c2a8d",
+      "openwop-synthetic-pkce-verifier-3e9f1b2c5a7d4e8f0a1b2c3d4e5f6a7b"
+    ]
+  }
+}
