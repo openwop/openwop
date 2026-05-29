@@ -11,6 +11,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### docs(spec): RFC 0025 (test-mode registry namespace) graduated `Active → Accepted` (2026-05-29)
+
+RFC 0025 (`/v1/packs-test/*` isolated registry namespace + `capabilities.packs.testMode`) promoted **`Active → Accepted`**. Every acceptance-criteria item was already satisfied; this graduation adds the **end-to-end verification against a running host** that was the remaining gap. The reference impl — `apps/workflow-engine/backend/typescript/src/routes/packs-test.ts` (full `PUT/GET/DELETE /v1/packs-test/{name}/-/{version}[.tgz|.sig]` + `POST /v1/packs-test/reset`, validation pipeline in spec order, isolated in-memory catalog) — is mounted + advertised behind `OPENWOP_PACKS_TEST_NAMESPACE_ENABLED=true` (`discovery.ts` emits `capabilities.packs.testMode.{supported, isolated, catalogResetEndpoint, scopes}`). Booted locally, **all 26 scenarios pass under strict `OPENWOP_REQUIRE_BEHAVIOR=true`** — `pack-registry-publish.test.ts` (the 25-code publish-error catalog) + `pack-registry-isolation.test.ts` (§C point-1 isolation invariant) — genuinely running, not soft-skipping.
+
+Per RFC 0001 §3 (implementation landed + conformance updated), both criteria are met; RFC 0025 sets no explicit non-steward bar. MyndHyve operates a `PackRegistryStorage` surface and has flagged `packs.testMode` as plausibly in scope (pending the contract) — a second-host advertisement would strengthen, not gate, this status. No wire-shape change — graduation only (RFC Status + README counts Accepted 59→60 / Active 12→11 + `docs/PROTOCOL-STATUS.md`).
+
 ### spec(rfc-0065,rfc-0066): workflow primary-output annotation + `x-openwop-form` picker hints — promote Draft → Active (2026-05-29)
 
 Two additive, advisory-only authoring-hint RFCs promoted **`Draft → Active`** — both consumer-side, neither changes any host behavior or wire contract:
