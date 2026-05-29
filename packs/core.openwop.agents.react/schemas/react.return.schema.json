@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.agents.react/1.0.0/react.return.schema.json",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.react/1.0.1/react.return.schema.json",
   "title": "ReActReturn",
   "description": "Return payload for the ReAct agent. Validated before persistence per RFC 0003 §D.",
   "type": "object",

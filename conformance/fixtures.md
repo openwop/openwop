@@ -469,6 +469,16 @@ Pack-manifest fixtures are exercised by the server-free `fixtures-valid.test.ts`
 
 ---
 
+## OAuth provider fixtures
+
+The `fixtures/oauth-providers/` sub-directory holds synthetic OAuth provider definitions used to prove the RFC 0047 `host.oauth` authorization-code roundtrip end-to-end **without a live IdP**. They are NOT `WorkflowDefinition`s and are NOT seeded as workflows — they parameterize the behavioral roundtrip scenario, which drives the host's `POST /v1/host/sample/oauth/authorize-code-roundtrip` seam against the provider's `authUrl`/`tokenUrl` (served by a conformance test double).
+
+| Fixture | `provider.id` | Purpose |
+|---|---|---|
+| `synthetic` | `synthetic` | The ONE canonical synthetic provider. Real providers differ only in `authUrl`/`tokenUrl` with no provider-specific grant/exchange quirks on the wire, so a single parameterizable provider exercises the whole authorization-code dance. Carries a canned `exchange` (authorization code, state, PKCE verifier, redirect URI, and a canary `tokenResponse`) so the paired `oauth-authorization-code-roundtrip.test.ts` can assert RFC 0047 §C + §C.2 redaction — none of those values may appear on a run-visible surface. A provider-specific quirk fixture is added only if one ever materializes.
+
+---
+
 ## Prompt-template fixtures
 
 The `fixtures/prompt-templates/` sub-directory holds canonical PromptTemplate documents (per RFC 0027 §A) used as schema-level proof points (validated server-free against `../schemas/prompt-template.schema.json`). They are NOT seeded into a workflow store. They exist so the `prompt-template-shape` scenario has stable positive fixtures, the secret-redaction + trust-marker conformance scenarios have known fixture templateIds to compose against (when a host advertises `capabilities.prompts.supported: true` + `observability: "full"`), and follow-up RFCs (RFC 0028 prompt packs, RFC 0029 resolution chain) can reference a stable shared fixture set.

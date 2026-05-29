@@ -21,7 +21,7 @@
       "signingKeyId": "openwop-registry-root",
       "integrity": "sha256-oAxD58p11EJDYJ8427coH0zhULSVo/gel+MI9liC3gg=",
       "deprecated": false,
-      "yanked": false
+      "yanked": true
     }
   ],
   "latest": "1.0.0",

@@ -156,6 +156,13 @@ node "$SPEC_ROOT/scripts/check-backend-dep-graph.mjs"
 # catalog named a different key than the real signer, which a strict consumer would
 # reject (cf. the 2026-05-27 81-version openwop-registry-root drift).
 node "$SPEC_ROOT/scripts/check-registry-signer-consistency.mjs"
+# Pack tarball signatures — cryptographically verify every NON-YANKED in-tree pack
+# version's embedded Ed25519 sig against its declared key over the EXACT in-tarball
+# pack.json octets. Catches what the string-compare guard above is blind to: an
+# UNSIGNED tarball (no signing block / no keys/pack.json.sig) whose catalog still
+# claims a signer, and a sig that verifies against no key (cf. the A2 finding —
+# core.openwop.examples@1.0.0 + vendor.openwop.rust-hello@1.0.0 shipped unsigned).
+node "$SPEC_ROOT/scripts/check-pack-tarball-signatures.mjs"
 # Agent-pack prompt bundling — every agent `systemPromptRef` in a source pack.json
 # MUST resolve to a prompts/*.md|.txt file the tarball bundler ships (RFC 0003 §C).
 # Catches the class where a declared prompt is missing or parked outside prompts/,

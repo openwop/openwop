@@ -25,9 +25,21 @@
       "signingKeyId": "openwop-registry-root",
       "integrity": "sha256-51hpp3dgCvSR72r2bB1JTIyRwKsZ54rQTBouOOhPKso=",
       "deprecated": false,
+      "yanked": true
+    },
+    {
+      "version": "1.0.1",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.examples/-/1.0.1.json",
+      "tarballUrl": "/v1/packs/core.openwop.examples/-/1.0.1.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.examples/-/1.0.1.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-team-1",
+      "integrity": "sha256-PHz50j758N2lKMgSrZPU4Z5xTbF6pqUyQcDfKbtcMTc=",
+      "deprecated": false,
       "yanked": false
     }
   ],
-  "latest": "1.0.0",
+  "latest": "1.0.1",
   "deprecated": false
 }
