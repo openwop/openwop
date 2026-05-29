@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### feat(host-postgres,spec): RFC 0036 (multi-region idempotency + cross-engine ordering) graduated `Active → Accepted` (2026-05-29)
+
+RFC 0036 promoted **`Active → Accepted`** — the deferred reference-host wiring landed, closing the RFC's stated path to Accepted ("Postgres reference host implements the simulator + advertises both capability blocks + the conformance scenarios pass").
+
+- **Schema**: added `capabilities.idempotency.crossRegion` (string enum `single-region`|`best-effort`|`strict`) as a first-class property — the **canonical** categorical posture surface (steward reconciliation decision). The RFC §A `idempotency.multiRegion` object stays as additive-optional granular metadata. Additive.
+- **Postgres reference host**: advertises `idempotency.crossRegion: 'single-region'` (honest — single-region host that ships the convergence resolver) + `eventLog.crossEngineOrdering.{supported: true, orderingModel: 'lamport'}`, gated on `OPENWOP_TEST_MULTI_REGION`. Two new conformance seams: `POST /v1/host/sample/test/multi-region/simulate-partition` (runs the pure `resolveCrossRegionConflict` — lex-min winner, per-region cache redirects, `cross_region_dedup_loss`, order-invariant) + `POST/GET /v1/host/sample/test/cross-engine/{append,read,reset}` (in-memory Lamport cross-engine ordering harness).
+- **Verification**: booted under `OPENWOP_TEST_MULTI_REGION=1`; **all 14 scenario assertions pass strict (`OPENWOP_REQUIRE_BEHAVIOR=true`)** across `multi-region-idempotency{,-behavior}.test.ts` + `cross-engine-append-{ordering,behavior}.test.ts` — none soft-skip.
+
+Per RFC 0001 §3 (impl + conformance), both met. A live multi-region / multi-engine non-steward host would graduate the §C/§B guarantees from seam-demonstrated to production-verified. README counts Accepted 60→61 / Active 11→10; `docs/PROTOCOL-STATUS.md` synced.
+
 ### spec(rfc-0077): Agent Run Lifecycle + Live Manifest Dispatch — new Draft RFC (2026-05-29)
 
 Filed **RFC 0077** (`Draft`), the Wave-1 keystone's live-execution layer on top of RFC 0070 (`manifestRuntime` floor) + RFC 0072 (inventory + `WorkflowNode.agent` dispatch path). It proposes:

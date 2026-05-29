@@ -1382,6 +1382,11 @@
               "description": "Deterministic resolution rule for conflicting idempotency-key records when a partition healed. `last-writer-wins` / `first-writer-wins` are spec-reserved categorical rules; vendor strategies use `^x-host-<host>-<key>$`. Conformance asserts deterministic resolution actually applies; it does NOT prescribe which strategy a host picks."
             }
           }
+        },
+        "crossRegion": {
+          "type": "string",
+          "enum": ["single-region", "best-effort", "strict"],
+          "description": "RFC 0036 — categorical multi-region idempotency posture (the canonical conformance-checked surface per spec/v1/idempotency.md §'Multi-region idempotency (annex)'). `single-region`: the host runs in one region and makes no cross-region claim (it MAY still implement the convergence resolver, demonstrable via the multi-region simulator seam). `best-effort`: cross-region reconciliation converges eventually under the annex's lex-min(runId) rule. `strict`: cross-region read-visibility is bounded by `multiRegion.replicationLagBoundMs`. When `best-effort` or `strict`, the host MUST emit the `openwop.idempotency.cross_region_conflicts_total` operator metric. The `multiRegion` sub-block above is the optional granular companion."
         }
       }
     },
