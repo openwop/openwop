@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0072 |
 | **Title** | Agent Inventory + Dispatch Normative Surface |
-| **Status** | `Draft` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-26 |
-| **Updated** | 2026-05-26 |
+| **Updated** | 2026-05-29 (`Draft → Active → Accepted` — the full §A wire surface had landed atomically on `main` (`agent-inventory-response.schema.json`, the gated `GET /v1/agents{,/{agentId}}` OpenAPI paths, `peerDependenciesMeta` in `node-pack-manifest.schema.json`, `node-packs.md` §C, the `host-capabilities.md` §A normative-inventory note, `OpenwopClient.agents.{list,get}`, and `conformance/src/scenarios/agent-manifest-runtime.test.ts`) but the Status was never flipped — a bookkeeping miss made visible by its amendment **RFC 0074 already being `Accepted`** (#290) over a `Draft` base. **Active:** wire shapes locked. **Accepted:** the `Active → Accepted` bar (a non-steward host exercised black-box over the normative inventory) is met — MyndHyve `workflow-runtime` advertises `agents.manifestRuntime: {supported: true, handoffValidation: true, installScope: 'tenant'}` live on `api.myndhyve.ai` and serves the tenant-scoped `GET /v1/agents` (steward-curl-verified via the RFC 0074 graduation #290: tenant A → 1 agent, tenant B → empty + cross-tenant 404). Steward reference host (`apps/workflow-engine` `routes/agents.ts`, AgentRegistry-backed) serves the normative inventory (37 installed manifest agents) and `agent-manifest-runtime.test.ts` passes non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true` (verified 2026-05-29). The two Unresolved questions are non-blocking (Q1 a future MAY→SHOULD; Q2 decided in-RFC). Comment window waived per `GOVERNANCE.md` single-maintainer lazy consensus.) |
 | **Affects** | `schemas/agent-inventory-response.schema.json` (new), `schemas/node-pack-manifest.schema.json`, `api/openapi.yaml`, `spec/v1/node-packs.md`, `spec/v1/host-capabilities.md`, `conformance/src/scenarios/agent-manifest-runtime.test.ts`, `CHANGELOG.md`, `INTEROP-MATRIX.md` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` |
 | **Supersedes** | — |
@@ -114,11 +114,12 @@ Negative — an optional unmet tier with no surfaced degradation (violates §C):
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (this file + §C in `node-packs.md` + §A normative-inventory note in `host-capabilities.md`/`capabilities.md`).
-- [ ] `agent-inventory-response.schema.json` + `peerDependenciesMeta` in `node-pack-manifest.schema.json`.
-- [ ] `GET /v1/agents{,/{agentId}}` in `api/openapi.yaml` (gated) + `OpenwopClient.agents.{list,get}`.
-- [ ] ≥1 capability-gated conformance scenario over the normative inventory.
-- [ ] CHANGELOG entry; reference host serves the inventory.
+- [x] Spec text merged (this file + §C in `node-packs.md` + §A normative-inventory note in `host-capabilities.md`).
+- [x] `agent-inventory-response.schema.json` + `peerDependenciesMeta` in `node-pack-manifest.schema.json`.
+- [x] `GET /v1/agents{,/{agentId}}` in `api/openapi.yaml` (gated) + `OpenwopClient.agents.{list,get}`.
+- [x] ≥1 capability-gated conformance scenario over the normative inventory (`agent-manifest-runtime.test.ts`).
+- [x] CHANGELOG entry; reference host serves the inventory (`apps/workflow-engine` `routes/agents.ts`, AgentRegistry-backed — 37 agents, scenario passes non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true`).
+- [x] **Path to `Accepted`:** a non-steward host exercises the normative inventory black-box. **Met** — MyndHyve `workflow-runtime` advertises `agents.manifestRuntime` (`installScope: 'tenant'`) live + serves the tenant-scoped `GET /v1/agents` (steward-verified via the RFC 0074 graduation #290).
 
 ## References
 
