@@ -7,8 +7,8 @@
 | **Status** | `Active` |
 | **Author(s)** | openwop working group (steward), prompted by the MyndHyve RFC 0072 §B second-host debrief (2026-05-28) |
 | **Created** | 2026-05-28 |
-| **Updated** | 2026-05-29 (`Draft → Active` — steward acceptance, comment window waived per GOVERNANCE.md single-maintainer lazy consensus; wire shapes now locked. §A implementation begins; §B remains a separate `Active → Accepted` track. rev 3 — MyndHyve §A schema-diff review folded in: elided additive diff synced to live `$defs/Runtime`, `oneOf`/`const`/`description` vocabulary (no JSON comments), empty-array≡omission, coarser-parent-breadth + closed-enum versioning rules, peerDependencies-compose note, Q5 credential-provenance breadcrumb). Rev 2 (2026-05-28) — second-host comment-window review: Q1–Q4 resolved, `env.read` added, §B audit MUST + request-init clamps + RFC 0069 composition + §A/§B sequencing |
-| **Affects** | `schemas/node-pack-manifest.schema.json` (new optional `runtime.requires[]`), `spec/v1/node-packs.md`, `spec/v1/registry-operations.md` (install-time gate), `spec/v1/host-extensions.md` (`ctx.http.safeFetch`), `spec/v1/capabilities.md` (`host.http.safeFetch` advertisement), `conformance/src/scenarios/*` |
+| **Updated** | 2026-05-29 (`Draft → Active` — steward acceptance, comment window waived per GOVERNANCE.md single-maintainer lazy consensus; wire shapes now locked. §A wire surface + conformance landed. **rev 4 (2026-05-29) — §B wire surface landed:** `safeFetch` reconciled under the existing `httpClient` capability (`httpClient.safeFetch`, reusing the `http-client-ssrf-guard` invariant + `maxResponseBodyBytes` cap) rather than a standalone `host.http.safeFetch`; `§host.http` prose + `safefetch-behavior.test.ts` + the `POST /v1/host/sample/http/safe-fetch` seam; §B reference-impl deferred. rev 3 — MyndHyve §A schema-diff review folded in: elided additive diff synced to live `$defs/Runtime`, `oneOf`/`const`/`description` vocabulary (no JSON comments), empty-array≡omission, coarser-parent-breadth + closed-enum versioning rules, peerDependencies-compose note, Q5 credential-provenance breadcrumb). Rev 2 (2026-05-28) — second-host comment-window review: Q1–Q4 resolved, `env.read` added, §B audit MUST + request-init clamps + RFC 0069 composition + §A/§B sequencing |
+| **Affects** | `schemas/node-pack-manifest.schema.json` (new optional `runtime.requires[]`), `schemas/capabilities.schema.json` (`httpClient` block + `httpClient.safeFetch`), `spec/v1/node-packs.md`, `spec/v1/registry-operations.md` (install-time gate), `spec/v1/host-capabilities.md` (§host.http — `ctx.http.safeFetch`), `spec/v1/host-sample-test-seams.md` (two seams), `conformance/src/scenarios/*` (runtime-requires + safefetch) |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` |
 | **Supersedes** | — |
 | **Superseded by** | — |
@@ -111,7 +111,9 @@ Add an OPTIONAL `requires` array to the manifest's `$defs/Runtime` object, drawn
 
 ### §B — host-provided `ctx.http.safeFetch` (additive, OPTIONAL host capability)
 
-A host MAY advertise `capabilities.host.http.safeFetch: { supported: true }` and expose `ctx.http.safeFetch(url, init?)` to pack runtime code:
+> **Amendment (rev 4, 2026-05-29 — reconciled at implementation).** §B's capability lives at **`capabilities.httpClient.safeFetch`**, not a standalone `host.http.safeFetch`. openwop already has an `httpClient` surface carrying the `http-client-ssrf-guard` invariant + `maxResponseBodyBytes` cap (the host's HTTP-client node egress); `safeFetch` is the *pack-facing exposure* of that same SSRF-guarded client, so it nests under `httpClient` and **reuses** that invariant + body cap rather than standing up a parallel SSRF surface (the corpus's reuse-don't-duplicate posture, cf. RFC 0064). The normative behavior below is unchanged; only the advertisement path is reconciled. The living contract is `host-capabilities.md` §host.http.
+
+A host MAY advertise `capabilities.httpClient.safeFetch: { supported: true }` and expose `ctx.http.safeFetch(url, init?)` to pack runtime code:
 
 ```typescript
 ctx.http.safeFetch(
@@ -123,7 +125,7 @@ ctx.http.safeFetch(
 **Behavior (normative, when advertised).**
 
 - The host MUST perform SSRF defense before connecting: resolve the host, and **reject** (throw `ssrf_blocked`) any request whose resolved address is loopback, RFC 1918 private, link-local, or a cloud metadata endpoint (`169.254.169.254`, `metadata.google.internal`, etc.). The host MUST re-check the resolved address against the connected address to defeat DNS-rebinding (pin the resolved IP for the connection).
-- When `capabilities.toolHooks.prePostEvents: true` **AND** `capabilities.host.http.safeFetch.supported: true` are **both** advertised, the host MUST emit `agent.toolCalled` / `agent.toolReturned` for every `safeFetch` invocation with `transport: 'http'`. Centralizing egress in the host must *increase* auditability, not become a quiet bypass: a host that wishes to sample audit volume MUST do so at the storage/projection tier; the wire-level emission stays unconditional. (Same posture as RFC 0064's existing audit MUST for the `agent.toolCalled`/`agent.toolReturned` pair.) A host advertising `safeFetch` but not `toolHooks.prePostEvents` SHOULD still emit the pair.
+- When `capabilities.toolHooks.prePostEvents: true` **AND** `capabilities.httpClient.safeFetch.supported: true` are **both** advertised, the host MUST emit `agent.toolCalled` / `agent.toolReturned` for every `safeFetch` invocation with `transport: 'http'`. Centralizing egress in the host must *increase* auditability, not become a quiet bypass: a host that wishes to sample audit volume MUST do so at the storage/projection tier; the wire-level emission stays unconditional. (Same posture as RFC 0064's existing audit MUST for the `agent.toolCalled`/`agent.toolReturned` pair.) A host advertising `safeFetch` but not `toolHooks.prePostEvents` SHOULD still emit the pair.
 - A pack that uses `ctx.http.safeFetch` **does not** declare `net.dns` in `runtime.requires` for the fetch path — the host owns resolution. A pack that wants to run on hosts lacking the capability MAY feature-detect (`ctx.http?.safeFetch`) and fall back to its own `net.outbound` + `net.dns` path (declaring both).
 
 This composes with — does not replace — RFC 0069's exec-class host-extension safety contract: `safeFetch` is the network-egress analogue of that RFC's subprocess sandboxing.
@@ -143,15 +145,16 @@ This composes with — does not replace — RFC 0069's exec-class host-extension
 **Additive.** Both surfaces are opt-in:
 
 - `runtime.requires[]` is a new OPTIONAL array; packs that omit it validate and load exactly as today. Hosts that don't gate platform access ignore it. The only new failure (`pack_runtime_requirement_unmet`) fires on packs that *opt in* to a requirement the host won't grant — which today fails *anyway* (at trial-load), only later and less legibly. No existing conformance pass is invalidated.
-- `ctx.http.safeFetch` is a new OPTIONAL capability under a new `host.http` block; hosts that omit it expose no `ctx.http`, and packs feature-detect. No existing pack depends on it.
+- `ctx.http.safeFetch` is a new OPTIONAL sub-capability under the existing `httpClient` block (`httpClient.safeFetch`); hosts that omit it expose no `ctx.http`, and packs feature-detect. No existing pack depends on it.
 
-No wire-event change, no new SECURITY invariant (the SSRF guarantee restates existing host responsibility; `safeFetch` centralizes it), no breaking schema change. Lands in v1.x.
+No wire-event change, **no new SECURITY invariant** — the SSRF guarantee reuses the existing `http-client-ssrf-guard` invariant (and `safeFetch` reuses `httpClient`'s `maxResponseBodyBytes` cap), no breaking schema change. Lands in v1.x.
 
 ## Conformance
 
 - **New, gated on a sandbox seam:** a pack manifest declaring `runtime.requires: ["subprocess"]` against a host seam that denies subprocess MUST yield `pack_runtime_requirement_unmet`; a manifest with `requires: ["net.dns"]` against a host that grants it installs.
-- **New, gated on `host.http.safeFetch.supported`:** `ctx.http.safeFetch` against a loopback / RFC-1918 / metadata URL MUST throw `ssrf_blocked` and MUST NOT connect; against a public URL it returns the response. A DNS-rebinding fixture (public A-record that re-resolves to `169.254.169.254`) MUST be blocked. A request carrying `Connection: upgrade` MUST be refused.
-- **New, gated on `host.http.safeFetch.supported` + `toolHooks.prePostEvents`:** a `safeFetch` call emits the `agent.toolCalled` / `agent.toolReturned` pair with `transport: 'http'`.
+- **New, gated on `httpClient.safeFetch.supported`:** `ctx.http.safeFetch` against a loopback / RFC-1918 / metadata URL MUST be blocked and MUST NOT connect; a DNS-rebinding case (public name re-resolving to `169.254.169.254`) MUST be blocked; a request carrying `Connection: upgrade` MUST be refused. Driven by `safefetch-behavior.test.ts` via the `POST /v1/host/sample/http/safe-fetch` seam; soft-skips until a host advertises `safeFetch` + wires the seam.
+- **New, gated on `httpClient.safeFetch.supported` + `toolHooks.prePostEvents`:** a fetched `safeFetch` call emits the `agent.toolCalled` / `agent.toolReturned` pair with `transport: 'http'`.
+- The advertisement contract (`httpClient` ⇒ `ssrfGuard: true` + positive `maxResponseBodyBytes`) stays covered by the existing `http-client-ssrf.test.ts`.
 - **Validation:** a manifest with a `runtime.requires` entry outside the vocabulary MUST be rejected `invalid_manifest`.
 
 Both scenario groups soft-skip until the respective capability/seam is advertised, per the established gating convention.
@@ -195,9 +198,9 @@ Two independent tracks (see Implementation notes §"Sequencing").
 - [ ] `Active → Accepted` on one second-host advertising the install gate (`core.openwop.http` declaring `["net.dns","net.outbound"]` is the first adopter).
 
 **§B — `ctx.http.safeFetch` (separate `Active → Accepted` track):**
-- [ ] Spec text merged (`ctx.http.safeFetch` in `host-extensions.md` + capability in `capabilities.md`); `schemas/capabilities.schema.json` adds `host.http.safeFetch`.
-- [ ] ≥1 conformance scenario (SSRF block incl. rebinding + `Connection: upgrade` refusal; audit-emission-when-both-advertised), capability-gated.
-- [ ] A reference host implements the resolve→pin→connect guard + `core.openwop.http@2.0.0` ships the feature-detection path, or §B explicitly defers reference implementation.
+- [x] Spec text merged (`§host.http` in `host-capabilities.md` documenting `ctx.http.safeFetch` + the SSRF/clamp/audit contract); `schemas/capabilities.schema.json` adds `httpClient.safeFetch` (and schematizes the previously-unschematized `httpClient` block — `ssrfGuard`/`maxResponseBodyBytes`/`requestTimeoutMs`/`methods`). *(2026-05-29, reconciled per the §B amendment — `httpClient.safeFetch`, not `host.http.safeFetch`.)*
+- [x] ≥1 conformance scenario (SSRF block incl. rebinding + `Connection: upgrade` refusal; audit-emission-when-both-advertised), capability+seam-gated — `safefetch-behavior.test.ts`; advertisement contract via the existing `http-client-ssrf.test.ts`. *(2026-05-29)*
+- [ ] A reference host implements the resolve→pin→connect guard + `core.openwop.http@2.0.0` ships the feature-detection path. **Deferred** — the §B wire surface is landed; reference-host implementation + a consumer pack are the remaining `Active → Accepted` gate (sequenced after §A).
 
 ## References
 

@@ -1894,6 +1894,52 @@ Additive — hosts that omit the block advertise no heartbeat. Verified by `hear
 
 ---
 
+## §host.http
+
+**Capability flag:** `capabilities.httpClient.supported: true` — the host's outbound-HTTP surface. RFC 0076 §B (`Active`) adds the OPTIONAL `httpClient.safeFetch` sub-capability.
+
+**Used by:** node egress (`core.http.request`-class nodes) and — when `safeFetch` is advertised — pack runtime code via `ctx.http.safeFetch`.
+
+**SSRF guard (normative — the `http-client-ssrf-guard` invariant).** A host advertising `httpClient` MUST set `ssrfGuard: true` and a positive `maxResponseBodyBytes`. Before connecting, the host MUST resolve the target, **reject** (loopback / RFC 1918 private / link-local / cloud-metadata, e.g. `169.254.169.254`, `metadata.google.internal`) and **pin the resolved IP for the connection** so a re-resolution cannot redirect to a blocked address (DNS-rebinding defeat). This is the existing `http-client-ssrf-guard` protocol-tier invariant (`SECURITY/invariants.yaml`) — **no new invariant**; `safeFetch` is one more surface under it.
+
+### `safeFetch` (RFC 0076 §B — pack-facing, OPTIONAL)
+
+A host MAY advertise `capabilities.httpClient.safeFetch.supported: true` and expose `ctx.http.safeFetch(url, init?)` to pack runtime code — the pack-facing exposure of the SSRF-guarded client, so packs stop reaching for `node:dns` / raw sockets to do their own SSRF defense:
+
+```typescript
+ctx.http.safeFetch(
+  url: string,
+  init?: RequestInit,        // method/headers/body subset, host-clamped
+) → Promise<Response>        // standard fetch Response, or throws ssrf_blocked / fetch_failed
+```
+
+**Behavior (normative, when `safeFetch.supported`):**
+
+- The host MUST apply the §host.http SSRF guard above (resolve→pin→connect; throw `ssrf_blocked` on a blocked address) and MUST enforce `maxResponseBodyBytes` + (when set) `requestTimeoutMs`.
+- The host MUST refuse connection-upgrade attempts (`Connection: upgrade` / a `101` protocol switch) — these escape HTTP into a raw bidirectional socket and defeat the resolve→pin→connect boundary. Body-size / timeout / `Authorization`-forwarding policy are host tuning (the body cap + timeout reuse the `httpClient` fields above; an `Authorization` header a pack did not construct from a host-issued credential SHOULD NOT be forwarded — host policy; see RFC 0076 §B Q5).
+- When `capabilities.toolHooks.prePostEvents: true` is **also** advertised, the host MUST emit the `agent.toolCalled` / `agent.toolReturned` pair (`transport: 'http'`) for every `safeFetch` invocation — centralizing egress in the host must increase auditability, not become a quiet bypass. Sampling belongs at the storage/projection tier; the wire-level emission stays unconditional (RFC 0064 posture).
+- A pack using `safeFetch` does **not** declare `net.dns` in `runtime.requires` for the fetch path (the host owns resolution); a pack that wants to run on hosts lacking the capability MAY feature-detect (`ctx.http?.safeFetch`) and fall back to its own `net.outbound` + `net.dns` path (declaring both). See RFC 0076 §A.
+
+`safeFetch` composes with a deployment-level egress allowlist (e.g. Cloud NAT) as defense-in-depth: the host's resolve→pin→connect guard applies *before* the proxy sees the request.
+
+**Capability advertisement shape:**
+
+```json
+{
+  "httpClient": {
+    "supported": true,
+    "ssrfGuard": true,
+    "maxResponseBodyBytes": 10485760,
+    "requestTimeoutMs": 30000,
+    "safeFetch": { "supported": true }
+  }
+}
+```
+
+Additive — hosts that omit `safeFetch` expose no `ctx.http.safeFetch`; packs feature-detect. Verified by `http-client-ssrf.test.ts` (advertisement contract, capability-gated) + `safefetch-behavior.test.ts` (SSRF block / rebinding / `Connection: upgrade` refusal / audit-when-both, seam-gated; soft-skips on 404 until a `safeFetch` host wires the seam).
+
+---
+
 ## §host.toolHooks
 
 **Capability flag:** `toolHooks.supported: true` *(advertised via top-level `Capabilities.toolHooks`; see [capabilities.md §toolHooks](capabilities.md#toolhooks))* — RFC 0064, `Active`.
