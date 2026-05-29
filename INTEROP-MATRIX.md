@@ -216,7 +216,7 @@ The conformance suite's `experimentalGate()` helper (`conformance/src/lib/behavi
 | 0052 scheduling | `capabilities.scheduling.{supported,cron,delayed,calendar}` (curl-verified live) | ✅ PASS — `scheduling-cron-fires-once.test.ts` via the `scheduling/tick` seam | **Accepted** ✅ |
 | 0053 dead-letter | `capabilities.deadLetter.{supported,retentionDays}` (curl-verified live) + `run.dead_lettered` | ✅ PASS — `deadletter-retry-exhaustion.test.ts` via the `deadletter/exhaust` seam | **Accepted** ✅ |
 
-**Not in this cohort:** RFC 0050 (SAML/SCIM) + RFC 0054 (run-diff) remain `Draft` — MyndHyve documented opt-outs (no SSO infra/UI demand; the RFC 0050 synthetic-IdP fixture is bundled). They graduate when a different non-steward host advertises them or MyndHyve's internal demand triggers implementation.
+**Not in this cohort:** RFC 0050 (SAML/SCIM) + RFC 0054 (run-diff) were MyndHyve opt-outs (no SSO infra/UI demand; the RFC 0050 synthetic-IdP fixture is bundled). **Update 2026-05-29:** RFC 0054 was promoted `Draft → Active` (PR #108, 2026-05-26) and then **graduated `Active → Accepted` 2026-05-29 on the steward workflow-engine reference host** — its `GET /v1/runs/{runId}:diff` endpoint passes all four `run-diff.test.ts` scenarios non-vacuously, and the Accepted criterion was amended from a non-steward bar to a steward-reference-host + strict-conformance bar (read-only deterministic diff; see `RFCS/0054` §"Acceptance criteria" + Updated note). MyndHyve's opt-out stands as an honest no-demand signal — a future non-steward `:diff` adopter is welcome post-Accepted corroboration, not a gate. RFC 0050 still `Draft`, awaiting a host wiring its SAML ACS.
 
 ## Capability adoption — round 3 (MyndHyve) — ✅ VERIFIED 2026-05-26
 
