@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.http/1.1.2/idempotency-key.input.json",
+  "$id": "https://packs.openwop.dev/core.openwop.http/2.0.0/idempotency-key.input.json",
   "title": "IdempotencyKeyInput",
   "description": "Inputs for the deterministic idempotency-key generator. runId / nodeId are normally read from ctx; the input fields are overrides for hosts that don't surface them on ctx, or for callers that want to derive a key for an off-host (runId, nodeId) pair.",
   "type": "object",

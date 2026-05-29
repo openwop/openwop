@@ -1,17 +1,17 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [1.12.0] — 2026-05-29
+## [Unreleased]
 
-Minor bump — ships the conformance scenario for **RFC 0076 §B** (`ctx.http.safeFetch`), whose wire surface just landed. Additive + seam-gated; existing hosts pass unchanged.
+> Suite version stays `1.10.0` until the next coordinated spec-corpus release (per the `openwop-check-publish-metadata` lockstep, `EXPECTED_CONFORMANCE_VERSION`); the scenarios below are unreleased additions, not a shipped version bump.
+
+**RFC 0076 §B** (`ctx.http.safeFetch`) — additive + seam-gated; existing hosts pass unchanged.
 
 ### Added — RFC 0076 §B scenario
 
 - **`safefetch-behavior.test.ts`** (seam-gated, soft-skips when `httpClient.safeFetch` is unadvertised or the seam is unwired) — drives `POST /v1/host/sample/http/safe-fetch`: SSRF block (cloud-metadata + loopback), DNS-rebinding defeat (`simulateRebindTo`), `Connection: upgrade` refusal, and the tool-hooks audit pair (`transport:"http"`) when `toolHooks.prePostEvents` is also advertised. Behavior grade `host-pending`; the SSRF guarantee reuses the existing `http-client-ssrf-guard` invariant (no new invariant). New lib helper `src/lib/safeFetch.ts`.
 - The `httpClient` advertisement contract (`ssrfGuard: true` + positive `maxResponseBodyBytes`) remains covered by the existing `http-client-ssrf.test.ts`; `capabilities.schema.json` now schematizes the `httpClient` block (previously referenced only by the invariant + that test) including the new `httpClient.safeFetch` sub-capability.
 
-## [1.11.0] — 2026-05-29
-
-Minor bump — ships the conformance scenarios for **RFC 0076 §A** (`runtime.requires[]` pack platform-requirement install gate), now `Active`. All additive: the schema-vocabulary scenario is always-on/server-free, and the install-gate behavioral scenarios are seam-gated and soft-skip against a host that doesn't wire the new seam. Existing v1.0-only hosts pass unchanged.
+**RFC 0076 §A** (`runtime.requires[]` pack platform-requirement install gate), now `Active` — all additive: the schema-vocabulary scenario is always-on/server-free, and the install-gate behavioral scenarios are seam-gated and soft-skip against a host that doesn't wire the new seam. Existing v1.0-only hosts pass unchanged.
 
 ### Added — RFC 0076 §A scenarios
 

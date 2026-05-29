@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.http/1.1.2/upload-multipart.output.json",
+  "$id": "https://packs.openwop.dev/core.openwop.http/2.0.0/upload-multipart.output.json",
   "title": "UploadMultipartOutput",
   "type": "object",
   "required": [

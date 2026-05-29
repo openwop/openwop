@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.http/1.1.2/fetch.output.json",
+  "$id": "https://packs.openwop.dev/core.openwop.http/2.0.0/fetch.output.json",
   "title": "FetchNodeOutput",
   "description": "Output for core.openwop.http.fetch. Carries the response and per-attempt telemetry so downstream nodes can branch on status / inspect bodies / observe retry behaviour.",
   "type": "object",
