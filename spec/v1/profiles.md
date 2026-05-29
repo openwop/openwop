@@ -211,6 +211,19 @@ openwop-discovery-auth-scoped(c) :=
 
 Three subtests in `conformance/src/scenarios/discovery.test.ts` validate the runtime behavior: capability shape, authenticated view satisfies the base schema, and the authorization-oracle probe (gated on `OPENWOP_TEST_UNAUTHORIZED_API_KEY`). A host passes `openwop-discovery-auth-scoped` when discovery passes the predicate AND those scenarios pass.
 
+### `openwop-experimental`
+
+A host advertising at least one capability sub-block as a preview (RFC 0042). Unlike the other profiles, this one signals *instability*, not a feature set: clients that require stable-only contracts filter on its **negation**.
+
+**Predicate:** any object-valued capability sub-block carries `tier: "experimental"` (with its required `experimentalUntil` sunset date, `capabilities.md` §"Capability stability tier").
+
+```
+openwop-experimental(c) :=
+     ∃ sub-block b ∈ c.capabilities.* : b.tier === 'experimental'
+```
+
+Derived purely from the existing `tier` field — no new wire field. The profile is intentionally coarse (host-level "some surface is preview"); per-capability stability is read directly off each sub-block's `tier`. A host with zero experimental capabilities does not derive this profile; a client depending only on `stable` surfaces requires `¬ openwop-experimental(c)` OR inspects the specific sub-blocks it consumes. The `experimental` capabilities themselves are enumerated, with their `experimentalUntil` dates, in `INTEROP-MATRIX.md` §"Experimental capabilities advertised". Conformance routing for experimental surfaces is the `experimentalGate` helper (`capabilities.md` §"Capability stability tier" → "Conformance routing"); the shape probes live in `conformance/src/scenarios/experimental-tier-shape.test.ts`.
+
 ---
 
 ## Derivation

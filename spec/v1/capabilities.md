@@ -620,6 +620,28 @@ Profile-string canonicalization follows `auth-profiles.md` §"Profile catalog". 
 
 ---
 
+## Capability stability tier — `tier` / `experimentalUntil` (RFC 0042)
+
+Every object-valued capability sub-block under the network-handshake `capabilities.*` MAY carry an optional **`tier`** field, plus a paired **`experimentalUntil`** date. This makes a host's *stability claim* for a capability machine-readable on the wire, so a consumer can tell a stable contract apart from an `Active`-RFC preview without fetching `RFCS/*.md`.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `tier` | `"stable" \| "experimental"` | Absent ⇒ `"stable"`. `stable`: the host commits to this capability's wire shape across v1.x minors. `experimental`: the host advertises the surface as a preview; the wire shape MAY shift compatibly without notice until the underlying RFC graduates to `Accepted` and the host re-advertises as `stable`. |
+| `experimentalUntil` | `string` (`YYYY-MM-DD`) | **REQUIRED when `tier: "experimental"`** (schema-enforced via `if`/`then`). ISO-8601 date no more than 12 months past the discovery-response date. |
+
+**Normative rules.**
+
+- A host **MUST omit** `tier` for a capability whose underlying RFC is already `Accepted` (the advertisement is then unconditionally stable). A capability whose RFC is still `Active` **SHOULD** advertise `tier: "experimental"` until the RFC promotes.
+- When `tier: "experimental"`, the host **MUST** advertise `experimentalUntil` ≤ 12 months out. This is enforced at the schema layer: `tier: "experimental"` without `experimentalUntil` **MUST** fail discovery validation.
+- **Sunset rule.** Reaching `experimentalUntil` without the underlying RFC graduating to `Accepted` obliges the host to take one of three publicly-visible actions: **(1) flip to `stable`** (the wire shape held — commit to it); **(2) extend** with a new `experimentalUntil` ≤ 12 months out (a *second* extension REQUIRES an open deprecation RFC justifying the continued flux); or **(3) retract** the capability advertisement (clients then receive `capability_not_provided` per §"Unsupported capability — refusal contract"). A host advertising an `experimentalUntil` in the past is **non-conformant** (`validation_error`, `details.field: "capabilities.<path>.experimentalUntil"`, `details.reason: "experimentalUntil_in_past"`).
+- `tier` is **per-capability, not per-host**: a host MAY advertise some capabilities `stable` and others `experimental` in the same discovery payload.
+
+**Conformance routing.** Scenarios gated on a capability consult its `tier` via the `experimentalGate(profileName, advertised, tier, experimentalUntil?)` helper (`conformance/src/lib/behavior-gate.ts`). Under default mode an `experimental` capability **soft-skips** (a dedicated `Skipped (experimental)` tally, distinct from the capability-gated skip bucket); it runs as a hard assertion only when **`OPENWOP_REQUIRE_EXPERIMENTAL=true`** is set (in addition to `OPENWOP_REQUIRE_BEHAVIOR=true`). A host that omits `tier` is evaluated as `stable` — the prior behavior, unchanged. The shape probes live in `conformance/src/scenarios/experimental-tier-shape.test.ts`.
+
+A host advertising any `tier: "experimental"` capability derives the `openwop-experimental` profile (`profiles.md` §`openwop-experimental`); clients requiring stable-only contracts filter on its negation. This is **additive** (`COMPATIBILITY.md` §2.1): `tier` is optional with default `"stable"`, no existing wire surface changes, and existing v1 conformance passes are unaffected.
+
+---
+
 ## Unsupported capability — refusal contract
 
 Workflows MAY reference typeIds that are gated on optional capability advertisement (e.g., `core.conversationGate` is gated on `conversationPrimitive: true`). A host that does not advertise the gating capability MUST refuse such workflows. Refusal may occur at either of two boundaries:
