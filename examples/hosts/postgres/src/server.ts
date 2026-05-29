@@ -137,8 +137,17 @@ import {
   readOIDCConfigFromEnv,
   type SupportedAlgorithm,
 } from './jwt-validator.js';
+// RFC 0036 — the canonical cross-region convergence resolver (pure function).
+// Exposed to the conformance suite via the multi-region simulator seam below.
+import { resolveCrossRegionConflict, type ConflictClaim } from './multi-region.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+// RFC 0036 — gates both the multi-region/cross-engine capability advertisement
+// AND the `/v1/host/sample/test/{multi-region,cross-engine}/*` conformance
+// seams. Off by default so a production deploy makes no cross-region claim.
+const MULTI_REGION_TEST =
+  process.env.OPENWOP_TEST_MULTI_REGION === '1' ||
+  process.env.OPENWOP_TEST_MULTI_REGION === 'true';
 const HOST = process.env.OPENWOP_HOST ?? '127.0.0.1';
 const PORT = Number(process.env.OPENWOP_PORT ?? 3839);
 const API_KEY = process.env.OPENWOP_API_KEY ?? 'openwop-postgres-dev-key';
@@ -2748,6 +2757,25 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
           targets: ['run'],
           signals: ['rating', 'correction', 'label', 'flag'],
         },
+        // RFC 0036 — multi-region idempotency posture + cross-engine append
+        // ordering. The Postgres reference host is single-region / single-
+        // engine, so it advertises `idempotency.crossRegion: 'single-region'`
+        // honestly (no live cross-region claim) — but it ships the canonical
+        // convergence resolver (`multi-region.ts`) + a Lamport cross-engine
+        // ordering model, both exercised by the conformance suite via the
+        // `/v1/host/sample/test/{multi-region,cross-engine}/*` seams below.
+        // Gated on OPENWOP_TEST_MULTI_REGION so a default deploy stays clean.
+        ...(MULTI_REGION_TEST
+          ? {
+              idempotency: { crossRegion: 'single-region' as const },
+              eventLog: {
+                crossEngineOrdering: {
+                  supported: true,
+                  orderingModel: 'lamport' as const,
+                },
+              },
+            }
+          : {}),
         // RFC 0058 — engine-enforced run bounds. Advertised under
         // `capabilities.limits` (the schema-canonical + conformance-read
         // location) so clients can pre-flight a `runTimeoutMs` against the
@@ -4625,6 +4653,103 @@ async function handleListAnnotations(req: IncomingMessage, res: ServerResponse, 
   sendJSON(res, 200, { annotations: r.rows.map((row) => row.data_json) });
 }
 
+// ─── RFC 0036 conformance seams (gated on MULTI_REGION_TEST) ───────────────────
+//
+// These are host-extension test seams in the `/v1/host/sample/test/*` namespace.
+// They exercise the canonical RFC 0036 algorithms WITHOUT requiring a live
+// multi-region / multi-engine deployment — the resolver + ordering model are
+// pure, so a single-region reference host can demonstrate the contract.
+
+/** §C convergence-rule seam — runs the canonical pure resolver over the
+ *  posted conflicting claims. POST /v1/host/sample/test/multi-region/simulate-partition. */
+async function handleSimulatePartition(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (!(await checkAuth(req, res))) return;
+  let body: { claims?: unknown };
+  try {
+    body = JSON.parse(await readBody(req)) as typeof body;
+  } catch {
+    sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+    return;
+  }
+  if (!Array.isArray(body.claims) || body.claims.length < 2) {
+    sendError(res, 400, 'validation_error', '`claims` MUST be an array of ≥2 ConflictClaim records.');
+    return;
+  }
+  try {
+    // Pure function (multi-region.ts): lex-min(runId) winner, per-region cache
+    // redirects at the winner, `cross_region_dedup_loss` loser reason. Order-
+    // invariant by construction.
+    const result = resolveCrossRegionConflict(body.claims as ConflictClaim[]);
+    sendJSON(res, 200, result);
+  } catch (e) {
+    sendError(res, 400, 'validation_error', e instanceof Error ? e.message : 'resolver error');
+  }
+}
+
+// §B cross-engine append-ordering harness — an in-memory, per-channel Lamport
+// log. `append` assigns `lamport = max(channelClock, incomingHint) + 1` (the
+// Lamport send/receive rule) and a monotonic arrival `seq`; `read` linearizes
+// by `(lamport asc, seq asc)`, which preserves each engine's submission order
+// (the shared clock strictly increases per append) and converges all engines
+// to one total order. Conformance-only state; cleared by `reset`.
+interface CrossEngineEntry {
+  engineId: string;
+  value: unknown;
+  lamport: number;
+  seq: number;
+}
+const crossEngineLog = new Map<string, { clock: number; seq: number; entries: CrossEngineEntry[] }>();
+function crossEngineChannel(id: string): { clock: number; seq: number; entries: CrossEngineEntry[] } {
+  let c = crossEngineLog.get(id);
+  if (!c) {
+    c = { clock: 0, seq: 0, entries: [] };
+    crossEngineLog.set(id, c);
+  }
+  return c;
+}
+
+async function handleCrossEngineAppend(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (!(await checkAuth(req, res))) return;
+  let body: { engineId?: unknown; channelId?: unknown; value?: unknown; lamport?: unknown };
+  try {
+    body = JSON.parse(await readBody(req)) as typeof body;
+  } catch {
+    sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+    return;
+  }
+  if (typeof body.engineId !== 'string' || typeof body.channelId !== 'string') {
+    sendError(res, 400, 'validation_error', '`engineId` + `channelId` MUST be strings.');
+    return;
+  }
+  const c = crossEngineChannel(body.channelId);
+  const incoming = typeof body.lamport === 'number' && Number.isFinite(body.lamport) ? body.lamport : 0;
+  const lamport = Math.max(c.clock, incoming) + 1; // Lamport receive rule
+  c.clock = lamport;
+  const seq = ++c.seq;
+  const entry: CrossEngineEntry = { engineId: body.engineId, value: body.value, lamport, seq };
+  c.entries.push(entry);
+  sendJSON(res, 200, entry);
+}
+
+async function handleCrossEngineRead(
+  req: IncomingMessage,
+  res: ServerResponse,
+  channelId: string,
+): Promise<void> {
+  if (!(await checkAuth(req, res))) return;
+  const c = crossEngineLog.get(channelId);
+  const entries = c
+    ? [...c.entries].sort((a, b) => (a.lamport !== b.lamport ? a.lamport - b.lamport : a.seq - b.seq))
+    : [];
+  sendJSON(res, 200, { entries });
+}
+
+async function handleCrossEngineReset(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (!(await checkAuth(req, res))) return;
+  crossEngineLog.clear();
+  sendJSON(res, 200, { ok: true });
+}
+
 // ─── Router ──────────────────────────────────────────────────────────────────
 
 const RUN_ANNOTATIONS_PATTERN = /^\/v1\/runs\/([^/]+)\/annotations$/; // RFC 0056
@@ -4706,6 +4831,23 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   // be exercised by the conformance suite without a full run.
   if (method === 'POST' && path === '/v1/host/sample/test/evaluate-model-capability-gate') {
     return handleEvaluateModelCapabilityGate(req, res);
+  }
+  // RFC 0036 conformance seams — only mounted when OPENWOP_TEST_MULTI_REGION is
+  // set (same gate as the capability advertisement). When unset, requests fall
+  // through to the 404 handler so the behavioral scenarios soft-skip cleanly.
+  if (MULTI_REGION_TEST) {
+    if (method === 'POST' && path === '/v1/host/sample/test/multi-region/simulate-partition') {
+      return handleSimulatePartition(req, res);
+    }
+    if (method === 'POST' && path === '/v1/host/sample/test/cross-engine/append') {
+      return handleCrossEngineAppend(req, res);
+    }
+    if (method === 'GET' && path === '/v1/host/sample/test/cross-engine/read') {
+      return handleCrossEngineRead(req, res, url.searchParams.get('channelId') ?? '');
+    }
+    if (method === 'POST' && path === '/v1/host/sample/test/cross-engine/reset') {
+      return handleCrossEngineReset(req, res);
+    }
   }
   // RFC 0012 test seams — only enabled when both
   // OPENWOP_MEMORY_COMPACTION=true AND OPENWOP_TEST_TRIGGER_COMPACTION=true.
