@@ -522,6 +522,30 @@ The two deliberately-misbehaving packs at `examples/packs/rust-misbehaving-memor
 
 For the Component Model variant (`language: wasm-component`), per-pack interfaces are defined in WIT rather than the hand-rolled imports/exports from RFC 0008 §C. Hosts advertise via `capabilities.nodePackRuntimes.wasmComponent.supported`; the surface is reserved for an additive sub-RFC.
 
+### Runtime platform requirements (RFC 0076)
+
+A pack MAY declare the **abstract platform primitives its runtime code exercises** via the OPTIONAL `runtime.requires[]` array (`node-pack-manifest.schema.json` `$defs/Runtime.requires`), so a sandbox-based host can gate at **install time** rather than discovering the need by a failed trial-load. This is distinct from `peerDependencies` (host agent-runtime capability *tiers*, RFC 0072 §C) and from `NodeModule.requires` / `capabilities.runtimeCapabilities` (host-advertised *facilities* checked per-node at dispatch, `capabilities.md`): `runtime.requires` is the *sandbox-primitive* axis, evaluated once at load.
+
+The vocabulary is **runtime-agnostic** (not language builtin names — `node:dns/promises` does not translate to the Python / Go / wasm runtimes) and **closed**:
+
+| Token | Primitive |
+|---|---|
+| `net.dns` | Resolves hostnames (e.g. SSRF pre-flight). |
+| `net.outbound` | Opens outbound network connections / fetch. |
+| `crypto` | Primitives beyond the standard hashing the host already provides. |
+| `subprocess` | Spawns a child process (composes with the RFC 0069 exec-class contract). |
+| `fs.read` / `fs.write` | Reads / writes the local filesystem. |
+| `env.read` | Reads the process environment (may expose deployment secrets if unscrubbed). |
+| `clock` | Reads wall-clock time as a **behavioral** input — gated for replay determinism (a pack that branches on the clock is non-deterministic on replay, `replay.md`), not access control. |
+
+**Normative behavior.**
+
+- A host that gates platform access MUST evaluate `runtime.requires[]` at install time and MUST refuse install with `pack_runtime_requirement_unmet` (see `registry-operations.md` §"Runtime-requirement install gate") naming any primitive it will not grant — it MUST NOT silently install and fail at first invocation. A non-gating host MAY ignore the field for enforcement but SHOULD project it onto the pack's inventory entry for operator visibility.
+- Absent or `[]` ⇒ no elevated platform needs; the two are equivalent. `runtime.requires` declares intent for gating, not an authorization grant — a host MUST still enforce its sandbox at runtime (an undeclared primitive is still denied).
+- **Vocabulary versioning.** Extensions are additive (minor version). When a later revision introduces a finer-grained primitive (`net.outbound.http` vs `net.outbound.raw`), a host MUST treat the coarser parent (`net.outbound`) as at-least-as-broad. A host validating against schema v*N* MUST refuse a token introduced after v*N* with `invalid_manifest` — an old host MUST NOT grant a primitive it has not yet specified (the install-time safety contract).
+
+Full rationale, the `ctx.http.safeFetch` companion (a separate track), and the RFC 0069 composition rules are in [RFC 0076](../../RFCS/0076-pack-runtime-requirements-and-host-safe-fetch.md).
+
 ---
 
 ## Distribution

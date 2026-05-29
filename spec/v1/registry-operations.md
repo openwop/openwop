@@ -159,6 +159,25 @@ This has two operational consequences a registry and its consumers MUST account 
 
 ---
 
+## Runtime-requirement install gate (RFC 0076)
+
+A pack MAY declare the abstract platform primitives its runtime code exercises via `runtime.requires[]` (see [`node-packs.md` §"Runtime platform requirements"](node-packs.md#runtime-platform-requirements-rfc-0076)). This is a **consumer/host install-time gate**, not a registry-acceptance check: the registry stores the field verbatim (it is part of the validated manifest), and the *host installing the pack into a workspace* enforces it.
+
+**Normative.** A host that gates platform access (a sandbox host) MUST, at install time, intersect a pack's `runtime.requires[]` against the set of primitives its sandbox will grant. If every listed primitive is grantable, install proceeds. If any primitive will **not** be granted, the host MUST refuse install with `pack_runtime_requirement_unmet` and MUST NOT silently install and fail at first invocation. The error reuses the `capability_not_provided` envelope (`capabilities.md`):
+
+```json
+{
+  "error": "pack_runtime_requirement_unmet",
+  "unmet": ["subprocess"],
+  "manifest": "core.openwop.cron@1.0.0",
+  "advice": "operator-facing remediation copy (OPTIONAL)"
+}
+```
+
+`unmet[]` is the subset of `runtime.requires[]` the host refuses; `manifest` is the offending `name@version`; `advice` is OPTIONAL. A host that does not gate platform access MAY skip enforcement but SHOULD project `runtime.requires[]` onto the pack's inventory entry for operator visibility (RFC 0076 §A). This is the runtime-primitive analogue of the host-capability boundary the [§"Host-private marketplace"](#host-private-marketplace-relationship-non-normative-example) example already illustrates with `requires: ['<host>.canvas.write']`.
+
+---
+
 ## Deprecation flow (closes NP4)
 
 Marking a published version deprecated without unpublishing it. Lets pinned consumers continue resolving the version while signaling new consumers to migrate.

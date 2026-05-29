@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0076 |
 | **Title** | Pack runtime-requirements declaration + host-provided safe-fetch |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | openwop working group (steward), prompted by the MyndHyve RFC 0072 §B second-host debrief (2026-05-28) |
 | **Created** | 2026-05-28 |
-| **Updated** | 2026-05-29 (rev 3 — MyndHyve §A schema-diff review folded in: elided additive diff synced to live `$defs/Runtime`, `oneOf`/`const`/`description` vocabulary (no JSON comments), empty-array≡omission, coarser-parent-breadth + closed-enum versioning rules, peerDependencies-compose note, Q5 credential-provenance breadcrumb). Rev 2 (2026-05-28) — second-host comment-window review: Q1–Q4 resolved, `env.read` added, §B audit MUST + request-init clamps + RFC 0069 composition + §A/§B sequencing |
+| **Updated** | 2026-05-29 (`Draft → Active` — steward acceptance, comment window waived per GOVERNANCE.md single-maintainer lazy consensus; wire shapes now locked. §A implementation begins; §B remains a separate `Active → Accepted` track. rev 3 — MyndHyve §A schema-diff review folded in: elided additive diff synced to live `$defs/Runtime`, `oneOf`/`const`/`description` vocabulary (no JSON comments), empty-array≡omission, coarser-parent-breadth + closed-enum versioning rules, peerDependencies-compose note, Q5 credential-provenance breadcrumb). Rev 2 (2026-05-28) — second-host comment-window review: Q1–Q4 resolved, `env.read` added, §B audit MUST + request-init clamps + RFC 0069 composition + §A/§B sequencing |
 | **Affects** | `schemas/node-pack-manifest.schema.json` (new optional `runtime.requires[]`), `spec/v1/node-packs.md`, `spec/v1/registry-operations.md` (install-time gate), `spec/v1/host-extensions.md` (`ctx.http.safeFetch`), `spec/v1/capabilities.md` (`host.http.safeFetch` advertisement), `conformance/src/scenarios/*` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` |
 | **Supersedes** | — |
@@ -188,10 +188,10 @@ Genuinely still open:
 Two independent tracks (see Implementation notes §"Sequencing").
 
 **§A — `runtime.requires[]` (declaration + install gate):**
-- [ ] Spec text merged (this file + `runtime.requires` in `node-packs.md` + the install gate + `pack_runtime_requirement_unmet` payload in `registry-operations.md`).
-- [ ] `schemas/node-pack-manifest.schema.json` adds `runtime.requires` (8-value enum).
+- [x] Spec text merged (this file + `runtime.requires` in `node-packs.md` §"Runtime platform requirements" + the install gate + `pack_runtime_requirement_unmet` payload in `registry-operations.md` §"Runtime-requirement install gate"). *(2026-05-29)*
+- [x] `schemas/node-pack-manifest.schema.json` adds `runtime.requires` (8-value `oneOf`/`const`/`description`). *(2026-05-29)*
 - [ ] ≥1 conformance scenario (install-grant, install-refuse, vocabulary-validation), seam-gated.
-- [ ] CHANGELOG entry under the target v1.x.
+- [x] CHANGELOG entry under the target v1.x. *(2026-05-29)*
 - [ ] `Active → Accepted` on one second-host advertising the install gate (`core.openwop.http` declaring `["net.dns","net.outbound"]` is the first adopter).
 
 **§B — `ctx.http.safeFetch` (separate `Active → Accepted` track):**

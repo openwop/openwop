@@ -366,6 +366,23 @@
         "minRuntimeVersion": {
           "type": "string",
           "description": "Minimum host runtime version (e.g., `node>=20`, `python>=3.10`, `go>=1.22`)."
+        },
+        "requires": {
+          "type": "array",
+          "uniqueItems": true,
+          "description": "RFC 0076. Abstract platform primitives the pack's runtime code exercises, for install-time sandbox gating. Runtime-agnostic (not language builtin names). Absent or [] ⇒ no elevated platform needs. A sandbox host MUST evaluate this at install time and refuse (`pack_runtime_requirement_unmet`) any primitive it will not grant; see node-packs.md §\"Runtime platform requirements\".",
+          "items": {
+            "oneOf": [
+              { "const": "net.dns", "description": "Resolves hostnames (e.g., SSRF pre-flight)." },
+              { "const": "net.outbound", "description": "Opens outbound network connections / fetch." },
+              { "const": "crypto", "description": "Primitives beyond the standard hashing the host already provides." },
+              { "const": "subprocess", "description": "Spawns a child process (composes with the RFC 0069 exec-class contract when the host advertises it)." },
+              { "const": "fs.read", "description": "Reads the local filesystem." },
+              { "const": "fs.write", "description": "Writes the local filesystem." },
+              { "const": "env.read", "description": "Reads the process environment (may expose deployment secrets if the host does not scrub it)." },
+              { "const": "clock", "description": "Reads wall-clock time as a behavioral input — gated for REPLAY determinism, not access control. A pack that branches on the clock is non-deterministic on replay (replay.md)." }
+            ]
+          }
         }
       },
       "additionalProperties": false

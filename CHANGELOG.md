@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### feat(spec): RFC 0076 §A — `runtime.requires[]` pack platform-requirement gate (Active, 2026-05-29)
+
+RFC 0076 promoted **`Draft → Active`** (steward acceptance, comment window waived per GOVERNANCE.md single-maintainer lazy consensus; wire shapes locked). §A — the `runtime.requires[]` declaration + install-time gate — lands its wire surface:
+
+- `schemas/node-pack-manifest.schema.json` `$defs/Runtime` gains the OPTIONAL `requires` array — an 8-value closed vocabulary (`net.dns`, `net.outbound`, `crypto`, `subprocess`, `fs.read`, `fs.write`, `env.read`, `clock`) carried as `oneOf`/`const`/`description` so each token's gate-reason rides in the schema. Additive: packs that omit it validate unchanged.
+- `node-packs.md` §"Runtime platform requirements" documents the vocabulary, the install-time gate (sandbox host MUST refuse `pack_runtime_requirement_unmet`; non-gating host SHOULD project for visibility), empty-array≡omission, and the vocabulary-versioning rules (coarser-parent breadth + closed-enum version-pinning).
+- `registry-operations.md` §"Runtime-requirement install gate" specifies the host-side gate + the `pack_runtime_requirement_unmet` payload (reuses the `capability_not_provided` envelope).
+
+§B (`ctx.http.safeFetch`) remains a separate `Active → Accepted` track. Still open for §A: conformance scenarios + a second-host adopting the gate (`core.openwop.http` declaring `["net.dns","net.outbound"]`). README RFC counts: Active 6→7, Draft 12→11.
+
 ### docs(spec): clarifications from the MyndHyve RFC 0072 §B second-host debrief (2026-05-28)
 
 Four spec clarifications surfaced by MyndHyve's second-host implementation of the RFC 0072 §B function-calling loop. All additive/editorial — no wire-shape change, no new field, error, or invariant:
