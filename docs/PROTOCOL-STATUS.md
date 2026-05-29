@@ -12,7 +12,7 @@
 | OpenAPI operations | 39 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 290 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 77 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 78 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
 
@@ -24,15 +24,15 @@
 |---|---:|
 | Accepted | 61 |
 | Active | 11 |
-| Draft | 5 |
+| Draft | 6 |
 
 | Latest RFC | Title | Status |
 |---|---|---|
+| RFC 0078 | An optional, capability-gated `GET /v1/tools` + `GET /v1/tools/{toolId}` projection returning a normative `ToolDescriptor` (stable `toolId`, source, I/O schemas, auth/egress/approval requirements, replay policy, safety tier) across every tool surface (node-pack / workflow / MCP / connector / host-extension), plus an optional tool-session lifecycle - so an agent or builder can discover what tools exist, what they require, and how they are audited, portably | Draft |
 | RFC 0077 | A normative `AgentManifest` -> live-run mapping + an optional `capabilities.agents.liveRuntime` flag + an `agent.invocation.started` / `agent.invocation.completed` event bracket, so a manifest agent executes against live models/tools with one portable, observable event family across all three entry points (workflow node, run API, chat mention) | Active |
 | RFC 0076 | Pack runtime-requirements declaration + host-provided safe-fetch | Active |
 | RFC 0075 | Artifact-Type Packs - real-world adoption amendment | Active |
 | RFC 0074 | Tenant-Scoped Manifest-Agent Inventory | Accepted |
-| RFC 0073 | Capability families are document-root properties of `/.well-known/openwop` | Draft |
 
 ## SDK Helper Coverage
 
@@ -72,7 +72,7 @@
 
 ## Active Follow-Ups
 
-- 5 RFCs still `Draft` (RFC 0038, RFC 0043, RFC 0050, RFC 0072, RFC 0073) — advance with schema/conformance proof or defer.
+- 6 RFCs still `Draft` (RFC 0038, RFC 0043, RFC 0050, RFC 0072, RFC 0073, RFC 0078) — advance with schema/conformance proof or defer.
 - 11 RFCs `Active` (RFC 0035, RFC 0042, RFC 0054, RFC 0065, RFC 0066, RFC 0067, RFC 0068, RFC 0069, RFC 0075, RFC 0076, RFC 0077) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
