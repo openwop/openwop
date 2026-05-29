@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.examples/1.0.0/coin-flip.input.json",
+  "title": "CoinFlipNodeInput",
+  "description": "Input for core.openwop.examples.coin-flip. The `seed` port drives deterministic output — same seed yields same result across replays.",
+  "type": "object",
+  "required": ["seed"],
+  "properties": {
+    "seed": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Arbitrary non-empty string used as the SHA-256 seed. The output is determined by `SHA-256(seed)[0] % 2`."
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,7 +1,7 @@
 {
   "name": "core.openwop.examples",
   "version": "1.0.0",
-  "description": "Spec-canonical examples pack \u2014 three minimal nodes (echo, coin-flip, delay-with-progress) that exercise the core node-pack contract end-to-end. Zero npm deps; runs on any Node 20+ host advertising the openwop-node-packs profile. See docs/PACKS-MVP-PLAN.md.",
+  "description": "Spec-canonical examples pack — three minimal nodes (echo, coin-flip, delay-with-progress) that exercise the core node-pack contract end-to-end. Zero npm deps; runs on any Node 20+ host advertising the openwop-node-packs profile. See docs/PACKS-MVP-PLAN.md.",
   "author": "OpenWOP Working Group",
   "license": "Apache-2.0",
   "homepage": "https://openwop.dev/packs/core.openwop.examples",
@@ -34,7 +34,7 @@
       "typeId": "core.openwop.examples.coin-flip",
       "version": "1.0.0",
       "label": "Coin Flip",
-      "description": "Deterministic pseudo-random choice from a seed input. Returns 'heads' or 'tails'. Pure / replay-safe \u2014 same seed always returns same result. Demonstrates the cacheable + replay-determinism contracts.",
+      "description": "Deterministic pseudo-random choice from a seed input. Returns 'heads' or 'tails'. Pure / replay-safe — same seed always returns same result. Demonstrates the cacheable + replay-determinism contracts.",
       "category": "data",
       "role": "pure",
       "capabilities": [
@@ -48,7 +48,7 @@
       "typeId": "core.openwop.examples.delay-with-progress",
       "version": "1.0.0",
       "label": "Delay With Progress",
-      "description": "Sleeps for `config.delayMs` milliseconds, streaming a node.progress event every `config.tickMs` (default 100). Demonstrates the streamable capability + bounded duration. Replay-safe \u2014 replays return the cached completed state without re-sleeping.",
+      "description": "Sleeps for `config.delayMs` milliseconds, streaming a node.progress event every `config.tickMs` (default 100). Demonstrates the streamable capability + bounded duration. Replay-safe — replays return the cached completed state without re-sleeping.",
       "category": "control",
       "role": "streaming-output",
       "capabilities": [
@@ -75,5 +75,6 @@
   },
   "integrity": "sha256-51hpp3dgCvSR72r2bB1JTIyRwKsZ54rQTBouOOhPKso=",
   "deprecated": false,
-  "yanked": false
+  "yanked": true,
+  "yankedReason": "Unsigned manifest (signing block absent) + detached .sig verifies against no registered key — supersded by correctly-signed 1.0.1. See A2 finding."
 }

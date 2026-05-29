@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.examples/1.0.0/echo.output.json",
+  "title": "EchoNodeOutput",
+  "description": "Output for core.openwop.examples.echo. Single `value` port mirroring the input.",
+  "type": "object",
+  "required": ["value"],
+  "properties": {
+    "value": {
+      "description": "Byte-identical (modulo JSON canonicalization) reflection of the input `value` port.",
+      "type": ["string", "number", "boolean", "object", "array", "null"]
+    }
+  },
+  "additionalProperties": false
+}
