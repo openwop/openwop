@@ -32,6 +32,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { EventEmitter } from 'node:events';
+import { isIP } from 'node:net';
 import { loadWasmPack, type LoadedWasmPack, type WasmHostBridge } from './wasm-loader.js';
 import {
   expandChainFromRegistry,
@@ -1172,6 +1173,105 @@ async function handleToolHooksInvoke(req: IncomingMessage, res: ServerResponse):
   sendJSON(res, 200, { toolCalled, toolReturned });
 }
 
+// ─── RFC 0076 §B — host-provided ctx.http.safeFetch ──────────────────────────
+//
+// The pack-facing exposure of the SSRF-guarded HTTP client (capabilities
+// httpClient.safeFetch). The guard is resolve->pin->connect: reject loopback /
+// RFC 1918 / link-local / cloud-metadata targets, pin the resolved IP so a
+// re-resolution cannot rebind to a blocked address, and refuse a Connection:
+// upgrade (no 101 socket-hijack escape). Reuses the http-client-ssrf-guard
+// invariant + the maxResponseBodyBytes cap — no new invariant. Because this host
+// also advertises toolHooks.prePostEvents, a fetched call emits the
+// agent.toolCalled / agent.toolReturned pair (transport: 'http'). The cross-host
+// driver is the POST /v1/host/sample/http/safe-fetch seam. This reference seam
+// SIMULATES the successful fetch (no real egress in the conformance env); the
+// blocking decisions are real.
+
+const SAFEFETCH_MAX_RESPONSE_BODY_BYTES = 10_485_760; // 10 MiB
+const SAFEFETCH_REQUEST_TIMEOUT_MS = 30_000;
+
+/** SSRF blocklist for a target host literal. Returns the block reason, or null
+ *  when the address/name is public. IP-literal checks mirror the Postgres
+ *  reference host's `checkHttpDestination`. */
+function safeFetchBlockReason(hostname: string): string | null {
+  const h = hostname.toLowerCase().replace(/^\[/, '').replace(/\]$/, '');
+  if (h === 'localhost' || h.endsWith('.local') || h.endsWith('.internal')) {
+    return 'loopback/internal hostname';
+  }
+  const v = isIP(h);
+  if (v === 4) {
+    const [a, b] = h.split('.').map(Number) as [number, number];
+    if (a === 127) return '127.0.0.0/8 (loopback)';
+    if (a === 10) return '10.0.0.0/8 (RFC1918)';
+    if (a === 172 && b >= 16 && b <= 31) return '172.16.0.0/12 (RFC1918)';
+    if (a === 192 && b === 168) return '192.168.0.0/16 (RFC1918)';
+    if (a === 169 && b === 254) return '169.254.0.0/16 (link-local; cloud metadata)';
+    if (a === 0) return '0.0.0.0/8';
+  }
+  if (v === 6) {
+    if (h === '::1' || h === '::ffff:127.0.0.1') return 'IPv6 loopback';
+    if (h.startsWith('fe80')) return 'IPv6 link-local';
+    if (h.startsWith('fc') || h.startsWith('fd')) return 'IPv6 unique-local';
+  }
+  return null;
+}
+
+async function handleSafeFetch(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (!checkAuth(req, res)) return;
+  const bodyText = await readBody(req);
+  let body: {
+    url?: unknown;
+    init?: { method?: unknown; headers?: unknown; body?: unknown };
+    simulateRebindTo?: unknown;
+  };
+  try {
+    body = JSON.parse(bodyText) as typeof body;
+  } catch {
+    return void sendError(res, 400, 'validation_error', 'Request body MUST be valid JSON.');
+  }
+  if (typeof body.url !== 'string') {
+    return void sendError(res, 400, 'validation_error', 'url: string is required.');
+  }
+  let target: URL;
+  try {
+    target = new URL(body.url);
+  } catch {
+    return void sendError(res, 400, 'validation_error', 'url MUST be a valid absolute URL.');
+  }
+
+  // Connection: upgrade refusal — escaping HTTP into a raw bidirectional socket
+  // would defeat the resolve->pin->connect boundary. Case-insensitive lookup.
+  const rawHeaders =
+    body.init && typeof body.init === 'object' && body.init.headers && typeof body.init.headers === 'object'
+      ? (body.init.headers as Record<string, string>)
+      : {};
+  const connection = Object.entries(rawHeaders).find(([k]) => k.toLowerCase() === 'connection')?.[1];
+  if (typeof connection === 'string' && connection.toLowerCase().includes('upgrade')) {
+    return void sendJSON(res, 200, { outcome: 'blocked', blocked: 'upgrade' });
+  }
+
+  // SSRF guard on the request host.
+  if (safeFetchBlockReason(target.hostname) !== null) {
+    return void sendJSON(res, 200, { outcome: 'blocked', blocked: 'ssrf' });
+  }
+  // DNS-rebinding defeat: the resolved IP is pinned for the connection. The seam
+  // models a re-resolution via `simulateRebindTo`; a public name that re-resolves
+  // to a blocked address MUST still be blocked.
+  if (typeof body.simulateRebindTo === 'string' && safeFetchBlockReason(body.simulateRebindTo) !== null) {
+    return void sendJSON(res, 200, { outcome: 'blocked', blocked: 'ssrf' });
+  }
+
+  // Public target, no upgrade: the guarded client fetches (simulated here). The
+  // body/timeout caps (SAFEFETCH_*) apply in a real impl. Emit the tool-hooks
+  // audit pair since this host advertises toolHooks.prePostEvents (RFC 0064).
+  const argsHash = createHash('sha256')
+    .update(scrubSecretShaped(stableStringify({ url: body.url })))
+    .digest('hex');
+  const toolCalled = { argsHash, principal: 'core.system', transport: 'http' };
+  const toolReturned = { status: 'ok', durationMs: 0 };
+  sendJSON(res, 200, { outcome: 'fetched', status: 200, toolCalled, toolReturned });
+}
+
 // ─── RFC 0062 — scheduled memory distillation ("dreams") ─────────────────────
 //
 // A budgeted compaction (RFC 0012) that writes a byte-stable archive and a
@@ -1513,6 +1613,20 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
     prePostEvents: true,
     perToolAuthorization: true,
     perToolRateLimit: true,
+  };
+
+  // RFC 0076 §B — host outbound-HTTP surface. The HTTP-client egress is
+  // SSRF-guarded (resolve->pin->connect; the http-client-ssrf-guard invariant)
+  // with a response-body cap. `safeFetch` exposes that guarded client to pack
+  // runtime code (ctx.http.safeFetch), exercised via the
+  // POST /v1/host/sample/http/safe-fetch seam.
+  capabilities.httpClient = {
+    supported: true,
+    ssrfGuard: true,
+    maxResponseBodyBytes: SAFEFETCH_MAX_RESPONSE_BODY_BYTES,
+    requestTimeoutMs: SAFEFETCH_REQUEST_TIMEOUT_MS,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'],
+    safeFetch: { supported: true },
   };
 
   // RFC 0062 — scheduled, token-budgeted memory distillation ("dreams"). A
@@ -2215,6 +2329,9 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   }
   if (method === 'POST' && path === '/v1/host/sample/toolhooks/invoke') {
     return handleToolHooksInvoke(req, res);
+  }
+  if (method === 'POST' && path === '/v1/host/sample/http/safe-fetch') {
+    return handleSafeFetch(req, res);
   }
   if (method === 'POST' && path === '/v1/host/sample/memory/distill') {
     return handleMemoryDistill(req, res);

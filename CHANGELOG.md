@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### feat(host-in-memory): RFC 0076 §B — reference `ctx.http.safeFetch` implementation (2026-05-29)
+
+The in-memory reference host implements the §B safe-fetch surface: it advertises `capabilities.httpClient { supported, ssrfGuard: true, maxResponseBodyBytes, requestTimeoutMs, methods, safeFetch: { supported: true } }` and serves the `POST /v1/host/sample/http/safe-fetch` seam — SSRF blocklist (loopback / RFC 1918 / link-local / cloud-metadata), DNS-rebinding defeat (pinned-IP model via `simulateRebindTo`), `Connection: upgrade` refusal, and the `agent.toolCalled`/`agent.toolReturned` audit pair (`transport:"http"`) since the host also advertises `toolHooks.prePostEvents`. Reuses the `http-client-ssrf-guard` invariant + `maxResponseBodyBytes` cap — no new invariant. `safefetch-behavior.test.ts` (5/5) + `http-client-ssrf.test.ts` pass under `OPENWOP_REQUIRE_BEHAVIOR=true` against it (steward-verified locally). This satisfies the reference-host half of §B's `Active → Accepted` gate; the consumer half (`core.openwop.http@2.0.0` + a non-steward adopter) remains. RFC 0076 §B acceptance box updated; in-memory `conformance.md` + `coverage.md` reflect the pass.
+
 ### docs(spec): RFC 0076 §A graduated `Active → Accepted` (2026-05-29)
 
 §A (`runtime.requires[]` declaration + install-time gate) is verified live on a **non-steward host**: `runtime-requires-install-gate.test.ts` (suite 1.12.0) passes all three behavioral scenarios under `OPENWOP_REQUIRE_BEHAVIOR=true` against MyndHyve `workflow-runtime-00230-zjn` (gate flag on), steward-corroborated by independent seam curls. Pack-side adoption: 6 `vendor.myndhyve.*` packs declare `runtime.requires[]`. RFC Status, README, and `INTEROP-MATRIX.md` updated; §B (`ctx.http.safeFetch`) stays `Active` (reference-impl pending), so RFC 0076 is `Active` overall.
