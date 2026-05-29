@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0067): provider-catalog auth-mode conventions — promote Draft → Active (2026-05-29)
+
+RFC 0067 (the additive optional `aiProviders.authModes` map — `{ <providerId>: ("apiKey" | "oauth-pkce" | "oauth-device" | "none")[] }` — letting a client pre-flight a provider's credential-supply UX, plus a non-normative provider-name vocabulary) promoted **`Draft → Active`**. The full wire surface had already landed on `main`: the additive optional `aiProviders.authModes` block in `capabilities.schema.json`, the §B normative auth-mode contract + §C provider vocabulary in `capabilities.md`, and the `byok-auth-modes.test.ts` conformance scenario (always-on shape + cross-field consistency gated on the field's presence). This promotion resolves the one `Active`-gating Unresolved question and flips the status:
+
+- **UQ #3 (local-endpoint addressing) RESOLVED: host-config only.** A `none` provider's endpoint URL (Ollama/vLLM) is host-internal deployment config, not interop surface — a portable client routes via `ai.provider`/`ai.model`, never the URL, so surfacing a base URL would leak deployment topology (SSRF-adjacent) for no portability gain. `authModes` stays purely a credential-supply advertisement; no endpoint field is added. (UQ #1 model-catalog + UQ #2 aggregator-nesting remain open but are `Accepted`-gated / implementer-confirmation items, not `Active` blockers.)
+- RFC Status → `Active`; spec §heading marker flipped `(RFC 0067, `Draft`)` → `(`Active`)`; all five acceptance criteria checked.
+- Comment window waived per `GOVERNANCE.md` lazy consensus. Reference-host advertisement remains deferred per §Conformance (shape + always-on validation ship; cross-field assertions soft-skip until a host advertises `authModes`).
+
+Additive (`COMPATIBILITY.md` §2.1): `authModes` optional on the existing optional `aiProviders` block; absent ⇒ today's "BYOK ⇒ `apiKey`" default. No existing field, error code, or endpoint changes.
+
 ### spec(rfc-0069): exec-class host-extension safety contract — promote Draft → Active (2026-05-29)
 
 RFC 0069 (arbitrary-command `exec`-class execution MUST NOT be a protocol-tier capability — it lives only in named host-extension scopes `x-host-<vendor>-exec` whose safety controls the host owns end-to-end) promoted **`Draft → Active`**. The RFC codifies an *existing* exclusion, so every acceptance artifact had already landed on `main`: the `spec/v1/host-extensions.md` §"`exec`-class tools" MUST-NOT, the `SECURITY/threat-model-prompt-injection.md` §4.7 threat row + §5 invariant row, the protocol-tier `exec-must-not-be-protocol-tier` invariant in `SECURITY/invariants.yaml`, and the always-on server-free `exec-not-protocol-tier.test.ts` conformance scenario (asserts the protocol corpus defines no exec-class primitive). This promotion is a status-line flip + acceptance-checklist tick:

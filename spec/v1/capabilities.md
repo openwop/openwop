@@ -249,7 +249,7 @@ Companion to `secrets`. Advertises which AI providers the host's AI-proxy can ro
 
 **Server semantics.** Servers reject `ai.credentialRef` for providers NOT in `byok` with `credential_forbidden`. Servers reject unknown `provider` ids with `validation_error`.
 
-#### `aiProviders.authModes` — BYOK auth-mode contract (RFC 0067, `Draft`)
+#### `aiProviders.authModes` — BYOK auth-mode contract (RFC 0067, `Active`)
 
 `supported` and `byok` say *which* providers the host routes to and *which* permit BYOK, but not *how* a client is expected to supply a provider's credential. As the catalog grows beyond API-key providers (OAuth-backed providers, local Ollama/vLLM endpoints, platform-managed providers) the supply mechanism diverges. The optional `authModes` map advertises it so a client can pre-flight the credential UX without trial-and-error.
 

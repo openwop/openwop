@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0067 |
 | **Title** | Provider-catalog conventions — a stable provider-name vocabulary and a per-provider BYOK auth-mode enum (`apiKey` / `oauth-pkce` / `oauth-device` / `none`) so clients can pre-flight how a host expects a provider's credential to be supplied |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-26 |
-| **Updated** | 2026-05-26 |
+| **Updated** | 2026-05-29 — promoted `Draft → Active`. The full wire surface already landed on `main` (the additive optional `aiProviders.authModes` map in `capabilities.schema.json`, the §B/§C prose in `capabilities.md`, and the always-on-shape + gated-cross-field `byok-auth-modes.test.ts` scenario). The one `Active`-gating Unresolved question (#3, local-endpoint addressing) is resolved below: **host-config only**. Comment window waived per `GOVERNANCE.md` lazy consensus. No host wire change; reference-host advertisement remains deferred per §Conformance. |
 | **Affects** | `schemas/capabilities.schema.json` (`aiProviders` — additive optional `authModes` map + a non-normative convention list extending `supported`'s description) · `spec/v1/capabilities.md` (§`aiProviders` — auth-mode contract + provider-name vocabulary) · `CHANGELOG.md` · new conformance scenario `byok-auth-modes.test.ts` |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -161,7 +161,7 @@ Forward-compatibility clauses:
 
 1. **Model-catalog advertisement.** Should a host be able to advertise which *models* a provider exposes (so a client can populate a model picker without a separate call)? Out of scope here; would compose with `aiProviders` if demanded. Decide before `Accepted`.
 2. **Aggregator semantics.** For `openrouter`/`litellm`, the `ai.model` string addresses an upstream model whose *own* provider may have a different auth mode. This RFC treats the aggregator as one provider with one auth mode (its own gateway key). Is that sufficient, or do aggregators need a nested advertisement? Likely sufficient for v1.x; confirm with an implementer.
-3. **`none` + local-endpoint addressing.** A `none` provider (Ollama/vLLM) needs an endpoint URL the host is configured with. Is endpoint addressing purely host-config, or should the discovery doc surface a non-secret base URL for observability? Proposed: host-config only (an endpoint URL is host-internal). Confirm before `Active`.
+3. **`none` + local-endpoint addressing.** ✅ **RESOLVED (2026-05-29, `Active` gate): host-config only — the discovery document does NOT surface a provider endpoint URL.** A `none` provider's endpoint (an Ollama/vLLM base URL) is host-internal deployment configuration, not interop surface. A portable client addresses a provider via `RunOptions.configurable.ai.provider` / `ai.model` (host-interpreted), never the URL, so surfacing a base URL would add a field with no client-portability benefit while leaking deployment topology — an SSRF-adjacent reconnaissance signal that contradicts the discovery document's posture of advertising *capability shape*, not deployment internals. This keeps `authModes` purely a credential-supply advertisement and adds no endpoint field. (If endpoint observability is later demanded it composes additively with `capabilities.observability`, not `aiProviders`.) UQ #1 (model-catalog advertisement) and #2 (aggregator nested semantics) remain open but are `Accepted`-gated / implementer-confirmation items, not `Active` blockers.
 
 ## Implementation notes (non-normative)
 
@@ -170,11 +170,11 @@ Forward-compatibility clauses:
 
 ## Acceptance criteria
 
-- [ ] `capabilities.md §aiProviders` documents `authModes` + the auth-mode contract (§B) + the provider-name vocabulary (§C).
-- [ ] `capabilities.schema.json` carries the additive optional `aiProviders.authModes` map.
-- [ ] `byok-auth-modes.test.ts` covers the shape (always-on) + cross-field consistency (gated on the field's presence).
-- [ ] CHANGELOG entry under `[1.1.5 — unreleased]`.
-- [ ] Reference host implements + advertises `authModes`, OR this RFC explicitly defers reference-host advertisement (it does — shape + always-on validation ship; cross-field assertions soft-skip until a host advertises).
+- [x] `capabilities.md §aiProviders` documents `authModes` + the auth-mode contract (§B) + the provider-name vocabulary (§C).
+- [x] `capabilities.schema.json` carries the additive optional `aiProviders.authModes` map.
+- [x] `byok-auth-modes.test.ts` covers the shape (always-on) + cross-field consistency (gated on the field's presence).
+- [x] CHANGELOG entry under `[1.1.6 — unreleased]`.
+- [x] Reference host implements + advertises `authModes`, OR this RFC explicitly defers reference-host advertisement (it does — shape + always-on validation ship; cross-field assertions soft-skip until a host advertises).
 
 ## References
 
