@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.examples/1.0.0/coin-flip.input.json",
+  "$id": "https://packs.openwop.dev/core.openwop.examples/1.0.1/coin-flip.input.json",
   "title": "CoinFlipNodeInput",
   "description": "Input for core.openwop.examples.coin-flip. The `seed` port drives deterministic output — same seed yields same result across replays.",
   "type": "object",

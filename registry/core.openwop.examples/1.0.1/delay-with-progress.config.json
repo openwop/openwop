@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.examples/1.0.0/delay-with-progress.config.json",
+  "$id": "https://packs.openwop.dev/core.openwop.examples/1.0.1/delay-with-progress.config.json",
   "title": "DelayWithProgressNodeConfig",
   "description": "Config for core.openwop.examples.delay-with-progress. Sleeps for delayMs and streams a progress event every tickMs.",
   "type": "object",

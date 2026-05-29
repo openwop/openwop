@@ -29,7 +29,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "6741e6d0d4b058bafadc4f1983c2da2ddfaaa42ba869940905c6c1f34ab2a291"
+          "content": "3c7cf9d23ef9f0dda528c812ad93d4e19e714db17aa6a53241c0df29bb5c3137"
         }
       ],
       "purl": "pkg:openwop/core.openwop.examples@1.0.1"
@@ -129,7 +129,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "f004129ea10b0238d9b5bcadf8c112bf3c9a2b97cac8508816a1a43fa2fb862b"
+          "content": "b657538caae844f63757036c3f6bfde309726a85f06f958e70d1767c77114242"
         }
       ],
       "properties": [
@@ -145,7 +145,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "f48a5564b214cf760e2b1d8ddad1075a8b93e463690a2419faab2a02dafd14ab"
+          "content": "c2f31fbd134c7c1023501d6797861efbbad1e4a06bb37b87a18498636d9cf58e"
         }
       ],
       "properties": [
@@ -161,7 +161,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "021fed0920259dabde1fd1c9a335bc14f85d0cc1b203bad2613497116f90eef7"
+          "content": "91f6489ebe8feefcd034bba36e968697830635fffb25daebc805159e3ccc714e"
         }
       ],
       "properties": [
@@ -177,7 +177,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "88d6d23c43fabb89f6a8b81145a6a51cb184601ff1099437b13b2332781ff1e5"
+          "content": "fc19eff6e377cbdd346a96e58593d2c33a8f66d8d334d3847e015c327d40a174"
         }
       ],
       "properties": [
@@ -193,7 +193,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "96ef74a791d59c50e1bdee054753f7e32bd52bb4c72d92cc1c85943a35c3985b"
+          "content": "37f06b478170369893ff0db2a29f5946340a4145baf6de8d0686d5c61931285d"
         }
       ],
       "properties": [
@@ -209,7 +209,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "fe81b38a2ce86fe66500f6143cafa590112abe67efe9e7ba615dc3bb8e231223"
+          "content": "b6a624190585952fcaa8560dbbd97bbe21426166adda32c6d4e6d794e4e7bbbc"
         }
       ],
       "properties": [
@@ -225,7 +225,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "36d6ec9d232aaa40b3282bbaacc73aae9aaca1a44e70f6e254aa686c478b9574"
+          "content": "25dc8c631b3f095da39e55a13be65ecfbdb24bb3eda6eb2ab5e9a16306482e1c"
         }
       ],
       "properties": [
@@ -241,7 +241,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "2c79f34d6e9764e1d3f026a95620503b70639a5d91fe3086d05a65081b6900fe"
+          "content": "5494ffcaca549d4fd2c7951fc472d6e587aeaf8fae3dd4e203a9fceea0583823"
         }
       ],
       "properties": [
@@ -257,7 +257,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "d9d926acd715b8eac8d3ce48de932a63635b56a96433e6c7380d896a7aabeb73"
+          "content": "e83288a8b57293bcfc3569c48d8a91488386c002cd99e93e9a51b37b136405c3"
         }
       ],
       "properties": [

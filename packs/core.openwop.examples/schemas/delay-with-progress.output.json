@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.examples/1.0.0/delay-with-progress.output.json",
+  "$id": "https://packs.openwop.dev/core.openwop.examples/1.0.1/delay-with-progress.output.json",
   "title": "DelayWithProgressNodeOutput",
   "description": "Output for core.openwop.examples.delay-with-progress. Returns the actual delay achieved (which may differ slightly from configured delayMs due to event-loop quantization).",
   "type": "object",
