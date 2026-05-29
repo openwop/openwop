@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0066 |
 | **Title** | `x-openwop-form` vendor extension on pack `configSchema` for picker-grade UX hints |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-25 |
-| **Updated** | 2026-05-25 |
+| **Updated** | 2026-05-29 (`Draft → Active`: the normative surface landed — `spec/v1/node-packs.md` §"`x-openwop-form` UX hints" (the §A `kind` vocabulary `prompt`/`provider`/`model`/`credential-picker` + the `MUST` unknown-`kind` fallback + the `MUST` `dependsOn` sibling-resolution/graceful-fallback) + the new server-free conformance scenario `x-openwop-form-pack-manifest.test.ts` (6 assertions: an annotated `configSchema` stays a valid 2020-12 schema and the advisory hints don't change what it accepts; each §A annotation matches the shape; forward-compat — an unknown `kind` validates; 3 negatives — missing `kind` / non-string `kind` / non-string `dependsOn`). No schema change (the annotation rides author-controlled `configSchema` `x-*` extensibility). Comment window waived (steward acceptance, additive per `COMPATIBILITY.md §2.1`). `Active → Accepted` awaits the Phase-2 reference-frontend `configFieldsFromSchema` honoring the extension + a first adopter pack publishing a `configSchema` that uses it — the path-to-Accepted evidence per `RFCS/0001`.) |
 | **Affects** | `spec/v1/node-packs.md` (new §"`x-openwop-form` UX hints"), `schemas/node-pack-manifest.schema.json` (no change — `additionalProperties` on inline configSchema already permits `x-*`), `RFCS/0043` (extends the vendor-extension policy to in-schema annotations), reference-app frontend `configFieldsFromSchema.ts` (Phase 2 — picks up the extension when present, falls through to pure-schema rendering when absent) |
 | **Compatibility** | `additive` per `COMPATIBILITY.md §2.1` |
 | **Supersedes** | — |

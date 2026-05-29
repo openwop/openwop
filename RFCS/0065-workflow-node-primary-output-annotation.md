@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0065 |
 | **Title** | Workflow node primary-output annotation |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidtufts) |
 | **Created** | 2026-05-25 |
-| **Updated** | 2026-05-25 |
+| **Updated** | 2026-05-29 (`Draft → Active`: the wire surface landed atomically — the additive optional `outputRole: "primary" \| "secondary"` field on `WorkflowNode` in `schemas/workflow-definition.schema.json` (`additionalProperties: false` preserved) + the always-on server-free conformance scenario `workflow-primary-output-annotation.test.ts` (6 assertions: primary/secondary validates, `invalid-value` rejects with an `enum` error, field-absent legacy shape still validates — the additive promise). The field is an advisory authoring-time hint with **no engine-observable effect**, so no reference-host execution test is required. Comment window waived (steward acceptance, additive per `COMPATIBILITY.md` §2.1). `Active → Accepted` awaits the reference-app `WorkflowCompletionCard` consuming the annotation — a non-blocking follow-up, architecturally clear from the v1 convention.) |
 | **Affects** | `schemas/workflow-definition.schema.json`, `spec/v1/positioning.md`, `conformance/src/scenarios/workflow-primary-output-annotation.test.ts`, FE chat-surface `WorkflowCompletionCard` consumption |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` |
 | **Supersedes** | — |

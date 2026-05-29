@@ -11,6 +11,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0065,rfc-0066): workflow primary-output annotation + `x-openwop-form` picker hints — promote Draft → Active (2026-05-29)
+
+Two additive, advisory-only authoring-hint RFCs promoted **`Draft → Active`** — both consumer-side, neither changes any host behavior or wire contract:
+
+- **RFC 0065** (workflow node primary-output annotation): the additive optional `outputRole: "primary" | "secondary"` field on `WorkflowNode` (in `schemas/workflow-definition.schema.json`, `additionalProperties: false` preserved) lets a workflow author mark the canonical-deliverable terminal node on a multi-terminal DAG. Hosts MUST execute identically regardless of the field — no engine-observable effect, so no reference-host execution test. The always-on server-free conformance scenario `workflow-primary-output-annotation.test.ts` (6 assertions) was already landed.
+- **RFC 0066** (`x-openwop-form` vendor extension): the normative `node-packs.md` §"`x-openwop-form` UX hints" surface (the §A `kind` vocabulary `prompt`/`provider`/`model`/`credential-picker`, the MUST unknown-`kind` forward-compat fallback, the MUST `dependsOn` sibling-resolution) is now backed by a **new** server-free conformance scenario `x-openwop-form-pack-manifest.test.ts` (added to the `openwop:check` server-free set + `conformance/coverage.md`): an annotated `configSchema` stays a valid 2020-12 schema and the advisory hints don't change what it accepts; the §A annotations match the shape; an unknown `kind` validates (forward-compat); 3 negatives. No schema change — the annotation rides author-controlled `configSchema` `x-*` extensibility.
+
+Comment windows waived (steward acceptance, additive per `COMPATIBILITY.md` §2.1). RFC Status + README counts (Active 10→12, Draft 7→5) + `docs/PROTOCOL-STATUS.md` + conformance scenario-file count (288→289) synced.
+
 ### docs(spec): RFC 0056 (run feedback & annotations) graduated `Active → Accepted` (2026-05-29)
 
 RFC 0056 (`host.feedback` capability + per-run annotation side-store at `POST/GET /v1/runs/{runId}/annotations` + the `run.annotated` SSE notification) promoted **`Active → Accepted`**. Implemented end-to-end on **three reference hosts** — in-memory (`#165`/`#168`) and Postgres + SQLite (`4288d6fa`) — each advertising `capabilities.feedback.{supported: true, targets: ["run"], signals: ["rating","correction","label","flag"]}`, persisting annotations in a per-run side-table (never a `RunEvent`, so a fork starts with zero annotations per §D), and SR-1-redacting `correction`/`label`/`note`. All seven `feedback-*.test.ts` conformance scenarios pass against the live SQLite host, verified non-vacuously (real `conformance-noop` run seeded → `POST` 201 with `annotationId` → `GET` lists it, `count: 1`). The two SECURITY invariants (`annotation-cross-tenant-isolation`, `annotation-content-redaction`) each have a matching public test.
