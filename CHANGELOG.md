@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0042): experimental capability tier — reconcile partial landing + promote Draft → Active (2026-05-29)
+
+RFC 0042 (`tier ∈ {stable, experimental}` + `experimentalUntil` ≤ 12-month sunset + derived `openwop-experimental` profile) promoted **`Draft → Active`**. Its schema surface (`tier`/`experimentalUntil` on `multiAgent.executionModel` + the `if`/`then` sunset rule), the `experimental-tier-shape.test.ts` conformance scenario, the `experimentalGate` helper, and the INTEROP "Experimental capabilities advertised" column had **already landed on main incidentally** (under the unrelated commit `45678c49`), but with **no normative prose** to cite — a schema/conformance-enforces-but-spec-silent gap. This reconciles it:
+
+- `spec/v1/capabilities.md` gains §"Capability stability tier" — the normative `tier`/`experimentalUntil` contract (§A), the three-action sunset rule (§B), and the `experimentalGate` conformance routing (§D, incl. the `OPENWOP_REQUIRE_EXPERIMENTAL` strict-mode axis).
+- `spec/v1/profiles.md` gains the `### openwop-experimental` derived profile (§C) — predicate: any sub-block advertises `tier: "experimental"`; clients filter on its negation for stable-only contracts.
+- RFC Status → `Active` (comment window waived, steward acceptance). Extending `tier` to the other §"Per-RFC application" sub-blocks is a per-host follow-on SHOULD, not a graduation blocker.
+
+Additive (`COMPATIBILITY.md` §2.1): `tier` optional, default `stable`; existing v1 conformance passes unaffected.
+
 ### chore(registry): publish signed core.openwop.http@2.0.0 to the in-tree mirror (2026-05-29)
 
 Built + signed (`build-pack-tarball.mjs --signed`, key `openwop-team-1`) and republished `core.openwop.http@2.0.0` (the RFC 0076 §B consumer) to the in-tree registry mirror: new `registry/v1/packs/core.openwop.http/-/2.0.0.{tgz,sig,json,sbom.json}` + the unpacked `registry/core.openwop.http/2.0.0/` schemas (69 files, `$id`s at `/2.0.0/`). `registry/scripts/build-index.mjs` + `generate-sbom.mjs` regenerated the per-pack index (`latest → 2.0.0`), the aggregate `registry/v1/sbom.json`, and the catalog page. All registry gates green: `verify-signatures` (88 signed), `check-pack-tarball-signatures` (82 non-yanked), `check-registry-signer-consistency`, `conformance-check`, tarball↔index integrity match. This closes the registry-distribution half of RFC 0076 §B's `Active → Accepted` gate; the remaining half is a non-steward host adopting `ctx.http.safeFetch`.

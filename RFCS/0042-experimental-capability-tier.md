@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0042 |
 | **Title** | Experimental capability tier — optional `tier` field on capability advertisements + sunset rule + derived `openwop-experimental` profile |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-22 |
-| **Updated** | 2026-05-22 |
+| **Updated** | 2026-05-29 (`Draft → Active` — steward acceptance, comment window waived per GOVERNANCE.md lazy consensus. Wire surface **reconciled**: §A/§B/§D normative prose landed in `capabilities.md` §"Capability stability tier" + §C `openwop-experimental` profile in `profiles.md`; the schema `tier`/`experimentalUntil` on `multiAgent.executionModel`, the `experimental-tier-shape` conformance scenario, the `experimentalGate` helper, and the INTEROP column were already on `main` — landed incidentally under commit `45678c49`, not a 0042 PR — and are now backed by prose. Extending `tier` to the other §"Per-RFC application" sub-blocks is a per-host follow-on SHOULD, not a graduation blocker.) |
 | **Affects** | `spec/v1/capabilities.md` · `spec/v1/profiles.md` · `schemas/capabilities.schema.json` (optional `tier` enum on each capability sub-block) · `conformance/src/scenarios/experimental-tier-shape.test.ts` (new) · `INTEROP-MATRIX.md` (new column) · `CHANGELOG.md` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 — new optional field with default `"stable"` |
 | **Supersedes** | — |
