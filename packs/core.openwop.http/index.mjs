@@ -149,14 +149,34 @@ async function assertPublicUrl(rawUrl) {
 }
 
 /** SSRF-hardened fetch wrapper. ALL outbound calls in this pack go
- *  through this. Validates the URL, scrubs sensitive caller headers,
- *  then delegates to the injected fetch impl (`ctx.fetch` for tests
- *  or `globalThis.fetch` for production). */
-async function safeFetch(rawUrl, init = {}, fetchImpl = globalThis.fetch) {
-  await assertPublicUrl(rawUrl);
+ *  through this. Scrubs sensitive caller headers, then either delegates
+ *  to a host-provided `ctx.http.safeFetch` (RFC 0076 §B) when present —
+ *  the host owns the resolve→pin→connect SSRF guard + the metadata
+ *  blocklist (one audited, host-maintained defense, audit-logged via
+ *  RFC 0064 toolHooks) — or, when the host doesn't expose it, falls back
+ *  to this pack's own `assertPublicUrl` (node:dns) + the injected fetch
+ *  impl (`ctx.fetch` for tests / `globalThis.fetch` for production).
+ *
+ *  RFC 0076 §A: a host that grants `net.outbound` lets the fallback path
+ *  run; a host that exposes `safeFetch` mediates egress itself. The pack
+ *  declares `runtime.requires: ["net.dns","net.outbound"]` for the
+ *  fallback and prefers `safeFetch` when offered. */
+async function safeFetch(rawUrl, init = {}, fetchImpl = globalThis.fetch, hostFetch = null) {
   const cleanInit = { ...init };
   if (cleanInit.headers) cleanInit.headers = sanitizeHeaders(cleanInit.headers);
+  if (typeof hostFetch === 'function') {
+    // Host-mediated path: the host performs SSRF defense + the fetch.
+    return hostFetch(rawUrl, cleanInit);
+  }
+  await assertPublicUrl(rawUrl);
   return fetchImpl(rawUrl, cleanInit);
+}
+
+/** Resolve the host-provided `ctx.http.safeFetch` (RFC 0076 §B) when the
+ *  host exposes it, else null (fall back to the in-pack guard). */
+function pickHostFetch(ctx) {
+  const hf = ctx?.http?.safeFetch;
+  return typeof hf === 'function' ? hf : null;
 }
 
 /**
@@ -315,7 +335,7 @@ export async function fetchNode(ctx) {
         headers,
         body: bodyBytes ?? undefined,
         signal: attemptController.signal,
-      }, fetchImpl);
+      }, fetchImpl, pickHostFetch(ctx));
       clearTimeout(timeoutHandle);
       ctx.signal?.removeEventListener('abort', onCallerAbort);
 
@@ -412,8 +432,8 @@ export async function fetchNode(ctx) {
 
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 
-async function bareFetch(url, init) {
-  const r = await safeFetch(url, init);
+async function bareFetch(url, init, hostFetch = null) {
+  const r = await safeFetch(url, init, globalThis.fetch, hostFetch);
   let body;
   const ct = r.headers.get('content-type') || '';
   if (ct.includes('application/json')) body = await r.json().catch(() => null);
@@ -446,7 +466,7 @@ export async function openapiCall(ctx) {
   if (ctx.inputs.body !== undefined && method.toUpperCase() !== 'GET') {
     init.body = typeof ctx.inputs.body === 'string' ? ctx.inputs.body : JSON.stringify(ctx.inputs.body);
   }
-  const res = await bareFetch(url, init);
+  const res = await bareFetch(url, init, pickHostFetch(ctx));
   return { status: 'success', outputs: { url, method: init.method, ...res } };
 }
 
@@ -455,7 +475,7 @@ export async function graphqlQuery(ctx) {
     method: 'POST',
     headers: { 'content-type': 'application/json', ...(ctx.inputs.headers ?? {}) },
     body: JSON.stringify({ query: ctx.inputs.query, variables: ctx.inputs.variables ?? {}, operationName: ctx.inputs.operationName ?? null }),
-  });
+  }, pickHostFetch(ctx));
   return { status: 'success', outputs: { ...res, data: res.body?.data ?? null, errors: res.body?.errors ?? null } };
 }
 
@@ -481,7 +501,7 @@ export async function soapCall(ctx) {
     method: 'POST',
     headers: { 'content-type': 'text/xml; charset=utf-8', 'soapaction': ctx.config.soapAction || '', ...(ctx.inputs.headers ?? {}) },
     body: envelope,
-  });
+  }, globalThis.fetch, pickHostFetch(ctx));
   const text = await res.text();
   return { status: 'success', outputs: { status: res.status, headers: Object.fromEntries(res.headers.entries()), body: text } };
 }
@@ -515,7 +535,7 @@ export async function sseConsume(ctx) {
   const emit = typeof ctx.emit === 'function' ? ctx.emit : null;
   const controller = new AbortController();
   const timer = ctx.config.durationMs ? setTimeout(() => controller.abort(), ctx.config.durationMs) : null;
-  const res = await safeFetch(ctx.inputs.url, { headers: { accept: 'text/event-stream', ...(ctx.inputs.headers ?? {}) }, signal: controller.signal });
+  const res = await safeFetch(ctx.inputs.url, { headers: { accept: 'text/event-stream', ...(ctx.inputs.headers ?? {}) }, signal: controller.signal }, globalThis.fetch, pickHostFetch(ctx));
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -564,7 +584,7 @@ export async function longPoll(ctx) {
   let iter = 0;
   while (iter < maxIter) {
     iter++;
-    const res = await bareFetch(ctx.inputs.url, { method: 'GET', headers: ctx.inputs.headers ?? {} });
+    const res = await bareFetch(ctx.inputs.url, { method: 'GET', headers: ctx.inputs.headers ?? {} }, pickHostFetch(ctx));
     if (res.status >= 200 && res.status < 300 && res.body !== null && (Array.isArray(res.body) ? res.body.length > 0 : true)) {
       return { status: 'success', outputs: { ...res, iterations: iter } };
     }
@@ -580,7 +600,7 @@ export async function uploadMultipart(ctx) {
     const buf = Buffer.from(file.contentBase64, 'base64');
     form.append(file.field, new Blob([buf], { type: file.contentType || 'application/octet-stream' }), file.filename);
   }
-  const res = await bareFetch(ctx.inputs.url, { method: 'POST', body: form, headers: ctx.inputs.headers ?? {} });
+  const res = await bareFetch(ctx.inputs.url, { method: 'POST', body: form, headers: ctx.inputs.headers ?? {} }, pickHostFetch(ctx));
   return { status: 'success', outputs: res };
 }
 
@@ -597,7 +617,7 @@ export async function uploadResumable(ctx) {
 }
 
 export async function downloadStream(ctx) {
-  const res = await safeFetch(ctx.inputs.url, { method: 'GET', headers: ctx.inputs.headers ?? {} });
+  const res = await safeFetch(ctx.inputs.url, { method: 'GET', headers: ctx.inputs.headers ?? {} }, globalThis.fetch, pickHostFetch(ctx));
   const chunks = [];
   const emit = typeof ctx.emit === 'function' ? ctx.emit : null;
   const reader = res.body.getReader();
@@ -629,7 +649,7 @@ function paginate(strategy) {
         : strategy === 'cursor' && cursor
           ? url + (url.includes('?') ? '&' : '?') + `cursor=${encodeURIComponent(cursor)}`
           : url;
-      const res = await bareFetch(requestUrl, { method: 'GET', headers: ctx.inputs.headers ?? {} });
+      const res = await bareFetch(requestUrl, { method: 'GET', headers: ctx.inputs.headers ?? {} }, pickHostFetch(ctx));
       pages.push(res);
       if (emit) await emit({ kind: 'node.progress', payload: { pageNum, status: res.status } });
       if (strategy === 'offset') {
@@ -659,7 +679,7 @@ export async function retryRateLimitAware(ctx) {
   let attempt = 0;
   while (attempt < max) {
     attempt++;
-    const res = await bareFetch(ctx.inputs.url, { method: ctx.inputs.method ?? 'GET', headers: ctx.inputs.headers ?? {}, body: ctx.inputs.body });
+    const res = await bareFetch(ctx.inputs.url, { method: ctx.inputs.method ?? 'GET', headers: ctx.inputs.headers ?? {}, body: ctx.inputs.body }, pickHostFetch(ctx));
     if (res.status !== 429 && res.status < 500) {
       return { status: 'success', outputs: { ...res, attempts: attempt } };
     }
@@ -680,7 +700,7 @@ export async function circuitBreaker(ctx) {
     return { status: 'success', outputs: { circuitOpen: true, status: 0, headers: {}, body: null, openUntilMs: state.openUntil - now } };
   }
   try {
-    const res = await bareFetch(ctx.inputs.url, { method: ctx.inputs.method ?? 'GET', headers: ctx.inputs.headers ?? {}, body: ctx.inputs.body });
+    const res = await bareFetch(ctx.inputs.url, { method: ctx.inputs.method ?? 'GET', headers: ctx.inputs.headers ?? {}, body: ctx.inputs.body }, pickHostFetch(ctx));
     if (res.status >= 500) state.failures++;
     else state.failures = 0;
     if (state.failures >= (ctx.config.threshold ?? 5)) {

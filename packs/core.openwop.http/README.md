@@ -3,12 +3,19 @@
 Spec-canonical HTTP fetch node. Single typeId `core.openwop.http.fetch` covering the universal "call an HTTP endpoint" use case with retry, backoff, and deterministic idempotency.
 
 | Pack name | `core.openwop.http` |
-| Version | `1.0.0` |
+| Version | `2.0.0` |
 | Engine | OpenWOP `>=1.0.0 <2.0.0` |
 | Runtime | JavaScript (ESM), Node `>=20` |
+| Runtime requires | `net.dns`, `net.outbound` (RFC 0076 §A — for the fallback path; satisfied trivially when the host mediates via `safeFetch`) |
 | External deps | None (uses Node 20's built-in `fetch`) |
 | Declares secrets? | No — auth is the workflow author's concern via `config.headers` |
 | License | Apache-2.0 |
+
+## v2.0 — host-mediated safe-fetch (RFC 0076 §B)
+
+Every outbound call in this pack flows through one wrapper that, when the host exposes **`ctx.http.safeFetch`** (advertised as `capabilities.httpClient.safeFetch`), delegates to it — the host performs the resolve→pin→connect SSRF guard + the cloud-metadata blocklist (one audited, host-maintained defense, audit-logged via RFC 0064 tool-hooks) and the fetch itself. When the host does **not** expose `safeFetch`, the pack falls back to its own `assertPublicUrl` (a `node:dns` resolution + private-range blocklist) + `globalThis.fetch`.
+
+Because of that fallback, the pack declares `runtime.requires: ["net.dns", "net.outbound"]` (RFC 0076 §A). A sandbox host that denies `net.outbound` and does **not** expose `safeFetch` refuses to install this pack at install time (`pack_runtime_requirement_unmet`) rather than failing at first fetch — and a host that mediates egress via `safeFetch` is the path that unblocks such sandboxes. Feature-detection means the same pack runs unchanged on hosts with or without `safeFetch`.
 
 ## Why no `requiresSecrets`?
 
