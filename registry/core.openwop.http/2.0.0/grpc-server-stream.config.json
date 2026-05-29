@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.http/2.0.0/grpc-server-stream.config.json",
+  "title": "Grpcserver-streamConfig",
+  "type": "object",
+  "required": [
+    "endpoint",
+    "service",
+    "method"
+  ],
+  "properties": {
+    "endpoint": {
+      "type": "string",
+      "format": "uri"
+    },
+    "service": {
+      "type": "string"
+    },
+    "method": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

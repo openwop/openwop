@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>openwop registry — packs.openwop.dev</title>
-<meta name="description" content="The canonical signed node-pack registry for the openwop workflow orchestration protocol. 62 pack(s), 87 version(s) published.">
+<meta name="description" content="The canonical signed node-pack registry for the openwop workflow orchestration protocol. 62 pack(s), 88 version(s) published.">
 <meta name="robots" content="index, follow">
 
 <meta property="og:type" content="website">
@@ -365,7 +365,7 @@
     <p class="lead">Canonical signed node-pack registry for the <a href="https://openwop.dev/">openwop</a> workflow orchestration protocol.</p>
     <div class="summary">
       <div><strong>62</strong><span>packs published</span></div>
-      <div><strong>87</strong><span>versions total</span></div>
+      <div><strong>88</strong><span>versions total</span></div>
       <div><strong>Ed25519</strong><span>signing algorithm</span></div>
     </div>
   </header>
@@ -537,14 +537,14 @@
         </tr>
         <tr>
           <td class="name"><code>core.openwop.http</code> </td>
-          <td class="version">1.1.2</td>
+          <td class="version">2.0.0</td>
           <td class="count" title="nodes in latest manifest">23</td>
-          <td class="desc">HTTP + general transport pack. v1.0 baseline: core.openwop.http.fetch (retry, backoff, idempotency). v1.1 additions: openapi-call, GraphQL (query/mutation/subscription), SOAP, gRPC (4 streaming variants), SSE consume, WebSocket client, long-poll, upload (multipart + resumable), download stream, pagination decorators (cursor/offset/link-header), rate-limit-aware retry, circuit breaker, idempotency-key generator, webhook signature verifier (Stripe/GitHub/Slack/raw-hmac). Zero npm deps — Node 20+ fetch/undici; transports requiring native libs delegate to host capabilities.</td>
+          <td class="desc">HTTP + general transport pack. v2.0 (RFC 0076 §B): prefers the host-mediated, SSRF-guarded `ctx.http.safeFetch` for all outbound when the host exposes it, falling back to the pack&#39;s own `assertPublicUrl` (node:dns) + `globalThis.fetch` otherwise; declares `runtime.requires: [&quot;net.dns&quot;,&quot;net.outbound&quot;]` for the fallback path. v1.0 baseline: core.openwop.http.fetch (retry, backoff, idempotency). v1.1 additions: openapi-call, GraphQL (query/mutation/subscription), SOAP, gRPC (4 streaming variants), SSE consume, WebSocket client, long-poll, upload (multipart + resumable), download stream, pagination decorators (cursor/offset/link-header), rate-limit-aware retry, circuit breaker, idempotency-key generator, webhook signature verifier (Stripe/GitHub/Slack/raw-hmac). Zero npm deps — Node 20+ fetch/undici; transports requiring native libs delegate to host capabilities.</td>
           <td class="license">Apache-2.0</td>
           <td class="artifacts">
-            <a href="/v1/packs/core.openwop.http/-/1.1.2.json" title="version manifest (JSON)">manifest</a>
-            · <a href="/v1/packs/core.openwop.http/-/1.1.2.tgz" title="signed tarball (tgz)">tgz</a>
-            · <a href="/v1/packs/core.openwop.http/-/1.1.2.sig" title="Ed25519 signature">sig</a>
+            <a href="/v1/packs/core.openwop.http/-/2.0.0.json" title="version manifest (JSON)">manifest</a>
+            · <a href="/v1/packs/core.openwop.http/-/2.0.0.tgz" title="signed tarball (tgz)">tgz</a>
+            · <a href="/v1/packs/core.openwop.http/-/2.0.0.sig" title="Ed25519 signature">sig</a>
           </td>
         </tr>
         <tr>
@@ -1230,7 +1230,7 @@ const ok = verify(null, readFileSync('pack.tgz'), pub, readFileSync('pack.sig'))
   </section>
 
   <footer>
-    Generated 2026-05-29T14:27:38.514Z · <a href="https://openwop.dev/">openwop.dev</a> · <a href="https://github.com/openwop/openwop">openwop on GitHub</a>
+    Generated 2026-05-29T16:49:54.076Z · <a href="https://openwop.dev/">openwop.dev</a> · <a href="https://github.com/openwop/openwop">openwop on GitHub</a>
   </footer>
 </main>
 </body>

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.http/2.0.0/webhook-verify.input.json",
+  "title": "WebhookVerifyInput",
+  "type": "object",
+  "required": [
+    "signatureHeader",
+    "secret",
+    "body"
+  ],
+  "properties": {
+    "signatureHeader": {
+      "type": "string"
+    },
+    "secret": {
+      "type": "string"
+    },
+    "body": {
+      "type": "string"
+    },
+    "timestampHeader": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

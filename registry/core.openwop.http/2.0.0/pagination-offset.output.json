@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.http/2.0.0/pagination-offset.output.json",
+  "title": "PaginationOffsetOutput",
+  "type": "object",
+  "required": [
+    "pages",
+    "pageCount"
+  ],
+  "properties": {
+    "pages": {
+      "type": "array"
+    },
+    "pageCount": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

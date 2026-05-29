@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.http/2.0.0/idempotency-key.config.json",
+  "title": "IdempotencyKeyConfig",
+  "description": "Generator modes for core.openwop.http.idempotency-key. Both are deterministic: same logical request → same key. The previous non-deterministic 'uuid' mode was removed in 1.1.2 (safety-fix — defeated retry-safety).",
+  "type": "object",
+  "properties": {
+    "mode": {
+      "type": "string",
+      "enum": [
+        "composite",
+        "hash"
+      ],
+      "default": "composite",
+      "description": "composite (default): SHA-256 of (ctx.runId, ctx.nodeId, payload). hash: SHA-256 of payload alone — use when the key must be stable across runs."
+    }
+  },
+  "additionalProperties": false
+}

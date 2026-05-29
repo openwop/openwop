@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.http/2.0.0/websocket-client.output.json",
+  "title": "WebsocketClientOutput",
+  "type": "object",
+  "required": [
+    "events",
+    "eventCount"
+  ],
+  "properties": {
+    "events": {
+      "type": "array"
+    },
+    "eventCount": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

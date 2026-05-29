@@ -1,7 +1,7 @@
 {
   "name": "core.openwop.http",
   "kind": "node",
-  "description": "HTTP + general transport pack. v1.0 baseline: core.openwop.http.fetch (retry, backoff, idempotency). v1.1 additions: openapi-call, GraphQL (query/mutation/subscription), SOAP, gRPC (4 streaming variants), SSE consume, WebSocket client, long-poll, upload (multipart + resumable), download stream, pagination decorators (cursor/offset/link-header), rate-limit-aware retry, circuit breaker, idempotency-key generator, webhook signature verifier (Stripe/GitHub/Slack/raw-hmac). Zero npm deps — Node 20+ fetch/undici; transports requiring native libs delegate to host capabilities.",
+  "description": "HTTP + general transport pack. v2.0 (RFC 0076 §B): prefers the host-mediated, SSRF-guarded `ctx.http.safeFetch` for all outbound when the host exposes it, falling back to the pack's own `assertPublicUrl` (node:dns) + `globalThis.fetch` otherwise; declares `runtime.requires: [\"net.dns\",\"net.outbound\"]` for the fallback path. v1.0 baseline: core.openwop.http.fetch (retry, backoff, idempotency). v1.1 additions: openapi-call, GraphQL (query/mutation/subscription), SOAP, gRPC (4 streaming variants), SSE consume, WebSocket client, long-poll, upload (multipart + resumable), download stream, pagination decorators (cursor/offset/link-header), rate-limit-aware retry, circuit breaker, idempotency-key generator, webhook signature verifier (Stripe/GitHub/Slack/raw-hmac). Zero npm deps — Node 20+ fetch/undici; transports requiring native libs delegate to host capabilities.",
   "author": "OpenWOP Working Group",
   "license": "Apache-2.0",
   "homepage": "https://openwop.dev/packs/core.openwop.http",
@@ -82,8 +82,20 @@
       "integrity": "sha256-qKmdrQXSsGmesZqhHNuunCxKWrQT+LlFOxdpoWvTl1c=",
       "deprecated": false,
       "yanked": false
+    },
+    {
+      "version": "2.0.0",
+      "publishedAt": "2026-05-10T00:00:00Z",
+      "manifestUrl": "/v1/packs/core.openwop.http/-/2.0.0.json",
+      "tarballUrl": "/v1/packs/core.openwop.http/-/2.0.0.tgz",
+      "signatureUrl": "/v1/packs/core.openwop.http/-/2.0.0.sig",
+      "signingMethod": "manual",
+      "signingKeyId": "openwop-team-1",
+      "integrity": "sha256-pDl0Aqv7X0Zr4pBnMy6x6s9cROObZR724Jy4xWOExL4=",
+      "deprecated": false,
+      "yanked": false
     }
   ],
-  "latest": "1.1.2",
+  "latest": "2.0.0",
   "deprecated": false
 }

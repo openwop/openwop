@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.http/2.0.0/idempotency-key.input.json",
+  "title": "IdempotencyKeyInput",
+  "description": "Inputs for the deterministic idempotency-key generator. runId / nodeId are normally read from ctx; the input fields are overrides for hosts that don't surface them on ctx, or for callers that want to derive a key for an off-host (runId, nodeId) pair.",
+  "type": "object",
+  "properties": {
+    "payload": {
+      "description": "Request-shape payload mixed into the SHA-256. Any JSON-serializable value (object, array, string, number, boolean, null). The same payload always produces the same key — that is the point."
+    },
+    "runId": {
+      "type": "string",
+      "description": "Override for ctx.runId. Honored only in composite mode."
+    },
+    "nodeId": {
+      "type": "string",
+      "description": "Override for ctx.nodeId. Honored only in composite mode."
+    }
+  },
+  "additionalProperties": false
+}

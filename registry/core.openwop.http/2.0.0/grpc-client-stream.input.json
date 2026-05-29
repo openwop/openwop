@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.http/2.0.0/grpc-client-stream.input.json",
+  "title": "Grpcclient-streamInput",
+  "type": "object",
+  "required": [
+    "request"
+  ],
+  "properties": {
+    "request": {},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {}
+    }
+  },
+  "additionalProperties": false
+}
