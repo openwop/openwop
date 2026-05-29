@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### fix(host-sample): chat-responder de-duplicates system messages before dispatch (2026-05-28)
+
+The chat-responder (`bootstrap/nodes.ts`) resolves a `systemBody` from one of three sources in precedence order (`inputs.agentId` → `config.systemPrompt` → `config.systemPromptRef`) and **prepends** it to the incoming `messages` array. When the chat-tab's `inputs.messages` ALREADY carried a system message (it bundles a generic "You are a helpful AI assistant…" default), the chat-responder ended up emitting **two consecutive `role: 'system'` messages**.
+
+MiniMax-M2.7 rejects that shape with HTTP 400 `invalid params, invalid chat setting (2013)` — confirmed by direct curl bisect against `https://api.minimax.io/v1/chat/completions`: single-system passes, two-system fails with this exact error code. Anthropic accepts multi-system but collapses internally; OpenAI accepts but its contract recommends one. De-duplicating at the chat-responder boundary is the correct shape for every provider.
+
+Fix: when the resolved `systemBody` is non-null, strip every existing `role: 'system'` message from `messages` before prepending. The resolved `systemBody` is authoritative; the caller's bundled default loses to whatever the workflow or active agent pins. Consecutive user messages (the other thing the chat-tab can emit when a prior run never recorded an assistant turn) are intentionally NOT collapsed — MiniMax accepts them and merging would lose conversation structure.
+
+Tests: new `chat-responder-system-dedup.test.ts` mocks `dispatchManagedChat`, captures the messages array the chat-responder sends, asserts (a) the stripping happens when a `systemBody` is resolved, (b) the messages pass through untouched when nothing is resolved, (c) consecutive user messages survive.
+
 ### fix(host-sample): bundle `packs/` into Cloud Run image so manifest agents auto-load in prod (2026-05-28)
 
 The Agents-tab inventory (`/v1/agents`) and the Install-from-registry page were empty on production despite `bootstrap/mountLocalPacks.ts` + `bootstrap/agentPackResolver.ts::loadAllLocalAgents()` correctly auto-loading ~30 manifest agents on a local `npm run dev`. Root cause: the Cloud Run runtime image's Dockerfile copied `lib/`, `providers.json`, `schemas/`, and `conformance-fixtures/` but **not** `packs/`, so `resolveLocalPacksDir()` walked up from `/app/lib` and found nothing to mount.
