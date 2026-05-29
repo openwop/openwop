@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0069 |
 | **Title** | A normative carve-out: arbitrary-command (`exec`-class) execution MUST NOT be a protocol-tier capability — it lives only in named host-extension scopes (`x-host-<vendor>-exec`) whose safety controls the host owns end-to-end. Codifies an existing exclusion; no host wire shape changes. |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-26 |
-| **Updated** | 2026-05-26 |
+| **Updated** | 2026-05-29 — promoted `Draft → Active`. Every acceptance artifact already landed on `main` (this RFC codifies the existing exclusion: the `host-extensions.md` §"`exec`-class tools" MUST-NOT, the threat-model row + §4.7, the protocol-tier `exec-must-not-be-protocol-tier` invariant, and the always-on `exec-not-protocol-tier.test.ts` are all merged and CI-green). The 7-day comment window is opened and waived under the bootstrap-phase steward waiver (`GOVERNANCE.md` §bootstrap; single-maintainer phase, no non-steward maintainer yet). No host wire change. |
 | **Affects** | `spec/v1/host-extensions.md` (new §"`exec`-class tools") · `SECURITY/threat-model-prompt-injection.md` (new §"`exec` tools" + an invariant row) · `SECURITY/invariants.yaml` (new protocol-tier invariant `exec-must-not-be-protocol-tier`) · `CHANGELOG.md` · new conformance scenario `exec-not-protocol-tier.test.ts` |
 | **Compatibility** | `additive` (codifies an existing exclusion; safety-fix-shaped but no host's wire shape changes) |
 | **Supersedes** | — |
@@ -139,12 +139,12 @@ Forward-compatibility clauses:
 
 ## Acceptance criteria
 
-- [ ] `host-extensions.md §"exec-class tools"` with the normative MUST-NOT + the named-host-extension carve-out + the safety-control SHOULDs.
-- [ ] `threat-model-prompt-injection.md` §"exec tools" threat row + §5 invariant row.
-- [ ] `SECURITY/invariants.yaml` carries `exec-must-not-be-protocol-tier` (protocol-tier) with a resolving test glob.
-- [ ] `exec-not-protocol-tier.test.ts` asserts the protocol corpus defines no exec-class primitive (always-on, server-free).
-- [ ] CHANGELOG entry under `[1.1.5 — unreleased]`.
-- [ ] No reference-host change required (the invariant is satisfied by the corpus; the scenario verifies it) — explicitly noted.
+- [x] `host-extensions.md §"exec-class tools"` with the normative MUST-NOT + the named-host-extension carve-out + the safety-control SHOULDs.
+- [x] `threat-model-prompt-injection.md` §"exec tools" threat row + §5 invariant row.
+- [x] `SECURITY/invariants.yaml` carries `exec-must-not-be-protocol-tier` (protocol-tier) with a resolving test glob.
+- [x] `exec-not-protocol-tier.test.ts` asserts the protocol corpus defines no exec-class primitive (always-on, server-free).
+- [x] CHANGELOG entry under `[1.1.6 — unreleased]`.
+- [x] No reference-host change required (the invariant is satisfied by the corpus; the scenario verifies it) — explicitly noted.
 
 ## References
 

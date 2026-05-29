@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0069): exec-class host-extension safety contract — promote Draft → Active (2026-05-29)
+
+RFC 0069 (arbitrary-command `exec`-class execution MUST NOT be a protocol-tier capability — it lives only in named host-extension scopes `x-host-<vendor>-exec` whose safety controls the host owns end-to-end) promoted **`Draft → Active`**. The RFC codifies an *existing* exclusion, so every acceptance artifact had already landed on `main`: the `spec/v1/host-extensions.md` §"`exec`-class tools" MUST-NOT, the `SECURITY/threat-model-prompt-injection.md` §4.7 threat row + §5 invariant row, the protocol-tier `exec-must-not-be-protocol-tier` invariant in `SECURITY/invariants.yaml`, and the always-on server-free `exec-not-protocol-tier.test.ts` conformance scenario (asserts the protocol corpus defines no exec-class primitive). This promotion is a status-line flip + acceptance-checklist tick:
+
+- RFC `0069` Status → `Active`; all six acceptance criteria checked (each satisfied by what is already on `main`); the spec §heading marker flipped `(`Draft`)` → `(`Active`)`.
+- Comment window opened and waived under the bootstrap-phase steward waiver (`GOVERNANCE.md` §bootstrap; single-maintainer phase, no non-steward maintainer yet).
+- No host wire change and no reference-host change required — the invariant is satisfied by the corpus and the scenario verifies it.
+
+Additive (`COMPATIBILITY.md` §2.1; safety-fix-shaped but codifies the status quo — no host's wire shape changes).
+
 ### spec(rfc-0042): experimental capability tier — reconcile partial landing + promote Draft → Active (2026-05-29)
 
 RFC 0042 (`tier ∈ {stable, experimental}` + `experimentalUntil` ≤ 12-month sunset + derived `openwop-experimental` profile) promoted **`Draft → Active`**. Its schema surface (`tier`/`experimentalUntil` on `multiAgent.executionModel` + the `if`/`then` sunset rule), the `experimental-tier-shape.test.ts` conformance scenario, the `experimentalGate` helper, and the INTEROP "Experimental capabilities advertised" column had **already landed on main incidentally** (under the unrelated commit `45678c49`), but with **no normative prose** to cite — a schema/conformance-enforces-but-spec-silent gap. This reconciles it:
