@@ -408,6 +408,55 @@ function generateStatus() {
   return `${lines.join('\n')}\n`;
 }
 
+// Self-heal the corpus counts embedded in README.md prose.
+//
+// `staleStatusFindings()` is a one-way guard: it FAILS when README's hand-typed
+// counts drift from the corpus, but a human still had to retype them. That made
+// the single giant "RFC status" blockquote a serialized merge-conflict locus —
+// every status flip hand-edited the same line, and parallel flips collided on
+// the integers. This makes `--write` the source of truth for those integers:
+// it rewrites ONLY the `\d+` run inside each checked, ASCII-delimited pattern
+// (the same patterns `staleStatusFindings()` validates), leaving every other
+// byte — including the unchecked `+ NNNN` enumeration, the graduation prose,
+// and any non-ASCII characters — untouched. A status flip is now: edit the
+// RFC's own `| **Status** |` row, then run `--write`; count conflicts on README
+// re-resolve mechanically (`git checkout --theirs README.md && …--write`) with
+// no arithmetic. Idempotent: re-running on a current README is a no-op.
+function syncReadmeCounts() {
+  const specDocs = listFiles('spec/v1', (rel) => rel.endsWith('.md'));
+  const schemas = listFiles('schemas', (rel) => rel.endsWith('.schema.json'));
+  const operations = openApiOperationIds();
+  const scenarios = listFiles('conformance/src/scenarios', (rel) => rel.endsWith('.test.ts'));
+  const rfcs = parseRfcs();
+  const invariantsText = read('SECURITY/invariants.yaml');
+  const protocolCount = (invariantsText.match(/^\s+tier:\s*protocol\b/gm) ?? []).length;
+  const referenceImplCount = (invariantsText.match(/^\s+tier:\s*reference-impl\b/gm) ?? []).length;
+  const advisoryCount = (invariantsText.match(/^\s+tier:\s*advisory\b/gm) ?? []).length;
+  const totalInvariants = protocolCount + referenceImplCount + advisoryCount;
+
+  // [regex with (prefix)(\d+)(suffix), replacement value]. Each pattern mirrors
+  // a check in staleStatusFindings(); only the middle \d+ run is rewritten.
+  const rules = [
+    [/(are\s+`Accepted`\s+\()\d+(\))/g, rfcs.filter((r) => r.status === 'Accepted').length],
+    [/(are\s+`Active`\s+\()\d+(\))/g, rfcs.filter((r) => r.status === 'Active').length],
+    [/(are\s+`Draft`\s+\()\d+(\))/g, rfcs.filter((r) => r.status === 'Draft').length],
+    [/(\()\d+(\s+RFCs\s+excluding\s+template\))/g, rfcs.length],
+    [/(\b)\d+(\s+conformance\s+scenario\s+files\b)/g, scenarios.length],
+    [/(\b)\d+(\s+prose\s+specs\b)/g, specDocs.length],
+    [/(\b)\d+(\s+JSON\s+Schemas\b)/g, schemas.length],
+    [/(\b)\d+(\s+OpenAPI\s+operations\b)/g, operations.length],
+    [/(\b)\d+(\s+protocol-tier\b)/g, protocolCount],
+    [/(\b)\d+(\s+reference-impl-tier\b)/g, referenceImplCount],
+    [/(\b)\d+(\s+invariants\s+in\b)/g, totalInvariants],
+  ];
+
+  let text = read('README.md');
+  for (const [re, value] of rules) {
+    text = text.replace(re, (_match, prefix, suffix) => `${prefix}${value}${suffix}`);
+  }
+  fs.writeFileSync(path.join(root, 'README.md'), text);
+}
+
 function main() {
   const mode = process.argv[2] ?? '--print';
   const generated = generateStatus();
@@ -416,6 +465,7 @@ function main() {
   if (mode === '--write') {
     fs.mkdirSync(path.dirname(statusPath), { recursive: true });
     fs.writeFileSync(statusPath, generated);
+    syncReadmeCounts();
     return;
   }
 
@@ -433,6 +483,11 @@ function main() {
     if (findings.length > 0) {
       console.error('Protocol status check failed:');
       for (const finding of findings) console.error(`- ${finding}`);
+      console.error(
+        '\nMost of these auto-fix: run `node scripts/generate-protocol-status.mjs --write` ' +
+          '(syncs README corpus counts + regenerates docs/PROTOCOL-STATUS.md). ' +
+          'Findings about RFC/spec Status lines, ROADMAP, or node-packs prose are content fixes, not counts.',
+      );
       process.exit(1);
     }
     console.log('Protocol status is current.');
