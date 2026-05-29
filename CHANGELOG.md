@@ -11,6 +11,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### fix(packs): bump core.openwop.agents.{deep-research,react,supervisor} source-schema $ids to 1.0.1 (2026-05-29)
+
+- The three agent packs were republished at `1.0.1` (PR #299) but their source schema `$id`s still read `…/1.0.0/…`, tripping the `packs-check` source-schema `$id`-vs-version audit (red on `main`). Bumped the 6 `$id`s to `1.0.1`.
+- The `$id` is **inert metadata** on these leaf schemas (manifests dispatch by `taskSchemaRef`/`returnSchemaRef` *path*, not by `$id`; nothing `$ref`s them by URL), so this is a hygiene-gate fix, not a wire/behavior change. Source-only — **no republish**.
+- Note: the already-published `1.0.1` tarballs remain frozen with their original (`1.0.0`) internal `$id`s; that is unobservable to consumers and is left as-is to avoid mutating a live version's bytes (per `registry-operations.md` immutability). The next substantive change to these packs will bump to `1.0.2` and carry the corrected `$id`s forward.
+
 ### fix(registry): republish core.openwop.examples@1.0.1 signed; yank unsigned 1.0.0 + rust-hello 1.0.0; add tarball-signature gate (2026-05-29)
 
 - **`core.openwop.examples@1.0.1`** — rebuilt + signed by `openwop-team-1` (the 1.0.0 in-tree tarball shipped with no `signing` block and a detached `.sig` that verified against no registered key). In-tree registry mirror regenerated (`1.0.1.{tgz,sig,json,sbom.json}`); the per-version manifest declares `signing.publicKeyRef: openwop-team-1`, so `build-index.mjs` now records the correct catalog `signingKeyId` (was the legacy `openwop-registry-root` drift). `latestVersion` → `1.0.1`.
