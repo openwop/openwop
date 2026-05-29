@@ -301,6 +301,20 @@ export function authMiddleware(): RequestHandler {
       return;
     }
 
+    // Read + verify the session cookie ONCE up front, even though we
+    // only consume it on the cookie path or the OIDC-promotion path
+    // below. The bearer-success branch needs it to decide whether to
+    // reissue the cookie as user-tier; the cookie branch needs it to
+    // decide mint-vs-refresh. Computing it twice (the prior shape)
+    // risked drift if the verification logic ever diverged between
+    // the two sites. Skip entirely in `cookiesDisabled` mode — there
+    // are no cookies to read.
+    const cookieSession = (() => {
+      if (cookiesDisabled) return null;
+      const raw = readCookie(req.header('cookie'), COOKIE_NAME);
+      return raw ? verifySession(raw) : null;
+    })();
+
     // ─── 1. Bearer token (or ?apiKey= for SSE EventSource) ───
     const header = req.header('authorization');
     let bearerToken: string | undefined;
@@ -347,21 +361,19 @@ export function authMiddleware(): RequestHandler {
           // though the user is signed in. Reissues only when the
           // existing cookie doesn't already match this user, so this
           // is a no-op on the steady-state hot path.
-          if (!cookiesDisabled) {
-            const existingRaw = readCookie(req.header('cookie'), COOKIE_NAME);
-            const existing = existingRaw ? verifySession(existingRaw) : null;
-            if (!existing || existing.tenantId !== tenantId || existing.tier !== 'user') {
-              const sid = base64urlEncode(randomBytes(18));
-              const now = Math.floor(Date.now() / 1000);
-              const upgraded: SessionPayload = {
-                sid,
-                tenantId,
-                tier: 'user',
-                iat: now,
-                exp: now + COOKIE_TTL_SECONDS,
-              };
-              setSessionCookie(res, signSession(upgraded));
-            }
+          if (!cookiesDisabled
+            && (!cookieSession || cookieSession.tenantId !== tenantId || cookieSession.tier !== 'user')
+          ) {
+            const sid = base64urlEncode(randomBytes(18));
+            const now = Math.floor(Date.now() / 1000);
+            const upgraded: SessionPayload = {
+              sid,
+              tenantId,
+              tier: 'user',
+              iat: now,
+              exp: now + COOKIE_TTL_SECONDS,
+            };
+            setSessionCookie(res, signSession(upgraded));
           }
           next();
           return;
@@ -425,8 +437,7 @@ export function authMiddleware(): RequestHandler {
       });
       return;
     }
-    const cookieRaw = readCookie(req.header('cookie'), COOKIE_NAME);
-    let session = cookieRaw ? verifySession(cookieRaw) : null;
+    let session = cookieSession;
     if (!session) {
       session = mintAnonSession();
       setSessionCookie(res, signSession(session));

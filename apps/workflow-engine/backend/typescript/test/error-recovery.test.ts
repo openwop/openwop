@@ -5,7 +5,10 @@
 
 import { describe, expect, it } from 'vitest';
 import { AiProviderError } from '../src/aiProviders/aiProvidersHost.js';
-import { classifyDispatchError } from '../src/observability/errorRecovery.js';
+import { classifyDispatchError, msUntilNextUtcMidnight } from '../src/observability/errorRecovery.js';
+
+const ONE_HOUR_MS = 60 * 60 * 1000;
+const ONE_DAY_MS = 24 * ONE_HOUR_MS;
 
 describe('classifyDispatchError — AiProviderError codes', () => {
   it('byok_required → auth / reconfigure', () => {
@@ -20,23 +23,46 @@ describe('classifyDispatchError — AiProviderError codes', () => {
   // cases they would render as the generic "Something went wrong"
   // default — which is wrong for user-actionable errors like
   // sign-in-required and daily-cap.
-  it('sign_in_required → auth / reconfigure with sign-in message', () => {
+  it('sign_in_required → auth / sign_in with sign-in message', () => {
     const r = classifyDispatchError(
       new AiProviderError('sign_in_required' as never, 'Sign in to use the free tier.'),
     );
     expect(r.category).toBe('auth');
-    expect(r.action).toBe('reconfigure');
+    // Distinct from `reconfigure` so consumers (FE recovery UI,
+    // notification surface, automated retry policies) can branch
+    // deterministically on "anon caller on a managed path" without
+    // pattern-matching the userMessage.
+    expect(r.action).toBe('sign_in');
     expect(r.userMessage).toMatch(/sign in/i);
     expect(r.userMessage).not.toMatch(/something went wrong/i);
   });
 
-  it('daily_limit_reached → rate_limit / wait with cap-explanation', () => {
+  it('daily_limit_reached → rate_limit / wait with retryAfterMs sized for the actual UTC-midnight reset', () => {
     const r = classifyDispatchError(
       new AiProviderError('daily_limit_reached' as never, 'cap hit'),
     );
     expect(r.category).toBe('rate_limit');
     expect(r.action).toBe('wait');
     expect(r.userMessage).toMatch(/daily limit/i);
+    // The cap resets at 00:00 UTC, so the wait window is at least
+    // 1ms (just before midnight) and at most 24h (just after).
+    // Without this hint, callers honoring `retryAfterMs` would retry
+    // in seconds and keep burning the same 401.
+    expect(r.retryAfterMs).toBeGreaterThan(0);
+    expect(r.retryAfterMs!).toBeLessThanOrEqual(ONE_DAY_MS);
+  });
+
+  it('msUntilNextUtcMidnight is deterministic + correct for a fixed instant', () => {
+    // 2026-05-29 18:30:00 UTC → next midnight = 2026-05-30 00:00:00 UTC
+    // → 5h 30m = 19_800_000ms.
+    const at = new Date(Date.UTC(2026, 4, 29, 18, 30, 0, 0));
+    expect(msUntilNextUtcMidnight(at)).toBe(5 * ONE_HOUR_MS + 30 * 60 * 1000);
+    // Edge: exactly at UTC midnight → returns a full day.
+    const atMidnight = new Date(Date.UTC(2026, 4, 29, 0, 0, 0, 0));
+    expect(msUntilNextUtcMidnight(atMidnight)).toBe(ONE_DAY_MS);
+    // Edge: one millisecond before midnight → returns 1ms.
+    const justBefore = new Date(Date.UTC(2026, 4, 29, 23, 59, 59, 999));
+    expect(msUntilNextUtcMidnight(justBefore)).toBe(1);
   });
 
   it('managed_unavailable → network / retry', () => {

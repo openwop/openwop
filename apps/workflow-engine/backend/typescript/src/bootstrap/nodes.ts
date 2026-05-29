@@ -23,6 +23,7 @@ import { dispatchAnthropicWithTools, type ToolDef } from '../providers/dispatchA
 import { dispatchMiniMaxWithTools } from '../providers/dispatchMiniMaxTools.js';
 import { getDefaultModel } from '../providers/catalog.js';
 import {
+  CHAT_RESPONDER_TYPE_ID,
   dispatchManagedChat,
   isManagedCredentialRef,
   managedProviderIdFromRef,
@@ -1118,7 +1119,7 @@ export function _setManagedChatTimeoutMs(ms: number): void {
 // Exported for test access; production callers wire via the registry
 // in `registerSampleNodes` below.
 export const sampleChatResponderNode: NodeModule = {
-  typeId: 'vendor.openwop-sample.chat-responder',
+  typeId: CHAT_RESPONDER_TYPE_ID,
   version: '0.2.0',
   async execute(ctx) {
     const inputs = (ctx.inputs && typeof ctx.inputs === 'object') ? (ctx.inputs as Record<string, unknown>) : {};

@@ -46,6 +46,29 @@ const log = createLogger('providers.managed');
 
 export const MANAGED_REF_PREFIX = 'managed:';
 
+/** Canonical typeId for the sample chat-responder node. Exported here
+ *  (rather than left as a literal at the node-module declaration site)
+ *  so it can be a single source of truth across (a) the node-module
+ *  registration in `bootstrap/nodes.ts`, (b) the
+ *  `MANAGED_DEFAULTING_TYPE_IDS` set below, and (c) the run-create
+ *  preflight in `routes/runs.ts`. Renaming the typeId in only one
+ *  place would silently break the preflight; routing it through one
+ *  constant makes the rename atomic. */
+export const CHAT_RESPONDER_TYPE_ID = 'vendor.openwop-sample.chat-responder';
+
+/** Node typeIds whose chat-class dispatch defaults to `managed:openwop-free`
+ *  when neither `config.credentialRef` nor `inputs.credentialRef` is set.
+ *  See the precedence chain in `bootstrap/nodes.ts` (the chat-responder
+ *  body's credentialRef resolution). The run-create preflight in
+ *  `routes/runs.ts` consumes this set to reject an anon caller whose
+ *  workflow contains such a node *implicitly* on managed (the workflow
+ *  author hasn't pinned an explicit ref). Co-located with
+ *  `MANAGED_REF_PREFIX` so the two "this is the managed path" signals
+ *  can't drift as future chat-class nodes land. */
+export const MANAGED_DEFAULTING_TYPE_IDS: ReadonlySet<string> = new Set([
+  CHAT_RESPONDER_TYPE_ID,
+]);
+
 /** Default grounding prompt for the "Try it free" tier. Overridable via
  *  `OPENWOP_MANAGED_SYSTEM_PROMPT`. Kept short so it doesn't dominate
  *  the context window for every turn. */

@@ -36,6 +36,7 @@ export type RecoveryAction =
   | 'retry'        // transient — try again, optionally with backoff
   | 'regenerate'   // safe to re-run the same turn
   | 'reconfigure'  // user must fix BYOK / policy / model selection
+  | 'sign_in'      // anon caller on a managed-tier path — sign in to unblock
   | 'abort'        // do not retry; surface as terminal failure
   | 'wait';        // throttling — wait `retryAfterMs` before retrying
 
@@ -52,6 +53,22 @@ export interface ClassifiedError {
 
 /** Match `<provider>_<status>:` preamble like `anthropic_429: ...`. */
 const PROVIDER_STATUS_RE = /^([a-z][a-z0-9-]+)_(\d{3}):/;
+
+/** Milliseconds remaining until the next UTC midnight. Used by the
+ *  free-tier daily-cap classifier so callers honoring `retryAfterMs`
+ *  back off for the actual remaining window (which can be anywhere
+ *  from seconds to ~24h) instead of retrying in a tight loop and
+ *  burning the same 401. `now` is injectable for deterministic
+ *  tests; production callers omit it. */
+export function msUntilNextUtcMidnight(now: Date = new Date()): number {
+  const nextMidnight = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() + 1,
+    0, 0, 0, 0,
+  ));
+  return nextMidnight.getTime() - now.getTime();
+}
 
 function classifyProviderStatus(provider: string, status: number): ClassifiedError {
   if (status === 429) {
@@ -119,14 +136,22 @@ function classifyAiProviderError(err: AiProviderError): ClassifiedError {
   if (codeString === 'sign_in_required') {
     return {
       category: 'auth',
-      action: 'reconfigure',
+      action: 'sign_in',
       userMessage: 'Sign in to use the free tier.',
     };
   }
   if (codeString === 'daily_limit_reached') {
+    // The free-tier cap resets at 00:00 UTC, which could be anywhere
+    // from a few seconds to ~24 hours away. Compute the actual
+    // remaining window so callers that honor `retryAfterMs` (the
+    // FE chat recovery surface, automated retry policies) back off
+    // for the right duration instead of retrying in seconds and
+    // burning the same 401. Same telemetry shape as
+    // `provider_rate_limited` above, just with a much larger window.
     return {
       category: 'rate_limit',
       action: 'wait',
+      retryAfterMs: msUntilNextUtcMidnight(),
       userMessage: 'You have hit the free-tier daily limit. It resets at 00:00 UTC, or add your own API key to keep going.',
     };
   }
