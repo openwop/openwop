@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
   "title": "RunEventPayloads",
-  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n75 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n77 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
   "type": "object",
   "$defs": {
     "_typeIndex": {
@@ -79,6 +79,8 @@
         "memory.written":            { "$ref": "#/$defs/memoryWritten" },
         "agent.memory.consolidated": { "$ref": "#/$defs/agentMemoryConsolidated" },
         "commitment.fired":          { "$ref": "#/$defs/commitmentFired" },
+        "agent.invocation.started":  { "$ref": "#/$defs/agentInvocationStarted" },
+        "agent.invocation.completed":{ "$ref": "#/$defs/agentInvocationCompleted" },
         "workspace.updated":         { "$ref": "#/$defs/workspaceUpdated" },
         "core.workflowChain.event":  { "$ref": "#/$defs/coreWorkflowChainEvent" },
         "core.workflowChain.confidence-escalated": { "$ref": "#/$defs/coreWorkflowChainConfidenceEscalated" },
@@ -1356,6 +1358,38 @@
         "memoryId":      { "type": "string", "minLength": 1, "description": "MAY — id of the source `MemoryEntry` the commitment was inferred from, when a single entry is attributable. Resolvable via `MemoryAdapter.get`; content is read SR-1-redacted from the read-side." },
         "condition":     { "type": "string", "enum": ["time", "predicate"], "description": "Which fire-condition kind triggered. `time` composes RFC 0052; `predicate` composes RFC 0060." },
         "enqueuedRunId": { "type": "string", "minLength": 1, "description": "MAY — id of the run the fired commitment enqueued, when the host initiates one. Absent when the commitment fires as a notification without a run." }
+      },
+      "additionalProperties": true
+    },
+
+    "agentInvocationStarted": {
+      "type": "object",
+      "description": "RFC 0077. Emitted by a host advertising `capabilities.agents.liveRuntime.supported: true` as the FIRST agent-scoped event of a live manifest invocation, bracketing the existing `agent.*` family with `agent.invocation.completed`. Content-free: identifiers + selection metadata only — prompt/task content is served by the run's normal projection, never on this event. A recorded-fact event per `replay.md` §\"Recorded-fact events\": on replay it is re-emitted from the log and the host MUST NOT regenerate its `invocationId` (or any identifier). Distinct from the deterministic RFC 0070 sample floor.",
+      "required": ["invocationId", "agentId", "source"],
+      "properties": {
+        "invocationId":     { "type": "string", "minLength": 1, "description": "Host-defined id correlating this agent invocation within its run, UNIQUE-WITHIN-RUN (not a mandated global id-space). Distinct from `runId` — one run MAY dispatch several invocations (multiple agent nodes, or a handoff chain) — but a host MAY derive it from an existing per-node-execution receipt id (e.g. `runId:nodeId:seq`) or mint a UUID; a single-invocation run MAY reuse `runId`. Recorded-fact: re-read from the log on replay, never regenerated (`replay.md` §\"Recorded-fact events\"). Correlates to the matching `agent.invocation.completed`." },
+        "agentId":          { "type": "string", "minLength": 1, "description": "The manifest agentId being invoked (matches `AgentManifest.agentId`)." },
+        "source":           { "type": "string", "enum": ["workflow-node", "run-api", "chat-mention"], "description": "Which entry point launched the invocation. All sources emit this identical family." },
+        "modelClass":       { "type": "string", "description": "MAY — the manifest's abstract `modelClass`. Always populatable at start." },
+        "resolvedModel":    { "type": "string", "description": "MAY — the concrete model the host selected. OPTIONAL: modelClass→concrete resolution MAY happen downstream (with capability-gated fallback substitution), so a dispatch-time start event genuinely may not know it; a host MAY also omit for deployment-privacy." },
+        "resolvedProvider": { "type": "string", "description": "MAY — the concrete provider the host routed to (aligns with `capabilities.aiProviders.supported` / RFC 0067 `authModes`). OPTIONAL, same rationale as `resolvedModel`." },
+        "toolSurfaceCount": { "type": "integer", "minimum": 0, "description": "MAY — number of tools in the constructed surface after `toolAllowlist` filtering. Content-free count, not the tool ids." },
+        "memoryBound":      { "type": "boolean", "description": "MAY — whether a long-term memory backend was bound for the invocation." }
+      },
+      "additionalProperties": true
+    },
+
+    "agentInvocationCompleted": {
+      "type": "object",
+      "description": "RFC 0077. Emitted by a host advertising `capabilities.agents.liveRuntime.supported: true` as the LAST agent-scoped event of a live manifest invocation (after the terminal `agent.decided`). Content-free: identifiers + outcome metadata only — the result body is served by the run's normal projection. A recorded-fact event per `replay.md` §\"Recorded-fact events\": re-read from the log on replay, never regenerated.",
+      "required": ["invocationId", "agentId", "outcome"],
+      "properties": {
+        "invocationId":    { "type": "string", "minLength": 1, "description": "Correlates to the `agent.invocation.started` `invocationId`. Recorded-fact: never regenerated on replay." },
+        "agentId":         { "type": "string", "minLength": 1, "description": "The manifest agentId." },
+        "outcome":         { "type": "string", "enum": ["completed", "handed-off", "escalated", "refused", "failed"], "description": "Terminal disposition. `completed`: produced a (schema-valid, if enforced) terminal result. `handed-off`: control passed to another agent (`agent.handoff`). `escalated`: confidence escalation fired (RFC 0002 §F). `refused`: the model refused (RFC 0032 refusal envelope) — never a silent substitution. `failed`: an error terminated the invocation." },
+        "schemaValidated": { "type": "boolean", "description": "MAY — whether the terminal result was validated against `handoff.returnSchemaRef` (true only when `liveRuntime.structuredOutput` is advertised and a `returnSchemaRef` exists)." },
+        "confidence":      { "type": "number", "minimum": 0, "maximum": 1, "description": "MAY — the terminal `agent.decided` confidence, mirrored for convenience. Content-free scalar." },
+        "enqueuedRunId":   { "type": "string", "minLength": 1, "description": "MAY — id of a follow-on run the invocation enqueued (e.g. a sub-run), when applicable." }
       },
       "additionalProperties": true
     },

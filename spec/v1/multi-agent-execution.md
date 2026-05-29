@@ -167,6 +167,44 @@ Writes a turn produces (memory writes, RFC 0059 workspace `PUT`s) MUST become vi
 
 **Acceptance + bound (existing surfaces, restated).** "Run until acceptance criteria met" is the existing `terminate` decision (§"Execution loop") — the supervisor evaluates the criteria and returns `terminate`, exiting to `run.completed`; RFC 0061 adds no mechanism, it names the pattern. "≤ N iterations" is RFC 0058's `maxLoopIterations`, bounding the iteration counter above; that bound gates on `capabilities.multiAgent.executionModel.supported` (orchestrator turns exist at `version >= 1`).
 
+## Live manifest dispatch (RFC 0077, normative — `capabilities.agents.liveRuntime`)
+
+Per [RFC 0077](../../RFCS/0077-agent-run-lifecycle-and-live-manifest-dispatch.md). RFC 0070 (`agents.manifestRuntime`) makes a pack-declared `AgentManifest` loadable + dispatchable on a deterministic floor; RFC 0072 pins its inventory (`GET /v1/agents`) + dispatch path (`WorkflowNode.agent` + `POST /v1/runs`). **Live manifest dispatch** is the execution layer that runs a manifest agent against a *live* model + its real tools, gated behind the additive optional `capabilities.agents.liveRuntime` — a **strict superset of `agents.manifestRuntime`** (`liveRuntime.supported: true` REQUIRES `manifestRuntime.supported: true`). Hosts that advertise only the floor are unchanged.
+
+### Manifest → live-run mapping (normative, when `agents.liveRuntime.supported: true`)
+
+A live manifest invocation MUST perform these steps; each composes an existing surface — this section pins which are MUST and their ordering, not the internal algorithm:
+
+1. **Model/provider selection.** The host resolves the manifest's abstract `modelClass` to a concrete model + provider. The mapping is host-defined; the host MUST keep it stable within a run for replay (the resolved model participates in the RFC 0041 LLM cache-key recipe). A run-time override MAY be supplied via `RunOptions.configurable.ai.*`, taking precedence. Resolution MAY occur downstream (e.g. at the prompt-call node, with capability-gated fallback-model substitution), so `agent.invocation.started` MAY omit the resolved model.
+2. **Prompt resolution.** Resolve the system prompt from `systemPrompt` | `systemPromptRef` (intrinsic, wins) with `promptOverrides` / `promptLibraryRef` fallback per `prompts.md` (RFC 0028/0029). The host MUST emit `agent.promptResolved` recording the resolved PromptRef identifiers (content-free per RFC 0028).
+3. **Tool-surface construction.** Construct the callable tool surface by filtering against `toolAllowlist` (RFC 0002 §A14). A tool NOT in the allowlist MUST NOT be callable. When `capabilities.toolHooks` (RFC 0064) is advertised, per-tool authorization MUST fail closed (`forbidden`) and tool calls MUST emit `agent.toolCalled` / `agent.toolReturned`.
+4. **Memory binding.** Bind the backends declared in `memoryShape` (RFC 0004). When `memoryShape.longTerm: true`, the host MUST apply the SR-1 redaction harness on writes and MAY emit `memory.written` (RFC 0057) / participate in consolidation (RFC 0068). Memory is tenant-scoped (CTI-1).
+5. **Reasoning + tool loop.** Run the agent turn(s): live inference + tool calls through the step-3 surface, emitting the existing `agent.reasoned` / `agent.reasoning.delta` / `agent.toolCalled` / `agent.toolReturned` events. **Single-shot is the `liveRuntime` floor** — a `liveRuntime` host MAY run one turn; the multi-turn agent loop composes *above* via the orchestrator + RFC 0061 (`executionModel.version >= 5`) and MUST NOT be folded into the `liveRuntime` floor (loop infrastructure is not required to advertise `liveRuntime`).
+6. **Handoff + structured-output validation.** When `handoff.taskSchemaRef` is present, the host MUST validate the inbound task against it before step 5 and reject a non-conforming task. When `handoff.returnSchemaRef` is present AND `liveRuntime.structuredOutput: true` is advertised, the host MUST validate the terminal result against it and fail the run rather than ship a non-conforming result. Cross-agent handoffs emit `agent.handoff`.
+7. **Confidence escalation.** When `liveRuntime.confidenceEscalation: true`, an `agent.decided` whose `confidence` falls below the effective threshold (`confidence.defaultThreshold`, or the run-resolved threshold per RFC 0002 §F, default 0.7) MUST trigger the §"Confidence escalation" contract rather than silently accept.
+8. **Terminal result projection.** On termination, project the agent's terminal result onto the run's normal result surface. When the agent ran as a sub-run with `capabilities.agents.subRunAttestation` (RFC 0063), the attestation composes unchanged and follows the agent-scoped terminal. The host MUST emit `agent.invocation.completed` as the final agent-scoped event.
+
+### Invocation bracket events (normative)
+
+A `liveRuntime` host MUST emit `agent.invocation.started` as the FIRST agent-scoped event of a live invocation and `agent.invocation.completed` as the LAST, bracketing the existing `agent.*` family. Both are **content-free** (identifiers + metadata only — no prompt text, no result body) and are **recorded-fact events** per `replay.md` §"Recorded-fact events": on replay they are re-emitted from the event log and the host MUST NOT regenerate their identifiers (notably `invocationId`) or timestamps.
+
+- **`invocationId`** correlates `started`↔`completed`. It is **host-defined and unique-within-run** — NOT a mandated global id-space. It is distinct from `runId` (one run MAY host several invocations — multiple agent nodes, or a handoff chain), but a host MAY derive it from an existing per-node-execution receipt id (e.g. `runId:nodeId:seq`) or mint a UUID, and a single-invocation run MAY reuse `runId`.
+- **`source`** ∈ `workflow-node` | `run-api` | `chat-mention` records the entry point (below). `agent.invocation.started` MAY also carry `modelClass`, the optional `resolvedModel`/`resolvedProvider`, `toolSurfaceCount`, `memoryBound`. `agent.invocation.completed` carries `outcome` ∈ `completed` | `handed-off` | `escalated` | `refused` | `failed`, plus optional `schemaValidated` / `confidence` / `enqueuedRunId`.
+
+**Event ordering (normative).** For a single live invocation the agent-scoped events MUST appear as: `agent.invocation.started` → `agent.promptResolved` → (`agent.reasoning.delta`* → `agent.reasoned`)+ → (`agent.toolCalled` → `agent.toolReturned`)* → `agent.decided`+ → `agent.handoff`? → `agent.invocation.completed`. `started` MUST precede every other agent-scoped event of the invocation; `completed` MUST follow them (and, for a sub-run, precedes the run-scoped RFC 0063 `output.harvested`).
+
+### Composition: three entry points (normative)
+
+A live manifest agent is invocable three ways; all MUST resolve to the same mapping above and emit the identical bracket + family — **one agent, one observable event family, three entry points**:
+
+1. **`workflow-node`** — a `WorkflowNode.agent` step (RFC 0072 §B); the invocation is a node execution inheriting the run's replay/fork/observability envelope. Default `sources` value.
+2. **`run-api`** — an agent as the root of `POST /v1/runs`; the run lifecycle wraps it. A host advertising `run-api` MUST accept a run whose root references a manifest `agentId`.
+3. **`chat-mention`** — a chat `@agent` invocation. The chat surface is host UX (non-normative), but a host advertising `chat-mention` MUST map it onto the same run surface + emit the identical family. `sources` is per-host; **no enum member is mandatory** — a host with no chat surface advertises `["workflow-node", "run-api"]` and is fully compliant.
+
+### Safety carry-forward (normative)
+
+Live execution MUST NOT relax any RFC 0072 §D mandatory floor guarantee: (1) `toolAllowlist` enforcement is mandatory (a tool outside the allowlist MUST NOT be callable even under `liveRuntime`); (2) handoff inbound validation (`taskSchemaRef`) is mandatory when present; (3) tenant scoping (CTI-1) on memory + any enqueued run is mandatory; (4) live model output is untrusted — the host MUST treat it per the RFC 0031/0032 envelope contract (a refusal terminates with `outcome: "refused"`, never a silent substitution); (5) per-tool authorization (when `toolHooks` advertised) fails closed. `structuredOutput` + `confidenceEscalation` are advertised *quality* sub-flags (a host MAY run live without them); the five guarantees above are unconditional under `liveRuntime`.
+
 ## Capability advertisement (normative)
 
 ```jsonc

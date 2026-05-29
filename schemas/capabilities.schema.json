@@ -866,6 +866,32 @@
             }
           }
         },
+        "liveRuntime": {
+          "type": "object",
+          "description": "RFC 0077. The host executes manifest agents against LIVE models and tools (not the deterministic RFC 0070 sample floor) per the normative AgentManifest→live-run mapping (`multi-agent-execution.md` §\"Live manifest dispatch\"), and emits the `agent.invocation.started`/`agent.invocation.completed` content-free bracket around the existing `agent.*` family. REQUIRES `agents.manifestRuntime.supported: true` — `liveRuntime` is a strict superset of the floor. The floor's mandatory safety guarantees (toolAllowlist enforcement, handoff inbound validation, tenant scoping, untrusted-model-output handling, fail-closed per-tool authorization) stay unconditional under `liveRuntime`. Hosts that omit this block run the floor only; the behavioral conformance scenarios skip cleanly.",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "REQUIRED when present. When `true`, the host performs live manifest dispatch per the §B mapping and emits the `agent.invocation.*` bracket. Gated on `agents.manifestRuntime.supported: true`."
+            },
+            "structuredOutput": {
+              "type": "boolean",
+              "description": "When `true`, the host validates the terminal result against the agent's `handoff.returnSchemaRef` and fails the run with a structured-output error on a non-conforming result rather than shipping it. Absent ⇒ `false` (runs live but does not enforce `returnSchemaRef`)."
+            },
+            "confidenceEscalation": {
+              "type": "boolean",
+              "description": "When `true`, the host honors `AgentManifest.confidence.defaultThreshold` and triggers the RFC 0002 §F escalation contract when an `agent.decided` confidence falls below the effective threshold, rather than silently accepting the decision. Absent ⇒ `false`."
+            },
+            "sources": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "type": "string", "enum": ["workflow-node", "run-api", "chat-mention"] },
+              "description": "Which invocation entry points the host exposes for live manifest dispatch. `workflow-node`: an agent step inside a workflow run (RFC 0072 §B); `run-api`: an agent as the root of POST /v1/runs; `chat-mention`: a chat @agent invocation mapped onto the run surface. Enum membership is NOT mandatory — a host with no chat surface simply omits `chat-mention`. Absent ⇒ `['workflow-node']` (the RFC 0072 §B normative path). All advertised sources MUST emit the identical `agent.invocation.*` + `agent.*` event family."
+            }
+          }
+        },
         "dispatchMapping": {
           "type": "boolean",
           "default": false,
