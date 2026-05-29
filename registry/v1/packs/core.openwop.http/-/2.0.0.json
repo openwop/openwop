@@ -1,0 +1,394 @@
+{
+  "name": "core.openwop.http",
+  "version": "2.0.0",
+  "description": "HTTP + general transport pack. v2.0 (RFC 0076 §B): prefers the host-mediated, SSRF-guarded `ctx.http.safeFetch` for all outbound when the host exposes it, falling back to the pack's own `assertPublicUrl` (node:dns) + `globalThis.fetch` otherwise; declares `runtime.requires: [\"net.dns\",\"net.outbound\"]` for the fallback path. v1.0 baseline: core.openwop.http.fetch (retry, backoff, idempotency). v1.1 additions: openapi-call, GraphQL (query/mutation/subscription), SOAP, gRPC (4 streaming variants), SSE consume, WebSocket client, long-poll, upload (multipart + resumable), download stream, pagination decorators (cursor/offset/link-header), rate-limit-aware retry, circuit breaker, idempotency-key generator, webhook signature verifier (Stripe/GitHub/Slack/raw-hmac). Zero npm deps — Node 20+ fetch/undici; transports requiring native libs delegate to host capabilities.",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.http",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "http",
+    "fetch",
+    "graphql",
+    "grpc",
+    "sse",
+    "websocket",
+    "openapi",
+    "webhook"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "nodes": [
+    {
+      "typeId": "core.openwop.http.fetch",
+      "version": "1.0.0",
+      "label": "HTTP Fetch",
+      "description": "Issues an HTTP request. Side-effectful (declared via the `side-effectful` capability) so the engine's Layer-2 invocation log caches responses keyed on (runId, nodeId, idempotencyKey) — replays return the cached response without re-issuing the request. Retries 5xx + network errors with exponential backoff; never retries 4xx (client error). Auth headers are the workflow author's concern — pass them through `config.headers` directly, or use the host's templating to inject a resolved credential.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/fetch.config.json",
+      "inputSchemaRef": "schemas/fetch.input.json",
+      "outputSchemaRef": "schemas/fetch.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.openapi-call",
+      "version": "1.0.0",
+      "label": "Openapi Call",
+      "description": "v1.1 HTTP node — openapi-call.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/openapi-call.config.json",
+      "inputSchemaRef": "schemas/openapi-call.input.json",
+      "outputSchemaRef": "schemas/openapi-call.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.graphql-query",
+      "version": "1.0.0",
+      "label": "Graphql Query",
+      "description": "v1.1 HTTP node — graphql-query.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/graphql-query.config.json",
+      "inputSchemaRef": "schemas/graphql-query.input.json",
+      "outputSchemaRef": "schemas/graphql-query.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.graphql-mutation",
+      "version": "1.0.0",
+      "label": "Graphql Mutation",
+      "description": "v1.1 HTTP node — graphql-mutation.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/graphql-mutation.config.json",
+      "inputSchemaRef": "schemas/graphql-mutation.input.json",
+      "outputSchemaRef": "schemas/graphql-mutation.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.graphql-subscription",
+      "version": "1.0.0",
+      "label": "Graphql Subscription",
+      "description": "v1.1 HTTP node — graphql-subscription.",
+      "category": "integration",
+      "role": "streaming-output",
+      "capabilities": [
+        "cacheable",
+        "side-effectful",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/graphql-subscription.config.json",
+      "inputSchemaRef": "schemas/graphql-subscription.input.json",
+      "outputSchemaRef": "schemas/graphql-subscription.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.soap-call",
+      "version": "1.0.0",
+      "label": "Soap Call",
+      "description": "v1.1 HTTP node — soap-call.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/soap-call.config.json",
+      "inputSchemaRef": "schemas/soap-call.input.json",
+      "outputSchemaRef": "schemas/soap-call.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.grpc-unary",
+      "version": "1.0.0",
+      "label": "Grpcunary",
+      "description": "v1.1 HTTP node — grpc-unary.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/grpc-unary.config.json",
+      "inputSchemaRef": "schemas/grpc-unary.input.json",
+      "outputSchemaRef": "schemas/grpc-unary.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.grpc-server-stream",
+      "version": "1.0.0",
+      "label": "Grpcserver-stream",
+      "description": "v1.1 HTTP node — grpc-server-stream.",
+      "category": "integration",
+      "role": "streaming-output",
+      "capabilities": [
+        "cacheable",
+        "side-effectful",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/grpc-server-stream.config.json",
+      "inputSchemaRef": "schemas/grpc-server-stream.input.json",
+      "outputSchemaRef": "schemas/grpc-server-stream.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.grpc-client-stream",
+      "version": "1.0.0",
+      "label": "Grpcclient-stream",
+      "description": "v1.1 HTTP node — grpc-client-stream.",
+      "category": "integration",
+      "role": "streaming-output",
+      "capabilities": [
+        "cacheable",
+        "side-effectful",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/grpc-client-stream.config.json",
+      "inputSchemaRef": "schemas/grpc-client-stream.input.json",
+      "outputSchemaRef": "schemas/grpc-client-stream.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.grpc-bidi",
+      "version": "1.0.0",
+      "label": "Grpcbidi",
+      "description": "v1.1 HTTP node — grpc-bidi.",
+      "category": "integration",
+      "role": "streaming-output",
+      "capabilities": [
+        "cacheable",
+        "side-effectful",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/grpc-bidi.config.json",
+      "inputSchemaRef": "schemas/grpc-bidi.input.json",
+      "outputSchemaRef": "schemas/grpc-bidi.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.sse-consume",
+      "version": "1.0.0",
+      "label": "Sse Consume",
+      "description": "v1.1 HTTP node — sse-consume.",
+      "category": "integration",
+      "role": "streaming-output",
+      "capabilities": [
+        "cacheable",
+        "side-effectful",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/sse-consume.config.json",
+      "inputSchemaRef": "schemas/sse-consume.input.json",
+      "outputSchemaRef": "schemas/sse-consume.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.websocket-client",
+      "version": "1.0.0",
+      "label": "Websocket Client",
+      "description": "v1.1 HTTP node — websocket-client.",
+      "category": "integration",
+      "role": "streaming-output",
+      "capabilities": [
+        "cacheable",
+        "side-effectful",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/websocket-client.config.json",
+      "inputSchemaRef": "schemas/websocket-client.input.json",
+      "outputSchemaRef": "schemas/websocket-client.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.long-poll",
+      "version": "1.0.0",
+      "label": "Long Poll",
+      "description": "v1.1 HTTP node — long-poll.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/long-poll.config.json",
+      "inputSchemaRef": "schemas/long-poll.input.json",
+      "outputSchemaRef": "schemas/long-poll.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.upload-multipart",
+      "version": "1.0.0",
+      "label": "Upload Multipart",
+      "description": "v1.1 HTTP node — upload-multipart.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/upload-multipart.config.json",
+      "inputSchemaRef": "schemas/upload-multipart.input.json",
+      "outputSchemaRef": "schemas/upload-multipart.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.upload-resumable",
+      "version": "1.0.0",
+      "label": "Upload Resumable",
+      "description": "v1.1 HTTP node — upload-resumable.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/upload-resumable.config.json",
+      "inputSchemaRef": "schemas/upload-resumable.input.json",
+      "outputSchemaRef": "schemas/upload-resumable.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.download-stream",
+      "version": "1.0.0",
+      "label": "Download Stream",
+      "description": "v1.1 HTTP node — download-stream.",
+      "category": "integration",
+      "role": "streaming-output",
+      "capabilities": [
+        "cacheable",
+        "side-effectful",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/download-stream.config.json",
+      "inputSchemaRef": "schemas/download-stream.input.json",
+      "outputSchemaRef": "schemas/download-stream.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.pagination-cursor",
+      "version": "1.0.0",
+      "label": "Pagination Cursor",
+      "description": "v1.1 HTTP node — pagination-cursor.",
+      "category": "integration",
+      "role": "streaming-output",
+      "capabilities": [
+        "cacheable",
+        "side-effectful",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/pagination-cursor.config.json",
+      "inputSchemaRef": "schemas/pagination-cursor.input.json",
+      "outputSchemaRef": "schemas/pagination-cursor.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.pagination-offset",
+      "version": "1.0.0",
+      "label": "Pagination Offset",
+      "description": "v1.1 HTTP node — pagination-offset.",
+      "category": "integration",
+      "role": "streaming-output",
+      "capabilities": [
+        "cacheable",
+        "side-effectful",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/pagination-offset.config.json",
+      "inputSchemaRef": "schemas/pagination-offset.input.json",
+      "outputSchemaRef": "schemas/pagination-offset.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.pagination-link-header",
+      "version": "1.0.0",
+      "label": "Pagination Link Header",
+      "description": "v1.1 HTTP node — pagination-link-header.",
+      "category": "integration",
+      "role": "streaming-output",
+      "capabilities": [
+        "cacheable",
+        "side-effectful",
+        "streamable"
+      ],
+      "configSchemaRef": "schemas/pagination-link-header.config.json",
+      "inputSchemaRef": "schemas/pagination-link-header.input.json",
+      "outputSchemaRef": "schemas/pagination-link-header.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.retry-rate-limit-aware",
+      "version": "1.0.0",
+      "label": "Retry Rate Limit Aware",
+      "description": "v1.1 HTTP node — retry-rate-limit-aware.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/retry-rate-limit-aware.config.json",
+      "inputSchemaRef": "schemas/retry-rate-limit-aware.input.json",
+      "outputSchemaRef": "schemas/retry-rate-limit-aware.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.circuit-breaker",
+      "version": "1.0.0",
+      "label": "Circuit Breaker",
+      "description": "v1.1 HTTP node — circuit-breaker.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/circuit-breaker.config.json",
+      "inputSchemaRef": "schemas/circuit-breaker.input.json",
+      "outputSchemaRef": "schemas/circuit-breaker.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.idempotency-key",
+      "version": "1.0.0",
+      "label": "Idempotency Key",
+      "description": "Generates a deterministic Idempotency-Key for HTTP retry-safety. composite mode (default): SHA-256 over (ctx.runId, ctx.nodeId, payload). hash mode: SHA-256 over payload alone. Same logical request → same key, so the remote service can dedupe across retries.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/idempotency-key.config.json",
+      "inputSchemaRef": "schemas/idempotency-key.input.json",
+      "outputSchemaRef": "schemas/idempotency-key.output.json"
+    },
+    {
+      "typeId": "core.openwop.http.webhook-verify",
+      "version": "1.0.0",
+      "label": "Webhook Verify",
+      "description": "v1.1 HTTP node — webhook-verify.",
+      "category": "integration",
+      "role": "pure",
+      "capabilities": [
+        "cacheable"
+      ],
+      "configSchemaRef": "schemas/webhook-verify.config.json",
+      "inputSchemaRef": "schemas/webhook-verify.input.json",
+      "outputSchemaRef": "schemas/webhook-verify.output.json"
+    }
+  ],
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20",
+    "requires": [
+      "net.dns",
+      "net.outbound"
+    ]
+  },
+  "signing": {
+    "method": "manual",
+    "publicKeyRef": "openwop-team-1",
+    "signatureRef": "keys/pack.json.sig"
+  },
+  "integrity": "sha256-pDl0Aqv7X0Zr4pBnMy6x6s9cROObZR724Jy4xWOExL4="
+}

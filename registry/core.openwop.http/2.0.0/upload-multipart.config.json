@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.http/2.0.0/upload-multipart.config.json",
+  "title": "UploadMultipartConfig",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}

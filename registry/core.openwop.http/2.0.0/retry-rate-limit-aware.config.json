@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.http/2.0.0/retry-rate-limit-aware.config.json",
+  "title": "RetryRateLimitAwareConfig",
+  "type": "object",
+  "properties": {
+    "maxAttempts": {
+      "type": "integer",
+      "default": 5
+    },
+    "baseDelayMs": {
+      "type": "integer",
+      "default": 500
+    }
+  },
+  "additionalProperties": false
+}

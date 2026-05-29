@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.http/2.0.0/upload-multipart.input.json",
+  "title": "UploadMultipartInput",
+  "type": "object",
+  "required": [
+    "url"
+  ],
+  "properties": {
+    "url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "headers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "fields": {
+      "type": "object",
+      "additionalProperties": {}
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "FilePart",
+        "type": "object",
+        "required": [
+          "field",
+          "filename",
+          "contentBase64"
+        ],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "contentBase64": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

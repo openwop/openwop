@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.http/2.0.0/webhook-verify.output.json",
+  "title": "WebhookVerifyOutput",
+  "type": "object",
+  "required": [
+    "valid"
+  ],
+  "properties": {
+    "valid": {
+      "type": "boolean"
+    },
+    "family": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

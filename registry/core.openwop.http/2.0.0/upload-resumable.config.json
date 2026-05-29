@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.http/2.0.0/upload-resumable.config.json",
+  "title": "UploadResumableConfig",
+  "type": "object",
+  "properties": {
+    "protocol": {
+      "type": "string",
+      "enum": [
+        "tus",
+        "s3-multipart",
+        "gcs-resumable"
+      ],
+      "default": "tus"
+    }
+  },
+  "additionalProperties": false
+}

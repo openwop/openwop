@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.http/2.0.0/graphql-subscription.output.json",
+  "title": "GraphqlSubscriptionOutput",
+  "type": "object",
+  "required": [
+    "events",
+    "eventCount"
+  ],
+  "properties": {
+    "terminal": {},
+    "events": {
+      "type": "array"
+    },
+    "eventCount": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false
+}

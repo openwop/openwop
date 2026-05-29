@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.http/2.0.0/idempotency-key.output.json",
+  "title": "IdempotencyKeyOutput",
+  "type": "object",
+  "required": [
+    "key"
+  ],
+  "properties": {
+    "key": {
+      "type": "string",
+      "pattern": "^openwop-[0-9a-f]{16}$",
+      "description": "Deterministic Idempotency-Key. Format: 'openwop-<sha256-prefix-16>' — same shape used by core.openwop.http.fetch's auto-derived key."
+    }
+  },
+  "additionalProperties": false
+}
