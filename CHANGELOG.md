@@ -11,6 +11,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0079): Credential Provenance + Egress Policy — new Draft RFC (2026-05-29)
+
+Filed **RFC 0079** (`Draft`), the Wave-2 security RFC that answers the credential↔destination-binding question RFC 0076 §B `safeFetch` explicitly parked (*how does a host know a credential attached to egress is allowed for that destination?*). It proposes:
+
+- A **credential-provenance descriptor** (NEW `credential-provenance.schema.json`) at the tool/egress boundary: host-issued credentials carry `{credentialId, issuer, audiences, scopes, expiresAt, redactionPolicy, auditCorrelationId}` — metadata only, **content-free of the secret value** (SR-1 / `credential-payload-redaction` posture).
+- A content-free **`egress.decided`** RunEvent (`allowed` / `denied` / `downgraded` / `approval-required`) with `destination` + `reason` + `auditCorrelationId`.
+- The **load-bearing MUST** + new protocol-tier SECURITY invariant **`egress-credential-audience-bound`**: a host-issued credential MUST NOT be attached to an egress destination outside its provenance `audiences`; provenance-unevaluable ⇒ fail-closed deny — the confused-deputy guard the RFC 0076 §B SSRF check (URL-level) does not perform.
+- A capability gate `capabilities.httpClient.egressPolicy` (requires `safeFetch` — now Accepted via #352).
+
+Additive (`COMPATIBILITY.md` §2.1) — new schema + optional `httpClient.egressPolicy` block + one content-free RunEventType + one new SECURITY invariant constraining *new* (capability-gated) behavior; no existing field/event/endpoint changes (a host that omits `egressPolicy` keeps the RFC 0076 §B SSRF guard unchanged). Files the RFC document only; the schema/event/invariant + its public test land together at `Draft → Active`. Composes RFC 0076 §B + 0046/0047 + 0049 + 0064 + 0078 + 0051. Four `Active`-gated Unresolved questions (audience matching semantics, downgrade default, emission scope, RFC 0026 relationship). RFC count 79 → 80; Draft 7 → 8.
+
 ### spec(rfc-0076): §B (`ctx.http.safeFetch`) graduated `Active → Accepted` — RFC 0076 now `Accepted` overall (2026-05-29)
 
 RFC 0076 §B (host-provided `ctx.http.safeFetch`, advertised under `httpClient.safeFetch`) graduates `Active → Accepted` on a non-steward host. The **§B → Accepted bar** — the durable-emission MUST proven on a real host (`safefetch-live-audit.test.ts`, PR #336) — is met: MyndHyve `workflow-runtime` (`workflow-runtime-00412-xow`) advertises `httpClient.safeFetch.supported: true` + `ssrfGuard: true` + `toolHooks.prePostEvents: true`, and its production `ctx.http.safeFetch` path (exercised via the `POST /v1/host/sample/http/safe-fetch-run` open seam) persists the `agent.toolCalled`/`agent.toolReturned` pair to the **durable run-event log** with `transport: 'http'` and the RFC 0002 §B `causationId` chain (`toolReturned.causationId === toolCalled.eventId`). Steward-verified by independent curl 2026-05-29 (fetched-path run → durable pair + chain; the `status:'error'`/`fetch_failed` is Cloud Run sandbox egress, which the scenario correctly does not gate on — the SSRF guard *passed* the public URL → `outcome:'fetched'`). With §A (`runtime.requires[]`) already Accepted, **RFC 0076 is `Accepted` overall.** No wire-shape change (the §B surface landed at Active, rev 4). RFC counts: Accepted 62 → 63, Active 10 → 9.
