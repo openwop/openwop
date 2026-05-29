@@ -1248,7 +1248,23 @@ export const sampleChatResponderNode: NodeModule = {
       }
     }
     if (systemBody !== null) {
-      messages = [{ role: 'system', content: systemBody }, ...messages];
+      // The resolved systemBody (from agent / config.systemPrompt /
+      // config.systemPromptRef, in that precedence) is authoritative —
+      // strip any system messages already present in `messages` before
+      // prepending so the dispatch carries exactly ONE system message.
+      // The chat-tab path bundles its own default system prompt into
+      // `inputs.messages`; when an agent is active OR the workflow
+      // pins its own system, we'd otherwise emit two system messages
+      // back-to-back. MiniMax-M2.7 rejects that with HTTP 400
+      // `invalid params, invalid chat setting (2013)` (confirmed by
+      // direct curl bisect — single system passes, two systems fail).
+      // Anthropic accepts multi-system but collapses them; OpenAI
+      // accepts but the API contract increasingly recommends one.
+      // De-duplicating here is the correct shape for every provider.
+      messages = [
+        { role: 'system', content: systemBody },
+        ...messages.filter((m) => m.role !== 'system'),
+      ];
     }
     const userBody = await resolveAndComposePromptRef(ctx, 'user', config['userPromptRef'], inputs);
     if (userBody !== null) {
