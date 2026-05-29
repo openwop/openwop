@@ -21,7 +21,7 @@ The in-memory reference host implements the §B safe-fetch surface: it advertise
 
 ### docs(spec): RFC 0076 §A graduated `Active → Accepted` (2026-05-29)
 
-§A (`runtime.requires[]` declaration + install-time gate) is verified live on a **non-steward host**: `runtime-requires-install-gate.test.ts` (suite 1.12.0) passes all three behavioral scenarios under `OPENWOP_REQUIRE_BEHAVIOR=true` against MyndHyve `workflow-runtime-00230-zjn` (gate flag on), steward-corroborated by independent seam curls. Pack-side adoption: 6 `vendor.myndhyve.*` packs declare `runtime.requires[]`. RFC Status, README, and `INTEROP-MATRIX.md` updated; §B (`ctx.http.safeFetch`) stays `Active` (reference-impl pending), so RFC 0076 is `Active` overall.
+§A (`runtime.requires[]` declaration + install-time gate) is verified live on a **non-steward host**: `runtime-requires-install-gate.test.ts` (suite 1.10.0, unreleased additions) passes all three behavioral scenarios under `OPENWOP_REQUIRE_BEHAVIOR=true` against MyndHyve `workflow-runtime-00230-zjn` (gate flag on), steward-corroborated by independent seam curls. Pack-side adoption: 6 `vendor.myndhyve.*` packs declare `runtime.requires[]`. RFC Status, README, and `INTEROP-MATRIX.md` updated; §B (`ctx.http.safeFetch`) stays `Active` (reference-impl pending), so RFC 0076 is `Active` overall.
 
 ### feat(spec): RFC 0076 §A — `runtime.requires[]` pack platform-requirement gate (Active, 2026-05-29)
 
