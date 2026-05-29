@@ -11,6 +11,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### docs(spec): RFC 0056 (run feedback & annotations) graduated `Active → Accepted` (2026-05-29)
+
+RFC 0056 (`host.feedback` capability + per-run annotation side-store at `POST/GET /v1/runs/{runId}/annotations` + the `run.annotated` SSE notification) promoted **`Active → Accepted`**. Implemented end-to-end on **three reference hosts** — in-memory (`#165`/`#168`) and Postgres + SQLite (`4288d6fa`) — each advertising `capabilities.feedback.{supported: true, targets: ["run"], signals: ["rating","correction","label","flag"]}`, persisting annotations in a per-run side-table (never a `RunEvent`, so a fork starts with zero annotations per §D), and SR-1-redacting `correction`/`label`/`note`. All seven `feedback-*.test.ts` conformance scenarios pass against the live SQLite host, verified non-vacuously (real `conformance-noop` run seeded → `POST` 201 with `annotationId` → `GET` lists it, `count: 1`). The two SECURITY invariants (`annotation-cross-tenant-isolation`, `annotation-content-redaction`) each have a matching public test.
+
+Per RFC 0001 §3 (`Accepted` = implementation landed + conformance updated), both criteria are met; RFC 0056 sets no explicit non-steward bar, mirroring the 0059/0060/0062/0063/0064 reference-host graduation path. MyndHyve `host.feedback` adoption is in flight (`myndhyve-rfc-acceptance` channel) and would strengthen, not gate, this status. No wire-shape change — graduation only.
+
 ### spec(rfc-0068): memory consolidation + standing commitments — promote Draft → Active (2026-05-29)
 
 RFC 0068 (two additive optional capabilities — `agents.memoryConsolidation` background reconciliation of long-term memory + `agents.commitments` inferred standing intentions — each with a content-free observability event: `agent.memory.consolidated` / `commitment.fired`) promoted **`Draft → Active`**. The full wire surface had already landed on `main`: the two `agents.*` capability sub-blocks in `capabilities.schema.json`, the `agentMemoryConsolidated` + `commitmentFired` payload `$defs` + `_typeIndex` entries in `run-event-payloads.schema.json`, the two RunEventType enum members in `run-event.schema.json`, the §D normative prose in `agent-memory.md`, and the three conformance scenarios (`memory-consolidation-shape` always-on; `memory-consolidation-idempotent` + `commitment-fired` capability-gated). This promotion resolves all four `Active`-gating Unresolved questions and flips status:
