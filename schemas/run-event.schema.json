@@ -123,6 +123,8 @@
         "agent.toolReturned",
         "agent.handoff",
         "agent.decided",
+        "agent.invocation.started",
+        "agent.invocation.completed",
         "runOrchestrator.decided",
         "node.dispatched",
         "conversation.opened",

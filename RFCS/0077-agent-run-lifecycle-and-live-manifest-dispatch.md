@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0077 |
 | **Title** | A normative `AgentManifest` → live-run mapping + an optional `capabilities.agents.liveRuntime` flag + an `agent.invocation.started` / `agent.invocation.completed` event bracket, so a manifest agent executes against live models/tools with one portable, observable event family across all three entry points (workflow node, run API, chat mention) |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-29 |
-| **Updated** | 2026-05-29 |
+| **Updated** | 2026-05-29 — promoted `Draft → Active`. All five Unresolved questions resolved via MyndHyve T4 co-design (architect-validated against the RFC 0002 id model + `replay.md`); the wire surface landed atomically: `capabilities.agents.liveRuntime` (`capabilities.schema.json`), the `agentInvocationStarted`/`agentInvocationCompleted` payloads + `_typeIndex` (`run-event-payloads.schema.json`), the RunEventType enum +2 (`run-event.schema.json`), the normative §"Live manifest dispatch" prose (`multi-agent-execution.md`), and the always-on server-free `agent-live-runtime-shape.test.ts` conformance scenario. Comment window waived per `GOVERNANCE.md` lazy consensus. No new SECURITY invariant (§F reuses the existing floor guarantees). Behavioral conformance + reference-host advertisement deferred per §Conformance; `Active → Accepted` gated on a non-steward host (MyndHyve) advertising `liveRuntime` + emitting the invocation pair. |
 | **Affects** | `schemas/capabilities.schema.json` (additive optional `agents.liveRuntime` sub-block) · `schemas/run-event-payloads.schema.json` (additive `agentInvocationStarted` + `agentInvocationCompleted` payloads + `_typeIndex` entries) · `schemas/run-event.schema.json` (RunEventType enum +2) · `spec/v1/multi-agent-execution.md` (new §"Live manifest dispatch") · `spec/v1/rest-endpoints.md` (`WorkflowNode.agent` + `POST /v1/runs` composition note) · `CHANGELOG.md` · `INTEROP-MATRIX.md` · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -76,7 +76,7 @@ A live manifest invocation MUST perform the following steps. Each composes an ex
 
 ### §C — `agent.invocation.started` / `agent.invocation.completed` (additive, content-free)
 
-A `liveRuntime` host MUST emit `agent.invocation.started` as the first agent-scoped event of a live invocation and `agent.invocation.completed` as the last, bracketing the existing family. Both are **content-free** (identifiers + metadata only — no prompt text, no result body, no secret-bearing payload; those live in the run's normal projection / SR-1-redacted surfaces). On replay both are re-read from the event log, never regenerated.
+A `liveRuntime` host MUST emit `agent.invocation.started` as the first agent-scoped event of a live invocation and `agent.invocation.completed` as the last, bracketing the existing family. Both are **content-free** (identifiers + metadata only — no prompt text, no result body, no secret-bearing payload; those live in the run's normal projection / SR-1-redacted surfaces). Both are **recorded-fact events** per [`replay.md`](../spec/v1/replay.md) §"Recorded-fact events" (the `memory.written`/RFC 0057 precedent): on replay against a checkpoint a host MUST re-emit them from the event log and MUST NOT regenerate their identifiers — notably `invocationId` — or timestamps. Because the payloads are content-free they introduce no non-deterministic body to diverge on.
 
 ```diff
 +    "agentInvocationStarted": {
@@ -190,13 +190,13 @@ Forward-compatibility clauses:
 
 ## Unresolved questions
 
-Open questions the maintainers must decide before this RFC moves to `Active`:
+All five were resolved 2026-05-29 via MyndHyve T4 co-design (architect-validated against the RFC 0002 id model + `replay.md`) and folded into the normative surface at `Draft → Active`:
 
-1. **Resolved-model disclosure.** Should `resolvedModel` / `resolvedProvider` on `agent.invocation.started` be RECOMMENDED or stay purely OPTIONAL (deployment-privacy: a host may not want to advertise which concrete model backs `reasoning`)? Proposed: OPTIONAL, host MAY omit; the `modelClass` is the portable signal. Decide before `Active`.
-2. **`invocationId` vs `runId`.** When an agent is the root of a `run-api` invocation, is `invocationId` distinct from `runId`, or MAY a host set `invocationId == runId`? Proposed: distinct id space (one run can host several invocations), but a host MAY reuse `runId` as the `invocationId` for a single-invocation run. Confirm before `Active`.
-3. **`chat-mention` normativity.** Is the chat `@agent` entry point a normative `source` or host-UX-only? Proposed: the run surface it maps onto is normative; the `@mention` parse is host UX, so `chat-mention` advertises "I expose this entry point" without normating the chat grammar. Confirm.
-4. **Single-shot vs loop floor.** Does a `liveRuntime` host that does not advertise `multiAgent.executionModel.version >= 5` (RFC 0061) run a single-shot turn, or is the agent loop mandatory? Proposed: single-shot is the `liveRuntime` floor; the stateful loop composes RFC 0061 when advertised. Confirm the floor before `Active`.
-5. **Terminal projection + attestation.** When the agent runs as a sub-run, does `agent.invocation.completed` precede or follow the RFC 0063 `output.harvested` attestation? Proposed: `agent.invocation.completed` is the agent-scoped terminal; the sub-run attestation is the run-scoped terminal and follows. Confirm ordering before `Active`.
+1. **Resolved-model disclosure → ✅ OPTIONAL.** `resolvedModel` / `resolvedProvider` on `agent.invocation.started` are OPTIONAL (`MAY`), not RECOMMENDED. `modelClass`→concrete resolution may happen downstream (at the prompt-call node, with capability-gated fallback substitution), so a dispatch-time `started` event genuinely may not know the resolved model; `modelClass` is the always-present portable signal. A host MAY also omit for deployment-privacy. (Aligns with the 0067 UQ3 "no deployment-topology disclosure" posture.)
+2. **`invocationId` vs `runId` → ✅ host-defined, unique-within-run, MAY be runId-derived.** `invocationId` is a payload correlation field (NOT a new envelope id-space — the `RunEvent` envelope keeps `eventId`/`causationId`); distinct from `runId` (one run MAY host several invocations) but a host MAY derive it from an existing per-node-execution receipt (`runId:nodeId:seq`) or a UUID, and a single-invocation run MAY reuse `runId`. **Replay safety:** the invocation pair is classified as recorded-fact events per `replay.md` §"Recorded-fact events" (§C) — re-read from the log, `invocationId` MUST NOT be regenerated. Mandating a new global id-space was the one adoption-cost MyndHyve flagged; this avoids it.
+3. **`chat-mention` normativity → ✅ optional `sources[]` member.** The run surface it maps onto is normative; the `@mention` parse is host UX. `chat-mention` is never a mandatory `sources[]` enum member — a host with no chat surface advertises `["workflow-node", "run-api"]` and is fully compliant (§D).
+4. **Single-shot vs loop floor → ✅ single-shot IS the floor.** A `liveRuntime` host MAY run a single-shot turn; the multi-turn loop composes ABOVE via the orchestrator + RFC 0061 (`version >= 5`) and MUST NOT be folded into the floor (loop infrastructure is not forced to advertise `liveRuntime`) (§B step 5).
+5. **Terminal projection + attestation → ✅ `completed` is the agent-scoped terminal.** `agent.invocation.completed` is the last agent-scoped event and PRECEDES the run-scoped RFC 0063 `output.harvested` attestation when the agent runs as a sub-run (§B step 8 / §E).
 
 ## Implementation notes (non-normative)
 
@@ -207,14 +207,15 @@ Open questions the maintainers must decide before this RFC moves to `Active`:
 
 ## Acceptance criteria
 
-Checklist the maintainers will use to flip `Status` from `Active` to `Accepted` (this RFC files at `Draft`):
+Checklist the maintainers will use to flip `Status` from `Active` to `Accepted`. The wire surface + always-on conformance + all five UQ resolutions landed at `Draft → Active` (2026-05-29); the remaining unchecked items are the `Active → Accepted` adoption gate.
 
-- [ ] `multi-agent-execution.md` §"Live manifest dispatch" documents the §B mapping + §C events + §D composition + §E ordering + §F safety carry-forward.
-- [ ] `capabilities.schema.json` carries `agents.liveRuntime`; `run-event-payloads.schema.json` carries `agentInvocationStarted` + `agentInvocationCompleted` + `_typeIndex`; `run-event.schema.json` RunEventType enum gains the two event names.
-- [ ] Conformance: `agent-live-runtime-shape.test.ts` (always-on) + the three gated behavioral scenarios.
-- [ ] CHANGELOG entry + INTEROP-MATRIX row.
-- [ ] All five Unresolved questions resolved (recorded in `Updated:`).
-- [ ] Reference host implements + advertises `liveRuntime` and passes the behavioral scenarios, OR the RFC explicitly defers reference-host implementation.
+- [x] `multi-agent-execution.md` §"Live manifest dispatch" documents the §B mapping + §C events + §D composition + §E ordering + §F safety carry-forward.
+- [x] `capabilities.schema.json` carries `agents.liveRuntime`; `run-event-payloads.schema.json` carries `agentInvocationStarted` + `agentInvocationCompleted` + `_typeIndex`; `run-event.schema.json` RunEventType enum gains the two event names.
+- [x] Conformance: `agent-live-runtime-shape.test.ts` (always-on, server-free) landed. The three gated behavioral scenarios (bracket ordering, structured-output enforcement, allowlist enforcement) are **deferred per §Conformance** — they gate on `capabilities.agents.liveRuntime.supported` + a live-invoke seam and soft-skip until a host wires it.
+- [x] CHANGELOG entry + INTEROP-MATRIX row.
+- [x] All five Unresolved questions resolved (recorded in `Updated:` + §Unresolved questions).
+- [x] Reference-host implementation **explicitly deferred** per §Conformance (shape + always-on validation ship; behavioral assertions soft-skip until a host advertises `liveRuntime`).
+- [ ] **(Accepted gate)** A non-steward host advertises `capabilities.agents.liveRuntime.supported: true` + emits the `agent.invocation.started`/`completed` bracket with the §E ordering; the gated behavioral scenarios pass against it (MyndHyve T4, queued behind §B).
 
 ## References
 
