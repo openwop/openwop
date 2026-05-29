@@ -238,14 +238,14 @@ The conformance suite's `experimentalGate()` helper (`conformance/src/lib/behavi
 
 **Deferred / opt-out (MyndHyve round-3):** 0056 feedback, 0061 stateful agent-loop, 0062 distillation deferred (criteria documented); 0025 test-mode-registry, 0035 sandbox, 0036 multi-region opt-out (single-region / no-untrusted-packs / canonical-publish rationale, same pattern as round-1 0050/0054).
 
-## Capability adoption — RFCs 0067 / 0068 / 0069 spec-gap Draft cohort — ⏳ NO ADOPTION YET (filed 2026-05-26)
+## Capability adoption — RFCs 0067 / 0068 / 0069 spec-gap cohort — all `Active` 2026-05-29 · ⏳ NO ADOPTION YET (filed 2026-05-26)
 
-> Three additive `Draft` RFCs filed 2026-05-26 from `docs/OPENWOP-FEATURE-GAP-ANALYSIS.md` RFC rows. No host advertises any of them yet; the conformance scenarios soft-skip (behavioral) or assert the corpus structurally (always-on). Listed here so adoption can be tracked toward `Active` / `Accepted`.
+> Three additive RFCs filed 2026-05-26 from `docs/OPENWOP-FEATURE-GAP-ANALYSIS.md` RFC rows, all promoted `Draft → Active` 2026-05-29 (0069 via #338, 0067 via #340, 0068 via this PR). No host advertises the two capability-bearing ones (0067/0068) yet; the conformance scenarios soft-skip (behavioral) or assert the corpus structurally (always-on). Listed here so adoption can be tracked toward `Accepted`.
 
 | RFC | Capability / surface | Conformance | Adoption status |
 |---|---|---|---|
 | 0067 provider-catalog conventions | `capabilities.aiProviders.authModes` (`apiKey`/`oauth-pkce`/`oauth-device`/`none`) + provider-name vocabulary | `byok-auth-modes.test.ts` (always-on shape + discovery-gated §B cross-field) | No host advertises `authModes` yet — default contract unchanged |
-| 0068 memory consolidation + commitments | `agents.memoryConsolidation` + `agents.commitments` + `agent.memory.consolidated` / `commitment.fired` events | `memory-consolidation-shape.test.ts` (always-on) + `memory-consolidation-idempotent.test.ts` / `commitment-fired.test.ts` (gated, seam soft-skip) | No host advertises either capability yet — replay-determinism Unresolved #1 to close before `Active` |
+| 0068 memory consolidation + commitments | `agents.memoryConsolidation` + `agents.commitments` + `agent.memory.consolidated` / `commitment.fired` events | `memory-consolidation-shape.test.ts` (always-on) + `memory-consolidation-idempotent.test.ts` / `commitment-fired.test.ts` (gated, seam soft-skip) | `Active` 2026-05-29 (UQ #1 replay-determinism resolved option-a per RFC 0041 §C; UQ #2/#3/#4 resolved). No host advertises either capability yet — `Active → Accepted` awaits a behavioral host (a Postgres-backed MemoryAdapter is the natural first implementer) |
 | 0069 exec-class tool safety contract | normative MUST-NOT (no protocol-tier exec) + `exec-must-not-be-protocol-tier` invariant | `exec-not-protocol-tier.test.ts` (always-on, server-free structural) | Satisfied by the corpus itself; no host advertisement applies (codifies an exclusion) |
 
 ## Capability adoption — RFC 0071 (Phase 1 ✅ ACCEPTED 2026-05-27 · Phase 2 🟡 ACTIVE 2026-05-27)
