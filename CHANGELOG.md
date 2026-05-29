@@ -11,6 +11,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0077): Agent Run Lifecycle + Live Manifest Dispatch — new Draft RFC (2026-05-29)
+
+Filed **RFC 0077** (`Draft`), the Wave-1 keystone's live-execution layer on top of RFC 0070 (`manifestRuntime` floor) + RFC 0072 (inventory + `WorkflowNode.agent` dispatch path). It proposes:
+
+- A **normative `AgentManifest` → live-run mapping** (§B, eight MUST-steps): `modelClass` → concrete model/provider selection; prompt resolution (RFC 0028/0029); tool-surface construction from `toolAllowlist` (RFC 0002 §A14 + RFC 0064); memory binding from `memoryShape` (RFC 0004/0057/0068); inbound/outbound schema validation from `handoff.*SchemaRef`; confidence escalation from `confidence.defaultThreshold` (RFC 0002 §F); terminal result projection.
+- An **additive optional `capabilities.agents.liveRuntime`** (`supported` + `structuredOutput` + `confidenceEscalation` + `sources` sub-flags) — a strict superset of `agents.manifestRuntime`.
+- A content-free **`agent.invocation.started` / `agent.invocation.completed`** event bracket around the existing `agent.reasoned`/`toolCalled`/`toolReturned`/`decided` family, with a normative §E ordering and an `invocationId` correlation id.
+- **§D composition**: workflow node, run API, and chat mention all resolve to the same mapping + emit one identical observable family ("one agent, one observable event family, three entry points").
+- **§F safety carry-forward**: the RFC 0072 §D mandatory floor guarantees (toolAllowlist enforcement, handoff inbound validation, tenant scoping, untrusted-model-output handling, fail-closed authorization) stay unconditional under `liveRuntime`.
+
+Additive (`COMPATIBILITY.md` §2.1) — new optional capability sub-block + two additive content-free RunEventTypes; nothing existing changes. This entry files the RFC document only (no schema/spec/conformance wire surface yet — that lands at `Draft → Active`). Carries five `Active`-gated Unresolved questions (resolved-model disclosure, `invocationId` vs `runId`, `chat-mention` normativity, single-shot-vs-loop floor, terminal-projection × RFC 0063 ordering). RFC count 76 → 77; Draft 5 → 6.
+
 ### docs(spec): RFC 0025 (test-mode registry namespace) graduated `Active → Accepted` (2026-05-29)
 
 RFC 0025 (`/v1/packs-test/*` isolated registry namespace + `capabilities.packs.testMode`) promoted **`Active → Accepted`**. Every acceptance-criteria item was already satisfied; this graduation adds the **end-to-end verification against a running host** that was the remaining gap. The reference impl — `apps/workflow-engine/backend/typescript/src/routes/packs-test.ts` (full `PUT/GET/DELETE /v1/packs-test/{name}/-/{version}[.tgz|.sig]` + `POST /v1/packs-test/reset`, validation pipeline in spec order, isolated in-memory catalog) — is mounted + advertised behind `OPENWOP_PACKS_TEST_NAMESPACE_ENABLED=true` (`discovery.ts` emits `capabilities.packs.testMode.{supported, isolated, catalogResetEndpoint, scopes}`). Booted locally, **all 26 scenarios pass under strict `OPENWOP_REQUIRE_BEHAVIOR=true`** — `pack-registry-publish.test.ts` (the 25-code publish-error catalog) + `pack-registry-isolation.test.ts` (§C point-1 isolation invariant) — genuinely running, not soft-skipping.
