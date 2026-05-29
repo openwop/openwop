@@ -11,6 +11,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### docs(spec): clarifications from the MyndHyve RFC 0072 §B second-host debrief (2026-05-28)
+
+Four spec clarifications surfaced by MyndHyve's second-host implementation of the RFC 0072 §B function-calling loop. All additive/editorial — no wire-shape change, no new field, error, or invariant:
+
+- **Forbidden-at-load causation (RFC 0064 §C + `host-capabilities.md` §host.toolHooks + RFC 0002).** A host MAY emit `agent.toolReturned { status: 'forbidden' }` *proactively* at agent-loop start for a `toolAllowlist` entry resolving to no approved pack — before any model call. Such a row has no paired `agent.toolCalled`, so the host synthesizes its `callId` (`forbidden:<sha256(ref)>` RECOMMENDED) and MAY omit `causationId`; a host MUST NOT mint a placeholder `agent.toolCalled` to anchor the chain. Consumers MUST tolerate a `forbidden`/`rate_limited` return whose `callId` has no matching call.
+- **Provider tool-name sanitization (`host-capabilities.md` §host.toolHooks, non-normative).** New host-implementation note: openwop tool ids carry `:`/`.`, which Anthropic/OpenAI/Gemini function-calling APIs reject, so a host running a function-calling loop maps the id to a provider-legal name (`:`/`.` → `_`) and reverses on the way back. Adapter-only; never on the openwop wire.
+- **Iteration-cap composition (`run-options.md` §`maxLoopIterations` + RFC 0058 #2).** Clarified that `maxLoopIterations` counts **outer orchestrator turns** only and does **not** bound the **inner function-calling loop within a single node/agent execution** (RFC 0072 §B model↔tool rounds), which runs under the host's own per-execution cap — mirroring the nested-sub-orchestrator isolation already in RFC 0058.
+- **toolHooks placement breadcrumb (`host-capabilities.md` §host.agentRuntime + `node-packs.md`).** Cross-links from the manifest-runtime/dispatch sections to the **top-level** `Capabilities.toolHooks` block, where implementers instinctively (and wrongly) looked under `agents`.
+
+### docs(registry): cross-namespace typeIds + `publishedTypeIds` reverse index (2026-05-28)
+
+`registry-operations.md` gains a "Type-ID indexing and cross-namespace exports" section (with a `node-packs.md` pointer): a pack's `nodes[].typeId` need not be prefixed by the pack `name` (the schema only *recommends* it), so prefix-scan discovery is unsound — consumers MUST resolve typeId→pack via a reverse index, and registries SHOULD denormalize a per-version `publishedTypeIds[]` / `publishedAgentIds[]` index (the term MyndHyve's catalog already relies on). Surfaced by the RFC 0072 §B debrief (finding 3, `core.openwop.agents.deep-research`'s cross-namespace `ai.research.web` tool).
+
+### rfc: RFC 0076 — pack runtime-requirements declaration + host-provided safe-fetch (Draft, 2026-05-28)
+
+Filed from the RFC 0072 §B debrief (finding 1): an additive abstract `runtime.requires[]` vocabulary (`net.dns`, `net.outbound`, `crypto`, `subprocess`, `fs.read`/`fs.write`, `clock`) on the pack manifest so sandbox hosts gate at **install time** (`pack_runtime_requirement_unmet`) instead of trial-load (MyndHyve had to carve `node:dns/promises` out of its sandbox to load `core.openwop.http`), plus an OPTIONAL host-provided `ctx.http.safeFetch(url)` centralizing SSRF defense (resolve→pin→connect, metadata-endpoint blocklist) so packs stop reaching for `node:dns` directly. Additive; Draft, open for comment.
+
 ### fix(host-sample): code-review follow-ups for PRs #321/#324/#325/#329 (2026-05-28)
 
 Six findings from the senior code review of the five-PR sprint, all host-internal:

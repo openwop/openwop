@@ -134,6 +134,31 @@ What the registry checks before accepting a submission. An OpenWOP-compliant reg
 
 ---
 
+## Type-ID indexing and cross-namespace exports
+
+A pack's contributed `nodes[].typeId` (and the `agents[]` it ships) **need not** be prefixed by the pack `name`. The manifest schema only *recommends* the prefix (`node-pack-manifest.schema.json` `nodes[].typeId.description`: "The pack's `name` prefix is recommended"); the `typeId` pattern itself permits any reverse-DNS namespace. A pack named `vendor.myndhyve.web-research` may legitimately publish a node typed `ai.research.web`, and an agent's `toolAllowlist` (RFC 0072) may name that typeId with no textual relationship to the providing pack.
+
+This has two operational consequences a registry and its consumers MUST account for:
+
+1. **Prefix-scan discovery is unsound.** A consumer resolving "which pack provides typeId `T`?" MUST NOT assume `T`'s namespace prefix identifies the pack. It MUST consult a typeId→pack reverse mapping derived from the authoritative source — each version manifest's `nodes[].typeId` + `agents[].agentId`. Resolving by string-prefixing the pack name silently fails on cross-namespace exports.
+
+2. **Registries SHOULD denormalize a `publishedTypeIds[]` index.** To let consumers resolve cross-namespace typeIds without fetching and scanning every manifest, a registry SHOULD surface, per pack version, the flat array of typeIds (and agent ids) that version contributes:
+
+   ```json
+   {
+     "name": "vendor.myndhyve.web-research",
+     "version": "1.0.1",
+     "publishedTypeIds": ["ai.research.web"],
+     "publishedAgentIds": []
+   }
+   ```
+
+   `publishedTypeIds[]` is the union of the version manifest's `nodes[].typeId`; `publishedAgentIds[]` is the union of its `agents[].agentId`. Both are a **denormalization** — the manifest remains authoritative; the index is a discovery convenience the registry MUST keep consistent with the manifest it serves. A registry MAY additionally expose a reverse lookup (`GET /v1/packs/-/by-type/{typeId}` → the pack/version that publishes it) built from the same denormalization. Consumers MUST tolerate the fields' absence (older registries omit them) and fall back to manifest inspection.
+
+**Agent-manifest pack dependencies (informative).** Because an agent's `toolAllowlist` may reference cross-namespace typeIds, "which packs must this workspace approve to run this agent?" is not derivable from the agent manifest by inspection alone. A tool that computes the dependency closure — resolve each `toolAllowlist` entry through the `publishedTypeIds[]` index to its providing pack — is the recommended way to present that set to a workspace admin (RFC 0074 approval). The protocol does not yet normate a `packDeps` block on the agent manifest; the reverse index above is the supported resolution path.
+
+---
+
 ## Deprecation flow (closes NP4)
 
 Marking a published version deprecated without unpublishing it. Lets pinned consumers continue resolving the version while signaling new consumers to migrate.
