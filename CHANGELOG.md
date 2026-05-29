@@ -11,7 +11,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
-### fix(host-sample): chat-responder de-duplicates system messages before dispatch (2026-05-28)
+### fix(host-sample): code-review follow-ups for PRs #321/#324/#325/#329 (2026-05-28)
+
+Six findings from the senior code review of the five-PR sprint, all host-internal:
+
+- **Preflight closes the implicit-managed-default gap** (`routes/runs.ts`, `providers/managedProvider.ts`). The `hasManagedCredentialRef` walker now flags chat-class typeIds with no explicit `credentialRef` because they default to `managed:openwop-free` at execution time. The host's own `sample.chat.turn` workflow is exactly that shape and was slipping past the preflight before. A new shared constant `MANAGED_DEFAULTING_TYPE_IDS` lives next to `MANAGED_REF_PREFIX` so the default and the gate can't drift; the chat-responder node module now sources its `typeId` from the same constant.
+- **Chat-responder system-dedup covers BYOK too** (`chat-responder-system-dedup.test.ts`). The dedup at `bootstrap/nodes.ts:1250` sits BEFORE the managed-vs-BYOK split, so it correctly applies to both paths. The test now mocks `dispatchChat` in addition to `dispatchManagedChat` and asserts a BYOK call with a multi-system input collapses to one — locking in dispatch-path-agnostic correctness.
+- **Cookie verification hoisted** (`middleware/auth.ts`). The OIDC-promotion branch and the cookie-mint/refresh branch now consume a single `cookieSession` computed once at the top of the handler, eliminating drift risk between the two sites if cookie-verification logic ever changes.
+- **`sign_in_required` classifier carries `action: 'sign_in'`** (`observability/errorRecovery.ts`). New value added to the `RecoveryAction` enum so the FE recovery surface, notifications, and automated retry policies can branch deterministically on "anon caller on a managed path" instead of pattern-matching `'reconfigure'` against the userMessage.
+- **`daily_limit_reached` carries a real `retryAfterMs`** (`observability/errorRecovery.ts`). New `msUntilNextUtcMidnight()` helper computes the actual wait window (1ms–24h depending on time of day) so callers honoring the hint back off correctly instead of retrying in seconds and burning the same 401.
+- **CHANGELOG entries cite PR numbers** — `(#NNN)` suffixes added retroactively to every `[1.1.6 — unreleased]` entry from this sprint to match the historical style.
+
+Tests: new test cases on `run-managed-anon-preflight.test.ts` (implicit-default rejected, explicit-BYOK accepted), extended `chat-responder-system-dedup.test.ts` (BYOK path), updated `error-recovery.test.ts` (new action vocabulary + `msUntilNextUtcMidnight` edge cases).
+
+### fix(host-sample): chat-responder de-duplicates system messages before dispatch (#329) (2026-05-28)
 
 The chat-responder (`bootstrap/nodes.ts`) resolves a `systemBody` from one of three sources in precedence order (`inputs.agentId` → `config.systemPrompt` → `config.systemPromptRef`) and **prepends** it to the incoming `messages` array. When the chat-tab's `inputs.messages` ALREADY carried a system message (it bundles a generic "You are a helpful AI assistant…" default), the chat-responder ended up emitting **two consecutive `role: 'system'` messages**.
 
@@ -21,7 +34,7 @@ Fix: when the resolved `systemBody` is non-null, strip every existing `role: 'sy
 
 Tests: new `chat-responder-system-dedup.test.ts` mocks `dispatchManagedChat`, captures the messages array the chat-responder sends, asserts (a) the stripping happens when a `systemBody` is resolved, (b) the messages pass through untouched when nothing is resolved, (c) consecutive user messages survive.
 
-### fix(host-sample): bundle `packs/` into Cloud Run image so manifest agents auto-load in prod (2026-05-28)
+### fix(host-sample): bundle `packs/` into Cloud Run image so manifest agents auto-load in prod (#325) (2026-05-28)
 
 The Agents-tab inventory (`/v1/agents`) and the Install-from-registry page were empty on production despite `bootstrap/mountLocalPacks.ts` + `bootstrap/agentPackResolver.ts::loadAllLocalAgents()` correctly auto-loading ~30 manifest agents on a local `npm run dev`. Root cause: the Cloud Run runtime image's Dockerfile copied `lib/`, `providers.json`, `schemas/`, and `conformance-fixtures/` but **not** `packs/`, so `resolveLocalPacksDir()` walked up from `/app/lib` and found nothing to mount.
 
@@ -32,6 +45,26 @@ The auto-load mechanism is wired correctly — the source data just wasn't shipp
 - `DEPLOY.md §6 "Redeploying new code"` now documents the three vendored sources (`schemas/`, `conformance-fixtures/`, `packs/`) + their sync scripts as a table, with a note that the vendored copies are committed to git so a clean checkout of `origin/main` already has them.
 
 Post-deploy verification: `curl /v1/agents | jq '.items | length'` returns ~37 instead of 0; the Install-from-registry page renders every local pack as "Installed".
+
+### fix(host-sample): signed-in users no longer hit `sign_in_required` on the free tier (#321) (2026-05-28)
+
+Workflow-engine reference host: a signed-in browser could still land at the managed-provider dispatch boundary as `anon:*` and fail with `sign_in_required` mid-run, even after a successful Firebase Auth sign-in. Three contributing defects, all host-internal (no protocol/schema impact):
+
+- `middleware/auth.ts` OIDC verify success branch now reissues the session cookie as `tier: 'user'` keyed to the OIDC-derived `tenantId`. Previously the cookie path and the bearer path disagreed about identity — any subsequent request that dropped the `Authorization` header fell back to the still-anon cookie. Idempotent: a cookie that already matches isn't reissued.
+- `routes/runs.ts` `POST /v1/runs` now preflights for `managed:*` credentialRefs vs an `anon:*` caller and returns `401 sign_in_required` at create-time instead of letting the run partially execute and fail at the first managed chat node. Symmetrical with the existing capability-gated typeId refusal.
+- `observability/errorRecovery.ts` `classifyDispatchError` gains explicit handling for `sign_in_required`, `daily_limit_reached`, and `managed_unavailable` so the `run.failed` envelope's `userMessage` is user-actionable (`"Sign in to use the free tier."`) instead of the generic `"Something went wrong. Check the server logs."` default.
+
+Tests: new `auth-oidc-cookie-promotion.test.ts` covers anon→user reissue + idempotent steady-state + bearer-only cookie minting; new `run-managed-anon-preflight.test.ts` covers 401 on anon×managed + non-managed pass-through + user×managed pass-through; `error-recovery.test.ts` extended for the three managed-provider codes. Existing `managed-provider.test.ts:115` (anon → `sign_in_required` at dispatch) intentionally preserved — the dispatch-level gate is unchanged. `OpenwopErrorCode` union additively gains `sign_in_required`.
+
+### fix(sdk-ts): capability-absent fallback uses `WopError.status`, not message regex (#324) (2026-05-28)
+
+Eleven SDK methods that document a "host doesn't advertise this capability → return null/false" fallback (`runs.{debugBundle, listAnnotations, ancestry, diff}`, `agents.{list, get}`, `userAgents.{listAvailablePacks, delete}`, `workspace.*`, plus the `runs.poll` 501 branch) were testing the error condition with `/\b404\b/.test(err.message)`. Because `WopError.message` is built from the host's envelope `message` field (`types.ts:1005`), a 404 whose envelope carried no "404" substring (e.g., the workflow-engine catch-all's `"No route matches this request."`) slipped past the regex and threw to the caller instead of returning the documented sentinel — surfacing as "Couldn't load pack list" on signed-in users hitting a host on an older deploy.
+
+Fix routes every site through `err instanceof WopError && err.status === 404` (and `=== 501` where applicable) so the actual HTTP status — which `WopError` carries verbatim — is the load-bearing signal. New `capability-absent-fallback.test.ts` reproduces the bug shape directly (404 with no status substring in the envelope, plus the false-positive case where a 400 message *contains* "404"). No wire-shape impact.
+
+### fix(app-frontend): pin account-pill text color on hover (#322) (2026-05-28)
+
+The signed-in header account pill rendered the user's display name in `--paper` against the cream `--color-surface-2` hover background, making the username invisible. The global `button:hover` rule sets `color: var(--paper)` for the default ink-on-paper primary buttons, and its specificity (`button:hover`, 0,1,1) beats `.account-menu-trigger`'s base color (0,1,0). The hover rule only set `background` and silently inherited the wrong text color. Fix re-pins `color: var(--color-text)` in `.account-menu-trigger:hover` with a comment explaining the specificity cascade.
 
 ### feat(app,sdk,host-sample): Agents tab + chat mention-symbol swap (2026-05-28)
 

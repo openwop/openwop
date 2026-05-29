@@ -33,7 +33,7 @@ import { stripSecretsFromPersisted } from '../byok/ephemeralRunSecrets.js';
 import { createLogger } from '../observability/logger.js';
 import { runQuotaMiddleware, reserveConcurrentSlot } from '../middleware/rateLimit.js';
 import { notifyRunTerminal } from '../executor/runLifecycle.js';
-import { isManagedCredentialRef } from '../providers/managedProvider.js';
+import { isManagedCredentialRef, MANAGED_DEFAULTING_TYPE_IDS } from '../providers/managedProvider.js';
 
 const log = createLogger('routes.runs');
 
@@ -979,11 +979,30 @@ function validateAgainstSchema(schema: Record<string, unknown>, value: unknown):
 void getRunsAjv().catch(() => { /* swallowed; validateAgainstSchema falls back */ });
 
 function hasManagedCredentialRef(
-  nodes: ReadonlyArray<{ config?: Record<string, unknown> }>,
+  nodes: ReadonlyArray<{ typeId: string; config?: Record<string, unknown> }>,
 ): boolean {
   for (const node of nodes) {
     const ref = node.config?.['credentialRef'];
-    if (typeof ref === 'string' && isManagedCredentialRef(ref)) return true;
+    if (typeof ref === 'string') {
+      // Explicit credentialRef wins. If it's `managed:*`, this node
+      // will route through the managed dispatch path; if it's any
+      // other ref, the workflow author opted into BYOK and we don't
+      // gate it.
+      if (isManagedCredentialRef(ref)) return true;
+      continue;
+    }
+    // No explicit ref → fall back to the per-node default. Today only
+    // chat-class typeIds default to `managed:openwop-free` (see the
+    // precedence chain in `bootstrap/nodes.ts` chat-responder body).
+    // Without this branch, the sample chat-tab workflow
+    // `sample.chat.turn` (which pins no credentialRef on its
+    // chat-responder node) slips past the preflight, dispatches under
+    // an anon tenant, and fails with `sign_in_required` at chat-node
+    // execution time — exactly the latency this preflight exists to
+    // close. `MANAGED_DEFAULTING_TYPE_IDS` lives next to the dispatch
+    // path's `MANAGED_REF_PREFIX` so the default and the gate can't
+    // drift silently as new chat-class typeIds land.
+    if (MANAGED_DEFAULTING_TYPE_IDS.has(node.typeId)) return true;
   }
   return false;
 }

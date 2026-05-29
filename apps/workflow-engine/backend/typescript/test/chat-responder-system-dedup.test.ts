@@ -52,6 +52,28 @@ vi.mock('../src/providers/managedProvider.js', async (importOriginal) => {
   };
 });
 
+// Mock the BYOK dispatch path too. The dedup lives at the chat-responder
+// boundary BEFORE the managed-vs-BYOK split, so a regression that only
+// reached the BYOK dispatcher (Anthropic / OpenAI / Google / MiniMax-BYOK)
+// would slip past the managed-only mock above. Capturing both paths
+// locks in the dispatch-path-agnostic correctness of the fix.
+vi.mock('../src/providers/dispatch.js', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../src/providers/dispatch.js')>();
+  return {
+    ...original,
+    dispatchChat: vi.fn(async (req: { messages: readonly ChatMessage[] }) => {
+      capturedMessages = req.messages.map((m) => ({ ...m }));
+      return {
+        provider: 'anthropic',
+        model: 'claude-sonnet-4-6',
+        completion: 'ok',
+        usage: { inputTokens: 1, outputTokens: 1 },
+        finishReason: 'stop',
+      };
+    }),
+  };
+});
+
 let sampleChatResponderNode: typeof import('../src/bootstrap/nodes.js')['sampleChatResponderNode'];
 
 beforeAll(async () => {
@@ -66,8 +88,11 @@ afterEach(() => {
 function makeCtx(overrides: {
   inputMessages: ChatMessage[];
   systemPrompt?: string;
+  credentialRef?: string;
+  secrets?: Record<string, string>;
 }): { ctx: NodeContext } {
   let nextSeq = 1;
+  const credentialRef = overrides.credentialRef ?? 'managed:openwop-free';
   const ctx: NodeContext = {
     runId: 'run-system-dedup-test',
     nodeId: 'chat-test',
@@ -76,12 +101,12 @@ function makeCtx(overrides: {
       messages: overrides.inputMessages,
     },
     config: {
-      credentialRef: 'managed:openwop-free',
+      credentialRef,
       ...(overrides.systemPrompt !== undefined ? { systemPrompt: overrides.systemPrompt } : {}),
     },
     configurable: {},
     attempt: 1,
-    secrets: {},
+    secrets: overrides.secrets ?? {},
     async emit(_type, _payload) {
       const eventId = `evt-${nextSeq.toString().padStart(8, '0')}`;
       const sequence = nextSeq++;
@@ -128,6 +153,30 @@ describe('chat-responder: system-message de-duplication', () => {
       { role: 'system', content: 'pre-existing system from caller' },
       { role: 'user', content: 'hi' },
     ]);
+  });
+
+  it('strips an existing system on the BYOK dispatch path too (not just managed)', async () => {
+    // The dedup lives at the chat-responder boundary BEFORE the
+    // managed-vs-BYOK split (bootstrap/nodes.ts:1250-ish), so it MUST
+    // apply to the BYOK dispatcher (Anthropic, OpenAI, Google,
+    // MiniMax-BYOK) too. A regression that only re-introduced
+    // multi-system on the BYOK path would slip past the managed-only
+    // cases above. Pin both paths so the fix can't silently drift.
+    const { ctx } = makeCtx({
+      inputMessages: [
+        { role: 'system', content: 'pre-existing default chat system' },
+        { role: 'user', content: 'hi' },
+      ],
+      systemPrompt: 'workflow-pinned system',
+      credentialRef: 'byok:anthropic-test',
+      secrets: { 'byok:anthropic-test': 'sk-ant-test-key-not-real' },
+    });
+    const outcome = await sampleChatResponderNode.execute(ctx);
+    expect(outcome.status).toBe('success');
+    expect(capturedMessages).not.toBeNull();
+    const systemMessages = capturedMessages!.filter((m) => m.role === 'system');
+    expect(systemMessages).toHaveLength(1);
+    expect(systemMessages[0]!.content).toBe('workflow-pinned system');
   });
 
   it('handles two consecutive user messages without erroring (only system messages are deduped)', async () => {
