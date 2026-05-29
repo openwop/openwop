@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://packs.openwop.dev/core.openwop.agents.deep-research/1.0.0/deep-research.return.schema.json",
+  "$id": "https://packs.openwop.dev/core.openwop.agents.deep-research/1.0.1/deep-research.return.schema.json",
   "title": "DeepResearchReturn",
   "type": "object",
   "required": ["report", "findings", "sources", "openQuestions"],
