@@ -11,6 +11,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0080): Agent Memory Capability Reconciliation — new Draft RFC (2026-05-29)
+
+Filed **RFC 0080** (`Draft`), a Wave-2 editorial/composable reconciliation of openwop's fragmented memory advertisement — split today across `capabilities.memory.{compaction,distillation,attribution}` + `capabilities.agents.{memoryBackends,memoryConsolidation,commitments}` + `agent-memory.md` + `AgentManifest.memoryShape`, with no `read`/`write`/`search`/`retention-forget` dimension and no degraded-status signal. It proposes:
+
+- A normative **memory capability model** (`agent-memory.md` §"Memory capability model") naming eight dimensions (read / write / search / long-term / compaction / attribution / replay-snapshot / retention-forget), each mapped to its **existing** flag, adding the two with none today as **additive optional** fields — `capabilities.memory.search` + `capabilities.memory.retention` (+ an optional `memory.writable: false` for read-only hosts). No existing flag is moved, renamed, or removed (a structural re-org would be breaking → deferred to a hypothetical v2).
+- **Resolving the canonical-query-endpoint question**: memory query stays the host-internal `MemoryAdapter` at v1.x; **no `GET /v1/memory`** (a portable cross-tenant query is a larger surface + attack surface; the operator need is met by the read-side + the degraded projection).
+- A normative **degraded-status projection**: when a host advertises a manifest agent whose `AgentManifest.memoryShape` it can't satisfy, `GET /v1/agents` (RFC 0072/0074) MUST surface `memoryDegraded: true` + `degradedMemoryDimensions[]` (additive optional inventory fields) — no silent degradation.
+- A derived **`openwop-memory`** profile over the reconciled core.
+
+Additive (`COMPATIBILITY.md` §2.1) — two optional capability dimensions + an optional `writable` flag + two optional inventory fields + a derived profile + a prose reconciliation table; no existing field changes, no new endpoint/event. Files the RFC document only (the schema dimensions + degraded-projection wire surface land at `Draft → Active`). Composes RFC 0004/0012/0057/0062/0068 + 0077 `memoryShape` + 0072/0074 inventory. Four `Active`-gated Unresolved questions (`writable` default, `degradedMemoryDimensions` vocabulary, `forget` × replay, profile tier names). RFC count 78 → 79; Draft 6 → 7.
+
 ### spec(rfc-0078): Portable Tool Catalog + Tool Session Contract — new Draft RFC (2026-05-29)
 
 Filed **RFC 0078** (`Draft`), the Wave-2 companion to the 0077 keystone — a portable way for an agent (or builder, or chat Tools panel) to discover what tools exist, what they require, and how they're audited, across the five fragmented tool surfaces (node-pack / workflow / MCP / connector / host-extension). It proposes:
