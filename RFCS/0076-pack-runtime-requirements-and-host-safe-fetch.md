@@ -190,7 +190,7 @@ Two independent tracks (see Implementation notes §"Sequencing").
 **§A — `runtime.requires[]` (declaration + install gate):**
 - [x] Spec text merged (this file + `runtime.requires` in `node-packs.md` §"Runtime platform requirements" + the install gate + `pack_runtime_requirement_unmet` payload in `registry-operations.md` §"Runtime-requirement install gate"). *(2026-05-29)*
 - [x] `schemas/node-pack-manifest.schema.json` adds `runtime.requires` (8-value `oneOf`/`const`/`description`). *(2026-05-29)*
-- [ ] ≥1 conformance scenario (install-grant, install-refuse, vocabulary-validation), seam-gated.
+- [x] ≥1 conformance scenario (install-grant, install-refuse, vocabulary-validation), seam-gated. *(2026-05-29 — `runtime-requires-shape.test.ts` always-on + `runtime-requires-install-gate.test.ts` seam-gated; suite 1.11.0)*
 - [x] CHANGELOG entry under the target v1.x. *(2026-05-29)*
 - [ ] `Active → Accepted` on one second-host advertising the install gate (`core.openwop.http` declaring `["net.dns","net.outbound"]` is the first adopter).
 
