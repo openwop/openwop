@@ -7,7 +7,7 @@
 | **Status** | `Draft` |
 | **Author(s)** | openwop working group (steward), prompted by the MyndHyve RFC 0072 §B second-host debrief (2026-05-28) |
 | **Created** | 2026-05-28 |
-| **Updated** | 2026-05-28 |
+| **Updated** | 2026-05-28 (rev 2 — MyndHyve second-host comment-window review folded in: Q1–Q4 resolved, `env.read` added, §B audit MUST + request-init clamps + RFC 0069 composition + §A/§B sequencing) |
 | **Affects** | `schemas/node-pack-manifest.schema.json` (new optional `runtime.requires[]`), `spec/v1/node-packs.md`, `spec/v1/registry-operations.md` (install-time gate), `spec/v1/host-extensions.md` (`ctx.http.safeFetch`), `spec/v1/capabilities.md` (`host.http.safeFetch` advertisement), `conformance/src/scenarios/*` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` |
 | **Supersedes** | — |
@@ -56,7 +56,8 @@ Add an OPTIONAL `requires` array to the manifest's `runtime` object, drawn from 
 +            "subprocess",     // spawns a child process (see RFC 0069 exec-class contract)
 +            "fs.read",        // reads the local filesystem
 +            "fs.write",       // writes the local filesystem
-+            "clock"           // reads wall-clock time as a behavioral input (replay-relevant)
++            "env.read",       // reads the process environment (may expose deployment secrets if the host does not scrub it)
++            "clock"           // reads wall-clock time as a *behavioral* input — gated for REPLAY determinism, not access control (a pack that branches on the clock is non-deterministic on replay; replay.md), which is why it stays in the set even though Date.now() is a language global
 +          ]
 +        },
 +        "uniqueItems": true
@@ -65,11 +66,13 @@ Add an OPTIONAL `requires` array to the manifest's `runtime` object, drawn from 
    }
 ```
 
+`clock` and `env.read` are the two non-obvious members. `clock` is included not because wall-clock access is privileged (it is a language global) but because a pack that branches on it is **non-deterministic on replay** (`replay.md`) — declaring it lets a replay-strict host gate or instrument it; future maintainers should not trim it as redundant with `Date.now()`. `env.read` is gated because an unscrubbed `process.env` can leak deployment secrets into pack code.
+
 **Behavior (normative).**
 
 - A pack MAY declare `runtime.requires[]`. Absent ⇒ the pack asserts no elevated platform needs (today's behavior).
 - A host that gates platform access (a sandbox host) MUST evaluate `runtime.requires[]` at **install time**: every listed primitive its sandbox can grant ⇒ install; any primitive it will **not** grant ⇒ the host MUST refuse install with `pack_runtime_requirement_unmet` naming the unmet primitive(s) — the install-time analogue of the dispatch-time `capability_not_provided` (`capabilities.md`). It MUST NOT silently install and fail at first invocation.
-- A host that does **not** gate platform access (grants the runtime's full standard library) MAY ignore the field — every primitive is already available; there is nothing to refuse.
+- A host that does **not** gate platform access (grants the runtime's full standard library) MAY ignore the field for *enforcement* — every primitive is already available; there is nothing to refuse. It SHOULD nevertheless **project `runtime.requires[]` onto the pack's inventory/summary entry** (e.g. the pack-summary projection on the `GET /v1/agents` / pack listing) so operators retain visibility into the declared platform footprint at install time. This forward-compatibly prepares the workspace approval ledger for a later migration to a sandbox-enforcing host (which packs to re-evaluate). It carries no execution requirement.
 - `runtime.requires[]` is a **declaration of intent for gating**, not an authorization grant. It does not widen what a pack may do; it lets the host decide *before* load whether it is willing to grant what the pack will attempt. A host MUST still enforce its sandbox at runtime — a pack that declares `net.dns` but attempts `subprocess` is still denied the undeclared primitive.
 
 **Examples.**
@@ -79,6 +82,24 @@ Add an OPTIONAL `requires` array to the manifest's `runtime` object, drawn from 
 *Negative (refused install).* A pack declares `"requires": ["subprocess"]`. A host whose sandbox forbids child processes refuses install with `pack_runtime_requirement_unmet { unmet: ["subprocess"] }` — the operator sees the boundary at install, not a production run failure.
 
 *Negative (validation).* `"requires": ["node:dns/promises"]` fails manifest validation (`400 invalid_manifest`) — raw builtin names are not in the controlled vocabulary; the abstract `net.dns` is the portable equivalent.
+
+**Error payload (normative).** `pack_runtime_requirement_unmet` reuses the `capability_not_provided` envelope shape (`capabilities.md`):
+
+```json
+{
+  "error": "pack_runtime_requirement_unmet",
+  "unmet": ["subprocess"],
+  "manifest": "core.openwop.cron@1.0.0",
+  "advice": "operator-facing copy (OPTIONAL)"
+}
+```
+
+`unmet[]` is the subset of the pack's `runtime.requires[]` the host will not grant; `manifest` is the offending `name@version`; `advice` is OPTIONAL operator-facing remediation copy.
+
+**Composition with RFC 0069 (normative).** `runtime.requires: ["subprocess"]` is the *install-time gate* (will the host grant subprocess at all?); RFC 0069's exec-class contract is the *runtime contract* for **how** subprocess is granted (exec-class enumeration, sandbox mechanics). They are independent so a host can adopt the gate without first implementing RFC 0069:
+
+- A host that grants `runtime.requires: ["subprocess"]` **AND** advertises RFC 0069's exec-class contract MUST apply that contract to every subprocess invocation by the pack.
+- A host MAY grant `runtime.requires: ["subprocess"]` **without** RFC 0069 — in which case its sandbox-internal subprocess mechanics are not protocol-specified, and a pack requiring exec-class-grade isolation SHOULD additionally express that dependency via `peerDependencies` (RFC 0072 §C), which fails install closed when unmet.
 
 ### §B — host-provided `ctx.http.safeFetch` (additive, OPTIONAL host capability)
 
@@ -94,12 +115,20 @@ ctx.http.safeFetch(
 **Behavior (normative, when advertised).**
 
 - The host MUST perform SSRF defense before connecting: resolve the host, and **reject** (throw `ssrf_blocked`) any request whose resolved address is loopback, RFC 1918 private, link-local, or a cloud metadata endpoint (`169.254.169.254`, `metadata.google.internal`, etc.). The host MUST re-check the resolved address against the connected address to defeat DNS-rebinding (pin the resolved IP for the connection).
-- The host SHOULD emit the call under RFC 0064 `host.toolHooks` (`agent.toolCalled` / `agent.toolReturned`, `transport: 'http'`) so safe-fetch egress is auditable and rate-limitable on the same surface as other tool calls.
+- When `capabilities.toolHooks.prePostEvents: true` **AND** `capabilities.host.http.safeFetch.supported: true` are **both** advertised, the host MUST emit `agent.toolCalled` / `agent.toolReturned` for every `safeFetch` invocation with `transport: 'http'`. Centralizing egress in the host must *increase* auditability, not become a quiet bypass: a host that wishes to sample audit volume MUST do so at the storage/projection tier; the wire-level emission stays unconditional. (Same posture as RFC 0064's existing audit MUST for the `agent.toolCalled`/`agent.toolReturned` pair.) A host advertising `safeFetch` but not `toolHooks.prePostEvents` SHOULD still emit the pair.
 - A pack that uses `ctx.http.safeFetch` **does not** declare `net.dns` in `runtime.requires` for the fetch path — the host owns resolution. A pack that wants to run on hosts lacking the capability MAY feature-detect (`ctx.http?.safeFetch`) and fall back to its own `net.outbound` + `net.dns` path (declaring both).
 
 This composes with — does not replace — RFC 0069's exec-class host-extension safety contract: `safeFetch` is the network-egress analogue of that RFC's subprocess sandboxing.
 
 **Example.** `core.openwop.http@2.0.0` (hypothetical) calls `ctx.http.safeFetch(url)` when present, dropping its in-pack `assertPublicUrl` + `node:dns/promises`; the host's audited blocklist applies uniformly across every pack that fetches.
+
+**Request-init clamping.** The `init?` argument is a host-clamped subset of `RequestInit`, not a passthrough. The protocol does not number all clamps, but one is **normative** because it defends the same boundary as the SSRF check: the host MUST refuse connection-upgrade attempts (`Connection: upgrade` / `Connection: keep-alive` requesting a `101` protocol switch) — these defeat the resolve→pin→connect guard by escaping HTTP into a raw bidirectional socket. The rest are non-normative host-policy defaults, surfaced here so first implementations converge:
+
+- **Body size** — host-configurable cap (suggest 10 MB default).
+- **Timeout** — host-configurable (suggest 30 s default).
+- **Headers** — MAY be reshaped. A host SHOULD refuse to forward an `Authorization` header the pack did not construct from a credential the host itself issued (RFC 0046 `host.credentials`) rather than from a static manifest string, to prevent a pack exfiltrating a host-issued credential to an arbitrary URL — but enforcement is host policy.
+
+**Egress-proxy composition (non-normative).** `safeFetch` composes with, and does not preclude, a deployment-level egress allowlist (e.g. Cloud Run behind a serverless VPC connector + Cloud NAT with its own allowlist). The host's resolve→pin→connect SSRF defense applies *before* the egress proxy sees the request; the proxy's allowlist applies after — defense-in-depth, not redundancy.
 
 ## Compatibility
 
@@ -113,7 +142,8 @@ No wire-event change, no new SECURITY invariant (the SSRF guarantee restates exi
 ## Conformance
 
 - **New, gated on a sandbox seam:** a pack manifest declaring `runtime.requires: ["subprocess"]` against a host seam that denies subprocess MUST yield `pack_runtime_requirement_unmet`; a manifest with `requires: ["net.dns"]` against a host that grants it installs.
-- **New, gated on `host.http.safeFetch.supported`:** `ctx.http.safeFetch` against a loopback / RFC-1918 / metadata URL MUST throw `ssrf_blocked` and MUST NOT connect; against a public URL it returns the response. A DNS-rebinding fixture (public A-record that re-resolves to `169.254.169.254`) MUST be blocked.
+- **New, gated on `host.http.safeFetch.supported`:** `ctx.http.safeFetch` against a loopback / RFC-1918 / metadata URL MUST throw `ssrf_blocked` and MUST NOT connect; against a public URL it returns the response. A DNS-rebinding fixture (public A-record that re-resolves to `169.254.169.254`) MUST be blocked. A request carrying `Connection: upgrade` MUST be refused.
+- **New, gated on `host.http.safeFetch.supported` + `toolHooks.prePostEvents`:** a `safeFetch` call emits the `agent.toolCalled` / `agent.toolReturned` pair with `transport: 'http'`.
 - **Validation:** a manifest with a `runtime.requires` entry outside the vocabulary MUST be rejected `invalid_manifest`.
 
 Both scenario groups soft-skip until the respective capability/seam is advertised, per the established gating convention.
@@ -127,28 +157,44 @@ Both scenario groups soft-skip until the respective capability/seam is advertise
 
 ## Unresolved questions
 
-1. **Vocabulary scope.** Is the seven-value set (`net.dns`, `net.outbound`, `crypto`, `subprocess`, `fs.read`, `fs.write`, `clock`) the right granularity, or do we want coarser (`net`, `fs`) / finer (`net.outbound.http` vs `net.outbound.raw`) buckets? Additions are themselves additive (enum extension, `wasm-*` precedent), so starting minimal is low-risk.
-2. **`safeFetch` MUST vs SHOULD for the audit emission.** Should emitting under `host.toolHooks` be MUST (when both capabilities are advertised) so safe-fetch egress is never an audit blind spot, or SHOULD?
-3. **Relationship to RFC 0069.** Should `subprocess` in `runtime.requires` be defined as *requiring* the RFC 0069 exec-class contract when the host grants it, or stay an independent declaration that RFC 0069 gates separately?
-4. **Install gate strictness for non-sandbox hosts.** This RFC lets a non-gating host ignore the field. Should a host instead be encouraged (SHOULD) to *record* the declared requirements on the inventory entry for operator visibility even when it grants everything?
+*Q1–Q4 resolved by the MyndHyve second-host comment-window review (2026-05-28); positions folded into the Proposal above.*
+
+1. **Vocabulary scope — RESOLVED.** Ship the v1 set as-is (now eight: `net.dns`, `net.outbound`, `crypto`, `subprocess`, `fs.read`, `fs.write`, `env.read`, `clock`). Reject coarser buckets (`net`/`fs`) — they lose gating power that is already paying off (a host can grant `net.dns` for safe-fetch preflight while denying `net.outbound` because all egress goes through `safeFetch`; collapsing to `net` would force granting the combined bucket). Defer finer buckets (`net.outbound.http` vs `net.outbound.raw`) — a real distinction (fetch allowed, raw sockets denied) but **additively extensible later** without breaking anyone (enum-addition, `wasm-*` precedent), so it stays out of v1. `env.read` added on review.
+2. **`safeFetch` audit emission — RESOLVED: MUST when both advertised.** See §B normative bullet. Sampling belongs at the storage/projection tier, not the wire-emission tier (RFC 0064 posture).
+3. **Relationship to RFC 0069 — RESOLVED: independent declarations + composition MUST.** See §A "Composition with RFC 0069." The gate and the runtime contract stay decoupled so a host can adopt the gate without first implementing RFC 0069.
+4. **Non-sandbox host strictness — RESOLVED: SHOULD record.** A non-gating host SHOULD project `runtime.requires[]` onto the inventory entry for operator visibility (§A). One denormalized field copy; cost-to-value favors SHOULD.
+
+Genuinely still open:
+
+5. **`Authorization`-header forwarding enforcement.** §B currently leaves "refuse forwarding a pack-constructed `Authorization` not derived from a host-issued credential" as host policy (SHOULD). Should a future revision make it a normative MUST once RFC 0046 credential-provenance is expressible at the `safeFetch` boundary? Deferred — needs a way to distinguish a host-issued credential from a static manifest string at call time.
 
 ## Implementation notes (non-normative)
 
 - Reference host (`examples/hosts/*`): add an install-time check that intersects `runtime.requires[]` against a configured grant-set, emitting `pack_runtime_requirement_unmet`; add a `ctx.http.safeFetch` behind a config flag implementing the resolve→pin→connect SSRF guard. Effort: small for the gate, medium for the rebinding-safe fetch.
 - `core.openwop.http` is the natural first adopter of both: declare `runtime.requires: ["net.dns", "net.outbound"]` now (additive, no behavior change), and ship a `safeFetch`-preferring `2.0.0` once a reference host advertises the capability.
-- Sequencing: §A (declaration) is independently shippable and unblocks sandbox hosts immediately; §B (`safeFetch`) can follow.
+- **Approval-snapshot under RFC 0074 (raised in second-host review).** A workspace approval today records `{packName, approvedAt, approvedBy}`. Once `runtime.requires` lands, an approval captures a *single grant-evaluation*; a later host update that tightens its sandbox can silently invalidate previously-approved packs (the dispatch-time gate now fails). Hosts SHOULD snapshot the gate-evaluated `runtime.requires` onto the approval document (`approved against {net.dns, net.outbound} on 2026-05-28`) so admins see the grant set an approval was made against and can react explicitly when it shifts. Non-normative for this RFC; a candidate RFC 0074 amendment.
+- **Sequencing (§A before §B).** §A (declaration + install gate) is independently shippable and delivers the immediate win the debrief surfaced; it merges to `Active` first, graduating to `Accepted` on one second-host adoption. §B (`safeFetch`) needs a reference implementation + ≥1 consumer pack gating behind feature-detection, so it follows as a **separate `Active → Accepted` track** once a reference host implements it and `core.openwop.http@2.0.0` ships the feature-detection path. This mirrors the established cohort-graduation pattern (RFC 0058's wall-clock and loop-iteration arms graduated independently).
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (this file + `runtime.requires` in `node-packs.md` + the install gate in `registry-operations.md` + `ctx.http.safeFetch` in `host-extensions.md` + the capability in `capabilities.md`).
-- [ ] `schemas/node-pack-manifest.schema.json` adds `runtime.requires`; `schemas/capabilities.schema.json` adds `host.http.safeFetch`.
-- [ ] At least one conformance scenario per §A and §B, capability/seam-gated.
+Two independent tracks (see Implementation notes §"Sequencing").
+
+**§A — `runtime.requires[]` (declaration + install gate):**
+- [ ] Spec text merged (this file + `runtime.requires` in `node-packs.md` + the install gate + `pack_runtime_requirement_unmet` payload in `registry-operations.md`).
+- [ ] `schemas/node-pack-manifest.schema.json` adds `runtime.requires` (8-value enum).
+- [ ] ≥1 conformance scenario (install-grant, install-refuse, vocabulary-validation), seam-gated.
 - [ ] CHANGELOG entry under the target v1.x.
-- [ ] A reference host implements the install gate + `safeFetch`, or this RFC explicitly defers §B reference implementation.
+- [ ] `Active → Accepted` on one second-host advertising the install gate (`core.openwop.http` declaring `["net.dns","net.outbound"]` is the first adopter).
+
+**§B — `ctx.http.safeFetch` (separate `Active → Accepted` track):**
+- [ ] Spec text merged (`ctx.http.safeFetch` in `host-extensions.md` + capability in `capabilities.md`); `schemas/capabilities.schema.json` adds `host.http.safeFetch`.
+- [ ] ≥1 conformance scenario (SSRF block incl. rebinding + `Connection: upgrade` refusal; audit-emission-when-both-advertised), capability-gated.
+- [ ] A reference host implements the resolve→pin→connect guard + `core.openwop.http@2.0.0` ships the feature-detection path, or §B explicitly defers reference implementation.
 
 ## References
 
 - MyndHyve RFC 0072 §B second-host debrief, 2026-05-28 (finding 1a/1b) — the implementer pain point that prompted this RFC.
+- MyndHyve RFC 0076 second-host review, 2026-05-28 — Q1–Q4 positions + observations A–D (approval-snapshot, request-init clamping, error payload, egress-proxy) + the §A/§B sequencing recommendation, all folded into rev 2.
 - RFC 0003 — agent/pack manifest (`runtime` object this extends).
 - RFC 0072 — agent inventory + dispatch (`peerDependencies` / `peerDependenciesMeta`, the adjacent host-capability gate).
 - RFC 0069 — exec-class tool host-extension safety contract (subprocess sandboxing; `safeFetch` is its network analogue).
