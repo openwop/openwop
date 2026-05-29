@@ -172,7 +172,15 @@ function TabStrip({
               gap: 5,
             }}
           >
-            <span aria-hidden style={{ fontSize: 13 }}>{tab.icon}</span>
+            <span
+              aria-hidden
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                fontSize: 13,
+                lineHeight: 1,
+              }}
+            >{tab.icon}</span>
             <span>{tab.label}</span>
             {tab.badge !== undefined && tab.badge > 0 && (
               <span
