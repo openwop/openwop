@@ -109,4 +109,19 @@ describe('agent-org-chart-shape: §B non-authority guarantee (RFC 0087, server-f
     const memberKeys = Object.keys(CHART.members[1]!).sort();
     expect(memberKeys, why('RFC 0087 §B', 'a member is descriptive only: {departmentId, reportsTo, roleId, rosterId}')).toEqual(['departmentId', 'reportsTo', 'roleId', 'rosterId']);
   });
+
+  it('the GET /v1/agents/org-chart/{departmentId} responsibility-view response validates (RFC 0087 §D)', () => {
+    const ajv = new Ajv2020({ strict: false, allErrors: true });
+    addFormats(ajv);
+    ajv.addSchema(loadSchema('agent-org-chart.schema.json'), 'https://openwop.dev/spec/v1/agent-org-chart.schema.json');
+    const view = ajv.compile(loadSchema('org-chart-responsibility-view.schema.json'));
+    const good = {
+      department: CHART.departments[0],
+      members: CHART.members,
+      responsibilities: ['marketing-email-campaign', 'social-post-scheduler'],
+    };
+    expect(view(good), why('RFC 0087 §D', 'a conforming responsibility-view response MUST validate')).toBe(true);
+    expect(view({ ...good, unexpected: true }), why('RFC 0087 §D', 'an extra top-level property MUST be rejected')).toBe(false);
+    expect(view({ department: CHART.departments[0], members: CHART.members }), why('RFC 0087 §D', '`responsibilities` is required')).toBe(false);
+  });
 });

@@ -44,6 +44,10 @@ Every OpenWOP-compliant server MUST expose:
 | `GET` | `/v1/agents/{agentId}` | API key | `runs:read` | RFC 0072 §A one manifest agent's inventory entry; 404 when absent/unadvertised |
 | `GET` | `/v1/agents/{agentId}/deployments` | API key | `runs:read` | RFC 0082 §C/§E deployment records for a manifest agent (capability-gated on `agents.deployment`; 404 when unadvertised) |
 | `POST` | `/v1/agents/{agentId}/deployments` | API key | `deploy:*` | RFC 0082 §E deployment state transition (promote/pause/deprecate/rollback/adjust-canary); fail-closed authz (RFC 0049) + RFC 0051 approvalGate + RFC 0081 `requiredEval`; `403` `eval_gate_unmet` / `400` `no_active_deployment` |
+| `GET` | `/v1/agents/roster` | API key | `runs:read` | RFC 0086 §B standing agent roster (named instances + portfolios; capability-gated on `agents.roster`; tenant-scoped per RFC 0074; 404 when unadvertised) |
+| `GET` | `/v1/agents/roster/{rosterId}` | API key | `runs:read` | RFC 0086 §B one roster entry; 404 when absent/cross-tenant/unadvertised |
+| `GET` | `/v1/agents/org-chart` | API key | `runs:read` | RFC 0087 §C descriptive agent org-chart (capability-gated on `agents.orgChart`; tenant-scoped; 404 when unadvertised) |
+| `GET` | `/v1/agents/org-chart/{departmentId}` | API key | `runs:read` | RFC 0087 §D one department's subtree + responsibility roll-up (`?recursive=false` for direct members); 404 when unknown/cross-tenant/unadvertised |
 | `GET` | `/v1/runs/{runId}/eval-summary` | API key | `runs:read` | RFC 0081 §C the `EvalSummary` scorecard for a terminal `mode:"eval"` run (capability-gated on `agents.evalSuite`; 404 when unadvertised/not-an-eval-run; 409 while running) |
 | `GET` | `/v1/runs/{runId}:diff` | API key | `runs:read` | RFC 0054 deterministic structured diff of two runs (`?against={otherRunId}`; `runs:read` on both; 404 when unimplemented) |
 | `POST` | `/v1/runs/{runId}/cancel` | API key | `runs:cancel` | Cancel an in-flight run |

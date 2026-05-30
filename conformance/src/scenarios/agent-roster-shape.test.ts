@@ -129,4 +129,18 @@ describe('agent-roster-shape: inventory projection + enum (RFC 0086 §B, server-
     const enumVals = (runEvent.$defs as Record<string, { enum?: string[] }>).RunEventType?.enum ?? [];
     expect(enumVals).toContain('roster.run.initiated');
   });
+
+  it('the GET /v1/agents/roster response schema validates + rejects extras (RFC 0086 §B)', () => {
+    const ajv = new Ajv2020({ strict: false, allErrors: true });
+    addFormats(ajv);
+    ajv.addSchema(loadSchema('agent-roster-entry.schema.json'), 'https://openwop.dev/spec/v1/agent-roster-entry.schema.json');
+    const resp = ajv.compile(loadSchema('agent-roster-response.schema.json'));
+    const good = {
+      roster: [{ rosterId: 'host:sally', persona: 'Sally', agentRef: { agentId: 'core.x.y.z' }, owner: { tenantId: 'acme' } }],
+      total: 1,
+    };
+    expect(resp(good), why('RFC 0086 §B', 'a conforming GET /v1/agents/roster response MUST validate')).toBe(true);
+    expect(resp({ ...good, unexpected: true }), why('RFC 0086 §B', 'an extra top-level property MUST be rejected')).toBe(false);
+    expect(resp({ roster: [] }), why('RFC 0086 §B', 'the response MUST require `total`')).toBe(false);
+  });
 });

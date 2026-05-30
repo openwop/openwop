@@ -1066,6 +1066,59 @@ export interface AgentInventoryResponse {
   total: number;
 }
 
+/* ── Standing agent roster + org-chart (RFC 0086 / 0087) ──────────────── */
+
+/** RFC 0086 §A — a standing agent INSTANCE: a `host:<id>` AgentRef that
+ *  references a manifest/deployment and owns a workflow portfolio. */
+export interface AgentRosterEntry {
+  rosterId: string;
+  persona: string;
+  agentRef: { agentId: string; version?: string; channel?: string };
+  workflows?: string[];
+  owner: { tenantId: string; workspaceId?: string };
+  enabled?: boolean;
+  label?: string;
+  description?: string;
+}
+
+/** Response for `GET /v1/agents/roster` (RFC 0086 §B). */
+export interface AgentRosterResponse {
+  roster: AgentRosterEntry[];
+  total: number;
+}
+
+/** RFC 0087 §A — an org-chart department (a tree node via `parentDepartmentId`). */
+export interface OrgChartDepartment {
+  departmentId: string;
+  name: string;
+  parentDepartmentId: string | null;
+  roles: { roleId: string; name: string }[];
+}
+
+/** RFC 0087 §A — an org-chart member (a roster instance placed in a dept/role). */
+export interface OrgChartMember {
+  rosterId: string;
+  departmentId: string;
+  roleId: string;
+  reportsTo: string | null;
+}
+
+/** RFC 0087 §A — the descriptive org-chart over roster members. Carries no
+ *  authority-bearing field by design (§B `org-position-no-authority-escalation`). */
+export interface AgentOrgChart {
+  owner: { tenantId: string; workspaceId?: string };
+  departments: OrgChartDepartment[];
+  members: OrgChartMember[];
+}
+
+/** Response for `GET /v1/agents/org-chart/{departmentId}` (RFC 0087 §D) — the
+ *  department subtree + the responsibility roll-up (union of member portfolios). */
+export interface OrgChartResponsibilityView {
+  department: OrgChartDepartment;
+  members: OrgChartMember[];
+  responsibilities: string[];
+}
+
 /* ── User-authored agents (sample-extension; non-normative) ─────────────
  * Backs the workflow-engine sample app's Agents tab. Pack-installed
  * agents come through `AgentInventoryEntry` above (RFC 0072 §A

@@ -900,6 +900,124 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
 
+  /v1/agents/roster:
+    get:
+      tags: [agents]
+      summary: |
+        RFC 0086 §B — list the standing agent roster (named "digital-twin
+        employee" instances + their workflow portfolios) visible to the
+        caller. Capability-gated on `capabilities.agents.roster.supported:
+        true`; hosts that don't advertise it return 404. Tenant-scoped per
+        RFC 0074 — on an `installScope: 'tenant'` host only the caller's
+        owner-triple entries are returned. Read-only; content-free (SR-1).
+      operationId: listAgentRoster
+      responses:
+        '200':
+          description: The caller's standing roster (rosterId-sorted).
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/agent-roster-response.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: Host does not advertise `capabilities.agents.roster`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /v1/agents/roster/{rosterId}:
+    get:
+      tags: [agents]
+      summary: |
+        RFC 0086 §B — return one standing roster entry, or 404 when no such
+        entry exists, the host doesn't advertise `capabilities.agents.roster`,
+        or (on an `installScope: 'tenant'` host) the entry is outside the
+        caller's owner triple — a cross-tenant entry 404s identically to
+        "not found", never disclosing another tenant's roster.
+      operationId: getAgentRosterEntry
+      parameters:
+        - in: path
+          name: rosterId
+          required: true
+          schema: { type: string }
+          description: The standing instance id (a `host:<id>` AgentRef agentId).
+      responses:
+        '200':
+          description: The roster entry.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/agent-roster-entry.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: No such entry, cross-tenant, or capability unadvertised.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /v1/agents/org-chart:
+    get:
+      tags: [agents]
+      summary: |
+        RFC 0087 §C — return the caller's agent org-chart (departments + roles
+        + `reportsTo` edges over roster members). Capability-gated on
+        `capabilities.agents.orgChart.supported: true`; hosts that don't
+        advertise it return 404. Tenant-scoped per RFC 0074. DESCRIPTIVE only:
+        an org edge confers no authority (§B `org-position-no-authority-escalation`).
+      operationId: getAgentOrgChart
+      responses:
+        '200':
+          description: The caller's org-chart.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/agent-org-chart.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: Host does not advertise `capabilities.agents.orgChart`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /v1/agents/org-chart/{departmentId}:
+    get:
+      tags: [agents]
+      summary: |
+        RFC 0087 §D — one department's subtree + responsibility roll-up (the
+        union of its members' RFC 0086 portfolios). `?recursive=false` narrows
+        the roll-up to direct members without changing the response shape.
+        404 when the department is unknown, cross-tenant, or the host doesn't
+        advertise `capabilities.agents.orgChart`. The roll-up grants nothing (§B).
+      operationId: getAgentOrgChartDepartment
+      parameters:
+        - in: path
+          name: departmentId
+          required: true
+          schema: { type: string }
+          description: The department id to root the subtree + roll-up at.
+        - in: query
+          name: recursive
+          required: false
+          schema: { type: boolean, default: true }
+          description: When `false`, the roll-up scopes to direct members only.
+      responses:
+        '200':
+          description: The department subtree + responsibility roll-up.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/org-chart-responsibility-view.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: Unknown/cross-tenant department, or capability unadvertised.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
   /v1/runs/{runId}/eval-summary:
     get:
       tags: [runs]

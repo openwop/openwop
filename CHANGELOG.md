@@ -11,6 +11,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(api+sdk): RFC 0086/0087 roster + org-chart read endpoints (deferred Accepted-track surface) (2026-05-30)
+
+Pulls forward the read endpoints RFC 0086 + 0087 deferred to `Active → Accepted`, so a host has the full normative wire contract to implement against (the graduation itself stays adoption-gated on a non-steward host advertising the capability + the behavioral conformance):
+
+- `api/openapi.yaml` — four additive `GET` operations: `/v1/agents/roster` + `/v1/agents/roster/{rosterId}` (RFC 0086 §B), `/v1/agents/org-chart` + `/v1/agents/org-chart/{departmentId}` (RFC 0087 §C/§D). Each capability-gated (404 when unadvertised), tenant-scoped (RFC 0074), with `operationId`/tag/`401`/`403`/`404`.
+- NEW `schemas/agent-roster-response.schema.json` (`{ roster: AgentRosterEntry[], total }`) + `schemas/org-chart-responsibility-view.schema.json` (the §D department subtree + responsibility roll-up). Response `$ref`s reuse `agent-roster-entry.schema.json` / `agent-org-chart.schema.json`.
+- `sdk/typescript` — four `OpenwopClient.agents` methods (`listRoster` / `getRosterEntry` / `getOrgChart` / `getOrgChartDepartment`), each returning `null` on 404 (gated), mirroring the existing `list`/`get`/`listDeployments` pattern; types added to `src/types.ts`.
+- Conformance — extended `agent-roster-shape.test.ts` + `agent-org-chart-shape.test.ts` (always-on) to validate the two new response schemas + reject extras/missing-required.
+
+Additive (`COMPATIBILITY.md` §2.1) — new optional endpoints (absent ⇒ 404 as today), two new response schemas, four new SDK methods; no existing surface changes. Behavioral conformance + a reference host serving the normative `/v1/agents/roster|org-chart` (vs the sample-extension `/v1/host/sample/*`) remain the `Active → Accepted` gate, adoption-driven.
+
 ### spec(rfc-0087): Agent Org-Chart — Draft → Active (2026-05-30)
 
 Promoted **RFC 0087** `Draft → Active` — lands the normative wire surface for the org-chart layer over RFC 0086 roster members, with the merged host-extension reference impl (`/v1/host/sample/org-chart`, #371) as the `Active → Accepted` evidence path. The shape landed atomically:

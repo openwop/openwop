@@ -51,6 +51,10 @@ import {
   type RunSnapshot,
   type AgentInventoryEntry,
   type AgentInventoryResponse,
+  type AgentRosterEntry,
+  type AgentRosterResponse,
+  type AgentOrgChart,
+  type OrgChartResponsibilityView,
   type EvalSummary,
   type AgentDeployment,
   type AgentDeploymentTransition,
@@ -421,6 +425,72 @@ export class OpenwopClient {
         body,
         headers: this.#mutationHeaders(opts),
       }),
+
+    /**
+     * RFC 0086 §B — list the standing agent roster (named instances + their
+     * workflow portfolios) visible to the caller. Returns `null` when the host
+     * doesn't advertise `capabilities.agents.roster` (the endpoint 404s).
+     */
+    listRoster: async (): Promise<AgentRosterResponse | null> => {
+      try {
+        return await this.#request<AgentRosterResponse>({ method: 'GET', path: '/v1/agents/roster' });
+      } catch (err) {
+        if (err instanceof WopError && err.status === 404) return null;
+        throw err;
+      }
+    },
+
+    /**
+     * RFC 0086 §B — return one standing roster entry. Returns `null` on 404
+     * (no such entry, cross-tenant, or the capability is unadvertised).
+     */
+    getRosterEntry: async (rosterId: string): Promise<AgentRosterEntry | null> => {
+      try {
+        return await this.#request<AgentRosterEntry>({
+          method: 'GET',
+          path: `/v1/agents/roster/${encodeURIComponent(rosterId)}`,
+        });
+      } catch (err) {
+        if (err instanceof WopError && err.status === 404) return null;
+        throw err;
+      }
+    },
+
+    /**
+     * RFC 0087 §C — return the caller's agent org-chart (departments + roles +
+     * `reportsTo` over roster members; descriptive — confers no authority).
+     * Returns `null` when the host doesn't advertise `capabilities.agents.orgChart`.
+     */
+    getOrgChart: async (): Promise<AgentOrgChart | null> => {
+      try {
+        return await this.#request<AgentOrgChart>({ method: 'GET', path: '/v1/agents/org-chart' });
+      } catch (err) {
+        if (err instanceof WopError && err.status === 404) return null;
+        throw err;
+      }
+    },
+
+    /**
+     * RFC 0087 §D — one department's subtree + responsibility roll-up (the
+     * union of its members' RFC 0086 portfolios). `recursive: false` scopes the
+     * roll-up to direct members. Returns `null` on 404 (unknown/cross-tenant
+     * department, or the capability is unadvertised).
+     */
+    getOrgChartDepartment: async (
+      departmentId: string,
+      opts: { recursive?: boolean } = {},
+    ): Promise<OrgChartResponsibilityView | null> => {
+      const qs = opts.recursive === false ? '?recursive=false' : '';
+      try {
+        return await this.#request<OrgChartResponsibilityView>({
+          method: 'GET',
+          path: `/v1/agents/org-chart/${encodeURIComponent(departmentId)}${qs}`,
+        });
+      } catch (err) {
+        if (err instanceof WopError && err.status === 404) return null;
+        throw err;
+      }
+    },
   };
 
   // ── User-authored agents (sample-extension; non-normative) ───────────
