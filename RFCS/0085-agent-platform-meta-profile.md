@@ -139,4 +139,3 @@ Checklist for `Active → Accepted` (files at `Draft`):
 - Recommended platform-plus tier: [`0081`](./0081-agent-evaluation-and-scorecards.md) (eval), [`0082`](./0082-agent-deployment-lifecycle.md) (deployment), [`0084`](./0084-budget-quota-and-cost-policy.md) (budget).
 - [`docs/IMPLEMENTATION-CERTIFICATION.md`](../docs/IMPLEMENTATION-CERTIFICATION.md) + [`INTEROP-MATRIX.md`](../INTEROP-MATRIX.md) — the badge + evidence surfaces.
 - [`COMPATIBILITY.md`](../COMPATIBILITY.md) §2.1 — additive-change discipline.
-</content>

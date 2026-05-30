@@ -93,7 +93,7 @@ A host that advertises `agents.deployment.supported` but not `agents.evalSuite` 
 }}
 ```
 
-Truthful advertisement (RFC 0031): a host that doesn't split traffic advertises `canary: false` and rejects `canaryPercent < 100`; a host that only supports a subset of states advertises that subset and rejects transitions outside it.
+Truthful advertisement (RFC 0031): a host that doesn't split traffic MUST advertise `canary: false` and MUST reject `canaryPercent < 100`; a host that only supports a subset of states MUST advertise that subset and MUST reject transitions outside it.
 
 ### Examples
 
@@ -159,10 +159,10 @@ Checklist for `Active → Accepted` (files at `Draft`):
 - [`RFCS/0081-agent-evaluation-and-scorecards.md`](./0081-agent-evaluation-and-scorecards.md) — the eval evidence (§E) the promotion gate enforces; the `{evalRunId, requiredPassScore?}` seam.
 - [`RFCS/0051-approval-deployment-gate-primitive.md`](./0051-approval-deployment-gate-primitive.md) — the `approvalGate` (the human gate §E composes).
 - [`RFCS/0049-rbac-scopes-and-authorization-decisions.md`](./0049-rbac-scopes-and-authorization-decisions.md) — the `deploy:*` scopes + `authorization-fail-closed` (§E-1).
+- [`spec/v1/auth.md`](../spec/v1/auth.md) — the audit log the `deployment.*` events are recorded to (§D); RFC 0009/0010 are its conformance, per the RFC 0051 precedent.
 - [`RFCS/0002-agent-identity-and-reasoning-events.md`](./0002-agent-identity-and-reasoning-events.md) — `AgentRef.version` the `channel` field parallels (§A).
 - [`RFCS/0070-agent-manifest-runtime.md`](./0070-agent-manifest-runtime.md) + [`RFCS/0072-agent-inventory-and-dispatch.md`](./0072-agent-inventory-and-dispatch.md) + [`RFCS/0074-tenant-scoped-agent-inventory.md`](./0074-tenant-scoped-agent-inventory.md) — the agent surface + `installScope` (UQ #6).
 - [`RFCS/0077-agent-run-lifecycle-and-live-manifest-dispatch.md`](./0077-agent-run-lifecycle-and-live-manifest-dispatch.md) — the `agent.invocation.started` payload that carries `resolvedAgentVersion` (§B).
 - [`spec/v1/version-negotiation.md`](../spec/v1/version-negotiation.md) §"Pinned change versions" — the `ctx.getVersion` pin model §B reuses; [`spec/v1/replay.md`](../spec/v1/replay.md) §"Recorded-fact events".
 - [`spec/v1/node-packs.md`](../spec/v1/node-packs.md) — registry semver tags (distinct from deployment channels, §C / Alt 1).
 - [`COMPATIBILITY.md`](../COMPATIBILITY.md) §2.1 — additive-change discipline.
-</content>

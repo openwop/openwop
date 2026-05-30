@@ -55,7 +55,7 @@ A **trigger subscription** is a durable record (a webhook registration, a schedu
 | `failed` | delivery failing past policy (the `webhooks.md` circuit-breaker generalized) | repeated delivery failure |
 | `dead-lettered` | terminal failure; deliveries routed to the RFC 0053 sink | retry exhaustion |
 
-The record carries `subscriptionId`, `source` (`webhook`/`schedule`/`queue`/…), `state`, `dedupEnabled`, the `retryPolicy`, and (for webhooks) the existing `(webhookId, secretFingerprint)` register keys (`webhooks.md`) — **unchanged**, with the state machine layered over them. `failed` → `dead-lettered` reuses RFC 0053's `host.deadLetter` sink + `retentionDays` (a dead-lettered *delivery* is fork/inspect-eligible exactly like a dead-lettered run).
+The record carries `subscriptionId`, `source` (`webhook`/`schedule`/`queue`/…), `state`, `dedupEnabled`, the `retryPolicy`, and (for webhooks) the existing `(webhookId, secretFingerprint)` register keys (`webhooks.md`) — **unchanged**, with the state machine layered over them. `failed` → `dead-lettered` reuses RFC 0053's `deadLetter` sink + `retentionDays` (a dead-lettered *delivery* is fork/inspect-eligible exactly like a dead-lettered run).
 
 ### §C — Delivery model: attempts, dedup, retry, causation
 
@@ -153,12 +153,11 @@ Checklist for `Active → Accepted` (files at `Draft`):
 ## References
 
 - `docs/OPENWOP-AI-AGENT-PLATFORM-RECOMMENDATIONS.md` §"RFC 0083" + §Non-Goals — the source recommendation + the channels-stay-extensions constraint.
-- [`RFCS/0052-scheduling-and-time-based-triggers.md`](./0052-scheduling-and-time-based-triggers.md) — `host.scheduling` + the missed-tick policy (UQ #5).
-- [`RFCS/0053-dead-letter-routing-and-failure-sinks.md`](./0053-dead-letter-routing-and-failure-sinks.md) — the `host.deadLetter` sink exhausted deliveries route to (§B/§C).
-- [`RFCS/0017-host-queue-bus-capability.md`](./0017-host-queue-bus-capability.md) — `host.queueBus` (a durable inbound source, §D) + cross-tenant isolation.
+- [`RFCS/0052-scheduling-and-time-based-triggers.md`](./0052-scheduling-and-time-based-triggers.md) — the `scheduling` capability (advertised at the document root per RFC 0073; the RFC's prose calls it `host.scheduling`) + the missed-tick policy (UQ #5).
+- [`RFCS/0053-dead-letter-routing-and-failure-sinks.md`](./0053-dead-letter-routing-and-failure-sinks.md) — the `deadLetter` sink exhausted deliveries route to (§B/§C).
+- [`RFCS/0017-host-queue-bus-capability.md`](./0017-host-queue-bus-capability.md) — the `queueBus` capability (a durable inbound source, §D) + cross-tenant isolation.
 - [`RFCS/0040-multi-agent-cross-host-causation.md`](./0040-multi-agent-cross-host-causation.md) — the `causationId`/`causationHostId` + `/ancestry` the trigger→run edge reuses (§C-3).
 - [`spec/v1/webhooks.md`](../spec/v1/webhooks.md) — the best-effort delivery contract the `webhooks.durable` opt-in extends (preserved as default).
 - [`spec/v1/idempotency.md`](../spec/v1/idempotency.md) — the Layer-1 dedup model the `dedupKey` reuses (§C-1, UQ #2).
 - [`spec/v1/profiles.md`](../spec/v1/profiles.md) §"Adding a profile" — the derived-profile machinery + the append-only rule.
 - [`COMPATIBILITY.md`](../COMPATIBILITY.md) §2.1 — additive-change discipline.
-</content>

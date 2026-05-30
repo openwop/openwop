@@ -161,5 +161,3 @@ Checklist for `Active → Accepted` (files at `Draft`):
 - [`RFCS/0082-agent-deployment-lifecycle.md`](./0082-agent-deployment-lifecycle.md) — the eval-gated promotion seam (§E) this RFC reserves and 0082 enforces.
 - [`spec/v1/replay.md`](../spec/v1/replay.md) §"Recorded-fact events" — the determinism posture for rubric/adversarial/live-shadow scores (UQ #1).
 - [`COMPATIBILITY.md`](../COMPATIBILITY.md) §2.1 — additive-change discipline.
-</content>
-</invoke>

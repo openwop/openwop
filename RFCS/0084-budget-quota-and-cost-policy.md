@@ -92,7 +92,7 @@ On `budget.exhausted` for a hard dimension, the host enforces per `onExhaustion`
 
 **Positive (hard cost cap).** `POST /v1/runs { configurable: { budget: { maxCostUsd: 1.00, thresholdPercent: 80, onExhaustion: "fail" } } }` on a host advertising `budget.dimensions:["cost"], enforce:"hard"` → `budget.reserved{effectiveBudget:{maxCostUsd:1.00}}` at start; as `provider.usage` events accrue, `budget.consumed{dimension:"cost",remaining:0.30}`; at $0.80, `budget.threshold.crossed{dimension:"cost",percent:80}`; at $1.00, `budget.exhausted{dimension:"cost"}` → `cap.breached{kind:"budget-cost",limit:1.00,observed:1.02}` → `run.failed{error:"budget_exhausted"}`. **Positive (interrupt).** Same with `onExhaustion:"interrupt"` → at exhaustion, an approval interrupt; a human resume extends the budget and the run continues.
 
-**Negative (orthogonality).** A `budget` policy attempting a `maxWallTimeMs` field → `400 validation_error` (`additionalProperties:false`; wall-time is RFC 0058's `runTimeoutMs`). **Negative (model deny).** A run resolving to `gpt-4-32k` with `modelDeny:["gpt-4-32k"]` → `budget_model_denied` before the call. **Negative (pricing leak).** A `budget.consumed` payload carrying a provider rate-card / per-token price fails validation + the `budget-no-pricing-leak` invariant. **Negative (advisory host).** A host advertising `enforce:"advisory"` emits the four events but does NOT stop the run — honest advertisement (it doesn't claim hard enforcement it lacks).
+**Negative (orthogonality).** A `budget` policy attempting a `maxWallTimeMs` field → `400 validation_error` (`additionalProperties:false`; wall-time is RFC 0058's `runTimeoutMs`). **Negative (model deny).** A run resolving to `gpt-4-32k` with `modelDeny:["gpt-4-32k"]` → `budget_model_denied` before the call. **Negative (pricing leak).** A `budget.consumed` payload carrying a provider rate-card / per-token price fails validation + the `budget-no-pricing-leak` invariant. **Negative (advisory host).** A host advertising `enforce:"advisory"` MUST emit the four events but MUST NOT stop the run — honest advertisement (it doesn't claim hard enforcement it lacks).
 
 ## Compatibility
 
@@ -155,4 +155,3 @@ Checklist for `Active → Accepted` (files at `Draft`):
 - [`spec/v1/run-options.md`](../spec/v1/run-options.md) — the reserved-key contract the `budget` key extends.
 - [`spec/v1/interrupt.md`](../spec/v1/interrupt.md) — the `onExhaustion:"interrupt"` path (§D, UQ #5); [`spec/v1/replay.md`](../spec/v1/replay.md) — the recorded-fact posture for consumed values (UQ #2).
 - [`COMPATIBILITY.md`](../COMPATIBILITY.md) §2.1 — additive-change discipline.
-</content>
