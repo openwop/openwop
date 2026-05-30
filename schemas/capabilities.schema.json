@@ -1247,6 +1247,16 @@
           "properties": {
             "supported": { "type": "boolean" }
           }
+        },
+        "egressPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "RFC 0079. The host evaluates credential provenance (`credential-provenance.schema.json`) + the audience-binding MUST (§C) on credentialed egress and emits `egress.decided` (§B). Requires `httpClient.safeFetch` (the egress mechanism). Absent ⇒ the host does not perform provenance binding (the RFC 0076 §B SSRF guard still applies); the conformance behavioral scenarios skip cleanly. Closes the credential↔destination-binding question RFC 0076 §B parked.",
+          "required": ["supported"],
+          "properties": {
+            "supported": { "type": "boolean", "description": "REQUIRED when present. `true` ⇒ the §C audience-binding MUST is enforced + `egress.decided` is emitted." },
+            "decisions": { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["allowed", "denied", "downgraded", "approval-required"] }, "description": "MAY — which decision outcomes the host implements. Absent ⇒ at least `allowed` + `denied`." }
+          }
         }
       }
     },

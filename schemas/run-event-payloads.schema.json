@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
   "title": "RunEventPayloads",
-  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n82 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n83 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
   "type": "object",
   "$defs": {
     "_typeIndex": {
@@ -91,7 +91,8 @@
         "eval.scored":               { "$ref": "#/$defs/evalScored" },
         "eval.completed":            { "$ref": "#/$defs/evalCompleted" },
         "tool.session.opened":       { "$ref": "#/$defs/toolSessionOpened" },
-        "tool.session.closed":       { "$ref": "#/$defs/toolSessionClosed" }
+        "tool.session.closed":       { "$ref": "#/$defs/toolSessionClosed" },
+        "egress.decided":            { "$ref": "#/$defs/egressDecided" }
       }
     },
 
@@ -1471,6 +1472,19 @@
         "sessionId": { "type": "string", "minLength": 1, "description": "Matches the `tool.session.opened` `sessionId`." },
         "toolId":    { "type": "string", "minLength": 1, "description": "The `ToolDescriptor.toolId` the session was for." },
         "outcome":   { "type": "string", "enum": ["completed", "failed", "cancelled"], "description": "Terminal disposition of the session. Content-free — no failure detail/result on the payload." }
+      },
+      "additionalProperties": true
+    },
+    "egressDecided": {
+      "type": "object",
+      "description": "RFC 0079 §B. Emitted when a host evaluates a credentialed egress (via `ctx.http.safeFetch` / a tool) against credential provenance + the SSRF guard. Content-free: identifiers + decision only — no credential value, no request/response body (SR-1). On replay re-read from the log, never regenerated (the decision is a recorded fact). Emitted only when `capabilities.httpClient.egressPolicy.supported: true`.",
+      "required": ["decision", "destination"],
+      "properties": {
+        "decision":     { "type": "string", "enum": ["allowed", "denied", "downgraded", "approval-required"], "description": "`allowed`: egress proceeds with the credential; `denied`: blocked (out-of-audience / expired / SSRF / unevaluable provenance — fail-closed); `downgraded`: proceeds WITHOUT the credential (anonymous egress, when host policy permits); `approval-required`: suspended pending an RFC 0051 approval interrupt." },
+        "destination":  { "type": "string", "minLength": 1, "description": "The egress destination (host/domain) evaluated. Content-free identifier — NOT the full URL with query." },
+        "credentialId": { "type": "string", "minLength": 1, "description": "MAY — the provenance `credentialId` considered (absent for an anonymous / denied-pre-credential egress)." },
+        "reason":       { "type": "string", "description": "MAY — a short machine-stable reason code for a crisp Keys-page / debugger explanation. Conventional values: `out-of-audience` / `expired` / `ssrf-blocked` / `provenance-unevaluable` / `scope-denied` / `ok` (left open for host-specific reasons; the load-bearing field is `decision`)." },
+        "auditCorrelationId": { "type": "string", "minLength": 1, "description": "MAY — correlates to the provenance descriptor + host audit log." }
       },
       "additionalProperties": true
     }

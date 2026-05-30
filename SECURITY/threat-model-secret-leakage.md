@@ -129,6 +129,12 @@ Each entry below is filed in `SECURITY/invariants.yaml` with its ID, severity, a
 | `secret-leakage-stream-chunk` | SSE chunks forwarded from a provider MUST pass through the redaction sanitizer. |
 | `secret-leakage-stream-error` | SSE error chunks MUST pass through the redaction sanitizer. |
 | `secret-leakage-author-emit` | (ADVISORY) Workflow validation SHOULD reject nodes whose declared inputs match credential shape patterns. Defense-in-depth; not a hard MUST. |
+| `egress-decision-no-secret-leak` | (RFC 0079) The `CredentialProvenance` descriptor + the `egress.decided` event MUST NOT carry the credential secret value — identifiers, destination, decision, audiences, and an optional reason code only. |
+| `egress-credential-audience-bound` | (RFC 0079, reference-impl until Accepted) A host-issued credential MUST NOT be attached to an egress whose destination is not in the credential's provenance `audiences`; provenance-unevaluable / expired ⇒ fail-closed `denied`. The confused-deputy / credential-exfiltration guard at the egress boundary. |
+
+### 4.7 Credential confused-deputy egress (RFC 0079)
+
+A new surface: when a tool or pack runtime attaches a host-issued credential (RFC 0046 reference / RFC 0047 OAuth token) to an outbound request via `ctx.http.safeFetch`, the §host.http SSRF guard checks the *URL* but not the *credential↔destination binding*. A prompt-injected or misconfigured tool can target an attacker-controlled destination with a credential minted for a legitimate service (a **confused deputy** — STRIDE: Information Disclosure + Elevation of Privilege). Mitigation: the `egress-credential-audience-bound` MUST (`host-capabilities.md` §"Credential provenance + egress policy" §C) — the host evaluates `CredentialProvenance.audiences` before attaching the credential and **fails closed**, emitting a content-free `egress.decided` decision. The decision/descriptor themselves are secret-free (`egress-decision-no-secret-leak`).
 
 ## 6. Residual risks
 

@@ -130,6 +130,7 @@
         "eval.completed",
         "tool.session.opened",
         "tool.session.closed",
+        "egress.decided",
         "runOrchestrator.decided",
         "node.dispatched",
         "conversation.opened",

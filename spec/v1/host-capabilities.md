@@ -1938,6 +1938,27 @@ ctx.http.safeFetch(
 
 Additive — hosts that omit `safeFetch` expose no `ctx.http.safeFetch`; packs feature-detect. Verified by `http-client-ssrf.test.ts` (advertisement contract, capability-gated) + `safefetch-behavior.test.ts` (SSRF block / rebinding / `Connection: upgrade` refusal / audit-when-both, seam-gated; soft-skips on 404 until a `safeFetch` host wires the seam) + `safefetch-live-audit.test.ts` (the audit-when-both MUST against the **durable run event log** rather than the seam's inline echo — a host advertising both `safeFetch` + `toolHooks.prePostEvents` that ships a production `ctx.http.safeFetch` with no audit hooks passes the inline seam but FAILS this scenario under `OPENWOP_REQUIRE_BEHAVIOR=true`; drives the `POST /v1/host/sample/http/safe-fetch-run` open seam, host-pending on 404). It asserts the pair on a guaranteed-**blocked** metadata URL as an egress-independent floor — the audit MUST is "for every safeFetch invocation," and a refused egress is itself audit-worthy — so the bar bites even on a host with no public egress, plus a best-effort public fetch for success-path coverage. This live-run scenario is the RFC 0076 §B → Accepted bar.
 
+### Credential provenance + egress policy (RFC 0079 §A–§F — `Active`)
+
+**Why this exists.** `safeFetch` (above) guards the *URL* (resolve→pin→connect, metadata block) but explicitly **parked** the credential question: when a tool attaches a host-issued credential (an RFC 0046 stored reference or an RFC 0047 OAuth token) to an egress, nothing checks that *this credential* is meant for *this destination*. A prompt-injected or misconfigured tool can attach a credential minted for service A to a request aimed at attacker-controlled service B — a confused-deputy / credential-exfiltration class the SSRF guard does not catch. RFC 0079 closes it.
+
+**Capability flag:** `capabilities.httpClient.egressPolicy.supported: true` — requires `httpClient.safeFetch` (the egress mechanism). Absent ⇒ the host does not perform provenance binding (the SSRF guard above still applies); the conformance behavioral scenarios skip cleanly.
+
+**§A — Credential provenance descriptor.** When the host binds a credential for an egress at the tool boundary, it attaches a [`CredentialProvenance`](../../schemas/credential-provenance.schema.json) — metadata *about* the credential (`credentialId`, `issuer`, REQUIRED `audiences`, optional `scopes`/`expiresAt`/`redactionPolicy`/`auditCorrelationId`), **never the secret value** (SR-1; reuses the RFC 0046 `credential-payload-redaction` posture).
+
+**§B — `egress.decided` event.** A host advertising `egressPolicy` MUST emit the content-free `egress.decided` ([`run-event-payloads.schema.json` `egressDecided`](../../schemas/run-event-payloads.schema.json)) when it evaluates a credentialed egress: `{ decision ∈ {allowed, denied, downgraded, approval-required}, destination, credentialId?, reason?, auditCorrelationId? }` — identifiers + decision only, no credential value, no request/response body. On replay it is re-read from the log, never regenerated (a recorded fact).
+
+**§C — Audience-binding MUST (normative — the parked-question answer).** When a host attaches a host-issued credential to an egress (via `ctx.http.safeFetch` or a tool):
+
+1. The host **MUST NOT** attach the credential if the egress destination is not in the credential's provenance `audiences` (the confused-deputy guard) — such an egress is `denied` (`reason: "out-of-audience"`) or, where host policy permits, `downgraded` (proceeds anonymously without the credential).
+2. The host **MUST fail closed**: if provenance cannot be evaluated (no descriptor, unparseable `audiences`), the egress is `denied` (`reason: "provenance-unevaluable"`) — never allowed-by-default.
+3. An **expired** credential (`expiresAt` past) MUST NOT be attached (`denied` / `reason: "expired"`).
+4. This composes the §host.http SSRF guard (URL-level); the audience binding is the **credential-level** check the SSRF guard does not perform — **both** MUST pass for `allowed`.
+
+This is the load-bearing behavioral guarantee, tracked as the **`egress-credential-audience-bound`** SECURITY invariant (reference-impl tier until a host wires `egressPolicy` over `safeFetch` — graduates to protocol-tier at `Active → Accepted` per the RFC 0035 precedent). The **content-free** guarantee on `egress.decided` + the provenance descriptor (no secret value on the wire) is the protocol-tier **`egress-decision-no-secret-leak`** invariant, verified always-on by `egress-provenance-shape.test.ts`. `audiences` matching is exact host or an explicit `*.domain` suffix (no arbitrary regex — injection risk).
+
+Additive — a host that omits `egressPolicy` keeps the SSRF guard unchanged. Verified by `egress-provenance-shape.test.ts` (always-on shape) + `egress-audience-binding.test.ts` + `egress-decision-content-free.test.ts` (gated on `egressPolicy.supported`, soft-skip until a host wires the seam).
+
 ---
 
 ## §host.toolHooks

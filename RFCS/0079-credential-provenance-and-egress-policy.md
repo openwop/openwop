@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0079 |
 | **Title** | A credential-provenance descriptor at the tool/egress boundary (host-issued credentials carry id / issuer / allowed audiences / scopes / expiry / redaction policy / audit-correlation id) + an `egress.decided` policy event (allowed / denied / downgraded / approval-required) + the load-bearing MUST that a host-issued credential is never attached to an egress destination outside its declared audiences — answering the credential-destination-binding question RFC 0076 §B parked |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-29 |
-| **Updated** | 2026-05-29 |
+| **Updated** | 2026-05-30 (`Draft → Active` — steward acceptance, comment window waived per `GOVERNANCE.md` single-maintainer lazy consensus after MyndHyve (non-steward) wire-shape review; wire shapes now locked. All 4 Unresolved questions resolved as proposed: UQ1 `audiences` matching = exact host OR explicit `*.domain` suffix (no arbitrary regex); UQ2 `downgraded` is per-credential opt-in, default `denied`; UQ3 emit `egress.decided` on all non-`allowed` always + `allowed` behind a verbosity flag; UQ4 `egress.decided` stays security-only (no RFC 0026 cost tag). NEW `schemas/credential-provenance.schema.json` + `host-capabilities.md` §"Credential provenance + egress policy" + `capabilities.httpClient.egressPolicy` + content-free `egress.decided` event + `egress-provenance-shape.test.ts` landed. **The §F invariant is split per the `check-security-invariants.sh` gate + RFC 0035 precedent:** `egress-decision-no-secret-leak` lands **protocol-tier** now (content-free guarantee; public test = the always-on shape scenario), and the behavioral `egress-credential-audience-bound` confused-deputy MUST-NOT lands **reference-impl tier**, graduating to protocol at `Active → Accepted` when a reference host wires `egressPolicy` over `safeFetch` + the gated `egress-audience-binding.test.ts` passes. Reference-host impl + behavioral scenarios deferred to Accepted.) |
 | **Affects** | `schemas/credential-provenance.schema.json` (NEW) · `schemas/capabilities.schema.json` (additive optional `httpClient.egressPolicy` block) · `schemas/run-event-payloads.schema.json` (additive `egress.decided` payload + `_typeIndex`) · `schemas/run-event.schema.json` (RunEventType enum +1) · `spec/v1/host-capabilities.md` (§"Credential provenance + egress policy") · `SECURITY/invariants.yaml` (`egress-credential-audience-bound`) · `SECURITY/threat-model-secret-leakage.md` · `CHANGELOG.md` · `INTEROP-MATRIX.md` · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -145,7 +145,7 @@ New protocol-tier invariant **`egress-credential-audience-bound`**: a host-issue
 
 ## Unresolved questions
 
-To decide before `Active`:
+**All four resolved at `Draft → Active` (2026-05-30) as proposed below — recorded in `Updated:`.** Retained for the rationale trail:
 
 1. **`audiences` matching semantics.** Exact host match, suffix/wildcard (`*.stripe.com`), or a destination-class id? Proposed: exact host + an explicit `*.domain` suffix form; no arbitrary regex (injection risk). Confirm before `Active`.
 2. **`downgraded` default policy.** Is anonymous-egress-on-out-of-audience (`downgraded`) opt-in per credential, or host-global? Proposed: per-credential (a credential MAY permit downgrade; default is `denied`). Confirm.

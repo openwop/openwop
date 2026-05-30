@@ -11,6 +11,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0079): Credential Provenance + Egress Policy — Draft → Active (2026-05-30)
+
+Promoted **RFC 0079** `Draft → Active` — answers the credential↔destination-binding question RFC 0076 §B explicitly parked (a confused-deputy / credential-exfiltration class the SSRF guard, which checks the *URL* not the *credential*, doesn't catch). The shape landed atomically:
+
+- NEW `schemas/credential-provenance.schema.json` (`CredentialProvenance`: `credentialId`/`issuer`/REQUIRED `audiences[minItems:1]` + optional `scopes`/`expiresAt`/`redactionPolicy`/`auditCorrelationId`; `additionalProperties:false`; secret-free — metadata *about* a credential, never the value).
+- `spec/v1/host-capabilities.md` §"Credential provenance + egress policy" (§A descriptor / §B `egress.decided` / §C audience-binding MUST + fail-closed / §D capability / §F invariants).
+- Additive optional `capabilities.httpClient.egressPolicy` (`supported` + `decisions[]` closed-enum; requires `httpClient.safeFetch`).
+- One content-free `egress.decided` RunEventType (`run-event.schema.json` enum 82 → 83) + `egressDecided` `$def` (`decision ∈ {allowed,denied,downgraded,approval-required}` + `destination` + optional `credentialId`/`reason`/`auditCorrelationId`) + `_typeIndex`; payloads self-count 82 → 83.
+- TWO SECURITY invariants, split per the `check-security-invariants.sh` gate + the RFC 0035 precedent: **`egress-decision-no-secret-leak`** (protocol-tier — the content-free guarantee on the descriptor + event; public test = the always-on `egress-provenance-shape.test.ts`) + **`egress-credential-audience-bound`** (reference-impl tier — the *behavioral* confused-deputy MUST-NOT; graduates to protocol at `Active → Accepted` when a host wires `egressPolicy` over `safeFetch`). `threat-model-secret-leakage.md` §4.7 "Credential confused-deputy egress" added.
+- Always-on server-free `egress-provenance-shape.test.ts` (descriptor round-trip + `audiences:[]`/missing-`credentialId`/unknown-property negatives + the no-secret-property structural check + the `egress.decided` content-free record + decision-enum/required negatives + RunEventType-enum membership + the capability shape) + `coverage.md` row.
+
+All four `Active`-gated Unresolved questions resolved as proposed (UQ1 `audiences` matching = exact host or explicit `*.domain` suffix, no arbitrary regex; UQ2 `downgraded` is per-credential opt-in, default `denied`; UQ3 emit `egress.decided` on all non-`allowed` always, `allowed` behind a verbosity flag; UQ4 `egress.decided` stays security-only, no RFC 0026 cost tag). Composes RFC 0076 §B (the egress mechanism) + 0046/0047 (credential sources) + 0049 (scopes) + 0064 (tool boundary) + 0078 (`ToolDescriptor.egress` static advertisement) + 0051 (approval-required). Additive (`COMPATIBILITY.md` §2.1) — one additive content-free RunEventType (no `eventLogSchemaVersion` bump), one new schema, one new optional capability block; the new invariant constrains only the new opt-in behavior. **Deferred to `Active → Accepted`**: the behavioral `egress-audience-binding.test.ts` + `egress-decision-content-free.test.ts`, the `egress-credential-audience-bound` protocol-tier graduation, the INTEROP-MATRIX row, and the reference-host `egressPolicy` implementation. Counts: RFC Active 12 → 13 / Draft 9 → 8; JSON Schemas +1; RunEventType variants 82 → 83; SECURITY invariants +2 (protocol +1, reference-impl +1); conformance scenario files +1.
+
 ### spec(rfc-0078): Portable Tool Catalog + Tool Session Contract — Draft → Active (2026-05-30)
 
 Promoted **RFC 0078** `Draft → Active` — a read-only projection that unifies the five openwop tool surfaces (node-pack / workflow / MCP / connector / host-extension) behind one portable `ToolDescriptor`. The shape landed atomically:

@@ -1541,3 +1541,41 @@ invariants:
       level; the always-on agent-eval-suite-shape.test.ts content-free
       negatives (a task entry with a taskOutput body; a safetyFinding with an
       excerpt) are the public test.
+
+  - id: egress-decision-no-secret-leak
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/egress-provenance-shape.test.ts
+    note: |
+      RFC 0079 §A/§F. The CredentialProvenance descriptor
+      (credential-provenance.schema.json) and the egress.decided event
+      (run-event-payloads.schema.json#egressDecided) MUST NOT carry the
+      credential secret value (SR-1) — identifiers (credentialId / issuer /
+      auditCorrelationId), the destination host, the decision enum, the
+      audiences list, and an optional machine-stable reason code only; never
+      the token / API key / Authorization header value, and never a
+      request/response body. credential-provenance.schema.json is
+      additionalProperties:false (no secret-value field exists); the always-on
+      egress-provenance-shape.test.ts asserts the descriptor + event shapes and
+      the decision-enum / audiences-minItems negatives. The redactionPolicy
+      field governs at-most an SR-1-redacted hash.
+
+  - id: egress-credential-audience-bound
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests: []
+    note: |
+      RFC 0079 §C/§F (the confused-deputy guard — RFC 0076 §B's parked
+      question). A host-issued credential MUST NOT be attached to an egress
+      whose destination is not in the credential's provenance `audiences`; such
+      an egress is denied (reason: out-of-audience) or downgraded (proceeds
+      anonymously). The host MUST fail closed — provenance-unevaluable ⇒ denied,
+      never allowed-by-default; an expired credential ⇒ denied. This is a
+      BEHAVIORAL guarantee requiring a live credentialed egress, so it lands at
+      reference-impl tier at Draft → Active (the gated egress-audience-binding.test.ts
+      soft-skips until a host wires egressPolicy over safeFetch). It GRADUATES to
+      protocol tier at Active → Accepted once a reference host implements it and
+      the behavioral scenario passes — the RFC 0035 sandbox-invariant precedent.

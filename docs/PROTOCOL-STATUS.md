@@ -8,10 +8,10 @@
 | Surface | Current value | Source |
 |---|---:|---|
 | Spec prose documents | 44 | `spec/v1/*.md` |
-| JSON Schemas | 46 | `schemas/*.schema.json` |
+| JSON Schemas | 47 | `schemas/*.schema.json` |
 | OpenAPI operations | 39 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 294 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 295 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 85 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
@@ -23,8 +23,8 @@
 | Status | Count |
 |---|---:|
 | Accepted | 64 |
-| Active | 12 |
-| Draft | 9 |
+| Active | 13 |
+| Draft | 8 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -106,7 +106,7 @@
 | RFC 0076 | Pack runtime-requirements declaration + host-provided safe-fetch | Accepted |
 | RFC 0077 | A normative `AgentManifest` -> live-run mapping + an optional `capabilities.agents.liveRuntime` flag + an `agent.invocation.started` / `agent.invocation.completed` event bracket, so a manifest agent executes against live models/tools with one portable, observable event family across all three entry points (workflow node, run API, chat mention) | Active |
 | RFC 0078 | An optional, capability-gated `GET /v1/tools` + `GET /v1/tools/{toolId}` projection returning a normative `ToolDescriptor` (stable `toolId`, source, I/O schemas, auth/egress/approval requirements, replay policy, safety tier) across every tool surface (node-pack / workflow / MCP / connector / host-extension), plus an optional tool-session lifecycle - so an agent or builder can discover what tools exist, what they require, and how they are audited, portably | Active |
-| RFC 0079 | A credential-provenance descriptor at the tool/egress boundary (host-issued credentials carry id / issuer / allowed audiences / scopes / expiry / redaction policy / audit-correlation id) + an `egress.decided` policy event (allowed / denied / downgraded / approval-required) + the load-bearing MUST that a host-issued credential is never attached to an egress destination outside its declared audiences - answering the credential-destination-binding question RFC 0076 sectionB parked | Draft |
+| RFC 0079 | A credential-provenance descriptor at the tool/egress boundary (host-issued credentials carry id / issuer / allowed audiences / scopes / expiry / redaction policy / audit-correlation id) + an `egress.decided` policy event (allowed / denied / downgraded / approval-required) + the load-bearing MUST that a host-issued credential is never attached to an egress destination outside its declared audiences - answering the credential-destination-binding question RFC 0076 sectionB parked | Active |
 | RFC 0080 | Reconcile the fragmented memory advertisement (`capabilities.memory.*` + `capabilities.agents.{memoryBackends,memoryConsolidation,commitments}` + `agent-memory.md` + `AgentManifest.memoryShape`) into one coherent, additive memory-capability model with eight named dimensions, a derived `openwop-memory` profile, and a normative requirement that the agent inventory surface when an agent's requested memory is degraded | Active |
 | RFC 0081 | Define a portable `AgentEvalSuite` artifact, an eval-run projection over the existing run surface (an `eval.*` event family + an `EvalSummary` schema), a host-advertised `agents.evalSuite` capability with a closed `modes[]` vocabulary (golden / rubric / adversarial / regression / live-shadow), and the composition seam by which an eval result MAY gate an agent deployment promotion - all additive | Active |
 | RFC 0082 | Define an agent deployment lifecycle - a named-channel + version binding (`agentId@version` / `agentId@channel` / `agentId@latest`), a deployment state machine (draft / test / staged / active / paused / deprecated / rolled-back) with canary percentage and a rollback pointer, a `deployment.*` audit-event family, and the eval-gated + RBAC-gated promotion contract - composing RFC 0051 (approval gates), RFC 0049 (RBAC), and RFC 0081 (eval), with channel->concrete-version resolution pinned at run-start for replay determinism | Draft |
@@ -152,8 +152,8 @@
 
 ## Active Follow-Ups
 
-- 9 RFCs still `Draft` (RFC 0038, RFC 0043, RFC 0050, RFC 0073, RFC 0079, RFC 0082, RFC 0083, RFC 0084, RFC 0085) — advance with schema/conformance proof or defer.
-- 12 RFCs `Active` (RFC 0035, RFC 0042, RFC 0065, RFC 0066, RFC 0067, RFC 0068, RFC 0069, RFC 0075, RFC 0077, RFC 0078, RFC 0080, RFC 0081) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 8 RFCs still `Draft` (RFC 0038, RFC 0043, RFC 0050, RFC 0073, RFC 0082, RFC 0083, RFC 0084, RFC 0085) — advance with schema/conformance proof or defer.
+- 13 RFCs `Active` (RFC 0035, RFC 0042, RFC 0065, RFC 0066, RFC 0067, RFC 0068, RFC 0069, RFC 0075, RFC 0077, RFC 0078, RFC 0079, RFC 0080, RFC 0081) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
