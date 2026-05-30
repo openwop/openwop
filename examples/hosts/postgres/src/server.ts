@@ -3023,10 +3023,19 @@ function handleDiscovery(req: IncomingMessage, res: ServerResponse): void {
   // wrapper property). Emit them at the root canonically + retain the nested
   // `capabilities` object as a DEPRECATED v1.x-window mirror (see
   // spec/v1/capabilities.md §"Document-root layout").
+  // `limits` exists at BOTH the root (AI-envelope limits: clarificationRounds /
+  // schemaRounds / envelopesPerTurn + maxNodeExecutions) and under `capabilities`
+  // (RFC 0058 maxRunDurationMs). A plain `...capabilities` spread would clobber the
+  // root `limits` with the capabilities one — dropping the envelope limits that
+  // `capabilities.schema.json §limits` requires. Merge the two so neither is lost.
   sendJSON(
     res,
     200,
-    { ...advertisement, ...advertisement.capabilities },
+    {
+      ...advertisement,
+      ...advertisement.capabilities,
+      limits: { ...advertisement.limits, ...advertisement.capabilities.limits },
+    },
     { 'Cache-Control': 'public, max-age=300' },
   );
 }
