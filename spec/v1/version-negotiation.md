@@ -282,6 +282,14 @@ The interaction between the four version axes determines deploy ordering. An Ope
 
 ---
 
+## Channel resolution + replay
+
+> Additive v1.x extension (RFC 0082). Applies only to hosts advertising `capabilities.agents.deployment.supported: true`.
+
+A deployment **channel** (`AgentRef.channel`, e.g. `stable` / `canary` / the reserved `latest`) is a fifth, agent-scoped instance of the **pinning** axis above (§"Pinned change versions"): it is runtime-pinned per-run, not deploy-coordinated. When a run binds `agentId@channel`, the host **MUST** resolve the channel to a concrete agent-definition `version` at the **first resolution** of that `(agentId, channel)` pair within the run, and **MUST** reuse that pinned version for every subsequent resolution of the same pair in the same run — it **MUST NOT** re-resolve against a channel that has moved mid-run. The resolved version is a **recorded fact** carried on `agent.invocation.started.resolvedAgentVersion` (a recorded-fact event per `replay.md`); on `POST /v1/runs/{runId}:fork` and on `replay`-mode re-execution the host **MUST** re-read it and **MUST NOT** re-resolve the channel. A canary traffic-split draw is performed once as part of this first-resolution pin and is likewise never re-rolled on replay. A channel that resolves to no `active` version fails the run with `no_active_deployment`. See [`agent-deployment.md`](./agent-deployment.md) §B for the full contract.
+
+---
+
 ## Open spec gaps
 
 | # | Gap | Owner |

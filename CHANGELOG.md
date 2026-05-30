@@ -11,6 +11,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0082): Agent Deployment Lifecycle — Draft → Active (2026-05-30)
+
+Promoted **RFC 0082** `Draft → Active` after an `/architect` pass on the load-bearing channel→version replay pin. The second Wave-3 RFC lands its wire surface:
+
+- NEW `spec/v1/agent-deployment.md` (normative §A binding / §B channel×replay pin / §C state machine / §D events / §E promotion contract / §F capability; Status `DRAFT v1.x`).
+- NEW `schemas/agent-deployment.schema.json` (the per-(agentId, version) deployment record: seven-state machine + canaryPercent + rollbackPointer + channels[]).
+- Additive optional **`channel`** on `schemas/agent-ref.schema.json`, mutually exclusive with the exact `version` pin via a `not: { required: ["version", "channel"] }` clause (additive-safe — no pre-0082 ref can carry `channel`; propagates to `WorkflowNode.agent`, which `$ref`s AgentRef — no separate `workflow-definition` edit needed). Additive optional `agents.deployment` capability (`channels`/`canary`/`rollback`/`states`).
+- Four content-free **`deployment.{promoted,rolled-back,canary.adjusted,state.changed}`** RunEventTypes (enum 80 → 84; payloads `additionalProperties:false`) + additive recorded-fact **`resolvedAgentVersion`/`resolvedChannel`** on the RFC 0077 `agent.invocation.started` payload (the §B pin's observable record).
+- Additive §"Channel resolution + replay" in `version-negotiation.md` + §"Deployment channels" in `node-packs.md` (registry-tags-that-EXIST vs channels-that-SERVE).
+- Always-on `agent-deployment-shape.test.ts` (record + `channel` XOR `version` `not`-clause + the four events + content-free negatives + the §B recorded-fact fields) + `coverage.md` row.
+- TWO SECURITY invariants per the architect finding: protocol-tier **`deployment-event-no-content-leak`** (structural, always-on public test) + **`deployment-promotion-fail-closed`** at **reference-impl tier** — it's behavioral, so rather than a vacuous always-on test it ships reference-impl (host-CI) and **graduates to protocol at Accepted** (the RFC 0035 sandbox-invariant precedent); at Active the structural fail-closed is covered by RFC 0049's `authorization-fail-closed`.
+
+All six `Active`-gated UQs resolved (the `/architect` pass refined §B from "pin at run.started" to **"pin per-(run, agentId, channel) at first resolution, reused within the run"** — closing the canary-determinism UQ#2 + the mid-run-drift gap: the canary draw is the §B pin, never re-rolled on replay). Composes RFC 0049 + 0051 + 0081 (Active) + 0070/0072/0074/0077 + 0002. Additive (`COMPATIBILITY.md` §2.1) — no `eventLogSchemaVersion` bump (RFC 0008 §K); the `channel` binding *strengthens* replay determinism. Counts synced via `--write`: RFC Active 10 → 11 / Draft 11 → 10; prose specs 43 → 44; JSON Schemas 45 → 46; RunEventType 80 → 84; SECURITY invariants 106 → 108 (protocol-tier 74 → 75, reference-impl 30 → 31); scenario files 292 → 293. **Deferred to `Active → Accepted`**: the `POST/GET /v1/agents/{agentId}/deployments` endpoint + deployment channels in OpenAPI/AsyncAPI, SDK helpers, the behavioral `agent-deployment-lifecycle.test.ts` + fixture, the INTEROP-MATRIX row, and the reference-host deployment store + canary router.
+
 ### spec(rfc-0081): Agent Evaluation, Scorecards, and Promotion Gates — Draft → Active (2026-05-30)
 
 Promoted **RFC 0081** `Draft → Active` (filed #357 four days prior) — the head of the Wave-3 "deployable" arc lands its wire surface. The shape landed atomically:
