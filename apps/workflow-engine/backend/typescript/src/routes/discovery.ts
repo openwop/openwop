@@ -391,6 +391,11 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
         // floor seam (`POST /v1/host/sample/agents/{agentId}/dispatch`),
         // enforcing toolAllowlist (§A14) + handoff schema validation (§D).
         manifestRuntime: { supported: true, handoffValidation: true },
+        // RFCS/0086 reference impl — standing agent roster (named agent
+        // instances owning a workflow portfolio). Sample host-extension
+        // under `/v1/host/sample/roster`; tenant-scoped. Non-normative
+        // until RFC 0086 reaches Active.
+        roster: { supported: true, installScope: 'tenant' },
       },
       // RFC 0026 — `provider.usage` event support. Reference host emits
       // one `provider.usage` event per real LLM dispatch from
