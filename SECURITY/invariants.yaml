@@ -1620,6 +1620,22 @@ invariants:
       content-free negatives (a deployment.promoted carrying a manifestBody; a
       deployment.state.changed carrying a prompt) are the public test.
 
+  - id: roster-attribution-no-content
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/agent-roster-shape.test.ts
+    note: |
+      RFC 0086 §C. The roster.run.initiated attribution event MUST carry the
+      standing agent's ids + persona + the trigger source ONLY (rosterId,
+      persona, agentId, workflowId, triggerSource, optional
+      triggerSubscriptionId) — never the inbound work-item body (a Kanban
+      card's description/payload), the resolved prompt, or credential material
+      (SR-1). The payload $def is additionalProperties:false; the always-on
+      agent-roster-shape.test.ts content-free negatives (a roster.run.initiated
+      carrying a `body`; one carrying a `prompt`) are the public test.
+
   - id: deployment-promotion-fail-closed
     tier: reference-impl
     severity: high

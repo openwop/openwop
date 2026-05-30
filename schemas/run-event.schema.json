@@ -132,6 +132,7 @@
         "deployment.rolled-back",
         "deployment.canary.adjusted",
         "deployment.state.changed",
+        "roster.run.initiated",
         "tool.session.opened",
         "tool.session.closed",
         "egress.decided",

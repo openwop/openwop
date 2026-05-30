@@ -11,6 +11,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0086): Standing Agent Roster — Draft → Active (2026-05-30)
+
+Promoted **RFC 0086** `Draft → Active` — lands the normative wire surface for the named "digital-twin employee" instance, with the merged host-extension reference impl (`/v1/host/sample/roster` + board attribution, #368) as the `Active → Accepted` evidence path. The shape landed atomically:
+
+- NEW `schemas/agent-roster-entry.schema.json` — the standing instance: `rosterId` (a dispatchable `host:<id>` AgentRef per §A — the reserved runtime-synthesis namespace, not a parallel id space), `persona`, `agentRef` (`agentId` + `version` XOR `channel` via `not`, RFC 0082 §A), a `workflows[]` portfolio, the RFC 0048 `owner` triple, and `enabled`.
+- Additive optional **`agents.roster`** capability (`supported` + `installScope` MUST-equal-`agents.manifestRuntime.installScope` + `portfolioTriggerSources`); REQUIRES `agents.manifestRuntime`.
+- Additive optional **`roster`** portfolio projection on `agent-inventory-response.schema.json` (`AgentInventoryEntry`) — `GET /v1/agents` surfaces an agent's standing instances + their portfolios.
+- One content-free **`roster.run.initiated`** RunEventType (`run-event.schema.json` + `run-event-payloads.schema.json` `$def` + `_typeIndex`) — a recorded-fact attribution event emitted once after `run.started`, carrying `{rosterId, persona, agentId, workflowId, triggerSource, triggerSubscriptionId?}` only.
+- NEW normative `spec/v1/agent-roster.md` (§A `host:<id>` dispatch handle / §B discovery + inventory projection / §C attribution / §D triggers-compose-RFC-0052+0083 / §E work-surface-stays-extension / §F capability; Status `DRAFT v1.x`).
+- Always-on server-free `agent-roster-shape.test.ts` (entry round-trip + the `host:` rosterId + `agentRef` XOR negatives + the content-free `roster.run.initiated` negatives + the inventory projection + RunEventType membership) + `coverage.md` row.
+- NEW protocol-tier SECURITY invariant **`roster-attribution-no-content`** — `roster.run.initiated` carries ids + persona + trigger source ONLY, never the work-item body / prompt / credentials (SR-1); public test = the shape scenario's content-free negatives.
+
+Triggers **compose** RFC 0052 (schedule) + RFC 0083 (durable work-item bridge) — **no new `WorkflowTrigger.type`** (the trigger enum is untouched); the concrete work surface (a Kanban board) stays a host/vendor extension (§E, the RFC 0083 channels-stay-extensions precedent). Additive (`COMPATIBILITY.md` §2.1) — one additive content-free RunEventType (no `eventLogSchemaVersion` bump, RFC 0008 §K), one new schema, one new optional capability block, one additive optional inventory field; no existing field/event/endpoint/`MUST` changes. **Deferred to `Active → Accepted`** per the RFC 0077/0082 precedent: the `GET /v1/agents/roster[/{id}]` OpenAPI/AsyncAPI surface, the SDK helpers, the behavioral attribution + cross-tenant-scoping scenario, the INTEROP-MATRIX row, and the reference-host normative wiring (the #368 host-extension is the reference demonstration). Counts: RFC Active 17 → 18 / Draft 6 → 5; prose specs 48 → 49; RunEventType variants +1; SECURITY invariants 111 → 112 (protocol-tier 77 → 78); conformance scenario files +1.
+
 ### spec(rfc-0086, rfc-0087): Standing Agent Roster + Agent Org-Chart — filed at Draft (2026-05-30)
 
 Filed two new `Draft` RFCs that add the **named standing agent** ("digital-twin employee") layer above the existing manifest/inventory/deployment surface, standardizing an adopter-proven private shape (MyndHyve's `AutomationAgent`) and adding the distinguishing org-chart layer. Both are design-complete `.md` at `Draft`; the wire surface (schemas / capability / events / conformance) is each RFC's `Draft → Active` gate (the RFC 0083 filed-at-Draft precedent).

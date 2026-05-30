@@ -93,6 +93,21 @@
           "items": { "type": "string", "enum": ["read", "write", "search", "long-term-durability", "compaction", "attribution", "replay-snapshot", "retention"] },
           "uniqueItems": true,
           "description": "RFC 0080 §C. The RFC 0080 §A dimension names (NOT the `memoryShape` keys) this host cannot satisfy for this agent. Present (non-empty) iff `memoryDegraded: true`; OPTIONAL/absent when `memoryDegraded` is false or absent. The dimension name `long-term-durability` is deliberately distinct from the `agents.memoryBackends` *value* `long-term` (a backend id) to avoid wire ambiguity. The §A→`memoryShape` mapping: `longTerm`⇒`long-term-durability`, `scratchpad`/`conversation`⇒`write`+`read` as applicable."
+        },
+        "roster": {
+          "type": "array",
+          "uniqueItems": true,
+          "description": "RFC 0086 §B. OPTIONAL/additive. The standing roster INSTANCES of this manifest agent visible to the caller (tenant-scoped per RFC 0074), each with its persona + owned workflow portfolio — so a single GET /v1/agents call surfaces responsibilities without a second round-trip. Present only when the host advertises `capabilities.agents.roster.supported: true`; absent ⇒ no roster surface (today's default).",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["rosterId", "persona", "workflows"],
+            "properties": {
+              "rosterId": { "type": "string", "minLength": 1, "description": "The roster entry's `host:<id>` instance id (agent-roster-entry.schema.json)." },
+              "persona": { "type": "string", "minLength": 1, "description": "The instance's human display name." },
+              "workflows": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true, "description": "The workflow ids this instance owns by role (its portfolio)." }
+            }
+          }
         }
       }
     }
