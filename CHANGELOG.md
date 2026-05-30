@@ -11,6 +11,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0087): Agent Org-Chart — Draft → Active (2026-05-30)
+
+Promoted **RFC 0087** `Draft → Active` — lands the normative wire surface for the org-chart layer over RFC 0086 roster members, with the merged host-extension reference impl (`/v1/host/sample/org-chart`, #371) as the `Active → Accepted` evidence path. The shape landed atomically:
+
+- NEW `schemas/agent-org-chart.schema.json` — departments + roles + members (RFC 0086 `rosterId`s) with acyclic `reportsTo` edges, tenant-scoped via the `owner` triple. **Carries NO `permissions`/`scopes`/`canDispatch`/`authority` field, and every object is `additionalProperties:false`** — so a host cannot express position-as-authority through it (the §B structural guarantee).
+- Additive optional **`agents.orgChart`** capability (`supported` + `installScope` + `departmentNesting` + `responsibilityView`); REQUIRES `agents.roster`.
+- NEW normative `spec/v1/agent-org-chart.md` (§A record / §B the load-bearing non-authority invariant / §C tenant scoping / §D responsibility roll-up / §E capability; Status `DRAFT v1.x`).
+- Always-on server-free `agent-org-chart-shape.test.ts` (chart round-trip + non-`host:`-member negative + the §B structural assertions: the schema rejects a `scopes`/`canDispatch`/`permissions`/`authority` field; a member's key set is descriptive-only) + `coverage.md` row.
+- NEW protocol-tier SECURITY invariant **`org-position-no-authority-escalation`** — an org edge MUST NOT widen `toolAllowlist` (RFC 0002 §A14), grant an RBAC scope (RFC 0049), or bypass an approval gate (RFC 0051); position describes, never authorizes. Public test = the shape scenario's structural assertions.
+
+**No new RunEventType** (the org-chart is structure + a read, not an event surface). Additive (`COMPATIBILITY.md` §2.1) — one new schema, one new optional capability block; no existing field/event/endpoint/`MUST` changes. The new MUST-NOT is on previously-undefined behavior (additive per §4) and *protects* — does not relax — the RFC 0002/0049/0051 authority contracts. **Deferred to `Active → Accepted`** per the RFC 0086/0077/0082 precedent: the `GET /v1/agents/org-chart[/{departmentId}]` OpenAPI/AsyncAPI surface, the SDK helpers, the behavioral non-authority + cross-tenant-scoping scenario, the INTEROP-MATRIX row, and the reference-host normative wiring (the #371 host-extension is the reference demonstration). Counts: RFC Active 18 → 19 / Draft 5 → 4; prose specs 49 → 50; SECURITY invariants 112 → 113 (protocol-tier 78 → 79); conformance scenario files +1.
+
 ### spec(rfc-0086): Standing Agent Roster — Draft → Active (2026-05-30)
 
 Promoted **RFC 0086** `Draft → Active` — lands the normative wire surface for the named "digital-twin employee" instance, with the merged host-extension reference impl (`/v1/host/sample/roster` + board attribution, #368) as the `Active → Accepted` evidence path. The shape landed atomically:

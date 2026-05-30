@@ -985,6 +985,31 @@
             }
           }
         },
+        "orgChart": {
+          "type": "object",
+          "description": "RFC 0087. The host maintains a tenant-scoped, DESCRIPTIVE org-chart over RFC 0086 roster members: departments + roles with acyclic `reportsTo` edges + a derived responsibility roll-up, discoverable via GET /v1/agents/org-chart. The load-bearing guarantee (§B `org-position-no-authority-escalation`): an org edge confers NO authority — it MUST NOT widen `toolAllowlist` (RFC 0002 §A14), grant an RBAC scope (RFC 0049), or bypass an approval gate (RFC 0051); org position MUST NOT be an authorization input. The schema carries no authority-bearing field, and a conformant host MUST NOT derive authority from position out-of-band. REQUIRES `agents.roster.supported: true` (the chart's members are roster entries). Hosts that omit this block have no org-chart surface (the read 501s). The org-chart-management endpoints + behavioral non-authority scenario + reference-host store land at Active → Accepted.",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "REQUIRED when present. When `true`, the host serves the tenant-scoped org-chart + the responsibility roll-up. The §B non-authority guarantee holds at every `installScope` — it is never gated, weakened, or opt-out."
+            },
+            "installScope": {
+              "type": "string",
+              "enum": ["host", "tenant"],
+              "description": "RFC 0074 carry-forward. `host`: a single global chart. `tenant`: charts are scoped per owner triple; GET /v1/agents/org-chart returns only the caller's chart. SHOULD equal `agents.roster.installScope` (the members are roster entries)."
+            },
+            "departmentNesting": {
+              "type": "boolean",
+              "description": "When `true`, the host supports `parentDepartmentId` trees. When `false`/absent, the host MUST reject a non-null `parentDepartmentId` (truthful advertisement, RFC 0031)."
+            },
+            "responsibilityView": {
+              "type": "boolean",
+              "description": "When `true`, the host computes the §D responsibility roll-up (the union of a department's members' RFC 0086 portfolios) on GET /v1/agents/org-chart/{departmentId}."
+            }
+          }
+        },
         "dispatchMapping": {
           "type": "boolean",
           "default": false,
