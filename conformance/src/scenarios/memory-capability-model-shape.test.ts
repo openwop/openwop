@@ -48,7 +48,7 @@ const DIMENSIONS = [
   'read',
   'write',
   'search',
-  'long-term',
+  'long-term-durability',
   'compaction',
   'attribution',
   'replay-snapshot',
@@ -143,7 +143,7 @@ describe('memory-capability-model-shape: degraded projection (RFC 0080 §C, serv
       packName: 'p', packVersion: '1.0.0', toolAllowlist: [], hasHandoffSchemas: false,
     };
     expect(
-      validate({ total: 1, agents: [{ ...base, memoryDegraded: true, degradedMemoryDimensions: ['write', 'long-term'] }] }),
+      validate({ total: 1, agents: [{ ...base, memoryDegraded: true, degradedMemoryDimensions: ['write', 'long-term-durability'] }] }),
       why('agent-memory.md §C-1', 'a degraded inventory entry MUST validate'),
     ).toBe(true);
     expect(

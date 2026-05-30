@@ -90,9 +90,9 @@
         },
         "degradedMemoryDimensions": {
           "type": "array",
-          "items": { "type": "string", "enum": ["read", "write", "search", "long-term", "compaction", "attribution", "replay-snapshot", "retention"] },
+          "items": { "type": "string", "enum": ["read", "write", "search", "long-term-durability", "compaction", "attribution", "replay-snapshot", "retention"] },
           "uniqueItems": true,
-          "description": "RFC 0080 §C. The RFC 0080 §A dimension names (NOT the `memoryShape` keys) this host cannot satisfy for this agent. Present (non-empty) iff `memoryDegraded: true`. The §A→`memoryShape` mapping: `longTerm`⇒`long-term`, `scratchpad`/`conversation`⇒`write`+`read` as applicable."
+          "description": "RFC 0080 §C. The RFC 0080 §A dimension names (NOT the `memoryShape` keys) this host cannot satisfy for this agent. Present (non-empty) iff `memoryDegraded: true`; OPTIONAL/absent when `memoryDegraded` is false or absent. The dimension name `long-term-durability` is deliberately distinct from the `agents.memoryBackends` *value* `long-term` (a backend id) to avoid wire ambiguity. The §A→`memoryShape` mapping: `longTerm`⇒`long-term-durability`, `scratchpad`/`conversation`⇒`write`+`read` as applicable."
         }
       }
     }

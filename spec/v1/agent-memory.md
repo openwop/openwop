@@ -107,13 +107,17 @@ The capability advertisement is a CLAIM. Hosts that advertise long-term memory M
 | **read** | `MemoryAdapter.list`/`get` (RFC 0004) | `capabilities.memory.supported` |
 | **write** | `MemoryAdapter.put`/`delete` | `memory.supported` ⇒ the four-op contract (RFC 0004 §A) is read+write; a **read-only** host sets **NEW** `memory.writable: false` |
 | **search** | semantic / filtered query beyond `list` | **NEW** optional `memory.search` (`{ supported, modes?: ["semantic","filter"] }`) |
-| **long-term** | cross-run durable store | `capabilities.agents.memoryBackends` includes `"long-term"` |
+| **long-term-durability** | cross-run durable store | `capabilities.agents.memoryBackends` includes `"long-term"` |
 | **compaction** | RFC 0012 budgeted compaction + RFC 0062 distillation | `memory.compaction` / `memory.distillation` |
 | **attribution** | RFC 0057 `memory.written` provenance | `memory.attribution` |
 | **replay-snapshot** | MAE-3 deterministic read-snapshot on replay (RFC 0039/0041); consolidation outside the envelope (RFC 0068) | derived: `agents.memoryBackends: ["long-term"]` + `multiAgent.executionModel.version >= 2` |
-| **retention** | TTL expiry (§TTL) + explicit forget/delete | **NEW** optional `memory.retention` (`{ ttl?, forget? }`) — `forget` advertises a tenant-scoped delete-by-subject operation (composes CTI-1) |
+| **retention** | TTL expiry (§TTL) + explicit forget/delete | **NEW** optional `memory.retention` (`{ ttl?: boolean, forget?: boolean }`) — `forget: true` advertises that the host supports a tenant-scoped delete-by-subject operation (composes CTI-1) |
+
+The dimension name **`long-term-durability`** is deliberately distinct from the `agents.memoryBackends` *value* `"long-term"` (a backend id) so a degraded-dimension list and a backend list never collide on the wire. The `read`/`write` dimensions are gated by **`memory.supported: true`** (the RFC 0004 four-op `MemoryAdapter` flag) — this is also the field the derived `openwop-memory` profile gates on (§"Memory capability model" → `profiles.md` §`openwop-memory`). The profile derives across **two** subtrees (`capabilities.memory.*` for read/write + `capabilities.agents.memoryBackends` for durability); a validator MUST NOT look for `memoryBackends` under `memory`.
 
 `capabilities.agents.{memoryConsolidation,commitments}` (RFC 0068) stay where they are — they are agent-runtime behaviors, not adapter dimensions — and are cross-referenced here, not relocated.
+
+**`forget` × erasure (cross-host correctness).** `forget: true` advertises erasure **from live memory** — a forgotten entry no longer surfaces to `MemoryAdapter.get`/`list`. It is replay-stable precisely because replay re-reads the **log-recorded snapshot** (the recorded-fact event log / observable-result cache, `replay.md` §"Recorded-fact events"), not live memory — so a post-run `forget` does not alter a replay. A consequence hosts MUST understand: `forget` is **not** a full GDPR-style erasure of run history — if the run log retains a content-carrying record (e.g. a vendor `memory.written` event that carries content), that record is unaffected by `forget`. Full erasure of the event log is a host-managed audit operation outside the replay envelope and outside v1.x scope; a host advertising `forget` advertises live-memory erasure only.
 
 ### §B — Canonical query endpoint: host-internal at v1.x
 
