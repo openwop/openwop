@@ -98,6 +98,14 @@ export async function setupSchema(q: Querier): Promise<void> {
       ) THEN
         ALTER TABLE runs ADD COLUMN variables_json JSONB;
       END IF;
+      -- channels-and-reducers.md — per-run reducer channel state (the message
+      -- reducer deduped-by-messageId list, etc.). Surfaced on RunSnapshot.channels.
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'runs' AND column_name = 'channels_json'
+      ) THEN
+        ALTER TABLE runs ADD COLUMN channels_json JSONB;
+      END IF;
     END $$;
   `);
 

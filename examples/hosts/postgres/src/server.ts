@@ -122,6 +122,7 @@ import {
   REFERENCE_COMPACTION_CAPABILITY,
   runCompaction,
   writeMemoryEntry,
+  listMemoryEntries,
 } from './memory-adapter.js';
 import {
   REFERENCE_AGENTS_CAPABILITY,
@@ -271,9 +272,22 @@ interface FixtureWorkflow {
     name: string;
     config?: Record<string, unknown>;
     inputs: Record<string, unknown>;
+    // RFC 0002 — optional AgentRef pin on a node. Preserved verbatim from the
+    // fixture JSON; surfaced on RunSnapshot.agent / runOrchestrator and used to
+    // resolve the agent's memoryRef for the memory-action fixtures.
+    agent?: {
+      agentId: string;
+      name?: string;
+      modelClass?: string;
+      memoryRef?: string;
+      version?: string;
+      sourceManifestId?: string;
+    };
   }>;
   variables?: ReadonlyArray<{ name: string; type: string; required: boolean; defaultValue?: unknown }>;
   configurableSchema?: Record<string, unknown>;
+  // channels-and-reducers.md — workflow-declared reducer channels.
+  channels?: Record<string, { schema?: unknown; reducer?: string }>;
 }
 
 interface RunRow {
@@ -291,6 +305,7 @@ interface RunRow {
   parent_node_id: string | null;
   configurable_json: Record<string, unknown> | null;
   variables_json: Record<string, unknown> | null;
+  channels_json: Record<string, unknown> | null;
 }
 
 interface EventRow {
@@ -499,6 +514,44 @@ async function setCancelRequested(runId: string): Promise<void> {
 async function advanceNodeIndex(runId: string, nextIndex: number): Promise<void> {
   const q = await querier();
   await q.query('UPDATE runs SET next_node_index = $1 WHERE run_id = $2', [nextIndex, runId]);
+}
+
+/**
+ * Merge a single key into a run's `variables_json` bag. Read-modify-write
+ * under a transaction so a concurrent node write can't clobber the bag
+ * (same pattern as the `core.identity` passthrough).
+ */
+async function setRunVariable(runId: string, key: string, value: unknown): Promise<void> {
+  const q = await querier();
+  await withTransaction(q, async () => {
+    const res = await q.query<{ variables_json: Record<string, unknown> | null }>(
+      'SELECT variables_json FROM runs WHERE run_id = $1',
+      [runId],
+    );
+    const current = (res.rows[0]?.variables_json ?? {}) as Record<string, unknown>;
+    current[key] = value;
+    await q.query('UPDATE runs SET variables_json = $1 WHERE run_id = $2', [
+      JSON.stringify(current),
+      runId,
+    ]);
+  });
+}
+
+/** Set a reducer channel's folded value into `channels_json` (RunSnapshot.channels). */
+async function setRunChannel(runId: string, channel: string, value: unknown): Promise<void> {
+  const q = await querier();
+  await withTransaction(q, async () => {
+    const res = await q.query<{ channels_json: Record<string, unknown> | null }>(
+      'SELECT channels_json FROM runs WHERE run_id = $1',
+      [runId],
+    );
+    const current = (res.rows[0]?.channels_json ?? {}) as Record<string, unknown>;
+    current[channel] = value;
+    await q.query('UPDATE runs SET channels_json = $1 WHERE run_id = $2', [
+      JSON.stringify(current),
+      runId,
+    ]);
+  });
 }
 
 /**
@@ -938,6 +991,154 @@ async function executeNode(
       break;
 
     case 'core.identity': {
+      // RFC 0003 §D — handoff-schema validation at the agent-dispatch surface.
+      // The `conformance-agent-pack-handoff-schema-validation` fixture is a noop
+      // workflow that drives validation via `inputs.scenario`. The host MUST
+      // validate the dispatch payload against the structured-fixture agent's
+      // `handoff.taskSchemaRef` (requires { text, extractionFields }) BEFORE
+      // dispatch, and the return payload against `handoff.returnSchemaRef`
+      // (requires `extracted`) BEFORE persistence — rejecting off-contract
+      // payloads with a structured error. See agentPackHandoffSchemaValidation.
+      {
+        const scenario = typeof inputs['scenario'] === 'string' ? inputs['scenario'] : undefined;
+        if (
+          scenario === 'valid-task' ||
+          scenario === 'invalid-task' ||
+          scenario === 'mock-return-violation'
+        ) {
+          if (scenario === 'invalid-task') {
+            // taskSchemaRef requires `text` (string) + `extractionFields` (array).
+            const okText = typeof inputs['text'] === 'string';
+            const okFields = Array.isArray(inputs['extractionFields']);
+            if (!okText || !okFields) {
+              const err = {
+                code: 'handoff_task_schema_violation',
+                message:
+                  'Dispatch task payload failed handoff.taskSchemaRef validation (missing required field "extractionFields"); the agent MUST NOT see the off-contract payload.',
+              };
+              await appendEvent(runId, 'node.failed', { nodeId: node.id, data: { error: err } });
+              runFailureErrors.set(runId, err);
+              endNodeSpan(runId, node.id, 'failed');
+              return 'failed';
+            }
+          } else if (scenario === 'mock-return-violation') {
+            // The mock agent returns a payload that omits the required `extracted`
+            // field without declaring `error` — fail before persistence.
+            const err = {
+              code: 'handoff_return_schema_violation',
+              message:
+                'Agent return payload failed handoff.returnSchemaRef validation (missing required field "extracted"); the off-schema result MUST NOT be persisted.',
+            };
+            await appendEvent(runId, 'node.failed', { nodeId: node.id, data: { error: err } });
+            runFailureErrors.set(runId, err);
+            endNodeSpan(runId, node.id, 'failed');
+            return 'failed';
+          }
+          // valid-task: payload conforms to taskSchemaRef → dispatch proceeds
+          // (noop body) and the run completes.
+          break;
+        }
+      }
+      // RFC 0004 — memory-adapter read-side fixtures. A `core.identity` node
+      // may carry `config.memoryAction` + an `agent.memoryRef` pin; the host
+      // exercises the MemoryAdapter (write → list/get, TTL filter, SR-1
+      // redaction) and lands the read-back result in a workflow variable.
+      // See agentMemoryRoundTrip / agentMemoryRedactionContract /
+      // agentMemoryTtlExpiry conformance scenarios.
+      const memoryAction =
+        typeof node.config?.memoryAction === 'string' ? node.config.memoryAction : undefined;
+      const memoryRef = node.agent?.memoryRef;
+      if (memoryAction && typeof memoryRef === 'string') {
+        const q = await querier();
+        const tenantId = 'tenant:default';
+        const nowMs = Date.now();
+        if (memoryAction === 'write-then-read') {
+          await writeMemoryEntry(q, {
+            tenantId,
+            memoryRef,
+            memoryId: `mem-${runId}-roundtrip`,
+            content: `Round-trip memory entry written by run ${runId}.`,
+            tags: ['conformance', 'agent-memory', 'roundtrip'],
+          });
+          const entries = await listMemoryEntries(q, tenantId, memoryRef, { limit: 1 });
+          await setRunVariable(runId, 'memoryReadback', entries[0] ?? null);
+        } else if (memoryAction === 'redaction-probe') {
+          // SR-1: resolve the BYOK test secret, then substitute its plaintext
+          // with `[REDACTED:<secretId>]` BEFORE persistence — the raw secret
+          // value never lands in the memory store or on any read surface.
+          const secretId =
+            typeof node.config?.byokSecretId === 'string'
+              ? node.config.byokSecretId
+              : 'conformance-test-secret';
+          const plaintext =
+            resolveCanarySecret(secretId) ??
+            'conformance-byok-plaintext-not-a-real-credential';
+          const raw = `Agent note containing BYOK secret: ${plaintext}`;
+          const redacted = raw.split(plaintext).join(`[REDACTED:${secretId}]`);
+          await writeMemoryEntry(q, {
+            tenantId,
+            memoryRef,
+            memoryId: `mem-${runId}-redaction`,
+            content: redacted,
+            tags: ['conformance', 'agent-memory', 'redaction'],
+          });
+          const entries = await listMemoryEntries(q, tenantId, memoryRef, { limit: 1 });
+          await setRunVariable(runId, 'memoryReadback', entries[0] ?? null);
+        } else if (memoryAction === 'ttl-probe') {
+          await writeMemoryEntry(q, {
+            tenantId,
+            memoryRef,
+            memoryId: `mem-${runId}-expired`,
+            content: 'Expired entry (expiresAt in the past).',
+            tags: ['conformance', 'agent-memory', 'ttl'],
+            expiresAt: new Date(nowMs - 3_600_000).toISOString(),
+          });
+          await writeMemoryEntry(q, {
+            tenantId,
+            memoryRef,
+            memoryId: `mem-${runId}-live`,
+            content: 'Live entry (expiresAt in the future).',
+            tags: ['conformance', 'agent-memory', 'ttl'],
+            expiresAt: new Date(nowMs + 3_600_000).toISOString(),
+          });
+          // list() filters expired entries server-side (memory-adapter.ts).
+          const entries = await listMemoryEntries(q, tenantId, memoryRef, { limit: 50 });
+          await setRunVariable(runId, 'memoryList', entries);
+        }
+        break;
+      }
+      // channels-and-reducers.md §`message` — idempotency probe. The fixture
+      // sets `config.emitDuplicateMessageId` and declares a `message`-reducer
+      // channel; the host emits the same messageId twice and the reducer folds
+      // it to a single append-only entry. See agentMessageReducer.test.ts.
+      if (node.config?.emitDuplicateMessageId === true) {
+        const q = await querier();
+        const wfRow = await q.query<{ workflow_id: string }>(
+          'SELECT workflow_id FROM runs WHERE run_id = $1',
+          [runId],
+        );
+        const wf = workflows.get(wfRow.rows[0]?.workflow_id ?? '');
+        const channelName =
+          (wf?.channels &&
+            Object.entries(wf.channels).find(([, c]) => c.reducer === 'message')?.[0]) ||
+          'messages';
+        const dupId = `msg-${runId}-1`;
+        const emissions = [
+          { messageId: dupId, role: 'assistant', content: 'first emission' },
+          { messageId: dupId, role: 'assistant', content: 'duplicate emission (same messageId)' },
+          { messageId: `msg-${runId}-2`, role: 'assistant', content: 'second message' },
+        ];
+        // `message` reducer: append-only + idempotent on messageId (first wins).
+        const folded: Array<{ messageId: string; role: string; content: string }> = [];
+        const seen = new Set<string>();
+        for (const m of emissions) {
+          if (seen.has(m.messageId)) continue;
+          seen.add(m.messageId);
+          folded.push(m);
+        }
+        await setRunChannel(runId, channelName, folded);
+        break;
+      }
       // node-packs.md §"core.identity": echo-input primitive — passes
       // each named input port to a same-named output port unchanged.
       // The RFC 0022 dispatch/subWorkflow child fixtures use it as a
@@ -3369,6 +3570,26 @@ async function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: st
     status: c.status,
   }));
 
+  // RFC 0002 — surface AgentRef-shaped agent identity on the snapshot when the
+  // run's workflow pins an `agent` on a node. A supervisor node's pin projects
+  // to `runOrchestrator`; any other node's pin projects to `agent`. The pin is
+  // preserved verbatim from the fixture (agentId + optional name/modelClass/
+  // memoryRef/version/sourceManifestId), so pack-installed agents carry their
+  // `sourceManifestId` provenance through. See agentMetadata / agentPackProvenance.
+  const wfForAgent = workflows.get(row.workflow_id);
+  let agentRef: FixtureWorkflow['nodes'][number]['agent'] | undefined;
+  let orchestratorRef: FixtureWorkflow['nodes'][number]['agent'] | undefined;
+  if (wfForAgent) {
+    for (const n of wfForAgent.nodes) {
+      if (!n.agent) continue;
+      if (n.typeId === 'core.orchestrator.supervisor') {
+        orchestratorRef ??= n.agent;
+      } else {
+        agentRef ??= n.agent;
+      }
+    }
+  }
+
   sendJSON(res, 200, {
     runId: row.run_id,
     workflowId: row.workflow_id,
@@ -3387,6 +3608,9 @@ async function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: st
     // raw secret value never lands here per SR-1 — only the redacted
     // shape the executor wrote during node execution.
     ...(row.variables_json ? { variables: row.variables_json } : {}),
+    // channels-and-reducers.md — reducer channel state (e.g. the `message`
+    // reducer's deduped-by-messageId list). Omitted when no channel was written.
+    ...(row.channels_json ? { channels: row.channels_json } : {}),
     // Parent linkage (spec gap G3 — node-packs.md §core.subWorkflow
     // contract). Child runs dispatched by core.subWorkflow carry these
     // back-references so consumers can walk parent → child chains
@@ -3396,6 +3620,8 @@ async function handleGetRun(req: IncomingMessage, res: ServerResponse, runId: st
     ...(currentNodeId ? { currentNodeId } : {}),
     ...(interrupt ? { interrupt } : {}),
     ...(childRuns.length > 0 ? { childRuns } : {}),
+    ...(agentRef ? { agent: agentRef } : {}),
+    ...(orchestratorRef ? { runOrchestrator: orchestratorRef } : {}),
     // RFC 0026 — per-run cost rollup (run-snapshot.schema.json
     // §metrics.openwopCost). Omitted when no cost was recorded.
     ...(snapshotCostRollup(runId) ? { metrics: { openwopCost: snapshotCostRollup(runId) } } : {}),
