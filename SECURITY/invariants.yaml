@@ -1636,6 +1636,30 @@ invariants:
       agent-roster-shape.test.ts content-free negatives (a roster.run.initiated
       carrying a `body`; one carrying a `prompt`) are the public test.
 
+  - id: org-position-no-authority-escalation
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/invariants.yaml
+    tests:
+      - conformance/src/scenarios/agent-org-chart-shape.test.ts
+    note: |
+      RFC 0087 §B. An agent's position in an org-chart — its department, its
+      role, or any reportsTo edge into or out of it — MUST NOT grant, widen, or
+      imply any authority. Being a "manager" MUST NOT add a report's tools to
+      the manager's effective toolAllowlist (RFC 0002 §A14); org position MUST
+      NOT be consulted as an RFC 0049 authorization input (same scopes => same
+      decision with or without the edge); and being "senior" MUST NOT
+      auto-satisfy, bypass, or override an RFC 0051 approval gate. The
+      agent-org-chart.schema.json carries NO permissions/scopes/canDispatch/
+      authority field and every object is additionalProperties:false, so a
+      conformant host cannot express position-as-authority through it; the
+      invariant additionally forbids deriving authority from position
+      out-of-band. The always-on agent-org-chart-shape.test.ts structural
+      assertions (the schema rejects an authority-bearing field; a member
+      object's key set is exactly {rosterId, departmentId, roleId, reportsTo})
+      are the protocol-tier public test; the behavioral live-dispatch refusal
+      is gated on agents.orgChart.supported and lands at Active -> Accepted.
+
   - id: deployment-promotion-fail-closed
     tier: reference-impl
     severity: high
