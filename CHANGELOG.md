@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### docs(known-limits): reconcile the "RFCs not yet Accepted" table with actual RFC statuses (2026-05-29)
+
+Docs-sync after this cycle's graduations. `docs/KNOWN-LIMITS.md` §"RFCs not yet `Accepted`" had drifted — it still listed RFCs that have since graduated as "not yet Accepted" (a direct contradiction the generated-status gate doesn't catch, since it validates only README counts, not this hand-curated table). Removed 6 now-`Accepted` rows (0025, 0036, 0054, 0056, 0058, 0061); corrected 3 rows from `Draft` to `Active` (0042, 0065, 0066); and fixed the post-table prose that still said 0058 + 0061 "stay Active" (both graduated `Active → Accepted` on MyndHyve's round-4 `version: 5` advertisement 2026-05-26). Added a header note pointing to the generated full per-RFC table in `docs/PROTOCOL-STATUS.md` as authoritative — this table is curated *why-open* commentary, not the exhaustive status list. No wire-shape / schema / capability change — docs only; `openwop:check` green.
+
 ### spec(rfc-0085): `openwop-agent-platform` Meta-Profile — new Draft RFC (2026-05-29)
 
 Filed **RFC 0085** (`Draft`), the **capstone** of the agent-platform arc — the one named target that says "this host behaves like a full agent platform," which the dozen optional capabilities lacked. It is defined as an **operational annex** (a `production-profile.md` / `auth-profiles.md`-style claim combining a discovery predicate + required runtime scenarios + documentation + a badge), explicitly **NOT** a new entry in the closed pure-predicate `profiles.md` catalog — per `profiles.md` §"Profile semantics," a platform claim requires *runtime behavior + evidence*, exactly what annexes are for. It proposes:
