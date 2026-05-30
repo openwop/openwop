@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
   "title": "RunEventPayloads",
-  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n77 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n80 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
   "type": "object",
   "$defs": {
     "_typeIndex": {
@@ -86,7 +86,10 @@
         "core.workflowChain.confidence-escalated": { "$ref": "#/$defs/coreWorkflowChainConfidenceEscalated" },
         "connector.authorized":      { "$ref": "#/$defs/connectorAuthorized" },
         "connector.auth_expired":    { "$ref": "#/$defs/connectorAuthExpired" },
-        "authorization.decided":     { "$ref": "#/$defs/authorizationDecided" }
+        "authorization.decided":     { "$ref": "#/$defs/authorizationDecided" },
+        "eval.started":              { "$ref": "#/$defs/evalStarted" },
+        "eval.scored":               { "$ref": "#/$defs/evalScored" },
+        "eval.completed":            { "$ref": "#/$defs/evalCompleted" }
       }
     },
 
@@ -1403,6 +1406,50 @@
         "path":    { "type": "string", "minLength": 1, "description": "Workspace-relative path of the file that changed (matches `workspace-file.schema.json#path`)." },
         "version": { "type": "integer", "minimum": 1, "description": "The file's resulting monotonic version after the write. On delete, the tombstone version when `versioned: true`." }
       }
+    },
+
+    "evalStarted": {
+      "type": "object",
+      "description": "RFC 0081 §C. Emitted ONCE at the start of an eval run (a `mode: \"eval\"` run, RFC 0081 §B) by a host advertising `capabilities.agents.evalSuite.supported: true`. Content-free: suite provenance + counts only. A recorded-fact event per `replay.md` §\"Recorded-fact events\".",
+      "required": ["suiteId", "suiteVersion", "taskCount", "modes"],
+      "properties": {
+        "suiteId":      { "type": "string", "minLength": 1, "description": "The `agent-eval-suite.schema.json#suiteId` being run." },
+        "suiteVersion": { "type": "string", "minLength": 1, "description": "The pinned suite SemVer." },
+        "taskCount":    { "type": "integer", "minimum": 0, "description": "Number of tasks the run will execute." },
+        "modes":        { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["golden", "rubric", "adversarial", "regression", "live-shadow"] }, "description": "The eval modes this run exercises (RFC 0081 §D)." },
+        "baselineRunId": { "type": "string", "minLength": 1, "description": "MAY — for `regression` mode, the prior eval run this run is scored against." }
+      },
+      "additionalProperties": true
+    },
+
+    "evalScored": {
+      "type": "object",
+      "description": "RFC 0081 §C. Emitted ONCE PER TASK, after that task's terminal `agent.decided`, so a streaming consumer sees results land incrementally. Content-free: the task id + scalars + counts ONLY — NEVER the task output, rubric prose, or model completion (SECURITY invariant `eval-summary-no-content-leak`). A recorded-fact event.",
+      "required": ["taskId", "score", "passed"],
+      "properties": {
+        "taskId":            { "type": "string", "minLength": 1, "description": "The `agent-eval-suite` task id." },
+        "score":             { "type": "number", "minimum": 0, "maximum": 1, "description": "Task score (0.0–1.0)." },
+        "passed":            { "type": "boolean", "description": "Whether the task met its bar." },
+        "costUsd":           { "type": "number", "minimum": 0, "description": "MAY — task cost (scalar; summed from RFC 0026 `provider.usage`). NEVER a pricing breakdown." },
+        "latencyMs":         { "type": "integer", "minimum": 0, "description": "MAY — task wall-clock latency." },
+        "schemaValid":       { "type": "boolean", "description": "MAY — whether the output validated against `handoff.returnSchemaRef`." },
+        "safetyFindingCount": { "type": "integer", "minimum": 0, "description": "MAY — count of safety findings for the task (the redaction-safe descriptors live on `EvalSummary`; the event carries the count only)." }
+      },
+      "additionalProperties": true
+    },
+
+    "evalCompleted": {
+      "type": "object",
+      "description": "RFC 0081 §C. Emitted ONCE, after all tasks and before `run.completed`. Content-free: aggregate scalars only. A recorded-fact event. The full scorecard is the run's output (`eval-summary.schema.json`), served by `GET /v1/runs/{runId}/eval-summary`.",
+      "required": ["aggregateScore", "passed", "taskCount", "passedCount"],
+      "properties": {
+        "aggregateScore":        { "type": "number", "minimum": 0, "maximum": 1, "description": "The suite-level score (0.0–1.0)." },
+        "passed":                { "type": "boolean", "description": "Whether the run cleared the suite thresholds — the flag an RFC 0082 deployment gate MAY require." },
+        "taskCount":             { "type": "integer", "minimum": 0, "description": "Tasks executed." },
+        "passedCount":           { "type": "integer", "minimum": 0, "description": "Tasks that individually passed." },
+        "regressionVsBaseline":  { "type": "number", "minimum": -1, "maximum": 1, "description": "MAY — for `regression` mode, `aggregateScore` minus the baseline's (negative ⇒ regression)." }
+      },
+      "additionalProperties": true
     }
   }
 }
