@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 17;
+export const LATEST_SCHEMA_VERSION = 18;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -521,6 +521,18 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
     // actually drives the run forward.
     db.exec(`
       ALTER TABLE runs ADD COLUMN scheduler_snapshot TEXT;
+    `);
+  },
+  18: (db) => {
+    // Generic key→JSON store backing the sample host-extension stores (Kanban
+    // boards, agent roster, org-chart) so they survive a restart. Coarse by
+    // design — each service serializes its whole collection to one key.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS host_ext_kv (
+        k TEXT PRIMARY KEY,
+        v TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
     `);
   },
 };

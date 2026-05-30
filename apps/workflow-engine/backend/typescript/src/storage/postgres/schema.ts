@@ -32,7 +32,7 @@ export interface Queryable {
   ): Promise<{ rows: R[] }>;
 }
 
-export const LATEST_SCHEMA_VERSION = 14;
+export const LATEST_SCHEMA_VERSION = 15;
 
 const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
   1: async (client) => {
@@ -483,6 +483,18 @@ const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
       );
       CREATE INDEX IF NOT EXISTS idx_user_agents_tenant
         ON user_agents (tenant_id, created_at DESC);
+    `);
+  },
+  15: async (client) => {
+    // Generic key→JSON store backing the sample host-extension stores (Kanban
+    // boards, agent roster, org-chart) so they survive a restart. Coarse by
+    // design — each service serializes its whole collection to one key.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS host_ext_kv (
+        k TEXT PRIMARY KEY,
+        v TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
     `);
   },
 };

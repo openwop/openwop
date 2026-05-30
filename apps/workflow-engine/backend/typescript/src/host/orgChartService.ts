@@ -23,6 +23,9 @@
  */
 
 import { getRosterEntry, type RosterEntry } from './rosterService.js';
+import { loadCollection, schedulePersist } from './hostExtPersistence.js';
+
+const ORG_CHART_KEY = 'hostext:orgchart';
 
 export interface OrgRole {
   roleId: string;
@@ -62,6 +65,15 @@ export interface OrgChartValidationError {
 }
 
 const charts = new Map<string, OrgChart>();
+
+function persistOrgCharts(): void {
+  schedulePersist(ORG_CHART_KEY, () => [...charts.values()]);
+}
+
+/** Hydrate org-charts from durable storage on boot. */
+export async function hydrateOrgCharts(): Promise<void> {
+  for (const c of await loadCollection<OrgChart>(ORG_CHART_KEY)) charts.set(c.tenantId, c);
+}
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -131,6 +143,7 @@ export function putChart(input: {
     updatedAt: nowIso(),
   };
   charts.set(input.tenantId, chart);
+  persistOrgCharts();
   return { chart };
 }
 
@@ -139,7 +152,9 @@ export function getChart(tenantId: string): OrgChart | undefined {
 }
 
 export function deleteChart(tenantId: string): boolean {
-  return charts.delete(tenantId);
+  const ok = charts.delete(tenantId);
+  if (ok) persistOrgCharts();
+  return ok;
 }
 
 export interface ResponsibilityView {

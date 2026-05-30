@@ -77,6 +77,10 @@ import { registerSchedulerRoutes } from './routes/scheduler.js';
 import { registerKanbanRoutes } from './routes/kanban.js';
 import { registerRosterRoutes } from './routes/roster.js';
 import { registerTriggerBridgeRoutes } from './routes/triggerBridge.js';
+import { initHostExtPersistence } from './host/hostExtPersistence.js';
+import { hydrateKanban } from './host/kanbanService.js';
+import { hydrateRoster } from './host/rosterService.js';
+import { hydrateOrgCharts } from './host/orgChartService.js';
 import { registerOrgChartRoutes } from './routes/orgChart.js';
 
 const log = createLogger('workflow-engine');
@@ -336,6 +340,13 @@ export async function createApp(config: AppConfig): Promise<Express> {
     log.error('user_agents_load_failed', {
       error: err instanceof Error ? err.message : String(err),
     });
+  });
+  // Host-extension durability (RFC 0086/0087/0083 sample stores): wire the kv
+  // persistence layer + hydrate the in-memory Kanban / roster / org-chart
+  // stores so they survive a restart on the file / Postgres backends.
+  initHostExtPersistence(storage);
+  void Promise.all([hydrateKanban(), hydrateRoster(), hydrateOrgCharts()]).catch((err) => {
+    log.error('host_ext_hydrate_failed', { error: err instanceof Error ? err.message : String(err) });
   });
   registerSchedulerRoutes(app);
   // Standing agent roster — RFCS/0086 reference impl (named agent

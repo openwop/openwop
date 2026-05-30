@@ -27,6 +27,10 @@
  */
 
 import { randomUUID } from 'node:crypto';
+import { loadCollection, schedulePersist } from './hostExtPersistence.js';
+
+const BOARDS_KEY = 'hostext:kanban:boards';
+const CARDS_KEY = 'hostext:kanban:cards';
 
 /** A column on a board. When `triggerWorkflowId` is set, any card moved
  *  into this column starts that workflow (unless the card overrides it
@@ -91,6 +95,17 @@ export const DEFAULT_COLUMNS: ReadonlyArray<Omit<KanbanColumn, 'triggerWorkflowI
 const boards = new Map<string, KanbanBoard>();
 const cards = new Map<string, KanbanCard>();
 
+function persistKanban(): void {
+  schedulePersist(BOARDS_KEY, () => [...boards.values()]);
+  schedulePersist(CARDS_KEY, () => [...cards.values()]);
+}
+
+/** Hydrate boards + cards from durable storage on boot. */
+export async function hydrateKanban(): Promise<void> {
+  for (const b of await loadCollection<KanbanBoard>(BOARDS_KEY)) boards.set(b.id, b);
+  for (const c of await loadCollection<KanbanCard>(CARDS_KEY)) cards.set(c.id, c);
+}
+
 function nowIso(): string {
   return new Date().toISOString();
 }
@@ -123,6 +138,7 @@ export function createBoard(input: {
     updatedAt: now,
   };
   boards.set(id, board);
+  persistKanban();
   return board;
 }
 
@@ -140,7 +156,9 @@ export function deleteBoard(boardId: string): boolean {
   for (const card of [...cards.values()]) {
     if (card.boardId === boardId) cards.delete(card.id);
   }
-  return boards.delete(boardId);
+  const ok = boards.delete(boardId);
+  if (ok) persistKanban();
+  return ok;
 }
 
 export function listCards(boardId: string): KanbanCard[] {
@@ -177,6 +195,7 @@ export function createCard(input: {
     updatedAt: now,
   };
   cards.set(id, card);
+  persistKanban();
   return card;
 }
 
@@ -190,11 +209,14 @@ export function updateCardFields(
   if (patch.description !== undefined) card.description = patch.description;
   if (patch.workflowId !== undefined) card.workflowId = patch.workflowId;
   card.updatedAt = nowIso();
+  persistKanban();
   return card;
 }
 
 export function deleteCard(cardId: string): boolean {
-  return cards.delete(cardId);
+  const ok = cards.delete(cardId);
+  if (ok) persistKanban();
+  return ok;
 }
 
 /** Record the run a card triggered (set by the route after starting it). */
@@ -203,6 +225,7 @@ export function setCardLastRun(cardId: string, runId: string): void {
   if (card) {
     card.lastRunId = runId;
     card.updatedAt = nowIso();
+    persistKanban();
   }
 }
 
@@ -237,6 +260,7 @@ export function moveCard(
   card.columnId = toColumnId;
   card.order = siblings.length;
   card.updatedAt = nowIso();
+  persistKanban();
 
   const workflowId = card.workflowId ?? destColumn.triggerWorkflowId;
   const trigger: KanbanTriggerDirective | null = workflowId

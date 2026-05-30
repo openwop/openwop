@@ -405,6 +405,15 @@ export interface Storage {
   listMessagingAllowlist(connectorId: string | undefined): Promise<readonly MessagingAllowlistEntry[]>;
   deleteMessagingAllowlist(connectorId: string, channel: string, peerId: string): Promise<boolean>;
 
+  // ── host-extension durability (generic key→JSON store) ──
+  // A single small table backing the sample host-extension stores (Kanban
+  // boards, agent roster, org-chart) so they survive a restart on the file /
+  // Postgres backends. Generic on purpose — a host-ext service serializes its
+  // whole collection to one key, rather than the core Storage interface
+  // fanning out a method per entity. NOT a normative protocol surface.
+  kvGet(key: string): Promise<string | null>;
+  kvSet(key: string, value: string): Promise<void>;
+
   // ── lifecycle ──
   close(): Promise<void>;
 }
