@@ -962,6 +962,29 @@
             }
           }
         },
+        "roster": {
+          "type": "object",
+          "description": "RFC 0086. The host maintains a standing agent roster: named, tenant-scoped agent INSTANCES (the 'digital-twin employee') that reference a manifest/deployment and own a workflow portfolio, discoverable via GET /v1/agents/roster, with trigger-fired portfolio runs attributed to the member via the content-free `roster.run.initiated` event. REQUIRES `agents.manifestRuntime.supported: true` (a roster entry instantiates a manifest agent). Triggers compose RFC 0052 (schedule) + RFC 0083 (durable work-item bridge) — no new WorkflowTrigger.type; the concrete work surface (a Kanban board) stays a host/vendor extension (§E). Hosts that omit this block do not maintain a roster (the roster reads 501). The roster-management endpoints + behavioral attribution scenario + reference-host store land at Active → Accepted.",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "REQUIRED when present. When `true`, the host serves the standing roster, projects it on the inventory, and emits `roster.run.initiated` on trigger-fired portfolio runs."
+            },
+            "installScope": {
+              "type": "string",
+              "enum": ["host", "tenant"],
+              "description": "RFC 0074 carry-forward. `host`: a single global roster. `tenant`: roster entries are scoped per owner triple; GET /v1/agents/roster returns only the caller's entries and a cross-tenant entry 404s. MUST equal `agents.manifestRuntime.installScope` (a roster cannot be host-global while its manifests are tenant-scoped, or vice-versa)."
+            },
+            "portfolioTriggerSources": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "type": "string", "minLength": 1 },
+              "description": "Which RFC 0052/0083 trigger sources fire portfolio runs on this host (e.g. `[\"schedule\", \"queue\", \"webhook\"]`). Truthful advertisement (RFC 0031): a source not listed does not fire portfolios here."
+            }
+          }
+        },
         "dispatchMapping": {
           "type": "boolean",
           "default": false,
