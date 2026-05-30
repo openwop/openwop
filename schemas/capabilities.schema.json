@@ -930,6 +930,38 @@
             }
           }
         },
+        "deployment": {
+          "type": "object",
+          "description": "RFC 0082. The host implements an agent deployment lifecycle: per-(agentId, version) deployment records with the seven-state machine (draft/test/staged/active/paused/deprecated/rolled-back), named-channel binding (`agentId@channel` / `@latest` resolved + pinned per-(run, agentId, channel) at first resolution per §B), optional canary traffic-split, a rollback pointer, the content-free `deployment.*` audit events, and the `POST /v1/agents/{agentId}/deployments` promotion contract composing RFC 0049 (`deploy:*` fail-closed scopes) + RFC 0051 (approvalGate) + RFC 0081 (`requiredEval`). Hosts that omit this block reject a `channel`-bearing `AgentRef` with `validation_error` and 501 the deployment endpoint. The promotion endpoint + behavioral lifecycle scenario + reference-host store land at Active → Accepted.",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "REQUIRED when present. When `true`, the host resolves `AgentRef.channel` bindings, serves deployment records, and accepts promotion transitions."
+            },
+            "channels": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "type": "string", "minLength": 1 },
+              "description": "The named channels the host resolves (e.g. `[\"stable\", \"canary\", \"latest\"]`). Truthful advertisement (RFC 0031): a `channel` not in this list resolves to no version and fails the run with `no_active_deployment`."
+            },
+            "canary": {
+              "type": "boolean",
+              "description": "When `true`, the host implements canary traffic-split (a per-run §B draw assigns the run to one of the channel's active versions by `canaryPercent`). When `false`/absent, the host MUST reject any `canaryPercent < 100`."
+            },
+            "rollback": {
+              "type": "boolean",
+              "description": "When `true`, the host implements the `rollbackPointer` recovery path (active→rolled-back restoring a prior version to active)."
+            },
+            "states": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "type": "string", "enum": ["draft", "test", "staged", "active", "paused", "deprecated", "rolled-back"] },
+              "description": "The subset of the seven lifecycle states the host implements. Truthful advertisement (RFC 0031): the host MUST reject a transition into a state not advertised here."
+            }
+          }
+        },
         "dispatchMapping": {
           "type": "boolean",
           "default": false,

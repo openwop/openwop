@@ -1603,3 +1603,36 @@ invariants:
       instance-level rejection of a ratePerToken-bearing payload — the public test.
       The host's pricing model (how it computes costEstimateUsd) stays a host
       choice (RFC 0026); only the policy shape + events + enforcement seam are pinned.
+
+  - id: deployment-event-no-content-leak
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/agent-deployment-shape.test.ts
+    note: |
+      RFC 0082 §D. The four deployment.{promoted,rolled-back,canary.adjusted,
+      state.changed} event payloads MUST carry ids, lifecycle states, scalars
+      (percent / version strings), and content-free references (evalRunId,
+      approvalGateId, rollbackPointer) ONLY — never a manifest body, prompt,
+      system-prompt, or credential material (SR-1). Each payload $def is
+      additionalProperties:false; the always-on agent-deployment-shape.test.ts
+      content-free negatives (a deployment.promoted carrying a manifestBody; a
+      deployment.state.changed carrying a prompt) are the public test.
+
+  - id: deployment-promotion-fail-closed
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/invariants.yaml
+    tests: []
+    note: |
+      RFC 0082 §E. A deployment state transition (promote / rollback / pause)
+      MUST authorize fail-closed against the RFC 0049 deploy:* scope (absent /
+      unseeded role denies) and MUST NOT bypass a configured RFC 0051
+      approvalGate or RFC 0081 requiredEval before emitting deployment.promoted.
+      Behavioral guarantee — verified by a reference host's CI until the
+      behavioral agent-deployment-lifecycle.test.ts lands; at that point this
+      invariant GRADUATES reference-impl -> protocol tier (the RFC 0035
+      sandbox-invariant precedent). At Active the structural fail-closed is
+      already covered by the protocol-tier authorization-fail-closed (RFC 0049)
+      applied to deploy:* scopes.

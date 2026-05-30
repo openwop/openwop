@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
   "title": "RunEventPayloads",
-  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n89 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n93 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
   "type": "object",
   "$defs": {
     "_typeIndex": {
@@ -90,6 +90,10 @@
         "eval.started":              { "$ref": "#/$defs/evalStarted" },
         "eval.scored":               { "$ref": "#/$defs/evalScored" },
         "eval.completed":            { "$ref": "#/$defs/evalCompleted" },
+        "deployment.promoted":       { "$ref": "#/$defs/deploymentPromoted" },
+        "deployment.rolled-back":    { "$ref": "#/$defs/deploymentRolledBack" },
+        "deployment.canary.adjusted":{ "$ref": "#/$defs/deploymentCanaryAdjusted" },
+        "deployment.state.changed":  { "$ref": "#/$defs/deploymentStateChanged" },
         "tool.session.opened":       { "$ref": "#/$defs/toolSessionOpened" },
         "tool.session.closed":       { "$ref": "#/$defs/toolSessionClosed" },
         "egress.decided":            { "$ref": "#/$defs/egressDecided" },
@@ -1385,6 +1389,8 @@
         "modelClass":       { "type": "string", "description": "MAY — the manifest's abstract `modelClass`. Always populatable at start." },
         "resolvedModel":    { "type": "string", "description": "MAY — the concrete model the host selected. OPTIONAL: modelClass→concrete resolution MAY happen downstream (with capability-gated fallback substitution), so a dispatch-time start event genuinely may not know it; a host MAY also omit for deployment-privacy." },
         "resolvedProvider": { "type": "string", "description": "MAY — the concrete provider the host routed to (aligns with `capabilities.aiProviders.supported` / RFC 0067 `authModes`). OPTIONAL, same rationale as `resolvedModel`." },
+        "resolvedAgentVersion": { "type": "string", "description": "MAY — RFC 0082 §B. When this invocation's `AgentRef` bound a `channel` (rather than an exact `version`), the concrete agent-definition version the host pinned per-(run, agentId, channel) at first resolution. A RECORDED FACT: re-read from the log on replay and NEVER re-resolved against a moved channel (the whole event is recorded-fact). Absent when the ref used an exact `version` or host-default resolution." },
+        "resolvedChannel":  { "type": "string", "description": "MAY — RFC 0082 §B. The named `channel` the `AgentRef` bound (mirrors `AgentRef.channel`), for which `resolvedAgentVersion` is the pinned resolution. Content-free label; present only when the ref bound a channel." },
         "toolSurfaceCount": { "type": "integer", "minimum": 0, "description": "MAY — number of tools in the constructed surface after `toolAllowlist` filtering. Content-free count, not the tool ids." },
         "memoryBound":      { "type": "boolean", "description": "MAY — whether a long-term memory backend was bound for the invocation." }
       },
@@ -1574,6 +1580,63 @@
         "limit":     { "type": "number", "minimum": 0 }
       },
       "additionalProperties": false
+    },
+
+    "deploymentPromoted": {
+      "type": "object",
+      "description": "RFC 0082 §D. Emitted on the deployment-management run when a version is promoted into a new lifecycle state (the §E contract: authorized via RFC 0049 `deploy:*`, gated via RFC 0051 `approvalGate`, eval-verified via RFC 0081 when `requiredEval` is configured). Content-free: ids / state / scalars / content-free references only — NEVER a manifest body, prompt, or credential (SECURITY invariant `deployment-event-no-content-leak`; `additionalProperties:false` enforces it). A recorded-fact event per `replay.md` §\"Recorded-fact events\". Audit-logged with the acting principal (`auth.md`).",
+      "additionalProperties": false,
+      "required": ["agentId", "toVersion", "toState"],
+      "properties": {
+        "agentId":        { "type": "string", "minLength": 1, "description": "The promoted agent's id." },
+        "fromVersion":    { "type": "string", "minLength": 1, "description": "MAY — the version previously occupying the target channel/state (absent on a first promotion)." },
+        "toVersion":      { "type": "string", "minLength": 1, "description": "The version promoted." },
+        "toState":        { "type": "string", "enum": ["draft", "test", "staged", "active", "paused", "deprecated", "rolled-back"], "description": "The lifecycle state entered." },
+        "channel":        { "type": "string", "minLength": 1, "description": "MAY — the named channel this promotion targets (when promoting to a channel)." },
+        "canaryPercent":  { "type": "integer", "minimum": 0, "maximum": 100, "description": "MAY — the canary traffic share assigned (when promoting `active` at < 100)." },
+        "evalRunId":      { "type": "string", "minLength": 1, "description": "MAY — the RFC 0081 eval run whose `EvalSummary.passed` gated this promotion (the §E evidence)." },
+        "approvalGateId": { "type": "string", "minLength": 1, "description": "MAY — the RFC 0051 approvalGate that authorized this promotion." }
+      }
+    },
+
+    "deploymentRolledBack": {
+      "type": "object",
+      "description": "RFC 0082 §D. Emitted when an `active` version is rolled back and a prior version restored to `active`. Content-free (`deployment-event-no-content-leak`). Recorded-fact; audit-logged.",
+      "additionalProperties": false,
+      "required": ["agentId", "fromVersion", "toVersion", "rollbackPointer"],
+      "properties": {
+        "agentId":         { "type": "string", "minLength": 1, "description": "The agent's id." },
+        "fromVersion":     { "type": "string", "minLength": 1, "description": "The version that was rolled back (left `active`)." },
+        "toVersion":       { "type": "string", "minLength": 1, "description": "The version restored to `active`." },
+        "rollbackPointer": { "type": "string", "minLength": 1, "description": "The recovery target the rolled-back record points to (= `toVersion`)." },
+        "reason":          { "type": "string", "minLength": 1, "description": "MAY — a short redaction-safe rollback reason label (NOT free-text content; same posture as `run.dead_lettered.reason`)." }
+      }
+    },
+
+    "deploymentCanaryAdjusted": {
+      "type": "object",
+      "description": "RFC 0082 §D. Emitted when an `active` version's canary traffic share changes. Content-free (`deployment-event-no-content-leak`). Recorded-fact; audit-logged.",
+      "additionalProperties": false,
+      "required": ["agentId", "version", "fromPercent", "toPercent"],
+      "properties": {
+        "agentId":     { "type": "string", "minLength": 1, "description": "The agent's id." },
+        "version":     { "type": "string", "minLength": 1, "description": "The version whose canary share changed." },
+        "fromPercent": { "type": "integer", "minimum": 0, "maximum": 100, "description": "The prior canary percent." },
+        "toPercent":   { "type": "integer", "minimum": 0, "maximum": 100, "description": "The new canary percent." }
+      }
+    },
+
+    "deploymentStateChanged": {
+      "type": "object",
+      "description": "RFC 0082 §D. Emitted on any non-promotion lifecycle transition (pause / resume / deprecate). Content-free (`deployment-event-no-content-leak`). Recorded-fact; audit-logged.",
+      "additionalProperties": false,
+      "required": ["agentId", "version", "fromState", "toState"],
+      "properties": {
+        "agentId":   { "type": "string", "minLength": 1, "description": "The agent's id." },
+        "version":   { "type": "string", "minLength": 1, "description": "The version whose state changed." },
+        "fromState": { "type": "string", "enum": ["draft", "test", "staged", "active", "paused", "deprecated", "rolled-back"], "description": "The prior state." },
+        "toState":   { "type": "string", "enum": ["draft", "test", "staged", "active", "paused", "deprecated", "rolled-back"], "description": "The new state." }
+      }
     }
   }
 }
