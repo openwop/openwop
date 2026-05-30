@@ -1,0 +1,157 @@
+# RFC 0084: Budget, Quota, and Cost Policy
+
+| Field | Value |
+|---|---|
+| **RFC** | 0084 |
+| **Title** | Define an enforceable budget/quota policy — reserved `budget.*` run-options keys (max tokens / cost / tool-calls / retries + a model allow/deny list), a `budget.{reserved,consumed,threshold.crossed,exhausted}` event family, and hard-stop enforcement via new `cap.breached` `budget-*` kinds — composing RFC 0026 (provider usage) and RFC 0031 (model gates), and **delegating** wall-time + loop-iteration limits to RFC 0058 rather than redefining them, so 0084 governs *spend* and 0058 governs *execution bounds* with no overlap |
+| **Status** | `Draft` |
+| **Author(s)** | David Tufts (@davidscotttufts) |
+| **Created** | 2026-05-29 |
+| **Updated** | 2026-05-29 |
+| **Affects** | NEW `schemas/budget-policy.schema.json` (the reserved `budget` run-options shape) · `spec/v1/run-options.md` (additive reserved `budget` key) · `schemas/run-event.schema.json` (additive `RunEventType`: `budget.reserved` / `budget.consumed` / `budget.threshold.crossed` / `budget.exhausted`) · `schemas/run-event-payloads.schema.json` (the four content-free payloads + new `capBreached.kind` values `budget-tokens` / `budget-cost` / `budget-tool-calls` / `budget-retries`) · `schemas/capabilities.schema.json` (additive optional `budget` block + additive `limits` ceiling fields) · `spec/v1/budget-policy.md` (NEW normative doc) · `api/openapi.yaml` (`rest-endpoints.md` error code `budget_exhausted` / `budget_model_denied`) · `api/asyncapi.yaml` · `SECURITY/invariants.yaml` (`budget-no-pricing-leak`) · `CHANGELOG.md` · `INTEROP-MATRIX.md` · new conformance scenarios |
+| **Compatibility** | `additive` |
+| **Supersedes** | — |
+| **Superseded by** | — |
+
+## Summary
+
+openwop *observes* spend — RFC 0026 emits per-call `provider.usage` (tokens + optional cost), and `observability.md` projects `openwop.cost.*` — but it **cannot enforce a budget**. A user cannot say "do not spend more than $1 on this research run"; a host cannot cap tool-call count, retry count, or restrict which models a run may use; and there is no event telling a consumer "you've crossed 80% of budget" or "budget exhausted." RFC 0058 caps *execution* (wall-clock `runTimeoutMs`, agent-loop `maxLoopIterations`) — a safety primitive against runaway execution — but says nothing about *cost*. This RFC adds the *cost-governance* layer **additively and orthogonally**: reserved **`budget.*`** run-options keys (`maxTokens`, `maxCostUsd`, `maxToolCalls`, `maxRetries`, `modelAllow[]`/`modelDeny[]`), resolved/clamped per the RFC 0058 §A pattern across run/workflow/agent/project scopes; a content-free **`budget.{reserved,consumed,threshold.crossed,exhausted}`** event family (consumption tracked off the existing RFC 0026 `provider.usage` events — no double-counting); **hard-stop enforcement** that reuses the existing `cap.breached` event with new `budget-*` kinds (the RFC 0058 precedent — no new failure event) terminating the run, or (host policy) escalating to an approval interrupt; and **model allow/deny** composing RFC 0031 model gates + RFC 0067 provider policy. It explicitly **delegates** wall-time to RFC 0058's `runTimeoutMs` and loop-iterations to `maxLoopIterations` rather than redefining them — 0084 owns *spend*, 0058 owns *execution bounds*, with a documented seam and zero overlap. No existing field, event, or endpoint changes.
+
+## Motivation
+
+`docs/OPENWOP-AI-AGENT-PLATFORM-RECOMMENDATIONS.md` §"RFC 0084" frames it: *the app emits provider usage and cost estimates, but agent platforms need enforceable budgets, not just after-the-fact cost panels.* Three concrete gaps:
+
+1. **Observability without enforcement.** RFC 0026 tells you what a run *spent* (after it spent it); nothing lets a client *cap* it. "Run this research agent but stop at $1" is unexpressible. A platform that runs third-party agents on a managed "try it free" tier (the live demo's stated mode) has no protocol-level spend ceiling — only after-the-fact cost panels.
+2. **No quota dimensions beyond execution.** RFC 0058 bounds wall-time and loop-iterations (runaway-execution safety); there is **no** token budget (outside RFC 0062's memory-distillation-specific `tokenBudget`), no cost cap, no tool-call quota, no retry quota, and no model allow/deny *budget* (RFC 0031 gates on model *capability*, RFC 0067 on provider *policy*, but neither is a per-run spend allowlist). These are distinct knobs an operator needs.
+3. **No budget lifecycle events.** A consumer can't see budget being reserved at run start, consumed as the run proceeds, a warning threshold crossed, or budget exhausted — so a Mission Control live burn-down + budget warnings (the demo target) has no event stream to render. `cap.breached` fires on the existing engine/WASM/0058 limits but has no budget kind.
+
+The spec is the right place because *enforceable budget* is a cross-host interop + governance concern: a managed multi-tenant host, a "try it free" tier, and a client that wants a hard spend ceiling all need one agreed policy shape + enforcement contract + event stream. The *pricing model* (how a host computes cost) stays a host choice (RFC 0026 already makes `costEstimateUsd` optional + host-defined); this RFC fixes the *policy shape*, the *consumption/exhaustion events*, and the *enforcement seam* — additively, and carefully orthogonal to RFC 0058.
+
+## Proposal
+
+### §A — The `budget` policy (reserved run-options key; `budget-policy.schema.json`)
+
+An additive reserved `budget` key on `RunOptions.configurable` (per `run-options.md`):
+
+```jsonc
+"budget": {
+  "maxTokens": 200000,        // total input+output tokens across all provider.usage in the run
+  "maxCostUsd": 1.00,         // total cost (summed from provider.usage costEstimateUsd)
+  "maxToolCalls": 50,         // total agent.toolCalled events
+  "maxRetries": 10,           // total node/envelope retries across the run
+  "modelAllow": ["claude-*"], // optional allowlist (glob over provider model ids); deny wins on conflict
+  "modelDeny": ["gpt-4-32k"], // optional denylist
+  "thresholdPercent": 80,     // emit budget.threshold.crossed at this % of any dimension
+  "onExhaustion": "fail"      // "fail" (cap.breached -> run.failed) | "interrupt" (approval to continue)
+}
+```
+
+`additionalProperties: false`. Every dimension is optional; an absent dimension is unbounded (host default). **Wall-time and loop-iterations are deliberately NOT here** — they are RFC 0058's `runTimeoutMs` / `maxLoopIterations` (§"Orthogonality" below); a `budget` policy that wants a wall-clock cap sets `runTimeoutMs` (0058), and the two compose without overlap.
+
+### §B — Scopes + resolution (run / workflow / agent / project)
+
+A budget MAY be declared at four scopes; the **effective budget for a run is the minimum across all applicable scopes**, then clamped to the host ceiling — the RFC 0058 §A `min(requested, hostCeiling)` resolution model. Project/agent/workflow budgets are host-configured (a `'tenant'` host, RFC 0074, scopes them to the owner triple); the run-level `budget` is the per-request overlay. Resolution is deterministic and recorded at `budget.reserved` (§C) so a replay re-reads the same effective budget (a recorded fact, not re-resolved).
+
+### §C — The `budget.*` event family (content-free)
+
+Four additive `RunEventType` values (payloads in `run-event-payloads.schema.json`):
+
+| Event | Emitted | Payload (content-free) |
+|---|---|---|
+| `budget.reserved` | once, at run start | `{ effectiveBudget: {maxTokens?,maxCostUsd?,maxToolCalls?,maxRetries?}, scope }` |
+| `budget.consumed` | on each `provider.usage` / tool call / retry (host MAY coalesce) | `{ dimension, consumed, limit, remaining }` |
+| `budget.threshold.crossed` | once per dimension, at `thresholdPercent` | `{ dimension, consumed, limit, percent }` |
+| `budget.exhausted` | when a dimension hits its limit | `{ dimension, consumed, limit }` |
+
+Consumption is **derived from the existing events** — `maxTokens`/`maxCostUsd` from RFC 0026 `provider.usage` (no double-counting; `budget.consumed` is a running projection, not a new measurement), `maxToolCalls` from `agent.toolCalled`, `maxRetries` from `node.retried` / `envelope.retry.attempted`. None of the four carries pricing breakdowns, provider credentials, or model prose (SR-1; the §F invariant) — only the dimension name, integers, and the scope.
+
+### §D — Enforcement (reuses `cap.breached`; composes RFC 0031/0067 for model policy)
+
+On `budget.exhausted` for a hard dimension, the host enforces per `onExhaustion`:
+
+- **`"fail"`** (default): emit `cap.breached` with a new `kind` ∈ `{budget-tokens, budget-cost, budget-tool-calls, budget-retries}` (the RFC 0058 precedent — budget enforcement reuses the unified cap-overflow event, no new failure event) → `run.failed` with error code `budget_exhausted`.
+- **`"interrupt"`**: raise an approval interrupt (`interrupt.md` `kind:"approval"`) — "budget exhausted, approve continuation?" — so a human MAY extend; resume composes the existing interrupt machinery.
+
+**Model allow/deny** is enforced at model selection: a run whose resolved model violates `modelAllow`/`modelDeny` is refused with `budget_model_denied` *before* the call (composing RFC 0031's model-gate dispatch point + RFC 0067's `provider_policy_denied` precedent; `modelDeny` wins on conflict, fail-closed). This is a *budget*-scoped allowlist (per-run spend control), distinct from RFC 0031 *capability* gating and RFC 0067 *provider* policy — all three compose at the same dispatch seam.
+
+### §E — Capability advertisement (`budget`) + orthogonality with RFC 0058
+
+```jsonc
+"budget": {
+  "supported": true,
+  "dimensions": ["tokens","cost","toolCalls","retries","model"],  // which it enforces (truthful)
+  "enforce": "hard",            // "hard" (cap.breached) | "advisory" (events only, no stop)
+  "scopes": ["run","project"]   // which budget scopes it honors
+},
+"limits": { "maxBudgetTokens": 5000000, "maxBudgetCostUsd": 100.0 }  // additive host ceilings (clamp)
+```
+
+**Orthogonality with RFC 0058 (the load-bearing seam):** RFC 0058 owns `runTimeoutMs` (wall-clock) + `maxLoopIterations` (agent-loop), emitting `cap.breached{kind:"run-duration"|"loop-iterations"}`. RFC 0084 owns token/cost/tool-call/retry *spend* + model *policy*, emitting `cap.breached{kind:"budget-*"}`. They share only the `cap.breached` event (by design — it's the unified overflow primitive) and the `min(requested, ceiling)` resolution pattern. A run MAY set both a `runTimeoutMs` (0058) and a `budget.maxCostUsd` (0084); whichever binds first fires its own `cap.breached` kind. No dimension is defined in both RFCs — `budget` has no wall-time/iteration field (§A), and 0058 has no token/cost/tool-call field. The `budget-policy.md` doc states this seam normatively so the two never drift into overlap.
+
+### Examples
+
+**Positive (hard cost cap).** `POST /v1/runs { configurable: { budget: { maxCostUsd: 1.00, thresholdPercent: 80, onExhaustion: "fail" } } }` on a host advertising `budget.dimensions:["cost"], enforce:"hard"` → `budget.reserved{effectiveBudget:{maxCostUsd:1.00}}` at start; as `provider.usage` events accrue, `budget.consumed{dimension:"cost",remaining:0.30}`; at $0.80, `budget.threshold.crossed{dimension:"cost",percent:80}`; at $1.00, `budget.exhausted{dimension:"cost"}` → `cap.breached{kind:"budget-cost",limit:1.00,observed:1.02}` → `run.failed{error:"budget_exhausted"}`. **Positive (interrupt).** Same with `onExhaustion:"interrupt"` → at exhaustion, an approval interrupt; a human resume extends the budget and the run continues.
+
+**Negative (orthogonality).** A `budget` policy attempting a `maxWallTimeMs` field → `400 validation_error` (`additionalProperties:false`; wall-time is RFC 0058's `runTimeoutMs`). **Negative (model deny).** A run resolving to `gpt-4-32k` with `modelDeny:["gpt-4-32k"]` → `budget_model_denied` before the call. **Negative (pricing leak).** A `budget.consumed` payload carrying a provider rate-card / per-token price fails validation + the `budget-no-pricing-leak` invariant. **Negative (advisory host).** A host advertising `enforce:"advisory"` MUST emit the four events but MUST NOT stop the run — honest advertisement (it doesn't claim hard enforcement it lacks).
+
+## Compatibility
+
+**Additive** (`COMPATIBILITY.md` §2.1). A new budget-policy schema; an additive reserved `budget` run-options key (absent ⇒ unbounded, today's behavior); four additive content-free `RunEventType` values; four additive `capBreached.kind` enum values (additive enum extension — the RFC 0008 §K / 0058 precedent, no `eventLogSchemaVersion` bump); a new optional `budget` capability block + additive `limits` ceiling fields (absent ⇒ no enforcement, exactly as today); two additive error codes. **No existing field is moved, renamed, removed, or type-changed; no existing event shape changes (`cap.breached` only gains kinds, its payload shape is unchanged); RFC 0058's `runTimeoutMs`/`maxLoopIterations` and RFC 0026's `provider.usage` are composed, not modified; no `MUST` is relaxed.** A host that omits `budget` is exactly as conformant as today. No conformance pass is invalidated.
+
+## Conformance
+
+- **New scenarios:**
+  - **`budget-policy-shape.test.ts`** (always-on, server-free): the `budget` policy schema + the four `budget.*` payloads + the four new `capBreached.kind` values validate; the orthogonality guard (a `budget` policy with a wall-time field fails); negatives (pricing-bearing `budget.consumed`; `thresholdPercent` out of 0–100).
+  - **`budget-enforcement.test.ts`** (gated on `budget.supported` + `enforce:"hard"`): a run with `maxCostUsd` accrues `budget.consumed`, crosses the threshold, exhausts, and terminates via `cap.breached{kind:"budget-cost"}` → `run.failed{budget_exhausted}`; a `modelDeny` violation refuses with `budget_model_denied`; an `advisory` host emits events without stopping. Soft-skips when unadvertised.
+- **Capability gating** per `conformance/coverage.md` (shape always-on; enforcement gated on `budget.supported`/`enforce`). New budget fixture + `fixtures.md` row.
+- **SECURITY:** `budget-no-pricing-leak` invariant (the four events + `cap.breached{budget-*}` MUST NOT carry pricing breakdowns / rate cards / credentials — content-free, mirroring `provider-usage-no-credential-leak`) + a public test.
+- **Reference host.** Deferred (files at `Draft`). The schema + events + `cap.breached` kinds + capability ship at `Draft → Active`; the enforcement scenario soft-skips until a reference host wires budget accounting + the stop.
+
+## Alternatives considered
+
+1. **Extend RFC 0058 with cost/token bounds (one "bounds" RFC).** Rejected — 0058 is *execution-safety* (runaway prevention: wall-clock, loop count), a different concern from *cost governance* (spend, model policy). Folding them would conflate two operator mental models and two ceiling sets. The §E seam keeps them orthogonal and composable (shared only via `cap.breached`).
+2. **A new `budget.breached` failure event instead of reusing `cap.breached`.** Rejected — `cap.breached` is the unified cap-overflow primitive (engine + WASM RFC 0008 + bounds RFC 0058 all use it); a parallel budget-failure event would fragment overflow handling. New `kind` values are the established additive pattern.
+3. **Reuse RFC 0062's `distillation.tokenBudget` as the general token budget.** Rejected — 0062's budget is memory-distillation-specific (a per-compaction-run budget against a named tokenizer); a general run/workflow/agent budget is a different scope. They're distinct knobs (0062 caps a distillation pass; 0084 caps a whole run's spend).
+4. **Model allow/deny as a separate RFC.** Rejected — model policy *is* a budget/cost control (which models a run may spend on) and enforces at the same dispatch seam as the cost cap (§D); splitting it would scatter the spend-governance surface.
+5. **Do nothing.** Rejected — Wave 4 "make it operational" needs enforceable budgets; a managed "try it free" tier without a hard spend ceiling is an operational + cost-exposure gap, and Mission Control burn-down has no event stream without §C.
+
+## Unresolved questions
+
+To decide before `Active`:
+
+1. **`budget.consumed` emission frequency.** Per `provider.usage` (fine-grained, chatty) or coalesced (per node / on threshold)? Proposed: host MAY coalesce; MUST emit at least `reserved` + `threshold.crossed` + `exhausted` (the consumed stream is optional granularity). Confirm.
+2. **Cost-cap determinism on replay.** `costEstimateUsd` is host-defined + optional (RFC 0026). If a host changes its pricing between original + replay, does the cost-cap fire at a different point? Proposed: the *consumed* values are recorded facts (replay re-reads them, per `replay.md`), so the exhaustion point is deterministic on replay even if live pricing changed. Confirm against `replay.md`.
+3. **Project/workflow/agent budget storage.** Are non-run-scoped budgets a protocol surface (a `GET /v1/budgets`?) or host-config only? Proposed: host-config only at v1.x (like RFC 0080's `GET /v1/memory` decision); the run-level `budget` overlay is the only wire surface; scopes resolve internally. Confirm.
+4. **`maxRetries` vs RFC 0009 retry policy.** Does `budget.maxRetries` cap the *same* retries RFC 0009 governs, or an independent counter? Proposed: it's a *ceiling* over the RFC 0009 retry count (the run fails when cumulative retries hit it), not a separate retry mechanism. Confirm against RFC 0009.
+5. **`interrupt` exhaustion + budget extension shape.** On `onExhaustion:"interrupt"`, how does the resume payload extend the budget (a new `maxCostUsd`?) and is the extension audited? Proposed: resume carries an additive budget delta, audited via `budget.reserved` (a second reservation). Confirm against `interrupt.md` resume schema.
+
+## Implementation notes (non-normative)
+
+- **Sequencing.** Orthogonal to RFC 0058 (the §E seam) + RFC 0062 (distillation budget, distinct scope); composes RFC 0026 (the consumption source), RFC 0031 (model-gate dispatch seam), RFC 0067 (provider-policy precedent), `cap.breached` (the overflow primitive), `interrupt.md` (the `onExhaustion:"interrupt"` path). Second of Wave 4, independent of RFC 0083. Adds a schema + four events + four `cap.breached` kinds + a capability; changes no existing surface.
+- **Reference host.** Wiring is: a budget resolver (`min` across scopes, clamp to ceiling), a consumption accumulator hooked to `provider.usage`/`agent.toolCalled`/`node.retried`, the threshold/exhaustion emitters, the `cap.breached{budget-*}` → `run.failed` stop (or the interrupt), and the model allow/deny check at the RFC 0031 dispatch seam.
+- **Demo impact** (out of scope): "do not spend more than $1 on this research run"; Mission Control live burn-down + budget warnings.
+- **Expected effort:** M for the schema + events + `cap.breached` kinds + prose + shape conformance; M for the reference accounting + enforcement (the accumulator + the stop seam).
+
+## Acceptance criteria
+
+Checklist for `Active → Accepted` (files at `Draft`):
+
+- [ ] `spec/v1/budget-policy.md`: §A policy, §B scopes/resolution, §C events, §D enforcement + model policy, §E capability + the RFC 0058 orthogonality seam, §F security.
+- [ ] `budget-policy.schema.json`; additive reserved `budget` in `run-options.md`; four `budget.*` RunEventTypes + payloads; four `budget-*` `capBreached.kind` values; additive `budget` block + `limits` ceilings on `capabilities.schema.json`; `budget_exhausted` + `budget_model_denied` error codes in `rest-endpoints.md`.
+- [ ] SECURITY invariant `budget-no-pricing-leak` + public test.
+- [ ] Conformance: `budget-policy-shape.test.ts` (always-on) + `budget-enforcement.test.ts` (gated) + fixture + `coverage.md`.
+- [ ] CHANGELOG entry + INTEROP-MATRIX row.
+- [ ] All five Unresolved questions resolved (recorded in `Updated:`).
+- [ ] Reference host wires budget accounting + the exhaustion stop + passes the gated scenario, OR the RFC explicitly defers reference-host implementation.
+
+## References
+
+- `docs/OPENWOP-AI-AGENT-PLATFORM-RECOMMENDATIONS.md` §"RFC 0084" — the source recommendation.
+- [`RFCS/0058-run-execution-bounds.md`](./0058-run-execution-bounds.md) — `runTimeoutMs` + `maxLoopIterations` (the wall-time/iteration dimensions 0084 **delegates** rather than redefines; the §E orthogonality seam + the `min(requested, ceiling)` resolution pattern + the `cap.breached`-reuse precedent).
+- [`RFCS/0026-provider-usage-event.md`](./0026-provider-usage-event.md) — `provider.usage` (the cost/token consumption source §C derives from; `provider-usage-no-credential-leak` the new invariant mirrors).
+- [`RFCS/0031-envelope-variants-and-model-capabilities.md`](./0031-envelope-variants-and-model-capabilities.md) — the model-gate dispatch seam `modelAllow`/`modelDeny` composes (§D).
+- [`RFCS/0067-provider-catalog-conventions.md`](./0067-provider-catalog-conventions.md) — `provider_policy_denied` the `budget_model_denied` enforcement parallels.
+- [`RFCS/0062-scheduled-memory-distillation.md`](./0062-scheduled-memory-distillation.md) — `distillation.tokenBudget` (a distinct, distillation-scoped budget; Alt 3).
+- [`spec/v1/run-options.md`](../spec/v1/run-options.md) — the reserved-key contract the `budget` key extends.
+- [`spec/v1/interrupt.md`](../spec/v1/interrupt.md) — the `onExhaustion:"interrupt"` path (§D, UQ #5); [`spec/v1/replay.md`](../spec/v1/replay.md) — the recorded-fact posture for consumed values (UQ #2).
+- [`COMPATIBILITY.md`](../COMPATIBILITY.md) §2.1 — additive-change discipline.
