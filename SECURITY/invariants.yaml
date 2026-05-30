@@ -1581,3 +1581,21 @@ invariants:
       soft-skips until a host wires egressPolicy over safeFetch). It GRADUATES to
       protocol tier at Active → Accepted once a reference host implements it and
       the behavioral scenario passes — the RFC 0035 sandbox-invariant precedent.
+
+  - id: budget-no-pricing-leak
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/budget-policy-shape.test.ts
+    note: |
+      RFC 0084 §F. The budget.{reserved,consumed,threshold.crossed,exhausted}
+      events and cap.breached{kind:"budget-*"} MUST NOT carry pricing breakdowns,
+      rate cards, per-token prices, provider credentials, or model prose —
+      content-free: dimension name + integers/numbers + scope only (mirroring
+      provider-usage-no-credential-leak). The budget.* payload $defs are
+      additionalProperties-controlled with no pricing field; the always-on
+      budget-policy-shape.test.ts content-free negatives (a budget.consumed
+      carrying a rate card / per-token price) are the public test. The host's
+      pricing model stays a host choice (RFC 0026); only the policy shape +
+      events + enforcement seam are pinned.

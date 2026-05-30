@@ -131,6 +131,7 @@ Each entry below is filed in `SECURITY/invariants.yaml` with its ID, severity, a
 | `secret-leakage-author-emit` | (ADVISORY) Workflow validation SHOULD reject nodes whose declared inputs match credential shape patterns. Defense-in-depth; not a hard MUST. |
 | `egress-decision-no-secret-leak` | (RFC 0079) The `CredentialProvenance` descriptor + the `egress.decided` event MUST NOT carry the credential secret value — identifiers, destination, decision, audiences, and an optional reason code only. |
 | `egress-credential-audience-bound` | (RFC 0079, reference-impl until Accepted) A host-issued credential MUST NOT be attached to an egress whose destination is not in the credential's provenance `audiences`; provenance-unevaluable / expired ⇒ fail-closed `denied`. The confused-deputy / credential-exfiltration guard at the egress boundary. |
+| `budget-no-pricing-leak` | (RFC 0084) The `budget.*` events + `cap.breached{budget-*}` MUST NOT carry pricing breakdowns, rate cards, per-token prices, provider credentials, or model prose — dimension name + integers/numbers + scope only. |
 
 ### 4.7 Credential confused-deputy egress (RFC 0079)
 

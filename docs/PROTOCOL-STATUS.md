@@ -7,11 +7,11 @@
 
 | Surface | Current value | Source |
 |---|---:|---|
-| Spec prose documents | 45 | `spec/v1/*.md` |
-| JSON Schemas | 48 | `schemas/*.schema.json` |
+| Spec prose documents | 46 | `spec/v1/*.md` |
+| JSON Schemas | 49 | `schemas/*.schema.json` |
 | OpenAPI operations | 39 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 296 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 297 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 85 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
@@ -23,8 +23,8 @@
 | Status | Count |
 |---|---:|
 | Accepted | 64 |
-| Active | 14 |
-| Draft | 7 |
+| Active | 15 |
+| Draft | 6 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -111,7 +111,7 @@
 | RFC 0081 | Define a portable `AgentEvalSuite` artifact, an eval-run projection over the existing run surface (an `eval.*` event family + an `EvalSummary` schema), a host-advertised `agents.evalSuite` capability with a closed `modes[]` vocabulary (golden / rubric / adversarial / regression / live-shadow), and the composition seam by which an eval result MAY gate an agent deployment promotion - all additive | Active |
 | RFC 0082 | Define an agent deployment lifecycle - a named-channel + version binding (`agentId@version` / `agentId@channel` / `agentId@latest`), a deployment state machine (draft / test / staged / active / paused / deprecated / rolled-back) with canary percentage and a rollback pointer, a `deployment.*` audit-event family, and the eval-gated + RBAC-gated promotion contract - composing RFC 0051 (approval gates), RFC 0049 (RBAC), and RFC 0081 (eval), with channel->concrete-version resolution pinned at run-start for replay determinism | Draft |
 | RFC 0083 | Define an `openwop-trigger-bridge` profile that composes the existing scheduling (RFC 0052), dead-letter (RFC 0053), queue-bus (RFC 0017), webhook, and cross-host-causation (RFC 0040) primitives into a uniform durable inbound-work contract - standardizing trigger-subscription states (active / paused / failed / dead-lettered), a delivery-attempt + dedup-key + retry-policy model, an opt-in durable-webhook mode, and an explicit trigger-to-run causation link - while keeping individual channels (Slack / email / SMS) as host/vendor extensions | Active |
-| RFC 0084 | Define an enforceable budget/quota policy - reserved `budget.*` run-options keys (max tokens / cost / tool-calls / retries + a model allow/deny list), a `budget.{reserved,consumed,threshold.crossed,exhausted}` event family, and hard-stop enforcement via new `cap.breached` `budget-*` kinds - composing RFC 0026 (provider usage) and RFC 0031 (model gates), and **delegating** wall-time + loop-iteration limits to RFC 0058 rather than redefining them, so 0084 governs *spend* and 0058 governs *execution bounds* with no overlap | Draft |
+| RFC 0084 | Define an enforceable budget/quota policy - reserved `budget.*` run-options keys (max tokens / cost / tool-calls / retries + a model allow/deny list), a `budget.{reserved,consumed,threshold.crossed,exhausted}` event family, and hard-stop enforcement via new `cap.breached` `budget-*` kinds - composing RFC 0026 (provider usage) and RFC 0031 (model gates), and **delegating** wall-time + loop-iteration limits to RFC 0058 rather than redefining them, so 0084 governs *spend* and 0058 governs *execution bounds* with no overlap | Active |
 | RFC 0085 | Define `openwop-agent-platform` - an **operational annex** profile (a `production-profile.md`-style claim combining a discovery predicate + required runtime conformance scenarios + documentation + a badge, NOT a pure entry in the closed `profiles.md` catalog) that names one coherent "this host behaves like a full agent platform" target aggregating manifest+live agents, tool catalog+hooks, safe-fetch+egress, provider usage, prompt library, memory read/write/attribution, replay/fork-or-nondeterminism-policy, feedback, durable triggers, debug bundle, RBAC/tenant scoping, and conformance evidence - with a `partial` / `full` status | Draft |
 
 ## SDK Helper Coverage
@@ -152,8 +152,8 @@
 
 ## Active Follow-Ups
 
-- 7 RFCs still `Draft` (RFC 0038, RFC 0043, RFC 0050, RFC 0073, RFC 0082, RFC 0084, RFC 0085) — advance with schema/conformance proof or defer.
-- 14 RFCs `Active` (RFC 0035, RFC 0042, RFC 0065, RFC 0066, RFC 0067, RFC 0068, RFC 0069, RFC 0075, RFC 0077, RFC 0078, RFC 0079, RFC 0080, RFC 0081, RFC 0083) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 6 RFCs still `Draft` (RFC 0038, RFC 0043, RFC 0050, RFC 0073, RFC 0082, RFC 0085) — advance with schema/conformance proof or defer.
+- 15 RFCs `Active` (RFC 0035, RFC 0042, RFC 0065, RFC 0066, RFC 0067, RFC 0068, RFC 0069, RFC 0075, RFC 0077, RFC 0078, RFC 0079, RFC 0080, RFC 0081, RFC 0083, RFC 0084) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.

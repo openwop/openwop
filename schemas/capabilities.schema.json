@@ -54,6 +54,16 @@
           "type": "integer",
           "minimum": 1,
           "description": "RFC 0058. Authoritative engine-side ceiling on agent-loop iterations. Upper bound for `RunOptions.configurable.maxLoopIterations`. Breach emits `cap.breached { kind: 'loop-iterations' }` + error `loop_limit_exceeded`. Optional; hosts that advertise it MUST enforce it."
+        },
+        "maxBudgetTokens": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "RFC 0084. Engine-side ceiling clamping `RunOptions.configurable.budget.maxTokens` (`min(requested, ceiling)`). Optional; only meaningful with `capabilities.budget`."
+        },
+        "maxBudgetCostUsd": {
+          "type": "number",
+          "minimum": 0,
+          "description": "RFC 0084. Engine-side cost ceiling clamping `RunOptions.configurable.budget.maxCostUsd`. Optional; only meaningful with `capabilities.budget`."
         }
       },
       "additionalProperties": false,
@@ -1299,6 +1309,18 @@
           }
         },
         "sources": { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["webhook", "schedule", "queue", "email", "form"] }, "description": "Which trigger sources bridge uniformly. A consumer MUST tolerate any subset." }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "description": "RFC 0084 (`Active`). Enforceable per-run SPEND governance — the reserved `budget` run-options key (`budget-policy.schema.json`), the content-free `budget.{reserved,consumed,threshold.crossed,exhausted}` events, and hard-stop enforcement via `cap.breached{kind:\"budget-*\"}`. Orthogonal to RFC 0058 (which owns wall-time + loop-iterations via `limits.maxRunDurationMs`/`maxLoopIterations`); they share only the `cap.breached` overflow event. Hosts that omit it perform no spend enforcement (today's behavior); the conformance behavioral scenarios skip cleanly.",
+      "required": ["supported"],
+      "additionalProperties": false,
+      "properties": {
+        "supported": { "type": "boolean", "description": "REQUIRED when present. `true` ⇒ the host resolves the `budget` policy, emits the `budget.*` events, and (when `enforce: \"hard\"`) stops the run on exhaustion." },
+        "dimensions": { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["tokens", "cost", "toolCalls", "retries", "model"] }, "description": "Which budget dimensions the host actually enforces (truthful — advertise only what it honors). A consumer MUST tolerate any subset." },
+        "enforce": { "type": "string", "enum": ["hard", "advisory"], "description": "`hard`: exhaustion emits `cap.breached` + stops the run. `advisory`: emits the events but MUST NOT stop the run (honest advertisement of observe-only)." },
+        "scopes": { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["run", "workflow", "agent", "project"] }, "description": "Which budget scopes the host honors (§B). Absent ⇒ at least `run`." }
       }
     },
     "workspace": {

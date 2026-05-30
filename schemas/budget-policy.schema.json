@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/budget-policy.schema.json",
+  "title": "BudgetPolicy",
+  "description": "RFC 0084 §A. The reserved `budget` run-options key (on `RunOptions.configurable`) — an enforceable per-run SPEND policy. Wall-time + loop-iterations are deliberately NOT here: those are RFC 0058's `runTimeoutMs` / `maxLoopIterations` (the §E orthogonality seam). 0084 governs spend; 0058 governs execution bounds; they share only the `cap.breached` overflow event. Every dimension is optional; an absent dimension is unbounded (host default).",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "maxTokens": { "type": "integer", "minimum": 1, "description": "Total input+output tokens across all `provider.usage` (RFC 0026) in the run." },
+    "maxCostUsd": { "type": "number", "minimum": 0, "description": "Total cost summed from `provider.usage` `costEstimateUsd` (host-defined pricing per RFC 0026)." },
+    "maxToolCalls": { "type": "integer", "minimum": 1, "description": "Total `agent.toolCalled` events in the run." },
+    "maxRetries": { "type": "integer", "minimum": 0, "description": "Ceiling over the cumulative RFC 0009 retry count (node + envelope retries); the run fails when cumulative retries hit it. NOT a separate retry mechanism (RFC 0084 §UQ4)." },
+    "modelAllow": { "type": "array", "items": { "type": "string" }, "uniqueItems": true, "description": "Optional allowlist (glob over provider model ids, e.g. `claude-*`). A run resolving to a model outside the allowlist is refused with `budget_model_denied` before the call." },
+    "modelDeny": { "type": "array", "items": { "type": "string" }, "uniqueItems": true, "description": "Optional denylist. `modelDeny` wins on conflict with `modelAllow` (fail-closed)." },
+    "thresholdPercent": { "type": "number", "minimum": 0, "maximum": 100, "description": "Emit `budget.threshold.crossed` once per dimension at this percent of the dimension's limit." },
+    "onExhaustion": { "type": "string", "enum": ["fail", "interrupt"], "description": "`fail` (default): `cap.breached{kind:\"budget-*\"}` → `run.failed{budget_exhausted}`. `interrupt`: raise an RFC 0051 approval interrupt so a human MAY extend the budget." }
+  }
+}
