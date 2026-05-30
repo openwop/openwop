@@ -8,12 +8,12 @@
   "required": ["department", "members", "responsibilities"],
   "properties": {
     "department": {
-      "$ref": "./agent-org-chart.schema.json#/properties/departments/items",
+      "$ref": "./agent-org-chart.schema.json#/$defs/Department",
       "description": "The department this view is rooted at."
     },
     "members": {
       "type": "array",
-      "items": { "$ref": "./agent-org-chart.schema.json#/properties/members/items" },
+      "items": { "$ref": "./agent-org-chart.schema.json#/$defs/Member" },
       "description": "The department's members (and, by default, its sub-departments' members)."
     },
     "responsibilities": {
