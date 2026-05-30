@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — RFC 0076: Pack runtime-requirements declaration + host-provided safe-fetch</title>
+  <meta name="description" content="A pack&#39;s runtime code may need platform primitives the host&#39;s sandbox denies by default — core.openwop.http@1.1.2 reaches for node:dns/promises to do SSRF defense before every fetch, which a tight default-deny sandbox refuses, so the host discovers…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0076-pack-runtime-requirements-and-host-safe-fetch.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — RFC 0076: Pack runtime-requirements declaration + host-provided safe-fetch"/>
+  <meta property="og:description" content="A pack&#39;s runtime code may need platform primitives the host&#39;s sandbox denies by default — core.openwop.http@1.1.2 reaches for node:dns/promises to do SSRF defense before every fetch, which a tight default-deny sandbox refuses, so the host discovers…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0076-pack-runtime-requirements-and-host-safe-fetch.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — RFC 0076: Pack runtime-requirements declaration + host-provided safe-fetch"/>
+  <meta name="twitter:description" content="A pack&#39;s runtime code may need platform primitives the host&#39;s sandbox denies by default — core.openwop.http@1.1.2 reaches for node:dns/promises to do SSRF defense before every fetch, which a tight default-deny sandbox refuses, so the host discovers…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "RFC 0076: Pack runtime-requirements declaration + host-provided safe-fetch",
+  "description": "A pack's runtime code may need platform primitives the host's sandbox denies by default — core.openwop.http@1.1.2 reaches for node:dns/promises to do SSRF defense before every fetch, which a tight default-deny sandbox refuses, so the host discovers…",
+  "url": "https://openwop.dev/rfcs/0076-pack-runtime-requirements-and-host-safe-fetch.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  }
+}</script>
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>RFC 0076: Pack runtime-requirements declaration + host-provided safe-fetch</h1>
+      <p class="lede">A pack&#39;s runtime code may need platform primitives the host&#39;s sandbox denies by default — core.openwop.http@1.1.2 reaches for node:dns/promises to do SSRF defense before every fetch, which a tight default-deny sandbox refuses, so the host discovers…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-runtime-requires-on-the-pack-manifest-additive">§A — runtime.requires[] on the pack manifest (additive)</a></li>
+      <li class="toc-sub"><a href="#b-host-provided-ctx-http-safefetch-additive-optional-host-capability">§B — host-provided ctx.http.safeFetch (additive, OPTIONAL host capability)</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0076</td></tr>
+<tr><td><strong>Title</strong></td><td>Pack runtime-requirements declaration + host-provided safe-fetch</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Track status</strong></td><td>§A (<code>runtime.requires[]</code>) <strong><code>Accepted</code> 2026-05-29</strong> — verified live on a non-steward host (MyndHyve); §B (<code>ctx.http.safeFetch</code> under <code>httpClient.safeFetch</code>) <strong><code>Accepted</code> 2026-05-29</strong> — durable-emission MUST proven live on a non-steward host (MyndHyve <code>workflow-runtime-00412-xow</code>). <strong>Both tracks <code>Accepted</code> ⇒ RFC 0076 <code>Accepted</code> overall.</strong></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>openwop working group (steward), prompted by the MyndHyve RFC 0072 §B second-host debrief (2026-05-28)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-28</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-29 (<code>Draft → Active</code> — steward acceptance, comment window waived per GOVERNANCE.md single-maintainer lazy consensus; wire shapes now locked. §A wire surface + conformance landed. <strong>rev 4 (2026-05-29) — §B wire surface landed:</strong> <code>safeFetch</code> reconciled under the existing <code>httpClient</code> capability (<code>httpClient.safeFetch</code>, reusing the <code>http-client-ssrf-guard</code> invariant + <code>maxResponseBodyBytes</code> cap) rather than a standalone <code>host.http.safeFetch</code>; <code>§host.http</code> prose + <code>safefetch-behavior.test.ts</code> + the <code>POST /v1/host/sample/http/safe-fetch</code> seam; §B reference-impl deferred. rev 3 — MyndHyve §A schema-diff review folded in: elided additive diff synced to live <code>$defs/Runtime</code>, <code>oneOf</code>/<code>const</code>/<code>description</code> vocabulary (no JSON comments), empty-array≡omission, coarser-parent-breadth + closed-enum versioning rules, peerDependencies-compose note, Q5 credential-provenance breadcrumb). Rev 2 (2026-05-28) — second-host comment-window review: Q1–Q4 resolved, <code>env.read</code> added, §B audit MUST + request-init clamps + RFC 0069 composition + §A/§B sequencing. <strong>§B graduated <code>Active → Accepted</code> 2026-05-29:</strong> the durable-emission MUST (§Conformance, <code>safefetch-live-audit.test.ts</code> — PR #336) was proven on a non-steward host. MyndHyve <code>workflow-runtime</code> advertises <code>httpClient.safeFetch.supported: true</code> + <code>ssrfGuard: true</code> + <code>toolHooks.prePostEvents: true</code>, and the production <code>ctx.http.safeFetch</code> path (exercised via the <code>POST /v1/host/sample/http/safe-fetch-run</code> open seam on rev <code>00412-xow</code>) persists the <code>agent.toolCalled</code>/<code>agent.toolReturned</code> pair to the durable run-event log with <code>transport: &#39;http&#39;</code> + the RFC 0002 §B <code>causationId</code> chain (<code>toolReturned.causationId === toolCalled.eventId</code>). Steward-verified by independent curl 2026-05-29 (fetched-path run → durable pair + chain; the <code>status:&#39;error&#39;</code>/<code>fetch_failed</code> is Cloud Run sandbox egress, which the scenario correctly does not gate on — the SSRF guard <em>passed</em> the public URL, yielding <code>outcome:&#39;fetched&#39;</code>). With §A already Accepted, RFC 0076 is <code>Accepted</code> overall.</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>schemas/node-pack-manifest.schema.json</code> (new optional <code>runtime.requires[]</code>), <code>schemas/capabilities.schema.json</code> (<code>httpClient</code> block + <code>httpClient.safeFetch</code>), <code>spec/v1/node-packs.md</code>, <code>spec/v1/registry-operations.md</code> (install-time gate), <code>spec/v1/host-capabilities.md</code> (§host.http — <code>ctx.http.safeFetch</code>), <code>spec/v1/host-sample-test-seams.md</code> (two seams), <code>conformance/src/scenarios/*</code> (runtime-requires + safefetch)</td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code> per <code>COMPATIBILITY.md</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>A pack's runtime code may need platform primitives the host's sandbox denies by default — <code>core.openwop.http@1.1.2</code> reaches for <code>node:dns/promises</code> to do SSRF defense before every fetch, which a tight default-deny sandbox refuses, so the host discovers the requirement only by a failed <em>trial-load</em>. This RFC adds two additive surfaces: (1) an abstract, runtime-agnostic <code>runtime.requires[]</code> declaration on the pack manifest so a host can gate at <strong>install time</strong> instead of at first invocation; and (2) an OPTIONAL host-provided <code>ctx.http.safeFetch(url, init?)</code> that centralizes outbound-request SSRF defense in the host, so packs no longer reach for <code>node:dns/promises</code> themselves. Both are opt-in and backward-compatible: packs without <code>runtime.requires</code> and hosts without <code>safeFetch</code> behave exactly as today.</p>
+<h2 id="motivation">Motivation</h2>
+<p>Today, pack-runtime platform requirements are <strong>not first-class</strong>. The manifest has three adjacent-but-distinct mechanisms, none of which expresses "this pack's code calls <code>dns.lookup</code> / opens outbound sockets":</p>
+<ul>
+<li><code>runtime</code> (<code>schemas/node-pack-manifest.schema.json</code> — <code>language</code>/<code>entry</code>) — <em>which</em> runtime, not what it touches.</li>
+<li><code>peerDependencies</code> (RFC 0072 §C) — host <strong>agent-runtime capability tiers</strong> (<code>agents.manifestRuntime</code>, <code>host.agentRuntime</code>).</li>
+<li><code>NodeModule.requires</code> + <code>capabilities.runtimeCapabilities</code> (<code>capabilities.md</code> §"Runtime capabilities") — <strong>host-advertised opaque facilities</strong> consumed <em>per node at dispatch</em> (<code>chat.sendPrompt</code>, <code>canvas.write</code>). <code>registry-operations.md</code> §"Host-private marketplace" already shows <code>requires: [&#39;&amp;lt;host&amp;gt;.canvas.write&#39;]</code> gating load.</li>
+</ul>
+<p>What's missing is the <strong>platform/sandbox</strong> axis: the primitives the pack's <em>own code</em> exercises (DNS resolution, outbound fetch, crypto, subprocess, filesystem). A sandbox-based host (the realistic deployment for untrusted <code>community.<em></code> / <code>vendor.</em></code> packs) runs a default deny-list and only learns a pack needs <code>node:dns</code> when the pack throws at first invocation. MyndHyve had to <strong>carve <code>node:dns/promises</code> out of its sandbox by trial-and-error</strong> to load <code>core.openwop.http</code> at all (RFC 0072 §B debrief, finding 1).</p>
+<p>The spec is the right place because pack portability is a cross-host guarantee: a pack that loads on host A's sandbox but silently fails on host B's tighter sandbox is exactly the "portable manifest, host-specific runtime" failure RFC 0072 set out to close. An install-time, declarative gate makes the boundary inspectable before a run depends on it.</p>
+<p>Separately, finding 1(b): packs that perform SSRF defense by direct DNS (the <code>core.openwop.http</code> <code>assertPublicUrl</code> pattern) <strong>each re-implement</strong> the metadata-endpoint blocklist and private-range checks, and each must reach for <code>node:dns</code>. Centralizing the defense in a host-provided <code>safeFetch</code> is more secure (one audited, host-maintained blocklist; audit-loggable via RFC 0064 <code>agent.toolCalled</code>), more portable (no <code>node:dns</code> dependency in the pack), and consistent across packs — worth settling before more packs follow <code>core.openwop.http</code>'s lead.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-runtime-requires-on-the-pack-manifest-additive">§A — <code>runtime.requires[]</code> on the pack manifest (additive)</h3>
+<p>Add an OPTIONAL <code>requires</code> array to the manifest's <code>$defs/Runtime</code> object, drawn from a <strong>controlled, runtime-agnostic vocabulary</strong> of platform primitives — <em>not</em> raw Node builtin names (<code>node:dns/promises</code> does not translate to the Python / Go / wasm runtimes the spec already supports). The diff below is <strong>additive-only</strong> — the <code>+</code> lines are the entire change; the surrounding properties (elided with <code>…</code>) are unchanged, including <code>language</code> (which already carries <code>wasm-component</code>, RFC 0008.1), <code>format</code>, and <code>minRuntimeVersion</code>. JSON Schema is strict JSON, so per-value semantics ride in <code>oneOf</code>/<code>const</code>/<code>description</code> rather than <code>//</code> comments:</p>
+<pre class="lang-diff"><code>   &quot;Runtime&quot;: {
+     &quot;type&quot;: &quot;object&quot;,
+     &quot;required&quot;: [&quot;language&quot;, &quot;entry&quot;],
+     &quot;properties&quot;: {
+       &quot;language&quot;:          { &quot;…&quot;: &quot;unchanged (incl. wasm-component, RFC 0008.1)&quot; },
+       &quot;entry&quot;:             { &quot;…&quot;: &quot;unchanged&quot; },
+       &quot;format&quot;:            { &quot;…&quot;: &quot;unchanged&quot; },
+       &quot;minRuntimeVersion&quot;: { &quot;…&quot;: &quot;unchanged&quot; },
++      &quot;requires&quot;: {
++        &quot;type&quot;: &quot;array&quot;,
++        &quot;uniqueItems&quot;: true,
++        &quot;description&quot;: &quot;RFC 0076. Abstract platform primitives the pack&#39;s runtime code exercises, for install-time sandbox gating. Runtime-agnostic (not language builtin names). Absent or [] ⇒ no elevated platform needs.&quot;,
++        &quot;items&quot;: {
++          &quot;oneOf&quot;: [
++            { &quot;const&quot;: &quot;net.dns&quot;,      &quot;description&quot;: &quot;Resolves hostnames (e.g., SSRF pre-flight).&quot; },
++            { &quot;const&quot;: &quot;net.outbound&quot;, &quot;description&quot;: &quot;Opens outbound network connections / fetch.&quot; },
++            { &quot;const&quot;: &quot;crypto&quot;,       &quot;description&quot;: &quot;Primitives beyond the standard hashing the host already provides.&quot; },
++            { &quot;const&quot;: &quot;subprocess&quot;,   &quot;description&quot;: &quot;Spawns a child process (composes with the RFC 0069 exec-class contract when the host advertises it).&quot; },
++            { &quot;const&quot;: &quot;fs.read&quot;,      &quot;description&quot;: &quot;Reads the local filesystem.&quot; },
++            { &quot;const&quot;: &quot;fs.write&quot;,     &quot;description&quot;: &quot;Writes the local filesystem.&quot; },
++            { &quot;const&quot;: &quot;env.read&quot;,     &quot;description&quot;: &quot;Reads the process environment (may expose deployment secrets if the host does not scrub it).&quot; },
++            { &quot;const&quot;: &quot;clock&quot;,        &quot;description&quot;: &quot;Reads wall-clock time as a behavioral input — gated for REPLAY determinism, not access control. A pack that branches on the clock is non-deterministic on replay (replay.md).&quot; }
++          ]
++        }
++      }
+     },
+     &quot;additionalProperties&quot;: false
+   }</code></pre>
+<p><code>clock</code> and <code>env.read</code> are the two non-obvious members. <code>clock</code> is included not because wall-clock access is privileged (it is a language global) but because a pack that branches on it is <strong>non-deterministic on replay</strong> (<code>replay.md</code>) — declaring it lets a replay-strict host gate or instrument it; future maintainers should not trim it as redundant with <code>Date.now()</code>. <code>env.read</code> is gated because an unscrubbed <code>process.env</code> can leak deployment secrets into pack code.</p>
+<p><strong>Behavior (normative).</strong></p>
+<ul>
+<li>A pack MAY declare <code>runtime.requires[]</code>. Absent — or an empty array (<code>runtime.requires: []</code>) — ⇒ the pack asserts no elevated platform needs (today's behavior); the two are equivalent, and a host MUST NOT read a distinct meaning into the empty array.</li>
+<li>A host that gates platform access (a sandbox host) MUST evaluate <code>runtime.requires[]</code> at <strong>install time</strong>: every listed primitive its sandbox can grant ⇒ install; any primitive it will <strong>not</strong> grant ⇒ the host MUST refuse install with <code>pack_runtime_requirement_unmet</code> naming the unmet primitive(s) — the install-time analogue of the dispatch-time <code>capability_not_provided</code> (<code>capabilities.md</code>). It MUST NOT silently install and fail at first invocation.</li>
+<li>A host that does <strong>not</strong> gate platform access (grants the runtime's full standard library) MAY ignore the field for <em>enforcement</em> — every primitive is already available; there is nothing to refuse. It SHOULD nevertheless <strong>project <code>runtime.requires[]</code> onto the pack's inventory/summary entry</strong> (e.g. the pack-summary projection on the <code>GET /v1/agents</code> / pack listing) so operators retain visibility into the declared platform footprint at install time. This forward-compatibly prepares the workspace approval ledger for a later migration to a sandbox-enforcing host (which packs to re-evaluate). It carries no execution requirement.</li>
+<li><code>runtime.requires[]</code> is a <strong>declaration of intent for gating</strong>, not an authorization grant. It does not widen what a pack may do; it lets the host decide <em>before</em> load whether it is willing to grant what the pack will attempt. A host MUST still enforce its sandbox at runtime — a pack that declares <code>net.dns</code> but attempts <code>subprocess</code> is still denied the undeclared primitive.</li>
+</ul>
+<p><strong>Vocabulary versioning (normative).</strong> The vocabulary extends additively (minor version; the <code>wasm-*</code> enum-addition precedent). Two rules keep the install gate sound as it refines:</p>
+<ul>
+<li><strong>Coarser-parent breadth.</strong> When a later revision introduces a finer-grained primitive (e.g. <code>net.outbound.http</code> vs <code>net.outbound.raw</code>), a host MUST treat the coarser parent (<code>net.outbound</code>) as <strong>at-least-as-broad</strong> — a manifest declaring the coarser term implicitly requires every finer sub-token the host might split it into. This prevents a vocabulary refinement from becoming a covert security regression: a host that newly enforces a finer distinction cannot silently accept a coarser declaration it would refuse at the finer grain.</li>
+<li><strong>Closed-enum / version-pinned (the safety contract).</strong> Schemas are version-pinned per host. A host validating manifests against schema v<em>N</em> MUST refuse a vocabulary token introduced after v<em>N</em> with <code>invalid_manifest</code>. This is intentional, not a gap: an old host refusing a newer requirement it does not understand <strong>is</strong> the install-time safety contract — a host MUST NOT grant a primitive it has not yet specified.</li>
+</ul>
+<p><strong>Examples.</strong></p>
+<p><em>Positive.</em> <code>core.openwop.http</code> declares <code>&quot;requires&quot;: [&quot;net.dns&quot;, &quot;net.outbound&quot;]</code>. A sandbox host that permits outbound HTTP + DNS installs it; the requirement is visible on the pack's discovery page; no trial-load.</p>
+<p><em>Negative (refused install).</em> A pack declares <code>&quot;requires&quot;: [&quot;subprocess&quot;]</code>. A host whose sandbox forbids child processes refuses install with <code>pack_runtime_requirement_unmet { unmet: [&quot;subprocess&quot;] }</code> — the operator sees the boundary at install, not a production run failure.</p>
+<p><em>Negative (validation).</em> <code>&quot;requires&quot;: [&quot;node:dns/promises&quot;]</code> fails manifest validation (<code>400 invalid_manifest</code>) — raw builtin names are not in the controlled vocabulary; the abstract <code>net.dns</code> is the portable equivalent.</p>
+<p><strong>Error payload (normative).</strong> <code>pack_runtime_requirement_unmet</code> reuses the <code>capability_not_provided</code> envelope shape (<code>capabilities.md</code>):</p>
+<pre class="lang-json"><code>{
+  &quot;error&quot;: &quot;pack_runtime_requirement_unmet&quot;,
+  &quot;unmet&quot;: [&quot;subprocess&quot;],
+  &quot;manifest&quot;: &quot;core.openwop.cron@1.0.0&quot;,
+  &quot;advice&quot;: &quot;operator-facing copy (OPTIONAL)&quot;
+}</code></pre>
+<p><code>unmet[]</code> is the subset of the pack's <code>runtime.requires[]</code> the host will not grant; <code>manifest</code> is the offending <code>name@version</code>; <code>advice</code> is OPTIONAL operator-facing remediation copy.</p>
+<p><strong>Composition with RFC 0069 (normative).</strong> <code>runtime.requires: [&quot;subprocess&quot;]</code> is the <em>install-time gate</em> (will the host grant subprocess at all?); RFC 0069's exec-class contract is the <em>runtime contract</em> for <strong>how</strong> subprocess is granted (exec-class enumeration, sandbox mechanics). They are independent so a host can adopt the gate without first implementing RFC 0069:</p>
+<ul>
+<li>A host that grants <code>runtime.requires: [&quot;subprocess&quot;]</code> <strong>AND</strong> advertises RFC 0069's exec-class contract MUST apply that contract to every subprocess invocation by the pack.</li>
+<li>A host MAY grant <code>runtime.requires: [&quot;subprocess&quot;]</code> <strong>without</strong> RFC 0069 — in which case its sandbox-internal subprocess mechanics are not protocol-specified, and a pack requiring exec-class-grade isolation SHOULD additionally express that dependency via <code>peerDependencies</code> (RFC 0072 §C), which fails install closed when unmet.</li>
+<li>The two gates compose to the <strong>stricter</strong> of the two: <code>peerDependencies</code> is install-closed (unmet ⇒ refuse) and <code>runtime.requires</code> is install-closed; a pack declaring both <code>runtime.requires: [&quot;subprocess&quot;]</code> <strong>and</strong> <code>peerDependencies: { &quot;host.execClass&quot;: &quot;supported&quot; }</code> opts into both and is refused on a host that grants <code>subprocess</code> but does not advertise the exec-class contract. That belt-and-suspenders posture is intentional and pack-author-selected, not a conflict.</li>
+</ul>
+<h3 id="b-host-provided-ctx-http-safefetch-additive-optional-host-capability">§B — host-provided <code>ctx.http.safeFetch</code> (additive, OPTIONAL host capability)</h3>
+<blockquote><p><strong>Amendment (rev 4, 2026-05-29 — reconciled at implementation).</strong> §B's capability lives at <strong><code>capabilities.httpClient.safeFetch</code></strong>, not a standalone <code>host.http.safeFetch</code>. openwop already has an <code>httpClient</code> surface carrying the <code>http-client-ssrf-guard</code> invariant + <code>maxResponseBodyBytes</code> cap (the host's HTTP-client node egress); <code>safeFetch</code> is the <em>pack-facing exposure</em> of that same SSRF-guarded client, so it nests under <code>httpClient</code> and <strong>reuses</strong> that invariant + body cap rather than standing up a parallel SSRF surface (the corpus's reuse-don't-duplicate posture, cf. RFC 0064). The normative behavior below is unchanged; only the advertisement path is reconciled. The living contract is <code>host-capabilities.md</code> §host.http.</p></blockquote>
+<p>A host MAY advertise <code>capabilities.httpClient.safeFetch: { supported: true }</code> and expose <code>ctx.http.safeFetch(url, init?)</code> to pack runtime code:</p>
+<pre class="lang-typescript"><code>ctx.http.safeFetch(
+  url: string,
+  init?: RequestInit,        // method/headers/body subset, host-clamped
+) → Promise&amp;lt;Response&amp;gt;        // standard fetch Response, or throws ssrf_blocked / fetch_failed</code></pre>
+<p><strong>Behavior (normative, when advertised).</strong></p>
+<ul>
+<li>The host MUST perform SSRF defense before connecting: resolve the host, and <strong>reject</strong> (throw <code>ssrf_blocked</code>) any request whose resolved address is loopback, RFC 1918 private, link-local, or a cloud metadata endpoint (<code>169.254.169.254</code>, <code>metadata.google.internal</code>, etc.). The host MUST re-check the resolved address against the connected address to defeat DNS-rebinding (pin the resolved IP for the connection).</li>
+<li>When <code>capabilities.toolHooks.prePostEvents: true</code> <strong>AND</strong> <code>capabilities.httpClient.safeFetch.supported: true</code> are <strong>both</strong> advertised, the host MUST emit <code>agent.toolCalled</code> / <code>agent.toolReturned</code> for every <code>safeFetch</code> invocation with <code>transport: &#39;http&#39;</code>. Centralizing egress in the host must <em>increase</em> auditability, not become a quiet bypass: a host that wishes to sample audit volume MUST do so at the storage/projection tier; the wire-level emission stays unconditional. (Same posture as RFC 0064's existing audit MUST for the <code>agent.toolCalled</code>/<code>agent.toolReturned</code> pair.) A host advertising <code>safeFetch</code> but not <code>toolHooks.prePostEvents</code> SHOULD still emit the pair.</li>
+<li>A pack that uses <code>ctx.http.safeFetch</code> <strong>does not</strong> declare <code>net.dns</code> in <code>runtime.requires</code> for the fetch path — the host owns resolution. A pack that wants to run on hosts lacking the capability MAY feature-detect (<code>ctx.http?.safeFetch</code>) and fall back to its own <code>net.outbound</code> + <code>net.dns</code> path (declaring both).</li>
+</ul>
+<p>This composes with — does not replace — RFC 0069's exec-class host-extension safety contract: <code>safeFetch</code> is the network-egress analogue of that RFC's subprocess sandboxing.</p>
+<p><strong>Example.</strong> <code>core.openwop.http@2.0.0</code> (hypothetical) calls <code>ctx.http.safeFetch(url)</code> when present, dropping its in-pack <code>assertPublicUrl</code> + <code>node:dns/promises</code>; the host's audited blocklist applies uniformly across every pack that fetches.</p>
+<p><strong>Request-init clamping.</strong> The <code>init?</code> argument is a host-clamped subset of <code>RequestInit</code>, not a passthrough. The protocol does not number all clamps, but one is <strong>normative</strong> because it defends the same boundary as the SSRF check: the host MUST refuse connection-upgrade attempts (<code>Connection: upgrade</code> / <code>Connection: keep-alive</code> requesting a <code>101</code> protocol switch) — these defeat the resolve→pin→connect guard by escaping HTTP into a raw bidirectional socket. The rest are non-normative host-policy defaults, surfaced here so first implementations converge:</p>
+<ul>
+<li><strong>Body size</strong> — host-configurable cap (suggest 10 MB default).</li>
+<li><strong>Timeout</strong> — host-configurable (suggest 30 s default).</li>
+<li><strong>Headers</strong> — MAY be reshaped. A host SHOULD refuse to forward an <code>Authorization</code> header the pack did not construct from a credential the host itself issued (RFC 0046 <code>host.credentials</code>) rather than from a static manifest string, to prevent a pack exfiltrating a host-issued credential to an arbitrary URL — but enforcement is host policy. <em>(Promoting this SHOULD → MUST needs credential provenance expressible at the <code>safeFetch</code> boundary — see future RFC: credential provenance; tracked as Q5 in Unresolved questions.)</em></li>
+</ul>
+<p><strong>Egress-proxy composition (non-normative).</strong> <code>safeFetch</code> composes with, and does not preclude, a deployment-level egress allowlist (e.g. Cloud Run behind a serverless VPC connector + Cloud NAT with its own allowlist). The host's resolve→pin→connect SSRF defense applies <em>before</em> the egress proxy sees the request; the proxy's allowlist applies after — defense-in-depth, not redundancy.</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong> Both surfaces are opt-in:</p>
+<ul>
+<li><code>runtime.requires[]</code> is a new OPTIONAL array; packs that omit it validate and load exactly as today. Hosts that don't gate platform access ignore it. The only new failure (<code>pack_runtime_requirement_unmet</code>) fires on packs that <em>opt in</em> to a requirement the host won't grant — which today fails <em>anyway</em> (at trial-load), only later and less legibly. No existing conformance pass is invalidated.</li>
+<li><code>ctx.http.safeFetch</code> is a new OPTIONAL sub-capability under the existing <code>httpClient</code> block (<code>httpClient.safeFetch</code>); hosts that omit it expose no <code>ctx.http</code>, and packs feature-detect. No existing pack depends on it.</li>
+</ul>
+<p>No wire-event change, <strong>no new SECURITY invariant</strong> — the SSRF guarantee reuses the existing <code>http-client-ssrf-guard</code> invariant (and <code>safeFetch</code> reuses <code>httpClient</code>'s <code>maxResponseBodyBytes</code> cap), no breaking schema change. Lands in v1.x.</p>
+<h2 id="conformance">Conformance</h2>
+<ul>
+<li><strong>New, gated on a sandbox seam:</strong> a pack manifest declaring <code>runtime.requires: [&quot;subprocess&quot;]</code> against a host seam that denies subprocess MUST yield <code>pack_runtime_requirement_unmet</code>; a manifest with <code>requires: [&quot;net.dns&quot;]</code> against a host that grants it installs.</li>
+<li><strong>New, gated on <code>httpClient.safeFetch.supported</code>:</strong> <code>ctx.http.safeFetch</code> against a loopback / RFC-1918 / metadata URL MUST be blocked and MUST NOT connect; a DNS-rebinding case (public name re-resolving to <code>169.254.169.254</code>) MUST be blocked; a request carrying <code>Connection: upgrade</code> MUST be refused. Driven by <code>safefetch-behavior.test.ts</code> via the <code>POST /v1/host/sample/http/safe-fetch</code> seam; soft-skips until a host advertises <code>safeFetch</code> + wires the seam.</li>
+<li><strong>New, gated on <code>httpClient.safeFetch.supported</code> + <code>toolHooks.prePostEvents</code>:</strong> a fetched <code>safeFetch</code> call emits the <code>agent.toolCalled</code> / <code>agent.toolReturned</code> pair with <code>transport: &#39;http&#39;</code>. Two verification surfaces: <code>safefetch-behavior.test.ts</code> reads the pair the <strong>inline seam</strong> (<code>POST /v1/host/sample/http/safe-fetch</code>) echoes; <code>safefetch-live-audit.test.ts</code> asserts the pair was persisted to the <strong>durable run event log</strong> by the <em>production</em> <code>ctx.http.safeFetch</code> path (via the <code>POST /v1/host/sample/http/safe-fetch-run</code> open seam + the test event-log seam). The live-run scenario closes the seam-vs-production gap — a host that ships a production <code>createSafeFetch()</code> with no audit hooks passes the inline seam but FAILS <code>safefetch-live-audit.test.ts</code> under <code>OPENWOP_REQUIRE_BEHAVIOR=true</code>. <strong>This live-run scenario is the §B → Accepted bar</strong> (the durable-emission MUST proven on a real host), alongside the <code>core.openwop.http@2.0.0</code> consumer + non-steward adoption.</li>
+<li>The advertisement contract (<code>httpClient</code> ⇒ <code>ssrfGuard: true</code> + positive <code>maxResponseBodyBytes</code>) stays covered by the existing <code>http-client-ssrf.test.ts</code>.</li>
+<li><strong>Validation:</strong> a manifest with a <code>runtime.requires</code> entry outside the vocabulary MUST be rejected <code>invalid_manifest</code>.</li>
+</ul>
+<p>Both scenario groups soft-skip until the respective capability/seam is advertised, per the established gating convention.</p>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Raw Node-builtin names in <code>requires</code> (MyndHyve's literal suggestion 1a, "listing required Node builtins").</strong> Rejected as the normative vocabulary: <code>node:dns/promises</code> is meaningless for the Python / Go / wasm / remote runtimes the manifest already supports, and would leak a runtime's implementation surface into the portable wire contract. The abstract vocabulary (<code>net.dns</code>, …) captures the same gating intent portably. A host MAY map the abstract primitive to its runtime's concrete builtins internally. 2. <strong>Reuse <code>NodeModule.requires</code> / <code>runtimeCapabilities</code> for platform primitives.</strong> Rejected — that mechanism is <em>per-node, host-advertised opaque facilities</em> checked at dispatch (<code>chat.sendPrompt</code>), a different axis and a different enforcement point. Overloading it would conflate "this node needs a host facility at run" with "this pack's code needs a sandbox primitive at load," and break the clean dispatch-time <code>capability_not_provided</code> semantics. 3. <strong><code>safeFetch</code> only, no <code>runtime.requires</code>.</strong> Rejected — <code>safeFetch</code> solves only outbound HTTP; it does nothing for packs needing <code>subprocess</code>, <code>fs</code>, or <code>crypto</code>. The declaration is the general gate; <code>safeFetch</code> is one centralized facility under it. 4. <strong>Do nothing (status quo: trial-load).</strong> Rejected — trial-load defers a load-time contract failure to first production invocation, is non-portable across sandbox policies, and forces each operator to reverse-engineer a pack's platform needs (exactly MyndHyve's experience). The cost of doing nothing is paid by every future sandbox host integrating every future pack.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p><em>Q1–Q4 resolved by the MyndHyve second-host comment-window review (2026-05-28); positions folded into the Proposal above.</em></p>
+<p>1. <strong>Vocabulary scope — RESOLVED.</strong> Ship the v1 set as-is (now eight: <code>net.dns</code>, <code>net.outbound</code>, <code>crypto</code>, <code>subprocess</code>, <code>fs.read</code>, <code>fs.write</code>, <code>env.read</code>, <code>clock</code>). Reject coarser buckets (<code>net</code>/<code>fs</code>) — they lose gating power that is already paying off (a host can grant <code>net.dns</code> for safe-fetch preflight while denying <code>net.outbound</code> because all egress goes through <code>safeFetch</code>; collapsing to <code>net</code> would force granting the combined bucket). Defer finer buckets (<code>net.outbound.http</code> vs <code>net.outbound.raw</code>) — a real distinction (fetch allowed, raw sockets denied) but <strong>additively extensible later</strong> without breaking anyone (enum-addition, <code>wasm-*</code> precedent), so it stays out of v1. <code>env.read</code> added on review. 2. <strong><code>safeFetch</code> audit emission — RESOLVED: MUST when both advertised.</strong> See §B normative bullet. Sampling belongs at the storage/projection tier, not the wire-emission tier (RFC 0064 posture). 3. <strong>Relationship to RFC 0069 — RESOLVED: independent declarations + composition MUST.</strong> See §A "Composition with RFC 0069." The gate and the runtime contract stay decoupled so a host can adopt the gate without first implementing RFC 0069. 4. <strong>Non-sandbox host strictness — RESOLVED: SHOULD record.</strong> A non-gating host SHOULD project <code>runtime.requires[]</code> onto the inventory entry for operator visibility (§A). One denormalized field copy; cost-to-value favors SHOULD.</p>
+<p>Genuinely still open:</p>
+<p>5. <strong><code>Authorization</code>-header forwarding enforcement (PARKED — own RFC).</strong> §B leaves "refuse forwarding a pack-constructed <code>Authorization</code> not derived from a host-issued credential" as host policy (SHOULD). Promoting it to MUST needs credential provenance at the <code>safeFetch</code> boundary, distinguishing a host-issued credential from a static manifest string at call time. Two candidate mechanisms, each RFC-worthy on its own (folding either into 0076 would balloon scope): (a) thread provenance through <code>RequestInit</code> (intrusive — changes the call signature), or (b) a host-side credential-issuance ledger keyed by call-id. Deferred to a dedicated "credential provenance" RFC; the §B breadcrumb points here.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>Reference host (<code>examples/hosts/*</code>): add an install-time check that intersects <code>runtime.requires[]</code> against a configured grant-set, emitting <code>pack_runtime_requirement_unmet</code>; add a <code>ctx.http.safeFetch</code> behind a config flag implementing the resolve→pin→connect SSRF guard. Effort: small for the gate, medium for the rebinding-safe fetch.</li>
+<li><code>core.openwop.http</code> is the natural first adopter of both: declare <code>runtime.requires: [&quot;net.dns&quot;, &quot;net.outbound&quot;]</code> now (additive, no behavior change), and ship a <code>safeFetch</code>-preferring <code>2.0.0</code> once a reference host advertises the capability.</li>
+<li><strong>Approval-snapshot under RFC 0074 (raised in second-host review).</strong> A workspace approval today records <code>{packName, approvedAt, approvedBy}</code>. Once <code>runtime.requires</code> lands, an approval captures a <em>single grant-evaluation</em>; a later host update that tightens its sandbox can silently invalidate previously-approved packs (the dispatch-time gate now fails). Hosts SHOULD snapshot the gate-evaluated <code>runtime.requires</code> onto the approval document (<code>approved against {net.dns, net.outbound} on 2026-05-28</code>) so admins see the grant set an approval was made against and can react explicitly when it shifts. Non-normative for this RFC; a candidate RFC 0074 amendment.</li>
+<li><strong>Sequencing (§A before §B).</strong> §A (declaration + install gate) is independently shippable and delivers the immediate win the debrief surfaced; it merges to <code>Active</code> first, graduating to <code>Accepted</code> on one second-host adoption. §B (<code>safeFetch</code>) needs a reference implementation + ≥1 consumer pack gating behind feature-detection, so it follows as a <strong>separate <code>Active → Accepted</code> track</strong> once a reference host implements it and <code>core.openwop.http@2.0.0</code> ships the feature-detection path. This mirrors the established cohort-graduation pattern (RFC 0058's wall-clock and loop-iteration arms graduated independently).</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<p>Two independent tracks (see Implementation notes §"Sequencing").</p>
+<p><strong>§A — <code>runtime.requires[]</code> (declaration + install gate):</strong></p>
+<ul>
+<li>[x] Spec text merged (this file + <code>runtime.requires</code> in <code>node-packs.md</code> §"Runtime platform requirements" + the install gate + <code>pack_runtime_requirement_unmet</code> payload in <code>registry-operations.md</code> §"Runtime-requirement install gate"). <em>(2026-05-29)</em></li>
+<li>[x] <code>schemas/node-pack-manifest.schema.json</code> adds <code>runtime.requires</code> (8-value <code>oneOf</code>/<code>const</code>/<code>description</code>). <em>(2026-05-29)</em></li>
+<li>[x] ≥1 conformance scenario (install-grant, install-refuse, vocabulary-validation), seam-gated. <em>(2026-05-29 — <code>runtime-requires-shape.test.ts</code> always-on + <code>runtime-requires-install-gate.test.ts</code> seam-gated; suite 1.10.0, unreleased additions)</em></li>
+<li>[x] CHANGELOG entry under the target v1.x. <em>(2026-05-29)</em></li>
+<li>[x] <strong><code>Active → Accepted</code> 2026-05-29 — verified live on MyndHyve (non-steward host).</strong> <code>runtime-requires-install-gate.test.ts</code> (suite 1.10.0, unreleased additions) passes all three behavioral scenarios under <code>OPENWOP_REQUIRE_BEHAVIOR=true</code> against <code>workflow-runtime-00230-zjn</code> (<code>https://workflow-runtime-gjw5bcse7a-uc.a.run.app</code>, <code>OPENWOP_RUNTIME_REQUIRES_GATE_ENABLED=true</code> + <code>OPENWOP_CONFORMANCE_FIXTURES=1</code>): install-grant → <code>200 {outcome:&quot;installed&quot;}</code>, install-refuse → <code>400 {error:&quot;pack_runtime_requirement_unmet&quot;, manifest, unmet, advice}</code>, non-sandbox projection → <code>200 {…, requiresProjected}</code>. Steward-corroborated by independent seam curls; discovery confirms §B unclaimed. Pack-side adoption: 6 <code>vendor.myndhyve.*</code> packs declare <code>runtime.requires[]</code> (<code>4d36c15d</code>); host-side gate: MyndHyve <code>4d2ba6553</code> (resolver) + <code>4bb1ab4f6</code> (seam).</li>
+</ul>
+<p><strong>§B — <code>ctx.http.safeFetch</code> (separate <code>Active → Accepted</code> track):</strong></p>
+<ul>
+<li>[x] Spec text merged (<code>§host.http</code> in <code>host-capabilities.md</code> documenting <code>ctx.http.safeFetch</code> + the SSRF/clamp/audit contract); <code>schemas/capabilities.schema.json</code> adds <code>httpClient.safeFetch</code> (and schematizes the previously-unschematized <code>httpClient</code> block — <code>ssrfGuard</code>/<code>maxResponseBodyBytes</code>/<code>requestTimeoutMs</code>/<code>methods</code>). <em>(2026-05-29, reconciled per the §B amendment — <code>httpClient.safeFetch</code>, not <code>host.http.safeFetch</code>.)</em></li>
+<li>[x] ≥1 conformance scenario (SSRF block incl. rebinding + <code>Connection: upgrade</code> refusal; audit-emission-when-both-advertised), capability+seam-gated — <code>safefetch-behavior.test.ts</code>; advertisement contract via the existing <code>http-client-ssrf.test.ts</code>. <em>(2026-05-29)</em></li>
+<li>[x] <strong>Live-run audit scenario authored (the §B → Accepted bar)</strong> <em>(2026-05-29)</em> — <code>safefetch-live-audit.test.ts</code> asserts the audit-when-both MUST against the <strong>durable run event log</strong> (production <code>ctx.http.safeFetch</code> path), not the inline seam echo, via the new <code>POST /v1/host/sample/http/safe-fetch-run</code> open seam + the test event-log seam; <code>behaviorGate(&#39;openwop-safefetch-live-audit&#39;, …)</code> so a host advertising both flags but not emitting to the durable log FAILS under <code>OPENWOP_REQUIRE_BEHAVIOR=true</code>. Closes the seam-vs-production gap surfaced in the §B second-host review (a production <code>createSafeFetch()</code> with no audit hooks passes the inline seam). Steward-side spec/test; a non-steward host validates its wiring against it.</li>
+<li>[x] <strong>Reference host implements the resolve→pin→connect guard</strong> <em>(2026-05-29)</em> — the in-memory reference host advertises <code>capabilities.httpClient.safeFetch</code> and implements the <code>POST /v1/host/sample/http/safe-fetch</code> seam (SSRF blocklist on loopback / RFC 1918 / link-local / cloud-metadata, DNS-rebinding defeat via the pinned-IP model, <code>Connection: upgrade</code> refusal, and the tool-hooks audit pair since it also advertises <code>toolHooks.prePostEvents</code>). <code>safefetch-behavior.test.ts</code> (5/5) + <code>http-client-ssrf.test.ts</code> pass under <code>OPENWOP_REQUIRE_BEHAVIOR=true</code> against it.</li>
+<li>[x] <strong><code>core.openwop.http@2.0.0</code> ships the feature-detection consumer path</strong> <em>(2026-05-29, source)</em> — every outbound call feature-detects <code>ctx.http?.safeFetch</code> (host-mediated, preferred) with a fallback to the pack's own <code>assertPublicUrl</code> (<code>node:dns</code>) + <code>globalThis.fetch</code>; declares <code>runtime.requires: [&quot;net.dns&quot;,&quot;net.outbound&quot;]</code> (§A). Both paths verified by a node smoke.</li>
+<li>[x] <strong>Registry republish of the signed <code>core.openwop.http@2.0.0</code> tarball</strong> <em>(2026-05-29)</em> — built + signed (<code>openwop-team-1</code>) via <code>build-pack-tarball.mjs</code>; the in-tree registry mirror (<code>registry/v1/packs/core.openwop.http/-/2.0.0.{tgz,sig,json,sbom.json}</code> + the unpacked <code>registry/core.openwop.http/2.0.0/</code> schemas) regenerated via <code>registry/scripts/build-index.mjs</code> + <code>generate-sbom.mjs</code> (<code>latest → 2.0.0</code>). All registry gates green: <code>verify-signatures</code>, <code>check-pack-tarball-signatures</code>, <code>check-registry-signer-consistency</code>, <code>conformance-check</code>, integrity match.</li>
+<li>[ ] <strong>Remaining §B <code>Active → Accepted</code> gate:</strong> a non-steward host adopting <code>ctx.http.safeFetch</code> — MyndHyve committed to the host adapter + flipping <code>net.outbound</code> into its grant-set (which unblocks its <code>ads-publish-*</code> packs from the §A install refusal).</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li>MyndHyve RFC 0072 §B second-host debrief, 2026-05-28 (finding 1a/1b) — the implementer pain point that prompted this RFC.</li>
+<li>MyndHyve RFC 0076 second-host review, 2026-05-28 — Q1–Q4 positions + observations A–D (approval-snapshot, request-init clamping, error payload, egress-proxy) + the §A/§B sequencing recommendation, all folded into rev 2.</li>
+<li>MyndHyve RFC 0076 §A schema-diff review, 2026-05-29 — five mechanical schema fixes (stale enum/elision, JSON-comment removal via <code>oneOf</code>, empty-array equivalence, coarser-parent forward-compat, closed-enum safety) + the peerDependencies-compose note, folded into rev 3. <code>wasm-component</code> (RFC 0008.1) drop-risk caught here.</li>
+<li>RFC 0003 — agent/pack manifest (<code>runtime</code> object this extends).</li>
+<li>RFC 0072 — agent inventory + dispatch (<code>peerDependencies</code> / <code>peerDependenciesMeta</code>, the adjacent host-capability gate).</li>
+<li>RFC 0069 — exec-class tool host-extension safety contract (subprocess sandboxing; <code>safeFetch</code> is its network analogue).</li>
+<li>RFC 0064 — <code>host.toolHooks</code> (the audit surface <code>safeFetch</code> egress reuses).</li>
+<li><code>spec/v1/capabilities.md</code> §"Runtime capabilities" — the distinct per-node host-facility mechanism this deliberately does not overload.</li>
+<li>OWASP SSRF prevention cheat sheet; GCP/AWS metadata-endpoint hardening guidance (prior art for the blocklist).</li>
+</ul><footer class="doc-edit"><a href="https://github.com/openwop/openwop/edit/main/RFCS/0076-pack-runtime-requirements-and-host-safe-fetch.md" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>

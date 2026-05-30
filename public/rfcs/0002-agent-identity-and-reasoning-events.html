@@ -272,7 +272,7 @@
   &quot;arguments&quot;: &quot;any JSON value&quot;
 }</code></pre>
 <h4 id="agent-toolreturned"><code>agent.toolReturned</code></h4>
-<p>Emitted after a tool invocation completes. <code>causationId</code> MUST equal the <code>eventId</code> of the corresponding <code>agent.toolCalled</code>. Payload:</p>
+<p>Emitted after a tool invocation completes. <code>causationId</code> MUST equal the <code>eventId</code> of the corresponding <code>agent.toolCalled</code> — except for a proactive <code>status: &#39;forbidden&#39;</code> / <code>&#39;rate_limited&#39;</code> row emitted at agent-loop start before any model call (RFC 0064 §C "forbidden-at-load"), which has no paired <code>agent.toolCalled</code> and MAY omit <code>causationId</code>. Payload:</p>
 <pre class="lang-json"><code>{
   &quot;agentId&quot;: &quot;string&quot;,
   &quot;toolId&quot;: &quot;string&quot;,

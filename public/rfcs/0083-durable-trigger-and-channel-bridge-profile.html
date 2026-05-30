@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — RFC 0083: Durable Trigger + Channel Bridge Profile</title>
+  <meta name="description" content="openwop has the pieces of durable inbound work — scheduling (RFC 0052), dead-letter sinks (RFC 0053), a queue bus (RFC 0017), webhooks (webhooks.md), cross-host causation (RFC 0040), and 15 trigger node shapes (core.openwop.triggers) — but no…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0083-durable-trigger-and-channel-bridge-profile.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — RFC 0083: Durable Trigger + Channel Bridge Profile"/>
+  <meta property="og:description" content="openwop has the pieces of durable inbound work — scheduling (RFC 0052), dead-letter sinks (RFC 0053), a queue bus (RFC 0017), webhooks (webhooks.md), cross-host causation (RFC 0040), and 15 trigger node shapes (core.openwop.triggers) — but no…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0083-durable-trigger-and-channel-bridge-profile.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — RFC 0083: Durable Trigger + Channel Bridge Profile"/>
+  <meta name="twitter:description" content="openwop has the pieces of durable inbound work — scheduling (RFC 0052), dead-letter sinks (RFC 0053), a queue bus (RFC 0017), webhooks (webhooks.md), cross-host causation (RFC 0040), and 15 trigger node shapes (core.openwop.triggers) — but no…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "RFC 0083: Durable Trigger + Channel Bridge Profile",
+  "description": "openwop has the pieces of durable inbound work — scheduling (RFC 0052), dead-letter sinks (RFC 0053), a queue bus (RFC 0017), webhooks (webhooks.md), cross-host causation (RFC 0040), and 15 trigger node shapes (core.openwop.triggers) — but no…",
+  "url": "https://openwop.dev/rfcs/0083-durable-trigger-and-channel-bridge-profile.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  }
+}</script>
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>RFC 0083: Durable Trigger + Channel Bridge Profile</h1>
+      <p class="lede">openwop has the pieces of durable inbound work — scheduling (RFC 0052), dead-letter sinks (RFC 0053), a queue bus (RFC 0017), webhooks (webhooks.md), cross-host causation (RFC 0040), and 15 trigger node shapes (core.openwop.triggers) — but no…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-the-triggerbridge-capability-opt-in-durable-webhooks">§A — The triggerBridge capability + opt-in durable webhooks</a></li>
+      <li class="toc-sub"><a href="#b-subscription-states-standardized-trigger-subscription-schema-json">§B — Subscription states (standardized, trigger-subscription.schema.json)</a></li>
+      <li class="toc-sub"><a href="#c-delivery-model-attempts-dedup-retry-causation">§C — Delivery model: attempts, dedup, retry, causation</a></li>
+      <li class="toc-sub"><a href="#d-the-openwop-trigger-bridge-profile-derived-profiles-md">§D — The openwop-trigger-bridge profile (derived; profiles.md)</a></li>
+      <li class="toc-sub"><a href="#e-channels-stay-extensions-the-non-goal-made-explicit">§E — Channels stay extensions (the Non-Goal, made explicit)</a></li>
+      <li class="toc-sub"><a href="#examples">Examples</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0083</td></tr>
+<tr><td><strong>Title</strong></td><td>Define an <code>openwop-trigger-bridge</code> profile that composes the existing scheduling (RFC 0052), dead-letter (RFC 0053), queue-bus (RFC 0017), webhook, and cross-host-causation (RFC 0040) primitives into a uniform durable inbound-work contract — standardizing trigger-subscription states (active / paused / failed / dead-lettered), a delivery-attempt + dedup-key + retry-policy model, an opt-in durable-webhook mode, and an explicit trigger-to-run causation link — while keeping individual channels (Slack / email / SMS) as host/vendor extensions</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Draft</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-29</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-29</td></tr>
+<tr><td><strong>Affects</strong></td><td>NEW <code>spec/v1/trigger-bridge.md</code> (the profile + the subscription/delivery contract) · NEW <code>schemas/trigger-subscription.schema.json</code> (the durable subscription record) · <code>schemas/run-event.schema.json</code> (additive <code>RunEventType</code>: <code>trigger.subscription.state.changed</code> / <code>trigger.delivery.attempted</code>) · <code>schemas/run-event-payloads.schema.json</code> (the two content-free payloads) · <code>schemas/capabilities.schema.json</code> (additive optional <code>triggerBridge</code> block + additive optional <code>webhooks.durable</code>) · <code>spec/v1/profiles.md</code> (derived <code>openwop-trigger-bridge</code> profile) · <code>conformance/src/lib/profiles.ts</code> (the derivation predicate) · <code>spec/v1/webhooks.md</code> (additive §"Durable delivery (opt-in)") · <code>api/openapi.yaml</code> (additive subscription-management + delivery-inspection endpoints) · <code>api/asyncapi.yaml</code> · <code>CHANGELOG.md</code> · <code>INTEROP-MATRIX.md</code> · new conformance scenarios</td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>openwop has the <em>pieces</em> of durable inbound work — scheduling (RFC 0052), dead-letter sinks (RFC 0053), a queue bus (RFC 0017), webhooks (<code>webhooks.md</code>), cross-host causation (RFC 0040), and 15 trigger node shapes (<code>core.openwop.triggers</code>) — but <strong>no uniform contract that ties them together</strong>. The live platform symptom: webhooks are <em>signed but best-effort</em> (a 4-failure circuit breaker, no durable retry), trigger fan-out is <em>not wired</em>, and there is <strong>no subscription state machine, no delivery-attempt/dedup-key model, and no explicit trigger→run causation</strong> — so an operator can't see "this webhook subscription is failing / dead-lettered" and a client can't reason about at-least-once inbound delivery portably. This RFC <strong>composes the existing primitives into one profile, additively</strong>: it defines a <code>triggerBridge</code> capability + a derived <strong><code>openwop-trigger-bridge</code></strong> profile, standardizes the four <strong>subscription states</strong> (active / paused / failed / dead-lettered), a <strong>delivery model</strong> (per-attempt tracking, a <code>dedupKey</code> for at-least-once de-duplication, a <code>retryPolicy</code> with backoff, dead-letter on exhaustion reusing RFC 0053), an <strong>opt-in durable-webhook mode</strong> (<code>webhooks.durable: true</code> — leaving the existing best-effort default unchanged), and an explicit <strong>trigger-to-run causation</strong> link (the delivered trigger's <code>causationId</code> on the resulting <code>run.started</code>, reusing RFC 0040). Individual channels (Slack / Discord / email / SMS) <strong>stay host/vendor extensions</strong> per the Non-Goals — only their <em>bridge into an openwop run</em> is uniform. No existing primitive is changed; the profile is a reading over them plus the subscription/delivery contract and the two new content-free events.</p>
+<h2 id="motivation">Motivation</h2>
+<p><code>docs/OPENWOP-AI-AGENT-PLATFORM-RECOMMENDATIONS.md</code> §"RFC 0083" frames it: <em>the demo has webhooks and messaging pieces, but discovery says full trigger fan-out is not wired; agent platforms need durable inbound work from webhooks, schedules, chat messages, forms, email, and external systems.</em> Three concrete gaps:</p>
+<p>1. <strong>No subscription state machine.</strong> A trigger subscription (a webhook registration, a schedule, a queue consumer) is either implicitly working or implicitly not — there is no advertised <code>active</code> / <code>paused</code> / <code>failed</code> / <code>dead-lettered</code> vocabulary. <code>webhooks.md</code> has a circuit-breaker that marks a subscription <code>failed</code> after 100 failures in 7 days, but that state isn't a portable, inspectable, resumable contract, and schedules/queues have no equivalent at all. 2. <strong>Best-effort-only delivery + no dedup.</strong> <code>webhooks.md</code> is explicitly <em>best-effort</em> (5s per-attempt timeout, circuit breaker, no durable retry). For an agent platform doing real inbound work (a webhook that must reliably start a run), there is no <em>durable</em> delivery option, no <em>delivery-attempt</em> record, and no <em>dedup key</em> to make at-least-once delivery idempotent (<code>idempotency.md</code> covers HTTP request idempotency + activity invocation idempotency, but not <em>inbound trigger</em> de-duplication). 3. <strong>No trigger→run causation.</strong> When a trigger fires a run, nothing on the wire links the run back to the subscription/delivery that caused it. RFC 0040 standardized <em>cross-host</em> causation (<code>causationId</code> + <code>causationHostId</code> + <code>/ancestry</code>) but no one wired the <em>trigger→run</em> edge, so "which webhook delivery started this run, and was it a retry?" is unanswerable.</p>
+<p>The spec is the right place because <em>durable inbound work</em> is a cross-host interop + operability concern: a Mission Control showing inbound trigger health, a builder with real trigger nodes, and a client depending on at-least-once webhook delivery all need one agreed contract. This is a <strong>profile</strong> (per <code>profiles.md</code> §"Adding a profile") — it composes existing capabilities into a named, derivable target rather than inventing a parallel trigger stack. The per-channel connectors (Slack/email) stay vendor extensions (the explicit Non-Goal); the <em>bridge</em> is what this standardizes.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-the-triggerbridge-capability-opt-in-durable-webhooks">§A — The <code>triggerBridge</code> capability + opt-in durable webhooks</h3>
+<pre class="lang-jsonc"><code>&quot;triggerBridge&quot;: {
+  &quot;supported&quot;: true,
+  &quot;subscriptionStates&quot;: [&quot;active&quot;,&quot;paused&quot;,&quot;failed&quot;,&quot;dead-lettered&quot;],
+  &quot;dedup&quot;: true,                          // host de-duplicates by dedupKey
+  &quot;retryPolicy&quot;: { &quot;maxAttempts&quot;: 8, &quot;backoff&quot;: &quot;exponential&quot; },
+  &quot;sources&quot;: [&quot;webhook&quot;,&quot;schedule&quot;,&quot;queue&quot;,&quot;email&quot;,&quot;form&quot;]   // which trigger sources bridge uniformly
+},
+&quot;webhooks&quot;: { &quot;supported&quot;: true, &quot;signatureAlgorithms&quot;: [&quot;v1&quot;], &quot;durable&quot;: true }  // NEW optional `durable`</code></pre>
+<p><code>webhooks.durable</code> is an <strong>additive opt-in</strong>: absent or <code>false</code> ⇒ the existing <code>webhooks.md</code> best-effort contract (circuit breaker, no durable retry) is unchanged; <code>true</code> ⇒ webhook delivery participates in the §C durable model (subscription states + retry policy + dead-letter). The best-effort default is <strong>not</strong> relaxed — durability is a strictly additional mode a host opts into.</p>
+<h3 id="b-subscription-states-standardized-trigger-subscription-schema-json">§B — Subscription states (standardized, <code>trigger-subscription.schema.json</code>)</h3>
+<p>A <strong>trigger subscription</strong> is a durable record (a webhook registration, a schedule, a queue consumer) with a standardized <code>state</code>:</p>
+<table>
+<thead><tr><th>State</th><th>Meaning</th><th>Entered by</th></tr></thead>
+<tbody>
+<tr><td><code>active</code></td><td>accepting + delivering inbound events</td><td>create / resume</td></tr>
+<tr><td><code>paused</code></td><td>retained but not delivering (operator-held)</td><td>pause</td></tr>
+<tr><td><code>failed</code></td><td>delivery failing past policy (the <code>webhooks.md</code> circuit-breaker generalized)</td><td>repeated delivery failure</td></tr>
+<tr><td><code>dead-lettered</code></td><td>terminal failure; deliveries routed to the RFC 0053 sink</td><td>retry exhaustion</td></tr>
+</tbody></table>
+<p>The record carries <code>subscriptionId</code>, <code>source</code> (<code>webhook</code>/<code>schedule</code>/<code>queue</code>/…), <code>state</code>, <code>dedupEnabled</code>, the <code>retryPolicy</code>, and (for webhooks) the existing <code>(webhookId, secretFingerprint)</code> register keys (<code>webhooks.md</code>) — <strong>unchanged</strong>, with the state machine layered over them. <code>failed</code> → <code>dead-lettered</code> reuses RFC 0053's <code>deadLetter</code> sink + <code>retentionDays</code> (a dead-lettered <em>delivery</em> is fork/inspect-eligible exactly like a dead-lettered run).</p>
+<h3 id="c-delivery-model-attempts-dedup-retry-causation">§C — Delivery model: attempts, dedup, retry, causation</h3>
+<p>When an inbound event arrives on an <code>active</code> subscription, the host:</p>
+<p>1. <strong>De-duplicates</strong> by <code>dedupKey</code> (a caller- or host-derived stable key; when <code>triggerBridge.dedup</code> is advertised, a repeat <code>dedupKey</code> within the retention window is a no-op returning the prior <code>runId</code> — at-least-once becomes effectively-once, the <code>idempotency.md</code> Layer-1 model applied to inbound triggers). 2. <strong>Attempts delivery</strong>, recording each attempt; on failure, retries per <code>retryPolicy</code> (backoff, <code>maxAttempts</code>); on exhaustion, transitions the subscription/delivery to <code>dead-lettered</code> (RFC 0053) — for <code>webhooks.durable: true</code>, this replaces the best-effort circuit-breaker-then-drop. 3. <strong>Links causation:</strong> the run started by a successful delivery carries the delivery's id as <code>causationId</code> on its <code>run.started</code> (reusing RFC 0040's <code>causationId</code> + optional <code>causationHostId</code> for cross-host inbound), so "which delivery (and which attempt) started this run" is answerable via the existing <code>/ancestry</code> endpoint.</p>
+<p>Two <strong>content-free</strong> events (additive <code>RunEventType</code>):</p>
+<table>
+<thead><tr><th>Event</th><th>Payload (content-free)</th></tr></thead>
+<tbody>
+<tr><td><code>trigger.subscription.state.changed</code></td><td><code>{ subscriptionId, source, fromState, toState, reason? }</code></td></tr>
+<tr><td><code>trigger.delivery.attempted</code></td><td>`{ subscriptionId, dedupKey, attempt, outcome: "delivered"\</td></tr>
+</tbody></table>
+<p>Neither carries the inbound payload, headers, or credential material (SR-1) — only the subscription id, dedup key, attempt counter, outcome, and the resulting <code>runId</code>.</p>
+<h3 id="d-the-openwop-trigger-bridge-profile-derived-profiles-md">§D — The <code>openwop-trigger-bridge</code> profile (derived; <code>profiles.md</code>)</h3>
+<p>A derived profile (per <code>profiles.md</code> — a predicate over discovery, not a wire field). Its predicate composes the constituent primitives:</p>
+<pre class="lang-"><code>openwop-trigger-bridge(c) :=
+     openwop-core(c)
+  &amp;&amp; c.triggerBridge != null &amp;&amp; c.triggerBridge.supported === true
+  &amp;&amp; c.deadLetter != null &amp;&amp; c.deadLetter.supported === true          // RFC 0053 sink for exhaustion
+  &amp;&amp; (   (c.queueBus != null &amp;&amp; c.queueBus.supported === true)        // a durable inbound source…
+       || (c.webhooks != null &amp;&amp; c.webhooks.durable === true)
+       || (c.scheduling != null &amp;&amp; c.scheduling.supported === true) )</code></pre>
+<p>A host in the profile advertises the bridge, has a dead-letter sink for exhausted deliveries, and has at least one durable inbound source (queue, durable webhooks, or scheduling). The runtime conformance scenarios (gated on the profile tag) verify the state machine + dedup + causation behavior; the predicate proves the host advertises the contract. The derivation lands in <code>conformance/src/lib/profiles.ts</code> in the same PR as the §Active wire surface (the <code>profiles.md</code> §"Adding a profile" process).</p>
+<h3 id="e-channels-stay-extensions-the-non-goal-made-explicit">§E — Channels stay extensions (the Non-Goal, made explicit)</h3>
+<p>Per the recommendation's Non-Goals: this RFC does <strong>not</strong> standardize Slack/Discord/email/SMS message formats. A vendor channel connector (e.g. <code>vendor.slack.<em></code> nodes, the CLI relay-gateway) remains a host/vendor extension; what it MUST do to participate in the profile is </em>bridge into a uniform trigger subscription<em> — register a <code>trigger-subscription</code>, emit the §C delivery events, and set the trigger→run <code>causationId</code>. The channel's </em>wire format<em> is its own; its </em>bridge* is openwop's.</p>
+<h3 id="examples">Examples</h3>
+<p><strong>Positive.</strong> A host advertising <code>triggerBridge.supported</code>, <code>deadLetter.supported</code>, <code>webhooks.durable:true</code> → satisfies <code>openwop-trigger-bridge</code>. An inbound webhook with <code>dedupKey:&quot;evt-9f3&quot;</code> on an <code>active</code> subscription → <code>trigger.delivery.attempted{attempt:1,outcome:&quot;delivered&quot;,runId:&quot;run_x&quot;}</code>, and <code>run_x</code>'s <code>run.started</code> carries <code>causationId</code> = the delivery id; a duplicate <code>evt-9f3</code> within retention → no-op returning <code>run_x</code> (dedup). A flapping endpoint → attempts 1–8 emit <code>trigger.delivery.attempted{outcome:&quot;retrying&quot;}</code>, then <code>trigger.subscription.state.changed{toState:&quot;dead-lettered&quot;}</code> + a final <code>{outcome:&quot;dead-lettered&quot;}</code>, the delivery landing in the RFC 0053 sink (inspectable for <code>retentionDays</code>).</p>
+<p><strong>Negative (profile).</strong> A host with <code>triggerBridge.supported</code> but no <code>deadLetter</code> → fails the predicate (no sink for exhaustion). <strong>Negative (best-effort unchanged).</strong> A host omitting <code>webhooks.durable</code> → its webhooks behave exactly as <code>webhooks.md</code> best-effort today (no regression). <strong>Negative (schema).</strong> A <code>trigger.delivery.attempted</code> payload carrying the inbound body fails validation (<code>additionalProperties:false</code>, content-free).</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive</strong> (<code>COMPATIBILITY.md</code> §2.1). A new subscription-record schema; a new optional <code>triggerBridge</code> capability block; an additive optional <code>webhooks.durable</code> flag (absent ⇒ the existing best-effort contract, <strong>explicitly unchanged</strong> — §A); two additive content-free <code>RunEventType</code> values (consumers tolerate unknowns per §2.1); a derived profile (additive per <code>profiles.md</code> §"Adding a profile" — a new profile MUST NOT cause a previously-passing host to fail an existing profile, and this one doesn't); additive subscription-management endpoints; additive §sections in <code>webhooks.md</code> + <code>profiles.md</code>. <strong>No existing primitive (RFC 0052/0053/0017, <code>webhooks.md</code>, RFC 0040) is changed — they are composed, not modified; the best-effort webhook contract is preserved as the default; no <code>MUST</code> is relaxed.</strong> The trigger→run <code>causationId</code> reuses RFC 0040's existing field (no new envelope id-space). No conformance pass is invalidated. Adding the two event types does not bump <code>eventLogSchemaVersion</code> (RFC 0008 §K / 0058 precedent).</p>
+<h2 id="conformance">Conformance</h2>
+<ul>
+<li><strong>New scenarios:</strong></li>
+</ul>
+<p>  - <strong><code>trigger-bridge-shape.test.ts</code></strong> (always-on, server-free): the subscription record + the two <code>trigger.*</code> payloads validate; the four-state vocabulary is stable; the profile predicate derives correctly on representative payloads; negatives (content-bearing payload; profile predicate false when <code>deadLetter</code> absent).   - <strong><code>trigger-bridge-delivery.test.ts</code></strong> (gated on the <code>openwop-trigger-bridge</code> profile, via <code>describe.runIf</code>): an <code>active</code> subscription de-duplicates by <code>dedupKey</code>, retries per policy, transitions to <code>dead-lettered</code> on exhaustion (RFC 0053 sink), and the delivered run's <code>run.started</code> carries the delivery <code>causationId</code> (resolvable via <code>/ancestry</code>). Soft-skips when the profile is unsatisfied.</p>
+<ul>
+<li><strong>Profile gating</strong> per <code>profiles.md</code> (the scenarios tag <code>openwop-trigger-bridge</code>; the runner's <code>--profile</code> filter applies) + <code>conformance/coverage.md</code>. The derivation lands in <code>profiles.ts</code>.</li>
+<li><strong>Reference host.</strong> Deferred (files at <code>Draft</code>). The capability + profile predicate + subscription schema + events ship at <code>Draft → Active</code>; the delivery scenario soft-skips until a reference host wires durable delivery + the state machine.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>A net-new unified trigger stack (one <code>Trigger</code> primitive replacing scheduling/webhooks/queue).</strong> Rejected — it would duplicate three Accepted RFCs (0052/0053/0017) + <code>webhooks.md</code> and break every host that implements them. The recommendation explicitly says <em>compose existing primitives into a profile</em>; that's what a profile is for. 2. <strong>Make webhook durability mandatory (change <code>webhooks.md</code> best-effort → durable).</strong> Rejected — that's a breaking change to an existing <code>MUST</code>-bearing contract (<code>COMPATIBILITY.md</code> §2.2) and invalidates every current webhook host's conformance. The opt-in <code>webhooks.durable</code> (§A) gets durability additively. 3. <strong>Reuse <code>idempotency.md</code> Layer-1 keys as the dedup key (no new <code>dedupKey</code>).</strong> Partially adopted — the dedup <em>model</em> is the <code>idempotency.md</code> Layer-1 model (§C-1), but the <em>inbound trigger</em> dedup key is caller/source-derived (a webhook event id, a message id), distinct from an HTTP <code>Idempotency-Key</code> header on a client request. The RFC reuses the <em>semantics</em>, names a trigger-scoped key. 4. <strong>Standardize the channel formats too (Slack/email payloads).</strong> Rejected — the explicit Non-Goal. Channels stay vendor extensions; only the bridge is uniform (§E). 5. <strong>Do nothing.</strong> Rejected — Wave 4 "make it operational" needs durable triggers + signed durable webhooks; the live platform's "trigger fan-out not wired" is a real gap, and at-least-once inbound delivery has no portable contract today.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>To decide before <code>Active</code>:</p>
+<p>1. <strong>Subscription management as endpoints vs nodes.</strong> Webhooks register via <code>POST /v1/webhooks</code> (<code>webhooks.md</code>); schedules/queues are trigger <em>nodes</em>. Does the subscription state machine get a unified <code>GET/PATCH /v1/trigger-subscriptions/{id}</code> surface, or does each source keep its own management path with the <em>state vocabulary</em> unified? Proposed: a unified read surface (<code>GET /v1/trigger-subscriptions</code>) + per-source management (don't move <code>POST /v1/webhooks</code>). Confirm against <code>rest-endpoints.md</code>. 2. <strong><code>dedupKey</code> retention window.</strong> Tie to <code>idempotency.md</code> Layer-1 retention (≥24h), or a separate <code>triggerBridge.dedupRetention</code>? Proposed: reuse the Layer-1 ≥24h floor with an optional override. Confirm. 3. <strong>Profile predicate strictness.</strong> Should the profile require <code>webhooks.durable</code> specifically, or accept any one durable source (queue / durable-webhooks / scheduling)? Proposed: any one (§D) — a queue-only durable-inbound host is legitimately in the profile. Confirm the OR is right. 4. <strong>Causation on dead-lettered (no run).</strong> A dead-lettered delivery starts no run — where does its causation chain terminate? Proposed: the <code>trigger.delivery.attempted{outcome:&quot;dead-lettered&quot;}</code> event is the terminal record (no <code>runId</code>); the RFC 0053 sink holds the delivery. Confirm. 5. <strong><code>paused</code> semantics for schedules vs webhooks.</strong> Pausing a webhook stops delivery; pausing a <em>schedule</em> — does it skip ticks or queue them (the RFC 0052 missed-tick policy)? Proposed: <code>paused</code> skips (no catch-up); resume starts fresh. Confirm against RFC 0052 §B missed-tick policy.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li><strong>Sequencing.</strong> Pure composition over RFC 0052 (Accepted — scheduling), RFC 0053 (Accepted — dead-letter), RFC 0017 (Accepted — queue bus), <code>webhooks.md</code> (the durable opt-in), RFC 0040 (Accepted — causation), <code>idempotency.md</code> (the dedup model), and the <code>core.openwop.triggers</code> pack (15 trigger shapes). First of Wave 4, independent of RFC 0084. Adds a subscription schema + two content-free events + a capability + a derived profile; changes no existing primitive.</li>
+<li><strong>Reference host.</strong> Wiring is: a durable subscription store with the four-state machine, a delivery loop with dedup + retry + dead-letter routing, the trigger→run <code>causationId</code> stamp, and the durable-webhook mode (the existing best-effort path stays for non-durable hosts). The <code>core.openwop.triggers</code> nodes forward <code>ctx.triggerData</code> as today; the bridge wraps them.</li>
+<li><strong>Demo impact</strong> (out of scope): real trigger nodes (webhook/schedule/form/chat/email) in the builder; Mission Control inbound trigger health + failed-delivery view.</li>
+<li><strong>Expected effort:</strong> S–M for the schema + profile predicate + capability + shape conformance; M–L for the reference durable-delivery + state-machine implementation.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<p>Checklist for <code>Active → Accepted</code> (files at <code>Draft</code>):</p>
+<ul>
+<li>[ ] <code>spec/v1/trigger-bridge.md</code>: §A capability + durable-webhook opt-in, §B subscription states, §C delivery model (attempts/dedup/retry/causation), §D profile predicate, §E channels-stay-extensions.</li>
+<li>[ ] <code>trigger-subscription.schema.json</code>; additive <code>triggerBridge</code> + <code>webhooks.durable</code> on <code>capabilities.schema.json</code>; two <code>trigger.*</code> RunEventTypes + payloads; <code>webhooks.md</code> §"Durable delivery (opt-in)".</li>
+<li>[ ] <code>openwop-trigger-bridge</code> predicate in <code>spec/v1/profiles.md</code> + <code>conformance/src/lib/profiles.ts</code>.</li>
+<li>[ ] Subscription read surface + delivery inspection in <code>openapi.yaml</code>; channels in <code>asyncapi.yaml</code>.</li>
+<li>[ ] Conformance: <code>trigger-bridge-shape.test.ts</code> (always-on) + <code>trigger-bridge-delivery.test.ts</code> (profile-gated) + fixture + <code>coverage.md</code>.</li>
+<li>[ ] CHANGELOG entry + INTEROP-MATRIX row (the new profile column).</li>
+<li>[ ] All five Unresolved questions resolved (recorded in <code>Updated:</code>).</li>
+<li>[ ] Reference host wires durable delivery + the state machine + passes the profile-gated scenario, OR the RFC explicitly defers reference-host implementation.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><code>docs/OPENWOP-AI-AGENT-PLATFORM-RECOMMENDATIONS.md</code> §"RFC 0083" + §Non-Goals — the source recommendation + the channels-stay-extensions constraint.</li>
+<li><a href="./0052-scheduling-and-time-based-triggers.md"><code>RFCS/0052-scheduling-and-time-based-triggers.md</code></a> — the <code>scheduling</code> capability (advertised at the document root per RFC 0073; the RFC's prose calls it <code>host.scheduling</code>) + the missed-tick policy (UQ #5).</li>
+<li><a href="./0053-dead-letter-routing-and-failure-sinks.md"><code>RFCS/0053-dead-letter-routing-and-failure-sinks.md</code></a> — the <code>deadLetter</code> sink exhausted deliveries route to (§B/§C).</li>
+<li><a href="./0017-host-queue-bus-capability.md"><code>RFCS/0017-host-queue-bus-capability.md</code></a> — the <code>queueBus</code> capability (a durable inbound source, §D) + cross-tenant isolation.</li>
+<li><a href="./0040-multi-agent-cross-host-causation.md"><code>RFCS/0040-multi-agent-cross-host-causation.md</code></a> — the <code>causationId</code>/<code>causationHostId</code> + <code>/ancestry</code> the trigger→run edge reuses (§C-3).</li>
+<li><a href="../spec/v1/webhooks.md"><code>spec/v1/webhooks.md</code></a> — the best-effort delivery contract the <code>webhooks.durable</code> opt-in extends (preserved as default).</li>
+<li><a href="../spec/v1/idempotency.md"><code>spec/v1/idempotency.md</code></a> — the Layer-1 dedup model the <code>dedupKey</code> reuses (§C-1, UQ #2).</li>
+<li><a href="../spec/v1/profiles.md"><code>spec/v1/profiles.md</code></a> §"Adding a profile" — the derived-profile machinery + the append-only rule.</li>
+<li><a href="../COMPATIBILITY.md"><code>COMPATIBILITY.md</code></a> §2.1 — additive-change discipline.</li>
+</ul><footer class="doc-edit"><a href="https://github.com/openwop/openwop/edit/main/RFCS/0083-durable-trigger-and-channel-bridge-profile.md" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>

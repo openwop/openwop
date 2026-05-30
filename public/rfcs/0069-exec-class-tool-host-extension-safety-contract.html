@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — RFC 0069: Host-extension safety contract for `exec`-class tools</title>
+  <meta name="description" content="openwop deliberately ships no exec-class tool — no protocol-tier primitive that runs an arbitrary host command on behalf of a workflow or an LLM. This RFC makes that exclusion explicit and normative rather than implicit. It adds a MUST-NOT to…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0069-exec-class-tool-host-extension-safety-contract.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — RFC 0069: Host-extension safety contract for `exec`-class tools"/>
+  <meta property="og:description" content="openwop deliberately ships no exec-class tool — no protocol-tier primitive that runs an arbitrary host command on behalf of a workflow or an LLM. This RFC makes that exclusion explicit and normative rather than implicit. It adds a MUST-NOT to…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0069-exec-class-tool-host-extension-safety-contract.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — RFC 0069: Host-extension safety contract for `exec`-class tools"/>
+  <meta name="twitter:description" content="openwop deliberately ships no exec-class tool — no protocol-tier primitive that runs an arbitrary host command on behalf of a workflow or an LLM. This RFC makes that exclusion explicit and normative rather than implicit. It adds a MUST-NOT to…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "RFC 0069: Host-extension safety contract for `exec`-class tools",
+  "description": "openwop deliberately ships no exec-class tool — no protocol-tier primitive that runs an arbitrary host command on behalf of a workflow or an LLM. This RFC makes that exclusion explicit and normative rather than implicit. It adds a MUST-NOT to…",
+  "url": "https://openwop.dev/rfcs/0069-exec-class-tool-host-extension-safety-contract.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  }
+}</script>
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>RFC 0069: Host-extension safety contract for `exec`-class tools</h1>
+      <p class="lede">openwop deliberately ships no exec-class tool — no protocol-tier primitive that runs an arbitrary host command on behalf of a workflow or an LLM. This RFC makes that exclusion explicit and normative rather than implicit. It adds a MUST-NOT to…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-host-extensions-md-new-section-exec-class-tools-normative">§A — host-extensions.md new section &quot;exec-class tools&quot; (normative)</a></li>
+      <li class="toc-sub"><a href="#b-threat-model-prompt-injection-md-new-section-exec-tools">§B — threat-model-prompt-injection.md new section &quot;exec tools&quot;</a></li>
+      <li class="toc-sub"><a href="#c-security-invariants-yaml-new-protocol-tier-invariant">§C — SECURITY/invariants.yaml new protocol-tier invariant</a></li>
+      <li class="toc-sub"><a href="#d-conformance-scenario-exec-not-protocol-tier-test-ts">§D — conformance scenario exec-not-protocol-tier.test.ts</a></li>
+      <li class="toc-sub"><a href="#examples">Examples</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0069</td></tr>
+<tr><td><strong>Title</strong></td><td>A normative carve-out: arbitrary-command (<code>exec</code>-class) execution MUST NOT be a protocol-tier capability — it lives only in named host-extension scopes (<code>x-host-&amp;lt;vendor&amp;gt;-exec</code>) whose safety controls the host owns end-to-end. Codifies an existing exclusion; no host wire shape changes.</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Active</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-26</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-29 — promoted <code>Draft → Active</code>. Every acceptance artifact already landed on <code>main</code> (this RFC codifies the existing exclusion: the <code>host-extensions.md</code> §"<code>exec</code>-class tools" MUST-NOT, the threat-model row + §4.7, the protocol-tier <code>exec-must-not-be-protocol-tier</code> invariant, and the always-on <code>exec-not-protocol-tier.test.ts</code> are all merged and CI-green). The 7-day comment window is opened and waived under the bootstrap-phase steward waiver (<code>GOVERNANCE.md</code> §bootstrap; single-maintainer phase, no non-steward maintainer yet). No host wire change.</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>spec/v1/host-extensions.md</code> (new §"<code>exec</code>-class tools") · <code>SECURITY/threat-model-prompt-injection.md</code> (new §"<code>exec</code> tools" + an invariant row) · <code>SECURITY/invariants.yaml</code> (new protocol-tier invariant <code>exec-must-not-be-protocol-tier</code>) · <code>CHANGELOG.md</code> · new conformance scenario <code>exec-not-protocol-tier.test.ts</code></td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code> (codifies an existing exclusion; safety-fix-shaped but no host's wire shape changes)</td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>openwop deliberately ships no <code>exec</code>-class tool — no protocol-tier primitive that runs an arbitrary host command on behalf of a workflow or an LLM. This RFC makes that exclusion <strong>explicit and normative</strong> rather than implicit. It adds a MUST-NOT to <code>spec/v1/host-extensions.md</code>: a host MUST NOT expose arbitrary-command execution under any protocol-owned namespace (<code>core.<em></code>, <code>openwop.</em></code>, or a <code>capabilities.<em></code> flag); a host that needs <code>exec</code> exposes it only under a named host-extension scope (<code>x-host-&amp;lt;vendor&amp;gt;-exec</code>) and owns the safety story (sandboxing, allowlists, approval gates, audit) end-to-end. It adds a threat-model section and a protocol-tier SECURITY invariant (<code>exec-must-not-be-protocol-tier</code>) with a conformance scenario that asserts the protocol's own surface (the <code>core.</em></code> node catalog, the capability schema, the canonical event/error vocabulary) defines no exec primitive. No host's wire shape changes — this codifies the status quo so an independent implementer can't read silence as permission.</p>
+<h2 id="motivation">Motivation</h2>
+<p>The feature-gap analysis (<code>docs/OPENWOP-FEATURE-GAP-ANALYSIS.md</code> row 7) classifies arbitrary-command execution as <strong>HIGH risk</strong> and recommends "file a new RFC defining a host-extension safety contract for <code>exec</code>-class tools (out-of-band, NOT in the protocol)." Its Out-of-scope section is blunt: "<code>exec</code>-class arbitrary command execution. Risky enough that the proposed RFC explicitly carves it OUT of the protocol rather than IN."</p>
+<p>The risk is concrete. <code>exec</code> is the highest-severity attack surface a workflow runtime can expose:</p>
+<ul>
+<li><strong>Prompt-injection → RCE.</strong> An LLM-emitted or untrusted-input-derived command string, if executed, turns a prompt-injection foothold into remote code execution on the host. openwop's prompt-injection threat model already establishes that LLM output and pack output are <em>untrusted</em> (<code>node-pack-output-untrusted</code>, the <code>&amp;lt;UNTRUSTED&amp;gt;</code> marker discipline); a protocol-tier <code>exec</code> would let that untrusted content reach a shell.</li>
+<li><strong>Sandbox escape.</strong> RFC 0008 (WASM ABI) + RFC 0035 (sandbox invariants) already pin that sandboxed pack code MUST NOT spawn host processes, fork, or call exec-family syscalls (<code>node-pack-sandbox-no-process</code>). A protocol-tier <code>exec</code> capability would directly contradict that invariant set.</li>
+<li><strong>Multi-tenant blast radius.</strong> openwop is multi-tenant (<code>tenantId</code> + <code>scopeId</code>); a shared exec surface is a cross-tenant catastrophe waiting on one path-traversal or one missed allowlist.</li>
+</ul>
+<p>Today the protocol simply <em>doesn't define</em> an exec tool. But silence is not a contract. An independent implementer building a "core exec node" could read the absence as an unfilled gap rather than a deliberate exclusion, name it <code>core.exec</code>, and ship a protocol-tier RCE primitive that other hosts and clients would then treat as canonical. The spec is the right place to fix this because the exclusion is an <strong>interop + security commitment</strong>: every conforming host must agree that <code>exec</code> is host-extension-only, and the registry/extension-policy (RFC 0043) must refuse a <code>core.*</code> exec namespace. This RFC writes the rule down and gives it a test.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-host-extensions-md-new-section-exec-class-tools-normative">§A — <code>host-extensions.md</code> new section "<code>exec</code>-class tools" (normative)</h3>
+<p>Add a section under §"What hosts MUST NOT do" (or adjacent to it):</p>
+<blockquote><p>### <code>exec</code>-class tools (arbitrary command execution)</p><p></p><p>An <strong><code>exec</code>-class tool</strong> is any capability that runs a caller- or model-supplied command, shell string, script, or binary on the host or in an environment the host controls (e.g., a "run this shell command", "execute this Python", or "spawn this process" tool).</p><p></p><p><strong><code>exec</code>-class execution MUST NOT be a protocol-tier capability.</strong> Specifically, a conforming host MUST NOT:</p><p>- define an <code>exec</code>-class tool under a protocol-owned namespace (<code>core.<em></code> or <code>openwop.</em></code>) — neither as a node typeId, an envelope type, nor a built-in tool;</p><p>- advertise an <code>exec</code>-class capability under a protocol-owned <code>capabilities.*</code> flag;</p><p>- redefine an existing protocol-tier capability (<code>host.fs</code>, <code>host.mcp</code>, a node pack, a connector) to perform arbitrary command execution.</p><p></p><p>A host that needs <code>exec</code>-class execution MUST expose it <strong>only</strong> under a named host-extension scope using the canonical vendor prefix (<code>x-host-&amp;lt;vendor&amp;gt;-exec</code>, or a <code>vendor.&amp;lt;org&amp;gt;.<em></code> / <code>private.&amp;lt;host&amp;gt;.</em></code> node-pack namespace per §"Canonical prefixes"). The host owns the safety controls end-to-end and SHOULD document, at minimum:</p><p>- <strong>Sandboxing</strong> — exec MUST run isolated from the host process and other tenants (RFC 0035 §A sandbox invariants are the recommended baseline; <code>node-pack-sandbox-no-process</code> already forbids protocol-tier sandboxed code from spawning processes, so any exec surface is by definition outside that sandbox and needs its own isolation).</p><p>- <strong>Command allowlisting / no shell interpolation</strong> — the command set MUST be constrained; untrusted (LLM- or input-derived) content MUST NOT be interpolated into a shell string (this is the <code>prompt-injection-input-marker</code> / <code>node-pack-output-untrusted</code> discipline applied to the exec boundary).</p><p>- <strong>Human approval gating</strong> — destructive or unbounded exec SHOULD require an RFC 0051 <code>approval</code> interrupt before execution.</p><p>- <strong>Audit</strong> — every exec invocation SHOULD emit a host-internal audit record; the protocol does not normate its shape.</p><p></p><p>Clients MUST treat any <code>x-host-&amp;lt;vendor&amp;gt;-exec</code> surface as opaque (per §"How extensions appear on the wire") and MUST NOT assume an exec extension is portable across hosts. A host MUST NOT depend on a client understanding its exec namespace.</p><p></p><p><strong>Rationale.</strong> <code>exec</code> is the highest-severity surface in a workflow runtime: a single prompt-injection or input-validation lapse becomes remote code execution, and a shared exec surface is a cross-tenant blast radius. The protocol stays exec-free so that no conforming host inherits that surface by default; hosts that accept the risk own it explicitly, in their own namespace, with their own controls. See <code>SECURITY/threat-model-prompt-injection.md §&quot;exec tools&quot;</code> and the <code>exec-must-not-be-protocol-tier</code> invariant.</p></blockquote>
+<p>Add a cross-reference from §"What stays in the protocol" / §"What hosts own" noting that arbitrary command execution is a host concern, never a protocol concern.</p>
+<h3 id="b-threat-model-prompt-injection-md-new-section-exec-tools">§B — <code>threat-model-prompt-injection.md</code> new section "<code>exec</code> tools"</h3>
+<p>Add to §4 (threat table) and §5 (invariants):</p>
+<ul>
+<li>Threat-table row: <em>"LLM output or untrusted input is executed as a host command (RCE) | A protocol-tier <code>exec</code> tool would let prompt-injection reach a shell | The protocol defines no <code>exec</code>-class tool; exec is host-extension-only with host-owned sandboxing/allowlist/approval per <code>host-extensions.md §exec-class tools</code> | <code>exec-must-not-be-protocol-tier</code>"</em></li>
+<li>§5 invariant row: <em>"<code>exec-must-not-be-protocol-tier</code> | Arbitrary-command (<code>exec</code>-class) execution MUST NOT be exposed under any protocol-owned namespace (<code>core.</em></code>, <code>openwop.<em></code>) or <code>capabilities.</em></code> flag; it lives only in named host-extension scopes whose safety controls the host owns end-to-end."*</li>
+</ul>
+<h3 id="c-security-invariants-yaml-new-protocol-tier-invariant">§C — <code>SECURITY/invariants.yaml</code> new protocol-tier invariant</h3>
+<pre class="lang-yaml"><code>  - id: exec-must-not-be-protocol-tier
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/exec-not-protocol-tier.test.ts
+    note: |
+      RFC 0069. Arbitrary-command (`exec`-class) execution MUST NOT be a
+      protocol-tier capability. The protocol defines NO exec-class tool
+      under a protocol-owned namespace (`core.*` / `openwop.*`), NO
+      exec capability flag in `capabilities.schema.json`, and NO
+      exec-class entry in the canonical event/error vocabulary. A host
+      that needs exec exposes it ONLY under a named host-extension scope
+      (`x-host-&amp;lt;vendor&amp;gt;-exec`) with host-owned sandboxing + allowlist +
+      approval-gating + audit, per `host-extensions.md §&quot;exec-class tools&quot;`.
+      This invariant guards against an independent implementer reading
+      the protocol&#39;s silence as permission to ship a `core.exec` RCE
+      primitive other hosts would treat as canonical. The conformance
+      scenario asserts the protocol&#39;s OWN surface (the published `core.*`
+      node catalog, capability schema property names, and the canonical
+      vocabularies) contains no exec-class primitive — a structural
+      assertion against the spec corpus, not a host behavior.</code></pre>
+<h3 id="d-conformance-scenario-exec-not-protocol-tier-test-ts">§D — conformance scenario <code>exec-not-protocol-tier.test.ts</code></h3>
+<p>A server-free structural assertion over the spec corpus (mirrors the existing <code>spec-corpus-validity.test.ts</code> style — no host required):</p>
+<ul>
+<li>Assert no <code>core.<em></code> / <code>openwop.</em></code> node typeId, envelope type, or capability property name matches an exec-class pattern (<code>exec</code>, <code>shell</code>, <code>spawn</code>, <code>runCommand</code>, <code>runScript</code>, <code>subprocess</code> — case-insensitive, as a whole namespaced segment), EXCEPT where the token is part of an already-defined, non-exec name (the test uses an exact closed denylist of exec-class identifiers, asserting none appear as a protocol-owned typeId/capability — it does not flag substrings like <code>execution</code> in <code>multi-agent-execution</code>).</li>
+<li>Assert <code>capabilities.schema.json</code> defines no top-level or <code>agents.<em></code>/<code>host.</em></code> property whose name denotes arbitrary command execution.</li>
+<li>Assert the canonical error-code and event-name vocabularies contain no exec-class member.</li>
+<li>The scenario carries a positive control: a <code>vendor.acme.exec</code> / <code>x-host-acme-exec</code> identifier is <em>allowed</em> (host-extension namespace) — the assertion only fires on protocol-owned namespaces.</li>
+</ul>
+<h3 id="examples">Examples</h3>
+<p><strong>Positive (conformant host).</strong> A host that needs to run shell commands ships a node pack <code>vendor.acme.exec</code> with <code>peerDependencies: { &quot;x-host-acme-exec&quot;: &quot;supported&quot; }</code>, runs each command in an nsjail sandbox against an allowlist, and gates destructive commands behind an RFC 0051 approval. The protocol never sees it as anything but an opaque host extension. Conformant.</p>
+<p><strong>Negative (non-conformant host).</strong> A host defines a node typeId <code>core.exec</code> (or advertises <code>capabilities.exec.supported: true</code>, or <code>capabilities.host.shell</code>) that runs <code>RunOptions.configurable.command</code> in a subprocess. Non-conformant by §A — exec under a protocol-owned namespace. The <code>exec-not-protocol-tier</code> scenario fails if such a primitive were ever added to the spec corpus; a host that ships it locally is advertising a non-conformant protocol-tier capability.</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive in practice; safety-fix-shaped in intent.</strong> This RFC codifies an <em>existing</em> exclusion — the protocol corpus today defines no exec-class primitive, so no host's wire shape changes and no conforming host is invalidated. It is not a §2.2 breaking change: nothing required becomes optional, no type changes, no error-code meaning changes, no endpoint contract changes. It <em>adds</em> a MUST-NOT that was previously implicit, which is the safety-fix <em>shape</em> — but because the status quo already satisfies it, there is no migration burden and no 90-day embargo is needed (no CVE-class defect is being disclosed; the surface never existed). A host that had privately shipped a <code>core.exec</code> primitive (a pre-existing protocol violation, since <code>core.*</code> is registry-reserved per RFC 0043) would need to rename it to <code>x-host-&amp;lt;vendor&amp;gt;-exec</code> — that is the only migration, and it is a correction of an already-non-conformant state.</p>
+<p>Forward-compatibility clauses:</p>
+<ul>
+<li>No new field, event, error code, capability flag, or endpoint is added — the change is prose + one threat-model section + one invariant + one structural conformance scenario.</li>
+<li>The invariant is a <em>structural</em> assertion over the spec corpus (the protocol's own surface), so it cannot regress a host that already advertises only host-extension exec.</li>
+</ul>
+<h2 id="conformance">Conformance</h2>
+<ul>
+<li><strong>Existing coverage.</strong> <code>spec-corpus-validity.test.ts</code> (server-free corpus structural checks) is the nearest neighbor — the new scenario follows its pattern. <code>runtime-capabilities.test.ts</code> / <code>discovery.test.ts</code> cover capability-shape validation. The sandbox scenarios (<code>sandbox-no-host-process-escape.test.ts</code>, RFC 0035) cover the complementary "sandboxed pack code can't spawn a process" surface.</li>
+<li><strong>New scenario — <code>exec-not-protocol-tier.test.ts</code></strong> (always-on, server-free, &lt;1s): the §D structural assertions over the spec corpus. Always-on (not capability-gated) because it asserts the protocol&#39;s <em>own</em> surface, not a host&#39;s advertisement — it must hold for every release of the corpus regardless of which host runs it.</li>
+<li><strong>Capability gating.</strong> None — this is a corpus-structural invariant, always asserted.</li>
+<li><strong>Reference host.</strong> No reference-host change needed — the invariant is satisfied by the protocol corpus itself; the scenario verifies that.</li>
+<li><strong>Fixtures.</strong> None.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Define a sandboxed <code>core.exec</code> primitive with a strict capability contract</strong> (bring exec <em>into</em> the protocol with mandatory sandboxing). Rejected — even a sandboxed protocol-tier exec normalizes the most dangerous surface in the runtime and creates an attractive nuisance: every host would feel pressure to implement it, and one sandbox-escape CVE becomes a protocol-wide incident. The gap analysis is explicit that exec must be carved OUT, not IN. Sandboxed pack execution (RFC 0008/0035) already covers <em>constrained</em> computation without arbitrary host commands. 2. <strong>Leave the exclusion implicit</strong> (do nothing; the protocol simply doesn&#39;t define exec). Rejected — silence is not a contract. An independent implementer can read an unfilled gap as an invitation, ship <code>core.exec</code>, and other hosts/clients would treat it as canonical. The whole point is to convert silence into a normative MUST-NOT with a test, so the exclusion survives contact with implementers who didn&#39;t read the threat model. 3. <strong>A non-normative note in <code>positioning.md</code></strong> (&quot;exec is out of scope&quot;) without an invariant or test. Rejected — a note has no enforcement. The gap analysis assigns this HIGH risk; a HIGH-risk exclusion deserves a protocol-tier invariant + a conformance scenario, not a prose aside.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. <strong>Denylist completeness.</strong> §D asserts no protocol-owned identifier matches an exec-class denylist (<code>exec</code>, <code>shell</code>, <code>spawn</code>, <code>runCommand</code>, <code>runScript</code>, <code>subprocess</code>, …). Is the closed denylist the right mechanism, or should the test assert against an allowlist of known-safe <code>core.<em></code> typeIds instead (fail on any new <code>core.</em></code> exec-shaped name)? Proposed: closed denylist for <code>Draft</code> (lower false-positive risk); revisit if the <code>core.<em></code> catalog grows a legitimately exec-adjacent-but-safe name. Decide before <code>Active</code>. 2. <strong>Relationship to a future &quot;command connector&quot;.</strong> Some hosts may want a </em>constrained<em> command surface (e.g., a connector that runs one specific, pre-registered binary with structured args, no shell). Is that an <code>exec</code>-class tool (host-extension-only) or a constrained connector (potentially protocol-tier under the RFC 0045 connector-manifest model)? Proposed: anything that runs a </em>caller/model-supplied<em> command is exec-class (host-extension-only); a connector that runs a </em>manifest-declared, host-resolved<em> action with structured args is not exec-class (it is the existing connector model). Confirm the boundary with an implementer before <code>Active</code>. 3. <strong>Sandbox-baseline normativity.</strong> §A lists sandboxing/allowlist/approval/audit as SHOULD for host-extension exec. Should any of these be MUST for a host that </em>advertises* an exec extension (even though the extension itself is non-portable)? Proposed: keep SHOULD at <code>Draft</code> — the protocol cannot enforce controls on a surface it deliberately doesn&#39;t define — but consider a MUST on &quot;untrusted content MUST NOT be shell-interpolated&quot; since that maps onto an existing protocol-tier prompt-injection invariant. Decide before <code>Active</code>.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>This RFC is prose + invariant + structural test; it lands no schema or wire change. The conformance scenario is the load-bearing artifact — it must pass against the corpus <em>as it stands today</em> (which it will, since no exec primitive exists) and would fail loudly if a future PR added one.</li>
+<li>The CLI/demo <code>exec</code>-adjacent work in the gap analysis (sandboxed dev exec) is implementation-only and lives in vendor host-extension territory — out of this RFC&#39;s scope, and a good first consumer of the <code>x-host-&amp;lt;vendor&amp;gt;-exec</code> convention this RFC names.</li>
+<li>Pairs with RFC 0043 (registry + extension policy): the registry MUST refuse to publish a pack claiming a <code>core.<em></code> exec typeId, since <code>core.</em></code> is registry-reserved. This RFC's invariant and RFC 0043's namespace reservation are mutually reinforcing.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[x] <code>host-extensions.md §&quot;exec-class tools&quot;</code> with the normative MUST-NOT + the named-host-extension carve-out + the safety-control SHOULDs.</li>
+<li>[x] <code>threat-model-prompt-injection.md</code> §"exec tools" threat row + §5 invariant row.</li>
+<li>[x] <code>SECURITY/invariants.yaml</code> carries <code>exec-must-not-be-protocol-tier</code> (protocol-tier) with a resolving test glob.</li>
+<li>[x] <code>exec-not-protocol-tier.test.ts</code> asserts the protocol corpus defines no exec-class primitive (always-on, server-free).</li>
+<li>[x] CHANGELOG entry under <code>[1.1.6 — unreleased]</code>.</li>
+<li>[x] No reference-host change required (the invariant is satisfied by the corpus; the scenario verifies it) — explicitly noted.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="../spec/v1/host-extensions.md"><code>spec/v1/host-extensions.md</code></a> — the protocol-vs-host-extension boundary this RFC sharpens; §"Canonical prefixes" + §"What hosts MUST NOT do".</li>
+<li><a href="../SECURITY/threat-model-prompt-injection.md"><code>SECURITY/threat-model-prompt-injection.md</code></a> — LLM/pack-output-untrusted discipline the exec MUST-NOT extends.</li>
+<li><a href="../SECURITY/threat-model-node-packs.md"><code>SECURITY/threat-model-node-packs.md</code></a> §sandbox — RFC 0035 sandbox invariants (<code>node-pack-sandbox-no-process</code>) the exec carve-out is consistent with.</li>
+<li><a href="./0035-sandbox-execution-contract.md"><code>RFCS/0035-sandbox-execution-contract.md</code></a> — sandbox execution invariants (sandboxed code MUST NOT spawn processes).</li>
+<li><a href="./0043-registry-and-extension-policy.md"><code>RFCS/0043-registry-and-extension-policy.md</code></a> — namespace reservation (<code>core.*</code> is protocol-owned; the registry refuses a <code>core.exec</code>).</li>
+<li><a href="./0051-approval-deployment-gate-primitive.md"><code>RFCS/0051-approval-deployment-gate-primitive.md</code></a> — the approval interrupt host-extension exec SHOULD gate behind.</li>
+<li><code>docs/OPENWOP-FEATURE-GAP-ANALYSIS.md</code> row 7 + Out-of-scope §"exec-class arbitrary command execution".</li>
+</ul><footer class="doc-edit"><a href="https://github.com/openwop/openwop/edit/main/RFCS/0069-exec-class-tool-host-extension-safety-contract.md" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>

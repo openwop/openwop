@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — RFC 0070: Agent Manifest Runtime Capability (`agents.manifestRuntime`)</title>
+  <meta name="description" content="RFC 0003 already specifies how an agent is packaged (agents[] in pack.json), installed (installNodes → installAgents append-only on an AgentRegistry, §ImplNotes), and resolved (systemPromptRef/handoff.SchemaRef at install, §C/§D) — but there is no…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0070-agent-manifest-runtime.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — RFC 0070: Agent Manifest Runtime Capability (`agents.manifestRuntime`)"/>
+  <meta property="og:description" content="RFC 0003 already specifies how an agent is packaged (agents[] in pack.json), installed (installNodes → installAgents append-only on an AgentRegistry, §ImplNotes), and resolved (systemPromptRef/handoff.SchemaRef at install, §C/§D) — but there is no…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0070-agent-manifest-runtime.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — RFC 0070: Agent Manifest Runtime Capability (`agents.manifestRuntime`)"/>
+  <meta name="twitter:description" content="RFC 0003 already specifies how an agent is packaged (agents[] in pack.json), installed (installNodes → installAgents append-only on an AgentRegistry, §ImplNotes), and resolved (systemPromptRef/handoff.SchemaRef at install, §C/§D) — but there is no…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "RFC 0070: Agent Manifest Runtime Capability (`agents.manifestRuntime`)",
+  "description": "RFC 0003 already specifies how an agent is packaged (agents[] in pack.json), installed (installNodes → installAgents append-only on an AgentRegistry, §ImplNotes), and resolved (systemPromptRef/handoff.SchemaRef at install, §C/§D) — but there is no…",
+  "url": "https://openwop.dev/rfcs/0070-agent-manifest-runtime.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  }
+}</script>
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>RFC 0070: Agent Manifest Runtime Capability (`agents.manifestRuntime`)</h1>
+      <p class="lede">RFC 0003 already specifies how an agent is packaged (agents[] in pack.json), installed (installNodes → installAgents append-only on an AgentRegistry, §ImplNotes), and resolved (systemPromptRef/handoff.SchemaRef at install, §C/§D) — but there is no…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-new-capability-flag-capabilities-agents-manifestruntime">§A New capability flag capabilities.agents.manifestRuntime</a></li>
+      <li class="toc-sub"><a href="#b-host-agentruntime-implies-manifestruntime">§B host.agentRuntime implies manifestRuntime</a></li>
+      <li class="toc-sub"><a href="#c-peer-dependency-reconciliation-node-packs-md">§C Peer-dependency reconciliation (node-packs.md)</a></li>
+      <li class="toc-sub"><a href="#d-graceful-degradation-ladder">§D Graceful-degradation ladder</a></li>
+      <li class="toc-sub"><a href="#e-cross-reference-fix-host-capabilities-md-host-agentruntime">§E Cross-reference fix (host-capabilities.md §host.agentRuntime)</a></li>
+      <li class="toc-sub"><a href="#f-positive-negative-examples">§F Positive / negative examples</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0070</td></tr>
+<tr><td><strong>Title</strong></td><td>Agent Manifest Runtime Capability (<code>agents.manifestRuntime</code>)</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-26</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-27 (<strong>Active → Accepted</strong>: the non-steward <strong>MyndHyve workflow-runtime</strong> serves <code>agents.manifestRuntime: { supported: true, handoffValidation: true }</code> end-to-end in production — Cloud Run revision <code>workflow-runtime-00394-jun</code> at 100% traffic — with the inventory seam returning the installed agent and the dispatch seam completing with <code>toolSurface</code> filtered to the allowlist (<code>[&#39;read_file&#39;]</code>, §A14) and emitting attributed <code>agent.reasoned</code> + <code>agent.decided</code>; existing <code>dispatch</code>/<code>orchestrator</code> flags + the parallel RFC 0071 <code>host.artifactTypes</code> carried forward (no rollback). <strong>Caveat:</strong> the published conformance scenario soft-skips against MyndHyve due to a pre-existing discovery-layout divergence (the suite + reference host read <code>discoveryDoc.capabilities.agents.*</code>; MyndHyve serves <code>agents</code> at the document root per <code>capabilities.schema.json</code>'s root placement) — a maintainer-level reconciliation tracked separately, not specific to RFC 0070. Earlier 2026-05-26: Draft → Active when the wire surface landed (#268) + steward comment-window waiver.)</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>schemas/capabilities.schema.json</code>, <code>spec/v1/host-capabilities.md</code>, <code>spec/v1/node-packs.md</code>, <code>conformance/src/scenarios/agent-manifest-runtime.test.ts</code>, <code>CHANGELOG.md</code>, <code>INTEROP-MATRIX.md</code></td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code> per <code>COMPATIBILITY.md</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>RFC 0003 already specifies how an agent is packaged (<code>agents[]</code> in <code>pack.json</code>), installed (<code>installNodes → installAgents</code> append-only on an <code>AgentRegistry</code>, §ImplNotes), and resolved (<code>systemPromptRef</code>/<code>handoff.<em>SchemaRef</code> at install, §C/§D) — but there is <strong>no capability flag</strong> by which a host advertises that it actually implements that runtime, and <strong>no light dependency</strong> a pack can declare against it. The only existing flag is the heavyweight <code>host.agentRuntime</code> (six methods: spawn/delegate/consensus/messageSend/skillInvoke/swarmExecute), which 21 of 24 <code>core.openwop.agents.</em></code> packs over-declare a peer-dependency on even though a single-agent code-reviewer needs none of <code>swarmExecute</code>/<code>consensus</code>. This RFC adds the minimal additive flag <strong><code>capabilities.agents.manifestRuntime</code></strong> — "this host loads pack <code>agents[]</code> into an <code>AgentRegistry</code> (RFC 0003) and dispatches them on the existing <code>core.dispatch</code> / orchestrator loop (RFC 0007/0037/0061)" — establishes <code>host.agentRuntime ⇒ manifestRuntime</code>, and specifies a graceful-degradation ladder so a manifest agent runs at the floor on any host that advertises the floor.</p>
+<h2 id="motivation">Motivation</h2>
+<p>OpenWOP ships ~31 fully-populated, schema-valid agent manifests across ~24 <code>packs/core.openwop.agents.*</code> packs (RFC 0003 + <code>agent-manifest.schema.json</code>). They are signable, publishable, and listable — but <strong>inert</strong>: no capability advertises "I can instantiate a manifest agent," so a pack cannot express that dependency, conformance cannot gate on it, and a host operator cannot tell from <code>/.well-known/openwop</code> whether their host will run a given agent pack. The problem is concretely visible:</p>
+<ul>
+<li><strong>Over-broad coupling.</strong> 21/24 core agent packs declare <code>peerDependencies: { &quot;host.agentRuntime&quot;: &quot;supported&quot; }</code>. <code>host.agentRuntime</code> is the swarm/consensus superset attributed to vendor orchestration (<code>host-capabilities.md §host.agentRuntime</code>). A tool-using single agent or a small crew does not need swarm primitives, yet today it can only depend on the heavyweight surface — so a minimal host that <em>could</em> run the agent cannot advertise eligibility for it.</li>
+<li><strong>"For any app" needs a low floor.</strong> A CRM, an IDE, or a CI runner should be able to host agents by implementing a small, cheap tier — load a manifest, dispatch it on the existing loop, enforce <code>toolAllowlist</code> + BYOK, emit <code>agent.*</code> events — with memory / crews / cross-host / swarm as honest, optional tiers layered above. There is no flag for that floor today.</li>
+<li><strong>Cross-reference drift.</strong> <code>host-capabilities.md §host.agentRuntime</code> cites "RFC 0008 AgentManifest"; RFC 0008 is the WASM ABI — <code>AgentManifest</code> is RFC 0003 and <code>AgentRef</code> is RFC 0002. The agent-runtime capability surface should name the right RFCs.</li>
+</ul>
+<p>The spec is the right place to solve this because capability advertisement and <code>peerDependencies</code> resolution are wire contract (<code>capabilities.md</code>, <code>node-packs.md</code>); the loader/registry/dispatch wiring is implementation-only against the already-Accepted RFC 0003.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-new-capability-flag-capabilities-agents-manifestruntime">§A New capability flag <code>capabilities.agents.manifestRuntime</code></h3>
+<p>Add an optional object to the existing <code>agents</code> capability block (which is already <code>additionalProperties: true</code>):</p>
+<pre class="lang-diff"><code>       &quot;dispatch&quot;: { &quot;type&quot;: &quot;boolean&quot;, &quot;description&quot;: &quot;Phase 6 ...&quot; },
++      &quot;manifestRuntime&quot;: {
++        &quot;type&quot;: &quot;object&quot;,
++        &quot;description&quot;: &quot;Agent-manifest runtime floor (RFC 0070). When `supported: true` the host implements RFC 0003 `installAgents` — it loads each installed pack&#39;s `agents[]` into an in-process AgentRegistry, resolves `systemPromptRef` + `handoff.*SchemaRef` from the tarball at install (RFC 0003 §C/§D), and can DISPATCH a manifest agent on the existing `core.dispatch`/orchestrator loop (RFC 0007/0037/0061). This is the minimal tier that makes a published agent pack runnable; it does NOT imply swarm/consensus (`host.agentRuntime`), long-term memory (`agents.memoryBackends`), or crews beyond what `agents.dispatch` advertises. Hosts that omit this block do not instantiate manifest agents (today&#39;s default).&quot;,
++        &quot;additionalProperties&quot;: false,
++        &quot;required&quot;: [&quot;supported&quot;],
++        &quot;properties&quot;: {
++          &quot;supported&quot;: {
++            &quot;type&quot;: &quot;boolean&quot;,
++            &quot;description&quot;: &quot;REQUIRED when the block is present. When `true`, the host loads + dispatches pack-declared manifest agents. A host advertising `supported: true` MUST enforce each dispatched agent&#39;s `toolAllowlist` (RFC 0002 §A14) and MUST NOT leak BYOK plaintext into `agent.*` events or handoff payloads (SR-1).&quot;
++          },
++          &quot;handoffValidation&quot;: {
++            &quot;type&quot;: &quot;boolean&quot;,
++            &quot;default&quot;: false,
++            &quot;description&quot;: &quot;When `true`, the host validates inbound task payloads against `handoff.taskSchemaRef` before dispatch and outbound results against `handoff.returnSchemaRef` before persistence (RFC 0003 §D). When `false`/absent, manifests carrying `handoff` schemas are dispatched with opaque payloads.&quot;
++          }
++        }
++      },</code></pre>
+<h3 id="b-host-agentruntime-implies-manifestruntime">§B <code>host.agentRuntime</code> implies <code>manifestRuntime</code></h3>
+<p>A host that advertises <code>host.agentRuntime: supported</code> (the six-method swarm superset) <strong>MUST</strong> be treated by clients and registries as also satisfying <code>agents.manifestRuntime</code> — the superset includes manifest instantiation (<code>spawn({ manifestId })</code>). This implication is what makes §C backward-safe: packs may be repointed to the lighter dependency without losing eligibility on hosts that only advertise the heavy flag.</p>
+<h3 id="c-peer-dependency-reconciliation-node-packs-md">§C Peer-dependency reconciliation (<code>node-packs.md</code>)</h3>
+<p>A pack whose agents need only single-agent or crew dispatch (no <code>consensus</code>/<code>swarmExecute</code>/<code>skillInvoke</code>) <strong>SHOULD</strong> declare:</p>
+<pre class="lang-json"><code>&quot;peerDependencies&quot;: { &quot;agents.manifestRuntime&quot;: &quot;supported&quot; }</code></pre>
+<p>A pack whose agents invoke swarm/consensus/skill primitives <strong>MUST</strong> continue to declare <code>peerDependencies: { &quot;host.agentRuntime&quot;: &quot;supported&quot; }</code>. Because of §B, repointing the former class from <code>host.agentRuntime</code> to <code>agents.manifestRuntime</code> is non-breaking: a host advertising <code>host.agentRuntime</code> still resolves the lighter dependency. Migrating the 21 currently-over-declared core packs is implementation work (per-pack version bump) tracked as a cross-cut, not part of this RFC's wire surface.</p>
+<h3 id="d-graceful-degradation-ladder">§D Graceful-degradation ladder</h3>
+<p>"Universal for any app" requires that the floor run on a host that lacks the richer tiers. Normatively:</p>
+<ul>
+<li>A host advertising <code>agents.manifestRuntime.supported: true</code> <strong>MUST</strong> install and dispatch a manifest agent whose declared peer-dependencies are satisfied by the floor alone.</li>
+<li>For a manifest agent that additionally requires an <strong>unmet</strong> tier (e.g. <code>memoryShape.longTerm: true</code> on a host without <code>agents.memoryBackends: [&quot;long-term&quot;]</code>, or <code>host.agentRuntime</code> swarm primitives), the host <strong>MUST</strong> take exactly one of:</li>
+</ul>
+<p>  1. <strong>Install degraded</strong> — install the agent with the unmet tier inert (e.g. <code>longTerm</code> writes are dropped or downgraded to <code>scratchpad</code>), and advertise the degradation honestly so a client can detect it; <strong>or</strong>   2. <strong>Refuse</strong> — reject install with <code>unsupported_capability</code> and <code>details.requiredCapability</code> naming the unmet tier (the existing refusal pattern from <code>capabilities.agents.modelClasses</code> / <code>dispatchMapping</code>).</p>
+<p>A host <strong>MUST NOT</strong> silently honor an unmet tier (e.g. accept <code>longTerm: true</code> but never persist) without advertising the degradation. Which path a host takes is host policy; the host advertises it.</p>
+<h3 id="e-cross-reference-fix-host-capabilities-md-host-agentruntime">§E Cross-reference fix (<code>host-capabilities.md §host.agentRuntime</code>)</h3>
+<p>Correct the RFC citations on the existing <code>host.agentRuntime</code> section: <code>AgentManifest</code> is <strong>RFC 0003</strong> (not RFC 0008, which is the WASM ABI); <code>AgentRef</code> is <strong>RFC 0002</strong>. Add one sentence positioning <code>agents.manifestRuntime</code> as the floor and <code>host.agentRuntime</code> as the optional swarm/consensus superset that implies it (§B).</p>
+<h3 id="f-positive-negative-examples">§F Positive / negative examples</h3>
+<p>Positive — a minimal host advertises the floor:</p>
+<pre class="lang-json"><code>{ &quot;agents&quot;: { &quot;supported&quot;: true, &quot;dispatch&quot;: true, &quot;manifestRuntime&quot;: { &quot;supported&quot;: true, &quot;handoffValidation&quot;: true } } }</code></pre>
+<p>Negative — block present without the required <code>supported</code> field (fails schema, <code>additionalProperties: false</code> + <code>required</code>):</p>
+<pre class="lang-json"><code>{ &quot;agents&quot;: { &quot;manifestRuntime&quot;: { &quot;handoffValidation&quot;: true } } }</code></pre>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong></p>
+<ul>
+<li><code>manifestRuntime</code> is a new optional object inside the <code>agents</code> block, which is already <code>additionalProperties: true</code> — no existing field changes type or optionality; pre-RFC capability docs validate unchanged.</li>
+<li>No existing required field, event type, endpoint, error code, or <code>MUST</code> is changed or relaxed.</li>
+<li>The §B implication only <em>widens</em> what an existing <code>host.agentRuntime</code> advertisement satisfies; no pack that installs today stops installing.</li>
+<li>§C is a SHOULD for new packs; existing packs are untouched until separately migrated (and remain installable via §B regardless).</li>
+<li>Backward-compat clause: a client that does not understand <code>manifestRuntime</code> ignores it and sees the host exactly as before; a host that does not emit it is treated as "no manifest-agent instantiation," which is today's behavior.</li>
+</ul>
+<h2 id="conformance">Conformance</h2>
+<ul>
+<li><strong>Existing</strong> scenarios that cover adjacent surface: <code>agent-pack-install.test.ts</code>, <code>agentPackHandoffSchemaValidation.test.ts</code> (RFC 0003 §D), <code>agent-pack-prompt-traversal.test.ts</code> (RFC 0003 §C), the dispatch/orchestrator suite (RFC 0007/0037).</li>
+<li><strong>New</strong> scenario <code>agent-manifest-runtime.test.ts</code>, gated on <code>capabilities.agents.manifestRuntime.supported</code>: install a signed agent pack → resolve a manifest agent from the registry → dispatch it → assert the observable <code>agent.*</code> event sequence, <code>toolAllowlist</code>-filtered tool surface, and (when <code>handoffValidation: true</code>) task/return validation. Soft-skips honestly when the host does not advertise the flag.</li>
+<li>The scenario runs only when the capability is advertised, per <code>conformance/coverage.md</code> §"Capability-gated scenarios."</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Schematize + implement the full <code>host.agentRuntime</code> (six methods) as the runtime.</strong> Rejected as the floor: it forces a host to implement <code>swarmExecute</code>/<code>consensus</code> to run a single code-reviewer, and keeps the 21 packs coupled to a heavyweight surface. <code>host.agentRuntime</code> remains valuable as the optional superset (§B) for vendor swarm packs — this RFC complements it, it does not replace it. 2. <strong>No new flag — treat manifest loading as pure reference-host implementation of RFC 0003.</strong> Rejected: without an advertised flag, a pack cannot express the floor dependency distinctly from swarm, conformance cannot gate the runtime, and a host operator cannot tell from discovery whether an agent pack will run. RFC 0003 specifies the <em>mechanism</em>; advertisement/gating is wire contract that needs a flag. 3. <strong>Do nothing.</strong> The 31 manifests stay inert; OpenWOP keeps a signed, portable agent artifact that nothing can instantiate — the worst outcome for "the portable agent protocol."</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. <strong>Degradation default.</strong> Should the spec recommend "install degraded + advertise" or "refuse with <code>unsupported_capability</code>" as the SHOULD-default when a tier is unmet (§D), or leave it fully host-policy? 2. <strong>Flag granularity.</strong> Is <code>manifestRuntime: { supported, handoffValidation }</code> the right grain, or should <code>toolAllowlist</code> enforcement and <code>systemPromptRef</code> resolution also be individually advertised sub-flags rather than mandated-when-supported? 3. <strong>Normative listing endpoint.</strong> Should <code>GET /v1/agents</code> (registry-backed agent inventory) be promoted from the current sample-extension <code>/v1/host/sample/agents</code> to a normative endpoint in this RFC, or in a follow-on additive RFC once the floor is proven on ≥2 hosts?</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li><code>AgentRegistry</code> mirrors <code>getNodeRegistry()</code> (<code>src/executor/agentRegistry.ts</code>); a lazy resolver mirrors <code>nodePackResolver.ts</code>; the loader extends <code>tarballLoader.ts</code> to parse <code>manifest.agents[]</code>; <code>registryInstaller.ts</code> adds <code>prompts</code> to its extraction allowlist so <code>systemPromptRef</code> files land. Dispatch wires the resolved agent (system prompt + <code>toolAllowlist</code> filter + handoff validation + confidence threshold) into the existing <code>core.dispatch</code>/orchestrator path. None of this is new wire — it is RFC 0003 §ImplNotes (<code>installAgents</code>) finally implemented, advertised behind this flag.</li>
+<li><strong>Cross-cut (CC):</strong> migrating the 21 core packs' <code>peerDependencies</code> from <code>host.agentRuntime</code> to <code>agents.manifestRuntime</code> (per §C) is a separate, version-bumping change coordinated with the impl plan; it is backward-safe via §B and is NOT required to land this RFC.</li>
+<li>Implementing the floor on one reference host closes RFC 0003's long-open acceptance criterion "Reference host installs and resolves at least one agent pack."</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[ ] Spec text merged (this file + §E cross-ref fix in <code>host-capabilities.md</code> + §C/§D prose in <code>node-packs.md</code>).</li>
+<li>[ ] <code>agents.manifestRuntime</code> added to <code>capabilities.schema.json</code>.</li>
+<li>[ ] <code>agent-manifest-runtime.test.ts</code> conformance scenario, capability-gated.</li>
+<li>[ ] CHANGELOG entry under <code>[Unreleased]</code>.</li>
+<li>[ ] One reference host advertises <code>agents.manifestRuntime</code> and loads + dispatches at least one manifest agent end-to-end (also closes RFC 0003's reference-host criterion).</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li>RFC 0002 (Agent Identity + <code>AgentRef</code> + §A14 toolAllowlist + §F confidence), RFC 0003 (Agent Packs — install + <code>systemPromptRef</code>/handoff resolution + <code>installAgents</code>/<code>AgentRegistry</code>), RFC 0007 (Dispatch), RFC 0037/0039/0061 (multi-agent execution + loop lifecycle).</li>
+<li><code>spec/v1/host-capabilities.md §host.agentRuntime</code>, <code>spec/v1/node-packs.md</code>, <code>spec/v1/capabilities.md</code>.</li>
+<li><code>docs/OPENWOP-AGENT-RUNTIME-ANALYSIS.md</code>, <code>docs/OPENWOP-AGENT-RUNTIME-HANDOFF.md</code>.</li>
+</ul><footer class="doc-edit"><a href="https://github.com/openwop/openwop/edit/main/RFCS/0070-agent-manifest-runtime.md" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>

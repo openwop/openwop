@@ -193,10 +193,10 @@
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0042</td></tr>
 <tr><td><strong>Title</strong></td><td>Experimental capability tier — optional <code>tier</code> field on capability advertisements + sunset rule + derived <code>openwop-experimental</code> profile</td></tr>
-<tr><td><strong>Status</strong></td><td><code>Draft</code></td></tr>
+<tr><td><strong>Status</strong></td><td><code>Active</code></td></tr>
 <tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
 <tr><td><strong>Created</strong></td><td>2026-05-22</td></tr>
-<tr><td><strong>Updated</strong></td><td>2026-05-22</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-29 (<code>Draft → Active</code> — steward acceptance, comment window waived per GOVERNANCE.md lazy consensus. Wire surface <strong>reconciled</strong>: §A/§B/§D normative prose landed in <code>capabilities.md</code> §"Capability stability tier" + §C <code>openwop-experimental</code> profile in <code>profiles.md</code>; the schema <code>tier</code>/<code>experimentalUntil</code> on <code>multiAgent.executionModel</code>, the <code>experimental-tier-shape</code> conformance scenario, the <code>experimentalGate</code> helper, and the INTEROP column were already on <code>main</code> — landed incidentally under commit <code>45678c49</code>, not a 0042 PR — and are now backed by prose. Extending <code>tier</code> to the other §"Per-RFC application" sub-blocks is a per-host follow-on SHOULD, not a graduation blocker.)</td></tr>
 <tr><td><strong>Affects</strong></td><td><code>spec/v1/capabilities.md</code> · <code>spec/v1/profiles.md</code> · <code>schemas/capabilities.schema.json</code> (optional <code>tier</code> enum on each capability sub-block) · <code>conformance/src/scenarios/experimental-tier-shape.test.ts</code> (new) · <code>INTEROP-MATRIX.md</code> (new column) · <code>CHANGELOG.md</code></td></tr>
 <tr><td><strong>Compatibility</strong></td><td><code>additive</code> per <code>COMPATIBILITY.md</code> §2.1 — new optional field with default <code>&quot;stable&quot;</code></td></tr>
 <tr><td><strong>Supersedes</strong></td><td>—</td></tr>

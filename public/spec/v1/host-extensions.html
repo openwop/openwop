@@ -182,6 +182,7 @@
       <li class="toc-sub"><a href="#event-payloads">Event payloads</a></li>
       <li class="toc-sub"><a href="#span-attributes">Span attributes</a></li>
       <li class="toc-top"><a href="#what-hosts-must-not-do">What hosts MUST NOT do</a></li>
+      <li class="toc-top"><a href="#exec-class-tools-arbitrary-command-execution-rfc-0069-draft">exec-class tools (arbitrary command execution) — RFC 0069 (Draft)</a></li>
       <li class="toc-top"><a href="#extension-lifecycle">Extension lifecycle</a></li>
       <li class="toc-top"><a href="#host-capability-surfaces">host.* capability surfaces</a></li>
       <li class="toc-top"><a href="#see-also">See also</a></li>
@@ -249,6 +250,7 @@
 <li><strong>Audit / observability sinks.</strong> Hosts wire their own log shipping, metrics export, OTel collectors.</li>
 <li><strong>Product-specific UI.</strong> openwop doesn't ship UI. Hosts build whatever UI fits their product.</li>
 <li><strong>Domain extensions.</strong> Workspace, project, canvas, persona, brand, knowledge base, agent personas — these are vendor-specific domain concepts (the namespaces in the example tables above carry one such vocabulary). Other hosts may have entirely different domain models.</li>
+<li><strong><code>exec</code>-class arbitrary command execution.</strong> Running a caller- or model-supplied command/shell/script/binary is a host concern, never a protocol concern — it lives only in a named host-extension scope per §"<code>exec</code>-class tools" below, with host-owned sandboxing, allowlisting, approval-gating, and audit.</li>
 </ul>
 <p>A host's domain extensions live in that host's own repo, not in this spec corpus.</p>
 <hr/>
@@ -298,6 +300,24 @@
 <li><strong>MUST NOT make the protocol's normative requirements optional via extension.</strong> A host that advertises <code>openwop-secrets</code> but doesn't honor <code>credentialRef</code> redaction is non-conformant regardless of any extension fields.</li>
 <li><strong>MUST NOT depend on clients honoring host-extension fields.</strong> Host extensions are opaque to clients by default.</li>
 </ul>
+<hr/>
+<h2 id="exec-class-tools-arbitrary-command-execution-rfc-0069-draft"><code>exec</code>-class tools (arbitrary command execution) — RFC 0069 (<code>Draft</code>)</h2>
+<p>An <strong><code>exec</code>-class tool</strong> is any capability that runs a caller- or model-supplied command, shell string, script, or binary on the host or in an environment the host controls (e.g., a "run this shell command", "execute this Python", or "spawn this process" tool).</p>
+<p><strong><code>exec</code>-class execution MUST NOT be a protocol-tier capability.</strong> Specifically, a conforming host MUST NOT:</p>
+<ul>
+<li>define an <code>exec</code>-class tool under a protocol-owned namespace (<code>core.<em></code> or <code>openwop.</em></code>) — neither as a node typeId, an envelope type, nor a built-in tool;</li>
+<li>advertise an <code>exec</code>-class capability under a protocol-owned <code>capabilities.*</code> flag;</li>
+<li>redefine an existing protocol-tier capability (<code>host.fs</code>, <code>host.mcp</code>, a node pack, a connector) to perform arbitrary command execution.</li>
+</ul>
+<p>A host that needs <code>exec</code>-class execution MUST expose it <strong>only</strong> under a named host-extension scope using the canonical vendor prefix (<code>x-host-&amp;lt;vendor&amp;gt;-exec</code>, or a <code>vendor.&amp;lt;org&amp;gt;.<em></code> / <code>private.&amp;lt;host&amp;gt;.</em></code> node-pack namespace per §"Canonical prefixes"). The host owns the safety controls end-to-end and SHOULD document, at minimum:</p>
+<ul>
+<li><strong>Sandboxing</strong> — exec MUST run isolated from the host process and other tenants (<a href="../../RFCS/0035-sandbox-execution-contract.md"><code>RFCS/0035</code></a> §A sandbox invariants are the recommended baseline; <code>node-pack-sandbox-no-process</code> already forbids protocol-tier sandboxed code from spawning processes, so any exec surface is by definition outside that sandbox and needs its own isolation).</li>
+<li><strong>Command allowlisting / no shell interpolation</strong> — the command set MUST be constrained; untrusted (LLM- or input-derived) content MUST NOT be interpolated into a shell string (the <code>prompt-injection-input-marker</code> / <code>node-pack-output-untrusted</code> discipline applied to the exec boundary).</li>
+<li><strong>Human approval gating</strong> — destructive or unbounded exec SHOULD require an <a href="../../RFCS/0051-approval-deployment-gate-primitive.md">RFC 0051</a> <code>approval</code> interrupt before execution.</li>
+<li><strong>Audit</strong> — every exec invocation SHOULD emit a host-internal audit record; the protocol does not normate its shape.</li>
+</ul>
+<p>Clients MUST treat any <code>x-host-&amp;lt;vendor&amp;gt;-exec</code> surface as opaque (per §"How extensions appear on the wire") and MUST NOT assume an exec extension is portable across hosts. A host MUST NOT depend on a client understanding its exec namespace.</p>
+<p><strong>Rationale.</strong> <code>exec</code> is the highest-severity surface in a workflow runtime: a single prompt-injection or input-validation lapse becomes remote code execution, and a shared exec surface is a cross-tenant blast radius. The protocol stays exec-free so that no conforming host inherits that surface by default; hosts that accept the risk own it explicitly, in their own namespace, with their own controls. See <a href="../../SECURITY/threat-model-prompt-injection.md"><code>SECURITY/threat-model-prompt-injection.md</code></a> §"<code>exec</code> tools" and the <code>exec-must-not-be-protocol-tier</code> invariant in <a href="../../SECURITY/invariants.yaml"><code>SECURITY/invariants.yaml</code></a>.</p>
 <hr/>
 <h2 id="extension-lifecycle">Extension lifecycle</h2>
 <p>A host extension MAY be:</p>

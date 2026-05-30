@@ -179,6 +179,7 @@
       <li class="toc-sub"><a href="#interaction-with-prompt-resolution-rfc-0029">Interaction with prompt resolution (RFC 0029)</a></li>
       <li class="toc-top"><a href="#host-promptlibrary">§host.promptLibrary</a></li>
       <li class="toc-top"><a href="#host-canvas">§host.canvas</a></li>
+      <li class="toc-top"><a href="#host-artifacttypes">§host.artifactTypes</a></li>
       <li class="toc-top"><a href="#host-chat">§host.chat</a></li>
       <li class="toc-top"><a href="#host-brand">§host.brand</a></li>
       <li class="toc-top"><a href="#host-kanban">§host.kanban</a></li>
@@ -210,6 +211,8 @@
       <li class="toc-sub"><a href="#error-codes-additive-to-rest-endpoints-md-common-error-codes">Error codes (additive to rest-endpoints.md §&quot;Common error codes&quot;)</a></li>
       <li class="toc-top"><a href="#host-scheduling">§host.scheduling</a></li>
       <li class="toc-top"><a href="#host-heartbeat">§host.heartbeat</a></li>
+      <li class="toc-top"><a href="#host-http">§host.http</a></li>
+      <li class="toc-sub"><a href="#safefetch-rfc-0076-b-pack-facing-optional">safeFetch (RFC 0076 §B — pack-facing, OPTIONAL)</a></li>
       <li class="toc-top"><a href="#host-toolhooks">§host.toolHooks</a></li>
       <li class="toc-top"><a href="#host-deadletter">§host.deadLetter</a></li>
       <li class="toc-top"><a href="#host-knowledge">§host.knowledge</a></li>
@@ -487,6 +490,38 @@ ctx.canvas.crossInvoke({
 <li><code>cross_canvas_circuit_open</code> — target canvas type circuit-broken</li>
 </ul>
 <hr/>
+<h2 id="host-artifacttypes">§host.artifactTypes</h2>
+<p><strong>Capability flag:</strong> <code>host.artifactTypes: { supported, store, render, export[], types? }</code></p>
+<p><strong>Used by:</strong> artifact-type packs (<code>kind: &quot;artifact-type&quot;</code>, RFC 0071; amended by RFC 0075 — see <a href="./artifact-type-packs.md"><code>artifact-type-packs.md</code></a>).</p>
+<p>Unlike most <code>host.*</code> capabilities, this one adds **no <code>ctx.artifactTypes.*</code> method**: it is an advertisement that changes how the host treats the artifact references already on the wire (<code>nodes[].artifact.typeId</code>, <code>WorkflowNode.artifactType</code>, <code>artifact.created.artifactType</code>). The facets are negotiated together, not dispatched independently:</p>
+<pre class="lang-jsonc"><code>&quot;host.artifactTypes&quot;: {
+  &quot;supported&quot;: true,
+  &quot;store&quot;:  true,           // persists registered artifacts + emits artifact.created
+  &quot;render&quot;: false,          // advisory; the spec defines no rendering surface
+  &quot;export&quot;: [&quot;pdf&quot;]         // export-format identifiers the host can materialize
+}</code></pre>
+<p><strong>Behavior (normative):</strong></p>
+<ul>
+<li>When <code>supported</code>, the host validates an artifact whose type matches a <strong>registered</strong> type — either an installed pack's <code>artifactTypeId</code> (<code>registrationSource: &quot;pack&quot;</code>) or a <strong>host-native</strong> type it validates against a host-known schema (<code>registrationSource: &quot;host&quot;</code>, RFC 0075) — against that type's schema before emitting <code>artifact.created</code> (and sets <code>registered: true</code> + <code>registrationSource</code>); unregistered types are accepted unvalidated with <code>registered: false</code> (the permanent first-class tier). See <code>artifact-type-packs.md</code> §"Binding the existing artifact surfaces".</li>
+<li>A host advertising <code>store: true</code> MUST persist registered artifacts and emit <code>artifact.created</code>.</li>
+<li>A host advertising <code>render: false</code> for a type it can <code>store</code> MUST still accept and store the artifact and MUST NOT fail the run for lack of a renderer — the cross-host store-without-render negotiation guarantee.</li>
+<li>The host MUST bound third-party schema compilation per <code>artifact-type-packs.md</code> §"Bounded schema compilation" (<code>artifact-schema-compile-bounded</code> invariant).</li>
+</ul>
+<p><strong>Per-type facets (<code>types</code>, RFC 0075).</strong> Capability is per-type. A host MAY declare a <code>types</code> map keyed by <code>artifactTypeId</code>; each entry overrides the global object and carries <code>{ validated, validation, schemaVersion, store, render, export }</code>. The global object is the fallback for any type not listed (<code>types</code> absent ⇒ host-global semantics; any facet absent ⇒ the global default — additive).</p>
+<pre class="lang-jsonc"><code>&quot;host.artifactTypes&quot;: {
+  &quot;supported&quot;: true, &quot;store&quot;: true, &quot;render&quot;: true, &quot;export&quot;: [&quot;pdf&quot;],
+  &quot;types&quot;: {
+    &quot;vendor.myndhyve.prd&quot;:   { &quot;validated&quot;: true,  &quot;validation&quot;: &quot;open&quot;,   &quot;schemaVersion&quot;: 1, &quot;render&quot;: true },
+    &quot;vendor.acme.cad.model&quot;: { &quot;validated&quot;: false, &quot;store&quot;: true, &quot;render&quot;: false }
+  }
+}</code></pre>
+<ul>
+<li><code>validated</code> (RFC 0075) is the <strong>runtime validation guarantee</strong> (<code>true</code> ⇒ the host validates this type before emit, so emits <code>registered: true</code>). <code>schemaVersions[&quot;…&quot;]</code> is only a **version *declaration***; the two are decoupled so a host can declare known versions without obligating per-type validation.</li>
+<li><code>validation</code> (<code>&quot;open&quot;</code>/<code>&quot;closed&quot;</code>) mirrors <code>ArtifactType.validation</code>, surfacing schema strictness in discovery so a consumer needn't fetch the schema to know whether to expect a closed-world shape (default <code>&quot;open&quot;</code> per <code>COMPATIBILITY.md</code> §2.1).</li>
+<li>A host emitting <code>registered: true</code> for a host-native (no-pack) type MUST serve its canonical schema URL (<code>artifact-type-packs.md</code> §"Schema distribution", P1-3) so the claim is downstream-verifiable.</li>
+</ul>
+<p>A pack MAY declare <code>peerDependencies: { &quot;host.artifactTypes&quot;: &quot;supported&quot; }</code>; the registry refuses registration against a host that does not advertise it.</p>
+<hr/>
 <h2 id="host-chat">§host.chat</h2>
 <p><strong>Capability flag:</strong> <code>host.chat: supported</code></p>
 <p><strong>Used by:</strong> <code>vendor.myndhyve.chat</code></p>
@@ -523,6 +558,7 @@ ctx.chat.updateCard({
   found: boolean,
 }&amp;gt;</code></pre>
 <p><strong>Required methods:</strong> <code>sendMessage</code>. <code>emitCard</code> + <code>updateCard</code> required when the host advertises <code>host.chat.cards: supported</code>.</p>
+<p><strong><code>host.chat.cardPacks</code> (RFC 0071 Phase 2).</strong> An additive sub-flag: a host advertising <code>host.chat.cardPacks: supported</code> resolves <strong>registered chat-card definitions</strong> (from installed <code>kind: &quot;card&quot;</code> packs — see <a href="./chat-card-packs.md"><code>chat-card-packs.md</code></a>) and executes them per that doc's §"Card execution": substitute the card's typed <code>inputs</code> into its <code>prompt.template</code>, route through <code>ctx.aiEnvelope.generate</code>, and (when the card declares an <code>outputArtifactType</code>) validate the result against the registered artifact type's schema before emitting <code>artifact.created</code>. A <code>WorkflowNode.cardType</code> (or <code>ctx.chat.emitCard</code> <code>cardType</code>) value SHOULD then reference a registered <code>cardTypeId</code>; existing free-form <code>cardType</code> strings remain valid. Card-input-derived prompt segments are <code>untrusted</code> and MUST propagate <code>meta.contentTrust: &quot;untrusted&quot;</code> per <code>chat-card-packs.md</code> §"Trust boundary". Requires <code>host.aiEnvelope: supported</code>.</p>
 <p><strong>Failure modes:</strong></p>
 <ul>
 <li><code>host_capability_missing</code> — <code>ctx.chat</code> absent</li>
@@ -744,10 +780,12 @@ ctx.webResearch.research({
 <h2 id="host-agentruntime">§host.agentRuntime</h2>
 <p><strong>Capability flag:</strong> <code>host.agentRuntime: supported</code></p>
 <p><strong>Used by:</strong> <code>vendor.myndhyve.agent-orchestration</code> (the <code>agent.*</code> typeIds)</p>
-<p>Operates on RFC 0007 / 0008 / 0011 protocol primitives — spawn, delegate, consensus, message-send, skill-invoke, swarm-execute.</p>
+<p>This is the heavyweight <strong>swarm/consensus superset</strong>. The minimal tier that makes a published agent pack runnable is <code>capabilities.agents.manifestRuntime</code> (RFC 0070) — loading a pack's <code>agents[]</code> into an <code>AgentRegistry</code> (RFC 0003) and dispatching one on the existing <code>core.dispatch</code>/orchestrator loop. A host advertising <code>host.agentRuntime: supported</code> <strong>implies</strong> <code>agents.manifestRuntime</code> (RFC 0070 §B), since <code>spawn({ manifestId })</code> instantiates a manifest agent. Hosts that only need single-agent / crew dispatch advertise the floor and omit this section. A multi-tenant host additionally advertises <code>agents.manifestRuntime.installScope: &#39;tenant&#39;</code> (RFC 0074) so <code>GET /v1/agents</code> is scoped to the caller's owner triple (default <code>&#39;host&#39;</code> = host-global, RFC 0072 §A behavior); see <code>node-packs.md</code> §"Inventory scope".</p>
+<p><strong>Related: per-tool authorization lives at the top level, not under <code>agents</code>.</strong> A host that runs a function-calling loop for manifest agents (the model requesting tools per RFC 0072 §B) advertises per-tool authorization, rate limiting, and the content-free tool-call audit trail via the <strong>top-level</strong> <code>Capabilities.toolHooks</code> block — see <a href="#hosttoolhooks">§host.toolHooks</a> — <em>not</em> via a sub-flag of <code>agents</code> next to <code>manifestRuntime</code>. <code>toolHooks</code> is transport- and runtime-agnostic (it covers MCP, HTTP egress, and native tool calls alike), so it is not nested under the agent-runtime tier.</p>
+<p>Operates on RFC 0002 / 0003 / 0007 protocol primitives — spawn, delegate, consensus, message-send, skill-invoke, swarm-execute.</p>
 <pre class="lang-typescript"><code>ctx.agentRuntime.spawn({
-  manifestId?: string,           // RFC 0008 AgentManifest reference
-  agentRef?: AgentRef,           // RFC 0007 inline definition
+  manifestId?: string,           // RFC 0003 AgentManifest reference
+  agentRef?: AgentRef,           // RFC 0002 AgentRef inline definition
   config?: Record&amp;lt;string, unknown&amp;gt;,
   idempotencyKey: string,
 }) → Promise&amp;lt;{ agentInstanceId: string, spawnedAt: string }&amp;gt;
@@ -1659,11 +1697,42 @@ ctx.storage.cache.delete({ key: string }) → Promise&amp;lt;{ deleted: boolean 
 </ul>
 <p>Additive — hosts that omit the block advertise no heartbeat. Verified by <code>heartbeat-capability-shape.test.ts</code> (shape, always runs) + <code>heartbeat-fires-once-per-tick.test.ts</code> / <code>heartbeat-idempotent-no-spam.test.ts</code> / <code>heartbeat-runtime-bound.test.ts</code> (capability-gated).</p>
 <hr/>
+<h2 id="host-http">§host.http</h2>
+<p><strong>Capability flag:</strong> <code>capabilities.httpClient.supported: true</code> — the host's outbound-HTTP surface. RFC 0076 §B (<code>Active</code>) adds the OPTIONAL <code>httpClient.safeFetch</code> sub-capability.</p>
+<p><strong>Used by:</strong> node egress (<code>core.http.request</code>-class nodes) and — when <code>safeFetch</code> is advertised — pack runtime code via <code>ctx.http.safeFetch</code>.</p>
+<p><strong>SSRF guard (normative — the <code>http-client-ssrf-guard</code> invariant).</strong> A host advertising <code>httpClient</code> MUST set <code>ssrfGuard: true</code> and a positive <code>maxResponseBodyBytes</code>. Before connecting, the host MUST resolve the target, <strong>reject</strong> (loopback / RFC 1918 private / link-local / cloud-metadata, e.g. <code>169.254.169.254</code>, <code>metadata.google.internal</code>) and <strong>pin the resolved IP for the connection</strong> so a re-resolution cannot redirect to a blocked address (DNS-rebinding defeat). This is the existing <code>http-client-ssrf-guard</code> protocol-tier invariant (<code>SECURITY/invariants.yaml</code>) — <strong>no new invariant</strong>; <code>safeFetch</code> is one more surface under it.</p>
+<h3 id="safefetch-rfc-0076-b-pack-facing-optional"><code>safeFetch</code> (RFC 0076 §B — pack-facing, OPTIONAL)</h3>
+<p>A host MAY advertise <code>capabilities.httpClient.safeFetch.supported: true</code> and expose <code>ctx.http.safeFetch(url, init?)</code> to pack runtime code — the pack-facing exposure of the SSRF-guarded client, so packs stop reaching for <code>node:dns</code> / raw sockets to do their own SSRF defense:</p>
+<pre class="lang-typescript"><code>ctx.http.safeFetch(
+  url: string,
+  init?: RequestInit,        // method/headers/body subset, host-clamped
+) → Promise&amp;lt;Response&amp;gt;        // standard fetch Response, or throws ssrf_blocked / fetch_failed</code></pre>
+<p><strong>Behavior (normative, when <code>safeFetch.supported</code>):</strong></p>
+<ul>
+<li>The host MUST apply the §host.http SSRF guard above (resolve→pin→connect; throw <code>ssrf_blocked</code> on a blocked address) and MUST enforce <code>maxResponseBodyBytes</code> + (when set) <code>requestTimeoutMs</code>.</li>
+<li>The host MUST refuse connection-upgrade attempts (<code>Connection: upgrade</code> / a <code>101</code> protocol switch) — these escape HTTP into a raw bidirectional socket and defeat the resolve→pin→connect boundary. Body-size / timeout / <code>Authorization</code>-forwarding policy are host tuning (the body cap + timeout reuse the <code>httpClient</code> fields above; an <code>Authorization</code> header a pack did not construct from a host-issued credential SHOULD NOT be forwarded — host policy; see RFC 0076 §B Q5).</li>
+<li>When <code>capabilities.toolHooks.prePostEvents: true</code> is <strong>also</strong> advertised, the host MUST emit the <code>agent.toolCalled</code> / <code>agent.toolReturned</code> pair (<code>transport: &#39;http&#39;</code>) for every <code>safeFetch</code> invocation — centralizing egress in the host must increase auditability, not become a quiet bypass. Sampling belongs at the storage/projection tier; the wire-level emission stays unconditional (RFC 0064 posture).</li>
+<li>A pack using <code>safeFetch</code> does <strong>not</strong> declare <code>net.dns</code> in <code>runtime.requires</code> for the fetch path (the host owns resolution); a pack that wants to run on hosts lacking the capability MAY feature-detect (<code>ctx.http?.safeFetch</code>) and fall back to its own <code>net.outbound</code> + <code>net.dns</code> path (declaring both). See RFC 0076 §A.</li>
+</ul>
+<p><code>safeFetch</code> composes with a deployment-level egress allowlist (e.g. Cloud NAT) as defense-in-depth: the host's resolve→pin→connect guard applies <em>before</em> the proxy sees the request.</p>
+<p><strong>Capability advertisement shape:</strong></p>
+<pre class="lang-json"><code>{
+  &quot;httpClient&quot;: {
+    &quot;supported&quot;: true,
+    &quot;ssrfGuard&quot;: true,
+    &quot;maxResponseBodyBytes&quot;: 10485760,
+    &quot;requestTimeoutMs&quot;: 30000,
+    &quot;safeFetch&quot;: { &quot;supported&quot;: true }
+  }
+}</code></pre>
+<p>Additive — hosts that omit <code>safeFetch</code> expose no <code>ctx.http.safeFetch</code>; packs feature-detect. Verified by <code>http-client-ssrf.test.ts</code> (advertisement contract, capability-gated) + <code>safefetch-behavior.test.ts</code> (SSRF block / rebinding / <code>Connection: upgrade</code> refusal / audit-when-both, seam-gated; soft-skips on 404 until a <code>safeFetch</code> host wires the seam) + <code>safefetch-live-audit.test.ts</code> (the audit-when-both MUST against the <strong>durable run event log</strong> rather than the seam's inline echo — a host advertising both <code>safeFetch</code> + <code>toolHooks.prePostEvents</code> that ships a production <code>ctx.http.safeFetch</code> with no audit hooks passes the inline seam but FAILS this scenario under <code>OPENWOP_REQUIRE_BEHAVIOR=true</code>; drives the <code>POST /v1/host/sample/http/safe-fetch-run</code> open seam, host-pending on 404). It asserts the pair on a guaranteed-<strong>blocked</strong> metadata URL as an egress-independent floor — the audit MUST is "for every safeFetch invocation," and a refused egress is itself audit-worthy — so the bar bites even on a host with no public egress, plus a best-effort public fetch for success-path coverage. This live-run scenario is the RFC 0076 §B → Accepted bar.</p>
+<hr/>
 <h2 id="host-toolhooks">§host.toolHooks</h2>
 <p><strong>Capability flag:</strong> <code>toolHooks.supported: true</code> <em>(advertised via top-level <code>Capabilities.toolHooks</code>; see <a href="capabilities.md#toolhooks">capabilities.md §toolHooks</a>)</em> — RFC 0064, <code>Active</code>.</p>
 <p><strong>Used by:</strong> per-tool authorization + rate limiting + a content-free tool-call audit trail, layered on the existing <code>agent.toolCalled</code> / <code>agent.toolReturned</code> events (RFC 0002). Generalizes the MCP-specific bridges across transports (<code>mcp</code> / <code>http</code> / <code>native</code>) — see <a href="mcp-integration.md">mcp-integration.md</a>. Reuses RFC 0049's <code>forbidden</code> error + <code>authorization-fail-closed</code> invariant and the existing <code>rate_limited</code> error; <strong>no new event type, error code, or SECURITY invariant</strong>.</p>
 <p><strong>Content-free audit (normative, when <code>prePostEvents: true</code>).</strong> For every external tool call, the host MUST populate the additive fields on the existing <code>callId</code>-paired events: <code>agent.toolCalled</code> gains <code>argsHash</code> (SHA-256 over RFC 8785 JCS-canonicalized args with resolved secrets <strong>already redacted</strong> per SR-1 — raw key material MUST NOT enter the hash input), <code>principal</code> (the RFC 0048 id; <code>core.system</code> for non-agent host egress — <code>agentId</code> stays REQUIRED, so non-agent calls use the reserved synthetic agent id), and <code>transport</code>; <code>agent.toolReturned</code> gains <code>status</code> (<code>ok</code>/<code>error</code>/<code>forbidden</code>/<code>rate_limited</code>) and <code>durationMs</code> (recorded, re-emitted verbatim on replay/<code>:fork</code>, never recomputed — <code>replay.md</code>).</p>
 <p><strong>Per-tool authorization (normative, when <code>perToolAuthorization: true</code>).</strong> A tool declares required scopes (<code>actions[].requiredScopes[]</code> in its connector/mount manifest, per RFC 0045). Before invoking, the host MUST check the run principal's RFC 0049 scopes and <strong>fail closed</strong>: if the principal lacks a scope <strong>or authorization cannot be evaluated</strong>, the host MUST NOT invoke the tool, MUST emit <code>agent.toolReturned { status: &#39;forbidden&#39; }</code>, and MUST surface the existing <code>forbidden</code> (403) error with <code>details.scope: &#39;tool&#39;</code> + <code>details.toolName</code> + <code>details.requiredScopes</code>. Absence of a decision is denial — this is the per-tool application of RFC 0049's <code>authorization-fail-closed</code> invariant.</p>
+<p><strong>Forbidden-at-load (clarification).</strong> A host MAY evaluate a manifest agent's <code>toolAllowlist</code> (RFC 0072 §D) <em>proactively at loop start</em> — before the first model call — and emit <code>agent.toolReturned { status: &#39;forbidden&#39; }</code> for an entry that resolves to no approved pack (unknown typeId, or a pack the workspace has not approved per RFC 0074). Because the model has not requested the tool, <strong>no <code>agent.toolCalled</code> precedes this row</strong>: the host MUST synthesize the <code>callId</code> (a stable derivation such as <code>forbidden:&amp;lt;sha256(ref)&amp;gt;</code> is RECOMMENDED so the row is replay-stable) and <strong>MAY omit <code>causationId</code></strong> — RFC 0002 §B requires <code>causationId</code> only to anchor a <code>toolReturned</code> to its paired <code>toolCalled</code>, and here there is no parent event. A host MUST NOT synthesize a placeholder <code>agent.toolCalled</code> <em>solely</em> to anchor the chain (it would assert a model request that never happened). Consumers reconstructing the causation graph MUST tolerate a <code>forbidden</code>/<code>rate_limited</code> <code>agent.toolReturned</code> whose <code>callId</code> has no matching <code>agent.toolCalled</code>.</p>
 <p><strong>Per-tool rate limiting (normative, when <code>perToolRateLimit: true</code>).</strong> The host MUST apply a token bucket keyed on <code>(principal, toolName)</code>; on exhaustion it MUST NOT invoke the tool, emits <code>agent.toolReturned { status: &#39;rate_limited&#39; }</code>, and surfaces the existing <code>rate_limited</code> (429, <code>Retry-After</code>) error with <code>details.scope: &#39;tool&#39;</code> — distinct from the HTTP-inbound limiter (unchanged), same envelope.</p>
 <p><strong>Capability advertisement shape:</strong></p>
 <pre class="lang-json"><code>{
@@ -1675,19 +1744,20 @@ ctx.storage.cache.delete({ key: string }) → Promise&amp;lt;{ deleted: boolean 
   }
 }</code></pre>
 <p>Additive — hosts that omit the block behave exactly as today (the <code>agent.toolCalled</code>/<code>agent.toolReturned</code> <code>required</code> arrays + <code>callId</code> pairing are unchanged; <code>version &amp;lt; toolHooks</code> consumers ignore the new fields). Verified by <code>tool-hooks-shape.test.ts</code> (shape, always runs) + <code>tool-hooks-content-free.test.ts</code> / <code>tool-hooks-authorization-fail-closed.test.ts</code> / <code>tool-hooks-rate-limit.test.ts</code> / <code>tool-hooks-secret-redaction.test.ts</code> (capability-gated).</p>
+<p><strong>Host implementation note — provider tool-name sanitization (non-normative).</strong> openwop tool ids carry <code>:</code> and <code>.</code> (<code>&amp;lt;scope&amp;gt;:&amp;lt;tool-id&amp;gt;</code>, e.g. <code>openwop:core.openwop.http.fetch</code>). The major model providers' function-calling APIs (Anthropic, OpenAI, Gemini) restrict tool names to <code>[A-Za-z0-9_-]</code> and reject those delimiters, so a host running a function-calling loop MUST map the openwop id to a provider-legal name on the request (a common choice is <code>:</code>/<code>.</code> → <code>_</code>, e.g. <code>openwop_core_openwop_http_fetch</code>) and reverse the mapping when matching the model's <code>tool_use</code> / <code>tool_calls</code> name back to the openwop tool. This mapping is purely a host↔provider adapter concern — it never appears on the openwop wire (the <code>agent.toolCalled.toolId</code> / <code>toolName</code> fields carry the canonical openwop id), so it is informative, not normative. It is called out here only to save the next implementer the rediscovery: a non-reversible or lossy sanitization (e.g. collapsing two distinct ids to the same provider name) silently breaks dispatch.</p>
 <hr/>
 <h2 id="host-deadletter">§host.deadLetter</h2>
 <p><strong>Capability flag:</strong> <code>deadLetter.supported: true</code> <em>(advertised via top-level <code>Capabilities.deadLetter</code>; see <a href="capabilities.md#deadletter">capabilities.md §deadLetter</a>)</em> — RFC 0053, <code>Draft</code>.</p>
-<p><strong>Used by:</strong> the engine&#39;s terminal-failure path. Gives a run/node that exhausts its retry policy a durable, inspectable <strong>sink</strong> instead of being logged and lost — so a poisoned run can be examined and replayed.</p>
+<p><strong>Used by:</strong> the engine's terminal-failure path. Gives a run/node that exhausts its retry policy a durable, inspectable <strong>sink</strong> instead of being logged and lost — so a poisoned run can be examined and replayed.</p>
 <p>This is the run-level dead-letter surface, <strong>distinct from</strong> <code>queueBus.deadLetterSupported</code> (RFC 0017), which dead-letters transport <em>messages</em> on a queue backend, not <em>runs</em> in the engine. It composes with the retry policy (RFC 0009) and fork/replay (RFC 0011).</p>
 <p><strong>Contract (normative).</strong> A host advertising <code>deadLetter.supported: true</code> MUST:</p>
-<p>1. On retry exhaustion (per the RFC 0009 retry policy), route the run/node to the dead-letter sink and emit <code>run.dead_lettered { runId, nodeId?, reason, attempts }</code>. The run&#39;s terminal <code>RunSnapshot.status</code> reflects failure; the run is <strong>not</strong> purged before <code>retentionDays</code>. 2. Keep the dead-lettered run <strong>fork-eligible</strong> per RFC 0011 for the retention window — it can be forked/replayed (e.g. after the underlying cause is fixed). 3. Purge the run after <code>retentionDays</code>; a fork attempt on a purged run returns the existing RFC 0011 not-found error.</p>
+<p>1. On retry exhaustion (per the RFC 0009 retry policy), route the run/node to the dead-letter sink and emit <code>run.dead_lettered { runId, nodeId?, reason, attempts }</code>. The run's terminal <code>RunSnapshot.status</code> reflects failure; the run is <strong>not</strong> purged before <code>retentionDays</code>. 2. Keep the dead-lettered run <strong>fork-eligible</strong> per RFC 0011 for the retention window — it can be forked/replayed (e.g. after the underlying cause is fixed). 3. Purge the run after <code>retentionDays</code>; a fork attempt on a purged run returns the existing RFC 0011 not-found error.</p>
 <p><code>run.dead_lettered</code> carries no credential or payload material beyond a redaction-safe <code>reason</code>.</p>
 <p><strong>Capability advertisement shape:</strong></p>
 <pre class="lang-json"><code>{
-  &amp;quot;deadLetter&amp;quot;: {
-    &amp;quot;supported&amp;quot;: true,
-    &amp;quot;retentionDays&amp;quot;: 30
+  &quot;deadLetter&quot;: {
+    &quot;supported&quot;: true,
+    &quot;retentionDays&quot;: 30
   }
 }</code></pre>
 <p>Additive — hosts that omit the block continue to fail runs with no sink, unaffected. Verified by <code>deadletter-capability-shape.test.ts</code> (shape, always runs) + <code>deadletter-retry-exhaustion.test.ts</code> (retry-exhaustion → <code>run.dead_lettered</code> + fork-eligibility, capability-gated).</p>
@@ -1695,10 +1765,10 @@ ctx.storage.cache.delete({ key: string }) → Promise&amp;lt;{ deleted: boolean 
 <h2 id="host-knowledge">§host.knowledge</h2>
 <p><strong>Capability flag:</strong> <code>host.knowledge: supported</code></p>
 <p><strong>Used by:</strong> market-intelligence packs, RAG-grounded copy packs, brief-enrichment packs.</p>
-<p>Knowledge-base retrieval. Routes queries through the host&#39;s RAG pipeline (embedding → vector search → optional re-rank). The host owns the corpus, the embedding model, and the access-control boundary; the pack supplies the query.</p>
+<p>Knowledge-base retrieval. Routes queries through the host's RAG pipeline (embedding → vector search → optional re-rank). The host owns the corpus, the embedding model, and the access-control boundary; the pack supplies the query.</p>
 <pre class="lang-typescript"><code>ctx.knowledge.retrieve({
   query: string,
-  workspaceId?: string,       // omit to use the run&amp;#39;s workspace
+  workspaceId?: string,       // omit to use the run&#39;s workspace
   collectionIds?: string[],   // scope to specific knowledge collections
   category?: string,          // optional category facet
   candidateLimit?: number,    // pre-rank candidate pool size; host caps the upper bound

@@ -181,6 +181,7 @@
       <li class="toc-sub"><a href="#openwop-fixtures">openwop-fixtures</a></li>
       <li class="toc-sub"><a href="#openwop-node-packs">openwop-node-packs</a></li>
       <li class="toc-sub"><a href="#openwop-discovery-auth-scoped">openwop-discovery-auth-scoped</a></li>
+      <li class="toc-sub"><a href="#openwop-experimental">openwop-experimental</a></li>
       <li class="toc-top"><a href="#derivation">Derivation</a></li>
       <li class="toc-top"><a href="#profile-semantics">Profile semantics</a></li>
       <li class="toc-top"><a href="#adding-a-profile">Adding a profile</a></li>
@@ -306,6 +307,12 @@
   ∧ (c.capabilities.discovery.authScoped.mode === &#39;extension-endpoint&#39;
         ⇒ c.capabilities.discovery.authScoped.endpointPath matches /^\//)</code></pre>
 <p>Three subtests in <code>conformance/src/scenarios/discovery.test.ts</code> validate the runtime behavior: capability shape, authenticated view satisfies the base schema, and the authorization-oracle probe (gated on <code>OPENWOP_TEST_UNAUTHORIZED_API_KEY</code>). A host passes <code>openwop-discovery-auth-scoped</code> when discovery passes the predicate AND those scenarios pass.</p>
+<h3 id="openwop-experimental"><code>openwop-experimental</code></h3>
+<p>A host advertising at least one capability sub-block as a preview (RFC 0042). Unlike the other profiles, this one signals <em>instability</em>, not a feature set: clients that require stable-only contracts filter on its <strong>negation</strong>.</p>
+<p><strong>Predicate:</strong> any object-valued capability sub-block carries <code>tier: &quot;experimental&quot;</code> (with its required <code>experimentalUntil</code> sunset date, <code>capabilities.md</code> §"Capability stability tier").</p>
+<pre class="lang-"><code>openwop-experimental(c) :=
+     ∃ sub-block b ∈ c.capabilities.* : b.tier === &#39;experimental&#39;</code></pre>
+<p>Derived purely from the existing <code>tier</code> field — no new wire field. The profile is intentionally coarse (host-level "some surface is preview"); per-capability stability is read directly off each sub-block's <code>tier</code>. A host with zero experimental capabilities does not derive this profile; a client depending only on <code>stable</code> surfaces requires <code>¬ openwop-experimental(c)</code> OR inspects the specific sub-blocks it consumes. The <code>experimental</code> capabilities themselves are enumerated, with their <code>experimentalUntil</code> dates, in <code>INTEROP-MATRIX.md</code> §"Experimental capabilities advertised". Conformance routing for experimental surfaces is the <code>experimentalGate</code> helper (<code>capabilities.md</code> §"Capability stability tier" → "Conformance routing"); the shape probes live in <code>conformance/src/scenarios/experimental-tier-shape.test.ts</code>.</p>
 <hr/>
 <h2 id="derivation">Derivation</h2>
 <p>The reference derivation for any conforming v1.x discovery payload <code>c</code> is:</p>
