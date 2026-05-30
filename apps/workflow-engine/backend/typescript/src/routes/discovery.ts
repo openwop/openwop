@@ -281,6 +281,15 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       supported: true,
       maxFileBytes: 65_536,
     },
+    // Kanban boards — sample host-extension (non-normative). Demonstrates
+    // the RFCS/0086 "named workflow agents" work surface: a card landing
+    // in a trigger column starts a workflow run (RFC 0086 §E keeps the
+    // board itself a host/vendor extension, not a normative protocol
+    // surface). Routes under `/v1/host/sample/kanban/*`.
+    kanban: {
+      supported: true,
+      features: ['boards', 'columns', 'cards', 'card-move-trigger'],
+    },
     supportedTransports: ['rest', 'sse'],
     stream: { modes: ['values', 'updates', 'messages', 'debug'] },
     // Conformance fixtures loaded from in-tree `conformance/fixtures/`

@@ -19,6 +19,7 @@ import { NotFoundPage } from './NotFoundPage.js';
 import { PromptLibraryPage } from './prompts/PromptLibraryPage.js';
 import { KeysPage } from './byok/KeysPage.js';
 import { MemoryInspectorPage } from './memory/MemoryInspectorPage.js';
+import { KanbanPage } from './kanban/KanbanPage.js';
 import { SignInButton } from './auth/SignInButton.js';
 import { NotificationBell } from './notifications/NotificationBell.js';
 import { NotificationPanel } from './notifications/NotificationPanel.js';
@@ -95,6 +96,7 @@ export function App() {
             label="Operate"
             items={[
               { label: 'Runs', to: '/runs', hint: 'Per-run event streams + replay' },
+              { label: 'Boards', to: '/boards', hint: 'Kanban work surface — card → run trigger' },
               { label: 'Inbox', to: '/inbox', hint: 'Notifications + approvals' },
               { label: 'Mission Control', to: '/mission', hint: 'Live fleet view across runs' },
               { label: 'Memory', to: '/memory', hint: 'Tenant-attributed memory writes' },
@@ -155,6 +157,7 @@ export function App() {
           <Route path="/prompts" element={<PromptLibraryPage />} />
           <Route path="/keys" element={<KeysPage />} />
           <Route path="/memory" element={<MemoryInspectorPage />} />
+          <Route path="/boards" element={<KanbanPage />} />
           {/* Agents tab — list + detail + create (E2) + install (E3)
               + fork (E4 also lands on /agents/new with ?fork= query). */}
           <Route path="/agents" element={<AgentsPage />} />
