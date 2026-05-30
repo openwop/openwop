@@ -27,7 +27,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { SCHEMAS_DIR } from '../lib/paths.js';
-import { isAgentPlatformPartial, isAgentPlatformFull, agentPlatformStatus } from '../lib/profiles.js';
+import { isAgentPlatformPartial, isAgentPlatformFull, agentPlatformStatus, agentPlatformSatisfiedTerms } from '../lib/profiles.js';
 
 const why = (specRef: string, requirement: string): string => `${specRef} — ${requirement}`;
 
@@ -84,7 +84,7 @@ describe('agent-platform-profile: full predicate + honest-advertisement (RFC 008
     authorization: { supported: true },
     agents: { manifestRuntime: { supported: true, installScope: 'tenant' }, liveRuntime: { supported: true } },
     memory: { supported: true, attribution: { supported: true } },
-    production: { debugBundleSupported: true },
+    debugBundle: { supported: true },
     triggerBridge: { supported: true },
     httpClient: { safeFetch: { supported: true }, egressPolicy: { supported: true } },
   };
@@ -107,6 +107,43 @@ describe('agent-platform-profile: full predicate + honest-advertisement (RFC 008
   it('eval/deploy/budget are NOT hard full terms (a full host without them is still full)', () => {
     const c = floorPayload(fullExtra); // no agents.evalSuite / agents.deployment / budget
     expect(isAgentPlatformFull(c), why('agent-platform-profile.md §B', 'platform-plus tier is advisory, not a hard full term')).toBe(true);
+  });
+});
+
+describe('agent-platform-profile: satisfiedTerms[] non-contiguous adoption (RFC 0085 §D, server-free)', () => {
+  it('a host honoring full-tier terms but failing floor terms is status none yet has a non-empty satisfiedTerms[]', () => {
+    // The real-host (MyndHyve) shape: RBAC + memory.attribution + tenant installScope (3 full terms)
+    // satisfied, while liveRuntime / toolCatalog / providerUsage / memory floor terms are absent.
+    const c = {
+      ...CORE,
+      agents: { manifestRuntime: { supported: true, installScope: 'tenant' } }, // no liveRuntime
+      authorization: { supported: true },
+      memory: { attribution: { supported: true } }, // attribution but NOT memory.supported
+      toolHooks: { supported: true },
+      httpClient: { safeFetch: { supported: true } },
+      prompts: { supported: true },
+      feedback: { supported: true },
+      replay: { supported: true },
+    } as Record<string, unknown>;
+    expect(agentPlatformStatus(c), why('agent-platform-profile.md §D', 'floor unmet ⇒ none')).toBe('none');
+    const terms = agentPlatformSatisfiedTerms(c);
+    expect(terms.includes('full:authorization'), why('§D', 'a satisfied full term is reported even at none')).toBe(true);
+    expect(terms.includes('full:memory.attribution')).toBe(true);
+    expect(terms.includes('full:tenant-installScope')).toBe(true);
+    expect(terms.includes('floor:agents.liveRuntime'), why('§D', 'an unmet floor term is NOT reported')).toBe(false);
+    expect(terms.length).toBeGreaterThan(0); // distinguishable from a 0/16 do-nothing host
+  });
+
+  it('a full host reports all sixteen terms satisfied', () => {
+    const c = floorPayload({
+      authorization: { supported: true },
+      agents: { manifestRuntime: { supported: true, installScope: 'tenant' }, liveRuntime: { supported: true } },
+      memory: { supported: true, attribution: { supported: true } },
+      debugBundle: { supported: true },
+      triggerBridge: { supported: true },
+      httpClient: { safeFetch: { supported: true }, egressPolicy: { supported: true } },
+    });
+    expect(agentPlatformSatisfiedTerms(c).length, why('§D', 'a full host satisfies all 16 terms')).toBe(16);
   });
 });
 

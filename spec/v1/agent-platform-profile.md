@@ -37,7 +37,7 @@ openwop-agent-platform-full(c) :=
   && c.authorization.supported === true                   // RFC 0049 — RBAC, fail-closed
   && c.agents.manifestRuntime.installScope === 'tenant'   // RFC 0074 — tenant scoping
   && c.memory.attribution.supported === true              // RFC 0057 — memory attribution
-  && c.production.debugBundleSupported === true           // RFC 0009 — debug bundle
+  && c.debugBundle.supported === true                     // RFC 0009 — debug bundle (capabilities.debugBundle, NOT production.*)
   && c.triggerBridge.supported === true                   // RFC 0083 — durable triggers
   && c.httpClient.egressPolicy.supported === true         // RFC 0079 — egress policy
 ```
@@ -63,6 +63,8 @@ A host reports one of three statuses (in its `conformance.md` + `INTEROP-MATRIX.
 A new **`openwop-agent-platform` badge** ([`public/badge/openwop-agent-platform.svg`](../../public/badge/openwop-agent-platform.svg), generated per `docs/IMPLEMENTATION-CERTIFICATION.md`) renders the status + suite version, so `app.openwop.dev` and any adopter can show "Agent Platform profile: partial / full" backed by `INTEROP-MATRIX.md` evidence. The badge asserts the *aggregate* claim; it does not replace per-capability badges.
 
 **Honest advertisement (the `production-profile.md` discipline):** a host MUST report `partial` (not `full`) until the full-tier scenarios actually pass — reporting `full` on shape alone is non-conformant by the §C aggregate-evidence rule.
+
+**`satisfiedTerms[]` — the richer interop signal (adoption is non-contiguous).** The flat `none`/`partial`/`full` ladder implicitly assumes *monotonic* adoption (floor before full), but a real host built feature-by-feature satisfies terms **out of order** — e.g. a host honoring RBAC (RFC 0049) + memory-attribution (RFC 0057) + tenant-scoping (RFC 0074) — three `full`-tier terms — while still missing `liveRuntime`/`toolCatalog` floor terms reads `none`, *identical to a do-nothing host*. To avoid understating such a host, a host SHOULD ALSO report `satisfiedTerms[]` — the exact list of floor/full term ids it satisfies (`floor:memory`, `full:authorization`, …) — alongside the flat status. The reference helper is `agentPlatformSatisfiedTerms` in `conformance/src/lib/profiles.ts`. The flat status remains the headline claim (and gates the badge); `satisfiedTerms[]` is the honest per-term breakdown a registry/Mission Control renders so a `none`-but-6/16 host is distinguishable from a `none`-and-0/16 one. (This non-contiguous-adoption finding came from the first live-host curl-verify of the predicate — RFC 0085 §UQ-followup.)
 
 ## Open spec gaps
 

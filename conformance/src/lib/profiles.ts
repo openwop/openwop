@@ -304,13 +304,14 @@ export function isAgentPlatformFull(c: DiscoveryPayload): boolean {
   if (!isAgentPlatformPartial(c)) return false;
   const agents = c.agents as { manifestRuntime?: { installScope?: unknown } } | undefined;
   const memory = c.memory as { attribution?: unknown } | undefined;
-  const production = c.production as { debugBundleSupported?: unknown } | undefined;
+  // Debug bundle is advertised at `capabilities.debugBundle.supported` (debug-bundle.md /
+  // RFC 0009), NOT under `production.*` — the production block only adds stricter truncation MUSTs.
   const httpClient = c.httpClient as { egressPolicy?: unknown } | undefined;
   return (
     blockSupported(c.authorization) &&
     agents?.manifestRuntime?.installScope === 'tenant' &&
     blockSupported(memory?.attribution) &&
-    production?.debugBundleSupported === true &&
+    blockSupported(c.debugBundle) &&
     blockSupported(c.triggerBridge) &&
     blockSupported(httpClient?.egressPolicy)
   );
@@ -321,6 +322,44 @@ export function agentPlatformStatus(c: DiscoveryPayload): 'none' | 'partial' | '
   if (isAgentPlatformFull(c)) return 'full';
   if (isAgentPlatformPartial(c)) return 'partial';
   return 'none';
+}
+
+/**
+ * The per-term satisfaction breakdown (RFC 0085 §D) — the richer interop signal
+ * alongside the flat `none`/`partial`/`full` ladder. Adoption is NON-CONTIGUOUS:
+ * a real host built feature-by-feature can satisfy `full`-tier terms (RBAC,
+ * memory-attribution, tenant-scoping) while still failing `floor` terms, so the
+ * flat status would understate it (reads identical to a do-nothing host). This
+ * returns exactly the term ids a host satisfies, so a `none` host honoring 6/16
+ * terms is distinguishable from one honoring 0/16.
+ */
+export function agentPlatformSatisfiedTerms(c: DiscoveryPayload): readonly string[] {
+  const agents = c.agents as { manifestRuntime?: { installScope?: unknown }; liveRuntime?: unknown } | undefined;
+  const httpClient = c.httpClient as { safeFetch?: unknown; egressPolicy?: unknown } | undefined;
+  const memory = c.memory as { attribution?: unknown } | undefined;
+  const replay = c.replay as { supported?: unknown } | undefined;
+  const nondet = c.nondeterminismPolicy as { declared?: unknown } | undefined;
+  const checks: ReadonlyArray<readonly [string, boolean]> = [
+    // floor
+    ['floor:agents.manifestRuntime', blockSupported(agents?.manifestRuntime)],
+    ['floor:agents.liveRuntime', blockSupported(agents?.liveRuntime)],
+    ['floor:toolCatalog', blockSupported(c.toolCatalog)],
+    ['floor:toolHooks', blockSupported(c.toolHooks)],
+    ['floor:httpClient.safeFetch', blockSupported(httpClient?.safeFetch)],
+    ['floor:providerUsage', blockSupported(c.providerUsage)],
+    ['floor:prompts', blockSupported(c.prompts)],
+    ['floor:memory', blockSupported(c.memory)],
+    ['floor:feedback', blockSupported(c.feedback)],
+    ['floor:replay-or-nondeterminism', replay?.supported === true || nondet?.declared === true],
+    // full (governance)
+    ['full:authorization', blockSupported(c.authorization)],
+    ['full:tenant-installScope', agents?.manifestRuntime?.installScope === 'tenant'],
+    ['full:memory.attribution', blockSupported(memory?.attribution)],
+    ['full:debugBundle', blockSupported(c.debugBundle)],
+    ['full:triggerBridge', blockSupported(c.triggerBridge)],
+    ['full:egressPolicy', blockSupported(httpClient?.egressPolicy)],
+  ];
+  return checks.filter(([, ok]) => ok).map(([id]) => id);
 }
 
 /**
