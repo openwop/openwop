@@ -51,6 +51,7 @@ import {
   type KanbanTriggerDirective,
 } from '../host/kanbanService.js';
 import { getRosterEntry } from '../host/rosterService.js';
+import { deliver, makeDedupKey, registerSubscription } from '../host/triggerBridgeService.js';
 
 const log = createLogger('routes.kanban');
 
@@ -112,46 +113,66 @@ async function startKanbanRun(
     attribution.agentId = roster.agentRef.agentId;
   }
 
-  const runId = randomUUID();
-  const now = new Date().toISOString();
-  const run: RunRecord = {
-    runId,
-    workflowId: trigger.workflowId,
-    tenantId,
-    status: 'pending',
-    inputs: null,
-    // Attribution block — the proto-`roster.run.initiated` payload
-    // (RFC 0086 §C). Content-free: ids + column names + persona only.
-    metadata: { kanban: attribution },
-    configurable: {},
-    createdAt: now,
-    updatedAt: now,
-  };
-  await storage.insertRun(run);
+  // RFC 0083: the card→run firing goes through a durable trigger subscription
+  // (dedup → retry → dead-letter → causation), not a direct executeRun. One
+  // `queue`-source subscription backs each board (§E: a vendor work surface
+  // bridges as the closest source kind).
+  const subscriptionId = `host:kanban:${trigger.boardId}`;
+  registerSubscription({ subscriptionId, tenantId, source: 'queue', label: `Kanban board ${trigger.boardId}` });
+  const dedupKey = makeDedupKey(subscriptionId, trigger.cardId, trigger.toColumnId);
+  attribution.triggerSource = 'queue';
+  attribution.triggerSubscriptionId = subscriptionId;
 
-  // Content-free attribution event on the new run's stream. Host-extension
-  // namespaced (`host.kanban.*`) until RFC 0086 §E promotes a normative
-  // `kanban.card.moved` behind a `host.kanban` capability — at which point
-  // this becomes the reference impl of that event. Mirrors the RFC 0086
-  // `roster.run.initiated` shape (ids + persona — no card body).
-  await getEventLog().append({
-    runId,
-    type: 'host.kanban.card.moved',
-    payload: attribution,
-  });
-
-  // Dispatch inline (sample single-instance) — same posture as POST /v1/runs.
-  setImmediate(() => {
-    executeRun(storage, run, wf.definition, {
-      policyResolver: hostSuite.providerPolicyResolver,
-    }).catch((err) => {
-      log.error('kanban_trigger_dispatch_failed', {
+  const result = await deliver({
+    subscriptionId,
+    dedupKey,
+    fire: async (deliveryId) => {
+      const runId = randomUUID();
+      const now = new Date().toISOString();
+      const run: RunRecord = {
         runId,
-        error: err instanceof Error ? err.message : String(err),
+        workflowId: trigger.workflowId,
+        tenantId,
+        status: 'pending',
+        inputs: null,
+        // Attribution block — the proto-`roster.run.initiated` payload
+        // (RFC 0086 §C). Content-free: ids + column names + persona only.
+        metadata: { kanban: attribution },
+        // RFC 0083 §C-3: the delivery id is the run's causationId so
+        // /ancestry resolves delivery → run.
+        causationId: deliveryId,
+        configurable: {},
+        createdAt: now,
+        updatedAt: now,
+      };
+      await storage.insertRun(run);
+      // Host-extension-namespaced attribution event (RFC 0086 §E).
+      await getEventLog().append({ runId, type: 'host.kanban.card.moved', payload: attribution });
+      // Dispatch inline (sample single-instance) — same posture as POST /v1/runs.
+      setImmediate(() => {
+        executeRun(storage, run, wf.definition, { policyResolver: hostSuite.providerPolicyResolver }).catch((err) => {
+          log.error('kanban_trigger_dispatch_failed', { runId, error: err instanceof Error ? err.message : String(err) });
+        });
       });
-    });
+      return runId;
+    },
   });
-  return { runId, attribution };
+
+  if ((result.outcome === 'delivered' || result.outcome === 'deduped') && result.runId) {
+    if (result.outcome === 'delivered') {
+      // RFC 0083 §C: the content-free delivery event on the new run's stream
+      // (subscription id + opaque dedup key + attempt + outcome + runId only).
+      await getEventLog().append({
+        runId: result.runId,
+        type: 'trigger.delivery.attempted',
+        payload: { subscriptionId, dedupKey, attempt: result.attempts, outcome: 'delivered', runId: result.runId },
+      });
+    }
+    // `deduped` returns the prior run (effectively-once) — no new run/event.
+    return { runId: result.runId, attribution };
+  }
+  // `skipped` (paused subscription) or `dead-lettered` (retries exhausted, no run).
+  return null;
 }
 
 export function registerKanbanRoutes(app: Express, deps: Deps): void {

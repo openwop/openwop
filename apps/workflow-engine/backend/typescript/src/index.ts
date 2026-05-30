@@ -76,6 +76,7 @@ import { createSelfHttpBridge } from './messaging/bridge.js';
 import { registerSchedulerRoutes } from './routes/scheduler.js';
 import { registerKanbanRoutes } from './routes/kanban.js';
 import { registerRosterRoutes } from './routes/roster.js';
+import { registerTriggerBridgeRoutes } from './routes/triggerBridge.js';
 import { registerOrgChartRoutes } from './routes/orgChart.js';
 
 const log = createLogger('workflow-engine');
@@ -347,6 +348,10 @@ export async function createApp(config: AppConfig): Promise<Express> {
   // Kanban boards — sample host-extension (non-normative). The card→run
   // trigger is the RFCS/0086 "named workflow agents" demo surface.
   registerKanbanRoutes(app, { storage, hostSuite });
+  // RFC 0083 durable trigger bridge — the deferred reference durable-delivery
+  // (subscription state machine + dedup/retry/dead-letter + the read surface).
+  // The Kanban card→run firing routes through it.
+  registerTriggerBridgeRoutes(app);
   // Inbound chat → workflow run bridge. Binds inbound messages to a workflow
   // (default deterministic `sample.demo.uppercase`; override via
   // OPENWOP_MESSAGING_WORKFLOW_ID) and enqueues the reply as outbound egress.
