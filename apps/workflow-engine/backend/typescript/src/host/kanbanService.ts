@@ -245,6 +245,34 @@ export function moveCard(
   return { card, trigger };
 }
 
+// --- live board-change fan-out (for the SSE board-events stream) ---
+//
+// A board mutation (card create/move/delete, board delete) notifies
+// in-process subscribers so an open SSE stream can tell connected clients to
+// refetch — multi-client live board refresh. Process-local + best-effort,
+// mirroring the eventLog subscribe/append pattern; a multi-instance host backs
+// this with a pub/sub bus.
+
+type BoardChangeSubscriber = (boardId: string) => void;
+const boardChangeSubscribers = new Set<BoardChangeSubscriber>();
+
+/** Subscribe to board-change notifications. Returns an unsubscribe fn. */
+export function subscribeBoardChanges(fn: BoardChangeSubscriber): () => void {
+  boardChangeSubscribers.add(fn);
+  return () => boardChangeSubscribers.delete(fn);
+}
+
+/** Notify subscribers that a board's contents changed. Best-effort. */
+export function notifyBoardChanged(boardId: string): void {
+  for (const fn of boardChangeSubscribers) {
+    try {
+      fn(boardId);
+    } catch {
+      /* swallow — a subscriber failure must not abort the mutation */
+    }
+  }
+}
+
 /** Test-only: drop all boards + cards. */
 export function __resetKanbanStore(): void {
   boards.clear();

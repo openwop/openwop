@@ -20,6 +20,8 @@ import {
   createBoard,
   createCard,
   moveCard,
+  notifyBoardChanged,
+  subscribeBoardChanges,
 } from '../src/host/kanbanService.js';
 
 describe('kanban service (pure)', () => {
@@ -69,6 +71,17 @@ describe('kanban service (pure)', () => {
     const board = createBoard({ tenantId: 't1', name: 'M' });
     const card = createCard({ boardId: board.id, columnId: 'doing', title: 'x' });
     expect(moveCard(card.id, 'todo')?.trigger).toBeNull();
+  });
+
+  it('fans out board-change notifications to subscribers (live refresh)', () => {
+    const seen: string[] = [];
+    const unsubscribe = subscribeBoardChanges((id) => seen.push(id));
+    notifyBoardChanged('board-1');
+    notifyBoardChanged('board-2');
+    expect(seen).toEqual(['board-1', 'board-2']);
+    unsubscribe();
+    notifyBoardChanged('board-3');
+    expect(seen).toEqual(['board-1', 'board-2']); // no longer notified after unsubscribe
   });
 });
 
@@ -172,5 +185,41 @@ describe('kanban routes (sqlite memory app)', () => {
   it('404s an unknown board', async () => {
     const res = await jsonFetch('/v1/host/sample/kanban/boards/board-does-not-exist');
     expect(res.status).toBe(404);
+  });
+
+  it('the board SSE events endpoint 404s an unknown board (before opening a stream)', async () => {
+    const res = await jsonFetch('/v1/host/sample/kanban/boards/board-nope/events');
+    expect(res.status).toBe(404);
+  });
+
+  it('opens a text/event-stream for an owned board and pushes board.changed on a card create', async () => {
+    const created = await jsonFetch<{ id: string }>('/v1/host/sample/kanban/boards', {
+      method: 'POST',
+      body: JSON.stringify({ name: 'SSE board' }),
+    });
+    const boardId = created.body.id;
+    const ac = new AbortController();
+    const res = await fetch(`${BASE}/v1/host/sample/kanban/boards/${boardId}/events`, {
+      headers: { authorization: `Bearer ${TOKEN}`, accept: 'text/event-stream' },
+      signal: ac.signal,
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('text/event-stream');
+    const reader = res.body!.getReader();
+    const decoder = new TextDecoder();
+    // Trigger a change, then read until we see the board.changed event.
+    await jsonFetch(`/v1/host/sample/kanban/boards/${boardId}/cards`, {
+      method: 'POST',
+      body: JSON.stringify({ title: 'live', columnId: 'todo' }),
+    });
+    let buf = '';
+    const deadline = Date.now() + 3000;
+    while (!buf.includes('board.changed') && Date.now() < deadline) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+    }
+    ac.abort();
+    expect(buf).toContain('board.changed');
   });
 });
