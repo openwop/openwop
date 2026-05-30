@@ -294,9 +294,13 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
     // The host runs the §B four-state machine + §C delivery model (dedup →
     // retry → dead-letter → causation) for `queue`-source subscriptions — the
     // Kanban card→run firing routes through it, emitting `trigger.delivery.
-    // attempted` on the delivered run (with `causationId` = the delivery id)
-    // and exposing subscription state + delivery attempts at
-    // `GET /v1/trigger-subscriptions`.
+    // attempted` on the delivered run (with `causationId` = the delivery id).
+    // Honest-advertisement note: the demo's run event log is run-scoped, so a
+    // run-LESS `trigger.subscription.state.changed` (operator pause, retry-
+    // exhaustion dead-letter — neither of which has a run) is recorded on the
+    // subscription + surfaced via `GET /v1/trigger-subscriptions[/{id}]`
+    // rather than emitted as a RunEvent. State + delivery attempts are durable
+    // (survive restart) per `hostExtPersistence`.
     triggerBridge: {
       supported: true,
       subscriptionStates: ['active', 'paused', 'failed', 'dead-lettered'],

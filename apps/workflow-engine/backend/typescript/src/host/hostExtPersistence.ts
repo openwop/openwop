@@ -11,6 +11,16 @@
  * schedules a single async write per tick) so the service APIs stay
  * synchronous; hydration on boot is awaited. This is sample-grade write-back
  * durability, not a transactional store.
+ *
+ * Sample-grade caveats (a production host would do better):
+ *  - DATA-LOSS WINDOW: a mutation is acknowledged to the caller BEFORE its
+ *    write-back flushes; a crash in that window loses it. A production store
+ *    writes synchronously within the request.
+ *  - COARSE GRANULARITY: a whole collection is one row keyed by `key`,
+ *    rewritten on every mutation (write amplification) and holding all
+ *    tenants' data in one blob. Reads filter by tenant in the service layer
+ *    (no cross-tenant leak), but at scale a production store keys per
+ *    entity/tenant.
  */
 
 import type { Storage } from '../storage/storage.js';
