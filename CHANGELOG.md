@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(schema): publish AgentOrgChart Department/Role/Member as named `$defs` (2026-05-30)
+
+Editorial schema-robustness follow-up to the RFC 0086/0087 read endpoints. `schemas/agent-org-chart.schema.json` now exposes its `Department`, `Role`, and `Member` subschemas as named `$defs` (the `departments`/`members` arrays and the roles array `$ref` them in place), and `schemas/org-chart-responsibility-view.schema.json` references `#/$defs/Department` + `#/$defs/Member` instead of the brittle positional `#/properties/departments/items` / `#/properties/members/items` JSON pointers. Pure refactor — identical validation behavior, byte-stable wire shape; additive (`COMPATIBILITY.md` §2.1). Hardens the cross-file dependency so a future restructure of the parent arrays cannot silently re-bind a dependent `$ref`.
+
 ### spec(api+sdk): RFC 0086/0087 roster + org-chart read endpoints (deferred Accepted-track surface) (2026-05-30)
 
 Pulls forward the read endpoints RFC 0086 + 0087 deferred to `Active → Accepted`, so a host has the full normative wire contract to implement against (the graduation itself stays adoption-gated on a non-steward host advertising the capability + the behavioral conformance):
