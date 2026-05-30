@@ -1483,9 +1483,9 @@
       "required": ["decision", "destination"],
       "properties": {
         "decision":     { "type": "string", "enum": ["allowed", "denied", "downgraded", "approval-required"], "description": "`allowed`: egress proceeds with the credential; `denied`: blocked (out-of-audience / expired / SSRF / unevaluable provenance — fail-closed); `downgraded`: proceeds WITHOUT the credential (anonymous egress, when host policy permits); `approval-required`: suspended pending an RFC 0051 approval interrupt." },
-        "destination":  { "type": "string", "minLength": 1, "description": "The egress destination (host/domain) evaluated. Content-free identifier — NOT the full URL with query." },
+        "destination":  { "type": "string", "minLength": 1, "description": "The egress destination **host/authority ONLY** (`api.stripe.com`) — NOT a path, query, or full URL (SR-1: a path/query can carry secrets; the host MUST strip them for this canonical content-free event). A host whose internal audit retains the path keeps that on its vendor `x-host-*` variant, never here." },
         "credentialId": { "type": "string", "minLength": 1, "description": "MAY — the provenance `credentialId` considered (absent for an anonymous / denied-pre-credential egress)." },
-        "reason":       { "type": "string", "description": "MAY — a short machine-stable reason code for a crisp Keys-page / debugger explanation. Conventional values: `out-of-audience` / `expired` / `ssrf-blocked` / `provenance-unevaluable` / `scope-denied` / `ok` (left open for host-specific reasons; the load-bearing field is `decision`)." },
+        "reason":       { "type": "string", "enum": ["ok", "out-of-audience", "expired", "ssrf-blocked", "provenance-unevaluable", "scope-denied", "policy-denied"], "description": "MAY — a machine-stable reason code (a CLOSED enum — a free-form reason is a leak vector that would let a host spill the blocked URL/host/header into it, defeating `egress-decision-no-secret-leak`). The load-bearing field is `decision`." },
         "auditCorrelationId": { "type": "string", "minLength": 1, "description": "MAY — correlates to the provenance descriptor + host audit log." }
       },
       "additionalProperties": true

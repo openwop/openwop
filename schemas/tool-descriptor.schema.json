@@ -48,7 +48,7 @@
     "safetyTier": {
       "type": "string",
       "enum": ["pure", "read", "write", "exec"],
-      "description": "REQUIRED. `pure`: no external side effects; `read`: reads external state; `write`: mutates external state; `exec`: arbitrary-command/`exec`-class — per RFC 0069 this MUST have `source: \"host-extension\"` (exec is never protocol-tier). A consumer uses this to gate/warn."
+      "description": "REQUIRED. The tool's DATA-EFFECT classification: `pure`: no external side effects; `read`: reads external state; `write`: mutates external state; `exec`: arbitrary-command/`exec`-class — per RFC 0069 this MUST have `source: \"host-extension\"` (exec is never protocol-tier). A consumer uses this to gate/warn. The host MUST ASSIGN `safetyTier` explicitly as per-tool metadata; it is NOT derivable from a permission / approval / risk tier — those are an ORTHOGONAL authorization axis (a read-only tool can be high-approval/restricted while being `safetyTier:\"read\"`). A host that mechanically maps its risk tier onto `safetyTier` mis-advertises."
     },
     "costHint": { "type": "string", "enum": ["low", "medium", "high"], "description": "MAY — advisory cost magnitude for planning UX. Non-normative." },
     "latencyHint": { "type": "string", "enum": ["low", "medium", "high"], "description": "MAY — advisory latency magnitude. Non-normative." }

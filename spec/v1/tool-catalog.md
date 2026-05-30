@@ -33,6 +33,10 @@ Both are additive optional endpoints; a host that omits `toolCatalog` returns `4
 
 `inputSchema`/`outputSchema` MAY be any JSON Schema 2020-12; for tools that feed an LLM tool-call, the host SHOULD (not MUST) constrain `inputSchema` to the RFC 0030 Tier-1 universal subset.
 
+**`safetyTier` is a host-assigned effect classification, not a derived projection.** `safetyTier` (`pure`/`read`/`write`/`exec`) describes a tool's *data effect*; it is **orthogonal** to any permission / approval / risk tier a host already has (those are an *authorization* axis — a read-only tool can be approval-restricted while being `safetyTier: "read"`). The host MUST assign `safetyTier` explicitly as per-tool metadata; mechanically mapping an existing risk/approval tier onto `safetyTier` mis-advertises the catalog. (`source` and `safetyTier` are likewise independent — `source` is the tool's *origin*, `safetyTier` its *effect*.)
+
+The catalog capability and the §D session-event capability are **separate honesty gates**: a host advertising `capabilities.toolCatalog.supported` WITHOUT `sessionLifecycle` is NOT expected to emit `tool.session.*` — it serves descriptors with single-shot (RFC 0064) call events only.
+
 ## §D — Tool-session lifecycle (optional, when `toolCatalog.sessionLifecycle: true`)
 
 Most tools are single-shot (one call → one result, already covered by RFC 0064's `agent.toolCalled`/`agent.toolReturned`). A *tool session* models a multi-step interaction (an MCP server holding a stateful connection; a connector OAuth dance mid-call). The lifecycle is **content-free observability** over the existing call events:

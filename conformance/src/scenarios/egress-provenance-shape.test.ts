@@ -102,6 +102,14 @@ describe('egress-provenance-shape: egress.decided event (RFC 0079 §B, server-fr
     expect(validate({ decision: 'allowed' }), why('RFC 0079 §B', 'destination is REQUIRED')).toBe(false);
   });
 
+  it('reason is a CLOSED enum — a free-form / URL-bearing reason is rejected (egress-decision-no-secret-leak)', () => {
+    expect(validate({ decision: 'denied', destination: 'attacker.example', reason: 'out-of-audience' }), why('egress-decision-no-secret-leak', 'a conventional reason code MUST validate')).toBe(true);
+    expect(
+      validate({ decision: 'denied', destination: 'attacker.example', reason: 'https://attacker.example/leak?token=sk-live-xxx' }),
+      why('egress-decision-no-secret-leak', 'a free-form / URL-bearing reason MUST be rejected (it would defeat the content-free guarantee)'),
+    ).toBe(false);
+  });
+
   it('the egressDecided $def declares no secret-value property', () => {
     const def = ((payloads.$defs as Record<string, { properties?: Record<string, unknown> }>).egressDecided.properties) ?? {};
     for (const p of Object.keys(def)) {
