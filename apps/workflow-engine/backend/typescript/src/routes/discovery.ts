@@ -396,6 +396,12 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
         // under `/v1/host/sample/roster`; tenant-scoped. Non-normative
         // until RFC 0086 reaches Active.
         roster: { supported: true, installScope: 'tenant' },
+        // RFCS/0087 reference impl — agent org-chart (departments/roles/
+        // reportsTo over roster members + responsibility roll-up). DESCRIPTIVE
+        // ONLY: an org edge confers no authority (org-position-no-authority-
+        // escalation). Sample host-extension under `/v1/host/sample/org-chart`;
+        // tenant-scoped. Non-normative until RFC 0087 reaches Active.
+        orgChart: { supported: true, installScope: 'tenant', departmentNesting: true, responsibilityView: true },
       },
       // RFC 0026 — `provider.usage` event support. Reference host emits
       // one `provider.usage` event per real LLM dispatch from
