@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0082 |
 | **Title** | Define an agent deployment lifecycle — a named-channel + version binding (`agentId@version` / `agentId@channel` / `agentId@latest`), a deployment state machine (draft / test / staged / active / paused / deprecated / rolled-back) with canary percentage and a rollback pointer, a `deployment.*` audit-event family, and the eval-gated + RBAC-gated promotion contract — composing RFC 0051 (approval gates), RFC 0049 (RBAC), and RFC 0081 (eval), with channel→concrete-version resolution pinned at run-start for replay determinism |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-29 |
-| **Updated** | 2026-05-29 |
+| **Updated** | 2026-05-30 (Draft → Active — wire surface landed after an `/architect` pass: `spec/v1/agent-deployment.md` + `agent-deployment.schema.json` + additive `channel` on `agent-ref.schema.json` (mutual-exclusion via `not`, propagating to `WorkflowNode.agent` which `$ref`s it) + `agents.deployment` capability + 4 content-free `deployment.*` events + additive `resolvedAgentVersion`/`resolvedChannel` on `agent.invocation.started` + always-on `agent-deployment-shape.test.ts` + `version-negotiation.md`/`node-packs.md` §sections. All 6 UQs resolved. The `POST /v1/agents/{agentId}/deployments` endpoint, SDK helpers, behavioral lifecycle scenario, and reference-host store are deferred to `Active → Accepted` per the RFC 0077 precedent.) |
 | **Affects** | NEW `schemas/agent-deployment.schema.json` (the per-(agentId, version) deployment record) · `schemas/agent-ref.schema.json` (additive optional `channel` alongside the existing exact `version` pin) · `schemas/workflow-definition.schema.json` (additive optional `channel` on the `WorkflowNode.agent` binding) · `schemas/run-event.schema.json` (additive `RunEventType`: `deployment.promoted` / `deployment.rolled-back` / `deployment.canary.adjusted` / `deployment.state.changed`) · `schemas/run-event-payloads.schema.json` (the four content-free deployment payloads) · `schemas/capabilities.schema.json` (additive optional `agents.deployment` block) · `spec/v1/agent-deployment.md` (NEW normative doc) · `spec/v1/node-packs.md` (additive §"Deployment channels" — channel→version resolution) · `spec/v1/version-negotiation.md` (additive §"Channel resolution + replay") · `api/openapi.yaml` (additive `GET` + `POST /v1/agents/{agentId}/deployments`) · `api/asyncapi.yaml` · `SECURITY/invariants.yaml` · `CHANGELOG.md` · `INTEROP-MATRIX.md` · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -124,7 +124,7 @@ Truthful advertisement (RFC 0031): a host that doesn't split traffic MUST advert
 
 ## Unresolved questions
 
-To decide before `Active`:
+**Resolved for `Active` (2026-05-30), validated by an `/architect` pass:** #1 deployment ops ride a lightweight management run (events + approval interrupt compose with the existing machinery; the run shape + endpoint defer to Accepted). **#2 + #3 are subsumed by the architect's load-bearing refinement:** channel resolution is pinned per-`(run, agentId, channel)` at FIRST resolution and reused within the run (not merely "at run.started") — the canary draw is performed once as part of that pin, recorded as `resolvedAgentVersion`, and never re-rolled on replay; `@latest` = highest active semver. #4 a version MAY be on multiple channels (`channels[]`). #5 RFC 0081 reserves `{evalRunId, requiredPassScore?}`, this RFC enforces (§E) — settled, 0081 is Active. #6 deployment channels follow `installScope` (tenant-scoped on a `'tenant'` host). **Architect-driven change to the SECURITY plan:** `deployment-promotion-fail-closed` is behavioral, so it ships at `reference-impl` tier (graduating to protocol at Accepted, RFC 0035 precedent) rather than as a vacuous always-on test; the structural content-free guarantee ships as the protocol-tier `deployment-event-no-content-leak` (real always-on public test). Original proposals retained below for the record:
 
 1. **Deployment ops as a run vs a synchronous endpoint.** Do `deployment.*` events ride a dedicated management *run* (with its own `runId`, replayable/auditable), or are they audit-log entries emitted by a synchronous `POST` that returns the new record? Proposed: a lightweight management run (so the events + approval interrupt + audit compose with the existing run/interrupt machinery). Confirm against `interrupt.md` (the gate is an interrupt).
 2. **Canary draw determinism on replay.** A canary traffic split is a random draw at `run.started`. Is the *draw outcome* (which version a given run got) recorded as a fact and replayed (yes — it must be, for §B), and is the *percentage* itself versioned per run? Proposed: the resolved version is the recorded fact (§B); the percentage is host-runtime state read at start. Confirm no replay divergence.
@@ -142,16 +142,16 @@ To decide before `Active`:
 
 ## Acceptance criteria
 
-Checklist for `Active → Accepted` (files at `Draft`):
+Landed at `Active` (2026-05-30) ✅ / deferred to `Active → Accepted` ⏳:
 
-- [ ] `spec/v1/agent-deployment.md` normative doc: §A binding, §B channel×replay pin, §C state machine + transitions, §D events, §E promotion contract, §F capability.
-- [ ] `agent-deployment.schema.json`; additive `channel` on `agent-ref.schema.json` + `workflow-definition.schema.json`; additive `agents.deployment` on `capabilities.schema.json`; four `deployment.*` RunEventTypes + payloads; additive `resolvedAgentVersion`/`resolvedChannel` on the RFC 0077 `agent.invocation.started` payload; `node-packs.md` §"Deployment channels"; `version-negotiation.md` §"Channel resolution + replay".
-- [ ] `GET` + `POST /v1/agents/{agentId}/deployments` in `openapi.yaml`; deployment channels in `asyncapi.yaml`.
-- [ ] SECURITY invariant `deployment-promotion-fail-closed` + public test; `authorization-fail-closed` reuse.
-- [ ] Conformance: `agent-deployment-shape.test.ts` (always-on) + `agent-deployment-lifecycle.test.ts` (gated) + fixture + `fixtures.md` + `coverage.md`.
-- [ ] CHANGELOG entry + INTEROP-MATRIX row.
-- [ ] All six Unresolved questions resolved (recorded in `Updated:`).
-- [ ] Reference host implements the deployment store + channel pin + the gated promotion + passes the scenario, OR the RFC explicitly defers reference-host implementation.
+- [x] `spec/v1/agent-deployment.md` normative doc: §A binding, §B channel×replay pin (per-run-pin refinement), §C state machine + transitions, §D events, §E promotion contract, §F capability.
+- [x] `agent-deployment.schema.json`; additive `channel` on `agent-ref.schema.json` (via `not`, propagating to `WorkflowNode.agent`); additive `agents.deployment` on `capabilities.schema.json`; four `deployment.*` RunEventTypes + content-free payloads; additive `resolvedAgentVersion`/`resolvedChannel` on the RFC 0077 `agent.invocation.started` payload; `node-packs.md` §"Deployment channels"; `version-negotiation.md` §"Channel resolution + replay".
+- [ ] ⏳ `GET` + `POST /v1/agents/{agentId}/deployments` in `openapi.yaml` + deployment channels in `asyncapi.yaml` (deferred — behavioral surface, RFC 0077 precedent).
+- [x] SECURITY: protocol-tier `deployment-event-no-content-leak` + its always-on public test; `deployment-promotion-fail-closed` at `reference-impl` tier (graduates to protocol at Accepted); `authorization-fail-closed` (RFC 0049) covers the structural fail-closed at Active.
+- [x] Conformance: `agent-deployment-shape.test.ts` (always-on) + `coverage.md` row. ⏳ `agent-deployment-lifecycle.test.ts` (gated/behavioral) + fixture + `fixtures.md` deferred.
+- [x] CHANGELOG entry. ⏳ INTEROP-MATRIX row (no host advertises `deployment` yet).
+- [x] All six Unresolved questions resolved (recorded in `Updated:` + above).
+- [ ] ⏳ Reference host implements the deployment store + channel pin + the gated promotion + passes the scenario — the explicit `Active → Accepted` gate.
 
 ## References
 

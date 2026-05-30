@@ -791,6 +791,14 @@ A workflow that references a typeId not provided by any registered pack MUST be 
 
 ---
 
+## Deployment channels
+
+> Additive v1.x extension (RFC 0082). Applies only to hosts advertising `capabilities.agents.deployment.supported: true`.
+
+The registry publishes **discrete semver tags** — which version of a pack (and its `agents[]`) *exists*. A **deployment channel** (`stable` / `canary` / the reserved `latest`) is a distinct, host-runtime concern — which version *serves*. The two MUST NOT be conflated: a published version may be `staged`, `paused`, or `rolled-back` and therefore not serve, and "latest published" is not "current production". A channel is a named pointer, resolved per-run and pinned as a recorded fact (`version-negotiation.md` §"Channel resolution + replay"), into the host's per-(agentId, version) deployment records. The deployment lifecycle, the channel→version resolution, the canary split, and the promotion contract are normative in [`agent-deployment.md`](./agent-deployment.md); the registry surface here is unchanged.
+
+---
+
 ## Open spec gaps
 
 | # | Gap | Owner |
