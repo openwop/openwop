@@ -11,6 +11,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0084): Budget, Quota, and Cost Policy — new Draft RFC (2026-05-29)
+
+Filed **RFC 0084** (`Draft`), the second Wave-4 RFC — the *enforceable* budget layer the protocol lacked (RFC 0026 *observes* spend after the fact; RFC 0058 caps *execution* — wall-clock + loop-iterations — but says nothing about *cost*). "Do not spend more than $1 on this research run" was previously unexpressible. It proposes:
+
+- A reserved **`budget`** run-options key (NEW `budget-policy.schema.json`): `maxTokens` / `maxCostUsd` / `maxToolCalls` / `maxRetries` + a `modelAllow[]`/`modelDeny[]` allowlist + `thresholdPercent` + `onExhaustion` (`fail`|`interrupt`), resolved as `min` across run/workflow/agent/project scopes then clamped to host ceilings (the RFC 0058 §A pattern).
+- A content-free **`budget.{reserved,consumed,threshold.crossed,exhausted}`** event family, with consumption **derived from existing events** (cost/tokens from RFC 0026 `provider.usage`, tool-calls from `agent.toolCalled`, retries from `node.retried` — a running projection, no double-counting / new measurement).
+- **Hard-stop enforcement reusing `cap.breached`** with four new `kind` values (`budget-tokens`/`budget-cost`/`budget-tool-calls`/`budget-retries` — the RFC 0058 precedent, no new failure event) → `run.failed{budget_exhausted}`, or (host policy) an approval interrupt to extend; plus **model allow/deny** at the RFC 0031 dispatch seam (`budget_model_denied`, composing RFC 0067's `provider_policy_denied`).
+- A host-advertised **`budget`** capability (`dimensions[]`/`enforce: hard|advisory`/`scopes[]`, truthful) + additive `limits` ceilings.
+- **The load-bearing RFC 0058 orthogonality seam (§E):** 0084 owns *spend* (tokens/cost/tool-calls/retries/model), 0058 owns *execution bounds* (wall-clock/loop) — 0084 **delegates** wall-time to `runTimeoutMs` and iterations to `maxLoopIterations` rather than redefining them (a `budget` policy with a wall-time field is a `400`); they share only the `cap.breached` overflow primitive + the resolution pattern, and no dimension is defined in both.
+
+Additive (`COMPATIBILITY.md` §2.1) — a new schema + a reserved `budget` key + four content-free RunEventTypes + four additive `cap.breached.kind` values (no `eventLogSchemaVersion` bump, RFC 0008 §K precedent) + an optional `budget` capability + two error codes; no existing field/event/endpoint changes (`cap.breached` only gains kinds; 0058/0026 are composed, not modified). Files the RFC document only; schema/events/capability/invariant + public tests land at `Draft → Active`. New SECURITY invariant (at `Active`): `budget-no-pricing-leak` (mirrors `provider-usage-no-credential-leak`). Five `Active`-gated Unresolved questions (`budget.consumed` frequency, cost-cap replay determinism, project/workflow/agent budget storage, `maxRetries` vs RFC 0009, interrupt-extension shape). RFC count 83 → 84; Draft 10 → 11.
+
 ### spec(rfc-0083): Durable Trigger + Channel Bridge Profile — new Draft RFC (2026-05-29)
 
 Filed **RFC 0083** (`Draft`), the first Wave-4 RFC ("make it operational") — a **profile** that composes the existing durable-inbound pieces (RFC 0052 scheduling, RFC 0053 dead-letter, RFC 0017 queue bus, `webhooks.md`, RFC 0040 causation, the 15 `core.openwop.triggers` shapes) into one uniform contract, rather than inventing a parallel trigger stack. Today webhooks are *signed but best-effort* (circuit-breaker, no durable retry), trigger fan-out is unwired, and there's no subscription state machine / dedup / trigger→run causation. It proposes:
