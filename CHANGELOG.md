@@ -11,6 +11,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0083): Durable Trigger + Channel Bridge Profile — new Draft RFC (2026-05-29)
+
+Filed **RFC 0083** (`Draft`), the first Wave-4 RFC ("make it operational") — a **profile** that composes the existing durable-inbound pieces (RFC 0052 scheduling, RFC 0053 dead-letter, RFC 0017 queue bus, `webhooks.md`, RFC 0040 causation, the 15 `core.openwop.triggers` shapes) into one uniform contract, rather than inventing a parallel trigger stack. Today webhooks are *signed but best-effort* (circuit-breaker, no durable retry), trigger fan-out is unwired, and there's no subscription state machine / dedup / trigger→run causation. It proposes:
+
+- A **`triggerBridge`** capability + an additive optional **`webhooks.durable`** flag (absent ⇒ the existing `webhooks.md` best-effort contract is **explicitly unchanged**; `true` ⇒ webhooks join the durable model — durability is opt-in, the default is not relaxed).
+- Four standardized **subscription states** (`active`/`paused`/`failed`/`dead-lettered`; the `webhooks.md` circuit-breaker generalized) on a NEW `trigger-subscription.schema.json`, with `failed → dead-lettered` reusing the RFC 0053 sink + `retentionDays`.
+- A **delivery model** (§C): per-attempt tracking, a source-derived `dedupKey` (the `idempotency.md` Layer-1 model applied to inbound triggers — at-least-once becomes effectively-once), a `retryPolicy` with backoff, dead-letter on exhaustion, and an explicit **trigger→run causation** link (the delivery id as `causationId` on the resulting `run.started`, reusing RFC 0040 + `/ancestry`). Two content-free events: `trigger.subscription.state.changed` + `trigger.delivery.attempted`.
+- A derived **`openwop-trigger-bridge`** profile (`profiles.md` + `conformance/src/lib/profiles.ts`): `triggerBridge.supported` + a `deadLetter` sink + at least one durable inbound source (queue / durable-webhooks / scheduling).
+- Channels (Slack/Discord/email/SMS) **stay host/vendor extensions** per the Non-Goal (§E) — only their *bridge into an openwop run* (register a subscription, emit the delivery events, set the causationId) is uniform.
+
+Additive (`COMPATIBILITY.md` §2.1) — a new subscription schema + an optional `triggerBridge` block + an optional `webhooks.durable` (best-effort preserved as default) + two content-free RunEventTypes + a derived profile (append-only per `profiles.md`); no existing primitive (0052/0053/0017/webhooks/0040) is changed — they're composed, not modified. The trigger→run causation reuses RFC 0040's existing field (no new id-space). Files the RFC document only; the schema/events/capability/profile-predicate + public tests land at `Draft → Active`. Five `Active`-gated Unresolved questions (subscription management endpoints vs nodes, `dedupKey` retention, profile-predicate strictness, dead-lettered causation termination, `paused` schedule vs webhook semantics). RFC count 82 → 83; Draft 9 → 10.
+
 ### spec(rfc-0082): Agent Deployment Lifecycle — new Draft RFC (2026-05-29)
 
 Filed **RFC 0082** (`Draft`), the second Wave-3 RFC — the lifecycle that turns "an agent is installed" (RFC 0070) into "promote draft → production worker, canary it, roll back, and bind a workflow to the *stable channel* not a frozen version." Today `AgentRef.version` is an exact pin and the registry has no channel concept, so "use the current production support-resolver" can only be a stale hard-coded version or an undeterministic omission. It proposes:
