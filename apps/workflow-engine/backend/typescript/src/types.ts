@@ -51,6 +51,10 @@ export interface RunRecord {
    *  one or more suspended branches. JSON-encoded `SerializedSnapshot`
    *  (see executor/executor.ts). Absent for non-DAG (legacy linear) runs. */
   schedulerSnapshot?: string;
+  /** RFC 0040 / RFC 0083 §C-3 — optional id of the event/delivery that caused
+   *  this run. When set, it is stamped as `run.started`'s `causationId` so
+   *  `/ancestry` resolves the cause → run (e.g. a trigger delivery → run). */
+  causationId?: string;
 }
 
 /** Persisted run event with monotonic sequence per run. */

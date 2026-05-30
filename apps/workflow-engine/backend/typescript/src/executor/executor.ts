@@ -678,7 +678,10 @@ export async function executeRun(
   const tracer = trace.getTracer('openwop.workflow-engine-sample');
 
   if (!isResume) {
-    await eventLog.append({ runId: run.runId, type: 'run.started', payload: { workflowId: run.workflowId } });
+    // RFC 0040 / RFC 0083 §C-3: when the run was initiated by an inbound
+    // trigger delivery, run.started carries the delivery id as causationId so
+    // /ancestry resolves delivery → run. Absent for directly-created runs.
+    await eventLog.append({ runId: run.runId, type: 'run.started', payload: { workflowId: run.workflowId }, causationId: run.causationId });
     await storage.updateRun(run.runId, { status: 'running' });
   } else {
     await eventLog.append({

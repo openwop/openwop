@@ -290,6 +290,20 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       supported: true,
       features: ['boards', 'columns', 'cards', 'card-move-trigger'],
     },
+    // RFC 0083 durable trigger bridge (the deferred reference durable-delivery).
+    // The host runs the §B four-state machine + §C delivery model (dedup →
+    // retry → dead-letter → causation) for `queue`-source subscriptions — the
+    // Kanban card→run firing routes through it, emitting `trigger.delivery.
+    // attempted` on the delivered run (with `causationId` = the delivery id)
+    // and exposing subscription state + delivery attempts at
+    // `GET /v1/trigger-subscriptions`.
+    triggerBridge: {
+      supported: true,
+      subscriptionStates: ['active', 'paused', 'failed', 'dead-lettered'],
+      dedup: true,
+      retryPolicy: { maxAttempts: 3, backoff: 'fixed' },
+      sources: ['queue'],
+    },
     supportedTransports: ['rest', 'sse'],
     stream: { modes: ['values', 'updates', 'messages', 'debug'] },
     // Conformance fixtures loaded from in-tree `conformance/fixtures/`
