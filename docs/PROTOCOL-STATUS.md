@@ -8,15 +8,15 @@
 | Surface | Current value | Source |
 |---|---:|---|
 | Spec prose documents | 50 | `spec/v1/*.md` |
-| JSON Schemas | 53 | `schemas/*.schema.json` |
-| OpenAPI operations | 42 | `api/openapi.yaml` |
+| JSON Schemas | 55 | `schemas/*.schema.json` |
+| OpenAPI operations | 46 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 301 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 87 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## OpenAPI Operations
 
-`bulkCancelRuns`, `cancelRun`, `createAnnotation`, `createPromptTemplate`, `createRun`, `deletePromptTemplate`, `deleteTestPackVersion`, `deleteWorkspaceFile`, `diffRun`, `forkRun`, `getAgent`, `getArtifact`, `getCapabilities`, `getEvalSummary`, `getOpenApiSpec`, `getPromptTemplate`, `getRun`, `getRunAncestry`, `getTestPackSignature`, `getTestPackTarball`, `getWorkflow`, `getWorkspaceFile`, `inspectInterruptByToken`, `listAgentDeployments`, `listAgents`, `listAnnotations`, `listPromptTemplates`, `listWorkspaceFiles`, `pauseRun`, `pollRunEvents`, `putTestPackTarball`, `putWorkspaceFile`, `registerWebhook`, `renderPromptTemplate`, `resolveInterruptByRun`, `resolveInterruptByToken`, `resumeRun`, `streamRunEvents`, `transitionAgentDeployment`, `unregisterWebhook`, `updatePromptTemplate`, `verifyAuditLog`
+`bulkCancelRuns`, `cancelRun`, `createAnnotation`, `createPromptTemplate`, `createRun`, `deletePromptTemplate`, `deleteTestPackVersion`, `deleteWorkspaceFile`, `diffRun`, `forkRun`, `getAgent`, `getAgentOrgChart`, `getAgentOrgChartDepartment`, `getAgentRosterEntry`, `getArtifact`, `getCapabilities`, `getEvalSummary`, `getOpenApiSpec`, `getPromptTemplate`, `getRun`, `getRunAncestry`, `getTestPackSignature`, `getTestPackTarball`, `getWorkflow`, `getWorkspaceFile`, `inspectInterruptByToken`, `listAgentDeployments`, `listAgentRoster`, `listAgents`, `listAnnotations`, `listPromptTemplates`, `listWorkspaceFiles`, `pauseRun`, `pollRunEvents`, `putTestPackTarball`, `putWorkspaceFile`, `registerWebhook`, `renderPromptTemplate`, `resolveInterruptByRun`, `resolveInterruptByToken`, `resumeRun`, `streamRunEvents`, `transitionAgentDeployment`, `unregisterWebhook`, `updatePromptTemplate`, `verifyAuditLog`
 
 ## RFC Status
 
