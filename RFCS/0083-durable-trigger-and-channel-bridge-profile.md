@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0083 |
 | **Title** | Define an `openwop-trigger-bridge` profile that composes the existing scheduling (RFC 0052), dead-letter (RFC 0053), queue-bus (RFC 0017), webhook, and cross-host-causation (RFC 0040) primitives into a uniform durable inbound-work contract — standardizing trigger-subscription states (active / paused / failed / dead-lettered), a delivery-attempt + dedup-key + retry-policy model, an opt-in durable-webhook mode, and an explicit trigger-to-run causation link — while keeping individual channels (Slack / email / SMS) as host/vendor extensions |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-29 |
-| **Updated** | 2026-05-29 |
+| **Updated** | 2026-05-30 (`Draft → Active` — steward acceptance, comment window waived per `GOVERNANCE.md` single-maintainer lazy consensus after MyndHyve (non-steward) wire-shape review; wire shapes now locked. All 5 Unresolved questions resolved as proposed: UQ1 unified `GET /v1/trigger-subscriptions` read surface + per-source management (don't move `POST /v1/webhooks`); UQ2 dedup reuses the `idempotency.md` Layer-1 ≥24h floor + optional override; UQ3 the profile accepts any one durable source (the OR is intentional — a queue-only host is legitimately in-profile); UQ4 a dead-lettered delivery's `trigger.delivery.attempted{outcome:"dead-lettered"}` is the terminal record (no run), the RFC 0053 sink holds it; UQ5 `paused` skips ticks (no catch-up), resume fresh (RFC 0052 §B missed-tick "skip"). NEW `spec/v1/trigger-bridge.md` + `schemas/trigger-subscription.schema.json` + `capabilities.{triggerBridge, webhooks.durable}` + the two content-free `trigger.*` events + the derived `openwop-trigger-bridge` profile (`profiles.md` + `profiles.ts`) + `webhooks.md` §"Durable delivery (opt-in)" + `trigger-bridge-shape.test.ts` landed. The behavioral delivery scenario, the subscription-management OpenAPI/AsyncAPI surface, and the reference-host durable-delivery implementation deferred to `Active → Accepted`.) |
 | **Affects** | NEW `spec/v1/trigger-bridge.md` (the profile + the subscription/delivery contract) · NEW `schemas/trigger-subscription.schema.json` (the durable subscription record) · `schemas/run-event.schema.json` (additive `RunEventType`: `trigger.subscription.state.changed` / `trigger.delivery.attempted`) · `schemas/run-event-payloads.schema.json` (the two content-free payloads) · `schemas/capabilities.schema.json` (additive optional `triggerBridge` block + additive optional `webhooks.durable`) · `spec/v1/profiles.md` (derived `openwop-trigger-bridge` profile) · `conformance/src/lib/profiles.ts` (the derivation predicate) · `spec/v1/webhooks.md` (additive §"Durable delivery (opt-in)") · `api/openapi.yaml` (additive subscription-management + delivery-inspection endpoints) · `api/asyncapi.yaml` · `CHANGELOG.md` · `INTEROP-MATRIX.md` · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -122,7 +122,7 @@ Per the recommendation's Non-Goals: this RFC does **not** standardize Slack/Disc
 
 ## Unresolved questions
 
-To decide before `Active`:
+**All five resolved at `Draft → Active` (2026-05-30) as proposed below — recorded in `Updated:`.** Retained for the rationale trail:
 
 1. **Subscription management as endpoints vs nodes.** Webhooks register via `POST /v1/webhooks` (`webhooks.md`); schedules/queues are trigger *nodes*. Does the subscription state machine get a unified `GET/PATCH /v1/trigger-subscriptions/{id}` surface, or does each source keep its own management path with the *state vocabulary* unified? Proposed: a unified read surface (`GET /v1/trigger-subscriptions`) + per-source management (don't move `POST /v1/webhooks`). Confirm against `rest-endpoints.md`.
 2. **`dedupKey` retention window.** Tie to `idempotency.md` Layer-1 retention (≥24h), or a separate `triggerBridge.dedupRetention`? Proposed: reuse the Layer-1 ≥24h floor with an optional override. Confirm.

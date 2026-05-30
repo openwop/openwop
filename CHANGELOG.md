@@ -11,6 +11,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0083): Durable Trigger + Channel Bridge Profile — Draft → Active (2026-05-30)
+
+Promoted **RFC 0083** `Draft → Active` — composes the existing scheduling (RFC 0052), dead-letter (RFC 0053), queue-bus (RFC 0017), webhook, and cross-host-causation (RFC 0040) primitives into one uniform durable inbound-work contract, **additively** (no existing primitive changed; the best-effort webhook contract preserved as default). The shape landed atomically:
+
+- NEW `spec/v1/trigger-bridge.md` (normative §A capability + durable-webhook opt-in / §B subscription states / §C delivery model — attempts/dedup/retry/causation / §D profile / §E channels-stay-extensions / §F `paused` semantics; Status `DRAFT v1.x`).
+- NEW `schemas/trigger-subscription.schema.json` (`TriggerSubscription`: `subscriptionId`/`source`/`state` four-state machine + `dedupEnabled`/`retryPolicy` + the webhooks.md register keys; `additionalProperties:false`, content-free).
+- Additive optional `capabilities.triggerBridge` (`supported` + `subscriptionStates`/`dedup`/`retryPolicy`/`sources`) + a formal `capabilities.webhooks` block with the additive opt-in `webhooks.durable` (absent ⇒ the best-effort `webhooks.md` contract, explicitly unchanged).
+- Two content-free `trigger.subscription.state.changed` + `trigger.delivery.attempted` RunEventTypes (`run-event.schema.json` enum 83 → 85) + their `$defs` (closed `state`/`outcome` enums) + `_typeIndex`; payloads self-count 83 → 85.
+- Derived `openwop-trigger-bridge` profile in `spec/v1/profiles.md` + the `isTriggerBridge` predicate + derivation in `conformance/src/lib/profiles.ts` (`triggerBridge.supported` + `deadLetter.supported` + a durable source: `queueBus` OR `webhooks.durable` OR `scheduling`).
+- `spec/v1/webhooks.md` §"Durable delivery (opt-in)" (the durable mode; best-effort default preserved; the "durable retries" future-work item now realized).
+- Always-on server-free `trigger-bridge-shape.test.ts` (subscription round-trip + the four-state vocab + the two content-free `trigger.*` payloads + RunEventType-enum membership + the capability shape + the `openwop-trigger-bridge` derivation incl. the no-sink negative) + `coverage.md` row.
+
+All five `Active`-gated Unresolved questions resolved as proposed (UQ1 unified `GET /v1/trigger-subscriptions` read surface + per-source management, don't move `POST /v1/webhooks`; UQ2 dedup reuses the `idempotency.md` Layer-1 ≥24h floor with optional override; UQ3 the profile accepts any one durable source — the OR is intentional; UQ4 a dead-lettered delivery's `trigger.delivery.attempted{outcome:"dead-lettered"}` is the terminal record, no run, the RFC 0053 sink holds it; UQ5 `paused` skips ticks, no catch-up, resume fresh). Additive (`COMPATIBILITY.md` §2.1) — two additive content-free RunEventTypes (no `eventLogSchemaVersion` bump), one new schema, two additive capability blocks, a derived profile; channels stay vendor extensions (§E). **Deferred to `Active → Accepted`**: the behavioral `trigger-bridge-delivery.test.ts`, the subscription-management OpenAPI/AsyncAPI surface, the INTEROP-MATRIX profile column, and the reference-host durable-delivery state machine. Counts: RFC Active 13 → 14 / Draft 8 → 7; prose specs 44 → 45; JSON Schemas +1; RunEventType variants 83 → 85; profiles +1 (`openwop-trigger-bridge`); conformance scenario files +1.
+
 ### spec(rfc-0079): Credential Provenance + Egress Policy — Draft → Active (2026-05-30)
 
 Promoted **RFC 0079** `Draft → Active` — answers the credential↔destination-binding question RFC 0076 §B explicitly parked (a confused-deputy / credential-exfiltration class the SSRF guard, which checks the *URL* not the *credential*, doesn't catch). The shape landed atomically:

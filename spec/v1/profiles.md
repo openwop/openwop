@@ -233,6 +233,26 @@ openwop-memory(c) :=
 
 Derived purely from existing + the RFC 0080 additive fields — no new wire field beyond the §A dimensions. The degraded-projection contract (RFC 0080 §C: `GET /v1/agents` surfaces `memoryDegraded` when an agent's `memoryShape` exceeds the host's reconciled model) is validated by `memory-degraded-projection.test.ts` (gated on `agents.manifestRuntime` + `memory`); the additive field shapes are validated always-on by `memory-capability-model-shape.test.ts`.
 
+### `openwop-trigger-bridge`
+
+The host implements the durable inbound-work contract per `trigger-bridge.md` (RFC 0083) — a uniform composition of scheduling (RFC 0052), dead-letter (RFC 0053), queue-bus (RFC 0017), webhooks, and cross-host causation (RFC 0040).
+
+**Requirements:** `triggerBridge.supported: true` AND `deadLetter.supported: true` (the RFC 0053 sink for exhausted deliveries) AND at least one durable inbound source — `queueBus.supported: true` OR `webhooks.durable: true` OR `scheduling.supported: true`. A queue-only durable-inbound host is legitimately in the profile (RFC 0083 §UQ3 — the OR is intentional).
+
+**Predicate (discovery-payload only — runtime check separate):**
+
+```
+openwop-trigger-bridge(c) :=
+     openwop-core(c)
+  && c.triggerBridge != null && c.triggerBridge.supported === true
+  && c.deadLetter != null && c.deadLetter.supported === true
+  && (   (c.queueBus != null && c.queueBus.supported === true)
+       || (c.webhooks != null && c.webhooks.durable === true)
+       || (c.scheduling != null && c.scheduling.supported === true) )
+```
+
+Capability families are document-root properties (RFC 0073), so the predicate reads `c.triggerBridge` / `c.deadLetter` / `c.queueBus` / `c.webhooks` / `c.scheduling`. The runtime conformance scenarios (`trigger-bridge-delivery.test.ts`, profile-gated) verify the state machine + dedup + causation behavior; the always-on `trigger-bridge-shape.test.ts` asserts the subscription record + the two content-free `trigger.*` payloads + the predicate derivation. Channels (Slack/email/SMS) stay vendor extensions (RFC 0083 §E) — only their *bridge* into a run is uniform.
+
 ### `openwop-experimental`
 
 A host advertising at least one capability sub-block as a preview (RFC 0042). Unlike the other profiles, this one signals *instability*, not a feature set: clients that require stable-only contracts filter on its **negation**.
@@ -265,6 +285,7 @@ profiles(c) := {
   'openwop-replay-fork'    if openwop-replay-fork(c),
   'openwop-fixtures'       if openwop-fixtures(c),
   'openwop-memory'         if openwop-memory(c),
+  'openwop-trigger-bridge' if openwop-trigger-bridge(c),
 }
 ```
 

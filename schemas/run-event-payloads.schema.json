@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
   "title": "RunEventPayloads",
-  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n83 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n85 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
   "type": "object",
   "$defs": {
     "_typeIndex": {
@@ -92,7 +92,9 @@
         "eval.completed":            { "$ref": "#/$defs/evalCompleted" },
         "tool.session.opened":       { "$ref": "#/$defs/toolSessionOpened" },
         "tool.session.closed":       { "$ref": "#/$defs/toolSessionClosed" },
-        "egress.decided":            { "$ref": "#/$defs/egressDecided" }
+        "egress.decided":            { "$ref": "#/$defs/egressDecided" },
+        "trigger.subscription.state.changed": { "$ref": "#/$defs/triggerSubscriptionStateChanged" },
+        "trigger.delivery.attempted":         { "$ref": "#/$defs/triggerDeliveryAttempted" }
       }
     },
 
@@ -1485,6 +1487,32 @@
         "credentialId": { "type": "string", "minLength": 1, "description": "MAY — the provenance `credentialId` considered (absent for an anonymous / denied-pre-credential egress)." },
         "reason":       { "type": "string", "description": "MAY — a short machine-stable reason code for a crisp Keys-page / debugger explanation. Conventional values: `out-of-audience` / `expired` / `ssrf-blocked` / `provenance-unevaluable` / `scope-denied` / `ok` (left open for host-specific reasons; the load-bearing field is `decision`)." },
         "auditCorrelationId": { "type": "string", "minLength": 1, "description": "MAY — correlates to the provenance descriptor + host audit log." }
+      },
+      "additionalProperties": true
+    },
+    "triggerSubscriptionStateChanged": {
+      "type": "object",
+      "description": "RFC 0083 §C. Emitted when a trigger subscription changes state (the §B four-state machine). Content-free: identifiers + states only — no inbound payload, headers, or credential material (SR-1). Emitted only when `capabilities.triggerBridge.supported: true`.",
+      "required": ["subscriptionId", "source", "fromState", "toState"],
+      "properties": {
+        "subscriptionId": { "type": "string", "minLength": 1, "description": "The TriggerSubscription this state change is for." },
+        "source":         { "type": "string", "enum": ["webhook", "schedule", "queue", "email", "form"], "description": "The subscription source." },
+        "fromState":      { "type": "string", "enum": ["active", "paused", "failed", "dead-lettered"], "description": "Prior state." },
+        "toState":        { "type": "string", "enum": ["active", "paused", "failed", "dead-lettered"], "description": "New state." },
+        "reason":         { "type": "string", "description": "MAY — a short machine-stable reason code (e.g. `retry-exhausted`, `operator-paused`)." }
+      },
+      "additionalProperties": true
+    },
+    "triggerDeliveryAttempted": {
+      "type": "object",
+      "description": "RFC 0083 §C. Emitted on each inbound-delivery attempt against an active subscription. Content-free: the subscription id, the dedup key, the attempt counter, the outcome, and the resulting runId only — NEVER the inbound body, headers, or credential material (SR-1).",
+      "required": ["subscriptionId", "dedupKey", "attempt", "outcome"],
+      "properties": {
+        "subscriptionId": { "type": "string", "minLength": 1, "description": "The TriggerSubscription the delivery is for." },
+        "dedupKey":       { "type": "string", "minLength": 1, "description": "The caller/source-derived stable de-duplication key (§C-1; a webhook event id, a message id). A repeat within retention is a no-op returning the prior runId." },
+        "attempt":        { "type": "integer", "minimum": 1, "description": "1-based attempt counter." },
+        "outcome":        { "type": "string", "enum": ["delivered", "retrying", "dead-lettered"], "description": "`delivered`: the run started; `retrying`: failed, will retry per policy; `dead-lettered`: retries exhausted, routed to the RFC 0053 sink (no run)." },
+        "runId":          { "type": "string", "minLength": 1, "description": "MAY — the run started by a `delivered` outcome (the run's `run.started` carries this delivery's id as `causationId`, RFC 0040). Absent for `retrying` / `dead-lettered`." }
       },
       "additionalProperties": true
     }

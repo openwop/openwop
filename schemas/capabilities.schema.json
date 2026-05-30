@@ -1270,6 +1270,37 @@
       },
       "additionalProperties": false
     },
+    "webhooks": {
+      "type": "object",
+      "description": "Webhook delivery surface (`webhooks.md`). The base contract is best-effort (5s per-attempt timeout, a circuit breaker, no durable retry). RFC 0083 adds the OPTIONAL `durable` mode: when `true`, webhook delivery participates in the trigger-bridge durable model (subscription states + retry policy + dead-letter on exhaustion) instead of the best-effort circuit-breaker-then-drop. Absent `durable` ⇒ the best-effort default, explicitly unchanged.",
+      "additionalProperties": true,
+      "properties": {
+        "supported": { "type": "boolean", "description": "Host serves the `webhooks.md` signed-delivery surface." },
+        "signatureAlgorithms": { "type": "array", "items": { "type": "string" }, "uniqueItems": true, "description": "HMAC signature algorithm ids the host supports (e.g. `v1`)." },
+        "durable": { "type": "boolean", "description": "RFC 0083 §A — OPTIONAL opt-in. `true` ⇒ webhook delivery is durable (a trigger-bridge source); absent/`false` ⇒ the best-effort `webhooks.md` contract, unchanged. The best-effort default is NOT relaxed." }
+      }
+    },
+    "triggerBridge": {
+      "type": "object",
+      "description": "RFC 0083 (`Active`). Composes the existing scheduling (RFC 0052), dead-letter (RFC 0053), queue-bus (RFC 0017), webhook, and cross-host-causation (RFC 0040) primitives into one uniform durable inbound-work contract: standardized subscription states + a delivery-attempt/dedup/retry model + trigger→run causation. Backs the derived `openwop-trigger-bridge` profile. Channels (Slack/email/SMS) stay vendor extensions (§E) — only their bridge into a run is uniform. Hosts that omit it have no uniform trigger contract (today's behavior); the conformance behavioral scenarios skip cleanly.",
+      "required": ["supported"],
+      "additionalProperties": false,
+      "properties": {
+        "supported": { "type": "boolean", "description": "REQUIRED when present. `true` ⇒ the host implements the §B state machine + §C delivery model + emits the two `trigger.*` events." },
+        "subscriptionStates": { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["active", "paused", "failed", "dead-lettered"] }, "description": "The subscription states the host implements (the §B four-state vocabulary). Absent ⇒ at least `active` + `dead-lettered`." },
+        "dedup": { "type": "boolean", "description": "`true` ⇒ the host de-duplicates inbound events by `dedupKey` within the retention window (§C-1; at-least-once becomes effectively-once)." },
+        "retryPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "The host's default delivery retry policy (§C-2).",
+          "properties": {
+            "maxAttempts": { "type": "integer", "minimum": 1, "description": "Max delivery attempts before dead-lettering." },
+            "backoff": { "type": "string", "enum": ["none", "fixed", "exponential"], "description": "Backoff strategy between attempts." }
+          }
+        },
+        "sources": { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["webhook", "schedule", "queue", "email", "form"] }, "description": "Which trigger sources bridge uniformly. A consumer MUST tolerate any subset." }
+      }
+    },
     "workspace": {
       "type": "object",
       "description": "RFC 0059 (`Active`). Versioned, tenant·workspace-scoped ground-truth file store (the `host.workspace` capability). Scopes to the RFC 0048 owner triple. Atomic, optimistically-concurrent writes (`If-Match` ETag); a read snapshot is exposed to every run at `run.started` (deterministic for replay). Complements the transactional `MemoryAdapter` (RFC 0004) with a durable, path-addressable file layer. Endpoints (`/v1/host/workspace/files[/{path}]`) are gated on `supported: true`; unsupported hosts return `501 capability_not_provided`. SECURITY invariants `workspace-cross-tenant-isolation` (WCT-1) + the WSR-1 secret-redaction MUST land with their conformance tests at implementation (RFC 0059 §E).",

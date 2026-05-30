@@ -31,6 +31,7 @@ export const PROFILE_NAMES = [
   'openwop-replay-fork',
   'openwop-fixtures',
   'openwop-memory',
+  'openwop-trigger-bridge',
 ] as const;
 
 export type ProfileName = (typeof PROFILE_NAMES)[number];
@@ -235,6 +236,31 @@ export function isMemory(c: DiscoveryPayload): boolean {
 }
 
 /**
+ * `openwop-trigger-bridge` predicate (RFC 0083). Host composes the durable
+ * inbound-work contract: advertises the `triggerBridge`, has a `deadLetter`
+ * sink for exhausted deliveries, and has at least one durable inbound source
+ * (queue bus, durable webhooks, or scheduling). Capability families are
+ * document-root properties (RFC 0073), so this reads `c.triggerBridge` /
+ * `c.deadLetter` / `c.queueBus` / `c.webhooks` / `c.scheduling`.
+ *
+ * @see spec/v1/profiles.md §`openwop-trigger-bridge`
+ * @see spec/v1/trigger-bridge.md
+ */
+export function isTriggerBridge(c: DiscoveryPayload): boolean {
+  if (!isCore(c)) return false;
+  const supported = (v: unknown): boolean =>
+    v != null && typeof v === 'object' && (v as { supported?: unknown }).supported === true;
+  if (!supported(c.triggerBridge)) return false;
+  if (!supported(c.deadLetter)) return false;
+  const webhooks = c.webhooks as { durable?: unknown } | undefined;
+  const durableSource =
+    supported(c.queueBus) ||
+    supported(c.scheduling) ||
+    (webhooks != null && typeof webhooks === 'object' && webhooks.durable === true);
+  return durableSource;
+}
+
+/**
  * Derive the full profile set from a discovery payload.
  *
  * Returns a set sorted by `PROFILE_NAMES` order so output is stable
@@ -252,6 +278,7 @@ export function deriveProfiles(c: DiscoveryPayload): readonly ProfileName[] {
   if (isReplayFork(c)) result.push('openwop-replay-fork');
   if (isFixtures(c)) result.push('openwop-fixtures');
   if (isMemory(c)) result.push('openwop-memory');
+  if (isTriggerBridge(c)) result.push('openwop-trigger-bridge');
   return result;
 }
 
@@ -280,5 +307,7 @@ export function hasProfile(c: DiscoveryPayload, profile: ProfileName): boolean {
       return isFixtures(c);
     case 'openwop-memory':
       return isMemory(c);
+    case 'openwop-trigger-bridge':
+      return isTriggerBridge(c);
   }
 }

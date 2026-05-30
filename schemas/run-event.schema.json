@@ -131,6 +131,8 @@
         "tool.session.opened",
         "tool.session.closed",
         "egress.decided",
+        "trigger.subscription.state.changed",
+        "trigger.delivery.attempted",
         "runOrchestrator.decided",
         "node.dispatched",
         "conversation.opened",
