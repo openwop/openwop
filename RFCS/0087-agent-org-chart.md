@@ -8,7 +8,7 @@
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-30 |
 | **Updated** | 2026-05-30 |
-| **Affects** | NEW `schemas/agent-org-chart.schema.json` (the department/role/edge record) · `schemas/capabilities.schema.json` (additive optional `agents.orgChart` block) · `spec/v1/agent-org-chart.md` (NEW normative doc) · `api/openapi.yaml` (additive `GET /v1/agents/org-chart`) · `SECURITY/invariants.yaml` (NEW protocol-tier `org-position-no-authority-escalation`) · `CHANGELOG.md` · `INTEROP-MATRIX.md` · new conformance scenarios |
+| **Affects** | NEW `schemas/agent-org-chart.schema.json` (the department/role/edge record) · `schemas/capabilities.schema.json` (additive optional `agents.orgChart` block) · `spec/v1/agent-org-chart.md` (NEW normative doc) · `api/openapi.yaml` (additive `GET /v1/agents/org-chart` + `GET /v1/agents/org-chart/{departmentId}`) · `SECURITY/invariants.yaml` (NEW protocol-tier `org-position-no-authority-escalation`) · `CHANGELOG.md` · `INTEROP-MATRIX.md` · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
 | **Superseded by** | — |
@@ -82,13 +82,15 @@ The org chart is tenant-scoped exactly as RFC 0074 scopes the agent inventory + 
 
 A derived read that rolls a department's responsibilities up from its members' RFC 0086 portfolios — no new stored field, computed from §A members + their roster `workflows[]`:
 
+Two endpoints with **stable, distinct response shapes** (one shape per path — never a query param that mutates the response shape):
+
 ```
-GET /v1/agents/org-chart                          → the full chart (tenant-scoped)
-GET /v1/agents/org-chart?department=dept-marketing → the subtree + its responsibility roll-up:
+GET /v1/agents/org-chart                       → the full chart (tenant-scoped): { departments[], members[] }
+GET /v1/agents/org-chart/{departmentId}         → one department's subtree + responsibility roll-up:
    { department, members[], responsibilities: ["marketing-email-campaign", "social-post-scheduler", …] }
 ```
 
-`responsibilities` is the **union of the `workflows[]` portfolios** of the department's members (and, recursively, its sub-departments) — "what is Marketing collectively responsible for". It is purely a *view*; it grants nothing (§B) and stores nothing (it is computed from RFC 0086 entries).
+`{departmentId}` resolves the subtree by path (an unknown/cross-tenant id 404s, §C). An optional `?recursive=false` query param **narrows** the roll-up to direct members without changing the response *shape* (UQ #4). `responsibilities` is the **union of the `workflows[]` portfolios** of the department's members (and, by default, recursively its sub-departments) — "what is Marketing collectively responsible for". It is purely a *view*; it grants nothing (§B) and stores nothing (it is computed from RFC 0086 entries).
 
 ### §E — Capability advertisement (`agents.orgChart`)
 
@@ -157,7 +159,7 @@ Checklist for `Active` (files at `Draft`):
 
 - [ ] `spec/v1/agent-org-chart.md`: §A record, §B the non-authority invariant (the normative heart), §C tenant scoping, §D responsibility view, §E capability.
 - [ ] `agent-org-chart.schema.json` (NO authority-bearing field, by design); additive `agents.orgChart` on `capabilities.schema.json`.
-- [ ] `GET /v1/agents/org-chart` in `openapi.yaml`.
+- [ ] `GET /v1/agents/org-chart` + `GET /v1/agents/org-chart/{departmentId}` in `openapi.yaml` (one stable response shape per path).
 - [ ] SECURITY: NEW protocol-tier `org-position-no-authority-escalation` in `SECURITY/invariants.yaml` + its always-on public test; reuses RFC 0049/0051/0002-§A14/0074 invariants.
 - [ ] Conformance: `agent-org-chart-shape.test.ts` (always-on) + `org-position-no-authority-escalation.test.ts` (structural always-on / behavioral gated) + `agent-org-chart-scoping.test.ts` (gated) + fixture + `coverage.md` row.
 - [ ] CHANGELOG entry (under a `### Security` note for the new invariant) + INTEROP-MATRIX row.
