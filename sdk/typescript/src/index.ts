@@ -74,6 +74,18 @@ export type {
   // `@` mention picker (2026-05-28 mention-symbol swap).
   AgentInventoryEntry,
   AgentInventoryResponse,
+  // RFC 0081 — Agent evaluation (spec/v1/agent-evaluation.md). EvalSummary
+  // scorecard read via `client.runs.evalSummary(runId)` for a `mode:'eval'` run.
+  AgentModelClass,
+  EvalSafetyFinding,
+  EvalTaskResult,
+  EvalRegression,
+  EvalSummary,
+  // RFC 0082 — Agent deployment lifecycle (spec/v1/agent-deployment.md).
+  // `client.agents.listDeployments` / `transitionDeployment`.
+  DeploymentState,
+  AgentDeployment,
+  AgentDeploymentTransition,
   // Sample-extension surface — user-authored agents
   // (`POST /v1/host/sample/agents`) + agent-pack registry browser
   // (`GET/POST /v1/host/sample/registry/agent-packs`). Non-normative;

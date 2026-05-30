@@ -51,6 +51,9 @@ import {
   type RunSnapshot,
   type AgentInventoryEntry,
   type AgentInventoryResponse,
+  type EvalSummary,
+  type AgentDeployment,
+  type AgentDeploymentTransition,
   type CreateUserAgentRequest,
   type UserAgentRecord,
   type AgentPackRegistryResponse,
@@ -307,6 +310,26 @@ export class OpenwopClient {
       }
     },
 
+    /**
+     * RFC 0081 §C — the `EvalSummary` scorecard for a terminal eval run (one
+     * started via `runs.create({ mode: 'eval', evalSuiteRef, agentId })`):
+     * aggregate + per-task scores, cost, latency, schema-validity, and
+     * redaction-safe safety findings. Returns `null` when the host doesn't
+     * advertise `capabilities.agents.evalSuite` or the run isn't an eval run
+     * (404). Throws `409` while the run is still in progress.
+     */
+    evalSummary: async (runId: string): Promise<EvalSummary | null> => {
+      try {
+        return await this.#request<EvalSummary>({
+          method: 'GET',
+          path: `/v1/runs/${encodeURIComponent(runId)}/eval-summary`,
+        });
+      } catch (err) {
+        if (err instanceof WopError && err.status === 404) return null;
+        throw err;
+      }
+    },
+
     pollEvents: (
       runId: string,
       params: { lastSequence?: number; timeoutSeconds?: number } = {},
@@ -360,6 +383,44 @@ export class OpenwopClient {
         throw err;
       }
     },
+
+    /**
+     * RFC 0082 §C/§E — list a manifest agent's deployment records (per-(agentId,
+     * version) lifecycle state + channels + canary + rollback pointer). Returns
+     * `null` when the host doesn't advertise `capabilities.agents.deployment`
+     * (the endpoint 404s).
+     */
+    listDeployments: async (agentId: string): Promise<readonly AgentDeployment[] | null> => {
+      try {
+        return await this.#request<AgentDeployment[]>({
+          method: 'GET',
+          path: `/v1/agents/${encodeURIComponent(agentId)}/deployments`,
+        });
+      } catch (err) {
+        if (err instanceof WopError && err.status === 404) return null;
+        throw err;
+      }
+    },
+
+    /**
+     * RFC 0082 §E — request a deployment state transition (promote / pause /
+     * deprecate / rollback / adjust-canary). The host authorizes fail-closed
+     * against the RFC 0049 `deploy:*` scope, runs any RFC 0051 approvalGate, and
+     * enforces RFC 0081 `requiredEval` before emitting `deployment.promoted`.
+     * Returns the updated deployment record. Throws on non-2xx (`403` fail-closed
+     * / `eval_gate_unmet`; `400` `no_active_deployment` / unsupported state).
+     */
+    transitionDeployment: (
+      agentId: string,
+      body: AgentDeploymentTransition,
+      opts: MutationOptions = {},
+    ): Promise<AgentDeployment> =>
+      this.#request<AgentDeployment>({
+        method: 'POST',
+        path: `/v1/agents/${encodeURIComponent(agentId)}/deployments`,
+        body,
+        headers: this.#mutationHeaders(opts),
+      }),
   };
 
   // ── User-authored agents (sample-extension; non-normative) ───────────

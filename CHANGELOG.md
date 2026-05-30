@@ -11,6 +11,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(api+sdk): RFC 0081/0082 Accepted-track wire surface — OpenAPI + AsyncAPI + TS SDK (2026-05-30)
+
+Completes the client-facing wire surface that RFC 0081 (eval) and RFC 0082 (deployment) **deferred at Draft → Active** (per the RFC 0077 precedent), now that both are Active on `main`. No spec/schema-shape change to the events/capabilities (those already landed) — this binds the existing surface into the callable HTTP + SDK contract:
+
+- **OpenAPI** (`api/openapi.yaml`): `GET /v1/runs/{runId}/eval-summary` (→ `eval-summary.schema.json`); additive `mode: "eval"` + `evalSuiteRef` + `agentId` on `POST /v1/runs` with an `if/then/else` so `workflowId` stays required for normal runs and eval runs require `evalSuiteRef`+`agentId` (additive — no existing request becomes invalid); `GET /v1/agents/{agentId}/deployments` (→ array of `agent-deployment.schema.json`) + `POST /v1/agents/{agentId}/deployments` (→ NEW `agent-deployment-transition.schema.json`, the promote/pause/deprecate/rollback/adjust-canary request, with `403` fail-closed / `eval_gate_unmet` + `400` `no_active_deployment` responses).
+- **AsyncAPI** (`api/asyncapi.yaml`): the `eval.{started,scored,completed}` + `deployment.{promoted,rolled-back,canary.adjusted,state.changed}` messages on the `runEvents` channel, payloads `$ref`-ing the existing `run-event-payloads.schema.json` `$defs` (they were already caught by `anyRunEvent`; this advertises them explicitly).
+- **TS SDK** (`sdk/typescript`): `client.runs.evalSummary(runId)`, `client.agents.listDeployments(agentId)`, `client.agents.transitionDeployment(agentId, body)` (all 404-soft per the SDK convention); `CreateRunRequest` gains optional `mode`/`evalSuiteRef`/`agentId` (and `workflowId` becomes optional, server-enforced); new public types `EvalSummary` (+`EvalTaskResult`/`EvalSafetyFinding`/`EvalRegression`/`AgentModelClass`) + `AgentDeployment`/`AgentDeploymentTransition`/`DeploymentState`.
+- NEW `schemas/agent-deployment-transition.schema.json` (the POST body, `additionalProperties:false`).
+
+Additive (`COMPATIBILITY.md` §2.1) — new endpoints + an additive request-field set + new AsyncAPI messages + new SDK methods/types; no existing endpoint/event/field contract changes (every endpoint maps to one `OpenwopClient` method per `CONTRIBUTING.md`). `redocly lint` + `asyncapi validate` clean; `tsc --noEmit` (strict + `exactOptionalPropertyTypes`) clean. The behavioral conformance scenarios (`agent-eval-run.test.ts` / `agent-deployment-lifecycle.test.ts`) + reference-host implementation remain the explicit `Active → Accepted` gate. Counts synced via `--write` (OpenAPI operations + JSON Schemas + SDK parity). (openwop-2's lane; coordinated with openwop-1 via the `ralph` queue — `api/`+`sdk/` are conflict-free between the two branches.)
+
 ### spec(rfc-0085): `openwop-agent-platform` Meta-Profile — Draft → Active (2026-05-30)
 
 Promoted **RFC 0085** `Draft → Active` — the **capstone** of the agent-platform arc: one named target ("this host behaves like a full agent platform") aggregating the dozen optional capabilities, with a `partial`/`full` status + a badge. It is an **operational annex** (the `production-profile.md`/`auth-profiles.md` pattern), explicitly **NOT** a new entry in the closed `profiles.md` predicate catalog (a platform claim requires runtime behavior + evidence, not just a discovery predicate). The shape landed atomically:

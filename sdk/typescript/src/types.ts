@@ -125,7 +125,12 @@ export interface RunConfigurable {
 }
 
 export interface CreateRunRequest {
-  workflowId: string;
+  /**
+   * The workflow to run. Required for a normal run; OMITTED for an eval run
+   * (`mode: 'eval'`), which targets `agentId` + `evalSuiteRef` instead
+   * (RFC 0081 §B). The server enforces the conditional requirement.
+   */
+  workflowId?: string;
   inputs?: Record<string, unknown>;
   tenantId?: string;
   scopeId?: string;
@@ -133,6 +138,12 @@ export interface CreateRunRequest {
   configurable?: RunConfigurable;
   tags?: readonly string[];
   metadata?: Record<string, unknown>;
+  /** RFC 0081 §B. `'eval'` makes this run an eval-suite projection (see `evalSuiteRef` + `agentId`). Omit for a normal workflow run. */
+  mode?: 'eval';
+  /** RFC 0081. URI of the `AgentEvalSuite` to run. Required when `mode === 'eval'`. */
+  evalSuiteRef?: string;
+  /** RFC 0081. The manifest agent the eval suite targets. Required when `mode === 'eval'`. */
+  agentId?: string;
 }
 
 export interface CreateRunResponse {
@@ -1145,4 +1156,100 @@ export interface InstallAgentPackResponse {
    *  already present in the registry. */
   installed: boolean;
   alreadyInstalled: boolean;
+}
+
+// ── RFC 0081 — Agent evaluation (eval-summary.schema.json) ─────────────
+
+/** Abstract model class (RFC 0002 / RFC 0003 manifest vocabulary). */
+export type AgentModelClass =
+  | 'reasoning'
+  | 'writing'
+  | 'coding'
+  | 'research'
+  | 'classification'
+  | 'general';
+
+/** A redaction-safe safety finding ({kind, severity} descriptor — never excerpted content). */
+export interface EvalSafetyFinding {
+  kind: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+}
+
+/** Per-task result on an `EvalSummary` (content-free: scores + scalars + ids). */
+export interface EvalTaskResult {
+  taskId: string;
+  score: number;
+  passed: boolean;
+  costUsd?: number;
+  latencyMs?: number;
+  schemaValid?: boolean;
+  safetyFindings?: readonly EvalSafetyFinding[];
+}
+
+/** The regression block on an `EvalSummary` (RFC 0081 §D `regression` mode). */
+export interface EvalRegression {
+  baselineRunId: string;
+  scoreDelta: number;
+  diffRef?: string;
+}
+
+/**
+ * RFC 0081 §C — the terminal scorecard of an eval run, read via
+ * `client.runs.evalSummary(runId)`. Content-free: scores, scalars, ids, and
+ * redaction-safe safety descriptors only (`eval-summary-no-content-leak`).
+ */
+export interface EvalSummary {
+  suiteId: string;
+  suiteVersion: string;
+  evaluatedModelClass?: AgentModelClass;
+  aggregateScore: number;
+  passed: boolean;
+  taskCount: number;
+  passedCount: number;
+  totalCostUsd?: number;
+  tasks: readonly EvalTaskResult[];
+  regression?: EvalRegression;
+}
+
+// ── RFC 0082 — Agent deployment lifecycle ─────────────────────────────
+
+/** The seven-state deployment lifecycle (RFC 0082 §C). */
+export type DeploymentState =
+  | 'draft'
+  | 'test'
+  | 'staged'
+  | 'active'
+  | 'paused'
+  | 'deprecated'
+  | 'rolled-back';
+
+/**
+ * RFC 0082 §C — a per-(agentId, version) deployment record, returned by
+ * `client.agents.listDeployments` / `transitionDeployment`. Host-runtime state
+ * distinct from the immutable manifest and the registry's published tags.
+ */
+export interface AgentDeployment {
+  agentId: string;
+  version: string;
+  state: DeploymentState;
+  canaryPercent?: number;
+  rollbackPointer?: string;
+  channels?: readonly string[];
+  evalRunId?: string;
+  approvalGateId?: string;
+}
+
+/**
+ * RFC 0082 §E — the `transitionDeployment` request body. The host authorizes it
+ * fail-closed (RFC 0049 `deploy:*`), runs any RFC 0051 approvalGate, and enforces
+ * RFC 0081 `requiredEval` before emitting `deployment.promoted`.
+ */
+export interface AgentDeploymentTransition {
+  version: string;
+  transition: 'promote' | 'pause' | 'deprecate' | 'rollback' | 'adjust-canary';
+  toState?: DeploymentState;
+  channel?: string;
+  canaryPercent?: number;
+  evalRunId?: string;
+  reason?: string;
 }
