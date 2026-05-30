@@ -76,6 +76,7 @@ import { createSelfHttpBridge } from './messaging/bridge.js';
 import { registerSchedulerRoutes } from './routes/scheduler.js';
 import { registerKanbanRoutes } from './routes/kanban.js';
 import { registerRosterRoutes } from './routes/roster.js';
+import { registerOrgChartRoutes } from './routes/orgChart.js';
 
 const log = createLogger('workflow-engine');
 
@@ -340,6 +341,9 @@ export async function createApp(config: AppConfig): Promise<Express> {
   // instances + workflow portfolios). Registered before Kanban so a board
   // can bind to a roster member.
   registerRosterRoutes(app);
+  // Agent org-chart — RFCS/0087 reference impl (departments/roles/reportsTo
+  // over roster members; descriptive only, confers no authority).
+  registerOrgChartRoutes(app);
   // Kanban boards — sample host-extension (non-normative). The card→run
   // trigger is the RFCS/0086 "named workflow agents" demo surface.
   registerKanbanRoutes(app, { storage, hostSuite });
