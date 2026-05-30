@@ -62,6 +62,9 @@ export interface KanbanBoard {
   tenantId: string;
   name: string;
   columns: KanbanColumn[];
+  /** Optional RFCS/0086 roster member that OWNS this board. When set, a
+   *  card→run trigger attributes the run to this named agent (persona). */
+  rosterId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -98,6 +101,8 @@ export function createBoard(input: {
   columns?: KanbanColumn[];
   /** When set, the default "To Do" column fires this workflow on card entry. */
   triggerWorkflowId?: string;
+  /** Optional RFCS/0086 roster member that owns this board (attribution). */
+  rosterId?: string;
 }): KanbanBoard {
   const id = `board-${randomUUID()}`;
   const now = nowIso();
@@ -113,6 +118,7 @@ export function createBoard(input: {
     tenantId: input.tenantId,
     name: input.name,
     columns,
+    rosterId: input.rosterId,
     createdAt: now,
     updatedAt: now,
   };

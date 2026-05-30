@@ -48,6 +48,7 @@ import {
   updateCardFields,
   type KanbanTriggerDirective,
 } from '../host/kanbanService.js';
+import { getRosterEntry } from '../host/rosterService.js';
 
 const log = createLogger('routes.kanban');
 
@@ -68,7 +69,7 @@ async function startKanbanRun(
   deps: Deps,
   tenantId: string,
   trigger: KanbanTriggerDirective,
-): Promise<string | null> {
+): Promise<{ runId: string; attribution: Record<string, unknown> } | null> {
   const { storage, hostSuite } = deps;
   const wf = await hostSuite.workflowCatalog.getWorkflow(trigger.workflowId);
   if (!wf) {
@@ -80,6 +81,24 @@ async function startKanbanRun(
     return null;
   }
 
+  // RFC 0086 §C attribution: if the board is owned by a roster member,
+  // attribute the run to that named agent (rosterId + persona + the
+  // manifest agentId it instantiates). Content-free — ids/persona only.
+  const board = getBoard(trigger.boardId);
+  const roster = board?.rosterId ? getRosterEntry(board.rosterId) : undefined;
+  const attribution: Record<string, unknown> = {
+    boardId: trigger.boardId,
+    cardId: trigger.cardId,
+    fromColumnId: trigger.fromColumnId,
+    toColumnId: trigger.toColumnId,
+    workflowId: trigger.workflowId,
+  };
+  if (roster) {
+    attribution.rosterId = roster.rosterId;
+    attribution.persona = roster.persona;
+    attribution.agentId = roster.agentRef.agentId;
+  }
+
   const runId = randomUUID();
   const now = new Date().toISOString();
   const run: RunRecord = {
@@ -89,15 +108,8 @@ async function startKanbanRun(
     status: 'pending',
     inputs: null,
     // Attribution block — the proto-`roster.run.initiated` payload
-    // (RFC 0086 §C). Content-free: ids + column names only.
-    metadata: {
-      kanban: {
-        boardId: trigger.boardId,
-        cardId: trigger.cardId,
-        fromColumnId: trigger.fromColumnId,
-        toColumnId: trigger.toColumnId,
-      },
-    },
+    // (RFC 0086 §C). Content-free: ids + column names + persona only.
+    metadata: { kanban: attribution },
     configurable: {},
     createdAt: now,
     updatedAt: now,
@@ -105,17 +117,11 @@ async function startKanbanRun(
   await storage.insertRun(run);
 
   // Content-free attribution event on the new run's stream. Mirrors the
-  // RFC 0086 `roster.run.initiated` shape (ids only — no card body).
+  // RFC 0086 `roster.run.initiated` shape (ids + persona — no card body).
   await getEventLog().append({
     runId,
     type: 'kanban.card.moved',
-    payload: {
-      boardId: trigger.boardId,
-      cardId: trigger.cardId,
-      fromColumnId: trigger.fromColumnId,
-      toColumnId: trigger.toColumnId,
-      workflowId: trigger.workflowId,
-    },
+    payload: attribution,
   });
 
   // Dispatch inline (sample single-instance) — same posture as POST /v1/runs.
@@ -129,7 +135,7 @@ async function startKanbanRun(
       });
     });
   });
-  return runId;
+  return { runId, attribution };
 }
 
 export function registerKanbanRoutes(app: Express, deps: Deps): void {
@@ -145,6 +151,7 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
         name?: unknown;
         columns?: unknown;
         triggerWorkflowId?: unknown;
+        rosterId?: unknown;
       };
       if (typeof body.name !== 'string' || body.name.trim().length === 0) {
         throw new OpenwopError('validation_error', 'Field `name` is required and MUST be a non-empty string.', 400, {
@@ -156,10 +163,34 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
           field: 'triggerWorkflowId',
         });
       }
+      // Optional RFCS/0086 roster binding: the named agent that owns this
+      // board. When bound and no explicit trigger workflow is given, the
+      // To Do column defaults to the member's first portfolio workflow —
+      // "Sally's board fires Sally's workflow".
+      let rosterId: string | undefined;
+      let triggerWorkflowId = typeof body.triggerWorkflowId === 'string' ? body.triggerWorkflowId : undefined;
+      if (body.rosterId !== undefined) {
+        if (typeof body.rosterId !== 'string') {
+          throw new OpenwopError('validation_error', 'Field `rosterId` MUST be a string when present.', 400, {
+            field: 'rosterId',
+          });
+        }
+        const entry = getRosterEntry(body.rosterId);
+        if (!entry || entry.tenantId !== tenantOf(req)) {
+          throw new OpenwopError('validation_error', 'Field `rosterId` does not name a roster entry in this tenant.', 400, {
+            field: 'rosterId',
+          });
+        }
+        rosterId = entry.rosterId;
+        if (!triggerWorkflowId && entry.workflows.length > 0) {
+          triggerWorkflowId = entry.workflows[0];
+        }
+      }
       const board = createBoard({
         tenantId: tenantOf(req),
         name: body.name,
-        triggerWorkflowId: typeof body.triggerWorkflowId === 'string' ? body.triggerWorkflowId : undefined,
+        triggerWorkflowId,
+        rosterId,
         columns: Array.isArray(body.columns) ? (body.columns as never) : undefined,
       });
       res.status(201).json(board);
@@ -259,6 +290,7 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
       // A columnId change is a move — and a move into a trigger column
       // starts a run.
       let triggeredRunId: string | null = null;
+      let attribution: Record<string, unknown> | null = null;
       if (typeof body.columnId === 'string' && body.columnId !== existing.columnId) {
         if (!board.columns.some((c) => c.id === body.columnId)) {
           throw new OpenwopError('validation_error', 'Field `columnId` MUST name a column on this board.', 400, {
@@ -267,13 +299,17 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
         }
         const moved = moveCard(cardId, body.columnId);
         if (moved?.trigger) {
-          triggeredRunId = await startKanbanRun(deps, tenantOf(req), moved.trigger);
-          if (triggeredRunId) setCardLastRun(cardId, triggeredRunId);
+          const started = await startKanbanRun(deps, tenantOf(req), moved.trigger);
+          if (started) {
+            triggeredRunId = started.runId;
+            attribution = started.attribution;
+            setCardLastRun(cardId, started.runId);
+          }
         }
       }
 
       const card = getCard(cardId);
-      res.json({ card, triggeredRunId });
+      res.json({ card, triggeredRunId, attribution });
     } catch (err) {
       next(err);
     }
