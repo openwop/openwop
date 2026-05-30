@@ -16,10 +16,21 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import http from 'node:http';
 import { createApp } from '../src/index.js';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { openSqliteStorage } from '../src/storage/sqlite/index.js';
+import {
+  __resetHostExtPersistence,
+  flushHostExtPersistence,
+  initHostExtPersistence,
+} from '../src/host/hostExtPersistence.js';
 import {
   __resetTriggerBridgeStore,
+  __setDedupRetentionMs,
   deliver,
   getSubscription,
+  hydrateTriggerBridge,
   listDeliveries,
   makeDedupKey,
   registerSubscription,
@@ -143,5 +154,59 @@ describe('trigger-bridge read surface + Kanban bridge (sqlite memory app)', () =
       body: JSON.stringify({ columnId: 'todo' }),
     });
     expect(m2.body.triggeredRunId).toBe(m1.body.triggeredRunId); // effectively-once
+  });
+});
+
+describe('trigger-bridge: dedup retention eviction (§C-1)', () => {
+  beforeEach(() => {
+    __resetTriggerBridgeStore();
+    __resetHostExtPersistence();
+  });
+
+  it('evicts a dedup entry past the retention window so a re-delivery fires fresh', async () => {
+    registerSubscription({ subscriptionId: 'sub-1', tenantId: 't1', source: 'queue' });
+    __setDedupRetentionMs(0); // every prior entry is immediately stale
+    const r1 = await deliver({ subscriptionId: 'sub-1', dedupKey: 'k1', fire: async () => 'run-A' });
+    expect(r1.outcome).toBe('delivered');
+    let fired = false;
+    const r2 = await deliver({ subscriptionId: 'sub-1', dedupKey: 'k1', fire: async () => { fired = true; return 'run-B'; } });
+    // Retention 0 ⇒ the prior k1 entry is evicted ⇒ NOT deduped ⇒ fires fresh.
+    expect(r2.outcome).toBe('delivered');
+    expect(r2.runId).toBe('run-B');
+    expect(fired).toBe(true);
+  });
+});
+
+describe('trigger-bridge: durability (subscriptions + deliveries + dedup survive restart)', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'owop-tb-dur-'));
+  afterAll(() => rmSync(dir, { recursive: true, force: true }));
+
+  it('persists then hydrates a subscription + delivery + dedup index into a fresh store', async () => {
+    const path = join(dir, 'tb.db');
+    __resetTriggerBridgeStore();
+    __resetHostExtPersistence();
+
+    const s1 = openSqliteStorage(path);
+    initHostExtPersistence(s1);
+    registerSubscription({ subscriptionId: 'host:kanban:b1', tenantId: 'acme', source: 'queue' });
+    const r1 = await deliver({ subscriptionId: 'host:kanban:b1', dedupKey: 'dk1', fire: async () => 'run-A' });
+    expect(r1.outcome).toBe('delivered');
+    await flushHostExtPersistence();
+    await s1.close();
+
+    // Restart: clear in-memory state, re-open the same file, hydrate.
+    __resetTriggerBridgeStore();
+    __resetHostExtPersistence();
+    const s2 = openSqliteStorage(path);
+    initHostExtPersistence(s2);
+    await hydrateTriggerBridge();
+
+    expect(getSubscription('host:kanban:b1')?.tenantId).toBe('acme');
+    expect(listDeliveries('host:kanban:b1').some((d) => d.outcome === 'delivered' && d.runId === 'run-A')).toBe(true);
+    // Effectively-once SURVIVES the restart: re-delivering dk1 dedups to run-A.
+    const r2 = await deliver({ subscriptionId: 'host:kanban:b1', dedupKey: 'dk1', fire: async () => 'run-B' });
+    expect(r2.outcome).toBe('deduped');
+    expect(r2.runId).toBe('run-A');
+    await s2.close();
   });
 });
