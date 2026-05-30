@@ -62,7 +62,7 @@ openwop-agent-platform-full(c) :=
   && c.memory?.attribution?.supported === true              // RFC 0057 — memory attribution
   && c.production?.debugBundleSupported === true            // RFC 0009 — debug bundle
   && (c.triggerBridge?.supported === true)                  // RFC 0083 — durable triggers
-  && c.egressPolicy?.supported === true                     // RFC 0079 — credential provenance/egress
+  && c.httpClient?.egressPolicy?.supported === true         // RFC 0079 — egress policy (nested under httpClient)
 ```
 
 The Wave-3 governance surfaces — **eval (RFC 0081)**, **deployment (RFC 0082)**, **budget (RFC 0084)** — are **RECOMMENDED for `full`** and surfaced in the annex as a "platform-plus" advisory checklist, but are NOT hard predicate terms in v1.x (a host can be a credible full platform while wiring eval/deploy/budget incrementally; making them hard terms would gate the whole profile on the newest, least-adopted surfaces). The annex states this rationale; a future minor MAY promote them into `full` once adopted. The `replay`-OR-`nondeterminismPolicy` term honors the recommendation's "run replay/fork **or explicit nondeterminism policy**" — a host that is honestly nondeterministic declares it (a new additive `nondeterminismPolicy.declared` flag) rather than failing the floor.
@@ -77,7 +77,7 @@ The annex defines three statuses a host reports (in its `conformance.md` + `INTE
 
 ### Examples
 
-**Positive.** A host advertising all §B-partial flags + passing the floor scenarios → reports `openwop-agent-platform: partial`, renders the partial badge, and shows in `INTEROP-MATRIX` as a credible agent-runtime+tooling host. Add `authorization` + `installScope:'tenant'` + `memory.attribution` + `production.debugBundleSupported` + `triggerBridge` + `egressPolicy`, pass the governance scenarios → `full`. **Positive (honest nondeterminism).** A host that doesn't support replay but declares `nondeterminismPolicy.declared:true` (documenting its nondeterminism) still satisfies the floor's replay-OR-policy term.
+**Positive.** A host advertising all §B-partial flags + passing the floor scenarios → reports `openwop-agent-platform: partial`, renders the partial badge, and shows in `INTEROP-MATRIX` as a credible agent-runtime+tooling host. Add `authorization` + `installScope:'tenant'` + `memory.attribution` + `production.debugBundleSupported` + `triggerBridge` + `httpClient.egressPolicy`, pass the governance scenarios → `full`. **Positive (honest nondeterminism).** A host that doesn't support replay but declares `nondeterminismPolicy.declared:true` (documenting its nondeterminism) still satisfies the floor's replay-OR-policy term.
 
 **Negative (over-claim).** A host advertising the full-tier flags but whose `agent-live-runtime` scenario does NOT pass → MUST report `partial`, not `full` (§D); reporting `full` is non-conformant by the aggregate-evidence rule (§C). **Negative (catalog).** Adding `openwop-agent-platform` to the closed `profiles.md` predicate catalog → wrong surface; it's an operational annex (§A), because it requires runtime+evidence, not just a discovery predicate.
 
