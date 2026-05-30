@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0085 |
 | **Title** | Define `openwop-agent-platform` — an **operational annex** profile (a `production-profile.md`-style claim combining a discovery predicate + required runtime conformance scenarios + documentation + a badge, NOT a pure entry in the closed `profiles.md` catalog) that names one coherent "this host behaves like a full agent platform" target aggregating manifest+live agents, tool catalog+hooks, safe-fetch+egress, provider usage, prompt library, memory read/write/attribution, replay/fork-or-nondeterminism-policy, feedback, durable triggers, debug bundle, RBAC/tenant scoping, and conformance evidence — with a `partial` / `full` status |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-29 |
-| **Updated** | 2026-05-29 |
+| **Updated** | 2026-05-30 (`Draft → Active` — steward acceptance, comment window waived per `GOVERNANCE.md` single-maintainer lazy consensus after MyndHyve (non-steward) wire-shape review; wire shapes now locked. The **capstone**, flipped LAST in the arc. The hard predicate terms reference only ≥Active constituents (0070/0072/0077/0078/0064/0076/0026/0027/0080/0004/0056/0049/0074/0057/0009/0083/0079 + replay) — all `Active`/`Accepted`; the platform-plus tier (0081/0082/0084) is advisory-RECOMMENDED, NOT a hard term, so the wire lock does not depend on 0082's shape (0082 reaches `Active` via PR #361). All 5 Unresolved questions resolved as proposed: UQ1 `feedback` is a FLOOR term; UQ2 `nondeterminismPolicy.declared` is a bare flag for v1.x; UQ3 eval/deploy/budget promote to hard `full` terms when ≥1 non-steward host advertises each + the scenario passes; UQ4 badge self-hosted now (GOV-3), doesn't block on the leaderboard; UQ5 the "RFC 0077–0084 ≥ Active" gate is pinned as a hard `Active → Accepted` precondition. NEW `spec/v1/agent-platform-profile.md` annex + the `profiles.md` cross-reference (closed catalog unchanged) + the `profiles.ts` `isAgentPlatform{Partial,Full}`/`agentPlatformStatus` helpers + additive `capabilities.nondeterminismPolicy.declared` + `agent-platform-profile.test.ts` + the `public/badge/openwop-agent-platform.svg` badge + the `INTEROP-MATRIX.md` status section landed. The live aggregate-evidence assertion against a reference host (Postgres candidate) + the badge rendering deferred to `Active → Accepted`.) |
 | **Affects** | NEW `spec/v1/agent-platform-profile.md` (the operational annex: predicate + required scenarios + partial/full + badge) · `spec/v1/profiles.md` (additive cross-reference in §"Profile semantics" annex list — NOT a new closed-catalog predicate) · `conformance/src/lib/profiles.ts` (the discovery-shape predicate helper + the aggregate-pass derivation) · `conformance/src/scenarios/agent-platform-profile.test.ts` (the aggregating meta-scenario) · `docs/IMPLEMENTATION-CERTIFICATION.md` + `public/badge/` (the `openwop-agent-platform` badge) · `INTEROP-MATRIX.md` (the platform-profile status column) · `CHANGELOG.md` · `conformance/coverage.md` |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -101,7 +101,7 @@ The annex defines three statuses a host reports (in its `conformance.md` + `INTE
 
 ## Unresolved questions
 
-To decide before `Active` (and the profile's acceptance is itself gated on RFC 0077–0084 ≥ `Active`):
+**All five resolved at `Draft → Active` (2026-05-30) as proposed below — recorded in `Updated:`.** (The profile's *acceptance* — `Active → Accepted` — remains gated on RFC 0077–0084 ≥ `Active` + ≥1 host reaching `partial`/`full`.) Retained for the rationale trail:
 
 1. **Floor membership — is `feedback` floor or full?** Proposed: floor (a platform you can't give feedback on isn't inspectable). Confirm vs moving it to full.
 2. **`nondeterminismPolicy.declared` shape.** A bare boolean, or a structured policy (which nondeterminism sources are declared)? Proposed: a bare additive flag for v1.x (the floor only needs "replay OR an honest declaration"); a structured policy is a future refinement. Confirm.

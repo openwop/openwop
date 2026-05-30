@@ -260,6 +260,69 @@ export function isTriggerBridge(c: DiscoveryPayload): boolean {
   return durableSource;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Operational annex: openwop-agent-platform (RFC 0085).
+//
+// NOT part of the closed `profiles.md` predicate catalog (PROFILE_NAMES /
+// deriveProfiles above) — it is an operational ANNEX (the production-profile.md /
+// auth-profiles.md pattern) combining a discovery predicate with required runtime
+// conformance evidence + documentation + a badge. These helpers compute only the
+// discovery-PREDICATE part; the live aggregate-evidence assertion (does every
+// constituent scenario actually pass?) lives in agent-platform-profile.test.ts.
+//
+// @see spec/v1/agent-platform-profile.md
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Narrow helper: a capability sub-block with `supported === true`. */
+function blockSupported(v: unknown): boolean {
+  return v != null && typeof v === 'object' && (v as { supported?: unknown }).supported === true;
+}
+
+/** The `openwop-agent-platform` FLOOR (`partial`) discovery predicate — RFC 0085 §B. */
+export function isAgentPlatformPartial(c: DiscoveryPayload): boolean {
+  if (!isCore(c)) return false;
+  const agents = c.agents as { manifestRuntime?: unknown; liveRuntime?: unknown } | undefined;
+  const httpClient = c.httpClient as { safeFetch?: unknown; egressPolicy?: unknown } | undefined;
+  const replay = c.replay as { supported?: unknown } | undefined;
+  const nondet = c.nondeterminismPolicy as { declared?: unknown } | undefined;
+  return (
+    blockSupported(agents?.manifestRuntime) &&
+    blockSupported(agents?.liveRuntime) &&
+    blockSupported(c.toolCatalog) &&
+    blockSupported(c.toolHooks) &&
+    blockSupported(httpClient?.safeFetch) &&
+    blockSupported(c.providerUsage) &&
+    blockSupported(c.prompts) &&
+    blockSupported(c.memory) &&
+    blockSupported(c.feedback) &&
+    (replay?.supported === true || nondet?.declared === true)
+  );
+}
+
+/** The `openwop-agent-platform` `full` discovery predicate (floor + governance tier) — RFC 0085 §B. */
+export function isAgentPlatformFull(c: DiscoveryPayload): boolean {
+  if (!isAgentPlatformPartial(c)) return false;
+  const agents = c.agents as { manifestRuntime?: { installScope?: unknown } } | undefined;
+  const memory = c.memory as { attribution?: unknown } | undefined;
+  const production = c.production as { debugBundleSupported?: unknown } | undefined;
+  const httpClient = c.httpClient as { egressPolicy?: unknown } | undefined;
+  return (
+    blockSupported(c.authorization) &&
+    agents?.manifestRuntime?.installScope === 'tenant' &&
+    blockSupported(memory?.attribution) &&
+    production?.debugBundleSupported === true &&
+    blockSupported(c.triggerBridge) &&
+    blockSupported(httpClient?.egressPolicy)
+  );
+}
+
+/** The host-reported annex status: `full` ⊃ `partial` ⊃ `none` (discovery-predicate only). */
+export function agentPlatformStatus(c: DiscoveryPayload): 'none' | 'partial' | 'full' {
+  if (isAgentPlatformFull(c)) return 'full';
+  if (isAgentPlatformPartial(c)) return 'partial';
+  return 'none';
+}
+
 /**
  * Derive the full profile set from a discovery payload.
  *

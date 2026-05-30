@@ -11,6 +11,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0085): `openwop-agent-platform` Meta-Profile — Draft → Active (2026-05-30)
+
+Promoted **RFC 0085** `Draft → Active` — the **capstone** of the agent-platform arc: one named target ("this host behaves like a full agent platform") aggregating the dozen optional capabilities, with a `partial`/`full` status + a badge. It is an **operational annex** (the `production-profile.md`/`auth-profiles.md` pattern), explicitly **NOT** a new entry in the closed `profiles.md` predicate catalog (a platform claim requires runtime behavior + evidence, not just a discovery predicate). The shape landed atomically:
+
+- NEW `spec/v1/agent-platform-profile.md` (operational annex §A annex rationale / §B floor+full discovery predicate / §C required-scenario set + aggregate-evidence rule / §D partial/full + badge; Status `DRAFT v1.x`).
+- Additive cross-reference in `spec/v1/profiles.md` §"Profile semantics" annex list (the closed catalog is **unchanged** — no new catalog predicate).
+- `conformance/src/lib/profiles.ts` annex helpers `isAgentPlatformPartial` / `isAgentPlatformFull` / `agentPlatformStatus` (clearly separate from the closed-catalog `deriveProfiles` — they compute only the discovery-predicate part).
+- Additive optional `capabilities.nondeterminismPolicy.declared` (a host with no `replay.supported` honestly declares its nondeterminism to satisfy the floor's replay-OR-policy term).
+- `public/badge/openwop-agent-platform.svg` + the `docs/IMPLEMENTATION-CERTIFICATION.md` badge note + the `INTEROP-MATRIX.md` agent-platform status section (no reference host claims it yet — honest `none` across the four).
+- Always-on server-free `agent-platform-profile.test.ts` (the floor/full derivation: all-floor ⇒ partial, missing-flag ⇒ none, replay-OR-nondeterminism, floor+governance ⇒ full, missing-tenant-scope ⇒ partial-not-full per the honest-advertisement rule, eval/deploy/budget-are-advisory-not-hard-terms) + `coverage.md` row.
+
+All five `Active`-gated Unresolved questions resolved as proposed (UQ1 `feedback` is a floor term — a platform you can't give feedback on isn't inspectable; UQ2 `nondeterminismPolicy.declared` is a bare flag for v1.x; UQ3 eval/deploy/budget promote to hard `full` terms when ≥1 non-steward host advertises each + the scenario passes; UQ4 badge self-hosted now per GOV-3, doesn't block on the leaderboard; UQ5 the acceptance gate "RFC 0077–0084 ≥ Active" is pinned as a hard `Active → Accepted` precondition). The **hard predicate terms reference only ≥Active constituents** (0070/0072/0077/0078/0064/0076/0026/0027/0080/0004/0056/0049/0074/0057/0009/0083/0079 + replay); the platform-plus tier (0081/0082/0084) is advisory-RECOMMENDED, not a hard term, so the wire lock does not depend on 0082's shape (0082 reaches Active via #361). Additive (`COMPATIBILITY.md` §2.1) — a new annex doc, a `profiles.md` cross-reference, annex predicate helpers + an aggregating scenario (a reading over existing payloads + scenarios), one additive optional capability flag, a badge; no existing capability/profile/event/endpoint/constituent changed. **Deferred to `Active → Accepted`**: the live aggregate-evidence assertion against a reference host (Postgres is the candidate) + the badge rendering + the `INTEROP-MATRIX` status population, naturally gated on a host reaching `partial`/`full`. Counts: RFC Active 15 → 16 / Draft 6 → 5; prose specs 46 → 47; conformance scenario files +1.
+
 ### spec(rfc-0084): Budget, Quota, and Cost Policy — Draft → Active (2026-05-30)
 
 Promoted **RFC 0084** `Draft → Active` — adds enforceable spend governance (openwop *observed* spend via RFC 0026 but could not *enforce* a budget), additively and **orthogonally to RFC 0058** (which owns wall-time + loop-iterations; 0084 owns spend; they share only `cap.breached`). The shape landed atomically:

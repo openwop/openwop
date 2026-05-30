@@ -118,6 +118,10 @@ https://openwop.dev/badges/<hostId>/<suite-version>.svg
 
 Until the hosted leaderboard ships, hosts MAY produce a static SVG and host it in their own repo per the convention in `site/scripts/build-host-badges.mjs`.
 
+### `openwop-agent-platform` badge (RFC 0085)
+
+A host that reaches the `openwop-agent-platform` operational-annex status (`spec/v1/agent-platform-profile.md`) MAY additionally render the aggregate platform badge — [`public/badge/openwop-agent-platform.svg`](../public/badge/openwop-agent-platform.svg) — stamped with its reported status (`partial` / `full`) + suite version. Self-hosted now (the GOV-3 pattern); it does NOT block on the hosted leaderboard. The badge asserts the *aggregate* platform claim and MUST be backed by the host's `INTEROP-MATRIX.md` row (the §C aggregate-evidence rule: report `partial` until the full-tier scenarios actually pass). It does not replace the per-suite-version conformance badge above.
+
 ---
 
 ## What this is NOT

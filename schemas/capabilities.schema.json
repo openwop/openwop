@@ -1323,6 +1323,15 @@
         "scopes": { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["run", "workflow", "agent", "project"] }, "description": "Which budget scopes the host honors (§B). Absent ⇒ at least `run`." }
       }
     },
+    "nondeterminismPolicy": {
+      "type": "object",
+      "description": "RFC 0085. A host that does NOT support replay/fork (`replay.supported`) MAY instead DECLARE that it is honestly nondeterministic — satisfying the `openwop-agent-platform` floor's replay-OR-policy term (`agent-platform-profile.md` §B) without claiming a replay capability it lacks. Absent ⇒ the floor's replay term must be met by `replay.supported`.",
+      "required": ["declared"],
+      "additionalProperties": false,
+      "properties": {
+        "declared": { "type": "boolean", "description": "When `true`, the host documents its nondeterminism (it does not guarantee deterministic replay). A bare flag for v1.x (RFC 0085 §UQ2); a structured per-source policy is a future refinement." }
+      }
+    },
     "workspace": {
       "type": "object",
       "description": "RFC 0059 (`Active`). Versioned, tenant·workspace-scoped ground-truth file store (the `host.workspace` capability). Scopes to the RFC 0048 owner triple. Atomic, optimistically-concurrent writes (`If-Match` ETag); a read snapshot is exposed to every run at `run.started` (deterministic for replay). Complements the transactional `MemoryAdapter` (RFC 0004) with a durable, path-addressable file layer. Endpoints (`/v1/host/workspace/files[/{path}]`) are gated on `supported: true`; unsupported hosts return `501 capability_not_provided`. SECURITY invariants `workspace-cross-tenant-isolation` (WCT-1) + the WSR-1 secret-redaction MUST land with their conformance tests at implementation (RFC 0059 §E).",
