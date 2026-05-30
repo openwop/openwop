@@ -1375,6 +1375,18 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
       return (r.rowCount ?? 0) > 0;
     },
 
+    async kvGet(key) {
+      const { rows } = await pool.query<{ v: string }>(`SELECT v FROM host_ext_kv WHERE k = $1`, [key]);
+      return rows[0]?.v ?? null;
+    },
+    async kvSet(key, value) {
+      await pool.query(
+        `INSERT INTO host_ext_kv (k, v, updated_at) VALUES ($1, $2, $3)
+         ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v, updated_at = EXCLUDED.updated_at`,
+        [key, value, new Date().toISOString()],
+      );
+    },
+
     async close() {
       await pool.end();
     },

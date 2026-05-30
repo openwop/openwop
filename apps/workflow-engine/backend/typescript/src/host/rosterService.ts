@@ -31,6 +31,9 @@
  */
 
 import { randomUUID } from 'node:crypto';
+import { loadCollection, schedulePersist } from './hostExtPersistence.js';
+
+const ROSTER_KEY = 'hostext:roster';
 
 /** The manifest/deployment a roster member instantiates (a trimmed
  *  AgentRef — RFC 0002). `version` XOR `channel` per RFC 0082 §A. */
@@ -58,6 +61,15 @@ export interface RosterEntry {
 }
 
 const entries = new Map<string, RosterEntry>();
+
+function persistRoster(): void {
+  schedulePersist(ROSTER_KEY, () => [...entries.values()]);
+}
+
+/** Hydrate the roster from durable storage on boot. */
+export async function hydrateRoster(): Promise<void> {
+  for (const e of await loadCollection<RosterEntry>(ROSTER_KEY)) entries.set(e.rosterId, e);
+}
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -97,6 +109,7 @@ export function createRosterEntry(input: {
     updatedAt: now,
   };
   entries.set(rosterId, entry);
+  persistRoster();
   return entry;
 }
 
@@ -122,11 +135,14 @@ export function updateRosterEntry(
   if (patch.label !== undefined) entry.label = patch.label;
   if (patch.description !== undefined) entry.description = patch.description;
   entry.updatedAt = nowIso();
+  persistRoster();
   return entry;
 }
 
 export function deleteRosterEntry(rosterId: string): boolean {
-  return entries.delete(rosterId);
+  const ok = entries.delete(rosterId);
+  if (ok) persistRoster();
+  return ok;
 }
 
 /** Test-only: drop all roster entries. */

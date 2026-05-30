@@ -1290,6 +1290,17 @@ export function openSqliteStorage(dbPath: string): Storage {
       return info.changes > 0;
     },
 
+    async kvGet(key) {
+      const row = db.prepare(`SELECT v FROM host_ext_kv WHERE k = ?`).get(key) as { v: string } | undefined;
+      return row?.v ?? null;
+    },
+    async kvSet(key, value) {
+      db.prepare(
+        `INSERT INTO host_ext_kv (k, v, updated_at) VALUES (?, ?, ?)
+         ON CONFLICT(k) DO UPDATE SET v = excluded.v, updated_at = excluded.updated_at`,
+      ).run(key, value, new Date().toISOString());
+    },
+
     async close() {
       db.close();
     },
