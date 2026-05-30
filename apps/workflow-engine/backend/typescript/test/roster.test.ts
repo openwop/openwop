@@ -158,4 +158,32 @@ describe('roster routes + board attribution (sqlite memory app)', () => {
     expect((await jsonFetch('/v1/host/sample/roster', { method: 'POST', body: JSON.stringify({}) })).status).toBe(400);
     expect((await jsonFetch('/v1/host/sample/roster/host:does-not-exist')).status).toBe(404);
   });
+
+  it('does NOT fire the trigger when the bound roster member is disabled (RFC 0086 §A)', async () => {
+    const triggerWorkflowId = (await jsonFetch<{ fixtures?: string[] }>('/.well-known/openwop')).body.fixtures?.[0];
+    // A disabled member.
+    const sam = await jsonFetch<{ rosterId: string }>('/v1/host/sample/roster', {
+      method: 'POST',
+      body: JSON.stringify({
+        persona: 'Sam',
+        agentRef: { agentId: 'core.openwop.agents.brief-writer' },
+        workflows: [triggerWorkflowId],
+        enabled: false,
+      }),
+    });
+    const board = await jsonFetch<{ id: string }>('/v1/host/sample/kanban/boards', {
+      method: 'POST',
+      body: JSON.stringify({ name: "Sam's board", rosterId: sam.body.rosterId }),
+    });
+    const card = await jsonFetch<{ id: string }>(`/v1/host/sample/kanban/boards/${board.body.id}/cards`, {
+      method: 'POST',
+      body: JSON.stringify({ title: 'x', columnId: 'doing' }),
+    });
+    const moved = await jsonFetch<{ triggeredRunId: string | null }>(`/v1/host/sample/kanban/cards/${card.body.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ columnId: 'todo' }),
+    });
+    // Card still moved, but the disabled member's portfolio trigger is inert.
+    expect(moved.body.triggeredRunId).toBeNull();
+  });
 });
