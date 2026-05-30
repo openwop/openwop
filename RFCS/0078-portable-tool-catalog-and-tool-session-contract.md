@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0078 |
 | **Title** | An optional, capability-gated `GET /v1/tools` + `GET /v1/tools/{toolId}` projection returning a normative `ToolDescriptor` (stable `toolId`, source, I/O schemas, auth/egress/approval requirements, replay policy, safety tier) across every tool surface (node-pack / workflow / MCP / connector / host-extension), plus an optional tool-session lifecycle — so an agent or builder can discover what tools exist, what they require, and how they are audited, portably |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-29 |
-| **Updated** | 2026-05-29 |
+| **Updated** | 2026-05-30 (`Draft → Active` — steward acceptance, comment window waived per `GOVERNANCE.md` single-maintainer lazy consensus after MyndHyve (non-steward) wire-shape review; wire shapes now locked. All 4 Unresolved questions resolved as proposed: UQ1 the `<scope>:` prefix disambiguates `toolId` per source + host MUST guarantee catalog uniqueness; UQ2 RECOMMEND (not MUST) the RFC 0030 Tier-1 subset for LLM-tool-call `inputSchema`; UQ3 keep §D `sessionLifecycle` in the Active surface as an optional sub-flag + defer the reference emission; UQ4 four `safetyTier` values for v1.x, extend additively if demanded. NEW `spec/v1/tool-catalog.md` + `schemas/tool-descriptor.schema.json` + `capabilities.toolCatalog` + the two content-free `tool.session.{opened,closed}` events + `tool-descriptor-shape.test.ts` landed. The `GET /v1/tools` OpenAPI surface, SDK helpers, behavioral projection/session scenarios, and reference-host catalog deferred to `Active → Accepted`.) |
 | **Affects** | `schemas/tool-descriptor.schema.json` (NEW) · `schemas/capabilities.schema.json` (additive optional `toolCatalog` block) · `api/openapi.yaml` (`GET /v1/tools` + `GET /v1/tools/{toolId}`) · `schemas/run-event-payloads.schema.json` (optional `tool.session.*` events for the session lifecycle) · `spec/v1/tool-catalog.md` (NEW) · `CHANGELOG.md` · `INTEROP-MATRIX.md` · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -150,7 +150,7 @@ The host MAY emit `tool.session.opened { sessionId, toolId }` and `tool.session.
 
 ## Unresolved questions
 
-To decide before `Active`:
+**All four resolved at `Draft → Active` (2026-05-30) as proposed below — recorded in `Updated:`.** Retained for the rationale trail:
 
 1. **`toolId` keyspace collisions across sources.** Two sources could mint the same `<scope>:<tool-id>` (e.g. an MCP tool and a connector action both named `mcp:fs.read`)? Proposed: the `<scope>` prefix disambiguates by construction (`mcp:` vs `connector:`), and the host MUST guarantee uniqueness within its catalog; confirm the prefix-per-source convention before `Active`.
 2. **`inputSchema`/`outputSchema` Tier-1 subset.** Should descriptor schemas be constrained to the RFC 0030 Tier-1 universal subset (so a model can consume them as tool-call schemas), or stay arbitrary 2020-12? Proposed: RECOMMEND Tier-1 for `mcp`/`node-pack` tools that feed an LLM tool-call, but don't MUST it. Confirm.

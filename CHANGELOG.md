@@ -11,6 +11,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0078): Portable Tool Catalog + Tool Session Contract — Draft → Active (2026-05-30)
+
+Promoted **RFC 0078** `Draft → Active` — a read-only projection that unifies the five openwop tool surfaces (node-pack / workflow / MCP / connector / host-extension) behind one portable `ToolDescriptor`. The shape landed atomically:
+
+- NEW `spec/v1/tool-catalog.md` (normative §A capability / §B `GET /v1/tools` endpoints / §C `ToolDescriptor` + cross-field MUSTs / §D tool-session lifecycle / §E composition / §F safety; Status `DRAFT v1.x`).
+- NEW `schemas/tool-descriptor.schema.json` (`additionalProperties:false`; REQUIRED `toolId`/`source`/`safetyTier`; closed vocabularies for `source`/`egress`/`approval`/`replayPolicy`/`safetyTier`; an `if/then` enforcing the RFC 0069 invariant that `safetyTier:"exec"` ⇒ `source:"host-extension"`).
+- Additive optional `capabilities.toolCatalog` (`supported` + `sources[]` closed-enum + `sessionLifecycle`).
+- Two content-free `tool.session.{opened,closed}` RunEventTypes (`run-event.schema.json` enum 80 → 82) + their `$defs` (`outcome` closed enum `completed`/`failed`/`cancelled`) + `_typeIndex` entries; the payloads-schema self-count updated 80 → 82.
+- Always-on server-free `tool-descriptor-shape.test.ts` (descriptor round-trip + the exec⇒host-extension cross-field MUST + the `safetyTier`-required + `additionalProperties:false` negatives + the capability shape + the two content-free session payloads + RunEventType-enum membership) + `coverage.md` row.
+- Doc-index + count surfaces synced (`README.md` Document index + `**Total**: 44 docs` + the DRAFT banner; `schemas/README.md` row; `conformance/README.md` ×2 → 294).
+
+All four `Active`-gated Unresolved questions resolved as proposed (UQ1 the `<scope>:` prefix disambiguates `toolId` per source + the host MUST guarantee catalog uniqueness; UQ2 RECOMMEND — not MUST — the RFC 0030 Tier-1 subset for LLM-tool-call `inputSchema`; UQ3 keep §D `sessionLifecycle` in the Active surface as an optional sub-flag, defer the reference emission; UQ4 four `safetyTier` values for v1.x, extend additively if demanded). Composes RFC 0064 (tool hooks) + 0077 (the `toolAllowlist` consumer) + 0049/0046/0051 (auth/credential/approval surfacing) + 0076 §B (egress) + 0069 (exec tier) + 0074 (the authorization-scoped non-disclosing pattern). Additive (`COMPATIBILITY.md` §2.1) — two additive content-free RunEventTypes (no `eventLogSchemaVersion` bump, RFC 0008 §K), one new schema, one new optional capability block, no existing surface changed. **Deferred to `Active → Accepted`** per the RFC 0077 precedent: the `GET /v1/tools` + `GET /v1/tools/{toolId}` OpenAPI surface, the SDK helpers, the behavioral `tool-catalog-projection.test.ts` + `tool-session-lifecycle.test.ts`, the INTEROP-MATRIX row, and the reference-host catalog projection. Counts: RFC Active 11 → 12 / Draft 10 → 9; prose specs 43 → 44; JSON Schemas +1; RunEventType variants 80 → 82; conformance scenario files +1.
+
+### spec(rfc-0080): Agent Memory Capability Reconciliation — Draft → Active (2026-05-30)
+
+Promoted **RFC 0080** `Draft → Active` — reconciles the memory advertisement (split across `capabilities.memory.*`, `capabilities.agents.{memoryBackends,memoryConsolidation,commitments}`, `agent-memory.md`, and `AgentManifest.memoryShape`) into one coherent, **additive** model. The shape landed atomically:
+
+- NEW `agent-memory.md` §"Memory capability model" (normative §A eight-dimension reconciliation table / §B canonical-query-endpoint decision / §C `memoryShape` degraded-projection contract; Status `Active`).
+- Additive optional `capabilities.memory.writable` (absent ⇒ writable — the RFC 0004 four-op default; a read-only host MUST set `false`), `capabilities.memory.search` (`{supported, modes?: ["semantic","filter"]}`), and `capabilities.memory.retention` (`{ttl?, forget?}` — `forget` is a tenant-scoped delete-by-subject composing CTI-1, outside the replay envelope). No existing `memory.*` field moved, renamed, removed, or type-changed.
+- Additive optional `memoryDegraded` (bool) + `degradedMemoryDimensions` (closed enum of the eight §A dimension names) on `agent-inventory-response.schema.json` — §C makes a host's silent memory degradation **observable** on `GET /v1/agents`.
+- Derived `openwop-memory` profile in `spec/v1/profiles.md` + the `isMemory` predicate + derivation wiring in `conformance/src/lib/profiles.ts` (`memory.supported` + `memory.writable !== false` + `agents.memoryBackends` includes `"long-term"`); richer `-search`/`-managed` tiers deferred per §UQ4.
+- Always-on server-free `memory-capability-model-shape.test.ts` (the additive dimension shapes + malformed-instance negatives + the closed degraded-dimension enum + the `openwop-memory` derivation) + `coverage.md` row.
+- §B resolves the standing query-endpoint question: memory query stays the host-internal `MemoryAdapter` at v1.x; **no `GET /v1/memory`** is added.
+
+All four `Active`-gated Unresolved questions resolved as proposed (UQ1 `writable` absent ⇒ writable; UQ2 `degradedMemoryDimensions` uses the §A dimension names not the `memoryShape` keys; UQ3 `forget` is outside the replay envelope per `replay.md` §"Recorded-fact events"; UQ4 ship base `openwop-memory`, defer richer tiers). Composes RFC 0004/0012/0057/0062/0068 (the existing dimensions) + 0077 `memoryShape` + 0072/0074 inventory. Additive (`COMPATIBILITY.md` §2.1) — no new endpoint, event, or invocation path; no `eventLogSchemaVersion` bump. **Deferred to `Active → Accepted`**: the behavioral `memory-degraded-projection.test.ts` + the reference host computing `memoryShape` satisfaction in its `GET /v1/agents` handler. Counts: RFC Active 10 → 11 / Draft 11 → 10; profiles +1 (`openwop-memory`); conformance scenario files +1.
+
 ### spec(rfc-0081): Agent Evaluation, Scorecards, and Promotion Gates — Draft → Active (2026-05-30)
 
 Promoted **RFC 0081** `Draft → Active` (filed #357 four days prior) — the head of the Wave-3 "deployable" arc lands its wire surface. The shape landed atomically:

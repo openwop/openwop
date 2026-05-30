@@ -30,6 +30,7 @@ export const PROFILE_NAMES = [
   'openwop-node-packs',
   'openwop-replay-fork',
   'openwop-fixtures',
+  'openwop-memory',
 ] as const;
 
 export type ProfileName = (typeof PROFILE_NAMES)[number];
@@ -212,6 +213,28 @@ export function isFixtures(c: DiscoveryPayload): boolean {
 }
 
 /**
+ * `openwop-memory` predicate (RFC 0080). Host implements the reconciled
+ * memory-capability model at the core tier: a read/write `MemoryAdapter`
+ * (`memory.supported: true` and `memory.writable !== false`) plus a cross-run
+ * durable store (`agents.memoryBackends` includes `'long-term'`). Capability
+ * families are document-root properties of the discovery payload (RFC 0073),
+ * so this reads `c.memory` / `c.agents`, matching `isReplayFork`.
+ *
+ * @see spec/v1/profiles.md §`openwop-memory`
+ * @see spec/v1/agent-memory.md §"Memory capability model"
+ */
+export function isMemory(c: DiscoveryPayload): boolean {
+  if (!isCore(c)) return false;
+  const memory = c.memory as { supported?: unknown; writable?: unknown } | undefined;
+  if (memory == null || typeof memory !== 'object') return false;
+  if (memory.supported !== true) return false;
+  if (memory.writable === false) return false;
+  const agents = c.agents as { memoryBackends?: unknown } | undefined;
+  if (agents == null || !isStringArray(agents.memoryBackends)) return false;
+  return agents.memoryBackends.includes('long-term');
+}
+
+/**
  * Derive the full profile set from a discovery payload.
  *
  * Returns a set sorted by `PROFILE_NAMES` order so output is stable
@@ -228,6 +251,7 @@ export function deriveProfiles(c: DiscoveryPayload): readonly ProfileName[] {
   if (isNodePacksDiscovery(c)) result.push('openwop-node-packs');
   if (isReplayFork(c)) result.push('openwop-replay-fork');
   if (isFixtures(c)) result.push('openwop-fixtures');
+  if (isMemory(c)) result.push('openwop-memory');
   return result;
 }
 
@@ -254,5 +278,7 @@ export function hasProfile(c: DiscoveryPayload, profile: ProfileName): boolean {
       return isReplayFork(c);
     case 'openwop-fixtures':
       return isFixtures(c);
+    case 'openwop-memory':
+      return isMemory(c);
   }
 }

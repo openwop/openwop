@@ -1030,6 +1030,34 @@
             }
           },
           "additionalProperties": false
+        },
+        "writable": {
+          "type": "boolean",
+          "description": "RFC 0080 §A (`write` dimension). Absent ⇒ the host implements the full RFC 0004 four-operation MemoryAdapter (`put`/`delete` available — i.e. writable), the back-compatible default. A read-only host (`get`/`list` only) MUST set `writable: false` so a consumer can distinguish a read-only store from a read/write one. Only meaningful when `supported: true`."
+        },
+        "search": {
+          "type": "object",
+          "description": "RFC 0080 §A (`search` dimension) — NEW optional. Semantic or filtered query beyond the RFC 0004 `list` enumeration. Absent ⇒ only `list`/`get` retrieval is advertised. The query path itself stays the host-internal MemoryAdapter (RFC 0080 §B — no portable `GET /v1/memory` at v1.x).",
+          "required": ["supported"],
+          "additionalProperties": false,
+          "properties": {
+            "supported": { "type": "boolean", "description": "REQUIRED when the sub-block is present. When `true`, the host supports memory query beyond `list` (semantic and/or filter modes per `modes`)." },
+            "modes": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["semantic", "filter"] },
+              "uniqueItems": true,
+              "description": "The query modes the host supports. `semantic` = embedding/similarity retrieval; `filter` = structured predicate query over entry metadata. Omitted ⇒ unspecified mode (the host supports some query beyond `list`)."
+            }
+          }
+        },
+        "retention": {
+          "type": "object",
+          "description": "RFC 0080 §A (`retention/forget` dimension) — NEW optional. TTL expiry (`agent-memory.md §TTL`) and/or an explicit forget operation. Absent ⇒ no TTL beyond `ttlSupported` and no forget operation advertised. `forget` is a host-managed mutation OUTSIDE the replay envelope (RFC 0080 §UQ3 / `replay.md` §Recorded-fact events — a replay re-reads the log-recorded snapshot, not live memory).",
+          "additionalProperties": false,
+          "properties": {
+            "ttl": { "type": "boolean", "description": "When `true`, memory entries expire per `expiresAt` (the `ttlSupported` semantics surfaced as a named retention dimension)." },
+            "forget": { "type": "boolean", "description": "When `true`, the host supports a tenant-scoped delete-by-subject forget operation (composes the CTI-1 cross-tenant invariant — a forget MUST NOT cross tenant boundaries)." }
+          }
         }
       },
       "additionalProperties": true
@@ -1182,6 +1210,22 @@
         "prePostEvents": { "type": "boolean", "description": "Host populates `argsHash`/`principal`/`transport` on `agent.toolCalled` + `status`/`durationMs` on `agent.toolReturned` for every external tool call." },
         "perToolAuthorization": { "type": "boolean", "description": "Host enforces per-tool scopes against the run principal (RFC 0049), fail-closed; a lacked-or-unevaluable scope yields `agent.toolReturned { status: 'forbidden' }` + a `forbidden` (403) error and the tool is never invoked." },
         "perToolRateLimit": { "type": "boolean", "description": "Host applies a per-`(principal, tool)` token-bucket rate limit; exhaustion yields `agent.toolReturned { status: 'rate_limited' }` + a `rate_limited` (429) error." }
+      }
+    },
+    "toolCatalog": {
+      "type": "object",
+      "description": "RFC 0078 (`Active`). The host exposes a read-only projection of its tool surfaces (node-pack / workflow / MCP / connector / host-extension) at `GET /v1/tools` + `GET /v1/tools/{toolId}`, returning `ToolDescriptor` records (`tool-descriptor.schema.json`). Optional; hosts that omit it expose no catalog (today's behavior) and the conformance scenarios skip cleanly. Read-only — the catalog never mutates tools; tool invocation stays on the existing surfaces (agent dispatch, `core.dispatch`, MCP). The listing is authorization-scoped + non-disclosing (RFC 0074 pattern).",
+      "required": ["supported"],
+      "additionalProperties": false,
+      "properties": {
+        "supported": { "type": "boolean", "description": "REQUIRED when present. `true` ⇒ `GET /v1/tools` + `GET /v1/tools/{toolId}` are served per RFC 0078 §B." },
+        "sources": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["node-pack", "workflow", "mcp", "connector", "host-extension"] },
+          "description": "Which tool sources the catalog projects. A host advertises only the sources it actually surfaces; a consumer MUST tolerate any subset. Absent ⇒ all sources the host implements."
+        },
+        "sessionLifecycle": { "type": "boolean", "description": "`true` ⇒ the host emits the RFC 0078 §D tool-session lifecycle events (`tool.session.opened`/`tool.session.closed`, content-free) bracketing the existing RFC 0064 `agent.toolCalled`/`agent.toolReturned` call events for multi-step interactions. Absent ⇒ `false` (single-shot tool calls only)." }
       }
     },
     "httpClient": {

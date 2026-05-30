@@ -211,6 +211,28 @@ openwop-discovery-auth-scoped(c) :=
 
 Three subtests in `conformance/src/scenarios/discovery.test.ts` validate the runtime behavior: capability shape, authenticated view satisfies the base schema, and the authorization-oracle probe (gated on `OPENWOP_TEST_UNAUTHORIZED_API_KEY`). A host passes `openwop-discovery-auth-scoped` when discovery passes the predicate AND those scenarios pass.
 
+### `openwop-memory`
+
+The host implements the reconciled memory-capability model per `agent-memory.md` §"Memory capability model" (RFC 0080) at the core tier: a read/write `MemoryAdapter` plus a cross-run durable store.
+
+**Requirements:** `memory.supported: true` (the RFC 0004 four-op adapter) AND `memory.writable` is not `false` (writable — the back-compatible default; a read-only host sets `writable: false` and does NOT derive this profile) AND `agents.memoryBackends` includes `"long-term"`. Richer tiers (`-search`, `-managed`) are deferred per RFC 0080 §UQ4 — clients filter on the additive `memory.search` / `memory.retention` / `memory.attribution` / `memory.compaction` fields directly until a tier is needed.
+
+**Predicate (discovery-payload only):**
+
+```
+openwop-memory(c) :=
+     openwop-core(c)
+  && c.memory != null
+  && c.memory.supported === true
+  && c.memory.writable !== false
+  && Array.isArray(c.agents?.memoryBackends)
+  && c.agents.memoryBackends.includes('long-term')
+```
+
+(Capability families are document-root properties of the discovery payload per RFC 0073, so the predicate reads `c.memory` / `c.agents`, matching `openwop-replay-fork`.)
+
+Derived purely from existing + the RFC 0080 additive fields — no new wire field beyond the §A dimensions. The degraded-projection contract (RFC 0080 §C: `GET /v1/agents` surfaces `memoryDegraded` when an agent's `memoryShape` exceeds the host's reconciled model) is validated by `memory-degraded-projection.test.ts` (gated on `agents.manifestRuntime` + `memory`); the additive field shapes are validated always-on by `memory-capability-model-shape.test.ts`.
+
 ### `openwop-experimental`
 
 A host advertising at least one capability sub-block as a preview (RFC 0042). Unlike the other profiles, this one signals *instability*, not a feature set: clients that require stable-only contracts filter on its **negation**.
@@ -242,6 +264,7 @@ profiles(c) := {
   'openwop-node-packs'     if openwop-node-packs-discovery(c),
   'openwop-replay-fork'    if openwop-replay-fork(c),
   'openwop-fixtures'       if openwop-fixtures(c),
+  'openwop-memory'         if openwop-memory(c),
 }
 ```
 
