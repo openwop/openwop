@@ -1542,6 +1542,68 @@ invariants:
       negatives (a task entry with a taskOutput body; a safetyFinding with an
       excerpt) are the public test.
 
+  - id: egress-decision-no-secret-leak
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/egress-provenance-shape.test.ts
+    note: |
+      RFC 0079 §A/§F. The CredentialProvenance descriptor
+      (credential-provenance.schema.json) and the egress.decided event
+      (run-event-payloads.schema.json#egressDecided) MUST NOT carry the
+      credential secret value (SR-1) — identifiers (credentialId / issuer /
+      auditCorrelationId), the destination HOST/AUTHORITY ONLY (no path/query —
+      those can carry secrets), the decision enum, the audiences list, and a
+      CLOSED-enum reason code only (a free-form reason would let a host spill a
+      blocked URL/host/header into it — a structural-pass-but-leak hole); never
+      the token / API key / Authorization header value, and never a
+      request/response body. credential-provenance.schema.json is
+      additionalProperties:false (no secret-value field exists); the always-on
+      egress-provenance-shape.test.ts asserts the descriptor + event shapes and
+      the decision-enum / audiences-minItems negatives. The redactionPolicy
+      field governs at-most an SR-1-redacted hash.
+
+  - id: egress-credential-audience-bound
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests: []
+    note: |
+      RFC 0079 §C/§F (the confused-deputy guard — RFC 0076 §B's parked
+      question). A host-issued credential MUST NOT be attached to an egress
+      whose destination is not in the credential's provenance `audiences`; such
+      an egress is denied (reason: out-of-audience) or downgraded (proceeds
+      anonymously). The host MUST fail closed — provenance-unevaluable ⇒ denied,
+      never allowed-by-default; an expired credential ⇒ denied. This is a
+      BEHAVIORAL guarantee requiring a live credentialed egress, so it lands at
+      reference-impl tier at Draft → Active (the gated egress-audience-binding.test.ts
+      soft-skips until a host wires egressPolicy over safeFetch). It GRADUATES to
+      protocol tier at Active → Accepted once a reference host implements it and
+      the behavioral scenario passes — the RFC 0035 sandbox-invariant precedent.
+
+  - id: budget-no-pricing-leak
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/budget-policy-shape.test.ts
+    note: |
+      RFC 0084 §F. The budget.{reserved,consumed,threshold.crossed,exhausted}
+      events and cap.breached{kind:"budget-*"} MUST NOT carry the host's PRICING
+      MODEL — rate cards, per-token/per-unit prices, cost breakdowns, provider
+      credentials, or model prose. The AGGREGATE cost total (the cost dimension's
+      consumed/limit + the user-set maxCostUsd) IS permitted — it is the user's
+      own budget reflected back, already derivable from the accepted RFC 0026
+      provider.usage.costEstimateUsd surface, and a single aggregate cannot
+      reconstruct a rate card. The four budget.* payload $defs are
+      additionalProperties:FALSE (so a rate-card extra field is rejected at the
+      INSTANCE level, not just absent from declared properties); the always-on
+      budget-policy-shape.test.ts asserts both the declared-property check and the
+      instance-level rejection of a ratePerToken-bearing payload — the public test.
+      The host's pricing model (how it computes costEstimateUsd) stays a host
+      choice (RFC 0026); only the policy shape + events + enforcement seam are pinned.
+
   - id: deployment-event-no-content-leak
     tier: protocol
     severity: high

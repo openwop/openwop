@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/trigger-subscription.schema.json",
+  "title": "TriggerSubscription",
+  "description": "RFC 0083 §B. A durable inbound-trigger subscription record (a webhook registration, a schedule, a queue consumer) with a standardized four-state machine layered over the existing per-source registration. Composes RFC 0052/0053/0017 + webhooks.md + RFC 0040 causation; the channel wire format stays a vendor extension (§E). Content-free of inbound payloads/credentials (SR-1).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["subscriptionId", "source", "state"],
+  "properties": {
+    "subscriptionId": { "type": "string", "minLength": 1, "description": "Stable host-unique id for the subscription. Correlates the §C delivery events + the management surface." },
+    "source": { "type": "string", "enum": ["webhook", "schedule", "queue", "email", "form"], "description": "Which trigger source backs the subscription. Channels beyond these (Slack/Discord/SMS) bridge as a vendor extension by registering a subscription of the closest source kind (§E)." },
+    "state": { "type": "string", "enum": ["active", "paused", "failed", "dead-lettered"], "description": "The §B state. `active`: accepting + delivering; `paused`: retained, not delivering (operator-held); `failed`: delivery failing past policy (the webhooks.md circuit-breaker generalized); `dead-lettered`: terminal, deliveries routed to the RFC 0053 sink." },
+    "dedupEnabled": { "type": "boolean", "description": "When true, the host de-duplicates inbound events by `dedupKey` within the retention window (§C-1; the idempotency.md Layer-1 model applied to inbound triggers)." },
+    "retryPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Delivery retry policy (§C-2). On exhaustion the subscription/delivery transitions to `dead-lettered` (RFC 0053).",
+      "properties": {
+        "maxAttempts": { "type": "integer", "minimum": 1, "description": "Maximum delivery attempts before dead-lettering." },
+        "backoff": { "type": "string", "enum": ["none", "fixed", "exponential"], "description": "Backoff strategy between attempts." }
+      }
+    },
+    "webhookId": { "type": "string", "minLength": 1, "description": "MAY — for `source: \"webhook\"`, the existing webhooks.md register key (unchanged; the state machine layers over it)." },
+    "secretFingerprint": { "type": "string", "minLength": 1, "maxLength": 32, "description": "MAY — for `source: \"webhook\"`, an identifier for the signing secret (the `(webhookId, secretFingerprint)` register key). It MUST be a **salted or host-keyed, TRUNCATED** one-way digest (e.g. the first 8–16 hex of `HMAC(hostKey, secret)`) — NOT the raw secret (SR-1) and NOT a full unsalted `SHA256(secret)` (a full unsalted hash of a low-entropy secret is an offline brute-force / confirmation oracle). The `maxLength: 32` ceiling structurally rejects a full 64-hex digest." }
+  }
+}

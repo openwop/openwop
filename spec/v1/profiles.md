@@ -211,6 +211,48 @@ openwop-discovery-auth-scoped(c) :=
 
 Three subtests in `conformance/src/scenarios/discovery.test.ts` validate the runtime behavior: capability shape, authenticated view satisfies the base schema, and the authorization-oracle probe (gated on `OPENWOP_TEST_UNAUTHORIZED_API_KEY`). A host passes `openwop-discovery-auth-scoped` when discovery passes the predicate AND those scenarios pass.
 
+### `openwop-memory`
+
+The host implements the reconciled memory-capability model per `agent-memory.md` §"Memory capability model" (RFC 0080) at the core tier: a read/write `MemoryAdapter` plus a cross-run durable store.
+
+**Requirements:** `memory.supported: true` (the RFC 0004 four-op adapter) AND `memory.writable` is not `false` (writable — the back-compatible default; a read-only host sets `writable: false` and does NOT derive this profile) AND `agents.memoryBackends` includes `"long-term"`. Richer tiers (`-search`, `-managed`) are deferred per RFC 0080 §UQ4 — clients filter on the additive `memory.search` / `memory.retention` / `memory.attribution` / `memory.compaction` fields directly until a tier is needed.
+
+**Predicate (discovery-payload only):**
+
+```
+openwop-memory(c) :=
+     openwop-core(c)
+  && c.memory != null
+  && c.memory.supported === true
+  && c.memory.writable !== false
+  && Array.isArray(c.agents?.memoryBackends)
+  && c.agents.memoryBackends.includes('long-term')
+```
+
+(Capability families are document-root properties of the discovery payload per RFC 0073, so the predicate reads `c.memory` / `c.agents`, matching `openwop-replay-fork`.)
+
+Derived purely from existing + the RFC 0080 additive fields — no new wire field beyond the §A dimensions. The degraded-projection contract (RFC 0080 §C: `GET /v1/agents` surfaces `memoryDegraded` when an agent's `memoryShape` exceeds the host's reconciled model) is validated by `memory-degraded-projection.test.ts` (gated on `agents.manifestRuntime` + `memory`); the additive field shapes are validated always-on by `memory-capability-model-shape.test.ts`.
+
+### `openwop-trigger-bridge`
+
+The host implements the durable inbound-work contract per `trigger-bridge.md` (RFC 0083) — a uniform composition of scheduling (RFC 0052), dead-letter (RFC 0053), queue-bus (RFC 0017), webhooks, and cross-host causation (RFC 0040).
+
+**Requirements:** `triggerBridge.supported: true` AND `deadLetter.supported: true` (the RFC 0053 sink for exhausted deliveries) AND at least one durable inbound source — `queueBus.supported: true` OR `webhooks.durable: true` OR `scheduling.supported: true`. A queue-only durable-inbound host is legitimately in the profile (RFC 0083 §UQ3 — the OR is intentional).
+
+**Predicate (discovery-payload only — runtime check separate):**
+
+```
+openwop-trigger-bridge(c) :=
+     openwop-core(c)
+  && c.triggerBridge != null && c.triggerBridge.supported === true
+  && c.deadLetter != null && c.deadLetter.supported === true
+  && (   (c.queueBus != null && c.queueBus.supported === true)
+       || (c.webhooks != null && c.webhooks.durable === true)
+       || (c.scheduling != null && c.scheduling.supported === true) )
+```
+
+Capability families are document-root properties (RFC 0073), so the predicate reads `c.triggerBridge` / `c.deadLetter` / `c.queueBus` / `c.webhooks` / `c.scheduling`. The runtime conformance scenarios (`trigger-bridge-delivery.test.ts`, profile-gated) verify the state machine + dedup + causation behavior; the always-on `trigger-bridge-shape.test.ts` asserts the subscription record + the two content-free `trigger.*` payloads + the predicate derivation. Channels (Slack/email/SMS) stay vendor extensions (RFC 0083 §E) — only their *bridge* into a run is uniform.
+
 ### `openwop-experimental`
 
 A host advertising at least one capability sub-block as a preview (RFC 0042). Unlike the other profiles, this one signals *instability*, not a feature set: clients that require stable-only contracts filter on its **negation**.
@@ -242,6 +284,8 @@ profiles(c) := {
   'openwop-node-packs'     if openwop-node-packs-discovery(c),
   'openwop-replay-fork'    if openwop-replay-fork(c),
   'openwop-fixtures'       if openwop-fixtures(c),
+  'openwop-memory'         if openwop-memory(c),
+  'openwop-trigger-bridge' if openwop-trigger-bridge(c),
 }
 ```
 
@@ -263,7 +307,7 @@ Profile claims are reported in:
 
 A profile is NOT something a host advertises in the discovery payload. The discovery payload advertises capabilities; the profile is what conformance derives from those capabilities.
 
-Operational annexes such as `auth-profiles.md`, `interrupt-profiles.md`, and `production-profile.md` define optional public-release claims. They are separate from this compatibility catalog because they combine runtime behavior, documentation, and conformance evidence rather than pure discovery-payload predicates.
+Operational annexes such as `auth-profiles.md`, `interrupt-profiles.md`, `production-profile.md`, and `agent-platform-profile.md` (RFC 0085 — the `openwop-agent-platform` partial/full meta-profile) define optional public-release claims. They are separate from this compatibility catalog because they combine runtime behavior, documentation, and conformance evidence rather than pure discovery-payload predicates.
 
 ---
 

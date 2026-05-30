@@ -206,9 +206,15 @@ curl -X DELETE "https://api.example.com/v1/webhooks/wh_a3b9c2?tenantId=workspace
 
 ---
 
+## Durable delivery (opt-in) — RFC 0083
+
+The delivery contract above is **best-effort** (per-attempt timeout, a circuit breaker, no durable retry). RFC 0083 adds an **opt-in durable mode** via `capabilities.webhooks.durable: true`. When advertised, webhook delivery participates in the [`trigger-bridge.md`](./trigger-bridge.md) durable model: the webhook registration becomes a `TriggerSubscription` with the four-state machine (`active`/`paused`/`failed`/`dead-lettered`), each delivery is tracked as an attempt with a `dedupKey` (at-least-once de-duplication), retries follow the advertised `retryPolicy`, and on exhaustion the delivery is routed to the RFC 0053 dead-letter sink (inspectable for `retentionDays`) instead of being dropped by the circuit breaker. The run a successful delivery starts carries the delivery id as `causationId` (RFC 0040).
+
+**The best-effort default is unchanged.** A host that omits `webhooks.durable` (or sets it `false`) behaves exactly as the contract above — durability is strictly additive, and the subscriber-side signature-verification recipe is identical in both modes.
+
 ## Future work
 
-- **Durable retries** via Cloud Tasks (or equivalent): defer-and-retry with exponential backoff. Forward-compatible — current subscriber-side verification recipe stays unchanged.
+- ~~**Durable retries** via Cloud Tasks (or equivalent)~~ — now specified as the opt-in `webhooks.durable` mode (RFC 0083 / `trigger-bridge.md`).
 - **Custom secret generation**: allow callers to supply their own secret at registration (rejected today).
 - **Additional event filters** beyond tags: per-canvas-type, per-project, regex on event type.
 - **Subscription introspection endpoint** (`GET /v1/webhooks/{id}`): currently admin-only via Firestore.

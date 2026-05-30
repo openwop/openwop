@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0080 |
 | **Title** | Reconcile the fragmented memory advertisement (`capabilities.memory.*` + `capabilities.agents.{memoryBackends,memoryConsolidation,commitments}` + `agent-memory.md` + `AgentManifest.memoryShape`) into one coherent, additive memory-capability model with eight named dimensions, a derived `openwop-memory` profile, and a normative requirement that the agent inventory surface when an agent's requested memory is degraded |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-29 |
-| **Updated** | 2026-05-29 |
+| **Updated** | 2026-05-30 (`Draft → Active` — steward acceptance, comment window waived per `GOVERNANCE.md` single-maintainer lazy consensus after MyndHyve (non-steward) wire-shape review; wire shapes now locked. All 4 Unresolved questions resolved as proposed: UQ1 `writable` absent ⇒ writable + read-only host sets `false`; UQ2 `degradedMemoryDimensions` uses the §A dimension names (closed enum), not the `memoryShape` keys; UQ3 `forget` is a host-managed mutation outside the replay envelope (`replay.md` §"Recorded-fact events"); UQ4 ship base `openwop-memory`, defer `-search`/`-managed` tiers. §A dimension table + §B query-endpoint decision + §C degraded-projection + the additive `memory.{writable,search,retention}` + inventory `memoryDegraded`/`degradedMemoryDimensions` + the `openwop-memory` profile + `memory-capability-model-shape.test.ts` landed. Reference-host degraded-projection + behavioral `memory-degraded-projection.test.ts` deferred to `Active → Accepted`.) |
 | **Affects** | `schemas/capabilities.schema.json` (additive optional `memory.search` + `memory.retention` dimensions; no existing field changes) · `schemas/agent-inventory-response.schema.json` (additive optional `memoryDegraded` / `degradedMemoryDimensions[]` on the inventory entry) · `spec/v1/agent-memory.md` (new §"Memory capability model" reconciliation table) · `RFCS/profiles.md` + `spec/v1/profiles.md` (derived `openwop-memory` profile) · `CHANGELOG.md` · `INTEROP-MATRIX.md` · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -89,7 +89,7 @@ A derived profile whose predicate is the §A core: `capabilities.memory.supporte
 
 ## Unresolved questions
 
-To decide before `Active`:
+**All four resolved at `Draft → Active` (2026-05-30) as proposed below — recorded in `Updated:`.** Retained for the rationale trail:
 
 1. **`writable` default.** Is absence of `memory.writable` "writable" (RFC 0004 four-op default) or "unknown"? Proposed: absent ⇒ writable (back-compat with today's four-op `MemoryAdapter`); a read-only host MUST set `writable: false`. Confirm.
 2. **`degradedMemoryDimensions` vocabulary.** Should it use the §A dimension names verbatim (`write`/`search`/`long-term`/…) or the `memoryShape` keys (`scratchpad`/`conversation`/`longTerm`)? Proposed: the §A dimension names (broader, future-proof). Confirm the mapping to `memoryShape` keys.

@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0084 |
 | **Title** | Define an enforceable budget/quota policy — reserved `budget.*` run-options keys (max tokens / cost / tool-calls / retries + a model allow/deny list), a `budget.{reserved,consumed,threshold.crossed,exhausted}` event family, and hard-stop enforcement via new `cap.breached` `budget-*` kinds — composing RFC 0026 (provider usage) and RFC 0031 (model gates), and **delegating** wall-time + loop-iteration limits to RFC 0058 rather than redefining them, so 0084 governs *spend* and 0058 governs *execution bounds* with no overlap |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-29 |
-| **Updated** | 2026-05-29 |
+| **Updated** | 2026-05-30 (`Draft → Active` — steward acceptance, comment window waived per `GOVERNANCE.md` single-maintainer lazy consensus after MyndHyve (non-steward) wire-shape review; wire shapes now locked. All 5 Unresolved questions resolved as proposed: UQ1 host MAY coalesce `budget.consumed` but MUST emit reserved+threshold+exhausted; UQ2 consumed values are recorded facts → replay exhaustion point deterministic even if live pricing changed; UQ3 non-run-scoped budgets are host-config only at v1.x (no `GET /v1/budgets`); UQ4 `budget.maxRetries` is a ceiling over the RFC 0009 retry count, not a separate mechanism; UQ5 `interrupt` resume carries an additive budget delta audited via a second `budget.reserved`. NEW `spec/v1/budget-policy.md` + `schemas/budget-policy.schema.json` + the reserved `budget` run-options key + four content-free `budget.*` events + four `cap.breached{budget-*}` kinds + `capabilities.budget` + `limits.maxBudget{Tokens,CostUsd}` + the protocol-tier `budget-no-pricing-leak` invariant + `budget-policy-shape.test.ts` landed. The §E orthogonality seam with RFC 0058 (wall-time/iterations) is normative — zero dimension overlap, shared only via `cap.breached`. The behavioral enforcement scenario, the `budget_exhausted`/`budget_model_denied` OpenAPI error codes, and the reference-host accounting deferred to `Active → Accepted`.) |
 | **Affects** | NEW `schemas/budget-policy.schema.json` (the reserved `budget` run-options shape) · `spec/v1/run-options.md` (additive reserved `budget` key) · `schemas/run-event.schema.json` (additive `RunEventType`: `budget.reserved` / `budget.consumed` / `budget.threshold.crossed` / `budget.exhausted`) · `schemas/run-event-payloads.schema.json` (the four content-free payloads + new `capBreached.kind` values `budget-tokens` / `budget-cost` / `budget-tool-calls` / `budget-retries`) · `schemas/capabilities.schema.json` (additive optional `budget` block + additive `limits` ceiling fields) · `spec/v1/budget-policy.md` (NEW normative doc) · `api/openapi.yaml` (`rest-endpoints.md` error code `budget_exhausted` / `budget_model_denied`) · `api/asyncapi.yaml` · `SECURITY/invariants.yaml` (`budget-no-pricing-leak`) · `CHANGELOG.md` · `INTEROP-MATRIX.md` · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -117,7 +117,7 @@ On `budget.exhausted` for a hard dimension, the host enforces per `onExhaustion`
 
 ## Unresolved questions
 
-To decide before `Active`:
+**All five resolved at `Draft → Active` (2026-05-30) as proposed below — recorded in `Updated:`.** Retained for the rationale trail:
 
 1. **`budget.consumed` emission frequency.** Per `provider.usage` (fine-grained, chatty) or coalesced (per node / on threshold)? Proposed: host MAY coalesce; MUST emit at least `reserved` + `threshold.crossed` + `exhausted` (the consumed stream is optional granularity). Confirm.
 2. **Cost-cap determinism on replay.** `costEstimateUsd` is host-defined + optional (RFC 0026). If a host changes its pricing between original + replay, does the cost-cap fire at a different point? Proposed: the *consumed* values are recorded facts (replay re-reads them, per `replay.md`), so the exhaustion point is deterministic on replay even if live pricing changed. Confirm against `replay.md`.

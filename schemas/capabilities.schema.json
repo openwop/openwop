@@ -54,6 +54,16 @@
           "type": "integer",
           "minimum": 1,
           "description": "RFC 0058. Authoritative engine-side ceiling on agent-loop iterations. Upper bound for `RunOptions.configurable.maxLoopIterations`. Breach emits `cap.breached { kind: 'loop-iterations' }` + error `loop_limit_exceeded`. Optional; hosts that advertise it MUST enforce it."
+        },
+        "maxBudgetTokens": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "RFC 0084. Engine-side ceiling clamping `RunOptions.configurable.budget.maxTokens` (`min(requested, ceiling)`). Optional; only meaningful with `capabilities.budget`."
+        },
+        "maxBudgetCostUsd": {
+          "type": "number",
+          "minimum": 0,
+          "description": "RFC 0084. Engine-side cost ceiling clamping `RunOptions.configurable.budget.maxCostUsd`. Optional; only meaningful with `capabilities.budget`."
         }
       },
       "additionalProperties": false,
@@ -1062,6 +1072,34 @@
             }
           },
           "additionalProperties": false
+        },
+        "writable": {
+          "type": "boolean",
+          "description": "RFC 0080 §A (`write` dimension). Absent ⇒ the host implements the full RFC 0004 four-operation MemoryAdapter (`put`/`delete` available — i.e. writable), the back-compatible default. A read-only host (`get`/`list` only) MUST set `writable: false` so a consumer can distinguish a read-only store from a read/write one. Only meaningful when `supported: true`."
+        },
+        "search": {
+          "type": "object",
+          "description": "RFC 0080 §A (`search` dimension) — NEW optional. Semantic or filtered query beyond the RFC 0004 `list` enumeration. Absent ⇒ only `list`/`get` retrieval is advertised. The query path itself stays the host-internal MemoryAdapter (RFC 0080 §B — no portable `GET /v1/memory` at v1.x).",
+          "required": ["supported"],
+          "additionalProperties": false,
+          "properties": {
+            "supported": { "type": "boolean", "description": "REQUIRED when the sub-block is present. When `true`, the host supports memory query beyond `list` (semantic and/or filter modes per `modes`)." },
+            "modes": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["semantic", "filter"] },
+              "uniqueItems": true,
+              "description": "The query modes the host supports. `semantic` = embedding/similarity retrieval; `filter` = structured predicate query over entry metadata. Omitted ⇒ unspecified mode (the host supports some query beyond `list`)."
+            }
+          }
+        },
+        "retention": {
+          "type": "object",
+          "description": "RFC 0080 §A (`retention/forget` dimension) — NEW optional. TTL expiry (`agent-memory.md §TTL`) and/or an explicit forget operation. Absent ⇒ no TTL beyond `ttlSupported` and no forget operation advertised. `forget` is a host-managed mutation OUTSIDE the replay envelope (RFC 0080 §UQ3 / `replay.md` §Recorded-fact events — a replay re-reads the log-recorded snapshot, not live memory).",
+          "additionalProperties": false,
+          "properties": {
+            "ttl": { "type": "boolean", "description": "When `true`, memory entries expire per `expiresAt` (the `ttlSupported` semantics surfaced as a named retention dimension)." },
+            "forget": { "type": "boolean", "description": "When `true`, the host supports a tenant-scoped delete-by-subject forget operation (composes the CTI-1 cross-tenant invariant — a forget MUST NOT cross tenant boundaries)." }
+          }
         }
       },
       "additionalProperties": true
@@ -1216,6 +1254,22 @@
         "perToolRateLimit": { "type": "boolean", "description": "Host applies a per-`(principal, tool)` token-bucket rate limit; exhaustion yields `agent.toolReturned { status: 'rate_limited' }` + a `rate_limited` (429) error." }
       }
     },
+    "toolCatalog": {
+      "type": "object",
+      "description": "RFC 0078 (`Active`). The host exposes a read-only projection of its tool surfaces (node-pack / workflow / MCP / connector / host-extension) at `GET /v1/tools` + `GET /v1/tools/{toolId}`, returning `ToolDescriptor` records (`tool-descriptor.schema.json`). Optional; hosts that omit it expose no catalog (today's behavior) and the conformance scenarios skip cleanly. Read-only — the catalog never mutates tools; tool invocation stays on the existing surfaces (agent dispatch, `core.dispatch`, MCP). The listing is authorization-scoped + non-disclosing (RFC 0074 pattern).",
+      "required": ["supported"],
+      "additionalProperties": false,
+      "properties": {
+        "supported": { "type": "boolean", "description": "REQUIRED when present. `true` ⇒ `GET /v1/tools` + `GET /v1/tools/{toolId}` are served per RFC 0078 §B." },
+        "sources": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["node-pack", "workflow", "mcp", "connector", "host-extension"] },
+          "description": "Which tool sources the catalog projects. A host advertises only the sources it actually surfaces; a consumer MUST tolerate any subset. Absent ⇒ all sources the host implements."
+        },
+        "sessionLifecycle": { "type": "boolean", "description": "`true` ⇒ the host emits the RFC 0078 §D tool-session lifecycle events (`tool.session.opened`/`tool.session.closed`, content-free) bracketing the existing RFC 0064 `agent.toolCalled`/`agent.toolReturned` call events for multi-step interactions. Absent ⇒ `false` (single-shot tool calls only)." }
+      }
+    },
     "httpClient": {
       "type": "object",
       "description": "Host outbound-HTTP surface. The host's HTTP-client node egress (e.g. `core.http.request`) MUST be SSRF-guarded (`ssrfGuard: true`) with a positive `maxResponseBodyBytes` cap — the `http-client-ssrf-guard` protocol invariant. RFC 0076 §B adds the OPTIONAL `safeFetch` sub-capability: a host-mediated `ctx.http.safeFetch(url, init?)` exposed to pack runtime code, backed by the SAME SSRF guard (resolve→pin→connect, metadata-endpoint blocklist, DNS-rebinding defeat) so packs need not reach for raw DNS/sockets. See `host-capabilities.md` §host.http.",
@@ -1235,6 +1289,16 @@
           "properties": {
             "supported": { "type": "boolean" }
           }
+        },
+        "egressPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "RFC 0079. The host evaluates credential provenance (`credential-provenance.schema.json`) + the audience-binding MUST (§C) on credentialed egress and emits `egress.decided` (§B). Requires `httpClient.safeFetch` (the egress mechanism). Absent ⇒ the host does not perform provenance binding (the RFC 0076 §B SSRF guard still applies); the conformance behavioral scenarios skip cleanly. Closes the credential↔destination-binding question RFC 0076 §B parked.",
+          "required": ["supported"],
+          "properties": {
+            "supported": { "type": "boolean", "description": "REQUIRED when present. `true` ⇒ the §C audience-binding MUST is enforced + `egress.decided` is emitted." },
+            "decisions": { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["allowed", "denied", "downgraded", "approval-required"] }, "description": "MAY — which decision outcomes the host implements. Absent ⇒ at least `allowed` + `denied`." }
+          }
         }
       }
     },
@@ -1247,6 +1311,58 @@
         "retentionDays": { "type": "integer", "minimum": 1, "description": "Days a dead-lettered run is retained for inspection/fork before purge." }
       },
       "additionalProperties": false
+    },
+    "webhooks": {
+      "type": "object",
+      "description": "Webhook delivery surface (`webhooks.md`). The base contract is best-effort (5s per-attempt timeout, a circuit breaker, no durable retry). RFC 0083 adds the OPTIONAL `durable` mode: when `true`, webhook delivery participates in the trigger-bridge durable model (subscription states + retry policy + dead-letter on exhaustion) instead of the best-effort circuit-breaker-then-drop. Absent `durable` ⇒ the best-effort default, explicitly unchanged.",
+      "additionalProperties": true,
+      "properties": {
+        "supported": { "type": "boolean", "description": "Host serves the `webhooks.md` signed-delivery surface." },
+        "signatureAlgorithms": { "type": "array", "items": { "type": "string" }, "uniqueItems": true, "description": "HMAC signature algorithm ids the host supports (e.g. `v1`)." },
+        "durable": { "type": "boolean", "description": "RFC 0083 §A — OPTIONAL opt-in. `true` ⇒ webhook delivery is durable (a trigger-bridge source); absent/`false` ⇒ the best-effort `webhooks.md` contract, unchanged. The best-effort default is NOT relaxed." }
+      }
+    },
+    "triggerBridge": {
+      "type": "object",
+      "description": "RFC 0083 (`Active`). Composes the existing scheduling (RFC 0052), dead-letter (RFC 0053), queue-bus (RFC 0017), webhook, and cross-host-causation (RFC 0040) primitives into one uniform durable inbound-work contract: standardized subscription states + a delivery-attempt/dedup/retry model + trigger→run causation. Backs the derived `openwop-trigger-bridge` profile. Channels (Slack/email/SMS) stay vendor extensions (§E) — only their bridge into a run is uniform. Hosts that omit it have no uniform trigger contract (today's behavior); the conformance behavioral scenarios skip cleanly.",
+      "required": ["supported"],
+      "additionalProperties": false,
+      "properties": {
+        "supported": { "type": "boolean", "description": "REQUIRED when present. `true` ⇒ the host implements the §B state machine + §C delivery model + emits the two `trigger.*` events." },
+        "subscriptionStates": { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["active", "paused", "failed", "dead-lettered"] }, "description": "The subscription states the host implements (the §B four-state vocabulary). Absent ⇒ at least `active` + `dead-lettered`." },
+        "dedup": { "type": "boolean", "description": "`true` ⇒ the host de-duplicates inbound events by `dedupKey` within the retention window (§C-1; at-least-once becomes effectively-once)." },
+        "retryPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "The host's default delivery retry policy (§C-2).",
+          "properties": {
+            "maxAttempts": { "type": "integer", "minimum": 1, "description": "Max delivery attempts before dead-lettering." },
+            "backoff": { "type": "string", "enum": ["none", "fixed", "exponential"], "description": "Backoff strategy between attempts." }
+          }
+        },
+        "sources": { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["webhook", "schedule", "queue", "email", "form"] }, "description": "Which trigger sources bridge uniformly. A source listed here MUST have a registerable `TriggerSubscription` driven through the four-state machine AND emit the two `trigger.*` events for that source — the list MUST NOT over-claim a source the host has as a feature but does not wire as a durable trigger subscription. A consumer MUST tolerate any subset." }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "description": "RFC 0084 (`Active`). Enforceable per-run SPEND governance — the reserved `budget` run-options key (`budget-policy.schema.json`), the content-free `budget.{reserved,consumed,threshold.crossed,exhausted}` events, and hard-stop enforcement via `cap.breached{kind:\"budget-*\"}`. Orthogonal to RFC 0058 (which owns wall-time + loop-iterations via `limits.maxRunDurationMs`/`maxLoopIterations`); they share only the `cap.breached` overflow event. Hosts that omit it perform no spend enforcement (today's behavior); the conformance behavioral scenarios skip cleanly.",
+      "required": ["supported"],
+      "additionalProperties": false,
+      "properties": {
+        "supported": { "type": "boolean", "description": "REQUIRED when present. `true` ⇒ the host resolves the `budget` policy, emits the `budget.*` events, and (when `enforce: \"hard\"`) stops the run on exhaustion." },
+        "dimensions": { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["tokens", "cost", "toolCalls", "retries", "model"] }, "description": "Which budget dimensions the host actually enforces (truthful — advertise only what it honors). A consumer MUST tolerate any subset." },
+        "enforce": { "type": "string", "enum": ["hard", "advisory"], "description": "`hard`: exhaustion emits `cap.breached` + stops the run. `advisory`: emits the events but MUST NOT stop the run (honest advertisement of observe-only)." },
+        "scopes": { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["run", "workflow", "agent", "project"] }, "description": "Which budget scopes the host honors (§B). Absent ⇒ at least `run`." }
+      }
+    },
+    "nondeterminismPolicy": {
+      "type": "object",
+      "description": "RFC 0085. A host that does NOT support replay/fork (`replay.supported`) MAY instead DECLARE that it is honestly nondeterministic — satisfying the `openwop-agent-platform` floor's replay-OR-policy term (`agent-platform-profile.md` §B) without claiming a replay capability it lacks. Absent ⇒ the floor's replay term must be met by `replay.supported`.",
+      "required": ["declared"],
+      "additionalProperties": false,
+      "properties": {
+        "declared": { "type": "boolean", "description": "When `true`, the host documents its nondeterminism (it does not guarantee deterministic replay). A bare flag for v1.x (RFC 0085 §UQ2); a structured per-source policy is a future refinement." }
+      }
     },
     "workspace": {
       "type": "object",

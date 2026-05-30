@@ -96,6 +96,41 @@ Hosts that implement long-term memory advertise via `capabilities.agents.memoryB
 
 The capability advertisement is a CLAIM. Hosts that advertise long-term memory MUST honor CTI-1 + SR-1 + TTL contracts end-to-end. Conformance scenarios skip cleanly when the advertisement is absent.
 
+## Memory capability model (RFC 0080, `Active`)
+
+**Why this exists.** Memory support is advertised across two unrelated capability blocks (`capabilities.memory.*` and `capabilities.agents.*`) plus this prose and `AgentManifest.memoryShape`. A client building a memory console — or pre-flighting an agent — cannot answer "does this host support *write*? *search*? *forget*?" from one place, and a host that can't satisfy an agent's declared `memoryShape` degrades dispatch with no observable signal. RFC 0080 reconciles the *advertisement* into one coherent, **additive** model: it names eight dimensions, maps each to its existing advertised source, adds the two that had none, and requires the agent inventory to surface degraded memory. No existing flag is moved, renamed, or removed.
+
+### §A — Eight memory dimensions
+
+| Dimension | Meaning | Advertised by (existing / **NEW**) |
+|---|---|---|
+| **read** | `MemoryAdapter.list`/`get` (RFC 0004) | `capabilities.memory.supported` |
+| **write** | `MemoryAdapter.put`/`delete` | `memory.supported` ⇒ the four-op contract (RFC 0004 §A) is read+write; a **read-only** host sets **NEW** `memory.writable: false` |
+| **search** | semantic / filtered query beyond `list` | **NEW** optional `memory.search` (`{ supported, modes?: ["semantic","filter"] }`) |
+| **long-term-durability** | cross-run durable store | `capabilities.agents.memoryBackends` includes `"long-term"` |
+| **compaction** | RFC 0012 budgeted compaction + RFC 0062 distillation | `memory.compaction` / `memory.distillation` |
+| **attribution** | RFC 0057 `memory.written` provenance | `memory.attribution` |
+| **replay-snapshot** | MAE-3 deterministic read-snapshot on replay (RFC 0039/0041); consolidation outside the envelope (RFC 0068) | derived: `agents.memoryBackends: ["long-term"]` + `multiAgent.executionModel.version >= 2` |
+| **retention** | TTL expiry (§TTL) + explicit forget/delete | **NEW** optional `memory.retention` (`{ ttl?: boolean, forget?: boolean }`) — `forget: true` advertises that the host supports a tenant-scoped delete-by-subject operation (composes CTI-1) |
+
+The dimension name **`long-term-durability`** is deliberately distinct from the `agents.memoryBackends` *value* `"long-term"` (a backend id) so a degraded-dimension list and a backend list never collide on the wire. The `read`/`write` dimensions are gated by **`memory.supported: true`** (the RFC 0004 four-op `MemoryAdapter` flag) — this is also the field the derived `openwop-memory` profile gates on (§"Memory capability model" → `profiles.md` §`openwop-memory`). The profile derives across **two** subtrees (`capabilities.memory.*` for read/write + `capabilities.agents.memoryBackends` for durability); a validator MUST NOT look for `memoryBackends` under `memory`.
+
+`capabilities.agents.{memoryConsolidation,commitments}` (RFC 0068) stay where they are — they are agent-runtime behaviors, not adapter dimensions — and are cross-referenced here, not relocated.
+
+**`forget` × erasure (cross-host correctness).** `forget: true` advertises erasure **from live memory** — a forgotten entry no longer surfaces to `MemoryAdapter.get`/`list`. It is replay-stable precisely because replay re-reads the **log-recorded snapshot** (the recorded-fact event log / observable-result cache, `replay.md` §"Recorded-fact events"), not live memory — so a post-run `forget` does not alter a replay. A consequence hosts MUST understand: `forget` is **not** a full GDPR-style erasure of run history — if the run log retains a content-carrying record (e.g. a vendor `memory.written` event that carries content), that record is unaffected by `forget`. Full erasure of the event log is a host-managed audit operation outside the replay envelope and outside v1.x scope; a host advertising `forget` advertises live-memory erasure only.
+
+### §B — Canonical query endpoint: host-internal at v1.x
+
+`memory.supported` advertises the **host-internal `MemoryAdapter`** (RFC 0004) + the SR-1-redacted read-side a run sees — **not** a portable client query path. RFC 0080 adds **no `GET /v1/memory` endpoint**: the `MemoryAdapter` is host-internal by design, a portable cross-tenant query is a much larger surface + attack surface, and the operator/console interop need is met by the existing read-side + the §C degraded projection. A host wanting a query API exposes it under a host-extension scope (`x-host-<vendor>-memory-query`). A normative `GET /v1/memory` MAY be revisited in a future RFC; v1.x keeps memory query host-internal.
+
+### §C — `memoryShape` enforcement + degraded projection (normative)
+
+When a host advertises a manifest agent (RFC 0072/0074 `GET /v1/agents`) whose `AgentManifest.memoryShape` declares a dimension the host's reconciled model (§A) does NOT satisfy:
+
+1. The host MUST surface the gap on the inventory entry via the additive optional `memoryDegraded: true` + `degradedMemoryDimensions: string[]` (the §A dimension names it can't satisfy) on `agent-inventory-response.schema.json`. Absent ⇒ memory fully satisfied; an older host that omits the fields is treated by consumers as not-degraded/unknown (they MAY probe).
+2. A degraded agent MAY still dispatch at the RFC 0070 floor (degradation is permitted), but the degradation MUST be **observable** — a silent satisfied-looking inventory entry for an agent whose `longTerm: true` can't be honored is non-conformant.
+3. This reuses the RFC 0072 §C `degraded[]` per-dependency-visibility philosophy, applied to the memory dimensions. `forget` (§A retention) is a host-managed mutation **outside** the replay envelope: a replayed run re-reads the log-recorded snapshot, not live memory (`replay.md` §"Recorded-fact events").
+
 ## Scheduled distillation — "dreams" (RFC 0062, `Active`)
 
 **Why this exists.** A "dream" is a periodic background run that distills recent transactional memory into long-term artifacts under an explicit token budget, then refreshes a retrieval index the next session loads at startup. openwop already has the halves — RFC 0012 defines host-managed *compaction* (lossy distillation + the `memory.compacted` event) and RFC 0052 defines *scheduled* run initiation — but nothing binds them, pins a token budget, or defines the index. Distillation composes them; it does **not** invent a parallel event.
