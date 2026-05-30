@@ -68,3 +68,19 @@ The in-memory host is the smallest reference and intentionally does not behavior
 
 - **Strict mode (`OPENWOP_REQUIRE_BEHAVIOR=true`).** Not re-run; its character is unchanged from the v1.5.0 measurement — the strict-mode "failures" are honest profile opt-outs (`OPENWOP_OPTED_OUT_PROFILES`), not bugs. See `INTEROP-MATRIX.md` for the per-host opt-out lists.
 - **Workflow-engine reference (exhaustive mode).** The `apps/workflow-engine` app host was not re-run against v1.10.0 in this pass (it requires the full app harness rather than an `examples/hosts/*` server); its prior v1.5.0 exhaustive-mode reading is retained in `INTEROP-MATRIX.md` and annotated as such.
+
+## Post-fix re-measurement (2026-05-30, same day, after #376 + #378)
+
+Two reference-host fixes landed the same day and were re-measured against the same suite v1.10.0:
+
+- **#376** (`fix(host-sqlite,host-postgres)`) — the RFC 0073 root-`limits` spread was clobbering the AI-envelope limits; merging the two `limits` objects closed `aiEnvelope.capBreached` (×3) + `discovery` (×1) on both hosts.
+- **#378** (`feat(host-postgres)`) — implemented the agent-memory read-side + `RunSnapshot.agent`/provenance + `message` reducer + RFC 0003 §D handoff-schema validation, closing the agent-memory (×5) + agent-pack (×3) failures.
+
+| Host | Before (#373) | After (#376 + #378) | Deterministic failures |
+|---|---|---|---|
+| SQLite | 1966 / 4 / 104 (2074) | **1982 / 0 / 104 (2086) = 95.0%** | **0** |
+| Postgres | 1968 / 14 / 92 (2074) | **1988 / 6 / 92 (2086) = 95.3%** | **1** (`orchestratorConservativePath`) |
+
+The per-host total rose 2074 → 2086 as the now-correct root `limits` + agent advertisements re-activated capability-gated sub-tests.
+
+**Correction to #378's "0 deterministic" claim.** Postgres has **one** deterministic failure remaining: `orchestratorConservativePath` (RFC 0006 CP-1 — the low-confidence supervisor must hold its decision, emit `node.suspended{reason:"low-confidence"}`, and transition to `waiting-approval` for human ratification; the host currently completes the run instead). #378 grouped this with the timing flakes without isolating it individually — it is genuine (fails on a fresh pglite, alone). The other 5 full-suite failures (`queue-ack-nack-dlq` ×2, `replay-llm-cache-key` ×3) pass in isolation and are parallelism flakes. Implementing the CP-1 suspend/resume flow is the next reference-host follow-up.
