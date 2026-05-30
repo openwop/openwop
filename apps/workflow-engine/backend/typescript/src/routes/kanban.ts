@@ -44,7 +44,9 @@ import {
   listBoards,
   listCards,
   moveCard,
+  notifyBoardChanged,
   setCardLastRun,
+  subscribeBoardChanges,
   updateCardFields,
   type KanbanTriggerDirective,
 } from '../host/kanbanService.js';
@@ -153,6 +155,38 @@ async function startKanbanRun(
 }
 
 export function registerKanbanRoutes(app: Express, deps: Deps): void {
+  // Live board refresh (SSE): clients subscribe to a board's change stream
+  // and refetch on `board.changed`. Tenant-scoped at subscribe time. A plain
+  // text/event-stream with heartbeats; the payload is just the boardId — the
+  // client refetches GET /boards/:id (no card bodies on the wire here).
+  app.get('/v1/host/sample/kanban/boards/:boardId/events', (req, res, next) => {
+    try {
+      const board = getBoard(req.params.boardId);
+      if (!board || board.tenantId !== tenantOf(req)) {
+        throw new OpenwopError('not_found', 'Board not found.', 404, { boardId: req.params.boardId });
+      }
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache, no-transform',
+        Connection: 'keep-alive',
+      });
+      res.write(': connected\n\n');
+      const unsubscribe = subscribeBoardChanges((changedBoardId) => {
+        if (changedBoardId === board.id) {
+          res.write(`event: board.changed\ndata: ${JSON.stringify({ boardId: board.id })}\n\n`);
+        }
+      });
+      const heartbeat = setInterval(() => res.write(': heartbeat\n\n'), 25_000);
+      req.on('close', () => {
+        clearInterval(heartbeat);
+        unsubscribe();
+        res.end();
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   // --- boards ---
 
   app.get('/v1/host/sample/kanban/boards', (req, res) => {
@@ -270,6 +304,7 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
         description: typeof body.description === 'string' ? body.description : undefined,
         workflowId: typeof body.workflowId === 'string' ? body.workflowId : undefined,
       });
+      notifyBoardChanged(board.id);
       res.status(201).json(card);
     } catch (err) {
       next(err);
@@ -323,6 +358,7 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
       }
 
       const card = getCard(cardId);
+      notifyBoardChanged(board.id);
       res.json({ card, triggeredRunId, attribution });
     } catch (err) {
       next(err);
@@ -340,6 +376,7 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
         throw new OpenwopError('not_found', 'Card not found.', 404, { cardId: req.params.cardId });
       }
       deleteCard(card.id);
+      notifyBoardChanged(card.boardId);
       res.status(204).end();
     } catch (err) {
       next(err);

@@ -32,6 +32,7 @@ import {
   getBoard,
   listBoards,
   patchCard,
+  subscribeBoardEvents,
   type KanbanBoard,
   type KanbanCard,
   type KanbanColumn,
@@ -169,6 +170,16 @@ export function KanbanPage(): JSX.Element {
     void refreshBoards();
     void listRoster().then(setRoster).catch(() => { /* roster optional */ });
   }, [refreshBoards]);
+
+  // Live refresh: while a board is open, subscribe to its SSE change stream
+  // and refetch on any change (this client's moves, another client's, or a
+  // triggered run updating a card's lastRunId).
+  useEffect(() => {
+    const boardId = activeBoard?.id;
+    if (!boardId) return;
+    const unsubscribe = subscribeBoardEvents(boardId, () => { void openBoard(boardId); });
+    return unsubscribe;
+  }, [activeBoard?.id, openBoard]);
 
   const onCreateBoard = async (e: React.FormEvent) => {
     e.preventDefault();

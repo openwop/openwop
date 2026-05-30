@@ -102,6 +102,45 @@ export async function patchCard(
   return (await res.json()) as { card: KanbanCard; triggeredRunId: string | null };
 }
 
+/**
+ * Subscribe to a board's live-change stream (SSE). Calls `onChange` whenever
+ * the board's cards/columns change (from this or another client), so the page
+ * can refetch. Uses a fetch-based reader (not native EventSource) so the
+ * bearer Authorization header is sent; cookie mode works via credentials.
+ * Returns an unsubscribe fn (aborts the stream).
+ */
+export function subscribeBoardEvents(boardId: string, onChange: () => void): () => void {
+  const controller = new AbortController();
+  void (async () => {
+    try {
+      const res = await fetch(
+        `${base}/boards/${encodeURIComponent(boardId)}/events`,
+        fetchOpts({ headers: authedHeaders({ accept: 'text/event-stream' }), signal: controller.signal }),
+      );
+      if (!res.ok || !res.body) return;
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        // A `board.changed` event line is enough to trigger a refetch; we
+        // don't parse the data payload (the client re-reads the board).
+        if (buf.includes('event: board.changed')) {
+          buf = '';
+          onChange();
+        } else if (buf.length > 8192) {
+          buf = buf.slice(-1024); // bound the buffer between events/heartbeats
+        }
+      }
+    } catch {
+      /* aborted or network drop — caller may resubscribe */
+    }
+  })();
+  return () => controller.abort();
+}
+
 export async function deleteCard(cardId: string): Promise<void> {
   const res = await fetch(`${base}/cards/${encodeURIComponent(cardId)}`, fetchOpts({ method: 'DELETE', headers: authedHeaders() }));
   if (!res.ok) throw new Error(`deleteCard returned ${res.status}`);
