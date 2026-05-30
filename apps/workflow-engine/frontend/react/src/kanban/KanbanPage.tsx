@@ -15,6 +15,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   DndContext,
+  KeyboardSensor,
   PointerSensor,
   useDraggable,
   useDroppable,
@@ -40,8 +41,8 @@ function CardChip({ card }: { card: KanbanCard }): JSX.Element {
   const style: React.CSSProperties = {
     transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
     opacity: isDragging ? 0.5 : 1,
-    border: '1px solid var(--line, #d9d2c5)',
-    background: 'var(--paper, #fff)',
+    border: '1px solid var(--color-border)',
+    background: 'var(--color-surface)',
     borderRadius: 8,
     padding: '0.5rem 0.6rem',
     marginBottom: '0.5rem',
@@ -52,10 +53,10 @@ function CardChip({ card }: { card: KanbanCard }): JSX.Element {
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
       <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{card.title}</div>
       {card.description ? (
-        <div style={{ fontSize: '0.78rem', color: 'var(--ink-soft, #6b6357)', marginTop: 2 }}>{card.description}</div>
+        <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: 2 }}>{card.description}</div>
       ) : null}
       {card.workflowId ? (
-        <div style={{ fontSize: '0.72rem', color: 'var(--clay, #b06a4f)', marginTop: 4 }}>⚙ {card.workflowId}</div>
+        <div style={{ fontSize: '0.72rem', color: 'var(--color-accent)', marginTop: 4 }}>⚙ {card.workflowId}</div>
       ) : null}
       {card.lastRunId ? (
         <div style={{ fontSize: '0.72rem', marginTop: 4 }}>
@@ -84,8 +85,8 @@ function Column({
       style={{
         flex: '1 1 0',
         minWidth: 220,
-        background: isOver ? 'var(--sand, #f3ede1)' : 'var(--paper-dim, #faf7f0)',
-        border: '1px solid var(--line, #d9d2c5)',
+        background: isOver ? 'var(--clay-wash)' : 'var(--color-bg)',
+        border: '1px solid var(--color-border)',
         borderRadius: 12,
         padding: '0.6rem',
       }}
@@ -132,7 +133,13 @@ export function KanbanPage(): JSX.Element {
   const [notice, setNotice] = useState<string | null>(null);
   const [newBoardName, setNewBoardName] = useState('');
   const [newTriggerWf, setNewTriggerWf] = useState('');
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  // PointerSensor for mouse/touch + KeyboardSensor so the board is
+  // operable without a pointer (a11y): focus a card, Space to pick up,
+  // arrow keys to move, Space to drop.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor),
+  );
 
   const refreshBoards = useCallback(async () => {
     try {
@@ -204,13 +211,13 @@ export function KanbanPage(): JSX.Element {
   return (
     <section style={{ padding: '1rem' }}>
       <h1 style={{ marginTop: 0 }}>Boards</h1>
-      <p style={{ color: 'var(--ink-soft, #6b6357)', marginTop: '-0.5rem' }}>
+      <p style={{ color: 'var(--color-text-muted)', marginTop: '-0.5rem' }}>
         Kanban work surface — drag a card into a <strong>trigger column</strong> (⚡) to start its workflow run. The
         digital-twin-employee demo (RFC 0086).
       </p>
 
-      {error ? <div style={{ color: 'var(--clay, #b06a4f)' }}>⚠ {error}</div> : null}
-      {notice ? <div style={{ color: 'var(--clay, #b06a4f)' }}>✓ {notice}</div> : null}
+      {error ? <div style={{ color: 'var(--color-danger)' }}>⚠ {error}</div> : null}
+      {notice ? <div style={{ color: 'var(--color-success)' }}>✓ {notice}</div> : null}
 
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', margin: '0.75rem 0' }}>
         {boards.map((b) => (
@@ -266,7 +273,7 @@ export function KanbanPage(): JSX.Element {
           </div>
         </DndContext>
       ) : (
-        <p style={{ color: 'var(--ink-soft, #6b6357)' }}>Select or create a board to begin.</p>
+        <p style={{ color: 'var(--color-text-muted)' }}>Select or create a board to begin.</p>
       )}
     </section>
   );

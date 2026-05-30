@@ -19,6 +19,13 @@
  * persists it and scopes by the RFC 0048 owner triple. This module is
  * pure data — the Kanban route owns the run side effects.
  *
+ * Scope note (reference impl): a board-triggered run is dispatched by its
+ * `workflowId`; the bound member's `agentRef` is recorded for ATTRIBUTION
+ * only (persona + agentId in the run's `kanban` metadata), not yet used to
+ * execute the workflow *as* that agent. Full RFC 0086 dispatch-as-agent is
+ * deferred to the Draft→Active wire surface. `enabled: false` makes a
+ * member's board triggers inert (enforced in routes/kanban.ts).
+ *
  * @see RFCS/0086-standing-agent-roster-and-workflow-portfolio.md §A/§B/§C
  * @see src/host/kanbanService.ts — the board surface a roster member owns
  */

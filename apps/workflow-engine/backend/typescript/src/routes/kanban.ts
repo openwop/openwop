@@ -86,6 +86,17 @@ async function startKanbanRun(
   // manifest agentId it instantiates). Content-free — ids/persona only.
   const board = getBoard(trigger.boardId);
   const roster = board?.rosterId ? getRosterEntry(board.rosterId) : undefined;
+  // RFC 0086 §A: a disabled roster member's portfolio triggers are inert.
+  // When a board is bound to a member that is missing or `enabled: false`,
+  // the card move does NOT start a run.
+  if (board?.rosterId && (!roster || !roster.enabled)) {
+    log.info('kanban_trigger_skipped_disabled_roster', {
+      boardId: trigger.boardId,
+      rosterId: board.rosterId,
+      reason: roster ? 'disabled' : 'missing',
+    });
+    return null;
+  }
   const attribution: Record<string, unknown> = {
     boardId: trigger.boardId,
     cardId: trigger.cardId,
@@ -116,11 +127,14 @@ async function startKanbanRun(
   };
   await storage.insertRun(run);
 
-  // Content-free attribution event on the new run's stream. Mirrors the
-  // RFC 0086 `roster.run.initiated` shape (ids + persona — no card body).
+  // Content-free attribution event on the new run's stream. Host-extension
+  // namespaced (`host.kanban.*`) until RFC 0086 §E promotes a normative
+  // `kanban.card.moved` behind a `host.kanban` capability — at which point
+  // this becomes the reference impl of that event. Mirrors the RFC 0086
+  // `roster.run.initiated` shape (ids + persona — no card body).
   await getEventLog().append({
     runId,
-    type: 'kanban.card.moved',
+    type: 'host.kanban.card.moved',
     payload: attribution,
   });
 
