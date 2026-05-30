@@ -110,6 +110,16 @@ describe('budget-policy-shape: budget.* events + cap.breached kinds (RFC 0084 §
       }
     }
   });
+
+  it('the budget.* payloads are additionalProperties:false — a rate-card field on an INSTANCE is rejected', () => {
+    // The aggregate cost total (the user's own budget) is permitted; the host's per-unit rate card is not.
+    // additionalProperties:false makes the rejection structural, not just a declared-property check.
+    expect(compile('budgetConsumed')({ dimension: 'cost', consumed: 0.8, limit: 1.0 }), why('budget-policy.md §F', 'an aggregate cost total (the user budget) MUST validate')).toBe(true);
+    expect(
+      compile('budgetConsumed')({ dimension: 'cost', consumed: 0.8, limit: 1.0, ratePerToken: 0.000003 }),
+      why('budget-no-pricing-leak', 'a rate-card / per-token-price field MUST be rejected (additionalProperties:false)'),
+    ).toBe(false);
+  });
 });
 
 describe('budget-policy-shape: capability advertisement (RFC 0084 §E, server-free)', () => {

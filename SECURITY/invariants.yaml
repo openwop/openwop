@@ -1590,12 +1590,16 @@ invariants:
       - conformance/src/scenarios/budget-policy-shape.test.ts
     note: |
       RFC 0084 §F. The budget.{reserved,consumed,threshold.crossed,exhausted}
-      events and cap.breached{kind:"budget-*"} MUST NOT carry pricing breakdowns,
-      rate cards, per-token prices, provider credentials, or model prose —
-      content-free: dimension name + integers/numbers + scope only (mirroring
-      provider-usage-no-credential-leak). The budget.* payload $defs are
-      additionalProperties-controlled with no pricing field; the always-on
-      budget-policy-shape.test.ts content-free negatives (a budget.consumed
-      carrying a rate card / per-token price) are the public test. The host's
-      pricing model stays a host choice (RFC 0026); only the policy shape +
-      events + enforcement seam are pinned.
+      events and cap.breached{kind:"budget-*"} MUST NOT carry the host's PRICING
+      MODEL — rate cards, per-token/per-unit prices, cost breakdowns, provider
+      credentials, or model prose. The AGGREGATE cost total (the cost dimension's
+      consumed/limit + the user-set maxCostUsd) IS permitted — it is the user's
+      own budget reflected back, already derivable from the accepted RFC 0026
+      provider.usage.costEstimateUsd surface, and a single aggregate cannot
+      reconstruct a rate card. The four budget.* payload $defs are
+      additionalProperties:FALSE (so a rate-card extra field is rejected at the
+      INSTANCE level, not just absent from declared properties); the always-on
+      budget-policy-shape.test.ts asserts both the declared-property check and the
+      instance-level rejection of a ratePerToken-bearing payload — the public test.
+      The host's pricing model (how it computes costEstimateUsd) stays a host
+      choice (RFC 0026); only the policy shape + events + enforcement seam are pinned.

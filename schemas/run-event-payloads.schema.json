@@ -1538,7 +1538,7 @@
         },
         "scope": { "type": "string", "enum": ["run", "workflow", "agent", "project"], "description": "The binding scope the effective budget resolved from (§B)." }
       },
-      "additionalProperties": true
+      "additionalProperties": false
     },
     "budgetConsumed": {
       "type": "object",
@@ -1550,7 +1550,7 @@
         "limit":     { "type": "number", "minimum": 0, "description": "The effective ceiling for the dimension." },
         "remaining": { "type": "number", "description": "MAY — `limit - consumed`." }
       },
-      "additionalProperties": true
+      "additionalProperties": false
     },
     "budgetThresholdCrossed": {
       "type": "object",
@@ -1562,7 +1562,7 @@
         "limit":     { "type": "number", "minimum": 0 },
         "percent":   { "type": "number", "minimum": 0, "maximum": 100, "description": "The percent-of-limit threshold crossed." }
       },
-      "additionalProperties": true
+      "additionalProperties": false
     },
     "budgetExhausted": {
       "type": "object",
@@ -1573,7 +1573,7 @@
         "consumed":  { "type": "number", "minimum": 0 },
         "limit":     { "type": "number", "minimum": 0 }
       },
-      "additionalProperties": true
+      "additionalProperties": false
     }
   }
 }
