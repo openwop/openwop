@@ -40,7 +40,7 @@ Two **content-free** events ([`run-event-payloads.schema.json`](../../schemas/ru
 | `trigger.subscription.state.changed` | `{ subscriptionId, source, fromState, toState, reason? }` |
 | `trigger.delivery.attempted` | `{ subscriptionId, dedupKey, attempt, outcome: "delivered"\|"retrying"\|"dead-lettered", runId? }` |
 
-Neither carries the inbound payload, headers, or credential material (SR-1) — only the subscription id, dedup key, attempt counter, outcome, and the resulting `runId`.
+Neither carries the inbound payload, headers, or credential material (SR-1) — only the subscription id, dedup key, attempt counter, outcome, and the resulting `runId`. Content-freeness MUSTs: `state.changed.reason` is a **closed enum** (`retry-exhausted`/`operator-paused`/`signature-invalid`/`backpressure`/`source-removed`/`provenance-unevaluable`) — a free-form reason would let a host spill an inbound URL/header into it; `delivery.attempted.dedupKey` MUST be a **host-opaque** key (e.g. `hash(subscriptionId + inbound-event-id)`) that does NOT embed inbound body/path/header content in cleartext; and a `TriggerSubscription.secretFingerprint` MUST be a **salted/host-keyed, truncated** one-way digest (≤32 chars, never a raw secret or a full unsalted `SHA256(secret)` — a brute-force oracle). A source listed in `capabilities.triggerBridge.sources[]` MUST actually be driven through the four-state machine + emit the two `trigger.*` events (no over-claiming a feature that isn't a durable subscription).
 
 ## §D — The `openwop-trigger-bridge` profile
 

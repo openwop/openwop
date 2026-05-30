@@ -1308,7 +1308,7 @@
             "backoff": { "type": "string", "enum": ["none", "fixed", "exponential"], "description": "Backoff strategy between attempts." }
           }
         },
-        "sources": { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["webhook", "schedule", "queue", "email", "form"] }, "description": "Which trigger sources bridge uniformly. A consumer MUST tolerate any subset." }
+        "sources": { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["webhook", "schedule", "queue", "email", "form"] }, "description": "Which trigger sources bridge uniformly. A source listed here MUST have a registerable `TriggerSubscription` driven through the four-state machine AND emit the two `trigger.*` events for that source — the list MUST NOT over-claim a source the host has as a feature but does not wire as a durable trigger subscription. A consumer MUST tolerate any subset." }
       }
     },
     "budget": {

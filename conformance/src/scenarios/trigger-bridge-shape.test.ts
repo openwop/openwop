@@ -63,6 +63,13 @@ describe('trigger-bridge-shape: TriggerSubscription (RFC 0083 §B, server-free)'
     expect(validate({ subscriptionId: 's', source: 'webhook', state: 'active', body: 'inbound' }), why('trigger-bridge.md §B', 'TriggerSubscription MUST be additionalProperties:false')).toBe(false);
   });
 
+  it('secretFingerprint MUST be bounded — a full 64-hex (unsalted-hash-smelling) digest is rejected', () => {
+    const truncated = 'a1b2c3d4e5f6a7b8';      // 16 hex — a truncated host-keyed fingerprint
+    const fullDigest = 'a'.repeat(64);          // 64 hex — smells like an unsalted SHA256(secret)
+    expect(validate({ subscriptionId: 's', source: 'webhook', state: 'active', secretFingerprint: truncated }), why('trigger-bridge.md §B', 'a truncated fingerprint MUST validate')).toBe(true);
+    expect(validate({ subscriptionId: 's', source: 'webhook', state: 'active', secretFingerprint: fullDigest }), why('SR-1', 'a full 64-hex digest MUST be rejected (brute-force oracle)')).toBe(false);
+  });
+
   it('the state enum is exactly the four §B states', () => {
     const stateEnum = ((sub.properties as Record<string, { enum?: string[] }>).state?.enum) ?? [];
     expect([...stateEnum].sort(), why('trigger-bridge.md §B', 'the four-state vocabulary MUST be stable')).toEqual([...STATES].sort());
@@ -78,10 +85,11 @@ describe('trigger-bridge-shape: trigger.* events (RFC 0083 §C, server-free)', (
     $ref: `#/$defs/${defName}`,
   } as Record<string, unknown>);
 
-  it('trigger.subscription.state.changed validates a content-free record', () => {
+  it('trigger.subscription.state.changed validates + reason is a CLOSED enum (no URL-bearing free text)', () => {
     const v = compile('triggerSubscriptionStateChanged');
     expect(v({ subscriptionId: 's', source: 'webhook', fromState: 'active', toState: 'dead-lettered', reason: 'retry-exhausted' }), why('trigger-bridge.md §C', 'state-changed MUST validate')).toBe(true);
     expect(v({ subscriptionId: 's', source: 'webhook', fromState: 'active' }), why('trigger-bridge.md §C', 'toState is REQUIRED')).toBe(false);
+    expect(v({ subscriptionId: 's', source: 'webhook', fromState: 'active', toState: 'failed', reason: 'https://attacker.example/leak?token=sk' }), why('SR-1', 'a free-form / URL-bearing reason MUST be rejected')).toBe(false);
   });
 
   it('trigger.delivery.attempted validates + enforces the outcome enum', () => {

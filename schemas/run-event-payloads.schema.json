@@ -1503,7 +1503,7 @@
         "source":         { "type": "string", "enum": ["webhook", "schedule", "queue", "email", "form"], "description": "The subscription source." },
         "fromState":      { "type": "string", "enum": ["active", "paused", "failed", "dead-lettered"], "description": "Prior state." },
         "toState":        { "type": "string", "enum": ["active", "paused", "failed", "dead-lettered"], "description": "New state." },
-        "reason":         { "type": "string", "description": "MAY — a short machine-stable reason code (e.g. `retry-exhausted`, `operator-paused`)." }
+        "reason":         { "type": "string", "enum": ["retry-exhausted", "operator-paused", "signature-invalid", "backpressure", "source-removed", "provenance-unevaluable"], "description": "MAY — a machine-stable reason code (a CLOSED enum — a free-form reason is a leak vector that would let a host spill an inbound URL/host/header into it). The load-bearing field is `toState`." }
       },
       "additionalProperties": true
     },
@@ -1513,7 +1513,7 @@
       "required": ["subscriptionId", "dedupKey", "attempt", "outcome"],
       "properties": {
         "subscriptionId": { "type": "string", "minLength": 1, "description": "The TriggerSubscription the delivery is for." },
-        "dedupKey":       { "type": "string", "minLength": 1, "description": "The caller/source-derived stable de-duplication key (§C-1; a webhook event id, a message id). A repeat within retention is a no-op returning the prior runId." },
+        "dedupKey":       { "type": "string", "minLength": 1, "description": "The de-duplication key (§C-1). MUST be a **host-opaque** stable key (e.g. `hash(subscriptionId + inbound-event-id)`); it MUST NOT embed inbound body / path / header content in cleartext (SR-1 — a key like `POST /webhook/orders/12345?token=…` would leak). A repeat within retention is a no-op returning the prior runId." },
         "attempt":        { "type": "integer", "minimum": 1, "description": "1-based attempt counter." },
         "outcome":        { "type": "string", "enum": ["delivered", "retrying", "dead-lettered"], "description": "`delivered`: the run started; `retrying`: failed, will retry per policy; `dead-lettered`: retries exhausted, routed to the RFC 0053 sink (no run)." },
         "runId":          { "type": "string", "minLength": 1, "description": "MAY — the run started by a `delivered` outcome (the run's `run.started` carries this delivery's id as `causationId`, RFC 0040). Absent for `retrying` / `dead-lettered`." }
