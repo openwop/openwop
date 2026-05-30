@@ -11,6 +11,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0081): Agent Evaluation, Scorecards, and Promotion Gates — Draft → Active (2026-05-30)
+
+Promoted **RFC 0081** `Draft → Active` (filed #357 four days prior) — the head of the Wave-3 "deployable" arc lands its wire surface. The shape landed atomically:
+
+- NEW `spec/v1/agent-evaluation.md` (normative §A suite artifact / §B `mode:"eval"` run projection / §C `eval.*` events + `EvalSummary` / §D modes / §E promotion seam / §F safety; Status `DRAFT v1.x`).
+- NEW `schemas/agent-eval-suite.schema.json` (the portable `AgentEvalSuite`: tasks + golden-or-rubric `expected` + deterministic `fixtures` + `allowedModels` + pass/fail `thresholds`) + NEW `schemas/eval-summary.schema.json` (the content-free scorecard).
+- Additive optional `evalSuiteRef` on `agent-manifest.schema.json` (pack-distributed like `systemPromptRef`); additive optional `capabilities.agents.evalSuite` (`supported` + closed five-mode `modes` vocabulary golden/rubric/adversarial/regression/live-shadow + optional ceilings).
+- Three content-free `eval.{started,scored,completed}` RunEventTypes (`run-event.schema.json` enum 77 → 80) + their `$defs` + `_typeIndex` entries (`run-event-payloads.schema.json`; `eval.scored` per-task for incremental streaming).
+- Always-on server-free `agent-eval-suite-shape.test.ts` (capability shape + the two schemas' round-trip + the three event payloads + the content-free negatives) + `coverage.md` row.
+- NEW protocol-tier SECURITY invariant `eval-summary-no-content-leak` — the `EvalSummary` + `eval.*` events MUST carry scores/scalars/ids/counts + redaction-safe `{kind, severity}` safety descriptors ONLY, never task output / rubric prose / completions / pricing / credentials (SR-1); its public test is the shape scenario's content-free negatives.
+
+All five `Active`-gated Unresolved questions resolved as proposed (rubric/adversarial/live-shadow scores are **recorded-fact events** per `replay.md`; `mode:"eval"` is the discriminator; suite inherits the pack signature; RFC 0081 reserves `{evalRunId, requiredPassScore?}` + RFC 0082 enforces; judge cost included in `totalCostUsd`). Composes RFC 0070/0072/0077 (the run surface eval projects over) + 0026 (per-task cost) + 0054 (regression `:diff`) + 0056 (human override). Additive (`COMPATIBILITY.md` §2.1) — three additive content-free RunEventTypes (no `eventLogSchemaVersion` bump, RFC 0008 §K precedent), two new schemas, two additive optional fields; no existing surface changes. **Deferred to `Active → Accepted`** per the RFC 0077 precedent: the `GET /v1/runs/{runId}/eval-summary` endpoint + `mode:"eval"` in OpenAPI/AsyncAPI, the SDK helpers, the behavioral `agent-eval-run.test.ts` + eval fixture, the INTEROP-MATRIX row, and the reference-host eval projection. Counts: RFC Active 9 → 10 / Draft 12 → 11; prose specs 42 → 43; RunEventType variants 77 → 80; SECURITY invariants 105 → 106 (protocol-tier 73 → 74); conformance scenario files +1.
+
 ### test(conformance): make the RFC 0076 §B live-audit bar non-vacuous + tighten its evidence (2026-05-29)
 
 Code-review follow-ups on the §B → Accepted bar (`safefetch-live-audit.test.ts`, PR #336), all additive — no wire-shape / schema / capability change; conformance suite stays `1.10.0` (unreleased additions):

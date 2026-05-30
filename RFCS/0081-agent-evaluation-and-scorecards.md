@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0081 |
 | **Title** | Define a portable `AgentEvalSuite` artifact, an eval-run projection over the existing run surface (an `eval.*` event family + an `EvalSummary` schema), a host-advertised `agents.evalSuite` capability with a closed `modes[]` vocabulary (golden / rubric / adversarial / regression / live-shadow), and the composition seam by which an eval result MAY gate an agent deployment promotion — all additive |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-29 |
-| **Updated** | 2026-05-29 |
+| **Updated** | 2026-05-30 (Draft → Active — wire surface landed: `spec/v1/agent-evaluation.md` + `agent-eval-suite`/`eval-summary` schemas + `evalSuiteRef` + `agents.evalSuite` + 3 `eval.*` events + always-on `agent-eval-suite-shape.test.ts` + `eval-summary-no-content-leak` invariant; all 5 UQs resolved as proposed. The `GET …/eval-summary` endpoint + `mode:"eval"` in OpenAPI/AsyncAPI, the SDK helpers, the behavioral gated scenario, and the reference-host eval projection are deferred to `Active → Accepted` per the RFC 0077 precedent.) |
 | **Affects** | NEW `schemas/agent-eval-suite.schema.json` (portable eval-suite artifact, pack-distributed like `systemPromptRef` / handoff schemas) · NEW `schemas/eval-summary.schema.json` (the terminal scorecard) · `schemas/run-event.schema.json` (additive `RunEventType` enum: `eval.started` / `eval.scored` / `eval.completed`) · `schemas/run-event-payloads.schema.json` (the three content-free eval payloads) · `schemas/capabilities.schema.json` (additive optional `agents.evalSuite` block) · `spec/v1/agent-evaluation.md` (NEW normative doc) · `api/openapi.yaml` (additive `GET /v1/runs/{runId}/eval-summary`; eval run-mode reuses `POST /v1/runs`) · `api/asyncapi.yaml` (eval channels) · `CHANGELOG.md` · `INTEROP-MATRIX.md` · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
@@ -123,7 +123,7 @@ This RFC defines *how an eval result is referenced by a deployment gate*, not th
 
 ## Unresolved questions
 
-To decide before `Active`:
+**Resolved for `Active` (2026-05-30) — the proposed answer to each was adopted; verified against the cited spec docs:**
 
 1. **Rubric/adversarial determinism + replay.** A rubric/adversarial/live-shadow eval is nondeterministic (judge model, live tools). Proposed: `eval.scored` / `eval.completed` are **recorded-fact events** per `replay.md` §"Recorded-fact events" (the RFC 0026 / RFC 0077 `invocationId` precedent — a replay re-reads the recorded score, never re-judges). Golden/regression-with-fixtures ARE reproducible. Confirm the recorded-fact classification covers all five modes.
 2. **`mode:"eval"` vs a `RunOptions.eval` sub-object.** Is `mode:"eval"` the right discriminator, or should eval be an option overlay on a normal run (`configurable.eval`)? Proposed: `mode` (it's a distinct terminal projection, not a tweak). Confirm against `run-options.md`.
@@ -140,15 +140,15 @@ To decide before `Active`:
 
 ## Acceptance criteria
 
-Checklist for `Active → Accepted` (files at `Draft`):
+Landed at `Active` (2026-05-30) ✅ / deferred to `Active → Accepted` ⏳:
 
-- [ ] `spec/v1/agent-evaluation.md` normative doc: §A suite artifact, §B eval-run projection, §C event family + summary, §D modes capability, §E promotion seam, §F safety (SR-1 + cross-tenant + recorded-fact).
-- [ ] `agent-eval-suite.schema.json` + `eval-summary.schema.json`; additive optional `evalSuiteRef` on `agent-manifest.schema.json`; additive optional `agents.evalSuite` on `capabilities.schema.json`; three `eval.*` RunEventTypes + payloads; `mode:"eval"` + `GET /v1/runs/{runId}/eval-summary` in `openapi.yaml`; eval channels in `asyncapi.yaml`.
-- [ ] SECURITY invariant `eval-summary-no-content-leak` (content-free events + redaction-safe `safetyFindings`) + cross-tenant isolation reuse, with public tests.
-- [ ] Conformance: `agent-eval-suite-shape.test.ts` (always-on) + `agent-eval-run.test.ts` (gated) + eval fixture + `fixtures.md` row + `coverage.md`.
-- [ ] CHANGELOG entry + INTEROP-MATRIX row.
-- [ ] All five Unresolved questions resolved (recorded in `Updated:`).
-- [ ] Reference host implements the golden+regression eval projection + passes the gated scenario, OR the RFC explicitly defers reference-host implementation.
+- [x] `spec/v1/agent-evaluation.md` normative doc: §A suite artifact, §B eval-run projection, §C event family + summary, §D modes capability, §E promotion seam, §F safety (SR-1 + cross-tenant + recorded-fact).
+- [x] `agent-eval-suite.schema.json` + `eval-summary.schema.json`; additive optional `evalSuiteRef` on `agent-manifest.schema.json`; additive optional `agents.evalSuite` on `capabilities.schema.json`; three `eval.*` RunEventTypes + payloads. ⏳ `mode:"eval"` + `GET /v1/runs/{runId}/eval-summary` in `openapi.yaml` + eval channels in `asyncapi.yaml` (deferred — behavioral surface, RFC 0077 precedent).
+- [x] SECURITY invariant `eval-summary-no-content-leak` (content-free events + summary + redaction-safe `safetyFindings`) + public test (the always-on shape scenario's content-free negatives). Cross-tenant isolation reuses the run owner-triple scope (RFC 0048/0074); a dedicated behavioral test lands with the reference host.
+- [x] Conformance: `agent-eval-suite-shape.test.ts` (always-on). ⏳ `agent-eval-run.test.ts` (gated/behavioral) + eval fixture + `fixtures.md` row deferred. [x] `coverage.md` row.
+- [x] CHANGELOG entry. ⏳ INTEROP-MATRIX row (no host advertises `evalSuite` yet).
+- [x] All five Unresolved questions resolved (recorded in `Updated:`).
+- [ ] ⏳ Reference host implements the golden+regression eval projection + passes the gated scenario — the explicit `Active → Accepted` gate (RFC 0077 precedent: behavioral conformance + reference-host advertisement deferred).
 
 ## References
 

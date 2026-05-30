@@ -892,6 +892,34 @@
             }
           }
         },
+        "evalSuite": {
+          "type": "object",
+          "description": "RFC 0081. The host runs portable `agent-eval-suite.schema.json` suites as eval runs (a `mode: \"eval\"` projection over POST /v1/runs, RFC 0081 §B), emits the `eval.started`/`eval.scored`/`eval.completed` content-free family, and terminates with an `eval-summary.schema.json` scorecard. Composes RFC 0026 (per-task cost), RFC 0054 (regression baseline diff), RFC 0056 (human override of an auto-score). Hosts that omit this block reject `mode: \"eval\"` with 501; the behavioral conformance scenario soft-skips. The summary + events are content-free (SECURITY invariant `eval-summary-no-content-leak`).",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "REQUIRED when present. When `true`, the host accepts `mode: \"eval\"` runs against an `evalSuiteRef`, scores each task, and serves `GET /v1/runs/{runId}/eval-summary`."
+            },
+            "modes": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "type": "string", "enum": ["golden", "rubric", "adversarial", "regression", "live-shadow"] },
+              "description": "Which eval modes the host actually implements (RFC 0081 §D closed vocabulary). Truthful advertisement (RFC 0031): a host advertises ONLY the modes it gates on; a suite requesting an unadvertised mode is rejected at run-create with `400 validation_error`. Absent ⇒ no modes (the host advertises `supported` but gates nothing — effectively shape-only)."
+            },
+            "maxTasksPerSuite": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "MAY. Host ceiling on tasks per suite; a suite exceeding it is rejected at run-create (the RFC 0058 §A clamp pattern)."
+            },
+            "maxCostUsdPerSuite": {
+              "type": "number",
+              "minimum": 0,
+              "description": "MAY. Host ceiling on total eval-run cost; composes RFC 0084 budget enforcement when advertised."
+            }
+          }
+        },
         "dispatchMapping": {
           "type": "boolean",
           "default": false,

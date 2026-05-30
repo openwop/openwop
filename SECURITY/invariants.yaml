@@ -1523,3 +1523,21 @@ invariants:
       RFC 0057 §C. memory.written events appear only on the run event stream
       of the tenant that owns the run; no memoryRef/memoryId for one tenant's
       run is disclosed on another tenant's stream. Mirrors CTI-1.
+
+  - id: eval-summary-no-content-leak
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/agent-eval-suite-shape.test.ts
+    note: |
+      RFC 0081 §F. An EvalSummary (eval-summary.schema.json) and the
+      eval.started/eval.scored/eval.completed events MUST NOT carry task
+      output bodies, rubric prose, model completions, prompts, pricing
+      breakdowns / rate cards, or credential material (SR-1) — scores,
+      scalars, ids, counts, and redaction-safe {kind, severity} safety
+      descriptors only. The result body is served by the run's normal
+      projection. The summary schema is additionalProperties:false at every
+      level; the always-on agent-eval-suite-shape.test.ts content-free
+      negatives (a task entry with a taskOutput body; a safetyFinding with an
+      excerpt) are the public test.
