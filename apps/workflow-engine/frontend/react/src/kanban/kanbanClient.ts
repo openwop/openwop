@@ -41,6 +41,7 @@ export interface KanbanBoard {
   tenantId: string;
   name: string;
   columns: KanbanColumn[];
+  rosterId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -57,6 +58,7 @@ export async function listBoards(): Promise<KanbanBoard[]> {
 export async function createBoard(input: {
   name: string;
   triggerWorkflowId?: string;
+  rosterId?: string;
 }): Promise<KanbanBoard> {
   const res = await fetch(`${base}/boards`, fetchOpts({ method: 'POST', headers: jsonHeaders(), body: JSON.stringify(input) }));
   if (!res.ok) throw new Error(`createBoard returned ${res.status}`);

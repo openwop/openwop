@@ -20,6 +20,7 @@ import { PromptLibraryPage } from './prompts/PromptLibraryPage.js';
 import { KeysPage } from './byok/KeysPage.js';
 import { MemoryInspectorPage } from './memory/MemoryInspectorPage.js';
 import { KanbanPage } from './kanban/KanbanPage.js';
+import { RosterPage } from './agents/RosterPage.js';
 import { SignInButton } from './auth/SignInButton.js';
 import { NotificationBell } from './notifications/NotificationBell.js';
 import { NotificationPanel } from './notifications/NotificationPanel.js';
@@ -89,6 +90,7 @@ export function App() {
             items={[
               { label: 'Workflows', to: '/builder', hint: 'Author + run multi-node graphs' },
               { label: 'Agents', to: '/agents', hint: 'Persona-driven LLM workers' },
+              { label: 'Roster', to: '/roster', hint: 'Named agents + workflow portfolios + org-chart' },
               { label: 'Prompts', to: '/prompts', hint: 'Reusable templates + variables' },
             ]}
           />
@@ -158,6 +160,7 @@ export function App() {
           <Route path="/keys" element={<KeysPage />} />
           <Route path="/memory" element={<MemoryInspectorPage />} />
           <Route path="/boards" element={<KanbanPage />} />
+          <Route path="/roster" element={<RosterPage />} />
           {/* Agents tab — list + detail + create (E2) + install (E3)
               + fork (E4 also lands on /agents/new with ?fork= query). */}
           <Route path="/agents" element={<AgentsPage />} />

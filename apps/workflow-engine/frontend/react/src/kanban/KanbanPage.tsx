@@ -24,6 +24,7 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import { Link } from 'react-router-dom';
+import { listRoster, type RosterEntry } from '../agents/rosterClient.js';
 import {
   createBoard,
   createCard,
@@ -133,6 +134,11 @@ export function KanbanPage(): JSX.Element {
   const [notice, setNotice] = useState<string | null>(null);
   const [newBoardName, setNewBoardName] = useState('');
   const [newTriggerWf, setNewTriggerWf] = useState('');
+  // Roster members the new board can be bound to (RFC 0086): binding defaults
+  // the To Do column to the member's first portfolio workflow + attributes
+  // triggered runs to the member.
+  const [roster, setRoster] = useState<RosterEntry[]>([]);
+  const [newRosterId, setNewRosterId] = useState('');
   // PointerSensor for mouse/touch + KeyboardSensor so the board is
   // operable without a pointer (a11y): focus a card, Space to pick up,
   // arrow keys to move, Space to drop.
@@ -161,6 +167,7 @@ export function KanbanPage(): JSX.Element {
 
   useEffect(() => {
     void refreshBoards();
+    void listRoster().then(setRoster).catch(() => { /* roster optional */ });
   }, [refreshBoards]);
 
   const onCreateBoard = async (e: React.FormEvent) => {
@@ -170,9 +177,11 @@ export function KanbanPage(): JSX.Element {
       const board = await createBoard({
         name: newBoardName.trim(),
         triggerWorkflowId: newTriggerWf.trim() || undefined,
+        rosterId: newRosterId || undefined,
       });
       setNewBoardName('');
       setNewTriggerWf('');
+      setNewRosterId('');
       await refreshBoards();
       await openBoard(board.id);
     } catch (err) {
@@ -254,6 +263,17 @@ export function KanbanPage(): JSX.Element {
           placeholder="To Do trigger workflowId (optional)"
           style={{ minWidth: 260 }}
         />
+        <select
+          value={newRosterId}
+          onChange={(e) => setNewRosterId(e.target.value)}
+          aria-label="Bind to a roster agent (optional)"
+          title="Bind to a named agent — its To Do column fires the agent's first portfolio workflow"
+        >
+          <option value="">— no agent —</option>
+          {roster.map((r) => (
+            <option key={r.rosterId} value={r.rosterId}>{r.persona}</option>
+          ))}
+        </select>
         <button type="submit" className="primary">
           Create board
         </button>
