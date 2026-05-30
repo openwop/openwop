@@ -1,0 +1,178 @@
+# RFC 0087: Agent Org-Chart
+
+| Field | Value |
+|---|---|
+| **RFC** | 0087 |
+| **Title** | Define an **agent org-chart** — a tenant-scoped, descriptive grouping of standing roster agents (RFC 0086) into departments + roles with `reportsTo` edges and a responsibility view — under one load-bearing invariant: **org position confers NO authority** (a `reportsTo`/manager edge MUST NOT widen `toolAllowlist`, grant an RBAC scope, or bypass an approval gate); composing RFC 0086 (the members), RFC 0074 (tenant scoping), RFC 0049 (RBAC — unchanged by position), and RFC 0051 (approval gates — unchanged by position) |
+| **Status** | `Draft` |
+| **Author(s)** | David Tufts (@davidscotttufts) |
+| **Created** | 2026-05-30 |
+| **Updated** | 2026-05-30 |
+| **Affects** | NEW `schemas/agent-org-chart.schema.json` (the department/role/edge record) · `schemas/capabilities.schema.json` (additive optional `agents.orgChart` block) · `spec/v1/agent-org-chart.md` (NEW normative doc) · `api/openapi.yaml` (additive `GET /v1/agents/org-chart` + `GET /v1/agents/org-chart/{departmentId}`) · `SECURITY/invariants.yaml` (NEW protocol-tier `org-position-no-authority-escalation`) · `CHANGELOG.md` · `INTEROP-MATRIX.md` · new conformance scenarios |
+| **Compatibility** | `additive` |
+| **Supersedes** | — |
+| **Superseded by** | — |
+
+## Summary
+
+RFC 0086 gives openwop the standing agent instance — the named "digital-twin employee" that owns a workflow portfolio. The natural next question on every agent platform is **organizational**: which department does Sally belong to, what is her role, who does she report to, and what is the team collectively responsible for? Today that is unmodeled — agents are a flat set (the adopter, MyndHyve, has only a flat `AgentTeam{agentIds, coordinationStrategy}`, no hierarchy), so an operator console cannot render an org chart, a responsibility audit cannot roll work up to a department, and a peer host cannot discover team structure. This RFC adds a **descriptive** org-chart layer **additively**: an `agent-org-chart.schema.json` with **departments**, **roles**, **members** (RFC 0086 `rosterId`s), and `reportsTo` **edges**, plus a derived **responsibility view** (which workflows a department owns, transitively via its members' portfolios), gated behind an `agents.orgChart` capability and tenant-scoped per RFC 0074. The **load-bearing constraint** — the reason this is a careful RFC and not a trivial grouping schema — is a new protocol-tier SECURITY invariant: **`org-position-no-authority-escalation`**. An org edge is *metadata only*. A "manager" agent does **not** inherit a report's `toolAllowlist` (RFC 0002 §A14), does **not** gain an RBAC scope by position (RFC 0049 stays the sole authority source, fail-closed), and does **not** auto-satisfy or bypass an approval gate by being "senior" (RFC 0051 stays the sole gate). Position describes; it never authorizes. No existing field, event, or endpoint changes.
+
+## Motivation
+
+`agent platforms model organizations` — but openwop models a flat agent set. Three concrete gaps, each downstream of RFC 0086:
+
+1. **No grouping above the individual.** RFC 0086 names the standing worker; nothing groups workers into a **department** ("Marketing") or assigns a **role** ("Brief Writer", "Campaign Manager"). The adopter's only collective is a flat `AgentTeam{agentIds}` with a coordination strategy — useful for multi-agent voting, but it is **not** an org structure: no department, no role, no reporting line. So "show me the Marketing org and what it owns" is inexpressible.
+
+2. **No reporting hierarchy → no roll-up.** Without `reportsTo` edges there is no chain of command to render, no way to roll a department's responsibilities up from its members' portfolios, and no way to audit "everything the Growth org is responsible for". An operator's org view and a responsibility matrix both need the edges.
+
+3. **The dangerous temptation if (1)/(2) are built naively — privilege by position.** The instant an org chart exists, the obvious-but-wrong next step is to let it *carry authority*: a manager agent that can dispatch its reports, approve their gated work because it is "senior", or inherit their tools. That is a privilege-escalation surface that would silently undermine three Accepted authority contracts (`toolAllowlist` enforcement RFC 0002 §A14, RBAC fail-closed RFC 0049, approval gates RFC 0051). The org chart **must** be specified as *descriptive metadata with a normative non-authority guarantee*, or it becomes a back door around the entire authorization model.
+
+The spec is the right place because *org structure*, *the responsibility roll-up*, and above all *the non-authority guarantee* are cross-host interop + **security** concerns: a peer host or operator rendering another host's org chart must know — portably, by contract, verified by conformance — that an edge in it grants nothing. The *org store* stays a host choice; this RFC fixes the structure schema, the responsibility view, the capability gate, and the load-bearing invariant — additively.
+
+## Proposal
+
+### §A — The org-chart record (`agent-org-chart.schema.json`)
+
+A tenant-scoped, **descriptive** structure over RFC 0086 roster members:
+
+```jsonc
+{
+  "owner": { "tenantId": "acme", "workspaceId": "growth" },   // RFC 0048 triple; tenant-scoped (RFC 0074)
+  "departments": [
+    {
+      "departmentId": "dept-marketing",
+      "name": "Marketing",
+      "parentDepartmentId": null,                 // department nesting (a tree)
+      "roles": [
+        { "roleId": "role-campaign-mgr", "name": "Campaign Manager" },
+        { "roleId": "role-brief-writer", "name": "Brief Writer" }
+      ]
+    }
+  ],
+  "members": [
+    {
+      "rosterId": "host:sally-marketing",          // RFC 0086 roster entry (the standing agent)
+      "departmentId": "dept-marketing",
+      "roleId": "role-brief-writer",
+      "reportsTo": "host:morgan-cmo"               // another member's rosterId; null for the root
+    },
+    { "rosterId": "host:morgan-cmo", "departmentId": "dept-marketing", "roleId": "role-campaign-mgr", "reportsTo": null }
+  ]
+}
+```
+
+`members[].rosterId` **MUST** reference an RFC 0086 roster entry within the **same** `owner` triple (no cross-tenant membership — §C). `reportsTo` is a `rosterId` of another member in the same chart, or `null` (the root); the edge set **MUST** be acyclic (a `reportsTo` cycle is a `validation_error`). `departments[]` form a tree via `parentDepartmentId`. **Every field is descriptive** — there is no `permissions`, `canDispatch`, `scopes`, or `authority` field anywhere in this schema, by §B design.
+
+### §B — The load-bearing invariant: org position confers NO authority (SECURITY)
+
+This is the normative heart of the RFC. A new **protocol-tier** SECURITY invariant, **`org-position-no-authority-escalation`**:
+
+> An agent's position in an org-chart — its department, its role, or any `reportsTo` edge into or out of it — **MUST NOT** grant, widen, or imply any authority. Specifically, for any agent A and any org position A holds:
+> - A's effective `toolAllowlist` is exactly its manifest/dispatch allowlist (RFC 0002 §A14); **being a "manager" of agent B MUST NOT add B's tools to A**, and **being a "report" MUST NOT inherit a manager's tools**.
+> - A's authorization decisions are made **solely** by RFC 0049 RBAC scopes (fail-closed); **org position MUST NOT be consulted as an authorization input** and MUST NOT cause an `authorization.decided{allowed:true}` that the principal's scopes alone would not.
+> - An approval gate (RFC 0051) is satisfied **solely** by its configured `requiredRole`/`quorum`/`override`; **being "senior" in the org-chart MUST NOT auto-satisfy, bypass, or override a gate**.
+
+The org-chart schema (§A) carries **no** authority-bearing field, so a conformant host **cannot** express position-as-authority through it; the invariant additionally forbids a host from *deriving* authority from position out-of-band. A host MAY use position for **non-authority** purposes (rendering, routing-preference, notification fan-out, responsibility reporting) — none of which changes who-can-do-what. This invariant has at least one always-on public test (§Conformance), per the protocol-tier rule that every MUST-NOT carries a matching test.
+
+### §C — Tenant scoping (RFC 0074 carry-forward)
+
+The org chart is tenant-scoped exactly as RFC 0074 scopes the agent inventory + RFC 0086 scopes the roster. On a `'tenant'`-install host, `GET /v1/agents/org-chart` returns **only** the chart for the authenticated principal's owner triple; a member, department, or edge outside it is never disclosed (the CTI-1 cross-tenant isolation carry-forward). A chart **MUST NOT** contain a member whose RFC 0086 roster entry is in a different tenant (cross-tenant org membership is a `validation_error`).
+
+### §D — Responsibility view (derived, read-only)
+
+A derived read that rolls a department's responsibilities up from its members' RFC 0086 portfolios — no new stored field, computed from §A members + their roster `workflows[]`:
+
+Two endpoints with **stable, distinct response shapes** (one shape per path — never a query param that mutates the response shape):
+
+```
+GET /v1/agents/org-chart                       → the full chart (tenant-scoped): { departments[], members[] }
+GET /v1/agents/org-chart/{departmentId}         → one department's subtree + responsibility roll-up:
+   { department, members[], responsibilities: ["marketing-email-campaign", "social-post-scheduler", …] }
+```
+
+`{departmentId}` resolves the subtree by path (an unknown/cross-tenant id 404s, §C). An optional `?recursive=false` query param **narrows** the roll-up to direct members without changing the response *shape* (UQ #4). `responsibilities` is the **union of the `workflows[]` portfolios** of the department's members (and, by default, recursively its sub-departments) — "what is Marketing collectively responsible for". It is purely a *view*; it grants nothing (§B) and stores nothing (it is computed from RFC 0086 entries).
+
+### §E — Capability advertisement (`agents.orgChart`)
+
+```jsonc
+"agents": { "orgChart": {
+  "supported": true,
+  "installScope": "tenant",          // 'host' | 'tenant' — follows RFC 0074 (and RFC 0086 agents.roster.installScope)
+  "departmentNesting": true,         // host supports parentDepartmentId trees (vs a flat department list)
+  "responsibilityView": true         // host computes the §D roll-up
+}}
+```
+
+`agents.orgChart` **REQUIRES** `agents.roster.supported: true` (the chart's members are RFC 0086 roster entries); advertising `orgChart` without `roster` is a `validation_error`. Truthful advertisement (RFC 0031): a host without department nesting advertises `departmentNesting:false` and rejects a non-null `parentDepartmentId`; a host that does not compute the roll-up advertises `responsibilityView:false`. A host that omits the block has no org-chart surface (today's default); the conformance behavioral scenarios skip cleanly. **Crucially, the §B non-authority invariant holds for every host that advertises `orgChart`, at every `installScope` — it is not gated, weakened, or opt-out.**
+
+### Examples
+
+**Positive (descriptive chart + roll-up).** On a host advertising `agents.orgChart` + `agents.roster`, the `acme/growth` chart places `host:sally-marketing` (role Brief Writer, `reportsTo: host:morgan-cmo`) and `host:morgan-cmo` (role Campaign Manager, root) in `dept-marketing`. `GET /v1/agents/org-chart?department=dept-marketing` (as an `acme` principal) returns both members + `responsibilities: ["marketing-email-campaign", "social-post-scheduler"]` (the union of their RFC 0086 portfolios). An operator console renders the org tree.
+
+**Negative (the invariant — authority).** `host:morgan-cmo` reports-to `null` (top of Marketing) and a workflow run dispatched by Morgan tries to invoke a tool on Sally's allowlist that is **not** on Morgan's manifest allowlist → the tool call is **refused** (RFC 0002 §A14); being Sally's manager grants nothing (`org-position-no-authority-escalation`). A gated approval (RFC 0051) requiring `requiredRole: "finance-approver"` is **not** satisfied by Morgan being org-senior → the gate holds. An `authorization.decided` for Morgan is computed from Morgan's RFC 0049 scopes alone; the org edge is never an input.
+
+**Negative (cross-tenant).** `GET /v1/agents/org-chart` by a `beta` principal never returns `acme`'s chart; a chart listing a `beta`-tenant `rosterId` under an `acme` department → `validation_error`. **Negative (cycle).** `host:a` reportsTo `host:b` reportsTo `host:a` → `validation_error` (acyclic). **Negative (schema).** An org-chart member object carrying a `scopes` / `canDispatch` / `permissions` field → fails validation (`additionalProperties:false` — the schema has no authority field by §B design).
+
+## Compatibility
+
+**Additive** (`COMPATIBILITY.md` §2.1). A new org-chart schema; a new optional `agents.orgChart` capability block (absent ⇒ the org-chart read `501`, exactly as an unsupported feature today); one additive read endpoint; a new protocol-tier SECURITY invariant that **adds** a MUST-NOT on a previously-unmodeled surface (introducing a normative requirement on previously-undefined behavior is additive per `COMPATIBILITY.md` §4); additive prose. **No existing field is moved, renamed, removed, or type-changed; `toolAllowlist` enforcement (RFC 0002 §A14), RBAC (RFC 0049), and approval gates (RFC 0051) are unchanged — the §B invariant *restates and protects* them, it does not relax any `MUST`; no existing event/endpoint contract changes.** A host that omits `agents.orgChart` is exactly as conformant as today. No new event type (the org chart is structure + a read, not a run-event surface), so `eventLogSchemaVersion` is untouched. The invariant cannot break a previously-passing host: a host that already derives no authority from (non-existent) org position trivially satisfies it; a host that *did* derive authority from an out-of-band hierarchy was already outside the RFC 0002/0049/0051 contracts.
+
+## Conformance
+
+- **New scenarios:**
+  - **`agent-org-chart-shape.test.ts`** (always-on, server-free): the org-chart record validates; departments form a tree; `reportsTo` edges are acyclic; **the schema rejects any authority-bearing field** (`scopes`/`canDispatch`/`permissions` → invalid, the structural half of §B); the responsibility-view roll-up computes the portfolio union on a representative payload; negatives (cycle; cross-tenant member; authority field present).
+  - **`org-position-no-authority-escalation.test.ts`** (protocol-tier, **always-on** public test for the §B MUST-NOT): asserts that, given a chart where A manages B, A's effective `toolAllowlist` equals A's manifest allowlist (B's tools are NOT added); that an RFC 0049 authorization decision for A is invariant to A's org position (same scopes ⇒ same decision with/without the edge); and that an RFC 0051 gate is not satisfied by org seniority. The behavioral half (a live dispatch refusing the manager's over-reach) is gated on `agents.orgChart.supported` and soft-skips when unadvertised; the structural assertions are always-on.
+  - **`agent-org-chart-scoping.test.ts`** (gated on `agents.orgChart.supported`): a cross-tenant `GET /v1/agents/org-chart` returns only the caller's chart (RFC 0074 carry-forward); a cross-tenant member write is rejected.
+- **Capability gating** per `conformance/coverage.md` (shape + the structural authority assertions always-on; the behavioral non-authority + scoping gated). New org-chart fixture + `fixtures.md` row.
+- **SECURITY:** NEW protocol-tier **`org-position-no-authority-escalation`** in `SECURITY/invariants.yaml` (the §B MUST-NOT) with its always-on public test; reuses RFC 0049 `authorization-fail-closed`, RFC 0002 §A14 tool enforcement, and RFC 0051 gate invariants (the chart changes none of them); reuses the RFC 0074 cross-tenant carry-forward for §C.
+- **Reference host.** Deferred (files at `Draft`). The schema + capability + the structural §B assertions ship at `Draft → Active`; the behavioral non-authority + scoping scenarios soft-skip until a reference host implements the org-chart store. `Active → Accepted` gated on a non-steward host advertising `agents.orgChart` and passing the behavioral `org-position-no-authority-escalation` scenario (the strongest acceptance bar — an adopter proving, live, that its org chart grants nothing).
+
+## Alternatives considered
+
+1. **Let org position carry authority (managers can dispatch/approve reports; roles map to scopes).** Rejected — this is the core threat (§Motivation 3). It would make the org chart a parallel, implicit authorization system that silently overrides RFC 0049 (fail-closed RBAC), RFC 0002 §A14 (tool enforcement), and RFC 0051 (approval gates). Authority stays in those three contracts; the org chart is descriptive (§B). A future RFC *could* add an explicit, audited *delegation* primitive (a principal granting a scope to another, through RFC 0049, with its own threat model) — but that is delegation-by-RBAC, not authority-by-position, and is out of scope here.
+2. **Reuse the adopter's `AgentTeam{agentIds, coordinationStrategy}` as the org unit.** Rejected — `AgentTeam` is a flat *multi-agent coordination* primitive (voting/consensus for a single task), not an organizational structure: no department, role, hierarchy, or reporting line. The two are orthogonal — a department MAY contain a team, but a team is not a department. This RFC models structure; coordination stays its own surface.
+3. **Put department/role on the RFC 0086 roster entry directly (a `department` + `reportsTo` field per entry).** Rejected — that scatters the graph across entries (no place for department metadata, role definitions, or the tree), makes the acyclic-edge + cross-tenant-membership checks per-entry instead of whole-graph, and couples RFC 0086 (which is useful standalone — a portfolio needs no org) to a structure many hosts will not build. A dedicated chart record (§A) keeps RFC 0086 minimal and the graph coherent.
+4. **Make the responsibility view a stored field instead of derived.** Rejected — it would duplicate RFC 0086 `workflows[]` and drift the instant a portfolio changes. §D computes the roll-up from the live roster entries (single source of truth).
+5. **Standardize the org chart as a run-event surface (`org.member.added` etc.).** Rejected — the org chart is slow-changing configuration, not run-time flow; it is a structure + a read (like the RFC 0072 inventory), not an event family. No `eventLogSchemaVersion` churn.
+6. **Do nothing.** Rejected — RFC 0086 makes the standing worker real; "which department, which role, who reports to whom, what does the team own" is the immediate operator + audit need, and building it without the §B invariant would create a privilege-escalation back door. The careful additive layer closes the gap *and* protects the authority model.
+
+## Unresolved questions
+
+To decide before `Active`:
+
+1. **Org-chart management surface.** Read-only on the wire at `Draft → Active` (the structure + roll-up + the invariant are the interop/security surface), with a `POST/PATCH /v1/agents/org-chart` management surface deferred to `Active → Accepted` (the RFC 0086/0077/0082 endpoint-deferral precedent)? Proposed: yes.
+2. **Multi-department membership.** May one `rosterId` belong to more than one department (a worker shared across Marketing + Sales)? Proposed: a member belongs to exactly one department + role per chart, but a host MAY maintain multiple charts (or a future minor MAY add `memberships[]`); start single to keep the roll-up unambiguous. Confirm.
+3. **`reportsTo` across departments.** May a member report to a member in a *different* department (a matrixed org)? Proposed: yes — `reportsTo` is a `rosterId` edge independent of department boundaries (matrixed reporting is real); only cycles and cross-*tenant* edges are forbidden. Confirm against the acyclic check.
+4. **Responsibility-view recursion + conflicts.** When two members in a department own the *same* workflow (RFC 0086 UQ #4), the roll-up unions (dedupes) it — confirmed harmless. Does the roll-up recurse through sub-departments by default? Proposed: yes, with an optional `?recursive=false` to scope to direct members. Confirm.
+5. **Invariant tier at Active vs Accepted.** `org-position-no-authority-escalation` ships protocol-tier with an always-on **structural** test at `Draft → Active` (the schema-has-no-authority-field + the tool/scope-invariance assertions); the **behavioral** live-dispatch refusal is gated and graduates the same invariant's behavioral coverage at `Accepted` (the RFC 0082 `deployment-promotion-fail-closed` reference-impl→protocol precedent). Confirm the structural always-on test is non-vacuous (it is — it asserts the schema rejects authority fields and that decisions are position-invariant on representative payloads).
+
+## Implementation notes (non-normative)
+
+- **Sequencing.** Directly on top of RFC 0086 (`Draft` — the roster members are the org-chart nodes; this RFC depends on it). Composes RFC 0074 (Accepted — tenant scoping §C), RFC 0049 (Accepted — RBAC, the sole authority source §B), RFC 0051 (Accepted — approval gates, unbypassed §B), RFC 0002 §A14 (Accepted — tool enforcement §B), RFC 0048 (Accepted — owner triple). Independent of RFC 0082/0083/0084. Should land *after* RFC 0086 reaches at least `Active` (its `rosterId` is this RFC's member key).
+- **Reference host (demo app).** Wiring is: an org-chart store keyed by `owner` triple (tenant-scoped), the `GET /v1/agents/org-chart[?department=]` read with the §D roll-up computed from RFC 0086 roster `workflows[]`, the acyclic + cross-tenant validators, and — the load-bearing part — **a test harness that proves the authorization path never reads org position** (the §B invariant). The hardest part is not the structure; it is the discipline of keeping position out of every authority decision.
+- **Adopter mapping.** MyndHyve has no org chart today (only a flat `AgentTeam`) — so this is net-new for the adopter too, and is the *distinguishing* layer (the structure + the non-authority guarantee no flat-team model provides). Adoption is the strongest `Accepted` evidence: an adopter proving live that its org chart is descriptive-only.
+- **Expected effort:** S for the schema + capability + the structural §B test; M for the reference org store + the roll-up + the behavioral non-authority harness (the discipline, not the code, is the cost).
+
+## Acceptance criteria
+
+Checklist for `Active` (files at `Draft`):
+
+- [ ] `spec/v1/agent-org-chart.md`: §A record, §B the non-authority invariant (the normative heart), §C tenant scoping, §D responsibility view, §E capability.
+- [ ] `agent-org-chart.schema.json` (NO authority-bearing field, by design); additive `agents.orgChart` on `capabilities.schema.json`.
+- [ ] `GET /v1/agents/org-chart` + `GET /v1/agents/org-chart/{departmentId}` in `openapi.yaml` (one stable response shape per path).
+- [ ] SECURITY: NEW protocol-tier `org-position-no-authority-escalation` in `SECURITY/invariants.yaml` + its always-on public test; reuses RFC 0049/0051/0002-§A14/0074 invariants.
+- [ ] Conformance: `agent-org-chart-shape.test.ts` (always-on) + `org-position-no-authority-escalation.test.ts` (structural always-on / behavioral gated) + `agent-org-chart-scoping.test.ts` (gated) + fixture + `coverage.md` row.
+- [ ] CHANGELOG entry (under a `### Security` note for the new invariant) + INTEROP-MATRIX row.
+- [ ] All five Unresolved questions resolved (recorded in `Updated:`).
+- [ ] Reference host implements the org store + roll-up + the non-authority harness + passes the behavioral scenario, OR the RFC explicitly defers — the `Active → Accepted` gate (a non-steward host proving the invariant live).
+
+## References
+
+- [`RFCS/0086-standing-agent-roster-and-workflow-portfolio.md`](./0086-standing-agent-roster-and-workflow-portfolio.md) — the roster members (`rosterId`) that are this chart's nodes; the portfolios the §D roll-up unions.
+- [`RFCS/0074-tenant-scoped-agent-inventory.md`](./0074-tenant-scoped-agent-inventory.md) — the `installScope` tenant scoping + cross-tenant isolation §C carries forward.
+- [`RFCS/0049-rbac-scopes-and-authorization-decisions.md`](./0049-rbac-scopes-and-authorization-decisions.md) — the sole authority source (`authorization-fail-closed`) that org position §B MUST NOT override.
+- [`RFCS/0051-approval-deployment-gate-primitive.md`](./0051-approval-deployment-gate-primitive.md) — the approval gate that org seniority §B MUST NOT bypass.
+- [`RFCS/0002-agent-identity-and-reasoning-events.md`](./0002-agent-identity-and-reasoning-events.md) §A14 — the `toolAllowlist` enforcement that a manager edge §B MUST NOT widen.
+- [`RFCS/0048-tenant-workspace-principal-identity-model.md`](./0048-tenant-workspace-principal-identity-model.md) — the owner triple §A/§C scope by.
+- [`SECURITY/invariants.yaml`](../SECURITY/invariants.yaml) — where `org-position-no-authority-escalation` is registered (§B); the protocol-tier rule that every MUST-NOT carries a public test.
+- [`COMPATIBILITY.md`](../COMPATIBILITY.md) §2.1 + §4 — additive-change discipline + "new normative requirement on previously-undefined behavior is additive".
