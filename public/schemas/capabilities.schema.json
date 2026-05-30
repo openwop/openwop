@@ -668,13 +668,26 @@
           "type": "array",
           "items": { "type": "string", "minLength": 1 },
           "uniqueItems": true,
-          "description": "Provider ids the host's AI-proxy can route to. Conventional ids: `anthropic`, `openai`, `gemini`, `mistral`, `cohere`, `vertex`, `bedrock`. Hosts MAY add vendor-prefixed extensions."
+          "description": "Provider ids the host's AI-proxy can route to. Conventional ids (RFC 0067 §C recommended vocabulary — advisory, not a closed set): `anthropic`, `openai`, `gemini`, `vertex`, `bedrock`, `mistral`, `cohere`, `openrouter`, `litellm`, `together`, `huggingface`, `qwen`, `ollama`, `vllm`. Hosts MAY add vendor-prefixed extensions; clients MUST tolerate unknown ids."
         },
         "byok": {
           "type": "array",
           "items": { "type": "string", "minLength": 1 },
           "uniqueItems": true,
           "description": "Subset of `supported` for which BYOK is permitted. Empty array → all calls use platform-managed keys; non-empty → clients MAY pass `ai.credentialRef` in `RunOptions.configurable` for matching providers."
+        },
+        "authModes": {
+          "type": "object",
+          "description": "RFC 0067 (`Draft`). Optional per-provider advertisement of HOW the host expects a provider's credential to be supplied. Keys are provider ids appearing in `supported`; values are the auth modes the host honors for that provider. Absent ⇒ no advertisement: a provider in `byok` defaults to `apiKey` semantics (client passes `ai.credentialRef`); a provider in `supported` but not in `byok` defaults to `none` (platform-managed). This map only DESCRIBES the supply mechanism — `oauth-pkce`/`oauth-device` flow mechanics compose RFC 0047 `host.oauth` and resolve credentials by `ref` (RFC 0046), never on `ai.credentialRef`. A provider with `apiKey` MUST appear in `byok`; a provider whose modes are exactly `[\"none\"]` MUST NOT appear in `byok`. Consumers MUST ignore an auth mode they don't recognize rather than reject the discovery doc.",
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": ["apiKey", "oauth-pkce", "oauth-device", "none"]
+            }
+          }
         },
         "policies": {
           "type": "object",
@@ -787,6 +800,41 @@
           "uniqueItems": true,
           "description": "Optional list of memory backends (Phase 3). `long-term` means the host implements `ExecutionHost.memory` against a durable store with the SR-1 redaction invariant intact end-to-end. Hosts that don't wire `MemoryAdapter` omit this field."
         },
+        "memoryConsolidation": {
+          "type": "object",
+          "description": "RFC 0068 (`Draft`). Background reconciliation of LONG-TERM memory (merge/dedup/supersede/strengthen) — distinct from RFC 0062 token-budgeted distillation of TRANSACTIONAL memory. A host advertising this emits `agent.memory.consolidated` (content-free) after a consolidation pass. Requires `agents.memoryBackends` to include `long-term`. SR-1 carry-forward + CTI-1 (RFC 0004) hold across the pass. Hosts that omit this block do not consolidate; the conformance scenarios skip cleanly.",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "REQUIRED when the block is present. When `true`, the host performs background consolidation over long-term memory and emits `agent.memory.consolidated`."
+            },
+            "schedule": {
+              "type": "string",
+              "enum": ["host-managed", "scheduled", "on-demand"],
+              "description": "How a consolidation pass is initiated. `host-managed`: a host-internal cadence clients do not control (default when absent and supported:true). `scheduled`: bound to a `capabilities.scheduling` (RFC 0052) trigger. `on-demand`: the host runs a pass when explicitly requested. A host MAY honor more than one path but advertises the primary."
+            }
+          }
+        },
+        "commitments": {
+          "type": "object",
+          "description": "RFC 0068 (`Draft`). Inferred STANDING commitments — durable, memory-derived intentions the host promotes into a time- or predicate-gated arm that fires a run later, without a fresh user turn. When an arm fires the host emits `commitment.fired` (content-free — the intention text lives in SR-1-redacted memory). Composes RFC 0052 (time arms) / RFC 0060 (predicate arms) for the fire substrate. Hosts that omit this block do not infer commitments; the conformance scenario skips cleanly.",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "REQUIRED when the block is present. When `true`, the host infers standing commitments from memory and emits `commitment.fired` when one fires."
+            },
+            "fireConditions": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["time", "predicate"] },
+              "uniqueItems": true,
+              "description": "Which fire-condition kinds the host supports. `time` composes RFC 0052 scheduling; `predicate` composes RFC 0060 heartbeat. Absent ⇒ `['time']`."
+            }
+          }
+        },
         "orchestrator": {
           "type": "boolean",
           "description": "Phase 5. When `true`, host advertises that it implements the `core.orchestrator.supervisor` node typeId AND honors the conservative-path suspend semantics (CP-1: low-confidence suspend via `node.suspended { reason: 'low-confidence' }`)."
@@ -794,6 +842,55 @@
         "dispatch": {
           "type": "boolean",
           "description": "Phase 6. When `true`, host advertises that it implements the `core.dispatch` Core typeId AND honors the conservative-path commitment CP-2 (`core.dispatch` MUST NOT mutate the run's DAG mid-run). Implies (but does NOT require) `agents.orchestrator: true`."
+        },
+        "manifestRuntime": {
+          "type": "object",
+          "description": "RFC 0070. Agent-manifest runtime floor — the minimal tier that makes a published agent pack (RFC 0003) runnable. When `supported: true`, the host implements RFC 0003 `installAgents`: it loads each installed pack's `agents[]` into an in-process AgentRegistry, resolves `systemPromptRef` + `handoff.*SchemaRef` from the tarball at install (RFC 0003 §C/§D), and can DISPATCH a manifest agent on the existing `core.dispatch`/orchestrator loop (RFC 0007/0037/0061). Does NOT imply swarm/consensus (`host.agentRuntime`), long-term memory (`agents.memoryBackends`), or crews beyond `agents.dispatch`. A host advertising `host.agentRuntime: supported` is treated as also satisfying this flag (RFC 0070 §B). Hosts that omit this block do not instantiate manifest agents (today's default).",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "REQUIRED when the block is present. When `true`, the host loads + dispatches pack-declared manifest agents. A host with `supported: true` MUST enforce each dispatched agent's `toolAllowlist` (RFC 0002 §A14) and MUST NOT leak BYOK plaintext into `agent.*` events or handoff payloads (SR-1)."
+            },
+            "handoffValidation": {
+              "type": "boolean",
+              "default": false,
+              "description": "When `true`, the host validates inbound task payloads against the agent's `handoff.taskSchemaRef` before dispatch and outbound results against `handoff.returnSchemaRef` before persistence (RFC 0003 §D). When `false`/absent, manifests carrying `handoff` schemas are dispatched with opaque payloads."
+            },
+            "installScope": {
+              "type": "string",
+              "enum": ["host", "tenant"],
+              "default": "host",
+              "description": "RFC 0074. Scope at which manifest agents are installed/approved and therefore enumerated by GET /v1/agents. 'host' (default): a single host-global inventory; the endpoint returns the same set for every caller (RFC 0072's original behavior). 'tenant': agents are installed per tenant·workspace (RFC 0048 owner triple); GET /v1/agents returns ONLY the agents available to the authenticated principal's workspace, and an unapproved/unknown agent 404s — the surface never discloses another tenant's inventory. Does not change dispatch (RFC 0072 §B, owner-triple-scoped POST /v1/runs) or any floor safety guarantee (toolAllowlist/systemPromptRef/SR-1 stay mandatory regardless of scope)."
+            }
+          }
+        },
+        "liveRuntime": {
+          "type": "object",
+          "description": "RFC 0077. The host executes manifest agents against LIVE models and tools (not the deterministic RFC 0070 sample floor) per the normative AgentManifest→live-run mapping (`multi-agent-execution.md` §\"Live manifest dispatch\"), and emits the `agent.invocation.started`/`agent.invocation.completed` content-free bracket around the existing `agent.*` family. REQUIRES `agents.manifestRuntime.supported: true` — `liveRuntime` is a strict superset of the floor. The floor's mandatory safety guarantees (toolAllowlist enforcement, handoff inbound validation, tenant scoping, untrusted-model-output handling, fail-closed per-tool authorization) stay unconditional under `liveRuntime`. Hosts that omit this block run the floor only; the behavioral conformance scenarios skip cleanly.",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "REQUIRED when present. When `true`, the host performs live manifest dispatch per the §B mapping and emits the `agent.invocation.*` bracket. Gated on `agents.manifestRuntime.supported: true`."
+            },
+            "structuredOutput": {
+              "type": "boolean",
+              "description": "When `true`, the host validates the terminal result against the agent's `handoff.returnSchemaRef` and fails the run with a structured-output error on a non-conforming result rather than shipping it. Absent ⇒ `false` (runs live but does not enforce `returnSchemaRef`)."
+            },
+            "confidenceEscalation": {
+              "type": "boolean",
+              "description": "When `true`, the host honors `AgentManifest.confidence.defaultThreshold` and triggers the RFC 0002 §F escalation contract when an `agent.decided` confidence falls below the effective threshold, rather than silently accepting the decision. Absent ⇒ `false`."
+            },
+            "sources": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "type": "string", "enum": ["workflow-node", "run-api", "chat-mention"] },
+              "description": "Which invocation entry points the host exposes for live manifest dispatch. `workflow-node`: an agent step inside a workflow run (RFC 0072 §B); `run-api`: an agent as the root of POST /v1/runs; `chat-mention`: a chat @agent invocation mapped onto the run surface. Enum membership is NOT mandatory — a host with no chat surface simply omits `chat-mention`. Absent ⇒ `['workflow-node']` (the RFC 0072 §B normative path). All advertised sources MUST emit the identical `agent.invocation.*` + `agent.*` event family."
+            }
+          }
         },
         "dispatchMapping": {
           "type": "boolean",
@@ -1059,6 +1156,28 @@
         "perToolRateLimit": { "type": "boolean", "description": "Host applies a per-`(principal, tool)` token-bucket rate limit; exhaustion yields `agent.toolReturned { status: 'rate_limited' }` + a `rate_limited` (429) error." }
       }
     },
+    "httpClient": {
+      "type": "object",
+      "description": "Host outbound-HTTP surface. The host's HTTP-client node egress (e.g. `core.http.request`) MUST be SSRF-guarded (`ssrfGuard: true`) with a positive `maxResponseBodyBytes` cap — the `http-client-ssrf-guard` protocol invariant. RFC 0076 §B adds the OPTIONAL `safeFetch` sub-capability: a host-mediated `ctx.http.safeFetch(url, init?)` exposed to pack runtime code, backed by the SAME SSRF guard (resolve→pin→connect, metadata-endpoint blocklist, DNS-rebinding defeat) so packs need not reach for raw DNS/sockets. See `host-capabilities.md` §host.http.",
+      "required": ["supported"],
+      "additionalProperties": false,
+      "properties": {
+        "supported": { "type": "boolean" },
+        "ssrfGuard": { "type": "boolean", "description": "Host rejects egress to loopback / RFC 1918 / link-local / cloud-metadata addresses (resolve→pin→connect). MUST be `true` when `supported` (the `http-client-ssrf-guard` invariant)." },
+        "maxResponseBodyBytes": { "type": "integer", "minimum": 1, "description": "Positive ceiling on a response body the host will buffer. Reused by `safeFetch`." },
+        "requestTimeoutMs": { "type": "integer", "minimum": 1, "description": "Host-enforced per-request wall-clock timeout (also applies to `safeFetch`)." },
+        "methods": { "type": "array", "items": { "type": "string" }, "description": "HTTP methods the client surface accepts (e.g. `GET`, `POST`)." },
+        "safeFetch": {
+          "type": "object",
+          "description": "RFC 0076 §B. Host-provided `ctx.http.safeFetch(url, init?)` for pack runtime code — the pack-facing exposure of the SSRF-guarded client. When advertised, the host MUST apply the §host.http SSRF defense + clamps (incl. refusing `Connection: upgrade`), and — when `toolHooks.prePostEvents` is also advertised — MUST emit the `agent.toolCalled`/`agent.toolReturned` pair (`transport: 'http'`) for each call. A pack that uses `safeFetch` need not declare `net.dns` in `runtime.requires` (the host owns resolution; RFC 0076 §A).",
+          "required": ["supported"],
+          "additionalProperties": false,
+          "properties": {
+            "supported": { "type": "boolean" }
+          }
+        }
+      }
+    },
     "deadLetter": {
       "type": "object",
       "description": "RFC 0053 (`Draft`). Run-level dead-letter sink for terminally-failed runs/nodes. On retry exhaustion (RFC 0009), the run is routed to a durable, inspectable sink and a `run.dead_lettered` event is emitted; dead-lettered runs remain fork-eligible (RFC 0011) for the retention window. Distinct from `queueBus.deadLetterSupported`, which dead-letters transport *messages*, not *runs*.",
@@ -1289,6 +1408,11 @@
               "description": "Deterministic resolution rule for conflicting idempotency-key records when a partition healed. `last-writer-wins` / `first-writer-wins` are spec-reserved categorical rules; vendor strategies use `^x-host-<host>-<key>$`. Conformance asserts deterministic resolution actually applies; it does NOT prescribe which strategy a host picks."
             }
           }
+        },
+        "crossRegion": {
+          "type": "string",
+          "enum": ["single-region", "best-effort", "strict"],
+          "description": "RFC 0036 — categorical multi-region idempotency posture (the canonical conformance-checked surface per spec/v1/idempotency.md §'Multi-region idempotency (annex)'). `single-region`: the host runs in one region and makes no cross-region claim (it MAY still implement the convergence resolver, demonstrable via the multi-region simulator seam). `best-effort`: cross-region reconciliation converges eventually under the annex's lex-min(runId) rule. `strict`: cross-region read-visibility is bounded by `multiRegion.replicationLagBoundMs`. When `best-effort` or `strict`, the host MUST emit the `openwop.idempotency.cross_region_conflicts_total` operator metric. The `multiRegion` sub-block above is the optional granular companion."
         }
       }
     },

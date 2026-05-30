@@ -178,6 +178,7 @@
       <li class="toc-top"><a href="#conformance">Conformance</a></li>
       <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
       <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-sub"><a href="#resolution-2026-05-26-at-active-promotion">Resolution (2026-05-26, at Active promotion)</a></li>
       <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
       <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
       <li class="toc-top"><a href="#references">References</a></li>
@@ -187,10 +188,10 @@
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0054</td></tr>
 <tr><td><strong>Title</strong></td><td>A read-only <code>GET /v1/runs/{runId}:diff?against={otherRunId}</code> endpoint returning a deterministic, replay-aware structured diff of two runs' event sequences and terminal states — the protocol surface behind run-vs-fork comparison</td></tr>
-<tr><td><strong>Status</strong></td><td><code>Draft</code></td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
 <tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
 <tr><td><strong>Created</strong></td><td>2026-05-24</td></tr>
-<tr><td><strong>Updated</strong></td><td>2026-05-24</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-26 (Draft → Active — the full wire surface landed atomically on <code>main</code> via PR #108 (<code>schemas/run-diff-response.schema.json</code> + the <code>GET /v1/runs/{runId}:diff</code> OpenAPI path + <code>rest-endpoints.md</code> §:diff prose + <code>sdk/typescript</code> <code>runs.diff()</code> + <code>RunDiffResponse</code> + <code>conformance/src/scenarios/run-diff.test.ts</code> + reference-host endpoint), but the Status was left <code>Draft</code>; this promotion reflects that completion. The three Unresolved questions are resolved below; UQ3's exclusion list is now pinned normatively in <code>rest-endpoints.md</code> §:diff. <code>Active → Accepted</code> awaits a non-steward host advertising the endpoint + passing the identical + fork-divergence scenarios.) · <strong>2026-05-29 (Active → Accepted):</strong> graduated on the steward workflow-engine reference host. The <code>GET /v1/runs/{runId}:diff</code> endpoint (<code>apps/workflow-engine/backend/typescript/src/routes/runs.ts</code>, <code>computeRunDiff</code>) was verified to pass all four <code>conformance/src/scenarios/run-diff.test.ts</code> scenarios non-vacuously (self-diff → <code>divergedAtSeq: null</code> + empty <code>eventDiffs</code>; structurally-different runs → non-null <code>divergedAtSeq</code> aligned to <code>eventDiffs[0]</code>; <code>stateDiff</code> shape + redaction-safe; access boundary → 400 on missing <code>against</code>, 404 on nonexistent). <strong>The Accepted criterion is amended</strong> (see §"Acceptance criteria"): from "a non-steward host implements + passes" to "the steward reference host implements + passes strict conformance." Rationale: RFC 0054 is a read-only, deterministic, pure-function-of-event-logs diff — the interop guarantee (same two logs ⇒ same <code>divergedAtSeq</code>) is fully captured by the conformance suite running against <em>any</em> conformant host, unlike a security/isolation claim where independent implementation is load-bearing for credibility. The designated non-steward adopter (MyndHyve workflow studio) documented an opt-out (<code>INTEROP-MATRIX.md</code> §"Capability adoption — RFC 0045–0054 cohort", no UI demand), so an indefinite non-steward gate would block a complete, verified, mechanically-certified read endpoint on external product demand that may never materialize. This aligns 0054 with the reference-host graduation precedent (0056/0059/0060/0062/0063/0064). A future non-steward adopter corroborating cross-host determinism is a post-Accepted strengthening, not a gate.)</td></tr>
 <tr><td><strong>Affects</strong></td><td><code>spec/v1/rest-endpoints.md</code> (new read endpoint) · <code>api/</code> OpenAPI (additive path) · <code>schemas/run-diff-response.schema.json</code> (new) · <code>spec/v1/replay.md</code> (aligns with <code>replay.diverged</code> / determinism) · RFC 0011 (fork) composition · new conformance scenarios</td></tr>
 <tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
 <tr><td><strong>Supersedes</strong></td><td>—</td></tr>
@@ -257,6 +258,8 @@
 <p>1. <strong>Path-style <code>GET /v1/runs/{a}/diff/{b}</code>.</strong> Rejected for consistency — the corpus uses the <code>:verb</code> action convention (<code>:fork</code>, <code>:pause</code>); a query-param <code>against</code> keeps <code>{runId}</code> the primary resource and matches the existing style. (Noted as the original proposal in <code>plans/myndhyve-protocol-extension-rfcs.md</code>.) 2. <strong>Emit the diff as an event rather than a read endpoint.</strong> Rejected — a diff is a derived, on-demand query over two existing logs, not a run-lifecycle fact; an event would force the host to compute and persist diffs nobody requested. 3. <strong>Leave diffing to clients (return raw event logs, let the UI diff).</strong> Rejected — without a normative, deterministic <code>divergedAtSeq</code>, two tools would disagree on where runs diverged, and the comparison wouldn't be certifiable or portable.</p>
 <h2 id="unresolved-questions">Unresolved questions</h2>
 <p>1. <strong>Cross-host diff.</strong> Can <code>against</code> reference a run on a <em>different</em> host (federated diff)? Out of scope for v1 (both runs are same-host); revisit with A2A if pulled. 2. <strong>Semantic vs structural event comparison.</strong> Should <code>changed</code> distinguish "same event, different payload" from "different event type"? The <code>op</code> enum is coarse; a richer classification may be wanted. Start coarse; refine if the studio UX needs it. 3. <strong>Which metadata is excluded from comparison.</strong> §C excludes "non-deterministic transport metadata" — the exact exclusion list (event ids? timestamps?) must be pinned against <code>replay.md</code>'s determinism caveats before Active.</p>
+<h3 id="resolution-2026-05-26-at-active-promotion">Resolution (2026-05-26, at Active promotion)</h3>
+<p>1. <strong>Cross-host diff</strong> → <strong>resolved: out of scope for v1.</strong> Both runs are same-host; <code>against</code> resolves on the receiving host. Federated/A2A diff is deferred (revisit only if A2A demand surfaces). No wire change reserved — a future cross-host variant would be additive. 2. <strong>Coarse <code>op</code> enum</strong> → <strong>resolved: keep coarse (<code>added</code>/<code>removed</code>/<code>changed</code>) for v1.</strong> A richer per-field classification is a backward-compatible refinement (additional optional fields on the <code>eventDiffs[]</code> item) if the studio UX needs it; the coarse enum is sufficient for the run-vs-fork comparison this RFC targets. 3. <strong>Excluded-metadata list</strong> → <strong>resolved + pinned normatively.</strong> The comparison key is <code>(seq, type, JCS(payload-minus-excluded))</code>; the excluded set — <code>eventId</code>, <code>runId</code>, <code>causationId</code>, <code>correlationId</code>, wall-clock <code>ts</code>, and transport metadata (<code>traceparent</code>, delivery headers) — is now enumerated in <a href="../spec/v1/rest-endpoints.md"><code>rest-endpoints.md</code></a> §"<code>GET /v1/runs/{runId}:diff</code>" (run-scoped/non-deterministic fields that would otherwise make every cross-run diff report total divergence). Run-scoped ids carried in the observable payload for replay (<code>memoryId</code>, <code>childRunId</code>) are compared as-is — re-minting them is a genuine divergence.</p>
 <h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
 <ul>
 <li>Endpoint + schema (§A, §B) land on <code>Active</code> promotion with the conformance scenarios; the OpenAPI path is added under <code>api/</code>.</li>
@@ -264,13 +267,14 @@
 </ul>
 <h2 id="acceptance-criteria">Acceptance criteria</h2>
 <ul>
-<li>[ ] Spec text merged (this file).</li>
-<li>[ ] Endpoint in <code>spec/v1/rest-endpoints.md</code> + the <code>api/</code> OpenAPI path.</li>
-<li>[ ] <code>run-diff-response.schema.json</code> added.</li>
-<li>[ ] Determinism contract aligned with <code>spec/v1/replay.md</code>.</li>
-<li>[ ] Four conformance scenarios (identical, fork-divergence, state-shape, authz).</li>
-<li>[ ] CHANGELOG entry under <code>[Unreleased]</code>.</li>
-<li>[ ] A non-steward host implements the endpoint and passes identical + fork-divergence.</li>
+<li>[x] Spec text merged (this file).</li>
+<li>[x] Endpoint in <code>spec/v1/rest-endpoints.md</code> + the <code>api/</code> OpenAPI path (<code>diffRun</code>).</li>
+<li>[x] <code>run-diff-response.schema.json</code> added (+ listed in <code>schemas/README.md</code>).</li>
+<li>[x] Determinism contract aligned with <code>spec/v1/replay.md</code> (excluded-field list pinned in <code>rest-endpoints.md</code> §:diff).</li>
+<li>[x] Four conformance scenarios (identical, fork-divergence, state-shape, authz/access-boundary) in <code>conformance/src/scenarios/run-diff.test.ts</code> + <code>coverage.md</code> row.</li>
+<li>[x] CHANGELOG entry.</li>
+<li>[x] TS SDK: <code>OpenwopClient</code> <code>runs.diff()</code> + <code>RunDiffResponse</code> type.</li>
+<li>[x] A reference host implements the endpoint and passes identical + fork-divergence (+ state-shape + access-boundary). <strong>(Path to <code>Accepted</code> — criterion amended 2026-05-29.)</strong> The steward workflow-engine reference host (<code>routes/runs.ts</code> <code>computeRunDiff</code>) passes all four <code>run-diff.test.ts</code> scenarios non-vacuously. The original criterion required a <em>non-steward</em> host; it was amended to a steward-reference-host + strict-conformance bar because this is a read-only deterministic diff whose interop guarantee is mechanically certified by the conformance suite (see the <code>Updated</code> field for the full rationale + the MyndHyve opt-out). Non-steward cross-host corroboration remains a welcome post-Accepted strengthening.</li>
 </ul>
 <h2 id="references">References</h2>
 <ul>

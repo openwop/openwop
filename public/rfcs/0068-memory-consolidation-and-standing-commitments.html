@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — RFC 0068: Memory consolidation + standing commitments</title>
+  <meta name="description" content="A long-running agent accumulates many long-term MemoryEntry rows that overlap, contradict, or restate one another, and it forms standing intentions (&quot;follow up next Monday&quot;, &quot;remind me when the invoice clears&quot;) that should fire later without a fresh…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0068-memory-consolidation-and-standing-commitments.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — RFC 0068: Memory consolidation + standing commitments"/>
+  <meta property="og:description" content="A long-running agent accumulates many long-term MemoryEntry rows that overlap, contradict, or restate one another, and it forms standing intentions (&quot;follow up next Monday&quot;, &quot;remind me when the invoice clears&quot;) that should fire later without a fresh…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0068-memory-consolidation-and-standing-commitments.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — RFC 0068: Memory consolidation + standing commitments"/>
+  <meta name="twitter:description" content="A long-running agent accumulates many long-term MemoryEntry rows that overlap, contradict, or restate one another, and it forms standing intentions (&quot;follow up next Monday&quot;, &quot;remind me when the invoice clears&quot;) that should fire later without a fresh…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "RFC 0068: Memory consolidation + standing commitments",
+  "description": "A long-running agent accumulates many long-term MemoryEntry rows that overlap, contradict, or restate one another, and it forms standing intentions (\"follow up next Monday\", \"remind me when the invoice clears\") that should fire later without a fresh…",
+  "url": "https://openwop.dev/rfcs/0068-memory-consolidation-and-standing-commitments.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  }
+}</script>
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>RFC 0068: Memory consolidation + standing commitments</h1>
+      <p class="lede">A long-running agent accumulates many long-term MemoryEntry rows that overlap, contradict, or restate one another, and it forms standing intentions (&quot;follow up next Monday&quot;, &quot;remind me when the invoice clears&quot;) that should fire later without a fresh…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-capabilities-schema-json-two-additive-optional-sub-blocks-under-agents">§A — capabilities.schema.json: two additive optional sub-blocks under agents</a></li>
+      <li class="toc-sub"><a href="#b-agent-memory-consolidated-event-additive-content-free">§B — agent.memory.consolidated event (additive, content-free)</a></li>
+      <li class="toc-sub"><a href="#c-commitment-fired-event-additive-content-free">§C — commitment.fired event (additive, content-free)</a></li>
+      <li class="toc-sub"><a href="#d-agent-memory-md-normative-prose-two-new-sections">§D — agent-memory.md normative prose (two new sections)</a></li>
+      <li class="toc-sub"><a href="#examples">Examples</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0068</td></tr>
+<tr><td><strong>Title</strong></td><td>Background memory consolidation (merge/dedup/strengthen of long-term entries) + inferred standing commitments — two additive optional capabilities (<code>agents.memoryConsolidation</code> + <code>agents.commitments</code>) with their own content-free observability events (<code>agent.memory.consolidated</code> + <code>commitment.fired</code>), distinct from RFC 0062 token-budgeted distillation</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Active</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-26</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-29 — promoted <code>Draft → Active</code>. The full wire surface already landed on <code>main</code> (the <code>agents.memoryConsolidation</code> + <code>agents.commitments</code> blocks in <code>capabilities.schema.json</code>; the <code>agentMemoryConsolidated</code> + <code>commitmentFired</code> payload defs + <code>_typeIndex</code> entries in <code>run-event-payloads.schema.json</code>; the two RunEventType enum members in <code>run-event.schema.json</code>; the §D normative prose in <code>agent-memory.md</code>; and the three conformance scenarios). All four <code>Active</code>-gating Unresolved questions are resolved below — #1 (the keystone replay-determinism question) confirmed against RFC 0041 §C: consolidation is a host-managed mutation outside the replay envelope, <code>agent.memory.consolidated</code> is an observability event re-read from the log per §C observable-output-sequence determinism, never regenerated. Comment window waived per <code>GOVERNANCE.md</code> lazy consensus. Reference-host behavioral implementation remains deferred per §Conformance (shape always-on; behavioral scenarios soft-skip until a host wires the seam).</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>spec/v1/agent-memory.md</code> (new §"Background consolidation" + §"Inferred commitments") · <code>schemas/run-event-payloads.schema.json</code> (additive optional <code>agent.memory.consolidated</code> + <code>commitment.fired</code> payloads + <code>_typeIndex</code> entries) · <code>schemas/capabilities.schema.json</code> (<code>agents.memoryConsolidation.{supported,schedule}</code> + <code>agents.commitments.supported</code>) · <code>CHANGELOG.md</code> · <code>INTEROP-MATRIX.md</code> · 3 new conformance scenarios</td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>A long-running agent accumulates many long-term <code>MemoryEntry</code> rows that overlap, contradict, or restate one another, and it forms <em>standing intentions</em> ("follow up next Monday", "remind me when the invoice clears") that should fire later without a fresh user turn. openwop has the read-only <code>MemoryAdapter</code> (RFC 0004), token-budgeted <em>distillation</em> of transactional → long-term memory (RFC 0062), the write-attribution event (RFC 0057), and scheduling (RFC 0052), but it has no contract for two distinct behaviors: (1) <strong>background consolidation</strong> — an idempotent merge/dedup/strengthen pass <em>within</em> long-term memory that does not collapse a budget window but reconciles the standing corpus; and (2) <strong>inferred standing commitments</strong> — a host promoting a memory-derived intention into a durable, time- or condition-gated arm that fires a run. This RFC adds two additive optional capabilities (<code>agents.memoryConsolidation</code>, <code>agents.commitments</code>) each with one content-free observability event (<code>agent.memory.consolidated</code>, <code>commitment.fired</code>). Both are optional/additive; hosts that omit them are unchanged, and the RFC carries an explicit <strong>Unresolved questions</strong> section on whether replay determinism holds through a consolidation pass.</p>
+<h2 id="motivation">Motivation</h2>
+<p>The feature-gap analysis (<code>docs/OPENWOP-FEATURE-GAP-ANALYSIS.md</code> row 4) lists "memory: search, get, active-memory plugin, dreaming, inferred commitments." Three of those are already closed or in motion: read access is RFC 0004; "dreaming" as token-budgeted background compaction is RFC 0062 (<code>memory.distillation</code>); per-node provenance is RFC 0057. Two are <strong>not</strong> covered:</p>
+<p>1. <strong>Consolidation is not distillation.</strong> RFC 0062 distills <em>recent transactional</em> memory into long-term artifacts under a <em>mandatory token budget</em>, emitting <code>memory.compacted</code> with a <code>distillation</code> sub-object. That is a forward funnel (many short-lived rows → fewer long-lived rows). It does not address the <em>standing</em> problem: a long-term corpus that, over months, contains near-duplicate facts, superseded preferences, and conflicting statements. Consolidation is a <em>reconciliation</em> pass over long-term entries — merge duplicates, supersede stale facts, strengthen corroborated ones — and is not budget-driven. Folding it into RFC 0062 would overload <code>memory.compacted</code> with a second, semantically different meaning; an observer watching the compaction stream would conflate "I distilled today's transcript" with "I reconciled the standing corpus." A distinct, content-free <code>agent.memory.consolidated</code> event keeps the two observable streams separable. 2. <strong>Inferred commitments have no protocol home.</strong> RFC 0052 scheduling and RFC 0058 wall-clock arms can <em>fire</em> a run on a clock; RFC 0060 heartbeat can fire on a predicate. But neither models a commitment <em>the agent inferred from memory</em> ("the user asked to be reminded when the contract is signed"). A commitment is a durable, agent-derived arm with a fire condition (time or predicate) and a memory provenance. When it fires it MUST be observable — but content-free, since the underlying intention text lives in SR-1-redacted memory, not on the event.</p>
+<p>The spec is the right place because "a consolidation pass ran, reconciled N entries into M, and did not re-expose a redacted secret" and "a memory-derived commitment fired exactly once, attributable to its source memory" are cross-host interop + correctness + security guarantees an operator depends on for unattended long-running agents. The <em>algorithm</em> (which entries merge, how a contradiction is resolved, the inference model) stays a host choice; this RFC pins only the wire shape, the capability gate, and the invariants.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-capabilities-schema-json-two-additive-optional-sub-blocks-under-agents">§A — <code>capabilities.schema.json</code>: two additive optional sub-blocks under <code>agents</code></h3>
+<pre class="lang-diff"><code>   &quot;agents&quot;: {
+     &quot;type&quot;: &quot;object&quot;,
+     &quot;properties&quot;: {
+       &quot;supported&quot;:      { &quot;...&quot;: &quot;unchanged&quot; },
+       &quot;memoryBackends&quot;: { &quot;...&quot;: &quot;unchanged — [&#39;long-term&#39;]&quot; },
++      &quot;memoryConsolidation&quot;: {
++        &quot;type&quot;: &quot;object&quot;,
++        &quot;description&quot;: &quot;RFC 0068. Background reconciliation of LONG-TERM memory (merge/dedup/supersede/strengthen) — distinct from RFC 0062 token-budgeted distillation of TRANSACTIONAL memory. A host advertising this emits `agent.memory.consolidated` (content-free) after a consolidation pass. Requires `agents.memoryBackends` to include `long-term`. SR-1 carry-forward (RFC 0004 §SR-1) and CTI-1 (RFC 0004 §CTI-1) hold across the pass. Hosts that omit this block do not consolidate; the conformance scenarios skip cleanly.&quot;,
++        &quot;additionalProperties&quot;: false,
++        &quot;required&quot;: [&quot;supported&quot;],
++        &quot;properties&quot;: {
++          &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot;, &quot;description&quot;: &quot;REQUIRED when the block is present. When true, the host performs background consolidation over long-term memory and emits `agent.memory.consolidated`.&quot; },
++          &quot;schedule&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;host-managed&quot;, &quot;scheduled&quot;, &quot;on-demand&quot;], &quot;description&quot;: &quot;How a consolidation pass is initiated. `host-managed`: a host-internal cadence clients do not control (default when absent and supported:true). `scheduled`: bound to a `capabilities.scheduling` (RFC 0052) trigger. `on-demand`: the host runs a pass when explicitly requested. A host MAY honor more than one path but advertises the primary.&quot; }
++        }
++      },
++      &quot;commitments&quot;: {
++        &quot;type&quot;: &quot;object&quot;,
++        &quot;description&quot;: &quot;RFC 0068. Inferred STANDING commitments — durable, memory-derived intentions the host promotes into a time- or predicate-gated arm that fires a run later, without a fresh user turn. When an arm fires the host emits `commitment.fired` (content-free — the intention text lives in SR-1-redacted memory). Composes RFC 0052 (time arms) / RFC 0060 (predicate arms) for the fire substrate. Hosts that omit this block do not infer commitments; the conformance scenario skips cleanly.&quot;,
++        &quot;additionalProperties&quot;: false,
++        &quot;required&quot;: [&quot;supported&quot;],
++        &quot;properties&quot;: {
++          &quot;supported&quot;: { &quot;type&quot;: &quot;boolean&quot;, &quot;description&quot;: &quot;REQUIRED when the block is present. When true, the host infers standing commitments from memory and emits `commitment.fired` when one fires.&quot; },
++          &quot;fireConditions&quot;: { &quot;type&quot;: &quot;array&quot;, &quot;items&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;time&quot;, &quot;predicate&quot;] }, &quot;uniqueItems&quot;: true, &quot;description&quot;: &quot;Which fire-condition kinds the host supports. `time` composes RFC 0052 scheduling; `predicate` composes RFC 0060 heartbeat. Absent ⇒ `[&#39;time&#39;]`.&quot; }
++        }
++      }
+     },
+     &quot;additionalProperties&quot;: true
+   }</code></pre>
+<h3 id="b-agent-memory-consolidated-event-additive-content-free">§B — <code>agent.memory.consolidated</code> event (additive, content-free)</h3>
+<p>Emitted by a host advertising <code>agents.memoryConsolidation.supported: true</code> after each consolidation pass completes — regardless of how the pass was initiated. Content-free: counts + the affected <code>memoryRef</code> only. The entry bodies are served by the SR-1-redacted read-side (<code>MemoryAdapter.get</code>); the event records a write that already happened and is re-read from the log on replay, never regenerated.</p>
+<pre class="lang-diff"><code>+    &quot;agentMemoryConsolidated&quot;: {
++      &quot;type&quot;: &quot;object&quot;,
++      &quot;description&quot;: &quot;RFC 0068. Emitted by a host advertising `capabilities.agents.memoryConsolidation.supported: true` after a background consolidation pass over LONG-TERM memory. Content-free: identifiers + counts only — entry content is served by the SR-1-redacted read-side (`MemoryAdapter.get`). On replay the event is re-read from the log, never regenerated. Distinct from RFC 0062 `memory.compacted` (token-budgeted distillation of transactional memory). SR-1 carry-forward (RFC 0004) + CTI-1 apply to the consolidated entries.&quot;,
++      &quot;required&quot;: [&quot;memoryRef&quot;, &quot;inputCount&quot;, &quot;outputCount&quot;],
++      &quot;properties&quot;: {
++        &quot;memoryRef&quot;:     { &quot;type&quot;: &quot;string&quot;, &quot;minLength&quot;: 1, &quot;description&quot;: &quot;Opaque MemoryAdapter handle (RFC 0004 §C) the consolidation pass operated over. Bounds the pass to a single memory scope (CTI-1).&quot; },
++        &quot;inputCount&quot;:    { &quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 0, &quot;description&quot;: &quot;Long-term entries considered by the pass.&quot; },
++        &quot;outputCount&quot;:   { &quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 0, &quot;description&quot;: &quot;Long-term entries remaining after the pass. MUST be &lt;= inputCount for a pass that only merges/dedups; a pass that also strengthens (no merge) MAY leave outputCount == inputCount.&quot; },
++        &quot;mergedIds&quot;:     { &quot;type&quot;: &quot;array&quot;, &quot;items&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;minLength&quot;: 1 }, &quot;description&quot;: &quot;MAY — ids of entries collapsed/superseded by the pass. Hosts MAY omit when inputCount is large; consumers MUST tolerate absence.&quot; },
++        &quot;trigger&quot;:       { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;host-managed&quot;, &quot;scheduled&quot;, &quot;on-demand&quot;], &quot;description&quot;: &quot;MAY — which initiation path drove this pass (mirrors `agents.memoryConsolidation.schedule`).&quot; }
++      },
++      &quot;additionalProperties&quot;: true
++    },</code></pre>
+<p><code>_typeIndex</code>: <code>&quot;agent.memory.consolidated&quot;: { &quot;$ref&quot;: &quot;#/$defs/agentMemoryConsolidated&quot; }</code>.</p>
+<h3 id="c-commitment-fired-event-additive-content-free">§C — <code>commitment.fired</code> event (additive, content-free)</h3>
+<p>Emitted by a host advertising <code>agents.commitments.supported: true</code> when an inferred standing commitment's fire condition is met. Content-free: a host-issued commitment id + provenance <code>memoryRef</code>/<code>memoryId</code> + the condition kind. The intention text and any payload live in SR-1-redacted memory; the event MUST NOT carry it.</p>
+<pre class="lang-diff"><code>+    &quot;commitmentFired&quot;: {
++      &quot;type&quot;: &quot;object&quot;,
++      &quot;description&quot;: &quot;RFC 0068. Emitted by a host advertising `capabilities.agents.commitments.supported: true` when an inferred standing commitment fires. Content-free: identifiers + condition kind only — the intention text lives in SR-1-redacted memory (`MemoryAdapter.get(memoryRef, memoryId)`). The fired arm composes RFC 0052 (time) or RFC 0060 (predicate). On replay the event is re-read from the log, never regenerated (the host MUST NOT re-infer or re-fire a commitment at replay time). CTI-1: the commitment, its memory provenance, and any run it enqueues MUST share the source memory&#39;s tenant.&quot;,
++      &quot;required&quot;: [&quot;commitmentId&quot;, &quot;memoryRef&quot;, &quot;condition&quot;],
++      &quot;properties&quot;: {
++        &quot;commitmentId&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;minLength&quot;: 1, &quot;description&quot;: &quot;Host-issued, stable id for the inferred commitment. Correlates repeated observability across re-evaluations of the same commitment.&quot; },
++        &quot;memoryRef&quot;:    { &quot;type&quot;: &quot;string&quot;, &quot;minLength&quot;: 1, &quot;description&quot;: &quot;Opaque MemoryAdapter handle of the memory scope the commitment was inferred from (provenance + CTI-1 tenant binding).&quot; },
++        &quot;memoryId&quot;:     { &quot;type&quot;: &quot;string&quot;, &quot;minLength&quot;: 1, &quot;description&quot;: &quot;MAY — id of the source `MemoryEntry` the commitment was inferred from, when a single entry is attributable. Resolvable via `MemoryAdapter.get`; content is read SR-1-redacted from the read-side.&quot; },
++        &quot;condition&quot;:    { &quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;time&quot;, &quot;predicate&quot;], &quot;description&quot;: &quot;Which fire-condition kind triggered. `time` composes RFC 0052; `predicate` composes RFC 0060.&quot; },
++        &quot;enqueuedRunId&quot;:{ &quot;type&quot;: &quot;string&quot;, &quot;minLength&quot;: 1, &quot;description&quot;: &quot;MAY — id of the run the fired commitment enqueued, when the host initiates one. Absent when the commitment fires as a notification without a run.&quot; }
++      },
++      &quot;additionalProperties&quot;: true
++    },</code></pre>
+<p><code>_typeIndex</code>: <code>&quot;commitment.fired&quot;: { &quot;$ref&quot;: &quot;#/$defs/commitmentFired&quot; }</code>.</p>
+<h3 id="d-agent-memory-md-normative-prose-two-new-sections">§D — agent-memory.md normative prose (two new sections)</h3>
+<p><strong>§"Background consolidation" (normative, when <code>agents.memoryConsolidation.supported: true</code>).</strong> A consolidation pass MUST: 1. Operate over a single <code>memoryRef</code>'s long-term entries (CTI-1 — a pass MUST NOT read or write entries of another tenant). 2. Be <strong>idempotent over a stable corpus</strong> — running a pass twice over an unchanged corpus MUST NOT further reduce <code>outputCount</code> (a no-op second pass). This bounds runaway consolidation and is the testable surface. 3. Route every derived/merged entry's content through the same BYOK redaction harness applied to a fresh <code>put</code> (SR-1 carry-forward, RFC 0004 §SR-1) — a merged summary can introduce secret-shaped substrings not present in any source, exactly as RFC 0012 §D / RFC 0062 establish for compaction. 4. Emit <code>agent.memory.consolidated</code> with <code>inputCount</code>/<code>outputCount</code>/<code>memoryRef</code> after the pass.</p>
+<p>Consolidation is <strong>read-modify-write of long-term memory</strong>; it is NOT a token-budgeted distillation of transactional memory (that is RFC 0062, which emits <code>memory.compacted</code>). A host MAY implement both; they are independent capabilities.</p>
+<p><strong>§"Inferred commitments" (normative, when <code>agents.commitments.supported: true</code>).</strong> A standing commitment is a host-inferred, durable intention with a fire condition. A host: 1. MUST bind each commitment to the <code>memoryRef</code> it was inferred from; the commitment, the fired event, and any enqueued run MUST share that memory's tenant (CTI-1). 2. MUST fire each commitment <strong>at most once per satisfied condition</strong> — a <code>time</code> commitment fires once per scheduled instant (reusing RFC 0052's once-per-tick guarantee); a <code>predicate</code> commitment fires once per state transition (reusing RFC 0060's anti-spam semantics). A host MUST NOT re-fire a commitment on replay. 3. MUST emit <code>commitment.fired</code> (content-free) when a commitment fires, and MUST NOT place the inferred intention text or any secret-bearing payload on the event (the read-side serves it SR-1-redacted). 4. MAY enqueue a run when a commitment fires; when it does, the run inherits the source memory's tenant and the <code>enqueuedRunId</code> is reported on the event.</p>
+<h3 id="examples">Examples</h3>
+<p><strong>Positive (consolidation).</strong> A nightly host-managed pass reads 240 long-term entries for <code>mem://support/agent-7</code>, merges 31 near-duplicate refund-policy notes into 4 and supersedes 12 stale price facts, leaving 201 entries; emits <code>agent.memory.consolidated { memoryRef: &quot;mem://support/agent-7&quot;, inputCount: 240, outputCount: 201, trigger: &quot;host-managed&quot; }</code>. A second pass that night over the unchanged corpus is a no-op (<code>inputCount == outputCount</code>).</p>
+<p><strong>Positive (commitment).</strong> From a user turn "remind me when the SOC2 report is filed," the host infers a predicate commitment bound to <code>mem://legal/agent-2</code> entry <code>mem-88</code>. When the host's heartbeat (RFC 0060) detects the filing, it fires once: <code>commitment.fired { commitmentId: &quot;cmt-...&quot;, memoryRef: &quot;mem://legal/agent-2&quot;, memoryId: &quot;mem-88&quot;, condition: &quot;predicate&quot;, enqueuedRunId: &quot;run-...&quot; }</code>.</p>
+<p><strong>Negative.</strong> A host emits <code>commitment.fired { commitmentId, condition: &quot;time&quot; }</code> <em>without</em> <code>memoryRef</code> → fails schema validation (<code>memoryRef</code> required) — a commitment with no memory provenance is not an <em>inferred</em> commitment and breaks the CTI-1 tenant binding. A host that emits the inferred intention text in the event payload violates §C / the SR-1 posture even though <code>additionalProperties: true</code> would let the field through (the no-content invariant is the semantic constraint).</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong> Two new optional capability sub-blocks under <code>agents</code> (which keeps <code>additionalProperties: true</code>); two new optional event types (consumers that don't recognize them fold best-effort per <code>observability.md §&quot;Forward-compat&quot;</code>). No existing field, event, error code, or endpoint changes. No existing required array changes. Hosts that omit both blocks behave exactly as today. No conformance pass is invalidated.</p>
+<p>Forward-compatibility clauses:</p>
+<ul>
+<li>New capability blocks are optional with no default emission by old hosts; the scenarios gate on the advertisement.</li>
+<li>New event types are additive RunEventTypes; existing consumers ignore unknown types. The <code>run-event.schema.json#$defs.RunEventType</code> enum gains two members additively (a consumer pinned to the old enum tolerates unknown types per the spec's fold-best-effort rule).</li>
+<li>Both events are content-free and re-read from the log on replay — they introduce no new replay-regeneration surface (see Unresolved questions on consolidation determinism).</li>
+</ul>
+<h2 id="conformance">Conformance</h2>
+<ul>
+<li><strong>Existing coverage.</strong> <code>agentMemoryRoundTrip.test.ts</code>, <code>agentMemoryCrossTenantIsolation.test.ts</code> (CTI-1), <code>agentMemoryRedactionContract.test.ts</code> (SR-1), <code>memory-compaction-sr1-carry-forward.test.ts</code>, and (RFC 0062) the <code>distillation-*.test.ts</code> family cover adjacent memory surface. None cover consolidation or commitments.</li>
+<li><strong>New scenarios (3):</strong></li>
+</ul>
+<p>  - <strong><code>memory-consolidation-shape.test.ts</code></strong> — always-on schema-shape probe: <code>agents.memoryConsolidation</code> + <code>agents.commitments</code> blocks validate; the <code>agent.memory.consolidated</code> + <code>commitment.fired</code> payloads validate against their <code>$defs</code>; a <code>commitment.fired</code> missing <code>memoryRef</code> is rejected (negative). (Always-on — drives the schemas, no host behavior.)   - <strong><code>memory-consolidation-idempotent.test.ts</code></strong> — gated on <code>capabilities.agents.memoryConsolidation.supported</code>: a consolidation pass emits <code>agent.memory.consolidated</code> with <code>outputCount &lt;= inputCount</code>, and a second pass over the unchanged corpus is a no-op (<code>inputCount == outputCount</code>) — the §D idempotence MUST. Also asserts SR-1 carry-forward over a consolidated entry (composes the redaction harness). Soft-skips on absent advertisement.   - <strong><code>commitment-fired.test.ts</code></strong> — gated on <code>capabilities.agents.commitments.supported</code>: a fired commitment emits a content-free <code>commitment.fired</code> with <code>memoryRef</code> provenance + fire-once-per-condition; the event MUST NOT carry the inferred intention text (no-content assertion). Soft-skips on absent advertisement.</p>
+<ul>
+<li><strong>Fixtures.</strong> A consolidation fixture (a long-term <code>memoryRef</code> seeded with duplicate/stale entries) + a commitment fixture (a memory entry tagged as a standing intention) under <code>conformance/fixtures/</code>, registered in <code>conformance/fixtures.md</code>. The behavioral assertions drive a documented host seam (<code>POST /v1/host/sample/memory/consolidate</code> + <code>.../commitment/fire</code>), staged per the RFC 0027 §G precedent — they soft-skip on <code>404</code> until a reference host wires the seam.</li>
+<li><strong>Capability gating.</strong> Per <code>conformance/coverage.md</code>: shape always-on; behavioral scenarios gated on <code>agents.memoryConsolidation.supported</code> / <code>agents.commitments.supported</code> respectively.</li>
+<li><strong>Reference host.</strong> Deferred to a follow-up milestone (this RFC lands at <code>Draft</code>). Shape + schema validation ship now; behavioral assertions soft-skip until a host advertises.</li>
+<li><strong>INTEROP-MATRIX.</strong> A new "Capability adoption — RFC 0068 memory consolidation + commitments" row is added (status: no host advertises yet — Draft).</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>Extend RFC 0062 <code>memory.distillation</code> to cover consolidation</strong> (reuse <code>memory.compacted</code>). Rejected — distillation is token-budgeted and operates on <em>transactional → long-term</em>; consolidation is unbudgeted and operates <em>within long-term</em>. Overloading <code>memory.compacted</code> would make the two indistinguishable on the observability stream and force a budget contract onto a reconciliation pass that has none. A distinct content-free event is the lower-confusion path (mirrors how RFC 0057 <code>memory.written</code> stayed separate from <code>memory.compacted</code>). 2. <strong>Model commitments as plain RFC 0052 schedules / RFC 0060 heartbeats</strong> with no new event. Rejected — those substrates <em>fire</em> the arm, but neither carries the <em>memory provenance</em> (<code>memoryRef</code>/<code>memoryId</code>) that makes a commitment "inferred." Without provenance the CTI-1 tenant binding and the auditability ("which memory did this come from?") are lost. The new event composes those substrates rather than replacing them. 3. <strong>Do nothing.</strong> Rejected — the gap analysis explicitly flags consolidation and inferred commitments as the two uncovered memory behaviors. Without a content-free event contract, hosts that build them will each invent a vendor-prefixed event, and fleet operators lose a canonical vocabulary (the same observability argument RFC 0012 §"Why this exists" makes for compaction). "Do nothing" is worse because divergent vendor extensions are harder to reconcile later than an additive spec contract now.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. <strong>Replay determinism through a consolidation pass.</strong> ✅ <strong>RESOLVED (2026-05-29, <code>Active</code> gate) — option (a), confirmed against RFC 0041 §C.</strong> A consolidation pass is modeled as a <em>host-managed background mutation</em> (like RFC 0062 distillation), explicitly <strong>outside the replay envelope</strong>. RFC 0041 §C pins the replay contract as <em>observable-output-sequence determinism, not bit-equivalent execution determinism</em>: the <code>RunEventDoc</code> records at event-log indices <code>[0, fromSeq]</code> MUST be byte-equivalent between original and replay (modulo per-region clock fields), and hosts cache the <em>observable result</em> rather than re-executing. Therefore: a run sees consolidated memory only via the deterministic read-snapshot the event log records; <code>agent.memory.consolidated</code> is an <strong>observability event re-read from the log on replay, never regenerated</strong> — a host MUST NOT re-run a consolidation pass at replay time. A run MUST NOT <em>trigger</em> a consolidation pass that mutates its own read-snapshot mid-run (the mid-run-triggered path stays out of scope at <code>Active</code>). This is exactly the posture the landed <code>agent-memory.md §&quot;Background consolidation&quot;</code> prose now states normatively, and it reuses RFC 0062's established "host-managed mutation, replayed run re-reads the snapshot" model — no new replay-regeneration surface. 2. <strong>Idempotence tolerance.</strong> ✅ <strong>RESOLVED (2026-05-29, <code>Active</code> gate): exact, count-based — no tolerance window.</strong> The §D rule-2 MUST is <code>inputCount == outputCount</code> on a second pass over an unchanged corpus, and the conformance assertion (<code>memory-consolidation-idempotent.test.ts</code>) is purely count-based. A strengthen-only pass (rewrites corroboration weights / recency without merging) is <strong>count-neutral</strong> — it leaves <code>outputCount == inputCount</code> — so it already satisfies the exact bar without any tolerance; the idempotence assertion does not inspect entry content or timestamps, so a strengthening rewrite does not perturb it. Exact count equality is the right and testable bar; no fuzz is introduced. 3. <strong>Commitment lifecycle observability.</strong> ✅ <strong>RESOLVED (2026-05-29, <code>Active</code> gate): <code>fired</code>-only at <code>Active</code>.</strong> <code>commitment.fired</code> is the minimal content-free observable that closes the gap-analysis "inferred commitments" item. A <code>commitment.inferred</code> (creation) + <code>commitment.cancelled</code> (revocation) lifecycle pair is <strong>deferred to a follow-up RFC</strong> — both would be additive new RunEventTypes that compose cleanly on top of <code>commitment.fired</code> without breaking it, so they need not block <code>Active</code>. An implementer needing the full create/cancel audit trail can request them then. 4. <strong>Consolidation + write-attribution interaction.</strong> ✅ <strong>RESOLVED (2026-05-29, <code>Active</code> gate): emit both when both capabilities are advertised; the consolidation <code>memory.written</code> omits <code>nodeId</code>.</strong> When a host advertises BOTH <code>agents.memoryConsolidation</code> AND RFC 0057 <code>memory.attribution</code>, a consolidation-pass write MAY emit RFC 0057 <code>memory.written</code> for each new/merged entry in addition to the pass-level <code>agent.memory.consolidated</code>. A consolidation pass is a host-managed <em>background</em> writer, not a workflow node, so its <code>memory.written</code> <strong>SHOULD omit <code>nodeId</code></strong> — RFC 0057 §B already permits writes with no node attribution ("e.g. host session-end auto-memory"). The pass-level attribution is carried by <code>agent.memory.consolidated</code> (which names the <code>memoryRef</code> + counts); a host wanting finer attribution MAY set <code>agentId</code> to a host-chosen consolidation identifier but MUST NOT fabricate a workflow <code>nodeId</code> for a non-node writer. This introduces <strong>no new reserved-id convention</strong> and stays consistent with RFC 0057's existing no-node-attribution carve-out.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>Sequencing: ships <em>after</em> RFC 0062 (which it cites for the distillation contrast) and composes RFC 0052 / RFC 0060 for commitment fire substrates and RFC 0057 for the write-attribution interaction. No hard dependency ordering for the <em>schema</em> additions; the <em>behavioral</em> host seam depends on a MemoryAdapter being wired.</li>
+<li>The in-memory reference host has no production MemoryAdapter, so a behavioral implementation would be seam-demonstrated (mirroring RFC 0062's <code>scheduled: false</code> posture). A Postgres-backed host is the natural first behavioral implementer.</li>
+<li>Expected effort: M for the schema + prose + shape conformance (this PR); L for a behavioral reference implementation (deferred), dominated by the consolidation algorithm and the replay-determinism confirmation (Unresolved #1).</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[x] <code>agent-memory.md</code> §"Background consolidation" + §"Inferred commitments" (the §D normative contracts).</li>
+<li>[x] <code>capabilities.schema.json</code> carries <code>agents.memoryConsolidation</code> + <code>agents.commitments</code>; <code>run-event-payloads.schema.json</code> carries <code>agentMemoryConsolidated</code> + <code>commitmentFired</code> defs + <code>_typeIndex</code> entries; <code>run-event.schema.json</code> RunEventType enum gains the two event names.</li>
+<li>[x] 3 conformance scenarios (shape always-on; consolidation idempotence + commitment fire-once gated on capability).</li>
+<li>[x] CHANGELOG entry under <code>[1.1.6 — unreleased]</code> + INTEROP-MATRIX row.</li>
+<li>[x] Reference host implements + passes the behavioral scenarios, OR this RFC explicitly defers reference-host implementation (it does — shape ships; behavioral assertions soft-skip until a host advertises).</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="../spec/v1/agent-memory.md"><code>spec/v1/agent-memory.md</code></a> — MemoryAdapter, CTI-1, SR-1, the RFC 0062 distillation section this contrasts with.</li>
+<li><a href="./0062-scheduled-memory-distillation.md"><code>RFCS/0062-scheduled-memory-distillation.md</code></a> — token-budgeted distillation of transactional memory (<code>memory.compacted</code> + <code>distillation</code>), the behavior consolidation is explicitly <em>not</em>.</li>
+<li><a href="./0057-memory-write-attribution-event.md"><code>RFCS/0057-memory-write-attribution-event.md</code></a> — the content-free <code>memory.written</code> event whose redaction + replay-re-read posture this RFC mirrors.</li>
+<li><a href="./0052-scheduling-and-time-based-triggers.md"><code>RFCS/0052-scheduling-and-time-based-triggers.md</code></a> — once-per-tick fire substrate for <code>time</code> commitments.</li>
+<li><a href="./0060-host-heartbeat-capability.md"><code>RFCS/0060-host-heartbeat-capability.md</code></a> — predicate-gated fire substrate for <code>predicate</code> commitments.</li>
+<li><a href="./0041-multi-agent-replay-under-nondeterminism.md"><code>RFCS/0041-multi-agent-replay-under-nondeterminism.md</code></a> — the determinism contract Unresolved #1 must be confirmed against.</li>
+<li><code>docs/OPENWOP-FEATURE-GAP-ANALYSIS.md</code> row 4 (memory: dreaming + inferred commitments).</li>
+<li>Prior art: Letta/MemGPT memory tiers + sleep-time compute; LangGraph long-term memory store.</li>
+</ul><footer class="doc-edit"><a href="https://github.com/openwop/openwop/edit/main/RFCS/0068-memory-consolidation-and-standing-commitments.md" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>

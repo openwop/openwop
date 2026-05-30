@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — RFC 0067: Provider-catalog conventions — provider-name vocabulary + BYOK auth-mode advertisement</title>
+  <meta name="description" content="openwop&#39;s capabilities.aiProviders advertises which AI providers a host can route to (supported) and which permit BYOK (byok), but it does not say how a client is expected to supply a provider&#39;s credential. As hosts expand their catalog beyond the…"/>
+  <link rel="canonical" href="https://openwop.dev/rfcs/0067-provider-catalog-conventions.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — RFC 0067: Provider-catalog conventions — provider-name vocabulary + BYOK auth-mode advertisement"/>
+  <meta property="og:description" content="openwop&#39;s capabilities.aiProviders advertises which AI providers a host can route to (supported) and which permit BYOK (byok), but it does not say how a client is expected to supply a provider&#39;s credential. As hosts expand their catalog beyond the…"/>
+  <meta property="og:url" content="https://openwop.dev/rfcs/0067-provider-catalog-conventions.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — RFC 0067: Provider-catalog conventions — provider-name vocabulary + BYOK auth-mode advertisement"/>
+  <meta name="twitter:description" content="openwop&#39;s capabilities.aiProviders advertises which AI providers a host can route to (supported) and which permit BYOK (byok), but it does not say how a client is expected to supply a provider&#39;s credential. As hosts expand their catalog beyond the…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "RFC 0067: Provider-catalog conventions — provider-name vocabulary + BYOK auth-mode advertisement",
+  "description": "openwop's capabilities.aiProviders advertises which AI providers a host can route to (supported) and which permit BYOK (byok), but it does not say how a client is expected to supply a provider's credential. As hosts expand their catalog beyond the…",
+  "url": "https://openwop.dev/rfcs/0067-provider-catalog-conventions.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  }
+}</script>
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>RFC 0067: Provider-catalog conventions — provider-name vocabulary + BYOK auth-mode advertisement</h1>
+      <p class="lede">openwop&#39;s capabilities.aiProviders advertises which AI providers a host can route to (supported) and which permit BYOK (byok), but it does not say how a client is expected to supply a provider&#39;s credential. As hosts expand their catalog beyond the…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#summary">Summary</a></li>
+      <li class="toc-top"><a href="#motivation">Motivation</a></li>
+      <li class="toc-top"><a href="#proposal">Proposal</a></li>
+      <li class="toc-sub"><a href="#a-capabilities-schema-json-additive-optional-aiproviders-authmodes">§A — capabilities.schema.json: additive optional aiProviders.authModes</a></li>
+      <li class="toc-sub"><a href="#b-auth-mode-contract-normative">§B — auth-mode contract (normative)</a></li>
+      <li class="toc-sub"><a href="#c-provider-name-vocabulary-non-normative-convention">§C — provider-name vocabulary (non-normative convention)</a></li>
+      <li class="toc-sub"><a href="#examples">Examples</a></li>
+      <li class="toc-top"><a href="#compatibility">Compatibility</a></li>
+      <li class="toc-top"><a href="#conformance">Conformance</a></li>
+      <li class="toc-top"><a href="#alternatives-considered">Alternatives considered</a></li>
+      <li class="toc-top"><a href="#unresolved-questions">Unresolved questions</a></li>
+      <li class="toc-top"><a href="#implementation-notes-non-normative">Implementation notes (non-normative)</a></li>
+      <li class="toc-top"><a href="#acceptance-criteria">Acceptance criteria</a></li>
+      <li class="toc-top"><a href="#references">References</a></li>
+    </ul>
+  </aside><article class="spec-doc"><table>
+<thead><tr><th>Field</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC</strong></td><td>0067</td></tr>
+<tr><td><strong>Title</strong></td><td>Provider-catalog conventions — a stable provider-name vocabulary and a per-provider BYOK auth-mode enum (<code>apiKey</code> / <code>oauth-pkce</code> / <code>oauth-device</code> / <code>none</code>) so clients can pre-flight how a host expects a provider's credential to be supplied</td></tr>
+<tr><td><strong>Status</strong></td><td><code>Active</code></td></tr>
+<tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
+<tr><td><strong>Created</strong></td><td>2026-05-26</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-29 — promoted <code>Draft → Active</code>. The full wire surface already landed on <code>main</code> (the additive optional <code>aiProviders.authModes</code> map in <code>capabilities.schema.json</code>, the §B/§C prose in <code>capabilities.md</code>, and the always-on-shape + gated-cross-field <code>byok-auth-modes.test.ts</code> scenario). The one <code>Active</code>-gating Unresolved question (#3, local-endpoint addressing) is resolved below: <strong>host-config only</strong>. Comment window waived per <code>GOVERNANCE.md</code> lazy consensus. No host wire change; reference-host advertisement remains deferred per §Conformance.</td></tr>
+<tr><td><strong>Affects</strong></td><td><code>schemas/capabilities.schema.json</code> (<code>aiProviders</code> — additive optional <code>authModes</code> map + a non-normative convention list extending <code>supported</code>'s description) · <code>spec/v1/capabilities.md</code> (§<code>aiProviders</code> — auth-mode contract + provider-name vocabulary) · <code>CHANGELOG.md</code> · new conformance scenario <code>byok-auth-modes.test.ts</code></td></tr>
+<tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
+<tr><td><strong>Supersedes</strong></td><td>—</td></tr>
+<tr><td><strong>Superseded by</strong></td><td>—</td></tr>
+</tbody></table>
+<h2 id="summary">Summary</h2>
+<p>openwop's <code>capabilities.aiProviders</code> advertises which AI providers a host can route to (<code>supported</code>) and which permit BYOK (<code>byok</code>), but it does not say <em>how</em> a client is expected to supply a provider's credential. As hosts expand their catalog beyond the original handful (OpenRouter, Bedrock, Ollama, vLLM, …) the supply mechanism diverges — an API-key header, an OAuth PKCE flow, an OAuth device flow, or no credential at all (a local or platform-managed provider). This RFC adds an <strong>additive optional <code>aiProviders.authModes</code></strong> map — <code>{ &amp;lt;providerId&amp;gt;: (&quot;apiKey&quot; | &quot;oauth-pkce&quot; | &quot;oauth-device&quot; | &quot;none&quot;)[] }</code> — so a client can pre-flight the credential UX without trial-and-error, and pins a <strong>non-normative provider-name vocabulary</strong> so independently-built hosts converge on the same ids. No existing required field changes; hosts that omit <code>authModes</code> keep today's "BYOK ⇒ <code>ai.credentialRef</code>" default.</p>
+<h2 id="motivation">Motivation</h2>
+<p>The feature-gap analysis (<code>docs/OPENWOP-FEATURE-GAP-ANALYSIS.md</code> row 3) calls for expanding the provider catalog from ~4 to ~20+ providers (OpenRouter, LiteLLM, Vercel/Cloudflare AI Gateway, Together, Bedrock, Qwen, Ollama, vLLM, HuggingFace, …). The schema already tolerates arbitrary provider ids in <code>aiProviders.supported</code> (<code>string[]</code>, <code>minLength: 1</code>, vendor-prefixed extensions allowed), so the <em>catalog</em> is not blocked. Two cross-host gaps remain:</p>
+<p>1. <strong>Auth-mode opacity.</strong> <code>capabilities.md §aiProviders</code> says BYOK providers accept an opaque <code>ai.credentialRef</code>. That is correct for an API-key provider, but it says nothing about a provider whose credential is acquired via an OAuth flow (the host owns the grant per RFC 0047 <code>host.oauth</code>) or a provider that needs no credential at all (a local Ollama / vLLM endpoint, or one the host serves from platform-managed keys). A client building a "connect provider X" UX today has to special-case each provider out-of-band. The host already <em>knows</em> the answer; it just can't advertise it. 2. <strong>Provider-id drift.</strong> Two hosts that both route to Google's Gemini might advertise <code>gemini</code> vs <code>google</code> vs <code>vertex</code>; OpenRouter as <code>openrouter</code> vs <code>open-router</code>. Without a recommended vocabulary, a portable client can't map a workflow's <code>RunOptions.configurable.ai.provider</code> across hosts.</p>
+<p>The spec is the right place for the <em>advertisement shape</em> and the <em>recommended vocabulary</em> — these are interop concerns a client depends on. The per-provider OAuth flow mechanics stay host-owned (RFC 0047); this RFC only lets a host <em>declare which mode applies</em>, it does not normate a new wire flow.</p>
+<h2 id="proposal">Proposal</h2>
+<h3 id="a-capabilities-schema-json-additive-optional-aiproviders-authmodes">§A — <code>capabilities.schema.json</code>: additive optional <code>aiProviders.authModes</code></h3>
+<pre class="lang-diff"><code>   &quot;aiProviders&quot;: {
+     &quot;type&quot;: &quot;object&quot;,
+     &quot;properties&quot;: {
+       &quot;supported&quot;: { &quot;...&quot;: &quot;unchanged — string[] of provider ids&quot; },
+       &quot;byok&quot;:      { &quot;...&quot;: &quot;unchanged — subset of supported permitting BYOK&quot; },
++      &quot;authModes&quot;: {
++        &quot;type&quot;: &quot;object&quot;,
++        &quot;description&quot;: &quot;RFC 0067. Optional per-provider advertisement of HOW the host expects a provider&#39;s credential to be supplied. Keys are provider ids appearing in `supported`; values are the auth modes the host honors for that provider. Absent ⇒ no advertisement: a provider in `byok` defaults to `apiKey` semantics (client passes `ai.credentialRef`); a provider in `supported` but not in `byok` defaults to `none` (platform-managed). This map only DESCRIBES the supply mechanism — the per-mode flow mechanics are owned elsewhere (`oauth-pkce`/`oauth-device` compose RFC 0047 `host.oauth`).&quot;,
++        &quot;additionalProperties&quot;: {
++          &quot;type&quot;: &quot;array&quot;,
++          &quot;minItems&quot;: 1,
++          &quot;uniqueItems&quot;: true,
++          &quot;items&quot;: {
++            &quot;type&quot;: &quot;string&quot;,
++            &quot;enum&quot;: [&quot;apiKey&quot;, &quot;oauth-pkce&quot;, &quot;oauth-device&quot;, &quot;none&quot;]
++          }
++        }
++      },
+       &quot;policies&quot;: { &quot;...&quot;: &quot;unchanged&quot; },
+       &quot;maxInlineMediaBytes&quot;: { &quot;...&quot;: &quot;unchanged&quot; }
+     },
+     &quot;additionalProperties&quot;: false
+   }</code></pre>
+<p>The four enum values:</p>
+<table>
+<thead><tr><th>Mode</th><th>Meaning</th><th>Credential supply</th></tr></thead>
+<tbody>
+<tr><td><code>apiKey</code></td><td>Host accepts a stored API-key credential for this provider.</td><td>Client passes <code>RunOptions.configurable.ai.credentialRef</code> (today's BYOK path). Provider MUST appear in <code>byok</code>.</td></tr>
+<tr><td><code>oauth-pkce</code></td><td>Host acquires a token via an OAuth 2.0 authorization-code + PKCE flow it owns (RFC 0047 <code>host.oauth</code>, <code>grants: [&quot;authorization_code&quot;]</code>).</td><td>Client does NOT pass key material; it references the host-stored credential by <code>ref</code> per RFC 0046. The PKCE flow is host-driven.</td></tr>
+<tr><td><code>oauth-device</code></td><td>Host acquires a token via an OAuth 2.0 device-authorization flow it owns.</td><td>Same as <code>oauth-pkce</code> — credential referenced, never wired.</td></tr>
+<tr><td><code>none</code></td><td>Provider needs no caller-supplied credential.</td><td>A local provider (Ollama / vLLM at a host-configured endpoint) or one served entirely from platform-managed keys. Client supplies neither <code>credentialRef</code> nor key material. Provider MUST NOT appear in <code>byok</code>.</td></tr>
+</tbody></table>
+<h3 id="b-auth-mode-contract-normative">§B — auth-mode contract (normative)</h3>
+<p>When a host advertises <code>aiProviders.authModes</code>:</p>
+<p>1. Every key in <code>authModes</code> MUST also appear in <code>aiProviders.supported</code>. A host MUST NOT advertise an auth mode for a provider it cannot route to. 2. A provider whose mode array includes <code>apiKey</code> MUST also appear in <code>aiProviders.byok</code> (the two advertisements MUST agree — <code>apiKey</code> <em>is</em> the BYOK path). 3. A provider whose mode array is exactly <code>[&quot;none&quot;]</code> MUST NOT appear in <code>aiProviders.byok</code> (<code>none</code> means no caller credential; a <code>byok</code> listing would contradict it). A provider MAY advertise <code>[&quot;apiKey&quot;, &quot;none&quot;]</code> (BYOK permitted but a platform-managed fallback exists) — such a provider MUST appear in <code>byok</code>. 4. A provider advertising <code>oauth-pkce</code> or <code>oauth-device</code> SHOULD also advertise <code>capabilities.oauth</code> (RFC 0047) with a matching provider <code>id</code>; the OAuth flow itself is governed by RFC 0047, not this RFC. The credential is referenced by <code>ref</code> (RFC 0046 <code>credential-reference</code>), never passed as key material on <code>ai.credentialRef</code>. 5. Absent <code>authModes</code>, the <strong>default contract is unchanged</strong>: a provider in <code>byok</code> behaves as <code>apiKey</code>; a provider in <code>supported</code> but not in <code>byok</code> behaves as <code>none</code>. Clients MUST tolerate the field's absence and fall back to this default. 6. <code>authModes</code> is an advertisement of <em>capability</em>, not a per-run <em>requirement</em>. Per-provider policy enforcement (must-use-BYOK, model allowlists) remains <code>aiProviders.policies</code> (unchanged). A client MUST NOT infer a policy mode from an auth mode.</p>
+<p>A client that wants to connect a provider reads <code>authModes[providerId]</code> to choose the UX: render an API-key field for <code>apiKey</code>, launch the host's OAuth flow for <code>oauth-pkce</code>/<code>oauth-device</code>, or show "ready to use" for <code>none</code>.</p>
+<h3 id="c-provider-name-vocabulary-non-normative-convention">§C — provider-name vocabulary (non-normative convention)</h3>
+<p><code>aiProviders.supported</code> stays an open <code>string[]</code>. To reduce cross-host id drift, hosts SHOULD use the following recommended ids when routing to a known provider (this list extends, and does not replace, the existing description's conventional ids). The list is advisory — a host MAY advertise any vendor-prefixed extension id, and clients MUST tolerate unknown ids.</p>
+<table>
+<thead><tr><th>Recommended id</th><th>Provider</th></tr></thead>
+<tbody>
+<tr><td><code>anthropic</code></td><td>Anthropic</td></tr>
+<tr><td><code>openai</code></td><td>OpenAI</td></tr>
+<tr><td><code>gemini</code></td><td>Google Gemini (direct API)</td></tr>
+<tr><td><code>vertex</code></td><td>Google Vertex AI</td></tr>
+<tr><td><code>bedrock</code></td><td>AWS Bedrock</td></tr>
+<tr><td><code>mistral</code></td><td>Mistral</td></tr>
+<tr><td><code>cohere</code></td><td>Cohere</td></tr>
+<tr><td><code>openrouter</code></td><td>OpenRouter (aggregator)</td></tr>
+<tr><td><code>litellm</code></td><td>LiteLLM proxy</td></tr>
+<tr><td><code>together</code></td><td>Together AI</td></tr>
+<tr><td><code>huggingface</code></td><td>Hugging Face Inference</td></tr>
+<tr><td><code>qwen</code></td><td>Alibaba Qwen</td></tr>
+<tr><td><code>ollama</code></td><td>Ollama (local)</td></tr>
+<tr><td><code>vllm</code></td><td>vLLM (local/self-hosted)</td></tr>
+</tbody></table>
+<p>Aggregators (<code>openrouter</code>, <code>litellm</code>) and gateways front many upstream models; the <code>RunOptions.configurable.ai.model</code> string disambiguates the upstream model and is host-interpreted. This RFC does not normate a model-id grammar.</p>
+<h3 id="examples">Examples</h3>
+<p><strong>Positive.</strong> A host routing to a mix of API-key, OAuth, and local providers:</p>
+<pre class="lang-json"><code>&quot;aiProviders&quot;: {
+  &quot;supported&quot;: [&quot;anthropic&quot;, &quot;openai&quot;, &quot;vertex&quot;, &quot;ollama&quot;],
+  &quot;byok&quot;: [&quot;anthropic&quot;, &quot;openai&quot;],
+  &quot;authModes&quot;: {
+    &quot;anthropic&quot;: [&quot;apiKey&quot;],
+    &quot;openai&quot;: [&quot;apiKey&quot;],
+    &quot;vertex&quot;: [&quot;oauth-pkce&quot;],
+    &quot;ollama&quot;: [&quot;none&quot;]
+  }
+}</code></pre>
+<p>A client sees <code>anthropic</code>/<code>openai</code> → API-key field; <code>vertex</code> → launch the host's OAuth PKCE flow (and finds <code>capabilities.oauth.providers[].id == &quot;vertex&quot;</code>); <code>ollama</code> → ready to use.</p>
+<p><strong>Negative (fails validation / non-conformant).</strong></p>
+<pre class="lang-json"><code>&quot;aiProviders&quot;: {
+  &quot;supported&quot;: [&quot;anthropic&quot;],
+  &quot;byok&quot;: [],
+  &quot;authModes&quot;: { &quot;anthropic&quot;: [&quot;apiKey&quot;] }
+}</code></pre>
+<p>Schema-valid in isolation, but <strong>non-conformant</strong> by §B rule 2: <code>apiKey</code> for <code>anthropic</code> requires <code>anthropic</code> to appear in <code>byok</code>. A schema-level negative example: <code>&quot;authModes&quot;: { &quot;anthropic&quot;: [] }</code> fails validation (<code>minItems: 1</code>), and <code>&quot;authModes&quot;: { &quot;anthropic&quot;: [&quot;device&quot;] }</code> fails validation (<code>device</code> not in the enum — the canonical value is <code>oauth-device</code>).</p>
+<h2 id="compatibility">Compatibility</h2>
+<p><strong>Additive.</strong> <code>aiProviders.authModes</code> is a new optional field on an existing optional block; <code>aiProviders</code> keeps <code>additionalProperties: false</code> but gains the property in its <code>properties</code> map. No existing field's type, optionality, or meaning changes. The default contract for hosts that omit <code>authModes</code> is exactly today's behavior (§B rule 5). Existing clients ignore the field; existing hosts don't emit it. No conformance pass is invalidated. No new error code, event type, or endpoint. The provider-name vocabulary (§C) is non-normative — it imposes no MUST on any host.</p>
+<p>Forward-compatibility clauses:</p>
+<ul>
+<li>New field optional with no default emitted by old hosts; consumers MUST tolerate absence and apply the §B rule-5 default.</li>
+<li>The enum is closed at four values; a future mode requires an additive RFC (the array's <code>items</code> enum can grow additively since unknown enum values would only ever be <em>emitted</em> by a newer host and a <code>uniqueItems</code> array tolerates a consumer that doesn't recognize a value — consumers MUST ignore an auth mode they don't recognize rather than reject the discovery doc).</li>
+</ul>
+<h2 id="conformance">Conformance</h2>
+<ul>
+<li><strong>Existing coverage.</strong> <code>conformance/src/scenarios/byok-roundtrip.test.ts</code> (BYOK credential resolution + redaction) and <code>policies.test.ts</code> (per-provider policy modes) cover the adjacent surface. <code>discovery.test.ts</code> validates the capabilities document shape. None assert auth-mode advertisement.</li>
+<li><strong>New scenario — <code>byok-auth-modes.test.ts</code></strong> (always-on shape + capability-gated cross-checks):</li>
+</ul>
+<p>  - <strong>Shape (always-on):</strong> when a host advertises <code>aiProviders.authModes</code>, the map validates against the schema — every value is a non-empty unique array of the four enum values.   - <strong>Cross-field consistency (gated on <code>aiProviders.authModes</code> present):</strong> every <code>authModes</code> key appears in <code>supported</code> (§B rule 1); every provider with <code>apiKey</code> appears in <code>byok</code> (§B rule 2); every provider whose modes are exactly <code>[&quot;none&quot;]</code> is absent from <code>byok</code> (§B rule 3).   - <strong>OAuth alignment (gated on <code>authModes</code> + <code>capabilities.oauth.supported</code>):</strong> every provider advertising <code>oauth-pkce</code>/<code>oauth-device</code> has a matching <code>capabilities.oauth.providers[].id</code> (§B rule 4 SHOULD — asserted as a soft check that reports rather than fails when oauth block absent).   - Hosts that omit <code>authModes</code> skip cleanly (the scenario is gated on the field's presence in the discovery doc).</p>
+<ul>
+<li><strong>Capability gating.</strong> Gated on the presence of <code>capabilities.aiProviders.authModes</code> in the discovery response. No new top-level capability flag — the field's presence <em>is</em> the gate.</li>
+<li><strong>Reference host.</strong> Deferred. The in-memory reference host MAY advertise <code>authModes</code> in a follow-up; this RFC ships the shape + always-on schema validation. Per the RFC 0027 §G staging precedent, the cross-field behavioral assertions soft-skip until a host advertises the field.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<p>1. <strong>A new top-level <code>providers</code> capability block</strong> with a rich per-provider object (<code>{ id, displayName, authModes, models, … }</code>). Rejected for <code>Draft</code> — it duplicates <code>aiProviders.supported</code> and <code>capabilities.oauth.providers</code>, creating three places that list providers. Extending <code>aiProviders</code> keeps the catalog in one block. (Revisitable if model-catalog advertisement is later demanded.) 2. <strong>A generic <code>oauth</code> mode</strong> (no pkce/device split). Rejected — a client building the connect UX needs to know whether to open a browser redirect (PKCE) or display a device code; collapsing them re-introduces the trial-and-error this RFC removes. The two map cleanly onto RFC 0047's grant vocabulary. 3. <strong>Do nothing.</strong> Rejected — the catalog can grow today (open <code>string[]</code>), but every new OAuth or local provider forces clients into per-provider out-of-band special-casing. The cost of doing nothing rises linearly with catalog size; the gap analysis explicitly targets a 5× catalog expansion.</p>
+<h2 id="unresolved-questions">Unresolved questions</h2>
+<p>1. <strong>Model-catalog advertisement.</strong> Should a host be able to advertise which <em>models</em> a provider exposes (so a client can populate a model picker without a separate call)? Out of scope here; would compose with <code>aiProviders</code> if demanded. Decide before <code>Accepted</code>. 2. <strong>Aggregator semantics.</strong> For <code>openrouter</code>/<code>litellm</code>, the <code>ai.model</code> string addresses an upstream model whose <em>own</em> provider may have a different auth mode. This RFC treats the aggregator as one provider with one auth mode (its own gateway key). Is that sufficient, or do aggregators need a nested advertisement? Likely sufficient for v1.x; confirm with an implementer. 3. <strong><code>none</code> + local-endpoint addressing.</strong> ✅ <strong>RESOLVED (2026-05-29, <code>Active</code> gate): host-config only — the discovery document does NOT surface a provider endpoint URL.</strong> A <code>none</code> provider's endpoint (an Ollama/vLLM base URL) is host-internal deployment configuration, not interop surface. A portable client addresses a provider via <code>RunOptions.configurable.ai.provider</code> / <code>ai.model</code> (host-interpreted), never the URL, so surfacing a base URL would add a field with no client-portability benefit while leaking deployment topology — an SSRF-adjacent reconnaissance signal that contradicts the discovery document's posture of advertising <em>capability shape</em>, not deployment internals. This keeps <code>authModes</code> purely a credential-supply advertisement and adds no endpoint field. (If endpoint observability is later demanded it composes additively with <code>capabilities.observability</code>, not <code>aiProviders</code>.) UQ #1 (model-catalog advertisement) and #2 (aggregator nested semantics) remain open but are <code>Accepted</code>-gated / implementer-confirmation items, not <code>Active</code> blockers.</p>
+<h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
+<ul>
+<li>The reference workflow-engine backend currently dispatches four providers (anthropic, openai, google, minimax). Advertising <code>authModes</code> is a one-line addition to its discovery handler once it decides each provider's supply mechanism. No dispatcher change is required to <em>advertise</em> — the field describes existing behavior.</li>
+<li>The CLI (<code>cli/</code>) can read <code>authModes</code> to drive <code>openwop providers add</code> UX (API-key prompt vs OAuth launch vs "no credential needed"), per the gap analysis CLI track. That is implementation-only and out of this RFC's scope.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<ul>
+<li>[x] <code>capabilities.md §aiProviders</code> documents <code>authModes</code> + the auth-mode contract (§B) + the provider-name vocabulary (§C).</li>
+<li>[x] <code>capabilities.schema.json</code> carries the additive optional <code>aiProviders.authModes</code> map.</li>
+<li>[x] <code>byok-auth-modes.test.ts</code> covers the shape (always-on) + cross-field consistency (gated on the field's presence).</li>
+<li>[x] CHANGELOG entry under <code>[1.1.6 — unreleased]</code>.</li>
+<li>[x] Reference host implements + advertises <code>authModes</code>, OR this RFC explicitly defers reference-host advertisement (it does — shape + always-on validation ship; cross-field assertions soft-skip until a host advertises).</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="../spec/v1/capabilities.md"><code>spec/v1/capabilities.md</code></a> §<code>aiProviders</code> + §<code>aiProviders.policies</code> — the BYOK + policy surface this extends.</li>
+<li><a href="./0046-host-credentials-capability.md"><code>RFCS/0046-host-credentials-capability.md</code></a> — credential-reference contract (<code>oauth-*</code> modes resolve credentials by <code>ref</code>).</li>
+<li><a href="./0047-host-oauth-connector-flows.md"><code>RFCS/0047-host-oauth-connector-flows.md</code></a> — the OAuth grant mechanics <code>oauth-pkce</code>/<code>oauth-device</code> compose.</li>
+<li><a href="../schemas/capabilities.schema.json"><code>schemas/capabilities.schema.json</code></a> §<code>aiProviders</code>.</li>
+<li><code>docs/OPENWOP-FEATURE-GAP-ANALYSIS.md</code> row 3 (provider-catalog expansion).</li>
+<li>Prior art: OpenRouter / LiteLLM provider-routing conventions; OAuth 2.0 PKCE (RFC 7636) + device-authorization grant (RFC 8628).</li>
+</ul><footer class="doc-edit"><a href="https://github.com/openwop/openwop/edit/main/RFCS/0067-provider-catalog-conventions.md" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>

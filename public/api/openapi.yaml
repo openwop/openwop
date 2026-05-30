@@ -51,6 +51,8 @@ tags:
     description: Workflow definition manifest.
   - name: runs
     description: Run lifecycle — create, read, stream, cancel, fork.
+  - name: agents
+    description: Manifest-agent inventory (RFC 0072 §A). Read-only; gated on capabilities.agents.manifestRuntime. Dispatch rides the run surface (WorkflowNode.agent + POST /v1/runs).
   - name: hitl
     description: Human-in-the-loop interrupts and approvals.
   - name: artifacts
@@ -713,6 +715,75 @@ paths:
             `crossHostCausation.ancestryEndpointSupported: true` and treats
             the endpoint as absent. Clients can disambiguate by inspecting
             the host's discovery doc.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /v1/agents:
+    get:
+      tags: [agents]
+      summary: |
+        RFC 0072 §A — list the manifest agents this host has installed into its
+        AgentRegistry (RFC 0070). Capability-gated on
+        `capabilities.agents.manifestRuntime.supported: true`; hosts that don't
+        advertise it return 404. Read-only projection — never carries the
+        system-prompt body, resolved handoff schemas, or credential material (SR-1).
+        Dispatch is not a bespoke endpoint: a manifest agent is invoked as a run
+        whose node pins it via `WorkflowNode.agent` + `POST /v1/runs` (RFC 0072 §B).
+        RFC 0074 — the result is scoped to the authenticated principal's owner
+        triple (RFC 0048). When `capabilities.agents.manifestRuntime.installScope`
+        is `'tenant'`, only the agents available to the caller's tenant·workspace
+        are returned (an agent another workspace installed is absent, never
+        disclosed); when `'host'` (default) the inventory is host-global as in
+        RFC 0072. A `'tenant'`-scoped host MUST reject unauthenticated/unscoped
+        requests per its standard auth contract rather than fall back to a global list.
+      operationId: listAgents
+      responses:
+        '200':
+          description: Installed manifest agents (agentId-sorted).
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/agent-inventory-response.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: |
+            Host does not advertise `capabilities.agents.manifestRuntime` and
+            treats the endpoint as absent.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /v1/agents/{agentId}:
+    get:
+      tags: [agents]
+      summary: |
+        RFC 0072 §A — return one installed manifest agent's inventory entry, or
+        404 when no such agent is installed (or the host doesn't advertise
+        `capabilities.agents.manifestRuntime`). RFC 0074 — resolved within the
+        authenticated principal's owner triple (RFC 0048): on an
+        `installScope: 'tenant'` host an agent the caller's workspace has not
+        approved 404s identically to "not installed", so the surface never
+        discloses another tenant's inventory.
+      operationId: getAgent
+      parameters:
+        - in: path
+          name: agentId
+          required: true
+          schema: { type: string }
+          description: The manifest agentId.
+      responses:
+        '200':
+          description: The agent's inventory entry.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/agent-inventory-response.schema.json#/$defs/AgentInventoryEntry'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: No such agent, or the host doesn't advertise the capability.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }

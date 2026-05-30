@@ -193,6 +193,7 @@
       <li class="toc-sub"><a href="#idempotency-track-13-multi-region-annex">idempotency (Track 13 multi-region annex)</a></li>
       <li class="toc-sub"><a href="#webhooks-signaturealgorithms-track-13">webhooks.signatureAlgorithms (Track 13)</a></li>
       <li class="toc-sub"><a href="#auth-profiles-and-auth-auditlogintegrity-track-13">auth.profiles and auth.auditLogIntegrity (Track 13)</a></li>
+      <li class="toc-top"><a href="#capability-stability-tier-tier-experimentaluntil-rfc-0042">Capability stability tier — tier / experimentalUntil (RFC 0042)</a></li>
       <li class="toc-top"><a href="#unsupported-capability-refusal-contract">Unsupported capability — refusal contract</a></li>
       <li class="toc-sub"><a href="#wire-envelope">Wire envelope</a></li>
       <li class="toc-sub"><a href="#capability-gated-typeid-map-normative">Capability-gated typeId map (normative)</a></li>
@@ -269,6 +270,9 @@ interface CapabilityLimits {
 <hr/>
 <h2 id="network-handshake-shape">Network-handshake shape</h2>
 <p>The full <code>GET /.well-known/openwop</code> response. Only <code>protocolVersion</code>, <code>supportedEnvelopes</code>, <code>schemaVersions</code>, and the three base <code>limits</code> are required by <code>schemas/capabilities.schema.json</code>. Additional fields below are <strong>optional v1</strong>: their shapes are stable when present, and clients MUST tolerate absence.</p>
+<h4 id="document-root-layout-normative-rfc-0073">Document-root layout (normative — RFC 0073)</h4>
+<p>Every capability family — the required <code>protocolVersion</code> / <code>supportedEnvelopes</code> / <code>schemaVersions</code> / <code>limits</code>, and every optional family (<code>agents</code>, <code>secrets</code>, <code>aiProviders</code>, <code>auth</code>, <code>memory</code>, <code>multiAgent</code>, <code>authorization</code>, and all others defined in <code>schemas/capabilities.schema.json</code>) — MUST appear as a property of the <strong>document root</strong> of the <code>GET /.well-known/openwop</code> response. <code>capabilities.schema.json</code> validates this full response: its properties are the root properties, and it declares <strong>no <code>capabilities</code> wrapper property</strong>. A host MUST NOT require a <code>capabilities</code> wrapper object to convey them.</p>
+<p>A top-level <code>capabilities</code> wrapper object is a <strong>deprecated legacy shape</strong>, tolerated only by the schema's <code>additionalProperties: true</code>. Through the v1.x migration window a host MAY additionally mirror the families under a <code>capabilities</code> object for backward compatibility; clients and the conformance suite SHOULD read the document root first and MAY fall back to a <code>capabilities.*</code> wrapper. New hosts MUST serve families at the root and SHOULD NOT emit the wrapper. The wrapper is scheduled for removal — see RFC 0073.</p>
 <pre class="lang-json"><code>{
   &quot;protocolVersion&quot;: &quot;1.0&quot;,
   &quot;implementation&quot;: { &quot;name&quot;: &quot;...&quot;, &quot;version&quot;: &quot;...&quot;, &quot;vendor&quot;: &quot;...&quot; },
@@ -397,6 +401,30 @@ interface CapabilityLimits {
 <li><code>RunOptions.configurable.ai.credentialRef</code> — opaque host-issued reference to a stored secret (must reference a credential of a provider in <code>byok</code>).</li>
 </ul>
 <p><strong>Server semantics.</strong> Servers reject <code>ai.credentialRef</code> for providers NOT in <code>byok</code> with <code>credential_forbidden</code>. Servers reject unknown <code>provider</code> ids with <code>validation_error</code>.</p>
+<h4 id="aiproviders-authmodes-byok-auth-mode-contract-rfc-0067-active"><code>aiProviders.authModes</code> — BYOK auth-mode contract (RFC 0067, <code>Active</code>)</h4>
+<p><code>supported</code> and <code>byok</code> say <em>which</em> providers the host routes to and <em>which</em> permit BYOK, but not <em>how</em> a client is expected to supply a provider's credential. As the catalog grows beyond API-key providers (OAuth-backed providers, local Ollama/vLLM endpoints, platform-managed providers) the supply mechanism diverges. The optional <code>authModes</code> map advertises it so a client can pre-flight the credential UX without trial-and-error.</p>
+<pre class="lang-json"><code>&quot;aiProviders&quot;: {
+  &quot;supported&quot;: [&quot;anthropic&quot;, &quot;openai&quot;, &quot;vertex&quot;, &quot;ollama&quot;],
+  &quot;byok&quot;: [&quot;anthropic&quot;, &quot;openai&quot;],
+  &quot;authModes&quot;: {
+    &quot;anthropic&quot;: [&quot;apiKey&quot;],
+    &quot;openai&quot;: [&quot;apiKey&quot;],
+    &quot;vertex&quot;: [&quot;oauth-pkce&quot;],
+    &quot;ollama&quot;: [&quot;none&quot;]
+  }
+}</code></pre>
+<p><strong>Field shape:</strong> <code>authModes</code> is an OPTIONAL object whose keys are provider ids (each MUST appear in <code>supported</code>) and whose values are non-empty, unique arrays of auth modes drawn from the closed enum <code>[&quot;apiKey&quot;, &quot;oauth-pkce&quot;, &quot;oauth-device&quot;, &quot;none&quot;]</code>.</p>
+<table>
+<thead><tr><th>Mode</th><th>Meaning</th><th>Credential supply</th></tr></thead>
+<tbody>
+<tr><td><code>apiKey</code></td><td>Host accepts a stored API-key credential.</td><td>Client passes <code>RunOptions.configurable.ai.credentialRef</code> (today's BYOK path). Provider MUST appear in <code>byok</code>.</td></tr>
+<tr><td><code>oauth-pkce</code></td><td>Host acquires a token via an OAuth 2.0 authorization-code + PKCE flow it owns (RFC 0047 <code>host.oauth</code>).</td><td>Client references the host-stored credential by <code>ref</code> (RFC 0046); the PKCE flow is host-driven; key material is NEVER passed on <code>ai.credentialRef</code>.</td></tr>
+<tr><td><code>oauth-device</code></td><td>Host acquires a token via an OAuth 2.0 device-authorization flow it owns.</td><td>Same as <code>oauth-pkce</code>.</td></tr>
+<tr><td><code>none</code></td><td>Provider needs no caller-supplied credential.</td><td>A local provider (Ollama / vLLM at a host-configured endpoint) or one served entirely from platform-managed keys. Provider MUST NOT appear in <code>byok</code>.</td></tr>
+</tbody></table>
+<p><strong>Auth-mode contract (normative when <code>authModes</code> is advertised):</strong></p>
+<p>1. Every key in <code>authModes</code> MUST also appear in <code>aiProviders.supported</code>. 2. A provider whose mode array includes <code>apiKey</code> MUST also appear in <code>aiProviders.byok</code> (<code>apiKey</code> <em>is</em> the BYOK path; the two advertisements MUST agree). 3. A provider whose mode array is exactly <code>[&quot;none&quot;]</code> MUST NOT appear in <code>aiProviders.byok</code>. A provider MAY advertise <code>[&quot;apiKey&quot;, &quot;none&quot;]</code> (BYOK permitted with a platform-managed fallback) and MUST then appear in <code>byok</code>. 4. A provider advertising <code>oauth-pkce</code> or <code>oauth-device</code> SHOULD also advertise <code>capabilities.oauth</code> (RFC 0047) with a matching provider <code>id</code>; the OAuth flow itself is governed by RFC 0047. The credential is referenced by <code>ref</code> (RFC 0046), never passed as key material. 5. Absent <code>authModes</code>, the default contract is unchanged: a provider in <code>byok</code> behaves as <code>apiKey</code>; a provider in <code>supported</code> but not in <code>byok</code> behaves as <code>none</code>. Clients MUST tolerate the field's absence and apply this default. 6. <code>authModes</code> advertises <em>capability</em>, not a per-run <em>requirement</em> — per-provider policy enforcement remains <code>aiProviders.policies</code>. A client MUST NOT infer a policy mode from an auth mode, and MUST ignore an auth mode it does not recognize rather than reject the discovery document.</p>
+<p><strong>Provider-name vocabulary (non-normative).</strong> <code>supported</code> stays an open <code>string[]</code>. To reduce cross-host id drift, hosts SHOULD use the recommended ids in <code>schemas/capabilities.schema.json</code> §<code>aiProviders.supported</code> when routing to a known provider (<code>anthropic</code>, <code>openai</code>, <code>gemini</code>, <code>vertex</code>, <code>bedrock</code>, <code>mistral</code>, <code>cohere</code>, <code>openrouter</code>, <code>litellm</code>, <code>together</code>, <code>huggingface</code>, <code>qwen</code>, <code>ollama</code>, <code>vllm</code>). The list is advisory; a host MAY advertise any vendor-prefixed extension id, and clients MUST tolerate unknown ids. Aggregators (<code>openrouter</code>, <code>litellm</code>) front many upstream models disambiguated by <code>RunOptions.configurable.ai.model</code> (host-interpreted); this spec does not normate a model-id grammar.</p>
 <h3 id="aiproviders-policies"><code>aiProviders.policies</code></h3>
 <p>Additive companion to <code>aiProviders</code>. Lets a host advertise which <strong>policy modes</strong> it implements for per-provider gating. Hosts that omit this field implement no enforcement (clients see only <code>optional</code> semantics).</p>
 <pre class="lang-json"><code>&quot;aiProviders&quot;: {
@@ -631,6 +659,24 @@ interface CapabilityLimits {
   }
 }</code></pre>
 <p>Profile-string canonicalization follows <code>auth-profiles.md</code> §"Profile catalog". When <code>openwop-audit-log-integrity</code> appears in <code>auth.profiles</code>, the <code>auditLogIntegrity</code> block is REQUIRED.</p>
+<hr/>
+<h2 id="capability-stability-tier-tier-experimentaluntil-rfc-0042">Capability stability tier — <code>tier</code> / <code>experimentalUntil</code> (RFC 0042)</h2>
+<p>Every object-valued capability sub-block under the network-handshake <code>capabilities.<em></code> MAY carry an optional <strong><code>tier</code></strong> field, plus a paired <strong><code>experimentalUntil</code></strong> date. This makes a host's </em>stability claim<em> for a capability machine-readable on the wire, so a consumer can tell a stable contract apart from an <code>Active</code>-RFC preview without fetching <code>RFCS/</em>.md</code>.</p>
+<table>
+<thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>tier</code></td><td>`"stable" \</td><td>"experimental"`</td></tr>
+<tr><td><code>experimentalUntil</code></td><td><code>string</code> (<code>YYYY-MM-DD</code>)</td><td><strong>REQUIRED when <code>tier: &quot;experimental&quot;</code></strong> (schema-enforced via <code>if</code>/<code>then</code>). ISO-8601 date no more than 12 months past the discovery-response date.</td></tr>
+</tbody></table>
+<p><strong>Normative rules.</strong></p>
+<ul>
+<li>A host <strong>MUST omit</strong> <code>tier</code> for a capability whose underlying RFC is already <code>Accepted</code> (the advertisement is then unconditionally stable). A capability whose RFC is still <code>Active</code> <strong>SHOULD</strong> advertise <code>tier: &quot;experimental&quot;</code> until the RFC promotes.</li>
+<li>When <code>tier: &quot;experimental&quot;</code>, the host <strong>MUST</strong> advertise <code>experimentalUntil</code> ≤ 12 months out. This is enforced at the schema layer: <code>tier: &quot;experimental&quot;</code> without <code>experimentalUntil</code> <strong>MUST</strong> fail discovery validation.</li>
+<li><strong>Sunset rule.</strong> Reaching <code>experimentalUntil</code> without the underlying RFC graduating to <code>Accepted</code> obliges the host to take one of three publicly-visible actions: <strong>(1) flip to <code>stable</code></strong> (the wire shape held — commit to it); <strong>(2) extend</strong> with a new <code>experimentalUntil</code> ≤ 12 months out (a <em>second</em> extension REQUIRES an open deprecation RFC justifying the continued flux); or <strong>(3) retract</strong> the capability advertisement (clients then receive <code>capability_not_provided</code> per §"Unsupported capability — refusal contract"). A host advertising an <code>experimentalUntil</code> in the past is <strong>non-conformant</strong> (<code>validation_error</code>, <code>details.field: &quot;capabilities.&amp;lt;path&amp;gt;.experimentalUntil&quot;</code>, <code>details.reason: &quot;experimentalUntil_in_past&quot;</code>).</li>
+<li><code>tier</code> is <strong>per-capability, not per-host</strong>: a host MAY advertise some capabilities <code>stable</code> and others <code>experimental</code> in the same discovery payload.</li>
+</ul>
+<p><strong>Conformance routing.</strong> Scenarios gated on a capability consult its <code>tier</code> via the <code>experimentalGate(profileName, advertised, tier, experimentalUntil?)</code> helper (<code>conformance/src/lib/behavior-gate.ts</code>). Under default mode an <code>experimental</code> capability <strong>soft-skips</strong> (a dedicated <code>Skipped (experimental)</code> tally, distinct from the capability-gated skip bucket); it runs as a hard assertion only when <strong><code>OPENWOP_REQUIRE_EXPERIMENTAL=true</code></strong> is set (in addition to <code>OPENWOP_REQUIRE_BEHAVIOR=true</code>). A host that omits <code>tier</code> is evaluated as <code>stable</code> — the prior behavior, unchanged. The shape probes live in <code>conformance/src/scenarios/experimental-tier-shape.test.ts</code>.</p>
+<p>A host advertising any <code>tier: &quot;experimental&quot;</code> capability derives the <code>openwop-experimental</code> profile (<code>profiles.md</code> §<code>openwop-experimental</code>); clients requiring stable-only contracts filter on its negation. This is <strong>additive</strong> (<code>COMPATIBILITY.md</code> §2.1): <code>tier</code> is optional with default <code>&quot;stable&quot;</code>, no existing wire surface changes, and existing v1 conformance passes are unaffected.</p>
 <hr/>
 <h2 id="unsupported-capability-refusal-contract">Unsupported capability — refusal contract</h2>
 <p>Workflows MAY reference typeIds that are gated on optional capability advertisement (e.g., <code>core.conversationGate</code> is gated on <code>conversationPrimitive: true</code>). A host that does not advertise the gating capability MUST refuse such workflows. Refusal may occur at either of two boundaries:</p>

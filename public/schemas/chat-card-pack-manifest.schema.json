@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/chat-card-pack-manifest.schema.json",
+  "title": "ChatCardPackManifest",
+  "description": "Manifest for a published OpenWOP AI chat card pack — `pack.json` at the pack root with `kind: \"card\"`. Peer to the node / workflow-chain / prompt / artifact-type pack manifests; disjoint via the `kind` discriminator. See `spec/v1/chat-card-packs.md` for the canonical contract and RFC 0071 Phase 2 for the rationale.\n\nA chat card pack distributes AI step cards: each card binds a prompt template (with typed input slots) to a typed output artifact. When a host advertises `host.chat.cardPacks: supported` and a registered card is invoked, the host substitutes inputs into the prompt, routes the call through `ctx.aiEnvelope.generate`, and (when `outputArtifactType` is set) validates the result against the referenced artifact-type pack's schema before emitting `artifact.created`.",
+  "type": "object",
+  "required": ["name", "version", "kind", "engines", "cards"],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "type": "string",
+      "const": "card",
+      "description": "Pack kind discriminator. MUST be the literal string `\"card\"`."
+    },
+    "name": {
+      "type": "string",
+      "description": "Reverse-DNS pack name per `node-packs.md` §Naming. Reserved scopes are identical (`core.*` / `vendor.<org>.*` / `community.<author>.*` / `private.<host>.*`).",
+      "pattern": "^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "version": {
+      "type": "string",
+      "description": "Pack-level SemVer 2.0.0.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+    },
+    "description": { "type": "string", "maxLength": 1024 },
+    "author": { "type": "string" },
+    "license": { "type": "string", "description": "SPDX license identifier (e.g., `Apache-2.0`, `MIT`)." },
+    "homepage": { "type": "string", "format": "uri" },
+    "repository": { "type": "string", "format": "uri" },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string", "maxLength": 64 },
+      "maxItems": 50
+    },
+    "engines": {
+      "type": "object",
+      "required": ["openwop"],
+      "properties": {
+        "openwop": { "type": "string", "description": "Semver range — which openwop protocol versions this pack works against." }
+      },
+      "additionalProperties": true
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Other packs this pack depends on (e.g., the artifact-type pack declaring this card's `outputArtifactType`). Map of pack name → semver range."
+    },
+    "peerDependencies": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Engine-supplied capabilities the pack consumes (e.g., `{ \"host.aiEnvelope\": \"supported\", \"host.chat.cards\": \"supported\" }`). Resolved against the host's advertised capabilities at register time."
+    },
+    "cards": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/Card" },
+      "description": "AI chat card definitions this pack contributes. Each MUST have a unique `cardTypeId` within the pack."
+    },
+    "signing": { "$ref": "#/$defs/Signing" }
+  },
+  "$defs": {
+    "Card": {
+      "type": "object",
+      "required": ["cardTypeId", "prompt"],
+      "additionalProperties": false,
+      "properties": {
+        "cardTypeId": {
+          "type": "string",
+          "description": "Reverse-DNS card identifier. Same pattern and reserved scopes as a pack `name`. The value `WorkflowNode.cardType` / `ctx.chat.emitCard` MAY reference. Third parties MUST NOT publish under `core.*`.",
+          "pattern": "^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "schemaVersion": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Non-negative integer card-schema version (the envelope/artifact integer-version axis). Absent ⇒ treated as 0."
+        },
+        "prompt": { "$ref": "#/$defs/PromptSpec" },
+        "inputs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/InputField" },
+          "description": "Typed input fields the card collects. The portable subset only; host-specific widget kinds extend via `vendor.*`/`x-` prefixed `type` values."
+        },
+        "outputArtifactType": {
+          "type": "string",
+          "description": "A registered `artifactTypeId` (RFC 0071 Phase 1) the card produces. When present, the host MUST validate the LLM output against that artifact type's schema and emit `artifact.created`. Registered-only by design: unlike a bare node `WorkflowNode.artifactType` (where the unregistered free-string tier is permanently valid), a card's product is always a contract-bound artifact, so this MUST be a reverse-DNS registered id. Omit the field for a prompt-only card that produces no durable artifact.",
+          "pattern": "^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$"
+        },
+        "outputSchemaRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Path inside the pack tarball to the JSON Schema (Draft 2020-12) the LLM output MUST conform to. SHOULD be consistent with the referenced artifact type's schema. MUST set top-level `additionalProperties: false`."
+        },
+        "requiredModelCapabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^([a-z][a-z0-9-]*|x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*)$"
+          },
+          "uniqueItems": true,
+          "maxItems": 32,
+          "description": "Model capabilities the card requires the active model to advertise. Reuses the `requiredModelCapabilities` registry in `host-capabilities.md` (spec-reserved: `structured-output`, `discriminator-enum`, `long-context`, `reasoning`, `function-calling`; host extensions `x-host-<host>-`)."
+        }
+      }
+    },
+    "PromptSpec": {
+      "type": "object",
+      "required": ["template", "placeholderMapping"],
+      "additionalProperties": false,
+      "description": "The prompt the card composes. The host substitutes mapped input values into `template`/`systemPrompt` before dispatch; segments derived from card inputs are `untrusted` (RFC 0071 Trust boundary).",
+      "properties": {
+        "template": { "type": "string", "minLength": 1, "description": "Prompt body with `{{placeholder}}` slots." },
+        "systemPrompt": { "type": "string", "description": "Optional system prompt." },
+        "placeholderMapping": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Map of `{{placeholder}}` name → input path (e.g. `\"spec\": \"inputs.spec\"`)."
+        },
+        "temperature": { "type": "number", "minimum": 0, "maximum": 2 },
+        "maxTokens": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "InputField": {
+      "type": "object",
+      "required": ["id", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$" },
+        "type": {
+          "type": "string",
+          "description": "Closed portable subset OR a `vendor.<org>.<kind>` / `x-<kind>` host extension other hosts ignore. The portable subset (G9, resolved 2026-05-27 against MyndHyve's `CardFieldType`): `text`, `longtext`, `number`, `boolean`, `select`, `multiselect`, `file`, `artifact-ref`. MyndHyve maps `textarea`→`longtext` and `toggle`→`boolean`; its product-specific kinds (`canvas-reference`, `collection-reference`, `color`) are host extensions (`vendor.myndhyve.*`), not portable.",
+          "pattern": "^(text|longtext|number|boolean|select|multiselect|file|artifact-ref|vendor\\.[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*|x-[a-z][a-z0-9-]*)$"
+        },
+        "label": { "type": "string" },
+        "required": { "type": "boolean" },
+        "default": {},
+        "options": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Choices for `type: \"select\"`."
+        }
+      }
+    },
+    "Signing": {
+      "type": "object",
+      "description": "Optional signing metadata. See node-packs.md §signing.",
+      "additionalProperties": false,
+      "properties": {
+        "publicKeyRef": { "type": "string" },
+        "signatureRef": { "type": "string" },
+        "method": { "type": "string", "enum": ["manual", "sigstore"] }
+      }
+    }
+  }
+}
