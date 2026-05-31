@@ -18,9 +18,11 @@
  *
  * The two `trigger.*` events are emitted by the caller on the resulting run's
  * stream (this module is pure state + the delivery algorithm, testable without
- * a server). Store is process-local (sample-grade), mirroring
- * schedulingService.ts; a production host backs it with a durable queue + the
- * RFC 0053 dead-letter sink.
+ * a server). The store is now a read-through, per-entity durable collection
+ * (subscriptions, delivery attempts, and the dedup index each one row per
+ * entity) -- so effectively-once + the delivery history are consistent across
+ * instances and survive restarts. A production host backs it with a durable
+ * queue + the RFC 0053 dead-letter sink.
  *
  * @see spec/v1/trigger-bridge.md section B/section C  -  RFCS/0083-durable-trigger-and-channel-bridge-profile.md
  * @see schemas/trigger-subscription.schema.json
@@ -28,11 +30,7 @@
 
 import { randomUUID } from 'node:crypto';
 import { createHash } from 'node:crypto';
-import { loadCollection, schedulePersist } from './hostExtPersistence.js';
-
-const SUBS_KEY = 'hostext:triggerbridge:subscriptions';
-const DELIVERIES_KEY = 'hostext:triggerbridge:deliveries';
-const DEDUP_KEY = 'hostext:triggerbridge:dedup';
+import { DurableCollection } from './hostExtPersistence.js';
 
 export type SubscriptionSource = 'webhook' | 'schedule' | 'queue' | 'email' | 'form';
 export type SubscriptionState = 'active' | 'paused' | 'failed' | 'dead-lettered';
@@ -74,6 +72,13 @@ export interface DeliverResult {
   stateChange?: { from: SubscriptionState; to: SubscriptionState; reason: 'retry-exhausted' };
 }
 
+/** The dedup index row: `dedupKey -> { prior runId, insertion epoch ms }`. */
+interface DedupRow {
+  k: string;
+  runId: string;
+  at: number;
+}
+
 const DEFAULT_RETRY: RetryPolicy = { maxAttempts: 3, backoff: 'fixed' };
 
 /** Dedup retention window (section C-1: the idempotency.md Layer-1 >=24h
@@ -84,11 +89,11 @@ let dedupRetentionMs = 24 * 60 * 60 * 1000;
  *  between retention sweeps on a busy host). */
 const DEDUP_MAX_ENTRIES = 50_000;
 
-const subscriptions = new Map<string, TriggerSubscription>();
-const deliveries: DeliveryAttempt[] = [];
-/** dedupKey -> { prior runId, insertion epoch ms } (the effectively-once
- *  index). Bounded by `dedupRetentionMs` + `DEDUP_MAX_ENTRIES`. */
-const dedupIndex = new Map<string, { runId: string; at: number }>();
+const subscriptions = new DurableCollection<TriggerSubscription>('triggerbridge:sub', (s) => s.subscriptionId);
+// A single deliveryId spans multiple attempt rows (retry/dead-letter), so the
+// row key is composite: `<deliveryId>:<attempt>`.
+const deliveriesCol = new DurableCollection<DeliveryAttempt>('triggerbridge:delivery', (d) => `${d.deliveryId}:${d.attempt}`);
+const dedupCol = new DurableCollection<DedupRow>('triggerbridge:dedup', (r) => r.k);
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -100,21 +105,24 @@ function nowMs(): number {
 
 /** Evict dedup entries past the retention window, then trim oldest-first if
  *  still over the hard cap. Called on each delivery (sample-grade sweep). */
-function evictStaleDedup(): void {
+async function evictStaleDedup(): Promise<void> {
   // Expired ⇔ now - at >= retentionMs ⇔ at <= now - retentionMs (so a 0ms
   // retention expires an entry on the very next delivery, even within the
   // same millisecond).
   const cutoff = nowMs() - dedupRetentionMs;
-  for (const [k, v] of dedupIndex) {
-    if (v.at <= cutoff) dedupIndex.delete(k);
-  }
-  if (dedupIndex.size > DEDUP_MAX_ENTRIES) {
-    const overflow = dedupIndex.size - DEDUP_MAX_ENTRIES;
-    let i = 0;
-    for (const k of dedupIndex.keys()) {
-      if (i++ >= overflow) break;
-      dedupIndex.delete(k);
+  const rows = await dedupCol.list();
+  const live: DedupRow[] = [];
+  for (const r of rows) {
+    if (r.at <= cutoff) {
+      await dedupCol.delete(r.k);
+    } else {
+      live.push(r);
     }
+  }
+  if (live.length > DEDUP_MAX_ENTRIES) {
+    live.sort((a, b) => a.at - b.at); // oldest first
+    const overflow = live.length - DEDUP_MAX_ENTRIES;
+    for (let i = 0; i < overflow; i++) await dedupCol.delete(live[i]!.k);
   }
 }
 
@@ -122,28 +130,6 @@ function evictStaleDedup(): void {
  *  cleartext. */
 export function makeDedupKey(...parts: string[]): string {
   return createHash('sha256').update(parts.join('')).digest('hex').slice(0, 32);
-}
-
-interface DedupRow {
-  k: string;
-  runId: string;
-  at: number;
-}
-
-function persistTriggerBridge(): void {
-  schedulePersist(SUBS_KEY, () => [...subscriptions.values()]);
-  schedulePersist(DELIVERIES_KEY, () => deliveries);
-  schedulePersist(DEDUP_KEY, () => [...dedupIndex.entries()].map(([k, v]) => ({ k, ...v })));
-}
-
-/** Hydrate subscriptions + deliveries + the dedup index from durable storage
- *  on boot — so effectively-once + the delivery history survive a restart,
- *  consistent with the Kanban/roster/org-chart stores. */
-export async function hydrateTriggerBridge(): Promise<void> {
-  for (const s of await loadCollection<TriggerSubscription>(SUBS_KEY)) subscriptions.set(s.subscriptionId, s);
-  for (const d of await loadCollection<DeliveryAttempt>(DELIVERIES_KEY)) deliveries.push(d);
-  for (const r of await loadCollection<DedupRow>(DEDUP_KEY)) dedupIndex.set(r.k, { runId: r.runId, at: r.at });
-  evictStaleDedup();
 }
 
 /** Test-only: override the dedup retention window. */
@@ -156,15 +142,15 @@ export function __setDedupRetentionMs(ms: number): void {
  * `subscriptionId` -- a caller (e.g. a Kanban board) uses a deterministic id so
  * one durable subscription backs the source across restarts.
  */
-export function registerSubscription(input: {
+export async function registerSubscription(input: {
   subscriptionId: string;
   tenantId: string;
   source: SubscriptionSource;
   dedupEnabled?: boolean;
   retryPolicy?: Partial<RetryPolicy>;
   label?: string;
-}): TriggerSubscription {
-  const existing = subscriptions.get(input.subscriptionId);
+}): Promise<TriggerSubscription> {
+  const existing = await subscriptions.get(input.subscriptionId);
   if (existing) return existing;
   const sub: TriggerSubscription = {
     subscriptionId: input.subscriptionId,
@@ -177,34 +163,37 @@ export function registerSubscription(input: {
     createdAt: nowIso(),
     updatedAt: nowIso(),
   };
-  subscriptions.set(sub.subscriptionId, sub);
-  persistTriggerBridge();
+  await subscriptions.put(sub);
   return sub;
 }
 
-export function getSubscription(subscriptionId: string): TriggerSubscription | undefined {
+export async function getSubscription(subscriptionId: string): Promise<TriggerSubscription | null> {
   return subscriptions.get(subscriptionId);
 }
 
-export function listSubscriptions(tenantId: string): TriggerSubscription[] {
-  return [...subscriptions.values()].filter((s) => s.tenantId === tenantId).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+export async function listSubscriptions(tenantId: string): Promise<TriggerSubscription[]> {
+  return (await subscriptions.list())
+    .filter((s) => s.tenantId === tenantId)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
-export function listDeliveries(subscriptionId: string): DeliveryAttempt[] {
-  return deliveries.filter((d) => d.subscriptionId === subscriptionId);
+export async function listDeliveries(subscriptionId: string): Promise<DeliveryAttempt[]> {
+  return (await deliveriesCol.list())
+    .filter((d) => d.subscriptionId === subscriptionId)
+    .sort((a, b) => a.at.localeCompare(b.at) || a.attempt - b.attempt);
 }
 
 /** Operator pause/resume (section B). Returns the state change, or null if a no-op. */
-export function setSubscriptionState(
+export async function setSubscriptionState(
   subscriptionId: string,
   toState: SubscriptionState,
-): { from: SubscriptionState; to: SubscriptionState } | null {
-  const sub = subscriptions.get(subscriptionId);
+): Promise<{ from: SubscriptionState; to: SubscriptionState } | null> {
+  const sub = await subscriptions.get(subscriptionId);
   if (!sub || sub.state === toState) return null;
   const from = sub.state;
   sub.state = toState;
   sub.updatedAt = nowIso();
-  persistTriggerBridge();
+  await subscriptions.put(sub);
   return { from, to: toState };
 }
 
@@ -221,15 +210,15 @@ export async function deliver(input: {
   dedupKey: string;
   fire: (deliveryId: string) => Promise<string>;
 }): Promise<DeliverResult> {
-  const sub = subscriptions.get(input.subscriptionId);
+  const sub = await subscriptions.get(input.subscriptionId);
   if (!sub) return { outcome: 'skipped', deliveryId: '', attempts: 0 };
   if (sub.state !== 'active') return { outcome: 'skipped', deliveryId: '', attempts: 0 };
 
   // section C-1 dedup -- effectively-once, bounded by the retention window.
   if (sub.dedupEnabled) {
-    evictStaleDedup();
-    const prior = dedupIndex.get(input.dedupKey);
-    if (prior !== undefined) {
+    await evictStaleDedup();
+    const prior = await dedupCol.get(input.dedupKey);
+    if (prior !== null) {
       return { outcome: 'deduped', deliveryId: '', runId: prior.runId, attempts: 0 };
     }
   }
@@ -239,13 +228,12 @@ export async function deliver(input: {
   for (let attempt = 1; attempt <= max; attempt++) {
     try {
       const runId = await input.fire(deliveryId);
-      deliveries.push({ deliveryId, subscriptionId: sub.subscriptionId, dedupKey: input.dedupKey, attempt, outcome: 'delivered', runId, at: nowIso() });
-      if (sub.dedupEnabled) dedupIndex.set(input.dedupKey, { runId, at: nowMs() });
-      persistTriggerBridge();
+      await deliveriesCol.put({ deliveryId, subscriptionId: sub.subscriptionId, dedupKey: input.dedupKey, attempt, outcome: 'delivered', runId, at: nowIso() });
+      if (sub.dedupEnabled) await dedupCol.put({ k: input.dedupKey, runId, at: nowMs() });
       return { outcome: 'delivered', deliveryId, runId, attempts: attempt };
     } catch {
       const last = attempt === max;
-      deliveries.push({
+      await deliveriesCol.put({
         deliveryId,
         subscriptionId: sub.subscriptionId,
         dedupKey: input.dedupKey,
@@ -261,14 +249,14 @@ export async function deliver(input: {
   const from = sub.state;
   sub.state = 'dead-lettered';
   sub.updatedAt = nowIso();
-  persistTriggerBridge();
+  await subscriptions.put(sub);
   return { outcome: 'dead-lettered', deliveryId, attempts: max, stateChange: { from, to: 'dead-lettered', reason: 'retry-exhausted' } };
 }
 
 /** Test-only: drop all subscriptions + deliveries + dedup index + retention. */
-export function __resetTriggerBridgeStore(): void {
-  subscriptions.clear();
-  deliveries.length = 0;
-  dedupIndex.clear();
+export async function __resetTriggerBridgeStore(): Promise<void> {
+  await subscriptions.__clear();
+  await deliveriesCol.__clear();
+  await dedupCol.__clear();
   dedupRetentionMs = 24 * 60 * 60 * 1000;
 }

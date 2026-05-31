@@ -25,26 +25,30 @@ function tenantOf(req: Request): string {
 }
 
 export function registerTriggerBridgeRoutes(app: Express): void {
-  app.get('/v1/trigger-subscriptions', (req, res) => {
-    res.json({ subscriptions: listSubscriptions(tenantOf(req)) });
+  app.get('/v1/trigger-subscriptions', async (req, res, next) => {
+    try {
+      res.json({ subscriptions: await listSubscriptions(tenantOf(req)) });
+    } catch (err) {
+      next(err);
+    }
   });
 
-  app.get('/v1/trigger-subscriptions/:subscriptionId', (req, res, next) => {
+  app.get('/v1/trigger-subscriptions/:subscriptionId', async (req, res, next) => {
     try {
-      const sub = getSubscription(req.params.subscriptionId);
+      const sub = await getSubscription(req.params.subscriptionId);
       if (!sub || sub.tenantId !== tenantOf(req)) {
         throw new OpenwopError('not_found', 'Trigger subscription not found.', 404, { subscriptionId: req.params.subscriptionId });
       }
-      res.json({ subscription: sub, deliveries: listDeliveries(sub.subscriptionId) });
+      res.json({ subscription: sub, deliveries: await listDeliveries(sub.subscriptionId) });
     } catch (err) {
       next(err);
     }
   });
 
   // Operator pause/resume (§B). { state: 'paused' | 'active' }.
-  app.patch('/v1/trigger-subscriptions/:subscriptionId', (req, res, next) => {
+  app.patch('/v1/trigger-subscriptions/:subscriptionId', async (req, res, next) => {
     try {
-      const sub = getSubscription(req.params.subscriptionId);
+      const sub = await getSubscription(req.params.subscriptionId);
       if (!sub || sub.tenantId !== tenantOf(req)) {
         throw new OpenwopError('not_found', 'Trigger subscription not found.', 404, { subscriptionId: req.params.subscriptionId });
       }
@@ -52,8 +56,8 @@ export function registerTriggerBridgeRoutes(app: Express): void {
       if (toState !== 'paused' && toState !== 'active') {
         throw new OpenwopError('validation_error', 'Field `state` MUST be `paused` or `active`.', 400, { field: 'state' });
       }
-      setSubscriptionState(sub.subscriptionId, toState);
-      res.json({ subscription: getSubscription(sub.subscriptionId) });
+      await setSubscriptionState(sub.subscriptionId, toState);
+      res.json({ subscription: await getSubscription(sub.subscriptionId) });
     } catch (err) {
       next(err);
     }

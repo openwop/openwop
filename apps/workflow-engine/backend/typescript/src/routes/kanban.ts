@@ -87,8 +87,8 @@ async function startKanbanRun(
   // RFC 0086 §C attribution: if the board is owned by a roster member,
   // attribute the run to that named agent (rosterId + persona + the
   // manifest agentId it instantiates). Content-free — ids/persona only.
-  const board = getBoard(trigger.boardId);
-  const roster = board?.rosterId ? getRosterEntry(board.rosterId) : undefined;
+  const board = await getBoard(trigger.boardId);
+  const roster = board?.rosterId ? await getRosterEntry(board.rosterId) : null;
   // RFC 0086 §A: a disabled roster member's portfolio triggers are inert.
   // When a board is bound to a member that is missing or `enabled: false`,
   // the card move does NOT start a run.
@@ -118,7 +118,7 @@ async function startKanbanRun(
   // `queue`-source subscription backs each board (§E: a vendor work surface
   // bridges as the closest source kind).
   const subscriptionId = `host:kanban:${trigger.boardId}`;
-  registerSubscription({ subscriptionId, tenantId, source: 'queue', label: `Kanban board ${trigger.boardId}` });
+  await registerSubscription({ subscriptionId, tenantId, source: 'queue', label: `Kanban board ${trigger.boardId}` });
   const dedupKey = makeDedupKey(subscriptionId, trigger.cardId, trigger.toColumnId);
   attribution.triggerSource = 'queue';
   attribution.triggerSubscriptionId = subscriptionId;
@@ -180,9 +180,9 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
   // and refetch on `board.changed`. Tenant-scoped at subscribe time. A plain
   // text/event-stream with heartbeats; the payload is just the boardId — the
   // client refetches GET /boards/:id (no card bodies on the wire here).
-  app.get('/v1/host/sample/kanban/boards/:boardId/events', (req, res, next) => {
+  app.get('/v1/host/sample/kanban/boards/:boardId/events', async (req, res, next) => {
     try {
-      const board = getBoard(req.params.boardId);
+      const board = await getBoard(req.params.boardId);
       if (!board || board.tenantId !== tenantOf(req)) {
         throw new OpenwopError('not_found', 'Board not found.', 404, { boardId: req.params.boardId });
       }
@@ -210,11 +210,15 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
 
   // --- boards ---
 
-  app.get('/v1/host/sample/kanban/boards', (req, res) => {
-    res.json({ boards: listBoards(tenantOf(req)) });
+  app.get('/v1/host/sample/kanban/boards', async (req, res, next) => {
+    try {
+      res.json({ boards: await listBoards(tenantOf(req)) });
+    } catch (err) {
+      next(err);
+    }
   });
 
-  app.post('/v1/host/sample/kanban/boards', (req, res, next) => {
+  app.post('/v1/host/sample/kanban/boards', async (req, res, next) => {
     try {
       const body = (req.body ?? {}) as {
         name?: unknown;
@@ -244,7 +248,7 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
             field: 'rosterId',
           });
         }
-        const entry = getRosterEntry(body.rosterId);
+        const entry = await getRosterEntry(body.rosterId);
         if (!entry || entry.tenantId !== tenantOf(req)) {
           throw new OpenwopError('validation_error', 'Field `rosterId` does not name a roster entry in this tenant.', 400, {
             field: 'rosterId',
@@ -255,7 +259,7 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
           triggerWorkflowId = entry.workflows[0];
         }
       }
-      const board = createBoard({
+      const board = await createBoard({
         tenantId: tenantOf(req),
         name: body.name,
         triggerWorkflowId,
@@ -268,25 +272,25 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
     }
   });
 
-  app.get('/v1/host/sample/kanban/boards/:boardId', (req, res, next) => {
+  app.get('/v1/host/sample/kanban/boards/:boardId', async (req, res, next) => {
     try {
-      const board = getBoard(req.params.boardId);
+      const board = await getBoard(req.params.boardId);
       if (!board || board.tenantId !== tenantOf(req)) {
         throw new OpenwopError('not_found', 'Board not found.', 404, { boardId: req.params.boardId });
       }
-      res.json({ board, cards: listCards(board.id) });
+      res.json({ board, cards: await listCards(board.id) });
     } catch (err) {
       next(err);
     }
   });
 
-  app.delete('/v1/host/sample/kanban/boards/:boardId', (req, res, next) => {
+  app.delete('/v1/host/sample/kanban/boards/:boardId', async (req, res, next) => {
     try {
-      const board = getBoard(req.params.boardId);
+      const board = await getBoard(req.params.boardId);
       if (!board || board.tenantId !== tenantOf(req)) {
         throw new OpenwopError('not_found', 'Board not found.', 404, { boardId: req.params.boardId });
       }
-      deleteBoard(board.id);
+      await deleteBoard(board.id);
       res.status(204).end();
     } catch (err) {
       next(err);
@@ -295,9 +299,9 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
 
   // --- cards ---
 
-  app.post('/v1/host/sample/kanban/boards/:boardId/cards', (req, res, next) => {
+  app.post('/v1/host/sample/kanban/boards/:boardId/cards', async (req, res, next) => {
     try {
-      const board = getBoard(req.params.boardId);
+      const board = await getBoard(req.params.boardId);
       if (!board || board.tenantId !== tenantOf(req)) {
         throw new OpenwopError('not_found', 'Board not found.', 404, { boardId: req.params.boardId });
       }
@@ -318,7 +322,7 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
           field: 'columnId',
         });
       }
-      const card = createCard({
+      const card = await createCard({
         boardId: board.id,
         columnId,
         title: body.title,
@@ -335,11 +339,11 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
   app.patch('/v1/host/sample/kanban/cards/:cardId', async (req, res, next) => {
     try {
       const cardId = req.params.cardId;
-      const existing = getCard(cardId);
+      const existing = await getCard(cardId);
       if (!existing) {
         throw new OpenwopError('not_found', 'Card not found.', 404, { cardId });
       }
-      const board = getBoard(existing.boardId);
+      const board = await getBoard(existing.boardId);
       if (!board || board.tenantId !== tenantOf(req)) {
         throw new OpenwopError('not_found', 'Card not found.', 404, { cardId });
       }
@@ -351,7 +355,7 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
       };
 
       // Field updates first (title/description/workflowId).
-      updateCardFields(cardId, {
+      await updateCardFields(cardId, {
         title: typeof body.title === 'string' ? body.title : undefined,
         description: typeof body.description === 'string' ? body.description : undefined,
         workflowId: typeof body.workflowId === 'string' ? body.workflowId : undefined,
@@ -367,18 +371,18 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
             field: 'columnId',
           });
         }
-        const moved = moveCard(cardId, body.columnId);
+        const moved = await moveCard(cardId, body.columnId);
         if (moved?.trigger) {
           const started = await startKanbanRun(deps, tenantOf(req), moved.trigger);
           if (started) {
             triggeredRunId = started.runId;
             attribution = started.attribution;
-            setCardLastRun(cardId, started.runId);
+            await setCardLastRun(cardId, started.runId);
           }
         }
       }
 
-      const card = getCard(cardId);
+      const card = await getCard(cardId);
       notifyBoardChanged(board.id);
       res.json({ card, triggeredRunId, attribution });
     } catch (err) {
@@ -386,17 +390,17 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
     }
   });
 
-  app.delete('/v1/host/sample/kanban/cards/:cardId', (req, res, next) => {
+  app.delete('/v1/host/sample/kanban/cards/:cardId', async (req, res, next) => {
     try {
-      const card = getCard(req.params.cardId);
+      const card = await getCard(req.params.cardId);
       if (!card) {
         throw new OpenwopError('not_found', 'Card not found.', 404, { cardId: req.params.cardId });
       }
-      const board = getBoard(card.boardId);
+      const board = await getBoard(card.boardId);
       if (!board || board.tenantId !== tenantOf(req)) {
         throw new OpenwopError('not_found', 'Card not found.', 404, { cardId: req.params.cardId });
       }
-      deleteCard(card.id);
+      await deleteCard(card.id);
       notifyBoardChanged(card.boardId);
       res.status(204).end();
     } catch (err) {

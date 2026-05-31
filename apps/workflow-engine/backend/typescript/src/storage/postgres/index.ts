@@ -1386,6 +1386,18 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
         [key, value, new Date().toISOString()],
       );
     },
+    async kvList(keyPrefix) {
+      const escaped = keyPrefix.replace(/[\\%_]/g, '\\$&');
+      const { rows } = await pool.query<{ k: string; v: string }>(
+        `SELECT k, v FROM host_ext_kv WHERE k LIKE $1 ESCAPE '\\' ORDER BY k`,
+        [`${escaped}%`],
+      );
+      return rows.map((r) => ({ key: r.k, value: r.v }));
+    },
+    async kvDelete(key) {
+      const { rowCount } = await pool.query(`DELETE FROM host_ext_kv WHERE k = $1`, [key]);
+      return (rowCount ?? 0) > 0;
+    },
 
     async close() {
       await pool.end();

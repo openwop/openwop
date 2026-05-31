@@ -1,96 +1,114 @@
 /**
- * Host-extension durability helper (sample-grade).
+ * Host-extension durability helper (read-through, sample-grade-hardened).
  *
- * Backs the in-memory host-extension stores (Kanban boards/cards, agent
- * roster, org-chart) with the generic `Storage.kvGet/kvSet` primitive so they
- * survive a restart on the file / Postgres backends (an in-memory `:memory:`
- * DSN naturally does not persist across process restarts — that is expected).
+ * Backs the host-extension stores (Kanban boards/cards, agent roster,
+ * org-chart, RFC 0083 trigger bridge) with the generic `Storage` kv table —
+ * but, unlike the previous boot-hydrate + in-memory write-back cache, this is
+ * a READ-THROUGH, PER-ENTITY, SYNCHRONOUSLY-WRITTEN store:
  *
- * Each service serializes its whole collection to one key and hydrates it on
- * boot. Writes are FIRE-AND-FORGET + coalesced per key (a sync mutation
- * schedules a single async write per tick) so the service APIs stay
- * synchronous; hydration on boot is awaited. This is sample-grade write-back
- * durability, not a transactional store.
+ *  - READ-THROUGH: every read hits storage, so a write made on one process is
+ *    visible to every other process immediately (no boot-time snapshot that
+ *    drifts). This is what makes a multi-instance deployment correct — the
+ *    earlier cache forced a single instance.
+ *  - PER-ENTITY: each entity is one row keyed `hostext:<name>:<id>`, so two
+ *    concurrent writes to *different* entities never clobber each other (the
+ *    prior whole-collection blob lost one of any two concurrent writes), and a
+ *    mutation rewrites one row, not the whole collection.
+ *  - SYNCHRONOUS: a write `await`s its `kvSet`/`kvDelete` before the service
+ *    returns, closing the fire-and-forget data-loss window.
  *
- * Sample-grade caveats (a production host would do better):
- *  - DATA-LOSS WINDOW: a mutation is acknowledged to the caller BEFORE its
- *    write-back flushes; a crash in that window loses it. A production store
- *    writes synchronously within the request.
- *  - COARSE GRANULARITY: a whole collection is one row keyed by `key`,
- *    rewritten on every mutation (write amplification) and holding all
- *    tenants' data in one blob. Reads filter by tenant in the service layer
- *    (no cross-tenant leak), but at scale a production store keys per
- *    entity/tenant.
+ * Remaining sample-grade trade-offs (a production host would do better):
+ *  - `list()` is a prefix SCAN of the whole collection (all tenants), filtered
+ *    in the service layer — fine at demo scale, indexed by the kv primary key,
+ *    but a production store keys/queries per (tenant, entity).
+ *  - No optimistic-concurrency token: two writes to the SAME entity are
+ *    last-writer-wins (acceptable for the demo; a production store adds an
+ *    `If-Match`/version guard).
+ *  - The Kanban SSE board-change fan-out (`subscribeBoardChanges`) is still
+ *    in-process: data is consistent across instances, but a live push only
+ *    reaches clients on the instance that handled the mutation. A production
+ *    host backs that with a pub/sub bus (e.g. Postgres LISTEN/NOTIFY).
  */
 
 import type { Storage } from '../storage/storage.js';
 
 let storageRef: Storage | null = null;
-const pending = new Map<string, () => unknown>();
-let flushScheduled = false;
 
 /** Wire the durability layer to the host's storage. Called once at boot. */
 export function initHostExtPersistence(storage: Storage): void {
   storageRef = storage;
 }
 
-/** Hydrate a collection persisted under `key` (empty array if absent). */
-export async function loadCollection<T>(key: string): Promise<T[]> {
-  if (!storageRef) return [];
-  const raw = await storageRef.kvGet(key);
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as T[]) : [];
-  } catch {
-    return [];
+/** Test-only: drop the storage ref. */
+export function __resetHostExtPersistence(): void {
+  storageRef = null;
+}
+
+function requireStorage(): Storage {
+  if (!storageRef) {
+    throw new Error('host-ext persistence not initialized — call initHostExtPersistence() at boot');
   }
+  return storageRef;
 }
 
 /**
- * Schedule a write-back of `key`'s current state. `snapshot` is invoked at
- * flush time (so multiple mutations in a tick collapse to one write of the
- * latest state). No-op when persistence is not wired (e.g. unit tests that
- * don't call `initHostExtPersistence`).
+ * A read-through, per-entity durable collection. `name` may contain `:` to
+ * namespace sub-collections (e.g. `kanban:board`). `idOf` extracts an entity's
+ * stable id (the row key suffix).
  */
-export function schedulePersist(key: string, snapshot: () => unknown): void {
-  if (!storageRef) return;
-  pending.set(key, snapshot);
-  if (!flushScheduled) {
-    flushScheduled = true;
-    setImmediate(() => {
-      void flush();
-    });
-  }
-}
+export class DurableCollection<T> {
+  constructor(
+    private readonly name: string,
+    private readonly idOf: (item: T) => string,
+  ) {}
 
-async function flush(): Promise<void> {
-  flushScheduled = false;
-  const storage = storageRef;
-  if (!storage) {
-    pending.clear();
-    return;
+  private key(id: string): string {
+    return `hostext:${this.name}:${id}`;
   }
-  const batch = [...pending.entries()];
-  pending.clear();
-  for (const [key, snapshot] of batch) {
+
+  private prefix(): string {
+    return `hostext:${this.name}:`;
+  }
+
+  /** Read one entity by id (read-through). */
+  async get(id: string): Promise<T | null> {
+    const raw = await requireStorage().kvGet(this.key(id));
+    if (raw === null) return null;
     try {
-      await storage.kvSet(key, JSON.stringify(snapshot()));
+      return JSON.parse(raw) as T;
     } catch {
-      /* best-effort write-back; a failed persist must not crash a mutation */
+      return null;
     }
   }
-}
 
-/** Flush any pending write-backs now (awaitable). Useful in tests + on a
- *  graceful shutdown. */
-export async function flushHostExtPersistence(): Promise<void> {
-  await flush();
-}
+  /** Read every entity in the collection (prefix scan, read-through). */
+  async list(): Promise<T[]> {
+    const rows = await requireStorage().kvList(this.prefix());
+    const out: T[] = [];
+    for (const row of rows) {
+      try {
+        out.push(JSON.parse(row.value) as T);
+      } catch {
+        /* skip a corrupt row rather than fail the whole list */
+      }
+    }
+    return out;
+  }
 
-/** Test-only: drop the storage ref + any pending writes. */
-export function __resetHostExtPersistence(): void {
-  storageRef = null;
-  pending.clear();
-  flushScheduled = false;
+  /** Upsert one entity (synchronous — awaits the write). */
+  async put(item: T): Promise<void> {
+    await requireStorage().kvSet(this.key(this.idOf(item)), JSON.stringify(item));
+  }
+
+  /** Delete one entity by id. Returns true if it existed. */
+  async delete(id: string): Promise<boolean> {
+    return requireStorage().kvDelete(this.key(id));
+  }
+
+  /** Test-only: remove every entity in this collection. */
+  async __clear(): Promise<void> {
+    const storage = requireStorage();
+    const rows = await storage.kvList(this.prefix());
+    for (const row of rows) await storage.kvDelete(row.key);
+  }
 }

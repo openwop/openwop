@@ -15,6 +15,8 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import http from 'node:http';
 import { createApp } from '../src/index.js';
+import { openSqliteStorage } from '../src/storage/sqlite/index.js';
+import { initHostExtPersistence, __resetHostExtPersistence } from '../src/host/hostExtPersistence.js';
 import {
   __resetKanbanStore,
   createBoard,
@@ -25,25 +27,36 @@ import {
 } from '../src/host/kanbanService.js';
 
 describe('kanban service (pure)', () => {
-  beforeEach(() => __resetKanbanStore());
+  const storage = openSqliteStorage(':memory:');
+  beforeAll(() => {
+    initHostExtPersistence(storage);
+  });
+  afterAll(async () => {
+    __resetHostExtPersistence();
+    await storage.close();
+  });
+  beforeEach(async () => {
+    initHostExtPersistence(storage);
+    await __resetKanbanStore();
+  });
 
-  it('creates a board with default To Do / Doing / Done lanes', () => {
-    const board = createBoard({ tenantId: 't1', name: 'Marketing' });
+  it('creates a board with default To Do / Doing / Done lanes', async () => {
+    const board = await createBoard({ tenantId: 't1', name: 'Marketing' });
     expect(board.columns.map((c) => c.id)).toEqual(['todo', 'doing', 'done']);
     expect(board.tenantId).toBe('t1');
   });
 
-  it('flags the To Do column as the trigger column when a board trigger workflow is given', () => {
-    const board = createBoard({ tenantId: 't1', name: 'Marketing', triggerWorkflowId: 'wf-campaign' });
+  it('flags the To Do column as the trigger column when a board trigger workflow is given', async () => {
+    const board = await createBoard({ tenantId: 't1', name: 'Marketing', triggerWorkflowId: 'wf-campaign' });
     const todo = board.columns.find((c) => c.id === 'todo');
     expect(todo?.triggerWorkflowId).toBe('wf-campaign');
     expect(board.columns.find((c) => c.id === 'doing')?.triggerWorkflowId).toBeUndefined();
   });
 
-  it('returns a trigger directive when a card moves INTO a trigger column', () => {
-    const board = createBoard({ tenantId: 't1', name: 'M', triggerWorkflowId: 'wf-campaign' });
-    const card = createCard({ boardId: board.id, columnId: 'doing', title: 'Draft email' });
-    const result = moveCard(card.id, 'todo');
+  it('returns a trigger directive when a card moves INTO a trigger column', async () => {
+    const board = await createBoard({ tenantId: 't1', name: 'M', triggerWorkflowId: 'wf-campaign' });
+    const card = await createCard({ boardId: board.id, columnId: 'doing', title: 'Draft email' });
+    const result = await moveCard(card.id, 'todo');
     expect(result?.trigger).toEqual({
       workflowId: 'wf-campaign',
       boardId: board.id,
@@ -54,23 +67,23 @@ describe('kanban service (pure)', () => {
     expect(result?.card.columnId).toBe('todo');
   });
 
-  it('does NOT trigger on a same-column move', () => {
-    const board = createBoard({ tenantId: 't1', name: 'M', triggerWorkflowId: 'wf-campaign' });
-    const card = createCard({ boardId: board.id, columnId: 'todo', title: 'x' });
-    const result = moveCard(card.id, 'todo');
+  it('does NOT trigger on a same-column move', async () => {
+    const board = await createBoard({ tenantId: 't1', name: 'M', triggerWorkflowId: 'wf-campaign' });
+    const card = await createCard({ boardId: board.id, columnId: 'todo', title: 'x' });
+    const result = await moveCard(card.id, 'todo');
     expect(result?.trigger).toBeNull();
   });
 
-  it('lets a card-level workflowId override the column default', () => {
-    const board = createBoard({ tenantId: 't1', name: 'M', triggerWorkflowId: 'wf-column' });
-    const card = createCard({ boardId: board.id, columnId: 'doing', title: 'x', workflowId: 'wf-card' });
-    expect(moveCard(card.id, 'todo')?.trigger?.workflowId).toBe('wf-card');
+  it('lets a card-level workflowId override the column default', async () => {
+    const board = await createBoard({ tenantId: 't1', name: 'M', triggerWorkflowId: 'wf-column' });
+    const card = await createCard({ boardId: board.id, columnId: 'doing', title: 'x', workflowId: 'wf-card' });
+    expect((await moveCard(card.id, 'todo'))?.trigger?.workflowId).toBe('wf-card');
   });
 
-  it('does not trigger when neither the column nor the card names a workflow', () => {
-    const board = createBoard({ tenantId: 't1', name: 'M' });
-    const card = createCard({ boardId: board.id, columnId: 'doing', title: 'x' });
-    expect(moveCard(card.id, 'todo')?.trigger).toBeNull();
+  it('does not trigger when neither the column nor the card names a workflow', async () => {
+    const board = await createBoard({ tenantId: 't1', name: 'M' });
+    const card = await createCard({ boardId: board.id, columnId: 'doing', title: 'x' });
+    expect((await moveCard(card.id, 'todo'))?.trigger).toBeNull();
   });
 
   it('fans out board-change notifications to subscribers (live refresh)', () => {
@@ -94,7 +107,6 @@ describe('kanban routes (sqlite memory app)', () => {
   beforeAll(async () => {
     process.env.OPENWOP_STORAGE_DSN = 'memory://';
     process.env.OPENWOP_AUTH_DISABLE_COOKIES = 'true';
-    __resetKanbanStore();
     const app = await createApp({
       port: PORT,
       storageDsn: 'memory://',
@@ -102,6 +114,7 @@ describe('kanban routes (sqlite memory app)', () => {
       serviceVersion: '0.0.1',
       enableConsoleTracer: false,
     });
+    await __resetKanbanStore();
     await new Promise<void>((res) => {
       server = app.listen(PORT, res);
     });

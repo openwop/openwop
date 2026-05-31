@@ -22,7 +22,6 @@ import { join } from 'node:path';
 import { openSqliteStorage } from '../src/storage/sqlite/index.js';
 import {
   __resetHostExtPersistence,
-  flushHostExtPersistence,
   initHostExtPersistence,
 } from '../src/host/hostExtPersistence.js';
 import {
@@ -30,7 +29,6 @@ import {
   __setDedupRetentionMs,
   deliver,
   getSubscription,
-  hydrateTriggerBridge,
   listDeliveries,
   makeDedupKey,
   registerSubscription,
@@ -38,28 +36,42 @@ import {
 } from '../src/host/triggerBridgeService.js';
 
 describe('trigger-bridge service (pure, RFC 0083 §C)', () => {
-  beforeEach(() => __resetTriggerBridgeStore());
+  const storage = openSqliteStorage(':memory:');
+  beforeAll(() => {
+    initHostExtPersistence(storage);
+  });
+  afterAll(async () => {
+    __resetHostExtPersistence();
+    await storage.close();
+  });
+  beforeEach(async () => {
+    initHostExtPersistence(storage);
+    await __resetTriggerBridgeStore();
+  });
 
-  it('registerSubscription is idempotent by subscriptionId', () => {
-    const a = registerSubscription({ subscriptionId: 'sub-1', tenantId: 't1', source: 'queue' });
-    const b = registerSubscription({ subscriptionId: 'sub-1', tenantId: 't1', source: 'queue' });
-    expect(a).toBe(b);
+  it('registerSubscription is idempotent by subscriptionId', async () => {
+    const a = await registerSubscription({ subscriptionId: 'sub-1', tenantId: 't1', source: 'queue' });
+    const b = await registerSubscription({ subscriptionId: 'sub-1', tenantId: 't1', source: 'queue' });
+    // Read-through returns a freshly-deserialized object each call, so this is
+    // value-equality (the idempotency guarantee is "same subscription, not a
+    // second row"), not reference-equality.
+    expect(a).toEqual(b);
     expect(a.state).toBe('active');
   });
 
   it('delivers, recording a delivered attempt + the run causationId handle', async () => {
-    registerSubscription({ subscriptionId: 'sub-1', tenantId: 't1', source: 'queue' });
+    await registerSubscription({ subscriptionId: 'sub-1', tenantId: 't1', source: 'queue' });
     const res = await deliver({ subscriptionId: 'sub-1', dedupKey: 'k1', fire: async () => 'run-A' });
     expect(res.outcome).toBe('delivered');
     expect(res.runId).toBe('run-A');
     expect(res.deliveryId.startsWith('dlv-')).toBe(true);
-    const d = listDeliveries('sub-1');
+    const d = await listDeliveries('sub-1');
     expect(d).toHaveLength(1);
     expect(d[0]!.outcome).toBe('delivered');
   });
 
   it('de-duplicates a repeat dedupKey to the prior run (effectively-once, §C-1)', async () => {
-    registerSubscription({ subscriptionId: 'sub-1', tenantId: 't1', source: 'queue' });
+    await registerSubscription({ subscriptionId: 'sub-1', tenantId: 't1', source: 'queue' });
     await deliver({ subscriptionId: 'sub-1', dedupKey: 'k1', fire: async () => 'run-A' });
     let fired = false;
     const res = await deliver({ subscriptionId: 'sub-1', dedupKey: 'k1', fire: async () => { fired = true; return 'run-B'; } });
@@ -69,18 +81,18 @@ describe('trigger-bridge service (pure, RFC 0083 §C)', () => {
   });
 
   it('retries then dead-letters on exhaustion, transitioning the subscription (§C-2 / §B)', async () => {
-    registerSubscription({ subscriptionId: 'sub-1', tenantId: 't1', source: 'queue', retryPolicy: { maxAttempts: 3, backoff: 'none' } });
+    await registerSubscription({ subscriptionId: 'sub-1', tenantId: 't1', source: 'queue', retryPolicy: { maxAttempts: 3, backoff: 'none' } });
     const res = await deliver({ subscriptionId: 'sub-1', dedupKey: 'k1', fire: async () => { throw new Error('downstream down'); } });
     expect(res.outcome).toBe('dead-lettered');
     expect(res.attempts).toBe(3);
     expect(res.stateChange).toEqual({ from: 'active', to: 'dead-lettered', reason: 'retry-exhausted' });
-    expect(getSubscription('sub-1')!.state).toBe('dead-lettered');
-    expect(listDeliveries('sub-1').map((d) => d.outcome)).toEqual(['retrying', 'retrying', 'dead-lettered']);
+    expect((await getSubscription('sub-1'))!.state).toBe('dead-lettered');
+    expect((await listDeliveries('sub-1')).map((d) => d.outcome)).toEqual(['retrying', 'retrying', 'dead-lettered']);
   });
 
   it('skips delivery when the subscription is paused (§B)', async () => {
-    registerSubscription({ subscriptionId: 'sub-1', tenantId: 't1', source: 'queue' });
-    setSubscriptionState('sub-1', 'paused');
+    await registerSubscription({ subscriptionId: 'sub-1', tenantId: 't1', source: 'queue' });
+    await setSubscriptionState('sub-1', 'paused');
     const res = await deliver({ subscriptionId: 'sub-1', dedupKey: 'k1', fire: async () => 'run-A' });
     expect(res.outcome).toBe('skipped');
   });
@@ -101,8 +113,8 @@ describe('trigger-bridge read surface + Kanban bridge (sqlite memory app)', () =
   beforeAll(async () => {
     process.env.OPENWOP_STORAGE_DSN = 'memory://';
     process.env.OPENWOP_AUTH_DISABLE_COOKIES = 'true';
-    __resetTriggerBridgeStore();
     const app = await createApp({ port: PORT, storageDsn: 'memory://', serviceName: 'test', serviceVersion: '0.0.1', enableConsoleTracer: false });
+    await __resetTriggerBridgeStore();
     await new Promise<void>((res) => { server = app.listen(PORT, res); });
   });
 
@@ -158,13 +170,21 @@ describe('trigger-bridge read surface + Kanban bridge (sqlite memory app)', () =
 });
 
 describe('trigger-bridge: dedup retention eviction (§C-1)', () => {
-  beforeEach(() => {
-    __resetTriggerBridgeStore();
+  const storage = openSqliteStorage(':memory:');
+  beforeAll(() => {
+    initHostExtPersistence(storage);
+  });
+  afterAll(async () => {
     __resetHostExtPersistence();
+    await storage.close();
+  });
+  beforeEach(async () => {
+    initHostExtPersistence(storage);
+    await __resetTriggerBridgeStore();
   });
 
   it('evicts a dedup entry past the retention window so a re-delivery fires fresh', async () => {
-    registerSubscription({ subscriptionId: 'sub-1', tenantId: 't1', source: 'queue' });
+    await registerSubscription({ subscriptionId: 'sub-1', tenantId: 't1', source: 'queue' });
     __setDedupRetentionMs(0); // every prior entry is immediately stale
     const r1 = await deliver({ subscriptionId: 'sub-1', dedupKey: 'k1', fire: async () => 'run-A' });
     expect(r1.outcome).toBe('delivered');
@@ -181,28 +201,25 @@ describe('trigger-bridge: durability (subscriptions + deliveries + dedup survive
   const dir = mkdtempSync(join(tmpdir(), 'owop-tb-dur-'));
   afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
-  it('persists then hydrates a subscription + delivery + dedup index into a fresh store', async () => {
+  it('persists then read-through-reads a subscription + delivery + dedup index from a fresh store', async () => {
     const path = join(dir, 'tb.db');
-    __resetTriggerBridgeStore();
-    __resetHostExtPersistence();
 
     const s1 = openSqliteStorage(path);
     initHostExtPersistence(s1);
-    registerSubscription({ subscriptionId: 'host:kanban:b1', tenantId: 'acme', source: 'queue' });
+    await __resetTriggerBridgeStore();
+    await registerSubscription({ subscriptionId: 'host:kanban:b1', tenantId: 'acme', source: 'queue' });
     const r1 = await deliver({ subscriptionId: 'host:kanban:b1', dedupKey: 'dk1', fire: async () => 'run-A' });
     expect(r1.outcome).toBe('delivered');
-    await flushHostExtPersistence();
     await s1.close();
 
-    // Restart: clear in-memory state, re-open the same file, hydrate.
-    __resetTriggerBridgeStore();
+    // Restart: a brand-new handle on the same file. Read-through means NO
+    // hydrate step — every read goes straight to the durable row.
     __resetHostExtPersistence();
     const s2 = openSqliteStorage(path);
     initHostExtPersistence(s2);
-    await hydrateTriggerBridge();
 
-    expect(getSubscription('host:kanban:b1')?.tenantId).toBe('acme');
-    expect(listDeliveries('host:kanban:b1').some((d) => d.outcome === 'delivered' && d.runId === 'run-A')).toBe(true);
+    expect((await getSubscription('host:kanban:b1'))?.tenantId).toBe('acme');
+    expect((await listDeliveries('host:kanban:b1')).some((d) => d.outcome === 'delivered' && d.runId === 'run-A')).toBe(true);
     // Effectively-once SURVIVES the restart: re-delivering dk1 dedups to run-A.
     const r2 = await deliver({ subscriptionId: 'host:kanban:b1', dedupKey: 'dk1', fire: async () => 'run-B' });
     expect(r2.outcome).toBe('deduped');

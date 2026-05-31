@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### feat(host-sample): read-through durable host-extension stores (2026-05-31)
+
+Hardens the workflow-engine demo's sample host-extension stores (Kanban boards/cards, the RFC 0086 agent roster, the RFC 0087 org-chart, and the RFC 0083 trigger bridge) from a boot-hydrated in-memory write-back cache to a **read-through, per-entity, synchronously-written** store on the generic `Storage` kv table (new `kvList`/`kvDelete` primitives on the sqlite + Postgres adapters). Every read/write now hits storage, so the stores stay consistent across a multi-instance deployment (the prior cache drifted between instances — a board created on one instance 404'd on another, forcing `--max-instances=1`) and a mutation is durable before it is acknowledged (closing the fire-and-forget data-loss window). Implementation-only; the `/v1/host/sample/*` wire responses are unchanged and no normative surface is touched. Remaining sample-grade trade-off documented in `hostExtPersistence.ts`: the Kanban SSE live-refresh fan-out is still per-instance (data is consistent; only the real-time push is instance-local) pending a pub/sub bus.
+
 ### spec(schema): publish AgentOrgChart Department/Role/Member as named `$defs` (2026-05-30)
 
 Editorial schema-robustness follow-up to the RFC 0086/0087 read endpoints. `schemas/agent-org-chart.schema.json` now exposes its `Department`, `Role`, and `Member` subschemas as named `$defs` (the `departments`/`members` arrays and the roles array `$ref` them in place), and `schemas/org-chart-responsibility-view.schema.json` references `#/$defs/Department` + `#/$defs/Member` instead of the brittle positional `#/properties/departments/items` / `#/properties/members/items` JSON pointers. Pure refactor — identical validation behavior, byte-stable wire shape; additive (`COMPATIBILITY.md` §2.1). Hardens the cross-file dependency so a future restructure of the parent arrays cannot silently re-bind a dependent `$ref`.
