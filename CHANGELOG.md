@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### fix(app): Kanban live-refresh polling fallback (2026-05-31)
+
+The demo's in-browser Kanban live-refresh relied on the board-events SSE stream, but the production `app.openwop.dev` edge (Firebase Hosting `/api/**` → Cloud Run rewrite) buffers `text/event-stream`, so the push never flushes to the browser (the stream works same-site / against Cloud Run directly). Adds a ~5s polling floor alongside the existing SSE subscription while a board is open — same-origin, cookie-authed, reliable through the CDN. The SSE path is retained for instant updates where reachable. Demo-only; no wire/spec change.
+
 ### feat(host-sample): cross-instance Kanban SSE fan-out via storage pub/sub (2026-05-31)
 
 Closes the last per-instance gap in the demo host-extension stores. The Kanban board-change SSE fan-out (`notifyBoardChanged`/`subscribeBoardChanges`) was in-process — with the read-through stores making data consistent across instances, only the live SSE *push* still reached clients on the instance that handled the mutation. Adds a generic `Storage.publish`/`subscribe` pub/sub — **Postgres `LISTEN/NOTIFY`** (one multiplexed channel, a dedicated self-healing listen connection) for true cross-instance delivery, an **in-process emitter on sqlite** (single node) — and routes the board-change fan-out through it. A mutation on any instance now pushes `board.changed` to SSE clients on every instance. Implementation-only; no wire/spec change. (The Postgres path is verified live; the in-process path is unit-tested.)
