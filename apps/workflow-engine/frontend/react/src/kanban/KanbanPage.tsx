@@ -171,14 +171,24 @@ export function KanbanPage(): JSX.Element {
     void listRoster().then(setRoster).catch(() => { /* roster optional */ });
   }, [refreshBoards]);
 
-  // Live refresh: while a board is open, subscribe to its SSE change stream
-  // and refetch on any change (this client's moves, another client's, or a
-  // triggered run updating a card's lastRunId).
+  // Live refresh: while a board is open, refetch on any change (this client's
+  // moves, another client's, or a triggered run updating a card's lastRunId).
+  // Two mechanisms:
+  //   1. SSE change stream — instant push, when reachable (same-site / direct).
+  //   2. Polling (~5s) — the reliable floor. The in-browser /api path is
+  //      proxied by Firebase Hosting, which buffers `text/event-stream`, so the
+  //      SSE push does not flush through the CDN; polling keeps the board fresh
+  //      regardless. Both simply refetch the open board.
   useEffect(() => {
     const boardId = activeBoard?.id;
     if (!boardId) return;
-    const unsubscribe = subscribeBoardEvents(boardId, () => { void openBoard(boardId); });
-    return unsubscribe;
+    const refresh = () => { void openBoard(boardId); };
+    const unsubscribe = subscribeBoardEvents(boardId, refresh);
+    const poll = setInterval(refresh, 5000);
+    return () => {
+      unsubscribe();
+      clearInterval(poll);
+    };
   }, [activeBoard?.id, openBoard]);
 
   const onCreateBoard = async (e: React.FormEvent) => {
