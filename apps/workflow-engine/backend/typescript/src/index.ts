@@ -75,6 +75,7 @@ import { registerMessagingRoutes } from './routes/messaging.js';
 import { createSelfHttpBridge } from './messaging/bridge.js';
 import { registerSchedulerRoutes } from './routes/scheduler.js';
 import { registerKanbanRoutes } from './routes/kanban.js';
+import { registerAgentOpsRoutes } from './routes/agentOps.js';
 import { registerRosterRoutes } from './routes/roster.js';
 import { registerTriggerBridgeRoutes } from './routes/triggerBridge.js';
 import { initHostExtPersistence } from './host/hostExtPersistence.js';
@@ -343,7 +344,7 @@ export async function createApp(config: AppConfig): Promise<Express> {
   // storage), so there is no boot-time hydrate step and no per-instance cache
   // to drift — a multi-instance deployment stays consistent.
   initHostExtPersistence(storage);
-  registerSchedulerRoutes(app);
+  registerSchedulerRoutes(app, { storage, hostSuite });
   // Standing agent roster — RFCS/0086 reference impl (named agent
   // instances + workflow portfolios). Registered before Kanban so a board
   // can bind to a roster member.
@@ -354,6 +355,10 @@ export async function createApp(config: AppConfig): Promise<Express> {
   // Kanban boards — sample host-extension (non-normative). The card→run
   // trigger is the RFCS/0086 "named workflow agents" demo surface.
   registerKanbanRoutes(app, { storage, hostSuite });
+  // Agent-experience ops (PRD §14): idempotent demo-agent seed + the agent
+  // heartbeat "Check now" task-claim. Registered after roster + kanban since it
+  // composes both.
+  registerAgentOpsRoutes(app, { storage, hostSuite });
   // RFC 0083 durable trigger bridge — the deferred reference durable-delivery
   // (subscription state machine + dedup/retry/dead-letter + the read surface).
   // The Kanban card→run firing routes through it.

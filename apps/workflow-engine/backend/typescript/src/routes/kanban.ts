@@ -48,6 +48,8 @@ import {
   setCardLastRun,
   subscribeBoardChanges,
   updateCardFields,
+  KANBAN_CARD_SOURCES,
+  type KanbanCardSource,
   type KanbanTriggerDirective,
 } from '../host/kanbanService.js';
 import { getRosterEntry } from '../host/rosterService.js';
@@ -62,6 +64,19 @@ interface Deps {
 
 function tenantOf(req: Request): string {
   return (req as { tenantId?: string }).tenantId ?? 'default';
+}
+
+/** Validate an optional card `source` against the known taxonomy. Unknown
+ *  strings fall back to `undefined` (the service then defaults to `human`)
+ *  rather than 400 — a forgiving demo surface. */
+function parseCardSource(input: unknown): KanbanCardSource | undefined {
+  return typeof input === 'string' && (KANBAN_CARD_SOURCES as readonly string[]).includes(input)
+    ? (input as KanbanCardSource)
+    : undefined;
+}
+
+function parseCardPriority(input: unknown): 'low' | 'normal' | 'high' | undefined {
+  return input === 'low' || input === 'normal' || input === 'high' ? input : undefined;
 }
 
 /** Resolve the trigger's workflow, create + dispatch a run, and emit the
@@ -316,6 +331,10 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
         columnId?: unknown;
         description?: unknown;
         workflowId?: unknown;
+        source?: unknown;
+        sourceLabel?: unknown;
+        priority?: unknown;
+        dueAt?: unknown;
       };
       if (typeof body.title !== 'string' || body.title.trim().length === 0) {
         throw new OpenwopError('validation_error', 'Field `title` is required and MUST be a non-empty string.', 400, {
@@ -334,6 +353,10 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
         title: body.title,
         description: typeof body.description === 'string' ? body.description : undefined,
         workflowId: typeof body.workflowId === 'string' ? body.workflowId : undefined,
+        source: parseCardSource(body.source),
+        sourceLabel: typeof body.sourceLabel === 'string' ? body.sourceLabel : undefined,
+        priority: parseCardPriority(body.priority),
+        dueAt: typeof body.dueAt === 'string' ? body.dueAt : undefined,
       });
       notifyBoardChanged(board.id);
       res.status(201).json(card);
@@ -358,13 +381,21 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
         description?: unknown;
         workflowId?: unknown;
         columnId?: unknown;
+        source?: unknown;
+        sourceLabel?: unknown;
+        priority?: unknown;
+        dueAt?: unknown;
       };
 
-      // Field updates first (title/description/workflowId).
+      // Field updates first (title/description/workflowId + demo metadata).
       await updateCardFields(cardId, {
         title: typeof body.title === 'string' ? body.title : undefined,
         description: typeof body.description === 'string' ? body.description : undefined,
         workflowId: typeof body.workflowId === 'string' ? body.workflowId : undefined,
+        source: parseCardSource(body.source),
+        sourceLabel: typeof body.sourceLabel === 'string' ? body.sourceLabel : undefined,
+        priority: parseCardPriority(body.priority),
+        dueAt: typeof body.dueAt === 'string' ? body.dueAt : undefined,
       });
 
       // A columnId change is a move — and a move into a trigger column

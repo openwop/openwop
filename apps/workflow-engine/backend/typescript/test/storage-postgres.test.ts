@@ -261,6 +261,7 @@ async function makeStorage(): Promise<Storage> {
       const r = await pool.query(`DELETE FROM user_agents WHERE agent_id = $1`, [agentId]);
       return (r.rowCount ?? 0) > 0;
     },
+    updateUserAgent: async () => { throw new Error('not exercised'); },
     // messaging relay-gateway — not exercised by this schema round-trip test
     upsertRelayDevice: async () => { throw new Error('not exercised'); },
     getRelayDevice: async () => null,

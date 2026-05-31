@@ -1,0 +1,113 @@
+/**
+ * Agent operations — host-extension routes (sample-grade, non-normative).
+ *
+ * Two demo-experience surfaces (PRD §14, §17):
+ *   POST /v1/host/sample/demo/seed            — idempotently seed the built-in
+ *                                                demo agents for the caller's
+ *                                                tenant ("Load demo agents")
+ *   POST /v1/host/sample/roster/{rosterId}/check
+ *                                              — the agent "heartbeat": pick the
+ *                                                first eligible To Do card on the
+ *                                                agent's board and start its
+ *                                                workflow ("Check now")
+ *
+ * The heartbeat is an MVP pull model (PRD §14): a manual/poll "check now" that
+ * claims the first To Do card carrying a resolvable workflow, starts a run
+ * attributed to the named agent, and moves the card to Working. A real
+ * background daemon (claim cadence, concurrency, dead-letter) is deferred.
+ *
+ * @see src/host/demoSeed.ts — the idempotent seed
+ * @see src/host/runStarter.ts — the shared run dispatch
+ */
+
+import type { Express, Request } from 'express';
+import { OpenwopError } from '../types.js';
+import type { HostAdapterSuite } from '../host/index.js';
+import type { Storage } from '../storage/storage.js';
+import { seedDemoAgents } from '../host/demoSeed.js';
+import { getRosterEntry } from '../host/rosterService.js';
+import { listBoards, listCards, moveCard, setCardLastRun, notifyBoardChanged } from '../host/kanbanService.js';
+import { startWorkflowRun } from '../host/runStarter.js';
+
+interface Deps {
+  storage: Storage;
+  hostSuite: HostAdapterSuite;
+}
+
+function tenantOf(req: Request): string {
+  return (req as { tenantId?: string }).tenantId ?? 'default';
+}
+
+export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
+  // "Load demo agents" — idempotent per-tenant seed.
+  app.post('/v1/host/sample/demo/seed', async (req, res, next) => {
+    try {
+      const result = await seedDemoAgents(tenantOf(req));
+      res.status(200).json(result);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Agent heartbeat "Check now" — claim the first eligible To Do card and run it.
+  app.post('/v1/host/sample/roster/:rosterId/check', async (req, res, next) => {
+    try {
+      const tenantId = tenantOf(req);
+      const entry = await getRosterEntry(req.params.rosterId);
+      if (!entry || entry.tenantId !== tenantId) {
+        throw new OpenwopError('not_found', 'Agent not found.', 404, { rosterId: req.params.rosterId });
+      }
+      if (!entry.enabled) {
+        res.status(200).json({ picked: false, reason: 'paused' });
+        return;
+      }
+
+      // Find the agent's board(s) and the first To Do card with a runnable
+      // workflow (card override, else the To Do column's trigger workflow).
+      const boards = (await listBoards(tenantId)).filter((b) => b.rosterId === entry.rosterId);
+      for (const board of boards) {
+        const todoColumn = board.columns.find((c) => c.id === 'todo' || c.name.toLowerCase() === 'to do');
+        if (!todoColumn) continue;
+        const cards = (await listCards(board.id)).filter((c) => c.columnId === todoColumn.id);
+        for (const card of cards) {
+          const workflowId = card.workflowId ?? todoColumn.triggerWorkflowId;
+          if (!workflowId) continue;
+          const runId = await startWorkflowRun(deps, {
+            tenantId,
+            workflowId,
+            metadata: {
+              heartbeat: {
+                rosterId: entry.rosterId,
+                persona: entry.persona,
+                agentId: entry.agentRef.agentId,
+                boardId: board.id,
+                cardId: card.id,
+                source: 'heartbeat',
+              },
+            },
+          });
+          if (!runId) continue;
+          await setCardLastRun(card.id, runId);
+          // Move the picked card to Working (no re-trigger — Working has no
+          // trigger workflow). Best-effort: a missing Working lane leaves the
+          // card in To Do with its run already started.
+          const working = board.columns.find((c) => c.id === 'working' || c.name.toLowerCase() === 'working');
+          if (working) await moveCard(card.id, working.id);
+          notifyBoardChanged(board.id);
+          res.status(200).json({
+            picked: true,
+            boardId: board.id,
+            cardId: card.id,
+            cardTitle: card.title,
+            runId,
+            persona: entry.persona,
+          });
+          return;
+        }
+      }
+      res.status(200).json({ picked: false, reason: 'no_eligible_tasks' });
+    } catch (err) {
+      next(err);
+    }
+  });
+}

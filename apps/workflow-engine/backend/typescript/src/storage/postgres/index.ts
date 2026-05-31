@@ -1160,6 +1160,31 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
       return (r.rowCount ?? 0) > 0;
     },
 
+    async updateUserAgent(record) {
+      const r = await pool.query(
+        `UPDATE user_agents SET
+          persona = $2, label = $3, description = $4, model_class = $5,
+          system_prompt = $6, tool_allowlist = $7::jsonb,
+          memory_scratchpad = $8, memory_conversation = $9, memory_long_term = $10,
+          confidence_threshold = $11
+        WHERE agent_id = $1`,
+        [
+          record.agentId,
+          record.persona,
+          record.label ?? null,
+          record.description ?? null,
+          record.modelClass,
+          record.systemPrompt,
+          JSON.stringify(record.toolAllowlist),
+          record.memoryShape.scratchpad,
+          record.memoryShape.conversation,
+          record.memoryShape.longTerm,
+          record.confidenceThreshold ?? null,
+        ],
+      );
+      return (r.rowCount ?? 0) > 0;
+    },
+
     // ── messaging relay-gateway (demo host-extension) ──
     async upsertRelayDevice(record) {
       await pool.query(

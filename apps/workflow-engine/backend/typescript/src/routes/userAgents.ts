@@ -173,6 +173,10 @@ export function registerUserAgentRoutes(app: Express, deps: Deps): void {
         label: record.label ?? record.persona,
         description: record.description,
         modelClass: record.modelClass,
+        // Echo the caller's own systemPrompt (consistent with the PATCH
+        // response). Not an SR-1 leak: the caller just authored it. The
+        // cross-agent read projection on GET /v1/agents still omits it.
+        systemPrompt: record.systemPrompt,
         packName: `user:${tenantId}`,
         packVersion: '0',
         toolAllowlist: record.toolAllowlist,
@@ -191,6 +195,61 @@ export function registerUserAgentRoutes(app: Express, deps: Deps): void {
         });
       }
       res.status(201).json(responseBody);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Editable "Instructions" panel (PRD §9) — patch a user-authored agent's
+  // mutable fields. `agentId`/`tenantId`/`createdAt` are immutable; persona is
+  // immutable too (it derives the agentId). Pack-installed agents are NOT
+  // editable here (different storage) — the UI forks them instead.
+  app.patch('/v1/host/sample/agents/:agentId', async (req, res, next) => {
+    try {
+      const tenantId = readTenantId(req);
+      const { agentId } = req.params;
+      const record = await storage.getUserAgent(agentId);
+      if (!record) {
+        throw new OpenwopError(
+          'not_found',
+          `User-authored agent ${agentId} not found. Pack-installed agents are not editable through this route.`,
+          404,
+        );
+      }
+      if (record.tenantId !== tenantId) {
+        throw new OpenwopError('forbidden_tenant', `Agent ${agentId} is not in your workspace.`, 403);
+      }
+      const patch = validatePatch(req.body as CreateBody);
+      const updated: UserAgentRecord = {
+        ...record,
+        ...(patch.label !== undefined ? { label: patch.label } : {}),
+        ...(patch.description !== undefined ? { description: patch.description } : {}),
+        ...(patch.modelClass !== undefined ? { modelClass: patch.modelClass } : {}),
+        ...(patch.systemPrompt !== undefined ? { systemPrompt: patch.systemPrompt } : {}),
+        ...(patch.toolAllowlist !== undefined ? { toolAllowlist: patch.toolAllowlist } : {}),
+        ...(patch.memoryShape !== undefined ? { memoryShape: patch.memoryShape } : {}),
+        ...(patch.confidenceThreshold !== undefined
+          ? { confidenceThreshold: patch.confidenceThreshold }
+          : {}),
+      };
+      await storage.updateUserAgent(updated);
+      // Re-register so the in-process registry (GET /v1/agents, the chat `@`
+      // picker, the chat-responder system prompt) reflects the edit at once.
+      registerUserAgent(updated);
+      res.json({
+        agentId: updated.agentId,
+        persona: updated.persona,
+        label: updated.label ?? updated.persona,
+        description: updated.description,
+        modelClass: updated.modelClass,
+        systemPrompt: updated.systemPrompt,
+        packName: `user:${tenantId}`,
+        packVersion: '0',
+        toolAllowlist: updated.toolAllowlist,
+        memoryShape: updated.memoryShape,
+        confidenceThreshold: updated.confidenceThreshold,
+        hasHandoffSchemas: false,
+      });
     } catch (err) {
       next(err);
     }
@@ -339,6 +398,63 @@ function validateCreate(body: CreateBody): ValidatedCreate {
     memoryShape,
     ...(confidenceThreshold !== undefined ? { confidenceThreshold } : {}),
   };
+}
+
+interface ValidatedPatch {
+  label?: string;
+  description?: string;
+  modelClass?: string;
+  systemPrompt?: string;
+  toolAllowlist?: string[];
+  memoryShape?: { scratchpad: boolean; conversation: boolean; longTerm: boolean };
+  confidenceThreshold?: number;
+}
+
+/** Validate a PATCH body: only the fields present are checked + returned.
+ *  `persona` is immutable (it derives the agentId) — a present `persona` is
+ *  rejected so the UI can't silently fail to rename. */
+function validatePatch(body: CreateBody): ValidatedPatch {
+  if (!body || typeof body !== 'object') {
+    throw new OpenwopError('validation_error', 'Request body MUST be an object.', 400);
+  }
+  if ((body as { persona?: unknown }).persona !== undefined) {
+    throw new OpenwopError(
+      'validation_error',
+      '`persona` is immutable — it identifies the agent. Create a new agent to use a different name.',
+      400,
+    );
+  }
+  const out: ValidatedPatch = {};
+  if (body.modelClass !== undefined) {
+    if (typeof body.modelClass !== 'string' || !KNOWN_MODEL_CLASSES.has(body.modelClass)) {
+      throw new OpenwopError(
+        'validation_error',
+        `\`modelClass\` MUST be one of [${[...KNOWN_MODEL_CLASSES].join(', ')}].`,
+        400,
+        { allowed: [...KNOWN_MODEL_CLASSES] },
+      );
+    }
+    out.modelClass = body.modelClass;
+  }
+  if (body.systemPrompt !== undefined) {
+    if (typeof body.systemPrompt !== 'string' || body.systemPrompt.trim().length === 0) {
+      throw new OpenwopError('validation_error', '`systemPrompt` MUST be a non-empty string.', 400);
+    }
+    if (body.systemPrompt.length > SYSTEM_PROMPT_MAX_LEN) {
+      throw new OpenwopError('validation_error', `\`systemPrompt\` MUST be ≤ ${SYSTEM_PROMPT_MAX_LEN} characters.`, 400);
+    }
+    out.systemPrompt = body.systemPrompt;
+  }
+  if (body.toolAllowlist !== undefined) out.toolAllowlist = parseToolAllowlist(body.toolAllowlist);
+  if (body.memoryShape !== undefined) out.memoryShape = parseMemoryShape(body.memoryShape);
+  if (body.confidenceThreshold !== undefined) {
+    out.confidenceThreshold = parseConfidenceThreshold(body.confidenceThreshold);
+  }
+  const label = optionalString(body.label, 'label', LABEL_MAX_LEN);
+  if (label !== undefined) out.label = label;
+  const description = optionalString(body.description, 'description', DESCRIPTION_MAX_LEN);
+  if (description !== undefined) out.description = description;
+  return out;
 }
 
 function parseToolAllowlist(input: unknown): string[] {
