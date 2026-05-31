@@ -22,8 +22,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 64 |
-| Active | 19 |
+| Accepted | 66 |
+| Active | 17 |
 | Draft | 4 |
 
 | RFC | Title | Status |
@@ -104,7 +104,7 @@
 | RFC 0074 | Tenant-Scoped Manifest-Agent Inventory | Accepted |
 | RFC 0075 | Artifact-Type Packs - real-world adoption amendment | Active |
 | RFC 0076 | Pack runtime-requirements declaration + host-provided safe-fetch | Accepted |
-| RFC 0077 | A normative `AgentManifest` -> live-run mapping + an optional `capabilities.agents.liveRuntime` flag + an `agent.invocation.started` / `agent.invocation.completed` event bracket, so a manifest agent executes against live models/tools with one portable, observable event family across all three entry points (workflow node, run API, chat mention) | Active |
+| RFC 0077 | A normative `AgentManifest` -> live-run mapping + an optional `capabilities.agents.liveRuntime` flag + an `agent.invocation.started` / `agent.invocation.completed` event bracket, so a manifest agent executes against live models/tools with one portable, observable event family across all three entry points (workflow node, run API, chat mention) | Accepted |
 | RFC 0078 | An optional, capability-gated `GET /v1/tools` + `GET /v1/tools/{toolId}` projection returning a normative `ToolDescriptor` (stable `toolId`, source, I/O schemas, auth/egress/approval requirements, replay policy, safety tier) across every tool surface (node-pack / workflow / MCP / connector / host-extension), plus an optional tool-session lifecycle - so an agent or builder can discover what tools exist, what they require, and how they are audited, portably | Active |
 | RFC 0079 | A credential-provenance descriptor at the tool/egress boundary (host-issued credentials carry id / issuer / allowed audiences / scopes / expiry / redaction policy / audit-correlation id) + an `egress.decided` policy event (allowed / denied / downgraded / approval-required) + the load-bearing MUST that a host-issued credential is never attached to an egress destination outside its declared audiences - answering the credential-destination-binding question RFC 0076 sectionB parked | Active |
 | RFC 0080 | Reconcile the fragmented memory advertisement (`capabilities.memory.*` + `capabilities.agents.{memoryBackends,memoryConsolidation,commitments}` + `agent-memory.md` + `AgentManifest.memoryShape`) into one coherent, additive memory-capability model with eight named dimensions, a derived `openwop-memory` profile, and a normative requirement that the agent inventory surface when an agent's requested memory is degraded | Active |
@@ -113,7 +113,7 @@
 | RFC 0083 | Define an `openwop-trigger-bridge` profile that composes the existing scheduling (RFC 0052), dead-letter (RFC 0053), queue-bus (RFC 0017), webhook, and cross-host-causation (RFC 0040) primitives into a uniform durable inbound-work contract - standardizing trigger-subscription states (active / paused / failed / dead-lettered), a delivery-attempt + dedup-key + retry-policy model, an opt-in durable-webhook mode, and an explicit trigger-to-run causation link - while keeping individual channels (Slack / email / SMS) as host/vendor extensions | Active |
 | RFC 0084 | Define an enforceable budget/quota policy - reserved `budget.*` run-options keys (max tokens / cost / tool-calls / retries + a model allow/deny list), a `budget.{reserved,consumed,threshold.crossed,exhausted}` event family, and hard-stop enforcement via new `cap.breached` `budget-*` kinds - composing RFC 0026 (provider usage) and RFC 0031 (model gates), and **delegating** wall-time + loop-iteration limits to RFC 0058 rather than redefining them, so 0084 governs *spend* and 0058 governs *execution bounds* with no overlap | Active |
 | RFC 0085 | Define `openwop-agent-platform` - an **operational annex** profile (a `production-profile.md`-style claim combining a discovery predicate + required runtime conformance scenarios + documentation + a badge, NOT a pure entry in the closed `profiles.md` catalog) that names one coherent "this host behaves like a full agent platform" target aggregating manifest+live agents, tool catalog+hooks, safe-fetch+egress, provider usage, prompt library, memory read/write/attribution, replay/fork-or-nondeterminism-policy, feedback, durable triggers, debug bundle, RBAC/tenant scoping, and conformance evidence - with a `partial` / `full` status | Active |
-| RFC 0086 | Define a **standing agent roster** - a named, tenant-scoped, mutable agent *instance* (the "digital-twin employee", e.g. `"Sally"`) that **references** a manifest/deployment (`agentId` + optional `version`/`channel`), **owns a workflow portfolio** (the workflows it is responsible for by role), and to which **trigger-fired runs are attributed** as a content-free recorded fact - composing RFC 0070/0072 (manifest agents + inventory), RFC 0082 (`@channel` binding), RFC 0052 (schedule triggers) and RFC 0083 (durable work-item triggers), while keeping per-host work surfaces (Kanban boards) as host/vendor extensions | Active |
+| RFC 0086 | Define a **standing agent roster** - a named, tenant-scoped, mutable agent *instance* (the "digital-twin employee", e.g. `"Sally"`) that **references** a manifest/deployment (`agentId` + optional `version`/`channel`), **owns a workflow portfolio** (the workflows it is responsible for by role), and to which **trigger-fired runs are attributed** as a content-free recorded fact - composing RFC 0070/0072 (manifest agents + inventory), RFC 0082 (`@channel` binding), RFC 0052 (schedule triggers) and RFC 0083 (durable work-item triggers), while keeping per-host work surfaces (Kanban boards) as host/vendor extensions | Accepted |
 | RFC 0087 | Define an **agent org-chart** - a tenant-scoped, descriptive grouping of standing roster agents (RFC 0086) into departments + roles with `reportsTo` edges and a responsibility view - under one load-bearing invariant: **org position confers NO authority** (a `reportsTo`/manager edge MUST NOT widen `toolAllowlist`, grant an RBAC scope, or bypass an approval gate); composing RFC 0086 (the members), RFC 0074 (tenant scoping), RFC 0049 (RBAC - unchanged by position), and RFC 0051 (approval gates - unchanged by position) | Active |
 
 ## SDK Helper Coverage
@@ -155,7 +155,7 @@
 ## Active Follow-Ups
 
 - 4 RFCs still `Draft` (RFC 0038, RFC 0043, RFC 0050, RFC 0073) — advance with schema/conformance proof or defer.
-- 19 RFCs `Active` (RFC 0035, RFC 0042, RFC 0065, RFC 0066, RFC 0067, RFC 0068, RFC 0069, RFC 0075, RFC 0077, RFC 0078, RFC 0079, RFC 0080, RFC 0081, RFC 0082, RFC 0083, RFC 0084, RFC 0085, RFC 0086, RFC 0087) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 17 RFCs `Active` (RFC 0035, RFC 0042, RFC 0065, RFC 0066, RFC 0067, RFC 0068, RFC 0069, RFC 0075, RFC 0078, RFC 0079, RFC 0080, RFC 0081, RFC 0082, RFC 0083, RFC 0084, RFC 0085, RFC 0087) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
