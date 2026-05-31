@@ -1,0 +1,22 @@
+{
+  "name": "@openwop/openwop-host-wasm-sandbox",
+  "version": "1.1.5",
+  "private": true,
+  "description": "Reference WASM-isolation OpenWOP host implementing the RFC 0035 sandbox execution contract. Executes pack-loaded typeIds as WebAssembly modules with real capability-gated imports, an engine-enforced memory bound, and a worker-thread wall-clock kill-timer — the real-isolation reference that graduates the node-pack-sandbox-* invariants to protocol tier.",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build-fixtures": "node scripts/build-fixtures.mjs",
+    "test": "tsx test/sandbox.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "wabt": "^1.0.36"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
