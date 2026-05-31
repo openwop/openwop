@@ -362,6 +362,21 @@ export function agentPlatformSatisfiedTerms(c: DiscoveryPayload): readonly strin
   return checks.filter(([, ok]) => ok).map(([id]) => id);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// `openwop-core-standard` operational-annex predicate (RFC 0088). Like the
+// agent-platform annex above, this is NOT a closed-catalog profile (so it is
+// absent from deriveProfiles) — it is an operational ANNEX whose claim is backed
+// by the §C floor scenarios passing black-box. This helper computes only the §B
+// discovery predicate (the floor of MUSTs with black-box production-path proof).
+//
+// @see spec/v1/core-standard-profile.md
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** The `openwop-core-standard` floor discovery predicate — RFC 0088 §B. */
+export function isCoreStandard(c: DiscoveryPayload): boolean {
+  return isCore(c) && isInterrupts(c) && (isStreamSse(c) || isStreamPoll(c));
+}
+
 /**
  * Derive the full profile set from a discovery payload.
  *

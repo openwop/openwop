@@ -307,7 +307,7 @@ Profile claims are reported in:
 
 A profile is NOT something a host advertises in the discovery payload. The discovery payload advertises capabilities; the profile is what conformance derives from those capabilities.
 
-Operational annexes such as `auth-profiles.md`, `interrupt-profiles.md`, `production-profile.md`, and `agent-platform-profile.md` (RFC 0085 — the `openwop-agent-platform` partial/full meta-profile) define optional public-release claims. They are separate from this compatibility catalog because they combine runtime behavior, documentation, and conformance evidence rather than pure discovery-payload predicates.
+Operational annexes such as `auth-profiles.md`, `interrupt-profiles.md`, `production-profile.md`, `agent-platform-profile.md` (RFC 0085 — the `openwop-agent-platform` partial/full meta-profile), and `core-standard-profile.md` (RFC 0088 — the `openwop-core-standard` stable floor of black-box-proven MUSTs) define optional public-release claims. They are separate from this compatibility catalog because they combine runtime behavior, documentation, and conformance evidence rather than pure discovery-payload predicates.
 
 ---
 
