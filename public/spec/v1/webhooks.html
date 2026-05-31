@@ -186,6 +186,7 @@
       <li class="toc-sub"><a href="#secret-rotation">Secret rotation</a></li>
       <li class="toc-sub"><a href="#logging-discipline">Logging discipline</a></li>
       <li class="toc-top"><a href="#example-flow">Example flow</a></li>
+      <li class="toc-top"><a href="#durable-delivery-opt-in-rfc-0083">Durable delivery (opt-in) — RFC 0083</a></li>
       <li class="toc-top"><a href="#future-work">Future work</a></li>
       <li class="toc-top"><a href="#see-also">See also</a></li>
     </ul>
@@ -334,9 +335,12 @@ curl -X POST https://api.example.com/v1/webhooks \
 curl -X DELETE &quot;https://api.example.com/v1/webhooks/wh_a3b9c2?tenantId=workspace-prod&quot; \
   -H &quot;Authorization: Bearer ${TOKEN}&quot;</code></pre>
 <hr/>
+<h2 id="durable-delivery-opt-in-rfc-0083">Durable delivery (opt-in) — RFC 0083</h2>
+<p>The delivery contract above is <strong>best-effort</strong> (per-attempt timeout, a circuit breaker, no durable retry). RFC 0083 adds an <strong>opt-in durable mode</strong> via <code>capabilities.webhooks.durable: true</code>. When advertised, webhook delivery participates in the <a href="./trigger-bridge.md"><code>trigger-bridge.md</code></a> durable model: the webhook registration becomes a <code>TriggerSubscription</code> with the four-state machine (<code>active</code>/<code>paused</code>/<code>failed</code>/<code>dead-lettered</code>), each delivery is tracked as an attempt with a <code>dedupKey</code> (at-least-once de-duplication), retries follow the advertised <code>retryPolicy</code>, and on exhaustion the delivery is routed to the RFC 0053 dead-letter sink (inspectable for <code>retentionDays</code>) instead of being dropped by the circuit breaker. The run a successful delivery starts carries the delivery id as <code>causationId</code> (RFC 0040).</p>
+<p><strong>The best-effort default is unchanged.</strong> A host that omits <code>webhooks.durable</code> (or sets it <code>false</code>) behaves exactly as the contract above — durability is strictly additive, and the subscriber-side signature-verification recipe is identical in both modes.</p>
 <h2 id="future-work">Future work</h2>
 <ul>
-<li><strong>Durable retries</strong> via Cloud Tasks (or equivalent): defer-and-retry with exponential backoff. Forward-compatible — current subscriber-side verification recipe stays unchanged.</li>
+<li>~~<strong>Durable retries</strong> via Cloud Tasks (or equivalent)~~ — now specified as the opt-in <code>webhooks.durable</code> mode (RFC 0083 / <code>trigger-bridge.md</code>).</li>
 <li><strong>Custom secret generation</strong>: allow callers to supply their own secret at registration (rejected today).</li>
 <li><strong>Additional event filters</strong> beyond tags: per-canvas-type, per-project, regex on event type.</li>
 <li><strong>Subscription introspection endpoint</strong> (<code>GET /v1/webhooks/{id}</code>): currently admin-only via Firestore.</li>

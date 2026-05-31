@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/eval-summary.schema.json",
+  "title": "EvalSummary",
+  "description": "RFC 0081 §C. The terminal scorecard of an eval run (the `mode: \"eval\"` projection over `POST /v1/runs`, RFC 0081 §B): the aggregate + per-task scores, cost, latency, schema-validity, and safety findings, plus the suite provenance and (for `regression` mode) the score delta vs a baseline. Set as the eval run's output and served by `GET /v1/runs/{runId}/eval-summary`. SECURITY invariant `eval-summary-no-content-leak`: the summary carries scores, ids, counts, and redaction-safe safety descriptors only — NEVER task output bodies, rubric prose, model completions, prompts, or credential material (SR-1). A consumer reads the run's normal projection for any body.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["suiteId", "suiteVersion", "aggregateScore", "passed", "taskCount", "passedCount", "tasks"],
+  "properties": {
+    "suiteId": {
+      "type": "string",
+      "pattern": "^[a-z0-9.-]+\\.evals\\.[a-z0-9-]+$",
+      "description": "The `agent-eval-suite.schema.json#suiteId` this summary scores."
+    },
+    "suiteVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "The pinned suite version the run executed (mirrors `eval.started.suiteVersion`)."
+    },
+    "evaluatedModelClass": {
+      "type": "string",
+      "enum": ["reasoning", "writing", "coding", "research", "classification", "general"],
+      "description": "MAY. The `AgentManifest.modelClass` (RFC 0002) the run was evaluated against, so a score is read against its model. Present when the host resolves a concrete class."
+    },
+    "aggregateScore": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "The suite-level score (0.0–1.0): the aggregation (host-defined, typically the mean) of per-task scores."
+    },
+    "passed": {
+      "type": "boolean",
+      "description": "Whether the run cleared the suite's `thresholds` (RFC 0081 §A) — `aggregateScore >= passScore` AND, when declared, `totalCostUsd <= maxCostUsd` AND the p95 latency bar. The load-bearing flag an RFC 0082 deployment gate may require (`requiredEval`)."
+    },
+    "taskCount": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of tasks executed."
+    },
+    "passedCount": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of tasks that individually passed."
+    },
+    "totalCostUsd": {
+      "type": "number",
+      "minimum": 0,
+      "description": "MAY. Total cost of the run, summed from the per-task RFC 0026 `provider.usage` events (the scalar only — never a pricing breakdown or rate card; `eval-summary-no-content-leak`)."
+    },
+    "tasks": {
+      "type": "array",
+      "description": "Per-task results, in suite order. Each entry is content-free: scores, scalars, ids, and redaction-safe safety descriptors only.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["taskId", "score", "passed"],
+        "properties": {
+          "taskId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$", "description": "The `agent-eval-suite` task id." },
+          "score": { "type": "number", "minimum": 0, "maximum": 1, "description": "Task score (0.0–1.0)." },
+          "passed": { "type": "boolean", "description": "Whether this task individually met its bar." },
+          "costUsd": { "type": "number", "minimum": 0, "description": "MAY. Task cost (scalar)." },
+          "latencyMs": { "type": "integer", "minimum": 0, "description": "MAY. Task wall-clock latency." },
+          "schemaValid": { "type": "boolean", "description": "MAY. Whether the task output validated against the agent's `handoff.returnSchemaRef` (when structured-output enforcement is in effect)." },
+          "safetyFindings": {
+            "type": "array",
+            "description": "MAY. Redaction-safe safety findings (primarily `adversarial` mode). Each is a `{kind, severity}` descriptor — NO excerpted content, prompt, or completion text (`eval-summary-no-content-leak`).",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind", "severity"],
+              "properties": {
+                "kind": { "type": "string", "minLength": 1, "description": "Finding category (e.g. `jailbreak`, `pii-leak`, `unsafe-tool-call`) — a category label, not excerpted content." },
+                "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"], "description": "Finding severity." }
+              }
+            }
+          }
+        }
+      }
+    },
+    "regression": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "MAY. Present for `regression` mode. The score delta vs a baseline eval run, plus a pointer to the RFC 0054 `:diff` for the structural divergence. Content-free.",
+      "required": ["baselineRunId", "scoreDelta"],
+      "properties": {
+        "baselineRunId": { "type": "string", "minLength": 1, "description": "The prior eval run this run is compared against." },
+        "scoreDelta": { "type": "number", "minimum": -1, "maximum": 1, "description": "`aggregateScore` minus the baseline's (negative ⇒ regression)." },
+        "diffRef": { "type": "string", "description": "MAY. A pointer to `GET /v1/runs/{runId}:diff?against={baselineRunId}` (RFC 0054) for the structural delta." }
+      }
+    }
+  }
+}

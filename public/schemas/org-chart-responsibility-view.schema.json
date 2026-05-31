@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/org-chart-responsibility-view.schema.json",
+  "title": "OrgChartResponsibilityView",
+  "description": "RFC 0087 §D. Response body for `GET /v1/agents/org-chart/{departmentId}` — one department's subtree + the derived responsibility roll-up (the union of its members' RFC 0086 workflow portfolios, recursively through sub-departments unless `?recursive=false`). A read-only VIEW computed from live roster entries: it grants nothing (§B `org-position-no-authority-escalation`) and stores nothing. Tenant-scoped per RFC 0074.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["department", "members", "responsibilities"],
+  "properties": {
+    "department": {
+      "$ref": "./agent-org-chart.schema.json#/$defs/Department",
+      "description": "The department this view is rooted at."
+    },
+    "members": {
+      "type": "array",
+      "items": { "$ref": "./agent-org-chart.schema.json#/$defs/Member" },
+      "description": "The department's members (and, by default, its sub-departments' members)."
+    },
+    "responsibilities": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "description": "The union of the members' RFC 0086 `workflows[]` portfolios — 'what this department is collectively responsible for'. Deduped; descriptive only."
+    }
+  }
+}

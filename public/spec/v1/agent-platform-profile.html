@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — openwop Spec v1 — `openwop-agent-platform` Operational Annex</title>
+  <meta name="description" content="openwop now has many optional agent-platform capabilities — manifest + live agent runtime (RFC 0070/0072/0077), a tool catalog + tool hooks (RFC 0078/0064), safe-fetch + egress policy (RFC 0076/0079), provider usage (RFC 0026), a prompt library (RFC…"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/agent-platform-profile.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — openwop Spec v1 — `openwop-agent-platform` Operational Annex"/>
+  <meta property="og:description" content="openwop now has many optional agent-platform capabilities — manifest + live agent runtime (RFC 0070/0072/0077), a tool catalog + tool hooks (RFC 0078/0064), safe-fetch + egress policy (RFC 0076/0079), provider usage (RFC 0026), a prompt library (RFC…"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/agent-platform-profile.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — openwop Spec v1 — `openwop-agent-platform` Operational Annex"/>
+  <meta name="twitter:description" content="openwop now has many optional agent-platform capabilities — manifest + live agent runtime (RFC 0070/0072/0077), a tool catalog + tool hooks (RFC 0078/0064), safe-fetch + egress policy (RFC 0076/0079), provider usage (RFC 0026), a prompt library (RFC…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "openwop Spec v1 — `openwop-agent-platform` Operational Annex",
+  "description": "openwop now has many optional agent-platform capabilities — manifest + live agent runtime (RFC 0070/0072/0077), a tool catalog + tool hooks (RFC 0078/0064), safe-fetch + egress policy (RFC 0076/0079), provider usage (RFC 0026), a prompt library (RFC…",
+  "url": "https://openwop.dev/spec/v1/agent-platform-profile.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "dependencies": "JSON Schema 2020-12, REST + SSE + signed webhooks"
+}</script>
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>`openwop-agent-platform` Operational Annex</h1>
+      <p class="lede">openwop now has many optional agent-platform capabilities — manifest + live agent runtime (RFC 0070/0072/0077), a tool catalog + tool hooks (RFC 0078/0064), safe-fetch + egress policy (RFC 0076/0079), provider usage (RFC 0026), a prompt library (RFC…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#a-why-an-annex-not-the-closed-catalog">§A — Why an annex, not the closed catalog</a></li>
+      <li class="toc-top"><a href="#b-the-discovery-predicate-floor-full">§B — The discovery predicate (floor + full)</a></li>
+      <li class="toc-top"><a href="#c-required-runtime-scenarios-the-aggregate-evidence-rule">§C — Required runtime scenarios (the aggregate-evidence rule)</a></li>
+      <li class="toc-top"><a href="#d-partial-full-status-the-badge">§D — partial / full status + the badge</a></li>
+      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
+    </ul>
+  </aside><article class="spec-doc"><blockquote><p><strong>Status: DRAFT v1.x (filed via <a href="../../RFCS/0085-agent-platform-meta-profile.md">RFC 0085</a>, 2026-05-30).</strong> Additive v1.x extension — an <strong>operational annex</strong> (the <a href="./production-profile.md"><code>production-profile.md</code></a> / <a href="./auth-profiles.md"><code>auth-profiles.md</code></a> pattern), NOT a new entry in the closed <a href="./profiles.md"><code>profiles.md</code></a> predicate catalog. Names one coherent "this host behaves like a full agent platform" target with a <code>partial</code>/<code>full</code> status, an aggregating conformance scenario, and a badge. The live aggregate-evidence assertion against a reference host + the badge rendering land at <code>Active → Accepted</code>. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+<h2 id="why-this-exists">Why this exists</h2>
+<p>openwop now has <em>many</em> optional agent-platform capabilities — manifest + live agent runtime (RFC 0070/0072/0077), a tool catalog + tool hooks (RFC 0078/0064), safe-fetch + egress policy (RFC 0076/0079), provider usage (RFC 0026), a prompt library (RFC 0027/0028), a reconciled memory model (RFC 0004/0057/0080), replay/fork, feedback (RFC 0056), durable triggers (RFC 0083), a debug bundle (RFC 0009), RBAC + tenant scoping (RFC 0049/0074), and — as a platform-plus tier — eval (RFC 0081), deployment (RFC 0082), budget (RFC 0084). But a demo, an adopter, or a buyer has <strong>no single named target</strong> that says "this host behaves like a full agent platform" — they must hand-check a dozen capability flags. This annex adds that target, additively. It <strong>composes — does not redefine</strong> every constituent.</p>
+<h2 id="a-why-an-annex-not-the-closed-catalog">§A — Why an annex, not the closed catalog</h2>
+<p><code>openwop-agent-platform</code> is an <strong>operational annex</strong>, alongside <code>production-profile.md</code>, <code>auth-profiles.md</code>, and <code>interrupt-profiles.md</code>. Per <code>profiles.md</code> §"Profile semantics": <em>operational annexes define optional public-release claims; they are separate from the compatibility catalog because they combine runtime behavior, documentation, and conformance evidence rather than pure discovery-payload predicates.</em> A platform claim requires <em>runtime behavior + documentation + conformance evidence</em> (does the live-runtime scenario actually pass?), not just a discovery predicate — so it does <strong>NOT</strong> enter the closed <code>profiles.md</code> predicate catalog (which stays the fine-grained pure-predicate set); <code>profiles.md</code> gains only a one-line cross-reference in its annex list.</p>
+<h2 id="b-the-discovery-predicate-floor-full">§B — The discovery predicate (floor + full)</h2>
+<p>The <code>partial</code> (floor) predicate ANDs the constituent capability checks (the <code>profiles.md</code> derivation style — a predicate MAY reference others syntactically):</p>
+<pre class="lang-"><code>openwop-agent-platform-partial(c) :=
+     openwop-core(c)
+  &amp;&amp; c.agents.manifestRuntime.supported === true          // RFC 0070/0072 — manifest agents
+  &amp;&amp; c.agents.liveRuntime.supported === true              // RFC 0077 — live agent runtime
+  &amp;&amp; c.toolCatalog.supported === true                     // RFC 0078 — portable tool catalog
+  &amp;&amp; c.toolHooks.supported === true                       // RFC 0064 — tool authorization/audit
+  &amp;&amp; c.httpClient.safeFetch.supported === true            // RFC 0076 §B — safe egress
+  &amp;&amp; c.providerUsage.supported === true                   // RFC 0026 — cost/usage
+  &amp;&amp; c.prompts.supported === true                         // RFC 0027/0028 — prompt library
+  &amp;&amp; c.memory.supported === true                          // RFC 0004/0080 — memory read/write
+  &amp;&amp; c.feedback.supported === true                        // RFC 0056 — feedback
+  &amp;&amp; (c.replay.supported === true || c.nondeterminismPolicy.declared === true)</code></pre>
+<p>The <code>full</code> predicate adds the governance/operability tier:</p>
+<pre class="lang-"><code>openwop-agent-platform-full(c) :=
+     openwop-agent-platform-partial(c)
+  &amp;&amp; c.authorization.supported === true                   // RFC 0049 — RBAC, fail-closed
+  &amp;&amp; c.agents.manifestRuntime.installScope === &#39;tenant&#39;   // RFC 0074 — tenant scoping
+  &amp;&amp; c.memory.attribution.supported === true              // RFC 0057 — memory attribution
+  &amp;&amp; c.debugBundle.supported === true                     // RFC 0009 — debug bundle (capabilities.debugBundle, NOT production.*)
+  &amp;&amp; c.triggerBridge.supported === true                   // RFC 0083 — durable triggers
+  &amp;&amp; c.httpClient.egressPolicy.supported === true         // RFC 0079 — egress policy</code></pre>
+<p>Capability families are document-root properties (RFC 0073), so the predicate reads <code>c.&amp;lt;family&amp;gt;</code>. The reference helper is <code>isAgentPlatformPartial</code> / <code>isAgentPlatformFull</code> / <code>agentPlatformStatus</code> in <code>conformance/src/lib/profiles.ts</code> (an annex helper, clearly separate from the closed-catalog <code>deriveProfiles</code>).</p>
+<p><strong>Platform-plus (advisory, RECOMMENDED for <code>full</code> — NOT hard terms in v1.x):</strong> eval (RFC 0081 <code>agents.evalSuite</code>), deployment (RFC 0082 <code>agents.deployment</code>), budget (RFC 0084 <code>budget</code>). A host can be a credible <code>full</code> platform while wiring these incrementally; making them hard terms would gate the whole profile on the newest, least-adopted surfaces. A future minor MAY promote them into <code>full</code> once ≥1 non-steward host advertises each + its scenario passes. The <code>replay</code>-OR-<code>nondeterminismPolicy.declared</code> term honors "run replay/fork OR an explicit nondeterminism policy" — an honestly-nondeterministic host declares it rather than failing the floor.</p>
+<h2 id="c-required-runtime-scenarios-the-aggregate-evidence-rule">§C — Required runtime scenarios (the aggregate-evidence rule)</h2>
+<p>A host <strong>claims</strong> the profile by satisfying the §B predicate <strong>AND passing the constituent profiles' runtime conformance scenarios</strong> (the <code>profiles.md</code> "claims vs passes" semantics) — the platform claim is <em>backed by</em> per-capability evidence, never asserted on shape alone. The required floor scenario set: <code>agent-manifest-runtime.test.ts</code>, <code>agent-live-runtime-shape.test.ts</code>, <code>tool-descriptor-shape.test.ts</code>, the tool-hooks scenarios, <code>safefetch-behavior.test.ts</code>, the provider-usage scenario, the prompt-library scenarios, <code>memory-capability-model-shape.test.ts</code>, the feedback scenario, and <code>replayDeterminism.test.ts</code> (or the host's declared nondeterminism). The <code>full</code> tier adds the RBAC, tenant-scoping, memory-attribution, debug-bundle, trigger-bridge, and egress-policy scenarios.</p>
+<p>The aggregating meta-scenario <code>agent-platform-profile.test.ts</code> derives <code>none</code>/<code>partial</code>/<code>full</code> from the discovery payload (§B) and, when <code>full</code> is claimed against a live host, asserts every required constituent scenario is in the host's passing set for the reported suite version. It soft-skips the live aggregate (reports <code>none</code>) when the floor predicate is unmet.</p>
+<h2 id="d-partial-full-status-the-badge">§D — <code>partial</code> / <code>full</code> status + the badge</h2>
+<p>A host reports one of three statuses (in its <code>conformance.md</code> + <code>INTEROP-MATRIX.md</code> row):</p>
+<ul>
+<li><strong>none</strong> — floor predicate unmet.</li>
+<li><strong>partial</strong> — floor met + floor scenarios pass.</li>
+<li><strong>full</strong> — full predicate met + governance-tier scenarios pass.</li>
+</ul>
+<p>A new <strong><code>openwop-agent-platform</code> badge</strong> (<a href="../../public/badge/openwop-agent-platform.svg"><code>public/badge/openwop-agent-platform.svg</code></a>, generated per <code>docs/IMPLEMENTATION-CERTIFICATION.md</code>) renders the status + suite version, so <code>app.openwop.dev</code> and any adopter can show "Agent Platform profile: partial / full" backed by <code>INTEROP-MATRIX.md</code> evidence. The badge asserts the <em>aggregate</em> claim; it does not replace per-capability badges.</p>
+<p><strong>Honest advertisement (the <code>production-profile.md</code> discipline):</strong> a host MUST report <code>partial</code> (not <code>full</code>) until the full-tier scenarios actually pass — reporting <code>full</code> on shape alone is non-conformant by the §C aggregate-evidence rule.</p>
+<p><strong><code>satisfiedTerms[]</code> — the richer interop signal (adoption is non-contiguous).</strong> The flat <code>none</code>/<code>partial</code>/<code>full</code> ladder implicitly assumes <em>monotonic</em> adoption (floor before full), but a real host built feature-by-feature satisfies terms <strong>out of order</strong> — e.g. a host honoring RBAC (RFC 0049) + memory-attribution (RFC 0057) + tenant-scoping (RFC 0074) — three <code>full</code>-tier terms — while still missing <code>liveRuntime</code>/<code>toolCatalog</code> floor terms reads <code>none</code>, <em>identical to a do-nothing host</em>. To avoid understating such a host, a host SHOULD ALSO report <code>satisfiedTerms[]</code> — the exact list of floor/full term ids it satisfies (<code>floor:memory</code>, <code>full:authorization</code>, …) — alongside the flat status. The reference helper is <code>agentPlatformSatisfiedTerms</code> in <code>conformance/src/lib/profiles.ts</code>. The flat status remains the headline claim (and gates the badge); <code>satisfiedTerms[]</code> is the honest per-term breakdown a registry/Mission Control renders so a <code>none</code>-but-6/16 host is distinguishable from a <code>none</code>-and-0/16 one. (This non-contiguous-adoption finding came from the first live-host curl-verify of the predicate — RFC 0085 §UQ-followup.)</p>
+<h2 id="open-spec-gaps">Open spec gaps</h2>
+<ul>
+<li>The live aggregate-evidence assertion against a reference host (the Postgres host — already <code>production-profile</code>-satisfying — is the natural first <code>partial</code>/<code>full</code> candidate) + the badge rendering are the <code>Active → Accepted</code> step, naturally gated on a host actually reaching <code>partial</code>/<code>full</code>.</li>
+<li>Promotion of the platform-plus tier (eval/deploy/budget) from RECOMMENDED to hard <code>full</code> terms is deferred to a future minor, triggered by ≥1 non-steward host advertising each.</li>
+</ul><footer class="doc-edit"><a href="https://github.com/openwop/openwop/edit/main/spec/v1/agent-platform-profile.md" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>

@@ -179,7 +179,6 @@ paths:
               # so callers see one unified body shape.
               allOf:
                 - type: object
-                  required: [workflowId]
                   properties:
                     workflowId: { type: string, minLength: 1 }
                     inputs:
@@ -195,7 +194,33 @@ paths:
                       type: string
                       format: uri
                       description: Signed-token HITL callback URL (see `interrupt.md`).
+                    mode:
+                      type: string
+                      enum: [eval]
+                      description: |
+                        RFC 0081 §B. When `eval`, this run is an eval-suite projection
+                        (not a workflow run): the host runs the `evalSuiteRef` against
+                        `agentId`, emits the content-free `eval.*` family, and terminates
+                        with an `EvalSummary` readable via `GET /v1/runs/{runId}/eval-summary`.
+                        Capability-gated on `capabilities.agents.evalSuite.supported`; a
+                        host that omits it rejects `mode: "eval"` with 501. Omit for a
+                        normal workflow run.
+                    evalSuiteRef:
+                      type: string
+                      minLength: 1
+                      description: RFC 0081 — URI of the `AgentEvalSuite` to run. Required when mode is `eval`.
+                    agentId:
+                      type: string
+                      minLength: 1
+                      description: RFC 0081 — the manifest agent the eval suite targets. Required when mode is `eval`.
                   additionalProperties: false
+                  if:
+                    properties: { mode: { const: eval } }
+                    required: [mode]
+                  then:
+                    required: [evalSuiteRef, agentId]
+                  else:
+                    required: [workflowId]
                 - $ref: '../schemas/run-options.schema.json'
       responses:
         '201':
@@ -784,6 +809,248 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404':
           description: No such agent, or the host doesn't advertise the capability.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /v1/agents/{agentId}/deployments:
+    get:
+      tags: [agents]
+      summary: |
+        RFC 0082 §C/§E — list the deployment records (per-(agentId, version)) for
+        a manifest agent: the lifecycle `state`, the named `channels`, the canary
+        share, the rollback pointer, and the last-transition provenance. Read-only,
+        content-free of any manifest body or credential (SR-1). Capability-gated on
+        `capabilities.agents.deployment.supported: true`; hosts that don't advertise
+        it return 404. Tenant-scoped to the caller's owner triple (RFC 0048/0074)
+        when `installScope: 'tenant'`.
+      operationId: listAgentDeployments
+      parameters:
+        - in: path
+          name: agentId
+          required: true
+          schema: { type: string }
+          description: The manifest agentId.
+      responses:
+        '200':
+          description: The agent's deployment records (version-sorted).
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '../schemas/agent-deployment.schema.json' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: No such agent, or the host doesn't advertise `capabilities.agents.deployment`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+    post:
+      tags: [agents]
+      summary: |
+        RFC 0082 §E — request a deployment state transition (promote / pause /
+        deprecate / rollback / adjust-canary). The host MUST authorize fail-closed
+        against the RFC 0049 `deploy:*` scope (absent/unseeded role denies), run any
+        configured RFC 0051 approvalGate, and — when the gate carries `requiredEval`
+        — verify the referenced RFC 0081 eval run is terminal and `EvalSummary.passed`
+        BEFORE emitting `deployment.promoted`. On success returns the updated
+        deployment record and emits the matching content-free `deployment.*` event.
+      operationId: transitionAgentDeployment
+      parameters:
+        - in: path
+          name: agentId
+          required: true
+          schema: { type: string }
+          description: The manifest agentId.
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/agent-deployment-transition.schema.json'
+      responses:
+        '200':
+          description: The deployment record after the applied transition.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/agent-deployment.schema.json'
+        '400':
+          description: |
+            Validation error, or a transition that the host's advertised
+            `states`/`canary` cannot satisfy, or `no_active_deployment` when a
+            referenced channel resolves to no active version.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403':
+          description: |
+            Fail-closed authorization denial (the principal lacks the required
+            `deploy:*` scope — RFC 0049), or `eval_gate_unmet` when a `requiredEval`
+            gate's referenced eval run is not terminal-and-passed (RFC 0081).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: No such agent, or the host doesn't advertise `capabilities.agents.deployment`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /v1/agents/roster:
+    get:
+      tags: [agents]
+      summary: |
+        RFC 0086 §B — list the standing agent roster (named "digital-twin
+        employee" instances + their workflow portfolios) visible to the
+        caller. Capability-gated on `capabilities.agents.roster.supported:
+        true`; hosts that don't advertise it return 404. Tenant-scoped per
+        RFC 0074 — on an `installScope: 'tenant'` host only the caller's
+        owner-triple entries are returned. Read-only; content-free (SR-1).
+      operationId: listAgentRoster
+      responses:
+        '200':
+          description: The caller's standing roster (rosterId-sorted).
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/agent-roster-response.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: Host does not advertise `capabilities.agents.roster`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /v1/agents/roster/{rosterId}:
+    get:
+      tags: [agents]
+      summary: |
+        RFC 0086 §B — return one standing roster entry, or 404 when no such
+        entry exists, the host doesn't advertise `capabilities.agents.roster`,
+        or (on an `installScope: 'tenant'` host) the entry is outside the
+        caller's owner triple — a cross-tenant entry 404s identically to
+        "not found", never disclosing another tenant's roster.
+      operationId: getAgentRosterEntry
+      parameters:
+        - in: path
+          name: rosterId
+          required: true
+          schema: { type: string }
+          description: The standing instance id (a `host:<id>` AgentRef agentId).
+      responses:
+        '200':
+          description: The roster entry.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/agent-roster-entry.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: No such entry, cross-tenant, or capability unadvertised.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /v1/agents/org-chart:
+    get:
+      tags: [agents]
+      summary: |
+        RFC 0087 §C — return the caller's agent org-chart (departments + roles
+        + `reportsTo` edges over roster members). Capability-gated on
+        `capabilities.agents.orgChart.supported: true`; hosts that don't
+        advertise it return 404. Tenant-scoped per RFC 0074. DESCRIPTIVE only:
+        an org edge confers no authority (§B `org-position-no-authority-escalation`).
+      operationId: getAgentOrgChart
+      responses:
+        '200':
+          description: The caller's org-chart.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/agent-org-chart.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: Host does not advertise `capabilities.agents.orgChart`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /v1/agents/org-chart/{departmentId}:
+    get:
+      tags: [agents]
+      summary: |
+        RFC 0087 §D — one department's subtree + responsibility roll-up (the
+        union of its members' RFC 0086 portfolios). `?recursive=false` narrows
+        the roll-up to direct members without changing the response shape.
+        404 when the department is unknown, cross-tenant, or the host doesn't
+        advertise `capabilities.agents.orgChart`. The roll-up grants nothing (§B).
+      operationId: getAgentOrgChartDepartment
+      parameters:
+        - in: path
+          name: departmentId
+          required: true
+          schema: { type: string }
+          description: The department id to root the subtree + roll-up at.
+        - in: query
+          name: recursive
+          required: false
+          schema: { type: boolean, default: true }
+          description: When `false`, the roll-up scopes to direct members only.
+      responses:
+        '200':
+          description: The department subtree + responsibility roll-up.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/org-chart-responsibility-view.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: Unknown/cross-tenant department, or capability unadvertised.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /v1/runs/{runId}/eval-summary:
+    get:
+      tags: [runs]
+      summary: |
+        RFC 0081 §C — return the `EvalSummary` scorecard for a terminal eval run
+        (a run started with `mode: "eval"`): aggregate + per-task scores, cost,
+        latency, schema-validity, and redaction-safe safety findings, plus the
+        suite provenance and (regression mode) the score delta vs a baseline.
+        Content-free of task output / rubric prose / credentials (SR-1; the
+        `eval-summary-no-content-leak` invariant). Capability-gated on
+        `capabilities.agents.evalSuite.supported: true`; hosts that don't advertise
+        it return 404. 409 when the run is not yet terminal.
+      operationId: getEvalSummary
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+      responses:
+        '200':
+          description: The eval run's scorecard.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/eval-summary.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: |
+            No such run, the run is not an eval run, or the host doesn't advertise
+            `capabilities.agents.evalSuite`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '409':
+          description: The eval run is still running; the summary is not yet final.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }

@@ -4,21 +4,21 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>OpenWOP — v1 spec corpus</title>
-  <meta name="description" content="42 normative prose specs governing the OpenWOP v1 wire contract. Each doc is independently citable via /spec/v1/{name}.html."/>
+  <meta name="description" content="50 normative prose specs governing the OpenWOP v1 wire contract. Each doc is independently citable via /spec/v1/{name}.html."/>
   <link rel="canonical" href="https://openwop.dev/spec/v1/"/>
 
   <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
   <meta property="og:type" content="website"/>
   <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
   <meta property="og:title" content="OpenWOP — v1 spec corpus"/>
-  <meta property="og:description" content="42 normative prose specs governing the OpenWOP v1 wire contract. Each doc is independently citable via /spec/v1/{name}.html."/>
+  <meta property="og:description" content="50 normative prose specs governing the OpenWOP v1 wire contract. Each doc is independently citable via /spec/v1/{name}.html."/>
   <meta property="og:url" content="https://openwop.dev/spec/v1/"/>
   <meta property="og:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Twitter card -->
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:title" content="OpenWOP — v1 spec corpus"/>
-  <meta name="twitter:description" content="42 normative prose specs governing the OpenWOP v1 wire contract. Each doc is independently citable via /spec/v1/{name}.html."/>
+  <meta name="twitter:description" content="50 normative prose specs governing the OpenWOP v1 wire contract. Each doc is independently citable via /spec/v1/{name}.html."/>
   <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Icons / theme -->
@@ -140,7 +140,7 @@
   <div class="wrap">
     <header class="page-header">
       <h1>OpenWOP v1 spec corpus</h1>
-      <p class="lede">42 prose specs governing the v1 wire contract. Each section below groups specs by what they do; click through for the normative text.</p>
+      <p class="lede">50 prose specs governing the v1 wire contract. Each section below groups specs by what they do; click through for the normative text.</p>
       <p class="meta">Status legend: <strong>Stable</strong> · Stabilizing · Draft · Experimental. A spec is Stable when its wire shape is locked under v1.x compatibility rules. See <a href="/governance/spec-status/">spec-status policy</a>.</p>
     </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
     <h4>On this page</h4>
@@ -431,6 +431,31 @@
   <p class="spec-group-lede">Specs not grouped elsewhere. New additions land here until categorized.</p>
   <ul class="spec-group-list">
     <li>
+      <a href="./agent-deployment.html"><strong>Agent Deployment Lifecycle</strong></a>
+      <span class="spec-item-status">DRAFT v1</span>
+      <p class="spec-item-desc">openwop has packs, manifest agents (RFC 0070/0072/0074), approvals (RFC 0051), RBAC (RFC 0049), and — with RFC 0081 — eval scorecards. What it lacks is a lifecycle: a way to…</p>
+    </li>
+    <li>
+      <a href="./agent-evaluation.html"><strong>Agent Evaluation</strong></a>
+      <span class="spec-item-status">DRAFT v1</span>
+      <p class="spec-item-desc">openwop can run a manifest agent (agent-memory.md, multi-agent-execution.md; RFC 0070/0072/0077) and observe its reasoning, tool calls, cost (RFC 0026 provider.usage), and human…</p>
+    </li>
+    <li>
+      <a href="./agent-org-chart.html"><strong>Agent Org-Chart</strong></a>
+      <span class="spec-item-status">DRAFT v1</span>
+      <p class="spec-item-desc">RFC 0086 gives openwop the standing agent instance — the named &quot;digital-twin employee&quot; that owns a workflow portfolio. The natural next question on every agent platform is…</p>
+    </li>
+    <li>
+      <a href="./agent-platform-profile.html"><strong>`openwop-agent-platform` Operational Annex</strong></a>
+      <span class="spec-item-status">DRAFT v1</span>
+      <p class="spec-item-desc">openwop now has many optional agent-platform capabilities — manifest + live agent runtime (RFC 0070/0072/0077), a tool catalog + tool hooks (RFC 0078/0064), safe-fetch + egress…</p>
+    </li>
+    <li>
+      <a href="./agent-roster.html"><strong>Standing Agent Roster + Workflow Portfolio</strong></a>
+      <span class="spec-item-status">DRAFT v1</span>
+      <p class="spec-item-desc">openwop has manifest agents (RFC 0070), an inventory + dispatch surface (RFC 0072), tenant scoping (RFC 0074), live dispatch (RFC 0077), and — with RFC 0082 — a per-version…</p>
+    </li>
+    <li>
       <a href="./agent-workspace.html"><strong>Agent Workspace (`host.workspace`)</strong></a>
       <span class="spec-item-status">DRAFT v1</span>
       <p class="spec-item-desc">Autonomous agents keep persistent ground-truth files — IDENTITY.md, standing DIRECTIVES.md, a MEMORY-INDEX.json — that are loaded at the start of every session and treated as…</p>
@@ -441,9 +466,24 @@
       <p class="spec-item-desc">Workflow nodes already produce typed artifacts — a PRD, a slide deck, a CAD model — and the protocol already carries a thin trace of them: WorkflowNode.artifactType (a string…</p>
     </li>
     <li>
+      <a href="./budget-policy.html"><strong>Budget, Quota, and Cost Policy</strong></a>
+      <span class="spec-item-status">DRAFT v1</span>
+      <p class="spec-item-desc">openwop observes spend — RFC 0026 emits per-call provider.usage (tokens + optional cost) and observability.md projects openwop.cost. — but it cannot enforce a budget. A user…</p>
+    </li>
+    <li>
       <a href="./chat-card-packs.html"><strong>AI Chat Card Packs</strong></a>
       <span class="spec-item-status">FINAL v1</span>
       <p class="spec-item-desc">A recurring host pattern is the AI step card: a user (or an agent) fills a small form, the host composes a prompt from those inputs, calls an LLM, validates the structured result,…</p>
+    </li>
+    <li>
+      <a href="./tool-catalog.html"><strong>Portable Tool Catalog</strong></a>
+      <span class="spec-item-status">DRAFT v1</span>
+      <p class="spec-item-desc">openwop tools live behind five unrelated surfaces — node-pack typeIds (RFC 0003), workflow-as-tool (core.subWorkflow / RFC 0013 chains), MCP servers (host.mcp), connectors (RFC…</p>
+    </li>
+    <li>
+      <a href="./trigger-bridge.html"><strong>Durable Trigger + Channel Bridge</strong></a>
+      <span class="spec-item-status">DRAFT v1</span>
+      <p class="spec-item-desc">openwop has the pieces of durable inbound work — scheduling (RFC 0052), dead-letter sinks (RFC 0053), a queue bus (RFC 0017), webhooks (webhooks.md), cross-host causation (RFC…</p>
     </li>
   </ul>
 </section></article></div><script src="/assets/spec-toc.js" defer></script>

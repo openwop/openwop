@@ -277,6 +277,13 @@ channels:
       interruptRequested: { $ref: &#39;#/components/messages/InterruptRequested&#39; }
       interruptResolved:  { $ref: &#39;#/components/messages/InterruptResolved&#39; }
       artifactCreated:   { $ref: &#39;#/components/messages/ArtifactCreated&#39; }
+      evalStarted:       { $ref: &#39;#/components/messages/EvalStarted&#39; }
+      evalScored:        { $ref: &#39;#/components/messages/EvalScored&#39; }
+      evalCompleted:     { $ref: &#39;#/components/messages/EvalCompleted&#39; }
+      deploymentPromoted:       { $ref: &#39;#/components/messages/DeploymentPromoted&#39; }
+      deploymentRolledBack:     { $ref: &#39;#/components/messages/DeploymentRolledBack&#39; }
+      deploymentCanaryAdjusted: { $ref: &#39;#/components/messages/DeploymentCanaryAdjusted&#39; }
+      deploymentStateChanged:   { $ref: &#39;#/components/messages/DeploymentStateChanged&#39; }
 
   runEventsValues:
     address: /runs/{runId}/events
@@ -448,6 +455,59 @@ components:
   # consumer handlers.
 
   messages:
+
+    # ── Agent evaluation (RFC 0081) — content-free recorded-fact events ───
+    EvalStarted:
+      name: eval.started
+      title: Eval run started (RFC 0081)
+      summary: An eval run began. Content-free — suite provenance + counts only. Gated on capabilities.agents.evalSuite.supported.
+      contentType: application/json
+      payload:
+        $ref: &#39;#/components/schemas/EvalStartedPayload&#39;
+    EvalScored:
+      name: eval.scored
+      title: Eval task scored (RFC 0081)
+      summary: One eval task was scored (emitted per task, after its terminal agent.decided). Content-free — taskId + score + scalars only, never task output (eval-summary-no-content-leak).
+      contentType: application/json
+      payload:
+        $ref: &#39;#/components/schemas/EvalScoredPayload&#39;
+    EvalCompleted:
+      name: eval.completed
+      title: Eval run completed (RFC 0081)
+      summary: An eval run finished. Content-free aggregate scalars; the full scorecard is the run output, read via GET /v1/runs/{runId}/eval-summary.
+      contentType: application/json
+      payload:
+        $ref: &#39;#/components/schemas/EvalCompletedPayload&#39;
+
+    # ── Agent deployment lifecycle (RFC 0082) — content-free audit events ─
+    DeploymentPromoted:
+      name: deployment.promoted
+      title: Deployment promoted (RFC 0082)
+      summary: A version was promoted into a new lifecycle state (gated by RFC 0049 deploy:* + RFC 0051 approvalGate + RFC 0081 requiredEval). Content-free (deployment-event-no-content-leak). Principal-stamped + audit-logged.
+      contentType: application/json
+      payload:
+        $ref: &#39;#/components/schemas/DeploymentPromotedPayload&#39;
+    DeploymentRolledBack:
+      name: deployment.rolled-back
+      title: Deployment rolled back (RFC 0082)
+      summary: An active version was rolled back and a prior version restored. Content-free; recorded-fact; audit-logged.
+      contentType: application/json
+      payload:
+        $ref: &#39;#/components/schemas/DeploymentRolledBackPayload&#39;
+    DeploymentCanaryAdjusted:
+      name: deployment.canary.adjusted
+      title: Deployment canary adjusted (RFC 0082)
+      summary: An active version&#39;s canary traffic share changed. Content-free; recorded-fact; audit-logged.
+      contentType: application/json
+      payload:
+        $ref: &#39;#/components/schemas/DeploymentCanaryAdjustedPayload&#39;
+    DeploymentStateChanged:
+      name: deployment.state.changed
+      title: Deployment state changed (RFC 0082)
+      summary: A non-promotion lifecycle transition (pause / resume / deprecate). Content-free; recorded-fact; audit-logged.
+      contentType: application/json
+      payload:
+        $ref: &#39;#/components/schemas/DeploymentStateChangedPayload&#39;
 
     # ── Run-lifecycle ────────────────────────────────────────────────────
     RunStarted:
@@ -675,6 +735,16 @@ components:
     # `GET /v1/runs/{runId}/events/poll`) and offline replay tools.
     RunEventDoc:
       $ref: &#39;../schemas/run-event.schema.json&#39;
+
+    # RFC 0081 — eval event payloads.
+    EvalStartedPayload:   { $ref: &#39;../schemas/run-event-payloads.schema.json#/$defs/evalStarted&#39; }
+    EvalScoredPayload:    { $ref: &#39;../schemas/run-event-payloads.schema.json#/$defs/evalScored&#39; }
+    EvalCompletedPayload: { $ref: &#39;../schemas/run-event-payloads.schema.json#/$defs/evalCompleted&#39; }
+    # RFC 0082 — deployment event payloads.
+    DeploymentPromotedPayload:       { $ref: &#39;../schemas/run-event-payloads.schema.json#/$defs/deploymentPromoted&#39; }
+    DeploymentRolledBackPayload:     { $ref: &#39;../schemas/run-event-payloads.schema.json#/$defs/deploymentRolledBack&#39; }
+    DeploymentCanaryAdjustedPayload: { $ref: &#39;../schemas/run-event-payloads.schema.json#/$defs/deploymentCanaryAdjusted&#39; }
+    DeploymentStateChangedPayload:   { $ref: &#39;../schemas/run-event-payloads.schema.json#/$defs/deploymentStateChanged&#39; }
 
     # RFC 0056. The run.annotated notification carries an Annotation —
     # NOT a RunEventDoc — because annotations are a side-resource, not

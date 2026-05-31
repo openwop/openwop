@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — openwop Spec v1 — Standing Agent Roster + Workflow Portfolio</title>
+  <meta name="description" content="openwop has manifest agents (RFC 0070), an inventory + dispatch surface (RFC 0072), tenant scoping (RFC 0074), live dispatch (RFC 0077), and — with RFC 0082 — a per-version deployment lifecycle. What it lacks is the standing instance: a named,…"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/agent-roster.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — openwop Spec v1 — Standing Agent Roster + Workflow Portfolio"/>
+  <meta property="og:description" content="openwop has manifest agents (RFC 0070), an inventory + dispatch surface (RFC 0072), tenant scoping (RFC 0074), live dispatch (RFC 0077), and — with RFC 0082 — a per-version deployment lifecycle. What it lacks is the standing instance: a named,…"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/agent-roster.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — openwop Spec v1 — Standing Agent Roster + Workflow Portfolio"/>
+  <meta name="twitter:description" content="openwop has manifest agents (RFC 0070), an inventory + dispatch surface (RFC 0072), tenant scoping (RFC 0074), live dispatch (RFC 0077), and — with RFC 0082 — a per-version deployment lifecycle. What it lacks is the standing instance: a named,…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "openwop Spec v1 — Standing Agent Roster + Workflow Portfolio",
+  "description": "openwop has manifest agents (RFC 0070), an inventory + dispatch surface (RFC 0072), tenant scoping (RFC 0074), live dispatch (RFC 0077), and — with RFC 0082 — a per-version deployment lifecycle. What it lacks is the standing instance: a named,…",
+  "url": "https://openwop.dev/spec/v1/agent-roster.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "dependencies": "JSON Schema 2020-12, REST + SSE + signed webhooks"
+}</script>
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>Standing Agent Roster + Workflow Portfolio</h1>
+      <p class="lede">openwop has manifest agents (RFC 0070), an inventory + dispatch surface (RFC 0072), tenant scoping (RFC 0074), live dispatch (RFC 0077), and — with RFC 0082 — a per-version deployment lifecycle. What it lacks is the standing instance: a named,…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#a-the-roster-entry-the-host-id-dispatch-handle">§A — The roster entry + the host:&lt;id&gt; dispatch handle</a></li>
+      <li class="toc-top"><a href="#b-portfolio-discovery">§B — Portfolio discovery</a></li>
+      <li class="toc-top"><a href="#c-run-attribution-roster-run-initiated">§C — Run attribution: roster.run.initiated</a></li>
+      <li class="toc-top"><a href="#d-triggers-compose-existing-primitives-no-new-workflowtrigger-type">§D — Triggers compose existing primitives (no new WorkflowTrigger.type)</a></li>
+      <li class="toc-top"><a href="#e-the-work-surface-stays-a-host-vendor-extension">§E — The work surface stays a host/vendor extension</a></li>
+      <li class="toc-top"><a href="#f-capability-advertisement-agents-roster">§F — Capability advertisement (agents.roster)</a></li>
+      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
+    </ul>
+  </aside><article class="spec-doc"><blockquote><p><strong>Status: DRAFT v1.x (filed via <a href="../../RFCS/0086-standing-agent-roster-and-workflow-portfolio.md">RFC 0086</a>, 2026-05-30).</strong> Additive v1.x extension — not part of the v1.0 conformance gate. Lands the standing agent-instance record, the workflow-portfolio + inventory projection, the content-free <code>roster.run.initiated</code> attribution event, and the <code>capabilities.agents.roster</code> advertisement. The <code>GET /v1/agents/roster</code> endpoint, the SDK helpers, the behavioral attribution scenario, and the reference-host roster store land at <code>Active → Accepted</code>. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+<h2 id="why-this-exists">Why this exists</h2>
+<p>openwop has manifest agents (RFC 0070), an inventory + dispatch surface (RFC 0072), tenant scoping (RFC 0074), live dispatch (RFC 0077), and — with RFC 0082 — a per-version deployment lifecycle. What it lacks is the <strong>standing instance</strong>: a named, tenant-local, mutable agent — the "digital-twin employee" <code>&quot;Sally&quot;</code> — that is <strong>responsible, by role, for a portfolio of workflows</strong> and that <strong>fires that portfolio on schedules and on inbound work items</strong>, with the resulting runs <strong>attributed back to it</strong>. The <a href="../../schemas/agent-manifest.schema.json"><code>AgentManifest</code></a> is the <em>class</em> (a pack-distributed, immutable template whose <code>agentId</code> pattern deliberately excludes the <code>host:&amp;lt;id&amp;gt;</code> instance form), and the RFC 0082 deployment record is the <em>version channel</em> (which build serves). Neither is the <em>named worker that owns standing work</em>. An adopter that needs this carries it entirely in a host-private record — invisible to discovery, to conformance, to <code>/.well-known/openwop</code>, and to any second host.</p>
+<p>This document adds that instance <strong>additively</strong>: a <a href="../../schemas/agent-roster-entry.schema.json">roster entry</a> keyed by a <code>host:&amp;lt;id&amp;gt;</code> <code>rosterId</code>, carrying <code>persona</code> (the human name), an <code>agentRef</code> (the manifest/deployment it instantiates), a <code>workflows[]</code> portfolio, an owner triple (RFC 0048, tenant-scoped per RFC 0074), and an <code>enabled</code> flag; an inventory projection so a peer/operator can discover an agent's responsibilities; one content-free <code>roster.run.initiated</code> recorded-fact event that attributes a trigger-fired run to the member; and an <code>agents.roster</code> capability. Triggers <strong>compose</strong> existing primitives — schedules via RFC 0052, durable inbound work items via RFC 0083 — so this surface adds <strong>no new <code>WorkflowTrigger.type</code></strong>, and the concrete work surface (a Kanban board, a queue, an inbox) stays a host/vendor extension.</p>
+<h2 id="a-the-roster-entry-the-host-lt-id-gt-dispatch-handle">§A — The roster entry + the <code>host:&amp;lt;id&amp;gt;</code> dispatch handle</h2>
+<p>A <a href="../../schemas/agent-roster-entry.schema.json">roster entry</a> is a host-local, tenant-scoped, <strong>mutable</strong> record — the standing agent instance. It is deliberately <em>not</em> the manifest (immutable, pack-distributed) and <em>not</em> the deployment record (per-version); it <strong>references</strong> them via <code>agentRef</code> (<code>agentId</code> + an optional exact <code>version</code> XOR a <code>channel</code>, per RFC 0082 §A).</p>
+<p><code>rosterId</code> <strong>MUST</strong> be a <code>host:&amp;lt;id&amp;gt;</code> form — the runtime-synthesis namespace <a href="../../schemas/agent-ref.schema.json"><code>AgentRef</code></a> reserves for host-internal agents that don't ship as packs (RFC 0002). It is a <strong>dispatchable</strong> id, not a parallel id space: a <code>WorkflowNode.agent: { &quot;agentId&quot;: &quot;&amp;lt;rosterId&amp;gt;&quot; }</code> (or a <code>POST /v1/runs</code> against it) <strong>MUST</strong> be resolved by the host to the entry's bound <code>agentRef</code>, <strong>MUST</strong> project the entry's <code>persona</code> onto the resulting dispatch <code>AgentRef</code>, and <strong>MUST</strong> emit <code>roster.run.initiated</code> (§C). The manifest schema still forbids <code>host:&amp;lt;id&amp;gt;</code> as a <em>manifest</em> <code>agentId</code> (RFC 0070); this surface names the runtime instance the reserved form was always for. <code>persona</code> reuses <code>AgentRef.persona</code> semantics (RFC 0002). <code>workflows[]</code> is the standing portfolio; an entry <strong>MUST NOT</strong> list a workflow outside its <code>owner</code> tenant scope (the WCT/CTI carry-forward). <code>enabled: false</code> makes the entry's portfolio <strong>triggers</strong> inert (no run fires) without deleting it; a disabled member <strong>SHOULD</strong> remain discoverable so an operator can see paused workers.</p>
+<h2 id="b-portfolio-discovery">§B — Portfolio discovery</h2>
+<p>A host advertising <code>agents.roster</code> exposes the standing roster at two additive sibling reads (lands at <code>Active → Accepted</code>):</p>
+<pre class="lang-"><code>GET /v1/agents/roster              → { &quot;roster&quot;: AgentRosterEntry[], &quot;total&quot;: integer }
+GET /v1/agents/roster/{rosterId}   → AgentRosterEntry</code></pre>
+<p>Both <strong>MUST</strong> be tenant-scoped exactly as RFC 0074 scopes <code>GET /v1/agents</code>: a <code>&#39;tenant&#39;</code>-install host returns only entries within the authenticated principal's owner triple, and an entry outside it <strong>MUST</strong> <code>404</code> (never disclosing another tenant's roster). Additionally, the RFC 0072 inventory entry (<a href="../../schemas/agent-inventory-response.schema.json"><code>agent-inventory-response.schema.json</code></a>) gains an <strong>additive optional</strong> <code>roster</code> projection — the standing instances of a manifest agent visible to the caller, each with its <code>persona</code> + <code>workflows[]</code> portfolio — so a single <code>GET /v1/agents</code> call surfaces responsibilities. A host that omits <code>agents.roster</code> omits these fields and <code>501</code>s the reads.</p>
+<h2 id="c-run-attribution-roster-run-initiated">§C — Run attribution: <code>roster.run.initiated</code></h2>
+<p>When a trigger (a schedule per RFC 0052, or a durable work item per RFC 0083) fires a workflow <strong>that is in a roster entry's portfolio</strong>, the host <strong>MUST</strong> emit one <a href="../../schemas/run-event-payloads.schema.json"><code>roster.run.initiated</code></a> event as a recorded fact on the resulting run, attributing it to the standing agent. The host <strong>MUST</strong> emit it once, immediately after <code>run.started</code> (the run's first event) and before any agent invocation — a portfolio workflow MAY contain non-agent nodes or several agent invocations, so attribution is to the <em>run</em>, not to a single <code>agent.invocation.started</code> bracket.</p>
+<p>The payload is <strong>content-free</strong> (<code>roster-attribution-no-content</code>): <code>{ rosterId, persona, agentId, workflowId, triggerSource, triggerSubscriptionId? }</code> — ids + persona + trigger source ONLY, never the inbound work-item body, the resolved prompt, or credential material (SR-1). It is a <strong>recorded-fact event</strong> per <a href="./replay.md"><code>replay.md</code></a> §"Recorded-fact events": on replay against a checkpoint the host <strong>MUST</strong> re-emit it from the log and <strong>MUST NOT</strong> regenerate its identifiers — so a replayed run is attributed to the same member even if the entry was since renamed, re-pointed, or deleted. When the fire came through the RFC 0083 trigger bridge, <code>triggerSubscriptionId</code> carries the subscription id so the trigger → run → roster chain resolves via <code>/ancestry</code> (RFC 0040).</p>
+<h2 id="d-triggers-compose-existing-primitives-no-new-workflowtrigger-type">§D — Triggers compose existing primitives (no new <code>WorkflowTrigger.type</code>)</h2>
+<p>This surface adds <strong>no</strong> new trigger type. A roster entry's portfolio fires through existing primitives: <strong>scheduled</strong> portfolio runs use RFC 0052 (the <code>schedule</code> <code>WorkflowTrigger</code>); <strong>inbound work-item</strong> portfolio runs use RFC 0083 (a durable <code>trigger-subscription</code> with at-least-once delivery, dedup, retry, dead-letter, and the trigger→run <code>causationId</code>). The roster entry binds the <em>owner</em> + supplies the §C attribution; the firing contract stays RFC 0052/0083 (no double-ownership of trigger semantics).</p>
+<h2 id="e-the-work-surface-stays-a-host-vendor-extension">§E — The work surface stays a host/vendor extension</h2>
+<p>This surface does <strong>not</strong> standardize Kanban boards, columns, cards, swimlanes, or any concrete work-item UI (the RFC 0083 §E channels-stay-extensions precedent). A host's board is a host/vendor extension; what it MUST do to participate is <strong>bridge a "work item entered the watched column" event into an RFC 0083 trigger delivery</strong> that fires a roster-portfolio workflow, so the §C attribution + the RFC 0040 causation chain hold. A future RFC MAY standardize a single <code>kanban.card.moved</code> event behind a <code>host.kanban</code> capability iff cross-host demand appears — out of scope here.</p>
+<h2 id="f-capability-advertisement-agents-roster">§F — Capability advertisement (<code>agents.roster</code>)</h2>
+<pre class="lang-jsonc"><code>&quot;agents&quot;: { &quot;roster&quot;: {
+  &quot;supported&quot;: true,
+  &quot;installScope&quot;: &quot;tenant&quot;,                 // &#39;host&#39; | &#39;tenant&#39; — MUST equal agents.manifestRuntime.installScope (RFC 0074)
+  &quot;portfolioTriggerSources&quot;: [&quot;schedule&quot;, &quot;queue&quot;, &quot;webhook&quot;]
+}}</code></pre>
+<p><code>agents.roster</code> <strong>REQUIRES</strong> <code>agents.manifestRuntime.supported: true</code> (a roster entry instantiates a manifest agent — RFC 0070); advertising <code>roster</code> without <code>manifestRuntime</code> is a <code>validation_error</code>. <code>agents.roster.installScope</code> <strong>MUST equal</strong> <code>agents.manifestRuntime.installScope</code>. Truthful advertisement (RFC 0031): a source not listed in <code>portfolioTriggerSources</code> does not fire portfolios on this host. A host that omits the block does not maintain a roster (today's default); the behavioral conformance scenarios skip cleanly.</p>
+<h2 id="open-spec-gaps">Open spec gaps</h2>
+<table>
+<thead><tr><th>Gap</th><th>Disposition</th></tr></thead>
+<tbody>
+<tr><td><code>GET /v1/agents/roster[/{id}]</code> + roster-management endpoints</td><td>Deferred to <code>Active → Accepted</code> (OpenAPI/AsyncAPI + SDK helpers). The read surface is the interop slice; management is host-private at v1.x.</td></tr>
+<tr><td>Behavioral attribution + scoping conformance</td><td>Deferred to <code>Active → Accepted</code> (gated on <code>agents.roster.supported</code>); the always-on <code>agent-roster-shape.test.ts</code> asserts the wire contract now.</td></tr>
+<tr><td>Reference-host roster store</td><td>Demonstrated as a host-extension at <code>/v1/host/sample/roster</code> (apps/workflow-engine); the normative <code>GET /v1/agents/roster</code> reference wiring lands at <code>Active → Accepted</code>.</td></tr>
+<tr><td>Dispatch-as-agent (resolving <code>agentRef</code> → the executing agent)</td><td>The reference impl attributes by <code>agentRef</code>; executing the portfolio workflow <em>as</em> that agent is deferred.</td></tr>
+<tr><td><code>kanban.card.moved</code> as a normative event</td><td>Deferred to a future <code>host.kanban</code> RFC iff cross-host demand appears (§E).</td></tr>
+</tbody></table><footer class="doc-edit"><a href="https://github.com/openwop/openwop/edit/main/spec/v1/agent-roster.md" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>

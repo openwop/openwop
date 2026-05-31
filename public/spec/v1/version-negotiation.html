@@ -195,6 +195,7 @@
       <li class="toc-sub"><a href="#events-poll-forward-compat-tolerance-normative">events/poll forward-compat tolerance (normative)</a></li>
       <li class="toc-top"><a href="#deploy-ordering-decision-matrix">Deploy ordering decision matrix</a></li>
       <li class="toc-top"><a href="#deploy-ordering-decision-matrix">Deploy ordering decision matrix</a></li>
+      <li class="toc-top"><a href="#channel-resolution-replay">Channel resolution + replay</a></li>
       <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
       <li class="toc-top"><a href="#references">References</a></li>
     </ul>
@@ -379,6 +380,10 @@ if (v === 1) {
 <tr><td>Remove old branch via <code>ctx.getVersion(id, M+1, ...)</code></td><td><code>min</code> (M+1)</td><td><strong>Drain or migrate</strong> runs holding pinned ≤ M, else they error</td><td>Server first</td></tr>
 </tbody></table>
 <p>⚠️ = optional but recommended   ✗ = mandatory (otherwise data is stranded)</p>
+<hr/>
+<h2 id="channel-resolution-replay">Channel resolution + replay</h2>
+<blockquote><p>Additive v1.x extension (RFC 0082). Applies only to hosts advertising <code>capabilities.agents.deployment.supported: true</code>.</p></blockquote>
+<p>A deployment <strong>channel</strong> (<code>AgentRef.channel</code>, e.g. <code>stable</code> / <code>canary</code> / the reserved <code>latest</code>) is a fifth, agent-scoped instance of the <strong>pinning</strong> axis above (§"Pinned change versions"): it is runtime-pinned per-run, not deploy-coordinated. When a run binds <code>agentId@channel</code>, the host <strong>MUST</strong> resolve the channel to a concrete agent-definition <code>version</code> at the <strong>first resolution</strong> of that <code>(agentId, channel)</code> pair within the run, and <strong>MUST</strong> reuse that pinned version for every subsequent resolution of the same pair in the same run — it <strong>MUST NOT</strong> re-resolve against a channel that has moved mid-run. The resolved version is a <strong>recorded fact</strong> carried on <code>agent.invocation.started.resolvedAgentVersion</code> (a recorded-fact event per <code>replay.md</code>); on <code>POST /v1/runs/{runId}:fork</code> and on <code>replay</code>-mode re-execution the host <strong>MUST</strong> re-read it and <strong>MUST NOT</strong> re-resolve the channel. A canary traffic-split draw is performed once as part of this first-resolution pin and is likewise never re-rolled on replay. A channel that resolves to no <code>active</code> version fails the run with <code>no_active_deployment</code>. See <a href="./agent-deployment.md"><code>agent-deployment.md</code></a> §B for the full contract.</p>
 <hr/>
 <h2 id="open-spec-gaps">Open spec gaps</h2>
 <table>

@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/agent-roster-entry.schema.json",
+  "title": "AgentRosterEntry",
+  "description": "RFC 0086 §A. A standing agent INSTANCE — a named, tenant-scoped, mutable agent (the 'digital-twin employee', e.g. \"Sally\") that REFERENCES a manifest/deployment (RFC 0070/0082) and OWNS a workflow portfolio (the workflows it is responsible for by role). Distinct from the immutable AgentManifest (the pack-distribution class) and from the RFC 0082 deployment record (the per-version channel). `rosterId` IS a dispatchable `host:<id>` AgentRef agentId — the runtime-synthesis namespace RFC 0002 reserves for host-internal agents that don't ship as packs (NOT a parallel id space): dispatching it resolves the bound `agentRef` and projects `persona`. Content-free of any system-prompt body or credential material (SR-1). The record is host-internal + mutable; this schema is the canonical wire shape a host exposes via GET /v1/agents/roster (the endpoint lands at Active → Accepted per RFC 0086 §Conformance).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["rosterId", "persona", "agentRef", "owner"],
+  "properties": {
+    "rosterId": {
+      "type": "string",
+      "pattern": "^host:[a-z0-9][a-z0-9._-]*$",
+      "minLength": 6,
+      "maxLength": 128,
+      "description": "Host-issued stable instance id in the reserved `host:<id>` AgentRef form (RFC 0002 / RFC 0086 §A). The dispatch handle for 'run as this agent': a `WorkflowNode.agent: { agentId: rosterId }` resolves to this entry's `agentRef` + stamps `persona`."
+    },
+    "persona": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Human display name (e.g. \"Sally\"). Reuses `AgentRef.persona` semantics (RFC 0002) — projected onto the dispatch AgentRef. Free-form; MAY collide within a tenant (`rosterId` is the uniqueness key)."
+    },
+    "agentRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agentId"],
+      "description": "The manifest/deployment this instance instantiates (a trimmed AgentRef — RFC 0002). `version` (exact) XOR `channel` (RFC 0082) — never both; absent ⇒ host-default resolution (RFC 0070).",
+      "properties": {
+        "agentId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 256,
+          "description": "The manifest agentId this instance runs (matches `AgentManifest.agentId`). MUST be resolvable by the host (RFC 0070)."
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Exact agent-definition version pin (RFC 0002). Mutually exclusive with `channel`."
+        },
+        "channel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Named deployment channel (RFC 0082 §A), e.g. `stable`. Resolved + pinned per run at first resolution. Mutually exclusive with `version`."
+        }
+      },
+      "not": { "required": ["version", "channel"] }
+    },
+    "workflows": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "maxLength": 128 },
+      "description": "The standing portfolio: workflow ids this agent owns by role (RFC 0086 §A/§B). Each MUST be resolvable by the host and within the entry's `owner` tenant scope (the WCT/CTI carry-forward). Absent ⇒ empty portfolio."
+    },
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tenantId"],
+      "description": "RFC 0048 owner triple the entry is scoped by. On a `'tenant'`-install host (RFC 0074), GET /v1/agents/roster returns only entries within the caller's owner triple; a cross-tenant entry 404s.",
+      "properties": {
+        "tenantId": { "type": "string", "minLength": 1, "maxLength": 256, "description": "Owning tenant." },
+        "workspaceId": { "type": "string", "minLength": 1, "maxLength": 256, "description": "MAY. Owning workspace within the tenant." }
+      }
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "When `false`, the entry's portfolio triggers are inert (no run fires) — the member is paused but still discoverable (RFC 0086 §A). Absent ⇒ `true`."
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "MAY. Short UI label; falls back to `persona`."
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 500,
+      "description": "MAY. One-line summary for catalog / console surfaces."
+    }
+  }
+}
