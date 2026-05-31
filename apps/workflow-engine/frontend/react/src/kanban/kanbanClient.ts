@@ -61,6 +61,16 @@ export async function listBoards(): Promise<KanbanBoard[]> {
   return ((await res.json()) as { boards: KanbanBoard[] }).boards;
 }
 
+export type KanbanBoardWithCards = KanbanBoard & { cards: KanbanCard[] };
+
+/** Boards + their cards in ONE request (`?include=cards`). Lets the agents
+ *  dashboard render every agent's lane preview without an N+1 `getBoard`. */
+export async function listBoardsWithCards(): Promise<KanbanBoardWithCards[]> {
+  const res = await fetch(`${base}/boards?include=cards`, fetchOpts({ headers: authedHeaders() }));
+  if (!res.ok) throw new Error(`listBoardsWithCards returned ${res.status}`);
+  return ((await res.json()) as { boards: KanbanBoardWithCards[] }).boards;
+}
+
 export async function createBoard(input: {
   name: string;
   triggerWorkflowId?: string;

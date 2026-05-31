@@ -95,6 +95,16 @@ describe('agents-demo backend foundations', () => {
     );
     expect(detail.body.cards.length).toBeGreaterThan(0);
     expect(detail.body.cards.some((c) => c.source === 'discord')).toBe(true);
+
+    // ?include=cards returns every board WITH its cards in one request (the
+    // dashboard batch path — no N+1 getBoard).
+    const batched = await api<{ boards: Array<{ id: string; rosterId?: string; cards: Array<{ source?: string }> }> }>(
+      '/v1/host/sample/kanban/boards?include=cards',
+    );
+    expect(batched.status).toBe(200);
+    const sallyBoard = batched.body.boards.find((b) => b.rosterId === sally.rosterId)!;
+    expect(Array.isArray(sallyBoard.cards)).toBe(true);
+    expect(sallyBoard.cards.length).toBeGreaterThan(0);
   });
 
   it('heartbeat check claims a To Do card, starts a run, and moves it to Working', async () => {

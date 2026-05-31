@@ -42,6 +42,7 @@ import {
   getBoard,
   getCard,
   listBoards,
+  listBoardsWithCards,
   listCards,
   moveCard,
   notifyBoardChanged,
@@ -233,6 +234,13 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
 
   app.get('/v1/host/sample/kanban/boards', async (req, res, next) => {
     try {
+      // `?include=cards` returns each board with its cards attached in a single
+      // round trip — lets the agents dashboard render lane previews without an
+      // N+1 `getBoard` per agent (which trips the per-IP read rate limit).
+      if (req.query.include === 'cards') {
+        res.json({ boards: await listBoardsWithCards(tenantOf(req)) });
+        return;
+      }
       res.json({ boards: await listBoards(tenantOf(req)) });
     } catch (err) {
       next(err);

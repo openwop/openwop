@@ -175,6 +175,31 @@ export async function getCard(cardId: string): Promise<KanbanCard | null> {
   return cards.get(cardId);
 }
 
+/** One-scan batch: every board the tenant owns, each with its cards attached.
+ *  Collapses the dashboard's N+1 (one `getBoard` per board → N card scans) into
+ *  a single boards scan + a single cards scan, grouped in memory. */
+export async function listBoardsWithCards(
+  tenantId: string,
+): Promise<Array<KanbanBoard & { cards: KanbanCard[] }>> {
+  const tenantBoards = (await boards.list())
+    .filter((b) => b.tenantId === tenantId)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const boardIds = new Set(tenantBoards.map((b) => b.id));
+  const byBoard = new Map<string, KanbanCard[]>();
+  for (const card of await cards.list()) {
+    if (!boardIds.has(card.boardId)) continue;
+    const arr = byBoard.get(card.boardId) ?? [];
+    arr.push(card);
+    byBoard.set(card.boardId, arr);
+  }
+  return tenantBoards.map((b) => ({
+    ...b,
+    cards: (byBoard.get(b.id) ?? []).sort(
+      (x, y) => x.columnId.localeCompare(y.columnId) || x.order - y.order,
+    ),
+  }));
+}
+
 export async function createCard(input: {
   boardId: string;
   columnId: string;
