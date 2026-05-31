@@ -1300,6 +1300,17 @@ export function openSqliteStorage(dbPath: string): Storage {
          ON CONFLICT(k) DO UPDATE SET v = excluded.v, updated_at = excluded.updated_at`,
       ).run(key, value, new Date().toISOString());
     },
+    async kvList(keyPrefix) {
+      const escaped = keyPrefix.replace(/[\\%_]/g, '\\$&');
+      const rows = db
+        .prepare(`SELECT k, v FROM host_ext_kv WHERE k LIKE ? ESCAPE '\\' ORDER BY k`)
+        .all(`${escaped}%`) as Array<{ k: string; v: string }>;
+      return rows.map((r) => ({ key: r.k, value: r.v }));
+    },
+    async kvDelete(key) {
+      const info = db.prepare(`DELETE FROM host_ext_kv WHERE k = ?`).run(key);
+      return info.changes > 0;
+    },
 
     async close() {
       db.close();

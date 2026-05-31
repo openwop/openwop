@@ -413,6 +413,12 @@ export interface Storage {
   // fanning out a method per entity. NOT a normative protocol surface.
   kvGet(key: string): Promise<string | null>;
   kvSet(key: string, value: string): Promise<void>;
+  /** Read-through scan of every (key,value) whose key starts with `keyPrefix`.
+   *  Backs the per-entity host-ext collections (one row per board/card/roster
+   *  entry/...), so a list reads live rows rather than a per-instance cache. */
+  kvList(keyPrefix: string): Promise<ReadonlyArray<{ key: string; value: string }>>;
+  /** Delete one key. Returns true if a row existed. */
+  kvDelete(key: string): Promise<boolean>;
 
   // ── lifecycle ──
   close(): Promise<void>;
