@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0087): Agent Org-Chart — Active → Accepted (2026-05-31)
+
+RFC 0087 graduated `Active → Accepted` on a **non-steward host**. MyndHyve `workflow-runtime` (rev `workflow-runtime-00426-lur`, live on `https://api.myndhyve.ai`) advertises `agents.orgChart = {supported:true, installScope:"tenant", departmentNesting:true, responsibilityView:true}` field-for-field (`installScope` matching its `agents.roster`, per RFC 0087 §E), serves the normative `GET /v1/agents/org-chart` + `/{departmentId}` (steward-curl-verified `401` auth-gated — route mounted, not a `/v1/host/sample/*` extension), and a §B projector strips every authority field off the live wire. The two gated behavioral scenarios RFC 0087 §Conformance named but deferred at `Draft → Active` were the steward prerequisite: authored in `@openwop/openwop-conformance@1.12.0` (`org-position-no-authority-escalation` + `agent-org-chart-scoping`) and MyndHyve passes both **non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true`** (chart carries 2 members; acyclic `reportsTo`; cross-tenant 404; §D responsibility roll-up dedup). RFC header + `INTEROP-MATRIX.md` updated with the dated graduation + the steward-curl evidence. No wire-shape change (the schema, capability block, and `org-position-no-authority-escalation` invariant shipped at `Draft → Active`). Remaining agent-platform-arc graduation: RFC 0083 trigger-bridge (Phase 3).
+
 ### fix(app): Kanban live-refresh polling fallback (2026-05-31)
 
 The demo's in-browser Kanban live-refresh relied on the board-events SSE stream, but the production `app.openwop.dev` edge (Firebase Hosting `/api/**` → Cloud Run rewrite) buffers `text/event-stream`, so the push never flushes to the browser (the stream works same-site / against Cloud Run directly). Adds a ~5s polling floor alongside the existing SSE subscription while a board is open — same-origin, cookie-authed, reliable through the CDN. The SSE path is retained for instant updates where reachable. Demo-only; no wire/spec change.
