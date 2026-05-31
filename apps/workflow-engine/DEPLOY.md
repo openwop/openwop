@@ -135,6 +135,12 @@ OPENWOP_API_KEYS: ""
 OPENWOP_INSTALL_PACKS: "$PACKS"
 EOF
 
+# Multi-instance is safe: the host-extension stores (Kanban / roster /
+# org-chart / RFC 0083 trigger bridge) are READ-THROUGH on the durable kv
+# table — every read/write hits storage, so instances stay consistent. (Before
+# that hardening they were a boot-hydrated in-memory cache, which required
+# pinning to `--max-instances=1`; if the live service is still pinned, restore
+# a multi-instance value with `gcloud run services update … --max-instances=10`.)
 gcloud run deploy openwop-app-backend \
   --source apps/workflow-engine \
   --region us-central1 \

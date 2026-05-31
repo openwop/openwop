@@ -14,6 +14,8 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import http from 'node:http';
 import { createApp } from '../src/index.js';
+import { openSqliteStorage } from '../src/storage/sqlite/index.js';
+import { initHostExtPersistence, __resetHostExtPersistence } from '../src/host/hostExtPersistence.js';
 import {
   __resetRosterStore,
   createRosterEntry,
@@ -24,10 +26,21 @@ import {
 import { __resetKanbanStore } from '../src/host/kanbanService.js';
 
 describe('roster service (pure)', () => {
-  beforeEach(() => __resetRosterStore());
+  const storage = openSqliteStorage(':memory:');
+  beforeAll(() => {
+    initHostExtPersistence(storage);
+  });
+  afterAll(async () => {
+    __resetHostExtPersistence();
+    await storage.close();
+  });
+  beforeEach(async () => {
+    initHostExtPersistence(storage);
+    await __resetRosterStore();
+  });
 
-  it('creates a named instance with a host:<id> rosterId + portfolio', () => {
-    const e = createRosterEntry({
+  it('creates a named instance with a host:<id> rosterId + portfolio', async () => {
+    const e = await createRosterEntry({
       tenantId: 't1',
       persona: 'Sally',
       agentRef: { agentId: 'core.openwop.agents.brief-writer', channel: 'stable' },
@@ -39,17 +52,17 @@ describe('roster service (pure)', () => {
     expect(e.enabled).toBe(true);
   });
 
-  it('scopes list by tenant', () => {
-    createRosterEntry({ tenantId: 't1', persona: 'Sally', agentRef: { agentId: 'a.b.c.d' } });
-    createRosterEntry({ tenantId: 't2', persona: 'Sam', agentRef: { agentId: 'a.b.c.d' } });
-    expect(listRoster('t1').map((e) => e.persona)).toEqual(['Sally']);
-    expect(listRoster('t2').map((e) => e.persona)).toEqual(['Sam']);
+  it('scopes list by tenant', async () => {
+    await createRosterEntry({ tenantId: 't1', persona: 'Sally', agentRef: { agentId: 'a.b.c.d' } });
+    await createRosterEntry({ tenantId: 't2', persona: 'Sam', agentRef: { agentId: 'a.b.c.d' } });
+    expect((await listRoster('t1')).map((e) => e.persona)).toEqual(['Sally']);
+    expect((await listRoster('t2')).map((e) => e.persona)).toEqual(['Sam']);
   });
 
-  it('updates the portfolio + enabled flag', () => {
-    const e = createRosterEntry({ tenantId: 't1', persona: 'Sally', agentRef: { agentId: 'a.b.c.d' } });
-    updateRosterEntry(e.rosterId, { workflows: ['wf-1', 'wf-2'], enabled: false });
-    const after = getRosterEntry(e.rosterId);
+  it('updates the portfolio + enabled flag', async () => {
+    const e = await createRosterEntry({ tenantId: 't1', persona: 'Sally', agentRef: { agentId: 'a.b.c.d' } });
+    await updateRosterEntry(e.rosterId, { workflows: ['wf-1', 'wf-2'], enabled: false });
+    const after = await getRosterEntry(e.rosterId);
     expect(after?.workflows).toEqual(['wf-1', 'wf-2']);
     expect(after?.enabled).toBe(false);
   });
@@ -64,8 +77,6 @@ describe('roster routes + board attribution (sqlite memory app)', () => {
   beforeAll(async () => {
     process.env.OPENWOP_STORAGE_DSN = 'memory://';
     process.env.OPENWOP_AUTH_DISABLE_COOKIES = 'true';
-    __resetRosterStore();
-    __resetKanbanStore();
     const app = await createApp({
       port: PORT,
       storageDsn: 'memory://',
@@ -73,6 +84,8 @@ describe('roster routes + board attribution (sqlite memory app)', () => {
       serviceVersion: '0.0.1',
       enableConsoleTracer: false,
     });
+    await __resetRosterStore();
+    await __resetKanbanStore();
     await new Promise<void>((res) => {
       server = app.listen(PORT, res);
     });

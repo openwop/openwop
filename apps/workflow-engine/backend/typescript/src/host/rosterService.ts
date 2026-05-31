@@ -14,10 +14,10 @@
  * `rosterId` is a `host:<id>` form — the runtime-synthesis namespace RFC
  * 0002 reserves for host-internal agents that don't ship as packs (RFC
  * 0086 §A: a roster entry IS a dispatchable `host:<id>` AgentRef, not a
- * parallel id space). Store is process-local (sample-grade), mirroring
- * host/schedulingService.ts + host/kanbanService.ts; a production host
- * persists it and scopes by the RFC 0048 owner triple. This module is
- * pure data — the Kanban route owns the run side effects.
+ * parallel id space). The store is now a read-through, per-entity durable
+ * collection (host/hostExtPersistence.ts) — every read/write hits storage,
+ * so the roster is consistent across instances and survives restarts. A
+ * production host scopes by the RFC 0048 owner triple.
  *
  * Scope note (reference impl): a board-triggered run is dispatched by its
  * `workflowId`; the bound member's `agentRef` is recorded for ATTRIBUTION
@@ -31,9 +31,7 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { loadCollection, schedulePersist } from './hostExtPersistence.js';
-
-const ROSTER_KEY = 'hostext:roster';
+import { DurableCollection } from './hostExtPersistence.js';
 
 /** The manifest/deployment a roster member instantiates (a trimmed
  *  AgentRef — RFC 0002). `version` XOR `channel` per RFC 0082 §A. */
@@ -60,16 +58,7 @@ export interface RosterEntry {
   updatedAt: string;
 }
 
-const entries = new Map<string, RosterEntry>();
-
-function persistRoster(): void {
-  schedulePersist(ROSTER_KEY, () => [...entries.values()]);
-}
-
-/** Hydrate the roster from durable storage on boot. */
-export async function hydrateRoster(): Promise<void> {
-  for (const e of await loadCollection<RosterEntry>(ROSTER_KEY)) entries.set(e.rosterId, e);
-}
+const roster = new DurableCollection<RosterEntry>('roster', (e) => e.rosterId);
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -84,7 +73,7 @@ function slugify(persona: string): string {
   return base.length > 0 ? base : 'agent';
 }
 
-export function createRosterEntry(input: {
+export async function createRosterEntry(input: {
   tenantId: string;
   persona: string;
   agentRef: RosterAgentRef;
@@ -92,7 +81,7 @@ export function createRosterEntry(input: {
   label?: string;
   description?: string;
   enabled?: boolean;
-}): RosterEntry {
+}): Promise<RosterEntry> {
   // `host:<slug>-<short>` keeps the id human-readable + collision-safe.
   const rosterId = `host:${slugify(input.persona)}-${randomUUID().slice(0, 8)}`;
   const now = nowIso();
@@ -108,44 +97,41 @@ export function createRosterEntry(input: {
     createdAt: now,
     updatedAt: now,
   };
-  entries.set(rosterId, entry);
-  persistRoster();
+  await roster.put(entry);
   return entry;
 }
 
-export function listRoster(tenantId: string): RosterEntry[] {
-  return [...entries.values()]
+export async function listRoster(tenantId: string): Promise<RosterEntry[]> {
+  return (await roster.list())
     .filter((e) => e.tenantId === tenantId)
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
-export function getRosterEntry(rosterId: string): RosterEntry | undefined {
-  return entries.get(rosterId);
+export async function getRosterEntry(rosterId: string): Promise<RosterEntry | null> {
+  return roster.get(rosterId);
 }
 
-export function updateRosterEntry(
+export async function updateRosterEntry(
   rosterId: string,
   patch: { persona?: string; workflows?: string[]; enabled?: boolean; label?: string; description?: string },
-): RosterEntry | undefined {
-  const entry = entries.get(rosterId);
-  if (!entry) return undefined;
+): Promise<RosterEntry | null> {
+  const entry = await roster.get(rosterId);
+  if (!entry) return null;
   if (patch.persona !== undefined) entry.persona = patch.persona;
   if (patch.workflows !== undefined) entry.workflows = [...patch.workflows];
   if (patch.enabled !== undefined) entry.enabled = patch.enabled;
   if (patch.label !== undefined) entry.label = patch.label;
   if (patch.description !== undefined) entry.description = patch.description;
   entry.updatedAt = nowIso();
-  persistRoster();
+  await roster.put(entry);
   return entry;
 }
 
-export function deleteRosterEntry(rosterId: string): boolean {
-  const ok = entries.delete(rosterId);
-  if (ok) persistRoster();
-  return ok;
+export async function deleteRosterEntry(rosterId: string): Promise<boolean> {
+  return roster.delete(rosterId);
 }
 
 /** Test-only: drop all roster entries. */
-export function __resetRosterStore(): void {
-  entries.clear();
+export async function __resetRosterStore(): Promise<void> {
+  await roster.__clear();
 }

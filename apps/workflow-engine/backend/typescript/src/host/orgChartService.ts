@@ -14,18 +14,17 @@
  * RBAC (RFC 0049), and approval gates (RFC 0051) — none of which this
  * module touches. Position describes; it never authorizes.
  *
- * Store is process-local (sample-grade), mirroring host/rosterService.ts +
- * host/kanbanService.ts. This module is pure data + validation; the roll-up
- * reads roster portfolios via rosterService.
+ * The store is a read-through, per-entity durable collection (one chart per
+ * tenant, keyed by tenantId) — consistent across instances + restart-safe.
+ * This module is pure data + validation; the roll-up reads roster portfolios
+ * via rosterService.
  *
  * @see RFCS/0087-agent-org-chart.md §A/§B/§C/§D
  * @see src/host/rosterService.ts — the members are roster entries
  */
 
-import { getRosterEntry, type RosterEntry } from './rosterService.js';
-import { loadCollection, schedulePersist } from './hostExtPersistence.js';
-
-const ORG_CHART_KEY = 'hostext:orgchart';
+import { getRosterEntry } from './rosterService.js';
+import { DurableCollection } from './hostExtPersistence.js';
 
 export interface OrgRole {
   roleId: string;
@@ -64,16 +63,8 @@ export interface OrgChartValidationError {
   detail?: string;
 }
 
-const charts = new Map<string, OrgChart>();
-
-function persistOrgCharts(): void {
-  schedulePersist(ORG_CHART_KEY, () => [...charts.values()]);
-}
-
-/** Hydrate org-charts from durable storage on boot. */
-export async function hydrateOrgCharts(): Promise<void> {
-  for (const c of await loadCollection<OrgChart>(ORG_CHART_KEY)) charts.set(c.tenantId, c);
-}
+// One chart per tenant — the tenantId IS the entity id.
+const charts = new DurableCollection<OrgChart>('orgchart', (c) => c.tenantId);
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -108,17 +99,17 @@ function hasReportsToCycle(members: OrgMember[]): boolean {
  * Returns the stored chart or a validation error. Note: there is no authority
  * to validate — the chart is descriptive (§B).
  */
-export function putChart(input: {
+export async function putChart(input: {
   tenantId: string;
   departments: OrgDepartment[];
   members: OrgMember[];
-}): { chart: OrgChart } | { error: OrgChartValidationError } {
+}): Promise<{ chart: OrgChart } | { error: OrgChartValidationError }> {
   const deptIds = new Set(input.departments.map((d) => d.departmentId));
   const roleIds = new Set(input.departments.flatMap((d) => d.roles.map((r) => r.roleId)));
   const memberIds = new Set(input.members.map((m) => m.rosterId));
 
   for (const m of input.members) {
-    const entry = getRosterEntry(m.rosterId);
+    const entry = await getRosterEntry(m.rosterId);
     if (!entry || entry.tenantId !== input.tenantId) {
       return { error: { code: 'cross_tenant_member', message: 'Every member MUST reference a roster entry in this tenant.', detail: m.rosterId } };
     }
@@ -142,19 +133,16 @@ export function putChart(input: {
     members: input.members.map((m) => ({ ...m })),
     updatedAt: nowIso(),
   };
-  charts.set(input.tenantId, chart);
-  persistOrgCharts();
+  await charts.put(chart);
   return { chart };
 }
 
-export function getChart(tenantId: string): OrgChart | undefined {
+export async function getChart(tenantId: string): Promise<OrgChart | null> {
   return charts.get(tenantId);
 }
 
-export function deleteChart(tenantId: string): boolean {
-  const ok = charts.delete(tenantId);
-  if (ok) persistOrgCharts();
-  return ok;
+export async function deleteChart(tenantId: string): Promise<boolean> {
+  return charts.delete(tenantId);
 }
 
 export interface ResponsibilityView {
@@ -186,30 +174,26 @@ function departmentSubtree(chart: OrgChart, departmentId: string): Set<string> {
  * false. Computed from live roster entries (no stored field, grants nothing).
  * Returns undefined if the department is unknown.
  */
-export function responsibilityView(
+export async function responsibilityView(
   tenantId: string,
   departmentId: string,
   recursive = true,
-): ResponsibilityView | undefined {
-  const chart = charts.get(tenantId);
+): Promise<ResponsibilityView | undefined> {
+  const chart = await charts.get(tenantId);
   if (!chart) return undefined;
   const department = chart.departments.find((d) => d.departmentId === departmentId);
   if (!department) return undefined;
 
   const scope = recursive ? departmentSubtree(chart, departmentId) : new Set([departmentId]);
   const members = chart.members.filter((m) => scope.has(m.departmentId));
-  const responsibilities = [
-    ...new Set(
-      members.flatMap((m) => {
-        const entry: RosterEntry | undefined = getRosterEntry(m.rosterId);
-        return entry?.workflows ?? [];
-      }),
-    ),
-  ];
+  const portfolios = await Promise.all(
+    members.map(async (m) => (await getRosterEntry(m.rosterId))?.workflows ?? []),
+  );
+  const responsibilities = [...new Set(portfolios.flat())];
   return { department, members, responsibilities };
 }
 
 /** Test-only: drop all charts. */
-export function __resetOrgChartStore(): void {
-  charts.clear();
+export async function __resetOrgChartStore(): Promise<void> {
+  await charts.__clear();
 }

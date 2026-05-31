@@ -59,11 +59,15 @@ function parseAgentRef(value: unknown): RosterAgentRef {
 }
 
 export function registerRosterRoutes(app: Express): void {
-  app.get('/v1/host/sample/roster', (req, res) => {
-    res.json({ roster: listRoster(tenantOf(req)) });
+  app.get('/v1/host/sample/roster', async (req, res, next) => {
+    try {
+      res.json({ roster: await listRoster(tenantOf(req)) });
+    } catch (err) {
+      next(err);
+    }
   });
 
-  app.post('/v1/host/sample/roster', (req, res, next) => {
+  app.post('/v1/host/sample/roster', async (req, res, next) => {
     try {
       const body = (req.body ?? {}) as {
         persona?: unknown;
@@ -84,7 +88,7 @@ export function registerRosterRoutes(app: Express): void {
           field: 'workflows',
         });
       }
-      const entry = createRosterEntry({
+      const entry = await createRosterEntry({
         tenantId: tenantOf(req),
         persona: body.persona,
         agentRef,
@@ -99,9 +103,9 @@ export function registerRosterRoutes(app: Express): void {
     }
   });
 
-  app.get('/v1/host/sample/roster/:rosterId', (req, res, next) => {
+  app.get('/v1/host/sample/roster/:rosterId', async (req, res, next) => {
     try {
-      const entry = getRosterEntry(req.params.rosterId);
+      const entry = await getRosterEntry(req.params.rosterId);
       if (!entry || entry.tenantId !== tenantOf(req)) {
         throw new OpenwopError('not_found', 'Roster entry not found.', 404, { rosterId: req.params.rosterId });
       }
@@ -111,9 +115,9 @@ export function registerRosterRoutes(app: Express): void {
     }
   });
 
-  app.patch('/v1/host/sample/roster/:rosterId', (req, res, next) => {
+  app.patch('/v1/host/sample/roster/:rosterId', async (req, res, next) => {
     try {
-      const existing = getRosterEntry(req.params.rosterId);
+      const existing = await getRosterEntry(req.params.rosterId);
       if (!existing || existing.tenantId !== tenantOf(req)) {
         throw new OpenwopError('not_found', 'Roster entry not found.', 404, { rosterId: req.params.rosterId });
       }
@@ -129,7 +133,7 @@ export function registerRosterRoutes(app: Express): void {
           field: 'workflows',
         });
       }
-      const updated = updateRosterEntry(req.params.rosterId, {
+      const updated = await updateRosterEntry(req.params.rosterId, {
         persona: typeof body.persona === 'string' ? body.persona : undefined,
         workflows: Array.isArray(body.workflows) ? body.workflows.filter((w): w is string => typeof w === 'string') : undefined,
         enabled: typeof body.enabled === 'boolean' ? body.enabled : undefined,
@@ -142,13 +146,13 @@ export function registerRosterRoutes(app: Express): void {
     }
   });
 
-  app.delete('/v1/host/sample/roster/:rosterId', (req, res, next) => {
+  app.delete('/v1/host/sample/roster/:rosterId', async (req, res, next) => {
     try {
-      const entry = getRosterEntry(req.params.rosterId);
+      const entry = await getRosterEntry(req.params.rosterId);
       if (!entry || entry.tenantId !== tenantOf(req)) {
         throw new OpenwopError('not_found', 'Roster entry not found.', 404, { rosterId: req.params.rosterId });
       }
-      deleteRosterEntry(entry.rosterId);
+      await deleteRosterEntry(entry.rosterId);
       res.status(204).end();
     } catch (err) {
       next(err);

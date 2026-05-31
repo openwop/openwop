@@ -35,12 +35,16 @@ function tenantOf(req: Request): string {
 }
 
 export function registerOrgChartRoutes(app: Express): void {
-  app.get('/v1/host/sample/org-chart', (req, res) => {
-    const chart = getChart(tenantOf(req));
-    res.json(chart ?? { tenantId: tenantOf(req), departments: [], members: [], updatedAt: null });
+  app.get('/v1/host/sample/org-chart', async (req, res, next) => {
+    try {
+      const chart = await getChart(tenantOf(req));
+      res.json(chart ?? { tenantId: tenantOf(req), departments: [], members: [], updatedAt: null });
+    } catch (err) {
+      next(err);
+    }
   });
 
-  app.put('/v1/host/sample/org-chart', (req, res, next) => {
+  app.put('/v1/host/sample/org-chart', async (req, res, next) => {
     try {
       const body = (req.body ?? {}) as { departments?: unknown; members?: unknown };
       if (!Array.isArray(body.departments) || !Array.isArray(body.members)) {
@@ -48,7 +52,7 @@ export function registerOrgChartRoutes(app: Express): void {
           field: 'departments|members',
         });
       }
-      const result = putChart({
+      const result = await putChart({
         tenantId: tenantOf(req),
         departments: body.departments as OrgDepartment[],
         members: body.members as OrgMember[],
@@ -66,15 +70,19 @@ export function registerOrgChartRoutes(app: Express): void {
     }
   });
 
-  app.delete('/v1/host/sample/org-chart', (req, res) => {
-    deleteChart(tenantOf(req));
-    res.status(204).end();
+  app.delete('/v1/host/sample/org-chart', async (req, res, next) => {
+    try {
+      await deleteChart(tenantOf(req));
+      res.status(204).end();
+    } catch (err) {
+      next(err);
+    }
   });
 
-  app.get('/v1/host/sample/org-chart/:departmentId', (req, res, next) => {
+  app.get('/v1/host/sample/org-chart/:departmentId', async (req, res, next) => {
     try {
       const recursive = req.query.recursive !== 'false';
-      const view = responsibilityView(tenantOf(req), req.params.departmentId, recursive);
+      const view = await responsibilityView(tenantOf(req), req.params.departmentId, recursive);
       if (!view) {
         throw new OpenwopError('not_found', 'Department not found in this tenant\'s org-chart.', 404, {
           departmentId: req.params.departmentId,

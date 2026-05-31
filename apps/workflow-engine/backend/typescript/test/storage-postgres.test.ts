@@ -299,6 +299,8 @@ async function makeStorage(): Promise<Storage> {
     deleteMessagingAllowlist: async () => false,
     kvGet: async () => null,
     kvSet: async () => {},
+    kvList: async () => [],
+    kvDelete: async () => false,
     close: async () => { await pool.end(); },
   };
 }

@@ -13,13 +13,12 @@
  * equivalent (see routes/kanban.ts), so replay/fork/observability are
  * inherited unchanged.
  *
- * The store is process-local (sample-grade), mirroring host/
- * schedulingService.ts; a production host backs it with a durable store
- * (and, per RFC 0083, bridges a card-moved event into a durable trigger
- * subscription). This module is pure: `moveCard` returns a trigger
- * DIRECTIVE rather than starting a run itself, so the route handler
- * (which holds `storage` + `hostSuite`) owns the side effects and this
- * service stays testable in isolation.
+ * The store is a read-through, per-entity durable collection (boards + cards
+ * each one row per entity in host/hostExtPersistence.ts) — consistent across
+ * instances + restart-safe. This module is pure: `moveCard` returns a trigger
+ * DIRECTIVE rather than starting a run itself, so the route handler (which
+ * holds `storage` + `hostSuite`) owns the side effects and this service stays
+ * testable in isolation.
  *
  * @see RFCS/0086-standing-agent-roster-and-workflow-portfolio.md §D/§E
  * @see RFCS/0087-agent-org-chart.md
@@ -27,10 +26,7 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { loadCollection, schedulePersist } from './hostExtPersistence.js';
-
-const BOARDS_KEY = 'hostext:kanban:boards';
-const CARDS_KEY = 'hostext:kanban:cards';
+import { DurableCollection } from './hostExtPersistence.js';
 
 /** A column on a board. When `triggerWorkflowId` is set, any card moved
  *  into this column starts that workflow (unless the card overrides it
@@ -92,25 +88,14 @@ export const DEFAULT_COLUMNS: ReadonlyArray<Omit<KanbanColumn, 'triggerWorkflowI
   { id: 'done', name: 'Done' },
 ];
 
-const boards = new Map<string, KanbanBoard>();
-const cards = new Map<string, KanbanCard>();
-
-function persistKanban(): void {
-  schedulePersist(BOARDS_KEY, () => [...boards.values()]);
-  schedulePersist(CARDS_KEY, () => [...cards.values()]);
-}
-
-/** Hydrate boards + cards from durable storage on boot. */
-export async function hydrateKanban(): Promise<void> {
-  for (const b of await loadCollection<KanbanBoard>(BOARDS_KEY)) boards.set(b.id, b);
-  for (const c of await loadCollection<KanbanCard>(CARDS_KEY)) cards.set(c.id, c);
-}
+const boards = new DurableCollection<KanbanBoard>('kanban:board', (b) => b.id);
+const cards = new DurableCollection<KanbanCard>('kanban:card', (c) => c.id);
 
 function nowIso(): string {
   return new Date().toISOString();
 }
 
-export function createBoard(input: {
+export async function createBoard(input: {
   tenantId: string;
   name: string;
   columns?: KanbanColumn[];
@@ -118,7 +103,7 @@ export function createBoard(input: {
   triggerWorkflowId?: string;
   /** Optional RFCS/0086 roster member that owns this board (attribution). */
   rosterId?: string;
-}): KanbanBoard {
+}): Promise<KanbanBoard> {
   const id = `board-${randomUUID()}`;
   const now = nowIso();
   const columns: KanbanColumn[] = input.columns
@@ -137,50 +122,46 @@ export function createBoard(input: {
     createdAt: now,
     updatedAt: now,
   };
-  boards.set(id, board);
-  persistKanban();
+  await boards.put(board);
   return board;
 }
 
-export function listBoards(tenantId: string): KanbanBoard[] {
-  return [...boards.values()]
+export async function listBoards(tenantId: string): Promise<KanbanBoard[]> {
+  return (await boards.list())
     .filter((b) => b.tenantId === tenantId)
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
-export function getBoard(boardId: string): KanbanBoard | undefined {
+export async function getBoard(boardId: string): Promise<KanbanBoard | null> {
   return boards.get(boardId);
 }
 
-export function deleteBoard(boardId: string): boolean {
-  for (const card of [...cards.values()]) {
-    if (card.boardId === boardId) cards.delete(card.id);
-  }
-  const ok = boards.delete(boardId);
-  if (ok) persistKanban();
-  return ok;
+export async function deleteBoard(boardId: string): Promise<boolean> {
+  const boardCards = (await cards.list()).filter((c) => c.boardId === boardId);
+  for (const card of boardCards) await cards.delete(card.id);
+  return boards.delete(boardId);
 }
 
-export function listCards(boardId: string): KanbanCard[] {
-  return [...cards.values()]
+export async function listCards(boardId: string): Promise<KanbanCard[]> {
+  return (await cards.list())
     .filter((c) => c.boardId === boardId)
     .sort((a, b) => a.columnId.localeCompare(b.columnId) || a.order - b.order);
 }
 
-export function getCard(cardId: string): KanbanCard | undefined {
+export async function getCard(cardId: string): Promise<KanbanCard | null> {
   return cards.get(cardId);
 }
 
-export function createCard(input: {
+export async function createCard(input: {
   boardId: string;
   columnId: string;
   title: string;
   description?: string;
   workflowId?: string;
-}): KanbanCard {
+}): Promise<KanbanCard> {
   const id = `card-${randomUUID()}`;
   const now = nowIso();
-  const siblings = [...cards.values()].filter(
+  const siblings = (await cards.list()).filter(
     (c) => c.boardId === input.boardId && c.columnId === input.columnId,
   );
   const card: KanbanCard = {
@@ -194,38 +175,35 @@ export function createCard(input: {
     createdAt: now,
     updatedAt: now,
   };
-  cards.set(id, card);
-  persistKanban();
+  await cards.put(card);
   return card;
 }
 
-export function updateCardFields(
+export async function updateCardFields(
   cardId: string,
   patch: { title?: string; description?: string; workflowId?: string },
-): KanbanCard | undefined {
-  const card = cards.get(cardId);
-  if (!card) return undefined;
+): Promise<KanbanCard | null> {
+  const card = await cards.get(cardId);
+  if (!card) return null;
   if (patch.title !== undefined) card.title = patch.title;
   if (patch.description !== undefined) card.description = patch.description;
   if (patch.workflowId !== undefined) card.workflowId = patch.workflowId;
   card.updatedAt = nowIso();
-  persistKanban();
+  await cards.put(card);
   return card;
 }
 
-export function deleteCard(cardId: string): boolean {
-  const ok = cards.delete(cardId);
-  if (ok) persistKanban();
-  return ok;
+export async function deleteCard(cardId: string): Promise<boolean> {
+  return cards.delete(cardId);
 }
 
 /** Record the run a card triggered (set by the route after starting it). */
-export function setCardLastRun(cardId: string, runId: string): void {
-  const card = cards.get(cardId);
+export async function setCardLastRun(cardId: string, runId: string): Promise<void> {
+  const card = await cards.get(cardId);
   if (card) {
     card.lastRunId = runId;
     card.updatedAt = nowIso();
-    persistKanban();
+    await cards.put(card);
   }
 }
 
@@ -238,13 +216,13 @@ export function setCardLastRun(cardId: string, runId: string): void {
  * toColumnId`). Returns `null` when the card or destination column is
  * unknown.
  */
-export function moveCard(
+export async function moveCard(
   cardId: string,
   toColumnId: string,
-): { card: KanbanCard; trigger: KanbanTriggerDirective | null } | null {
-  const card = cards.get(cardId);
+): Promise<{ card: KanbanCard; trigger: KanbanTriggerDirective | null } | null> {
+  const card = await cards.get(cardId);
   if (!card) return null;
-  const board = boards.get(card.boardId);
+  const board = await boards.get(card.boardId);
   if (!board) return null;
   const destColumn = board.columns.find((c) => c.id === toColumnId);
   if (!destColumn) return null;
@@ -254,13 +232,13 @@ export function moveCard(
     return { card, trigger: null };
   }
 
-  const siblings = [...cards.values()].filter(
+  const siblings = (await cards.list()).filter(
     (c) => c.boardId === card.boardId && c.columnId === toColumnId,
   );
   card.columnId = toColumnId;
   card.order = siblings.length;
   card.updatedAt = nowIso();
-  persistKanban();
+  await cards.put(card);
 
   const workflowId = card.workflowId ?? destColumn.triggerWorkflowId;
   const trigger: KanbanTriggerDirective | null = workflowId
@@ -273,9 +251,11 @@ export function moveCard(
 //
 // A board mutation (card create/move/delete, board delete) notifies
 // in-process subscribers so an open SSE stream can tell connected clients to
-// refetch — multi-client live board refresh. Process-local + best-effort,
-// mirroring the eventLog subscribe/append pattern; a multi-instance host backs
-// this with a pub/sub bus.
+// refetch — multi-client live board refresh. PROCESS-LOCAL + best-effort: the
+// durable store keeps data consistent across instances, but a live push only
+// reaches clients connected to the instance that handled the mutation. A
+// multi-instance host backs this with a pub/sub bus (e.g. Postgres
+// LISTEN/NOTIFY); see hostExtPersistence.ts for the standing caveat.
 
 type BoardChangeSubscriber = (boardId: string) => void;
 const boardChangeSubscribers = new Set<BoardChangeSubscriber>();
@@ -298,7 +278,7 @@ export function notifyBoardChanged(boardId: string): void {
 }
 
 /** Test-only: drop all boards + cards. */
-export function __resetKanbanStore(): void {
-  boards.clear();
-  cards.clear();
+export async function __resetKanbanStore(): Promise<void> {
+  await boards.__clear();
+  await cards.__clear();
 }

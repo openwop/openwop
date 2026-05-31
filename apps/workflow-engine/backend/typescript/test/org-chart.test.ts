@@ -16,6 +16,8 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import http from 'node:http';
 import { createApp } from '../src/index.js';
+import { openSqliteStorage } from '../src/storage/sqlite/index.js';
+import { initHostExtPersistence, __resetHostExtPersistence } from '../src/host/hostExtPersistence.js';
 import { __resetRosterStore, createRosterEntry } from '../src/host/rosterService.js';
 import { __resetOrgChartStore, putChart, responsibilityView } from '../src/host/orgChartService.js';
 
@@ -25,21 +27,30 @@ const DEPTS = [
 ];
 
 describe('org-chart service (pure)', () => {
-  beforeEach(() => {
-    __resetRosterStore();
-    __resetOrgChartStore();
+  const storage = openSqliteStorage(':memory:');
+  beforeAll(() => {
+    initHostExtPersistence(storage);
+  });
+  afterAll(async () => {
+    __resetHostExtPersistence();
+    await storage.close();
+  });
+  beforeEach(async () => {
+    initHostExtPersistence(storage);
+    await __resetRosterStore();
+    await __resetOrgChartStore();
   });
 
-  function seedMembers() {
-    const sally = createRosterEntry({ tenantId: 't1', persona: 'Sally', agentRef: { agentId: 'a.b.c.d' }, workflows: ['email-campaign'] });
-    const morgan = createRosterEntry({ tenantId: 't1', persona: 'Morgan', agentRef: { agentId: 'a.b.c.d' }, workflows: ['quarterly-plan'] });
-    const sage = createRosterEntry({ tenantId: 't1', persona: 'Sage', agentRef: { agentId: 'a.b.c.d' }, workflows: ['social-post'] });
+  async function seedMembers() {
+    const sally = await createRosterEntry({ tenantId: 't1', persona: 'Sally', agentRef: { agentId: 'a.b.c.d' }, workflows: ['email-campaign'] });
+    const morgan = await createRosterEntry({ tenantId: 't1', persona: 'Morgan', agentRef: { agentId: 'a.b.c.d' }, workflows: ['quarterly-plan'] });
+    const sage = await createRosterEntry({ tenantId: 't1', persona: 'Sage', agentRef: { agentId: 'a.b.c.d' }, workflows: ['social-post'] });
     return { sally, morgan, sage };
   }
 
-  it('stores a valid chart and the member objects carry NO authority field (§B)', () => {
-    const { sally, morgan } = seedMembers();
-    const res = putChart({
+  it('stores a valid chart and the member objects carry NO authority field (§B)', async () => {
+    const { sally, morgan } = await seedMembers();
+    const res = await putChart({
       tenantId: 't1',
       departments: DEPTS,
       members: [
@@ -58,9 +69,9 @@ describe('org-chart service (pure)', () => {
     }
   });
 
-  it('rejects a reportsTo cycle (§A)', () => {
-    const { sally, morgan } = seedMembers();
-    const res = putChart({
+  it('rejects a reportsTo cycle (§A)', async () => {
+    const { sally, morgan } = await seedMembers();
+    const res = await putChart({
       tenantId: 't1',
       departments: DEPTS,
       members: [
@@ -71,9 +82,9 @@ describe('org-chart service (pure)', () => {
     expect('error' in res && res.error.code === 'cycle').toBe(true);
   });
 
-  it('rejects a cross-tenant member (§C)', () => {
-    const beta = createRosterEntry({ tenantId: 't2', persona: 'Beta', agentRef: { agentId: 'a.b.c.d' } });
-    const res = putChart({
+  it('rejects a cross-tenant member (§C)', async () => {
+    const beta = await createRosterEntry({ tenantId: 't2', persona: 'Beta', agentRef: { agentId: 'a.b.c.d' } });
+    const res = await putChart({
       tenantId: 't1',
       departments: DEPTS,
       members: [{ rosterId: beta.rosterId, departmentId: 'dept-marketing', roleId: 'role-bw', reportsTo: null }],
@@ -81,9 +92,9 @@ describe('org-chart service (pure)', () => {
     expect('error' in res && res.error.code === 'cross_tenant_member').toBe(true);
   });
 
-  it('rolls up responsibilities as the union of member portfolios, recursing sub-departments (§D)', () => {
-    const { sally, morgan, sage } = seedMembers();
-    putChart({
+  it('rolls up responsibilities as the union of member portfolios, recursing sub-departments (§D)', async () => {
+    const { sally, morgan, sage } = await seedMembers();
+    await putChart({
       tenantId: 't1',
       departments: DEPTS,
       members: [
@@ -92,9 +103,9 @@ describe('org-chart service (pure)', () => {
         { rosterId: sage.rosterId, departmentId: 'dept-social', roleId: 'role-sm', reportsTo: morgan.rosterId },
       ],
     });
-    const recursive = responsibilityView('t1', 'dept-marketing', true);
+    const recursive = await responsibilityView('t1', 'dept-marketing', true);
     expect(recursive?.responsibilities.sort()).toEqual(['email-campaign', 'quarterly-plan', 'social-post']);
-    const direct = responsibilityView('t1', 'dept-marketing', false);
+    const direct = await responsibilityView('t1', 'dept-marketing', false);
     // Non-recursive excludes the sub-department (Social) member's portfolio.
     expect(direct?.responsibilities.sort()).toEqual(['email-campaign', 'quarterly-plan']);
   });
@@ -109,9 +120,9 @@ describe('org-chart routes (sqlite memory app)', () => {
   beforeAll(async () => {
     process.env.OPENWOP_STORAGE_DSN = 'memory://';
     process.env.OPENWOP_AUTH_DISABLE_COOKIES = 'true';
-    __resetRosterStore();
-    __resetOrgChartStore();
     const app = await createApp({ port: PORT, storageDsn: 'memory://', serviceName: 'test', serviceVersion: '0.0.1', enableConsoleTracer: false });
+    await __resetRosterStore();
+    await __resetOrgChartStore();
     await new Promise<void>((res) => { server = app.listen(PORT, res); });
   });
 
