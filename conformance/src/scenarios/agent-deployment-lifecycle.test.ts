@@ -1,0 +1,147 @@
+/**
+ * Agent deployment lifecycle — the §E promotion contract + §B channel pin
+ * (RFC 0082) — behavioral.
+ *
+ * Capability-gated on `agents.deployment.supported` (root-first per RFC 0073).
+ * Soft-skips when unadvertised (default) / hard-fails under
+ * `OPENWOP_REQUIRE_BEHAVIOR=true`. The always-on wire-shape coverage lives in
+ * `agent-deployment-shape.test.ts`; this asserts host BEHAVIOR via the
+ * `POST /v1/host/sample/agents/deployment-transition` seam + the test event-log
+ * seam + the NORMATIVE `GET /v1/agents/{agentId}/deployments` read:
+ *
+ *   1. PROMOTE (§E) — authorize → approvalGate → eval-verify → a content-free
+ *      `deployment.promoted` with `toState` in the seven-state vocabulary; the
+ *      returned record validates against `agent-deployment.schema.json`.
+ *   2. FAIL-CLOSED (§E-1, `deployment-promotion-fail-closed`) — a principal
+ *      lacking `deploy:promote` is denied (`allowed !== true`) and emits NO
+ *      `deployment.promoted`.
+ *   3. EVAL-GATE-UNMET (§E-3) — a promote whose `evalRunId` has `passed:false`
+ *      is denied with `eval_gate_unmet` and emits NO `deployment.promoted`.
+ *   4. CHANNEL PIN (§B) — a `@channel`-bound run records the resolved version as
+ *      `resolvedAgentVersion` on `agent.invocation.started` (the recorded fact a
+ *      replay re-reads rather than re-resolving).
+ *
+ * Each leg soft-skips independently (seam absent / event-log seam absent).
+ *
+ * Spec references:
+ *   - https://github.com/openwop/openwop/blob/main/spec/v1/agent-deployment.md (§B/§E)
+ *   - https://github.com/openwop/openwop/blob/main/RFCS/0082-agent-deployment-lifecycle.md
+ */
+
+import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import Ajv2020 from 'ajv/dist/2020.js';
+import addFormats from 'ajv-formats';
+import { driver } from '../lib/driver.js';
+import { behaviorGate } from '../lib/behavior-gate.js';
+import { SCHEMAS_DIR } from '../lib/paths.js';
+import {
+  readDeploymentCap,
+  driveDeploymentTransition,
+  DEPLOYMENT_STATES,
+  DEPLOYMENT_CONTENT_FORBIDDEN,
+} from '../lib/agentDeployment.js';
+import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
+
+function loadSchema(name: string): Record<string, unknown> {
+  return JSON.parse(readFileSync(join(SCHEMAS_DIR, name), 'utf8')) as Record<string, unknown>;
+}
+
+function expectContentFree(payload: Record<string, unknown>, where: string): void {
+  for (const f of DEPLOYMENT_CONTENT_FORBIDDEN) {
+    expect(
+      !(f in payload),
+      driver.describe('RFC 0082 §D (deployment-event-no-content-leak)', `${where} MUST be content-free (no ${f})`),
+    ).toBe(true);
+  }
+}
+
+describe('agent-deployment-lifecycle (RFC 0082 §B/§E)', () => {
+  it('promotes via the eval+RBAC+approval gate, fails closed without scope/eval, and pins the channel version', async () => {
+    const cap = await readDeploymentCap();
+    if (!behaviorGate('openwop-deployment-lifecycle', cap?.supported === true)) return;
+    if (!(await isEventLogSeamAvailable())) return; // event-log seam absent — soft-skip
+
+    const ajv = new Ajv2020({ strict: false, allErrors: true });
+    addFormats(ajv);
+    const validateRecord = ajv.compile(loadSchema('agent-deployment.schema.json'));
+
+    // ---- Leg 1: eval+RBAC+approval-gated promotion (§E) ------------------
+    const promote = await driveDeploymentTransition({ scenario: 'promote' });
+    if (promote === null) return; // deployment seam unwired — soft-skip the whole behavioral suite
+
+    if (promote.record) {
+      expect(
+        validateRecord(promote.record),
+        driver.describe(
+          'agent-deployment.schema.json',
+          `a promoted deployment record MUST validate (${ajv.errorsText(validateRecord.errors)})`,
+        ),
+      ).toBe(true);
+    }
+    if (promote.runId) {
+      const pq = await queryTestEvents(promote.runId, { type: 'deployment.promoted' });
+      if (pq.ok) {
+        for (const e of pq.events) {
+          expectContentFree(e.payload, 'deployment.promoted');
+          expect(
+            typeof e.payload.toState === 'string' && DEPLOYMENT_STATES.includes(e.payload.toState as string),
+            driver.describe('run-event-payloads.schema.json#/$defs/deploymentPromoted', 'toState MUST be in the seven-state vocabulary'),
+          ).toBe(true);
+          expect(
+            typeof e.payload.toVersion === 'string' && (e.payload.toVersion as string).length > 0,
+            driver.describe('agent-deployment.md §D', 'deployment.promoted MUST carry the promoted toVersion'),
+          ).toBe(true);
+        }
+      }
+    }
+
+    // ---- Leg 2: fail-closed authz (§E-1; deployment-promotion-fail-closed) -
+    const unauth = await driveDeploymentTransition({ scenario: 'unauthorized' });
+    if (unauth && unauth.runId) {
+      expect(
+        unauth.allowed !== true,
+        driver.describe('agent-deployment.md §E-1', 'a principal without deploy:promote MUST be denied (fail-closed)'),
+      ).toBe(true);
+      const uq = await queryTestEvents(unauth.runId, { type: 'deployment.promoted' });
+      if (uq.ok) {
+        expect(
+          uq.events.length === 0,
+          driver.describe('SECURITY invariant deployment-promotion-fail-closed', 'a denied transition MUST emit NO deployment.promoted'),
+        ).toBe(true);
+      }
+    }
+
+    // ---- Leg 3: eval-gate-unmet denial (§E-3) ----------------------------
+    const evalUnmet = await driveDeploymentTransition({ scenario: 'eval-gate-unmet' });
+    if (evalUnmet && evalUnmet.runId) {
+      expect(
+        evalUnmet.error === 'eval_gate_unmet' || evalUnmet.allowed !== true,
+        driver.describe('agent-deployment.md §E-3', 'a promote whose eval evidence has passed:false MUST be denied (eval_gate_unmet)'),
+      ).toBe(true);
+      const eq = await queryTestEvents(evalUnmet.runId, { type: 'deployment.promoted' });
+      if (eq.ok) {
+        expect(
+          eq.events.length === 0,
+          driver.describe('agent-deployment.md §E-3', 'an unmet eval gate MUST emit NO deployment.promoted'),
+        ).toBe(true);
+      }
+    }
+
+    // ---- Leg 4: channel-resolution pin (§B) ------------------------------
+    const pin = await driveDeploymentTransition({ scenario: 'channel-pin', channel: 'stable' });
+    if (pin && pin.runId) {
+      const iq = await queryTestEvents(pin.runId, { type: 'agent.invocation.started' });
+      if (iq.ok && iq.events.length > 0) {
+        const started = iq.events.sort((a, b) => a.sequence - b.sequence)[0]!;
+        expect(
+          typeof started.payload.resolvedAgentVersion === 'string' && (started.payload.resolvedAgentVersion as string).length > 0,
+          driver.describe('agent-deployment.md §B', 'a @channel-bound run MUST record resolvedAgentVersion on agent.invocation.started (the recorded fact a replay re-reads)'),
+        ).toBe(true);
+      }
+    }
+
+    await resetTestSeam();
+  });
+});
