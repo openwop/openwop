@@ -2,7 +2,13 @@
 
 ## [Unreleased]
 
-_No unreleased changes._
+**RFC 0087** (`agents.orgChart`, the Active→Accepted behavioral gate) — additive + capability-gated; existing hosts pass unchanged. The two gated behavioral scenarios RFC 0087's §Conformance named but deferred at `Draft → Active`; authoring them is the steward prerequisite to graduating `agents.orgChart` from `Active` to `Accepted` on a non-steward host (MyndHyve). Suite version stays `1.11.0` until the next coordinated/standalone conformance release per the `EXPECTED_CONFORMANCE_VERSION` lockstep; these are unreleased additions.
+
+### Added — RFC 0087 behavioral scenarios
+
+- **`agent-org-chart-scoping.test.ts`** (`behaviorGate('openwop-org-chart-scoping', …)`, gated on `agents.orgChart.supported`) — black-box on the normative `/v1/agents/org-chart` surface (no POST seam): the `GET /v1/agents/org-chart` tree-shape (`{owner, departments, members}`; `parentDepartmentId` forms an acyclic tree; members reference `host:<id>` roster entries); the §D responsibility roll-up via `GET /v1/agents/org-chart/{departmentId}` (a deduped `responsibilities[]` union of the subtree members' RFC 0086 portfolios; `recursive=false` keeps the shape); and the RFC 0074 cross-tenant 404 via the new `OPENWOP_CROSS_TENANT_ORG_CHART_DEPARTMENT_ID` env var (the org-chart analog of `OPENWOP_CROSS_TENANT_ROSTER_ID`). **This is part of the RFC 0087 → Accepted bar.** New lib helper `src/lib/agentOrgChart.ts`.
+- **`org-position-no-authority-escalation.test.ts`** (`behaviorGate('openwop-org-position-no-authority', …)`, gated on `agents.orgChart.supported`) — the BEHAVIORAL leg of the protocol-tier `org-position-no-authority-escalation` invariant: the live org-chart wire carries NO authority-bearing field (`scopes`/`canDispatch`/`permissions`/`authority`/`roleGrants`/`capabilities`) on any member / department / responsibility-view object, proving the host's projector strips position-as-authority at every install scope. The STRUCTURAL leg (the schema rejects an authority field, `additionalProperties:false`) remains always-on in `agent-org-chart-shape.test.ts`; the deeper RFC 0049 (authz-decision-invariant-to-position) + RFC 0051 (gate-not-satisfied-by-seniority) legs stay reference-impl tier because forcing them black-box needs a non-normative authz-decide hook (the `agent-manifest-runtime` confidence-escalation precedent). No new SECURITY invariant (`org-position-no-authority-escalation` already exists, exercised structurally always-on and now behaviorally here).
+- No new schemas (`agent-org-chart.schema.json` + `org-chart-responsibility-view.schema.json` shipped at `Draft → Active`); no new POST seam (both scenarios are black-box reads + an env-var cross-tenant probe); `coverage.md` rows added.
 
 ## [1.11.0] — 2026-05-31 — agent-platform graduation + safe-fetch + runtime-requires behavioral scenarios
 
