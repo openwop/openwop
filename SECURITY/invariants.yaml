@@ -1152,6 +1152,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/workspace-cross-tenant-isolation.test.ts
+      - conformance/src/scenarios/workspace-cross-tenant-isolation-blackbox.test.ts
     note: |
       RFC 0059 §E WCT-1: hosts advertising `capabilities.workspace.supported`
       MUST scope every file to a single `{tenant, workspace}` (RFC 0048). No
@@ -1160,7 +1161,13 @@ invariants:
       elsewhere. The owner binding MUST come from the authenticated identity,
       not caller-supplied scope hints (fail-closed); errors MUST NOT leak the
       existence of another owner's file (`404` over `403`). Mirrors
-      `agent-memory-cti-1` / `kv-cross-tenant-isolation`.
+      `agent-memory-cti-1` / `kv-cross-tenant-isolation`. Two tests back this:
+      the single-credential `workspace-cross-tenant-isolation.test.ts` (the
+      `/v1/host/sample/workspace/op` seam) AND `-blackbox.test.ts` (2026-05-31)
+      which drives the NORMATIVE §C `PUT`/`GET /v1/host/workspace/files`
+      endpoints with TWO operator credentials (`OPENWOP_TEST_TENANT_B_API_KEY`)
+      — the production-path proof that graduates this surface into the
+      `openwop-core-standard` floor (RFC 0088 §D Lever-2), no seam.
 
   # ===== RFC 0063 core.subWorkflow output-merge approval fail-closed =====
 
