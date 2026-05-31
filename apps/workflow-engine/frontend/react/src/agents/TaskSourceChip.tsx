@@ -7,34 +7,23 @@
 
 import type { KanbanCardSource } from '../kanban/kanbanClient.js';
 
-const SOURCE_META: Record<KanbanCardSource, { label: string; glyph: string; bg: string; fg: string }> = {
-  human: { label: 'Human', glyph: '🧑', bg: 'var(--color-surface-alt, #eef1f5)', fg: 'var(--color-text)' },
-  workflow: { label: 'Workflow', glyph: '⚙', bg: '#e7f0ff', fg: '#1c4f9c' },
-  agent: { label: 'Agent', glyph: '🤖', bg: '#efe9ff', fg: '#5a36b0' },
-  discord: { label: 'Discord', glyph: '💬', bg: '#e8eaff', fg: '#4451c7' },
-  schedule: { label: 'Schedule', glyph: '⏰', bg: '#fff1e0', fg: '#9a5b12' },
-  api: { label: 'API', glyph: '🔌', bg: '#e6f7ee', fg: '#1f7a4d' },
+// Each source maps to a glyph + label + a token-driven `.chip--*` variant (no
+// hardcoded hex; chips theme correctly across surfaces). Color is never the
+// sole signal — the glyph + label carry the meaning (PRD §20).
+const SOURCE_META: Record<KanbanCardSource, { label: string; glyph: string; chip: string }> = {
+  human: { label: 'Human', glyph: '🧑', chip: 'chip--muted' },
+  workflow: { label: 'Workflow', glyph: '⚙', chip: 'chip--accent' },
+  agent: { label: 'Agent', glyph: '🤖', chip: 'chip--ai' },
+  discord: { label: 'Discord', glyph: '💬', chip: 'chip--ai' },
+  schedule: { label: 'Schedule', glyph: '⏰', chip: 'chip--warning' },
+  api: { label: 'API', glyph: '🔌', chip: 'chip--success' },
 };
 
 export function TaskSourceChip({ source, sourceLabel }: { source?: KanbanCardSource; sourceLabel?: string }): JSX.Element {
   const meta = SOURCE_META[source ?? 'human'];
   const title = sourceLabel ? `${meta.label}: ${sourceLabel}` : `Created by ${meta.label}`;
   return (
-    <span
-      title={title}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        fontSize: '0.7rem',
-        fontWeight: 600,
-        padding: '1px 7px',
-        borderRadius: 999,
-        background: meta.bg,
-        color: meta.fg,
-        whiteSpace: 'nowrap',
-      }}
-    >
+    <span className={`chip ${meta.chip}`} title={title}>
       <span aria-hidden="true">{meta.glyph}</span>
       <span>{sourceLabel ?? meta.label}</span>
     </span>

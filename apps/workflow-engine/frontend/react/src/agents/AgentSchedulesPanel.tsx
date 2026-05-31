@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { CADENCE_PRESETS, createJob, deleteJob, listJobs, setJobEnabled, triggerJob, type ScheduledJob } from './scheduleClient.js';
 import { workflowName } from './roleTemplates.js';
 import type { RosterEntry } from './rosterClient.js';
+import { Notice } from '../ui/Notice.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
@@ -68,8 +69,8 @@ export function AgentSchedulesPanel({ entry }: { entry: RosterEntry }): JSX.Elem
 
   return (
     <div>
-      {error ? <div style={{ color: 'var(--color-danger)', marginBottom: '0.5rem' }}>⚠ {error}</div> : null}
-      {notice ? <div style={{ background: '#e6f7ee', color: '#1f7a4d', padding: '0.4rem 0.6rem', borderRadius: 8, marginBottom: '0.5rem', fontSize: '0.82rem' }}>{notice} <Link to="/runs">View runs</Link></div> : null}
+      {error ? <Notice variant="error">⚠ {error}</Notice> : null}
+      {notice ? <Notice variant="success">{notice} <Link to="/runs">View runs</Link></Notice> : null}
 
       {jobs.length === 0 ? (
         <p style={muted}>No schedules yet. Create one below so {entry.persona} runs a workflow on a timer.</p>

@@ -14,6 +14,8 @@ import { checkAgent, seedDemoAgents } from './rosterClient.js';
 import { loadAgentViews, type AgentView } from './agentViewModel.js';
 import { AgentCard } from './AgentCard.js';
 import { AgentActivityFeed } from './AgentActivityFeed.js';
+import { Notice } from '../ui/Notice.js';
+import { StateCard } from '../ui/StateCard.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
@@ -40,7 +42,7 @@ function ConceptStrip(): JSX.Element {
             gap: '0.5rem',
           }}
         >
-          <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--color-accent, #3b5bdb)', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.78rem', fontWeight: 700 }}>{s.n}</span>
+          <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--color-accent)', color: 'var(--paper)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700 }}>{s.n}</span>
           <span style={{ fontSize: '0.85rem' }}>{s.label}</span>
         </div>
       ))}
@@ -136,31 +138,28 @@ export function AgentDashboardPage(): JSX.Element {
 
       <ConceptStrip />
 
-      {error ? <div style={{ color: 'var(--color-danger)', marginBottom: '0.6rem' }}>⚠ {error}</div> : null}
-      {notice ? <div style={{ background: '#e6f7ee', color: '#1f7a4d', padding: '0.5rem 0.7rem', borderRadius: 8, marginBottom: '0.6rem', fontSize: '0.85rem' }}>{notice}</div> : null}
+      {error ? <Notice variant="error">⚠ {error}</Notice> : null}
+      {notice ? <Notice variant="success">{notice}</Notice> : null}
 
       {loading ? (
-        <p style={muted}>Loading your agents…</p>
+        <StateCard loading title="Loading your agents…" />
       ) : views.length === 0 ? (
-        <div style={{ border: '1px dashed var(--color-border)', borderRadius: 12, padding: '1.5rem', textAlign: 'center' }}>
-          <p style={{ marginTop: 0 }}>Agents are named digital coworkers — like Sally in Sales Ops or Marcus in Support.</p>
-          <p style={muted}>Give each one a role, workflows, and a task board, then watch work arrive and get picked up.</p>
-          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginTop: '1rem' }}>
-            <button type="button" className="primary" onClick={() => navigate('/agents/new')}>Create from template</button>
-            <button type="button" className="secondary" onClick={() => void onLoadDemo()} disabled={seeding}>
-              {seeding ? 'Loading…' : 'Load demo agents'}
-            </button>
-          </div>
-        </div>
+        <StateCard
+          glyph="🤝"
+          title="Agents are named digital coworkers"
+          body="Like Sally in Sales Ops or Marcus in Support. Give each one a role, workflows, and a task board, then watch work arrive and get picked up."
+          action={
+            <>
+              <button type="button" className="primary" onClick={() => navigate('/agents/new')}>Create from template</button>
+              <button type="button" className="secondary" onClick={() => void onLoadDemo()} disabled={seeding}>
+                {seeding ? 'Loading…' : 'Load demo agents'}
+              </button>
+            </>
+          }
+        />
       ) : (
         <>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-              gap: '0.9rem',
-            }}
-          >
+          <div className="card-grid">
             {views.map((view) => (
               <AgentCard
                 key={view.entry.rosterId}
@@ -172,7 +171,7 @@ export function AgentDashboardPage(): JSX.Element {
             ))}
           </div>
 
-          <h2 style={{ fontSize: '1rem', marginTop: '1.6rem' }}>Fleet activity</h2>
+          <h2 style={{ fontSize: '15px', marginTop: 'var(--space-5)' }}>Fleet activity</h2>
           <AgentActivityFeed views={views} />
         </>
       )}

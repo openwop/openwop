@@ -15,6 +15,7 @@ import { AgentSchedulesPanel } from './AgentSchedulesPanel.js';
 import { AgentInstructionsPanel } from './AgentInstructionsPanel.js';
 import { AgentIntegrationsPanel } from './AgentIntegrationsPanel.js';
 import { AgentActivityFeed } from './AgentActivityFeed.js';
+import { Notice } from '../ui/Notice.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
@@ -112,22 +113,20 @@ export function AgentWorkspacePage(): JSX.Element {
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', margin: '0.6rem 0 0.4rem', flexWrap: 'wrap' }}>
-        <div aria-hidden="true" style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--color-accent, #3b5bdb)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.1rem' }}>
+        <div aria-hidden="true" style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--color-accent)', color: 'var(--paper)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.1rem' }}>
           {initials(entry.persona)}
         </div>
         <div style={{ flex: 1, minWidth: 200 }}>
           <h1 style={{ margin: 0 }}>{entry.persona}</h1>
           <div style={muted}>{entry.label ?? 'Agent'}</div>
         </div>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.74rem', fontWeight: 600, padding: '2px 9px', borderRadius: 999, background: sm.bg, color: sm.fg }}>{sm.label}</span>
-          <span style={{ fontSize: '0.74rem', padding: '2px 9px', borderRadius: 999, background: 'var(--color-surface-alt, #eef1f5)', color: 'var(--color-text-muted)' }}>
-            Heartbeat: manual
-          </span>
+        <div className="action-bar">
+          <span className={`chip ${sm.chip}`}>{sm.label}</span>
+          <span className="chip chip--muted">Heartbeat: manual</span>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.6rem' }}>
+      <div className="action-bar" style={{ marginBottom: 'var(--space-3)' }}>
         <button type="button" className="primary" onClick={() => void onCheckNow()} disabled={busy || !entry.enabled}>{busy ? 'Checking…' : 'Check now'}</button>
         <button type="button" className="secondary" onClick={() => setTab('board')}>Add task</button>
         <button type="button" className="secondary" onClick={() => setTab('workflows')}>Run workflow</button>
@@ -135,11 +134,11 @@ export function AgentWorkspacePage(): JSX.Element {
         <button type="button" className="secondary" onClick={() => setTab('instructions')}>Edit instructions</button>
       </div>
 
-      {error ? <div style={{ color: 'var(--color-danger)', marginBottom: '0.5rem' }}>⚠ {error}</div> : null}
-      {notice ? <div style={{ background: '#e6f7ee', color: '#1f7a4d', padding: '0.5rem 0.7rem', borderRadius: 8, marginBottom: '0.5rem', fontSize: '0.85rem' }}>{notice}</div> : null}
+      {error ? <Notice variant="error">⚠ {error}</Notice> : null}
+      {notice ? <Notice variant="success">{notice}</Notice> : null}
 
       {/* Tabs */}
-      <div role="tablist" style={{ display: 'flex', gap: '0.2rem', borderBottom: '1px solid var(--color-border)', marginBottom: '0.9rem', flexWrap: 'wrap' }}>
+      <div role="tablist" style={{ display: 'flex', gap: 'var(--space-1)', borderBottom: '1px solid var(--color-border)', marginBottom: 'var(--space-4)', flexWrap: 'wrap' }}>
         {TABS.map((t) => (
           <button
             key={t.key}
@@ -149,12 +148,15 @@ export function AgentWorkspacePage(): JSX.Element {
             onClick={() => setTab(t.key)}
             style={{
               border: 'none',
-              background: 'none',
-              padding: '0.5rem 0.8rem',
+              background: tab === t.key ? 'var(--color-surface-2)' : 'transparent',
+              padding: 'var(--space-2) var(--space-3)',
               cursor: 'pointer',
+              fontSize: '13px',
               fontWeight: tab === t.key ? 700 : 400,
               color: tab === t.key ? 'var(--color-text)' : 'var(--color-text-muted)',
-              borderBottom: tab === t.key ? '2px solid var(--color-accent, #3b5bdb)' : '2px solid transparent',
+              borderTopLeftRadius: 'var(--radius)',
+              borderTopRightRadius: 'var(--radius)',
+              borderBottom: tab === t.key ? '2px solid var(--color-accent)' : '2px solid transparent',
             }}
           >
             {t.label}

@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom';
 import { updateRosterEntry, type RosterEntry } from './rosterClient.js';
 import { createRun } from '../client/runsClient.js';
 import { ALL_WORKFLOW_OPTIONS, isKnownWorkflow, workflowName, workflowPurpose } from './roleTemplates.js';
+import { Notice } from '../ui/Notice.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
@@ -46,8 +47,8 @@ export function AgentWorkflowPortfolioPanel({ entry, onChanged }: { entry: Roste
 
   return (
     <div>
-      {error ? <div style={{ color: 'var(--color-danger)', marginBottom: '0.5rem' }}>⚠ {error}</div> : null}
-      {notice ? <div style={{ background: '#e6f7ee', color: '#1f7a4d', padding: '0.4rem 0.6rem', borderRadius: 8, marginBottom: '0.5rem', fontSize: '0.82rem' }}>{notice} <Link to="/runs">View runs</Link></div> : null}
+      {error ? <Notice variant="error">⚠ {error}</Notice> : null}
+      {notice ? <Notice variant="success">{notice} <Link to="/runs">View runs</Link></Notice> : null}
 
       {entry.workflows.length === 0 ? (
         <p style={muted}>No workflows assigned yet. Assign one from the library below so {entry.persona} has work to do.</p>

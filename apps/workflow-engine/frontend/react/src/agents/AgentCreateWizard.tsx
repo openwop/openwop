@@ -174,7 +174,7 @@ export function AgentCreateWizard(): JSX.Element {
                 key={r.key}
                 type="button"
                 onClick={() => pickRole(r)}
-                style={{ textAlign: 'left', border: role?.key === r.key ? '2px solid var(--color-accent, #3b5bdb)' : '1px solid var(--color-border)', borderRadius: 10, padding: '0.6rem', background: 'var(--color-surface)', cursor: 'pointer' }}
+                style={{ textAlign: 'left', border: role?.key === r.key ? '2px solid var(--color-accent)' : '1px solid var(--color-border)', borderRadius: 10, padding: '0.6rem', background: 'var(--color-surface)', cursor: 'pointer' }}
               >
                 <strong style={{ fontSize: '0.9rem' }}>{r.title}</strong>
                 <div style={{ ...muted, fontSize: '0.78rem' }}>{r.blurb}</div>
@@ -183,7 +183,7 @@ export function AgentCreateWizard(): JSX.Element {
             <button
               type="button"
               onClick={pickCustom}
-              style={{ textAlign: 'left', border: isCustom ? '2px solid var(--color-accent, #3b5bdb)' : '1px solid var(--color-border)', borderRadius: 10, padding: '0.6rem', background: 'var(--color-surface)', cursor: 'pointer' }}
+              style={{ textAlign: 'left', border: isCustom ? '2px solid var(--color-accent)' : '1px solid var(--color-border)', borderRadius: 10, padding: '0.6rem', background: 'var(--color-surface)', cursor: 'pointer' }}
             >
               <strong style={{ fontSize: '0.9rem' }}>Custom role</strong>
               <div style={{ ...muted, fontSize: '0.78rem' }}>Define your own role and workflows.</div>

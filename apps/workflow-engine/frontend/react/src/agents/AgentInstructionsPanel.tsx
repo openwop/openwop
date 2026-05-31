@@ -17,6 +17,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { updateRosterEntry, type RosterEntry } from './rosterClient.js';
 import { updateUserAgent } from '../client/agentsClient.js';
+import { Notice } from '../ui/Notice.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
@@ -71,8 +72,8 @@ export function AgentInstructionsPanel({ entry, onChanged }: { entry: RosterEntr
 
   return (
     <div style={{ maxWidth: 700 }}>
-      {error ? <div style={{ color: 'var(--color-danger)', marginBottom: '0.5rem' }}>⚠ {error}</div> : null}
-      {notice ? <div style={{ background: '#e6f7ee', color: '#1f7a4d', padding: '0.4rem 0.6rem', borderRadius: 8, marginBottom: '0.5rem', fontSize: '0.82rem' }}>{notice}</div> : null}
+      {error ? <Notice variant="error">⚠ {error}</Notice> : null}
+      {notice ? <Notice variant="success">{notice}</Notice> : null}
 
       <label style={{ display: 'block', fontWeight: 600, marginBottom: 4 }}>What this agent does</label>
       <p style={{ ...muted, fontSize: '0.8rem', marginTop: 0 }}>
