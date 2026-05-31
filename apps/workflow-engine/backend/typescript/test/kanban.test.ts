@@ -86,13 +86,16 @@ describe('kanban service (pure)', () => {
     expect((await moveCard(card.id, 'todo'))?.trigger).toBeNull();
   });
 
-  it('fans out board-change notifications to subscribers (live refresh)', () => {
+  it('fans out board-change notifications to subscribers (live refresh)', async () => {
     const seen: string[] = [];
-    const unsubscribe = subscribeBoardChanges((id) => seen.push(id));
+    // On the sqlite (single-node) backend the publish delivers in-process and
+    // synchronously, so the assertions need no extra flush; the Postgres
+    // LISTEN/NOTIFY cross-instance path is exercised live.
+    const unsubscribe = await subscribeBoardChanges((id) => seen.push(id));
     notifyBoardChanged('board-1');
     notifyBoardChanged('board-2');
     expect(seen).toEqual(['board-1', 'board-2']);
-    unsubscribe();
+    await unsubscribe();
     notifyBoardChanged('board-3');
     expect(seen).toEqual(['board-1', 'board-2']); // no longer notified after unsubscribe
   });

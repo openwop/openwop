@@ -420,6 +420,17 @@ export interface Storage {
   /** Delete one key. Returns true if a row existed. */
   kvDelete(key: string): Promise<boolean>;
 
+  // ── cross-instance pub/sub (host-ext live fan-out) ──
+  // Publishes a small payload to a logical channel and delivers it to every
+  // subscriber across ALL host instances. Backs the Kanban SSE board-change
+  // fan-out so a mutation on one instance reaches SSE clients on every
+  // instance. On Postgres this is LISTEN/NOTIFY; on sqlite (single node) it is
+  // an in-process emitter. NOT a normative protocol surface.
+  /** Publish `payload` to a logical `channel` (delivered cross-instance). */
+  publish(channel: string, payload: string): Promise<void>;
+  /** Subscribe to a logical `channel`. Returns an async unsubscribe. */
+  subscribe(channel: string, handler: (payload: string) => void): Promise<() => Promise<void>>;
+
   // ── lifecycle ──
   close(): Promise<void>;
 }

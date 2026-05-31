@@ -8,6 +8,7 @@
  */
 
 import Database from 'better-sqlite3';
+import { EventEmitter } from 'node:events';
 import { mkdirSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -53,6 +54,12 @@ export function openSqliteStorage(dbPath: string): Storage {
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
   applyMigrations(db);
+
+  // Cross-instance pub/sub is in-process here: sqlite is single-node, so an
+  // EventEmitter delivers a publish to every subscriber in the one process.
+  // (The Postgres adapter uses LISTEN/NOTIFY for true cross-instance fan-out.)
+  const pubsub = new EventEmitter();
+  pubsub.setMaxListeners(0); // many concurrent SSE subscribers
 
   // ── statements (prepared once for reuse) ──
 
@@ -1312,7 +1319,18 @@ export function openSqliteStorage(dbPath: string): Storage {
       return info.changes > 0;
     },
 
+    async publish(channel, payload) {
+      pubsub.emit(channel, payload);
+    },
+    async subscribe(channel, handler) {
+      pubsub.on(channel, handler);
+      return async () => {
+        pubsub.off(channel, handler);
+      };
+    },
+
     async close() {
+      pubsub.removeAllListeners();
       db.close();
     },
   };
