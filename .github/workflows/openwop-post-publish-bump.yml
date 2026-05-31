@@ -44,10 +44,34 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Discover latest @openwop/openwop on npm
+      - name: Discover latest @openwop/openwop on npm (wait for registry propagation)
         id: sdk
         run: |
-          LATEST=$(npm view @openwop/openwop version)
+          # The publish job ships sdk/typescript/package.json's version, so treat
+          # that as the TARGET and poll npm until its registry actually serves it.
+          # This step's workflow_run trigger fires the instant openwop-publish.yml
+          # completes — typically BEFORE npmjs.com propagates the new version — so
+          # a single `npm view` here races and returns the PRIOR version, which
+          # makes the diff below see no drift and skip the bump (the failure mode
+          # observed on the 1.1.6 release, recovered only by a manual
+          # workflow_dispatch re-run). Poll up to ~5 min; if the target never
+          # appears, fall back to whatever npm serves (defensive — e.g. a publish
+          # run that didn't bump the version, where no consumer bump is wanted).
+          EXPECTED=$(node -e "console.log(require('./sdk/typescript/package.json').version)")
+          echo "Target version (sdk/typescript/package.json): $EXPECTED"
+          LATEST=""
+          for attempt in $(seq 1 30); do
+            LATEST=$(npm view @openwop/openwop version 2>/dev/null || echo "")
+            echo "  attempt $attempt: npm latest=${LATEST:-<unavailable>}"
+            if [ "$LATEST" = "$EXPECTED" ]; then
+              echo "npm registry has propagated $EXPECTED after attempt $attempt."
+              break
+            fi
+            sleep 10
+          done
+          if [ "$LATEST" != "$EXPECTED" ]; then
+            echo "::warning::npm still serves '${LATEST:-<unavailable>}' after polling ~5 min; target was '$EXPECTED'. Proceeding with what npm serves — no bump will open unless the lockfiles differ from it. Re-run this workflow (workflow_dispatch) once the version is live to recover."
+          fi
           echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
           echo "Latest @openwop/openwop on npm: $LATEST"
 
