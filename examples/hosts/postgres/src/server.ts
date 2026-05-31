@@ -1894,7 +1894,39 @@ async function executeNode(
         [runId],
       );
       const prior = Number(priorRes.rows[0]?.n ?? '0');
-      const agentId = (node.config?.agentId as string | undefined) ?? 'core.reference-supervisor';
+      const agentId =
+        node.agent?.agentId ??
+        (node.config?.agentId as string | undefined) ??
+        'core.reference-supervisor';
+
+      // CP-1 (RFC 0006 §C / interrupt.md §`low-confidence`): if the supervisor's
+      // confidence is below the escalation threshold, HOLD the decision — do NOT
+      // emit `runOrchestrator.decided` — suspend via `node.suspended { reason:
+      // 'low-confidence' }`, and transition the run to `waiting-approval` for human
+      // ratification. Threshold resolution: `configurable.escalationThreshold` →
+      // default 0.7. See orchestratorConservativePath.test.ts.
+      const mockConfidence = node.config?.mockConfidence;
+      if (typeof mockConfidence === 'number') {
+        const cfgRes = await q.query<{ configurable_json: Record<string, unknown> | null }>(
+          'SELECT configurable_json FROM runs WHERE run_id = $1',
+          [runId],
+        );
+        const configurable = (cfgRes.rows[0]?.configurable_json ?? {}) as {
+          escalationThreshold?: unknown;
+        };
+        const override = configurable.escalationThreshold;
+        const threshold =
+          typeof override === 'number' && override >= 0 && override <= 1 ? override : 0.7;
+        if (mockConfidence < threshold) {
+          await appendEvent(runId, 'node.suspended', {
+            nodeId: node.id,
+            data: { reason: 'low-confidence', agentId, threshold, observed: mockConfidence },
+          });
+          endNodeSpan(runId, node.id, 'suspended');
+          return 'suspended';
+        }
+      }
+
       const mockPlan = Array.isArray(node.config?.mockDispatchPlan)
         ? (node.config!.mockDispatchPlan as Array<{
             kind?: string;
