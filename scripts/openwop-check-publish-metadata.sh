@@ -26,6 +26,13 @@ EXPECTED_V1_VERSION="1.1.5"
 # corpus release. Bump this when the next `openwop-conformance/v*` tag
 # rolls.
 EXPECTED_CONFORMANCE_VERSION="1.10.0"
+# The TypeScript SDK floats its patch version independently within the v1
+# major, per PUBLISHING.md §"Versioning alignment" ("within a major, SDK
+# patch versions float independently") + the `openwop/v*` SDK-only release
+# tag. It publishes ahead of the coordinated corpus version when the SDK
+# surface gains additive wrappers between corpus releases. Bump this when
+# the next `openwop/v*` (or coordinated `v*`) tag rolls.
+EXPECTED_TS_SDK_VERSION="1.1.6"
 fail=0
 
 err() { echo "  FAIL: $*" >&2; fail=1; }
@@ -130,10 +137,10 @@ done
 echo "[8/12] v1.0 manifest version alignment..."
 TS_PKG="$SPEC_ROOT/sdk/typescript/package.json"
 TS_VERSION=$(grep -E '"version":' "$TS_PKG" | head -1 | sed -E 's/.*"version":[[:space:]]*"([^"]+)".*/\1/')
-if [[ "$TS_VERSION" != "$EXPECTED_V1_VERSION" ]]; then
-  err "$TS_PKG has version '$TS_VERSION', expected '$EXPECTED_V1_VERSION'."
+if [[ "$TS_VERSION" != "$EXPECTED_TS_SDK_VERSION" ]]; then
+  err "$TS_PKG has version '$TS_VERSION', expected '$EXPECTED_TS_SDK_VERSION'."
 else
-  ok "$TS_PKG version is $EXPECTED_V1_VERSION."
+  ok "$TS_PKG version is $EXPECTED_TS_SDK_VERSION."
 fi
 # Conformance package tracks its own minor cadence per PUBLISHING.md
 # §"Versioning alignment" — checked against EXPECTED_CONFORMANCE_VERSION.

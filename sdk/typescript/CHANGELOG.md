@@ -1,5 +1,13 @@
 # `@openwop/openwop` Changelog
 
+## [1.1.6] — 2026-05-31 — catch-up republish: agent-platform SDK surface
+
+Republishes the package to bring the npm artifact in line with the agent-platform additions merged to the SDK source since the prior publish (`1.1.5` on npm predates them). All additive — no existing method or type changed; zero new runtime dependencies.
+
+- **User-authored agents (RFC 0072 §A, #314).** New `client.userAgents` namespace wrapping the sample-app host extension: `create()` / `delete()` / pack-registry helpers. New exported types `UserAgentRecord`, `AgentPackSummary`, `CreateUserAgentRequest`. (The published `1.1.5` already carried the `client.agents` inventory surface + `AgentInventoryEntry` from RFC 0072 — this adds the user-authored side.)
+- **Agent deployment lifecycle (RFC 0081/0082, #364).** New `client.agents.listDeployments()` + deployment-channel read helpers; new types for the deployment/channel + evaluation/scorecard surface mirroring the OpenAPI additions.
+- **Standing roster + org-chart reads (RFC 0086/0087, #382).** New `client.agents.listRoster()` / `getRosterEntry()` / `getOrgChart()` / `getOrgChartDepartment()` (each returns `null` on 404 for capability-absent hosts). New exported types `AgentRosterEntry`, `AgentRosterResponse`, `AgentOrgChart`, `OrgChartDepartment`, `OrgChartMember`, `OrgChartResponsibilityView`.
+
 ## [1.0 — additions] — 2026-05-25 — `memory.written` typed event helper (RFC 0057)
 
 - **New typed event helper.** `isMemoryWritten(ev)` type-guard (narrows to `TypedRunEvent<MemoryWrittenPayload>`) + the `MemoryWrittenPayload` interface (`memoryRef`/`memoryId` required; `nodeId`/`agentId`/`tags` optional) for the content-free `memory.written` RunEvent. Joins the RFC 0024 `agent.*` event-helper family in `event-helpers.ts`; exported from the package root.
