@@ -9,7 +9,7 @@
  */
 
 import { listRoster, getRosterEntry, type RosterEntry } from './rosterClient.js';
-import { listBoards, getBoard, type KanbanBoard, type KanbanCard } from '../kanban/kanbanClient.js';
+import { listBoards, listBoardsWithCards, getBoard, type KanbanBoard, type KanbanCard } from '../kanban/kanbanClient.js';
 import { listJobs, type ScheduledJob } from './scheduleClient.js';
 
 export type AgentStatus = 'active' | 'working' | 'waiting' | 'paused' | 'needs-setup';
@@ -85,23 +85,15 @@ function buildView(entry: RosterEntry, board: KanbanBoard | null, cards: KanbanC
   };
 }
 
-/** Load every agent's view (dashboard). One board fetch per agent for cards. */
+/** Load every agent's view (dashboard) in exactly THREE requests — roster +
+ *  boards-with-cards (one batched `?include=cards` call, not N+1) + jobs — so a
+ *  dashboard with many agents doesn't trip the per-IP read rate limit. */
 export async function loadAgentViews(): Promise<AgentView[]> {
-  const [roster, boards, jobs] = await Promise.all([listRoster(), listBoards(), listJobs()]);
-  const views: AgentView[] = [];
-  for (const entry of roster) {
+  const [roster, boards, jobs] = await Promise.all([listRoster(), listBoardsWithCards(), listJobs()]);
+  return roster.map((entry) => {
     const board = boards.find((b) => b.rosterId === entry.rosterId) ?? null;
-    let cards: KanbanCard[] = [];
-    if (board) {
-      try {
-        cards = (await getBoard(board.id)).cards;
-      } catch {
-        /* a board fetch failure shouldn't drop the whole dashboard */
-      }
-    }
-    views.push(buildView(entry, board, cards, jobs));
-  }
-  return views;
+    return buildView(entry, board, board?.cards ?? [], jobs);
+  });
 }
 
 /** Load a single agent's view (workspace). */
