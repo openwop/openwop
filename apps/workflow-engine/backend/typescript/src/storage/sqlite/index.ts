@@ -1050,6 +1050,30 @@ export function openSqliteStorage(dbPath: string): Storage {
       return r.changes > 0;
     },
 
+    async updateUserAgent(record) {
+      const r = db.prepare(
+        `UPDATE user_agents SET
+          persona = ?, label = ?, description = ?, model_class = ?,
+          system_prompt = ?, tool_allowlist = ?,
+          memory_scratchpad = ?, memory_conversation = ?, memory_long_term = ?,
+          confidence_threshold = ?
+        WHERE agent_id = ?`,
+      ).run(
+        record.persona,
+        record.label ?? null,
+        record.description ?? null,
+        record.modelClass,
+        record.systemPrompt,
+        JSON.stringify(record.toolAllowlist),
+        record.memoryShape.scratchpad ? 1 : 0,
+        record.memoryShape.conversation ? 1 : 0,
+        record.memoryShape.longTerm ? 1 : 0,
+        record.confidenceThreshold ?? null,
+        record.agentId,
+      );
+      return r.changes > 0;
+    },
+
     // ── messaging relay-gateway (demo host-extension) ──
     async upsertRelayDevice(record) {
       db.prepare(

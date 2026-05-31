@@ -9,7 +9,7 @@
  * @see RFCS/0052-scheduling-and-time-based-triggers.md §B
  */
 
-import { describe, expect, it, beforeEach } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, beforeEach } from 'vitest';
 import {
   singleTick,
   missedWindow,
@@ -17,9 +17,20 @@ import {
   resetScheduling,
   MAX_FUTURE_HORIZON_MS,
 } from '../src/host/schedulingService.js';
+import { openSqliteStorage } from '../src/storage/sqlite/index.js';
+import { initHostExtPersistence, __resetHostExtPersistence } from '../src/host/hostExtPersistence.js';
 
-beforeEach(() => {
-  resetScheduling();
+const storage = openSqliteStorage(':memory:');
+beforeAll(() => {
+  initHostExtPersistence(storage);
+});
+afterAll(async () => {
+  __resetHostExtPersistence();
+  await storage.close();
+});
+beforeEach(async () => {
+  initHostExtPersistence(storage);
+  await resetScheduling();
 });
 
 describe('RFC 0052 §B.2 — fire-once-per-tick', () => {
@@ -47,14 +58,15 @@ describe('RFC 0052 §B.4 — missed-tick policy', () => {
 });
 
 describe('RFC 0052 §A — maxFutureHorizon', () => {
-  it('accepts a schedule within the horizon', () => {
-    const r = registerJob({ jobId: 'soon', cronExpr: '* * * * *', firstFireAtMs: Date.now() + 60_000 });
+  it('accepts a schedule within the horizon', async () => {
+    const r = await registerJob({ jobId: 'soon', tenantId: 't1', cronExpr: '* * * * *', firstFireAtMs: Date.now() + 60_000 });
     expect(r.ok).toBe(true);
   });
 
-  it('rejects a schedule beyond the horizon with schedule_horizon_exceeded', () => {
-    const r = registerJob({
+  it('rejects a schedule beyond the horizon with schedule_horizon_exceeded', async () => {
+    const r = await registerJob({
       jobId: 'far',
+      tenantId: 't1',
       cronExpr: '* * * * *',
       firstFireAtMs: Date.now() + MAX_FUTURE_HORIZON_MS + 60_000,
     });

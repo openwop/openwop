@@ -19,6 +19,7 @@ import type { Principal } from '../types.js';
 import { OpenwopError } from '../types.js';
 import type { WorkflowDefinition } from '../executor/types.js';
 import { getRegisteredWorkflow } from './workflowsRegistry.js';
+import { getDemoWorkflow } from './demoWorkflows.js';
 
 /**
  * Load conformance fixtures from the in-tree `conformance/fixtures/`
@@ -332,6 +333,12 @@ export function createHostAdapterSuite(deps: { storage: Storage }): HostAdapterS
             },
           };
         }
+        // Built-in demo role-workflows (the "AI coworkers" roster portfolios).
+        // Resolved here in catalog source A — NOT the in-memory builder
+        // registry — so a roster portfolio id is runnable on every instance
+        // and survives restart (host/demoWorkflows.ts explains why).
+        const demo = getDemoWorkflow(workflowId);
+        if (demo) return { workflowId, definition: demo };
         // Builder-registered workflows from the in-memory registry,
         // populated via `POST /v1/host/sample/workflows`. Sample-grade
         // (process-local). Real hosts read from storage's `workflows` table.

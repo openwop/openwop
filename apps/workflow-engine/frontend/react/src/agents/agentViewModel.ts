@@ -1,0 +1,126 @@
+/**
+ * Agent view-model — composes the product-facing "AI coworker" from the
+ * underlying host-extension surfaces (roster + board + cards + schedules).
+ *
+ * The product concept is the RosterEntry (PRD §18 data boundary). This module
+ * hydrates each roster member with its board lane counts, its schedules, and a
+ * derived status, so the dashboard cards + the workspace header read from one
+ * consistent shape.
+ */
+
+import { listRoster, getRosterEntry, type RosterEntry } from './rosterClient.js';
+import { listBoards, getBoard, type KanbanBoard, type KanbanCard } from '../kanban/kanbanClient.js';
+import { listJobs, type ScheduledJob } from './scheduleClient.js';
+
+export type AgentStatus = 'active' | 'working' | 'waiting' | 'paused' | 'needs-setup';
+
+export interface LaneCounts {
+  todo: number;
+  working: number;
+  waiting: number;
+  done: number;
+}
+
+export interface AgentView {
+  entry: RosterEntry;
+  board: KanbanBoard | null;
+  cards: KanbanCard[];
+  laneCounts: LaneCounts;
+  status: AgentStatus;
+  jobs: ScheduledJob[];
+  /** First enabled schedule (the "next run" hint; cron is not parsed to a
+   *  wall-clock time in the sample). */
+  nextSchedule: ScheduledJob | null;
+}
+
+const STATUS_META: Record<AgentStatus, { label: string; bg: string; fg: string }> = {
+  active: { label: 'Active', bg: '#e6f7ee', fg: '#1f7a4d' },
+  working: { label: 'Working', bg: '#e7f0ff', fg: '#1c4f9c' },
+  waiting: { label: 'Waiting on Human', bg: '#fff1e0', fg: '#9a5b12' },
+  paused: { label: 'Paused', bg: 'var(--color-surface-alt, #eef1f5)', fg: 'var(--color-text-muted)' },
+  'needs-setup': { label: 'Needs setup', bg: '#fde8e8', fg: '#a12d2d' },
+};
+
+export function statusMeta(status: AgentStatus): { label: string; bg: string; fg: string } {
+  return STATUS_META[status];
+}
+
+/** Match a column by canonical id or its (case-insensitive) display name. */
+function laneOf(card: KanbanCard, board: KanbanBoard | null): keyof LaneCounts | null {
+  if (!board) return null;
+  const col = board.columns.find((c) => c.id === card.columnId);
+  if (!col) return null;
+  const key = col.id.toLowerCase();
+  const name = col.name.toLowerCase();
+  if (key === 'todo' || name === 'to do') return 'todo';
+  if (key === 'working' || name === 'working' || key === 'doing' || name === 'doing') return 'working';
+  if (key === 'waiting' || name.startsWith('waiting')) return 'waiting';
+  if (key === 'done' || name === 'done') return 'done';
+  return null;
+}
+
+function deriveStatus(entry: RosterEntry, board: KanbanBoard | null, counts: LaneCounts): AgentStatus {
+  if (!entry.enabled) return 'paused';
+  if (entry.workflows.length === 0 || !board) return 'needs-setup';
+  if (counts.working > 0) return 'working';
+  if (counts.waiting > 0) return 'waiting';
+  return 'active';
+}
+
+function buildView(entry: RosterEntry, board: KanbanBoard | null, cards: KanbanCard[], jobs: ScheduledJob[]): AgentView {
+  const laneCounts: LaneCounts = { todo: 0, working: 0, waiting: 0, done: 0 };
+  for (const card of cards) {
+    const lane = laneOf(card, board);
+    if (lane) laneCounts[lane] += 1;
+  }
+  const myJobs = jobs.filter((j) => j.rosterId === entry.rosterId);
+  return {
+    entry,
+    board,
+    cards,
+    laneCounts,
+    status: deriveStatus(entry, board, laneCounts),
+    jobs: myJobs,
+    nextSchedule: myJobs.find((j) => j.enabled) ?? null,
+  };
+}
+
+/** Load every agent's view (dashboard). One board fetch per agent for cards. */
+export async function loadAgentViews(): Promise<AgentView[]> {
+  const [roster, boards, jobs] = await Promise.all([listRoster(), listBoards(), listJobs()]);
+  const views: AgentView[] = [];
+  for (const entry of roster) {
+    const board = boards.find((b) => b.rosterId === entry.rosterId) ?? null;
+    let cards: KanbanCard[] = [];
+    if (board) {
+      try {
+        cards = (await getBoard(board.id)).cards;
+      } catch {
+        /* a board fetch failure shouldn't drop the whole dashboard */
+      }
+    }
+    views.push(buildView(entry, board, cards, jobs));
+  }
+  return views;
+}
+
+/** Load a single agent's view (workspace). */
+export async function loadAgentView(rosterId: string): Promise<AgentView | null> {
+  let entry: RosterEntry;
+  try {
+    entry = await getRosterEntry(rosterId);
+  } catch {
+    return null;
+  }
+  const [boards, jobs] = await Promise.all([listBoards(), listJobs(rosterId)]);
+  const board = boards.find((b) => b.rosterId === entry.rosterId) ?? null;
+  let cards: KanbanCard[] = [];
+  if (board) {
+    try {
+      cards = (await getBoard(board.id)).cards;
+    } catch {
+      /* ignore */
+    }
+  }
+  return buildView(entry, board, cards, jobs);
+}

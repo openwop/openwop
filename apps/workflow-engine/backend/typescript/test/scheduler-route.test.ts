@@ -40,8 +40,8 @@ afterAll(async () => {
   await new Promise<void>((res) => server.close(() => res()));
 });
 
-beforeEach(() => {
-  resetScheduling();
+beforeEach(async () => {
+  await resetScheduling();
 });
 
 async function jsonFetch<T = unknown>(

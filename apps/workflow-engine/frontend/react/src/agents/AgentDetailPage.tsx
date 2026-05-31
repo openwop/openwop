@@ -55,8 +55,8 @@ export function AgentDetailPage(): JSX.Element {
   return (
     <section aria-labelledby="agent-detail-heading" style={{ maxWidth: 800, margin: '0 auto' }}>
       <div style={{ marginBottom: 'var(--space-3)' }}>
-        <Link to="/agents" style={{ fontSize: 12, color: 'var(--ink-3)' }}>
-          ← All agents
+        <Link to="/agents/templates" style={{ fontSize: 12, color: 'var(--ink-3)' }}>
+          ← Agent templates
         </Link>
       </div>
 
@@ -69,7 +69,7 @@ export function AgentDetailPage(): JSX.Element {
       {!state.isLoading && !state.error && !state.agent && (
         <EmptyBlock>
           Agent <code>{agentId}</code> is not installed on this host.{' '}
-          <Link to="/agents">Back to the list.</Link>
+          <Link to="/agents/templates">Back to the list.</Link>
         </EmptyBlock>
       )}
 
@@ -98,7 +98,7 @@ function AgentDetail({ agent }: { agent: AgentEntry }): JSX.Element {
     setDeleteError(null);
     try {
       await deleteUserAgent(agent.agentId);
-      navigate('/agents');
+      navigate('/agents/templates');
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : String(err));
       setIsDeleting(false);
@@ -126,7 +126,7 @@ function AgentDetail({ agent }: { agent: AgentEntry }): JSX.Element {
           <button
             type="button"
             className="secondary"
-            onClick={() => navigate(`/agents/new?fork=${encodeURIComponent(agent.agentId)}`)}
+            onClick={() => navigate(`/agents/fork?fork=${encodeURIComponent(agent.agentId)}`)}
             title="Duplicate this agent's config into a new one you can customize"
           >
             Fork

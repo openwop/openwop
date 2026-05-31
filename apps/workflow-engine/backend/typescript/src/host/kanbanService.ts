@@ -40,9 +40,25 @@ export interface KanbanColumn {
   triggerWorkflowId?: string;
 }
 
+/** Where a task card came from — the demo "task source taxonomy" so the UI
+ *  can show source-specific visual language (human / workflow / agent /
+ *  Discord / schedule / API). Attribution-only; does not change run wiring. */
+export type KanbanCardSource = 'human' | 'workflow' | 'agent' | 'discord' | 'schedule' | 'api';
+
+export const KANBAN_CARD_SOURCES: ReadonlyArray<KanbanCardSource> = [
+  'human',
+  'workflow',
+  'agent',
+  'discord',
+  'schedule',
+  'api',
+];
+
 /** A card (work item). `workflowId` is the card-level override of the
  *  destination column's `triggerWorkflowId`. `order` is the position
- *  within its column (ascending). */
+ *  within its column (ascending). The `source`/`sourceLabel`/`priority`/
+ *  `dueAt` fields are demo-oriented metadata (PRD §11) — all optional and
+ *  backward-compatible; existing cards without them stay valid. */
 export interface KanbanCard {
   id: string;
   boardId: string;
@@ -52,6 +68,13 @@ export interface KanbanCard {
   workflowId?: string;
   /** Set to the runId of the most recent run this card triggered. */
   lastRunId?: string;
+  /** Where this task came from (drives the source chip). Defaults to `human`. */
+  source?: KanbanCardSource;
+  /** Free-text source detail, e.g. the Discord command or the agent name. */
+  sourceLabel?: string;
+  priority?: 'low' | 'normal' | 'high';
+  /** ISO-8601 due date. */
+  dueAt?: string;
   order: number;
   createdAt: string;
   updatedAt: string;
@@ -158,6 +181,10 @@ export async function createCard(input: {
   title: string;
   description?: string;
   workflowId?: string;
+  source?: KanbanCardSource;
+  sourceLabel?: string;
+  priority?: 'low' | 'normal' | 'high';
+  dueAt?: string;
 }): Promise<KanbanCard> {
   const id = `card-${randomUUID()}`;
   const now = nowIso();
@@ -171,6 +198,11 @@ export async function createCard(input: {
     title: input.title,
     description: input.description,
     workflowId: input.workflowId,
+    // Default unattributed cards to `human` — a person dragged it in.
+    source: input.source ?? 'human',
+    sourceLabel: input.sourceLabel,
+    priority: input.priority,
+    dueAt: input.dueAt,
     order: siblings.length,
     createdAt: now,
     updatedAt: now,
@@ -181,13 +213,25 @@ export async function createCard(input: {
 
 export async function updateCardFields(
   cardId: string,
-  patch: { title?: string; description?: string; workflowId?: string },
+  patch: {
+    title?: string;
+    description?: string;
+    workflowId?: string;
+    source?: KanbanCardSource;
+    sourceLabel?: string;
+    priority?: 'low' | 'normal' | 'high';
+    dueAt?: string;
+  },
 ): Promise<KanbanCard | null> {
   const card = await cards.get(cardId);
   if (!card) return null;
   if (patch.title !== undefined) card.title = patch.title;
   if (patch.description !== undefined) card.description = patch.description;
   if (patch.workflowId !== undefined) card.workflowId = patch.workflowId;
+  if (patch.source !== undefined) card.source = patch.source;
+  if (patch.sourceLabel !== undefined) card.sourceLabel = patch.sourceLabel;
+  if (patch.priority !== undefined) card.priority = patch.priority;
+  if (patch.dueAt !== undefined) card.dueAt = patch.dueAt;
   card.updatedAt = nowIso();
   await cards.put(card);
   return card;

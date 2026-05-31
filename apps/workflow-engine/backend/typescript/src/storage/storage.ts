@@ -347,6 +347,11 @@ export interface Storage {
    *  removed. Pack-installed agents aren't reachable through this
    *  surface (different storage). */
   deleteUserAgent(agentId: string): Promise<boolean>;
+  /** Update one user-authored agent's mutable fields (the editable
+   *  "Instructions" panel — systemPrompt + persona-shaping metadata).
+   *  `agentId`/`tenantId`/`createdAt` are immutable. Returns true when a
+   *  row was updated; false when no such agent exists. */
+  updateUserAgent(record: UserAgentRecord): Promise<boolean>;
 
   // ── messaging relay-gateway (demo host-extension; NON-normative) ──
   // Device tokens are persisted as a SHA-256 hash only (see RelayDeviceRecord).
