@@ -84,3 +84,9 @@ Two reference-host fixes landed the same day and were re-measured against the sa
 The per-host total rose 2074 → 2086 as the now-correct root `limits` + agent advertisements re-activated capability-gated sub-tests.
 
 **Correction to #378's "0 deterministic" claim.** Postgres has **one** deterministic failure remaining: `orchestratorConservativePath` (RFC 0006 CP-1 — the low-confidence supervisor must hold its decision, emit `node.suspended{reason:"low-confidence"}`, and transition to `waiting-approval` for human ratification; the host currently completes the run instead). #378 grouped this with the timing flakes without isolating it individually — it is genuine (fails on a fresh pglite, alone). The other 5 full-suite failures (`queue-ack-nack-dlq` ×2, `replay-llm-cache-key` ×3) pass in isolation and are parallelism flakes. Implementing the CP-1 suspend/resume flow is the next reference-host follow-up.
+
+## CP-1 close (2026-05-30, #384)
+
+The lone deterministic Postgres failure recorded above — `orchestratorConservativePath` (RFC 0006 CP-1 low-confidence orchestrator suspend) — is now **closed** (#384). The `core.orchestrator.supervisor` node now resolves `config.mockConfidence` against the escalation threshold (default 0.7) and, when below it, holds the decision + emits `node.suspended{reason:"low-confidence"}` + transitions to `waiting-approval`.
+
+Post-#384 Postgres full-suite: **1994 / 8 / 92 (2094) = 95.2%, 0 deterministic failures.** The 8 residuals (`aiEnvelope.schemaDrift` ×4, `model-capability-substituted` ×3, `highConcurrency` ×1) were each isolated on a fresh pglite and pass — full-suite-parallelism flakes. Both SQLite and Postgres are now at 0 deterministic failures against suite v1.10.0.
