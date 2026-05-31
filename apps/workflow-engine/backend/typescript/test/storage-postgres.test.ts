@@ -301,6 +301,8 @@ async function makeStorage(): Promise<Storage> {
     kvSet: async () => {},
     kvList: async () => [],
     kvDelete: async () => false,
+    publish: async () => {},
+    subscribe: async () => async () => {},
     close: async () => { await pool.end(); },
   };
 }

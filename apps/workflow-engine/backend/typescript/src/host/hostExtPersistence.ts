@@ -24,10 +24,10 @@
  *  - No optimistic-concurrency token: two writes to the SAME entity are
  *    last-writer-wins (acceptable for the demo; a production store adds an
  *    `If-Match`/version guard).
- *  - The Kanban SSE board-change fan-out (`subscribeBoardChanges`) is still
- *    in-process: data is consistent across instances, but a live push only
- *    reaches clients on the instance that handled the mutation. A production
- *    host backs that with a pub/sub bus (e.g. Postgres LISTEN/NOTIFY).
+ *
+ * The Kanban SSE board-change fan-out is now CROSS-INSTANCE: see
+ * `publishHostExtEvent`/`subscribeHostExtEvent` below, backed by the storage
+ * pub/sub (Postgres LISTEN/NOTIFY; in-process emitter on sqlite).
  */
 
 import type { Storage } from '../storage/storage.js';
@@ -49,6 +49,23 @@ function requireStorage(): Storage {
     throw new Error('host-ext persistence not initialized — call initHostExtPersistence() at boot');
   }
   return storageRef;
+}
+
+/**
+ * Cross-instance live-event fan-out for the host-ext surfaces (e.g. the Kanban
+ * SSE board-change push). Delegates to the storage pub/sub — LISTEN/NOTIFY on
+ * Postgres (every instance), an in-process emitter on sqlite (single node) —
+ * so a mutation on one instance reaches SSE clients on every instance.
+ */
+export async function publishHostExtEvent(channel: string, payload: string): Promise<void> {
+  await requireStorage().publish(channel, payload);
+}
+
+export async function subscribeHostExtEvent(
+  channel: string,
+  handler: (payload: string) => void,
+): Promise<() => Promise<void>> {
+  return requireStorage().subscribe(channel, handler);
 }
 
 /**

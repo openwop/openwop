@@ -192,17 +192,23 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
         Connection: 'keep-alive',
       });
       res.write(': connected\n\n');
-      const unsubscribe = subscribeBoardChanges((changedBoardId) => {
+      let closed = false;
+      let unsubscribe: (() => Promise<void>) | null = null;
+      const heartbeat = setInterval(() => res.write(': heartbeat\n\n'), 25_000);
+      req.on('close', () => {
+        closed = true;
+        clearInterval(heartbeat);
+        if (unsubscribe) void unsubscribe();
+        res.end();
+      });
+      // subscribe is async (it may open a LISTEN connection); if the client
+      // already disconnected, tear the subscription down immediately.
+      unsubscribe = await subscribeBoardChanges((changedBoardId) => {
         if (changedBoardId === board.id) {
           res.write(`event: board.changed\ndata: ${JSON.stringify({ boardId: board.id })}\n\n`);
         }
       });
-      const heartbeat = setInterval(() => res.write(': heartbeat\n\n'), 25_000);
-      req.on('close', () => {
-        clearInterval(heartbeat);
-        unsubscribe();
-        res.end();
-      });
+      if (closed) void unsubscribe();
     } catch (err) {
       next(err);
     }

@@ -205,6 +205,49 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
     migrationClient.release();
   }
 
+  // ── cross-instance pub/sub via LISTEN/NOTIFY ──
+  // One physical channel (`openwop_host_ext`) multiplexes all logical
+  // channels; the payload is `{ c: logicalChannel, p: payload }`. A single
+  // dedicated connection (held out of the pool) LISTENs and fans incoming
+  // notifications to the registered handlers. It self-heals on connection drop.
+  const PUBSUB_CHANNEL = 'openwop_host_ext';
+  const channelHandlers = new Map<string, Set<(payload: string) => void>>();
+  let listenClient: import('pg').PoolClient | null = null;
+  let listenStarting: Promise<void> | null = null;
+  let closing = false;
+
+  async function startListener(): Promise<void> {
+    const client = await pool.connect();
+    client.on('notification', (msg) => {
+      if (msg.channel !== PUBSUB_CHANNEL || !msg.payload) return;
+      try {
+        const { c, p } = JSON.parse(msg.payload) as { c: string; p: string };
+        const handlers = channelHandlers.get(c);
+        if (handlers) for (const h of handlers) {
+          try { h(p); } catch { /* a handler must not break delivery */ }
+        }
+      } catch { /* ignore a malformed payload */ }
+    });
+    client.on('error', () => {
+      // Connection dropped: reset + re-establish if anyone is still listening.
+      if (listenClient === client) listenClient = null;
+      try { client.release(); } catch { /* already gone */ }
+      if (!closing && channelHandlers.size > 0) {
+        setTimeout(() => { void ensureListener().catch(() => undefined); }, 1000);
+      }
+    });
+    await client.query(`LISTEN ${PUBSUB_CHANNEL}`);
+    listenClient = client;
+  }
+
+  async function ensureListener(): Promise<void> {
+    if (listenClient || closing) return;
+    if (!listenStarting) {
+      listenStarting = startListener().finally(() => { listenStarting = null; });
+    }
+    await listenStarting;
+  }
+
   const impl: Storage = {
     async insertRun(run) {
       await pool.query(
@@ -1399,7 +1442,31 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
       return (rowCount ?? 0) > 0;
     },
 
+    async publish(channel, payload) {
+      await pool.query(`SELECT pg_notify($1, $2)`, [PUBSUB_CHANNEL, JSON.stringify({ c: channel, p: payload })]);
+    },
+    async subscribe(channel, handler) {
+      let handlers = channelHandlers.get(channel);
+      if (!handlers) {
+        handlers = new Set();
+        channelHandlers.set(channel, handlers);
+      }
+      handlers.add(handler);
+      await ensureListener();
+      return async () => {
+        const set = channelHandlers.get(channel);
+        if (!set) return;
+        set.delete(handler);
+        if (set.size === 0) channelHandlers.delete(channel);
+      };
+    },
+
     async close() {
+      closing = true;
+      if (listenClient) {
+        try { listenClient.release(); } catch { /* already gone */ }
+        listenClient = null;
+      }
       await pool.end();
     },
   };

@@ -26,7 +26,7 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { DurableCollection } from './hostExtPersistence.js';
+import { DurableCollection, publishHostExtEvent, subscribeHostExtEvent } from './hostExtPersistence.js';
 
 /** A column on a board. When `triggerWorkflowId` is set, any card moved
  *  into this column starts that workflow (unless the card overrides it
@@ -249,32 +249,24 @@ export async function moveCard(
 
 // --- live board-change fan-out (for the SSE board-events stream) ---
 //
-// A board mutation (card create/move/delete, board delete) notifies
-// in-process subscribers so an open SSE stream can tell connected clients to
-// refetch — multi-client live board refresh. PROCESS-LOCAL + best-effort: the
-// durable store keeps data consistent across instances, but a live push only
-// reaches clients connected to the instance that handled the mutation. A
-// multi-instance host backs this with a pub/sub bus (e.g. Postgres
-// LISTEN/NOTIFY); see hostExtPersistence.ts for the standing caveat.
+// A board mutation (card create/move/delete, board delete) publishes a
+// board-change event on the storage pub/sub bus so an open SSE stream can tell
+// connected clients to refetch — multi-client live board refresh. This is now
+// CROSS-INSTANCE: on Postgres the publish rides LISTEN/NOTIFY so a mutation on
+// any instance reaches SSE clients on every instance; on sqlite (single node)
+// it is an in-process emitter. See host/hostExtPersistence.ts.
 
-type BoardChangeSubscriber = (boardId: string) => void;
-const boardChangeSubscribers = new Set<BoardChangeSubscriber>();
+const BOARD_CHANGED_CHANNEL = 'hostext:kanban:board.changed';
 
-/** Subscribe to board-change notifications. Returns an unsubscribe fn. */
-export function subscribeBoardChanges(fn: BoardChangeSubscriber): () => void {
-  boardChangeSubscribers.add(fn);
-  return () => boardChangeSubscribers.delete(fn);
+/** Subscribe to board-change notifications. Returns an async unsubscribe fn. */
+export function subscribeBoardChanges(fn: (boardId: string) => void): Promise<() => Promise<void>> {
+  return subscribeHostExtEvent(BOARD_CHANGED_CHANNEL, fn);
 }
 
-/** Notify subscribers that a board's contents changed. Best-effort. */
+/** Publish a board-change notification (cross-instance). Fire-and-forget: a
+ *  failed publish must not abort the mutation that triggered it. */
 export function notifyBoardChanged(boardId: string): void {
-  for (const fn of boardChangeSubscribers) {
-    try {
-      fn(boardId);
-    } catch {
-      /* swallow — a subscriber failure must not abort the mutation */
-    }
-  }
+  void publishHostExtEvent(BOARD_CHANGED_CHANNEL, boardId).catch(() => undefined);
 }
 
 /** Test-only: drop all boards + cards. */

@@ -51,6 +51,23 @@ describe('host-ext durability: kv primitives', () => {
     expect((await s.kvList('hostext:thing:')).map((r) => r.key)).toEqual(['hostext:thing:b']);
     await s.close();
   });
+
+  it('pub/sub delivers to subscribers by channel; unsubscribe stops delivery', async () => {
+    const s = openSqliteStorage(':memory:');
+    const seenA: string[] = [];
+    const seenB: string[] = [];
+    const unsubA = await s.subscribe('chan.a', (p) => seenA.push(p));
+    await s.subscribe('chan.b', (p) => seenB.push(p));
+    await s.publish('chan.a', 'a1');
+    await s.publish('chan.b', 'b1');
+    await s.publish('chan.a', 'a2');
+    expect(seenA).toEqual(['a1', 'a2']);
+    expect(seenB).toEqual(['b1']); // channel isolation
+    await unsubA();
+    await s.publish('chan.a', 'a3');
+    expect(seenA).toEqual(['a1', 'a2']); // no delivery after unsubscribe
+    await s.close();
+  });
 });
 
 describe('host-ext durability: read-through across instances', () => {
