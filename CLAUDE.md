@@ -17,3 +17,25 @@ Multiple Claude Code sessions share this one checkout. Assume another session is
 - **Before every commit:** `git branch --show-current` (a parallel `checkout` can move you) and `git diff --cached` (a parallel write can land between `add` and `commit`). Stage explicit paths, never `git add -A`.
 - **Don't symlink `node_modules` as a shortcut.** The shell cwd resets between tool calls, so `ln -s` lands in the wrong dir and leaves stray `node_modules/node_modules` symlinks that break later `git checkout` ("cannot rmdir node_modules"). Provision worktrees with a real `npm install`.
 - **Clean up only your own artifacts.** Delete your stale branches after the PR is up; never delete branches, worktrees, or stashes you didn't create.
+
+## Deploying the demo app (`app.openwop.dev`)
+
+The live demo is **two independent deploys** — get this wrong and you ship half a release. (Full recipe + prerequisites in `apps/workflow-engine/DEPLOY.md`; this is the gotcha digest.)
+
+- **`app.openwop.dev` = backend (Cloud Run) + frontend (Firebase Hosting), deployed separately.** The `apps/workflow-engine/Dockerfile` builds the **backend only** (no `COPY frontend`, no vite build). The React SPA is a *separate* Firebase Hosting deploy. A backend-only redeploy will NOT ship frontend changes, and vice-versa.
+- **Deploy order: backend FIRST, then frontend.** A new SPA calls new backend endpoints; if the frontend lands first, those calls 404 until the backend catches up. Wait for the Cloud Run revision to serve 100% traffic before `firebase deploy`.
+- **Deploy from a CLEAN `origin/main` checkout** (your worktree reset to `origin/main`, or `git worktree add --detach /tmp/owp-deploy origin/main`) — never the shared tree, whose uncommitted work would ride into the `--source` upload.
+- **Backend (Cloud Run `openwop-app-backend`):**
+  ```
+  gcloud run deploy openwop-app-backend --source apps/workflow-engine \
+    --region us-central1 --project openwop-dev --quiet
+  ```
+  **Pass NO `--set-secrets` / `--set-env-vars` / `--env-vars-file` flags.** A bare `gcloud run deploy` preserves the live secret + env config; DEPLOY.md §6's fuller command is STALE and would wipe the 7-secret config (Cloud SQL DSN, provider keys, messaging token). The build runs via Cloud Build (~3–5 min). The image vendors `conformance-fixtures/`, `schemas/`, `packs/` from the build context — re-run `scripts/sync-{fixtures,schemas,packs}.sh` only if those changed.
+- **Frontend (Firebase Hosting target `app`):**
+  ```
+  ( cd apps/workflow-engine/frontend/react && npm run build )   # uses .env.production
+  firebase deploy --only hosting:app --project openwop-dev
+  ```
+  `.env.production` wires the SPA to `VITE_OPENWOP_BASE_URL=/api` (a Firebase rewrite proxy to Cloud Run) + `cookie` auth. SSE bypasses `/api` (CDN buffers it) via a direct `*.run.app` URL — don't "simplify" it back to `/api`.
+- **Deploy account:** use the gcloud account that has `run.admin` on `openwop-dev` — check `LAST DEPLOYED BY` on `gcloud run services list --project openwop-dev`. The project-*owner* account may NOT have Cloud Run perms; the deployer is a different account (see private memory).
+- **Verify the full stack after both deploys:** `curl https://app.openwop.dev/` should reference the **same `assets/index-<hash>.js`** your local `dist/` just built; `curl https://app.openwop.dev/api/readiness` → 200 (503 only if a managed provider key is unconfigured); a `POST https://app.openwop.dev/api/v1/host/sample/demo/seed` (with a `-c -b` cookie jar — cookieless requests each get a throwaway `anon:<sid>` tenant) should round-trip.
