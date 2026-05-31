@@ -14,6 +14,19 @@
 | Conformance scenario files | 310 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 87 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
+## Artifact Versions
+
+> Per `PUBLISHING.md`, these artifacts version on independent cadences. The spec-corpus (root) version bumps only on a coordinated release, so it intentionally trails the per-artifact patch streams. This generated table is the single reconciled readout — read it instead of any one `package.json` in isolation.
+
+| Artifact | Version | Source | Cadence |
+|---|---|---|---|
+| Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
+| TypeScript SDK `@openwop/openwop` | 1.1.6 | `sdk/typescript/package.json` | floats patch via `openwop/v*` tags |
+| Python SDK `openwop-client` | 1.1.5 | `sdk/python/pyproject.toml` | tracks spec major; floats patch |
+| Go SDK | git tag `sdk/go/v*` | `sdk/go/` (tag-versioned module) | tracks spec major; tagged |
+| Conformance suite `@openwop/openwop-conformance` | 1.13.0 | `conformance/package.json` | minor on scenario add/remove |
+| CLI `@openwop/cli` | 0.1.2 | `cli/package.json` | independent 0.x via `cli/v*` tags |
+
 ## OpenAPI Operations
 
 `bulkCancelRuns`, `cancelRun`, `createAnnotation`, `createPromptTemplate`, `createRun`, `deletePromptTemplate`, `deleteTestPackVersion`, `deleteWorkspaceFile`, `diffRun`, `forkRun`, `getAgent`, `getAgentOrgChart`, `getAgentOrgChartDepartment`, `getAgentRosterEntry`, `getArtifact`, `getCapabilities`, `getEvalSummary`, `getOpenApiSpec`, `getPromptTemplate`, `getRun`, `getRunAncestry`, `getTestPackSignature`, `getTestPackTarball`, `getWorkflow`, `getWorkspaceFile`, `inspectInterruptByToken`, `listAgentDeployments`, `listAgentRoster`, `listAgents`, `listAnnotations`, `listPromptTemplates`, `listWorkspaceFiles`, `pauseRun`, `pollRunEvents`, `putTestPackTarball`, `putWorkspaceFile`, `registerWebhook`, `renderPromptTemplate`, `resolveInterruptByRun`, `resolveInterruptByToken`, `resumeRun`, `streamRunEvents`, `transitionAgentDeployment`, `unregisterWebhook`, `updatePromptTemplate`, `verifyAuditLog`

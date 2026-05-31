@@ -96,6 +96,36 @@ function asyncApiVersion() {
   return match ? match[1] : 'unknown';
 }
 
+function readJsonVersion(rel) {
+  if (!exists(rel)) return 'absent';
+  try {
+    return JSON.parse(read(rel)).version ?? 'unknown';
+  } catch {
+    return 'unparseable';
+  }
+}
+
+function pyprojectVersion(rel) {
+  if (!exists(rel)) return 'absent';
+  const match = read(rel).match(/^version\s*=\s*["']([^"']+)["']/m);
+  return match ? match[1] : 'unknown';
+}
+
+// The reconciled artifact-version readout. Per PUBLISHING.md these stream on
+// independent cadences; the spec-corpus (root) version trails the per-artifact
+// patch streams by design, so a bare `package.json` version read in isolation
+// looks like "drift" when it is intentional. This table is the single source.
+function artifactVersions() {
+  return [
+    { artifact: 'Spec corpus (root)', version: readJsonVersion('package.json'), source: '`package.json`', cadence: 'bumps only on a coordinated spec release' },
+    { artifact: 'TypeScript SDK `@openwop/openwop`', version: readJsonVersion('sdk/typescript/package.json'), source: '`sdk/typescript/package.json`', cadence: 'floats patch via `openwop/v*` tags' },
+    { artifact: 'Python SDK `openwop-client`', version: pyprojectVersion('sdk/python/pyproject.toml'), source: '`sdk/python/pyproject.toml`', cadence: 'tracks spec major; floats patch' },
+    { artifact: 'Go SDK', version: 'git tag `sdk/go/v*`', source: '`sdk/go/` (tag-versioned module)', cadence: 'tracks spec major; tagged' },
+    { artifact: 'Conformance suite `@openwop/openwop-conformance`', version: readJsonVersion('conformance/package.json'), source: '`conformance/package.json`', cadence: 'minor on scenario add/remove' },
+    { artifact: 'CLI `@openwop/cli`', version: readJsonVersion('cli/package.json'), source: '`cli/package.json`', cadence: 'independent 0.x via `cli/v*` tags' },
+  ];
+}
+
 function parseRfcs() {
   return listFiles('RFCS', (rel) => /^RFCS\/\d{4}-.+\.md$/.test(rel) && !rel.includes('0000-template'))
     .map((rel) => {
@@ -337,6 +367,16 @@ function generateStatus() {
   lines.push(tableRow(['AsyncAPI version', asyncApiVersion(), '`api/asyncapi.yaml`']));
   lines.push(tableRow(['Conformance scenario files', String(scenarios.length), '`conformance/src/scenarios/*.test.ts`']));
   lines.push(tableRow(['RFCs tracked', String(rfcs.length), '`RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template']));
+  lines.push('');
+  lines.push('## Artifact Versions');
+  lines.push('');
+  lines.push('> Per `PUBLISHING.md`, these artifacts version on independent cadences. The spec-corpus (root) version bumps only on a coordinated release, so it intentionally trails the per-artifact patch streams. This generated table is the single reconciled readout — read it instead of any one `package.json` in isolation.');
+  lines.push('');
+  lines.push('| Artifact | Version | Source | Cadence |');
+  lines.push('|---|---|---|---|');
+  for (const v of artifactVersions()) {
+    lines.push(tableRow([v.artifact, v.version, v.source, v.cadence]));
+  }
   lines.push('');
   lines.push('## OpenAPI Operations');
   lines.push('');
