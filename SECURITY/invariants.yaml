@@ -746,20 +746,22 @@ invariants:
   # and Workstream 4 SEC-4 for the policy.
 
   - id: node-pack-sandbox-no-process
-    tier: reference-impl
+    tier: protocol
     severity: critical
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
+      - conformance/src/scenarios/sandbox-wasm-isolation.test.ts
       - conformance/src/scenarios/sandbox-no-host-process-escape.test.ts
     note: |
       RFC 0035 §A invariant 4. Sandboxed code MUST NOT spawn host
-      processes, fork, or call exec-family syscalls. Scenario shape
-      ships in @openwop/openwop-conformance@1.4.0 (2026-05-22) but the
-      behavioral assertion is `it.todo` — the spawn/fork/exec probe
-      against a sandbox_escape_attempt envelope requires a sandbox-
-      executing reference host. Tier graduates `reference-impl →
-      protocol` when the scenario grows a real behavioral assertion
-      against a host advertising `capabilities.sandbox.supported: true`.
+      processes, fork, or call exec-family syscalls. GRADUATED
+      reference-impl → protocol 2026-05-31: the WASM-isolation reference
+      (`examples/hosts/wasm-sandbox/`) makes this hold by construction —
+      a process syscall can only be a declared import, refused before
+      instantiation. The portable server-free `sandbox-wasm-isolation
+      .test.ts` asserts `misbehaving-process` → sandbox_escape_attempt
+      (host-process-escape) non-vacuously. The legacy seam scenario
+      remains for the host-driven path.
 
   - id: node-pack-sandbox-no-eval
     tier: reference-impl
@@ -778,45 +780,54 @@ invariants:
       ships with a corresponding `sandbox-no-eval.test.ts`.
 
   - id: node-pack-sandbox-network-gated
-    tier: reference-impl
+    tier: protocol
     severity: critical
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
+      - conformance/src/scenarios/sandbox-wasm-isolation.test.ts
       - conformance/src/scenarios/sandbox-no-network-escape.test.ts
     note: |
       RFC 0035 §A invariant 3. Sandboxed code MUST NOT initiate
       network requests unless host.fetch (or equivalent) is in
-      allowedHostCalls. Scenario shape ships in v1.4.0 but the
-      behavioral assertion is `it.todo` — needs a sandbox-executing
-      host. Tier graduates when the assertion grows a real probe.
+      allowedHostCalls. GRADUATED reference-impl → protocol 2026-05-31:
+      a WASM module's only path to the network is a declared import; the
+      portable `sandbox-wasm-isolation.test.ts` asserts an un-granted
+      socket import (`misbehaving-network`) → sandbox_escape_attempt
+      (network-escape) non-vacuously, and a granted `openwop.fetch` is
+      callable only when in allowedHostCalls.
 
   - id: node-pack-sandbox-fs-gated
-    tier: reference-impl
+    tier: protocol
     severity: critical
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
+      - conformance/src/scenarios/sandbox-wasm-isolation.test.ts
       - conformance/src/scenarios/sandbox-no-host-fs-escape.test.ts
     note: |
       RFC 0035 §A invariant 1. Sandboxed code MUST NOT read or write
-      files outside the host-advertised sandbox root. Scenario shape
-      ships in v1.4.0 but the behavioral assertion is `it.todo` —
-      needs a sandbox-executing host that can stage an out-of-root
-      access attempt and a sandbox_escape_attempt envelope response.
-      Tier graduates when the assertion grows a real probe.
+      files outside the host-advertised sandbox root. GRADUATED
+      reference-impl → protocol 2026-05-31: a WASM module has no
+      filesystem syscalls — an out-of-root access can only be a declared
+      import the host refuses before instantiation. The portable
+      `sandbox-wasm-isolation.test.ts` asserts `misbehaving-fs` →
+      sandbox_escape_attempt (host-fs-escape) non-vacuously.
 
   - id: node-pack-sandbox-no-env
-    tier: reference-impl
+    tier: protocol
     severity: critical
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
+      - conformance/src/scenarios/sandbox-wasm-isolation.test.ts
       - conformance/src/scenarios/sandbox-no-host-env-leak.test.ts
     note: |
       RFC 0035 §A invariant 2. Host environment variables MUST NOT
       be visible to sandbox code unless the host has explicitly
-      forwarded them via an allowedHostCalls entry. Scenario shape
-      ships in v1.4.0 but the behavioral assertion is `it.todo` —
-      needs a sandbox-executing host. Tier graduates when the
-      assertion grows a real probe.
+      forwarded them via an allowedHostCalls entry. GRADUATED
+      reference-impl → protocol 2026-05-31: a WASM module cannot read
+      the host environment except via a declared import the host
+      refuses. The portable `sandbox-wasm-isolation.test.ts` asserts
+      `misbehaving-env` → sandbox_escape_attempt (host-env-leak)
+      non-vacuously.
 
   - id: node-pack-sandbox-timeout
     tier: reference-impl
@@ -828,46 +839,49 @@ invariants:
       RFC 0035 §A invariant 6. Exceeding capabilities.sandbox
       .wallClockLimitMs MUST fail the node with error.code:
       "sandbox_timeout" (the canonical name in `spec/v1/rest-
-      endpoints.md` §"Common error codes"). Scenario shape ships in
-      v1.4.0 but the behavioral assertion is `it.todo` — needs a
-      sandbox-executing host. Tier graduates when the assertion
-      grows a real probe.
+      endpoints.md` §"Common error codes"). STAYS reference-impl: a
+      wall-clock cap requires thread preemption (a worker kill-timer),
+      which cannot be exercised in a server-free conformance probe.
+      Proven at reference-impl tier by the WASM-isolation host's
+      `examples/hosts/wasm-sandbox/test/sandbox.test.ts` (a real worker
+      terminates an infinite-loop fixture → sandbox_timeout). Graduates
+      to protocol when a worker-driven conformance probe lands under
+      `conformance/src/scenarios/`.
 
   - id: node-pack-sandbox-memory-cap
-    tier: reference-impl
+    tier: protocol
     severity: high
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
+      - conformance/src/scenarios/sandbox-wasm-isolation.test.ts
       - conformance/src/scenarios/sandbox-memory-cap.test.ts
       - conformance/src/scenarios/wasm-pack-memory-cap.test.ts
     note: |
       RFC 0035 §A invariant 5. Exceeding capabilities.sandbox
       .memoryLimitBytes MUST fail the node with error.code:
-      "sandbox_memory_exceeded". Two scenarios point at this — the
-      WASM-runtime-specific path (wasm-pack-memory-cap.test.ts
-      against vendor.openwop.misbehaving-memory, expecting
-      cap.breached with kind: wasm-memory) AND the RFC 0035 generic
-      sandbox-memory-cap.test.ts. The generic scenario's behavioral
-      assertion ships as `it.todo` in v1.4.0 (sandbox-memory-cap
-      currently has one real schema-shape probe + one `it.todo` for
-      the actual cap-exceeded envelope). Tier graduates when the
-      generic behavioral assertion grows a real probe AND the WASM
-      path covers cross-runtime semantics.
+      "sandbox_memory_exceeded". GRADUATED reference-impl → protocol
+      2026-05-31: the WASM-isolation reference provides the module's
+      linear memory with a fixed `maximum`, so an access past the bound
+      traps. The portable `sandbox-wasm-isolation.test.ts` asserts
+      `misbehaving-memory` (an out-of-bound store) → sandbox_memory
+      _exceeded non-vacuously, engine-enforced. The legacy seam +
+      WASM-pack-runtime scenarios remain for those paths.
 
   - id: node-pack-sandbox-isolated-context
-    tier: reference-impl
+    tier: protocol
     severity: high
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
+      - conformance/src/scenarios/sandbox-wasm-isolation.test.ts
       - conformance/src/scenarios/sandbox-no-cross-pack-mutation.test.ts
     note: |
       RFC 0035 §A invariant 8. Sandboxed code from pack A MUST NOT
       mutate state visible to pack B inside the same host process.
-      Scenario shape ships in v1.4.0 but the behavioral assertion is
-      `it.todo` — needs a host that loads two packs through `core.pack.*`
-      execution and exposes a probe for pack-B-state-at-start vs
-      pack-B-state-at-pack-A-completion. Tier graduates when the
-      assertion grows a real probe.
+      GRADUATED reference-impl → protocol 2026-05-31: the WASM-isolation
+      reference gives each invocation a fresh `WebAssembly.Instance`, so
+      no module state survives across calls. The portable `sandbox-wasm
+      -isolation.test.ts` bumps a mutable global on one instance and
+      reads 0 on a separate fresh instance non-vacuously.
 
   - id: node-pack-output-untrusted
     tier: protocol
