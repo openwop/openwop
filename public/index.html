@@ -587,7 +587,7 @@
       <a class="ship" href="/conformance/">
         <div class="ship-num">5</div>
         <div class="ship-label">hosts measured</div>
-        <div class="ship-detail">4 reference <span class="ship-sep">·</span> 1 non-steward host live in production (<code>api.myndhyve.ai</code>, 28/0 against suite v1.7.0)</div>
+        <div class="ship-detail">4 reference <span class="ship-sep">·</span> 1 independent host live in production at <code>api.myndhyve.ai</code>, passing every conformance check it claims</div>
       </a>
       <a class="ship" href="https://github.com/openwop/openwop/tree/main/sdk">
         <div class="ship-num">3</div>
@@ -1530,7 +1530,7 @@
           <p class="row-summary">1.1.x (v1 stable)</p>
           <details class="row-detail">
             <summary>What this means</summary>
-            <p>v1.0 wire contract frozen 2026-05-08 · v1.1.0 released 2026-05-12 · v1.1.4 released 2026-05-26 (MyndHyve protocol-extension cohort live in production + autonomous-agent-runtime cohort + 19 RFC graduations) · v1.1.5 released 2026-05-28 (OpenWOP CLI launch + channel-messaging chat parity + RFC 0070/0072/0074 agent-runtime arc Accepted + RFC 0071 artifact/chat-card packs Accepted). Current work expands behavior coverage without breaking required fields, event payloads, endpoint contracts, or package names. The active surface now includes auth profiles, gRPC transport, WASM pack execution, multi-agent identity and reasoning, memory, orchestrator dispatch, agent workspace, host heartbeat, sub-workflow output attestation, tool-invocation hooks, and fixture-backed host behavior.</p>
+            <p>v1.0 wire contract frozen 2026-05-08 · v1.1.0 released 2026-05-12 · v1.1.4 released 2026-05-26 (MyndHyve's production extensions live + the autonomous-agent runtime + 19 spec milestones landed) · v1.1.5 released 2026-05-28 (the OpenWOP command-line tool launched, chat reaches workflows from Signal · WhatsApp · iMessage · Discord, agents you can list and run — proven on an independent host, and new result-type and chat-card packs). Current work expands behavior coverage without breaking required fields, event payloads, endpoint contracts, or package names. The active surface now includes auth profiles, gRPC transport, WASM pack execution, multi-agent identity and reasoning, memory, orchestrator dispatch, agent workspace, host heartbeat, sub-workflow output attestation, tool-invocation hooks, and fixture-backed host behavior.</p>
           </details>
         </div>
       </div>
@@ -1665,18 +1665,30 @@
 
       <article class="proof-card">
         <span class="proof-k">04 · agents</span>
-        <h3>Reasoning can stream safely.</h3>
-        <p>Agent reasoning deltas are sequence-checked before a single closing reasoning event, with ordering guards in the conformance suite and matching reference-host smoke tests.</p>
+        <h3>Agents you can list and put to work.</h3>
+        <p>A host now publishes the agents it offers, so you can pick one, hand it a task, and watch it think and decide as it goes — the reasoning streamed in order with a clean finish. The first independent host already runs them in production for its own customers.</p>
       </article>
 
       <article class="proof-card">
-        <span class="proof-k">05 · capability honesty</span>
+        <span class="proof-k">05 · messaging</span>
+        <h3>Reach a workflow from your chat apps.</h3>
+        <p>Signal, iMessage, WhatsApp, and Discord can each talk to a workflow or an agent, keep the whole conversation in one thread, and stay behind the pairing and allow-lists you set.</p>
+      </article>
+
+      <article class="proof-card">
+        <span class="proof-k">06 · packs</span>
+        <h3>Hosts can share their own result types and chat cards.</h3>
+        <p>Beyond the workflow building blocks, a host can now package its own kinds of output — checked and rendered for you — plus interactive cards that come to life right inside a chat.</p>
+      </article>
+
+      <article class="proof-card">
+        <span class="proof-k">07 · capability honesty</span>
         <h3>Claims are tested as behavior.</h3>
         <p>Capability toggles let the harness verify register-time refusal paths, while hosts that do not claim a feature skip cleanly instead of pretending to implement it.</p>
       </article>
 
       <article class="proof-card">
-        <span class="proof-k">06 · release hygiene</span>
+        <span class="proof-k">08 · release hygiene</span>
         <h3>CI blocks common drift.</h3>
         <p>The corpus gate enforces fixture sync, conformance soak builds the TypeScript SDK before running, and Docker build arguments keep the sample image honest about whether fixtures are present.</p>
       </article>
