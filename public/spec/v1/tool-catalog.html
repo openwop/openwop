@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — openwop Spec v1 — Portable Tool Catalog</title>
+  <meta name="description" content="openwop tools live behind five unrelated surfaces — node-pack typeIds (RFC 0003), workflow-as-tool (core.subWorkflow / RFC 0013 chains), MCP servers (host.mcp), connectors (RFC 0045), and host-extension scopes (x-host-&lt;vendor&gt;- / RFC 0069) — each…"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/tool-catalog.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — openwop Spec v1 — Portable Tool Catalog"/>
+  <meta property="og:description" content="openwop tools live behind five unrelated surfaces — node-pack typeIds (RFC 0003), workflow-as-tool (core.subWorkflow / RFC 0013 chains), MCP servers (host.mcp), connectors (RFC 0045), and host-extension scopes (x-host-&lt;vendor&gt;- / RFC 0069) — each…"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/tool-catalog.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — openwop Spec v1 — Portable Tool Catalog"/>
+  <meta name="twitter:description" content="openwop tools live behind five unrelated surfaces — node-pack typeIds (RFC 0003), workflow-as-tool (core.subWorkflow / RFC 0013 chains), MCP servers (host.mcp), connectors (RFC 0045), and host-extension scopes (x-host-&lt;vendor&gt;- / RFC 0069) — each…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "openwop Spec v1 — Portable Tool Catalog",
+  "description": "openwop tools live behind five unrelated surfaces — node-pack typeIds (RFC 0003), workflow-as-tool (core.subWorkflow / RFC 0013 chains), MCP servers (host.mcp), connectors (RFC 0045), and host-extension scopes (x-host-<vendor>- / RFC 0069) — each…",
+  "url": "https://openwop.dev/spec/v1/tool-catalog.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "dependencies": "JSON Schema 2020-12, REST + SSE + signed webhooks"
+}</script>
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>Portable Tool Catalog</h1>
+      <p class="lede">openwop tools live behind five unrelated surfaces — node-pack typeIds (RFC 0003), workflow-as-tool (core.subWorkflow / RFC 0013 chains), MCP servers (host.mcp), connectors (RFC 0045), and host-extension scopes (x-host-&lt;vendor&gt;- / RFC 0069) — each…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#a-capability-advertisement">§A — Capability advertisement</a></li>
+      <li class="toc-top"><a href="#b-get-v1-tools-get-v1-tools-toolid-read-only-capability-gated">§B — GET /v1/tools + GET /v1/tools/{toolId} (read-only, capability-gated)</a></li>
+      <li class="toc-top"><a href="#c-the-tooldescriptor">§C — The ToolDescriptor</a></li>
+      <li class="toc-top"><a href="#d-tool-session-lifecycle-optional-when-toolcatalog-sessionlifecycle-true">§D — Tool-session lifecycle (optional, when toolCatalog.sessionLifecycle: true)</a></li>
+      <li class="toc-top"><a href="#e-composition-reuse-not-reinvention">§E — Composition (reuse, not reinvention)</a></li>
+      <li class="toc-top"><a href="#f-safety-normative">§F — Safety (normative)</a></li>
+      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
+    </ul>
+  </aside><article class="spec-doc"><blockquote><p><strong>Status: DRAFT v1.x (filed via <a href="../../RFCS/0078-portable-tool-catalog-and-tool-session-contract.md">RFC 0078</a>, 2026-05-30).</strong> Additive v1.x extension — not part of the v1.0 conformance gate. Lands the read-only <code>GET /v1/tools</code> + <code>GET /v1/tools/{toolId}</code> projection, the normative <code>ToolDescriptor</code> shape, the <code>capabilities.toolCatalog</code> advertisement, and the optional content-free <code>tool.session.*</code> lifecycle. The behavioral projection + session scenarios, the <code>GET /v1/tools</code> OpenAPI surface, the SDK helpers, and the reference-host catalog land at <code>Active → Accepted</code>. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+<h2 id="why-this-exists">Why this exists</h2>
+<p>openwop tools live behind five unrelated surfaces — node-pack typeIds (RFC 0003), workflow-as-tool (<code>core.subWorkflow</code> / RFC 0013 chains), MCP servers (<code>host.mcp</code>), connectors (RFC 0045), and host-extension scopes (<code>x-host-&amp;lt;vendor&amp;gt;-<em></code> / RFC 0069) — each discoverable, if at all, only through its own mechanism. An agent (RFC 0077) is handed a <code>toolAllowlist</code> of opaque <code>&amp;lt;scope&amp;gt;:&amp;lt;tool-id&amp;gt;</code> strings with no portable way to learn what each tool </em>is<em>, what it </em>requires<em> (credentials, scopes, approval), how it </em>behaves on the wire<em> (egress, replay determinism), or how </em>dangerous* it is. A builder adding a tool to an agent edits a raw allowlist string blind; a client building a tool picker re-implements four discovery mechanisms.</p>
+<p>This document adds, <strong>additively</strong>, a read-only projection that unifies those five surfaces behind one stable <a href="../../schemas/tool-descriptor.schema.json"><code>ToolDescriptor</code></a>: a <code>toolId</code> keyspace that spans sources, the input/output schemas, the auth/egress/approval requirements, a replay policy, cost/latency hints, and a <strong>safety tier</strong> that honestly surfaces the RFC 0069 exec carve-out. It <strong>describes</strong> existing tools — it does not define a new invocation path. Everything is gated on <code>capabilities.toolCatalog</code>; a host that omits it is unchanged.</p>
+<h2 id="a-capability-advertisement">§A — Capability advertisement</h2>
+<p>A host advertises the catalog via the additive optional <code>capabilities.toolCatalog</code> block (<a href="../../schemas/capabilities.schema.json"><code>capabilities.schema.json</code></a>): <code>supported</code> (REQUIRED when present), <code>sources[]</code> (which of <code>node-pack</code>/<code>workflow</code>/<code>mcp</code>/<code>connector</code>/<code>host-extension</code> it projects; a consumer MUST tolerate any subset), and <code>sessionLifecycle</code> (whether it emits the §D events). Hosts that omit the block expose no catalog and the conformance scenarios skip cleanly.</p>
+<h2 id="b-get-v1-tools-get-v1-tools-toolid-read-only-capability-gated">§B — <code>GET /v1/tools</code> + <code>GET /v1/tools/{toolId}</code> (read-only, capability-gated)</h2>
+<p>When <code>capabilities.toolCatalog.supported: true</code>:</p>
+<ul>
+<li><strong><code>GET /v1/tools</code></strong> MUST return <code>{ tools: ToolDescriptor[] }</code>, the catalog the <strong>authenticated principal</strong> may see. The list MUST be scoped to the caller's authorization (RFC 0049) and tenant (a tool the principal cannot invoke MUST NOT appear), exactly as RFC 0074 scoped <code>GET /v1/agents</code>. It SHOULD support optional <code>?source=&amp;lt;source&amp;gt;</code> filtering. It MUST be read-only (<code>GET</code>); it MUST NOT mutate.</li>
+<li><strong><code>GET /v1/tools/{toolId}</code></strong> MUST return one <code>ToolDescriptor</code>, or <code>404</code> for an unknown <strong>or unauthorized</strong> <code>toolId</code> (the surface MUST NOT disclose a tool the principal can't see — the RFC 0074 non-disclosure pattern).</li>
+</ul>
+<p>Both are additive optional endpoints; a host that omits <code>toolCatalog</code> returns <code>404</code>/<code>501</code> and stays v1-compliant. The catalog is a <em>projection</em> — a tool is invoked exactly as today (agent dispatch with <code>toolAllowlist</code>, <code>core.dispatch</code>, MCP call); the catalog only <em>describes</em> it.</p>
+<h2 id="c-the-tooldescriptor">§C — The <code>ToolDescriptor</code></h2>
+<p><a href="../../schemas/tool-descriptor.schema.json"><code>tool-descriptor.schema.json</code></a> is <code>additionalProperties: false</code> with REQUIRED <code>toolId</code>, <code>source</code>, <code>safetyTier</code> and OPTIONAL <code>title</code>/<code>description</code>/<code>inputSchema</code>/<code>outputSchema</code>/<code>auth</code>/<code>egress</code>/<code>approval</code>/<code>replayPolicy</code>/<code>costHint</code>/<code>latencyHint</code>. The closed vocabularies: <code>source ∈ {node-pack, workflow, mcp, connector, host-extension}</code>; <code>egress ∈ {none, safe-fetch, host-mediated, host-owned}</code>; <code>approval ∈ {never, conditional, always}</code>; <code>replayPolicy ∈ {deterministic, idempotent, non-deterministic}</code>; <code>safetyTier ∈ {pure, read, write, exec}</code>.</p>
+<p><strong>Cross-field MUSTs (normative):</strong></p>
+<p>1. <code>safetyTier: &quot;exec&quot;</code> MUST carry <code>source: &quot;host-extension&quot;</code> — the RFC 0069 invariant: exec-class (arbitrary-command) execution is never protocol-tier. The schema enforces this with an <code>if/then</code> clause; a <code>node-pack</code>/<code>workflow</code> descriptor claiming <code>exec</code> is non-conformant. 2. The descriptor MUST be <strong>content-free of secrets</strong> — <code>auth.credentialRef: true</code> declares a credential is <em>needed</em>, but the catalog MUST NOT include credential material (SR-1). 3. A tool's <code>toolId</code> MUST be <strong>stable</strong> across catalog reads for a given host version so an agent's <code>toolAllowlist</code> keeps resolving. The <code>&amp;lt;scope&amp;gt;</code> prefix (<code>openwop:</code>/<code>mcp:</code>/<code>connector:</code>/<code>&amp;lt;vendor&amp;gt;.&amp;lt;host&amp;gt;</code>) disambiguates sources by construction, and the host MUST guarantee uniqueness within its catalog.</p>
+<p><code>inputSchema</code>/<code>outputSchema</code> MAY be any JSON Schema 2020-12; for tools that feed an LLM tool-call, the host SHOULD (not MUST) constrain <code>inputSchema</code> to the RFC 0030 Tier-1 universal subset.</p>
+<p><strong><code>safetyTier</code> is a host-assigned effect classification, not a derived projection.</strong> <code>safetyTier</code> (<code>pure</code>/<code>read</code>/<code>write</code>/<code>exec</code>) describes a tool's <em>data effect</em>; it is <strong>orthogonal</strong> to any permission / approval / risk tier a host already has (those are an <em>authorization</em> axis — a read-only tool can be approval-restricted while being <code>safetyTier: &quot;read&quot;</code>). The host MUST assign <code>safetyTier</code> explicitly as per-tool metadata; mechanically mapping an existing risk/approval tier onto <code>safetyTier</code> mis-advertises the catalog. (<code>source</code> and <code>safetyTier</code> are likewise independent — <code>source</code> is the tool's <em>origin</em>, <code>safetyTier</code> its <em>effect</em>.)</p>
+<p>The catalog capability and the §D session-event capability are <strong>separate honesty gates</strong>: a host advertising <code>capabilities.toolCatalog.supported</code> WITHOUT <code>sessionLifecycle</code> is NOT expected to emit <code>tool.session.*</code> — it serves descriptors with single-shot (RFC 0064) call events only.</p>
+<h2 id="d-tool-session-lifecycle-optional-when-toolcatalog-sessionlifecycle-true">§D — Tool-session lifecycle (optional, when <code>toolCatalog.sessionLifecycle: true</code>)</h2>
+<p>Most tools are single-shot (one call → one result, already covered by RFC 0064's <code>agent.toolCalled</code>/<code>agent.toolReturned</code>). A <em>tool session</em> models a multi-step interaction (an MCP server holding a stateful connection; a connector OAuth dance mid-call). The lifecycle is <strong>content-free observability</strong> over the existing call events:</p>
+<pre class="lang-"><code>tool.session.opened  → (agent.toolCalled → [auth/approval interrupt?] → agent.toolReturned)+ → tool.session.closed</code></pre>
+<p>The host MAY emit <code>tool.session.opened { sessionId, toolId }</code> and <code>tool.session.closed { sessionId, toolId, outcome }</code> (both content-free; <code>outcome ∈ {completed, failed, cancelled}</code>) bracketing one or more RFC 0064 call events. Auth/approval mid-session reuses the RFC 0051 <code>approval</code> interrupt and RFC 0049 fail-closed authorization — <strong>no new interrupt kind</strong>. A host that does not advertise <code>sessionLifecycle</code> treats every call as single-shot; consumers MUST tolerate the absence.</p>
+<h2 id="e-composition-reuse-not-reinvention">§E — Composition (reuse, not reinvention)</h2>
+<ul>
+<li><strong>RFC 0064 tool hooks</strong> — the per-call authorization + <code>agent.toolCalled</code>/<code>agent.toolReturned</code> events are unchanged; the catalog is the <em>static</em> projection, RFC 0064 the <em>runtime</em> signal. <code>auth.scopes</code> declares what RFC 0064 §C enforces.</li>
+<li><strong>RFC 0077 live runtime</strong> — <code>toolAllowlist</code> entries resolve to <code>ToolDescriptor</code>s by <code>toolId</code>.</li>
+<li><strong>RFC 0049 / 0046 / 0051</strong> — <code>auth.scopes</code> / <code>auth.credentialRef</code> / <code>approval</code> surface the existing RBAC / credential / approval requirements; no new auth primitive.</li>
+<li><strong>RFC 0076 §B</strong> — <code>egress: &quot;safe-fetch&quot;</code> advertises a tool routes through the host's SSRF-guarded fetch.</li>
+<li><strong>RFC 0069</strong> — <code>safetyTier: &quot;exec&quot;</code> is the catalog's honest surfacing of the exec carve-out (host-extension-only).</li>
+<li><strong><code>host.mcp</code> / RFC 0045 / RFC 0013 / node-packs</strong> — the <code>source</code> taxonomy; the host maps each surface's native tool list into descriptors.</li>
+</ul>
+<h2 id="f-safety-normative">§F — Safety (normative)</h2>
+<p>1. The catalog is <strong>read-only</strong> — <code>GET</code> only; it MUST NOT be a tool-invocation or tool-mutation path. 2. <strong>Authorization-scoped + non-disclosing</strong> — <code>GET /v1/tools</code> returns only the principal's authorized/tenant-visible tools; <code>GET /v1/tools/{toolId}</code> <code>404</code>s an unauthorized id (RFC 0074 pattern; no cross-tenant disclosure). 3. <strong>Secret-free</strong> — descriptors carry requirement <em>flags</em> (<code>auth.credentialRef</code>), never credential material (SR-1). 4. <strong>Exec honesty</strong> — <code>safetyTier: &quot;exec&quot;</code> ⇒ <code>source: &quot;host-extension&quot;</code> (RFC 0069); the catalog MUST NOT present an exec-class tool as a protocol-tier (<code>node-pack</code>/<code>workflow</code>) source.</p>
+<h2 id="open-spec-gaps">Open spec gaps</h2>
+<ul>
+<li>The behavioral <code>GET /v1/tools</code> projection (over ≥1 source), the authorization-scoping check, and the <code>tool.session.*</code> reference emission land at <code>Active → Accepted</code> with a reference host; the always-on <code>tool-descriptor-shape.test.ts</code> ships now.</li>
+<li>A writable tool-registration endpoint is explicitly out of scope (tools register through their existing surfaces); revisitable in a future RFC if implementer demand surfaces.</li>
+</ul><footer class="doc-edit"><a href="https://github.com/openwop/openwop/edit/main/spec/v1/tool-catalog.md" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>

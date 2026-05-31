@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/agent-org-chart.schema.json",
+  "title": "AgentOrgChart",
+  "description": "RFC 0087 §A. A tenant-scoped, DESCRIPTIVE grouping of RFC 0086 standing roster members (agent-roster-entry.schema.json) into departments + roles with acyclic `reportsTo` edges. The load-bearing constraint (§B `org-position-no-authority-escalation`): an org edge confers NO authority — there is NO `permissions`/`scopes`/`canDispatch`/`authority` field anywhere in this schema BY DESIGN, and every object is `additionalProperties:false` so a host cannot smuggle one in. Authority stays in `toolAllowlist` (RFC 0002 §A14), RBAC (RFC 0049, the sole authority source, fail-closed), and approval gates (RFC 0051); org position MUST NOT be consulted as an authorization input. Position describes; it never authorizes. Tenant-scoped (RFC 0074): a chart is served only to its `owner` triple. The record is host-internal; this is the canonical wire shape behind GET /v1/agents/org-chart (the endpoint lands at Active → Accepted per RFC 0087 §Conformance). The `Department`/`Role`/`Member` subschemas are published as named `$defs` so dependent schemas (e.g. org-chart-responsibility-view.schema.json) reference a stable anchor rather than a positional `properties/.../items` pointer.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["owner", "departments", "members"],
+  "properties": {
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tenantId"],
+      "description": "RFC 0048 owner triple the chart is scoped by (RFC 0074). A chart is served only to a principal within this triple; a member/department/edge outside it is never disclosed (CTI-1 carry-forward).",
+      "properties": {
+        "tenantId": { "type": "string", "minLength": 1, "maxLength": 256, "description": "Owning tenant." },
+        "workspaceId": { "type": "string", "minLength": 1, "maxLength": 256, "description": "MAY. Owning workspace within the tenant." }
+      }
+    },
+    "departments": {
+      "type": "array",
+      "description": "The departments, forming a tree via `parentDepartmentId`.",
+      "items": { "$ref": "#/$defs/Department" }
+    },
+    "members": {
+      "type": "array",
+      "description": "The members — each is an RFC 0086 roster instance placed in a department + role, with an optional reporting edge. Every field is descriptive; there is NO authority-bearing field (§B).",
+      "items": { "$ref": "#/$defs/Member" }
+    }
+  },
+  "$defs": {
+    "Department": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["departmentId", "name", "roles"],
+      "properties": {
+        "departmentId": { "type": "string", "minLength": 1, "maxLength": 128, "description": "Stable department id, unique within the chart." },
+        "name": { "type": "string", "minLength": 1, "maxLength": 200, "description": "Human department name (e.g. \"Marketing\")." },
+        "parentDepartmentId": {
+          "type": ["string", "null"],
+          "maxLength": 128,
+          "description": "MAY. The parent department id (department nesting); `null` for a top-level department. A host advertising `agents.orgChart.departmentNesting: false` MUST reject a non-null value."
+        },
+        "roles": {
+          "type": "array",
+          "description": "The roles defined in this department.",
+          "items": { "$ref": "#/$defs/Role" }
+        }
+      }
+    },
+    "Role": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["roleId", "name"],
+      "properties": {
+        "roleId": { "type": "string", "minLength": 1, "maxLength": 128, "description": "Stable role id, unique within the chart." },
+        "name": { "type": "string", "minLength": 1, "maxLength": 200, "description": "Human role name (e.g. \"Campaign Manager\"). DESCRIPTIVE — a role grants no authority (§B)." }
+      }
+    },
+    "Member": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rosterId", "departmentId", "roleId", "reportsTo"],
+      "properties": {
+        "rosterId": {
+          "type": "string",
+          "pattern": "^host:[a-z0-9][a-z0-9._-]*$",
+          "minLength": 6,
+          "maxLength": 128,
+          "description": "An RFC 0086 roster entry id (`agent-roster-entry.schema.json` `rosterId`). MUST reference a roster entry in the same `owner` tenant (no cross-tenant membership — §C)."
+        },
+        "departmentId": { "type": "string", "minLength": 1, "maxLength": 128, "description": "The department this member belongs to (MUST exist in `departments[]`)." },
+        "roleId": { "type": "string", "minLength": 1, "maxLength": 128, "description": "The member's role (MUST exist in the chart's roles)." },
+        "reportsTo": {
+          "type": ["string", "null"],
+          "maxLength": 128,
+          "description": "Another member's `rosterId` (the manager), or `null` for the root. The edge set MUST be acyclic (a cycle is a `validation_error`, §A). A `reportsTo` edge is METADATA ONLY — it confers no authority over the report (§B `org-position-no-authority-escalation`)."
+        }
+      }
+    }
+  }
+}

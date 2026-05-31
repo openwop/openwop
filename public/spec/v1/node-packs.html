@@ -206,6 +206,7 @@
       <li class="toc-sub"><a href="#optional-registry-endpoints">Optional registry endpoints</a></li>
       <li class="toc-top"><a href="#trust-model">Trust model</a></li>
       <li class="toc-top"><a href="#engine-integration">Engine integration</a></li>
+      <li class="toc-top"><a href="#deployment-channels">Deployment channels</a></li>
       <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
       <li class="toc-top"><a href="#references">References</a></li>
     </ul>
@@ -765,6 +766,10 @@ pack.json.sig              (detached signature over pack.json)</code></pre>
 <p>An OpenWOP-compliant engine MUST:</p>
 <p>1. Resolve all packs declared in a workflow's <code>packs</code> map at workflow-register time, before executing any nodes. 2. Verify integrity (<code>tarballSha256</code>) and signature (when <code>signing</code> is present). 3. Surface load failures as <code>400 pack_load_failure</code> on the workflow-register response — not as a node-runtime failure.</p>
 <p>A workflow that references a typeId not provided by any registered pack MUST be rejected at workflow-register time, NOT at run time. Catching this at register is the difference between "this workflow is broken" (engineer can fix) and "this run is broken" (user sees runtime failure).</p>
+<hr/>
+<h2 id="deployment-channels">Deployment channels</h2>
+<blockquote><p>Additive v1.x extension (RFC 0082). Applies only to hosts advertising <code>capabilities.agents.deployment.supported: true</code>.</p></blockquote>
+<p>The registry publishes <strong>discrete semver tags</strong> — which version of a pack (and its <code>agents[]</code>) <em>exists</em>. A <strong>deployment channel</strong> (<code>stable</code> / <code>canary</code> / the reserved <code>latest</code>) is a distinct, host-runtime concern — which version <em>serves</em>. The two MUST NOT be conflated: a published version may be <code>staged</code>, <code>paused</code>, or <code>rolled-back</code> and therefore not serve, and "latest published" is not "current production". A channel is a named pointer, resolved per-run and pinned as a recorded fact (<code>version-negotiation.md</code> §"Channel resolution + replay"), into the host's per-(agentId, version) deployment records. The deployment lifecycle, the channel→version resolution, the canary split, and the promotion contract are normative in <a href="./agent-deployment.md"><code>agent-deployment.md</code></a>; the registry surface here is unchanged.</p>
 <hr/>
 <h2 id="open-spec-gaps">Open spec gaps</h2>
 <table>

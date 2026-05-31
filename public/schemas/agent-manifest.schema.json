@@ -41,6 +41,11 @@
       "description": "URI-reference to a prompt file inside the pack tarball (e.g., `prompts/supervisor.md`). Mutually exclusive with `systemPrompt`. Useful when the prompt body is large enough that inlining would bloat the manifest.",
       "minLength": 1
     },
+    "evalSuiteRef": {
+      "type": "string",
+      "description": "RFC 0081 §A. MAY. URI-reference to an `agent-eval-suite.schema.json` file inside the pack tarball (e.g., `evals/support-resolver.json`), resolved at install exactly like `systemPromptRef` / `handoff.*SchemaRef`. Declares the agent's portable evaluation suite (golden/rubric/adversarial/regression/live-shadow tasks + thresholds) so a host advertising `capabilities.agents.evalSuite.supported: true` can run it as a `mode: \"eval\"` run. Absent ⇒ the agent ships no suite (a suite MAY still be authored independently and pointed at this `agentId` at run time). Does NOT embed the suite in the manifest — the suite evolves on its own cadence and is often authored by a different role.",
+      "minLength": 1
+    },
     "toolAllowlist": {
       "type": "array",
       "items": { "type": "string", "minLength": 1 },

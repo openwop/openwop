@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — openwop Spec v1 — Budget, Quota, and Cost Policy</title>
+  <meta name="description" content="openwop observes spend — RFC 0026 emits per-call provider.usage (tokens + optional cost) and observability.md projects openwop.cost. — but it cannot enforce a budget. A user cannot say &quot;do not spend more than $1 on this research run&quot;; a host cannot…"/>
+  <link rel="canonical" href="https://openwop.dev/spec/v1/budget-policy.html"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — openwop Spec v1 — Budget, Quota, and Cost Policy"/>
+  <meta property="og:description" content="openwop observes spend — RFC 0026 emits per-call provider.usage (tokens + optional cost) and observability.md projects openwop.cost. — but it cannot enforce a budget. A user cannot say &quot;do not spend more than $1 on this research run&quot;; a host cannot…"/>
+  <meta property="og:url" content="https://openwop.dev/spec/v1/budget-policy.html"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — openwop Spec v1 — Budget, Quota, and Cost Policy"/>
+  <meta name="twitter:description" content="openwop observes spend — RFC 0026 emits per-call provider.usage (tokens + optional cost) and observability.md projects openwop.cost. — but it cannot enforce a budget. A user cannot say &quot;do not spend more than $1 on this research run&quot;; a host cannot…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "openwop Spec v1 — Budget, Quota, and Cost Policy",
+  "description": "openwop observes spend — RFC 0026 emits per-call provider.usage (tokens + optional cost) and observability.md projects openwop.cost. — but it cannot enforce a budget. A user cannot say \"do not spend more than $1 on this research run\"; a host cannot…",
+  "url": "https://openwop.dev/spec/v1/budget-policy.html",
+  "inLanguage": "en-US",
+  "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://openwop.dev/#website",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "about": {
+    "@type": "SoftwareSourceCode",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev",
+    "codeRepository": "https://github.com/openwop/openwop"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "OpenWOP",
+    "url": "https://openwop.dev"
+  },
+  "dependencies": "JSON Schema 2020-12, REST + SSE + signed webhooks"
+}</script>
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>Budget, Quota, and Cost Policy</h1>
+      <p class="lede">openwop observes spend — RFC 0026 emits per-call provider.usage (tokens + optional cost) and observability.md projects openwop.cost. — but it cannot enforce a budget. A user cannot say &quot;do not spend more than $1 on this research run&quot;; a host cannot…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
+      <li class="toc-top"><a href="#a-the-budget-policy">§A — The budget policy</a></li>
+      <li class="toc-top"><a href="#b-scopes-resolution">§B — Scopes + resolution</a></li>
+      <li class="toc-top"><a href="#c-the-budget-event-family-content-free">§C — The budget.* event family (content-free)</a></li>
+      <li class="toc-top"><a href="#d-enforcement">§D — Enforcement</a></li>
+      <li class="toc-top"><a href="#e-capability-orthogonality-with-rfc-0058-the-load-bearing-seam">§E — Capability + orthogonality with RFC 0058 (the load-bearing seam)</a></li>
+      <li class="toc-top"><a href="#f-security">§F — Security</a></li>
+      <li class="toc-top"><a href="#open-spec-gaps">Open spec gaps</a></li>
+    </ul>
+  </aside><article class="spec-doc"><blockquote><p><strong>Status: DRAFT v1.x (filed via <a href="../../RFCS/0084-budget-quota-and-cost-policy.md">RFC 0084</a>, 2026-05-30).</strong> Additive v1.x extension — not part of the v1.0 conformance gate. Lands the reserved <code>budget</code> run-options key, the content-free <code>budget.{reserved,consumed,threshold.crossed,exhausted}</code> events, the four <code>cap.breached{budget-*}</code> kinds, and the <code>budget</code> capability + <code>limits</code> ceilings. The behavioral enforcement scenario, the <code>budget_exhausted</code>/<code>budget_model_denied</code> OpenAPI error codes, and the reference-host accounting land at <code>Active → Accepted</code>. Keywords MUST, SHOULD, MAY follow <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a>. See <code>auth.md</code> for the status legend.</p></blockquote>
+<h2 id="why-this-exists">Why this exists</h2>
+<p>openwop <em>observes</em> spend — RFC 0026 emits per-call <code>provider.usage</code> (tokens + optional cost) and <code>observability.md</code> projects <code>openwop.cost.<em></code> — but it cannot <strong>enforce</strong> a budget. A user cannot say "do not spend more than $1 on this research run"; a host cannot cap tool-call count, retry count, or restrict which models a run may use; and there is no event telling a consumer "you've crossed 80% of budget" or "budget exhausted." RFC 0058 caps </em>execution<em> (wall-clock, agent-loop iterations) — runaway-execution safety — but says nothing about </em>cost*. This document adds the <strong>cost-governance</strong> layer, additively and orthogonally to RFC 0058.</p>
+<h2 id="a-the-budget-policy">§A — The <code>budget</code> policy</h2>
+<p>An additive reserved <code>budget</code> key on <code>RunOptions.configurable</code> (<a href="../../schemas/budget-policy.schema.json"><code>budget-policy.schema.json</code></a>, <code>additionalProperties: false</code>): <code>maxTokens</code>, <code>maxCostUsd</code>, <code>maxToolCalls</code>, <code>maxRetries</code>, <code>modelAllow[]</code>/<code>modelDeny[]</code>, <code>thresholdPercent</code>, <code>onExhaustion ∈ {fail, interrupt}</code>. Every dimension is optional; an absent dimension is unbounded (host default). <strong>Wall-time and loop-iterations are deliberately NOT here</strong> — they are RFC 0058's <code>runTimeoutMs</code> / <code>maxLoopIterations</code> (§E); a <code>budget</code> policy attempting a wall-time field fails validation (<code>additionalProperties: false</code>).</p>
+<h2 id="b-scopes-resolution">§B — Scopes + resolution</h2>
+<p>A budget MAY be declared at four scopes (run / workflow / agent / project). The <strong>effective budget for a run is the minimum across all applicable scopes</strong>, then clamped to the host ceiling (<code>Capabilities.limits.maxBudgetTokens</code> / <code>maxBudgetCostUsd</code>) — the RFC 0058 §A <code>min(requested, hostCeiling)</code> model. Project/agent/workflow budgets are host-configured (a <code>tenant</code> host, RFC 0074, scopes them to the owner triple); the run-level <code>budget</code> is the per-request overlay. Resolution is deterministic and <strong>recorded at <code>budget.reserved</code></strong>, so a replay re-reads the same effective budget (a recorded fact, not re-resolved). Non-run-scoped budgets are host-config only at v1.x — there is no <code>GET /v1/budgets</code> wire surface (the RFC 0080 <code>GET /v1/memory</code> decision, applied to budgets); the run-level overlay is the only wire surface.</p>
+<h2 id="c-the-budget-event-family-content-free">§C — The <code>budget.*</code> event family (content-free)</h2>
+<table>
+<thead><tr><th>Event</th><th>Emitted</th><th>Payload (content-free)</th></tr></thead>
+<tbody>
+<tr><td><code>budget.reserved</code></td><td>once, at run start</td><td><code>{ effectiveBudget, scope }</code></td></tr>
+<tr><td><code>budget.consumed</code></td><td>on each <code>provider.usage</code> / tool call / retry (host MAY coalesce)</td><td><code>{ dimension, consumed, limit, remaining? }</code></td></tr>
+<tr><td><code>budget.threshold.crossed</code></td><td>once per dimension, at <code>thresholdPercent</code></td><td><code>{ dimension, consumed, limit, percent }</code></td></tr>
+<tr><td><code>budget.exhausted</code></td><td>when a dimension hits its limit</td><td><code>{ dimension, consumed, limit }</code></td></tr>
+</tbody></table>
+<p>Consumption is <strong>derived from the existing events</strong> — <code>maxTokens</code>/<code>maxCostUsd</code> from RFC 0026 <code>provider.usage</code> (no double-counting; <code>budget.consumed</code> is a running projection, not a new measurement), <code>maxToolCalls</code> from <code>agent.toolCalled</code>, <code>maxRetries</code> from the RFC 0009 retry events. The host MAY coalesce <code>budget.consumed</code>; it MUST emit at least <code>reserved</code> + <code>threshold.crossed</code> + <code>exhausted</code>. None of the four carries pricing breakdowns, rate cards, provider credentials, or model prose (SR-1; the §F invariant) — only the dimension name, integers/numbers, and the scope. Consumed values are recorded facts: on replay the exhaustion point is deterministic even if the host's live pricing changed (<code>replay.md</code> §"Recorded-fact events").</p>
+<h2 id="d-enforcement">§D — Enforcement</h2>
+<p>On <code>budget.exhausted</code> for a hard dimension, the host enforces per <code>onExhaustion</code>:</p>
+<ul>
+<li><strong><code>&quot;fail&quot;</code></strong> (default): emit <code>cap.breached</code> with a <code>kind ∈ {budget-tokens, budget-cost, budget-tool-calls, budget-retries}</code> (the RFC 0058 precedent — budget enforcement REUSES the unified cap-overflow event, no new failure event) → <code>run.failed</code> with error code <code>budget_exhausted</code>.</li>
+<li><strong><code>&quot;interrupt&quot;</code></strong>: raise an RFC 0051 approval interrupt ("budget exhausted, approve continuation?"). A resume carries an additive budget delta, audited via a second <code>budget.reserved</code>.</li>
+</ul>
+<p><strong>Model allow/deny</strong> is enforced at model selection: a run whose resolved model violates <code>modelAllow</code>/<code>modelDeny</code> (<code>modelDeny</code> wins on conflict, fail-closed) is refused with <code>budget_model_denied</code> <strong>before</strong> the call — composing the RFC 0031 model-gate dispatch point + the RFC 0067 <code>provider_policy_denied</code> precedent. This is a <em>budget</em>-scoped allowlist (per-run spend control), distinct from RFC 0031 <em>capability</em> gating and RFC 0067 <em>provider</em> policy; all three compose at the same dispatch seam. <code>budget.maxRetries</code> is a <strong>ceiling over</strong> the RFC 0009 retry count (the run fails when cumulative retries hit it), not a separate retry mechanism.</p>
+<h2 id="e-capability-orthogonality-with-rfc-0058-the-load-bearing-seam">§E — Capability + orthogonality with RFC 0058 (the load-bearing seam)</h2>
+<p>A host advertises <code>capabilities.budget</code> (<code>supported</code> + <code>dimensions[]</code> truthful + <code>enforce ∈ {hard, advisory}</code> + <code>scopes[]</code>) and the additive <code>limits.maxBudget{Tokens,CostUsd}</code> ceilings. <strong>The event-emission obligation is identical across both modes</strong> — <code>hard</code> AND <code>advisory</code> hosts MUST emit the four <code>budget.<em></code> events (so a consumer can rely on <code>budget.threshold.crossed</code> / <code>budget.exhausted</code> firing regardless of mode); only the </em>enforcement<em> differs: a <code>hard</code> host additionally emits <code>cap.breached{budget-</em>}</code> and terminates the run on exhaustion, while an <code>advisory</code> host MUST NOT stop the run (honest advertisement of observe-only). A host's <code>advisory</code> mode maps cleanly onto an existing observe-only token-budget projector (no hard-stop wiring required).</p>
+<p><strong>RFC 0058 owns</strong> <code>runTimeoutMs</code> (wall-clock) + <code>maxLoopIterations</code> (agent-loop), emitting <code>cap.breached{kind:&quot;run-duration&quot;|&quot;loop-iterations&quot;}</code>. <strong>RFC 0084 owns</strong> token/cost/tool-call/retry <em>spend</em> + model <em>policy</em>, emitting <code>cap.breached{kind:&quot;budget-*&quot;}</code>. They share only the <code>cap.breached</code> event (by design — the unified overflow primitive) and the <code>min(requested, ceiling)</code> resolution pattern. <strong>No dimension is defined in both</strong> — <code>budget</code> has no wall-time/iteration field (§A), and 0058 has no token/cost/tool-call field. A run MAY set both a <code>runTimeoutMs</code> (0058) and a <code>budget.maxCostUsd</code> (0084); whichever binds first fires its own <code>cap.breached</code> kind. This seam is normative so the two never drift into overlap.</p>
+<h2 id="f-security">§F — Security</h2>
+<p>The new protocol-tier invariant <strong><code>budget-no-pricing-leak</code></strong>: the four <code>budget.<em></code> events + <code>cap.breached{budget-</em>}</code> MUST NOT carry the host's <strong>pricing model</strong> — rate cards, per-token / per-unit prices, cost breakdowns, provider credentials, or model prose. Verified always-on by <code>budget-policy-shape.test.ts</code> (the content-free negatives — a payload with a <code>ratePerToken</code> / <code>rateCard</code> / <code>pricing</code> field — are its public test).</p>
+<p><strong>Aggregate cost vs. pricing model (the precise line).</strong> The <code>cost</code> dimension's <strong>aggregate total</strong> — <code>budget.consumed{dimension:&quot;cost&quot;, consumed, limit}</code> and the <code>maxCostUsd</code> the user <em>set</em> — IS permitted and is load-bearing (the headline "do not spend more than $1" feature). It is the user's own budget reflected back, and the aggregate is already derivable from the <strong>accepted</strong> RFC 0026 <code>provider.usage.costEstimateUsd</code> surface — so it introduces no new leak. What is forbidden is the host's <strong>rate card</strong> (the per-token/per-unit price <em>breakdown</em> by which that aggregate was computed): a single aggregate total cannot reconstruct a rate card, but a per-unit price field would expose commercially-sensitive pricing. The host's pricing <em>model</em> (how it computes <code>costEstimateUsd</code>) stays a host choice (RFC 0026); this RFC fixes only the policy shape, the events, and the enforcement seam. A host that prefers to never put any <code>$</code>-denominated value on the wire MAY advertise only the non-cost dimensions (<code>tokens</code>/<code>toolCalls</code>/<code>retries</code>) — the cost dimension is optional.</p>
+<h2 id="open-spec-gaps">Open spec gaps</h2>
+<ul>
+<li>The behavioral enforcement scenario (accrue → threshold → exhaust → <code>cap.breached{budget-cost}</code> → <code>run.failed{budget_exhausted}</code>; <code>budget_model_denied</code>; the advisory no-stop path), the <code>budget_exhausted</code>/<code>budget_model_denied</code> OpenAPI error codes, and the reference-host budget accumulator land at <code>Active → Accepted</code>; the always-on <code>budget-policy-shape.test.ts</code> + the schema + events + <code>cap.breached</code> kinds + capability ship now.</li>
+</ul><footer class="doc-edit"><a href="https://github.com/openwop/openwop/edit/main/spec/v1/budget-policy.md" rel="noopener">Edit this page on GitHub <span class="arrow">↗</span></a></footer></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>
