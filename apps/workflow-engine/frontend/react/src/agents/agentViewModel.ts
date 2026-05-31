@@ -33,15 +33,17 @@ export interface AgentView {
   nextSchedule: ScheduledJob | null;
 }
 
-const STATUS_META: Record<AgentStatus, { label: string; bg: string; fg: string }> = {
-  active: { label: 'Active', bg: '#e6f7ee', fg: '#1f7a4d' },
-  working: { label: 'Working', bg: '#e7f0ff', fg: '#1c4f9c' },
-  waiting: { label: 'Waiting on Human', bg: '#fff1e0', fg: '#9a5b12' },
-  paused: { label: 'Paused', bg: 'var(--color-surface-alt, #eef1f5)', fg: 'var(--color-text-muted)' },
-  'needs-setup': { label: 'Needs setup', bg: '#fde8e8', fg: '#a12d2d' },
+// Status → label + a token-driven `.chip--*` modifier (no hardcoded hex; the
+// chip classes live in global.css and theme correctly across every surface).
+const STATUS_META: Record<AgentStatus, { label: string; chip: string }> = {
+  active: { label: 'Active', chip: 'chip--success' },
+  working: { label: 'Working', chip: 'chip--accent' },
+  waiting: { label: 'Waiting on Human', chip: 'chip--warning' },
+  paused: { label: 'Paused', chip: 'chip--muted' },
+  'needs-setup': { label: 'Needs setup', chip: 'chip--danger' },
 };
 
-export function statusMeta(status: AgentStatus): { label: string; bg: string; fg: string } {
+export function statusMeta(status: AgentStatus): { label: string; chip: string } {
   return STATUS_META[status];
 }
 

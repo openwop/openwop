@@ -9,6 +9,7 @@ import { statusMeta, type AgentView } from './agentViewModel.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
+/** Initials for the avatar. Falls back to the first two chars of the name. */
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
   return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || name.slice(0, 2).toUpperCase();
@@ -18,7 +19,7 @@ function LaneCount({ label, n }: { label: string; n: number }): JSX.Element {
   return (
     <div style={{ textAlign: 'center', minWidth: 56 }}>
       <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{n}</div>
-      <div style={{ ...muted, fontSize: '0.68rem' }}>{label}</div>
+      <div style={{ ...muted, fontSize: '12px' }}>{label}</div>
     </div>
   );
 }
@@ -39,26 +40,16 @@ export function AgentCard({
   const firstWorkflow = entry.workflows[0];
 
   return (
-    <div
-      style={{
-        border: '1px solid var(--color-border)',
-        background: 'var(--color-surface)',
-        borderRadius: 12,
-        padding: '0.9rem 1rem',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.6rem',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+    <div className="surface-card">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
         <div
           aria-hidden="true"
           style={{
             width: 40,
             height: 40,
             borderRadius: '50%',
-            background: 'var(--color-accent, #3b5bdb)',
-            color: '#fff',
+            background: 'var(--color-accent)',
+            color: 'var(--paper)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -69,37 +60,35 @@ export function AgentCard({
           {initials(entry.persona)}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 700, fontSize: '1.05rem' }}>{entry.persona}</div>
-          <div style={{ ...muted, fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ fontWeight: 700, fontSize: '15px' }}>{entry.persona}</div>
+          <div style={{ ...muted, fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {entry.label ?? 'Agent'}
           </div>
         </div>
-        <span style={{ fontSize: '0.72rem', fontWeight: 600, padding: '2px 9px', borderRadius: 999, background: sm.bg, color: sm.fg, whiteSpace: 'nowrap' }}>
-          {sm.label}
-        </span>
+        <span className={`chip ${sm.chip}`}>{sm.label}</span>
       </div>
 
-      <div style={{ display: 'flex', gap: '0.4rem', fontSize: '0.8rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 'var(--space-2)', fontSize: '13px', flexWrap: 'wrap' }}>
         <span><strong>{entry.workflows.length}</strong> <span style={muted}>workflow{entry.workflows.length === 1 ? '' : 's'}</span></span>
         <span style={muted}>·</span>
         <span><strong>{laneCounts.todo}</strong> <span style={muted}>in To Do</span></span>
       </div>
 
-      <div style={{ fontSize: '0.8rem' }}>
+      <div style={{ fontSize: '13px' }}>
         <span style={muted}>Next run: </span>
         {nextSchedule
           ? <span>{firstWorkflow ? workflowName(nextSchedule.workflowId ?? firstWorkflow) : 'workflow'} <span style={muted}>· {String(nextSchedule.metadata?.label ?? nextSchedule.cronExpr)}</span></span>
           : <span style={muted}>no schedule</span>}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.3rem', padding: '0.4rem 0', borderTop: '1px solid var(--color-border)', borderBottom: '1px solid var(--color-border)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--space-1)', padding: 'var(--space-2) 0', borderTop: '1px solid var(--color-border)', borderBottom: '1px solid var(--color-border)' }}>
         <LaneCount label="To Do" n={laneCounts.todo} />
         <LaneCount label="Working" n={laneCounts.working} />
         <LaneCount label="Waiting" n={laneCounts.waiting} />
         <LaneCount label="Done" n={laneCounts.done} />
       </div>
 
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
+      <div className="action-bar">
         <button type="button" className="primary" style={{ flex: 1 }} onClick={onOpen}>Open</button>
         <button
           type="button"

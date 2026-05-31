@@ -7,6 +7,7 @@
 
 import { useState } from 'react';
 import { createCard } from '../kanban/kanbanClient.js';
+import { Notice } from '../ui/Notice.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
@@ -52,8 +53,8 @@ export function AgentIntegrationsPanel({ boardId, persona, onChanged }: { boardI
 
   return (
     <div style={{ maxWidth: 720 }}>
-      {error ? <div style={{ color: 'var(--color-danger)', marginBottom: '0.5rem' }}>⚠ {error}</div> : null}
-      {notice ? <div style={{ background: '#e6f7ee', color: '#1f7a4d', padding: '0.4rem 0.6rem', borderRadius: 8, marginBottom: '0.5rem', fontSize: '0.82rem' }}>{notice}</div> : null}
+      {error ? <Notice variant="error">⚠ {error}</Notice> : null}
+      {notice ? <Notice variant="success">{notice}</Notice> : null}
 
       <p style={{ ...muted, marginTop: 0 }}>
         Work can arrive on {persona}'s board from humans, workflows, other agents, chat tools, schedules, or APIs.
@@ -62,7 +63,7 @@ export function AgentIntegrationsPanel({ boardId, persona, onChanged }: { boardI
       <div style={{ border: '1px solid var(--color-border)', borderRadius: 10, padding: '0.8rem', marginBottom: '1rem', background: 'var(--color-surface)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <strong>💬 Discord</strong>
-          <span style={{ fontSize: '0.68rem', fontWeight: 600, padding: '1px 7px', borderRadius: 999, background: '#fff1e0', color: '#9a5b12' }}>Demo simulation</span>
+          <span className="chip chip--warning">Demo simulation</span>
         </div>
         <p style={{ fontSize: '0.85rem' }}>
           In Discord, <code>/assign @{handle} "Follow up with ACME on renewal"</code> creates a To Do card on {persona}'s board.
@@ -90,7 +91,7 @@ export function AgentIntegrationsPanel({ boardId, persona, onChanged }: { boardI
             <span aria-hidden="true">{s.glyph}</span>
             <span style={{ fontWeight: 600, minWidth: 110 }}>{s.name}</span>
             <span style={{ ...muted, fontSize: '0.82rem', flex: 1 }}>{s.blurb}</span>
-            <span style={{ fontSize: '0.68rem', fontWeight: 600, padding: '1px 7px', borderRadius: 999, background: s.status === 'demo' ? '#e6f7ee' : 'var(--color-surface-alt, #eef1f5)', color: s.status === 'demo' ? '#1f7a4d' : 'var(--color-text-muted)' }}>
+            <span className={`chip ${s.status === 'demo' ? 'chip--success' : 'chip--muted'}`}>
               {s.status === 'demo' ? 'Demo' : 'Planned'}
             </span>
           </li>

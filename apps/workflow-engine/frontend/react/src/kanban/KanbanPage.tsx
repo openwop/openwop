@@ -25,6 +25,9 @@ import {
 } from '@dnd-kit/core';
 import { Link } from 'react-router-dom';
 import { listRoster, type RosterEntry } from '../agents/rosterClient.js';
+import { workflowName } from '../agents/roleTemplates.js';
+import { Notice } from '../ui/Notice.js';
+import { StateCard } from '../ui/StateCard.js';
 import {
   createBoard,
   createCard,
@@ -58,11 +61,11 @@ function CardChip({ card }: { card: KanbanCard }): JSX.Element {
         <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: 2 }}>{card.description}</div>
       ) : null}
       {card.workflowId ? (
-        <div style={{ fontSize: '0.72rem', color: 'var(--color-accent)', marginTop: 4 }}>⚙ {card.workflowId}</div>
+        <div style={{ fontSize: '12px', color: 'var(--color-accent)', marginTop: 4 }}>⚙ {workflowName(card.workflowId)}</div>
       ) : null}
       {card.lastRunId ? (
-        <div style={{ fontSize: '0.72rem', marginTop: 4 }}>
-          <Link to={`/runs/${card.lastRunId}`}>▶ run {card.lastRunId.slice(0, 8)}</Link>
+        <div style={{ fontSize: '12px', marginTop: 4 }}>
+          <Link to={`/runs/${card.lastRunId}`}>▶ View run</Link>
         </div>
       ) : null}
     </div>
@@ -242,12 +245,12 @@ export function KanbanPage(): JSX.Element {
     <section style={{ padding: '1rem' }}>
       <h1 style={{ marginTop: 0 }}>Boards</h1>
       <p style={{ color: 'var(--color-text-muted)', marginTop: '-0.5rem' }}>
-        Kanban work surface — drag a card into a <strong>trigger column</strong> (⚡) to start its workflow run. The
-        digital-twin-employee demo (RFC 0086).
+        Drag a card into a <strong>trigger column</strong> (⚡) to start its workflow — the same task board your agents
+        work from.
       </p>
 
-      {error ? <div style={{ color: 'var(--color-danger)' }}>⚠ {error}</div> : null}
-      {notice ? <div style={{ color: 'var(--color-success)' }}>✓ {notice}</div> : null}
+      {error ? <Notice variant="error">⚠ {error}</Notice> : null}
+      {notice ? <Notice variant="success">✓ {notice}</Notice> : null}
 
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', margin: '0.75rem 0' }}>
         {boards.map((b) => (
@@ -314,7 +317,11 @@ export function KanbanPage(): JSX.Element {
           </div>
         </DndContext>
       ) : (
-        <p style={{ color: 'var(--color-text-muted)' }}>Select or create a board to begin.</p>
+        <StateCard
+          glyph="🗂️"
+          title="No board open"
+          body="Pick a board from the tabs above, or use the form above to create one and start tracking work."
+        />
       )}
     </section>
   );

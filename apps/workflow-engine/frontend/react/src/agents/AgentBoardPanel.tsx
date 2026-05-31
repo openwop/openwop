@@ -24,6 +24,7 @@ import {
 } from '../kanban/kanbanClient.js';
 import { TaskSourceChip } from './TaskSourceChip.js';
 import { workflowName } from './roleTemplates.js';
+import { Notice } from '../ui/Notice.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
@@ -95,8 +96,8 @@ export function AgentBoardPanel({ boardId, persona, onChanged }: { boardId: stri
 
   return (
     <div>
-      {error ? <div style={{ color: 'var(--color-danger)', marginBottom: '0.5rem' }}>⚠ {error}</div> : null}
-      {notice ? <div style={{ background: '#e6f7ee', color: '#1f7a4d', padding: '0.4rem 0.6rem', borderRadius: 8, marginBottom: '0.5rem', fontSize: '0.82rem' }}>{notice}</div> : null}
+      {error ? <Notice variant="error">⚠ {error}</Notice> : null}
+      {notice ? <Notice variant="success">{notice}</Notice> : null}
       <p style={{ ...muted, fontSize: '0.82rem', marginTop: 0 }}>
         New work arrives in <strong>To Do</strong>. Move a card to a lane, or run the heartbeat from the header to let {persona} pick up the next task.
       </p>
