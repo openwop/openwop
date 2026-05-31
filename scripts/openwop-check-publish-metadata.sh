@@ -25,7 +25,7 @@ EXPECTED_V1_VERSION="1.1.5"
 # stay locked to EXPECTED_V1_VERSION until the next coordinated spec-
 # corpus release. Bump this when the next `openwop-conformance/v*` tag
 # rolls.
-EXPECTED_CONFORMANCE_VERSION="1.10.0"
+EXPECTED_CONFORMANCE_VERSION="1.11.0"
 # The TypeScript SDK floats its patch version independently within the v1
 # major, per PUBLISHING.md §"Versioning alignment" ("within a major, SDK
 # patch versions float independently") + the `openwop/v*` SDK-only release

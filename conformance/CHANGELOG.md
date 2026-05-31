@@ -2,7 +2,11 @@
 
 ## [Unreleased]
 
-> Suite version stays `1.10.0` until the next coordinated spec-corpus release (per the `openwop-check-publish-metadata` lockstep, `EXPECTED_CONFORMANCE_VERSION`); the scenarios below are unreleased additions, not a shipped version bump.
+_No unreleased changes._
+
+## [1.11.0] — 2026-05-31 — agent-platform graduation + safe-fetch + runtime-requires behavioral scenarios
+
+First independent conformance minor since `1.10.0` — a scenario addition published via the `openwop-conformance/v1.11.0` per-package tag (PUBLISHING.md §"CI automation"; only the `publish-conformance` job runs), NOT a coordinated spec-corpus release. `EXPECTED_CONFORMANCE_VERSION` advances to `1.11.0` in lockstep. All additive + capability/seam-gated; existing v1.0-only hosts pass unchanged. Net-new scenario files since the published `1.10.0`: the four RFC 0086/0077 graduation scenarios below, plus the RFC 0076 §B (`safefetch-behavior`, `safefetch-live-audit`) and §A (`runtime-requires-shape`, `runtime-requires-install-gate`) scenarios that had accumulated unreleased.
 
 **RFCs 0086 + 0077** (the Active→Accepted behavioral gate) — additive + capability/seam-gated; existing hosts pass unchanged. These are the four gated behavioral scenarios each RFC's §Conformance named but deferred at `Draft → Active`; authoring them is the steward prerequisite to a non-steward host (MyndHyve) graduating `agents.roster` / `agents.liveRuntime` from `Active` to `Accepted` by passing them non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true`.
 
