@@ -16,6 +16,7 @@ import { AgentCard } from './AgentCard.js';
 import { AgentActivityFeed } from './AgentActivityFeed.js';
 import { Notice } from '../ui/Notice.js';
 import { StateCard } from '../ui/StateCard.js';
+import { BotIcon } from '../chat/icons/index.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
@@ -138,14 +139,14 @@ export function AgentDashboardPage(): JSX.Element {
 
       <ConceptStrip />
 
-      {error ? <Notice variant="error">⚠ {error}</Notice> : null}
+      {error ? <Notice variant="error">{error}</Notice> : null}
       {notice ? <Notice variant="success">{notice}</Notice> : null}
 
       {loading ? (
         <StateCard loading title="Loading your agents…" />
       ) : views.length === 0 ? (
         <StateCard
-          glyph="🤝"
+          icon={<BotIcon size={26} />}
           title="Agents are named digital coworkers"
           body="Like Sally in Sales Ops or Marcus in Support. Give each one a role, workflows, and a task board, then watch work arrive and get picked up."
           action={

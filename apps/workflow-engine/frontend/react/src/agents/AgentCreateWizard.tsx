@@ -19,6 +19,7 @@ import { createUserAgent } from '../client/agentsClient.js';
 import { createRosterEntry } from './rosterClient.js';
 import { createBoard, type KanbanColumn } from '../kanban/kanbanClient.js';
 import { CADENCE_PRESETS, createJob } from './scheduleClient.js';
+import { Notice } from '../ui/Notice.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
@@ -162,7 +163,7 @@ export function AgentCreateWizard(): JSX.Element {
       <Link to="/agents" style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>← All agents</Link>
       <h1 style={{ marginTop: '0.4rem' }}>Create an agent</h1>
 
-      {error ? <div style={{ color: 'var(--color-danger)', marginBottom: '0.6rem' }}>⚠ {error}</div> : null}
+      {error ? <Notice variant="error">{error}</Notice> : null}
 
       {step === 1 ? (
         <div>

@@ -6,13 +6,14 @@
  */
 
 export function StateCard({
-  glyph,
+  icon,
   title,
   body,
   action,
   loading,
 }: {
-  glyph?: string;
+  /** A Lucide icon node shown above the title. */
+  icon?: React.ReactNode;
   title: string;
   body?: React.ReactNode;
   /** The single next-action CTA(s). Omit for loading states. */
@@ -22,7 +23,7 @@ export function StateCard({
 }): JSX.Element {
   return (
     <div className="state-card" aria-busy={loading ? 'true' : undefined}>
-      {glyph ? <div className="state-card__glyph" aria-hidden="true">{glyph}</div> : null}
+      {icon ? <div className="state-card__glyph" aria-hidden="true" style={{ color: 'var(--color-text-muted)' }}>{icon}</div> : null}
       <div className="state-card__title">{title}</div>
       {body ? <div className="state-card__body">{body}</div> : null}
       {action ? <div className="state-card__actions action-bar" style={{ justifyContent: 'center' }}>{action}</div> : null}
