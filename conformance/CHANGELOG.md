@@ -2,7 +2,15 @@
 
 ## [Unreleased]
 
-**RFC 0087** (`agents.orgChart`, the Active→Accepted behavioral gate) — additive + capability-gated; existing hosts pass unchanged. The two gated behavioral scenarios RFC 0087's §Conformance named but deferred at `Draft → Active`; authoring them is the steward prerequisite to graduating `agents.orgChart` from `Active` to `Accepted` on a non-steward host (MyndHyve). Suite version stays `1.11.0` until the next coordinated/standalone conformance release per the `EXPECTED_CONFORMANCE_VERSION` lockstep; these are unreleased additions.
+_No unreleased changes._
+
+## [1.12.0] — 2026-05-31 — RFC 0087 org-chart + RFC 0083 trigger-bridge behavioral gates
+
+Standalone conformance minor — a scenario addition published via the `openwop-conformance/v1.12.0` per-package tag (PUBLISHING.md §"CI automation"; only the `publish-conformance` job runs), NOT a coordinated spec-corpus release. `EXPECTED_CONFORMANCE_VERSION` advances to `1.12.0` in lockstep. All additive + capability/profile/seam-gated; existing v1.0-only hosts pass unchanged. Ships the three gated behavioral scenarios RFC 0087 + RFC 0083 each name in their §Conformance but deferred at `Draft → Active` — the steward prerequisite to graduating `agents.orgChart` (RFC 0087) and `triggerBridge` (RFC 0083) from `Active` to `Accepted` on a non-steward host (MyndHyve).
+
+### Added — RFC 0083 behavioral scenario
+
+- **`trigger-bridge-delivery.test.ts`** (`behaviorGate('openwop-trigger-bridge', …)`, profile-gated — the `openwop-trigger-bridge` profile derived from the live discovery doc per RFC 0083 §D: the bridge advertised + a dead-letter sink + a durable source) — drives the §C delivery model via the new `POST /v1/host/sample/trigger-bridge/deliver` seam + the test event-log seam: dedup → effectively-once (≤1 `trigger.delivery.attempted{outcome:"delivered"}` per `dedupKey`, §C-1); retry-exhaustion → terminal `trigger.delivery.attempted{outcome:"dead-lettered"}` + `trigger.subscription.state.changed{toState:"dead-lettered"}` (§C-2 + RFC 0053); and a successful delivery whose resulting run's `run.started.causationId` == the delivery id (§C / RFC 0040). Both `trigger.*` events asserted content-free (SR-1). The normative `GET /v1/trigger-subscriptions` read runs black-box. **This is the RFC 0083 → Accepted bar.** New lib helper `src/lib/triggerBridge.ts`; new seam in `host-sample-test-seams.md` §"Open seams". No new schemas (`trigger-subscription.schema.json` + the two `trigger.*` payload $defs shipped at `Draft → Active`); no new SECURITY invariant.
 
 ### Added — RFC 0087 behavioral scenarios
 
