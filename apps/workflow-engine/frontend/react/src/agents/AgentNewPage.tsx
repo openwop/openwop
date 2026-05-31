@@ -118,7 +118,7 @@ export function AgentNewPage(): JSX.Element {
     try {
       const input: CreateUserAgentInput = validation.input;
       const created = await createUserAgent(input);
-      navigate(`/agents/${encodeURIComponent(created.agentId)}`);
+      navigate(`/agents/templates/${encodeURIComponent(created.agentId)}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
       setIsSubmitting(false);

@@ -13,6 +13,7 @@
  */
 
 import { getSdkClient } from './runsClient.js';
+import { authedHeaders, config, fetchOpts } from './config.js';
 import type {
   AgentInventoryEntry,
   AgentPackSummary as SdkAgentPackSummary,
@@ -78,4 +79,48 @@ export async function installAgentPack(name: string, version?: string): Promise<
  *  pack-installed. */
 export async function deleteUserAgent(agentId: string): Promise<boolean> {
   return await getSdkClient().userAgents.delete(agentId);
+}
+
+/** Projection returned by the editable-instructions PATCH. */
+export interface UserAgentProjection {
+  agentId: string;
+  persona: string;
+  label?: string;
+  description?: string;
+  modelClass: string;
+  systemPrompt: string;
+  toolAllowlist: string[];
+  memoryShape: { scratchpad: boolean; conversation: boolean; longTerm: boolean };
+  confidenceThreshold?: number;
+}
+
+/** Edit a user-authored agent's instructions + persona-shaping metadata via
+ *  `PATCH /v1/host/sample/agents/:id` (sample-extension; not in the SDK).
+ *  `persona` is immutable — omit it. The response carries the saved
+ *  `systemPrompt` (the read projection on `GET /v1/agents` omits it). */
+export async function updateUserAgent(
+  agentId: string,
+  patch: {
+    label?: string;
+    description?: string;
+    modelClass?: 'chat' | 'reasoning' | 'coding' | 'extraction';
+    systemPrompt?: string;
+    toolAllowlist?: string[];
+    memoryShape?: { scratchpad?: boolean; conversation?: boolean; longTerm?: boolean };
+    confidenceThreshold?: number;
+  },
+): Promise<UserAgentProjection> {
+  const res = await fetch(
+    `${config.baseUrl}/v1/host/sample/agents/${encodeURIComponent(agentId)}`,
+    fetchOpts({ method: 'PATCH', headers: authedHeaders({ 'content-type': 'application/json' }), body: JSON.stringify(patch) }),
+  );
+  if (!res.ok) {
+    let detail = `${res.status}`;
+    try {
+      const body = (await res.json()) as { message?: string };
+      if (body.message) detail = body.message;
+    } catch { /* ignore */ }
+    throw new Error(`updateUserAgent failed: ${detail}`);
+  }
+  return (await res.json()) as UserAgentProjection;
 }

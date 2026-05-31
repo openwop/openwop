@@ -23,6 +23,8 @@ export interface KanbanColumn {
   triggerWorkflowId?: string;
 }
 
+export type KanbanCardSource = 'human' | 'workflow' | 'agent' | 'discord' | 'schedule' | 'api';
+
 export interface KanbanCard {
   id: string;
   boardId: string;
@@ -31,6 +33,10 @@ export interface KanbanCard {
   description?: string;
   workflowId?: string;
   lastRunId?: string;
+  source?: KanbanCardSource;
+  sourceLabel?: string;
+  priority?: 'low' | 'normal' | 'high';
+  dueAt?: string;
   order: number;
   createdAt: string;
   updatedAt: string;
@@ -59,6 +65,7 @@ export async function createBoard(input: {
   name: string;
   triggerWorkflowId?: string;
   rosterId?: string;
+  columns?: KanbanColumn[];
 }): Promise<KanbanBoard> {
   const res = await fetch(`${base}/boards`, fetchOpts({ method: 'POST', headers: jsonHeaders(), body: JSON.stringify(input) }));
   if (!res.ok) throw new Error(`createBoard returned ${res.status}`);
@@ -78,7 +85,16 @@ export async function deleteBoard(boardId: string): Promise<void> {
 
 export async function createCard(
   boardId: string,
-  input: { title: string; columnId: string; description?: string; workflowId?: string },
+  input: {
+    title: string;
+    columnId: string;
+    description?: string;
+    workflowId?: string;
+    source?: KanbanCardSource;
+    sourceLabel?: string;
+    priority?: 'low' | 'normal' | 'high';
+    dueAt?: string;
+  },
 ): Promise<KanbanCard> {
   const res = await fetch(
     `${base}/boards/${encodeURIComponent(boardId)}/cards`,
@@ -92,7 +108,16 @@ export async function createCard(
  *  started run id (or null) when the move lands in a trigger column. */
 export async function patchCard(
   cardId: string,
-  patch: { title?: string; description?: string; workflowId?: string; columnId?: string },
+  patch: {
+    title?: string;
+    description?: string;
+    workflowId?: string;
+    columnId?: string;
+    source?: KanbanCardSource;
+    sourceLabel?: string;
+    priority?: 'low' | 'normal' | 'high';
+    dueAt?: string;
+  },
 ): Promise<{ card: KanbanCard; triggeredRunId: string | null }> {
   const res = await fetch(
     `${base}/cards/${encodeURIComponent(cardId)}`,

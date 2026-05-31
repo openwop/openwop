@@ -28,8 +28,11 @@ import { useNotificationStore } from './notifications/notificationStore.js';
 import { NavDropdown } from './chrome/NavDropdown.js';
 import { AgentsPage } from './agents/AgentsPage.js';
 import { AgentDetailPage } from './agents/AgentDetailPage.js';
-import { AgentNewPage } from './agents/AgentNewPage.js';
 import { AgentInstallPage } from './agents/AgentInstallPage.js';
+import { AgentNewPage } from './agents/AgentNewPage.js';
+import { AgentDashboardPage } from './agents/AgentDashboardPage.js';
+import { AgentWorkspacePage } from './agents/AgentWorkspacePage.js';
+import { AgentCreateWizard } from './agents/AgentCreateWizard.js';
 
 export function App() {
   const location = useLocation();
@@ -84,31 +87,28 @@ export function App() {
                 Settings — config that doesn't change per session
 
               Chat first per feedback_chat_first_nav memory. */}
+          {/* IA rebuilt around the named digital coworker (agents-demo PRD §6):
+              the product-facing primaries are Chat / Agents / Workflows / Runs.
+              The protocol/operate surfaces (Boards, Roster, Inbox, Mission
+              Control, Memory, Prompts, Agent templates) are preserved under an
+              "Advanced" posture — NOT hidden (PRD Non-Goals). Chat first per
+              feedback_chat_first_nav memory. */}
           <NavLink to="/" end>Chat</NavLink>
+          <NavLink to="/agents">Agents</NavLink>
+          <NavLink to="/builder">Workflows</NavLink>
+          <NavLink to="/runs">Runs</NavLink>
           <NavDropdown
-            label="Build"
+            label="Advanced"
             items={[
-              { label: 'Workflows', to: '/builder', hint: 'Author + run multi-node graphs' },
-              { label: 'Agents', to: '/agents', hint: 'Persona-driven LLM workers' },
-              { label: 'Roster', to: '/roster', hint: 'Named agents + workflow portfolios + org-chart' },
-              { label: 'Prompts', to: '/prompts', hint: 'Reusable templates + variables' },
-            ]}
-          />
-          <NavDropdown
-            label="Operate"
-            items={[
-              { label: 'Runs', to: '/runs', hint: 'Per-run event streams + replay' },
-              { label: 'Boards', to: '/boards', hint: 'Kanban work surface — card → run trigger' },
+              { label: 'Boards', to: '/boards', hint: 'All Kanban boards — card → run trigger' },
+              { label: 'Roster', to: '/roster', hint: 'Raw roster + org-chart editor' },
+              { label: 'Agent templates', to: '/agents/templates', hint: 'Installed manifest agents + packs' },
               { label: 'Inbox', to: '/inbox', hint: 'Notifications + approvals' },
               { label: 'Mission Control', to: '/mission', hint: 'Live fleet view across runs' },
               { label: 'Memory', to: '/memory', hint: 'Tenant-attributed memory writes' },
+              { label: 'Prompts', to: '/prompts', hint: 'Reusable templates + variables' },
             ]}
           />
-          {/* CLI lives in Settings — it's a dev/admin surface
-              adjacent to BYOK keys + capabilities discovery, not an
-              authoring or operate surface. Added during the rebase
-              of `feat/agents-tab` onto `e55ce3cb feat(app): in-app
-              /cli page`. */}
           <NavDropdown
             label="Settings"
             items={[
@@ -161,12 +161,19 @@ export function App() {
           <Route path="/memory" element={<MemoryInspectorPage />} />
           <Route path="/boards" element={<KanbanPage />} />
           <Route path="/roster" element={<RosterPage />} />
-          {/* Agents tab — list + detail + create (E2) + install (E3)
-              + fork (E4 also lands on /agents/new with ?fork= query). */}
-          <Route path="/agents" element={<AgentsPage />} />
-          <Route path="/agents/new" element={<AgentNewPage />} />
+          {/* Agents experience (agents-demo PRD): the dashboard of named
+              coworkers is the primary `/agents`; the manifest-agent inventory
+              moves under `/agents/templates`. The per-agent workspace lives at
+              `/agents/:agentId` (a roster id). */}
+          <Route path="/agents" element={<AgentDashboardPage />} />
+          <Route path="/agents/new" element={<AgentCreateWizard />} />
+          {/* Raw single-form authoring (also the ?fork= target) — kept for the
+              fork-to-customize flow from a pack/template agent. */}
+          <Route path="/agents/fork" element={<AgentNewPage />} />
           <Route path="/agents/install" element={<AgentInstallPage />} />
-          <Route path="/agents/:agentId" element={<AgentDetailPage />} />
+          <Route path="/agents/templates" element={<AgentsPage />} />
+          <Route path="/agents/templates/:agentId" element={<AgentDetailPage />} />
+          <Route path="/agents/:agentId" element={<AgentWorkspacePage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/cli" element={<CliPage />} />
           {/* Catch-all: the SPA host rewrites every path to index.html, so an

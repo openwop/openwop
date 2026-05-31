@@ -46,20 +46,63 @@ export async function listRoster(): Promise<RosterEntry[]> {
   return ((await res.json()) as { roster: RosterEntry[] }).roster;
 }
 
+export async function getRosterEntry(rosterId: string): Promise<RosterEntry> {
+  const res = await fetch(`${rosterBase}/${encodeURIComponent(rosterId)}`, fetchOpts({ headers: authedHeaders() }));
+  if (!res.ok) throw new Error(`getRosterEntry returned ${res.status}`);
+  return (await res.json()) as RosterEntry;
+}
+
 export async function createRosterEntry(input: {
   persona: string;
   agentRef: RosterAgentRef;
   workflows?: string[];
+  label?: string;
   description?: string;
+  enabled?: boolean;
 }): Promise<RosterEntry> {
   const res = await fetch(rosterBase, fetchOpts({ method: 'POST', headers: jsonHeaders(), body: JSON.stringify(input) }));
   if (!res.ok) throw new Error(`createRosterEntry returned ${res.status}`);
   return (await res.json()) as RosterEntry;
 }
 
+export async function updateRosterEntry(
+  rosterId: string,
+  patch: { persona?: string; workflows?: string[]; enabled?: boolean; label?: string; description?: string },
+): Promise<RosterEntry> {
+  const res = await fetch(`${rosterBase}/${encodeURIComponent(rosterId)}`, fetchOpts({ method: 'PATCH', headers: jsonHeaders(), body: JSON.stringify(patch) }));
+  if (!res.ok) throw new Error(`updateRosterEntry returned ${res.status}`);
+  return (await res.json()) as RosterEntry;
+}
+
 export async function deleteRosterEntry(rosterId: string): Promise<void> {
   const res = await fetch(`${rosterBase}/${encodeURIComponent(rosterId)}`, fetchOpts({ method: 'DELETE', headers: authedHeaders() }));
   if (!res.ok) throw new Error(`deleteRosterEntry returned ${res.status}`);
+}
+
+/** "Load demo agents" — idempotently seed the built-in demo agents for the
+ *  caller's tenant. A no-op when the roster is already populated. */
+export async function seedDemoAgents(): Promise<{ seeded: boolean; agents: number }> {
+  const res = await fetch(`${config.baseUrl}/v1/host/sample/demo/seed`, fetchOpts({ method: 'POST', headers: jsonHeaders(), body: '{}' }));
+  if (!res.ok) throw new Error(`seedDemoAgents returned ${res.status}`);
+  return (await res.json()) as { seeded: boolean; agents: number };
+}
+
+export interface HeartbeatResult {
+  picked: boolean;
+  reason?: string;
+  boardId?: string;
+  cardId?: string;
+  cardTitle?: string;
+  runId?: string;
+  persona?: string;
+}
+
+/** Agent heartbeat "Check now" — claim the first eligible To Do card on the
+ *  agent's board and start its workflow. */
+export async function checkAgent(rosterId: string): Promise<HeartbeatResult> {
+  const res = await fetch(`${rosterBase}/${encodeURIComponent(rosterId)}/check`, fetchOpts({ method: 'POST', headers: jsonHeaders(), body: '{}' }));
+  if (!res.ok) throw new Error(`checkAgent returned ${res.status}`);
+  return (await res.json()) as HeartbeatResult;
 }
 
 export async function getOrgChart(): Promise<OrgChart> {

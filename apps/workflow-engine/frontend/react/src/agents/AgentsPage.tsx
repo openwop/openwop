@@ -143,7 +143,7 @@ function AgentRow({ agent }: { agent: AgentEntry }): JSX.Element {
   return (
     <li>
       <Link
-        to={`/agents/${encodeURIComponent(agent.agentId)}`}
+        to={`/agents/templates/${encodeURIComponent(agent.agentId)}`}
         style={{
           display: 'block',
           padding: 'var(--space-3) var(--space-4)',
