@@ -72,7 +72,7 @@ export function AgentInstructionsPanel({ entry, onChanged }: { entry: RosterEntr
 
   return (
     <div style={{ maxWidth: 700 }}>
-      {error ? <Notice variant="error">⚠ {error}</Notice> : null}
+      {error ? <Notice variant="error">{error}</Notice> : null}
       {notice ? <Notice variant="success">{notice}</Notice> : null}
 
       <label style={{ display: 'block', fontWeight: 600, marginBottom: 4 }}>What this agent does</label>

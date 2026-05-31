@@ -69,7 +69,7 @@ export function AgentSchedulesPanel({ entry }: { entry: RosterEntry }): JSX.Elem
 
   return (
     <div>
-      {error ? <Notice variant="error">⚠ {error}</Notice> : null}
+      {error ? <Notice variant="error">{error}</Notice> : null}
       {notice ? <Notice variant="success">{notice} <Link to="/runs">View runs</Link></Notice> : null}
 
       {jobs.length === 0 ? (

@@ -13,122 +13,23 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import {
-  DndContext,
-  KeyboardSensor,
-  PointerSensor,
-  useDraggable,
-  useDroppable,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from '@dnd-kit/core';
-import { Link } from 'react-router-dom';
 import { listRoster, type RosterEntry } from '../agents/rosterClient.js';
-import { workflowName } from '../agents/roleTemplates.js';
 import { Notice } from '../ui/Notice.js';
 import { StateCard } from '../ui/StateCard.js';
+import { ColumnsIcon } from '../chat/icons/index.js';
+import { KanbanBoardView } from './KanbanBoardView.js';
 import {
   createBoard,
   createCard,
   deleteBoard,
+  deleteCard,
   getBoard,
   listBoards,
   patchCard,
   subscribeBoardEvents,
   type KanbanBoard,
   type KanbanCard,
-  type KanbanColumn,
 } from './kanbanClient.js';
-
-function CardChip({ card }: { card: KanbanCard }): JSX.Element {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: card.id });
-  const style: React.CSSProperties = {
-    transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
-    opacity: isDragging ? 0.5 : 1,
-    border: '1px solid var(--color-border)',
-    background: 'var(--color-surface)',
-    borderRadius: 8,
-    padding: '0.5rem 0.6rem',
-    marginBottom: '0.5rem',
-    cursor: 'grab',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-  };
-  return (
-    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-      <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{card.title}</div>
-      {card.description ? (
-        <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: 2 }}>{card.description}</div>
-      ) : null}
-      {card.workflowId ? (
-        <div style={{ fontSize: '12px', color: 'var(--color-accent)', marginTop: 4 }}>⚙ {workflowName(card.workflowId)}</div>
-      ) : null}
-      {card.lastRunId ? (
-        <div style={{ fontSize: '12px', marginTop: 4 }}>
-          <Link to={`/runs/${card.lastRunId}`}>▶ View run</Link>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function Column({
-  column,
-  cards,
-  onAddCard,
-}: {
-  column: KanbanColumn;
-  cards: KanbanCard[];
-  onAddCard: (columnId: string, title: string) => void;
-}): JSX.Element {
-  const { setNodeRef, isOver } = useDroppable({ id: column.id });
-  const [adding, setAdding] = useState(false);
-  const [title, setTitle] = useState('');
-  return (
-    <div
-      ref={setNodeRef}
-      style={{
-        flex: '1 1 0',
-        minWidth: 220,
-        background: isOver ? 'var(--clay-wash)' : 'var(--color-bg)',
-        border: '1px solid var(--color-border)',
-        borderRadius: 12,
-        padding: '0.6rem',
-      }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-        <strong style={{ fontSize: '0.85rem' }}>{column.name}</strong>
-        {column.triggerWorkflowId ? <span title={`fires ${column.triggerWorkflowId}`}>⚡</span> : null}
-      </div>
-      {cards.map((c) => (
-        <CardChip key={c.id} card={c} />
-      ))}
-      {adding ? (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (title.trim()) onAddCard(column.id, title.trim());
-            setTitle('');
-            setAdding(false);
-          }}
-        >
-          <input
-            autoFocus
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Card title…"
-            style={{ width: '100%', fontSize: '0.85rem' }}
-            onBlur={() => setAdding(false)}
-          />
-        </form>
-      ) : (
-        <button type="button" className="secondary" style={{ width: '100%', fontSize: '0.8rem' }} onClick={() => setAdding(true)}>
-          + Add card
-        </button>
-      )}
-    </div>
-  );
-}
 
 export function KanbanPage(): JSX.Element {
   const [boards, setBoards] = useState<KanbanBoard[]>([]);
@@ -143,13 +44,6 @@ export function KanbanPage(): JSX.Element {
   // triggered runs to the member.
   const [roster, setRoster] = useState<RosterEntry[]>([]);
   const [newRosterId, setNewRosterId] = useState('');
-  // PointerSensor for mouse/touch + KeyboardSensor so the board is
-  // operable without a pointer (a11y): focus a card, Space to pick up,
-  // arrow keys to move, Space to drop.
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-    useSensor(KeyboardSensor),
-  );
 
   const refreshBoards = useCallback(async () => {
     try {
@@ -213,27 +107,32 @@ export function KanbanPage(): JSX.Element {
     }
   };
 
-  const onAddCard = async (columnId: string, title: string) => {
+  const onCreateCard = async (columnId: string, input: { title: string }) => {
     if (!activeBoard) return;
     try {
-      await createCard(activeBoard.id, { title, columnId });
+      await createCard(activeBoard.id, { title: input.title, columnId });
       await openBoard(activeBoard.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
   };
 
-  const onDragEnd = async (event: DragEndEvent) => {
-    const cardId = String(event.active.id);
-    const toColumnId = event.over ? String(event.over.id) : null;
-    if (!activeBoard || !toColumnId) return;
+  const onDeleteCard = async (cardId: string) => {
+    if (!activeBoard) return;
+    try {
+      await deleteCard(cardId);
+      await openBoard(activeBoard.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  const onMoveCard = async (cardId: string, toColumnId: string) => {
+    if (!activeBoard) return;
     const card = cards.find((c) => c.id === cardId);
-    if (!card || card.columnId === toColumnId) return;
-    // Optimistic move.
-    setCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, columnId: toColumnId } : c)));
     try {
       const { triggeredRunId } = await patchCard(cardId, { columnId: toColumnId });
-      if (triggeredRunId) setNotice(`Started run ${triggeredRunId.slice(0, 8)} from "${card.title}"`);
+      if (triggeredRunId && card) setNotice(`Started a run from "${card.title}" — it landed in a ⚡ trigger lane.`);
       await openBoard(activeBoard.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -249,8 +148,8 @@ export function KanbanPage(): JSX.Element {
         work from.
       </p>
 
-      {error ? <Notice variant="error">⚠ {error}</Notice> : null}
-      {notice ? <Notice variant="success">✓ {notice}</Notice> : null}
+      {error ? <Notice variant="error">{error}</Notice> : null}
+      {notice ? <Notice variant="success">{notice}</Notice> : null}
 
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', margin: '0.75rem 0' }}>
         {boards.map((b) => (
@@ -304,21 +203,16 @@ export function KanbanPage(): JSX.Element {
       </form>
 
       {activeBoard ? (
-        <DndContext sensors={sensors} onDragEnd={(e) => void onDragEnd(e)}>
-          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-            {activeBoard.columns.map((col) => (
-              <Column
-                key={col.id}
-                column={col}
-                cards={cards.filter((c) => c.columnId === col.id).sort((a, b) => a.order - b.order)}
-                onAddCard={(columnId, title) => void onAddCard(columnId, title)}
-              />
-            ))}
-          </div>
-        </DndContext>
+        <KanbanBoardView
+          board={activeBoard}
+          cards={cards}
+          onMoveCard={(cardId, toColumnId) => void onMoveCard(cardId, toColumnId)}
+          onCreateCard={(columnId, input) => void onCreateCard(columnId, input)}
+          onDeleteCard={(cardId) => void onDeleteCard(cardId)}
+        />
       ) : (
         <StateCard
-          glyph="🗂️"
+          icon={<ColumnsIcon size={26} />}
           title="No board open"
           body="Pick a board from the tabs above, or use the form above to create one and start tracking work."
         />

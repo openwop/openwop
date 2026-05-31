@@ -1,17 +1,12 @@
 /**
  * Agent board panel (PRD §9 Board tab) — the agent's task board embedded in
- * its workspace. Lanes To Do / Working / Waiting on Human / Done; cards show
- * their source chip, workflow, priority, and a link to the last run. Cards can
- * be created by a human or simulated as Discord/agent-created. Moving a card
- * into the To Do trigger column (or any trigger column) starts the linked
- * workflow.
- *
- * Keyboard-operable (PRD §20): cards move via a per-card lane <select>, not
- * drag-only.
+ * its workspace. Renders the SHARED KanbanBoardView (drag-and-drop + rich
+ * cards), the same board the standalone `/boards` page uses. This panel owns
+ * the data fetch + live refresh (SSE) + create/move/delete persistence; the
+ * board view owns the interaction.
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
   createCard,
   deleteCard,
@@ -22,8 +17,7 @@ import {
   type KanbanCard,
   type KanbanCardSource,
 } from '../kanban/kanbanClient.js';
-import { TaskSourceChip } from './TaskSourceChip.js';
-import { workflowName } from './roleTemplates.js';
+import { KanbanBoardView } from '../kanban/KanbanBoardView.js';
 import { Notice } from '../ui/Notice.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
@@ -33,9 +27,6 @@ export function AgentBoardPanel({ boardId, persona, onChanged }: { boardId: stri
   const [cards, setCards] = useState<KanbanCard[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [addingTo, setAddingTo] = useState<string | null>(null);
-  const [newTitle, setNewTitle] = useState('');
-  const [newSource, setNewSource] = useState<KanbanCardSource>('human');
 
   const refresh = useCallback(async () => {
     try {
@@ -51,18 +42,16 @@ export function AgentBoardPanel({ boardId, persona, onChanged }: { boardId: stri
   // Live refresh via SSE (cross-instance board-change fan-out).
   useEffect(() => subscribeBoardEvents(boardId, () => void refresh()), [boardId, refresh]);
 
-  const onAdd = async (columnId: string) => {
-    if (!newTitle.trim()) return;
+  const onCreateCard = async (columnId: string, input: { title: string; source?: KanbanCardSource }) => {
     try {
+      const source = input.source ?? 'human';
       await createCard(boardId, {
-        title: newTitle.trim(),
+        title: input.title,
         columnId,
-        source: newSource,
-        ...(newSource === 'discord' ? { sourceLabel: `/assign @${persona.toLowerCase()}` } : {}),
+        source,
+        // A simulated-Discord card carries the slash-command as its label.
+        ...(source === 'discord' ? { sourceLabel: `/assign @${persona.toLowerCase()}` } : {}),
       });
-      setNewTitle('');
-      setNewSource('human');
-      setAddingTo(null);
       await refresh();
       onChanged?.();
     } catch (err) {
@@ -70,11 +59,11 @@ export function AgentBoardPanel({ boardId, persona, onChanged }: { boardId: stri
     }
   };
 
-  const onMove = async (card: KanbanCard, toColumnId: string) => {
+  const onMoveCard = async (cardId: string, toColumnId: string) => {
     setNotice(null);
     try {
-      const { triggeredRunId } = await patchCard(card.id, { columnId: toColumnId });
-      if (triggeredRunId) setNotice(`Started a run for “${card.title}”.`);
+      const { triggeredRunId } = await patchCard(cardId, { columnId: toColumnId });
+      if (triggeredRunId) setNotice('Started a run — dropping a card into a ⚡ trigger lane fires its workflow.');
       await refresh();
       onChanged?.();
     } catch (err) {
@@ -82,7 +71,7 @@ export function AgentBoardPanel({ boardId, persona, onChanged }: { boardId: stri
     }
   };
 
-  const onDelete = async (cardId: string) => {
+  const onDeleteCard = async (cardId: string) => {
     try {
       await deleteCard(cardId);
       await refresh();
@@ -96,71 +85,20 @@ export function AgentBoardPanel({ boardId, persona, onChanged }: { boardId: stri
 
   return (
     <div>
-      {error ? <Notice variant="error">⚠ {error}</Notice> : null}
+      {error ? <Notice variant="error">{error}</Notice> : null}
       {notice ? <Notice variant="success">{notice}</Notice> : null}
-      <p style={{ ...muted, fontSize: '0.82rem', marginTop: 0 }}>
-        New work arrives in <strong>To Do</strong>. Move a card to a lane, or run the heartbeat from the header to let {persona} pick up the next task.
+      <p style={{ ...muted, fontSize: '13px', marginTop: 0 }}>
+        New work arrives in <strong>To Do</strong>. <strong>Drag a card</strong> between lanes (or run the heartbeat from
+        the header) to let {persona} pick up the next task.
       </p>
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${board.columns.length}, minmax(180px, 1fr))`, gap: '0.6rem', overflowX: 'auto' }}>
-        {board.columns.map((col) => {
-          const colCards = cards.filter((c) => c.columnId === col.id).sort((a, b) => a.order - b.order);
-          return (
-            <div key={col.id} style={{ background: 'var(--color-surface-alt, #f4f6f9)', borderRadius: 10, padding: '0.5rem', minWidth: 180 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                <strong style={{ fontSize: '0.85rem' }}>{col.name}{col.triggerWorkflowId ? ' ⚡' : ''}</strong>
-                <span style={{ ...muted, fontSize: '0.75rem' }}>{colCards.length}</span>
-              </div>
-              {colCards.map((card) => (
-                <div key={card.id} style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 8, padding: '0.5rem', marginBottom: '0.4rem' }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{card.title}</div>
-                  <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', alignItems: 'center', marginTop: 4 }}>
-                    <TaskSourceChip source={card.source} sourceLabel={card.sourceLabel} />
-                    {card.workflowId ? <span style={{ ...muted, fontSize: '0.7rem' }}>⚙ {workflowName(card.workflowId)}</span> : null}
-                    {card.priority === 'high' ? <span style={{ fontSize: '0.68rem', color: '#a12d2d', fontWeight: 700 }}>HIGH</span> : null}
-                  </div>
-                  {card.lastRunId ? <div style={{ fontSize: '0.72rem', marginTop: 3 }}><Link to={`/runs/${card.lastRunId}`}>view run ▶</Link></div> : null}
-                  <div style={{ display: 'flex', gap: 4, marginTop: 5, alignItems: 'center' }}>
-                    <label style={{ ...muted, fontSize: '0.68rem' }}>Move
-                      <select
-                        value={card.columnId}
-                        onChange={(e) => void onMove(card, e.target.value)}
-                        style={{ fontSize: '0.7rem', marginLeft: 3 }}
-                        aria-label={`Move ${card.title} to a lane`}
-                      >
-                        {board.columns.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                      </select>
-                    </label>
-                    <button type="button" className="secondary" style={{ fontSize: '0.65rem', padding: '1px 5px' }} onClick={() => void onDelete(card.id)} aria-label={`Delete ${card.title}`}>✕</button>
-                  </div>
-                </div>
-              ))}
-              {addingTo === col.id ? (
-                <div style={{ marginTop: 4 }}>
-                  <input
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    placeholder="Task title"
-                    style={{ width: '100%', fontSize: '0.78rem', marginBottom: 4 }}
-                    autoFocus
-                  />
-                  <select value={newSource} onChange={(e) => setNewSource(e.target.value as KanbanCardSource)} style={{ fontSize: '0.72rem', width: '100%', marginBottom: 4 }} aria-label="Task source">
-                    <option value="human">From a human</option>
-                    <option value="discord">Simulated Discord</option>
-                    <option value="agent">From another agent</option>
-                    <option value="api">From an API</option>
-                  </select>
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    <button type="button" className="primary" style={{ fontSize: '0.72rem' }} onClick={() => void onAdd(col.id)}>Add</button>
-                    <button type="button" className="secondary" style={{ fontSize: '0.72rem' }} onClick={() => { setAddingTo(null); setNewTitle(''); }}>Cancel</button>
-                  </div>
-                </div>
-              ) : (
-                <button type="button" className="secondary" style={{ fontSize: '0.72rem', width: '100%' }} onClick={() => { setAddingTo(col.id); setNewTitle(''); }}>+ Add task</button>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      <KanbanBoardView
+        board={board}
+        cards={cards}
+        enableSources
+        onMoveCard={(cardId, toColumnId) => void onMoveCard(cardId, toColumnId)}
+        onCreateCard={(columnId, input) => void onCreateCard(columnId, input)}
+        onDeleteCard={(cardId) => void onDeleteCard(cardId)}
+      />
     </div>
   );
 }

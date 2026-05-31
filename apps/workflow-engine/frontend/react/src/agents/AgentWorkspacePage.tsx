@@ -134,7 +134,7 @@ export function AgentWorkspacePage(): JSX.Element {
         <button type="button" className="secondary" onClick={() => setTab('instructions')}>Edit instructions</button>
       </div>
 
-      {error ? <Notice variant="error">⚠ {error}</Notice> : null}
+      {error ? <Notice variant="error">{error}</Notice> : null}
       {notice ? <Notice variant="success">{notice}</Notice> : null}
 
       {/* Tabs */}

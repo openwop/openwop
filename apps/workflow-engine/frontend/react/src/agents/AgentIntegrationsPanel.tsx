@@ -5,25 +5,28 @@
  * without a real integration. Future sources are clearly labeled.
  */
 
-import { useState } from 'react';
+import { useState, type ComponentType, type CSSProperties } from 'react';
 import { createCard } from '../kanban/kanbanClient.js';
 import { Notice } from '../ui/Notice.js';
+import { BotIcon, MessageCircleIcon, PlugIcon, SendIcon } from '../chat/icons/index.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
+type IconCmp = ComponentType<{ size?: number; strokeWidth?: number; style?: CSSProperties }>;
+
 interface SourceRow {
   name: string;
-  glyph: string;
+  Icon: IconCmp;
   status: 'demo' | 'planned';
   blurb: string;
 }
 
 const SOURCES: ReadonlyArray<SourceRow> = [
-  { name: 'Discord', glyph: '💬', status: 'demo', blurb: 'Teammates assign work from chat with a slash command.' },
-  { name: 'Slack', glyph: '💼', status: 'planned', blurb: 'Assign tasks from a Slack channel or DM.' },
-  { name: 'Email', glyph: '✉️', status: 'planned', blurb: 'Forward an email to create a task.' },
-  { name: 'Webhook / API', glyph: '🔌', status: 'planned', blurb: 'Create tasks programmatically from your systems.' },
-  { name: 'Other agents', glyph: '🤖', status: 'demo', blurb: 'One agent assigns a task to another.' },
+  { name: 'Discord', Icon: MessageCircleIcon, status: 'demo', blurb: 'Teammates assign work from chat with a slash command.' },
+  { name: 'Slack', Icon: MessageCircleIcon, status: 'planned', blurb: 'Assign tasks from a Slack channel or DM.' },
+  { name: 'Email', Icon: SendIcon, status: 'planned', blurb: 'Forward an email to create a task.' },
+  { name: 'Webhook / API', Icon: PlugIcon, status: 'planned', blurb: 'Create tasks programmatically from your systems.' },
+  { name: 'Other agents', Icon: BotIcon, status: 'demo', blurb: 'One agent assigns a task to another.' },
 ];
 
 export function AgentIntegrationsPanel({ boardId, persona, onChanged }: { boardId: string | null; persona: string; onChanged?: () => void }): JSX.Element {
@@ -53,7 +56,7 @@ export function AgentIntegrationsPanel({ boardId, persona, onChanged }: { boardI
 
   return (
     <div style={{ maxWidth: 720 }}>
-      {error ? <Notice variant="error">⚠ {error}</Notice> : null}
+      {error ? <Notice variant="error">{error}</Notice> : null}
       {notice ? <Notice variant="success">{notice}</Notice> : null}
 
       <p style={{ ...muted, marginTop: 0 }}>
@@ -62,7 +65,7 @@ export function AgentIntegrationsPanel({ boardId, persona, onChanged }: { boardI
 
       <div style={{ border: '1px solid var(--color-border)', borderRadius: 10, padding: '0.8rem', marginBottom: '1rem', background: 'var(--color-surface)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <strong>💬 Discord</strong>
+          <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-1)' }}><MessageCircleIcon size={16} /> Discord</strong>
           <span className="chip chip--warning">Demo simulation</span>
         </div>
         <p style={{ fontSize: '0.85rem' }}>
@@ -88,7 +91,7 @@ export function AgentIntegrationsPanel({ boardId, persona, onChanged }: { boardI
       <ul style={{ listStyle: 'none', margin: '0.5rem 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
         {SOURCES.map((s) => (
           <li key={s.name} style={{ border: '1px solid var(--color-border)', borderRadius: 8, padding: '0.5rem 0.7rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span aria-hidden="true">{s.glyph}</span>
+            <span style={{ color: 'var(--color-text-muted)', display: 'inline-flex' }}><s.Icon size={16} /></span>
             <span style={{ fontWeight: 600, minWidth: 110 }}>{s.name}</span>
             <span style={{ ...muted, fontSize: '0.82rem', flex: 1 }}>{s.blurb}</span>
             <span className={`chip ${s.status === 'demo' ? 'chip--success' : 'chip--muted'}`}>
