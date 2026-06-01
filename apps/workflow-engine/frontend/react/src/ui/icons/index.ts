@@ -23,6 +23,7 @@ export { ClockIcon } from './ClockIcon.js';
 export { ColumnsIcon } from './ColumnsIcon.js';
 export { FlagIcon } from './FlagIcon.js';
 export { GlobeIcon } from './GlobeIcon.js';
+export { GripVerticalIcon } from './GripVerticalIcon.js';
 export { ImageIcon } from './ImageIcon.js';
 export { InfoIcon } from './InfoIcon.js';
 export { LifeBuoyIcon } from './LifeBuoyIcon.js';

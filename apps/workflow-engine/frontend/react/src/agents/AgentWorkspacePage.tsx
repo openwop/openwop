@@ -212,10 +212,11 @@ function NoBoard({ persona }: { persona: string }): JSX.Element {
 }
 
 const PRIORITY_RANK: Record<string, number> = { high: 0, normal: 1, low: 2 };
-function colMatches(col: KanbanColumn, kind: 'todo' | 'working'): boolean {
+function colMatches(col: KanbanColumn, kind: 'todo' | 'working' | 'done'): boolean {
   const id = col.id.toLowerCase();
   const name = col.name.toLowerCase();
   if (kind === 'todo') return id === 'todo' || name === 'to do';
+  if (kind === 'done') return id === 'done' || name === 'done';
   return id === 'working' || id === 'doing' || name === 'working' || name === 'doing';
 }
 function topByPriority(cards: KanbanCard[]): KanbanCard | undefined {
@@ -241,10 +242,14 @@ function PriorityPanel({
   const { entry, board, cards, nextSchedule } = view;
   const todoCol = board?.columns.find((c) => colMatches(c, 'todo'));
   const workingCol = board?.columns.find((c) => colMatches(c, 'working'));
+  const doneCol = board?.columns.find((c) => colMatches(c, 'done'));
   const topTodo = todoCol ? topByPriority(cards.filter((c) => c.columnId === todoCol.id)) : undefined;
+  // "In progress" = a run on a card in the Working lane; fall back to any card
+  // with a run that is NOT already Done, so a finished run is never mislabeled
+  // as running on a board without a canonical Working lane.
   const running =
     (workingCol ? cards.filter((c) => c.columnId === workingCol.id && c.lastRunId)[0] : undefined) ??
-    cards.find((c) => c.lastRunId);
+    cards.find((c) => c.lastRunId && c.columnId !== doneCol?.id);
 
   const cell: React.CSSProperties = { flex: '1 1 200px', minWidth: 180 };
   const label: React.CSSProperties = { ...muted, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 };

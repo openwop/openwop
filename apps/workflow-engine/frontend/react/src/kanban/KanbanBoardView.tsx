@@ -30,12 +30,15 @@ import {
 import { Link } from 'react-router-dom';
 import { TaskSourceChip } from '../agents/TaskSourceChip.js';
 import { workflowName } from '../agents/roleTemplates.js';
-import { CheckIcon, PlayIcon, WorkflowIcon, XIcon, ZapIcon } from '../ui/icons/index.js';
+import { CheckIcon, GripVerticalIcon, PlayIcon, WorkflowIcon, XIcon, ZapIcon } from '../ui/icons/index.js';
 import type { KanbanBoard, KanbanCard, KanbanColumn, KanbanCardSource } from './kanbanClient.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
 type LaneKind = 'todo' | 'working' | 'waiting' | 'done';
+/** The lanes a card can be moved TO via the non-drag quick-actions (forward /
+ *  side moves — "back to To Do" is intentionally drag-only). */
+type MoveKind = 'working' | 'waiting' | 'done';
 
 /** Match a column to a canonical lane by id or display name (mirrors
  *  agentViewModel.laneOf) so the non-drag quick-actions know where "Start" /
@@ -76,28 +79,34 @@ function DraggableCard({
   card: KanbanCard;
   onDelete?: (cardId: string) => void;
   /** Lanes this card can jump to without dragging (a11y + clarity). */
-  quickMoves?: ReadonlyArray<{ kind: LaneKind; columnId: string }>;
+  quickMoves?: ReadonlyArray<{ kind: MoveKind; columnId: string }>;
   onMove?: (cardId: string, toColumnId: string) => void;
 }): JSX.Element {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: card.id });
+  // Drag activates from a dedicated grip handle, NOT the whole card: dnd-kit's
+  // listeners/attributes set role="button"+tabindex on their element, and the
+  // card body holds real interactive controls (delete, run link, move buttons)
+  // that must not be nested inside a role=button (invalid ARIA). setNodeRef
+  // marks the draggable; setActivatorNodeRef + listeners mark the handle.
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } = useDraggable({ id: card.id });
   const style: React.CSSProperties = {
     transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
     opacity: isDragging ? 0.5 : 1,
-    cursor: 'grab',
     padding: 'var(--space-2) var(--space-2-5)',
     marginBottom: 'var(--space-2)',
   };
   return (
-    <div
-      ref={setNodeRef}
-      className="surface-card"
-      style={style}
-      aria-label={`${card.title} — drag to move between lanes`}
-      {...listeners}
-      {...attributes}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--space-2)' }}>
-        <div style={{ fontWeight: 600, fontSize: '13px' }}>{card.title}</div>
+    <div ref={setNodeRef} className="surface-card" style={style}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+        <span
+          ref={setActivatorNodeRef}
+          aria-label={`Drag ${card.title} to another lane`}
+          style={{ cursor: 'grab', display: 'inline-flex', alignItems: 'center', color: 'var(--color-text-muted)', touchAction: 'none', flexShrink: 0 }}
+          {...listeners}
+          {...attributes}
+        >
+          <GripVerticalIcon size={14} />
+        </span>
+        <div style={{ fontWeight: 600, fontSize: '13px', flex: 1, minWidth: 0 }}>{card.title}</div>
         {onDelete ? (
           <button
             type="button"
@@ -152,8 +161,7 @@ function DraggableCard({
   );
 }
 
-const QUICK_MOVE_META: Record<LaneKind, { label: string; icon: JSX.Element | null }> = {
-  todo: { label: 'To Do', icon: null },
+const QUICK_MOVE_META: Record<MoveKind, { label: string; icon: JSX.Element | null }> = {
   working: { label: 'Start work', icon: <PlayIcon size={12} /> },
   waiting: { label: 'Move to Waiting', icon: null },
   done: { label: 'Mark done', icon: <CheckIcon size={12} /> },
@@ -176,7 +184,7 @@ function DroppableColumn({
   enableSources?: boolean;
   workflowOptions?: string[];
   /** Lanes a card in THIS column can jump to (its own lane excluded). */
-  quickMoves?: ReadonlyArray<{ kind: LaneKind; columnId: string }>;
+  quickMoves?: ReadonlyArray<{ kind: MoveKind; columnId: string }>;
   onMove?: (cardId: string, toColumnId: string) => void;
 }): JSX.Element {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
@@ -305,12 +313,12 @@ export function KanbanBoardView({
 
   // Canonical lane → first matching column, so the per-card quick-actions
   // ("Start work" / "Move to Waiting" / "Mark done") resolve to real columns.
-  const laneTargets = (['working', 'waiting', 'done'] as LaneKind[])
+  const laneTargets = (['working', 'waiting', 'done'] as MoveKind[])
     .map((kind) => {
       const col = board.columns.find((c) => laneKindOf(c) === kind);
       return col ? { kind, columnId: col.id } : null;
     })
-    .filter((t): t is { kind: LaneKind; columnId: string } => t !== null);
+    .filter((t): t is { kind: MoveKind; columnId: string } => t !== null);
 
   return (
     <DndContext sensors={sensors} onDragEnd={onDragEnd}>
