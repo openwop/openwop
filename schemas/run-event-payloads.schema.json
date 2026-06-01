@@ -764,8 +764,8 @@
       "required": ["kind", "limit", "observed"],
       "properties": {
         "kind":     { "type": "string", "enum": ["clarification", "schema", "envelopes", "node-executions", "wasm-memory", "wasm-fuel", "wasm-execution-time", "run-duration", "loop-iterations", "budget-tokens", "budget-cost", "budget-tool-calls", "budget-retries"] },
-        "limit":    { "type": "integer", "minimum": 0 },
-        "observed": { "type": "integer", "minimum": 0 },
+        "limit":    { "type": "number", "minimum": 0, "description": "The effective ceiling. A whole number for the engine/WASM/RFC 0058 integer kinds; a fractional value for budget-cost (dollars, matching budget.exhausted + maxCostUsd — RFC 0084 §D)." },
+        "observed": { "type": "number", "minimum": 0, "description": "The observed value at breach. Same numeric domain as limit for the kind." },
         "nodeId":   { "type": "string" }
       },
       "additionalProperties": true
