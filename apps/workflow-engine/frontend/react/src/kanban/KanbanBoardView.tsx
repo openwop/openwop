@@ -35,6 +35,16 @@ import type { KanbanBoard, KanbanCard, KanbanColumn, KanbanCardSource } from './
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
+/** The full create-card payload the add-card form can produce. */
+export interface NewCardInput {
+  title: string;
+  source?: KanbanCardSource;
+  description?: string;
+  workflowId?: string;
+  priority?: 'low' | 'normal' | 'high';
+  dueAt?: string;
+}
+
 const SOURCE_OPTIONS: ReadonlyArray<{ value: KanbanCardSource; label: string }> = [
   { value: 'human', label: 'From a human' },
   { value: 'discord', label: 'Simulated Discord' },
@@ -109,18 +119,25 @@ function DroppableColumn({
   onAddCard,
   onDeleteCard,
   enableSources,
+  workflowOptions,
 }: {
   column: KanbanColumn;
   cards: KanbanCard[];
-  onAddCard: (columnId: string, input: { title: string; source?: KanbanCardSource }) => void;
+  onAddCard: (columnId: string, input: NewCardInput) => void;
   onDeleteCard?: (cardId: string) => void;
   enableSources?: boolean;
+  workflowOptions?: string[];
 }): JSX.Element {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [source, setSource] = useState<KanbanCardSource>('human');
+  const [workflowId, setWorkflowId] = useState('');
+  const [priority, setPriority] = useState<'low' | 'normal' | 'high'>('normal');
+  const [dueAt, setDueAt] = useState('');
   const isTrigger = Boolean(column.triggerWorkflowId);
+  const resetForm = (): void => { setTitle(''); setDescription(''); setSource('human'); setWorkflowId(''); setPriority('normal'); setDueAt(''); setAdding(false); };
 
   return (
     <div
@@ -149,28 +166,43 @@ function DroppableColumn({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (title.trim()) onAddCard(column.id, { title: title.trim(), ...(enableSources ? { source } : {}) });
-            setTitle('');
-            setSource('human');
-            setAdding(false);
+            if (!title.trim()) return;
+            onAddCard(column.id, {
+              title: title.trim(),
+              ...(enableSources ? { source } : {}),
+              ...(description.trim() ? { description: description.trim() } : {}),
+              ...(workflowId ? { workflowId } : {}),
+              ...(priority !== 'normal' ? { priority } : {}),
+              ...(dueAt ? { dueAt } : {}),
+            });
+            resetForm();
           }}
+          style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}
         >
-          <input
-            autoFocus
-            className="ui-input"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Task title…"
-            style={{ width: '100%', marginBottom: 'var(--space-1)' }}
-          />
+          <input autoFocus className="ui-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Task title…" style={{ width: '100%' }} />
+          <textarea className="ui-input" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description (optional)" rows={2} style={{ width: '100%', fontFamily: 'inherit' }} />
           {enableSources ? (
-            <select className="ui-input" value={source} onChange={(e) => setSource(e.target.value as KanbanCardSource)} aria-label="Task source" style={{ width: '100%', marginBottom: 'var(--space-1)' }}>
+            <select className="ui-input" value={source} onChange={(e) => setSource(e.target.value as KanbanCardSource)} aria-label="Task source" style={{ width: '100%' }}>
               {SOURCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           ) : null}
+          {workflowOptions && workflowOptions.length > 0 ? (
+            <select className="ui-input" value={workflowId} onChange={(e) => setWorkflowId(e.target.value)} aria-label="Workflow" style={{ width: '100%' }}>
+              <option value="">No workflow</option>
+              {workflowOptions.map((w) => <option key={w} value={w}>{workflowName(w)}</option>)}
+            </select>
+          ) : null}
+          <div style={{ display: 'flex', gap: 'var(--space-1)' }}>
+            <select className="ui-input" value={priority} onChange={(e) => setPriority(e.target.value as 'low' | 'normal' | 'high')} aria-label="Priority" style={{ flex: 1 }}>
+              <option value="low">Low</option>
+              <option value="normal">Normal</option>
+              <option value="high">High</option>
+            </select>
+            <input className="ui-input" type="date" value={dueAt} onChange={(e) => setDueAt(e.target.value)} aria-label="Due date" style={{ flex: 1 }} />
+          </div>
           <div className="action-bar">
             <button type="submit" className="primary btn-sm">Add</button>
-            <button type="button" className="secondary btn-sm" onClick={() => { setAdding(false); setTitle(''); }}>Cancel</button>
+            <button type="button" className="secondary btn-sm" onClick={resetForm}>Cancel</button>
           </div>
         </form>
       ) : (
@@ -184,6 +216,7 @@ export function KanbanBoardView({
   board,
   cards,
   enableSources,
+  workflowOptions,
   onMoveCard,
   onCreateCard,
   onDeleteCard,
@@ -191,8 +224,10 @@ export function KanbanBoardView({
   board: KanbanBoard;
   cards: KanbanCard[];
   enableSources?: boolean;
+  /** Workflow ids the add-card form can attach (the owning agent's portfolio). */
+  workflowOptions?: string[];
   onMoveCard: (cardId: string, toColumnId: string) => void;
-  onCreateCard: (columnId: string, input: { title: string; source?: KanbanCardSource }) => void;
+  onCreateCard: (columnId: string, input: NewCardInput) => void;
   onDeleteCard?: (cardId: string) => void;
 }): JSX.Element {
   // Mirror props into local state for an optimistic move; re-sync when the
@@ -226,6 +261,7 @@ export function KanbanBoardView({
             onAddCard={onCreateCard}
             onDeleteCard={onDeleteCard}
             enableSources={enableSources}
+            workflowOptions={workflowOptions}
           />
         ))}
       </div>

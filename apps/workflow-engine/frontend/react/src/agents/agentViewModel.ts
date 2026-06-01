@@ -36,7 +36,7 @@ export interface AgentView {
 // Status → label + a token-driven `.chip--*` modifier (no hardcoded hex; the
 // chip classes live in global.css and theme correctly across every surface).
 const STATUS_META: Record<AgentStatus, { label: string; chip: string }> = {
-  active: { label: 'Active', chip: 'chip--success' },
+  active: { label: 'Ready', chip: 'chip--success' },
   working: { label: 'Working', chip: 'chip--accent' },
   waiting: { label: 'Waiting on Human', chip: 'chip--warning' },
   paused: { label: 'Paused', chip: 'chip--muted' },

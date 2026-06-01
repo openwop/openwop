@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { checkAgent, updateRosterEntry } from './rosterClient.js';
 import { loadAgentView, statusMeta, type AgentView } from './agentViewModel.js';
 import { workflowName } from './roleTemplates.js';
@@ -42,8 +42,21 @@ export function AgentWorkspacePage(): JSX.Element {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [tab, setTab] = useState<TabKey>('overview');
   const [busy, setBusy] = useState(false);
+  // Bumped on board-affecting actions (Check now) so the embedded board refetches.
+  const [boardRefresh, setBoardRefresh] = useState(0);
+  // Tab lives in the URL (?tab=board) so refresh / back / share preserve it.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const tab: TabKey = TABS.some((t) => t.key === tabParam) ? (tabParam as TabKey) : 'overview';
+  const setTab = (next: TabKey): void => {
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev);
+      if (next === 'overview') p.delete('tab');
+      else p.set('tab', next);
+      return p;
+    }, { replace: true });
+  };
 
   const refresh = useCallback(async () => {
     if (!rosterId) return;
@@ -78,6 +91,8 @@ export function AgentWorkspacePage(): JSX.Element {
       const result = await checkAgent(view.entry.rosterId);
       setNotice(result.picked ? `${view.entry.persona} picked up “${result.cardTitle}” and started a run.` : `No eligible To Do tasks (${result.reason ?? 'idle'}).`);
       await refresh();
+      setBoardRefresh((n) => n + 1); // make the Board tab reflect the moved card immediately
+      if (result.picked) setTab('board');
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -131,7 +146,7 @@ export function AgentWorkspacePage(): JSX.Element {
         <button type="button" className="secondary" onClick={() => setTab('board')}>Add task</button>
         <button type="button" className="secondary" onClick={() => setTab('workflows')}>Run workflow</button>
         <button type="button" className="secondary" onClick={() => void onTogglePause()}>{entry.enabled ? 'Pause' : 'Resume'}</button>
-        <button type="button" className="secondary" onClick={() => setTab('instructions')}>Edit instructions</button>
+        <button type="button" className="secondary" onClick={() => setTab('instructions')}>Instructions</button>
       </div>
 
       {error ? <Notice variant="error">{error}</Notice> : null}
@@ -165,17 +180,20 @@ export function AgentWorkspacePage(): JSX.Element {
       </div>
 
       {tab === 'overview' ? <OverviewTab view={view} onGoto={setTab} /> : null}
-      {tab === 'workflows' ? <AgentWorkflowPortfolioPanel entry={entry} onChanged={() => void refresh()} /> : null}
-      {tab === 'board' ? (view.board ? <AgentBoardPanel boardId={view.board.id} persona={entry.persona} onChanged={() => void refresh()} /> : <NoBoard persona={entry.persona} />) : null}
+      {tab === 'workflows' ? <AgentWorkflowPortfolioPanel entry={entry} jobs={view.jobs} board={view.board} onChanged={() => void refresh()} /> : null}
+      {tab === 'board' ? (view.board ? <AgentBoardPanel boardId={view.board.id} persona={entry.persona} workflows={entry.workflows} refreshSignal={boardRefresh} onChanged={() => void refresh()} /> : <NoBoard persona={entry.persona} />) : null}
       {tab === 'schedules' ? <AgentSchedulesPanel entry={entry} /> : null}
       {tab === 'instructions' ? <AgentInstructionsPanel entry={entry} onChanged={() => void refresh()} /> : null}
       {tab === 'integrations' ? <AgentIntegrationsPanel boardId={view.board?.id ?? null} persona={entry.persona} onChanged={() => void refresh()} /> : null}
       {tab === 'activity' ? <AgentActivityFeed views={[view]} /> : null}
 
-      <p style={{ ...muted, fontSize: '0.72rem', marginTop: '1.5rem' }}>
-        Advanced: {entry.persona} runs manifest agent <code>{entry.agentRef.agentId}</code> · roster id <code>{entry.rosterId}</code>.
-        {' '}<button type="button" className="secondary" style={{ fontSize: '0.7rem' }} onClick={() => navigate('/roster')}>Open raw roster</button>
-      </p>
+      <details style={{ marginTop: 'var(--space-5)' }}>
+        <summary style={{ ...muted, fontSize: '12px', cursor: 'pointer' }}>Protocol details</summary>
+        <p style={{ ...muted, fontSize: '12px', marginTop: 'var(--space-2)' }}>
+          {entry.persona} runs manifest agent <code>{entry.agentRef.agentId}</code> · roster id <code>{entry.rosterId}</code>.
+          {' '}<button type="button" className="secondary btn-sm" onClick={() => navigate('/roster')}>Open raw roster</button>
+        </p>
+      </details>
     </section>
   );
 }

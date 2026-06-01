@@ -40,7 +40,14 @@ export function AgentCard({
   const firstWorkflow = entry.workflows[0];
 
   return (
-    <div className="surface-card">
+    <div
+      className="surface-card surface-card--interactive"
+      role="button"
+      tabIndex={0}
+      aria-label={`Open ${entry.persona}'s dashboard`}
+      onClick={onOpen}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(); } }}
+    >
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
         <div
           aria-hidden="true"
@@ -89,11 +96,11 @@ export function AgentCard({
       </div>
 
       <div className="action-bar">
-        <button type="button" className="primary" style={{ flex: 1 }} onClick={onOpen}>Open</button>
+        <button type="button" className="primary" style={{ flex: 1 }} onClick={(e) => { e.stopPropagation(); onOpen(); }}>Open dashboard</button>
         <button
           type="button"
           className="secondary"
-          onClick={onCheckNow}
+          onClick={(e) => { e.stopPropagation(); onCheckNow(); }}
           disabled={busy || status === 'paused' || status === 'needs-setup'}
           title="Run the agent's heartbeat: pick up the first To Do task and start its workflow"
         >

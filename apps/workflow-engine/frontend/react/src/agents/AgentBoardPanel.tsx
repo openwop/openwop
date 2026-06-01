@@ -15,14 +15,13 @@ import {
   subscribeBoardEvents,
   type KanbanBoard,
   type KanbanCard,
-  type KanbanCardSource,
 } from '../kanban/kanbanClient.js';
-import { KanbanBoardView } from '../kanban/KanbanBoardView.js';
+import { KanbanBoardView, type NewCardInput } from '../kanban/KanbanBoardView.js';
 import { Notice } from '../ui/Notice.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
-export function AgentBoardPanel({ boardId, persona, onChanged }: { boardId: string; persona: string; onChanged?: () => void }): JSX.Element {
+export function AgentBoardPanel({ boardId, persona, workflows, refreshSignal, onChanged }: { boardId: string; persona: string; workflows?: string[]; refreshSignal?: number; onChanged?: () => void }): JSX.Element {
   const [board, setBoard] = useState<KanbanBoard | null>(null);
   const [cards, setCards] = useState<KanbanCard[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -39,16 +38,30 @@ export function AgentBoardPanel({ boardId, persona, onChanged }: { boardId: stri
   }, [boardId]);
 
   useEffect(() => { void refresh(); }, [refresh]);
-  // Live refresh via SSE (cross-instance board-change fan-out).
-  useEffect(() => subscribeBoardEvents(boardId, () => void refresh()), [boardId, refresh]);
+  // Refetch when the parent signals a board-affecting action (e.g. the header's
+  // "Check now" heartbeat moves a card) — fixes the stale-board trust bug where
+  // the move only showed after a manual reload.
+  useEffect(() => { void refresh(); }, [refreshSignal, refresh]);
+  // Live refresh: SSE push (cross-instance) PLUS a 5s poll floor — Firebase
+  // Hosting buffers text/event-stream through the CDN, so the SSE push doesn't
+  // flush in production; the poll keeps the board fresh regardless.
+  useEffect(() => {
+    const unsubscribe = subscribeBoardEvents(boardId, () => void refresh());
+    const poll = setInterval(() => void refresh(), 5000);
+    return () => { unsubscribe(); clearInterval(poll); };
+  }, [boardId, refresh]);
 
-  const onCreateCard = async (columnId: string, input: { title: string; source?: KanbanCardSource }) => {
+  const onCreateCard = async (columnId: string, input: NewCardInput) => {
     try {
       const source = input.source ?? 'human';
       await createCard(boardId, {
         title: input.title,
         columnId,
         source,
+        ...(input.description ? { description: input.description } : {}),
+        ...(input.workflowId ? { workflowId: input.workflowId } : {}),
+        ...(input.priority ? { priority: input.priority } : {}),
+        ...(input.dueAt ? { dueAt: input.dueAt } : {}),
         // A simulated-Discord card carries the slash-command as its label.
         ...(source === 'discord' ? { sourceLabel: `/assign @${persona.toLowerCase()}` } : {}),
       });
@@ -95,6 +108,7 @@ export function AgentBoardPanel({ boardId, persona, onChanged }: { boardId: stri
         board={board}
         cards={cards}
         enableSources
+        workflowOptions={workflows}
         onMoveCard={(cardId, toColumnId) => void onMoveCard(cardId, toColumnId)}
         onCreateCard={(columnId, input) => void onCreateCard(columnId, input)}
         onDeleteCard={(cardId) => void onDeleteCard(cardId)}
