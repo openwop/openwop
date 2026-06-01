@@ -100,7 +100,10 @@ function DraggableCard({
         <span
           ref={setActivatorNodeRef}
           aria-label={`Drag ${card.title} to another lane`}
-          style={{ cursor: 'grab', display: 'inline-flex', alignItems: 'center', color: 'var(--color-text-muted)', touchAction: 'none', flexShrink: 0 }}
+          // ≥24px hit area (WCAG 2.5.8): 14px glyph + 5px padding; negative
+          // margin keeps the row layout from growing. Rounded so the focus
+          // ring (global [role=button]:focus-visible) reads cleanly.
+          style={{ cursor: 'grab', display: 'inline-flex', alignItems: 'center', color: 'var(--color-text-muted)', touchAction: 'none', flexShrink: 0, padding: 5, margin: -3, borderRadius: 'var(--radius)' }}
           {...listeners}
           {...attributes}
         >

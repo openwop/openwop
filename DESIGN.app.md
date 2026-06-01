@@ -131,6 +131,7 @@ Run / agent / node status is rendered as a chip (color **and** label — never c
 
 - Agent + run status → a `.chip--*` via `agents/agentViewModel.ts` `statusMeta`: active → `chip--success`, working/running → `chip--accent`, waiting/paused → `chip--warning`, needs-setup/failed/cancelled → `chip--danger`.
 - Node-canvas run status uses the §3 functional tokens on `.builder-node*` badges paired with a Lucide glyph (`CircleIcon filled` / `Check` / `X` / `Pause`), color via `var(--color-warning/success/danger/ai)`.
+- **Severity reuses the same functional tokens.** A task's priority is a severity signal, not a run state, but it lives on the same axis: a `High`-priority card uses `chip--danger` (always with the visible "High" label, §11). This is the one sanctioned reuse of a functional token outside run state — do not extend it to non-severity dimensions (role, source, owner), which differentiate by glyph/label instead (§5.2, §5.4).
 
 Do not invent a per-surface status palette; reuse these mappings so a "completed" state looks identical everywhere.
 
