@@ -9,6 +9,16 @@
  * Keep in sync with apps/.../backend/typescript/src/host/demoWorkflows.ts.
  */
 
+import type { CSSProperties } from 'react';
+import {
+  BotIcon,
+  BriefcaseIcon,
+  LifeBuoyIcon,
+  MegaphoneIcon,
+  ScaleIcon,
+  WrenchIcon,
+} from '../ui/icons/index.js';
+
 export interface WorkflowOption {
   workflowId: string;
   name: string;
@@ -110,3 +120,58 @@ export function isKnownWorkflow(workflowId: string): boolean {
 }
 
 export const ALL_WORKFLOW_OPTIONS: ReadonlyArray<WorkflowOption> = ROLE_TEMPLATES.flatMap((r) => r.workflows);
+
+// ---------------------------------------------------------------------------
+// Role theming — give each role a distinct Lucide glyph so a dashboard of 5+
+// coworkers reads at a glance. Differentiation is by ICON only (no per-role
+// colour): DESIGN.app.md §3 reserves the functional/accent palette for run
+// state, so a role accent would fight the editorial discipline. The clay
+// avatar stays uniform; the glyph inside it carries the role.
+// ---------------------------------------------------------------------------
+
+type IconComponent = (props: { size?: number; strokeWidth?: number; style?: CSSProperties }) => JSX.Element;
+
+export interface RoleTheme {
+  key: string;
+  /** Human label for the role family (e.g. "Sales", "Support"). */
+  label: string;
+  Icon: IconComponent;
+}
+
+const ROLE_THEMES: Record<string, RoleTheme> = {
+  'sales-ops': { key: 'sales-ops', label: 'Sales', Icon: BriefcaseIcon },
+  'support-triage': { key: 'support-triage', label: 'Support', Icon: LifeBuoyIcon },
+  'finance-ops': { key: 'finance-ops', label: 'Finance', Icon: ScaleIcon },
+  'engineering-ops': { key: 'engineering-ops', label: 'Engineering', Icon: WrenchIcon },
+  'marketing-ops': { key: 'marketing-ops', label: 'Marketing', Icon: MegaphoneIcon },
+};
+
+const CUSTOM_THEME: RoleTheme = { key: 'custom', label: 'Custom', Icon: BotIcon };
+
+/** Map a role-template key (or anything) to its theme; unknown → the custom (Bot) theme. */
+export function roleThemeForKey(key: string | undefined): RoleTheme {
+  return (key && ROLE_THEMES[key]) || CUSTOM_THEME;
+}
+
+/** Derive the role-template key for a roster member: prefer the seeded
+ *  `host:demo-<key>` agentRef, else infer from the workflow portfolio, else
+ *  fall back to the custom theme. Mirrors host/demoSeed.ts agentRef ids. */
+export function roleKeyForAgent(agentId: string | undefined, workflows: ReadonlyArray<string>): string {
+  if (agentId) {
+    const m = /^host:demo-(.+)$/.exec(agentId);
+    if (m && ROLE_THEMES[m[1]]) return m[1];
+  }
+  // Infer from the portfolio: the template whose workflows overlap the most.
+  let best: { key: string; hits: number } | null = null;
+  for (const t of ROLE_TEMPLATES) {
+    const ids = new Set(t.workflows.map((w) => w.workflowId));
+    const hits = workflows.reduce((n, w) => n + (ids.has(w) ? 1 : 0), 0);
+    if (hits > 0 && (!best || hits > best.hits)) best = { key: t.key, hits };
+  }
+  return best?.key ?? 'custom';
+}
+
+/** Convenience: theme for a roster member. */
+export function roleThemeForAgent(agentId: string | undefined, workflows: ReadonlyArray<string>): RoleTheme {
+  return roleThemeForKey(roleKeyForAgent(agentId, workflows));
+}

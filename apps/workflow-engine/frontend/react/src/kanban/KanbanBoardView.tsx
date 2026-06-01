@@ -30,10 +30,25 @@ import {
 import { Link } from 'react-router-dom';
 import { TaskSourceChip } from '../agents/TaskSourceChip.js';
 import { workflowName } from '../agents/roleTemplates.js';
-import { PlayIcon, WorkflowIcon, XIcon, ZapIcon } from '../ui/icons/index.js';
+import { CheckIcon, PlayIcon, WorkflowIcon, XIcon, ZapIcon } from '../ui/icons/index.js';
 import type { KanbanBoard, KanbanCard, KanbanColumn, KanbanCardSource } from './kanbanClient.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
+
+type LaneKind = 'todo' | 'working' | 'waiting' | 'done';
+
+/** Match a column to a canonical lane by id or display name (mirrors
+ *  agentViewModel.laneOf) so the non-drag quick-actions know where "Start" /
+ *  "Waiting" / "Done" point on boards that use either id or label conventions. */
+function laneKindOf(col: KanbanColumn): LaneKind | null {
+  const id = col.id.toLowerCase();
+  const name = col.name.toLowerCase();
+  if (id === 'todo' || name === 'to do') return 'todo';
+  if (id === 'working' || id === 'doing' || name === 'working' || name === 'doing') return 'working';
+  if (id === 'waiting' || name.startsWith('waiting')) return 'waiting';
+  if (id === 'done' || name === 'done') return 'done';
+  return null;
+}
 
 /** The full create-card payload the add-card form can produce. */
 export interface NewCardInput {
@@ -55,9 +70,14 @@ const SOURCE_OPTIONS: ReadonlyArray<{ value: KanbanCardSource; label: string }> 
 function DraggableCard({
   card,
   onDelete,
+  quickMoves,
+  onMove,
 }: {
   card: KanbanCard;
   onDelete?: (cardId: string) => void;
+  /** Lanes this card can jump to without dragging (a11y + clarity). */
+  quickMoves?: ReadonlyArray<{ kind: LaneKind; columnId: string }>;
+  onMove?: (cardId: string, toColumnId: string) => void;
 }): JSX.Element {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: card.id });
   const style: React.CSSProperties = {
@@ -109,9 +129,35 @@ function DraggableCard({
           </Link>
         </div>
       ) : null}
+      {quickMoves && quickMoves.length > 0 && onMove ? (
+        // Non-drag equivalents — the board is otherwise drag-only, which is
+        // unreachable by keyboard-averse / touch users and unclear in a demo.
+        <div style={{ display: 'flex', gap: 'var(--space-1)', flexWrap: 'wrap', marginTop: 'var(--space-2)' }}>
+          {quickMoves.map((m) => (
+            <button
+              key={m.kind}
+              type="button"
+              className="secondary btn-sm"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); onMove(card.id, m.columnId); }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-1)' }}
+            >
+              {QUICK_MOVE_META[m.kind].icon}
+              {QUICK_MOVE_META[m.kind].label}
+            </button>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
+
+const QUICK_MOVE_META: Record<LaneKind, { label: string; icon: JSX.Element | null }> = {
+  todo: { label: 'To Do', icon: null },
+  working: { label: 'Start work', icon: <PlayIcon size={12} /> },
+  waiting: { label: 'Move to Waiting', icon: null },
+  done: { label: 'Mark done', icon: <CheckIcon size={12} /> },
+};
 
 function DroppableColumn({
   column,
@@ -120,6 +166,8 @@ function DroppableColumn({
   onDeleteCard,
   enableSources,
   workflowOptions,
+  quickMoves,
+  onMove,
 }: {
   column: KanbanColumn;
   cards: KanbanCard[];
@@ -127,6 +175,9 @@ function DroppableColumn({
   onDeleteCard?: (cardId: string) => void;
   enableSources?: boolean;
   workflowOptions?: string[];
+  /** Lanes a card in THIS column can jump to (its own lane excluded). */
+  quickMoves?: ReadonlyArray<{ kind: LaneKind; columnId: string }>;
+  onMove?: (cardId: string, toColumnId: string) => void;
 }): JSX.Element {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
   const [adding, setAdding] = useState(false);
@@ -160,7 +211,7 @@ function DroppableColumn({
         <span style={{ ...muted, fontSize: '12px' }}>{cards.length}</span>
       </div>
       {cards.map((c) => (
-        <DraggableCard key={c.id} card={c} onDelete={onDeleteCard} />
+        <DraggableCard key={c.id} card={c} onDelete={onDeleteCard} quickMoves={quickMoves} onMove={onMove} />
       ))}
       {adding ? (
         <form
@@ -240,15 +291,26 @@ export function KanbanBoardView({
     useSensor(KeyboardSensor),
   );
 
-  const onDragEnd = (event: DragEndEvent) => {
-    const cardId = String(event.active.id);
-    const toColumnId = event.over ? String(event.over.id) : null;
-    if (!toColumnId) return;
+  const moveCard = (cardId: string, toColumnId: string): void => {
     const card = local.find((c) => c.id === cardId);
     if (!card || card.columnId === toColumnId) return;
     setLocal((prev) => prev.map((c) => (c.id === cardId ? { ...c, columnId: toColumnId } : c)));
     onMoveCard(cardId, toColumnId);
   };
+
+  const onDragEnd = (event: DragEndEvent) => {
+    const toColumnId = event.over ? String(event.over.id) : null;
+    if (toColumnId) moveCard(String(event.active.id), toColumnId);
+  };
+
+  // Canonical lane → first matching column, so the per-card quick-actions
+  // ("Start work" / "Move to Waiting" / "Mark done") resolve to real columns.
+  const laneTargets = (['working', 'waiting', 'done'] as LaneKind[])
+    .map((kind) => {
+      const col = board.columns.find((c) => laneKindOf(c) === kind);
+      return col ? { kind, columnId: col.id } : null;
+    })
+    .filter((t): t is { kind: LaneKind; columnId: string } => t !== null);
 
   return (
     <DndContext sensors={sensors} onDragEnd={onDragEnd}>
@@ -262,6 +324,8 @@ export function KanbanBoardView({
             onDeleteCard={onDeleteCard}
             enableSources={enableSources}
             workflowOptions={workflowOptions}
+            quickMoves={laneTargets.filter((t) => t.columnId !== col.id)}
+            onMove={moveCard}
           />
         ))}
       </div>

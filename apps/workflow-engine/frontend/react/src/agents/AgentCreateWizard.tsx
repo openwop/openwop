@@ -14,7 +14,7 @@
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ROLE_TEMPLATES, type RoleTemplate, type WorkflowOption } from './roleTemplates.js';
+import { ROLE_TEMPLATES, roleThemeForKey, type RoleTemplate, type WorkflowOption } from './roleTemplates.js';
 import { createUserAgent } from '../client/agentsClient.js';
 import { createRosterEntry } from './rosterClient.js';
 import { createBoard, type KanbanColumn } from '../kanban/kanbanClient.js';
@@ -29,6 +29,16 @@ const DEMO_LANES: KanbanColumn[] = [
   { id: 'waiting', name: 'Waiting on Human' },
   { id: 'done', name: 'Done' },
 ];
+
+// Suggested human names per role — same personas the demo seed uses, so the
+// name field reads as a coworker rather than a config value.
+const EXAMPLE_NAMES: Record<string, string> = {
+  'sales-ops': 'Sally',
+  'support-triage': 'Marcus',
+  'finance-ops': 'Priya',
+  'engineering-ops': 'Devon',
+  'marketing-ops': 'Nora',
+};
 
 const HEARTBEAT_OPTIONS = [
   { key: 'manual', label: 'Manual only (Check now)' },
@@ -114,6 +124,17 @@ export function AgentCreateWizard(): JSX.Element {
     return true;
   };
 
+  // Explain why "Next" is disabled instead of leaving a dead button.
+  const nextHint = (): string | null => {
+    if (step !== 1 || canNext()) return null;
+    if (role === null && !isCustom) return 'Pick a role to continue.';
+    if (!name.trim()) return 'Add a name so teammates can assign work.';
+    if (!roleTitle.trim()) return 'Add a role title to continue.';
+    return null;
+  };
+
+  const exampleName = role ? EXAMPLE_NAMES[role.key] ?? 'Sally' : 'Sally';
+
   const onFinish = async () => {
     setCreating(true);
     setError(null);
@@ -170,30 +191,40 @@ export function AgentCreateWizard(): JSX.Element {
           <StepHeader step={1} title="Pick a role" />
           <p style={{ ...muted, marginTop: 0, fontSize: '0.85rem' }}>The name is how teammates assign work — pick a human-like name.</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem', marginBottom: '0.8rem' }}>
-            {ROLE_TEMPLATES.map((r) => (
-              <button
-                key={r.key}
-                type="button"
-                onClick={() => pickRole(r)}
-                style={{ textAlign: 'left', border: role?.key === r.key ? '2px solid var(--color-accent)' : '1px solid var(--color-border)', borderRadius: 10, padding: '0.6rem', background: 'var(--color-surface)', cursor: 'pointer' }}
-              >
-                <strong style={{ fontSize: '0.9rem' }}>{r.title}</strong>
-                <div style={{ ...muted, fontSize: '0.78rem' }}>{r.blurb}</div>
-              </button>
-            ))}
+            {ROLE_TEMPLATES.map((r) => {
+              const RoleIcon = roleThemeForKey(r.key).Icon;
+              const selected = role?.key === r.key;
+              return (
+                <button
+                  key={r.key}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => pickRole(r)}
+                  style={{ textAlign: 'left', border: selected ? '2px solid var(--color-accent)' : '1px solid var(--color-border)', borderRadius: 10, padding: '0.6rem', background: selected ? 'var(--clay-wash)' : 'var(--color-surface)', cursor: 'pointer' }}
+                >
+                  <strong style={{ fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <RoleIcon size={15} style={{ color: 'var(--color-accent)' }} /> {r.title}
+                  </strong>
+                  <div style={{ ...muted, fontSize: '0.78rem' }}>{r.blurb}</div>
+                </button>
+              );
+            })}
             <button
               type="button"
+              aria-pressed={isCustom}
               onClick={pickCustom}
-              style={{ textAlign: 'left', border: isCustom ? '2px solid var(--color-accent)' : '1px solid var(--color-border)', borderRadius: 10, padding: '0.6rem', background: 'var(--color-surface)', cursor: 'pointer' }}
+              style={{ textAlign: 'left', border: isCustom ? '2px solid var(--color-accent)' : '1px solid var(--color-border)', borderRadius: 10, padding: '0.6rem', background: isCustom ? 'var(--clay-wash)' : 'var(--color-surface)', cursor: 'pointer' }}
             >
-              <strong style={{ fontSize: '0.9rem' }}>Custom role</strong>
+              <strong style={{ fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                {(() => { const C = roleThemeForKey('custom').Icon; return <C size={15} style={{ color: 'var(--color-accent)' }} />; })()} Custom role
+              </strong>
               <div style={{ ...muted, fontSize: '0.78rem' }}>Define your own role and workflows.</div>
             </button>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <label style={{ flex: 1, minWidth: 200 }}>
               <div style={{ fontSize: '0.82rem', fontWeight: 600 }}>Name</div>
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Sally" style={{ width: '100%' }} />
+              <input value={name} onChange={(e) => setName(e.target.value)} placeholder={`e.g. ${exampleName}`} style={{ width: '100%' }} />
             </label>
             <label style={{ flex: 1, minWidth: 200 }}>
               <div style={{ fontSize: '0.82rem', fontWeight: 600 }}>Role title</div>
@@ -300,7 +331,7 @@ export function AgentCreateWizard(): JSX.Element {
               </div>
             </div>
           ) : null}
-          <div style={{ marginTop: '1rem', padding: '0.7rem', border: '1px solid var(--color-border)', borderRadius: 10, background: 'var(--color-surface-alt, #f4f6f9)' }}>
+          <div style={{ marginTop: '1rem', padding: '0.7rem', border: '1px solid var(--color-border)', borderRadius: 10, background: 'var(--color-surface-2)' }}>
             <strong>Review</strong>
             <ul style={{ margin: '0.3rem 0 0', paddingLeft: '1.1rem', fontSize: '0.84rem' }}>
               <li>{name} — {roleTitle}</li>
@@ -312,13 +343,16 @@ export function AgentCreateWizard(): JSX.Element {
         </div>
       ) : null}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1.2rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.2rem', gap: '0.6rem' }}>
         <button type="button" className="secondary" onClick={() => setStep((s) => Math.max(1, s - 1))} disabled={step === 1 || creating}>Back</button>
-        {step < 5 ? (
-          <button type="button" className="primary" onClick={() => setStep((s) => s + 1)} disabled={!canNext()}>Next</button>
-        ) : (
-          <button type="button" className="primary" onClick={() => void onFinish()} disabled={creating}>{creating ? 'Creating…' : 'Create agent'}</button>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          {nextHint() ? <span style={{ ...muted, fontSize: '0.8rem' }}>{nextHint()}</span> : null}
+          {step < 5 ? (
+            <button type="button" className="primary" onClick={() => setStep((s) => s + 1)} disabled={!canNext()}>Next</button>
+          ) : (
+            <button type="button" className="primary" onClick={() => void onFinish()} disabled={creating}>{creating ? 'Creating…' : 'Create agent'}</button>
+          )}
+        </div>
       </div>
     </section>
   );
