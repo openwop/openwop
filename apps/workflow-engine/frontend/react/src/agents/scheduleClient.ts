@@ -23,6 +23,10 @@ export interface ScheduledJob {
   enabled: boolean;
   metadata?: Record<string, unknown>;
   lastRunId?: string;
+  /** ISO-8601 wall-clock time of the most recent fire. */
+  lastRunAt?: string;
+  /** IANA timezone the cadence is expressed in (informational). */
+  timezone?: string;
   createdAt?: string;
 }
 
@@ -44,6 +48,7 @@ export async function createJob(input: {
   agentId?: string;
   enabled?: boolean;
   metadata?: Record<string, unknown>;
+  timezone?: string;
 }): Promise<ScheduledJob> {
   const res = await fetch(base, fetchOpts({ method: 'POST', headers: jsonHeaders(), body: JSON.stringify(input) }));
   if (!res.ok) {
@@ -57,10 +62,19 @@ export async function createJob(input: {
   return (await res.json()) as ScheduledJob;
 }
 
-export async function setJobEnabled(jobId: string, enabled: boolean): Promise<ScheduledJob> {
-  const res = await fetch(`${base}/${encodeURIComponent(jobId)}`, fetchOpts({ method: 'PATCH', headers: jsonHeaders(), body: JSON.stringify({ enabled }) }));
-  if (!res.ok) throw new Error(`setJobEnabled returned ${res.status}`);
+/** Patch an editable subset of a schedule (cadence, workflow, label, timezone,
+ *  enabled). Lets the UI edit in place rather than delete-and-recreate. */
+export async function updateJob(
+  jobId: string,
+  patch: { enabled?: boolean; cronExpr?: string; workflowId?: string; metadata?: Record<string, unknown>; timezone?: string },
+): Promise<ScheduledJob> {
+  const res = await fetch(`${base}/${encodeURIComponent(jobId)}`, fetchOpts({ method: 'PATCH', headers: jsonHeaders(), body: JSON.stringify(patch) }));
+  if (!res.ok) throw new Error(`updateJob returned ${res.status}`);
   return (await res.json()) as ScheduledJob;
+}
+
+export async function setJobEnabled(jobId: string, enabled: boolean): Promise<ScheduledJob> {
+  return updateJob(jobId, { enabled });
 }
 
 export async function deleteJob(jobId: string): Promise<void> {

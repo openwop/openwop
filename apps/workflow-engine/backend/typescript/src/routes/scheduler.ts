@@ -41,7 +41,7 @@ import {
   listJobsByRoster,
   getJob,
   deleteJob,
-  setJobEnabled,
+  updateJob,
   markJobFired,
   singleTick,
   currentTick,
@@ -82,6 +82,7 @@ export function registerSchedulerRoutes(app: Express, deps: Deps): void {
         agentId?: unknown;
         enabled?: unknown;
         metadata?: unknown;
+        timezone?: unknown;
       };
       if (typeof body.cronExpr !== 'string' || body.cronExpr.length === 0) {
         throw new OpenwopError(
@@ -129,6 +130,7 @@ export function registerSchedulerRoutes(app: Express, deps: Deps): void {
       if (body.metadata && typeof body.metadata === 'object') {
         input.metadata = body.metadata as Record<string, unknown>;
       }
+      if (typeof body.timezone === 'string') input.timezone = body.timezone;
 
       const result = await registerJob(input);
       if (!result.ok) {
@@ -156,13 +158,48 @@ export function registerSchedulerRoutes(app: Express, deps: Deps): void {
           jobId: req.params.jobId,
         });
       }
-      const body = (req.body ?? {}) as { enabled?: unknown };
-      if (typeof body.enabled !== 'boolean') {
-        throw new OpenwopError('validation_error', 'Field `enabled` is required and MUST be a boolean.', 400, {
-          field: 'enabled',
-        });
+      const body = (req.body ?? {}) as {
+        enabled?: unknown;
+        cronExpr?: unknown;
+        workflowId?: unknown;
+        metadata?: unknown;
+        timezone?: unknown;
+      };
+      const patch: Parameters<typeof updateJob>[1] = {};
+      if (body.enabled !== undefined) {
+        if (typeof body.enabled !== 'boolean') {
+          throw new OpenwopError('validation_error', 'Field `enabled` MUST be a boolean.', 400, { field: 'enabled' });
+        }
+        patch.enabled = body.enabled;
       }
-      const updated = await setJobEnabled(req.params.jobId, body.enabled);
+      if (body.cronExpr !== undefined) {
+        if (typeof body.cronExpr !== 'string' || body.cronExpr.length === 0) {
+          throw new OpenwopError('validation_error', 'Field `cronExpr` MUST be a non-empty string.', 400, { field: 'cronExpr' });
+        }
+        patch.cronExpr = body.cronExpr;
+      }
+      if (body.workflowId !== undefined) {
+        if (typeof body.workflowId !== 'string') {
+          throw new OpenwopError('validation_error', 'Field `workflowId` MUST be a string.', 400, { field: 'workflowId' });
+        }
+        patch.workflowId = body.workflowId;
+      }
+      if (body.timezone !== undefined) {
+        if (typeof body.timezone !== 'string') {
+          throw new OpenwopError('validation_error', 'Field `timezone` MUST be a string.', 400, { field: 'timezone' });
+        }
+        patch.timezone = body.timezone;
+      }
+      if (body.metadata !== undefined) {
+        if (typeof body.metadata !== 'object' || body.metadata === null) {
+          throw new OpenwopError('validation_error', 'Field `metadata` MUST be an object.', 400, { field: 'metadata' });
+        }
+        patch.metadata = body.metadata as Record<string, unknown>;
+      }
+      if (Object.keys(patch).length === 0) {
+        throw new OpenwopError('validation_error', 'Provide at least one editable field (enabled, cronExpr, workflowId, metadata, timezone).', 400, {});
+      }
+      const updated = await updateJob(req.params.jobId, patch);
       res.status(200).json(updated);
     } catch (err) {
       next(err);

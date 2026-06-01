@@ -1,17 +1,41 @@
 /**
  * Agent schedules panel (PRD §9 Schedules + §13) — agent-owned scheduled
- * workflows. List, enable/disable, run now, delete, and create from a cadence
- * preset. Backed by the durable scheduler (host/schedulingService.ts).
+ * workflows. List with cadence + last-run, edit in place (cadence / workflow),
+ * pause/resume, run now, delete, and create from a cadence preset. Backed by
+ * the durable scheduler (host/schedulingService.ts).
+ *
+ * Honesty note: the reference scheduler is a deterministic tick seam + manual
+ * "Run now" — there is no wall-clock daemon auto-firing jobs, so we show the
+ * intended *cadence* (and the real last-run time) rather than a fabricated
+ * "next run at HH:MM". The timezone is informational for the same reason.
  */
 
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CADENCE_PRESETS, createJob, deleteJob, listJobs, setJobEnabled, triggerJob, type ScheduledJob } from './scheduleClient.js';
+import { CADENCE_PRESETS, createJob, deleteJob, listJobs, updateJob, triggerJob, type ScheduledJob } from './scheduleClient.js';
 import { workflowName } from './roleTemplates.js';
+import { relativeTime } from './agentViewModel.js';
 import type { RosterEntry } from './rosterClient.js';
 import { Notice } from '../ui/Notice.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
+
+// The browser's IANA zone — stamped on new/edited schedules so the cadence
+// reads in the operator's local time (informational in the sample).
+const LOCAL_TZ = (() => {
+  try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return 'UTC'; }
+})();
+
+/** Human cadence for a stored cron expression — a preset label when it matches
+ *  a known cadence, else the raw cron string. */
+function cadenceLabel(cronExpr: string): string {
+  return CADENCE_PRESETS.find((p) => p.cronExpr === cronExpr)?.label ?? cronExpr;
+}
+
+/** Best-effort reverse map cron → preset key (to preselect the edit dropdown). */
+function cadenceKey(cronExpr: string): string {
+  return CADENCE_PRESETS.find((p) => p.cronExpr === cronExpr)?.key ?? CADENCE_PRESETS[0]!.key;
+}
 
 export function AgentSchedulesPanel({ entry }: { entry: RosterEntry }): JSX.Element {
   const [jobs, setJobs] = useState<ScheduledJob[]>([]);
@@ -19,6 +43,10 @@ export function AgentSchedulesPanel({ entry }: { entry: RosterEntry }): JSX.Elem
   const [notice, setNotice] = useState<string | null>(null);
   const [wfId, setWfId] = useState(entry.workflows[0] ?? '');
   const [cadence, setCadence] = useState(CADENCE_PRESETS[0]!.key);
+  // The job currently being edited inline (jobId), plus its draft fields.
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editWf, setEditWf] = useState('');
+  const [editCadence, setEditCadence] = useState(CADENCE_PRESETS[0]!.key);
 
   const refresh = useCallback(async () => {
     try {
@@ -41,6 +69,7 @@ export function AgentSchedulesPanel({ entry }: { entry: RosterEntry }): JSX.Elem
         rosterId: entry.rosterId,
         agentId: entry.agentRef.agentId,
         metadata: { label: `${workflowName(wfId)} · ${preset.label}` },
+        timezone: LOCAL_TZ,
       });
       await refresh();
     } catch (err) {
@@ -48,8 +77,29 @@ export function AgentSchedulesPanel({ entry }: { entry: RosterEntry }): JSX.Elem
     }
   };
 
+  const startEdit = (job: ScheduledJob) => {
+    setEditing(job.jobId);
+    setEditWf(job.workflowId ?? entry.workflows[0] ?? '');
+    setEditCadence(cadenceKey(job.cronExpr));
+  };
+
+  const onSaveEdit = async (job: ScheduledJob) => {
+    const preset = CADENCE_PRESETS.find((p) => p.key === editCadence)!;
+    setError(null);
+    try {
+      await updateJob(job.jobId, {
+        cronExpr: preset.cronExpr,
+        workflowId: editWf,
+        metadata: { ...(job.metadata ?? {}), label: `${workflowName(editWf)} · ${preset.label}` },
+        timezone: LOCAL_TZ,
+      });
+      setEditing(null);
+      await refresh();
+    } catch (err) { setError(err instanceof Error ? err.message : String(err)); }
+  };
+
   const onToggle = async (job: ScheduledJob) => {
-    try { await setJobEnabled(job.jobId, !job.enabled); await refresh(); }
+    try { await updateJob(job.jobId, { enabled: !job.enabled }); await refresh(); }
     catch (err) { setError(err instanceof Error ? err.message : String(err)); }
   };
 
@@ -75,23 +125,46 @@ export function AgentSchedulesPanel({ entry }: { entry: RosterEntry }): JSX.Elem
       {notice ? <Notice variant="success">{notice} <Link to="/runs">View runs</Link></Notice> : null}
 
       {jobs.length === 0 ? (
-        <p style={muted}>No schedules yet. Create one below so {entry.persona} runs a workflow on a timer.</p>
+        <p style={muted}>No schedules yet. Create one below so {entry.persona} runs a workflow on a cadence.</p>
       ) : (
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
           {jobs.map((job) => (
-            <li key={job.jobId} style={{ border: '1px solid var(--color-border)', borderRadius: 10, padding: '0.6rem 0.7rem', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-              <div style={{ flex: 1, minWidth: 200 }}>
-                <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{job.workflowId ? workflowName(job.workflowId) : 'No workflow'}</div>
-                <div style={{ ...muted, fontSize: '0.78rem' }}>
-                  {String(job.metadata?.label ?? job.cronExpr)}{job.enabled ? '' : ' · disabled'}
-                  {job.lastRunId ? <> · last run <Link to={`/runs/${job.lastRunId}`}>{job.lastRunId.slice(0, 8)}</Link></> : ' · not run yet'}
+            <li key={job.jobId} style={{ border: '1px solid var(--color-border)', borderRadius: 10, padding: '0.6rem 0.7rem', background: 'var(--color-surface)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: 200 }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    {job.workflowId ? workflowName(job.workflowId) : 'No workflow'}
+                    <span className={`chip ${job.enabled ? 'chip--success' : 'chip--muted'}`}>{job.enabled ? 'Active' : 'Paused'}</span>
+                  </div>
+                  <div style={{ ...muted, fontSize: '0.78rem' }}>
+                    Runs {cadenceLabel(job.cronExpr)}{job.timezone ? ` · ${job.timezone}` : ''}
+                  </div>
+                  <div style={{ ...muted, fontSize: '0.78rem' }}>
+                    {job.lastRunAt
+                      ? <>Last run {relativeTime(job.lastRunAt)}{job.lastRunId ? <> · <Link to={`/runs/${job.lastRunId}`}>view run</Link></> : null}</>
+                      : 'Not run yet'}
+                  </div>
+                </div>
+                <div className="action-bar" style={{ gap: 'var(--space-1)' }}>
+                  <button type="button" className="secondary btn-sm" onClick={() => (editing === job.jobId ? setEditing(null) : startEdit(job))}>{editing === job.jobId ? 'Cancel' : 'Edit'}</button>
+                  <button type="button" className="secondary btn-sm" onClick={() => void onToggle(job)}>{job.enabled ? 'Pause' : 'Resume'}</button>
+                  <button type="button" className="secondary btn-sm" onClick={() => void onRunNow(job)}>Run now</button>
+                  <button type="button" className="secondary btn-sm" onClick={() => void onDelete(job)}>Delete</button>
                 </div>
               </div>
-              <label style={{ fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <input type="checkbox" checked={job.enabled} onChange={() => void onToggle(job)} /> Enabled
-              </label>
-              <button type="button" className="secondary" style={{ fontSize: '0.74rem' }} onClick={() => void onRunNow(job)}>Run now</button>
-              <button type="button" className="secondary" style={{ fontSize: '0.74rem' }} onClick={() => void onDelete(job)}>Delete</button>
+
+              {editing === job.jobId ? (
+                <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem', flexWrap: 'wrap', alignItems: 'center', borderTop: '1px dashed var(--color-border)', paddingTop: '0.5rem' }}>
+                  <select value={editWf} onChange={(e) => setEditWf(e.target.value)} aria-label="Workflow" style={{ minWidth: 180 }}>
+                    {entry.workflows.length === 0 ? <option value="">Assign a workflow first</option> : null}
+                    {entry.workflows.map((w) => <option key={w} value={w}>{workflowName(w)}</option>)}
+                  </select>
+                  <select value={editCadence} onChange={(e) => setEditCadence(e.target.value)} aria-label="Cadence">
+                    {CADENCE_PRESETS.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
+                  </select>
+                  <button type="button" className="primary btn-sm" disabled={!editWf} onClick={() => void onSaveEdit(job)}>Save changes</button>
+                </div>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -109,6 +182,9 @@ export function AgentSchedulesPanel({ entry }: { entry: RosterEntry }): JSX.Elem
           </select>
           <button type="button" className="primary" disabled={!wfId} onClick={() => void onCreate()}>Create schedule</button>
         </div>
+        <p style={{ ...muted, fontSize: '0.74rem', marginBottom: 0 }}>
+          Cadence shown in {LOCAL_TZ}. In this demo, schedules fire on “Run now” or the agent's heartbeat — a background timer isn't wired.
+        </p>
       </div>
     </div>
   );

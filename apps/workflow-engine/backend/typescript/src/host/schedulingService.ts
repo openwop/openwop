@@ -60,6 +60,13 @@ export interface ScheduledJob {
   metadata?: Record<string, unknown>;
   /** runId of the most recent run this schedule fired. */
   lastRunId?: string;
+  /** ISO-8601 wall-clock time of the most recent fire (set in markJobFired).
+   *  Distinct from `lastFiredTick` (the deterministic tick index); this is the
+   *  human-facing "last run …" timestamp. */
+  lastRunAt?: string;
+  /** IANA timezone the cadence is expressed in (informational in the sample —
+   *  the tick seam doesn't apply it; surfaced so the UI can show it). */
+  timezone?: string;
   /** ISO-8601 registration timestamp (informational). */
   createdAt?: string;
 }
@@ -140,6 +147,7 @@ export async function registerJob(
     agentId?: string;
     enabled?: boolean;
     metadata?: Record<string, unknown>;
+    timezone?: string;
   },
   nowMs: number = Date.now(),
 ): Promise<{ ok: true; job: ScheduledJob } | { ok: false; error: ScheduleHorizonError }> {
@@ -162,6 +170,7 @@ export async function registerJob(
     ...(input.rosterId !== undefined ? { rosterId: input.rosterId } : {}),
     ...(input.agentId !== undefined ? { agentId: input.agentId } : {}),
     ...(input.metadata !== undefined ? { metadata: input.metadata } : {}),
+    ...(input.timezone !== undefined ? { timezone: input.timezone } : {}),
     createdAt: new Date(nowMs).toISOString(),
   };
   await jobs.put(job);
@@ -192,18 +201,45 @@ export async function deleteJob(jobId: string): Promise<boolean> {
 
 /** Enable/disable a job. Returns the updated job, or null when not found. */
 export async function setJobEnabled(jobId: string, enabled: boolean): Promise<ScheduledJob | null> {
+  return updateJob(jobId, { enabled });
+}
+
+/** Patch an editable subset of a job (cadence, bound workflow, attribution
+ *  label, timezone, enabled). Lets the UI edit a schedule in place instead of
+ *  delete-and-recreate. Only provided fields change. Returns the updated job,
+ *  or null when not found. */
+export async function updateJob(
+  jobId: string,
+  patch: {
+    enabled?: boolean;
+    cronExpr?: string;
+    workflowId?: string;
+    metadata?: Record<string, unknown>;
+    timezone?: string;
+  },
+): Promise<ScheduledJob | null> {
   const job = await jobs.get(jobId);
   if (!job) return null;
-  job.enabled = enabled;
+  if (patch.enabled !== undefined) job.enabled = patch.enabled;
+  if (patch.cronExpr !== undefined) job.cronExpr = patch.cronExpr;
+  if (patch.workflowId !== undefined) job.workflowId = patch.workflowId;
+  if (patch.metadata !== undefined) job.metadata = patch.metadata;
+  if (patch.timezone !== undefined) job.timezone = patch.timezone;
   await jobs.put(job);
   return job;
 }
 
 /** Record that a job fired (durable bookkeeping for the CRUD surface). */
-export async function markJobFired(jobId: string, tick: number, runId?: string): Promise<void> {
+export async function markJobFired(
+  jobId: string,
+  tick: number,
+  runId?: string,
+  firedAtMs: number = Date.now(),
+): Promise<void> {
   const job = await jobs.get(jobId);
   if (!job) return;
   job.lastFiredTick = tick;
+  job.lastRunAt = new Date(firedAtMs).toISOString();
   if (runId !== undefined) job.lastRunId = runId;
   await jobs.put(job);
 }
