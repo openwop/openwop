@@ -276,6 +276,11 @@ export async function createApp(config: AppConfig): Promise<Express> {
   // register before the global 1mb parser; body-parser is no-op when
   // req._body is set, so registration order is precedence order.
   app.use('/v1/packs', express.json({ limit: '50mb' }));
+  // Chat-attachment uploads (base64) ride a scoped parser sized to the
+  // 8mb-base64 store cap in routes/mediaAssets.ts. Registered before the
+  // global 1mb parser; body-parser is a no-op once req._body is set, so
+  // registration order is precedence order.
+  app.use('/v1/host/sample/media', express.json({ limit: '12mb' }));
   app.use(express.json({ limit: '1mb' }));
 
   // CORS — MUST come before auth so OPTIONS preflight succeeds without

@@ -23,6 +23,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { ContentPart } from './hooks/useChatSession.js';
+import { config } from '../client/config.js';
 import { MicIcon } from '../ui/icons/MicIcon.js';
 import { CheckIcon, PaperclipIcon } from '../ui/icons/index.js';
 
@@ -325,13 +326,22 @@ function AudioAttachment({ mimeType, dataBase64, durationSeconds }: AudioProps):
 /** Resolve a media part to a renderable src: host-served URL (RFC 0055 §C
  *  preferred) or an inline data URI. Returns null when neither is present.
  *
- *  The untrusted `url` field is restricted to http(s)/blob — media content
- *  is LLM-influenced, and an unsanitized `javascript:` URL in the file-chip
- *  anchor would be a DOM-XSS vector (the app's other links are sanitized by
- *  react-markdown; this raw element is not). Inline `data:` is only ever
- *  produced from our own base64 below, never accepted from `url`. */
+ *  The untrusted `url` field is restricted to http(s)/blob OR the host's own
+ *  media-asset serve path — media content is LLM-influenced, and an
+ *  unsanitized `javascript:` URL in the file-chip anchor would be a DOM-XSS
+ *  vector (the app's other links are sanitized by react-markdown; this raw
+ *  element is not). The relative host path (`/v1/host/sample/assets/<token>`,
+ *  where the unguessable token IS the capability) is resolved against the API
+ *  base so an `<img>`/`<a>` can fetch it cross-origin in the public deploy;
+ *  any other relative or non-allowlisted scheme is rejected. Inline `data:`
+ *  is only ever produced from our own base64 below, never accepted from `url`. */
 function mediaSrc(mimeType: string, url?: string, dataBase64?: string): string | null {
-  if (url) return /^(https?|blob):/i.test(url.trim()) ? url : null;
+  if (url) {
+    const u = url.trim();
+    if (/^(https?|blob):/i.test(u)) return u;
+    if (u.startsWith('/v1/host/sample/assets/')) return `${config.baseUrl}${u}`;
+    return null;
+  }
   if (dataBase64) return `data:${mimeType};base64,${dataBase64}`;
   return null;
 }

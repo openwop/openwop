@@ -15,10 +15,15 @@ import { dispatchMock } from './dispatchMock.js';
 export type ProviderId = 'anthropic' | 'openai' | 'google' | 'minimax' | 'mock';
 
 /** A single piece of content within a message. Mirrors the FE shape
- *  in src/chat/hooks/useChatSession.ts. */
+ *  in src/chat/types.ts. `image`/`file` parts carry inline `dataBase64`
+ *  by the time they reach a dispatcher — the chat-responder node resolves
+ *  any host-`url` reference to bytes BEFORE dispatch (replay-safe + works
+ *  for providers that can't fetch a relative host URL). */
 export type ContentPart =
   | { type: 'text'; text: string }
-  | { type: 'audio'; mimeType: string; dataBase64: string; durationSeconds?: number };
+  | { type: 'audio'; mimeType: string; dataBase64: string; durationSeconds?: number }
+  | { type: 'image'; mimeType: string; dataBase64?: string; url?: string; alt?: string }
+  | { type: 'file'; mimeType: string; dataBase64?: string; url?: string; name?: string };
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -235,7 +240,7 @@ async function dispatchAnthropic(req: DispatchRequest): Promise<DispatchResult> 
       max_tokens: req.maxTokens ?? (thinkingEnabled ? 8192 : 4096),
       stream: true,
       ...(systemMessage ? { system: contentToText(systemMessage.content, 'Anthropic') } : {}),
-      messages: conversation.map((m) => ({ role: m.role, content: contentToText(m.content, 'Anthropic') })),
+      messages: conversation.map((m) => ({ role: m.role, content: contentToAnthropicBlocks(m.content) })),
       ...(thinkingEnabled ? { thinking: { type: 'enabled', budget_tokens: thinkingBudget } } : {}),
     }),
     ...(req.signal ? { signal: req.signal } : {}),
@@ -351,7 +356,7 @@ async function dispatchOpenAI(req: DispatchRequest): Promise<DispatchResult> {
       max_tokens: req.maxTokens ?? 4096,
       stream: true,
       stream_options: { include_usage: true },
-      messages: req.messages.map((m) => ({ role: m.role, content: contentToText(m.content, 'OpenAI') })),
+      messages: req.messages.map((m) => ({ role: m.role, content: contentToOpenAIBlocks(m.content) })),
     }),
     ...(req.signal ? { signal: req.signal } : {}),
   }), req.signal);
@@ -750,33 +755,113 @@ async function dispatchGoogle(req: DispatchRequest): Promise<DispatchResult> {
 }
 
 // ── Content-part converters (one per provider) ────────────────────────
+//
+// Every converter is FAIL-CLOSED: a part a provider can't represent in our
+// supported API surface throws a clear, user-facing error so the responder
+// node surfaces "this model can't read that attachment" rather than silently
+// dropping it (the bug we saw in the MyndHyve reference). Text-like documents
+// (.txt/.md/.json/.csv) are decoded and inlined as TEXT, so they work on every
+// provider; images go to native vision blocks; PDFs go to native document
+// blocks where supported (Anthropic, Gemini).
 
-/** Flatten ContentPart[] → text-only string for providers that don't
- *  accept multi-modal in our supported API surface (Anthropic Messages,
- *  OpenAI Chat Completions on non-audio-preview models). Throws when
- *  audio/image parts are present so the responder node can surface a
- *  clear "this provider doesn't support audio input" error instead of
- *  silently dropping the attachment. */
-function contentToText(content: string | readonly ContentPart[], providerLabel: string): string {
-  if (typeof content === 'string') return content;
-  const unsupported = content.find((p) => p.type !== 'text');
-  if (unsupported) {
-    throw new Error(
-      `${providerLabel} doesn't support ${unsupported.type} content parts in this sample. ` +
-      'Audio input requires Gemini (via inlineData) or OpenAI gpt-4o-audio-preview / Anthropic ' +
-      "Phase 4 v2. Pick a Gemini model + retry, or text-only.",
-    );
-  }
-  return content.filter((p): p is { type: 'text'; text: string } => p.type === 'text').map((p) => p.text).join('');
+/** MIME types we inline as decoded UTF-8 text on every provider. */
+const TEXT_FILE_MIME = new Set(['text/plain', 'text/markdown', 'application/json', 'text/csv']);
+
+/** Decode a text-like `file` part to a UTF-8 string wrapped with a small
+ *  header, or null when the part isn't a text-like file. */
+function asInlinedText(part: ContentPart): string | null {
+  if (part.type !== 'file' || !TEXT_FILE_MIME.has(part.mimeType)) return null;
+  if (!part.dataBase64) throw new Error('attachment bytes unavailable (file not resolved before dispatch)');
+  const body = Buffer.from(part.dataBase64, 'base64').toString('utf8');
+  const label = part.name ? `Attached file "${part.name}"` : 'Attached file';
+  return `\n\n[${label} (${part.mimeType})]\n${body}\n`;
 }
 
+/** The base64 bytes of an image/PDF `file`/`image` part, or throw fail-closed
+ *  if the part was never resolved to inline bytes. */
+function requireBytes(part: ContentPart): string {
+  if ((part.type === 'image' || part.type === 'file') && part.dataBase64) return part.dataBase64;
+  throw new Error('attachment bytes unavailable (not resolved before dispatch)');
+}
 
+function unsupported(providerLabel: string, part: ContentPart): Error {
+  const kind = part.type === 'file' ? `file (${(part as { mimeType?: string }).mimeType ?? 'unknown'})` : part.type;
+  return new Error(
+    `${providerLabel} can't accept ${kind} attachments in this sample. ` +
+    'Images need a vision model (Anthropic, Gemini, or an OpenAI vision model); ' +
+    'PDFs need Anthropic or Gemini; text files (.txt/.md/.json/.csv) work everywhere. ' +
+    'Switch models and retry, or remove the attachment.',
+  );
+}
+
+/** Flatten ContentPart[] → text-only string for providers/messages that take
+ *  a plain string (Anthropic `system`, MiniMax). Text + text-like files pass
+ *  through; image/audio/PDF parts throw fail-closed. */
+function contentToText(content: string | readonly ContentPart[], providerLabel: string): string {
+  if (typeof content === 'string') return content;
+  let out = '';
+  for (const part of content) {
+    if (part.type === 'text') { out += part.text; continue; }
+    const inlined = asInlinedText(part);
+    if (inlined !== null) { out += inlined; continue; }
+    throw unsupported(providerLabel, part);
+  }
+  return out;
+}
+
+/** Anthropic Messages API content: a plain string when only text, else an
+ *  array of content blocks (text / image / document). */
+function contentToAnthropicBlocks(content: string | readonly ContentPart[]): string | Array<Record<string, unknown>> {
+  if (typeof content === 'string') return content;
+  if (content.every((p) => p.type === 'text')) {
+    return content.map((p) => (p as { text: string }).text).join('');
+  }
+  const blocks: Array<Record<string, unknown>> = [];
+  for (const part of content) {
+    if (part.type === 'text') {
+      blocks.push({ type: 'text', text: part.text });
+    } else if (part.type === 'image') {
+      blocks.push({ type: 'image', source: { type: 'base64', media_type: part.mimeType, data: requireBytes(part) } });
+    } else if (part.type === 'file' && part.mimeType === 'application/pdf') {
+      blocks.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: requireBytes(part) } });
+    } else {
+      const inlined = asInlinedText(part);
+      if (inlined !== null) { blocks.push({ type: 'text', text: inlined }); continue; }
+      throw unsupported('Anthropic', part);
+    }
+  }
+  return blocks;
+}
+
+/** OpenAI Chat Completions content: a plain string when only text, else an
+ *  array of parts (text / image_url). PDFs are NOT accepted on the Chat
+ *  Completions content surface — fail-closed. */
+function contentToOpenAIBlocks(content: string | readonly ContentPart[]): string | Array<Record<string, unknown>> {
+  if (typeof content === 'string') return content;
+  if (content.every((p) => p.type === 'text')) {
+    return content.map((p) => (p as { text: string }).text).join('');
+  }
+  const blocks: Array<Record<string, unknown>> = [];
+  for (const part of content) {
+    if (part.type === 'text') {
+      blocks.push({ type: 'text', text: part.text });
+    } else if (part.type === 'image') {
+      blocks.push({ type: 'image_url', image_url: { url: `data:${part.mimeType};base64,${requireBytes(part)}` } });
+    } else {
+      const inlined = asInlinedText(part);
+      if (inlined !== null) { blocks.push({ type: 'text', text: inlined }); continue; }
+      throw unsupported('OpenAI', part);
+    }
+  }
+  return blocks;
+}
 
 /** Convert a unified ContentPart[] (or string) to Gemini's `parts` format.
  *  Gemini accepts {text} + {inlineData: {mimeType, data}} parts; the
  *  audio formats it accepts include audio/wav, audio/mp3, audio/ogg,
  *  audio/flac, audio/aiff, audio/aac. webm/opus has spotty support so
- *  callers should record audio in a compatible format. */
+ *  callers should record audio in a compatible format. Images + PDFs ride
+ *  the same inlineData channel; text files inline as a {text} part. */
 function contentToGeminiParts(content: string | readonly ContentPart[]): Array<Record<string, unknown>> {
   if (typeof content === 'string') return [{ text: content }];
   const out: Array<Record<string, unknown>> = [];
@@ -785,6 +870,12 @@ function contentToGeminiParts(content: string | readonly ContentPart[]): Array<R
       out.push({ text: part.text });
     } else if (part.type === 'audio') {
       out.push({ inlineData: { mimeType: part.mimeType, data: part.dataBase64 } });
+    } else if (part.type === 'image' || (part.type === 'file' && part.mimeType === 'application/pdf')) {
+      out.push({ inlineData: { mimeType: part.mimeType, data: requireBytes(part) } });
+    } else {
+      const inlined = asInlinedText(part);
+      if (inlined !== null) { out.push({ text: inlined }); continue; }
+      throw unsupported('Gemini', part);
     }
   }
   return out;

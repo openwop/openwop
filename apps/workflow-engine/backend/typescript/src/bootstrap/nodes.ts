@@ -18,7 +18,7 @@ import { composePromptTemplate } from '../host/promptCompose.js';
 import { resolvePromptRef, type PromptKind } from '../host/promptResolve.js';
 import { getTemplate } from '../host/promptStore.js';
 import { getPromptsHostConfig } from '../host/promptHostConfig.js';
-import { dispatchChat, type ChatMessage, type DispatchResult, type ProviderId } from '../providers/dispatch.js';
+import { dispatchChat, type ChatMessage, type ContentPart, type DispatchResult, type ProviderId } from '../providers/dispatch.js';
 import { dispatchAnthropicWithTools, type ToolDef } from '../providers/dispatchAnthropicTools.js';
 import { dispatchMiniMaxWithTools } from '../providers/dispatchMiniMaxTools.js';
 import { getDefaultModel } from '../providers/catalog.js';
@@ -36,7 +36,7 @@ import {
 } from '../host/envelopeReliabilityEmit.js';
 import { dispatchSubRun, type SubRunResult } from '../subruns/subRunDispatcher.js';
 import { registerMockAgentNode } from './conformanceMockAgent.js';
-import { storeMediaAsset, writeMemoryEntry, MEMORY_DEMO_REF } from '../host/inMemorySurfaces.js';
+import { storeMediaAsset, resolveMediaAsset, writeMemoryEntry, MEMORY_DEMO_REF } from '../host/inMemorySurfaces.js';
 
 const noopNode: NodeModule = {
   typeId: 'core.noop',
@@ -1096,6 +1096,50 @@ function lastIndexOfRole(messages: readonly ChatMessage[], role: ChatMessage['ro
   return -1;
 }
 
+/** Replace the TEXT of a (possibly multi-modal) user turn with `text` while
+ *  PRESERVING any non-text attachment parts. A `userPromptRef` that resolves
+ *  to a string must not silently drop the image/file the user attached. */
+function withUserText(original: ChatMessage['content'], text: string): ChatMessage['content'] {
+  if (typeof original === 'string') return text;
+  const nonText = original.filter((p) => p.type !== 'text');
+  if (nonText.length === 0) return text;
+  return [{ type: 'text', text }, ...nonText];
+}
+
+/** Extract the capability token from a host media-asset serve URL, or null. */
+function tokenFromAssetUrl(url: string): string | null {
+  const m = /\/v1\/host\/sample\/assets\/([^/?#]+)/.exec(url);
+  return m ? decodeURIComponent(m[1]!) : null;
+}
+
+/** Resolve any URL-referenced image/file attachment to inline `dataBase64`
+ *  BEFORE dispatch. Providers can't fetch a relative host URL, and inlining
+ *  here keeps a forked/replayed run self-contained. Tenant-checked (CTI-1):
+ *  a token minted for another tenant — or an expired one — fails closed. */
+async function resolveAttachmentBytes(messages: readonly ChatMessage[], tenantId: string): Promise<ChatMessage[]> {
+  let touched = false;
+  const out: ChatMessage[] = [];
+  for (const m of messages) {
+    if (typeof m.content === 'string') { out.push(m); continue; }
+    const parts: ContentPart[] = [];
+    for (const part of m.content) {
+      if ((part.type === 'image' || part.type === 'file') && !part.dataBase64 && part.url) {
+        const token = tokenFromAssetUrl(part.url);
+        const entry = token ? await resolveMediaAsset(token) : null;
+        if (!entry || entry.tenantId !== tenantId) {
+          throw new Error('a referenced attachment is unavailable or has expired — re-attach the file and retry');
+        }
+        parts.push({ ...part, dataBase64: entry.contentBase64, mimeType: part.mimeType || entry.contentType });
+        touched = true;
+      } else {
+        parts.push(part);
+      }
+    }
+    out.push({ ...m, content: parts });
+  }
+  return touched ? out : [...messages];
+}
+
 /** Upper bound on managed-chat (openwop-free / MiniMax) dispatch wall
  *  time. Without a timeout, an unresponsive upstream parks the worker
  *  forever and the run goes `running` with no further events.
@@ -1274,12 +1318,17 @@ export const sampleChatResponderNode: NodeModule = {
       const lastUserIdx = lastIndexOfRole(messages, 'user');
       if (lastUserIdx >= 0) {
         messages = messages.map((m, i) =>
-          i === lastUserIdx ? { ...m, content: userBody } : m,
+          i === lastUserIdx ? { ...m, content: withUserText(m.content, userBody) } : m,
         );
       } else {
         messages = [...messages, { role: 'user', content: userBody }];
       }
     }
+
+    // Resolve URL-referenced attachments to inline bytes before dispatch
+    // (tenant-checked; replay-safe). No-op when every part is already inline
+    // or text-only, so the common chat path pays nothing.
+    messages = await resolveAttachmentBytes(messages, ctx.tenantId);
 
     // Managed-provider path: server-held key, per-tenant daily cap,
     // underlying provider hidden. The chat-responder short-circuits
@@ -1592,7 +1641,7 @@ const sampleImageEmitNode: NodeModule = {
       : 'image/png';
     const alt = typeof inputs.alt === 'string' ? inputs.alt : 'Demo image (RFC 0055 media.image)';
 
-    const stored = storeMediaAsset(ctx.tenantId, { contentBase64, contentType: mimeType });
+    const stored = await storeMediaAsset(ctx.tenantId, { contentBase64, contentType: mimeType });
 
     // RFC 0055 §C rule 1 + 3: reference the asset by its tenant-scoped URL,
     // never inline the binary. Payload conforms to the media.image schema
