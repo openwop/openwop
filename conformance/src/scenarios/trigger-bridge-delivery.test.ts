@@ -36,7 +36,7 @@ import {
   DELIVERY_OUTCOMES,
   SUBSCRIPTION_STATES,
 } from '../lib/triggerBridge.js';
-import { queryTestEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
+import { queryTestEvents, requireEvents, isEventLogSeamAvailable, resetTestSeam } from '../lib/event-log-query.js';
 
 const CONTENT_FREE_FORBIDDEN = ['body', 'headers', 'payload', 'secret', 'credentials', 'token', 'apiKey'];
 
@@ -57,69 +57,105 @@ describe('trigger-bridge-delivery (RFC 0083 §C)', () => {
     // ---- Leg 1: dedup → effectively-once (§C-1) ---------------------------
     const dedup = await driveDelivery({ scenario: 'dedup', dedupKey: 'conformance-dedup-key', source: 'queue' });
     if (dedup === null) return; // delivery seam unwired — soft-skip the whole behavioral suite
-    if (dedup.runId || dedup.subscriptionId) {
-      const subId = dedup.subscriptionId;
-      const q = await queryTestEvents(dedup.runId ?? '__dedup__', { type: 'trigger.delivery.attempted' });
-      if (q.ok) {
-        const deliveredForKey = q.events.filter(
-          (e) => e.payload.dedupKey === 'conformance-dedup-key' && e.payload.outcome === 'delivered',
-        );
-        // Effectively-once: a repeated dedupKey MUST NOT produce two 'delivered' attempts.
-        expect(
-          deliveredForKey.length <= 1,
-          driver.describe('trigger-bridge.md §C-1', 'a repeated dedupKey MUST be effectively-once (≤1 delivered attempt)'),
-        ).toBe(true);
-        for (const e of q.events) {
-          expect(
-            typeof e.payload.outcome === 'string' && DELIVERY_OUTCOMES.includes(e.payload.outcome as string),
-            driver.describe('run-event-payloads.schema.json#triggerDeliveryAttempted', 'outcome MUST be delivered|retrying|dead-lettered'),
-          ).toBe(true);
-          expectContentFree(e.payload, 'trigger.delivery.attempted');
-        }
-      }
-      void subId;
+
+    // The profile is derived AND the seam is wired — missing evidence is a
+    // FAILURE, not a soft-skip. A repeated dedupKey MUST be effectively-once:
+    // EXACTLY one delivered attempt for the key (zero would mean no delivery at all).
+    const dedupQueryId = dedup.runId ?? '__dedup__';
+    const dedupEvents = requireEvents(
+      await queryTestEvents(dedupQueryId, { type: 'trigger.delivery.attempted' }),
+      'trigger.delivery.attempted (dedup)',
+    );
+    const deliveredForKey = dedupEvents.filter(
+      (e) => e.payload.dedupKey === 'conformance-dedup-key' && e.payload.outcome === 'delivered',
+    );
+    expect(
+      deliveredForKey.length === 1,
+      driver.describe('trigger-bridge.md §C-1', 'a repeated dedupKey MUST be effectively-once — EXACTLY one delivered attempt (not zero, not two)'),
+    ).toBe(true);
+    for (const e of dedupEvents) {
+      expect(
+        typeof e.payload.outcome === 'string' && DELIVERY_OUTCOMES.includes(e.payload.outcome as string),
+        driver.describe('run-event-payloads.schema.json#triggerDeliveryAttempted', 'outcome MUST be delivered|retrying|dead-lettered'),
+      ).toBe(true);
+      expectContentFree(e.payload, 'trigger.delivery.attempted');
     }
 
     // ---- Leg 2: retry → dead-letter (§C-2 + RFC 0053) --------------------
     const exhaust = await driveDelivery({ scenario: 'exhaust', source: 'webhook' });
-    if (exhaust && (exhaust.runId || exhaust.subscriptionId)) {
-      const key = exhaust.runId ?? '__exhaust__';
-      const dq = await queryTestEvents(key, { type: 'trigger.delivery.attempted' });
-      if (dq.ok && dq.events.length > 0) {
-        const terminal = dq.events.sort((a, b) => a.sequence - b.sequence)[dq.events.length - 1]!;
-        expect(
-          terminal.payload.outcome === 'dead-lettered',
-          driver.describe('trigger-bridge.md §C-2', 'an exhausted retry policy MUST terminate in a dead-lettered delivery'),
-        ).toBe(true);
-      }
-      const sq = await queryTestEvents(key, { type: 'trigger.subscription.state.changed' });
-      if (sq.ok && sq.events.length > 0) {
-        const toDeadLetter = sq.events.some((e) => e.payload.toState === 'dead-lettered');
-        expect(
-          toDeadLetter,
-          driver.describe('trigger-bridge.md §B', 'the subscription MUST transition to dead-lettered on exhaustion'),
-        ).toBe(true);
-        for (const e of sq.events) {
-          expect(
-            typeof e.payload.toState === 'string' && SUBSCRIPTION_STATES.includes(e.payload.toState as string),
-            driver.describe('trigger-bridge.md §B', 'toState MUST be in the four-state vocabulary'),
-          ).toBe(true);
-          expectContentFree(e.payload, 'trigger.subscription.state.changed');
-        }
-      }
+    expect(
+      exhaust !== null,
+      driver.describe('trigger-bridge.md §C-2', 'the exhaust scenario MUST be wired when the delivery seam is'),
+    ).toBe(true);
+    const exKey = exhaust!.runId ?? '__exhaust__';
+    const exhaustEvents = requireEvents(
+      await queryTestEvents(exKey, { type: 'trigger.delivery.attempted' }),
+      'trigger.delivery.attempted (exhaust)',
+    );
+    expect(
+      exhaustEvents.length >= 1,
+      driver.describe('trigger-bridge.md §C-2', 'an exhausted delivery MUST emit ≥1 trigger.delivery.attempted'),
+    ).toBe(true);
+    const terminal = exhaustEvents.sort((a, b) => a.sequence - b.sequence)[exhaustEvents.length - 1]!;
+    expect(
+      terminal.payload.outcome === 'dead-lettered',
+      driver.describe('trigger-bridge.md §C-2', 'an exhausted retry policy MUST terminate in a dead-lettered delivery'),
+    ).toBe(true);
+    const stateEvents = requireEvents(
+      await queryTestEvents(exKey, { type: 'trigger.subscription.state.changed' }),
+      'trigger.subscription.state.changed (exhaust)',
+    );
+    expect(
+      stateEvents.length >= 1,
+      driver.describe('trigger-bridge.md §B', 'exhaustion MUST emit ≥1 trigger.subscription.state.changed'),
+    ).toBe(true);
+    expect(
+      stateEvents.some((e) => e.payload.toState === 'dead-lettered'),
+      driver.describe('trigger-bridge.md §B', 'the subscription MUST transition to dead-lettered on exhaustion'),
+    ).toBe(true);
+    for (const e of stateEvents) {
+      expect(
+        typeof e.payload.toState === 'string' && SUBSCRIPTION_STATES.includes(e.payload.toState as string),
+        driver.describe('trigger-bridge.md §B', 'toState MUST be in the four-state vocabulary'),
+      ).toBe(true);
+      expectContentFree(e.payload, 'trigger.subscription.state.changed');
     }
 
     // ---- Leg 3: delivery → run causation (§C / RFC 0040) -----------------
+    // §C: "the run started by a successful delivery MUST carry the delivery's
+    // id as causationId on its run.started." The delivery's id is the
+    // trigger.delivery.attempted{delivered} event's id, so we assert EQUALITY
+    // (not merely "a causation id exists") — the trigger→run link MUST resolve.
     const delivered = await driveDelivery({ scenario: 'deliver', source: 'schedule' });
-    if (delivered?.runId) {
-      const rq = await queryTestEvents(delivered.runId, { type: 'run.started' });
-      if (rq.ok && rq.events[0]) {
-        expect(
-          typeof rq.events[0].causationId === 'string' && (rq.events[0].causationId as string).length > 0,
-          driver.describe('trigger-bridge.md §C / RFC 0040', 'the delivered run.started MUST carry the delivery causationId (resolvable via /ancestry)'),
-        ).toBe(true);
-      }
-    }
+    expect(
+      delivered !== null && typeof delivered.runId === 'string' && (delivered.runId as string).length > 0,
+      driver.describe('trigger-bridge.md §C', 'a successful delivery MUST create a run'),
+    ).toBe(true);
+    const deliveredRunId = delivered!.runId as string;
+    const attemptEvents = requireEvents(
+      await queryTestEvents(deliveredRunId, { type: 'trigger.delivery.attempted' }),
+      'trigger.delivery.attempted (deliver)',
+    );
+    const deliveredEvent = attemptEvents.find((e) => e.payload.outcome === 'delivered');
+    expect(
+      deliveredEvent !== undefined,
+      driver.describe('trigger-bridge.md §C-1', 'a successful delivery MUST emit a trigger.delivery.attempted{outcome:delivered}'),
+    ).toBe(true);
+    const runStartedEvents = requireEvents(
+      await queryTestEvents(deliveredRunId, { type: 'run.started' }),
+      'run.started (deliver)',
+    );
+    expect(
+      runStartedEvents.length >= 1,
+      driver.describe('trigger-bridge.md §C', 'a delivered run MUST emit run.started'),
+    ).toBe(true);
+    const runStarted = runStartedEvents.sort((a, b) => a.sequence - b.sequence)[0]!;
+    expect(
+      typeof runStarted.causationId === 'string' &&
+        (runStarted.causationId as string).length > 0 &&
+        runStarted.causationId === deliveredEvent!.eventId,
+      driver.describe('trigger-bridge.md §C / RFC 0040', 'run.started.causationId MUST EQUAL the delivery id (the trigger.delivery.attempted{delivered} eventId) — resolvable via /ancestry'),
+    ).toBe(true);
 
     await resetTestSeam();
   });

@@ -4,6 +4,20 @@
 
 _No unreleased changes._
 
+## [1.17.0] — 2026-06-01 — harden the agent-platform behavioral gates against vacuous passes
+
+Standalone conformance minor — a strictness fix to three existing capability-gated behavioral scenarios published via the `openwop-conformance/v1.17.0` per-package tag (PUBLISHING.md §"CI automation"). `EXPECTED_CONFORMANCE_VERSION` advances to `1.17.0` in lockstep. **No new scenario files** (count unchanged); this tightens the assertions inside three scenarios so a host that advertises the capability + wires the seam but emits **no evidence** now FAILS rather than vacuously passing. Addresses an independent audit finding that these gates "could pass without proving the behavior they claim."
+
+The fix preserves every legitimate soft-skip (capability/profile not advertised, event-log seam absent, drive-seam unwired → the host hasn't opted in). What changes is that **once a host has opted in and returned a runId**, missing evidence is a hard failure.
+
+### Changed — agent-platform behavioral gates (RFC 0081 / 0082 / 0083)
+
+- **`agent-eval-run.test.ts`** (RFC 0081) — previously the entire `eval.*` ordering/content block was wrapped in `if (startedEvents.length > 0)` and the `EvalSummary` read in `if (status === 200)`, so a host emitting nothing (or a non-200 summary) passed. Now: a wired eval-run MUST return a runId; the event-log seam MUST return the events; **exactly one** `eval.started`, **≥1** `eval.scored`, **exactly one** `eval.completed`; the ordering + per-task count + content-free + `score∈0..1` checks run unconditionally; and `GET /v1/runs/{runId}/eval-summary` MUST serve a **200** schema-valid `EvalSummary`.
+- **`agent-deployment-lifecycle.test.ts`** (RFC 0082) — previously the positive promote could pass with no record/runId and no `deployment.promoted`; the denial/channel-pin legs were conditionally checked. Now: a promote MUST return a runId + a schema-valid record + emit **≥1** `deployment.promoted`; the unauthorized + eval-gate-unmet legs MUST return a runId, be denied, and emit **zero** `deployment.promoted`; the channel-pin leg MUST emit `agent.invocation.started` carrying `resolvedAgentVersion`.
+- **`trigger-bridge-delivery.test.ts`** (RFC 0083) — previously dedup checked `≤1` delivered (zero passed) and causation only checked that a causationId *existed*. Now: dedup MUST be **exactly one** delivered attempt; exhaustion MUST emit a terminal `dead-lettered` delivery + a `dead-lettered` subscription transition; and the delivered run's `run.started.causationId` MUST **equal the delivery id** (the `trigger.delivery.attempted{delivered}` event's `eventId`) per trigger-bridge.md §C — not merely be non-empty.
+
+New shared helper `requireEvents()` in `src/lib/event-log-query.ts` asserts a query succeeded (hard-fail, no vacuous pass) and returns the typed events. Capability-gated + additive; reference hosts that don't advertise these surfaces continue to soft-skip. MyndHyve (which already emits the full evidence) continues to pass non-vacuously.
+
 ## [1.16.0] — 2026-06-01 — RFC 0084 budget-enforcement behavioral gate
 
 Standalone conformance minor — a scenario addition published via the `openwop-conformance/v1.16.0` per-package tag (PUBLISHING.md §"CI automation"; only the `publish-conformance` job runs), NOT a coordinated spec-corpus release. `EXPECTED_CONFORMANCE_VERSION` advances to `1.16.0` in lockstep. The steward prerequisite that lets MyndHyve run the RFC 0084 §C/§D budget-enforcement scenario non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true` to graduate `budget` from `Active` to `Accepted`. The normative surface (`budget-policy.schema.json` + the four `budget.*` events + the four `cap.breached{budget-*}` kinds) already shipped — this release is the gated test surface only.
