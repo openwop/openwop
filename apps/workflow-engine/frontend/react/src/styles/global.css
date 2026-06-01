@@ -169,7 +169,7 @@
 .chat-md li { margin: 2px 0; }
 .chat-md li > p { margin: 0; }
 .chat-md a {
-  color: var(--color-clay, var(--ink));
+  color: var(--color-accent);
   text-decoration: underline;
   text-underline-offset: 2px;
 }

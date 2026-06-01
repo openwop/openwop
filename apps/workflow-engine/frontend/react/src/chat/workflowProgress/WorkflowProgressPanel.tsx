@@ -174,11 +174,11 @@ function RunSwitcher({
                   padding: '4px 8px',
                   fontSize: 12,
                   background: isActive
-                    ? 'color-mix(in oklch, var(--color-clay) 18%, transparent)'
+                    ? 'color-mix(in oklch, var(--color-accent) 18%, transparent)'
                     : 'transparent',
                   border: 'none',
                   borderLeft: isActive
-                    ? '2px solid var(--color-clay)'
+                    ? '2px solid var(--color-accent)'
                     : '2px solid transparent',
                   cursor: 'pointer',
                   fontWeight: isActive ? 600 : 400,

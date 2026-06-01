@@ -125,7 +125,7 @@ export function AgentInstructionsPanel({ entry, onChanged }: { entry: RosterEntr
           ) : null}
         </>
       ) : (
-        <div style={{ border: '1px solid var(--color-border)', borderRadius: 10, padding: '0.7rem', background: 'var(--color-surface-alt)' }}>
+        <div style={{ border: '1px solid var(--color-border)', borderRadius: 10, padding: '0.7rem', background: 'var(--color-surface-2)' }}>
           {isForkable ? (
             <>
               <p style={{ marginTop: 0, fontSize: '0.85rem' }}>
