@@ -35,12 +35,12 @@ interface Chip {
 
 const PHASE_COLOR: Record<string, string> = {
   'dispatch.began': 'var(--clay)',
-  'dispatch.succeeded': '#10b981',
-  'dispatch.failed': '#ef4444',
-  'child.completed': '#10b981',
-  'child.failed': '#ef4444',
+  'dispatch.succeeded': 'var(--color-success)',
+  'dispatch.failed': 'var(--color-danger)',
+  'child.completed': 'var(--color-success)',
+  'child.failed': 'var(--color-danger)',
   'child.cancelled': 'var(--ink-3)',
-  'output.harvested': '#0ea5e9',
+  'output.harvested': 'var(--color-info)',
 };
 
 function asRecord(v: unknown): Record<string, unknown> {
@@ -56,7 +56,7 @@ function buildChips(events: readonly RunEventDoc[]): Chip[] {
       case 'runOrchestrator.decided': {
         const d = p.decision;
         const label = typeof d === 'string' ? d : (asRecord(d).kind as string) ?? 'decided';
-        chips.push({ seq: ev.sequence, kind: 'supervisor', label: `supervisor: ${label}`, sublabel: p.agentId as string, color: '#8b5cf6' });
+        chips.push({ seq: ev.sequence, kind: 'supervisor', label: `supervisor: ${label}`, sublabel: p.agentId as string, color: 'var(--color-ai)' });
         break;
       }
       case 'agent.handoff': {
@@ -67,7 +67,7 @@ function buildChips(events: readonly RunEventDoc[]): Chip[] {
           seq: ev.sequence, kind: 'handoff',
           label: `${from ?? '?'} → ${to ?? '?'}`,
           ...(typeof p.reason === 'string' ? { sublabel: p.reason as string } : {}),
-          color: '#0ea5e9',
+          color: 'var(--color-info)',
         });
         break;
       }
@@ -96,7 +96,7 @@ function buildChips(events: readonly RunEventDoc[]): Chip[] {
           sublabel: typeof p.confidence === 'number'
             ? `conf ${Math.round((p.confidence as number) * 100)}% < floor ${Math.round(((p.floor as number) ?? 0) * 100)}%`
             : (p.workerId as string),
-          color: '#f59e0b',
+          color: 'var(--color-warning)',
           emphasize: true,
         });
         break;

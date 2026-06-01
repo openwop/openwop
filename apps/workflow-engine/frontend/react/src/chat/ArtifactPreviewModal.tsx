@@ -93,7 +93,7 @@ export function ArtifactPreviewModal({ open, nodeId, label, output, onClose }: P
         style={{
           position: 'fixed',
           inset: 0,
-          background: 'var(--color-modal-backdrop, rgba(0, 0, 0, 0.5))',
+          background: 'var(--scrim)',
           zIndex: 60,
         }}
       />
@@ -128,7 +128,7 @@ export function ArtifactPreviewModal({ open, nodeId, label, output, onClose }: P
             maxHeight: '85vh',
             display: 'flex',
             flexDirection: 'column',
-            boxShadow: 'var(--shadow-modal, 0 10px 40px rgba(0,0,0,0.25))',
+            boxShadow: '0 10px 40px var(--ink-shadow)',
             border: '1px solid var(--color-border)',
           }}
         >

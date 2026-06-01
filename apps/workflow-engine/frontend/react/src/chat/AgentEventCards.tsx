@@ -148,7 +148,7 @@ export function ToolCallCard({ call }: { call: AgentToolCall }): JSX.Element {
             <div
               style={{
                 padding: 6,
-                background: 'rgba(248, 113, 113, 0.08)',
+                background: 'color-mix(in oklch, var(--color-danger) 8%, transparent)',
                 border: '1px solid var(--color-danger)',
                 borderRadius: 4,
                 fontSize: 11,
@@ -201,8 +201,8 @@ export function DecisionBadge({ decision }: { decision: AgentDecision }): JSX.El
   const conf = decision.confidence;
   const confColor =
     conf == null ? 'var(--color-text-muted)' :
-    conf >= 0.7 ? 'var(--color-success, #4ade80)' :
-    conf >= 0.5 ? 'var(--color-warning, #fbbf24)' :
+    conf >= 0.7 ? 'var(--color-success)' :
+    conf >= 0.5 ? 'var(--color-warning)' :
                   'var(--color-danger)';
   const decisionLabel = typeof decision.decision === 'string'
     ? decision.decision

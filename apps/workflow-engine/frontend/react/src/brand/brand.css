@@ -41,19 +41,11 @@
   /* ── Functional / status colors (optional) ───────────────────────────
    * Semantic run-state colors. Keep these legible on your `--paper`.
    * Per DESIGN.app.md §3 these are functional, not brand — only override
-   * if your surface needs it. */
+   * if your surface needs it. They also drive the pack-registry flags and
+   * agent-trace strips (token-mapped in global.css), so overriding them
+   * re-skins those surfaces too. */
   /* --color-success: oklch(62% 0.13 145); */
   /* --color-warning: oklch(72% 0.14 75);  */
   /* --color-danger:  oklch(55% 0.16 28);  */
   /* --color-ai:      oklch(60% 0.12 280);  */
-
-  /* ── Trace / flag accents (optional) ──────────────────────────────────
-   * Category accents for the pack registry + agent-trace surfaces. These
-   * default to their stock values in `global.css`; override to align them
-   * with your palette. */
-  /* --color-flag-ok:         #10b981; */
-  /* --color-flag-danger:     #ef4444; */
-  /* --color-trace-reasoning: #8b5cf6; */
-  /* --color-trace-error:     #ef4444; */
-  /* --color-trace-decision:  #f59e0b; */
 }

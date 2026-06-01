@@ -73,9 +73,9 @@ export function WorkflowRunBubble({ message, onOpenProgress, isFocusedInPanel }:
               fontSize: 10,
               padding: '1px 8px',
               borderRadius: 10,
-              background: 'var(--clay-wash, #f3e0d4)',
+              background: 'var(--clay-wash)',
               color: 'var(--clay)',
-              border: '1px solid var(--clay-rule, #d9b9a3)',
+              border: '1px solid var(--clay-rule)',
               whiteSpace: 'nowrap',
             }}>
               Awaiting your input
@@ -94,7 +94,7 @@ export function WorkflowRunBubble({ message, onOpenProgress, isFocusedInPanel }:
                   cursor: 'pointer',
                   padding: 0,
                   textDecoration: 'underline',
-                  textDecorationColor: 'var(--clay-rule, #d9b9a3)',
+                  textDecorationColor: 'var(--clay-rule)',
                 }}
                 aria-pressed={isFocusedInPanel}
                 title={isFocusedInPanel ? 'Already showing in the side panel' : 'Open the progress panel'}

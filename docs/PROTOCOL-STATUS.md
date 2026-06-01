@@ -35,8 +35,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 83 |
-| Active | 3 |
+| Accepted | 85 |
+| Active | 1 |
 | Draft | 2 |
 
 | RFC | Title | Status |
@@ -82,7 +82,7 @@
 | RFC 0039 | Multi-agent execution model Phase 2: confidence-threshold escalation + agent memory lifecycle across sub-runs and replay | Accepted |
 | RFC 0040 | Multi-agent execution model Phase 3: cross-host causation linking + W3C tracecontext propagation across composition boundaries + cross-host run-ID resolution | Accepted |
 | RFC 0041 | Multi-agent execution model Phase 4: LLM cache-key recipe normation + envelope-refusal recovery in replay context + determinism vs idempotency contract | Accepted |
-| RFC 0042 | Experimental capability tier - optional `tier` field on capability advertisements + sunset rule + derived `openwop-experimental` profile | Active |
+| RFC 0042 | Experimental capability tier - optional `tier` field on capability advertisements + sunset rule + derived `openwop-experimental` profile | Accepted |
 | RFC 0043 | Registry submission policy, extension namespace rules, profile/event/capability name reservation, and IPR posture | Draft |
 | RFC 0044 | `multiAgent.executionModel.confidenceEscalationInterruptKind` capability advertisement - supports canonical (`clarification` / `approval`) and vendor-extension (`x-host-<host>-<kind>`) interrupt-kind names without forcing cross-cutting rename on hosts with entrenched kinds | Accepted |
 | RFC 0045 | A manifest-first `connector` block that lets a pack declare itself a named integration exposing typed **actions** (reusing the existing trigger model), each bound to an RFC 0047 `auth` declaration + RFC 0046 `requiredCredentials`, with standardized idempotency / retry / rate-limit metadata - the n8n/Make "connector" abstraction, expressed the openwop way | Accepted |
@@ -107,7 +107,7 @@
 | RFC 0064 | A `host.toolHooks` capability - additive authorization + timing + content-free-argument fields on the existing `agent.toolCalled` / `agent.toolReturned` events (RFC 0002), fail-closed per-tool authorization via RFC 0049 scopes (reusing the `forbidden` error + the `authorization-fail-closed` invariant), and optional per-tool rate limiting (reusing `rate_limited`) - generalizing the MCP bridges into one auditable, least-privilege tool surface without inventing parallel events | Accepted |
 | RFC 0065 | Workflow node primary-output annotation | Accepted |
 | RFC 0066 | `x-openwop-form` vendor extension on pack `configSchema` for picker-grade UX hints | Accepted |
-| RFC 0067 | Provider-catalog conventions - a stable provider-name vocabulary and a per-provider BYOK auth-mode enum (`apiKey` / `oauth-pkce` / `oauth-device` / `none`) so clients can pre-flight how a host expects a provider's credential to be supplied | Active |
+| RFC 0067 | Provider-catalog conventions - a stable provider-name vocabulary and a per-provider BYOK auth-mode enum (`apiKey` / `oauth-pkce` / `oauth-device` / `none`) so clients can pre-flight how a host expects a provider's credential to be supplied | Accepted |
 | RFC 0068 | Background memory consolidation (merge/dedup/strengthen of long-term entries) + inferred standing commitments - two additive optional capabilities (`agents.memoryConsolidation` + `agents.commitments`) with their own content-free observability events (`agent.memory.consolidated` + `commitment.fired`), distinct from RFC 0062 token-budgeted distillation | Accepted |
 | RFC 0069 | A normative carve-out: arbitrary-command (`exec`-class) execution MUST NOT be a protocol-tier capability - it lives only in named host-extension scopes (`x-host-<vendor>-exec`) whose safety controls the host owns end-to-end. Codifies an existing exclusion; no host wire shape changes. | Accepted |
 | RFC 0070 | Agent Manifest Runtime Capability (`agents.manifestRuntime`) | Accepted |
@@ -169,7 +169,7 @@
 ## Active Follow-Ups
 
 - 2 RFCs still `Draft` (RFC 0038, RFC 0043) — advance with schema/conformance proof or defer.
-- 3 RFCs `Active` (RFC 0035, RFC 0042, RFC 0067) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 1 RFC `Active` (RFC 0035) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.

@@ -39,13 +39,24 @@ The marketing site has no `--color-success` etc.; the app needs them because it 
 --color-warning: oklch(72% 0.14 75);    /* warmer amber, neighbour of --star-glow */
 --color-danger:  oklch(55% 0.16 28);    /* muted brick red */
 --color-ai:      oklch(60% 0.12 280);   /* indigo for the AI node category and the "pipeline" template badge; distinct from clay (flow) and the success/warning/danger triad */
+--color-info:    oklch(58% 0.12 240);   /* azure — informational / dispatch accent (run-handoff "output.harvested", pack "vendor" flag, publish banner); distinct from --color-ai (280) */
 --scrim:         rgb(0 0 0 / 0.6);      /* modal backdrop; intentionally neutral on either theme */
+
+/* Node-category accents — five well-spread editorial hues on the same
+ * lightness/chroma band, so builder categories + run/handoff maps stay
+ * distinguishable while belonging to the system. flow reuses clay; ai reuses
+ * the functional indigo. Consumed only via entry.accent (CSS-value contexts). */
+--cat-flow:        var(--clay);            /* hue 40  — clay   */
+--cat-data:        oklch(62% 0.13 145);    /* hue 145 — forest */
+--cat-control:     oklch(72% 0.14 75);     /* hue 75  — amber  */
+--cat-ai:          var(--color-ai);        /* hue 280 — indigo */
+--cat-integration: oklch(62% 0.11 195);    /* hue 195 — teal   */
 ```
 
 Rules:
 
 1. **Use functional tokens only for run-state semantics.** A button doesn't get `--color-danger` for emphasis — it gets clay. `--color-danger` is reserved for `RunStatus = failed | cancelled`, error banners, and the destructive secondary state of confirm dialogs.
-2. **Status colors will lift in dark mode when it lands** (DESIGN.md §9.2 invariant 4): success → `oklch(72% 0.14 145)`, warning → `oklch(80% 0.14 75)`, danger → `oklch(65% 0.16 28)`, ai → `oklch(70% 0.12 280)`. Keep the chroma; lift the luminance. The lifted values are not in the stylesheet today because dark mode is deferred (`DESIGN.md §9`).
+2. **Status colors will lift in dark mode when it lands** (DESIGN.md §9.2 invariant 4): success → `oklch(72% 0.14 145)`, warning → `oklch(80% 0.14 75)`, danger → `oklch(65% 0.16 28)`, ai → `oklch(70% 0.12 280)`, info → `oklch(68% 0.12 240)`. Keep the chroma; lift the luminance. The lifted values are not in the stylesheet today because dark mode is deferred (`DESIGN.md §9`).
 3. **Never use a status color as a background fill at body weight.** Surface as an icon, a dot, a label, or a hairline. Backgrounds compete with `--paper`.
 
 ---

@@ -38,9 +38,9 @@ interface Props {
 }
 
 const TIER_COLOR: Record<string, string> = {
-  official: '#10b981',
-  vendor: '#0ea5e9',
-  community: '#8b5cf6',
+  official: 'var(--color-success)',
+  vendor: 'var(--color-info)',
+  community: 'var(--color-ai)',
   unknown: 'var(--ink-3)',
 };
 
