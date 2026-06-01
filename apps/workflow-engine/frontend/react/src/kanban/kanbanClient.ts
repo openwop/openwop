@@ -37,6 +37,12 @@ export interface KanbanCard {
   sourceLabel?: string;
   priority?: 'low' | 'normal' | 'high';
   dueAt?: string;
+  /** Who created the task (the source chip says HOW it arrived; this says WHO). */
+  createdBy?: string;
+  /** Why this task is assigned to the board's agent (the "why Sally?" answer). */
+  assignmentReason?: string;
+  /** Free-text note on what's blocking the task (lightweight; not a graph). */
+  blockerNote?: string;
   order: number;
   createdAt: string;
   updatedAt: string;
@@ -104,6 +110,9 @@ export async function createCard(
     sourceLabel?: string;
     priority?: 'low' | 'normal' | 'high';
     dueAt?: string;
+    createdBy?: string;
+    assignmentReason?: string;
+    blockerNote?: string;
   },
 ): Promise<KanbanCard> {
   const res = await fetch(
@@ -127,6 +136,9 @@ export async function patchCard(
     sourceLabel?: string;
     priority?: 'low' | 'normal' | 'high';
     dueAt?: string;
+    createdBy?: string;
+    assignmentReason?: string;
+    blockerNote?: string;
   },
 ): Promise<{ card: KanbanCard; triggeredRunId: string | null }> {
   const res = await fetch(
