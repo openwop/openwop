@@ -18,6 +18,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useBuilderStore } from '../store/builderStore.js';
 import { catalogEntry } from '../palette/catalogRegistry.js';
 import { type ConfigField } from '../palette/nodeCatalog.js';
+import { AlertIcon } from '../../ui/icons/index.js';
 import { PromptPickerInput } from '../../prompts/PromptPickerInput.js';
 import { CredentialPickerInput } from './CredentialPickerInput.js';
 import { ProviderPickerInput } from './ProviderPickerInput.js';
@@ -398,7 +399,7 @@ function StringListInput({
       />
       {overLimit ? (
         <div className="muted builder-inspector-help" role="status">
-          ⚠ Only the first {maxItems} entries are kept (host limit).
+          <AlertIcon size={12} /> Only the first {maxItems} entries are kept (host limit).
         </div>
       ) : null}
     </>

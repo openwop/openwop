@@ -53,7 +53,7 @@ export function isImageMime(mime: string): boolean {
  *  be rejected, or null when acceptable. */
 export function attachmentRejectionReason(file: File): string | null {
   // Some browsers leave `.md` files with an empty type; fall back by extension.
-  const mime = file.type || mimeFromName(file.name);
+  const mime = mimeOf(file);
   if (!ACCEPTED_ATTACHMENT_MIME.includes(mime)) {
     return `"${file.name}" is an unsupported type. Allowed: images, PDF, and .txt/.md/.json/.csv.`;
   }
@@ -61,6 +61,12 @@ export function attachmentRejectionReason(file: File): string | null {
     return `"${file.name}" is too large (max ${Math.floor(MAX_ATTACHMENT_BYTES / (1024 * 1024))} MiB).`;
   }
   return null;
+}
+
+/** A file's effective MIME type: the browser-reported `type`, falling back to
+ *  an extension lookup (some browsers leave `.md`/`.csv` with an empty type). */
+export function mimeOf(file: File): string {
+  return file.type || mimeFromName(file.name);
 }
 
 function mimeFromName(name: string): string {
@@ -85,7 +91,7 @@ function mimeFromName(name: string): string {
 export async function fileToContentPart(file: File): Promise<ContentPart> {
   const reason = attachmentRejectionReason(file);
   if (reason) throw new Error(reason);
-  const mimeType = file.type || mimeFromName(file.name);
+  const mimeType = mimeOf(file);
   const dataBase64 = await blobToBase64(file);
   const isImage = isImageMime(mimeType);
 

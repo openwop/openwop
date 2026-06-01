@@ -18,11 +18,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useAudioRecorder, blobToBase64, type RecordedAudio } from './hooks/useAudioRecorder.js';
 import { SlashAutocomplete } from './SlashAutocomplete.js';
 import { AgentMentionAutocomplete } from './AgentMentionAutocomplete.js';
-import { MicIcon, SendIcon, StopIcon, PaperclipIcon, XIcon } from '../ui/icons/index.js';
+import { MicIcon, SendIcon, StopIcon, PaperclipIcon, XIcon, AlertIcon } from '../ui/icons/index.js';
 import {
   fileToContentPart,
   attachmentRejectionReason,
   isImageMime,
+  mimeOf,
   ATTACHMENT_ACCEPT,
 } from '../client/mediaClient.js';
 import type { ContentPart } from './hooks/useChatSession.js';
@@ -109,7 +110,7 @@ export function ChatInput({
     for (const file of Array.from(files)) {
       const reason = attachmentRejectionReason(file);
       if (reason) { firstReason ??= reason; continue; }
-      const isImage = isImageMime(file.type || '');
+      const isImage = isImageMime(mimeOf(file));
       accepted.push({
         id: crypto.randomUUID(),
         file,
@@ -291,7 +292,11 @@ export function ChatInput({
                 <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {pf.file.name}
                 </span>
-                {cantSend && <span style={{ color: 'var(--color-warning)' }} title="Unsupported by the current model">⚠</span>}
+                {cantSend && (
+                  <span style={{ color: 'var(--color-warning)', display: 'inline-flex' }} title="Unsupported by the current model">
+                    <AlertIcon size={12} />
+                  </span>
+                )}
                 <button
                   type="button"
                   onClick={() => removeFile(pf.id)}
