@@ -105,6 +105,7 @@
           <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
           <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
           <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/install/" role="menuitem">Install the demo app</a>
           <a href="/implement/" role="menuitem">All implementer landings →</a>
         </div>
       </div>
@@ -149,6 +150,7 @@
     <li><a href="/for/host-implementers/">Host implementers</a></li>
     <li><a href="/for/pack-authors/">Pack authors</a></li>
     <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/install/">Install the demo app</a></li>
     <li><a href="/implement/">All implementer landings →</a></li>
   </ul>
 
@@ -188,10 +190,10 @@
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0050</td></tr>
 <tr><td><strong>Title</strong></td><td>Two new entries in the auth-profile family — a SAML assertion-validation profile and a SCIM provisioning profile (LDAP as an optional directory-bind variant) — that sync external IdP users/groups onto RFC 0048 principals + RFC 0049 roles, with <code>alg:none</code> rejection mirroring the OIDC work</td></tr>
-<tr><td><strong>Status</strong></td><td><code>Draft</code></td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
 <tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
 <tr><td><strong>Created</strong></td><td>2026-05-24</td></tr>
-<tr><td><strong>Updated</strong></td><td>2026-05-24</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-06-01 (<code>Active → Accepted</code>) — graduated on the <strong>non-steward host</strong> MyndHyve, whose <strong>real XML-DSig SAML ACS + SCIM provisioning</strong> the steward <strong>independently drove over the live wire</strong> (rev <code>workflow-runtime-00453-hot @ 100%</code>, <code>https://api.myndhyve.ai</code>; steward-verified 2026-06-01). MyndHyve advertises <code>auth.profiles: [&quot;openwop-auth-saml&quot;,&quot;openwop-auth-scim&quot;]</code> at the discovery doc root, self-hosts the bundled <code>createSyntheticSamlIdp()</code> behind the <code>GET {idpUrl}?variant=&amp;lt;v&amp;gt;</code> → <code>{certificatePem, assertion}</code> contract (assertions steward-defined, host serves transport only; SUT = its separate <code>samlAcs.ts</code>), and passes the gated <code>auth-saml-profile</code> + <code>auth-scim-profile</code> legs <strong>non-vacuously</strong> under <code>OPENWOP_REQUIRE_BEHAVIOR=true</code> vs <code>@openwop/openwop-conformance@1.18.1</code> (<strong>19/19, no soft-skips</strong> — the count rose 13→19 once the IdP URL engaged the behavioral legs). The steward then <strong>drove the live <code>auth/saml/validate</code> seam directly for all 7 §A variants</strong>: <code>valid</code> → <code>200 {authenticated:true}</code>; <code>alg-none</code>/<code>unsigned</code>/<code>bad-signature</code>/<code>expired</code>/<code>not-yet-valid</code>/<strong><code>signature-wrapping</code></strong> → <code>401 {reason}</code> each (the XSW defense — <code>&amp;lt;ds:Reference URI&amp;gt;</code> ≠ consumed assertion — fires live), plus the SCIM seam (<code>create-user</code> → resolvable principal; <code>deactivate-user</code> → <code>resolvable:false</code>, fail-closed). The steward prerequisite was conformance 1.18.1 (#467 <code>8886c713</code>), which expanded the gated SAML behavioral leg from a single <code>alg-none</code> negative to the full 7-variant set over the seam. No regression: <code>openwop-core-standard</code> + <code>openwop-agent-platform</code> still hold on the same host. · 2026-06-01 (<code>Draft → Active</code> — the full wire surface already landed on <code>main</code> (the <code>auth-profiles.md</code> SAML/SCIM/LDAP profile prose; the reserved <code>openwop-auth-{saml,scim,ldap}</code> profile ids in <code>capabilities.schema.json</code>; the two conformance scenarios <code>auth-saml-profile.test.ts</code> + <code>auth-scim-profile.test.ts</code>; the two host-sample seams <code>POST /v1/host/sample/auth/saml/validate</code> + <code>.../scim/provision</code>); this promotion reflects that completion. Comment window waived per <code>GOVERNANCE.md</code> single-maintainer lazy consensus. <strong>The load-bearing SAML attack-surface guarantee is proven server-free + non-vacuously today:</strong> the bundled synthetic SAML IdP (<code>conformance/src/lib/saml-idp.ts</code>, <code>node:crypto</code> RSA-SHA256, no deps) runs the 1-positive + 6-negative reference suite — accepts a valid signed, in-window, non-wrapped assertion, and rejects <code>alg:none</code>, unsigned, bad-signature, expired (<code>NotOnOrAfter</code>), not-yet-valid (<code>NotBefore</code>), and <strong>signature-wrapping</strong> (8/8 passing on <code>main</code>), pinning the footguns RFC 0010 established the pattern for. Maps onto RFC 0048 <code>principal</code> + RFC 0049 roles; extends RFC 0010. <code>Active → Accepted</code> is gated on a host wiring its SAML ACS / SCIM endpoint to the seams (the synthetic-IdP suite proves the validation contract; a live enterprise-SSO host — MyndHyve flagged SAML/SCIM as an enterprise need — closes the cross-host adoption gate). The advertisement-shape + live-ACS/SCIM scenario legs gate on <code>auth.profiles</code> including <code>openwop-auth-{saml,scim}</code> + the operator-supplied IdP/SCIM env and soft-skip until a host advertises them.) — 2026-05-24</td></tr>
 <tr><td><strong>Affects</strong></td><td><code>spec/v1/auth-profiles.md</code> (new <code>openwop-auth-saml</code> + <code>openwop-auth-scim</code> profiles; optional <code>openwop-auth-ldap</code>) · <code>schemas/capabilities.schema.json</code> (conditional <code>auth.profiles += [&#39;saml&#39;,&#39;scim&#39;]</code>) · RFC 0010 (extends the auth-profile-conformance family) · new conformance scenarios</td></tr>
 <tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
 <tr><td><strong>Supersedes</strong></td><td>—</td></tr>
@@ -322,6 +324,7 @@
           <li><a href="/for/host-implementers/">Host implementers</a></li>
           <li><a href="/for/pack-authors/">Pack authors</a></li>
           <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+          <li><a href="/install/">Install the demo app</a></li>
         </ul>
       </div>
     </div>

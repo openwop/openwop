@@ -105,6 +105,7 @@
           <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
           <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
           <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/install/" role="menuitem">Install the demo app</a>
           <a href="/implement/" role="menuitem">All implementer landings →</a>
         </div>
       </div>
@@ -149,6 +150,7 @@
     <li><a href="/for/host-implementers/">Host implementers</a></li>
     <li><a href="/for/pack-authors/">Pack authors</a></li>
     <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/install/">Install the demo app</a></li>
     <li><a href="/implement/">All implementer landings →</a></li>
   </ul>
 
@@ -188,10 +190,10 @@
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0073</td></tr>
 <tr><td><strong>Title</strong></td><td>Capability families are document-root properties of <code>/.well-known/openwop</code></td></tr>
-<tr><td><strong>Status</strong></td><td><code>Draft</code></td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
 <tr><td><strong>Author(s)</strong></td><td>David Tufts (@dtufts, steward)</td></tr>
 <tr><td><strong>Created</strong></td><td>2026-05-27</td></tr>
-<tr><td><strong>Updated</strong></td><td>2026-05-27</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-31 (Draft → Accepted: the root layout is the normative MUST since Phase 1, all four+ reference hosts serve root since Phase 3, and Phase 4 now makes the conformance suite <strong>enforce</strong> root by dropping the accessor's wrapper-fallback — a wrapper-only host grades as non-conformant. Both Unresolved Questions resolved: the host-side mirror affordance and the schema's <code>additionalProperties</code> tolerance retire <strong>together at v2.0</strong>, when <code>capabilities.schema.json</code> tightens to forbid the wrapper. They are paired because both serve laggard <em>clients</em> reading discovery during the v1.x window; removing the mirror while the schema stays permissive would be incoherent.)</td></tr>
 <tr><td><strong>Affects</strong></td><td><code>spec/v1/capabilities.md</code>, <code>conformance/src/lib/<em></code>, <code>conformance/src/scenarios/</em></code>, <code>apps/workflow-engine/.../routes/discovery.ts</code>, <code>INTEROP-MATRIX.md</code></td></tr>
 <tr><td><strong>Compatibility</strong></td><td><code>safety-fix</code> (corrective; brings implementations + suite to the schema's existing shape — no normative wire-shape change) per <code>COMPATIBILITY.md</code></td></tr>
 <tr><td><strong>Supersedes</strong></td><td>—</td></tr>
@@ -273,7 +275,8 @@ export async function readCapabilityFamily&amp;lt;T&amp;gt;(name: string): Promi
 <h2 id="alternatives-considered">Alternatives considered</h2>
 <p>1. <strong>Add a <code>capabilities</code> wrapper to the schema (canonicalize on nested).</strong>    Rejected: it is a breaking wire-shape change to a shipped, adopted contract —    it would invalidate MyndHyve's just-verified production advertisement and the    profile machinery, and it contradicts <code>capabilities.md</code>'s documented response. 2. **Flip only the divergent helpers to read <code>capabilities.*</code> (no spec change).<strong>    Rejected: it entrenches a shape the schema never defined, deepens the    contradiction with the profile machinery, and still mis-grades schema-faithful    third-party hosts. It is the "hack" path — a workaround, not a fix. 3. </strong>Tell adopters to mirror under <code>capabilities</code> on their side.<strong> Rejected:    pushes a non-canonical shape onto the only real adopter and makes "easy to    implement" worse (the wrapper is invisible in the schema, discoverable only by    reading reference-host source). 4. </strong>Do nothing.** Rejected: every schema-faithful third-party host is mis-graded    indefinitely — a standing adoption tax that already fired once.</p>
 <h2 id="unresolved-questions">Unresolved questions</h2>
-<p>1. Window length for removing the wrapper-fallback from the accessor + the    reference-host mirror (Phase 4). Proposed: one minor release after all four    reference hosts (<code>in-memory</code>/<code>apps</code>, <code>sqlite</code>, <code>postgres</code>, <code>python</code>) emit at    the root. Maintainer to set the concrete release. 2. Whether to additionally tighten <code>capabilities.schema.json</code> to <em>forbid</em> a    top-level <code>capabilities</code> property (set <code>additionalProperties</code>-level rule)    once the window closes, or leave <code>additionalProperties: true</code> with the prose    <code>SHOULD NOT</code>. Deferred to Phase 4.</p>
+<p>Both resolved at <code>Draft → Accepted</code> (2026-05-31):</p>
+<p>1. <strong>Window length / what moves when.</strong> <em>Resolved:</em> the change splits across two    release boundaries by what each piece tests. The <strong>conformance suite</strong>'s    wrapper-fallback is dropped <strong>now</strong> (v1.x) — the suite grades the <em>normative</em>    shape (root MUST), so enforcing root-only is correct in v1.x and a wrapper-only    host is non-conformant. The <strong>host-side mirror</strong> is a backward-compat affordance    for laggard <em>clients</em> reading discovery, so it stays for the v1.x window and is    removed at <strong>v2.0</strong>, paired with Q2. 2. <strong>Schema forbid vs <code>SHOULD NOT</code>.</strong> <em>Resolved:</em> leave <code>additionalProperties: true</code>    with the prose <code>SHOULD NOT</code> for v1.x (forbidding the wrapper in-schema now is a    breaking change under <code>COMPATIBILITY.md</code> §2.2 for any host still emitting the    deprecated mirror). Tighten <code>capabilities.schema.json</code> to <strong>forbid</strong> the    top-level <code>capabilities</code> property at <strong>v2.0</strong>, together with the host-mirror    removal (Q1) — the permissive schema and the mirror are the same affordance and    retire as one.</p>
 <h2 id="implementation-notes-non-normative">Implementation notes (non-normative)</h2>
 <ul>
 <li><strong>#276</strong> landed Phase 1 (prose) + Phase 2 (accessor + agent-cohort helper</li>
@@ -288,9 +291,13 @@ export async function readCapabilityFamily&amp;lt;T&amp;gt;(name: string): Promi
 </ul>
 <p>  <code>examples/hosts/{in-memory,sqlite,postgres,python}</code>) emit families at the document   root (canonical) via <code>{ ...advertisement, ...advertisement.capabilities }</code> (TS) /   <code>{<strong>payload, </strong>payload[&quot;capabilities&quot;]}</code> (Python), retaining the nested   <code>capabilities</code> object as a DEPRECATED v1.x-window mirror — non-breaking for   existing consumers + the hosts' own (nested-reading) tests. This closes the latent   honesty gap where the hosts' root-read profile claims (<code>openwop-secrets</code>,   <code>openwop-provider-policy</code>) were unverifiable against their previously nested-only   shape.</p>
 <ul>
-<li><strong>Phase 4 (remaining):</strong> one minor release after all hosts are confirmed</li>
+<li><strong>Phase 4 (v1.x — this release, #DONE):</strong> drop the accessor's wrapper-fallback</li>
 </ul>
-<p>  root-serving, drop the accessor's wrapper fallback + the host mirrors, and decide   whether to tighten <code>capabilities.schema.json</code> to forbid the wrapper (Unresolved Q2).</p>
+<p>  in <code>conformance/src/lib/discovery-capabilities.ts</code> so the suite reads the document   root only and enforces the Phase-1 MUST (a wrapper-only host grades as   non-conformant). Tighten the <code>capabilities.md</code> prose to separate the suite   (root-only) from clients (MAY fall back during the window).</p>
+<ul>
+<li><strong>Phase 5 (v2.0 — deferred, tracked):</strong> remove the deprecated host-side</li>
+</ul>
+<p>  <code>capabilities</code> mirror from the reference hosts AND tighten   <code>capabilities.schema.json</code> to forbid the top-level <code>capabilities</code> property. These   move together: both are v1.x backward-compat affordances for clients still reading   the wrapper, so retiring one without the other is incoherent. Gated on the v2.0   major (the schema forbid is a breaking change under <code>COMPATIBILITY.md</code> §2.2).</p>
 <ul>
 <li><strong>Separate gap (not this RFC):</strong> <code>replay</code>, <code>interrupts</code>, <code>stream</code>, <code>runs</code>,</li>
 </ul>
@@ -302,8 +309,9 @@ export async function readCapabilityFamily&amp;lt;T&amp;gt;(name: string): Promi
 <li>[x] Conformance suite reads root-first via one shared accessor; wrapper readers migrated.</li>
 <li>[x] CHANGELOG entry under <code>[Unreleased]</code>.</li>
 <li>[x] All four reference hosts emit families at the document root (+ deprecated mirror).</li>
-<li>[x] All 78 capability-gated scenarios read via the root-first accessor, so RFC 0070's <code>agent-manifest-runtime</code> scenario (and the rest) grade a root-serving host instead of soft-skipping.</li>
-<li>[ ] Phase 4: drop the wrapper fallback + host mirrors (one minor release after all hosts confirmed root-serving).</li>
+<li>[x] All 78 capability-gated scenarios read via the root-only accessor, so RFC 0070's <code>agent-manifest-runtime</code> scenario (and the rest) grade a root-serving host instead of soft-skipping.</li>
+<li>[x] Phase 4 (v1.x): accessor wrapper-fallback dropped — the suite reads the document root only and grades a wrapper-only host as non-conformant; prose separates suite (root-only) from clients (MAY fall back during the window).</li>
+<li>[ ] Phase 5 (v2.0, deferred): remove the host-side mirror + tighten <code>capabilities.schema.json</code> to forbid the wrapper (paired; breaking, gated on the v2.0 major).</li>
 </ul>
 <h2 id="references">References</h2>
 <ul>
@@ -378,6 +386,7 @@ export async function readCapabilityFamily&amp;lt;T&amp;gt;(name: string): Promi
           <li><a href="/for/host-implementers/">Host implementers</a></li>
           <li><a href="/for/pack-authors/">Pack authors</a></li>
           <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+          <li><a href="/install/">Install the demo app</a></li>
         </ul>
       </div>
     </div>

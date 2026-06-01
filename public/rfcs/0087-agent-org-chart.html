@@ -105,6 +105,7 @@
           <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
           <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
           <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/install/" role="menuitem">Install the demo app</a>
           <a href="/implement/" role="menuitem">All implementer landings →</a>
         </div>
       </div>
@@ -149,6 +150,7 @@
     <li><a href="/for/host-implementers/">Host implementers</a></li>
     <li><a href="/for/pack-authors/">Pack authors</a></li>
     <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/install/">Install the demo app</a></li>
     <li><a href="/implement/">All implementer landings →</a></li>
   </ul>
 
@@ -190,10 +192,10 @@
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0087</td></tr>
 <tr><td><strong>Title</strong></td><td>Define an <strong>agent org-chart</strong> — a tenant-scoped, descriptive grouping of standing roster agents (RFC 0086) into departments + roles with <code>reportsTo</code> edges and a responsibility view — under one load-bearing invariant: <strong>org position confers NO authority</strong> (a <code>reportsTo</code>/manager edge MUST NOT widen <code>toolAllowlist</code>, grant an RBAC scope, or bypass an approval gate); composing RFC 0086 (the members), RFC 0074 (tenant scoping), RFC 0049 (RBAC — unchanged by position), and RFC 0051 (approval gates — unchanged by position)</td></tr>
-<tr><td><strong>Status</strong></td><td><code>Active</code></td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
 <tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
 <tr><td><strong>Created</strong></td><td>2026-05-30</td></tr>
-<tr><td><strong>Updated</strong></td><td>2026-05-30 (Draft → Active — wire surface landed: NEW <code>agent-org-chart.schema.json</code> (departments/roles/members over RFC 0086 <code>rosterId</code>s + acyclic <code>reportsTo</code>; NO authority field, every object <code>additionalProperties:false</code>) + additive <code>agents.orgChart</code> capability (REQUIRES <code>agents.roster</code>; <code>departmentNesting</code>/<code>responsibilityView</code>) + NEW normative <code>spec/v1/agent-org-chart.md</code> (§A record / §B the load-bearing non-authority invariant / §C tenant scoping / §D responsibility roll-up / §E capability) + always-on <code>agent-org-chart-shape.test.ts</code> (incl. the structural §B assertions: the schema rejects a <code>scopes</code>/<code>canDispatch</code>/<code>permissions</code>/<code>authority</code> field; a member's key set is descriptive-only) + NEW protocol-tier SECURITY invariant <code>org-position-no-authority-escalation</code>. NO new RunEventType (the org-chart is structure + a read, not an event surface — §Alt-5). The reference impl shipped as a host-extension at <code>/v1/host/sample/org-chart</code> (apps/workflow-engine, #371). The <code>GET /v1/agents/org-chart</code> endpoint, SDK helpers, behavioral non-authority + scoping scenario, and reference-host normative wiring defer to <code>Active → Accepted</code> per the RFC 0086/0077/0082 precedent.)</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-31 (<code>Active → Accepted</code> — graduated on a non-steward host. MyndHyve advertised <code>agents.orgChart = {supported:true, installScope:&quot;tenant&quot;, departmentNesting:true, responsibilityView:true}</code> live at the discovery doc root (<code>installScope</code> matching its <code>agents.roster</code>), served the normative <code>GET /v1/agents/org-chart</code> + <code>/{departmentId}</code> paths (auth-gated, not the <code>/v1/host/sample/*</code> extension), and passed both gated behavioral scenarios non-vacuously under <code>OPENWOP_REQUIRE_BEHAVIOR=true</code> vs published conformance 1.12.0 — <code>org-position-no-authority-escalation</code> (the §B projector strips every authority field off the live wire) + <code>agent-org-chart-scoping</code> (acyclic tree, cross-tenant 404, §D roll-up dedup). Steward independently curl-verified the live host at rev <code>workflow-runtime-00426-lur</code> (api.myndhyve.ai). Mirror of the RFC 0086/0077 graduation (#396).) &lt;br&gt; 2026-05-30 (Draft → Active — wire surface landed: NEW <code>agent-org-chart.schema.json</code> (departments/roles/members over RFC 0086 <code>rosterId</code>s + acyclic <code>reportsTo</code>; NO authority field, every object <code>additionalProperties:false</code>) + additive <code>agents.orgChart</code> capability (REQUIRES <code>agents.roster</code>; <code>departmentNesting</code>/<code>responsibilityView</code>) + NEW normative <code>spec/v1/agent-org-chart.md</code> (§A record / §B the load-bearing non-authority invariant / §C tenant scoping / §D responsibility roll-up / §E capability) + always-on <code>agent-org-chart-shape.test.ts</code> (incl. the structural §B assertions: the schema rejects a <code>scopes</code>/<code>canDispatch</code>/<code>permissions</code>/<code>authority</code> field; a member's key set is descriptive-only) + NEW protocol-tier SECURITY invariant <code>org-position-no-authority-escalation</code>. NO new RunEventType (the org-chart is structure + a read, not an event surface — §Alt-5). The reference impl shipped as a host-extension at <code>/v1/host/sample/org-chart</code> (apps/workflow-engine, #371). The <code>GET /v1/agents/org-chart</code> endpoint, SDK helpers, behavioral non-authority + scoping scenario, and reference-host normative wiring defer to <code>Active → Accepted</code> per the RFC 0086/0077/0082 precedent.)</td></tr>
 <tr><td><strong>Affects</strong></td><td>NEW <code>schemas/agent-org-chart.schema.json</code> (the department/role/edge record) · <code>schemas/capabilities.schema.json</code> (additive optional <code>agents.orgChart</code> block) · <code>spec/v1/agent-org-chart.md</code> (NEW normative doc) · <code>api/openapi.yaml</code> (additive <code>GET /v1/agents/org-chart</code> + <code>GET /v1/agents/org-chart/{departmentId}</code>) · <code>SECURITY/invariants.yaml</code> (NEW protocol-tier <code>org-position-no-authority-escalation</code>) · <code>CHANGELOG.md</code> · <code>INTEROP-MATRIX.md</code> · new conformance scenarios</td></tr>
 <tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
 <tr><td><strong>Supersedes</strong></td><td>—</td></tr>
@@ -370,6 +372,7 @@ GET /v1/agents/org-chart/{departmentId}         → one department&#39;s subtree
           <li><a href="/for/host-implementers/">Host implementers</a></li>
           <li><a href="/for/pack-authors/">Pack authors</a></li>
           <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+          <li><a href="/install/">Install the demo app</a></li>
         </ul>
       </div>
     </div>

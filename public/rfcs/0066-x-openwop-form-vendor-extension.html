@@ -105,6 +105,7 @@
           <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
           <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
           <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/install/" role="menuitem">Install the demo app</a>
           <a href="/implement/" role="menuitem">All implementer landings →</a>
         </div>
       </div>
@@ -149,6 +150,7 @@
     <li><a href="/for/host-implementers/">Host implementers</a></li>
     <li><a href="/for/pack-authors/">Pack authors</a></li>
     <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/install/">Install the demo app</a></li>
     <li><a href="/implement/">All implementer landings →</a></li>
   </ul>
 
@@ -190,10 +192,10 @@
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0066</td></tr>
 <tr><td><strong>Title</strong></td><td><code>x-openwop-form</code> vendor extension on pack <code>configSchema</code> for picker-grade UX hints</td></tr>
-<tr><td><strong>Status</strong></td><td><code>Active</code></td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
 <tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
 <tr><td><strong>Created</strong></td><td>2026-05-25</td></tr>
-<tr><td><strong>Updated</strong></td><td>2026-05-29 (<code>Draft → Active</code>: the normative surface landed — <code>spec/v1/node-packs.md</code> §"<code>x-openwop-form</code> UX hints" (the §A <code>kind</code> vocabulary <code>prompt</code>/<code>provider</code>/<code>model</code>/<code>credential-picker</code> + the <code>MUST</code> unknown-<code>kind</code> fallback + the <code>MUST</code> <code>dependsOn</code> sibling-resolution/graceful-fallback) + the new server-free conformance scenario <code>x-openwop-form-pack-manifest.test.ts</code> (6 assertions: an annotated <code>configSchema</code> stays a valid 2020-12 schema and the advisory hints don't change what it accepts; each §A annotation matches the shape; forward-compat — an unknown <code>kind</code> validates; 3 negatives — missing <code>kind</code> / non-string <code>kind</code> / non-string <code>dependsOn</code>). No schema change (the annotation rides author-controlled <code>configSchema</code> <code>x-*</code> extensibility). Comment window waived (steward acceptance, additive per <code>COMPATIBILITY.md §2.1</code>). <code>Active → Accepted</code> awaits the Phase-2 reference-frontend <code>configFieldsFromSchema</code> honoring the extension + a first adopter pack publishing a <code>configSchema</code> that uses it — the path-to-Accepted evidence per <code>RFCS/0001</code>.)</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-06-01 (<code>Active → Accepted</code>) — graduated on the <strong>non-steward host</strong> MyndHyve's <strong>genuine frontend consumption</strong> of the extension (deployed to Firebase Hosting <code>myndhyve-prod.web.app</code>, commit <code>33b498747</code>; reported via the <code>billy</code> crosstalk bus 2026-06-01). MyndHyve's <code>SchemaFormRenderer</code> now reads <code>x-openwop-form</code>: the <code>field</code> <code>kind</code> picks an explicit widget overriding the heuristics (<code>prompt</code> → multiline; <code>provider</code>/<code>model</code>/<code>credential-picker</code> → enum Select or a single-line input tagged <code>data-openwop-form=&amp;lt;kind&amp;gt;</code> for a richer picker), and <code>dependsOn</code> makes a field conditionally visible on a sibling's value — exactly the Phase-2 <code>configFieldsFromSchema</code> consumption the path-to-Accepted called for (3 render tests + the always-on server-free <code>x-openwop-form-pack-manifest</code> scenario green on <code>main</code>). <strong>Verification basis (honest):</strong> <code>x-openwop-form</code> is an advisory authoring-time UX hint with <strong>no discovery advertisement or wire surface</strong> by design, so the graduation rests on the adoption-judgment model — the verifiable server-free conformance floor (green on <code>main</code>) + a credible non-steward genuine-consumption report — not a steward curl of a discovery field (there is none to curl). David greenlit building real app-side adoption, not advertise-only. · 2026-05-29 (<code>Draft → Active</code>: the normative surface landed — <code>spec/v1/node-packs.md</code> §"<code>x-openwop-form</code> UX hints" (the §A <code>kind</code> vocabulary <code>prompt</code>/<code>provider</code>/<code>model</code>/<code>credential-picker</code> + the <code>MUST</code> unknown-<code>kind</code> fallback + the <code>MUST</code> <code>dependsOn</code> sibling-resolution/graceful-fallback) + the new server-free conformance scenario <code>x-openwop-form-pack-manifest.test.ts</code> (6 assertions: an annotated <code>configSchema</code> stays a valid 2020-12 schema and the advisory hints don't change what it accepts; each §A annotation matches the shape; forward-compat — an unknown <code>kind</code> validates; 3 negatives — missing <code>kind</code> / non-string <code>kind</code> / non-string <code>dependsOn</code>). No schema change (the annotation rides author-controlled <code>configSchema</code> <code>x-*</code> extensibility). Comment window waived (steward acceptance, additive per <code>COMPATIBILITY.md §2.1</code>). <code>Active → Accepted</code> awaits the Phase-2 reference-frontend <code>configFieldsFromSchema</code> honoring the extension + a first adopter pack publishing a <code>configSchema</code> that uses it — the path-to-Accepted evidence per <code>RFCS/0001</code>.)</td></tr>
 <tr><td><strong>Affects</strong></td><td><code>spec/v1/node-packs.md</code> (new §"<code>x-openwop-form</code> UX hints"), <code>schemas/node-pack-manifest.schema.json</code> (no change — <code>additionalProperties</code> on inline configSchema already permits <code>x-*</code>), <code>RFCS/0043</code> (extends the vendor-extension policy to in-schema annotations), reference-app frontend <code>configFieldsFromSchema.ts</code> (Phase 2 — picks up the extension when present, falls through to pure-schema rendering when absent)</td></tr>
 <tr><td><strong>Compatibility</strong></td><td><code>additive</code> per <code>COMPATIBILITY.md §2.1</code></td></tr>
 <tr><td><strong>Supersedes</strong></td><td>—</td></tr>
@@ -406,6 +408,7 @@
           <li><a href="/for/host-implementers/">Host implementers</a></li>
           <li><a href="/for/pack-authors/">Pack authors</a></li>
           <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+          <li><a href="/install/">Install the demo app</a></li>
         </ul>
       </div>
     </div>

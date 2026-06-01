@@ -105,6 +105,7 @@
           <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
           <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
           <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/install/" role="menuitem">Install the demo app</a>
           <a href="/implement/" role="menuitem">All implementer landings →</a>
         </div>
       </div>
@@ -149,6 +150,7 @@
     <li><a href="/for/host-implementers/">Host implementers</a></li>
     <li><a href="/for/pack-authors/">Pack authors</a></li>
     <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/install/">Install the demo app</a></li>
     <li><a href="/implement/">All implementer landings →</a></li>
   </ul>
 
@@ -191,10 +193,10 @@
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0077</td></tr>
 <tr><td><strong>Title</strong></td><td>A normative <code>AgentManifest</code> → live-run mapping + an optional <code>capabilities.agents.liveRuntime</code> flag + an <code>agent.invocation.started</code> / <code>agent.invocation.completed</code> event bracket, so a manifest agent executes against live models/tools with one portable, observable event family across all three entry points (workflow node, run API, chat mention)</td></tr>
-<tr><td><strong>Status</strong></td><td><code>Active</code></td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
 <tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
 <tr><td><strong>Created</strong></td><td>2026-05-29</td></tr>
-<tr><td><strong>Updated</strong></td><td>2026-05-29 — promoted <code>Draft → Active</code>. All five Unresolved questions resolved via MyndHyve T4 co-design (architect-validated against the RFC 0002 id model + <code>replay.md</code>); the wire surface landed atomically: <code>capabilities.agents.liveRuntime</code> (<code>capabilities.schema.json</code>), the <code>agentInvocationStarted</code>/<code>agentInvocationCompleted</code> payloads + <code>_typeIndex</code> (<code>run-event-payloads.schema.json</code>), the RunEventType enum +2 (<code>run-event.schema.json</code>), the normative §"Live manifest dispatch" prose (<code>multi-agent-execution.md</code>), and the always-on server-free <code>agent-live-runtime-shape.test.ts</code> conformance scenario. Comment window waived per <code>GOVERNANCE.md</code> lazy consensus. No new SECURITY invariant (§F reuses the existing floor guarantees). Behavioral conformance + reference-host advertisement deferred per §Conformance; <code>Active → Accepted</code> gated on a non-steward host (MyndHyve) advertising <code>liveRuntime</code> + emitting the invocation pair.</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-05-31 (<code>Active → Accepted</code> — graduated on a non-steward host. <strong>MyndHyve <code>workflow-runtime</code> (rev <code>workflow-runtime-00424-kam</code>, live on <code>https://api.myndhyve.ai</code>) advertises <code>agents.liveRuntime</code> field-for-field</strong> — <code>{supported:true, structuredOutput:true, confidenceEscalation:true, sources:[&quot;workflow-node&quot;,&quot;run-api&quot;,&quot;chat-mention&quot;]}</code> (steward-curl-verified) — and emits the <code>agent.invocation.started</code>/<code>completed</code> bracket via the production emitter (<code>host/agentInvocation.ts</code>). The three gated behavioral scenarios — <strong><code>agent-live-invocation-bracket</code> / <code>agent-live-structured-output</code> / <code>agent-live-allowlist-enforced</code></strong>, authored steward-side in <code>@openwop/openwop-conformance@1.11.0</code> (the deferred §Conformance deliverable; PR #392/#394) — <strong>pass non-vacuously under <code>OPENWOP_REQUIRE_BEHAVIOR=true</code></strong>: the §E bracket (started-first/completed-last, matching <code>invocationId</code>, content-free); the §B-step-6 structured-output failure (<code>returnSchemaRef</code>+invalid result ⇒ <code>outcome:&quot;failed&quot;</code>, <code>schemaValidated≠true</code>); the §F-1 allowlist floor (a tool outside <code>toolAllowlist</code> is not callable). Per the §Conformance <code>Active → Accepted</code> gate (a non-steward host advertising <code>liveRuntime</code> + emitting the invocation pair), the criterion is met. Coordinated via the <code>billy</code> crosstalk bus. <strong>Strengthening follow-up (non-gating):</strong> the gated bracket emits through the production emitter via the conformance sample seam; full production-path wiring into the <code>runExecutor</code> dispatch turn (so a live agent turn is a single bracketed unit rather than separately-emitted <code>promptResolved</code>/<code>toolCalled</code>/<code>decided</code>) is a tracked MyndHyve follow-up — it does not affect the gated behavioral guarantee.) · 2026-05-29 — promoted <code>Draft → Active</code>. All five Unresolved questions resolved via MyndHyve T4 co-design (architect-validated against the RFC 0002 id model + <code>replay.md</code>); the wire surface landed atomically: <code>capabilities.agents.liveRuntime</code> (<code>capabilities.schema.json</code>), the <code>agentInvocationStarted</code>/<code>agentInvocationCompleted</code> payloads + <code>_typeIndex</code> (<code>run-event-payloads.schema.json</code>), the RunEventType enum +2 (<code>run-event.schema.json</code>), the normative §"Live manifest dispatch" prose (<code>multi-agent-execution.md</code>), and the always-on server-free <code>agent-live-runtime-shape.test.ts</code> conformance scenario. Comment window waived per <code>GOVERNANCE.md</code> lazy consensus. No new SECURITY invariant (§F reuses the existing floor guarantees). Behavioral conformance + reference-host advertisement deferred per §Conformance; <code>Active → Accepted</code> gated on a non-steward host (MyndHyve) advertising <code>liveRuntime</code> + emitting the invocation pair.</td></tr>
 <tr><td><strong>Affects</strong></td><td><code>schemas/capabilities.schema.json</code> (additive optional <code>agents.liveRuntime</code> sub-block) · <code>schemas/run-event-payloads.schema.json</code> (additive <code>agentInvocationStarted</code> + <code>agentInvocationCompleted</code> payloads + <code>_typeIndex</code> entries) · <code>schemas/run-event.schema.json</code> (RunEventType enum +2) · <code>spec/v1/multi-agent-execution.md</code> (new §"Live manifest dispatch") · <code>spec/v1/rest-endpoints.md</code> (<code>WorkflowNode.agent</code> + <code>POST /v1/runs</code> composition note) · <code>CHANGELOG.md</code> · <code>INTEROP-MATRIX.md</code> · new conformance scenarios</td></tr>
 <tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
 <tr><td><strong>Supersedes</strong></td><td>—</td></tr>
@@ -411,6 +413,7 @@ agent.invocation.completed</code></pre>
           <li><a href="/for/host-implementers/">Host implementers</a></li>
           <li><a href="/for/pack-authors/">Pack authors</a></li>
           <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+          <li><a href="/install/">Install the demo app</a></li>
         </ul>
       </div>
     </div>

@@ -53,6 +53,8 @@ tags:
     description: Run lifecycle — create, read, stream, cancel, fork.
   - name: agents
     description: Manifest-agent inventory (RFC 0072 §A). Read-only; gated on capabilities.agents.manifestRuntime. Dispatch rides the run surface (WorkflowNode.agent + POST /v1/runs).
+  - name: tools
+    description: Portable tool catalog (RFC 0078 §B). Read-only ToolDescriptor projection across tool sources (node-pack / workflow / mcp / connector / host-extension); gated on capabilities.toolCatalog; authorization-scoped per §F-2.
   - name: hitl
     description: Human-in-the-loop interrupts and approvals.
   - name: artifacts
@@ -1014,6 +1016,64 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404':
           description: Unknown/cross-tenant department, or capability unadvertised.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /v1/tools:
+    get:
+      tags: [tools]
+      summary: |
+        RFC 0078 §B — list the portable `ToolDescriptor`s visible to the caller
+        across every tool source (node-pack / workflow / mcp / connector /
+        host-extension). Capability-gated on
+        `capabilities.toolCatalog.supported: true`; hosts that don't advertise
+        it return 404. §F-2 — the projection is authorization-scoped: a
+        principal sees only the tools it may invoke, and a second principal MUST
+        NOT see another principal's tools (non-disclosure). Read-only; each
+        descriptor is content-free of any credential material (SR-1).
+      operationId: listTools
+      responses:
+        '200':
+          description: The caller's authorized tool catalog.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '../schemas/tool-descriptor.schema.json' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: Host does not advertise `capabilities.toolCatalog`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /v1/tools/{toolId}:
+    get:
+      tags: [tools]
+      summary: |
+        RFC 0078 §B — return one `ToolDescriptor` by its stable `toolId`, or 404
+        when no such tool exists, the caller isn't authorized for it (§F-2
+        non-disclosure — a cross-principal tool 404s identically to "not
+        found"), or the host doesn't advertise `capabilities.toolCatalog`.
+      operationId: getTool
+      parameters:
+        - in: path
+          name: toolId
+          required: true
+          schema: { type: string }
+          description: The stable tool id (`ToolDescriptor.toolId`).
+      responses:
+        '200':
+          description: The tool descriptor.
+          content:
+            application/json:
+              schema: { $ref: '../schemas/tool-descriptor.schema.json' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: No such tool, unauthorized, or capability unadvertised.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }

@@ -106,6 +106,7 @@
           <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
           <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
           <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/install/" role="menuitem">Install the demo app</a>
           <a href="/implement/" role="menuitem">All implementer landings →</a>
         </div>
       </div>
@@ -150,6 +151,7 @@
     <li><a href="/for/host-implementers/">Host implementers</a></li>
     <li><a href="/for/pack-authors/">Pack authors</a></li>
     <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/install/">Install the demo app</a></li>
     <li><a href="/implement/">All implementer landings →</a></li>
   </ul>
 
@@ -233,6 +235,8 @@
 <tr><td><code>POST</code></td><td><code>/v1/agents/{agentId}/deployments</code></td><td>API key</td><td><code>deploy:*</code></td><td>RFC 0082 §E deployment state transition (promote/pause/deprecate/rollback/adjust-canary); fail-closed authz (RFC 0049) + RFC 0051 approvalGate + RFC 0081 <code>requiredEval</code>; <code>403</code> <code>eval_gate_unmet</code> / <code>400</code> <code>no_active_deployment</code></td></tr>
 <tr><td><code>GET</code></td><td><code>/v1/agents/roster</code></td><td>API key</td><td><code>runs:read</code></td><td>RFC 0086 §B standing agent roster (named instances + portfolios; capability-gated on <code>agents.roster</code>; tenant-scoped per RFC 0074; 404 when unadvertised)</td></tr>
 <tr><td><code>GET</code></td><td><code>/v1/agents/roster/{rosterId}</code></td><td>API key</td><td><code>runs:read</code></td><td>RFC 0086 §B one roster entry; 404 when absent/cross-tenant/unadvertised</td></tr>
+<tr><td><code>GET</code></td><td><code>/v1/tools</code></td><td>API key</td><td><code>runs:read</code></td><td>RFC 0078 §B portable tool catalog (<code>ToolDescriptor[]</code> across node-pack/workflow/mcp/connector/host-extension sources; capability-gated on <code>toolCatalog</code>; §F-2 authorization-scoped; 404 when unadvertised)</td></tr>
+<tr><td><code>GET</code></td><td><code>/v1/tools/{toolId}</code></td><td>API key</td><td><code>runs:read</code></td><td>RFC 0078 §B one <code>ToolDescriptor</code>; 404 when absent/unauthorized/unadvertised</td></tr>
 <tr><td><code>GET</code></td><td><code>/v1/agents/org-chart</code></td><td>API key</td><td><code>runs:read</code></td><td>RFC 0087 §C descriptive agent org-chart (capability-gated on <code>agents.orgChart</code>; tenant-scoped; 404 when unadvertised)</td></tr>
 <tr><td><code>GET</code></td><td><code>/v1/agents/org-chart/{departmentId}</code></td><td>API key</td><td><code>runs:read</code></td><td>RFC 0087 §D one department's subtree + responsibility roll-up (<code>?recursive=false</code> for direct members); 404 when unknown/cross-tenant/unadvertised</td></tr>
 <tr><td><code>GET</code></td><td><code>/v1/runs/{runId}/eval-summary</code></td><td>API key</td><td><code>runs:read</code></td><td>RFC 0081 §C the <code>EvalSummary</code> scorecard for a terminal <code>mode:&quot;eval&quot;</code> run (capability-gated on <code>agents.evalSuite</code>; 404 when unadvertised/not-an-eval-run; 409 while running)</td></tr>
@@ -601,6 +605,7 @@
           <li><a href="/for/host-implementers/">Host implementers</a></li>
           <li><a href="/for/pack-authors/">Pack authors</a></li>
           <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+          <li><a href="/install/">Install the demo app</a></li>
         </ul>
       </div>
     </div>
