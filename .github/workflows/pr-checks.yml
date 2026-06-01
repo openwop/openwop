@@ -29,6 +29,7 @@ jobs:
       python: ${{ steps.filter.outputs.python }}
       go: ${{ steps.filter.outputs.go }}
       conformance: ${{ steps.filter.outputs.conformance }}
+      appfrontend: ${{ steps.filter.outputs.appfrontend }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
@@ -45,6 +46,8 @@ jobs:
               - 'sdk/go/go.sum'
             conformance:
               - 'conformance/**'
+            appfrontend:
+              - 'apps/workflow-engine/frontend/react/**'
 
   lint-typescript:
     name: TS lint (ESLint)
@@ -71,6 +74,29 @@ jobs:
           cd conformance
           npm ci
           npm run lint --if-present || (echo "::warning::lint script is not configured for this package" && true)
+
+  # Build gate for the reference app's React frontend. Previously the app
+  # frontend had NO PR gate, so a type error, a dead prompt-ref default, or a
+  # reference to an undefined CSS custom property only surfaced at deploy-time
+  # `npm run build`. `npm run build` here runs, in order: tsc --noEmit,
+  # check-prompt-ref-defaults, check-css-tokens (the var(--token) integrity
+  # gate), and the vite production build.
+  build-app-frontend:
+    name: App frontend (tsc + css-token gate + build)
+    needs: changes
+    if: needs.changes.outputs.appfrontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Build (tsc + checks + vite)
+        run: |
+          cd apps/workflow-engine/frontend/react
+          npm ci
+          npm run build
 
   lint-python:
     name: Python lint (ruff)
