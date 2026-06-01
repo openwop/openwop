@@ -1,16 +1,20 @@
 /**
  * auth-saml-profile — RFC 0050: openwop-auth-saml profile.
  *
- * Status: DRAFT. RFC 0050 (SAML / SCIM enterprise identity profiles) is
- * `Draft`. The profile is documented in `auth-profiles.md`
+ * Status: ACTIVE. RFC 0050 (SAML / SCIM enterprise identity profiles) is
+ * `Active`. The profile is documented in `auth-profiles.md`
  * §`openwop-auth-saml` and reserved in `capabilities.auth.profiles`.
  *
  * Capability shape runs unconditionally when the profile is advertised.
- * The assertion-validation behavior (1 positive + ≥6 negatives: bad
- * signature, `alg:none`, absent signature, `NotOnOrAfter` expiry,
- * `NotBefore` not-yet-valid, signature-wrapping) is opt-in via
- * `OPENWOP_TEST_SAML_IDP_URL` (operator-supplied synthetic IdP), because
- * a deterministic XML-DSig signer harness isn't bundled yet — follows the
+ * The assertion-validation behavior is exercised over the host's live
+ * `auth/saml/validate` seam for the FULL §A variant set — 1 positive
+ * (valid, signed, in-window, non-wrapped → accepted) + 6 negatives
+ * (`alg:none`, unsigned, bad-signature, `NotOnOrAfter` expiry, `NotBefore`
+ * not-yet-valid, signature-wrapping → rejected). This behavioral leg is
+ * opt-in via `OPENWOP_TEST_SAML_IDP_URL` (an operator-supplied HTTP
+ * synthetic IdP serving the bundled `createSyntheticSamlIdp()` assertions),
+ * because it requires a live host ACS + an HTTP IdP the seam can resolve
+ * variants from — the in-process minter below is not a server. Follows the
  * `auth-mtls.test.ts` opt-in precedent. Soft-skips otherwise.
  *
  * @see RFCS/0050-saml-scim-enterprise-identity-profiles.md
@@ -65,19 +69,52 @@ describe('auth-saml-profile: advertisement shape (RFC 0050)', () => {
 describe('auth-saml-profile: assertion validation (RFC 0050 §A — opt-in)', () => {
   const idpUrl = process.env.OPENWOP_TEST_SAML_IDP_URL;
 
-  it('rejects an `alg:none` / unsigned assertion (synthetic IdP required)', async () => {
+  // The host's real SAML ACS is driven over the `auth/saml/validate` seam for
+  // every variant the bundled synthetic IdP mints — the full RFC 0050 §A MUST
+  // list, not just one negative. The seam receives `{ idpUrl, variant }`,
+  // resolves `{ certificatePem, assertion }` of that variant from the
+  // operator-supplied synthetic IdP, runs it through the host's genuine
+  // validator, and answers 2xx (accepted) / non-2xx (rejected). This is the
+  // NON-VACUOUS behavioral leg: it exercises the host's ACS on the live wire,
+  // distinct from the in-process reference suite below (which proves the
+  // assertions are detectably malformed against the bundled oracle, not the
+  // host). All legs soft-skip until `OPENWOP_TEST_SAML_IDP_URL` is supplied.
+  const gated = (): boolean => idpUrl !== undefined && idpUrl.length > 0;
+
+  it('ACCEPTS a valid signed, in-window, non-wrapped assertion (synthetic IdP required)', async () => {
     const profiles = await readProfiles();
     if (profiles === null || !profiles.includes(SAML_PROFILE)) return; // capability-gated
-    if (idpUrl === undefined || idpUrl.length === 0) return; // opt-in: synthetic-IdP harness not provided
-    // With a synthetic IdP, an `alg:none`/unsigned assertion presented to the
-    // host's SAML ACS MUST be rejected with `unauthenticated`.
-    const res = await driver.post('/v1/host/sample/auth/saml/validate', { idpUrl, variant: 'alg-none' });
+    if (!gated()) return; // opt-in: synthetic-IdP harness not provided
+    const res = await driver.post('/v1/host/sample/auth/saml/validate', { idpUrl, variant: 'valid' });
     if (res.status === 404) return; // seam unwired
     expect(
       res.status,
-      driver.describe('RFC 0050 §A', 'an `alg:none`/unsigned SAML assertion MUST be rejected (non-2xx)'),
-    ).toBeGreaterThanOrEqual(400);
+      driver.describe('RFC 0050 §A', 'a valid signed, in-window, non-wrapped SAML assertion MUST be accepted (2xx)'),
+    ).toBeLessThan(400);
   });
+
+  // The 6 negatives the RFC 0050 §A MUST list requires a host to reject. The
+  // signature-wrapping (XSW) case is the load-bearing security property — a
+  // host MUST bind the validated signature to the consumed assertion.
+  const negatives: ReadonlyArray<[Exclude<SamlVariant, 'valid'>, string]> = [
+    ['alg-none', 'an `alg:none` SAML assertion MUST be rejected (non-2xx)'],
+    ['unsigned', 'an unsigned SAML assertion MUST be rejected (non-2xx)'],
+    ['bad-signature', 'a SAML assertion with an invalid signature MUST be rejected (non-2xx)'],
+    ['expired', 'a SAML assertion past `NotOnOrAfter` MUST be rejected (non-2xx)'],
+    ['not-yet-valid', 'a SAML assertion before `NotBefore` MUST be rejected (non-2xx)'],
+    ['signature-wrapping', 'a signature-wrapped (XSW) SAML assertion MUST be rejected (non-2xx)'],
+  ];
+
+  for (const [variant, requirement] of negatives) {
+    it(`REJECTS the ${variant} assertion over the seam (synthetic IdP required)`, async () => {
+      const profiles = await readProfiles();
+      if (profiles === null || !profiles.includes(SAML_PROFILE)) return; // capability-gated
+      if (!gated()) return; // opt-in: synthetic-IdP harness not provided
+      const res = await driver.post('/v1/host/sample/auth/saml/validate', { idpUrl, variant });
+      if (res.status === 404) return; // seam unwired
+      expect(res.status, driver.describe('RFC 0050 §A', requirement)).toBeGreaterThanOrEqual(400);
+    });
+  }
 });
 
 describe('category: auth-saml synthetic-IdP reference suite (RFC 0050 §A)', () => {

@@ -4,6 +4,14 @@
 
 _No unreleased changes._
 
+## [1.18.1] — 2026-06-01 — RFC 0050 SAML behavioral leg: full 7-variant seam coverage
+
+Standalone conformance patch — published via the `openwop-conformance/v1.18.1` per-package tag (PUBLISHING.md §"CI automation"; only the `publish-conformance` job runs), NOT a coordinated spec-corpus release. `EXPECTED_CONFORMANCE_VERSION` advances to `1.18.1` in lockstep. No new scenario file → patch bump.
+
+### Changed — RFC 0050 `auth-saml-profile` opt-in behavioral leg
+
+Expanded the opt-in `auth/saml/validate` behavioral leg from a single `alg-none` negative to the **full RFC 0050 §A variant set driven over the host's live seam**: 1 positive (valid, signed, in-window, non-wrapped → MUST be accepted, 2xx) + 6 negatives (`alg-none`, `unsigned`, `bad-signature`, `expired`, `not-yet-valid`, `signature-wrapping` → MUST be rejected, non-2xx). The signature-wrapping (XSW) case is the load-bearing security property. This makes the behavioral cert **non-vacuous against a host's real XML-DSig ACS** (distinct from the in-process reference suite, which proves the assertions detectably malformed against the bundled oracle, not the host). Still gated on `OPENWOP_TEST_SAML_IDP_URL` (an operator-supplied HTTP synthetic IdP serving the bundled `createSyntheticSamlIdp()` assertions) + the `openwop-auth-saml` advertisement; soft-skips otherwise. The steward prerequisite for graduating RFC 0050 `Active → Accepted` on a host with a real SAML ACS. Scenario docstring updated `Draft → Active`.
+
 ## [1.18.0] — 2026-06-01 — RFC 0085 openwop-agent-platform live aggregate-evidence gate
 
 Standalone conformance minor — a scenario addition published via the `openwop-conformance/v1.18.0` per-package tag (PUBLISHING.md §"CI automation"; only the `publish-conformance` job runs), NOT a coordinated spec-corpus release. `EXPECTED_CONFORMANCE_VERSION` advances to `1.18.0` in lockstep. The steward prerequisite that lets MyndHyve run the RFC 0085 §C live aggregate-evidence scenario non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true` to graduate the `openwop-agent-platform` meta-profile from `Active` to `Accepted` — the capstone of the agent-platform program. The normative surface (the `nondeterminismPolicy.declared` flag + the `isAgentPlatform*` predicate helpers + the operational annex) already shipped — this release is the gated test surface only.
