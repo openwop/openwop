@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### conformance: collector-side BYOK-canary inspection — close the OTel collector-seam KNOWN-LIMITS gap (2026-06-01)
+
+KNOWN-LIMITS gap-closure Phase 2 — the `secret-leakage-otel-attribute` / `secret-leakage-debug-bundle-otel` rows tracked that "the conformance OTel collector seam doesn't yet inspect span attributes; a host could pass conformance while leaking BYOK material on telemetry exports." The existing `secret-leakage-otel-attribute.test.ts` scraped the host's *self-reported* `GET /v1/host/sample/test/otel/spans` seam — but a host could redact there while still shipping the plaintext over the wire via its real OTLP exporter.
+
+- **`OtelCollector.findCanaryLeakage(canary)`** (new, `conformance/src/lib/otel-collector.ts`) scans every captured span name + attribute keys/values + resource-attribute keys/values + metric data-point attribute for the canary substring, returning one `CanaryLeak{surface, emitterName, key, value}` per hit. An empty/whitespace canary returns no hits (vacuity guard). This is the collector-side complement to the host scrape seam: it inspects what the host's OTLP exporter *actually shipped over the wire* to the conformance collector.
+- **`conformance/src/scenarios/otel-collector-canary-inspection.test.ts`** (new, always-on, server-free, 5/5) stands up a real `OtelCollector`, POSTs synthetic OTLP/HTTP-JSON traces + metrics through the collector's actual ingest path, and proves the inspector is **non-vacuous**: it catches a canary embedded in a span attribute / resource attribute / span name / metric data-point attribute, reports ZERO hits on a `[REDACTED:…]` payload (positive control), and never matches an empty canary.
+- **`secret-leakage-otel-attribute.test.ts`** gains a collector-export `describe` block: when the in-process collector is active (`OPENWOP_OTEL_COLLECTOR=true` + the host configured to export to it), it runs the BYOK fixture and asserts `findCanaryLeakage()` returns `[]` against the host's real export — the live, capability-gated complement to the always-on proof.
+
+Both invariants were already `protocol` tier (graduated 2026-05-21 via RFC 0034 §C); this closes the *harness* gap their KNOWN-LIMITS rows described — the conformance collector now inspects real exported telemetry, so a host can no longer redact in its scrape seam while leaking on the wire. The remaining residual is adoption-only (the live assertion soft-skips until a host exports OTLP to the collector). KNOWN-LIMITS rows updated (gap CLOSED + the stale "reference-impl tier" mislabel corrected to "protocol tier"); `coverage.md` regraded to A; conformance scenario count 319 → 320. Additive; no wire/schema change.
+
 ### conformance + host: close 3 KNOWN-LIMITS rows (sandbox-timeout graduation, anon-auth flag, escalation flake) (2026-06-01)
 
 KNOWN-LIMITS gap-closure Phase 1 — three repo-closeable reference-host/test gaps:

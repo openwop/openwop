@@ -84,6 +84,23 @@ export interface CapturedMetric {
 }
 
 /**
+ * One place where a canary string was found inside the captured OTLP
+ * export. Returned by `OtelCollector.findCanaryLeakage()` so a leak
+ * assertion can name the offending surface (which span, which attribute)
+ * rather than just `true`.
+ */
+export interface CanaryLeak {
+  /** Which captured surface leaked: a span field or a metric data point. */
+  readonly surface: 'span.name' | 'span.attribute' | 'span.resourceAttribute' | 'metric.attribute';
+  /** The span/metric name the leak was found under. */
+  readonly emitterName: string;
+  /** Attribute key when `surface` is an attribute; `undefined` for `span.name`. */
+  readonly key: string | undefined;
+  /** Stringified value (or the name itself) that contained the canary. */
+  readonly value: string;
+}
+
+/**
  * Decode an OTLP attribute-value object into a primitive. Returns `null`
  * when the value shape is unrecognized.
  */
@@ -233,6 +250,61 @@ export class OtelCollector {
 
   spansByName(name: string): readonly CapturedSpan[] {
     return this._spans.filter((s) => s.name === name);
+  }
+
+  /**
+   * Scan every captured span (name + attribute keys/values + resource
+   * attribute keys/values) and metric data-point attribute for the given
+   * canary substring, returning one `CanaryLeak` per hit.
+   *
+   * This is the collector-side complement to the host's
+   * `GET /v1/host/sample/test/otel/spans` scrape seam: the scrape seam
+   * reports what the host *says* it emitted; this method inspects what
+   * the host's OTLP exporter *actually shipped over the wire* to the
+   * collector. A host could redact in its scrape seam yet still leak on
+   * the real export — only collector-side inspection catches that, which
+   * is the gap `docs/KNOWN-LIMITS.md` tracked for
+   * `secret-leakage-otel-attribute` / `-debug-bundle-otel`.
+   *
+   * The match is a plain substring test (case-sensitive) so an attribute
+   * value that merely *embeds* the canary (e.g. inside a JSON blob or an
+   * error message) is still caught. Empty/whitespace canaries return no
+   * hits — a guard against vacuous "everything leaks" assertions.
+   *
+   * @see SECURITY/invariants.yaml secret-leakage-otel-attribute
+   * @see SECURITY/threat-model-secret-leakage.md
+   */
+  findCanaryLeakage(canary: string): readonly CanaryLeak[] {
+    const hits: CanaryLeak[] = [];
+    if (canary.trim() === '') return hits;
+    const contains = (v: unknown): string | null => {
+      const s = typeof v === 'string' ? v : JSON.stringify(v);
+      return s !== undefined && s.includes(canary) ? s : null;
+    };
+    for (const sp of this._spans) {
+      if (sp.name.includes(canary)) {
+        hits.push({ surface: 'span.name', emitterName: sp.name, key: undefined, value: sp.name });
+      }
+      for (const [key, val] of sp.attributes) {
+        const m = contains(val) ?? (key.includes(canary) ? key : null);
+        if (m !== null) hits.push({ surface: 'span.attribute', emitterName: sp.name, key, value: m });
+      }
+      for (const [key, val] of sp.resourceAttributes) {
+        const m = contains(val) ?? (key.includes(canary) ? key : null);
+        if (m !== null) {
+          hits.push({ surface: 'span.resourceAttribute', emitterName: sp.name, key, value: m });
+        }
+      }
+    }
+    for (const metric of this._metrics) {
+      for (const [key, val] of metric.dataPoint.attributes) {
+        const m = contains(val) ?? (key.includes(canary) ? key : null);
+        if (m !== null) {
+          hits.push({ surface: 'metric.attribute', emitterName: metric.name, key, value: m });
+        }
+      }
+    }
+    return hits;
   }
 
   metrics(): readonly CapturedMetric[] {
