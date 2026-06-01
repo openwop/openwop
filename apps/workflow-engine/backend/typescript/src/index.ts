@@ -80,6 +80,7 @@ import { registerRosterRoutes } from './routes/roster.js';
 import { registerTriggerBridgeRoutes } from './routes/triggerBridge.js';
 import { initHostExtPersistence } from './host/hostExtPersistence.js';
 import { registerOrgChartRoutes } from './routes/orgChart.js';
+import { registerAccessControlRoutes } from './routes/accessControl.js';
 
 const log = createLogger('workflow-engine');
 
@@ -369,6 +370,10 @@ export async function createApp(config: AppConfig): Promise<Express> {
   // Agent org-chart — RFCS/0087 reference impl (departments/roles/reportsTo
   // over roster members; descriptive only, confers no authority).
   registerOrgChartRoutes(app);
+  // Organizations / teams / members + role-based access — sample host-extension
+  // (non-normative). Roles map to RFC 0049 scopes; a SEPARATE layer from the
+  // descriptive org-chart above (org position still confers no authority).
+  registerAccessControlRoutes(app);
   // Kanban boards — sample host-extension (non-normative). The card→run
   // trigger is the RFCS/0086 "named workflow agents" demo surface.
   registerKanbanRoutes(app, { storage, hostSuite });
