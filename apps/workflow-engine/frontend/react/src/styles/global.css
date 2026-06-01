@@ -749,10 +749,14 @@ a:visited {
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
-  /* Faint letterpress dot-grid so the whole app sits on the same drafting
-   * paper as the workflow canvas — shows only in the gutters between cards
-   * (surfaces carry their own --paper bg). Uses --rule-2, the same token as
-   * the canvas grid; intentionally near-threshold. */
+}
+/* Faint letterpress dot-grid so the content pages sit on the same drafting
+ * paper as the workflow canvas — shows only in the gutters between cards
+ * (surfaces carry their own --paper bg). Uses --rule-2, the same token as the
+ * canvas grid; intentionally near-threshold. Scoped OUT of the two immersive
+ * surfaces: chat (--ai) keeps its editorial-chrome register, and the builder
+ * (-fullbleed) has its own xyflow canvas grid — neither should carry it. */
+.app-main:not(.app-main--ai):not(.app-main-fullbleed) {
   background-image: radial-gradient(var(--rule-2) 0.6px, transparent 0.6px);
   background-size: 24px 24px;
   background-position: -1px -1px;
@@ -3856,8 +3860,11 @@ a.surface-card:hover,
 .state-card__body  { font-size: 13px; max-width: 46ch; }
 .state-card__actions { margin-top: var(--space-2); }
 /* Empty states echo the canvas drafting-paper grid inside the dashed frame —
- * "this is where work will appear" (DESIGN.app.md §5.1). */
+ * "this is where work will appear" (DESIGN.app.md §5.1). The opaque surface
+ * background occludes the page grid behind the card so only the card's own
+ * grid shows (otherwise two grids at different pitches moiré). */
 .state-card {
+  background-color: var(--color-surface);
   background-image: radial-gradient(var(--rule-2) 0.6px, transparent 0.6px);
   background-size: 22px 22px;
 }
