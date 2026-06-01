@@ -39,7 +39,7 @@ export interface AgentView {
 const STATUS_META: Record<AgentStatus, { label: string; chip: string; help: string }> = {
   active: { label: 'Ready', chip: 'chip--success', help: 'Idle and ready — no work in progress. Add a task or run the heartbeat to give it work.' },
   working: { label: 'Working', chip: 'chip--accent', help: 'Has at least one task in the Working lane with a run in progress.' },
-  waiting: { label: 'Waiting on Human', chip: 'chip--warning', help: 'A task is parked in the Waiting lane and needs a person to act before it can move on.' },
+  waiting: { label: 'Waiting on Human', chip: 'chip--warning chip--pulse', help: 'A task is parked in the Waiting lane and needs a person to act before it can move on.' },
   paused: { label: 'Paused', chip: 'chip--muted', help: 'Disabled — its board triggers and heartbeat are inert until you re-enable it.' },
   'needs-setup': { label: 'Needs setup', chip: 'chip--danger', help: 'No workflows assigned or no board yet — finish setup so it can pick up work.' },
 };

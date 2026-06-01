@@ -27,6 +27,7 @@ import {
   type TemplateWorkflow,
 } from './templates/premadeWorkflows.js';
 import { loadDynamicCatalog, useCatalog } from './palette/catalogRegistry.js';
+import { PageHeader } from '../ui/PageHeader.js';
 
 /** A template is offerable when it needs no pack nodes, or every pack
  *  typeId it needs is present in the merged catalog (host has the pack). */
@@ -178,10 +179,12 @@ export function WorkflowsDashboard() {
 
   return (
     <section className="workflows-dashboard">
-      <div className="workflows-header">
-        <h2>Workflows</h2>
-        <button onClick={onCreate}>+ New workflow</button>
-      </div>
+      <PageHeader
+        eyebrow="Build"
+        title="Workflows"
+        lede="Compose multi-step, multi-agent workflows on a visual canvas — then run them by name from chat."
+        actions={<button onClick={onCreate}>+ New workflow</button>}
+      />
 
       <div className="workflows-section">
         <div className="workflows-section-header">

@@ -139,7 +139,7 @@ export function App() {
             ? 'app-main app-main-fullbleed'
             : isChatPage
               ? 'app-main app-main--ai'
-              : 'app-main'
+              : 'app-main page-enter'
         }
       >
         <Routes>

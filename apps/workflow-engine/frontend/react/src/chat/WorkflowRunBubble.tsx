@@ -43,7 +43,9 @@ export function WorkflowRunBubble({ message, onOpenProgress, isFocusedInPanel }:
 
   return (
     <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 12 }}>
-      <div style={{
+      <div
+        className={run.status === 'running' ? 'workflow-run-bubble workflow-run-bubble--live' : 'workflow-run-bubble'}
+        style={{
         maxWidth: 'var(--max-bubble-width, 75ch)',
         width: '100%',
         padding: '10px 14px',
@@ -64,6 +66,11 @@ export function WorkflowRunBubble({ message, onOpenProgress, isFocusedInPanel }:
             background: 'var(--color-surface)',
             color: STATUS_COLORS[run.status],
             border: `1px solid ${STATUS_COLORS[run.status]}`,
+            // Lands like a stamp when the run reaches a terminal state (§6).
+            ...(run.status === 'completed' || run.status === 'failed'
+              ? { animation: 'openwop-stamp-in 280ms cubic-bezier(0.34, 1.56, 0.64, 1) 1' }
+              : {}),
+            display: 'inline-block',
           }}>
             {STATUS_LABELS[run.status]}
           </span>

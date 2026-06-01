@@ -16,6 +16,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { listRoster, type RosterEntry } from '../agents/rosterClient.js';
 import { Notice } from '../ui/Notice.js';
 import { StateCard } from '../ui/StateCard.js';
+import { PageHeader } from '../ui/PageHeader.js';
 import { ColumnsIcon } from '../ui/icons/index.js';
 import { KanbanBoardView, type NewCardInput } from './KanbanBoardView.js';
 import {
@@ -154,11 +155,11 @@ export function KanbanPage(): JSX.Element {
 
   return (
     <section style={{ padding: '1rem' }}>
-      <h1 style={{ marginTop: 0 }}>Boards</h1>
-      <p style={{ color: 'var(--color-text-muted)', marginTop: '-0.5rem' }}>
-        Drag a card into a <strong>trigger column</strong> (⚡) to start its workflow — the same task board your agents
-        work from.
-      </p>
+      <PageHeader
+        eyebrow="Boards"
+        title="Boards"
+        lede={<>Drag a card into a <strong>trigger column</strong> (⚡) to start its workflow — the same task board your agents work from.</>}
+      />
 
       {error ? <Notice variant="error">{error}</Notice> : null}
       {notice ? <Notice variant="success">{notice}</Notice> : null}

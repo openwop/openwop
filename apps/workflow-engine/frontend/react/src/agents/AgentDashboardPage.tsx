@@ -17,9 +17,8 @@ import { AgentCard } from './AgentCard.js';
 import { AgentActivityFeed } from './AgentActivityFeed.js';
 import { Notice } from '../ui/Notice.js';
 import { StateCard } from '../ui/StateCard.js';
+import { PageHeader } from '../ui/PageHeader.js';
 import { BotIcon } from '../ui/icons/index.js';
-
-const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
 type SortKey = 'attention' | 'name';
 
@@ -171,18 +170,14 @@ export function AgentDashboardPage(): JSX.Element {
 
   return (
     <section style={{ padding: '1rem', maxWidth: 1100, margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-        <div>
-          <h1 style={{ marginTop: 0, marginBottom: '0.3rem' }}>AI coworkers</h1>
-          <p style={{ ...muted, marginTop: 0, maxWidth: 600 }}>
-            Create AI coworkers that act as digital twins for company roles, then give them
-            workflows, schedules, and task boards.
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+      <PageHeader
+        eyebrow="Agents"
+        title="AI coworkers"
+        lede="Create AI coworkers that act as digital twins for company roles, then give them workflows, schedules, and task boards."
+        actions={
           <button type="button" className="primary" onClick={() => navigate('/agents/new')}>Create agent</button>
-        </div>
-      </div>
+        }
+      />
 
       <ConceptStrip />
 

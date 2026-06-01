@@ -94,7 +94,13 @@ function BaseNodeImpl({ id, data, selected }: NodeProps) {
             justifyContent: 'center',
             fontWeight: 700,
             boxShadow: '0 1px 3px var(--ink-shadow)',
-            animation: d.runStatus === 'running' ? 'openwop-pulse 1.2s ease-in-out infinite' : 'none',
+            // running → live breathe; landed (completed/failed) → one-shot
+            // "stamp" press so the run visibly settles down the graph (§6).
+            animation: d.runStatus === 'running'
+              ? 'openwop-pulse 1.2s ease-in-out infinite'
+              : (d.runStatus === 'completed' || d.runStatus === 'failed')
+                ? 'openwop-stamp-in 280ms cubic-bezier(0.34, 1.56, 0.64, 1) 1'
+                : 'none',
           }}
         >
           {runMeta.glyph}
