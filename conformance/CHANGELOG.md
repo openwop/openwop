@@ -2,11 +2,17 @@
 
 ## [Unreleased]
 
-### Added — RFC 0080 behavioral scenario (steward prerequisite for the next conformance minor)
+_No unreleased changes._
+
+## [1.15.0] — 2026-06-01 — RFC 0080 memory degraded-projection behavioral gate
+
+Standalone conformance minor — a scenario addition published via the `openwop-conformance/v1.15.0` per-package tag (PUBLISHING.md §"CI automation"; only the `publish-conformance` job runs), NOT a coordinated spec-corpus release. `EXPECTED_CONFORMANCE_VERSION` advances to `1.15.0` in lockstep. The steward prerequisite that lets MyndHyve run the RFC 0080 §C degraded-projection scenario non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true` to graduate `memory` from `Active` to `Accepted`. The normative surface (the `memory.{search,retention,writable}` dimensions + the `memoryDegraded`/`degradedMemoryDimensions` inventory fields) already shipped — this release is the gated test surface only. The companion RFC 0068 gated scenarios (`memory-consolidation-idempotent` + `commitment-fired`) shipped in 1.14.0; this release additionally documents their two host seams in `host-sample-test-seams.md`.
+
+### Added — RFC 0080 behavioral scenario
 
 - **`memory-degraded-projection.test.ts`** (`behaviorGate('openwop-memory-degraded', …)`, gated on `agents.manifestRuntime.supported` + `memory.supported`) — the RFC 0080 §C degraded-projection iff-contract on the NORMATIVE `GET /v1/agents`: a degraded inventory entry MUST carry `memoryDegraded:true` + a non-empty, unique `degradedMemoryDimensions[]` drawn from the closed §A-name enum (`read`/`write`/`search`/`long-term-durability`/`compaction`/`attribution`/`replay-snapshot`/`retention`); a non-degraded entry MUST NOT carry a non-empty list; the inventory is non-empty; the degraded branch runs non-vacuously when `OPENWOP_DEGRADED_AGENT_ID` names a known-degraded agent. Black-box on the normative path — no POST seam. This is the RFC 0080 → Accepted bar.
 
-Additive + capability-gated; existing v1.0-only hosts pass unchanged. No new schemas (the `memory.{search,retention,writable}` dimensions + the `memoryDegraded`/`degradedMemoryDimensions` inventory fields shipped at `Draft → Active`). Also documents the two RFC 0068 conformance seams (`POST /v1/host/sample/memory/consolidate` + `.../commitment/fire`) in `host-sample-test-seams.md` — the 0068 gated scenarios (`memory-consolidation-idempotent` + `commitment-fired`) already shipped in 1.14.0. The version bump + `EXPECTED_CONFORMANCE_VERSION` advance ships in the follow-up publish.
+Additive + capability-gated; existing v1.0-only hosts pass unchanged. No new schemas (the `memory.{search,retention,writable}` dimensions + the `memoryDegraded`/`degradedMemoryDimensions` inventory fields shipped at `Draft → Active`). Also documents the two RFC 0068 conformance seams (`POST /v1/host/sample/memory/consolidate` + `.../commitment/fire`) in `host-sample-test-seams.md` — the 0068 gated scenarios (`memory-consolidation-idempotent` + `commitment-fired`) already shipped in 1.14.0.
 
 ## [1.14.0] — 2026-06-01 — RFC 0078 tool-catalog + RFC 0079 egress-policy behavioral gates
 
