@@ -6,14 +6,9 @@
 
 import { workflowName, roleThemeForAgent } from './roleTemplates.js';
 import { statusMeta, type AgentView } from './agentViewModel.js';
+import { AgentAvatar } from './AgentAvatar.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
-
-/** Initials for the avatar. Falls back to the first two chars of the name. */
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || name.slice(0, 2).toUpperCase();
-}
 
 function LaneCount({ label, n }: { label: string; n: number }): JSX.Element {
   return (
@@ -39,7 +34,6 @@ export function AgentCard({
   const sm = statusMeta(status);
   const firstWorkflow = entry.workflows[0];
   const theme = roleThemeForAgent(entry.agentRef?.agentId, entry.workflows);
-  const RoleIcon = theme.Icon;
 
   return (
     // Whole card clickable for MOUSE convenience (onClick); intentionally NOT a
@@ -51,43 +45,7 @@ export function AgentCard({
       onClick={onOpen}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-        <div aria-hidden="true" style={{ position: 'relative', flexShrink: 0 }}>
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: '50%',
-              background: 'var(--color-accent)',
-              color: 'var(--paper)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 700,
-            }}
-          >
-            {initials(entry.persona)}
-          </div>
-          {/* Role glyph badge — the at-a-glance differentiator between coworkers. */}
-          <div
-            title={`${theme.label} role`}
-            style={{
-              position: 'absolute',
-              right: -3,
-              bottom: -3,
-              width: 18,
-              height: 18,
-              borderRadius: '50%',
-              background: 'var(--paper)',
-              border: '1px solid var(--color-border)',
-              color: 'var(--color-text-muted)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <RoleIcon size={11} strokeWidth={2} />
-          </div>
-        </div>
+        <AgentAvatar persona={entry.persona} avatarUrl={entry.avatarUrl} roleTheme={theme} size={40} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 700, fontSize: '15px' }}>{entry.persona}</div>
           <div style={{ ...muted, fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
