@@ -43,7 +43,6 @@ import { OpenwopError } from '../types.js';
 import {
   BUILT_IN_ROLES,
   BUILT_IN_ROLE_IDS,
-  isBuiltInRoleId,
   resolveEffectiveAccess,
   createOrg,
   listOrgs,
@@ -65,7 +64,13 @@ import {
   getGroup,
   updateGroup,
   deleteGroup,
-  type BuiltInRoleId,
+  createCustomRole,
+  listCustomRoles,
+  getCustomRole,
+  updateCustomRole,
+  deleteCustomRole,
+  isScope,
+  ALL_SCOPES,
   type Scope,
 } from '../host/accessControlService.js';
 
@@ -74,14 +79,37 @@ function tenantOf(req: Request): string {
 }
 
 /**
- * Gate a management mutation on a scope. Resolves the caller's effective
- * access (no member context ⇒ the tenant owner principal, implicitly `owner`)
- * and 403s when the scope is absent. Fail-closed.
+ * Reference-host DEMO SEAM: `x-openwop-act-as: <memberId>` lets the tenant
+ * owner exercise the role-derived scopes of one of its members, so role-based
+ * enforcement is demonstrable (a `viewer` is actually denied a management
+ * mutation) without a production multi-principal auth stack.
+ *
+ * This is NOT an authentication mechanism — a production host derives the
+ * acting principal from real auth (OIDC/mTLS), never a client header. It is
+ * tenant-scoped: `resolveEffectiveAccess` only matches members in the caller's
+ * own tenant, so acting-as a foreign member resolves to zero scopes
+ * (fail-closed). Absent ⇒ the caller is the tenant owner (implicitly `owner`).
+ */
+const ACT_AS_HEADER = 'x-openwop-act-as';
+
+function actingMemberId(req: Request): string | undefined {
+  const v = req.header(ACT_AS_HEADER);
+  return typeof v === 'string' && v.trim().length > 0 ? v.trim() : undefined;
+}
+
+/**
+ * Gate a management mutation on a scope. Resolves the caller's effective access
+ * — as the acted-as member when `x-openwop-act-as` is present, else the tenant
+ * owner — and 403s when the scope is absent. FAIL-CLOSED.
  */
 async function requireScope(req: Request, scope: Scope): Promise<void> {
-  const access = await resolveEffectiveAccess(tenantOf(req));
+  const memberId = actingMemberId(req);
+  const access = await resolveEffectiveAccess(tenantOf(req), memberId ? { memberId } : {});
   if (!access.scopes.includes(scope)) {
-    throw new OpenwopError('forbidden_scope', `Missing required scope: ${scope}`, 403, { requiredScope: scope });
+    throw new OpenwopError('forbidden_scope', `Missing required scope: ${scope}`, 403, {
+      requiredScope: scope,
+      ...(memberId ? { actingAs: memberId } : {}),
+    });
   }
 }
 
@@ -110,23 +138,43 @@ function patchString(value: unknown, field: string): string | null | undefined {
   return value;
 }
 
-/** Validate a `roles` array against the built-in catalog (fail-closed: unknown
- *  ids are rejected at the boundary so the stored member only carries valid
- *  roles; the resolver also drops unknowns defensively). */
-function parseRoles(value: unknown): BuiltInRoleId[] | undefined {
+/** The role ids assignable in an org: the built-in catalog ∪ the org's custom
+ *  roles. Used to validate role assignments fail-closed at the boundary. */
+async function validRoleIds(tenantId: string, orgId: string): Promise<ReadonlySet<string>> {
+  const custom = await listCustomRoles(tenantId, orgId);
+  return new Set<string>([...BUILT_IN_ROLE_IDS, ...custom.map((r) => r.roleId)]);
+}
+
+/** Validate a `roles` array against the set of valid role ids (fail-closed:
+ *  unknown ids are rejected so a member/group only ever carries valid roles). */
+function parseRoleIds(value: unknown, validIds: ReadonlySet<string>): string[] | undefined {
   if (value === undefined) return undefined;
   if (!Array.isArray(value)) {
     throw new OpenwopError('validation_error', 'Field `roles` MUST be an array of role ids.', 400, { field: 'roles' });
   }
-  const out: BuiltInRoleId[] = [];
+  const out: string[] = [];
   for (const r of value) {
-    if (!isBuiltInRoleId(r)) {
-      throw new OpenwopError('validation_error', `Unknown role id \`${String(r)}\`. Valid: ${BUILT_IN_ROLE_IDS.join(', ')}.`, 400, {
-        field: 'roles',
-        valid: BUILT_IN_ROLE_IDS,
-      });
+    if (typeof r !== 'string' || !validIds.has(r)) {
+      throw new OpenwopError('validation_error', `Unknown role id \`${String(r)}\`.`, 400, { field: 'roles', valid: [...validIds] });
     }
     out.push(r);
+  }
+  return out;
+}
+
+/** Validate a custom role's `scopes` array fail-closed against the known
+ *  vocabulary (PROTOCOL_SCOPES ∪ MANAGEMENT_SCOPES). */
+function parseScopes(value: unknown): Scope[] | undefined {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value)) {
+    throw new OpenwopError('validation_error', 'Field `scopes` MUST be an array of scope strings.', 400, { field: 'scopes' });
+  }
+  const out: Scope[] = [];
+  for (const s of value) {
+    if (!isScope(s)) {
+      throw new OpenwopError('validation_error', `Unknown scope \`${String(s)}\`.`, 400, { field: 'scopes', valid: ALL_SCOPES });
+    }
+    out.push(s);
   }
   return out;
 }
@@ -165,7 +213,11 @@ export function registerAccessControlRoutes(app: Express): void {
   // ── Effective access ──
   app.get('/v1/host/sample/access/effective', async (req, res, next) => {
     try {
-      const memberId = typeof req.query.memberId === 'string' ? req.query.memberId : undefined;
+      // Explicit query param wins (the UI's per-member preview); otherwise fall
+      // back to the act-as header so a "view as member" session reports the
+      // scopes it's actually being enforced with.
+      const memberId =
+        typeof req.query.memberId === 'string' ? req.query.memberId : actingMemberId(req);
       const subject = typeof req.query.subject === 'string' ? req.query.subject : undefined;
       const access = await resolveEffectiveAccess(tenantOf(req), { memberId, subject });
       res.json(access);
@@ -324,7 +376,7 @@ export function registerAccessControlRoutes(app: Express): void {
         displayName: requireString(body.displayName, 'displayName'),
         subject: optionalString(body.subject, 'subject'),
         email: optionalString(body.email, 'email'),
-        roles: parseRoles(body.roles),
+        roles: parseRoleIds(body.roles, await validRoleIds(tenantOf(req), req.params.orgId)),
         teamIds: parseTeamIds(body.teamIds),
       });
       res.status(201).json(member);
@@ -352,7 +404,7 @@ export function registerAccessControlRoutes(app: Express): void {
         displayName: optionalString(body.displayName, 'displayName'),
         email: patchString(body.email, 'email'),
         subject: patchString(body.subject, 'subject'),
-        roles: parseRoles(body.roles),
+        roles: parseRoleIds(body.roles, await validRoleIds(tenantOf(req), req.params.orgId)),
         teamIds: parseTeamIds(body.teamIds),
       });
       res.json(updated);
@@ -396,7 +448,7 @@ export function registerAccessControlRoutes(app: Express): void {
         tenantId: tenantOf(req),
         name: requireString(body.name, 'name'),
         description: optionalString(body.description, 'description'),
-        roles: parseRoles(body.roles),
+        roles: parseRoleIds(body.roles, await validRoleIds(tenantOf(req), req.params.orgId)),
         memberIds: parseMemberIds(body.memberIds),
       });
       res.status(201).json(group);
@@ -417,7 +469,7 @@ export function registerAccessControlRoutes(app: Express): void {
       const updated = await updateGroup(req.params.groupId, {
         name: optionalString(body.name, 'name'),
         description: patchString(body.description, 'description'),
-        roles: parseRoles(body.roles),
+        roles: parseRoleIds(body.roles, await validRoleIds(tenantOf(req), req.params.orgId)),
         memberIds: parseMemberIds(body.memberIds),
       });
       res.json(updated);
@@ -435,6 +487,72 @@ export function registerAccessControlRoutes(app: Express): void {
         throw new OpenwopError('not_found', 'Group not found.', 404, { groupId: req.params.groupId });
       }
       await deleteGroup(req.params.groupId);
+      res.status(204).end();
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ── Custom roles (org-defined, beyond the built-in catalog) ──
+  app.get('/v1/host/sample/orgs/:orgId/roles', async (req, res, next) => {
+    try {
+      await loadOrgOwned(req, req.params.orgId);
+      res.json({
+        roles: BUILT_IN_ROLE_IDS.map((id) => BUILT_IN_ROLES[id]),
+        customRoles: await listCustomRoles(tenantOf(req), req.params.orgId),
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post('/v1/host/sample/orgs/:orgId/roles', async (req, res, next) => {
+    try {
+      await loadOrgOwned(req, req.params.orgId);
+      await requireScope(req, 'host:roles:manage');
+      const body = (req.body ?? {}) as { name?: unknown; description?: unknown; scopes?: unknown };
+      const role = await createCustomRole({
+        orgId: req.params.orgId,
+        tenantId: tenantOf(req),
+        name: requireString(body.name, 'name'),
+        description: optionalString(body.description, 'description'),
+        scopes: parseScopes(body.scopes) ?? [],
+      });
+      res.status(201).json(role);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.patch('/v1/host/sample/orgs/:orgId/roles/:roleId', async (req, res, next) => {
+    try {
+      await loadOrgOwned(req, req.params.orgId);
+      await requireScope(req, 'host:roles:manage');
+      const role = await getCustomRole(req.params.roleId);
+      if (!role || role.tenantId !== tenantOf(req) || role.orgId !== req.params.orgId) {
+        throw new OpenwopError('not_found', 'Custom role not found.', 404, { roleId: req.params.roleId });
+      }
+      const body = (req.body ?? {}) as { name?: unknown; description?: unknown; scopes?: unknown };
+      const updated = await updateCustomRole(req.params.roleId, {
+        name: optionalString(body.name, 'name'),
+        description: patchString(body.description, 'description'),
+        scopes: parseScopes(body.scopes),
+      });
+      res.json(updated);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.delete('/v1/host/sample/orgs/:orgId/roles/:roleId', async (req, res, next) => {
+    try {
+      await loadOrgOwned(req, req.params.orgId);
+      await requireScope(req, 'host:roles:manage');
+      const role = await getCustomRole(req.params.roleId);
+      if (!role || role.tenantId !== tenantOf(req) || role.orgId !== req.params.orgId) {
+        throw new OpenwopError('not_found', 'Custom role not found.', 404, { roleId: req.params.roleId });
+      }
+      await deleteCustomRole(req.params.roleId);
       res.status(204).end();
     } catch (err) {
       next(err);

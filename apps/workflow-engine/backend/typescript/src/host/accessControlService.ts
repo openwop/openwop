@@ -72,9 +72,18 @@ export const MANAGEMENT_SCOPES = [
   'host:teams:manage',
   'host:members:manage',
   'host:groups:manage',
+  'host:roles:manage',
 ] as const;
 
 export type Scope = (typeof PROTOCOL_SCOPES)[number] | (typeof MANAGEMENT_SCOPES)[number];
+
+/** The full known scope vocabulary — the only values a custom role may carry
+ *  (validated fail-closed at the route boundary). */
+export const ALL_SCOPES: readonly Scope[] = [...PROTOCOL_SCOPES, ...MANAGEMENT_SCOPES];
+const ALL_SCOPES_SET: ReadonlySet<string> = new Set(ALL_SCOPES);
+export function isScope(value: unknown): value is Scope {
+  return typeof value === 'string' && ALL_SCOPES_SET.has(value);
+}
 
 // ── Built-in role catalog (role → scopes) ───────────────────────────────────
 
@@ -98,6 +107,7 @@ const ADMIN_SCOPES: Scope[] = [
   'host:teams:manage',
   'host:members:manage',
   'host:groups:manage',
+  'host:roles:manage',
 ];
 const OWNER_SCOPES: Scope[] = [...ADMIN_SCOPES, 'host:org:manage'];
 
@@ -159,7 +169,8 @@ export interface OrgMember {
   subject?: string;
   displayName: string;
   email?: string;
-  roles: BuiltInRoleId[];
+  /** Role ids — each either a built-in (`viewer`…`owner`) or a custom role id. */
+  roles: string[];
   teamIds: string[];
   createdAt: string;
   updatedAt: string;
@@ -177,8 +188,26 @@ export interface Group {
   tenantId: string;
   name: string;
   description?: string;
-  roles: BuiltInRoleId[];
+  /** Role ids — each either a built-in or a custom role id. */
+  roles: string[];
   memberIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * A tenant/org-scoped custom role — lets an org define roles beyond the
+ * built-in four. `scopes` is validated fail-closed against ALL_SCOPES at the
+ * route boundary. Custom roles are NOT advertised via capabilities.authorization
+ * (same posture as the built-ins — enforcement is host-extension-local).
+ */
+export interface CustomRole {
+  roleId: string;
+  orgId: string;
+  tenantId: string;
+  name: string;
+  description?: string;
+  scopes: Scope[];
   createdAt: string;
   updatedAt: string;
 }
@@ -187,6 +216,7 @@ const orgs = new DurableCollection<Organization>('access-orgs', (o) => o.orgId);
 const teams = new DurableCollection<Team>('access-teams', (t) => t.teamId);
 const members = new DurableCollection<OrgMember>('access-members', (m) => m.memberId);
 const groups = new DurableCollection<Group>('access-groups', (g) => g.groupId);
+const customRoles = new DurableCollection<CustomRole>('access-custom-roles', (r) => r.roleId);
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -255,17 +285,21 @@ export async function updateOrg(
 
 /** Delete an org and CASCADE its teams + members + groups (architect finding 7
  *  — no orphaned tenant-scoped rows). Returns the deleted counts. */
-export async function deleteOrg(orgId: string): Promise<{ org: boolean; teams: number; members: number; groups: number }> {
+export async function deleteOrg(
+  orgId: string,
+): Promise<{ org: boolean; teams: number; members: number; groups: number; roles: number }> {
   const org = await orgs.get(orgId);
-  if (!org) return { org: false, teams: 0, members: 0, groups: 0 };
+  if (!org) return { org: false, teams: 0, members: 0, groups: 0, roles: 0 };
   const orgTeams = (await teams.list()).filter((t) => t.orgId === orgId);
   const orgMembers = (await members.list()).filter((m) => m.orgId === orgId);
   const orgGroups = (await groups.list()).filter((g) => g.orgId === orgId);
+  const orgRoles = (await customRoles.list()).filter((r) => r.orgId === orgId);
   for (const t of orgTeams) await teams.delete(t.teamId);
   for (const m of orgMembers) await members.delete(m.memberId);
   for (const g of orgGroups) await groups.delete(g.groupId);
+  for (const r of orgRoles) await customRoles.delete(r.roleId);
   await orgs.delete(orgId);
-  return { org: true, teams: orgTeams.length, members: orgMembers.length, groups: orgGroups.length };
+  return { org: true, teams: orgTeams.length, members: orgMembers.length, groups: orgGroups.length, roles: orgRoles.length };
 }
 
 // ── Teams ─────────────────────────────────────────────────────────────────────
@@ -343,7 +377,7 @@ export async function createMember(input: {
   displayName: string;
   subject?: string;
   email?: string;
-  roles?: BuiltInRoleId[];
+  roles?: string[];
   teamIds?: string[];
 }): Promise<OrgMember> {
   const now = nowIso();
@@ -375,7 +409,7 @@ export async function getMember(memberId: string): Promise<OrgMember | null> {
 
 export async function updateMember(
   memberId: string,
-  patch: { displayName?: string; email?: string | null; subject?: string | null; roles?: BuiltInRoleId[]; teamIds?: string[] },
+  patch: { displayName?: string; email?: string | null; subject?: string | null; roles?: string[]; teamIds?: string[] },
 ): Promise<OrgMember | null> {
   const member = await members.get(memberId);
   if (!member) return null;
@@ -415,7 +449,7 @@ export async function createGroup(input: {
   tenantId: string;
   name: string;
   description?: string;
-  roles?: BuiltInRoleId[];
+  roles?: string[];
   memberIds?: string[];
 }): Promise<Group> {
   const now = nowIso();
@@ -446,7 +480,7 @@ export async function getGroup(groupId: string): Promise<Group | null> {
 
 export async function updateGroup(
   groupId: string,
-  patch: { name?: string; description?: string | null; roles?: BuiltInRoleId[]; memberIds?: string[] },
+  patch: { name?: string; description?: string | null; roles?: string[]; memberIds?: string[] },
 ): Promise<Group | null> {
   const group = await groups.get(groupId);
   if (!group) return null;
@@ -466,11 +500,96 @@ export async function deleteGroup(groupId: string): Promise<boolean> {
   return groups.delete(groupId);
 }
 
+// ── Custom roles ───────────────────────────────────────────────────────────────
+
+export async function createCustomRole(input: {
+  orgId: string;
+  tenantId: string;
+  name: string;
+  description?: string;
+  scopes: Scope[];
+}): Promise<CustomRole> {
+  const now = nowIso();
+  const role: CustomRole = {
+    roleId: `role-${randomUUID().slice(0, 8)}`,
+    orgId: input.orgId,
+    tenantId: input.tenantId,
+    name: input.name,
+    description: input.description,
+    scopes: [...new Set(input.scopes)],
+    createdAt: now,
+    updatedAt: now,
+  };
+  await customRoles.put(role);
+  return role;
+}
+
+export async function listCustomRoles(tenantId: string, orgId: string): Promise<CustomRole[]> {
+  return (await customRoles.list())
+    .filter((r) => r.tenantId === tenantId && r.orgId === orgId)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+export async function getCustomRole(roleId: string): Promise<CustomRole | null> {
+  return customRoles.get(roleId);
+}
+
+export async function updateCustomRole(
+  roleId: string,
+  patch: { name?: string; description?: string | null; scopes?: Scope[] },
+): Promise<CustomRole | null> {
+  const role = await customRoles.get(roleId);
+  if (!role) return null;
+  if (patch.name !== undefined) role.name = patch.name;
+  if (patch.description !== undefined) {
+    if (patch.description === null) delete role.description;
+    else role.description = patch.description;
+  }
+  if (patch.scopes !== undefined) role.scopes = [...new Set(patch.scopes)];
+  role.updatedAt = nowIso();
+  await customRoles.put(role);
+  return role;
+}
+
+/** Delete a custom role and scrub it from every member's + group's `roles[]`
+ *  in the same tenant (no dangling references). */
+export async function deleteCustomRole(roleId: string): Promise<boolean> {
+  const existed = await customRoles.delete(roleId);
+  if (existed) {
+    for (const m of (await members.list()).filter((m) => m.roles.includes(roleId))) {
+      m.roles = m.roles.filter((r) => r !== roleId);
+      m.updatedAt = nowIso();
+      await members.put(m);
+    }
+    for (const g of (await groups.list()).filter((g) => g.roles.includes(roleId))) {
+      g.roles = g.roles.filter((r) => r !== roleId);
+      g.updatedAt = nowIso();
+      await groups.put(g);
+    }
+  }
+  return existed;
+}
+
+/** Resolve a set of role ids (built-in or custom) to a union of scopes against
+ *  a custom-role lookup. Unknown ids are dropped — fail-closed. */
+function unionScopes(roleIds: readonly string[], customById: ReadonlyMap<string, CustomRole>): Scope[] {
+  const set = new Set<Scope>();
+  for (const id of roleIds) {
+    if (isBuiltInRoleId(id)) {
+      for (const s of BUILT_IN_ROLES[id].scopes) set.add(s);
+    } else {
+      const cr = customById.get(id);
+      if (cr) for (const s of cr.scopes) set.add(s);
+    }
+  }
+  return [...set];
+}
+
 // ── Effective-access resolution ───────────────────────────────────────────────
 
 export interface EffectiveAccess {
-  /** Resolved role ids that applied (direct ∪ group-derived). */
-  roles: BuiltInRoleId[];
+  /** Resolved role ids that applied (direct ∪ group-derived; built-in or custom). */
+  roles: string[];
   /** Union of scopes granted by those roles. */
   scopes: Scope[];
   /** How the resolution was reached — for the UI + audit clarity. */
@@ -478,9 +597,9 @@ export interface EffectiveAccess {
   /** The member the resolution matched, when basis === 'member'. */
   memberId?: string;
   /** Roles assigned directly on the member (provenance, when basis === 'member'). */
-  directRoles?: BuiltInRoleId[];
+  directRoles?: string[];
   /** Roles inherited via group membership (provenance, when basis === 'member'). */
-  groupRoles?: BuiltInRoleId[];
+  groupRoles?: string[];
 }
 
 /**
@@ -508,14 +627,17 @@ export async function resolveEffectiveAccess(
         (opts.memberId !== undefined ? m.memberId === opts.memberId : m.subject === opts.subject),
     );
     if (!member) return { roles: [], scopes: [], basis: 'none' };
-    const directRoles = member.roles.filter(isBuiltInRoleId);
+    // Custom roles defined in this member's org, for scope resolution.
+    const orgCustom = (await customRoles.list()).filter((r) => r.tenantId === tenantId && r.orgId === member.orgId);
+    const customById = new Map(orgCustom.map((r) => [r.roleId, r]));
+    const directRoles = [...member.roles];
     // Roles inherited via group membership (batch permission management).
     const memberGroups = (await groups.list()).filter(
       (g) => g.tenantId === tenantId && g.memberIds.includes(member.memberId),
     );
-    const groupRoles = [...new Set(memberGroups.flatMap((g) => g.roles.filter(isBuiltInRoleId)))];
+    const groupRoles = [...new Set(memberGroups.flatMap((g) => g.roles))];
     const roles = [...new Set([...directRoles, ...groupRoles])];
-    return { roles, scopes: scopesForRoles(roles), basis: 'member', memberId: member.memberId, directRoles, groupRoles };
+    return { roles, scopes: unionScopes(roles, customById), basis: 'member', memberId: member.memberId, directRoles, groupRoles };
   }
   // No member context → the tenant owner principal, implicitly `owner`.
   return { roles: ['owner'], scopes: [...OWNER_SCOPES], basis: 'tenant-owner' };
@@ -528,4 +650,5 @@ export async function __resetAccessStores(): Promise<void> {
   await teams.__clear();
   await members.__clear();
   await groups.__clear();
+  await customRoles.__clear();
 }

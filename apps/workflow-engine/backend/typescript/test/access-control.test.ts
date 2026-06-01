@@ -167,6 +167,78 @@ describe('access-control host-extension — HTTP', () => {
     expect(eff.body.scopes).toContain('runs:create'); // came from the group, not the direct role
   });
 
+  it('enforces scopes via the act-as seam: a viewer member is DENIED a management mutation', async () => {
+    const org = await api<Org>('/v1/host/sample/orgs', { method: 'POST', body: JSON.stringify({ name: 'Enforce Co' }) });
+    const orgId = org.body.orgId;
+    const viewer = await api<Member>(`/v1/host/sample/orgs/${orgId}/members`, {
+      method: 'POST',
+      body: JSON.stringify({ displayName: 'Val', roles: ['viewer'] }),
+    });
+    const admin = await api<Member>(`/v1/host/sample/orgs/${orgId}/members`, {
+      method: 'POST',
+      body: JSON.stringify({ displayName: 'Ada', roles: ['admin'] }),
+    });
+
+    // No header → tenant owner → allowed.
+    const asOwner = await api(`/v1/host/sample/orgs/${orgId}/teams`, { method: 'POST', body: JSON.stringify({ name: 'T-owner' }) });
+    expect(asOwner.status).toBe(201);
+
+    // Acting as a viewer (lacks host:teams:manage) → 403 forbidden_scope.
+    const asViewer = await api<{ error?: { code?: string } }>(`/v1/host/sample/orgs/${orgId}/teams`, {
+      method: 'POST',
+      headers: { 'x-openwop-act-as': viewer.body.memberId },
+      body: JSON.stringify({ name: 'T-viewer' }),
+    });
+    expect(asViewer.status).toBe(403);
+
+    // Acting as an admin (has host:teams:manage) → allowed.
+    const asAdmin = await api(`/v1/host/sample/orgs/${orgId}/teams`, {
+      method: 'POST',
+      headers: { 'x-openwop-act-as': admin.body.memberId },
+      body: JSON.stringify({ name: 'T-admin' }),
+    });
+    expect(asAdmin.status).toBe(201);
+
+    // /access/effective honors the header too.
+    const eff = await api<{ basis: string; scopes: string[] }>('/v1/host/sample/access/effective', {
+      headers: { 'x-openwop-act-as': viewer.body.memberId },
+    });
+    expect(eff.body.basis).toBe('member');
+    expect(eff.body.scopes).not.toContain('host:teams:manage');
+  });
+
+  it('custom roles: define a role with scopes (unknown scope rejected), assign it, and it resolves', async () => {
+    const org = await api<Org>('/v1/host/sample/orgs', { method: 'POST', body: JSON.stringify({ name: 'Custom Co' }) });
+    const orgId = org.body.orgId;
+
+    // Unknown scope rejected fail-closed.
+    const bad = await api(`/v1/host/sample/orgs/${orgId}/roles`, { method: 'POST', body: JSON.stringify({ name: 'X', scopes: ['not-a-scope'] }) });
+    expect(bad.status).toBe(400);
+
+    // Define a custom role carrying two protocol scopes.
+    const role = await api<{ roleId: string; scopes: string[] }>(`/v1/host/sample/orgs/${orgId}/roles`, {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Runner', scopes: ['runs:create', 'runs:read'] }),
+    });
+    expect(role.status).toBe(201);
+
+    // The org role catalog returns built-in (4) + custom.
+    const cat = await api<{ roles: Array<{ id: string }>; customRoles: Array<{ roleId: string }> }>(`/v1/host/sample/orgs/${orgId}/roles`);
+    expect(cat.body.roles.length).toBe(4);
+    expect(cat.body.customRoles.some((r) => r.roleId === role.body.roleId)).toBe(true);
+
+    // Assign ONLY the custom role to a member, then resolve effective access.
+    const m = await api<Member>(`/v1/host/sample/orgs/${orgId}/members`, {
+      method: 'POST',
+      body: JSON.stringify({ displayName: 'Runner Person', roles: [role.body.roleId] }),
+    });
+    expect(m.status).toBe(201);
+    const eff = await api<{ scopes: string[]; roles: string[] }>(`/v1/host/sample/access/effective?memberId=${m.body.memberId}`);
+    expect(eff.body.roles).toEqual([role.body.roleId]);
+    expect(eff.body.scopes).toContain('runs:create'); // from the custom role
+    expect(eff.body.scopes).not.toContain('artifacts:read'); // NOT in the custom role, no built-in role assigned
+  });
+
   it('404s a foreign/unknown orgId rather than leaking it', async () => {
     const res = await api('/v1/host/sample/orgs/org-doesnotexist');
     expect(res.status).toBe(404);

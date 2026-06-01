@@ -48,8 +48,20 @@ export interface OrgMember {
   subject?: string;
   displayName: string;
   email?: string;
-  roles: BuiltInRoleId[];
+  /** Role ids — built-in (`viewer`…`owner`) or custom role ids. */
+  roles: string[];
   teamIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CustomRole {
+  roleId: string;
+  orgId: string;
+  tenantId: string;
+  name: string;
+  description?: string;
+  scopes: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -60,23 +72,44 @@ export interface Group {
   tenantId: string;
   name: string;
   description?: string;
-  roles: BuiltInRoleId[];
+  roles: string[];
   memberIds: string[];
   createdAt: string;
   updatedAt: string;
 }
 
 export interface EffectiveAccess {
-  roles: BuiltInRoleId[];
+  roles: string[];
   scopes: string[];
   basis: 'tenant-owner' | 'member' | 'none';
   memberId?: string;
-  directRoles?: BuiltInRoleId[];
-  groupRoles?: BuiltInRoleId[];
+  directRoles?: string[];
+  groupRoles?: string[];
 }
 
 const base = `${config.baseUrl}/v1/host/sample`;
-const jsonHeaders = (): HeadersInit => authedHeaders({ 'content-type': 'application/json' });
+
+/**
+ * "View as member" demo seam (reference host only). When set, every access
+ * call carries `x-openwop-act-as: <memberId>` so the backend enforces that
+ * member's role-derived scopes — letting the UI demonstrate role-based denial.
+ * NOT an auth mechanism; a production host derives the acting principal from
+ * real auth, never a client header.
+ */
+let actingMemberId: string | null = null;
+export function setActingMember(memberId: string | null): void {
+  actingMemberId = memberId && memberId.trim() ? memberId : null;
+}
+export function getActingMember(): string | null {
+  return actingMemberId;
+}
+
+function acHeaders(extra?: Record<string, string>): Record<string, string> {
+  const h = authedHeaders(extra);
+  if (actingMemberId) h['x-openwop-act-as'] = actingMemberId;
+  return h;
+}
+const jsonHeaders = (): Record<string, string> => acHeaders({ 'content-type': 'application/json' });
 
 /** Resolve a JSON body, surfacing the host's error envelope message when present. */
 async function asJson<T>(res: Response, ctx: string): Promise<T> {
@@ -100,7 +133,7 @@ async function expectOk(res: Response, ctx: string): Promise<void> {
 // ── Roles + effective access ──────────────────────────────────────────────────
 
 export async function listRoles(): Promise<AccessRole[]> {
-  const res = await fetch(`${base}/roles`, fetchOpts({ headers: authedHeaders() }));
+  const res = await fetch(`${base}/roles`, fetchOpts({ headers: acHeaders() }));
   return (await asJson<{ roles: AccessRole[] }>(res, 'listRoles')).roles;
 }
 
@@ -109,14 +142,14 @@ export async function getEffectiveAccess(opts: { memberId?: string; subject?: st
   if (opts.memberId) qs.set('memberId', opts.memberId);
   if (opts.subject) qs.set('subject', opts.subject);
   const suffix = qs.toString() ? `?${qs.toString()}` : '';
-  const res = await fetch(`${base}/access/effective${suffix}`, fetchOpts({ headers: authedHeaders() }));
+  const res = await fetch(`${base}/access/effective${suffix}`, fetchOpts({ headers: acHeaders() }));
   return asJson<EffectiveAccess>(res, 'getEffectiveAccess');
 }
 
 // ── Organizations ──────────────────────────────────────────────────────────────
 
 export async function listOrgs(): Promise<Organization[]> {
-  const res = await fetch(`${base}/orgs`, fetchOpts({ headers: authedHeaders() }));
+  const res = await fetch(`${base}/orgs`, fetchOpts({ headers: acHeaders() }));
   return (await asJson<{ orgs: Organization[] }>(res, 'listOrgs')).orgs;
 }
 
@@ -131,14 +164,14 @@ export async function updateOrg(orgId: string, patch: { name?: string; descripti
 }
 
 export async function deleteOrg(orgId: string): Promise<void> {
-  const res = await fetch(`${base}/orgs/${encodeURIComponent(orgId)}`, fetchOpts({ method: 'DELETE', headers: authedHeaders() }));
+  const res = await fetch(`${base}/orgs/${encodeURIComponent(orgId)}`, fetchOpts({ method: 'DELETE', headers: acHeaders() }));
   await expectOk(res, 'deleteOrg');
 }
 
 // ── Teams ────────────────────────────────────────────────────────────────────
 
 export async function listTeams(orgId: string): Promise<Team[]> {
-  const res = await fetch(`${base}/orgs/${encodeURIComponent(orgId)}/teams`, fetchOpts({ headers: authedHeaders() }));
+  const res = await fetch(`${base}/orgs/${encodeURIComponent(orgId)}/teams`, fetchOpts({ headers: acHeaders() }));
   return (await asJson<{ teams: Team[] }>(res, 'listTeams')).teams;
 }
 
@@ -148,20 +181,20 @@ export async function createTeam(orgId: string, input: { name: string; descripti
 }
 
 export async function deleteTeam(orgId: string, teamId: string): Promise<void> {
-  const res = await fetch(`${base}/orgs/${encodeURIComponent(orgId)}/teams/${encodeURIComponent(teamId)}`, fetchOpts({ method: 'DELETE', headers: authedHeaders() }));
+  const res = await fetch(`${base}/orgs/${encodeURIComponent(orgId)}/teams/${encodeURIComponent(teamId)}`, fetchOpts({ method: 'DELETE', headers: acHeaders() }));
   await expectOk(res, 'deleteTeam');
 }
 
 // ── Members ──────────────────────────────────────────────────────────────────
 
 export async function listMembers(orgId: string): Promise<OrgMember[]> {
-  const res = await fetch(`${base}/orgs/${encodeURIComponent(orgId)}/members`, fetchOpts({ headers: authedHeaders() }));
+  const res = await fetch(`${base}/orgs/${encodeURIComponent(orgId)}/members`, fetchOpts({ headers: acHeaders() }));
   return (await asJson<{ members: OrgMember[] }>(res, 'listMembers')).members;
 }
 
 export async function createMember(
   orgId: string,
-  input: { displayName: string; email?: string; subject?: string; roles?: BuiltInRoleId[]; teamIds?: string[] },
+  input: { displayName: string; email?: string; subject?: string; roles?: string[]; teamIds?: string[] },
 ): Promise<OrgMember> {
   const res = await fetch(`${base}/orgs/${encodeURIComponent(orgId)}/members`, fetchOpts({ method: 'POST', headers: jsonHeaders(), body: JSON.stringify(input) }));
   return asJson<OrgMember>(res, 'createMember');
@@ -170,7 +203,7 @@ export async function createMember(
 export async function updateMember(
   orgId: string,
   memberId: string,
-  patch: { displayName?: string; email?: string | null; subject?: string | null; roles?: BuiltInRoleId[]; teamIds?: string[] },
+  patch: { displayName?: string; email?: string | null; subject?: string | null; roles?: string[]; teamIds?: string[] },
 ): Promise<OrgMember> {
   const res = await fetch(
     `${base}/orgs/${encodeURIComponent(orgId)}/members/${encodeURIComponent(memberId)}`,
@@ -182,7 +215,7 @@ export async function updateMember(
 export async function deleteMember(orgId: string, memberId: string): Promise<void> {
   const res = await fetch(
     `${base}/orgs/${encodeURIComponent(orgId)}/members/${encodeURIComponent(memberId)}`,
-    fetchOpts({ method: 'DELETE', headers: authedHeaders() }),
+    fetchOpts({ method: 'DELETE', headers: acHeaders() }),
   );
   await expectOk(res, 'deleteMember');
 }
@@ -190,13 +223,13 @@ export async function deleteMember(orgId: string, memberId: string): Promise<voi
 // ── Groups (cross-cutting RBAC units carrying roles) ──────────────────────────
 
 export async function listGroups(orgId: string): Promise<Group[]> {
-  const res = await fetch(`${base}/orgs/${encodeURIComponent(orgId)}/groups`, fetchOpts({ headers: authedHeaders() }));
+  const res = await fetch(`${base}/orgs/${encodeURIComponent(orgId)}/groups`, fetchOpts({ headers: acHeaders() }));
   return (await asJson<{ groups: Group[] }>(res, 'listGroups')).groups;
 }
 
 export async function createGroup(
   orgId: string,
-  input: { name: string; description?: string; roles?: BuiltInRoleId[]; memberIds?: string[] },
+  input: { name: string; description?: string; roles?: string[]; memberIds?: string[] },
 ): Promise<Group> {
   const res = await fetch(`${base}/orgs/${encodeURIComponent(orgId)}/groups`, fetchOpts({ method: 'POST', headers: jsonHeaders(), body: JSON.stringify(input) }));
   return asJson<Group>(res, 'createGroup');
@@ -205,7 +238,7 @@ export async function createGroup(
 export async function updateGroup(
   orgId: string,
   groupId: string,
-  patch: { name?: string; description?: string | null; roles?: BuiltInRoleId[]; memberIds?: string[] },
+  patch: { name?: string; description?: string | null; roles?: string[]; memberIds?: string[] },
 ): Promise<Group> {
   const res = await fetch(
     `${base}/orgs/${encodeURIComponent(orgId)}/groups/${encodeURIComponent(groupId)}`,
@@ -217,7 +250,31 @@ export async function updateGroup(
 export async function deleteGroup(orgId: string, groupId: string): Promise<void> {
   const res = await fetch(
     `${base}/orgs/${encodeURIComponent(orgId)}/groups/${encodeURIComponent(groupId)}`,
-    fetchOpts({ method: 'DELETE', headers: authedHeaders() }),
+    fetchOpts({ method: 'DELETE', headers: acHeaders() }),
   );
   await expectOk(res, 'deleteGroup');
+}
+
+// ── Custom roles ──────────────────────────────────────────────────────────────
+
+/** The org's full role catalog: built-in roles + custom roles. */
+export async function listOrgRoles(orgId: string): Promise<{ roles: AccessRole[]; customRoles: CustomRole[] }> {
+  const res = await fetch(`${base}/orgs/${encodeURIComponent(orgId)}/roles`, fetchOpts({ headers: acHeaders() }));
+  return asJson<{ roles: AccessRole[]; customRoles: CustomRole[] }>(res, 'listOrgRoles');
+}
+
+export async function createCustomRole(
+  orgId: string,
+  input: { name: string; description?: string; scopes: string[] },
+): Promise<CustomRole> {
+  const res = await fetch(`${base}/orgs/${encodeURIComponent(orgId)}/roles`, fetchOpts({ method: 'POST', headers: jsonHeaders(), body: JSON.stringify(input) }));
+  return asJson<CustomRole>(res, 'createCustomRole');
+}
+
+export async function deleteCustomRole(orgId: string, roleId: string): Promise<void> {
+  const res = await fetch(
+    `${base}/orgs/${encodeURIComponent(orgId)}/roles/${encodeURIComponent(roleId)}`,
+    fetchOpts({ method: 'DELETE', headers: acHeaders() }),
+  );
+  await expectOk(res, 'deleteCustomRole');
 }
