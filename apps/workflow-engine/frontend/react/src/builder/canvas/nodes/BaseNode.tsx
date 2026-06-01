@@ -7,10 +7,11 @@
  * glow so the canvas doubles as an execution view.
  */
 
-import { memo, useState } from 'react';
+import { memo, useState, type ReactNode } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { catalogEntry } from '../../palette/catalogRegistry.js';
 import { useBuilderStore, type NodeRunStatus } from '../../store/builderStore.js';
+import { CircleIcon, CheckIcon, XIcon, PauseIcon, AlertIcon } from '../../../chat/icons/index.js';
 
 interface NodeData extends Record<string, unknown> {
   kind: string;
@@ -20,11 +21,11 @@ interface NodeData extends Record<string, unknown> {
 }
 
 // Status → accent color + glyph for the live-execution overlay badge.
-const RUN_STATUS_META: Record<NodeRunStatus, { color: string; label: string; glyph: string }> = {
-  running: { color: '#f59e0b', label: 'Running', glyph: '●' },
-  completed: { color: '#10b981', label: 'Completed', glyph: '✓' },
-  failed: { color: '#ef4444', label: 'Failed', glyph: '✕' },
-  suspended: { color: '#8b5cf6', label: 'Suspended', glyph: '⏸' },
+const RUN_STATUS_META: Record<NodeRunStatus, { color: string; label: string; glyph: ReactNode }> = {
+  running: { color: '#f59e0b', label: 'Running', glyph: <CircleIcon size={12} filled /> },
+  completed: { color: '#10b981', label: 'Completed', glyph: <CheckIcon size={12} /> },
+  failed: { color: '#ef4444', label: 'Failed', glyph: <XIcon size={12} /> },
+  suspended: { color: '#8b5cf6', label: 'Suspended', glyph: <PauseIcon size={12} /> },
 };
 
 function BaseNodeImpl({ id, data, selected }: NodeProps) {
@@ -68,7 +69,7 @@ function BaseNodeImpl({ id, data, selected }: NodeProps) {
           title={`This host can't run this node — needs: ${missingSurfaces.join(', ')}`}
           aria-label={`Host capability missing: needs ${missingSurfaces.join(', ')}`}
         >
-          ⚠
+          <AlertIcon size={14} />
         </span>
       )}
       {runMeta && (
@@ -88,6 +89,9 @@ function BaseNodeImpl({ id, data, selected }: NodeProps) {
             fontSize: 11,
             lineHeight: '18px',
             textAlign: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             fontWeight: 700,
             boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
             animation: d.runStatus === 'running' ? 'openwop-pulse 1.2s ease-in-out infinite' : 'none',

@@ -23,6 +23,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { RunEventDoc } from '@openwop/openwop';
 import { listMemory, getCapabilities, type MemoryEntry } from '../client/runsClient.js';
+import { LockIcon, PencilIcon } from '../chat/icons/index.js';
 
 interface Props {
   runId: string;
@@ -169,7 +170,7 @@ export function RunMemoryPanel({ runId, events, status }: Props) {
                   <td>
                     {isRedacted(e.content) && (
                       <span className="memory-redacted-badge" title="Contains host-redacted secret material (SR-1)">
-                        🔒 redacted
+                        <LockIcon size={12} /> redacted
                       </span>
                     )}
                     {attr?.nodeId && (
@@ -177,7 +178,7 @@ export function RunMemoryPanel({ runId, events, status }: Props) {
                         className="memory-wrote-badge"
                         title={`Written by node ${attr.nodeId}${attr.agentId ? ` (agent ${attr.agentId})` : ''} — RFC 0057 memory.written`}
                       >
-                        ✎ {attr.nodeId}
+                        <PencilIcon size={12} /> {attr.nodeId}
                       </span>
                     )}
                     <span className="memory-content">{e.content}</span>

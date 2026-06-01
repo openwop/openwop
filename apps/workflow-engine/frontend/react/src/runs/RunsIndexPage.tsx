@@ -8,6 +8,7 @@ import { listSavedWorkflows } from '../builder/persistence/localStore.js';
 import { serializeWorkflow, SerializeError } from '../builder/schema/serialize.js';
 import { registerWorkflow } from '../builder/persistence/registerClient.js';
 import { useAuth } from '../auth/useAuth.js';
+import { FlagIcon } from '../chat/icons/index.js';
 
 const SAMPLE_WORKFLOWS = [
   { id: 'sample.demo.uppercase', label: 'sample.demo.uppercase — single-node uppercase' },
@@ -150,7 +151,7 @@ export function RunsIndexPage() {
                   All
                 </button>
                 <button type="button" aria-pressed={reviewOnly} onClick={() => setReviewOnly(true)} title="Runs flagged, low-rated, or corrected">
-                  🚩 Flagged{flaggedCount > 0 ? ` (${flaggedCount})` : ''}
+                  <FlagIcon size={13} /> Flagged{flaggedCount > 0 ? ` (${flaggedCount})` : ''}
                 </button>
               </div>
             )}
@@ -195,7 +196,7 @@ export function RunsIndexPage() {
                             style={{ marginLeft: 6, fontSize: 10 }}
                             title={`Flagged for review: ${reviewReason(reviewOf(byRun.get(r.runId) ?? []))}`}
                           >
-                            🚩 review
+                            <FlagIcon size={10} /> review
                           </span>
                         )}
                       </td>

@@ -19,6 +19,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChatMessageThoughts } from './hooks/useChatSession.js';
 import { useElapsedMs } from './hooks/useElapsedMs.js';
+import { ChevronRightIcon, ChevronDownIcon } from './icons/index.js';
 
 interface Props {
   thoughts: ChatMessageThoughts;
@@ -151,11 +152,11 @@ export function ThoughtsDisclosure({ thoughts }: Props): JSX.Element {
       >
         {showChevron && (
           <span
-            className={`openwop-thoughts-chevron ${open ? 'open' : ''}`}
+            className="openwop-thoughts-chevron"
             aria-hidden
-            style={{ fontSize: 10, opacity: 0.7 }}
+            style={{ opacity: 0.7, display: 'inline-flex' }}
           >
-            ▶
+            {open ? <ChevronDownIcon size={12} /> : <ChevronRightIcon size={12} />}
           </span>
         )}
         {summaryLine}

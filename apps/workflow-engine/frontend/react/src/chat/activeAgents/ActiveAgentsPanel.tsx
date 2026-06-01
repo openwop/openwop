@@ -31,6 +31,7 @@
  */
 
 import type { ActiveAgentRow } from './types.js';
+import { CircleIcon, XIcon } from '../icons/index.js';
 
 /** The sentinel id for the default OpenWOP Assistant — kept here so
  *  every consumer of the active-agents state agrees on the value
@@ -99,9 +100,9 @@ export function ActiveAgentsPanel({
           className="secondary"
           onClick={onClose}
           aria-label="Close active agents"
-          style={{ padding: '2px 8px', fontSize: 11, minHeight: 0, height: 22 }}
+          style={{ padding: '2px 8px', fontSize: 11, minHeight: 0, height: 22, display: 'inline-flex', alignItems: 'center' }}
         >
-          ×
+          <XIcon size={14} />
         </button>
       </header>
 
@@ -201,7 +202,7 @@ function ActiveAgentRowView({
           }}
         >
           <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span aria-hidden style={{ fontSize: 12 }}>{isCurrent ? '●' : '○'}</span>
+            <span aria-hidden style={{ display: 'inline-flex' }}>{isCurrent ? <CircleIcon size={12} filled /> : <CircleIcon size={12} />}</span>
             <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {row.persona}
             </span>
@@ -226,9 +227,11 @@ function ActiveAgentRowView({
               cursor: 'pointer',
               borderRadius: 4,
               minHeight: 0,
+              display: 'inline-flex',
+              alignItems: 'center',
             }}
           >
-            ×
+            <XIcon size={14} />
           </button>
         )}
       </div>

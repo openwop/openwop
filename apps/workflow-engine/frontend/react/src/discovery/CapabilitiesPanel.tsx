@@ -3,12 +3,13 @@ import { getCapabilities } from '../client/runsClient.js';
 import { authedHeaders, config, fetchOpts } from '../client/config.js';
 import { McpToolsPanel } from '../mcp/McpToolsPanel.js';
 import { A2APeerPanel } from '../peers/A2APeerPanel.js';
+import { CheckIcon, CircleIcon } from '../chat/icons/index.js';
 
 /** Render an advertised boolean as a tri-state glyph. `undefined` means the
  *  host hasn't declared the field; that's distinct from `false` (declared off). */
 function boolGlyph(v: boolean | undefined): JSX.Element {
-  if (v === true) return <span style={{ color: 'var(--color-success)' }}>✓</span>;
-  if (v === false) return <span style={{ color: 'var(--ink-3)' }}>○</span>;
+  if (v === true) return <span style={{ color: 'var(--color-success)' }}><CheckIcon size={14} /></span>;
+  if (v === false) return <span style={{ color: 'var(--ink-3)' }}><CircleIcon size={14} /></span>;
   return <span className="muted">—</span>;
 }
 
@@ -196,7 +197,7 @@ export function CapabilitiesPanel() {
               {surfaces.map((s) => (
                 <tr key={s.name}>
                   <td><code>{s.name}</code></td>
-                  <td>{s.supported ? '✓' : '○'}</td>
+                  <td>{s.supported ? <CheckIcon size={14} /> : <CircleIcon size={14} />}</td>
                   <td>{s.implementation ? <code>{s.implementation}</code> : <span className="muted">—</span>}</td>
                   <td className="muted">{s.note ?? ''}</td>
                 </tr>

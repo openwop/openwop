@@ -16,6 +16,7 @@
 
 import { useMemo, useState } from 'react';
 import type { RunEventDoc } from '@openwop/openwop';
+import { SaveIcon } from '../chat/icons/index.js';
 
 interface Props {
   events: readonly RunEventDoc[];
@@ -189,7 +190,7 @@ export function RunTimeline({ events, onForkFrom, onSelectSeq }: Props) {
                     className="muted run-timeline-mem-write"
                     title={`Wrote ${mw.count} memory entr${mw.count === 1 ? 'y' : 'ies'} (RFC 0057)${mw.refs.length ? ` → ${mw.refs.join(', ')}` : ''}`}
                   >
-                    {' '}<span aria-hidden="true">💾</span>{mw.count > 1 ? ` ${mw.count}` : ''}
+                    {' '}<span aria-hidden="true"><SaveIcon size={12} /></span>{mw.count > 1 ? ` ${mw.count}` : ''}
                   </span>
                 );
               })()}

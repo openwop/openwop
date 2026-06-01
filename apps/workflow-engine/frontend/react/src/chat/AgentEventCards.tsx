@@ -17,6 +17,7 @@ import type {
   AgentHandoff,
   AgentToolCall,
 } from './hooks/useChatSession.js';
+import { ScaleIcon, WrenchIcon } from './icons/index.js';
 
 function formatDuration(ms: number): string {
   if (ms < 1000) return `${ms}ms`;
@@ -79,8 +80,8 @@ export function ToolCallCard({ call }: { call: AgentToolCall }): JSX.Element {
           textAlign: 'left',
         }}
       >
-        <span className="muted" style={{ fontSize: 10 }}>
-          🔧
+        <span className="muted" style={{ display: 'inline-flex' }} aria-hidden>
+          <WrenchIcon size={12} />
         </span>
         <span style={{ fontWeight: 600 }}>{call.toolName}</span>
         {call.agentId && (
@@ -240,7 +241,7 @@ export function DecisionBadge({ decision }: { decision: AgentDecision }): JSX.El
           textAlign: 'left',
         }}
       >
-        <span className="muted" style={{ fontSize: 10 }}>⚖️</span>
+        <span className="muted" style={{ display: 'inline-flex' }} aria-hidden><ScaleIcon size={12} /></span>
         <span style={{ fontWeight: 600 }}>Decision: {decisionLabel}</span>
         {conf != null && (
           <span

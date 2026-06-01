@@ -10,6 +10,7 @@
  */
 
 import { useState } from 'react';
+import { CheckIcon, ChevronDownIcon, ChevronRightIcon, CircleIcon, PauseIcon, XIcon } from '../icons/index.js';
 import type { ChatMessage, WorkflowRunState } from '../hooks/useChatSession.js';
 
 export const STATUS_COLORS: Record<WorkflowRunState['status'], string> = {
@@ -83,12 +84,12 @@ export function StepList({ run, message }: Props): JSX.Element {
           && (typeof outputs !== 'object' || Object.keys(outputs).length > 0);
         const isExpanded = expandedNodeId === nodeId;
 
-        const stateChip: { label: string | 'spinner'; color: string } = isCompleted
-          ? { label: '✓', color: STATUS_COLORS.completed }
-          : isFailed ? { label: '✕', color: STATUS_COLORS.failed }
-          : isSuspended ? { label: '⏸', color: STATUS_COLORS.running }
-          : isRunning ? { label: 'spinner', color: STATUS_COLORS.running }
-          : { label: '○', color: 'var(--ink-3, #8a857a)' };
+        const stateChip: { icon: JSX.Element; color: string } = isCompleted
+          ? { icon: <CheckIcon size={13} />, color: STATUS_COLORS.completed }
+          : isFailed ? { icon: <XIcon size={13} />, color: STATUS_COLORS.failed }
+          : isSuspended ? { icon: <PauseIcon size={13} />, color: STATUS_COLORS.running }
+          : isRunning ? { icon: <StepSpinner />, color: STATUS_COLORS.running }
+          : { icon: <CircleIcon size={13} />, color: 'var(--ink-3, #8a857a)' };
 
         // A11y wiring for the disclosure pattern. Screen readers
         // announce the row as a button + report its expanded state +
@@ -127,7 +128,7 @@ export function StepList({ run, message }: Props): JSX.Element {
                 fontSize: 11,
                 color: stateChip.color,
               }} aria-hidden>
-                {stateChip.label === 'spinner' ? <StepSpinner /> : stateChip.label}
+                {stateChip.icon}
               </span>
               <span style={{
                 width: 22,
@@ -146,8 +147,11 @@ export function StepList({ run, message }: Props): JSX.Element {
                   color: 'var(--clay)',
                   textDecoration: 'underline',
                   textDecorationColor: 'var(--clay-rule, #d9b9a3)',
-                }} aria-hidden>
-                  {isExpanded ? '▾ hide' : '▸ view output'}
+                }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                    {isExpanded ? <ChevronDownIcon size={12} /> : <ChevronRightIcon size={12} />}
+                    {isExpanded ? 'hide' : 'view output'}
+                  </span>
                 </span>
               )}
               {isSuspended && (

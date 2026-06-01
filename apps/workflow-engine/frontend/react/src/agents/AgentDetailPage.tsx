@@ -21,6 +21,7 @@
 import { useEffect, useState } from 'react'; // useState used by both AgentDetailPage (state) and AgentDetail (delete-in-flight + error)
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { deleteUserAgent, getAgent, type AgentEntry } from '../client/agentsClient.js';
+import { ArrowLeftIcon, CheckIcon, CircleIcon } from '../chat/icons/index.js';
 
 interface State {
   agent: AgentEntry | null;
@@ -56,7 +57,7 @@ export function AgentDetailPage(): JSX.Element {
     <section aria-labelledby="agent-detail-heading" style={{ maxWidth: 800, margin: '0 auto' }}>
       <div style={{ marginBottom: 'var(--space-3)' }}>
         <Link to="/agents/templates" style={{ fontSize: 12, color: 'var(--ink-3)' }}>
-          ← Agent templates
+          <ArrowLeftIcon size={12} /> Agent templates
         </Link>
       </div>
 
@@ -354,7 +355,7 @@ function MemoryBadge({ label, enabled }: { label: string; enabled: boolean }): J
         border: `1px solid ${enabled ? 'var(--clay-rule)' : 'var(--color-border)'}`,
       }}
     >
-      {enabled ? '✓' : '○'} {label}
+      {enabled ? <CheckIcon size={12} /> : <CircleIcon size={12} />} {label}
     </span>
   );
 }

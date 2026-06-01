@@ -21,6 +21,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getCapabilities } from '../client/runsClient.js';
 import { useAuth } from '../auth/useAuth.js';
+import { InfoIcon, XIcon } from '../chat/icons/index.js';
 
 const DISMISS_KEY = 'openwop:demo-banner:dismissed';
 
@@ -76,7 +77,7 @@ export function DemoHostBanner() {
 
   return (
     <div className="demo-host-banner" role="status" aria-live="polite">
-      <span className="demo-host-banner-icon" aria-hidden>ⓘ</span>
+      <span className="demo-host-banner-icon" aria-hidden><InfoIcon size={16} /></span>
       <span className="demo-host-banner-text">
         <strong>Anonymous demo.</strong>{' '}
         Your workflows + any BYOK keys you add are scoped to this browser
@@ -91,7 +92,7 @@ export function DemoHostBanner() {
         aria-label="Dismiss notice"
         title="Dismiss"
       >
-        ×
+        <XIcon size={14} />
       </button>
     </div>
   );

@@ -24,6 +24,7 @@ import { PALETTE_MIME } from '../canvas/BuilderCanvas.js';
 import type { NodeCategory } from '../schema/workflow.js';
 import { useBuilderStore } from '../store/builderStore.js';
 import { PackBrowser } from '../../registry/PackBrowser.js';
+import { ChevronRightIcon, ChevronDownIcon, XIcon } from '../../chat/icons/index.js';
 
 const CATEGORY_LABELS: Record<NodeCategory, string> = {
   flow: 'Flow',
@@ -160,7 +161,7 @@ export function NodePalette() {
               onClick={() => setQuery('')}
               aria-label="Clear search"
             >
-              ×
+              <XIcon size={14} />
             </button>
           ) : null}
         </div>
@@ -196,8 +197,8 @@ export function NodePalette() {
               onClick={() => toggleCategory(cat)}
               aria-expanded={!categoryCollapsed}
             >
-              <span className="builder-palette-disclosure" aria-hidden>
-                {categoryCollapsed ? '▸' : '▾'}
+              <span className="builder-palette-disclosure" aria-hidden style={{ display: 'inline-flex' }}>
+                {categoryCollapsed ? <ChevronRightIcon size={14} /> : <ChevronDownIcon size={14} />}
               </span>
               <span className="builder-palette-group-name">{CATEGORY_LABELS[cat]}</span>
               <span className="builder-palette-group-count">{total}</span>
@@ -223,8 +224,8 @@ export function NodePalette() {
                           aria-expanded={!packCollapsed}
                           title={subKey === BUILTIN_SUBSECTION ? 'Host-local nodes' : subKey}
                         >
-                          <span className="builder-palette-disclosure" aria-hidden>
-                            {packCollapsed ? '▸' : '▾'}
+                          <span className="builder-palette-disclosure" aria-hidden style={{ display: 'inline-flex' }}>
+                            {packCollapsed ? <ChevronRightIcon size={14} /> : <ChevronDownIcon size={14} />}
                           </span>
                           <span className="builder-palette-subgroup-name">{subsectionLabel(subKey)}</span>
                           <span className="builder-palette-subgroup-count">{entries.length}</span>

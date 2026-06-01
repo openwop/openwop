@@ -5,6 +5,7 @@
  */
 
 import { PROVIDERS } from '../../byok/lib/providers.js';
+import { ArrowLeftIcon, ImageIcon, WrenchIcon } from '../../chat/icons/index.js';
 
 interface Props {
   value: string | undefined;
@@ -57,7 +58,7 @@ export function ModelPickerInput({ value, onChange, providerId, required }: Prop
           onClick={() => onChange(undefined)}
           title="Switch back to the declared-model dropdown"
         >
-          ← list
+          <ArrowLeftIcon size={12} /> list
         </button>
       </div>
     );
@@ -95,11 +96,11 @@ export function ModelPickerInput({ value, onChange, providerId, required }: Prop
   );
 }
 
-const CAP_BADGE: Record<string, { glyph: string; label: string }> = {
+const CAP_BADGE: Record<string, { glyph: React.ReactNode; label: string }> = {
   // RFC 0055 §A — surface what the chosen model can do (esp. vision) so the
   // user knows before relying on it. `text` is universal, so it's omitted.
-  vision: { glyph: '📷', label: 'Vision' },
-  tools: { glyph: '🛠', label: 'Tools' },
+  vision: { glyph: <ImageIcon size={12} />, label: 'Vision' },
+  tools: { glyph: <WrenchIcon size={12} />, label: 'Tools' },
   structured: { glyph: '⌗', label: 'Structured' },
 };
 

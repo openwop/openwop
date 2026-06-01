@@ -11,9 +11,9 @@
  * came from + can build their own.
  */
 
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SparklesIcon } from './icons/index.js';
+import { ClipboardIcon, SparklesIcon, WrenchIcon } from './icons/index.js';
 import { listWorkflowMentions } from './lib/workflowMentions.js';
 
 interface Props {
@@ -21,8 +21,9 @@ interface Props {
 }
 
 interface WorkflowCardSpec {
-  /** Emoji shown as a small visual anchor. */
-  glyph: string;
+  /** Small visual anchor — an icon component, or an emoji (for glyphs
+   *  with no icon-set equivalent, e.g. the traffic light). */
+  glyph: ReactNode;
   /** Card headline (display only). */
   title: string;
   /** Template display-name pattern. Matched (case-insensitive, prefix)
@@ -39,7 +40,7 @@ interface WorkflowCardSpec {
 
 const WORKFLOW_CARD_SPECS: readonly WorkflowCardSpec[] = [
   {
-    glyph: '📋',
+    glyph: <ClipboardIcon size={14} />,
     title: 'Multi-channel content review',
     templateName: 'Multi-channel content review',
     description: 'One draft, four parallel reviewers (legal, brand, compliance, risk), fan-in with all_success, publish. 12 nodes, 4 HITL gates, 1 click.',
@@ -53,7 +54,7 @@ const WORKFLOW_CARD_SPECS: readonly WorkflowCardSpec[] = [
     trailing: 'Approve the new pricing change',
   },
   {
-    glyph: '🧠',
+    glyph: <SparklesIcon size={14} />,
     title: 'Triple-AI review board',
     // Match the EXACT premadeWorkflows.ts template name (hyphenated).
     // Welcome-card resolution does a case-insensitive prefix match
@@ -190,7 +191,7 @@ export function WelcomeCard({ onPickSuggestion }: Props): JSX.Element {
           }}
         >
           <span style={{ fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span aria-hidden>🛠️</span> Build your own →
+            <WrenchIcon size={14} /> Build your own →
           </span>
           <code style={{ fontSize: 10.5, color: 'var(--clay)', fontFamily: 'var(--mono)' }}>
             /builder

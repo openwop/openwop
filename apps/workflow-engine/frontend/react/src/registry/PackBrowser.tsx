@@ -25,6 +25,7 @@ import {
   type PackDetail,
   type PackVersionRecord,
 } from './registryClient.js';
+import { CheckIcon, XIcon } from '../chat/icons/index.js';
 
 interface Props {
   /** typeIds already in the merged local catalog (installed + draggable). */
@@ -73,7 +74,7 @@ export function PackBrowser({ installedTypeIds, onClose, onUseNode }: Props) {
         <header className="pack-browser-header">
           <strong style={{ flex: 1 }}>Pack registry</strong>
           {packs && <span className="muted" style={{ fontSize: 12 }}>{packs.length} published</span>}
-          <button type="button" className="secondary" onClick={onClose} aria-label="Close">×</button>
+          <button type="button" className="secondary" onClick={onClose} aria-label="Close"><XIcon size={14} /></button>
         </header>
         <div className="pack-browser-search">
           <input
@@ -262,7 +263,7 @@ function InstallGuidance({
   if (allInstalled) {
     return (
       <p className="muted pack-detail-install-note">
-        ✓ All of this pack&apos;s nodes are installed — drag them onto the canvas from the palette.
+        <CheckIcon size={12} /> All of this pack&apos;s nodes are installed — drag them onto the canvas from the palette.
       </p>
     );
   }

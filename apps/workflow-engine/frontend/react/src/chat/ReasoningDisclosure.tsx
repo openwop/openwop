@@ -15,6 +15,8 @@
  * @see spec/v1/ai-envelope.md §"Reasoning field (normative)"
  */
 
+import { InfoIcon } from './icons/index.js';
+
 interface Props {
   reasoning: string;
 }
@@ -29,7 +31,7 @@ export function ReasoningDisclosure({ reasoning }: Props): JSX.Element | null {
          *  across Safari/VoiceOver, Firefox/NVDA, and Chrome/JAWS — each
          *  handles pseudo-element content differently. aria-hidden because
          *  the text label "Why this answer" already conveys meaning. */}
-        <span aria-hidden="true" className="reasoning-disclosure-icon">ⓘ</span>{' '}
+        <span aria-hidden="true" className="reasoning-disclosure-icon"><InfoIcon size={14} /></span>{' '}
         Why this answer
       </summary>
       <div className="reasoning-disclosure-body">{trimmed}</div>

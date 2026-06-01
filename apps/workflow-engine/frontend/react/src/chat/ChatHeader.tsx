@@ -7,7 +7,7 @@ import { ConfiguredProviderCard } from '../byok/ConfiguredProviderCard.js';
 import type { BYOKActiveConfig } from '../byok/lib/useBYOKConfig.js';
 import type { ChatSession } from './hooks/useChatSession.js';
 import { formatUsd, sessionCostUsd } from './lib/cost.js';
-import { GlobeIcon } from './icons/index.js';
+import { GlobeIcon, MenuIcon, WrenchIcon } from './icons/index.js';
 
 interface Props {
   config: BYOKActiveConfig;
@@ -74,7 +74,7 @@ export function ChatHeader({
               gap: 4,
             }}
           >
-            <span aria-hidden>☰</span>
+            <MenuIcon size={14} />
             {railBadgeCount > 0 && (
               <span style={{
                 fontSize: 10,
@@ -137,7 +137,7 @@ export function ChatHeader({
               gap: 4,
             }}
           >
-            🔧 tools{toolsEnabled ? ' on' : ''}
+            <WrenchIcon size={12} /> tools{toolsEnabled ? ' on' : ''}
           </button>
         )}
         {totalCost > 0 && (

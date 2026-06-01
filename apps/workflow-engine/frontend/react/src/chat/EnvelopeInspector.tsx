@@ -18,6 +18,7 @@
 import { useState } from 'react';
 import type { ChatMessage } from './types.js';
 import { hasEnvelopeEvents } from './EnvelopeEventsTimeline.js';
+import { ChevronRightIcon, ChevronDownIcon } from './icons/index.js';
 
 interface Props {
   message: ChatMessage;
@@ -189,8 +190,8 @@ export function EnvelopeInspector({ message }: Props): JSX.Element | null {
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="envelope-inspector-toggle-icon" aria-hidden="true">
-          {open ? '▾' : '▸'}
+        <span className="envelope-inspector-toggle-icon" aria-hidden="true" style={{ display: 'inline-flex' }}>
+          {open ? <ChevronDownIcon size={14} /> : <ChevronRightIcon size={14} />}
         </span>
         {open ? 'Hide envelope' : 'Show envelope'}
         <span className="envelope-inspector-toggle-count">{rows.length}</span>

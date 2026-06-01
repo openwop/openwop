@@ -18,15 +18,16 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useNotificationStore } from './notificationStore.js';
 import { NotificationPreferencesPanel } from './NotificationPreferencesPanel.js';
+import { AlertIcon, CheckIcon, SettingsIcon, XIcon } from '../chat/icons/index.js';
 import type { Notification, NotificationType } from './types.js';
 
 type Tab = 'all' | 'unread' | 'archived';
 
-const TYPE_ICON: Record<string, string> = {
-  'workflow.approval_needed': '✋',
+const TYPE_ICON: Record<string, React.ReactNode> = {
+  'workflow.approval_needed': <AlertIcon size={14} />,
   'workflow.input_needed':    '?',
   'workflow.failed':          '!',
-  'workflow.completed':       '✓',
+  'workflow.completed':       <CheckIcon size={14} />,
   'system.alert':             'i',
 };
 
@@ -159,7 +160,7 @@ export function NotificationPanel(): JSX.Element | null {
               title="Notification preferences"
               style={{ fontSize: 14 }}
             >
-              ⚙
+              <SettingsIcon size={16} />
             </button>
             <button
               type="button"
@@ -167,7 +168,7 @@ export function NotificationPanel(): JSX.Element | null {
               onClick={closePanel}
               aria-label="Close notifications"
             >
-              ✕
+              <XIcon size={16} />
             </button>
           </div>
         </header>

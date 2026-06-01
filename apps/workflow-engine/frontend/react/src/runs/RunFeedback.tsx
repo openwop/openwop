@@ -13,6 +13,7 @@ import {
   type AnnotationSignal,
   type FeedbackCapability,
 } from '../client/feedbackClient.js';
+import { ThumbsUpIcon, ThumbsDownIcon, FlagIcon } from '../chat/icons/index.js';
 
 export function RunFeedback({ runId, onRecorded }: { runId: string; onRecorded?: () => void }) {
   const [cap, setCap] = useState<FeedbackCapability | null>(null);
@@ -51,9 +52,9 @@ export function RunFeedback({ runId, onRecorded }: { runId: string; onRecorded?:
         <p className="muted" style={{ margin: 0 }}>Recorded: {sent}. Thanks.</p>
       ) : (
         <div className="button-row" role="group" aria-label="Rate this run">
-          <button type="button" className="secondary" disabled={pending} onClick={() => send({ kind: 'rating', rating: 5 }, '👍 good')} aria-label="Good">👍 Good</button>
-          <button type="button" className="secondary" disabled={pending} onClick={() => send({ kind: 'rating', rating: 1 }, '👎 bad')} aria-label="Bad">👎 Bad</button>
-          <button type="button" className="secondary" disabled={pending} onClick={() => send({ kind: 'flag' }, '🚩 flagged')} aria-label="Flag for review">🚩 Flag for review</button>
+          <button type="button" className="secondary" disabled={pending} onClick={() => send({ kind: 'rating', rating: 5 }, 'good')} aria-label="Good"><ThumbsUpIcon size={14} /> Good</button>
+          <button type="button" className="secondary" disabled={pending} onClick={() => send({ kind: 'rating', rating: 1 }, 'bad')} aria-label="Bad"><ThumbsDownIcon size={14} /> Bad</button>
+          <button type="button" className="secondary" disabled={pending} onClick={() => send({ kind: 'flag' }, 'flagged')} aria-label="Flag for review"><FlagIcon size={14} /> Flag for review</button>
         </div>
       )}
       {error && <div className="alert error" style={{ marginTop: 8 }}>{error}</div>}

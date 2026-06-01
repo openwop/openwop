@@ -24,6 +24,7 @@ import { createRun, getCapabilities } from '../client/runsClient.js';
 import { subscribeToRun } from '../client/streamsClient.js';
 import type { SavedWorkflow } from './schema/workflow.js';
 import { catalogEntry } from './palette/catalogRegistry.js';
+import { UndoIcon, RedoIcon, CheckIcon } from '../chat/icons/index.js';
 
 /** Host-advertised engine limits from `capabilities.limits` (RFC 0009 +
  *  RFC 0058). Optional fields are absent when the host doesn't advertise. */
@@ -422,8 +423,8 @@ export function BuilderShell({ onNewWorkflow }: Props) {
         />
         <span className="builder-toolbar-id muted">{workflowId || newWorkflowId()}</span>
         <div className="builder-toolbar-spacer" />
-        <button className="secondary" onClick={undo} disabled={!canUndo} title="Undo">↶</button>
-        <button className="secondary" onClick={redo} disabled={!canRedo} title="Redo">↷</button>
+        <button className="secondary" onClick={undo} disabled={!canUndo} title="Undo" aria-label="Undo"><UndoIcon size={14} /></button>
+        <button className="secondary" onClick={redo} disabled={!canRedo} title="Redo" aria-label="Redo"><RedoIcon size={14} /></button>
         <button className="secondary" onClick={onExport} title="Export this workflow as portable JSON">Export</button>
         <button
           className="secondary"
@@ -473,7 +474,7 @@ export function BuilderShell({ onNewWorkflow }: Props) {
       {error && <div className="alert error builder-toolbar-error">{error}</div>}
       {validateOk && (
         <div className="alert success builder-toolbar-error" role="status">
-          ✓ {validateOk}
+          <CheckIcon size={14} /> {validateOk}
         </div>
       )}
       {publishHelp && (

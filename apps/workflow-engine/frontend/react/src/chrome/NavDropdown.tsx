@@ -41,6 +41,7 @@ import {
   type ReactNode,
 } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { ChevronDownIcon } from '../chat/icons/index.js';
 
 export interface NavDropdownItem {
   /** Visible label — UPPERCASE styling comes from the CSS, write
@@ -181,7 +182,7 @@ export function NavDropdown({ label, items, leading }: Props): JSX.Element {
       >
         {leading}
         {label}
-        <span className="nav-caret" aria-hidden>▾</span>
+        <span className="nav-caret" aria-hidden style={{ display: 'inline-flex' }}><ChevronDownIcon size={14} /></span>
       </button>
       <div
         ref={menuRef}
