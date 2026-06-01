@@ -26,6 +26,9 @@ export interface RosterEntry {
   enabled: boolean;
   label?: string;
   description?: string;
+  /** Profile picture as a `data:image/*;base64,…` URI, or absent for the
+   *  initials fallback. Host-extension only (not on the normative inventory). */
+  avatarUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -67,7 +70,7 @@ export async function createRosterEntry(input: {
 
 export async function updateRosterEntry(
   rosterId: string,
-  patch: { persona?: string; workflows?: string[]; enabled?: boolean; label?: string; description?: string },
+  patch: { persona?: string; workflows?: string[]; enabled?: boolean; label?: string; description?: string; avatarUrl?: string | null },
 ): Promise<RosterEntry> {
   const res = await fetch(`${rosterBase}/${encodeURIComponent(rosterId)}`, fetchOpts({ method: 'PATCH', headers: jsonHeaders(), body: JSON.stringify(patch) }));
   if (!res.ok) throw new Error(`updateRosterEntry returned ${res.status}`);

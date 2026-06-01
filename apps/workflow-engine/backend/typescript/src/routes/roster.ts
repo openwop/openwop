@@ -58,6 +58,45 @@ function parseAgentRef(value: unknown): RosterAgentRef {
   };
 }
 
+/** Max length of the stored `avatarUrl` data-URI string. The editor exports a
+ *  256×256 JPEG (~20–60 KB ⇒ ~30–80 KB base64); 700 KB leaves generous head-
+ *  room (~512 KB decoded) while keeping the durable roster row small and
+ *  refusing oversized uploads. */
+const AVATAR_URL_MAX_LEN = 700_000;
+const AVATAR_DATA_URI_RE = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/;
+
+/** Parse + validate the optional `avatarUrl` field shared by POST + PATCH.
+ *  Returns `undefined` (no change / omit), `null` (clear), or the validated
+ *  data-URI string. Only inline `data:image/*;base64` URIs are accepted — no
+ *  remote URLs, so the host never fetches caller-controlled origins (SSRF) and
+ *  the bytes are self-contained on the durable row. */
+function parseAvatarUrl(value: unknown): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null || value === '') return null;
+  if (typeof value !== 'string') {
+    throw new OpenwopError('validation_error', 'Field `avatarUrl` MUST be a string, null, or omitted.', 400, {
+      field: 'avatarUrl',
+    });
+  }
+  if (value.length > AVATAR_URL_MAX_LEN) {
+    throw new OpenwopError(
+      'validation_error',
+      `Field \`avatarUrl\` exceeds the ${AVATAR_URL_MAX_LEN}-character limit. Crop or shrink the image.`,
+      400,
+      { field: 'avatarUrl', maxLength: AVATAR_URL_MAX_LEN },
+    );
+  }
+  if (!AVATAR_DATA_URI_RE.test(value)) {
+    throw new OpenwopError(
+      'validation_error',
+      'Field `avatarUrl` MUST be a `data:image/(png|jpeg|webp);base64,…` URI.',
+      400,
+      { field: 'avatarUrl' },
+    );
+  }
+  return value;
+}
+
 export function registerRosterRoutes(app: Express): void {
   app.get('/v1/host/sample/roster', async (req, res, next) => {
     try {
@@ -76,6 +115,7 @@ export function registerRosterRoutes(app: Express): void {
         label?: unknown;
         description?: unknown;
         enabled?: unknown;
+        avatarUrl?: unknown;
       };
       if (typeof body.persona !== 'string' || body.persona.trim().length === 0) {
         throw new OpenwopError('validation_error', 'Field `persona` is required and MUST be a non-empty string.', 400, {
@@ -88,6 +128,9 @@ export function registerRosterRoutes(app: Express): void {
           field: 'workflows',
         });
       }
+      // On create, a `null`/clear is meaningless (there's nothing to clear yet)
+      // — coalesce to undefined so the new row simply has no photo.
+      const avatarUrl = parseAvatarUrl(body.avatarUrl) ?? undefined;
       const entry = await createRosterEntry({
         tenantId: tenantOf(req),
         persona: body.persona,
@@ -96,6 +139,7 @@ export function registerRosterRoutes(app: Express): void {
         label: typeof body.label === 'string' ? body.label : undefined,
         description: typeof body.description === 'string' ? body.description : undefined,
         enabled: typeof body.enabled === 'boolean' ? body.enabled : undefined,
+        avatarUrl,
       });
       res.status(201).json(entry);
     } catch (err) {
@@ -127,6 +171,7 @@ export function registerRosterRoutes(app: Express): void {
         enabled?: unknown;
         label?: unknown;
         description?: unknown;
+        avatarUrl?: unknown;
       };
       if (body.workflows !== undefined && !Array.isArray(body.workflows)) {
         throw new OpenwopError('validation_error', 'Field `workflows` MUST be an array of workflow ids.', 400, {
@@ -139,6 +184,7 @@ export function registerRosterRoutes(app: Express): void {
         enabled: typeof body.enabled === 'boolean' ? body.enabled : undefined,
         label: typeof body.label === 'string' ? body.label : undefined,
         description: typeof body.description === 'string' ? body.description : undefined,
+        avatarUrl: parseAvatarUrl(body.avatarUrl),
       });
       res.json(updated);
     } catch (err) {

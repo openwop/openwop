@@ -54,6 +54,12 @@ export interface RosterEntry {
   enabled: boolean;
   label?: string;
   description?: string;
+  /** Profile picture as a small `data:image/*;base64,…` URI (host-extension
+   *  only; never crosses the normative RFC 0072 manifest inventory). The
+   *  reference impl stores the cropped 256×256 thumbnail inline on the durable
+   *  roster row — multi-instance safe + restart-durable, unlike the in-memory
+   *  media-asset store. Absent ⇒ the UI renders the persona initials. */
+  avatarUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -81,6 +87,7 @@ export async function createRosterEntry(input: {
   label?: string;
   description?: string;
   enabled?: boolean;
+  avatarUrl?: string;
 }): Promise<RosterEntry> {
   // `host:<slug>-<short>` keeps the id human-readable + collision-safe.
   const rosterId = `host:${slugify(input.persona)}-${randomUUID().slice(0, 8)}`;
@@ -94,6 +101,7 @@ export async function createRosterEntry(input: {
     enabled: input.enabled ?? true,
     label: input.label,
     description: input.description,
+    avatarUrl: input.avatarUrl,
     createdAt: now,
     updatedAt: now,
   };
@@ -113,7 +121,15 @@ export async function getRosterEntry(rosterId: string): Promise<RosterEntry | nu
 
 export async function updateRosterEntry(
   rosterId: string,
-  patch: { persona?: string; workflows?: string[]; enabled?: boolean; label?: string; description?: string },
+  patch: {
+    persona?: string;
+    workflows?: string[];
+    enabled?: boolean;
+    label?: string;
+    description?: string;
+    /** `string` sets the photo, `null` clears it, `undefined` leaves it. */
+    avatarUrl?: string | null;
+  },
 ): Promise<RosterEntry | null> {
   const entry = await roster.get(rosterId);
   if (!entry) return null;
@@ -122,6 +138,10 @@ export async function updateRosterEntry(
   if (patch.enabled !== undefined) entry.enabled = patch.enabled;
   if (patch.label !== undefined) entry.label = patch.label;
   if (patch.description !== undefined) entry.description = patch.description;
+  if (patch.avatarUrl !== undefined) {
+    if (patch.avatarUrl === null) delete entry.avatarUrl;
+    else entry.avatarUrl = patch.avatarUrl;
+  }
   entry.updatedAt = nowIso();
   await roster.put(entry);
   return entry;

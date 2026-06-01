@@ -17,6 +17,8 @@ import { AgentSchedulesPanel } from './AgentSchedulesPanel.js';
 import { AgentInstructionsPanel } from './AgentInstructionsPanel.js';
 import { AgentIntegrationsPanel } from './AgentIntegrationsPanel.js';
 import { AgentActivityFeed } from './AgentActivityFeed.js';
+import { AgentAvatar } from './AgentAvatar.js';
+import { AvatarEditor } from './AvatarEditor.js';
 import { Notice } from '../ui/Notice.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
@@ -32,11 +34,6 @@ const TABS: ReadonlyArray<{ key: TabKey; label: string }> = [
   { key: 'activity', label: 'Activity' },
 ];
 
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || name.slice(0, 2).toUpperCase();
-}
-
 export function AgentWorkspacePage(): JSX.Element {
   const { agentId: rosterId } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
@@ -45,6 +42,7 @@ export function AgentWorkspacePage(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [editingAvatar, setEditingAvatar] = useState(false);
   // Bumped on board-affecting actions (Check now) so the embedded board refetches.
   const [boardRefresh, setBoardRefresh] = useState(0);
   // Tab lives in the URL (?tab=board) so refresh / back / share preserve it.
@@ -112,6 +110,23 @@ export function AgentWorkspacePage(): JSX.Element {
     }
   };
 
+  // Save (string data-URI) or clear (null) the profile photo, then refresh so
+  // the header — and, after navigation, the dashboard card — reflect it.
+  const onSaveAvatar = async (avatarUrl: string | null) => {
+    if (!view) return;
+    setNotice(null);
+    setError(null);
+    try {
+      await updateRosterEntry(view.entry.rosterId, { avatarUrl });
+      setEditingAvatar(false);
+      await refresh();
+      setNotice(avatarUrl ? `Updated ${view.entry.persona}'s profile photo.` : `Removed ${view.entry.persona}'s profile photo.`);
+    } catch (err) {
+      // Keep the editor open so the user can retry / shrink an oversized image.
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
   if (loading) return <section style={{ padding: '1rem' }}><p style={muted}>Loading agent…</p></section>;
   if (!view) {
     return (
@@ -124,7 +139,6 @@ export function AgentWorkspacePage(): JSX.Element {
   const { entry } = view;
   const sm = statusMeta(view.status);
   const theme = roleThemeForAgent(entry.agentRef?.agentId, entry.workflows);
-  const RoleIcon = theme.Icon;
 
   return (
     <section style={{ padding: '1rem', maxWidth: 1100, margin: '0 auto' }}>
@@ -132,14 +146,7 @@ export function AgentWorkspacePage(): JSX.Element {
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', margin: '0.6rem 0 0.4rem', flexWrap: 'wrap' }}>
-        <div aria-hidden="true" style={{ position: 'relative', flexShrink: 0 }}>
-          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--color-accent)', color: 'var(--paper)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.1rem' }}>
-            {initials(entry.persona)}
-          </div>
-          <div title={`${theme.label} role`} style={{ position: 'absolute', right: -3, bottom: -3, width: 20, height: 20, borderRadius: '50%', background: 'var(--paper)', border: '1px solid var(--color-border)', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <RoleIcon size={12} strokeWidth={2} />
-          </div>
-        </div>
+        <AgentAvatar persona={entry.persona} avatarUrl={entry.avatarUrl} roleTheme={theme} size={48} onEdit={() => setEditingAvatar(true)} />
         <div style={{ flex: 1, minWidth: 200 }}>
           <h1 style={{ margin: 0 }}>{entry.persona}</h1>
           <div style={muted}>{entry.label ?? 'Agent'}</div>
@@ -203,6 +210,15 @@ export function AgentWorkspacePage(): JSX.Element {
           {' '}<button type="button" className="secondary btn-sm" onClick={() => navigate('/roster')}>Open raw roster</button>
         </p>
       </details>
+
+      {editingAvatar ? (
+        <AvatarEditor
+          personaName={entry.persona}
+          currentAvatarUrl={entry.avatarUrl}
+          onCancel={() => setEditingAvatar(false)}
+          onSave={onSaveAvatar}
+        />
+      ) : null}
     </section>
   );
 }
