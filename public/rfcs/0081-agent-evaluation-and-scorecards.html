@@ -105,6 +105,7 @@
           <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
           <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
           <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/install/" role="menuitem">Install the demo app</a>
           <a href="/implement/" role="menuitem">All implementer landings →</a>
         </div>
       </div>
@@ -149,6 +150,7 @@
     <li><a href="/for/host-implementers/">Host implementers</a></li>
     <li><a href="/for/pack-authors/">Pack authors</a></li>
     <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/install/">Install the demo app</a></li>
     <li><a href="/implement/">All implementer landings →</a></li>
   </ul>
 
@@ -190,10 +192,10 @@
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0081</td></tr>
 <tr><td><strong>Title</strong></td><td>Define a portable <code>AgentEvalSuite</code> artifact, an eval-run projection over the existing run surface (an <code>eval.*</code> event family + an <code>EvalSummary</code> schema), a host-advertised <code>agents.evalSuite</code> capability with a closed <code>modes[]</code> vocabulary (golden / rubric / adversarial / regression / live-shadow), and the composition seam by which an eval result MAY gate an agent deployment promotion — all additive</td></tr>
-<tr><td><strong>Status</strong></td><td><code>Active</code></td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
 <tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
 <tr><td><strong>Created</strong></td><td>2026-05-29</td></tr>
-<tr><td><strong>Updated</strong></td><td>2026-05-30 (Draft → Active — wire surface landed: <code>spec/v1/agent-evaluation.md</code> + <code>agent-eval-suite</code>/<code>eval-summary</code> schemas + <code>evalSuiteRef</code> + <code>agents.evalSuite</code> + 3 <code>eval.*</code> events + always-on <code>agent-eval-suite-shape.test.ts</code> + <code>eval-summary-no-content-leak</code> invariant; all 5 UQs resolved as proposed. The <code>GET …/eval-summary</code> endpoint + <code>mode:&quot;eval&quot;</code> in OpenAPI/AsyncAPI, the SDK helpers, the behavioral gated scenario, and the reference-host eval projection are deferred to <code>Active → Accepted</code> per the RFC 0077 precedent.)</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-06-01 (Active → Accepted — graduated on a non-steward host. MyndHyve <code>workflow-runtime</code> (rev <code>workflow-runtime-00435-sep @ 100%</code>, live on <code>https://api.myndhyve.ai</code>) advertises <code>agents.evalSuite = {supported:true, modes:[&quot;golden&quot;,&quot;regression&quot;], maxTasksPerSuite:200, maxCostUsdPerSuite:5}</code> field-for-field at the discovery doc root (§D), serves the NORMATIVE <code>GET /v1/runs/{runId}/eval-summary</code> (steward-curl-verified <code>401</code> auth-gated — route mounted, not a <code>/v1/host/sample/<em></code> extension), and drives the §B <code>mode:&quot;eval&quot;</code> projection: the steward independently drove the eval-run seam and observed a valid <code>{runId, suiteId:&quot;core.openwop.evals.sample&quot;, taskCount:2, passed:true, aggregateScore:0.9}</code> plus the §C event ordering (<code>eval.started</code> → per-task <code>agent.invocation.</em></code> + <code>eval.scored</code> → <code>eval.completed</code>) on the live event-log seam. The deferred gated behavioral scenario <code>agent-eval-run.test.ts</code> was the steward prerequisite: authored in <code>@openwop/openwop-conformance@1.13.0</code> (#405/#408) and MyndHyve passes it non-vacuously under <code>OPENWOP_REQUIRE_BEHAVIOR=true</code>. Coordinated via the <code>billy</code> crosstalk bus. 2026-05-30 (Draft → Active — wire surface landed: <code>spec/v1/agent-evaluation.md</code> + <code>agent-eval-suite</code>/<code>eval-summary</code> schemas + <code>evalSuiteRef</code> + <code>agents.evalSuite</code> + 3 <code>eval.*</code> events + always-on <code>agent-eval-suite-shape.test.ts</code> + <code>eval-summary-no-content-leak</code> invariant; all 5 UQs resolved as proposed. The <code>GET …/eval-summary</code> endpoint + <code>mode:&quot;eval&quot;</code> in OpenAPI/AsyncAPI, the SDK helpers, the behavioral gated scenario, and the reference-host eval projection are deferred to <code>Active → Accepted</code> per the RFC 0077 precedent.)</td></tr>
 <tr><td><strong>Affects</strong></td><td>NEW <code>schemas/agent-eval-suite.schema.json</code> (portable eval-suite artifact, pack-distributed like <code>systemPromptRef</code> / handoff schemas) · NEW <code>schemas/eval-summary.schema.json</code> (the terminal scorecard) · <code>schemas/run-event.schema.json</code> (additive <code>RunEventType</code> enum: <code>eval.started</code> / <code>eval.scored</code> / <code>eval.completed</code>) · <code>schemas/run-event-payloads.schema.json</code> (the three content-free eval payloads) · <code>schemas/capabilities.schema.json</code> (additive optional <code>agents.evalSuite</code> block) · <code>spec/v1/agent-evaluation.md</code> (NEW normative doc) · <code>api/openapi.yaml</code> (additive <code>GET /v1/runs/{runId}/eval-summary</code>; eval run-mode reuses <code>POST /v1/runs</code>) · <code>api/asyncapi.yaml</code> (eval channels) · <code>CHANGELOG.md</code> · <code>INTEROP-MATRIX.md</code> · new conformance scenarios</td></tr>
 <tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
 <tr><td><strong>Supersedes</strong></td><td>—</td></tr>
@@ -364,6 +366,7 @@
           <li><a href="/for/host-implementers/">Host implementers</a></li>
           <li><a href="/for/pack-authors/">Pack authors</a></li>
           <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+          <li><a href="/install/">Install the demo app</a></li>
         </ul>
       </div>
     </div>

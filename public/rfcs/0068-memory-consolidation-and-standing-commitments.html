@@ -105,6 +105,7 @@
           <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
           <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
           <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/install/" role="menuitem">Install the demo app</a>
           <a href="/implement/" role="menuitem">All implementer landings →</a>
         </div>
       </div>
@@ -149,6 +150,7 @@
     <li><a href="/for/host-implementers/">Host implementers</a></li>
     <li><a href="/for/pack-authors/">Pack authors</a></li>
     <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/install/">Install the demo app</a></li>
     <li><a href="/implement/">All implementer landings →</a></li>
   </ul>
 
@@ -189,10 +191,10 @@
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0068</td></tr>
 <tr><td><strong>Title</strong></td><td>Background memory consolidation (merge/dedup/strengthen of long-term entries) + inferred standing commitments — two additive optional capabilities (<code>agents.memoryConsolidation</code> + <code>agents.commitments</code>) with their own content-free observability events (<code>agent.memory.consolidated</code> + <code>commitment.fired</code>), distinct from RFC 0062 token-budgeted distillation</td></tr>
-<tr><td><strong>Status</strong></td><td><code>Active</code></td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
 <tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
 <tr><td><strong>Created</strong></td><td>2026-05-26</td></tr>
-<tr><td><strong>Updated</strong></td><td>2026-05-29 — promoted <code>Draft → Active</code>. The full wire surface already landed on <code>main</code> (the <code>agents.memoryConsolidation</code> + <code>agents.commitments</code> blocks in <code>capabilities.schema.json</code>; the <code>agentMemoryConsolidated</code> + <code>commitmentFired</code> payload defs + <code>_typeIndex</code> entries in <code>run-event-payloads.schema.json</code>; the two RunEventType enum members in <code>run-event.schema.json</code>; the §D normative prose in <code>agent-memory.md</code>; and the three conformance scenarios). All four <code>Active</code>-gating Unresolved questions are resolved below — #1 (the keystone replay-determinism question) confirmed against RFC 0041 §C: consolidation is a host-managed mutation outside the replay envelope, <code>agent.memory.consolidated</code> is an observability event re-read from the log per §C observable-output-sequence determinism, never regenerated. Comment window waived per <code>GOVERNANCE.md</code> lazy consensus. Reference-host behavioral implementation remains deferred per §Conformance (shape always-on; behavioral scenarios soft-skip until a host wires the seam).</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-06-01 (<code>Active → Accepted</code> — graduated on a <strong>non-steward host</strong>. MyndHyve <code>workflow-runtime</code> (rev <code>workflow-runtime-00445-bem @ 100%</code>, live on <code>https://api.myndhyve.ai</code>) advertises <code>agents.memoryConsolidation {supported:true, schedule:&quot;on-demand&quot;}</code> + <code>agents.commitments {supported:true, fireConditions:[&quot;time&quot;,&quot;predicate&quot;]}</code> at the discovery doc root (steward-curl-verified field-for-field). The two gated behavioral scenarios deferred at <code>Draft → Active</code> were the steward prerequisite — they shipped in <code>@openwop/openwop-conformance@1.14.0</code> and MyndHyve passes both <strong>non-vacuously under <code>OPENWOP_REQUIRE_BEHAVIOR=true</code></strong> (durations 1085/911ms, zero soft-skip): <code>memory-consolidation-idempotent</code> (§D) — a live pass over a 4-entry corpus returns <code>{inputCount:4, outputCount:3}</code> (merge/dedup, <code>outputCount ≤ inputCount</code>), a second pass over the unchanged corpus returns <code>{3,3}</code> (the §D.2 idempotence no-op), and a redacted secret stays redacted (<code>secretLeaked:false</code>, §D.3 SR-1 carry-forward) — all to the durable <code>agent.memory.consolidated</code> event, content-free (counts + ref only); <code>commitment-fired</code> (§C) — the <code>commitment.fired</code> event carries <code>commitmentId</code> + the source <code>memoryRef</code> + <code>condition</code> with <code>fireCount:1</code> (fire-once), and the inferred intention text appears ONLY at the top-level seam response, NEVER on the durable event payload (§C.3 content-free). The two seams (<code>POST /v1/host/sample/memory/consolidate</code> + <code>.../commitment/fire</code>) are documented in <code>host-sample-test-seams.md</code>. No wire-shape change at graduation (the <code>agents.memoryConsolidation</code>/<code>agents.commitments</code> caps + the <code>agent.memory.consolidated</code>/<code>commitment.fired</code> events shipped at <code>Draft → Active</code>). — 2026-05-29 — promoted <code>Draft → Active</code>. The full wire surface already landed on <code>main</code> (the <code>agents.memoryConsolidation</code> + <code>agents.commitments</code> blocks in <code>capabilities.schema.json</code>; the <code>agentMemoryConsolidated</code> + <code>commitmentFired</code> payload defs + <code>_typeIndex</code> entries in <code>run-event-payloads.schema.json</code>; the two RunEventType enum members in <code>run-event.schema.json</code>; the §D normative prose in <code>agent-memory.md</code>; and the three conformance scenarios). All four <code>Active</code>-gating Unresolved questions are resolved below — #1 (the keystone replay-determinism question) confirmed against RFC 0041 §C: consolidation is a host-managed mutation outside the replay envelope, <code>agent.memory.consolidated</code> is an observability event re-read from the log per §C observable-output-sequence determinism, never regenerated. Comment window waived per <code>GOVERNANCE.md</code> lazy consensus. Reference-host behavioral implementation remains deferred per §Conformance (shape always-on; behavioral scenarios soft-skip until a host wires the seam).</td></tr>
 <tr><td><strong>Affects</strong></td><td><code>spec/v1/agent-memory.md</code> (new §"Background consolidation" + §"Inferred commitments") · <code>schemas/run-event-payloads.schema.json</code> (additive optional <code>agent.memory.consolidated</code> + <code>commitment.fired</code> payloads + <code>_typeIndex</code> entries) · <code>schemas/capabilities.schema.json</code> (<code>agents.memoryConsolidation.{supported,schedule}</code> + <code>agents.commitments.supported</code>) · <code>CHANGELOG.md</code> · <code>INTEROP-MATRIX.md</code> · 3 new conformance scenarios</td></tr>
 <tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
 <tr><td><strong>Supersedes</strong></td><td>—</td></tr>
@@ -387,6 +389,7 @@
           <li><a href="/for/host-implementers/">Host implementers</a></li>
           <li><a href="/for/pack-authors/">Pack authors</a></li>
           <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+          <li><a href="/install/">Install the demo app</a></li>
         </ul>
       </div>
     </div>

@@ -106,6 +106,7 @@
           <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
           <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
           <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/install/" role="menuitem">Install the demo app</a>
           <a href="/implement/" role="menuitem">All implementer landings →</a>
         </div>
       </div>
@@ -150,6 +151,7 @@
     <li><a href="/for/host-implementers/">Host implementers</a></li>
     <li><a href="/for/pack-authors/">Pack authors</a></li>
     <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/install/">Install the demo app</a></li>
     <li><a href="/implement/">All implementer landings →</a></li>
   </ul>
 
@@ -272,7 +274,7 @@ interface CapabilityLimits {
 <p>The full <code>GET /.well-known/openwop</code> response. Only <code>protocolVersion</code>, <code>supportedEnvelopes</code>, <code>schemaVersions</code>, and the three base <code>limits</code> are required by <code>schemas/capabilities.schema.json</code>. Additional fields below are <strong>optional v1</strong>: their shapes are stable when present, and clients MUST tolerate absence.</p>
 <h4 id="document-root-layout-normative-rfc-0073">Document-root layout (normative — RFC 0073)</h4>
 <p>Every capability family — the required <code>protocolVersion</code> / <code>supportedEnvelopes</code> / <code>schemaVersions</code> / <code>limits</code>, and every optional family (<code>agents</code>, <code>secrets</code>, <code>aiProviders</code>, <code>auth</code>, <code>memory</code>, <code>multiAgent</code>, <code>authorization</code>, and all others defined in <code>schemas/capabilities.schema.json</code>) — MUST appear as a property of the <strong>document root</strong> of the <code>GET /.well-known/openwop</code> response. <code>capabilities.schema.json</code> validates this full response: its properties are the root properties, and it declares <strong>no <code>capabilities</code> wrapper property</strong>. A host MUST NOT require a <code>capabilities</code> wrapper object to convey them.</p>
-<p>A top-level <code>capabilities</code> wrapper object is a <strong>deprecated legacy shape</strong>, tolerated only by the schema's <code>additionalProperties: true</code>. Through the v1.x migration window a host MAY additionally mirror the families under a <code>capabilities</code> object for backward compatibility; clients and the conformance suite SHOULD read the document root first and MAY fall back to a <code>capabilities.*</code> wrapper. New hosts MUST serve families at the root and SHOULD NOT emit the wrapper. The wrapper is scheduled for removal — see RFC 0073.</p>
+<p>A top-level <code>capabilities</code> wrapper object is a <strong>deprecated legacy shape</strong>, tolerated only by the schema's <code>additionalProperties: true</code>. Through the v1.x migration window a host MAY additionally mirror the families under a <code>capabilities</code> object for backward compatibility; <strong>clients</strong> SHOULD read the document root first and MAY fall back to a <code>capabilities.*</code> wrapper. The <strong>conformance suite reads the root only</strong> — root is the MUST above, so a host that serves families exclusively under the wrapper is non-conformant and is graded as such (RFC 0073 Phase 4). Hosts MUST serve families at the root and SHOULD NOT emit the wrapper. The host-side mirror affordance and the schema's <code>additionalProperties</code> tolerance are scheduled to retire together at the next major version (v2.0), at which point <code>capabilities.schema.json</code> tightens to forbid the wrapper — see RFC 0073.</p>
 <pre class="lang-json"><code>{
   &quot;protocolVersion&quot;: &quot;1.0&quot;,
   &quot;implementation&quot;: { &quot;name&quot;: &quot;...&quot;, &quot;version&quot;: &quot;...&quot;, &quot;vendor&quot;: &quot;...&quot; },
@@ -857,6 +859,7 @@ interface CapabilityLimits {
           <li><a href="/for/host-implementers/">Host implementers</a></li>
           <li><a href="/for/pack-authors/">Pack authors</a></li>
           <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+          <li><a href="/install/">Install the demo app</a></li>
         </ul>
       </div>
     </div>

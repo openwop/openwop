@@ -105,6 +105,7 @@
           <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
           <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
           <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/install/" role="menuitem">Install the demo app</a>
           <a href="/implement/" role="menuitem">All implementer landings →</a>
         </div>
       </div>
@@ -149,6 +150,7 @@
     <li><a href="/for/host-implementers/">Host implementers</a></li>
     <li><a href="/for/pack-authors/">Pack authors</a></li>
     <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/install/">Install the demo app</a></li>
     <li><a href="/implement/">All implementer landings →</a></li>
   </ul>
 
@@ -190,10 +192,10 @@
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0075</td></tr>
 <tr><td><strong>Title</strong></td><td>Artifact-Type Packs — real-world adoption amendment</td></tr>
-<tr><td><strong>Status</strong></td><td><code>Active</code></td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
 <tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
 <tr><td><strong>Created</strong></td><td>2026-05-27</td></tr>
-<tr><td><strong>Updated</strong></td><td>2026-05-27</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-06-01 (<code>Active → Accepted</code>) — graduated on the <strong>non-steward host</strong> MyndHyve, whose live discovery advertises the amendment's per-type facets field-for-field (rev <code>workflow-runtime-00449-fal @ 100%</code>, <code>https://api.myndhyve.ai</code>; steward-verified 2026-06-01). This RFC codifies what MyndHyve's real RFC 0071 adoption already does: <code>host.artifactTypes.supported: true</code> with <strong>7 host-registered artifact types</strong>, each carrying the amendment's facets — <code>validation: &quot;open&quot;</code> (the P0-2 MUST→SHOULD relaxation + <code>validation</code> field for AI-produced artifacts), <code>registrationSource: &quot;host&quot;</code> (P0-1 host-native, no-pack registration), <code>schemaVersion: 1</code> (P1-2 <code>schemaVersions</code> decoupling), and <code>validated: true</code> (P1-1 per-type facet). The amendment required no new MyndHyve code — its AI-native host surfaced these facets when it implemented 0071 — and the server-free <code>artifact-type-pack-manifest-validation.test.ts</code> (incl. the new `validation: open</td></tr>
 <tr><td><strong>Affects</strong></td><td><code>spec/v1/artifact-type-packs.md</code>, <code>spec/v1/host-capabilities.md</code> §host.artifactTypes, <code>spec/v1/capabilities.md</code>; <code>schemas/artifact-type-pack-manifest.schema.json</code>, <code>schemas/run-event-payloads.schema.json</code>; conformance scenarios</td></tr>
 <tr><td><strong>Compatibility</strong></td><td><code>additive</code> per <code>COMPATIBILITY.md</code> §2.1 (one MUST→SHOULD relaxation, otherwise additive)</td></tr>
 <tr><td><strong>Supersedes</strong></td><td>— (amends RFC 0071 Phase 1)</td></tr>
@@ -332,6 +334,7 @@
           <li><a href="/for/host-implementers/">Host implementers</a></li>
           <li><a href="/for/pack-authors/">Pack authors</a></li>
           <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+          <li><a href="/install/">Install the demo app</a></li>
         </ul>
       </div>
     </div>

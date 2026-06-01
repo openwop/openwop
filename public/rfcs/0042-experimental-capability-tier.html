@@ -105,6 +105,7 @@
           <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
           <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
           <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/install/" role="menuitem">Install the demo app</a>
           <a href="/implement/" role="menuitem">All implementer landings →</a>
         </div>
       </div>
@@ -149,6 +150,7 @@
     <li><a href="/for/host-implementers/">Host implementers</a></li>
     <li><a href="/for/pack-authors/">Pack authors</a></li>
     <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/install/">Install the demo app</a></li>
     <li><a href="/implement/">All implementer landings →</a></li>
   </ul>
 
@@ -193,10 +195,10 @@
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0042</td></tr>
 <tr><td><strong>Title</strong></td><td>Experimental capability tier — optional <code>tier</code> field on capability advertisements + sunset rule + derived <code>openwop-experimental</code> profile</td></tr>
-<tr><td><strong>Status</strong></td><td><code>Active</code></td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
 <tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
 <tr><td><strong>Created</strong></td><td>2026-05-22</td></tr>
-<tr><td><strong>Updated</strong></td><td>2026-05-29 (<code>Draft → Active</code> — steward acceptance, comment window waived per GOVERNANCE.md lazy consensus. Wire surface <strong>reconciled</strong>: §A/§B/§D normative prose landed in <code>capabilities.md</code> §"Capability stability tier" + §C <code>openwop-experimental</code> profile in <code>profiles.md</code>; the schema <code>tier</code>/<code>experimentalUntil</code> on <code>multiAgent.executionModel</code>, the <code>experimental-tier-shape</code> conformance scenario, the <code>experimentalGate</code> helper, and the INTEROP column were already on <code>main</code> — landed incidentally under commit <code>45678c49</code>, not a 0042 PR — and are now backed by prose. Extending <code>tier</code> to the other §"Per-RFC application" sub-blocks is a per-host follow-on SHOULD, not a graduation blocker.)</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-06-01 (<code>Active → Accepted</code>) — graduated as a <strong>steward-side mechanism-codification with an AMENDED acceptance criterion</strong> (the RFC 0069 precedent — a corpus-level mechanism with nothing behavioral for a non-steward host to advertise — composed with the RFC 0054 / 0080 amended-criterion precedent for deterministic, non-security, read-only metadata). <strong>Architect-gated decision; David-confirmed.</strong> RFC 0042 is a <em>stability-signaling convention</em>, not a behavioral capability: its guarantee decomposes entirely into (a) the schema <code>tier</code> enum + conditional-required <code>experimentalUntil</code> (<code>capabilities.schema.json</code>), (b) the deterministic <code>experimentalGate()</code> helper (soft-skip under default mode / strict under <code>OPENWOP_REQUIRE_EXPERIMENTAL=true</code>, <code>conformance/src/lib/behavior-gate.ts</code>), (c) the always-on server-free <code>experimental-tier-shape</code> §A shape group + the §C <code>openwop-experimental</code> derived profile prose — all green on <code>main</code>. There is <strong>no host-side logic</strong>: a host "exercising" 0042 merely writes the string <code>&quot;tier&quot;:&quot;experimental&quot;</code> into its discovery JSON, which proves nothing the schema does not already guarantee well-formed, and the soft-skip it triggers is the helper's deterministic branch, not host behavior — so the live "advertise <code>tier:experimental</code>" direction is <strong>mechanically-equivalent-by-construction</strong> to the schema+helper. Moreover, the only honest way to make it non-vacuous would require a host to mark a <em>stable, Accepted-RFC-backed</em> capability <code>experimental</code> — an <strong>active false-stability signal on the live wire</strong> that the honest-advertisement invariant (the same one behind RFC 0080's degraded keystone) forbids; the non-steward adopter MyndHyve correctly <strong>refused to fabricate</strong> one (its <code>multiAgent.executionModel</code> is <code>version:5</code>, stable, every constituent RFC Accepted). The field is genuinely exercised the first time a host honestly has an <code>Active</code>-RFC-preview capability to mark — a real future event, never a fabricated one. <strong>Honest disclosure:</strong> the schema currently anchors <code>tier</code>/<code>experimentalUntil</code> ONLY on <code>multiAgent.executionModel</code>; every other capability sub-block keeps <code>additionalProperties:false</code> with no <code>tier</code> property and would reject one today, so §A's "every capability advertisement" is wire-enabled incrementally per the §"Per-RFC application" SHOULD — generalizing the schema is clean additive follow-up, not a graduation blocker. · 2026-05-29 (<code>Draft → Active</code> — steward acceptance, comment window waived per GOVERNANCE.md lazy consensus. Wire surface <strong>reconciled</strong>: §A/§B/§D normative prose landed in <code>capabilities.md</code> §"Capability stability tier" + §C <code>openwop-experimental</code> profile in <code>profiles.md</code>; the schema <code>tier</code>/<code>experimentalUntil</code> on <code>multiAgent.executionModel</code>, the <code>experimental-tier-shape</code> conformance scenario, the <code>experimentalGate</code> helper, and the INTEROP column were already on <code>main</code> — landed incidentally under commit <code>45678c49</code>, not a 0042 PR — and are now backed by prose. Extending <code>tier</code> to the other §"Per-RFC application" sub-blocks is a per-host follow-on SHOULD, not a graduation blocker.)</td></tr>
 <tr><td><strong>Affects</strong></td><td><code>spec/v1/capabilities.md</code> · <code>spec/v1/profiles.md</code> · <code>schemas/capabilities.schema.json</code> (optional <code>tier</code> enum on each capability sub-block) · <code>conformance/src/scenarios/experimental-tier-shape.test.ts</code> (new) · <code>INTEROP-MATRIX.md</code> (new column) · <code>CHANGELOG.md</code></td></tr>
 <tr><td><strong>Compatibility</strong></td><td><code>additive</code> per <code>COMPATIBILITY.md</code> §2.1 — new optional field with default <code>&quot;stable&quot;</code></td></tr>
 <tr><td><strong>Supersedes</strong></td><td>—</td></tr>
@@ -329,15 +331,17 @@
 <li><strong>Reference impl can land BEFORE the 7-day comment window closes.</strong> Per <code>CONTRIBUTING.md</code> §"Bootstrap-phase notes", single-steward additive RFCs may co-land schema + impl + RFC. The 7-day window runs alongside.</li>
 </ul>
 <h2 id="acceptance-criteria">Acceptance criteria</h2>
+<p><strong>Amended 2026-06-01 (architect-gated, David-confirmed) — the RFC 0080 precedent.</strong> RFC 0042 is a <em>stability-signaling metadata convention</em>, not a behavioral capability: it has no host-side logic, so the live "advertise <code>tier:&quot;experimental&quot;</code>" direction is mechanically-equivalent-by-construction to the schema + the deterministic <code>experimentalGate()</code> helper, AND the only honest way to make it non-vacuous would require a host to mark a <em>stable</em> capability <code>experimental</code> — a false-stability signal the honest-advertisement invariant forbids (the same wall as RFC 0080's degraded keystone). The two original criteria that can only be met by fabrication — <em>"Reference workflow-engine advertises at least one capability sub-block with <code>tier: &quot;experimental&quot;</code>"</em> and <em>"At least one non-steward implementer signals adoption"</em> — are therefore <strong>struck</strong>; the deliverable is the mechanism itself, and the field is exercised the first time a host honestly holds an <code>Active</code>-RFC-preview capability to mark.</p>
 <ul>
-<li>[ ] Spec text merged into <code>spec/v1/capabilities.md</code> + <code>spec/v1/profiles.md</code>.</li>
-<li>[ ] Schema diff merged into <code>schemas/capabilities.schema.json</code>; <code>spec-corpus-validity.test.ts</code> passes.</li>
-<li>[ ] <code>conformance/src/scenarios/experimental-tier-shape.test.ts</code> lands with 3 describe blocks.</li>
-<li>[ ] <code>INTEROP-MATRIX.md</code> gains "Experimental capabilities advertised" column.</li>
-<li>[ ] CHANGELOG entry under <code>[Unreleased]</code> referencing this RFC.</li>
-<li>[ ] Reference workflow-engine advertises at least one capability sub-block with <code>tier: &quot;experimental&quot;</code>.</li>
-<li>[ ] 7-day public comment window closes without unresolved objections.</li>
-<li>[ ] At least one non-steward implementer signals adoption (or explicit waiver per the bootstrap-phase rule).</li>
+<li>[x] Spec text merged into <code>spec/v1/capabilities.md</code> + <code>spec/v1/profiles.md</code>.</li>
+<li>[x] Schema diff merged into <code>schemas/capabilities.schema.json</code> (<code>tier</code> enum + conditional-required <code>experimentalUntil</code> on <code>multiAgent.executionModel</code>); <code>spec-corpus-validity.test.ts</code> passes.</li>
+<li>[x] <code>conformance/src/scenarios/experimental-tier-shape.test.ts</code> lands with 3 describe blocks (always-on §A shape group green; §B/§D gated legs honor <code>experimentalGate()</code>).</li>
+<li>[x] <code>INTEROP-MATRIX.md</code> gains "Experimental capabilities advertised" column.</li>
+<li>[x] CHANGELOG entry under <code>[1.1.6 — unreleased]</code> referencing this RFC.</li>
+<li>[x] <strong>AMENDED (was: reference engine advertises <code>tier:&quot;experimental&quot;</code>):</strong> the <code>experimentalGate()</code> helper is implemented + its soft-skip/strict routing is deterministic and green; a live <code>tier:&quot;experimental&quot;</code> advertisement is <strong>not required</strong> — it is mechanically-equivalent-by-construction to the schema+helper and would be a false-stability signal on any host whose capability is genuinely stable.</li>
+<li>[x] 7-day public comment window closed (steward acceptance, lazy consensus per <code>GOVERNANCE.md</code>).</li>
+<li>[x] <strong>AMENDED (was: non-steward implementer signals adoption):</strong> graduated as a steward-side mechanism-codification (the RFC 0069 + 0054/0080 amended-criterion precedent); the non-steward adopter MyndHyve confirmed the honest-advertisement posture — it correctly does NOT mark its stable <code>executionModel</code> experimental.</li>
+<li>[ ] <strong>Follow-up (additive, non-blocking):</strong> generalize the schema so <code>tier</code>/<code>experimentalUntil</code> is permitted on every capability sub-block (currently only <code>multiAgent.executionModel</code>), making §A's "every capability advertisement" fully wire-deliverable.</li>
 </ul>
 <h2 id="references">References</h2>
 <ul>
@@ -413,6 +417,7 @@
           <li><a href="/for/host-implementers/">Host implementers</a></li>
           <li><a href="/for/pack-authors/">Pack authors</a></li>
           <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+          <li><a href="/install/">Install the demo app</a></li>
         </ul>
       </div>
     </div>

@@ -105,6 +105,7 @@
           <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
           <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
           <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/install/" role="menuitem">Install the demo app</a>
           <a href="/implement/" role="menuitem">All implementer landings →</a>
         </div>
       </div>
@@ -149,6 +150,7 @@
     <li><a href="/for/host-implementers/">Host implementers</a></li>
     <li><a href="/for/pack-authors/">Pack authors</a></li>
     <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/install/">Install the demo app</a></li>
     <li><a href="/implement/">All implementer landings →</a></li>
   </ul>
 
@@ -188,10 +190,10 @@
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0067</td></tr>
 <tr><td><strong>Title</strong></td><td>Provider-catalog conventions — a stable provider-name vocabulary and a per-provider BYOK auth-mode enum (<code>apiKey</code> / <code>oauth-pkce</code> / <code>oauth-device</code> / <code>none</code>) so clients can pre-flight how a host expects a provider's credential to be supplied</td></tr>
-<tr><td><strong>Status</strong></td><td><code>Active</code></td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
 <tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
 <tr><td><strong>Created</strong></td><td>2026-05-26</td></tr>
-<tr><td><strong>Updated</strong></td><td>2026-05-29 — promoted <code>Draft → Active</code>. The full wire surface already landed on <code>main</code> (the additive optional <code>aiProviders.authModes</code> map in <code>capabilities.schema.json</code>, the §B/§C prose in <code>capabilities.md</code>, and the always-on-shape + gated-cross-field <code>byok-auth-modes.test.ts</code> scenario). The one <code>Active</code>-gating Unresolved question (#3, local-endpoint addressing) is resolved below: <strong>host-config only</strong>. Comment window waived per <code>GOVERNANCE.md</code> lazy consensus. No host wire change; reference-host advertisement remains deferred per §Conformance.</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-06-01 (<code>Active → Accepted</code>) — graduated on the <strong>non-steward host</strong> MyndHyve advertising its real <code>aiProviders</code> catalog + the <code>authModes</code> map at the discovery doc root (rev <code>workflow-runtime-00455-xus @ 100%</code>, <code>https://api.myndhyve.ai</code>; steward-verified 2026-06-01). Like RFC 0088, the §B auth-mode contract is a <strong>pure function of the public <code>/.well-known/openwop</code></strong>, so the steward <strong>independently re-derived it from the live doc</strong> (no host-reported numbers, no bearer key): <code>aiProviders.supported = [&quot;anthropic&quot;,&quot;openai&quot;,&quot;gemini&quot;,&quot;minimax&quot;]</code>, <code>byok = [same four]</code>, <code>authModes = {anthropic:[&quot;apiKey&quot;], openai:[&quot;apiKey&quot;], gemini:[&quot;apiKey&quot;], minimax:[&quot;apiKey&quot;]}</code> — and <strong>B.1</strong> (every <code>authModes</code> key ∈ <code>supported</code>) ✓, <strong>B.2</strong> (every <code>apiKey</code> provider ∈ <code>byok</code>) ✓, <strong>B.3</strong> (no <code>[&quot;none&quot;]</code>-only provider in <code>byok</code>) ✓ all hold; <strong>B.4</strong> does not engage (no <code>oauth-*</code> providers). MyndHyve's catalog is genuine — these are the providers its headless <code>workflow-runtime</code> AI execution path (<code>@myndhyve/ai-providers</code> via <code>serverExecutionHost</code>) actually routes to (confirmed against its structured-output switch + pricing table), superseding the prior empty <code>supported:[]</code> advertisement. The gated <code>byok-auth-modes</code> cross-field consistency leg passes <strong>non-vacuously</strong> (<code>3 passed</code>, no soft-skip — the <code>authModes</code> presence engages the gate) under <code>OPENWOP_REQUIRE_BEHAVIOR=true</code> vs <code>@openwop/openwop-conformance@1.18.1</code> (the scenario shipped at <code>Draft → Active</code> — no steward prerequisite was owed). No regression: <code>openwop-core-standard</code> + <code>openwop-agent-platform</code> + <code>auth.profiles</code> still hold on the same host. · 2026-05-29 — promoted <code>Draft → Active</code>. The full wire surface already landed on <code>main</code> (the additive optional <code>aiProviders.authModes</code> map in <code>capabilities.schema.json</code>, the §B/§C prose in <code>capabilities.md</code>, and the always-on-shape + gated-cross-field <code>byok-auth-modes.test.ts</code> scenario). The one <code>Active</code>-gating Unresolved question (#3, local-endpoint addressing) is resolved below: <strong>host-config only</strong>. Comment window waived per <code>GOVERNANCE.md</code> lazy consensus. No host wire change; reference-host advertisement remains deferred per §Conformance.</td></tr>
 <tr><td><strong>Affects</strong></td><td><code>schemas/capabilities.schema.json</code> (<code>aiProviders</code> — additive optional <code>authModes</code> map + a non-normative convention list extending <code>supported</code>'s description) · <code>spec/v1/capabilities.md</code> (§<code>aiProviders</code> — auth-mode contract + provider-name vocabulary) · <code>CHANGELOG.md</code> · new conformance scenario <code>byok-auth-modes.test.ts</code></td></tr>
 <tr><td><strong>Compatibility</strong></td><td><code>additive</code></td></tr>
 <tr><td><strong>Supersedes</strong></td><td>—</td></tr>
@@ -389,6 +391,7 @@
           <li><a href="/for/host-implementers/">Host implementers</a></li>
           <li><a href="/for/pack-authors/">Pack authors</a></li>
           <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+          <li><a href="/install/">Install the demo app</a></li>
         </ul>
       </div>
     </div>

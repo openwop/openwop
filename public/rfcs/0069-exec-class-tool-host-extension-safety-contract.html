@@ -105,6 +105,7 @@
           <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
           <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
           <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/install/" role="menuitem">Install the demo app</a>
           <a href="/implement/" role="menuitem">All implementer landings →</a>
         </div>
       </div>
@@ -149,6 +150,7 @@
     <li><a href="/for/host-implementers/">Host implementers</a></li>
     <li><a href="/for/pack-authors/">Pack authors</a></li>
     <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/install/">Install the demo app</a></li>
     <li><a href="/implement/">All implementer landings →</a></li>
   </ul>
 
@@ -189,10 +191,10 @@
 <tbody>
 <tr><td><strong>RFC</strong></td><td>0069</td></tr>
 <tr><td><strong>Title</strong></td><td>A normative carve-out: arbitrary-command (<code>exec</code>-class) execution MUST NOT be a protocol-tier capability — it lives only in named host-extension scopes (<code>x-host-&amp;lt;vendor&amp;gt;-exec</code>) whose safety controls the host owns end-to-end. Codifies an existing exclusion; no host wire shape changes.</td></tr>
-<tr><td><strong>Status</strong></td><td><code>Active</code></td></tr>
+<tr><td><strong>Status</strong></td><td><code>Accepted</code></td></tr>
 <tr><td><strong>Author(s)</strong></td><td>David Tufts (@davidscotttufts)</td></tr>
 <tr><td><strong>Created</strong></td><td>2026-05-26</td></tr>
-<tr><td><strong>Updated</strong></td><td>2026-05-29 — promoted <code>Draft → Active</code>. Every acceptance artifact already landed on <code>main</code> (this RFC codifies the existing exclusion: the <code>host-extensions.md</code> §"<code>exec</code>-class tools" MUST-NOT, the threat-model row + §4.7, the protocol-tier <code>exec-must-not-be-protocol-tier</code> invariant, and the always-on <code>exec-not-protocol-tier.test.ts</code> are all merged and CI-green). The 7-day comment window is opened and waived under the bootstrap-phase steward waiver (<code>GOVERNANCE.md</code> §bootstrap; single-maintainer phase, no non-steward maintainer yet). No host wire change.</td></tr>
+<tr><td><strong>Updated</strong></td><td>2026-06-01 (<code>Active → Accepted</code>) — graduated as a <strong>steward codification flip with no host dependency</strong>, the RFC 0054 amendment precedent for deterministic corpus-level guarantees that cannot be adoption-gated. RFC 0069 advertises NO capability and changes no host's wire shape — it is a structural carve-out asserting the protocol corpus defines no <code>exec</code>-class primitive — so there is nothing a non-steward host could advertise to prove it; its guarantee is proven directly against the corpus by the always-on, server-free <code>exec-not-protocol-tier.test.ts</code> (the <code>exec-must-not-be-protocol-tier</code> protocol-tier SECURITY invariant), green on <code>main</code>. All six acceptance criteria are <code>[x]</code>. Accepting it on this basis (rather than leaving it <code>Active</code> indefinitely behind an unsatisfiable adoption gate) mirrors how RFC 0054 was amended. · 2026-05-29 — promoted <code>Draft → Active</code>. Every acceptance artifact already landed on <code>main</code> (this RFC codifies the existing exclusion: the <code>host-extensions.md</code> §"<code>exec</code>-class tools" MUST-NOT, the threat-model row + §4.7, the protocol-tier <code>exec-must-not-be-protocol-tier</code> invariant, and the always-on <code>exec-not-protocol-tier.test.ts</code> are all merged and CI-green). The 7-day comment window is opened and waived under the bootstrap-phase steward waiver (<code>GOVERNANCE.md</code> §bootstrap; single-maintainer phase, no non-steward maintainer yet). No host wire change.</td></tr>
 <tr><td><strong>Affects</strong></td><td><code>spec/v1/host-extensions.md</code> (new §"<code>exec</code>-class tools") · <code>SECURITY/threat-model-prompt-injection.md</code> (new §"<code>exec</code> tools" + an invariant row) · <code>SECURITY/invariants.yaml</code> (new protocol-tier invariant <code>exec-must-not-be-protocol-tier</code>) · <code>CHANGELOG.md</code> · new conformance scenario <code>exec-not-protocol-tier.test.ts</code></td></tr>
 <tr><td><strong>Compatibility</strong></td><td><code>additive</code> (codifies an existing exclusion; safety-fix-shaped but no host's wire shape changes)</td></tr>
 <tr><td><strong>Supersedes</strong></td><td>—</td></tr>
@@ -362,6 +364,7 @@
           <li><a href="/for/host-implementers/">Host implementers</a></li>
           <li><a href="/for/pack-authors/">Pack authors</a></li>
           <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+          <li><a href="/install/">Install the demo app</a></li>
         </ul>
       </div>
     </div>
