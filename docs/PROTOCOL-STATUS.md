@@ -7,12 +7,12 @@
 
 | Surface | Current value | Source |
 |---|---:|---|
-| Spec prose documents | 50 | `spec/v1/*.md` |
+| Spec prose documents | 51 | `spec/v1/*.md` |
 | JSON Schemas | 55 | `schemas/*.schema.json` |
 | OpenAPI operations | 46 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 310 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 87 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 311 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 88 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -36,7 +36,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 71 |
-| Active | 13 |
+| Active | 14 |
 | Draft | 3 |
 
 | RFC | Title | Status |
@@ -128,6 +128,7 @@
 | RFC 0085 | Define `openwop-agent-platform` - an **operational annex** profile (a `production-profile.md`-style claim combining a discovery predicate + required runtime conformance scenarios + documentation + a badge, NOT a pure entry in the closed `profiles.md` catalog) that names one coherent "this host behaves like a full agent platform" target aggregating manifest+live agents, tool catalog+hooks, safe-fetch+egress, provider usage, prompt library, memory read/write/attribution, replay/fork-or-nondeterminism-policy, feedback, durable triggers, debug bundle, RBAC/tenant scoping, and conformance evidence - with a `partial` / `full` status | Active |
 | RFC 0086 | Define a **standing agent roster** - a named, tenant-scoped, mutable agent *instance* (the "digital-twin employee", e.g. `"Sally"`) that **references** a manifest/deployment (`agentId` + optional `version`/`channel`), **owns a workflow portfolio** (the workflows it is responsible for by role), and to which **trigger-fired runs are attributed** as a content-free recorded fact - composing RFC 0070/0072 (manifest agents + inventory), RFC 0082 (`@channel` binding), RFC 0052 (schedule triggers) and RFC 0083 (durable work-item triggers), while keeping per-host work surfaces (Kanban boards) as host/vendor extensions | Accepted |
 | RFC 0087 | Define an **agent org-chart** - a tenant-scoped, descriptive grouping of standing roster agents (RFC 0086) into departments + roles with `reportsTo` edges and a responsibility view - under one load-bearing invariant: **org position confers NO authority** (a `reportsTo`/manager edge MUST NOT widen `toolAllowlist`, grant an RBAC scope, or bypass an approval gate); composing RFC 0086 (the members), RFC 0074 (tenant scoping), RFC 0049 (RBAC - unchanged by position), and RFC 0051 (approval gates - unchanged by position) | Accepted |
+| RFC 0088 | `openwop-core-standard` - the stable Core Standard Profile (the black-box-proven floor) | Active |
 
 ## SDK Helper Coverage
 
@@ -168,7 +169,7 @@
 ## Active Follow-Ups
 
 - 3 RFCs still `Draft` (RFC 0038, RFC 0043, RFC 0050) — advance with schema/conformance proof or defer.
-- 13 RFCs `Active` (RFC 0035, RFC 0042, RFC 0065, RFC 0066, RFC 0067, RFC 0068, RFC 0069, RFC 0075, RFC 0078, RFC 0079, RFC 0080, RFC 0084, RFC 0085) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 14 RFCs `Active` (RFC 0035, RFC 0042, RFC 0065, RFC 0066, RFC 0067, RFC 0068, RFC 0069, RFC 0075, RFC 0078, RFC 0079, RFC 0080, RFC 0084, RFC 0085, RFC 0088) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
