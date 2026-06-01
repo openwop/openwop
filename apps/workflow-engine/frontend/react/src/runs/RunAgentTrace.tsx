@@ -19,6 +19,7 @@
 
 import { useMemo, useState } from 'react';
 import type { RunEventDoc } from '@openwop/openwop';
+import { MessageSquareIcon, WrenchIcon, ScaleIcon } from '../chat/icons/index.js';
 
 interface Props {
   events: readonly RunEventDoc[];
@@ -154,7 +155,7 @@ export function RunAgentTrace({ events }: Props) {
 function ReasoningStepView({ step }: { step: ReasonStep }) {
   return (
     <div className="agent-trace-body agent-trace-reasoning">
-      <span className="agent-trace-glyph" aria-hidden>💭</span>
+      <span className="agent-trace-glyph" aria-hidden><MessageSquareIcon size={14} /></span>
       <span className="agent-trace-text">{step.text}</span>
     </div>
   );
@@ -166,7 +167,7 @@ function ToolStepView({ step }: { step: ToolStep }) {
   return (
     <div className={`agent-trace-body agent-trace-tool${isError ? ' agent-trace-tool-error' : ''}`}>
       <button type="button" className="agent-trace-tool-head" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
-        <span className="agent-trace-glyph" aria-hidden>🔧</span>
+        <span className="agent-trace-glyph" aria-hidden><WrenchIcon size={14} /></span>
         <strong>{step.toolName}</strong>
         <span className="muted agent-trace-tool-status">
           {!step.returned ? 'running…' : isError ? 'failed' : 'ok'}
@@ -200,7 +201,7 @@ function DecisionStepView({ step }: { step: DecisionStep }) {
     : (asRecord(step.decision).kind as string) ?? 'decision';
   return (
     <div className="agent-trace-body agent-trace-decision">
-      <span className="agent-trace-glyph" aria-hidden>⚖️</span>
+      <span className="agent-trace-glyph" aria-hidden><ScaleIcon size={14} /></span>
       <strong>Decision: {label}</strong>
       {conf != null && (
         <span className="agent-trace-conf" style={{ borderColor: confColor, color: confColor }}>

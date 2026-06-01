@@ -25,6 +25,7 @@ import { Link } from 'react-router-dom';
 import { StepList, STATUS_COLORS, STATUS_LABELS } from './StepList.js';
 import { formatElapsed } from './formatters.js';
 import type { ChatMessage } from '../hooks/useChatSession.js';
+import { PauseIcon, XIcon } from '../icons/index.js';
 
 /** Render-time humanization for the pointer-chip copy. Raw `kind`
  *  values are lowercase enum strings — the labels here read more
@@ -106,9 +107,9 @@ export function WorkflowProgressPanel({
           className="secondary"
           onClick={onClose}
           aria-label="Close workflow progress"
-          style={{ padding: '2px 8px', fontSize: 11, minHeight: 0, height: 22 }}
+          style={{ padding: '2px 8px', fontSize: 11, minHeight: 0, height: 22, display: 'inline-flex', alignItems: 'center' }}
         >
-          ×
+          <XIcon size={14} />
         </button>
       </header>
 
@@ -304,8 +305,11 @@ function FocusedRunView({
           border: '1px solid var(--clay-rule, #d9b9a3)',
           borderRadius: 6,
           fontSize: 12,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
         }}>
-          ⏸ Awaiting your input — see the {INTERRUPT_KIND_LABEL[message.activeInterrupt.kind] ?? message.activeInterrupt.kind} card in the chat ↑
+          <PauseIcon size={14} /> <span>Awaiting your input — see the {INTERRUPT_KIND_LABEL[message.activeInterrupt.kind] ?? message.activeInterrupt.kind} card in the chat ↑</span>
         </div>
       )}
 

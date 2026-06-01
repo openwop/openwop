@@ -17,6 +17,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { deleteMemoryEntry, listMemory, type MemoryEntry } from './lib/memoryClient.js';
+import { LockIcon } from '../chat/icons/index.js';
 
 function isRedacted(content: string): boolean {
   return /\[REDACTED:[^\]]*\]/.test(content);
@@ -129,7 +130,7 @@ export function MemoryInspectorPage(): JSX.Element {
                       <td>
                         {isRedacted(e.content) && (
                           <span className="memory-redacted-badge" title="Contains host-redacted secret material (SR-1)">
-                            🔒 redacted
+                            <LockIcon size={12} /> redacted
                           </span>
                         )}
                         <span className="memory-content">{e.content}</span>

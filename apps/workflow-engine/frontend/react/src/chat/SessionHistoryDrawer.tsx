@@ -14,6 +14,7 @@
 
 import { useMemo, useState } from 'react';
 import type { ChatSessionHeader } from '../client/chatSessionsClient.js';
+import { PencilIcon, TrashIcon, XIcon } from './icons/index.js';
 
 interface Props {
   sessions: readonly ChatSessionHeader[];
@@ -122,7 +123,7 @@ export function SessionHistoryDrawer({
           aria-label="Close history"
           style={{ padding: '2px 8px', fontSize: 11, minHeight: 0, height: 22 }}
         >
-          ×
+          <XIcon size={14} />
         </button>
       </header>
 
@@ -251,7 +252,7 @@ export function SessionHistoryDrawer({
                               }}
                               aria-label="Rename chat"
                             >
-                              ✎
+                              <PencilIcon size={12} />
                             </button>
                             <button
                               type="button"
@@ -263,7 +264,7 @@ export function SessionHistoryDrawer({
                               }}
                               aria-label="Delete chat"
                             >
-                              🗑
+                              <TrashIcon size={12} />
                             </button>
                           </div>
                         </>

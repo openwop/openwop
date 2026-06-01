@@ -24,6 +24,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import type { AuditVerifyResult, RunEventDoc } from '@openwop/openwop';
 import { getSdkClient, getCapabilities, pollEvents } from '../client/runsClient.js';
+import { ArrowLeftIcon, CheckIcon, XIcon } from '../chat/icons/index.js';
 
 export function RunAuditPage() {
   const { runId = '' } = useParams();
@@ -119,7 +120,7 @@ export function RunAuditPage() {
     <section className="card">
       <div className="audit-page__head">
         <h1 style={{ flex: 1, margin: 0 }}>Audit log — <code style={{ fontSize: 14 }}>{runId}</code></h1>
-        <Link to={`/runs/${runId}`} className="linklike" style={{ fontSize: 13 }}>← Back to run</Link>
+        <Link to={`/runs/${runId}`} className="linklike" style={{ fontSize: 13 }}><ArrowLeftIcon size={13} /> Back to run</Link>
       </div>
       <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>
         Append-only hash chain + Merkle-rooted signed checkpoints per the{' '}
@@ -158,7 +159,7 @@ export function RunAuditPage() {
                 role="status"
                 style={{ marginBottom: 12 }}
               >
-                <strong>{result.chainValid ? '✓ Hash chain valid' : '✕ Hash chain INVALID'}</strong>
+                <strong>{result.chainValid ? <><CheckIcon size={14} /> Hash chain valid</> : <><XIcon size={14} /> Hash chain INVALID</>}</strong>
                 {' — '}
                 seq {result.fromSeq}–{result.toSeq} ·{' '}
                 {result.checkpoints.length} checkpoint{result.checkpoints.length === 1 ? '' : 's'}

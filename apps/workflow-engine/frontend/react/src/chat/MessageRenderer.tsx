@@ -24,6 +24,7 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { ContentPart } from './hooks/useChatSession.js';
 import { MicIcon } from './icons/MicIcon.js';
+import { CheckIcon, PaperclipIcon } from './icons/index.js';
 
 /** Overrides applied to ReactMarkdown's element renderers. Two
  *  behaviors we want different from the defaults:
@@ -258,7 +259,11 @@ function CodeBlock({ source, language }: CodeBlockProps): JSX.Element {
           style={{ padding: '0 8px', fontSize: 10, minHeight: 0, height: 22 }}
           aria-label="Copy code"
         >
-          {copied ? '✓ Copied' : 'Copy'}
+          {copied ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <CheckIcon size={12} /> Copied
+            </span>
+          ) : 'Copy'}
         </button>
       </div>
       <pre
@@ -362,7 +367,7 @@ function FileAttachment({ mimeType, url, dataBase64, name }: { mimeType: string;
       rel="noreferrer"
       style={{ display: 'inline-flex', alignItems: 'center', gap: 8, margin: '6px 0', padding: '6px 10px', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 8, fontSize: 12, textDecoration: 'none', color: 'var(--color-text)' }}
     >
-      <span aria-hidden="true">📎</span>
+      <PaperclipIcon size={14} />
       <span>{name ?? mimeType}</span>
     </a>
   );

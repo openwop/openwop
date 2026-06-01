@@ -15,6 +15,7 @@ import {
   subscribeNetworkEntries,
   type NetworkEntry,
 } from './networkRecorder.js';
+import { XIcon } from '../chat/icons/index.js';
 
 type FilterKind = 'all' | 'rest' | 'sse' | 'errors';
 
@@ -81,7 +82,7 @@ export function NetworkPanel({ open, onClose }: Props): JSX.Element | null {
               Clear
             </button>
             <button className="secondary" onClick={onClose} aria-label="Close network panel">
-              ✕
+              <XIcon size={14} />
             </button>
           </div>
         </header>

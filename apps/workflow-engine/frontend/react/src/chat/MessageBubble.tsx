@@ -19,7 +19,7 @@ import { EnvelopeInspector } from './EnvelopeInspector.js';
 import { ReasoningDisclosure } from './ReasoningDisclosure.js';
 import { ErrorCard } from './ErrorCard.js';
 import { formatUsd, turnCostUsd } from './lib/cost.js';
-import { GlobeIcon, ThumbsDownIcon, ThumbsUpIcon } from './icons/index.js';
+import { CheckIcon, GlobeIcon, RotateCwIcon, ThumbsDownIcon, ThumbsUpIcon } from './icons/index.js';
 
 function hasContent(content: ChatMessage['content']): boolean {
   if (typeof content === 'string') return content.length > 0;
@@ -96,7 +96,11 @@ function MessageActions({
       }}
     >
       <button type="button" style={btn} onClick={copy} aria-label="Copy message">
-        {copied ? '✓ Copied' : 'Copy'}
+        {copied ? (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <CheckIcon size={13} /> Copied
+          </span>
+        ) : 'Copy'}
       </button>
       {onRegenerate && (
         <button
@@ -106,7 +110,9 @@ function MessageActions({
           aria-label="Regenerate response"
           title="Re-run the prior user message"
         >
-          ↻ Regenerate
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <RotateCwIcon size={13} /> Regenerate
+          </span>
         </button>
       )}
       {onFeedback && (

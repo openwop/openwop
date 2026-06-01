@@ -1,5 +1,6 @@
 import type { RunEventDoc } from '@openwop/openwop';
 import { config } from '../client/config.js';
+import { PaperclipIcon } from '../chat/icons/index.js';
 
 interface Props {
   events: readonly RunEventDoc[];
@@ -42,7 +43,7 @@ function MediaEventPreview({ type, payload }: { type: string; payload: unknown }
   }
   return (
     <a href={src} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 4, fontSize: 12 }}>
-      📎 download asset
+      <PaperclipIcon size={12} /> download asset
     </a>
   );
 }
