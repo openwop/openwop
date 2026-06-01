@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0067): provider-catalog conventions — Active → Accepted (2026-06-01)
+
+**RFC 0067** graduated `Active → Accepted` on the non-steward host MyndHyve (rev `workflow-runtime-00455-xus`). MyndHyve advertises its real `aiProviders` catalog + the new `authModes` map at the discovery doc root — `supported = byok = ["anthropic","openai","gemini","minimax"]`, `authModes = {anthropic:["apiKey"], openai:["apiKey"], gemini:["apiKey"], minimax:["apiKey"]}` (the genuine providers its `workflow-runtime` AI path routes to, superseding the prior empty `supported:[]`). Like RFC 0088 the §B auth-mode contract is a pure function of the public `/.well-known/openwop`, so the steward **independently re-derived it** (no bearer key): B.1 keys ∈ supported ✓, B.2 apiKey ∈ byok ✓, B.3 no `["none"]`-in-byok ✓; B.4 n/a. The gated `byok-auth-modes` cross-field leg passes **non-vacuously** (`3 passed`, no soft-skip) under `OPENWOP_REQUIRE_BEHAVIOR=true` vs `@openwop/openwop-conformance@1.18.1` — the scenario shipped at `Draft → Active`, **no steward prerequisite owed**. No regression on core-standard/agent-platform/auth.profiles. RFC header + README banner counts (**Accepted 83→84, Active 3→2**) + INTEROP lead + regenerated PROTOCOL-STATUS. No wire-shape change. Coordinated via the `billy` crosstalk bus. (Remaining Active: 0042 experimental-tier, 0035 sandbox — each independently/externally gated.)
+
 ### spec(rfc-0050+0066+0065): SAML/SCIM + x-openwop-form + outputRole — Active → Accepted — greenlit list closed (2026-06-01)
 
 **RFC 0050 (SAML/SCIM enterprise identity)**, **RFC 0066 (`x-openwop-form` config UX hints)**, and **RFC 0065 (`outputRole` annotation)** graduated `Active → Accepted` on the non-steward host MyndHyve — closing the entire greenlit Active→Accepted list (0069·0088·0075·0050·0066·0065). RFC counts **Accepted 80→83, Active 6→3**.
