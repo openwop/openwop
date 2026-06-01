@@ -1369,6 +1369,13 @@ pre {
   --xy-controls-button-background-color-hover-default: var(--clay-wash);
   --xy-controls-button-color-default: var(--ink);
   --xy-controls-button-border-color-default: var(--rule);
+  /* Minimap — without these it falls back to xyflow's stock #fff background
+   * + #e2e2e2 node rects, which is light-on-light against the editorial
+   * canvas and reads as a blank white box (the overview shows nothing).
+   * Theme it to the paper palette so the workflow is actually visible. */
+  --xy-minimap-background-color-default: var(--paper-2);
+  --xy-minimap-node-background-color-default: var(--ink-2);
+  --xy-minimap-mask-background-color-default: var(--ink-shadow);
 }
 
 .builder-canvas .react-flow {
@@ -1377,6 +1384,14 @@ pre {
 
 .builder-canvas .react-flow__controls {
   background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  box-shadow: 0 1px 3px var(--ink-shadow);
+}
+
+/* Match the controls panel so the overview reads as a framed panel, not a
+ * floating swatch (the background var is themed in the .builder-canvas block). */
+.builder-canvas .react-flow__minimap {
   border: 1px solid var(--rule);
   border-radius: 2px;
   box-shadow: 0 1px 3px var(--ink-shadow);
