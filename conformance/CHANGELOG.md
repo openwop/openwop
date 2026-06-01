@@ -2,11 +2,17 @@
 
 ## [Unreleased]
 
-### Added — RFC 0085 live aggregate-evidence scenario (steward prerequisite for the next conformance minor)
+_No unreleased changes._
+
+## [1.18.0] — 2026-06-01 — RFC 0085 openwop-agent-platform live aggregate-evidence gate
+
+Standalone conformance minor — a scenario addition published via the `openwop-conformance/v1.18.0` per-package tag (PUBLISHING.md §"CI automation"; only the `publish-conformance` job runs), NOT a coordinated spec-corpus release. `EXPECTED_CONFORMANCE_VERSION` advances to `1.18.0` in lockstep. The steward prerequisite that lets MyndHyve run the RFC 0085 §C live aggregate-evidence scenario non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true` to graduate the `openwop-agent-platform` meta-profile from `Active` to `Accepted` — the capstone of the agent-platform program. The normative surface (the `nondeterminismPolicy.declared` flag + the `isAgentPlatform*` predicate helpers + the operational annex) already shipped — this release is the gated test surface only.
+
+### Added — RFC 0085 live aggregate-evidence scenario
 
 - **`agent-platform-aggregate-evidence.test.ts`** (`behaviorGate('openwop-agent-platform', …)`, gated on a host CLAIMING `openwop-agent-platform` in its live discovery `profiles[]`) — the RFC 0085 §C `Active → Accepted` bar. Reads the live `/.well-known/openwop` and asserts the §C/§D honest-advertisement rule: a host MAY advertise `openwop-agent-platform` only if its real wire satisfies the §B floor predicate (`isAgentPlatformPartial`), deriving to `partial` or `full` (never `none`) — the platform claim is **backed by** the per-capability evidence (each constituent cap's gated scenario runs in the same suite run), never the profile string alone. When the operator declares the cert tier `full` (`OPENWOP_AGENT_PLATFORM_TIER=full`), the full predicate (authorization + tenant installScope + memory.attribution + debugBundle + triggerBridge + egressPolicy) MUST hold + all 16 §D terms satisfied. Server-requiring — the always-on §B/§D predicate-derivation legs stay in `agent-platform-profile.test.ts`. This is the RFC 0085 → Accepted bar.
 
-Additive + capability-gated; existing v1.0-only hosts pass unchanged. No new schemas (the `nondeterminismPolicy.declared` flag + the `isAgentPlatform*` predicate helpers shipped at `Draft → Active`). The version bump + `EXPECTED_CONFORMANCE_VERSION` advance ships in the follow-up publish.
+Additive + capability-gated; existing v1.0-only hosts pass unchanged. No new schemas (the `nondeterminismPolicy.declared` flag + the `isAgentPlatform*` predicate helpers shipped at `Draft → Active`).
 
 ## [1.17.0] — 2026-06-01 — harden the agent-platform behavioral gates against vacuous passes
 
