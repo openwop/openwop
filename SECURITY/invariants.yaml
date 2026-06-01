@@ -1661,10 +1661,11 @@ invariants:
       is gated on agents.orgChart.supported and lands at Active -> Accepted.
 
   - id: deployment-promotion-fail-closed
-    tier: reference-impl
+    tier: protocol
     severity: high
     threat_model: SECURITY/invariants.yaml
-    tests: []
+    tests:
+      - conformance/src/scenarios/agent-deployment-lifecycle.test.ts
     note: |
       RFC 0082 §E. A deployment state transition (promote / rollback / pause)
       MUST authorize fail-closed against the RFC 0049 deploy:* scope (absent /
