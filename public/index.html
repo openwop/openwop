@@ -788,7 +788,7 @@
     <div class="ana-tabs" role="tablist" aria-label="OpenWOP run components">
       <button class="ana-tab is-active" role="tab" id="ana-tab-A" aria-controls="ana-A" aria-selected="true" data-tab="A"><span class="ana-tab-key">A</span><span class="ana-tab-label">Workflow definition</span></button>
       <button class="ana-tab" role="tab" id="ana-tab-B" aria-controls="ana-B" aria-selected="false" tabindex="-1" data-tab="B"><span class="ana-tab-key">B</span><span class="ana-tab-label">Run state machine</span></button>
-      <button class="ana-tab" role="tab" id="ana-tab-C" aria-controls="ana-C" aria-selected="false" tabindex="-1" data-tab="C"><span class="ana-tab-key">C</span><span class="ana-tab-label">Agent &amp; memory</span></button>
+      <button class="ana-tab" role="tab" id="ana-tab-C" aria-controls="ana-C" aria-selected="false" tabindex="-1" data-tab="C"><span class="ana-tab-key">C</span><span class="ana-tab-label">Agent platform</span></button>
       <button class="ana-tab" role="tab" id="ana-tab-D" aria-controls="ana-D" aria-selected="false" tabindex="-1" data-tab="D"><span class="ana-tab-key">D</span><span class="ana-tab-label">Human checkpoints</span></button>
       <button class="ana-tab" role="tab" id="ana-tab-E" aria-controls="ana-E" aria-selected="false" tabindex="-1" data-tab="E"><span class="ana-tab-key">E</span><span class="ana-tab-label">Streaming &amp; webhooks</span></button>
       <button class="ana-tab" role="tab" id="ana-tab-F" aria-controls="ana-F" aria-selected="false" tabindex="-1" data-tab="F"><span class="ana-tab-key">F</span><span class="ana-tab-label">Node packs</span></button>
@@ -983,17 +983,18 @@
     <article class="ana-block" id="ana-C" role="tabpanel" aria-labelledby="ana-tab-C" hidden>
       <header class="ana-block-head">
         <span class="ana-block-key">C</span>
-        <h3 class="ana-block-title">Agent &amp; memory surfaces</h3>
-        <span class="ana-block-tag">agent-manifest.schema.json</span>
+        <h3 class="ana-block-title">Agent platform surfaces</h3>
+        <span class="ana-block-tag">agent-manifest.schema.json &middot; agent-platform-profile.md</span>
       </header>
       <div class="ana-block-body">
         <div class="ana-block-prose">
           <p>Multi-agent workflows need a wire shape for who took which turn. The protocol defines <code>AgentRef</code> — agent identity that travels with every reasoning event — and a closed set of five reasoning events: <code>agent.reasoned</code>, <code>agent.toolCalled</code>, <code>agent.toolReturned</code>, <code>agent.handoff</code>, <code>agent.decided</code>.</p>
           <p>Conversations are first-class. A <code>conversation</code> interrupt opens a multi-turn exchange that emits <code>conversation.opened</code> / <code>exchanged</code> / <code>closed</code> events without re-entering the workflow on every turn.</p>
           <p>Cross-run memory lives behind a host-side <em>memory adapter</em> with four operations (<code>list</code>, <code>get</code>, <code>put</code>, <code>delete</code>) and a redaction invariant that composes with BYOK secret handling. The protocol pins the read-path semantics; the storage backend is a host choice.</p>
+          <p>These surfaces roll up into one named target: the <code>openwop-agent-platform</code> meta-profile (RFC 0085). It <em>composes</em> &mdash; never redefines &mdash; the constituent capabilities into a <code>partial</code> floor (ten terms: manifest + live agent runtime, tool catalog + hooks, safe-fetch, provider usage, prompt library, memory, feedback, and replay-or-declared-nondeterminism) and a governance <code>full</code> tier (+ RBAC, tenant scoping, memory attribution, debug bundle, durable triggers, egress policy). Eval, deployment, and budget are advisory platform-plus. The claim is <em>backed by per-capability conformance evidence</em>, never asserted on shape alone &mdash; so a host reports <code>partial</code> until the full-tier scenarios actually pass. The independent MyndHyve host is certified <code>full</code>: all sixteen terms re-derived by the steward from its public discovery document.</p>
         </div>
         <figure class="ana-block-fig">
-          <svg viewBox="0 0 720 360" preserveAspectRatio="xMidYMid meet" role="img" aria-label="An agent in the center exposes five reasoning event types as a vertical list on the right (agent.reasoned, agent.toolCalled, agent.toolReturned, agent.handoff, agent.decided). A multi-turn conversation surface is shown to the upper-left, with bidirectional arrows for exchanged messages. Below the agent, a memory adapter exposes four operations: list, get, put, delete.">
+          <svg viewBox="0 0 720 440" preserveAspectRatio="xMidYMid meet" role="img" aria-label="An agent in the center exposes five reasoning event types as a vertical list on the right (agent.reasoned, agent.toolCalled, agent.toolReturned, agent.handoff, agent.decided). A multi-turn conversation surface is shown to the upper-left, with bidirectional arrows for exchanged messages. Below the agent, a memory adapter exposes four operations: list, get, put, delete. A meta-profile band along the bottom shows these surfaces aggregating into the openwop-agent-platform profile: a partial floor of ten terms, a governance full tier of six more terms, an advisory platform-plus tier of eval, deployment, and budget, and an evidence chip noting the MyndHyve host is certified full.">
             <defs><marker id="ag-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)" opacity="0.6"/></marker>
             <marker id="ag-arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--clay)"/></marker></defs>
             <!-- Conversation surface (top-left) -->
@@ -1062,12 +1063,39 @@
             <text x="378" y="234" class="node-label" style="font-size:7px; fill:var(--ink-3);">memoryRef</text>
 
             <text x="370" y="346" text-anchor="middle" class="node-label" style="font-size:7.5px; fill:var(--ink-3);">protocol pins the wire shape · runtime, model, and storage are host choices</text>
+
+            <!-- ─── Meta-profile band: the surfaces above roll up into openwop-agent-platform ─── -->
+            <line x1="30" y1="366" x2="690" y2="366" stroke="var(--rule-2)"/>
+            <text x="30" y="382" class="node-label" style="font-size:8.5px; fill:var(--ink); letter-spacing:0.06em;">META-PROFILE</text>
+            <text x="148" y="382" class="node-label" style="font-size:7.5px; fill:var(--clay);">openwop-agent-platform · RFC 0085</text>
+            <text x="690" y="382" text-anchor="end" class="node-label" style="font-size:7px; fill:var(--ink-3);">composes the surfaces above · never redefines them</text>
+
+            <!-- partial pill -->
+            <rect x="30" y="392" width="300" height="38" rx="4" class="node-c"/>
+            <text x="44" y="408" class="node-label" style="font-size:9px; fill:var(--ink);">partial</text>
+            <text x="92" y="408" class="node-label" style="font-size:7px; fill:var(--ink-3);">— floor · 10 terms</text>
+            <text x="44" y="422" class="node-label" style="font-size:6.5px; fill:var(--ink-3);">core · runtime · tools · safe-fetch · usage · prompts · memory · feedback · replay</text>
+
+            <!-- full pill (accent) -->
+            <rect x="342" y="392" width="244" height="38" rx="4" class="node-c accent"/>
+            <text x="356" y="408" class="node-label" style="font-size:9px; fill:var(--clay);">full</text>
+            <text x="384" y="408" class="node-label" style="font-size:7px; fill:var(--ink-3);">— + governance · 6 terms</text>
+            <text x="356" y="422" class="node-label" style="font-size:6.5px; fill:var(--ink-3);">RBAC · tenant scope · attribution · debug bundle · triggers · egress policy</text>
+
+            <!-- evidence chip -->
+            <rect x="598" y="392" width="92" height="38" rx="4" fill="var(--paper)" stroke="var(--clay-rule)" stroke-width=".8"/>
+            <text x="644" y="406" text-anchor="middle" class="node-label" style="font-size:7px; fill:var(--clay);">▣ MyndHyve</text>
+            <text x="644" y="416" text-anchor="middle" class="node-label" style="font-size:7px; fill:var(--clay);">certified full</text>
+            <text x="644" y="426" text-anchor="middle" class="node-label" style="font-size:5.5px; fill:var(--ink-3);">16/16 · evidence-backed</text>
+
+            <text x="30" y="438" class="node-label" style="font-size:6.5px; fill:var(--ink-3);">platform-plus (advisory): eval · deployment · budget · — claim backed by per-capability conformance, never shape alone</text>
           </svg>
-          <figcaption><span>FIG. 02C · AGENT &amp; MEMORY</span><span>AgentRef · EVENTS · MEMORY</span></figcaption>
+          <figcaption><span>FIG. 02C · AGENT PLATFORM</span><span>AgentRef · EVENTS · MEMORY · PROFILE</span></figcaption>
         </figure>
       </div>
       <div class="ana-block-cta">
-        <a href="/spec/v1/agent-memory.html">View the agent memory spec <span class="arrow">→</span></a>
+        <a href="/spec/v1/agent-platform-profile.html">Agent-platform profile <span class="arrow">→</span></a>
+        <a href="/spec/v1/agent-memory.html">Agent memory spec <span class="arrow">→</span></a>
       </div>
     </article>
 
