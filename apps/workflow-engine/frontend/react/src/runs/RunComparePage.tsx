@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { RunSnapshot, RunEventDoc } from '@openwop/openwop';
 import { getRun, pollEvents } from '../client/runsClient.js';
+import { PageHeader } from '../ui/PageHeader.js';
 import { RunTimeline } from './RunTimeline.js';
 
 interface Side {
@@ -54,8 +55,8 @@ export function RunComparePage() {
 
   return (
     <section>
+      <PageHeader eyebrow="Runs" title="Compare runs" />
       <div className="card">
-        <h2>Compare runs</h2>
         <form
           className="button-row"
           onSubmit={(e) => { e.preventDefault(); setParams({ a: aIn.trim(), b: bIn.trim() }); }}

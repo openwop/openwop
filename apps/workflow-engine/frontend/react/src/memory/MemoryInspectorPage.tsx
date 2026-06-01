@@ -18,6 +18,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { deleteMemoryEntry, listMemory, type MemoryEntry } from './lib/memoryClient.js';
 import { LockIcon } from '../ui/icons/index.js';
+import { PageHeader } from '../ui/PageHeader.js';
 
 function isRedacted(content: string): boolean {
   return /\[REDACTED:[^\]]*\]/.test(content);
@@ -69,18 +70,13 @@ export function MemoryInspectorPage(): JSX.Element {
 
   return (
     <section>
+      <PageHeader
+        eyebrow="Memory"
+        title="Memory inspector"
+        lede={<>Browse the tenant&apos;s memory ledger (RFC 0004 read-side). Entries are written host-internally — the executor writes a run-summary on completion. Reads and deletes are scoped to your credential server-side; the inspector can&apos;t see another tenant&apos;s memory.{memoryRef && <> Showing <code>{memoryRef}</code>.</>}</>}
+        actions={<button className="secondary" onClick={() => { void refresh(); }}>Refresh</button>}
+      />
       <div className="card">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <h2 style={{ margin: 0 }}>Memory inspector</h2>
-          <button className="secondary" onClick={() => { void refresh(); }}>Refresh</button>
-        </div>
-        <p className="muted">
-          Browse the tenant&apos;s memory ledger (RFC 0004 read-side). Entries are
-          written host-internally — the executor writes a run-summary on
-          completion. Reads and deletes are scoped to your credential
-          server-side; the inspector can&apos;t see another tenant&apos;s memory.
-          {memoryRef && <> Showing <code>{memoryRef}</code>.</>}
-        </p>
 
         <div className="form-row" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <div style={{ flex: 2, minWidth: 200 }}>

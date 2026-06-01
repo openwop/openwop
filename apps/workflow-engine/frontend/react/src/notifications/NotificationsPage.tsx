@@ -12,6 +12,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useNotificationStore } from './notificationStore.js';
+import { PageHeader } from '../ui/PageHeader.js';
 import { listOpenInterrupts, type OpenInterrupt } from '../client/interruptsClient.js';
 import { RenderInterrupt } from '../interrupts/RenderInterrupt.js';
 import type { Notification } from './types.js';
@@ -53,27 +54,18 @@ export function NotificationsPage(): JSX.Element {
 
   return (
     <section>
-      <div className="card">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <h2 style={{ flex: 1, margin: 0 }}>Inbox</h2>
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => void markAllRead()}
-            disabled={unreadCount === 0}
-          >
-            Mark all read
-          </button>
-          <button type="button" className="secondary" onClick={() => void refresh()}>
-            Refresh
-          </button>
-        </div>
-        <p className="muted" style={{ fontSize: 12 }}>
-          Everything that needs your attention. Approval requests from suspended workflows render their
-          resume form inline so you can resolve without leaving the page.
-        </p>
-        {error && <div className="alert error">{error}</div>}
-      </div>
+      <PageHeader
+        eyebrow="Inbox"
+        title="Inbox"
+        lede="Everything that needs your attention. Approval requests from suspended workflows render their resume form inline so you can resolve without leaving the page."
+        actions={
+          <>
+            <button type="button" className="secondary" onClick={() => void markAllRead()} disabled={unreadCount === 0}>Mark all read</button>
+            <button type="button" className="secondary" onClick={() => void refresh()}>Refresh</button>
+          </>
+        }
+      />
+      {error && <div className="alert error">{error}</div>}
 
       <div
         className="card"

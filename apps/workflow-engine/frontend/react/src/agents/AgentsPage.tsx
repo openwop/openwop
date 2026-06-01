@@ -22,6 +22,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { listAgents, type AgentEntry } from '../client/agentsClient.js';
+import { PageHeader } from '../ui/PageHeader.js';
 
 interface State {
   agents: readonly AgentEntry[];
@@ -65,32 +66,22 @@ export function AgentsPage(): JSX.Element {
   });
 
   return (
-    <section aria-labelledby="agents-page-heading" style={{ maxWidth: 960, margin: '0 auto' }}>
-      <header style={{ marginBottom: 'var(--space-4)', display: 'flex', alignItems: 'flex-end', gap: 'var(--space-4)' }}>
-        <div style={{ flex: 1 }}>
-          <h2 id="agents-page-heading" style={{ marginBottom: 'var(--space-1)' }}>Agents</h2>
-          <p className="muted" style={{ fontSize: 13, margin: 0 }}>
-            Persona-driven LLM workers. Mention one in chat with{' '}
-            <code>@</code> to add it to your active-agents lineup.
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => navigate('/agents/install')}
-          >
-            Install from registry
-          </button>
-          <button
-            type="button"
-            className="primary"
-            onClick={() => navigate('/agents/new')}
-          >
-            + Author new
-          </button>
-        </div>
-      </header>
+    <section style={{ maxWidth: 960, margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Agents"
+        title="Agent templates"
+        lede={<>Persona-driven LLM workers. Mention one in chat with <code>@</code> to add it to your active-agents lineup.</>}
+        actions={
+          <>
+            <button type="button" className="secondary" onClick={() => navigate('/agents/install')}>
+              Install from registry
+            </button>
+            <button type="button" className="primary" onClick={() => navigate('/agents/new')}>
+              + Author new
+            </button>
+          </>
+        }
+      />
 
       <div style={{ marginBottom: 'var(--space-3)' }}>
         <input

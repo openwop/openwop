@@ -17,6 +17,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Notice } from '../ui/Notice.js';
 import { StateCard } from '../ui/StateCard.js';
+import { PageHeader } from '../ui/PageHeader.js';
 import { BriefcaseIcon, ColumnsIcon, LockIcon, PencilIcon, ShieldIcon, TrashIcon, UserIcon } from '../ui/icons/index.js';
 import {
   type AccessRole,
@@ -362,14 +363,11 @@ export function OrgsPage(): JSX.Element {
 
   return (
     <section style={{ padding: '1rem', maxWidth: 1040 }}>
-      <h1 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-        <ShieldIcon size={22} /> Organizations &amp; access
-      </h1>
-      <p style={{ ...muted, marginTop: '-0.4rem' }}>
-        Organizations, teams, and members with role-based access. Roles map to OpenWOP authorization
-        scopes (RFC 0049); a member&rsquo;s authority comes from its assigned roles only — org-chart
-        position confers none.
-      </p>
+      <PageHeader
+        eyebrow="Settings"
+        title="Organizations & access"
+        lede={<>Organizations, teams, and members with role-based access. Roles map to OpenWOP authorization scopes (RFC 0049); a member&rsquo;s authority comes from its assigned roles only — org-chart position confers none.</>}
+      />
       {error ? <Notice variant="error">{error}</Notice> : null}
 
       <div style={{ display: 'flex', gap: 'var(--space-5)', alignItems: 'flex-start', flexWrap: 'wrap' }}>

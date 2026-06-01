@@ -19,6 +19,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { deleteKey, listStoredRefs, storeKey } from './lib/byokClient.js';
 import { PROVIDERS, type ProviderConfig } from './lib/providers.js';
+import { PageHeader } from '../ui/PageHeader.js';
 
 interface CredentialEntry {
   ref: string;
@@ -85,18 +86,13 @@ export function KeysPage(): JSX.Element {
 
   return (
     <section>
+      <PageHeader
+        eyebrow="Settings"
+        title="API keys"
+        lede="Manage the API keys your workflows use. Each key is stored server-side (encrypted at rest); the chat and workflow-node dispatchers reference a key by its label. Add multiple keys per provider (e.g., separate prod/test keys) and pick which one a specific workflow node uses from the builder."
+        actions={<button className="secondary" onClick={() => { void refresh(); }}>Refresh</button>}
+      />
       <div className="card">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <h2 style={{ margin: 0 }}>API keys</h2>
-          <button className="secondary" onClick={() => { void refresh(); }}>Refresh</button>
-        </div>
-        <p className="muted">
-          Manage the API keys your workflows use. Each key is stored
-          server-side (encrypted at rest); the chat and workflow-node
-          dispatchers reference a key by its label. Add multiple keys
-          per provider (e.g., separate prod/test keys) and pick which
-          one a specific workflow node uses from the builder.
-        </p>
 
         {error && <div className="alert error">{error}</div>}
 
