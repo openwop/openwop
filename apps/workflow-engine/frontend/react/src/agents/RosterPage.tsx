@@ -11,6 +11,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { Notice } from '../ui/Notice.js';
 import {
   createRosterEntry,
   deleteRosterEntry,
@@ -109,7 +110,7 @@ export function RosterPage(): JSX.Element {
         org-chart (RFC 0087). Bind a roster member to a board on the <strong>Boards</strong> page to make its To&nbsp;Do
         column fire that agent's workflow.
       </p>
-      {error ? <div style={{ color: 'var(--color-danger)' }}>⚠ {error}</div> : null}
+      {error ? <Notice variant="error">{error}</Notice> : null}
 
       <h2 style={{ fontSize: '1rem' }}>Roster</h2>
       <form onSubmit={onCreate} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
