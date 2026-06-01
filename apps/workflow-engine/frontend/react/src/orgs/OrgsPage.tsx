@@ -330,8 +330,10 @@ export function OrgsPage(): JSX.Element {
   const assignableRoleIds: string[] = [...ALL_ROLES, ...customRoles.map((r) => r.roleId)];
   const roleChipClass = (id: string): string => (isBuiltIn(id) ? ROLE_CHIP[id] : 'chip chip--accent');
   const roleLabel = (id: string): string => (isBuiltIn(id) ? id : customRoles.find((r) => r.roleId === id)?.name ?? id);
-  // Full known scope vocabulary, derived from the owner role (which holds all scopes).
-  const allScopes: string[] = roles.find((r) => r.id === 'owner')?.scopes ?? [];
+  // Scopes assignable to a CUSTOM role: RFC 0049 protocol scopes only (the
+  // `host:` management scopes are reserved to built-in admin/owner). Derived
+  // from the owner role's scope set, filtered to the non-`host:` (protocol) ones.
+  const assignableScopes: string[] = (roles.find((r) => r.id === 'owner')?.scopes ?? []).filter((s) => !s.startsWith('host:'));
 
   // ── Custom-role actions ──
   const onCreateRole = async (e: React.FormEvent) => {
@@ -679,10 +681,10 @@ export function OrgsPage(): JSX.Element {
                 </button>
               </form>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: 'var(--space-3)' }}>
-                {allScopes.map((s) => (
+                {assignableScopes.map((s) => (
                   <label
                     key={s}
-                    className={roleScopes.has(s) ? (s.startsWith('host:') ? 'chip chip--muted' : 'chip chip--accent') : 'chip chip--muted'}
+                    className={roleScopes.has(s) ? 'chip chip--accent' : 'chip chip--muted'}
                     style={{ cursor: 'pointer', opacity: roleScopes.has(s) ? 1 : 0.65, fontSize: '0.7rem' }}
                   >
                     <input type="checkbox" checked={roleScopes.has(s)} onChange={() => setRoleScopes((x) => toggleStr(x, s))} style={{ marginRight: 4 }} />

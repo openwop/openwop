@@ -215,6 +215,11 @@ describe('access-control host-extension — HTTP', () => {
     const bad = await api(`/v1/host/sample/orgs/${orgId}/roles`, { method: 'POST', body: JSON.stringify({ name: 'X', scopes: ['not-a-scope'] }) });
     expect(bad.status).toBe(400);
 
+    // A `host:` management scope is NOT assignable to a custom role (reserved to
+    // built-in admin/owner) — a custom role can't administer the access surface.
+    const mgmt = await api(`/v1/host/sample/orgs/${orgId}/roles`, { method: 'POST', body: JSON.stringify({ name: 'Sneaky', scopes: ['host:roles:manage'] }) });
+    expect(mgmt.status).toBe(400);
+
     // Define a custom role carrying two protocol scopes.
     const role = await api<{ roleId: string; scopes: string[] }>(`/v1/host/sample/orgs/${orgId}/roles`, {
       method: 'POST',

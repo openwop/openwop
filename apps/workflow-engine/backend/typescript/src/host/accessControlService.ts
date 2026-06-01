@@ -77,12 +77,16 @@ export const MANAGEMENT_SCOPES = [
 
 export type Scope = (typeof PROTOCOL_SCOPES)[number] | (typeof MANAGEMENT_SCOPES)[number];
 
-/** The full known scope vocabulary — the only values a custom role may carry
- *  (validated fail-closed at the route boundary). */
-export const ALL_SCOPES: readonly Scope[] = [...PROTOCOL_SCOPES, ...MANAGEMENT_SCOPES];
-const ALL_SCOPES_SET: ReadonlySet<string> = new Set(ALL_SCOPES);
-export function isScope(value: unknown): value is Scope {
-  return typeof value === 'string' && ALL_SCOPES_SET.has(value);
+const PROTOCOL_SCOPES_SET: ReadonlySet<string> = new Set(PROTOCOL_SCOPES);
+/**
+ * A custom role may carry ONLY RFC 0049 protocol scopes. The `host:` management
+ * scopes (administering orgs/teams/members/groups/roles) are reserved to the
+ * built-in admin/owner roles — so a custom role can never grant the power to
+ * administer the access-control surface itself (in particular, never mint a
+ * role-that-mints-roles). Validated fail-closed at the route boundary.
+ */
+export function isProtocolScope(value: unknown): value is (typeof PROTOCOL_SCOPES)[number] {
+  return typeof value === 'string' && PROTOCOL_SCOPES_SET.has(value);
 }
 
 // ── Built-in role catalog (role → scopes) ───────────────────────────────────
@@ -197,9 +201,10 @@ export interface Group {
 
 /**
  * A tenant/org-scoped custom role — lets an org define roles beyond the
- * built-in four. `scopes` is validated fail-closed against ALL_SCOPES at the
- * route boundary. Custom roles are NOT advertised via capabilities.authorization
- * (same posture as the built-ins — enforcement is host-extension-local).
+ * built-in four. `scopes` is validated fail-closed against the RFC 0049
+ * PROTOCOL scopes at the route boundary (NOT the `host:` management scopes —
+ * see `isProtocolScope`). Custom roles are NOT advertised via
+ * capabilities.authorization (same posture as the built-ins).
  */
 export interface CustomRole {
   roleId: string;

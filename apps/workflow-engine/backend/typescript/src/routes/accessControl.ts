@@ -69,8 +69,8 @@ import {
   getCustomRole,
   updateCustomRole,
   deleteCustomRole,
-  isScope,
-  ALL_SCOPES,
+  isProtocolScope,
+  PROTOCOL_SCOPES,
   type Scope,
 } from '../host/accessControlService.js';
 
@@ -162,8 +162,10 @@ function parseRoleIds(value: unknown, validIds: ReadonlySet<string>): string[] |
   return out;
 }
 
-/** Validate a custom role's `scopes` array fail-closed against the known
- *  vocabulary (PROTOCOL_SCOPES ∪ MANAGEMENT_SCOPES). */
+/** Validate a custom role's `scopes` array fail-closed. A custom role may carry
+ *  ONLY RFC 0049 protocol scopes — `host:` management scopes are reserved to
+ *  the built-in admin/owner roles (so a custom role can't administer the
+ *  access-control surface or mint roles). */
 function parseScopes(value: unknown): Scope[] | undefined {
   if (value === undefined) return undefined;
   if (!Array.isArray(value)) {
@@ -171,8 +173,13 @@ function parseScopes(value: unknown): Scope[] | undefined {
   }
   const out: Scope[] = [];
   for (const s of value) {
-    if (!isScope(s)) {
-      throw new OpenwopError('validation_error', `Unknown scope \`${String(s)}\`.`, 400, { field: 'scopes', valid: ALL_SCOPES });
+    if (!isProtocolScope(s)) {
+      throw new OpenwopError(
+        'validation_error',
+        `Scope \`${String(s)}\` is not assignable to a custom role. Custom roles may carry only RFC 0049 protocol scopes; \`host:\` management scopes are reserved to the built-in admin/owner roles.`,
+        400,
+        { field: 'scopes', valid: PROTOCOL_SCOPES },
+      );
     }
     out.push(s);
   }

@@ -100,9 +100,6 @@ let actingMemberId: string | null = null;
 export function setActingMember(memberId: string | null): void {
   actingMemberId = memberId && memberId.trim() ? memberId : null;
 }
-export function getActingMember(): string | null {
-  return actingMemberId;
-}
 
 function acHeaders(extra?: Record<string, string>): Record<string, string> {
   const h = authedHeaders(extra);
