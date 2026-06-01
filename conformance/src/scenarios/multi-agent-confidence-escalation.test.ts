@@ -49,7 +49,7 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
-import { pollUntilTerminal } from '../lib/polling.js';
+import { pollUntil } from '../lib/polling.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
@@ -111,12 +111,17 @@ describe.skipIf(BEHAVIORAL_SKIP)('multi-agent-confidence-escalation: behavioral 
     expect(create.status).toBe(201);
     const runId = (create.json as { runId: string }).runId;
 
-    const terminal = await pollUntilTerminal(runId);
-    // RFC 0039 escalation suspends the parent — NOT a terminal `completed`.
-    // The conformance pollUntilTerminal returns when the run reaches any
-    // settled status. RFC 0039 §A gives hosts a choice: clarify-kind
-    // escalation (→ waiting-clarification) OR escalate-kind approval
-    // (→ waiting-approval).
+    // RFC 0039 confidence escalation SUSPENDS the parent (a `waiting-*` status)
+    // — it is NOT a terminal `completed`/`failed`/`cancelled`. So poll until the
+    // run either suspends or settles; polling only for terminal statuses
+    // (`pollUntilTerminal`, whose set is {completed,failed,cancelled}) would time
+    // out before the suspension is ever observed — the cause of the prior flake.
+    const terminal = await pollUntil(runId, (s) => {
+      const st = s.status as string;
+      return st.startsWith('waiting-') || st === 'completed' || st === 'failed' || st === 'cancelled';
+    });
+    // RFC 0039 §A gives hosts a choice: clarify-kind escalation
+    // (→ waiting-clarification) OR escalate-kind approval (→ waiting-approval).
     //
     // RFC 0044 routing: when the host advertises
     // `capabilities.multiAgent.executionModel.confidenceEscalationInterruptKind`

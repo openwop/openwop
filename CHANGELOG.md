@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### conformance + host: close 3 KNOWN-LIMITS rows (sandbox-timeout graduation, anon-auth flag, escalation flake) (2026-06-01)
+
+KNOWN-LIMITS gap-closure Phase 1 — three repo-closeable reference-host/test gaps:
+
+- **`node-pack-sandbox-timeout` graduated `reference-impl → protocol`** (7 of 8 `node-pack-sandbox-*` invariants now protocol-tier; only the JS-specific `no-eval` stays permanently exempt). A wall-clock cap needs THREAD PREEMPTION, so the new worker-driven `conformance/src/scenarios/sandbox-wasm-timeout.test.ts` (+ `probeTimeout` in `conformance/src/lib/wasm-sandbox-probe.ts` + the suite-local `sandbox-timeout-worker.mjs`) spawns a worker running the committed `misbehaving-timeout.wasm` fixture and races a main-thread kill-timer — asserting `sandbox_timeout` with a well-behaved positive control (2/2). Verified the worker `.mjs` + the `.wasm` ship in the conformance package's `files[]`.
+- **Anon-auth fallback is now flag-gated** — `apps/workflow-engine/backend/typescript/src/middleware/auth.ts` adds `OPENWOP_AUTH_ENFORCE_BEARER`: when set, a request with no bearer AND no valid session cookie returns the spec-correct `401` instead of auto-minting an anon session, *independently of `NODE_ENV`*. Default-off preserves the app.openwop.dev demo's anon-session UX; a conformance/production deployment sets it so `auth.test.ts` "no Authorization → 401" holds. Not a v1 spec break (bearer was always required; this makes enforcement reachable without `NODE_ENV=production`).
+- **Confidence-escalation flake fixed** — `conformance/src/scenarios/multi-agent-confidence-escalation.test.ts` polled with `pollUntilTerminal` (terminal set `{completed,failed,cancelled}`) but RFC 0039 escalation **suspends** the run (`waiting-*`), so the poll timed out before the suspension was observed. Switched to a suspension-aware `pollUntil` predicate (`waiting-*` OR terminal).
+
+Retires the three corresponding KNOWN-LIMITS rows (the sandbox row collapses to the `no-eval` permanent-exemption note; anon-auth reworded as operator-closeable via the flag). SECURITY protocol-tier count +1. Conformance scenario count 318 → 319. Full openwop:check green; the new scenario passes 2/2.
+
 ### docs(known-limits): retire the 0081/0082 open-RFC rows (Accepted via #421) (2026-06-01)
 
 A full drift-#3 sweep (every `Accepted` RFC in `docs/PROTOCOL-STATUS.md` vs the `docs/KNOWN-LIMITS.md` §"RFCs not yet `Accepted`" open table) found RFC 0081 (Agent Evaluation) + 0082 (Agent Deployment Lifecycle) still listed as `Active` although #421 graduated both to `Accepted` on 2026-06-01 (the prior docs-sync had scoped its check to specific IDs and missed them). Removed both rows and added a prose graduation note (MyndHyve rev `workflow-runtime-00435-sep`; the `deployment-promotion-fail-closed` invariant advanced `reference-impl → protocol` on 0082's graduation). The KNOWN-LIMITS open table now matches the authoritative generated status exhaustively. Curated-commentary docs only; no wire/schema change.

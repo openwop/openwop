@@ -830,23 +830,27 @@ invariants:
       non-vacuously.
 
   - id: node-pack-sandbox-timeout
-    tier: reference-impl
+    tier: protocol
     severity: high
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
+      - conformance/src/scenarios/sandbox-wasm-timeout.test.ts
       - conformance/src/scenarios/sandbox-timeout-cap.test.ts
     note: |
       RFC 0035 §A invariant 6. Exceeding capabilities.sandbox
       .wallClockLimitMs MUST fail the node with error.code:
       "sandbox_timeout" (the canonical name in `spec/v1/rest-
-      endpoints.md` §"Common error codes"). STAYS reference-impl: a
-      wall-clock cap requires thread preemption (a worker kill-timer),
-      which cannot be exercised in a server-free conformance probe.
-      Proven at reference-impl tier by the WASM-isolation host's
-      `examples/hosts/wasm-sandbox/test/sandbox.test.ts` (a real worker
-      terminates an infinite-loop fixture → sandbox_timeout). Graduates
-      to protocol when a worker-driven conformance probe lands under
-      `conformance/src/scenarios/`.
+      endpoints.md` §"Common error codes"). GRADUATED reference-impl →
+      protocol 2026-06-01: a wall-clock cap requires thread preemption
+      (a same-thread timer cannot interrupt a synchronous WASM loop), so
+      the portable `sandbox-wasm-timeout.test.ts` spawns a worker thread
+      running the committed `misbehaving-timeout.wasm` fixture and races a
+      main-thread kill-timer — `probeTimeout` in `conformance/src/lib/
+      wasm-sandbox-probe.ts` (+ the suite-local `sandbox-timeout-worker.mjs`),
+      asserting sandbox_timeout non-vacuously with a well-behaved positive
+      control. This completes the 7-of-8 RFC 0035 §B graduation (only the
+      JS-specific `no-eval` stays exempt). The legacy seam scenario remains
+      for the host-driven path.
 
   - id: node-pack-sandbox-memory-cap
     tier: protocol

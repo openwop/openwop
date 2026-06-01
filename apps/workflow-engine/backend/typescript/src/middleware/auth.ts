@@ -295,6 +295,13 @@ export function _resetFallthroughTracker(): void {
  *  default when cookies are enabled. */
 export function authMiddleware(): RequestHandler {
   const cookiesDisabled = process.env.OPENWOP_AUTH_DISABLE_COOKIES === 'true';
+  // When set, a request with no bearer AND no valid session cookie gets a strict
+  // 401 instead of an auto-minted anon session — the spec-correct bearer-required
+  // posture (auth.md). Default-off preserves the app.openwop.dev demo's anon-session
+  // UX; production / conformance set it so "no Authorization → 401" holds
+  // independently of NODE_ENV (the anon fallback was previously only suppressed
+  // under NODE_ENV=production).
+  const enforceBearer = process.env.OPENWOP_AUTH_ENFORCE_BEARER === 'true';
   return async (req, res, next) => {
     if (PUBLIC_PATH_PREFIXES.some((p) => req.path === p || req.path.startsWith(p + '/'))) {
       next();
@@ -439,6 +446,16 @@ export function authMiddleware(): RequestHandler {
     }
     let session = cookieSession;
     if (!session) {
+      if (enforceBearer) {
+        // Bearer-required posture: no anon fallback. Matches the spec contract
+        // (auth.md) + lets the conformance `auth.test.ts` "no Authorization → 401"
+        // pass against the reference host without forcing NODE_ENV=production.
+        res.status(401).json({
+          error: 'unauthenticated',
+          message: 'Missing Bearer token (Authorization header) or apiKey query param.',
+        });
+        return;
+      }
       session = mintAnonSession();
       setSessionCookie(res, signSession(session));
     } else {

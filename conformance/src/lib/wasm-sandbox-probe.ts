@@ -25,8 +25,12 @@
  * @see RFCS/0035-sandbox-execution-contract.md §B
  * @see examples/hosts/wasm-sandbox/ (the reference host this mirrors)
  */
+import { Worker } from 'node:worker_threads';
+import { fileURLToPath } from 'node:url';
+
 export type SandboxErrorCode =
   | 'sandbox_memory_exceeded'
+  | 'sandbox_timeout'
   | 'sandbox_capability_denied'
   | 'sandbox_escape_attempt'
   | 'sandbox_invocation_error';
@@ -123,4 +127,42 @@ export function probeSandboxed(
     }
     return { ok: false, code: 'sandbox_invocation_error' };
   }
+}
+
+const timeoutWorkerPath = fileURLToPath(new URL('./sandbox-timeout-worker.mjs', import.meta.url));
+
+/**
+ * Worker-based timeout probe — RFC 0035 §B invariant 6 (`node-pack-sandbox-timeout`).
+ * A wall-clock cap can only be enforced by THREAD PREEMPTION: a same-thread timer
+ * cannot interrupt a synchronous WASM loop. So this spawns a worker thread running
+ * the module and races a main-thread kill-timer. A non-terminating module →
+ * `sandbox_timeout` (the worker is terminated at `wallClockLimitMs`); a module that
+ * completes within the budget posts its result first. This is the worker-driven
+ * counterpart to the server-free `probeSandboxed` (which deliberately cannot run a
+ * non-terminating module).
+ */
+export function probeTimeout(
+  wasmBytes: Uint8Array,
+  config: { readonly memoryLimitBytes: number; readonly wallClockLimitMs: number },
+  entry = 'invoke',
+  arg = 0,
+): Promise<ProbeResult> {
+  const memoryMaxPages = Math.max(1, Math.ceil(config.memoryLimitBytes / WASM_PAGE_BYTES));
+  return new Promise((resolve) => {
+    const worker = new Worker(timeoutWorkerPath, { workerData: { wasmBytes, entry, arg, memoryMaxPages } });
+    let settled = false;
+    const finish = (r: ProbeResult): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      void worker.terminate();
+      resolve(r);
+    };
+    const timer = setTimeout(() => finish({ ok: false, code: 'sandbox_timeout' }), config.wallClockLimitMs);
+    worker.on('message', (m: { ok: boolean; result?: number; code?: SandboxErrorCode }) => {
+      if (m.ok) finish(m.result === undefined ? { ok: true } : { ok: true, result: m.result });
+      else finish({ ok: false, code: m.code ?? 'sandbox_invocation_error' });
+    });
+    worker.on('error', () => finish({ ok: false, code: 'sandbox_invocation_error' }));
+  });
 }
