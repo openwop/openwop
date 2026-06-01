@@ -38,6 +38,18 @@
   --color-warning: oklch(72% 0.14 75);    /* warmer amber, neighbour of --star-glow */
   --color-danger:  oklch(55% 0.16 28);    /* muted brick red */
   --color-ai:      oklch(60% 0.12 280);   /* indigo for AI-category nodes; visually distinct from clay (flow) and the success/warning/danger functional tokens */
+
+  /* ── Trace / flag category accents ──
+   * Category colors for the pack registry flags and the agent-trace
+   * border strips. Defaults preserve the historical literals; they're
+   * tokenized so a white-label re-skin (src/brand/brand.css) can retint
+   * them without editing component rules. Functional, not brand. */
+  --color-flag-ok:         #10b981;   /* pack-registry "OK" flag */
+  --color-flag-danger:     #ef4444;   /* pack-registry "danger" flag */
+  --color-trace-reasoning: #8b5cf6;   /* reasoning-trace border (violet) */
+  --color-trace-error:     #ef4444;   /* tool-error trace border (red) */
+  --color-trace-decision:  #f59e0b;   /* decision-trace + handoff emphasis (amber) */
+
   --scrim:         rgb(0 0 0 / 0.6);      /* modal backdrop; neutral on either theme */
   --scrim-soft:    rgb(0 0 0 / 0.45);     /* lighter image overlay (e.g. avatar edit scrim) */
   --color-on-scrim: #fff;                 /* text/icon on a scrim; always light on either theme */
@@ -1491,8 +1503,8 @@ pre {
   border-radius: 8px;
   color: var(--ink-3);
 }
-.pack-flag-ok { color: #10b981; border-color: #10b981; }
-.pack-flag-danger { color: #ef4444; border-color: #ef4444; }
+.pack-flag-ok { color: var(--color-flag-ok); border-color: var(--color-flag-ok); }
+.pack-flag-danger { color: var(--color-flag-danger); border-color: var(--color-flag-danger); }
 .pack-browser-detail { flex: 1; overflow-y: auto; padding: 12px 16px; }
 .pack-detail-head { display: flex; align-items: center; gap: 8px; }
 .pack-detail-head h3 { margin: 0; font-family: var(--mono, monospace); }
@@ -1642,13 +1654,13 @@ pre {
   font-size: 12px;
 }
 .agent-trace-reasoning {
-  border-left-color: #8b5cf6;
+  border-left-color: var(--color-trace-reasoning);
   font-style: italic;
   color: var(--ink-2, var(--ink));
 }
 .agent-trace-text { white-space: pre-wrap; }
 .agent-trace-tool { border-left-color: var(--clay); flex-direction: column; align-items: stretch; }
-.agent-trace-tool-error { border-left-color: #ef4444; }
+.agent-trace-tool-error { border-left-color: var(--color-trace-error); }
 .agent-trace-tool-head {
   display: flex;
   align-items: center;
@@ -1664,7 +1676,7 @@ pre {
 }
 .agent-trace-tool-status { margin-left: auto; }
 .agent-trace-tool-detail { margin-top: 6px; }
-.agent-trace-decision { border-left-color: #f59e0b; }
+.agent-trace-decision { border-left-color: var(--color-trace-decision); }
 .agent-trace-conf {
   padding: 0 6px;
   border: 1px solid;
@@ -1696,7 +1708,7 @@ pre {
   font-size: 12px;
 }
 .handoff-chip-emphasize {
-  background: color-mix(in oklch, #f59e0b 12%, transparent);
+  background: color-mix(in oklch, var(--color-trace-decision) 12%, transparent);
 }
 .handoff-chip-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .handoff-chip-sub { font-size: 10px; font-style: italic; }

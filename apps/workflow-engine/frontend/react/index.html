@@ -3,17 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>workflow-engine — OpenWOP Reference UI</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23a35a30'/><text x='16' y='22' font-family='Instrument Serif,Times New Roman,serif' font-style='italic' font-size='20' fill='%23f4f1ea' text-anchor='middle'>O</text></svg>" />
+    <!-- The title / favicon / fonts placeholders below are stamped at
+         build time by the `openwop-brand-html` Vite plugin from
+         `VITE_BRAND_*` env (defaults in src/brand/defaults.ts). See
+         WHITE-LABEL.md — do not hard-code brand values here. -->
+    <title>{{BRAND_TITLE}}</title>
+    <link rel="icon" type="image/svg+xml" href="{{BRAND_FAVICON}}" />
 
-    <!-- Fonts — mirrors public/index.html so the marketing site and the
-         reference app share the same Instrument Serif + Geist + Geist Mono
-         triple per DESIGN.md §3. -->
+    <!-- Fonts — defaults mirror public/index.html so the marketing site and
+         the reference app share the same Instrument Serif + Geist + Geist
+         Mono triple per DESIGN.md §3. Override per-deploy with
+         VITE_BRAND_FONTS_HREF. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" />
+    <link rel="stylesheet" href="{{BRAND_FONTS_HREF}}" />
 
     <link rel="stylesheet" href="/src/styles/global.css" />
+    <!-- White-label override layer — loads AFTER global.css so its tokens
+         win the cascade without editing the synced editorial palette. -->
+    <link rel="stylesheet" href="/src/brand/brand.css" />
   </head>
   <body>
     <div id="root"></div>

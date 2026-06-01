@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'node:path';
+import { resolveBrandFromEnv } from './src/brand/defaults';
 
 // Vite inlines `import.meta.env.VITE_*` at build time, NOT at runtime.
 // A production build with `VITE_OPENWOP_BASE_URL` unset bakes the dev
@@ -69,6 +70,25 @@ export default defineConfig(({ mode }) => {
     // empty module — the frontend never executes the HMAC code path.
     plugins: [
       react(),
+      {
+        // White-label: stamp the brand document title, favicon, and font
+        // stylesheet into index.html at build time from `VITE_BRAND_*`
+        // env (falling back to `BRAND_DEFAULTS`). Runs for both `vite dev`
+        // and `vite build`. The `{{BRAND_*}}` placeholders in index.html
+        // are always replaced, so an un-overridden build renders the
+        // stock OpenWOP identity. See `src/brand/defaults.ts`.
+        name: 'openwop-brand-html',
+        transformIndexHtml: {
+          order: 'pre' as const,
+          handler(html: string) {
+            const brand = resolveBrandFromEnv(loadEnv(mode, __dirname, ''));
+            return html
+              .replaceAll('{{BRAND_TITLE}}', brand.documentTitle)
+              .replaceAll('{{BRAND_FAVICON}}', brand.faviconSrc)
+              .replaceAll('{{BRAND_FONTS_HREF}}', brand.fontsHref);
+          },
+        },
+      },
       {
         name: 'openwop-stub-webhook-helpers',
         enforce: 'pre',
