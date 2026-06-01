@@ -24,6 +24,8 @@ export function AgentAvatar({
   roleTheme,
   size,
   onEdit,
+  alt,
+  showBadge = true,
 }: {
   persona: string;
   avatarUrl?: string;
@@ -33,6 +35,13 @@ export function AgentAvatar({
   /** When provided the avatar becomes a focusable button that opens the
    *  profile-photo editor; a camera badge + hover/focus scrim signal it. */
   onEdit?: () => void;
+  /** Accessible name for the photo. Omitted → decorative (alt=""), correct
+   *  where the persona name is adjacent text (list cards, header). Pass a
+   *  meaningful alt where the avatar stands more on its own (activity rows). */
+  alt?: string;
+  /** Show the role-glyph badge overlay. Off for tiny inline avatars where the
+   *  badge would crowd the circle. */
+  showBadge?: boolean;
 }): JSX.Element {
   const RoleIcon = roleTheme.Icon;
   const [active, setActive] = useState(false); // hover OR keyboard focus
@@ -53,13 +62,12 @@ export function AgentAvatar({
         alignItems: 'center',
         justifyContent: 'center',
         fontWeight: 700,
-        fontSize: size <= 40 ? '0.95rem' : '1.1rem',
+        fontSize: size <= 28 ? '0.7rem' : size <= 40 ? '0.95rem' : '1.1rem',
         overflow: 'hidden',
       }}
     >
       {avatarUrl ? (
-        // alt="" — decorative; the persona name is adjacent text at both sites.
-        <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        <img src={avatarUrl} alt={alt ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
       ) : (
         initials(persona)
       )}
@@ -113,26 +121,28 @@ export function AgentAvatar({
       )}
 
       {/* Role glyph badge — the at-a-glance differentiator between coworkers. */}
-      <div
-        aria-hidden="true"
-        title={`${roleTheme.label} role`}
-        style={{
-          position: 'absolute',
-          right: -3,
-          bottom: -3,
-          width: badge,
-          height: badge,
-          borderRadius: '50%',
-          background: 'var(--paper)',
-          border: '1px solid var(--color-border)',
-          color: 'var(--color-text-muted)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <RoleIcon size={badgeIcon} strokeWidth={2} />
-      </div>
+      {showBadge ? (
+        <div
+          aria-hidden="true"
+          title={`${roleTheme.label} role`}
+          style={{
+            position: 'absolute',
+            right: -3,
+            bottom: -3,
+            width: badge,
+            height: badge,
+            borderRadius: '50%',
+            background: 'var(--paper)',
+            border: '1px solid var(--color-border)',
+            color: 'var(--color-text-muted)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <RoleIcon size={badgeIcon} strokeWidth={2} />
+        </div>
+      ) : null}
     </div>
   );
 }
