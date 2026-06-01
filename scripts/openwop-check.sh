@@ -170,6 +170,12 @@ node "$SPEC_ROOT/scripts/check-pack-tarball-signatures.mjs"
 # so an installing host fail-loud-rejects the pack (cf. the 2026-05-27 core agent
 # packs that shipped without their systemPromptRef body).
 node "$SPEC_ROOT/scripts/check-pack-prompt-refs.mjs"
+# External-audit remediation gate — once the audit report lands and findings are
+# recorded in SECURITY/external-audit-findings.json, an OPEN high/critical finding
+# MUST block the gate (and thus any release / standardization claim). Passes on
+# the pre-audit empty-tracker state. Mechanizes the audit's "close high/critical
+# findings before standardizing" requirement (cf. docs/AUDIT-RESPONSE).
+node "$SPEC_ROOT/scripts/check-audit-findings.mjs"
 # Workflow-engine sample bundles a vendored copy of conformance/fixtures/
 # into its Docker image (apps/workflow-engine/conformance-fixtures/, per
 # the Dockerfile + scripts/sync-fixtures.sh). Catch silent drift: if the

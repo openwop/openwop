@@ -62,7 +62,7 @@ A non-steward implementer claiming any of these would fire the vendor-neutral mi
 | `packs.openwop.dev` registry | **Live.** 48 packs across 4 trust tiers as of 2026-05-13. Tarball + Ed25519 signature + SRI integrity verified end-to-end (`registry-public.test.ts`). |
 | `openwop.dev` site | Auto-built from spec corpus per `.github/workflows/site.yml`. Auto-deploy is gated on `vars.ALLOW_DEPLOY=1` (release-manager-controlled). |
 | Conformance leaderboard | **Not yet live.** GOV-3 plan task — needs a hosted page rendering `INTEROP-MATRIX.md` evidence + badge semantics. |
-| External audit report | **Not yet engaged.** Outreach drafted at `SECURITY/outreach/external-audit/STATUS.md`; SEC-2 audit scope pinned to current repo state 2026-05-15. |
+| External audit report | **Not yet engaged** (vendor-external — the steward cannot complete a third-party audit from inside the repo). Outreach drafted at `SECURITY/outreach/external-audit/STATUS.md`; SEC-2 audit scope pinned to current repo state 2026-05-15. **The remediation obligation is now mechanized:** `scripts/check-audit-findings.mjs` (wired into `openwop:check`) reads `SECURITY/external-audit-findings.json` and **hard-fails the gate on any OPEN high/critical finding** — so the moment the report lands and findings are recorded, an unremediated serious finding blocks every release / standardization claim. Passes today on the empty pre-audit tracker. |
 | High-stakes `core.openwop.{ai,http,mcp,triggers}` packs | **Built + signed in-tree, audit-gated for public publication.** See `SECURITY/external-audit-engagement.md` §2.1. |
 
 ---
