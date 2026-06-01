@@ -13,6 +13,7 @@
  * from leaking across scenarios.
  */
 
+import { expect } from 'vitest';
 import { driver } from './driver.js';
 
 export interface TestEvent {
@@ -48,6 +49,23 @@ export async function queryTestEvents(
   if (res.status !== 200) return { ok: false, reason: 'http_error', status: res.status };
   const body = res.json as { events?: TestEvent[] };
   return { ok: true, events: body.events ?? [] };
+}
+
+/**
+ * Assert a query SUCCEEDED and return its typed events. Use this AFTER a
+ * scenario's legitimate soft-skip gates (capability/profile not advertised,
+ * seam unwired) so that a host which has opted in but returns no events FAILS
+ * the assertion rather than vacuously passing an `if (q.ok && events.length)`
+ * guard. The trailing `throw` is unreachable once `expect` has fired but lets
+ * TypeScript narrow `QueryOutcome` to the `{ ok: true }` branch.
+ */
+export function requireEvents(q: QueryOutcome, where: string): TestEvent[] {
+  expect(
+    q.ok,
+    `${where}: the event-log seam MUST return events for a wired behavioral run (got ${q.ok ? 'ok' : ('reason' in q ? q.reason : 'error')})`,
+  ).toBe(true);
+  if (!q.ok) throw new Error(`${where}: event-log query not ok`);
+  return q.events;
 }
 
 /** Reset the test-only event log + capability overlay (suite teardown). */
