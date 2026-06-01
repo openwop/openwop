@@ -13,10 +13,11 @@
  *     missing any reports `partial`, never `full` (the honest-advertisement rule).
  *   - `capabilities.nondeterminismPolicy.declared` is declared in the schema.
  *
- * The LIVE aggregate-evidence assertion (does every required constituent scenario
- * actually pass against a host claiming `full`?) is the `Active → Accepted` step
- * per RFC 0085 §C — naturally gated on a reference host reaching partial/full, and
- * deferred here. This scenario asserts the discovery-predicate derivation only.
+ * The LIVE aggregate-evidence assertion (the §C honest-advertisement rule on a
+ * host claiming `openwop-agent-platform`) is the `Active → Accepted` step per RFC
+ * 0085 §C — capability-gated, server-requiring, and lives in the sibling
+ * `agent-platform-aggregate-evidence.test.ts`. THIS scenario asserts the
+ * discovery-predicate derivation only (always-on, server-free).
  *
  * Spec references:
  *   - https://github.com/openwop/openwop/blob/main/spec/v1/agent-platform-profile.md

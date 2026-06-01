@@ -2,7 +2,11 @@
 
 ## [Unreleased]
 
-_No unreleased changes._
+### Added — RFC 0085 live aggregate-evidence scenario (steward prerequisite for the next conformance minor)
+
+- **`agent-platform-aggregate-evidence.test.ts`** (`behaviorGate('openwop-agent-platform', …)`, gated on a host CLAIMING `openwop-agent-platform` in its live discovery `profiles[]`) — the RFC 0085 §C `Active → Accepted` bar. Reads the live `/.well-known/openwop` and asserts the §C/§D honest-advertisement rule: a host MAY advertise `openwop-agent-platform` only if its real wire satisfies the §B floor predicate (`isAgentPlatformPartial`), deriving to `partial` or `full` (never `none`) — the platform claim is **backed by** the per-capability evidence (each constituent cap's gated scenario runs in the same suite run), never the profile string alone. When the operator declares the cert tier `full` (`OPENWOP_AGENT_PLATFORM_TIER=full`), the full predicate (authorization + tenant installScope + memory.attribution + debugBundle + triggerBridge + egressPolicy) MUST hold + all 16 §D terms satisfied. Server-requiring — the always-on §B/§D predicate-derivation legs stay in `agent-platform-profile.test.ts`. This is the RFC 0085 → Accepted bar.
+
+Additive + capability-gated; existing v1.0-only hosts pass unchanged. No new schemas (the `nondeterminismPolicy.declared` flag + the `isAgentPlatform*` predicate helpers shipped at `Draft → Active`). The version bump + `EXPECTED_CONFORMANCE_VERSION` advance ships in the follow-up publish.
 
 ## [1.17.0] — 2026-06-01 — harden the agent-platform behavioral gates against vacuous passes
 
