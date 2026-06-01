@@ -121,7 +121,46 @@ fills per `DESIGN.md §13`. Don't theme them.
 
 ---
 
-## 4. Build + deploy your white-label instance
+## 4. Backend (server) white-labeling
+
+The backend follows the same principle: **no brand string is hard-coded into a
+default that a white-label host would have to override.** Seed *content* lives
+in data files, and the runtime fallbacks are brand-neutral. Configure via env
+(all preserve-on-update — use an incremental `gcloud run services update`, not
+`--set-env-vars`, so you don't wipe other secrets/config):
+
+| Env var | Default | Controls |
+|---|---|---|
+| `OPENWOP_SERVICE_NAME` | `openwop-workflow-engine-sample` | Service name in `/.well-known/openwop` + the OpenAPI `info.title` |
+| `OPENWOP_SERVICE_DESCRIPTION` | `An OpenWOP-compatible workflow and agent orchestration host.` | OpenAPI `info.description` (brand-neutral by default — no marketing URL) |
+| `OPENWOP_MANAGED_SYSTEM_PROMPT` | *(brand-neutral generic assistant prompt)* | Grounding prompt for the managed "try it free" chat tier. **The code fallback is generic** — set this to your own grounding (the reference deploy supplies the OpenWOP blurb here) |
+| `OPENWOP_DEMO_SEED_ENABLED` | `true` | Set `false` to ship a clean tenant with NO demo personas/boards |
+| `OPENWOP_SESSION_COOKIE_NAME` | `__session` | Session cookie name (already un-branded; Firebase Hosting requires `__session`) |
+| `OPENWOP_VAPID_SUBJECT` | `mailto:admin@openwop.dev` | Web-push contact (RFC 8030) |
+
+### Demo seed content
+
+The demo personas (Sally, Marcus, …), their boards, cards, schedules, and
+org-chart live in **`backend/typescript/src/host/seed-data/demoAgents.json`** —
+the brand-authoring surface. Edit that JSON to ship your own demo content (it's
+type-checked at build time and bundled into the image), or set
+`OPENWOP_DEMO_SEED_ENABLED=false` for none. See
+[`seed-data/SEEDING.md`](../../backend/typescript/src/host/seed-data/SEEDING.md).
+
+> **Protocol identifiers are NOT branding** and must stay: `core.openwop.*`
+> capability IDs, `/.well-known/openwop`, the `x-openwop-device-token` header,
+> `Capabilities-Etag`, and `anon:`/`user:` tenant prefixes are the OpenWOP wire
+> protocol your host implements — not a product name. Leave them as-is.
+
+### Note for the reference `app.openwop.dev` deploy
+
+Because the managed system-prompt fallback is now brand-neutral, the reference
+deployment should set `OPENWOP_MANAGED_SYSTEM_PROMPT` to retain its OpenWOP
+grounding blurb (incremental env update, no rebuild needed).
+
+---
+
+## 5. Build + deploy your white-label instance
 
 The app is **two independent deploys** — backend (Cloud Run) and frontend
 (Firebase Hosting). Full recipe + prerequisites in

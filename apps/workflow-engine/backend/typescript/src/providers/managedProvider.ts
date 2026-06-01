@@ -69,13 +69,15 @@ export const MANAGED_DEFAULTING_TYPE_IDS: ReadonlySet<string> = new Set([
   CHAT_RESPONDER_TYPE_ID,
 ]);
 
-/** Default grounding prompt for the "Try it free" tier. Overridable via
- *  `OPENWOP_MANAGED_SYSTEM_PROMPT`. Kept short so it doesn't dominate
- *  the context window for every turn. */
-const DEFAULT_SYSTEM_PROMPT =
-  'You are an assistant for OpenWOP — a vendor-neutral open spec for AI workflow and agent orchestration. ' +
-  'OpenWOP defines a wire protocol so different hosts can run the same agent workflows; it is a specification, ' +
-  'not a platform or hosted service. The repo lives at https://github.com/openwop/openwop. ' +
+/** Brand-NEUTRAL fallback grounding prompt for the managed tier. Kept generic
+ *  on purpose so a white-label deployment never leaks a product name it didn't
+ *  configure (mirrors myndhyve's neutral `FALLBACK_GENERIC_ROLE`). Supply your
+ *  own grounding — e.g. the OpenWOP reference deploy's assistant blurb — via
+ *  the `OPENWOP_MANAGED_SYSTEM_PROMPT` env var; that is the brand-authoring
+ *  surface, not this constant. Kept short so it doesn't dominate the context
+ *  window for every turn. */
+const FALLBACK_SYSTEM_PROMPT =
+  'You are a helpful AI assistant. ' +
   'Keep answers concise (2-4 sentences for most questions). ' +
   "When you don't actually know something, say so plainly rather than guessing.";
 
@@ -90,9 +92,8 @@ interface ManagedTarget {
   envKeyName: string;
   /** Per-tenant per-day cap (input + output tokens combined). */
   dailyTokenCap: number;
-  /** System prompt prepended when the caller didn't supply one. Grounds
-   *  the model in OpenWOP context so it doesn't hallucinate about what
-   *  the product is. */
+  /** System prompt prepended when the caller didn't supply one. Resolves to
+   *  `OPENWOP_MANAGED_SYSTEM_PROMPT` if set, else the brand-neutral fallback. */
   defaultSystemPrompt: string;
 }
 
@@ -112,7 +113,7 @@ function getTargets(): Record<string, ManagedTarget> {
       storageRef: `${MANAGED_REF_PREFIX}openwop-free`,
       envKeyName: 'MINIMAX_API_KEY',
       dailyTokenCap: cap,
-      defaultSystemPrompt: process.env.OPENWOP_MANAGED_SYSTEM_PROMPT ?? DEFAULT_SYSTEM_PROMPT,
+      defaultSystemPrompt: process.env.OPENWOP_MANAGED_SYSTEM_PROMPT ?? FALLBACK_SYSTEM_PROMPT,
     },
   };
 }

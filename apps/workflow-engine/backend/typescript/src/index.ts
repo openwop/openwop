@@ -83,20 +83,32 @@ import { registerOrgChartRoutes } from './routes/orgChart.js';
 
 const log = createLogger('workflow-engine');
 
+/** Brand-neutral, protocol-accurate default for the OpenAPI discovery doc.
+ *  A white-label host overrides it with OPENWOP_SERVICE_DESCRIPTION rather than
+ *  inheriting a marketing string it didn't set. */
+export const DEFAULT_SERVICE_DESCRIPTION =
+  'An OpenWOP-compatible workflow and agent orchestration host.';
+
 export interface AppConfig {
   port: number;
   storageDsn: string;
   serviceName: string;
   serviceVersion: string;
+  /** Optional so existing inline test configs stay valid; `loadConfigFromEnv`
+   *  always populates it, and the discovery route falls back to the default. */
+  serviceDescription?: string;
   enableConsoleTracer: boolean;
 }
 
 export function loadConfigFromEnv(): AppConfig {
+  const serviceName = process.env.OPENWOP_SERVICE_NAME || 'openwop-workflow-engine-sample';
   return {
     port: Number(process.env.PORT) || 8080,
     storageDsn: process.env.OPENWOP_STORAGE_DSN || 'sqlite://./data/workflow-engine.db',
-    serviceName: process.env.OPENWOP_SERVICE_NAME || 'openwop-workflow-engine-sample',
+    serviceName,
     serviceVersion: process.env.OPENWOP_SERVICE_VERSION || '0.1.0',
+    // Surfaced in the OpenAPI discovery doc (`GET /v1/openapi.json`).
+    serviceDescription: process.env.OPENWOP_SERVICE_DESCRIPTION || DEFAULT_SERVICE_DESCRIPTION,
     enableConsoleTracer: process.env.OPENWOP_OTEL_CONSOLE !== 'false',
   };
 }

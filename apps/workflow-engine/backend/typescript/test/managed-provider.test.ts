@@ -282,7 +282,12 @@ describe('dispatchManagedChat — system prompt injection', () => {
     expect(sent).toBeTruthy();
     const messages = sent!.messages as Array<{ role: string; content: string }>;
     expect(messages[0]?.role).toBe('system');
-    expect(messages[0]?.content).toMatch(/OpenWOP/i);
+    // A default grounding prompt is injected, and it is brand-NEUTRAL: a
+    // white-label deploy that doesn't set OPENWOP_MANAGED_SYSTEM_PROMPT must
+    // not leak a product name. The branded variant is supplied via that env
+    // var (covered by the override test below).
+    expect(messages[0]?.content).toMatch(/helpful AI assistant/i);
+    expect(messages[0]?.content).not.toMatch(/OpenWOP/i);
     expect(messages[1]?.role).toBe('user');
   });
 
