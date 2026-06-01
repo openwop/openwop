@@ -2,7 +2,16 @@
 
 ## [Unreleased]
 
-_No unreleased changes._
+### Added — RFC 0078 + RFC 0079 behavioral scenarios (steward prerequisite for the next conformance minor)
+
+Four gated behavioral scenarios + two `src/lib/` helpers, the steward prerequisite to graduating `toolCatalog` (RFC 0078) and `httpClient.egressPolicy` (RFC 0079) from `Active` to `Accepted` on a non-steward host (MyndHyve). All additive + capability-gated; existing v1.0-only hosts pass unchanged. The version bump + `EXPECTED_CONFORMANCE_VERSION` advance ships in the follow-up publish.
+
+- **`tool-catalog-projection.test.ts`** (`behaviorGate('openwop-tool-catalog', …)`, gated on `toolCatalog.supported`) — the NORMATIVE `GET /v1/tools` list (each `ToolDescriptor` schema-valid against `tool-descriptor.schema.json`, `source`/`safetyTier` in the closed vocab, content-free), `GET /v1/tools/{toolId}` round-trip + unknown-id 404, 401-unauthenticated, and the §F-2 cross-principal non-disclosure (`OPENWOP_CROSS_PRINCIPAL_TOOL_ID` → 404). Black-box on the normative path — no POST seam.
+- **`tool-session-lifecycle.test.ts`** (`behaviorGate('openwop-tool-session-lifecycle', …)`, gated on `toolCatalog.sessionLifecycle`) — the §D bracket via the new `POST /v1/host/sample/tools/session-run` seam + the test event-log seam: `tool.session.opened` before the first RFC 0064 call event → `tool.session.closed` after the last, one shared `sessionId`, each carrying a `toolId`, `closed.outcome` in the closed enum, both content-free (SR-1).
+- **`egress-audience-binding.test.ts`** (KEYSTONE — `behaviorGate('openwop-egress-audience-binding', …)`, gated on `httpClient.egressPolicy.supported`) — the §C confused-deputy MUST via the new `POST /v1/host/sample/egress/decide` seam: an out-of-audience egress is `denied`/`downgraded` with `reason:"out-of-audience"` and the credential is NOT attached; a provenance-unevaluable egress fails closed (`denied` + `reason:"provenance-unevaluable"`). The behavioral leg of the `egress-credential-audience-bound` invariant, which graduates reference-impl → protocol tier when this passes against a host (at flip).
+- **`egress-decision-content-free.test.ts`** (`behaviorGate('openwop-egress-decision-content-free', …)`) — the SR-1 secret non-leak: a `canary` credential's sentinel never surfaces in the decision, the `egress.decided` payload carries no forbidden content key, and `reason` stays in the CLOSED vocabulary (no blocked-destination spill).
+
+New lib helpers `src/lib/toolCatalog.ts` + `src/lib/egressPolicy.ts`; two new seams in `host-sample-test-seams.md` §"Open seams". No new schemas (`tool-descriptor.schema.json` + `credential-provenance.schema.json` + the `toolSession*`/`egressDecided` payload `$defs` shipped earlier); the `egress-credential-audience-bound` invariant graduates tiers at flip, not here. SDK `tools.*` methods deferred. The normative `GET /v1/tools` OpenAPI endpoints (`listTools`/`getTool`) land with this batch.
 
 ## [1.13.0] — 2026-05-31 — RFC 0081 eval-suite + RFC 0082 deployment behavioral gates
 
