@@ -51,13 +51,14 @@ import {
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)', fontSize: '0.85rem' };
 
-/** A role badge. Distinct chip tints so the hierarchy reads at a glance. */
-const ROLE_CHIP: Record<BuiltInRoleId, string> = {
-  viewer: 'chip chip--muted',
-  editor: 'chip chip--accent',
-  admin: 'chip chip--warning',
-  owner: 'chip chip--ai',
-};
+/**
+ * Roles, teams, and scopes are non-status LABEL dimensions, so per
+ * DESIGN.app.md §5.3/§5.4 they differentiate by their text label — never by a
+ * functional/accent color (those are reserved for run/agent/node status +
+ * severity). Every such chip is the one neutral pill; selected/unselected in a
+ * toggle is shown by opacity, not color.
+ */
+const NEUTRAL_CHIP = 'chip chip--muted';
 const ALL_ROLES: BuiltInRoleId[] = ['viewer', 'editor', 'admin', 'owner'];
 
 export function OrgsPage(): JSX.Element {
@@ -328,7 +329,6 @@ export function OrgsPage(): JSX.Element {
   // ── Role catalog helpers (built-in + custom) ──
   const isBuiltIn = (id: string): id is BuiltInRoleId => (ALL_ROLES as string[]).includes(id);
   const assignableRoleIds: string[] = [...ALL_ROLES, ...customRoles.map((r) => r.roleId)];
-  const roleChipClass = (id: string): string => (isBuiltIn(id) ? ROLE_CHIP[id] : 'chip chip--accent');
   const roleLabel = (id: string): string => (isBuiltIn(id) ? id : customRoles.find((r) => r.roleId === id)?.name ?? id);
   // Scopes assignable to a CUSTOM role: RFC 0049 protocol scopes only (the
   // `host:` management scopes are reserved to built-in admin/owner). Derived
@@ -461,7 +461,7 @@ export function OrgsPage(): JSX.Element {
               ) : (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
                   {teams.map((t) => (
-                    <span key={t.teamId} className="chip chip--accent" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <span key={t.teamId} className={NEUTRAL_CHIP} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                       {t.name}
                       <button
                         type="button"
@@ -486,7 +486,7 @@ export function OrgsPage(): JSX.Element {
                 <input value={memberEmail} onChange={(e) => setMemberEmail(e.target.value)} placeholder="Email (optional)" aria-label="Member email" />
                 <span className="action-bar" style={{ gap: '6px' }}>
                   {assignableRoleIds.map((role) => (
-                    <label key={role} className={memberRoles.has(role) ? roleChipClass(role) : 'chip chip--muted'} style={{ cursor: 'pointer' }}>
+                    <label key={role} className={NEUTRAL_CHIP} style={{ cursor: 'pointer', opacity: memberRoles.has(role) ? 1 : 0.6 }}>
                       <input
                         type="checkbox"
                         checked={memberRoles.has(role)}
@@ -528,7 +528,7 @@ export function OrgsPage(): JSX.Element {
                       {m.roles.length === 0 ? (
                         <span className="chip chip--muted">no roles</span>
                       ) : (
-                        m.roles.map((r) => <span key={r} className={roleChipClass(r)}>{roleLabel(r)}</span>)
+                        m.roles.map((r) => <span key={r} className={NEUTRAL_CHIP}>{roleLabel(r)}</span>)
                       )}
                     </div>
 
@@ -536,7 +536,7 @@ export function OrgsPage(): JSX.Element {
                     {editingId === m.memberId ? (
                       <div className="action-bar" style={{ flexWrap: 'wrap', marginTop: 'var(--space-2)' }}>
                         {assignableRoleIds.map((role) => (
-                          <label key={role} className={draftRoles.has(role) ? roleChipClass(role) : 'chip chip--muted'} style={{ cursor: 'pointer' }}>
+                          <label key={role} className={NEUTRAL_CHIP} style={{ cursor: 'pointer', opacity: draftRoles.has(role) ? 1 : 0.6 }}>
                             <input
                               type="checkbox"
                               checked={draftRoles.has(role)}
@@ -562,7 +562,7 @@ export function OrgsPage(): JSX.Element {
                             <span className="chip chip--muted">no scopes (fail-closed)</span>
                           ) : (
                             access.scopes.map((s) => (
-                              <span key={s} className={s.startsWith('host:') ? 'chip chip--muted' : 'chip chip--accent'}>{s}</span>
+                              <span key={s} className={NEUTRAL_CHIP}>{s}</span>
                             ))
                           )}
                         </div>
@@ -584,7 +584,7 @@ export function OrgsPage(): JSX.Element {
                 <input value={groupName} onChange={(e) => setGroupName(e.target.value)} placeholder="New group name" aria-label="New group name" />
                 <span className="action-bar" style={{ gap: '6px' }}>
                   {assignableRoleIds.map((role) => (
-                    <label key={role} className={groupRoles.has(role) ? roleChipClass(role) : 'chip chip--muted'} style={{ cursor: 'pointer' }}>
+                    <label key={role} className={NEUTRAL_CHIP} style={{ cursor: 'pointer', opacity: groupRoles.has(role) ? 1 : 0.6 }}>
                       <input type="checkbox" checked={groupRoles.has(role)} onChange={() => setGroupRoles((s) => toggleStr(s, role))} style={{ marginRight: 4 }} />
                       {roleLabel(role)}
                     </label>
@@ -611,7 +611,7 @@ export function OrgsPage(): JSX.Element {
                       </span>
                     </div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
-                      {g.roles.length === 0 ? <span className="chip chip--muted">no roles</span> : g.roles.map((r) => <span key={r} className={roleChipClass(r)}>{roleLabel(r)}</span>)}
+                      {g.roles.length === 0 ? <span className="chip chip--muted">no roles</span> : g.roles.map((r) => <span key={r} className={NEUTRAL_CHIP}>{roleLabel(r)}</span>)}
                     </div>
                     <div style={{ ...muted, marginTop: '4px' }}>
                       {g.memberIds.length} member{g.memberIds.length === 1 ? '' : 's'}
@@ -623,7 +623,7 @@ export function OrgsPage(): JSX.Element {
                           <span style={muted}>Add members to the org first.</span>
                         ) : (
                           members.map((m) => (
-                            <label key={m.memberId} className={draftGroupMembers.has(m.memberId) ? 'chip chip--accent' : 'chip chip--muted'} style={{ cursor: 'pointer' }}>
+                            <label key={m.memberId} className={NEUTRAL_CHIP} style={{ cursor: 'pointer', opacity: draftGroupMembers.has(m.memberId) ? 1 : 0.6 }}>
                               <input
                                 type="checkbox"
                                 checked={draftGroupMembers.has(m.memberId)}
@@ -650,12 +650,12 @@ export function OrgsPage(): JSX.Element {
               {roles.map((r) => (
                 <div key={r.id} className="surface-card" style={{ marginBottom: 'var(--space-2)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                    <span className={ROLE_CHIP[r.id]}>{r.id}</span>
+                    <span className={NEUTRAL_CHIP}>{r.id}</span>
                     <span style={muted}>{r.description}</span>
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
                     {r.scopes.map((s) => (
-                      <span key={s} className={s.startsWith('host:') ? 'chip chip--muted' : 'chip chip--accent'} style={{ fontSize: '0.7rem' }}>{s}</span>
+                      <span key={s} className={NEUTRAL_CHIP} style={{ fontSize: '0.7rem' }}>{s}</span>
                     ))}
                   </div>
                 </div>
@@ -684,7 +684,7 @@ export function OrgsPage(): JSX.Element {
                 {assignableScopes.map((s) => (
                   <label
                     key={s}
-                    className={roleScopes.has(s) ? 'chip chip--accent' : 'chip chip--muted'}
+                    className={NEUTRAL_CHIP}
                     style={{ cursor: 'pointer', opacity: roleScopes.has(s) ? 1 : 0.65, fontSize: '0.7rem' }}
                   >
                     <input type="checkbox" checked={roleScopes.has(s)} onChange={() => setRoleScopes((x) => toggleStr(x, s))} style={{ marginRight: 4 }} />
@@ -708,7 +708,7 @@ export function OrgsPage(): JSX.Element {
                         <span className="chip chip--muted">no scopes</span>
                       ) : (
                         r.scopes.map((s) => (
-                          <span key={s} className={s.startsWith('host:') ? 'chip chip--muted' : 'chip chip--accent'} style={{ fontSize: '0.7rem' }}>{s}</span>
+                          <span key={s} className={NEUTRAL_CHIP} style={{ fontSize: '0.7rem' }}>{s}</span>
                         ))
                       )}
                     </div>
