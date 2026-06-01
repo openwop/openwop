@@ -300,9 +300,9 @@ function FocusedRunView({
       {message.activeInterrupt && (
         <div style={{
           padding: '8px 10px',
-          background: 'var(--clay-wash, #f3e0d4)',
+          background: 'var(--clay-wash)',
           color: 'var(--clay)',
-          border: '1px solid var(--clay-rule, #d9b9a3)',
+          border: '1px solid var(--clay-rule)',
           borderRadius: 6,
           fontSize: 12,
           display: 'flex',
@@ -340,7 +340,7 @@ function FocusedRunView({
       {run.status === 'failed' && run.error && (
         <div style={{
           padding: 8,
-          background: 'rgba(248, 113, 113, 0.08)',
+          background: 'color-mix(in oklch, var(--color-danger) 8%, transparent)',
           border: '1px solid var(--color-danger)',
           borderRadius: 'var(--radius)',
           fontSize: 12,

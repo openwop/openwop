@@ -58,7 +58,7 @@ export function NotificationBell(): JSX.Element {
             top: -4,
             right: -4,
             background: 'var(--color-danger)',
-            color: '#fff',
+            color: 'var(--color-on-scrim)',
             borderRadius: 10,
             minWidth: 18,
             height: 18,

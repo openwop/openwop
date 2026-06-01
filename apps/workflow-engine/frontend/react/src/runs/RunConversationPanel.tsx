@@ -99,7 +99,7 @@ function ConversationCard({
             caps: {capabilities.map((c) => <code key={c} style={{ marginRight: 4 }}>{c}</code>)}
           </span>
         )}
-        {closed && <span className="badge" style={{ background: '#10b981', color: '#fff', fontSize: 11 }}>closed</span>}
+        {closed && <span className="badge" style={{ background: 'var(--color-success)', color: 'var(--color-on-scrim)', fontSize: 11 }}>closed</span>}
       </div>
       <ol className="conversation-turn-list">
         {turns.map((t) => (
@@ -117,7 +117,7 @@ function ConversationCard({
       {closed && outcome !== undefined && (
         <details style={{ marginBottom: 8 }}>
           <summary className="muted" style={{ fontSize: 12 }}>Final outcome</summary>
-          <pre style={{ fontSize: 11, background: '#f9fafb', padding: 8, borderRadius: 4, marginTop: 4 }}>
+          <pre style={{ fontSize: 11, background: 'var(--paper-2)', padding: 8, borderRadius: 4, marginTop: 4 }}>
             {JSON.stringify(outcome, null, 2)}
           </pre>
         </details>
@@ -218,7 +218,7 @@ function ResumeForm({
         onChange={(e) => setText(e.target.value)}
         placeholder={hasSchema ? 'JSON matching outcomeSchema…' : 'Your reply…'}
         rows={3}
-        style={{ width: '100%', fontFamily: hasSchema ? 'monospace' : 'inherit', fontSize: 13 }}
+        style={{ width: '100%', fontFamily: hasSchema ? 'var(--mono)' : 'inherit', fontSize: 13 }}
         disabled={submitting}
       />
       {error && <div className="alert error" style={{ fontSize: 12, marginTop: 4 }}>{error}</div>}

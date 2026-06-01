@@ -99,7 +99,7 @@ export function NotificationPanel(): JSX.Element | null {
         style={{
           position: 'fixed',
           inset: 0,
-          background: isMobile ? 'rgba(0,0,0,0.4)' : 'transparent',
+          background: isMobile ? 'var(--scrim-soft)' : 'transparent',
           zIndex: 49,
         }}
       />
@@ -118,7 +118,7 @@ export function NotificationPanel(): JSX.Element | null {
           maxWidth: '100vw',
           background: 'var(--color-surface)',
           borderLeft: '1px solid var(--color-border)',
-          boxShadow: '-4px 0 18px rgba(0,0,0,0.08)',
+          boxShadow: '-4px 0 18px var(--ink-shadow)',
           display: 'flex',
           flexDirection: 'column',
           zIndex: 50,
@@ -141,7 +141,7 @@ export function NotificationPanel(): JSX.Element | null {
                   marginLeft: 8,
                   fontSize: 12,
                   background: 'var(--color-danger)',
-                  color: '#fff',
+                  color: 'var(--color-on-scrim)',
                   borderRadius: 10,
                   padding: '1px 7px',
                   fontWeight: 600,

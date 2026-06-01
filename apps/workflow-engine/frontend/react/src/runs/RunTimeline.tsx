@@ -40,9 +40,9 @@ interface Segment {
 
 const SEG_COLOR: Record<SegStatus, string> = {
   running: 'var(--clay)',
-  completed: '#10b981',
-  failed: '#ef4444',
-  suspended: '#8b5cf6',
+  completed: 'var(--color-success)',
+  failed: 'var(--color-danger)',
+  suspended: 'var(--color-ai)',
 };
 
 // Fold the event log into per-node segments. A `node.started` opens a
