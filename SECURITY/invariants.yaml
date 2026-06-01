@@ -1600,10 +1600,11 @@ invariants:
       field governs at-most an SR-1-redacted hash.
 
   - id: egress-credential-audience-bound
-    tier: reference-impl
+    tier: protocol
     severity: critical
     threat_model: SECURITY/threat-model-secret-leakage.md
-    tests: []
+    tests:
+      - conformance/src/scenarios/egress-audience-binding.test.ts
     note: |
       RFC 0079 §C/§F (the confused-deputy guard — RFC 0076 §B's parked
       question). A host-issued credential MUST NOT be attached to an egress
@@ -1613,9 +1614,12 @@ invariants:
       never allowed-by-default; an expired credential ⇒ denied. This is a
       BEHAVIORAL guarantee requiring a live credentialed egress, so it lands at
       reference-impl tier at Draft → Active (the gated egress-audience-binding.test.ts
-      soft-skips until a host wires egressPolicy over safeFetch). It GRADUATES to
-      protocol tier at Active → Accepted once a reference host implements it and
-      the behavioral scenario passes — the RFC 0035 sandbox-invariant precedent.
+      soft-skips until a host wires egressPolicy over safeFetch). It GRADUATED to
+      protocol tier at RFC 0079's Active → Accepted (2026-06-01) — MyndHyve wired
+      egressPolicy over safeFetch and passed the gated egress-audience-binding.test.ts
+      non-vacuously under OPENWOP_REQUIRE_BEHAVIOR=true (out-of-audience → denied +
+      credentialAttached:false; provenance-unevaluable → denied fail-closed) — the
+      RFC 0035 sandbox-invariant precedent.
 
   - id: budget-no-pricing-leak
     tier: protocol
