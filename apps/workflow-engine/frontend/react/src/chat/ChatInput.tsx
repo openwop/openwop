@@ -18,12 +18,26 @@ import { useEffect, useRef, useState } from 'react';
 import { useAudioRecorder, blobToBase64, type RecordedAudio } from './hooks/useAudioRecorder.js';
 import { SlashAutocomplete } from './SlashAutocomplete.js';
 import { AgentMentionAutocomplete } from './AgentMentionAutocomplete.js';
-import { MicIcon, SendIcon, StopIcon } from '../ui/icons/index.js';
+import { MicIcon, SendIcon, StopIcon, PaperclipIcon, XIcon } from '../ui/icons/index.js';
+import {
+  fileToContentPart,
+  attachmentRejectionReason,
+  isImageMime,
+  ATTACHMENT_ACCEPT,
+} from '../client/mediaClient.js';
 import type { ContentPart } from './hooks/useChatSession.js';
 
 interface PendingAudio {
   id: string;
   audio: RecordedAudio;
+}
+
+interface PendingFile {
+  id: string;
+  file: File;
+  isImage: boolean;
+  /** Object URL for an image thumbnail; revoked on remove/submit. */
+  previewUrl?: string;
 }
 
 interface Props {
@@ -38,6 +52,12 @@ interface Props {
    *  the mic still records, but on send we'll surface a clear error
    *  rather than ship audio to an incompatible model. */
   supportsAudioInput?: boolean;
+  /** Hint that the active model accepts image input (vision). When false,
+   *  an attached image is flagged with a "switch models" warning. */
+  supportsImageInput?: boolean;
+  /** Hint that the active model accepts PDF documents (Anthropic / Gemini).
+   *  Text files (.txt/.md/.json/.csv) inline as text and work everywhere. */
+  supportsPdfInput?: boolean;
 }
 
 export function ChatInput({
@@ -47,9 +67,14 @@ export function ChatInput({
   placeholder,
   disabledReason,
   supportsAudioInput,
+  supportsImageInput,
+  supportsPdfInput,
 }: Props): JSX.Element {
   const [text, setText] = useState('');
   const [pendingAudio, setPendingAudio] = useState<PendingAudio | null>(null);
+  const [pendingFiles, setPendingFiles] = useState<readonly PendingFile[]>([]);
+  const [attachError, setAttachError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   // Tracked for the @-mention popover. Synced from onChange / onSelect
   // / onClick / onKeyUp on the textarea so the popover sees the live
   // caret position.
@@ -72,9 +97,46 @@ export function ChatInput({
     el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
   }, [text]);
 
+  // Revoke any outstanding image-thumbnail object URLs on unmount.
+  useEffect(() => () => {
+    for (const f of pendingFiles) if (f.previewUrl) URL.revokeObjectURL(f.previewUrl);
+  }, [pendingFiles]);
+
+  function addFiles(files: FileList | null): void {
+    if (!files || files.length === 0) return;
+    const accepted: PendingFile[] = [];
+    let firstReason: string | null = null;
+    for (const file of Array.from(files)) {
+      const reason = attachmentRejectionReason(file);
+      if (reason) { firstReason ??= reason; continue; }
+      const isImage = isImageMime(file.type || '');
+      accepted.push({
+        id: crypto.randomUUID(),
+        file,
+        isImage,
+        ...(isImage ? { previewUrl: URL.createObjectURL(file) } : {}),
+      });
+    }
+    setAttachError(firstReason);
+    if (accepted.length > 0) setPendingFiles((prev) => [...prev, ...accepted]);
+  }
+
+  function removeFile(id: string): void {
+    setPendingFiles((prev) => {
+      const target = prev.find((f) => f.id === id);
+      if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
+      return prev.filter((f) => f.id !== id);
+    });
+  }
+
+  function clearPendingFiles(files: readonly PendingFile[]): void {
+    for (const f of files) if (f.previewUrl) URL.revokeObjectURL(f.previewUrl);
+    setPendingFiles([]);
+  }
+
   async function submit(): Promise<void> {
     if (disabled) return;
-    if (!text.trim() && !pendingAudio) return;
+    if (!text.trim() && !pendingAudio && pendingFiles.length === 0) return;
     const attachments: ContentPart[] = [];
     if (pendingAudio) {
       const dataBase64 = await blobToBase64(pendingAudio.audio.blob);
@@ -85,9 +147,21 @@ export function ChatInput({
         durationSeconds: pendingAudio.audio.durationSeconds,
       });
     }
+    // Convert pending files (inline small / upload large). If any fail, abort
+    // the send and surface the error rather than silently dropping the file.
+    try {
+      for (const pf of pendingFiles) {
+        attachments.push(await fileToContentPart(pf.file));
+      }
+    } catch (err) {
+      setAttachError(err instanceof Error ? err.message : 'Attachment failed.');
+      return;
+    }
     onSend(text.trim(), attachments.length > 0 ? attachments : undefined);
     setText('');
     setPendingAudio(null);
+    clearPendingFiles(pendingFiles);
+    setAttachError(null);
   }
 
   function onKey(e: React.KeyboardEvent<HTMLTextAreaElement>): void {
@@ -117,7 +191,7 @@ export function ChatInput({
     }
   }
 
-  const canSend = !disabled && (text.trim().length > 0 || pendingAudio !== null);
+  const canSend = !disabled && (text.trim().length > 0 || pendingAudio !== null || pendingFiles.length > 0);
 
   return (
     <div style={{ position: 'relative' }}>
@@ -182,6 +256,72 @@ export function ChatInput({
           </button>
         </div>
       )}
+      {pendingFiles.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
+          {pendingFiles.map((pf) => {
+            const isPdf = pf.file.type === 'application/pdf';
+            const cantSend =
+              (pf.isImage && supportsImageInput === false) ||
+              (isPdf && supportsPdfInput === false);
+            return (
+              <div
+                key={pf.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '4px 8px',
+                  background: 'var(--color-surface-2)',
+                  border: `1px solid ${cantSend ? 'var(--color-warning)' : 'var(--color-border)'}`,
+                  borderRadius: 'var(--radius)',
+                  fontSize: 12,
+                  maxWidth: 220,
+                }}
+                title={cantSend ? "The current model can't read this attachment — switch to a vision/PDF-capable model." : pf.file.name}
+              >
+                {pf.isImage && pf.previewUrl ? (
+                  <img
+                    src={pf.previewUrl}
+                    alt={pf.file.name}
+                    style={{ width: 20, height: 20, objectFit: 'cover', borderRadius: 3 }}
+                  />
+                ) : (
+                  <PaperclipIcon size={14} />
+                )}
+                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {pf.file.name}
+                </span>
+                {cantSend && <span style={{ color: 'var(--color-warning)' }} title="Unsupported by the current model">⚠</span>}
+                <button
+                  type="button"
+                  onClick={() => removeFile(pf.id)}
+                  aria-label={`Remove ${pf.file.name}`}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
+                    color: 'var(--color-text-muted, var(--color-text))', minHeight: 0,
+                  }}
+                >
+                  <XIcon size={12} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {attachError && (
+        <div className="alert error" style={{ marginBottom: 6, fontSize: 11 }}>{attachError}</div>
+      )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept={ATTACHMENT_ACCEPT}
+        onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }}
+        style={{ display: 'none' }}
+        aria-hidden="true"
+        tabIndex={-1}
+      />
       <div style={{
         display: 'flex', alignItems: 'flex-end', gap: 8,
         padding: 8,
@@ -215,6 +355,24 @@ export function ChatInput({
             width: '100%',
           }}
         />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={disabled}
+          title="Attach a file (images, PDF, .txt/.md/.json/.csv)"
+          aria-label="Attach a file"
+          style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            borderRadius: '50%',
+            minWidth: 36, width: 36, height: 36,
+            padding: 0,
+            background: 'var(--color-surface-2)',
+            color: 'var(--color-text)',
+            border: '1px solid var(--color-border)',
+          }}
+        >
+          <PaperclipIcon size={18} />
+        </button>
         {recorder.isSupported && (
           <button
             type="button"

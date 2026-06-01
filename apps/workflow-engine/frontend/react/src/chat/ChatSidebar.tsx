@@ -242,6 +242,13 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
     }
   })();
   const supportsAudioInput = activeModel?.audioInput === true;
+  // Image (vision) input is the model's `vision` capability. PDFs ride the
+  // same native document channel only on Anthropic + Gemini in our dispatcher
+  // (OpenAI Chat Completions + MiniMax don't accept PDF parts) — gate on both
+  // vision + provider so the chip warns honestly. Text files (.txt/.md/.json/
+  // .csv) inline as text on every provider, so they're never gated.
+  const supportsImageInput = activeModel?.capabilities?.includes('vision') === true;
+  const supportsPdfInput = supportsImageInput && (config.provider === 'anthropic' || config.provider === 'google');
   const supportsWebSearch = activeModel?.webSearch === true;
   // Tool calling is gated to Anthropic in the backend dispatcher
   // (OpenAI / Google have their own wire shapes — see
@@ -436,6 +443,8 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
             disabledReason={disabledReason}
             placeholder={isSending ? 'Generating… (Esc to stop)' : 'Type / for commands + workflows, @ for agents, or just chat…'}
             supportsAudioInput={supportsAudioInput}
+            supportsImageInput={supportsImageInput}
+            supportsPdfInput={supportsPdfInput}
           />
         </div>
       </div>

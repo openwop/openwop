@@ -30,6 +30,7 @@ import Database from 'better-sqlite3';
 import { createLogger } from '../observability/logger.js';
 import { registerHostSurface } from '../bootstrap/hostSurfaceRegistry.js';
 import { redactForCompaction } from '../byok/textRedaction.js';
+import { DurableCollection } from './hostExtPersistence.js';
 
 const log = createLogger('host.inMemorySurfaces');
 
@@ -1080,11 +1081,23 @@ export function compactMemory(tenantId: string, memoryRef: string): CompactionRe
 // interrupt way (32 random bytes, base64url — opaque, not guessable) and
 // key the store by token; the entry carries its own tenantId so a token
 // minted for tenant A never resolves to tenant B's bytes (the
-// `media-asset-url-tenant-scoped` SECURITY invariant). Demo-only:
-// process-local, restart wipes; entries TTL out.
+// `media-asset-url-tenant-scoped` SECURITY invariant).
+//
+// Durable + read-through (the same hardening PR #395 applied to the other
+// host-extension stores, now extended here): each asset is one row in the
+// generic `host_ext_kv` table keyed `hostext:media:asset:<token>`, so a URL
+// minted on one Cloud Run instance resolves on every instance, survives a
+// restart, and — critically — survives a `POST /v1/runs/{runId}:fork` replay
+// of a chat turn that referenced the asset by URL (see replay.md). Inline
+// `dataBase64` attachments are replay-safe by construction (they live in
+// `run.inputs`, copied verbatim on fork); URL-referenced attachments are
+// replay-safe only because this store is now durable with a retention window
+// (≥ run lifetime) that outlives the run.
 // ───────────────────────────────────────────────────────────────────
 
 interface MediaAssetEntry {
+  /** The capability token — also the durable row id (`idOf`). */
+  token: string;
   tenantId: string;
   contentBase64: string;
   contentType: string;
@@ -1093,16 +1106,21 @@ interface MediaAssetEntry {
   expiresAtMs: number;
 }
 
-/** token → entry. Single map (tokens are globally unique + carry tenantId). */
-const _mediaAssets = new Map<string, MediaAssetEntry>();
+/** token → entry, one durable row per asset (read-through, multi-instance
+ *  correct). Tokens are globally unique + carry their own tenantId. */
+const _mediaAssets = new DurableCollection<MediaAssetEntry>('media:asset', (e) => e.token);
+/** LLM-emitted media (RFC 0055) is ephemeral — a short TTL keeps the store
+ *  small. User-uploaded chat attachments override this with a longer TTL
+ *  (see UPLOADED_ASSET_TTL_MS in routes/mediaAssets.ts) so a fork/replay of
+ *  the turn within a reasonable window can still re-resolve the URL. */
 const MEDIA_ASSET_DEFAULT_TTL_MS = 60 * 60 * 1000; // 1h
 
 /** Store an asset for `tenantId` and mint a tenant-scoped capability URL.
  *  Returns the relative serve URL + decoded byte size + expiry. */
-export function storeMediaAsset(
+export async function storeMediaAsset(
   tenantId: string,
   input: { contentBase64: string; contentType: string; ttlSeconds?: number },
-): { token: string; url: string; bytes: number; expiresAt: string } {
+): Promise<{ token: string; url: string; bytes: number; expiresAt: string }> {
   const token = randomBytes(32).toString('base64url');
   const bytes = Buffer.byteLength(input.contentBase64, 'base64');
   const ttlMs =
@@ -1110,17 +1128,21 @@ export function storeMediaAsset(
       ? input.ttlSeconds * 1000
       : MEDIA_ASSET_DEFAULT_TTL_MS;
   const expiresAtMs = Date.now() + ttlMs;
-  _mediaAssets.set(token, { tenantId, contentBase64: input.contentBase64, contentType: input.contentType, bytes, expiresAtMs });
+  await _mediaAssets.put({ token, tenantId, contentBase64: input.contentBase64, contentType: input.contentType, bytes, expiresAtMs });
   return { token, url: `/v1/host/sample/assets/${token}`, bytes, expiresAt: new Date(expiresAtMs).toISOString() };
 }
 
 /** Resolve a media-asset token. Returns null when unknown or expired (the
- *  token IS the capability — a caller without it cannot reach the bytes). */
-export function resolveMediaAsset(token: string): MediaAssetEntry | null {
-  const e = _mediaAssets.get(token);
+ *  token IS the capability — a caller without it cannot reach the bytes).
+ *  The returned entry carries its own `tenantId`; callers that resolve on
+ *  behalf of a request MUST check it against `req.tenantId` to uphold the
+ *  `media-asset-url-tenant-scoped` invariant (the token is unguessable, so a
+ *  cross-tenant read requires already holding tenant A's token). */
+export async function resolveMediaAsset(token: string): Promise<MediaAssetEntry | null> {
+  const e = await _mediaAssets.get(token);
   if (!e) return null;
   if (e.expiresAtMs <= Date.now()) {
-    _mediaAssets.delete(token);
+    await _mediaAssets.delete(token);
     return null;
   }
   return e;
