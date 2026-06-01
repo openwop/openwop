@@ -444,7 +444,6 @@ function generateStatus() {
     const list = activeRfcs.map((rfc) => `RFC ${rfc.id}`).join(', ');
     lines.push(`- ${activeRfcs.length} RFC${activeRfcs.length === 1 ? '' : 's'} \`Active\` (${list}) — wire-shape MAY shift compatibly within v1.x until promotion to \`Accepted\`.`);
   }
-  lines.push('- SDK parity still shows raw-only rows for several stable v1.x helper surfaces.');
   lines.push('- External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.');
   lines.push('- Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.');
   lines.push('');
