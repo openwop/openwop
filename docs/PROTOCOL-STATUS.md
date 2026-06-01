@@ -24,7 +24,7 @@
 | TypeScript SDK `@openwop/openwop` | 1.1.6 | `sdk/typescript/package.json` | floats patch via `openwop/v*` tags |
 | Python SDK `openwop-client` | 1.1.5 | `sdk/python/pyproject.toml` | tracks spec major; floats patch |
 | Go SDK | git tag `sdk/go/v*` | `sdk/go/` (tag-versioned module) | tracks spec major; tagged |
-| Conformance suite `@openwop/openwop-conformance` | 1.13.0 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 1.14.0 | `conformance/package.json` | minor on scenario add/remove |
 | CLI `@openwop/cli` | 0.1.2 | `cli/package.json` | independent 0.x via `cli/v*` tags |
 
 ## OpenAPI Operations
