@@ -40,13 +40,13 @@ export function AgentCard({
   const firstWorkflow = entry.workflows[0];
 
   return (
+    // Whole card clickable for MOUSE convenience (onClick); intentionally NOT a
+    // role=button/tabIndex target — that would nest interactive controls (the
+    // card holds real <button>s) and add a redundant tab stop. Keyboard / AT
+    // users reach the explicit "Open dashboard" button below.
     <div
       className="surface-card surface-card--interactive"
-      role="button"
-      tabIndex={0}
-      aria-label={`Open ${entry.persona}'s dashboard`}
       onClick={onOpen}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(); } }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
         <div

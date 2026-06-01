@@ -17,7 +17,7 @@ import { listRoster, type RosterEntry } from '../agents/rosterClient.js';
 import { Notice } from '../ui/Notice.js';
 import { StateCard } from '../ui/StateCard.js';
 import { ColumnsIcon } from '../ui/icons/index.js';
-import { KanbanBoardView } from './KanbanBoardView.js';
+import { KanbanBoardView, type NewCardInput } from './KanbanBoardView.js';
 import {
   createBoard,
   createCard,
@@ -107,10 +107,20 @@ export function KanbanPage(): JSX.Element {
     }
   };
 
-  const onCreateCard = async (columnId: string, input: { title: string }) => {
+  const onCreateCard = async (columnId: string, input: NewCardInput) => {
     if (!activeBoard) return;
     try {
-      await createCard(activeBoard.id, { title: input.title, columnId });
+      // Forward every field the shared add-card form collects (description /
+      // priority / due / source) — not just the title.
+      await createCard(activeBoard.id, {
+        title: input.title,
+        columnId,
+        ...(input.description ? { description: input.description } : {}),
+        ...(input.source ? { source: input.source } : {}),
+        ...(input.workflowId ? { workflowId: input.workflowId } : {}),
+        ...(input.priority ? { priority: input.priority } : {}),
+        ...(input.dueAt ? { dueAt: input.dueAt } : {}),
+      });
       await openBoard(activeBoard.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
