@@ -128,11 +128,13 @@ export interface AgentActivityItem {
 }
 
 /** Per-agent activity: recent runs (heartbeat / schedule / card triggers) with
- *  timestamps + outcomes, newest first. */
-export async function getAgentActivity(rosterId: string): Promise<AgentActivityItem[]> {
+ *  timestamps + outcomes, newest first. `truncated` ⇒ the scan window was hit
+ *  and older runs may exist beyond what's shown. */
+export async function getAgentActivity(rosterId: string): Promise<{ items: AgentActivityItem[]; truncated: boolean }> {
   const res = await fetch(`${rosterBase}/${encodeURIComponent(rosterId)}/activity`, fetchOpts({ headers: authedHeaders() }));
   if (!res.ok) throw new Error(`getAgentActivity returned ${res.status}`);
-  return ((await res.json()) as { items: AgentActivityItem[] }).items;
+  const body = (await res.json()) as { items: AgentActivityItem[]; truncated?: boolean };
+  return { items: body.items, truncated: body.truncated ?? false };
 }
 
 export async function getOrgChart(): Promise<OrgChart> {

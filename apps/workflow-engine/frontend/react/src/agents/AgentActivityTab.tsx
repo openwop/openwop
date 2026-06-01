@@ -39,19 +39,25 @@ function statusChip(status: string): { cls: string; label: string } {
   }
 }
 
-export function AgentActivityTab({ rosterId, persona }: { rosterId: string; persona: string }): JSX.Element {
+export function AgentActivityTab({ rosterId, persona, refreshSignal }: { rosterId: string; persona: string; refreshSignal?: number }): JSX.Element {
   const [items, setItems] = useState<AgentActivityItem[] | null>(null);
+  const [truncated, setTruncated] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
-      setItems(await getAgentActivity(rosterId));
+      const res = await getAgentActivity(rosterId);
+      setItems(res.items);
+      setTruncated(res.truncated);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
   }, [rosterId]);
 
   useEffect(() => { void refresh(); }, [refresh]);
+  // Re-fetch when the parent signals an activity-affecting action (e.g. the
+  // header's "Check now" heartbeat started a run).
+  useEffect(() => { void refresh(); }, [refreshSignal, refresh]);
 
   if (error) return <Notice variant="error">{error}</Notice>;
   if (items === null) return <p style={muted}>Loading activity…</p>;
@@ -65,6 +71,7 @@ export function AgentActivityTab({ rosterId, persona }: { rosterId: string; pers
   }
 
   return (
+    <>
     <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
       {items.map((item) => {
         const chip = statusChip(item.status);
@@ -87,5 +94,11 @@ export function AgentActivityTab({ rosterId, persona }: { rosterId: string; pers
         );
       })}
     </ul>
+    {truncated ? (
+      <p style={{ ...muted, fontSize: '0.74rem', marginTop: '0.5rem' }}>
+        Showing {persona}'s most recent activity. Older runs may exist beyond this window.
+      </p>
+    ) : null}
+    </>
   );
 }

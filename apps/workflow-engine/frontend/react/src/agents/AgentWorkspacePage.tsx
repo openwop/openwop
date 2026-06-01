@@ -218,7 +218,7 @@ export function AgentWorkspacePage(): JSX.Element {
       {tab === 'schedules' ? <AgentSchedulesPanel entry={entry} /> : null}
       {tab === 'instructions' ? <AgentInstructionsPanel entry={entry} onChanged={() => void refresh()} /> : null}
       {tab === 'integrations' ? <AgentIntegrationsPanel boardId={view.board?.id ?? null} persona={entry.persona} onChanged={() => void refresh()} /> : null}
-      {tab === 'activity' ? <AgentActivityTab rosterId={entry.rosterId} persona={entry.persona} /> : null}
+      {tab === 'activity' ? <AgentActivityTab rosterId={entry.rosterId} persona={entry.persona} refreshSignal={boardRefresh} /> : null}
 
       <details style={{ marginTop: 'var(--space-5)' }}>
         <summary style={{ ...muted, fontSize: '12px', cursor: 'pointer' }}>Advanced protocol details</summary>
