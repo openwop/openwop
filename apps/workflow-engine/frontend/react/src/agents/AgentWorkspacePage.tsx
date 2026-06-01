@@ -8,7 +8,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { checkAgent, updateRosterEntry } from './rosterClient.js';
 import { loadAgentView, statusMeta, type AgentView } from './agentViewModel.js';
-import { workflowName } from './roleTemplates.js';
+import { workflowName, roleThemeForAgent } from './roleTemplates.js';
+import { PlayIcon } from '../ui/icons/index.js';
+import type { KanbanCard, KanbanColumn } from '../kanban/kanbanClient.js';
 import { AgentBoardPanel } from './AgentBoardPanel.js';
 import { AgentWorkflowPortfolioPanel } from './AgentWorkflowPortfolioPanel.js';
 import { AgentSchedulesPanel } from './AgentSchedulesPanel.js';
@@ -121,6 +123,8 @@ export function AgentWorkspacePage(): JSX.Element {
 
   const { entry } = view;
   const sm = statusMeta(view.status);
+  const theme = roleThemeForAgent(entry.agentRef?.agentId, entry.workflows);
+  const RoleIcon = theme.Icon;
 
   return (
     <section style={{ padding: '1rem', maxWidth: 1100, margin: '0 auto' }}>
@@ -128,8 +132,13 @@ export function AgentWorkspacePage(): JSX.Element {
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', margin: '0.6rem 0 0.4rem', flexWrap: 'wrap' }}>
-        <div aria-hidden="true" style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--color-accent)', color: 'var(--paper)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.1rem' }}>
-          {initials(entry.persona)}
+        <div aria-hidden="true" style={{ position: 'relative', flexShrink: 0 }}>
+          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--color-accent)', color: 'var(--paper)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.1rem' }}>
+            {initials(entry.persona)}
+          </div>
+          <div title={`${theme.label} role`} style={{ position: 'absolute', right: -3, bottom: -3, width: 20, height: 20, borderRadius: '50%', background: 'var(--paper)', border: '1px solid var(--color-border)', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <RoleIcon size={12} strokeWidth={2} />
+          </div>
         </div>
         <div style={{ flex: 1, minWidth: 200 }}>
           <h1 style={{ margin: 0 }}>{entry.persona}</h1>
@@ -179,7 +188,7 @@ export function AgentWorkspacePage(): JSX.Element {
         ))}
       </div>
 
-      {tab === 'overview' ? <OverviewTab view={view} onGoto={setTab} /> : null}
+      {tab === 'overview' ? <OverviewTab view={view} onGoto={setTab} onCheckNow={() => void onCheckNow()} busy={busy} /> : null}
       {tab === 'workflows' ? <AgentWorkflowPortfolioPanel entry={entry} jobs={view.jobs} board={view.board} onChanged={() => void refresh()} /> : null}
       {tab === 'board' ? (view.board ? <AgentBoardPanel boardId={view.board.id} persona={entry.persona} workflows={entry.workflows} refreshSignal={boardRefresh} onChanged={() => void refresh()} /> : <NoBoard persona={entry.persona} />) : null}
       {tab === 'schedules' ? <AgentSchedulesPanel entry={entry} /> : null}
@@ -202,10 +211,96 @@ function NoBoard({ persona }: { persona: string }): JSX.Element {
   return <p style={muted}>{persona} has no task board yet.</p>;
 }
 
-function OverviewTab({ view, onGoto }: { view: AgentView; onGoto: (t: TabKey) => void }): JSX.Element {
+const PRIORITY_RANK: Record<string, number> = { high: 0, normal: 1, low: 2 };
+function colMatches(col: KanbanColumn, kind: 'todo' | 'working'): boolean {
+  const id = col.id.toLowerCase();
+  const name = col.name.toLowerCase();
+  if (kind === 'todo') return id === 'todo' || name === 'to do';
+  return id === 'working' || id === 'doing' || name === 'working' || name === 'doing';
+}
+function topByPriority(cards: KanbanCard[]): KanbanCard | undefined {
+  return [...cards].sort(
+    (a, b) => (PRIORITY_RANK[a.priority ?? 'normal'] - PRIORITY_RANK[b.priority ?? 'normal']) || a.order - b.order,
+  )[0];
+}
+
+/** The dominant "what should I do now?" panel — the most important pending
+ *  task, the run in flight, and the next scheduled run, so the workspace opens
+ *  on the answer instead of a grid of equal-weight stat cards. */
+function PriorityPanel({
+  view,
+  onGoto,
+  onCheckNow,
+  busy,
+}: {
+  view: AgentView;
+  onGoto: (t: TabKey) => void;
+  onCheckNow: () => void;
+  busy: boolean;
+}): JSX.Element {
+  const { entry, board, cards, nextSchedule } = view;
+  const todoCol = board?.columns.find((c) => colMatches(c, 'todo'));
+  const workingCol = board?.columns.find((c) => colMatches(c, 'working'));
+  const topTodo = todoCol ? topByPriority(cards.filter((c) => c.columnId === todoCol.id)) : undefined;
+  const running =
+    (workingCol ? cards.filter((c) => c.columnId === workingCol.id && c.lastRunId)[0] : undefined) ??
+    cards.find((c) => c.lastRunId);
+
+  const cell: React.CSSProperties = { flex: '1 1 200px', minWidth: 180 };
+  const label: React.CSSProperties = { ...muted, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 };
+
+  return (
+    <div className="surface-card" style={{ borderLeft: '3px solid var(--color-accent)', marginBottom: 'var(--space-4)' }}>
+      <div style={{ display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
+        <div style={cell}>
+          <div style={label}>Next up</div>
+          {topTodo ? (
+            <>
+              <div style={{ fontWeight: 600, fontSize: '14px' }}>
+                {topTodo.title}
+                {topTodo.priority === 'high' ? <span className="chip chip--danger" style={{ marginLeft: 6 }}>High</span> : null}
+              </div>
+              <button type="button" className="primary btn-sm" style={{ marginTop: 6 }} onClick={onCheckNow} disabled={busy || !entry.enabled}>
+                {busy ? 'Checking…' : 'Pick up now'}
+              </button>
+            </>
+          ) : (
+            <div style={{ ...muted, fontSize: '13px' }}>No pending tasks. <button type="button" className="secondary btn-sm" onClick={() => onGoto('board')}>Add a task</button></div>
+          )}
+        </div>
+        <div style={cell}>
+          <div style={label}>In progress</div>
+          {running ? (
+            <div style={{ fontSize: '14px' }}>
+              <div style={{ fontWeight: 600 }}>{running.title}</div>
+              {running.lastRunId ? <Link to={`/runs/${running.lastRunId}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '13px', marginTop: 4 }}><PlayIcon size={12} /> View run</Link> : null}
+            </div>
+          ) : (
+            <div style={{ ...muted, fontSize: '13px' }}>Nothing running.</div>
+          )}
+        </div>
+        <div style={cell}>
+          <div style={label}>Next scheduled</div>
+          {nextSchedule ? (
+            <div style={{ fontSize: '14px' }}>
+              <div style={{ fontWeight: 600 }}>{workflowName(nextSchedule.workflowId ?? entry.workflows[0] ?? '')}</div>
+              <div style={{ ...muted, fontSize: '13px', marginTop: 4 }}>{String(nextSchedule.metadata?.label ?? nextSchedule.cronExpr)}</div>
+            </div>
+          ) : (
+            <div style={{ ...muted, fontSize: '13px' }}>No schedule. <button type="button" className="secondary btn-sm" onClick={() => onGoto('schedules')}>Add one</button></div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OverviewTab({ view, onGoto, onCheckNow, busy }: { view: AgentView; onGoto: (t: TabKey) => void; onCheckNow: () => void; busy: boolean }): JSX.Element {
   const { entry, laneCounts, nextSchedule } = view;
   const card: React.CSSProperties = { border: '1px solid var(--color-border)', borderRadius: 10, padding: '0.8rem', background: 'var(--color-surface)' };
   return (
+    <>
+    <PriorityPanel view={view} onGoto={onGoto} onCheckNow={onCheckNow} busy={busy} />
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '0.7rem' }}>
       <div style={card}>
         <strong>What {entry.persona} does</strong>
@@ -239,5 +334,6 @@ function OverviewTab({ view, onGoto }: { view: AgentView; onGoto: (t: TabKey) =>
         </ul>
       </div>
     </div>
+    </>
   );
 }

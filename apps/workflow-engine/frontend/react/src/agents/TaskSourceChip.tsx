@@ -27,10 +27,16 @@ export function TaskSourceChip({ source, sourceLabel }: { source?: KanbanCardSou
   const meta = SOURCE_META[source ?? 'human'];
   const { Icon } = meta;
   const title = sourceLabel ? `${meta.label}: ${sourceLabel}` : `Created by ${meta.label}`;
+  // The chip always names the source TYPE (e.g. "Discord"); the specific origin
+  // (e.g. "#support-inbox") rides alongside as secondary muted text so the
+  // category is never buried in the detail.
   return (
-    <span className={`chip ${meta.chip}`} title={title}>
-      <Icon size={12} />
-      <span>{sourceLabel ?? meta.label}</span>
-    </span>
+    <>
+      <span className={`chip ${meta.chip}`} title={title}>
+        <Icon size={12} />
+        <span>{meta.label}</span>
+      </span>
+      {sourceLabel ? <span style={{ color: 'var(--color-text-muted)', fontSize: '12px' }}>{sourceLabel}</span> : null}
+    </>
   );
 }

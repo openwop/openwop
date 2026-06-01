@@ -134,6 +134,10 @@ Run / agent / node status is rendered as a chip (color **and** label — never c
 
 Do not invent a per-surface status palette; reuse these mappings so a "completed" state looks identical everywhere.
 
+### 5.4 Role glyphs — differentiate by icon, never by color
+
+A roster of named coworkers must read at a glance, but role is **not** a run-state, so it does not earn a functional/accent color (§3 reserves those for status). Differentiation is therefore by **Lucide glyph only**, mapped centrally in `agents/roleTemplates.ts` (`roleThemeForKey` / `roleThemeForAgent`): `sales-ops → Briefcase`, `support-triage → LifeBuoy`, `finance-ops → Scale`, `engineering-ops → Wrench`, `marketing-ops → Megaphone`, custom/unknown → `Bot`. The glyph rides as a small bordered badge on the otherwise-uniform clay avatar (dashboard card + workspace header) and inline on the create-agent role picker. The role key is derived from the seeded `host:demo-<key>` agentRef, else inferred from the workflow portfolio. Do not give a role its own accent color or avatar tint.
+
 When adding a new app-specific component:
 
 1. Add a row here.
