@@ -11,6 +11,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### docs(known-limits): retire the stale multi-region "shape-only" row — simulation harness already landed (2026-06-01)
+
+KNOWN-LIMITS gap-closure Phase 3 — the `multi-region-idempotency.test.ts` row in the "Shape-only" section still framed multi-region convergence as untested ("requires actual multi-region replication infrastructure that no reference host ships"), but the **simulation-harness half landed 2026-05-22**: `multi-region-idempotency-behavior.test.ts` (6 behavioral assertions) drives the `POST /v1/host/sample/test/multi-region/simulate-partition` seam — implemented on **both** the reference workflow-engine and the Postgres host — and verifies the RFC 0036 §C convergence rule (lex-min `runId` winner, per-region cache redirect, canonical `cross_region_dedup_loss` loser reason, resolver order-invariance, partition→converge with no coordination). All assertions PASS (coverage.md grade A). Row rewritten to **simulation-harness gap CLOSED**; the residual (a genuinely deployed multi-region host for Core-floor entry + non-steward adoption) stays external per RFC 0088 §D Lever-2.
+
+The two sibling Phase-3 items remain accurately documented as CI-infra/adoption residuals (no staleness to fix): the `replay-llm-cache-key.test.ts` §D cross-host parity row already states it awaits two reference hosts that both expose the recipe seam (the seam is currently only on the workflow-engine; genuine §D value needs an *independent* recipe reimplementation, not a second instance of the same code) or an `OPENWOP_BASE_URL_B` CI matrix; and the `auth-mtls.test.ts` behavior row already states it lights up via `OPENWOP_TEST_MTLS=1` + a cert harness (the Postgres host already terminates mTLS). Curated-commentary docs only; no wire/schema change.
+
 ### docs(known-limits) + conformance: retire stale cross-engine CF-8 row + activate the RFC 0041 §C replay-observable assertions (2026-06-01)
 
 KNOWN-LIMITS gap-closure Phase 2 (cont.) — two repo-closeable items that turned out already largely closed by prior seam/fixture work, plus a stale-row cleanup keeping the catalog honest:
