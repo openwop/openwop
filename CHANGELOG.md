@@ -11,6 +11,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### conformance: post-review polish on the OTel canary inspector + replay-observable normalizer (2026-06-01)
+
+Follow-up to the KNOWN-LIMITS gap-closure conformance work (#430, #433) addressing review feedback — no behavior change to the contracts, only robustness/clarity:
+
+- **`OtelCollector.findCanaryLeakage()` dedups its output.** A canary in a *resource* attribute previously reported once per span (resource attributes repeat across every span from a resource). Hits are now deduped: resource/metric-attribute leaks key emitter-independently (surface+key+value) so a resource-scoped leak surfaces exactly once; span.name/span.attribute hits stay per-span. New regression test (`otel-collector-canary-inspection.test.ts`, now 6/6) posts 5 spans sharing one leaking resource attribute and asserts a single hit.
+- **`replay-observable-sequence-determinism.test.ts` `stripVolatile` now recurses.** It previously stripped volatile fields (`eventId`/`runId`/clock fields) only at the event top level; it now walks nested objects + arrays, so a `version: 4` host that buries a clock or ULID inside a payload is normalized too — the byte-equivalence assertion tolerates only the documented carve-outs and flags any other divergence.
+- **Documented why `otel-collector-canary-inspection.test.ts` uses bare `expect(...)`** (it is a harness self-test of the collector library, not a host spec-compliance assertion — so there is no spec section to cite via `driver.describe`), so future reviews don't re-flag it.
+
+Conformance scenario count unchanged (no new file). Additive; no wire/schema change.
+
 ### spec(rfc-0080, rfc-0068): memory degraded-projection gated scenario + 0068 seam docs — steward prerequisite (2026-06-01)
 
 Authors the steward prerequisite to graduate `memory` (RFC 0080 memory-capability reconciliation) and `agents.memoryConsolidation`/`agents.commitments` (RFC 0068 consolidation + standing commitments) from `Active → Accepted` on a non-steward host (MyndHyve). Adds the gated behavioral scenario RFC 0080 §Conformance named but deferred at `Draft → Active`: `memory-degraded-projection.test.ts` (gated on `agents.manifestRuntime` + `memory`; black-box on the normative `GET /v1/agents` — the §C iff-contract: a degraded inventory entry carries `memoryDegraded:true` + a non-empty, unique `degradedMemoryDimensions[]` from the closed §A-name enum, a non-degraded entry carries neither; non-vacuous degraded branch via `OPENWOP_DEGRADED_AGENT_ID`). Documents the two RFC 0068 conformance seams (`POST /v1/host/sample/memory/consolidate` + `.../commitment/fire`) in `host-sample-test-seams.md` — the 0068 gated scenarios (`memory-consolidation-idempotent` + `commitment-fired`) already shipped in conformance 1.14.0, so 0068 needs no new scenario. `coverage.md` + scenario-count surfaces synced (320 → 321). All additive + capability-gated; existing v1.0-only hosts pass unchanged. The conformance suite version bump that publishes the 0080 scenario (1.15.0) is a separate step. No wire-shape change (the `memory.{search,retention,writable}` dimensions + the `memoryDegraded`/`degradedMemoryDimensions` inventory fields + the `agent.memory.consolidated`/`commitment.fired` events shipped earlier).

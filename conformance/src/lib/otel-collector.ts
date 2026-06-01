@@ -281,18 +281,45 @@ export class OtelCollector {
       const s = typeof v === 'string' ? v : JSON.stringify(v);
       return s !== undefined && s.includes(canary) ? s : null;
     };
+    // Dedup so each distinct leak surfaces exactly once. Resource
+    // attributes are resource-scoped, not span-scoped: the same resource
+    // attribute repeats across every span from that resource, so without
+    // dedup a single leaking resource attribute would be reported once per
+    // span. The resource-attribute dedup key is therefore emitter-
+    // independent (surface+key+value); span.name / span.attribute hits stay
+    // per-span (they are span-specific) and metric.attribute hits stay
+    // per-metric (the metric name is the emitter). The reported
+    // `emitterName` for a deduped resource-attribute leak is the first span
+    // that carried it — illustrative, since the leak is resource-level.
+    const seen = new Set<string>();
+    const record = (leak: CanaryLeak, dedupKey: string): void => {
+      if (seen.has(dedupKey)) return;
+      seen.add(dedupKey);
+      hits.push(leak);
+    };
     for (const sp of this._spans) {
       if (sp.name.includes(canary)) {
-        hits.push({ surface: 'span.name', emitterName: sp.name, key: undefined, value: sp.name });
+        record(
+          { surface: 'span.name', emitterName: sp.name, key: undefined, value: sp.name },
+          `span.name|${sp.name}`,
+        );
       }
       for (const [key, val] of sp.attributes) {
         const m = contains(val) ?? (key.includes(canary) ? key : null);
-        if (m !== null) hits.push({ surface: 'span.attribute', emitterName: sp.name, key, value: m });
+        if (m !== null) {
+          record(
+            { surface: 'span.attribute', emitterName: sp.name, key, value: m },
+            `span.attribute|${sp.name}|${key}|${m}`,
+          );
+        }
       }
       for (const [key, val] of sp.resourceAttributes) {
         const m = contains(val) ?? (key.includes(canary) ? key : null);
         if (m !== null) {
-          hits.push({ surface: 'span.resourceAttribute', emitterName: sp.name, key, value: m });
+          record(
+            { surface: 'span.resourceAttribute', emitterName: sp.name, key, value: m },
+            `span.resourceAttribute|${key}|${m}`,
+          );
         }
       }
     }
@@ -300,7 +327,10 @@ export class OtelCollector {
       for (const [key, val] of metric.dataPoint.attributes) {
         const m = contains(val) ?? (key.includes(canary) ? key : null);
         if (m !== null) {
-          hits.push({ surface: 'metric.attribute', emitterName: metric.name, key, value: m });
+          record(
+            { surface: 'metric.attribute', emitterName: metric.name, key, value: m },
+            `metric.attribute|${metric.name}|${key}|${m}`,
+          );
         }
       }
     }

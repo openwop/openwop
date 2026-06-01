@@ -109,17 +109,42 @@ async function readEvents(runId: string): Promise<RunEventDoc[]> {
 }
 
 /**
- * Strip volatile per-event fields so two runs of the same workflow are
- * comparable. Removes the run id, freshly-minted event ids/ULIDs, and the
- * per-region observed-at clock (RFC 0036 §E carve-out) wherever they
- * appear at the event top level.
+ * Volatile field names that differ legitimately between an original run and
+ * its replay: freshly-minted event ids/ULIDs, the run id, and per-region
+ * clock fields (RFC 0036 §E carve-out). Stripped wherever they appear —
+ * including NESTED inside payloads — so the byte-equivalence comparison
+ * tolerates only these carve-outs and flags any other divergence.
  */
-function stripVolatile(ev: RunEventDoc): Record<string, unknown> {
-  const clone = JSON.parse(JSON.stringify(ev)) as Record<string, unknown>;
-  for (const k of ['eventId', 'runId', 'observedAt', 'timestamp', 'occurredAt', 'emittedAt', 'id']) {
-    delete clone[k];
-  }
-  return clone;
+const VOLATILE_KEYS = new Set([
+  'eventId',
+  'runId',
+  'observedAt',
+  'timestamp',
+  'occurredAt',
+  'emittedAt',
+  'id',
+]);
+
+/**
+ * Recursively strip {@link VOLATILE_KEYS} from an event so two runs of the
+ * same workflow are comparable. Recurses into nested objects + arrays (a
+ * host that buries a clock or ULID inside a payload is normalized too),
+ * leaving every non-volatile field intact for the equivalence assertion.
+ */
+function stripVolatile(ev: RunEventDoc): unknown {
+  const walk = (node: unknown): unknown => {
+    if (Array.isArray(node)) return node.map(walk);
+    if (node !== null && typeof node === 'object') {
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
+        if (VOLATILE_KEYS.has(k)) continue;
+        out[k] = walk(v);
+      }
+      return out;
+    }
+    return node;
+  };
+  return walk(JSON.parse(JSON.stringify(ev)));
 }
 
 /** Create the fixture run; returns null (with a skip) if it isn't advertised. */

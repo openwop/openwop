@@ -104,6 +104,44 @@ function metricsPayload(metricName: string, attrs: Record<string, string>): unkn
   };
 }
 
+// NOTE: assertions here intentionally use bare `expect(...)` rather than
+// `expect(..., driver.describe('spec.md §section', 'requirement'))`. This is a
+// HARNESS self-test — it verifies the conformance collector's own
+// `findCanaryLeakage()` inspector, not a host's compliance with a spec
+// requirement, so there is no spec section to cite (consistent with other
+// library-level tests, e.g. `sandbox-wasm-isolation.test.ts`). The
+// host-facing, spec-citing assertion lives in the collector-export block of
+// `secret-leakage-otel-attribute.test.ts`.
+/**
+ * Build a traces export with `spanCount` spans that all share ONE resource
+ * (hence one set of resource attributes). Used to prove resource-attribute
+ * leaks are deduped to a single hit rather than reported once per span.
+ */
+function multiSpanSharedResourcePayload(spanCount: number, resourceAttrs: Record<string, string>): unknown {
+  const toAttrs = (m: Record<string, string>) =>
+    Object.entries(m).map(([key, value]) => ({ key, value: { stringValue: value } }));
+  return {
+    resourceSpans: [
+      {
+        resource: { attributes: toAttrs(resourceAttrs) },
+        scopeSpans: [
+          {
+            scope: { name: 'openwop' },
+            spans: Array.from({ length: spanCount }, (_unused, i) => ({
+              traceId: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+              spanId: `span${i}`.padEnd(16, '0'),
+              name: `openwop.node.execute.${i}`,
+              startTimeUnixNano: '1',
+              endTimeUnixNano: '2',
+              attributes: toAttrs({ 'openwop.node.id': `n${i}` }),
+            })),
+          },
+        ],
+      },
+    ],
+  };
+}
+
 describe('otel-collector-canary-inspection: collector inspects real OTLP exports', () => {
   let collector: OtelCollector | null = null;
 
@@ -177,6 +215,18 @@ describe('otel-collector-canary-inspection: collector inspects real OTLP exports
     const metricLeak = leaks.find((l) => l.surface === 'metric.attribute');
     expect(metricLeak).toBeDefined();
     expect(metricLeak!.emitterName).toBe('openwop.node.duration');
+  });
+
+  it('dedups a resource-attribute leak to ONE hit even when shared across many spans', async () => {
+    collector = new OtelCollector();
+    await collector.start();
+    // 5 spans sharing one resource whose attribute leaks the canary. Without
+    // dedup this would report 5 identical resource-attribute hits.
+    await postTraces(multiSpanSharedResourcePayload(5, { 'service.name': 'host', 'deployment.token': CANARY }));
+
+    const leaks = collector.findCanaryLeakage(CANARY);
+    const resourceLeaks = leaks.filter((l) => l.surface === 'span.resourceAttribute' && l.key === 'deployment.token');
+    expect(resourceLeaks.length).toBe(1);
   });
 
   it('reports ZERO hits when the host redacts the canary before export (positive control)', async () => {
