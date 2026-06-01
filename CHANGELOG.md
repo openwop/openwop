@@ -11,6 +11,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### docs(interop-matrix): re-measure all four reference hosts against suite v1.15.0 (2026-06-01)
+
+Closes the standing suite-version-cascade drift — the INTEROP-MATRIX pass-rate table + the per-host `conformance.md` banners cited suite v1.10.0 (last measured 2026-05-30), but the suite had since advanced 1.10.0 → 1.13.0 → 1.14.0 → 1.15.0 across three releases that didn't re-measure hosts. Fresh cross-host re-measurement, each host built + booted locally + run in default mode (`vitest run` against the live host via `OPENWOP_BASE_URL`, TypeScript SDK `dist/` built first so the server-free corpus-validity scenarios pass):
+
+| Host | Passed | Failed | Skipped | Total | Rate |
+|---|---:|---:|---:|---:|---:|
+| Postgres (pglite) | 2050 | 0 | 93 | 2143 | 95.7% |
+| SQLite | 2038 | 0 | 105 | 2143 | 95.1% |
+| In-memory | 1992 | 46 | 105 | 2143 | 92.9% |
+| Python (3.9 stdlib) | 1990 | 2 | 151 | 2143 | 92.9% |
+
+Both production-grade hosts (Postgres, SQLite) hold at **0 deterministic failures** — Postgres is cleaner than its prior 1994/8 reading (the 8 full-suite-parallelism flakes did not recur). The in-memory (46) + Python (2) failures are honest non-claims for surfaces those minimal hosts don't implement (artifacts, bulk-cancel, BYOK, cap/cost-breach, RFC 0058 run-timeout, et al.) — down from 48/2 even as the suite grew 2074 → 2143. The workflow-engine exhaustive-mode row stays at its retained v1.5.0 reading (it needs the full app harness, not an `examples/hosts/*` server) — re-measurement against v1.15.0 queued. Updated `INTEROP-MATRIX.md` §"External conformance suite — pass rates" + all four host `conformance.md` banners (demoting the v1.10.0 readings to "Prior measurement") + regenerated `docs/PROTOCOL-STATUS.md`. Docs/evidence only; no wire/schema/code change.
+
 ### conformance: post-review polish on the OTel canary inspector + replay-observable normalizer (2026-06-01)
 
 Follow-up to the KNOWN-LIMITS gap-closure conformance work (#430, #433) addressing review feedback — no behavior change to the contracts, only robustness/clarity:
