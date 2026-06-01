@@ -207,7 +207,7 @@ export function AgentDashboardPage(): JSX.Element {
       ) : (
         <>
           {views.length > 3 ? (
-            <div className="action-bar" style={{ marginBottom: 'var(--space-3)', flexWrap: 'wrap' }}>
+            <div className="action-bar" role="group" aria-label="Filter and sort agents" style={{ marginBottom: 'var(--space-3)', flexWrap: 'wrap' }}>
               <input
                 type="search"
                 className="ui-input"
