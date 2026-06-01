@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getCapabilities } from '../client/runsClient.js';
 import { authedHeaders, config, fetchOpts } from '../client/config.js';
 import { McpToolsPanel } from '../mcp/McpToolsPanel.js';
+import { PageHeader } from '../ui/PageHeader.js';
 import { A2APeerPanel } from '../peers/A2APeerPanel.js';
 import { CheckIcon, CircleIcon } from '../ui/icons/index.js';
 
@@ -142,15 +143,12 @@ export function CapabilitiesPanel() {
 
   return (
     <section>
+      <PageHeader
+        eyebrow="Discovery"
+        title="Host capabilities"
+        lede={<>What this host can actually run from the installed packs. Coverage is (runnable / total) where "runnable" means every required host surface is advertised. The remainder will return <code>HOST_CAPABILITY_MISSING</code> if executed here — the workflow still serializes and ships, so deploying to a fuller host stays cheap.</>}
+      />
       <div className="card">
-        <h2>Pack coverage</h2>
-        <p className="muted">
-          What this host can actually run from the installed packs. Coverage is
-          (runnable / total) where "runnable" means every required host surface is
-          advertised. The remainder will return <code>HOST_CAPABILITY_MISSING</code>
-          if executed here — the workflow still serializes and ships, so deploying
-          to a fuller host stays cheap.
-        </p>
         {error && <div className="alert error">{error}</div>}
         {catalog ? (
           <>

@@ -12,6 +12,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Notice } from '../ui/Notice.js';
+import { PageHeader } from '../ui/PageHeader.js';
 import {
   createRosterEntry,
   deleteRosterEntry,
@@ -106,12 +107,11 @@ export function RosterPage(): JSX.Element {
 
   return (
     <section style={{ padding: '1rem', maxWidth: 920 }}>
-      <h1 style={{ marginTop: 0 }}>Agents — Roster &amp; Org-Chart</h1>
-      <p style={{ ...muted, marginTop: '-0.5rem' }}>
-        Named "digital-twin employee" agents that own a workflow portfolio (RFC 0086), grouped into a descriptive
-        org-chart (RFC 0087). Bind a roster member to a board on the <strong>Boards</strong> page to make its To&nbsp;Do
-        column fire that agent's workflow.
-      </p>
+      <PageHeader
+        eyebrow="Roster"
+        title="Roster & Org-Chart"
+        lede={<>Named "digital-twin employee" agents that own a workflow portfolio (RFC 0086), grouped into a descriptive org-chart (RFC 0087). Bind a roster member to a board on the <strong>Boards</strong> page to make its To&nbsp;Do column fire that agent's workflow.</>}
+      />
       {error ? <Notice variant="error">{error}</Notice> : null}
 
       <h2 style={{ fontSize: '1rem' }}>Roster</h2>

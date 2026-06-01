@@ -11,6 +11,7 @@
  */
 import { useState } from 'react';
 import { Notice } from '../ui/Notice.js';
+import { PageHeader } from '../ui/PageHeader.js';
 import { RotateCwIcon } from '../ui/icons/index.js';
 import { seedDemoAgents } from '../agents/rosterClient.js';
 
@@ -41,11 +42,11 @@ export function DemoDataPage(): JSX.Element {
 
   return (
     <section style={{ padding: '1rem', maxWidth: 720 }}>
-      <h1 style={{ marginTop: 0 }}>Demo data</h1>
-      <p style={{ ...muted, marginTop: '-0.4rem' }}>
-        Re-create the built-in demo roster — five named agents (Sally, Marcus, Priya, Devon, Nora),
-        each with a task board, sample cards, and schedules.
-      </p>
+      <PageHeader
+        eyebrow="Settings"
+        title="Demo data"
+        lede="Re-create the built-in demo roster — five named agents (Sally, Marcus, Priya, Devon, Nora), each with a task board, sample cards, and schedules."
+      />
 
       {error ? <Notice variant="error">{error}</Notice> : null}
       {result ? <Notice variant="success">{result}</Notice> : null}

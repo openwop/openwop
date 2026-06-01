@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { listPrompts, renderLocal } from './promptsClient.js';
 import type { PromptKind, PromptTemplate } from './types.js';
+import { PageHeader } from '../ui/PageHeader.js';
 import { refToString } from './types.js';
 import { lintPromptForTierOne, tierOneFindingsCount } from './tierOneLint.js';
 import { getCapabilities } from '../client/runsClient.js';
@@ -94,19 +95,13 @@ export function PromptLibraryPage() {
 
   return (
     <section>
+      <PageHeader
+        eyebrow="Build"
+        title="Prompt library"
+        lede="Reusable prompts your workflow's AI nodes can pick from. Edit one in a single place and every node that uses it updates the next time it runs — no copy-paste, no drift. System prompts set the AI's role and tone; user prompts shape what you ask of it."
+        actions={<button onClick={() => setEditing('new')}>+ New prompt</button>}
+      />
       <div className="card">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <h2 style={{ margin: 0 }}>Prompt library</h2>
-          <button onClick={() => setEditing('new')}>+ New prompt</button>
-        </div>
-        <p className="muted">
-          Reusable prompts your workflow&apos;s AI nodes can pick from. Edit
-          one in a single place and every node that uses it updates the
-          next time it runs — no copy-paste, no drift, no per-node tweaks
-          to keep in sync. System prompts set the AI&apos;s role and tone;
-          user prompts shape what you ask of it.
-        </p>
-
         {error && <div className="alert error">{error}</div>}
 
         {tierOneActive && flaggedCount > 0 && (

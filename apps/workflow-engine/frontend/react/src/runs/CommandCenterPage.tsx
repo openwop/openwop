@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { RunEventDoc } from '@openwop/openwop';
 import { cancelRun, deleteRun, listMyRuns, pollEvents, type RunListItem } from '../client/runsClient.js';
+import { PageHeader } from '../ui/PageHeader.js';
 import { subscribeToRun } from '../client/streamsClient.js';
 import { RunAgentTrace } from './RunAgentTrace.js';
 import { RunHandoffMap } from './RunHandoffMap.js';
@@ -97,19 +98,18 @@ export function CommandCenterPage() {
 
   return (
     <section>
-      <div className="card">
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-          <h2 style={{ margin: 0 }}>Mission Control</h2>
+      <PageHeader
+        eyebrow="Mission"
+        title="Mission Control"
+        lede="Live view of every in-flight run for this session. Select a run to watch its agent handoffs and reasoning stream in real time."
+        actions={
           <span className="muted" style={{ fontSize: 12 }} aria-live="polite">
             {runs.length} active{runs.some((r) => needsAttention(r.status)) ? ` · ${runs.filter((r) => needsAttention(r.status)).length} need attention` : ''}
           </span>
-        </div>
-        <p className="muted" style={{ marginBottom: 0 }}>
-          Live view of every in-flight run for this session. Select a run to watch its agent handoffs and reasoning stream in real time.
-        </p>
-        {listError && <div className="alert error">{listError}</div>}
-        {actionError && <div className="alert error">{actionError}</div>}
-      </div>
+        }
+      />
+      {listError && <div className="alert error">{listError}</div>}
+      {actionError && <div className="alert error">{actionError}</div>}
 
       <div className="command-center">
         <aside className="command-center-rail" aria-label="Active runs">

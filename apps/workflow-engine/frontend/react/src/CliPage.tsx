@@ -9,6 +9,8 @@
  * host, including hosts that haven't deployed CLI-specific endpoints yet.
  */
 
+import { PageHeader } from './ui/PageHeader.js';
+
 function Cmd({ children }: { children: string }) {
   return <code>{children}</code>;
 }
@@ -20,16 +22,14 @@ function Block({ children }: { children: string }) {
 export function CliPage() {
   return (
     <section className="cli-page">
+      <PageHeader
+        eyebrow="CLI"
+        title="OpenWOP CLI"
+        lede={<>The <Cmd>openwop</Cmd> command operates this host (and any OpenWOP-compatible host) from the terminal — auth onboarding, capabilities discovery, run submission + streaming, prompts + memory + agents, channel messaging, and host doctor.</>}
+      />
       <div className="card">
-        <h2>OpenWOP CLI</h2>
-        <p className="muted">
-          The <Cmd>openwop</Cmd> command operates this host (and any
-          OpenWOP-compatible host) from the terminal — auth onboarding,
-          capabilities discovery, run submission + streaming, prompts +
-          memory + agents, channel messaging, and host doctor.
-        </p>
 
-        <h3>Install</h3>
+        <h2>Install</h2>
         <p>Global (recommended for daily use):</p>
         <Block>{`npm install -g @openwop/cli
 openwop --version`}</Block>
@@ -43,7 +43,7 @@ openwop --version`}</Block>
           if you actually use those channels.
         </p>
 
-        <h3>Point it at this host</h3>
+        <h2>Point it at this host</h2>
         <p>
           The CLI reads <Cmd>OPENWOP_BASE_URL</Cmd> (or <Cmd>--base-url</Cmd>)
           and <Cmd>OPENWOP_API_KEY</Cmd> (or the interactive onboard flow).
@@ -54,7 +54,7 @@ openwop onboard           # interactive auth + key issuance
 openwop doctor            # check connectivity + capability surface
 openwop capabilities      # read /.well-known/openwop`}</Block>
 
-        <h3>Command catalog</h3>
+        <h2>Command catalog</h2>
         <table className="cap-table">
           <thead>
             <tr><th>Group</th><th>Commands</th><th>What it does</th></tr>
@@ -118,7 +118,7 @@ openwop capabilities      # read /.well-known/openwop`}</Block>
           </tbody>
         </table>
 
-        <h3>Channel relay (optional)</h3>
+        <h2>Channel relay (optional)</h2>
         <p>
           The <Cmd>messaging</Cmd> and <Cmd>relay</Cmd> commands are a
           non-normative host extension under <Cmd>/v1/host/sample/messaging/*</Cmd>:
@@ -140,7 +140,7 @@ openwop relay whatsapp`}</Block>
           and channel-side auth lives only in the local adapter process.
         </p>
 
-        <h3>Source &amp; issues</h3>
+        <h2>Source &amp; issues</h2>
         <p>
           The CLI is <a href="https://www.npmjs.com/package/@openwop/cli">@openwop/cli</a> on
           npm. Source, docs, and issue tracker live in
