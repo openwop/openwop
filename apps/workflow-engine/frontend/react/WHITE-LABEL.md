@@ -164,7 +164,7 @@ grounding blurb (incremental env update, no rebuild needed).
 
 The app is **two independent deploys** — backend (Cloud Run) and frontend
 (Firebase Hosting). Full recipe + prerequisites in
-[`../DEPLOY.md`](../DEPLOY.md); the white-label-relevant steps:
+[`../../DEPLOY.md`](../../DEPLOY.md); the white-label-relevant steps:
 
 1. **Backend** (unchanged by re-branding — deploy first so new SPA calls
    resolve):
