@@ -221,7 +221,7 @@ export function AgentWorkspacePage(): JSX.Element {
       {tab === 'activity' ? <AgentActivityTab rosterId={entry.rosterId} persona={entry.persona} /> : null}
 
       <details style={{ marginTop: 'var(--space-5)' }}>
-        <summary style={{ ...muted, fontSize: '12px', cursor: 'pointer' }}>Protocol details</summary>
+        <summary style={{ ...muted, fontSize: '12px', cursor: 'pointer' }}>Advanced protocol details</summary>
         <p style={{ ...muted, fontSize: '12px', marginTop: 'var(--space-2)' }}>
           {entry.persona} runs manifest agent <code>{entry.agentRef.agentId}</code> · roster id <code>{entry.rosterId}</code>.
           {' '}<button type="button" className="secondary btn-sm" onClick={() => navigate('/roster')}>Open raw roster</button>

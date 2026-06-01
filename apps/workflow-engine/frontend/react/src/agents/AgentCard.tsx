@@ -19,6 +19,17 @@ function LaneCount({ label, n }: { label: string; n: number }): JSX.Element {
   );
 }
 
+/** The single most useful next action for this agent, given its state — drives
+ *  the card's primary button + deep-links to the relevant workspace tab. */
+function nextAction(view: AgentView): { label: string; tab?: string } {
+  const { status, laneCounts, entry, board } = view;
+  if (status === 'paused') return { label: 'Open dashboard' };
+  if (entry.workflows.length === 0) return { label: 'Assign workflows', tab: 'workflows' };
+  if (!board) return { label: 'Set up board', tab: 'board' };
+  if (laneCounts.waiting > 0) return { label: 'Review waiting task', tab: 'board' };
+  return { label: 'Open board', tab: 'board' };
+}
+
 export function AgentCard({
   view,
   onOpen,
@@ -26,7 +37,7 @@ export function AgentCard({
   busy,
 }: {
   view: AgentView;
-  onOpen: () => void;
+  onOpen: (tab?: string) => void;
   onCheckNow: () => void;
   busy?: boolean;
 }): JSX.Element {
@@ -34,15 +45,16 @@ export function AgentCard({
   const sm = statusMeta(status);
   const firstWorkflow = entry.workflows[0];
   const theme = roleThemeForAgent(entry.agentRef?.agentId, entry.workflows);
+  const action = nextAction(view);
 
   return (
-    // Whole card clickable for MOUSE convenience (onClick); intentionally NOT a
-    // role=button/tabIndex target — that would nest interactive controls (the
-    // card holds real <button>s) and add a redundant tab stop. Keyboard / AT
-    // users reach the explicit "Open dashboard" button below.
+    // Whole card clickable for MOUSE convenience (onClick → overview);
+    // intentionally NOT a role=button/tabIndex target — that would nest
+    // interactive controls (the card holds real <button>s) and add a redundant
+    // tab stop. Keyboard / AT users reach the explicit next-action button below.
     <div
       className="surface-card surface-card--interactive"
-      onClick={onOpen}
+      onClick={() => onOpen()}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
         <AgentAvatar persona={entry.persona} avatarUrl={entry.avatarUrl} roleTheme={theme} size={40} />
@@ -80,7 +92,7 @@ export function AgentCard({
       </div>
 
       <div className="action-bar">
-        <button type="button" className="primary" style={{ flex: 1 }} onClick={(e) => { e.stopPropagation(); onOpen(); }}>Open dashboard</button>
+        <button type="button" className="primary" style={{ flex: 1 }} onClick={(e) => { e.stopPropagation(); onOpen(action.tab); }}>{action.label}</button>
         <button
           type="button"
           className="secondary"

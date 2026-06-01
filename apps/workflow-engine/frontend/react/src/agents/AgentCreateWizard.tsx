@@ -21,6 +21,7 @@ import { createBoard, type KanbanColumn } from '../kanban/kanbanClient.js';
 import { CADENCE_PRESETS, createJob } from './scheduleClient.js';
 import { Notice } from '../ui/Notice.js';
 import { StructuredPromptEditor } from './StructuredPromptEditor.js';
+import { AgentAvatar } from './AgentAvatar.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
@@ -333,15 +334,39 @@ export function AgentCreateWizard(): JSX.Element {
               </div>
             </div>
           ) : null}
-          <div style={{ marginTop: '1rem', padding: '0.7rem', border: '1px solid var(--color-border)', borderRadius: 10, background: 'var(--color-surface-2)' }}>
-            <strong>Review</strong>
-            <ul style={{ margin: '0.3rem 0 0', paddingLeft: '1.1rem', fontSize: '0.84rem' }}>
-              <li>{name} — {roleTitle}</li>
-              <li>{selectedWorkflows.size} workflow{selectedWorkflows.size === 1 ? '' : 's'}</li>
-              <li>{createBoardEnabled ? 'Task board with 4 lanes' : 'No board'}</li>
-              <li>Heartbeat: {HEARTBEAT_OPTIONS.find((h) => h.key === heartbeat)?.label}</li>
-            </ul>
-          </div>
+          {(() => {
+            const wfOptions = isCustom ? ROLE_TEMPLATES.flatMap((r) => r.workflows) : recommendedWorkflows;
+            const wfNames = [...selectedWorkflows].map((id) => wfOptions.find((w) => w.workflowId === id)?.name ?? id);
+            const prompt = composedPrompt();
+            const promptPreview = prompt.length > 160 ? `${prompt.slice(0, 160)}…` : prompt;
+            const sources = ['Human tasks', 'Workflow-created tasks', ...(enableDiscord ? ['Simulated Discord'] : [])];
+            return (
+              <div style={{ marginTop: '1rem', padding: '0.8rem', border: '1px solid var(--color-border)', borderRadius: 10, background: 'var(--color-surface-2)' }}>
+                <strong>Review &amp; create</strong>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', margin: '0.5rem 0' }}>
+                  <AgentAvatar persona={name || 'New agent'} roleTheme={roleThemeForKey(role?.key ?? 'custom')} size={40} />
+                  <div>
+                    <div style={{ fontWeight: 700 }}>{name || 'Unnamed'}</div>
+                    <div style={{ ...muted, fontSize: '0.8rem' }}>{roleTitle || 'No role title'}</div>
+                  </div>
+                </div>
+                <dl style={{ margin: 0, fontSize: '0.84rem', display: 'grid', gridTemplateColumns: 'max-content 1fr', gap: '0.2rem 0.6rem' }}>
+                  <dt style={muted}>Workflows</dt>
+                  <dd style={{ margin: 0 }}>{wfNames.length ? wfNames.join(', ') : 'None selected'}</dd>
+                  <dt style={muted}>Board</dt>
+                  <dd style={{ margin: 0 }}>{createBoardEnabled ? 'Task board · To Do / Working / Waiting / Done' : 'No board'}</dd>
+                  <dt style={muted}>Sources</dt>
+                  <dd style={{ margin: 0 }}>{sources.join(', ')}</dd>
+                  <dt style={muted}>Heartbeat</dt>
+                  <dd style={{ margin: 0 }}>{HEARTBEAT_OPTIONS.find((h) => h.key === heartbeat)?.label}</dd>
+                </dl>
+                <div style={{ marginTop: '0.5rem' }}>
+                  <div style={{ ...muted, fontSize: '0.78rem' }}>Instructions preview</div>
+                  <div style={{ fontSize: '0.8rem', fontStyle: 'italic', whiteSpace: 'pre-wrap' }}>{promptPreview}</div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       ) : null}
 
