@@ -1,10 +1,37 @@
-# Audit response — 2026-05-22 standards-readiness review
+# Audit response — 2026-05-22 + 2026-05-31 standards-readiness reviews
 
-> Public, point-by-point response to the 2026-05-22 external standards-readiness review of the openwop protocol corpus. Filed for transparency with adopters and standards-body reviewers.
+> Public, point-by-point response to the external standards-readiness reviews of the openwop protocol corpus. Filed for transparency with adopters and standards-body reviewers. **The latest re-review (2026-05-31) and the gap-closure program that answers it are in the [§"2026-05-31 re-review"](#2026-05-31-re-review--gap-closure-program) section below; the original 2026-05-22 response follows it.**
 >
 > **TL;DR.** The audit's verdict ("serious candidate protocol; not yet a finished standard") is **accepted**. Of the seven Acceptance-Bar items the audit listed, five are fully closed or addressed by this response and the accompanying commits; two remain external-action gated (the external security audit completion, and working-group ratification) with named tripwires in `ROADMAP.md`. No item is dismissed.
 >
 > **Date filed:** 2026-05-22. Updated `git log -- docs/AUDIT-RESPONSE-2026-05.md` for any subsequent revisions.
+
+---
+
+## 2026-05-31 re-review — gap-closure program
+
+> A second independent standards-readiness review (2026-05-31) restated the same seven-item Acceptance Bar and reached the same verdict: *"a serious candidate core plus experimental agent-platform extensions — not yet a stable open standard."* That verdict is **accepted**, and it is the design target this program builds toward. The table below maps each bar item to its closing pull request. Five of the seven are now closed or substantially landed; the remainder are honestly residual (externally gated) and are tracked, not dismissed.
+
+**The architectural spine.** The program is organized around one falsifiable rule introduced by RFC 0088: **the Core Standard Profile floor is exactly the set of normative MUSTs with black-box production-path conformance.** With that definition, "freeze a Core profile" (item 1) and "replace seam proofs with black-box conformance" (item 3) become two ends of one pipeline — black-box conformance is the graduation pipeline *into* the floor. Extensions are kept out by one of two levers chosen by RFC status: RFC 0042 `tier: experimental` for `Active` capabilities, and floor-exclusion for `Accepted`-but-seam-gated capabilities (which graduate in as their black-box proof lands). No capability is de-graded and no wire shape changes.
+
+| # | Acceptance-Bar item (2026-05-31, verbatim) | Status | Closing PR(s) |
+|---|---|---|---|
+| 1 | Freeze a small "OpenWOP Core Standard Profile" and move the Active/Draft agent-platform RFCs behind an experimental extension profile | ✅ **Closed** | **#411** — RFC 0088 + `spec/v1/core-standard-profile.md` operational annex + the two-lever framework. (Per-host `tier:experimental` on the Active caps is a MyndHyve follow-up — the reference hosts advertise none of those caps, so tagging would mean fabricating advertisements.) |
+| 2 | Finalize RFC 0073 capability layout and remove root/wrapper ambiguity | ✅ **Closed** | **#410** — RFC 0073 `Draft → Accepted`; the conformance suite now reads the document root **only** (a wrapper-only host grades non-conformant). Host mirror + schema hard-forbid paired to v2.0. |
+| 3 | Replace seam-gated Accepted proofs with black-box production-path conformance for every stable-profile MUST | ◑ **In progress** | **#415** — RFC 0059 workspace cross-tenant isolation, the first surface proven black-box on the production wire (two-credential, no seam) → graduates *into* the floor. The Core floor is now *defined* as the black-box set, so the pipeline exists; prompt-chain (0029), OTel-redaction (0034), and multi-region (0036) remain (see residuals). |
+| 4 | Provide a real sandbox reference implementation and promote the sandbox invariants into protocol-tier conformance | ✅ **Closed** | **#412** — `examples/hosts/wasm-sandbox/`, a real WASM-isolation host (11/11 non-vacuous against real `.wasm`, retiring `node:vm`). **#414** — 6 cross-runtime `node-pack-sandbox-*` invariants graduated `reference-impl → protocol` (79 → 85) via a portable server-free scenario. (`timeout` stays reference-impl — needs worker preemption, proven by the host test; `no-eval` is exempt.) |
+| 5 | Complete the external security audit and close high/critical findings before standardizing | ◑ **Mechanized** | **#417** — `scripts/check-audit-findings.mjs` (wired into `openwop:check`) hard-fails the gate on any OPEN high/critical finding the moment one is recorded. The audit *completion* is vendor-external (the steward cannot perform it from inside the repo); the remediation obligation is now gate-enforced. |
+| 6 | Strengthen replay, nondeterminism, OTel/debug-bundle leakage, multi-region idempotency, and cross-engine ordering tests | ◑ **In progress** | **#414** (sandbox) + **#415** (workspace) land real behavioral proofs; OTel-redaction (0034), multi-region/cross-engine (0036), and replay-under-nondeterminism remain steward-reference-proven and **out of the Core floor** — they need a non-steward exporter / multi-region host the steward cannot supply (MyndHyve is single-region with no production OTel exporter). Honestly residual. |
+| 7 | Clean up status/version/document drift so the generated protocol status is the single reliable source of truth | ✅ **Closed** | **#409** — `generate-protocol-status.mjs` now emits a reconciled **Artifact Versions** table (turning the intentional multi-cadence into a documented fact); corrected the self-contradicting `sdk/PARITY.md` webhook-helper rows. |
+
+**Honest residuals (not closeable by repo work alone), each tracked:**
+
+- **RFC 0035 `Active → Accepted`** — needs a *non-steward* host that runs untrusted pack code in a real-isolation sandbox. MyndHyve has formally opted out (`no-untrusted-packs`). The steward's WASM host satisfies the invariant *tier* graduation but, by construction, cannot satisfy the non-steward `Accepted` bar.
+- **0034 / 0036 into the Core floor** — need a non-steward production OTel exporter and a deployed multi-region / multi-engine host respectively. Proven at reference-impl tier by steward hosts; honestly outside the floor until an external party supplies the infrastructure.
+- **prompt-resolution chain (0029) into the floor** — requires tightening the `agent.promptResolved` event to carry the full `chain[]` (an additive event-schema change) plus a host emitting it; sequenced as the next Phase-4 increment.
+- **External audit completion** — vendor-external; the remediation gate (#417) is the steward-side half.
+
+> **Date filed:** 2026-05-31. The eight PRs above (#409–#412, #414, #415, #417) are each branched from a fresh `origin/main`, pass the full `npm run openwop:check`, and are DCO-signed. Merge note: **#414 stacks on #412** (merge #412 first); the generated count/CHANGELOG surfaces across the set need the usual re-derive-on-merge.
 
 ---
 
