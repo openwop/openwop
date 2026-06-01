@@ -346,7 +346,7 @@ See [CHANGELOG.md](./CHANGELOG.md) â `[1] â 2026-05-08 â OpenWOP 
 The current in-motion cohort is the **agent-platform arc (RFCs 0077–0087)** — agent run lifecycle + live manifest dispatch, portable tool catalog, credential-provenance/egress policy, memory reconciliation, evaluation & scorecards, deployment lifecycle, durable trigger/channel bridge, budget/quota policy, the agent-platform meta-profile, and the standing agent roster + org-chart. See [`docs/PROTOCOL-STATUS.md`](./docs/PROTOCOL-STATUS.md) for which of these are `Active` vs `Draft` today.
 
 **v1 Foundation (2026-04-27):**
-Current generated state: 51 prose specs (37 FINAL + 6 DRAFT) Â· 55 JSON Schemas Â· 46 OpenAPI operations Â· AsyncAPI 3.1 Â· 314 conformance scenario files Â· 3 reference SDKs. See [docs/PROTOCOL-STATUS.md](./docs/PROTOCOL-STATUS.md) for the machine-generated snapshot.
+Current generated state: 51 prose specs (37 FINAL + 6 DRAFT) Â· 55 JSON Schemas Â· 48 OpenAPI operations Â· AsyncAPI 3.1 Â· 318 conformance scenario files Â· 3 reference SDKs. See [docs/PROTOCOL-STATUS.md](./docs/PROTOCOL-STATUS.md) for the machine-generated snapshot.
 
 - **Protocol corpus** â Normative REST, SSE, discovery, auth, idempotency, replay/fork, interruption, observability, node-pack, host-extension, and version-negotiation contracts are frozen for v1.
 - **Machine-readable contracts** â OpenAPI 3.1, AsyncAPI 3.1, and JSON Schemas are bundled and cross-validated by the conformance corpus.
