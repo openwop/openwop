@@ -163,7 +163,7 @@ function TabStrip({
               color: isActive ? 'var(--ink, var(--color-text))' : 'var(--color-text-muted, var(--color-text))',
               border: 'none',
               borderBottom: isActive
-                ? '2px solid var(--color-clay, var(--clay))'
+                ? '2px solid var(--color-accent)'
                 : '2px solid transparent',
               cursor: 'pointer',
               display: 'inline-flex',

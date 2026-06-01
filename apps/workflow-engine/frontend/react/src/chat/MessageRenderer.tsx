@@ -165,7 +165,7 @@ function TextWithCodeBlocks({ content, markdown }: { content: string; markdown: 
 
 /** Render a plain-text segment as GFM markdown using openwop's theme
  *  tokens. Headings / lists / emphasis / links / tables / blockquotes /
- *  inline-code all wired to `var(--ink)` / `var(--color-clay)` /
+ *  inline-code all wired to `var(--ink)` / `var(--color-accent)` /
  *  `var(--color-border)` / `var(--mono)` so dark-mode + reduced-motion
  *  pick up the same overrides as the rest of the chat. Block-level
  *  triple-backtick fences never reach this component (handled by the
