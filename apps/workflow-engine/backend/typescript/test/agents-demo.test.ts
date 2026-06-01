@@ -111,13 +111,18 @@ describe('agents-demo backend foundations', () => {
     const roster = await api<{ roster: RosterEntry[] }>('/v1/host/sample/roster');
     const sally = roster.body.roster.find((r) => r.persona === 'Sally')!;
 
-    const checked = await api<{ picked: boolean; cardId: string; runId: string }>(
+    const checked = await api<{ picked: boolean; cardId: string; runId: string; lastHeartbeatAt?: string }>(
       `/v1/host/sample/roster/${sally.rosterId}/check`,
       { method: 'POST', body: '{}' },
     );
     expect(checked.status).toBe(200);
     expect(checked.body.picked).toBe(true);
     expect(typeof checked.body.runId).toBe('string');
+    // The heartbeat stamps "last checked" on the entry + returns it.
+    expect(typeof checked.body.lastHeartbeatAt).toBe('string');
+    const afterCheck = await api<RosterEntry & { lastHeartbeatAt?: string }>(`/v1/host/sample/roster/${sally.rosterId}`);
+    expect(afterCheck.status).toBe(200);
+    expect(afterCheck.body.lastHeartbeatAt).toBe(checked.body.lastHeartbeatAt);
 
     // The run exists AND runs to completion — the demo role-workflow
     // (sample.agents.lead-routing → local.sample.demo.mock-ai) must execute
