@@ -16,7 +16,7 @@ import { AgentCard } from './AgentCard.js';
 import { AgentActivityFeed } from './AgentActivityFeed.js';
 import { Notice } from '../ui/Notice.js';
 import { StateCard } from '../ui/StateCard.js';
-import { BotIcon } from '../chat/icons/index.js';
+import { BotIcon } from '../ui/icons/index.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 

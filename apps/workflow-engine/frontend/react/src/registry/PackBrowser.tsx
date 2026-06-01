@@ -25,7 +25,7 @@ import {
   type PackDetail,
   type PackVersionRecord,
 } from './registryClient.js';
-import { CheckIcon, XIcon } from '../chat/icons/index.js';
+import { CheckIcon, XIcon } from '../ui/icons/index.js';
 
 interface Props {
   /** typeIds already in the merged local catalog (installed + draggable). */

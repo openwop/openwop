@@ -24,7 +24,7 @@ import { PALETTE_MIME } from '../canvas/BuilderCanvas.js';
 import type { NodeCategory } from '../schema/workflow.js';
 import { useBuilderStore } from '../store/builderStore.js';
 import { PackBrowser } from '../../registry/PackBrowser.js';
-import { ChevronRightIcon, ChevronDownIcon, XIcon } from '../../chat/icons/index.js';
+import { ChevronRightIcon, ChevronDownIcon, XIcon } from '../../ui/icons/index.js';
 
 const CATEGORY_LABELS: Record<NodeCategory, string> = {
   flow: 'Flow',

@@ -21,7 +21,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getCapabilities } from '../client/runsClient.js';
 import { useAuth } from '../auth/useAuth.js';
-import { InfoIcon, XIcon } from '../chat/icons/index.js';
+import { InfoIcon, XIcon } from '../ui/icons/index.js';
 
 const DISMISS_KEY = 'openwop:demo-banner:dismissed';
 

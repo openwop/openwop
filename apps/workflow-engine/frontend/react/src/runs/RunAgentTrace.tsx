@@ -19,7 +19,7 @@
 
 import { useMemo, useState } from 'react';
 import type { RunEventDoc } from '@openwop/openwop';
-import { MessageSquareIcon, WrenchIcon, ScaleIcon } from '../chat/icons/index.js';
+import { MessageSquareIcon, WrenchIcon, ScaleIcon } from '../ui/icons/index.js';
 
 interface Props {
   events: readonly RunEventDoc[];

@@ -19,7 +19,7 @@ import { EnvelopeInspector } from './EnvelopeInspector.js';
 import { ReasoningDisclosure } from './ReasoningDisclosure.js';
 import { ErrorCard } from './ErrorCard.js';
 import { formatUsd, turnCostUsd } from './lib/cost.js';
-import { CheckIcon, GlobeIcon, RotateCwIcon, ThumbsDownIcon, ThumbsUpIcon } from './icons/index.js';
+import { CheckIcon, GlobeIcon, RotateCwIcon, ThumbsDownIcon, ThumbsUpIcon } from '../ui/icons/index.js';
 
 function hasContent(content: ChatMessage['content']): boolean {
   if (typeof content === 'string') return content.length > 0;

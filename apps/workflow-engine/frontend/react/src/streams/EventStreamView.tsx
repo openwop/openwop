@@ -1,6 +1,6 @@
 import type { RunEventDoc } from '@openwop/openwop';
 import { config } from '../client/config.js';
-import { PaperclipIcon } from '../chat/icons/index.js';
+import { PaperclipIcon } from '../ui/icons/index.js';
 
 interface Props {
   events: readonly RunEventDoc[];

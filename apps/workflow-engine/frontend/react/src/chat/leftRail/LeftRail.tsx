@@ -21,7 +21,7 @@ import type { ComponentProps, ReactNode } from 'react';
 import { SessionHistoryDrawer } from '../SessionHistoryDrawer.js';
 import { WorkflowProgressPanel } from '../workflowProgress/WorkflowProgressPanel.js';
 import { ActiveAgentsPanel } from '../activeAgents/ActiveAgentsPanel.js';
-import { BotIcon, ClockIcon, WorkflowIcon } from '../icons/index.js';
+import { BotIcon, ClockIcon, WorkflowIcon } from '../../ui/icons/index.js';
 
 export type LeftRailTab = 'history' | 'progress' | 'agents';
 

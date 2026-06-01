@@ -15,7 +15,7 @@ import {
   subscribeNetworkEntries,
   type NetworkEntry,
 } from './networkRecorder.js';
-import { XIcon } from '../chat/icons/index.js';
+import { XIcon } from '../ui/icons/index.js';
 
 type FilterKind = 'all' | 'rest' | 'sse' | 'errors';
 

@@ -19,7 +19,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChatMessageThoughts } from './hooks/useChatSession.js';
 import { useElapsedMs } from './hooks/useElapsedMs.js';
-import { ChevronRightIcon, ChevronDownIcon } from './icons/index.js';
+import { ChevronRightIcon, ChevronDownIcon } from '../ui/icons/index.js';
 
 interface Props {
   thoughts: ChatMessageThoughts;

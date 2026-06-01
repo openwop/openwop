@@ -17,7 +17,7 @@
 import { useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { XIcon } from './icons/index.js';
+import { XIcon } from '../ui/icons/index.js';
 import { isRecord } from './lib/typeGuards.js';
 
 interface Props {

@@ -5,7 +5,7 @@
  */
 
 import { PROVIDERS } from '../../byok/lib/providers.js';
-import { ArrowLeftIcon, ImageIcon, WrenchIcon } from '../../chat/icons/index.js';
+import { ArrowLeftIcon, ImageIcon, WrenchIcon } from '../../ui/icons/index.js';
 
 interface Props {
   value: string | undefined;

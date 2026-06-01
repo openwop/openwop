@@ -1,7 +1,9 @@
 /**
- * Inline-SVG icon set, adapted from Lucide (Apache-2.0).
- * https://lucide.dev — used because the sample avoids a 50-100 KB
- * icon-library dep when one stable icon set covers our needs.
+ * App-wide inline-SVG icon set, adapted from Lucide (Apache-2.0).
+ * https://lucide.dev — used because the sample avoids a 50-100 KB icon-library
+ * dep when one stable icon set covers our needs. This is the single icon
+ * vocabulary for the whole app (chat, runs, builder, agents, kanban, …); import
+ * it from `ui/icons` everywhere — do NOT reintroduce emoji as icons.
  *
  * Add a new icon by creating `<Name>Icon.tsx` and re-exporting here.
  */

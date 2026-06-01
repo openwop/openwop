@@ -3,7 +3,7 @@ import { getCapabilities } from '../client/runsClient.js';
 import { authedHeaders, config, fetchOpts } from '../client/config.js';
 import { McpToolsPanel } from '../mcp/McpToolsPanel.js';
 import { A2APeerPanel } from '../peers/A2APeerPanel.js';
-import { CheckIcon, CircleIcon } from '../chat/icons/index.js';
+import { CheckIcon, CircleIcon } from '../ui/icons/index.js';
 
 /** Render an advertised boolean as a tri-state glyph. `undefined` means the
  *  host hasn't declared the field; that's distinct from `false` (declared off). */

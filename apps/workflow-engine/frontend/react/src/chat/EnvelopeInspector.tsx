@@ -18,7 +18,7 @@
 import { useState } from 'react';
 import type { ChatMessage } from './types.js';
 import { hasEnvelopeEvents } from './EnvelopeEventsTimeline.js';
-import { ChevronRightIcon, ChevronDownIcon } from './icons/index.js';
+import { ChevronRightIcon, ChevronDownIcon } from '../ui/icons/index.js';
 
 interface Props {
   message: ChatMessage;

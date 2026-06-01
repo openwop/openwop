@@ -25,7 +25,7 @@ import { Link } from 'react-router-dom';
 import { StepList, STATUS_COLORS, STATUS_LABELS } from './StepList.js';
 import { formatElapsed } from './formatters.js';
 import type { ChatMessage } from '../hooks/useChatSession.js';
-import { PauseIcon, XIcon } from '../icons/index.js';
+import { PauseIcon, XIcon } from '../../ui/icons/index.js';
 
 /** Render-time humanization for the pointer-chip copy. Raw `kind`
  *  values are lowercase enum strings — the labels here read more

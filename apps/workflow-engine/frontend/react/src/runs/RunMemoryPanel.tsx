@@ -23,7 +23,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { RunEventDoc } from '@openwop/openwop';
 import { listMemory, getCapabilities, type MemoryEntry } from '../client/runsClient.js';
-import { LockIcon, PencilIcon } from '../chat/icons/index.js';
+import { LockIcon, PencilIcon } from '../ui/icons/index.js';
 
 interface Props {
   runId: string;

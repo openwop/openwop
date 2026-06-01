@@ -23,8 +23,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { ContentPart } from './hooks/useChatSession.js';
-import { MicIcon } from './icons/MicIcon.js';
-import { CheckIcon, PaperclipIcon } from './icons/index.js';
+import { MicIcon } from '../ui/icons/MicIcon.js';
+import { CheckIcon, PaperclipIcon } from '../ui/icons/index.js';
 
 /** Overrides applied to ReactMarkdown's element renderers. Two
  *  behaviors we want different from the defaults:
