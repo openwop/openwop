@@ -77,6 +77,8 @@ export function RosterPage(): JSX.Element {
   };
 
   const onDelete = async (rosterId: string) => {
+    const name = roster.find((r) => r.rosterId === rosterId)?.persona ?? 'this agent';
+    if (!window.confirm(`Delete the agent “${name}”? This removes it and its board/schedules and can't be undone.`)) return;
     try {
       await deleteRosterEntry(rosterId);
       await refresh();

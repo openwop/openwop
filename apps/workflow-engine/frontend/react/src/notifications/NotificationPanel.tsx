@@ -311,7 +311,7 @@ export function NotificationPanel(): JSX.Element | null {
               notification={n}
               onMarkRead={() => void markAsRead(n.notificationId)}
               onArchive={() => void archive(n.notificationId)}
-              onDelete={() => void deleteNotif(n.notificationId)}
+              onDelete={() => { if (window.confirm("Delete this notification? This can't be undone — use Archive to dismiss without deleting.")) void deleteNotif(n.notificationId); }}
               onClose={closePanel}
             />
           ))}

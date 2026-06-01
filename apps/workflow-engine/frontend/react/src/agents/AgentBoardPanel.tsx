@@ -92,6 +92,8 @@ export function AgentBoardPanel({ boardId, persona, avatarUrl, roleTheme, workfl
   };
 
   const onDeleteCard = async (cardId: string) => {
+    const card = cards.find((c) => c.id === cardId);
+    if (!window.confirm(`Delete the card${card ? ` “${card.title}”` : ''}? This can't be undone.`)) return;
     try {
       await deleteCard(cardId);
       await refresh();
