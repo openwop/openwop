@@ -18,6 +18,9 @@ import { useNavigate } from 'react-router-dom';
 import { updateRosterEntry, type RosterEntry } from './rosterClient.js';
 import { updateUserAgent } from '../client/agentsClient.js';
 import { Notice } from '../ui/Notice.js';
+import { MarkdownEditor } from '../ui/MarkdownEditor.js';
+import { Markdown } from '../ui/Markdown.js';
+import { StructuredPromptEditor } from './StructuredPromptEditor.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
@@ -44,6 +47,7 @@ export function AgentInstructionsPanel({ entry, onChanged }: { entry: RosterEntr
     setNotice(null);
     try {
       await updateRosterEntry(entry.rosterId, { description });
+      try { window.localStorage.removeItem(`owp.draft.desc.${entry.rosterId}`); } catch { /* ignore */ }
       setNotice('Saved.');
       onChanged();
     } catch (err) {
@@ -60,6 +64,7 @@ export function AgentInstructionsPanel({ entry, onChanged }: { entry: RosterEntr
     setNotice(null);
     try {
       const updated = await updateUserAgent(agentId, { systemPrompt });
+      try { window.localStorage.removeItem(`owp.draft.prompt.${agentId}`); } catch { /* ignore */ }
       setSavedPrompt(updated.systemPrompt);
       setSystemPrompt('');
       setNotice('Instructions updated.');
@@ -79,12 +84,14 @@ export function AgentInstructionsPanel({ entry, onChanged }: { entry: RosterEntr
       <p style={{ ...muted, fontSize: '0.8rem', marginTop: 0 }}>
         A short description of {entry.persona}'s role — shown on the dashboard and overview.
       </p>
-      <textarea
+      <MarkdownEditor
         value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        rows={2}
-        style={{ width: '100%', fontFamily: 'inherit' }}
-        placeholder={`e.g. ${entry.persona} routes leads and follows up on opportunities.`}
+        onChange={setDescription}
+        rows={3}
+        maxLength={600}
+        autosaveKey={`owp.draft.desc.${entry.rosterId}`}
+        placeholder={`e.g. **${entry.persona}** routes leads and follows up on opportunities.`}
+        ariaLabel={`${entry.persona}'s role description`}
       />
       <div style={{ marginTop: '0.4rem', marginBottom: '1.2rem' }}>
         <button type="button" className="primary" onClick={() => void onSaveDescription()} disabled={saving}>Save</button>
@@ -97,12 +104,13 @@ export function AgentInstructionsPanel({ entry, onChanged }: { entry: RosterEntr
 
       {isUserAuthored ? (
         <>
-          <textarea
+          <p style={{ ...muted, fontSize: '0.78rem', marginTop: 0 }}>
+            For security, the current instructions aren't shown here — saving replaces them.
+          </p>
+          <StructuredPromptEditor
             value={systemPrompt}
-            onChange={(e) => setSystemPrompt(e.target.value)}
-            rows={8}
-            style={{ width: '100%', fontFamily: 'var(--font-mono, monospace)', fontSize: '0.85rem' }}
-            placeholder="Enter new instructions for this agent. (For security, the current instructions are not shown — saving replaces them.)"
+            onChange={setSystemPrompt}
+            autosaveKey={`owp.draft.prompt.${agentId}`}
           />
           <div style={{ marginTop: '0.4rem' }}>
             <button type="button" className="primary" onClick={() => void onSavePrompt()} disabled={saving || !systemPrompt.trim()}>Save instructions</button>
@@ -110,7 +118,9 @@ export function AgentInstructionsPanel({ entry, onChanged }: { entry: RosterEntr
           {savedPrompt ? (
             <div style={{ marginTop: '0.6rem' }}>
               <div style={{ ...muted, fontSize: '0.78rem' }}>Saved instructions:</div>
-              <pre style={{ whiteSpace: 'pre-wrap', background: 'var(--color-surface-alt, #f4f6f9)', padding: '0.5rem', borderRadius: 8, fontSize: '0.8rem' }}>{savedPrompt}</pre>
+              <div className="surface-card" style={{ padding: '0.5rem 0.7rem', marginTop: 4 }}>
+                <Markdown>{savedPrompt}</Markdown>
+              </div>
             </div>
           ) : null}
         </>

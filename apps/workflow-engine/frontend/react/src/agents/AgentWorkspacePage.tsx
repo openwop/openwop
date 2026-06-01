@@ -20,6 +20,7 @@ import { AgentActivityFeed } from './AgentActivityFeed.js';
 import { AgentAvatar } from './AgentAvatar.js';
 import { AvatarEditor } from './AvatarEditor.js';
 import { Notice } from '../ui/Notice.js';
+import { Markdown } from '../ui/Markdown.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
@@ -325,7 +326,9 @@ function OverviewTab({ view, onGoto, onCheckNow, busy }: { view: AgentView; onGo
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '0.7rem' }}>
       <div style={card}>
         <strong>What {entry.persona} does</strong>
-        <p style={{ fontSize: '0.85rem', marginBottom: 0 }}>{entry.description ?? `${entry.label ?? 'Agent'} — assign a role description in Instructions.`}</p>
+        {entry.description
+          ? <Markdown style={{ fontSize: '0.85rem' }}>{entry.description}</Markdown>
+          : <p style={{ fontSize: '0.85rem', marginBottom: 0 }}>{`${entry.label ?? 'Agent'} — assign a role description in Instructions.`}</p>}
       </div>
       <div style={card}>
         <strong>Workflow portfolio</strong>

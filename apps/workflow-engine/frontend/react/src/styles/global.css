@@ -129,13 +129,15 @@
   opacity: 1 !important;
 }
 
-/* ─── Markdown rendering inside chat assistant bubbles ────────────────
- * `.chat-md` wraps the ReactMarkdown tree rendered by MessageRenderer
- * for assistant turns. Selectors target the descendants so headings /
- * lists / blockquotes / tables / links / inline-code all pick up the
- * app's CSS-variable theme. User-turn text bypasses this (renders as
- * <span style={whiteSpace:pre-wrap}>) so the literal text doesn't get
- * reformatted by a markdown pass over user input. */
+/* ─── Markdown prose theme (`.chat-md`) ───────────────────────────────
+ * The shared markdown-typography class. Originally for chat assistant
+ * bubbles (MessageRenderer), now ALSO the prose class for the `ui/Markdown`
+ * renderer used across the agent surfaces (persona descriptions,
+ * instructions, system prompts, task details) — one source of truth so
+ * headings / lists / blockquotes / tables / links / inline-code pick up the
+ * app's CSS-variable theme everywhere. In chat, user-turn text bypasses this
+ * (renders as <span style={whiteSpace:pre-wrap}>) so a user's literal text
+ * isn't reformatted by a markdown pass over their input. */
 .chat-md > *:first-child { margin-top: 0; }
 .chat-md > *:last-child { margin-bottom: 0; }
 .chat-md p { margin: 0 0 8px; line-height: 1.55; white-space: pre-wrap; }
