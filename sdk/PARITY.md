@@ -115,7 +115,6 @@ These landed during Track 1 / T1.1 / T1.2 / T1.4 / T1.7 work. Audit-log verifica
 | Webhooks: `POST /v1/webhooks` register (T1.7) | ✅ `client.webhooks.register(body, opts?)` (SDK-3, 2026-05-15) | ✅ `client.webhooks_register(body, idempotency_key=...)` (SDK-3, 2026-05-15) | ✅ `client.RegisterWebhook(ctx, body, opts)` (SDK-3, 2026-05-15) |
 | Webhooks: `DELETE /v1/webhooks/{id}` unregister | ✅ `client.webhooks.unregister(subscriptionId)` (SDK-3, 2026-05-15) | ✅ `client.webhooks_unregister(subscription_id)` (SDK-3, 2026-05-15) | ✅ `client.UnregisterWebhook(ctx, subscriptionID)` (SDK-3, 2026-05-15) |
 | Webhook HMAC verification helper (receiver-side) | ✅ `verifyWebhookSignature` + `signWebhookDelivery` (SDK-3, 2026-05-15) | ✅ `verify_webhook_signature` + `sign_webhook_delivery` (SDK-3, 2026-05-15) | ✅ `VerifyWebhookSignature` + `SignWebhookDelivery` (SDK-3, 2026-05-15) |
-| Webhooks: HMAC verification helper | ⚠️ none — consumers re-implement HMAC-SHA256 | ⚠️ none | ⚠️ none |
 | Debug bundle: `GET /v1/runs/{id}/debug-bundle` | ✅ `client.runs.debugBundle(id, opts?)` (SDK-4, 2026-05-15) | ✅ `client.runs_debug_bundle(id, max_events=...)` (SDK-4, 2026-05-15) | ✅ `client.GetDebugBundle(ctx, id, opts)` (SDK-4, 2026-05-15) |
 | Registry: `GET /v1/packs/*` read surface (SDK-5, 2026-05-15) | ✅ `RegistryClient` (`discovery / index / pack / version / tarball / signature / publicKey`) | ✅ `RegistryClient` (`discovery / index / pack / version / tarball / signature / public_key`) | ✅ `RegistryClient` (`Discovery / Index / Pack / Version / Tarball / Signature / PublicKey`) |
 | Feedback: `POST /v1/runs/{id}/annotations` create (RFC 0056, 2026-05-25) | ✅ `client.runs.createAnnotation(id, body, opts?)` | ✅ `client.create_annotation(id, body, idempotency_key=...)` | ✅ `client.CreateAnnotation(ctx, id, body, opts)` |
@@ -131,7 +130,7 @@ These landed during Track 1 / T1.1 / T1.2 / T1.4 / T1.7 work. Audit-log verifica
 | Mutation-header helpers | ✅ full | ✅ full | ✅ full |
 | SSE async-iterable consumer | ✅ AsyncGenerator | ✅ generator | ✅ channel |
 | Track-13 v1.x additions (pause / resume / configurableSchema) | ✅ pause/resume; configurableSchema via workflow docs | ✅ pause/resume; configurableSchema via workflow docs | ✅ pause/resume; configurableSchema via workflow docs |
-| T1.1 + T1.4 + T1.7 v1.x additions (audit / debug-bundle / webhooks) | ✅ audit + debug; ⚠️ webhooks | ✅ audit + debug; ⚠️ webhooks | ✅ audit + debug; ⚠️ webhooks |
+| T1.1 + T1.4 + T1.7 v1.x additions (audit / debug-bundle / webhooks) | ✅ audit + debug + webhooks | ✅ audit + debug + webhooks | ✅ audit + debug + webhooks |
 | Pack registry read surface | ✅ `RegistryClient` (SDK-5, 2026-05-15) | ✅ `RegistryClient` (SDK-5, 2026-05-15) | ✅ `RegistryClient` (SDK-5, 2026-05-15) |
 | Feedback annotations (RFC 0056: create + list) | ✅ full | ✅ full | ✅ full |
 
