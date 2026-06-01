@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { checkAgent, updateRosterEntry } from './rosterClient.js';
-import { loadAgentView, statusMeta, type AgentView } from './agentViewModel.js';
+import { loadAgentView, statusMeta, relativeTime, type AgentView } from './agentViewModel.js';
 import { workflowName, roleThemeForAgent } from './roleTemplates.js';
 import { PlayIcon } from '../ui/icons/index.js';
 import type { KanbanCard, KanbanColumn } from '../kanban/kanbanClient.js';
@@ -153,17 +153,33 @@ export function AgentWorkspacePage(): JSX.Element {
           <div style={muted}>{entry.label ?? 'Agent'}</div>
         </div>
         <div className="action-bar">
-          <span className={`chip ${sm.chip}`}>{sm.label}</span>
-          <span className="chip chip--muted">Heartbeat: manual</span>
+          <span className={`chip ${sm.chip}`} title={sm.help}>{sm.label}</span>
+          <span className="chip chip--muted" title="This agent checks for work when you click “Check now”, plus on any enabled schedule.">Heartbeat: manual</span>
         </div>
       </div>
 
-      <div className="action-bar" style={{ marginBottom: 'var(--space-3)' }}>
-        <button type="button" className="primary" onClick={() => void onCheckNow()} disabled={busy || !entry.enabled}>{busy ? 'Checking…' : 'Check now'}</button>
+      <div className="action-bar" style={{ marginBottom: 'var(--space-3)', alignItems: 'center' }}>
+        <button
+          type="button"
+          className="primary"
+          onClick={() => void onCheckNow()}
+          disabled={busy || !entry.enabled}
+          title={`Run the heartbeat: let ${entry.persona} pick up the next To Do task and start its workflow.`}
+        >
+          {busy ? 'Checking…' : 'Check now'}
+        </button>
         <button type="button" className="secondary" onClick={() => setTab('board')}>Add task</button>
         <button type="button" className="secondary" onClick={() => setTab('workflows')}>Run workflow</button>
         <button type="button" className="secondary" onClick={() => void onTogglePause()}>{entry.enabled ? 'Pause' : 'Resume'}</button>
         <button type="button" className="secondary" onClick={() => setTab('instructions')}>Instructions</button>
+        <span style={{ ...muted, fontSize: '0.78rem' }}>
+          {entry.lastHeartbeatAt
+            ? `Last checked ${relativeTime(entry.lastHeartbeatAt)}`
+            : 'Not checked yet'}
+          {view.nextSchedule
+            ? ` · next scheduled run: ${String(view.nextSchedule.metadata?.label ?? view.nextSchedule.cronExpr)}`
+            : ''}
+        </span>
       </div>
 
       {error ? <Notice variant="error">{error}</Notice> : null}

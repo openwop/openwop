@@ -34,17 +34,35 @@ export interface AgentView {
 }
 
 // Status → label + a token-driven `.chip--*` modifier (no hardcoded hex; the
-// chip classes live in global.css and theme correctly across every surface).
-const STATUS_META: Record<AgentStatus, { label: string; chip: string }> = {
-  active: { label: 'Ready', chip: 'chip--success' },
-  working: { label: 'Working', chip: 'chip--accent' },
-  waiting: { label: 'Waiting on Human', chip: 'chip--warning' },
-  paused: { label: 'Paused', chip: 'chip--muted' },
-  'needs-setup': { label: 'Needs setup', chip: 'chip--danger' },
+// chip classes live in global.css and theme correctly across every surface) +
+// a one-line `help` shown as a tooltip so each state explains itself.
+const STATUS_META: Record<AgentStatus, { label: string; chip: string; help: string }> = {
+  active: { label: 'Ready', chip: 'chip--success', help: 'Idle and ready — no work in progress. Add a task or run the heartbeat to give it work.' },
+  working: { label: 'Working', chip: 'chip--accent', help: 'Has at least one task in the Working lane with a run in progress.' },
+  waiting: { label: 'Waiting on Human', chip: 'chip--warning', help: 'A task is parked in the Waiting lane and needs a person to act before it can move on.' },
+  paused: { label: 'Paused', chip: 'chip--muted', help: 'Disabled — its board triggers and heartbeat are inert until you re-enable it.' },
+  'needs-setup': { label: 'Needs setup', chip: 'chip--danger', help: 'No workflows assigned or no board yet — finish setup so it can pick up work.' },
 };
 
-export function statusMeta(status: AgentStatus): { label: string; chip: string } {
+export function statusMeta(status: AgentStatus): { label: string; chip: string; help: string } {
   return STATUS_META[status];
+}
+
+/** Compact relative time ("just now", "5m ago", "3h ago", "2d ago") for the
+ *  last-checked / last-run hints. Falls back to the ISO date past a week. */
+export function relativeTime(iso: string | undefined): string | null {
+  if (!iso) return null;
+  const then = Date.parse(iso);
+  if (Number.isNaN(then)) return null;
+  const secs = Math.max(0, Math.round((Date.now() - then) / 1000));
+  if (secs < 45) return 'just now';
+  const mins = Math.round(secs / 60);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.round(hrs / 24);
+  if (days <= 7) return `${days}d ago`;
+  return iso.slice(0, 10);
 }
 
 /** Match a column by canonical id or its (case-insensitive) display name. */

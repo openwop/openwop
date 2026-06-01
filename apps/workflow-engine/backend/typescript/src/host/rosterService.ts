@@ -60,6 +60,11 @@ export interface RosterEntry {
    *  roster row — multi-instance safe + restart-durable, unlike the in-memory
    *  media-asset store. Absent ⇒ the UI renders the persona initials. */
   avatarUrl?: string;
+  /** ISO-8601 timestamp of the last "Check now" heartbeat that actually ran
+   *  (set in routes/agentOps.ts). Absent ⇒ never checked. Surfaced in the UI
+   *  as "last checked …"; the heartbeat is a manual pull in this sample, so
+   *  there is no persisted "next check" beyond any enabled scheduler job. */
+  lastHeartbeatAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -143,6 +148,18 @@ export async function updateRosterEntry(
     else entry.avatarUrl = patch.avatarUrl;
   }
   entry.updatedAt = nowIso();
+  await roster.put(entry);
+  return entry;
+}
+
+/** Stamp the last-heartbeat time on an entry (called when a "Check now"
+ *  heartbeat actually runs). Returns the updated entry, or null if missing.
+ *  Does not touch `updatedAt` — a heartbeat is an activity marker, not an
+ *  edit to the agent's definition. */
+export async function recordHeartbeat(rosterId: string): Promise<RosterEntry | null> {
+  const entry = await roster.get(rosterId);
+  if (!entry) return null;
+  entry.lastHeartbeatAt = nowIso();
   await roster.put(entry);
   return entry;
 }

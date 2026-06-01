@@ -5,7 +5,7 @@
  */
 
 import { workflowName, roleThemeForAgent } from './roleTemplates.js';
-import { statusMeta, type AgentView } from './agentViewModel.js';
+import { statusMeta, relativeTime, type AgentView } from './agentViewModel.js';
 import { AgentAvatar } from './AgentAvatar.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
@@ -52,7 +52,7 @@ export function AgentCard({
             {entry.label ?? 'Agent'}
           </div>
         </div>
-        <span className={`chip ${sm.chip}`}>{sm.label}</span>
+        <span className={`chip ${sm.chip}`} title={sm.help}>{sm.label}</span>
       </div>
 
       <div style={{ display: 'flex', gap: 'var(--space-2)', fontSize: '13px', flexWrap: 'wrap' }}>
@@ -66,6 +66,10 @@ export function AgentCard({
         {nextSchedule
           ? <span>{firstWorkflow ? workflowName(nextSchedule.workflowId ?? firstWorkflow) : 'workflow'} <span style={muted}>· {String(nextSchedule.metadata?.label ?? nextSchedule.cronExpr)}</span></span>
           : <span style={muted}>no schedule</span>}
+      </div>
+
+      <div style={{ ...muted, fontSize: '12px' }}>
+        {entry.lastHeartbeatAt ? `Last checked ${relativeTime(entry.lastHeartbeatAt)}` : 'Not checked yet'}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--space-1)', padding: 'var(--space-2) 0', borderTop: '1px solid var(--color-border)', borderBottom: '1px solid var(--color-border)' }}>
@@ -82,7 +86,7 @@ export function AgentCard({
           className="secondary"
           onClick={(e) => { e.stopPropagation(); onCheckNow(); }}
           disabled={busy || status === 'paused' || status === 'needs-setup'}
-          title="Run the agent's heartbeat: pick up the first To Do task and start its workflow"
+          title={`Run the heartbeat: let ${entry.persona} pick up the next To Do task and start its workflow.`}
         >
           {busy ? 'Checking…' : 'Check now'}
         </button>

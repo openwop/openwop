@@ -29,6 +29,9 @@ export interface RosterEntry {
   /** Profile picture as a `data:image/*;base64,…` URI, or absent for the
    *  initials fallback. Host-extension only (not on the normative inventory). */
   avatarUrl?: string;
+  /** ISO-8601 timestamp of the last "Check now" heartbeat that ran; absent ⇒
+   *  never checked. Surfaced as "last checked …". */
+  lastHeartbeatAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -98,6 +101,8 @@ export interface HeartbeatResult {
   cardTitle?: string;
   runId?: string;
   persona?: string;
+  /** When the heartbeat ran (absent if the agent was paused). */
+  lastHeartbeatAt?: string;
 }
 
 /** Agent heartbeat "Check now" — claim the first eligible To Do card on the

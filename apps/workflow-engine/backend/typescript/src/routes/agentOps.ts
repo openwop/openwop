@@ -25,7 +25,7 @@ import { OpenwopError } from '../types.js';
 import type { HostAdapterSuite } from '../host/index.js';
 import type { Storage } from '../storage/storage.js';
 import { seedDemoAgents } from '../host/demoSeed.js';
-import { getRosterEntry } from '../host/rosterService.js';
+import { getRosterEntry, recordHeartbeat } from '../host/rosterService.js';
 import { listBoards, listCards, moveCard, setCardLastRun, notifyBoardChanged } from '../host/kanbanService.js';
 import { startWorkflowRun } from '../host/runStarter.js';
 
@@ -61,6 +61,11 @@ export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
         res.status(200).json({ picked: false, reason: 'paused' });
         return;
       }
+
+      // The heartbeat is running — stamp "last checked" regardless of whether a
+      // card gets picked up, so the UI can show how recently the agent looked.
+      const heartbeatEntry = await recordHeartbeat(entry.rosterId);
+      const lastHeartbeatAt = heartbeatEntry?.lastHeartbeatAt;
 
       // Find the agent's board(s) and the first To Do card with a runnable
       // workflow (card override, else the To Do column's trigger workflow).
@@ -101,11 +106,12 @@ export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
             cardTitle: card.title,
             runId,
             persona: entry.persona,
+            lastHeartbeatAt,
           });
           return;
         }
       }
-      res.status(200).json({ picked: false, reason: 'no_eligible_tasks' });
+      res.status(200).json({ picked: false, reason: 'no_eligible_tasks', lastHeartbeatAt });
     } catch (err) {
       next(err);
     }
