@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0050 |
 | **Title** | Two new entries in the auth-profile family — a SAML assertion-validation profile and a SCIM provisioning profile (LDAP as an optional directory-bind variant) — that sync external IdP users/groups onto RFC 0048 principals + RFC 0049 roles, with `alg:none` rejection mirroring the OIDC work |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-24 |
-| **Updated** | 2026-05-24 |
+| **Updated** | 2026-06-01 (`Draft → Active` — the full wire surface already landed on `main` (the `auth-profiles.md` SAML/SCIM/LDAP profile prose; the reserved `openwop-auth-{saml,scim,ldap}` profile ids in `capabilities.schema.json`; the two conformance scenarios `auth-saml-profile.test.ts` + `auth-scim-profile.test.ts`; the two host-sample seams `POST /v1/host/sample/auth/saml/validate` + `.../scim/provision`); this promotion reflects that completion. Comment window waived per `GOVERNANCE.md` single-maintainer lazy consensus. **The load-bearing SAML attack-surface guarantee is proven server-free + non-vacuously today:** the bundled synthetic SAML IdP (`conformance/src/lib/saml-idp.ts`, `node:crypto` RSA-SHA256, no deps) runs the 1-positive + 6-negative reference suite — accepts a valid signed, in-window, non-wrapped assertion, and rejects `alg:none`, unsigned, bad-signature, expired (`NotOnOrAfter`), not-yet-valid (`NotBefore`), and **signature-wrapping** (8/8 passing on `main`), pinning the footguns RFC 0010 established the pattern for. Maps onto RFC 0048 `principal` + RFC 0049 roles; extends RFC 0010. `Active → Accepted` is gated on a host wiring its SAML ACS / SCIM endpoint to the seams (the synthetic-IdP suite proves the validation contract; a live enterprise-SSO host — MyndHyve flagged SAML/SCIM as an enterprise need — closes the cross-host adoption gate). The advertisement-shape + live-ACS/SCIM scenario legs gate on `auth.profiles` including `openwop-auth-{saml,scim}` + the operator-supplied IdP/SCIM env and soft-skip until a host advertises them.) — 2026-05-24 |
 | **Affects** | `spec/v1/auth-profiles.md` (new `openwop-auth-saml` + `openwop-auth-scim` profiles; optional `openwop-auth-ldap`) · `schemas/capabilities.schema.json` (conditional `auth.profiles += ['saml','scim']`) · RFC 0010 (extends the auth-profile-conformance family) · new conformance scenarios |
 | **Compatibility** | `additive` |
 | **Supersedes** | — |
