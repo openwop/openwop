@@ -27,7 +27,7 @@ import { Link } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import { getSavedWorkflow } from '../builder/persistence/localStore.js';
 import { formatElapsed } from './workflowProgress/formatters.js';
-import { AlertIcon, BanIcon, CheckIcon } from './icons/index.js';
+import { AlertIcon, BanIcon, CheckIcon } from '../ui/icons/index.js';
 import type { WorkflowRunState } from './types.js';
 
 interface Props {

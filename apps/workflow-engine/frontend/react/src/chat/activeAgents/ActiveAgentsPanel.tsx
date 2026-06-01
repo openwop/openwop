@@ -31,7 +31,7 @@
  */
 
 import type { ActiveAgentRow } from './types.js';
-import { CircleIcon, XIcon } from '../icons/index.js';
+import { CircleIcon, XIcon } from '../../ui/icons/index.js';
 
 /** The sentinel id for the default OpenWOP Assistant — kept here so
  *  every consumer of the active-agents state agrees on the value

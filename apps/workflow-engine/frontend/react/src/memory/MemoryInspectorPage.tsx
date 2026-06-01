@@ -17,7 +17,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { deleteMemoryEntry, listMemory, type MemoryEntry } from './lib/memoryClient.js';
-import { LockIcon } from '../chat/icons/index.js';
+import { LockIcon } from '../ui/icons/index.js';
 
 function isRedacted(content: string): boolean {
   return /\[REDACTED:[^\]]*\]/.test(content);

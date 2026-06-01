@@ -1,6 +1,6 @@
 # OpenWOP Conformance Coverage Map
 
-> **Status: Living document. Updated 2026-05-30.** This map connects the current scenario files to the protocol surfaces they protect and records the remaining gaps from the protocol deep dive. Scenario names are source-of-truth file names under `conformance/src/scenarios/`.
+> **Status: Living document. Updated 2026-06-01.** This map connects the current scenario files to the protocol surfaces they protect and records the remaining gaps from the protocol deep dive. Scenario names are source-of-truth file names under `conformance/src/scenarios/`.
 
 > **Shape grade vs behavior grade.** Some optional-profile scenarios validate **capability shape** (the host's discovery advertisement is well-formed) without yet exercising **behavior** (the host actually implements the profile end-to-end). The "Current grade" column reflects shape; see §"Capability-gated scenarios: shape vs behavior" below for the dual-grade view and the `OPENWOP_REQUIRE_BEHAVIOR=true` strict-mode runner flag.
 

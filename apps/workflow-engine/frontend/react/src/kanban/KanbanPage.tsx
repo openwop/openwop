@@ -16,7 +16,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { listRoster, type RosterEntry } from '../agents/rosterClient.js';
 import { Notice } from '../ui/Notice.js';
 import { StateCard } from '../ui/StateCard.js';
-import { ColumnsIcon } from '../chat/icons/index.js';
+import { ColumnsIcon } from '../ui/icons/index.js';
 import { KanbanBoardView } from './KanbanBoardView.js';
 import {
   createBoard,

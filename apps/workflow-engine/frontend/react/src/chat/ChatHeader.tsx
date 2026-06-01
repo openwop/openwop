@@ -7,7 +7,7 @@ import { ConfiguredProviderCard } from '../byok/ConfiguredProviderCard.js';
 import type { BYOKActiveConfig } from '../byok/lib/useBYOKConfig.js';
 import type { ChatSession } from './hooks/useChatSession.js';
 import { formatUsd, sessionCostUsd } from './lib/cost.js';
-import { GlobeIcon, MenuIcon, WrenchIcon } from './icons/index.js';
+import { GlobeIcon, MenuIcon, WrenchIcon } from '../ui/icons/index.js';
 
 interface Props {
   config: BYOKActiveConfig;

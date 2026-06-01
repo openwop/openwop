@@ -41,7 +41,7 @@ import {
   type ReactNode,
 } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronDownIcon } from '../chat/icons/index.js';
+import { ChevronDownIcon } from '../ui/icons/index.js';
 
 export interface NavDropdownItem {
   /** Visible label — UPPERCASE styling comes from the CSS, write

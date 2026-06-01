@@ -14,7 +14,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { PROVIDERS, type ProviderConfig, type ProviderModel } from './lib/providers.js';
-import { ShieldIcon } from '../chat/icons/index.js';
+import { ShieldIcon } from '../ui/icons/index.js';
 import { storeKey } from './lib/byokClient.js';
 import { useAuth } from '../auth/useAuth.js';
 import type { BYOKActiveConfig } from './lib/useBYOKConfig.js';

@@ -21,7 +21,7 @@
 import { useEffect, useState } from 'react'; // useState used by both AgentDetailPage (state) and AgentDetail (delete-in-flight + error)
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { deleteUserAgent, getAgent, type AgentEntry } from '../client/agentsClient.js';
-import { ArrowLeftIcon, CheckIcon, CircleIcon } from '../chat/icons/index.js';
+import { ArrowLeftIcon, CheckIcon, CircleIcon } from '../ui/icons/index.js';
 
 interface State {
   agent: AgentEntry | null;

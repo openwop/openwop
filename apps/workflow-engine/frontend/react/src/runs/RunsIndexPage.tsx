@@ -8,7 +8,7 @@ import { listSavedWorkflows } from '../builder/persistence/localStore.js';
 import { serializeWorkflow, SerializeError } from '../builder/schema/serialize.js';
 import { registerWorkflow } from '../builder/persistence/registerClient.js';
 import { useAuth } from '../auth/useAuth.js';
-import { FlagIcon } from '../chat/icons/index.js';
+import { FlagIcon } from '../ui/icons/index.js';
 
 const SAMPLE_WORKFLOWS = [
   { id: 'sample.demo.uppercase', label: 'sample.demo.uppercase — single-node uppercase' },

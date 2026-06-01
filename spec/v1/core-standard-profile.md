@@ -60,15 +60,22 @@ Everything not in §B is an **extension**, kept out by exactly one lever, chosen
 | `agents.deployment` | 0082 |
 | `budget` | 0084 |
 
+### Graduated to black-box production-path (capability-gated; proof landed 2026-06-01)
+
+These `Accepted` capabilities have moved out of the seam-gated set: their behavioral conformance is now proven on the **production wire with no `/v1/host/sample/*` seam** (capability-gated — a host that advertises the capability MUST pass the black-box scenario). This is the Lever-2 "graduate in" outcome.
+
+| Capability | RFC | Black-box proof (no seam) |
+|---|---|---|
+| Workspace cross-tenant isolation | 0059 | `workspace-cross-tenant-isolation-blackbox.test.ts` — two operator credentials write-A / read-B against the normative §C `PUT`/`GET /v1/host/workspace/files` endpoints |
+| Prompt-resolution chain | 0029 | `prompt-resolution-chain-event.test.ts` — reads the `agent.promptResolved.chain[]` precedence record from the normative `GET /v1/runs/{runId}/events/poll` |
+
 ### Extensions outside the floor pending black-box proof (Lever 2 — `Accepted` RFCs)
 
 | Capability | RFC | Today's proof | Graduation condition |
 |---|---|---|---|
-| Prompt-resolution chain | 0029 | `/v1/host/sample/prompt/resolve` seam | `agent.promptResolved` carries `chain[]` on the production wire + black-box precedence assertion |
 | OTel secret-redaction | 0034 | OTel-scrape seam / reference-impl | conformance OTel collector scrapes **exported** spans for BYOK canaries against a non-steward host |
 | Multi-region idempotency + cross-engine ordering | 0036 | partition / two-engine simulator seam | a deployed multi-region / multi-engine host (no single-host wire can exercise it) |
-| Sandbox execution | 0035 | `node:vm` demonstrator seam | a real-isolation host (the WASM sandbox reference host) de-vacuums the 7 §B invariants |
-| Workspace cross-tenant isolation | 0059 | `/v1/host/sample/workspace/op` seam | black-box ≥2-tenant write-A / read-B against the production wire |
+| Sandbox execution | 0035 | real-isolation WASM reference host (`examples/hosts/wasm-sandbox/`; 6 `node-pack-sandbox-*` invariants graduated `reference-impl → protocol`) | a **non-steward** host that runs untrusted packs in a real-isolation sandbox advertises `capabilities.sandbox` + passes the §B probes (RFC 0035 `Active → Accepted`). Sandbox is a capability-gated surface, not a Core-floor MUST. |
 
 ## §E — Relationship to `openwop-agent-platform` (RFC 0085)
 
