@@ -1040,6 +1040,46 @@
     .proof-card { min-height: auto; }
   }
 
+  /* ─── Self-host CTA band (§09) ────────────────────────────────────────
+     A single, self-contained call-to-action — NOT a proof-card (those are
+     top/left-bordered cells meant for a multi-up grid). Full border + radius,
+     content left, action right; wraps to stacked on narrow viewports. */
+  .selfhost-card {
+    margin-top: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 28px;
+    flex-wrap: wrap;
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 26px 32px;
+    background: var(--paper);
+    transition: background .25s ease, border-color .25s ease;
+  }
+  .selfhost-card:hover { background: var(--clay-wash); border-color: var(--clay-rule); }
+  .selfhost-card .sh-body { max-width: 620px; }
+  .selfhost-card .proof-k { margin-bottom: 12px; }
+  .selfhost-card h3 {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 27px;
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    margin: 0 0 10px;
+  }
+  .selfhost-card p {
+    margin: 0;
+    color: var(--ink-2);
+    font-size: 14.5px;
+    line-height: 1.6;
+  }
+  .selfhost-card .actions { flex-shrink: 0; }
+  @media (max-width: 640px) {
+    .selfhost-card { padding: 24px; }
+  }
+
   /* ─── Ecosystem · package cards ───────────────────────────────────── */
   .packs {
     display: grid;
