@@ -137,7 +137,6 @@ function DraggableCard({
         ) : null}
         {card.priority === 'high' ? <span className="chip chip--danger">High</span> : null}
         {card.dueAt ? <span style={{ ...muted, fontSize: '12px' }}>due {card.dueAt.slice(0, 10)}</span> : null}
-        {card.blockerNote ? <span className="chip chip--warning" title={card.blockerNote}>Blocked</span> : null}
       </div>
       {card.createdBy ? <div style={{ ...muted, fontSize: '12px', marginTop: 'var(--space-1)' }}>Created by {card.createdBy}</div> : null}
       {card.assignmentReason ? <div style={{ ...muted, fontSize: '12px' }}>Why assigned: {card.assignmentReason}</div> : null}

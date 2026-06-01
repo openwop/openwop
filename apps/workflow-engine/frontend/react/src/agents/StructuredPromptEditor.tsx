@@ -43,11 +43,19 @@ function parsePrompt(value: string): Parsed {
   const preamble: string[] = [];
   let current: string | null = null;
   let structured = false;
+  // Track fenced code blocks so a `## Comment` line INSIDE ```…``` isn't
+  // mistaken for a section boundary (it stays part of the current section's
+  // body). A residual ambiguity remains for a literal `## Role` heading the user
+  // types as prose outside a fence — that's inherent to the section convention.
+  let inFence = false;
   for (const line of value.split('\n')) {
-    const m = /^##\s+(.+?)\s*$/.exec(line);
-    if (m) {
-      const name = HEADINGS.find((h) => h.toLowerCase() === m[1]!.toLowerCase());
-      if (name) { current = name; structured = true; continue; }
+    if (/^\s*```/.test(line)) inFence = !inFence;
+    if (!inFence) {
+      const m = /^##\s+(.+?)\s*$/.exec(line);
+      if (m) {
+        const name = HEADINGS.find((h) => h.toLowerCase() === m[1]!.toLowerCase());
+        if (name) { current = name; structured = true; continue; }
+      }
     }
     if (current) acc[current]!.push(line);
     else preamble.push(line);

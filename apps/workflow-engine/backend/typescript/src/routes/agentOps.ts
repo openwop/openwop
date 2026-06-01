@@ -129,7 +129,14 @@ export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
         throw new OpenwopError('not_found', 'Agent not found.', 404, { rosterId: req.params.rosterId });
       }
       const limit = Math.min(50, Math.max(1, Number.parseInt(String(req.query.limit ?? '25'), 10) || 25));
-      const runs = await deps.storage.listRuns({ tenantId, limit: 200 });
+      // listRuns has no per-attribution filter, so we scan the most-recent tenant
+      // runs and filter in memory. Bound the scan, but report when it was hit so
+      // the UI can say "older activity may exist" rather than imply "none" — no
+      // silent truncation. `truncated` ⇒ the agent could have older runs beyond
+      // the scan window.
+      const SCAN_LIMIT = 500;
+      const runs = await deps.storage.listRuns({ tenantId, limit: SCAN_LIMIT });
+      const truncated = runs.length >= SCAN_LIMIT;
       const items = runs
         .map((run) => {
           const md = (run.metadata ?? {}) as Record<string, unknown>;
@@ -155,7 +162,7 @@ export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
         .filter((x): x is NonNullable<typeof x> => x !== null)
         .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
         .slice(0, limit);
-      res.status(200).json({ rosterId: entry.rosterId, items });
+      res.status(200).json({ rosterId: entry.rosterId, items, truncated });
     } catch (err) {
       next(err);
     }

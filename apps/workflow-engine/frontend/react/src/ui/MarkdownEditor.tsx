@@ -90,24 +90,27 @@ export function MarkdownEditor({
   ariaLabel,
 }: MarkdownEditorProps): JSX.Element {
   const ref = useRef<HTMLTextAreaElement>(null);
+  // Guards the draft-recovery check to fire at most once — re-offering on every
+  // keystroke (value churn) would be wrong, so we can't key it off `value`.
+  const recoveryChecked = useRef(false);
   const [mode, setMode] = useState<'write' | 'preview'>('write');
   const [draftStatus, setDraftStatus] = useState<string | null>(null);
   const [recoverable, setRecoverable] = useState<string | null>(null);
   const tabId = useId();
 
-  // On mount: surface a recoverable draft if one was autosaved and differs
-  // from the value the parent loaded (e.g. a refresh mid-edit).
+  // Surface a recoverable draft if one was autosaved and differs from the value
+  // the parent loaded (e.g. a refresh mid-edit). The ref guard keeps this to the
+  // first run while letting the dep array stay honest (no eslint-disable).
   useEffect(() => {
-    if (!autosaveKey) return;
+    if (!autosaveKey || recoveryChecked.current) return;
+    recoveryChecked.current = true;
     try {
       const saved = window.localStorage.getItem(autosaveKey);
       if (saved && saved !== value && saved.trim()) setRecoverable(saved);
     } catch {
       /* localStorage unavailable (private mode); skip draft recovery */
     }
-    // intentionally mount-only — value churn during editing must not re-offer.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [autosaveKey, value]);
 
   // Debounced autosave of in-progress text.
   useEffect(() => {
