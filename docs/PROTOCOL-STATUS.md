@@ -35,8 +35,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 78 |
-| Active | 8 |
+| Accepted | 80 |
+| Active | 6 |
 | Draft | 2 |
 
 | RFC | Title | Status |
@@ -115,7 +115,7 @@
 | RFC 0072 | Agent Inventory + Dispatch Normative Surface | Accepted |
 | RFC 0073 | Capability families are document-root properties of `/.well-known/openwop` | Accepted |
 | RFC 0074 | Tenant-Scoped Manifest-Agent Inventory | Accepted |
-| RFC 0075 | Artifact-Type Packs - real-world adoption amendment | Active |
+| RFC 0075 | Artifact-Type Packs - real-world adoption amendment | Accepted |
 | RFC 0076 | Pack runtime-requirements declaration + host-provided safe-fetch | Accepted |
 | RFC 0077 | A normative `AgentManifest` -> live-run mapping + an optional `capabilities.agents.liveRuntime` flag + an `agent.invocation.started` / `agent.invocation.completed` event bracket, so a manifest agent executes against live models/tools with one portable, observable event family across all three entry points (workflow node, run API, chat mention) | Accepted |
 | RFC 0078 | An optional, capability-gated `GET /v1/tools` + `GET /v1/tools/{toolId}` projection returning a normative `ToolDescriptor` (stable `toolId`, source, I/O schemas, auth/egress/approval requirements, replay policy, safety tier) across every tool surface (node-pack / workflow / MCP / connector / host-extension), plus an optional tool-session lifecycle - so an agent or builder can discover what tools exist, what they require, and how they are audited, portably | Accepted |
@@ -128,7 +128,7 @@
 | RFC 0085 | Define `openwop-agent-platform` - an **operational annex** profile (a `production-profile.md`-style claim combining a discovery predicate + required runtime conformance scenarios + documentation + a badge, NOT a pure entry in the closed `profiles.md` catalog) that names one coherent "this host behaves like a full agent platform" target aggregating manifest+live agents, tool catalog+hooks, safe-fetch+egress, provider usage, prompt library, memory read/write/attribution, replay/fork-or-nondeterminism-policy, feedback, durable triggers, debug bundle, RBAC/tenant scoping, and conformance evidence - with a `partial` / `full` status | Accepted |
 | RFC 0086 | Define a **standing agent roster** - a named, tenant-scoped, mutable agent *instance* (the "digital-twin employee", e.g. `"Sally"`) that **references** a manifest/deployment (`agentId` + optional `version`/`channel`), **owns a workflow portfolio** (the workflows it is responsible for by role), and to which **trigger-fired runs are attributed** as a content-free recorded fact - composing RFC 0070/0072 (manifest agents + inventory), RFC 0082 (`@channel` binding), RFC 0052 (schedule triggers) and RFC 0083 (durable work-item triggers), while keeping per-host work surfaces (Kanban boards) as host/vendor extensions | Accepted |
 | RFC 0087 | Define an **agent org-chart** - a tenant-scoped, descriptive grouping of standing roster agents (RFC 0086) into departments + roles with `reportsTo` edges and a responsibility view - under one load-bearing invariant: **org position confers NO authority** (a `reportsTo`/manager edge MUST NOT widen `toolAllowlist`, grant an RBAC scope, or bypass an approval gate); composing RFC 0086 (the members), RFC 0074 (tenant scoping), RFC 0049 (RBAC - unchanged by position), and RFC 0051 (approval gates - unchanged by position) | Accepted |
-| RFC 0088 | `openwop-core-standard` - the stable Core Standard Profile (the black-box-proven floor) | Active |
+| RFC 0088 | `openwop-core-standard` - the stable Core Standard Profile (the black-box-proven floor) | Accepted |
 
 ## SDK Helper Coverage
 
@@ -169,7 +169,7 @@
 ## Active Follow-Ups
 
 - 2 RFCs still `Draft` (RFC 0038, RFC 0043) — advance with schema/conformance proof or defer.
-- 8 RFCs `Active` (RFC 0035, RFC 0042, RFC 0050, RFC 0065, RFC 0066, RFC 0067, RFC 0075, RFC 0088) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 6 RFCs `Active` (RFC 0035, RFC 0042, RFC 0050, RFC 0065, RFC 0066, RFC 0067) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
