@@ -33,6 +33,7 @@ import { AgentNewPage } from './agents/AgentNewPage.js';
 import { AgentDashboardPage } from './agents/AgentDashboardPage.js';
 import { AgentWorkspacePage } from './agents/AgentWorkspacePage.js';
 import { AgentCreateWizard } from './agents/AgentCreateWizard.js';
+import { DemoDataPage } from './settings/DemoDataPage.js';
 import { BrandMark } from './brand/BrandMark.js';
 import { brand } from './brand/brand.js';
 import { OrgsPage } from './orgs/OrgsPage.js';
@@ -113,6 +114,7 @@ export function App() {
             label="Settings"
             items={[
               { label: 'Organizations', to: '/orgs', hint: 'Orgs, teams, members + role-based access' },
+              { label: 'Demo data', to: '/demo-data', hint: 'Re-seed the built-in demo roster' },
               { label: 'Keys', to: '/keys', hint: 'BYOK credentials + provider config' },
               { label: 'Capabilities', to: '/capabilities', hint: 'What this host advertises' },
               { label: 'CLI', to: '/cli', hint: 'In-app CLI quickstart + command catalog' },
@@ -159,6 +161,7 @@ export function App() {
           <Route path="/builder/:workflowId" element={<BuilderTab />} />
           <Route path="/prompts" element={<PromptLibraryPage />} />
           <Route path="/keys" element={<KeysPage />} />
+          <Route path="/demo-data" element={<DemoDataPage />} />
           <Route path="/orgs" element={<OrgsPage />} />
           <Route path="/memory" element={<MemoryInspectorPage />} />
           <Route path="/boards" element={<KanbanPage />} />

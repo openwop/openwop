@@ -17,7 +17,7 @@ import { listRoster, type RosterEntry } from '../agents/rosterClient.js';
 import { Notice } from '../ui/Notice.js';
 import { StateCard } from '../ui/StateCard.js';
 import { PageHeader } from '../ui/PageHeader.js';
-import { ColumnsIcon } from '../ui/icons/index.js';
+import { ColumnsIcon, TrashIcon } from '../ui/icons/index.js';
 import { KanbanBoardView, type NewCardInput } from './KanbanBoardView.js';
 import {
   createBoard,
@@ -176,17 +176,29 @@ export function KanbanPage(): JSX.Element {
           </button>
         ))}
         {activeBoard ? (
+          // Far-right + icon + name + confirm so this destructive action isn't
+          // mistaken for "the last board tab" and clicked by accident (it sits
+          // in the same row as the board tabs).
           <button
             type="button"
             className="secondary"
+            style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            aria-label={`Delete the board "${activeBoard.name}"`}
+            title={`Delete the board "${activeBoard.name}" and all its cards`}
             onClick={async () => {
-              await deleteBoard(activeBoard.id);
-              setActiveBoard(null);
-              setCards([]);
-              await refreshBoards();
+              const board = activeBoard;
+              if (!window.confirm(`Delete the board "${board.name}"? This removes the board and all its cards and can't be undone.`)) return;
+              try {
+                await deleteBoard(board.id);
+                setActiveBoard(null);
+                setCards([]);
+                await refreshBoards();
+              } catch (err) {
+                setError(err instanceof Error ? err.message : String(err));
+              }
             }}
           >
-            Delete board
+            <TrashIcon size={14} /> Delete this board
           </button>
         ) : null}
       </div>
