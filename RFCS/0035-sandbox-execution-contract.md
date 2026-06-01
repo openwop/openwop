@@ -21,7 +21,9 @@ Define a normative contract for what isolation guarantees a host makes when it l
 
 Per `docs/KNOWN-LIMITS.md:32` and the external standards-readiness review 2026-05-21 finding (5): "no reference host executes pack-loaded typeIds in a sandbox. Before endorsement, I'd require sandbox proof, telemetry/debug-bundle secret-leakage conformance, and external review." The 8 `node-pack-sandbox-*` invariants exist as protocol claims (loaded packs MUST NOT escape the host's process context, MUST NOT access the host filesystem outside an advertised root, MUST NOT exfiltrate env vars, MUST NOT bypass capability gates, etc.) — but they're verified host-internally only on the Postgres pack-consumer's install-time security checks (PACK-1/PACK-2), which are necessary but not sufficient for runtime claims.
 
-This is the highest-leverage SECURITY gap in the corpus: every published pack the host loads runs with full host process privileges today, with the protocol's invariants depending on a sandbox that doesn't exist. Closing this requires both (a) a spec contract that defines what a compliant sandbox looks like and (b) at least one reference implementation.
+This was the highest-leverage SECURITY gap in the corpus: absent a sandbox, a host that loads third-party packs runs them with full host process privileges, with the protocol's invariants depending on a sandbox that did not exist. Closing it required both (a) a spec contract defining what a compliant sandbox looks like and (b) at least one reference implementation.
+
+**Status update (2026-06-01).** Both halves now exist. This RFC's §A contract is implemented by `examples/hosts/wasm-sandbox/` — a real WebAssembly host that executes pack-loaded typeIds with explicit imports, a memory cap, timeout enforcement, and a fresh instance per invocation (see its README). On the strength of that reference, the seven testable `node-pack-sandbox-*` invariants graduated `reference-impl → protocol`. The RFC stays `Active` (not `Accepted`): promotion is gated on a **non-steward** host that actually runs untrusted packs adopting the contract — the one thing a single steward cannot manufacture on the wire.
 
 ## Proposal
 
