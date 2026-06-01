@@ -98,6 +98,42 @@ Cross-surface components (`.btn`, `.marker`, etc.) live in `DESIGN.md §6`. The 
 | `.reasoning-disclosure` | RFC 0030 §A `<details>` for the `envelope.payload.reasoning` string | distinct from `ThoughtsDisclosure` — uses an `ⓘ` info glyph (vs `…` ellipsis), dashed top divider, AI-coloured left-bar on the open body |
 | `.prompt-tier-one-chip` | Tier-1 subset finding on a schema-hint prompt (RFC 0030 §B) | warning-tinted mono chip; appears on the prompt-list-item card; pairs with a banner above the list when `capabilities.envelopes.tierOneSubsetCompliance` is `strict` / `warn` |
 
+### 5.1 Shared UI primitives — the cross-surface cohesion layer (`src/ui/`)
+
+These exist so the three product surfaces (Agents, Workflows, Kanban) read as **one** product instead of three bolted-together apps. The failure mode they fix: a surface reimplementing a card/chip/notice with inline styles + hardcoded hex that bypass the token layer. Defined once in `global.css`, plus two React primitives in `src/ui/`. **Reach for these before hand-rolling an inline-styled widget.**
+
+| Class / Component | Purpose | Notes |
+|---|---|---|
+| `.surface-card` | the one list/dashboard card primitive | clone of `.workflow-card`: `--color-surface` bg, `--rule` border, `--radius`, `--space-3 --space-4` padding, hover → `--clay` border / `--paper-2`, `:focus-visible` ring. Navigational cards render as `<a>` / `<Link>` so keyboard + semantics come free |
+| `.card-grid` | responsive card grid | `repeat(auto-fill, minmax(280px, 1fr))`, `--space-3` gap, single column ≤ 640px |
+| `.action-bar` | button-cluster wrapper | flex + wrap + `--space-2` gap; the one way to group Open / Run / Delete actions so they read as parallel |
+| `.btn-sm` | small button size | 12px / `--space-1 --space-2`; replaces ad-hoc inline `fontSize` on buttons |
+| `.chip` + `.chip--{success,warning,danger,accent,ai,muted}` | status / source / label chips | 12px pill; color families are token-driven (no hex); pairs a Lucide icon + text label so color is **never** the sole signal (§11) |
+| `.ui-input` | text-input baseline | `--space-2 --space-3` padding, `--rule` border, `--radius`; opt-in class (avoids regressing the many bare `<input>`s elsewhere) |
+| `.state-card` + `<StateCard>` (`src/ui/StateCard.tsx`) | empty / loading / error block | dashed border, optional Lucide `icon`, title, one-line body, and **one** next-action CTA. Every empty state MUST name its single next action |
+| `<Notice variant=success\|error\|info\|warning>` (`src/ui/Notice.tsx`) | transient notice | renders `.alert.{variant}` + a leading Lucide icon + `role="status" aria-live="polite"` — never bare colored text, never a hardcoded hex, never a `⚠`/`✓` emoji prefix |
+| `<KanbanBoardView>` (`src/kanban/KanbanBoardView.tsx`) | the ONE Kanban board renderer | shared by `/boards` (KanbanPage) and the embedded agent-workspace Board tab. @dnd-kit drag-and-drop (pointer + keyboard sensor) + rich cards (source chip, workflow name, priority, run link) + trigger-lane affordance. A surface MUST NOT reimplement a second board |
+
+Global focus ring: `button`, `button.secondary`, `select`, `input`, `textarea`, `[role=button]`, and `.surface-card` all receive `outline: 2px solid var(--color-accent); outline-offset: 2px` on `:focus-visible` (one block in `global.css`). New interactive elements inherit it.
+
+Half-step spacing tokens: `--space-1-5: 6px` and `--space-2-5: 10px` cover the genuine micro-gaps authors reach for; **all** spacing still comes from the `--space-*` set — never inline a raw rem.
+
+### 5.2 Iconography — the app-wide Lucide icon set (`src/ui/icons`)
+
+- **One icon vocabulary.** Every UI icon is an inline-SVG component adapted from Lucide (Apache-2.0) under `src/ui/icons/`, re-exported from `src/ui/icons/index.ts`. Props: `{ size?: number; strokeWidth?: number; style?: CSSProperties }` (`CircleIcon` adds `filled?`). Icons render `stroke="currentColor"`, so they inherit the surrounding text color — place them in a span with the desired color, or where the color already applies.
+- **No emoji as UI icons — anywhere.** An emoji rendered as a decorative/affordance glyph is a bug; use a component from `ui/icons`. Add a new icon by copying an existing `<Name>Icon.tsx`, pasting the Lucide path, and re-exporting from `index.ts`. **Exempt** (these are not icons): prose mentions of a symbol (e.g. "drop a card into a ⚡ trigger lane" describing the column's `ZapIcon`), keyboard-shortcut hints (`⌘`, `⌗`), ASCII-art diagrams, and bullets (`•`).
+- **Canonical mappings** (the vocabulary): status `✓`/`✕`/`⏸`/`●`/`○` → `Check`/`X`/`Pause`/`Circle`(`filled` for ●); disclosure `▸`/`▾` → `ChevronRight`/`ChevronDown`; back-links `←` → `ArrowLeft`; feedback `👍`/`👎`/`🚩` → `ThumbsUp`/`ThumbsDown`/`Flag`; `🔧`/`🛠` → `Wrench`; `🔒` → `Lock`; `✎` → `Pencil`; `🗑` → `Trash`; `⚙` → `Settings`; `ⓘ` → `Info`; `📎` → `Paperclip`; `📋` → `Clipboard`; `💾` → `Save`; `⚖` → `Scale`; `💭` → `MessageSquare`; `☰` → `Menu`; `↻` → `RotateCw`; `↶`/`↷` → `Undo`/`Redo`; `⚡` → `Zap`; `▶` → `Play`; the workflow glyph → `Workflow`; `🧠` → `Sparkles`.
+- **Brand / vendor marks are exempt and never re-colored** — the OpenWOP robot, the Google `g`, the GitHub octocat (see §8 and DESIGN.md §13).
+
+### 5.3 Status → chip semantics
+
+Run / agent / node status is rendered as a chip (color **and** label — never color alone, §11), mapped centrally rather than per-component:
+
+- Agent + run status → a `.chip--*` via `agents/agentViewModel.ts` `statusMeta`: active → `chip--success`, working/running → `chip--accent`, waiting/paused → `chip--warning`, needs-setup/failed/cancelled → `chip--danger`.
+- Node-canvas run status uses the §3 functional tokens on `.builder-node*` badges paired with a Lucide glyph (`CircleIcon filled` / `Check` / `X` / `Pause`), color via `var(--color-warning/success/danger/ai)`.
+
+Do not invent a per-surface status palette; reuse these mappings so a "completed" state looks identical everywhere.
+
 When adding a new app-specific component:
 
 1. Add a row here.
@@ -192,6 +228,23 @@ Lint gates:
 - `grep -rEn "#[0-9a-fA-F]{3,6}" src/` MUST return 0 hits (zero hex literals anywhere in TS/TSX). Post-Phase-E bar: enforced.
 - `grep -rEn "style=\{\{[^}]*(color|background)[^}]*[\"'](?!var\()" src/` MUST return 0 hits (no literal color values inline). Post-Phase-E bar: enforced.
 - `grep -rEn "style=\{\{[^}]*(color|background|font)" src/` shows the residuals allowed by the carve-outs above; should be reviewed but not blocked.
+- **No emoji as UI icons (§5.2).** A scan for emoji rendered as icons in JSX (excluding comments, prose, keyboard hints, ASCII art) MUST be empty — use `ui/icons`. Practical scan:
+  ```bash
+  # rendered decorative glyphs in non-comment lines; expect 0 (prose ⚡ excepted)
+  python3 - <<'PY'
+  import os,re
+  icons=set('👍👎🚩🔒🗑🔧🛠🧠💭📋📎📷💾☰▶▸▾◉●○⏸⚙✋⚖↻↶↷✓✗✕✎ⓘ')
+  for r,_,fs in os.walk('src'):
+      if 'ui/icons' in r: continue
+      for f in fs:
+          if not f.endswith(('.tsx','.ts')) or '.test.' in f: continue
+          for i,l in enumerate(open(os.path.join(r,f)),1):
+              s=l.strip()
+              if s.startswith(('//','*','/*')): continue
+              for c in l:
+                  if c in icons: print(f"{r}/{f}:{i}: {c}")
+  PY
+  ```
 
 ---
 
@@ -212,6 +265,9 @@ In addition to the marketing-site rules:
 Before merging a PR that introduces a new app component:
 
 - [ ] New class added to §5 (app components) OR DESIGN.md §6 (if it's cross-surface)
+- [ ] Reuses the §5.1 cohesion primitives (`.surface-card` / `.chip` / `.action-bar` / `.btn-sm` / `<StateCard>` / `<Notice>`) instead of a bespoke inline-styled card/chip/notice
+- [ ] Icons come from `ui/icons` (§5.2) — **no emoji as icons**
+- [ ] Status is shown as a labeled chip, never color alone (§5.3 / §11)
 - [ ] Uses only shared tokens (canonical names) + app-functional tokens for color/type/spacing
 - [ ] No hard-coded hex / OKLCH literal in component CSS
 - [ ] No inline `style={{}}` for color/font (geometry OK)
@@ -226,9 +282,12 @@ Before merging a PR that introduces a new app component:
 ## 13. Related files
 
 - `DESIGN.md` — marketing-site standards + shared tokens
-- `apps/workflow-engine/frontend/react/src/styles/global.css` — the lone stylesheet
+- `apps/workflow-engine/frontend/react/src/styles/global.css` — the lone stylesheet (tokens, the §5.1 cohesion layer, focus ring, `.alert.*`, `.status-badge`)
+- `apps/workflow-engine/frontend/react/src/ui/` — shared primitives: `Notice.tsx`, `StateCard.tsx`, and `icons/` (the §5.2 app-wide Lucide set)
+- `apps/workflow-engine/frontend/react/src/kanban/KanbanBoardView.tsx` — the one shared drag-and-drop board
 - `apps/workflow-engine/frontend/react/index.html` — Google Fonts link
 - `apps/workflow-engine/DEPLOY.md`, `DEPLOY-SMOKE.md` — deployment + smoke
+- `.claude/skills/ux-review/SKILL.md` — the review skill that enforces this doc (Mode A, app surface)
 
 ---
 
