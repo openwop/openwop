@@ -63,6 +63,8 @@ export interface NewCardInput {
   workflowId?: string;
   priority?: 'low' | 'normal' | 'high';
   dueAt?: string;
+  assignmentReason?: string;
+  blockerNote?: string;
 }
 
 const SOURCE_OPTIONS: ReadonlyArray<{ value: KanbanCardSource; label: string }> = [
@@ -135,7 +137,11 @@ function DraggableCard({
         ) : null}
         {card.priority === 'high' ? <span className="chip chip--danger">High</span> : null}
         {card.dueAt ? <span style={{ ...muted, fontSize: '12px' }}>due {card.dueAt.slice(0, 10)}</span> : null}
+        {card.blockerNote ? <span className="chip chip--warning" title={card.blockerNote}>Blocked</span> : null}
       </div>
+      {card.createdBy ? <div style={{ ...muted, fontSize: '12px', marginTop: 'var(--space-1)' }}>Created by {card.createdBy}</div> : null}
+      {card.assignmentReason ? <div style={{ ...muted, fontSize: '12px' }}>Why assigned: {card.assignmentReason}</div> : null}
+      {card.blockerNote ? <div style={{ fontSize: '12px', color: 'var(--color-warning, var(--color-text-muted))', marginTop: 'var(--space-1)' }}>⚠ Blocked: {card.blockerNote}</div> : null}
       {card.lastRunId ? (
         <div style={{ fontSize: '12px', marginTop: 'var(--space-1)' }}>
           <Link to={`/runs/${card.lastRunId}`} onPointerDown={(e) => e.stopPropagation()} style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-1)' }}>
@@ -200,8 +206,10 @@ function DroppableColumn({
   const [workflowId, setWorkflowId] = useState('');
   const [priority, setPriority] = useState<'low' | 'normal' | 'high'>('normal');
   const [dueAt, setDueAt] = useState('');
+  const [assignmentReason, setAssignmentReason] = useState('');
+  const [blockerNote, setBlockerNote] = useState('');
   const isTrigger = Boolean(column.triggerWorkflowId);
-  const resetForm = (): void => { setTitle(''); setDescription(''); setSource('human'); setWorkflowId(''); setPriority('normal'); setDueAt(''); setAdding(false); };
+  const resetForm = (): void => { setTitle(''); setDescription(''); setSource('human'); setWorkflowId(''); setPriority('normal'); setDueAt(''); setAssignmentReason(''); setBlockerNote(''); setAdding(false); };
 
   return (
     <div
@@ -238,6 +246,8 @@ function DroppableColumn({
               ...(workflowId ? { workflowId } : {}),
               ...(priority !== 'normal' ? { priority } : {}),
               ...(dueAt ? { dueAt } : {}),
+              ...(assignmentReason.trim() ? { assignmentReason: assignmentReason.trim() } : {}),
+              ...(blockerNote.trim() ? { blockerNote: blockerNote.trim() } : {}),
             });
             resetForm();
           }}
@@ -264,6 +274,8 @@ function DroppableColumn({
             </select>
             <input className="ui-input" type="date" value={dueAt} onChange={(e) => setDueAt(e.target.value)} aria-label="Due date" style={{ flex: 1 }} />
           </div>
+          <input className="ui-input" value={assignmentReason} onChange={(e) => setAssignmentReason(e.target.value)} placeholder="Why assigned (optional)" aria-label="Why assigned" style={{ width: '100%' }} />
+          <input className="ui-input" value={blockerNote} onChange={(e) => setBlockerNote(e.target.value)} placeholder="Blocker, if any (optional)" aria-label="Blocker note" style={{ width: '100%' }} />
           <div className="action-bar">
             <button type="submit" className="primary btn-sm">Add</button>
             <button type="button" className="secondary btn-sm" onClick={resetForm}>Cancel</button>

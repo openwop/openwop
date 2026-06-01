@@ -33,6 +33,9 @@ interface SeedCard {
   priority?: 'low' | 'normal' | 'high';
   /** Lane to place the card in (defaults to To Do). */
   columnId?: string;
+  createdBy?: string;
+  assignmentReason?: string;
+  blockerNote?: string;
 }
 
 interface SeedSchedule {
@@ -73,9 +76,9 @@ const SEED_AGENTS: ReadonlyArray<SeedAgent> = [
     systemPrompt:
       'You are Sally, a Sales Ops Assistant. You are precise, friendly, and CRM-aware. You route leads, keep the CRM clean, and follow up on stalled opportunities quickly.',
     cards: [
-      { title: 'Review new enterprise lead from website form', source: 'discord', sourceLabel: '/assign @sally', priority: 'high' },
-      { title: 'Route ACME renewal note to account owner', source: 'human', priority: 'normal' },
-      { title: 'Draft follow-up for stalled opportunity', source: 'workflow', sourceLabel: 'Follow-up reminder generation' },
+      { title: 'Review new enterprise lead from website form', source: 'discord', sourceLabel: '/assign @sally', priority: 'high', createdBy: 'Jordan (Sales)', assignmentReason: 'Owns inbound enterprise lead routing for this region.' },
+      { title: 'Route ACME renewal note to account owner', source: 'human', priority: 'normal', createdBy: 'Jordan (Sales)', assignmentReason: 'Renewals are part of Sally’s Sales Ops portfolio.', blockerNote: 'Waiting on the updated ACME contract value from Finance.' },
+      { title: 'Draft follow-up for stalled opportunity', source: 'workflow', sourceLabel: 'Follow-up reminder generation', createdBy: 'Follow-up reminder generation', assignmentReason: 'Auto-routed to the lead owner.' },
     ],
     schedules: [
       { slug: 'scan-leads', cronExpr: '0 9 * * 1-5', workflowIndex: 0, label: 'Scan new leads (weekdays 9:00 AM)' },
@@ -92,7 +95,7 @@ const SEED_AGENTS: ReadonlyArray<SeedAgent> = [
       'You are Marcus, a Support Triage Specialist. You are calm, concise, and customer-first. You classify inbound tickets, escalate the urgent ones, and draft first responses.',
     cards: [
       { title: 'Classify inbound ticket: "login loop on mobile"', source: 'discord', sourceLabel: '/assign @marcus', priority: 'high' },
-      { title: 'Escalate P1 outage report to on-call', source: 'workflow', sourceLabel: 'Priority escalation', columnId: 'waiting' },
+      { title: 'Escalate P1 outage report to on-call', source: 'workflow', sourceLabel: 'Priority escalation', columnId: 'waiting', assignmentReason: 'Marcus triages all inbound P1s.', blockerNote: 'Paused until the on-call engineer acknowledges in PagerDuty.' },
       { title: 'Draft response for billing question', source: 'human' },
     ],
     schedules: [
@@ -109,7 +112,7 @@ const SEED_AGENTS: ReadonlyArray<SeedAgent> = [
       'You are Priya, a Finance Ops Analyst. You are careful and audit-friendly. You extract invoice data, summarize spend anomalies, and ALWAYS request human approval before applying a risky change.',
     cards: [
       { title: 'Extract fields from Q2 vendor invoice batch', source: 'api', sourceLabel: 'Invoices API', priority: 'normal' },
-      { title: 'Approve refund over $5,000', source: 'agent', sourceLabel: 'Created by Marcus', columnId: 'waiting', priority: 'high' },
+      { title: 'Approve refund over $5,000', source: 'agent', sourceLabel: 'Created by Marcus', columnId: 'waiting', priority: 'high', createdBy: 'Marcus', assignmentReason: 'Refunds over $5k need Priya’s finance approval.', blockerNote: 'Needs a human sign-off — over Priya’s auto-approval limit.' },
       { title: 'Summarize unusual spend in marketing', source: 'schedule', sourceLabel: 'Weekly spend scan' },
     ],
     schedules: [
@@ -212,6 +215,9 @@ export async function seedDemoAgents(tenantId: string): Promise<SeedResult> {
           source: card.source,
           ...(card.sourceLabel !== undefined ? { sourceLabel: card.sourceLabel } : {}),
           ...(card.priority !== undefined ? { priority: card.priority } : {}),
+          ...(card.createdBy !== undefined ? { createdBy: card.createdBy } : {}),
+          ...(card.assignmentReason !== undefined ? { assignmentReason: card.assignmentReason } : {}),
+          ...(card.blockerNote !== undefined ? { blockerNote: card.blockerNote } : {}),
         });
       }
 

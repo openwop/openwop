@@ -75,6 +75,14 @@ export interface KanbanCard {
   priority?: 'low' | 'normal' | 'high';
   /** ISO-8601 due date. */
   dueAt?: string;
+  /** Who created this task (free text, e.g. a person's name or "Discord"). The
+   *  `source` chip says HOW it arrived; this says WHO. */
+  createdBy?: string;
+  /** Why this task is assigned to the board's agent — the "why Sally?" answer. */
+  assignmentReason?: string;
+  /** Free-text note describing what's blocking the task (a lightweight blocker;
+   *  not a dependency graph). Surfaced as a "Blocked" chip. */
+  blockerNote?: string;
   order: number;
   createdAt: string;
   updatedAt: string;
@@ -210,6 +218,9 @@ export async function createCard(input: {
   sourceLabel?: string;
   priority?: 'low' | 'normal' | 'high';
   dueAt?: string;
+  createdBy?: string;
+  assignmentReason?: string;
+  blockerNote?: string;
 }): Promise<KanbanCard> {
   const id = `card-${randomUUID()}`;
   const now = nowIso();
@@ -228,6 +239,9 @@ export async function createCard(input: {
     sourceLabel: input.sourceLabel,
     priority: input.priority,
     dueAt: input.dueAt,
+    createdBy: input.createdBy,
+    assignmentReason: input.assignmentReason,
+    blockerNote: input.blockerNote,
     order: siblings.length,
     createdAt: now,
     updatedAt: now,
@@ -246,6 +260,9 @@ export async function updateCardFields(
     sourceLabel?: string;
     priority?: 'low' | 'normal' | 'high';
     dueAt?: string;
+    createdBy?: string;
+    assignmentReason?: string;
+    blockerNote?: string;
   },
 ): Promise<KanbanCard | null> {
   const card = await cards.get(cardId);
@@ -257,6 +274,9 @@ export async function updateCardFields(
   if (patch.sourceLabel !== undefined) card.sourceLabel = patch.sourceLabel;
   if (patch.priority !== undefined) card.priority = patch.priority;
   if (patch.dueAt !== undefined) card.dueAt = patch.dueAt;
+  if (patch.createdBy !== undefined) card.createdBy = patch.createdBy;
+  if (patch.assignmentReason !== undefined) card.assignmentReason = patch.assignmentReason;
+  if (patch.blockerNote !== undefined) card.blockerNote = patch.blockerNote;
   card.updatedAt = nowIso();
   await cards.put(card);
   return card;

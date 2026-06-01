@@ -120,6 +120,8 @@ export function KanbanPage(): JSX.Element {
         ...(input.workflowId ? { workflowId: input.workflowId } : {}),
         ...(input.priority ? { priority: input.priority } : {}),
         ...(input.dueAt ? { dueAt: input.dueAt } : {}),
+        ...(input.assignmentReason ? { assignmentReason: input.assignmentReason } : {}),
+        ...(input.blockerNote ? { blockerNote: input.blockerNote } : {}),
       });
       await openBoard(activeBoard.id);
     } catch (err) {

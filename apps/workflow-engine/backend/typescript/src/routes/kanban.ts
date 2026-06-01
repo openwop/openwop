@@ -343,6 +343,9 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
         sourceLabel?: unknown;
         priority?: unknown;
         dueAt?: unknown;
+        createdBy?: unknown;
+        assignmentReason?: unknown;
+        blockerNote?: unknown;
       };
       if (typeof body.title !== 'string' || body.title.trim().length === 0) {
         throw new OpenwopError('validation_error', 'Field `title` is required and MUST be a non-empty string.', 400, {
@@ -365,6 +368,9 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
         sourceLabel: typeof body.sourceLabel === 'string' ? body.sourceLabel : undefined,
         priority: parseCardPriority(body.priority),
         dueAt: typeof body.dueAt === 'string' ? body.dueAt : undefined,
+        createdBy: typeof body.createdBy === 'string' ? body.createdBy : undefined,
+        assignmentReason: typeof body.assignmentReason === 'string' ? body.assignmentReason : undefined,
+        blockerNote: typeof body.blockerNote === 'string' ? body.blockerNote : undefined,
       });
       notifyBoardChanged(board.id);
       res.status(201).json(card);
@@ -393,6 +399,9 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
         sourceLabel?: unknown;
         priority?: unknown;
         dueAt?: unknown;
+        createdBy?: unknown;
+        assignmentReason?: unknown;
+        blockerNote?: unknown;
       };
 
       // Field updates first (title/description/workflowId + demo metadata).
@@ -404,6 +413,9 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
         sourceLabel: typeof body.sourceLabel === 'string' ? body.sourceLabel : undefined,
         priority: parseCardPriority(body.priority),
         dueAt: typeof body.dueAt === 'string' ? body.dueAt : undefined,
+        createdBy: typeof body.createdBy === 'string' ? body.createdBy : undefined,
+        assignmentReason: typeof body.assignmentReason === 'string' ? body.assignmentReason : undefined,
+        blockerNote: typeof body.blockerNote === 'string' ? body.blockerNote : undefined,
       });
 
       // A columnId change is a move — and a move into a trigger column

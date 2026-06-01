@@ -21,9 +21,11 @@ import {
   __resetKanbanStore,
   createBoard,
   createCard,
+  getCard,
   moveCard,
   notifyBoardChanged,
   subscribeBoardChanges,
+  updateCardFields,
 } from '../src/host/kanbanService.js';
 
 describe('kanban service (pure)', () => {
@@ -51,6 +53,26 @@ describe('kanban service (pure)', () => {
     const todo = board.columns.find((c) => c.id === 'todo');
     expect(todo?.triggerWorkflowId).toBe('wf-campaign');
     expect(board.columns.find((c) => c.id === 'doing')?.triggerWorkflowId).toBeUndefined();
+  });
+
+  it('round-trips createdBy / assignmentReason / blockerNote on create + patch', async () => {
+    const board = await createBoard({ tenantId: 't1', name: 'M' });
+    const card = await createCard({
+      boardId: board.id,
+      columnId: 'todo',
+      title: 'Approve refund',
+      createdBy: 'Marcus',
+      assignmentReason: 'Over Priya’s auto-approval limit.',
+      blockerNote: 'Needs a human sign-off.',
+    });
+    expect(card.createdBy).toBe('Marcus');
+    expect(card.assignmentReason).toBe('Over Priya’s auto-approval limit.');
+    expect(card.blockerNote).toBe('Needs a human sign-off.');
+
+    await updateCardFields(card.id, { blockerNote: '' });
+    const cleared = await getCard(card.id);
+    expect(cleared?.blockerNote).toBe('');
+    expect(cleared?.assignmentReason).toBe('Over Priya’s auto-approval limit.');
   });
 
   it('returns a trigger directive when a card moves INTO a trigger column', async () => {

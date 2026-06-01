@@ -64,6 +64,11 @@ export function AgentBoardPanel({ boardId, persona, avatarUrl, roleTheme, workfl
         ...(input.workflowId ? { workflowId: input.workflowId } : {}),
         ...(input.priority ? { priority: input.priority } : {}),
         ...(input.dueAt ? { dueAt: input.dueAt } : {}),
+        ...(input.assignmentReason ? { assignmentReason: input.assignmentReason } : {}),
+        ...(input.blockerNote ? { blockerNote: input.blockerNote } : {}),
+        // A human-added card is created by a person; attribute it so the card's
+        // "Created by" reads sensibly (Discord/agent/workflow carry their own).
+        ...(source === 'human' ? { createdBy: 'You' } : {}),
         // A simulated-Discord card carries the slash-command as its label.
         ...(source === 'discord' ? { sourceLabel: `/assign @${persona.toLowerCase()}` } : {}),
       });
