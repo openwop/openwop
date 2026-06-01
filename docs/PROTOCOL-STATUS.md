@@ -35,8 +35,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 80 |
-| Active | 6 |
+| Accepted | 83 |
+| Active | 3 |
 | Draft | 2 |
 
 | RFC | Title | Status |
@@ -90,7 +90,7 @@
 | RFC 0047 | `host.oauth` capability - the host performs the OAuth 2.0 authorization-code + refresh dance on a user's behalf and persists the result as a `host.credentials` entry, so a connector pack declares only *which provider + scopes* it needs, not *how* the token is obtained | Accepted |
 | RFC 0048 | Promote the existing tenant dimension to an explicit identity triple - `{ tenant, workspace?, principal }` - threading through auth context, scoped discovery, run ownership, and events, so workspace sub-tenancy and the acting principal become portable wire-level concepts | Accepted |
 | RFC 0049 | A portable role->scope binding (reusing the existing API-key scope grammar) plus a standardized, redaction-safe `authorization.decided` event, with a normative **fail-closed** default - so a host's RBAC becomes observable, auditable, and conformance-testable | Accepted |
-| RFC 0050 | Two new entries in the auth-profile family - a SAML assertion-validation profile and a SCIM provisioning profile (LDAP as an optional directory-bind variant) - that sync external IdP users/groups onto RFC 0048 principals + RFC 0049 roles, with `alg:none` rejection mirroring the OIDC work | Active |
+| RFC 0050 | Two new entries in the auth-profile family - a SAML assertion-validation profile and a SCIM provisioning profile (LDAP as an optional directory-bind variant) - that sync external IdP users/groups onto RFC 0048 principals + RFC 0049 roles, with `alg:none` rejection mirroring the OIDC work | Accepted |
 | RFC 0051 | `core.openwop.governance.approvalGate` - a first-class, role-bound, audited interrupt node for approvals and deployment promotions, composing the existing interrupt-profile machinery (quorum, auth-required) with RFC 0049 authorization and the audit log | Accepted |
 | RFC 0052 | A `host.scheduling` capability (cron / delayed / calendar) wiring the `schedule` trigger to a portable, durable execution contract - promoting the still-Draft scheduling intent behind RFC 0017's `host.queueBus` into a conformance-tested surface | Accepted |
 | RFC 0053 | A `host.deadLetter` capability + `run.dead_lettered` event - terminally-failed runs/nodes land in a durable, inspectable sink that stays fork-eligible, so a poisoned run can be examined and replayed rather than silently lost | Accepted |
@@ -105,8 +105,8 @@
 | RFC 0062 | A `memory.distillation` capability - scheduled, token-budgeted background compaction runs reusing RFC 0012's `memory.compacted` event (with an additive optional `distillation` sub-object), writing a stable archive + a memory-index workspace file; composing RFC 0012 (compaction) + RFC 0052 (scheduling) + RFC 0004 (memory) into the "dream" pattern | Accepted |
 | RFC 0063 | An optional `outputAttestation` config on `core.subWorkflow` - a content checksum surfaced on the child's terminal event, plus an optional `requireApproval` gate that suspends via an `approval` interrupt (RFC 0051) *before* `outputMapping` merges a child's outputs into the parent, so a parent can verify and approve sub-agent artifacts rather than merging them blindly | Accepted |
 | RFC 0064 | A `host.toolHooks` capability - additive authorization + timing + content-free-argument fields on the existing `agent.toolCalled` / `agent.toolReturned` events (RFC 0002), fail-closed per-tool authorization via RFC 0049 scopes (reusing the `forbidden` error + the `authorization-fail-closed` invariant), and optional per-tool rate limiting (reusing `rate_limited`) - generalizing the MCP bridges into one auditable, least-privilege tool surface without inventing parallel events | Accepted |
-| RFC 0065 | Workflow node primary-output annotation | Active |
-| RFC 0066 | `x-openwop-form` vendor extension on pack `configSchema` for picker-grade UX hints | Active |
+| RFC 0065 | Workflow node primary-output annotation | Accepted |
+| RFC 0066 | `x-openwop-form` vendor extension on pack `configSchema` for picker-grade UX hints | Accepted |
 | RFC 0067 | Provider-catalog conventions - a stable provider-name vocabulary and a per-provider BYOK auth-mode enum (`apiKey` / `oauth-pkce` / `oauth-device` / `none`) so clients can pre-flight how a host expects a provider's credential to be supplied | Active |
 | RFC 0068 | Background memory consolidation (merge/dedup/strengthen of long-term entries) + inferred standing commitments - two additive optional capabilities (`agents.memoryConsolidation` + `agents.commitments`) with their own content-free observability events (`agent.memory.consolidated` + `commitment.fired`), distinct from RFC 0062 token-budgeted distillation | Accepted |
 | RFC 0069 | A normative carve-out: arbitrary-command (`exec`-class) execution MUST NOT be a protocol-tier capability - it lives only in named host-extension scopes (`x-host-<vendor>-exec`) whose safety controls the host owns end-to-end. Codifies an existing exclusion; no host wire shape changes. | Accepted |
@@ -169,7 +169,7 @@
 ## Active Follow-Ups
 
 - 2 RFCs still `Draft` (RFC 0038, RFC 0043) — advance with schema/conformance proof or defer.
-- 6 RFCs `Active` (RFC 0035, RFC 0042, RFC 0050, RFC 0065, RFC 0066, RFC 0067) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 3 RFCs `Active` (RFC 0035, RFC 0042, RFC 0067) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.

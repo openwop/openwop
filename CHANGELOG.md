@@ -11,6 +11,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0050+0066+0065): SAML/SCIM + x-openwop-form + outputRole — Active → Accepted — greenlit list closed (2026-06-01)
+
+**RFC 0050 (SAML/SCIM enterprise identity)**, **RFC 0066 (`x-openwop-form` config UX hints)**, and **RFC 0065 (`outputRole` annotation)** graduated `Active → Accepted` on the non-steward host MyndHyve — closing the entire greenlit Active→Accepted list (0069·0088·0075·0050·0066·0065). RFC counts **Accepted 80→83, Active 6→3**.
+
+- **RFC 0050** — MyndHyve (rev `workflow-runtime-00453-hot`) ships a **real XML-DSig SAML ACS + SCIM** and advertises `auth.profiles: ["openwop-auth-saml","openwop-auth-scim"]`. It self-hosts the bundled `createSyntheticSamlIdp()` behind the `GET {idpUrl}?variant` → `{certificatePem,assertion}` contract (assertions steward-defined, host serves transport only) and passes the gated `auth-saml-profile` + `auth-scim-profile` legs **non-vacuously** vs `@openwop/openwop-conformance@1.18.1` (**19/19, no soft-skips**). The **steward independently drove the live `auth/saml/validate` seam for all 7 §A variants** — `valid`→200 authenticated; `alg-none`/`unsigned`/`bad-signature`/`expired`/`not-yet-valid`/`signature-wrapping`→401 with the correct reason (XSW fires live) — plus SCIM (`create-user`→resolvable; `deactivate-user`→`resolvable:false` fail-closed). Steward prerequisite was conformance 1.18.1 (#467 `8886c713`). No regression on `openwop-core-standard`/`openwop-agent-platform`.
+- **RFC 0066 + 0065** — graduated on MyndHyve's **genuine frontend consumption** (Firebase Hosting, commit `33b498747`): `SchemaFormRenderer` honors `x-openwop-form` (`field`→widget + `dependsOn`→conditional visibility) and `selectPrimaryOutputNode` honors `outputRole` (explicit-primary-wins/unique-terminal/surface-all). **Honest basis:** both are advisory authoring-time hints with **no discovery advertisement** by design → graduate on the adoption-judgment model (the verifiable server-free conformance floor green on `main` + a credible non-steward genuine-consumption report), not a steward curl of a wire field.
+
+RFC headers + README banner counts + `INTEROP-MATRIX.md` lead + regenerated PROTOCOL-STATUS. No wire-shape change. Coordinated via the `billy` crosstalk bus.
+
 ### spec(rfc-0088+0075): Core Standard Profile + artifact-type-packs amendment — Active → Accepted (2026-06-01)
 
 **RFC 0088 (`openwop-core-standard`)** and **RFC 0075 (artifact-type-packs real-world amendment)** graduated `Active → Accepted` on the **non-steward host** MyndHyve (rev `workflow-runtime-00449-fal @ 100%`, `https://api.myndhyve.ai`; steward-verified 2026-06-01).
