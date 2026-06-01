@@ -17,6 +17,10 @@
  *   POST   /orgs/:orgId/members           add a member               [host:members:manage]
  *   PATCH  /orgs/:orgId/members/:memberId edit roles/teams/identity  [host:members:manage]
  *   DELETE /orgs/:orgId/members/:memberId remove                     [host:members:manage]
+ *   GET    /orgs/:orgId/groups            list groups
+ *   POST   /orgs/:orgId/groups            create a group (roles+members) [host:groups:manage]
+ *   PATCH  /orgs/:orgId/groups/:groupId   edit roles/members          [host:groups:manage]
+ *   DELETE /orgs/:orgId/groups/:groupId   delete                      [host:groups:manage]
  *
  * Tenant-scoped per entity: every by-id read/write verifies the stored row's
  * tenantId matches the caller's tenant (404 otherwise) — the IDOR guard
@@ -56,6 +60,11 @@ import {
   getMember,
   updateMember,
   deleteMember,
+  createGroup,
+  listGroups,
+  getGroup,
+  updateGroup,
+  deleteGroup,
   type BuiltInRoleId,
   type Scope,
 } from '../host/accessControlService.js';
@@ -126,6 +135,14 @@ function parseTeamIds(value: unknown): string[] | undefined {
   if (value === undefined) return undefined;
   if (!Array.isArray(value) || !value.every((t) => typeof t === 'string')) {
     throw new OpenwopError('validation_error', 'Field `teamIds` MUST be an array of team ids.', 400, { field: 'teamIds' });
+  }
+  return value as string[];
+}
+
+function parseMemberIds(value: unknown): string[] | undefined {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value) || !value.every((m) => typeof m === 'string')) {
+    throw new OpenwopError('validation_error', 'Field `memberIds` MUST be an array of member ids.', 400, { field: 'memberIds' });
   }
   return value as string[];
 }
@@ -353,6 +370,71 @@ export function registerAccessControlRoutes(app: Express): void {
         throw new OpenwopError('not_found', 'Member not found.', 404, { memberId: req.params.memberId });
       }
       await deleteMember(req.params.memberId);
+      res.status(204).end();
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ── Groups (cross-cutting RBAC units carrying roles) ──
+  app.get('/v1/host/sample/orgs/:orgId/groups', async (req, res, next) => {
+    try {
+      await loadOrgOwned(req, req.params.orgId);
+      res.json({ groups: await listGroups(tenantOf(req), req.params.orgId) });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post('/v1/host/sample/orgs/:orgId/groups', async (req, res, next) => {
+    try {
+      await loadOrgOwned(req, req.params.orgId);
+      await requireScope(req, 'host:groups:manage');
+      const body = (req.body ?? {}) as { name?: unknown; description?: unknown; roles?: unknown; memberIds?: unknown };
+      const group = await createGroup({
+        orgId: req.params.orgId,
+        tenantId: tenantOf(req),
+        name: requireString(body.name, 'name'),
+        description: optionalString(body.description, 'description'),
+        roles: parseRoles(body.roles),
+        memberIds: parseMemberIds(body.memberIds),
+      });
+      res.status(201).json(group);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.patch('/v1/host/sample/orgs/:orgId/groups/:groupId', async (req, res, next) => {
+    try {
+      await loadOrgOwned(req, req.params.orgId);
+      await requireScope(req, 'host:groups:manage');
+      const group = await getGroup(req.params.groupId);
+      if (!group || group.tenantId !== tenantOf(req) || group.orgId !== req.params.orgId) {
+        throw new OpenwopError('not_found', 'Group not found.', 404, { groupId: req.params.groupId });
+      }
+      const body = (req.body ?? {}) as { name?: unknown; description?: unknown; roles?: unknown; memberIds?: unknown };
+      const updated = await updateGroup(req.params.groupId, {
+        name: optionalString(body.name, 'name'),
+        description: patchString(body.description, 'description'),
+        roles: parseRoles(body.roles),
+        memberIds: parseMemberIds(body.memberIds),
+      });
+      res.json(updated);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.delete('/v1/host/sample/orgs/:orgId/groups/:groupId', async (req, res, next) => {
+    try {
+      await loadOrgOwned(req, req.params.orgId);
+      await requireScope(req, 'host:groups:manage');
+      const group = await getGroup(req.params.groupId);
+      if (!group || group.tenantId !== tenantOf(req) || group.orgId !== req.params.orgId) {
+        throw new OpenwopError('not_found', 'Group not found.', 404, { groupId: req.params.groupId });
+      }
+      await deleteGroup(req.params.groupId);
       res.status(204).end();
     } catch (err) {
       next(err);

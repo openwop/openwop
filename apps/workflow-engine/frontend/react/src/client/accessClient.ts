@@ -54,11 +54,25 @@ export interface OrgMember {
   updatedAt: string;
 }
 
+export interface Group {
+  groupId: string;
+  orgId: string;
+  tenantId: string;
+  name: string;
+  description?: string;
+  roles: BuiltInRoleId[];
+  memberIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface EffectiveAccess {
   roles: BuiltInRoleId[];
   scopes: string[];
   basis: 'tenant-owner' | 'member' | 'none';
   memberId?: string;
+  directRoles?: BuiltInRoleId[];
+  groupRoles?: BuiltInRoleId[];
 }
 
 const base = `${config.baseUrl}/v1/host/sample`;
@@ -171,4 +185,39 @@ export async function deleteMember(orgId: string, memberId: string): Promise<voi
     fetchOpts({ method: 'DELETE', headers: authedHeaders() }),
   );
   await expectOk(res, 'deleteMember');
+}
+
+// ── Groups (cross-cutting RBAC units carrying roles) ──────────────────────────
+
+export async function listGroups(orgId: string): Promise<Group[]> {
+  const res = await fetch(`${base}/orgs/${encodeURIComponent(orgId)}/groups`, fetchOpts({ headers: authedHeaders() }));
+  return (await asJson<{ groups: Group[] }>(res, 'listGroups')).groups;
+}
+
+export async function createGroup(
+  orgId: string,
+  input: { name: string; description?: string; roles?: BuiltInRoleId[]; memberIds?: string[] },
+): Promise<Group> {
+  const res = await fetch(`${base}/orgs/${encodeURIComponent(orgId)}/groups`, fetchOpts({ method: 'POST', headers: jsonHeaders(), body: JSON.stringify(input) }));
+  return asJson<Group>(res, 'createGroup');
+}
+
+export async function updateGroup(
+  orgId: string,
+  groupId: string,
+  patch: { name?: string; description?: string | null; roles?: BuiltInRoleId[]; memberIds?: string[] },
+): Promise<Group> {
+  const res = await fetch(
+    `${base}/orgs/${encodeURIComponent(orgId)}/groups/${encodeURIComponent(groupId)}`,
+    fetchOpts({ method: 'PATCH', headers: jsonHeaders(), body: JSON.stringify(patch) }),
+  );
+  return asJson<Group>(res, 'updateGroup');
+}
+
+export async function deleteGroup(orgId: string, groupId: string): Promise<void> {
+  const res = await fetch(
+    `${base}/orgs/${encodeURIComponent(orgId)}/groups/${encodeURIComponent(groupId)}`,
+    fetchOpts({ method: 'DELETE', headers: authedHeaders() }),
+  );
+  await expectOk(res, 'deleteGroup');
 }

@@ -67,7 +67,12 @@ export const PROTOCOL_SCOPES = [
  * NOT RFC 0049 protocol scopes (architect finding 3). They gate the org/team/
  * member management routes in this extension only.
  */
-export const MANAGEMENT_SCOPES = ['host:org:manage', 'host:teams:manage', 'host:members:manage'] as const;
+export const MANAGEMENT_SCOPES = [
+  'host:org:manage',
+  'host:teams:manage',
+  'host:members:manage',
+  'host:groups:manage',
+] as const;
 
 export type Scope = (typeof PROTOCOL_SCOPES)[number] | (typeof MANAGEMENT_SCOPES)[number];
 
@@ -92,13 +97,14 @@ const ADMIN_SCOPES: Scope[] = [
   'packs:yank',
   'host:teams:manage',
   'host:members:manage',
+  'host:groups:manage',
 ];
 const OWNER_SCOPES: Scope[] = [...ADMIN_SCOPES, 'host:org:manage'];
 
 export const BUILT_IN_ROLES: Record<BuiltInRoleId, AccessRole> = {
   viewer: { id: 'viewer', name: 'Viewer', description: 'Read-only access to runs, artifacts, audit, and workspace.', scopes: VIEWER_SCOPES, builtIn: true },
   editor: { id: 'editor', name: 'Editor', description: 'Create and cancel runs, write workspace, respond to approvals.', scopes: EDITOR_SCOPES, builtIn: true },
-  admin: { id: 'admin', name: 'Admin', description: 'Editor plus webhook/pack management and team/member administration.', scopes: ADMIN_SCOPES, builtIn: true },
+  admin: { id: 'admin', name: 'Admin', description: 'Editor plus webhook/pack management and team/member/group administration.', scopes: ADMIN_SCOPES, builtIn: true },
   owner: { id: 'owner', name: 'Owner', description: 'Full access including organization management.', scopes: OWNER_SCOPES, builtIn: true },
 };
 
@@ -159,9 +165,28 @@ export interface OrgMember {
   updatedAt: string;
 }
 
+/**
+ * A cross-cutting RBAC unit (distinct from a Team, which is a collaboration
+ * grouping with no authority). A Group CARRIES roles and grants them to its
+ * members — batch permission management. A member's effective roles are the
+ * union of its own `roles[]` and the roles of every group it belongs to.
+ */
+export interface Group {
+  groupId: string;
+  orgId: string;
+  tenantId: string;
+  name: string;
+  description?: string;
+  roles: BuiltInRoleId[];
+  memberIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 const orgs = new DurableCollection<Organization>('access-orgs', (o) => o.orgId);
 const teams = new DurableCollection<Team>('access-teams', (t) => t.teamId);
 const members = new DurableCollection<OrgMember>('access-members', (m) => m.memberId);
+const groups = new DurableCollection<Group>('access-groups', (g) => g.groupId);
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -228,17 +253,19 @@ export async function updateOrg(
   return org;
 }
 
-/** Delete an org and CASCADE its teams + members (architect finding 7 — no
- *  orphaned tenant-scoped rows). Returns the deleted counts. */
-export async function deleteOrg(orgId: string): Promise<{ org: boolean; teams: number; members: number }> {
+/** Delete an org and CASCADE its teams + members + groups (architect finding 7
+ *  — no orphaned tenant-scoped rows). Returns the deleted counts. */
+export async function deleteOrg(orgId: string): Promise<{ org: boolean; teams: number; members: number; groups: number }> {
   const org = await orgs.get(orgId);
-  if (!org) return { org: false, teams: 0, members: 0 };
+  if (!org) return { org: false, teams: 0, members: 0, groups: 0 };
   const orgTeams = (await teams.list()).filter((t) => t.orgId === orgId);
   const orgMembers = (await members.list()).filter((m) => m.orgId === orgId);
+  const orgGroups = (await groups.list()).filter((g) => g.orgId === orgId);
   for (const t of orgTeams) await teams.delete(t.teamId);
   for (const m of orgMembers) await members.delete(m.memberId);
+  for (const g of orgGroups) await groups.delete(g.groupId);
   await orgs.delete(orgId);
-  return { org: true, teams: orgTeams.length, members: orgMembers.length };
+  return { org: true, teams: orgTeams.length, members: orgMembers.length, groups: orgGroups.length };
 }
 
 // ── Teams ─────────────────────────────────────────────────────────────────────
@@ -368,14 +395,81 @@ export async function updateMember(
   return member;
 }
 
+/** Delete a member and remove it from any group's `memberIds`. */
 export async function deleteMember(memberId: string): Promise<boolean> {
-  return members.delete(memberId);
+  const existed = await members.delete(memberId);
+  if (existed) {
+    for (const g of (await groups.list()).filter((g) => g.memberIds.includes(memberId))) {
+      g.memberIds = g.memberIds.filter((id) => id !== memberId);
+      g.updatedAt = nowIso();
+      await groups.put(g);
+    }
+  }
+  return existed;
+}
+
+// ── Groups (cross-cutting RBAC units) ──────────────────────────────────────────
+
+export async function createGroup(input: {
+  orgId: string;
+  tenantId: string;
+  name: string;
+  description?: string;
+  roles?: BuiltInRoleId[];
+  memberIds?: string[];
+}): Promise<Group> {
+  const now = nowIso();
+  const group: Group = {
+    groupId: `grp-${randomUUID().slice(0, 8)}`,
+    orgId: input.orgId,
+    tenantId: input.tenantId,
+    name: input.name,
+    description: input.description,
+    roles: input.roles ? [...input.roles] : [],
+    memberIds: input.memberIds ? [...input.memberIds] : [],
+    createdAt: now,
+    updatedAt: now,
+  };
+  await groups.put(group);
+  return group;
+}
+
+export async function listGroups(tenantId: string, orgId: string): Promise<Group[]> {
+  return (await groups.list())
+    .filter((g) => g.tenantId === tenantId && g.orgId === orgId)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+export async function getGroup(groupId: string): Promise<Group | null> {
+  return groups.get(groupId);
+}
+
+export async function updateGroup(
+  groupId: string,
+  patch: { name?: string; description?: string | null; roles?: BuiltInRoleId[]; memberIds?: string[] },
+): Promise<Group | null> {
+  const group = await groups.get(groupId);
+  if (!group) return null;
+  if (patch.name !== undefined) group.name = patch.name;
+  if (patch.description !== undefined) {
+    if (patch.description === null) delete group.description;
+    else group.description = patch.description;
+  }
+  if (patch.roles !== undefined) group.roles = [...patch.roles];
+  if (patch.memberIds !== undefined) group.memberIds = [...patch.memberIds];
+  group.updatedAt = nowIso();
+  await groups.put(group);
+  return group;
+}
+
+export async function deleteGroup(groupId: string): Promise<boolean> {
+  return groups.delete(groupId);
 }
 
 // ── Effective-access resolution ───────────────────────────────────────────────
 
 export interface EffectiveAccess {
-  /** Resolved role ids that applied. */
+  /** Resolved role ids that applied (direct ∪ group-derived). */
   roles: BuiltInRoleId[];
   /** Union of scopes granted by those roles. */
   scopes: Scope[];
@@ -383,6 +477,10 @@ export interface EffectiveAccess {
   basis: 'tenant-owner' | 'member' | 'none';
   /** The member the resolution matched, when basis === 'member'. */
   memberId?: string;
+  /** Roles assigned directly on the member (provenance, when basis === 'member'). */
+  directRoles?: BuiltInRoleId[];
+  /** Roles inherited via group membership (provenance, when basis === 'member'). */
+  groupRoles?: BuiltInRoleId[];
 }
 
 /**
@@ -390,8 +488,9 @@ export interface EffectiveAccess {
  *
  * FAIL-CLOSED (RFC 0049): if a specific member is requested (by memberId or
  * subject) and not found, the result is empty (`none`). Authority is computed
- * ONLY from the member's explicit `roles[]` — NEVER from org-chart position
- * (RFC 0087 §B). The org-chart is not consulted here at all.
+ * ONLY from the member's explicit `roles[]` plus the roles of any GROUP it
+ * belongs to — NEVER from org-chart position (RFC 0087 §B). The org-chart is
+ * not consulted here at all.
  *
  * Tenant-owner exception: when no member context is supplied, the caller is
  * the tenant's own principal (tenant == principal in this demo host) and is
@@ -409,8 +508,14 @@ export async function resolveEffectiveAccess(
         (opts.memberId !== undefined ? m.memberId === opts.memberId : m.subject === opts.subject),
     );
     if (!member) return { roles: [], scopes: [], basis: 'none' };
-    const roles = member.roles.filter(isBuiltInRoleId);
-    return { roles, scopes: scopesForRoles(roles), basis: 'member', memberId: member.memberId };
+    const directRoles = member.roles.filter(isBuiltInRoleId);
+    // Roles inherited via group membership (batch permission management).
+    const memberGroups = (await groups.list()).filter(
+      (g) => g.tenantId === tenantId && g.memberIds.includes(member.memberId),
+    );
+    const groupRoles = [...new Set(memberGroups.flatMap((g) => g.roles.filter(isBuiltInRoleId)))];
+    const roles = [...new Set([...directRoles, ...groupRoles])];
+    return { roles, scopes: scopesForRoles(roles), basis: 'member', memberId: member.memberId, directRoles, groupRoles };
   }
   // No member context → the tenant owner principal, implicitly `owner`.
   return { roles: ['owner'], scopes: [...OWNER_SCOPES], basis: 'tenant-owner' };
@@ -422,4 +527,5 @@ export async function __resetAccessStores(): Promise<void> {
   await orgs.__clear();
   await teams.__clear();
   await members.__clear();
+  await groups.__clear();
 }

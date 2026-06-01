@@ -20,6 +20,7 @@ import {
   listOrgs,
   getOrg,
   createMember,
+  createGroup,
   __resetAccessStores,
   BUILT_IN_ROLES,
 } from '../src/host/accessControlService.js';
@@ -139,6 +140,33 @@ describe('access-control host-extension — HTTP', () => {
     expect(preview.body.scopes).not.toContain('runs:create');
   });
 
+  it('groups carry roles and grant them to members (batch RBAC, group-derived scopes)', async () => {
+    const org = await api<Org>('/v1/host/sample/orgs', { method: 'POST', body: JSON.stringify({ name: 'Group Co' }) });
+    const orgId = org.body.orgId;
+    // A member with NO direct role beyond viewer.
+    const m = await api<Member>(`/v1/host/sample/orgs/${orgId}/members`, {
+      method: 'POST',
+      body: JSON.stringify({ displayName: 'Grace', roles: ['viewer'] }),
+    });
+    // A group that carries `editor` and contains the member.
+    const grp = await api<{ groupId: string; roles: string[]; memberIds: string[] }>(
+      `/v1/host/sample/orgs/${orgId}/groups`,
+      { method: 'POST', body: JSON.stringify({ name: 'Editors', roles: ['editor'], memberIds: [m.body.memberId] }) },
+    );
+    expect(grp.status).toBe(201);
+
+    const list = await api<{ groups: Array<{ groupId: string }> }>(`/v1/host/sample/orgs/${orgId}/groups`);
+    expect(list.body.groups.some((g) => g.groupId === grp.body.groupId)).toBe(true);
+
+    // Effective access now unions direct (viewer) + group (editor) → editor scopes.
+    const eff = await api<{ roles: string[]; scopes: string[]; directRoles: string[]; groupRoles: string[] }>(
+      `/v1/host/sample/access/effective?memberId=${m.body.memberId}`,
+    );
+    expect(eff.body.directRoles).toEqual(['viewer']);
+    expect(eff.body.groupRoles).toContain('editor');
+    expect(eff.body.scopes).toContain('runs:create'); // came from the group, not the direct role
+  });
+
   it('404s a foreign/unknown orgId rather than leaking it', async () => {
     const res = await api('/v1/host/sample/orgs/org-doesnotexist');
     expect(res.status).toBe(404);
@@ -191,5 +219,20 @@ describe('access-control — protocol-safety guardrails (service unit)', () => {
     // to viewer scopes, period — no authority from position.
     const access = await resolveEffectiveAccess('iso-D', { memberId: m.memberId });
     expect(access.scopes.sort()).toEqual([...BUILT_IN_ROLES.viewer.scopes].sort());
+  });
+
+  it('unions group-carried roles into a member\'s effective access (and stays tenant-scoped)', async () => {
+    const org = await createOrg({ tenantId: 'iso-E', createdBy: 'iso-E', name: 'E Org' });
+    const m = await createMember({ orgId: org.orgId, tenantId: 'iso-E', displayName: 'Gina', subject: 'gina@e', roles: ['viewer'] });
+    await createGroup({ orgId: org.orgId, tenantId: 'iso-E', name: 'Admins', roles: ['admin'], memberIds: [m.memberId] });
+    // A group in ANOTHER tenant must not leak its roles in.
+    await createGroup({ orgId: org.orgId, tenantId: 'iso-OTHER', name: 'Foreign', roles: ['owner'], memberIds: [m.memberId] });
+
+    const eff = await resolveEffectiveAccess('iso-E', { memberId: m.memberId });
+    expect(eff.directRoles).toEqual(['viewer']);
+    expect(eff.groupRoles).toContain('admin');
+    expect(eff.groupRoles).not.toContain('owner'); // foreign-tenant group ignored
+    expect(eff.scopes).toContain('webhooks:manage'); // admin-only, via the group
+    expect(eff.scopes).not.toContain('host:org:manage'); // owner-only, correctly absent
   });
 });

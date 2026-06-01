@@ -17,25 +17,30 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Notice } from '../ui/Notice.js';
 import { StateCard } from '../ui/StateCard.js';
-import { BriefcaseIcon, ColumnsIcon, PencilIcon, ShieldIcon, TrashIcon, UserIcon } from '../ui/icons/index.js';
+import { BriefcaseIcon, ColumnsIcon, LockIcon, PencilIcon, ShieldIcon, TrashIcon, UserIcon } from '../ui/icons/index.js';
 import {
   type AccessRole,
   type BuiltInRoleId,
   type EffectiveAccess,
+  type Group,
   type Organization,
   type OrgMember,
   type Team,
+  createGroup,
   createMember,
   createOrg,
   createTeam,
+  deleteGroup,
   deleteMember,
   deleteOrg,
   deleteTeam,
   getEffectiveAccess,
+  listGroups,
   listMembers,
   listOrgs,
   listRoles,
   listTeams,
+  updateGroup,
   updateMember,
 } from '../client/accessClient.js';
 
@@ -55,6 +60,7 @@ export function OrgsPage(): JSX.Element {
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [members, setMembers] = useState<OrgMember[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [roles, setRoles] = useState<AccessRole[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,6 +79,12 @@ export function OrgsPage(): JSX.Element {
   const [accessFor, setAccessFor] = useState<string | null>(null);
   const [access, setAccess] = useState<EffectiveAccess | null>(null);
 
+  // Create-group form + inline group-membership editor.
+  const [groupName, setGroupName] = useState('');
+  const [groupRoles, setGroupRoles] = useState<Set<BuiltInRoleId>>(new Set(['editor']));
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [draftGroupMembers, setDraftGroupMembers] = useState<Set<string>>(new Set());
+
   const fail = (err: unknown) => setError(err instanceof Error ? err.message : String(err));
 
   const loadOrgs = useCallback(async () => {
@@ -88,9 +100,10 @@ export function OrgsPage(): JSX.Element {
 
   const loadOrgDetail = useCallback(async (orgId: string) => {
     try {
-      const [t, m] = await Promise.all([listTeams(orgId), listMembers(orgId)]);
+      const [t, m, g] = await Promise.all([listTeams(orgId), listMembers(orgId), listGroups(orgId)]);
       setTeams(t);
       setMembers(m);
+      setGroups(g);
       setError(null);
     } catch (err) {
       fail(err);
@@ -224,6 +237,56 @@ export function OrgsPage(): JSX.Element {
       fail(err);
     }
   };
+
+  // ── Group actions ──
+  const toggleStr = (set: Set<string>, id: string): Set<string> => {
+    const next = new Set(set);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    return next;
+  };
+
+  const onCreateGroup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedOrgId || !groupName.trim()) return;
+    try {
+      await createGroup(selectedOrgId, { name: groupName.trim(), roles: [...groupRoles] });
+      setGroupName('');
+      setGroupRoles(new Set(['editor']));
+      await loadOrgDetail(selectedOrgId);
+    } catch (err) {
+      fail(err);
+    }
+  };
+
+  const onDeleteGroup = async (g: Group) => {
+    if (!selectedOrgId) return;
+    if (!window.confirm(`Delete group "${g.name}"? Members keep their direct roles.`)) return;
+    try {
+      await deleteGroup(selectedOrgId, g.groupId);
+      await loadOrgDetail(selectedOrgId);
+    } catch (err) {
+      fail(err);
+    }
+  };
+
+  const startEditGroup = (g: Group) => {
+    setEditingGroupId(g.groupId);
+    setDraftGroupMembers(new Set(g.memberIds));
+  };
+
+  const onSaveGroupMembers = async (g: Group) => {
+    if (!selectedOrgId) return;
+    try {
+      await updateGroup(selectedOrgId, g.groupId, { memberIds: [...draftGroupMembers] });
+      setEditingGroupId(null);
+      await loadOrgDetail(selectedOrgId);
+    } catch (err) {
+      fail(err);
+    }
+  };
+
+  const nameOfMember = (id: string): string => members.find((m) => m.memberId === id)?.displayName ?? id;
 
   return (
     <section style={{ padding: '1rem', maxWidth: 1040 }}>
@@ -408,6 +471,76 @@ export function OrgsPage(): JSX.Element {
                             ))
                           )}
                         </div>
+                      </div>
+                    ) : null}
+                  </div>
+                ))
+              )}
+
+              {/* Groups — cross-cutting role bundles */}
+              <h3 style={{ fontSize: '0.9rem', marginTop: 'var(--space-5)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                <LockIcon size={15} /> Groups <span style={muted}>· role bundles</span>
+              </h3>
+              <p style={muted}>
+                A group bundles roles and grants them to its members — on top of each member&rsquo;s own
+                roles. Use it for batch access management (e.g. &ldquo;Editors&rdquo;, &ldquo;Admins&rdquo;).
+              </p>
+              <form onSubmit={onCreateGroup} className="action-bar" style={{ flexWrap: 'wrap', marginBottom: 'var(--space-2)' }}>
+                <input value={groupName} onChange={(e) => setGroupName(e.target.value)} placeholder="New group name" aria-label="New group name" />
+                <span className="action-bar" style={{ gap: '6px' }}>
+                  {ALL_ROLES.map((role) => (
+                    <label key={role} className={groupRoles.has(role) ? ROLE_CHIP[role] : 'chip chip--muted'} style={{ cursor: 'pointer' }}>
+                      <input type="checkbox" checked={groupRoles.has(role)} onChange={() => setGroupRoles((s) => toggle(s, role))} style={{ marginRight: 4 }} />
+                      {role}
+                    </label>
+                  ))}
+                </span>
+                <button type="submit" className="primary" disabled={!groupName.trim()}>Add group</button>
+              </form>
+              {groups.length === 0 ? (
+                <p style={muted}>No groups yet.</p>
+              ) : (
+                groups.map((g) => (
+                  <div key={g.groupId} className="surface-card" style={{ marginBottom: 'var(--space-2)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 'var(--space-2)' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                        <LockIcon size={14} /> <strong>{g.name}</strong>
+                      </span>
+                      <span className="action-bar">
+                        <button type="button" className="secondary" onClick={() => startEditGroup(g)} aria-label={`Edit members of ${g.name}`}>
+                          <PencilIcon size={13} /> Members
+                        </button>
+                        <button type="button" className="secondary" onClick={() => void onDeleteGroup(g)} aria-label={`Delete group ${g.name}`}>
+                          <TrashIcon size={13} />
+                        </button>
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+                      {g.roles.length === 0 ? <span className="chip chip--muted">no roles</span> : g.roles.map((r) => <span key={r} className={ROLE_CHIP[r]}>{r}</span>)}
+                    </div>
+                    <div style={{ ...muted, marginTop: '4px' }}>
+                      {g.memberIds.length} member{g.memberIds.length === 1 ? '' : 's'}
+                      {g.memberIds.length ? `: ${g.memberIds.map(nameOfMember).join(', ')}` : ''}
+                    </div>
+                    {editingGroupId === g.groupId ? (
+                      <div className="action-bar" style={{ flexWrap: 'wrap', marginTop: 'var(--space-2)' }}>
+                        {members.length === 0 ? (
+                          <span style={muted}>Add members to the org first.</span>
+                        ) : (
+                          members.map((m) => (
+                            <label key={m.memberId} className={draftGroupMembers.has(m.memberId) ? 'chip chip--accent' : 'chip chip--muted'} style={{ cursor: 'pointer' }}>
+                              <input
+                                type="checkbox"
+                                checked={draftGroupMembers.has(m.memberId)}
+                                onChange={() => setDraftGroupMembers((s) => toggleStr(s, m.memberId))}
+                                style={{ marginRight: 4 }}
+                              />
+                              {m.displayName}
+                            </label>
+                          ))
+                        )}
+                        <button type="button" className="primary" onClick={() => void onSaveGroupMembers(g)}>Save</button>
+                        <button type="button" className="secondary" onClick={() => setEditingGroupId(null)}>Cancel</button>
                       </div>
                     ) : null}
                   </div>
