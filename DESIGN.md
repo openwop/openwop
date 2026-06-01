@@ -111,6 +111,7 @@ The page composes from a small fixed set. Adding a new component is a design dec
 | `.foot` + `.foot-grid` + `.foot-mark` | footer | 4-column at desktop; 2-col + brand spanning at ≤760px |
 | `.demo-flow` + `li` | numbered "what to try" grid (Try-it-live block) | 3-up at desktop, 2-up ≤920, 1-up ≤640; `.demo-k` marker in clay; serif italic h3; hover tint clay-wash |
 | `.star-cta` + `.btn-star` | "Star on GitHub" callout band | clay-wash band with a 2-col grid (text + ink-on-paper inline-flex button); stacks ≤920; button is excepted from the auto-`↗` rule; star glyph uses `--star-glow` |
+| `.selfhost-card` + `.sh-body` | single self-host CTA band (§09 Get-started) | full `--rule` border + radius, paper bg, clay-wash + clay-rule hover; flex row (body left, `.actions` button right) that wraps to stacked ≤640; reuses `.proof-k` marker + serif-italic `h3`. NOT a `.proof-card` (those are top/left-bordered cells for a multi-up grid) |
 
 Any new card must inherit a border-only or rule-only style — never a shadow heavier than the terminal's, never a gradient that competes with the page paper background.
 
