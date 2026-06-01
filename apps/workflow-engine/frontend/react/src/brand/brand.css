@@ -1,0 +1,51 @@
+/* ───────────────────────────────────────────────────────────────────────
+ * WHITE-LABEL OVERRIDE LAYER
+ *
+ * This file is the ONE place to re-skin the app's colors and typography.
+ * It loads AFTER `src/styles/global.css` (see `index.html`), so any
+ * custom property declared here wins the cascade without touching the
+ * shared editorial palette in `global.css :root` — which is under a
+ * lockstep sync rule with the marketing site's `public/styles.css`
+ * (DESIGN.app.md §2) and MUST NOT be edited for a re-brand.
+ *
+ * Ships EMPTY by default: with no overrides the app renders the stock
+ * OpenWOP identity, byte-for-byte. Uncomment a token below and set your
+ * own value to take it over. See `WHITE-LABEL.md` for the full token
+ * catalog and a worked example.
+ *
+ * Brand STRINGS and ASSET PATHS (product name, logo, favicon, title)
+ * are configured separately via `VITE_BRAND_*` env vars / `brand/defaults.ts`.
+ * ─────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── Brand accent + surface palette ──────────────────────────────────
+   * The warm "clay" accent and "paper" surfaces are the app's primary
+   * brand colors. `--clay` accepts any CSS color; the derived alpha
+   * variants below re-tint themselves from it via color-mix, so in most
+   * cases you only need to set `--clay`. */
+  /* --clay:      oklch(58% 0.13 40);   */ /* primary accent (buttons, links, active nav) */
+  /* --paper:     #f4f1ea;              */ /* page background */
+  /* --paper-2:   #ece8de;              */ /* alternate surface (assistant bubble, etc.) */
+  /* --ink:       #1a1a17;              */ /* primary text */
+  /* --ink-2:     #4a4842;              */ /* secondary text */
+  /* --ink-3:     #837f72;              */ /* muted text */
+  /* --rule:      #d9d4c5;              */ /* hairline borders */
+
+  /* ── Typography ──────────────────────────────────────────────────────
+   * Pair with a matching font `<link>` via `VITE_BRAND_FONTS_HREF`
+   * (build-time HTML) so the families are actually loaded. */
+  /* --serif: "Instrument Serif", "Times New Roman", serif; */ /* headings + wordmark */
+  /* --sans:  "Geist", ui-sans-serif, system-ui, sans-serif; */ /* body + UI */
+  /* --mono:  "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace; */ /* code */
+
+  /* ── Functional / status colors (optional) ───────────────────────────
+   * Semantic run-state colors. Keep these legible on your `--paper`.
+   * Per DESIGN.app.md §3 these are functional, not brand — only override
+   * if your surface needs it. They also drive the pack-registry flags and
+   * agent-trace strips (token-mapped in global.css), so overriding them
+   * re-skins those surfaces too. */
+  /* --color-success: oklch(62% 0.13 145); */
+  /* --color-warning: oklch(72% 0.14 75);  */
+  /* --color-danger:  oklch(55% 0.16 28);  */
+  /* --color-ai:      oklch(60% 0.12 280);  */
+}

@@ -199,4 +199,22 @@ describe('agents-demo backend foundations', () => {
     });
     expect(rejected.status).toBe(400);
   });
+
+  it('skips demo seeding entirely when OPENWOP_DEMO_SEED_ENABLED=false (white-label)', async () => {
+    // The toggle is read per-call, so a branded deployment can ship a clean
+    // tenant with no demo personas. Early-return shape is `agents: 0`, distinct
+    // from the idempotent no-op (`seeded:false, agents:5`).
+    process.env.OPENWOP_DEMO_SEED_ENABLED = 'false';
+    try {
+      const res = await api<{ seeded: boolean; agents: number }>('/v1/host/sample/demo/seed', {
+        method: 'POST',
+        body: '{}',
+      });
+      expect(res.status).toBe(200);
+      expect(res.body.seeded).toBe(false);
+      expect(res.body.agents).toBe(0);
+    } finally {
+      delete process.env.OPENWOP_DEMO_SEED_ENABLED;
+    }
+  });
 });

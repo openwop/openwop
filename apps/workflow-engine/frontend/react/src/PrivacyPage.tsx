@@ -6,7 +6,14 @@
  * Linked from the DemoHostBanner. If/when Phase 3 (Firebase Auth +
  * persistent Cloud SQL backend) lands, this page expands with the
  * signed-in retention rules.
+ *
+ * White-label note: the brand-bound tokens (domain, home/repo URLs) read
+ * from `brand` so a re-deploy reflects them automatically. The legal/
+ * operational specifics below (cookie name, Cloud Run, retention windows,
+ * the steward contact) are deployment-specific — adopters should review
+ * and rewrite this page for their own service. See WHITE-LABEL.md.
  */
+import { brand } from './brand/brand.js';
 
 export function PrivacyPage() {
   return (
@@ -14,7 +21,7 @@ export function PrivacyPage() {
       <div className="card">
         <h2>Privacy &amp; cookies</h2>
         <p className="muted">
-          Last updated 2026-05-17 · Applies to <code>app.openwop.dev</code> only
+          Last updated 2026-05-17 · Applies to <code>{brand.primaryDomain}</code> only
         </p>
 
         <h3>The one cookie we set</h3>
@@ -24,7 +31,7 @@ export function PrivacyPage() {
         </p>
         <pre>
 {`Name:    openwop.session
-Domain:  app.openwop.dev
+Domain:  ${brand.primaryDomain}
 Path:    /
 Max-Age: 86400 seconds (24 hours)
 Flags:   HttpOnly; Secure; SameSite=Lax`}
@@ -107,7 +114,7 @@ Flags:   HttpOnly; Secure; SameSite=Lax`}
 
         <h3>How to delete your data immediately</h3>
         <ol>
-          <li>Clear cookies for <code>app.openwop.dev</code> in your browser.</li>
+          <li>Clear cookies for <code>{brand.primaryDomain}</code> in your browser.</li>
           <li>Your session ID is gone, and the backend's in-memory state for it becomes
               unreachable; the daily cleanup endpoint will wipe it within 24h.</li>
         </ol>
@@ -123,9 +130,9 @@ Flags:   HttpOnly; Secure; SameSite=Lax`}
         <h3>Contact</h3>
         <p>
           The protocol's single steward is reachable via the contact email on
-          <a href="https://openwop.dev/" target="_blank" rel="noopener">openwop.dev</a>.
+          <a href={brand.homeUrl} target="_blank" rel="noopener">{brand.homeUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}</a>.
           For security disclosures see <code>SECURITY.md</code> in the
-          <a href="https://github.com/openwop/openwop" target="_blank" rel="noopener">openwop/openwop</a> repo.
+          <a href={brand.repoUrl} target="_blank" rel="noopener">{brand.repoUrl.replace(/^https?:\/\/(www\.)?github\.com\//, '').replace(/\/$/, '')}</a> repo.
         </p>
       </div>
     </section>

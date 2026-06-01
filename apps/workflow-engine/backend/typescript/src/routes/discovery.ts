@@ -8,7 +8,7 @@
 
 import { createHash } from 'node:crypto';
 import type { Express } from 'express';
-import type { AppConfig } from '../index.js';
+import { DEFAULT_SERVICE_DESCRIPTION, type AppConfig } from '../index.js';
 import { listCapabilities } from '../executor/runtimeCapabilities.js';
 import type { Storage } from '../storage/storage.js';
 import { listHostSurfaces } from '../bootstrap/hostSurfaceRegistry.js';
@@ -64,10 +64,12 @@ export function registerDiscoveryRoutes(app: Express, _deps: Deps): void {
     res.json({
       openapi: '3.1.0',
       info: {
-        title: 'openwop-workflow-engine-sample',
+        // Brand-driven, not hard-coded: title + description flow from the
+        // service config (OPENWOP_SERVICE_NAME / OPENWOP_SERVICE_DESCRIPTION)
+        // so a white-label host doesn't emit "openwop" strings it didn't set.
+        title: _deps.config.serviceName,
         version: _deps.config.serviceVersion,
-        description:
-          'Sample OpenWOP host. See https://openwop.dev for the canonical OpenAPI 3.1 spec.',
+        description: _deps.config.serviceDescription ?? DEFAULT_SERVICE_DESCRIPTION,
       },
       paths: {
         '/v1/runs': { post: { summary: 'Create a run' } },

@@ -28,6 +28,7 @@ import type { BYOKActiveConfig } from '../../byok/lib/useBYOKConfig.js';
 import { useApplyAnimation } from './useApplyAnimation.js';
 import { useActiveAgents, type UseActiveAgentsResult } from '../activeAgents/useActiveAgents.js';
 import { isRecord } from '../lib/typeGuards.js';
+import { brand } from '../../brand/brand.js';
 import { getSavedWorkflow } from '../../builder/persistence/localStore.js';
 import { serializeWorkflow } from '../../builder/schema/serialize.js';
 import { registerWorkflow } from '../../builder/persistence/registerClient.js';
@@ -124,8 +125,8 @@ function updateEnvelopeEvents(
 // file.
 
 const SYSTEM_PROMPT =
-  'You are a helpful AI assistant inside the OpenWOP workflow-engine sample. ' +
-  'Keep responses concise. If the user asks about OpenWOP itself, explain what you know honestly.';
+  `You are a helpful AI assistant inside the ${brand.assistantName} workflow-engine sample. ` +
+  `Keep responses concise. If the user asks about ${brand.assistantName} itself, explain what you know honestly.`;
 
 // LocalStorage session index — list of session HEADERS the drawer can
 // fall back to when the BE write-through is in a cold-start / 401 state

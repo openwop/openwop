@@ -33,6 +33,8 @@ import { AgentNewPage } from './agents/AgentNewPage.js';
 import { AgentDashboardPage } from './agents/AgentDashboardPage.js';
 import { AgentWorkspacePage } from './agents/AgentWorkspacePage.js';
 import { AgentCreateWizard } from './agents/AgentCreateWizard.js';
+import { BrandMark } from './brand/BrandMark.js';
+import { brand } from './brand/brand.js';
 import { OrgsPage } from './orgs/OrgsPage.js';
 
 export function App() {
@@ -66,10 +68,7 @@ export function App() {
     <div className={isChatPage ? 'app-shell app-shell--ai' : 'app-shell'}>
       <DemoHostBanner />
       <header className="app-header">
-        <h1 className="brand-mark">
-          <img src="/OpenWOP.svg" alt="" aria-hidden="true" />
-          <span>Open<em>WOP</em> <span className="app-header-sub">workflow engine</span></span>
-        </h1>
+        <BrandMark />
         <nav>
           {/* Chat stays top-level — the most-used entry point. The
               other 8 nav items used to be flat siblings here; they're
@@ -185,7 +184,7 @@ export function App() {
         </Routes>
       </main>
       <footer className="app-footer">
-        Sample / template code. Not production-hardened. ·{' '}
+        {brand.footerText} ·{' '}
         <Link to="/privacy">Privacy</Link>
       </footer>
       <NetworkPanel open={netOpen} onClose={() => setNetOpen(false)} />
