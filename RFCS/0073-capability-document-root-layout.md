@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0073 |
 | **Title** | Capability families are document-root properties of `/.well-known/openwop` |
-| **Status** | `Draft` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@dtufts, steward) |
 | **Created** | 2026-05-27 |
-| **Updated** | 2026-05-27 |
+| **Updated** | 2026-05-31 (Draft → Accepted: the root layout is the normative MUST since Phase 1, all four+ reference hosts serve root since Phase 3, and Phase 4 now makes the conformance suite **enforce** root by dropping the accessor's wrapper-fallback — a wrapper-only host grades as non-conformant. Both Unresolved Questions resolved: the host-side mirror affordance and the schema's `additionalProperties` tolerance retire **together at v2.0**, when `capabilities.schema.json` tightens to forbid the wrapper. They are paired because both serve laggard *clients* reading discovery during the v1.x window; removing the mirror while the schema stays permissive would be incoherent.) |
 | **Affects** | `spec/v1/capabilities.md`, `conformance/src/lib/*`, `conformance/src/scenarios/*`, `apps/workflow-engine/.../routes/discovery.ts`, `INTEROP-MATRIX.md` |
 | **Compatibility** | `safety-fix` (corrective; brings implementations + suite to the schema's existing shape — no normative wire-shape change) per `COMPATIBILITY.md` |
 | **Supersedes** | — |
@@ -188,14 +188,22 @@ waiver for this corpus the additive-clarification window is waived
 
 ## Unresolved questions
 
-1. Window length for removing the wrapper-fallback from the accessor + the
-   reference-host mirror (Phase 4). Proposed: one minor release after all four
-   reference hosts (`in-memory`/`apps`, `sqlite`, `postgres`, `python`) emit at
-   the root. Maintainer to set the concrete release.
-2. Whether to additionally tighten `capabilities.schema.json` to *forbid* a
-   top-level `capabilities` property (set `additionalProperties`-level rule)
-   once the window closes, or leave `additionalProperties: true` with the prose
-   `SHOULD NOT`. Deferred to Phase 4.
+Both resolved at `Draft → Accepted` (2026-05-31):
+
+1. **Window length / what moves when.** *Resolved:* the change splits across two
+   release boundaries by what each piece tests. The **conformance suite**'s
+   wrapper-fallback is dropped **now** (v1.x) — the suite grades the *normative*
+   shape (root MUST), so enforcing root-only is correct in v1.x and a wrapper-only
+   host is non-conformant. The **host-side mirror** is a backward-compat affordance
+   for laggard *clients* reading discovery, so it stays for the v1.x window and is
+   removed at **v2.0**, paired with Q2.
+2. **Schema forbid vs `SHOULD NOT`.** *Resolved:* leave `additionalProperties: true`
+   with the prose `SHOULD NOT` for v1.x (forbidding the wrapper in-schema now is a
+   breaking change under `COMPATIBILITY.md` §2.2 for any host still emitting the
+   deprecated mirror). Tighten `capabilities.schema.json` to **forbid** the
+   top-level `capabilities` property at **v2.0**, together with the host-mirror
+   removal (Q1) — the permissive schema and the mirror are the same affordance and
+   retire as one.
 
 ## Implementation notes (non-normative)
 
@@ -216,9 +224,17 @@ waiver for this corpus the additive-clarification window is waived
   honesty gap where the hosts' root-read profile claims (`openwop-secrets`,
   `openwop-provider-policy`) were unverifiable against their previously nested-only
   shape.
-- **Phase 4 (remaining):** one minor release after all hosts are confirmed
-  root-serving, drop the accessor's wrapper fallback + the host mirrors, and decide
-  whether to tighten `capabilities.schema.json` to forbid the wrapper (Unresolved Q2).
+- **Phase 4 (v1.x — this release, #DONE):** drop the accessor's wrapper-fallback
+  in `conformance/src/lib/discovery-capabilities.ts` so the suite reads the document
+  root only and enforces the Phase-1 MUST (a wrapper-only host grades as
+  non-conformant). Tighten the `capabilities.md` prose to separate the suite
+  (root-only) from clients (MAY fall back during the window).
+- **Phase 5 (v2.0 — deferred, tracked):** remove the deprecated host-side
+  `capabilities` mirror from the reference hosts AND tighten
+  `capabilities.schema.json` to forbid the top-level `capabilities` property. These
+  move together: both are v1.x backward-compat affordances for clients still reading
+  the wrapper, so retiring one without the other is incoherent. Gated on the v2.0
+  major (the schema forbid is a breaking change under `COMPATIBILITY.md` §2.2).
 - **Separate gap (not this RFC):** `replay`, `interrupts`, `stream`, `runs`,
   `webhooks` are referenced by hosts/profiles but are not yet root properties in
   `capabilities.schema.json` (tolerated only by `additionalProperties: true`).
@@ -231,8 +247,9 @@ waiver for this corpus the additive-clarification window is waived
 - [x] Conformance suite reads root-first via one shared accessor; wrapper readers migrated.
 - [x] CHANGELOG entry under `[Unreleased]`.
 - [x] All four reference hosts emit families at the document root (+ deprecated mirror).
-- [x] All 78 capability-gated scenarios read via the root-first accessor, so RFC 0070's `agent-manifest-runtime` scenario (and the rest) grade a root-serving host instead of soft-skipping.
-- [ ] Phase 4: drop the wrapper fallback + host mirrors (one minor release after all hosts confirmed root-serving).
+- [x] All 78 capability-gated scenarios read via the root-only accessor, so RFC 0070's `agent-manifest-runtime` scenario (and the rest) grade a root-serving host instead of soft-skipping.
+- [x] Phase 4 (v1.x): accessor wrapper-fallback dropped — the suite reads the document root only and grades a wrapper-only host as non-conformant; prose separates suite (root-only) from clients (MAY fall back during the window).
+- [ ] Phase 5 (v2.0, deferred): remove the host-side mirror + tighten `capabilities.schema.json` to forbid the wrapper (paired; breaking, gated on the v2.0 major).
 
 ## References
 

@@ -35,9 +35,9 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 70 |
+| Accepted | 71 |
 | Active | 13 |
-| Draft | 4 |
+| Draft | 3 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -113,7 +113,7 @@
 | RFC 0070 | Agent Manifest Runtime Capability (`agents.manifestRuntime`) | Accepted |
 | RFC 0071 | Artifact-Type Packs and AI Chat Card Packs | Accepted |
 | RFC 0072 | Agent Inventory + Dispatch Normative Surface | Accepted |
-| RFC 0073 | Capability families are document-root properties of `/.well-known/openwop` | Draft |
+| RFC 0073 | Capability families are document-root properties of `/.well-known/openwop` | Accepted |
 | RFC 0074 | Tenant-Scoped Manifest-Agent Inventory | Accepted |
 | RFC 0075 | Artifact-Type Packs - real-world adoption amendment | Active |
 | RFC 0076 | Pack runtime-requirements declaration + host-provided safe-fetch | Accepted |
@@ -167,7 +167,7 @@
 
 ## Active Follow-Ups
 
-- 4 RFCs still `Draft` (RFC 0038, RFC 0043, RFC 0050, RFC 0073) — advance with schema/conformance proof or defer.
+- 3 RFCs still `Draft` (RFC 0038, RFC 0043, RFC 0050) — advance with schema/conformance proof or defer.
 - 13 RFCs `Active` (RFC 0035, RFC 0042, RFC 0065, RFC 0066, RFC 0067, RFC 0068, RFC 0069, RFC 0075, RFC 0078, RFC 0079, RFC 0080, RFC 0084, RFC 0085) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
