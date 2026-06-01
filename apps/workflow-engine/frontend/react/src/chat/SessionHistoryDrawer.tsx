@@ -191,10 +191,10 @@ export function SessionHistoryDrawer({
                         padding: '6px 12px',
                         cursor: 'pointer',
                         background: isActive
-                          ? 'color-mix(in oklch, var(--color-clay) 18%, transparent)'
+                          ? 'color-mix(in oklch, var(--color-accent) 18%, transparent)'
                           : 'transparent',
                         borderLeft: isActive
-                          ? '2px solid var(--color-clay)'
+                          ? '2px solid var(--color-accent)'
                           : '2px solid transparent',
                       }}
                       onClick={() => { if (!isRenaming) onSelect(s.sessionId); }}

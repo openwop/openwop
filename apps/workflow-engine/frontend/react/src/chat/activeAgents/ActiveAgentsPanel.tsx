@@ -184,7 +184,7 @@ function ActiveAgentRowView({
             textAlign: 'left',
             padding: '6px 8px',
             background: isCurrent
-              ? 'color-mix(in oklch, var(--color-clay, var(--clay)) 14%, transparent)'
+              ? 'color-mix(in oklch, var(--color-accent) 14%, transparent)'
               : 'transparent',
             border: 'none',
             borderLeft: isCurrent
