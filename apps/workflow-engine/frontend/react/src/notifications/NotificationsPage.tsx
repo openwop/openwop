@@ -136,7 +136,7 @@ export function NotificationsPage(): JSX.Element {
           key={n.notificationId}
           notification={n}
           onArchive={() => void archive(n.notificationId)}
-          onDelete={() => void deleteN(n.notificationId)}
+          onDelete={() => { if (window.confirm("Delete this notification? This can't be undone — use Archive to dismiss without deleting.")) void deleteN(n.notificationId); }}
           onResolved={() => {
             // After an interrupt is resolved, archive the notification
             // and re-fetch — the BE may have emitted a follow-up event
