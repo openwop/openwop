@@ -144,6 +144,17 @@ describe('agents-demo backend foundations', () => {
     const detail = await api<{ cards: Array<{ id: string; columnId: string }> }>(`/v1/host/sample/kanban/boards/${board.id}`);
     const movedCard = detail.body.cards.find((c) => c.id === checked.body.cardId)!;
     expect(movedCard.columnId).toBe('working');
+
+    // The activity feed surfaces that run with its outcome + a timestamp.
+    const activity = await api<{ items: Array<{ runId: string; status: string; source: string; timestamp: string }> }>(
+      `/v1/host/sample/roster/${sally.rosterId}/activity`,
+    );
+    expect(activity.status).toBe(200);
+    const entry = activity.body.items.find((i) => i.runId === checked.body.runId)!;
+    expect(entry).toBeTruthy();
+    expect(entry.source).toBe('heartbeat');
+    expect(entry.status).toBe('completed');
+    expect(Number.isNaN(Date.parse(entry.timestamp))).toBe(false);
   });
 
   it('scheduler jobs are durable + roster-filterable, and :trigger starts a run', async () => {

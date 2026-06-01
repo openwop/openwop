@@ -113,6 +113,28 @@ export async function checkAgent(rosterId: string): Promise<HeartbeatResult> {
   return (await res.json()) as HeartbeatResult;
 }
 
+/** One activity item — a run attributed to the agent, with its outcome + time. */
+export interface AgentActivityItem {
+  runId: string;
+  workflowId: string;
+  /** RunStatus: pending | running | completed | failed | … */
+  status: string;
+  /** How the run was triggered. */
+  source: 'heartbeat' | 'schedule' | 'kanban';
+  /** The board card that triggered it (heartbeat / kanban), when known. */
+  cardId?: string;
+  /** ISO-8601 — terminal time, else last-update / creation. */
+  timestamp: string;
+}
+
+/** Per-agent activity: recent runs (heartbeat / schedule / card triggers) with
+ *  timestamps + outcomes, newest first. */
+export async function getAgentActivity(rosterId: string): Promise<AgentActivityItem[]> {
+  const res = await fetch(`${rosterBase}/${encodeURIComponent(rosterId)}/activity`, fetchOpts({ headers: authedHeaders() }));
+  if (!res.ok) throw new Error(`getAgentActivity returned ${res.status}`);
+  return ((await res.json()) as { items: AgentActivityItem[] }).items;
+}
+
 export async function getOrgChart(): Promise<OrgChart> {
   const res = await fetch(orgBase, fetchOpts({ headers: authedHeaders() }));
   if (!res.ok) throw new Error(`getOrgChart returned ${res.status}`);

@@ -16,7 +16,7 @@ import { AgentWorkflowPortfolioPanel } from './AgentWorkflowPortfolioPanel.js';
 import { AgentSchedulesPanel } from './AgentSchedulesPanel.js';
 import { AgentInstructionsPanel } from './AgentInstructionsPanel.js';
 import { AgentIntegrationsPanel } from './AgentIntegrationsPanel.js';
-import { AgentActivityFeed } from './AgentActivityFeed.js';
+import { AgentActivityTab } from './AgentActivityTab.js';
 import { AgentAvatar } from './AgentAvatar.js';
 import { AvatarEditor } from './AvatarEditor.js';
 import { Notice } from '../ui/Notice.js';
@@ -218,7 +218,7 @@ export function AgentWorkspacePage(): JSX.Element {
       {tab === 'schedules' ? <AgentSchedulesPanel entry={entry} /> : null}
       {tab === 'instructions' ? <AgentInstructionsPanel entry={entry} onChanged={() => void refresh()} /> : null}
       {tab === 'integrations' ? <AgentIntegrationsPanel boardId={view.board?.id ?? null} persona={entry.persona} onChanged={() => void refresh()} /> : null}
-      {tab === 'activity' ? <AgentActivityFeed views={[view]} /> : null}
+      {tab === 'activity' ? <AgentActivityTab rosterId={entry.rosterId} persona={entry.persona} /> : null}
 
       <details style={{ marginTop: 'var(--space-5)' }}>
         <summary style={{ ...muted, fontSize: '12px', cursor: 'pointer' }}>Protocol details</summary>
