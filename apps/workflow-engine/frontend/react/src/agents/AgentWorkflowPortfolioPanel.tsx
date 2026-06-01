@@ -77,6 +77,11 @@ export function AgentWorkflowPortfolioPanel({
       {entry.workflows.length === 0 ? (
         <p style={muted}>No workflows assigned yet. Assign one from the library below so {entry.persona} has work to do.</p>
       ) : (
+        <>
+        <p style={{ ...muted, fontSize: '13px', marginTop: 0 }}>
+          These workflows make up {entry.persona}'s <strong>{entry.label ?? 'role'}</strong> portfolio — the work this
+          role owns. Each card explains what it does and how it's triggered.
+        </p>
         <div className="card-grid" style={{ marginBottom: 'var(--space-4)' }}>
           {entry.workflows.map((wfId) => {
             const known = isKnownWorkflow(wfId);
@@ -109,6 +114,7 @@ export function AgentWorkflowPortfolioPanel({
             );
           })}
         </div>
+        </>
       )}
 
       <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 'var(--space-3)' }}>

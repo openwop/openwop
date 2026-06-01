@@ -174,8 +174,9 @@ export function AgentDashboardPage(): JSX.Element {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
         <div>
           <h1 style={{ marginTop: 0, marginBottom: '0.3rem' }}>AI coworkers</h1>
-          <p style={{ ...muted, marginTop: 0, maxWidth: 560 }}>
-            Create named agents, assign company workflows, and manage their work from task boards.
+          <p style={{ ...muted, marginTop: 0, maxWidth: 600 }}>
+            Create AI coworkers that act as digital twins for company roles, then give them
+            workflows, schedules, and task boards.
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -254,7 +255,7 @@ export function AgentDashboardPage(): JSX.Element {
                   key={view.entry.rosterId}
                   view={view}
                   busy={busyAgent === view.entry.rosterId}
-                  onOpen={() => navigate(`/agents/${encodeURIComponent(view.entry.rosterId)}`)}
+                  onOpen={(tab) => navigate(`/agents/${encodeURIComponent(view.entry.rosterId)}${tab ? `?tab=${tab}` : ''}`)}
                   onCheckNow={() => void onCheckNow(view.entry.rosterId, view.entry.persona)}
                 />
               ))}
