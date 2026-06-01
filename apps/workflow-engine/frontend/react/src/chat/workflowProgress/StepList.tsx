@@ -10,7 +10,7 @@
  */
 
 import { useState } from 'react';
-import { CheckIcon, ChevronDownIcon, ChevronRightIcon, CircleIcon, PauseIcon, XIcon } from '../icons/index.js';
+import { CheckIcon, ChevronDownIcon, ChevronRightIcon, CircleIcon, PauseIcon, XIcon } from '../../ui/icons/index.js';
 import type { ChatMessage, WorkflowRunState } from '../hooks/useChatSession.js';
 
 export const STATUS_COLORS: Record<WorkflowRunState['status'], string> = {

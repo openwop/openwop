@@ -17,7 +17,7 @@ import type {
   AgentHandoff,
   AgentToolCall,
 } from './hooks/useChatSession.js';
-import { ScaleIcon, WrenchIcon } from './icons/index.js';
+import { ScaleIcon, WrenchIcon } from '../ui/icons/index.js';
 
 function formatDuration(ms: number): string {
   if (ms < 1000) return `${ms}ms`;

@@ -24,7 +24,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import type { AuditVerifyResult, RunEventDoc } from '@openwop/openwop';
 import { getSdkClient, getCapabilities, pollEvents } from '../client/runsClient.js';
-import { ArrowLeftIcon, CheckIcon, XIcon } from '../chat/icons/index.js';
+import { ArrowLeftIcon, CheckIcon, XIcon } from '../ui/icons/index.js';
 
 export function RunAuditPage() {
   const { runId = '' } = useParams();

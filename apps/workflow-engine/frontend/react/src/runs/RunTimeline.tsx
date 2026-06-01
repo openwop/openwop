@@ -16,7 +16,7 @@
 
 import { useMemo, useState } from 'react';
 import type { RunEventDoc } from '@openwop/openwop';
-import { SaveIcon } from '../chat/icons/index.js';
+import { SaveIcon } from '../ui/icons/index.js';
 
 interface Props {
   events: readonly RunEventDoc[];

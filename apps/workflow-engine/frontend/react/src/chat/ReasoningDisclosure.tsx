@@ -15,7 +15,7 @@
  * @see spec/v1/ai-envelope.md §"Reasoning field (normative)"
  */
 
-import { InfoIcon } from './icons/index.js';
+import { InfoIcon } from '../ui/icons/index.js';
 
 interface Props {
   reasoning: string;

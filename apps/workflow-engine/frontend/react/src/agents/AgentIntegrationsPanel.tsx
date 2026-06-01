@@ -8,7 +8,7 @@
 import { useState, type ComponentType, type CSSProperties } from 'react';
 import { createCard } from '../kanban/kanbanClient.js';
 import { Notice } from '../ui/Notice.js';
-import { BotIcon, MessageCircleIcon, PlugIcon, SendIcon } from '../chat/icons/index.js';
+import { BotIcon, MessageCircleIcon, PlugIcon, SendIcon } from '../ui/icons/index.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 

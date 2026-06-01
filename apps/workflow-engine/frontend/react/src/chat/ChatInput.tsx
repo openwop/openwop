@@ -18,7 +18,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAudioRecorder, blobToBase64, type RecordedAudio } from './hooks/useAudioRecorder.js';
 import { SlashAutocomplete } from './SlashAutocomplete.js';
 import { AgentMentionAutocomplete } from './AgentMentionAutocomplete.js';
-import { MicIcon, SendIcon, StopIcon } from './icons/index.js';
+import { MicIcon, SendIcon, StopIcon } from '../ui/icons/index.js';
 import type { ContentPart } from './hooks/useChatSession.js';
 
 interface PendingAudio {

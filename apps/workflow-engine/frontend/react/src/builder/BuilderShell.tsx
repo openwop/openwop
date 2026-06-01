@@ -24,7 +24,7 @@ import { createRun, getCapabilities } from '../client/runsClient.js';
 import { subscribeToRun } from '../client/streamsClient.js';
 import type { SavedWorkflow } from './schema/workflow.js';
 import { catalogEntry } from './palette/catalogRegistry.js';
-import { UndoIcon, RedoIcon, CheckIcon } from '../chat/icons/index.js';
+import { UndoIcon, RedoIcon, CheckIcon } from '../ui/icons/index.js';
 
 /** Host-advertised engine limits from `capabilities.limits` (RFC 0009 +
  *  RFC 0058). Optional fields are absent when the host doesn't advertise. */

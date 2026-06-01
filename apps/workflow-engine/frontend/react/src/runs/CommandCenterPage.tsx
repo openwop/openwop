@@ -5,7 +5,7 @@ import { cancelRun, deleteRun, listMyRuns, pollEvents, type RunListItem } from '
 import { subscribeToRun } from '../client/streamsClient.js';
 import { RunAgentTrace } from './RunAgentTrace.js';
 import { RunHandoffMap } from './RunHandoffMap.js';
-import { AlertIcon } from '../chat/icons/index.js';
+import { AlertIcon } from '../ui/icons/index.js';
 
 // "Mission Control" — RFC 0055/0056 NOT required. This page is a pure
 // composition of surfaces the protocol + app already expose: it polls

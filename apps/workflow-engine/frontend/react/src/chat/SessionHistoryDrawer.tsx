@@ -14,7 +14,7 @@
 
 import { useMemo, useState } from 'react';
 import type { ChatSessionHeader } from '../client/chatSessionsClient.js';
-import { PencilIcon, TrashIcon, XIcon } from './icons/index.js';
+import { PencilIcon, TrashIcon, XIcon } from '../ui/icons/index.js';
 
 interface Props {
   sessions: readonly ChatSessionHeader[];

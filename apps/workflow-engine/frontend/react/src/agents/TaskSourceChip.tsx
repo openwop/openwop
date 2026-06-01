@@ -6,7 +6,7 @@
  */
 
 import type { ComponentType, CSSProperties } from 'react';
-import { BotIcon, ClockIcon, MessageCircleIcon, PlugIcon, UserIcon, WorkflowIcon } from '../chat/icons/index.js';
+import { BotIcon, ClockIcon, MessageCircleIcon, PlugIcon, UserIcon, WorkflowIcon } from '../ui/icons/index.js';
 import type { KanbanCardSource } from '../kanban/kanbanClient.js';
 
 type IconCmp = ComponentType<{ size?: number; strokeWidth?: number; style?: CSSProperties }>;

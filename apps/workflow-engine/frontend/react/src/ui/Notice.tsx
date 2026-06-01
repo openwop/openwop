@@ -5,7 +5,7 @@
  * announces to assistive tech via `role="status"` + `aria-live`.
  */
 
-import { AlertIcon, CheckIcon } from '../chat/icons/index.js';
+import { AlertIcon, CheckIcon } from './icons/index.js';
 
 export type NoticeVariant = 'success' | 'error' | 'info' | 'warning';
 

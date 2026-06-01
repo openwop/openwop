@@ -30,7 +30,7 @@ import {
 import { Link } from 'react-router-dom';
 import { TaskSourceChip } from '../agents/TaskSourceChip.js';
 import { workflowName } from '../agents/roleTemplates.js';
-import { PlayIcon, WorkflowIcon, XIcon, ZapIcon } from '../chat/icons/index.js';
+import { PlayIcon, WorkflowIcon, XIcon, ZapIcon } from '../ui/icons/index.js';
 import type { KanbanBoard, KanbanCard, KanbanColumn, KanbanCardSource } from './kanbanClient.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };

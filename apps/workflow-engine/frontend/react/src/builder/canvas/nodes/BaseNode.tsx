@@ -11,7 +11,7 @@ import { memo, useState, type ReactNode } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { catalogEntry } from '../../palette/catalogRegistry.js';
 import { useBuilderStore, type NodeRunStatus } from '../../store/builderStore.js';
-import { CircleIcon, CheckIcon, XIcon, PauseIcon, AlertIcon } from '../../../chat/icons/index.js';
+import { CircleIcon, CheckIcon, XIcon, PauseIcon, AlertIcon } from '../../../ui/icons/index.js';
 
 interface NodeData extends Record<string, unknown> {
   kind: string;
@@ -22,10 +22,10 @@ interface NodeData extends Record<string, unknown> {
 
 // Status → accent color + glyph for the live-execution overlay badge.
 const RUN_STATUS_META: Record<NodeRunStatus, { color: string; label: string; glyph: ReactNode }> = {
-  running: { color: '#f59e0b', label: 'Running', glyph: <CircleIcon size={12} filled /> },
-  completed: { color: '#10b981', label: 'Completed', glyph: <CheckIcon size={12} /> },
-  failed: { color: '#ef4444', label: 'Failed', glyph: <XIcon size={12} /> },
-  suspended: { color: '#8b5cf6', label: 'Suspended', glyph: <PauseIcon size={12} /> },
+  running: { color: 'var(--color-warning)', label: 'Running', glyph: <CircleIcon size={12} filled /> },
+  completed: { color: 'var(--color-success)', label: 'Completed', glyph: <CheckIcon size={12} /> },
+  failed: { color: 'var(--color-danger)', label: 'Failed', glyph: <XIcon size={12} /> },
+  suspended: { color: 'var(--color-ai)', label: 'Suspended', glyph: <PauseIcon size={12} /> },
 };
 
 function BaseNodeImpl({ id, data, selected }: NodeProps) {

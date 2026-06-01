@@ -15,7 +15,7 @@
  * `payload.outputs.output` as the resumeValue. We just present it.
  */
 
-import { BanIcon, CheckIcon, XIcon } from './icons/index.js';
+import { BanIcon, CheckIcon, XIcon } from '../ui/icons/index.js';
 import { isRecord } from './lib/typeGuards.js';
 import type { InterruptHistoryEntry } from './types.js';
 

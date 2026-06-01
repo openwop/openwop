@@ -13,7 +13,7 @@
 
 import { useMemo, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardIcon, SparklesIcon, WrenchIcon } from './icons/index.js';
+import { ClipboardIcon, SparklesIcon, WrenchIcon } from '../ui/icons/index.js';
 import { listWorkflowMentions } from './lib/workflowMentions.js';
 
 interface Props {

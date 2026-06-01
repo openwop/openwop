@@ -18,7 +18,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useNotificationStore } from './notificationStore.js';
 import { NotificationPreferencesPanel } from './NotificationPreferencesPanel.js';
-import { AlertIcon, CheckIcon, SettingsIcon, XIcon } from '../chat/icons/index.js';
+import { AlertIcon, CheckIcon, SettingsIcon, XIcon } from '../ui/icons/index.js';
 import type { Notification, NotificationType } from './types.js';
 
 type Tab = 'all' | 'unread' | 'archived';

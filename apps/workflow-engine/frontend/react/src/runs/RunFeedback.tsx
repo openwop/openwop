@@ -13,7 +13,7 @@ import {
   type AnnotationSignal,
   type FeedbackCapability,
 } from '../client/feedbackClient.js';
-import { ThumbsUpIcon, ThumbsDownIcon, FlagIcon } from '../chat/icons/index.js';
+import { ThumbsUpIcon, ThumbsDownIcon, FlagIcon } from '../ui/icons/index.js';
 
 export function RunFeedback({ runId, onRecorded }: { runId: string; onRecorded?: () => void }) {
   const [cap, setCap] = useState<FeedbackCapability | null>(null);
