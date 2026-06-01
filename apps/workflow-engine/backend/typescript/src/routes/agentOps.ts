@@ -116,4 +116,48 @@ export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
       next(err);
     }
   });
+
+  // Per-agent activity feed — recent runs attributed to this agent (heartbeat
+  // pick-ups, schedule fires, board-card triggers), each with a real timestamp,
+  // outcome, and links. Derived from the durable runs store, so it carries the
+  // run status + completion time the board-state-derived fleet feed can't.
+  app.get('/v1/host/sample/roster/:rosterId/activity', async (req, res, next) => {
+    try {
+      const tenantId = tenantOf(req);
+      const entry = await getRosterEntry(req.params.rosterId);
+      if (!entry || entry.tenantId !== tenantId) {
+        throw new OpenwopError('not_found', 'Agent not found.', 404, { rosterId: req.params.rosterId });
+      }
+      const limit = Math.min(50, Math.max(1, Number.parseInt(String(req.query.limit ?? '25'), 10) || 25));
+      const runs = await deps.storage.listRuns({ tenantId, limit: 200 });
+      const items = runs
+        .map((run) => {
+          const md = (run.metadata ?? {}) as Record<string, unknown>;
+          // A run carries one attribution block (heartbeat / schedule / kanban);
+          // keep it only if that block names this roster member.
+          const candidates: Array<{ source: string; block: Record<string, unknown> }> = [];
+          for (const key of ['heartbeat', 'schedule', 'kanban'] as const) {
+            const block = md[key];
+            if (block && typeof block === 'object') candidates.push({ source: key, block: block as Record<string, unknown> });
+          }
+          const mine = candidates.find((c) => c.block.rosterId === entry.rosterId);
+          if (!mine) return null;
+          return {
+            runId: run.runId,
+            workflowId: run.workflowId,
+            status: run.status,
+            source: mine.source,
+            cardId: typeof mine.block.cardId === 'string' ? mine.block.cardId : undefined,
+            // Prefer the terminal time; fall back to last-update / creation.
+            timestamp: run.completedAt ?? run.updatedAt ?? run.createdAt,
+          };
+        })
+        .filter((x): x is NonNullable<typeof x> => x !== null)
+        .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+        .slice(0, limit);
+      res.status(200).json({ rosterId: entry.rosterId, items });
+    } catch (err) {
+      next(err);
+    }
+  });
 }
