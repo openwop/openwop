@@ -126,7 +126,20 @@ jobs:
       # OIDC-authenticated publish — npm 11.5.1+ accepts the OIDC token from
       # `permissions: id-token: write` automatically. No NODE_AUTH_TOKEN needed.
       # Trusted-publisher config: npmjs.com/package/@openwop/openwop/access.
-      - run: cd sdk/typescript && npm publish --access public --provenance
+      # Idempotency guard: a corpus `v*` tag fires every publish job, but a
+      # package may already be at its manifest version (e.g. shipped earlier
+      # via its per-package tag). Skip rather than fail on a duplicate so the
+      # corpus tag never partial-publishes — see PUBLISHING.md §"most specific tag".
+      - name: Publish to npm (skip if already published)
+        run: |
+          cd sdk/typescript
+          PKG=$(node -p "require('./package.json').name")
+          VER=$(node -p "require('./package.json').version")
+          if npm view "$PKG@$VER" version >/dev/null 2>&1; then
+            echo "✓ $PKG@$VER is already on npm — skipping publish (idempotent)."
+          else
+            npm publish --access public --provenance
+          fi
 
   publish-conformance:
     needs: preflight
@@ -150,7 +163,19 @@ jobs:
       - run: cd conformance && npm run build:cli
       # OIDC-authenticated publish — see publish-ts-client comment above.
       # Trusted-publisher config: npmjs.com/package/@openwop/openwop-conformance/access.
-      - run: cd conformance && npm publish --access public --provenance
+      # Idempotency guard (see publish-ts-client): conformance has an independent
+      # version line bumped via its own `openwop-conformance/v*` tag, so a corpus
+      # `v*` tag almost always finds it already published — skip rather than fail.
+      - name: Publish to npm (skip if already published)
+        run: |
+          cd conformance
+          PKG=$(node -p "require('./package.json').name")
+          VER=$(node -p "require('./package.json').version")
+          if npm view "$PKG@$VER" version >/dev/null 2>&1; then
+            echo "✓ $PKG@$VER is already on npm — skipping publish (idempotent)."
+          else
+            npm publish --access public --provenance
+          fi
 
   publish-python:
     needs: preflight
@@ -177,6 +202,10 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: sdk/python/dist
+          # Idempotency guard: a corpus `v*` tag fires this job even when the
+          # Python SDK is unchanged and already on PyPI at its manifest version.
+          # `skip-existing` makes the upload a no-op instead of a hard failure.
+          skip-existing: true
 
   publish-go:
     needs: preflight
@@ -231,4 +260,16 @@ jobs:
       # trusted publisher on npmjs.com (Settings → Trusted Publishers, or
       # via "Publish package" → "Trusted Publisher") before the first tag
       # push. After that, subsequent `cli/vX.Y.Z` tag pushes auto-publish.
-      - run: cd cli && npm publish --access public --provenance
+      # Idempotency guard (see publish-ts-client): the CLI has its own `cli/v*`
+      # version line, so a corpus `v*` tag usually finds it already published —
+      # skip rather than fail.
+      - name: Publish to npm (skip if already published)
+        run: |
+          cd cli
+          PKG=$(node -p "require('./package.json').name")
+          VER=$(node -p "require('./package.json').version")
+          if npm view "$PKG@$VER" version >/dev/null 2>&1; then
+            echo "✓ $PKG@$VER is already on npm — skipping publish (idempotent)."
+          else
+            npm publish --access public --provenance
+          fi
