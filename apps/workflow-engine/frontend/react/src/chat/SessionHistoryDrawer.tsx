@@ -286,7 +286,7 @@ export function SessionHistoryDrawer({
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'var(--scrim, rgba(0,0,0,0.4))',
+            background: 'var(--scrim)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

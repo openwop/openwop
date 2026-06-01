@@ -89,7 +89,7 @@ export function StepList({ run, message }: Props): JSX.Element {
           : isFailed ? { icon: <XIcon size={13} />, color: STATUS_COLORS.failed }
           : isSuspended ? { icon: <PauseIcon size={13} />, color: STATUS_COLORS.running }
           : isRunning ? { icon: <StepSpinner />, color: STATUS_COLORS.running }
-          : { icon: <CircleIcon size={13} />, color: 'var(--ink-3, #8a857a)' };
+          : { icon: <CircleIcon size={13} />, color: 'var(--ink-3)' };
 
         // A11y wiring for the disclosure pattern. Screen readers
         // announce the row as a button + report its expanded state +
@@ -132,7 +132,7 @@ export function StepList({ run, message }: Props): JSX.Element {
               </span>
               <span style={{
                 width: 22,
-                color: 'var(--ink-3, #8a857a)',
+                color: 'var(--ink-3)',
                 fontFamily: 'var(--mono)',
                 fontSize: 10.5,
               }}>
@@ -146,7 +146,7 @@ export function StepList({ run, message }: Props): JSX.Element {
                   fontSize: 10,
                   color: 'var(--clay)',
                   textDecoration: 'underline',
-                  textDecorationColor: 'var(--clay-rule, #d9b9a3)',
+                  textDecorationColor: 'var(--clay-rule)',
                 }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                     {isExpanded ? <ChevronDownIcon size={12} /> : <ChevronRightIcon size={12} />}
@@ -159,9 +159,9 @@ export function StepList({ run, message }: Props): JSX.Element {
                   fontSize: 10,
                   padding: '1px 8px',
                   borderRadius: 10,
-                  background: 'var(--clay-wash, #f3e0d4)',
+                  background: 'var(--clay-wash)',
                   color: 'var(--clay)',
-                  border: '1px solid var(--clay-rule, #d9b9a3)',
+                  border: '1px solid var(--clay-rule)',
                   whiteSpace: 'nowrap',
                 }}>
                   Awaiting your input ↓
@@ -177,7 +177,7 @@ export function StepList({ run, message }: Props): JSX.Element {
               <pre id={panelId} style={{
                 margin: '4px 0 6px 26px',
                 padding: '8px 10px',
-                background: 'var(--paper-2, var(--color-surface, #ece8de))',
+                background: 'var(--paper-2, var(--color-surface))',
                 border: '1px solid var(--rule, var(--color-border))',
                 borderRadius: 4,
                 fontSize: 11,

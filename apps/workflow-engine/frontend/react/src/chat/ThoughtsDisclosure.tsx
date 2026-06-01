@@ -168,7 +168,7 @@ export function ThoughtsDisclosure({ thoughts }: Props): JSX.Element {
           style={{
             marginTop: 6,
             padding: '8px 10px',
-            background: 'var(--color-surface, rgba(255,255,255,0.03))',
+            background: 'var(--color-surface)',
             border: '1px solid var(--color-border)',
             borderRadius: 8,
             fontSize: 12,

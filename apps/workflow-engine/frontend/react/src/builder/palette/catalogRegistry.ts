@@ -208,11 +208,11 @@ function mapCategory(raw: string): NodeCategory {
 
 function accentFor(category: NodeCategory): string {
   switch (category) {
-    case 'flow': return '#5b8cff';
-    case 'data': return '#4ade80';
-    case 'ai': return '#a78bfa';
-    case 'control': return '#fbbf24';
-    case 'integration': return '#f59e0b';
+    case 'flow': return 'var(--cat-flow)';
+    case 'data': return 'var(--cat-data)';
+    case 'ai': return 'var(--cat-ai)';
+    case 'control': return 'var(--cat-control)';
+    case 'integration': return 'var(--cat-integration)';
   }
 }
 

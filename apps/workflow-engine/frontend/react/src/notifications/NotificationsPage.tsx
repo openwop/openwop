@@ -104,7 +104,7 @@ export function NotificationsPage(): JSX.Element {
                 style={{
                   marginLeft: 6,
                   background: 'var(--color-warning)',
-                  color: '#fff',
+                  color: 'var(--color-on-scrim)',
                   borderRadius: 10,
                   padding: '1px 7px',
                   fontSize: 11,
