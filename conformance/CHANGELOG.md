@@ -2,7 +2,11 @@
 
 ## [Unreleased]
 
-_No unreleased changes._
+### Added — RFC 0080 behavioral scenario (steward prerequisite for the next conformance minor)
+
+- **`memory-degraded-projection.test.ts`** (`behaviorGate('openwop-memory-degraded', …)`, gated on `agents.manifestRuntime.supported` + `memory.supported`) — the RFC 0080 §C degraded-projection iff-contract on the NORMATIVE `GET /v1/agents`: a degraded inventory entry MUST carry `memoryDegraded:true` + a non-empty, unique `degradedMemoryDimensions[]` drawn from the closed §A-name enum (`read`/`write`/`search`/`long-term-durability`/`compaction`/`attribution`/`replay-snapshot`/`retention`); a non-degraded entry MUST NOT carry a non-empty list; the inventory is non-empty; the degraded branch runs non-vacuously when `OPENWOP_DEGRADED_AGENT_ID` names a known-degraded agent. Black-box on the normative path — no POST seam. This is the RFC 0080 → Accepted bar.
+
+Additive + capability-gated; existing v1.0-only hosts pass unchanged. No new schemas (the `memory.{search,retention,writable}` dimensions + the `memoryDegraded`/`degradedMemoryDimensions` inventory fields shipped at `Draft → Active`). Also documents the two RFC 0068 conformance seams (`POST /v1/host/sample/memory/consolidate` + `.../commitment/fire`) in `host-sample-test-seams.md` — the 0068 gated scenarios (`memory-consolidation-idempotent` + `commitment-fired`) already shipped in 1.14.0. The version bump + `EXPECTED_CONFORMANCE_VERSION` advance ships in the follow-up publish.
 
 ## [1.14.0] — 2026-06-01 — RFC 0078 tool-catalog + RFC 0079 egress-policy behavioral gates
 

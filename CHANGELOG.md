@@ -11,6 +11,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.6 — unreleased]
 
+### spec(rfc-0080, rfc-0068): memory degraded-projection gated scenario + 0068 seam docs — steward prerequisite (2026-06-01)
+
+Authors the steward prerequisite to graduate `memory` (RFC 0080 memory-capability reconciliation) and `agents.memoryConsolidation`/`agents.commitments` (RFC 0068 consolidation + standing commitments) from `Active → Accepted` on a non-steward host (MyndHyve). Adds the gated behavioral scenario RFC 0080 §Conformance named but deferred at `Draft → Active`: `memory-degraded-projection.test.ts` (gated on `agents.manifestRuntime` + `memory`; black-box on the normative `GET /v1/agents` — the §C iff-contract: a degraded inventory entry carries `memoryDegraded:true` + a non-empty, unique `degradedMemoryDimensions[]` from the closed §A-name enum, a non-degraded entry carries neither; non-vacuous degraded branch via `OPENWOP_DEGRADED_AGENT_ID`). Documents the two RFC 0068 conformance seams (`POST /v1/host/sample/memory/consolidate` + `.../commitment/fire`) in `host-sample-test-seams.md` — the 0068 gated scenarios (`memory-consolidation-idempotent` + `commitment-fired`) already shipped in conformance 1.14.0, so 0068 needs no new scenario. `coverage.md` + scenario-count surfaces synced (320 → 321). All additive + capability-gated; existing v1.0-only hosts pass unchanged. The conformance suite version bump that publishes the 0080 scenario (1.15.0) is a separate step. No wire-shape change (the `memory.{search,retention,writable}` dimensions + the `memoryDegraded`/`degradedMemoryDimensions` inventory fields + the `agent.memory.consolidated`/`commitment.fired` events shipped earlier).
+
 ### docs(known-limits) + conformance: retire stale cross-engine CF-8 row + activate the RFC 0041 §C replay-observable assertions (2026-06-01)
 
 KNOWN-LIMITS gap-closure Phase 2 (cont.) — two repo-closeable items that turned out already largely closed by prior seam/fixture work, plus a stale-row cleanup keeping the catalog honest:
