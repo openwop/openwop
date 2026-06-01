@@ -18,10 +18,12 @@ import {
 } from '../kanban/kanbanClient.js';
 import { KanbanBoardView, type NewCardInput } from '../kanban/KanbanBoardView.js';
 import { Notice } from '../ui/Notice.js';
+import { AgentAvatar } from './AgentAvatar.js';
+import type { RoleTheme } from './roleTemplates.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
-export function AgentBoardPanel({ boardId, persona, workflows, refreshSignal, onChanged }: { boardId: string; persona: string; workflows?: string[]; refreshSignal?: number; onChanged?: () => void }): JSX.Element {
+export function AgentBoardPanel({ boardId, persona, avatarUrl, roleTheme, workflows, refreshSignal, onChanged }: { boardId: string; persona: string; avatarUrl?: string; roleTheme?: RoleTheme; workflows?: string[]; refreshSignal?: number; onChanged?: () => void }): JSX.Element {
   const [board, setBoard] = useState<KanbanBoard | null>(null);
   const [cards, setCards] = useState<KanbanCard[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -100,10 +102,15 @@ export function AgentBoardPanel({ boardId, persona, workflows, refreshSignal, on
     <div>
       {error ? <Notice variant="error">{error}</Notice> : null}
       {notice ? <Notice variant="success">{notice}</Notice> : null}
-      <p style={{ ...muted, fontSize: '13px', marginTop: 0 }}>
-        New work arrives in <strong>To Do</strong>. <strong>Drag a card</strong> between lanes (or run the heartbeat from
-        the header) to let {persona} pick up the next task.
-      </p>
+      <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
+        {roleTheme ? (
+          <AgentAvatar persona={persona} avatarUrl={avatarUrl} roleTheme={roleTheme} size={28} showBadge={false} alt={`${persona}'s photo`} />
+        ) : null}
+        <p style={{ ...muted, fontSize: '13px', margin: 0 }}>
+          <strong>{persona}'s board.</strong> New work arrives in <strong>To Do</strong>. <strong>Drag a card</strong> between
+          lanes (or run the heartbeat from the header) to let {persona} pick up the next task.
+        </p>
+      </div>
       <KanbanBoardView
         board={board}
         cards={cards}
