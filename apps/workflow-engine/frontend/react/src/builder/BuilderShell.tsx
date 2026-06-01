@@ -593,8 +593,8 @@ export function BuilderShell({ onNewWorkflow }: Props) {
 
 const OVERLAY_STATUS_META: Record<string, { label: string; color: string }> = {
   running: { label: 'Running', color: 'var(--clay)' },
-  completed: { label: 'Completed', color: '#10b981' },
-  failed: { label: 'Failed', color: '#ef4444' },
+  completed: { label: 'Completed', color: 'var(--color-success)' },
+  failed: { label: 'Failed', color: 'var(--color-danger)' },
   cancelled: { label: 'Cancelled', color: 'var(--ink-3)' },
 };
 

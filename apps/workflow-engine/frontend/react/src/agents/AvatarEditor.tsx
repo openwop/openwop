@@ -131,7 +131,7 @@ export function AvatarEditor({
             pointerEvents: 'auto', background: 'var(--color-surface)', color: 'var(--color-text)',
             border: '1px solid var(--color-border)', borderRadius: 'var(--radius)',
             width: '100%', maxWidth: 420, display: 'flex', flexDirection: 'column',
-            boxShadow: '0 8px 24px var(--ink-shadow, rgba(0,0,0,0.25))',
+            boxShadow: '0 8px 24px var(--ink-shadow)',
           }}
         >
           <header style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', padding: 'var(--space-3) var(--space-4)', borderBottom: '1px solid var(--color-border)' }}>

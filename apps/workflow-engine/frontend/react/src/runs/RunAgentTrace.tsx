@@ -193,9 +193,9 @@ function ToolStepView({ step }: { step: ToolStep }) {
 function DecisionStepView({ step }: { step: DecisionStep }) {
   const conf = step.confidence;
   const confColor = conf == null ? 'var(--ink-3)'
-    : conf >= 0.7 ? '#10b981'
-    : conf >= 0.5 ? '#f59e0b'
-    : '#ef4444';
+    : conf >= 0.7 ? 'var(--color-success)'
+    : conf >= 0.5 ? 'var(--color-warning)'
+    : 'var(--color-danger)';
   const label = typeof step.decision === 'string'
     ? step.decision
     : (asRecord(step.decision).kind as string) ?? 'decision';

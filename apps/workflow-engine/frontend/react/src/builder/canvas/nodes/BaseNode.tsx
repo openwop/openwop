@@ -85,7 +85,7 @@ function BaseNodeImpl({ id, data, selected }: NodeProps) {
             height: 18,
             borderRadius: 9,
             background: runMeta.color,
-            color: '#fff',
+            color: 'var(--color-on-scrim)',
             fontSize: 11,
             lineHeight: '18px',
             textAlign: 'center',
@@ -93,7 +93,7 @@ function BaseNodeImpl({ id, data, selected }: NodeProps) {
             alignItems: 'center',
             justifyContent: 'center',
             fontWeight: 700,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+            boxShadow: '0 1px 3px var(--ink-shadow)',
             animation: d.runStatus === 'running' ? 'openwop-pulse 1.2s ease-in-out infinite' : 'none',
           }}
         >
