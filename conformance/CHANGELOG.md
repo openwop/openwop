@@ -2,11 +2,17 @@
 
 ## [Unreleased]
 
-### Added — RFC 0084 behavioral scenario (steward prerequisite for the next conformance minor)
+_No unreleased changes._
+
+## [1.16.0] — 2026-06-01 — RFC 0084 budget-enforcement behavioral gate
+
+Standalone conformance minor — a scenario addition published via the `openwop-conformance/v1.16.0` per-package tag (PUBLISHING.md §"CI automation"; only the `publish-conformance` job runs), NOT a coordinated spec-corpus release. `EXPECTED_CONFORMANCE_VERSION` advances to `1.16.0` in lockstep. The steward prerequisite that lets MyndHyve run the RFC 0084 §C/§D budget-enforcement scenario non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true` to graduate `budget` from `Active` to `Accepted`. The normative surface (`budget-policy.schema.json` + the four `budget.*` events + the four `cap.breached{budget-*}` kinds) already shipped — this release is the gated test surface only.
+
+### Added — RFC 0084 behavioral scenario
 
 - **`budget-enforcement.test.ts`** (`behaviorGate('openwop-budget-enforcement', …)`, gated on `budget.supported`) — the RFC 0084 §C/§D enforcement via the new `POST /v1/host/sample/budget/run` seam + the test event-log seam: a `hard-cost-exhaust` run emits the strict-ordered `budget.reserved → budget.consumed → budget.threshold.crossed{percent} → budget.exhausted → cap.breached{kind:"budget-cost"} → run.failed{error:"budget_exhausted"}` chain; a `model-denied` run is refused `budget_model_denied` BEFORE the provider call (fail-closed, composing RFC 0031 + RFC 0067); an `advisory` host emits the `budget.*` events without stopping the run; every `budget.*` payload is content-free (SR-1 / `budget-no-pricing-leak` — no pricing table / per-token rate). New lib helper `src/lib/budgetPolicy.ts`; new seam in `host-sample-test-seams.md` §"Open seams". This is the RFC 0084 → Accepted bar.
 
-Additive + capability-gated; existing v1.0-only hosts pass unchanged. No new schemas (`budget-policy.schema.json` + the four `budget.*` payload `$defs` + the four `cap.breached{budget-*}` kinds shipped at `Draft → Active`). The version bump + `EXPECTED_CONFORMANCE_VERSION` advance ships in the follow-up publish.
+Additive + capability-gated; existing v1.0-only hosts pass unchanged. No new schemas (`budget-policy.schema.json` + the four `budget.*` payload `$defs` + the four `cap.breached{budget-*}` kinds shipped at `Draft → Active`).
 
 ## [1.15.0] — 2026-06-01 — RFC 0080 memory degraded-projection behavioral gate
 
