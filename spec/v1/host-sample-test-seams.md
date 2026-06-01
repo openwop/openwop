@@ -73,6 +73,8 @@ Hosts that advertise `capabilities.prompts.supported: true` MUST serve this seam
 
 Conformance: `prompt-resolution-chain-{node-wins,agent-intrinsic,fallback-cascade}.test.ts`.
 
+**Production-path equivalent (preferred).** The same layer-by-layer precedence record is carried by the durable `agent.promptResolved` event (`schemas/run-event-payloads.schema.json` `agentPromptResolved` — a REQUIRED `chain[]` with one `applied: true` entry + the full-traversal MUST). A host that emits the event is provable **black-box** via `prompt-resolution-chain-event.test.ts`, which creates a run and reads `chain[]` from the NORMATIVE `GET /v1/runs/{runId}/events/poll` endpoint — no seam. This synchronous seam remains the convenience for hosts that have not yet wired event emission (RFC 0029 staging); the production-path event is what graduates RFC 0029 prompt-chain precedence into the `openwop-core-standard` floor.
+
 ### 2. `GET /v1/host/sample/test/otel/spans?runId=<id>` — OTel span scrape (RFC 0034)
 
 | Field | Value |
