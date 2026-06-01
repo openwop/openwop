@@ -797,7 +797,7 @@ function unsupported(providerLabel: string, part: ContentPart): Error {
 /** Flatten ContentPart[] → text-only string for providers/messages that take
  *  a plain string (Anthropic `system`, MiniMax). Text + text-like files pass
  *  through; image/audio/PDF parts throw fail-closed. */
-function contentToText(content: string | readonly ContentPart[], providerLabel: string): string {
+export function contentToText(content: string | readonly ContentPart[], providerLabel: string): string {
   if (typeof content === 'string') return content;
   let out = '';
   for (const part of content) {
@@ -811,7 +811,7 @@ function contentToText(content: string | readonly ContentPart[], providerLabel: 
 
 /** Anthropic Messages API content: a plain string when only text, else an
  *  array of content blocks (text / image / document). */
-function contentToAnthropicBlocks(content: string | readonly ContentPart[]): string | Array<Record<string, unknown>> {
+export function contentToAnthropicBlocks(content: string | readonly ContentPart[]): string | Array<Record<string, unknown>> {
   if (typeof content === 'string') return content;
   if (content.every((p) => p.type === 'text')) {
     return content.map((p) => (p as { text: string }).text).join('');
@@ -836,7 +836,7 @@ function contentToAnthropicBlocks(content: string | readonly ContentPart[]): str
 /** OpenAI Chat Completions content: a plain string when only text, else an
  *  array of parts (text / image_url). PDFs are NOT accepted on the Chat
  *  Completions content surface — fail-closed. */
-function contentToOpenAIBlocks(content: string | readonly ContentPart[]): string | Array<Record<string, unknown>> {
+export function contentToOpenAIBlocks(content: string | readonly ContentPart[]): string | Array<Record<string, unknown>> {
   if (typeof content === 'string') return content;
   if (content.every((p) => p.type === 'text')) {
     return content.map((p) => (p as { text: string }).text).join('');
@@ -862,7 +862,7 @@ function contentToOpenAIBlocks(content: string | readonly ContentPart[]): string
  *  audio/flac, audio/aiff, audio/aac. webm/opus has spotty support so
  *  callers should record audio in a compatible format. Images + PDFs ride
  *  the same inlineData channel; text files inline as a {text} part. */
-function contentToGeminiParts(content: string | readonly ContentPart[]): Array<Record<string, unknown>> {
+export function contentToGeminiParts(content: string | readonly ContentPart[]): Array<Record<string, unknown>> {
   if (typeof content === 'string') return [{ text: content }];
   const out: Array<Record<string, unknown>> = [];
   for (const part of content) {

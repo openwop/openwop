@@ -1115,6 +1115,34 @@ const _mediaAssets = new DurableCollection<MediaAssetEntry>('media:asset', (e) =
  *  the turn within a reasonable window can still re-resolve the URL. */
 const MEDIA_ASSET_DEFAULT_TTL_MS = 60 * 60 * 1000; // 1h
 
+// Unlike the old in-memory Map (which every restart cleared), the durable
+// store keeps expired rows until something touches them — `resolveMediaAsset`
+// only deletes lazily on access, so an asset never re-fetched after its TTL
+// would linger forever in the shared host_ext_kv table. Reclaim them with a
+// throttled background sweep kicked off on store (idempotent across instances;
+// each prunes independently). Demo-grade — a production host would expire at
+// the storage layer (TTL column / object-store lifecycle rule).
+const MEDIA_SWEEP_INTERVAL_MS = 10 * 60 * 1000; // at most once / 10 min / process
+let _lastMediaSweepMs = 0;
+
+async function sweepExpiredMediaAssets(): Promise<void> {
+  const now = Date.now();
+  const all = await _mediaAssets.list();
+  for (const e of all) {
+    if (e.expiresAtMs <= now) await _mediaAssets.delete(e.token);
+  }
+}
+
+function maybeSweepExpiredMediaAssets(): void {
+  const now = Date.now();
+  if (now - _lastMediaSweepMs < MEDIA_SWEEP_INTERVAL_MS) return;
+  _lastMediaSweepMs = now;
+  // Fire-and-forget: never let GC bookkeeping delay or fail a store.
+  void sweepExpiredMediaAssets().catch((err) => {
+    log.warn('media-asset sweep failed', { error: err instanceof Error ? err.message : String(err) });
+  });
+}
+
 /** Store an asset for `tenantId` and mint a tenant-scoped capability URL.
  *  Returns the relative serve URL + decoded byte size + expiry. */
 export async function storeMediaAsset(
@@ -1129,6 +1157,7 @@ export async function storeMediaAsset(
       : MEDIA_ASSET_DEFAULT_TTL_MS;
   const expiresAtMs = Date.now() + ttlMs;
   await _mediaAssets.put({ token, tenantId, contentBase64: input.contentBase64, contentType: input.contentType, bytes, expiresAtMs });
+  maybeSweepExpiredMediaAssets();
   return { token, url: `/v1/host/sample/assets/${token}`, bytes, expiresAt: new Date(expiresAtMs).toISOString() };
 }
 

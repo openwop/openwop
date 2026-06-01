@@ -23,6 +23,7 @@ import {
   fileToContentPart,
   attachmentRejectionReason,
   isImageMime,
+  mimeOf,
   ATTACHMENT_ACCEPT,
 } from '../client/mediaClient.js';
 import type { ContentPart } from './hooks/useChatSession.js';
@@ -109,7 +110,7 @@ export function ChatInput({
     for (const file of Array.from(files)) {
       const reason = attachmentRejectionReason(file);
       if (reason) { firstReason ??= reason; continue; }
-      const isImage = isImageMime(file.type || '');
+      const isImage = isImageMime(mimeOf(file));
       accepted.push({
         id: crypto.randomUUID(),
         file,

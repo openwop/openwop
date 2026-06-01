@@ -86,7 +86,19 @@ const _uploadUsage = new DurableCollection<TenantUploadUsage>('media:upload-usag
 
 /** Charge `bytes` against the tenant's daily budget. Returns null when the
  *  charge fits (and persists the new total) or a reason string when it would
- *  exceed a cap (and persists nothing). */
+ *  exceed a cap (and persists nothing).
+ *
+ *  Concurrency: this is a read-modify-write over a last-writer-wins durable
+ *  row, so two simultaneous uploads from the SAME tenant can read the same
+ *  baseline and under-count (the budget can be modestly overshot under a
+ *  burst). Acceptable at demo scale — the per-IP request limiter
+ *  (rateLimit.ts, 60/min) already throttles a single client, and the cap is an
+ *  abuse backstop, not a billing meter. A production host would use an atomic
+ *  counter or an If-Match/version guard. We deliberately charge BEFORE storing
+ *  (rather than after): failing closed on quota is the safer skew for the
+ *  abuse-prevention goal — a lost charge on a rare store error merely costs the
+ *  user a sliver of their daily budget, whereas charging after store would let
+ *  a racing pair store unbounded bytes. */
 async function chargeUploadQuota(tenantId: string, bytes: number): Promise<string | null> {
   const now = Date.now();
   const prev = await _uploadUsage.get(tenantId);
