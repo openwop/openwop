@@ -1,6 +1,6 @@
 ---
 name: ux-review
-description: Two-mode review for openwop user-facing surfaces. **Marketing-site mode** audits `public/index.html`, `public/styles.css`, `public/main.js` and any future web surface against `DESIGN.md` (typography, color tokens, spacing, components, a11y, localization, light/dark, mobile breakpoints, no hard-coded values). **Spec-prose mode** audits `spec/v1/`, `RFCS/`, `README.md`, `CHANGELOG.md`, `INTEROP-MATRIX.md`, `ROADMAP.md`, `docs/` for RFC 2119 keyword discipline, Status legend, table format, normative voice, cross-doc link integrity, "Why this exists" + "Open spec gaps", doc-index drift, and PUBLISHING / SECURITY surface honesty.
+description: Multi-mode review for openwop user-facing surfaces. **Marketing-site mode** audits `public/index.html`, `public/styles.css`, `public/main.js` against `DESIGN.md` (typography, color tokens, spacing, components, a11y, localization, light/dark, mobile breakpoints, no hard-coded values). **App-UI mode** audits the reference app `apps/workflow-engine/frontend/react/src` against `DESIGN.app.md` — the shared `ui/` cohesion layer (`.surface-card`/`.chip`/`.action-bar`/`<Notice>`/`<StateCard>`), the `ui/icons` Lucide set + no-emoji-as-icons rule, status→chip semantics, the inline-style/token policy, and app a11y. **Spec-prose mode** audits `spec/v1/`, `RFCS/`, `README.md`, `CHANGELOG.md`, `INTEROP-MATRIX.md`, `ROADMAP.md`, `docs/` for RFC 2119 keyword discipline, Status legend, table format, normative voice, cross-doc link integrity, "Why this exists" + "Open spec gaps", doc-index drift, and PUBLISHING / SECURITY surface honesty.
 ---
 
 # UX Review (openwop)
@@ -10,14 +10,17 @@ This skill runs in one of two modes — pick the mode that matches what changed,
 ## Mode selection
 
 ```bash
-# Marketing-site mode: any change touching public/ or assets used by the live site
+# Marketing-site mode (Mode A): any change touching public/ or assets used by the live site
 git diff --name-only origin/main..HEAD | grep -E '^public/'
 
-# Spec-prose mode: any change touching prose
+# App-UI mode (Mode A (app)): any change to the reference app frontend — reviewed against DESIGN.app.md
+git diff --name-only origin/main..HEAD | grep -E '^apps/workflow-engine/frontend/react/src/'
+
+# Spec-prose mode (Mode B): any change touching prose
 git diff --name-only origin/main..HEAD | grep -E '^(spec/v1|RFCS|docs|public)/.*\.md$|^(README|CHANGELOG|CONTRIBUTING|COMPATIBILITY|GOVERNANCE|MAINTAINERS|ROADMAP|SECURITY|PUBLISHING|QUICKSTART(-10MIN)?|INTEROP-MATRIX|CODE_OF_CONDUCT)\.md$'
 ```
 
-If both produce results, run marketing-site mode first (faster), then spec-prose mode.
+Run whichever modes match the diff (marketing → app → prose); the app surface (`apps/workflow-engine/frontend/react/`) is reviewed against `DESIGN.app.md`, the marketing site against `DESIGN.md`.
 
 ---
 
@@ -133,6 +136,77 @@ grep -nE '@media\s*\(max-width:\s*[0-9]+px\)' public/styles.css
 - [ ] No `style="…color…"` or `style="…font…"` attributes in HTML
 - [ ] External links use the auto `::after` arrow hook
 - [ ] Dates in ISO-8601
+
+---
+
+# Mode A (app) — Reference-app UX review (`DESIGN.app.md`)
+
+Audits the reference app at `apps/workflow-engine/frontend/react/src` against **`DESIGN.app.md`** (companion to `DESIGN.md`; shared tokens live in `DESIGN.md §3–§5 / §9`, mirrored in the app's `global.css :root`). Run this whenever the diff touches `apps/workflow-engine/frontend/react/`. Every finding cites a `DESIGN.app.md §N` (or `DESIGN.md §N` for a shared rule). Same Senior-Product-Designer lens as Mode A.
+
+## Step Aa-1 — Automated checks (from `apps/workflow-engine/frontend/react/`)
+
+```bash
+# DESIGN.app.md §10 — zero hex literals in TS/TSX (FAIL on any hit; ui/icons SVG paths exempt)
+grep -rEn "#[0-9a-fA-F]{3,6}" src/ | grep -v "/ui/icons/" | head
+# §10 — no literal (non-token) color/background in inline style (FAIL)
+grep -rEn "style=\{\{[^}]*(color|background)[^}]*[\"'](?!var\()" src/ | head
+# §5.2 — no emoji used as UI icons (FAIL on rendered, non-comment hits; prose ⚡ / keyboard ⌘ / ASCII art exempt)
+python3 - <<'PY'
+import os
+icons=set('👍👎🚩🔒🗑🔧🛠🧠💭📋📎📷💾☰▶▸▾◉●○⏸⚙✋⚖↻↶↷✓✗✕✎ⓘ')
+for r,_,fs in os.walk('src'):
+    if 'ui/icons' in r: continue
+    for f in fs:
+        if not f.endswith(('.tsx','.ts')) or '.test.' in f: continue
+        for i,l in enumerate(open(os.path.join(r,f)),1):
+            if l.strip().startswith(('//','*','/*')): continue
+            for c in l:
+                if c in icons: print(f"{r}/{f}:{i}: {c}")
+PY
+# §11 — global focus ring + reduced-motion present in the lone stylesheet (MUST be > 0)
+grep -c ':focus-visible' src/styles/global.css
+grep -c 'prefers-reduced-motion' src/styles/global.css
+# Structural gate
+node node_modules/typescript/bin/tsc --noEmit && node node_modules/vite/bin/vite.js build 2>&1 | tail -3
+```
+
+## Step Aa-2 — Review categories
+
+### CRITICAL — `DESIGN.app.md §10` token discipline / `§3` functional tokens
+- Any hex / OKLCH literal in `.tsx`/`.ts` (outside `ui/icons` SVG paths) or in `global.css` outside `:root`.
+- A literal color in an inline `style={{}}` (a `var(--…)` reference is allowed).
+- A status color used as a body-weight background fill (§3 rule 3).
+
+### CRITICAL — `DESIGN.app.md §11` accessibility
+- An interactive element without a reachable `:focus-visible` (the global ring covers `button`/`select`/`input`/`[role=button]`/`.surface-card`; anything else needs its own).
+- Status conveyed by color alone — MUST pair with a label or glyph (§5.3).
+- A transient notice as bare colored text instead of `<Notice>` (`.alert.*` + `role="status"`).
+- An icon-only button without an `aria-label`.
+
+### HIGH — `DESIGN.app.md §5.2` iconography
+- An **emoji used as a UI icon** anywhere (use `ui/icons`; add a new icon there if missing). Prose mentions / keyboard hints / ASCII art are exempt.
+- A vendor/brand mark re-colored (§8).
+
+### HIGH — `DESIGN.app.md §5.1` cohesion layer
+- A dashboard/list card hand-rolled with inline styles instead of `.surface-card` + `.card-grid`.
+- A bespoke chip / notice / empty-state instead of `.chip` / `<Notice>` / `<StateCard>`.
+- A second Kanban board renderer instead of `<KanbanBoardView>`.
+
+### HIGH — `DESIGN.app.md §5` component-registry drift
+- A new app component without a §5 row.
+
+### MEDIUM — `DESIGN.app.md §10` inline-style carve-outs
+- Inline `fontSize` outside the 10–14px geometry band; inline color/font that isn't a token reference.
+
+## Step Aa-3 — Pre-merge checklist (app surface)
+
+- [ ] 0 hex / OKLCH literals in TS/TSX (outside `ui/icons`)
+- [ ] 0 emoji used as icons (`ui/icons` only)
+- [ ] New cards / chips / notices reuse the §5.1 primitives
+- [ ] Status shown as a labeled chip, never color alone (§5.3)
+- [ ] New interactive elements keyboard-reachable (`:focus-visible`)
+- [ ] New component has a `DESIGN.app.md §5` row
+- [ ] `tsc --noEmit` + `vite build` clean
 
 ---
 
