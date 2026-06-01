@@ -56,6 +56,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilTerminal } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
+import { getCollector, waitForRunSpans } from '../lib/otel-collector.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 const BYOK_WORKFLOW_ID = 'openwop-smoke-byok-roundtrip';
@@ -201,6 +202,57 @@ describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
           'no debug-bundle field may contain the BYOK canary plaintext — debug-bundle export MUST redact or omit secret material. Per `debug-bundle.md` §"Redaction", the canonical marker is `[REDACTED:<secretId>]`.',
         ),
       ).toBe(false);
+    });
+  },
+);
+
+describe.skipIf(HTTP_SKIP || FIXTURE_SKIP)(
+  'secret-leakage-otel-attribute: real OTLP export scrape (collector-side)',
+  () => {
+    // Distinct from the scrape-seam probe above: this asserts against what
+    // the host's OTLP exporter ACTUALLY shipped over the wire to the
+    // conformance collector, not what the host self-reports via its
+    // `/v1/host/sample/test/otel/spans` seam. A host could redact in its
+    // seam yet leak on the real export — only this catches that. Closes
+    // the `docs/KNOWN-LIMITS.md` "collector seam doesn't inspect span
+    // attributes" gap. Gated on the in-process collector being active
+    // (`OPENWOP_OTEL_COLLECTOR=true` + the host configured to export to it).
+    it('NO real-exported OTel span/metric attribute MUST contain the BYOK canary plaintext', async (ctx) => {
+      const collector = getCollector();
+      if (!collector || !CANARY_VALUE) {
+        ctx.skip();
+        return;
+      }
+      const d = await readDiscovery();
+      const secretsOk = capabilityFamily<{ supported?: unknown }>(d, 'secrets')?.supported === true;
+      const obsOk = capabilityFamily<unknown>(d, 'observability') !== undefined;
+      if (!secretsOk || !obsOk) {
+        ctx.skip();
+        return;
+      }
+
+      collector.reset();
+      const runId = await startByokRun();
+      if (runId === null) {
+        ctx.skip();
+        return;
+      }
+      const terminal = await pollUntilTerminal(runId);
+      expect(terminal.status).toBe('completed');
+
+      // Hosts export spans asynchronously after terminal; poll until the
+      // run's spans land (or the timeout elapses — an absent export is a
+      // separate coverage concern, not a leak).
+      await waitForRunSpans(runId, { timeoutMs: 8_000 });
+
+      const leaks = collector.findCanaryLeakage(CANARY_VALUE);
+      expect(
+        leaks,
+        driver.describe(
+          'SECURITY/invariants.yaml secret-leakage-otel-attribute',
+          `no real-exported OTel span/metric attribute may contain the BYOK canary plaintext. Leaking surfaces: ${JSON.stringify(leaks)}`,
+        ),
+      ).toEqual([]);
     });
   },
 );
