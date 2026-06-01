@@ -1,6 +1,8 @@
 # Conformance Result: openwop SQLite Reference Host
 
-> **Latest measurement:** **2026-05-30 against `@openwop/openwop-conformance@1.10.0` — 1982 passed / 0 failed / 104 skipped / 0 todo of 2086 tests (95.0%) — 0 deterministic failures**, re-measured after the root-`limits` fix (#376). The prior `aiEnvelope.capBreached` (×3) + `discovery` (×1) failures are closed; the total rose 2074 → 2086 as the merged root limits re-activated capability-gated sub-tests. See `docs/CONFORMANCE-RUNS-2026-05-30.md` + `INTEROP-MATRIX.md`.
+> **Latest measurement:** **2026-06-01 against `@openwop/openwop-conformance@1.15.0` — 2038 passed / 0 failed / 105 skipped / 0 todo of 2143 tests (95.1%) — 0 deterministic failures**. Holds the 0-failure posture; total rose 2086 → 2143 as the v1.11–v1.15 scenarios (RFCs 0078–0083 + memory-degraded-projection + OTel collector-canary-inspection) landed. The TypeScript SDK `dist/` was built first so the server-free corpus-validity scenarios pass. See `INTEROP-MATRIX.md` §"External conformance suite — pass rates".
+>
+> **Prior measurement (superseded 2026-06-01):** **2026-05-30 against `@openwop/openwop-conformance@1.10.0` — 1982 passed / 0 failed / 104 skipped / 0 todo of 2086 tests (95.0%) — 0 deterministic failures**, re-measured after the root-`limits` fix (#376). The prior `aiEnvelope.capBreached` (×3) + `discovery` (×1) failures are closed; the total rose 2074 → 2086 as the merged root limits re-activated capability-gated sub-tests. See `docs/CONFORMANCE-RUNS-2026-05-30.md` + `INTEROP-MATRIX.md`.
 >
 > **Prior measurement (superseded by the #376 fix):** **2026-05-30 against `@openwop/openwop-conformance@1.10.0` — 1966 passed / 4 failed / 104 skipped / 0 todo of 2074 tests (94.8%)**. The 4 failures were `aiEnvelope.capBreached` (×3) + `discovery` (×1) — both closed by #376.
 >
