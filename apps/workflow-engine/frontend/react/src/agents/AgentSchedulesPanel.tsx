@@ -129,7 +129,7 @@ export function AgentSchedulesPanel({ entry }: { entry: RosterEntry }): JSX.Elem
       ) : (
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
           {jobs.map((job) => (
-            <li key={job.jobId} style={{ border: '1px solid var(--color-border)', borderRadius: 10, padding: '0.6rem 0.7rem', background: 'var(--color-surface)' }}>
+            <li key={job.jobId} className="surface-card" style={{ padding: 'var(--space-2) var(--space-2-5)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
                 <div style={{ flex: 1, minWidth: 200 }}>
                   <div style={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>

@@ -39,6 +39,8 @@
   --color-danger:  oklch(55% 0.16 28);    /* muted brick red */
   --color-ai:      oklch(60% 0.12 280);   /* indigo for AI-category nodes; visually distinct from clay (flow) and the success/warning/danger functional tokens */
   --scrim:         rgb(0 0 0 / 0.6);      /* modal backdrop; neutral on either theme */
+  --scrim-soft:    rgb(0 0 0 / 0.45);     /* lighter image overlay (e.g. avatar edit scrim) */
+  --color-on-scrim: #fff;                 /* text/icon on a scrim; always light on either theme */
 
   /* ── Legacy app-token aliases — points old refs at the new palette. ──
    * Phase A: aliases let every existing component keep working. Phases B/C

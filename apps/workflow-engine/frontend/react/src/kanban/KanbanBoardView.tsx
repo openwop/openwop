@@ -30,7 +30,7 @@ import {
 import { Link } from 'react-router-dom';
 import { TaskSourceChip } from '../agents/TaskSourceChip.js';
 import { workflowName } from '../agents/roleTemplates.js';
-import { CheckIcon, GripVerticalIcon, PlayIcon, WorkflowIcon, XIcon, ZapIcon } from '../ui/icons/index.js';
+import { AlertIcon, CheckIcon, GripVerticalIcon, PlayIcon, WorkflowIcon, XIcon, ZapIcon } from '../ui/icons/index.js';
 import { Markdown } from '../ui/Markdown.js';
 import { MarkdownEditor } from '../ui/MarkdownEditor.js';
 import type { KanbanBoard, KanbanCard, KanbanColumn, KanbanCardSource } from './kanbanClient.js';
@@ -140,7 +140,7 @@ function DraggableCard({
       </div>
       {card.createdBy ? <div style={{ ...muted, fontSize: '12px', marginTop: 'var(--space-1)' }}>Created by {card.createdBy}</div> : null}
       {card.assignmentReason ? <div style={{ ...muted, fontSize: '12px' }}>Why assigned: {card.assignmentReason}</div> : null}
-      {card.blockerNote ? <div style={{ fontSize: '12px', color: 'var(--color-warning, var(--color-text-muted))', marginTop: 'var(--space-1)' }}>⚠ Blocked: {card.blockerNote}</div> : null}
+      {card.blockerNote ? <div style={{ fontSize: '12px', color: 'var(--color-warning, var(--color-text-muted))', marginTop: 'var(--space-1)', display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}><AlertIcon size={12} /> Blocked: {card.blockerNote}</div> : null}
       {card.lastRunId ? (
         <div style={{ fontSize: '12px', marginTop: 'var(--space-1)' }}>
           <Link to={`/runs/${card.lastRunId}`} onPointerDown={(e) => e.stopPropagation()} style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-1)' }}>

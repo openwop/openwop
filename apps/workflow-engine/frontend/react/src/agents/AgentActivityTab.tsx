@@ -78,7 +78,8 @@ export function AgentActivityTab({ rosterId, persona, refreshSignal }: { rosterI
         return (
           <li
             key={item.runId}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', border: '1px solid var(--color-border)', borderRadius: 10, padding: '0.5rem 0.7rem', background: 'var(--color-surface)' }}
+            className="surface-card"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', padding: 'var(--space-2) var(--space-2-5)' }}
           >
             <span aria-hidden="true" style={{ ...muted, display: 'inline-flex' }}>{SOURCE_ICON[item.source]}</span>
             <div style={{ flex: 1, minWidth: 200 }}>
