@@ -6,6 +6,7 @@
  */
 
 import { Link } from 'react-router-dom';
+import { workflowName } from './roleTemplates.js';
 import type { AgentView } from './agentViewModel.js';
 
 interface ActivityItem {
@@ -18,6 +19,7 @@ function deriveActivity(views: AgentView[]): ActivityItem[] {
   const items: ActivityItem[] = [];
   for (const view of views) {
     const persona = view.entry.persona;
+    // In-progress + waiting work (with run links where present).
     for (const card of view.cards) {
       const lane = view.board?.columns.find((c) => c.id === card.columnId);
       const laneName = (lane?.name ?? '').toLowerCase();
@@ -27,8 +29,17 @@ function deriveActivity(views: AgentView[]): ActivityItem[] {
         items.push({ key: `${card.id}-wait`, text: `${persona} has “${card.title}” waiting on a human` });
       }
     }
+    // New work queued in To Do.
+    if (view.laneCounts.todo > 0) {
+      items.push({ key: `${view.entry.rosterId}-todo`, text: `${persona} has ${view.laneCounts.todo} new task${view.laneCounts.todo === 1 ? '' : 's'} in To Do` });
+    }
+    // Scheduled runs.
+    for (const job of view.jobs.filter((j) => j.enabled !== false).slice(0, 2)) {
+      const label = String(job.metadata?.label ?? (job.workflowId ? workflowName(job.workflowId) : 'a workflow'));
+      items.push({ key: `${job.jobId}-sched`, text: `${persona}: ${label} is scheduled` });
+    }
   }
-  return items.slice(0, 8);
+  return items.slice(0, 10);
 }
 
 export function AgentActivityFeed({ views }: { views: AgentView[] }): JSX.Element {
@@ -36,7 +47,7 @@ export function AgentActivityFeed({ views }: { views: AgentView[] }): JSX.Elemen
   if (items.length === 0) {
     return (
       <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
-        No active work yet. Open an agent and click “Check now” to see its heartbeat pick up a task.
+        No work yet. Create an agent, add a task, or click “Check now” to see its heartbeat pick up work.
       </p>
     );
   }

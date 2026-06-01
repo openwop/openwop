@@ -70,7 +70,7 @@ export function AgentIntegrationsPanel({ boardId, persona, onChanged }: { boardI
         </div>
         <p style={{ fontSize: '0.85rem' }}>
           In Discord, <code>/assign @{handle} "Follow up with ACME on renewal"</code> creates a To Do card on {persona}'s board.
-          {persona}'s heartbeat then picks it up and runs the matching workflow.
+          {' '}{persona}'s heartbeat then picks it up and runs the matching workflow.
         </p>
         <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
           <input

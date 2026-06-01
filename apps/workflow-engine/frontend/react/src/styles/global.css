@@ -447,7 +447,11 @@ a:visited {
   padding: var(--space-3) var(--space-5);
   display: flex;
   align-items: center;
-  gap: var(--space-5);
+  /* Wrap so a narrow viewport stacks the header onto extra rows instead of
+   * forcing page-wide horizontal scroll (the chrome's intrinsic width is
+   * ~950px). Harmless on wide screens — everything fits on one row. */
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
   /* Sticky so the header stays visible while the main pane scrolls.
    * z-index keeps it above content (especially the SSE event-stream
    * code blocks which have their own absolute-positioned copy buttons).
@@ -498,7 +502,18 @@ a:visited {
 
 .app-header nav {
   display: flex;
-  gap: var(--space-3);
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  min-width: 0;
+}
+
+/* Narrow viewports: drop the "workflow engine" sub-label and tighten the
+ * header so it never forces horizontal page scroll. The header + nav wrap
+ * (above); this just trims chrome so the wrap is graceful. */
+@media (max-width: 760px) {
+  .app-header { padding: var(--space-2) var(--space-3); gap: var(--space-2) var(--space-3); }
+  .app-header-sub { display: none; }
+  .app-header-spacer { flex-basis: 100%; height: 0; }
 }
 
 .app-header nav a {

@@ -63,6 +63,8 @@ export function AgentSchedulesPanel({ entry }: { entry: RosterEntry }): JSX.Elem
   };
 
   const onDelete = async (job: ScheduledJob) => {
+    const label = String(job.metadata?.label ?? (job.workflowId ? workflowName(job.workflowId) : job.cronExpr));
+    if (!window.confirm(`Delete the schedule “${label}”? This can't be undone.`)) return;
     try { await deleteJob(job.jobId); await refresh(); }
     catch (err) { setError(err instanceof Error ? err.message : String(err)); }
   };
@@ -80,7 +82,10 @@ export function AgentSchedulesPanel({ entry }: { entry: RosterEntry }): JSX.Elem
             <li key={job.jobId} style={{ border: '1px solid var(--color-border)', borderRadius: 10, padding: '0.6rem 0.7rem', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
               <div style={{ flex: 1, minWidth: 200 }}>
                 <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{job.workflowId ? workflowName(job.workflowId) : 'No workflow'}</div>
-                <div style={{ ...muted, fontSize: '0.78rem' }}>{String(job.metadata?.label ?? job.cronExpr)}{job.enabled ? '' : ' · disabled'}</div>
+                <div style={{ ...muted, fontSize: '0.78rem' }}>
+                  {String(job.metadata?.label ?? job.cronExpr)}{job.enabled ? '' : ' · disabled'}
+                  {job.lastRunId ? <> · last run <Link to={`/runs/${job.lastRunId}`}>{job.lastRunId.slice(0, 8)}</Link></> : ' · not run yet'}
+                </div>
               </div>
               <label style={{ fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <input type="checkbox" checked={job.enabled} onChange={() => void onToggle(job)} /> Enabled
