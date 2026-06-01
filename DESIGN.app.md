@@ -125,6 +125,7 @@ These exist so the three product surfaces (Agents, Workflows, Kanban) read as **
 | `<Notice variant=success\|error\|info\|warning>` (`src/ui/Notice.tsx`) | transient notice | renders `.alert.{variant}` + a leading Lucide icon + `role="status" aria-live="polite"` — never bare colored text, never a hardcoded hex, never a `⚠`/`✓` emoji prefix |
 | `<KanbanBoardView>` (`src/kanban/KanbanBoardView.tsx`) | the ONE Kanban board renderer | shared by `/boards` (KanbanPage) and the embedded agent-workspace Board tab. @dnd-kit drag-and-drop (pointer + keyboard sensor) + rich cards (source chip, workflow name, priority, run link) + trigger-lane affordance. A surface MUST NOT reimplement a second board |
 | `<Markdown>` (`src/ui/Markdown.tsx`) | read-only GFM renderer | `react-markdown` + `remark-gfm` via the shared `chat-md` prose class; XSS-safe (no `rehype-raw`; unsafe link protocols stripped); links open in a new tab, task-list checkboxes disabled. The one way to render agent prose (descriptions, instructions, task details) |
+| `<PageHeader>` (`src/ui/PageHeader.tsx`) | the one editorial page-title primitive | mono uppercase `eyebrow` kicker (`--ink-3`) + Instrument-Serif `title` (out-ranks the cards below) + one-line sans `lede` (≤ 64ch) + right-aligned `actions` (`.action-bar`), over a hairline rule. Every top-level page leads with this instead of a bare `<h1>`/`<h2>` so the surfaces read as one publication |
 | `<MarkdownEditor>` (`src/ui/MarkdownEditor.tsx`) | Markdown editing surface | textarea + formatting toolbar (icons from `ui/icons`), Write/Preview toggle (preview via `<Markdown>`), character count, optional `localStorage` draft autosave + recovery; `compact` trims the toolbar for small surfaces (board cards). Backs the structured system-prompt editor (`agents/StructuredPromptEditor`) |
 
 Global focus ring: `button`, `button.secondary`, `select`, `input`, `textarea`, `[role=button]`, and `.surface-card` all receive `outline: 2px solid var(--color-accent); outline-offset: 2px` on `:focus-visible` (one block in `global.css`). New interactive elements inherit it.
@@ -166,15 +167,22 @@ When adding a new app-specific component:
 
 The app animates more than the marketing site because it shows live activity. Discipline:
 
+Animation philosophy: **motion equals meaning.** Nothing moves unless something is happening; when it is, the surface dramatises the work; when it completes, it lands like a stamp on paper, never a balloon drop. (No confetti, no spring-bounce chrome, no decorative motion — that would undercut the credibility a protocol reference needs.)
+
 | Keyframe | Purpose | Constraint |
 |---|---|---|
 | `openwop-pulse` | "live / streaming" indicator (opacity 0.2 → 0.8 → 0.2) | duration 1.6s–2.4s; opacity only |
 | `openwop-mic-pulse` | recording / capturing prompt | box-shadow ring using `--color-danger` alpha; ≤ 6px ring radius |
+| `openwop-fade-rise` | route arrival — one calm staggered entrance per page mount (applied via `.page-enter > *`, 40ms stagger) | opacity + ≤ 8px `translateY`; runs once per mount, never on re-render; not on the chat surface |
+| `openwop-edge-flow` | active run edge — "data in flight" marching dash (canvas) | clay `stroke-dasharray`; only on `.react-flow__edge.edge-running` (target node running) |
+| `openwop-stamp-in` | completion "press" on a status badge/pill when a node or run reaches a terminal state | one-shot scale overshoot → settle; **no colour fill** — colour carries the success/failure meaning |
+| `openwop-attention` | action-required chip ("Waiting on Human") | gentle opacity dip (1 → 0.6 → 1) that keeps the label legible; reserved for human-action states, never decorative (`.chip--pulse`) |
+| `openwop-bubble-breathe` | live workflow-run chat bubble | faint `--clay-wash` inset-shadow tint while streaming; respects bubble radius; never touches the background fill |
 
 Rules:
 
-1. **All animations MUST honor `prefers-reduced-motion: reduce`.** The shared rule in `global.css` zeroes durations.
-2. No animation drives a state change (e.g., do not animate a card *into* the success state — set the state, animate the badge once and stop).
+1. **All animations MUST honor `prefers-reduced-motion: reduce`.** The universal rule in `global.css` (`*, *::before, *::after`) zeroes durations + iteration counts, so every keyframe above is covered for free.
+2. No animation drives a state change (e.g., do not animate a card *into* the success state — set the state, animate the badge once and stop). The `*-stamp-in` / `*-fade-rise` one-shots fire *after* the state is set.
 3. New keyframes are app-only unless they are also added to `DESIGN.md §11`.
 
 ---

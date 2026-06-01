@@ -124,6 +124,69 @@
   }
 }
 
+/* ─── Liveness pass (DESIGN.app.md §6) ────────────────────────────────────
+ * "Motion equals meaning." Nothing moves unless something is happening; when
+ * it is, the surface dramatises the work; when it completes, it lands like a
+ * stamp on paper — never a balloon drop. All keyframes are collapsed by the
+ * universal prefers-reduced-motion block above. */
+
+/* Page arrival — one calm orchestrated entrance per route mount. Applied to
+ * direct children of `.page-enter`, staggered, runs once per mount (React
+ * remounts on route change), opacity + an 8px rise only. */
+@keyframes openwop-fade-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.page-enter > * {
+  animation: openwop-fade-rise 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.page-enter > *:nth-child(1) { animation-delay: 0ms; }
+.page-enter > *:nth-child(2) { animation-delay: 40ms; }
+.page-enter > *:nth-child(3) { animation-delay: 80ms; }
+.page-enter > *:nth-child(4) { animation-delay: 120ms; }
+.page-enter > *:nth-child(5) { animation-delay: 160ms; }
+.page-enter > *:nth-child(n+6) { animation-delay: 200ms; }
+
+/* Active run edge — data visibly travels source → target. Marching dash in
+ * clay; only on edges whose target node is currently running. */
+@keyframes openwop-edge-flow {
+  to { stroke-dashoffset: -14; }
+}
+.builder-canvas .react-flow__edge.edge-running .react-flow__edge-path {
+  stroke: var(--clay);
+  stroke-width: 2;
+  stroke-dasharray: 5 4;
+  animation: openwop-edge-flow 0.7s linear infinite;
+}
+
+/* Completion stamp — a one-shot "press" on a status badge/seal when a node or
+ * run lands (completed OR failed; the colour carries the meaning). Scale
+ * overshoot + settle, no colour fill. */
+@keyframes openwop-stamp-in {
+  0%   { transform: scale(1.18); }
+  60%  { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+
+/* Attention breathe — for action-required chips ("Waiting on Human"). Gentle
+ * opacity dip that keeps the label legible; reserved for states that ask for a
+ * human (never decorative). */
+@keyframes openwop-attention {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.6; }
+}
+.chip.chip--pulse { animation: openwop-attention 1.8s ease-in-out infinite; }
+
+/* Live workflow-run bubble — the bubble itself breathes a faint clay-wash
+ * tint while the run streams, so the chat feed feels like it's thinking (not
+ * just the cursor blinking). Inset shadow respects the bubble radius and never
+ * touches the inline background. */
+@keyframes openwop-bubble-breathe {
+  0%, 100% { box-shadow: inset 0 0 0 9999px transparent; }
+  50%      { box-shadow: inset 0 0 0 9999px var(--clay-wash); }
+}
+.workflow-run-bubble--live { animation: openwop-bubble-breathe 1.8s ease-in-out infinite; }
+
 /* ─── Message-actions hover reveal ────────────────────────────────────
  * `.message-actions` lives inside each assistant bubble; hidden by
  * default (opacity:0 in inline styles) and revealed when the user
@@ -686,6 +749,13 @@ a:visited {
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
+  /* Faint letterpress dot-grid so the whole app sits on the same drafting
+   * paper as the workflow canvas — shows only in the gutters between cards
+   * (surfaces carry their own --paper bg). Uses --rule-2, the same token as
+   * the canvas grid; intentionally near-threshold. */
+  background-image: radial-gradient(var(--rule-2) 0.6px, transparent 0.6px);
+  background-size: 24px 24px;
+  background-position: -1px -1px;
 }
 
 .app-footer {
@@ -3785,6 +3855,48 @@ a.surface-card:hover,
 .state-card__title { font-size: 14px; font-weight: 600; color: var(--color-text); }
 .state-card__body  { font-size: 13px; max-width: 46ch; }
 .state-card__actions { margin-top: var(--space-2); }
+/* Empty states echo the canvas drafting-paper grid inside the dashed frame —
+ * "this is where work will appear" (DESIGN.app.md §5.1). */
+.state-card {
+  background-image: radial-gradient(var(--rule-2) 0.6px, transparent 0.6px);
+  background-size: 22px 22px;
+}
+
+/* ─── PageHeader — the editorial page-title primitive (DESIGN.app.md §5) ─── */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--rule);
+}
+.page-header__eyebrow {
+  margin: 0 0 var(--space-1);
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+}
+.page-header__title {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 400;
+  color: var(--ink);
+}
+.page-header__lede {
+  margin: var(--space-2) 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-3);
+  max-width: 64ch;
+}
+.page-header__actions { flex-shrink: 0; }
 
 @media (max-width: 640px) {
   .card-grid { grid-template-columns: 1fr; }

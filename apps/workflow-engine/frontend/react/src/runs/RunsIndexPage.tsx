@@ -8,6 +8,7 @@ import { listSavedWorkflows } from '../builder/persistence/localStore.js';
 import { serializeWorkflow, SerializeError } from '../builder/schema/serialize.js';
 import { registerWorkflow } from '../builder/persistence/registerClient.js';
 import { useAuth } from '../auth/useAuth.js';
+import { PageHeader } from '../ui/PageHeader.js';
 import { FlagIcon } from '../ui/icons/index.js';
 
 const SAMPLE_WORKFLOWS = [
@@ -105,6 +106,11 @@ export function RunsIndexPage() {
 
   return (
     <section>
+      <PageHeader
+        eyebrow="Runs"
+        title="Runs"
+        lede="Submit a workflow on the live sample host, then watch it stream — status, events, and outputs land in real time."
+      />
       <div className="card">
         <h2>Create a run</h2>
         <p className="muted" style={{ marginTop: 0 }}>

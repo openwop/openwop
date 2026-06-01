@@ -135,7 +135,7 @@ export function WelcomeCard({ onPickSuggestion }: Props): JSX.Element {
         or @-mentioning an agent. Click one below — each is a real multi-step
         workflow on the live sample backend.
       </p>
-      <div style={{
+      <div className="page-enter" style={{
         display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12,
         maxWidth: 720, width: '100%', marginTop: 24,
       }}>

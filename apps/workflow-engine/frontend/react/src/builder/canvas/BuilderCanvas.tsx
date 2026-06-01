@@ -138,8 +138,11 @@ function BuilderCanvasInner() {
         target: e.target,
         sourceHandle: e.sourcePort,
         targetHandle: e.targetPort,
+        // Liveness: an edge whose target node is currently running carries the
+        // marching-dash "data in flight" treatment (CSS .edge-running, §6).
+        ...(overlay?.nodeStatus[e.target] === 'running' ? { className: 'edge-running' } : {}),
       })),
-    [builderEdges],
+    [builderEdges, overlay],
   );
 
   const onNodesChange = useCallback(
