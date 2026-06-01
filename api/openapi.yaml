@@ -798,8 +798,12 @@ paths:
         - in: path
           name: agentId
           required: true
-          schema: { type: string }
-          description: The manifest agentId.
+          schema: { type: string, pattern: '^(?!roster$|org-chart$).+$' }
+          description: |
+            The manifest agentId. MUST NOT be the reserved literals `roster` or
+            `org-chart` — those name the sibling collection routes
+            (`/v1/agents/roster`, `/v1/agents/org-chart`), so excluding them here
+            keeps `/v1/agents/{agentId}` unambiguous against them.
       responses:
         '200':
           description: The agent's inventory entry.
@@ -831,8 +835,13 @@ paths:
         - in: path
           name: agentId
           required: true
-          schema: { type: string }
-          description: The manifest agentId.
+          schema: { type: string, pattern: '^(?!roster$|org-chart$).+$' }
+          description: |
+            The manifest agentId. MUST NOT be the reserved literals `roster` or
+            `org-chart` — those name the sibling collection routes
+            (`/v1/agents/roster/{rosterId}`, `/v1/agents/org-chart/{departmentId}`),
+            so excluding them here keeps `/v1/agents/{agentId}/deployments`
+            unambiguous against them.
       responses:
         '200':
           description: The agent's deployment records (version-sorted).
