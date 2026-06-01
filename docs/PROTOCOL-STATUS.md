@@ -36,8 +36,8 @@
 | Status | Count |
 |---|---:|
 | Accepted | 76 |
-| Active | 9 |
-| Draft | 3 |
+| Active | 10 |
+| Draft | 2 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -90,7 +90,7 @@
 | RFC 0047 | `host.oauth` capability - the host performs the OAuth 2.0 authorization-code + refresh dance on a user's behalf and persists the result as a `host.credentials` entry, so a connector pack declares only *which provider + scopes* it needs, not *how* the token is obtained | Accepted |
 | RFC 0048 | Promote the existing tenant dimension to an explicit identity triple - `{ tenant, workspace?, principal }` - threading through auth context, scoped discovery, run ownership, and events, so workspace sub-tenancy and the acting principal become portable wire-level concepts | Accepted |
 | RFC 0049 | A portable role->scope binding (reusing the existing API-key scope grammar) plus a standardized, redaction-safe `authorization.decided` event, with a normative **fail-closed** default - so a host's RBAC becomes observable, auditable, and conformance-testable | Accepted |
-| RFC 0050 | Two new entries in the auth-profile family - a SAML assertion-validation profile and a SCIM provisioning profile (LDAP as an optional directory-bind variant) - that sync external IdP users/groups onto RFC 0048 principals + RFC 0049 roles, with `alg:none` rejection mirroring the OIDC work | Draft |
+| RFC 0050 | Two new entries in the auth-profile family - a SAML assertion-validation profile and a SCIM provisioning profile (LDAP as an optional directory-bind variant) - that sync external IdP users/groups onto RFC 0048 principals + RFC 0049 roles, with `alg:none` rejection mirroring the OIDC work | Active |
 | RFC 0051 | `core.openwop.governance.approvalGate` - a first-class, role-bound, audited interrupt node for approvals and deployment promotions, composing the existing interrupt-profile machinery (quorum, auth-required) with RFC 0049 authorization and the audit log | Accepted |
 | RFC 0052 | A `host.scheduling` capability (cron / delayed / calendar) wiring the `schedule` trigger to a portable, durable execution contract - promoting the still-Draft scheduling intent behind RFC 0017's `host.queueBus` into a conformance-tested surface | Accepted |
 | RFC 0053 | A `host.deadLetter` capability + `run.dead_lettered` event - terminally-failed runs/nodes land in a durable, inspectable sink that stays fork-eligible, so a poisoned run can be examined and replayed rather than silently lost | Accepted |
@@ -168,8 +168,8 @@
 
 ## Active Follow-Ups
 
-- 3 RFCs still `Draft` (RFC 0038, RFC 0043, RFC 0050) — advance with schema/conformance proof or defer.
-- 9 RFCs `Active` (RFC 0035, RFC 0042, RFC 0065, RFC 0066, RFC 0067, RFC 0069, RFC 0075, RFC 0085, RFC 0088) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 2 RFCs still `Draft` (RFC 0038, RFC 0043) — advance with schema/conformance proof or defer.
+- 10 RFCs `Active` (RFC 0035, RFC 0042, RFC 0050, RFC 0065, RFC 0066, RFC 0067, RFC 0069, RFC 0075, RFC 0085, RFC 0088) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - SDK parity still shows raw-only rows for several stable v1.x helper surfaces.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
