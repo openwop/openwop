@@ -134,6 +134,7 @@ export function AgentCreateWizard(): JSX.Element {
   };
 
   const exampleName = role ? EXAMPLE_NAMES[role.key] ?? 'Sally' : 'Sally';
+  const CustomRoleIcon = roleThemeForKey('custom').Icon;
 
   const onFinish = async () => {
     setCreating(true);
@@ -216,7 +217,7 @@ export function AgentCreateWizard(): JSX.Element {
               style={{ textAlign: 'left', border: isCustom ? '2px solid var(--color-accent)' : '1px solid var(--color-border)', borderRadius: 10, padding: '0.6rem', background: isCustom ? 'var(--clay-wash)' : 'var(--color-surface)', cursor: 'pointer' }}
             >
               <strong style={{ fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-                {(() => { const C = roleThemeForKey('custom').Icon; return <C size={15} style={{ color: 'var(--color-accent)' }} />; })()} Custom role
+                <CustomRoleIcon size={15} style={{ color: 'var(--color-accent)' }} /> Custom role
               </strong>
               <div style={{ ...muted, fontSize: '0.78rem' }}>Define your own role and workflows.</div>
             </button>
