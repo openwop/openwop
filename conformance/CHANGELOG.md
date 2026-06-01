@@ -2,9 +2,11 @@
 
 ## [Unreleased]
 
-### Added — RFC 0078 + RFC 0079 behavioral scenarios (steward prerequisite for the next conformance minor)
+_No unreleased changes._
 
-Four gated behavioral scenarios + two `src/lib/` helpers, the steward prerequisite to graduating `toolCatalog` (RFC 0078) and `httpClient.egressPolicy` (RFC 0079) from `Active` to `Accepted` on a non-steward host (MyndHyve). All additive + capability-gated; existing v1.0-only hosts pass unchanged. The version bump + `EXPECTED_CONFORMANCE_VERSION` advance ships in the follow-up publish.
+## [1.14.0] — 2026-06-01 — RFC 0078 tool-catalog + RFC 0079 egress-policy behavioral gates
+
+Standalone conformance minor — a scenario addition published via the `openwop-conformance/v1.14.0` per-package tag (PUBLISHING.md §"CI automation"; only the `publish-conformance` job runs), NOT a coordinated spec-corpus release. `EXPECTED_CONFORMANCE_VERSION` advances to `1.14.0` in lockstep. Four gated behavioral scenarios + two `src/lib/` helpers, the steward prerequisite to graduating `toolCatalog` (RFC 0078) and `httpClient.egressPolicy` (RFC 0079) from `Active` to `Accepted` on a non-steward host (MyndHyve). All additive + capability-gated; existing v1.0-only hosts pass unchanged. The normative surface (`GET /v1/tools` + `GET /v1/tools/{toolId}`, the `tool.session.*`/`egress.decided` events + the `tool-descriptor`/`credential-provenance` schemas) already shipped — this release is the gated test surface only.
 
 - **`tool-catalog-projection.test.ts`** (`behaviorGate('openwop-tool-catalog', …)`, gated on `toolCatalog.supported`) — the NORMATIVE `GET /v1/tools` list (each `ToolDescriptor` schema-valid against `tool-descriptor.schema.json`, `source`/`safetyTier` in the closed vocab, content-free), `GET /v1/tools/{toolId}` round-trip + unknown-id 404, 401-unauthenticated, and the §F-2 cross-principal non-disclosure (`OPENWOP_CROSS_PRINCIPAL_TOOL_ID` → 404). Black-box on the normative path — no POST seam.
 - **`tool-session-lifecycle.test.ts`** (`behaviorGate('openwop-tool-session-lifecycle', …)`, gated on `toolCatalog.sessionLifecycle`) — the §D bracket via the new `POST /v1/host/sample/tools/session-run` seam + the test event-log seam: `tool.session.opened` before the first RFC 0064 call event → `tool.session.closed` after the last, one shared `sessionId`, each carrying a `toolId`, `closed.outcome` in the closed enum, both content-free (SR-1).
