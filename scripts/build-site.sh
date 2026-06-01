@@ -55,7 +55,7 @@ cp -R "$ROOT/schemas" "$PUBLIC/schemas"
 # `robots.txt`, and `404.html` are preserved (we don't copy site/dist/index.html
 # or site/dist/robots.txt; the rendered marketing site wins root).
 echo "[build-site] copying site-generated directories → public/"
-for dir in spec conformance profiles badge changelog roadmap versioning security contributing governance maintainers quickstart community protocol implement adopters rfcs faq errors scenarios for; do
+for dir in spec conformance profiles badge changelog roadmap versioning security contributing governance maintainers quickstart community protocol implement install adopters rfcs faq errors scenarios for; do
   if [[ -d "$SITE/dist/$dir" ]]; then
     rm -rf "$PUBLIC/$dir"
     cp -R "$SITE/dist/$dir" "$PUBLIC/$dir"
@@ -94,5 +94,11 @@ cp "$SITE/dist/og-default.svg"  "$PUBLIC/assets/og-default.svg"
 
 # The site-built sitemap replaces the public/ root one.
 cp "$SITE/dist/sitemap.xml" "$PUBLIC/sitemap.xml"
+
+# White-label demo-app source bundle for the /install/ page. Generated into
+# public/downloads/ (gitignored) so `firebase deploy --only hosting:docs`
+# serves it at /downloads/openwop-demo-app.zip with its .sha256 sidecar.
+echo "[build-site] building white-label demo-app zip"
+bash "$ROOT/scripts/build-whitelabel-zip.sh"
 
 echo "[build-site] done. Next: firebase deploy --only hosting:docs"

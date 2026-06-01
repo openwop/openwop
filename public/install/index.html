@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — Install the white-label demo app</title>
+  <meta name="description" content="Self-host your own branded copy of the OpenWOP reference app — the same workflow-engine deployment that runs at app.openwop.dev, re-skinnable to your product without forking core logic. This page walks the full install: download, back-end,…"/>
+  <link rel="canonical" href="https://openwop.dev/install/"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP — Install the white-label demo app"/>
+  <meta property="og:description" content="Self-host your own branded copy of the OpenWOP reference app — the same workflow-engine deployment that runs at app.openwop.dev, re-skinnable to your product without forking core logic. This page walks the full install: download, back-end,…"/>
+  <meta property="og:url" content="https://openwop.dev/install/"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP — Install the white-label demo app"/>
+  <meta name="twitter:description" content="Self-host your own branded copy of the OpenWOP reference app — the same workflow-engine deployment that runs at app.openwop.dev, re-skinnable to your product without forking core logic. This page walks the full install: download, back-end,…"/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/install/" role="menuitem">Install the demo app</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/install/">Install the demo app</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <header class="page-header">
+      <h1>Install the white-label demo app</h1>
+      <p class="lede">Self-host your own branded copy of the OpenWOP reference app — the same workflow-engine deployment that runs at app.openwop.dev, re-skinnable to your product without forking core logic. This page walks the full install: download, back-end,…</p>
+    </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#download">Download</a></li>
+      <li class="toc-sub"><a href="#download-openwop-demo-app-zip-downloads-openwop-demo-app-zip">Download openwop-demo-app.zip →</a></li>
+      <li class="toc-top"><a href="#prerequisites">Prerequisites</a></li>
+      <li class="toc-top"><a href="#1-back-end">1. Back-end</a></li>
+      <li class="toc-top"><a href="#2-front-end">2. Front-end</a></li>
+      <li class="toc-top"><a href="#3-seeding">3. Seeding</a></li>
+      <li class="toc-top"><a href="#4-cli">4. CLI</a></li>
+      <li class="toc-top"><a href="#5-re-brand-white-label">5. Re-brand (white-label)</a></li>
+      <li class="toc-top"><a href="#6-verify">6. Verify</a></li>
+      <li class="toc-top"><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </aside><article class="spec-doc"><p>Self-host your own branded copy of the OpenWOP reference app — the same workflow-engine deployment that runs at <a href="https://app.openwop.dev/">app.openwop.dev</a>, re-skinnable to your product without forking core logic. This page walks the full install: download, back-end, front-end, seeding, CLI, and re-brand.</p>
+<p>The app is <strong>two independent deploys</strong> — a back-end (HTTP API, runs + events + host extensions) and a front-end (the React SPA). They are set up separately and the order matters at deploy time.</p>
+<h2 id="download">Download</h2>
+<p>Grab the source bundle — the <code>apps/workflow-engine</code> subtree (back-end + front-end + <code>WHITE-LABEL.md</code> + <code>DEPLOY.md</code> + provider catalog), tracked files only (no <code>node_modules</code>, build output, or secrets):</p>
+<h3 id="download-openwop-demo-app-zip-downloads-openwop-demo-app-zip"><a href="/downloads/openwop-demo-app.zip">Download openwop-demo-app.zip →</a></h3>
+<p>Verify integrity against the published checksum:</p>
+<pre class="lang-bash"><code># macOS
+shasum -a 256 openwop-demo-app.zip
+# Linux
+sha256sum openwop-demo-app.zip
+# Compare against:
+curl -s https://openwop.dev/downloads/openwop-demo-app.zip.sha256</code></pre>
+<p>The bundle is regenerated on every site deploy from the current <code>main</code>. Prefer git? <code>git clone https://github.com/openwop/openwop.git</code> and work in <code>apps/workflow-engine/</code>.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li><strong>Node.js 20+</strong> and npm.</li>
+<li>A model-provider key for live AI runs (optional — the demo seeds deterministic mock-AI workflows that run with no key).</li>
+<li>For the reference cloud deploy: a Google Cloud project (Cloud Run) and a Firebase Hosting project. Self-hosting on any Node host or container works too — the back-end is a plain Express app and the front-end is static files.</li>
+</ul>
+<h2 id="1-back-end">1. Back-end</h2>
+<pre class="lang-bash"><code>unzip openwop-demo-app.zip &amp;&amp; cd openwop-demo-app/backend/typescript
+npm install
+npm run build
+# SQLite-backed local run (no external services):
+OPENWOP_STORAGE_DSN=&quot;sqlite://./data/workflow-engine.db&quot; npm start</code></pre>
+<p>The API comes up on <code>:8080</code>. Confirm it's live and advertising capabilities:</p>
+<pre class="lang-bash"><code>curl http://127.0.0.1:8080/readiness
+curl http://127.0.0.1:8080/.well-known/openwop</code></pre>
+<p>Configure it with environment variables (all optional — sensible defaults apply):</p>
+<ul>
+<li><code>OPENWOP_STORAGE_DSN</code> — <code>sqlite://…</code> (default) or a Postgres DSN for multi-instance durability.</li>
+<li><code>OPENWOP_SERVICE_NAME</code> — your service name (surfaces in the OpenAPI discovery doc).</li>
+<li><code>OPENWOP_SERVICE_DESCRIPTION</code> — your one-line service description.</li>
+<li><code>OPENWOP_MANAGED_SYSTEM_PROMPT</code> — grounding prompt for the managed "try it free" chat tier (the code default is brand-neutral; set this to your own).</li>
+</ul>
+<p>The cloud reference recipe (Cloud Run, secrets, Cloud SQL) is in the bundled <code>DEPLOY.md</code>.</p>
+<h2 id="2-front-end">2. Front-end</h2>
+<pre class="lang-bash"><code>cd openwop-demo-app/frontend/react
+npm install
+VITE_OPENWOP_BASE_URL=/api npm run build</code></pre>
+<p><code>VITE_OPENWOP_BASE_URL</code> points the SPA at your back-end (<code>/api</code> when proxied on the same origin, or an absolute <code>https://…</code> URL). The production build aborts if it's unset, so a broken bundle can never ship. The build output in <code>dist/</code> is static — serve it from Firebase Hosting, any CDN, or <code>npm run preview</code> locally.</p>
+<blockquote><p><strong>Deploy order:</strong> back-end first, then front-end. A new SPA calls new back-end endpoints; if the front-end lands first those calls 404 until the back-end catches up.</p></blockquote>
+<h2 id="3-seeding">3. Seeding</h2>
+<p>On first use the app seeds a demo roster — five named agents (Sally, Marcus, Priya, Devon, Nora), each with a board, sample cards, schedules, and an org-chart position — so a first-time visitor sees the product without building anything. Seeding is idempotent and never clobbers a tenant's own edits.</p>
+<ul>
+<li><strong>Re-brand the demo content:</strong> edit <code>backend/typescript/src/host/seed-data/demoAgents.json</code> (personas, roles, system prompts, cards). The shape is type-checked at build time.</li>
+<li><strong>Ship a clean tenant (no demo content):</strong> set <code>OPENWOP_DEMO_SEED_ENABLED=false</code>.</li>
+</ul>
+<p>See <code>backend/typescript/src/host/seed-data/SEEDING.md</code> in the bundle for the full strategy.</p>
+<h2 id="4-cli">4. CLI</h2>
+<p><code>@openwop/cli</code> is the control-plane CLI for any OpenWOP-compatible host — auth, capability discovery, run submission with SSE streaming, agent dispatch, and HITL interrupt resume. Point it at your self-hosted instance:</p>
+<pre class="lang-bash"><code>npm install -g @openwop/cli
+export OPENWOP_BASE_URL=https://your-host.example/api
+openwop doctor          # verify host + profile + auth
+openwop runs create     # submit a run, stream its events</code></pre>
+<p>Full command catalog: the bundled CLI quickstart, or <code>@openwop/cli</code> on npm.</p>
+<h2 id="5-re-brand-white-label">5. Re-brand (white-label)</h2>
+<p>Brand identity is isolated into three additive seams — no core-logic fork required. The default build renders the stock OpenWOP identity; everything below is opt-in.</p>
+<ul>
+<li><strong>Strings + assets</strong> — set <code>VITE_BRAND_*</code> env vars at front-end build time: <code>VITE_BRAND_PRODUCT_NAME</code>, <code>VITE_BRAND_MARK_PRE</code> / <code>_EMPHASIS</code> / <code>_SUB</code>, <code>VITE_BRAND_LOGO_SRC</code>, <code>VITE_BRAND_DOCUMENT_TITLE</code>, <code>VITE_BRAND_PRIMARY_DOMAIN</code>, and more. No code edit needed.</li>
+<li><strong>Colors + typography</strong> — override design tokens in <code>frontend/react/src/brand/brand.css</code> (it loads after the base stylesheet and wins the cascade). In most cases setting <code>--clay</code> (accent) and <code>--paper</code>/<code>--ink</code> is enough.</li>
+<li><strong>Back-end strings</strong> — <code>OPENWOP_SERVICE_NAME</code>, <code>OPENWOP_SERVICE_DESCRIPTION</code>, <code>OPENWOP_MANAGED_SYSTEM_PROMPT</code> (above).</li>
+</ul>
+<p>The full catalog — every <code>VITE_BRAND_*</code> var, a worked example, and the can/can't-change matrix — is in <code>frontend/react/WHITE-LABEL.md</code> in the bundle. Vendor sign-in marks (Google, GitHub) are never re-colored.</p>
+<h2 id="6-verify">6. Verify</h2>
+<pre class="lang-bash"><code># Back-end healthy + advertising honestly
+curl https://your-host.example/api/readiness          # → 200
+curl https://your-host.example/api/.well-known/openwop  # → your capability set
+
+# Front-end serves your brand
+curl -s https://your-host.example/ | grep -i &quot;&amp;lt;title&amp;gt;&quot;  # → your product name</code></pre>
+<p>Then open the app: the header wordmark, logo, document title, and footer should all show your brand, and the demo roster (or a clean tenant) should load.</p>
+<h2 id="next-steps">Next steps</h2>
+<ul>
+<li><a href="/quickstart/">Run the quickstart</a> — your first workflow against any host.</li>
+<li><a href="/for/host-implementers/">Host implementers</a> — the capability + conformance contract your deployment now implements.</li>
+<li><a href="https://app.openwop.dev/">Try the live reference</a> — the unbranded demo this bundle is built from.</li>
+</ul></article></div><script src="/assets/spec-toc.js" defer></script>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+          <li><a href="/install/">Install the demo app</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>

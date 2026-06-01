@@ -1410,6 +1410,7 @@ function buildContentDir() {
     { src: 'community.md',                    dest: ['community'],                    nav: 'community',  label: 'Community' },
     { src: 'protocol.md',                     dest: ['protocol'],                     nav: 'protocol',   label: 'The OpenWOP protocol' },
     { src: 'implement.md',                    dest: ['implement'],                    nav: 'implement',  label: 'Implementing OpenWOP' },
+    { src: 'install.md',                      dest: ['install'],                      nav: 'implement',  label: 'Install the demo app' },
     { src: 'governance/spec-status.md',       dest: ['governance', 'spec-status'],    nav: 'protocol',   label: 'Spec status policy' },
     { src: 'for/workflow-authors.md',         dest: ['for', 'workflow-authors'],      nav: 'implement',  label: 'For workflow authors' },
     { src: 'for/host-implementers.md',        dest: ['for', 'host-implementers'],     nav: 'implement',  label: 'For host implementers' },

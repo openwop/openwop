@@ -206,3 +206,6 @@ docker-compose.override.yml
 # `git add -f plans/<file>.md`.
 plans/*.md
 
+
+# Generated white-label demo-app zip (scripts/build-whitelabel-zip.sh) — built at deploy, not committed
+public/downloads/
