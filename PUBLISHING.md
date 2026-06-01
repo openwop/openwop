@@ -124,6 +124,8 @@ Publish workflow at `.github/workflows/openwop-publish.yml`. Triggers map 1:1 to
 
 Push the most specific tag for the change. Per-package tags keep unrelated packages at their current version (no phantom no-op republishes).
 
+Each publish job is **idempotent**: before publishing, it checks whether the package's manifest version is already on its registry (`npm view <pkg>@<version>` for the three npm packages; `skip-existing: true` for the PyPI upload) and **skips rather than fails** if so. This means a corpus-aligned `v*` tag — which fires every publish job — can never partial-publish or hard-fail when some packages are already at their version (e.g. shipped earlier via their per-package tag); only the genuinely-fresh packages publish. The guard makes re-running a tag safe and makes a corpus tag tolerant of the common "only one package changed" case, but it does **not** change the policy above: push the most specific tag, and reserve a `v*` corpus tag for a genuine coordinated multi-artifact delta.
+
 The workflow runs `bash scripts/openwop-check.sh` as a hard preflight before any publish job, so a bad commit can't reach the registries even if a tag is pushed.
 
 Secrets required (configured once at repo settings):
