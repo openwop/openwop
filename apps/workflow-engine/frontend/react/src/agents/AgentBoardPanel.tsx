@@ -101,7 +101,11 @@ export function AgentBoardPanel({ boardId, persona, avatarUrl, roleTheme, workfl
     }
   };
 
-  if (!board) return <p style={muted}>{error ? `⚠ ${error}` : 'Loading board…'}</p>;
+  if (!board) {
+    return error
+      ? <Notice variant="error">{error}</Notice>
+      : <p style={muted}>Loading board…</p>;
+  }
 
   return (
     <div>
