@@ -20,6 +20,7 @@ import { createRosterEntry } from './rosterClient.js';
 import { createBoard, type KanbanColumn } from '../kanban/kanbanClient.js';
 import { CADENCE_PRESETS, createJob } from './scheduleClient.js';
 import { Notice } from '../ui/Notice.js';
+import { StructuredPromptEditor } from './StructuredPromptEditor.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
@@ -253,13 +254,13 @@ export function AgentCreateWizard(): JSX.Element {
             </label>
           </div>
           <div style={{ fontSize: '0.82rem', fontWeight: 600 }}>Instructions (editable)</div>
-          <p style={{ ...muted, fontSize: '0.78rem', marginTop: 0 }}>Auto-generated from the role — edit freely.</p>
-          <textarea
+          <p style={{ ...muted, fontSize: '0.78rem', marginTop: 0 }}>
+            Auto-generated from the role — edit freely. Use the sections, or switch to raw Markdown.
+          </p>
+          <StructuredPromptEditor
+            key={role?.key ?? (isCustom ? 'custom' : 'none')}
             value={systemPrompt}
-            onChange={(e) => setSystemPrompt(e.target.value)}
-            rows={6}
-            style={{ width: '100%', fontFamily: 'var(--font-mono, monospace)', fontSize: '0.85rem' }}
-            placeholder={composedPrompt()}
+            onChange={setSystemPrompt}
           />
         </div>
       ) : null}

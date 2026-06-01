@@ -31,6 +31,8 @@ import { Link } from 'react-router-dom';
 import { TaskSourceChip } from '../agents/TaskSourceChip.js';
 import { workflowName } from '../agents/roleTemplates.js';
 import { CheckIcon, GripVerticalIcon, PlayIcon, WorkflowIcon, XIcon, ZapIcon } from '../ui/icons/index.js';
+import { Markdown } from '../ui/Markdown.js';
+import { MarkdownEditor } from '../ui/MarkdownEditor.js';
 import type { KanbanBoard, KanbanCard, KanbanColumn, KanbanCardSource } from './kanbanClient.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
@@ -123,7 +125,7 @@ function DraggableCard({
           </button>
         ) : null}
       </div>
-      {card.description ? <div style={{ ...muted, fontSize: '12px', marginTop: 2 }}>{card.description}</div> : null}
+      {card.description ? <Markdown style={{ ...muted, fontSize: '12px', marginTop: 2 }}>{card.description}</Markdown> : null}
       <div style={{ display: 'flex', gap: 'var(--space-1)', flexWrap: 'wrap', alignItems: 'center', marginTop: 'var(--space-1)' }}>
         {card.source ? <TaskSourceChip source={card.source} sourceLabel={card.sourceLabel} /> : null}
         {card.workflowId ? (
@@ -242,7 +244,7 @@ function DroppableColumn({
           style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}
         >
           <input autoFocus className="ui-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Task title…" style={{ width: '100%' }} />
-          <textarea className="ui-input" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description (optional)" rows={2} style={{ width: '100%', fontFamily: 'inherit' }} />
+          <MarkdownEditor value={description} onChange={setDescription} placeholder="Description (optional) — Markdown supported" rows={2} compact ariaLabel="Task description" />
           {enableSources ? (
             <select className="ui-input" value={source} onChange={(e) => setSource(e.target.value as KanbanCardSource)} aria-label="Task source" style={{ width: '100%' }}>
               {SOURCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
