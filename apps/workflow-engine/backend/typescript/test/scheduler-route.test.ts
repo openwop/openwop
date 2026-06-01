@@ -84,6 +84,48 @@ describe('scheduler CRUD route (C-6 / RFC 0052)', () => {
     expect(list.body.jobs.some((j) => j.jobId === 'job-a')).toBe(true);
   });
 
+  it('edits a job in place (PATCH cronExpr + workflowId + timezone)', async () => {
+    await jsonFetch('/v1/host/sample/scheduler/jobs', {
+      method: 'POST',
+      body: JSON.stringify({ jobId: 'job-e', cronExpr: '0 9 * * *', workflowId: 'wf-old' }),
+    });
+    const patched = await jsonFetch<Job & { timezone?: string; enabled: boolean }>(
+      '/v1/host/sample/scheduler/jobs/job-e',
+      { method: 'PATCH', body: JSON.stringify({ cronExpr: '0 9 * * 1-5', workflowId: 'wf-new', timezone: 'America/New_York' }) },
+    );
+    expect(patched.status).toBe(200);
+    expect(patched.body.cronExpr).toBe('0 9 * * 1-5');
+    expect(patched.body.workflowId).toBe('wf-new');
+    expect(patched.body.timezone).toBe('America/New_York');
+    // enabled untouched by a partial patch.
+    expect(patched.body.enabled).toBe(true);
+  });
+
+  it('PATCH with no editable field is a validation_error', async () => {
+    await jsonFetch('/v1/host/sample/scheduler/jobs', {
+      method: 'POST',
+      body: JSON.stringify({ jobId: 'job-empty', cronExpr: '0 9 * * *' }),
+    });
+    const res = await jsonFetch<{ error: string }>('/v1/host/sample/scheduler/jobs/job-empty', {
+      method: 'PATCH',
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('validation_error');
+  });
+
+  it('records lastRunAt when a job is triggered', async () => {
+    await jsonFetch('/v1/host/sample/scheduler/jobs', {
+      method: 'POST',
+      body: JSON.stringify({ jobId: 'job-lr', cronExpr: '* * * * *' }),
+    });
+    await jsonFetch('/v1/host/sample/scheduler/jobs/job-lr/trigger', { method: 'POST', body: '{}' });
+    const list = await jsonFetch<{ jobs: Array<Job & { lastRunAt?: string }> }>('/v1/host/sample/scheduler/jobs');
+    const job = list.body.jobs.find((j) => j.jobId === 'job-lr')!;
+    expect(typeof job.lastRunAt).toBe('string');
+    expect(Number.isNaN(Date.parse(job.lastRunAt!))).toBe(false);
+  });
+
   it('assigns a jobId when none is supplied', async () => {
     const created = await jsonFetch<Job>('/v1/host/sample/scheduler/jobs', {
       method: 'POST',
