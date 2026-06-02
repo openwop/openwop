@@ -59,6 +59,12 @@ import { runConfig, CONFIG_HELP } from './cli/config.js';
 import { runCatalog, CATALOG_HELP } from './cli/catalog.js';
 import { runWorkflows, WORKFLOWS_HELP } from './cli/workflows.js';
 import { runAgents, AGENTS_HELP } from './cli/agents.js';
+import { runRoster, ROSTER_HELP } from './cli/roster.js';
+import { runOrgChart, ORG_CHART_HELP } from './cli/orgChart.js';
+import { runKanban, KANBAN_HELP } from './cli/kanban.js';
+import { runOrgs, ORGS_HELP } from './cli/accessControl.js';
+import { runWorkspace, WORKSPACE_HELP } from './cli/workspace.js';
+import { runByok, BYOK_HELP } from './cli/byok.js';
 import { runConformance, CONFORMANCE_HELP } from './cli/conformance.js';
 import { runAccount, ACCOUNT_HELP } from './cli/account.js';
 import { runAdmin, ADMIN_HELP } from './cli/admin.js';
@@ -172,6 +178,21 @@ export async function runCli(argv: string[], options: any = {}): Promise<number>
       case 'agents':
       case 'agent':
         return await runAgents(ctx, commandArgs);
+      case 'roster':
+        return await runRoster(ctx, commandArgs);
+      case 'org-chart':
+      case 'orgchart':
+        return await runOrgChart(ctx, commandArgs);
+      case 'kanban':
+      case 'boards':
+        return await runKanban(ctx, commandArgs);
+      case 'orgs':
+      case 'org':
+        return await runOrgs(ctx, commandArgs);
+      case 'workspace':
+        return await runWorkspace(ctx, commandArgs);
+      case 'byok':
+        return await runByok(ctx, commandArgs);
       case 'config':
         return await runConfig(ctx, commandArgs);
       case 'webhooks':
@@ -236,6 +257,15 @@ function showHelp(io: any, command: any) {
     provider: PROVIDERS_HELP,
     agents: AGENTS_HELP,
     agent: AGENTS_HELP,
+    roster: ROSTER_HELP,
+    'org-chart': ORG_CHART_HELP,
+    orgchart: ORG_CHART_HELP,
+    kanban: KANBAN_HELP,
+    boards: KANBAN_HELP,
+    orgs: ORGS_HELP,
+    org: ORGS_HELP,
+    workspace: WORKSPACE_HELP,
+    byok: BYOK_HELP,
     config: CONFIG_HELP,
     doctor: DOCTOR_HELP,
     health: HEALTH_HELP,
@@ -538,8 +568,31 @@ Commands:
   memory get          Show one memory entry
   memory delete       Delete one memory entry
   runs ancestry       Show a run's cross-host parent chain (RFC 0040)
-  agents list         List agent-attributed node roles on the host
-  agents info         Show one agent role's details
+  agents list         List manifest agents (RFC 0070) on the host
+  agents info         Show one agent's details
+  agents create       Create a tenant-scoped user-defined agent
+  agents update       Update a user-defined agent
+  agents delete       Delete a user-defined agent
+  roster list         List named standing agents + their workflow portfolio (RFC 0086)
+  roster create       Create a roster entry
+  roster update       Update / pause / re-enable a roster entry
+  roster delete       Delete a roster entry
+  org-chart get       Show the descriptive department/reporting structure (RFC 0087)
+  org-chart set       Replace the org chart from a JSON file
+  kanban boards       List agent task boards
+  kanban board-create Create a board (optionally bound to a roster entry)
+  kanban card-add     Add a card to a board
+  kanban card-move    Move a card between columns
+  kanban watch        Stream a board's card events
+  orgs list           List organizations (RFC 0049 RBAC)
+  orgs create         Create an organization
+  orgs teams|groups|roles|members  Manage org teams/groups/roles/members
+  orgs effective      Resolve a subject's effective access
+  workspace list      List per-tenant agent workspace files (RFC 0059)
+  workspace put|get   Write / read a workspace file
+  byok list           List BYOK credential refs (never values)
+  byok set            Store a BYOK secret (prompts if --value omitted)
+  byok delete         Remove a BYOK secret ref
   webhooks list       List webhook subscriptions
   webhooks add        Register a webhook subscription
   webhooks remove     Delete a webhook subscription
