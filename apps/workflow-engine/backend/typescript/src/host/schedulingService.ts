@@ -32,6 +32,7 @@
  */
 
 import { DurableCollection } from './hostExtPersistence.js';
+import { computeNextFire } from './cronSchedule.js';
 
 /** Largest future horizon the host honors — mirrors the advertised
  *  `capabilities.scheduling.maxFutureHorizon: 'P30D'`. */
@@ -64,9 +65,16 @@ export interface ScheduledJob {
    *  Distinct from `lastFiredTick` (the deterministic tick index); this is the
    *  human-facing "last run …" timestamp. */
   lastRunAt?: string;
-  /** IANA timezone the cadence is expressed in (informational in the sample —
-   *  the tick seam doesn't apply it; surfaced so the UI can show it). */
+  /** IANA timezone the cadence is expressed in. The background daemon
+   *  (scheduleDaemon.ts) evaluates the cadence against this zone when computing
+   *  `nextFireAt`; the deterministic tick seam still ignores it. */
   timezone?: string;
+  /** Epoch-ms wall-clock time the background daemon should next fire this job,
+   *  computed from `cronExpr` (+ `timezone`). Undefined when the cron expression
+   *  doesn't parse (the daemon skips such jobs) or the schedule is one-shot/spent.
+   *  Advanced past each fire in `markJobFired` (collapsing any missed backlog to
+   *  the next future slot — RFC 0052 §B.4). */
+  nextFireAt?: number;
   /** ISO-8601 registration timestamp (informational). */
   createdAt?: string;
 }
@@ -160,6 +168,7 @@ export async function registerJob(
       },
     };
   }
+  const nextFireAt = computeNextFire(input.cronExpr, nowMs, input.timezone);
   const job: ScheduledJob = {
     jobId: input.jobId,
     tenantId: input.tenantId,
@@ -171,6 +180,7 @@ export async function registerJob(
     ...(input.agentId !== undefined ? { agentId: input.agentId } : {}),
     ...(input.metadata !== undefined ? { metadata: input.metadata } : {}),
     ...(input.timezone !== undefined ? { timezone: input.timezone } : {}),
+    ...(nextFireAt !== null ? { nextFireAt } : {}),
     createdAt: new Date(nowMs).toISOString(),
   };
   await jobs.put(job);
@@ -225,6 +235,12 @@ export async function updateJob(
   if (patch.workflowId !== undefined) job.workflowId = patch.workflowId;
   if (patch.metadata !== undefined) job.metadata = patch.metadata;
   if (patch.timezone !== undefined) job.timezone = patch.timezone;
+  // Recompute the daemon's next-fire when the cadence or timezone changed.
+  if (patch.cronExpr !== undefined || patch.timezone !== undefined) {
+    const next = computeNextFire(job.cronExpr, Date.now(), job.timezone);
+    if (next !== null) job.nextFireAt = next;
+    else delete job.nextFireAt;
+  }
   await jobs.put(job);
   return job;
 }
@@ -241,6 +257,12 @@ export async function markJobFired(
   job.lastFiredTick = tick;
   job.lastRunAt = new Date(firedAtMs).toISOString();
   if (runId !== undefined) job.lastRunId = runId;
+  // Advance the daemon's next-fire strictly past this fire. computeNextFire
+  // searches forward from `firedAtMs`, so a backlog accrued while the daemon was
+  // down collapses to the next future slot — fire-once-on-recovery (§B.4).
+  const next = computeNextFire(job.cronExpr, firedAtMs, job.timezone);
+  if (next !== null) job.nextFireAt = next;
+  else delete job.nextFireAt;
   await jobs.put(job);
 }
 
