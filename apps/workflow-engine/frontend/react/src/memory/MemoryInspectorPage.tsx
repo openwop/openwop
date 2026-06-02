@@ -17,8 +17,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { deleteMemoryEntry, listMemory, type MemoryEntry } from './lib/memoryClient.js';
-import { LockIcon } from '../ui/icons/index.js';
+import { LockIcon, TrashIcon } from '../ui/icons/index.js';
 import { PageHeader } from '../ui/PageHeader.js';
+import { DataTable, DensityToggle, type DataColumn } from '../ui/DataTable.js';
+import { SkeletonRows } from '../ui/Skeleton.js';
+import { toast } from '../ui/toast.js';
 
 function isRedacted(content: string): boolean {
   return /\[REDACTED:[^\]]*\]/.test(content);
@@ -30,6 +33,8 @@ export function MemoryInspectorPage(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [tag, setTag] = useState('');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [density, setDensity] = useState<'comfortable' | 'compact'>('comfortable');
 
   const refresh = useCallback(async () => {
     try {
@@ -62,11 +67,70 @@ export function MemoryInspectorPage(): JSX.Element {
     if (!window.confirm(`Delete memory entry "${e.id}"? This cannot be undone.`)) return;
     try {
       await deleteMemoryEntry(e.id, memoryRef || undefined);
+      toast.success('Memory entry deleted.');
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
+      toast.error('Could not delete the memory entry.');
     }
   }
+
+  async function onBulkDelete(rows: MemoryEntry[]) {
+    if (rows.length === 0) return;
+    if (!window.confirm(`Delete ${rows.length} memory ${rows.length === 1 ? 'entry' : 'entries'}? This cannot be undone.`)) return;
+    const results = await Promise.allSettled(rows.map((e) => deleteMemoryEntry(e.id, memoryRef || undefined)));
+    const failed = results.filter((r) => r.status === 'rejected').length;
+    const ok = rows.length - failed;
+    if (ok > 0) toast.success(`Deleted ${ok} memory ${ok === 1 ? 'entry' : 'entries'}.`);
+    if (failed > 0) toast.error(`${failed} ${failed === 1 ? 'entry' : 'entries'} could not be deleted.`);
+    setSelected(new Set());
+    await refresh();
+  }
+
+  const columns: DataColumn<MemoryEntry>[] = [
+    {
+      key: 'content',
+      header: 'Content',
+      render: (e) => (
+        <>
+          {isRedacted(e.content) && (
+            <span className="memory-redacted-badge" title="Contains host-redacted secret material (SR-1)">
+              <LockIcon size={12} /> redacted
+            </span>
+          )}
+          <span className="memory-content">{e.content}</span>
+        </>
+      ),
+    },
+    {
+      key: 'tags',
+      header: 'Tags',
+      cellClassName: 'memory-tags',
+      render: (e) => e.tags.map((t) => <span key={t} className="memory-tag">{t}</span>),
+    },
+    {
+      key: 'created',
+      header: 'Created',
+      cellClassName: 'memory-created',
+      sortValue: (e) => (e.createdAt ? Date.parse(e.createdAt) : 0),
+      render: (e) => (
+        <span title={e.createdAt}>
+          {new Date(e.createdAt).toLocaleString()}
+          {e.expiresAt && <span className="muted" title={`Expires ${e.expiresAt}`}> · TTL</span>}
+        </span>
+      ),
+    },
+    {
+      key: 'actions',
+      header: '',
+      align: 'right',
+      render: (e) => (
+        <button className="secondary btn-sm" onClick={() => { void onDelete(e); }} title="Delete this memory entry" aria-label={`Delete memory entry ${e.id}`}>
+          <TrashIcon size={13} />
+        </button>
+      ),
+    },
+  ];
 
   return (
     <section>
@@ -100,62 +164,34 @@ export function MemoryInspectorPage(): JSX.Element {
 
         {error && <div className="alert error">{error}</div>}
 
-        {entries === null && <p className="muted">Loading…</p>}
+        {entries === null && <SkeletonRows rows={5} columns={[24, '60%', 120, 140, 60]} />}
 
         {entries !== null && !error && (
           <>
-            <p className="muted" style={{ fontSize: 12 }}>
-              {filtered.length} {filtered.length === 1 ? 'entry' : 'entries'}
-              {entries.length !== filtered.length ? ` of ${entries.length}` : ''}
-            </p>
-            {filtered.length === 0 ? (
-              <p className="muted">No memory entries.</p>
-            ) : (
-              <table className="memory-table">
-                <thead>
-                  <tr>
-                    <th>Content</th>
-                    <th>Tags</th>
-                    <th>Created</th>
-                    <th aria-label="Actions" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((e) => (
-                    <tr key={e.id}>
-                      <td>
-                        {isRedacted(e.content) && (
-                          <span className="memory-redacted-badge" title="Contains host-redacted secret material (SR-1)">
-                            <LockIcon size={12} /> redacted
-                          </span>
-                        )}
-                        <span className="memory-content">{e.content}</span>
-                      </td>
-                      <td className="memory-tags">
-                        {e.tags.map((t) => (
-                          <span key={t} className="memory-tag">{t}</span>
-                        ))}
-                      </td>
-                      <td className="memory-created" title={e.createdAt}>
-                        {new Date(e.createdAt).toLocaleString()}
-                        {e.expiresAt && (
-                          <span className="muted" title={`Expires ${e.expiresAt}`}> · TTL</span>
-                        )}
-                      </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <button
-                          className="secondary"
-                          onClick={() => { void onDelete(e); }}
-                          title="Delete this memory entry"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+            <div className="action-bar" style={{ justifyContent: 'space-between' }}>
+              <p className="muted" style={{ fontSize: 12, margin: 0 }}>
+                {filtered.length} {filtered.length === 1 ? 'entry' : 'entries'}
+                {entries.length !== filtered.length ? ` of ${entries.length}` : ''}
+              </p>
+              <DensityToggle value={density} onChange={setDensity} />
+            </div>
+            <DataTable
+              rows={filtered}
+              rowKey={(e) => e.id}
+              columns={columns}
+              density={density}
+              caption="Memory entries"
+              initialSort={{ key: 'created', dir: 'desc' }}
+              selectable
+              selected={selected}
+              onSelectionChange={setSelected}
+              bulkActions={(rows) => (
+                <button className="secondary btn-sm" onClick={() => { void onBulkDelete(rows); }}>
+                  <TrashIcon size={13} /> Delete selected
+                </button>
+              )}
+              empty={<p className="muted">No memory entries.</p>}
+            />
           </>
         )}
       </div>
