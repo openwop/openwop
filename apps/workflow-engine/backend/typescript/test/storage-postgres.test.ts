@@ -274,6 +274,8 @@ async function makeStorage(): Promise<Storage> {
     getRelayDevice: async () => null,
     getRelayDeviceByTokenHash: async () => null,
     listRelayDevices: async () => [],
+    recordAgentRunAttribution: async () => {},
+    listAgentRunActivity: async () => [],
     enqueueRelayOutbound: async () => { throw new Error('not exercised'); },
     listRelayOutbound: async () => [],
     ackRelayOutbound: async () => 0,

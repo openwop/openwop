@@ -42,6 +42,17 @@ import type {
   RelayDeviceRecord,
 } from '../messaging/types.js';
 
+/** One row of the append-only agent-attributed-run index (RFC 0086). */
+export interface AgentRunAttributionRow {
+  runId: string;
+  tenantId: string;
+  rosterId: string;
+  agentId?: string;
+  source: 'heartbeat' | 'schedule' | 'kanban' | 'approval';
+  /** ISO-8601 run creation time. */
+  createdAt: string;
+}
+
 export interface Storage {
   // ── runs ──
   insertRun(run: RunRecord): Promise<void>;
@@ -430,6 +441,22 @@ export interface Storage {
    *  connector deliverability probe — "is there a live device that can actually
    *  deliver outbound for this channel right now?". */
   listRelayDevices(tenantId: string): Promise<readonly RelayDeviceRecord[]>;
+
+  // ── agent-attributed run activity index (RFC 0086) ──
+  /** Record (append-only, idempotent on runId) that a run is attributed to a
+   *  roster member. Written once at run creation; immutable — live status is
+   *  read from the runs table at query time. */
+  recordAgentRunAttribution(row: AgentRunAttributionRow): Promise<void>;
+  /** List agent-attributed runs via the index, joined to the live run row:
+   *  filter by tenant, optional roster member, optional run status; newest
+   *  first. Returns full RunRecords so callers project them as usual. */
+  listAgentRunActivity(filter: {
+    tenantId: string;
+    rosterId?: string;
+    status?: string;
+    limit?: number;
+  }): Promise<readonly RunRecord[]>;
+
   /** Append an egress to a relay's outbound queue. */
   enqueueRelayOutbound(record: ChatEgressEnvelope): Promise<void>;
   /** Pull pending egress for a relay, oldest first. */

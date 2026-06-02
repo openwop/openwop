@@ -32,7 +32,7 @@ export interface Queryable {
   ): Promise<{ rows: R[] }>;
 }
 
-export const LATEST_SCHEMA_VERSION = 17;
+export const LATEST_SCHEMA_VERSION = 18;
 
 const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
   1: async (client) => {
@@ -539,6 +539,22 @@ const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
       ALTER TABLE runs ADD COLUMN IF NOT EXISTS dispatch_lease_expires_at BIGINT;
       CREATE INDEX IF NOT EXISTS idx_runs_dispatch_lease
         ON runs (status, dispatch_lease_expires_at);
+    `);
+  },
+  18: async (client) => {
+    // Append-only agent-attributed-run index (RFC 0086). Mirrors sqlite mig 21:
+    // written once at run creation; live status joined from runs at query time.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS agent_run_activity (
+        run_id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        roster_id TEXT NOT NULL,
+        agent_id TEXT,
+        source TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_agent_run_activity_tenant_roster
+        ON agent_run_activity (tenant_id, roster_id, created_at);
     `);
   },
 };

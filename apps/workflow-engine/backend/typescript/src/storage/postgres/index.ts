@@ -1365,6 +1365,27 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
       );
       return rows.map(rowToRelayDevicePg);
     },
+    async recordAgentRunAttribution(row) {
+      await pool.query(
+        `INSERT INTO agent_run_activity (run_id, tenant_id, roster_id, agent_id, source, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6::timestamptz)
+         ON CONFLICT (run_id) DO NOTHING`,
+        [row.runId, row.tenantId, row.rosterId, row.agentId ?? null, row.source, row.createdAt],
+      );
+    },
+    async listAgentRunActivity({ tenantId, rosterId, status, limit = 50 }) {
+      const { rows } = await pool.query<Row>(
+        `SELECT r.* FROM agent_run_activity a
+           JOIN runs r ON r.run_id = a.run_id
+          WHERE a.tenant_id = $1
+            AND ($2::text IS NULL OR a.roster_id = $2)
+            AND ($3::text IS NULL OR r.status = $3)
+          ORDER BY r.created_at DESC
+          LIMIT $4`,
+        [tenantId, rosterId ?? null, status ?? null, limit],
+      );
+      return rows.map(rowToRun);
+    },
     async enqueueRelayOutbound(record) {
       await pool.query(
         `INSERT INTO relay_outbound (egress_id, relay_id, channel, conversation_id, text, reply_to_message_id, enqueued_at, extra)

@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 20;
+export const LATEST_SCHEMA_VERSION = 21;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -582,6 +582,26 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
       ALTER TABLE runs ADD COLUMN dispatch_lease_expires_at INTEGER;
       CREATE INDEX IF NOT EXISTS idx_runs_dispatch_lease
         ON runs (status, dispatch_lease_expires_at);
+    `);
+  },
+  21: (db) => {
+    // Append-only index of agent-attributed runs (RFC 0086). Written once when
+    // a run is created carrying heartbeat/schedule/kanban/approval attribution;
+    // the live status comes from the runs table at query time (joined), so this
+    // row never needs updating. Lets fleet / per-agent / failure activity
+    // queries filter by (tenant, roster) directly instead of scanning the most
+    // recent N runs and filtering in memory.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS agent_run_activity (
+        run_id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        roster_id TEXT NOT NULL,
+        agent_id TEXT,
+        source TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_agent_run_activity_tenant_roster
+        ON agent_run_activity (tenant_id, roster_id, created_at);
     `);
   },
 };
