@@ -146,6 +146,11 @@ echo "[7/10] Generated protocol status..."
 node "$SPEC_ROOT/scripts/generate-protocol-status.mjs" --check
 node "$SPEC_ROOT/scripts/check-workflow-chain-expansion-sync.mjs"
 node "$SPEC_ROOT/scripts/check-required-properties-defined.mjs"
+# SDK parity — every OpenAPI operation must declare a per-SDK helper status in
+# sdk/parity-expectations.json ('typed' or 'excluded'), and every 'typed' op's
+# path must still be wired in that SDK. Catches a route landing without an SDK
+# helper (or its declaration), and whole-surface SDK regressions.
+node "$SPEC_ROOT/scripts/check-sdk-parity.mjs"
 # Backend dep-graph sanity — every external import in apps/workflow-engine/
 # backend/typescript/src/ MUST be declared in its package.json. Catches the
 # class of bug where local hoisting masks a missing dep that breaks Cloud
@@ -176,6 +181,23 @@ node "$SPEC_ROOT/scripts/check-pack-prompt-refs.mjs"
 # the pre-audit empty-tracker state. Mechanizes the audit's "close high/critical
 # findings before standardizing" requirement (cf. docs/AUDIT-RESPONSE).
 node "$SPEC_ROOT/scripts/check-audit-findings.mjs"
+# CF-11 out-of-band audit-checkpoint verifier regression guard. The verifier
+# (scripts/verify-audit-checkpoints.mjs) is a security-relevant tamper-detection
+# tool; pin its behavior against committed sample bundles so a regression is
+# caught at the spec gate, not just in the postgres host's own test. MUST accept
+# a valid bundle (exit 0) and reject a tampered one (exit 1).
+if node "$SPEC_ROOT/scripts/verify-audit-checkpoints.mjs" "$SPEC_ROOT/conformance/audit-export-samples/valid.json" >/dev/null 2>&1; then
+  echo "  ok: audit-checkpoint verifier accepts the valid sample bundle"
+else
+  echo "  FAIL: verify-audit-checkpoints.mjs rejected conformance/audit-export-samples/valid.json (expected exit 0)" >&2
+  exit 1
+fi
+if node "$SPEC_ROOT/scripts/verify-audit-checkpoints.mjs" "$SPEC_ROOT/conformance/audit-export-samples/tampered.json" >/dev/null 2>&1; then
+  echo "  FAIL: verify-audit-checkpoints.mjs ACCEPTED the tampered sample bundle (expected non-zero exit — tamper not detected)" >&2
+  exit 1
+else
+  echo "  ok: audit-checkpoint verifier rejects the tampered sample bundle"
+fi
 # Workflow-engine sample bundles a vendored copy of conformance/fixtures/
 # into its Docker image (apps/workflow-engine/conformance-fixtures/, per
 # the Dockerfile + scripts/sync-fixtures.sh). Catch silent drift: if the

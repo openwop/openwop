@@ -713,3 +713,405 @@ func (c *OpenwopClient) GetAgent(ctx context.Context, agentID string) (*AgentInv
 	}
 	return &out, nil
 }
+
+// ── RFC 0078 — Portable tool catalog (spec/v1/tool-catalog.md) ─────────────
+
+// ListTools calls GET /v1/tools per RFC 0078 §B — lists the portable
+// ToolDescriptors visible to the caller. Returns (nil, nil) when the host
+// doesn't advertise capabilities.toolCatalog (the endpoint 404s), so callers can
+// branch on capability discovery without unwrapping the error envelope.
+func (c *OpenwopClient) ListTools(ctx context.Context) ([]ToolDescriptor, error) {
+	var out []ToolDescriptor
+	err := c.requestJSON(ctx, http.MethodGet, "/v1/tools", nil, nil, true, &out)
+	if err != nil {
+		var werr *WopError
+		if errors.As(err, &werr) && werr.Status == 404 {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return out, nil
+}
+
+// GetTool calls GET /v1/tools/{toolID} per RFC 0078 §B — returns one
+// ToolDescriptor by its stable toolId. Returns (nil, nil) on 404 (no such tool,
+// or the capability is unadvertised).
+func (c *OpenwopClient) GetTool(ctx context.Context, toolID string) (*ToolDescriptor, error) {
+	var out ToolDescriptor
+	err := c.requestJSON(ctx, http.MethodGet, "/v1/tools/"+url.PathEscape(toolID), nil, nil, true, &out)
+	if err != nil {
+		var werr *WopError
+		if errors.As(err, &werr) && werr.Status == 404 {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetArtifact calls GET /v1/runs/{runID}/artifacts/{artifactID} — reads a
+// run-produced artifact by id. The artifact body is implementation-defined per
+// the host, so it's returned as a generic map. Returns (nil, nil) on 404 (no
+// such artifact, or the host doesn't store artifacts).
+func (c *OpenwopClient) GetArtifact(
+	ctx context.Context,
+	runID, artifactID string,
+) (map[string]any, error) {
+	var out map[string]any
+	err := c.requestJSON(
+		ctx, http.MethodGet,
+		"/v1/runs/"+url.PathEscape(runID)+"/artifacts/"+url.PathEscape(artifactID),
+		nil, nil, true, &out,
+	)
+	if err != nil {
+		var werr *WopError
+		if errors.As(err, &werr) && werr.Status == 404 {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return out, nil
+}
+
+// ── RFC 0082 — Agent deployment lifecycle ──────────────────────────────────
+
+// ListAgentDeployments calls GET /v1/agents/{agentID}/deployments per RFC 0082
+// §C/§E — lists a manifest agent's deployment records. Returns (nil, nil) when
+// the host doesn't advertise capabilities.agents.deployment (the endpoint 404s).
+func (c *OpenwopClient) ListAgentDeployments(
+	ctx context.Context,
+	agentID string,
+) ([]AgentDeployment, error) {
+	var out []AgentDeployment
+	err := c.requestJSON(
+		ctx, http.MethodGet,
+		"/v1/agents/"+url.PathEscape(agentID)+"/deployments",
+		nil, nil, true, &out,
+	)
+	if err != nil {
+		var werr *WopError
+		if errors.As(err, &werr) && werr.Status == 404 {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return out, nil
+}
+
+// TransitionAgentDeployment calls POST /v1/agents/{agentID}/deployments per
+// RFC 0082 §E — requests a deployment state transition (promote / pause /
+// deprecate / rollback / adjust-canary). The host authorizes fail-closed against
+// the RFC 0049 deploy:* scope, runs any RFC 0051 approvalGate, and enforces
+// RFC 0081 requiredEval before emitting deployment.promoted. Returns the updated
+// deployment record; a *WopError with Status 403 (fail-closed / eval_gate_unmet)
+// or 400 (no_active_deployment / unsupported state) on failure.
+func (c *OpenwopClient) TransitionAgentDeployment(
+	ctx context.Context,
+	agentID string,
+	body AgentDeploymentTransition,
+	opts MutationOptions,
+) (*AgentDeployment, error) {
+	var out AgentDeployment
+	if err := c.requestJSON(
+		ctx, http.MethodPost,
+		"/v1/agents/"+url.PathEscape(agentID)+"/deployments",
+		body, opts.headers(), true, &out,
+	); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ── RFC 0086 / 0087 — Standing agent roster + org-chart ────────────────────
+
+// ListAgentRoster calls GET /v1/agents/roster per RFC 0086 §B — lists the
+// standing agent roster (named instances + their workflow portfolios) visible to
+// the caller. Returns (nil, nil) when the host doesn't advertise
+// capabilities.agents.roster (the endpoint 404s).
+func (c *OpenwopClient) ListAgentRoster(ctx context.Context) (*AgentRosterResponse, error) {
+	var out AgentRosterResponse
+	err := c.requestJSON(ctx, http.MethodGet, "/v1/agents/roster", nil, nil, true, &out)
+	if err != nil {
+		var werr *WopError
+		if errors.As(err, &werr) && werr.Status == 404 {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetAgentRosterEntry calls GET /v1/agents/roster/{rosterID} per RFC 0086 §B —
+// returns one standing roster entry. Returns (nil, nil) on 404 (no such entry,
+// cross-tenant, or the capability is unadvertised).
+func (c *OpenwopClient) GetAgentRosterEntry(
+	ctx context.Context,
+	rosterID string,
+) (*AgentRosterEntry, error) {
+	var out AgentRosterEntry
+	err := c.requestJSON(
+		ctx, http.MethodGet,
+		"/v1/agents/roster/"+url.PathEscape(rosterID),
+		nil, nil, true, &out,
+	)
+	if err != nil {
+		var werr *WopError
+		if errors.As(err, &werr) && werr.Status == 404 {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetAgentOrgChart calls GET /v1/agents/org-chart per RFC 0087 §C — returns the
+// caller's agent org-chart (departments + roles + reportsTo over roster members;
+// descriptive — confers no authority). Returns (nil, nil) when the host doesn't
+// advertise capabilities.agents.orgChart (the endpoint 404s).
+func (c *OpenwopClient) GetAgentOrgChart(ctx context.Context) (*AgentOrgChart, error) {
+	var out AgentOrgChart
+	err := c.requestJSON(ctx, http.MethodGet, "/v1/agents/org-chart", nil, nil, true, &out)
+	if err != nil {
+		var werr *WopError
+		if errors.As(err, &werr) && werr.Status == 404 {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetAgentOrgChartDepartmentOptions controls the
+// GET /v1/agents/org-chart/{departmentID} query.
+type GetAgentOrgChartDepartmentOptions struct {
+	// Recursive scopes the responsibility roll-up. Defaults to true (recursive);
+	// set NonRecursive to scope the roll-up to direct members only.
+	NonRecursive bool
+}
+
+// GetAgentOrgChartDepartment calls GET /v1/agents/org-chart/{departmentID} per
+// RFC 0087 §D — one department's subtree + responsibility roll-up (the union of
+// its members' RFC 0086 portfolios). Pass NonRecursive to scope the roll-up to
+// direct members. Returns (nil, nil) on 404 (unknown/cross-tenant department, or
+// the capability is unadvertised).
+func (c *OpenwopClient) GetAgentOrgChartDepartment(
+	ctx context.Context,
+	departmentID string,
+	opts GetAgentOrgChartDepartmentOptions,
+) (*OrgChartResponsibilityView, error) {
+	path := "/v1/agents/org-chart/" + url.PathEscape(departmentID)
+	if opts.NonRecursive {
+		path += "?recursive=false"
+	}
+	var out OrgChartResponsibilityView
+	err := c.requestJSON(ctx, http.MethodGet, path, nil, nil, true, &out)
+	if err != nil {
+		var werr *WopError
+		if errors.As(err, &werr) && werr.Status == 404 {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ── RFC 0081 — Eval summary ─────────────────────────────────────────────────
+
+// GetEvalSummary calls GET /v1/runs/{runID}/eval-summary per RFC 0081 §C — the
+// EvalSummary scorecard for a terminal eval run (one started via
+// CreateRun with mode "eval"): aggregate + per-task scores, cost, latency,
+// schema-validity, and redaction-safe safety findings. Returns (nil, nil) when
+// the host doesn't advertise capabilities.agents.evalSuite or the run isn't an
+// eval run (404). A *WopError with Status 409 surfaces while the run is still in
+// progress.
+func (c *OpenwopClient) GetEvalSummary(
+	ctx context.Context,
+	runID string,
+) (*EvalSummary, error) {
+	var out EvalSummary
+	err := c.requestJSON(
+		ctx, http.MethodGet,
+		"/v1/runs/"+url.PathEscape(runID)+"/eval-summary",
+		nil, nil, true, &out,
+	)
+	if err != nil {
+		var werr *WopError
+		if errors.As(err, &werr) && werr.Status == 404 {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ── RFC 0054 — Run diff ─────────────────────────────────────────────────────
+
+// DiffRun calls GET /v1/runs/{runID}:diff?against={against} per RFC 0054 — a
+// deterministic, replay-aware structured diff of two runs (typically a run and
+// its :fork). Requires runs:read on BOTH runID and against. Returns (nil, nil)
+// when the host doesn't implement the endpoint (404). DivergedAtSeq is nil +
+// EventDiffs empty when the two logs are identical.
+func (c *OpenwopClient) DiffRun(
+	ctx context.Context,
+	runID, against string,
+) (*RunDiffResponse, error) {
+	q := url.Values{}
+	q.Set("against", against)
+	var out RunDiffResponse
+	err := c.requestJSON(
+		ctx, http.MethodGet,
+		"/v1/runs/"+url.PathEscape(runID)+":diff?"+q.Encode(),
+		nil, nil, true, &out,
+	)
+	if err != nil {
+		var werr *WopError
+		if errors.As(err, &werr) && werr.Status == 404 {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ── RFC 0027 + RFC 0028 — Prompt library (spec/v1/prompts.md) ──────────────
+//
+// Read endpoints (list, get, render) gate on
+// capabilities.prompts.endpointsSupported: true. Mutating endpoints (create,
+// update, delete) additionally require capabilities.prompts.mutableLibrary: true.
+// Hosts that don't advertise the relevant capability return 501
+// capability_not_provided, surfaced as a *WopError. Callers SHOULD pre-flight via
+// GetCapabilities before calling.
+
+// ListPromptTemplates calls GET /v1/prompts per RFC 0028 §A (operationId
+// listPromptTemplates). Supports kind / tag / modelClass / source filters +
+// opaque cursor pagination.
+func (c *OpenwopClient) ListPromptTemplates(
+	ctx context.Context,
+	opts ListPromptTemplatesOptions,
+) (*ListPromptTemplatesResponse, error) {
+	q := url.Values{}
+	if opts.Kind != "" {
+		q.Set("kind", opts.Kind)
+	}
+	if opts.Tag != "" {
+		q.Set("tag", opts.Tag)
+	}
+	if opts.ModelClass != "" {
+		q.Set("modelClass", opts.ModelClass)
+	}
+	if opts.Source != "" {
+		q.Set("source", opts.Source)
+	}
+	if opts.Cursor != "" {
+		q.Set("cursor", opts.Cursor)
+	}
+	if opts.Limit > 0 {
+		q.Set("limit", strconv.Itoa(opts.Limit))
+	}
+	path := "/v1/prompts"
+	if encoded := q.Encode(); encoded != "" {
+		path += "?" + encoded
+	}
+	var out ListPromptTemplatesResponse
+	if err := c.requestJSON(ctx, http.MethodGet, path, nil, nil, true, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// CreatePromptTemplate calls POST /v1/prompts per RFC 0028 §A (operationId
+// createPromptTemplate). Mutating endpoint — requires
+// capabilities.prompts.mutableLibrary: true. Supports Idempotency-Key via
+// MutationOptions. Returns nil on success (201).
+func (c *OpenwopClient) CreatePromptTemplate(
+	ctx context.Context,
+	template PromptTemplate,
+	opts MutationOptions,
+) error {
+	return c.requestJSON(ctx, http.MethodPost, "/v1/prompts", template, opts.headers(), true, nil)
+}
+
+// GetPromptTemplate calls GET /v1/prompts/{templateID} per RFC 0028 §A
+// (operationId getPromptTemplate). Optionally pin a SemVer Version; supply
+// LibraryID to disambiguate when multiple installed packs ship the same
+// templateId.
+func (c *OpenwopClient) GetPromptTemplate(
+	ctx context.Context,
+	templateID string,
+	opts GetPromptTemplateOptions,
+) (*PromptTemplate, error) {
+	q := url.Values{}
+	if opts.Version != "" {
+		q.Set("version", opts.Version)
+	}
+	if opts.LibraryID != "" {
+		q.Set("libraryId", opts.LibraryID)
+	}
+	path := "/v1/prompts/" + url.PathEscape(templateID)
+	if encoded := q.Encode(); encoded != "" {
+		path += "?" + encoded
+	}
+	var out PromptTemplate
+	if err := c.requestJSON(ctx, http.MethodGet, path, nil, nil, true, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// UpdatePromptTemplate calls PUT /v1/prompts/{templateID} per RFC 0028 §A
+// (operationId updatePromptTemplate). Submitted SemVer MUST be strictly greater
+// than stored. Mutating endpoint — requires
+// capabilities.prompts.mutableLibrary: true. Pack-sourced and host-built-in
+// templates are read-only (host returns 403).
+func (c *OpenwopClient) UpdatePromptTemplate(
+	ctx context.Context,
+	templateID string,
+	template PromptTemplate,
+	opts MutationOptions,
+) (*PromptTemplate, error) {
+	var out PromptTemplate
+	if err := c.requestJSON(
+		ctx, http.MethodPut,
+		"/v1/prompts/"+url.PathEscape(templateID),
+		template, opts.headers(), true, &out,
+	); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// DeletePromptTemplate calls DELETE /v1/prompts/{templateID} per RFC 0028 §A
+// (operationId deletePromptTemplate). Mutating endpoint — requires
+// capabilities.prompts.mutableLibrary: true. Pack-sourced and host-built-in
+// templates are read-only (host returns 403). Returns nil on success (204).
+func (c *OpenwopClient) DeletePromptTemplate(
+	ctx context.Context,
+	templateID string,
+) error {
+	return c.requestJSON(
+		ctx, http.MethodDelete,
+		"/v1/prompts/"+url.PathEscape(templateID),
+		nil, nil, true, nil,
+	)
+}
+
+// RenderPromptTemplate calls POST /v1/prompts:render per RFC 0028 §A (operationId
+// renderPromptTemplate). Returns composed body + sha256 hash + per-variable
+// hashes. The deterministic-hash invariant requires Hash to match what a matching
+// prompt.composed event would carry at dispatch time. Does NOT dispatch an LLM
+// call. Secret-source variable values MUST be supplied as
+// [REDACTED:<credentialRef>] markers per SR-1.
+func (c *OpenwopClient) RenderPromptTemplate(
+	ctx context.Context,
+	body RenderPromptTemplateRequest,
+) (*RenderPromptTemplateResponse, error) {
+	var out RenderPromptTemplateResponse
+	if err := c.requestJSON(
+		ctx, http.MethodPost,
+		"/v1/prompts:render",
+		body, nil, true, &out,
+	); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}

@@ -29,9 +29,9 @@
  *   stream, not on variable projection.
  *
  * **AgentId resolution** (order): `config.agentId` → `nodes[].agent.agentId`
- * (read from `ctx.config?.agent?.agentId` if the host surfaces the pin
- * here — TODO confirm with `nodes[].agent` exposure in NodeContext) →
- * host-minted synthetic `host:mock-agent:${nodeId}`.
+ * (read from `ctx.nodeAgent.agentId`, which the engine surfaces from the
+ * node's authoring-time pin) → host-minted synthetic
+ * `host:mock-agent:${nodeId}`.
  *
  * **Hard limit (RFC 0023 §B.1).** This typeId is conformance-only.
  * `ensureMockAgentRegistered()` registers it unconditionally for the
@@ -98,12 +98,12 @@ function resolveAgentId(ctx: NodeContext, config: MockAgentConfig): string {
   if (typeof config.agentId === 'string' && config.agentId.length > 0) {
     return config.agentId;
   }
-  // The `nodes[].agent` pin is exposed by the engine on context — try a
-  // best-effort lookup via the (untyped) `config.agent` shadow. Hosts
-  // that surface the pin on a different field can adapt this.
-  const agentShadow = (ctx.config as { agent?: { agentId?: string } } | undefined)?.agent;
-  if (agentShadow && typeof agentShadow.agentId === 'string' && agentShadow.agentId.length > 0) {
-    return agentShadow.agentId;
+  // The node's authoring-time `nodes[].agent` pin, surfaced by the engine on
+  // `NodeContext.nodeAgent` (a typed `agent-ref.schema.json`). Undefined when
+  // the node carries no pin, in which case we mint a synthetic id.
+  const pinned = ctx.nodeAgent?.agentId;
+  if (typeof pinned === 'string' && pinned.length > 0) {
+    return pinned;
   }
   return `${SYNTHETIC_AGENT_ID_PREFIX}${ctx.nodeId}`;
 }

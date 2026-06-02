@@ -1277,6 +1277,28 @@ export type DeploymentState =
   | 'rolled-back';
 
 /**
+ * RFC 0078 §B — a portable tool descriptor as projected onto the host's
+ * `GET /v1/tools` catalog. Source-agnostic (node-pack / workflow / mcp /
+ * connector / host-extension); `safetyTier`, `egress`, and `approval` let a
+ * caller reason about a tool's blast radius before invoking it.
+ */
+export interface ToolDescriptor {
+  toolId: string;
+  source: 'node-pack' | 'workflow' | 'mcp' | 'connector' | 'host-extension';
+  title?: string;
+  description?: string;
+  inputSchema?: Record<string, unknown>;
+  outputSchema?: Record<string, unknown>;
+  auth?: Record<string, unknown>;
+  egress?: 'none' | 'safe-fetch' | 'host-mediated' | 'host-owned';
+  approval?: 'never' | 'conditional' | 'always';
+  replayPolicy?: 'deterministic' | 'idempotent' | 'non-deterministic';
+  safetyTier: 'pure' | 'read' | 'write' | 'exec';
+  costHint?: string;
+  latencyHint?: string;
+}
+
+/**
  * RFC 0082 §C — a per-(agentId, version) deployment record, returned by
  * `client.agents.listDeployments` / `transitionDeployment`. Host-runtime state
  * distinct from the immutable manifest and the registry's published tags.

@@ -1,0 +1,31 @@
+{
+  "bundleVersion": "1",
+  "exportedAt": "2026-06-02T00:00:00.000Z",
+  "host": {
+    "name": "openwop-sample-fixture",
+    "version": "1.0.0"
+  },
+  "signingKey": {
+    "keyId": "audit-sample-key-1",
+    "algorithm": "ed25519",
+    "publicKeyPEM": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAG9Kopp77MJpxoZECTo3oX+wMOhkZnrLEckh7baYKVf0=\n-----END PUBLIC KEY-----\n"
+  },
+  "checkpoints": [
+    {
+      "checkpointId": "cp-1",
+      "atSequence": 1000,
+      "merkleRoot": "dcfbde1c5b418a8f699d31d49c5b11e824f92f187f5da9cb06e3972e345f8efb",
+      "signature": "IZ/O81fZ26x12MmEsKo4rNS8etwVISSg3zK54xeshMTK9wTd0Ro0Ao8Tdbhy3xGmPe7bZcsdrR2SxulAmTBZAA==",
+      "signedAt": "2026-06-02T00:00:00.000Z",
+      "signingKeyId": "audit-sample-key-1"
+    },
+    {
+      "checkpointId": "cp-2",
+      "atSequence": 2000,
+      "merkleRoot": "76e4238984a2a9b747f7f8ea3e9e334aea73c1ee076f217e2c63ac9e9c1ea040",
+      "signature": "A8asu9yCg33E8iZuFZ1RXQiRqU+J0tSHnqhIgzHCKt0pPGUsfTYt92BiVoB7H9jzSfEdzxYhS+yo6TaFfcdTCw==",
+      "signedAt": "2026-06-02T00:00:00.000Z",
+      "signingKeyId": "audit-sample-key-1"
+    }
+  ]
+}

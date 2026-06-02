@@ -42,6 +42,7 @@ describe('P0.4 rate limit', () => {
   beforeEach(async () => {
     _resetRateLimitState();
     process.env.OPENWOP_RATELIMIT_DISABLED = '';
+    process.env.OPENWOP_FORCE_RATE_LIMIT = '';
     // These tests drive the limiter over loopback, so opt out of the bridge
     // loopback-self exemption (otherwise every test request would be exempt).
     process.env.OPENWOP_RATELIMIT_TRUST_LOOPBACK = 'false';
@@ -68,9 +69,30 @@ describe('P0.4 rate limit', () => {
     const r = await fetch(`http://127.0.0.1:${port}/ping`);
     expect(r.status).toBe(429);
     expect(r.headers.get('retry-after')).toBeTruthy();
-    const body = (await r.json()) as { error: string; details: { scope: string } };
+    const body = (await r.json()) as { error: string; details: { scope: string; reason: string } };
     expect(body.error).toBe('rate_limited');
-    expect(body.details.scope).toBe('ip_request_rate');
+    // Canonical closed enum per rest-endpoints.md §429 (per-IP bucket → "key").
+    expect(body.details.scope).toBe('key');
+    // Host detail: which limiter fired.
+    expect(body.details.reason).toBe('ip_request_rate');
+  });
+
+  it('OPENWOP_FORCE_RATE_LIMIT forces a deterministic 429 regardless of the configured IP budget (CF-6)', async () => {
+    // Even with a generous configured budget, the conformance affordance forces a
+    // tiny (3/min) per-IP budget so the harness can induce a canonical 429 without
+    // load timing. The envelope MUST be identical to a production rate-limit.
+    process.env.OPENWOP_FORCE_RATE_LIMIT = 'true';
+    process.env.OPENWOP_RATELIMIT_IP_REQS_PER_MIN = '1000';
+    _resetRateLimitState();
+    let last: Response | undefined;
+    for (let i = 0; i < 5; i++) {
+      last = await fetch(`http://127.0.0.1:${port}/ping`);
+      if (last.status === 429) break;
+    }
+    expect(last!.status).toBe(429);
+    const body = (await last!.json()) as { error: string; details: { scope: string; reason: string } };
+    expect(body.error).toBe('rate_limited');
+    expect(body.details.scope).toBe('key');
   });
 
   it('per-session run quota: 3 runs/min then 429', async () => {
@@ -88,8 +110,10 @@ describe('P0.4 rate limit', () => {
       body: '{}',
     });
     expect(blocked.status).toBe(429);
-    const body = (await blocked.json()) as { details: { scope: string } };
-    expect(body.details.scope).toBe('session_runs_per_min');
+    const body = (await blocked.json()) as { details: { scope: string; reason: string } };
+    // Per-session/tenant bucket → canonical "tenant"; reason carries the detail.
+    expect(body.details.scope).toBe('tenant');
+    expect(body.details.reason).toBe('session_runs_per_min');
   });
 
   it('per-session quota is isolated between sessions', async () => {

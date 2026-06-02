@@ -676,3 +676,293 @@ type AgentInventoryResponse struct {
 	Agents []AgentInventoryEntry `json:"agents"`
 	Total  int                   `json:"total"`
 }
+
+// ── RFC 0078 — Portable tool catalog (spec/v1/tool-catalog.md) ─────────────
+
+// ToolDescriptor is a portable tool descriptor as projected onto the host's
+// GET /v1/tools catalog (RFC 0078 §B). Source-agnostic (node-pack / workflow /
+// mcp / connector / host-extension); SafetyTier, Egress, and Approval let a
+// caller reason about a tool's blast radius before invoking it.
+type ToolDescriptor struct {
+	ToolID       string         `json:"toolId"`
+	Source       string         `json:"source"`
+	Title        string         `json:"title,omitempty"`
+	Description  string         `json:"description,omitempty"`
+	InputSchema  map[string]any `json:"inputSchema,omitempty"`
+	OutputSchema map[string]any `json:"outputSchema,omitempty"`
+	Auth         map[string]any `json:"auth,omitempty"`
+	Egress       string         `json:"egress,omitempty"`
+	Approval     string         `json:"approval,omitempty"`
+	ReplayPolicy string         `json:"replayPolicy,omitempty"`
+	SafetyTier   string         `json:"safetyTier"`
+	CostHint     string         `json:"costHint,omitempty"`
+	LatencyHint  string         `json:"latencyHint,omitempty"`
+}
+
+// ── RFC 0082 — Agent deployment lifecycle ──────────────────────────────────
+
+// AgentDeployment is a per-(agentId, version) deployment record, returned by
+// ListAgentDeployments / TransitionAgentDeployment (RFC 0082 §C). Host-runtime
+// state distinct from the immutable manifest and the registry's published tags.
+type AgentDeployment struct {
+	AgentID         string   `json:"agentId"`
+	Version         string   `json:"version"`
+	State           string   `json:"state"`
+	CanaryPercent   *float64 `json:"canaryPercent,omitempty"`
+	RollbackPointer string   `json:"rollbackPointer,omitempty"`
+	Channels        []string `json:"channels,omitempty"`
+	EvalRunID       string   `json:"evalRunId,omitempty"`
+	ApprovalGateID  string   `json:"approvalGateId,omitempty"`
+}
+
+// AgentDeploymentTransition is the TransitionAgentDeployment request body
+// (RFC 0082 §E). The host authorizes it fail-closed (RFC 0049 deploy:*), runs
+// any RFC 0051 approvalGate, and enforces RFC 0081 requiredEval before emitting
+// deployment.promoted.
+type AgentDeploymentTransition struct {
+	Version       string   `json:"version"`
+	Transition    string   `json:"transition"`
+	ToState       string   `json:"toState,omitempty"`
+	Channel       string   `json:"channel,omitempty"`
+	CanaryPercent *float64 `json:"canaryPercent,omitempty"`
+	EvalRunID     string   `json:"evalRunId,omitempty"`
+	Reason        string   `json:"reason,omitempty"`
+}
+
+// ── RFC 0086 / 0087 — Standing agent roster + org-chart ────────────────────
+
+// AgentRef references a manifest/deployment from a roster entry (RFC 0086 §A).
+type AgentRef struct {
+	AgentID string `json:"agentId"`
+	Version string `json:"version,omitempty"`
+	Channel string `json:"channel,omitempty"`
+}
+
+// AgentRosterOwner is the {tenant, workspace} owner of a roster entry / org-chart.
+type AgentRosterOwner struct {
+	TenantID    string `json:"tenantId"`
+	WorkspaceID string `json:"workspaceId,omitempty"`
+}
+
+// AgentRosterEntry is a standing agent INSTANCE: a host:<id> AgentRef that
+// references a manifest/deployment and owns a workflow portfolio (RFC 0086 §A).
+type AgentRosterEntry struct {
+	RosterID    string           `json:"rosterId"`
+	Persona     string           `json:"persona"`
+	AgentRef    AgentRef         `json:"agentRef"`
+	Workflows   []string         `json:"workflows,omitempty"`
+	Owner       AgentRosterOwner `json:"owner"`
+	Enabled     *bool            `json:"enabled,omitempty"`
+	Label       string           `json:"label,omitempty"`
+	Description string           `json:"description,omitempty"`
+}
+
+// AgentRosterResponse is the GET /v1/agents/roster body (RFC 0086 §B).
+type AgentRosterResponse struct {
+	Roster []AgentRosterEntry `json:"roster"`
+	Total  int                `json:"total"`
+}
+
+// OrgChartRole is a role within an org-chart department (RFC 0087 §A).
+type OrgChartRole struct {
+	RoleID string `json:"roleId"`
+	Name   string `json:"name"`
+}
+
+// OrgChartDepartment is an org-chart department (a tree node via
+// ParentDepartmentID) (RFC 0087 §A).
+type OrgChartDepartment struct {
+	DepartmentID       string         `json:"departmentId"`
+	Name               string         `json:"name"`
+	ParentDepartmentID *string        `json:"parentDepartmentId"`
+	Roles              []OrgChartRole `json:"roles"`
+}
+
+// OrgChartMember is a roster instance placed in a department/role (RFC 0087 §A).
+type OrgChartMember struct {
+	RosterID     string  `json:"rosterId"`
+	DepartmentID string  `json:"departmentId"`
+	RoleID       string  `json:"roleId"`
+	ReportsTo    *string `json:"reportsTo"`
+}
+
+// AgentOrgChart is the descriptive org-chart over roster members (RFC 0087 §A).
+// Carries no authority-bearing field by design (§B
+// org-position-no-authority-escalation).
+type AgentOrgChart struct {
+	Owner       AgentRosterOwner     `json:"owner"`
+	Departments []OrgChartDepartment `json:"departments"`
+	Members     []OrgChartMember     `json:"members"`
+}
+
+// OrgChartResponsibilityView is the GET /v1/agents/org-chart/{departmentId} body
+// (RFC 0087 §D) — the department subtree + the responsibility roll-up (union of
+// member portfolios).
+type OrgChartResponsibilityView struct {
+	Department       OrgChartDepartment `json:"department"`
+	Members          []OrgChartMember   `json:"members"`
+	Responsibilities []string           `json:"responsibilities"`
+}
+
+// ── RFC 0081 — Eval summary (spec/v1/agent-eval-suite.md) ──────────────────
+
+// EvalSafetyFinding is a redaction-safe safety finding ({kind, severity}
+// descriptor — never excerpted content).
+type EvalSafetyFinding struct {
+	Kind     string `json:"kind"`
+	Severity string `json:"severity"`
+}
+
+// EvalTaskResult is a per-task result on an EvalSummary (content-free: scores +
+// scalars + ids).
+type EvalTaskResult struct {
+	TaskID         string              `json:"taskId"`
+	Score          float64             `json:"score"`
+	Passed         bool                `json:"passed"`
+	CostUsd        *float64            `json:"costUsd,omitempty"`
+	LatencyMs      *int                `json:"latencyMs,omitempty"`
+	SchemaValid    *bool               `json:"schemaValid,omitempty"`
+	SafetyFindings []EvalSafetyFinding `json:"safetyFindings,omitempty"`
+}
+
+// EvalRegression is the regression block on an EvalSummary (RFC 0081 §D
+// regression mode).
+type EvalRegression struct {
+	BaselineRunID string  `json:"baselineRunId"`
+	ScoreDelta    float64 `json:"scoreDelta"`
+	DiffRef       string  `json:"diffRef,omitempty"`
+}
+
+// EvalSummary is the terminal scorecard of an eval run, read via GetEvalSummary
+// (RFC 0081 §C). Content-free: scores, scalars, ids, and redaction-safe safety
+// descriptors only (eval-summary-no-content-leak).
+type EvalSummary struct {
+	SuiteID             string           `json:"suiteId"`
+	SuiteVersion        string           `json:"suiteVersion"`
+	EvaluatedModelClass string           `json:"evaluatedModelClass,omitempty"`
+	AggregateScore      float64          `json:"aggregateScore"`
+	Passed              bool             `json:"passed"`
+	TaskCount           int              `json:"taskCount"`
+	PassedCount         int              `json:"passedCount"`
+	TotalCostUsd        *float64         `json:"totalCostUsd,omitempty"`
+	Tasks               []EvalTaskResult `json:"tasks"`
+	Regression          *EvalRegression  `json:"regression,omitempty"`
+}
+
+// ── RFC 0054 — Run diff (spec/v1/rest-endpoints.md §GET /v1/runs/{runId}:diff) ─
+
+// RunDiffEventDiff is one event-level diff entry on a RunDiffResponse.
+type RunDiffEventDiff struct {
+	Op       string       `json:"op"`
+	Sequence int          `json:"sequence"`
+	AEvent   *RunEventDoc `json:"aEvent,omitempty"`
+	BEvent   *RunEventDoc `json:"bEvent,omitempty"`
+}
+
+// RunDiffResponse is the deterministic, replay-aware structured diff of two runs
+// (RFC 0054). DivergedAtSeq is nil + EventDiffs empty when the two logs are
+// identical.
+type RunDiffResponse struct {
+	A             string             `json:"a"`
+	B             string             `json:"b"`
+	DivergedAtSeq *int               `json:"divergedAtSeq"`
+	EventDiffs    []RunDiffEventDiff `json:"eventDiffs"`
+	StateDiff     map[string]any     `json:"stateDiff"`
+	Truncated     *bool              `json:"truncated,omitempty"`
+}
+
+// ── RFC 0027 + RFC 0028 — Prompt library (spec/v1/prompts.md) ──────────────
+
+// PromptVariable is a typed interpolation slot in a PromptTemplate. Bindings are
+// validated against this declaration before composition.
+type PromptVariable struct {
+	Name         string `json:"name"`
+	Type         string `json:"type"`
+	Required     bool   `json:"required"`
+	Source       string `json:"source,omitempty"`
+	ExtractPath  string `json:"extractPath,omitempty"`
+	DefaultValue any    `json:"defaultValue,omitempty"`
+	Description  string `json:"description,omitempty"`
+}
+
+// PromptModelHints carries optional per-template model hints.
+type PromptModelHints struct {
+	ModelClass   string   `json:"modelClass,omitempty"`
+	Temperature  *float64 `json:"temperature,omitempty"`
+	MaxTokens    *int     `json:"maxTokens,omitempty"`
+	EnvelopeType string   `json:"envelopeType,omitempty"`
+}
+
+// PromptMeta carries provenance metadata for a PromptTemplate. PackName +
+// PackVersion are required when Source == "pack" (RFC 0028 §C).
+type PromptMeta struct {
+	Author      string `json:"author,omitempty"`
+	CreatedAt   string `json:"createdAt,omitempty"`
+	UpdatedAt   string `json:"updatedAt,omitempty"`
+	Source      string `json:"source,omitempty"`
+	PackName    string `json:"packName,omitempty"`
+	PackVersion string `json:"packVersion,omitempty"`
+}
+
+// PromptTemplate is a named, versioned, variable-bound prompt body (RFC 0028 §A;
+// schemas/prompt-template.schema.json).
+type PromptTemplate struct {
+	TemplateID  string            `json:"templateId"`
+	Version     string            `json:"version"`
+	Kind        string            `json:"kind"`
+	Text        string            `json:"text"`
+	Name        string            `json:"name,omitempty"`
+	Description string            `json:"description,omitempty"`
+	Variables   []PromptVariable  `json:"variables,omitempty"`
+	ModelHints  *PromptModelHints `json:"modelHints,omitempty"`
+	Tags        []string          `json:"tags,omitempty"`
+	Meta        *PromptMeta       `json:"meta,omitempty"`
+}
+
+// ListPromptTemplatesOptions is the filter set for ListPromptTemplates (RFC 0028 §A).
+type ListPromptTemplatesOptions struct {
+	Kind       string
+	Tag        string
+	ModelClass string
+	Source     string
+	Cursor     string
+	// Limit caps entries per page; zero = host default.
+	Limit int
+}
+
+// ListPromptTemplatesResponse is the GET /v1/prompts body (RFC 0028 §A).
+type ListPromptTemplatesResponse struct {
+	Items      []PromptTemplate `json:"items"`
+	NextCursor string           `json:"nextCursor,omitempty"`
+}
+
+// GetPromptTemplateOptions disambiguates a GetPromptTemplate read (RFC 0028 §A).
+type GetPromptTemplateOptions struct {
+	// Version pins to a SemVer version; latest when empty.
+	Version string
+	// LibraryID disambiguates when multiple installed packs ship the same templateId.
+	LibraryID string
+}
+
+// RenderPromptTemplateRequest is the POST /v1/prompts:render request body
+// (RFC 0028 §A). Secret-source bindings carry [REDACTED:<credentialRef>] markers;
+// the host resolves the real value internally and never echoes it.
+type RenderPromptTemplateRequest struct {
+	// Ref is a PromptRef — the stringy prompt:<templateId>[@<version>] form or the
+	// structured object form (schemas/prompt-ref.schema.json). Modeled as any to
+	// admit both wire shapes.
+	Ref          any            `json:"ref"`
+	Variables    map[string]any `json:"variables"`
+	ContentTrust string         `json:"contentTrust,omitempty"`
+}
+
+// RenderPromptTemplateResponse is the POST /v1/prompts:render response (RFC 0028 §A).
+// Hash + Refs + VariableHashes are always present; Composed populates only under
+// capabilities.prompts.observability: "full".
+type RenderPromptTemplateResponse struct {
+	Hash           string            `json:"hash"`
+	Refs           []string          `json:"refs"`
+	VariableHashes map[string]string `json:"variableHashes"`
+	Composed       string            `json:"composed,omitempty"`
+	ContentTrust   string            `json:"contentTrust,omitempty"`
+}

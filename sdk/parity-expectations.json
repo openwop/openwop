@@ -1,0 +1,393 @@
+{
+  "$comment": "Source-of-truth SDK parity declaration, enforced by scripts/check-sdk-parity.mjs (openwop:check step 4b). Each OpenAPI operation declares whether each reference SDK exposes a typed helper ('typed') or intentionally omits it ('excluded', requires a note). Adding an OpenAPI operation without a matching entry here fails the gate. See sdk/PARITY.md for the human-readable matrix.",
+  "operations": [
+    {
+      "operationId": "getCapabilities",
+      "method": "GET",
+      "path": "/.well-known/openwop",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "listAgents",
+      "method": "GET",
+      "path": "/v1/agents",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "getAgentOrgChart",
+      "method": "GET",
+      "path": "/v1/agents/org-chart",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "getAgentOrgChartDepartment",
+      "method": "GET",
+      "path": "/v1/agents/org-chart/{departmentId}",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "listAgentRoster",
+      "method": "GET",
+      "path": "/v1/agents/roster",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "getAgentRosterEntry",
+      "method": "GET",
+      "path": "/v1/agents/roster/{rosterId}",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "getAgent",
+      "method": "GET",
+      "path": "/v1/agents/{agentId}",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "listAgentDeployments",
+      "method": "GET",
+      "path": "/v1/agents/{agentId}/deployments",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "transitionAgentDeployment",
+      "method": "POST",
+      "path": "/v1/agents/{agentId}/deployments",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "verifyAuditLog",
+      "method": "GET",
+      "path": "/v1/audit/verify",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "listWorkspaceFiles",
+      "method": "GET",
+      "path": "/v1/host/workspace/files",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "deleteWorkspaceFile",
+      "method": "DELETE",
+      "path": "/v1/host/workspace/files/{path}",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "getWorkspaceFile",
+      "method": "GET",
+      "path": "/v1/host/workspace/files/{path}",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "putWorkspaceFile",
+      "method": "PUT",
+      "path": "/v1/host/workspace/files/{path}",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "inspectInterruptByToken",
+      "method": "GET",
+      "path": "/v1/interrupts/{token}",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "resolveInterruptByToken",
+      "method": "POST",
+      "path": "/v1/interrupts/{token}",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "getOpenApiSpec",
+      "method": "GET",
+      "path": "/v1/openapi.json",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "deleteTestPackVersion",
+      "method": "DELETE",
+      "path": "/v1/packs-test/{name}/-/{version}",
+      "ts": "excluded",
+      "py": "excluded",
+      "go": "excluded",
+      "note": "Test-only mirror of the pack-registry write API (/v1/packs/...); a server-side conformance affordance, not a client surface. The reference SDKs intentionally cover registry READS only (see PARITY.md scope)."
+    },
+    {
+      "operationId": "getTestPackSignature",
+      "method": "GET",
+      "path": "/v1/packs-test/{name}/-/{version}.sig",
+      "ts": "excluded",
+      "py": "excluded",
+      "go": "excluded",
+      "note": "Test-only mirror of the pack-registry write API (/v1/packs/...); a server-side conformance affordance, not a client surface. The reference SDKs intentionally cover registry READS only (see PARITY.md scope)."
+    },
+    {
+      "operationId": "getTestPackTarball",
+      "method": "GET",
+      "path": "/v1/packs-test/{name}/-/{version}.tgz",
+      "ts": "excluded",
+      "py": "excluded",
+      "go": "excluded",
+      "note": "Test-only mirror of the pack-registry write API (/v1/packs/...); a server-side conformance affordance, not a client surface. The reference SDKs intentionally cover registry READS only (see PARITY.md scope)."
+    },
+    {
+      "operationId": "putTestPackTarball",
+      "method": "PUT",
+      "path": "/v1/packs-test/{name}/-/{version}.tgz",
+      "ts": "excluded",
+      "py": "excluded",
+      "go": "excluded",
+      "note": "Test-only mirror of the pack-registry write API (/v1/packs/...); a server-side conformance affordance, not a client surface. The reference SDKs intentionally cover registry READS only (see PARITY.md scope)."
+    },
+    {
+      "operationId": "listPromptTemplates",
+      "method": "GET",
+      "path": "/v1/prompts",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "createPromptTemplate",
+      "method": "POST",
+      "path": "/v1/prompts",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "deletePromptTemplate",
+      "method": "DELETE",
+      "path": "/v1/prompts/{templateId}",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "getPromptTemplate",
+      "method": "GET",
+      "path": "/v1/prompts/{templateId}",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "updatePromptTemplate",
+      "method": "PUT",
+      "path": "/v1/prompts/{templateId}",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "renderPromptTemplate",
+      "method": "POST",
+      "path": "/v1/prompts:render",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "createRun",
+      "method": "POST",
+      "path": "/v1/runs",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "getRun",
+      "method": "GET",
+      "path": "/v1/runs/{runId}",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "getRunAncestry",
+      "method": "GET",
+      "path": "/v1/runs/{runId}/ancestry",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "listAnnotations",
+      "method": "GET",
+      "path": "/v1/runs/{runId}/annotations",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "createAnnotation",
+      "method": "POST",
+      "path": "/v1/runs/{runId}/annotations",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "getArtifact",
+      "method": "GET",
+      "path": "/v1/runs/{runId}/artifacts/{artifactId}",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "cancelRun",
+      "method": "POST",
+      "path": "/v1/runs/{runId}/cancel",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "getEvalSummary",
+      "method": "GET",
+      "path": "/v1/runs/{runId}/eval-summary",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "streamRunEvents",
+      "method": "GET",
+      "path": "/v1/runs/{runId}/events",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "pollRunEvents",
+      "method": "GET",
+      "path": "/v1/runs/{runId}/events/poll",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "resolveInterruptByRun",
+      "method": "POST",
+      "path": "/v1/runs/{runId}/interrupts/{nodeId}",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "diffRun",
+      "method": "GET",
+      "path": "/v1/runs/{runId}:diff",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "forkRun",
+      "method": "POST",
+      "path": "/v1/runs/{runId}:fork",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "pauseRun",
+      "method": "POST",
+      "path": "/v1/runs/{runId}:pause",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "resumeRun",
+      "method": "POST",
+      "path": "/v1/runs/{runId}:resume",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "bulkCancelRuns",
+      "method": "POST",
+      "path": "/v1/runs:bulk-cancel",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "listTools",
+      "method": "GET",
+      "path": "/v1/tools",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "getTool",
+      "method": "GET",
+      "path": "/v1/tools/{toolId}",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "registerWebhook",
+      "method": "POST",
+      "path": "/v1/webhooks",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "unregisterWebhook",
+      "method": "DELETE",
+      "path": "/v1/webhooks/{webhookId}",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    },
+    {
+      "operationId": "getWorkflow",
+      "method": "GET",
+      "path": "/v1/workflows/{workflowId}",
+      "ts": "typed",
+      "py": "typed",
+      "go": "typed"
+    }
+  ]
+}

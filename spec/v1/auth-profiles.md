@@ -1,6 +1,6 @@
 # openwop Spec v1 — Auth Profiles
 
-> **Status: Stable · v1.1 (2026-05-10).** Optional production-auth annex for hosts that need stronger authentication than the baseline API-key contract in `auth.md`. This document is additive: it defines profile claims and conformance expectations without changing any required v1 endpoint, header, or error shape. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1 (2026-05-10; conformance-reference hygiene 2026-06-02).** Optional production-auth annex for hosts that need stronger authentication than the baseline API-key contract in `auth.md`. This document is additive: it defines profile claims and conformance expectations without changing any required v1 endpoint, header, or error shape. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 
@@ -273,7 +273,9 @@ The audit-signing Ed25519 key:
 A host claims the profile by:
 
 - Advertising `capabilities.auth.profiles` includes `openwop-audit-log-integrity`.
-- Passing the suite scenarios `audit-log-chain.test.ts`, `audit-log-tamper-detection.test.ts`, `audit-log-checkpoint-signature.test.ts` (suite version 1.17.0+).
+- Passing the black-box suite scenario `audit-log-integrity.test.ts` — profile-shape, `GET /v1/audit/verify` returning `{chainValid, checkpoints, anomalies}`, the `checkpointsValid` chain re-walk, and at least one signed checkpoint with a non-empty signature.
+- Tamper detection — mutating an entry or forging a checkpoint signature and asserting `chainValid: false` — requires admin access to the audit store, so it is covered **host-internally** (`examples/hosts/{sqlite,postgres}/test/audit-tamper.test.ts`) rather than by the black-box suite.
+- Cross-host re-anchoring — an out-of-band verifier checking an exported checkpoint bundle's Ed25519 signatures independently of the host — is exercised by the standalone `scripts/verify-audit-checkpoints.mjs` against the export producer `examples/hosts/postgres/src/audit-export.ts` (round-trip in `examples/hosts/postgres/test/audit-checkpoint-export.test.ts`; the verifier is regression-guarded in `openwop:check` against the committed sample bundles in `conformance/audit-export-samples/`).
 
 The profile is **strongly RECOMMENDED** as a precondition for any host commissioning an external security review (Track 9 in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md`): the review's value depends on the log being trustworthy.
 
