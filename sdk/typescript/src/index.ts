@@ -81,6 +81,9 @@ export type {
   EvalTaskResult,
   EvalRegression,
   EvalSummary,
+  // RFC 0078 — Portable tool catalog (spec/v1/tool-catalog.md).
+  // `client.tools.list` / `client.tools.get`.
+  ToolDescriptor,
   // RFC 0082 — Agent deployment lifecycle (spec/v1/agent-deployment.md).
   // `client.agents.listDeployments` / `transitionDeployment`.
   DeploymentState,
