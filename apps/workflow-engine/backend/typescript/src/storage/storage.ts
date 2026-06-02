@@ -457,6 +457,17 @@ export interface Storage {
     limit?: number;
   }): Promise<readonly RunRecord[]>;
 
+  // ── autonomous-run budget (windowed counter) ──
+  /** Atomically increment the run-budget counter for `bucket` (a `tenant:window`
+   *  key) and return the new count. `windowStart` (epoch ms) is stamped on
+   *  insert so rolled-over windows can be pruned. Multi-instance-safe (single
+   *  upsert) — concurrent callers get distinct monotonically-increasing counts,
+   *  so a ceiling compared against the returned value is enforced exactly once. */
+  consumeRunBudget(bucket: string, windowStart: number): Promise<number>;
+  /** Delete run-budget rows for windows older than `olderThanWindowStart`
+   *  (epoch ms). Best-effort housekeeping; returns the count removed. */
+  pruneRunBudget(olderThanWindowStart: number): Promise<number>;
+
   /** Append an egress to a relay's outbound queue. */
   enqueueRelayOutbound(record: ChatEgressEnvelope): Promise<void>;
   /** Pull pending egress for a relay, oldest first. */

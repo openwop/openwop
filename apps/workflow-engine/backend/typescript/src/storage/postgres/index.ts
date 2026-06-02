@@ -1365,6 +1365,20 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
       );
       return rows.map(rowToRelayDevicePg);
     },
+    async consumeRunBudget(bucket, windowStart) {
+      const { rows } = await pool.query<{ count: string }>(
+        `INSERT INTO run_budget (bucket, window_start, count) VALUES ($1, $2, 1)
+         ON CONFLICT (bucket) DO UPDATE SET count = run_budget.count + 1
+         RETURNING count`,
+        [bucket, windowStart],
+      );
+      return Number(rows[0]!.count);
+    },
+    async pruneRunBudget(olderThanWindowStart) {
+      const { rowCount } = await pool.query(`DELETE FROM run_budget WHERE window_start < $1`, [olderThanWindowStart]);
+      return rowCount ?? 0;
+    },
+
     async recordAgentRunAttribution(row) {
       await pool.query(
         `INSERT INTO agent_run_activity (run_id, tenant_id, roster_id, agent_id, source, created_at)

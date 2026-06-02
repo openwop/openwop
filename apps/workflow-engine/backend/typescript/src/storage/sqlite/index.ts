@@ -1303,6 +1303,21 @@ export function openSqliteStorage(dbPath: string): Storage {
       return rows.map(rowToRelayDeviceSqlite);
     },
 
+    async consumeRunBudget(bucket, windowStart) {
+      const row = db
+        .prepare(
+          `INSERT INTO run_budget (bucket, window_start, count) VALUES (?, ?, 1)
+           ON CONFLICT(bucket) DO UPDATE SET count = count + 1
+           RETURNING count`,
+        )
+        .get(bucket, windowStart) as { count: number };
+      return row.count;
+    },
+    async pruneRunBudget(olderThanWindowStart) {
+      const info = db.prepare(`DELETE FROM run_budget WHERE window_start < ?`).run(olderThanWindowStart);
+      return info.changes;
+    },
+
     async recordAgentRunAttribution(row) {
       db.prepare(
         `INSERT OR IGNORE INTO agent_run_activity (run_id, tenant_id, roster_id, agent_id, source, created_at)

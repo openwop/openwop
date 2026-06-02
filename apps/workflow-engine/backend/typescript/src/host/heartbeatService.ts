@@ -23,6 +23,7 @@ import { startWorkflowRun } from './runStarter.js';
 import { listRoster, recordHeartbeat, autonomyOf, type RosterEntry } from './rosterService.js';
 import { listBoards, listCards, moveCard, setCardLastRun, notifyBoardChanged } from './kanbanService.js';
 import { createApproval, hasPendingApprovalForCard } from './approvalService.js';
+import { checkAutonomousRunBudget } from './runBudgetService.js';
 import { getInstanceId } from './instanceId.js';
 import { createLogger } from '../observability/logger.js';
 
@@ -183,6 +184,16 @@ export async function processDueHeartbeats(
     const claimKey = `${CLAIM_KEY_PREFIX}${entry.rosterId}:${slot}`;
     const claim = await deps.storage.claimIdempotency(claimKey, new Date(now).toISOString());
     if (!claim.claimed) continue; // another instance is running this slot
+    // Autonomous-run budget: skip an auto-heartbeat that would exceed the
+    // tenant's ceiling (manual "Check now" is never throttled). lastHeartbeatAt
+    // isn't stamped, so it retries next window once budget frees.
+    const budget = await checkAutonomousRunBudget(deps.storage, entry.tenantId, now);
+    if (!budget.allowed) {
+      log.warn('autonomous heartbeat skipped — tenant over run budget', {
+        rosterId: entry.rosterId, tenantId: entry.tenantId, current: budget.current, limit: budget.limit,
+      });
+      continue;
+    }
     try {
       const result = await runHeartbeatOnce(deps, entry);
       if (result.picked) {

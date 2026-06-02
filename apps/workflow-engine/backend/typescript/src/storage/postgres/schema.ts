@@ -32,7 +32,7 @@ export interface Queryable {
   ): Promise<{ rows: R[] }>;
 }
 
-export const LATEST_SCHEMA_VERSION = 18;
+export const LATEST_SCHEMA_VERSION = 19;
 
 const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
   1: async (client) => {
@@ -555,6 +555,18 @@ const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
       );
       CREATE INDEX IF NOT EXISTS idx_agent_run_activity_tenant_roster
         ON agent_run_activity (tenant_id, roster_id, created_at);
+    `);
+  },
+  19: async (client) => {
+    // Windowed run-budget counter for the autonomous daemons. Mirrors sqlite
+    // mig 22: atomic upsert-increment per (tenant, window) bucket.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS run_budget (
+        bucket TEXT PRIMARY KEY,
+        window_start BIGINT NOT NULL,
+        count BIGINT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_run_budget_window ON run_budget (window_start);
     `);
   },
 };

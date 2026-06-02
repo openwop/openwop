@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 21;
+export const LATEST_SCHEMA_VERSION = 22;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -602,6 +602,21 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
       );
       CREATE INDEX IF NOT EXISTS idx_agent_run_activity_tenant_roster
         ON agent_run_activity (tenant_id, roster_id, created_at);
+    `);
+  },
+  22: (db) => {
+    // Windowed run-budget counter for the autonomous daemons (scheduler +
+    // heartbeat). One row per (tenant, time-window) bucket; an atomic
+    // upsert-increment makes the ceiling multi-instance-safe so self-firing
+    // autonomy can't run away on cost. Stale buckets are harmless (a fixed
+    // integer per past window) and pruned best-effort by the budget service.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS run_budget (
+        bucket TEXT PRIMARY KEY,
+        window_start INTEGER NOT NULL,
+        count INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_run_budget_window ON run_budget (window_start);
     `);
   },
 };
