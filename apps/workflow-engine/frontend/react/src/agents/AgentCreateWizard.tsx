@@ -22,6 +22,7 @@ import { CADENCE_PRESETS, createJob } from './scheduleClient.js';
 import { Notice } from '../ui/Notice.js';
 import { StructuredPromptEditor } from './StructuredPromptEditor.js';
 import { AgentAvatar } from './AgentAvatar.js';
+import { PageHeader } from '../ui/PageHeader.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
@@ -206,7 +207,11 @@ export function AgentCreateWizard(): JSX.Element {
   return (
     <section>
       <Link to="/agents" style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>← All agents</Link>
-      <h1 style={{ marginTop: '0.4rem' }}>Create an agent</h1>
+      <PageHeader
+        eyebrow="Agents"
+        title="Create an agent"
+        lede="Pick a role, name your coworker, give it a workflow to run, and choose how autonomously it works."
+      />
 
       {error ? <Notice variant="error">{error}</Notice> : null}
 
