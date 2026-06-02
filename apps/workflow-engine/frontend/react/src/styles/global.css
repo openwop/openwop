@@ -1790,14 +1790,25 @@ pre {
   border: 1px solid var(--rule);
   border-radius: var(--radius, 4px);
   overflow: hidden;
+  background: var(--paper);
 }
+/* Segment buttons are a subtle surface control, NOT the inverted primary
+ * button — explicitly tokenized so they track the theme (the base `button`
+ * uses --ink bg / --paper text, which would flip the whole control to the
+ * opposite of the page in dark mode). Active segment = clay-soft tint, matching
+ * the nav-link active state. */
 .segmented > button {
   border: none;
   border-radius: 0;
   padding: 4px 12px;
   font-size: 12px;
   min-height: 0;
+  background: transparent;
+  color: var(--ink-2);
 }
+.segmented > button + button { border-left: 1px solid var(--rule); }
+.segmented > button:hover { background: var(--paper-2); color: var(--ink); }
+.segmented > button[aria-pressed="true"] { background: var(--clay-soft); color: var(--clay); }
 
 /* Pack registry browser (RFC 0003 / 0013 / 0043) */
 .pack-browser-overlay {
