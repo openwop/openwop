@@ -17,7 +17,7 @@ SPEC_ROOT="."
 EXPECTED_REPO="github.com/openwop/openwop"
 EXPECTED_GO_MODULE="${EXPECTED_REPO}/sdk/go"
 EXPECTED_NPM_SCOPE="@openwop"
-EXPECTED_V1_VERSION="1.1.5"
+EXPECTED_V1_VERSION="1.1.7"
 # `@openwop/openwop-conformance` independently bumps minors as conformance
 # scenarios are added/removed, per `PUBLISHING.md` §"Versioning alignment"
 # ("Conformance scenario addition | @openwop/openwop-conformance minor
@@ -32,7 +32,7 @@ EXPECTED_CONFORMANCE_VERSION="1.18.1"
 # tag. It publishes ahead of the coordinated corpus version when the SDK
 # surface gains additive wrappers between corpus releases. Bump this when
 # the next `openwop/v*` (or coordinated `v*`) tag rolls.
-EXPECTED_TS_SDK_VERSION="1.1.6"
+EXPECTED_TS_SDK_VERSION="1.2.0"
 fail=0
 
 err() { echo "  FAIL: $*" >&2; fail=1; }
