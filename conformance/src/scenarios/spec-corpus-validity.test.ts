@@ -721,6 +721,51 @@ describe('spec-corpus: OpenAPI 3.1 spec is structurally valid', () => {
     }
   });
 
+  // ── Reserved-route disambiguation (RFC 0086/0087 + audit PR #495) ──────────
+  // The literal collection routes /v1/agents/roster and /v1/agents/org-chart
+  // share a prefix with the parameterized /v1/agents/{agentId}. The mitigation
+  // excludes the reserved literals from the {agentId} path param via a
+  // negative-lookahead pattern, AND the agent-manifest agentId pattern requires
+  // a dotted-tier form the bare literals can't satisfy. These guard both halves
+  // from silently regressing (the external standards-readiness audit asked the
+  // reserved-route mitigation be bound to a test).
+  it('declares both the literal /v1/agents/{roster,org-chart} routes and the {agentId} param route', () => {
+    const { raw } = readYamlHeader(openapiPath);
+    expect(raw).toContain('/v1/agents/{agentId}:');
+    expect(raw).toContain('/v1/agents/roster:');
+    expect(raw).toContain('/v1/agents/org-chart:');
+  });
+
+  it('every /v1/agents/{agentId} param excludes the reserved literals (roster, org-chart)', () => {
+    const { raw } = readYamlHeader(openapiPath);
+    const paramRoutes = (raw.match(/\/v1\/agents\/\{agentId\}/g) ?? []).length;
+    const exclusions = (raw.match(/\(\?!roster\$\|org-chart\$\)/g) ?? []).length;
+    expect(paramRoutes, 'expected ≥2 /v1/agents/{agentId...} routes (base + /deployments)').toBeGreaterThanOrEqual(2);
+    expect(
+      exclusions,
+      'each /v1/agents/{agentId} param schema MUST exclude the reserved literals via a (?!roster$|org-chart$) lookahead',
+    ).toBeGreaterThanOrEqual(2);
+  });
+
+  it('the reserved-literal exclusion pattern rejects roster/org-chart and accepts a real agentId', () => {
+    const re = /^(?!roster$|org-chart$).+$/;
+    expect(re.test('roster'), 'roster MUST NOT match the {agentId} param').toBe(false);
+    expect(re.test('org-chart'), 'org-chart MUST NOT match the {agentId} param').toBe(false);
+    expect(re.test('core.example.pack.agent')).toBe(true);
+  });
+
+  it('the agent-manifest agentId pattern can never produce a reserved literal (defense in depth)', () => {
+    const manifest = readJson(join(SCHEMAS_DIR, 'agent-manifest.schema.json')) as {
+      properties?: { agentId?: { pattern?: string } };
+    };
+    const pattern = manifest.properties?.agentId?.pattern;
+    expect(typeof pattern, 'agent-manifest.schema.json MUST constrain agentId with a pattern').toBe('string');
+    const re = new RegExp(pattern as string);
+    expect(re.test('roster'), 'manifest agentId MUST NOT permit the reserved literal `roster`').toBe(false);
+    expect(re.test('org-chart'), 'manifest agentId MUST NOT permit the reserved literal `org-chart`').toBe(false);
+    expect(re.test('core.example.pack.agent')).toBe(true);
+  });
+
   it('typed error specializations compose the canonical Error schema', () => {
     const { raw } = readYamlHeader(openapiPath);
 
