@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { DataTable, DensityToggle, type DataColumn } from '../ui/DataTable.js';
+import { SkeletonRows } from '../ui/Skeleton.js';
+import { toast } from '../ui/toast.js';
 import { createRun, listMyRuns, type RunListItem } from '../client/runsClient.js';
 import type { Annotation } from '../client/feedbackClient.js';
 import { useRunAnnotations, reviewOf, needsReview, reviewReason } from './useRunAnnotations.js';
@@ -108,6 +110,7 @@ export function RunsIndexPage() {
       // middleware overrides it with the principal's tenant.
       const res = await createRun({ workflowId, tenantId: '', inputs });
       void refreshRuns();
+      toast.success(`Run created — streaming ${res.runId.slice(0, 8)}…`);
       nav(`/runs/${res.runId}`);
     } catch (err) {
       if (err instanceof SerializeError) {
@@ -234,15 +237,17 @@ export function RunsIndexPage() {
           initialSort={{ key: 'started', dir: 'desc' }}
           columns={runColumns}
           empty={
-            <p className="muted">
-              {runsLoading
-                ? 'Loading…'
-                : runs.length === 0
+            runsLoading ? (
+              <SkeletonRows rows={4} columns={[90, 180, 80, 150]} />
+            ) : (
+              <p className="muted">
+                {runs.length === 0
                   ? 'No runs yet. Create one above to get started.'
                   : reviewOnly
                     ? 'No runs flagged for review. Thumbs-down, flag, or correct a run to add it here.'
                     : 'No runs match this filter.'}
-            </p>
+              </p>
+            )
           }
         />
       </div>

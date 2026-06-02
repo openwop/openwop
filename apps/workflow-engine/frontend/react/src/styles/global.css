@@ -1128,6 +1128,63 @@ pre {
   border: 1px solid var(--color-success);
 }
 
+/* ── Toasts (§5.1 <Toaster>) — ephemeral, stack bottom-right. Reuse the
+ * .alert.* colour families; .toast (defined after .alert) wins the layout
+ * overrides on equal specificity. ───────────────────────────────────────── */
+.toast-stack {
+  position: fixed;
+  bottom: var(--space-4);
+  right: var(--space-4);
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: min(380px, 92vw);
+}
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2-5) var(--space-3);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: 0 6px 24px var(--ink-shadow);
+  animation: openwop-toast-in 0.18s ease both;
+}
+.toast-icon { flex-shrink: 0; display: inline-flex; margin-top: 1px; }
+.toast-message { flex: 1; font-size: 13px; color: var(--ink); }
+.toast-close { flex-shrink: 0; background: none; border: 0; color: var(--ink-3); opacity: 0.7; cursor: pointer; display: inline-flex; padding: 0; }
+.toast-close:hover { opacity: 1; color: var(--ink); }
+@keyframes openwop-toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* ── Skeleton loaders (§5.1 <Skeleton>) ──────────────────────────────────── */
+.skeleton {
+  display: inline-block;
+  height: 14px;
+  background: var(--rule);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  vertical-align: middle;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--paper), transparent);
+  transform: translateX(-100%);
+  animation: openwop-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes openwop-shimmer { 100% { transform: translateX(100%); } }
+.skeleton-rows { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3) 0; }
+.skeleton-row { display: flex; gap: var(--space-4); align-items: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .toast { animation: none; }
+  .skeleton::after { display: none; }
+}
+
 .muted {
   color: var(--color-text-muted);
 }
