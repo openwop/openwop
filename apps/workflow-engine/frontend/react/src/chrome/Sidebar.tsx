@@ -4,6 +4,7 @@ import { BrandMark } from '../brand/BrandMark.js';
 import { SignInButton } from '../auth/SignInButton.js';
 import { NotificationBell } from '../notifications/NotificationBell.js';
 import { BuildingIcon, MenuIcon, ChevronRightIcon, SearchIcon } from '../ui/icons/index.js';
+import { ThemeToggle } from '../ui/ThemeToggle.js';
 import { NAV, navItemIsActive } from './navItems.js';
 
 const COLLAPSE_KEY = 'openwop.sidebar.collapsed';
@@ -108,6 +109,7 @@ export function Sidebar({ netOpen, onToggleNet }: { netOpen: boolean; onToggleNe
         </nav>
 
         <div className="app-sidebar-foot">
+          <ThemeToggle />
           <div className="app-sidebar-utils">
             <NotificationBell />
             <button

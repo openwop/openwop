@@ -22,6 +22,24 @@
     --mono:  "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
   }
 
+  /* Warm-dark mode (DESIGN.md §9.1) — token-only override, same names with
+   * paper ↔ ink swapped. Landed in lockstep with the app + registry surfaces
+   * (§9.2.5). --clay + --star-glow stay identical (OKLCH keeps them balanced).
+   * The marketing site has no app-functional status tokens, so only the shared
+   * palette flips. OS-pref-driven; the static site has no manual toggle. */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper:        #1a1a17;
+      --paper-2:      #232220;
+      --rule:         #3a3833;
+      --rule-2:       #4a4842;
+      --ink:          #f4f1ea;
+      --ink-2:        #d9d4c5;
+      --ink-3:        #a8a39a;
+      --ink-shadow:   rgb(0 0 0 / 0.35);
+    }
+  }
+
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
 

@@ -98,6 +98,52 @@
   --chat-feed-pad: var(--space-4);
 }
 
+/* ── Warm-dark mode (DESIGN.md §9, DESIGN.app.md §3 rule 2) ───────────────
+ * Token-only override: same token NAMES, swapped roles (paper ↔ ink). Per
+ * §9.2.1, no component CSS changes when dark flips — a component that breaks
+ * had a hardcoded value. The app-functional status tokens lift ~10% luminance
+ * (§9.2.4) to hold on-dark contrast; --clay stays identical (OKLCH keeps it
+ * luminance-balanced on either paper).
+ *
+ * Default is the OS preference (`@media`); a user can force a mode with
+ * `<html class="theme-dark|theme-light">` (§9.2.3), driven by the app's theme
+ * toggle. `:root:not(.theme-light)` lets the forced-light class win over the
+ * media query. The block is duplicated for the forced-dark class — intentional
+ * per §9.2's documented shape (CSS can't share one declaration across two
+ * selector contexts). */
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light) {
+    --paper:        #1a1a17;
+    --paper-2:      #232220;
+    --rule:         #3a3833;
+    --rule-2:       #4a4842;
+    --ink:          #f4f1ea;
+    --ink-2:        #d9d4c5;
+    --ink-3:        #a8a39a;
+    --ink-shadow:   rgb(0 0 0 / 0.35);
+    --color-success: oklch(72% 0.14 145);
+    --color-warning: oklch(80% 0.14 75);
+    --color-danger:  oklch(65% 0.16 28);
+    --color-ai:      oklch(70% 0.12 280);
+    --color-info:    oklch(68% 0.12 240);
+  }
+}
+:root.theme-dark {
+  --paper:        #1a1a17;
+  --paper-2:      #232220;
+  --rule:         #3a3833;
+  --rule-2:       #4a4842;
+  --ink:          #f4f1ea;
+  --ink-2:        #d9d4c5;
+  --ink-3:        #a8a39a;
+  --ink-shadow:   rgb(0 0 0 / 0.35);
+  --color-success: oklch(72% 0.14 145);
+  --color-warning: oklch(80% 0.14 75);
+  --color-danger:  oklch(65% 0.16 28);
+  --color-ai:      oklch(70% 0.12 280);
+  --color-info:    oklch(68% 0.12 240);
+}
+
 @keyframes openwop-pulse {
   0%, 100% { opacity: 0.2; }
   50% { opacity: 0.8; }
@@ -679,6 +725,8 @@ a:visited {
   gap: var(--space-2);
 }
 .app-sidebar-utils { display: flex; align-items: center; gap: var(--space-2); }
+.app-sidebar-foot .theme-toggle { width: 100%; }
+.app-sidebar-foot .theme-toggle button { flex: 1; display: inline-flex; align-items: center; justify-content: center; }
 .app-sidebar.is-collapsed .app-sidebar-foot { display: none; }
 
 /* Mobile launcher + drawer scrim (shown only ≤860px) */
