@@ -3156,6 +3156,8 @@ pre {
   content: "";
   flex: 1;
   height: 1px;
+  background: var(--rule);
+}
 
 /* BYOK section (Pick a provider) — serif-italic h2 + readable lede + ~14px
  * sans body, mirroring the marketing site's editorial pattern. */
@@ -3688,11 +3690,16 @@ pre {
 
 /* ─── Header network toggle ───────────────────────────────────────────
  * Tiny secondary pill in the header that opens the network inspector. */
-
+.app-header-net-toggle {
   font-size: 11px;
   padding: 4px 12px;
   margin-right: 8px;
   letter-spacing: 0.02em;
+}
+.app-header-net-toggle[aria-expanded="true"] {
+  background: var(--clay-wash);
+  border-color: var(--clay-rule);
+  color: var(--clay);
 }
 
 /* ─── Network inspector slide-out ─────────────────────────────────────
