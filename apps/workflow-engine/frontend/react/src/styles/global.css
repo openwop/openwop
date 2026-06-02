@@ -1324,6 +1324,8 @@ pre {
   gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
   border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
 
 .builder-toolbar-name {
   width: auto;
@@ -1356,6 +1358,8 @@ pre {
 
 .builder-toolbar-back:hover {
   color: var(--color-text);
+  background: var(--color-surface-2);
+}
 
 .builder-body {
   flex: 1;
@@ -1369,6 +1373,8 @@ pre {
   border-right: 1px solid var(--color-border);
   padding: var(--space-3) 0;
   overflow-y: auto;
+  background: var(--color-surface);
+}
 
 .builder-palette-header {
   padding: 0 var(--space-3) var(--space-2);
@@ -1554,6 +1560,8 @@ pre {
 }
 
 .builder-palette-item:hover {
+  background: var(--color-surface-2);
+}
 
 .builder-palette-item:active {
   cursor: grabbing;
@@ -1731,6 +1739,8 @@ pre {
 }
 
 .builder-canvas .react-flow {
+  background: var(--paper);
+}
 
 .builder-canvas .react-flow__controls {
   background: var(--paper);
@@ -1756,6 +1766,8 @@ pre {
 }
 
 .builder-canvas .react-flow__controls-button:hover {
+  background: var(--clay-wash);
+}
 
 .builder-canvas .react-flow__controls-button svg {
   fill: currentColor;
@@ -2354,6 +2366,8 @@ pre {
   border-left: 1px solid var(--color-border);
   padding: var(--space-3);
   overflow-y: auto;
+  background: var(--color-surface);
+}
 
 .builder-inspector-title {
   margin: 0 0 var(--space-1);
@@ -2489,6 +2503,8 @@ pre {
 
 .workflow-card:hover {
   border-color: var(--color-accent);
+  background: var(--color-surface-2);
+}
 
 .workflow-card:focus-visible {
   outline: 2px solid var(--color-accent);
@@ -2572,12 +2588,16 @@ pre {
 }
 
 .workflow-card-menu-popover button:hover {
+  background: var(--color-surface-2);
+}
 
 .workflow-card-menu-popover .workflow-card-menu-danger {
   color: var(--color-danger);
 }
 
 .workflow-card-menu-popover .workflow-card-menu-danger:hover {
+  background: color-mix(in oklch, var(--color-danger) 10%, transparent);
+}
 
 .workflow-card-empty {
   text-align: center;
@@ -2632,6 +2652,8 @@ pre {
 .workflow-template-card:hover {
   /* Override .workflow-card:hover — no accent border on templates. */
   border-color: var(--color-border);
+  background: var(--color-surface);
+}
 
 .workflow-template-description {
   font-size: 12px;
@@ -4046,6 +4068,8 @@ a.surface-card,
 a.surface-card:hover,
 .surface-card--interactive:hover {
   border-color: var(--color-accent);
+  background: var(--color-surface-2);
+}
 
 /* Card grid — identical track sizing to .workflows-grid. */
 .card-grid {
