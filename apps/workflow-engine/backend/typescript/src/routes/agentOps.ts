@@ -27,6 +27,12 @@ import type { Storage } from '../storage/storage.js';
 import { seedDemoAgents } from '../host/demoSeed.js';
 import { getRosterEntry } from '../host/rosterService.js';
 import { runHeartbeatOnce } from '../host/heartbeatService.js';
+import { projectAgentActivity } from '../host/agentActivity.js';
+
+/** Bound the per-tenant run scan that backs the in-memory attribution filter
+ *  (the runs store has no per-roster/agent index). `truncated` is reported when
+ *  hit so the UI never implies "no older activity". */
+const ACTIVITY_SCAN_LIMIT = 500;
 
 interface Deps {
   storage: Storage;
@@ -81,40 +87,31 @@ export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
         throw new OpenwopError('not_found', 'Agent not found.', 404, { rosterId: req.params.rosterId });
       }
       const limit = Math.min(50, Math.max(1, Number.parseInt(String(req.query.limit ?? '25'), 10) || 25));
-      // listRuns has no per-attribution filter, so we scan the most-recent tenant
-      // runs and filter in memory. Bound the scan, but report when it was hit so
-      // the UI can say "older activity may exist" rather than imply "none" — no
-      // silent truncation. `truncated` ⇒ the agent could have older runs beyond
-      // the scan window.
-      const SCAN_LIMIT = 500;
-      const runs = await deps.storage.listRuns({ tenantId, limit: SCAN_LIMIT });
-      const truncated = runs.length >= SCAN_LIMIT;
-      const items = runs
-        .map((run) => {
-          const md = (run.metadata ?? {}) as Record<string, unknown>;
-          // A run carries one attribution block (heartbeat / schedule / kanban);
-          // keep it only if that block names this roster member.
-          const candidates: Array<{ source: string; block: Record<string, unknown> }> = [];
-          for (const key of ['heartbeat', 'schedule', 'kanban'] as const) {
-            const block = md[key];
-            if (block && typeof block === 'object') candidates.push({ source: key, block: block as Record<string, unknown> });
-          }
-          const mine = candidates.find((c) => c.block.rosterId === entry.rosterId);
-          if (!mine) return null;
-          return {
-            runId: run.runId,
-            workflowId: run.workflowId,
-            status: run.status,
-            source: mine.source,
-            cardId: typeof mine.block.cardId === 'string' ? mine.block.cardId : undefined,
-            // Prefer the terminal time; fall back to last-update / creation.
-            timestamp: run.completedAt ?? run.updatedAt ?? run.createdAt,
-          };
-        })
-        .filter((x): x is NonNullable<typeof x> => x !== null)
-        .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
-        .slice(0, limit);
+      const optionalStatus = typeof req.query.status === 'string' ? req.query.status : undefined;
+      const runs = await deps.storage.listRuns({ tenantId, limit: ACTIVITY_SCAN_LIMIT });
+      const truncated = runs.length >= ACTIVITY_SCAN_LIMIT;
+      const items = projectAgentActivity(runs, { rosterId: entry.rosterId, status: optionalStatus }).slice(0, limit);
       res.status(200).json({ rosterId: entry.rosterId, items, truncated });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Fleet-wide activity feed — recent agent-attributed runs across the whole
+  // roster, each carrying its rosterId/persona so the dashboard can show a
+  // single timeline + a failures view (`?status=failed`). Same scan-and-filter
+  // posture + honest `truncated` as the per-agent feed. Optional `?rosterId=`
+  // narrows to one member without the path param.
+  app.get('/v1/host/sample/fleet/activity', async (req, res, next) => {
+    try {
+      const tenantId = tenantOf(req);
+      const limit = Math.min(100, Math.max(1, Number.parseInt(String(req.query.limit ?? '50'), 10) || 50));
+      const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+      const rosterId = typeof req.query.rosterId === 'string' ? req.query.rosterId : undefined;
+      const runs = await deps.storage.listRuns({ tenantId, limit: ACTIVITY_SCAN_LIMIT });
+      const truncated = runs.length >= ACTIVITY_SCAN_LIMIT;
+      const items = projectAgentActivity(runs, { status, rosterId }).slice(0, limit);
+      res.status(200).json({ items, truncated });
     } catch (err) {
       next(err);
     }
