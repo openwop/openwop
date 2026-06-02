@@ -144,7 +144,11 @@ The demo personas (Sally, Marcus, …), their boards, cards, schedules, and
 org-chart live in **`backend/typescript/src/host/seed-data/demoAgents.json`** —
 the brand-authoring surface. Edit that JSON to ship your own demo content (it's
 type-checked at build time and bundled into the image), or set
-`OPENWOP_DEMO_SEED_ENABLED=false` for none. See
+`OPENWOP_DEMO_SEED_ENABLED=false` for none. Each persona also takes an optional
+**`autonomyLevel`** (`"auto"` default, or `"review"`): a `review` persona ships
+in "agents propose, humans dispose" mode — its heartbeat queues a proposal to
+the approval inbox rather than running it (the stock seed ships **Nora** in
+`review` so the approval flow is demoable out of the box). See
 [`seed-data/SEEDING.md`](../../backend/typescript/src/host/seed-data/SEEDING.md).
 
 > **Protocol identifiers are NOT branding** and must stay: `core.openwop.*`

@@ -28,6 +28,11 @@ host-extension stores.
    prompts, card titles, schedule labels, department names. The shape is
    validated against the `SeedAgent` type in `demoSeed.ts` at compile time
    (`tsc`/CI), so a malformed edit fails the build.
+   - **`autonomyLevel`** (optional, per persona): omit or `"auto"` to start
+     heartbeat picks immediately; `"review"` ships the persona in the
+     "agents propose, humans dispose" mode — its heartbeat queues a proposal
+     to the approval inbox instead of running it. The stock seed ships **Nora**
+     in `review` so the approval flow is demoable out of the box.
 2. **Rebuild** the backend (`npm run build`) and redeploy — the JSON is
    bundled, so the new content ships with the image.
 

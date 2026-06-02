@@ -64,6 +64,12 @@ interface SeedAgent {
   cards: SeedCard[];
   schedules: SeedSchedule[];
   department: { departmentId: string; name: string; roleId: string; roleName: string };
+  /** Heartbeat autonomy for this seeded persona (host-extension). Omit for
+   *  `auto` (start picks immediately); `review` ships the persona in the
+   *  "agents propose, humans dispose" mode — its heartbeat queues a proposal
+   *  for the approval inbox instead of running. Lets a white-label operator
+   *  author review-mode agents declaratively in the seed (WHITE-LABEL.md §4). */
+  autonomyLevel?: 'auto' | 'review';
 }
 
 /** The four canonical agent lanes (PRD §7). To Do is the trigger column. */
@@ -140,6 +146,7 @@ export async function seedDemoAgents(tenantId: string): Promise<SeedResult> {
         workflows: workflowIds,
         label: spec.role,
         description: spec.description,
+        autonomyLevel: spec.autonomyLevel,
       });
       created += 1;
 
