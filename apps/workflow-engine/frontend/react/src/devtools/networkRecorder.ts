@@ -22,9 +22,12 @@
  * - Request bodies are recorded only when JSON-ish (avoids logging
  *   binary uploads). Response bodies are truncated to 16KB to keep
  *   localStorage / memory bounded.
- * - The buffer is in-memory only (lost on reload). A future commit
- *   could persist the last N to sessionStorage if the user wants a
- *   record across hot-reloads.
+ * - The buffer survives reload: the last `PERSIST_MAX` entries are
+ *   mirrored to `sessionStorage` (throttled, quota-safe, response bodies
+ *   re-truncated to `PERSIST_RESPONSE_BYTES`) and rehydrated on boot, so a
+ *   hot-reload or accidental refresh doesn't wipe the record. It stays
+ *   tab-scoped (sessionStorage, not localStorage) so it doesn't outlive the
+ *   session or leak across tabs.
  *
  * Disable in production builds via VITE_DISABLE_NETWORK_RECORDER=1.
  */
@@ -34,6 +37,9 @@ import { config as backendConfig } from '../client/config.js';
 
 const MAX_ENTRIES = 200;
 const MAX_RESPONSE_BYTES = 16 * 1024;
+const STORAGE_KEY = 'openwop.networkRecorder.v1';
+const PERSIST_MAX = 50;
+const PERSIST_RESPONSE_BYTES = 4 * 1024;
 
 export type NetworkEntryKind = 'rest' | 'sse';
 
@@ -63,11 +69,64 @@ const entries: NetworkEntry[] = [];
 const listeners = new Set<Listener>();
 let installed = false;
 
+let persistScheduled = false;
+
+function canPersist(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return !!window.sessionStorage;
+  } catch {
+    return false; // access can throw under strict privacy settings
+  }
+}
+
+/** Mirror the tail of the buffer to sessionStorage, coalescing the burst of
+ *  push+update calls in one tick into a single write. Quota-safe: on failure
+ *  it drops the persisted copy rather than throwing into the fetch hook. */
+function schedulePersist(): void {
+  if (persistScheduled || !canPersist()) return;
+  persistScheduled = true;
+  setTimeout(() => {
+    persistScheduled = false;
+    try {
+      const trimmed = entries.slice(-PERSIST_MAX).map((e) =>
+        e.responseBody && e.responseBody.length > PERSIST_RESPONSE_BYTES
+          ? { ...e, responseBody: e.responseBody.slice(0, PERSIST_RESPONSE_BYTES), responseTruncated: true }
+          : e,
+      );
+      window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+    } catch {
+      // QuotaExceededError / serialization failure — discard the persisted
+      // mirror; the in-memory buffer is the source of truth and is unaffected.
+      try { window.sessionStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+    }
+  }, 0);
+}
+
+/** Rehydrate the buffer from sessionStorage on boot. No-op if the buffer
+ *  already has entries (don't clobber a live session) or the persisted state
+ *  is absent/corrupt. */
+function hydrateFromStorage(): void {
+  if (!canPersist() || entries.length > 0) return;
+  try {
+    const raw = window.sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return;
+    for (const e of parsed as NetworkEntry[]) {
+      if (e && typeof e.id === 'string' && typeof e.url === 'string') entries.push(e);
+    }
+  } catch {
+    /* corrupt persisted state — ignore and start fresh */
+  }
+}
+
 function notify(): void {
   const snapshot = entries.slice();
   for (const l of listeners) {
     try { l(snapshot); } catch { /* ignore listener errors */ }
   }
+  schedulePersist();
 }
 
 function push(entry: NetworkEntry): void {
@@ -112,6 +171,9 @@ export function installNetworkRecorder(): void {
     return;
   }
   installed = true;
+  // Restore the prior session's tail so a reload/hot-reload keeps the record.
+  hydrateFromStorage();
+  if (entries.length > 0) notify();
   const nativeFetch = window.fetch.bind(window);
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url = typeof input === 'string'
