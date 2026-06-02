@@ -3,6 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Apply the saved theme override (DESIGN.md §9.2.3) before first paint so
+         a forced light/dark choice doesn't flash. 'system' (or unset) leaves
+         the @media (prefers-color-scheme) default in charge. ThemeToggle keeps
+         localStorage in sync at runtime. -->
+    <script>
+      try {
+        var t = localStorage.getItem('openwop.theme');
+        if (t === 'dark') document.documentElement.classList.add('theme-dark');
+        else if (t === 'light') document.documentElement.classList.add('theme-light');
+      } catch (e) {}
+    </script>
     <!-- The title / favicon / fonts placeholders below are stamped at
          build time by the `openwop-brand-html` Vite plugin from
          `VITE_BRAND_*` env (defaults in src/brand/defaults.ts). See

@@ -189,11 +189,11 @@ Any future infographic MUST follow this pattern unless the SVG's text labels are
 
 ## 9. Light / dark mode
 
-**All three openwop surfaces are light-mode only today** — `public/` (marketing site), `apps/workflow-engine/frontend/react/` (reference app), and `registry/` (pack registry at packs.openwop.dev) ship the warm editorial palette without a `@media (prefers-color-scheme: dark)` override. A user on a dark-OS sees the same cream / ink / clay register everywhere.
+**All three openwop surfaces now ship the warm-dark override** — `public/` (marketing site), `apps/workflow-engine/frontend/react/` (reference app), and `registry/` (pack registry at packs.openwop.dev) carry the `@media (prefers-color-scheme: dark)` token override below, landed in one release per the §9.2.5 lockstep rule. A dark-OS user now sees a coherent warm-dark register across all three; a light-OS user keeps the original cream / ink / clay. The reference app additionally offers a per-user toggle (§9.2.3).
 
-Dark mode is **deferred** until a coherent warm-dark variant lands across all three surfaces in the same release. The recipe below is the candidate; it isn't wired anywhere right now.
+Dark mode was deferred until a coherent warm-dark variant could land across all three surfaces together; it now has. The token override below is **active**.
 
-### 9.1 Candidate warm-dark token override (deferred — informative)
+### 9.1 Warm-dark token override (active)
 
 ```css
 @media (prefers-color-scheme: dark) {
@@ -214,7 +214,7 @@ Dark mode is **deferred** until a coherent warm-dark variant lands across all th
 
 The inversion `paper ↔ ink`, `paper-2 ↔ ink-2`, etc., is the contract — same token names, swapped role. Any future doc-level override MUST follow this same shape.
 
-### 9.2 Implementation invariants (apply when dark mode lands)
+### 9.2 Implementation invariants (in force)
 
 1. **No component CSS changes when dark mode flips.** If a component breaks in dark mode, it had hard-coded values — that is the test.
 2. The `@media (prefers-color-scheme: dark)` block lives inside the same `:root` declaration as the light tokens, never as a separate stylesheet.

@@ -75,3 +75,6 @@ export { BuildingIcon } from './BuildingIcon.js';
 export { KeyIcon } from './KeyIcon.js';
 export { TerminalIcon } from './TerminalIcon.js';
 export { SearchIcon } from './SearchIcon.js';
+export { SunIcon } from './SunIcon.js';
+export { MoonIcon } from './MoonIcon.js';
+export { MonitorIcon } from './MonitorIcon.js';
