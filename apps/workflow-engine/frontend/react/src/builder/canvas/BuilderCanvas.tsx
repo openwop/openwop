@@ -242,6 +242,16 @@ function BuilderCanvasInner() {
     e.dataTransfer.dropEffect = 'copy';
   }, []);
 
+  // Color each minimap blip with its node-kind accent so the overview is a
+  // legible mini-map of the workflow (default xyflow node color is invisible
+  // against the themed panel). Reads `data.kind` → catalog accent (a token
+  // var), falling back to a neutral ink for unknown kinds.
+  const miniMapNodeColor = useCallback((node: Node): string => {
+    const kind = node.data?.['kind'];
+    const accent = typeof kind === 'string' ? catalogEntry(kind)?.accent : undefined;
+    return accent ?? 'var(--ink-2)';
+  }, []);
+
   return (
     <div
       ref={wrapperRef}
@@ -266,7 +276,15 @@ function BuilderCanvasInner() {
       >
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
         <Controls position="bottom-right" />
-        <MiniMap pannable zoomable position="bottom-left" />
+        <MiniMap
+          pannable
+          zoomable
+          position="bottom-left"
+          nodeColor={miniMapNodeColor}
+          nodeStrokeColor={miniMapNodeColor}
+          nodeStrokeWidth={2}
+          nodeBorderRadius={2}
+        />
       </ReactFlow>
     </div>
   );
