@@ -25,9 +25,8 @@ import { OpenwopError } from '../types.js';
 import type { HostAdapterSuite } from '../host/index.js';
 import type { Storage } from '../storage/storage.js';
 import { seedDemoAgents } from '../host/demoSeed.js';
-import { getRosterEntry, recordHeartbeat } from '../host/rosterService.js';
-import { listBoards, listCards, moveCard, setCardLastRun, notifyBoardChanged } from '../host/kanbanService.js';
-import { startWorkflowRun } from '../host/runStarter.js';
+import { getRosterEntry } from '../host/rosterService.js';
+import { runHeartbeatOnce } from '../host/heartbeatService.js';
 
 interface Deps {
   storage: Storage;
@@ -62,56 +61,9 @@ export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
         return;
       }
 
-      // The heartbeat is running — stamp "last checked" regardless of whether a
-      // card gets picked up, so the UI can show how recently the agent looked.
-      const heartbeatEntry = await recordHeartbeat(entry.rosterId);
-      const lastHeartbeatAt = heartbeatEntry?.lastHeartbeatAt;
-
-      // Find the agent's board(s) and the first To Do card with a runnable
-      // workflow (card override, else the To Do column's trigger workflow).
-      const boards = (await listBoards(tenantId)).filter((b) => b.rosterId === entry.rosterId);
-      for (const board of boards) {
-        const todoColumn = board.columns.find((c) => c.id === 'todo' || c.name.toLowerCase() === 'to do');
-        if (!todoColumn) continue;
-        const cards = (await listCards(board.id)).filter((c) => c.columnId === todoColumn.id);
-        for (const card of cards) {
-          const workflowId = card.workflowId ?? todoColumn.triggerWorkflowId;
-          if (!workflowId) continue;
-          const runId = await startWorkflowRun(deps, {
-            tenantId,
-            workflowId,
-            metadata: {
-              heartbeat: {
-                rosterId: entry.rosterId,
-                persona: entry.persona,
-                agentId: entry.agentRef.agentId,
-                boardId: board.id,
-                cardId: card.id,
-                source: 'heartbeat',
-              },
-            },
-          });
-          if (!runId) continue;
-          await setCardLastRun(card.id, runId);
-          // Move the picked card to Working (no re-trigger — Working has no
-          // trigger workflow). Best-effort: a missing Working lane leaves the
-          // card in To Do with its run already started.
-          const working = board.columns.find((c) => c.id === 'working' || c.name.toLowerCase() === 'working');
-          if (working) await moveCard(card.id, working.id);
-          notifyBoardChanged(board.id);
-          res.status(200).json({
-            picked: true,
-            boardId: board.id,
-            cardId: card.id,
-            cardTitle: card.title,
-            runId,
-            persona: entry.persona,
-            lastHeartbeatAt,
-          });
-          return;
-        }
-      }
-      res.status(200).json({ picked: false, reason: 'no_eligible_tasks', lastHeartbeatAt });
+      // Shared with the autonomous heartbeat daemon so the two can't drift.
+      const result = await runHeartbeatOnce(deps, entry);
+      res.status(200).json(result);
     } catch (err) {
       next(err);
     }

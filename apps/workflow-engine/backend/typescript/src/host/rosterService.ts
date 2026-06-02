@@ -65,6 +65,11 @@ export interface RosterEntry {
    *  as "last checked …"; the heartbeat is a manual pull in this sample, so
    *  there is no persisted "next check" beyond any enabled scheduler job. */
   lastHeartbeatAt?: string;
+  /** Opt-in autonomous heartbeat cadence in milliseconds. When > 0, the
+   *  background heartbeat daemon (host/heartbeatService.ts) auto-runs this
+   *  member's "Check now" on this interval. Absent or <= 0 ⇒ manual pull only
+   *  (the prior, default behavior) — the daemon never touches it. */
+  heartbeatIntervalMs?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -93,6 +98,7 @@ export async function createRosterEntry(input: {
   description?: string;
   enabled?: boolean;
   avatarUrl?: string;
+  heartbeatIntervalMs?: number;
 }): Promise<RosterEntry> {
   // `host:<slug>-<short>` keeps the id human-readable + collision-safe.
   const rosterId = `host:${slugify(input.persona)}-${randomUUID().slice(0, 8)}`;
@@ -107,6 +113,7 @@ export async function createRosterEntry(input: {
     label: input.label,
     description: input.description,
     avatarUrl: input.avatarUrl,
+    ...(input.heartbeatIntervalMs !== undefined ? { heartbeatIntervalMs: input.heartbeatIntervalMs } : {}),
     createdAt: now,
     updatedAt: now,
   };
@@ -124,6 +131,15 @@ export async function getRosterEntry(rosterId: string): Promise<RosterEntry | nu
   return roster.get(rosterId);
 }
 
+/** Distinct tenant ids that own at least one roster member. The background
+ *  heartbeat daemon uses this to scope its per-tenant scan (the store lists
+ *  per tenant). Prefix-scan posture, like the rest of the host-ext surfaces. */
+export async function listRosterTenants(): Promise<string[]> {
+  const tenants = new Set<string>();
+  for (const e of await roster.list()) tenants.add(e.tenantId);
+  return [...tenants];
+}
+
 export async function updateRosterEntry(
   rosterId: string,
   patch: {
@@ -134,6 +150,8 @@ export async function updateRosterEntry(
     description?: string;
     /** `string` sets the photo, `null` clears it, `undefined` leaves it. */
     avatarUrl?: string | null;
+    /** Autonomous heartbeat cadence (ms). 0 or negative disables it. */
+    heartbeatIntervalMs?: number;
   },
 ): Promise<RosterEntry | null> {
   const entry = await roster.get(rosterId);
@@ -143,6 +161,10 @@ export async function updateRosterEntry(
   if (patch.enabled !== undefined) entry.enabled = patch.enabled;
   if (patch.label !== undefined) entry.label = patch.label;
   if (patch.description !== undefined) entry.description = patch.description;
+  if (patch.heartbeatIntervalMs !== undefined) {
+    if (patch.heartbeatIntervalMs > 0) entry.heartbeatIntervalMs = patch.heartbeatIntervalMs;
+    else delete entry.heartbeatIntervalMs;
+  }
   if (patch.avatarUrl !== undefined) {
     if (patch.avatarUrl === null) delete entry.avatarUrl;
     else entry.avatarUrl = patch.avatarUrl;

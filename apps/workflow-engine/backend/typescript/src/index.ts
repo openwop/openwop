@@ -38,6 +38,8 @@ import { createHostAdapterSuite, type HostAdapterSuite } from './host/index.js';
 import { startWebhookDeliveryWorker } from './host/webhookDeliveryWorker.js';
 import { startRunDispatchSweeper } from './host/runDispatchSweeper.js';
 import { startScheduleDaemon } from './host/scheduleDaemon.js';
+import { startHeartbeatDaemon } from './host/heartbeatService.js';
+import { listRosterTenants } from './host/rosterService.js';
 import { getInstanceId } from './host/instanceId.js';
 import { configureSecretResolver, loadSecretsFromEnv } from './byok/secretResolver.js';
 import { bootstrapKmsFromEnv } from './byok/kmsEncryption.js';
@@ -451,11 +453,15 @@ async function main(): Promise<void> {
   // instance polls; per-fire claimIdempotency makes it fire-once across the
   // fleet (see scheduleDaemon.ts).
   const scheduleDaemon = startScheduleDaemon({ storage, hostSuite });
+  // Autonomous agent heartbeat: members that opted into a cadence get their
+  // "Check now" run automatically (fire-once across the fleet).
+  const heartbeatDaemon = startHeartbeatDaemon({ storage, hostSuite }, listRosterTenants);
   for (const sig of ['SIGTERM', 'SIGINT'] as const) {
     process.once(sig, () => {
       webhookWorker.stop();
       runSweeper.stop();
       scheduleDaemon.stop();
+      heartbeatDaemon.stop();
     });
   }
 
