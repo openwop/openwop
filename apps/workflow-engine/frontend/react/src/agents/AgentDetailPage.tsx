@@ -1,21 +1,16 @@
 /**
- * Agent detail view — `/agents/:agentId` (phase C2).
+ * Agent template detail — `/agents/templates/:agentId`.
  *
- * Read-only projection of `GET /v1/agents/:agentId` (RFC 0072 §A).
- * Shows the resolved manifest metadata: persona/label, description,
- * model class, tool allowlist, memory shape, handoff schemas,
- * confidence threshold, and source pack pin.
+ * Read-only projection of `GET /v1/agents/:agentId` (RFC 0072 §A): the resolved
+ * manifest metadata (persona/label, description, model class, tool allowlist,
+ * memory shape, handoff schemas, confidence threshold, source pack pin). A
+ * "Fork" button → `/agents/fork?fork=<agentId>` prefilled; a user-authored
+ * template additionally shows "Delete" (pack-installed templates are immutable).
  *
- * Future phases attaching here:
- *   - E4: a "Fork" button navigates to `/agents/new?fork=<agentId>`
- *     prefilled with this agent's config
- *   - E1: when a user-authored agent is in view, a "Delete" affordance
- *     appears (pack-installed agents are immutable)
- *
- * The systemPrompt body itself is NOT projected over the inventory
- * surface (RFC 0072 §A SR-1 — system prompts are credential-adjacent
- * and never cross the read-only API). The detail view shows the
- * `systemPromptRef` only; the body lives in the pack manifest.
+ * The systemPrompt body itself is NOT projected over the inventory surface
+ * (RFC 0072 §A SR-1 — system prompts are credential-adjacent and never cross the
+ * read-only API). The detail view shows the `systemPromptRef` only; the body
+ * lives in the pack manifest.
  */
 
 import { useEffect, useState } from 'react'; // useState used by both AgentDetailPage (state) and AgentDetail (delete-in-flight + error)

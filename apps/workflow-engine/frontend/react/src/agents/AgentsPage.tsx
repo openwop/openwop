@@ -1,22 +1,12 @@
 /**
- * Agents tab — list view (phase C1).
+ * Agent Templates — the installed manifest-agent LIBRARY (System A).
  *
- * Sources from `GET /v1/agents` (RFC 0072 §A normative read-only
- * inventory). Surfaces every installed manifest agent the host knows
- * about; the source pack + version is shown per row so users can tell
- * two same-persona agents apart.
- *
- * Future phases attaching to this surface:
- *   - C2: row click → `/agents/:agentId` detail view
- *   - E1-E2: "+ Author new" button → `/agents/new` form, backed by
- *     `POST /v1/host/sample/agents`
- *   - E3: "Install from registry" → modal listing published
- *     `core.openwop.agents.*` packs
- *   - E4: per-row "Fork" → `/agents/new?fork=<agentId>` prefilled
- *
- * Today the row affordances are just "View" (text link to detail);
- * Fork / Delete light up after E1 introduces the user-authored
- * vs pack-installed split.
+ * Sources from `GET /v1/agents` (RFC 0072 §A normative read-only inventory):
+ * every installed manifest agent the host knows about, with its source pack +
+ * version per row so two same-persona templates are distinguishable. These are
+ * reusable *templates* — a named "AI coworker" (the roster, /agents) instantiates
+ * one via `agentRef.agentId`. Row affordances: View → detail, Author new →
+ * `/agents/new`, Install from registry → `/agents/install`, per-row Fork.
  */
 
 import { useEffect, useState } from 'react';
@@ -70,7 +60,7 @@ export function AgentsPage(): JSX.Element {
       <PageHeader
         eyebrow="Agents"
         title="Agent templates"
-        lede={<>Persona-driven LLM workers. Mention one in chat with <code>@</code> to add it to your active-agents lineup.</>}
+        lede={<>Reusable persona-driven LLM workers. A named coworker on the <Link to="/agents">Agents</Link> page instantiates a template; mention one in chat with <code>@</code> to add it to your active-agents lineup.</>}
         actions={
           <>
             <button type="button" className="secondary" onClick={() => navigate('/agents/install')}>
@@ -110,9 +100,8 @@ export function AgentsPage(): JSX.Element {
       )}
       {!state.isLoading && !state.error && state.agents.length === 0 && (
         <EmptyBlock>
-          No agents installed yet. Install one from the registry or author
-          your own — both are coming in phase E (the buttons above light
-          up then).
+          No agent templates installed yet. Use “Install from registry” or
+          “+ Author new” above to add one.
         </EmptyBlock>
       )}
       {!state.isLoading && !state.error && state.agents.length > 0 && filtered.length === 0 && (
