@@ -359,7 +359,7 @@ export async function createApp(config: AppConfig): Promise<Express> {
   registerNodeCatalogRoute(app);
   registerDemoSummaryRoutes(app, { config });
   registerDaemonStatusRoutes(app, { config, startTimeMs });
-  registerAgentRoutes(app);
+  registerAgentRoutes(app, { hostSuite });
   registerUserAgentRoutes(app, { storage });
   registerAgentPackRegistryRoutes(app);
   // Boot-time hydration of the AgentRegistry from persisted

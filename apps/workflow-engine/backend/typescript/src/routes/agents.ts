@@ -12,9 +12,17 @@
  * `capabilities.agents.manifestRuntime`, these reflect real installed agents.
  */
 
+import { randomUUID } from 'node:crypto';
 import type { Express } from 'express';
 import { getAgentRegistry, type ResolvedAgentManifest } from '../executor/agentRegistry.js';
-import { runAgentDispatch, AgentNotFoundError, type AgentDispatchRequest } from '../host/agentDispatch.js';
+import { runAgentDispatch, runAgentDispatchLive, AgentNotFoundError, type AgentDispatchRequest } from '../host/agentDispatch.js';
+import { createAiProvidersAdapter } from '../aiProviders/aiProvidersHost.js';
+import type { HostAdapterSuite } from '../host/index.js';
+
+interface AgentRoutesDeps {
+  /** When provided, `dispatch` with `live: true` makes a real model turn. */
+  hostSuite?: HostAdapterSuite;
+}
 
 interface AgentInventoryEntry {
   agentId: string;
@@ -77,7 +85,7 @@ function visibleTo(a: ResolvedAgentManifest, requestTenant: string | undefined):
 
 interface AgentReqLike { tenantId?: string }
 
-export function registerAgentRoutes(app: Express): void {
+export function registerAgentRoutes(app: Express, deps: AgentRoutesDeps = {}): void {
   // RFC 0072 §A — NORMATIVE read-only inventory (matches agent-inventory-response.schema.json).
   // Auth-gated (registered after authMiddleware in index.ts). This host advertises
   // capabilities.agents.manifestRuntime UNCONDITIONALLY (discovery.ts), so the route
@@ -121,19 +129,40 @@ export function registerAgentRoutes(app: Express): void {
     res.json(toEntry(a));
   });
 
-  // Dispatch one turn of a manifest agent (RFC 0070 floor).
-  app.post('/v1/host/sample/agents/:agentId/dispatch', (req, res) => {
-    const body = (req.body ?? {}) as Partial<AgentDispatchRequest>;
+  // Dispatch one turn of a manifest agent (RFC 0070 floor). Deterministic by
+  // default (replay-safe, conformance-stable); a real model turn when the body
+  // sets `live: true` AND the host wired an AI adapter (deps.hostSuite). Live
+  // turns default to the managed tier so no BYOK is required.
+  app.post('/v1/host/sample/agents/:agentId/dispatch', async (req, res) => {
+    const body = (req.body ?? {}) as Partial<AgentDispatchRequest> & { live?: boolean };
+    const reqShape: AgentDispatchRequest = {
+      agentId: req.params.agentId,
+      task: body.task,
+      availableTools: Array.isArray(body.availableTools) ? body.availableTools : undefined,
+      confidenceThreshold: typeof body.confidenceThreshold === 'number' ? body.confidenceThreshold : undefined,
+      simulateConfidence: typeof body.simulateConfidence === 'number' ? body.simulateConfidence : undefined,
+      validateHandoff: body.validateHandoff,
+    };
     try {
-      const result = runAgentDispatch({
-        agentId: req.params.agentId,
-        task: body.task,
-        availableTools: Array.isArray(body.availableTools) ? body.availableTools : undefined,
-        confidenceThreshold: typeof body.confidenceThreshold === 'number' ? body.confidenceThreshold : undefined,
-        simulateConfidence: typeof body.simulateConfidence === 'number' ? body.simulateConfidence : undefined,
-        validateHandoff: body.validateHandoff,
-      });
-      res.status(200).json(result);
+      if (body.live === true && deps.hostSuite) {
+        const tenantId = (req as AgentReqLike).tenantId ?? 'default';
+        // Ad-hoc dispatch (not a persisted run): a synthetic scope, empty BYOK
+        // secrets, no event-log emit. The managed tier needs none of these; a
+        // pinned BYOK provider would fail byok_required (returned as a failed
+        // turn), which is the honest outcome without a per-run vault.
+        const adapter = createAiProvidersAdapter({
+          runId: `agent-dispatch:${randomUUID()}`,
+          nodeId: 'agent.dispatch',
+          tenantId,
+          attempt: 1,
+          secrets: {},
+          policyResolver: deps.hostSuite.providerPolicyResolver,
+        });
+        const result = await runAgentDispatchLive(reqShape, { callAI: adapter.callAI });
+        res.status(200).json(result);
+        return;
+      }
+      res.status(200).json(runAgentDispatch(reqShape));
     } catch (err) {
       if (err instanceof AgentNotFoundError) {
         res.status(404).json({ error: 'agent_not_found', message: err.message });
