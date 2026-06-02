@@ -36,8 +36,8 @@
 | Status | Count |
 |---|---:|
 | Accepted | 85 |
-| Active | 1 |
-| Draft | 3 |
+| Active | 2 |
+| Draft | 2 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -129,7 +129,7 @@
 | RFC 0086 | Define a **standing agent roster** - a named, tenant-scoped, mutable agent *instance* (the "digital-twin employee", e.g. `"Sally"`) that **references** a manifest/deployment (`agentId` + optional `version`/`channel`), **owns a workflow portfolio** (the workflows it is responsible for by role), and to which **trigger-fired runs are attributed** as a content-free recorded fact - composing RFC 0070/0072 (manifest agents + inventory), RFC 0082 (`@channel` binding), RFC 0052 (schedule triggers) and RFC 0083 (durable work-item triggers), while keeping per-host work surfaces (Kanban boards) as host/vendor extensions | Accepted |
 | RFC 0087 | Define an **agent org-chart** - a tenant-scoped, descriptive grouping of standing roster agents (RFC 0086) into departments + roles with `reportsTo` edges and a responsibility view - under one load-bearing invariant: **org position confers NO authority** (a `reportsTo`/manager edge MUST NOT widen `toolAllowlist`, grant an RBAC scope, or bypass an approval gate); composing RFC 0086 (the members), RFC 0074 (tenant scoping), RFC 0049 (RBAC - unchanged by position), and RFC 0051 (approval gates - unchanged by position) | Accepted |
 | RFC 0088 | `openwop-core-standard` - the stable Core Standard Profile (the black-box-proven floor) | Accepted |
-| RFC 0089 | Conformance certification bundle - machine-readable per-profile evidence | Draft |
+| RFC 0089 | Conformance certification bundle - machine-readable per-profile evidence | Active |
 
 ## SDK Helper Coverage
 
@@ -147,7 +147,7 @@
 | SQLite reference | 2056 | 0 | 105 | 0 | 2161 | 95.1% total; 0 deterministic failures (re-measured 2026-06-01 against suite v1.18.1). Holds its 0-failure posture; +18 passed as the total rose 2143 -> 2161. |
 | In-memory reference | 2010 | 46 | 105 | 0 | 2161 | 93.0% total - the minimal-host floor. The 46 failures are honest non-claims for surfaces it does not behaviorally implement (interrupts ×6, multi-agent dispatch ×3, stream-mode buffering ×3, sub-workflow, BYOK round-trip, cap/cost-breach, channel-TTL, pause/resume, version-negotiation, artifacts, et al.), unchanged from the v1.15.0 reading; +18 passed as the total grew 2143 -> 2161. Not regressions. |
 | Python reference | 2008 | 2 | 151 | 0 | 2161 | 92.9% total; 100% of applicable when scoped to the host's claimed openwop-core + openwop-stream-poll + openwop-stream-sse profile set (the cross-language-parity floor). The 151 skips reflect the smaller stdlib-only advertised surface; the 2 failures (artifact-auth -> 404-not-401, run-execution-bounds-shape RFC 0058 run-timeout) are honest non-implementations outside the claimed set, unchanged from v1.15.0. (Booted on Python 3.9 stdlib in this run; the host targets 3.11 but the port is 3.9-compatible.) |
-| Workflow-engine reference (exhaustive mode) | 1525 | 2 | 56 | 14 | 1597 | Not re-measured against v1.18.1 in the 2026-06-01 pass - this app host requires the full app harness rather than an examples/hosts/* server. The figures shown are its retained 2026-05-23 v1.5.0 exhaustive-mode reading (95.5% total; the 2 failures were an auth-anonymous-allow dev-mode case - now flag-gated by OPENWOP_AUTH_ENFORCE_BEARER - + a multi-agent confidence-escalation timing flake - now fixed via the pollUntil suspension-aware predicate; both in docs/KNOWN-LIMITS.md). Re-measurement against 1.18.1 is queued. |
+| Workflow-engine reference (in-process harness) | 1400 | 20 | 107 | 0 | 1527 | Re-measured 2026-06-02 against suite v1.18.1 via the in-process npm run test:conformance harness (apps/workflow-engine/backend/typescript/conformance/run.ts; memory:// store, default flags) - the same harness as the prior reading, now run against the current suite (replacing a stale 2026-05-23 v1.5.0 number). 91.7% (1400/1527). The 20 failures are predominantly honest non-claims for surfaces this lean in-memory sample doesn't behaviorally implement - agent-pack install/export/provenance (7), AI-envelope truncation/retry per RFC 0033 (5), plus stream-reconnect (Last-Event-ID), event-ordering, and workspace-membership - analogous to the in-memory reference host's non-claims, not regressions. A per-failure triage separating any genuine gap from the non-claims is the remaining follow-up. The production-grade Postgres/SQLite reference hosts hold 0 deterministic failures at v1.18.1 (above). |
 
 ## Registry Snapshot
 
@@ -169,8 +169,8 @@
 
 ## Active Follow-Ups
 
-- 3 RFCs still `Draft` (RFC 0038, RFC 0043, RFC 0089) — advance with schema/conformance proof or defer.
-- 1 RFC `Active` (RFC 0035) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 2 RFCs still `Draft` (RFC 0038, RFC 0043) — advance with schema/conformance proof or defer.
+- 2 RFCs `Active` (RFC 0035, RFC 0089) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

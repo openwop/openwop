@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0089 |
 | **Title** | Conformance certification bundle — machine-readable per-profile evidence |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-06-02 |
-| **Updated** | 2026-06-02 |
+| **Updated** | 2026-06-02 (Draft → Active same-day: the lead maintainer waived the 7-day comment window under the bootstrap-phase one-approval rule — cf. RFC 0012's bootstrap-phase waiver — moving this RFC to merge-candidate. The design + the `additive` classification are firm; implementation (schema + `--certify` generator + spec doc + conformance assertions + a reference-host bundle) is pending toward `Accepted`. Gap **G1** — machine-readable per-profile floor-scenario sets, which the §B binding rule needs — is the gating design item to settle during implementation; the other gaps/risks have named resolution paths in the companion registers.) |
 | **Affects** | NEW `spec/v1/conformance-certification.md` · NEW `schemas/conformance-certification-bundle.schema.json` · `schemas/capabilities.schema.json` (optional `conformance.certificationBundleUrl`) · `spec/v1/capabilities.md` · `conformance/` CLI (`--certify`) + a reporter lib · `conformance/src/scenarios/spec-corpus-validity.test.ts` · `examples/hosts/*` (generated bundles) · `INTEROP-MATRIX.md` · `CHANGELOG.md` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` |
 | **Supersedes** | — |
