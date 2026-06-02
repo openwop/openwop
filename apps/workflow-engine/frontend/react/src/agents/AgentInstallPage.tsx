@@ -26,6 +26,7 @@ import {
   installAgentPack,
   type AgentPackSummary,
 } from '../client/agentsClient.js';
+import { PageHeader } from '../ui/PageHeader.js';
 
 interface State {
   packs: readonly AgentPackSummary[];
@@ -69,21 +70,17 @@ export function AgentInstallPage(): JSX.Element {
   }
 
   return (
-    <section aria-labelledby="agent-install-heading" style={{ maxWidth: 800, margin: '0 auto' }}>
+    <section>
       <div style={{ marginBottom: 'var(--space-3)' }}>
         <Link to="/agents" style={{ fontSize: 12, color: 'var(--ink-3)' }}>
           ← All agents
         </Link>
       </div>
-      <header style={{ marginBottom: 'var(--space-4)' }}>
-        <h2 id="agent-install-heading" style={{ marginBottom: 'var(--space-1)' }}>
-          Install from registry
-        </h2>
-        <p className="muted" style={{ fontSize: 13, margin: 0 }}>
-          Agent packs available in this host's local registry mirror.
-          Most auto-mount at boot — those rows show "Installed".
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Agents"
+        title="Install from registry"
+        lede={`Agent packs available in this host's local registry mirror. Most auto-mount at boot — those rows show "Installed".`}
+      />
 
       {state.isLoading && (
         <EmptyBlock>Loading available packs…</EmptyBlock>

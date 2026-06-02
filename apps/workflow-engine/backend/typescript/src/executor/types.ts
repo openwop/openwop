@@ -8,6 +8,14 @@
  * keeps it minimal.
  */
 
+import type { A2aSurface } from '../host/a2aSurface.js';
+import type { KanbanSurface } from '../host/kanbanSurface.js';
+import type { KnowledgeSurface } from '../host/knowledgeSurface.js';
+import type { ChatSurface } from '../host/chatSurface.js';
+import type { CanvasSurface } from '../host/canvasSurface.js';
+import type { WebResearchSurface } from '../host/webResearchSurface.js';
+import type { LaunchStudioSurface } from '../host/launchStudioSurface.js';
+
 /**
  * Single message in a chat-style AI request. Field shapes mirror
  * `spec/v1/host-capabilities.md §host.aiProviders` verbatim.
@@ -114,6 +122,11 @@ export interface NodeContext {
   nodeAgent?: { agentId: string };
   /** Run-level configurable overlay from RunOptions.configurable. */
   configurable: Record<string, unknown>;
+  /** ctx.triggerData — the run-scoped trigger payload the `core.openwop.triggers`
+   *  entry nodes surface to downstream nodes. Captured at run start, identical
+   *  for every node (replay-safe). `undefined` for runs not started by a
+   *  trigger that carries a payload. */
+  triggerData?: unknown;
   /** Per-attempt counter; first attempt = 1. */
   attempt: number;
   /** Trust boundary of inputs entering this node (RFC 0020 §D).
@@ -173,6 +186,31 @@ export interface NodeContext {
   queueBus?: HostQueueBusSurface;
   /** ctx.observability — used by core.openwop.obs nodes. */
   observability?: HostObservabilitySurface;
+  /** ctx.a2a — RFC 0076 §A `host.a2a`. The A2A (Agent-to-Agent) client the
+   *  `core.openwop.a2a` pack delegates to (`spec/v1/a2a-integration.md`). */
+  a2a?: A2aSurface;
+  /** ctx.kanban — `host.kanban`. The `vendor.myndhyve.kanban` pack's bridge to
+   *  the demo kanban store (`spec/v1/host-capabilities.md §host.kanban`). */
+  kanban?: KanbanSurface;
+  /** ctx.knowledge — `host.knowledge`. Lexical RAG retrieval for the
+   *  `vendor.myndhyve.knowledge-tools` pack (§host.knowledge). */
+  knowledge?: KnowledgeSurface;
+  /** ctx.chat — `host.chat`. The `vendor.myndhyve.chat` pack's bridge to the
+   *  demo chat store (`spec/v1/host-capabilities.md §host.chat`). */
+  chat?: ChatSurface;
+  /** ctx.canvas — `host.canvas`. Durable shared-canvas store for the
+   *  `vendor.myndhyve.canvas` pack (§host.canvas). */
+  canvas?: CanvasSurface;
+  /** ctx.webResearch — `host.webResearch` (§host.webResearch). */
+  webResearch?: WebResearchSurface;
+  /** ctx.launchStudio — `host.launchStudio` (§host.launchStudio). */
+  launchStudio?: LaunchStudioSurface;
+  /** ctx.userId — opaque principal id for vendor surfaces that key context on
+   *  a user (e.g. launch-studio). The sample host sets it to the run tenant. */
+  userId?: string;
+  /** ctx.variables — run-scoped mutable variable bag (get/set), backed by the
+   *  variables runtime. Used by launch-studio to thread step context. */
+  variables?: { get(name: string): unknown; set(name: string, value: unknown): void };
   /** ctx.mcp — RFC 0020 host-side MCP server. The `expose` method is a
    *  no-op for hosts that build their MCP registry declaratively (by
    *  scanning workflow definitions). Pack delegates from
@@ -180,6 +218,10 @@ export interface NodeContext {
   mcp?: {
     expose: (args: Record<string, unknown>) => Promise<Record<string, unknown>>;
   };
+  /** ctx.respondToWebhook — the `core.openwop.triggers` webhook-respond node's
+   *  reply channel. The host durably records the intended HTTP reply; absent
+   *  on hosts where the pack should fall back to surfacing it as node outputs. */
+  respondToWebhook?(response: { status?: number; headers?: Record<string, string>; body?: unknown }): Promise<void>;
 }
 
 /** Loose-typed surface map. The concrete shape lives in

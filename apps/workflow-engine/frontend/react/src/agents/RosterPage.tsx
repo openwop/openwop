@@ -125,7 +125,7 @@ export function RosterPage(): JSX.Element {
   const personaOf = (rosterId: string): string => roster.find((r) => r.rosterId === rosterId)?.persona ?? rosterId;
 
   return (
-    <section style={{ padding: '1rem', maxWidth: 920 }}>
+    <section>
       <PageHeader
         eyebrow="Roster"
         title="Roster & Org-Chart"

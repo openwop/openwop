@@ -32,6 +32,7 @@ import { ensureLocalPacksMounted } from './bootstrap/mountLocalPacks.js';
 import { loadPromptPacks, defaultPromptPackRoots } from './host/promptPackLoader.js';
 import { seedDefaultHostSurfaces } from './bootstrap/hostSurfaceRegistry.js';
 import { initInMemorySurfaces } from './host/inMemorySurfaces.js';
+import { setChatStorage } from './host/chatSurface.js';
 import { openStorage } from './storage/index.js';
 import type { Storage } from './storage/storage.js';
 import { createHostAdapterSuite, type HostAdapterSuite } from './host/index.js';
@@ -193,6 +194,9 @@ export async function createApp(config: AppConfig): Promise<Express> {
   // Phase 6 replaces these with real-backend adapters (see
   // examples/hosts/postgres). The surface shapes don't change.
   initInMemorySurfaces({ dataDir });
+  // host.chat writes the SAME chat tables the /v1/host/sample/chat routes + SPA
+  // read, so it needs the app Storage (not a host-ext singleton). Inject it here.
+  setChatStorage(storage);
 
   // RFC 0027 + RFC 0028 — boot-time prompt-store init. Loads the
   // host-built-in PromptTemplate fixtures shipped under

@@ -91,6 +91,31 @@ const MAP: readonly MapEntry[] = [
   { prefix: 'core.trigger.form', surfaces: ['host.triggers'] },
   // `core.trigger.manual`, `.event`, `.envelope` etc. don't need a
   // dedicated surface — they're synthesized inline by the run kickoff.
+
+  // ── vendor.myndhyve.kanban ───────────────────────────────────────
+  { prefix: 'kanban.board.', surfaces: ['host.kanban'] },
+  { prefix: 'kanban.task.', surfaces: ['host.kanban'] },
+  { prefix: 'kanban.timeline.', surfaces: ['host.kanban'] },
+  { prefix: 'kanban.workflow.', surfaces: ['host.kanban'] },
+  { prefix: 'kanban.resource.', surfaces: ['host.kanban'] },
+
+  // ── vendor.myndhyve.knowledge-tools ──────────────────────────────
+  { prefix: 'knowledge.', surfaces: ['host.knowledge'] },
+
+  // ── vendor.myndhyve.chat ─────────────────────────────────────────
+  { prefix: 'core.chat.', surfaces: ['host.chat'] },
+
+  // ── vendor.myndhyve.canvas ───────────────────────────────────────
+  { prefix: 'core.coordination.canvas', surfaces: ['host.canvas'] },
+  { prefix: 'core.coordination.crossCanvas', surfaces: ['host.canvas'] },
+
+  // ── vendor.myndhyve.web-research ─────────────────────────────────
+  { prefix: 'data.source.webSearch', surfaces: ['host.webResearch'] },
+  { prefix: 'data.transform.fetchUrls', surfaces: ['host.webResearch'] },
+  { prefix: 'ai.research.web', surfaces: ['host.webResearch'] },
+
+  // ── vendor.myndhyve.launch-studio ────────────────────────────────
+  { prefix: 'launch-studio.', surfaces: ['host.launchStudio'] },
 ];
 
 // Sort once at module load: longest prefix first, so more-specific

@@ -45,7 +45,13 @@ export type HostSurfaceName =
   | 'host.aiProviders'
   | 'host.interrupts'
   | 'host.triggers'
-  | 'host.a2a';
+  | 'host.a2a'
+  | 'host.kanban'
+  | 'host.knowledge'
+  | 'host.chat'
+  | 'host.canvas'
+  | 'host.webResearch'
+  | 'host.launchStudio';
 
 export interface HostSurfaceAdvertisement {
   /** Stable surface name. */
@@ -95,8 +101,14 @@ export function seedDefaultHostSurfaces(): void {
     { name: 'host.messaging', supported: false },
     { name: 'host.observability', supported: false, note: 'Wired implicitly via emit() — surface flag not yet honored.' },
     { name: 'host.mcp', supported: process.env.OPENWOP_MCP_SERVER_ENABLED === 'true', implementation: 'workflow-engine', note: 'RFC 0020 (Active). Sample-host MCP server mount at /v1/host/sample/mcp; advertise streamable-http transport. OFF by default — set OPENWOP_MCP_SERVER_ENABLED=true.' },
-    { name: 'host.triggers', supported: false, note: 'Webhooks already supported via /v1/webhooks; full trigger fan-out not yet wired.' },
-    { name: 'host.a2a', supported: false, note: 'A2A requires a peer agent.' },
+    { name: 'host.triggers', supported: true, implementation: 'workflow-engine', note: 'Trigger entry nodes (webhook/schedule/cron/email/mailhook/rss/form) surface the run-scoped ctx.triggerData payload; runs are started by the RFC 0083 trigger bridge, scheduler, and kanban paths. webhook-respond durably records the reply via ctx.respondToWebhook.' },
+    { name: 'host.webResearch', supported: true, implementation: 'workflow-engine', note: 'For vendor.myndhyve.web-research. fetchBatch is real (concurrent HTTP fetch + readable-text extraction); search returns an honest demo result (a real query URL) — configure a BYOK search provider for live results; research composes the two.' },
+    { name: 'host.launchStudio', supported: true, implementation: 'workflow-engine', note: 'Multi-canvas studio backbone for vendor.myndhyve.launch-studio. getStudio returns a seeded demo studio; buildProjectContext/resolveLinkedArtifacts are pure derivations; task dispatch composes ctx.kanban.' },
+    { name: 'host.canvas', supported: true, implementation: 'workflow-engine', note: 'Durable versioned shared-canvas store for vendor.myndhyve.canvas. read/write/create are real (optimistic-concurrency, shallow/deep/replace merge, field projection); crossCanvasInvoke is an honest stub (no run dispatcher on the surface).' },
+    { name: 'host.chat', supported: true, implementation: 'workflow-engine', note: 'Bridges vendor.myndhyve.chat to the demo chat store (the same /v1/host/sample/chat tables the SPA reads). sendMessage/progressCard/updateCard run; the suspend-based gate nodes (phaseInputGate/approvalGate/clarificationGate) need ctx.suspend, not yet implemented on the sample host.' },
+    { name: 'host.knowledge', supported: true, implementation: 'workflow-engine', note: 'Lexical RAG retrieval (token-frequency over a seeded demo corpus) for vendor.myndhyve.knowledge-tools. Real retrieve-with-citations; lexical not semantic (sample host ships no embedding model).' },
+    { name: 'host.kanban', supported: true, implementation: 'workflow-engine', note: 'Bridges vendor.myndhyve.kanban to the demo kanban store (kanbanService.ts) — boards/cards shared with the builder UI. boardReview/timelinePlan/resourceMonitor are genuinely computed; automation rules persist in-process.' },
+    { name: 'host.a2a', supported: true, implementation: 'workflow-engine', note: 'RFC 0076 §A. A2A 0.3 JSON-RPC client from host/a2aSurface.ts — discover/send/stream/tasks/pushConfig against any peer A2A agent; wire state-form normalized to the pack vocabulary. Server-as-agent methods (publishAgentCard/emit*/pushSend) are demo stubs (sample host has no live A2A server endpoint).' },
     // These two are already advertised honestly elsewhere — pre-seed
     // them as supported so the UI doesn't show contradictory data.
     { name: 'host.aiProviders', supported: true, implementation: 'workflow-engine', note: 'BYOK via /v1/host/sample/byok/secrets.' },

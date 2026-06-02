@@ -819,6 +819,15 @@ h1.brand-mark em {
   width: 100%;
   margin: 0 auto;
 }
+/* Two-tier content width, both shell-owned + centered. Default .app-main is the
+ * WIDE column (1200) for lists, dashboards, tables, kanban. The --narrow
+ * modifier (760) is for forms + single-column reads (agent create/fork/install,
+ * demo-data, agent detail, prose) where a full-width column reads poorly. Pages
+ * MUST NOT set their own max-width/padding/margin — width is governed here so
+ * every page in the right panel lines up. App.tsx picks the tier by route. */
+.app-main--narrow {
+  max-width: 760px;
+}
 /* Faint letterpress dot-grid so the content pages sit on the same drafting
  * paper as the workflow canvas — shows only in the gutters between cards
  * (surfaces carry their own --paper bg). Uses --rule-2, the same token as the
@@ -1750,12 +1759,25 @@ pre {
 }
 
 /* Match the controls panel so the overview reads as a framed panel, not a
- * floating swatch (the background var is themed in the .builder-canvas block). */
+ * floating swatch. The `--xy-minimap-*` vars set on `.builder-canvas` above are
+ * shadowed by xyflow's own defaults declared deeper on `.react-flow`, so the
+ * minimap fell back to its stock #fff svg + light node rects — a glaring white
+ * box in dark mode. Set the paint properties DIRECTLY on the minimap parts
+ * (specificity 0,2,0 beats xyflow's 0,1,0), bypassing the var indirection. */
 .builder-canvas .react-flow__minimap {
+  background: var(--paper-2);
   border: 1px solid var(--rule);
   border-radius: 2px;
   box-shadow: 0 1px 3px var(--ink-shadow);
 }
+.builder-canvas .react-flow__minimap-mask {
+  fill: var(--ink-shadow);
+}
+/* Node blips are colored per-kind via the MiniMap `nodeColor` prop
+ * (BuilderCanvas.tsx) — it sets the xyflow node-background-color-props custom
+ * property, which the stock minimap-node fill rule consumes. Do NOT set `fill`
+ * here: a direct fill (specificity 0,2,0) would override the prop and flatten
+ * every blip to one color. */
 
 .builder-canvas .react-flow__controls-button {
   background: var(--paper);
@@ -2600,6 +2622,9 @@ pre {
 
 .workflow-card-menu-popover button:hover {
   background: var(--color-surface-2);
+  /* Pin color — the global `button:hover` (0,1,1) sets color:var(--paper),
+   * which would otherwise turn this dark-on-dark in dark mode. */
+  color: var(--color-text);
 }
 
 .workflow-card-menu-popover .workflow-card-menu-danger {
@@ -2608,6 +2633,7 @@ pre {
 
 .workflow-card-menu-popover .workflow-card-menu-danger:hover {
   background: color-mix(in oklch, var(--color-danger) 10%, transparent);
+  color: var(--color-danger);
 }
 
 .workflow-card-empty {
@@ -2860,7 +2886,7 @@ pre {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .account-menu-popover {
-  position: absolute; right: 0; top: calc(100% + 4px);
+  position: absolute; left: 0; bottom: calc(100% + 4px);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
@@ -2883,7 +2909,13 @@ pre {
   font-size: 13px; color: var(--color-text);
   cursor: pointer; border-radius: 4px;
 }
-.account-menu-item:hover { background: var(--color-surface-2); }
+/* Pin the text color on hover. The global `button:hover` rule (0,1,1) sets
+ * `color: var(--paper)` for the clay-fill hover; it beats `.account-menu-item`
+ * (0,1,0), so without this the menu text flips to near-black on the dark hover
+ * box (black-on-black in dark mode). Same pin `.account-menu-trigger` uses. */
+.account-menu-item:hover { background: var(--color-surface-2); color: var(--color-text); }
+.account-menu-danger { color: var(--color-danger); }
+.account-menu-danger:hover { background: color-mix(in oklch, var(--color-danger) 10%, transparent); color: var(--color-danger); }
 
 /* ---------------------------------------------------------------------
    Prompt library (RFC 0027 / 0028 wire shapes; surface still Draft).
@@ -3156,6 +3188,8 @@ pre {
   content: "";
   flex: 1;
   height: 1px;
+  background: var(--rule);
+}
 
 /* BYOK section (Pick a provider) — serif-italic h2 + readable lede + ~14px
  * sans body, mirroring the marketing site's editorial pattern. */
@@ -3688,11 +3722,16 @@ pre {
 
 /* ─── Header network toggle ───────────────────────────────────────────
  * Tiny secondary pill in the header that opens the network inspector. */
-
+.app-header-net-toggle {
   font-size: 11px;
   padding: 4px 12px;
   margin-right: 8px;
   letter-spacing: 0.02em;
+}
+.app-header-net-toggle[aria-expanded="true"] {
+  background: var(--clay-wash);
+  border-color: var(--clay-rule);
+  color: var(--clay);
 }
 
 /* ─── Network inspector slide-out ─────────────────────────────────────

@@ -27,6 +27,7 @@ import {
   getAgent,
   type CreateUserAgentInput,
 } from '../client/agentsClient.js';
+import { PageHeader } from '../ui/PageHeader.js';
 
 const MODEL_CLASSES = ['chat', 'reasoning', 'coding', 'extraction'] as const;
 type ModelClass = (typeof MODEL_CLASSES)[number];
@@ -126,22 +127,21 @@ export function AgentNewPage(): JSX.Element {
   }
 
   return (
-    <section aria-labelledby="agent-new-heading" style={{ maxWidth: 720, margin: '0 auto' }}>
+    <section>
       <div style={{ marginBottom: 'var(--space-3)' }}>
         <Link to="/agents" style={{ fontSize: 12, color: 'var(--ink-3)' }}>
           ← All agents
         </Link>
       </div>
-      <header style={{ marginBottom: 'var(--space-4)' }}>
-        <h2 id="agent-new-heading" style={{ marginBottom: 'var(--space-1)' }}>
-          {forkSource ? 'Fork agent' : 'Author new agent'}
-        </h2>
-        <p className="muted" style={{ fontSize: 13, margin: 0 }}>
-          {forkSource
+      <PageHeader
+        eyebrow="Agents"
+        title={forkSource ? 'Fork agent' : 'Author new agent'}
+        lede={
+          forkSource
             ? `Customize a copy of an existing agent. System prompts aren't projected over the read API — you'll write a new one.`
-            : `Define a persona, give it a system prompt, and pick a model class. The agent shows up in the @-mention picker for every chat in this tenant.`}
-        </p>
-      </header>
+            : `Define a persona, give it a system prompt, and pick a model class. The agent shows up in the @-mention picker for every chat in this tenant.`
+        }
+      />
 
       <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
         <Field label="Persona" hint="Short name. Becomes the @-mention slug + the chat panel label.">

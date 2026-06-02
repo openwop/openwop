@@ -41,7 +41,7 @@ export function DemoDataPage(): JSX.Element {
   };
 
   return (
-    <section style={{ padding: '1rem', maxWidth: 720 }}>
+    <section>
       <PageHeader
         eyebrow="Settings"
         title="Demo data"

@@ -66,7 +66,7 @@ import { buildHostSurfaceBundle, writeMemoryEntry, MEMORY_DEMO_REF } from '../ho
 import { getInstanceId } from '../host/instanceId.js';
 import { notifyRunTerminal } from './runLifecycle.js';
 import { emitRunFailureNotification } from '../notifications/notify.js';
-import { snapshotRunVariables } from '../host/variablesRuntime.js';
+import { snapshotRunVariables, setRunVariable } from '../host/variablesRuntime.js';
 import {
   buildGraph,
   buildNodeInputs,
@@ -403,6 +403,16 @@ async function runOneNode(input: {
     config: nodeRef.config ?? {},
     ...(nodeRef.agent ? { nodeAgent: nodeRef.agent } : {}),
     configurable: run.configurable ?? {},
+    // RFC trigger pack (`core.openwop.triggers`) — run-scoped trigger payload.
+    // Captured at run start and identical for every node (replay-safe). A
+    // trigger-started run carries its payload in `run.metadata.triggerData`
+    // (set by the scheduler / kanban / webhook-subscription paths); a manual or
+    // builder-issued run falls back to the run's own `inputs`. Trigger entry
+    // nodes read `ctx.triggerData`; all other nodes ignore it.
+    triggerData:
+      run.metadata && (run.metadata as Record<string, unknown>).triggerData !== undefined
+        ? (run.metadata as Record<string, unknown>).triggerData
+        : run.inputs,
     attempt: 1,
     // RFC 0020 §D: propagate the run-level trust boundary onto every
     // node ctx. The MCP server mount (routes/mcp.ts) sets
@@ -431,6 +441,21 @@ async function runOneNode(input: {
     fs: surfaces.fs,
     queueBus: surfaces.queueBus,
     observability: surfaces.observability,
+    a2a: surfaces.a2a,
+    kanban: surfaces.kanban,
+    knowledge: surfaces.knowledge,
+    chat: surfaces.chat,
+    canvas: surfaces.canvas,
+    webResearch: surfaces.webResearch,
+    launchStudio: surfaces.launchStudio,
+    // launch-studio keys context on a user + threads step state through a
+    // run-scoped variable bag. The sample host maps the principal to the run
+    // tenant; the bag is backed by the variables runtime (replay-safe snapshot).
+    userId: run.tenantId,
+    variables: {
+      get: (name: string): unknown => snapshotRunVariables(run.runId)?.[name],
+      set: (name: string, value: unknown): void => setRunVariable(run.runId, name, value),
+    },
     // RFC 0020 — host-side MCP. The sample host builds its MCP registry
     // declaratively from workflow definitions (see host/mcpServerRegistry.ts),
     // so `expose` is a stable no-op that returns a synthetic handle. Pack
@@ -441,6 +466,19 @@ async function runOneNode(input: {
         handle: `mcp:${run.runId}:${nodeRef.nodeId}`,
         kind: typeof args.kind === 'string' ? args.kind : 'tool',
       }),
+    },
+    // `core.openwop.triggers` webhook-respond node. The sample executor runs
+    // asynchronously (no synchronous request still held open), so the host
+    // durably records the intended HTTP reply as a run event — retrievable from
+    // the event log and consumable by a synchronous webhook ingress. (Without
+    // this the pack falls back to surfacing the reply as node outputs.)
+    async respondToWebhook(response) {
+      await eventLog.append({
+        runId: run.runId,
+        nodeId: nodeRef.nodeId,
+        type: 'host.webhook.response',
+        payload: stripSecretsFromPersisted(response),
+      });
     },
   };
 
