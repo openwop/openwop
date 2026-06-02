@@ -99,7 +99,7 @@ Cross-surface components (`.btn`, `.marker`, etc.) live in `DESIGN.md §6`. The 
 | `.muted` | low-emphasis text | `var(--ink-3)`; mono OR sans depending on context |
 | `.secondary` | secondary button surface | matches `.btn-ghost` register |
 | `.chat-feed` + `.message-bubble.user` / `.message-bubble.assistant` | chat surfaces | bubble: clay for user, paper-2 for assistant; metadata rendered in mono `--ink-3` |
-| `.workflow-canvas` | xyflow wrapper | sets a `:where(.react-flow)` scope for token overrides (see §7) |
+| `.builder-canvas` | xyflow workflow-canvas wrapper | scopes all `--xy-*` token overrides + the run-edge/grid styling (see §7); the wrapper class in `src/builder/canvas/BuilderCanvas.tsx` |
 | `.interrupt-card` | HITL interrupt surface | matches `.compare-card` register; clay-rule top border to mark "action required" |
 | `.byok-wizard` | BYOK step-through | progressive disclosure; `<abbr>`-expand acronyms per step per DESIGN.md §2 |
 | `.signin-button` (Google / GitHub variants) | auth chrome | wraps vendor brand SVG marks; container is ink-on-paper; **brand marks themselves are never re-colored** (DESIGN.md §13) |
@@ -111,7 +111,7 @@ Cross-surface components (`.btn`, `.marker`, etc.) live in `DESIGN.md §6`. The 
 
 ### 5.1 Shared UI primitives — the cross-surface cohesion layer (`src/ui/`)
 
-These exist so the three product surfaces (Agents, Workflows, Kanban) read as **one** product instead of three bolted-together apps. The failure mode they fix: a surface reimplementing a card/chip/notice with inline styles + hardcoded hex that bypass the token layer. Defined once in `global.css`, plus two React primitives in `src/ui/`. **Reach for these before hand-rolling an inline-styled widget.**
+These exist so every surface (Chat, Agents, Workflows, Runs, Kanban, Roster, Org-chart, Registry, Settings, …) reads as **one** product instead of a dozen bolted-together apps. The failure mode they fix: a surface reimplementing a card/chip/notice/page-title with inline styles + hardcoded hex that bypass the token layer. Defined once in `global.css`, plus the React primitives in `src/ui/` (`PageHeader`, `StateCard`, `Notice`, `Markdown`, `MarkdownEditor`). **Reach for these before hand-rolling an inline-styled widget.**
 
 | Class / Component | Purpose | Notes |
 |---|---|---|
@@ -144,7 +144,7 @@ Half-step spacing tokens: `--space-1-5: 6px` and `--space-2-5: 10px` cover the g
 
 Run / agent / node status is rendered as a chip (color **and** label — never color alone, §11), mapped centrally rather than per-component:
 
-- Agent + run status → a `.chip--*` via `agents/agentViewModel.ts` `statusMeta`: active → `chip--success`, working/running → `chip--accent`, waiting/paused → `chip--warning`, needs-setup/failed/cancelled → `chip--danger`.
+- Agent + run status → a `.chip--*` via `agents/agentViewModel.ts` `statusMeta`: active ("Ready") → `chip--success`, working/running → `chip--accent`, waiting ("Waiting on Human") → `chip--warning chip--pulse` (the one action-required state that breathes, §6 `openwop-attention`), paused → `chip--muted`, needs-setup/failed/cancelled → `chip--danger`.
 - Node-canvas run status uses the §3 functional tokens on `.builder-node*` badges paired with a Lucide glyph (`CircleIcon filled` / `Check` / `X` / `Pause`), color via `var(--color-warning/success/danger/ai)`.
 - **Severity reuses the same functional tokens.** A task's priority is a severity signal, not a run state, but it lives on the same axis: a `High`-priority card uses `chip--danger` (always with the visible "High" label, §11). This is the one sanctioned reuse of a functional token outside run state — do not extend it to non-severity dimensions (role, source, owner), which differentiate by glyph/label instead (§5.2, §5.4).
 
@@ -154,12 +154,22 @@ Do not invent a per-surface status palette; reuse these mappings so a "completed
 
 A roster of named coworkers must read at a glance, but role is **not** a run-state, so it does not earn a functional/accent color (§3 reserves those for status). Differentiation is therefore by **Lucide glyph only**, mapped centrally in `agents/roleTemplates.ts` (`roleThemeForKey` / `roleThemeForAgent`): `sales-ops → Briefcase`, `support-triage → LifeBuoy`, `finance-ops → Scale`, `engineering-ops → Wrench`, `marketing-ops → Megaphone`, custom/unknown → `Bot`. The glyph rides as a small bordered badge on the otherwise-uniform clay avatar (dashboard card + workspace header) and inline on the create-agent role picker. The role key is derived from the seeded `host:demo-<key>` agentRef, else inferred from the workflow portfolio. Do not give a role its own accent color or avatar tint.
 
+### 5.5 Page architecture & atmosphere
+
+The chrome that makes every page feel like one publication:
+
+- **Every top-level nav page leads with `<PageHeader>`** (§5.1) — `eyebrow` (mono kicker) → Instrument-Serif `title` → sans `lede` → `actions`. Do not open a page with a bare `<h1>`/`<h2>`. The serif title is the page's `<h1>`; section headings inside the page are `<h2>` (never skip a level — see §11). Pages on this standard (16): Agents, Agent templates, Workflows, Runs, Run-compare, Mission Control, Inbox, Boards, Roster, Prompts, Keys, Memory, Capabilities, Organizations, Demo data, CLI.
+  - **Exempt:** (a) the **Chat** surface (`/`) leads with its `WelcomeCard` hero, not a PageHeader — it's the immersive `.app-main--ai` surface; (b) entity-detail and wizard sub-pages (run detail, agent detail / workspace, agent new / install / create) keep a back-link + entity-name header — they are contextual, not flat index pages. Both still use shared tokens + the serif/mono register.
+- **Route arrival:** the standard content `.app-main` carries `.page-enter`, which fades-and-rises its children once per route mount (`openwop-fade-rise`, §6). The chat (`.app-main--ai`) and builder (`.app-main-fullbleed`) are exempt — they are persistent/immersive, not document pages.
+- **Atmosphere — the letterpress dot-grid.** The content `.app-main` (scoped `:not(.app-main--ai):not(.app-main-fullbleed)`) and empty `<StateCard>`s carry a faint `radial-gradient` dot-grid in `--rule-2` — the same token + motif as the xyflow canvas grid (§7), so the whole app sits on one drafting paper. It shows only in the gutters between cards; surfaces carry their own `--paper` background. **Never** put the grid on the chat or builder surfaces (they have their own register / canvas grid), and `<StateCard>` MUST set an opaque `background-color` so its grid does not moiré against the page grid behind it.
+
 When adding a new app-specific component:
 
 1. Add a row here.
 2. Cite the marketing-site register it borrows from (`.compare-card`, `.proof-card`, `.pack`, `.start`).
 3. Use only shared tokens for color/type/spacing.
 4. No shadows heavier than the marketing site's `.terminal`; no gradients that compete with paper.
+5. A new top-level page leads with `<PageHeader>` (§5.5); a new sustained animation gets a §6 row + honors reduced-motion.
 
 ---
 
@@ -178,6 +188,8 @@ Animation philosophy: **motion equals meaning.** Nothing moves unless something 
 | `openwop-stamp-in` | completion "press" on a status badge/pill when a node or run reaches a terminal state | one-shot scale overshoot → settle; **no colour fill** — colour carries the success/failure meaning |
 | `openwop-attention` | action-required chip ("Waiting on Human") | gentle opacity dip (1 → 0.6 → 1) that keeps the label legible; reserved for human-action states, never decorative (`.chip--pulse`) |
 | `openwop-bubble-breathe` | live workflow-run chat bubble | faint `--clay-wash` inset-shadow tint while streaming; respects bubble radius; never touches the background fill |
+| `openwop-spinner-rotate` | per-step "running" arc in the workflow-progress panel (`chat/workflowProgress/StepList.tsx`) | a 1.5px ring with one coloured top edge replacing the `○` glyph; inherits colour from the surrounding chip; frozen (not hidden) under reduced-motion so the affordance survives |
+| `openwop-spinup-dot` / `openwop-spinup-breathe` | "thinking" disclosure indicator (`chat/ThoughtsDisclosure.tsx`) | pulsing dot + body fade while the agent reasons; opacity only |
 
 Rules:
 
@@ -210,8 +222,10 @@ Direct selector overrides cover the rest:
 
 - `.builder-canvas .react-flow__edge-path` — `stroke: var(--ink-2); stroke-width: 1.5;`
 - `.builder-canvas .react-flow__edge.selected .react-flow__edge-path` — `stroke: var(--clay); stroke-width: 2;`
+- `.builder-canvas .react-flow__edge.edge-running .react-flow__edge-path` — clay marching dash (`openwop-edge-flow`, §6) on edges whose target node is running during a live run ("data in flight")
 - `.builder-canvas .react-flow__controls` — paper background, rule border, 2px radius, ink-shadow
 - `.builder-canvas .react-flow__handle` — 12×12 clay disc with a 2px paper border (the "port" affordance)
+- `.builder-canvas .react-flow__minimap` — themed to the paper palette via `--xy-minimap-*` vars (`--paper-2` bg, `--ink-2` node rects, `--ink-shadow` mask) + a `--rule` border; xyflow's stock `#fff`/`#e2e2e2` defaults render invisibly on the editorial canvas and MUST be overridden
 
 Node-internal styling (the React component each `<Handle>` renders inside) uses app tokens directly via `.builder-node*` classes. Port labels render in `--mono` at 10px / 0.04em. Node body uses `--sans`.
 
@@ -255,6 +269,8 @@ Lint gates:
 - `grep -rEn "#[0-9a-fA-F]{3,6}" src/` MUST return 0 hits (zero hex literals anywhere in TS/TSX). Post-Phase-E bar: enforced.
 - `grep -rEn "style=\{\{[^}]*(color|background)[^}]*[\"'](?!var\()" src/` MUST return 0 hits (no literal color values inline). Post-Phase-E bar: enforced.
 - `grep -rEn "style=\{\{[^}]*(color|background|font)" src/` shows the residuals allowed by the carve-outs above; should be reviewed but not blocked.
+- **CSS-token integrity** (`npm run check:css-tokens` → `scripts/check-css-tokens.mjs`): every `var(--token)` reference in `src/` MUST resolve to a custom property defined in `global.css` or set inline (`--xy-*` vendor vars exempt). Catches typos/undefined tokens that `tsc` + `vite` compile happily but render as nothing or a silent fallback. Wired into `npm run build` (after `tsc` + `check-prompt-ref-defaults`, before `vite`).
+- **CI gate:** `.github/workflows/pr-checks.yml` → `build-app-frontend` runs the full `npm run build` (tsc + both checks + vite) on any `apps/workflow-engine/frontend/react/**` change, so a type error, a dead prompt-ref, or an undefined CSS token fails the PR rather than surfacing only at deploy-time.
 - **No emoji as UI icons (§5.2).** A scan for emoji rendered as icons in JSX (excluding comments, prose, keyboard hints, ASCII art) MUST be empty — use `ui/icons`. Practical scan:
   ```bash
   # rendered decorative glyphs in non-comment lines; expect 0 (prose ⚡ excepted)
@@ -310,8 +326,9 @@ Before merging a PR that introduces a new app component:
 
 - `DESIGN.md` — marketing-site standards + shared tokens
 - `apps/workflow-engine/frontend/react/src/styles/global.css` — the lone stylesheet (tokens, the §5.1 cohesion layer, focus ring, `.alert.*`, `.status-badge`)
-- `apps/workflow-engine/frontend/react/src/ui/` — shared primitives: `Notice.tsx`, `StateCard.tsx`, and `icons/` (the §5.2 app-wide Lucide set)
+- `apps/workflow-engine/frontend/react/src/ui/` — shared primitives: `PageHeader.tsx` (§5.5), `StateCard.tsx`, `Notice.tsx`, `Markdown.tsx`, `MarkdownEditor.tsx`, and `icons/` (the §5.2 app-wide Lucide set)
 - `apps/workflow-engine/frontend/react/src/kanban/KanbanBoardView.tsx` — the one shared drag-and-drop board
+- `apps/workflow-engine/frontend/react/scripts/check-css-tokens.mjs` — the §10 CSS-token integrity gate (run in `npm run build` + the `build-app-frontend` CI job)
 - `apps/workflow-engine/frontend/react/index.html` — Google Fonts link
 - `apps/workflow-engine/DEPLOY.md`, `DEPLOY-SMOKE.md` — deployment + smoke
 - `.claude/skills/ux-review/SKILL.md` — the review skill that enforces this doc (Mode A, app surface)
