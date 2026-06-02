@@ -609,6 +609,14 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
         [record.key, record.responseBody, record.responseStatus, record.createdAt],
       );
     },
+    async pruneIdempotencyByPrefix(keyPrefix, olderThanIso) {
+      const escaped = keyPrefix.replace(/[%_\\]/g, '\\$&');
+      const { rowCount } = await pool.query(
+        `DELETE FROM idempotency WHERE key LIKE $1 AND created_at < $2::timestamptz`,
+        [`${escaped}%`, olderThanIso],
+      );
+      return rowCount ?? 0;
+    },
 
     async appendAudit(input) {
       await pool.query(

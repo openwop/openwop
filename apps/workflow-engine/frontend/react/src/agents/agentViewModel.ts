@@ -109,9 +109,10 @@ function buildView(entry: RosterEntry, board: KanbanBoard | null, cards: KanbanC
   };
 }
 
-/** Load every agent's view (dashboard) in exactly THREE requests — roster +
- *  boards-with-cards (one batched `?include=cards` call, not N+1) + jobs — so a
- *  dashboard with many agents doesn't trip the per-IP read rate limit. */
+/** Load every agent's view (dashboard) in a fixed FOUR requests — roster +
+ *  boards-with-cards (one batched `?include=cards` call, not N+1) + jobs +
+ *  recent failed runs (best-effort, for the 'error' badge) — so a dashboard
+ *  with many agents doesn't trip the per-IP read rate limit. */
 export async function loadAgentViews(): Promise<AgentView[]> {
   const [roster, boards, jobs, failures] = await Promise.all([
     listRoster(),

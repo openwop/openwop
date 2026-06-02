@@ -120,9 +120,10 @@ const WEEKDAY_INDEX: Record<string, number> = {
   Sat: 6,
 };
 
-/** Render an instant to wall-clock fields in the given IANA timezone. */
-function wallClockInTz(ms: number, timeZone: string): WallClock {
-  const dtf = new Intl.DateTimeFormat('en-US', {
+/** Build a reusable timezone formatter (construction is expensive, so the
+ *  caller builds one per computeNextFire call rather than per candidate). */
+function tzFormatter(timeZone: string): Intl.DateTimeFormat {
+  return new Intl.DateTimeFormat('en-US', {
     timeZone,
     hour12: false,
     year: 'numeric',
@@ -132,6 +133,10 @@ function wallClockInTz(ms: number, timeZone: string): WallClock {
     minute: 'numeric',
     weekday: 'short',
   });
+}
+
+/** Render an instant to wall-clock fields using a prebuilt timezone formatter. */
+function wallClockInTz(ms: number, dtf: Intl.DateTimeFormat): WallClock {
   const parts = dtf.formatToParts(new Date(ms));
   const get = (type: string): string => parts.find((p) => p.type === type)?.value ?? '';
   // hour12:false can render midnight as "24" on some ICU builds — normalize.
@@ -186,11 +191,14 @@ function matches(wc: WallClock, c: CronFields): boolean {
 export function computeNextFire(cronExpr: string, afterMs: number, timezone?: string): number | null {
   const c = parseCron(cronExpr);
   if (!c) return null;
+  // Build the timezone formatter ONCE (construction is heavy; the loop can run
+  // tens of thousands of minutes for a sparse cron).
+  const dtf = timezone ? tzFormatter(timezone) : null;
   // Start at the next whole minute strictly after `afterMs`.
   let candidate = Math.floor(afterMs / MINUTE_MS) * MINUTE_MS + MINUTE_MS;
   const limit = afterMs + SEARCH_HORIZON_MS;
   while (candidate <= limit) {
-    const wc = timezone ? wallClockInTz(candidate, timezone) : wallClockUtc(candidate);
+    const wc = dtf ? wallClockInTz(candidate, dtf) : wallClockUtc(candidate);
     if (matches(wc, c)) return candidate;
     candidate += MINUTE_MS;
   }

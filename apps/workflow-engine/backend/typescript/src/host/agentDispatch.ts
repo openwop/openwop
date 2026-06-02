@@ -208,10 +208,13 @@ function taskToMessage(task: unknown): string {
   }
 }
 
-/** Pull a numeric `confidence` from a structured result, if present. */
+/** Pull a numeric self-confidence from a structured result. Uses the reserved
+ *  `_confidence` meta-field, NOT a bare `confidence` — a bare key would collide
+ *  with an agent's own domain schema (e.g. a result field literally named
+ *  `confidence`) and spuriously drive §F escalation. */
 function confidenceFromData(data: unknown): number | undefined {
-  if (data && typeof data === 'object' && typeof (data as { confidence?: unknown }).confidence === 'number') {
-    return (data as { confidence: number }).confidence;
+  if (data && typeof data === 'object' && typeof (data as { _confidence?: unknown })._confidence === 'number') {
+    return (data as { _confidence: number })._confidence;
   }
   return undefined;
 }

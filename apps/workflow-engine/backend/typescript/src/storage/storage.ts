@@ -146,6 +146,17 @@ export interface Storage {
   claimIdempotency(key: string, createdAt: string): Promise<{ claimed: boolean; existing: IdempotencyRecord | null }>;
   /** Insert-or-replace the cached record (used to upgrade `__pending__` → final). */
   putIdempotency(record: IdempotencyRecord): Promise<void>;
+  /**
+   * Delete idempotency rows whose key starts with `keyPrefix` and whose
+   * `createdAt` is older than `olderThanIso`. Returns the number deleted.
+   *
+   * Used by the scheduler / heartbeat daemons, which use `claimIdempotency` as
+   * a short-lived per-(job, slot) fire-once mutex with machine-generated keys.
+   * Those keys are only needed for the brief concurrent-poll window, so the
+   * daemons prune their own stale keys each tick to keep the table bounded —
+   * unlike caller-supplied HTTP idempotency keys, which are retained.
+   */
+  pruneIdempotencyByPrefix(keyPrefix: string, olderThanIso: string): Promise<number>;
 
   // ── audit log ──
   appendAudit(input: {

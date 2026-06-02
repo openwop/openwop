@@ -187,6 +187,7 @@ async function makeStorage(): Promise<Storage> {
       };
     },
     putIdempotency: async () => { throw new Error('not exercised'); },
+    pruneIdempotencyByPrefix: async () => 0,
     appendAudit: async () => { throw new Error('not exercised'); },
     getInvocation: async () => null,
     putInvocation: async () => { throw new Error('not exercised'); },

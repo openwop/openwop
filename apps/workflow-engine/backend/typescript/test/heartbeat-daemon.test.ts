@@ -13,7 +13,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { openStorage } from '../src/storage/index.js';
 import type { Storage } from '../src/storage/storage.js';
-import type { HostAdapterSuite } from '../src/host/index.js';
+import type { StartRunDeps } from '../src/host/runStarter.js';
 import { initHostExtPersistence, __resetHostExtPersistence } from '../src/host/hostExtPersistence.js';
 import {
   createRosterEntry,
@@ -25,13 +25,14 @@ import {
 import { createBoard, createCard, __resetKanbanStore } from '../src/host/kanbanService.js';
 import { processDueHeartbeats } from '../src/host/heartbeatService.js';
 
-const hostSuite = {
-  workflowCatalog: { getWorkflow: async (id: string) => ({ definition: { workflowId: id, nodes: [] } }) },
-  providerPolicyResolver: undefined,
-} as unknown as HostAdapterSuite;
+// Fully typed against the narrowed StartRunDeps['hostSuite'] — no cast.
+const hostSuite: StartRunDeps['hostSuite'] = {
+  workflowCatalog: { getWorkflow: async (id) => ({ workflowId: id, definition: { workflowId: id, nodes: [] } }) },
+  providerPolicyResolver: { resolveForRun: async () => [] },
+};
 
 let storage: Storage;
-let deps: { storage: Storage; hostSuite: HostAdapterSuite };
+let deps: StartRunDeps;
 
 const TENANT = 't1';
 const NOW = Date.parse('2026-06-02T12:00:00Z');

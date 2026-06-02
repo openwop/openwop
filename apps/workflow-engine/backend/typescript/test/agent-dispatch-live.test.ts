@@ -98,12 +98,27 @@ describe('runAgentDispatchLive', () => {
     expect(callAI).not.toHaveBeenCalled();
   });
 
-  it('escalates when the model declares confidence below threshold (§F)', async () => {
+  it('escalates when the model declares _confidence below threshold (§F)', async () => {
     registerAgent({ confidence: { defaultThreshold: 0.7 } });
-    const callAI: CallAi = async () => ({ data: { answer: 'maybe', confidence: 0.3 } });
+    // Reserved _confidence meta-field — a bare `confidence` is NOT honored.
+    const callAI: CallAi = async () => ({ data: { answer: 'maybe', _confidence: 0.3 } });
     const result = await runAgentDispatchLive({ agentId: 'test.agent' }, { callAI });
     expect(result.status).toBe('escalated');
     expect(result.confidence).toBe(0.3);
+  });
+
+  it('does NOT escalate on a bare domain `confidence` field (no reserved key)', async () => {
+    registerAgent({
+      confidence: { defaultThreshold: 0.7 },
+      handoff: {
+        returnSchema: { type: 'object', required: ['answer'], properties: { answer: { type: 'string' }, confidence: { type: 'number' } } },
+        validateReturn: answerValidator,
+      },
+    });
+    // A domain field literally named `confidence` must not drive §F escalation.
+    const callAI: CallAi = async () => ({ data: { answer: 'sure', confidence: 0.1 } });
+    const result = await runAgentDispatchLive({ agentId: 'test.agent' }, { callAI });
+    expect(result.status).toBe('completed');
   });
 
   it('returns failed (not thrown) when the provider call errors, carrying the code', async () => {

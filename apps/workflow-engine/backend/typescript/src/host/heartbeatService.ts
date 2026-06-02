@@ -31,6 +31,10 @@ const POLL_INTERVAL_MS = 30_000;
 /** Most members auto-checked per pass (backstop against a large fleet flooding
  *  the dispatcher in one tick). */
 const CHECK_BATCH = 50;
+/** Per-(roster, slot) claim keys are only needed for the concurrent-poll
+ *  window; prune older ones each tick so the idempotency table stays bounded. */
+const CLAIM_KEY_PREFIX = 'heartbeat:';
+const CLAIM_PRUNE_AGE_MS = 10 * 60_000;
 
 export interface HeartbeatResult {
   picked: boolean;
@@ -141,7 +145,7 @@ export async function processDueHeartbeats(
     // Quantize to the interval so concurrent instances claim the same slot key.
     const interval = entry.heartbeatIntervalMs ?? POLL_INTERVAL_MS;
     const slot = Math.floor(now / interval);
-    const claimKey = `heartbeat:${entry.rosterId}:${slot}`;
+    const claimKey = `${CLAIM_KEY_PREFIX}${entry.rosterId}:${slot}`;
     const claim = await deps.storage.claimIdempotency(claimKey, new Date(now).toISOString());
     if (!claim.claimed) continue; // another instance is running this slot
     try {
@@ -164,6 +168,17 @@ export async function processDueHeartbeats(
   return ran;
 }
 
+/** Delete this daemon's stale per-(roster, slot) claim keys so the idempotency
+ *  table stays bounded. Best-effort. */
+export async function pruneStaleHeartbeatClaims(deps: StartRunDeps, now: number = Date.now()): Promise<number> {
+  try {
+    return await deps.storage.pruneIdempotencyByPrefix(CLAIM_KEY_PREFIX, new Date(now - CLAIM_PRUNE_AGE_MS).toISOString());
+  } catch (err) {
+    log.warn('heartbeat claim prune failed', { error: err instanceof Error ? err.message : String(err) });
+    return 0;
+  }
+}
+
 export interface HeartbeatDaemon {
   stop(): void;
 }
@@ -179,6 +194,7 @@ export function startHeartbeatDaemon(deps: StartRunDeps, listTenants: () => Prom
     running = true;
     try {
       await processDueHeartbeats(deps, listTenants);
+      await pruneStaleHeartbeatClaims(deps);
     } catch (err) {
       log.warn('heartbeat daemon tick error', { error: err instanceof Error ? err.message : String(err) });
     } finally {

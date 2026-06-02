@@ -33,7 +33,7 @@
 
 import type { StartRunDeps } from './runStarter.js';
 import { startWorkflowRun } from './runStarter.js';
-import { listJobs, markJobFired, currentTick } from './schedulingService.js';
+import { listJobs, markJobFired, recordJobRun, currentTick } from './schedulingService.js';
 import { getInstanceId } from './instanceId.js';
 import { createLogger } from '../observability/logger.js';
 
@@ -45,6 +45,11 @@ const POLL_INTERVAL_MS = 30_000;
 /** Most jobs fired per pass — a backstop against a misconfiguration flooding
  *  the dispatcher; remaining due jobs fire on the next tick. */
 const FIRE_BATCH = 50;
+/** Per-(job, slot) claim keys are only needed for the brief concurrent-poll
+ *  window; prune ones older than this each tick so the idempotency table stays
+ *  bounded (an hourly job would otherwise leave a permanent row per fire). */
+const CLAIM_KEY_PREFIX = 'schedule-fire:';
+const CLAIM_PRUNE_AGE_MS = 10 * 60_000;
 
 /**
  * Fire every due scheduled job exactly once across the fleet. Returns the number
@@ -66,13 +71,21 @@ export async function processDueSchedules(
   let fired = 0;
   for (const job of due) {
     const slot = job.nextFireAt!;
-    const claimKey = `schedule-fire:${job.jobId}:${slot}`;
+    const claimKey = `${CLAIM_KEY_PREFIX}${job.jobId}:${slot}`;
     const claim = await deps.storage.claimIdempotency(claimKey, new Date(now).toISOString());
     if (!claim.claimed) {
       // Another instance is firing (or already fired) this slot — skip. We'll
       // see the advanced nextFireAt once the winner's markJobFired lands.
       continue;
     }
+    // Advance nextFireAt to the next slot BEFORE dispatching. The claim row is
+    // permanent, so if we advanced only after dispatch, a crash in between would
+    // leave the slot perpetually due AND un-claimable → a permanently wedged
+    // schedule. Advancing first means a crash loses at most one fire; the next
+    // poll sees a future nextFireAt and carries on. Cross-instance dedup still
+    // holds: a racing instance advances to the same value (idempotent) and the
+    // claim already serialized the single fire.
+    await markJobFired(job.jobId, currentTick(), undefined, now);
     try {
       const runId = await startWorkflowRun(deps, {
         tenantId: job.tenantId,
@@ -86,11 +99,8 @@ export async function processDueSchedules(
           },
         },
       });
-      // Advance nextFireAt past this slot regardless of whether the workflow id
-      // resolved (a missing workflow is logged by startWorkflowRun and must not
-      // wedge the schedule on a perpetually-due slot).
-      await markJobFired(job.jobId, currentTick(), runId ?? undefined, now);
       if (runId) {
+        await recordJobRun(job.jobId, runId, now);
         fired++;
         log.info('schedule fired', { jobId: job.jobId, workflowId: job.workflowId, runId, slot });
       } else {
@@ -101,9 +111,8 @@ export async function processDueSchedules(
         });
       }
     } catch (err) {
-      // Advance past the slot even on dispatch error so one bad fire doesn't
-      // wedge the schedule; the error is logged for triage.
-      await markJobFired(job.jobId, currentTick(), undefined, now).catch(() => {});
+      // nextFireAt already advanced above, so a dispatch error can't wedge the
+      // schedule; just log for triage.
       log.error('schedule fire failed', {
         jobId: job.jobId,
         error: err instanceof Error ? err.message : String(err),
@@ -111,6 +120,17 @@ export async function processDueSchedules(
     }
   }
   return fired;
+}
+
+/** Delete this daemon's stale per-(job, slot) claim keys so the idempotency
+ *  table stays bounded. Best-effort: a prune failure must not fail the tick. */
+export async function pruneStaleScheduleClaims(deps: StartRunDeps, now: number = Date.now()): Promise<number> {
+  try {
+    return await deps.storage.pruneIdempotencyByPrefix(CLAIM_KEY_PREFIX, new Date(now - CLAIM_PRUNE_AGE_MS).toISOString());
+  } catch (err) {
+    log.warn('schedule claim prune failed', { error: err instanceof Error ? err.message : String(err) });
+    return 0;
+  }
 }
 
 export interface ScheduleDaemon {
@@ -129,6 +149,7 @@ export function startScheduleDaemon(deps: StartRunDeps): ScheduleDaemon {
     running = true;
     try {
       await processDueSchedules(deps);
+      await pruneStaleScheduleClaims(deps);
     } catch (err) {
       log.warn('schedule daemon tick error', { error: err instanceof Error ? err.message : String(err) });
     } finally {

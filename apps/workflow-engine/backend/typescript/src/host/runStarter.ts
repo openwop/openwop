@@ -26,7 +26,11 @@ const log = createLogger('host.runStarter');
 
 export interface StartRunDeps {
   storage: Storage;
-  hostSuite: HostAdapterSuite;
+  /** Only the two members startWorkflowRun actually uses, narrowed from the
+   *  full 15-slot HostAdapterSuite (interface segregation). A full HostAdapterSuite
+   *  is structurally assignable, so production callers pass it unchanged; tests
+   *  can supply a minimal, fully-typed stub without casting the whole suite. */
+  hostSuite: Pick<HostAdapterSuite, 'workflowCatalog' | 'providerPolicyResolver'>;
 }
 
 /** Resolve `workflowId`, insert a pending run, and dispatch it. Returns the new

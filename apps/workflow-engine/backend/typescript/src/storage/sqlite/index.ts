@@ -746,6 +746,13 @@ export function openSqliteStorage(dbPath: string): Storage {
         createdAt: record.createdAt,
       });
     },
+    async pruneIdempotencyByPrefix(keyPrefix, olderThanIso) {
+      // created_at is an ISO-8601 string → lexicographic compare is chronological.
+      const info = db
+        .prepare(`DELETE FROM idempotency WHERE key LIKE ? ESCAPE '\\' AND created_at < ?`)
+        .run(`${keyPrefix.replace(/[%_\\]/g, '\\$&')}%`, olderThanIso);
+      return info.changes;
+    },
 
     async appendAudit(input) {
       insertAuditStmt.run({

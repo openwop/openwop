@@ -266,6 +266,17 @@ export async function markJobFired(
   await jobs.put(job);
 }
 
+/** Record only the most-recent run on a job (lastRunId + lastRunAt), without
+ *  touching nextFireAt. The daemon advances nextFireAt BEFORE dispatch (so a
+ *  crash can't wedge the schedule), then calls this once the run id is known. */
+export async function recordJobRun(jobId: string, runId: string, firedAtMs: number = Date.now()): Promise<void> {
+  const job = await jobs.get(jobId);
+  if (!job) return;
+  job.lastRunId = runId;
+  job.lastRunAt = new Date(firedAtMs).toISOString();
+  await jobs.put(job);
+}
+
 /** Reset all scheduler state (test teardown). Resets the in-memory tick clock
  *  synchronously, then awaits the durable job store clear so a caller that
  *  awaits gets full isolation (e.g. a future count-based assertion). Callers
