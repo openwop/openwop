@@ -37,6 +37,7 @@ import type { Storage } from './storage/storage.js';
 import { createHostAdapterSuite, type HostAdapterSuite } from './host/index.js';
 import { startWebhookDeliveryWorker } from './host/webhookDeliveryWorker.js';
 import { startRunDispatchSweeper } from './host/runDispatchSweeper.js';
+import { startScheduleDaemon } from './host/scheduleDaemon.js';
 import { getInstanceId } from './host/instanceId.js';
 import { configureSecretResolver, loadSecretsFromEnv } from './byok/secretResolver.js';
 import { bootstrapKmsFromEnv } from './byok/kmsEncryption.js';
@@ -446,10 +447,15 @@ async function main(): Promise<void> {
   const hostSuite = app.locals.hostSuite as HostAdapterSuite;
   const webhookWorker = startWebhookDeliveryWorker(storage, `webhook-${getInstanceId()}`);
   const runSweeper = startRunDispatchSweeper({ storage, hostSuite });
+  // Wall-clock scheduler: fires durable scheduled jobs on their cadence. Each
+  // instance polls; per-fire claimIdempotency makes it fire-once across the
+  // fleet (see scheduleDaemon.ts).
+  const scheduleDaemon = startScheduleDaemon({ storage, hostSuite });
   for (const sig of ['SIGTERM', 'SIGINT'] as const) {
     process.once(sig, () => {
       webhookWorker.stop();
       runSweeper.stop();
+      scheduleDaemon.stop();
     });
   }
 
