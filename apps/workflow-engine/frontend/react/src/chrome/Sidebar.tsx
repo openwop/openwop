@@ -109,21 +109,21 @@ export function Sidebar({ netOpen, onToggleNet }: { netOpen: boolean; onToggleNe
         </nav>
 
         <div className="app-sidebar-foot">
+          <button
+            type="button"
+            className="secondary btn-sm app-sidebar-net"
+            onClick={onToggleNet}
+            aria-label="Open network inspector"
+            aria-expanded={netOpen}
+            title="Show every REST + SSE call the app is making"
+          >
+            Network
+          </button>
           <ThemeToggle />
-          <div className="app-sidebar-utils">
+          <div className="app-sidebar-account-row">
             <NotificationBell />
-            <button
-              type="button"
-              className="secondary btn-sm app-sidebar-net"
-              onClick={onToggleNet}
-              aria-label="Open network inspector"
-              aria-expanded={netOpen}
-              title="Show every REST + SSE call the app is making"
-            >
-              Network
-            </button>
+            <SignInButton />
           </div>
-          <SignInButton />
         </div>
       </aside>
     </>

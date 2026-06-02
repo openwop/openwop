@@ -724,7 +724,10 @@ a:visited {
   flex-direction: column;
   gap: var(--space-2);
 }
-.app-sidebar-utils { display: flex; align-items: center; gap: var(--space-2); }
+/* Footer stacks full-width controls (Network, then the theme toggle), then a
+ * row with the notification bell to the LEFT of the account chip. */
+.app-sidebar-net { width: 100%; justify-content: center; }
+.app-sidebar-account-row { display: flex; align-items: center; gap: var(--space-2); }
 .app-sidebar-foot .theme-toggle { width: 100%; }
 .app-sidebar-foot .theme-toggle button { flex: 1; display: inline-flex; align-items: center; justify-content: center; }
 .app-sidebar.is-collapsed .app-sidebar-foot { display: none; }
