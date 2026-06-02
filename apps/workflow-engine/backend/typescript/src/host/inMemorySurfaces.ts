@@ -35,6 +35,7 @@ import { createA2aSurface, type A2aSurface } from './a2aSurface.js';
 import { createKanbanSurface, type KanbanSurface } from './kanbanSurface.js';
 import { createKnowledgeSurface, type KnowledgeSurface } from './knowledgeSurface.js';
 import { createChatSurface, type ChatSurface } from './chatSurface.js';
+import { createCanvasSurface, type CanvasSurface } from './canvasSurface.js';
 
 const log = createLogger('host.inMemorySurfaces');
 
@@ -80,6 +81,9 @@ export interface HostSurfaceBundle {
   /** `host.chat` — bridges the `vendor.myndhyve.chat` pack to the demo chat
    *  store (the same tables the UI reads). See `host/chatSurface.ts`. */
   chat: ChatSurface;
+  /** `host.canvas` — durable versioned shared-canvas store for the
+   *  `vendor.myndhyve.canvas` pack. See `host/canvasSurface.ts`. */
+  canvas: CanvasSurface;
 }
 
 /** Inputs all surface methods receive. Pack delegates spread
@@ -1374,5 +1378,6 @@ export function buildHostSurfaceBundle(scope: BundleScope): HostSurfaceBundle {
     kanban: createKanbanSurface(scope),
     knowledge: createKnowledgeSurface(scope),
     chat: createChatSurface(scope),
+    canvas: createCanvasSurface(scope),
   };
 }
