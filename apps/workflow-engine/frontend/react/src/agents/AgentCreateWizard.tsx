@@ -204,7 +204,7 @@ export function AgentCreateWizard(): JSX.Element {
   };
 
   return (
-    <section style={{ padding: '1rem', maxWidth: 720, margin: '0 auto' }}>
+    <section>
       <Link to="/agents" style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>← All agents</Link>
       <h1 style={{ marginTop: '0.4rem' }}>Create an agent</h1>
 

@@ -69,7 +69,7 @@ export function AgentInstallPage(): JSX.Element {
   }
 
   return (
-    <section aria-labelledby="agent-install-heading" style={{ maxWidth: 800, margin: '0 auto' }}>
+    <section aria-labelledby="agent-install-heading">
       <div style={{ marginBottom: 'var(--space-3)' }}>
         <Link to="/agents" style={{ fontSize: 12, color: 'var(--ink-3)' }}>
           ← All agents

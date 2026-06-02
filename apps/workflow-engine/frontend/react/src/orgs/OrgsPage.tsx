@@ -362,7 +362,7 @@ export function OrgsPage(): JSX.Element {
   };
 
   return (
-    <section style={{ padding: '1rem', maxWidth: 1040 }}>
+    <section>
       <PageHeader
         eyebrow="Settings"
         title="Organizations & access"

@@ -222,7 +222,7 @@ export function RunsIndexPage() {
               onChange={(e) => setQuery(e.target.value)}
             />
             <DensityToggle value={density} onChange={setDensity} />
-            <button type="button" className="button-secondary" onClick={refreshRuns} disabled={runsLoading}>
+            <button type="button" className="secondary" onClick={refreshRuns} disabled={runsLoading}>
               {runsLoading ? 'Loading…' : 'Refresh'}
             </button>
           </div>

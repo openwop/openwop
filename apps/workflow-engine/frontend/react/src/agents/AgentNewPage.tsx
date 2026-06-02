@@ -126,7 +126,7 @@ export function AgentNewPage(): JSX.Element {
   }
 
   return (
-    <section aria-labelledby="agent-new-heading" style={{ maxWidth: 720, margin: '0 auto' }}>
+    <section aria-labelledby="agent-new-heading">
       <div style={{ marginBottom: 'var(--space-3)' }}>
         <Link to="/agents" style={{ fontSize: 12, color: 'var(--ink-3)' }}>
           ← All agents
