@@ -6,8 +6,8 @@
  * every affordance stays inert) against a host that doesn't. See
  * plans/app-ux-enhancements.md Track C — gated on the capability handshake.
  */
-import { authedHeaders, config } from './config.js';
-import { getCapabilities } from './runsClient.js';
+import { WopError } from '@openwop/openwop';
+import { client, getCapabilities } from './runsClient.js';
 
 export interface FeedbackCapability {
   supported: boolean;
@@ -46,11 +46,10 @@ export interface AnnotationInput {
  *  The host assigns annotationId/actor/createdAt; `signal.correction` and
  *  `note` are secret-scrubbed server-side (SR-1) before they reach us.
  *
- *  TODO: migrate to `client.runs.listAnnotations` / `createAnnotation` once
- *  the next SDK release publishes (the methods exist in `sdk/typescript/src/`
- *  per `sdk/PARITY.md` 2026-05-25 entry but aren't in the published
- *  `@openwop/openwop@1.1.3` package yet). The shapes here are identical to
- *  the SDK types so the swap is mechanical. */
+ *  Structurally identical to the SDK's `Annotation` (which the package does
+ *  not re-export by name), so the values returned by `client.runs.*` below
+ *  flow into this shape without a cast. Kept local so callers keep importing
+ *  it from here. */
 export interface Annotation {
   annotationId: string;
   target: { runId: string; eventId?: string; nodeId?: string };
@@ -60,36 +59,35 @@ export interface Annotation {
   createdAt: string;
 }
 
-/** GET /v1/runs/{runId}/annotations (RFC 0056 §C). Resolves to `[]` when the
- *  host doesn't advertise feedback (404/501) so callers can aggregate across
- *  runs without a per-run try/catch. Throws only on unexpected failures. */
+/** GET /v1/runs/{runId}/annotations (RFC 0056 §C) via `client.runs.listAnnotations`.
+ *  Resolves to `[]` when the host doesn't advertise feedback (the SDK maps
+ *  404/501 to `null`) so callers can aggregate across runs without a per-run
+ *  try/catch. Throws only on unexpected failures. */
 export async function listAnnotations(runId: string): Promise<Annotation[]> {
-  let res: Response;
   try {
-    res = await fetch(`${config.baseUrl}/v1/runs/${encodeURIComponent(runId)}/annotations`, {
-      headers: { ...authedHeaders() },
-      credentials: config.authMode === 'cookie' ? 'include' : 'same-origin',
-    });
+    const res = await client.runs.listAnnotations(runId);
+    return res ? [...res] : []; // SDK returns a readonly array or null
   } catch {
     return []; // network/discovery unreachable — treat as no annotations
   }
-  if (res.status === 404 || res.status === 501) return [];
-  if (!res.ok) throw new Error(`Failed to list annotations (${res.status})`);
-  const body = (await res.json()) as { annotations?: Annotation[] };
-  return Array.isArray(body.annotations) ? body.annotations : [];
 }
 
-/** POST /v1/runs/{runId}/annotations (RFC 0056 §C). */
+/** POST /v1/runs/{runId}/annotations (RFC 0056 §C) via `client.runs.createAnnotation`.
+ *  `runId` rides the path, so it's dropped from the request-body `target`. */
 export async function recordAnnotation(runId: string, input: AnnotationInput): Promise<void> {
-  const res = await fetch(`${config.baseUrl}/v1/runs/${encodeURIComponent(runId)}/annotations`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', ...authedHeaders() },
-    credentials: config.authMode === 'cookie' ? 'include' : 'same-origin',
-    body: JSON.stringify(input),
-  });
-  if (!res.ok) {
+  try {
+    await client.runs.createAnnotation(runId, {
+      target: { eventId: input.target.eventId, nodeId: input.target.nodeId },
+      signal: input.signal,
+      note: input.note,
+    });
+  } catch (err) {
     // 501 capability_not_provided is the spec'd honest response when a host
     // doesn't advertise host.feedback; surface a readable message either way.
-    throw new Error(res.status === 501 ? 'This host does not support feedback yet.' : `Feedback failed (${res.status})`);
+    if (err instanceof WopError && err.status === 501) {
+      throw new Error('This host does not support feedback yet.');
+    }
+    const status = err instanceof WopError ? err.status : undefined;
+    throw new Error(status ? `Feedback failed (${status})` : 'Feedback failed.');
   }
 }

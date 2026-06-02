@@ -32,7 +32,7 @@ import { authedHeaders, config } from './config.js';
 // `Authorization` header in the fetch wrapper before it hits the
 // backend (the openwop.session cookie carries auth instead, rolling
 // with `credentials: 'include'`).
-const client = new OpenwopClient({
+export const client = new OpenwopClient({
   baseUrl: config.baseUrl,
   apiKey: config.authMode === 'cookie' ? 'cookie-mode-placeholder' : config.apiKey,
   // Single fetch wrapper that handles all three auth modes

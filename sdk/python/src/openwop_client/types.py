@@ -640,3 +640,331 @@ class AgentInventoryEntry:
     confidenceThreshold: float | None = None
     # RFC 0072 §C — optional capability tiers this host does not satisfy, inert here.
     degraded: list[str] | None = None
+
+
+# ── RFC 0054 run diff (run-diff-response.schema.json) ───────────────────
+
+
+@dataclass(frozen=True)
+class RunDiffEventDiff:
+    """One per-event entry in a :class:`RunDiffResponse`. ``aEvent`` is absent
+    when ``op == 'added'``; ``bEvent`` is absent when ``op == 'removed'``."""
+
+    seq: int
+    op: Literal["added", "removed", "changed"]
+    aEvent: dict[str, Any] | None = None
+    bEvent: dict[str, Any] | None = None
+
+
+@dataclass(frozen=True)
+class RunDiffResponse:
+    """RFC 0054 — response from ``GET /v1/runs/{runId}:diff?against={otherRunId}``
+    (``run-diff-response.schema.json``). Deterministic, replay-aware structured
+    diff of two runs' event sequences + terminal states. ``divergedAtSeq`` is
+    ``None`` and ``eventDiffs`` is empty when the two logs are identical."""
+
+    a: str
+    b: str
+    divergedAtSeq: int | None
+    eventDiffs: list[RunDiffEventDiff]
+    stateDiff: dict[str, Any]
+    truncated: bool | None = None
+
+
+# ── RFC 0078 portable tool catalog (tool-descriptor.schema.json) ────────
+
+
+@dataclass(frozen=True)
+class ToolDescriptor:
+    """RFC 0078 §B — a portable tool descriptor as projected onto the host's
+    ``GET /v1/tools`` catalog (``tool-descriptor.schema.json``). Source-agnostic;
+    ``safetyTier`` / ``egress`` / ``approval`` let a caller reason about a tool's
+    blast radius before invoking it."""
+
+    toolId: str
+    source: Literal["node-pack", "workflow", "mcp", "connector", "host-extension"]
+    safetyTier: Literal["pure", "read", "write", "exec"]
+    title: str | None = None
+    description: str | None = None
+    inputSchema: dict[str, Any] | None = None
+    outputSchema: dict[str, Any] | None = None
+    auth: dict[str, Any] | None = None
+    egress: Literal["none", "safe-fetch", "host-mediated", "host-owned"] | None = None
+    approval: Literal["never", "conditional", "always"] | None = None
+    replayPolicy: (
+        Literal["deterministic", "idempotent", "non-deterministic"] | None
+    ) = None
+    costHint: str | None = None
+    latencyHint: str | None = None
+
+
+# ── RFC 0082 agent deployment lifecycle ─────────────────────────────────
+
+DeploymentState = Literal[
+    "draft",
+    "test",
+    "staged",
+    "active",
+    "paused",
+    "deprecated",
+    "rolled-back",
+]
+"""The seven-state deployment lifecycle (RFC 0082 §C)."""
+
+
+@dataclass(frozen=True)
+class AgentDeployment:
+    """RFC 0082 §C — a per-(agentId, version) deployment record, returned by
+    ``agents_list_deployments`` / ``agents_transition_deployment``
+    (``agent-deployment.schema.json``). Host-runtime state distinct from the
+    immutable manifest and the registry's published tags."""
+
+    agentId: str
+    version: str
+    state: DeploymentState
+    canaryPercent: float | None = None
+    rollbackPointer: str | None = None
+    channels: list[str] | None = None
+    evalRunId: str | None = None
+    approvalGateId: str | None = None
+
+
+@dataclass
+class AgentDeploymentTransition:
+    """RFC 0082 §E — the ``agents_transition_deployment`` request body
+    (``agent-deployment-transition.schema.json``). The host authorizes it
+    fail-closed (RFC 0049 ``deploy:*``), runs any RFC 0051 approvalGate, and
+    enforces RFC 0081 ``requiredEval`` before emitting ``deployment.promoted``."""
+
+    version: str
+    transition: Literal["promote", "pause", "deprecate", "rollback", "adjust-canary"]
+    toState: DeploymentState | None = None
+    channel: str | None = None
+    canaryPercent: float | None = None
+    evalRunId: str | None = None
+    reason: str | None = None
+
+
+# ── RFC 0086 standing agent roster (agent-roster-*.schema.json) ──────────
+
+
+@dataclass(frozen=True)
+class AgentRosterEntry:
+    """RFC 0086 §A — a standing agent INSTANCE: a ``host:<id>`` AgentRef that
+    references a manifest/deployment and owns a workflow portfolio
+    (``agent-roster-entry.schema.json``)."""
+
+    rosterId: str
+    persona: str
+    agentRef: dict[str, Any]
+    owner: dict[str, Any]
+    workflows: list[str] | None = None
+    enabled: bool | None = None
+    label: str | None = None
+    description: str | None = None
+
+
+@dataclass(frozen=True)
+class AgentRosterResponse:
+    """Response for ``GET /v1/agents/roster`` (RFC 0086 §B,
+    ``agent-roster-response.schema.json``)."""
+
+    roster: list[AgentRosterEntry]
+    total: int
+
+
+# ── RFC 0087 agent org-chart (agent-org-chart.schema.json) ──────────────
+
+
+@dataclass(frozen=True)
+class OrgChartDepartment:
+    """RFC 0087 §A — an org-chart department (a tree node via
+    ``parentDepartmentId``)."""
+
+    departmentId: str
+    name: str
+    parentDepartmentId: str | None
+    roles: list[dict[str, str]]
+
+
+@dataclass(frozen=True)
+class OrgChartMember:
+    """RFC 0087 §A — an org-chart member (a roster instance placed in a
+    dept/role)."""
+
+    rosterId: str
+    departmentId: str
+    roleId: str
+    reportsTo: str | None
+
+
+@dataclass(frozen=True)
+class AgentOrgChart:
+    """RFC 0087 §A — the descriptive org-chart over roster members
+    (``agent-org-chart.schema.json``). Carries no authority-bearing field by
+    design (§B ``org-position-no-authority-escalation``)."""
+
+    owner: dict[str, Any]
+    departments: list[OrgChartDepartment]
+    members: list[OrgChartMember]
+
+
+@dataclass(frozen=True)
+class OrgChartResponsibilityView:
+    """Response for ``GET /v1/agents/org-chart/{departmentId}`` (RFC 0087 §D,
+    ``org-chart-responsibility-view.schema.json``) — the department subtree +
+    the responsibility roll-up (union of member portfolios)."""
+
+    department: OrgChartDepartment
+    members: list[OrgChartMember]
+    responsibilities: list[str]
+
+
+# ── RFC 0081 agent evaluation (eval-summary.schema.json) ────────────────
+
+AgentModelClass = Literal[
+    "reasoning",
+    "writing",
+    "coding",
+    "research",
+    "classification",
+    "general",
+]
+"""Abstract model class (RFC 0002 / RFC 0003 manifest vocabulary)."""
+
+
+@dataclass(frozen=True)
+class EvalSafetyFinding:
+    """A redaction-safe safety finding ({kind, severity} descriptor — never
+    excerpted content)."""
+
+    kind: str
+    severity: Literal["low", "medium", "high", "critical"]
+
+
+@dataclass(frozen=True)
+class EvalTaskResult:
+    """Per-task result on an :class:`EvalSummary` (content-free: scores +
+    scalars + ids)."""
+
+    taskId: str
+    score: float
+    passed: bool
+    costUsd: float | None = None
+    latencyMs: float | None = None
+    schemaValid: bool | None = None
+    safetyFindings: list[EvalSafetyFinding] | None = None
+
+
+@dataclass(frozen=True)
+class EvalRegression:
+    """The regression block on an :class:`EvalSummary` (RFC 0081 §D
+    ``regression`` mode)."""
+
+    baselineRunId: str
+    scoreDelta: float
+    diffRef: str | None = None
+
+
+@dataclass(frozen=True)
+class EvalSummary:
+    """RFC 0081 §C — the terminal scorecard of an eval run, read via
+    ``runs_eval_summary(runId)`` (``eval-summary.schema.json``). Content-free:
+    scores, scalars, ids, and redaction-safe safety descriptors only
+    (``eval-summary-no-content-leak``)."""
+
+    suiteId: str
+    suiteVersion: str
+    aggregateScore: float
+    passed: bool
+    taskCount: int
+    passedCount: int
+    tasks: list[EvalTaskResult]
+    evaluatedModelClass: AgentModelClass | None = None
+    totalCostUsd: float | None = None
+    regression: EvalRegression | None = None
+
+
+# ── RFC 0027 / RFC 0028 prompt library (prompt-template.schema.json) ────
+
+PromptKind = Literal["system", "user", "few-shot", "schema-hint"]
+"""Role a PromptTemplate plays when composed into an LLM call
+(``prompt-kind.schema.json``)."""
+
+
+@dataclass
+class PromptVariable:
+    """Typed interpolation slot in a :class:`PromptTemplate`
+    (``prompt-template.schema.json#/$defs/PromptVariable``)."""
+
+    name: str
+    type: Literal["string", "number", "boolean", "array", "object"]
+    required: bool
+    source: Literal["input", "variable", "secret", "context"] | None = None
+    extractPath: str | None = None
+    defaultValue: Any | None = None
+    description: str | None = None
+
+
+@dataclass
+class PromptTemplate:
+    """RFC 0027 / RFC 0028 — named, versioned, variable-bound prompt body
+    (``prompt-template.schema.json``). Used as both request body
+    (``create``/``update``) and 2xx response shape."""
+
+    templateId: str
+    version: str
+    kind: PromptKind
+    text: str
+    name: str | None = None
+    description: str | None = None
+    variables: list[PromptVariable] | None = None
+    modelHints: dict[str, Any] | None = None
+    tags: list[str] | None = None
+    meta: dict[str, Any] | None = None
+
+
+@dataclass
+class ListPromptsRequest:
+    """Filter set for ``prompts_list(...)`` per RFC 0028 §A."""
+
+    kind: PromptKind | None = None
+    tag: str | None = None
+    modelClass: str | None = None
+    source: Literal["host", "pack", "user"] | None = None
+    cursor: str | None = None
+    limit: int | None = None
+
+
+@dataclass(frozen=True)
+class ListPromptsResponse:
+    """Response for ``prompts_list(...)`` — the 200 body of
+    ``GET /v1/prompts``."""
+
+    items: list[PromptTemplate]
+    nextCursor: str | None = None
+
+
+@dataclass
+class RenderPromptRequest:
+    """Request shape for ``prompts_render(...)`` per RFC 0028 §A. ``ref`` is a
+    ``prompt-ref.schema.json`` value — the stringy ``prompt:<id>[@<ver>]`` form
+    or the structured object form. Secret-source bindings MUST carry
+    ``[REDACTED:<credentialRef>]`` markers (SR-1)."""
+
+    ref: str | dict[str, Any]
+    variables: dict[str, Any]
+    contentTrust: Literal["trusted", "untrusted"] | None = None
+
+
+@dataclass(frozen=True)
+class RenderPromptResponse:
+    """Response for ``prompts_render(...)``. ``hash`` / ``variableHashes`` are
+    always present; ``composed`` populates only under
+    ``capabilities.prompts.observability: "full"``."""
+
+    hash: str
+    refs: list[str]
+    variableHashes: dict[str, str]
+    composed: str | None = None
+    contentTrust: Literal["trusted", "untrusted"] | None = None

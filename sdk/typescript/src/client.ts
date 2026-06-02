@@ -56,6 +56,7 @@ import {
   type AgentOrgChart,
   type OrgChartResponsibilityView,
   type EvalSummary,
+  type ToolDescriptor,
   type AgentDeployment,
   type AgentDeploymentTransition,
   type CreateUserAgentRequest,
@@ -334,6 +335,23 @@ export class OpenwopClient {
       }
     },
 
+    /**
+     * Read a run-produced artifact by id (`GET /v1/runs/{runId}/artifacts/{artifactId}`).
+     * The artifact body is implementation-defined per the host. Returns `null`
+     * on 404 (no such artifact, or the host doesn't store artifacts).
+     */
+    getArtifact: async (runId: string, artifactId: string): Promise<Record<string, unknown> | null> => {
+      try {
+        return await this.#request<Record<string, unknown>>({
+          method: 'GET',
+          path: `/v1/runs/${encodeURIComponent(runId)}/artifacts/${encodeURIComponent(artifactId)}`,
+        });
+      } catch (err) {
+        if (err instanceof WopError && err.status === 404) return null;
+        throw err;
+      }
+    },
+
     pollEvents: (
       runId: string,
       params: { lastSequence?: number; timeoutSeconds?: number } = {},
@@ -485,6 +503,41 @@ export class OpenwopClient {
         return await this.#request<OrgChartResponsibilityView>({
           method: 'GET',
           path: `/v1/agents/org-chart/${encodeURIComponent(departmentId)}${qs}`,
+        });
+      } catch (err) {
+        if (err instanceof WopError && err.status === 404) return null;
+        throw err;
+      }
+    },
+  };
+
+  // RFC 0078 — portable tool catalog (spec/v1/tool-catalog.md). The host
+  // projects every node-pack / workflow / mcp / connector / host-extension
+  // tool visible to the caller onto a uniform `ToolDescriptor`.
+  readonly tools = {
+    /**
+     * RFC 0078 §B — list the portable `ToolDescriptor`s visible to the caller.
+     * Returns `null` when the host doesn't advertise `capabilities.toolCatalog`
+     * (the endpoint 404s), so callers can branch on capability discovery.
+     */
+    list: async (): Promise<readonly ToolDescriptor[] | null> => {
+      try {
+        return await this.#request<ToolDescriptor[]>({ method: 'GET', path: '/v1/tools' });
+      } catch (err) {
+        if (err instanceof WopError && err.status === 404) return null;
+        throw err;
+      }
+    },
+
+    /**
+     * RFC 0078 §B — return one `ToolDescriptor` by its stable `toolId`. Returns
+     * `null` on 404 (no such tool, or the capability is unadvertised).
+     */
+    get: async (toolId: string): Promise<ToolDescriptor | null> => {
+      try {
+        return await this.#request<ToolDescriptor>({
+          method: 'GET',
+          path: `/v1/tools/${encodeURIComponent(toolId)}`,
         });
       } catch (err) {
         if (err instanceof WopError && err.status === 404) return null;
