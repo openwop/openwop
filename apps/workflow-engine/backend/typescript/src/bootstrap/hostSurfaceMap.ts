@@ -101,6 +101,9 @@ const MAP: readonly MapEntry[] = [
 
   // ── vendor.myndhyve.knowledge-tools ──────────────────────────────
   { prefix: 'knowledge.', surfaces: ['host.knowledge'] },
+
+  // ── vendor.myndhyve.chat ─────────────────────────────────────────
+  { prefix: 'core.chat.', surfaces: ['host.chat'] },
 ];
 
 // Sort once at module load: longest prefix first, so more-specific

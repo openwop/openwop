@@ -34,6 +34,7 @@ import { DurableCollection } from './hostExtPersistence.js';
 import { createA2aSurface, type A2aSurface } from './a2aSurface.js';
 import { createKanbanSurface, type KanbanSurface } from './kanbanSurface.js';
 import { createKnowledgeSurface, type KnowledgeSurface } from './knowledgeSurface.js';
+import { createChatSurface, type ChatSurface } from './chatSurface.js';
 
 const log = createLogger('host.inMemorySurfaces');
 
@@ -76,6 +77,9 @@ export interface HostSurfaceBundle {
   /** `host.knowledge` — lexical RAG retrieval over a seeded demo corpus for the
    *  `vendor.myndhyve.knowledge-tools` pack. See `host/knowledgeSurface.ts`. */
   knowledge: KnowledgeSurface;
+  /** `host.chat` — bridges the `vendor.myndhyve.chat` pack to the demo chat
+   *  store (the same tables the UI reads). See `host/chatSurface.ts`. */
+  chat: ChatSurface;
 }
 
 /** Inputs all surface methods receive. Pack delegates spread
@@ -1369,5 +1373,6 @@ export function buildHostSurfaceBundle(scope: BundleScope): HostSurfaceBundle {
     a2a: createA2aSurface(scope),
     kanban: createKanbanSurface(scope),
     knowledge: createKnowledgeSurface(scope),
+    chat: createChatSurface(scope),
   };
 }
