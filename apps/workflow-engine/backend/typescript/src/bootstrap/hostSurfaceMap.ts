@@ -98,6 +98,9 @@ const MAP: readonly MapEntry[] = [
   { prefix: 'kanban.timeline.', surfaces: ['host.kanban'] },
   { prefix: 'kanban.workflow.', surfaces: ['host.kanban'] },
   { prefix: 'kanban.resource.', surfaces: ['host.kanban'] },
+
+  // ── vendor.myndhyve.knowledge-tools ──────────────────────────────
+  { prefix: 'knowledge.', surfaces: ['host.knowledge'] },
 ];
 
 // Sort once at module load: longest prefix first, so more-specific

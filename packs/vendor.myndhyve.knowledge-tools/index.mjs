@@ -220,7 +220,7 @@ export async function knowledgeAugmentPrompt(ctx) {
   };
 }
 
-const nodes = {
+export const nodes = {
   'knowledge.retrieve': knowledgeRetrieve,
   'knowledge.augment-prompt': knowledgeAugmentPrompt,
 };
