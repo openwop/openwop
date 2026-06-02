@@ -32,6 +32,9 @@ export interface RosterEntry {
   /** ISO-8601 timestamp of the last "Check now" heartbeat that ran; absent ⇒
    *  never checked. Surfaced as "last checked …". */
   lastHeartbeatAt?: string;
+  /** Opt-in autonomous heartbeat cadence (ms). When > 0, the background daemon
+   *  auto-runs this agent's "Check now" on this interval. Absent ⇒ manual only. */
+  heartbeatIntervalMs?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -65,6 +68,7 @@ export async function createRosterEntry(input: {
   label?: string;
   description?: string;
   enabled?: boolean;
+  heartbeatIntervalMs?: number;
 }): Promise<RosterEntry> {
   const res = await fetch(rosterBase, fetchOpts({ method: 'POST', headers: jsonHeaders(), body: JSON.stringify(input) }));
   if (!res.ok) throw new Error(`createRosterEntry returned ${res.status}`);
@@ -73,7 +77,7 @@ export async function createRosterEntry(input: {
 
 export async function updateRosterEntry(
   rosterId: string,
-  patch: { persona?: string; workflows?: string[]; enabled?: boolean; label?: string; description?: string; avatarUrl?: string | null },
+  patch: { persona?: string; workflows?: string[]; enabled?: boolean; label?: string; description?: string; avatarUrl?: string | null; heartbeatIntervalMs?: number },
 ): Promise<RosterEntry> {
   const res = await fetch(`${rosterBase}/${encodeURIComponent(rosterId)}`, fetchOpts({ method: 'PATCH', headers: jsonHeaders(), body: JSON.stringify(patch) }));
   if (!res.ok) throw new Error(`updateRosterEntry returned ${res.status}`);
@@ -123,6 +127,10 @@ export interface AgentActivityItem {
   source: 'heartbeat' | 'schedule' | 'kanban';
   /** The board card that triggered it (heartbeat / kanban), when known. */
   cardId?: string;
+  /** Attribution — present on the fleet feed so items can name their agent. */
+  rosterId?: string;
+  agentId?: string;
+  persona?: string;
   /** ISO-8601 — terminal time, else last-update / creation. */
   timestamp: string;
 }
@@ -133,6 +141,24 @@ export interface AgentActivityItem {
 export async function getAgentActivity(rosterId: string): Promise<{ items: AgentActivityItem[]; truncated: boolean }> {
   const res = await fetch(`${rosterBase}/${encodeURIComponent(rosterId)}/activity`, fetchOpts({ headers: authedHeaders() }));
   if (!res.ok) throw new Error(`getAgentActivity returned ${res.status}`);
+  const body = (await res.json()) as { items: AgentActivityItem[]; truncated?: boolean };
+  return { items: body.items, truncated: body.truncated ?? false };
+}
+
+/** Fleet-wide activity: recent agent-attributed runs across the whole roster,
+ *  newest first. `status` narrows to one run status (e.g. 'failed' for the
+ *  failures view); `rosterId` narrows to one member. `truncated` ⇒ the scan
+ *  window was hit. */
+export async function getFleetActivity(
+  opts: { status?: string; rosterId?: string; limit?: number } = {},
+): Promise<{ items: AgentActivityItem[]; truncated: boolean }> {
+  const qs = new URLSearchParams();
+  if (opts.status) qs.set('status', opts.status);
+  if (opts.rosterId) qs.set('rosterId', opts.rosterId);
+  if (opts.limit) qs.set('limit', String(opts.limit));
+  const suffix = qs.toString() ? `?${qs.toString()}` : '';
+  const res = await fetch(`${config.baseUrl}/v1/host/sample/fleet/activity${suffix}`, fetchOpts({ headers: authedHeaders() }));
+  if (!res.ok) throw new Error(`getFleetActivity returned ${res.status}`);
   const body = (await res.json()) as { items: AgentActivityItem[]; truncated?: boolean };
   return { items: body.items, truncated: body.truncated ?? false };
 }
