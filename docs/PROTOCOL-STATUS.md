@@ -25,7 +25,7 @@
 | Python SDK `openwop-client` | 1.1.5 | `sdk/python/pyproject.toml` | tracks spec major; floats patch |
 | Go SDK | git tag `sdk/go/v*` | `sdk/go/` (tag-versioned module) | tracks spec major; tagged |
 | Conformance suite `@openwop/openwop-conformance` | 1.18.1 | `conformance/package.json` | minor on scenario add/remove |
-| CLI `@openwop/cli` | 0.1.2 | `cli/package.json` | independent 0.x via `cli/v*` tags |
+| CLI `@openwop/cli` | 0.2.0 | `cli/package.json` | independent 0.x via `cli/v*` tags |
 
 ## OpenAPI Operations
 

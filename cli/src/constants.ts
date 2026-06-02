@@ -1,6 +1,6 @@
 /** Static CLI constants — version, default endpoints, provider + host catalogs. Leaf module. */
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.2.0';
 export const DEFAULT_BASE_URL = 'http://localhost:8080';
 // Canonical signed node-pack registry. Distinct from the host --base-url
 // (the workflow-engine demo): the demo only knows its in-process nodes and

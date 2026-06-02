@@ -1,6 +1,6 @@
 {
   "name": "@openwop/cli",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "OpenWOP CLI for operating the workflow-engine demo app and OpenWOP-compatible hosts.",
   "license": "Apache-2.0",
   "type": "module",

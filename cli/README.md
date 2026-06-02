@@ -153,6 +153,31 @@ openwop runs ancestry <runId>                             # RFC 0040 cross-host 
 
 Beyond runs/workflows/catalog, the CLI surfaces the host's operator endpoints: `agents`, `memory`, `media`, `webhooks`, `chat`, plus `notifications` (inbox), `interrupts` (list/resolve human-in-the-loop pauses), and `prompts` (RFC 0029 library list/get/render). Every command supports `--json`.
 
+## Agent-platform surfaces
+
+These drive the demo app's protocol-enabled agent surfaces (each `--help` cites its RFC + endpoint):
+
+```bash
+openwop roster list                          # named standing agents + workflow portfolio (RFC 0086)
+openwop roster create --persona "Sally" --agent-ref core.x.agent --workflow sample.demo.triage
+openwop org-chart get                         # descriptive departments/reporting (RFC 0087)
+openwop org-chart set --file ./org.json       # replace the chart (departments[] + members[])
+openwop kanban boards                         # agent task boards
+openwop kanban board-create --name "Sally's work" --roster r_123
+openwop kanban card-add b_1 --title "Triage" --column todo
+openwop kanban watch b_1                       # stream a board's card events (SSE)
+openwop orgs list                             # organizations + RBAC (RFC 0049)
+openwop orgs teams|groups|roles|members <orgId> list|create|update|delete
+openwop orgs effective --subject user:jo      # resolve a subject's effective access
+openwop workspace list                        # per-tenant agent workspace files (RFC 0059)
+openwop workspace put notes/todo.md --content "- ship it"
+openwop byok list                             # BYOK credential refs (never values)
+openwop byok set --ref anthropic-prod         # prompts for the secret (no shell history)
+openwop agents create --persona "Triage bot" --model-class fast   # user-defined agent CRUD
+```
+
+Destructive commands (`roster delete`, `kanban board-delete`/`card-delete`, `orgs … delete`, `workspace delete`, `byok delete`, `agents delete`) require an explicit `--yes`.
+
 Two maintenance commands guard destructive operations behind a confirmation prompt (default *no*, bypass with `--confirm`):
 
 ```bash
