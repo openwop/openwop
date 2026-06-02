@@ -32,6 +32,7 @@ import { registerHostSurface } from '../bootstrap/hostSurfaceRegistry.js';
 import { redactForCompaction } from '../byok/textRedaction.js';
 import { DurableCollection } from './hostExtPersistence.js';
 import { createA2aSurface, type A2aSurface } from './a2aSurface.js';
+import { createKanbanSurface, type KanbanSurface } from './kanbanSurface.js';
 
 const log = createLogger('host.inMemorySurfaces');
 
@@ -68,6 +69,9 @@ export interface HostSurfaceBundle {
   /** RFC 0076 §A `host.a2a` — the A2A (Agent-to-Agent) client the
    *  `core.openwop.a2a` pack delegates to. See `host/a2aSurface.ts`. */
   a2a: A2aSurface;
+  /** `host.kanban` — bridges the `vendor.myndhyve.kanban` pack to the demo's
+   *  durable kanban store (`kanbanService.ts`). See `host/kanbanSurface.ts`. */
+  kanban: KanbanSurface;
 }
 
 /** Inputs all surface methods receive. Pack delegates spread
@@ -1359,5 +1363,6 @@ export function buildHostSurfaceBundle(scope: BundleScope): HostSurfaceBundle {
     queueBus: createQueueBus(_busState, scope),
     observability: createObservability(scope),
     a2a: createA2aSurface(scope),
+    kanban: createKanbanSurface(scope),
   };
 }

@@ -83,6 +83,16 @@ export interface KanbanCard {
   /** Free-text note describing what's blocking the task (a lightweight blocker;
    *  not a dependency graph). Surfaced as a "Blocked" chip. */
   blockerNote?: string;
+  /** Who the task is assigned to (host.kanban taskAssign / resourceMonitor).
+   *  Additive — existing cards without it stay valid. */
+  assigneeId?: string;
+  /** Effort estimate in hours (host.kanban timelinePlan). */
+  estimateHours?: number;
+  /** Free-form labels (host.kanban automateRules `label-changed` triggers). */
+  labels?: string[];
+  /** Ids of tasks this one depends on (host.kanban timelinePlan critical path,
+   *  getReadyTasks). A lightweight DAG over cards on the same board. */
+  dependsOn?: string[];
   order: number;
   createdAt: string;
   updatedAt: string;
@@ -221,6 +231,10 @@ export async function createCard(input: {
   createdBy?: string;
   assignmentReason?: string;
   blockerNote?: string;
+  assigneeId?: string;
+  estimateHours?: number;
+  labels?: string[];
+  dependsOn?: string[];
 }): Promise<KanbanCard> {
   const id = `card-${randomUUID()}`;
   const now = nowIso();
@@ -242,6 +256,10 @@ export async function createCard(input: {
     createdBy: input.createdBy,
     assignmentReason: input.assignmentReason,
     blockerNote: input.blockerNote,
+    ...(input.assigneeId !== undefined ? { assigneeId: input.assigneeId } : {}),
+    ...(input.estimateHours !== undefined ? { estimateHours: input.estimateHours } : {}),
+    ...(input.labels !== undefined ? { labels: input.labels } : {}),
+    ...(input.dependsOn !== undefined ? { dependsOn: input.dependsOn } : {}),
     order: siblings.length,
     createdAt: now,
     updatedAt: now,
@@ -263,6 +281,10 @@ export async function updateCardFields(
     createdBy?: string;
     assignmentReason?: string;
     blockerNote?: string;
+    assigneeId?: string;
+    estimateHours?: number;
+    labels?: string[];
+    dependsOn?: string[];
   },
 ): Promise<KanbanCard | null> {
   const card = await cards.get(cardId);
@@ -277,6 +299,10 @@ export async function updateCardFields(
   if (patch.createdBy !== undefined) card.createdBy = patch.createdBy;
   if (patch.assignmentReason !== undefined) card.assignmentReason = patch.assignmentReason;
   if (patch.blockerNote !== undefined) card.blockerNote = patch.blockerNote;
+  if (patch.assigneeId !== undefined) card.assigneeId = patch.assigneeId;
+  if (patch.estimateHours !== undefined) card.estimateHours = patch.estimateHours;
+  if (patch.labels !== undefined) card.labels = patch.labels;
+  if (patch.dependsOn !== undefined) card.dependsOn = patch.dependsOn;
   card.updatedAt = nowIso();
   await cards.put(card);
   return card;
