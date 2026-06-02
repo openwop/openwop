@@ -12,6 +12,7 @@ import type { A2aSurface } from '../host/a2aSurface.js';
 import type { KanbanSurface } from '../host/kanbanSurface.js';
 import type { KnowledgeSurface } from '../host/knowledgeSurface.js';
 import type { ChatSurface } from '../host/chatSurface.js';
+import type { CanvasSurface } from '../host/canvasSurface.js';
 
 /**
  * Single message in a chat-style AI request. Field shapes mirror
@@ -195,6 +196,9 @@ export interface NodeContext {
   /** ctx.chat — `host.chat`. The `vendor.myndhyve.chat` pack's bridge to the
    *  demo chat store (`spec/v1/host-capabilities.md §host.chat`). */
   chat?: ChatSurface;
+  /** ctx.canvas — `host.canvas`. Durable shared-canvas store for the
+   *  `vendor.myndhyve.canvas` pack (§host.canvas). */
+  canvas?: CanvasSurface;
   /** ctx.mcp — RFC 0020 host-side MCP server. The `expose` method is a
    *  no-op for hosts that build their MCP registry declaratively (by
    *  scanning workflow definitions). Pack delegates from

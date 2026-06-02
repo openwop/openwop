@@ -445,6 +445,7 @@ async function runOneNode(input: {
     kanban: surfaces.kanban,
     knowledge: surfaces.knowledge,
     chat: surfaces.chat,
+    canvas: surfaces.canvas,
     // RFC 0020 — host-side MCP. The sample host builds its MCP registry
     // declaratively from workflow definitions (see host/mcpServerRegistry.ts),
     // so `expose` is a stable no-op that returns a synthetic handle. Pack
