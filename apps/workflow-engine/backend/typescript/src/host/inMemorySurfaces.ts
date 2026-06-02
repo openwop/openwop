@@ -33,6 +33,7 @@ import { redactForCompaction } from '../byok/textRedaction.js';
 import { DurableCollection } from './hostExtPersistence.js';
 import { createA2aSurface, type A2aSurface } from './a2aSurface.js';
 import { createKanbanSurface, type KanbanSurface } from './kanbanSurface.js';
+import { createKnowledgeSurface, type KnowledgeSurface } from './knowledgeSurface.js';
 
 const log = createLogger('host.inMemorySurfaces');
 
@@ -72,6 +73,9 @@ export interface HostSurfaceBundle {
   /** `host.kanban` — bridges the `vendor.myndhyve.kanban` pack to the demo's
    *  durable kanban store (`kanbanService.ts`). See `host/kanbanSurface.ts`. */
   kanban: KanbanSurface;
+  /** `host.knowledge` — lexical RAG retrieval over a seeded demo corpus for the
+   *  `vendor.myndhyve.knowledge-tools` pack. See `host/knowledgeSurface.ts`. */
+  knowledge: KnowledgeSurface;
 }
 
 /** Inputs all surface methods receive. Pack delegates spread
@@ -1364,5 +1368,6 @@ export function buildHostSurfaceBundle(scope: BundleScope): HostSurfaceBundle {
     observability: createObservability(scope),
     a2a: createA2aSurface(scope),
     kanban: createKanbanSurface(scope),
+    knowledge: createKnowledgeSurface(scope),
   };
 }

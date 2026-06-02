@@ -10,6 +10,7 @@
 
 import type { A2aSurface } from '../host/a2aSurface.js';
 import type { KanbanSurface } from '../host/kanbanSurface.js';
+import type { KnowledgeSurface } from '../host/knowledgeSurface.js';
 
 /**
  * Single message in a chat-style AI request. Field shapes mirror
@@ -187,6 +188,9 @@ export interface NodeContext {
   /** ctx.kanban — `host.kanban`. The `vendor.myndhyve.kanban` pack's bridge to
    *  the demo kanban store (`spec/v1/host-capabilities.md §host.kanban`). */
   kanban?: KanbanSurface;
+  /** ctx.knowledge — `host.knowledge`. Lexical RAG retrieval for the
+   *  `vendor.myndhyve.knowledge-tools` pack (§host.knowledge). */
+  knowledge?: KnowledgeSurface;
   /** ctx.mcp — RFC 0020 host-side MCP server. The `expose` method is a
    *  no-op for hosts that build their MCP registry declaratively (by
    *  scanning workflow definitions). Pack delegates from
