@@ -108,6 +108,14 @@ const MAP: readonly MapEntry[] = [
   // ── vendor.myndhyve.canvas ───────────────────────────────────────
   { prefix: 'core.coordination.canvas', surfaces: ['host.canvas'] },
   { prefix: 'core.coordination.crossCanvas', surfaces: ['host.canvas'] },
+
+  // ── vendor.myndhyve.web-research ─────────────────────────────────
+  { prefix: 'data.source.webSearch', surfaces: ['host.webResearch'] },
+  { prefix: 'data.transform.fetchUrls', surfaces: ['host.webResearch'] },
+  { prefix: 'ai.research.web', surfaces: ['host.webResearch'] },
+
+  // ── vendor.myndhyve.launch-studio ────────────────────────────────
+  { prefix: 'launch-studio.', surfaces: ['host.launchStudio'] },
 ];
 
 // Sort once at module load: longest prefix first, so more-specific

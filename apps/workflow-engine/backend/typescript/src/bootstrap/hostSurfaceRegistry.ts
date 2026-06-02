@@ -49,7 +49,9 @@ export type HostSurfaceName =
   | 'host.kanban'
   | 'host.knowledge'
   | 'host.chat'
-  | 'host.canvas';
+  | 'host.canvas'
+  | 'host.webResearch'
+  | 'host.launchStudio';
 
 export interface HostSurfaceAdvertisement {
   /** Stable surface name. */
@@ -100,6 +102,8 @@ export function seedDefaultHostSurfaces(): void {
     { name: 'host.observability', supported: false, note: 'Wired implicitly via emit() — surface flag not yet honored.' },
     { name: 'host.mcp', supported: process.env.OPENWOP_MCP_SERVER_ENABLED === 'true', implementation: 'workflow-engine', note: 'RFC 0020 (Active). Sample-host MCP server mount at /v1/host/sample/mcp; advertise streamable-http transport. OFF by default — set OPENWOP_MCP_SERVER_ENABLED=true.' },
     { name: 'host.triggers', supported: true, implementation: 'workflow-engine', note: 'Trigger entry nodes (webhook/schedule/cron/email/mailhook/rss/form) surface the run-scoped ctx.triggerData payload; runs are started by the RFC 0083 trigger bridge, scheduler, and kanban paths. webhook-respond durably records the reply via ctx.respondToWebhook.' },
+    { name: 'host.webResearch', supported: true, implementation: 'workflow-engine', note: 'For vendor.myndhyve.web-research. fetchBatch is real (concurrent HTTP fetch + readable-text extraction); search returns an honest demo result (a real query URL) — configure a BYOK search provider for live results; research composes the two.' },
+    { name: 'host.launchStudio', supported: true, implementation: 'workflow-engine', note: 'Multi-canvas studio backbone for vendor.myndhyve.launch-studio. getStudio returns a seeded demo studio; buildProjectContext/resolveLinkedArtifacts are pure derivations; task dispatch composes ctx.kanban.' },
     { name: 'host.canvas', supported: true, implementation: 'workflow-engine', note: 'Durable versioned shared-canvas store for vendor.myndhyve.canvas. read/write/create are real (optimistic-concurrency, shallow/deep/replace merge, field projection); crossCanvasInvoke is an honest stub (no run dispatcher on the surface).' },
     { name: 'host.chat', supported: true, implementation: 'workflow-engine', note: 'Bridges vendor.myndhyve.chat to the demo chat store (the same /v1/host/sample/chat tables the SPA reads). sendMessage/progressCard/updateCard run; the suspend-based gate nodes (phaseInputGate/approvalGate/clarificationGate) need ctx.suspend, not yet implemented on the sample host.' },
     { name: 'host.knowledge', supported: true, implementation: 'workflow-engine', note: 'Lexical RAG retrieval (token-frequency over a seeded demo corpus) for vendor.myndhyve.knowledge-tools. Real retrieve-with-citations; lexical not semantic (sample host ships no embedding model).' },

@@ -36,6 +36,8 @@ import { createKanbanSurface, type KanbanSurface } from './kanbanSurface.js';
 import { createKnowledgeSurface, type KnowledgeSurface } from './knowledgeSurface.js';
 import { createChatSurface, type ChatSurface } from './chatSurface.js';
 import { createCanvasSurface, type CanvasSurface } from './canvasSurface.js';
+import { createWebResearchSurface, type WebResearchSurface } from './webResearchSurface.js';
+import { createLaunchStudioSurface, type LaunchStudioSurface } from './launchStudioSurface.js';
 
 const log = createLogger('host.inMemorySurfaces');
 
@@ -84,6 +86,12 @@ export interface HostSurfaceBundle {
   /** `host.canvas` — durable versioned shared-canvas store for the
    *  `vendor.myndhyve.canvas` pack. See `host/canvasSurface.ts`. */
   canvas: CanvasSurface;
+  /** `host.webResearch` — search/fetch/research for the
+   *  `vendor.myndhyve.web-research` pack. See `host/webResearchSurface.ts`. */
+  webResearch: WebResearchSurface;
+  /** `host.launchStudio` — multi-canvas studio backbone for the
+   *  `vendor.myndhyve.launch-studio` pack. See `host/launchStudioSurface.ts`. */
+  launchStudio: LaunchStudioSurface;
 }
 
 /** Inputs all surface methods receive. Pack delegates spread
@@ -1379,5 +1387,7 @@ export function buildHostSurfaceBundle(scope: BundleScope): HostSurfaceBundle {
     knowledge: createKnowledgeSurface(scope),
     chat: createChatSurface(scope),
     canvas: createCanvasSurface(scope),
+    webResearch: createWebResearchSurface(scope),
+    launchStudio: createLaunchStudioSurface(scope),
   };
 }

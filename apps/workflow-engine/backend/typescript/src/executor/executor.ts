@@ -66,7 +66,7 @@ import { buildHostSurfaceBundle, writeMemoryEntry, MEMORY_DEMO_REF } from '../ho
 import { getInstanceId } from '../host/instanceId.js';
 import { notifyRunTerminal } from './runLifecycle.js';
 import { emitRunFailureNotification } from '../notifications/notify.js';
-import { snapshotRunVariables } from '../host/variablesRuntime.js';
+import { snapshotRunVariables, setRunVariable } from '../host/variablesRuntime.js';
 import {
   buildGraph,
   buildNodeInputs,
@@ -446,6 +446,16 @@ async function runOneNode(input: {
     knowledge: surfaces.knowledge,
     chat: surfaces.chat,
     canvas: surfaces.canvas,
+    webResearch: surfaces.webResearch,
+    launchStudio: surfaces.launchStudio,
+    // launch-studio keys context on a user + threads step state through a
+    // run-scoped variable bag. The sample host maps the principal to the run
+    // tenant; the bag is backed by the variables runtime (replay-safe snapshot).
+    userId: run.tenantId,
+    variables: {
+      get: (name: string): unknown => snapshotRunVariables(run.runId)?.[name],
+      set: (name: string, value: unknown): void => setRunVariable(run.runId, name, value),
+    },
     // RFC 0020 — host-side MCP. The sample host builds its MCP registry
     // declaratively from workflow definitions (see host/mcpServerRegistry.ts),
     // so `expose` is a stable no-op that returns a synthetic handle. Pack
