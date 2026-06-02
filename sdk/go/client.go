@@ -1053,6 +1053,14 @@ func (c *OpenwopClient) GetPromptTemplate(
 	}
 	var out PromptTemplate
 	if err := c.requestJSON(ctx, http.MethodGet, path, nil, nil, true, &out); err != nil {
+		// Return (nil, nil) on 404 (no such template), consistent with the other
+		// Get-by-id methods and the TypeScript/Python SDKs; a 400
+		// prompt_ref_ambiguous and other errors still surface so callers can
+		// distinguish "not found" from "ambiguous reference".
+		var werr *WopError
+		if errors.As(err, &werr) && werr.Status == 404 {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &out, nil

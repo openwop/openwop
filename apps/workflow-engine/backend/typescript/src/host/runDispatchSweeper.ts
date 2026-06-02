@@ -21,7 +21,7 @@
 
 import type { Storage } from '../storage/storage.js';
 import type { HostAdapterSuite } from './index.js';
-import { executeRun, RUN_DISPATCH_LEASE_MS } from '../executor/executor.js';
+import { executeRun, emitTerminalFailure, RUN_DISPATCH_LEASE_MS } from '../executor/executor.js';
 import { getInstanceId } from './instanceId.js';
 import { createLogger } from '../observability/logger.js';
 
@@ -29,6 +29,12 @@ const log = createLogger('runDispatchSweeper');
 
 /** Runs younger than this are never swept (avoids racing a fresh dispatch). */
 const GRACE_MS = 120_000;
+/** Re-dispatch ceiling: an orphan still `pending`/`running` this long after
+ *  creation is presumed genuinely stuck (a host bug or a node hung past the
+ *  run-duration ceiling without hitting a boundary check). Rather than
+ *  re-dispatch it on every sweep forever, the sweeper fails it terminally so it
+ *  reaches a clean end state instead of looping. ~6 lease windows. */
+const MAX_REDISPATCH_AGE_MS = 3_600_000;
 /** Orphans re-claimed per pass. */
 const CLAIM_BATCH = 10;
 /** Poll cadence. Crash recovery isn't latency-critical — a slow sweep is fine. */
@@ -52,8 +58,33 @@ export async function sweepOrphanedRuns(
   const { storage, hostSuite } = deps;
   const staleBeforeIso = new Date(now - GRACE_MS).toISOString();
   const orphans = await storage.claimOrphanedRuns(workerId, now, staleBeforeIso, RUN_DISPATCH_LEASE_MS, CLAIM_BATCH);
+  const abandonBefore = now - MAX_REDISPATCH_AGE_MS;
   let redispatched = 0;
   for (const run of orphans) {
+    // A run still orphaned this long after creation is presumed genuinely stuck;
+    // fail it terminally rather than re-dispatch it on every sweep forever.
+    if (Date.parse(run.createdAt) < abandonBefore) {
+      log.error('abandoning chronically-orphaned run (exceeded re-dispatch ceiling)', {
+        runId: run.runId,
+        status: run.status,
+        ageMs: now - Date.parse(run.createdAt),
+      });
+      try {
+        await emitTerminalFailure({
+          storage,
+          runId: run.runId,
+          error: {
+            code: 'dispatch_abandoned',
+            message: `Run repeatedly orphaned and re-dispatched for over ${Math.round(MAX_REDISPATCH_AGE_MS / 60000)} minutes; abandoned by the dispatch sweeper.`,
+          },
+        });
+      } catch (err) {
+        // Best-effort: a failed terminal-emit must not crash the sweep. The run
+        // keeps its (now fresh) lease and the next sweep re-attempts the abandon.
+        log.warn('failed to abandon orphaned run', { runId: run.runId, error: err instanceof Error ? err.message : String(err) });
+      }
+      continue;
+    }
     const wf = await hostSuite.workflowCatalog.getWorkflow(run.workflowId);
     if (!wf) {
       log.warn('orphan run workflow not found — skipping re-dispatch', { runId: run.runId, workflowId: run.workflowId });
