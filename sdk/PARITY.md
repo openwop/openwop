@@ -1,9 +1,15 @@
 # SDK Parity Matrix
 
-> **Status:** Living document. Last reviewed 2026-05-15 against:
-> - `@openwop/openwop` TypeScript SDK (~960 LOC, 5 files under `sdk/typescript/src/`)
-> - `openwop-client` Python SDK (~990 LOC, 5 files under `sdk/python/src/openwop_client/`)
-> - `github.com/openwop/openwop/sdk/go` Go SDK (~880 LOC, 4 files under `sdk/go/`)
+> **Status:** Living document. Last reviewed 2026-06-02 against:
+> - `@openwop/openwop` TypeScript SDK (5 files under `sdk/typescript/src/`)
+> - `openwop-client` Python SDK (5 files under `sdk/python/src/openwop_client/`)
+> - `github.com/openwop/openwop/sdk/go` Go SDK (`sdk/go/`)
+>
+> **Now machine-enforced.** `sdk/parity-expectations.json` declares a per-SDK
+> status for every OpenAPI operation, and `scripts/check-sdk-parity.mjs`
+> (`openwop:check` step 7) fails when a route lands without a declared SDK
+> helper or when a `typed` surface regresses out of an SDK. This prose matrix
+> is the human-readable companion; the JSON file is the source of truth.
 
 This matrix records per-protocol-surface feature parity across the three reference SDKs. Each row is a protocol surface; each column shows whether the SDK has a typed helper for that surface, only-raw-HTTP coverage, or no coverage at all.
 
@@ -17,17 +23,30 @@ This matrix records per-protocol-surface feature parity across the three referen
 
 ## Headline
 
-The three SDKs are at **full parity across every host wire surface AND the public registry read surface as of 2026-05-15**. First-class helpers across all three SDKs: discovery, run lifecycle (create/get/cancel/pause/resume/fork/bulk-cancel), event poll + SSE + stream-options + bulk-cancel, HITL interrupts, error envelope + canonical HTTP error / run error code lists + predicates + active/terminal run-status predicates, audit-log verification, debug-bundle retrieval (SDK-4 close-out 2026-05-15), webhook register/unregister + receiver-side HMAC verification (SDK-3 close-out 2026-05-15), and public-registry reads — discovery, index, per-pack manifest, version manifest, raw tarball, raw signature, public key (SDK-5 close-out 2026-05-15). No remaining raw-only PARITY rows.
+The three SDKs are at **full operation-level parity across every OpenAPI
+operation, except the four intentionally-excluded `packs-test` write-mirror
+operations** (a server-side conformance affordance, not a client surface — the
+reference SDKs cover registry *reads* only). Of the 48 OpenAPI operations, 44
+have a first-class typed helper in TypeScript, Python, and Go; 4 are excluded.
+This is enforced by `scripts/check-sdk-parity.mjs` against
+`sdk/parity-expectations.json`.
 
-Per-SDK net surface counts (counted from the per-surface tables below, excluding the headline-summary row):
+Per-operation parity counts (from `sdk/parity-expectations.json`):
 
-| SDK | ✅ helpers | ⚠️ raw-only | ❌ unreachable |
+| SDK | ✅ typed | excluded | ❌ undeclared gap |
 |---|---:|---:|---:|
-| TypeScript (`@openwop/openwop`) | 34 | 0 | 0 |
-| Python (`openwop-client`) | 34 | 0 | 0 |
-| Go (`github.com/openwop/openwop/sdk/go`) | 34 | 0 | 0 |
+| TypeScript (`@openwop/openwop`) | 44 | 4 | 0 |
+| Python (`openwop-client`) | 44 | 4 | 0 |
+| Go (`github.com/openwop/openwop/sdk/go`) | 44 | 4 | 0 |
 
-(Counts bumped 2026-05-15 — Phase 0/P0 gap-closure added pause/resume helpers across all three SDKs. SDK-6 close-out 2026-05-15 added Python + Go run-status + run-error-code predicates matching TypeScript: Python/Go each gain 3 typed helpers — `ACTIVE_RUN_STATUSES`/`TERMINAL_RUN_STATUSES`/`is_terminal_run_status` AND `RUN_ERROR_CODES`/`is_run_error_code`. Headline counts move 23/23 → 26/26.)
+**2026-06-02 full port.** A parity audit found `sdk/PARITY.md`'s prior
+"34/34/34 as of 2026-05-15" headline was stale: the agent-platform surfaces
+(RFC 0078 tool catalog, RFC 0082 agent deployments, RFC 0086 roster, RFC 0087
+org-chart, RFC 0081 eval-summary, run diff, and prompt-template CRUD) had
+landed in OpenAPI but only reached the TypeScript SDK. This port adds the
+missing helpers to all three SDKs and adds `getArtifact`, `tools.list/get`
+across the board, and introduces the machine gate so the matrix can no longer
+silently drift. Counts: TS +3 (tools×2, artifact), Python +17, Go +17.
 
 RFC 0056 feedback annotations landed 2026-05-25: each SDK gains two helpers — annotation create (`POST /v1/runs/{id}/annotations`) and annotation list (`GET /v1/runs/{id}/annotations`, returning the language's null sentinel when the host doesn't advertise `capabilities.feedback`). Headline counts move 32/32 → 34/34/34.
 

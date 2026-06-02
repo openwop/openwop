@@ -146,6 +146,11 @@ echo "[7/10] Generated protocol status..."
 node "$SPEC_ROOT/scripts/generate-protocol-status.mjs" --check
 node "$SPEC_ROOT/scripts/check-workflow-chain-expansion-sync.mjs"
 node "$SPEC_ROOT/scripts/check-required-properties-defined.mjs"
+# SDK parity — every OpenAPI operation must declare a per-SDK helper status in
+# sdk/parity-expectations.json ('typed' or 'excluded'), and every 'typed' op's
+# path must still be wired in that SDK. Catches a route landing without an SDK
+# helper (or its declaration), and whole-surface SDK regressions.
+node "$SPEC_ROOT/scripts/check-sdk-parity.mjs"
 # Backend dep-graph sanity — every external import in apps/workflow-engine/
 # backend/typescript/src/ MUST be declared in its package.json. Catches the
 # class of bug where local hoisting masks a missing dep that breaks Cloud
