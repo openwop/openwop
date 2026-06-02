@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { DataTable, DensityToggle, type DataColumn } from '../ui/DataTable.js';
 import { createRun, listMyRuns, type RunListItem } from '../client/runsClient.js';
 import type { Annotation } from '../client/feedbackClient.js';
 import { useRunAnnotations, reviewOf, needsReview, reviewReason } from './useRunAnnotations.js';
@@ -48,7 +49,26 @@ export function RunsIndexPage() {
     () => runs.filter((r) => isFlagged(r.runId)).length,
     [runs, isFlagged],
   );
-  const visibleRuns = reviewOnly ? runs.filter((r) => isFlagged(r.runId)) : runs;
+  const reviewFiltered = reviewOnly ? runs.filter((r) => isFlagged(r.runId)) : runs;
+  // Free-text filter, persisted in the URL (?q=) so a filtered view is
+  // shareable + survives reload (gap analysis #4). Matches run id or workflow.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const query = searchParams.get('q') ?? '';
+  const setQuery = useCallback((q: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (q) next.set('q', q); else next.delete('q');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+  const visibleRuns = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return reviewFiltered;
+    return reviewFiltered.filter((r) => r.runId.toLowerCase().includes(q) || r.workflowId.toLowerCase().includes(q));
+  }, [reviewFiltered, query]);
+  // Row density (comfortable/compact), persisted per-user (gap analysis #5).
+  const [density, setDensity] = useState<'comfortable' | 'compact'>(() => {
+    try { return localStorage.getItem('openwop.runs.density') === 'compact' ? 'compact' : 'comfortable'; } catch { return 'comfortable'; }
+  });
+  useEffect(() => { try { localStorage.setItem('openwop.runs.density', density); } catch { /* ignore */ } }, [density]);
 
   async function refreshRuns() {
     setRunsLoading(true);
@@ -103,6 +123,35 @@ export function RunsIndexPage() {
   const tenantScope = isConfigured && user
     ? `Signed in as ${user.displayName ?? user.email ?? user.uid}`
     : 'Anonymous session (24h lifetime)';
+
+  const runColumns = useMemo<DataColumn<RunListItem>[]>(() => [
+    {
+      key: 'run',
+      header: 'Run',
+      render: (r) => (
+        <>
+          <Link to={`/runs/${r.runId}`} onClick={(e) => e.stopPropagation()}><code>{r.runId.slice(0, 8)}…</code></Link>
+          {isFlagged(r.runId) && (
+            <span
+              className="status-badge status-error runs-review-flag"
+              title={`Flagged for review: ${reviewReason(reviewOf(byRun.get(r.runId) ?? []))}`}
+            >
+              <FlagIcon size={10} /> review
+            </span>
+          )}
+        </>
+      ),
+    },
+    { key: 'workflow', header: 'Workflow', render: (r) => r.workflowId, sortValue: (r) => r.workflowId },
+    { key: 'status', header: 'Status', render: (r) => <StatusBadge status={r.status} />, sortValue: (r) => r.status },
+    {
+      key: 'started',
+      header: 'Started',
+      cellClassName: 'muted',
+      render: (r) => (r.startedAt ? new Date(r.startedAt).toLocaleString() : '—'),
+      sortValue: (r) => (r.startedAt ? Date.parse(r.startedAt) : 0),
+    },
+  ], [isFlagged, byRun]);
 
   return (
     <section>
@@ -161,61 +210,41 @@ export function RunsIndexPage() {
                 </button>
               </div>
             )}
+            <input
+              type="search"
+              className="ui-input runs-filter"
+              placeholder="Filter by run id or workflow…"
+              aria-label="Filter runs"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <DensityToggle value={density} onChange={setDensity} />
             <button type="button" className="button-secondary" onClick={refreshRuns} disabled={runsLoading}>
               {runsLoading ? 'Loading…' : 'Refresh'}
             </button>
           </div>
         </div>
         {runsError ? <div className="alert error">{runsError}</div> : null}
-        {!runsLoading && runs.length === 0 ? (
-          <p className="muted">No runs yet. Create one above to get started.</p>
-        ) : reviewOnly && visibleRuns.length === 0 ? (
-          <p className="muted">No runs flagged for review. Thumbs-down, flag, or correct a run to add it here.</p>
-        ) : (
-          <div className="table-scroll">
-            <table className="runs-table">
-              <thead>
-                <tr>
-                  <th>Run</th>
-                  <th>Workflow</th>
-                  <th>Status</th>
-                  <th>Started</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleRuns.map((r) => {
-                  const flagged = isFlagged(r.runId);
-                  return (
-                    <tr
-                      key={r.runId}
-                      onClick={() => nav(`/runs/${r.runId}`)}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {/* The run id is a real link so the row is keyboard-
-                          navigable (tab + Enter); the row onClick stays for
-                          mouse convenience and targets the same route. */}
-                      <td>
-                        <Link to={`/runs/${r.runId}`} onClick={(e) => e.stopPropagation()}><code>{r.runId.slice(0, 8)}…</code></Link>
-                        {flagged && (
-                          <span
-                            className="status-badge status-error"
-                            style={{ marginLeft: 6, fontSize: 10 }}
-                            title={`Flagged for review: ${reviewReason(reviewOf(byRun.get(r.runId) ?? []))}`}
-                          >
-                            <FlagIcon size={10} /> review
-                          </span>
-                        )}
-                      </td>
-                      <td>{r.workflowId}</td>
-                      <td><StatusBadge status={r.status} /></td>
-                      <td className="muted">{r.startedAt ? new Date(r.startedAt).toLocaleString() : '—'}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <DataTable
+          rows={visibleRuns}
+          rowKey={(r) => r.runId}
+          onRowClick={(r) => nav(`/runs/${r.runId}`)}
+          density={density}
+          caption="Recent runs"
+          initialSort={{ key: 'started', dir: 'desc' }}
+          columns={runColumns}
+          empty={
+            <p className="muted">
+              {runsLoading
+                ? 'Loading…'
+                : runs.length === 0
+                  ? 'No runs yet. Create one above to get started.'
+                  : reviewOnly
+                    ? 'No runs flagged for review. Thumbs-down, flag, or correct a run to add it here.'
+                    : 'No runs match this filter.'}
+            </p>
+          }
+        />
       </div>
 
       <div className="card">
