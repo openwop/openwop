@@ -30,6 +30,9 @@
  *   OPENWOP_RATELIMIT_SESSION_RUNS_PER_DAY=50
  *   OPENWOP_RATELIMIT_SESSION_CONCURRENT=5
  *   OPENWOP_RATELIMIT_IP_RUNS_PER_DAY=60
+ *   OPENWOP_FORCE_RATE_LIMIT=true   conformance affordance — forces a tiny
+ *                                   per-IP budget (3/min) so the harness can
+ *                                   deterministically induce a canonical 429
  *
  * Returns 429 + canonical `rate_limited` envelope per
  * spec/v1/capabilities.md §3 + a `Retry-After` header.
@@ -49,6 +52,15 @@ interface Limits {
   ipRunsPerDay: number;
 }
 
+/** Which specific limiter fired — carried in `details.reason` and mapped to the
+ *  canonical `details.scope` closed enum via `RATE_LIMIT_SCOPE`. */
+type RateLimitReason =
+  | 'ip_request_rate'
+  | 'session_runs_per_min'
+  | 'session_runs_per_day'
+  | 'session_concurrent'
+  | 'ip_runs_per_day';
+
 function loadLimits(): Limits {
   const n = (k: string, dflt: number) => {
     const raw = process.env[k];
@@ -56,14 +68,34 @@ function loadLimits(): Limits {
     const v = Number(raw);
     return Number.isFinite(v) && v >= 0 ? v : dflt;
   };
+  // Conformance affordance: OPENWOP_FORCE_RATE_LIMIT=true forces a tiny per-IP
+  // request budget so the conformance harness can DETERMINISTICALLY induce a 429
+  // (rate-limit-envelope.test.ts) without depending on real load timing. The
+  // canonical `rate_limited` envelope is identical to a production 429.
+  const forced = process.env.OPENWOP_FORCE_RATE_LIMIT === 'true';
   return {
-    ipReqsPerMin: n('OPENWOP_RATELIMIT_IP_REQS_PER_MIN', 60),
+    ipReqsPerMin: forced ? 3 : n('OPENWOP_RATELIMIT_IP_REQS_PER_MIN', 60),
     sessionRunsPerMin: n('OPENWOP_RATELIMIT_SESSION_RUNS_PER_MIN', 10),
     sessionRunsPerDay: n('OPENWOP_RATELIMIT_SESSION_RUNS_PER_DAY', 50),
     sessionConcurrent: n('OPENWOP_RATELIMIT_SESSION_CONCURRENT', 5),
     ipRunsPerDay: n('OPENWOP_RATELIMIT_IP_RUNS_PER_DAY', 60),
   };
 }
+
+/**
+ * Map each internal limiter reason to the canonical `details.scope` closed enum
+ * required by `rest-endpoints.md §"429 Too Many Requests envelope"`
+ * (`"tenant" | "route" | "global" | "key"`). Per-IP buckets are keyed on the
+ * source IP → `"key"`; per-session/tenant buckets → `"tenant"`. The specific
+ * limiter that fired is preserved in `details.reason` for observability.
+ */
+const RATE_LIMIT_SCOPE: Record<RateLimitReason, 'tenant' | 'route' | 'global' | 'key'> = {
+  ip_request_rate: 'key',
+  ip_runs_per_day: 'key',
+  session_runs_per_min: 'tenant',
+  session_runs_per_day: 'tenant',
+  session_concurrent: 'tenant',
+};
 
 // ── State (all maps reset per process / cold start) ──
 
@@ -124,7 +156,7 @@ function sessionKey(req: Request): string {
 
 function rejectRateLimited(
   res: import('express').Response,
-  reason: 'ip_request_rate' | 'session_runs_per_min' | 'session_runs_per_day' | 'session_concurrent' | 'ip_runs_per_day',
+  reason: RateLimitReason,
   retryAfterSeconds: number,
 ): void {
   res.set('Retry-After', String(Math.max(1, Math.ceil(retryAfterSeconds))));
@@ -132,7 +164,10 @@ function rejectRateLimited(
     error: 'rate_limited',
     message: 'Request denied by rate limit. Try again later.',
     details: {
-      scope: reason,
+      // Canonical closed enum per rest-endpoints.md §429.
+      scope: RATE_LIMIT_SCOPE[reason],
+      // Host detail: which specific limiter fired (non-normative).
+      reason,
       retryAfterMs: Math.max(1000, Math.ceil(retryAfterSeconds * 1000)),
     },
   });

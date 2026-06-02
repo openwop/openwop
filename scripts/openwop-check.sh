@@ -181,6 +181,23 @@ node "$SPEC_ROOT/scripts/check-pack-prompt-refs.mjs"
 # the pre-audit empty-tracker state. Mechanizes the audit's "close high/critical
 # findings before standardizing" requirement (cf. docs/AUDIT-RESPONSE).
 node "$SPEC_ROOT/scripts/check-audit-findings.mjs"
+# CF-11 out-of-band audit-checkpoint verifier regression guard. The verifier
+# (scripts/verify-audit-checkpoints.mjs) is a security-relevant tamper-detection
+# tool; pin its behavior against committed sample bundles so a regression is
+# caught at the spec gate, not just in the postgres host's own test. MUST accept
+# a valid bundle (exit 0) and reject a tampered one (exit 1).
+if node "$SPEC_ROOT/scripts/verify-audit-checkpoints.mjs" "$SPEC_ROOT/conformance/audit-export-samples/valid.json" >/dev/null 2>&1; then
+  echo "  ok: audit-checkpoint verifier accepts the valid sample bundle"
+else
+  echo "  FAIL: verify-audit-checkpoints.mjs rejected conformance/audit-export-samples/valid.json (expected exit 0)" >&2
+  exit 1
+fi
+if node "$SPEC_ROOT/scripts/verify-audit-checkpoints.mjs" "$SPEC_ROOT/conformance/audit-export-samples/tampered.json" >/dev/null 2>&1; then
+  echo "  FAIL: verify-audit-checkpoints.mjs ACCEPTED the tampered sample bundle (expected non-zero exit — tamper not detected)" >&2
+  exit 1
+else
+  echo "  ok: audit-checkpoint verifier rejects the tampered sample bundle"
+fi
 # Workflow-engine sample bundles a vendored copy of conformance/fixtures/
 # into its Docker image (apps/workflow-engine/conformance-fixtures/, per
 # the Dockerfile + scripts/sync-fixtures.sh). Catch silent drift: if the
