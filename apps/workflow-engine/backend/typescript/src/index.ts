@@ -33,7 +33,11 @@ import { loadPromptPacks, defaultPromptPackRoots } from './host/promptPackLoader
 import { seedDefaultHostSurfaces } from './bootstrap/hostSurfaceRegistry.js';
 import { initInMemorySurfaces } from './host/inMemorySurfaces.js';
 import { openStorage } from './storage/index.js';
-import { createHostAdapterSuite } from './host/index.js';
+import type { Storage } from './storage/storage.js';
+import { createHostAdapterSuite, type HostAdapterSuite } from './host/index.js';
+import { startWebhookDeliveryWorker } from './host/webhookDeliveryWorker.js';
+import { startRunDispatchSweeper } from './host/runDispatchSweeper.js';
+import { getInstanceId } from './host/instanceId.js';
 import { configureSecretResolver, loadSecretsFromEnv } from './byok/secretResolver.js';
 import { bootstrapKmsFromEnv } from './byok/kmsEncryption.js';
 import {
@@ -321,6 +325,14 @@ export async function createApp(config: AppConfig): Promise<Express> {
   registerPushSubscriptionRoutes(app, { storage });
   registerStreamRoutes(app, { storage });
   registerWebhookRoutes(app, { storage });
+  // Expose storage + hostSuite so the server entry (main) can start the
+  // background workers (durable webhook delivery + run-dispatch crash-recovery
+  // sweeper) against them. Tests build the app via createApp WITHOUT polling
+  // workers and drive the queue/sweep deterministically via the exported
+  // processDueWebhookDeliveries() / sweepOrphanedRuns(); only the long-lived
+  // server polls.
+  app.locals.storage = storage;
+  app.locals.hostSuite = hostSuite;
   registerPackRoutes(app, { storage });
   // RFC 0025 — isolated test-mode mirror namespace. Gated on
   // OPENWOP_PACKS_TEST_NAMESPACE_ENABLED=true; routes are not mounted
@@ -426,6 +438,20 @@ export async function createApp(config: AppConfig): Promise<Express> {
 async function main(): Promise<void> {
   const config = loadConfigFromEnv();
   const app = await createApp(config);
+
+  // Background workers (server-only): drain the durable webhook-delivery queue,
+  // and re-dispatch runs orphaned by a crashed instance. Both lease their work
+  // to this instance id so a crash lets another instance re-claim it.
+  const storage = app.locals.storage as Storage;
+  const hostSuite = app.locals.hostSuite as HostAdapterSuite;
+  const webhookWorker = startWebhookDeliveryWorker(storage, `webhook-${getInstanceId()}`);
+  const runSweeper = startRunDispatchSweeper({ storage, hostSuite });
+  for (const sig of ['SIGTERM', 'SIGINT'] as const) {
+    process.once(sig, () => {
+      webhookWorker.stop();
+      runSweeper.stop();
+    });
+  }
 
   app.listen(config.port, () => {
     log.info('workflow-engine listening', { port: config.port });

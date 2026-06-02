@@ -55,6 +55,14 @@ export interface RunRecord {
    *  this run. When set, it is stamped as `run.started`'s `causationId` so
    *  `/ancestry` resolves the cause → run (e.g. a trigger delivery → run). */
   causationId?: string;
+  /** Multi-instance dispatch lease. Set by `executeRun` at start to the
+   *  instance id that is executing the run; the lease (`dispatchLeaseExpiresAt`,
+   *  epoch ms) outlives the max legal runtime, so an alive run is never
+   *  re-dispatched. The `runDispatchSweeper` re-dispatches `pending`/`running`
+   *  runs whose lease has expired (the owning instance crashed). Cleared
+   *  implicitly: terminal/`waiting-*` status excludes a run from the sweep. */
+  dispatchOwner?: string | null;
+  dispatchLeaseExpiresAt?: number | null;
 }
 
 /** Persisted run event with monotonic sequence per run. */
@@ -105,6 +113,39 @@ export interface WebhookSubscriptionRecord {
   /** HMAC-SHA256 secret. Stored in plaintext in this sample (use KMS in production). */
   secret: string;
   createdAt: string;
+}
+
+/**
+ * Durable webhook-delivery queue row. Each subscription that matches an emitted
+ * event gets one row; the background worker (`webhookWorker.ts`) claims due
+ * rows, POSTs the signed delivery, and either marks it `delivered` or reschedules
+ * it with exponential backoff until `maxAttempts` is reached (then `dead`).
+ *
+ * The claim lease (`claimedBy` + `claimExpiresAt`) makes the queue
+ * multi-instance-safe: a crashed worker's lease expires and another instance
+ * re-claims the row, so deliveries survive a process crash rather than being
+ * dropped (the prior `setImmediate` fire-and-forget path lost them).
+ */
+export interface WebhookDeliveryRecord {
+  deliveryId: string;
+  subscriptionId: string;
+  url: string;
+  /** HMAC-SHA256 secret captured at enqueue time (the subscription may be deleted before delivery). */
+  secret: string;
+  eventType: string;
+  /** The exact JSON body to POST (a serialized EventRecord). */
+  payload: string;
+  status: 'pending' | 'delivered' | 'dead';
+  attempts: number;
+  maxAttempts: number;
+  /** Epoch ms; a row is due when `status === 'pending'` AND `nextAttemptAt <= now`. */
+  nextAttemptAt: number;
+  /** Claim lease: worker id + expiry (epoch ms). A due row whose lease is absent or expired is re-claimable. */
+  claimedBy?: string | null;
+  claimExpiresAt?: number | null;
+  lastError?: string | null;
+  createdAt: number;
+  updatedAt: number;
 }
 
 /** Idempotency key replay entry. */
