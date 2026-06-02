@@ -57,6 +57,7 @@ interface RosterEntry {
   rosterId: string;
   persona: string;
   workflows: string[];
+  autonomyLevel?: 'auto' | 'review';
 }
 
 describe('agents-demo backend foundations', () => {
@@ -69,6 +70,13 @@ describe('agents-demo backend foundations', () => {
     const roster = await api<{ roster: RosterEntry[] }>('/v1/host/sample/roster');
     expect(roster.body.roster.length).toBe(5);
     expect(roster.body.roster.map((r) => r.persona)).toContain('Sally');
+
+    // Seedable autonomy (white-label): the stock seed ships Nora in `review`
+    // (so the approval flow is demoable out of the box); others default to auto.
+    const nora = roster.body.roster.find((r) => r.persona === 'Nora')!;
+    expect(nora.autonomyLevel).toBe('review');
+    const sally = roster.body.roster.find((r) => r.persona === 'Sally')!;
+    expect(sally.autonomyLevel).toBeUndefined();
 
     // Re-seed is a no-op (does not clobber the existing roster).
     const second = await api<{ seeded: boolean }>('/v1/host/sample/demo/seed', { method: 'POST', body: '{}' });

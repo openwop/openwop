@@ -68,6 +68,7 @@
     "role": "Marketing Campaign Coordinator",
     "roleKey": "marketing-ops",
     "description": "Brand-aware, action-oriented.",
+    "autonomyLevel": "review",
     "systemPrompt": "You are Nora, a Marketing Campaign Coordinator. You are brand-aware and action-oriented. You review campaign briefs, route content for approval, and run channel publish checklists.",
     "cards": [
       { "title": "Review Q3 campaign brief against brand guide", "source": "human", "priority": "normal" },
