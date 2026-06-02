@@ -555,6 +555,27 @@ const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
       );
       CREATE INDEX IF NOT EXISTS idx_agent_run_activity_tenant_roster
         ON agent_run_activity (tenant_id, roster_id, created_at);
+
+      -- Backfill from existing runs (metadata is JSONB) so the activity feed
+      -- isn't empty after this migration. First present attribution block wins,
+      -- matching recordRunAttribution's priority.
+      INSERT INTO agent_run_activity (run_id, tenant_id, roster_id, agent_id, source, created_at)
+      SELECT run_id, tenant_id,
+        COALESCE(metadata->'heartbeat'->>'rosterId', metadata->'schedule'->>'rosterId',
+                 metadata->'kanban'->>'rosterId',    metadata->'approval'->>'rosterId'),
+        COALESCE(metadata->'heartbeat'->>'agentId',  metadata->'schedule'->>'agentId',
+                 metadata->'kanban'->>'agentId',     metadata->'approval'->>'agentId'),
+        CASE
+          WHEN metadata->'heartbeat'->>'rosterId' IS NOT NULL THEN 'heartbeat'
+          WHEN metadata->'schedule'->>'rosterId'  IS NOT NULL THEN 'schedule'
+          WHEN metadata->'kanban'->>'rosterId'    IS NOT NULL THEN 'kanban'
+          ELSE 'approval'
+        END,
+        created_at
+      FROM runs
+      WHERE COALESCE(metadata->'heartbeat'->>'rosterId', metadata->'schedule'->>'rosterId',
+                     metadata->'kanban'->>'rosterId',    metadata->'approval'->>'rosterId') IS NOT NULL
+      ON CONFLICT (run_id) DO NOTHING;
     `);
   },
   19: async (client) => {

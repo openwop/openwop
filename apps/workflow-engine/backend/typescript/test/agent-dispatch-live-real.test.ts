@@ -19,7 +19,6 @@ import { createAiProvidersAdapter } from '../src/aiProviders/aiProvidersHost.js'
 import { programMock } from '../src/providers/dispatchMock.js';
 import { getAgentRegistry, type ResolvedAgentManifest } from '../src/executor/agentRegistry.js';
 import { runAgentDispatchLive } from '../src/host/agentDispatch.js';
-import type { AiCallRequest, AiCallResult } from '../src/executor/types.js';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 let port = 19600;
@@ -49,16 +48,15 @@ function registerAgent(agentId: string, over: Partial<ResolvedAgentManifest> = {
   });
 }
 
-/** A real adapter scope bound to a unique nodeId, capturing emitted events. */
-function realAdapter(nodeId: string, events: Array<{ type: string }>) {
+/** A real adapter's callAI bound to a unique nodeId, capturing emitted events. */
+function realCallAI(nodeId: string, events: Array<{ type: string }>) {
   const hostSuite = app.locals.hostSuite as HostAdapterSuite;
   const adapter = createAiProvidersAdapter({
     runId: `run-${nodeId}`, nodeId, tenantId: 't1', attempt: 1,
     secrets: {}, policyResolver: hostSuite.providerPolicyResolver,
     emit: async (type) => { events.push({ type }); return { eventId: `e${events.length}`, sequence: events.length }; },
   });
-  // Pin the keyless mock provider for the agent's turn.
-  return (req: Parameters<typeof adapter.callAI>[0]): Promise<AiCallResult> => adapter.callAI(req as AiCallRequest);
+  return adapter.callAI; // the agent's turn pins the keyless mock provider via modelOptions
 }
 
 describe('runAgentDispatchLive — real callAI pipeline via mock provider', () => {
@@ -67,7 +65,7 @@ describe('runAgentDispatchLive — real callAI pipeline via mock provider', () =
     registerAgent('t.complete');
     programMock(nodeId, [{ content: '{"answer":"42"}', stopReason: 'end_turn', inputTokens: 5, outputTokens: 3 }]);
     const events: Array<{ type: string }> = [];
-    const callAI = realAdapter(nodeId, events);
+    const callAI = realCallAI(nodeId, events);
 
     const result = await runAgentDispatchLive(
       { agentId: 't.complete', task: { q: 'meaning?' } },
@@ -90,19 +88,23 @@ describe('runAgentDispatchLive — real callAI pipeline via mock provider', () =
 
     const result = await runAgentDispatchLive(
       { agentId: 't.escalate' },
-      { callAI: realAdapter(nodeId, events), modelOptions: { provider: 'mock', model: nodeId } },
+      { callAI: realCallAI(nodeId, events), modelOptions: { provider: 'mock', model: nodeId } },
     );
     expect(result.status).toBe('escalated');
     expect(result.confidence).toBe(0.2);
   });
 
-  it('SR-1: no cleartext credential appears in the result', async () => {
+  it('SR-1: no cleartext credential appears in the result (intent check)', async () => {
+    // Intent/regression guard: the mock path carries no credential, so this
+    // cannot fail today — it pins the contract that a dispatch result never
+    // serializes secret material. The real credential-redaction (credentialRef
+    // hashing) is covered on a keyed provider by the opt-in managed test.
     const nodeId = 'agent.dispatch.sr1';
     registerAgent('t.sr1');
     programMock(nodeId, [{ content: '{"answer":"ok"}', stopReason: 'end_turn' }]);
     const result = await runAgentDispatchLive(
       { agentId: 't.sr1' },
-      { callAI: realAdapter(nodeId, []), modelOptions: { provider: 'mock', model: nodeId } },
+      { callAI: realCallAI(nodeId, []), modelOptions: { provider: 'mock', model: nodeId } },
     );
     expect(result.status).toBe('completed');
     const serialized = JSON.stringify(result);

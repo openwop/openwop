@@ -1372,7 +1372,8 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
          RETURNING count`,
         [bucket, windowStart],
       );
-      return Number(rows[0]!.count);
+      // INSERT … RETURNING always yields exactly one row; default defensively.
+      return rows[0] ? Number(rows[0].count) : 0;
     },
     async pruneRunBudget(olderThanWindowStart) {
       const { rowCount } = await pool.query(`DELETE FROM run_budget WHERE window_start < $1`, [olderThanWindowStart]);

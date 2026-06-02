@@ -12,6 +12,10 @@
  *
  * The deliverer is injected into the messaging routes so it is unit-testable
  * with a mock (no real network in tests).
+ *
+ * Trust boundary: `OPENWOP_NOTIFY_WEBHOOK_URL` is an OPERATOR-set env value (not
+ * user input — no SSRF), but the POST body carries the message content +
+ * recipient, so the configured endpoint must be a trusted host-owned function.
  */
 
 import { createLogger } from '../observability/logger.js';

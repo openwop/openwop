@@ -602,6 +602,32 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
       );
       CREATE INDEX IF NOT EXISTS idx_agent_run_activity_tenant_roster
         ON agent_run_activity (tenant_id, roster_id, created_at);
+
+      -- Backfill from existing runs so the activity feed isn't empty after this
+      -- migration. Pick the first present attribution block (heartbeat →
+      -- schedule → kanban → approval), matching recordRunAttribution's priority.
+      -- json_extract returns NULL for non-JSON/absent, so the WHERE keeps only
+      -- agent-attributed runs.
+      INSERT OR IGNORE INTO agent_run_activity (run_id, tenant_id, roster_id, agent_id, source, created_at)
+      SELECT run_id, tenant_id,
+        COALESCE(json_extract(metadata,'$.heartbeat.rosterId'), json_extract(metadata,'$.schedule.rosterId'),
+                 json_extract(metadata,'$.kanban.rosterId'),    json_extract(metadata,'$.approval.rosterId')),
+        COALESCE(json_extract(metadata,'$.heartbeat.agentId'),  json_extract(metadata,'$.schedule.agentId'),
+                 json_extract(metadata,'$.kanban.agentId'),     json_extract(metadata,'$.approval.agentId')),
+        CASE
+          WHEN json_extract(metadata,'$.heartbeat.rosterId') IS NOT NULL THEN 'heartbeat'
+          WHEN json_extract(metadata,'$.schedule.rosterId')  IS NOT NULL THEN 'schedule'
+          WHEN json_extract(metadata,'$.kanban.rosterId')    IS NOT NULL THEN 'kanban'
+          ELSE 'approval'
+        END,
+        created_at
+      FROM runs
+      -- json_valid guards json_extract (sqlite raises on malformed JSON; AND
+      -- short-circuits so json_extract only runs on valid-JSON rows). In practice
+      -- metadata is always JSON.stringify output, but stay defensive.
+      WHERE json_valid(metadata)
+        AND COALESCE(json_extract(metadata,'$.heartbeat.rosterId'), json_extract(metadata,'$.schedule.rosterId'),
+                     json_extract(metadata,'$.kanban.rosterId'),    json_extract(metadata,'$.approval.rosterId')) IS NOT NULL;
     `);
   },
   22: (db) => {
