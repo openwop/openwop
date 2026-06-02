@@ -1516,7 +1516,7 @@ function handleOpenApi(_req: IncomingMessage, res: ServerResponse): void {
     openapi: '3.1',
     info: {
       title: 'openwop in-memory reference host',
-      version: '1.1.5',
+      version: '1.1.7',
       description:
         'Stub OpenAPI document. The full canonical OpenAPI bundle lives at api/openapi.yaml in the openwop repo. This host serves only the shape conformance suites assert on.',
     },
@@ -1664,7 +1664,7 @@ function handleDiscovery(_req: IncomingMessage, res: ServerResponse): void {
     protocolVersion: '1.0',
     implementation: {
       name: 'openwop-host-in-memory',
-      version: '1.1.5',
+      version: '1.1.7',
       vendor: 'openwop-spec (reference example)',
     },
     supportedEnvelopes: [],
@@ -2087,7 +2087,7 @@ function handleDebugBundle(
     generatedAt: new Date().toISOString(),
     host: {
       name: 'openwop-host-in-memory',
-      version: '1.1.5',
+      version: '1.1.7',
       vendor: 'openwop-spec (reference example)',
     },
     run: {
