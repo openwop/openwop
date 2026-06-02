@@ -210,6 +210,35 @@ gcloud run services describe openwop-app-backend --region=us-central1 \
 curl -s https://app.openwop.dev/api/readiness   # {"status":"ready",...} — 503 if a managed key is unconfigured
 ```
 
+### Verifying live agent dispatch (real model completion)
+
+`POST /v1/host/sample/agents/{agentId}/dispatch` with `{"live": true}` runs a
+manifest agent's turn through the real provider pipeline. By default it routes
+to the **managed tier** (no per-tenant BYOK needed), so a real completion
+requires the managed key to be configured:
+
+- **Managed tier:** set `MINIMAX_API_KEY` (the `openwop-free` tier is
+  MiniMax-backed) and restart; `/api/readiness` turns green. Then a `live`
+  dispatch produces a real completion.
+- **BYOK:** issue a tenant secret for a real provider (anthropic / openai /
+  google) and dispatch with `{"live": true, "provider": "<id>", "model": "<id>"}`
+  (the resolver honors an explicit pin; `callAI` is the provider gate).
+
+Two automated checks back this:
+
+- **In-sandbox, no key** — `test/agent-dispatch-live-real.test.ts` exercises the
+  full `callAI → dispatchStructured` pipeline (structured-output validation, §F
+  escalation, usage emission, SR-1) through the keyless `mock` provider. Runs in
+  CI.
+- **Real provider, opt-in** — `test/agent-dispatch-live-managed.test.ts` is
+  skipped unless `OPENWOP_VERIFY_LIVE=1`; with `MINIMAX_API_KEY` set it confirms
+  an actual managed-tier completion. Never runs in CI.
+
+```bash
+MINIMAX_API_KEY=... OPENWOP_VERIFY_LIVE=1 \
+  npx vitest run test/agent-dispatch-live-managed.test.ts
+```
+
 ### Feature toggle: warm-instance posture
 
 By default the deploy above uses `min-instances=0` (Cloud Run evicts
