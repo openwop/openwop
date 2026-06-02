@@ -1,6 +1,6 @@
 # openwop Spec v1 — `openwop-core-standard` Operational Annex
 
-> **Status: DRAFT v1.x (filed via [RFC 0088](../../RFCS/0088-core-standard-profile.md), 2026-05-31).** Additive v1.x extension — an **operational annex** (the [`production-profile.md`](./production-profile.md) / [`agent-platform-profile.md`](./agent-platform-profile.md) pattern), NOT a new entry in the closed [`profiles.md`](./profiles.md) predicate catalog. Names the small, stable **Core Standard Profile** — the floor of normative MUSTs that have black-box production-path conformance — so an adopter can build against a frozen target without inheriting the in-motion agent-platform surface. The live aggregate-evidence assertion against a claiming host lands at `Active → Accepted`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.x — the Core Standard Profile reached `Accepted` via [RFC 0088](../../RFCS/0088-core-standard-profile.md) (2026-06-01; filed 2026-05-31).** Additive v1.x extension — an **operational annex** (the [`production-profile.md`](./production-profile.md) / [`agent-platform-profile.md`](./agent-platform-profile.md) pattern), NOT a new entry in the closed [`profiles.md`](./profiles.md) predicate catalog. Names the small, stable **Core Standard Profile** — the floor of normative MUSTs that have black-box production-path conformance — so an adopter can build against a frozen target without inheriting the in-motion agent-platform surface. RFC 0088 reached `Accepted` on the aggregate-floor evidence (the four reference hosts pass the §C floor scenarios with 0 deterministic failures vs the current suite); a per-profile machine-readable certification bundle is tracked as an open gap below. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ## Why this exists
 
@@ -48,17 +48,9 @@ Everything not in §B is an **extension**, kept out by exactly one lever, chosen
 - **Lever 1 — `tier: "experimental"` (RFC 0042)** for capabilities whose RFC is still `Active`/`Draft`. The host advertises the experimental signal; the suite soft-skips by default. RFC 0042 forbids this on `Accepted`-RFC capabilities.
 - **Lever 2 — outside the floor, pending black-box proof** for `Accepted` capabilities whose **behavioral** conformance is still proven via a seam / soft-skip / simulator. They stay `Accepted` (no de-grade) but sit outside the floor until their black-box production-path proof lands, then graduate **in**.
 
-### Experimental extensions (Lever 1 — `Active` RFCs)
+### Experimental extensions (Lever 1 — `Active`/`Draft` RFCs)
 
-| Capability | RFC |
-|---|---|
-| `agents.memoryConsolidation` / `agents.commitments` | 0068 |
-| `toolCatalog` | 0078 |
-| `httpClient.egressPolicy` | 0079 |
-| `memory.search` / `memory.retention` | 0080 |
-| `agents.evalSuite` | 0081 |
-| `agents.deployment` | 0082 |
-| `budget` | 0084 |
+**None at present.** Every agent-platform extension capability previously tracked here — `agents.memoryConsolidation`/`commitments` (0068), `toolCatalog` (0078), `httpClient.egressPolicy` (0079), `memory.search`/`retention` (0080), `agents.evalSuite` (0081), `agents.deployment` (0082), `budget` (0084) — has since reached `Accepted`. Per RFC 0042 a capability on an `Accepted` RFC MUST NOT advertise `tier: "experimental"`, so these are no longer Lever-1 extensions: they are **agent-platform extension capabilities governed by RFC 0085's `openwop-agent-platform` `partial`/`full` claim** (§E), and remain **outside the Core floor**. Each graduates *into* the floor only if/when it gains black-box production-path proof (Lever 2).
 
 ### Graduated to black-box production-path (capability-gated; proof landed 2026-06-01)
 
@@ -79,9 +71,9 @@ These `Accepted` capabilities have moved out of the seam-gated set: their behavi
 
 ## §E — Relationship to `openwop-agent-platform` (RFC 0085)
 
-The aggregate agent-platform target is named separately by RFC 0085's `openwop-agent-platform` annex. `openwop-core-standard` does not duplicate it: the agent-platform capabilities are extensions **outside** the Core floor (Lever 1 for the `Active` ones; RFC 0085's `partial`/`full` claim for the `Accepted` ones). A host MAY advertise both annexes; they are orthogonal — Core = the stable wire floor, agent-platform = the aggregate platform claim.
+The aggregate agent-platform target is named separately by RFC 0085's `openwop-agent-platform` annex. `openwop-core-standard` does not duplicate it: the agent-platform capabilities are extensions **outside** the Core floor — now that every one has reached `Accepted`, they are governed by RFC 0085's `partial`/`full` claim (no longer Lever-1 experimental signals). A host MAY advertise both annexes; they are orthogonal — Core = the stable wire floor, agent-platform = the aggregate platform claim.
 
 ## Open spec gaps
 
-- The live aggregate-evidence assertion against a claiming host is the `Active → Accepted` step (MyndHyve + all reference hosts already pass the floor scenarios).
+- **Per-profile machine-readable certification bundle (open).** RFC 0088 reached `Accepted` on the aggregate-floor evidence, but a claimed profile is not yet bound to a reproducible `{suite version, pass list, host commit, discovery document}` bundle — the floor proof today is server-free predicate coverage (§C) plus an externally-documented live aggregate. A future additive RFC SHOULD define a machine-readable certification bundle so every profile claim is mechanically reproducible from a single artifact.
 - Each Lever-2 row graduates into the floor as its Phase-4 black-box harness lands; the §C table grows by the corresponding scenario set at that point.
