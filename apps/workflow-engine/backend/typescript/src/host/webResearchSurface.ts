@@ -6,13 +6,17 @@
  * `fetchBatch` is REAL: it concurrently HTTP-fetches the given URLs, extracts a
  * title + readable text, and truncates to a byte cap — no API key needed.
  *
- * `search` requires a search provider. The sample host ships none, so it
- * returns an HONEST demo result: a real search-engine query URL for the term
- * (a usable link, not fabricated content), marked `engine: 'demo'`. Configure a
- * BYOK provider for live results. `research` composes search → fetchBatch.
+ * `search` is provider-gated: when a search-provider API key is configured —
+ * BYOK secret `web-search` for the tenant, or the host env
+ * `OPENWOP_WEBSEARCH_API_KEY` — it queries a real provider (Brave-shaped JSON by
+ * default; override the endpoint with `OPENWOP_WEBSEARCH_BASE_URL`). With no key
+ * (or on a provider error) it falls back to an HONEST demo result: a real
+ * search-engine query URL marked `engine: 'demo'`. `research` composes search →
+ * fetchBatch, so it goes live automatically once a key is configured.
  */
 
 import { createLogger } from '../observability/logger.js';
+import { resolveSecret } from '../byok/secretResolver.js';
 import type { BundleScope } from './inMemorySurfaces.js';
 
 const log = createLogger('host.webResearch');
@@ -58,7 +62,46 @@ export interface WebResearchSurface {
   research(args: { query: string; maxResults?: number; perFetchTimeoutMs?: number; siteFilter?: string }): Promise<{ citations: Array<{ url: string; title: string; snippet?: string; content: string; rank?: number; fetchedAt?: string }>; engine?: string; totalResults?: number }>;
 }
 
-export function createWebResearchSurface(_scope: BundleScope): WebResearchSurface {
+type SearchResult = { results: Array<{ url: string; title: string; snippet?: string; rank?: number }>; engine: string; totalResults?: number };
+
+/** Resolve a search-provider key: BYOK secret `web-search` for the tenant first,
+ *  then the host env key. Returns null when neither is configured. */
+async function resolveSearchKey(tenantId: string): Promise<string | null> {
+  try {
+    const byok = await resolveSecret('web-search', { tenantId });
+    if (byok) return byok;
+  } catch {
+    // BYOK lookup failures are non-fatal — fall through to the env key.
+  }
+  return process.env.OPENWOP_WEBSEARCH_API_KEY ?? null;
+}
+
+/** Honest demo result — a real query URL, not fabricated content. */
+function demoSearch(query: string, maxResults: number): SearchResult {
+  return {
+    results: [{ url: `https://duckduckgo.com/?q=${encodeURIComponent(query)}`, title: `Web search: ${query}`, snippet: 'Demo result — configure a search provider (BYOK secret "web-search" or OPENWOP_WEBSEARCH_API_KEY) for live results.', rank: 1 }].slice(0, Math.max(1, maxResults)),
+    engine: 'demo',
+    totalResults: 1,
+  };
+}
+
+/** Live provider query (Brave-shaped JSON by default). Throws on transport / non-2xx. */
+async function searchLive(query: string, key: string, maxResults: number, siteFilter?: string): Promise<SearchResult> {
+  const base = process.env.OPENWOP_WEBSEARCH_BASE_URL ?? 'https://api.search.brave.com/res/v1/web/search';
+  const q = siteFilter ? `${query} site:${siteFilter}` : query;
+  const url = `${base}?q=${encodeURIComponent(q)}&count=${Math.max(1, Math.min(maxResults, 20))}`;
+  const res = await fetch(url, { headers: { accept: 'application/json', 'x-subscription-token': key }, signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS) });
+  if (!res.ok) throw new Error(`search provider returned HTTP ${res.status}`);
+  const body = (await res.json()) as { web?: { results?: Array<{ url?: string; title?: string; description?: string }> } };
+  const raw = body.web?.results ?? [];
+  const results = raw
+    .filter((r): r is { url: string; title?: string; description?: string } => typeof r.url === 'string')
+    .slice(0, maxResults)
+    .map((r, i) => ({ url: r.url, title: r.title ?? r.url, ...(r.description ? { snippet: r.description } : {}), rank: i + 1 }));
+  return { results, engine: process.env.OPENWOP_WEBSEARCH_ENGINE ?? 'brave', totalResults: results.length };
+}
+
+export function createWebResearchSurface(scope: BundleScope): WebResearchSurface {
   async function fetchOne(url: string, timeoutMs: number, maxBody: number, readable: boolean): Promise<Page> {
     const fetchedAt = new Date().toISOString();
     try {
@@ -78,16 +121,21 @@ export function createWebResearchSurface(_scope: BundleScope): WebResearchSurfac
   }
 
   const surface: WebResearchSurface = {
-    async search({ query, maxResults = 10, engine }) {
-      // No search provider on the sample host → honest demo result: a real
-      // query URL the user can click, not fabricated page content.
-      const q = encodeURIComponent(query);
-      log.info('web search (demo — no provider configured)', { query, engine });
-      return {
-        results: [{ url: `https://duckduckgo.com/?q=${q}`, title: `Web search: ${query}`, snippet: 'Demo result — configure a search provider (BYOK) for live results.', rank: 1 }].slice(0, Math.max(1, maxResults)),
-        engine: 'demo',
-        totalResults: 1,
-      };
+    async search({ query, maxResults = 10, siteFilter }) {
+      const key = await resolveSearchKey(scope.tenantId);
+      if (!key) {
+        log.info('web search (demo — no provider key configured)', { query });
+        return demoSearch(query, maxResults);
+      }
+      try {
+        const live = await searchLive(query, key, maxResults, siteFilter);
+        log.info('web search (live)', { query, engine: live.engine, results: live.results.length });
+        return live;
+      } catch (err) {
+        // Provider error → don't hard-fail the node; fall back to the honest demo.
+        log.warn('web search provider failed — falling back to demo result', { query, error: err instanceof Error ? err.message : String(err) });
+        return demoSearch(query, maxResults);
+      }
     },
 
     fetchBatch: ({ urls, concurrency = 4, perRequestTimeoutMs = DEFAULT_TIMEOUT_MS, maxBodyBytes = DEFAULT_MAX_BODY, extractReadable = true }) =>
