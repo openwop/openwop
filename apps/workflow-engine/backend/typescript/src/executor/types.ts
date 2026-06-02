@@ -8,6 +8,8 @@
  * keeps it minimal.
  */
 
+import type { A2aSurface } from '../host/a2aSurface.js';
+
 /**
  * Single message in a chat-style AI request. Field shapes mirror
  * `spec/v1/host-capabilities.md §host.aiProviders` verbatim.
@@ -173,6 +175,9 @@ export interface NodeContext {
   queueBus?: HostQueueBusSurface;
   /** ctx.observability — used by core.openwop.obs nodes. */
   observability?: HostObservabilitySurface;
+  /** ctx.a2a — RFC 0076 §A `host.a2a`. The A2A (Agent-to-Agent) client the
+   *  `core.openwop.a2a` pack delegates to (`spec/v1/a2a-integration.md`). */
+  a2a?: A2aSurface;
   /** ctx.mcp — RFC 0020 host-side MCP server. The `expose` method is a
    *  no-op for hosts that build their MCP registry declaratively (by
    *  scanning workflow definitions). Pack delegates from

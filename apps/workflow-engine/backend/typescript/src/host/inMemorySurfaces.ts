@@ -31,6 +31,7 @@ import { createLogger } from '../observability/logger.js';
 import { registerHostSurface } from '../bootstrap/hostSurfaceRegistry.js';
 import { redactForCompaction } from '../byok/textRedaction.js';
 import { DurableCollection } from './hostExtPersistence.js';
+import { createA2aSurface, type A2aSurface } from './a2aSurface.js';
 
 const log = createLogger('host.inMemorySurfaces');
 
@@ -62,6 +63,9 @@ export interface HostSurfaceBundle {
   fs: FsSurface;
   queueBus: QueueBusSurface;
   observability: ObservabilitySurface;
+  /** RFC 0076 §A `host.a2a` — the A2A (Agent-to-Agent) client the
+   *  `core.openwop.a2a` pack delegates to. See `host/a2aSurface.ts`. */
+  a2a: A2aSurface;
 }
 
 /** Inputs all surface methods receive. Pack delegates spread
@@ -1200,5 +1204,6 @@ export function buildHostSurfaceBundle(scope: BundleScope): HostSurfaceBundle {
     fs: createFs(fsRoot, scope),
     queueBus: createQueueBus(_busState, scope),
     observability: createObservability(scope),
+    a2a: createA2aSurface(scope),
   };
 }
