@@ -26,6 +26,10 @@ import { processDueHeartbeats } from '../src/host/heartbeatService.js';
 import { processDueSchedules } from '../src/host/scheduleDaemon.js';
 import { updateRosterEntry, listRosterTenants, listRoster } from '../src/host/rosterService.js';
 import { registerJob } from '../src/host/schedulingService.js';
+import { createAiProvidersAdapter } from '../src/aiProviders/aiProvidersHost.js';
+import { programMock } from '../src/providers/dispatchMock.js';
+import { getAgentRegistry } from '../src/executor/agentRegistry.js';
+import { runAgentDispatchLive } from '../src/host/agentDispatch.js';
 
 const OP: Record<string, string> = { authorization: 'Bearer sample-token', 'content-type': 'application/json' };
 let server: http.Server;
@@ -113,6 +117,37 @@ describe('agent autonomy — end-to-end smoke', () => {
     const probe = (await post(`/v1/host/sample/messaging/connectors/${made.connectorId}/test`, {})).body;
     expect(probe.ok).toBe(true);
     expect(probe.liveRelayDevices).toBeGreaterThanOrEqual(1);
+  });
+
+  it('runs a real live-dispatch model turn end-to-end (keyless mock provider)', async () => {
+    // Register an agent with a return schema, program the keyless mock provider,
+    // and dispatch a LIVE turn through the app's real AI adapter — the actual
+    // callAI → dispatchStructured → dispatchMock pipeline, no credentials.
+    const nodeId = 'agent.dispatch.smoke';
+    getAgentRegistry().register({
+      agentId: 'smoke.agent', persona: 'Smokey', modelClass: 'chat', systemPrompt: 'Answer.',
+      packName: 'test', packVersion: '0', toolAllowlist: [],
+      handoff: {
+        returnSchema: { type: 'object', required: ['answer'], properties: { answer: { type: 'string' } } },
+        validateReturn: (v: unknown) =>
+          v && typeof v === 'object' && typeof (v as { answer?: unknown }).answer === 'string'
+            ? { ok: true }
+            : { ok: false, errors: 'missing answer' },
+      },
+    });
+    programMock(nodeId, [{ content: '{"answer":"live"}', stopReason: 'end_turn', inputTokens: 4, outputTokens: 2 }]);
+    const hostSuite = app.locals.hostSuite as HostAdapterSuite;
+    const adapter = createAiProvidersAdapter({
+      runId: 'smoke-run', nodeId, tenantId: 'default', attempt: 1,
+      secrets: {}, policyResolver: hostSuite.providerPolicyResolver,
+    });
+    const result = await runAgentDispatchLive(
+      { agentId: 'smoke.agent', task: { q: 'hi' } },
+      { callAI: adapter.callAI, modelOptions: { provider: 'mock', model: nodeId } },
+    );
+    expect(result.status).toBe('completed');
+    expect(result.provider).toBe('mock');
+    expect(result.result).toEqual({ answer: 'live' });
   });
 
   it('/notify returns an honest synthetic receipt with no webhook configured', async () => {
