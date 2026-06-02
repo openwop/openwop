@@ -1,15 +1,32 @@
 ---
 name: browser
-description: Validate the openwop spec site (site/, public/, registry/, registry/v1/, openwop.dev). Build, serve locally, verify the doc index renders, schema JSONs are served with correct MIME types, redocly/asyncapi previews succeed, registry pack pages resolve, and no broken cross-doc links. Lightweight — most openwop surface is non-UI, but the site is a credibility surface.
+description: Validate the openwop public surfaces. Mode A — the spec site (site/, public/, registry/, openwop.dev): build, serve, verify the doc index renders, schemas serve, redocly/asyncapi previews, registry pack pages resolve, no broken cross-doc links. Mode B — the demo app (apps/workflow-engine/frontend/react, app.openwop.dev): a static dark-mode + CSS-integrity audit (empty-:is() nesting-break fingerprint, hover color-pin traps, third-party-widget theming, hardcoded light fallbacks) since there is no headless browser in this environment. Pick the mode that matches the surface, or run both.
 ---
 
-# Spec Site Validation (openwop)
+# Browser-Surface Validation (openwop)
 
-The openwop spec site is the public credibility surface — `openwop.dev`, the registry under `packs.openwop.dev`, and the doc landing pages. It is regenerated from the corpus by `site/src/build.mjs`. Drift between the site and the corpus erodes trust, even when the corpus itself is correct.
+openwop has **two** public browser surfaces, and they are validated differently:
 
-This skill validates the static site, the registry surface, and the public-facing doc renders. It is lightweight by openwop standards — most validation is `npm run openwop:check` (the wire side); this skill checks the human-facing side.
+- **Mode A — the spec site** (`openwop.dev`, `packs.openwop.dev`): the credibility surface, regenerated from the corpus by `site/src/build.mjs`. Drift between the site and the corpus erodes trust even when the corpus is correct. This is the historical body of this skill (Steps 0–9 below).
+- **Mode B — the demo app** (`app.openwop.dev`, source `apps/workflow-engine/frontend/react/`): the interactive reference app. Its bugs are *runtime/visual* — broken dark-mode contrast, off-screen popovers, mis-themed third-party widgets, silently-dropped CSS rules — none of which `npm run openwop:check` or the spec-site checks catch.
+
+## Mode selection
+
+```bash
+# What changed / what to audit?
+git diff --name-only origin/main..HEAD | grep -E '^(site/|public/|registry/|api/|spec/v1/|RFCS/|schemas/)' && echo "→ run MODE A (spec site)"
+git diff --name-only origin/main..HEAD | grep -E '^apps/workflow-engine/frontend/react/' && echo "→ run MODE B (demo app)"
+```
+
+Run Mode A for spec-site/registry/doc changes, Mode B for demo-app changes, or **both** for "do a full audit". `$ARGUMENTS` selects the target — "site", "app", or "full".
+
+> **Hard constraint: there is no headless browser in this environment.** Mode B cannot *render* the app. It is a **static + build-time** audit that encodes the failure modes we have actually shipped (see Mode B). Build/lint-green ≠ visually correct — Mode B always ends by naming the surfaces a human must click through, in **both** light and dark.
 
 ## Target: $ARGUMENTS
+
+---
+
+# MODE A — Spec site (`openwop.dev` / `packs.openwop.dev`)
 
 ---
 
@@ -270,24 +287,166 @@ Before pushing site changes to `openwop.dev`:
 - [ ] Relative cross-doc links resolve
 - [ ] Registry surface (if claiming live) returns manifests + signing keys honestly
 - [ ] `public/index.html` status / version claims align with README
-- [ ] `firebase deploy --only hosting` (when ready) — but only after the prior items pass
+- [ ] `firebase deploy --only hosting:docs` (when ready) — but only after the prior items pass
+
+---
+
+# MODE B — Demo app (`app.openwop.dev`)
+
+Source: `apps/workflow-engine/frontend/react/` (lone stylesheet: `src/styles/global.css`). Deployed as the Firebase Hosting target `app` (the React SPA) in front of the Cloud Run backend — see `apps/workflow-engine/DEPLOY.md` + CLAUDE.md's deploy digest.
+
+**Scope split — do not duplicate `/ux-review`.** `/ux-review` Mode A(app) owns *token discipline* against `DESIGN.app.md` (hex literals, emoji-as-icons, component-registry drift, focus rings). Mode B here owns what ux-review and `openwop:check` **cannot** see: **build-time CSS integrity** and **dark-mode runtime rendering**. These are the bugs we have actually shipped to `app.openwop.dev` and then fixed one screenshot at a time — encode them so the next audit catches them in one pass.
+
+## Step B-1: Build + CSS structural integrity — the empty-`:is()` fingerprint (CRITICAL)
+
+```bash
+cd apps/workflow-engine/frontend/react
+rm -rf dist && npm run build 2>&1 | tail -6           # tsc + vite; must exit 0
+CSS=$(ls dist/assets/index-*.css)
+
+# THE check. An empty `:is()` in the BUILT bundle is the unambiguous fingerprint
+# of a local CSS nesting break: an unclosed `{` upstream made esbuild's nesting
+# transform swallow every following rule as a child and lower the (empty) parent
+# to `:is()`, which matches nothing → those rules silently vanish at runtime.
+test "$(grep -oE ':is\(\)' "$CSS" | wc -l | tr -d ' ')" = 0 \
+  && echo "OK: 0 empty :is()" || echo "FAIL: empty :is() present — a rule block was swallowed"
+```
+
+Why this is the canonical detector (and brace-counting is NOT sufficient): a comment/string-aware brace counter reports the *global* balance, but **two defects can cancel** — one missing `}` plus one stray `}` nets to depth 0 and passes the brace check while the file is locally broken and N rules are dropped. That exact pattern shipped past the `#522` brace fix and broke `/keys` (provider badges), then the minimap, then more. **The built-bundle `:is()` count is the reliable signal; run it too:**
+
+```bash
+# Necessary but not sufficient — run alongside the :is() check, never instead of it.
+python3 - "$PWD/src/styles/global.css" <<'PY'
+import sys
+s=open(sys.argv[1]).read(); i=0; n=len(s); inb=False; ins=None; stack=[]; line=1; stray=0
+while i<n:
+    c=s[i]; nx=s[i+1] if i+1<n else ''
+    if c=='\n': line+=1
+    if inb:
+        if c=='*' and nx=='/': inb=False; i+=2; continue
+        i+=1; continue
+    if ins:
+        if c=='\\': i+=2; continue
+        if c==ins: ins=None
+        i+=1; continue
+    if c=='/' and nx=='*': inb=True; i+=2; continue
+    if c in '"\'': ins=c; i+=1; continue
+    if c=='{': stack.append(line)
+    elif c=='}':
+        if stack: stack.pop()
+        else: stray+=1; print("STRAY } at line", line)
+    i+=1
+print(f"strays={stray} depth={len(stack)} first_unmatched_open_lines={stack[:10]}")
+PY
+```
+
+If `:is()` > 0: find the swallowed block (the first `:is()` selector names the first dropped rule), walk *up* to the nearest rule missing its `}`, and recover it verbatim from the pre-break commit (`git show <good-sha>:…/global.css`). NEVER fix a stylesheet with a broad `re.sub(count=0)` — that is what deleted `background:` + `}` from a dozen rules in the first place.
+
+> **Durable fix to recommend:** add `grep -c ':is()' dist/assets/index-*.css` (assert 0) to the `pr-checks.yml` frontend gate so a swallowed-rule regression fails CI instead of shipping. This is the single highest-leverage follow-up — file it.
+
+## Step B-2: Dark-mode hover color-pin trap (HIGH)
+
+The global rule `button:hover { background: var(--clay); color: var(--paper) }` (specificity `0,1,1`) is meant for standalone clay-fill buttons. It **beats** any ghost/menu item that sets its color at `0,1,0` — so on hover the text flips to `--paper` (near-black in dark mode) on a dark hover box → **black-on-black, unreadable**. This hit the account menu and the workflow-card menu.
+
+```bash
+cd apps/workflow-engine/frontend/react
+# Menu/ghost-item :hover rules that set background but NOT color → candidates for the trap.
+grep -nE '\.(account-menu|workflow-card-menu|app-nav|.*-menu|.*-item)[^{]*:hover\s*\{' src/styles/global.css
+# For each hit, confirm the rule (or the same selector) pins `color:` — a ghost item
+# that changes background on hover MUST also pin `color: var(--color-text)` (or
+# `var(--color-danger)` for destructive items), mirroring `.account-menu-trigger`.
+```
+
+Flag any popover/menu/ghost `:hover` that changes `background` without an explicit `color:`.
+
+## Step B-3: Third-party widget dark theming (HIGH)
+
+Vendored widgets (React Flow / `@xyflow/react` in the builder) ship light-mode defaults that read as glaring white boxes on the dark canvas. Two traps: (a) the widget declares its theming CSS vars on a **deeper** element than yours, shadowing an ancestor override; (b) a direct `fill`/`background` override flattens per-item color.
+
+```bash
+cd apps/workflow-engine/frontend/react
+# MiniMap must be themed AND its node blips colored per-node via the `nodeColor`
+# PROP (a CSS `fill` override on `.react-flow__minimap-node` flattens every blip).
+grep -nE 'react-flow__minimap|nodeColor|maskColor|MiniMap' src/styles/global.css src/builder/canvas/BuilderCanvas.tsx
+# Controls + handles themed?
+grep -nE 'react-flow__controls|--xy-(controls|handle|minimap)' src/styles/global.css
+```
+
+Verify: minimap `background`/mask are themed via tokens, node color comes from the `nodeColor` prop (not a flat CSS `fill`), and controls/handles use `--xy-*` token overrides. The CAVEAT to state in findings: you cannot confirm the blips actually render without a browser — name it as a human-verify item.
+
+## Step B-4: Hardcoded light fallbacks (MEDIUM)
+
+A literal `#fff` / `white` / light hex used as a `background`/`fill` outside the `:root` and dark-theme override blocks will not flip in dark mode.
+
+```bash
+cd apps/workflow-engine/frontend/react
+# Light backgrounds in the built bundle (resolved) — the dark-theme block lives near the top of global.css.
+grep -nE '(background|fill)\s*:\s*(#fff|#ffffff|white)\b' src/styles/global.css
+# TSX inline styles with non-token colors (ux-review also flags hex; here we care about light fills specifically).
+grep -rnE "style=\{\{[^}]*(background|fill)[^}]*(#fff|white)" src/ | head
+```
+
+## Step B-5: Overlay / popover positioning (MEDIUM)
+
+A popover anchored `top: calc(100% + …)` opens **downward**; if its trigger sits at the bottom of the viewport (e.g. the sidebar footer account chip), the menu renders off-screen. Footer-anchored popovers must open upward (`bottom: …`) and, in a left sidebar, extend rightward (`left: 0`, not `right: 0`, so a wide menu doesn't spill off-screen).
+
+```bash
+grep -nE '\.[a-z-]*(popover|menu|dropdown|tooltip)[^{]*\{[^}]*position:\s*absolute' src/styles/global.css
+# Inspect each: does its trigger live in `.app-sidebar-foot` / a bottom region? If so it must open upward.
+```
+
+## Step B-6: Deploy + skew (when shipping a fix)
+
+`app.openwop.dev` is **two** deploys (CLAUDE.md): the Cloud Run backend and the Firebase `hosting:app` frontend. A frontend-only redeploy built from `origin/main` drags *other sessions'* merged frontend live; if it calls backend endpoints the running Cloud Run revision lacks → 500/404 skew. Before a frontend deploy, confirm the deployed backend revision is at the same `origin/main` SHA (or newer for the routes the frontend calls).
+
+```bash
+( cd apps/workflow-engine/frontend/react && npm run build )     # uses .env.production
+firebase deploy --only hosting:app --project openwop-dev
+# Verify live serves the new bundle + the fix is present (cache-bust the query):
+H=$(curl -fsS "https://app.openwop.dev/?cb=$(date +%s)" | grep -oE 'assets/index-[A-Za-z0-9_-]+\.css')
+curl -fsS "https://app.openwop.dev/$H?cb=$(date +%s)" | grep -c ':is()'   # expect 0
+```
+
+## Step B-7: The human pass (mandatory close-out)
+
+Because there is no headless browser here, Mode B **must** end by handing the user a click-list, in **both** light and dark (toggle in the sidebar footer):
+
+- Sidebar shell + nav hover/active states
+- Account menu (open it; hover every item — Sign out + Delete; check off-screen)
+- `/keys` provider badges + add-key flow
+- Workflow builder: node cards, the **minimap blips**, controls, edges
+- DataTables (filters, bulk-select), toasts, skeletons, command palette (⌘K)
+- Any card/menu/notice introduced by the change
+
+State plainly: build-green + the static checks above are necessary, not sufficient — these surfaces need eyes.
+
+## Mode B findings format
+
+Same severity list as Step 9. Tag each with `[CSS-INTEGRITY]` / `[DARK-HOVER]` / `[WIDGET-THEME]` / `[LIGHT-FALLBACK]` / `[OVERLAY-POS]` / `[DEPLOY-SKEW]` and cite `global.css:line` or the component.
 
 ---
 
 ## Workflow Commands
 
-| Command | Action |
-|---|---|
-| `build` | Run Step 1 — rebuild `site/dist/` |
-| `serve` | Run Step 2 — local serve + smoke |
-| `index-parity` | Run Step 3 — README doc-index drift check |
-| `links` | Run Step 4 — relative-link verification |
-| `schemas` | Run Step 5 — schema $id serving check |
-| `previews` | Run Step 6 — OpenAPI + AsyncAPI preview build |
-| `registry` | Run Step 7 — packs.openwop.dev surface check |
-| `landing` | Run Step 8 — public/ landing page smoke |
-| `report` | Generate the findings list |
-| `done` | Complete site validation |
+| Command | Mode | Action |
+|---|---|---|
+| `site` / `full` | A | Run all Mode A steps (spec site) |
+| `app` / `full` | B | Run all Mode B steps (demo app) |
+| `build` | A | Step 1 — rebuild `site/dist/` |
+| `serve` | A | Step 2 — local serve + smoke |
+| `index-parity` | A | Step 3 — README doc-index drift check |
+| `links` | A | Step 4 — relative-link verification |
+| `schemas` | A | Step 5 — schema $id serving check |
+| `previews` | A | Step 6 — OpenAPI + AsyncAPI preview build |
+| `registry` | A | Step 7 — packs.openwop.dev surface check |
+| `landing` | A | Step 8 — public/ landing page smoke |
+| `is-check` | B | Step B-1 — build + assert 0 empty `:is()` + brace balance |
+| `dark-hover` | B | Step B-2 — hover color-pin trap scan |
+| `widgets` | B | Step B-3 — third-party widget dark theming |
+| `light-fallbacks` | B | Step B-4 — hardcoded white/`#fff` background scan |
+| `overlays` | B | Step B-5 — popover positioning scan |
+| `report` | — | Generate the findings list |
+| `done` | — | Complete validation |
 
 ---
 
@@ -295,6 +454,6 @@ Before pushing site changes to `openwop.dev`:
 
 | Skill | Purpose |
 |---|---|
-| `/update-docs` | Sync README "Document index" + CHANGELOG when the site drifts |
-| `/cleanup audit hosts` | Verify reference-host advertisements before they hit the live INTEROP-MATRIX page |
-| `/ux-review` | Prose-level RFC 2119 + cross-link integrity on the corpus the site renders |
+| `/update-docs` | Sync README "Document index" + CHANGELOG when the site drifts (Mode A) |
+| `/cleanup audit hosts` | Verify reference-host advertisements before they hit the live INTEROP-MATRIX page (Mode A) |
+| `/ux-review` | Prose RFC 2119 + cross-link integrity on the corpus (Mode A); **token discipline** against `DESIGN.app.md` for the demo app — the companion to Mode B, which owns build-integrity + dark-mode rendering instead |
