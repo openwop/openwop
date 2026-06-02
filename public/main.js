@@ -180,3 +180,43 @@ document.querySelectorAll('.block, .pillar, .compare-card, .ana-list li, .spec .
     if (el) observer.observe(el);
   }
 })();
+
+// Light/dark theme toggle — single button, light ↔ dark, persisted in
+// localStorage. The inline <head> script applies a saved choice pre-paint
+// (no FOUC); this wires the click + keeps the a11y label/state in sync. With
+// no saved choice, prefers-color-scheme is the default and the toggle pins an
+// explicit override on first click (flipping the currently-effective theme).
+(() => {
+  const btn = document.querySelector('.theme-toggle');
+  if (!btn) return;
+  const root = document.documentElement;
+  const mql = window.matchMedia('(prefers-color-scheme: dark)');
+
+  const effective = () =>
+    root.classList.contains('theme-dark') ? 'dark'
+    : root.classList.contains('theme-light') ? 'light'
+    : (mql.matches ? 'dark' : 'light');
+
+  const sync = () => {
+    const isDark = effective() === 'dark';
+    const label = isDark ? 'Switch to light theme' : 'Switch to dark theme';
+    btn.setAttribute('aria-label', label);
+    btn.setAttribute('title', label);
+    btn.setAttribute('aria-pressed', String(isDark));
+  };
+
+  btn.addEventListener('click', () => {
+    const next = effective() === 'dark' ? 'light' : 'dark';
+    root.classList.remove('theme-dark', 'theme-light');
+    root.classList.add(next === 'dark' ? 'theme-dark' : 'theme-light');
+    try { localStorage.setItem('owop-theme', next); } catch { /* storage blocked */ }
+    sync();
+  });
+
+  // Follow OS changes only while the user hasn't pinned an explicit choice.
+  mql.addEventListener?.('change', () => {
+    if (!root.classList.contains('theme-dark') && !root.classList.contains('theme-light')) sync();
+  });
+
+  sync();
+})();
