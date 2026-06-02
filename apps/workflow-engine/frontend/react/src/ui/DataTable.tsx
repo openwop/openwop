@@ -36,7 +36,7 @@ interface SortState { key: string; dir: 'asc' | 'desc' }
 
 const EMPTY_SELECTION: ReadonlySet<string> = new Set();
 
-interface Props<T> {
+interface BaseProps<T> {
   columns: DataColumn<T>[];
   rows: T[];
   rowKey: (row: T) => string;
@@ -49,14 +49,27 @@ interface Props<T> {
   initialSort?: SortState;
   /** Rendered in place of the table body when `rows` is empty. */
   empty?: ReactNode;
-  /** Opt into a leading checkbox column + select-all + a bulk-action bar. */
-  selectable?: boolean;
-  /** Controlled set of selected row keys (parent-owned so it can clear it). */
-  selected?: ReadonlySet<string>;
-  onSelectionChange?: (next: Set<string>) => void;
-  /** Rendered in the bar above the table when ≥1 row is selected. */
-  bulkActions?: (selectedRows: T[]) => ReactNode;
 }
+
+/**
+ * Selection is all-or-nothing at the type level: opting into `selectable`
+ * REQUIRES the controlled `selected` set + `onSelectionChange` (otherwise the
+ * checkboxes would render inert). Omitting `selectable` forbids the selection
+ * props entirely, so a non-selectable table can't accidentally carry stale
+ * selection wiring.
+ */
+type SelectionProps<T> =
+  | { selectable?: false; selected?: undefined; onSelectionChange?: undefined; bulkActions?: undefined }
+  | {
+      selectable: true;
+      /** Controlled set of selected row keys (parent-owned so it can clear it). */
+      selected: ReadonlySet<string>;
+      onSelectionChange: (next: Set<string>) => void;
+      /** Rendered in the bar above the table when ≥1 row is selected. */
+      bulkActions?: (selectedRows: T[]) => ReactNode;
+    };
+
+type Props<T> = BaseProps<T> & SelectionProps<T>;
 
 export function DataTable<T>({
   columns, rows, rowKey, onRowClick, density = 'comfortable', caption, initialSort, empty,

@@ -134,19 +134,38 @@ if (invalid.length) fail('Invalid sdk/parity-expectations.json entries:', invali
 // 4. Regression: every `typed` op's distinctive path fragment is present in
 //    that SDK's source.
 const sources = Object.fromEntries(Object.entries(SDK_SOURCES).map(([k, v]) => [k, collectSource(v)]));
+// A whole-identifier (word-boundary) match — so a `symbols.go` of `GetAgent`
+// does NOT spuriously match the sibling `GetAgentRosterEntry`, nor `agents_get`
+// match `agents_get_org_chart`.
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const hasSymbol = (src, sym) => new RegExp(`\\b${escapeRe(sym)}\\b`).test(src);
+
 const missing = [];
 for (const e of expectations) {
   const frag = distinctiveFragment(e.path);
-  if (!frag || frag.replace(/[^A-Za-z0-9]/g, '').length < 4) continue; // too generic to anchor on
   for (const lang of ['ts', 'py', 'go']) {
     if (e[lang] !== 'typed') continue;
+    // Prefer an exact method-symbol check when the entry declares one — this
+    // catches a SINGLE method being deleted from a shared path family (e.g.
+    // dropping `prompts.update` while `prompts.list` keeps `/v1/prompts` wired),
+    // which the path-fragment anchor alone cannot see. TS methods are namespaced
+    // (not globally-unique identifiers), so symbols are py/go-only; TS falls back
+    // to the fragment anchor.
+    const sym = e.symbols?.[lang];
+    if (sym) {
+      if (!hasSymbol(sources[lang], sym)) {
+        missing.push(`${e.operationId} declared typed in ${SDK_SOURCES[lang].label} but its method "${sym}" is not defined in ${SDK_SOURCES[lang].dir}`);
+      }
+      continue;
+    }
+    if (!frag || frag.replace(/[^A-Za-z0-9]/g, '').length < 4) continue; // fragment too generic to anchor on
     if (!sources[lang].includes(frag)) {
       missing.push(`${e.operationId} declared typed in ${SDK_SOURCES[lang].label} but "${frag}" is not referenced in ${SDK_SOURCES[lang].dir}`);
     }
   }
 }
 if (missing.length) {
-  fail('SDK parity regressions (declared typed but the path is no longer wired):', missing);
+  fail('SDK parity regressions (declared typed but the method/path is no longer wired):', missing);
 }
 
 const typed = expectations.filter((e) => e.ts === 'typed' && e.py === 'typed' && e.go === 'typed').length;

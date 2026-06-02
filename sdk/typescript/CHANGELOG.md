@@ -1,5 +1,9 @@
 # `@openwop/openwop` Changelog
 
+## [Unreleased]
+
+- **`client.prompts.get` now returns `PromptTemplate | null`** (was `PromptTemplate`). It resolves to `null` on `404` — consistent with the other get-by-id helpers (`agents.get`, `tools.get`, …) and the Python/Go SDKs — while a `400 prompt_ref_ambiguous` and other errors still throw, so callers can distinguish "not found" from "ambiguous reference." Minor source-compatibility note for TypeScript consumers: a null-check may now be required at the call site.
+
 ## [1.1.6] — 2026-05-31 — catch-up republish: agent-platform SDK surface
 
 Republishes the package to bring the npm artifact in line with the agent-platform additions merged to the SDK source since the prior publish (`1.1.5` on npm predates them). All additive — no existing method or type changed; zero new runtime dependencies.

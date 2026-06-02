@@ -16,6 +16,7 @@ import type { Storage } from '../src/storage/storage.js';
 import type { RunRecord } from '../src/types.js';
 import type { HostAdapterSuite } from '../src/host/index.js';
 import { sweepOrphanedRuns } from '../src/host/runDispatchSweeper.js';
+import { setEventLogBackend } from '../src/executor/eventLog.js';
 
 const NOW = 1_700_000_000_000;
 const HOUR = 3_600_000;
@@ -91,5 +92,21 @@ describe('run-dispatch crash recovery', () => {
     // The orphan now belongs to the sweeper (claimed before re-dispatch).
     const run = await storage.getRun('orphan');
     expect(run?.dispatchOwner).toBe('sweeper-a');
+  });
+
+  it('abandons (fails) a chronically-orphaned run instead of re-dispatching it forever', async () => {
+    setEventLogBackend(storage); // emitTerminalFailure appends run.failed
+    // Created > 1h ago and still running → past the re-dispatch ceiling.
+    await storage.insertRun(makeRun({ runId: 'stuck', status: 'running', createdAt: new Date(NOW - 2 * HOUR).toISOString() }));
+    const hostSuite = {
+      workflowCatalog: { getWorkflow: async () => ({ definition: { workflowId: 'wf-1', nodes: [] } }) },
+      providerPolicyResolver: undefined,
+    } as unknown as HostAdapterSuite;
+
+    const redispatched = await sweepOrphanedRuns({ storage, hostSuite }, 'sweeper-a', NOW);
+    expect(redispatched).toBe(0); // abandoned, not re-dispatched
+    const run = await storage.getRun('stuck');
+    expect(run?.status).toBe('failed');
+    expect(run?.error?.code).toBe('dispatch_abandoned');
   });
 });
