@@ -74,3 +74,4 @@ export { PackageIcon } from './PackageIcon.js';
 export { BuildingIcon } from './BuildingIcon.js';
 export { KeyIcon } from './KeyIcon.js';
 export { TerminalIcon } from './TerminalIcon.js';
+export { SearchIcon } from './SearchIcon.js';

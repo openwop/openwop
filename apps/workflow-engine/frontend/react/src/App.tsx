@@ -24,6 +24,7 @@ import { RosterPage } from './agents/RosterPage.js';
 import { NotificationPanel } from './notifications/NotificationPanel.js';
 import { useNotificationStore } from './notifications/notificationStore.js';
 import { Sidebar } from './chrome/Sidebar.js';
+import { CommandPalette } from './ui/CommandPalette.js';
 import { AgentsPage } from './agents/AgentsPage.js';
 import { AgentDetailPage } from './agents/AgentDetailPage.js';
 import { AgentInstallPage } from './agents/AgentInstallPage.js';
@@ -129,6 +130,7 @@ export function App() {
       </div>
       <NetworkPanel open={netOpen} onClose={() => setNetOpen(false)} />
       <NotificationPanel />
+      <CommandPalette />
     </div>
   );
 }
