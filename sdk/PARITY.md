@@ -48,6 +48,16 @@ missing helpers to all three SDKs and adds `getArtifact`, `tools.list/get`
 across the board, and introduces the machine gate so the matrix can no longer
 silently drift. Counts: TS +3 (tools×2, artifact), Python +17, Go +17.
 
+**2026-06-02 follow-ups (code-review fixes).** `prompts.get` now returns the
+language's null sentinel on `404` in all three SDKs (TS `prompts.get` previously
+threw — it's now consistent with the other get-by-id helpers; a `400
+prompt_ref_ambiguous` still throws). The gate (`scripts/check-sdk-parity.mjs`)
+gained an optional per-op `symbols` map (py/go method names, word-boundary
+matched) on the shared-path-family operations (all `/v1/prompts`, `/v1/tools`,
+`/v1/agents`, `/v1/webhooks`, `/v1/interrupts` ops) so it now also catches a
+SINGLE method being deleted from a family — which the path anchor alone, shared
+across those ops, could not see.
+
 RFC 0056 feedback annotations landed 2026-05-25: each SDK gains two helpers — annotation create (`POST /v1/runs/{id}/annotations`) and annotation list (`GET /v1/runs/{id}/annotations`, returning the language's null sentinel when the host doesn't advertise `capabilities.feedback`). Headline counts move 32/32 → 34/34/34.
 
 Helper parity across run-status + run-error-code predicates landed 2026-05-15 (SDK-6 close-out). Python adds `ACTIVE_RUN_STATUSES` / `TERMINAL_RUN_STATUSES` frozensets + `is_terminal_run_status` predicate + `RUN_ERROR_CODES` frozenset + `is_run_error_code` predicate. Go adds `ActiveRunStatuses` / `TerminalRunStatuses` / `IsTerminalRunStatus` / `RunErrorCodes` / `IsRunErrorCode`. All three SDKs now expose the same vocabulary at the same call-site shape; the prior TypeScript-only convenience asymmetry is closed.

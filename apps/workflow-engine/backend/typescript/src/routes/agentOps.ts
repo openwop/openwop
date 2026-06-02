@@ -67,7 +67,8 @@ export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
         return;
       }
 
-      // Shared with the autonomous heartbeat daemon so the two can't drift.
+      // Shared with the autonomous heartbeat daemon so the two can't drift —
+      // including the review-mode "agents propose, humans dispose" branch.
       const result = await runHeartbeatOnce(deps, entry);
       res.status(200).json(result);
     } catch (err) {

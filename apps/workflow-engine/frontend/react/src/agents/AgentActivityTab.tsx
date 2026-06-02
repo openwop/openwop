@@ -12,7 +12,7 @@ import { getAgentActivity, type AgentActivityItem } from './rosterClient.js';
 import { workflowName } from './roleTemplates.js';
 import { relativeTime } from './agentViewModel.js';
 import { Notice } from '../ui/Notice.js';
-import { ClockIcon, ZapIcon, PlayIcon } from '../ui/icons/index.js';
+import { ClockIcon, ZapIcon, PlayIcon, CheckIcon } from '../ui/icons/index.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
@@ -20,13 +20,24 @@ const SOURCE_TEXT: Record<AgentActivityItem['source'], string> = {
   heartbeat: 'picked up a task',
   schedule: 'ran on a schedule',
   kanban: 'started a workflow from a card',
+  approval: 'ran an approved proposal',
 };
 
 const SOURCE_ICON: Record<AgentActivityItem['source'], JSX.Element> = {
   heartbeat: <PlayIcon size={13} />,
   schedule: <ClockIcon size={13} />,
   kanban: <ZapIcon size={13} />,
+  approval: <CheckIcon size={13} />,
 };
+
+/** Compact wall-clock duration: "820 ms" / "4.2 s" / "1m 5s". */
+function fmtDuration(ms: number): string {
+  if (ms < 1000) return `${ms} ms`;
+  const s = ms / 1000;
+  if (s < 60) return `${s.toFixed(1)} s`;
+  const m = Math.floor(s / 60);
+  return `${m}m ${Math.round(s % 60)}s`;
+}
 
 /** Map a run status to a chip class + label. */
 function statusChip(status: string): { cls: string; label: string } {
@@ -87,7 +98,10 @@ export function AgentActivityTab({ rosterId, persona, refreshSignal }: { rosterI
                 {persona} {SOURCE_TEXT[item.source]} · <strong>{workflowName(item.workflowId)}</strong>
               </div>
               <div style={{ ...muted, fontSize: '0.76rem' }}>
-                {relativeTime(item.timestamp)} · <Link to={`/runs/${item.runId}`}>view run</Link>
+                {relativeTime(item.timestamp)}
+                {item.durationMs != null && <> · ran in {fmtDuration(item.durationMs)}</>}
+                {item.causationId && <> · <span title="Caused by an upstream trigger (RFC 0040)">chained</span></>}
+                {' · '}<Link to={`/runs/${item.runId}`}>view run</Link>
               </div>
             </div>
             <span className={`chip ${chip.cls}`} title={`Run ${item.status}`}>{chip.label}</span>

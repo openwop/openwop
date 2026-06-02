@@ -35,6 +35,10 @@ export interface RosterEntry {
   /** Opt-in autonomous heartbeat cadence (ms). When > 0, the background daemon
    *  auto-runs this agent's "Check now" on this interval. Absent ⇒ manual only. */
   heartbeatIntervalMs?: number;
+  /** Heartbeat autonomy: `auto` (default) starts picked runs immediately;
+   *  `review` queues a proposal for human sign-off (the approval inbox).
+   *  Absent ⇒ `auto`. */
+  autonomyLevel?: 'auto' | 'review';
   createdAt: string;
   updatedAt: string;
 }
@@ -77,7 +81,7 @@ export async function createRosterEntry(input: {
 
 export async function updateRosterEntry(
   rosterId: string,
-  patch: { persona?: string; workflows?: string[]; enabled?: boolean; label?: string; description?: string; avatarUrl?: string | null; heartbeatIntervalMs?: number },
+  patch: { persona?: string; workflows?: string[]; enabled?: boolean; label?: string; description?: string; avatarUrl?: string | null; heartbeatIntervalMs?: number; autonomyLevel?: 'auto' | 'review' },
 ): Promise<RosterEntry> {
   const res = await fetch(`${rosterBase}/${encodeURIComponent(rosterId)}`, fetchOpts({ method: 'PATCH', headers: jsonHeaders(), body: JSON.stringify(patch) }));
   if (!res.ok) throw new Error(`updateRosterEntry returned ${res.status}`);
@@ -124,8 +128,8 @@ export interface AgentActivityItem {
   /** RunStatus: pending | running | completed | failed | … */
   status: string;
   /** How the run was triggered. */
-  source: 'heartbeat' | 'schedule' | 'kanban';
-  /** The board card that triggered it (heartbeat / kanban), when known. */
+  source: 'heartbeat' | 'schedule' | 'kanban' | 'approval';
+  /** The board card that triggered it (heartbeat / kanban / approval), when known. */
   cardId?: string;
   /** Attribution — present on the fleet feed so items can name their agent. */
   rosterId?: string;
@@ -133,6 +137,14 @@ export interface AgentActivityItem {
   persona?: string;
   /** ISO-8601 — terminal time, else last-update / creation. */
   timestamp: string;
+  /** ISO-8601 run creation time. */
+  createdAt?: string;
+  /** ISO-8601 terminal time; absent while still running. */
+  completedAt?: string;
+  /** Wall-clock run duration in ms (when both bookends are known). */
+  durationMs?: number;
+  /** RFC 0040 — the trigger event that caused this run, when recorded. */
+  causationId?: string;
 }
 
 /** Per-agent activity: recent runs (heartbeat / schedule / card triggers) with

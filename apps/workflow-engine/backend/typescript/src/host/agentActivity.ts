@@ -19,8 +19,8 @@
 
 import type { RunRecord } from '../types.js';
 
-export type AgentActivitySource = 'heartbeat' | 'schedule' | 'kanban';
-const ATTRIBUTION_KEYS: readonly AgentActivitySource[] = ['heartbeat', 'schedule', 'kanban'];
+export type AgentActivitySource = 'heartbeat' | 'schedule' | 'kanban' | 'approval';
+const ATTRIBUTION_KEYS: readonly AgentActivitySource[] = ['heartbeat', 'schedule', 'kanban', 'approval'];
 
 export interface AgentActivityItem {
   runId: string;
@@ -33,6 +33,15 @@ export interface AgentActivityItem {
   cardId?: string;
   /** Terminal time when available, else last-update / creation. */
   timestamp: string;
+  /** ISO-8601 run creation time. */
+  createdAt?: string;
+  /** ISO-8601 terminal time; absent while still running. */
+  completedAt?: string;
+  /** Wall-clock run duration in ms (when both bookends are known) — lets the UI
+   *  show "ran in 4.2s" without a per-run event scan. */
+  durationMs?: number;
+  /** RFC 0040 — the trigger event that caused this run, when recorded. */
+  causationId?: string;
 }
 
 export interface ActivityFilter {
@@ -66,6 +75,9 @@ export function projectAgentActivity(runs: readonly RunRecord[], filter: Activit
     }
     if (!chosen) continue;
     if (filter.rosterId && chosen.block.rosterId !== filter.rosterId) continue;
+    const durationMs = run.completedAt
+      ? Math.max(0, new Date(run.completedAt).getTime() - new Date(run.createdAt).getTime())
+      : undefined;
     items.push({
       runId: run.runId,
       workflowId: run.workflowId,
@@ -76,6 +88,10 @@ export function projectAgentActivity(runs: readonly RunRecord[], filter: Activit
       persona: str(chosen.block.persona),
       cardId: str(chosen.block.cardId),
       timestamp: run.completedAt ?? run.updatedAt ?? run.createdAt,
+      createdAt: run.createdAt,
+      ...(run.completedAt ? { completedAt: run.completedAt } : {}),
+      ...(durationMs !== undefined ? { durationMs } : {}),
+      ...(run.causationId ? { causationId: run.causationId } : {}),
     });
   }
   return items.sort((a, b) => b.timestamp.localeCompare(a.timestamp));

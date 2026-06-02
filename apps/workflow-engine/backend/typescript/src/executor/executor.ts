@@ -109,7 +109,7 @@ export const RUN_DURATION_CEILING_MS = 600_000;
  *  swept; only a crashed instance's run (lease expired past this) is re-claimed. */
 export const RUN_DISPATCH_LEASE_MS = RUN_DURATION_CEILING_MS + 120_000;
 
-async function emitTerminalFailure(input: {
+export async function emitTerminalFailure(input: {
   storage: Storage;
   runId: string;
   nodeId?: string;

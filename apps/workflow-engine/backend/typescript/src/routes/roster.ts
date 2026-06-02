@@ -97,6 +97,16 @@ function parseAvatarUrl(value: unknown): string | null | undefined {
   return value;
 }
 
+/** Validate the optional `autonomyLevel` field (POST + PATCH). `undefined`
+ *  leaves it unchanged; only `'auto'` / `'review'` are accepted. */
+function parseAutonomyLevel(value: unknown): 'auto' | 'review' | undefined {
+  if (value === undefined) return undefined;
+  if (value === 'auto' || value === 'review') return value;
+  throw new OpenwopError('validation_error', 'Field `autonomyLevel` MUST be "auto" or "review".', 400, {
+    field: 'autonomyLevel',
+  });
+}
+
 export function registerRosterRoutes(app: Express): void {
   app.get('/v1/host/sample/roster', async (req, res, next) => {
     try {
@@ -116,6 +126,7 @@ export function registerRosterRoutes(app: Express): void {
         description?: unknown;
         enabled?: unknown;
         avatarUrl?: unknown;
+        autonomyLevel?: unknown;
       };
       if (typeof body.persona !== 'string' || body.persona.trim().length === 0) {
         throw new OpenwopError('validation_error', 'Field `persona` is required and MUST be a non-empty string.', 400, {
@@ -140,6 +151,7 @@ export function registerRosterRoutes(app: Express): void {
         description: typeof body.description === 'string' ? body.description : undefined,
         enabled: typeof body.enabled === 'boolean' ? body.enabled : undefined,
         avatarUrl,
+        autonomyLevel: parseAutonomyLevel(body.autonomyLevel),
       });
       res.status(201).json(entry);
     } catch (err) {
@@ -172,6 +184,7 @@ export function registerRosterRoutes(app: Express): void {
         label?: unknown;
         description?: unknown;
         avatarUrl?: unknown;
+        autonomyLevel?: unknown;
       };
       if (body.workflows !== undefined && !Array.isArray(body.workflows)) {
         throw new OpenwopError('validation_error', 'Field `workflows` MUST be an array of workflow ids.', 400, {
@@ -185,6 +198,7 @@ export function registerRosterRoutes(app: Express): void {
         label: typeof body.label === 'string' ? body.label : undefined,
         description: typeof body.description === 'string' ? body.description : undefined,
         avatarUrl: parseAvatarUrl(body.avatarUrl),
+        autonomyLevel: parseAutonomyLevel(body.autonomyLevel),
       });
       res.json(updated);
     } catch (err) {

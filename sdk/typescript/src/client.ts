@@ -726,15 +726,24 @@ export class OpenwopClient {
      * `version`; supply `libraryId` to disambiguate when multiple installed
      * packs ship the same templateId.
      */
-    get: (req: GetPromptRequest): Promise<PromptTemplate> => {
+    get: async (req: GetPromptRequest): Promise<PromptTemplate | null> => {
       const search = new URLSearchParams();
       if (req.version) search.set('version', req.version);
       if (req.libraryId) search.set('libraryId', req.libraryId);
       const query = search.toString();
-      return this.#request<PromptTemplate>({
-        method: 'GET',
-        path: `/v1/prompts/${encodeURIComponent(req.templateId)}${query ? `?${query}` : ''}`,
-      });
+      try {
+        return await this.#request<PromptTemplate>({
+          method: 'GET',
+          path: `/v1/prompts/${encodeURIComponent(req.templateId)}${query ? `?${query}` : ''}`,
+        });
+      } catch (err) {
+        // Return null on 404 (no such template), consistent with the other
+        // get-by-id methods (`agents.get`, `tools.get`, …) and the Python/Go
+        // SDKs; a `400 prompt_ref_ambiguous` and other errors still throw so
+        // callers can distinguish "not found" from "ambiguous reference".
+        if (err instanceof WopError && err.status === 404) return null;
+        throw err;
+      }
     },
 
     /**

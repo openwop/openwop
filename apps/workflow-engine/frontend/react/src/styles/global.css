@@ -1093,6 +1093,26 @@ pre {
 /* visually-hidden caption (a11y) */
 .data-table-caption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
+/* DataTable bulk-select column + bulk-action bar */
+.data-col--check { width: 1px; white-space: nowrap; text-align: center; }
+.data-col--check input { cursor: pointer; margin: 0; vertical-align: middle; }
+.data-table tbody tr.is-selected,
+.data-table tbody tr.is-selected:hover { background: var(--clay-soft); }
+.data-bulkbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-2);
+  background: var(--clay-soft);
+  border: 1px solid var(--clay-rule);
+  border-radius: var(--radius);
+}
+.data-bulkbar-count { font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; color: var(--clay); flex-shrink: 0; }
+.data-bulkbar-actions { display: flex; gap: var(--space-2); flex: 1; flex-wrap: wrap; }
+.data-bulkbar-clear { background: none; border: 0; color: var(--ink-3); font-size: 12px; cursor: pointer; flex-shrink: 0; }
+.data-bulkbar-clear:hover { color: var(--ink); }
+
 /* Runs page: the URL-persisted filter input + the inline "flagged" marker. */
 .runs-filter { min-width: 200px; }
 .runs-review-flag { margin-left: var(--space-1-5); font-size: 10px; }
@@ -3997,6 +4017,14 @@ a.surface-card:focus-visible,
 }
 /* Inset the ring on the nav links so it doesn't clip against the rail edge. */
 .app-nav-link:focus-visible { outline-offset: -2px; }
+
+/* Inline navigational text links opt into the keyboard focus ring — the ring
+ * above covers a.surface-card but not bare <a>. */
+.inline-link:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
 
 /* Card primitive — the cross-surface clone of .workflow-card. Render
  * navigational cards as <a>/<Link> so keyboard + semantics come free. */

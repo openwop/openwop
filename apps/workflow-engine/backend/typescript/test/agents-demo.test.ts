@@ -145,16 +145,25 @@ describe('agents-demo backend foundations', () => {
     const movedCard = detail.body.cards.find((c) => c.id === checked.body.cardId)!;
     expect(movedCard.columnId).toBe('working');
 
-    // The activity feed surfaces that run with its outcome + a timestamp.
-    const activity = await api<{ items: Array<{ runId: string; status: string; source: string; timestamp: string }> }>(
-      `/v1/host/sample/roster/${sally.rosterId}/activity`,
-    );
+    // The activity feed surfaces that run with its outcome, a timestamp, and
+    // the enriched provenance fields (createdAt / completedAt / durationMs).
+    const activity = await api<{
+      items: Array<{
+        runId: string; status: string; source: string; timestamp: string;
+        createdAt?: string; completedAt?: string; durationMs?: number; causationId?: string;
+      }>;
+    }>(`/v1/host/sample/roster/${sally.rosterId}/activity`);
     expect(activity.status).toBe(200);
     const entry = activity.body.items.find((i) => i.runId === checked.body.runId)!;
     expect(entry).toBeTruthy();
     expect(entry.source).toBe('heartbeat');
     expect(entry.status).toBe('completed');
     expect(Number.isNaN(Date.parse(entry.timestamp))).toBe(false);
+    // A completed run carries both bookends and a non-negative duration.
+    expect(typeof entry.createdAt).toBe('string');
+    expect(typeof entry.completedAt).toBe('string');
+    expect(typeof entry.durationMs).toBe('number');
+    expect(entry.durationMs!).toBeGreaterThanOrEqual(0);
   });
 
   it('scheduler jobs are durable + roster-filterable, and :trigger starts a run', async () => {

@@ -70,8 +70,20 @@ export interface RosterEntry {
    *  member's "Check now" on this interval. Absent or <= 0 ⇒ manual pull only
    *  (the prior, default behavior) — the daemon never touches it. */
   heartbeatIntervalMs?: number;
+  /** How much autonomy this member has when its heartbeat picks up work.
+   *  `auto` (default) — start the proposed run immediately (today's behavior).
+   *  `review` — "agents propose, humans dispose": the heartbeat does NOT start
+   *  the run; it queues a pending approval (host/approvalService.ts) that a
+   *  human must affirmatively claim before the run starts. Host-extension only;
+   *  the normative manifest inventory is unaffected. Absent ⇒ `auto`. */
+  autonomyLevel?: 'auto' | 'review';
   createdAt: string;
   updatedAt: string;
+}
+
+/** The effective autonomy of an entry (the field is optional; absent ⇒ auto). */
+export function autonomyOf(entry: RosterEntry): 'auto' | 'review' {
+  return entry.autonomyLevel === 'review' ? 'review' : 'auto';
 }
 
 const roster = new DurableCollection<RosterEntry>('roster', (e) => e.rosterId);
@@ -99,6 +111,7 @@ export async function createRosterEntry(input: {
   enabled?: boolean;
   avatarUrl?: string;
   heartbeatIntervalMs?: number;
+  autonomyLevel?: 'auto' | 'review';
 }): Promise<RosterEntry> {
   // `host:<slug>-<short>` keeps the id human-readable + collision-safe.
   const rosterId = `host:${slugify(input.persona)}-${randomUUID().slice(0, 8)}`;
@@ -114,6 +127,7 @@ export async function createRosterEntry(input: {
     description: input.description,
     avatarUrl: input.avatarUrl,
     ...(input.heartbeatIntervalMs !== undefined ? { heartbeatIntervalMs: input.heartbeatIntervalMs } : {}),
+    autonomyLevel: input.autonomyLevel === 'review' ? 'review' : undefined,
     createdAt: now,
     updatedAt: now,
   };
@@ -152,6 +166,7 @@ export async function updateRosterEntry(
     avatarUrl?: string | null;
     /** Autonomous heartbeat cadence (ms). 0 or negative disables it. */
     heartbeatIntervalMs?: number;
+    autonomyLevel?: 'auto' | 'review';
   },
 ): Promise<RosterEntry | null> {
   const entry = await roster.get(rosterId);
@@ -168,6 +183,11 @@ export async function updateRosterEntry(
   if (patch.avatarUrl !== undefined) {
     if (patch.avatarUrl === null) delete entry.avatarUrl;
     else entry.avatarUrl = patch.avatarUrl;
+  }
+  if (patch.autonomyLevel !== undefined) {
+    // Normalize: only 'review' is stored; 'auto' is the absent default.
+    if (patch.autonomyLevel === 'review') entry.autonomyLevel = 'review';
+    else delete entry.autonomyLevel;
   }
   entry.updatedAt = nowIso();
   await roster.put(entry);

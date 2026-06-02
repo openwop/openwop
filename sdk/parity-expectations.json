@@ -1,5 +1,5 @@
 {
-  "$comment": "Source-of-truth SDK parity declaration, enforced by scripts/check-sdk-parity.mjs (openwop:check step 4b). Each OpenAPI operation declares whether each reference SDK exposes a typed helper ('typed') or intentionally omits it ('excluded', requires a note). Adding an OpenAPI operation without a matching entry here fails the gate. See sdk/PARITY.md for the human-readable matrix.",
+  "$comment": "Source-of-truth SDK parity declaration, enforced by scripts/check-sdk-parity.mjs (openwop:check step 4b). Each OpenAPI operation declares whether each reference SDK exposes a typed helper ('typed') or intentionally omits it ('excluded', requires a note). Adding an OpenAPI operation without a matching entry here fails the gate. Entries on a shared path family (e.g. all /v1/prompts ops) carry an optional per-SDK `symbols` map (py/go method names) so the gate can detect a SINGLE method being deleted from the family, which the path anchor alone cannot. See sdk/PARITY.md for the human-readable matrix.",
   "operations": [
     {
       "operationId": "getCapabilities",
@@ -15,7 +15,11 @@
       "path": "/v1/agents",
       "ts": "typed",
       "py": "typed",
-      "go": "typed"
+      "go": "typed",
+      "symbols": {
+        "py": "agents_list",
+        "go": "ListAgents"
+      }
     },
     {
       "operationId": "getAgentOrgChart",
@@ -55,7 +59,11 @@
       "path": "/v1/agents/{agentId}",
       "ts": "typed",
       "py": "typed",
-      "go": "typed"
+      "go": "typed",
+      "symbols": {
+        "py": "agents_get",
+        "go": "GetAgent"
+      }
     },
     {
       "operationId": "listAgentDeployments",
@@ -119,7 +127,11 @@
       "path": "/v1/interrupts/{token}",
       "ts": "typed",
       "py": "typed",
-      "go": "typed"
+      "go": "typed",
+      "symbols": {
+        "py": "interrupts_inspect_by_token",
+        "go": "InspectInterruptByToken"
+      }
     },
     {
       "operationId": "resolveInterruptByToken",
@@ -127,7 +139,11 @@
       "path": "/v1/interrupts/{token}",
       "ts": "typed",
       "py": "typed",
-      "go": "typed"
+      "go": "typed",
+      "symbols": {
+        "py": "interrupts_resolve_by_token",
+        "go": "ResolveInterruptByToken"
+      }
     },
     {
       "operationId": "getOpenApiSpec",
@@ -179,7 +195,11 @@
       "path": "/v1/prompts",
       "ts": "typed",
       "py": "typed",
-      "go": "typed"
+      "go": "typed",
+      "symbols": {
+        "py": "prompts_list",
+        "go": "ListPromptTemplates"
+      }
     },
     {
       "operationId": "createPromptTemplate",
@@ -187,7 +207,11 @@
       "path": "/v1/prompts",
       "ts": "typed",
       "py": "typed",
-      "go": "typed"
+      "go": "typed",
+      "symbols": {
+        "py": "prompts_create",
+        "go": "CreatePromptTemplate"
+      }
     },
     {
       "operationId": "deletePromptTemplate",
@@ -195,7 +219,11 @@
       "path": "/v1/prompts/{templateId}",
       "ts": "typed",
       "py": "typed",
-      "go": "typed"
+      "go": "typed",
+      "symbols": {
+        "py": "prompts_delete",
+        "go": "DeletePromptTemplate"
+      }
     },
     {
       "operationId": "getPromptTemplate",
@@ -203,7 +231,11 @@
       "path": "/v1/prompts/{templateId}",
       "ts": "typed",
       "py": "typed",
-      "go": "typed"
+      "go": "typed",
+      "symbols": {
+        "py": "prompts_get",
+        "go": "GetPromptTemplate"
+      }
     },
     {
       "operationId": "updatePromptTemplate",
@@ -211,7 +243,11 @@
       "path": "/v1/prompts/{templateId}",
       "ts": "typed",
       "py": "typed",
-      "go": "typed"
+      "go": "typed",
+      "symbols": {
+        "py": "prompts_update",
+        "go": "UpdatePromptTemplate"
+      }
     },
     {
       "operationId": "renderPromptTemplate",
@@ -355,7 +391,11 @@
       "path": "/v1/tools",
       "ts": "typed",
       "py": "typed",
-      "go": "typed"
+      "go": "typed",
+      "symbols": {
+        "py": "tools_list",
+        "go": "ListTools"
+      }
     },
     {
       "operationId": "getTool",
@@ -363,7 +403,11 @@
       "path": "/v1/tools/{toolId}",
       "ts": "typed",
       "py": "typed",
-      "go": "typed"
+      "go": "typed",
+      "symbols": {
+        "py": "tools_get",
+        "go": "GetTool"
+      }
     },
     {
       "operationId": "registerWebhook",
@@ -371,7 +415,11 @@
       "path": "/v1/webhooks",
       "ts": "typed",
       "py": "typed",
-      "go": "typed"
+      "go": "typed",
+      "symbols": {
+        "py": "webhooks_register",
+        "go": "RegisterWebhook"
+      }
     },
     {
       "operationId": "unregisterWebhook",
@@ -379,7 +427,11 @@
       "path": "/v1/webhooks/{webhookId}",
       "ts": "typed",
       "py": "typed",
-      "go": "typed"
+      "go": "typed",
+      "symbols": {
+        "py": "webhooks_unregister",
+        "go": "UnregisterWebhook"
+      }
     },
     {
       "operationId": "getWorkflow",

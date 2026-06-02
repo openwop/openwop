@@ -20,8 +20,9 @@
 
 import type { StartRunDeps } from './runStarter.js';
 import { startWorkflowRun } from './runStarter.js';
-import { listRoster, recordHeartbeat, type RosterEntry } from './rosterService.js';
+import { listRoster, recordHeartbeat, autonomyOf, type RosterEntry } from './rosterService.js';
 import { listBoards, listCards, moveCard, setCardLastRun, notifyBoardChanged } from './kanbanService.js';
+import { createApproval, hasPendingApprovalForCard } from './approvalService.js';
 import { getInstanceId } from './instanceId.js';
 import { createLogger } from '../observability/logger.js';
 
@@ -45,6 +46,9 @@ export interface HeartbeatResult {
   runId?: string;
   persona?: string;
   lastHeartbeatAt?: string;
+  /** review-mode: the run was NOT started — a pending approval was queued. */
+  proposed?: boolean;
+  approvalId?: string;
 }
 
 /**
@@ -68,6 +72,37 @@ export async function runHeartbeatOnce(deps: StartRunDeps, entry: RosterEntry): 
     for (const card of cards) {
       const workflowId = card.workflowId ?? todoColumn.triggerWorkflowId;
       if (!workflowId) continue;
+
+      // "Agents propose, humans dispose": a review-mode member doesn't start the
+      // run — it queues a pending approval for a human to claim. Skip cards that
+      // already have one so a re-poll (or the daemon) doesn't duplicate the
+      // proposal (it sits in To Do until the approval is resolved). This lives in
+      // the SHARED helper so the autonomous daemon honors review mode too, not
+      // just the manual "Check now" route.
+      if (autonomyOf(entry) === 'review') {
+        if (await hasPendingApprovalForCard(entry.tenantId, card.id)) continue;
+        const approval = await createApproval({
+          tenantId: entry.tenantId,
+          rosterId: entry.rosterId,
+          persona: entry.persona,
+          workflowId,
+          boardId: board.id,
+          cardId: card.id,
+          cardTitle: card.title,
+          proposal: `Run ${workflowId} on “${card.title}”`,
+        });
+        return {
+          picked: true,
+          proposed: true,
+          approvalId: approval.approvalId,
+          boardId: board.id,
+          cardId: card.id,
+          cardTitle: card.title,
+          persona: entry.persona,
+          lastHeartbeatAt,
+        };
+      }
+
       const runId = await startWorkflowRun(deps, {
         tenantId: entry.tenantId,
         workflowId,
