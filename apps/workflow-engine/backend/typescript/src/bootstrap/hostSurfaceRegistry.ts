@@ -96,7 +96,7 @@ export function seedDefaultHostSurfaces(): void {
     { name: 'host.observability', supported: false, note: 'Wired implicitly via emit() — surface flag not yet honored.' },
     { name: 'host.mcp', supported: process.env.OPENWOP_MCP_SERVER_ENABLED === 'true', implementation: 'workflow-engine', note: 'RFC 0020 (Active). Sample-host MCP server mount at /v1/host/sample/mcp; advertise streamable-http transport. OFF by default — set OPENWOP_MCP_SERVER_ENABLED=true.' },
     { name: 'host.triggers', supported: false, note: 'Webhooks already supported via /v1/webhooks; full trigger fan-out not yet wired.' },
-    { name: 'host.a2a', supported: false, note: 'A2A requires a peer agent.' },
+    { name: 'host.a2a', supported: true, implementation: 'workflow-engine', note: 'RFC 0076 §A. A2A 0.3 JSON-RPC client from host/a2aSurface.ts — discover/send/stream/tasks/pushConfig against any peer A2A agent; wire state-form normalized to the pack vocabulary. Server-as-agent methods (publishAgentCard/emit*/pushSend) are demo stubs (sample host has no live A2A server endpoint).' },
     // These two are already advertised honestly elsewhere — pre-seed
     // them as supported so the UI doesn't show contradictory data.
     { name: 'host.aiProviders', supported: true, implementation: 'workflow-engine', note: 'BYOK via /v1/host/sample/byok/secrets.' },

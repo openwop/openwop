@@ -431,6 +431,7 @@ async function runOneNode(input: {
     fs: surfaces.fs,
     queueBus: surfaces.queueBus,
     observability: surfaces.observability,
+    a2a: surfaces.a2a,
     // RFC 0020 — host-side MCP. The sample host builds its MCP registry
     // declaratively from workflow definitions (see host/mcpServerRegistry.ts),
     // so `expose` is a stable no-op that returns a synthetic handle. Pack
