@@ -214,6 +214,11 @@ export type ObservabilitySurface = {
 export interface BundleScope {
   tenantId: string;
   scopeId?: string;
+  /** The current run's id. Surfaces that spawn child runs (host.canvas
+   *  crossCanvasInvoke) use it as the child's `parentRunId` + to walk the
+   *  ancestor chain for the recursion/depth guard. Absent for surface-direct
+   *  (non-run) callers. */
+  runId?: string;
 }
 
 // ───────────────────────────────────────────────────────────────────
