@@ -20,10 +20,12 @@ import {
   getOrgChart,
   listRoster,
   putOrgChart,
+  updateRosterEntry,
   type OrgChart,
   type ResponsibilityView,
   type RosterEntry,
 } from './rosterClient.js';
+import { toast } from '../ui/toast.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 const card: React.CSSProperties = {
@@ -88,6 +90,23 @@ export function RosterPage(): JSX.Element {
     }
   };
 
+  // Flip a member between autonomy levels: `auto` runs heartbeat picks
+  // immediately; `review` routes them to the approval inbox for human sign-off.
+  const onToggleAutonomy = async (r: RosterEntry) => {
+    const next = r.autonomyLevel === 'review' ? 'auto' : 'review';
+    try {
+      await updateRosterEntry(r.rosterId, { autonomyLevel: next });
+      await refresh();
+      toast.success(
+        next === 'review'
+          ? `${r.persona} now proposes — its picks need your sign-off in the Inbox.`
+          : `${r.persona} now runs its picks automatically.`,
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err));
+    }
+  };
+
   // Convenience: put every roster member into one flat "All Agents" department,
   // so the org-chart + responsibility roll-up are demonstrable without a full
   // tree editor. reportsTo is null for all (no hierarchy) — descriptive only.
@@ -131,6 +150,22 @@ export function RosterPage(): JSX.Element {
               <button type="button" className="secondary" style={{ fontSize: '0.75rem' }} onClick={() => void onDelete(r.rosterId)}>Delete</button>
             </div>
             <div style={{ ...muted, fontSize: '0.8rem' }}>{r.rosterId} · runs <code>{r.agentRef.agentId}</code>{r.enabled ? '' : ' · disabled'}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+              <span className={`chip ${r.autonomyLevel === 'review' ? 'chip--accent' : 'chip--muted'}`}>
+                {r.autonomyLevel === 'review' ? 'review — proposes' : 'auto — runs'}
+              </span>
+              <button
+                type="button"
+                className="secondary"
+                style={{ fontSize: '0.72rem' }}
+                onClick={() => void onToggleAutonomy(r)}
+                title={r.autonomyLevel === 'review'
+                  ? 'Switch to auto: heartbeat picks run immediately'
+                  : 'Switch to review: heartbeat picks need human sign-off (Inbox)'}
+              >
+                {r.autonomyLevel === 'review' ? 'Set auto' : 'Set review'}
+              </button>
+            </div>
             {r.workflows.length > 0 ? (
               <div style={{ fontSize: '0.8rem', marginTop: 4 }}>portfolio: {r.workflows.map((w) => <code key={w} style={{ marginRight: 6 }}>{w}</code>)}</div>
             ) : <div style={{ ...muted, fontSize: '0.8rem', marginTop: 4 }}>no workflows assigned</div>}

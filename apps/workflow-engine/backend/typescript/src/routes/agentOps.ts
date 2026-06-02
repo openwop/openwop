@@ -25,9 +25,10 @@ import { OpenwopError } from '../types.js';
 import type { HostAdapterSuite } from '../host/index.js';
 import type { Storage } from '../storage/storage.js';
 import { seedDemoAgents } from '../host/demoSeed.js';
-import { getRosterEntry, recordHeartbeat } from '../host/rosterService.js';
+import { getRosterEntry, recordHeartbeat, autonomyOf } from '../host/rosterService.js';
 import { listBoards, listCards, moveCard, setCardLastRun, notifyBoardChanged } from '../host/kanbanService.js';
 import { startWorkflowRun } from '../host/runStarter.js';
+import { createApproval, hasPendingApprovalForCard } from '../host/approvalService.js';
 
 interface Deps {
   storage: Storage;
@@ -77,6 +78,36 @@ export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
         for (const card of cards) {
           const workflowId = card.workflowId ?? todoColumn.triggerWorkflowId;
           if (!workflowId) continue;
+
+          // "Agents propose, humans dispose": a review-mode member doesn't start
+          // the run — it queues a pending approval for a human to claim. Skip
+          // cards that already have one so a re-poll doesn't duplicate the
+          // proposal (it sits in To Do until the approval is resolved).
+          if (autonomyOf(entry) === 'review') {
+            if (await hasPendingApprovalForCard(tenantId, card.id)) continue;
+            const approval = await createApproval({
+              tenantId,
+              rosterId: entry.rosterId,
+              persona: entry.persona,
+              workflowId,
+              boardId: board.id,
+              cardId: card.id,
+              cardTitle: card.title,
+              proposal: `Run ${workflowId} on “${card.title}”`,
+            });
+            res.status(200).json({
+              picked: true,
+              proposed: true,
+              approvalId: approval.approvalId,
+              boardId: board.id,
+              cardId: card.id,
+              cardTitle: card.title,
+              persona: entry.persona,
+              lastHeartbeatAt,
+            });
+            return;
+          }
+
           const runId = await startWorkflowRun(deps, {
             tenantId,
             workflowId,
@@ -140,10 +171,10 @@ export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
       const items = runs
         .map((run) => {
           const md = (run.metadata ?? {}) as Record<string, unknown>;
-          // A run carries one attribution block (heartbeat / schedule / kanban);
-          // keep it only if that block names this roster member.
+          // A run carries one attribution block (heartbeat / schedule / kanban /
+          // approval); keep it only if that block names this roster member.
           const candidates: Array<{ source: string; block: Record<string, unknown> }> = [];
-          for (const key of ['heartbeat', 'schedule', 'kanban'] as const) {
+          for (const key of ['heartbeat', 'schedule', 'kanban', 'approval'] as const) {
             const block = md[key];
             if (block && typeof block === 'object') candidates.push({ source: key, block: block as Record<string, unknown> });
           }

@@ -15,6 +15,7 @@ import { useNotificationStore } from './notificationStore.js';
 import { PageHeader } from '../ui/PageHeader.js';
 import { listOpenInterrupts, type OpenInterrupt } from '../client/interruptsClient.js';
 import { RenderInterrupt } from '../interrupts/RenderInterrupt.js';
+import { ApprovalsInbox } from './ApprovalsInbox.js';
 import type { Notification } from './types.js';
 import { isActionNeeded } from './types.js';
 
@@ -66,6 +67,8 @@ export function NotificationsPage(): JSX.Element {
         }
       />
       {error && <div className="alert error">{error}</div>}
+
+      <ApprovalsInbox onResolved={() => void refresh()} />
 
       <div
         className="card"

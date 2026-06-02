@@ -262,7 +262,7 @@ export function RunProvenancePanel({ events, snapshot }: Props) {
             <dt className="muted">Caused by</dt>
             <dd style={{ margin: 0 }}>
               {p.parentRunId ? (
-                <Link to={`/runs/${encodeURIComponent(p.parentRunId)}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                <Link to={`/runs/${encodeURIComponent(p.parentRunId)}`} className="inline-link" style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
                   parent run <ChevronRightIcon size={12} />
                 </Link>
               ) : (

@@ -110,6 +110,7 @@ Cross-surface components (`.btn`, `.marker`, etc.) live in `DESIGN.md §6`. The 
 | `.envelope-events` | the in-bubble timeline wrapper holding stacked `.env-chip` rows | column flex with 6px gap; sits between `MessageRenderer` and `AgentEventCards` inside `MessageBubble` |
 | `.reasoning-disclosure` | RFC 0030 §A `<details>` for the `envelope.payload.reasoning` string | distinct from `ThoughtsDisclosure` — uses an `ⓘ` info glyph (vs `…` ellipsis), dashed top divider, AI-coloured left-bar on the open body |
 | `.prompt-tier-one-chip` | Tier-1 subset finding on a schema-hint prompt (RFC 0030 §B) | warning-tinted mono chip; appears on the prompt-list-item card; pairs with a banner above the list when `capabilities.envelopes.tierOneSubsetCompliance` is `strict` / `warn` |
+| `.inline-link` | bare inline text-`<a>` keyboard focus ring | opts an in-text `<Link>`/`<a>` into the `--clay`/`--color-accent` `:focus-visible` ring (the global ring covers `a.surface-card` but not text links); outline + 2px offset only, no color/weight change |
 
 ### 5.1 Shared UI primitives — the cross-surface cohesion layer (`src/ui/`)
 

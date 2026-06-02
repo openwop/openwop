@@ -32,6 +32,10 @@ export interface RosterEntry {
   /** ISO-8601 timestamp of the last "Check now" heartbeat that ran; absent ⇒
    *  never checked. Surfaced as "last checked …". */
   lastHeartbeatAt?: string;
+  /** Heartbeat autonomy: `auto` (default) starts picked runs immediately;
+   *  `review` queues a proposal for human sign-off (the approval inbox).
+   *  Absent ⇒ `auto`. */
+  autonomyLevel?: 'auto' | 'review';
   createdAt: string;
   updatedAt: string;
 }
@@ -73,7 +77,7 @@ export async function createRosterEntry(input: {
 
 export async function updateRosterEntry(
   rosterId: string,
-  patch: { persona?: string; workflows?: string[]; enabled?: boolean; label?: string; description?: string; avatarUrl?: string | null },
+  patch: { persona?: string; workflows?: string[]; enabled?: boolean; label?: string; description?: string; avatarUrl?: string | null; autonomyLevel?: 'auto' | 'review' },
 ): Promise<RosterEntry> {
   const res = await fetch(`${rosterBase}/${encodeURIComponent(rosterId)}`, fetchOpts({ method: 'PATCH', headers: jsonHeaders(), body: JSON.stringify(patch) }));
   if (!res.ok) throw new Error(`updateRosterEntry returned ${res.status}`);
@@ -120,8 +124,8 @@ export interface AgentActivityItem {
   /** RunStatus: pending | running | completed | failed | … */
   status: string;
   /** How the run was triggered. */
-  source: 'heartbeat' | 'schedule' | 'kanban';
-  /** The board card that triggered it (heartbeat / kanban), when known. */
+  source: 'heartbeat' | 'schedule' | 'kanban' | 'approval';
+  /** The board card that triggered it (heartbeat / kanban / approval), when known. */
   cardId?: string;
   /** ISO-8601 — terminal time, else last-update / creation. */
   timestamp: string;

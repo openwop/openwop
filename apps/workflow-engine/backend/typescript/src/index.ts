@@ -80,6 +80,7 @@ import { createSelfHttpBridge } from './messaging/bridge.js';
 import { registerSchedulerRoutes } from './routes/scheduler.js';
 import { registerKanbanRoutes } from './routes/kanban.js';
 import { registerAgentOpsRoutes } from './routes/agentOps.js';
+import { registerApprovalRoutes } from './routes/approvals.js';
 import { registerRosterRoutes } from './routes/roster.js';
 import { registerTriggerBridgeRoutes } from './routes/triggerBridge.js';
 import { initHostExtPersistence } from './host/hostExtPersistence.js';
@@ -393,6 +394,11 @@ export async function createApp(config: AppConfig): Promise<Express> {
   // heartbeat "Check now" task-claim. Registered after roster + kanban since it
   // composes both.
   registerAgentOpsRoutes(app, { storage, hostSuite });
+  // Approval inbox — the human side of the "agents propose, humans dispose"
+  // gate. A review-mode member's heartbeat queues a proposal here; a human
+  // claims (starts the run) or rejects it. Registered after agentOps since it
+  // resolves proposals agentOps creates.
+  registerApprovalRoutes(app, { storage, hostSuite });
   // RFC 0083 durable trigger bridge — the deferred reference durable-delivery
   // (subscription state machine + dedup/retry/dead-letter + the read surface).
   // The Kanban card→run firing routes through it.

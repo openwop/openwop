@@ -12,7 +12,7 @@ import { getAgentActivity, type AgentActivityItem } from './rosterClient.js';
 import { workflowName } from './roleTemplates.js';
 import { relativeTime } from './agentViewModel.js';
 import { Notice } from '../ui/Notice.js';
-import { ClockIcon, ZapIcon, PlayIcon } from '../ui/icons/index.js';
+import { ClockIcon, ZapIcon, PlayIcon, CheckIcon } from '../ui/icons/index.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
@@ -20,12 +20,14 @@ const SOURCE_TEXT: Record<AgentActivityItem['source'], string> = {
   heartbeat: 'picked up a task',
   schedule: 'ran on a schedule',
   kanban: 'started a workflow from a card',
+  approval: 'ran an approved proposal',
 };
 
 const SOURCE_ICON: Record<AgentActivityItem['source'], JSX.Element> = {
   heartbeat: <PlayIcon size={13} />,
   schedule: <ClockIcon size={13} />,
   kanban: <ZapIcon size={13} />,
+  approval: <CheckIcon size={13} />,
 };
 
 /** Compact wall-clock duration: "820 ms" / "4.2 s" / "1m 5s". */
