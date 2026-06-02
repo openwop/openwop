@@ -32,7 +32,7 @@ export interface Queryable {
   ): Promise<{ rows: R[] }>;
 }
 
-export const LATEST_SCHEMA_VERSION = 16;
+export const LATEST_SCHEMA_VERSION = 17;
 
 const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
   1: async (client) => {
@@ -524,6 +524,21 @@ const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
       );
       CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_due
         ON webhook_deliveries (status, next_attempt_at);
+    `);
+  },
+  17: async (client) => {
+    // Run-dispatch lease (multi-instance crash recovery). A worker stamps
+    // `dispatch_owner` + `dispatch_lease_expires_at` (epoch ms, BIGINT — pg
+    // returns it as a string, the adapter coerces via Number(...)) when it
+    // begins executing a run; `claimOrphanedRuns` re-claims runs whose lease
+    // is absent or expired via FOR UPDATE SKIP LOCKED so it is multi-instance-
+    // safe. The partial index covers the orphan scan (status + lease expiry).
+    // Mirrors sqlite mig 18.
+    await client.query(`
+      ALTER TABLE runs ADD COLUMN IF NOT EXISTS dispatch_owner TEXT;
+      ALTER TABLE runs ADD COLUMN IF NOT EXISTS dispatch_lease_expires_at BIGINT;
+      CREATE INDEX IF NOT EXISTS idx_runs_dispatch_lease
+        ON runs (status, dispatch_lease_expires_at);
     `);
   },
 };

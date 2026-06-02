@@ -63,6 +63,7 @@ import type { ProviderPolicyResolver } from '../host/index.js';
 import { createAiProvidersAdapter, AiProviderError, type AiProviderErrorCode } from '../aiProviders/aiProvidersHost.js';
 import { classifyDispatchError } from '../observability/errorRecovery.js';
 import { buildHostSurfaceBundle, writeMemoryEntry, MEMORY_DEMO_REF } from '../host/inMemorySurfaces.js';
+import { getInstanceId } from '../host/instanceId.js';
 import { notifyRunTerminal } from './runLifecycle.js';
 import { emitRunFailureNotification } from '../notifications/notify.js';
 import { snapshotRunVariables } from '../host/variablesRuntime.js';
@@ -102,6 +103,11 @@ export interface ExecuteRunResult {
  *  as the upper bound when resolving `RunOptions.configurable.runTimeoutMs`
  *  below. MUST equal the advertised value (advertise/enforce must agree). */
 export const RUN_DURATION_CEILING_MS = 600_000;
+
+/** Dispatch-lease duration (ms) stamped on a run at execution start. Exceeds the
+ *  run-duration ceiling by a buffer so a legitimately long-running run is never
+ *  swept; only a crashed instance's run (lease expired past this) is re-claimed. */
+export const RUN_DISPATCH_LEASE_MS = RUN_DURATION_CEILING_MS + 120_000;
 
 async function emitTerminalFailure(input: {
   storage: Storage;
@@ -690,6 +696,18 @@ export async function executeRun(
       payload: { resumedAtNode: options.resumeNodeId ?? null },
     });
     await storage.updateRun(run.runId, { status: 'running' });
+  }
+
+  // Multi-instance dispatch lease: claim this run for this instance. The lease
+  // outlives the maximum legal runtime (run-duration ceiling + buffer), so an
+  // alive run is never re-dispatched; once it expires (the owning instance
+  // crashed) the `runDispatchSweeper` re-claims and re-runs the run, which is
+  // idempotent against the Layer-2 invocation log. Best-effort — a lease write
+  // failure must not abort the run.
+  try {
+    await storage.setRunDispatchLease(run.runId, getInstanceId(), Date.now() + RUN_DISPATCH_LEASE_MS);
+  } catch {
+    /* lease is an availability optimization, not a correctness gate */
   }
 
   // Open the run-lifecycle span per `observability.md §"Span naming"`

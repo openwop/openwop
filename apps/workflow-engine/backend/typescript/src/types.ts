@@ -55,6 +55,14 @@ export interface RunRecord {
    *  this run. When set, it is stamped as `run.started`'s `causationId` so
    *  `/ancestry` resolves the cause → run (e.g. a trigger delivery → run). */
   causationId?: string;
+  /** Multi-instance dispatch lease. Set by `executeRun` at start to the
+   *  instance id that is executing the run; the lease (`dispatchLeaseExpiresAt`,
+   *  epoch ms) outlives the max legal runtime, so an alive run is never
+   *  re-dispatched. The `runDispatchSweeper` re-dispatches `pending`/`running`
+   *  runs whose lease has expired (the owning instance crashed). Cleared
+   *  implicitly: terminal/`waiting-*` status excludes a run from the sweep. */
+  dispatchOwner?: string | null;
+  dispatchLeaseExpiresAt?: number | null;
 }
 
 /** Persisted run event with monotonic sequence per run. */

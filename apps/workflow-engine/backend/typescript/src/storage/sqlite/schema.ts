@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 19;
+export const LATEST_SCHEMA_VERSION = 20;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -564,6 +564,24 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
       );
       CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_due
         ON webhook_deliveries (status, next_attempt_at);
+    `);
+  },
+  20: (db) => {
+    // Multi-instance run-dispatch lease (crash recovery). A dispatching
+    // instance stamps `dispatch_owner` (its worker/instance id) + a
+    // time-boxed `dispatch_lease_expires_at` (epoch-ms) on a run when it
+    // starts executing it. If that instance crashes, the lease expires and
+    // a survivor's reaper re-claims the orphaned run (`claimOrphanedRuns`)
+    // for re-dispatch — without two instances racing the same run, because
+    // the claim runs in a single write transaction and excludes rows whose
+    // lease is still live. Both columns are nullable (a run with no live
+    // dispatcher carries NULL/NULL). The (status, dispatch_lease_expires_at)
+    // index serves the orphan-claim scan.
+    db.exec(`
+      ALTER TABLE runs ADD COLUMN dispatch_owner TEXT;
+      ALTER TABLE runs ADD COLUMN dispatch_lease_expires_at INTEGER;
+      CREATE INDEX IF NOT EXISTS idx_runs_dispatch_lease
+        ON runs (status, dispatch_lease_expires_at);
     `);
   },
 };

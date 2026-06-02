@@ -90,6 +90,29 @@ export function openSqliteStorage(dbPath: string): Storage {
     LIMIT @limit
   `);
 
+  // ── run dispatch lease (multi-instance crash recovery, schema v20) ──
+  const setRunDispatchLeaseStmt = db.prepare(`
+    UPDATE runs
+    SET dispatch_owner = @owner, dispatch_lease_expires_at = @lease
+    WHERE run_id = @runId
+  `);
+  // Select up-to-`limit` ORPHAN run ids: pending/running, past the grace
+  // window (createdAt < staleBeforeIso — created_at is ISO-8601 TEXT, so
+  // lexicographic compare is chronological), and the lease absent/expired.
+  const selectOrphanedRunIdsStmt = db.prepare(`
+    SELECT run_id FROM runs
+    WHERE status IN ('pending', 'running')
+      AND created_at < @staleBeforeIso
+      AND (dispatch_lease_expires_at IS NULL OR dispatch_lease_expires_at < @nowMs)
+    ORDER BY created_at ASC
+    LIMIT @limit
+  `);
+  const claimRunDispatchStmt = db.prepare(`
+    UPDATE runs
+    SET dispatch_owner = @workerId, dispatch_lease_expires_at = @leaseExpiresAt
+    WHERE run_id = @runId
+  `);
+
   const appendEventStmt = db.prepare(`
     INSERT INTO events (event_id, run_id, sequence, type, node_id, payload, timestamp, causation_id)
     VALUES (@eventId, @runId, @sequence, @type, @nodeId, @payload, @timestamp, @causationId)
@@ -192,6 +215,33 @@ export function openSqliteStorage(dbPath: string): Storage {
         claimWebhookDeliveryStmt.run({ deliveryId: delivery_id, workerId, claimExpiresAt, now });
         const row = getWebhookDeliveryStmt.get(delivery_id);
         if (row) claimed.push(rowToWebhookDelivery(row));
+      }
+      return claimed;
+    },
+  );
+
+  // Atomic orphan-run claim: SELECT due ids + UPDATE the lease + re-SELECT
+  // the claimed rows, all under one better-sqlite3 write transaction — same
+  // shape as claimDueWebhookDeliveriesTxn above. better-sqlite3 serializes
+  // write txns process-wide, so two concurrent reapers can't grab the same
+  // run: the second's due-scan excludes ids whose lease the first just set.
+  const claimOrphanedRunsTxn = db.transaction(
+    (
+      workerId: string,
+      nowMs: number,
+      staleBeforeIso: string,
+      leaseMs: number,
+      limit: number,
+    ): RunRecord[] => {
+      const idRows = selectOrphanedRunIdsStmt.all({ staleBeforeIso, nowMs, limit }) as Array<{
+        run_id: string;
+      }>;
+      const leaseExpiresAt = nowMs + leaseMs;
+      const claimed: RunRecord[] = [];
+      for (const { run_id } of idRows) {
+        claimRunDispatchStmt.run({ runId: run_id, workerId, leaseExpiresAt });
+        const row = getRunStmt.get(run_id);
+        if (row) claimed.push(rowToRun(row));
       }
       return claimed;
     },
@@ -388,6 +438,10 @@ export function openSqliteStorage(dbPath: string): Storage {
       // the resume path can JSON.parse it without round-tripping
       // through a typed shape.
       schedulerSnapshot: (row.scheduler_snapshot as string | null) ?? undefined,
+      // Multi-instance run-dispatch lease (schema migration v20). Both
+      // columns are nullable; `dispatch_lease_expires_at` is epoch-ms.
+      dispatchOwner: row.dispatch_owner ?? null,
+      dispatchLeaseExpiresAt: row.dispatch_lease_expires_at == null ? null : Number(row.dispatch_lease_expires_at),
       ...(row.error_code
         ? { error: { code: row.error_code, message: row.error_message ?? '' } }
         : {}),
@@ -546,6 +600,15 @@ export function openSqliteStorage(dbPath: string): Storage {
         limit,
       });
       return rows.map(rowToRun);
+    },
+
+    async setRunDispatchLease(runId, owner, leaseExpiresAt) {
+      // Best-effort: a missing run row is a no-op (zero rows updated).
+      setRunDispatchLeaseStmt.run({ runId, owner: owner ?? null, lease: leaseExpiresAt ?? null });
+    },
+
+    async claimOrphanedRuns(workerId, nowMs, staleBeforeIso, leaseMs, limit) {
+      return claimOrphanedRunsTxn(workerId, nowMs, staleBeforeIso, leaseMs, limit);
     },
 
     async appendEvent(input) {

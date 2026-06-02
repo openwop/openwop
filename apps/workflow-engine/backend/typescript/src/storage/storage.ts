@@ -54,6 +54,30 @@ export interface Storage {
    *  the route, not here. */
   deleteRun(runId: string): Promise<boolean>;
 
+  // ── run dispatch lease (multi-instance crash recovery) ──
+  /**
+   * Stamp the dispatch lease on a run: `dispatchOwner = owner`,
+   * `dispatchLeaseExpiresAt = leaseExpiresAt` (epoch ms). Called by `executeRun`
+   * at start. Pass `(null, null)` to clear. Best-effort — a missing run is a no-op.
+   */
+  setRunDispatchLease(runId: string, owner: string | null, leaseExpiresAt: number | null): Promise<void>;
+  /**
+   * Atomically claim up to `limit` ORPHANED runs for `workerId`: rows with
+   * `status IN ('pending','running')`, `createdAt < staleBeforeIso` (a grace
+   * window so freshly-dispatched runs are never raced), and the dispatch lease
+   * absent or expired (`dispatchLeaseExpiresAt IS NULL OR < nowMs`). Sets a fresh
+   * lease (`dispatchOwner=workerId`, `dispatchLeaseExpiresAt=nowMs+leaseMs`) and
+   * returns the claimed runs for re-dispatch. MUST be multi-instance-safe
+   * (Postgres `FOR UPDATE SKIP LOCKED`; sqlite a single write transaction).
+   */
+  claimOrphanedRuns(
+    workerId: string,
+    nowMs: number,
+    staleBeforeIso: string,
+    leaseMs: number,
+    limit: number,
+  ): Promise<readonly RunRecord[]>;
+
   // ── annotations (RFC 0056 — per-run side-store, NOT the event log) ──
   insertAnnotation(record: AnnotationRecord): Promise<void>;
   listAnnotations(runId: string): Promise<readonly AnnotationRecord[]>;

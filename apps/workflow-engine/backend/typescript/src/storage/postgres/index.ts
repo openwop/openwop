@@ -79,6 +79,10 @@ function rowToRun(r: Row): RunRecord {
     completedAt: r.completed_at ? (r.completed_at as Date).toISOString() : undefined,
     currentNodeId: (r.current_node_id as string | null) ?? undefined,
     schedulerSnapshot: (r.scheduler_snapshot as string | null) ?? undefined,
+    dispatchOwner: (r.dispatch_owner as string | null) ?? null,
+    // BIGINT — pg returns it as a string; coerce via Number(...), preserve null.
+    dispatchLeaseExpiresAt:
+      r.dispatch_lease_expires_at == null ? null : Number(r.dispatch_lease_expires_at),
     ...(r.error_code
       ? { error: { code: r.error_code as string, message: (r.error_message as string | null) ?? '' } }
       : {}),
@@ -731,6 +735,46 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
       } finally {
         client.release();
       }
+    },
+
+    // ── run dispatch lease (multi-instance crash recovery) ──
+    async setRunDispatchLease(runId, owner, leaseExpiresAt) {
+      // Best-effort stamp; a missing run updates 0 rows (no-op). Does NOT
+      // touch updated_at — the lease is a dispatch-control column, orthogonal
+      // to the run's logical updated_at.
+      await pool.query(
+        `UPDATE runs SET dispatch_owner = $2, dispatch_lease_expires_at = $3
+          WHERE run_id = $1`,
+        [runId, owner, leaseExpiresAt],
+      );
+    },
+
+    async claimOrphanedRuns(workerId, nowMs, staleBeforeIso, leaseMs, limit) {
+      // Multi-instance-safe atomic claim: the inner SELECT picks orphaned runs
+      // (pending/running, created before the grace window, lease absent or
+      // expired) and takes a row lock with FOR UPDATE SKIP LOCKED so concurrent
+      // re-dispatchers on other instances skip rows already being claimed; the
+      // outer UPDATE stamps a fresh lease and RETURNs the claimed rows in one
+      // statement. `created_at` is TIMESTAMPTZ, so compare against the ISO
+      // stale-before bound cast to timestamptz.
+      const { rows } = await pool.query<Row>(
+        `UPDATE runs
+            SET dispatch_owner = $1,
+                dispatch_lease_expires_at = $2,
+                updated_at = NOW()
+          WHERE run_id IN (
+            SELECT run_id FROM runs
+             WHERE status IN ('pending','running')
+               AND created_at < $3::timestamptz
+               AND (dispatch_lease_expires_at IS NULL OR dispatch_lease_expires_at < $4)
+             ORDER BY created_at ASC
+             LIMIT $5
+             FOR UPDATE SKIP LOCKED
+          )
+          RETURNING *`,
+        [workerId, nowMs + leaseMs, staleBeforeIso, nowMs, limit],
+      );
+      return rows.map(rowToRun);
     },
 
     async insertAnnotation(record) {
