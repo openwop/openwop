@@ -59,6 +59,8 @@ export interface HostSurfaceBundle {
     /** RFC 0018 §A.searchIndex — full-text / BM25 search surface.
      *  Distinct from `vector` (semantic) and `sql` (relational). */
     search: SearchSurface;
+    /** RFC 0018 §A.nosql — document store. */
+    nosql: NoSqlSurface;
   };
   fs: FsSurface;
   queueBus: QueueBusSurface;
@@ -125,6 +127,20 @@ export type VectorSurface = {
 export type SearchSurface = {
   index: SurfaceFn;
   query: SurfaceFn;
+  delete: SurfaceFn;
+};
+/** RFC 0018 §A.nosql — document-store surface. The `core.openwop.db` pack's
+ *  nodes call `find` / `insert` / `update` / `delete`. (The spec prose under
+ *  `host-capabilities.md §host.db.nosql` names `get`/`query` alongside; the
+ *  shipped pack uses `find` and has no `get` node — a pre-existing spec↔pack
+ *  divergence. This surface implements exactly what the nodes call.) The
+ *  in-memory reference impl is a nested Map (tenant → datasource/collection →
+ *  doc) with exact-match filters; production hosts back it with MongoDB /
+ *  DynamoDB / Firestore / CosmosDB. */
+export type NoSqlSurface = {
+  find: SurfaceFn;
+  insert: SurfaceFn;
+  update: SurfaceFn;
   delete: SurfaceFn;
 };
 export type FsSurface = {
@@ -639,6 +655,141 @@ function cosine(a: number[], b: number[]): number {
 }
 
 // ───────────────────────────────────────────────────────────────────
+// NoSQL — document store (tenant → datasource/collection → doc)
+// ───────────────────────────────────────────────────────────────────
+//
+// Demo-grade: exact-match filters only (field === value, deep-equal for
+// nested values). Per `host-capabilities.md §host.db.nosql` the host MUST
+// reject injection-style filter operators — any `$`-prefixed filter key is
+// refused (a real MongoDB host blocks `$where` JS eval; here the whole
+// operator family is unsupported, so refusing them is both safe and honest).
+// Updates accept Mongo-style `$set` / `$unset`, or a plain field-merge object.
+
+type NoSqlDoc = Record<string, unknown>;
+
+function deepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return false;
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  const ka = Object.keys(a as object), kb = Object.keys(b as object);
+  if (ka.length !== kb.length) return false;
+  return ka.every((k) => deepEqual((a as NoSqlDoc)[k], (b as NoSqlDoc)[k]));
+}
+
+/** Reject `$`-prefixed keys ANYWHERE in a filter (injection guard,
+ *  §host.db.nosql). The Mongo operator form is nested (`{field:{$gt:1}}`), so
+ *  the guard recurses — a top-level-only check would let `$where`/`$gt` slip
+ *  through a field value. */
+function assertSafeFilter(value: unknown): void {
+  if (!value || typeof value !== 'object') return;
+  if (Array.isArray(value)) { value.forEach(assertSafeFilter); return; }
+  for (const [k, v] of Object.entries(value)) {
+    if (k.startsWith('$')) {
+      throw Object.assign(new Error(`nosql filter operator '${k}' is not supported (exact-match filters only)`), { code: 'nosql_filter_unsupported' });
+    }
+    assertSafeFilter(v);
+  }
+}
+
+function matchesFilter(doc: NoSqlDoc, filter: NoSqlDoc): boolean {
+  return Object.keys(filter).every((k) => deepEqual(doc[k], filter[k]));
+}
+
+/** Apply a `{field:1|0}` projection. Any included (truthy) field → inclusion
+ *  mode (only those + always `_id`); otherwise exclusion mode. */
+function project(doc: NoSqlDoc, projection: NoSqlDoc | undefined): NoSqlDoc {
+  if (!projection || Object.keys(projection).length === 0) return doc;
+  const includes = Object.entries(projection).filter(([, v]) => v).map(([k]) => k);
+  if (includes.length > 0) {
+    const out: NoSqlDoc = {};
+    if ('_id' in doc) out._id = doc._id;
+    for (const k of includes) if (k in doc) out[k] = doc[k];
+    return out;
+  }
+  const out: NoSqlDoc = { ...doc };
+  for (const k of Object.keys(projection)) delete out[k];
+  return out;
+}
+
+function applySort(docs: NoSqlDoc[], sort: NoSqlDoc | undefined): NoSqlDoc[] {
+  if (!sort || Object.keys(sort).length === 0) return docs;
+  const keys = Object.entries(sort).map(([k, v]) => ({ k, dir: Number(v) < 0 ? -1 : 1 }));
+  return [...docs].sort((a, b) => {
+    for (const { k, dir } of keys) {
+      const av = a[k], bv = b[k];
+      if (av === bv) continue;
+      if (av === undefined || av === null) return -dir;
+      if (bv === undefined || bv === null) return dir;
+      const cmp = typeof av === 'number' && typeof bv === 'number'
+        ? av - bv
+        : String(av).localeCompare(String(bv));
+      if (cmp !== 0) return cmp * dir;
+    }
+    return 0;
+  });
+}
+
+function createNosql(state: TenantMap<Map<string, NoSqlDoc>>, scope: BundleScope): NoSqlSurface {
+  const coll = (datasource: unknown, collection: unknown): Map<string, NoSqlDoc> => {
+    const t = state.bucket(scope.tenantId);
+    const key = `${String(datasource ?? 'default')}::${String(collection ?? 'default')}`;
+    let m = t.get(key);
+    if (!m) { m = new Map(); t.set(key, m); }
+    return m;
+  };
+  return {
+    async insert({ datasource, collection, docs }) {
+      const m = coll(datasource, collection);
+      const ids: string[] = [];
+      const arr = Array.isArray(docs) ? (docs as NoSqlDoc[]) : [docs as NoSqlDoc];
+      for (const raw of arr) {
+        const id = typeof raw._id === 'string' ? raw._id : `doc_${randomUUID()}`;
+        const stored: NoSqlDoc = { ...raw, _id: id };
+        m.set(id, stored);
+        ids.push(id);
+      }
+      return { inserted: ids.length, ids };
+    },
+    async find({ datasource, collection, filter, projection, sort, limit }) {
+      const f = (filter as NoSqlDoc) ?? {};
+      assertSafeFilter(f);
+      const m = coll(datasource, collection);
+      let hits = [...m.values()].filter((d) => matchesFilter(d, f));
+      hits = applySort(hits, sort as NoSqlDoc | undefined);
+      if (typeof limit === 'number' && limit >= 0) hits = hits.slice(0, limit);
+      return { docs: hits.map((d) => project(d, projection as NoSqlDoc | undefined)) };
+    },
+    async update({ datasource, collection, filter, update, upsert }) {
+      const f = (filter as NoSqlDoc) ?? {};
+      assertSafeFilter(f);
+      const u = (update as NoSqlDoc) ?? {};
+      const set = (u.$set as NoSqlDoc | undefined) ?? (Object.keys(u).some((k) => k.startsWith('$')) ? {} : u);
+      const unset = u.$unset as NoSqlDoc | undefined;
+      const m = coll(datasource, collection);
+      const matches = [...m.values()].filter((d) => matchesFilter(d, f));
+      for (const d of matches) {
+        Object.assign(d, set);
+        if (unset) for (const k of Object.keys(unset)) delete d[k];
+      }
+      if (matches.length === 0 && upsert === true) {
+        const id = `doc_${randomUUID()}`;
+        m.set(id, { ...f, ...set, _id: id });
+        return { matched: 0, modified: 0, upsertedId: id };
+      }
+      return { matched: matches.length, modified: matches.length };
+    },
+    async delete({ datasource, collection, filter }) {
+      const f = (filter as NoSqlDoc) ?? {};
+      assertSafeFilter(f);
+      const m = coll(datasource, collection);
+      let deleted = 0;
+      for (const [id, d] of [...m.entries()]) if (matchesFilter(d, f)) { m.delete(id); deleted++; }
+      return { deleted };
+    },
+  };
+}
+
+// ───────────────────────────────────────────────────────────────────
 // FS — sandboxed under <dataDir>/host-fs/<tenant>/
 // ───────────────────────────────────────────────────────────────────
 
@@ -848,6 +999,7 @@ const _queueState = new TenantMap<QueueEntry[]>();
 const _busState = new TenantMap<BusMessage[]>();
 const _vectorState = new TenantMap<Map<string, VectorEntry>>();
 const _searchState = new TenantMap<Map<string, SearchDoc>>();
+const _nosqlState = new TenantMap<Map<string, NoSqlDoc>>();
 const _sqlPool = new Map<string, Database.Database>();
 // RFC 0004 memory: tenant → memoryRef → entries. Host-internal write side
 // (run-summary on completion); read side exposed via GET /v1/host/sample/memory.
@@ -880,6 +1032,7 @@ export function initInMemorySurfaces(deps: { dataDir: string }): void {
   registerHostSurface({ name: 'host.db.sql', supported: true, implementation: 'sqlite-in-memory', note: 'better-sqlite3, one in-memory DB per tenant.' });
   registerHostSurface({ name: 'host.db.vector', supported: true, implementation: 'brute-force-cosine', note: 'O(n) cosine over an in-memory Map.' });
   registerHostSurface({ name: 'host.db.search', supported: true, implementation: 'naive-bag-of-words', note: 'Token-frequency relevance score. Real impls use Elasticsearch / OpenSearch / Meilisearch / Typesense.' });
+  registerHostSurface({ name: 'host.db.nosql', supported: true, implementation: 'nested-map-document-store', note: 'tenant → datasource/collection → doc. Exact-match filters only ($-operators refused); $set/$unset updates. Real impls use MongoDB / DynamoDB / Firestore / CosmosDB.' });
   registerHostSurface({ name: 'host.messaging', supported: true, implementation: inmem });
   registerHostSurface({ name: 'host.observability', supported: true, implementation: 'structured-logger', note: 'Routes through the workflow-engine logger.' });
   registerHostSurface({ name: 'host.memory', supported: true, implementation: inmem, note: 'Demo only. RFC 0004 read-side (list/get); host writes a run-summary on completion. Restarts wipe state.' });
@@ -1200,6 +1353,7 @@ export function buildHostSurfaceBundle(scope: BundleScope): HostSurfaceBundle {
       sql: createSql(_sqlPool, scope),
       vector: createVector(_vectorState, scope),
       search: createSearch(_searchState, scope),
+      nosql: createNosql(_nosqlState, scope),
     },
     fs: createFs(fsRoot, scope),
     queueBus: createQueueBus(_busState, scope),
