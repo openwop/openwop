@@ -30,10 +30,15 @@ const log = createLogger('webhookDeliveryWorker');
 
 /** Per-delivery attempt budget before a row is dead-lettered. */
 export const WEBHOOK_MAX_ATTEMPTS = 5;
-/** Claim lease duration (ms). A claimed row whose lease expires is re-claimable. */
-const CLAIM_LEASE_MS = 30_000;
-/** Rows claimed per poll. */
-const CLAIM_BATCH = 20;
+/** Rows claimed per poll. Kept small so the worst-case sequential batch time
+ *  (`CLAIM_BATCH × DELIVERY_TIMEOUT_MS`) stays well under `CLAIM_LEASE_MS` —
+ *  otherwise a slow batch's unprocessed tail could have its lease expire and be
+ *  re-claimed (and re-delivered) by another instance mid-batch. */
+const CLAIM_BATCH = 5;
+/** Claim lease duration (ms). A claimed row whose lease expires is re-claimable.
+ *  MUST exceed the worst-case batch processing time (`CLAIM_BATCH × timeout` =
+ *  5 × 10s = 50s) with margin so an in-progress batch is never re-claimed. */
+const CLAIM_LEASE_MS = 120_000;
 /** Poll cadence for the running worker. */
 const POLL_INTERVAL_MS = 1_000;
 /** Per-delivery HTTP timeout. */
@@ -49,9 +54,12 @@ export function webhookBackoffMs(attempts: number): number {
   return Math.min(base, 300_000);
 }
 
-/** Sign + POST one delivery. Returns true on a 2xx response. */
-async function sendDelivery(rec: WebhookDeliveryRecord, now: number): Promise<{ ok: boolean; detail: string }> {
-  const timestamp = Math.floor(now / 1000).toString();
+/** Sign + POST one delivery. Returns true on a 2xx response. The signature
+ *  timestamp is computed at SEND time (not the batch-claim time) so a slow batch
+ *  doesn't ship later items with a stale `t=` — receivers verify it against the
+ *  spec's ±5min freshness window (webhooks.md §"Signature recipe"). */
+async function sendDelivery(rec: WebhookDeliveryRecord): Promise<{ ok: boolean; detail: string }> {
+  const timestamp = Math.floor(Date.now() / 1000).toString();
   const signature = createHmac('sha256', rec.secret).update(`${timestamp}.${rec.payload}`).digest('hex');
   try {
     const res = await fetch(rec.url, {
@@ -84,7 +92,7 @@ export async function processDueWebhookDeliveries(
 ): Promise<number> {
   const due = await storage.claimDueWebhookDeliveries(workerId, now, CLAIM_LEASE_MS, CLAIM_BATCH);
   for (const rec of due) {
-    const result = await sendDelivery(rec, now);
+    const result = await sendDelivery(rec);
     if (result.ok) {
       await storage.markWebhookDeliveryDelivered(rec.deliveryId, now);
       continue;
