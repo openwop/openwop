@@ -127,7 +127,11 @@ function artifactVersions() {
 }
 
 function parseRfcs() {
-  return listFiles('RFCS', (rel) => /^RFCS\/\d{4}-.+\.md$/.test(rel) && !rel.includes('0000-template'))
+  // Exclude `0000-template.md` and the per-RFC companion registers
+  // (`NNNN-<slug>.gaps.md` / `.risks.md`, authored by the /prd skill) — those
+  // are working artifacts, not RFCs, and would otherwise inflate the count +
+  // add garbage rows to the RFC status table.
+  return listFiles('RFCS', (rel) => /^RFCS\/\d{4}-.+\.md$/.test(rel) && !rel.includes('0000-template') && !/\.(gaps|risks)\.md$/.test(rel))
     .map((rel) => {
       const text = read(rel);
       const id = path.basename(rel).slice(0, 4);
