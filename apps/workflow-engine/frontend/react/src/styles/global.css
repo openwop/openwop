@@ -957,6 +957,74 @@ pre {
    screens rather than forcing the layout to overflow the viewport. */
 .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
+/* ── <DataTable> — the shared sortable/sticky data-grid primitive (§5.1) ── */
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--paper-2);
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--ink-3);
+  padding: var(--space-2) var(--space-3);
+  white-space: nowrap;
+}
+.data-table tbody td {
+  padding: var(--space-2-5) var(--space-3);
+  border-bottom: 1px solid var(--rule);
+  color: var(--ink-2);
+  vertical-align: middle;
+}
+.data-table tbody tr:last-child td { border-bottom: 0; }
+.data-row--clickable { cursor: pointer; }
+.data-table tbody tr.data-row--clickable:hover { background: var(--clay-wash); }
+.data-col--right { text-align: right; }
+.data-col--center { text-align: center; }
+
+/* compact density */
+.data-table--compact { font-size: 12px; }
+.data-table--compact thead th { padding: var(--space-1-5) var(--space-3); }
+.data-table--compact tbody td { padding: var(--space-1-5) var(--space-3); }
+
+/* sortable header — the <button> owns the cell padding so the whole header is the hit target */
+.data-th--sortable { padding: 0; }
+.data-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  width: 100%;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.data-table--compact .data-sort-btn { padding: var(--space-1-5) var(--space-3); }
+.data-col--right .data-sort-btn { justify-content: flex-end; }
+.data-col--center .data-sort-btn { justify-content: center; }
+.data-sort-btn:hover { color: var(--ink); }
+.data-sort-caret { display: inline-flex; opacity: 0; transition: opacity 0.12s ease, transform 0.12s ease; }
+.data-th--sortable:hover .data-sort-caret { opacity: 0.45; }
+.data-th--sortable.is-sorted .data-sort-caret { opacity: 1; color: var(--clay); }
+.data-sort-caret.is-asc { transform: rotate(180deg); }
+/* visually-hidden caption (a11y) */
+.data-table-caption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Runs page: the URL-persisted filter input + the inline "flagged" marker. */
+.runs-filter { min-width: 200px; }
+.runs-review-flag { margin-left: var(--space-1-5); font-size: 10px; }
+
 .alert {
   padding: var(--space-3);
   border-radius: var(--radius);
