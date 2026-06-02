@@ -124,12 +124,33 @@ For each requirement in `MYNDHYVE-ON-OPENWOP-SHOULD-BE-ANALYSIS.md` §3, here's 
 | Capability discovery UI | `src/discovery/CapabilitiesPanel.tsx` |
 | BYOK key entry + policy explainer | `src/byok/` |
 
+## Crash recovery + delivery durability (multi-instance-safe)
+
+Two former "next step" gaps are now closed in the sample itself — both built on
+an atomic, lease-based claim that works across instances (Postgres `FOR UPDATE
+SKIP LOCKED`, sqlite a single write transaction):
+
+- **Run dispatch.** `executor.executeRun` — the single chokepoint every dispatch
+  path funnels through — stamps a dispatch lease (`storage.setRunDispatchLease`)
+  for this instance, expiring past the maximum legal runtime, so a live run is
+  never re-dispatched. The `runDispatchSweeper` re-claims and re-runs
+  `pending`/`running` runs whose lease expired (the owning instance crashed); the
+  re-run is idempotent against the Layer-2 invocation log. A `createdAt` grace
+  window keeps fresh dispatches from being raced; `waiting-*`/terminal runs are
+  excluded by status.
+- **Webhook delivery.** Routes enqueue a durable `webhook_deliveries` row per
+  subscriber; the `webhookDeliveryWorker` claims due rows under a lease, signs +
+  POSTs them, and retries with exponential backoff until dead-lettering — so a
+  crash or transient receiver failure no longer drops a delivery (the prior
+  `setImmediate` path did).
+
+Both workers run only in the long-lived server entry (`main`); tests drive the
+exported `sweepOrphanedRuns` / `processDueWebhookDeliveries` deterministically.
+
 ## Failure modes the sample explicitly does NOT guard against
 
 These are valid critiques of the sample as a *production* artifact, but in scope only for the documented "next step" follow-ups:
 
-- **Multi-instance dispatch.** sqlite + in-process executor means one instance, period. Real deployments need claim acquisition (postgres advisory locks) + Cloud Tasks / SQS / Pub/Sub.
-- **Webhook durability.** HMAC delivery is wired; the durable retry queue is stubbed (`setImmediate`).
 - **Audit-log integrity.** No hash chain, no Ed25519 checkpoint signatures. Use the postgres reference host for that profile.
 - **Production SLA claims.** Sample doesn't advertise `openwop-production-profile`.
 - **Pack publishing.** Read-only catalog only. Publishing lives in the postgres host's `pack-consumer.ts` story + `examples/node-pack-publishing/`.

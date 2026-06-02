@@ -107,6 +107,11 @@ export interface NodeContext {
   scopeId?: string;
   inputs: unknown;
   config?: Record<string, unknown>;
+  /** Multi-Agent Shift Phase 1 — the node's authoring-time agent pin
+   *  (`node.agent`, an `agent-ref.schema.json`), surfaced so node modules
+   *  can honor `nodes[].agent.agentId`. Undefined when the node carries no
+   *  pin. Distinct from `config`, which the schema models as a sibling. */
+  nodeAgent?: { agentId: string };
   /** Run-level configurable overlay from RunOptions.configurable. */
   configurable: Record<string, unknown>;
   /** Per-attempt counter; first attempt = 1. */
@@ -299,6 +304,12 @@ export interface WorkflowDefinition {
      *  (chat-surface completion cards, run-detail page, third-party
      *  hosts) can pick a primary output deterministically. */
     outputRole?: 'primary' | 'secondary';
+    /** Multi-Agent Shift Phase 1 (`agent-ref.schema.json`). Optional
+     *  authoring-time pin of which agent executes this node. Surfaced on
+     *  `NodeContext.nodeAgent` so node modules (e.g. the conformance mock
+     *  agent) can resolve the pinned `agentId`; the engine MAY override it
+     *  at runtime via dispatch/orchestrator per the schema description. */
+    agent?: { agentId: string };
   }>;
   /** DAG edges. When absent or empty, the executor builds an implicit linear
    *  chain from `nodes` (back-compat path for callers that pre-date the

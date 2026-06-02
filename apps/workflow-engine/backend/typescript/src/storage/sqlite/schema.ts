@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 18;
+export const LATEST_SCHEMA_VERSION = 20;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -533,6 +533,55 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
         v TEXT NOT NULL,
         updated_at TEXT NOT NULL
       );
+    `);
+  },
+  19: (db) => {
+    // Durable webhook-delivery retry queue. Backs the background worker
+    // (`webhookWorker.ts`): a delivery is enqueued `pending`, claimed under
+    // a time-boxed lease (`claimed_by` + `claim_expires_at`) so multiple
+    // worker instances can't double-deliver, then either marked `delivered`
+    // (terminal) or rescheduled with backoff — flipping to terminal `dead`
+    // once `attempts` reaches `max_attempts`. Epoch-ms integers throughout
+    // (the lease/backoff math is purely numeric; no ISO round-trip needed).
+    // The (status, next_attempt_at) index serves the due-claim scan.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS webhook_deliveries (
+        delivery_id TEXT PRIMARY KEY,
+        subscription_id TEXT NOT NULL,
+        url TEXT NOT NULL,
+        secret TEXT NOT NULL,
+        event_type TEXT NOT NULL,
+        payload TEXT NOT NULL,
+        status TEXT NOT NULL,
+        attempts INTEGER NOT NULL,
+        max_attempts INTEGER NOT NULL,
+        next_attempt_at INTEGER NOT NULL,
+        claimed_by TEXT,
+        claim_expires_at INTEGER,
+        last_error TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_due
+        ON webhook_deliveries (status, next_attempt_at);
+    `);
+  },
+  20: (db) => {
+    // Multi-instance run-dispatch lease (crash recovery). A dispatching
+    // instance stamps `dispatch_owner` (its worker/instance id) + a
+    // time-boxed `dispatch_lease_expires_at` (epoch-ms) on a run when it
+    // starts executing it. If that instance crashes, the lease expires and
+    // a survivor's reaper re-claims the orphaned run (`claimOrphanedRuns`)
+    // for re-dispatch — without two instances racing the same run, because
+    // the claim runs in a single write transaction and excludes rows whose
+    // lease is still live. Both columns are nullable (a run with no live
+    // dispatcher carries NULL/NULL). The (status, dispatch_lease_expires_at)
+    // index serves the orphan-claim scan.
+    db.exec(`
+      ALTER TABLE runs ADD COLUMN dispatch_owner TEXT;
+      ALTER TABLE runs ADD COLUMN dispatch_lease_expires_at INTEGER;
+      CREATE INDEX IF NOT EXISTS idx_runs_dispatch_lease
+        ON runs (status, dispatch_lease_expires_at);
     `);
   },
 };
