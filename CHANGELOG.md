@@ -7,6 +7,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 > **Status legend** (per [`/governance/spec-status/`](https://openwop.dev/governance/spec-status/)):
 > Stable · Stabilizing · Draft · Experimental — see individual doc headers for current state. The legacy `STUB / DRAFT / OUTLINE / FINAL` vocabulary still appears in older releases below; both are valid in the corpus.
 
+> **Package version map.** The version headers below are **spec-corpus** versions, not package versions — each package advances independently on its own per-package release tag. So a corpus version may be skipped here when its number was already consumed by a single-package release, and not every published package version has a corpus row. Notably **there is no corpus `1.1.6`**: that number was taken by a TypeScript-SDK-only npm patch (`@openwop/openwop@1.1.6`, published 2026-05-31, the agent-platform/roster helper catch-up), so the corpus skipped straight to `1.1.7`. A deep-link like `#v1-1-6` therefore has no anchor here by design — the TS SDK's own history lives in [`sdk/typescript/CHANGELOG.md`](https://github.com/openwop/openwop/blob/main/sdk/typescript/CHANGELOG.md) and on npm. Current published per-package versions: `@openwop/openwop` **1.1.6** (npm) · `@openwop/openwop-conformance` **1.18.1** (npm) · `openwop-client` **1.1.5** (PyPI) · `github.com/openwop/openwop/sdk/go` **v1.1.5** (Go modules).
+
 ---
 
 ## [1.1.7 — unreleased] — the Active→Accepted graduation program + agent-platform capstone
