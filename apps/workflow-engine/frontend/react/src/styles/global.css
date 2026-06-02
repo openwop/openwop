@@ -819,6 +819,15 @@ h1.brand-mark em {
   width: 100%;
   margin: 0 auto;
 }
+/* Two-tier content width, both shell-owned + centered. Default .app-main is the
+ * WIDE column (1200) for lists, dashboards, tables, kanban. The --narrow
+ * modifier (760) is for forms + single-column reads (agent create/fork/install,
+ * demo-data, agent detail, prose) where a full-width column reads poorly. Pages
+ * MUST NOT set their own max-width/padding/margin — width is governed here so
+ * every page in the right panel lines up. App.tsx picks the tier by route. */
+.app-main--narrow {
+  max-width: 760px;
+}
 /* Faint letterpress dot-grid so the content pages sit on the same drafting
  * paper as the workflow canvas — shows only in the gutters between cards
  * (surfaces carry their own --paper bg). Uses --rule-2, the same token as the

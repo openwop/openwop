@@ -56,7 +56,7 @@ export function AgentsPage(): JSX.Element {
   });
 
   return (
-    <section style={{ maxWidth: 960, margin: '0 auto' }}>
+    <section>
       <PageHeader
         eyebrow="Agents"
         title="Agent templates"

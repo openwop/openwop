@@ -151,7 +151,7 @@ export function AgentWorkspacePage(): JSX.Element {
   const theme = roleThemeForAgent(entry.agentRef?.agentId, entry.workflows);
 
   return (
-    <section style={{ padding: '1rem', maxWidth: 1100, margin: '0 auto' }}>
+    <section>
       <Link to="/agents" style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>← All agents</Link>
 
       {/* Header */}

@@ -49,7 +49,7 @@ export function AgentDetailPage(): JSX.Element {
   }, [agentId]);
 
   return (
-    <section aria-labelledby="agent-detail-heading" style={{ maxWidth: 800, margin: '0 auto' }}>
+    <section aria-labelledby="agent-detail-heading">
       <div style={{ marginBottom: 'var(--space-3)' }}>
         <Link to="/agents/templates" style={{ fontSize: 12, color: 'var(--ink-3)' }}>
           <ArrowLeftIcon size={12} /> Agent templates

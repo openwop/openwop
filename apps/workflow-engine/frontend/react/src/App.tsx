@@ -64,6 +64,20 @@ export function App() {
   // to 100vh and let .app-main flex-fill so ChatSidebar can take what
   // remains after header + banner + footer.
   const isChatPage = location.pathname === '/';
+  // Narrow content tier (.app-main--narrow, 760px): forms + single-column
+  // reads where a full-width column reads poorly. Everything else uses the
+  // wide default. Width is shell-owned — pages set NO max-width of their own.
+  const NARROW_ROUTES = new Set<string>([
+    '/agents/new',
+    '/agents/fork',
+    '/agents/install',
+    '/demo-data',
+    '/privacy',
+    '/cli',
+  ]);
+  const isNarrow =
+    NARROW_ROUTES.has(location.pathname) ||
+    /^\/agents\/templates\/[^/]+/.test(location.pathname); // agent detail (not the list)
   return (
     <div className={isChatPage ? 'app-shell app-shell--ai' : 'app-shell'}>
       {/* Persistent left rail (Phase 1): grouped Build / Operate / Admin nav,
@@ -79,7 +93,9 @@ export function App() {
               ? 'app-main app-main-fullbleed'
               : isChatPage
                 ? 'app-main app-main--ai'
-                : 'app-main page-enter'
+                : isNarrow
+                  ? 'app-main app-main--narrow page-enter'
+                  : 'app-main page-enter'
           }
         >
         <Routes>

@@ -170,7 +170,7 @@ export function AgentDashboardPage(): JSX.Element {
   };
 
   return (
-    <section style={{ padding: '1rem', maxWidth: 1100, margin: '0 auto' }}>
+    <section>
       <PageHeader
         eyebrow="Agents"
         title="AI coworkers"
