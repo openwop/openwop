@@ -45,7 +45,8 @@ export type HostSurfaceName =
   | 'host.aiProviders'
   | 'host.interrupts'
   | 'host.triggers'
-  | 'host.a2a';
+  | 'host.a2a'
+  | 'host.kanban';
 
 export interface HostSurfaceAdvertisement {
   /** Stable surface name. */
@@ -96,6 +97,7 @@ export function seedDefaultHostSurfaces(): void {
     { name: 'host.observability', supported: false, note: 'Wired implicitly via emit() — surface flag not yet honored.' },
     { name: 'host.mcp', supported: process.env.OPENWOP_MCP_SERVER_ENABLED === 'true', implementation: 'workflow-engine', note: 'RFC 0020 (Active). Sample-host MCP server mount at /v1/host/sample/mcp; advertise streamable-http transport. OFF by default — set OPENWOP_MCP_SERVER_ENABLED=true.' },
     { name: 'host.triggers', supported: true, implementation: 'workflow-engine', note: 'Trigger entry nodes (webhook/schedule/cron/email/mailhook/rss/form) surface the run-scoped ctx.triggerData payload; runs are started by the RFC 0083 trigger bridge, scheduler, and kanban paths. webhook-respond durably records the reply via ctx.respondToWebhook.' },
+    { name: 'host.kanban', supported: true, implementation: 'workflow-engine', note: 'Bridges vendor.myndhyve.kanban to the demo kanban store (kanbanService.ts) — boards/cards shared with the builder UI. boardReview/timelinePlan/resourceMonitor are genuinely computed; automation rules persist in-process.' },
     { name: 'host.a2a', supported: true, implementation: 'workflow-engine', note: 'RFC 0076 §A. A2A 0.3 JSON-RPC client from host/a2aSurface.ts — discover/send/stream/tasks/pushConfig against any peer A2A agent; wire state-form normalized to the pack vocabulary. Server-as-agent methods (publishAgentCard/emit*/pushSend) are demo stubs (sample host has no live A2A server endpoint).' },
     // These two are already advertised honestly elsewhere — pre-seed
     // them as supported so the UI doesn't show contradictory data.

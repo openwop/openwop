@@ -34,7 +34,12 @@ import { resolveDefaultPackDir } from '../packs/registryInstaller.js';
 
 const log = createLogger('bootstrap.mountLocalPacks');
 
-const LOCAL_PACK_PREFIXES = ['core.openwop.'] as const;
+// Pack-name prefixes the dev mount surfaces from the workspace `packs/` tree.
+// `core.openwop.*` are the protocol's own packs; `vendor.myndhyve.*` are the
+// reference vendor packs whose host surfaces the sample host implements
+// (host.kanban/chat/canvas/knowledge/launchStudio/webResearch) — mounting them
+// makes those nodes available in the builder so the wired surfaces are runnable.
+const LOCAL_PACK_PREFIXES = ['core.openwop.', 'vendor.myndhyve.'] as const;
 
 export interface MountResult {
   /** Directories mounted on this run (excludes pre-existing). */

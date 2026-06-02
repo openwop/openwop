@@ -91,6 +91,13 @@ const MAP: readonly MapEntry[] = [
   { prefix: 'core.trigger.form', surfaces: ['host.triggers'] },
   // `core.trigger.manual`, `.event`, `.envelope` etc. don't need a
   // dedicated surface — they're synthesized inline by the run kickoff.
+
+  // ── vendor.myndhyve.kanban ───────────────────────────────────────
+  { prefix: 'kanban.board.', surfaces: ['host.kanban'] },
+  { prefix: 'kanban.task.', surfaces: ['host.kanban'] },
+  { prefix: 'kanban.timeline.', surfaces: ['host.kanban'] },
+  { prefix: 'kanban.workflow.', surfaces: ['host.kanban'] },
+  { prefix: 'kanban.resource.', surfaces: ['host.kanban'] },
 ];
 
 // Sort once at module load: longest prefix first, so more-specific
