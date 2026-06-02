@@ -52,6 +52,7 @@ import {
   type RelayChannel,
   type RelayDeviceRecord,
 } from '../messaging/types.js';
+import { syntheticNotifyDeliverer, type NotifyDeliverer } from '../messaging/notifyDeliverer.js';
 
 const DM_POLICIES: readonly DmPolicy[] = ['pairing', 'allowlist', 'open', 'disabled'];
 const GROUP_POLICIES: readonly GroupPolicy[] = ['allowlist', 'open', 'disabled'];
@@ -72,10 +73,14 @@ function hashToken(token: string): string {
 interface Deps {
   storage: Storage;
   bridge?: MessagingBridge;
+  /** Email/SMS delivery seam. Defaults to the synthetic stub (accepted, not
+   *  delivered) when the host wires none. */
+  notifyDeliverer?: NotifyDeliverer;
 }
 
 export function registerMessagingRoutes(app: Express, deps: Deps): void {
   const { storage, bridge } = deps;
+  const notifyDeliverer = deps.notifyDeliverer ?? syntheticNotifyDeliverer;
 
   // ---- Device lifecycle (operator bearer) ----
 
@@ -642,9 +647,10 @@ export function registerMessagingRoutes(app: Express, deps: Deps): void {
   });
 
   // ---- One-off notifications (operator bearer) ----
-  // Demo stub: email / SMS dispatch. Returns a synthetic receipt — wiring an
-  // actual provider (SES / Twilio) is a host concern, intentionally out of
-  // scope for the reference app.
+  // Email / SMS dispatch. Delivered through the injected notifyDeliverer: a
+  // configured webhook (fronting SES / Twilio / etc.) actually delivers and
+  // reports `status: 'delivered'`; with none configured it falls back to an
+  // honest synthetic receipt (`status: 'accepted'`, not delivered).
 
   app.post(`${BASE}/notify`, async (req, res, next) => {
     try {
@@ -653,15 +659,18 @@ export function registerMessagingRoutes(app: Express, deps: Deps): void {
       const kind = assertNotifyKind(body.kind);
       const to = requireString(body.to, 'to');
       const text = requireString(body.text, 'text');
+      const subject = optionalString(body.subject) ? String(body.subject) : undefined;
+      const result = await notifyDeliverer({ kind, to, text, tenantId, ...(subject ? { subject } : {}) });
       res.status(202).json({
         notifyId: `ntf_${randomUUID()}`,
         tenantId,
         kind,
         to,
-        ...(optionalString(body.subject) ? { subject: String(body.subject) } : {}),
+        ...(subject ? { subject } : {}),
         textLength: text.length,
-        status: 'accepted',
-        detail: `synthetic ${kind} dispatch accepted; no provider configured`,
+        status: result.delivered ? 'delivered' : 'accepted',
+        ...(result.provider ? { provider: result.provider } : {}),
+        detail: result.detail,
         acceptedAt: new Date().toISOString(),
       });
     } catch (err) {

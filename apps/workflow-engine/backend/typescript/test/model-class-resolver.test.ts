@@ -45,6 +45,15 @@ describe('resolveModelForClass', () => {
     assertReal(r); // model coerced to openai's catalog default
   });
 
+  it('honors an explicit off-catalog provider pin (e.g. the mock provider)', () => {
+    // The catalog drives DEFAULT resolution only; an explicit pin is honored so
+    // the live-dispatch pipeline can be verified through the keyless `mock`
+    // provider. callAI's provider gate is the real safety check.
+    expect(resolveModelForClass('chat', { provider: 'mock', model: 'mock' })).toEqual({ provider: 'mock', model: 'mock', managed: false });
+    // model defaults to the provider id when unspecified
+    expect(resolveModelForClass('reasoning', { provider: 'mock' })).toEqual({ provider: 'mock', model: 'mock', managed: false });
+  });
+
   it('preferManaged resolves to the managed tier', () => {
     const r = resolveModelForClass('chat', { preferManaged: true });
     expect(r).not.toBeNull();

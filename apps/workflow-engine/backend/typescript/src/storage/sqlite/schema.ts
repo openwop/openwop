@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 20;
+export const LATEST_SCHEMA_VERSION = 22;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -582,6 +582,67 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
       ALTER TABLE runs ADD COLUMN dispatch_lease_expires_at INTEGER;
       CREATE INDEX IF NOT EXISTS idx_runs_dispatch_lease
         ON runs (status, dispatch_lease_expires_at);
+    `);
+  },
+  21: (db) => {
+    // Append-only index of agent-attributed runs (RFC 0086). Written once when
+    // a run is created carrying heartbeat/schedule/kanban/approval attribution;
+    // the live status comes from the runs table at query time (joined), so this
+    // row never needs updating. Lets fleet / per-agent / failure activity
+    // queries filter by (tenant, roster) directly instead of scanning the most
+    // recent N runs and filtering in memory.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS agent_run_activity (
+        run_id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        roster_id TEXT NOT NULL,
+        agent_id TEXT,
+        source TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_agent_run_activity_tenant_roster
+        ON agent_run_activity (tenant_id, roster_id, created_at);
+
+      -- Backfill from existing runs so the activity feed isn't empty after this
+      -- migration. Pick the first present attribution block (heartbeat →
+      -- schedule → kanban → approval), matching recordRunAttribution's priority.
+      -- json_extract returns NULL for non-JSON/absent, so the WHERE keeps only
+      -- agent-attributed runs.
+      INSERT OR IGNORE INTO agent_run_activity (run_id, tenant_id, roster_id, agent_id, source, created_at)
+      SELECT run_id, tenant_id,
+        COALESCE(json_extract(metadata,'$.heartbeat.rosterId'), json_extract(metadata,'$.schedule.rosterId'),
+                 json_extract(metadata,'$.kanban.rosterId'),    json_extract(metadata,'$.approval.rosterId')),
+        COALESCE(json_extract(metadata,'$.heartbeat.agentId'),  json_extract(metadata,'$.schedule.agentId'),
+                 json_extract(metadata,'$.kanban.agentId'),     json_extract(metadata,'$.approval.agentId')),
+        CASE
+          WHEN json_extract(metadata,'$.heartbeat.rosterId') IS NOT NULL THEN 'heartbeat'
+          WHEN json_extract(metadata,'$.schedule.rosterId')  IS NOT NULL THEN 'schedule'
+          WHEN json_extract(metadata,'$.kanban.rosterId')    IS NOT NULL THEN 'kanban'
+          ELSE 'approval'
+        END,
+        created_at
+      FROM runs
+      -- json_valid guards json_extract (sqlite raises on malformed JSON; AND
+      -- short-circuits so json_extract only runs on valid-JSON rows). In practice
+      -- metadata is always JSON.stringify output, but stay defensive.
+      WHERE json_valid(metadata)
+        AND COALESCE(json_extract(metadata,'$.heartbeat.rosterId'), json_extract(metadata,'$.schedule.rosterId'),
+                     json_extract(metadata,'$.kanban.rosterId'),    json_extract(metadata,'$.approval.rosterId')) IS NOT NULL;
+    `);
+  },
+  22: (db) => {
+    // Windowed run-budget counter for the autonomous daemons (scheduler +
+    // heartbeat). One row per (tenant, time-window) bucket; an atomic
+    // upsert-increment makes the ceiling multi-instance-safe so self-firing
+    // autonomy can't run away on cost. Stale buckets are harmless (a fixed
+    // integer per past window) and pruned best-effort by the budget service.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS run_budget (
+        bucket TEXT PRIMARY KEY,
+        window_start INTEGER NOT NULL,
+        count INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_run_budget_window ON run_budget (window_start);
     `);
   },
 };

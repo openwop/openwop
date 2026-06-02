@@ -20,6 +20,7 @@ import type { RunRecord } from '../types.js';
 import type { HostAdapterSuite } from './index.js';
 import type { Storage } from '../storage/storage.js';
 import { executeRun } from '../executor/executor.js';
+import { recordRunAttribution } from './agentRunActivityIndex.js';
 import { createLogger } from '../observability/logger.js';
 
 const log = createLogger('host.runStarter');
@@ -66,6 +67,9 @@ export async function startWorkflowRun(
     updatedAt: now,
   };
   await storage.insertRun(run);
+  // Index the agent attribution (if any) so fleet/per-agent activity queries
+  // hit an index instead of scanning recent runs. Best-effort — never blocks.
+  await recordRunAttribution(storage, run);
   setImmediate(() => {
     executeRun(storage, run, wf.definition, { policyResolver: hostSuite.providerPolicyResolver }).catch((err) => {
       log.error('run_starter_dispatch_failed', {

@@ -34,6 +34,7 @@
 import type { StartRunDeps } from './runStarter.js';
 import { startWorkflowRun } from './runStarter.js';
 import { listJobs, markJobFired, recordJobRun, currentTick } from './schedulingService.js';
+import { checkAutonomousRunBudget, pruneRunBudget } from './runBudgetService.js';
 import { getInstanceId } from './instanceId.js';
 import { createLogger } from '../observability/logger.js';
 
@@ -86,6 +87,16 @@ export async function processDueSchedules(
     // holds: a racing instance advances to the same value (idempotent) and the
     // claim already serialized the single fire.
     await markJobFired(job.jobId, currentTick(), undefined, now);
+    // Autonomous-run budget: drop (don't queue) a fire that would exceed the
+    // tenant's window ceiling. nextFireAt already advanced, so the schedule just
+    // skips this slot and resumes next window — it cannot run away on cost.
+    const budget = await checkAutonomousRunBudget(deps.storage, job.tenantId, now);
+    if (!budget.allowed) {
+      log.warn('schedule fire dropped — tenant over autonomous-run budget', {
+        jobId: job.jobId, tenantId: job.tenantId, current: budget.current, limit: budget.limit,
+      });
+      continue;
+    }
     try {
       const runId = await startWorkflowRun(deps, {
         tenantId: job.tenantId,
@@ -150,6 +161,7 @@ export function startScheduleDaemon(deps: StartRunDeps): ScheduleDaemon {
     try {
       await processDueSchedules(deps);
       await pruneStaleScheduleClaims(deps);
+      await pruneRunBudget(deps.storage);
     } catch (err) {
       log.warn('schedule daemon tick error', { error: err instanceof Error ? err.message : String(err) });
     } finally {

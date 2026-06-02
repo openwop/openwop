@@ -29,11 +29,6 @@ import { getRosterEntry } from '../host/rosterService.js';
 import { runHeartbeatOnce } from '../host/heartbeatService.js';
 import { projectAgentActivity } from '../host/agentActivity.js';
 
-/** Bound the per-tenant run scan that backs the in-memory attribution filter
- *  (the runs store has no per-roster/agent index). `truncated` is reported when
- *  hit so the UI never implies "no older activity". */
-const ACTIVITY_SCAN_LIMIT = 500;
-
 interface Deps {
   storage: Storage;
   hostSuite: HostAdapterSuite;
@@ -89,10 +84,11 @@ export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
       }
       const limit = Math.min(50, Math.max(1, Number.parseInt(String(req.query.limit ?? '25'), 10) || 25));
       const optionalStatus = typeof req.query.status === 'string' ? req.query.status : undefined;
-      const runs = await deps.storage.listRuns({ tenantId, limit: ACTIVITY_SCAN_LIMIT });
-      const truncated = runs.length >= ACTIVITY_SCAN_LIMIT;
-      const items = projectAgentActivity(runs, { rosterId: entry.rosterId, status: optionalStatus }).slice(0, limit);
-      res.status(200).json({ rosterId: entry.rosterId, items, truncated });
+      // Indexed lookup (agent_run_activity → runs join) — no recent-run scan, so
+      // no truncation ceiling. The projector still derives source/persona/etc.
+      const runs = await deps.storage.listAgentRunActivity({ tenantId, rosterId: entry.rosterId, status: optionalStatus, limit });
+      const items = projectAgentActivity(runs, {}).slice(0, limit);
+      res.status(200).json({ rosterId: entry.rosterId, items, truncated: false });
     } catch (err) {
       next(err);
     }
@@ -100,19 +96,18 @@ export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
 
   // Fleet-wide activity feed — recent agent-attributed runs across the whole
   // roster, each carrying its rosterId/persona so the dashboard can show a
-  // single timeline + a failures view (`?status=failed`). Same scan-and-filter
-  // posture + honest `truncated` as the per-agent feed. Optional `?rosterId=`
-  // narrows to one member without the path param.
+  // single timeline + a failures view (`?status=failed`). Backed by the
+  // attribution index (no recent-run scan). Optional `?rosterId=` narrows to one
+  // member without the path param.
   app.get('/v1/host/sample/fleet/activity', async (req, res, next) => {
     try {
       const tenantId = tenantOf(req);
       const limit = Math.min(100, Math.max(1, Number.parseInt(String(req.query.limit ?? '50'), 10) || 50));
       const status = typeof req.query.status === 'string' ? req.query.status : undefined;
       const rosterId = typeof req.query.rosterId === 'string' ? req.query.rosterId : undefined;
-      const runs = await deps.storage.listRuns({ tenantId, limit: ACTIVITY_SCAN_LIMIT });
-      const truncated = runs.length >= ACTIVITY_SCAN_LIMIT;
-      const items = projectAgentActivity(runs, { status, rosterId }).slice(0, limit);
-      res.status(200).json({ items, truncated });
+      const runs = await deps.storage.listAgentRunActivity({ tenantId, status, rosterId, limit });
+      const items = projectAgentActivity(runs, {}).slice(0, limit);
+      res.status(200).json({ items, truncated: false });
     } catch (err) {
       next(err);
     }

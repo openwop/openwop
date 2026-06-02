@@ -81,6 +81,7 @@ import { registerUserAgentRoutes, loadUserAgentsIntoRegistry } from './routes/us
 import { registerAgentPackRegistryRoutes } from './routes/agentPackRegistry.js';
 import { registerMessagingRoutes } from './routes/messaging.js';
 import { createSelfHttpBridge } from './messaging/bridge.js';
+import { resolveNotifyDelivererFromEnv } from './messaging/notifyDeliverer.js';
 import { registerSchedulerRoutes } from './routes/scheduler.js';
 import { registerKanbanRoutes } from './routes/kanban.js';
 import { registerAgentOpsRoutes } from './routes/agentOps.js';
@@ -432,6 +433,9 @@ export async function createApp(config: AppConfig): Promise<Express> {
       bearer: process.env.OPENWOP_MESSAGING_BRIDGE_TOKEN ?? process.env.OPENWOP_API_KEY ?? 'sample-token',
       defaultWorkflowId: process.env.OPENWOP_MESSAGING_WORKFLOW_ID ?? 'sample.demo.uppercase',
     }),
+    // Email/SMS delivery: a real webhook (OPENWOP_NOTIFY_WEBHOOK_URL) when set,
+    // else the honest synthetic fallback.
+    notifyDeliverer: resolveNotifyDelivererFromEnv(),
   });
 
   // Express 4 catch-all (no path string — avoids path-to-regexp v6 issue).

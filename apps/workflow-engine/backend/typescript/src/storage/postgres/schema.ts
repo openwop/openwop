@@ -32,7 +32,7 @@ export interface Queryable {
   ): Promise<{ rows: R[] }>;
 }
 
-export const LATEST_SCHEMA_VERSION = 17;
+export const LATEST_SCHEMA_VERSION = 19;
 
 const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
   1: async (client) => {
@@ -539,6 +539,55 @@ const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
       ALTER TABLE runs ADD COLUMN IF NOT EXISTS dispatch_lease_expires_at BIGINT;
       CREATE INDEX IF NOT EXISTS idx_runs_dispatch_lease
         ON runs (status, dispatch_lease_expires_at);
+    `);
+  },
+  18: async (client) => {
+    // Append-only agent-attributed-run index (RFC 0086). Mirrors sqlite mig 21:
+    // written once at run creation; live status joined from runs at query time.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS agent_run_activity (
+        run_id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        roster_id TEXT NOT NULL,
+        agent_id TEXT,
+        source TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_agent_run_activity_tenant_roster
+        ON agent_run_activity (tenant_id, roster_id, created_at);
+
+      -- Backfill from existing runs (metadata is JSONB) so the activity feed
+      -- isn't empty after this migration. First present attribution block wins,
+      -- matching recordRunAttribution's priority.
+      INSERT INTO agent_run_activity (run_id, tenant_id, roster_id, agent_id, source, created_at)
+      SELECT run_id, tenant_id,
+        COALESCE(metadata->'heartbeat'->>'rosterId', metadata->'schedule'->>'rosterId',
+                 metadata->'kanban'->>'rosterId',    metadata->'approval'->>'rosterId'),
+        COALESCE(metadata->'heartbeat'->>'agentId',  metadata->'schedule'->>'agentId',
+                 metadata->'kanban'->>'agentId',     metadata->'approval'->>'agentId'),
+        CASE
+          WHEN metadata->'heartbeat'->>'rosterId' IS NOT NULL THEN 'heartbeat'
+          WHEN metadata->'schedule'->>'rosterId'  IS NOT NULL THEN 'schedule'
+          WHEN metadata->'kanban'->>'rosterId'    IS NOT NULL THEN 'kanban'
+          ELSE 'approval'
+        END,
+        created_at
+      FROM runs
+      WHERE COALESCE(metadata->'heartbeat'->>'rosterId', metadata->'schedule'->>'rosterId',
+                     metadata->'kanban'->>'rosterId',    metadata->'approval'->>'rosterId') IS NOT NULL
+      ON CONFLICT (run_id) DO NOTHING;
+    `);
+  },
+  19: async (client) => {
+    // Windowed run-budget counter for the autonomous daemons. Mirrors sqlite
+    // mig 22: atomic upsert-increment per (tenant, window) bucket.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS run_budget (
+        bucket TEXT PRIMARY KEY,
+        window_start BIGINT NOT NULL,
+        count BIGINT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_run_budget_window ON run_budget (window_start);
     `);
   },
 };

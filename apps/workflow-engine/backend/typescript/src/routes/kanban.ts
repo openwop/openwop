@@ -33,6 +33,7 @@ import type { HostAdapterSuite } from '../host/index.js';
 import type { Storage } from '../storage/storage.js';
 import { executeRun } from '../executor/executor.js';
 import { getEventLog } from '../executor/eventLog.js';
+import { recordRunAttribution } from '../host/agentRunActivityIndex.js';
 import { createLogger } from '../observability/logger.js';
 import {
   createBoard,
@@ -162,6 +163,8 @@ async function startKanbanRun(
         updatedAt: now,
       };
       await storage.insertRun(run);
+      // Index the kanban attribution so it shows in fleet/per-agent activity.
+      await recordRunAttribution(storage, run);
       // Host-extension-namespaced attribution event (RFC 0086 §E).
       await getEventLog().append({ runId, type: 'host.kanban.card.moved', payload: attribution });
       // Dispatch inline (sample single-instance) — same posture as POST /v1/runs.
