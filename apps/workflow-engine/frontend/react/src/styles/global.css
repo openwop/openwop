@@ -1764,10 +1764,11 @@ pre {
 .builder-canvas .react-flow__minimap-mask {
   fill: var(--ink-shadow);
 }
-.builder-canvas .react-flow__minimap-node {
-  fill: var(--ink-2);
-  stroke: none;
-}
+/* Node blips are colored per-kind via the MiniMap `nodeColor` prop
+ * (BuilderCanvas.tsx) — it sets the xyflow node-background-color-props custom
+ * property, which the stock minimap-node fill rule consumes. Do NOT set `fill`
+ * here: a direct fill (specificity 0,2,0) would override the prop and flatten
+ * every blip to one color. */
 
 .builder-canvas .react-flow__controls-button {
   background: var(--paper);
