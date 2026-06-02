@@ -37,6 +37,7 @@ import type {
   PushSubscriptionRecord,
   RunRecord,
   UserAgentRecord,
+  WebhookDeliveryRecord,
   WebhookSubscriptionRecord,
 } from '../../types.js';
 import type {
@@ -180,6 +181,28 @@ function rowToWebhook(r: Row): WebhookSubscriptionRecord {
     tags: (r.tags as string[] | null) ?? undefined,
     secret: r.secret as string,
     createdAt: (r.created_at as Date).toISOString(),
+  };
+}
+
+function rowToWebhookDelivery(r: Row): WebhookDeliveryRecord {
+  // Epoch-ms columns are BIGINT — pg returns them as strings, so coerce
+  // every one via Number(...). `claim_expires_at` is nullable; preserve null.
+  return {
+    deliveryId: r.delivery_id as string,
+    subscriptionId: r.subscription_id as string,
+    url: r.url as string,
+    secret: r.secret as string,
+    eventType: r.event_type as string,
+    payload: r.payload as string,
+    status: r.status as WebhookDeliveryRecord['status'],
+    attempts: Number(r.attempts),
+    maxAttempts: Number(r.max_attempts),
+    nextAttemptAt: Number(r.next_attempt_at),
+    claimedBy: (r.claimed_by as string | null) ?? null,
+    claimExpiresAt: r.claim_expires_at == null ? null : Number(r.claim_expires_at),
+    lastError: (r.last_error as string | null) ?? null,
+    createdAt: Number(r.created_at),
+    updatedAt: Number(r.updated_at),
   };
 }
 
@@ -473,6 +496,72 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
         }
         return true;
       });
+    },
+
+    // ── webhook deliveries (durable retry queue) ──
+    async enqueueWebhookDelivery(record) {
+      await pool.query(
+        `INSERT INTO webhook_deliveries (
+          delivery_id, subscription_id, url, secret, event_type, payload,
+          status, attempts, max_attempts, next_attempt_at,
+          claimed_by, claim_expires_at, last_error, created_at, updated_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+        [
+          record.deliveryId, record.subscriptionId, record.url, record.secret,
+          record.eventType, record.payload, record.status,
+          record.attempts, record.maxAttempts, record.nextAttemptAt,
+          record.claimedBy ?? null, record.claimExpiresAt ?? null,
+          record.lastError ?? null, record.createdAt, record.updatedAt,
+        ],
+      );
+    },
+
+    async claimDueWebhookDeliveries(workerId, now, leaseMs, limit) {
+      // Multi-instance-safe claim: the inner SELECT picks the due rows and
+      // takes a row lock with FOR UPDATE SKIP LOCKED so concurrent workers on
+      // other instances skip rows already being claimed; the outer UPDATE then
+      // stamps the lease and RETURNs the claimed rows in one statement.
+      const { rows } = await pool.query<Row>(
+        `UPDATE webhook_deliveries
+            SET claimed_by = $1, claim_expires_at = $2, updated_at = $3
+          WHERE delivery_id IN (
+            SELECT delivery_id FROM webhook_deliveries
+             WHERE status = 'pending'
+               AND next_attempt_at <= $4
+               AND (claim_expires_at IS NULL OR claim_expires_at < $4)
+             ORDER BY next_attempt_at ASC
+             LIMIT $5
+             FOR UPDATE SKIP LOCKED
+          )
+          RETURNING *`,
+        [workerId, now + leaseMs, now, now, limit],
+      );
+      return rows.map(rowToWebhookDelivery);
+    },
+
+    async markWebhookDeliveryDelivered(deliveryId, now) {
+      await pool.query(
+        `UPDATE webhook_deliveries
+            SET status = 'delivered', updated_at = $2,
+                claimed_by = NULL, claim_expires_at = NULL
+          WHERE delivery_id = $1`,
+        [deliveryId, now],
+      );
+    },
+
+    async rescheduleWebhookDelivery(deliveryId, now, nextAttemptAt, dead, error) {
+      await pool.query(
+        `UPDATE webhook_deliveries
+            SET attempts = attempts + 1,
+                last_error = $2,
+                claimed_by = NULL,
+                claim_expires_at = NULL,
+                updated_at = $3,
+                status = CASE WHEN $4 THEN 'dead' ELSE 'pending' END,
+                next_attempt_at = $5
+          WHERE delivery_id = $1`,
+        [deliveryId, error, now, dead, nextAttemptAt],
+      );
     },
 
     async claimIdempotency(key, createdAt) {

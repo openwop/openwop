@@ -154,6 +154,10 @@ async function makeStorage(): Promise<Storage> {
     getWebhook: async () => null,
     deleteWebhook: async () => { throw new Error('not exercised'); },
     listWebhooks: async () => [],
+    enqueueWebhookDelivery: async () => { throw new Error('not exercised'); },
+    claimDueWebhookDeliveries: async () => [],
+    markWebhookDeliveryDelivered: async () => { throw new Error('not exercised'); },
+    rescheduleWebhookDelivery: async () => { throw new Error('not exercised'); },
     claimIdempotency: async (key, createdAt) => {
       const ins = await pool.query(
         `INSERT INTO idempotency (key, response_body, response_status, created_at)

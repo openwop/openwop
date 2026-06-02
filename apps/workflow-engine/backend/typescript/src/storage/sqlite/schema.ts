@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 18;
+export const LATEST_SCHEMA_VERSION = 19;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -533,6 +533,37 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
         v TEXT NOT NULL,
         updated_at TEXT NOT NULL
       );
+    `);
+  },
+  19: (db) => {
+    // Durable webhook-delivery retry queue. Backs the background worker
+    // (`webhookWorker.ts`): a delivery is enqueued `pending`, claimed under
+    // a time-boxed lease (`claimed_by` + `claim_expires_at`) so multiple
+    // worker instances can't double-deliver, then either marked `delivered`
+    // (terminal) or rescheduled with backoff — flipping to terminal `dead`
+    // once `attempts` reaches `max_attempts`. Epoch-ms integers throughout
+    // (the lease/backoff math is purely numeric; no ISO round-trip needed).
+    // The (status, next_attempt_at) index serves the due-claim scan.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS webhook_deliveries (
+        delivery_id TEXT PRIMARY KEY,
+        subscription_id TEXT NOT NULL,
+        url TEXT NOT NULL,
+        secret TEXT NOT NULL,
+        event_type TEXT NOT NULL,
+        payload TEXT NOT NULL,
+        status TEXT NOT NULL,
+        attempts INTEGER NOT NULL,
+        max_attempts INTEGER NOT NULL,
+        next_attempt_at INTEGER NOT NULL,
+        claimed_by TEXT,
+        claim_expires_at INTEGER,
+        last_error TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_due
+        ON webhook_deliveries (status, next_attempt_at);
     `);
   },
 };

@@ -5,13 +5,15 @@
  *   DELETE /v1/webhooks/{subscriptionId} — unregister
  *   POST   /v1/webhooks/{subscriptionId}/test — fire a signed test delivery
  *
- * Delivery is HMAC-SHA256-signed per spec/v1/webhooks.md §"Signature
- * recipe". The sample fires deliveries inline via `setImmediate` —
- * production deployers replace this with a durable queue (Cloud Tasks
- * / SQS / Pub/Sub) so a process crash doesn't drop deliveries.
+ * Delivery is HMAC-SHA256-signed per spec/v1/webhooks.md §"Signature recipe".
+ * Routes ENQUEUE a durable `WebhookDeliveryRecord` per matching subscriber; the
+ * background `webhookDeliveryWorker` drains the queue with claim-based leasing
+ * (multi-instance-safe) + exponential-backoff retry + dead-lettering, so a
+ * process crash or a transient receiver failure no longer drops the delivery.
+ * (The signing itself lives in the worker, next to the POST.)
  */
 
-import { createHmac, randomBytes, randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import type { Express } from 'express';
 // `RegisterWebhookRequest` / `Response` aren't exported by @openwop/openwop@1.1.1
 // even though the in-tree source declares them — define minimal local shapes.
@@ -28,9 +30,10 @@ interface RegisterWebhookResponse {
   secret?: string;
 }
 import type { Storage } from '../storage/storage.js';
-import { OpenwopError, type EventRecord } from '../types.js';
+import { OpenwopError, type EventRecord, type WebhookDeliveryRecord } from '../types.js';
 import { getEventLog } from '../executor/eventLog.js';
 import { createLogger } from '../observability/logger.js';
+import { WEBHOOK_MAX_ATTEMPTS } from '../host/webhookDeliveryWorker.js';
 
 const log = createLogger('routes.webhooks');
 
@@ -129,10 +132,10 @@ export function registerWebhookRoutes(app: Express, deps: Deps): void {
     }
   });
 
-  // Fire a synthetic, HMAC-signed `webhook.test` delivery to the subscription's
-  // URL so an operator can verify reachability + signature handling end-to-end.
-  // Delivery is fire-and-forget (same setImmediate path as live fanout); the
-  // 202 means "test delivery dispatched", not "endpoint acknowledged".
+  // Enqueue a synthetic, HMAC-signed `webhook.test` delivery to the
+  // subscription's URL so an operator can verify reachability + signature
+  // handling end-to-end. The 202 means "test delivery enqueued", not "endpoint
+  // acknowledged" — the worker delivers (and retries) it asynchronously.
   app.post('/v1/webhooks/:subscriptionId/test', async (req, res, next) => {
     try {
       const sub = await storage.getWebhook(req.params.subscriptionId);
@@ -152,7 +155,7 @@ export function registerWebhookRoutes(app: Express, deps: Deps): void {
         payload: { message: 'OpenWOP webhook test delivery', subscriptionId: sub.subscriptionId },
         timestamp: new Date().toISOString(),
       };
-      setImmediate(() => deliverOne(sub, testEvent).catch(() => undefined));
+      await enqueueDelivery(storage, sub, testEvent);
       res.status(202).json({
         subscriptionId: sub.subscriptionId,
         url: sub.url,
@@ -168,38 +171,40 @@ export function registerWebhookRoutes(app: Express, deps: Deps): void {
 async function deliverToSubscribers(storage: Storage, event: EventRecord): Promise<void> {
   const subscribers = await storage.listWebhooks({ eventType: event.type });
   for (const sub of subscribers) {
-    setImmediate(() => deliverOne(sub, event).catch(() => undefined));
+    await enqueueDelivery(storage, sub, event);
   }
 }
 
-async function deliverOne(
+/**
+ * Enqueue one durable delivery row. The `secret` is captured here (the
+ * subscription may be deleted before the worker delivers) and the event is
+ * serialized into the exact `payload` body the worker will POST. The worker
+ * (`webhookDeliveryWorker`) signs + delivers + retries with backoff.
+ */
+async function enqueueDelivery(
+  storage: Storage,
   sub: { subscriptionId: string; url: string; secret: string },
   event: EventRecord,
 ): Promise<void> {
-  const body = JSON.stringify(event);
-  const timestamp = Math.floor(Date.now() / 1000).toString();
-  const signature = createHmac('sha256', sub.secret)
-    .update(`${timestamp}.${body}`)
-    .digest('hex');
-  try {
-    await fetch(sub.url, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'openwop-signature': `t=${timestamp},v1=${signature}`,
-        'openwop-event-type': event.type,
-        'openwop-subscription-id': sub.subscriptionId,
-      },
-      body,
-      signal: AbortSignal.timeout(10_000),
-    });
-  } catch (err) {
-    log.warn('webhook delivery failed', {
-      subscriptionId: sub.subscriptionId,
-      url: sub.url,
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
+  const now = Date.now();
+  const record: WebhookDeliveryRecord = {
+    deliveryId: randomUUID(),
+    subscriptionId: sub.subscriptionId,
+    url: sub.url,
+    secret: sub.secret,
+    eventType: event.type,
+    payload: JSON.stringify(event),
+    status: 'pending',
+    attempts: 0,
+    maxAttempts: WEBHOOK_MAX_ATTEMPTS,
+    nextAttemptAt: now,
+    claimedBy: null,
+    claimExpiresAt: null,
+    lastError: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await storage.enqueueWebhookDelivery(record);
 }
 
 function assertReachableUrl(url: string): void {

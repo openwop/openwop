@@ -22,6 +22,7 @@ import type {
   PushSubscriptionRecord,
   RunRecord,
   UserAgentRecord,
+  WebhookDeliveryRecord,
   WebhookSubscriptionRecord,
 } from '../../types.js';
 import type {
@@ -132,6 +133,69 @@ export function openSqliteStorage(dbPath: string): Storage {
   const getWebhookStmt = db.prepare(`SELECT * FROM webhooks WHERE subscription_id = ?`);
   const deleteWebhookStmt = db.prepare(`DELETE FROM webhooks WHERE subscription_id = ?`);
   const listWebhooksStmt = db.prepare(`SELECT * FROM webhooks`);
+
+  // ── webhook deliveries (durable retry queue) ──
+  const enqueueWebhookDeliveryStmt = db.prepare(`
+    INSERT INTO webhook_deliveries (
+      delivery_id, subscription_id, url, secret, event_type, payload,
+      status, attempts, max_attempts, next_attempt_at,
+      claimed_by, claim_expires_at, last_error, created_at, updated_at
+    ) VALUES (
+      @deliveryId, @subscriptionId, @url, @secret, @eventType, @payload,
+      @status, @attempts, @maxAttempts, @nextAttemptAt,
+      @claimedBy, @claimExpiresAt, @lastError, @createdAt, @updatedAt
+    )
+  `);
+  // Select the ids of up-to-`limit` DUE deliveries, oldest schedule first.
+  const selectDueWebhookDeliveryIdsStmt = db.prepare(`
+    SELECT delivery_id FROM webhook_deliveries
+    WHERE status = 'pending'
+      AND next_attempt_at <= @now
+      AND (claim_expires_at IS NULL OR claim_expires_at < @now)
+    ORDER BY next_attempt_at ASC
+    LIMIT @limit
+  `);
+  const claimWebhookDeliveryStmt = db.prepare(`
+    UPDATE webhook_deliveries
+    SET claimed_by = @workerId, claim_expires_at = @claimExpiresAt, updated_at = @now
+    WHERE delivery_id = @deliveryId
+  `);
+  const getWebhookDeliveryStmt = db.prepare(`SELECT * FROM webhook_deliveries WHERE delivery_id = ?`);
+  const markWebhookDeliveryDeliveredStmt = db.prepare(`
+    UPDATE webhook_deliveries
+    SET status = 'delivered', updated_at = @now, claimed_by = NULL, claim_expires_at = NULL
+    WHERE delivery_id = @deliveryId
+  `);
+  const rescheduleWebhookDeliveryStmt = db.prepare(`
+    UPDATE webhook_deliveries
+    SET attempts = attempts + 1,
+        status = @status,
+        next_attempt_at = @nextAttemptAt,
+        last_error = @error,
+        claimed_by = NULL,
+        claim_expires_at = NULL,
+        updated_at = @now
+    WHERE delivery_id = @deliveryId
+  `);
+
+  // Atomic claim: SELECT due ids + UPDATE the lease + re-SELECT the claimed
+  // rows, all under one better-sqlite3 write transaction. better-sqlite3
+  // serializes write txns process-wide, so two concurrent claimers cannot
+  // grab the same row — the second sees the lease already set and its own
+  // due-scan excludes those ids.
+  const claimDueWebhookDeliveriesTxn = db.transaction(
+    (workerId: string, now: number, leaseMs: number, limit: number): WebhookDeliveryRecord[] => {
+      const idRows = selectDueWebhookDeliveryIdsStmt.all({ now, limit }) as Array<{ delivery_id: string }>;
+      const claimExpiresAt = now + leaseMs;
+      const claimed: WebhookDeliveryRecord[] = [];
+      for (const { delivery_id } of idRows) {
+        claimWebhookDeliveryStmt.run({ deliveryId: delivery_id, workerId, claimExpiresAt, now });
+        const row = getWebhookDeliveryStmt.get(delivery_id);
+        if (row) claimed.push(rowToWebhookDelivery(row));
+      }
+      return claimed;
+    },
+  );
 
   const getIdempotencyStmt = db.prepare(`SELECT * FROM idempotency WHERE key = ?`);
   const upsertIdempotencyStmt = db.prepare(`
@@ -369,6 +433,26 @@ export function openSqliteStorage(dbPath: string): Storage {
     };
   }
 
+  function rowToWebhookDelivery(row: any): WebhookDeliveryRecord {
+    return {
+      deliveryId: row.delivery_id,
+      subscriptionId: row.subscription_id,
+      url: row.url,
+      secret: row.secret,
+      eventType: row.event_type,
+      payload: row.payload,
+      status: row.status,
+      attempts: row.attempts,
+      maxAttempts: row.max_attempts,
+      nextAttemptAt: row.next_attempt_at,
+      claimedBy: row.claimed_by ?? null,
+      claimExpiresAt: row.claim_expires_at ?? null,
+      lastError: row.last_error ?? null,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
   function rowToUserAgent(row: any): UserAgentRecord {
     return {
       agentId: row.agent_id,
@@ -544,6 +628,44 @@ export function openSqliteStorage(dbPath: string): Storage {
           if (!hasTag) return false;
         }
         return true;
+      });
+    },
+
+    async enqueueWebhookDelivery(record) {
+      enqueueWebhookDeliveryStmt.run({
+        deliveryId: record.deliveryId,
+        subscriptionId: record.subscriptionId,
+        url: record.url,
+        secret: record.secret,
+        eventType: record.eventType,
+        payload: record.payload,
+        status: record.status,
+        attempts: record.attempts,
+        maxAttempts: record.maxAttempts,
+        nextAttemptAt: record.nextAttemptAt,
+        claimedBy: record.claimedBy ?? null,
+        claimExpiresAt: record.claimExpiresAt ?? null,
+        lastError: record.lastError ?? null,
+        createdAt: record.createdAt,
+        updatedAt: record.updatedAt,
+      });
+    },
+
+    async claimDueWebhookDeliveries(workerId, now, leaseMs, limit) {
+      return claimDueWebhookDeliveriesTxn(workerId, now, leaseMs, limit);
+    },
+
+    async markWebhookDeliveryDelivered(deliveryId, now) {
+      markWebhookDeliveryDeliveredStmt.run({ deliveryId, now });
+    },
+
+    async rescheduleWebhookDelivery(deliveryId, now, nextAttemptAt, dead, error) {
+      rescheduleWebhookDeliveryStmt.run({
+        deliveryId,
+        now,
+        nextAttemptAt,
+        status: dead ? 'dead' : 'pending',
+        error,
       });
     },
 

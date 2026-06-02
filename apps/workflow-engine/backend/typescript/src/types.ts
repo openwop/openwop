@@ -107,6 +107,39 @@ export interface WebhookSubscriptionRecord {
   createdAt: string;
 }
 
+/**
+ * Durable webhook-delivery queue row. Each subscription that matches an emitted
+ * event gets one row; the background worker (`webhookWorker.ts`) claims due
+ * rows, POSTs the signed delivery, and either marks it `delivered` or reschedules
+ * it with exponential backoff until `maxAttempts` is reached (then `dead`).
+ *
+ * The claim lease (`claimedBy` + `claimExpiresAt`) makes the queue
+ * multi-instance-safe: a crashed worker's lease expires and another instance
+ * re-claims the row, so deliveries survive a process crash rather than being
+ * dropped (the prior `setImmediate` fire-and-forget path lost them).
+ */
+export interface WebhookDeliveryRecord {
+  deliveryId: string;
+  subscriptionId: string;
+  url: string;
+  /** HMAC-SHA256 secret captured at enqueue time (the subscription may be deleted before delivery). */
+  secret: string;
+  eventType: string;
+  /** The exact JSON body to POST (a serialized EventRecord). */
+  payload: string;
+  status: 'pending' | 'delivered' | 'dead';
+  attempts: number;
+  maxAttempts: number;
+  /** Epoch ms; a row is due when `status === 'pending'` AND `nextAttemptAt <= now`. */
+  nextAttemptAt: number;
+  /** Claim lease: worker id + expiry (epoch ms). A due row whose lease is absent or expired is re-claimable. */
+  claimedBy?: string | null;
+  claimExpiresAt?: number | null;
+  lastError?: string | null;
+  createdAt: number;
+  updatedAt: number;
+}
+
 /** Idempotency key replay entry. */
 export interface IdempotencyRecord {
   key: string;

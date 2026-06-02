@@ -25,6 +25,7 @@ import type {
   PushSubscriptionRecord,
   RunRecord,
   UserAgentRecord,
+  WebhookDeliveryRecord,
   WebhookSubscriptionRecord,
 } from '../types.js';
 import type {
@@ -76,6 +77,37 @@ export interface Storage {
   getWebhook(subscriptionId: string): Promise<WebhookSubscriptionRecord | null>;
   deleteWebhook(subscriptionId: string): Promise<void>;
   listWebhooks(filter: { eventType?: string; tags?: readonly string[] }): Promise<readonly WebhookSubscriptionRecord[]>;
+
+  // ── webhook deliveries (durable retry queue) ──
+  /** Enqueue a delivery for the background worker (`webhookWorker.ts`) to attempt. */
+  enqueueWebhookDelivery(record: WebhookDeliveryRecord): Promise<void>;
+  /**
+   * Atomically claim up to `limit` *due* deliveries for `workerId`: rows with
+   * `status='pending'`, `nextAttemptAt <= now`, and the claim lease absent or
+   * expired. Sets the lease (`claimedBy=workerId`, `claimExpiresAt=now+leaseMs`)
+   * and returns the claimed rows. MUST be multi-instance-safe — Postgres uses
+   * `FOR UPDATE SKIP LOCKED`; sqlite a single write transaction.
+   */
+  claimDueWebhookDeliveries(
+    workerId: string,
+    now: number,
+    leaseMs: number,
+    limit: number,
+  ): Promise<readonly WebhookDeliveryRecord[]>;
+  /** Mark a claimed delivery `delivered` (terminal). */
+  markWebhookDeliveryDelivered(deliveryId: string, now: number): Promise<void>;
+  /**
+   * Reschedule a failed delivery: increment `attempts`, record `error`, clear the
+   * lease. When `dead` is true the row becomes terminal `dead`; otherwise it
+   * returns to `pending` with the caller-computed backoff `nextAttemptAt`.
+   */
+  rescheduleWebhookDelivery(
+    deliveryId: string,
+    now: number,
+    nextAttemptAt: number,
+    dead: boolean,
+    error: string,
+  ): Promise<void>;
 
   // ── idempotency ──
   /**

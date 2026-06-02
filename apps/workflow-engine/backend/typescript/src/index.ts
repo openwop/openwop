@@ -32,8 +32,11 @@ import { ensureLocalPacksMounted } from './bootstrap/mountLocalPacks.js';
 import { loadPromptPacks, defaultPromptPackRoots } from './host/promptPackLoader.js';
 import { seedDefaultHostSurfaces } from './bootstrap/hostSurfaceRegistry.js';
 import { initInMemorySurfaces } from './host/inMemorySurfaces.js';
+import { hostname } from 'node:os';
 import { openStorage } from './storage/index.js';
+import type { Storage } from './storage/storage.js';
 import { createHostAdapterSuite } from './host/index.js';
+import { startWebhookDeliveryWorker } from './host/webhookDeliveryWorker.js';
 import { configureSecretResolver, loadSecretsFromEnv } from './byok/secretResolver.js';
 import { bootstrapKmsFromEnv } from './byok/kmsEncryption.js';
 import {
@@ -321,6 +324,11 @@ export async function createApp(config: AppConfig): Promise<Express> {
   registerPushSubscriptionRoutes(app, { storage });
   registerStreamRoutes(app, { storage });
   registerWebhookRoutes(app, { storage });
+  // Expose storage so the server entry (main) can start the durable webhook
+  // delivery worker against it. Tests build the app via createApp WITHOUT a
+  // polling worker and drain the queue deterministically via
+  // processDueWebhookDeliveries(); only the long-lived server polls.
+  app.locals.storage = storage;
   registerPackRoutes(app, { storage });
   // RFC 0025 — isolated test-mode mirror namespace. Gated on
   // OPENWOP_PACKS_TEST_NAMESPACE_ENABLED=true; routes are not mounted
@@ -426,6 +434,15 @@ export async function createApp(config: AppConfig): Promise<Express> {
 async function main(): Promise<void> {
   const config = loadConfigFromEnv();
   const app = await createApp(config);
+
+  // Drain the durable webhook-delivery queue. The worker id ties claimed rows
+  // to this instance's lease; a crash lets another instance re-claim them.
+  const storage = app.locals.storage as Storage;
+  const workerId = `webhook-${hostname()}-${process.pid}`;
+  const webhookWorker = startWebhookDeliveryWorker(storage, workerId);
+  for (const sig of ['SIGTERM', 'SIGINT'] as const) {
+    process.once(sig, () => webhookWorker.stop());
+  }
 
   app.listen(config.port, () => {
     log.info('workflow-engine listening', { port: config.port });
