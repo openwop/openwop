@@ -189,7 +189,7 @@ function withImplicitEdges(definition: WorkflowDefinition): WorkflowDefinition {
 async function runOneNode(input: {
   storage: Storage;
   run: RunRecord;
-  nodeRef: { nodeId: string; typeId: string; config?: Record<string, unknown>; inputs?: Record<string, unknown> };
+  nodeRef: { nodeId: string; typeId: string; config?: Record<string, unknown>; inputs?: Record<string, unknown>; agent?: { agentId: string } };
   inputsByPort: Record<string, unknown>;
   policyResolver?: ProviderPolicyResolver;
 }): Promise<
@@ -395,6 +395,7 @@ async function runOneNode(input: {
     scopeId: run.scopeId,
     inputs: ctxInputs,
     config: nodeRef.config ?? {},
+    ...(nodeRef.agent ? { nodeAgent: nodeRef.agent } : {}),
     configurable: run.configurable ?? {},
     attempt: 1,
     // RFC 0020 §D: propagate the run-level trust boundary onto every

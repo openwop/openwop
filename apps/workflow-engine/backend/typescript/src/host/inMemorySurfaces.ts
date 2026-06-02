@@ -232,11 +232,10 @@ function createKv(state: TenantMap<KvEntry>, scope: BundleScope): KvSurface {
     },
     async cas(args) {
       // RFC 0015 §B point 5 canonical CAS shape: input `{key, expect,
-      // set}`, output `{swapped: boolean, currentValue?: unknown}`.
-      // Accept legacy `{expected, value}` from older sample call sites
-      // for backward compatibility; emit only the canonical output
-      // shape (callers that need the legacy `{ok, value/currentValue}`
-      // can derive from `{swapped, currentValue}`).
+      // set}`, output `{swapped: boolean, actual?: unknown}` (the live
+      // value at the call). Accept legacy `{expected, value}` from older
+      // sample call sites for backward compatibility; emit only the
+      // canonical output shape.
       const a = args as { key?: unknown; expect?: unknown; expected?: unknown; set?: unknown; value?: unknown };
       const key = String(a.key);
       const expectVal = 'expect' in a ? a.expect : a.expected;
@@ -244,13 +243,13 @@ function createKv(state: TenantMap<KvEntry>, scope: BundleScope): KvSurface {
       const b = bucket();
       const cur = fresh(b.get(key))?.value ?? null;
       if (JSON.stringify(cur) !== JSON.stringify(expectVal ?? null)) {
-        // Spec field name is `actual` (the live value at miss-time)
-        // per `kv-cas.test.ts`. Earlier `currentValue` alias kept for
-        // legacy callers; future commits can drop it.
-        return { swapped: false, actual: cur, currentValue: cur };
+        // Spec field name is `actual` (the live value at miss-time) per
+        // `kv-cas.test.ts`. The legacy `currentValue` alias had no remaining
+        // readers (src, packs, conformance) so it's dropped.
+        return { swapped: false, actual: cur };
       }
       b.set(key, { value: setVal });
-      return { swapped: true, actual: setVal, currentValue: setVal };
+      return { swapped: true, actual: setVal };
     },
   };
 }

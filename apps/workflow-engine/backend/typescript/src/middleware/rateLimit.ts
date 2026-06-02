@@ -72,9 +72,10 @@ const ipReqTimes = new Map<string, number[]>();
 const sessionRunTimesMin = new Map<string, number[]>();
 const sessionRunCountsDay = new Map<string, { day: number; count: number }>();
 const ipRunCountsDay = new Map<string, { day: number; count: number }>();
-/** In-flight run set per session. Each entry expires after 60s as a
- *  safety net — real tracking via run.completed events is the
- *  follow-up. */
+/** In-flight run set per session, keyed for the per-session concurrency cap.
+ *  Slots are bound to the real runId and auto-released on the run's terminal
+ *  event by `reserveConcurrentSlot` (via `onRunTerminal`); the 60s entry TTL
+ *  is only a backstop for a route that forgets to reserve. */
 const sessionInflightRuns = new Map<string, { startedAtMs: number; runId: string }[]>();
 
 function dayBucket(): number {

@@ -23,6 +23,7 @@ function makeCtx(overrides?: {
   config?: Record<string, unknown>;
   configurable?: Record<string, unknown>;
   nodeId?: string;
+  nodeAgent?: { agentId: string };
 }): { ctx: NodeContext; events: CapturedEvent[] } {
   const events: CapturedEvent[] = [];
   let nextSeq = 1;
@@ -32,6 +33,7 @@ function makeCtx(overrides?: {
     tenantId: 'tenant-test',
     inputs: {},
     config: overrides?.config ?? {},
+    ...(overrides?.nodeAgent ? { nodeAgent: overrides.nodeAgent } : {}),
     configurable: overrides?.configurable ?? {},
     attempt: 1,
     secrets: {},
@@ -294,12 +296,10 @@ describe('core.conformance.mock-agent', () => {
   });
 
   describe('agentId resolution', () => {
-    it('falls back to nodes[].agent.agentId shadow when config.agentId missing', async () => {
+    it('falls back to nodes[].agent.agentId pin (ctx.nodeAgent) when config.agentId missing', async () => {
       const { ctx, events } = makeCtx({
-        config: {
-          mockReasoning: true,
-          agent: { agentId: 'agent-from-pin' },
-        },
+        config: { mockReasoning: true },
+        nodeAgent: { agentId: 'agent-from-pin' },
       });
       await mockAgentNode.execute(ctx);
       expect((events[0].payload as { agentId: string }).agentId).toBe('agent-from-pin');
