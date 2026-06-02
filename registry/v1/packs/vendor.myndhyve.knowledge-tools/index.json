@@ -22,7 +22,7 @@
       "signatureUrl": "/v1/packs/vendor.myndhyve.knowledge-tools/-/1.0.0.sig",
       "signingMethod": "manual",
       "signingKeyId": "myndhyve-internal-1",
-      "integrity": "sha256-1CuVLoqERUCHn6Q+iBVb/NhffNt4t5sZ3pJruBJXPjo=",
+      "integrity": "sha256-MsPbOfmWJH41OjsQxik9wSUUo8lD4kOfVhNVJrjSqcQ=",
       "deprecated": false,
       "yanked": false
     }

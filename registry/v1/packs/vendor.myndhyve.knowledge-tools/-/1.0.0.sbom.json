@@ -29,7 +29,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "d42b952e8a844540879fa43e88155bfcd85f7cdb78b79b19de926bb812573e3a"
+          "content": "32c3db39f996247e353a3b10c6293dc12514a3c943e2439f56135526b8d2a9c4"
         }
       ],
       "purl": "pkg:openwop/vendor.myndhyve.knowledge-tools@1.0.0"
@@ -81,13 +81,13 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "5ffd3700cdf4bd193adbef5a16f6e2ddcda17cee8479367367c4c67f7f470267"
+          "content": "cbbc8f168f98a7f3504d46e1812d3118808a0349741dec6285a5ec9395631fa1"
         }
       ],
       "properties": [
         {
           "name": "openwop:size",
-          "value": "8400"
+          "value": "8407"
         }
       ]
     },

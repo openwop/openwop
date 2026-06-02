@@ -63,5 +63,5 @@
     "publicKeyRef": "myndhyve-internal-1",
     "signatureRef": "keys/pack.json.sig"
   },
-  "integrity": "sha256-qiB996JY5VHjc3m0ELTwH4SYw8y8EYLb5UCxZIBXhMU="
+  "integrity": "sha256-I91PRlKqT/3rM/h8orqobFp3l34Vxu5++546XEVkkEE="
 }
