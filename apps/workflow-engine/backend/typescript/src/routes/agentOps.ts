@@ -171,10 +171,10 @@ export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
       const items = runs
         .map((run) => {
           const md = (run.metadata ?? {}) as Record<string, unknown>;
-          // A run carries one attribution block (heartbeat / schedule / kanban);
-          // keep it only if that block names this roster member.
+          // A run carries one attribution block (heartbeat / schedule / kanban /
+          // approval); keep it only if that block names this roster member.
           const candidates: Array<{ source: string; block: Record<string, unknown> }> = [];
-          for (const key of ['heartbeat', 'schedule', 'kanban'] as const) {
+          for (const key of ['heartbeat', 'schedule', 'kanban', 'approval'] as const) {
             const block = md[key];
             if (block && typeof block === 'object') candidates.push({ source: key, block: block as Record<string, unknown> });
           }

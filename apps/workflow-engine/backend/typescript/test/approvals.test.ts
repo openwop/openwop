@@ -160,4 +160,39 @@ describe('approval inbox — agents propose, humans dispose', () => {
     const card = board.body.cards.find((c) => c.id === target.cardId)!;
     expect(card.columnId).toBe(terminalId);
   });
+
+  it('a claimed run is attributed to the agent in its activity as an approved proposal', async () => {
+    const sally = (await roster()).find((r) => r.persona === 'Sally')!;
+    const checked = await api<CheckResult>(`/v1/host/sample/roster/${sally.rosterId}/check`, { method: 'POST', body: '{}' });
+    expect(checked.body.proposed).toBe(true);
+    const claimed = await api<{ runId: string }>(
+      `/v1/host/sample/approvals/${encodeURIComponent(checked.body.approvalId!)}/claim`, { method: 'POST', body: '{}' },
+    );
+    const activity = await api<{ items: Array<{ runId: string; source: string }> }>(
+      `/v1/host/sample/roster/${sally.rosterId}/activity`,
+    );
+    const item = activity.body.items.find((i) => i.runId === claimed.body.runId)!;
+    expect(item).toBeTruthy();
+    expect(item.source).toBe('approval'); // not 'heartbeat'
+  });
+
+  it('concurrent claims for one proposal start exactly one run (resolve-before-dispatch lock)', async () => {
+    // Fresh pending proposal from a different agent.
+    const marcus = (await roster()).find((r) => r.persona === 'Marcus')!;
+    await api(`/v1/host/sample/roster/${marcus.rosterId}`, { method: 'PATCH', body: JSON.stringify({ autonomyLevel: 'review' }) });
+    const checked = await api<CheckResult>(`/v1/host/sample/roster/${marcus.rosterId}/check`, { method: 'POST', body: '{}' });
+    expect(checked.body.proposed).toBe(true);
+    const id = encodeURIComponent(checked.body.approvalId!);
+
+    // Two claims race; the lock must let exactly one win.
+    const [a, b] = await Promise.all([
+      api<{ runId?: string }>(`/v1/host/sample/approvals/${id}/claim`, { method: 'POST', body: '{}' }),
+      api<{ runId?: string }>(`/v1/host/sample/approvals/${id}/claim`, { method: 'POST', body: '{}' }),
+    ]);
+    const oks = [a, b].filter((r) => r.status === 200);
+    const conflicts = [a, b].filter((r) => r.status === 409);
+    expect(oks.length).toBe(1);
+    expect(conflicts.length).toBe(1);
+    expect(typeof oks[0].body.runId).toBe('string');
+  });
 });

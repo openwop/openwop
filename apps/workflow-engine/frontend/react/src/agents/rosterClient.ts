@@ -124,8 +124,8 @@ export interface AgentActivityItem {
   /** RunStatus: pending | running | completed | failed | … */
   status: string;
   /** How the run was triggered. */
-  source: 'heartbeat' | 'schedule' | 'kanban';
-  /** The board card that triggered it (heartbeat / kanban), when known. */
+  source: 'heartbeat' | 'schedule' | 'kanban' | 'approval';
+  /** The board card that triggered it (heartbeat / kanban / approval), when known. */
   cardId?: string;
   /** ISO-8601 — terminal time, else last-update / creation. */
   timestamp: string;

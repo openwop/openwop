@@ -56,6 +56,24 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
+// Per-approval in-process serialization. The durable store has no
+// compare-and-swap, so two concurrent resolves could each read `pending` before
+// either writes. Chaining each key's work serializes resolves within one
+// process → exactly one winner. (Cross-INSTANCE races still need the
+// conditional-write a production host provides; documented on resolveApproval.)
+const resolveChains = new Map<string, Promise<unknown>>();
+function withApprovalLock<T>(approvalId: string, fn: () => Promise<T>): Promise<T> {
+  const prior = resolveChains.get(approvalId) ?? Promise.resolve();
+  const run = prior.then(fn, fn);
+  const tail = run.then(() => undefined, () => undefined);
+  resolveChains.set(approvalId, tail);
+  // Drop the entry once this is the last queued work for the key (bounds the map).
+  void tail.then(() => {
+    if (resolveChains.get(approvalId) === tail) resolveChains.delete(approvalId);
+  });
+  return run;
+}
+
 export async function createApproval(input: {
   tenantId: string;
   rosterId: string;
@@ -102,22 +120,56 @@ export async function hasPendingApprovalForCard(tenantId: string, cardId: string
   );
 }
 
-/** Resolve an approval (claim → approved+runId, reject → rejected). Idempotent
- *  guard: only a `pending` approval can be resolved. Returns null if missing,
- *  or the unchanged entry if it was already resolved. */
-export async function resolveApproval(
+/** Resolve an approval (claim → approved, reject → rejected). The `pending`
+ *  guard is the lock: `changed` is true only for the call that performed the
+ *  pending→resolved transition, so a caller can gate a side effect on it (e.g.
+ *  only the winning claim dispatches the run). Returns null if missing.
+ *
+ *  The host-ext store has no compare-and-swap, so this is not a hard
+ *  cross-instance lock — there is a sub-millisecond window between the read and
+ *  the write. Resolve-before-dispatch (routes/approvals.ts) shrinks the
+ *  double-dispatch window to that single get→put, sufficient for the sample's
+ *  single-actor demo posture; a production host backs this with a conditional
+ *  write. */
+export function resolveApproval(
   approvalId: string,
   outcome: { status: 'approved' | 'rejected'; runId?: string; note?: string },
-): Promise<PendingApproval | null> {
+): Promise<{ approval: PendingApproval; changed: boolean } | null> {
+  return withApprovalLock(approvalId, async () => {
+    const approval = await approvals.get(approvalId);
+    if (!approval) return null;
+    if (approval.status !== 'pending') return { approval, changed: false };
+    approval.status = outcome.status;
+    approval.resolvedAt = nowIso();
+    if (outcome.runId) approval.runId = outcome.runId;
+    if (outcome.note !== undefined) approval.note = outcome.note;
+    await approvals.put(approval);
+    // Bound the store: resolved rows accumulate forever otherwise, growing the
+    // per-heartbeat scan. Prune the tenant's oldest resolved entries past the cap.
+    await pruneResolved(approval.tenantId);
+    return { approval, changed: true };
+  });
+}
+
+/** Attach the started run to an already-approved approval (post-dispatch). */
+export async function attachRunId(approvalId: string, runId: string): Promise<void> {
   const approval = await approvals.get(approvalId);
-  if (!approval) return null;
-  if (approval.status !== 'pending') return approval;
-  approval.status = outcome.status;
-  approval.resolvedAt = nowIso();
-  if (outcome.runId) approval.runId = outcome.runId;
-  if (outcome.note !== undefined) approval.note = outcome.note;
+  if (!approval) return;
+  approval.runId = runId;
   await approvals.put(approval);
-  return approval;
+}
+
+const RESOLVED_RETENTION = 100;
+
+/** Keep only the most-recent `keep` resolved approvals for a tenant; delete the
+ *  rest. Pending approvals are never pruned. */
+async function pruneResolved(tenantId: string, keep = RESOLVED_RETENTION): Promise<void> {
+  const resolved = (await approvals.list())
+    .filter((a) => a.tenantId === tenantId && a.status !== 'pending')
+    .sort((a, b) => (b.resolvedAt ?? b.createdAt).localeCompare(a.resolvedAt ?? a.createdAt));
+  for (const stale of resolved.slice(keep)) {
+    await approvals.delete(stale.approvalId);
+  }
 }
 
 /** Test-only: drop all approvals. */

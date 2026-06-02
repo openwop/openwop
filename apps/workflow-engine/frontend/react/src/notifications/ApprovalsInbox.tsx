@@ -112,6 +112,21 @@ export function ApprovalsInbox({ onResolved }: { onResolved?: () => void }): JSX
     },
   ];
 
+  // Empty + settled: collapse to a single discoverable line rather than a full
+  // card, so the inbox isn't dominated by an empty section for users who never
+  // enable review mode.
+  if (items !== null && items.length === 0 && !error) {
+    return (
+      <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+        <ScaleIcon size={14} />
+        <span className="muted">
+          No agent proposals awaiting sign-off. Set an agent&apos;s autonomy to <strong>review</strong> (on its Roster
+          card) to route its heartbeat picks here.
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="card">
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -134,12 +149,6 @@ export function ApprovalsInbox({ onResolved }: { onResolved?: () => void }): JSX
           rowKey={(a) => a.approvalId}
           density="compact"
           caption="Pending agent proposals awaiting human sign-off"
-          empty={
-            <p className="muted" style={{ fontSize: 13, padding: 'var(--space-3)' }}>
-              No proposals awaiting sign-off. Set an agent&apos;s autonomy to <strong>review</strong> (on its Roster
-              card) to route its heartbeat picks here instead of running them automatically.
-            </p>
-          }
         />
       )}
     </div>
