@@ -432,9 +432,23 @@ ${rows}
     --flag-yanked:        oklch(55% 0.16 28);
     --flag-yanked-bg:     oklch(55% 0.16 28 / 0.12);
   }
-  /* Light-mode only today. Dark mode lands when all three surfaces
-     (marketing site, app, registry) ship a coherent dark variant
-     together — see DESIGN.md §9. */
+  /* Warm-dark mode (DESIGN.md §9.1) — landed in lockstep with the marketing
+     site + app (§9.2.5). Token-only, same names with paper ↔ ink swapped;
+     --clay stays identical. The registry flag tokens lift for on-dark contrast
+     (§9.2.4 principle). OS-pref-driven; the static page has no manual toggle. */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper:        #1a1a17;
+      --paper-2:      #232220;
+      --rule:         #3a3833;
+      --rule-2:       #4a4842;
+      --ink:          #f4f1ea;
+      --ink-2:        #d9d4c5;
+      --ink-3:        #a8a39a;
+      --flag-deprecated: oklch(75% 0.13 75);
+      --flag-yanked:     oklch(65% 0.16 28);
+    }
+  }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); }
   body {
