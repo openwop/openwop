@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
-    "@openwop/openwop": "^1.1.6",
+    "@openwop/openwop": "^1.2.0",
     "@xyflow/react": "^12.10.2",
     "firebase": "^12.13.0",
     "react": "^18.3.1",
