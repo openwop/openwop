@@ -90,9 +90,11 @@ Cross-surface components (`.btn`, `.marker`, etc.) live in `DESIGN.md §6`. The 
 
 | Class | Purpose | Notes |
 |---|---|---|
-| `.app-shell` | top-level flex column wrapper | min-height 100vh |
-| `.app-header` | sticky app nav | 64px tall; ink on paper; matches `.topbar` register from the marketing site |
-| `.app-main` | scrollable content region under `.app-header` | inherits `--paper` |
+| `.app-shell` | top-level flex **row** wrapper | min-height 100vh; `[.app-sidebar][.app-body]` |
+| `.app-sidebar` | persistent left navigation rail (`src/chrome/Sidebar.tsx`) | sticky full-height column on `--paper-2` with a `--rule` right border (`--sidebar-w`); brand + workspace/org switcher (top) → grouped `Build`/`Operate`/`Admin` nav with Lucide icons (scroll) → account chrome `.app-sidebar-foot` (bottom). Collapses to an icon-only strip (`.is-collapsed`, `--sidebar-w-collapsed`, persisted to `localStorage`); becomes an off-canvas drawer ≤860px (`.app-sidebar-launcher` + `.app-sidebar-scrim`). Active item via `.app-nav-link.is-active` (clay-soft tint + clay text + `aria-current`); `:focus-visible` ring added for the anchor links. Replaces the former top-nav + `NavDropdown` |
+| `.app-body` | content column right of the rail | flex column (`min-width:0` so wide tables/canvas shrink rather than force page scroll); holds `DemoHostBanner` + `.app-main` + `.app-footer`. Under `.app-shell--ai` it locks to viewport height so the chat feed owns the scroll |
+| `.app-workspace-switcher` | org-context slot at the rail head | links to `/orgs` (RFC 0049); a future phase hydrates a real org list. Mono eyebrow + workspace name + chevron |
+| `.app-main` | scrollable content region inside `.app-body` | inherits `--paper`; carries the dot-grid + `.page-enter` (§5.5) |
 | `.app-footer` | minimal footer | mono attribution, paper |
 | `.card` | generic surface card | border-only via `--rule`; no shadow; hover tint `--clay-wash`; matches `.compare-card` register |
 | `.status-badge` + `.completed` / `.failed` / `.cancelled` / `.running` variants | run-state pill | mono label; functional color from §3; no fill — color on `--paper-2` |
@@ -127,6 +129,8 @@ These exist so every surface (Chat, Agents, Workflows, Runs, Kanban, Roster, Org
 | `<Markdown>` (`src/ui/Markdown.tsx`) | read-only GFM renderer | `react-markdown` + `remark-gfm` via the shared `chat-md` prose class; XSS-safe (no `rehype-raw`; unsafe link protocols stripped); links open in a new tab, task-list checkboxes disabled. The one way to render agent prose (descriptions, instructions, task details) |
 | `<PageHeader>` (`src/ui/PageHeader.tsx`) | the one editorial page-title primitive | mono uppercase `eyebrow` kicker (`--ink-3`) + Instrument-Serif `title` (out-ranks the cards below) + one-line sans `lede` (≤ 64ch) + right-aligned `actions` (`.action-bar`), over a hairline rule. Every top-level page leads with this instead of a bare `<h1>`/`<h2>` so the surfaces read as one publication |
 | `<MarkdownEditor>` (`src/ui/MarkdownEditor.tsx`) | Markdown editing surface | textarea + formatting toolbar (icons from `ui/icons`), Write/Preview toggle (preview via `<Markdown>`), character count, optional `localStorage` draft autosave + recovery; `compact` trims the toolbar for small surfaces (board cards). Backs the structured system-prompt editor (`agents/StructuredPromptEditor`) |
+| `<DataTable>` (`src/ui/DataTable.tsx`) | the ONE tabular-data primitive for the operate surfaces (Runs, Memory, Orgs, …) | generic `columns` config + `rows` + `rowKey`; sticky `--paper-2` mono header, click-to-sort columns (opt-in per column via `sortValue`, `aria-sort` + clay caret), `comfortable`/`compact` density axis, optional `onRowClick` (renders rows as `.data-row--clickable`), built-in `empty` slot. Styling under `.data-table` (`global.css`); token-only. A surface MUST NOT hand-roll a second sortable table — first adopted on the Runs index |
+| `<DensityToggle>` (`src/ui/DataTable.tsx`) | comfortable/compact segmented control | pairs with `<DataTable density>`; reuses `.segmented`. Persist the choice per-surface in `localStorage` |
 
 Global focus ring: `button`, `button.secondary`, `select`, `input`, `textarea`, `[role=button]`, and `.surface-card` all receive `outline: 2px solid var(--color-accent); outline-offset: 2px` on `:focus-visible` (one block in `global.css`). New interactive elements inherit it.
 

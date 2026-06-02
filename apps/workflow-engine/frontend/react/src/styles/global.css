@@ -78,6 +78,11 @@
   --space-5: 24px;
   --space-6: 32px;
 
+  /* App-shell sidebar (§5 .app-sidebar). The rail is a fixed-width column;
+   * collapsed mode narrows it to an icon-only strip. */
+  --sidebar-w: 248px;
+  --sidebar-w-collapsed: 64px;
+
   /* Chat-specific tokens — seated on the warm palette.
    * User bubble uses clay-soft (10% alpha) instead of full clay so the chat
    * surface reads editorial-calm rather than slab-of-orange. Ink-on-tint
@@ -516,38 +521,194 @@ a:visited {
 
 .app-shell {
   display: flex;
+  flex-direction: row;
+  min-height: 100vh;
+}
+
+/* The content column to the right of the rail — holds the demo-host banner,
+ * the scrollable main, and the footer. min-width:0 lets wide content (tables,
+ * canvases) shrink inside the flex row instead of forcing page scroll. */
+.app-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
-.app-header {
-  background: var(--paper);
-  border-bottom: 1px solid var(--rule);
-  padding: var(--space-3) var(--space-5);
-  display: flex;
-  align-items: center;
-  /* Wrap so a narrow viewport stacks the header onto extra rows instead of
-   * forcing page-wide horizontal scroll (the chrome's intrinsic width is
-   * ~950px). Harmless on wide screens — everything fits on one row. */
-  flex-wrap: wrap;
-  gap: var(--space-3) var(--space-5);
-  /* Sticky so the header stays visible while the main pane scrolls.
-   * z-index keeps it above content (especially the SSE event-stream
-   * code blocks which have their own absolute-positioned copy buttons).
-   * Background is FULLY OPAQUE — the previous translucent + backdrop-
-   * blur treatment let chat / scrollable content bleed through behind
-   * the brand + nav. Across all five tabs the editorial intent is a
-   * clean, solid header. */
+/* ── Persistent left navigation rail (Phase 1) ─────────────────────────
+ * A sticky, full-height column on --paper-2 with a --rule right border, so
+ * the app reads as a platform rather than a top-nav site. Brand + workspace
+ * switcher (top), grouped nav (scroll), account chrome (bottom). Collapses to
+ * an icon-only strip; becomes an off-canvas drawer ≤860px. */
+.app-sidebar {
+  flex: 0 0 var(--sidebar-w);
+  width: var(--sidebar-w);
   position: sticky;
   top: 0;
-  z-index: 50;
+  align-self: flex-start;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper-2);
+  border-right: 1px solid var(--rule);
+  z-index: 40;
+  transition: flex-basis 0.18s ease, width 0.18s ease;
+}
+.app-sidebar.is-collapsed { flex-basis: var(--sidebar-w-collapsed); width: var(--sidebar-w-collapsed); }
+
+.app-sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-3) var(--space-2);
+}
+.app-sidebar-brand { text-decoration: none; min-width: 0; overflow: hidden; }
+.app-sidebar-brand .brand-mark { font-size: 19px; }
+.app-sidebar.is-collapsed .app-sidebar-brand { display: none; }
+.app-sidebar-collapse {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.app-sidebar-collapse:hover { background: var(--paper); color: var(--ink); border-color: var(--rule); }
+.app-sidebar.is-collapsed .app-sidebar-head { justify-content: center; }
+
+/* Workspace / org switcher — the org-context slot at the top of the rail. */
+.app-workspace-switcher {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  margin: 0 var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-2-5);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  text-decoration: none;
+}
+.app-workspace-switcher:hover { border-color: var(--clay-rule); background: var(--clay-wash); }
+.app-workspace-icon { display: inline-flex; color: var(--ink-3); flex-shrink: 0; }
+.app-workspace-meta { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.app-workspace-eyebrow {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.app-workspace-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app-workspace-caret { margin-left: auto; color: var(--ink-3); flex-shrink: 0; }
+.app-sidebar.is-collapsed .app-workspace-switcher { justify-content: center; margin: 0 var(--space-2) var(--space-3); padding: var(--space-2); }
+.app-sidebar.is-collapsed .app-workspace-meta,
+.app-sidebar.is-collapsed .app-workspace-caret { display: none; }
+
+/* Grouped nav */
+.app-sidebar-nav { flex: 1 1 auto; overflow-y: auto; padding: 0 var(--space-2) var(--space-3); }
+.app-nav-group + .app-nav-group { margin-top: var(--space-4); }
+.app-nav-group-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 0 var(--space-2-5) var(--space-1-5);
+}
+.app-sidebar.is-collapsed .app-nav-group-label { display: none; }
+.app-sidebar.is-collapsed .app-nav-group + .app-nav-group { margin-top: var(--space-2-5); border-top: 1px solid var(--rule); padding-top: var(--space-2-5); }
+.app-sidebar-nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.app-nav-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  padding: var(--space-2) var(--space-2-5);
+  border-radius: var(--radius);
+  color: var(--ink-2);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 450;
+  line-height: 1.2;
+}
+.app-nav-link:hover { background: var(--paper); color: var(--ink); }
+.app-nav-link.is-active { background: var(--clay-soft); color: var(--clay); font-weight: 600; }
+.app-nav-icon { display: inline-flex; align-items: center; color: var(--ink-3); flex-shrink: 0; }
+.app-nav-link:hover .app-nav-icon { color: var(--ink-2); }
+.app-nav-link.is-active .app-nav-icon { color: var(--clay); }
+.app-nav-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-sidebar.is-collapsed .app-nav-label { display: none; }
+.app-sidebar.is-collapsed .app-nav-link { justify-content: center; padding: var(--space-2); }
+
+/* Account chrome footer */
+.app-sidebar-foot {
+  border-top: 1px solid var(--rule);
+  padding: var(--space-2-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.app-sidebar-utils { display: flex; align-items: center; gap: var(--space-2); }
+.app-sidebar.is-collapsed .app-sidebar-foot { display: none; }
+
+/* Mobile launcher + drawer scrim (shown only ≤860px) */
+.app-sidebar-launcher { display: none; }
+.app-sidebar-scrim { display: none; }
+
+@media (max-width: 860px) {
+  .app-sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    height: 100vh; height: 100dvh;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    box-shadow: 0 0 0 100vmax transparent;
+  }
+  .app-sidebar.is-open { transform: translateX(0); box-shadow: 2px 0 16px var(--ink-shadow); }
+  /* Ignore the collapsed strip on mobile — the drawer is always full-width. */
+  .app-sidebar.is-collapsed { flex-basis: var(--sidebar-w); width: var(--sidebar-w); }
+  .app-sidebar.is-collapsed .app-sidebar-brand,
+  .app-sidebar.is-collapsed .app-workspace-meta,
+  .app-sidebar.is-collapsed .app-workspace-caret,
+  .app-sidebar.is-collapsed .app-nav-label,
+  .app-sidebar.is-collapsed .app-nav-group-label,
+  .app-sidebar.is-collapsed .app-sidebar-foot { display: revert; }
+  .app-sidebar-scrim { display: block; position: fixed; inset: 0; background: var(--scrim); z-index: 75; }
+  .app-sidebar { z-index: 80; }
+  .app-sidebar-launcher {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: var(--space-2);
+    left: var(--space-2);
+    z-index: 70;
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow: 0 1px 4px var(--ink-shadow);
+  }
+  /* Clear the floating launcher on the standard document pages. */
+  .app-main:not(.app-main--ai):not(.app-main-fullbleed) { padding-top: calc(var(--space-5) + 30px); }
 }
 
 /* Brand mark in the header — mirrors public/styles.css .foot-mark per
  * DESIGN.md §6: SVG icon + Instrument Serif "Open" + italic clay "WOP".
- * Sized down from the marketing site's 38px footer mark to ~22px so it
- * fits the 64px-tall sticky app header. */
-.app-header h1.brand-mark {
+ * Sized for the sidebar rail head; the .app-sidebar-brand wrapper trims it
+ * a touch further. */
+h1.brand-mark {
   margin: 0;
   display: inline-flex;
   align-items: center;
@@ -559,13 +720,13 @@ a:visited {
   letter-spacing: -0.01em;
   color: var(--ink);
 }
-.app-header h1.brand-mark img {
+h1.brand-mark img {
   width: 28px;
   height: 28px;
   display: inline-block;
   flex-shrink: 0;
 }
-.app-header h1.brand-mark em {
+h1.brand-mark em {
   font-style: italic;
   color: var(--clay);
 }
@@ -577,170 +738,6 @@ a:visited {
   font-style: normal;
   color: var(--ink-3);
   margin-left: 8px;
-}
-
-.app-header nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-3);
-  min-width: 0;
-}
-
-/* Narrow viewports: drop the "workflow engine" sub-label and tighten the
- * header so it never forces horizontal page scroll. The header + nav wrap
- * (above); this just trims chrome so the wrap is graceful. */
-@media (max-width: 760px) {
-  .app-header { padding: var(--space-2) var(--space-3); gap: var(--space-2) var(--space-3); }
-  .app-header-sub { display: none; }
-  .app-header-spacer { flex-basis: 100%; height: 0; }
-}
-
-.app-header nav a {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  text-decoration: none;
-  padding: var(--space-1) var(--space-3);
-  border-radius: 2px;
-  transition: color .15s ease, background .15s ease;
-}
-
-.app-header nav a:hover {
-  color: var(--clay);
-  background: transparent;
-}
-
-.app-header nav a.active {
-  color: var(--ink);
-  background: var(--clay-wash);
-}
-
-/* ─── Nav dropdowns ───────────────────────────────────────────────────
- * Header submenus mirror the marketing site's `.nav-dropdown` pattern
- * (`public/styles.css:154-224`) but bind to the app's design tokens
- * (--paper / --rule / --clay / --ink). The React primitive lives in
- * `chrome/NavDropdown.tsx`. Hover, focus-within, AND `.is-open`
- * (click-toggled by the component) all reveal the menu so touch +
- * keyboard users get parity with mouse hover.
- *
- * The trigger inherits the same mono-uppercase-11px styling as the
- * sibling `<a>` nav items so the bar reads as one rhythm regardless
- * of whether a slot is a leaf link or a submenu parent.
- */
-.app-header nav .nav-dropdown {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-/* 14px invisible hover-bridge under the trigger so the cursor
- * crossing the 8px gap between trigger and menu doesn't leave the
- * dropdown bounding box and dismiss the menu. */
-.app-header nav .nav-dropdown::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 100%;
-  height: 14px;
-}
-.app-header nav .nav-dropdown-trigger {
-  appearance: none;
-  background: transparent;
-  border: 0;
-  margin: 0;
-  cursor: pointer;
-  /* Match the mono-uppercase-11px rhythm of sibling `<a>` nav items
-   * so the trigger doesn't visually stand out as "different". */
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  padding: var(--space-1) var(--space-3);
-  border-radius: 2px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: color .15s ease, background .15s ease;
-}
-.app-header nav .nav-dropdown-trigger:hover,
-.app-header nav .nav-dropdown.is-open > .nav-dropdown-trigger {
-  color: var(--clay);
-}
-/* `.active` is added when any submenu child route is current — same
- * visual treatment as the leaf `<a>.active` so the user always knows
- * which section owns the current page. */
-.app-header nav .nav-dropdown.active > .nav-dropdown-trigger {
-  color: var(--ink);
-  background: var(--clay-wash);
-}
-.app-header nav .nav-dropdown-trigger .nav-caret {
-  font-size: 9px;
-  line-height: 1;
-  transform: translateY(1px);
-  transition: transform .15s ease;
-}
-.app-header nav .nav-dropdown.is-open .nav-caret {
-  transform: translateY(1px) rotate(180deg);
-}
-.app-header nav .nav-dropdown-menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  min-width: 220px;
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  box-shadow: 0 10px 24px var(--ink-shadow);
-  padding: 6px;
-  display: none;
-  flex-direction: column;
-  z-index: 60;
-}
-.app-header nav .nav-dropdown:hover > .nav-dropdown-menu,
-.app-header nav .nav-dropdown.is-open > .nav-dropdown-menu,
-.app-header nav .nav-dropdown:focus-within > .nav-dropdown-menu {
-  display: flex;
-}
-.app-header nav .nav-dropdown-menu a {
-  /* Override the inherited `nav a` mono-uppercase-11px rhythm — menu
-   * items read better as sentence-case 13px so the persona of a
-   * "Workflows" or "Agents" row is legible at a glance. The trigger
-   * keeps the uppercase mono persona; the items underneath drop it. */
-  font-family: var(--font-sans, inherit);
-  font-size: 13px;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--ink);
-  padding: 8px 12px;
-  border-radius: 5px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  line-height: 1.35;
-  background: transparent;
-}
-.app-header nav .nav-dropdown-menu a:hover,
-.app-header nav .nav-dropdown-menu a:focus-visible {
-  background: var(--paper-2);
-  color: var(--clay);
-  outline: none;
-}
-.app-header nav .nav-dropdown-menu-label {
-  font-weight: 500;
-}
-.app-header nav .nav-dropdown-menu-hint {
-  color: var(--ink-3);
-  font-size: 11.5px;
-  /* Hints disappear on hover so the row feels like one focusable
-   * surface — a separate hint color on a hovered row reads as two
-   * conflicting accents. Keep it readable but de-emphasized. */
-}
-.app-header nav .nav-dropdown-menu a:hover .nav-dropdown-menu-hint,
-.app-header nav .nav-dropdown-menu a:focus-visible .nav-dropdown-menu-hint {
-  color: color-mix(in oklch, var(--clay) 70%, transparent);
 }
 
 .app-main {
@@ -960,6 +957,74 @@ pre {
    screens rather than forcing the layout to overflow the viewport. */
 .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
+/* ── <DataTable> — the shared sortable/sticky data-grid primitive (§5.1) ── */
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--paper-2);
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--ink-3);
+  padding: var(--space-2) var(--space-3);
+  white-space: nowrap;
+}
+.data-table tbody td {
+  padding: var(--space-2-5) var(--space-3);
+  border-bottom: 1px solid var(--rule);
+  color: var(--ink-2);
+  vertical-align: middle;
+}
+.data-table tbody tr:last-child td { border-bottom: 0; }
+.data-row--clickable { cursor: pointer; }
+.data-table tbody tr.data-row--clickable:hover { background: var(--clay-wash); }
+.data-col--right { text-align: right; }
+.data-col--center { text-align: center; }
+
+/* compact density */
+.data-table--compact { font-size: 12px; }
+.data-table--compact thead th { padding: var(--space-1-5) var(--space-3); }
+.data-table--compact tbody td { padding: var(--space-1-5) var(--space-3); }
+
+/* sortable header — the <button> owns the cell padding so the whole header is the hit target */
+.data-th--sortable { padding: 0; }
+.data-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  width: 100%;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.data-table--compact .data-sort-btn { padding: var(--space-1-5) var(--space-3); }
+.data-col--right .data-sort-btn { justify-content: flex-end; }
+.data-col--center .data-sort-btn { justify-content: center; }
+.data-sort-btn:hover { color: var(--ink); }
+.data-sort-caret { display: inline-flex; opacity: 0; transition: opacity 0.12s ease, transform 0.12s ease; }
+.data-th--sortable:hover .data-sort-caret { opacity: 0.45; }
+.data-th--sortable.is-sorted .data-sort-caret { opacity: 1; color: var(--clay); }
+.data-sort-caret.is-asc { transform: rotate(180deg); }
+/* visually-hidden caption (a11y) */
+.data-table-caption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Runs page: the URL-persisted filter input + the inline "flagged" marker. */
+.runs-filter { min-width: 200px; }
+.runs-review-flag { margin-left: var(--space-1-5); font-size: 10px; }
+
 .alert {
   padding: var(--space-3);
   border-radius: var(--radius);
@@ -1000,6 +1065,14 @@ pre {
  * header / composer) from pushing the page taller than the viewport.
  * Fallback to 100vh for browsers that don't support dvh. */
 .app-shell.app-shell--ai {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+/* In the sidebar row layout, the chat body column must also lock to the
+ * viewport so the message feed (not the page) owns the scroll. */
+.app-shell--ai .app-body {
   height: 100vh;
   height: 100dvh;
   min-height: 0;
@@ -1050,8 +1123,6 @@ pre {
   gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
   border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface);
-}
 
 .builder-toolbar-name {
   width: auto;
@@ -1084,8 +1155,6 @@ pre {
 
 .builder-toolbar-back:hover {
   color: var(--color-text);
-  background: var(--color-surface-2);
-}
 
 .builder-body {
   flex: 1;
@@ -1099,8 +1168,6 @@ pre {
   border-right: 1px solid var(--color-border);
   padding: var(--space-3) 0;
   overflow-y: auto;
-  background: var(--color-surface);
-}
 
 .builder-palette-header {
   padding: 0 var(--space-3) var(--space-2);
@@ -1286,8 +1353,6 @@ pre {
 }
 
 .builder-palette-item:hover {
-  background: var(--color-surface-2);
-}
 
 .builder-palette-item:active {
   cursor: grabbing;
@@ -1465,8 +1530,6 @@ pre {
 }
 
 .builder-canvas .react-flow {
-  background: var(--paper);
-}
 
 .builder-canvas .react-flow__controls {
   background: var(--paper);
@@ -1492,8 +1555,6 @@ pre {
 }
 
 .builder-canvas .react-flow__controls-button:hover {
-  background: var(--clay-wash);
-}
 
 .builder-canvas .react-flow__controls-button svg {
   fill: currentColor;
@@ -2092,8 +2153,6 @@ pre {
   border-left: 1px solid var(--color-border);
   padding: var(--space-3);
   overflow-y: auto;
-  background: var(--color-surface);
-}
 
 .builder-inspector-title {
   margin: 0 0 var(--space-1);
@@ -2229,8 +2288,6 @@ pre {
 
 .workflow-card:hover {
   border-color: var(--color-accent);
-  background: var(--color-surface-2);
-}
 
 .workflow-card:focus-visible {
   outline: 2px solid var(--color-accent);
@@ -2314,16 +2371,12 @@ pre {
 }
 
 .workflow-card-menu-popover button:hover {
-  background: var(--color-surface-2);
-}
 
 .workflow-card-menu-popover .workflow-card-menu-danger {
   color: var(--color-danger);
 }
 
 .workflow-card-menu-popover .workflow-card-menu-danger:hover {
-  background: color-mix(in oklch, var(--color-danger) 10%, transparent);
-}
 
 .workflow-card-empty {
   text-align: center;
@@ -2378,8 +2431,6 @@ pre {
 .workflow-template-card:hover {
   /* Override .workflow-card:hover — no accent border on templates. */
   border-color: var(--color-border);
-  background: var(--color-surface);
-}
 
 .workflow-template-description {
   font-size: 12px;
@@ -2444,7 +2495,6 @@ pre {
  * Vendor brand SVGs inside .signin-provider are NEVER recolored
  * (DESIGN.app.md §8). */
 
-.app-header-spacer { flex: 1; }
 
 .signin-trigger {
   background: var(--paper);
@@ -2872,8 +2922,6 @@ pre {
   content: "";
   flex: 1;
   height: 1px;
-  background: var(--rule);
-}
 
 /* BYOK section (Pick a provider) — serif-italic h2 + readable lede + ~14px
  * sans body, mirroring the marketing site's editorial pattern. */
@@ -3406,16 +3454,11 @@ pre {
 
 /* ─── Header network toggle ───────────────────────────────────────────
  * Tiny secondary pill in the header that opens the network inspector. */
-.app-header-net-toggle {
+
   font-size: 11px;
   padding: 4px 12px;
   margin-right: 8px;
   letter-spacing: 0.02em;
-}
-.app-header-net-toggle[aria-expanded="true"] {
-  background: var(--clay-wash);
-  border-color: var(--clay-rule);
-  color: var(--clay);
 }
 
 /* ─── Network inspector slide-out ─────────────────────────────────────
@@ -3765,10 +3808,14 @@ input:focus-visible,
 textarea:focus-visible,
 [role="button"]:focus-visible,
 .surface-card:focus-visible,
-a.surface-card:focus-visible {
+a.surface-card:focus-visible,
+.app-nav-link:focus-visible,
+.app-workspace-switcher:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
+/* Inset the ring on the nav links so it doesn't clip against the rail edge. */
+.app-nav-link:focus-visible { outline-offset: -2px; }
 
 /* Card primitive — the cross-surface clone of .workflow-card. Render
  * navigational cards as <a>/<Link> so keyboard + semantics come free. */
@@ -3790,8 +3837,6 @@ a.surface-card,
 a.surface-card:hover,
 .surface-card--interactive:hover {
   border-color: var(--color-accent);
-  background: var(--color-surface-2);
-}
 
 /* Card grid — identical track sizing to .workflows-grid. */
 .card-grid {
