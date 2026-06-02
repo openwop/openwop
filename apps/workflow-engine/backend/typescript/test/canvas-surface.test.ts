@@ -94,10 +94,9 @@ describe('host.canvas: surface-direct', () => {
     await expect(b.read(canvasId)).rejects.toMatchObject({ code: 'canvas_not_found' });
   });
 
-  it('crossCanvasInvoke is an honest stub (synthetic id, no fabricated terminal status)', async () => {
-    const c = cv();
-    const r = await c.invoke('canvas-x', 'wf-y', {});
-    expect(r.childRunId).toMatch(/^canvas-invoke-/);
-    expect((r as Record<string, unknown>).terminalStatus).toBeUndefined();
+  it('crossCanvasInvoke does real dispatch — rejects an unknown workflow', async () => {
+    // Now a real child-run dispatcher (see canvas-invoke-dispatch.test.ts);
+    // an unknown workflowId is refused rather than stubbed.
+    await expect(cv().invoke('canvas-x', 'wf-does-not-exist', {})).rejects.toMatchObject({ code: 'canvas_invoke_workflow_not_found' });
   });
 });

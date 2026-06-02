@@ -16,11 +16,35 @@
 import { randomUUID } from 'node:crypto';
 import { createLogger } from '../observability/logger.js';
 import { DurableCollection } from './hostExtPersistence.js';
+import { snapshotRunVariables } from './variablesRuntime.js';
 import type { BundleScope } from './inMemorySurfaces.js';
+import type { Storage } from '../storage/storage.js';
+import type { RunRecord } from '../types.js';
 
 const log = createLogger('host.canvas');
 
 type Json = Record<string, unknown>;
+
+/** Injected at boot (createApp) so crossCanvasInvoke can spawn a real child
+ *  run — host surfaces don't otherwise see the run dispatcher. Mirrors
+ *  `setSubWorkflowDispatcher`. */
+interface CanvasInvokeDeps {
+  storage: Storage;
+  getWorkflow: (workflowId: string) => Promise<{ definition: WorkflowDef } | null>;
+  executeRun: (storage: Storage, run: RunRecord, definition: unknown, options?: unknown) => Promise<unknown>;
+}
+interface WorkflowDef { variables?: unknown }
+let _invokeDeps: CanvasInvokeDeps | null = null;
+export function setCanvasInvokeDispatcher(d: CanvasInvokeDeps): void {
+  _invokeDeps = d;
+}
+
+/** Max canvas-invoke nesting depth (cycle/runaway guard), matching the
+ *  sub-workflow dispatcher's cap. */
+const MAX_INVOKE_DEPTH = 8;
+const TERMINAL_RUN: readonly string[] = ['completed', 'failed', 'cancelled'];
+// Per-tenant::target circuit breaker — consecutive child-run failures.
+const _circuit = new Map<string, number>();
 
 interface Canvas {
   canvasId: string;
@@ -61,7 +85,7 @@ export interface CanvasSurface {
   read(canvasId: string, opts?: { fields?: unknown; consistency?: unknown }): Promise<{ canvasId: string; state: Json; canvasTypeId: string; version: number }>;
   write(canvasId: string, mutation: Json, opts?: { expectedVersion?: number; merge?: 'shallow' | 'deep' | 'replace'; idempotencyKey?: string }): Promise<{ canvasId: string; newVersion: number }>;
   create(args: { canvasTypeId: string; projectId?: string; name?: string; initialState?: Json; metadata?: Json; idempotencyKey?: string }): Promise<{ canvasId: string; canvasTypeId: string; name?: string; projectId?: string; createdAt: string }>;
-  invoke(targetCanvasId: string, workflowId: string, args: Json, opts?: { awaitTerminal?: boolean; timeoutMs?: number; circuitBreaker?: unknown; idempotencyKey?: string }): Promise<{ childRunId: string; result?: unknown; circuitOpen?: boolean }>;
+  invoke(targetCanvasId: string, workflowId: string, args: Json, opts?: { awaitTerminal?: boolean; timeoutMs?: number; circuitBreaker?: unknown; idempotencyKey?: string }): Promise<{ childRunId: string; result?: unknown; circuitOpen?: boolean; terminalStatus?: string; error?: unknown }>;
 }
 
 export function createCanvasSurface(scope: BundleScope): CanvasSurface {
@@ -126,12 +150,91 @@ export function createCanvasSurface(scope: BundleScope): CanvasSurface {
       return out;
     },
 
-    async invoke(targetCanvasId, workflowId) {
-      // Honest demo stub: cross-canvas workflow dispatch needs the run
-      // dispatcher, which isn't injected into host surfaces. Acknowledge with a
-      // synthetic id; do NOT fabricate a terminal status or result.
-      log.info('canvas invoke (demo: not dispatched — no run dispatcher on the surface)', { targetCanvasId, workflowId });
-      return { childRunId: `canvas-invoke-${randomUUID()}`, result: { demo: 'cross-canvas invoke is not dispatched on the sample host' } };
+    async invoke(targetCanvasId, workflowId, args, opts) {
+      // Surface-direct callers (no app boot) have no dispatcher — stay honest.
+      if (!_invokeDeps) {
+        log.info('canvas invoke: dispatcher not initialized (surface-direct)', { targetCanvasId, workflowId });
+        return { childRunId: `canvas-invoke-${randomUUID()}`, result: { demo: 'run dispatcher not initialized' } };
+      }
+      const { storage, getWorkflow, executeRun } = _invokeDeps;
+
+      // Circuit breaker: after N consecutive child-run failures for this
+      // target, open the circuit (configurable threshold; default 5).
+      const cbKey = `${tenantId}::${targetCanvasId}`;
+      const threshold = Number((opts?.circuitBreaker as { threshold?: number } | undefined)?.threshold ?? 5);
+      if ((_circuit.get(cbKey) ?? 0) >= threshold) {
+        log.warn('canvas invoke: circuit open', { targetCanvasId, failures: _circuit.get(cbKey) });
+        return { childRunId: '', circuitOpen: true };
+      }
+
+      // Recursion/depth guard — walk the parentRunId ancestor chain.
+      const ancestors: string[] = [];
+      let cursor = scope.runId;
+      while (cursor && ancestors.length < MAX_INVOKE_DEPTH) {
+        const a = await storage.getRun(cursor);
+        if (!a) break;
+        ancestors.push(a.workflowId);
+        cursor = a.parentRunId;
+      }
+      if (ancestors.length >= MAX_INVOKE_DEPTH) {
+        throw Object.assign(new Error(`canvas invoke depth ${ancestors.length} exceeds ${MAX_INVOKE_DEPTH}`), { code: 'canvas_invoke_depth_exceeded' });
+      }
+      if (ancestors.includes(workflowId)) {
+        throw Object.assign(new Error(`canvas invoke cycle: '${workflowId}' already in ancestor chain`), { code: 'canvas_invoke_cycle_detected' });
+      }
+
+      const wf = await getWorkflow(workflowId);
+      if (!wf) {
+        throw Object.assign(new Error(`canvas invoke: workflow '${workflowId}' not found`), { code: 'canvas_invoke_workflow_not_found' });
+      }
+
+      const childRunId = randomUUID();
+      const now = new Date().toISOString();
+      const childRun: RunRecord = {
+        runId: childRunId,
+        workflowId,
+        tenantId,
+        ...(scope.scopeId ? { scopeId: scope.scopeId } : {}),
+        status: 'pending',
+        inputs: (args as Json) ?? {},
+        metadata: { causationCanvasId: targetCanvasId },
+        configurable: {},
+        ...(scope.runId ? { parentRunId: scope.runId } : {}),
+        createdAt: now,
+        updatedAt: now,
+      };
+      await storage.insertRun(childRun);
+
+      // awaitTerminal:false → fire-and-forget; return the id immediately.
+      if (opts?.awaitTerminal === false) {
+        void executeRun(storage, childRun, wf.definition, {}).catch((err) => log.warn('canvas child run (async) failed', { childRunId, error: err instanceof Error ? err.message : String(err) }));
+        return { childRunId };
+      }
+
+      // Await terminal (executeRun resolves at terminal/suspend). Optional
+      // timeout: stop waiting but let the run continue in the background.
+      const runP = executeRun(storage, childRun, wf.definition, {}).catch(() => undefined);
+      let timedOut = false;
+      if (opts?.timeoutMs && opts.timeoutMs > 0) {
+        await Promise.race([runP, new Promise<void>((r) => setTimeout(() => { timedOut = true; r(); }, opts.timeoutMs))]);
+        if (timedOut) return { childRunId, result: { timedOut: true } };
+      } else {
+        await runP;
+      }
+
+      const finalChild = await storage.getRun(childRunId);
+      const status = finalChild?.status ?? 'failed';
+      // Circuit-breaker bookkeeping: count failures, reset on success.
+      _circuit.set(cbKey, status === 'failed' ? (_circuit.get(cbKey) ?? 0) + 1 : 0);
+
+      const result = snapshotRunVariables(childRunId) ?? {};
+      const out: { childRunId: string; result?: unknown; circuitOpen?: boolean; terminalStatus?: string; error?: unknown } = {
+        childRunId,
+        ...(TERMINAL_RUN.includes(status) ? { terminalStatus: status } : {}),
+        result,
+        ...(finalChild?.error ? { error: finalChild.error } : {}),
+      };
+      return out;
     },
   };
 }

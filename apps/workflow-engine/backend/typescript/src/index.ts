@@ -215,6 +215,13 @@ export async function createApp(config: AppConfig): Promise<Express> {
   const { setSubWorkflowDispatcher } = await import('./executor/subWorkflowDispatcher.js');
   const { executeRun } = await import('./executor/executor.js');
   setSubWorkflowDispatcher({ storage, hostSuite, executeRun: executeRun as never });
+  // host.canvas crossCanvasInvoke spawns a real child run via the same deps.
+  const { setCanvasInvokeDispatcher } = await import('./host/canvasSurface.js');
+  setCanvasInvokeDispatcher({
+    storage,
+    getWorkflow: (workflowId) => hostSuite.workflowCatalog.getWorkflow(workflowId) as Promise<{ definition: { variables?: unknown } } | null>,
+    executeRun: executeRun as never,
+  });
   ensureSuspendManagerInstalled(storage);
   ensureEventLogInstalled(storage);
   ensureNotificationEmitterInstalled(storage);

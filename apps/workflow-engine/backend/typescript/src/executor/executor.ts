@@ -348,6 +348,7 @@ async function runOneNode(input: {
   const surfaces = buildHostSurfaceBundle({
     tenantId: run.tenantId,
     ...(run.scopeId ? { scopeId: run.scopeId } : {}),
+    runId: run.runId,
   });
 
   // Fixture-shape input resolution. When the workflow definition's
