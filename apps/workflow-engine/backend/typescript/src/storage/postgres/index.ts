@@ -609,6 +609,14 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
         [record.key, record.responseBody, record.responseStatus, record.createdAt],
       );
     },
+    async pruneIdempotencyByPrefix(keyPrefix, olderThanIso) {
+      const escaped = keyPrefix.replace(/[%_\\]/g, '\\$&');
+      const { rowCount } = await pool.query(
+        `DELETE FROM idempotency WHERE key LIKE $1 AND created_at < $2::timestamptz`,
+        [`${escaped}%`, olderThanIso],
+      );
+      return rowCount ?? 0;
+    },
 
     async appendAudit(input) {
       await pool.query(
@@ -1349,6 +1357,13 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
         [tokenHash],
       );
       return rows[0] ? rowToRelayDevicePg(rows[0]) : null;
+    },
+    async listRelayDevices(tenantId) {
+      const { rows } = await pool.query<Row>(
+        `SELECT * FROM relay_devices WHERE tenant_id = $1 ORDER BY registered_at DESC`,
+        [tenantId],
+      );
+      return rows.map(rowToRelayDevicePg);
     },
     async enqueueRelayOutbound(record) {
       await pool.query(

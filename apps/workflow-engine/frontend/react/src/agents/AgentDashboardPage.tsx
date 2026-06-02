@@ -27,6 +27,7 @@ type SortKey = 'attention' | 'name';
 // empty one. Drives the default "Needs attention" sort so a 20-agent fleet
 // surfaces what to look at first.
 const STATUS_WEIGHT: Record<AgentStatus, number> = {
+  error: 500,
   waiting: 400,
   'needs-setup': 300,
   working: 200,
@@ -215,6 +216,7 @@ export function AgentDashboardPage(): JSX.Element {
               />
               <select className="ui-input" aria-label="Filter by status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | AgentStatus)}>
                 <option value="all">All statuses</option>
+                <option value="error">Run failed</option>
                 <option value="working">Working</option>
                 <option value="waiting">Waiting on human</option>
                 <option value="active">Ready</option>

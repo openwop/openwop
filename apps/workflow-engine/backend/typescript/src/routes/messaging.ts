@@ -382,13 +382,34 @@ export function registerMessagingRoutes(app: Express, deps: Deps): void {
   app.post(`${BASE}/connectors/:id/test`, async (req, res, next) => {
     try {
       const c = await getConnectorOr404(req, storage);
+      // Real deliverability, not a synthetic "ok": outbound for this channel is
+      // delivered by an external relay DEVICE pulling the queue, so the probe is
+      // only green when an active device for this channel has heartbeated
+      // recently. Without one, outbound just queues undelivered — report that
+      // honestly rather than a false-positive.
+      const FRESH_MS = 90_000;
+      const now = Date.now();
+      const devices = (await storage.listRelayDevices(c.tenantId)).filter(
+        (d) => d.channel === c.channel && d.status === 'active',
+      );
+      const live = devices.filter((d) => d.lastHeartbeatAt && now - Date.parse(d.lastHeartbeatAt) <= FRESH_MS);
+      const ok = c.enabled && live.length > 0;
+      const detail = !c.enabled
+        ? 'connector disabled'
+        : live.length > 0
+          ? `${live.length} active relay device(s) reachable for ${c.channel}`
+          : devices.length > 0
+            ? `relay device(s) registered for ${c.channel} but none heartbeated within ${FRESH_MS / 1000}s — outbound would queue undelivered`
+            : `no active relay device for ${c.channel} — outbound would queue undelivered`;
       res.json({
         connectorId: c.connectorId,
         channel: c.channel,
         enabled: c.enabled,
-        ok: c.enabled,
-        detail: c.enabled ? 'connector enabled; synthetic probe ok' : 'connector disabled',
-        probedAt: new Date().toISOString(),
+        ok,
+        relayDevices: devices.length,
+        liveRelayDevices: live.length,
+        detail,
+        probedAt: new Date(now).toISOString(),
       });
     } catch (err) {
       next(err);

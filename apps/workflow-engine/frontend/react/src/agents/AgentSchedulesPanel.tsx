@@ -4,10 +4,10 @@
  * pause/resume, run now, delete, and create from a cadence preset. Backed by
  * the durable scheduler (host/schedulingService.ts).
  *
- * Honesty note: the reference scheduler is a deterministic tick seam + manual
- * "Run now" — there is no wall-clock daemon auto-firing jobs, so we show the
- * intended *cadence* (and the real last-run time) rather than a fabricated
- * "next run at HH:MM". The timezone is informational for the same reason.
+ * A background scheduler daemon (host/scheduleDaemon.ts) fires these jobs on
+ * their wall-clock cadence (and the deterministic tick seam still backs
+ * conformance). We show the cadence + the real last-run time; the next-fire
+ * instant is computed server-side (`nextFireAt`) from the cron + timezone.
  */
 
 import { useCallback, useEffect, useState } from 'react';
@@ -183,7 +183,7 @@ export function AgentSchedulesPanel({ entry }: { entry: RosterEntry }): JSX.Elem
           <button type="button" className="primary" disabled={!wfId} onClick={() => void onCreate()}>Create schedule</button>
         </div>
         <p style={{ ...muted, fontSize: '0.74rem', marginBottom: 0 }}>
-          Cadence shown in {LOCAL_TZ}. In this demo, schedules fire on “Run now” or the agent's heartbeat — a background timer isn't wired.
+          Cadence shown in {LOCAL_TZ}. Schedules fire automatically on this cadence (a background daemon), or immediately with “Run now”.
         </p>
       </div>
     </div>

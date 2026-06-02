@@ -746,6 +746,13 @@ export function openSqliteStorage(dbPath: string): Storage {
         createdAt: record.createdAt,
       });
     },
+    async pruneIdempotencyByPrefix(keyPrefix, olderThanIso) {
+      // created_at is an ISO-8601 string → lexicographic compare is chronological.
+      const info = db
+        .prepare(`DELETE FROM idempotency WHERE key LIKE ? ESCAPE '\\' AND created_at < ?`)
+        .run(`${keyPrefix.replace(/[%_\\]/g, '\\$&')}%`, olderThanIso);
+      return info.changes;
+    },
 
     async appendAudit(input) {
       insertAuditStmt.run({
@@ -1288,6 +1295,12 @@ export function openSqliteStorage(dbPath: string): Storage {
         `SELECT * FROM relay_devices WHERE device_token_hash = ? AND status = 'active'`,
       ).get(tokenHash) as Record<string, unknown> | undefined;
       return row ? rowToRelayDeviceSqlite(row) : null;
+    },
+    async listRelayDevices(tenantId) {
+      const rows = db
+        .prepare(`SELECT * FROM relay_devices WHERE tenant_id = ? ORDER BY registered_at DESC`)
+        .all(tenantId) as Record<string, unknown>[];
+      return rows.map(rowToRelayDeviceSqlite);
     },
     async enqueueRelayOutbound(record) {
       db.prepare(

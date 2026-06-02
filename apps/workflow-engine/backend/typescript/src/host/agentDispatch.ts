@@ -13,17 +13,26 @@
  *   - attributed `agent.*` events (RFC 0002 §A) carrying the agentId;
  *   - BYOK/SR-1: no credential material is placed in events or the result.
  *
- * The turn itself is deterministic (no live model call) so the seam is
- * replay-safe and conformance-stable — it proves the dispatch CONTRACTS, not
- * model quality. A real model turn rides the existing provider dispatch; that
- * (and crew/orchestrator integration) is sequenced as a tier-up.
+ * Two turn modes share the SAME floor contracts (tool filtering, §D schema
+ * validation, §F escalation, SR-1):
+ *   - `runAgentDispatch` — the DETERMINISTIC seam (no model call). Replay-safe
+ *     and conformance-stable; proves the dispatch CONTRACTS, not model quality.
+ *     This stays the default so the conformance harness is unaffected.
+ *   - `runAgentDispatchLive` — a REAL model turn via an injected `callAI`
+ *     (the host's `ctx.callAI`, managed or BYOK). The agent's `modelClass` is
+ *     resolved to a concrete `(provider, model)` (modelClassResolver) and, when
+ *     a return schema is declared, the call runs in structured-output mode and
+ *     the parsed payload is validated against it.
  *
- * Backs `POST /v1/host/sample/agents/{agentId}/dispatch`.
+ * Backs `POST /v1/host/sample/agents/{agentId}/dispatch` (live when the request
+ * sets `live: true` and the host wired an AI adapter).
  *
  * @see RFCS/0070-agent-manifest-runtime.md
  */
 
 import { getAgentRegistry, type ResolvedAgentManifest } from '../executor/agentRegistry.js';
+import type { AiCallRequest, AiCallResult } from '../executor/types.js';
+import { resolveModelForClass, type ResolveModelOptions } from './modelClassResolver.js';
 
 export class AgentNotFoundError extends Error {
   constructor(public agentId: string) {
@@ -67,6 +76,13 @@ export interface AgentDispatchResult {
   events: AgentEvent[];
   result?: unknown;
   error?: { code: string; message: string };
+  /** Whether this turn made a real model call (live) or ran the deterministic
+   *  seam. Lets callers/telemetry distinguish the two. */
+  live?: boolean;
+  /** Concrete provider/model the live turn resolved from the agent's modelClass
+   *  (absent for the deterministic seam). */
+  provider?: string;
+  model?: string;
 }
 
 /** RFC 0002 §A14 — intersect the host-offered tools with the agent's allowlist.
@@ -162,6 +178,140 @@ export function runAgentDispatch(req: AgentDispatchRequest): AgentDispatchResult
   }
   events.push({ type: 'agent.decided', agentId: agent.agentId, decision: 'final', confidence });
   return base('completed', { events, result });
+}
+
+// ── Live dispatch (real model turn) ──────────────────────────────────────
+
+/** A bound `ctx.callAI` (from `createAiProvidersAdapter(scope).callAI`). Injected
+ *  so this module stays free of the heavy adapter/secrets construction and is
+ *  unit-testable with a mock. */
+export type CallAi = (req: AiCallRequest) => Promise<AiCallResult>;
+
+export interface LiveDispatchDeps {
+  /** The real provider call (managed or BYOK), already scoped to a run/tenant. */
+  callAI: CallAi;
+  /** Provider/model resolution hints. Defaults to `preferManaged: true` so an
+   *  agent can take a real turn with no BYOK setup. */
+  modelOptions?: ResolveModelOptions;
+  /** BYOK credentialRef to pass through (non-managed turns). */
+  credentialRef?: string;
+}
+
+/** Render the inbound task into a single user message. */
+function taskToMessage(task: unknown): string {
+  if (task === undefined || task === null) return 'Begin the task.';
+  if (typeof task === 'string') return task;
+  try {
+    return JSON.stringify(task, null, 2);
+  } catch {
+    return String(task);
+  }
+}
+
+/** Pull a numeric self-confidence from a structured result. Uses the reserved
+ *  `_confidence` meta-field, NOT a bare `confidence` — a bare key would collide
+ *  with an agent's own domain schema (e.g. a result field literally named
+ *  `confidence`) and spuriously drive §F escalation. */
+function confidenceFromData(data: unknown): number | undefined {
+  if (data && typeof data === 'object' && typeof (data as { _confidence?: unknown })._confidence === 'number') {
+    return (data as { _confidence: number })._confidence;
+  }
+  return undefined;
+}
+
+/**
+ * Dispatch one LIVE turn of a manifest agent — a real model call via the
+ * injected `callAI`, wrapped in the same floor contracts as the deterministic
+ * seam: tool-allowlist filtering (§A14), §D task/return schema validation,
+ * §F confidence escalation, and SR-1 (no credential material in the result).
+ *
+ * The agent's `modelClass` is resolved to a concrete `(provider, model)` here
+ * (modelClassResolver). When the agent declares a return schema, the call runs
+ * in structured-output mode and the parsed payload is validated against it.
+ *
+ * Throws AgentNotFoundError when the agentId is not installed (caller → 404).
+ * Provider failures are returned as `status: 'failed'` with the provider's
+ * error code — they are not thrown.
+ */
+export async function runAgentDispatchLive(
+  req: AgentDispatchRequest,
+  deps: LiveDispatchDeps,
+): Promise<AgentDispatchResult> {
+  const agent = getAgentRegistry().get(req.agentId);
+  if (!agent) throw new AgentNotFoundError(req.agentId);
+
+  const validate = req.validateHandoff !== false;
+  const toolSurface = filterTools(req.availableTools ?? [], agent.toolAllowlist);
+  const threshold = typeof req.confidenceThreshold === 'number'
+    ? req.confidenceThreshold
+    : (agent.confidence?.defaultThreshold ?? 0.7);
+
+  const base = (status: AgentDispatchResult['status'], extra: Partial<AgentDispatchResult>): AgentDispatchResult => ({
+    agentId: agent.agentId, persona: agent.persona, modelClass: agent.modelClass,
+    status, toolSurface, confidence: 1, threshold, events: [], live: true, ...extra,
+  });
+
+  // §D inbound task validation.
+  if (validate && agent.handoff?.validateTask) {
+    const r = agent.handoff.validateTask(req.task);
+    if (!r.ok) {
+      return base('failed', { error: { code: 'task_schema_violation', message: r.errors ?? 'task schema validation failed' } });
+    }
+  }
+
+  // Resolve modelClass → concrete (provider, model). Default to the managed tier
+  // so no BYOK is required for an out-of-the-box live turn.
+  const resolved = resolveModelForClass(agent.modelClass, deps.modelOptions ?? { preferManaged: true });
+  if (!resolved) {
+    return base('failed', { error: { code: 'no_model_available', message: `no provider/model resolves for modelClass '${agent.modelClass}'` } });
+  }
+  const credentialRef = resolved.managed ? `managed:${resolved.provider}` : (deps.credentialRef ?? resolved.provider);
+
+  const request: AiCallRequest = {
+    provider: resolved.provider,
+    model: resolved.model,
+    systemPrompt: agent.systemPrompt,
+    messages: [{ role: 'user', content: taskToMessage(req.task) }],
+    credentialRef,
+    ...(agent.handoff?.returnSchema ? { responseSchema: agent.handoff.returnSchema as Record<string, unknown> } : {}),
+  };
+
+  let out: AiCallResult;
+  try {
+    out = await deps.callAI(request);
+  } catch (err) {
+    const code = (err as { code?: string })?.code ?? 'provider_error';
+    return base('failed', {
+      provider: resolved.provider, model: resolved.model,
+      error: { code, message: err instanceof Error ? err.message : String(err) },
+    });
+  }
+
+  const result = agent.handoff?.returnSchema ? out.data : { content: out.content ?? '' };
+  // §F confidence escalation — only when the model's structured output declares
+  // a numeric confidence (we never fabricate one for a live turn).
+  const confidence = confidenceFromData(out.data) ?? (typeof req.simulateConfidence === 'number' ? req.simulateConfidence : 1);
+  const events: AgentEvent[] = [
+    { type: 'agent.reasoned', agentId: agent.agentId, summary: `${agent.persona} ran a ${resolved.provider}/${resolved.model} turn over ${toolSurface.length} permitted tool(s).` },
+  ];
+  if (confidence < threshold) {
+    events.push({ type: 'agent.decided', agentId: agent.agentId, decision: 'escalate', confidence });
+    return base('escalated', { provider: resolved.provider, model: resolved.model, confidence, events });
+  }
+
+  // §D return-schema validation against the real model output.
+  if (validate && agent.handoff?.returnSchema && agent.handoff.validateReturn) {
+    const r = agent.handoff.validateReturn(result);
+    if (!r.ok) {
+      events.push({ type: 'agent.decided', agentId: agent.agentId, decision: 'final', confidence });
+      return base('failed', {
+        provider: resolved.provider, model: resolved.model, confidence, events,
+        error: { code: 'return_schema_violation', message: r.errors ?? 'return schema validation failed' },
+      });
+    }
+  }
+  events.push({ type: 'agent.decided', agentId: agent.agentId, decision: 'final', confidence });
+  return base('completed', { provider: resolved.provider, model: resolved.model, confidence, events, result });
 }
 
 /** Read-only inventory of installed manifest agents (registry-backed). */

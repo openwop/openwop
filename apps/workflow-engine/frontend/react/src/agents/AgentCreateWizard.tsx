@@ -49,6 +49,23 @@ const HEARTBEAT_OPTIONS = [
   { key: 'hourly', label: 'Hourly' },
 ];
 
+/** Heartbeat key → autonomous cadence in ms (0 = manual only). Persisted on the
+ *  roster entry; the background heartbeat daemon honors it. */
+const HEARTBEAT_INTERVAL_MS: Record<string, number> = {
+  manual: 0,
+  '2m': 120_000,
+  '15m': 900_000,
+  hourly: 3_600_000,
+};
+
+const MODEL_CLASS_OPTIONS = [
+  { key: 'chat', label: 'Chat — general conversation' },
+  { key: 'reasoning', label: 'Reasoning — complex multi-step work' },
+  { key: 'coding', label: 'Coding — code generation & review' },
+  { key: 'extraction', label: 'Extraction — structured data pulls' },
+] as const;
+type WizardModelClass = (typeof MODEL_CLASS_OPTIONS)[number]['key'];
+
 function StepHeader({ step, title }: { step: number; title: string }): JSX.Element {
   return (
     <div style={{ marginBottom: '0.6rem' }}>
@@ -85,6 +102,7 @@ export function AgentCreateWizard(): JSX.Element {
 
   // Step 5 — schedule + heartbeat
   const [heartbeat, setHeartbeat] = useState('manual');
+  const [modelClass, setModelClass] = useState<WizardModelClass>('chat');
   const [scheduleWorkflowId, setScheduleWorkflowId] = useState('');
   const [scheduleCadence, setScheduleCadence] = useState(CADENCE_PRESETS[2]!.key); // weekdays
 
@@ -147,15 +165,18 @@ export function AgentCreateWizard(): JSX.Element {
       const agent = await createUserAgent({
         persona: name.trim(),
         label: roleTitle.trim(),
-        modelClass: 'chat',
+        modelClass,
         systemPrompt: composedPrompt(),
       });
-      // 2. roster entry bound to that agent.
+      // 2. roster entry bound to that agent. The heartbeat cadence is persisted
+      //    so the background daemon auto-runs "Check now" on that interval.
+      const heartbeatIntervalMs = HEARTBEAT_INTERVAL_MS[heartbeat] ?? 0;
       const entry = await createRosterEntry({
         persona: name.trim(),
         agentRef: { agentId: agent.agentId },
         workflows,
         label: roleTitle.trim(),
+        ...(heartbeatIntervalMs > 0 ? { heartbeatIntervalMs } : {}),
       });
       // 3. board with the 4 demo lanes; To Do triggers the first workflow.
       if (createBoardEnabled) {
@@ -254,6 +275,12 @@ export function AgentCreateWizard(): JSX.Element {
               <input value={escalation} onChange={(e) => setEscalation(e.target.value)} style={{ width: '100%' }} />
             </label>
           </div>
+          <label style={{ display: 'block', marginBottom: '0.6rem', maxWidth: 360 }}>
+            <div style={{ fontSize: '0.82rem' }}>Model class</div>
+            <select value={modelClass} onChange={(e) => setModelClass(e.target.value as WizardModelClass)} style={{ width: '100%' }}>
+              {MODEL_CLASS_OPTIONS.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
+            </select>
+          </label>
           <div style={{ fontSize: '0.82rem', fontWeight: 600 }}>Instructions (editable)</div>
           <p style={{ ...muted, fontSize: '0.78rem', marginTop: 0 }}>
             Auto-generated from the role — edit freely. Use the sections, or switch to raw Markdown.

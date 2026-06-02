@@ -8,11 +8,11 @@
  * consistent shape.
  */
 
-import { listRoster, getRosterEntry, type RosterEntry } from './rosterClient.js';
+import { listRoster, getRosterEntry, getFleetActivity, type RosterEntry } from './rosterClient.js';
 import { listBoards, listBoardsWithCards, getBoard, type KanbanBoard, type KanbanCard } from '../kanban/kanbanClient.js';
 import { listJobs, type ScheduledJob } from './scheduleClient.js';
 
-export type AgentStatus = 'active' | 'working' | 'waiting' | 'paused' | 'needs-setup';
+export type AgentStatus = 'active' | 'working' | 'waiting' | 'paused' | 'needs-setup' | 'error';
 
 export interface LaneCounts {
   todo: number;
@@ -42,6 +42,7 @@ const STATUS_META: Record<AgentStatus, { label: string; chip: string; help: stri
   waiting: { label: 'Waiting on Human', chip: 'chip--warning chip--pulse', help: 'A task is parked in the Waiting lane and needs a person to act before it can move on.' },
   paused: { label: 'Paused', chip: 'chip--muted', help: 'Disabled — its board triggers and heartbeat are inert until you re-enable it.' },
   'needs-setup': { label: 'Needs setup', chip: 'chip--danger', help: 'No workflows assigned or no board yet — finish setup so it can pick up work.' },
+  error: { label: 'Run failed', chip: 'chip--danger chip--pulse', help: 'A recent run for this agent failed — open the Activity tab to see what went wrong.' },
 };
 
 export function statusMeta(status: AgentStatus): { label: string; chip: string; help: string } {
@@ -79,15 +80,18 @@ function laneOf(card: KanbanCard, board: KanbanBoard | null): keyof LaneCounts |
   return null;
 }
 
-function deriveStatus(entry: RosterEntry, board: KanbanBoard | null, counts: LaneCounts): AgentStatus {
+function deriveStatus(entry: RosterEntry, board: KanbanBoard | null, counts: LaneCounts, hasRecentFailure: boolean): AgentStatus {
   if (!entry.enabled) return 'paused';
   if (entry.workflows.length === 0 || !board) return 'needs-setup';
+  // A recent failed run is the most actionable "set up but broke" signal —
+  // surface it above in-progress/waiting state.
+  if (hasRecentFailure) return 'error';
   if (counts.working > 0) return 'working';
   if (counts.waiting > 0) return 'waiting';
   return 'active';
 }
 
-function buildView(entry: RosterEntry, board: KanbanBoard | null, cards: KanbanCard[], jobs: ScheduledJob[]): AgentView {
+function buildView(entry: RosterEntry, board: KanbanBoard | null, cards: KanbanCard[], jobs: ScheduledJob[], hasRecentFailure = false): AgentView {
   const laneCounts: LaneCounts = { todo: 0, working: 0, waiting: 0, done: 0 };
   for (const card of cards) {
     const lane = laneOf(card, board);
@@ -99,20 +103,29 @@ function buildView(entry: RosterEntry, board: KanbanBoard | null, cards: KanbanC
     board,
     cards,
     laneCounts,
-    status: deriveStatus(entry, board, laneCounts),
+    status: deriveStatus(entry, board, laneCounts, hasRecentFailure),
     jobs: myJobs,
     nextSchedule: myJobs.find((j) => j.enabled) ?? null,
   };
 }
 
-/** Load every agent's view (dashboard) in exactly THREE requests — roster +
- *  boards-with-cards (one batched `?include=cards` call, not N+1) + jobs — so a
- *  dashboard with many agents doesn't trip the per-IP read rate limit. */
+/** Load every agent's view (dashboard) in a fixed FOUR requests — roster +
+ *  boards-with-cards (one batched `?include=cards` call, not N+1) + jobs +
+ *  recent failed runs (best-effort, for the 'error' badge) — so a dashboard
+ *  with many agents doesn't trip the per-IP read rate limit. */
 export async function loadAgentViews(): Promise<AgentView[]> {
-  const [roster, boards, jobs] = await Promise.all([listRoster(), listBoardsWithCards(), listJobs()]);
+  const [roster, boards, jobs, failures] = await Promise.all([
+    listRoster(),
+    listBoardsWithCards(),
+    listJobs(),
+    // Recent failed runs across the fleet → which agents need an "error" badge.
+    // Best-effort: a failure here must not blank the dashboard.
+    getFleetActivity({ status: 'failed', limit: 100 }).catch(() => ({ items: [], truncated: false })),
+  ]);
+  const failedRosterIds = new Set(failures.items.map((i) => i.rosterId).filter((id): id is string => !!id));
   return roster.map((entry) => {
     const board = boards.find((b) => b.rosterId === entry.rosterId) ?? null;
-    return buildView(entry, board, board?.cards ?? [], jobs);
+    return buildView(entry, board, board?.cards ?? [], jobs, failedRosterIds.has(entry.rosterId));
   });
 }
 
@@ -124,7 +137,11 @@ export async function loadAgentView(rosterId: string): Promise<AgentView | null>
   } catch {
     return null;
   }
-  const [boards, jobs] = await Promise.all([listBoards(), listJobs(rosterId)]);
+  const [boards, jobs, failures] = await Promise.all([
+    listBoards(),
+    listJobs(rosterId),
+    getFleetActivity({ status: 'failed', rosterId, limit: 1 }).catch(() => ({ items: [], truncated: false })),
+  ]);
   const board = boards.find((b) => b.rosterId === entry.rosterId) ?? null;
   let cards: KanbanCard[] = [];
   if (board) {
@@ -134,5 +151,5 @@ export async function loadAgentView(rosterId: string): Promise<AgentView | null>
       /* ignore */
     }
   }
-  return buildView(entry, board, cards, jobs);
+  return buildView(entry, board, cards, jobs, failures.items.length > 0);
 }

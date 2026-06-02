@@ -25,10 +25,14 @@ import { OpenwopError } from '../types.js';
 import type { HostAdapterSuite } from '../host/index.js';
 import type { Storage } from '../storage/storage.js';
 import { seedDemoAgents } from '../host/demoSeed.js';
-import { getRosterEntry, recordHeartbeat, autonomyOf } from '../host/rosterService.js';
-import { listBoards, listCards, moveCard, setCardLastRun, notifyBoardChanged } from '../host/kanbanService.js';
-import { startWorkflowRun } from '../host/runStarter.js';
-import { createApproval, hasPendingApprovalForCard } from '../host/approvalService.js';
+import { getRosterEntry } from '../host/rosterService.js';
+import { runHeartbeatOnce } from '../host/heartbeatService.js';
+import { projectAgentActivity } from '../host/agentActivity.js';
+
+/** Bound the per-tenant run scan that backs the in-memory attribution filter
+ *  (the runs store has no per-roster/agent index). `truncated` is reported when
+ *  hit so the UI never implies "no older activity". */
+const ACTIVITY_SCAN_LIMIT = 500;
 
 interface Deps {
   storage: Storage;
@@ -63,86 +67,10 @@ export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
         return;
       }
 
-      // The heartbeat is running — stamp "last checked" regardless of whether a
-      // card gets picked up, so the UI can show how recently the agent looked.
-      const heartbeatEntry = await recordHeartbeat(entry.rosterId);
-      const lastHeartbeatAt = heartbeatEntry?.lastHeartbeatAt;
-
-      // Find the agent's board(s) and the first To Do card with a runnable
-      // workflow (card override, else the To Do column's trigger workflow).
-      const boards = (await listBoards(tenantId)).filter((b) => b.rosterId === entry.rosterId);
-      for (const board of boards) {
-        const todoColumn = board.columns.find((c) => c.id === 'todo' || c.name.toLowerCase() === 'to do');
-        if (!todoColumn) continue;
-        const cards = (await listCards(board.id)).filter((c) => c.columnId === todoColumn.id);
-        for (const card of cards) {
-          const workflowId = card.workflowId ?? todoColumn.triggerWorkflowId;
-          if (!workflowId) continue;
-
-          // "Agents propose, humans dispose": a review-mode member doesn't start
-          // the run — it queues a pending approval for a human to claim. Skip
-          // cards that already have one so a re-poll doesn't duplicate the
-          // proposal (it sits in To Do until the approval is resolved).
-          if (autonomyOf(entry) === 'review') {
-            if (await hasPendingApprovalForCard(tenantId, card.id)) continue;
-            const approval = await createApproval({
-              tenantId,
-              rosterId: entry.rosterId,
-              persona: entry.persona,
-              workflowId,
-              boardId: board.id,
-              cardId: card.id,
-              cardTitle: card.title,
-              proposal: `Run ${workflowId} on “${card.title}”`,
-            });
-            res.status(200).json({
-              picked: true,
-              proposed: true,
-              approvalId: approval.approvalId,
-              boardId: board.id,
-              cardId: card.id,
-              cardTitle: card.title,
-              persona: entry.persona,
-              lastHeartbeatAt,
-            });
-            return;
-          }
-
-          const runId = await startWorkflowRun(deps, {
-            tenantId,
-            workflowId,
-            metadata: {
-              heartbeat: {
-                rosterId: entry.rosterId,
-                persona: entry.persona,
-                agentId: entry.agentRef.agentId,
-                boardId: board.id,
-                cardId: card.id,
-                source: 'heartbeat',
-              },
-            },
-          });
-          if (!runId) continue;
-          await setCardLastRun(card.id, runId);
-          // Move the picked card to Working (no re-trigger — Working has no
-          // trigger workflow). Best-effort: a missing Working lane leaves the
-          // card in To Do with its run already started.
-          const working = board.columns.find((c) => c.id === 'working' || c.name.toLowerCase() === 'working');
-          if (working) await moveCard(card.id, working.id);
-          notifyBoardChanged(board.id);
-          res.status(200).json({
-            picked: true,
-            boardId: board.id,
-            cardId: card.id,
-            cardTitle: card.title,
-            runId,
-            persona: entry.persona,
-            lastHeartbeatAt,
-          });
-          return;
-        }
-      }
-      res.status(200).json({ picked: false, reason: 'no_eligible_tasks', lastHeartbeatAt });
+      // Shared with the autonomous heartbeat daemon so the two can't drift —
+      // including the review-mode "agents propose, humans dispose" branch.
+      const result = await runHeartbeatOnce(deps, entry);
+      res.status(200).json(result);
     } catch (err) {
       next(err);
     }
@@ -160,51 +88,31 @@ export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
         throw new OpenwopError('not_found', 'Agent not found.', 404, { rosterId: req.params.rosterId });
       }
       const limit = Math.min(50, Math.max(1, Number.parseInt(String(req.query.limit ?? '25'), 10) || 25));
-      // listRuns has no per-attribution filter, so we scan the most-recent tenant
-      // runs and filter in memory. Bound the scan, but report when it was hit so
-      // the UI can say "older activity may exist" rather than imply "none" — no
-      // silent truncation. `truncated` ⇒ the agent could have older runs beyond
-      // the scan window.
-      const SCAN_LIMIT = 500;
-      const runs = await deps.storage.listRuns({ tenantId, limit: SCAN_LIMIT });
-      const truncated = runs.length >= SCAN_LIMIT;
-      const items = runs
-        .map((run) => {
-          const md = (run.metadata ?? {}) as Record<string, unknown>;
-          // A run carries one attribution block (heartbeat / schedule / kanban /
-          // approval); keep it only if that block names this roster member.
-          const candidates: Array<{ source: string; block: Record<string, unknown> }> = [];
-          for (const key of ['heartbeat', 'schedule', 'kanban', 'approval'] as const) {
-            const block = md[key];
-            if (block && typeof block === 'object') candidates.push({ source: key, block: block as Record<string, unknown> });
-          }
-          const mine = candidates.find((c) => c.block.rosterId === entry.rosterId);
-          if (!mine) return null;
-          // Wall-clock duration when both bookends are known — lets the UI show
-          // "ran in 4.2s" without a per-run event scan (which would N+1 the
-          // per-IP read budget).
-          const durationMs = run.completedAt
-            ? Math.max(0, new Date(run.completedAt).getTime() - new Date(run.createdAt).getTime())
-            : undefined;
-          return {
-            runId: run.runId,
-            workflowId: run.workflowId,
-            status: run.status,
-            source: mine.source,
-            cardId: typeof mine.block.cardId === 'string' ? mine.block.cardId : undefined,
-            // Prefer the terminal time; fall back to last-update / creation.
-            timestamp: run.completedAt ?? run.updatedAt ?? run.createdAt,
-            createdAt: run.createdAt,
-            completedAt: run.completedAt,
-            durationMs,
-            // RFC 0040 — the trigger event that caused this run, when recorded.
-            causationId: run.causationId,
-          };
-        })
-        .filter((x): x is NonNullable<typeof x> => x !== null)
-        .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
-        .slice(0, limit);
+      const optionalStatus = typeof req.query.status === 'string' ? req.query.status : undefined;
+      const runs = await deps.storage.listRuns({ tenantId, limit: ACTIVITY_SCAN_LIMIT });
+      const truncated = runs.length >= ACTIVITY_SCAN_LIMIT;
+      const items = projectAgentActivity(runs, { rosterId: entry.rosterId, status: optionalStatus }).slice(0, limit);
       res.status(200).json({ rosterId: entry.rosterId, items, truncated });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Fleet-wide activity feed — recent agent-attributed runs across the whole
+  // roster, each carrying its rosterId/persona so the dashboard can show a
+  // single timeline + a failures view (`?status=failed`). Same scan-and-filter
+  // posture + honest `truncated` as the per-agent feed. Optional `?rosterId=`
+  // narrows to one member without the path param.
+  app.get('/v1/host/sample/fleet/activity', async (req, res, next) => {
+    try {
+      const tenantId = tenantOf(req);
+      const limit = Math.min(100, Math.max(1, Number.parseInt(String(req.query.limit ?? '50'), 10) || 50));
+      const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+      const rosterId = typeof req.query.rosterId === 'string' ? req.query.rosterId : undefined;
+      const runs = await deps.storage.listRuns({ tenantId, limit: ACTIVITY_SCAN_LIMIT });
+      const truncated = runs.length >= ACTIVITY_SCAN_LIMIT;
+      const items = projectAgentActivity(runs, { status, rosterId }).slice(0, limit);
+      res.status(200).json({ items, truncated });
     } catch (err) {
       next(err);
     }

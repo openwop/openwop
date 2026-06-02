@@ -187,6 +187,7 @@ async function makeStorage(): Promise<Storage> {
       };
     },
     putIdempotency: async () => { throw new Error('not exercised'); },
+    pruneIdempotencyByPrefix: async () => 0,
     appendAudit: async () => { throw new Error('not exercised'); },
     getInvocation: async () => null,
     putInvocation: async () => { throw new Error('not exercised'); },
@@ -272,6 +273,7 @@ async function makeStorage(): Promise<Storage> {
     upsertRelayDevice: async () => { throw new Error('not exercised'); },
     getRelayDevice: async () => null,
     getRelayDeviceByTokenHash: async () => null,
+    listRelayDevices: async () => [],
     enqueueRelayOutbound: async () => { throw new Error('not exercised'); },
     listRelayOutbound: async () => [],
     ackRelayOutbound: async () => 0,

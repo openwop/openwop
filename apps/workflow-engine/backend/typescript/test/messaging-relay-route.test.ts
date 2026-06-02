@@ -207,8 +207,11 @@ describe('messaging relay-gateway — connectors', () => {
 
     const en = await post(`/connectors/${id}/enable`, OP, {});
     expect(en.body.enabled).toBe(true);
+    // Enabling alone is NOT deliverable — outbound needs a live relay device.
     const probe = await post(`/connectors/${id}/test`, OP, {});
-    expect(probe.body.ok).toBe(true);
+    expect(probe.body.ok).toBe(false);
+    expect(probe.body.liveRelayDevices).toBe(0);
+    expect(probe.body.detail).toContain('no active relay device');
     const dis = await post(`/connectors/${id}/disable`, OP, {});
     expect(dis.body.enabled).toBe(false);
 
@@ -218,6 +221,28 @@ describe('messaging relay-gateway — connectors', () => {
     // wildcard operator scoping by ?tenantId — connector lives under 'default'
     const other = await get('/connectors?tenantId=someone-else', OP);
     expect(other.body.connectors.length).toBe(0);
+  });
+
+  it('test probe is deliverable only with a live relay device for the channel', async () => {
+    const created = await post('/connectors', OP, { channel: 'signal', displayName: 'Signal' });
+    const id = created.body.connectorId;
+    await post(`/connectors/${id}/enable`, OP, {});
+
+    // No device yet → not deliverable.
+    expect((await post(`/connectors/${id}/test`, OP, {})).body.ok).toBe(false);
+
+    // A device on a DIFFERENT channel doesn't make signal deliverable.
+    await activeRelay('whatsapp');
+    expect((await post(`/connectors/${id}/test`, OP, {})).body.ok).toBe(false);
+
+    // An active, heartbeating signal device → deliverable.
+    const { deviceToken } = await activeRelay('signal');
+    const dev = { 'x-openwop-device-token': deviceToken, 'content-type': 'application/json' };
+    await post('/device/heartbeat', dev, { status: 'connected' });
+    const probe = await post(`/connectors/${id}/test`, OP, {});
+    expect(probe.body.ok).toBe(true);
+    expect(probe.body.liveRelayDevices).toBeGreaterThanOrEqual(1);
+    expect(probe.body.detail).toContain('reachable');
   });
 });
 
