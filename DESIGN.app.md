@@ -90,9 +90,11 @@ Cross-surface components (`.btn`, `.marker`, etc.) live in `DESIGN.md §6`. The 
 
 | Class | Purpose | Notes |
 |---|---|---|
-| `.app-shell` | top-level flex column wrapper | min-height 100vh |
-| `.app-header` | sticky app nav | 64px tall; ink on paper; matches `.topbar` register from the marketing site |
-| `.app-main` | scrollable content region under `.app-header` | inherits `--paper` |
+| `.app-shell` | top-level flex **row** wrapper | min-height 100vh; `[.app-sidebar][.app-body]` |
+| `.app-sidebar` | persistent left navigation rail (`src/chrome/Sidebar.tsx`) | sticky full-height column on `--paper-2` with a `--rule` right border (`--sidebar-w`); brand + workspace/org switcher (top) → grouped `Build`/`Operate`/`Admin` nav with Lucide icons (scroll) → account chrome `.app-sidebar-foot` (bottom). Collapses to an icon-only strip (`.is-collapsed`, `--sidebar-w-collapsed`, persisted to `localStorage`); becomes an off-canvas drawer ≤860px (`.app-sidebar-launcher` + `.app-sidebar-scrim`). Active item via `.app-nav-link.is-active` (clay-soft tint + clay text + `aria-current`); `:focus-visible` ring added for the anchor links. Replaces the former top-nav + `NavDropdown` |
+| `.app-body` | content column right of the rail | flex column (`min-width:0` so wide tables/canvas shrink rather than force page scroll); holds `DemoHostBanner` + `.app-main` + `.app-footer`. Under `.app-shell--ai` it locks to viewport height so the chat feed owns the scroll |
+| `.app-workspace-switcher` | org-context slot at the rail head | links to `/orgs` (RFC 0049); a future phase hydrates a real org list. Mono eyebrow + workspace name + chevron |
+| `.app-main` | scrollable content region inside `.app-body` | inherits `--paper`; carries the dot-grid + `.page-enter` (§5.5) |
 | `.app-footer` | minimal footer | mono attribution, paper |
 | `.card` | generic surface card | border-only via `--rule`; no shadow; hover tint `--clay-wash`; matches `.compare-card` register |
 | `.status-badge` + `.completed` / `.failed` / `.cancelled` / `.running` variants | run-state pill | mono label; functional color from §3; no fill — color on `--paper-2` |

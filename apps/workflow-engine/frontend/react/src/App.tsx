@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { RunsIndexPage } from './runs/RunsIndexPage.js';
 import { NetworkPanel } from './devtools/NetworkPanel.js';
 import { installNetworkRecorder } from './devtools/networkRecorder.js';
@@ -21,11 +21,9 @@ import { KeysPage } from './byok/KeysPage.js';
 import { MemoryInspectorPage } from './memory/MemoryInspectorPage.js';
 import { KanbanPage } from './kanban/KanbanPage.js';
 import { RosterPage } from './agents/RosterPage.js';
-import { SignInButton } from './auth/SignInButton.js';
-import { NotificationBell } from './notifications/NotificationBell.js';
 import { NotificationPanel } from './notifications/NotificationPanel.js';
 import { useNotificationStore } from './notifications/notificationStore.js';
-import { NavDropdown } from './chrome/NavDropdown.js';
+import { Sidebar } from './chrome/Sidebar.js';
 import { AgentsPage } from './agents/AgentsPage.js';
 import { AgentDetailPage } from './agents/AgentDetailPage.js';
 import { AgentInstallPage } from './agents/AgentInstallPage.js';
@@ -34,7 +32,6 @@ import { AgentDashboardPage } from './agents/AgentDashboardPage.js';
 import { AgentWorkspacePage } from './agents/AgentWorkspacePage.js';
 import { AgentCreateWizard } from './agents/AgentCreateWizard.js';
 import { DemoDataPage } from './settings/DemoDataPage.js';
-import { BrandMark } from './brand/BrandMark.js';
 import { brand } from './brand/brand.js';
 import { OrgsPage } from './orgs/OrgsPage.js';
 
@@ -67,83 +64,22 @@ export function App() {
   const isChatPage = location.pathname === '/';
   return (
     <div className={isChatPage ? 'app-shell app-shell--ai' : 'app-shell'}>
-      <DemoHostBanner />
-      <header className="app-header">
-        <BrandMark />
-        <nav>
-          {/* Chat stays top-level — the most-used entry point. The
-              other 8 nav items used to be flat siblings here; they're
-              now grouped into three submenu parents (Build / Operate /
-              Settings) so the bar stays scannable as the surface grows
-              (Agents tab added 2026-05-28). The submenu visual rhythm
-              matches the marketing site's `.nav-dropdown` pattern in
-              public/styles.css — same hover-bridge, caret rotation,
-              and click-toggle behaviour, retokenized onto the app's
-              --clay / --paper palette so the two sites read as one
-              family.
-
-              Ordering rationale:
-                Build    — surfaces you author at (create work)
-                Operate  — surfaces you observe at (watch work happen)
-                Settings — config that doesn't change per session
-
-              Chat first per feedback_chat_first_nav memory. */}
-          {/* IA rebuilt around the named digital coworker (agents-demo PRD §6):
-              the product-facing primaries are Chat / Agents / Workflows / Runs.
-              The protocol/operate surfaces (Boards, Roster, Inbox, Mission
-              Control, Memory, Prompts, Agent templates) are preserved under an
-              "Advanced" posture — NOT hidden (PRD Non-Goals). Chat first per
-              feedback_chat_first_nav memory. */}
-          <NavLink to="/" end>Chat</NavLink>
-          <NavLink to="/agents">Agents</NavLink>
-          <NavLink to="/builder">Workflows</NavLink>
-          <NavLink to="/runs">Runs</NavLink>
-          <NavDropdown
-            label="Advanced"
-            items={[
-              { label: 'Boards', to: '/boards', hint: 'All Kanban boards — card → run trigger' },
-              { label: 'Roster', to: '/roster', hint: 'Raw roster + org-chart editor' },
-              { label: 'Agent templates', to: '/agents/templates', hint: 'Installed manifest agents + packs' },
-              { label: 'Inbox', to: '/inbox', hint: 'Notifications + approvals' },
-              { label: 'Mission Control', to: '/mission', hint: 'Live fleet view across runs' },
-              { label: 'Memory', to: '/memory', hint: 'Tenant-attributed memory writes' },
-              { label: 'Prompts', to: '/prompts', hint: 'Reusable templates + variables' },
-            ]}
-          />
-          <NavDropdown
-            label="Settings"
-            items={[
-              { label: 'Organizations', to: '/orgs', hint: 'Orgs, teams, members + role-based access' },
-              { label: 'Demo data', to: '/demo-data', hint: 'Re-seed the built-in demo roster' },
-              { label: 'Keys', to: '/keys', hint: 'BYOK credentials + provider config' },
-              { label: 'Capabilities', to: '/capabilities', hint: 'What this host advertises' },
-              { label: 'CLI', to: '/cli', hint: 'In-app CLI quickstart + command catalog' },
-            ]}
-          />
-        </nav>
-        <div className="app-header-spacer" />
-        <button
-          type="button"
-          className="secondary app-header-net-toggle"
-          onClick={() => setNetOpen((v) => !v)}
-          aria-label="Open network inspector"
-          aria-expanded={netOpen}
-          title="Show every REST + SSE call the app is making"
+      {/* Persistent left rail (Phase 1): grouped Build / Operate / Admin nav,
+          collapsible, with the workspace/org switcher + account chrome. Replaces
+          the former top-nav + Advanced/Settings dropdowns. Chat stays first
+          (feedback_chat_first_nav). */}
+      <Sidebar netOpen={netOpen} onToggleNet={() => setNetOpen((v) => !v)} />
+      <div className="app-body">
+        <DemoHostBanner />
+        <main
+          className={
+            fullBleed
+              ? 'app-main app-main-fullbleed'
+              : isChatPage
+                ? 'app-main app-main--ai'
+                : 'app-main page-enter'
+          }
         >
-          Network
-        </button>
-        <NotificationBell />
-        <SignInButton />
-      </header>
-      <main
-        className={
-          fullBleed
-            ? 'app-main app-main-fullbleed'
-            : isChatPage
-              ? 'app-main app-main--ai'
-              : 'app-main page-enter'
-        }
-      >
         <Routes>
           <Route path="/" element={<ChatTab />} />
           {/* The nav label says "Chat" but the route stays "/" so existing
@@ -185,11 +121,12 @@ export function App() {
               unmatched URL must resolve here rather than render a blank main. */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
-      </main>
-      <footer className="app-footer">
-        {brand.footerText} ·{' '}
-        <Link to="/privacy">Privacy</Link>
-      </footer>
+        </main>
+        <footer className="app-footer">
+          {brand.footerText} ·{' '}
+          <Link to="/privacy">Privacy</Link>
+        </footer>
+      </div>
       <NetworkPanel open={netOpen} onClose={() => setNetOpen(false)} />
       <NotificationPanel />
     </div>
