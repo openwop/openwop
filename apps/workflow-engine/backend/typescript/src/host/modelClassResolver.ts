@@ -73,14 +73,21 @@ export interface ResolveModelOptions {
  * the catalog) — the caller treats null as "no model available".
  */
 export function resolveModelForClass(modelClass: string, opts: ResolveModelOptions = {}): ResolvedModel | null {
-  // 1. Explicit pin.
+  // 1. Explicit pin — the caller's deliberate choice wins over default
+  //    resolution. The catalog drives only DEFAULT model selection, so an
+  //    off-catalog pin (e.g. the conformance-only `mock` provider used to
+  //    verify the live-dispatch pipeline without credentials) is still honored.
+  //    callAI's assertProviderSupported remains the real safety gate: a bogus
+  //    provider reaches it and fails as `provider_not_supported`.
   if (opts.provider) {
     const cfg = getProviderConfig(opts.provider);
     if (cfg) {
       const model = opts.model && modelExists(opts.provider, opts.model) ? opts.model : getDefaultModel(opts.provider);
       return { provider: opts.provider, model, managed: cfg.managed === true };
     }
-    // Unknown pinned provider — fall through to defaults rather than fail hard.
+    // Off-catalog but explicitly pinned — honor it (model defaults to the
+    // provider id when unspecified; e.g. `mock`/`mock`).
+    return { provider: opts.provider, model: opts.model ?? opts.provider, managed: false };
   }
 
   // 2. Managed preference.
