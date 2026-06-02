@@ -1750,11 +1750,23 @@ pre {
 }
 
 /* Match the controls panel so the overview reads as a framed panel, not a
- * floating swatch (the background var is themed in the .builder-canvas block). */
+ * floating swatch. The `--xy-minimap-*` vars set on `.builder-canvas` above are
+ * shadowed by xyflow's own defaults declared deeper on `.react-flow`, so the
+ * minimap fell back to its stock #fff svg + light node rects — a glaring white
+ * box in dark mode. Set the paint properties DIRECTLY on the minimap parts
+ * (specificity 0,2,0 beats xyflow's 0,1,0), bypassing the var indirection. */
 .builder-canvas .react-flow__minimap {
+  background: var(--paper-2);
   border: 1px solid var(--rule);
   border-radius: 2px;
   box-shadow: 0 1px 3px var(--ink-shadow);
+}
+.builder-canvas .react-flow__minimap-mask {
+  fill: var(--ink-shadow);
+}
+.builder-canvas .react-flow__minimap-node {
+  fill: var(--ink-2);
+  stroke: none;
 }
 
 .builder-canvas .react-flow__controls-button {
@@ -2600,6 +2612,9 @@ pre {
 
 .workflow-card-menu-popover button:hover {
   background: var(--color-surface-2);
+  /* Pin color — the global `button:hover` (0,1,1) sets color:var(--paper),
+   * which would otherwise turn this dark-on-dark in dark mode. */
+  color: var(--color-text);
 }
 
 .workflow-card-menu-popover .workflow-card-menu-danger {
@@ -2608,6 +2623,7 @@ pre {
 
 .workflow-card-menu-popover .workflow-card-menu-danger:hover {
   background: color-mix(in oklch, var(--color-danger) 10%, transparent);
+  color: var(--color-danger);
 }
 
 .workflow-card-empty {
@@ -2883,9 +2899,13 @@ pre {
   font-size: 13px; color: var(--color-text);
   cursor: pointer; border-radius: 4px;
 }
-.account-menu-item:hover { background: var(--color-surface-2); }
+/* Pin the text color on hover. The global `button:hover` rule (0,1,1) sets
+ * `color: var(--paper)` for the clay-fill hover; it beats `.account-menu-item`
+ * (0,1,0), so without this the menu text flips to near-black on the dark hover
+ * box (black-on-black in dark mode). Same pin `.account-menu-trigger` uses. */
+.account-menu-item:hover { background: var(--color-surface-2); color: var(--color-text); }
 .account-menu-danger { color: var(--color-danger); }
-.account-menu-danger:hover { background: color-mix(in oklch, var(--color-danger) 10%, transparent); }
+.account-menu-danger:hover { background: color-mix(in oklch, var(--color-danger) 10%, transparent); color: var(--color-danger); }
 
 /* ---------------------------------------------------------------------
    Prompt library (RFC 0027 / 0028 wire shapes; surface still Draft).
