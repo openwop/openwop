@@ -2884,6 +2884,8 @@ pre {
   cursor: pointer; border-radius: 4px;
 }
 .account-menu-item:hover { background: var(--color-surface-2); }
+.account-menu-danger { color: var(--color-danger); }
+.account-menu-danger:hover { background: color-mix(in oklch, var(--color-danger) 10%, transparent); }
 
 /* ---------------------------------------------------------------------
    Prompt library (RFC 0027 / 0028 wire shapes; surface still Draft).
