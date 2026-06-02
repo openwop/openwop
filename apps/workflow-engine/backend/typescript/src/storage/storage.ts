@@ -415,6 +415,10 @@ export interface Storage {
   getRelayDevice(relayId: string): Promise<RelayDeviceRecord | null>;
   /** Look up an active device by the SHA-256 hash of its presented token. */
   getRelayDeviceByTokenHash(tokenHash: string): Promise<RelayDeviceRecord | null>;
+  /** List a tenant's relay devices (newest registration first). Backs the
+   *  connector deliverability probe — "is there a live device that can actually
+   *  deliver outbound for this channel right now?". */
+  listRelayDevices(tenantId: string): Promise<readonly RelayDeviceRecord[]>;
   /** Append an egress to a relay's outbound queue. */
   enqueueRelayOutbound(record: ChatEgressEnvelope): Promise<void>;
   /** Pull pending egress for a relay, oldest first. */

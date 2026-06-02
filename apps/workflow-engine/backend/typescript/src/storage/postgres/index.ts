@@ -1350,6 +1350,13 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
       );
       return rows[0] ? rowToRelayDevicePg(rows[0]) : null;
     },
+    async listRelayDevices(tenantId) {
+      const { rows } = await pool.query<Row>(
+        `SELECT * FROM relay_devices WHERE tenant_id = $1 ORDER BY registered_at DESC`,
+        [tenantId],
+      );
+      return rows.map(rowToRelayDevicePg);
+    },
     async enqueueRelayOutbound(record) {
       await pool.query(
         `INSERT INTO relay_outbound (egress_id, relay_id, channel, conversation_id, text, reply_to_message_id, enqueued_at, extra)

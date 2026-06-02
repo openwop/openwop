@@ -1289,6 +1289,12 @@ export function openSqliteStorage(dbPath: string): Storage {
       ).get(tokenHash) as Record<string, unknown> | undefined;
       return row ? rowToRelayDeviceSqlite(row) : null;
     },
+    async listRelayDevices(tenantId) {
+      const rows = db
+        .prepare(`SELECT * FROM relay_devices WHERE tenant_id = ? ORDER BY registered_at DESC`)
+        .all(tenantId) as Record<string, unknown>[];
+      return rows.map(rowToRelayDeviceSqlite);
+    },
     async enqueueRelayOutbound(record) {
       db.prepare(
         `INSERT INTO relay_outbound (egress_id, relay_id, channel, conversation_id, text, reply_to_message_id, enqueued_at, extra)
