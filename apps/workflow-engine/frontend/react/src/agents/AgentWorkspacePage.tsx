@@ -24,6 +24,15 @@ import { Markdown } from '../ui/Markdown.js';
 
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
+/** Human label for an autonomous-heartbeat cadence (ms). 0/absent ⇒ manual. */
+function formatHeartbeat(intervalMs: number | undefined): string {
+  if (!intervalMs || intervalMs <= 0) return 'manual';
+  const mins = Math.round(intervalMs / 60_000);
+  if (mins < 60) return `every ${mins}m`;
+  const hrs = Math.round(mins / 60);
+  return `every ${hrs}h`;
+}
+
 type TabKey = 'overview' | 'workflows' | 'board' | 'schedules' | 'instructions' | 'integrations' | 'activity';
 const TABS: ReadonlyArray<{ key: TabKey; label: string }> = [
   { key: 'overview', label: 'Overview' },
@@ -154,7 +163,16 @@ export function AgentWorkspacePage(): JSX.Element {
         </div>
         <div className="action-bar">
           <span className={`chip ${sm.chip}`} title={sm.help}>{sm.label}</span>
-          <span className="chip chip--muted" title="This agent checks for work when you click “Check now”, plus on any enabled schedule.">Heartbeat: manual</span>
+          <span
+            className="chip chip--muted"
+            title={
+              entry.heartbeatIntervalMs && entry.heartbeatIntervalMs > 0
+                ? 'A background daemon runs this agent’s “Check now” automatically on this cadence; you can also trigger it manually.'
+                : 'This agent checks for work when you click “Check now”, plus on any enabled schedule.'
+            }
+          >
+            Heartbeat: {formatHeartbeat(entry.heartbeatIntervalMs)}
+          </span>
         </div>
       </div>
 
