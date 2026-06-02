@@ -125,6 +125,14 @@ export interface AgentActivityItem {
   cardId?: string;
   /** ISO-8601 — terminal time, else last-update / creation. */
   timestamp: string;
+  /** ISO-8601 run creation time. */
+  createdAt?: string;
+  /** ISO-8601 terminal time; absent while still running. */
+  completedAt?: string;
+  /** Wall-clock run duration in ms (when both bookends are known). */
+  durationMs?: number;
+  /** RFC 0040 — the trigger event that caused this run, when recorded. */
+  causationId?: string;
 }
 
 /** Per-agent activity: recent runs (heartbeat / schedule / card triggers) with

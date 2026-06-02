@@ -11,6 +11,7 @@ import { RunStepInspector } from './RunStepInspector.js';
 import { RunAgentTrace } from './RunAgentTrace.js';
 import { RunHandoffMap } from './RunHandoffMap.js';
 import { RunCostPanel } from './RunCostPanel.js';
+import { RunProvenancePanel } from './RunProvenancePanel.js';
 import { RunAnalyticsPanel } from './RunAnalyticsPanel.js';
 import { RunFeedback } from './RunFeedback.js';
 import { RunOpsPanel } from './RunOpsPanel.js';
@@ -258,6 +259,7 @@ export function RunDetailPage() {
       />
 
       <RunAnalyticsPanel events={events} annotations={annotations} />
+      <RunProvenancePanel events={events} snapshot={snapshot} />
       <RunFeedback runId={runId} onRecorded={refreshAnnotations} />
       <RunCostPanel events={events} />
       <RunHandoffMap events={events} />

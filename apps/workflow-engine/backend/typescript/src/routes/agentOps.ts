@@ -149,6 +149,12 @@ export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
           }
           const mine = candidates.find((c) => c.block.rosterId === entry.rosterId);
           if (!mine) return null;
+          // Wall-clock duration when both bookends are known — lets the UI show
+          // "ran in 4.2s" without a per-run event scan (which would N+1 the
+          // per-IP read budget).
+          const durationMs = run.completedAt
+            ? Math.max(0, new Date(run.completedAt).getTime() - new Date(run.createdAt).getTime())
+            : undefined;
           return {
             runId: run.runId,
             workflowId: run.workflowId,
@@ -157,6 +163,11 @@ export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
             cardId: typeof mine.block.cardId === 'string' ? mine.block.cardId : undefined,
             // Prefer the terminal time; fall back to last-update / creation.
             timestamp: run.completedAt ?? run.updatedAt ?? run.createdAt,
+            createdAt: run.createdAt,
+            completedAt: run.completedAt,
+            durationMs,
+            // RFC 0040 — the trigger event that caused this run, when recorded.
+            causationId: run.causationId,
           };
         })
         .filter((x): x is NonNullable<typeof x> => x !== null)
