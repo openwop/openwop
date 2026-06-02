@@ -33,6 +33,7 @@ export const linkStep = async (ctx) => {
 
   if (!studioId || !stepId || !projectId || !canvasTypeId) {
     return {
+      status: 'success',
       outputs: {
         studioId: studioId ?? '',
         stepId: stepId ?? '',
@@ -72,11 +73,13 @@ export const linkStep = async (ctx) => {
     ctx.variables.set(`${stepId}_projectId`, projectId);
 
     return {
+      status: 'success',
       outputs: { studioId, stepId, projectId, canvasTypeId, success: true },
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return {
+      status: 'success',
       outputs: { studioId, stepId, projectId, canvasTypeId, success: false, error: message },
     };
   }
@@ -99,6 +102,7 @@ export const dispatchStackItems = async (ctx) => {
 
   if (!boardId || !canvasTypeId) {
     return {
+      status: 'success',
       outputs: {
         executedCount: 0,
         results: [],
@@ -116,6 +120,7 @@ export const dispatchStackItems = async (ctx) => {
 
     if (!readyTasks || readyTasks.length === 0) {
       return {
+        status: 'success',
         outputs: {
           executedCount: 0,
           results: [],
@@ -151,6 +156,7 @@ export const dispatchStackItems = async (ctx) => {
     );
 
     return {
+      status: 'success',
       outputs: {
         executedCount: results.length,
         results,
@@ -161,6 +167,7 @@ export const dispatchStackItems = async (ctx) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return {
+      status: 'success',
       outputs: {
         executedCount: 0,
         results: [],

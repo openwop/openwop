@@ -13,6 +13,8 @@ import type { KanbanSurface } from '../host/kanbanSurface.js';
 import type { KnowledgeSurface } from '../host/knowledgeSurface.js';
 import type { ChatSurface } from '../host/chatSurface.js';
 import type { CanvasSurface } from '../host/canvasSurface.js';
+import type { WebResearchSurface } from '../host/webResearchSurface.js';
+import type { LaunchStudioSurface } from '../host/launchStudioSurface.js';
 
 /**
  * Single message in a chat-style AI request. Field shapes mirror
@@ -199,6 +201,16 @@ export interface NodeContext {
   /** ctx.canvas — `host.canvas`. Durable shared-canvas store for the
    *  `vendor.myndhyve.canvas` pack (§host.canvas). */
   canvas?: CanvasSurface;
+  /** ctx.webResearch — `host.webResearch` (§host.webResearch). */
+  webResearch?: WebResearchSurface;
+  /** ctx.launchStudio — `host.launchStudio` (§host.launchStudio). */
+  launchStudio?: LaunchStudioSurface;
+  /** ctx.userId — opaque principal id for vendor surfaces that key context on
+   *  a user (e.g. launch-studio). The sample host sets it to the run tenant. */
+  userId?: string;
+  /** ctx.variables — run-scoped mutable variable bag (get/set), backed by the
+   *  variables runtime. Used by launch-studio to thread step context. */
+  variables?: { get(name: string): unknown; set(name: string, value: unknown): void };
   /** ctx.mcp — RFC 0020 host-side MCP server. The `expose` method is a
    *  no-op for hosts that build their MCP registry declaratively (by
    *  scanning workflow definitions). Pack delegates from
