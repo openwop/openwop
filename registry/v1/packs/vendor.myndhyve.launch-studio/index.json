@@ -22,7 +22,7 @@
       "signatureUrl": "/v1/packs/vendor.myndhyve.launch-studio/-/1.0.0.sig",
       "signingMethod": "manual",
       "signingKeyId": "myndhyve-internal-1",
-      "integrity": "sha256-qiB996JY5VHjc3m0ELTwH4SYw8y8EYLb5UCxZIBXhMU=",
+      "integrity": "sha256-I91PRlKqT/3rM/h8orqobFp3l34Vxu5++546XEVkkEE=",
       "deprecated": false,
       "yanked": false
     }

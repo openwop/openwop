@@ -29,7 +29,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "aa207df7a258e551e37379b410b4f01f8498c3ccbc1182dbe540b164805784c5"
+          "content": "23dd4f4652aa4ffdeb33f87ca2baa86c5a77977e15c6ee7efb9e3a5c45649041"
         }
       ],
       "purl": "pkg:openwop/vendor.myndhyve.launch-studio@1.0.0"
@@ -81,13 +81,13 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "6168bd4f634fedbe92e27cbc2abad04e81fdb3dab58437fbf3ecf7afe69205df"
+          "content": "a0b893c2512bf57fe350e0f7eaad13275dc1568f0b5c6e2c0b3dacc36f0fa077"
         }
       ],
       "properties": [
         {
           "name": "openwop:size",
-          "value": "5515"
+          "value": "5692"
         }
       ]
     },
