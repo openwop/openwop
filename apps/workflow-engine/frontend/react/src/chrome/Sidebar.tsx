@@ -1,72 +1,10 @@
-import { useEffect, useState, type ComponentType } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { BrandMark } from '../brand/BrandMark.js';
 import { SignInButton } from '../auth/SignInButton.js';
 import { NotificationBell } from '../notifications/NotificationBell.js';
-import {
-  MessageSquareIcon, BotIcon, WorkflowIcon, PlayIcon, ColumnsIcon, UserIcon,
-  InboxIcon, ActivityIcon, DatabaseIcon, FileTextIcon, PackageIcon,
-  BuildingIcon, KeyIcon, ShieldIcon, TerminalIcon, MenuIcon, ChevronRightIcon,
-} from '../ui/icons/index.js';
-
-type IconCmp = ComponentType<{ size?: number; strokeWidth?: number }>;
-
-interface NavItem {
-  label: string;
-  to: string;
-  icon: IconCmp;
-  hint: string;
-  /** Exact-match only (Chat lives at "/", which would otherwise prefix-match everything). */
-  end?: boolean;
-  /** Sibling routes that must NOT light this item (e.g. /agents vs /agents/templates). */
-  notUnder?: string[];
-}
-interface NavGroup { label: string; items: NavItem[] }
-
-// Grouped IA (Phase 1): Build = surfaces you author at; Operate = surfaces you
-// observe at; Admin = config that doesn't change per session. Chat stays first
-// (feedback_chat_first_nav). Mirrors the prior Advanced/Settings dropdown
-// contents, now a persistent rail. Icons from the app-wide Lucide set (§5.2).
-const NAV: NavGroup[] = [
-  {
-    label: 'Build',
-    items: [
-      { label: 'Chat', to: '/', icon: MessageSquareIcon, hint: 'Conversational entry point', end: true },
-      { label: 'Agents', to: '/agents', icon: BotIcon, hint: 'Your named AI coworkers', notUnder: ['/agents/templates'] },
-      { label: 'Workflows', to: '/builder', icon: WorkflowIcon, hint: 'Author + edit workflows' },
-      { label: 'Runs', to: '/runs', icon: PlayIcon, hint: 'Execution history + detail' },
-    ],
-  },
-  {
-    label: 'Operate',
-    items: [
-      { label: 'Boards', to: '/boards', icon: ColumnsIcon, hint: 'Kanban — card → run trigger' },
-      { label: 'Roster', to: '/roster', icon: UserIcon, hint: 'Roster + org-chart editor' },
-      { label: 'Inbox', to: '/inbox', icon: InboxIcon, hint: 'Notifications + approvals' },
-      { label: 'Mission Control', to: '/mission', icon: ActivityIcon, hint: 'Live fleet view across runs' },
-      { label: 'Memory', to: '/memory', icon: DatabaseIcon, hint: 'Tenant-attributed memory writes' },
-      { label: 'Prompts', to: '/prompts', icon: FileTextIcon, hint: 'Reusable templates + variables' },
-      { label: 'Agent templates', to: '/agents/templates', icon: PackageIcon, hint: 'Installed manifest agents + packs' },
-    ],
-  },
-  {
-    label: 'Admin',
-    items: [
-      { label: 'Organizations', to: '/orgs', icon: BuildingIcon, hint: 'Orgs, teams, members + RBAC' },
-      { label: 'Keys', to: '/keys', icon: KeyIcon, hint: 'BYOK credentials + provider config' },
-      { label: 'Capabilities', to: '/capabilities', icon: ShieldIcon, hint: 'What this host advertises' },
-      { label: 'Demo data', to: '/demo-data', icon: DatabaseIcon, hint: 'Re-seed the built-in demo roster' },
-      { label: 'CLI', to: '/cli', icon: TerminalIcon, hint: 'In-app CLI quickstart + catalog' },
-    ],
-  },
-];
-
-function itemIsActive(item: NavItem, pathname: string): boolean {
-  if (item.end) return pathname === item.to;
-  const under = pathname === item.to || pathname.startsWith(`${item.to}/`);
-  if (!under) return false;
-  return !(item.notUnder ?? []).some((p) => pathname === p || pathname.startsWith(`${p}/`));
-}
+import { BuildingIcon, MenuIcon, ChevronRightIcon, SearchIcon } from '../ui/icons/index.js';
+import { NAV, navItemIsActive } from './navItems.js';
 
 const COLLAPSE_KEY = 'openwop.sidebar.collapsed';
 
@@ -128,6 +66,19 @@ export function Sidebar({ netOpen, onToggleNet }: { netOpen: boolean; onToggleNe
           <span className="app-workspace-caret" aria-hidden><ChevronRightIcon size={14} /></span>
         </Link>
 
+        {/* Discoverable entry to the ⌘K command palette (the hotkey also works
+            globally). Dispatches a custom event the palette listens for. */}
+        <button
+          type="button"
+          className="app-cmdk-trigger"
+          onClick={() => window.dispatchEvent(new Event('openwop:cmdk'))}
+          title="Search + jump to anything (⌘K)"
+        >
+          <span className="app-cmdk-icon" aria-hidden><SearchIcon size={15} /></span>
+          <span className="app-cmdk-label">Search…</span>
+          <kbd className="app-cmdk-kbd" aria-hidden>⌘K</kbd>
+        </button>
+
         <nav className="app-sidebar-nav" aria-label="Sections">
           {NAV.map((group) => (
             <div key={group.label} className="app-nav-group">
@@ -135,7 +86,7 @@ export function Sidebar({ netOpen, onToggleNet }: { netOpen: boolean; onToggleNe
               <ul>
                 {group.items.map((item) => {
                   const Icon = item.icon;
-                  const active = itemIsActive(item, location.pathname);
+                  const active = navItemIsActive(item, location.pathname);
                   return (
                     <li key={item.to}>
                       <NavLink

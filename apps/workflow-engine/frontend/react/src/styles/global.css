@@ -613,6 +613,28 @@ a:visited {
 .app-sidebar.is-collapsed .app-workspace-meta,
 .app-sidebar.is-collapsed .app-workspace-caret { display: none; }
 
+/* Rail search trigger → ⌘K palette */
+.app-cmdk-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  margin: 0 var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-2-5);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink-3);
+  cursor: pointer;
+  font-size: 13px;
+}
+.app-cmdk-trigger:hover { border-color: var(--clay-rule); color: var(--ink-2); }
+.app-cmdk-icon { display: inline-flex; flex-shrink: 0; }
+.app-cmdk-label { flex: 1; text-align: left; }
+.app-cmdk-kbd { font-family: var(--mono); font-size: 10px; color: var(--ink-3); border: 1px solid var(--rule); border-radius: 4px; padding: 1px 5px; }
+.app-sidebar.is-collapsed .app-cmdk-trigger { justify-content: center; padding: var(--space-2); }
+.app-sidebar.is-collapsed .app-cmdk-label,
+.app-sidebar.is-collapsed .app-cmdk-kbd { display: none; }
+
 /* Grouped nav */
 .app-sidebar-nav { flex: 1 1 auto; overflow-y: auto; padding: 0 var(--space-2) var(--space-3); }
 .app-nav-group + .app-nav-group { margin-top: var(--space-4); }
@@ -680,6 +702,8 @@ a:visited {
   .app-sidebar.is-collapsed .app-workspace-caret,
   .app-sidebar.is-collapsed .app-nav-label,
   .app-sidebar.is-collapsed .app-nav-group-label,
+  .app-sidebar.is-collapsed .app-cmdk-label,
+  .app-sidebar.is-collapsed .app-cmdk-kbd,
   .app-sidebar.is-collapsed .app-sidebar-foot { display: revert; }
   .app-sidebar-scrim { display: block; position: fixed; inset: 0; background: var(--scrim); z-index: 75; }
   .app-sidebar { z-index: 80; }
@@ -1025,6 +1049,58 @@ pre {
 .runs-filter { min-width: 200px; }
 .runs-review-flag { margin-left: var(--space-1-5); font-size: 10px; }
 
+/* ── ⌘K command palette (§5.1 <CommandPalette>) ──────────────────────── */
+.cmdk-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--scrim);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+}
+.cmdk-panel {
+  width: min(560px, 92vw);
+  max-height: 64vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 48px var(--ink-shadow);
+  overflow: hidden;
+}
+.cmdk-input-row { display: flex; align-items: center; gap: var(--space-2-5); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--rule); }
+.cmdk-input-icon { color: var(--ink-3); display: inline-flex; flex-shrink: 0; }
+.cmdk-input { flex: 1; border: 0; background: none; font-family: var(--sans); font-size: 15px; color: var(--ink); outline: none; min-width: 0; }
+.cmdk-input::placeholder { color: var(--ink-3); }
+.cmdk-esc { font-family: var(--mono); font-size: 10px; color: var(--ink-3); border: 1px solid var(--rule); border-radius: 4px; padding: 1px 5px; }
+.cmdk-list { list-style: none; margin: 0; padding: var(--space-1); overflow-y: auto; }
+.cmdk-list li { margin: 0; }
+.cmdk-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  background: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--ink-2);
+  text-align: left;
+  font-size: 13px;
+}
+.cmdk-item.is-active { background: var(--clay-soft); color: var(--clay); }
+.cmdk-item-icon { color: var(--ink-3); display: inline-flex; flex-shrink: 0; }
+.cmdk-item.is-active .cmdk-item-icon { color: var(--clay); }
+.cmdk-item-label { flex: 1; min-width: 0; }
+.cmdk-item-group { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); flex-shrink: 0; }
+.cmdk-empty { padding: var(--space-5); text-align: center; color: var(--ink-3); font-size: 13px; }
+.cmdk-foot { display: flex; gap: var(--space-4); padding: var(--space-2) var(--space-4); border-top: 1px solid var(--rule); font-family: var(--mono); font-size: 10px; color: var(--ink-3); }
+.cmdk-foot kbd { border: 1px solid var(--rule); border-radius: 3px; padding: 0 4px; margin-right: 2px; }
+
 .alert {
   padding: var(--space-3);
   border-radius: var(--radius);
@@ -1050,6 +1126,63 @@ pre {
 .alert.success {
   background: color-mix(in oklch, var(--color-success) 10%, transparent);
   border: 1px solid var(--color-success);
+}
+
+/* ── Toasts (§5.1 <Toaster>) — ephemeral, stack bottom-right. Reuse the
+ * .alert.* colour families; .toast (defined after .alert) wins the layout
+ * overrides on equal specificity. ───────────────────────────────────────── */
+.toast-stack {
+  position: fixed;
+  bottom: var(--space-4);
+  right: var(--space-4);
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: min(380px, 92vw);
+}
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2-5) var(--space-3);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: 0 6px 24px var(--ink-shadow);
+  animation: openwop-toast-in 0.18s ease both;
+}
+.toast-icon { flex-shrink: 0; display: inline-flex; margin-top: 1px; }
+.toast-message { flex: 1; font-size: 13px; color: var(--ink); }
+.toast-close { flex-shrink: 0; background: none; border: 0; color: var(--ink-3); opacity: 0.7; cursor: pointer; display: inline-flex; padding: 0; }
+.toast-close:hover { opacity: 1; color: var(--ink); }
+@keyframes openwop-toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* ── Skeleton loaders (§5.1 <Skeleton>) ──────────────────────────────────── */
+.skeleton {
+  display: inline-block;
+  height: 14px;
+  background: var(--rule);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  vertical-align: middle;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--paper), transparent);
+  transform: translateX(-100%);
+  animation: openwop-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes openwop-shimmer { 100% { transform: translateX(100%); } }
+.skeleton-rows { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3) 0; }
+.skeleton-row { display: flex; gap: var(--space-4); align-items: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .toast { animation: none; }
+  .skeleton::after { display: none; }
 }
 
 .muted {
