@@ -116,6 +116,11 @@ export interface NodeContext {
   nodeAgent?: { agentId: string };
   /** Run-level configurable overlay from RunOptions.configurable. */
   configurable: Record<string, unknown>;
+  /** ctx.triggerData — the run-scoped trigger payload the `core.openwop.triggers`
+   *  entry nodes surface to downstream nodes. Captured at run start, identical
+   *  for every node (replay-safe). `undefined` for runs not started by a
+   *  trigger that carries a payload. */
+  triggerData?: unknown;
   /** Per-attempt counter; first attempt = 1. */
   attempt: number;
   /** Trust boundary of inputs entering this node (RFC 0020 §D).
@@ -185,6 +190,10 @@ export interface NodeContext {
   mcp?: {
     expose: (args: Record<string, unknown>) => Promise<Record<string, unknown>>;
   };
+  /** ctx.respondToWebhook — the `core.openwop.triggers` webhook-respond node's
+   *  reply channel. The host durably records the intended HTTP reply; absent
+   *  on hosts where the pack should fall back to surfacing it as node outputs. */
+  respondToWebhook?(response: { status?: number; headers?: Record<string, string>; body?: unknown }): Promise<void>;
 }
 
 /** Loose-typed surface map. The concrete shape lives in
