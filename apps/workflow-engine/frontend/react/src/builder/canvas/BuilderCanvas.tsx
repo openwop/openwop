@@ -12,7 +12,7 @@
  *   BaseNode paints execution state.
  */
 
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Background,
   BackgroundVariant,
@@ -118,6 +118,14 @@ function BuilderCanvasInner() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
+  // Measured node dimensions, captured from xyflow's `dimensions` changes (see
+  // onNodesChange). We feed these back onto the controlled nodes as width/height
+  // so downstream consumers that read node size — notably the <MiniMap>, which
+  // draws each blip from `measured?.width ?? width` — have dimensions to draw.
+  // Without this, the controlled nodes carry no size and the minimap renders an
+  // empty viewport box with no node blips.
+  const [nodeDims, setNodeDims] = useState<Record<string, { width: number; height: number }>>({});
+
   const rfNodes: Node[] = useMemo(
     () =>
       builderNodes.map((n) => ({
@@ -126,8 +134,9 @@ function BuilderCanvasInner() {
         position: n.position,
         data: { kind: n.kind, name: n.name, runStatus: overlay?.nodeStatus[n.id] },
         selected: selectedSet.has(n.id),
+        ...(nodeDims[n.id] ? { width: nodeDims[n.id].width, height: nodeDims[n.id].height } : {}),
       })),
-    [builderNodes, selectedSet, overlay],
+    [builderNodes, selectedSet, overlay, nodeDims],
   );
 
   const rfEdges: Edge[] = useMemo(
@@ -154,15 +163,39 @@ function BuilderCanvasInner() {
       let selectionChanged = false;
       const moves: { id: string; position: { x: number; y: number } }[] = [];
       const removals: string[] = [];
+      const dimUpdates: Record<string, { width: number; height: number }> = {};
       for (const change of changes) {
         if (change.type === 'position' && change.position && !change.dragging) {
           moves.push({ id: change.id, position: change.position });
         }
         if (change.type === 'select') selectionChanged = true;
         if (change.type === 'remove') removals.push(change.id);
+        // Capture xyflow's measured dimensions so the minimap (and any size-
+        // dependent consumer) has a box to draw. Stored, not pushed to the
+        // builder store — it's a render concern, not part of the saved workflow.
+        if (change.type === 'dimensions' && change.dimensions) {
+          dimUpdates[change.id] = { width: change.dimensions.width, height: change.dimensions.height };
+        }
       }
       if (moves.length > 0) moveNodes(moves);
       if (removals.length > 0) removeNodes(removals);
+      if (Object.keys(dimUpdates).length > 0) {
+        // Guard against a re-render loop: only update when a value actually
+        // changed (feeding width/height back recomputes rfNodes, which could
+        // otherwise re-fire identical dimensions every render).
+        setNodeDims((prev) => {
+          let changed = false;
+          const next = { ...prev };
+          for (const [id, d] of Object.entries(dimUpdates)) {
+            const p = prev[id];
+            if (!p || p.width !== d.width || p.height !== d.height) {
+              next[id] = d;
+              changed = true;
+            }
+          }
+          return changed ? next : prev;
+        });
+      }
       // Derive the FULL multi-selection from xyflow's applied state — this
       // handles single click, shift-click (add/remove), and box-select
       // (multiple select changes in one batch) uniformly.
