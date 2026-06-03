@@ -30,7 +30,17 @@ import { registerJob } from './schedulingService.js';
 import { putChart, type OrgDepartment, type OrgMember } from './orgChartService.js';
 import { demoWorkflowsForRole, type DemoRoleKey } from './demoWorkflows.js';
 import { createLogger } from '../observability/logger.js';
+import { ensureUserAgentRegistered } from '../routes/userAgents.js';
+import type { Storage } from '../storage/storage.js';
+import type { UserAgentRecord } from '../types.js';
 import demoAgentSeed from './seed-data/demoAgents.json';
+
+/** Lowercase-kebab slug from a persona name — must match the frontend's
+ *  `slugify` in `chat/lib/agentMentions.ts` so the `@`-mention slug a user
+ *  types (`@nora`) resolves to the same agent the seed registered. */
+function personaSlug(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
 
 const log = createLogger('host.demoSeed');
 
@@ -61,6 +71,10 @@ interface SeedAgent {
   roleKey: DemoRoleKey;
   description: string;
   systemPrompt: string;
+  /** Model class for the persona's chat-callable inventory agent. Optional in
+   *  the seed data; defaults to `chat`. One of the host's known classes
+   *  (`userAgents.ts` KNOWN_MODEL_CLASSES: chat / reasoning / coding / extraction). */
+  modelClass?: string;
   cards: SeedCard[];
   schedules: SeedSchedule[];
   department: { departmentId: string; name: string; roleId: string; roleName: string };
@@ -116,7 +130,7 @@ export interface SeedResult {
  * of a populated tenant happens only via the explicit "Load demo agents"
  * action (which restoring a deleted demo agent is the expected outcome of).
  */
-export async function seedDemoAgents(tenantId: string): Promise<SeedResult> {
+export async function seedDemoAgents(tenantId: string, storage: Storage): Promise<SeedResult> {
   if (!demoSeedEnabled()) {
     log.info('demo_seed_skipped', { tenantId, reason: 'OPENWOP_DEMO_SEED_ENABLED=false' });
     return { seeded: false, agents: 0 };
@@ -133,16 +147,42 @@ export async function seedDemoAgents(tenantId: string): Promise<SeedResult> {
   for (const spec of SEED_AGENTS) {
     const workflowIds = demoWorkflowsForRole(spec.roleKey).map((w) => w.workflowId);
 
+    // Register the persona as a tenant-owned, chat-callable inventory agent
+    // (RFC 0072) via the same isolation-correct path the create wizard uses, so
+    // a user can `@`-mention it in chat (the mention list is fed by
+    // `GET /v1/agents`; the chat-responder resolves `inputs.agentId` →
+    // systemPrompt, gated by `ownerTenant === tenantId`). The persona's
+    // `systemPrompt` is authored in `demoAgents.json` and was previously unused
+    // on any chat-reachable path. Done for EVERY spec (not just newly-created
+    // roster entries) so an explicit "Load demo agents" re-seed heals tenants
+    // seeded before this feature. Idempotent: insert-if-absent + last-write-wins
+    // registry register.
+    const chatAgentId = `user.${tenantId}.${personaSlug(spec.persona)}`;
+    const userAgentRecord: UserAgentRecord = {
+      agentId: chatAgentId,
+      tenantId,
+      persona: spec.persona,
+      label: spec.role,
+      description: spec.description,
+      modelClass: spec.modelClass ?? 'chat',
+      systemPrompt: spec.systemPrompt,
+      toolAllowlist: [],
+      memoryShape: { scratchpad: true, conversation: true, longTerm: false },
+      createdAt: new Date().toISOString(),
+    };
+    await ensureUserAgentRegistered(storage, userAgentRecord);
+
     let entry = byPersona.get(spec.persona.toLowerCase());
     if (!entry) {
       // Create the roster entry, its board (4 demo lanes; To Do triggers the
-      // first workflow), its sample cards, and its schedules. Attribution-only
-      // AgentRef (runs dispatch by workflowId, not this id) — a synthetic
-      // host-internal manifest reference per RFC 0002.
+      // first workflow), its sample cards, and its schedules. The AgentRef
+      // points at the persona's chat-callable inventory agent (above), linking
+      // the two projections of one persona — the roster portfolio owner and the
+      // conversable agent. Runs still dispatch by workflowId, not this id.
       entry = await createRosterEntry({
         tenantId,
         persona: spec.persona,
-        agentRef: { agentId: `host:demo-${spec.roleKey}`, version: '1.0.0' },
+        agentRef: { agentId: chatAgentId, version: '1.0.0' },
         workflows: workflowIds,
         label: spec.role,
         description: spec.description,

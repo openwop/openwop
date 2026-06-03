@@ -42,7 +42,7 @@ export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
   // "Load demo agents" — idempotent per-tenant seed.
   app.post('/v1/host/sample/demo/seed', async (req, res, next) => {
     try {
-      const result = await seedDemoAgents(tenantOf(req));
+      const result = await seedDemoAgents(tenantOf(req), deps.storage);
       res.status(200).json(result);
     } catch (err) {
       next(err);

@@ -152,14 +152,20 @@ export function detectAgentMention(
   text: string,
   entries: readonly AgentMentionEntry[],
 ): AgentMentionMatch | null {
-  const stripped = text.trim();
-  const match = /^@([a-z0-9][a-z0-9-]*)(?:\s+(.*))?$/i.exec(stripped);
-  if (!match) return null;
-  const slug = match[1]?.toLowerCase() ?? '';
-  const entry = entries.find((e) => e.slug === slug);
-  if (!entry) return null;
-  const trailingRaw = (match[2] ?? '').trim();
-  return { entry, trailing: trailingRaw.length > 0 ? trailingRaw : null };
+  // Scan every `@<slug>` token — not only a start-anchored one — and route to
+  // the FIRST that resolves to a known agent. Entry-gated, so a non-agent token
+  // ("@here", an email's "@", a bare "@5pm") never routes. This lets a user
+  // write "review this @nora" mid-message, not only "@nora review this".
+  const re = /@([a-z0-9][a-z0-9-]*)/gi;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(text)) !== null) {
+    const slug = (match[1] ?? '').toLowerCase();
+    const entry = entries.find((e) => e.slug === slug);
+    if (!entry) continue;
+    const trailingRaw = text.slice(match.index + match[0].length).trim();
+    return { entry, trailing: trailingRaw.length > 0 ? trailingRaw : null };
+  }
+  return null;
 }
 
 function slugify(name: string): string {

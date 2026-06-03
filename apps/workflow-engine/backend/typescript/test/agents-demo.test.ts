@@ -85,6 +85,29 @@ describe('agents-demo backend foundations', () => {
     expect(rosterAgain.body.roster.length).toBe(5);
   });
 
+  it('registers each seeded persona as a chat-callable inventory agent (so @Nora works in chat)', async () => {
+    // The chat `@`-mention list is fed by GET /v1/agents (RFC 0072); before this
+    // wiring the personas existed ONLY as roster entries (a synthetic
+    // attribution-only agentRef) and were unreachable from chat. The seed now
+    // registers each as a tenant-owned user-agent with the persona's authored
+    // systemPrompt, so it surfaces in the inventory and the chat-responder can
+    // resolve inputs.agentId → systemPrompt (gated by ownerTenant).
+    const inv = await api<{ agents: Array<{ agentId: string; persona: string; modelClass: string; packName: string }> }>(
+      '/v1/agents',
+    );
+    expect(inv.status).toBe(200);
+    const personas = inv.body.agents.map((a) => a.persona);
+    for (const name of ['Sally', 'Marcus', 'Priya', 'Devon', 'Nora']) {
+      expect(personas).toContain(name);
+    }
+    // The roster↔inventory link: the persona's inventory agentId is the
+    // deterministic `user.<tenant>.<slug>` the roster entry's agentRef points at.
+    const nora = inv.body.agents.find((a) => a.persona === 'Nora')!;
+    expect(nora.agentId).toBe('user.default.nora');
+    expect(nora.modelClass).toBe('chat');
+    expect(nora.packName).toBe('user:default'); // tenant-scoped provenance (ownerTenant)
+  });
+
   it('seeded board has source-tagged cards under a triggering To Do column', async () => {
     const roster = await api<{ roster: RosterEntry[] }>('/v1/host/sample/roster');
     const sally = roster.body.roster.find((r) => r.persona === 'Sally')!;
