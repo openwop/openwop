@@ -72,6 +72,34 @@ VITE_BRAND_REPO_URL=https://github.com/acme/flow
    adjacent wordmark already names the product to screen readers, so the
    image is decorative. Keep it that way to avoid double-announcing.
 
+### Brandable-surface checklist + the pre-deploy guard
+
+Every surface that carries the OpenWOP identity, with the var/file to override
+it. A forgotten field ships OpenWOP branding silently — so run the guard below.
+
+| Surface | Override |
+|---|---|
+| Product name / wordmark | `VITE_BRAND_PRODUCT_NAME`, `VITE_BRAND_MARK_PRE/EMPHASIS/SUB` |
+| Header logo | `VITE_BRAND_LOGO_SRC` (+ drop the SVG in `public/`) |
+| **Favicon** | `VITE_BRAND_FAVICON_SRC` (commonly missed → ships the OpenWOP "O") |
+| Document `<title>` | `VITE_BRAND_DOCUMENT_TITLE` |
+| Tagline / footer / assistant name | `VITE_BRAND_TAGLINE`, `VITE_BRAND_FOOTER_TEXT`, `VITE_BRAND_ASSISTANT_NAME` |
+| Domain / home / repo links | `VITE_BRAND_PRIMARY_DOMAIN`, `VITE_BRAND_HOME_URL`, `VITE_BRAND_REPO_URL` |
+| Fonts | `VITE_BRAND_FONTS_HREF` |
+| Colors / type | `src/brand/brand.css` (§2 below) |
+| Backend / Firebase config | a scrubbed `.env.production` — start from **`.env.production.example`**, never the upstream's `.env.production` (it points at the steward's backend) |
+
+**Verify before you ship** — after `npm run build`, run the guard from the repo
+root; it fails if any OpenWOP default leaked into your bundle:
+
+```sh
+( cd apps/workflow-engine/frontend/react && npm run build )
+bash scripts/check-branding.sh apps/workflow-engine/frontend/react/dist
+```
+
+(The guard is a *fork* tool — the upstream OpenWOP build legitimately carries
+these strings, so it's expected to report leaks there.)
+
 ---
 
 ## 2. Rebrand the colors + typography (`src/brand/brand.css`)
