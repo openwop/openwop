@@ -129,12 +129,12 @@ describe.skipIf(HTTP_SKIP)('agent-channel-dispatch (RFC 0082 §B): production ru
       ),
     ).toBe(true);
     expect(
-      started!.payload.resolvedChannel === BOUND_CHANNEL,
+      started!.payload.resolvedChannel,
       driver.describe(
         'agent-deployment.md §B',
         `agent.invocation.started MUST carry the bound channel as resolvedChannel ("${BOUND_CHANNEL}")`,
       ),
-    ).toBe(true);
+    ).toBe(BOUND_CHANNEL);
     const pinnedVersion = started!.payload.resolvedAgentVersion;
     expect(
       typeof pinnedVersion === 'string' && (pinnedVersion as string).length > 0,
@@ -166,18 +166,26 @@ describe.skipIf(HTTP_SKIP)('agent-channel-dispatch (RFC 0082 §B): production ru
       driver.describe('agent-deployment.md §B', 'a replay fork MUST re-emit agent.invocation.started'),
     ).toBe(true);
     expect(
-      fork1Started!.payload.resolvedAgentVersion === pinnedVersion,
+      fork1Started!.payload.resolvedAgentVersion,
       driver.describe(
         'agent-deployment.md §B',
         'a replay MUST re-read the recorded resolvedAgentVersion (NOT re-resolve the channel)',
       ),
-    ).toBe(true);
+    ).toBe(pinnedVersion);
 
     // ---- Leg 3 (seam-guarded): move the channel, prove non-re-resolution -
     // The strongest form of §B: after the original pin, MOVE `stable` to a new
     // active version via the optional deployment seam. A replay fork of the
     // ORIGINAL run MUST still carry the ORIGINAL pin — proving the host re-reads
     // the recorded fact rather than re-resolving the (now-moved) channel.
+    //
+    // TEST ISOLATION: this promotes the bound agent's `stable` head via the
+    // conformance-only seam and does NOT roll it back — the seam exposes no
+    // rollback primitive (see agentDeployment.ts: scenarios are promote /
+    // unauthorized / eval-gate-unmet / channel-pin, no `rollback`). Scenarios are
+    // independent and the seam is conformance-only (404/403 in production), so the
+    // un-restored head is benign; hosts SHOULD nonetheless run the suite against an
+    // isolated/ephemeral deployment store rather than shared production state.
     const moved = await driveDeploymentTransition({
       scenario: 'promote',
       agentId: BOUND_AGENT_ID,
@@ -217,18 +225,18 @@ describe.skipIf(HTTP_SKIP)('agent-channel-dispatch (RFC 0082 §B): production ru
     await pollUntilTerminal(fork2RunId, { timeoutMs: 15_000 });
     const fork2Started = await firstInvocationStarted(fork2RunId);
     expect(
-      fork2Started?.payload.resolvedAgentVersion === pinnedVersion,
+      fork2Started?.payload.resolvedAgentVersion,
       driver.describe(
         'agent-deployment.md §B',
         'after the channel moves, a replay of the original run MUST still carry the ORIGINAL pin — never re-resolving the moved channel',
       ),
-    ).toBe(true);
+    ).toBe(pinnedVersion);
     expect(
-      fork2Started?.payload.resolvedAgentVersion !== movedVersion,
+      fork2Started?.payload.resolvedAgentVersion,
       driver.describe(
         'agent-deployment.md §B',
         'a replay MUST NOT resolve to the post-move version (proves the recorded fact is re-read, not re-resolved)',
       ),
-    ).toBe(true);
+    ).not.toBe(movedVersion);
   });
 });

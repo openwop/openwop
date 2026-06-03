@@ -2,7 +2,8 @@
 
 ## [Unreleased]
 
-_No unreleased changes._
+### Changed — test diagnostics (no behavior / count change)
+- **`agent-channel-dispatch.test.ts` (RFC 0082 §B) — value assertions over boolean assertions.** The four pin-comparison checks (Leg 1 `resolvedChannel`, Leg 2 + Leg 3 `resolvedAgentVersion`) now assert the observed value directly (`expect(observed, …).toBe(expected)` / `.not.toBe(movedVersion)`) instead of pre-computing a boolean and asserting `.toBe(true)`. A failing run on a third-party host now surfaces the *actual* resolved channel/version in the diff, not just "expected true, got false" + the requirement text. Pass/fail semantics, scenario count (324), and the published suite behavior are unchanged. Also documented Leg 3's test-isolation caveat: it promotes the bound agent's `stable` head via the conformance-only seam without rollback (the seam exposes no rollback primitive), so hosts SHOULD run the suite against an isolated/ephemeral deployment store.
 
 ## [1.20.0] — 2026-06-02 — RFC 0082 §B channel-dispatch: Leg 3 targets the fixture's agent
 
