@@ -14,6 +14,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 ## [1.1.8 — unreleased]
 
 ### Docs
+- **Conformance-evidence suite-version sync.** The four `examples/hosts/*/conformance.md` banners lagged at `@openwop/openwop-conformance@1.15.0` while `INTEROP-MATRIX.md` had already re-measured those hosts to `1.18.1` (2026-06-01) — making the matrix's "evidence no longer stale at 1.15.0" claim untrue. Synced the in-memory / sqlite / python per-host banners to the matrix-authoritative `1.18.1` numbers (+18 passed, failures/skips unchanged → 2010·46·105, 2056·0·105, 2008·2·151 of 2161), and noted on all surfaces that the current published suite `1.19.0` adds only the capability-gated RFC 0082 §B `agent-channel-dispatch` scenario, which soft-skips on these hosts — applicable pass-rates unchanged. No re-run / fabricated counts.
 - **Sample workflow-engine host doc sync.** `apps/workflow-engine/README.md` now reflects that the sample wires the reference `vendor.myndhyve.*` host surfaces (chat/canvas/kanban/knowledge/launchStudio/webResearch) + `host.{a2a,triggers,db.nosql}` + the `ctx.interrupt`/`ctx.suspend` primitive; stale `~70%`/`v1.1.0` measurements are marked as 2026-05-15-era snapshots (not re-measured). `docs/KNOWN-LIMITS.md` gains a "Sample workflow-engine host" section documenting the single-suspend-per-node limitation of the sample's `ctx.suspend` (only `core.openwop.a2a.multiTurnCoordinator` loops suspend; all gate nodes are single-suspend and unaffected).
 
 ### Additive
