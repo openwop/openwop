@@ -67,6 +67,7 @@ import { getInstanceId } from '../host/instanceId.js';
 import { notifyRunTerminal } from './runLifecycle.js';
 import { emitRunFailureNotification } from '../notifications/notify.js';
 import { snapshotRunVariables, setRunVariable } from '../host/variablesRuntime.js';
+import { SuspendSignal, makeSuspendFn } from './suspendSignal.js';
 import {
   buildGraph,
   buildNodeInputs,
@@ -198,6 +199,9 @@ async function runOneNode(input: {
   nodeRef: { nodeId: string; typeId: string; config?: Record<string, unknown>; inputs?: Record<string, unknown>; agent?: { agentId: string } };
   inputsByPort: Record<string, unknown>;
   policyResolver?: ProviderPolicyResolver;
+  /** On a re-invoke resume (interrupt.md §"key field"), the resolution seeded for
+   *  this node so `ctx.suspend`/`ctx.interrupt` returns it instead of suspending. */
+  suspendResolution?: { resumeKey: string; value: unknown };
 }): Promise<
   | { kind: 'success'; outputs: Record<string, unknown> }
   | { kind: 'failure'; error: { code: string; message: string } }
@@ -437,6 +441,11 @@ async function runOneNode(input: {
       return { eventId: record.eventId, sequence: record.sequence };
     },
     ...(aiAdapter ? { callAI: aiAdapter.callAI, callAIWithTools: aiAdapter.callAIWithTools } : {}),
+    // interrupt.md — the normative awaitable interrupt primitive (+ the `suspend`
+    // alias the packs call). Throws a SuspendSignal on first call (caught below →
+    // suspended outcome); on a re-invoke resume the seeded resolution is returned.
+    interrupt: makeSuspendFn(nodeRef.nodeId, input.suspendResolution),
+    suspend: makeSuspendFn(nodeRef.nodeId, input.suspendResolution),
     storage: surfaces.storage,
     db: surfaces.db,
     fs: surfaces.fs,
@@ -505,10 +514,25 @@ async function runOneNode(input: {
     outcome = await module.execute(ctx);
     span.setStatus({ code: SpanStatusCode.OK });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    span.setStatus({ code: SpanStatusCode.ERROR, message });
-    const code = err instanceof AiProviderError ? err.code : 'internal_error';
-    outcome = { status: 'failure', error: { code, message } };
+    if (err instanceof SuspendSignal) {
+      // ctx.suspend/ctx.interrupt threw → suspend the run. Tag the interrupt
+      // data with the resume key + re-invoke style so the resume path knows to
+      // re-run this node (vs the native mark-completed path).
+      span.setStatus({ code: SpanStatusCode.OK });
+      outcome = {
+        status: 'suspended',
+        interrupt: {
+          kind: err.kind,
+          data: { ...err.data, __resumeKey: err.resumeKey, __resumeStyle: 'reinvoke' },
+          ...(err.resumeSchema !== undefined ? { resumeSchema: err.resumeSchema } : {}),
+        },
+      };
+    } else {
+      const message = err instanceof Error ? err.message : String(err);
+      span.setStatus({ code: SpanStatusCode.ERROR, message });
+      const code = err instanceof AiProviderError ? err.code : 'internal_error';
+      outcome = { status: 'failure', error: { code, message } };
+    }
   } finally {
     span.end();
   }
@@ -708,6 +732,13 @@ export interface ExecuteRunOptions {
   resumeValue?: unknown;
   /** When resuming, the nodeId whose suspension just resolved. */
   resumeNodeId?: string;
+  /** Resume style for the resolved node. `'reinvoke'` (set when the node
+   *  suspended via ctx.suspend/ctx.interrupt) re-runs the node with the
+   *  resolution seeded so it can shape the result into its real outputs; absent
+   *  → the native mark-completed path. interrupt.md §"key field". */
+  resumeStyle?: 'reinvoke';
+  /** The deterministic resume key the re-invoked ctx.suspend call must match. */
+  resumeKey?: string;
   policyResolver?: ProviderPolicyResolver;
 }
 
@@ -802,6 +833,11 @@ async function executeRunBody(input: ExecuteRunBodyInput): Promise<ExecuteRunRes
     return { status: 'failed' };
   }
 
+  // ctx.suspend/ctx.interrupt resume: nodeId → seeded resolution. The resumed
+  // node is re-queued (state 'ready') and runOneNode reads this so the node's
+  // ctx.suspend returns the value instead of suspending again (interrupt.md §key).
+  const reinvokeResolutions = new Map<string, { resumeKey: string; value: unknown }>();
+
   // When resuming from the legacy linear path (`resumeFromNodeIndex`), seed
   // every prior node as completed using `resumeValue` as the seed input on
   // the resume target.
@@ -849,16 +885,30 @@ async function executeRunBody(input: ExecuteRunBodyInput): Promise<ExecuteRunRes
     // Order matters: `stripSecretsFromPersisted` first (removes
     // ephemeral-secret tokens entirely); `sanitizeFreeTextDeep` second
     // (replaces remaining free-text key shapes in-place).
-    const outputs = { output: options.resumeValue };
-    snapshot.nodeOutputs.set(options.resumeNodeId, outputs);
-    snapshot.nodeState.set(options.resumeNodeId, 'completed');
-    await eventLog.append({
-      runId: run.runId,
-      nodeId: options.resumeNodeId,
-      type: 'node.completed',
-      payload: sanitizeFreeTextDeep(stripSecretsFromPersisted({ outputs })),
-    });
-    releaseDownstream(options.resumeNodeId, graph, snapshot);
+    // Redact the resume value once at this boundary (BYOK reference tokens +
+    // free-text key shapes a HITL approver may have pasted) before it flows
+    // anywhere. Applies to BOTH resume styles.
+    const safeResumeValue = sanitizeFreeTextDeep(stripSecretsFromPersisted(options.resumeValue));
+    if (options.resumeStyle === 'reinvoke') {
+      // ctx.suspend/ctx.interrupt node: re-run it with the resolution seeded so
+      // it shapes the result into its real output ports. Re-queue as 'ready';
+      // the draining loop re-invokes it and handles success/re-suspend/failure.
+      reinvokeResolutions.set(options.resumeNodeId, { resumeKey: options.resumeKey ?? options.resumeNodeId, value: safeResumeValue });
+      snapshot.nodeState.set(options.resumeNodeId, 'ready');
+    } else {
+      // Native return-and-resume node: map the (redacted) resume value onto the
+      // node's `input` port and mark it completed without re-running.
+      const outputs = { output: safeResumeValue };
+      snapshot.nodeOutputs.set(options.resumeNodeId, outputs);
+      snapshot.nodeState.set(options.resumeNodeId, 'completed');
+      await eventLog.append({
+        runId: run.runId,
+        nodeId: options.resumeNodeId,
+        type: 'node.completed',
+        payload: stripSecretsFromPersisted({ outputs }),
+      });
+      releaseDownstream(options.resumeNodeId, graph, snapshot);
+    }
   }
 
   // Resolve all required secrets up-front (only on initial run; resumes
@@ -972,6 +1022,7 @@ async function executeRunBody(input: ExecuteRunBodyInput): Promise<ExecuteRunRes
         nodeRef,
         inputsByPort,
         ...(options.policyResolver ? { policyResolver: options.policyResolver } : {}),
+        ...(reinvokeResolutions.has(nodeId) ? { suspendResolution: reinvokeResolutions.get(nodeId)! } : {}),
       });
       if (out.kind === 'success') {
         markCompleted(nodeId, out.outputs, snapshot);

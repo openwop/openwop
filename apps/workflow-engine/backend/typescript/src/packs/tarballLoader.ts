@@ -19,6 +19,7 @@ import { join } from 'node:path';
 import { createHash, verify as verifySig, KeyObject, createPublicKey } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import type { NodeModule } from '../executor/types.js';
+import { SuspendSignal } from '../executor/suspendSignal.js';
 import { createLogger } from '../observability/logger.js';
 import { isInstalledPack, verifyInstalledPack } from './registryInstaller.js';
 
@@ -126,6 +127,9 @@ export async function loadPackFromManifest(packDir: string): Promise<NodeModule 
         try {
           result = await (fn as (c: unknown) => Promise<unknown>)(ctx);
         } catch (err) {
+          // ctx.suspend/ctx.interrupt threw — let the executor convert it to a
+          // suspended outcome (don't downgrade it to pack_node_error here).
+          if (err instanceof SuspendSignal) throw err;
           const code =
             err && typeof err === 'object' && 'code' in err && typeof (err as { code: unknown }).code === 'string'
               ? ((err as { code: string }).code)
