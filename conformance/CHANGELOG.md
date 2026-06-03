@@ -4,6 +4,12 @@
 
 _No unreleased changes._
 
+## [1.20.0] — 2026-06-02 — RFC 0082 §B channel-dispatch: Leg 3 targets the fixture's agent
+
+A one-line correctness fix to `agent-channel-dispatch.test.ts` Leg 3 (the seam-guarded cross-move non-re-resolution proof). The promote that moves the channel between the original run and the replay fork now passes `agentId: "core.conformance.channel-agent"` (the fixture's bound agent) to `driveDeploymentTransition`, instead of letting the host-sample `deployment-transition` seam default to its sample agent (`core.openwop.agents.sample`). Without this, Leg 3 could never observe a move — the seam promoted a different agent than the fixture binds, so a fresh fixture run's `stable` head was unchanged and Leg 3's `movedVersion === pinnedVersion` guard always self-skipped. Now a host whose promote actually mutates the deployment store for the bound agent can exercise Leg 3's strict assertion (a replay still carries the ORIGINAL pin after the channel moves). Hosts whose promote only emits an event (e.g. the reference sample seam) still self-skip honestly — no behavior change for them. Legs 1+2 (production-path resolve-and-pin + replay re-read) are unchanged, and the 1.19.0 second-host witness (MyndHyve) stands; this only widens what a future host can prove. No new scenario file (count unchanged at 324).
+
+**Version note:** this is a patch-scope change but is released as `1.20.0` (skipping `1.19.1`) because `1.19.1` is a reserved string in the `openwop-check-publish-metadata.sh` posture guard (a deliberate catch for stale pre-OpenWOP "WOP-era" version artifacts: `1.18.6` / `1.19.1` / `v19`). `EXPECTED_CONFORMANCE_VERSION` + the `check-npm-pack-contents.sh` assert advance to `1.20.0` in lockstep.
+
 ## [1.19.0] — 2026-06-02 — RFC 0082 §B production-path channel-dispatch scenario
 
 Standalone conformance minor — a scenario addition published via the `openwop-conformance/v1.19.0` per-package tag (PUBLISHING.md §"CI automation"; only the `publish-conformance` job runs), NOT a coordinated spec-corpus release. `EXPECTED_CONFORMANCE_VERSION` advances to `1.19.0` in lockstep. The steward prerequisite that lets an `agents.deployment` host (first witness: MyndHyve) prove the RFC 0082 §B channel resolve-and-pin contract from a real run graph under `OPENWOP_REQUIRE_BEHAVIOR=true`. RFC 0082 is already `Accepted`; this hardens §B coverage from seam-proven to production-path-proven — no RFC flip.

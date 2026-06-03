@@ -45,6 +45,10 @@ import { readDeploymentCap, driveDeploymentTransition } from '../lib/agentDeploy
 
 const FIXTURE_ID = 'conformance-agent-channel-dispatch';
 const BOUND_CHANNEL = 'stable';
+/** The agentId the fixture's node binds (`agent.channel`). Leg 3 promotes THIS
+ *  agent's channel head — not the deployment-transition seam's default sample
+ *  agent — so the move is observable to a fresh run of the fixture. */
+const BOUND_AGENT_ID = 'core.conformance.channel-agent';
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
 interface RunEventDoc {
@@ -176,6 +180,7 @@ describe.skipIf(HTTP_SKIP)('agent-channel-dispatch (RFC 0082 §B): production ru
     // the recorded fact rather than re-resolving the (now-moved) channel.
     const moved = await driveDeploymentTransition({
       scenario: 'promote',
+      agentId: BOUND_AGENT_ID,
       channel: BOUND_CHANNEL,
     });
     if (moved === null) {
