@@ -11,9 +11,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
-## [Unreleased]
+## [1.1.8 — unreleased]
 
+### Additive
+- **`interrupt.md`: document `suspend` as the accepted alias of `interrupt`.** Much of the v1 pack ecosystem (`core.openwop.hitl`, `core.openwop.flow`, and several vendor packs) calls the interrupt primitive `suspend` with the field aliases `reason`→`kind`/`resumeKey`→`key`/`answerSchema`→`resumeSchema`. A host SHOULD also expose `suspend` so those packs run unmodified; `interrupt` stays canonical and a host exposing only `interrupt` remains v1-compliant. Reconciles the de-facto ecosystem name with the normative surface — additive, no wire change.
 - **RFC 0089 (conformance certification bundle) Accepted.** The `openwop-conformance --certify <out.json>` generator landed in `conformance/src/cli.ts`: it fetches `/.well-known/openwop` (captured verbatim + canonical-JSON SHA-256), derives `claimedProfiles` from the captured document (reusing `profiles.ts` `deriveProfiles`/`isCoreStandard`/`agentPlatformStatus`), runs the suite recording each scenario file's terminal state via vitest's JSON reporter, validates the assembled bundle against `conformance-certification-bundle.schema.json` (Ajv2020) before writing, and never lists a vacuously-run scenario in `results.passed`. A real reference-host bundle generated against the in-memory reference host is committed at `examples/hosts/in-memory/certification-bundle.json` (claims exactly the profiles its discovery document derives — `openwop-core` + `openwop-stream-sse` + `openwop-stream-poll` + `openwop-node-packs` + `openwop-fixtures` — and `verifyBundle` accepts it), with a server-free round-trip assertion (schema-valid + `verifyBundle` accept + `discovery.sha256` reproduces) added to the RFC 0089 block of `spec-corpus-validity.test.ts`. Additive per `COMPATIBILITY.md` §2 — no wire-shape change. RFC counts: **Accepted 86 / Active 1 / Draft 2** (only RFC 0035 remains `Active`).
+
+---
 
 ## [1.1.7] — 2026-06-02 — the Active→Accepted graduation program + agent-platform capstone + SDK parity
 

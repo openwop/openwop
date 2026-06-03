@@ -36,6 +36,19 @@ interface NodeContext {
 }
 ```
 
+### `suspend` — accepted alias
+
+`interrupt` is the canonical name. Much of the v1 pack ecosystem — the
+`core.openwop.hitl` and `core.openwop.flow` packs plus several vendor packs —
+calls the primitive `suspend` instead, with the field aliases `reason` → `kind`,
+`resumeKey` → `key`, and `answerSchema` → `resumeSchema`. A host SHOULD also
+expose `suspend` as an alias of `interrupt` that accepts those aliased field
+names, so those packs run unmodified. The two names are interchangeable and
+share identical semantics (including the `key`-based replay short-circuit
+below); `interrupt` is preferred for new code. A host that exposes only
+`interrupt` remains v1-compliant — the alias is a compatibility convenience, not
+a new requirement.
+
 ### `InterruptPayload`
 
 ```typescript
