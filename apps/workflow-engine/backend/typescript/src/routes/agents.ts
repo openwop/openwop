@@ -13,7 +13,7 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import type { Express } from 'express';
+import type { Express, Request } from 'express';
 import { getAgentRegistry, type ResolvedAgentManifest } from '../executor/agentRegistry.js';
 import { runAgentDispatch, runAgentDispatchLive, AgentNotFoundError, type AgentDispatchRequest } from '../host/agentDispatch.js';
 import { createAiProvidersAdapter } from '../aiProviders/aiProvidersHost.js';
@@ -85,8 +85,9 @@ function userRecordToEntry(r: UserAgentRecord): AgentInventoryEntry {
 
 /** The tenant-visible inventory: registry agents (pack + boot-hydrated user)
  *  filtered by `ownerTenant`, plus a read-through merge of durable user agents
- *  that this instance hasn't hydrated yet. Wildcard/admin callers (`undefined` /
- *  `*`) already see the full hydrated set, so the extra storage read is skipped. */
+ *  that this instance hasn't hydrated yet. Explicit wildcard/admin callers
+ *  (`?tenantId=*`) see the full hydrated set, so the extra storage read is
+ *  skipped. */
 async function listVisibleAgents(
   storage: Storage | undefined,
   tenant: string | undefined,
@@ -111,24 +112,27 @@ async function listVisibleAgents(
  *  middleware:
  *    - `anon:<sid>` for cookie-anon callers
  *    - `user:<hash>` for OIDC-signed-in callers
- *    - `undefined` for API-key Bearer callers (the auth middleware
- *      sets `principal.tenants = ['*']` but doesn't bind `tenantId`;
- *      the conformance harness + admin tooling reach this path).
- *      Treated as wildcard-read here, matching the `runs.list` +
- *      `chat_sessions.list` patterns.
+ *    - `default` for API-key Bearer callers without an explicit tenant override
+ *      (bearer-shared demo posture).
  *    - `*` is the explicit wildcard from `?tenantId=*` overrides.
  *
- *  Wildcard sees everything — that's by-design for the conformance
- *  suite and admin tooling. Real user sessions (cookie-anon / OIDC)
- *  carry a concrete tenantId and only see their own user-authored
- *  agents. */
+ *  Wildcard sees everything only when requested explicitly — that's the admin
+ *  escape hatch. Normal sessions and bearer-shared callers carry a concrete
+ *  tenantId and only see their own user-authored agents. */
 function visibleTo(a: ResolvedAgentManifest, requestTenant: string | undefined): boolean {
   if (!a.ownerTenant) return true;
-  if (requestTenant === undefined || requestTenant === '*') return true;
+  if (requestTenant === '*') return true;
   return a.ownerTenant === requestTenant;
 }
 
 interface AgentReqLike { tenantId?: string }
+
+function tenantForInventory(req: Request): string {
+  const requestedTenant = typeof req.query.tenantId === 'string' ? req.query.tenantId : undefined;
+  const principalIsWildcard = (req.principal?.tenants ?? []).includes('*');
+  if (principalIsWildcard && requestedTenant) return requestedTenant;
+  return (req as AgentReqLike).tenantId ?? 'default';
+}
 
 export function registerAgentRoutes(app: Express, deps: AgentRoutesDeps = {}): void {
   // RFC 0072 §A — NORMATIVE read-only inventory (matches agent-inventory-response.schema.json).
@@ -137,12 +141,12 @@ export function registerAgentRoutes(app: Express, deps: AgentRoutesDeps = {}): v
   // is always live; a host that gates the advertisement MUST 404 these endpoints when
   // it does not advertise the capability (RFC 0072 §A: "MUST serve iff advertised").
   app.get('/v1/agents', async (req, res) => {
-    const tenant = (req as AgentReqLike).tenantId;
+    const tenant = tenantForInventory(req);
     const agents = await listVisibleAgents(deps.storage, tenant);
     res.json({ agents, total: agents.length });
   });
   app.get('/v1/agents/:agentId', async (req, res) => {
-    const tenant = (req as AgentReqLike).tenantId;
+    const tenant = tenantForInventory(req);
     // `resolve()` reads through to durable storage on a registry miss, so a
     // cold instance still serves a seeded/user agent it hasn't hydrated.
     const a = await getAgentRegistry().resolve(req.params.agentId);
@@ -158,12 +162,12 @@ export function registerAgentRoutes(app: Express, deps: AgentRoutesDeps = {}): v
   // Sample-extension aliases (RFC 0070 convenience; non-normative). The list
   // form additionally reports the host's runtime posture for the CLI.
   app.get('/v1/host/sample/agents', async (req, res) => {
-    const tenant = (req as AgentReqLike).tenantId;
+    const tenant = tenantForInventory(req);
     const agents = await listVisibleAgents(deps.storage, tenant);
     res.json({ agents, total: agents.length, runtime: { manifestRuntime: true } });
   });
   app.get('/v1/host/sample/agents/:agentId', async (req, res) => {
-    const tenant = (req as AgentReqLike).tenantId;
+    const tenant = tenantForInventory(req);
     const a = await getAgentRegistry().resolve(req.params.agentId);
     if (!a || !visibleTo(a, tenant)) {
       res.status(404).json({ error: 'not_found', message: `agent '${req.params.agentId}' is not installed on this host` });

@@ -5,7 +5,7 @@
  * AND `@media (prefers-color-scheme: dark)`. An <img>-referenced SVG can only see
  * the latter, so a manual toggle that contradicts the OS left the mark
  * black-on-dark. The clay accent (`#b95c3a`) stays literal — it reads in both
- * modes. White-label deployers with a custom `VITE_BRAND_LOGO_SRC` keep the
+ * modes. White-label deployers with a custom `VITE_BRAND_MARK_SRC` keep the
  * <img> path (see BrandMark); this inline mark is the default-OpenWOP-logo case.
  *
  * Static, trusted markup (our own committed asset) → dangerouslySetInnerHTML is

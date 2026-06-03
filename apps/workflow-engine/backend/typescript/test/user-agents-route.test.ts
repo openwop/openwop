@@ -223,10 +223,7 @@ describe('user-authored agents — DELETE /v1/host/sample/agents/{agentId}', () 
   });
 
   it('returns 404 for a non-existent agentId', async () => {
-    const del = await jsonFetch<{ message: string }>(
-      '/v1/host/sample/agents/user._anon.does-not-exist',
-      { method: 'DELETE' },
-    );
+    const del = await jsonFetch<{ message: string }>('/v1/host/sample/agents/user.default.does-not-exist', { method: 'DELETE' });
     expect(del.status).toBe(404);
   });
 
@@ -244,7 +241,7 @@ describe('user-authored agents — DELETE /v1/host/sample/agents/{agentId}', () 
 
 describe('user-authored agents — cross-tenant isolation in GET /v1/agents', () => {
   it('user-authored agents projected through GET /v1/agents', async () => {
-    // Create an agent (lands under the bearer-fallback _anon tenant).
+    // Create an agent (lands under the bearer-shared default tenant).
     await jsonFetch('/v1/host/sample/agents', {
       method: 'POST',
       body: JSON.stringify({
@@ -261,5 +258,24 @@ describe('user-authored agents — cross-tenant isolation in GET /v1/agents', ()
     const userAgent = r.body.agents.find((a) => a.persona === 'Inventory Probe');
     expect(userAgent).toBeDefined();
     expect(userAgent!.packName).toMatch(/^user:/);
+  });
+
+  it('does not expose user-authored agents across explicit tenant filters', async () => {
+    await jsonFetch('/v1/host/sample/agents', {
+      method: 'POST',
+      body: JSON.stringify({
+        persona: 'Tenant Scoped Probe',
+        modelClass: 'chat',
+        systemPrompt: 'You only appear in your tenant.',
+      }),
+    });
+
+    const other = await jsonFetch<{ agents: Array<{ persona: string }> }>('/v1/agents?tenantId=someone-else');
+    expect(other.status).toBe(200);
+    expect(other.body.agents.some((a) => a.persona === 'Tenant Scoped Probe')).toBe(false);
+
+    const wildcard = await jsonFetch<{ agents: Array<{ persona: string }> }>('/v1/agents?tenantId=*');
+    expect(wildcard.status).toBe(200);
+    expect(wildcard.body.agents.some((a) => a.persona === 'Tenant Scoped Probe')).toBe(true);
   });
 });

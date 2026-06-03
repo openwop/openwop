@@ -6,9 +6,9 @@ logic**. Brand identity is isolated into three small seams:
 
 | Seam | What it controls | How you change it |
 |---|---|---|
-| `VITE_BRAND_*` env vars | Brand **strings + asset paths**: product name, wordmark, footer, assistant persona, logo, favicon, document title, fonts, privacy domain/URLs | Set env vars at build time (no code edit) |
+| `VITE_BRAND_*` env vars | Brand **strings + asset paths**: product name, wordmark, footer, assistant persona, icon mark, lockup, favicon, document title, fonts, privacy domain/URLs | Set env vars at build time (no code edit) |
 | `src/brand/brand.css` | Brand **colors + typography** (CSS custom properties) | Uncomment + set tokens in one file |
-| Asset files in `public/` | The logo image, and any custom favicon/font files you reference | Drop in replacements |
+| Asset files in `public/` | The icon mark / lockup image, and any custom favicon/font files you reference | Drop in replacements |
 
 The stock build with no overrides renders the standard OpenWOP identity,
 byte-for-byte. Everything below is opt-in.
@@ -38,13 +38,20 @@ default in `src/brand/defaults.ts`.
 | `VITE_BRAND_TAGLINE` | `workflow engine` | Short descriptor |
 | `VITE_BRAND_FOOTER_TEXT` | `Sample / template code. Not production-hardened.` | Footer line |
 | `VITE_BRAND_ASSISTANT_NAME` | `OpenWOP` | Name the in-app AI assistant refers to itself by |
-| `VITE_BRAND_LOGO_SRC` | `/OpenWOP.svg` | Header logo (path under `public/` or a URL) |
+| `VITE_BRAND_MARK_SRC` | `/OpenWOP.svg` | Square icon mark for the sidebar header + PWA manifest (path under `public/` or a URL) |
+| `VITE_BRAND_LOCKUP_SRC` | *(blank)* | Optional full lockup asset for marketing/brand surfaces; not rendered by the default sidebar |
+| `VITE_BRAND_LOGO_SRC` | `/OpenWOP.svg` | Deprecated alias for `VITE_BRAND_MARK_SRC` (kept so existing forks keep working) |
 | `VITE_BRAND_FAVICON_SRC` | *(inline SVG)* | Favicon — a URL or `data:` URI |
 | `VITE_BRAND_DOCUMENT_TITLE` | `workflow-engine — OpenWOP Reference UI` | Browser tab `<title>` |
 | `VITE_BRAND_FONTS_HREF` | *(Google Fonts triple)* | Web-font stylesheet `<link href>` |
 | `VITE_BRAND_PRIMARY_DOMAIN` | `app.openwop.dev` | Domain shown in the privacy disclosure |
+| `VITE_BRAND_INSTANCE_NAME` | `Demo host` | Workspace / instance name shown in the sidebar chrome |
 | `VITE_BRAND_HOME_URL` | `https://openwop.dev/` | "Learn more" link (privacy footer) |
 | `VITE_BRAND_REPO_URL` | `https://github.com/openwop/openwop` | Source-repo link (privacy footer) |
+| `VITE_BRAND_THEME_COLOR` | `#1a1a17` | PWA manifest + mobile browser chrome color |
+| `VITE_BRAND_DEFAULT_THEME` | `system` | Initial app theme when the visitor has not chosen one (`system`, `light`, or `dark`) |
+| `VITE_BRAND_APP_GATE_MODE` | `none` | App-wide pre-render gate (`none`, `password`, or `sign-in`) |
+| `VITE_BRAND_APP_GATE_PASSWORD` | *(blank)* | Password value for AppGate when `mode=password` |
 
 **Example `.env.production.local`:**
 
@@ -56,19 +63,27 @@ VITE_BRAND_MARK_EMPHASIS=Flow
 VITE_BRAND_MARK_SUB=automation
 VITE_BRAND_ASSISTANT_NAME=Acme Flow
 VITE_BRAND_DOCUMENT_TITLE=Acme Flow — Workflow Automation
-VITE_BRAND_LOGO_SRC=/acme-logo.svg
+VITE_BRAND_MARK_SRC=/acme-mark.svg
+VITE_BRAND_LOCKUP_SRC=/acme-lockup.svg
 VITE_BRAND_PRIMARY_DOMAIN=flow.acme.example
+VITE_BRAND_INSTANCE_NAME=Acme Workspace
 VITE_BRAND_HOME_URL=https://acme.example/
 VITE_BRAND_REPO_URL=https://github.com/acme/flow
+VITE_BRAND_DEFAULT_THEME=light
 ```
 
-### Swapping the logo + favicon
+### Swapping the icon mark, lockup + favicon
 
-1. Drop your logo into `public/` (e.g. `public/acme-logo.svg`) and set
-   `VITE_BRAND_LOGO_SRC=/acme-logo.svg`.
-2. For the favicon, either set `VITE_BRAND_FAVICON_SRC` to a `/`-rooted
+1. Drop a **square icon mark** into `public/` (e.g. `public/acme-mark.svg`) and
+   set `VITE_BRAND_MARK_SRC=/acme-mark.svg`. This is the asset used in the
+   28×28 sidebar slot and the generated PWA manifest.
+2. If you also have a full wordmark/lockup asset, drop it into `public/` and set
+   `VITE_BRAND_LOCKUP_SRC=/acme-lockup.svg`. The stock sidebar renders the text
+   wordmark from `VITE_BRAND_MARK_PRE/EMPHASIS/SUB`, so do **not** point the
+   square mark at a full lockup or the brand will appear twice.
+3. For the favicon, either set `VITE_BRAND_FAVICON_SRC` to a `/`-rooted
    path of a file in `public/`, or paste a `data:` URI inline.
-3. The header logo's `alt` is intentionally empty + `aria-hidden` — the
+4. The header mark's `alt` is intentionally empty + `aria-hidden` — the
    adjacent wordmark already names the product to screen readers, so the
    image is decorative. Keep it that way to avoid double-announcing.
 
@@ -80,13 +95,17 @@ it. A forgotten field ships OpenWOP branding silently — so run the guard below
 | Surface | Override |
 |---|---|
 | Product name / wordmark | `VITE_BRAND_PRODUCT_NAME`, `VITE_BRAND_MARK_PRE/EMPHASIS/SUB` |
-| Header logo | `VITE_BRAND_LOGO_SRC` (+ drop the SVG in `public/`) |
+| Header icon mark | `VITE_BRAND_MARK_SRC` (+ drop the square SVG in `public/`; `VITE_BRAND_LOGO_SRC` remains a deprecated alias) |
+| Optional full lockup | `VITE_BRAND_LOCKUP_SRC` (+ drop the lockup SVG in `public/`) |
 | **Favicon** | `VITE_BRAND_FAVICON_SRC` (commonly missed → ships the OpenWOP "O") |
-| PWA manifest + mobile `theme-color` | `VITE_BRAND_THEME_COLOR` (the `manifest.webmanifest` is auto-stamped at build from product name + favicon + this color — no hand-authored manifest) |
+| PWA manifest + mobile `theme-color` | `VITE_BRAND_THEME_COLOR` (the `manifest.webmanifest` is auto-stamped at build from product name + icon mark + this color — no hand-authored manifest) |
 | Document `<title>` | `VITE_BRAND_DOCUMENT_TITLE` |
 | Tagline / footer / assistant name | `VITE_BRAND_TAGLINE`, `VITE_BRAND_FOOTER_TEXT`, `VITE_BRAND_ASSISTANT_NAME` |
 | Domain / home / repo links | `VITE_BRAND_PRIMARY_DOMAIN`, `VITE_BRAND_HOME_URL`, `VITE_BRAND_REPO_URL` |
 | Fonts | `VITE_BRAND_FONTS_HREF` |
+| Instance / workspace label | `VITE_BRAND_INSTANCE_NAME` |
+| Default theme | `VITE_BRAND_DEFAULT_THEME` |
+| App gate config | `VITE_BRAND_APP_GATE_MODE`, `VITE_BRAND_APP_GATE_PASSWORD` |
 | Colors / type | `src/brand/brand.css` (§2 below) |
 | Backend / Firebase config | a scrubbed `.env.production` — start from **`.env.production.example`**, never the upstream's `.env.production` (it points at the steward's backend) |
 
@@ -140,7 +159,7 @@ keep legible on your `--paper`); `--color-flag-*`, `--color-trace-*`
 | ✅ Clean seam | ⚠️ Needs manual review |
 |---|---|
 | Product name, wordmark, footer, assistant persona | The **privacy page** (`src/PrivacyPage.tsx`) — its domain/URLs are tokenized, but the cookie name, retention windows, Cloud Run specifics, and steward contact are deployment/legal content you should rewrite for your service |
-| Logo, favicon, document title, fonts | The **demo banner** (`src/builder/DemoHostBanner.tsx`) — "anonymous demo / resets after 24h" copy is tied to the public-demo deployment mode; review if you run a persistent backend |
+| Icon mark, optional lockup, favicon, document title, fonts, instance name, default theme | The **demo banner** (`src/builder/DemoHostBanner.tsx`) — "anonymous demo / resets after 24h" copy is tied to the public-demo deployment mode; review if you run a persistent backend |
 | Accent + surface palette, typography, status/trace colors | Backend-set strings (e.g. the `openwop.session` cookie name) live in the server, not this SPA |
 | Privacy domain + home/repo links | `package.json` `name`/`description` — internal, not user-facing; rename if forking |
 
@@ -163,17 +182,25 @@ in data files, and the runtime fallbacks are brand-neutral. Configure via env
 | `OPENWOP_SERVICE_NAME` | `openwop-workflow-engine-sample` | Service name in `/.well-known/openwop` + the OpenAPI `info.title` |
 | `OPENWOP_SERVICE_DESCRIPTION` | `An OpenWOP-compatible workflow and agent orchestration host.` | OpenAPI `info.description` (brand-neutral by default — no marketing URL) |
 | `OPENWOP_MANAGED_SYSTEM_PROMPT` | *(brand-neutral generic assistant prompt)* | Grounding prompt for the managed "try it free" chat tier. **The code fallback is generic** — set this to your own grounding (the reference deploy supplies the OpenWOP blurb here) |
-| `OPENWOP_DEMO_SEED_ENABLED` | `true` | Set `false` to ship a clean tenant with NO demo personas/boards |
+| `OPENWOP_DEMO_SEED_ENABLED` | `true` | Set `false` to ship a clean tenant with NO demo personas/boards/schedules/org chart |
+| `OPENWOP_DEPLOY_POSTURE` | `cookie-per-visitor` | Backend auth posture: `bearer-shared`, `cookie-per-visitor`, or `auth` |
+| `OPENWOP_MANAGED_ANON_SIGNIN_REQUIRED` | *(derived)* | Optional override for the managed free-tier sign-in wall (`true`/`false`); demo postures allow anon by default, `auth` requires sign-in |
 | `OPENWOP_SESSION_COOKIE_NAME` | `__session` | Session cookie name (already un-branded; Firebase Hosting requires `__session`) |
 | `OPENWOP_VAPID_SUBJECT` | `mailto:admin@openwop.dev` | Web-push contact (RFC 8030) |
 
 ### Demo seed content
 
-The demo personas (Sally, Marcus, …), their boards, cards, schedules, and
-org-chart live in **`backend/typescript/src/host/seed-data/demoAgents.json`** —
-the brand-authoring surface. Edit that JSON to ship your own demo content (it's
+The demo seed runs through `seedEverything(tenant)` and currently covers the
+registered stock domains: user-agent inventory, roster, boards, cards,
+schedules, and org chart. The persona content (Sally, Marcus, …), boards, cards,
+schedules, and org-chart positions live in
+**`backend/typescript/src/host/seed-data/demoAgents.json`** — the
+brand-authoring surface. Edit that JSON to ship your own demo content (it's
 type-checked at build time and bundled into the image), or set
-`OPENWOP_DEMO_SEED_ENABLED=false` for none. Each persona also takes an optional
+`OPENWOP_DEMO_SEED_ENABLED=false` for none. The app shell calls the idempotent
+seed endpoint once per page load after `<AppGate>` passes, so a cookie-scoped
+visitor who lands on a deep link does not start from a blank tenant. Each
+persona also takes an optional
 **`autonomyLevel`** (`"auto"` default, or `"review"`): a `review` persona ships
 in "agents propose, humans dispose" mode — its heartbeat queues a proposal to
 the approval inbox rather than running it (the stock seed ships **Nora** in
@@ -218,7 +245,7 @@ The app is **two independent deploys** — backend (Cloud Run) and frontend
    and non-default (guards against shipping a localhost-pointed bundle).
 
 3. **Verify**: load the page and confirm the tab title, header wordmark,
-   logo, and footer all show your brand; `curl https://<your-domain>/`
+   icon mark, and footer all show your brand; `curl https://<your-domain>/`
    should reference the same `assets/index-<hash>.js` your local `dist/`
    just built.
 
@@ -230,6 +257,6 @@ The app is **two independent deploys** — backend (Cloud Run) and frontend
 |---|---|
 | `src/brand/defaults.ts` | Default brand values + `VITE_BRAND_*` → field mapping (pure data; shared by client + Vite plugin) |
 | `src/brand/brand.ts` | Client-resolved `brand` singleton (layers `import.meta.env` over defaults) |
-| `src/brand/BrandMark.tsx` | The header logo + wordmark component |
+| `src/brand/BrandMark.tsx` | The header icon mark + wordmark component |
 | `src/brand/brand.css` | The color/type override layer (loads after `global.css`) |
 | `vite.config.ts` → `openwop-brand-html` | Stamps title/favicon/fonts into `index.html` at build time |

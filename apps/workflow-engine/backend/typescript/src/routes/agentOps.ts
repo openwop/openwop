@@ -2,9 +2,9 @@
  * Agent operations — host-extension routes (sample-grade, non-normative).
  *
  * Two demo-experience surfaces (PRD §14, §17):
- *   POST /v1/host/sample/demo/seed            — idempotently seed the built-in
- *                                                demo agents for the caller's
- *                                                tenant ("Load demo agents")
+ *   POST /v1/host/sample/demo/seed            — idempotently seed all built-in
+ *                                                demo domains for the caller's
+ *                                                tenant ("Load demo data")
  *   POST /v1/host/sample/roster/{rosterId}/check
  *                                              — the agent "heartbeat": pick the
  *                                                first eligible To Do card on the
@@ -16,7 +16,7 @@
  * attributed to the named agent, and moves the card to Working. A real
  * background daemon (claim cadence, concurrency, dead-letter) is deferred.
  *
- * @see src/host/demoSeed.ts — the idempotent seed
+ * @see src/host/seedEverything.ts — the idempotent seed orchestrator
  * @see src/host/runStarter.ts — the shared run dispatch
  */
 
@@ -24,7 +24,7 @@ import type { Express, Request } from 'express';
 import { OpenwopError } from '../types.js';
 import type { HostAdapterSuite } from '../host/index.js';
 import type { Storage } from '../storage/storage.js';
-import { seedDemoAgents } from '../host/demoSeed.js';
+import { seedEverything } from '../host/seedEverything.js';
 import { getRosterEntry } from '../host/rosterService.js';
 import { runHeartbeatOnce } from '../host/heartbeatService.js';
 import { projectAgentActivity } from '../host/agentActivity.js';
@@ -39,10 +39,10 @@ function tenantOf(req: Request): string {
 }
 
 export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
-  // "Load demo agents" — idempotent per-tenant seed.
+  // "Load demo data" — idempotent per-tenant seed across registered domains.
   app.post('/v1/host/sample/demo/seed', async (req, res, next) => {
     try {
-      const result = await seedDemoAgents(tenantOf(req), deps.storage);
+      const result = await seedEverything(tenantOf(req), deps.storage);
       res.status(200).json(result);
     } catch (err) {
       next(err);

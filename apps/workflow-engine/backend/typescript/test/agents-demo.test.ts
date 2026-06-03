@@ -2,8 +2,8 @@
  * Agents-demo experience — backend foundations (PRD Phase 0).
  *
  * Covers the new host-extension surfaces that back the "AI coworkers" UX:
- *   - POST /v1/host/sample/demo/seed seeds 5 agents idempotently (no-op on
- *     re-run; never clobbers an existing roster)
+ *   - POST /v1/host/sample/demo/seed seeds the registered demo domains
+ *     idempotently (no-op on re-run; never clobbers an existing roster)
  *   - seeded boards carry source-tagged cards; the To Do column triggers the
  *     agent's first portfolio workflow
  *   - POST /v1/host/sample/roster/:id/check (heartbeat) claims the first To Do
@@ -63,10 +63,11 @@ interface RosterEntry {
 
 describe('agents-demo backend foundations', () => {
   it('seeds 5 demo agents and is idempotent', async () => {
-    const first = await api<{ seeded: boolean; agents: number }>('/v1/host/sample/demo/seed', { method: 'POST', body: '{}' });
+    const first = await api<{ seeded: boolean; agents: number; domains: string[] }>('/v1/host/sample/demo/seed', { method: 'POST', body: '{}' });
     expect(first.status).toBe(200);
     expect(first.body.seeded).toBe(true);
     expect(first.body.agents).toBe(5);
+    expect(first.body.domains).toEqual(['user-agents', 'roster', 'boards', 'cards', 'schedules', 'org-chart']);
 
     const roster = await api<{ roster: RosterEntry[] }>('/v1/host/sample/roster');
     expect(roster.body.roster.length).toBe(5);
@@ -80,8 +81,9 @@ describe('agents-demo backend foundations', () => {
     expect(sally.autonomyLevel).toBeUndefined();
 
     // Re-seed is a no-op (does not clobber the existing roster).
-    const second = await api<{ seeded: boolean }>('/v1/host/sample/demo/seed', { method: 'POST', body: '{}' });
+    const second = await api<{ seeded: boolean; domains: string[] }>('/v1/host/sample/demo/seed', { method: 'POST', body: '{}' });
     expect(second.body.seeded).toBe(false);
+    expect(second.body.domains).toEqual(['user-agents', 'roster', 'boards', 'cards', 'schedules', 'org-chart']);
     const rosterAgain = await api<{ roster: RosterEntry[] }>('/v1/host/sample/roster');
     expect(rosterAgain.body.roster.length).toBe(5);
   });

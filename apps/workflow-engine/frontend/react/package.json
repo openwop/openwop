@@ -6,11 +6,12 @@
   "description": "OpenWOP reference application — React frontend consuming @openwop/openwop. Sample / template code; not production-hardened. See ../../README.md.",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && node scripts/check-prompt-ref-defaults.mjs && node scripts/check-css-tokens.mjs && vite build && node scripts/check-built-css.mjs",
+    "build": "tsc --noEmit && node scripts/check-prompt-ref-defaults.mjs && node scripts/check-brand-resolver.mjs && node scripts/check-css-tokens.mjs && vite build && node scripts/check-built-css.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "check:prompt-defaults": "node scripts/check-prompt-ref-defaults.mjs",
     "check:css-tokens": "node scripts/check-css-tokens.mjs",
+    "check:brand-resolver": "node scripts/check-brand-resolver.mjs",
     "check:built-css": "node scripts/check-built-css.mjs"
   },
   "dependencies": {

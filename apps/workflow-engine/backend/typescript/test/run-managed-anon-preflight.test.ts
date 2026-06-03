@@ -32,6 +32,7 @@ beforeAll(async () => {
   process.env.OPENWOP_STORAGE_DSN = 'memory://';
   process.env.OPENWOP_AUTH_DISABLE_COOKIES = '';
   process.env.OPENWOP_SESSION_SECRET = 'b'.repeat(48);
+  process.env.OPENWOP_MANAGED_ANON_SIGNIN_REQUIRED = 'true';
   // A user-tier bearer that the bearer allow-list accepts as a wildcard
   // principal — used to assert the gate is anon-only (signed-in user
   // would normally come in via OIDC, but the wildcard bearer is a
@@ -51,10 +52,11 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await new Promise<void>((res) => server.close(() => res()));
+  if (server) await new Promise<void>((res) => server.close(() => res()));
   delete process.env.OPENWOP_AUTH_DISABLE_COOKIES;
   delete process.env.OPENWOP_SESSION_SECRET;
   delete process.env.OPENWOP_API_KEYS;
+  delete process.env.OPENWOP_MANAGED_ANON_SIGNIN_REQUIRED;
 });
 
 function extractCookie(setCookieHeader: string | null): string | null {

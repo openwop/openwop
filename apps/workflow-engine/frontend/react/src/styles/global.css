@@ -2880,6 +2880,71 @@ pre {
 }
 .signin-modal-cancel:hover { color: var(--clay); }
 
+.app-gate {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-5);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  color: var(--ink);
+}
+.app-gate-panel {
+  width: min(100%, 420px);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: 0 18px 50px var(--ink-shadow);
+  padding: var(--space-5);
+}
+.app-gate-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: var(--space-4);
+}
+.app-gate-product {
+  font-family: var(--serif);
+  font-size: 25px;
+  line-height: 1;
+}
+.app-gate-instance {
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.app-gate h1 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.15;
+}
+.app-gate p {
+  margin: var(--space-2) 0 var(--space-4);
+  color: var(--ink-2);
+}
+.app-gate-form {
+  display: grid;
+  gap: var(--space-3);
+}
+.app-gate-form label {
+  display: grid;
+  gap: var(--space-1);
+  color: var(--ink-2);
+  font-size: 13px;
+}
+.app-gate-form input {
+  width: 100%;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper-2);
+  color: var(--ink);
+  padding: 10px 11px;
+}
+.app-gate-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
 .account-menu { position: relative; }
 .account-menu-trigger {
   display: flex; align-items: center; gap: var(--space-2);

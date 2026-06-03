@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
+import { brand } from '../brand/brand.js';
 import { BrandMark } from '../brand/BrandMark.js';
 import { SignInButton } from '../auth/SignInButton.js';
 import { NotificationBell } from '../notifications/NotificationBell.js';
@@ -62,7 +63,7 @@ export function Sidebar({ netOpen, onToggleNet }: { netOpen: boolean; onToggleNe
           <span className="app-workspace-icon" aria-hidden><BuildingIcon size={16} /></span>
           <span className="app-workspace-meta">
             <span className="app-workspace-eyebrow">Workspace</span>
-            <span className="app-workspace-name">Demo host</span>
+            <span className="app-workspace-name">{brand.instanceName}</span>
           </span>
           <span className="app-workspace-caret" aria-hidden><ChevronRightIcon size={14} /></span>
         </Link>

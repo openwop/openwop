@@ -34,6 +34,7 @@ import { createLogger } from '../observability/logger.js';
 import { runQuotaMiddleware, reserveConcurrentSlot } from '../middleware/rateLimit.js';
 import { notifyRunTerminal } from '../executor/runLifecycle.js';
 import { isManagedCredentialRef, MANAGED_DEFAULTING_TYPE_IDS } from '../providers/managedProvider.js';
+import { managedAnonSignInRequired } from '../host/deployPosture.js';
 
 const log = createLogger('routes.runs');
 
@@ -137,7 +138,10 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
         // code at run-create so the UI can prompt for sign-in before
         // any work is done. Symmetrical with the capability-gated
         // refusal above.
-        if (tenantId.startsWith('anon:') && hasManagedCredentialRef(wf.definition.nodes)) {
+        if (managedAnonSignInRequired()
+          && tenantId.startsWith('anon:')
+          && hasManagedCredentialRef(wf.definition.nodes)
+        ) {
           throw new OpenwopError(
             'sign_in_required',
             'Sign in to use the free tier.',

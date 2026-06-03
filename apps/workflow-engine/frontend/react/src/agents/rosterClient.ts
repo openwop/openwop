@@ -93,12 +93,12 @@ export async function deleteRosterEntry(rosterId: string): Promise<void> {
   if (!res.ok) throw new Error(`deleteRosterEntry returned ${res.status}`);
 }
 
-/** "Load demo agents" — idempotently seed the built-in demo agents for the
- *  caller's tenant. A no-op when the roster is already populated. */
-export async function seedDemoAgents(): Promise<{ seeded: boolean; agents: number }> {
+/** "Load demo data" — idempotently seed the built-in demo domains for the
+ *  caller's tenant. A no-op when the tenant already has those demo rows. */
+export async function seedDemoAgents(): Promise<{ seeded: boolean; agents: number; domains?: string[] }> {
   const res = await fetch(`${config.baseUrl}/v1/host/sample/demo/seed`, fetchOpts({ method: 'POST', headers: jsonHeaders(), body: '{}' }));
   if (!res.ok) throw new Error(`seedDemoAgents returned ${res.status}`);
-  return (await res.json()) as { seeded: boolean; agents: number };
+  return (await res.json()) as { seeded: boolean; agents: number; domains?: string[] };
 }
 
 export interface HeartbeatResult {

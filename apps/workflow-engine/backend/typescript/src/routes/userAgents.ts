@@ -569,14 +569,12 @@ function readTenantId(req: { tenantId?: unknown }): string {
   if (typeof tid === 'string' && tid.length > 0 && tid !== '*') {
     return tid;
   }
-  // Bearer-authed callers (conformance harness, admin tooling) reach
-  // this route with `req.tenantId === undefined` because the API-key
-  // allowlist path doesn't bind a tenant (`tenants: ['*']` instead).
-  // Mirror `sampleChat.tenantFromReq` and bucket them under `_anon`
-  // so the route is reachable in tests + admin smoke probes without
-  // a sign-in. Cookie-anon sessions get their own real `anon:<sid>`,
-  // so this fallback only catches the wildcard case.
-  return '_anon';
+  // Bearer-authed demo callers reach this route with `req.tenantId ===
+  // undefined` because the API-key allowlist path doesn't bind a tenant
+  // (`tenants: ['*']` instead). Bucket them under the shared demo tenant so
+  // POST /v1/host/sample/agents and GET /v1/agents agree in bearer-shared
+  // posture. Cookie-anon sessions get their own real `anon:<sid>`.
+  return 'default';
 }
 
 function slugify(name: string): string {

@@ -6,6 +6,53 @@ so future maintainers can rebuild it from scratch in <30 min.
 
 Read alongside `DEPLOY-SMOKE.md` (the live-deploy verification sequence).
 
+## White-label quick path
+
+For a new branded fork, use the deploy helper instead of copying the
+`app.openwop.dev` commands below verbatim. It keeps the backend -> frontend
+order, grants Secret Manager access to the runtime service account, builds the
+SPA with an SSE URL that bypasses the Firebase `/api` proxy, runs the branding
+leak guard, deploys Firebase Hosting, and verifies `/api/readiness`.
+
+The helper is a dry run unless explicitly confirmed:
+
+```bash
+OPENWOP_GCP_PROJECT=<your-project> \
+OPENWOP_RUN_SERVICE=<your-cloud-run-service> \
+OPENWOP_RUN_REGION=<region> \
+OPENWOP_FIREBASE_TARGET=<hosting-target> \
+OPENWOP_PUBLIC_BASE_URL=https://<your-domain> \
+bash apps/workflow-engine/deploy/up.sh
+```
+
+The helper defaults `OPENWOP_DEPLOY_POSTURE=cookie-per-visitor`: every visitor
+gets an isolated anonymous cookie tenant, and the managed free tier is usable
+without sign-in under the existing rate limits. Set
+`OPENWOP_DEPLOY_POSTURE=bearer-shared` for a shared demo token posture, or
+`OPENWOP_DEPLOY_POSTURE=auth` to require sign-in for managed-tier turns.
+`OPENWOP_MANAGED_ANON_SIGNIN_REQUIRED=true|false` can override only that
+managed-tier sign-in wall.
+
+After the printed commands look right, execute them:
+
+```bash
+OPENWOP_DEPLOY_CONFIRM=1 \
+OPENWOP_GCP_PROJECT=<your-project> \
+OPENWOP_RUN_SERVICE=<your-cloud-run-service> \
+OPENWOP_RUN_REGION=<region> \
+OPENWOP_FIREBASE_TARGET=<hosting-target> \
+OPENWOP_PUBLIC_BASE_URL=https://<your-domain> \
+bash apps/workflow-engine/deploy/up.sh
+```
+
+Before the live run, copy
+`frontend/react/.env.production.example` to `.env.production` and fill in your
+`VITE_BRAND_*` values. `scripts/check-branding.sh` intentionally fails if the
+built bundle still contains stock OpenWOP title/favicon/domain/instance
+defaults. For existing Cloud Run services, the helper uses merge-style
+`--update-secrets` / `--update-env-vars`; keep using those forms for one-off
+changes and avoid `--set-*`, which replaces the whole binding set.
+
 ## Prerequisites
 
 - GCP project `openwop-dev` exists. Owner = `admin@myndhyve.ai`.

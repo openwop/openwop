@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { brand } from '../brand/brand.js';
 import { SunIcon, MoonIcon, MonitorIcon } from './icons/index.js';
 
 /**
@@ -24,7 +25,7 @@ function readTheme(): Theme {
     const t = localStorage.getItem(KEY);
     if (t === 'dark' || t === 'light' || t === 'system') return t;
   } catch { /* ignore */ }
-  return 'system';
+  return brand.defaultTheme;
 }
 
 const OPTIONS: { value: Theme; label: string; Icon: typeof SunIcon }[] = [

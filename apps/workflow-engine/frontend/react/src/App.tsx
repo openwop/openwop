@@ -24,6 +24,8 @@ import { RosterPage } from './agents/RosterPage.js';
 import { NotificationPanel } from './notifications/NotificationPanel.js';
 import { useNotificationStore } from './notifications/notificationStore.js';
 import { Sidebar } from './chrome/Sidebar.js';
+import { AppGate } from './chrome/AppGate.js';
+import { AutoSeedDemoData } from './chrome/AutoSeedDemoData.js';
 import { CommandPalette } from './ui/CommandPalette.js';
 import { Toaster } from './ui/toast.js';
 import { AgentsPage } from './agents/AgentsPage.js';
@@ -79,7 +81,9 @@ export function App() {
     NARROW_ROUTES.has(location.pathname) ||
     /^\/agents\/templates\/[^/]+/.test(location.pathname); // agent detail (not the list)
   return (
+    <AppGate>
     <div className={isChatPage ? 'app-shell app-shell--ai' : 'app-shell'}>
+      <AutoSeedDemoData />
       {/* Persistent left rail (Phase 1): grouped Build / Operate / Admin nav,
           collapsible, with the workspace/org switcher + account chrome. Replaces
           the former top-nav + Advanced/Settings dropdowns. Chat stays first
@@ -150,5 +154,6 @@ export function App() {
       <CommandPalette />
       <Toaster />
     </div>
+    </AppGate>
   );
 }

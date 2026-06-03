@@ -47,6 +47,11 @@ fi
 grep -qiE '(og:site_name|application-name)[^>]*OpenWOP' "$INDEX" \
   && flag "social/app meta still names OpenWOP (set VITE_BRAND_PRODUCT_NAME)"
 
+# 5) Instance/workspace name left at the stock demo label.
+if grep -rqiE 'Demo host' "$DIST"/assets/*.js 2>/dev/null; then
+  flag "sidebar instance name is still the stock Demo host (set VITE_BRAND_INSTANCE_NAME)"
+fi
+
 if [[ "$leaks" -gt 0 ]]; then
   echo "[check-branding] FAIL — $leaks OpenWOP default(s) leaked into the build." >&2
   echo "[check-branding] Set the matching VITE_BRAND_* vars (WHITE-LABEL.md) and rebuild." >&2

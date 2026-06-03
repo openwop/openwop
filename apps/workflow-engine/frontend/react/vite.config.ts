@@ -94,11 +94,12 @@ export default defineConfig(({ mode }) => {
               .replaceAll('{{BRAND_TITLE}}', brand.documentTitle)
               .replaceAll('{{BRAND_FAVICON}}', brand.faviconSrc)
               .replaceAll('{{BRAND_FONTS_HREF}}', brand.fontsHref)
-              .replaceAll('{{BRAND_THEME_COLOR}}', brand.themeColor);
+              .replaceAll('{{BRAND_THEME_COLOR}}', brand.themeColor)
+              .replaceAll('{{BRAND_DEFAULT_THEME}}', brand.defaultTheme);
           },
         },
         // Emit a brand-stamped PWA manifest at build time (index.html links it
-        // via `<link rel="manifest">`). name / theme-color / icon all come from
+        // via `<link rel="manifest">`). name / theme-color / icon mark all come from
         // `VITE_BRAND_*`, so a fork's `npm run build` ships an installable app
         // with ITS identity — no hand-authored manifest. Build-only: in
         // `vite dev` the manifest link 404s harmlessly (install is a prod concern).
@@ -112,7 +113,7 @@ export default defineConfig(({ mode }) => {
             display: 'standalone',
             background_color: brand.themeColor,
             theme_color: brand.themeColor,
-            icons: [{ src: brand.faviconSrc, sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
+            icons: [{ src: brand.markSrc, sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
           };
           this.emitFile({
             type: 'asset',

@@ -14,9 +14,25 @@
  * Brand is fixed at build time, so a plain module singleton is correct —
  * no React context / provider is needed.
  */
-import { BRAND_DEFAULTS, coalesce, type BrandConfig } from './defaults.js';
+import { BRAND_DEFAULTS, coalesce, optional, type BrandConfig } from './defaults.js';
 
 const env = import.meta.env;
+const markSrc =
+  optional(env.VITE_BRAND_MARK_SRC as string | undefined) ??
+  optional(env.VITE_BRAND_LOGO_SRC as string | undefined) ??
+  BRAND_DEFAULTS.markSrc;
+
+function coalesceTheme(value: string | undefined): BrandConfig['defaultTheme'] {
+  return value === 'system' || value === 'light' || value === 'dark'
+    ? value
+    : BRAND_DEFAULTS.defaultTheme;
+}
+
+function coalesceGateMode(value: string | undefined): BrandConfig['appGate']['mode'] {
+  return value === 'none' || value === 'password' || value === 'sign-in'
+    ? value
+    : BRAND_DEFAULTS.appGate.mode;
+}
 
 export const brand: BrandConfig = {
   productName: coalesce(
@@ -40,7 +56,12 @@ export const brand: BrandConfig = {
     env.VITE_BRAND_ASSISTANT_NAME as string | undefined,
     BRAND_DEFAULTS.assistantName,
   ),
-  logoSrc: coalesce(env.VITE_BRAND_LOGO_SRC as string | undefined, BRAND_DEFAULTS.logoSrc),
+  markSrc,
+  lockupSrc: coalesce(
+    env.VITE_BRAND_LOCKUP_SRC as string | undefined,
+    BRAND_DEFAULTS.lockupSrc,
+  ),
+  logoSrc: markSrc,
   // faviconSrc / documentTitle / fontsHref are stamped into index.html by
   // the Vite plugin at build time; they are not consumed from the client
   // bundle. Kept on the object for a single complete shape.
@@ -60,9 +81,21 @@ export const brand: BrandConfig = {
     env.VITE_BRAND_PRIMARY_DOMAIN as string | undefined,
     BRAND_DEFAULTS.primaryDomain,
   ),
+  instanceName: coalesce(
+    env.VITE_BRAND_INSTANCE_NAME as string | undefined,
+    BRAND_DEFAULTS.instanceName,
+  ),
   homeUrl: coalesce(env.VITE_BRAND_HOME_URL as string | undefined, BRAND_DEFAULTS.homeUrl),
   repoUrl: coalesce(env.VITE_BRAND_REPO_URL as string | undefined, BRAND_DEFAULTS.repoUrl),
   // Stamped into the PWA manifest + theme-color meta by the Vite plugin at
   // build time (like faviconSrc); kept here for a single complete shape.
   themeColor: coalesce(env.VITE_BRAND_THEME_COLOR as string | undefined, BRAND_DEFAULTS.themeColor),
+  defaultTheme: coalesceTheme(env.VITE_BRAND_DEFAULT_THEME as string | undefined),
+  appGate: {
+    mode: coalesceGateMode(env.VITE_BRAND_APP_GATE_MODE as string | undefined),
+    password: coalesce(
+      env.VITE_BRAND_APP_GATE_PASSWORD as string | undefined,
+      BRAND_DEFAULTS.appGate.password,
+    ),
+  },
 };

@@ -13,8 +13,8 @@
  *
  * Caller contract:
  *   - `req.userFacingProvider` is the providers.json id ('openwop-free').
- *   - `req.tenantId` MUST be a signed-in tenant (`user:*`). Anonymous
- *     tenants are rejected with `sign_in_required`.
+ *   - `req.tenantId` is charged against the daily cap. Auth-posture deploys
+ *     can require `user:*`; demo postures may allow `anon:*`.
  *   - Daily token cap: input+output combined, per (tenant, day, provider).
  *     Reset at 00:00 UTC. Configurable via
  *     `OPENWOP_MANAGED_DAILY_TOKEN_CAP` (default 50000).
@@ -39,6 +39,7 @@ import {
 } from '../byok/encryption.js';
 import { createLogger } from '../observability/logger.js';
 import type { Storage } from '../storage/storage.js';
+import { managedAnonSignInRequired } from '../host/deployPosture.js';
 import { listManagedProviderIds } from './catalog.js';
 import { dispatchChat, type ChatMessage, type ProviderId } from './dispatch.js';
 
@@ -220,14 +221,10 @@ function todayUtc(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function isSignedInTenant(tenantId: string): boolean {
-  return tenantId.startsWith('user:');
-}
-
 export interface ManagedDispatchRequest {
   /** providers.json id, e.g. 'openwop-free'. */
   userFacingProvider: string;
-  /** Caller tenant — must be signed-in (`user:*`). */
+  /** Caller tenant; demo postures may be anon, auth posture requires user. */
   tenantId: string;
   messages: readonly ChatMessage[];
   maxTokens?: number;
@@ -261,7 +258,7 @@ export async function dispatchManagedChat(
       `No managed target configured for provider "${req.userFacingProvider}".`,
     );
   }
-  if (!isSignedInTenant(req.tenantId)) {
+  if (managedAnonSignInRequired() && req.tenantId.startsWith('anon:')) {
     throw new ManagedProviderError('sign_in_required', 'Sign in to use the free tier.');
   }
   if (!storageRef) {
