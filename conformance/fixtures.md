@@ -412,6 +412,21 @@ Hosts that don't ship a BYOK SecretResolver MAY return `404` / `422` on the star
 
 ---
 
+## `conformance-agent-channel-dispatch` (RFC 0082 §B — production-path channel pin)
+
+> **Status: capability-gated (RFC 0082 `agents.deployment`).** Only a host advertising `agents.deployment.supported:true` can seed this fixture — a host that omits `agents.deployment` MUST reject the channel-bearing `agent` ref with `validation_error` (`agent-ref.schema.json`). Exercised by `src/scenarios/agent-channel-dispatch.test.ts`.
+
+- **Purpose**: prove the RFC 0082 §B channel resolve-and-pin contract from a real run graph (complementing `agent-deployment-lifecycle.test.ts` Leg 4, which uses the host-sample seam). A node binds a deployment CHANNEL (`agent.channel: "stable"`) instead of an exact `version`.
+- **Topology**: a single `core.identity` node whose `agent` binding is `{ "agentId": "core.conformance.channel-agent", "channel": "stable" }` (no `version`). The host MUST have an active deployment of `core.conformance.channel-agent` on the `stable` channel.
+- **Inputs**: none. Trigger `manual`.
+- **Conformance test driver**:
+  1. POST `/v1/runs` with `{workflowId: "conformance-agent-channel-dispatch"}`; poll until terminal.
+  2. **Assert** the first `agent.invocation.started` carries `resolvedChannel: "stable"` and a concrete non-empty `resolvedAgentVersion` (the recorded fact, RFC 0077).
+  3. **Replay** via `POST /v1/runs/{runId}:fork {mode:"replay"}`; **assert** the fork's `agent.invocation.started` re-reads the SAME `resolvedAgentVersion`.
+  4. **(Seam-guarded)** Move the `stable` channel via the deployment seam; **assert** a replay of the original run STILL carries the original pin — never re-resolving the moved channel.
+
+---
+
 ## NodeModule registration
 
 The fixtures reference these typeIds:
