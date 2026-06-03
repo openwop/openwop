@@ -7,8 +7,8 @@
 
 | Surface | Current value | Source |
 |---|---:|---|
-| Spec prose documents | 51 | `spec/v1/*.md` |
-| JSON Schemas | 55 | `schemas/*.schema.json` |
+| Spec prose documents | 52 | `spec/v1/*.md` |
+| JSON Schemas | 56 | `schemas/*.schema.json` |
 | OpenAPI operations | 48 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 323 | `conformance/src/scenarios/*.test.ts` |

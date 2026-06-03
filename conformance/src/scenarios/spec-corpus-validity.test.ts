@@ -53,6 +53,7 @@ import {
   TYPESCRIPT_RUN_HELPERS_PATH,
   V1_DIR,
 } from '../lib/paths.js';
+import { verifyBundle, PROFILE_FLOOR_SCENARIOS } from '../lib/profiles.js';
 
 // Layout-aware paths come from `lib/paths.ts`. Three layouts:
 //   - Repo (github.com/openwop/openwop): schemas/api at repo root,
@@ -1394,5 +1395,82 @@ describe.skipIf(FIXTURES_DOC_PATH === null)('spec-corpus: fixtures.json catalog 
         `fixture ${id}.json exists but fixtures.md does not document it`,
       ).toContain(id);
     }
+  });
+});
+
+// RFC 0089 — conformance certification bundle. The schema itself is compiled +
+// $id-checked by the "JSON Schemas compile under Ajv2020" block above; here we
+// assert a sample bundle validates AND that the §B binding rule (verifyBundle)
+// correctly accepts a valid claim and rejects both a not-derivable claim and a
+// missing-floor-scenario one.
+describe('spec-corpus: RFC 0089 conformance certification bundle + binding rule', () => {
+  // A discovery document that derives `openwop-core-standard`
+  // (isCore ∧ isInterrupts ∧ a transport — supportedTransports omitted ⇒ rest).
+  const coreStandardDiscovery = {
+    protocolVersion: '1.0',
+    supportedEnvelopes: ['final', 'clarification.request'],
+    schemaVersions: { 'workflow-definition': '1.0' },
+    limits: { clarificationRounds: 3, schemaRounds: 2, envelopesPerTurn: 8 },
+  };
+  const coreStandardFloorPassed = [
+    ...PROFILE_FLOOR_SCENARIOS['openwop-core-standard']!.required,
+    'interrupt-resume.test.ts',
+  ];
+  const sampleBundle = {
+    bundleVersion: '1',
+    generatedAt: '2026-06-02T00:00:00Z',
+    generator: { name: '@openwop/openwop-conformance --certify', version: '1.18.1' },
+    suite: { package: '@openwop/openwop-conformance', version: '1.18.1' },
+    host: { name: 'openwop-host-sqlite', version: '1.0.0' },
+    discovery: {
+      url: 'https://example.test/.well-known/openwop',
+      sha256: 'a'.repeat(64),
+      document: coreStandardDiscovery,
+    },
+    claimedProfiles: ['openwop-core-standard'],
+    results: {
+      totals: { passed: coreStandardFloorPassed.length, failed: 0, skipped: 0, total: coreStandardFloorPassed.length },
+      passed: coreStandardFloorPassed,
+      failed: [],
+      skipped: [],
+    },
+  };
+
+  const ajv = new Ajv2020({ allErrors: true, strict: false });
+  addFormats(ajv);
+  const bundleSchema = readJson(join(SCHEMAS_DIR, 'conformance-certification-bundle.schema.json')) as Record<string, unknown>;
+
+  it('a sample bundle validates against conformance-certification-bundle.schema.json', () => {
+    const validate = ajv.compile(bundleSchema);
+    const ok = validate(sampleBundle);
+    expect(ok, JSON.stringify(validate.errors)).toBe(true);
+  });
+
+  it('verifyBundle ACCEPTS a claim that is discovery-derivable AND floor-proven (§B)', () => {
+    const r = verifyBundle(sampleBundle);
+    expect(r.valid).toBe(true);
+    expect(r.verdicts[0]?.derivable).toBe(true);
+    expect(r.verdicts[0]?.floorProven).toBe(true);
+  });
+
+  it('verifyBundle REJECTS a profile its discovery document does not derive (§B(1))', () => {
+    const notDerivable = {
+      ...sampleBundle,
+      discovery: { ...sampleBundle.discovery, document: { ...coreStandardDiscovery, supportedEnvelopes: ['final'] } },
+    };
+    const r = verifyBundle(notDerivable);
+    expect(r.valid).toBe(false);
+    expect(r.verdicts[0]?.derivable).toBe(false);
+  });
+
+  it('verifyBundle REJECTS a bundle missing a floor scenario (§B(2))', () => {
+    const missingFloor = {
+      ...sampleBundle,
+      results: { ...sampleBundle.results, passed: coreStandardFloorPassed.filter((s) => s !== 'auth.test.ts') },
+    };
+    const r = verifyBundle(missingFloor);
+    expect(r.valid).toBe(false);
+    expect(r.verdicts[0]?.floorProven).toBe(false);
+    expect(r.verdicts[0]?.missingFloor).toContain('auth.test.ts');
   });
 });
