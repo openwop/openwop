@@ -171,11 +171,11 @@ The conformance CLI gains `--certify <out.json>`. When set, the harness MUST: (a
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (`spec/v1/conformance-certification.md`).
-- [ ] `conformance-certification-bundle.schema.json` + optional `conformance.certificationBundleUrl` in `capabilities.schema.json` merged.
-- [ ] At least one conformance assertion covering the schema + binding rule (server-free).
+- [x] Spec text merged (`spec/v1/conformance-certification.md`).
+- [x] `conformance-certification-bundle.schema.json` + optional `conformance.certificationBundleUrl` in `capabilities.schema.json` merged.
+- [x] At least one conformance assertion covering the schema + binding rule (server-free) — the RFC 0089 block in `spec-corpus-validity.test.ts` (schema validate + `verifyBundle` accept/reject), backed by `PROFILE_FLOOR_SCENARIOS` (G1) + `verifyBundle()` in `conformance/src/lib/profiles.ts`.
 - [ ] CHANGELOG entry under the appropriate version.
-- [ ] At least one reference host generates + commits a real bundle and links it from `INTEROP-MATRIX.md`, OR the RFC explicitly defers reference-host generation to a follow-up.
+- [ ] At least one reference host generates + commits a real bundle and links it from `INTEROP-MATRIX.md`, OR the RFC explicitly defers reference-host generation to a follow-up. **(Remaining for `Accepted` — needs the `--certify` generator; deferred.)**
 
 ## References
 

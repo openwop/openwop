@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/conformance-certification-bundle.schema.json",
+  "title": "OpenWOP Conformance Certification Bundle",
+  "description": "RFC 0089. A machine-readable attestation binding a host's claimed profiles to the reproducible run that substantiates them: suite version, per-scenario pass list, host identity + commit, and the captured discovery document. An out-of-band artifact emitted by the conformance harness (not a runtime wire message). A consumer MUST re-derive each claimed profile from the embedded `discovery.document` rather than trusting `claimedProfiles` verbatim (RFC 0089 §B).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["bundleVersion", "generatedAt", "generator", "suite", "host", "discovery", "claimedProfiles", "results"],
+  "properties": {
+    "bundleVersion": {
+      "const": "1",
+      "description": "Certification-bundle format version. `1` for RFC 0089."
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "RFC 3339 timestamp when the bundle was generated. Marks the bundle as a point-in-time attestation."
+    },
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string", "description": "Tool that produced the bundle, e.g. `@openwop/openwop-conformance --certify`." },
+        "version": { "type": "string" }
+      }
+    },
+    "suite": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["package", "version"],
+      "properties": {
+        "package": { "const": "@openwop/openwop-conformance" },
+        "version": { "type": "string", "description": "Exact conformance suite version the results were produced against." }
+      }
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "vendor": { "type": "string" },
+        "commit": { "type": "string", "description": "VCS commit / build id of the host under test, when known. Self-reported; authoritative only for independent-verifier-generated bundles (RFC 0089 §Security)." }
+      }
+    },
+    "discovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "sha256", "document"],
+      "properties": {
+        "url": { "type": "string", "format": "uri", "description": "The `/.well-known/openwop` URL fetched for this run." },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "SHA-256 of the canonical-JSON serialization of `document`, so a verifier can confirm it matches a live fetch." },
+        "document": { "type": "object", "description": "The verbatim `/.well-known/openwop` discovery document captured for this run. Profile derivation re-runs against THIS document." }
+      }
+    },
+    "claimedProfiles": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 0,
+      "description": "Profiles the host claims. A bundle MUST NOT list a profile its own `discovery.document` does not derive (RFC 0089 §B(1))."
+    },
+    "results": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["totals", "passed", "failed", "skipped"],
+      "properties": {
+        "totals": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["passed", "failed", "skipped", "total"],
+          "properties": {
+            "passed": { "type": "integer", "minimum": 0 },
+            "failed": { "type": "integer", "minimum": 0 },
+            "skipped": { "type": "integer", "minimum": 0 },
+            "total": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "passed": { "type": "array", "items": { "type": "string" }, "description": "Stable scenario IDs that passed non-vacuously. The generator MUST NOT list a scenario here that did not run non-vacuously." },
+        "failed": { "type": "array", "items": { "type": "string" } },
+        "skipped": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

@@ -428,3 +428,88 @@ export function hasProfile(c: DiscoveryPayload, profile: ProfileName): boolean {
       return isTriggerBridge(c);
   }
 }
+
+// ── RFC 0089: conformance certification bundle — floor-scenario sets + verifier ──
+//
+// G1 (RFC 0089): the §B binding rule needs each profile's REQUIRED floor
+// scenarios in a machine-readable form. Source of truth for
+// `openwop-core-standard` is `core-standard-profile.md` §C — the nine named
+// black-box floor scenarios plus the `interrupt-*` family. Keyed by profile
+// name (string) because annex profiles like `openwop-core-standard` sit outside
+// the closed `PROFILE_NAMES` catalog.
+
+export interface ProfileFloor {
+  /** Scenario files (basenames) that MUST each appear in `results.passed`. */
+  readonly required: readonly string[];
+  /** Prefix groups where ≥1 matching passed scenario satisfies the group. */
+  readonly requiredAnyPrefix?: readonly string[];
+}
+
+export const PROFILE_FLOOR_SCENARIOS: Readonly<Record<string, ProfileFloor>> = {
+  'openwop-core-standard': {
+    required: [
+      'runs-lifecycle.test.ts',
+      'discovery.test.ts',
+      'auth.test.ts',
+      'eventOrdering.test.ts',
+      'failure-path.test.ts',
+      'idempotency.test.ts',
+      'idempotency-key-determinism.test.ts',
+      'webhook-negative.test.ts',
+      'audit-log-verification.test.ts',
+    ],
+    requiredAnyPrefix: ['interrupt-'],
+  },
+};
+
+/** Is `profile` derivable from a discovery document? Maps a profile name to its predicate (RFC 0089 §B(1)). */
+export function profileDerivable(c: DiscoveryPayload, profile: string): boolean {
+  if (profile === 'openwop-core-standard') return isCoreStandard(c);
+  if (profile === 'openwop-agent-platform') return agentPlatformStatus(c) !== 'none';
+  if ((PROFILE_NAMES as readonly string[]).includes(profile)) {
+    return deriveProfiles(c).includes(profile as ProfileName);
+  }
+  return false;
+}
+
+/** Minimal shape of an RFC 0089 certification bundle the verifier reads. */
+export interface CertificationBundleLike {
+  readonly discovery: { readonly document: DiscoveryPayload };
+  readonly claimedProfiles: readonly string[];
+  readonly results: { readonly passed: readonly string[] };
+}
+
+export interface BundleProfileVerdict {
+  readonly profile: string;
+  /** §B(1): derivable from the captured discovery document. */
+  readonly derivable: boolean;
+  /** §B(2): every floor scenario for the profile is in `results.passed`. */
+  readonly floorProven: boolean;
+  readonly valid: boolean;
+  readonly missingFloor: readonly string[];
+}
+
+const scenarioBasename = (id: string): string => id.split('/').pop() ?? id;
+
+/**
+ * Verify a bundle's claim for one profile per RFC 0089 §B. A consumer MUST
+ * re-derive (this function) rather than trust `claimedProfiles` verbatim.
+ */
+export function verifyBundleProfile(bundle: CertificationBundleLike, profile: string): BundleProfileVerdict {
+  const derivable = profileDerivable(bundle.discovery.document, profile);
+  const floor = PROFILE_FLOOR_SCENARIOS[profile];
+  const passed = new Set(bundle.results.passed.map(scenarioBasename));
+  const missingFloor = floor ? floor.required.filter((r) => !passed.has(scenarioBasename(r))) : [];
+  const prefixOk = (floor?.requiredAnyPrefix ?? []).every((p) => [...passed].some((s) => s.startsWith(p)));
+  const floorProven = missingFloor.length === 0 && prefixOk;
+  return { profile, derivable, floorProven, valid: derivable && floorProven, missingFloor };
+}
+
+/** Verify every profile in `bundle.claimedProfiles`; the bundle is valid iff all claims are valid. */
+export function verifyBundle(bundle: CertificationBundleLike): {
+  readonly valid: boolean;
+  readonly verdicts: readonly BundleProfileVerdict[];
+} {
+  const verdicts = bundle.claimedProfiles.map((p) => verifyBundleProfile(bundle, p));
+  return { valid: verdicts.every((v) => v.valid), verdicts };
+}
