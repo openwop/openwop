@@ -198,6 +198,13 @@ export interface NodeContext {
   /** ctx.chat — `host.chat`. The `vendor.myndhyve.chat` pack's bridge to the
    *  demo chat store (`spec/v1/host-capabilities.md §host.chat`). */
   chat?: ChatSurface;
+  /** ctx.interrupt / ctx.suspend — the normative interrupt primitive
+   *  (`spec/v1/interrupt.md §"engine MUST expose interrupt"`). Awaitable:
+   *  suspends the run and returns the resume value on re-entry, short-circuiting
+   *  on the deterministic `key` (interrupt.md §"key field"). `interrupt` is the
+   *  spec name; `suspend` is the alias the packs call. */
+  interrupt?(payload: Record<string, unknown>): Promise<unknown>;
+  suspend?(payload: Record<string, unknown>): Promise<unknown>;
   /** ctx.canvas — `host.canvas`. Durable shared-canvas store for the
    *  `vendor.myndhyve.canvas` pack (§host.canvas). */
   canvas?: CanvasSurface;

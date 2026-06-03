@@ -397,6 +397,13 @@ async function resolveAndResume(
     // path), fall back to `resumeFromNodeIndex` which the executor
     // handles via its implicit-linear chain logic.
     const serializedSnapshot = freshRun.schedulerSnapshot;
+    // ctx.suspend/ctx.interrupt nodes tag the interrupt for re-invoke resume
+    // (the node re-runs to shape the resolution into its outputs); native
+    // return-and-resume nodes use the default mark-completed path.
+    const idata = (interrupt.data ?? {}) as { __resumeStyle?: unknown; __resumeKey?: unknown };
+    const reinvokeOpts = idata.__resumeStyle === 'reinvoke'
+      ? { resumeStyle: 'reinvoke' as const, ...(typeof idata.__resumeKey === 'string' ? { resumeKey: idata.__resumeKey } : {}) }
+      : {};
     const resumeOptions =
       typeof serializedSnapshot === 'string'
         ? (() => {
@@ -405,6 +412,7 @@ async function resolveAndResume(
                 resumeSnapshot: JSON.parse(serializedSnapshot) as never,
                 resumeNodeId: interrupt.nodeId,
                 resumeValue,
+                ...reinvokeOpts,
                 policyResolver: hostSuite.providerPolicyResolver,
               };
             } catch {
