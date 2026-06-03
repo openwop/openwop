@@ -4,6 +4,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ChatHeader } from './ChatHeader.js';
 import { ChatInput } from './ChatInput.js';
 import { MessageFeed } from './MessageFeed.js';
@@ -117,6 +118,26 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
   // /v1/agents round-trip but cached results bake themselves out in
   // the SDK fetch layer.
   const { entries: agentEntries } = useAgentMentions();
+  // Deep-link: a "Chat with <persona>" affordance elsewhere (e.g. the agent
+  // dashboard / roster cards) navigates to `/?agent=<agentId|slug>`. When that
+  // param is present AND the agent catalog has loaded, pre-activate the matching
+  // agent so the chat opens already routed to it, then strip the param so a
+  // refresh doesn't re-activate and the URL stays clean. Entry-gated: an
+  // unknown/legacy id simply no-ops (the catalog re-runs this effect as it
+  // loads, so an early mount before `agentEntries` arrives still resolves).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const deepLinkAgentHandled = useRef<string | null>(null);
+  useEffect(() => {
+    const wanted = searchParams.get('agent');
+    if (!wanted || deepLinkAgentHandled.current === wanted) return;
+    const entry = agentEntries.find((e) => e.agentId === wanted || e.slug === wanted.toLowerCase());
+    if (!entry) return; // catalog may still be loading; this effect re-runs when it arrives
+    deepLinkAgentHandled.current = wanted;
+    activeAgents.activateAgent(entry);
+    const next = new URLSearchParams(searchParams);
+    next.delete('agent');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams, agentEntries, activeAgents]);
   const sessionsCollection = useChatSessions();
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [toolsEnabled, setToolsEnabled] = useState(false);

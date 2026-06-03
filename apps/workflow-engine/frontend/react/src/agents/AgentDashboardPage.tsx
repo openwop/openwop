@@ -254,6 +254,10 @@ export function AgentDashboardPage(): JSX.Element {
                   busy={busyAgent === view.entry.rosterId}
                   onOpen={(tab) => navigate(`/agents/${encodeURIComponent(view.entry.rosterId)}${tab ? `?tab=${tab}` : ''}`)}
                   onCheckNow={() => void onCheckNow(view.entry.rosterId, view.entry.persona)}
+                  onChat={() => {
+                    const agentId = view.entry.agentRef?.agentId;
+                    navigate(agentId ? `/?agent=${encodeURIComponent(agentId)}` : '/');
+                  }}
                 />
               ))}
             </div>
