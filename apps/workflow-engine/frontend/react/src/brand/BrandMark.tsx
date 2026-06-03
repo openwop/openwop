@@ -10,12 +10,21 @@
  * is decorative and must not be announced twice.
  */
 import { brand } from './brand.js';
+import { BRAND_DEFAULTS } from './defaults.js';
+import { OpenwopLogo } from './OpenwopLogo.js';
 
 export function BrandMark() {
   const { pre, emphasis, sub } = brand.brandMark;
+  // Default OpenWOP mark → inline `currentColor` SVG so it follows the in-app
+  // theme toggle (manual `html.theme-dark` AND system), not just the OS. A
+  // white-label custom logo (`VITE_BRAND_LOGO_SRC`) stays an <img> — adopters
+  // make their own asset theme-aware (e.g. an `@media` in their SVG).
+  const isDefaultLogo = brand.logoSrc === BRAND_DEFAULTS.logoSrc;
   return (
     <h1 className="brand-mark">
-      <img src={brand.logoSrc} alt="" aria-hidden="true" />
+      {isDefaultLogo
+        ? <OpenwopLogo />
+        : <img src={brand.logoSrc} alt="" aria-hidden="true" />}
       <span>
         {pre}
         {emphasis ? <em>{emphasis}</em> : null}{' '}
