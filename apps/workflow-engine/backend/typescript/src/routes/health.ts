@@ -1,6 +1,7 @@
 import type { Express } from 'express';
 import { createLogger } from '../observability/logger.js';
 import { getManagedProviderStatuses } from '../providers/managedProvider.js';
+import { sessionSecretConfigError } from '../middleware/auth.js';
 
 const log = createLogger('routes.health');
 
@@ -39,10 +40,21 @@ export function registerHealthRoutes(app: Express): void {
         unconfigured: unconfigured.map((p) => p.providerId),
       });
     }
-    const ready = unconfigured.length === 0;
+    // Required prod config: a cookie-mode deploy missing OPENWOP_SESSION_SECRET
+    // throws on the first session-minting POST (a silent 503) while readiness
+    // would otherwise 200. Surface it here so a deploy smoke test fails fast
+    // instead of the health check lying (PRD §8.3 footgun).
+    const configError = sessionSecretConfigError();
+    if (configError) {
+      log.warn('readiness degraded — required prod config missing', { error: configError });
+    }
+    const ready = unconfigured.length === 0 && !configError;
     res.status(ready ? 200 : 503).json({
       status: ready ? 'ready' : 'degraded',
-      checks: { managedProviders },
+      checks: {
+        managedProviders,
+        config: configError ? { ok: false, error: configError } : { ok: true },
+      },
     });
   });
 }

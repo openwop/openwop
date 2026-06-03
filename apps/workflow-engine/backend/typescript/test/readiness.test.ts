@@ -10,6 +10,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import http from 'node:http';
 import { createApp } from '../src/index.js';
+import { sessionSecretConfigError } from '../src/middleware/auth.js';
 
 let server: http.Server;
 const PORT = 18199;
@@ -39,7 +40,10 @@ afterAll(async () => {
 
 interface ReadinessBody {
   status: string;
-  checks?: { managedProviders: Array<{ providerId: string; ready: boolean; detail: string }> };
+  checks?: {
+    managedProviders: Array<{ providerId: string; ready: boolean; detail: string }>;
+    config?: { ok: boolean; error?: string };
+  };
 }
 
 describe('GET /health', () => {
@@ -60,5 +64,39 @@ describe('GET /readiness', () => {
     expect(free).toBeTruthy();
     expect(free!.ready).toBe(false);
     expect(free!.detail).toContain('MINIMAX_API_KEY');
+    // The required-config check is now part of readiness (ok here — this boot is
+    // not production, so the dev session-secret fallback applies).
+    expect(body.checks?.config?.ok).toBe(true);
+  });
+});
+
+describe('sessionSecretConfigError() — the readiness config predicate', () => {
+  const savedNodeEnv = process.env.NODE_ENV;
+  const savedSecret = process.env.OPENWOP_SESSION_SECRET;
+  afterAll(() => {
+    if (savedNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = savedNodeEnv;
+    if (savedSecret === undefined) delete process.env.OPENWOP_SESSION_SECRET;
+    else process.env.OPENWOP_SESSION_SECRET = savedSecret;
+  });
+
+  it('flags production with no/short OPENWOP_SESSION_SECRET (the silent-503 footgun)', () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.OPENWOP_SESSION_SECRET;
+    expect(sessionSecretConfigError()).toContain('OPENWOP_SESSION_SECRET');
+    process.env.OPENWOP_SESSION_SECRET = 'too-short';
+    expect(sessionSecretConfigError()).toContain('OPENWOP_SESSION_SECRET');
+  });
+
+  it('passes in production once a >=32-char secret is set', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.OPENWOP_SESSION_SECRET = 'x'.repeat(32);
+    expect(sessionSecretConfigError()).toBeNull();
+  });
+
+  it('never blocks outside production (dev uses an ephemeral secret)', () => {
+    process.env.NODE_ENV = 'development';
+    delete process.env.OPENWOP_SESSION_SECRET;
+    expect(sessionSecretConfigError()).toBeNull();
   });
 });

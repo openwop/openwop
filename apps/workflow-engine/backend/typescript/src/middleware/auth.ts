@@ -121,13 +121,32 @@ function base64urlDecode(s: string): Buffer {
   return Buffer.from(pad, 'base64');
 }
 
+/**
+ * Pure config check for the session secret — returns a human-readable reason
+ * when production requires `OPENWOP_SESSION_SECRET` but it's unset/too short,
+ * else null. Shared with the `/readiness` route so the health check reflects
+ * the SAME condition that makes cookie-minting throw: previously readiness
+ * returned 200 while the first session-minting POST 503'd, so the health check
+ * lied about a deploy that was actually broken (PRD §8.3). Dev uses an ephemeral
+ * fallback, so this is null outside production.
+ */
+export function sessionSecretConfigError(): string | null {
+  const s = process.env.OPENWOP_SESSION_SECRET;
+  if (s && s.length >= 32) return null;
+  if (process.env.NODE_ENV === 'production') {
+    return 'OPENWOP_SESSION_SECRET must be set in production (>=32 chars) — cookie-session minting will fail without it';
+  }
+  return null;
+}
+
 function readSessionSecret(): string {
   const s = process.env.OPENWOP_SESSION_SECRET;
   if (s && s.length >= 32) return s;
-  if (process.env.NODE_ENV === 'production') {
+  const configError = sessionSecretConfigError();
+  if (configError) {
     // Hard fail in production rather than mint cookies with a weak
     // / predictable secret. Cookie-mode deploys MUST set this.
-    throw new Error('OPENWOP_SESSION_SECRET must be set in production (>=32 chars). See P0.2 in the deploy plan.');
+    throw new Error(`${configError}. See P0.2 in the deploy plan.`);
   }
   // Dev fallback: stable per-process random secret. Cookies invalidate
   // on restart, which is fine for local dev.
