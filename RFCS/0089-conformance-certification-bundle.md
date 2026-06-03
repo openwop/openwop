@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0089 |
 | **Title** | Conformance certification bundle — machine-readable per-profile evidence |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-06-02 |
-| **Updated** | 2026-06-02 (Draft → Active same-day: the lead maintainer waived the 7-day comment window under the bootstrap-phase one-approval rule — cf. RFC 0012's bootstrap-phase waiver — moving this RFC to merge-candidate. The design + the `additive` classification are firm; implementation (schema + `--certify` generator + spec doc + conformance assertions + a reference-host bundle) is pending toward `Accepted`. Gap **G1** — machine-readable per-profile floor-scenario sets, which the §B binding rule needs — is the gating design item to settle during implementation; the other gaps/risks have named resolution paths in the companion registers.) |
+| **Updated** | 2026-06-02 (Active → Accepted: the `--certify` generator landed in `conformance/src/cli.ts` (fetch + canonical-JSON SHA-256 + profile derivation + vitest JSON-reporter scenario states + schema-validate-before-write), and a real reference-host bundle generated against the in-memory reference host was committed at `examples/hosts/in-memory/certification-bundle.json` with a server-free round-trip assertion in `spec-corpus-validity.test.ts` (schema-valid + `verifyBundle` accepts every honestly-claimed profile + `discovery.sha256` reproduces). All acceptance criteria are met; gap **G1** is resolved by `PROFILE_FLOOR_SCENARIOS` in `profiles.ts`.) — Draft → Active 2026-06-02: the lead maintainer waived the 7-day comment window under the bootstrap-phase one-approval rule (cf. RFC 0012's bootstrap-phase waiver). |
 | **Affects** | NEW `spec/v1/conformance-certification.md` · NEW `schemas/conformance-certification-bundle.schema.json` · `schemas/capabilities.schema.json` (optional `conformance.certificationBundleUrl`) · `spec/v1/capabilities.md` · `conformance/` CLI (`--certify`) + a reporter lib · `conformance/src/scenarios/spec-corpus-validity.test.ts` · `examples/hosts/*` (generated bundles) · `INTEROP-MATRIX.md` · `CHANGELOG.md` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` |
 | **Supersedes** | — |
@@ -174,8 +174,8 @@ The conformance CLI gains `--certify <out.json>`. When set, the harness MUST: (a
 - [x] Spec text merged (`spec/v1/conformance-certification.md`).
 - [x] `conformance-certification-bundle.schema.json` + optional `conformance.certificationBundleUrl` in `capabilities.schema.json` merged.
 - [x] At least one conformance assertion covering the schema + binding rule (server-free) — the RFC 0089 block in `spec-corpus-validity.test.ts` (schema validate + `verifyBundle` accept/reject), backed by `PROFILE_FLOOR_SCENARIOS` (G1) + `verifyBundle()` in `conformance/src/lib/profiles.ts`.
-- [ ] CHANGELOG entry under the appropriate version.
-- [ ] At least one reference host generates + commits a real bundle and links it from `INTEROP-MATRIX.md`, OR the RFC explicitly defers reference-host generation to a follow-up. **(Remaining for `Accepted` — needs the `--certify` generator; deferred.)**
+- [x] CHANGELOG entry under the appropriate version.
+- [x] At least one reference host generates + commits a real bundle and links it from `INTEROP-MATRIX.md`. The `openwop-conformance --certify` generator landed in `conformance/src/cli.ts`; a real bundle generated against the in-memory reference host is committed at `examples/hosts/in-memory/certification-bundle.json` (claims `openwop-core` + `openwop-stream-sse` + `openwop-stream-poll` + `openwop-node-packs` + `openwop-fixtures` — exactly the profiles its discovery document derives — and `verifyBundle` accepts it; the host honestly does NOT claim `openwop-core-standard` because its discovery document omits `clarification.request`, so none of its 29 honest scenario non-claims touch a claimed profile's floor). The server-free round-trip lives in the RFC 0089 block of `spec-corpus-validity.test.ts`.
 
 ## References
 
