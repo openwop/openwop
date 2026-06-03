@@ -1,0 +1,27 @@
+{
+  "id": "conformance-agent-channel-dispatch",
+  "name": "Conformance: Agent Channel Dispatch",
+  "version": "1.0",
+  "description": "RFC 0082 §B. Single-node run whose `agent` binding pins a deployment CHANNEL (`channel: \"stable\"`) instead of an exact `version`. A host advertising `agents.deployment.supported:true` MUST resolve the channel to a concrete version at first resolution and record it as `resolvedChannel` + `resolvedAgentVersion` on `agent.invocation.started` (RFC 0077); a `:fork {mode:\"replay\"}` MUST re-read that recorded version and MUST NOT re-resolve a since-moved channel. Hosts that omit `agents.deployment` MUST reject this channel-bearing ref with `validation_error` (agent-ref.schema.json) and so cannot seed it. See agent-channel-dispatch.test.ts.",
+  "nodes": [
+    {
+      "id": "resolve",
+      "typeId": "core.identity",
+      "name": "Channel-bound agent dispatch",
+      "position": { "x": 0, "y": 0 },
+      "config": {},
+      "inputs": {},
+      "agent": {
+        "agentId": "core.conformance.channel-agent",
+        "channel": "stable"
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "multi-agent", "deployment", "channel", "rfc-0082"] },
+  "settings": { "timeout": 10000 }
+}
