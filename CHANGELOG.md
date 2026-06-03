@@ -11,6 +11,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ---
 
+## [1.1.8 — unreleased]
+
+### Additive
+- **`interrupt.md`: document `suspend` as the accepted alias of `interrupt`.** Much of the v1 pack ecosystem (`core.openwop.hitl`, `core.openwop.flow`, and several vendor packs) calls the interrupt primitive `suspend` with the field aliases `reason`→`kind`/`resumeKey`→`key`/`answerSchema`→`resumeSchema`. A host SHOULD also expose `suspend` so those packs run unmodified; `interrupt` stays canonical and a host exposing only `interrupt` remains v1-compliant. Reconciles the de-facto ecosystem name with the normative surface — additive, no wire change.
+
+---
+
 ## [1.1.7] — 2026-06-02 — the Active→Accepted graduation program + agent-platform capstone + SDK parity
 
 The largest graduation cycle since v1.0. The entire agent-platform program plus the bulk of the Active-RFC backlog graduated `Active → Accepted` on a non-steward host (MyndHyve), closing RFC counts to **Accepted 85 / Active 1 / Draft 2**. All wire shapes additive per `COMPATIBILITY.md` §2.1 — no schema, event, endpoint, or `MUST` change. This coordinated release also publishes the agent-platform read surface to the **Python and Go SDKs** (which had lagged the OpenAPI surface by 17 methods) and a TypeScript SDK minor. The header is `1.1.7` because `1.1.6` was consumed by an earlier TS-SDK-only npm patch. Full per-RFC history is in each RFC's `Updated` field, `INTEROP-MATRIX.md`, and the generated `docs/PROTOCOL-STATUS.md`.
