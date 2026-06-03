@@ -554,15 +554,22 @@ html, body {
  * rather than a trailing `a:visited` override: as a standalone later rule it
  * beat `a:hover` by source order (so visited links stayed at the base color on
  * hover) and any link that escaped this rule fell back to a UA visited tint.
- * Privacy-safe: only `color` is set on the visited state. */
+ * Privacy-safe: only `color` is set on the visited state.
+ *
+ * `:visited` is wrapped in `:where()` so it adds NO specificity — without this,
+ * `a:visited` (0-1-1) outranks chrome link classes like `.app-nav-link` (0-1-0),
+ * so every visited sidebar/menu link inherited the clay accent instead of its
+ * designed foreground color (white-ish in dark, near-black in light). `:where()`
+ * keeps bare content links accent (no competing class) while letting a component
+ * class own its color in BOTH the unvisited and visited states. */
 a,
-a:visited {
+a:where(:visited) {
   color: var(--color-accent);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 a:hover,
-a:visited:hover {
+a:where(:visited):hover {
   color: var(--color-accent-hover);
 }
 
