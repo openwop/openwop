@@ -4,6 +4,17 @@
 
 _No unreleased changes._
 
+## [1.19.0] — 2026-06-02 — RFC 0082 §B production-path channel-dispatch scenario
+
+Standalone conformance minor — a scenario addition published via the `openwop-conformance/v1.19.0` per-package tag (PUBLISHING.md §"CI automation"; only the `publish-conformance` job runs), NOT a coordinated spec-corpus release. `EXPECTED_CONFORMANCE_VERSION` advances to `1.19.0` in lockstep. The steward prerequisite that lets an `agents.deployment` host (first witness: MyndHyve) prove the RFC 0082 §B channel resolve-and-pin contract from a real run graph under `OPENWOP_REQUIRE_BEHAVIOR=true`. RFC 0082 is already `Accepted`; this hardens §B coverage from seam-proven to production-path-proven — no RFC flip.
+
+### Added — RFC 0082 §B production-path channel-dispatch scenario
+
+- **`agent-channel-dispatch.test.ts`** (`behaviorGate('openwop-deployment-channel-dispatch', …)`, gated on `agents.deployment.supported` + the seeded `conformance-agent-channel-dispatch` fixture + advertised `replay` mode) — complements `agent-deployment-lifecycle.test.ts` Leg 4 (which drives the §B pin through the host-sample `deployment-transition` seam) by proving the SAME contract from a canonical `POST /v1/runs`: a node binding `agent.channel:"stable"` (no `version`) MUST resolve + record `resolvedChannel` + a concrete `resolvedAgentVersion` on `agent.invocation.started` (RFC 0077); a `:fork{mode:"replay"}` MUST re-read that recorded version; and the seam-guarded Leg 3 MOVES the channel then asserts a replay STILL carries the ORIGINAL pin — never re-resolving the moved channel. Soft-skips by default, hard-fails under `OPENWOP_REQUIRE_BEHAVIOR=true`.
+- New fixture **`conformance-agent-channel-dispatch.json`** (a single `core.identity` node binding `agent.channel:"stable"`). A host omitting `agents.deployment` MUST reject the channel-bearing ref (`agent-ref.schema.json`) and so cannot seed it.
+
+Additive + capability-gated; existing v1.0-only hosts pass unchanged. No new schemas (the `AgentRef.channel` field + the §B contract + `resolvedChannel`/`resolvedAgentVersion` all shipped with Accepted RFC 0082).
+
 ## [1.18.1] — 2026-06-01 — RFC 0050 SAML behavioral leg: full 7-variant seam coverage
 
 Standalone conformance patch — published via the `openwop-conformance/v1.18.1` per-package tag (PUBLISHING.md §"CI automation"; only the `publish-conformance` job runs), NOT a coordinated spec-corpus release. `EXPECTED_CONFORMANCE_VERSION` advances to `1.18.1` in lockstep. No new scenario file → patch bump.
