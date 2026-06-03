@@ -31,4 +31,4 @@ A host MAY advertise `conformance.certificationBundleUrl` (an optional `format: 
 
 - **Scenario-ID stability + floor-set source (G1/G2).** §B(2) depends on stable scenario identifiers and the `PROFILE_FLOOR_SCENARIOS` map staying in sync with each profile's prose definition. Floor sets for profiles beyond `openwop-core-standard` are added as those profiles' floor scenarios stabilize.
 - **Signing / tamper-evidence.** v1 bundles are unsigned-but-reproducible (re-running the named suite against the same host commit reproduces the pass list). A future RFC MAY wrap the bundle in an Ed25519 / in-toto envelope.
-- **Reference-host generation.** The `--certify` generator and a committed reference-host bundle land at RFC 0089 `Accepted`; this document defines the format + binding rule that they implement.
+- **Reference-host generation.** The `openwop-conformance --certify` generator (`conformance/src/cli.ts`) and a committed reference-host bundle (`examples/hosts/in-memory/certification-bundle.json`) landed at RFC 0089 `Accepted`; this document defines the format + binding rule that they implement.
