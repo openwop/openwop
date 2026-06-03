@@ -282,12 +282,14 @@
 .chat-md ul, .chat-md ol { margin: 0 0 8px; padding-left: 1.5em; }
 .chat-md li { margin: 2px 0; }
 .chat-md li > p { margin: 0; }
-.chat-md a {
+.chat-md a,
+.chat-md a:visited {
   color: var(--color-accent);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-.chat-md a:hover { text-decoration-thickness: 2px; }
+.chat-md a:hover,
+.chat-md a:visited:hover { text-decoration-thickness: 2px; }
 .chat-md strong { font-weight: 600; }
 .chat-md em { font-style: italic; }
 /* Inline-code only — scoped via `:not(pre) > code` so a 4-space-indented
@@ -547,16 +549,21 @@ html, body {
 /* Bare anchors (no className) — default to the accent color so links
    are readable on both dark + light backgrounds. Component-level
    anchors (.app-header nav a, .signin-* etc.) override as needed. */
-a {
+/* Visited links MUST render identically to unvisited ones — same base color
+ * AND same hover color. `:visited` is folded into each state's selector list
+ * rather than a trailing `a:visited` override: as a standalone later rule it
+ * beat `a:hover` by source order (so visited links stayed at the base color on
+ * hover) and any link that escaped this rule fell back to a UA visited tint.
+ * Privacy-safe: only `color` is set on the visited state. */
+a,
+a:visited {
   color: var(--color-accent);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-a:hover {
+a:hover,
+a:visited:hover {
   color: var(--color-accent-hover);
-}
-a:visited {
-  color: var(--color-accent);
 }
 
 #root {
