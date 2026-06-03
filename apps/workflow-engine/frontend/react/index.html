@@ -20,6 +20,13 @@
          WHITE-LABEL.md — do not hard-code brand values here. -->
     <title>{{BRAND_TITLE}}</title>
     <link rel="icon" type="image/svg+xml" href="{{BRAND_FAVICON}}" />
+    <!-- PWA install + mobile chrome. The manifest is emitted at build time by
+         the `openwop-brand-html` Vite plugin (name/theme-color/icon from
+         `VITE_BRAND_*`); theme-color + apple-touch-icon are stamped here. See
+         WHITE-LABEL.md — override via VITE_BRAND_THEME_COLOR / VITE_BRAND_FAVICON_SRC. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="{{BRAND_THEME_COLOR}}" />
+    <link rel="apple-touch-icon" href="{{BRAND_FAVICON}}" />
 
     <!-- Fonts — defaults mirror public/index.html so the marketing site and
          the reference app share the same Instrument Serif + Geist + Geist

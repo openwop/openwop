@@ -62,4 +62,7 @@ export const brand: BrandConfig = {
   ),
   homeUrl: coalesce(env.VITE_BRAND_HOME_URL as string | undefined, BRAND_DEFAULTS.homeUrl),
   repoUrl: coalesce(env.VITE_BRAND_REPO_URL as string | undefined, BRAND_DEFAULTS.repoUrl),
+  // Stamped into the PWA manifest + theme-color meta by the Vite plugin at
+  // build time (like faviconSrc); kept here for a single complete shape.
+  themeColor: coalesce(env.VITE_BRAND_THEME_COLOR as string | undefined, BRAND_DEFAULTS.themeColor),
 };

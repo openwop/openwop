@@ -52,6 +52,8 @@ export interface BrandConfig {
   homeUrl: string;
   /** Source-repository URL (privacy footer). */
   repoUrl: string;
+  /** PWA manifest + mobile-chrome `theme-color`. Build-time only. */
+  themeColor: string;
 }
 
 export const BRAND_DEFAULTS: BrandConfig = {
@@ -73,6 +75,7 @@ export const BRAND_DEFAULTS: BrandConfig = {
   primaryDomain: 'app.openwop.dev',
   homeUrl: 'https://openwop.dev/',
   repoUrl: 'https://github.com/openwop/openwop',
+  themeColor: '#1a1a17',
 };
 
 /**
@@ -95,6 +98,7 @@ export const BRAND_ENV_KEYS = {
   primaryDomain: 'VITE_BRAND_PRIMARY_DOMAIN',
   homeUrl: 'VITE_BRAND_HOME_URL',
   repoUrl: 'VITE_BRAND_REPO_URL',
+  themeColor: 'VITE_BRAND_THEME_COLOR',
 } as const;
 
 /** A non-empty string, or the fallback when unset/blank. */
@@ -129,5 +133,6 @@ export function resolveBrandFromEnv(
     primaryDomain: coalesce(env[k.primaryDomain], BRAND_DEFAULTS.primaryDomain),
     homeUrl: coalesce(env[k.homeUrl], BRAND_DEFAULTS.homeUrl),
     repoUrl: coalesce(env[k.repoUrl], BRAND_DEFAULTS.repoUrl),
+    themeColor: coalesce(env[k.themeColor], BRAND_DEFAULTS.themeColor),
   };
 }
