@@ -66,6 +66,16 @@ A non-steward implementer claiming any of these would fire the vendor-neutral mi
 
 ---
 
+## Sample workflow-engine host: known implementation gaps
+
+The reference workflow-engine sample (`apps/workflow-engine/`, live at `app.openwop.dev`) is sample/template code, not a normative reference host. Known gaps in its host-surface implementations:
+
+| Gap | Detail |
+|---|---|
+| `ctx.suspend` / `ctx.interrupt` is **single-suspend-per-node** | The sample realises the `interrupt.md §"key field"` replay model by re-invoking a suspended node with ONE seeded resolution. A node that calls `ctx.suspend` **multiple times sequentially within one invocation** is not fully supported — on re-invoke only the latest resolution is seeded; the sample does not accumulate prior resolutions per `key` across re-invokes. The one pack node that does this is `core.openwop.a2a.multiTurnCoordinator` (it loops `ctx.suspend` up to `maxTurns` and supplies **no per-iteration `key`**, so it also under-specifies the deterministic key the spec recommends — `${runId}:${nodeId}:${interruptCount}`). All single-suspend gate nodes work correctly: `vendor.myndhyve.chat` (phaseInputGate/approvalGate/clarificationGate), `core.openwop.hitl` (formRequest/approvalRequest/askUser), `core.openwop.flow` `waitNode` (mutually-exclusive branches → one suspend per path), `core.openwop.mcp` `handleElicitation`. The chat `approvalGate` `'ask'` loop is orchestrated by workflow edges (not a second in-node suspend), so it is unaffected. A production host that re-seeds per-`key` across re-invokes (or keeps the suspended async frame alive) handles multi-suspend; this is a sample-host limitation, **not a spec constraint** — `interrupt.md` permits any number of keyed interrupts per run. |
+
+---
+
 ## External-action gates (cannot be closed without outside engagement)
 
 The plan calls these out explicitly — none can be moved by repo-side mechanical work alone.
