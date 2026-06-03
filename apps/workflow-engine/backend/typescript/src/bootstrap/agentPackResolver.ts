@@ -13,6 +13,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { setAgentPackResolver } from '../executor/agentRegistry.js';
+import { hydrateUserAgentIntoRegistry } from '../routes/userAgents.js';
 import { loadAgentsFromManifest } from '../packs/agentLoader.js';
 import { resolveDefaultPackDir } from '../packs/registryInstaller.js';
 import { createLogger } from '../observability/logger.js';
@@ -56,9 +57,16 @@ export function loadAllLocalAgents(): number {
   return total;
 }
 
-export function ensureAgentPackResolverInstalled(_storage: Storage): void {
-  // Lazy resolver — handles packs installed after boot.
+export function ensureAgentPackResolverInstalled(storage: Storage): void {
+  // Lazy resolver — handles a registry miss for both user-authored agents and
+  // packs installed after boot.
   setAgentPackResolver(async (agentId) => {
+    // User-authored / seeded agents live in durable storage, NOT the pack dir.
+    // The registry is boot-hydrated (not read-through), so on an instance that
+    // booted before the agent was created/seeded it's absent from the in-process
+    // map though present in storage. Hydrate it first so `resolve()` re-reads it
+    // — this closes the multi-instance gap for chat-callable seeded personas.
+    if (await hydrateUserAgentIntoRegistry(storage, agentId)) return null;
     if (!existsSync(PACK_DIR)) return null;
     for (const entry of readdirSync(PACK_DIR)) {
       const manifestPath = join(PACK_DIR, entry, 'pack.json');

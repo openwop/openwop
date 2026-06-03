@@ -18,10 +18,17 @@ import { getAgentRegistry, type ResolvedAgentManifest } from '../executor/agentR
 import { runAgentDispatch, runAgentDispatchLive, AgentNotFoundError, type AgentDispatchRequest } from '../host/agentDispatch.js';
 import { createAiProvidersAdapter } from '../aiProviders/aiProvidersHost.js';
 import type { HostAdapterSuite } from '../host/index.js';
+import type { Storage } from '../storage/storage.js';
+import type { UserAgentRecord } from '../types.js';
 
 interface AgentRoutesDeps {
   /** When provided, `dispatch` with `live: true` makes a real model turn. */
   hostSuite?: HostAdapterSuite;
+  /** When provided, the inventory list reads through to durable user-agent
+   *  storage so a concrete-tenant caller on a cold instance (registry is
+   *  boot-hydrated, not refreshed) still sees its seeded/user agents — keeping
+   *  the chat `@`-mention list consistent across instances. */
+  storage?: Storage;
 }
 
 interface AgentInventoryEntry {
@@ -54,6 +61,44 @@ function toEntry(a: ResolvedAgentManifest): AgentInventoryEntry {
     confidenceThreshold: a.confidence?.defaultThreshold,
     degraded: a.degraded && a.degraded.length > 0 ? a.degraded : undefined,
   };
+}
+
+/** Project a durable user-agent record straight to the inventory shape — used by
+ *  the list read-through (`listVisibleAgents`) for records that aren't yet in
+ *  this instance's boot-hydrated registry. Mirrors `registerUserAgent`'s
+ *  projection in `userAgents.ts` (synthetic `user:<tenant>` provenance). */
+function userRecordToEntry(r: UserAgentRecord): AgentInventoryEntry {
+  return {
+    agentId: r.agentId,
+    persona: r.persona,
+    label: r.label ?? r.persona,
+    description: r.description,
+    modelClass: r.modelClass,
+    packName: `user:${r.tenantId}`,
+    packVersion: '0',
+    toolAllowlist: r.toolAllowlist ?? [],
+    hasHandoffSchemas: false,
+    memoryShape: r.memoryShape,
+    confidenceThreshold: r.confidenceThreshold,
+  };
+}
+
+/** The tenant-visible inventory: registry agents (pack + boot-hydrated user)
+ *  filtered by `ownerTenant`, plus a read-through merge of durable user agents
+ *  that this instance hasn't hydrated yet. Wildcard/admin callers (`undefined` /
+ *  `*`) already see the full hydrated set, so the extra storage read is skipped. */
+async function listVisibleAgents(
+  storage: Storage | undefined,
+  tenant: string | undefined,
+): Promise<AgentInventoryEntry[]> {
+  const entries = getAgentRegistry().list().filter((a) => visibleTo(a, tenant)).map(toEntry);
+  if (storage && tenant && tenant !== '*') {
+    const known = new Set(entries.map((e) => e.agentId));
+    for (const r of await storage.listUserAgents(tenant)) {
+      if (!known.has(r.agentId)) entries.push(userRecordToEntry(r));
+    }
+  }
+  return entries;
 }
 
 /** Cross-tenant isolation filter for user-authored agents (phase E1,
@@ -91,16 +136,16 @@ export function registerAgentRoutes(app: Express, deps: AgentRoutesDeps = {}): v
   // capabilities.agents.manifestRuntime UNCONDITIONALLY (discovery.ts), so the route
   // is always live; a host that gates the advertisement MUST 404 these endpoints when
   // it does not advertise the capability (RFC 0072 §A: "MUST serve iff advertised").
-  app.get('/v1/agents', (req, res) => {
+  app.get('/v1/agents', async (req, res) => {
     const tenant = (req as AgentReqLike).tenantId;
-    const agents = getAgentRegistry().list()
-      .filter((a) => visibleTo(a, tenant))
-      .map(toEntry);
+    const agents = await listVisibleAgents(deps.storage, tenant);
     res.json({ agents, total: agents.length });
   });
-  app.get('/v1/agents/:agentId', (req, res) => {
+  app.get('/v1/agents/:agentId', async (req, res) => {
     const tenant = (req as AgentReqLike).tenantId;
-    const a = getAgentRegistry().get(req.params.agentId);
+    // `resolve()` reads through to durable storage on a registry miss, so a
+    // cold instance still serves a seeded/user agent it hasn't hydrated.
+    const a = await getAgentRegistry().resolve(req.params.agentId);
     if (!a || !visibleTo(a, tenant)) {
       // Same 404 for "absent" and "not yours" — never leak that a
       // cross-tenant agent exists by returning a distinct status.
@@ -112,16 +157,14 @@ export function registerAgentRoutes(app: Express, deps: AgentRoutesDeps = {}): v
 
   // Sample-extension aliases (RFC 0070 convenience; non-normative). The list
   // form additionally reports the host's runtime posture for the CLI.
-  app.get('/v1/host/sample/agents', (req, res) => {
+  app.get('/v1/host/sample/agents', async (req, res) => {
     const tenant = (req as AgentReqLike).tenantId;
-    const agents = getAgentRegistry().list()
-      .filter((a) => visibleTo(a, tenant))
-      .map(toEntry);
+    const agents = await listVisibleAgents(deps.storage, tenant);
     res.json({ agents, total: agents.length, runtime: { manifestRuntime: true } });
   });
-  app.get('/v1/host/sample/agents/:agentId', (req, res) => {
+  app.get('/v1/host/sample/agents/:agentId', async (req, res) => {
     const tenant = (req as AgentReqLike).tenantId;
-    const a = getAgentRegistry().get(req.params.agentId);
+    const a = await getAgentRegistry().resolve(req.params.agentId);
     if (!a || !visibleTo(a, tenant)) {
       res.status(404).json({ error: 'not_found', message: `agent '${req.params.agentId}' is not installed on this host` });
       return;

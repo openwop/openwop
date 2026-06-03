@@ -16,6 +16,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import http from 'node:http';
 import { createApp } from '../src/index.js';
+import { getAgentRegistry } from '../src/executor/agentRegistry.js';
 
 let server: http.Server;
 const PORT = 18233;
@@ -256,5 +257,24 @@ describe('agents-demo backend foundations', () => {
     } finally {
       delete process.env.OPENWOP_DEMO_SEED_ENABLED;
     }
+  });
+
+  it('resolve() reads a seeded agent through from durable storage on a cold registry (multi-instance)', async () => {
+    // The registry is boot-hydrated, NOT read-through. Simulate an instance that
+    // booted before the seed: drop the in-process map, leaving the durable
+    // user-agent rows (written by the seed in the first test) intact. Runs last;
+    // vitest isolates module state per file, so this reset can't leak into other
+    // suites.
+    getAgentRegistry()._resetForTest();
+    expect(getAgentRegistry().get('user.default.nora')).toBeNull(); // cold: not in-process
+
+    // resolve() falls through to the agent-pack resolver, which now hydrates a
+    // user/seeded agent from storage on a miss — so the chat-responder dispatch
+    // and the by-id inventory routes route correctly on any instance.
+    const hydrated = await getAgentRegistry().resolve('user.default.nora');
+    expect(hydrated?.persona).toBe('Nora');
+    expect(hydrated?.ownerTenant).toBe('default'); // tenant-scoping preserved
+    // Now cached in-process (last-write-wins register).
+    expect(getAgentRegistry().get('user.default.nora')?.persona).toBe('Nora');
   });
 });

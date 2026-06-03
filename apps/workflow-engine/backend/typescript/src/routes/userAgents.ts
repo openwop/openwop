@@ -340,6 +340,22 @@ export async function ensureUserAgentRegistered(
   registerUserAgent(record);
 }
 
+/** Read-through hydration: load ONE user-authored agent from durable storage
+ *  into the in-process `AgentRegistry`, returning true if it existed. This is
+ *  the miss-path for `getAgentRegistry().resolve()` — the registry is
+ *  boot-hydrated (not refreshed per request), so an instance that booted before
+ *  an agent was created/seeded won't carry it until it reboots. Wiring this into
+ *  the agent-pack resolver (`agentPackResolver.ts`) makes every `.resolve()`
+ *  caller (the chat-responder dispatch, the by-id inventory routes) read through
+ *  to storage on a miss, closing the multi-instance eventual-consistency gap for
+ *  chat-callable seeded personas. Idempotent: register is last-write-wins. */
+export async function hydrateUserAgentIntoRegistry(storage: Storage, agentId: string): Promise<boolean> {
+  const record = await storage.getUserAgent(agentId);
+  if (!record) return false;
+  registerUserAgent(record);
+  return true;
+}
+
 /** Project a user-authored record into the registry's resolved-manifest
  *  shape. `systemPrompt` is inlined (RFC 0070 stores resolved bodies,
  *  not refs); `packName/packVersion` use the synthetic `user:<tenant>`

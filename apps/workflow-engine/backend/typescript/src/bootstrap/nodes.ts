@@ -1245,7 +1245,11 @@ export const sampleChatResponderNode: NodeModule = {
     let systemBody: string | null = null;
     const agentIdInput = inputs['agentId'];
     if (typeof agentIdInput === 'string' && agentIdInput.length > 0) {
-      const agent = getAgentRegistry().get(agentIdInput);
+      // `resolve()` (not `get()`) so a seeded/user agent absent from THIS
+      // instance's boot-hydrated registry is read through from durable storage
+      // (agentPackResolver miss-path) rather than silently falling through to
+      // the default prompt — the chat turn routes correctly on any instance.
+      const agent = await getAgentRegistry().resolve(agentIdInput);
       // Cross-tenant isolation (CTI-1, agent-memory.md). User-authored
       // agents carry `ownerTenant`; pack-installed agents don't. The
       // request that triggered this node carries `ctx.tenantId` (the
