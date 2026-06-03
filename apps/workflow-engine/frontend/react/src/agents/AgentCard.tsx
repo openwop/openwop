@@ -34,11 +34,15 @@ export function AgentCard({
   view,
   onOpen,
   onCheckNow,
+  onChat,
   busy,
 }: {
   view: AgentView;
   onOpen: (tab?: string) => void;
   onCheckNow: () => void;
+  /** Open a chat already routed to this agent (deep-links into the chat with
+   *  the persona pre-activated). */
+  onChat: () => void;
   busy?: boolean;
 }): JSX.Element {
   const { entry, laneCounts, status, nextSchedule } = view;
@@ -93,6 +97,14 @@ export function AgentCard({
 
       <div className="action-bar">
         <button type="button" className="primary" style={{ flex: 1 }} onClick={(e) => { e.stopPropagation(); onOpen(action.tab); }}>{action.label}</button>
+        <button
+          type="button"
+          className="secondary"
+          onClick={(e) => { e.stopPropagation(); onChat(); }}
+          title={`Open a chat with ${entry.persona}.`}
+        >
+          Chat
+        </button>
         <button
           type="button"
           className="secondary"
