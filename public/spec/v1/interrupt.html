@@ -173,6 +173,7 @@
     <ul>
       <li class="toc-top"><a href="#why-this-exists">Why this exists</a></li>
       <li class="toc-top"><a href="#primitive">Primitive</a></li>
+      <li class="toc-sub"><a href="#suspend-accepted-alias">suspend — accepted alias</a></li>
       <li class="toc-sub"><a href="#interruptpayload">InterruptPayload</a></li>
       <li class="toc-sub"><a href="#resume-value">Resume value</a></li>
       <li class="toc-top"><a href="#per-kind-payloads">Per-kind payloads</a></li>
@@ -220,6 +221,8 @@
    */
   interrupt&amp;lt;TResume = unknown&amp;gt;(payload: InterruptPayload&amp;lt;TResume&amp;gt;): Promise&amp;lt;TResume&amp;gt;;
 }</code></pre>
+<h3 id="suspend-accepted-alias"><code>suspend</code> — accepted alias</h3>
+<p><code>interrupt</code> is the canonical name. Much of the v1 pack ecosystem — the <code>core.openwop.hitl</code> and <code>core.openwop.flow</code> packs plus several vendor packs — calls the primitive <code>suspend</code> instead, with the field aliases <code>reason</code> → <code>kind</code>, <code>resumeKey</code> → <code>key</code>, and <code>answerSchema</code> → <code>resumeSchema</code>. A host SHOULD also expose <code>suspend</code> as an alias of <code>interrupt</code> that accepts those aliased field names, so those packs run unmodified. The two names are interchangeable and share identical semantics (including the <code>key</code>-based replay short-circuit below); <code>interrupt</code> is preferred for new code. A host that exposes only <code>interrupt</code> remains v1-compliant — the alias is a compatibility convenience, not a new requirement.</p>
 <h3 id="interruptpayload"><code>InterruptPayload</code></h3>
 <pre class="lang-typescript"><code>interface InterruptPayload&amp;lt;TResume = unknown&amp;gt; {
   /** Discriminator for resume-time routing + UI rendering + observability. */

@@ -769,6 +769,11 @@
         "mockAgent": {
           "type": "boolean",
           "description": "RFC 0023 §B.2. When `true`, the host has registered the `core.conformance.mock-agent` typeId. The scenarios `agentReasoningEvents.test.ts` and `agentConfidenceEscalation.test.ts` rely on the typeId being reachable. Hosts that register the typeId only for workflow ids matching the conformance fixture prefix (`conformance-*`) and refuse it for other tenants MAY still advertise `true` — the advertisement says only that the typeId is reachable from the conformance suite, not that it is reachable from arbitrary workflows."
+        },
+        "certificationBundleUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "OPTIONAL (RFC 0089). URL of the host's most recent conformance certification bundle (`conformance-certification-bundle.schema.json`) — a machine-readable attestation binding this host's claimed profiles to the reproducible run that substantiates them. Omitting it is fully conformant; clients MUST tolerate its absence."
         }
       },
       "additionalProperties": false

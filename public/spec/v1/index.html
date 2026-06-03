@@ -4,21 +4,21 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>OpenWOP — v1 spec corpus</title>
-  <meta name="description" content="51 normative prose specs governing the OpenWOP v1 wire contract. Each doc is independently citable via /spec/v1/{name}.html."/>
+  <meta name="description" content="52 normative prose specs governing the OpenWOP v1 wire contract. Each doc is independently citable via /spec/v1/{name}.html."/>
   <link rel="canonical" href="https://openwop.dev/spec/v1/"/>
 
   <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
   <meta property="og:type" content="website"/>
   <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
   <meta property="og:title" content="OpenWOP — v1 spec corpus"/>
-  <meta property="og:description" content="51 normative prose specs governing the OpenWOP v1 wire contract. Each doc is independently citable via /spec/v1/{name}.html."/>
+  <meta property="og:description" content="52 normative prose specs governing the OpenWOP v1 wire contract. Each doc is independently citable via /spec/v1/{name}.html."/>
   <meta property="og:url" content="https://openwop.dev/spec/v1/"/>
   <meta property="og:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Twitter card -->
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:title" content="OpenWOP — v1 spec corpus"/>
-  <meta name="twitter:description" content="51 normative prose specs governing the OpenWOP v1 wire contract. Each doc is independently citable via /spec/v1/{name}.html."/>
+  <meta name="twitter:description" content="52 normative prose specs governing the OpenWOP v1 wire contract. Each doc is independently citable via /spec/v1/{name}.html."/>
   <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Icons / theme -->
@@ -142,7 +142,7 @@
   <div class="wrap">
     <header class="page-header">
       <h1>OpenWOP v1 spec corpus</h1>
-      <p class="lede">51 prose specs governing the v1 wire contract. Each section below groups specs by what they do; click through for the normative text.</p>
+      <p class="lede">52 prose specs governing the v1 wire contract. Each section below groups specs by what they do; click through for the normative text.</p>
       <p class="meta">Status legend: <strong>Stable</strong> · Stabilizing · Draft · Experimental. A spec is Stable when its wire shape is locked under v1.x compatibility rules. See <a href="/governance/spec-status/">spec-status policy</a>.</p>
     </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
     <h4>On this page</h4>
@@ -478,8 +478,13 @@
       <p class="spec-item-desc">A recurring host pattern is the AI step card: a user (or an agent) fills a small form, the host composes a prompt from those inputs, calls an LLM, validates the structured result,…</p>
     </li>
     <li>
-      <a href="./core-standard-profile.html"><strong>`openwop-core-standard` Operational Annex</strong></a>
+      <a href="./conformance-certification.html"><strong>Conformance Certification Bundle</strong></a>
       <span class="spec-item-status">DRAFT v1</span>
+      <p class="spec-item-desc">A host&#39;s profile claims are derivable from its /.well-known/openwop discovery document, but the evidence that a host actually passes a claimed profile has lived as hand-authored…</p>
+    </li>
+    <li>
+      <a href="./core-standard-profile.html"><strong>`openwop-core-standard` Operational Annex</strong></a>
+      <span class="spec-item-status">Stable · v1</span>
       <p class="spec-item-desc">A standards-readiness review found OpenWOP&#39;s standard boundary too fluid for full open-standard acceptance — 15+ Active/Draft agent-platform RFCs, and a lot of behavior proven…</p>
     </li>
     <li>

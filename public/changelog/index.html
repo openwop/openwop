@@ -4,21 +4,21 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>OpenWOP — Changelog</title>
-  <meta name="description" content="Per-version record of every change to the OpenWOP spec corpus, schemas, SDKs, and reference hosts. 9 versions tracked."/>
+  <meta name="description" content="Per-version record of every change to the OpenWOP spec corpus, schemas, SDKs, and reference hosts. 10 versions tracked."/>
   <link rel="canonical" href="https://openwop.dev/changelog/"/>
 
   <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
   <meta property="og:type" content="website"/>
   <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
   <meta property="og:title" content="OpenWOP — Changelog"/>
-  <meta property="og:description" content="Per-version record of every change to the OpenWOP spec corpus, schemas, SDKs, and reference hosts. 9 versions tracked."/>
+  <meta property="og:description" content="Per-version record of every change to the OpenWOP spec corpus, schemas, SDKs, and reference hosts. 10 versions tracked."/>
   <meta property="og:url" content="https://openwop.dev/changelog/"/>
   <meta property="og:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Twitter card -->
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:title" content="OpenWOP — Changelog"/>
-  <meta name="twitter:description" content="Per-version record of every change to the OpenWOP spec corpus, schemas, SDKs, and reference hosts. 9 versions tracked."/>
+  <meta name="twitter:description" content="Per-version record of every change to the OpenWOP spec corpus, schemas, SDKs, and reference hosts. 10 versions tracked."/>
   <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
 
   <!-- Icons / theme -->
@@ -146,6 +146,7 @@
   </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
     <h4>Releases</h4>
     <ul>
+      <li class="toc-top"><a href="#v1-1-8-unreleased">1.1.8 · unreleased</a></li>
       <li class="toc-top"><a href="#v1-1-7">1.1.7 · 2026-06-02</a></li>
       <li class="toc-top"><a href="#v1-1-5">1.1.5 · 2026-05-28</a></li>
       <li class="toc-top"><a href="#v1-1-4">1.1.4 · 2026-05-26</a></li>
@@ -168,7 +169,26 @@
 <blockquote><p><strong>Status legend</strong> (per <a href="https://openwop.dev/governance/spec-status/"><code>/governance/spec-status/</code></a>):</p><p>Stable · Stabilizing · Draft · Experimental — see individual doc headers for current state. The legacy <code>STUB / DRAFT / OUTLINE / FINAL</code> vocabulary still appears in older releases below; both are valid in the corpus.</p></blockquote>
 <blockquote><p><strong>Package version map.</strong> The version headers below are <strong>spec-corpus</strong> versions, not package versions — each package advances independently on its own per-package release tag. So a corpus version may be skipped here when its number was already consumed by a single-package release, and not every published package version has a corpus row. Notably <strong>there is no corpus <code>1.1.6</code></strong>: that number was taken by a TypeScript-SDK-only npm patch (<code>@openwop/openwop@1.1.6</code>, published 2026-05-31, the agent-platform/roster helper catch-up), so the corpus skipped straight to <code>1.1.7</code>. A deep-link like <code>#v1-1-6</code> therefore has no anchor here by design — the TS SDK's own history lives in <a href="https://github.com/openwop/openwop/blob/main/sdk/typescript/CHANGELOG.md"><code>sdk/typescript/CHANGELOG.md</code></a> and on npm. Current published per-package versions (as of the <code>1.1.7</code> corpus release): <code>@openwop/openwop</code> <strong>1.2.0</strong> (npm) · <code>@openwop/openwop-conformance</code> <strong>1.18.1</strong> (npm) · <code>openwop-client</code> <strong>1.1.7</strong> (PyPI) · <code>github.com/openwop/openwop/sdk/go</code> <strong>v1.1.7</strong> (Go modules).</p></blockquote>
 <hr/>
-    <section class="changelog-version" id="v1-1-7">
+    <section class="changelog-version" id="v1-1-8-unreleased">
+  <header class="changelog-version-head">
+    <h2><a href="#v1-1-8-unreleased">1.1.8 · unreleased</a></h2>
+    <span class="changelog-version-date is-unreleased">Unreleased</span>
+    
+  </header>
+  <div class="changelog-version-body">
+    <h3 id="docs">Docs</h3>
+<ul>
+<li><strong>Sample workflow-engine host doc sync.</strong> <code>apps/workflow-engine/README.md</code> now reflects that the sample wires the reference <code>vendor.myndhyve.*</code> host surfaces (chat/canvas/kanban/knowledge/launchStudio/webResearch) + <code>host.{a2a,triggers,db.nosql}</code> + the <code>ctx.interrupt</code>/<code>ctx.suspend</code> primitive; stale <code>~70%</code>/<code>v1.1.0</code> measurements are marked as 2026-05-15-era snapshots (not re-measured). <code>docs/KNOWN-LIMITS.md</code> gains a "Sample workflow-engine host" section documenting the single-suspend-per-node limitation of the sample's <code>ctx.suspend</code> (only <code>core.openwop.a2a.multiTurnCoordinator</code> loops suspend; all gate nodes are single-suspend and unaffected).</li>
+</ul>
+<h3 id="additive">Additive</h3>
+<ul>
+<li><strong><code>interrupt.md</code>: document <code>suspend</code> as the accepted alias of <code>interrupt</code>.</strong> Much of the v1 pack ecosystem (<code>core.openwop.hitl</code>, <code>core.openwop.flow</code>, and several vendor packs) calls the interrupt primitive <code>suspend</code> with the field aliases <code>reason</code>→<code>kind</code>/<code>resumeKey</code>→<code>key</code>/<code>answerSchema</code>→<code>resumeSchema</code>. A host SHOULD also expose <code>suspend</code> so those packs run unmodified; <code>interrupt</code> stays canonical and a host exposing only <code>interrupt</code> remains v1-compliant. Reconciles the de-facto ecosystem name with the normative surface — additive, no wire change.</li>
+<li><strong>RFC 0089 (conformance certification bundle) Accepted.</strong> The <code>openwop-conformance --certify &amp;lt;out.json&amp;gt;</code> generator landed in <code>conformance/src/cli.ts</code>: it fetches <code>/.well-known/openwop</code> (captured verbatim + canonical-JSON SHA-256), derives <code>claimedProfiles</code> from the captured document (reusing <code>profiles.ts</code> <code>deriveProfiles</code>/<code>isCoreStandard</code>/<code>agentPlatformStatus</code>), runs the suite recording each scenario file's terminal state via vitest's JSON reporter, validates the assembled bundle against <code>conformance-certification-bundle.schema.json</code> (Ajv2020) before writing, and never lists a vacuously-run scenario in <code>results.passed</code>. A real reference-host bundle generated against the in-memory reference host is committed at <code>examples/hosts/in-memory/certification-bundle.json</code> (claims exactly the profiles its discovery document derives — <code>openwop-core</code> + <code>openwop-stream-sse</code> + <code>openwop-stream-poll</code> + <code>openwop-node-packs</code> + <code>openwop-fixtures</code> — and <code>verifyBundle</code> accepts it), with a server-free round-trip assertion (schema-valid + <code>verifyBundle</code> accept + <code>discovery.sha256</code> reproduces) added to the RFC 0089 block of <code>spec-corpus-validity.test.ts</code>. Additive per <code>COMPATIBILITY.md</code> §2 — no wire-shape change. RFC counts: <strong>Accepted 86 / Active 1 / Draft 2</strong> (only RFC 0035 remains <code>Active</code>).</li>
+</ul>
+<hr/>
+  </div>
+</section>
+<section class="changelog-version" id="v1-1-7">
   <header class="changelog-version-head">
     <h2><a href="#v1-1-7">1.1.7</a></h2>
     <span class="changelog-version-date">2026-06-02</span>
