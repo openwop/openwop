@@ -93,8 +93,32 @@ export default defineConfig(({ mode }) => {
             return html
               .replaceAll('{{BRAND_TITLE}}', brand.documentTitle)
               .replaceAll('{{BRAND_FAVICON}}', brand.faviconSrc)
-              .replaceAll('{{BRAND_FONTS_HREF}}', brand.fontsHref);
+              .replaceAll('{{BRAND_FONTS_HREF}}', brand.fontsHref)
+              .replaceAll('{{BRAND_THEME_COLOR}}', brand.themeColor);
           },
+        },
+        // Emit a brand-stamped PWA manifest at build time (index.html links it
+        // via `<link rel="manifest">`). name / theme-color / icon all come from
+        // `VITE_BRAND_*`, so a fork's `npm run build` ships an installable app
+        // with ITS identity — no hand-authored manifest. Build-only: in
+        // `vite dev` the manifest link 404s harmlessly (install is a prod concern).
+        generateBundle() {
+          const brand = resolveBrandFromEnv(loadEnv(mode, __dirname, ''));
+          const manifest = {
+            name: brand.productName,
+            short_name: brand.productName,
+            description: brand.tagline,
+            start_url: '/',
+            display: 'standalone',
+            background_color: brand.themeColor,
+            theme_color: brand.themeColor,
+            icons: [{ src: brand.faviconSrc, sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
+          };
+          this.emitFile({
+            type: 'asset',
+            fileName: 'manifest.webmanifest',
+            source: JSON.stringify(manifest, null, 2),
+          });
         },
       },
       {

@@ -82,6 +82,7 @@ it. A forgotten field ships OpenWOP branding silently — so run the guard below
 | Product name / wordmark | `VITE_BRAND_PRODUCT_NAME`, `VITE_BRAND_MARK_PRE/EMPHASIS/SUB` |
 | Header logo | `VITE_BRAND_LOGO_SRC` (+ drop the SVG in `public/`) |
 | **Favicon** | `VITE_BRAND_FAVICON_SRC` (commonly missed → ships the OpenWOP "O") |
+| PWA manifest + mobile `theme-color` | `VITE_BRAND_THEME_COLOR` (the `manifest.webmanifest` is auto-stamped at build from product name + favicon + this color — no hand-authored manifest) |
 | Document `<title>` | `VITE_BRAND_DOCUMENT_TITLE` |
 | Tagline / footer / assistant name | `VITE_BRAND_TAGLINE`, `VITE_BRAND_FOOTER_TEXT`, `VITE_BRAND_ASSISTANT_NAME` |
 | Domain / home / repo links | `VITE_BRAND_PRIMARY_DOMAIN`, `VITE_BRAND_HOME_URL`, `VITE_BRAND_REPO_URL` |
