@@ -316,6 +316,30 @@ export async function loadUserAgentsIntoRegistry(storage: Storage): Promise<numb
   return records.length;
 }
 
+/** Durably persist a user-authored agent (insert-if-absent) AND register it
+ *  with the in-process `AgentRegistry`, so it is both (a) visible to
+ *  `GET /v1/agents` after a boot/rehydrate on any instance and (b) immediately
+ *  live on THIS instance. Used by the demo seed (`demoSeed.ts`) to make its
+ *  named personas chat-callable through the same isolation-correct path the
+ *  create-wizard uses — `ownerTenant` scopes them per-tenant. Idempotent:
+ *  skips the durable insert when the record already exists, and the registry
+ *  register is last-write-wins.
+ *
+ *  NOTE (multi-instance): the registry is boot-hydrated, not read-through —
+ *  an instance that was already running before this insert won't carry the
+ *  agent until it reboots/rehydrates (the same eventual-consistency property
+ *  user-created agents already have). A redeploy or scale-up heals it. */
+export async function ensureUserAgentRegistered(
+  storage: Storage,
+  record: UserAgentRecord,
+): Promise<void> {
+  const existing = await storage.getUserAgent(record.agentId);
+  if (!existing) {
+    await storage.insertUserAgent(record);
+  }
+  registerUserAgent(record);
+}
+
 /** Project a user-authored record into the registry's resolved-manifest
  *  shape. `systemPrompt` is inlined (RFC 0070 stores resolved bodies,
  *  not refs); `packName/packVersion` use the synthetic `user:<tenant>`
