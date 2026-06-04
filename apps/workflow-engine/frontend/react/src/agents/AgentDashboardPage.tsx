@@ -9,18 +9,47 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { checkAgent, seedDemoAgents } from './rosterClient.js';
-import { loadAgentViews, type AgentView, type AgentStatus } from './agentViewModel.js';
-import { roleKeyForAgent, roleThemeForKey } from './roleTemplates.js';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  checkAgent, getFleetActivity, getOrgChart, seedDemoAgents,
+  type AgentActivityItem, type OrgChart,
+} from './rosterClient.js';
+import { loadAgentViews, relativeTime, type AgentView, type AgentStatus } from './agentViewModel.js';
+import { roleKeyForAgent, roleThemeForKey, workflowName } from './roleTemplates.js';
 import { AgentCard } from './AgentCard.js';
-import { AgentActivityFeed } from './AgentActivityFeed.js';
 import { Notice } from '../ui/Notice.js';
 import { StateCard } from '../ui/StateCard.js';
+import { Skeleton } from '../ui/Skeleton.js';
 import { PageHeader } from '../ui/PageHeader.js';
-import { BotIcon } from '../ui/icons/index.js';
+import { BotIcon, ZapIcon, ClockIcon, ColumnsIcon, InboxIcon, PlayIcon, BuildingIcon } from '../ui/icons/index.js';
 
 type SortKey = 'attention' | 'name';
+
+// ── Run-ledger helpers (folded in from the former /workforce page) ─────────
+const SOURCE_GLYPH: Record<AgentActivityItem['source'], { Icon: typeof ZapIcon; label: string }> = {
+  heartbeat: { Icon: ZapIcon, label: 'Heartbeat pick' },
+  schedule: { Icon: ClockIcon, label: 'Scheduled run' },
+  kanban: { Icon: ColumnsIcon, label: 'Board card' },
+  approval: { Icon: InboxIcon, label: 'Approved proposal' },
+};
+
+function runChip(status: string): string {
+  if (status === 'completed') return 'chip chip--success';
+  if (status === 'failed') return 'chip chip--danger';
+  if (status === 'running' || status === 'pending') return 'chip chip--accent';
+  return 'chip chip--muted';
+}
+
+/** rosterId → department name, from the descriptive org chart. */
+function placements(chart: OrgChart | null): Map<string, string> {
+  const out = new Map<string, string>();
+  if (!chart) return out;
+  for (const m of chart.members) {
+    const dept = chart.departments.find((d) => d.departmentId === m.departmentId);
+    if (dept) out.set(m.rosterId, dept.name);
+  }
+  return out;
+}
 
 // How much each agent wants the operator's eyes (highest first). "Waiting on a
 // human" outranks everything; an idle agent with a full To Do queue outranks an
@@ -72,6 +101,8 @@ function ConceptStrip(): JSX.Element {
 export function AgentDashboardPage(): JSX.Element {
   const navigate = useNavigate();
   const [views, setViews] = useState<AgentView[]>([]);
+  const [chart, setChart] = useState<OrgChart | null>(null);
+  const [feed, setFeed] = useState<AgentActivityItem[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -108,7 +139,17 @@ export function AgentDashboardPage(): JSX.Element {
 
   const refresh = useCallback(async () => {
     try {
-      setViews(await loadAgentViews());
+      // Views + the editorial frame (org-chart filing, run ledger) in one
+      // fan-in. Chart + ledger are progressive: their failure never blocks
+      // the cards.
+      const [v, c, f] = await Promise.all([
+        loadAgentViews(),
+        getOrgChart().catch(() => null),
+        getFleetActivity({ limit: 12 }).catch(() => ({ items: [], truncated: false })),
+      ]);
+      setViews(v);
+      setChart(c);
+      setFeed(f.items);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
@@ -125,7 +166,14 @@ export function AgentDashboardPage(): JSX.Element {
           await seedDemoAgents();
           loaded = await loadAgentViews();
         }
-        if (!cancelled) setViews(loaded);
+        if (!cancelled) {
+          setViews(loaded);
+          const [c, f] = await Promise.all([
+            getOrgChart().catch(() => null),
+            getFleetActivity({ limit: 12 }).catch(() => ({ items: [], truncated: false })),
+          ]);
+          if (!cancelled) { setChart(c); setFeed(f.items); }
+        }
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err));
       } finally {
@@ -136,6 +184,14 @@ export function AgentDashboardPage(): JSX.Element {
       cancelled = true;
     };
   }, []);
+
+  const byMember = useMemo(() => placements(chart), [chart]);
+  const figures = useMemo(() => ({
+    staff: views.length,
+    working: views.filter((v) => v.status === 'working').length,
+    waiting: views.filter((v) => v.status === 'waiting').length,
+    onHeartbeat: views.filter((v) => (v.entry.heartbeatIntervalMs ?? 0) > 0 && v.entry.enabled).length,
+  }), [views]);
 
   const onCheckNow = async (rosterId: string, persona: string) => {
     setBusyAgent(rosterId);
@@ -173,14 +229,28 @@ export function AgentDashboardPage(): JSX.Element {
     <section>
       <PageHeader
         eyebrow="Agents"
-        title="AI coworkers"
-        lede="Create AI coworkers that act as digital twins for company roles, then give them workflows, schedules, and task boards."
+        title="Digital workforce"
+        lede="The named agents on staff — digital twins for company roles, each with workflows, a schedule, and a task board. What they own, how autonomous they are, and what they have been doing."
         actions={
-          <button type="button" className="primary" onClick={() => navigate('/agents/new')}>Create agent</button>
+          <button type="button" className="primary" onClick={() => navigate('/agents/new')}>Hire an agent</button>
         }
       />
 
-      <ConceptStrip />
+      {!loading && views.length > 0 ? (
+        <dl className="wf-figures" aria-label="Workforce key figures">
+          {([
+            ['On staff', figures.staff],
+            ['Working now', figures.working],
+            ['Waiting on human', figures.waiting],
+            ['On a heartbeat', figures.onHeartbeat],
+          ] as const).map(([label, n]) => (
+            <div className="wf-figure" key={label}>
+              <dd>{n}</dd>
+              <dt>{label}</dt>
+            </div>
+          ))}
+        </dl>
+      ) : null}
 
       {error ? <Notice variant="error">{error}</Notice> : null}
       {notice ? <Notice variant="success">{notice}</Notice> : null}
@@ -188,6 +258,8 @@ export function AgentDashboardPage(): JSX.Element {
       {loading ? (
         <StateCard loading title="Loading your agents…" />
       ) : views.length === 0 ? (
+        <>
+        <ConceptStrip />
         <StateCard
           icon={<BotIcon size={26} />}
           title="Agents are named digital coworkers"
@@ -201,6 +273,7 @@ export function AgentDashboardPage(): JSX.Element {
             </>
           }
         />
+        </>
       ) : (
         <>
           {views.length > 3 ? (
@@ -238,33 +311,83 @@ export function AgentDashboardPage(): JSX.Element {
             </div>
           ) : null}
 
-          {visible.length === 0 ? (
-            <StateCard
-              icon={<BotIcon size={26} />}
-              title="No agents match"
-              body="Try clearing the search or filters."
-              action={<button type="button" className="secondary" onClick={() => { setQuery(''); setStatusFilter('all'); setRoleFilter('all'); }}>Clear filters</button>}
-            />
-          ) : (
-            <div className="card-grid">
-              {visible.map((view) => (
-                <AgentCard
-                  key={view.entry.rosterId}
-                  view={view}
-                  busy={busyAgent === view.entry.rosterId}
-                  onOpen={(tab) => navigate(`/agents/${encodeURIComponent(view.entry.rosterId)}${tab ? `?tab=${tab}` : ''}`)}
-                  onCheckNow={() => void onCheckNow(view.entry.rosterId, view.entry.persona)}
-                  onChat={() => {
-                    const agentId = view.entry.agentRef?.agentId;
-                    navigate(agentId ? `/?agent=${encodeURIComponent(agentId)}` : '/');
-                  }}
-                />
-              ))}
-            </div>
-          )}
+          <div className="wf-body">
+            {visible.length === 0 ? (
+              <StateCard
+                icon={<BotIcon size={26} />}
+                title="No agents match"
+                body="Try clearing the search or filters."
+                action={<button type="button" className="secondary" onClick={() => { setQuery(''); setStatusFilter('all'); setRoleFilter('all'); }}>Clear filters</button>}
+              />
+            ) : (
+              <div className="card-grid">
+                {visible.map((view) => (
+                  <AgentCard
+                    key={view.entry.rosterId}
+                    view={view}
+                    department={chart ? (byMember.get(view.entry.rosterId) ?? '') : undefined}
+                    busy={busyAgent === view.entry.rosterId}
+                    onOpen={(tab) => navigate(`/agents/${encodeURIComponent(view.entry.rosterId)}${tab ? `?tab=${tab}` : ''}`)}
+                    onCheckNow={() => void onCheckNow(view.entry.rosterId, view.entry.persona)}
+                    onChat={() => {
+                      const agentId = view.entry.agentRef?.agentId;
+                      navigate(agentId ? `/?agent=${encodeURIComponent(agentId)}` : '/');
+                    }}
+                  />
+                ))}
+              </div>
+            )}
 
-          <h2 style={{ fontSize: '15px', marginTop: 'var(--space-5)' }}>Fleet activity</h2>
-          <AgentActivityFeed views={views} />
+            {/* The run ledger — fleet activity with run links, plus the
+                department roll-up (folded in from the former /workforce). */}
+            <aside className="wf-ledger surface-card" aria-label="Recent runs">
+              <div className="wf-ledger-head">
+                <span className="wf-ledger-title">The ledger</span>
+                <Link to="/mission" className="wf-ledger-more">Mission control →</Link>
+              </div>
+              {feed === null ? (
+                <div className="wf-ledger-rows">{[0, 1, 2, 3].map((i) => <Skeleton key={i} width="100%" height={30} />)}</div>
+              ) : feed.length === 0 ? (
+                <p className="wf-ledger-empty">
+                  No agent-attributed runs yet. Check an agent now, or drop a card on its board.
+                </p>
+              ) : (
+                <ol className="wf-ledger-rows">
+                  {feed.map((item) => {
+                    const glyph = SOURCE_GLYPH[item.source] ?? { Icon: PlayIcon, label: item.source };
+                    const Icon = glyph.Icon;
+                    return (
+                      <li className="wf-ledger-row" key={item.runId}>
+                        <span className="wf-ledger-src" title={glyph.label} aria-hidden><Icon size={13} /></span>
+                        <span className="wf-ledger-who">
+                          <em>{item.persona ?? 'Agent'}</em>
+                          <span className="wf-ledger-what">{workflowName(item.workflowId)}</span>
+                        </span>
+                        <span className={runChip(item.status)}>{item.status}</span>
+                        <Link to={`/runs/${encodeURIComponent(item.runId)}`} className="wf-ledger-when">
+                          {relativeTime(item.timestamp) ?? '—'}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+              {chart && chart.departments.length > 0 ? (
+                <div className="wf-ledger-foot">
+                  <span className="wf-ledger-title">Departments</span>
+                  <ul className="wf-depts">
+                    {chart.departments.map((d) => (
+                      <li key={d.departmentId}>
+                        <BuildingIcon size={12} aria-hidden /> {d.name}
+                        <span className="wf-dept-count">{chart.members.filter((m) => m.departmentId === d.departmentId).length}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link to="/roster" className="wf-ledger-more">Org chart →</Link>
+                </div>
+              ) : null}
+            </aside>
+          </div>
         </>
       )}
     </section>
