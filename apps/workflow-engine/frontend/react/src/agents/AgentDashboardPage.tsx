@@ -20,6 +20,7 @@ import { roleKeyForAgent, roleThemeForKey, workflowName } from './roleTemplates.
 import { RosterRow } from './RosterRow.js';
 import { NeedsYouQueue } from './NeedsYouQueue.js';
 import { AgentDrawer, type DrawerTab } from './AgentDrawer.js';
+import { HireAgentModal } from './HireAgentModal.js';
 import { Notice } from '../ui/Notice.js';
 import { StateCard } from '../ui/StateCard.js';
 import { Skeleton } from '../ui/Skeleton.js';
@@ -95,6 +96,7 @@ export function AgentDashboardPage(): JSX.Element {
   const [views, setViews] = useState<AgentView[]>([]);
   const [chart, setChart] = useState<OrgChart | null>(null);
   const [approvals, setApprovals] = useState<PendingApproval[]>([]);
+  const [hiring, setHiring] = useState(false);
   // Quick-look drawer state rides the URL (?agent=<rosterId>&tab=) so a
   // drawer view is shareable/refreshable (redesign PR 2, prototype contract).
   const [searchParams, setSearchParams] = useSearchParams();
@@ -250,7 +252,7 @@ export function AgentDashboardPage(): JSX.Element {
         title="Digital workforce"
         lede="The named agents on staff — digital twins for company roles, each with workflows, a schedule, and a task board. What they own, how autonomous they are, and what they have been doing."
         actions={
-          <button type="button" className="primary" onClick={() => navigate('/agents/new')}>Hire an agent</button>
+          <button type="button" className="primary" onClick={() => setHiring(true)}>Hire an agent</button>
         }
       />
 
@@ -437,6 +439,8 @@ export function AgentDashboardPage(): JSX.Element {
           </div>
         </>
       )}
+
+      {hiring ? <HireAgentModal onClose={() => setHiring(false)} /> : null}
 
       {(() => {
         const drawerView = drawerId ? views.find((v) => v.entry.rosterId === drawerId) : undefined;

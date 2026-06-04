@@ -12,8 +12,8 @@
  * then routes to the new agent's workspace.
  */
 
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ROLE_TEMPLATES, roleThemeForKey, type RoleTemplate, type WorkflowOption } from './roleTemplates.js';
 import { createUserAgent } from '../client/agentsClient.js';
 import { createRosterEntry } from './rosterClient.js';
@@ -101,13 +101,32 @@ export function AgentCreateWizard(): JSX.Element {
   const [createBoardEnabled, setCreateBoardEnabled] = useState(true);
   const [enableDiscord, setEnableDiscord] = useState(true);
 
-  // Step 5 — schedule + heartbeat
+  // Step 5 — schedule + heartbeat + autonomy
   const [heartbeat, setHeartbeat] = useState('manual');
+  const [autonomy, setAutonomy] = useState<'auto' | 'review'>('auto');
   const [modelClass, setModelClass] = useState<WizardModelClass>('chat');
   const [scheduleWorkflowId, setScheduleWorkflowId] = useState('');
   const [scheduleCadence, setScheduleCadence] = useState(CADENCE_PRESETS[2]!.key); // weekdays
 
   const recommendedWorkflows: WorkflowOption[] = role?.workflows ?? [];
+
+  // Prefill from the Hire modal's hand-off (?role=<template>&autonomy=) —
+  // redesign PR 4: the modal is a fast path IN FRONT of this wizard, never a
+  // second creation flow. Runs once; a user-picked role is never overridden.
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    const roleParam = searchParams.get('role');
+    const autonomyParam = searchParams.get('autonomy');
+    if (autonomyParam === 'review' || autonomyParam === 'auto') setAutonomy(autonomyParam);
+    if (roleParam && role === null && !isCustom) {
+      const t = ROLE_TEMPLATES.find((r) => r.key === roleParam);
+      if (t) {
+        pickRole(t);
+        if (!name) setName(EXAMPLE_NAMES[t.key] ?? '');
+      }
+    }
+    // Mount-only by design — the prefill must never re-fire and clobber edits.
+  }, []);
 
   const pickRole = (r: RoleTemplate) => {
     setRole(r);
@@ -178,6 +197,7 @@ export function AgentCreateWizard(): JSX.Element {
         workflows,
         label: roleTitle.trim(),
         ...(heartbeatIntervalMs > 0 ? { heartbeatIntervalMs } : {}),
+        ...(autonomy === 'review' ? { autonomyLevel: 'review' as const } : {}),
       });
       // 3. board with the 4 demo lanes; To Do triggers the first workflow.
       if (createBoardEnabled) {
@@ -349,6 +369,24 @@ export function AgentCreateWizard(): JSX.Element {
           <select value={heartbeat} onChange={(e) => setHeartbeat(e.target.value)} style={{ marginBottom: '0.8rem' }}>
             {HEARTBEAT_OPTIONS.map((h) => <option key={h.key} value={h.key}>{h.label}</option>)}
           </select>
+
+          <div style={{ fontSize: '0.82rem', fontWeight: 600 }}>Starting autonomy</div>
+          <p style={{ ...muted, fontSize: '0.78rem', marginTop: 0 }}>
+            Supervised agents propose work for your sign-off; autonomous agents start runs immediately. You can change this later.
+          </p>
+          <div className="action-bar" style={{ marginBottom: '0.8rem' }}>
+            {([['review', 'Supervised — propose for review'], ['auto', 'Autonomous — run immediately']] as const).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className={autonomy === value ? 'primary btn-sm' : 'secondary btn-sm'}
+                aria-pressed={autonomy === value}
+                onClick={() => setAutonomy(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           {heartbeat !== 'manual' && selectedWorkflows.size > 0 ? (
             <div>
               <div style={{ fontSize: '0.82rem', fontWeight: 600 }}>Starter schedule (optional)</div>
