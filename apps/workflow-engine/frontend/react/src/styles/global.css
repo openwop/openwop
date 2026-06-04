@@ -4330,3 +4330,280 @@ a.surface-card:hover,
 @media (max-width: 640px) {
   .card-grid { grid-template-columns: 1fr; }
 }
+
+/* ── Admin tier (white-label PRD §2: two-tier IA as framework chrome) ──────
+ * <AdminLayout> = pathless layout route; the embedded rail derives from the
+ * feature manifest's admin tier. Renders inside .app-main-fullbleed. */
+.admin-shell {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+  padding: var(--space-4) var(--space-5);
+  width: 100%;
+}
+.admin-rail {
+  position: sticky;
+  top: var(--space-4);
+  align-self: start;
+  border-right: 1px solid var(--rule);
+  padding-right: var(--space-3);
+}
+.admin-rail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 0 var(--space-2-5) var(--space-2);
+}
+.admin-rail-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.admin-rail-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.admin-rail-toggle:hover { color: var(--ink); background: var(--paper-2); }
+/* Chevron points right when collapsed (expand), left when expanded. */
+.admin-shell:not(.is-collapsed) .admin-rail-toggle svg { transform: rotate(180deg); }
+.admin-rail nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.admin-nav-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  padding: var(--space-2) var(--space-2-5);
+  border-radius: var(--radius);
+  color: var(--ink-2);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 450;
+  line-height: 1.2;
+}
+.admin-nav-link:visited { color: var(--ink-2); }
+.admin-nav-link:hover { background: var(--paper-2); color: var(--ink); }
+.admin-nav-link.is-active { background: var(--clay-soft); color: var(--clay); font-weight: 600; }
+.admin-nav-link.is-active:visited { color: var(--clay); }
+.admin-nav-icon { display: inline-flex; align-items: center; color: var(--ink-3); flex-shrink: 0; }
+.admin-nav-link:hover .admin-nav-icon { color: var(--ink-2); }
+.admin-nav-link.is-active .admin-nav-icon { color: var(--clay); }
+.admin-nav-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Collapsed icon strip — desktop only; the ≤860px layout stacks instead. */
+@media (min-width: 861px) {
+  .admin-shell.is-collapsed { grid-template-columns: 44px minmax(0, 1fr); gap: var(--space-3); }
+  .admin-shell.is-collapsed .admin-rail { padding-right: 0; }
+  .admin-shell.is-collapsed .admin-rail-head { justify-content: center; padding-left: 0; padding-right: 0; }
+  .admin-shell.is-collapsed .admin-nav-label { display: none; }
+  .admin-shell.is-collapsed .admin-nav-link { justify-content: center; padding: var(--space-2) 0; }
+}
+@media (max-width: 860px) {
+  .admin-shell { grid-template-columns: minmax(0, 1fr); padding: var(--space-3); }
+  .admin-rail { position: static; border-right: 0; padding-right: 0; border-bottom: 1px solid var(--rule); padding-bottom: var(--space-2); }
+  .admin-rail nav ul { flex-direction: row; flex-wrap: wrap; }
+}
+/* Content column: owns its width so admin pages stay shell-width-agnostic.
+ * `--narrow` preserves the manifest's reading-width tier inside the shell. */
+.admin-content { min-width: 0; max-width: 1200px; }
+.admin-content--narrow { max-width: 760px; }
+
+/* The single Admin entry pinned under the workspace groups. */
+.app-nav-group--admin { margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--rule); }
+
+/* Admin overview (/admin): card grid derived from the manifest. */
+.admin-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+.admin-overview-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  text-decoration: none;
+  color: var(--ink);
+}
+.admin-overview-card:visited { color: var(--ink); }
+.admin-overview-card:hover { border-color: var(--clay); }
+.admin-overview-icon { display: inline-flex; color: var(--clay); flex-shrink: 0; margin-top: 2px; }
+.admin-overview-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.admin-overview-label { font-weight: 600; font-size: 14px; }
+.admin-overview-hint { color: var(--ink-2); font-size: 12.5px; line-height: 1.45; }
+
+/* ── Digital Workforce (/workforce) — editorial annual-report roster ───────
+ * Key-figures band (oversized serif numerals over hairline rules), personnel-
+ * dossier cards filed by org-chart department, ruled run ledger. Tokens only;
+ * light + warm-dark both derive. */
+.workforce { display: flex; flex-direction: column; gap: var(--space-5); }
+
+/* Key figures: a ruled band, numerals set in the display serif. */
+.wf-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  margin: 0;
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--rule);
+}
+.wf-figure {
+  padding: var(--space-3) var(--space-4) var(--space-3) 0;
+  border-left: 1px solid var(--rule);
+  padding-left: var(--space-4);
+}
+.wf-figure:first-child { border-left: 0; padding-left: 0; }
+.wf-figure dd {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.wf-figure dt {
+  margin-top: 2px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* Asymmetric body: dossiers | ledger. */
+.wf-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--space-4);
+  align-items: start;
+}
+@media (max-width: 1020px) { .wf-body { grid-template-columns: minmax(0, 1fr); } }
+
+.wf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-3);
+}
+
+/* Dossier card: staggered reveal, lift + clay rule on hover. */
+.wf-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2-5);
+  padding: var(--space-4);
+  animation: wf-reveal 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+.wf-card:hover { border-color: var(--clay); transform: translateY(-2px); box-shadow: 0 10px 28px var(--ink-shadow); }
+@keyframes wf-reveal { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .wf-card { animation: none; }
+  .wf-card:hover { transform: none; }
+}
+
+/* The filing label: department eyebrow + live heartbeat dot over a hairline. */
+.wf-card-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--rule);
+}
+.wf-card-dept {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.wf-live { width: 8px; height: 8px; border-radius: 50%; background: var(--rule); flex-shrink: 0; }
+.wf-live.is-on { background: var(--color-success); animation: wf-pulse 2.2s ease-in-out infinite; }
+@keyframes wf-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-success) 35%, transparent); }
+  50% { box-shadow: 0 0 0 5px color-mix(in oklch, var(--color-success) 0%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) { .wf-live.is-on { animation: none; } }
+
+.wf-card-id { display: flex; align-items: center; gap: var(--space-3); }
+.wf-card-name h3 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 21px;
+  line-height: 1.1;
+  font-weight: 500;
+}
+.wf-card-role { margin: 2px 0 0; color: var(--ink-2); font-size: 12.5px; }
+.wf-card-bio {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Ruled facts mini-table. */
+.wf-card-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--rule);
+}
+.wf-card-facts dt {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.wf-card-facts dd { margin: 1px 0 0; font-size: 12.5px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.wf-card-standing { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.wf-card-actions { margin-top: auto; padding-top: var(--space-2); }
+
+/* The ledger: ruled rows like a ledger book. */
+.wf-ledger { padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
+.wf-ledger-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
+.wf-ledger-title {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.wf-ledger-more { font-size: 12px; color: var(--clay); text-decoration: none; }
+.wf-ledger-more:hover { text-decoration: underline; }
+.wf-ledger-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.wf-ledger-row {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto auto;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--rule);
+}
+.wf-ledger-row:last-child { border-bottom: 0; }
+.wf-ledger-src { display: inline-flex; color: var(--ink-3); }
+.wf-ledger-who { min-width: 0; display: flex; flex-direction: column; }
+.wf-ledger-who em { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--ink); }
+.wf-ledger-what { font-size: 11.5px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wf-ledger-when { font-family: var(--mono); font-size: 11px; color: var(--ink-3); text-decoration: none; white-space: nowrap; }
+.wf-ledger-when:hover { color: var(--clay); }
+.wf-ledger-empty { margin: 0; color: var(--ink-2); font-size: 12.5px; line-height: 1.5; }
+.wf-ledger-foot { padding-top: var(--space-2); border-top: 1px solid var(--rule); display: flex; flex-direction: column; gap: var(--space-2); }
+.wf-depts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.wf-depts li { display: flex; align-items: center; gap: var(--space-2); font-size: 12.5px; color: var(--ink-2); }
+.wf-dept-count { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--ink-3); }

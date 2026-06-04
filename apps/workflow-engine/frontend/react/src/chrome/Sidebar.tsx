@@ -4,9 +4,10 @@ import { brand } from '../brand/brand.js';
 import { BrandMark } from '../brand/BrandMark.js';
 import { SignInButton } from '../auth/SignInButton.js';
 import { NotificationBell } from '../notifications/NotificationBell.js';
-import { BuildingIcon, MenuIcon, ChevronRightIcon, SearchIcon } from '../ui/icons/index.js';
+import { BuildingIcon, MenuIcon, ChevronRightIcon, SearchIcon, SettingsIcon } from '../ui/icons/index.js';
 import { ThemeToggle } from '../ui/ThemeToggle.js';
-import { NAV, navItemIsActive } from './navItems.js';
+import { WORKSPACE_NAV, navItemIsActive } from './features.js';
+import { isAdminPath } from './features.js';
 
 const COLLAPSE_KEY = 'openwop.sidebar.collapsed';
 
@@ -82,7 +83,7 @@ export function Sidebar({ netOpen, onToggleNet }: { netOpen: boolean; onToggleNe
         </button>
 
         <nav className="app-sidebar-nav" aria-label="Sections">
-          {NAV.map((group) => (
+          {WORKSPACE_NAV.map((group) => (
             <div key={group.label} className="app-nav-group">
               <div className="app-nav-group-label" aria-hidden>{group.label}</div>
               <ul>
@@ -107,6 +108,24 @@ export function Sidebar({ netOpen, onToggleNet }: { netOpen: boolean; onToggleNe
               </ul>
             </div>
           ))}
+          {/* The admin tier surfaces as ONE pinned entry (white-label PRD §2):
+              everything platform/config lives behind it, inside <AdminLayout>'s
+              embedded rail. Active whenever any admin-tier route is open. */}
+          <div className="app-nav-group app-nav-group--admin">
+            <ul>
+              <li>
+                <NavLink
+                  to="/admin"
+                  className={`app-nav-link${isAdminPath(location.pathname) ? ' is-active' : ''}`}
+                  aria-current={isAdminPath(location.pathname) ? 'page' : undefined}
+                  title="Platform configuration + console"
+                >
+                  <span className="app-nav-icon" aria-hidden><SettingsIcon size={16} /></span>
+                  <span className="app-nav-label">Admin</span>
+                </NavLink>
+              </li>
+            </ul>
+          </div>
         </nav>
 
         <div className="app-sidebar-foot">

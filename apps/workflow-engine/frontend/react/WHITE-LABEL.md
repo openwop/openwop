@@ -265,6 +265,8 @@ The app is **two independent deploys** — backend (Cloud Run) and frontend
 
 | File | Role |
 |---|---|
+| `src/chrome/features.tsx` | **The feature manifest** — declare your pages once (`{path, element, tier: workspace\|admin, chrome, nav}`); routes, the two-tier nav (workspace rail + Admin console), width rules, and the ⌘K catalog all derive. A fork re-shapes the whole IA in this one file |
+| `src/chrome/AdminLayout.tsx` | The admin tier's embedded collapsible rail (pathless layout route; deep links unchanged) |
 | `src/brand/defaults.ts` | Default brand values + `VITE_BRAND_*` → field mapping (pure data; shared by client + Vite plugin) |
 | `src/brand/brand.ts` | Client-resolved `brand` singleton (layers `import.meta.env` over defaults) |
 | `src/brand/BrandMark.tsx` | The header icon mark + wordmark component |
