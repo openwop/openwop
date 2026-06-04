@@ -27,11 +27,17 @@ export function DemoDataPage(): JSX.Element {
     setError(null);
     setResult(null);
     try {
-      const { seeded, agents } = await seedDemoAgents();
+      const { seeded, agents, healed } = await seedDemoAgents({ heal: true });
+      const restored: string[] = [];
+      if (healed?.boards) restored.push(`${healed.boards} board${healed.boards === 1 ? '' : 's'}`);
+      if (healed?.schedules) restored.push(`${healed.schedules} schedule${healed.schedules === 1 ? '' : 's'}`);
+      if (healed?.orgChart) restored.push('the org chart');
       setResult(
         seeded
           ? `Re-seeded the demo roster — ${agents} demo agents present.`
-          : `Demo roster already complete — ${agents} agents, nothing to add.`,
+          : restored.length > 0
+            ? `Restored ${restored.join(', ')} — ${agents} agents already present.`
+            : `Demo roster already complete — ${agents} agents, nothing to add.`,
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));

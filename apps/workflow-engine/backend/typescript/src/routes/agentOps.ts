@@ -42,7 +42,11 @@ export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
   // "Load demo data" — idempotent per-tenant seed across registered domains.
   app.post('/v1/host/sample/demo/seed', async (req, res, next) => {
     try {
-      const result = await seedEverything(tenantOf(req), deps.storage);
+      // `heal: true` = the EXPLICIT "Load demo data" action — restores missing
+      // boards/schedules/chart for existing personas. The silent auto-seed on
+      // page entry omits it, so it can never resurrect deliberate deletions.
+      const heal = (req.body as { heal?: unknown } | undefined)?.heal === true;
+      const result = await seedEverything(tenantOf(req), deps.storage, { heal });
       res.status(200).json(result);
     } catch (err) {
       next(err);

@@ -14,7 +14,7 @@
  * test asserting the full list actually proves per-domain coverage.
  */
 
-import { seedDemoAgents, type SeedResult } from './demoSeed.js';
+import { seedDemoAgents, type SeedOptions, type SeedResult } from './demoSeed.js';
 import { listRoster } from './rosterService.js';
 import { listBoardsWithCards } from './kanbanService.js';
 import { listJobs } from './schedulingService.js';
@@ -52,8 +52,12 @@ async function verifyDomains(tenantId: string, storage: Storage): Promise<DemoSe
   return DEMO_SEED_DOMAINS.filter((d) => checks[d]);
 }
 
-export async function seedEverything(tenantId: string, storage: Storage): Promise<SeedEverythingResult> {
-  const result = await seedDemoAgents(tenantId, storage);
+export async function seedEverything(
+  tenantId: string,
+  storage: Storage,
+  opts: SeedOptions = {},
+): Promise<SeedEverythingResult> {
+  const result = await seedDemoAgents(tenantId, storage, opts);
   return {
     ...result,
     domains: await verifyDomains(tenantId, storage),

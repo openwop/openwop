@@ -160,7 +160,7 @@ export function AgentDashboardPage(): JSX.Element {
     setSeeding(true);
     setError(null);
     try {
-      await seedDemoAgents();
+      await seedDemoAgents({ heal: true });
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));

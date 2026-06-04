@@ -95,10 +95,24 @@ export async function deleteRosterEntry(rosterId: string): Promise<void> {
 
 /** "Load demo data" — idempotently seed the built-in demo domains for the
  *  caller's tenant. A no-op when the tenant already has those demo rows. */
-export async function seedDemoAgents(): Promise<{ seeded: boolean; agents: number; domains?: string[] }> {
-  const res = await fetch(`${config.baseUrl}/v1/host/sample/demo/seed`, fetchOpts({ method: 'POST', headers: jsonHeaders(), body: '{}' }));
+export async function seedDemoAgents(opts: { heal?: boolean } = {}): Promise<{
+  seeded: boolean;
+  agents: number;
+  domains?: string[];
+  healed?: { boards: number; schedules: number; orgChart: boolean };
+}> {
+  const res = await fetch(`${config.baseUrl}/v1/host/sample/demo/seed`, fetchOpts({
+    method: 'POST',
+    headers: jsonHeaders(),
+    // heal:true = explicit restore (the "Load demo data" buttons); the silent
+    // auto-seed on page entry sends {} so it never resurrects deletions.
+    body: JSON.stringify(opts.heal ? { heal: true } : {}),
+  }));
   if (!res.ok) throw new Error(`seedDemoAgents returned ${res.status}`);
-  return (await res.json()) as { seeded: boolean; agents: number; domains?: string[] };
+  return (await res.json()) as {
+    seeded: boolean; agents: number; domains?: string[];
+    healed?: { boards: number; schedules: number; orgChart: boolean };
+  };
 }
 
 export interface HeartbeatResult {
