@@ -4682,3 +4682,120 @@ a.surface-card:hover,
   .roster-sub { grid-column: 1 / -1; }
   .roster-actions { grid-column: 1 / -1; }
 }
+
+/* ── Agent quick-look drawer (workforce redesign PR 2) ─────────────────────
+ * Right slide-over; reviewing an agent never leaves the roster. */
+.agent-drawer-scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim);
+  z-index: 70;
+  display: flex;
+  justify-content: flex-end;
+}
+.agent-drawer {
+  width: min(680px, 100vw);
+  height: 100%;
+  background: var(--paper);
+  border-left: 1px solid var(--rule);
+  box-shadow: 0 18px 50px var(--ink-shadow);
+  display: flex;
+  flex-direction: column;
+  outline: none;
+  animation: agent-drawer-in 0.22s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes agent-drawer-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .agent-drawer { animation: none; } }
+
+.agent-drawer-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--rule);
+}
+.agent-drawer-id { flex: 1; min-width: 0; }
+.agent-drawer-name-line { display: flex; align-items: center; gap: var(--space-2); }
+.agent-drawer-name { font-family: var(--serif); font-size: 19px; }
+.agent-drawer-role { color: var(--ink-2); font-size: 12.5px; }
+.agent-drawer-headactions { flex: 0 0 auto; flex-wrap: nowrap; }
+
+.agent-drawer-tabs {
+  display: flex;
+  gap: var(--space-1);
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--rule);
+}
+.agent-drawer-tab {
+  border: 0;
+  background: transparent;
+  padding: var(--space-2) var(--space-3);
+  font-size: 13px;
+  color: var(--ink-2);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.agent-drawer-tab:hover { color: var(--ink); }
+.agent-drawer-tab.is-active { color: var(--ink); font-weight: 600; border-bottom-color: var(--clay); }
+
+.agent-drawer-body { flex: 1; overflow-y: auto; padding: var(--space-4); }
+.agent-drawer-overview { display: flex; flex-direction: column; gap: var(--space-4); }
+.agent-drawer-ask {
+  border: 1px solid var(--clay);
+  border-radius: var(--radius);
+  background: var(--clay-soft);
+  padding: var(--space-3) var(--space-4);
+}
+.agent-drawer-ask-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-warning);
+}
+.agent-drawer-ask-title { font-weight: 600; font-size: 14.5px; margin-top: 6px; }
+.agent-drawer-ask-detail { color: var(--ink-2); font-size: 13px; margin-top: 2px; }
+
+.agent-drawer-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.agent-drawer-facts dt {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.agent-drawer-facts dd { margin: 2px 0 0; font-size: 13px; }
+
+.agent-drawer-lanes { display: flex; gap: var(--space-4); }
+.agent-drawer-lanes > div { display: flex; flex-direction: column; }
+.agent-drawer-lane-n { font-family: var(--serif); font-size: 22px; font-variant-numeric: tabular-nums; }
+.agent-drawer-lane-l { font-family: var(--mono); font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-3); }
+.agent-drawer-next { color: var(--ink-2); font-size: 13px; margin: 0; }
+.agent-drawer-empty { color: var(--ink-2); font-size: 13px; }
+
+.agent-drawer-foot {
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--rule);
+  display: flex;
+  justify-content: flex-end;
+}
+.agent-drawer-full {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--clay);
+  text-decoration: none;
+}
+.agent-drawer-full:hover { text-decoration: underline; }
