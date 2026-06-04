@@ -4508,29 +4508,6 @@ a.surface-card:hover,
 }
 @media (max-width: 1020px) { .wf-body { grid-template-columns: minmax(0, 1fr); } }
 
-/* The filing label: department eyebrow + live heartbeat dot over a hairline. */
-.wf-card-file {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: var(--space-2);
-  border-bottom: 1px solid var(--rule);
-}
-.wf-card-dept {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-.wf-live { width: 8px; height: 8px; border-radius: 50%; background: var(--rule); flex-shrink: 0; }
-.wf-live.is-on { background: var(--color-success); animation: wf-pulse 2.2s ease-in-out infinite; }
-@keyframes wf-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-success) 35%, transparent); }
-  50% { box-shadow: 0 0 0 5px color-mix(in oklch, var(--color-success) 0%, transparent); }
-}
-@media (prefers-reduced-motion: reduce) { .wf-live.is-on { animation: none; } }
-
 /* The ledger: ruled rows like a ledger book. */
 .wf-ledger { padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
 .wf-ledger-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
@@ -4588,4 +4565,120 @@ a.surface-card:hover,
   font-size: 10px;
   letter-spacing: 0.07em;
   text-transform: uppercase;
+}
+
+/* ── Decision-first agents dashboard (workforce redesign PR 1) ─────────────
+ * Key-figure tiles double as the status filter; the Needs-you queue is the
+ * hero; the roster renders as dense rows. Tokens only. */
+
+/* Figure tiles: the figures band, now interactive. */
+.wf-figure--tile {
+  text-align: left;
+  background: transparent;
+  border-top: 0; border-right: 0; border-bottom: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: background 0.12s ease;
+}
+.wf-figure--tile:hover { background: var(--paper-2); }
+.wf-figure--tile.is-active { box-shadow: inset 0 2px 0 var(--clay); background: var(--clay-soft); }
+.wf-figure--tile.is-attn .wf-figure-n,
+.wf-figure--tile.is-attn .wf-figure-l { color: var(--color-warning); }
+.wf-figure-n {
+  font-family: var(--serif);
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.wf-figure-l {
+  margin-top: 2px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* The Needs-you queue. */
+.needs-card { padding: 0; overflow: hidden; border-color: var(--clay); }
+.needs-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--rule);
+  background: var(--clay-soft);
+  color: var(--color-warning);
+}
+.needs-title { font-family: var(--serif); font-size: 18px; color: var(--ink); }
+.needs-hint { margin-left: auto; font-size: 12.5px; color: var(--ink-2); }
+.needs-item {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-3) var(--space-4);
+}
+.needs-item + .needs-item { border-top: 1px solid var(--rule); }
+.needs-body { flex: 1; min-width: 0; }
+.needs-who { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.needs-name { font-family: var(--serif); font-size: 16px; }
+.needs-role { color: var(--ink-2); font-size: 12.5px; }
+.needs-age { display: inline-flex; align-items: center; gap: 4px; }
+.needs-ask { font-weight: 600; font-size: 14px; margin-top: 5px; }
+.needs-detail { color: var(--ink-2); font-size: 13px; margin-top: 2px; }
+.needs-actions { flex: 0 0 auto; align-self: center; }
+@media (max-width: 700px) {
+  .needs-item { flex-direction: column; }
+  .needs-actions { align-self: stretch; }
+}
+.needs-clear { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); }
+.needs-clear-icon {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: color-mix(in oklch, var(--color-success) 14%, transparent);
+  color: var(--color-success);
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.needs-clear-title { font-weight: 600; }
+.needs-clear-sub { color: var(--ink-2); font-size: 13px; }
+
+/* Roster rows. */
+.roster-list { padding: 0; overflow: hidden; }
+.roster-row {
+  display: grid;
+  grid-template-columns: minmax(190px, 240px) minmax(0, 1fr) auto auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+}
+.roster-row + .roster-row { border-top: 1px solid var(--rule); }
+.roster-row:hover { background: var(--paper-2); }
+.roster-id {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  color: var(--ink);
+  min-width: 0;
+}
+.roster-name-wrap { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.roster-name-line { display: flex; align-items: center; gap: var(--space-2); }
+.roster-name { font-family: var(--serif); font-size: 16px; }
+.roster-role { color: var(--ink-2); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.roster-sub { min-width: 0; }
+.roster-subline { font-size: 13px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.roster-counts { display: flex; gap: var(--space-3); margin-top: 3px; font-size: 12px; color: var(--ink-3); flex-wrap: wrap; }
+.roster-count-waiting { color: var(--color-warning); }
+.roster-autonomy { flex: 0 0 auto; }
+.roster-actions { flex-wrap: nowrap; }
+@media (max-width: 900px) {
+  .roster-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .roster-sub { grid-column: 1 / -1; }
+  .roster-actions { grid-column: 1 / -1; }
 }
