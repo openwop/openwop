@@ -4813,3 +4813,67 @@ a.surface-card:hover,
 }
 .auto-meter-bars i.is-filled { background: var(--clay); }
 .auto-meter-label { font-size: 12px; color: var(--ink-2); white-space: nowrap; }
+
+/* ── Hire-an-agent modal (workforce redesign PR 4) ─────────────────────────
+ * Fast path in front of the create wizard. */
+.hire-scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim);
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+.hire-modal {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: var(--space-4);
+  outline: none;
+  box-shadow: 0 18px 50px var(--ink-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.hire-head { display: flex; align-items: flex-start; gap: var(--space-3); }
+.hire-head > div { flex: 1; min-width: 0; }
+.hire-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.hire-title { margin: 4px 0 2px; font-family: var(--serif); font-size: 22px; font-weight: 500; }
+.hire-lede { margin: 0; color: var(--ink-2); font-size: 13px; line-height: 1.5; }
+.hire-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.hire-roles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-2);
+}
+.hire-role {
+  text-align: left;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  padding: var(--space-2-5) var(--space-3);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--ink);
+}
+.hire-role:hover { border-color: var(--clay); }
+.hire-role.is-selected { border-color: var(--clay); background: var(--clay-soft); }
+.hire-role-title { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13.5px; }
+.hire-role-blurb { color: var(--ink-2); font-size: 12px; line-height: 1.45; }
+.hire-foot { justify-content: flex-end; }

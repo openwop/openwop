@@ -73,6 +73,8 @@ export async function createRosterEntry(input: {
   description?: string;
   enabled?: boolean;
   heartbeatIntervalMs?: number;
+  /** Host-ext heartbeat autonomy: `review` = "agents propose, humans dispose". */
+  autonomyLevel?: 'auto' | 'review';
 }): Promise<RosterEntry> {
   const res = await fetch(rosterBase, fetchOpts({ method: 'POST', headers: jsonHeaders(), body: JSON.stringify(input) }));
   if (!res.ok) throw new Error(`createRosterEntry returned ${res.status}`);
