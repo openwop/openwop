@@ -118,13 +118,6 @@ export const FEATURES: FeatureRoute[] = [
   },
   // The canvas is its own scroll/zoom region — full viewport, no centered column.
   { path: '/builder/:workflowId', element: <BuilderTab />, tier: 'workspace', chrome: 'fullbleed' },
-  {
-    path: '/runs', element: <RunsIndexPage />, tier: 'workspace',
-    nav: { group: 'Build', label: 'Runs', icon: PlayIcon, hint: 'Execution history + detail' },
-  },
-  { path: '/runs/:runId', element: <RunDetailPage />, tier: 'workspace' },
-  { path: '/runs/:runId/audit', element: <RunAuditPage />, tier: 'workspace' },
-  { path: '/compare', element: <RunComparePage />, tier: 'workspace' },
 
   // ── workspace · Operate ────────────────────────────────────────────────
   // /workforce merged into /agents (2026-06-04) — redirect keeps bookmarks.
@@ -137,10 +130,6 @@ export const FEATURES: FeatureRoute[] = [
     path: '/inbox', element: <NotificationsPage />, tier: 'workspace',
     nav: { group: 'Operate', label: 'Inbox', icon: InboxIcon, hint: 'Notifications + approvals' },
   },
-  {
-    path: '/mission', element: <CommandCenterPage />, tier: 'workspace',
-    nav: { group: 'Operate', label: 'Mission Control', icon: ActivityIcon, hint: 'Live fleet view across runs' },
-  },
   { path: '/privacy', element: <PrivacyPage />, tier: 'workspace', chrome: 'narrow' },
 
   // ── admin (platform/console — one flat rail inside <AdminLayout>) ──────
@@ -148,45 +137,58 @@ export const FEATURES: FeatureRoute[] = [
     path: '/admin', element: <AdminOverviewPage />, tier: 'admin',
     nav: { group: 'Admin', label: 'Overview', icon: SettingsIcon, hint: 'Admin home', end: true },
   },
+  // ─ Operations: observe + drive run state (relocated from the workspace
+  //   tier 2026-06-04 — the day-to-day view is /agents' ledger).
+  {
+    path: '/mission', element: <CommandCenterPage />, tier: 'admin',
+    nav: { group: 'Operations', label: 'Mission Control', icon: ActivityIcon, hint: 'Live fleet view across runs' },
+  },
+  {
+    path: '/runs', element: <RunsIndexPage />, tier: 'admin',
+    nav: { group: 'Operations', label: 'Runs', icon: PlayIcon, hint: 'Execution history + detail' },
+  },
+  { path: '/runs/:runId', element: <RunDetailPage />, tier: 'admin' },
+  { path: '/runs/:runId/audit', element: <RunAuditPage />, tier: 'admin' },
+  { path: '/compare', element: <RunComparePage />, tier: 'admin' },
+  // ─ Workforce: the configuration side of the named agents.
   {
     path: '/agents/templates', element: <AgentsPage />, tier: 'admin',
-    nav: { group: 'Admin', label: 'Agent templates', icon: PackageIcon, hint: 'Installed manifest agents + packs' },
+    nav: { group: 'Workforce', label: 'Agent templates', icon: PackageIcon, hint: 'Installed manifest agents + packs' },
   },
   { path: '/agents/templates/:agentId', element: <AgentDetailPage />, tier: 'admin', chrome: 'narrow' },
   {
-    path: '/orgs', element: <OrgsPage />, tier: 'admin',
-    nav: { group: 'Admin', label: 'Organizations', icon: BuildingIcon, hint: 'Orgs, teams, members + RBAC' },
-  },
-  // Relocated from the workspace tier (2026-06-04, IA consolidation): the
-  // roster/org-chart EDITOR is config (the operate view lives on /agents),
-  // and memory/prompts are platform inspection surfaces.
-  {
     path: '/roster', element: <RosterPage />, tier: 'admin',
-    nav: { group: 'Admin', label: 'Org chart', icon: UserIcon, hint: 'Roster + org-chart editor (descriptive only — confers no authority)' },
+    nav: { group: 'Workforce', label: 'Org chart', icon: UserIcon, hint: 'Roster + org-chart editor (descriptive only — confers no authority)' },
+  },
+  // ─ Platform: inspection + tooling surfaces.
+  {
+    path: '/prompts', element: <PromptLibraryPage />, tier: 'admin',
+    nav: { group: 'Platform', label: 'Prompts', icon: FileTextIcon, hint: 'Reusable templates + variables' },
   },
   {
     path: '/memory', element: <MemoryInspectorPage />, tier: 'admin',
-    nav: { group: 'Admin', label: 'Memory', icon: DatabaseIcon, hint: 'Tenant-attributed memory writes' },
-  },
-  {
-    path: '/prompts', element: <PromptLibraryPage />, tier: 'admin',
-    nav: { group: 'Admin', label: 'Prompts', icon: FileTextIcon, hint: 'Reusable templates + variables' },
-  },
-  {
-    path: '/keys', element: <KeysPage />, tier: 'admin',
-    nav: { group: 'Admin', label: 'Keys', icon: KeyIcon, hint: 'BYOK credentials + provider config' },
+    nav: { group: 'Platform', label: 'Memory', icon: DatabaseIcon, hint: 'Tenant-attributed memory writes' },
   },
   {
     path: '/capabilities', element: <CapabilitiesPanel />, tier: 'admin',
-    nav: { group: 'Admin', label: 'Capabilities', icon: ShieldIcon, hint: 'What this host advertises' },
-  },
-  {
-    path: '/demo-data', element: <DemoDataPage />, tier: 'admin', chrome: 'narrow',
-    nav: { group: 'Admin', label: 'Demo data', icon: DatabaseIcon, hint: 'Re-seed the built-in demo roster' },
+    nav: { group: 'Platform', label: 'Capabilities', icon: ShieldIcon, hint: 'What this host advertises' },
   },
   {
     path: '/cli', element: <CliPage />, tier: 'admin', chrome: 'narrow',
-    nav: { group: 'Admin', label: 'CLI', icon: TerminalIcon, hint: 'In-app CLI quickstart + catalog' },
+    nav: { group: 'Platform', label: 'CLI', icon: TerminalIcon, hint: 'In-app CLI quickstart + catalog' },
+  },
+  // ─ Access & data: identity, credentials, and the demo dataset.
+  {
+    path: '/orgs', element: <OrgsPage />, tier: 'admin',
+    nav: { group: 'Access & data', label: 'Organizations', icon: BuildingIcon, hint: 'Orgs, teams, members + RBAC' },
+  },
+  {
+    path: '/keys', element: <KeysPage />, tier: 'admin',
+    nav: { group: 'Access & data', label: 'Keys', icon: KeyIcon, hint: 'BYOK credentials + provider config' },
+  },
+  {
+    path: '/demo-data', element: <DemoDataPage />, tier: 'admin', chrome: 'narrow',
+    nav: { group: 'Access & data', label: 'Demo data', icon: DatabaseIcon, hint: 'Re-seed the built-in demo roster' },
   },
 ];
 
@@ -210,10 +212,12 @@ function navGroups(routes: FeatureRoute[]): NavGroup[] {
  *  tier appears there as ONE pinned entry (Sidebar renders it explicitly). */
 export const WORKSPACE_NAV: NavGroup[] = navGroups(FEATURES.filter((f) => f.tier === 'workspace'));
 
-/** The flat embedded admin rail (<AdminLayout>). */
-export const ADMIN_NAV: NavItem[] = FEATURES
-  .filter((f) => f.tier === 'admin' && f.nav)
-  .map((f) => ({ ...f.nav!, to: f.path }));
+/** The embedded admin rail (<AdminLayout>), grouped. The root 'Admin' group
+ *  (Overview) renders header-less — the rail's own title already says Admin. */
+export const ADMIN_NAV_GROUPS: NavGroup[] = navGroups(FEATURES.filter((f) => f.tier === 'admin'));
+
+/** Flat admin catalog (the /admin overview card grid). */
+export const ADMIN_NAV: NavItem[] = ADMIN_NAV_GROUPS.flatMap((g) => g.items);
 
 /** The full catalog (⌘K palette): workspace groups + the Admin group. */
 export const NAV: NavGroup[] = navGroups(FEATURES);

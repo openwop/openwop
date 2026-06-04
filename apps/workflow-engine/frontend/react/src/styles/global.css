@@ -4380,6 +4380,15 @@ a.surface-card:hover,
 /* Chevron points right when collapsed (expand), left when expanded. */
 .admin-shell:not(.is-collapsed) .admin-rail-toggle svg { transform: rotate(180deg); }
 .admin-rail nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.admin-nav-group + .admin-nav-group { margin-top: var(--space-3); }
+.admin-nav-group-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 0 var(--space-2-5) var(--space-1);
+}
 .admin-nav-link {
   display: flex;
   align-items: center;
@@ -4421,7 +4430,16 @@ a.surface-card:hover,
 /* The single Admin entry pinned under the workspace groups. */
 .app-nav-group--admin { margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--rule); }
 
-/* Admin overview (/admin): card grid derived from the manifest. */
+/* Admin overview (/admin): grouped card grid derived from the manifest. */
+.admin-overview-group {
+  margin: var(--space-4) 0 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
 .admin-overview-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { ADMIN_NAV, chromeFor, navItemIsActive } from './features.js';
+import { ADMIN_NAV_GROUPS, chromeFor, navItemIsActive } from './features.js';
 import { ChevronRightIcon } from '../ui/icons/index.js';
 import { IconButton } from '../ui/IconButton.js';
 
@@ -50,26 +50,36 @@ export function AdminLayout(): JSX.Element {
           />
         </div>
         <nav>
-          <ul>
-            {ADMIN_NAV.map((item) => {
-              const Icon = item.icon;
-              const active = navItemIsActive(item, location.pathname);
-              return (
-                <li key={item.to}>
-                  <NavLink
-                    to={item.to}
-                    end={item.end}
-                    className={`admin-nav-link${active ? ' is-active' : ''}`}
-                    aria-current={active ? 'page' : undefined}
-                    title={collapsed ? item.label : item.hint}
-                  >
-                    <span className="admin-nav-icon" aria-hidden><Icon size={16} /></span>
-                    <span className="admin-nav-label">{item.label}</span>
-                  </NavLink>
-                </li>
-              );
-            })}
-          </ul>
+          {ADMIN_NAV_GROUPS.map((group) => (
+            <div key={group.label} className="admin-nav-group">
+              {/* The root 'Admin' group (Overview) is header-less — the rail
+                  title already names the tier. Headers also hide when the
+                  rail collapses to the icon strip. */}
+              {group.label !== 'Admin' && !collapsed
+                ? <div className="admin-nav-group-label" aria-hidden>{group.label}</div>
+                : null}
+              <ul>
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const active = navItemIsActive(item, location.pathname);
+                  return (
+                    <li key={item.to}>
+                      <NavLink
+                        to={item.to}
+                        end={item.end}
+                        className={`admin-nav-link${active ? ' is-active' : ''}`}
+                        aria-current={active ? 'page' : undefined}
+                        title={collapsed ? item.label : item.hint}
+                      >
+                        <span className="admin-nav-icon" aria-hidden><Icon size={16} /></span>
+                        <span className="admin-nav-label">{item.label}</span>
+                      </NavLink>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
         </nav>
       </aside>
       <div className={narrow ? 'admin-content admin-content--narrow' : 'admin-content'}>
