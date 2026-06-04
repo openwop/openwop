@@ -1,0 +1,248 @@
+/**
+ * The declarative feature manifest — the single source of truth for the app
+ * shell (white-label PRD §3 "the paved path").
+ *
+ * Every route declares itself here once: its element, which IA *tier* it
+ * belongs to (`workspace` = the product rail; `admin` = the platform/console
+ * surface inside <AdminLayout>), which width *chrome* the shell gives it, and
+ * (optionally) the nav entry that advertises it. Everything else derives:
+ *
+ *   - App.tsx renders <Routes> FROM this list (no hand-wired <Route>s),
+ *   - Sidebar renders the workspace rail + the single Admin entry from it,
+ *   - AdminLayout renders the embedded admin rail from it,
+ *   - the ⌘K palette catalog derives from it,
+ *   - width rules (`narrow`/`fullbleed`/`chat`) derive from it — the old
+ *     `NARROW_ROUTES` set + ad-hoc regexes are gone, so they cannot drift.
+ *
+ * Adding a page = ONE entry here. Wiring a nav item, the admin chrome, and
+ * the width tier all happen by declaration, not by editing layout code
+ * (white-label PRD §2/§3 acceptance).
+ */
+import type { ComponentType, ReactElement } from 'react';
+import { Navigate, matchRoutes } from 'react-router-dom';
+import {
+  MessageSquareIcon, BotIcon, WorkflowIcon, PlayIcon, ColumnsIcon, UserIcon,
+  InboxIcon, ActivityIcon, DatabaseIcon, FileTextIcon, PackageIcon,
+  BuildingIcon, KeyIcon, ShieldIcon, TerminalIcon, SettingsIcon, BriefcaseIcon,
+} from '../ui/icons/index.js';
+import { ChatTab } from '../chat/ChatTab.js';
+import { WorkforcePage } from '../agents/WorkforcePage.js';
+import { RunsIndexPage } from '../runs/RunsIndexPage.js';
+import { RunDetailPage } from '../runs/RunDetailPage.js';
+import { RunAuditPage } from '../runs/RunAuditPage.js';
+import { RunComparePage } from '../runs/RunComparePage.js';
+import { CommandCenterPage } from '../runs/CommandCenterPage.js';
+import { NotificationsPage } from '../notifications/NotificationsPage.js';
+import { CapabilitiesPanel } from '../discovery/CapabilitiesPanel.js';
+import { BuilderTab } from '../builder/BuilderTab.js';
+import { WorkflowsDashboard } from '../builder/WorkflowsDashboard.js';
+import { PrivacyPage } from '../PrivacyPage.js';
+import { CliPage } from '../CliPage.js';
+import { PromptLibraryPage } from '../prompts/PromptLibraryPage.js';
+import { KeysPage } from '../byok/KeysPage.js';
+import { MemoryInspectorPage } from '../memory/MemoryInspectorPage.js';
+import { KanbanPage } from '../kanban/KanbanPage.js';
+import { RosterPage } from '../agents/RosterPage.js';
+import { AgentsPage } from '../agents/AgentsPage.js';
+import { AgentDetailPage } from '../agents/AgentDetailPage.js';
+import { AgentInstallPage } from '../agents/AgentInstallPage.js';
+import { AgentNewPage } from '../agents/AgentNewPage.js';
+import { AgentDashboardPage } from '../agents/AgentDashboardPage.js';
+import { AgentWorkspacePage } from '../agents/AgentWorkspacePage.js';
+import { AgentCreateWizard } from '../agents/AgentCreateWizard.js';
+import { DemoDataPage } from '../settings/DemoDataPage.js';
+import { AdminOverviewPage } from '../settings/AdminOverviewPage.js';
+import { OrgsPage } from '../orgs/OrgsPage.js';
+
+export type IconCmp = ComponentType<{ size?: number; strokeWidth?: number }>;
+
+/** Which shell the route renders in. `workspace` = the primary product rail;
+ *  `admin` = inside <AdminLayout>'s embedded collapsible rail (deep-link paths
+ *  unchanged — the layout route is pathless). */
+export type FeatureTier = 'workspace' | 'admin';
+
+/** Width/scroll treatment the shell gives the route's <main>. Shell-owned —
+ *  pages set NO max-width of their own (DESIGN.app.md). */
+export type FeatureChrome = 'default' | 'narrow' | 'fullbleed' | 'chat';
+
+export interface FeatureNav {
+  /** Group header within the tier ('Build' / 'Operate' for workspace;
+   *  admin entries render as one flat rail, group label unused there but
+   *  still shown in the ⌘K palette catalog). */
+  group: string;
+  label: string;
+  icon: IconCmp;
+  hint: string;
+  /** Exact-match only (Chat lives at "/", which would otherwise prefix-match everything). */
+  end?: boolean;
+  /** Sibling routes that must NOT light this item (e.g. /agents vs /agents/templates). */
+  notUnder?: string[];
+}
+
+export interface FeatureRoute {
+  /** react-router path pattern (`/runs/:runId`). */
+  path: string;
+  element: ReactElement;
+  tier: FeatureTier;
+  /** Defaults to 'default'. */
+  chrome?: FeatureChrome;
+  /** Present = the route appears in its tier's nav (and the ⌘K palette). */
+  nav?: FeatureNav;
+}
+
+// Grouped IA: Build = surfaces you author at; Operate = surfaces you observe
+// at; admin tier = platform/config that doesn't change per session. Chat stays
+// first (feedback_chat_first_nav).
+export const FEATURES: FeatureRoute[] = [
+  // ── workspace · Build ──────────────────────────────────────────────────
+  {
+    path: '/', element: <ChatTab />, tier: 'workspace', chrome: 'chat',
+    nav: { group: 'Build', label: 'Chat', icon: MessageSquareIcon, hint: 'Conversational entry point', end: true },
+  },
+  // The nav label says "Chat" but the route stays "/" so existing bookmarks
+  // don't break; /chat redirects for users who type the nav label as a URL.
+  { path: '/chat', element: <Navigate to="/" replace />, tier: 'workspace' },
+  {
+    path: '/agents', element: <AgentDashboardPage />, tier: 'workspace',
+    nav: { group: 'Build', label: 'Agents', icon: BotIcon, hint: 'Your named AI coworkers', notUnder: ['/agents/templates'] },
+  },
+  { path: '/agents/new', element: <AgentCreateWizard />, tier: 'workspace', chrome: 'narrow' },
+  // Raw single-form authoring (also the ?fork= target) — kept for the
+  // fork-to-customize flow from a pack/template agent.
+  { path: '/agents/fork', element: <AgentNewPage />, tier: 'workspace', chrome: 'narrow' },
+  { path: '/agents/install', element: <AgentInstallPage />, tier: 'workspace', chrome: 'narrow' },
+  // Per-agent workspace (a roster id) — the agents-demo PRD's primary surface.
+  { path: '/agents/:agentId', element: <AgentWorkspacePage />, tier: 'workspace' },
+  {
+    path: '/builder', element: <WorkflowsDashboard />, tier: 'workspace',
+    nav: { group: 'Build', label: 'Workflows', icon: WorkflowIcon, hint: 'Author + edit workflows' },
+  },
+  // The canvas is its own scroll/zoom region — full viewport, no centered column.
+  { path: '/builder/:workflowId', element: <BuilderTab />, tier: 'workspace', chrome: 'fullbleed' },
+  {
+    path: '/runs', element: <RunsIndexPage />, tier: 'workspace',
+    nav: { group: 'Build', label: 'Runs', icon: PlayIcon, hint: 'Execution history + detail' },
+  },
+  { path: '/runs/:runId', element: <RunDetailPage />, tier: 'workspace' },
+  { path: '/runs/:runId/audit', element: <RunAuditPage />, tier: 'workspace' },
+  { path: '/compare', element: <RunComparePage />, tier: 'workspace' },
+
+  // ── workspace · Operate ────────────────────────────────────────────────
+  {
+    path: '/workforce', element: <WorkforcePage />, tier: 'workspace',
+    nav: { group: 'Operate', label: 'Workforce', icon: BriefcaseIcon, hint: 'The digital workforce — named agents at a glance' },
+  },
+  {
+    path: '/boards', element: <KanbanPage />, tier: 'workspace',
+    nav: { group: 'Operate', label: 'Boards', icon: ColumnsIcon, hint: 'Kanban — card → run trigger' },
+  },
+  {
+    path: '/roster', element: <RosterPage />, tier: 'workspace',
+    nav: { group: 'Operate', label: 'Roster', icon: UserIcon, hint: 'Roster + org-chart editor' },
+  },
+  {
+    path: '/inbox', element: <NotificationsPage />, tier: 'workspace',
+    nav: { group: 'Operate', label: 'Inbox', icon: InboxIcon, hint: 'Notifications + approvals' },
+  },
+  {
+    path: '/mission', element: <CommandCenterPage />, tier: 'workspace',
+    nav: { group: 'Operate', label: 'Mission Control', icon: ActivityIcon, hint: 'Live fleet view across runs' },
+  },
+  {
+    path: '/memory', element: <MemoryInspectorPage />, tier: 'workspace',
+    nav: { group: 'Operate', label: 'Memory', icon: DatabaseIcon, hint: 'Tenant-attributed memory writes' },
+  },
+  {
+    path: '/prompts', element: <PromptLibraryPage />, tier: 'workspace',
+    nav: { group: 'Operate', label: 'Prompts', icon: FileTextIcon, hint: 'Reusable templates + variables' },
+  },
+  { path: '/privacy', element: <PrivacyPage />, tier: 'workspace', chrome: 'narrow' },
+
+  // ── admin (platform/console — one flat rail inside <AdminLayout>) ──────
+  {
+    path: '/admin', element: <AdminOverviewPage />, tier: 'admin',
+    nav: { group: 'Admin', label: 'Overview', icon: SettingsIcon, hint: 'Admin home', end: true },
+  },
+  {
+    path: '/agents/templates', element: <AgentsPage />, tier: 'admin',
+    nav: { group: 'Admin', label: 'Agent templates', icon: PackageIcon, hint: 'Installed manifest agents + packs' },
+  },
+  { path: '/agents/templates/:agentId', element: <AgentDetailPage />, tier: 'admin', chrome: 'narrow' },
+  {
+    path: '/orgs', element: <OrgsPage />, tier: 'admin',
+    nav: { group: 'Admin', label: 'Organizations', icon: BuildingIcon, hint: 'Orgs, teams, members + RBAC' },
+  },
+  {
+    path: '/keys', element: <KeysPage />, tier: 'admin',
+    nav: { group: 'Admin', label: 'Keys', icon: KeyIcon, hint: 'BYOK credentials + provider config' },
+  },
+  {
+    path: '/capabilities', element: <CapabilitiesPanel />, tier: 'admin',
+    nav: { group: 'Admin', label: 'Capabilities', icon: ShieldIcon, hint: 'What this host advertises' },
+  },
+  {
+    path: '/demo-data', element: <DemoDataPage />, tier: 'admin', chrome: 'narrow',
+    nav: { group: 'Admin', label: 'Demo data', icon: DatabaseIcon, hint: 'Re-seed the built-in demo roster' },
+  },
+  {
+    path: '/cli', element: <CliPage />, tier: 'admin', chrome: 'narrow',
+    nav: { group: 'Admin', label: 'CLI', icon: TerminalIcon, hint: 'In-app CLI quickstart + catalog' },
+  },
+];
+
+// ── Derivations (consumers render these; never re-declare nav/width data) ──
+
+export interface NavItem extends FeatureNav { to: string }
+export interface NavGroup { label: string; items: NavItem[] }
+
+function navGroups(routes: FeatureRoute[]): NavGroup[] {
+  const groups: NavGroup[] = [];
+  for (const f of routes) {
+    if (!f.nav) continue;
+    let g = groups.find((x) => x.label === f.nav!.group);
+    if (!g) { g = { label: f.nav.group, items: [] }; groups.push(g); }
+    g.items.push({ ...f.nav, to: f.path });
+  }
+  return groups;
+}
+
+/** The primary product rail (Sidebar): workspace-tier groups only. The admin
+ *  tier appears there as ONE pinned entry (Sidebar renders it explicitly). */
+export const WORKSPACE_NAV: NavGroup[] = navGroups(FEATURES.filter((f) => f.tier === 'workspace'));
+
+/** The flat embedded admin rail (<AdminLayout>). */
+export const ADMIN_NAV: NavItem[] = FEATURES
+  .filter((f) => f.tier === 'admin' && f.nav)
+  .map((f) => ({ ...f.nav!, to: f.path }));
+
+/** The full catalog (⌘K palette): workspace groups + the Admin group. */
+export const NAV: NavGroup[] = navGroups(FEATURES);
+
+export function navItemIsActive(item: NavItem, pathname: string): boolean {
+  if (item.end) return pathname === item.to;
+  const under = pathname === item.to || pathname.startsWith(`${item.to}/`);
+  if (!under) return false;
+  return !(item.notUnder ?? []).some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
+// matchRoutes applies react-router's own specificity ranking, so
+// `/agents/templates` wins over `/agents/:agentId` exactly as <Routes> would —
+// the manifest never needs to be order-sensitive.
+const MATCHABLE = FEATURES.map((f) => ({ path: f.path }));
+
+export function featureFor(pathname: string): FeatureRoute | null {
+  const matches = matchRoutes(MATCHABLE, pathname);
+  if (!matches || matches.length === 0) return null;
+  const matchedPath = matches[matches.length - 1].route.path;
+  return FEATURES.find((f) => f.path === matchedPath) ?? null;
+}
+
+/** Shell width/scroll treatment for the current location. */
+export function chromeFor(pathname: string): FeatureChrome {
+  return featureFor(pathname)?.chrome ?? 'default';
+}
+
+/** True when the location renders inside the admin chrome. */
+export function isAdminPath(pathname: string): boolean {
+  return featureFor(pathname)?.tier === 'admin';
+}
