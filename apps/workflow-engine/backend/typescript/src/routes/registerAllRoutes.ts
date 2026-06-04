@@ -62,6 +62,7 @@ import { registerMessagingRoutes } from './messaging.js';
 import { createSelfHttpBridge } from '../messaging/bridge.js';
 import { resolveNotifyDelivererFromEnv } from '../messaging/notifyDeliverer.js';
 import { initHostExtPersistence } from '../host/hostExtPersistence.js';
+import { registerWidgetRoutes } from './widgets.js';
 
 const log = createLogger('routes.registerAll');
 
@@ -166,6 +167,11 @@ const ROUTE_MODULES: RouteModule[] = [
   // (subscription state machine + dedup/retry/dead-letter + the read surface).
   // The Kanban card→run firing routes through it.
   { name: 'triggerBridge', register: ({ app }) => registerTriggerBridgeRoutes(app) },
+  // REFERENCE DOMAIN (white-label PRD §4) — the canonical host-extension
+  // vertical-slice example. Env-gated inside the module
+  // (OPENWOP_EXAMPLE_WIDGETS_ENABLED=true); listed unconditionally so the
+  // can't-ship-unregistered guard covers it.
+  { name: 'widgets:example', register: ({ app }) => registerWidgetRoutes(app) },
   {
     // Inbound chat → workflow run bridge. Binds inbound messages to a workflow
     // (default deterministic `sample.demo.uppercase`; override via
