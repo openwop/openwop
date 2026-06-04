@@ -8,6 +8,7 @@ import { AgentBoardPanel } from './AgentBoardPanel.js';
 import { AgentActivityTab } from './AgentActivityTab.js';
 import { Markdown } from '../ui/Markdown.js';
 import { IconButton } from '../ui/IconButton.js';
+import { AutonomyMeter } from './AutonomyMeter.js';
 import { toast } from '../ui/toast.js';
 import { XIcon, CheckIcon, ClockIcon, MessageSquareIcon, AlertIcon, ArrowRightIcon } from '../ui/icons/index.js';
 
@@ -179,7 +180,7 @@ export function AgentDrawer({ view, approvals, tab, onTab, onClose, onCheckNow, 
               ) : null}
 
               <dl className="agent-drawer-facts">
-                <div><dt>Autonomy</dt><dd>{entry.autonomyLevel === 'review' ? 'Proposes for review' : 'Autonomous'}</dd></div>
+                <div><dt>Autonomy</dt><dd><AutonomyMeter autonomyLevel={entry.autonomyLevel} /></dd></div>
                 <div><dt>Heartbeat</dt><dd>{cadence(entry.heartbeatIntervalMs)}</dd></div>
                 <div><dt>Last check</dt><dd>{relativeTime(entry.lastHeartbeatAt) ?? 'never'}</dd></div>
                 <div><dt>Portfolio</dt><dd>{entry.workflows.length} workflow{entry.workflows.length === 1 ? '' : 's'}</dd></div>
