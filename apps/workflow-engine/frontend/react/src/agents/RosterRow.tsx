@@ -2,6 +2,7 @@ import { workflowName, roleThemeForAgent } from './roleTemplates.js';
 import { statusMeta, relativeTime, type AgentView } from './agentViewModel.js';
 import { AgentAvatar } from './AgentAvatar.js';
 import { ColumnsIcon, MessageSquareIcon, PlayIcon, AlertIcon, ActivityIcon, WrenchIcon } from '../ui/icons/index.js';
+import { AutonomyMeter } from './AutonomyMeter.js';
 
 /**
  * One agent as a roster ROW (agents-workforce redesign PR 1) — replaces the
@@ -81,13 +82,8 @@ export function RosterRow({ view, busy, onOpen, onCheckNow, onChat }: {
         </div>
       </div>
 
-      <span
-        className={entry.autonomyLevel === 'review' ? 'chip chip--warning roster-autonomy' : 'chip chip--accent roster-autonomy'}
-        title={entry.autonomyLevel === 'review'
-          ? 'Proposes for review — heartbeat picks queue as proposals for human sign-off'
-          : 'Autonomous — heartbeat picks start runs immediately'}
-      >
-        {entry.autonomyLevel === 'review' ? 'Review' : 'Auto'}
+      <span className="roster-autonomy">
+        <AutonomyMeter autonomyLevel={entry.autonomyLevel} />
       </span>
 
       <div className="roster-actions action-bar">

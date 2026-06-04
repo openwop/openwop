@@ -4799,3 +4799,17 @@ a.surface-card:hover,
   text-decoration: none;
 }
 .agent-drawer-full:hover { text-decoration: underline; }
+
+/* ── Autonomy meter (workforce redesign PR 3) ──────────────────────────────
+ * Supervised(1) / Guided(2, reserved) / Autonomous(3). Only two positions are
+ * reachable today — the host field is binary review|auto. */
+.auto-meter { display: inline-flex; align-items: center; gap: 7px; }
+.auto-meter-bars { display: inline-flex; gap: 3px; }
+.auto-meter-bars i {
+  width: 4px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--rule);
+}
+.auto-meter-bars i.is-filled { background: var(--clay); }
+.auto-meter-label { font-size: 12px; color: var(--ink-2); white-space: nowrap; }
