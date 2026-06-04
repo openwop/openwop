@@ -137,10 +137,6 @@ export const FEATURES: FeatureRoute[] = [
     path: '/inbox', element: <NotificationsPage />, tier: 'workspace',
     nav: { group: 'Operate', label: 'Inbox', icon: InboxIcon, hint: 'Notifications + approvals' },
   },
-  {
-    path: '/mission', element: <CommandCenterPage />, tier: 'workspace',
-    nav: { group: 'Operate', label: 'Mission Control', icon: ActivityIcon, hint: 'Live fleet view across runs' },
-  },
   { path: '/privacy', element: <PrivacyPage />, tier: 'workspace', chrome: 'narrow' },
 
   // ── admin (platform/console — one flat rail inside <AdminLayout>) ──────
@@ -159,7 +155,12 @@ export const FEATURES: FeatureRoute[] = [
   },
   // Relocated from the workspace tier (2026-06-04, IA consolidation): the
   // roster/org-chart EDITOR is config (the operate view lives on /agents),
-  // and memory/prompts are platform inspection surfaces.
+  // memory/prompts are platform inspection surfaces, and Mission Control is
+  // the operator console (the day-to-day run view lives on /agents' ledger).
+  {
+    path: '/mission', element: <CommandCenterPage />, tier: 'admin',
+    nav: { group: 'Admin', label: 'Mission Control', icon: ActivityIcon, hint: 'Live fleet view across runs' },
+  },
   {
     path: '/roster', element: <RosterPage />, tier: 'admin',
     nav: { group: 'Admin', label: 'Org chart', icon: UserIcon, hint: 'Roster + org-chart editor (descriptive only — confers no authority)' },
