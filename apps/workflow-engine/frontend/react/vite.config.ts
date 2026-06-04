@@ -105,6 +105,19 @@ export default defineConfig(({ mode }) => {
         // `vite dev` the manifest link 404s harmlessly (install is a prod concern).
         generateBundle() {
           const brand = resolveBrandFromEnv(loadEnv(mode, __dirname, ''));
+          // Icon MIME follows the mark's actual format — a fork pointing
+          // VITE_BRAND_MARK_SRC at a PNG must not ship `image/svg+xml`.
+          // `sizes: 'any'` is only meaningful for scalable (SVG) icons;
+          // raster icons omit it and let the browser read intrinsic size.
+          const markExt = (brand.markSrc.split('?')[0].split('.').pop() ?? '').toLowerCase();
+          const markType: Record<string, string> = {
+            svg: 'image/svg+xml',
+            png: 'image/png',
+            webp: 'image/webp',
+            ico: 'image/x-icon',
+            jpg: 'image/jpeg',
+            jpeg: 'image/jpeg',
+          };
           const manifest = {
             name: brand.productName,
             short_name: brand.productName,
@@ -113,7 +126,12 @@ export default defineConfig(({ mode }) => {
             display: 'standalone',
             background_color: brand.themeColor,
             theme_color: brand.themeColor,
-            icons: [{ src: brand.markSrc, sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
+            icons: [{
+              src: brand.markSrc,
+              ...(markExt === 'svg' ? { sizes: 'any' } : {}),
+              ...(markType[markExt] ? { type: markType[markExt] } : {}),
+              purpose: 'any',
+            }],
           };
           this.emitFile({
             type: 'asset',

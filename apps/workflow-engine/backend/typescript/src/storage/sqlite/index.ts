@@ -1245,12 +1245,14 @@ export function openSqliteStorage(dbPath: string): Storage {
     async updateUserAgent(record) {
       const r = db.prepare(
         `UPDATE user_agents SET
+          tenant_id = ?,
           persona = ?, label = ?, description = ?, model_class = ?,
           system_prompt = ?, tool_allowlist = ?,
           memory_scratchpad = ?, memory_conversation = ?, memory_long_term = ?,
           confidence_threshold = ?
         WHERE agent_id = ?`,
       ).run(
+        record.tenantId,
         record.persona,
         record.label ?? null,
         record.description ?? null,

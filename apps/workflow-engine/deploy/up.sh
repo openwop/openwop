@@ -19,6 +19,7 @@
 #   OPENWOP_RUN_EXTRA_ARGS        appended to gcloud run deploy
 #   OPENWOP_FRONTEND_DIR          default: apps/workflow-engine/frontend/react
 #   OPENWOP_DEPLOY_POSTURE        default: cookie-per-visitor
+#   OPENWOP_SKIP_BRAND_CHECK      1 = skip check-branding.sh (stock-brand deploys)
 #
 # This script intentionally uses merge-style `--update-secrets` /
 # `--update-env-vars` for existing services. It does not use the dangerous
@@ -84,9 +85,11 @@ run() {
   fi
 }
 
+# capture <fn> <dry-run-fallback> — run <fn> live; print the fallback in
+# dry-run. The fallback is NEVER passed to <fn> as an argument.
 capture() {
   if [ "$CONFIRM" = "1" ]; then
-    "$@"
+    "$1"
   else
     printf '%s' "$2"
   fi
@@ -175,18 +178,18 @@ echo "== Deploy Cloud Run backend =="
 run bash apps/workflow-engine/scripts/sync-schemas.sh
 run bash apps/workflow-engine/scripts/sync-fixtures.sh
 run bash apps/workflow-engine/scripts/sync-packs.sh
+# Secrets + env ride on the deploy itself (merge-style --update-*), so even the
+# FIRST revision of a brand-new service boots fully configured — no transient
+# window where /readiness 503s on a missing session secret.
 run gcloud run deploy "$SERVICE" \
   --source apps/workflow-engine \
   --project "$PROJECT" \
   --region "$REGION" \
   --allow-unauthenticated \
+  --update-secrets "OPENWOP_SESSION_SECRET=$SESSION_SECRET_NAME:latest,OPENWOP_ADMIN_TOKEN=$ADMIN_TOKEN_NAME:latest" \
+  --update-env-vars "NODE_ENV=production,OPENWOP_COOKIE_SECURE=true,OPENWOP_DEPLOY_POSTURE=$DEPLOY_POSTURE" \
   --quiet \
   ${OPENWOP_RUN_EXTRA_ARGS:-}
-run gcloud run services update "$SERVICE" \
-  --project "$PROJECT" \
-  --region "$REGION" \
-  --update-secrets "OPENWOP_SESSION_SECRET=$SESSION_SECRET_NAME:latest,OPENWOP_ADMIN_TOKEN=$ADMIN_TOKEN_NAME:latest" \
-  --update-env-vars "NODE_ENV=production,OPENWOP_COOKIE_SECURE=true,OPENWOP_DEPLOY_POSTURE=$DEPLOY_POSTURE"
 
 RUN_URL="${OPENWOP_SSE_BASE_URL:-$(capture service_url "https://$SERVICE-$PROJECT.$REGION.run.app")}"
 echo "backend URL: $RUN_URL"
@@ -200,7 +203,13 @@ echo "== Build branded frontend =="
     "VITE_OPENWOP_SSE_BASE_URL=${VITE_OPENWOP_SSE_BASE_URL:-$RUN_URL}" \
     npm run build
 )
-run bash scripts/check-branding.sh "$FRONTEND_DIR/dist"
+# check-branding.sh is a FORK guard — the steward's own OpenWOP-branded deploy
+# legitimately carries the default strings and must skip it.
+if [ "${OPENWOP_SKIP_BRAND_CHECK:-0}" = "1" ]; then
+  echo "skipping check-branding.sh (OPENWOP_SKIP_BRAND_CHECK=1 — stock OpenWOP brand deploy)"
+else
+  run bash scripts/check-branding.sh "$FRONTEND_DIR/dist"
+fi
 
 echo
 echo "== Deploy Firebase Hosting =="

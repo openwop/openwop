@@ -307,8 +307,33 @@ export function registerUserAgentRoutes(app: Express, deps: Deps): void {
  *  dispatcher passes only agentId so the registry lookup is global). */
 export async function loadUserAgentsIntoRegistry(storage: Storage): Promise<number> {
   const records = await storage.listAllUserAgents();
+  let migrated = 0;
   for (const record of records) {
-    registerUserAgent(record);
+    // One-time legacy-tenant migration: before the bearer-shared posture work,
+    // API-key callers' agents were bucketed under the `_anon` fallback tenant.
+    // The fallback is now `default`, so without this rewrite those rows orphan
+    // (invisible to GET /v1/agents and undeletable for bearer-shared callers).
+    // The agentId is immutable — a legacy id keeps its `user._anon.` prefix;
+    // only the owning tenant moves. Idempotent: once rewritten, the branch
+    // never matches again.
+    let effective = record;
+    if (record.tenantId === '_anon') {
+      effective = { ...record, tenantId: 'default' };
+      try {
+        if (await storage.updateUserAgent(effective)) migrated += 1;
+      } catch (err) {
+        // Keep boot resilient: register under the new tenant either way; the
+        // durable rewrite retries on the next boot.
+        log.warn('user_agent_anon_migration_failed', {
+          agentId: record.agentId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+    registerUserAgent(effective);
+  }
+  if (migrated > 0) {
+    log.info('user_agents_anon_tenant_migrated', { migrated });
   }
   if (records.length > 0) {
     log.info('user_agents_loaded', { count: records.length });

@@ -18,6 +18,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import http from 'node:http';
 import { createApp } from '../src/index.js';
+import { openStorage } from '../src/storage/index.js';
+import { loadUserAgentsIntoRegistry } from '../src/routes/userAgents.js';
+import type { UserAgentRecord } from '../src/types.js';
 
 let server: http.Server;
 const PORT = 18601;
@@ -277,5 +280,43 @@ describe('user-authored agents — cross-tenant isolation in GET /v1/agents', ()
     const wildcard = await jsonFetch<{ agents: Array<{ persona: string }> }>('/v1/agents?tenantId=*');
     expect(wildcard.status).toBe(200);
     expect(wildcard.body.agents.some((a) => a.persona === 'Tenant Scoped Probe')).toBe(true);
+  });
+});
+
+describe('legacy `_anon` tenant migration — loadUserAgentsIntoRegistry', () => {
+  it('rewrites a stored `_anon` record to the `default` tenant at boot (idempotent)', async () => {
+    // Records created by bearer callers BEFORE the bearer-shared posture
+    // rename were bucketed under `_anon`; without the boot migration they
+    // orphan (invisible to the `default`-scoped list, undeletable). Uses an
+    // isolated storage instance — this is the boot path, not the HTTP surface.
+    const storage = await openStorage('memory://');
+    try {
+      const legacy: UserAgentRecord = {
+        agentId: 'user._anon.legacy-probe',
+        tenantId: '_anon',
+        persona: 'Legacy Probe',
+        modelClass: 'chat',
+        systemPrompt: 'You predate the bearer-shared posture.',
+        toolAllowlist: [],
+        memoryShape: { scratchpad: true, conversation: true, longTerm: false },
+        createdAt: new Date().toISOString(),
+      };
+      await storage.insertUserAgent(legacy);
+
+      await loadUserAgentsIntoRegistry(storage);
+
+      // Durable rewrite: tenant moves, the immutable agentId keeps its
+      // legacy `user._anon.` prefix.
+      const migrated = await storage.getUserAgent('user._anon.legacy-probe');
+      expect(migrated?.tenantId).toBe('default');
+      expect((await storage.listUserAgents('default')).some((r) => r.agentId === 'user._anon.legacy-probe')).toBe(true);
+      expect((await storage.listUserAgents('_anon')).length).toBe(0);
+
+      // Second boot: nothing left to migrate, registration still succeeds.
+      await loadUserAgentsIntoRegistry(storage);
+      expect((await storage.getUserAgent('user._anon.legacy-probe'))?.tenantId).toBe('default');
+    } finally {
+      await storage.close();
+    }
   });
 });

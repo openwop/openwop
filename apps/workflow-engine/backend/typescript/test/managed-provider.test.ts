@@ -7,8 +7,12 @@
  *   1. Bootstrap reads MINIMAX_API_KEY → encrypts → writes to byok_secrets.
  *   2. Bootstrap is idempotent (same env value = no re-write).
  *   3. Bootstrap rotates when env value changes.
- *   4. Anonymous tenants (`anon:*`) get `sign_in_required`.
+ *   4. Anonymous tenants (`anon:*`) get `sign_in_required` when the wall is
+ *      on (OPENWOP_MANAGED_ANON_SIGNIN_REQUIRED=true / posture `auth`); the
+ *      default demo posture lets them through (mocked transport).
  *   5. Daily cap enforced once a tenant reaches OPENWOP_MANAGED_DAILY_TOKEN_CAP.
+ *   5b. Global ceiling (OPENWOP_MANAGED_GLOBAL_DAILY_TOKEN_CAP) refuses a
+ *       FRESH tenant once cross-tenant usage hits the cap; off when unset.
  *   6. Missing managed key → `managed_unavailable`.
  *   7. Happy path: signed-in tenant under cap → dispatch succeeds and
  *      usage is incremented. Result uses USER-FACING provider/model ids
@@ -20,6 +24,7 @@ import { openStorage } from '../src/storage/index.js';
 import { resetCachedMasterKey } from '../src/byok/encryption.js';
 import {
   _clearManagedCacheForTests,
+  GLOBAL_USAGE_TENANT,
   bootstrapManagedProvider,
   configureManagedProvider,
   dispatchManagedChat,
@@ -112,17 +117,41 @@ describe('bootstrapManagedProvider', () => {
 });
 
 describe('dispatchManagedChat — gating', () => {
-  it('rejects anonymous tenants with sign_in_required', async () => {
+  // The sign-in wall is posture-derived since the deploy-posture work:
+  // ON when OPENWOP_MANAGED_ANON_SIGNIN_REQUIRED=true (or posture `auth`),
+  // OFF in the demo postures. (This test originally asserted an
+  // unconditional wall and was left failing — AND hitting the live MiniMax
+  // API — when the default flipped; both posture branches are now pinned
+  // deterministically.)
+  it('rejects anonymous tenants with sign_in_required when the wall is on', async () => {
+    process.env.MINIMAX_API_KEY = 'sk-test';
+    process.env.OPENWOP_MANAGED_ANON_SIGNIN_REQUIRED = 'true';
+    try {
+      await bootstrapManagedProvider();
+
+      await expect(
+        dispatchManagedChat({
+          userFacingProvider: 'openwop-free',
+          tenantId: 'anon:abc',
+          messages: [{ role: 'user', content: 'hi' }],
+        }),
+      ).rejects.toMatchObject({ code: 'sign_in_required' });
+    } finally {
+      delete process.env.OPENWOP_MANAGED_ANON_SIGNIN_REQUIRED;
+    }
+  });
+
+  it('default demo posture lets anonymous tenants past the sign-in gate', async () => {
     process.env.MINIMAX_API_KEY = 'sk-test';
     await bootstrapManagedProvider();
+    mockMiniMaxSseOnce('anon ok', 1, 1);
 
-    await expect(
-      dispatchManagedChat({
-        userFacingProvider: 'openwop-free',
-        tenantId: 'anon:abc',
-        messages: [{ role: 'user', content: 'hi' }],
-      }),
-    ).rejects.toMatchObject({ code: 'sign_in_required' });
+    const result = await dispatchManagedChat({
+      userFacingProvider: 'openwop-free',
+      tenantId: 'anon:abc',
+      messages: [{ role: 'user', content: 'hi' }],
+    });
+    expect(result.completion).toBe('anon ok');
   });
 
   it('rejects when no managed key seeded', async () => {
@@ -164,7 +193,76 @@ describe('dispatchManagedChat — gating', () => {
       }),
     ).rejects.toMatchObject({ code: 'daily_limit_reached' });
   });
+
+  it('global ceiling rejects a FRESH tenant once cross-tenant usage hits the cap', async () => {
+    // The per-tenant cap is evadable on cookie-per-visitor deploys (every
+    // fresh cookie jar = a fresh anon tenant). The global ceiling is the
+    // operator's spend backstop: pre-seed the reserved bucket at the cap and
+    // a brand-new tenant must still be refused.
+    process.env.MINIMAX_API_KEY = 'sk-test';
+    process.env.OPENWOP_MANAGED_GLOBAL_DAILY_TOKEN_CAP = '500';
+    try {
+      await bootstrapManagedProvider();
+      const date = new Date().toISOString().slice(0, 10);
+      await storage.incrementManagedUsage(GLOBAL_USAGE_TENANT, 'openwop-free', date, 300, 200);
+
+      await expect(
+        dispatchManagedChat({
+          userFacingProvider: 'openwop-free',
+          tenantId: 'user:fresh-never-seen',
+          messages: [{ role: 'user', content: 'hi' }],
+        }),
+      ).rejects.toMatchObject({ code: 'daily_limit_reached' });
+    } finally {
+      delete process.env.OPENWOP_MANAGED_GLOBAL_DAILY_TOKEN_CAP;
+    }
+  });
+
+  it('global ceiling is disabled when the env var is unset', async () => {
+    // Same pre-seeded global bucket, no cap configured → the per-tenant cap
+    // is the only gate, and this fresh tenant is under it (managed key absent
+    // would be the next failure, so expect managed_unavailable NOT
+    // daily_limit_reached after clearing the key).
+    process.env.MINIMAX_API_KEY = 'sk-test';
+    await bootstrapManagedProvider();
+    const date = new Date().toISOString().slice(0, 10);
+    await storage.incrementManagedUsage(GLOBAL_USAGE_TENANT, 'openwop-free', date, 9_000_000, 0);
+
+    // No OPENWOP_MANAGED_GLOBAL_DAILY_TOKEN_CAP set → dispatch proceeds past
+    // both cap checks (it will fail later on the mocked transport only if we
+    // let it run — mock a tiny success instead).
+    mockMiniMaxSseOnce('ok', 1, 1);
+    const result = await dispatchManagedChat({
+      userFacingProvider: 'openwop-free',
+      tenantId: 'user:fresh-2',
+      messages: [{ role: 'user', content: 'hi' }],
+    });
+    expect(result.completion).toBe('ok');
+  });
 });
+
+/** SSE mock shared with the happy-path block below (hoisted here so the
+ *  global-ceiling-disabled test can dispatch end-to-end). */
+function mockMiniMaxSseOnce(completion: string, inputTokens: number, outputTokens: number): void {
+  const chunks = [
+    `data: ${JSON.stringify({ choices: [{ delta: { content: completion } }] })}\n\n`,
+    `data: ${JSON.stringify({ choices: [{ finish_reason: 'stop' }], usage: { prompt_tokens: inputTokens, completion_tokens: outputTokens } })}\n\n`,
+    `data: [DONE]\n\n`,
+  ];
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) {
+      const enc = new TextEncoder();
+      for (const c of chunks) controller.enqueue(enc.encode(c));
+      controller.close();
+    },
+  });
+  vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+    new Response(body, {
+      status: 200,
+      headers: { 'content-type': 'text/event-stream' },
+    }),
+  );
+}
 
 describe('dispatchManagedChat — happy path', () => {
   function mockMiniMaxSse(completion: string, inputTokens: number, outputTokens: number): void {
@@ -220,6 +318,10 @@ describe('dispatchManagedChat — happy path', () => {
     const date = new Date().toISOString().slice(0, 10);
     const usage = await storage.getManagedUsage('user:alice', 'openwop-free', date);
     expect(usage).toEqual({ inputTokens: 5, outputTokens: 11 });
+    // The reserved global bucket accrues in lockstep (spend backstop history
+    // exists even before the operator enables the ceiling).
+    const globalUsage = await storage.getManagedUsage(GLOBAL_USAGE_TENANT, 'openwop-free', date);
+    expect(globalUsage).toEqual({ inputTokens: 5, outputTokens: 11 });
   });
 
   it('underlying provider name does NOT appear in the returned result fields', async () => {

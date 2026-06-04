@@ -50,8 +50,17 @@ default in `src/brand/defaults.ts`.
 | `VITE_BRAND_REPO_URL` | `https://github.com/openwop/openwop` | Source-repo link (privacy footer) |
 | `VITE_BRAND_THEME_COLOR` | `#1a1a17` | PWA manifest + mobile browser chrome color |
 | `VITE_BRAND_DEFAULT_THEME` | `system` | Initial app theme when the visitor has not chosen one (`system`, `light`, or `dark`) |
-| `VITE_BRAND_APP_GATE_MODE` | `none` | App-wide pre-render gate (`none`, `password`, or `sign-in`) |
+| `VITE_BRAND_APP_GATE_MODE` | `none` | App-wide pre-render gate (`none`, `password`, or `sign-in`) — see the security caveat below |
 | `VITE_BRAND_APP_GATE_PASSWORD` | *(blank)* | Password value for AppGate when `mode=password` |
+
+> **AppGate `password` mode is demo friction, NOT authentication.** The
+> password is a `VITE_*` var, so it is inlined in plain text into the shipped
+> JS bundle (anyone can read it from the source), and the unlock is a
+> client-side localStorage flag — the backend API stays reachable without it.
+> Use it to keep a public demo URL semi-private. For real protection use
+> `mode=sign-in` (Firebase Auth) **plus** a backend auth posture
+> (`OPENWOP_DEPLOY_POSTURE=auth`), or front the whole deployment with your
+> own access control (IAP, VPN, basic auth at the proxy).
 
 **Example `.env.production.local`:**
 
@@ -185,6 +194,7 @@ in data files, and the runtime fallbacks are brand-neutral. Configure via env
 | `OPENWOP_DEMO_SEED_ENABLED` | `true` | Set `false` to ship a clean tenant with NO demo personas/boards/schedules/org chart |
 | `OPENWOP_DEPLOY_POSTURE` | `cookie-per-visitor` | Backend auth posture: `bearer-shared`, `cookie-per-visitor`, or `auth` |
 | `OPENWOP_MANAGED_ANON_SIGNIN_REQUIRED` | *(derived)* | Optional override for the managed free-tier sign-in wall (`true`/`false`); demo postures allow anon by default, `auth` requires sign-in |
+| `OPENWOP_MANAGED_GLOBAL_DAILY_TOKEN_CAP` | *(unset = off)* | Operator spend backstop: total managed-tier tokens per day across ALL tenants. **Set this on any login-free public demo** — the per-tenant cap alone is evadable on cookie-per-visitor deploys (every fresh cookie jar is a fresh anon tenant) |
 | `OPENWOP_SESSION_COOKIE_NAME` | `__session` | Session cookie name (already un-branded; Firebase Hosting requires `__session`) |
 | `OPENWOP_VAPID_SUBJECT` | `mailto:admin@openwop.dev` | Web-push contact (RFC 8030) |
 
