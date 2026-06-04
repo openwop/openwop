@@ -7,6 +7,7 @@ import { NotificationBell } from '../notifications/NotificationBell.js';
 import { BuildingIcon, MenuIcon, ChevronRightIcon, SearchIcon, SettingsIcon } from '../ui/icons/index.js';
 import { ThemeToggle } from '../ui/ThemeToggle.js';
 import { WORKSPACE_NAV, navItemIsActive } from './features.js';
+import { IconButton } from '../ui/IconButton.js';
 import { isAdminPath } from './features.js';
 
 const COLLAPSE_KEY = 'openwop.sidebar.collapsed';
@@ -26,15 +27,13 @@ export function Sidebar({ netOpen, onToggleNet }: { netOpen: boolean; onToggleNe
   return (
     <>
       {/* Mobile launcher — only shown ≤860px via CSS; opens the drawer. */}
-      <button
-        type="button"
+      <IconButton
         className="app-sidebar-launcher"
-        aria-label="Open navigation"
+        label="Open navigation"
         aria-expanded={drawerOpen}
         onClick={() => setDrawerOpen(true)}
-      >
-        <MenuIcon size={18} />
-      </button>
+        icon={<MenuIcon size={18} />}
+      />
       {drawerOpen && <div className="app-sidebar-scrim" onClick={() => setDrawerOpen(false)} aria-hidden />}
 
       <aside
@@ -45,16 +44,14 @@ export function Sidebar({ netOpen, onToggleNet }: { netOpen: boolean; onToggleNe
           <Link to="/" className="app-sidebar-brand" aria-label="OpenWOP home">
             <BrandMark />
           </Link>
-          <button
-            type="button"
+          <IconButton
             className="app-sidebar-collapse"
-            aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+            label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
             aria-pressed={collapsed}
             onClick={() => setCollapsed((v) => !v)}
             title={collapsed ? 'Expand' : 'Collapse'}
-          >
-            <MenuIcon size={16} />
-          </button>
+            icon={<MenuIcon size={16} />}
+          />
         </div>
 
         {/* Workspace / org switcher — the org-context slot. Links to the

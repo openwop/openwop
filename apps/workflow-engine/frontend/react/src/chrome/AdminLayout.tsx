@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { ADMIN_NAV, chromeFor, navItemIsActive } from './features.js';
 import { ChevronRightIcon } from '../ui/icons/index.js';
+import { IconButton } from '../ui/IconButton.js';
 
 const COLLAPSE_KEY = 'openwop.admin.railCollapsed';
 
@@ -39,16 +40,14 @@ export function AdminLayout(): JSX.Element {
       <aside className="admin-rail" aria-label="Admin sections">
         <div className="admin-rail-head">
           {!collapsed && <div className="admin-rail-title">Admin</div>}
-          <button
-            type="button"
+          <IconButton
             className="admin-rail-toggle"
             onClick={toggle}
-            aria-label={collapsed ? 'Expand admin menu' : 'Collapse admin menu'}
+            label={collapsed ? 'Expand admin menu' : 'Collapse admin menu'}
             aria-pressed={!collapsed}
             title={collapsed ? 'Expand' : 'Collapse'}
-          >
-            <ChevronRightIcon size={16} />
-          </button>
+            icon={<ChevronRightIcon size={16} />}
+          />
         </div>
         <nav>
           <ul>
