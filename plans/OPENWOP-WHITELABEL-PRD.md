@@ -1,6 +1,6 @@
 # PRD — Make the OpenWOP demo app a first-class white-label foundation
 
-**Status:** Draft · 2026-06-03
+**Status:** In progress · 2026-06-03 (status + review findings updated 2026-06-04 — see §12)
 **Author:** Derived from building **CoLabCare** (a pediatric behavioral-health practice app) on top of the white-labeled OpenWOP workflow-engine demo app.
 **Audience:** OpenWOP demo-app maintainers (`apps/workflow-engine/`).
 **Goal:** Capture every place CoLabCare had to **deviate from, fork, work around, or fix** the upstream demo app, and turn those into a prioritized set of improvements so the next white-label build (the next "CoLabCare") is dramatically faster and lower-risk.
@@ -211,3 +211,59 @@ CoLabCare invented several "make a demo feel real and honest" patterns the frame
 ---
 
 *If this PRD is adopted upstream, the single highest-leverage change is the **declarative feature/nav manifest (§3) + two-tier shell (§2)** — together they convert "fork the app shell" into "declare your pages," which is what made CoLabCare slow. The deploy-DX fixes (§8) are the cheapest high-value wins.*
+
+---
+
+## 12. Status & senior code-review findings (2026-06-04)
+
+Implementation landed across **7 merged PRs + 1 direct-to-main commit** (range `d4ebff4e..860895b4`):
+#568 dev-proxy→localhost · #569 zip strips `.env*` · #570/#571 logo theme fixes · #573 honest `/readiness` · #574 `.env.production.example` + `check-branding.sh` · #575 brand-stamped PWA manifest · `860895b4` (deploy posture + `<AppGate>` + auto-seed + `markSrc`/`lockupSrc` + instance/theme config + `deploy/up.sh` + WHITE-LABEL.md checklist + `/v1/agents` tenant scoping — **pushed directly to main, no PR**).
+
+### Backlog status (§10)
+
+| # | Item | Status |
+|---|------|--------|
+| 1 | Dev-proxy default → localhost + `.env.*.example` | ✅ **Done** (#568, #569, #574) |
+| 2 | Startup preflight + honest `/readiness` | ✅ **Done** (#573 + `sessionSecretConfigError` shared predicate) |
+| 3 | Two-tier nav (workspace vs admin) + `AdminLayout` + grouped nav config | ❌ **Not started** — `App.tsx` still 29 hand-wired routes, no `adminNav`/`navTier` |
+| 4 | Declarative feature/route/nav manifest + centralized registration | ❌ **Not started** |
+| 5 | `WHITE-LABEL.md` checklist + `check-branding.sh` + favicon/manifest/mark/instance config | ✅ **Done** (#574, #575, `860895b4`: `markSrc`/`lockupSrc` split, `VITE_BRAND_INSTANCE_NAME`, stamped manifest, 262-line checklist, `check-brand-resolver.mjs` in the build) |
+| 6 | Deploy posture + `<AppGate>` + comprehensive auto-on-empty seed | 🟡 **Mostly done** (`860895b4`: posture flag, password/sign-in/none gate, `AutoSeedDemoData` on-entry) — but `seedEverything` is a relabel of `seedDemoAgents` with a hardcoded domain list, not a registry (finding M2); the PRD's **global token ceiling was NOT implemented** (finding C1) |
+| 7 | Reference domain module + `host-extensions.md` | ❌ **Not started** |
+| 8 | `DESIGN.app.md` + `VITE_BRAND_DEFAULT_THEME` + tokenized palette + CSS `:is()` gate | 🟡 **Partial** — theme var ✅, CSS empty-`:is()` gate ✅ (already wired as `check-built-css.mjs`), `DESIGN.app.md` **already existed at repo root** (this PRD's "no DESIGN.app.md" claim is stale), agent-palette tokenization ❌ |
+| 9 | Tenant-scope `/v1/agents` wildcard | ✅ **Done** (`860895b4`: explicit `?tenantId=*` escape hatch + isolation test) — see finding H2 for the migration caveat |
+| 10 | Cohesion primitives (`IllustrativeBadge`, `IconButton` aria, `@`-handle titling) | ❌ **Not started** |
+| 11 | `deploy/up.sh` end-to-end recipe | ✅ **Done** (`860895b4`, dry-run-default, merge-style `--update-*` flags) — see findings M3/M4 |
+
+**Verification (2026-06-04):** full `openwop:check` 10/10 GREEN; all touched backend test files pass (deploy-posture 4, anon-preflight 5, user-agents 12, agents-demo + readiness 13); frontend build green incl. the brand-resolver and built-CSS gates; zero banned patterns in the range diff. The red **Conformance Soak** on `860895b4` is the *scheduled* SQLite-host soak failing since ≥2026-06-03 (missing profile opt-outs: `deployment-channel-dispatch`, `safefetch-live-audit`, `roster-attribution`) — pre-existing, **not** caused by this work.
+
+### Findings (severity-ordered)
+
+**C1 [CRITICAL — cost exposure on the live deploy].** `managedAnonSignInRequired()` defaults the managed free-tier sign-in wall **OFF** in the default `cookie-per-visitor` posture (`deployPosture.ts:11-16`; both the dispatch gate in `managedProvider.ts` and the run-create preflight in `routes/runs.ts` now condition on it). The live Cloud Run service predates the new env vars, so the **next backend deploy silently opens the operator-funded MiniMax tier to anonymous visitors**. The per-tenant daily token cap (50k) is evadable by clearing cookies (each cookie jar = a fresh `anon:<sid>` tenant), and §7.1's "optional global token ceiling" was **not implemented**. → Before the next deploy: `gcloud run services update openwop-app-backend --update-env-vars OPENWOP_MANAGED_ANON_SIGNIN_REQUIRED=true …` (or ship the global ceiling first).
+
+**H1 [HIGH — governance].** `860895b4` was pushed **directly to main with no PR and no DCO `Signed-off-by`** (every other commit in the program is signed), and its **commit message is confabulated** — it describes `FIREBASE_PROJECT_ID`/`CLOUD_SQL_INSTANCE`/`KMS_KEY_RING` boot checks, a 503-driven AppGate, and an env-gated admin-only seed, *none of which exist in the diff* (the real contents are the §7 posture flag, brand-config gate, and on-entry seed). History is misleading; this section is the corrective record. Don't rewrite main; do enforce PR + DCO going forward.
+
+**H2 [HIGH — behavior change + data orphaning].** Bearer/API-key callers of the normative `GET /v1/agents` changed from implicit-wildcard to tenant `default` (wildcard now requires an explicit `?tenantId=*` from a wildcard principal), and the user-agents fallback tenant renamed `_anon` → `default`. Right direction (it closes this PRD's §7 latent leak, with a test) — but (a) any **existing live durable records under `_anon` orphan** after deploy (invisible to list/GET/DELETE), (b) external tooling relying on implicit wildcard now sees a filtered list with no error, (c) no CHANGELOG entry and the host's conformance evidence wasn't re-measured. → one-time `_anon`→`default` migration (or an explicit decision to abandon those rows) + a CHANGELOG line + re-run the black-box suite against the workflow-engine host before the next conformance publish.
+
+**M1 [MEDIUM].** No CHANGELOG `[Unreleased]` entries for any of the 8 changesets, despite precedent for workflow-engine entries (e.g. the earlier `/readiness` managed-provider line).
+
+**M2 [MEDIUM].** `seedEverything.ts` returns a **hardcoded** `domains` constant when `agents > 0` — the agents-demo test asserts the constant, not actual per-domain coverage. The §7.3 acceptance ("a test asserts every domain seeded") is only nominally met; a real domain registry should ride along with backlog #4.
+
+**M3 [MEDIUM].** `deploy/up.sh` runs `check-branding.sh` unconditionally before the Firebase deploy — the **steward's own OpenWOP-branded deploy always fails it** (the script is documented as a fork tool). Needs a skip flag for the reference deploy. Also: the first-ever deploy boots one revision without the session secret (attached only in the follow-up `services update`) — transient 503 window; and `capture()` passes its dry-run fallback as a live argument (latent footgun).
+
+**M4 [MEDIUM].** `AppGate` `password` mode is **client-side only** (password inlined in the JS bundle, unlock in localStorage). Acceptable as demo friction; WHITE-LABEL.md should say explicitly it is not authentication.
+
+**L1 [LOW].** `check-branding.sh`: check 4 (`og:site_name`/`application-name`) is vacuous (no such meta exists in `index.html`); check 2 false-positives on any custom inline-SVG data-URI favicon containing `viewBox`.
+
+**L2 [LOW].** PWA manifest hardcodes `type: 'image/svg+xml'` and `sizes: 'any'` for the icon — a fork pointing `markSrc` at a PNG ships a wrong-MIME manifest icon; no `maskable` purpose.
+
+**L3 [LOW].** The brand-mark SVG now exists in 4 copies with 2 theming mechanisms (class-based `@media` in the 3 committed `.svg` assets; `currentColor` in `OpenwopLogo.tsx`) — drift hazard; consider one generated source.
+
+**L4 [LOW].** The published `/install/` zip (`openwop.dev/downloads/openwop-demo-app.zip`, last published 2026-06-03 14:13 GMT) predates all 8 changesets — run `/publish-whitelabel` to ship the posture/gate/seed/manifest/env-template work to adopters.
+
+### Remaining work, in priority order
+
+1. **C1 mitigation on the live service** (one `gcloud run services update`, before any backend deploy).
+2. **Backlog #3 + #4** (two-tier nav + declarative manifest) — the PRD's stated highest-leverage items, untouched.
+3. **H2 follow-ups** (`_anon` migration decision, CHANGELOG, conformance re-measure) + **M1** CHANGELOG batch entry.
+4. Republish the white-label zip (**L4**), then backlog #7, the §6 palette tokenization, #10, and the M3/M4/L1–L3 polish.
