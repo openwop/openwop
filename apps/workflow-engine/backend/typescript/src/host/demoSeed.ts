@@ -25,9 +25,9 @@
  */
 
 import { createRosterEntry, listRoster, type RosterEntry } from './rosterService.js';
-import { createBoard, createCard, type KanbanColumn, type KanbanCardSource } from './kanbanService.js';
-import { registerJob } from './schedulingService.js';
-import { putChart, type OrgDepartment, type OrgMember } from './orgChartService.js';
+import { createBoard, createCard, listBoards, type KanbanBoard, type KanbanColumn, type KanbanCardSource } from './kanbanService.js';
+import { getJob, registerJob } from './schedulingService.js';
+import { getChart, putChart, type OrgDepartment, type OrgMember } from './orgChartService.js';
 import { demoWorkflowsForRole, type DemoRoleKey } from './demoWorkflows.js';
 import { createLogger } from '../observability/logger.js';
 import { ensureUserAgentRegistered } from '../routes/userAgents.js';
@@ -116,6 +116,21 @@ function demoSeedEnabled(): boolean {
 export interface SeedResult {
   seeded: boolean;
   agents: number;
+  /** Present when `heal: true` — what an explicit re-seed restored for
+   *  EXISTING personas (missing boards / schedule jobs / a missing chart). */
+  healed?: { boards: number; schedules: number; orgChart: boolean };
+}
+
+export interface SeedOptions {
+  /** Restore missing demo surfaces for personas that already exist.
+   *
+   *  OFF for the silent auto-seed-on-entry (it must never resurrect a board or
+   *  schedule the user deliberately deleted); ON for the explicit "Load demo
+   *  data" action — whose whole point is "put the demo back". Healing creates
+   *  a missing BOARD (with its sample cards), registers missing schedule
+   *  jobIds, and rebuilds the org chart ONLY when none exists. It never
+   *  touches an existing board's cards (clearing a board is normal usage). */
+  heal?: boolean;
 }
 
 /**
@@ -130,7 +145,11 @@ export interface SeedResult {
  * of a populated tenant happens only via the explicit "Load demo agents"
  * action (which restoring a deleted demo agent is the expected outcome of).
  */
-export async function seedDemoAgents(tenantId: string, storage: Storage): Promise<SeedResult> {
+export async function seedDemoAgents(
+  tenantId: string,
+  storage: Storage,
+  opts: SeedOptions = {},
+): Promise<SeedResult> {
   if (!demoSeedEnabled()) {
     log.info('demo_seed_skipped', { tenantId, reason: 'OPENWOP_DEMO_SEED_ENABLED=false' });
     return { seeded: false, agents: 0 };
@@ -139,10 +158,21 @@ export async function seedDemoAgents(tenantId: string, storage: Storage): Promis
   const existing = await listRoster(tenantId);
   const byPersona = new Map<string, RosterEntry>(existing.map((e) => [e.persona.toLowerCase(), e]));
 
+  // Heal mode: one boards read up front so per-agent "is the board missing?"
+  // is a map lookup, not N scans.
+  const boardByRoster = new Map<string, KanbanBoard>();
+  if (opts.heal) {
+    for (const b of await listBoards(tenantId)) {
+      if (b.rosterId) boardByRoster.set(b.rosterId, b);
+    }
+  }
+
   const members: OrgMember[] = [];
   const departments: OrgDepartment[] = [];
   const seenDepartments = new Set<string>();
   let created = 0;
+  let healedBoards = 0;
+  let healedSchedules = 0;
 
   for (const spec of SEED_AGENTS) {
     const workflowIds = demoWorkflowsForRole(spec.roleKey).map((w) => w.workflowId);
@@ -172,6 +202,49 @@ export async function seedDemoAgents(tenantId: string, storage: Storage): Promis
     };
     await ensureUserAgentRegistered(storage, userAgentRecord);
 
+    // Board + sample cards for one persona — used by the fresh-create path
+    // AND by heal mode when an existing persona's board went missing (the
+    // live "boards disappeared and re-seed didn't restore them" failure:
+    // rows that predate the read-through-durability hardening kept their
+    // roster entry but lost the board, and the old create-only seed could
+    // never bring it back).
+    const createBoardWithCards = async (rosterId: string): Promise<void> => {
+      const board = await createBoard({
+        tenantId,
+        name: `${spec.persona}'s board`,
+        rosterId,
+        columns: demoColumns(workflowIds[0]),
+      });
+      for (const card of spec.cards) {
+        await createCard({
+          boardId: board.id,
+          columnId: card.columnId ?? 'todo',
+          title: card.title,
+          ...(card.description !== undefined ? { description: card.description } : {}),
+          source: card.source,
+          ...(card.sourceLabel !== undefined ? { sourceLabel: card.sourceLabel } : {}),
+          ...(card.priority !== undefined ? { priority: card.priority } : {}),
+          ...(card.createdBy !== undefined ? { createdBy: card.createdBy } : {}),
+          ...(card.assignmentReason !== undefined ? { assignmentReason: card.assignmentReason } : {}),
+          ...(card.blockerNote !== undefined ? { blockerNote: card.blockerNote } : {}),
+        });
+      }
+    };
+
+    const registerSchedule = async (rosterId: string, agentId: string, sched: SeedSchedule): Promise<void> => {
+      const workflowId = workflowIds[sched.workflowIndex];
+      if (!workflowId) return;
+      await registerJob({
+        jobId: `${rosterId}:${sched.slug}`,
+        tenantId,
+        cronExpr: sched.cronExpr,
+        workflowId,
+        rosterId,
+        agentId,
+        metadata: { label: sched.label },
+      });
+    };
+
     let entry = byPersona.get(spec.persona.toLowerCase());
     if (!entry) {
       // Create the roster entry, its board (4 demo lanes; To Do triggers the
@@ -190,40 +263,22 @@ export async function seedDemoAgents(tenantId: string, storage: Storage): Promis
       });
       created += 1;
 
-      const board = await createBoard({
-        tenantId,
-        name: `${spec.persona}'s board`,
-        rosterId: entry.rosterId,
-        columns: demoColumns(workflowIds[0]),
-      });
-
-      for (const card of spec.cards) {
-        await createCard({
-          boardId: board.id,
-          columnId: card.columnId ?? 'todo',
-          title: card.title,
-          ...(card.description !== undefined ? { description: card.description } : {}),
-          source: card.source,
-          ...(card.sourceLabel !== undefined ? { sourceLabel: card.sourceLabel } : {}),
-          ...(card.priority !== undefined ? { priority: card.priority } : {}),
-          ...(card.createdBy !== undefined ? { createdBy: card.createdBy } : {}),
-          ...(card.assignmentReason !== undefined ? { assignmentReason: card.assignmentReason } : {}),
-          ...(card.blockerNote !== undefined ? { blockerNote: card.blockerNote } : {}),
-        });
-      }
-
+      await createBoardWithCards(entry.rosterId);
       for (const sched of spec.schedules) {
-        const workflowId = workflowIds[sched.workflowIndex];
-        if (!workflowId) continue;
-        await registerJob({
-          jobId: `${entry.rosterId}:${sched.slug}`,
-          tenantId,
-          cronExpr: sched.cronExpr,
-          workflowId,
-          rosterId: entry.rosterId,
-          agentId: entry.agentRef.agentId,
-          metadata: { label: sched.label },
-        });
+        await registerSchedule(entry.rosterId, entry.agentRef.agentId, sched);
+      }
+    } else if (opts.heal) {
+      // HEAL: restore what is structurally MISSING; never touch what exists.
+      // A present-but-emptied board stays untouched (clearing cards is normal
+      // usage); a present schedule keeps any user-tweaked cron.
+      if (!boardByRoster.has(entry.rosterId)) {
+        await createBoardWithCards(entry.rosterId);
+        healedBoards += 1;
+      }
+      for (const sched of spec.schedules) {
+        if (await getJob(`${entry.rosterId}:${sched.slug}`)) continue;
+        await registerSchedule(entry.rosterId, entry.agentRef.agentId, sched);
+        healedSchedules += 1;
       }
     }
 
@@ -248,8 +303,13 @@ export async function seedDemoAgents(tenantId: string, storage: Storage): Promis
   }
 
   // Only (re)write the org-chart when we created something — avoids clobbering
-  // a user's hand-built chart on a no-op re-seed.
-  if (created > 0) {
+  // a user's hand-built chart on a no-op re-seed. Heal mode additionally
+  // rebuilds it when NO chart exists at all (nothing to clobber).
+  let healedChart = false;
+  if (opts.heal && created === 0) {
+    healedChart = (await getChart(tenantId)) === null;
+  }
+  if (created > 0 || healedChart) {
     const orgResult = await putChart({ tenantId, departments, members });
     if ('error' in orgResult) {
       // Non-fatal: the roster + boards seeded fine; only the org-chart failed.
@@ -257,6 +317,12 @@ export async function seedDemoAgents(tenantId: string, storage: Storage): Promis
     }
   }
 
+  if (healedBoards > 0 || healedSchedules > 0 || healedChart) {
+    log.info('demo_seed_healed', { tenantId, healedBoards, healedSchedules, healedChart });
+  }
   log.info('demo_seed_complete', { tenantId, created, total: SEED_AGENTS.length });
-  return { seeded: created > 0, agents: SEED_AGENTS.length };
+  return {
+    seeded: created > 0, agents: SEED_AGENTS.length,
+    ...(opts.heal ? { healed: { boards: healedBoards, schedules: healedSchedules, orgChart: healedChart } } : {}),
+  };
 }

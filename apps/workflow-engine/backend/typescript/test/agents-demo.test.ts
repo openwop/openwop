@@ -280,3 +280,54 @@ describe('agents-demo backend foundations', () => {
     expect(getAgentRegistry().get('user.default.nora')?.persona).toBe('Nora');
   });
 });
+
+describe('demo seed heal mode — restores missing surfaces (live bug 2026-06-04)', () => {
+  // Reproduces the production failure: a tenant whose roster entries survived
+  // but whose BOARD rows were lost (rows predating the read-through-durability
+  // hardening). The old create-only seed skipped existing personas entirely,
+  // so "Load demo data" could never bring the boards back.
+  it('plain re-seed does NOT resurrect a deleted board; heal:true restores it with cards', async () => {
+    const { listBoardsWithCards, deleteBoard } = await import('../src/host/kanbanService.js');
+    const { deleteJob, getJob } = await import('../src/host/schedulingService.js');
+
+    // Baseline from the suite's earlier seeding: every agent has a board.
+    const before = await listBoardsWithCards('default');
+    expect(before.length).toBeGreaterThan(0);
+    const victim = before[0];
+    expect(victim.rosterId).toBeTruthy();
+    expect(await deleteBoard(victim.id)).toBe(true);
+    // Also lose one schedule job for the same roster member, when present.
+    const lostJobIds: string[] = [];
+    for (const suffix of ['daily', 'hourly', 'weekly', 'standup', 'digest', 'triage', 'report', 'sync']) {
+      const id = `${victim.rosterId}:${suffix}`;
+      if (await getJob(id)) { await deleteJob(id); lostJobIds.push(id); }
+    }
+
+    // Silent auto-seed shape (no heal): the board MUST stay gone — the auto
+    // path must never resurrect a deliberate deletion.
+    const plain = await api<{ seeded: boolean; healed?: unknown }>('/v1/host/sample/demo/seed', { method: 'POST', body: '{}' });
+    expect(plain.status).toBe(200);
+    expect(plain.body.healed).toBeUndefined();
+    expect((await listBoardsWithCards('default')).some((b) => b.rosterId === victim.rosterId)).toBe(false);
+
+    // Explicit heal: the board comes back, WITH its sample cards.
+    const heal = await api<{ seeded: boolean; healed: { boards: number; schedules: number; orgChart: boolean } }>(
+      '/v1/host/sample/demo/seed',
+      { method: 'POST', body: JSON.stringify({ heal: true }) },
+    );
+    expect(heal.status).toBe(200);
+    expect(heal.body.healed.boards).toBe(1);
+    expect(heal.body.healed.schedules).toBe(lostJobIds.length);
+    const after = (await listBoardsWithCards('default')).find((b) => b.rosterId === victim.rosterId);
+    expect(after).toBeDefined();
+    expect(after!.cards.length).toBeGreaterThan(0);
+    for (const id of lostJobIds) expect(await getJob(id)).not.toBeNull();
+
+    // Heal is idempotent: a second heal finds nothing missing.
+    const again = await api<{ healed: { boards: number; schedules: number } }>(
+      '/v1/host/sample/demo/seed',
+      { method: 'POST', body: JSON.stringify({ heal: true }) },
+    );
+    expect(again.body.healed).toEqual({ boards: 0, schedules: 0, orgChart: false });
+  });
+});
