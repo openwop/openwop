@@ -190,6 +190,7 @@ CoLabCare invented several "make a demo feel real and honest" patterns the frame
 | 9 | Tenant-scope `/v1/agents`; document wildcard | Tenancy | **P1** | Latent cross-tenant visibility |
 | 10 | Cohesion primitives: `IllustrativeBadge`, `IconButton`(aria), honest states, `@`-handle titling | Demo quality | **P2** | Polish + a11y, reusable |
 | 11 | `deploy/up.sh` end-to-end recipe (incl. IAM + secrets + SSE URL + verify) | Deploy | **P2** | One-command repeatable deploys |
+| 12 | **Tier-1 "Digital Workforce" page** — workspace-nav page displaying the named agents as a workforce (who they are, what they own, autonomy, recent activity), designed via the frontend-design plugin for a distinctive, production-grade UX | Nav/IA | **P0** | User-requested 2026-06-04 |
 
 ---
 
@@ -271,7 +272,13 @@ All review findings are **closed** except the H1 history note (unfixable without
 - **M1 ✅** CHANGELOG `[Unreleased]` retro-logs the batch + fixes. **M2 ✅** `seedEverything` verifies domains via read-through store checks. **M3 ✅** up.sh: secrets on first revision, `OPENWOP_SKIP_BRAND_CHECK=1`, `capture()` fix. **M4 ✅** WHITE-LABEL.md password-gate caveat.
 - **L1 ✅** favicon check matches only OpenWOP defaults (and survives the `>` inside the stock data-URI — it was silently missing the favicon leak); manifest-name check replaces the vacuous meta check (stock build now flags all 5 leaks). **L2 ✅** manifest icon MIME by file type. **L3 ✅** brand-mark drift guard in the build. **L4 ✅** zip republished post-merge.
 
-### Remaining work, in priority order
+### 🏁 Backlog complete (2026-06-04)
 
-1. **Backlog #3 + #4** (two-tier nav + declarative manifest) — the PRD's stated highest-leverage items, untouched.
-2. Backlog #7 (reference domain module), the §6 agent-palette tokenization, and #10 (cohesion primitives).
+Every backlog row is closed. The final four PRs (all merged, CI green):
+
+- **#577** — backlog #3 + #4 (frontend) + #12: the declarative feature manifest (`chrome/features.tsx` — routes/tiers/chrome/nav in one declaration; `App.tsx` renders from it; `NARROW_ROUTES` deleted), the two-tier IA (workspace rail + single Admin entry; `<AdminLayout>` pathless layout route w/ embedded collapsible persisted rail; deep links preserved; `/admin` overview derives from the manifest), and the **Digital Workforce page** (`/workforce` — editorial annual-report roster: key-figures band, personnel-dossier cards filed by org-chart department w/ autonomy chips + live heartbeat pulse + per-card Check now, ruled run ledger). Added as ONE manifest entry — the §3 acceptance proof.
+- **#578** — backlog #4 (backend): `registerAllRoutes` ONE ordered module list (mount order preserved; boot side-effects ride the list) + the CI guard test that fails when any `register*Routes` export isn't listed and when index.ts hand-mounts anything.
+- **#579** — backlog #7: the reference domain slice (`host/examples/widgetService.ts` + env-gated `routes/widgets.ts` + `HOST-EXTENSIONS.md` 8-step paved path + 9 tests) demonstrating tenant-scoped DurableCollection keys, idempotent per-entity seed, the fail-closed `{ok:false,reason}`→409 chain, and derived read-through projections.
+- **#580** — backlog #8 remainder + #10: `check-tsx-color-literals.mjs` build gate (no raw colors in TSX outside sanctioned brand/icon files), `<IconButton>` (required `label` → unlabeled icon buttons unrepresentable; adopted in chrome), `<IllustrativeBadge>` + disabled-with-reason convention, DESIGN.app.md updated. Verified already-correct upstream: scrim tokens, no per-agent palette exists here (fork-only), `@`-picker already handle-first, zero unlabeled icon buttons.
+
+**Externally-pending only:** deploying the merged work to app.openwop.dev (backend → frontend, in that order) and the next white-label zip republish.
