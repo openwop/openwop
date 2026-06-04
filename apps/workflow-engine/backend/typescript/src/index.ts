@@ -49,48 +49,8 @@ import {
   configureManagedProvider,
 } from './providers/managedProvider.js';
 import { dirname, resolve as resolvePath } from 'node:path';
-import { registerHealthRoutes } from './routes/health.js';
-import { registerDiscoveryRoutes } from './routes/discovery.js';
-import { registerRunRoutes } from './routes/runs.js';
-import { registerInterruptRoutes } from './routes/interrupts.js';
-import { registerNotificationRoutes } from './routes/notifications.js';
-import { registerPushSubscriptionRoutes } from './routes/pushSubscriptions.js';
+import { registerAllRoutes } from './routes/registerAllRoutes.js';
 import { configureWebPush } from './notifications/webPush.js';
-import { registerStreamRoutes } from './routes/streams.js';
-import { registerWebhookRoutes } from './routes/webhooks.js';
-import { registerPackRoutes } from './routes/packs.js';
-import { registerPackTestRoutes } from './routes/packs-test.js';
-import { registerByokRoutes } from './routes/byok.js';
-import { registerSampleChatRoutes } from './routes/sampleChat.js';
-import { registerPromptRoutes } from './routes/prompts.js';
-import { registerTestSeamRoutes } from './routes/testSeam.js';
-import { registerMcpServerRoutes } from './routes/mcp.js';
-import { registerAdminRoutes } from './routes/admin.js';
-import { registerWorkflowRoutes } from './routes/workflows.js';
-import { registerNodeCatalogRoute } from './routes/nodeCatalog.js';
-import { registerMigrateRoute } from './routes/migrate.js';
-import { registerAccountRoutes } from './routes/account.js';
-import { registerMemoryRoutes } from './routes/memory.js';
-import { registerMemoryCompactionSeamRoutes } from './routes/memoryCompactionSeam.js';
-import { registerWorkspaceRoutes } from './routes/workspace.js';
-import { registerMediaAssetRoutes } from './routes/mediaAssets.js';
-import { registerDemoSummaryRoutes } from './routes/demoSummary.js';
-import { registerDaemonStatusRoutes } from './routes/daemonStatus.js';
-import { registerAgentRoutes } from './routes/agents.js';
-import { registerUserAgentRoutes, loadUserAgentsIntoRegistry } from './routes/userAgents.js';
-import { registerAgentPackRegistryRoutes } from './routes/agentPackRegistry.js';
-import { registerMessagingRoutes } from './routes/messaging.js';
-import { createSelfHttpBridge } from './messaging/bridge.js';
-import { resolveNotifyDelivererFromEnv } from './messaging/notifyDeliverer.js';
-import { registerSchedulerRoutes } from './routes/scheduler.js';
-import { registerKanbanRoutes } from './routes/kanban.js';
-import { registerAgentOpsRoutes } from './routes/agentOps.js';
-import { registerApprovalRoutes } from './routes/approvals.js';
-import { registerRosterRoutes } from './routes/roster.js';
-import { registerTriggerBridgeRoutes } from './routes/triggerBridge.js';
-import { initHostExtPersistence } from './host/hostExtPersistence.js';
-import { registerOrgChartRoutes } from './routes/orgChart.js';
-import { registerAccessControlRoutes } from './routes/accessControl.js';
 
 const log = createLogger('workflow-engine');
 
@@ -333,14 +293,6 @@ export async function createApp(config: AppConfig): Promise<Express> {
   // (it needs the principal to scope by session).
   app.use(ipRateLimitMiddleware());
 
-  registerHealthRoutes(app);
-  registerDiscoveryRoutes(app, { storage, config });
-  registerRunRoutes(app, { storage, hostSuite });
-  registerInterruptRoutes(app, { storage });
-  registerNotificationRoutes(app, { storage });
-  registerPushSubscriptionRoutes(app, { storage });
-  registerStreamRoutes(app, { storage });
-  registerWebhookRoutes(app, { storage });
   // Expose storage + hostSuite so the server entry (main) can start the
   // background workers (durable webhook delivery + run-dispatch crash-recovery
   // sweeper) against them. Tests build the app via createApp WITHOUT polling
@@ -349,101 +301,11 @@ export async function createApp(config: AppConfig): Promise<Express> {
   // server polls.
   app.locals.storage = storage;
   app.locals.hostSuite = hostSuite;
-  registerPackRoutes(app, { storage });
-  // RFC 0025 — isolated test-mode mirror namespace. Gated on
-  // OPENWOP_PACKS_TEST_NAMESPACE_ENABLED=true; routes are not mounted
-  // when the env-gate is unset, so production deploys default to "off".
-  registerPackTestRoutes(app);
-  registerByokRoutes(app);
-  registerSampleChatRoutes(app, { storage });
-  registerPromptRoutes(app, {
-    capability: { endpointsSupported: true, mutableLibrary: true },
-  });
-  registerMigrateRoute(app, { storage });
-  registerAccountRoutes(app, { storage });
-  registerMemoryRoutes(app);
-  registerMemoryCompactionSeamRoutes(app);
-  registerWorkspaceRoutes(app);
-  registerMediaAssetRoutes(app);
-  registerTestSeamRoutes(app, { storage });
-  registerMcpServerRoutes(app, { storage, hostSuite });
-  registerAdminRoutes(app);
-  registerWorkflowRoutes(app, { hostSuite });
-  registerNodeCatalogRoute(app);
-  registerDemoSummaryRoutes(app, { config });
-  registerDaemonStatusRoutes(app, { config, startTimeMs });
-  registerAgentRoutes(app, { hostSuite, storage });
-  registerUserAgentRoutes(app, { storage });
-  registerAgentPackRegistryRoutes(app);
-  // Boot-time hydration of the AgentRegistry from persisted
-  // user-authored rows. Pack-installed agents are registered earlier
-  // in the pack loader; this fold adds any user-authored ones so
-  // `GET /v1/agents` and the chat-tab `@` picker both see them
-  // without per-request lookups.
-  void loadUserAgentsIntoRegistry(storage).catch((err) => {
-    log.error('user_agents_load_failed', {
-      error: err instanceof Error ? err.message : String(err),
-    });
-  });
-  // Host-extension durability (RFC 0086/0087/0083 sample stores): wire the kv
-  // persistence layer. The stores are now read-through (every read/write hits
-  // storage), so there is no boot-time hydrate step and no per-instance cache
-  // to drift — a multi-instance deployment stays consistent.
-  initHostExtPersistence(storage);
-  registerSchedulerRoutes(app, { storage, hostSuite });
-  // Standing agent roster — RFCS/0086 reference impl (named agent
-  // instances + workflow portfolios). Registered before Kanban so a board
-  // can bind to a roster member.
-  registerRosterRoutes(app);
-  // Agent org-chart — RFCS/0087 reference impl (departments/roles/reportsTo
-  // over roster members; descriptive only, confers no authority).
-  registerOrgChartRoutes(app);
-  // Organizations / teams / members + role-based access — sample host-extension
-  // (non-normative). Roles map to RFC 0049 scopes; a SEPARATE layer from the
-  // descriptive org-chart above (org position still confers no authority).
-  registerAccessControlRoutes(app);
-  // Kanban boards — sample host-extension (non-normative). The card→run
-  // trigger is the RFCS/0086 "named workflow agents" demo surface.
-  registerKanbanRoutes(app, { storage, hostSuite });
-  // Agent-experience ops (PRD §14): idempotent demo-agent seed + the agent
-  // heartbeat "Check now" task-claim. Registered after roster + kanban since it
-  // composes both.
-  registerAgentOpsRoutes(app, { storage, hostSuite });
-  // Approval inbox — the human side of the "agents propose, humans dispose"
-  // gate. A review-mode member's heartbeat queues a proposal here; a human
-  // claims (starts the run) or rejects it. Registered after agentOps since it
-  // resolves proposals agentOps creates.
-  registerApprovalRoutes(app, { storage, hostSuite });
-  // RFC 0083 durable trigger bridge — the deferred reference durable-delivery
-  // (subscription state machine + dedup/retry/dead-letter + the read surface).
-  // The Kanban card→run firing routes through it.
-  registerTriggerBridgeRoutes(app);
-  // Inbound chat → workflow run bridge. Binds inbound messages to a workflow
-  // (default deterministic `sample.demo.uppercase`; override via
-  // OPENWOP_MESSAGING_WORKFLOW_ID) and enqueues the reply as outbound egress.
-  // Defense-in-depth: warn loudly if a production deploy left the bridge on the
-  // wildcard demo bearer instead of a scoped OPENWOP_MESSAGING_BRIDGE_TOKEN.
-  if (process.env.NODE_ENV === 'production' && !process.env.OPENWOP_MESSAGING_BRIDGE_TOKEN) {
-    log.warn('messaging_bridge_unscoped_credential', {
-      detail: 'OPENWOP_MESSAGING_BRIDGE_TOKEN is unset; the inbound→run bridge is using the host bearer. Set a tenant-scoped credential for production.',
-    });
-  }
-  registerMessagingRoutes(app, {
-    storage,
-    bridge: createSelfHttpBridge({
-      storage,
-      baseUrl: `http://127.0.0.1:${config.port}`,
-      // Prefer a dedicated, tenant-scopable bridge credential; fall back to the
-      // host bearer for the demo. A real multi-tenant host SHOULD set
-      // OPENWOP_MESSAGING_BRIDGE_TOKEN to a scoped credential (the run's tenant
-      // still comes from the registered device, not the inbound message).
-      bearer: process.env.OPENWOP_MESSAGING_BRIDGE_TOKEN ?? process.env.OPENWOP_API_KEY ?? 'sample-token',
-      defaultWorkflowId: process.env.OPENWOP_MESSAGING_WORKFLOW_ID ?? 'sample.demo.uppercase',
-    }),
-    // Email/SMS delivery: a real webhook (OPENWOP_NOTIFY_WEBHOOK_URL) when set,
-    // else the honest synthetic fallback.
-    notifyDeliverer: resolveNotifyDelivererFromEnv(),
-  });
+
+  // Every domain mounts through the ONE ordered module list (white-label PRD
+  // §3): add new domains in routes/registerAllRoutes.ts, never here. The
+  // companion test fails CI if a routes/ module isn't listed.
+  registerAllRoutes({ app, config, storage, hostSuite, startTimeMs });
 
   // Express 4 catch-all (no path string — avoids path-to-regexp v6 issue).
   app.use((_req, res) => {
