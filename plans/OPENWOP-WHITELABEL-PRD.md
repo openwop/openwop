@@ -261,9 +261,17 @@ Implementation landed across **7 merged PRs + 1 direct-to-main commit** (range `
 
 **L4 [LOW].** The published `/install/` zip (`openwop.dev/downloads/openwop-demo-app.zip`, last published 2026-06-03 14:13 GMT) predates all 8 changesets — run `/publish-whitelabel` to ship the posture/gate/seed/manifest/env-template work to adopters.
 
+### Finding resolutions (2026-06-04, PR #576 + ops)
+
+All review findings are **closed** except the H1 history note (unfixable without rewriting main; this section is the corrective record):
+
+- **C1 ✅** — live service pinned: `OPENWOP_MANAGED_ANON_SIGNIN_REQUIRED=true` on `openwop-app-backend` (rev `00104-rhc`, operator directive: app.openwop.dev stays sign-up-gated) **and** `OPENWOP_MANAGED_GLOBAL_DAILY_TOKEN_CAP` implemented (cross-tenant daily spend backstop, reserved `managed:global` bucket always accrues). Bonus: the anon-gating unit test `860895b4` left failing on main — silently hitting the **live MiniMax API** — is now posture-aware and fully mocked.
+- **H1 ⚠️ (documented)** — main not rewritten; PR+DCO process re-affirmed going forward.
+- **H2 ✅** — one-time `_anon`→`default` boot migration in `loadUserAgentsIntoRegistry` (+ `updateUserAgent` persists `tenant_id` in sqlite/postgres); CHANGELOG entry added; conformance re-measured vs the patched local host: agent-surface scenarios **17/17 pass with `OPENWOP_REQUIRE_BEHAVIOR=true`** (non-vacuous).
+- **M1 ✅** CHANGELOG `[Unreleased]` retro-logs the batch + fixes. **M2 ✅** `seedEverything` verifies domains via read-through store checks. **M3 ✅** up.sh: secrets on first revision, `OPENWOP_SKIP_BRAND_CHECK=1`, `capture()` fix. **M4 ✅** WHITE-LABEL.md password-gate caveat.
+- **L1 ✅** favicon check matches only OpenWOP defaults (and survives the `>` inside the stock data-URI — it was silently missing the favicon leak); manifest-name check replaces the vacuous meta check (stock build now flags all 5 leaks). **L2 ✅** manifest icon MIME by file type. **L3 ✅** brand-mark drift guard in the build. **L4 ✅** zip republished post-merge.
+
 ### Remaining work, in priority order
 
-1. **C1 mitigation on the live service** (one `gcloud run services update`, before any backend deploy).
-2. **Backlog #3 + #4** (two-tier nav + declarative manifest) — the PRD's stated highest-leverage items, untouched.
-3. **H2 follow-ups** (`_anon` migration decision, CHANGELOG, conformance re-measure) + **M1** CHANGELOG batch entry.
-4. Republish the white-label zip (**L4**), then backlog #7, the §6 palette tokenization, #10, and the M3/M4/L1–L3 polish.
+1. **Backlog #3 + #4** (two-tier nav + declarative manifest) — the PRD's stated highest-leverage items, untouched.
+2. Backlog #7 (reference domain module), the §6 agent-palette tokenization, and #10 (cohesion primitives).
