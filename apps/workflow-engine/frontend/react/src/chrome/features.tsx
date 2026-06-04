@@ -23,10 +23,9 @@ import { Navigate, matchRoutes } from 'react-router-dom';
 import {
   MessageSquareIcon, BotIcon, WorkflowIcon, PlayIcon, ColumnsIcon, UserIcon,
   InboxIcon, ActivityIcon, DatabaseIcon, FileTextIcon, PackageIcon,
-  BuildingIcon, KeyIcon, ShieldIcon, TerminalIcon, SettingsIcon, BriefcaseIcon,
+  BuildingIcon, KeyIcon, ShieldIcon, TerminalIcon, SettingsIcon,
 } from '../ui/icons/index.js';
 import { ChatTab } from '../chat/ChatTab.js';
-import { WorkforcePage } from '../agents/WorkforcePage.js';
 import { RunsIndexPage } from '../runs/RunsIndexPage.js';
 import { RunDetailPage } from '../runs/RunDetailPage.js';
 import { RunAuditPage } from '../runs/RunAuditPage.js';
@@ -104,7 +103,7 @@ export const FEATURES: FeatureRoute[] = [
   { path: '/chat', element: <Navigate to="/" replace />, tier: 'workspace' },
   {
     path: '/agents', element: <AgentDashboardPage />, tier: 'workspace',
-    nav: { group: 'Build', label: 'Agents', icon: BotIcon, hint: 'Your named AI coworkers', notUnder: ['/agents/templates'] },
+    nav: { group: 'Build', label: 'Agents', icon: BotIcon, hint: 'Your digital workforce — named AI coworkers', notUnder: ['/agents/templates'] },
   },
   { path: '/agents/new', element: <AgentCreateWizard />, tier: 'workspace', chrome: 'narrow' },
   // Raw single-form authoring (also the ?fork= target) — kept for the
@@ -128,17 +127,11 @@ export const FEATURES: FeatureRoute[] = [
   { path: '/compare', element: <RunComparePage />, tier: 'workspace' },
 
   // ── workspace · Operate ────────────────────────────────────────────────
-  {
-    path: '/workforce', element: <WorkforcePage />, tier: 'workspace',
-    nav: { group: 'Operate', label: 'Workforce', icon: BriefcaseIcon, hint: 'The digital workforce — named agents at a glance' },
-  },
+  // /workforce merged into /agents (2026-06-04) — redirect keeps bookmarks.
+  { path: '/workforce', element: <Navigate to="/agents" replace />, tier: 'workspace' },
   {
     path: '/boards', element: <KanbanPage />, tier: 'workspace',
     nav: { group: 'Operate', label: 'Boards', icon: ColumnsIcon, hint: 'Kanban — card → run trigger' },
-  },
-  {
-    path: '/roster', element: <RosterPage />, tier: 'workspace',
-    nav: { group: 'Operate', label: 'Roster', icon: UserIcon, hint: 'Roster + org-chart editor' },
   },
   {
     path: '/inbox', element: <NotificationsPage />, tier: 'workspace',
@@ -147,14 +140,6 @@ export const FEATURES: FeatureRoute[] = [
   {
     path: '/mission', element: <CommandCenterPage />, tier: 'workspace',
     nav: { group: 'Operate', label: 'Mission Control', icon: ActivityIcon, hint: 'Live fleet view across runs' },
-  },
-  {
-    path: '/memory', element: <MemoryInspectorPage />, tier: 'workspace',
-    nav: { group: 'Operate', label: 'Memory', icon: DatabaseIcon, hint: 'Tenant-attributed memory writes' },
-  },
-  {
-    path: '/prompts', element: <PromptLibraryPage />, tier: 'workspace',
-    nav: { group: 'Operate', label: 'Prompts', icon: FileTextIcon, hint: 'Reusable templates + variables' },
   },
   { path: '/privacy', element: <PrivacyPage />, tier: 'workspace', chrome: 'narrow' },
 
@@ -171,6 +156,21 @@ export const FEATURES: FeatureRoute[] = [
   {
     path: '/orgs', element: <OrgsPage />, tier: 'admin',
     nav: { group: 'Admin', label: 'Organizations', icon: BuildingIcon, hint: 'Orgs, teams, members + RBAC' },
+  },
+  // Relocated from the workspace tier (2026-06-04, IA consolidation): the
+  // roster/org-chart EDITOR is config (the operate view lives on /agents),
+  // and memory/prompts are platform inspection surfaces.
+  {
+    path: '/roster', element: <RosterPage />, tier: 'admin',
+    nav: { group: 'Admin', label: 'Org chart', icon: UserIcon, hint: 'Roster + org-chart editor (descriptive only — confers no authority)' },
+  },
+  {
+    path: '/memory', element: <MemoryInspectorPage />, tier: 'admin',
+    nav: { group: 'Admin', label: 'Memory', icon: DatabaseIcon, hint: 'Tenant-attributed memory writes' },
+  },
+  {
+    path: '/prompts', element: <PromptLibraryPage />, tier: 'admin',
+    nav: { group: 'Admin', label: 'Prompts', icon: FileTextIcon, hint: 'Reusable templates + variables' },
   },
   {
     path: '/keys', element: <KeysPage />, tier: 'admin',

@@ -36,6 +36,7 @@ export function AgentCard({
   onCheckNow,
   onChat,
   busy,
+  department,
 }: {
   view: AgentView;
   onOpen: (tab?: string) => void;
@@ -44,6 +45,9 @@ export function AgentCard({
    *  the persona pre-activated). */
   onChat: () => void;
   busy?: boolean;
+  /** Org-chart department the agent files under — renders the dossier strip
+   *  (department eyebrow + live heartbeat pulse) above the identity row. */
+  department?: string;
 }): JSX.Element {
   const { entry, laneCounts, status, nextSchedule } = view;
   const sm = statusMeta(status);
@@ -60,6 +64,15 @@ export function AgentCard({
       className="surface-card surface-card--interactive"
       onClick={() => onOpen()}
     >
+      {department !== undefined ? (
+        <div className="wf-card-file" aria-hidden>
+          <span className="wf-card-dept">{department || 'Unassigned'}</span>
+          <span
+            className={(entry.heartbeatIntervalMs ?? 0) > 0 && entry.enabled ? 'wf-live is-on' : 'wf-live'}
+            title={(entry.heartbeatIntervalMs ?? 0) > 0 && entry.enabled ? 'Autonomous heartbeat enabled' : 'Manual heartbeat only'}
+          />
+        </div>
+      ) : null}
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
         <AgentAvatar persona={entry.persona} avatarUrl={entry.avatarUrl} roleTheme={theme} size={40} />
         <div style={{ flex: 1, minWidth: 0 }}>
