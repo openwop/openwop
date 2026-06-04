@@ -9,7 +9,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   checkAgent, getFleetActivity, getOrgChart, seedDemoAgents,
   type AgentActivityItem, type OrgChart,
@@ -19,6 +19,7 @@ import { loadAgentViews, relativeTime, type AgentView, type AgentStatus } from '
 import { roleKeyForAgent, roleThemeForKey, workflowName } from './roleTemplates.js';
 import { RosterRow } from './RosterRow.js';
 import { NeedsYouQueue } from './NeedsYouQueue.js';
+import { AgentDrawer, type DrawerTab } from './AgentDrawer.js';
 import { Notice } from '../ui/Notice.js';
 import { StateCard } from '../ui/StateCard.js';
 import { Skeleton } from '../ui/Skeleton.js';
@@ -94,6 +95,29 @@ export function AgentDashboardPage(): JSX.Element {
   const [views, setViews] = useState<AgentView[]>([]);
   const [chart, setChart] = useState<OrgChart | null>(null);
   const [approvals, setApprovals] = useState<PendingApproval[]>([]);
+  // Quick-look drawer state rides the URL (?agent=<rosterId>&tab=) so a
+  // drawer view is shareable/refreshable (redesign PR 2, prototype contract).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const drawerId = searchParams.get('agent');
+  const drawerTabParam = searchParams.get('tab');
+  const drawerTab: DrawerTab = drawerTabParam === 'board' || drawerTabParam === 'activity' ? drawerTabParam : 'overview';
+  const openDrawer = useCallback((rosterId: string, tab?: string) => {
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev);
+      p.set('agent', rosterId);
+      if (tab === 'board' || tab === 'activity') p.set('tab', tab);
+      else p.delete('tab');
+      return p;
+    });
+  }, [setSearchParams]);
+  const closeDrawer = useCallback(() => {
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev);
+      p.delete('agent');
+      p.delete('tab');
+      return p;
+    });
+  }, [setSearchParams]);
   const [feed, setFeed] = useState<AgentActivityItem[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -234,7 +258,7 @@ export function AgentDashboardPage(): JSX.Element {
         <NeedsYouQueue
           views={views}
           approvals={approvals}
-          onOpen={(rosterId, tab) => navigate(`/agents/${encodeURIComponent(rosterId)}${tab ? `?tab=${tab}` : ''}`)}
+          onOpen={(rosterId, tab) => openDrawer(rosterId, tab)}
           onResolved={() => void refresh()}
         />
       ) : null}
@@ -343,7 +367,14 @@ export function AgentDashboardPage(): JSX.Element {
                     key={view.entry.rosterId}
                     view={view}
                     busy={busyAgent === view.entry.rosterId}
-                    onOpen={(tab) => navigate(`/agents/${encodeURIComponent(view.entry.rosterId)}${tab ? `?tab=${tab}` : ''}`)}
+                    onOpen={(tab) => {
+                      if (tab === 'workflows') {
+                        // Editing flow — the full workspace, not the quick look.
+                        navigate(`/agents/${encodeURIComponent(view.entry.rosterId)}?tab=workflows`);
+                        return;
+                      }
+                      openDrawer(view.entry.rosterId, tab);
+                    }}
                     onCheckNow={() => void onCheckNow(view.entry.rosterId, view.entry.persona)}
                     onChat={() => {
                       const agentId = view.entry.agentRef?.agentId;
@@ -406,6 +437,27 @@ export function AgentDashboardPage(): JSX.Element {
           </div>
         </>
       )}
+
+      {(() => {
+        const drawerView = drawerId ? views.find((v) => v.entry.rosterId === drawerId) : undefined;
+        if (!drawerView) return null;
+        return (
+          <AgentDrawer
+            view={drawerView}
+            approvals={approvals.filter((a) => a.rosterId === drawerView.entry.rosterId)}
+            tab={drawerTab}
+            onTab={(tab) => openDrawer(drawerView.entry.rosterId, tab)}
+            onClose={closeDrawer}
+            busy={busyAgent === drawerView.entry.rosterId}
+            onCheckNow={() => void onCheckNow(drawerView.entry.rosterId, drawerView.entry.persona)}
+            onResolved={() => void refresh()}
+            onChat={() => {
+              const agentId = drawerView.entry.agentRef?.agentId;
+              navigate(agentId ? `/?agent=${encodeURIComponent(agentId)}` : '/');
+            }}
+          />
+        );
+      })()}
     </section>
   );
 }
