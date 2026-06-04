@@ -89,21 +89,22 @@ export interface FeatureRoute {
   nav?: FeatureNav;
 }
 
-// Grouped IA: Build = surfaces you author at; Operate = surfaces you observe
-// at; admin tier = platform/config that doesn't change per session. Chat stays
-// first (feedback_chat_first_nav).
+// Grouped IA (renamed 2026-06-04 per David): Workspace = the day-to-day
+// product surfaces (Chat · Agents · Boards · Inbox); Author = workflow
+// authoring; admin tier = platform/config that doesn't change per session.
+// Chat stays first (feedback_chat_first_nav).
 export const FEATURES: FeatureRoute[] = [
-  // ── workspace · Build ──────────────────────────────────────────────────
+  // ── workspace · the day-to-day product surfaces ────────────────────────
   {
     path: '/', element: <ChatTab />, tier: 'workspace', chrome: 'chat',
-    nav: { group: 'Build', label: 'Chat', icon: MessageSquareIcon, hint: 'Conversational entry point', end: true },
+    nav: { group: 'Workspace', label: 'Chat', icon: MessageSquareIcon, hint: 'Conversational entry point', end: true },
   },
   // The nav label says "Chat" but the route stays "/" so existing bookmarks
   // don't break; /chat redirects for users who type the nav label as a URL.
   { path: '/chat', element: <Navigate to="/" replace />, tier: 'workspace' },
   {
     path: '/agents', element: <AgentDashboardPage />, tier: 'workspace',
-    nav: { group: 'Build', label: 'Agents', icon: BotIcon, hint: 'Your digital workforce — named AI coworkers', notUnder: ['/agents/templates'] },
+    nav: { group: 'Workspace', label: 'Agents', icon: BotIcon, hint: 'Your digital workforce — named AI coworkers', notUnder: ['/agents/templates'] },
   },
   { path: '/agents/new', element: <AgentCreateWizard />, tier: 'workspace', chrome: 'narrow' },
   // Raw single-form authoring (also the ?fork= target) — kept for the
@@ -114,21 +115,22 @@ export const FEATURES: FeatureRoute[] = [
   { path: '/agents/:agentId', element: <AgentWorkspacePage />, tier: 'workspace' },
   {
     path: '/builder', element: <WorkflowsDashboard />, tier: 'workspace',
-    nav: { group: 'Build', label: 'Workflows', icon: WorkflowIcon, hint: 'Author + edit workflows' },
+    nav: { group: 'Author', label: 'Workflows', icon: WorkflowIcon, hint: 'Author + edit workflows' },
   },
   // The canvas is its own scroll/zoom region — full viewport, no centered column.
   { path: '/builder/:workflowId', element: <BuilderTab />, tier: 'workspace', chrome: 'fullbleed' },
 
-  // ── workspace · Operate ────────────────────────────────────────────────
+  // ── workspace · (Boards/Inbox continue the Workspace group; Workflows
+  //    above carries the Author group) ──────────────────────────────────────
   // /workforce merged into /agents (2026-06-04) — redirect keeps bookmarks.
   { path: '/workforce', element: <Navigate to="/agents" replace />, tier: 'workspace' },
   {
     path: '/boards', element: <KanbanPage />, tier: 'workspace',
-    nav: { group: 'Operate', label: 'Boards', icon: ColumnsIcon, hint: 'Kanban — card → run trigger' },
+    nav: { group: 'Workspace', label: 'Boards', icon: ColumnsIcon, hint: 'Kanban — card → run trigger' },
   },
   {
     path: '/inbox', element: <NotificationsPage />, tier: 'workspace',
-    nav: { group: 'Operate', label: 'Inbox', icon: InboxIcon, hint: 'Notifications + approvals' },
+    nav: { group: 'Workspace', label: 'Inbox', icon: InboxIcon, hint: 'Notifications + approvals' },
   },
   { path: '/privacy', element: <PrivacyPage />, tier: 'workspace', chrome: 'narrow' },
 
