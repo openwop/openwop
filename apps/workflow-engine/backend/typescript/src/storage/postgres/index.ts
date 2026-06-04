@@ -1304,6 +1304,7 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
     async updateUserAgent(record) {
       const r = await pool.query(
         `UPDATE user_agents SET
+          tenant_id = $12,
           persona = $2, label = $3, description = $4, model_class = $5,
           system_prompt = $6, tool_allowlist = $7::jsonb,
           memory_scratchpad = $8, memory_conversation = $9, memory_long_term = $10,
@@ -1321,6 +1322,7 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
           record.memoryShape.conversation,
           record.memoryShape.longTerm,
           record.confidenceThreshold ?? null,
+          record.tenantId,
         ],
       );
       return (r.rowCount ?? 0) > 0;

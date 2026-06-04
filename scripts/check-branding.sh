@@ -33,8 +33,11 @@ echo "[check-branding] scanning $DIST for un-overridden OpenWOP defaults…"
 # 1) Document title (Vite plugin stamps it into <title> from VITE_BRAND_DOCUMENT_TITLE).
 grep -qiE '<title>[^<]*OpenWOP' "$INDEX" && flag "<title> still names OpenWOP (set VITE_BRAND_DOCUMENT_TITLE)"
 
-# 2) Favicon — default points at /OpenWOP.svg or the inline OpenWOP data-uri.
-grep -qiE 'rel="icon"[^>]*(OpenWOP\.svg|svg\+xml[^"]*viewBox)' "$INDEX" \
+# 2) Favicon — match ONLY the OpenWOP defaults: the /OpenWOP.svg asset or the
+#    stock data-URI (identified by its clay rect fill %23a35a30 — a custom
+#    inline-SVG data-URI favicon must NOT false-positive here).
+# (note: the stock data-URI embeds `>` inside href, so no [^>]* spans here)
+grep -qiE 'rel="icon".*(OpenWOP\.svg|a35a30)' "$INDEX" \
   && flag "favicon is the OpenWOP default (set VITE_BRAND_FAVICON_SRC + drop your icon in public/)"
 
 # 3) The steward's domain baked into the bundle (strong fork-leak signal — a
@@ -43,9 +46,12 @@ if grep -rqiE 'app\.openwop\.dev|//openwop\.dev' "$DIST"/assets/*.js 2>/dev/null
   flag "the bundle references the steward domain openwop.dev (set VITE_BRAND_PRIMARY_DOMAIN / VITE_BRAND_HOME_URL; scrub .env.production)"
 fi
 
-# 4) Product wordmark left as Open/WOP in the stamped meta.
-grep -qiE '(og:site_name|application-name)[^>]*OpenWOP' "$INDEX" \
-  && flag "social/app meta still names OpenWOP (set VITE_BRAND_PRODUCT_NAME)"
+# 4) PWA manifest — stamped at build from VITE_BRAND_PRODUCT_NAME; an
+#    installable app announcing "OpenWOP" is a leak.
+MANIFEST="$DIST/manifest.webmanifest"
+if [[ -f "$MANIFEST" ]] && grep -qiE '"(name|short_name)"[[:space:]]*:[[:space:]]*"[^"]*OpenWOP' "$MANIFEST"; then
+  flag "PWA manifest still names OpenWOP (set VITE_BRAND_PRODUCT_NAME)"
+fi
 
 # 5) Instance/workspace name left at the stock demo label.
 if grep -rqiE 'Demo host' "$DIST"/assets/*.js 2>/dev/null; then

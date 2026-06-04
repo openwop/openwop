@@ -427,8 +427,11 @@ export interface Storage {
   deleteUserAgent(agentId: string): Promise<boolean>;
   /** Update one user-authored agent's mutable fields (the editable
    *  "Instructions" panel — systemPrompt + persona-shaping metadata).
-   *  `agentId`/`tenantId`/`createdAt` are immutable. Returns true when a
-   *  row was updated; false when no such agent exists. */
+   *  `agentId`/`createdAt` are immutable. `tenantId` is persisted from the
+   *  record but the PATCH route never changes it — the only writer that does
+   *  is the one-time `_anon` → `default` legacy migration at boot
+   *  (`loadUserAgentsIntoRegistry`). Returns true when a row was updated;
+   *  false when no such agent exists. */
   updateUserAgent(record: UserAgentRecord): Promise<boolean>;
 
   // ── messaging relay-gateway (demo host-extension; NON-normative) ──

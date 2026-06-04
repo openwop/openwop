@@ -18,6 +18,14 @@
  *   - Daily token cap: input+output combined, per (tenant, day, provider).
  *     Reset at 00:00 UTC. Configurable via
  *     `OPENWOP_MANAGED_DAILY_TOKEN_CAP` (default 50000).
+ *   - Global daily ceiling (optional): input+output combined across ALL
+ *     tenants, per (day, provider), via
+ *     `OPENWOP_MANAGED_GLOBAL_DAILY_TOKEN_CAP` (unset/0 = disabled).
+ *     This is the operator's spend backstop for login-free demo postures:
+ *     the per-tenant cap alone is evadable on cookie-per-visitor deploys
+ *     (each fresh cookie jar is a fresh anon tenant), so a public demo
+ *     SHOULD set the global ceiling. Tracked under the reserved
+ *     `managed:global` usage bucket (not a real tenant).
  *
  * Result rewriting:
  *   - The returned `provider` / `model` are the user-facing ids, NOT
@@ -221,6 +229,20 @@ function todayUtc(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+/** Reserved usage-bucket id for the cross-tenant global ceiling. Not a real
+ *  tenant: real ids are `anon:<sid>` / `user:<hash>` / `default`, so this
+ *  namespaced value can't collide. */
+export const GLOBAL_USAGE_TENANT = 'managed:global';
+
+/** Operator spend backstop across ALL tenants per (day, provider).
+ *  `OPENWOP_MANAGED_GLOBAL_DAILY_TOKEN_CAP` unset/0/non-numeric = disabled.
+ *  Complements the per-tenant cap, which a cookie-per-visitor demo caller can
+ *  evade by minting fresh anon tenants (PRD §7.1's "global token ceiling"). */
+function globalDailyTokenCap(): number {
+  const raw = Number(process.env.OPENWOP_MANAGED_GLOBAL_DAILY_TOKEN_CAP ?? '0');
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 0;
+}
+
 export interface ManagedDispatchRequest {
   /** providers.json id, e.g. 'openwop-free'. */
   userFacingProvider: string;
@@ -278,6 +300,24 @@ export async function dispatchManagedChat(
     );
   }
 
+  // Global ceiling — the operator's spend backstop across ALL tenants.
+  // Checked after the per-tenant cap so an over-cap caller gets the more
+  // actionable per-tenant message.
+  const globalCap = globalDailyTokenCap();
+  if (globalCap > 0) {
+    const globalUsage = await storageRef.getManagedUsage(
+      GLOBAL_USAGE_TENANT,
+      req.userFacingProvider,
+      date,
+    );
+    if (globalUsage.inputTokens + globalUsage.outputTokens >= globalCap) {
+      throw new ManagedProviderError(
+        'daily_limit_reached',
+        'The free tier is at capacity for today. Resets at 00:00 UTC — or bring your own key.',
+      );
+    }
+  }
+
   const apiKey = await resolveManagedKey(target.storageRef);
   if (!apiKey) {
     throw new ManagedProviderError(
@@ -320,6 +360,16 @@ export async function dispatchManagedChat(
     try {
       await storageRef.incrementManagedUsage(
         req.tenantId,
+        req.userFacingProvider,
+        date,
+        inTok,
+        outTok,
+      );
+      // Always also accrue the reserved global bucket (cheap upsert), so
+      // enabling OPENWOP_MANAGED_GLOBAL_DAILY_TOKEN_CAP later still sees
+      // today's full history.
+      await storageRef.incrementManagedUsage(
+        GLOBAL_USAGE_TENANT,
         req.userFacingProvider,
         date,
         inTok,
