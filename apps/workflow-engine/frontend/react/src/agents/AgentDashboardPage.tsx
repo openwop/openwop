@@ -14,9 +14,11 @@ import {
   checkAgent, getFleetActivity, getOrgChart, seedDemoAgents,
   type AgentActivityItem, type OrgChart,
 } from './rosterClient.js';
+import { listApprovals, type PendingApproval } from './approvalsClient.js';
 import { loadAgentViews, relativeTime, type AgentView, type AgentStatus } from './agentViewModel.js';
 import { roleKeyForAgent, roleThemeForKey, workflowName } from './roleTemplates.js';
-import { AgentCard } from './AgentCard.js';
+import { RosterRow } from './RosterRow.js';
+import { NeedsYouQueue } from './NeedsYouQueue.js';
 import { Notice } from '../ui/Notice.js';
 import { StateCard } from '../ui/StateCard.js';
 import { Skeleton } from '../ui/Skeleton.js';
@@ -38,17 +40,6 @@ function runChip(status: string): string {
   if (status === 'failed') return 'chip chip--danger';
   if (status === 'running' || status === 'pending') return 'chip chip--accent';
   return 'chip chip--muted';
-}
-
-/** rosterId → department name, from the descriptive org chart. */
-function placements(chart: OrgChart | null): Map<string, string> {
-  const out = new Map<string, string>();
-  if (!chart) return out;
-  for (const m of chart.members) {
-    const dept = chart.departments.find((d) => d.departmentId === m.departmentId);
-    if (dept) out.set(m.rosterId, dept.name);
-  }
-  return out;
 }
 
 // How much each agent wants the operator's eyes (highest first). "Waiting on a
@@ -102,6 +93,7 @@ export function AgentDashboardPage(): JSX.Element {
   const navigate = useNavigate();
   const [views, setViews] = useState<AgentView[]>([]);
   const [chart, setChart] = useState<OrgChart | null>(null);
+  const [approvals, setApprovals] = useState<PendingApproval[]>([]);
   const [feed, setFeed] = useState<AgentActivityItem[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -142,14 +134,16 @@ export function AgentDashboardPage(): JSX.Element {
       // Views + the editorial frame (org-chart filing, run ledger) in one
       // fan-in. Chart + ledger are progressive: their failure never blocks
       // the cards.
-      const [v, c, f] = await Promise.all([
+      const [v, c, f, ap] = await Promise.all([
         loadAgentViews(),
         getOrgChart().catch(() => null),
         getFleetActivity({ limit: 12 }).catch(() => ({ items: [], truncated: false })),
+        listApprovals('pending').catch(() => []),
       ]);
       setViews(v);
       setChart(c);
       setFeed(f.items);
+      setApprovals(ap);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
@@ -168,11 +162,12 @@ export function AgentDashboardPage(): JSX.Element {
         }
         if (!cancelled) {
           setViews(loaded);
-          const [c, f] = await Promise.all([
+          const [c, f, ap] = await Promise.all([
             getOrgChart().catch(() => null),
             getFleetActivity({ limit: 12 }).catch(() => ({ items: [], truncated: false })),
+            listApprovals('pending').catch(() => []),
           ]);
-          if (!cancelled) { setChart(c); setFeed(f.items); }
+          if (!cancelled) { setChart(c); setFeed(f.items); setApprovals(ap); }
         }
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err));
@@ -185,12 +180,11 @@ export function AgentDashboardPage(): JSX.Element {
     };
   }, []);
 
-  const byMember = useMemo(() => placements(chart), [chart]);
   const figures = useMemo(() => ({
     staff: views.length,
     working: views.filter((v) => v.status === 'working').length,
     waiting: views.filter((v) => v.status === 'waiting').length,
-    onHeartbeat: views.filter((v) => (v.entry.heartbeatIntervalMs ?? 0) > 0 && v.entry.enabled).length,
+    ready: views.filter((v) => v.status === 'active').length,
   }), [views]);
 
   const onCheckNow = async (rosterId: string, persona: string) => {
@@ -237,19 +231,42 @@ export function AgentDashboardPage(): JSX.Element {
       />
 
       {!loading && views.length > 0 ? (
-        <dl className="wf-figures" aria-label="Workforce key figures">
+        <NeedsYouQueue
+          views={views}
+          approvals={approvals}
+          onOpen={(rosterId, tab) => navigate(`/agents/${encodeURIComponent(rosterId)}${tab ? `?tab=${tab}` : ''}`)}
+          onResolved={() => void refresh()}
+        />
+      ) : null}
+
+      {/* Key figures double as the status FILTER (redesign PR 1): a tile both
+          reports the count and narrows the roster to it. The toolbar's status
+          select stays for the long-tail states (error / needs setup / paused)
+          and shares the same state, so the two can never disagree. */}
+      {!loading && views.length > 0 ? (
+        <div className="wf-figures" role="group" aria-label="Workforce key figures — click to filter">
           {([
-            ['On staff', figures.staff],
-            ['Working now', figures.working],
-            ['Waiting on human', figures.waiting],
-            ['On a heartbeat', figures.onHeartbeat],
-          ] as const).map(([label, n]) => (
-            <div className="wf-figure" key={label}>
-              <dd>{n}</dd>
-              <dt>{label}</dt>
-            </div>
+            ['all', 'On staff', figures.staff, false],
+            ['working', 'Working now', figures.working, false],
+            ['waiting', 'Waiting on you', figures.waiting, true],
+            ['active', 'Idle & ready', figures.ready, false],
+          ] as const).map(([key, label, n, attn]) => (
+            <button
+              type="button"
+              className={
+                'wf-figure wf-figure--tile'
+                + (statusFilter === key ? ' is-active' : '')
+                + (attn && n > 0 ? ' is-attn' : '')
+              }
+              key={key}
+              aria-pressed={statusFilter === key}
+              onClick={() => setStatusFilter(key as 'all' | AgentStatus)}
+            >
+              <span className="wf-figure-n">{n}</span>
+              <span className="wf-figure-l">{label}</span>
+            </button>
           ))}
-        </dl>
+        </div>
       ) : null}
 
       {error ? <Notice variant="error">{error}</Notice> : null}
@@ -320,12 +337,11 @@ export function AgentDashboardPage(): JSX.Element {
                 action={<button type="button" className="secondary" onClick={() => { setQuery(''); setStatusFilter('all'); setRoleFilter('all'); }}>Clear filters</button>}
               />
             ) : (
-              <div className="card-grid">
+              <div className="surface-card roster-list">
                 {visible.map((view) => (
-                  <AgentCard
+                  <RosterRow
                     key={view.entry.rosterId}
                     view={view}
-                    department={chart ? (byMember.get(view.entry.rosterId) ?? '') : undefined}
                     busy={busyAgent === view.entry.rosterId}
                     onOpen={(tab) => navigate(`/agents/${encodeURIComponent(view.entry.rosterId)}${tab ? `?tab=${tab}` : ''}`)}
                     onCheckNow={() => void onCheckNow(view.entry.rosterId, view.entry.persona)}
