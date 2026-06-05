@@ -103,7 +103,7 @@ export function AgentCreateWizard(): JSX.Element {
 
   // Step 5 — schedule + heartbeat + autonomy
   const [heartbeat, setHeartbeat] = useState('manual');
-  const [autonomy, setAutonomy] = useState<'auto' | 'review'>('auto');
+  const [autonomy, setAutonomy] = useState<'auto' | 'guided' | 'review'>('auto');
   const [modelClass, setModelClass] = useState<WizardModelClass>('chat');
   const [scheduleWorkflowId, setScheduleWorkflowId] = useState('');
   const [scheduleCadence, setScheduleCadence] = useState(CADENCE_PRESETS[2]!.key); // weekdays
@@ -117,7 +117,7 @@ export function AgentCreateWizard(): JSX.Element {
   useEffect(() => {
     const roleParam = searchParams.get('role');
     const autonomyParam = searchParams.get('autonomy');
-    if (autonomyParam === 'review' || autonomyParam === 'auto') setAutonomy(autonomyParam);
+    if (autonomyParam === 'review' || autonomyParam === 'guided' || autonomyParam === 'auto') setAutonomy(autonomyParam);
     if (roleParam && role === null && !isCustom) {
       const t = ROLE_TEMPLATES.find((r) => r.key === roleParam);
       if (t) {
@@ -197,7 +197,7 @@ export function AgentCreateWizard(): JSX.Element {
         workflows,
         label: roleTitle.trim(),
         ...(heartbeatIntervalMs > 0 ? { heartbeatIntervalMs } : {}),
-        ...(autonomy === 'review' ? { autonomyLevel: 'review' as const } : {}),
+        ...(autonomy !== 'auto' ? { autonomyLevel: autonomy } : {}),
       });
       // 3. board with the 4 demo lanes; To Do triggers the first workflow.
       if (createBoardEnabled) {
@@ -375,7 +375,7 @@ export function AgentCreateWizard(): JSX.Element {
             Supervised agents propose work for your sign-off; autonomous agents start runs immediately. You can change this later.
           </p>
           <div className="action-bar" style={{ marginBottom: '0.8rem' }}>
-            {([['review', 'Supervised — propose for review'], ['auto', 'Autonomous — run immediately']] as const).map(([value, label]) => (
+            {([['review', 'Supervised — propose for review'], ['guided', 'Guided — asks on high-priority work'], ['auto', 'Autonomous — run immediately']] as const).map(([value, label]) => (
               <button
                 key={value}
                 type="button"

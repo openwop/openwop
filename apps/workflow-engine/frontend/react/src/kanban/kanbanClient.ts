@@ -94,6 +94,16 @@ export async function getBoard(boardId: string): Promise<{ board: KanbanBoard; c
   return (await res.json()) as { board: KanbanBoard; cards: KanbanCard[] };
 }
 
+/** Rename a board — `name` is the only mutable field (owner/columns are
+ *  deliberately immutable via PATCH; see the route's architect note). */
+export async function patchBoard(boardId: string, input: { name: string }): Promise<KanbanBoard> {
+  const res = await fetch(`${base}/boards/${encodeURIComponent(boardId)}`, fetchOpts({
+    method: 'PATCH', headers: jsonHeaders(), body: JSON.stringify(input),
+  }));
+  if (!res.ok) throw new Error(`patchBoard returned ${res.status}`);
+  return (await res.json()) as KanbanBoard;
+}
+
 export async function deleteBoard(boardId: string): Promise<void> {
   const res = await fetch(`${base}/boards/${encodeURIComponent(boardId)}`, fetchOpts({ method: 'DELETE', headers: authedHeaders() }));
   if (!res.ok) throw new Error(`deleteBoard returned ${res.status}`);

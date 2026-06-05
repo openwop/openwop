@@ -80,7 +80,14 @@ export async function runHeartbeatOnce(deps: StartRunDeps, entry: RosterEntry): 
       // proposal (it sits in To Do until the approval is resolved). This lives in
       // the SHARED helper so the autonomous daemon honors review mode too, not
       // just the manual "Check now" route.
-      if (autonomyOf(entry) === 'review') {
+      // `review` proposes EVERY pick; `guided` proposes only HIGH-priority
+      // picks (routine work runs itself, high-stakes work asks first —
+      // architect memo 2026-06-05; the only middle level composable from
+      // real fields: card.priority + the existing approval path).
+      const autonomy = autonomyOf(entry);
+      const mustPropose = autonomy === 'review'
+        || (autonomy === 'guided' && card.priority === 'high');
+      if (mustPropose) {
         if (await hasPendingApprovalForCard(entry.tenantId, card.id)) continue;
         const approval = await createApproval({
           tenantId: entry.tenantId,

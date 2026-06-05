@@ -28,13 +28,14 @@ import { Notice } from '../ui/Notice.js';
 import { StateCard } from '../ui/StateCard.js';
 import { PageHeader } from '../ui/PageHeader.js';
 import { IconButton } from '../ui/IconButton.js';
-import { AlertIcon, ColumnsIcon, DotsIcon, TrashIcon, WorkflowIcon } from '../ui/icons/index.js';
+import { AlertIcon, ColumnsIcon, DotsIcon, PencilIcon, TrashIcon, WorkflowIcon } from '../ui/icons/index.js';
 import { KanbanBoardView, type NewCardInput } from './KanbanBoardView.js';
 import { CreateBoardModal } from './CreateBoardModal.js';
 import {
   createBoard,
   createCard,
   deleteBoard,
+  patchBoard,
   deleteCard,
   getBoard,
   listBoardsWithCards,
@@ -55,8 +56,9 @@ function waitingCount(columns: KanbanBoard['columns'], cards: readonly KanbanCar
   return cards.filter((c) => waitingCols.has(c.columnId)).length;
 }
 
-/** The board's overflow menu — Duplicate / Delete. */
-function BoardMenu({ onDuplicate, onDelete }: {
+/** The board's overflow menu — Rename / Duplicate / Delete. */
+function BoardMenu({ onRename, onDuplicate, onDelete }: {
+  onRename: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
 }): JSX.Element {
@@ -87,6 +89,9 @@ function BoardMenu({ onDuplicate, onDelete }: {
       />
       {open ? (
         <div className="board-menu-pop surface-card" role="menu">
+          <button type="button" role="menuitem" className="board-menu-item" onClick={() => { setOpen(false); onRename(); }}>
+            <PencilIcon size={14} aria-hidden /> Rename board
+          </button>
           <button type="button" role="menuitem" className="board-menu-item" onClick={() => { setOpen(false); onDuplicate(); }}>
             <ColumnsIcon size={14} aria-hidden /> Duplicate
           </button>
@@ -198,6 +203,22 @@ export function KanbanPage(): JSX.Element {
       setNotice(`Duplicated "${activeBoard.name}" — now viewing the copy.`);
       await refreshBoards();
       await openBoard(copy.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  const onRenameBoard = async () => {
+    if (!activeBoard) return;
+    const next = window.prompt('Rename board', activeBoard.name);
+    if (next === null) return;
+    const name = next.trim();
+    if (!name || name === activeBoard.name) return;
+    try {
+      const renamed = await patchBoard(activeBoard.id, { name });
+      setActiveBoard(renamed);
+      setNotice(`Renamed to "${renamed.name}".`);
+      await refreshBoards();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
@@ -346,7 +367,7 @@ export function KanbanPage(): JSX.Element {
               </span>
             ) : null}
             <span className="board-head-spacer" />
-            <BoardMenu onDuplicate={() => void onDuplicateBoard()} onDelete={() => void onDeleteBoard()} />
+            <BoardMenu onRename={() => void onRenameBoard()} onDuplicate={() => void onDuplicateBoard()} onDelete={() => void onDeleteBoard()} />
           </div>
 
           <KanbanBoardView

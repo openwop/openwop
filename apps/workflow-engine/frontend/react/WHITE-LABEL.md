@@ -211,9 +211,15 @@ type-checked at build time and bundled into the image), or set
 seed endpoint once per page load after `<AppGate>` passes, so a cookie-scoped
 visitor who lands on a deep link does not start from a blank tenant. Each
 persona also takes an optional
-**`autonomyLevel`** (`"auto"` default, or `"review"`): a `review` persona ships
-in "agents propose, humans dispose" mode — its heartbeat queues a proposal to
-the approval inbox rather than running it (the stock seed ships **Nora** in
+**`autonomyLevel`** (`"auto"` default, `"guided"`, or `"review"`): a `review`
+persona ships in "agents propose, humans dispose" mode — its heartbeat queues
+a proposal to the approval inbox rather than running it; a `guided` persona
+runs routine picks immediately but proposes when the picked card is
+**high priority** (the stock seed ships **Devon** guided). This field is
+host-extension ONLY — never serialize it onto the normative
+`/v1/agents/roster` response (`agent-roster-entry.schema.json` is
+`additionalProperties: false`; leaking it fails conformance). The stock seed
+ships **Nora** in
 `review` so the approval flow is demoable out of the box). See
 [`seed-data/SEEDING.md`](../../backend/typescript/src/host/seed-data/SEEDING.md).
 

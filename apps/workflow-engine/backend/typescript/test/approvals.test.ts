@@ -17,7 +17,7 @@ import http from 'node:http';
 import { createApp } from '../src/index.js';
 
 let server: http.Server;
-const PORT = 18244;
+const PORT = 18746;
 const BASE = `http://127.0.0.1:${PORT}`;
 const TOKEN = 'sample-token';
 
@@ -52,7 +52,7 @@ async function api<T = unknown>(path: string, init: RequestInit = {}): Promise<{
   return { status: res.status, body: (text.length ? JSON.parse(text) : null) as T };
 }
 
-interface RosterEntry { rosterId: string; persona: string; autonomyLevel?: 'auto' | 'review' }
+interface RosterEntry { rosterId: string; persona: string; autonomyLevel?: 'auto' | 'guided' | 'review' }
 interface Approval {
   approvalId: string; rosterId: string; persona: string; workflowId: string;
   cardId?: string; status: 'pending' | 'approved' | 'rejected'; runId?: string;
@@ -69,6 +69,42 @@ async function pending(): Promise<Approval[]> {
 describe('approval inbox — agents propose, humans dispose', () => {
   beforeAll(async () => {
     await api('/v1/host/sample/demo/seed', { method: 'POST', body: '{}' });
+  });
+
+  it('guided-mode: a HIGH-priority pick proposes; a routine pick runs (architect memo 2026-06-05)', async () => {
+    // Devon ships guided in the seed, and Devon's first To Do card is high
+    // priority — the heartbeat must QUEUE A PROPOSAL, not start the run.
+    const devon = (await roster()).find((r) => r.persona === 'Devon')!;
+    expect(devon.autonomyLevel).toBe('guided');
+
+    const first = await api<CheckResult>(`/v1/host/sample/roster/${devon.rosterId}/check`, { method: 'POST', body: '{}' });
+    expect(first.status).toBe(200);
+    expect(first.body.picked).toBe(true);
+    expect(first.body.proposed).toBe(true);
+    expect(typeof first.body.approvalId).toBe('string');
+    expect(first.body.runId).toBeUndefined();
+
+    // The NEXT pick is the routine (non-high) card — guided runs it
+    // immediately, exactly like auto. (The high card stays parked in To Do
+    // behind its pending approval; the dedup guard skips it.)
+    const second = await api<CheckResult>(`/v1/host/sample/roster/${devon.rosterId}/check`, { method: 'POST', body: '{}' });
+    expect(second.status).toBe(200);
+    expect(second.body.picked).toBe(true);
+    expect(second.body.proposed).toBeUndefined();
+    expect(typeof second.body.runId).toBe('string');
+
+    // PATCH round-trips guided too (the update path had a review-only
+    // normalizer that silently dropped it).
+    const marcus = (await roster()).find((r) => r.persona === 'Marcus')!;
+    const patched = await api<RosterEntry>(`/v1/host/sample/roster/${marcus.rosterId}`, {
+      method: 'PATCH', body: JSON.stringify({ autonomyLevel: 'guided' }),
+    });
+    expect(patched.status).toBe(200);
+    expect(patched.body.autonomyLevel).toBe('guided');
+    const back = await api<RosterEntry>(`/v1/host/sample/roster/${marcus.rosterId}`, {
+      method: 'PATCH', body: JSON.stringify({ autonomyLevel: 'auto' }),
+    });
+    expect(back.body.autonomyLevel).toBeUndefined();
   });
 
   it('auto-mode member (default) runs directly on heartbeat — regression', async () => {

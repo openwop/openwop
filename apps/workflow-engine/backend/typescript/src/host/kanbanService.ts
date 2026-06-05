@@ -177,6 +177,18 @@ export async function getBoard(boardId: string): Promise<KanbanBoard | null> {
   return boards.get(boardId);
 }
 
+/** Rename a board — metadata only. Owner (`rosterId`) and columns are
+ *  deliberately NOT mutable here: rebinding the owner alters run attribution
+ *  (RFC 0086 §C) and column edits alter trigger semantics (architect memo
+ *  2026-06-05). Returns null when the board doesn't exist. */
+export async function renameBoard(boardId: string, name: string): Promise<KanbanBoard | null> {
+  const board = await boards.get(boardId);
+  if (!board) return null;
+  const next: KanbanBoard = { ...board, name, updatedAt: new Date().toISOString() };
+  await boards.put(next);
+  return next;
+}
+
 export async function deleteBoard(boardId: string): Promise<boolean> {
   const boardCards = (await cards.list()).filter((c) => c.boardId === boardId);
   for (const card of boardCards) await cards.delete(card.id);
