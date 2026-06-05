@@ -76,14 +76,22 @@ export interface RosterEntry {
    *  the run; it queues a pending approval (host/approvalService.ts) that a
    *  human must affirmatively claim before the run starts. Host-extension only;
    *  the normative manifest inventory is unaffected. Absent ⇒ `auto`. */
-  autonomyLevel?: 'auto' | 'review';
+  autonomyLevel?: 'auto' | 'guided' | 'review';
   createdAt: string;
   updatedAt: string;
 }
 
-/** The effective autonomy of an entry (the field is optional; absent ⇒ auto). */
-export function autonomyOf(entry: RosterEntry): 'auto' | 'review' {
-  return entry.autonomyLevel === 'review' ? 'review' : 'auto';
+/** The effective autonomy of an entry (the field is optional; absent ⇒ auto).
+ *  `guided` (2026-06-05): routine heartbeat picks run immediately; HIGH-
+ *  priority picks queue as proposals — the only middle level composable from
+ *  data the host actually has (card.priority + the approval path).
+ *  TRIPWIRE: this host-ext field MUST NEVER be serialized onto a normative
+ *  /v1/agents/roster response (agent-roster-entry.schema.json is
+ *  additionalProperties:false — any host that leaks it fails conformance). */
+export function autonomyOf(entry: RosterEntry): 'auto' | 'guided' | 'review' {
+  if (entry.autonomyLevel === 'review') return 'review';
+  if (entry.autonomyLevel === 'guided') return 'guided';
+  return 'auto';
 }
 
 const roster = new DurableCollection<RosterEntry>('roster', (e) => e.rosterId);
@@ -111,7 +119,7 @@ export async function createRosterEntry(input: {
   enabled?: boolean;
   avatarUrl?: string;
   heartbeatIntervalMs?: number;
-  autonomyLevel?: 'auto' | 'review';
+  autonomyLevel?: 'auto' | 'guided' | 'review';
 }): Promise<RosterEntry> {
   // `host:<slug>-<short>` keeps the id human-readable + collision-safe.
   const rosterId = `host:${slugify(input.persona)}-${randomUUID().slice(0, 8)}`;
@@ -127,7 +135,9 @@ export async function createRosterEntry(input: {
     description: input.description,
     avatarUrl: input.avatarUrl,
     ...(input.heartbeatIntervalMs !== undefined ? { heartbeatIntervalMs: input.heartbeatIntervalMs } : {}),
-    autonomyLevel: input.autonomyLevel === 'review' ? 'review' : undefined,
+    // Persist non-default levels; `auto`/absent normalize to undefined (the
+    // default) so stock entries stay shape-stable.
+    autonomyLevel: input.autonomyLevel === 'review' || input.autonomyLevel === 'guided' ? input.autonomyLevel : undefined,
     createdAt: now,
     updatedAt: now,
   };
@@ -166,7 +176,7 @@ export async function updateRosterEntry(
     avatarUrl?: string | null;
     /** Autonomous heartbeat cadence (ms). 0 or negative disables it. */
     heartbeatIntervalMs?: number;
-    autonomyLevel?: 'auto' | 'review';
+    autonomyLevel?: 'auto' | 'guided' | 'review';
   },
 ): Promise<RosterEntry | null> {
   const entry = await roster.get(rosterId);
@@ -185,8 +195,8 @@ export async function updateRosterEntry(
     else entry.avatarUrl = patch.avatarUrl;
   }
   if (patch.autonomyLevel !== undefined) {
-    // Normalize: only 'review' is stored; 'auto' is the absent default.
-    if (patch.autonomyLevel === 'review') entry.autonomyLevel = 'review';
+    // Normalize: non-default levels persist; 'auto' is the absent default.
+    if (patch.autonomyLevel === 'review' || patch.autonomyLevel === 'guided') entry.autonomyLevel = patch.autonomyLevel;
     else delete entry.autonomyLevel;
   }
   entry.updatedAt = nowIso();

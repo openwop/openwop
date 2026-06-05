@@ -99,11 +99,12 @@ function parseAvatarUrl(value: unknown): string | null | undefined {
 
 /** Validate the optional `autonomyLevel` field (POST + PATCH). `undefined`
  *  leaves it unchanged; only `'auto'` / `'review'` are accepted. */
-function parseAutonomyLevel(value: unknown): 'auto' | 'review' | undefined {
+function parseAutonomyLevel(value: unknown): 'auto' | 'guided' | 'review' | undefined {
   if (value === undefined) return undefined;
-  if (value === 'auto' || value === 'review') return value;
-  throw new OpenwopError('validation_error', 'Field `autonomyLevel` MUST be "auto" or "review".', 400, {
+  if (value === 'auto' || value === 'guided' || value === 'review') return value;
+  throw new OpenwopError('validation_error', 'Field `autonomyLevel` MUST be "auto", "guided", or "review".', 400, {
     field: 'autonomyLevel',
+    allowed: ['auto', 'guided', 'review'],
   });
 }
 

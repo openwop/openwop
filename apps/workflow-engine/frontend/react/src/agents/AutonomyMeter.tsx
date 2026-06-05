@@ -1,12 +1,10 @@
 /**
- * Autonomy meter (agents-workforce redesign PR 3) — the prototype's 3-bar
- * Supervised / Guided / Autonomous scale, mapped onto the REAL backend field
- * (architect delta): `autonomyLevel` is the host-extension binary
- * `'review' | 'auto'`, so today only two positions are reachable —
- *   review → level 1 · Supervised ("agents propose, humans dispose")
- *   auto   → level 3 · Autonomous (heartbeat picks start runs immediately)
- * The middle bar (Guided) is RESERVED until a backend level with defined
- * semantics exists; this component never fabricates it.
+ * Autonomy meter — the 3-bar Supervised / Guided / Autonomous scale on the
+ * host-ext `autonomyLevel` field. All three positions are LIVE (architect
+ * memo 2026-06-05):
+ *   review → 1 · Supervised (every heartbeat pick proposes for sign-off)
+ *   guided → 2 · Guided (routine picks run; HIGH-priority picks propose)
+ *   auto   → 3 · Autonomous (every pick runs immediately)
  */
 
 const LEVELS = {
@@ -14,6 +12,11 @@ const LEVELS = {
     level: 1,
     label: 'Supervised',
     help: 'Proposes for review — heartbeat picks queue as proposals for human sign-off (agents propose, humans dispose).',
+  },
+  guided: {
+    level: 2,
+    label: 'Guided',
+    help: 'Routine picks run immediately; HIGH-priority picks queue as proposals for sign-off.',
   },
   auto: {
     level: 3,
@@ -24,10 +27,10 @@ const LEVELS = {
 
 export function AutonomyMeter({ autonomyLevel, showLabel = true }: {
   /** The roster entry's host-ext field; absent ⇒ `auto`. */
-  autonomyLevel: 'auto' | 'review' | undefined;
+  autonomyLevel: 'auto' | 'guided' | 'review' | undefined;
   showLabel?: boolean;
 }): JSX.Element {
-  const meta = LEVELS[autonomyLevel === 'review' ? 'review' : 'auto'];
+  const meta = LEVELS[autonomyLevel === 'review' || autonomyLevel === 'guided' ? autonomyLevel : 'auto'];
   return (
     <span
       className="auto-meter"

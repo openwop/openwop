@@ -38,7 +38,7 @@ export interface RosterEntry {
   /** Heartbeat autonomy: `auto` (default) starts picked runs immediately;
    *  `review` queues a proposal for human sign-off (the approval inbox).
    *  Absent ⇒ `auto`. */
-  autonomyLevel?: 'auto' | 'review';
+  autonomyLevel?: 'auto' | 'guided' | 'review';
   createdAt: string;
   updatedAt: string;
 }
@@ -74,7 +74,7 @@ export async function createRosterEntry(input: {
   enabled?: boolean;
   heartbeatIntervalMs?: number;
   /** Host-ext heartbeat autonomy: `review` = "agents propose, humans dispose". */
-  autonomyLevel?: 'auto' | 'review';
+  autonomyLevel?: 'auto' | 'guided' | 'review';
 }): Promise<RosterEntry> {
   const res = await fetch(rosterBase, fetchOpts({ method: 'POST', headers: jsonHeaders(), body: JSON.stringify(input) }));
   if (!res.ok) throw new Error(`createRosterEntry returned ${res.status}`);

@@ -47,6 +47,7 @@ import {
   listCards,
   moveCard,
   notifyBoardChanged,
+  renameBoard,
   setCardLastRun,
   subscribeBoardChanges,
   updateCardFields,
@@ -311,6 +312,33 @@ export function registerKanbanRoutes(app: Express, deps: Deps): void {
         throw new OpenwopError('not_found', 'Board not found.', 404, { boardId: req.params.boardId });
       }
       res.json({ board, cards: await listCards(board.id) });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Rename only (architect memo 2026-06-05): `rosterId` rebinding and column
+  // edits are deliberately rejected — owner changes alter run attribution
+  // (RFC 0086 §C) and column changes alter trigger semantics.
+  app.patch('/v1/host/sample/kanban/boards/:boardId', async (req, res, next) => {
+    try {
+      const board = await getBoard(req.params.boardId);
+      if (!board || board.tenantId !== tenantOf(req)) {
+        throw new OpenwopError('not_found', 'Board not found.', 404, { boardId: req.params.boardId });
+      }
+      const body = (req.body ?? {}) as { name?: unknown } & Record<string, unknown>;
+      const extra = Object.keys(body).filter((k) => k !== 'name');
+      if (extra.length > 0) {
+        throw new OpenwopError('validation_error', 'Only `name` is mutable on a board.', 400, { fields: extra });
+      }
+      if (typeof body.name !== 'string' || body.name.trim().length === 0) {
+        throw new OpenwopError('validation_error', 'Field `name` is required and MUST be a non-empty string.', 400, {
+          field: 'name',
+        });
+      }
+      const renamed = await renameBoard(board.id, body.name.trim());
+      notifyBoardChanged(board.id);
+      res.json(renamed);
     } catch (err) {
       next(err);
     }

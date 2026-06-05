@@ -18,7 +18,7 @@ import { ModalPortal } from '../ui/ModalPortal.js';
 export function HireAgentModal({ onClose }: { onClose: () => void }): JSX.Element {
   const navigate = useNavigate();
   const [roleKey, setRoleKey] = useState<string | null>(null);
-  const [autonomy, setAutonomy] = useState<'auto' | 'review'>('auto');
+  const [autonomy, setAutonomy] = useState<'auto' | 'guided' | 'review'>('auto');
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -90,7 +90,7 @@ export function HireAgentModal({ onClose }: { onClose: () => void }): JSX.Elemen
 
         <div className="hire-label">Starting autonomy</div>
         <div className="action-bar">
-          {([['review', 'Supervised — propose for review'], ['auto', 'Autonomous — run immediately']] as const).map(([value, label]) => (
+          {([['review', 'Supervised — propose for review'], ['guided', 'Guided — asks on high-priority'], ['auto', 'Autonomous — run immediately']] as const).map(([value, label]) => (
             <button
               key={value}
               type="button"
