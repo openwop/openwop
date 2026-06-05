@@ -7,9 +7,14 @@
  * Features:
  *  - @dnd-kit drag-and-drop (pointer + keyboard sensor — focus a card, Space to
  *    pick up, arrows to move, Space to drop) with an optimistic local move.
- *  - Rich cards: source chip, workflow name, priority, due date, run link.
- *  - Trigger columns (⚡) fire a workflow when a card lands in them.
- *  - Per-column count badge + add-card form (with an optional source selector).
+ *  - Rich cards: source chip, workflow name, priority, due date, run link,
+ *    and ONE lane-contextual action (boards redesign 2026-06-05): To do →
+ *    Start work · Working → Mark done · Waiting → Resolve · Done → Reopen.
+ *    Reopen moves back into the trigger lane and therefore fires the
+ *    workflow — the same semantics as dragging the card back.
+ *  - Trigger columns (⚡) read as accent-outlined; waiting cards carry an
+ *    amber edge bar.
+ *  - Per-column count badge + dashed add-card affordance.
  *
  * Presentational + interactive: it owns drag state but delegates persistence to
  * the parent via onMoveCard / onCreateCard / onDeleteCard, so each surface keeps
@@ -30,7 +35,7 @@ import {
 import { Link } from 'react-router-dom';
 import { TaskSourceChip } from '../agents/TaskSourceChip.js';
 import { workflowName } from '../agents/roleTemplates.js';
-import { AlertIcon, CheckIcon, GripVerticalIcon, PlayIcon, WorkflowIcon, XIcon, ZapIcon } from '../ui/icons/index.js';
+import { AlertIcon, CheckIcon, GripVerticalIcon, PlayIcon, RotateCwIcon, UserIcon, WorkflowIcon, XIcon, ZapIcon } from '../ui/icons/index.js';
 import { Markdown } from '../ui/Markdown.js';
 import { MarkdownEditor } from '../ui/MarkdownEditor.js';
 import type { KanbanBoard, KanbanCard, KanbanColumn, KanbanCardSource } from './kanbanClient.js';
@@ -38,9 +43,7 @@ import type { KanbanBoard, KanbanCard, KanbanColumn, KanbanCardSource } from './
 const muted: React.CSSProperties = { color: 'var(--color-text-muted)' };
 
 type LaneKind = 'todo' | 'working' | 'waiting' | 'done';
-/** The lanes a card can be moved TO via the non-drag quick-actions (forward /
- *  side moves — "back to To Do" is intentionally drag-only). */
-type MoveKind = 'working' | 'waiting' | 'done';
+type MoveKind = 'todo' | 'working' | 'waiting' | 'done';
 
 /** Match a column to a canonical lane by id or display name (mirrors
  *  agentViewModel.laneOf) so the non-drag quick-actions know where "Start" /
@@ -76,14 +79,17 @@ const SOURCE_OPTIONS: ReadonlyArray<{ value: KanbanCardSource; label: string }> 
 
 function DraggableCard({
   card,
+  lane,
+  laneTargets,
   onDelete,
-  quickMoves,
   onMove,
 }: {
   card: KanbanCard;
+  /** Canonical lane of the column this card sits in (null = custom lane). */
+  lane: LaneKind | null;
+  /** Canonical lane → real column id, for the contextual action target. */
+  laneTargets: ReadonlyMap<MoveKind, string>;
   onDelete?: (cardId: string) => void;
-  /** Lanes this card can jump to without dragging (a11y + clarity). */
-  quickMoves?: ReadonlyArray<{ kind: MoveKind; columnId: string }>;
   onMove?: (cardId: string, toColumnId: string) => void;
 }): JSX.Element {
   // Drag activates from a dedicated grip handle, NOT the whole card: dnd-kit's
@@ -95,11 +101,13 @@ function DraggableCard({
   const style: React.CSSProperties = {
     transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
     opacity: isDragging ? 0.5 : 1,
-    padding: 'var(--space-2) var(--space-2-5)',
+    padding: 'var(--space-2-5) var(--space-3)',
     marginBottom: 'var(--space-2)',
   };
+  const action = lane ? LANE_ACTION[lane] : null;
+  const actionTarget = action ? laneTargets.get(action.to) : undefined;
   return (
-    <div ref={setNodeRef} className="surface-card" style={style}>
+    <div ref={setNodeRef} className={lane === 'waiting' ? 'surface-card kb-card kb-card--waiting' : 'surface-card kb-card'} style={style}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
         <span
           ref={setActivatorNodeRef}
@@ -117,13 +125,13 @@ function DraggableCard({
         {onDelete ? (
           <button
             type="button"
-            className="secondary btn-sm"
+            className="icon-button kb-card-delete"
             aria-label={`Delete ${card.title}`}
+            title={`Delete ${card.title}`}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); onDelete(card.id); }}
-            style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', lineHeight: 1 }}
           >
-            <XIcon size={13} />
+            <XIcon size={13} aria-hidden />
           </button>
         ) : null}
       </div>
@@ -135,46 +143,52 @@ function DraggableCard({
             <WorkflowIcon size={12} /> {workflowName(card.workflowId)}
           </span>
         ) : null}
-        {card.priority === 'high' ? <span className="chip chip--danger">High</span> : null}
+        {card.priority === 'high' ? <span className="chip chip--danger kb-prio">HIGH</span> : null}
+        {card.priority === 'low' ? <span className="chip chip--muted kb-prio">LOW</span> : null}
+        {card.createdBy ? (
+          <span className="kb-person"><UserIcon size={12} aria-hidden /> {card.createdBy}</span>
+        ) : null}
         {card.dueAt ? <span style={{ ...muted, fontSize: '12px' }}>due {card.dueAt.slice(0, 10)}</span> : null}
       </div>
-      {card.createdBy ? <div style={{ ...muted, fontSize: '12px', marginTop: 'var(--space-1)' }}>Created by {card.createdBy}</div> : null}
       {card.assignmentReason ? <div style={{ ...muted, fontSize: '12px' }}>Why assigned: {card.assignmentReason}</div> : null}
       {card.blockerNote ? <div style={{ fontSize: '12px', color: 'var(--color-warning, var(--color-text-muted))', marginTop: 'var(--space-1)', display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}><AlertIcon size={12} /> Blocked: {card.blockerNote}</div> : null}
-      {card.lastRunId ? (
-        <div style={{ fontSize: '12px', marginTop: 'var(--space-1)' }}>
-          <Link to={`/runs/${card.lastRunId}`} onPointerDown={(e) => e.stopPropagation()} style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-1)' }}>
-            <PlayIcon size={12} /> View run
+      <div className="kb-card-foot">
+        {action && actionTarget && onMove ? (
+          // The lane's ONE next action — the non-drag path (a11y + touch).
+          // Other moves stay drag-and-drop.
+          <button
+            type="button"
+            className={action.accent ? 'btn-accent btn-sm' : 'secondary btn-sm'}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); onMove(card.id, actionTarget); }}
+          >
+            {action.icon} {action.label}
+          </button>
+        ) : null}
+        <span className="kb-card-foot-spacer" />
+        {card.lastRunId ? (
+          <Link
+            to={`/runs/${card.lastRunId}`}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="kb-run-link"
+            title="View the triggered run"
+          >
+            <PlayIcon size={12} aria-hidden /> View run
           </Link>
-        </div>
-      ) : null}
-      {quickMoves && quickMoves.length > 0 && onMove ? (
-        // Non-drag equivalents — the board is otherwise drag-only, which is
-        // unreachable by keyboard-averse / touch users and unclear in a demo.
-        <div style={{ display: 'flex', gap: 'var(--space-1)', flexWrap: 'wrap', marginTop: 'var(--space-2)' }}>
-          {quickMoves.map((m) => (
-            <button
-              key={m.kind}
-              type="button"
-              className="secondary btn-sm"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => { e.stopPropagation(); onMove(card.id, m.columnId); }}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-1)' }}
-            >
-              {QUICK_MOVE_META[m.kind].icon}
-              {QUICK_MOVE_META[m.kind].label}
-            </button>
-          ))}
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   );
 }
 
-const QUICK_MOVE_META: Record<MoveKind, { label: string; icon: JSX.Element | null }> = {
-  working: { label: 'Start work', icon: <PlayIcon size={12} /> },
-  waiting: { label: 'Move to Waiting', icon: null },
-  done: { label: 'Mark done', icon: <CheckIcon size={12} /> },
+/** The ONE contextual action per lane (boards redesign): what a human most
+ *  plausibly does next with a card in that lane. Everything else stays
+ *  drag-and-drop. */
+const LANE_ACTION: Record<LaneKind, { label: string; to: MoveKind; icon: JSX.Element; accent?: boolean } | null> = {
+  todo: { label: 'Start work', to: 'working', icon: <PlayIcon size={12} /> },
+  working: { label: 'Mark done', to: 'done', icon: <CheckIcon size={12} /> },
+  waiting: { label: 'Resolve', to: 'working', icon: <CheckIcon size={12} />, accent: true },
+  done: { label: 'Reopen', to: 'todo', icon: <RotateCwIcon size={12} /> },
 };
 
 function DroppableColumn({
@@ -184,7 +198,7 @@ function DroppableColumn({
   onDeleteCard,
   enableSources,
   workflowOptions,
-  quickMoves,
+  laneTargets,
   onMove,
 }: {
   column: KanbanColumn;
@@ -193,8 +207,8 @@ function DroppableColumn({
   onDeleteCard?: (cardId: string) => void;
   enableSources?: boolean;
   workflowOptions?: string[];
-  /** Lanes a card in THIS column can jump to (its own lane excluded). */
-  quickMoves?: ReadonlyArray<{ kind: MoveKind; columnId: string }>;
+  /** Canonical lane → real column id (the contextual-action targets). */
+  laneTargets: ReadonlyMap<MoveKind, string>;
   onMove?: (cardId: string, toColumnId: string) => void;
 }): JSX.Element {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
@@ -210,28 +224,21 @@ function DroppableColumn({
   const isTrigger = Boolean(column.triggerWorkflowId);
   const resetForm = (): void => { setTitle(''); setDescription(''); setSource('human'); setWorkflowId(''); setPriority('normal'); setDueAt(''); setAssignmentReason(''); setBlockerNote(''); setAdding(false); };
 
+  const lane = laneKindOf(column);
   return (
     <div
       ref={setNodeRef}
-      style={{
-        flex: '1 1 0',
-        minWidth: 200,
-        background: isOver ? 'var(--clay-wash)' : 'var(--color-surface-2)',
-        border: '1px solid var(--color-border)',
-        borderLeft: isTrigger ? '3px solid var(--color-accent)' : '1px solid var(--color-border)',
-        borderRadius: 'var(--radius)',
-        padding: 'var(--space-2)',
-      }}
+      className={'kb-col' + (isTrigger ? ' kb-col--trigger' : '') + (isOver ? ' is-over' : '')}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
-        <strong style={{ fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: 'var(--space-1)' }}>
+      <div className="kb-col-head">
+        <span className="kb-col-name">
           {column.name}
           {isTrigger ? <ZapIcon size={13} style={{ color: 'var(--color-accent)' }} /> : null}
-        </strong>
-        <span style={{ ...muted, fontSize: '12px' }}>{cards.length}</span>
+        </span>
+        <span className="kb-col-count">{cards.length}</span>
       </div>
       {cards.map((c) => (
-        <DraggableCard key={c.id} card={c} onDelete={onDeleteCard} quickMoves={quickMoves} onMove={onMove} />
+        <DraggableCard key={c.id} card={c} lane={lane} laneTargets={laneTargets} onDelete={onDeleteCard} onMove={onMove} />
       ))}
       {adding ? (
         <form
@@ -281,7 +288,7 @@ function DroppableColumn({
           </div>
         </form>
       ) : (
-        <button type="button" className="secondary btn-sm" style={{ width: '100%' }} onClick={() => setAdding(true)}>+ Add card</button>
+        <button type="button" className="kb-add" onClick={() => setAdding(true)}>+ Add card</button>
       )}
     </div>
   );
@@ -301,6 +308,8 @@ export function KanbanBoardView({
   enableSources?: boolean;
   /** Workflow ids the add-card form can attach (the owning agent's portfolio). */
   workflowOptions?: string[];
+  /** Owner persona — accepted for parity with the page header (unused here). */
+  ownerPersona?: string;
   onMoveCard: (cardId: string, toColumnId: string) => void;
   onCreateCard: (columnId: string, input: NewCardInput) => void;
   onDeleteCard?: (cardId: string) => void;
@@ -327,14 +336,13 @@ export function KanbanBoardView({
     if (toColumnId) moveCard(String(event.active.id), toColumnId);
   };
 
-  // Canonical lane → first matching column, so the per-card quick-actions
-  // ("Start work" / "Move to Waiting" / "Mark done") resolve to real columns.
-  const laneTargets = (['working', 'waiting', 'done'] as MoveKind[])
-    .map((kind) => {
-      const col = board.columns.find((c) => laneKindOf(c) === kind);
-      return col ? { kind, columnId: col.id } : null;
-    })
-    .filter((t): t is { kind: MoveKind; columnId: string } => t !== null);
+  // Canonical lane → first matching column, so each card's contextual action
+  // ("Start work" / "Mark done" / "Resolve" / "Reopen") targets a real column.
+  const laneTargets = new Map<MoveKind, string>();
+  for (const kind of ['todo', 'working', 'waiting', 'done'] as MoveKind[]) {
+    const col = board.columns.find((c) => laneKindOf(c) === kind);
+    if (col) laneTargets.set(kind, col.id);
+  }
 
   return (
     <DndContext sensors={sensors} onDragEnd={onDragEnd}>
@@ -348,7 +356,7 @@ export function KanbanBoardView({
             onDeleteCard={onDeleteCard}
             enableSources={enableSources}
             workflowOptions={workflowOptions}
-            quickMoves={laneTargets.filter((t) => t.columnId !== col.id)}
+            laneTargets={laneTargets}
             onMove={moveCard}
           />
         ))}

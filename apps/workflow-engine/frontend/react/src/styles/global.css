@@ -4980,3 +4980,107 @@ a.surface-card:hover,
   justify-content: center;
   flex-shrink: 0;
 }
+
+/* ── Boards redesign (2026-06-05, Claude Design mock in our tokens) ──────── */
+/* Switcher pills: owner avatar · name · live count · amber attention dot. */
+.board-pills { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; margin: var(--space-2) 0 var(--space-4); }
+.board-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2-5);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 13px;
+  cursor: pointer;
+}
+.board-pill:hover { background: var(--paper-2); border-color: var(--rule-2); color: var(--ink); }
+.board-pill.is-active { border-color: var(--clay); background: var(--clay-soft); }
+.board-pill.is-active:hover { border-color: var(--clay); background: var(--clay-soft); }
+.board-pill-name { font-weight: 600; }
+.board-pill-count { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+.board-pill-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--color-warning); flex-shrink: 0; }
+.board-pill--new { border-style: dashed; color: var(--ink-2); }
+.board-pill--new:hover { color: var(--ink); border-color: var(--clay); background: transparent; }
+
+/* Board header: name · owner · trigger · waiting chip · overflow menu. */
+.board-head { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; margin: 0 0 var(--space-3); }
+.board-head-name { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+.board-head-owner { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--ink-2); font-size: 13px; }
+.board-head-trigger { display: inline-flex; align-items: center; gap: 5px; color: var(--ink-2); font-size: 13px; }
+.board-head-trigger strong { color: var(--ink); font-weight: 600; }
+.board-head-spacer { flex: 1; }
+.board-menu { position: relative; }
+.board-menu-pop {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 180px;
+  padding: var(--space-1);
+  z-index: 40;
+  box-shadow: 0 18px 50px var(--ink-shadow);
+}
+.board-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  padding: var(--space-2) var(--space-2-5);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.board-menu-item:hover { background: var(--paper-2); color: var(--ink); border-color: transparent; }
+.board-menu-item--danger { color: var(--color-danger); }
+.board-menu-item--danger:hover { color: var(--color-danger); background: color-mix(in oklch, var(--color-danger) 10%, transparent); }
+.board-menu-rule { height: 1px; background: var(--rule); margin: var(--space-1) var(--space-2); }
+
+/* Columns: contained cards; the trigger column is accent-outlined. */
+.kb-col {
+  flex: 1 1 0;
+  min-width: 220px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2-5);
+}
+.kb-col--trigger { border-color: var(--clay); }
+.kb-col.is-over { background: var(--clay-wash); }
+.kb-col-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2-5); padding: 0 var(--space-1); }
+.kb-col-name { font-size: 13.5px; font-weight: 650; display: inline-flex; align-items: center; gap: var(--space-1); }
+.kb-col-count {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+.kb-add {
+  width: 100%;
+  border: 1px dashed var(--rule-2);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 12.5px;
+  padding: var(--space-2);
+  cursor: pointer;
+}
+.kb-add:hover { color: var(--ink); border-color: var(--clay); background: transparent; }
+
+/* Cards: waiting edge bar, ghost delete, person chip, footer action row. */
+.kb-card--waiting { box-shadow: inset 3px 0 0 var(--color-warning); }
+.kb-card-delete { width: 22px; height: 22px; flex-shrink: 0; }
+.kb-prio { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; }
+.kb-person { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--ink-2); }
+.kb-card-foot { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-2); }
+.kb-card-foot-spacer { flex: 1; }
+.kb-run-link { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--clay); text-decoration: none; }
+.kb-run-link:hover { text-decoration: underline; }
