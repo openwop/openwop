@@ -15,6 +15,8 @@ import { useMemo, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ClipboardIcon, SparklesIcon, WrenchIcon } from '../ui/icons/index.js';
 import { listWorkflowMentions } from './lib/workflowMentions.js';
+import { seedSavedWorkflowsIfFirstVisit } from '../builder/persistence/localStore.js';
+import { PREMADE_WORKFLOWS, cloneTemplateToUserWorkflow } from '../builder/templates/premadeWorkflows.js';
 
 interface Props {
   onPickSuggestion: (text: string) => void;
@@ -93,10 +95,23 @@ export function WelcomeCard({ onPickSuggestion }: Props): JSX.Element {
   // names change. Cards whose template isn't in the user's saved
   // workflows render disabled with a tooltip explaining why.
   const resolvedCards = useMemo(
-    () => WORKFLOW_CARD_SPECS.map((spec) => ({
-      ...spec,
-      slug: resolveSlug(spec.templateName),
-    })),
+    () => {
+      // PRE-SEED: chat is most visitors' FIRST page, but the premade
+      // templates these cards point at were only seeded on the workflow
+      // dashboard's first visit — so the cards rendered "(not available)"
+      // until the user happened to open /builder. Run the SAME first-visit
+      // seed here (same persisted flag → first surface visited wins, and a
+      // user who deleted their workflows is still never re-seeded).
+      seedSavedWorkflowsIfFirstVisit(
+        PREMADE_WORKFLOWS
+          .filter((tpl) => !tpl.requiresTypeIds)
+          .map((tpl) => cloneTemplateToUserWorkflow(tpl)),
+      );
+      return WORKFLOW_CARD_SPECS.map((spec) => ({
+        ...spec,
+        slug: resolveSlug(spec.templateName),
+      }));
+    },
     // listWorkflowMentions reads localStorage synchronously; we
     // intentionally don't subscribe to it here because the welcome
     // card only renders when no chat messages exist yet, and the
