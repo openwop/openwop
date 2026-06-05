@@ -37,6 +37,34 @@ const SOURCE_GLYPH: Record<AgentActivityItem['source'], { Icon: typeof ZapIcon; 
   approval: { Icon: InboxIcon, label: 'Approved proposal' },
 };
 
+interface LedgerGroup {
+  first: AgentActivityItem;
+  runs: number;
+}
+
+/** Collapse CONSECUTIVE feed items with the same agent + workflow + status
+ *  into one row ("xN runs") — six identical "Lead routing · completed" rows
+ *  carry one fact, not six rows of whitespace. Non-consecutive repeats stay
+ *  separate so ordering remains honest. */
+function groupLedger(items: AgentActivityItem[]): LedgerGroup[] {
+  const out: LedgerGroup[] = [];
+  for (const item of items) {
+    const last = out[out.length - 1];
+    if (
+      last
+      && last.first.persona === item.persona
+      && last.first.workflowId === item.workflowId
+      && last.first.status === item.status
+      && last.first.source === item.source
+    ) {
+      last.runs += 1;
+      continue;
+    }
+    out.push({ first: item, runs: 1 });
+  }
+  return out;
+}
+
 function runChip(status: string): string {
   if (status === 'completed') return 'chip chip--success';
   if (status === 'failed') return 'chip chip--danger';
@@ -399,20 +427,23 @@ export function AgentDashboardPage(): JSX.Element {
                 </p>
               ) : (
                 <ol className="wf-ledger-rows">
-                  {feed.map((item) => {
+                  {groupLedger(feed).map((group) => {
+                    const item = group.first;
                     const glyph = SOURCE_GLYPH[item.source] ?? { Icon: PlayIcon, label: item.source };
                     const Icon = glyph.Icon;
                     return (
                       <li className="wf-ledger-row" key={item.runId}>
                         <span className="wf-ledger-src" title={glyph.label} aria-hidden><Icon size={13} /></span>
                         <span className="wf-ledger-who">
-                          <em>{item.persona ?? 'Agent'}</em>
-                          <span className="wf-ledger-what">{workflowName(item.workflowId)}</span>
+                          <span>
+                            <em>{item.persona ?? 'Agent'}</em>
+                            <span className="wf-ledger-what"> · {workflowName(item.workflowId)}</span>
+                          </span>
+                          <Link to={`/runs/${encodeURIComponent(item.runId)}`} className="wf-ledger-when">
+                            {group.runs > 1 ? `${group.runs} runs · ` : ''}{relativeTime(item.timestamp) ?? '—'}
+                          </Link>
                         </span>
                         <span className={runChip(item.status)}>{item.status}</span>
-                        <Link to={`/runs/${encodeURIComponent(item.runId)}`} className="wf-ledger-when">
-                          {relativeTime(item.timestamp) ?? '—'}
-                        </Link>
                       </li>
                     );
                   })}

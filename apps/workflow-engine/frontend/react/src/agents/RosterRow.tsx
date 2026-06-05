@@ -36,7 +36,7 @@ function subLine(view: AgentView): string {
   }
   if (status === 'error') return 'A recent run failed — see what went wrong';
   if (status === 'needs-setup') return 'No workflows or board yet — finish setup to give it work';
-  if (status === 'paused') return 'Paused — board triggers and heartbeat are inert';
+  if (status === 'paused') return 'Re-enable to resume board triggers and the heartbeat';
   if (nextSchedule) {
     const wf = nextSchedule.workflowId ?? entry.workflows[0];
     const label = String(nextSchedule.metadata?.label ?? nextSchedule.cronExpr);
