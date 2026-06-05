@@ -70,7 +70,8 @@
   --font-mono:          var(--mono);
 
   /* App geometry tokens — unchanged */
-  --radius: 6px;
+  --radius: 8px;          /* controls: buttons, inputs, chips-adjacent */
+  --radius-lg: 14px;      /* containers: cards, queue, tiles, modals */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -929,7 +930,7 @@ input, textarea, select {
   background: var(--paper);
   color: var(--ink);
   border: 1px solid var(--rule);
-  border-radius: 2px;
+  border-radius: var(--radius);
   width: 100%;
   transition: border-color .15s ease;
 }
@@ -4201,7 +4202,7 @@ a.surface-card:focus-visible,
   gap: var(--space-2);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   padding: var(--space-3) var(--space-4);
   color: var(--color-text);
   text-decoration: none;
@@ -4474,7 +4475,7 @@ a.surface-card:hover,
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   margin: 0;
   border: 1px solid var(--rule);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   background: var(--paper-2);
   overflow: hidden;
 }
@@ -4915,6 +4916,24 @@ a.surface-card:hover,
 .btn-accent:hover { background: color-mix(in oklch, var(--clay) 24%, transparent); }
 .btn-accent:disabled { opacity: 0.55; cursor: not-allowed; }
 .btn-accent.btn-sm { padding: var(--space-1) var(--space-2-5); font-size: 12.5px; }
+
+/* Solid accent: the page CTA + queue Approve & resume (the recommended
+ * hierarchy: solid clay > soft clay > outline). */
+.btn-accent-solid {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--clay);
+  border-radius: var(--radius);
+  background: var(--clay);
+  color: var(--paper);
+  font-weight: 600;
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
+}
+.btn-accent-solid:hover { background: color-mix(in oklch, var(--clay) 86%, var(--ink)); }
+.btn-accent-solid:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-accent-solid.btn-sm { padding: var(--space-1) var(--space-2-5); font-size: 12.5px; }
 
 /* Leading status dot inside chips (roster rows, drawer header). */
 .chip-dot {

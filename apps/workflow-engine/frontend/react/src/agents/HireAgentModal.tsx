@@ -103,7 +103,7 @@ export function HireAgentModal({ onClose }: { onClose: () => void }): JSX.Elemen
 
         <div className="hire-foot action-bar">
           <button type="button" className="secondary btn-sm" onClick={onClose}>Cancel</button>
-          <button type="button" className="primary btn-sm" disabled={roleKey === null} onClick={go}>
+          <button type="button" className="btn-accent-solid btn-sm" disabled={roleKey === null} onClick={go}>
             Continue <ArrowRightIcon size={14} aria-hidden />
           </button>
         </div>
