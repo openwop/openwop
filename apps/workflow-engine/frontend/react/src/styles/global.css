@@ -4377,7 +4377,7 @@ a.surface-card:hover,
   cursor: pointer;
   flex-shrink: 0;
 }
-.admin-rail-toggle:hover { color: var(--ink); background: var(--paper-2); }
+.admin-rail-toggle:hover { color: var(--ink); background: var(--paper-2); border-color: transparent; }
 /* Chevron points right when collapsed (expand), left when expanded. */
 .admin-shell:not(.is-collapsed) .admin-rail-toggle svg { transform: rotate(180deg); }
 .admin-rail nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
@@ -4562,7 +4562,7 @@ a.surface-card:hover,
   cursor: pointer;
   flex-shrink: 0;
 }
-.icon-button:hover { color: var(--ink); background: var(--paper-2); }
+.icon-button:hover { color: var(--ink); background: var(--paper-2); border-color: transparent; }
 .icon-button:disabled { opacity: 0.5; cursor: not-allowed; }
 /* Demo-honesty badge (ui/IllustrativeBadge.tsx) — small-caps mono file label. */
 .illustrative-badge {
@@ -4586,7 +4586,7 @@ a.surface-card:hover,
   flex-direction: column;
   transition: background 0.12s ease;
 }
-.wf-figure--tile:hover { background: var(--paper); }
+.wf-figure--tile:hover { background: var(--paper); border-color: var(--rule); color: inherit; }
 .wf-figure--tile.is-active { box-shadow: inset 3px 0 0 var(--clay); background: var(--clay-soft); }
 .wf-figure--tile.is-attn .wf-figure-n,
 .wf-figure--tile.is-attn .wf-figure-l { color: var(--color-warning); }
@@ -4673,6 +4673,11 @@ a.surface-card:hover,
   color: var(--ink);
   min-width: 0;
 }
+/* Identity hover: the row already tints via .roster-row:hover — the button
+ * itself only hints with the name turning clay (no slab; overrides the
+ * global button:hover fill). */
+.roster-id:hover { background: transparent; border-color: transparent; color: var(--ink); }
+.roster-id:hover .roster-name { color: var(--clay); }
 .roster-name-wrap { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .roster-name-line { display: flex; align-items: center; gap: var(--space-2); }
 .roster-name { font-family: var(--serif); font-size: 16px; }
@@ -4741,8 +4746,9 @@ a.surface-card:hover,
   cursor: pointer;
   border-bottom: 2px solid transparent;
 }
-.agent-drawer-tab:hover { color: var(--ink); }
+.agent-drawer-tab:hover { color: var(--ink); background: transparent; border-color: transparent; }
 .agent-drawer-tab.is-active { color: var(--ink); font-weight: 600; border-bottom-color: var(--clay); }
+.agent-drawer-tab.is-active:hover { border-bottom-color: var(--clay); }
 
 .agent-drawer-body { flex: 1; overflow-y: auto; padding: var(--space-4); }
 .agent-drawer-overview { display: flex; flex-direction: column; gap: var(--space-4); }
@@ -4878,7 +4884,7 @@ a.surface-card:hover,
   gap: 2px;
   color: var(--ink);
 }
-.hire-role:hover { border-color: var(--clay); }
+.hire-role:hover { border-color: var(--clay); background: var(--paper-2); color: var(--ink); }
 .hire-role.is-selected { border-color: var(--clay); background: var(--clay-soft); }
 .hire-role-title { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13.5px; }
 .hire-role-blurb { color: var(--ink-2); font-size: 12px; line-height: 1.45; }
@@ -4913,7 +4919,7 @@ a.surface-card:hover,
   font-weight: 600;
   cursor: pointer;
 }
-.btn-accent:hover { background: color-mix(in oklch, var(--clay) 24%, transparent); }
+.btn-accent:hover { background: color-mix(in oklch, var(--clay) 24%, transparent); color: var(--clay); border-color: var(--clay); }
 .btn-accent:disabled { opacity: 0.55; cursor: not-allowed; }
 .btn-accent.btn-sm { padding: var(--space-1) var(--space-2-5); font-size: 12.5px; }
 
