@@ -58,6 +58,7 @@ Rules:
 1. **Use functional tokens only for run-state semantics.** A button doesn't get `--color-danger` for emphasis — it gets clay. `--color-danger` is reserved for `RunStatus = failed | cancelled`, error banners, and the destructive secondary state of confirm dialogs.
 2. **Status colors lift in dark mode** (DESIGN.md §9.2 invariant 4): success → `oklch(72% 0.14 145)`, warning → `oklch(80% 0.14 75)`, danger → `oklch(65% 0.16 28)`, ai → `oklch(70% 0.12 280)`, info → `oklch(68% 0.12 240)`. Keep the chroma; lift the luminance. These lifted values are now in the `@media (prefers-color-scheme: dark)` + `:root.theme-dark` blocks in `global.css` (DESIGN.md §9.1 active).
 3. **Never use a status color as a background fill at body weight.** Surface as an icon, a dot, a label, or a hairline. Backgrounds compete with `--paper`.
+4. **Native chrome follows the theme via `color-scheme`.** `global.css` sets `color-scheme: light` on `:root` and `color-scheme: dark` in both dark blocks (`@media` + `.theme-dark`) so the browser paints scrollbars, form-control internals, and autofill for the active theme — without it, dark mode shows a glaring light scrollbar track even though every painted pixel is dark. On top of that, a global token-driven scrollbar rule (`scrollbar-color: var(--rule-2) transparent` + matching `::-webkit-scrollbar-*` for Safari) keeps every scrollbar — page and inner panes — on the palette in both modes. Don't restyle scrollbars per-component.
 
 ---
 
