@@ -25,6 +25,11 @@ import { AlertIcon, CheckIcon, ClockIcon } from '../ui/icons/index.js';
  * an unblocked fleet instead of rendering nothing.
  */
 
+/** "13h ago" → "13h" for the compact time pill. */
+function compact(rel: string | null): string {
+  return rel ? rel.replace(' ago', '') : 'now';
+}
+
 export function NeedsYouQueue({ views, approvals, onOpen, onResolved }: {
   views: AgentView[];
   approvals: PendingApproval[];
@@ -82,7 +87,7 @@ export function NeedsYouQueue({ views, approvals, onOpen, onResolved }: {
       <div className="needs-head">
         <AlertIcon size={16} aria-hidden />
         <span className="needs-title">Needs you</span>
-        <span className="chip chip--warning">{total}</span>
+        <span className="needs-count">{total}</span>
         <span className="needs-hint">Resolve these to unblock your agents</span>
       </div>
 
@@ -91,13 +96,13 @@ export function NeedsYouQueue({ views, approvals, onOpen, onResolved }: {
         const theme = roleThemeForAgent(view?.entry.agentRef?.agentId, view?.entry.workflows ?? []);
         return (
           <div className="needs-item" key={a.approvalId}>
-            <AgentAvatar persona={a.persona} avatarUrl={view?.entry.avatarUrl} roleTheme={theme} size={40} showBadge={false} />
+            <AgentAvatar persona={a.persona} avatarUrl={view?.entry.avatarUrl} roleTheme={theme} size={40} showBadge={false} ring="var(--color-warning)" />
             <div className="needs-body">
               <div className="needs-who">
                 <span className="needs-name">{a.persona}</span>
                 {view?.entry.label ? <span className="needs-role">{view.entry.label}</span> : null}
                 <span className="chip chip--warning needs-age">
-                  <ClockIcon size={11} aria-hidden /> waiting {relativeTime(a.createdAt) ?? 'now'}
+                  <ClockIcon size={11} aria-hidden /> {compact(relativeTime(a.createdAt))}
                 </span>
               </div>
               <div className="needs-ask">{a.cardTitle ?? a.proposal}</div>
@@ -112,7 +117,7 @@ export function NeedsYouQueue({ views, approvals, onOpen, onResolved }: {
               <button type="button" className="secondary btn-sm" disabled={busy === a.approvalId} onClick={() => void sendBack(a)}>
                 Send back
               </button>
-              <button type="button" className="primary btn-sm" disabled={busy === a.approvalId} onClick={() => void approve(a)}>
+              <button type="button" className="btn-accent btn-sm" disabled={busy === a.approvalId} onClick={() => void approve(a)}>
                 <CheckIcon size={14} aria-hidden /> Approve &amp; resume
               </button>
             </div>
@@ -125,14 +130,14 @@ export function NeedsYouQueue({ views, approvals, onOpen, onResolved }: {
         const theme = roleThemeForAgent(v.entry.agentRef?.agentId, v.entry.workflows);
         return (
           <div className="needs-item" key={v.entry.rosterId}>
-            <AgentAvatar persona={v.entry.persona} avatarUrl={v.entry.avatarUrl} roleTheme={theme} size={40} showBadge={false} />
+            <AgentAvatar persona={v.entry.persona} avatarUrl={v.entry.avatarUrl} roleTheme={theme} size={40} showBadge={false} ring="var(--color-warning)" />
             <div className="needs-body">
               <div className="needs-who">
                 <span className="needs-name">{v.entry.persona}</span>
                 {v.entry.label ? <span className="needs-role">{v.entry.label}</span> : null}
                 {card?.updatedAt ? (
                   <span className="chip chip--warning needs-age">
-                    <ClockIcon size={11} aria-hidden /> in waiting since {relativeTime(card.updatedAt)}
+                    <ClockIcon size={11} aria-hidden /> {compact(relativeTime(card.updatedAt))}
                   </span>
                 ) : null}
               </div>
@@ -142,7 +147,7 @@ export function NeedsYouQueue({ views, approvals, onOpen, onResolved }: {
               </div>
             </div>
             <div className="needs-actions action-bar">
-              <button type="button" className="primary btn-sm" onClick={() => onOpen(v.entry.rosterId, 'board')}>
+              <button type="button" className="btn-accent btn-sm" onClick={() => onOpen(v.entry.rosterId, 'board')}>
                 Open board
               </button>
             </div>

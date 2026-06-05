@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { claimApproval, rejectApproval, type PendingApproval } from './approvalsClient.js';
-import { statusMeta, relativeTime, type AgentView } from './agentViewModel.js';
+import { statusMeta, statusRingColor, relativeTime, type AgentView } from './agentViewModel.js';
 import { workflowName, roleThemeForAgent } from './roleTemplates.js';
 import { AgentAvatar } from './AgentAvatar.js';
 import { AgentBoardPanel } from './AgentBoardPanel.js';
@@ -110,11 +110,11 @@ export function AgentDrawer({ view, approvals, tab, onTab, onClose, onCheckNow, 
         onClick={(e) => e.stopPropagation()}
       >
         <header className="agent-drawer-head">
-          <AgentAvatar persona={entry.persona} avatarUrl={entry.avatarUrl} roleTheme={theme} size={44} showBadge={false} />
+          <AgentAvatar persona={entry.persona} avatarUrl={entry.avatarUrl} roleTheme={theme} size={44} showBadge={false} ring={statusRingColor(view.status)} />
           <div className="agent-drawer-id">
             <div className="agent-drawer-name-line">
               <span className="agent-drawer-name">{entry.persona}</span>
-              <span className={`chip ${sm.chip}`} title={sm.help}>{sm.label}</span>
+              <span className={`chip ${sm.chip}`} title={sm.help}><span className="chip-dot" aria-hidden />{sm.label}</span>
             </div>
             <div className="agent-drawer-role">{entry.label ?? 'Agent'}</div>
           </div>
@@ -155,7 +155,7 @@ export function AgentDrawer({ view, approvals, tab, onTab, onClose, onCheckNow, 
                   <div className="agent-drawer-ask-title">{a.cardTitle ?? a.proposal}</div>
                   <div className="agent-drawer-ask-detail">Proposes to run {workflowName(a.workflowId)}.</div>
                   <div className="action-bar" style={{ marginTop: 'var(--space-2)' }}>
-                    <button type="button" className="primary btn-sm" disabled={resolving === a.approvalId} onClick={() => void approve(a)}>
+                    <button type="button" className="btn-accent btn-sm" disabled={resolving === a.approvalId} onClick={() => void approve(a)}>
                       <CheckIcon size={14} aria-hidden /> Approve &amp; resume
                     </button>
                     <button type="button" className="secondary btn-sm" disabled={resolving === a.approvalId} onClick={() => void sendBack(a)}>
