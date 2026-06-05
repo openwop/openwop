@@ -26,6 +26,7 @@ export function AgentAvatar({
   onEdit,
   alt,
   showBadge = true,
+  ring,
 }: {
   persona: string;
   avatarUrl?: string;
@@ -42,6 +43,9 @@ export function AgentAvatar({
   /** Show the role-glyph badge overlay. Off for tiny inline avatars where the
    *  badge would crowd the circle. */
   showBadge?: boolean;
+  /** Status-ring color (a CSS color/token value). Renders a 2px ring offset
+   *  from the circle — the roster's at-a-glance status cue. */
+  ring?: string;
 }): JSX.Element {
   const RoleIcon = roleTheme.Icon;
   const [active, setActive] = useState(false); // hover OR keyboard focus
@@ -64,6 +68,7 @@ export function AgentAvatar({
         fontWeight: 700,
         fontSize: size <= 28 ? '0.7rem' : size <= 40 ? '0.95rem' : '1.1rem',
         overflow: 'hidden',
+        ...(ring ? { boxShadow: `0 0 0 2px var(--paper), 0 0 0 4px ${ring}` } : {}),
       }}
     >
       {avatarUrl ? (

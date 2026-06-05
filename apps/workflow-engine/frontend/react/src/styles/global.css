@@ -4473,8 +4473,10 @@ a.surface-card:hover,
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   margin: 0;
-  border-top: 1px solid var(--ink);
-  border-bottom: 1px solid var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper-2);
+  overflow: hidden;
 }
 .wf-figure {
   padding: var(--space-3) var(--space-4) var(--space-3) 0;
@@ -4583,8 +4585,8 @@ a.surface-card:hover,
   flex-direction: column;
   transition: background 0.12s ease;
 }
-.wf-figure--tile:hover { background: var(--paper-2); }
-.wf-figure--tile.is-active { box-shadow: inset 0 2px 0 var(--clay); background: var(--clay-soft); }
+.wf-figure--tile:hover { background: var(--paper); }
+.wf-figure--tile.is-active { box-shadow: inset 3px 0 0 var(--clay); background: var(--clay-soft); }
 .wf-figure--tile.is-attn .wf-figure-n,
 .wf-figure--tile.is-attn .wf-figure-l { color: var(--color-warning); }
 .wf-figure-n {
@@ -4895,3 +4897,48 @@ a.surface-card:hover,
 .filterbar-select { width: auto; flex: 0 0 auto; }
 .wf-figures { margin-bottom: 0; }
 .wf-figure-l { display: inline-flex; align-items: center; gap: 5px; }
+
+/* ── Design-detail parity (workforce redesign polish) ──────────────────────
+ * Accent action button: the in-row / in-queue PRIMARY (Review, Approve &
+ * resume) reads as the page accent, not a paper-filled block. */
+.btn-accent {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--clay);
+  border-radius: var(--radius);
+  background: var(--clay-soft);
+  color: var(--clay);
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-accent:hover { background: color-mix(in oklch, var(--clay) 24%, transparent); }
+.btn-accent:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-accent.btn-sm { padding: var(--space-1) var(--space-2-5); font-size: 12.5px; }
+
+/* Leading status dot inside chips (roster rows, drawer header). */
+.chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+  margin-right: 5px;
+  flex-shrink: 0;
+}
+
+/* The Needs-you count: a filled circular badge, not a pill. */
+.needs-count {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: color-mix(in oklch, var(--color-warning) 22%, transparent);
+  color: var(--color-warning);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}

@@ -1,5 +1,5 @@
 import { workflowName, roleThemeForAgent } from './roleTemplates.js';
-import { statusMeta, relativeTime, type AgentView } from './agentViewModel.js';
+import { statusMeta, statusRingColor, relativeTime, type AgentView } from './agentViewModel.js';
 import { AgentAvatar } from './AgentAvatar.js';
 import { ColumnsIcon, MessageSquareIcon, PlayIcon, AlertIcon, ActivityIcon, WrenchIcon } from '../ui/icons/index.js';
 import { AutonomyMeter } from './AutonomyMeter.js';
@@ -62,11 +62,11 @@ export function RosterRow({ view, busy, onOpen, onCheckNow, onChat }: {
   return (
     <div className="roster-row">
       <button type="button" className="roster-id" onClick={() => onOpen()} title={`Open ${entry.persona}'s workspace`}>
-        <AgentAvatar persona={entry.persona} avatarUrl={entry.avatarUrl} roleTheme={theme} size={40} showBadge={false} />
+        <AgentAvatar persona={entry.persona} avatarUrl={entry.avatarUrl} roleTheme={theme} size={40} showBadge={false} ring={statusRingColor(status)} />
         <span className="roster-name-wrap">
           <span className="roster-name-line">
             <span className="roster-name">{entry.persona}</span>
-            <span className={`chip ${sm.chip}`} title={sm.help}>{sm.label}</span>
+            <span className={`chip ${sm.chip}`} title={sm.help}><span className="chip-dot" aria-hidden />{sm.label}</span>
           </span>
           <span className="roster-role">{entry.label ?? 'Agent'}</span>
         </span>
@@ -93,7 +93,7 @@ export function RosterRow({ view, busy, onOpen, onCheckNow, onChat }: {
         <button type="button" className="secondary btn-sm" title={`Chat with ${entry.persona}`} aria-label={`Chat with ${entry.persona}`} onClick={onChat}>
           <MessageSquareIcon size={14} aria-hidden />
         </button>
-        <button type="button" className={status === 'waiting' ? 'primary btn-sm' : 'secondary btn-sm'} onClick={() => onOpen(action.tab)}>
+        <button type="button" className={status === 'waiting' ? 'btn-accent btn-sm' : 'secondary btn-sm'} onClick={() => onOpen(action.tab)}>
           <ActionIcon size={14} aria-hidden /> {action.label}
         </button>
       </div>
