@@ -5084,3 +5084,95 @@ a.surface-card:hover,
 .kb-card-foot-spacer { flex: 1; }
 .kb-run-link { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--clay); text-decoration: none; }
 .kb-run-link:hover { text-decoration: underline; }
+
+/* ── Chat welcome inner content (redesign 2026-06-05) ──────────────────────
+ * Four real slash-workflow cards + the agent hand-off pills. */
+.welcome-key {
+  font-family: var(--mono);
+  color: var(--clay);
+  background: var(--clay-soft);
+  border-radius: 4px;
+  padding: 0 5px;
+}
+.welcome-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  max-width: 760px;
+  width: 100%;
+  margin-top: var(--space-4);
+}
+@media (max-width: 700px) { .welcome-grid { grid-template-columns: 1fr; } }
+.welcome-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  text-align: left;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+}
+.welcome-card:hover { border-color: var(--clay); background: var(--paper-2); color: var(--ink); }
+.welcome-card:disabled { opacity: 0.55; cursor: not-allowed; }
+.welcome-card-head { display: flex; align-items: center; gap: var(--space-2-5); }
+.welcome-card-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--clay-soft);
+  color: var(--clay);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.welcome-card-title { font-weight: 650; font-size: 14px; }
+.welcome-card-desc { color: var(--ink-2); font-size: 12.5px; line-height: 1.55; }
+.welcome-slug {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--clay);
+  background: var(--clay-soft);
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+.welcome-agents {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: var(--space-4);
+}
+.welcome-agents-label { color: var(--ink-3); font-size: 12.5px; margin-right: var(--space-1); }
+.welcome-agent-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 12px 4px 5px;
+  cursor: pointer;
+}
+.welcome-agent-pill:hover { border-color: var(--clay); background: var(--paper-2); color: var(--ink); }
+.welcome-agent-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--clay);
+  color: var(--paper);
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.welcome-agent-at { color: var(--ink-3); font-family: var(--mono); font-size: 11px; }
