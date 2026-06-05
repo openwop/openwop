@@ -25,7 +25,7 @@ import { Notice } from '../ui/Notice.js';
 import { StateCard } from '../ui/StateCard.js';
 import { Skeleton } from '../ui/Skeleton.js';
 import { PageHeader } from '../ui/PageHeader.js';
-import { BotIcon, ZapIcon, ClockIcon, ColumnsIcon, InboxIcon, PlayIcon, BuildingIcon } from '../ui/icons/index.js';
+import { BotIcon, ZapIcon, ClockIcon, ColumnsIcon, InboxIcon, PlayIcon, BuildingIcon, AlertIcon } from '../ui/icons/index.js';
 
 type SortKey = 'attention' | 'name';
 
@@ -265,36 +265,6 @@ export function AgentDashboardPage(): JSX.Element {
         />
       ) : null}
 
-      {/* Key figures double as the status FILTER (redesign PR 1): a tile both
-          reports the count and narrows the roster to it. The toolbar's status
-          select stays for the long-tail states (error / needs setup / paused)
-          and shares the same state, so the two can never disagree. */}
-      {!loading && views.length > 0 ? (
-        <div className="wf-figures" role="group" aria-label="Workforce key figures — click to filter">
-          {([
-            ['all', 'On staff', figures.staff, false],
-            ['working', 'Working now', figures.working, false],
-            ['waiting', 'Waiting on you', figures.waiting, true],
-            ['active', 'Idle & ready', figures.ready, false],
-          ] as const).map(([key, label, n, attn]) => (
-            <button
-              type="button"
-              className={
-                'wf-figure wf-figure--tile'
-                + (statusFilter === key ? ' is-active' : '')
-                + (attn && n > 0 ? ' is-attn' : '')
-              }
-              key={key}
-              aria-pressed={statusFilter === key}
-              onClick={() => setStatusFilter(key as 'all' | AgentStatus)}
-            >
-              <span className="wf-figure-n">{n}</span>
-              <span className="wf-figure-l">{label}</span>
-            </button>
-          ))}
-        </div>
-      ) : null}
-
       {error ? <Notice variant="error">{error}</Notice> : null}
       {notice ? <Notice variant="success">{notice}</Notice> : null}
 
@@ -319,42 +289,67 @@ export function AgentDashboardPage(): JSX.Element {
         </>
       ) : (
         <>
-          {views.length > 3 ? (
-            <div className="action-bar" role="group" aria-label="Filter and sort agents" style={{ marginBottom: 'var(--space-3)', flexWrap: 'wrap' }}>
-              <input
-                type="search"
-                className="ui-input"
-                placeholder="Search by name or role…"
-                aria-label="Search agents"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                style={{ flex: '1 1 200px', minWidth: 160 }}
-              />
-              <select className="ui-input" aria-label="Filter by status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | AgentStatus)}>
-                <option value="all">All statuses</option>
-                <option value="error">Run failed</option>
-                <option value="working">Working</option>
-                <option value="waiting">Waiting on human</option>
-                <option value="active">Ready</option>
-                <option value="paused">Paused</option>
-                <option value="needs-setup">Needs setup</option>
-              </select>
-              {roleOptions.length > 1 ? (
-                <select className="ui-input" aria-label="Filter by role" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
-                  <option value="all">All roles</option>
-                  {roleOptions.map((r) => (
-                    <option key={r.key} value={r.key}>{r.label}</option>
-                  ))}
-                </select>
-              ) : null}
-              <select className="ui-input" aria-label="Sort agents" value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)}>
-                <option value="attention">Sort: Needs attention</option>
-                <option value="name">Sort: Name</option>
-              </select>
-            </div>
-          ) : null}
-
+          {/* The two-column split opens at the TILES (layout parity with the
+              prototype): tiles + toolbar + roster on the left, the ledger
+              top-aligned with the tiles on the right. */}
           <div className="wf-body">
+            <div>
+            {/* Key figures double as the status FILTER: a tile both reports
+                the count and narrows the roster to it. The old status select
+                is gone — the tiles own status; long-tail states (failed /
+                needs setup / paused) still bubble up via the attention sort. */}
+            <div className="wf-figures" role="group" aria-label="Workforce key figures — click to filter">
+              {([
+                ['all', 'On staff', figures.staff, false],
+                ['working', 'Working now', figures.working, false],
+                ['waiting', 'Waiting on you', figures.waiting, true],
+                ['active', 'Idle & ready', figures.ready, false],
+              ] as const).map(([key, label, n, attn]) => (
+                <button
+                  type="button"
+                  className={
+                    'wf-figure wf-figure--tile'
+                    + (statusFilter === key ? ' is-active' : '')
+                    + (attn && n > 0 ? ' is-attn' : '')
+                  }
+                  key={key}
+                  aria-pressed={statusFilter === key}
+                  onClick={() => setStatusFilter(key as 'all' | AgentStatus)}
+                >
+                  <span className="wf-figure-n">{n}</span>
+                  <span className="wf-figure-l">
+                    {attn && n > 0 ? <AlertIcon size={11} aria-hidden /> : null}
+                    {label}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {views.length > 3 ? (
+              <div className="filterbar" role="group" aria-label="Filter and sort agents">
+                <input
+                  type="search"
+                  className="ui-input filterbar-search"
+                  placeholder="Search by name or role…"
+                  aria-label="Search agents"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+                {roleOptions.length > 1 ? (
+                  <select className="ui-input filterbar-select" aria-label="Filter by role" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+                    <option value="all">All roles</option>
+                    {roleOptions.map((r) => (
+                      <option key={r.key} value={r.key}>{r.label}</option>
+                    ))}
+                  </select>
+                ) : null}
+                <select className="ui-input filterbar-select" aria-label="Sort agents" value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)}>
+                  <option value="attention">Sort: Needs attention</option>
+                  <option value="name">Sort: Name</option>
+                </select>
+              </div>
+            ) : null}
+
             {visible.length === 0 ? (
               <StateCard
                 icon={<BotIcon size={26} />}
@@ -386,6 +381,8 @@ export function AgentDashboardPage(): JSX.Element {
                 ))}
               </div>
             )}
+
+            </div>
 
             {/* The run ledger — fleet activity with run links, plus the
                 department roll-up (folded in from the former /workforce). */}
