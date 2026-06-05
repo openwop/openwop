@@ -173,24 +173,52 @@ export function exportSavedWorkflowAsJSON(
  *
  * Returns the number of workflows seeded (0 if it no-op'd).
  */
-export function seedSavedWorkflowsIfFirstVisit(
+const LS_DELIVERED_KEY = 'openwop.sample.builder.workflows.seedDelivered';
+
+/** Per-template seed top-up (replaces the all-or-nothing first-visit flag,
+ *  2026-06-05). The old flag locked the WHOLE catalog after one visit, so
+ *  templates ADDED to PREMADE_WORKFLOWS later were never delivered to
+ *  existing browsers ("(not available)" welcome cards) — and a browser that
+ *  had any workflow at all was locked out of every template forever.
+ *
+ *  Contract: each template (keyed by its stable NAME) is delivered AT MOST
+ *  ONCE per browser. Already-delivered names never re-seed, so a deliberate
+ *  deletion stays deleted. Migration (no delivered list yet): names that
+ *  already exist among saved workflows count as delivered; everything else
+ *  tops up — a one-time resurrection of templates deleted under the legacy
+ *  flag, accepted to un-strand the never-delivered ones. */
+export function topUpSeededWorkflows(
   workflows: readonly SavedWorkflow[],
 ): number {
+  let delivered: Set<string>;
   try {
-    if (localStorage.getItem(LS_SEEDED_KEY) === '1') return 0;
+    const raw = localStorage.getItem(LS_DELIVERED_KEY);
+    delivered = new Set(raw ? (JSON.parse(raw) as string[]) : []);
   } catch {
     return 0;
   }
-  const existing = readIndex();
-  if (Object.keys(existing).length > 0) {
-    // User has workflows already (e.g., migrated from before seeding existed).
-    // Don't seed; just mark seeded so we never run again.
-    try { localStorage.setItem(LS_SEEDED_KEY, '1'); } catch { /* ignore */ }
-    return 0;
+  const idx = readIndex();
+  const savedNames = new Set(Object.values(idx).map((w) => w.name.toLowerCase()));
+
+  if (delivered.size === 0) {
+    for (const wf of workflows) {
+      if (savedNames.has(wf.name.toLowerCase())) delivered.add(wf.name);
+    }
   }
-  const idx: Index = {};
-  for (const wf of workflows) idx[wf.id] = wf;
-  writeIndex(idx);
-  try { localStorage.setItem(LS_SEEDED_KEY, '1'); } catch { /* ignore */ }
-  return workflows.length;
+
+  let inserted = 0;
+  for (const wf of workflows) {
+    if (delivered.has(wf.name)) continue;
+    delivered.add(wf.name);
+    if (!savedNames.has(wf.name.toLowerCase())) {
+      idx[wf.id] = wf;
+      inserted += 1;
+    }
+  }
+  if (inserted > 0) writeIndex(idx);
+  try {
+    localStorage.setItem(LS_DELIVERED_KEY, JSON.stringify([...delivered]));
+    localStorage.setItem(LS_SEEDED_KEY, '1'); // legacy flag kept for back-compat readers
+  } catch { /* ignore */ }
+  return inserted;
 }

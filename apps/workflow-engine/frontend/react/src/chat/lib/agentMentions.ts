@@ -31,6 +31,9 @@ import { listAgents, type AgentEntry } from '../../client/agentsClient.js';
 export interface AgentMentionEntry {
   /** Persona name as shown in the popover row ("Code Reviewer"). */
   displayName: string;
+  /** The human persona name ("Nora") — the welcome pills label by this,
+   *  not the role title. */
+  persona: string;
   /** Whitespace-free token inserted after `@`. Stable for the same
    *  agentId across renders. */
   slug: string;
@@ -64,6 +67,7 @@ export function projectAgentEntry(
   usedSlugs.add(slug);
   return {
     displayName: agent.label || agent.persona,
+    persona: agent.persona,
     slug,
     description: agent.description ?? `${agent.modelClass} agent from ${agent.packName}`,
     agentId: agent.agentId,

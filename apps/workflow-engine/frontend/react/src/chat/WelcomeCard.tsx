@@ -14,7 +14,7 @@ import { useMemo, type ReactNode } from 'react';
 import { ClockIcon, ColumnsIcon, SparklesIcon, ZapIcon } from '../ui/icons/index.js';
 import { listWorkflowMentions } from './lib/workflowMentions.js';
 import { useAgentMentions } from './lib/agentMentions.js';
-import { seedSavedWorkflowsIfFirstVisit } from '../builder/persistence/localStore.js';
+import { topUpSeededWorkflows } from '../builder/persistence/localStore.js';
 import { PREMADE_WORKFLOWS, cloneTemplateToUserWorkflow } from '../builder/templates/premadeWorkflows.js';
 
 interface Props {
@@ -110,7 +110,7 @@ export function WelcomeCard({ onPickSuggestion }: Props): JSX.Element {
       // until the user happened to open /builder. Run the SAME first-visit
       // seed here (same persisted flag → first surface visited wins, and a
       // user who deleted their workflows is still never re-seeded).
-      seedSavedWorkflowsIfFirstVisit(
+      topUpSeededWorkflows(
         PREMADE_WORKFLOWS
           .filter((tpl) => !tpl.requiresTypeIds)
           .map((tpl) => cloneTemplateToUserWorkflow(tpl)),
@@ -188,21 +188,23 @@ export function WelcomeCard({ onPickSuggestion }: Props): JSX.Element {
       </div>
 
       {personas.length > 0 ? (
-        <div className="welcome-agents">
-          <span className="welcome-agents-label">or hand it to an agent</span>
-          {personas.map((a) => (
-            <button
-              key={a.agentId}
-              type="button"
-              className="welcome-agent-pill"
-              onClick={() => onPickSuggestion(`@${a.slug} `)}
-              title={`Hand the task to ${a.displayName} (@${a.slug})`}
-            >
-              <span className="welcome-agent-avatar" aria-hidden>{a.displayName.slice(0, 1).toUpperCase()}</span>
-              <span className="welcome-agent-at" aria-hidden>@</span> {a.displayName}
-            </button>
-          ))}
-        </div>
+        <>
+          <div className="welcome-agents-label">Or hand it to an agent</div>
+          <div className="welcome-agents">
+            {personas.map((a) => (
+              <button
+                key={a.agentId}
+                type="button"
+                className="welcome-agent-pill"
+                onClick={() => onPickSuggestion(`@${a.slug} `)}
+                title={`Hand the task to ${a.persona}${a.displayName !== a.persona ? ` — ${a.displayName}` : ''} (@${a.slug})`}
+              >
+                <span className="welcome-agent-avatar" aria-hidden>{a.persona.slice(0, 1).toUpperCase()}</span>
+                <span className="welcome-agent-at" aria-hidden>@</span> {a.persona}
+              </button>
+            ))}
+          </div>
+        </>
       ) : null}
 
       <p className="muted" style={{ marginTop: 20, fontSize: 11.5, maxWidth: 520, lineHeight: 1.5 }}>
