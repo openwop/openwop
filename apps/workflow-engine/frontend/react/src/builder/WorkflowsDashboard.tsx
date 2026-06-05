@@ -183,7 +183,7 @@ export function WorkflowsDashboard() {
         eyebrow="Build"
         title="Workflows"
         lede="Compose multi-step, multi-agent workflows on a visual canvas — then run them by name from chat."
-        actions={<button onClick={onCreate}>+ New workflow</button>}
+        actions={<button type="button" className="btn-accent-solid" onClick={onCreate}>+ New workflow</button>}
       />
 
       <div className="workflows-section">

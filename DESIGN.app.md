@@ -84,6 +84,53 @@ Do not add new references to the alias block. Net new code uses canonical names.
 
 ---
 
+## 4.5 Composition principles — the workforce glow-up canon (2026-06-04/05)
+
+Distilled from the agents-page redesign (PRs #585–#592, validated against the
+Claude Design prototype crop-by-crop). These govern EVERY surface, not just
+`/agents` — a page that violates one of these is a defect, not a style choice.
+
+1. **Decision-first, inventory second.** What needs the HUMAN renders at the
+   top (the `/agents` "Needs you" queue); the catalog/list below. A page whose
+   first screenful is undifferentiated inventory buries its reason to exist.
+   Celebrate the empty queue ("You're all caught up") — don't render nothing.
+2. **Stats are filters.** A number worth a tile is worth clicking: key-figure
+   tiles both report a count and narrow the list (`aria-pressed`, left clay
+   bar when active, amber numeral + glyph for attention states). Never ship a
+   static stat band next to a separate dropdown asking the same question.
+3. **Radius hierarchy.** `--radius-lg` (14px) for containers — cards, queues,
+   tile bands, modals; `--radius` (8px) for controls — buttons, inputs,
+   selects; pills stay fully rounded. One flat radius reads as unfinished;
+   a 2px input next to a 14px card reads as broken.
+4. **Accent CTA hierarchy.** `.btn-accent-solid` (clay fill, `--paper` text —
+   the avatar-initials precedent, theme-safe) for THE action on the page
+   (page CTA, Approve & resume); `.btn-accent` (clay-soft) for in-row
+   primaries; `.secondary` outline for everything else. A paper-white fill is
+   never the loudest element — selection states use SOFT accent, not solid.
+5. **Toolbars are one row.** Search grows, selects hug content
+   (`.filterbar` — the global `input/select { width: 100% }` baseline must be
+   scoped away in toolbars). Stacked full-width filter controls are a defect.
+6. **Rows at fleet scale, with honest sub-lines.** Past ~5 homogeneous
+   entities, dense rows beat card grids. The contextual sub-line composes
+   from REAL fields only (the working card's title, the next schedule's
+   label) — never fabricated progress, counts, or prose the store can't back.
+7. **Status is a system: dot + ring + chip.** Status chips lead with a
+   `currentColor` dot; avatars carry a 2px status ring (`statusRingColor`);
+   the same family colors drive tiles, chips, and rings so one glance reads
+   one way everywhere. Address the operator as "you" ("Waiting on you").
+8. **Whitespace does work.** Group repetition instead of padding it (the
+   ledger collapses consecutive same-agent/same-workflow runs into "6 runs ·
+   4d ago"); major bands separate by `--space-5`; colliding borders between
+   sibling containers are a layout bug.
+9. **Quick-look before navigation.** Reviewing an entity should not leave the
+   list: a right drawer composing the entity's existing panels, deep-linkable
+   via URL params (`?agent=&tab=`), Esc/scrim close, with "Open full
+   workspace →" always present. The drawer never grows a second copy of a
+   full surface (no embedded chat).
+10. **Real timestamps, compact form.** Time pills derive from store fields
+    (`createdAt`, `updatedAt`) and render compact ("13h", "6 runs · 4d ago").
+    If the store can't date it, the UI doesn't claim it.
+
 ## 5. Components — app-specific canonical list
 
 Cross-surface components (`.btn`, `.marker`, etc.) live in `DESIGN.md §6`. The list below is app-only.
