@@ -136,10 +136,9 @@ export function WelcomeCard({ onPickSuggestion }: Props): JSX.Element {
       </div>
       <h2 style={{
         margin: 0,
-        fontFamily: 'var(--serif)',
-        fontStyle: 'italic',
-        fontWeight: 400,
-        fontSize: 30,
+        fontFamily: 'var(--sans)',
+        fontWeight: 700,
+        fontSize: 26,
         letterSpacing: '-0.01em',
         color: 'var(--ink)',
       }}>

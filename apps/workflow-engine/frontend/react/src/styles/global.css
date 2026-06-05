@@ -966,7 +966,8 @@ label {
 
 .card h2 {
   margin: 0 0 var(--space-3);
-  font-family: var(--serif);
+  font-family: var(--sans);
+  font-weight: 650;
   font-weight: 400;
   font-size: 22px;
   line-height: 1.15;
@@ -2832,7 +2833,8 @@ pre {
 }
 .signin-modal-title {
   margin: 0;
-  font-family: var(--serif);
+  font-family: var(--sans);
+  font-weight: 650;
   font-style: italic;
   font-weight: 400;
   font-size: 28px;
@@ -3159,7 +3161,8 @@ pre {
 }
 .modal-header h3 {
   margin: 0;
-  font-family: var(--serif);
+  font-family: var(--sans);
+  font-weight: 650;
   font-weight: 400;
   font-size: 22px;
   color: var(--ink);
@@ -3219,7 +3222,8 @@ pre {
   flex-wrap: wrap;
 }
 .byok-try-free-title {
-  font-family: var(--serif);
+  font-family: var(--sans);
+  font-weight: 650;
   font-style: italic;
   font-size: 26px;
   font-weight: 400;
@@ -3228,7 +3232,7 @@ pre {
   color: var(--ink);
 }
 .byok-try-free-suffix {
-  font-family: var(--serif);
+  font-family: var(--sans);
   font-style: italic;
   font-size: 18px;
   font-weight: 400;
@@ -3252,7 +3256,7 @@ pre {
   margin-top: 8px;
 }
 .byok-try-free-arrow {
-  font-family: var(--serif);
+  font-family: var(--sans);
   font-size: 28px;
   color: var(--ink-3);
   flex: 0 0 auto;
@@ -3291,7 +3295,8 @@ pre {
 .byok-section {}
 .byok-section-title {
   margin: 0 0 12px;
-  font-family: var(--serif);
+  font-family: var(--sans);
+  font-weight: 650;
   font-style: italic;
   font-size: 22px;
   font-weight: 400;
@@ -3434,7 +3439,8 @@ pre {
   border-radius: 8px;
 }
 .backend-resting-title {
-  font-family: var(--serif);
+  font-family: var(--sans);
+  font-weight: 650;
   font-style: italic;
   font-weight: 400;
   font-size: 32px;
@@ -4313,7 +4319,9 @@ a.surface-card:hover,
 }
 .page-header__title {
   margin: 0;
-  font-family: var(--serif);
+  font-family: var(--sans);
+  font-weight: 700;
+  letter-spacing: -0.01em;
   font-size: 28px;
   line-height: 1.1;
   font-weight: 400;
@@ -4338,7 +4346,7 @@ a.surface-card:hover,
 .admin-shell {
   display: grid;
   grid-template-columns: 232px minmax(0, 1fr);
-  gap: var(--space-5);
+  gap: var(--space-4);
   align-items: start;
   padding: var(--space-4) var(--space-5);
   width: 100%;
@@ -4347,8 +4355,6 @@ a.surface-card:hover,
   position: sticky;
   top: var(--space-4);
   align-self: start;
-  border-right: 1px solid var(--rule);
-  padding-right: var(--space-3);
 }
 .admin-rail-head {
   display: flex;
@@ -4412,20 +4418,27 @@ a.surface-card:hover,
 .admin-nav-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* Collapsed icon strip — desktop only; the ≤860px layout stacks instead. */
 @media (min-width: 861px) {
-  .admin-shell.is-collapsed { grid-template-columns: 44px minmax(0, 1fr); gap: var(--space-3); }
-  .admin-shell.is-collapsed .admin-rail { padding-right: 0; }
+  .admin-shell.is-collapsed { grid-template-columns: 44px minmax(0, 1fr); gap: var(--space-3); padding-left: var(--space-3); }
   .admin-shell.is-collapsed .admin-rail-head { justify-content: center; padding-left: 0; padding-right: 0; }
   .admin-shell.is-collapsed .admin-nav-label { display: none; }
   .admin-shell.is-collapsed .admin-nav-link { justify-content: center; padding: var(--space-2) 0; }
 }
 @media (max-width: 860px) {
   .admin-shell { grid-template-columns: minmax(0, 1fr); padding: var(--space-3); }
-  .admin-rail { position: static; border-right: 0; padding-right: 0; border-bottom: 1px solid var(--rule); padding-bottom: var(--space-2); }
+  .admin-rail { position: static; border-bottom: 1px solid var(--rule); padding-bottom: var(--space-2); }
   .admin-rail nav ul { flex-direction: row; flex-wrap: wrap; }
+  .admin-content { border-left: 0; padding-left: 0; }
 }
 /* Content column: owns its width so admin pages stay shell-width-agnostic.
- * `--narrow` preserves the manifest's reading-width tier inside the shell. */
-.admin-content { min-width: 0; max-width: 1200px; }
+ * `--narrow` preserves the manifest's reading-width tier inside the shell.
+ * The full-height divider lives HERE (the tall column), not on the short
+ * sticky rail. */
+.admin-content {
+  min-width: 0;
+  max-width: 1200px;
+  border-left: 1px solid var(--rule);
+  padding-left: var(--space-5);
+}
 .admin-content--narrow { max-width: 760px; }
 
 /* The single Admin entry pinned under the workspace groups. */
@@ -4618,7 +4631,7 @@ a.surface-card:hover,
   background: var(--clay-soft);
   color: var(--color-warning);
 }
-.needs-title { font-family: var(--serif); font-size: 18px; color: var(--ink); }
+.needs-title { font-family: var(--sans); font-weight: 650; font-size: 16.5px; color: var(--ink); }
 .needs-hint { margin-left: auto; font-size: 12.5px; color: var(--ink-2); }
 .needs-item {
   display: flex;
@@ -4629,7 +4642,7 @@ a.surface-card:hover,
 .needs-item + .needs-item { border-top: 1px solid var(--rule); }
 .needs-body { flex: 1; min-width: 0; }
 .needs-who { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
-.needs-name { font-family: var(--serif); font-size: 16px; }
+.needs-name { font-family: var(--sans); font-weight: 650; font-size: 14.5px; }
 .needs-role { color: var(--ink-2); font-size: 12.5px; }
 .needs-age { display: inline-flex; align-items: center; gap: 4px; }
 .needs-ask { font-weight: 600; font-size: 14px; margin-top: 5px; }
@@ -4680,7 +4693,7 @@ a.surface-card:hover,
 .roster-id:hover .roster-name { color: var(--clay); }
 .roster-name-wrap { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .roster-name-line { display: flex; align-items: center; gap: var(--space-2); }
-.roster-name { font-family: var(--serif); font-size: 16px; }
+.roster-name { font-family: var(--sans); font-weight: 650; font-size: 14.5px; }
 .roster-role { color: var(--ink-2); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .roster-sub { min-width: 0; }
 .roster-subline { font-size: 13px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -4727,7 +4740,7 @@ a.surface-card:hover,
 }
 .agent-drawer-id { flex: 1; min-width: 0; }
 .agent-drawer-name-line { display: flex; align-items: center; gap: var(--space-2); }
-.agent-drawer-name { font-family: var(--serif); font-size: 19px; }
+.agent-drawer-name { font-family: var(--sans); font-weight: 700; font-size: 17px; }
 .agent-drawer-role { color: var(--ink-2); font-size: 12.5px; }
 .agent-drawer-headactions { flex: 0 0 auto; flex-wrap: nowrap; }
 
@@ -4858,7 +4871,7 @@ a.surface-card:hover,
   text-transform: uppercase;
   color: var(--ink-3);
 }
-.hire-title { margin: 4px 0 2px; font-family: var(--serif); font-size: 22px; font-weight: 500; }
+.hire-title { margin: 4px 0 2px; font-family: var(--sans); font-size: 19px; font-weight: 700; }
 .hire-lede { margin: 0; color: var(--ink-2); font-size: 13px; line-height: 1.5; }
 .hire-label {
   font-family: var(--mono);

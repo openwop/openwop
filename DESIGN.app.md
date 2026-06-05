@@ -12,7 +12,7 @@ When the marketing site (`DESIGN.md`) and this doc disagree on a shared token, t
 
 `apps/workflow-engine/frontend/react/` is the reference deployment behind `https://app.openwop.dev/`. It exists so protocol implementers and evaluators can exercise the v1 wire contract without cloning the repo — workflow building, run lifecycle, SSE event streaming, HITL interrupts, capability discovery, BYOK paste-and-run.
 
-Visual register: **the same editorial-technical voice as the marketing site**, applied to an interactive surface. Where the marketing site is read once, the app is operated. Editorial discipline applies to chrome, navigation, headings, status, and labels; the workflow canvas is allowed denser geometric tooling.
+Visual register: **the same editorial-technical voice as the marketing site**, applied to an interactive surface. **Heading typography is SANS (2026-06-05, David's directive): every header — page titles, card/section/modal titles, entity names — sets `var(--sans)` at weight 650–700.** The serif (`var(--serif)`) survives only as deliberate accents: the brand wordmark, the figure-tile numerals, the gate product name, and the ledger's italic persona names. Do not reintroduce serif headers. Where the marketing site is read once, the app is operated. Editorial discipline applies to chrome, navigation, headings, status, and labels; the workflow canvas is allowed denser geometric tooling.
 
 ---
 
