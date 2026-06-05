@@ -3,6 +3,7 @@ import type { RosterEntry } from '../agents/rosterClient.js';
 import { ALL_WORKFLOW_OPTIONS } from '../agents/roleTemplates.js';
 import { IconButton } from '../ui/IconButton.js';
 import { XIcon } from '../ui/icons/index.js';
+import { ModalPortal } from '../ui/ModalPortal.js';
 
 /**
  * "Create a board" modal (boards redesign) — replaces the inline create form.
@@ -40,6 +41,7 @@ export function CreateBoardModal({ roster, onClose, onCreate }: {
   }, []);
 
   return (
+    <ModalPortal>
     <div className="hire-scrim" onClick={onClose}>
       <div
         ref={dialogRef}
@@ -100,5 +102,6 @@ export function CreateBoardModal({ roster, onClose, onCreate }: {
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }

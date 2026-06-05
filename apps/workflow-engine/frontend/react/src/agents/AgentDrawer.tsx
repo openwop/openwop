@@ -11,6 +11,7 @@ import { IconButton } from '../ui/IconButton.js';
 import { AutonomyMeter } from './AutonomyMeter.js';
 import { toast } from '../ui/toast.js';
 import { XIcon, CheckIcon, ClockIcon, MessageSquareIcon, AlertIcon, ArrowRightIcon } from '../ui/icons/index.js';
+import { ModalPortal } from '../ui/ModalPortal.js';
 
 /**
  * Agent quick-look drawer (agents-workforce redesign PR 2) — a right
@@ -99,6 +100,7 @@ export function AgentDrawer({ view, approvals, tab, onTab, onClose, onCheckNow, 
   const waitingCard = view.cards.find((c) => c.columnId === 'waiting');
 
   return (
+    <ModalPortal>
     <div className="agent-drawer-scrim" onClick={onClose}>
       <aside
         ref={dialogRef}
@@ -220,5 +222,6 @@ export function AgentDrawer({ view, approvals, tab, onTab, onClose, onCheckNow, 
         </footer>
       </aside>
     </div>
+    </ModalPortal>
   );
 }

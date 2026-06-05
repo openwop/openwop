@@ -4713,6 +4713,8 @@ a.surface-card:hover,
   position: fixed;
   inset: 0;
   background: var(--scrim);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   z-index: 70;
   display: flex;
   justify-content: flex-end;
@@ -4845,6 +4847,8 @@ a.surface-card:hover,
   position: fixed;
   inset: 0;
   background: var(--scrim);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   z-index: 70;
   display: flex;
   align-items: center;

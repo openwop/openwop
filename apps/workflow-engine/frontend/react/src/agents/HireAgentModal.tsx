@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ROLE_TEMPLATES, roleThemeForKey } from './roleTemplates.js';
 import { IconButton } from '../ui/IconButton.js';
 import { XIcon, ArrowRightIcon } from '../ui/icons/index.js';
+import { ModalPortal } from '../ui/ModalPortal.js';
 
 /**
  * "Hire an agent" modal (agents-workforce redesign PR 4) — the fast path IN
@@ -36,6 +37,7 @@ export function HireAgentModal({ onClose }: { onClose: () => void }): JSX.Elemen
   };
 
   return (
+    <ModalPortal>
     <div className="hire-scrim" onClick={onClose}>
       <div
         ref={dialogRef}
@@ -109,5 +111,6 @@ export function HireAgentModal({ onClose }: { onClose: () => void }): JSX.Elemen
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }
