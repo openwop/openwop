@@ -16,7 +16,7 @@ import {
   listSavedWorkflows,
   newWorkflowId,
   renameSavedWorkflow,
-  seedSavedWorkflowsIfFirstVisit,
+  topUpSeededWorkflows,
   upsertSavedWorkflow,
 } from './persistence/localStore.js';
 import type { SavedWorkflow } from './schema/workflow.js';
@@ -99,7 +99,7 @@ export function WorkflowsDashboard() {
     const seeds = PREMADE_WORKFLOWS
       .filter((tpl) => !tpl.requiresTypeIds)
       .map((tpl) => cloneTemplateToUserWorkflow(tpl));
-    const n = seedSavedWorkflowsIfFirstVisit(seeds);
+    const n = topUpSeededWorkflows(seeds);
     if (n > 0) refresh();
     // refresh is stable for this hook's lifetime (closes over setVersion);
     // intentionally run-once on mount only.

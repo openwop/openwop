@@ -5146,9 +5146,9 @@ a.surface-card:hover,
   gap: var(--space-2);
   flex-wrap: wrap;
   justify-content: center;
-  margin-top: var(--space-4);
+  margin-top: var(--space-3);
 }
-.welcome-agents-label { color: var(--ink-3); font-size: 12.5px; margin-right: var(--space-1); }
+.welcome-agents-label { color: var(--ink-3); font-size: 12.5px; margin-top: var(--space-4); text-align: center; width: 100%; }
 .welcome-agent-pill {
   display: inline-flex;
   align-items: center;
