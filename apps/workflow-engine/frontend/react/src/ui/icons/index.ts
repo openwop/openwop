@@ -68,6 +68,7 @@ export { XIcon } from './XIcon.js';
 export { ZapIcon } from './ZapIcon.js';
 export { InboxIcon } from './InboxIcon.js';
 export { ActivityIcon } from './ActivityIcon.js';
+export { DotsIcon } from './DotsIcon.js';
 export { DatabaseIcon } from './DatabaseIcon.js';
 export { FileTextIcon } from './FileTextIcon.js';
 export { PackageIcon } from './PackageIcon.js';
