@@ -18,7 +18,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAudioRecorder, blobToBase64, type RecordedAudio } from './hooks/useAudioRecorder.js';
 import { SlashAutocomplete } from './SlashAutocomplete.js';
 import { AgentMentionAutocomplete } from './AgentMentionAutocomplete.js';
-import { MicIcon, SendIcon, StopIcon, PaperclipIcon, XIcon, AlertIcon } from '../ui/icons/index.js';
+import { MicIcon, SendIcon, StopIcon, PaperclipIcon, PlusIcon, XIcon, AlertIcon } from '../ui/icons/index.js';
 import {
   fileToContentPart,
   attachmentRejectionReason,
@@ -376,7 +376,7 @@ export function ChatInput({
             border: '1px solid var(--color-border)',
           }}
         >
-          <PaperclipIcon size={18} />
+          <PlusIcon size={18} />
         </button>
         {recorder.isSupported && (
           <button
