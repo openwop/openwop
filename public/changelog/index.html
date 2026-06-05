@@ -64,6 +64,7 @@
         <div class="nav-dropdown-menu" role="menu">
           <a href="/spec/v1/" role="menuitem">Spec</a>
           <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/comparisons/a2a-openwop-mcp/" role="menuitem">A2A vs MCP vs OpenWOP</a>
           <a href="/rfcs/" role="menuitem">RFCs</a>
           <a href="/governance/" role="menuitem">Governance</a>
           <a href="/security/" role="menuitem">Security</a>
@@ -113,6 +114,7 @@
   <ul>
     <li><a href="/spec/v1/">Spec</a></li>
     <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/comparisons/a2a-openwop-mcp/">A2A vs MCP vs OpenWOP</a></li>
     <li><a href="/rfcs/">RFCs</a></li>
     <li><a href="/governance/">Governance</a></li>
     <li><a href="/security/">Security</a></li>
@@ -176,8 +178,16 @@
     
   </header>
   <div class="changelog-version-body">
-    <h3 id="docs">Docs</h3>
+    <h3 id="reference-app-non-normative-apps-workflow-engine">Reference app (non-normative, <code>apps/workflow-engine</code>)</h3>
 <ul>
+<li><strong>Board rename + <code>guided</code> autonomy (architect-approved 2026-06-05).</strong> <code>PATCH /v1/host/sample/kanban/boards/{boardId}</code> renames a board — <code>name</code> is the only mutable field (owner rebinding alters RFC 0086 §C run attribution; column edits alter trigger semantics — both rejected); the boards overflow menu gains Rename. <code>autonomyLevel</code> gains <code>guided</code>: routine heartbeat picks run immediately, <strong>high-priority</strong> picks queue as approval proposals (the only middle level composable from real fields — card priority + the existing approval path); the autonomy meter's middle bar goes live, the create wizard + hire modal offer it, and the stock seed ships Devon guided. Tripwire restated: <code>autonomyLevel</code> is host-extension only and must never appear on the normative <code>/v1/agents/roster</code> response.</li>
+<li><strong>White-label foundation batch (PRD <code>plans/OPENWOP-WHITELABEL-PRD.md</code>, PRs #568/#569/#570/#571/#573/#574/#575 + the deploy-posture commit).</strong> Retro-logged as one entry: dev <code>/api</code> proxy now defaults to <code>http://localhost:8080</code> (the steward-backend default leaked adopters' dev traffic upstream); the white-label zip strips every <code>.env<em></code> (the tracked <code>.env.production</code> carried the steward's backend + Firebase config); <code>/readiness</code> reports a missing prod <code>OPENWOP_SESSION_SECRET</code> instead of lying 200; <code>.env.production.example</code> template + <code>scripts/check-branding.sh</code> leak guard; brand-stamped installable PWA manifest; <code>OPENWOP_DEPLOY_POSTURE</code> (<code>bearer-shared</code> / <code>cookie-per-visitor</code> / <code>auth</code>) with the managed-tier sign-in wall derived per posture (<code>OPENWOP_MANAGED_ANON_SIGNIN_REQUIRED</code> overrides); <code>&amp;lt;AppGate&amp;gt;</code> (none/password/sign-in) + auto-seed-on-entry; <code>markSrc</code>/<code>lockupSrc</code> split (legacy <code>VITE_BRAND_LOGO_SRC</code> aliased), <code>VITE_BRAND_INSTANCE_NAME</code>, <code>VITE_BRAND_DEFAULT_THEME</code>; <code>deploy/up.sh</code> recipe. <strong>Behavior change for bearer/API-key callers of <code>GET /v1/agents</code>:</strong> the implicit see-all-tenants read is gone — wildcard is now the explicit <code>?tenantId=</em></code> escape hatch for wildcard principals; plain bearer callers scope to the shared <code>default</code> tenant (closes a latent cross-tenant user-agent visibility leak; host-app surface, not a normative-spec change).</li>
+<li><strong>White-label review fixes (code-review follow-up).</strong> <code>OPENWOP_MANAGED_GLOBAL_DAILY_TOKEN_CAP</code> — a cross-tenant daily spend backstop for the managed tier (the per-tenant cap alone is evadable on cookie-per-visitor deploys by minting fresh anon tenants); one-time boot migration of legacy <code>_anon</code>-tenant user agents to <code>default</code> (they would otherwise orphan after the fallback rename); <code>seedEverything</code> now <em>verifies</em> each demo domain against the durable stores instead of returning a constant list; <code>up.sh</code> attaches secrets on the first revision, gains <code>OPENWOP_SKIP_BRAND_CHECK=1</code> for stock-brand deploys, and fixes the <code>capture()</code> arg leak; PWA manifest icon MIME follows the mark's file type; <code>check-branding.sh</code> favicon check no longer false-positives on custom inline-SVG favicons and now inspects the stamped manifest; WHITE-LABEL.md documents that the password gate is demo friction, not authentication; brand-mark drift guard (committed SVG copies byte-identical + inline <code>OpenwopLogo</code> geometry matches) wired into the frontend build.</li>
+</ul>
+<h3 id="docs">Docs</h3>
+<ul>
+<li><strong>README document-index RFC-status lag.</strong> The hand-curated <code>Covers</code> cells in the README "Document index" table marked <code>agent-workspace.md</code> as "RFC 0059 (<code>Active</code>)" and <code>conformance-certification.md</code> as "RFC 0089 (<code>Active</code>)" — both RFCs are in fact <code>Accepted</code> (0059 since 2026-05-25; 0089 this cycle). The generated status banner (<code>docs/PROTOCOL-STATUS.md</code>, line ~66) was already correct ("Accepted 86 / Active 1 / Draft 2 — only RFC 0035 remains Active"); only the prose row descriptions lagged. Corrected both to <code>Accepted</code>. No count or wire change.</li>
+<li><strong>Conformance-evidence suite-version sync.</strong> The four <code>examples/hosts/*/conformance.md</code> banners lagged at <code>@openwop/openwop-conformance@1.15.0</code> while <code>INTEROP-MATRIX.md</code> had already re-measured those hosts to <code>1.18.1</code> (2026-06-01) — making the matrix's "evidence no longer stale at 1.15.0" claim untrue. Synced the in-memory / sqlite / python per-host banners to the matrix-authoritative <code>1.18.1</code> numbers (+18 passed, failures/skips unchanged → 2010·46·105, 2056·0·105, 2008·2·151 of 2161), and noted on all surfaces that the current published suite <code>1.19.0</code> adds only the capability-gated RFC 0082 §B <code>agent-channel-dispatch</code> scenario, which soft-skips on these hosts — applicable pass-rates unchanged. No re-run / fabricated counts.</li>
 <li><strong>Sample workflow-engine host doc sync.</strong> <code>apps/workflow-engine/README.md</code> now reflects that the sample wires the reference <code>vendor.myndhyve.*</code> host surfaces (chat/canvas/kanban/knowledge/launchStudio/webResearch) + <code>host.{a2a,triggers,db.nosql}</code> + the <code>ctx.interrupt</code>/<code>ctx.suspend</code> primitive; stale <code>~70%</code>/<code>v1.1.0</code> measurements are marked as 2026-05-15-era snapshots (not re-measured). <code>docs/KNOWN-LIMITS.md</code> gains a "Sample workflow-engine host" section documenting the single-suspend-per-node limitation of the sample's <code>ctx.suspend</code> (only <code>core.openwop.a2a.multiTurnCoordinator</code> loops suspend; all gate nodes are single-suspend and unaffected).</li>
 </ul>
 <h3 id="additive">Additive</h3>
@@ -566,6 +576,7 @@
           <li><a href="/scenarios/">Scenario walkthroughs</a></li>
           <li><a href="/profiles/">Profiles</a></li>
           <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/comparisons/a2a-openwop-mcp/">A2A vs MCP vs OpenWOP</a></li>
           <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
           <li><a href="/versioning/">Versioning policy</a></li>
         </ul>

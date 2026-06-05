@@ -1409,6 +1409,7 @@ function buildContentDir() {
     { src: 'scenarios.md',                    dest: ['scenarios'],                    nav: '',           label: 'Scenario walkthroughs' },
     { src: 'community.md',                    dest: ['community'],                    nav: 'community',  label: 'Community' },
     { src: 'protocol.md',                     dest: ['protocol'],                     nav: 'protocol',   label: 'The OpenWOP protocol' },
+    { src: 'comparisons/a2a-openwop-mcp.md',  dest: ['comparisons', 'a2a-openwop-mcp'], nav: 'protocol', label: 'A2A vs MCP vs OpenWOP' },
     { src: 'implement.md',                    dest: ['implement'],                    nav: 'implement',  label: 'Implementing OpenWOP' },
     { src: 'install.md',                      dest: ['install'],                      nav: 'implement',  label: 'Install the demo app' },
     { src: 'governance/spec-status.md',       dest: ['governance', 'spec-status'],    nav: 'protocol',   label: 'Spec status policy' },

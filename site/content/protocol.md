@@ -10,6 +10,13 @@ The normative wire contract for v1.x.
 - **[REST API reference →](/api/rest/)** — every endpoint with request, response, and error envelope, rendered from `api/openapi.yaml`.
 - **[Profiles →](/profiles/)** — the coherent capability slices a host can claim (`openwop-core`, `openwop-stream-sse`, `openwop-secrets`, `openwop-provider-policy`, `openwop-node-packs`, etc.).
 
+## Comparisons and positioning
+
+Where OpenWOP sits relative to adjacent agent protocols.
+
+- **[A2A vs MCP vs OpenWOP →](/comparisons/a2a-openwop-mcp/)** — a specification-level comparison of agent-to-agent collaboration, tool/context integration, and durable workflow orchestration.
+- **[Positioning & non-goals →](/spec/v1/positioning.html)** — the normative OpenWOP positioning surface inside the v1 spec.
+
 ## Conformance
 
 How a host proves it implements the spec.
