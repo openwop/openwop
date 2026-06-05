@@ -101,7 +101,7 @@ export function ApprovalsInbox({ onResolved }: { onResolved?: () => void }): JSX
       align: 'right',
       render: (a) => (
         <div className="action-bar" style={{ justifyContent: 'flex-end' }}>
-          <button type="button" onClick={() => void claim(a)} disabled={busy === a.approvalId}>
+          <button type="button" className="btn-accent-solid btn-sm" onClick={() => void claim(a)} disabled={busy === a.approvalId}>
             <CheckIcon size={13} /> Approve &amp; run
           </button>
           <button type="button" className="secondary" onClick={() => void reject(a)} disabled={busy === a.approvalId}>

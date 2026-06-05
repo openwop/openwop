@@ -47,7 +47,7 @@ export function ApprovalCard({ runId, nodeId, data, onResolved }: Props) {
           <button
             key={action}
             disabled={submitting}
-            className={action === 'approve' ? '' : 'secondary'}
+            className={action === 'approve' ? 'btn-accent-solid' : 'secondary'}
             onClick={() => send(action)}
           >
             {action}

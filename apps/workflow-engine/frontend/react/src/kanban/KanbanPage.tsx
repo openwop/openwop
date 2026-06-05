@@ -171,7 +171,7 @@ export function KanbanPage(): JSX.Element {
           <button
             key={b.id}
             type="button"
-            className={activeBoard?.id === b.id ? 'primary' : 'secondary'}
+            className={activeBoard?.id === b.id ? 'btn-accent' : 'secondary'}
             onClick={() => void openBoard(b.id)}
           >
             {b.name}
@@ -224,7 +224,7 @@ export function KanbanPage(): JSX.Element {
             <option key={r.rosterId} value={r.rosterId}>{r.persona}</option>
           ))}
         </select>
-        <button type="submit" className="primary">
+        <button type="submit" className="btn-accent-solid">
           Create board
         </button>
       </form>

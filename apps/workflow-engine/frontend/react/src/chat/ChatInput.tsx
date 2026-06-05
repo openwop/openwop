@@ -420,15 +420,16 @@ export function ChatInput({
         ) : (
           <button
             type="button"
+            className="btn-accent-solid"
             onClick={() => { void submit(); }}
             disabled={!canSend}
             title={!canSend && disabledReason ? disabledReason : 'Send (Enter)'}
             aria-label="Send"
             style={{
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               borderRadius: '50%',
               minWidth: 36, width: 36, height: 36,
               padding: 0,
+              justifyContent: 'center',
             }}
           >
             <SendIcon size={16} />
