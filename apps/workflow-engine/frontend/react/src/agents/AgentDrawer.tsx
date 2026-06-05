@@ -155,7 +155,7 @@ export function AgentDrawer({ view, approvals, tab, onTab, onClose, onCheckNow, 
                   <div className="agent-drawer-ask-title">{a.cardTitle ?? a.proposal}</div>
                   <div className="agent-drawer-ask-detail">Proposes to run {workflowName(a.workflowId)}.</div>
                   <div className="action-bar" style={{ marginTop: 'var(--space-2)' }}>
-                    <button type="button" className="btn-accent btn-sm" disabled={resolving === a.approvalId} onClick={() => void approve(a)}>
+                    <button type="button" className="btn-accent-solid btn-sm" disabled={resolving === a.approvalId} onClick={() => void approve(a)}>
                       <CheckIcon size={14} aria-hidden /> Approve &amp; resume
                     </button>
                     <button type="button" className="secondary btn-sm" disabled={resolving === a.approvalId} onClick={() => void sendBack(a)}>

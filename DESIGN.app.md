@@ -26,7 +26,7 @@ The `:root` block in `src/styles/global.css` carries:
 | Warm-dark override (`@media (prefers-color-scheme: dark)`) | `DESIGN.md §9.1` (active) | Wired in `global.css` — token-only override + lifted functional tokens (§3 rule 2); landed across all three surfaces in lockstep (§9.2.5). The app adds a per-user `.theme-dark`/`.theme-light` toggle (`<ThemeToggle>`, §9.2.3) |
 | App-functional tokens (`--color-success` / `--color-warning` / `--color-danger`) | This doc, §3 | App-only; not mirrored to marketing site |
 | Legacy app aliases (`--color-bg`, `--color-surface`, `--font-sans`, …) | This doc, §4 | Transitional. Shrinks over time as references migrate to canonical names |
-| App geometry (`--radius`, `--space-1..6`, `--radius-bubble`, etc.) | This doc | App-only |
+| App geometry (`--radius` 8px controls · `--radius-lg` 14px containers (cards/queue/tiles/modals) · `--space-1..6`, `--radius-bubble`, etc.) | This doc | App-only. Button accent hierarchy: `.btn-accent-solid` (clay fill, `--paper` text — page CTA + queue Approve) > `.btn-accent` (clay-soft — in-row primaries) > `.secondary` outline |
 
 The marketing site has no `--color-success` etc.; the app needs them because it surfaces run states. Status colors are **functional, not brand**.
 

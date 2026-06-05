@@ -280,7 +280,7 @@ export function AgentDashboardPage(): JSX.Element {
         title="Digital workforce"
         lede="The named agents on staff — digital twins for company roles, each with workflows, a schedule, and a task board. What they own, how autonomous they are, and what they have been doing."
         actions={
-          <button type="button" className="primary" onClick={() => setHiring(true)}>Hire an agent</button>
+          <button type="button" className="btn-accent-solid" onClick={() => setHiring(true)}>+ Hire an agent</button>
         }
       />
 

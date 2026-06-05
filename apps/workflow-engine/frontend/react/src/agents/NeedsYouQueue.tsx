@@ -117,7 +117,7 @@ export function NeedsYouQueue({ views, approvals, onOpen, onResolved }: {
               <button type="button" className="secondary btn-sm" disabled={busy === a.approvalId} onClick={() => void sendBack(a)}>
                 Send back
               </button>
-              <button type="button" className="btn-accent btn-sm" disabled={busy === a.approvalId} onClick={() => void approve(a)}>
+              <button type="button" className="btn-accent-solid btn-sm" disabled={busy === a.approvalId} onClick={() => void approve(a)}>
                 <CheckIcon size={14} aria-hidden /> Approve &amp; resume
               </button>
             </div>
@@ -147,7 +147,7 @@ export function NeedsYouQueue({ views, approvals, onOpen, onResolved }: {
               </div>
             </div>
             <div className="needs-actions action-bar">
-              <button type="button" className="btn-accent btn-sm" onClick={() => onOpen(v.entry.rosterId, 'board')}>
+              <button type="button" className="btn-accent-solid btn-sm" onClick={() => onOpen(v.entry.rosterId, 'board')}>
                 Open board
               </button>
             </div>
