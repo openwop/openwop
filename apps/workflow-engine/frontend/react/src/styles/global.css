@@ -145,6 +145,40 @@
   --color-info:    oklch(68% 0.12 240);
 }
 
+/* ── Native chrome + scrollbars (token-driven; DESIGN.app.md §3 rule 2) ────
+ * `color-scheme` tells the UA which palette to paint native chrome with —
+ * overlay/native scrollbars, form-control internals, autofill. Without it,
+ * dark mode gets a glaring light scrollbar track (the page LOOKS dark but
+ * the browser still thinks it's light). Mirrors the token-block selector
+ * shape above: OS preference via @media, forced override via .theme-dark /
+ * .theme-light classes. */
+:root { color-scheme: light; }
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light) { color-scheme: dark; }
+}
+:root.theme-dark { color-scheme: dark; }
+
+/* Explicit scrollbar colors so EVERY scrollbar (page + inner panes) sits on
+ * the token palette in both modes: thumb = --rule-2 (the heavier hairline,
+ * which already flips for dark), track = transparent so the underlying
+ * surface shows through. Browsers that honor `scrollbar-color` (Firefox,
+ * Chrome 121+) ignore the ::-webkit-* pseudos by spec; Safari still reads
+ * them — same colors in both branches keeps engines consistent. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule-2) transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-corner { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background-color: var(--rule-2);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover { background-color: var(--ink-3); }
+
 @keyframes openwop-pulse {
   0%, 100% { opacity: 0.2; }
   50% { opacity: 0.8; }
