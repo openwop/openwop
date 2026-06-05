@@ -4877,3 +4877,18 @@ a.surface-card:hover,
 .hire-role-title { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13.5px; }
 .hire-role-blurb { color: var(--ink-2); font-size: 12px; line-height: 1.45; }
 .hire-foot { justify-content: flex-end; }
+
+/* ── Agents toolbar — one row (layout parity pass) ─────────────────────────
+ * The global `input/select { width: 100% }` baseline stacks toolbar controls;
+ * the filterbar overrides it so search grows and the selects hug content. */
+.filterbar {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin: var(--space-3) 0;
+  flex-wrap: wrap;
+}
+.filterbar-search { flex: 1 1 200px; width: auto; min-width: 160px; }
+.filterbar-select { width: auto; flex: 0 0 auto; }
+.wf-figures { margin-bottom: 0; }
+.wf-figure-l { display: inline-flex; align-items: center; gap: 5px; }
