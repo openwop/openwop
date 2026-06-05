@@ -1,20 +1,19 @@
 /**
- * Empty-state welcome card. Pivots from "ask the LLM about OpenWOP"
- * (the prior chatbot framing) to "run a workflow with @-mention" —
- * the actual differentiator the demo is built around.
+ * Empty-state welcome card (inner-content redesign 2026-06-05). Pivots from
+ * "ask the LLM about OpenWOP" to the actual differentiator: run a multi-step
+ * workflow with `/`, or hand a task to a named agent with `@`.
  *
- * Three of the four cards are real `@-mention` invocations of the
- * seeded templates: clicking pre-fills the chat input with the
- * mention + a representative input string so the user can hit Send
- * to actually dispatch a multi-step workflow. The fourth card is
- * a navigation pivot to the builder so users see where the workflows
- * came from + can build their own.
+ * All four cards are REAL slash invocations of the seeded premade templates —
+ * clicking pre-fills the composer with `/slug` + a representative input so
+ * Send dispatches a real run. Below them, the agent pills hand the chat to a
+ * named roster persona (`@nora `). No fabricated badges: there is no usage
+ * telemetry, so nothing claims "most used".
  */
 
 import { useMemo, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ClipboardIcon, SparklesIcon, WrenchIcon } from '../ui/icons/index.js';
+import { ClockIcon, ColumnsIcon, SparklesIcon, ZapIcon } from '../ui/icons/index.js';
 import { listWorkflowMentions } from './lib/workflowMentions.js';
+import { useAgentMentions } from './lib/agentMentions.js';
 import { seedSavedWorkflowsIfFirstVisit } from '../builder/persistence/localStore.js';
 import { PREMADE_WORKFLOWS, cloneTemplateToUserWorkflow } from '../builder/templates/premadeWorkflows.js';
 
@@ -42,28 +41,28 @@ interface WorkflowCardSpec {
 
 const WORKFLOW_CARD_SPECS: readonly WorkflowCardSpec[] = [
   {
-    glyph: <ClipboardIcon size={14} />,
+    glyph: <ColumnsIcon size={16} />,
     title: 'Multi-channel content review',
     templateName: 'Multi-channel content review',
-    description: 'One draft, four parallel reviewers (legal, brand, compliance, risk), fan-in with all_success, publish. 12 nodes, 4 HITL gates, 1 click.',
+    description: 'One draft is reviewed in parallel by legal, brand, compliance and risk — and only publishes once all four approve.',
     trailing: 'Draft a Q3 product launch announcement',
   },
   {
-    glyph: '🚦',
+    glyph: <ClockIcon size={16} />,
     title: 'Approval with timeout fallback',
     templateName: 'Approval escalation with timeout fallback',
-    description: 'Primary approver races a 5s timeout to a backup approver. Whichever resolves first drives publication. The canonical HITL escalation pattern.',
+    description: "The primary approver races a 5-second timer. If they don't respond, a backup approver takes over so work never stalls.",
     trailing: 'Approve the new pricing change',
   },
   {
-    glyph: <SparklesIcon size={14} />,
+    glyph: <SparklesIcon size={16} />,
     title: 'Triple-AI review board',
     // Match the EXACT premadeWorkflows.ts template name (hyphenated).
     // Welcome-card resolution does a case-insensitive prefix match
     // against listWorkflowMentions(); the hyphen has to be present
     // for the match to fire.
     templateName: 'Triple-AI review board',
-    description: 'Three concurrent critics fan out from one draft. An arbiter merges their notes into a single verdict. Multi-agent orchestration in one turn.',
+    description: 'Three AI critics review one draft at the same time; an arbiter merges their notes into a single verdict.',
     // The three critic system prompts say "Read the text below" — so
     // trailing MUST be real prose, not a meta-instruction. Earlier
     // versions sent "Critique this paragraph for clarity and concision"
@@ -71,6 +70,13 @@ const WORKFLOW_CARD_SPECS: readonly WorkflowCardSpec[] = [
     // actual paragraph attached.
     trailing:
       'Our new pricing is simple: $19/month gets you the Starter plan with unlimited workflows, 10,000 runs, and email support. Teams that need more can upgrade to Pro at $49/month for 50,000 runs and priority support. Both plans include a 14-day free trial — no credit card required. Cancel anytime.',
+  },
+  {
+    glyph: <ZapIcon size={16} />,
+    title: 'Race-to-respond with audit trail',
+    templateName: 'Race-to-respond with audit trail',
+    description: 'A fast first response races a slower audit log; whichever finishes first moves work forward — and both always complete.',
+    trailing: 'Customer reports checkout is failing on mobile — draft the first response',
   },
 ];
 
@@ -87,7 +93,9 @@ function resolveSlug(templateName: string): string | null {
 }
 
 export function WelcomeCard({ onPickSuggestion }: Props): JSX.Element {
-  const nav = useNavigate();
+  // The named roster personas — the `@` hand-off pills under the cards.
+  const { entries: agentEntries } = useAgentMentions();
+  const personas = agentEntries.filter((e) => e.agentId.startsWith('user.')).slice(0, 5);
 
   // Resolve each card's live slug once per render. This binds the
   // welcome card to the user's actual workflow inventory rather than
@@ -144,80 +152,61 @@ export function WelcomeCard({ onPickSuggestion }: Props): JSX.Element {
       }}>
         Run workflows by name. Chat when you need to.
       </h2>
-      <p className="muted" style={{ marginTop: 8, fontSize: 13, maxWidth: 560, lineHeight: 1.5 }}>
-        OpenWOP makes multi-agent orchestration as easy as /-mentioning a workflow
-        or @-mentioning an agent. Click one below — each is a real multi-step
-        workflow on the live sample backend.
+      <p className="muted" style={{ marginTop: 8, fontSize: 13.5, maxWidth: 560, lineHeight: 1.6 }}>
+        Type <code className="welcome-key">/</code> to run a multi-step workflow,
+        or <code className="welcome-key">@</code> to hand a task to one of your
+        agents. Pick one to see it run live.
       </p>
-      <div className="page-enter" style={{
-        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12,
-        maxWidth: 720, width: '100%', marginTop: 24,
-      }}>
+      <div className="page-enter welcome-grid">
         {resolvedCards.map((c) => {
           const available = c.slug !== null;
           return (
             <button
               key={c.templateName}
               type="button"
-              className="secondary"
+              className="welcome-card"
               disabled={!available}
               onClick={() => {
                 if (c.slug) onPickSuggestion(`/${c.slug} ${c.trailing}`);
               }}
               title={available
-                ? `Pre-fill chat input with @${c.slug}`
+                ? `Pre-fill the composer with /${c.slug}`
                 : `Workflow "${c.title}" isn't in your saved workflows. Open the builder to create or import it.`}
               aria-label={available
-                ? `Run workflow ${c.title} (@${c.slug})`
+                ? `Run workflow ${c.title} (/${c.slug})`
                 : `${c.title} — workflow not available`}
-              style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
-                padding: 14, textAlign: 'left',
-                gap: 6, border: '1px solid var(--color-border)',
-                opacity: available ? 1 : 0.55,
-                cursor: available ? 'pointer' : 'not-allowed',
-              }}
             >
-              <span style={{ fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span aria-hidden>{c.glyph}</span> {c.title}
+              <span className="welcome-card-head">
+                <span className="welcome-card-icon" aria-hidden>{c.glyph}</span>
+                <span className="welcome-card-title">{c.title}</span>
               </span>
-              <code style={{ fontSize: 10.5, color: 'var(--clay)', fontFamily: 'var(--mono)' }}>
-                {c.slug ? `@${c.slug}` : '(not available)'}
-              </code>
-              <span className="muted" style={{ fontSize: 11.5, lineHeight: 1.5 }}>{c.description}</span>
+              <span className="welcome-card-desc">{c.description}</span>
+              <code className="welcome-slug">{c.slug ? `/${c.slug}` : '(not available)'}</code>
             </button>
           );
         })}
-        {/* Fourth card: pivot to the builder. Not a workflow invocation —
-            a navigation hand-off so users see where workflows come from
-            + can build their own. */}
-        <button
-          type="button"
-          className="secondary"
-          onClick={() => nav('/builder')}
-          title="Open the visual workflow builder"
-          aria-label="Open the visual workflow builder"
-          style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
-            padding: 14, textAlign: 'left',
-            gap: 6, border: '1px solid var(--clay-rule, var(--color-border))',
-            background: 'var(--paper-2, transparent)',
-          }}
-        >
-          <span style={{ fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <WrenchIcon size={14} /> Build your own →
-          </span>
-          <code style={{ fontSize: 10.5, color: 'var(--clay)', fontFamily: 'var(--mono)' }}>
-            /builder
-          </code>
-          <span className="muted" style={{ fontSize: 11.5, lineHeight: 1.5 }}>
-            Open the visual workflow builder. Drag nodes, pick provider + key + prompts per node, watch the wire-shape in the envelope inspector.
-          </span>
-        </button>
       </div>
+
+      {personas.length > 0 ? (
+        <div className="welcome-agents">
+          <span className="welcome-agents-label">or hand it to an agent</span>
+          {personas.map((a) => (
+            <button
+              key={a.agentId}
+              type="button"
+              className="welcome-agent-pill"
+              onClick={() => onPickSuggestion(`@${a.slug} `)}
+              title={`Hand the task to ${a.displayName} (@${a.slug})`}
+            >
+              <span className="welcome-agent-avatar" aria-hidden>{a.displayName.slice(0, 1).toUpperCase()}</span>
+              <span className="welcome-agent-at" aria-hidden>@</span> {a.displayName}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       <p className="muted" style={{ marginTop: 20, fontSize: 11.5, maxWidth: 520, lineHeight: 1.5 }}>
         Just want to chat? Type below — the LLM passthrough is a single-step workflow with one chat node.
-        Type <code>@</code> any time to switch into orchestration mode.
       </p>
     </div>
   );
