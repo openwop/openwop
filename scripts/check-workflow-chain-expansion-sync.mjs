@@ -33,7 +33,13 @@ import { fileURLToPath } from 'node:url';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const CONFORMANCE_PATH = resolve(REPO_ROOT, 'conformance/src/lib/workflow-chain-expansion.ts');
-const HOST_PATH = resolve(REPO_ROOT, 'examples/hosts/in-memory/src/workflow-chain-expansion.ts');
+// The in-memory host now lives in the openwop-examples repo. CI checks it out and
+// points OPENWOP_EXAMPLES_DIR at the checkout root; falls back to an in-tree path
+// for anyone who vendors examples/ alongside the spec corpus.
+const EXAMPLES_ROOT = process.env.OPENWOP_EXAMPLES_DIR
+  ? resolve(process.env.OPENWOP_EXAMPLES_DIR)
+  : REPO_ROOT;
+const HOST_PATH = resolve(EXAMPLES_ROOT, 'examples/hosts/in-memory/src/workflow-chain-expansion.ts');
 
 // Markers chosen so that the host file (which has additional I/O code
 // AFTER the pure algorithm) and the conformance file (which is pure

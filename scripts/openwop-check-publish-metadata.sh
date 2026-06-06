@@ -158,43 +158,9 @@ else
   ok "$PYPROJECT version is $EXPECTED_V1_VERSION."
 fi
 
-# 9. Example packages are not publishable artifacts, but they are part of the
-#    public release surface. Keep them under the OpenWOP scope, pinned to the
-#    v1.0 baseline, and private so npm publish workflows cannot accidentally
-#    ship demos. (The site package moved to the openwop/openwop-site repo.)
-echo "[9/12] example package release metadata..."
-for PKG in \
-  "$SPEC_ROOT"/examples/*/package.json \
-  "$SPEC_ROOT"/examples/hosts/*/package.json; do
-  PKG_NAME=$(grep -E '"name":' "$PKG" | head -1 | sed -E 's/.*"name":[[:space:]]*"([^"]+)".*/\1/')
-  PKG_VERSION=$(grep -E '"version":' "$PKG" | head -1 | sed -E 's/.*"version":[[:space:]]*"([^"]+)".*/\1/')
-  if [[ "$PKG_NAME" != ${EXPECTED_NPM_SCOPE}/* ]]; then
-    err "$PKG has name '$PKG_NAME' — does not start with $EXPECTED_NPM_SCOPE/."
-  elif [[ "$PKG_VERSION" != "$EXPECTED_V1_VERSION" ]]; then
-    err "$PKG has version '$PKG_VERSION', expected '$EXPECTED_V1_VERSION'."
-  elif ! grep -qE '"private":\s*true' "$PKG"; then
-    err "$PKG is a demo/site package and must remain private."
-  else
-    ok "$PKG is private and aligned to $EXPECTED_V1_VERSION."
-  fi
-done
-
-# 10. Reference hosts advertise v1.0 metadata in discovery/OpenAPI surfaces.
-#     A copied 0.x sample version here is user-visible and makes the examples
-#     look pre-release even when the spec and packages are v1.0.
-echo "[10/12] reference host advertised versions..."
-for HOST in \
-  "$SPEC_ROOT/examples/hosts/in-memory/src/server.ts" \
-  "$SPEC_ROOT/examples/hosts/sqlite/src/server.ts"; do
-  if grep -qE "version:[[:space:]]*'0\\.|version:[[:space:]]*\"0\\.|info:[^{]*\\{[^}]*version:[[:space:]]*'0\\.|protocolVersion:[[:space:]]*'0\\." "$HOST"; then
-    err "$HOST advertises stale 0.x host/API metadata."
-    grep -nE "version:[[:space:]]*'0\\.|version:[[:space:]]*\"0\\.|protocolVersion:[[:space:]]*'0\\." "$HOST" >&2
-  elif ! grep -qE "version:[[:space:]]*'${EXPECTED_V1_VERSION}'|version:[[:space:]]*\"${EXPECTED_V1_VERSION}\"" "$HOST"; then
-    err "$HOST does not advertise host/API version $EXPECTED_V1_VERSION."
-  else
-    ok "$HOST advertises v1.0 release metadata."
-  fi
-done
+# Example-package release metadata + reference-host advertised-version checks
+# moved to the openwop-examples repo (examples/ extracted 2026-06); they run in
+# that repo's CI against its own package.json + host server.ts files.
 
 # 11. Release posture — manifests and publishing docs must describe a
 #    production-ready v1.0 release, not alpha/deferred/live-history copy

@@ -34,13 +34,11 @@ on:
   push:
     branches: [main]
     paths:
-      - 'examples/hosts/postgres/**'
       - 'conformance/**'
       - 'spec/v1/production-profile.md'
       - '.github/workflows/postgres-host-conformance.yml'
   pull_request:
     paths:
-      - 'examples/hosts/postgres/**'
       - 'conformance/**'
       - '.github/workflows/postgres-host-conformance.yml'
 
@@ -53,18 +51,25 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # Reference hosts moved to openwop-examples; check them out alongside.
+      - name: Check out openwop-examples (reference hosts)
+        uses: actions/checkout@v6
+        with:
+          repository: openwop/openwop-examples
+          path: examples-ext
+
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
           cache: 'npm'
-          cache-dependency-path: examples/hosts/postgres/package-lock.json
+          cache-dependency-path: examples-ext/examples/hosts/postgres/package-lock.json
 
       - name: Install Postgres host
-        working-directory: examples/hosts/postgres
+        working-directory: examples-ext/examples/hosts/postgres
         run: npm ci
 
       - name: Run in-host smoke suite
-        working-directory: examples/hosts/postgres
+        working-directory: examples-ext/examples/hosts/postgres
         env:
           OPENWOP_WEBHOOK_ALLOW_PRIVATE: 'true'
         run: npm test
@@ -77,16 +82,23 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # Reference hosts moved to openwop-examples; check them out alongside.
+      - name: Check out openwop-examples (reference hosts)
+        uses: actions/checkout@v6
+        with:
+          repository: openwop/openwop-examples
+          path: examples-ext
+
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
           cache: 'npm'
           cache-dependency-path: |
-            examples/hosts/postgres/package-lock.json
+            examples-ext/examples/hosts/postgres/package-lock.json
             conformance/package-lock.json
 
       - name: Install Postgres host
-        working-directory: examples/hosts/postgres
+        working-directory: examples-ext/examples/hosts/postgres
         run: npm ci
 
       - name: Install conformance suite
@@ -94,7 +106,7 @@ jobs:
         run: npm ci
 
       - name: Boot Postgres host via pglite (background)
-        working-directory: examples/hosts/postgres
+        working-directory: examples-ext/examples/hosts/postgres
         env:
           OPENWOP_WEBHOOK_ALLOW_PRIVATE: 'true'
           OPENWOP_PORT: '3839'
