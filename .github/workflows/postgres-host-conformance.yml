@@ -58,6 +58,15 @@ jobs:
           repository: openwop/openwop-examples
           path: examples-ext
 
+      # The postgres host's in-host test suite assumes the old monorepo layout —
+      # pack-consumer.test.ts reads <root>/registry/v1/packs + <root>/registry/keys
+      # (now in openwop-registry). Check that out too.
+      - name: Check out openwop-registry (pack fixtures for pack-consumer test)
+        uses: actions/checkout@v6
+        with:
+          repository: openwop/openwop-registry
+          path: registry-ext
+
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
@@ -68,15 +77,19 @@ jobs:
         working-directory: examples-ext/examples/hosts/postgres
         run: npm ci
 
-      # A few postgres host tests (mcp-client, oauth2-oidc, reasoning-event-emission)
-      # import conformance test-libs via ../../../../conformance/src/lib/*. That
-      # path is the spec corpus's conformance/ (which stays in this repo). Expose it
-      # at examples-ext/conformance (where the host's relative import resolves) and
-      # install its deps so the helpers load.
-      - name: Provide conformance test-libs to host tests
+      # The host test suite expects spec-corpus + registry siblings at its REPO_ROOT
+      # (examples-ext/), via relative imports + join(REPO_ROOT, ...). Reconstruct
+      # that layout from the checked-out repos so the in-host smoke runs unchanged:
+      #   - conformance/src/lib/*           (spec corpus, stays here)  → mcp-client, oauth2-oidc, reasoning-event tests
+      #   - scripts/verify-audit-checkpoints.mjs (spec corpus)         → audit-checkpoint-export test
+      #   - registry/v1/packs + registry/keys (openwop-registry)       → pack-consumer test
+      - name: Reconstruct spec-corpus + registry siblings for host tests
         run: |
           npm --prefix conformance ci
           ln -s "$GITHUB_WORKSPACE/conformance" examples-ext/conformance
+          ln -s "$GITHUB_WORKSPACE/scripts/verify-audit-checkpoints.mjs" \
+                examples-ext/scripts/verify-audit-checkpoints.mjs
+          ln -s "$GITHUB_WORKSPACE/registry-ext/registry" examples-ext/registry
 
       - name: Run in-host smoke suite
         working-directory: examples-ext/examples/hosts/postgres
