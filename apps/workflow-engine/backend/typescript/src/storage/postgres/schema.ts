@@ -32,7 +32,7 @@ export interface Queryable {
   ): Promise<{ rows: R[] }>;
 }
 
-export const LATEST_SCHEMA_VERSION = 19;
+export const LATEST_SCHEMA_VERSION = 20;
 
 const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
   1: async (client) => {
@@ -90,17 +90,11 @@ const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
       CREATE INDEX IF NOT EXISTS idx_interrupts_run_node
         ON interrupts (run_id, node_id, resolved_at);
 
-      -- RFC 0056 annotations: per-run side-store (NOT the replayable event log).
-      CREATE TABLE IF NOT EXISTS annotations (
-        annotation_id TEXT PRIMARY KEY,
-        run_id TEXT NOT NULL,
-        tenant_id TEXT NOT NULL,
-        payload JSONB NOT NULL,
-        created_at TEXT NOT NULL
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_annotations_run
-        ON annotations (run_id, created_at);
+      -- RFC 0056 annotations: created in migration v20 (NOT here). It was
+      -- briefly declared in this v1 block, but forward-only migrations never
+      -- re-run v1, so long-lived DBs initialized before that edit never got the
+      -- table. Creating it once in v20 fixes those DBs and keeps fresh DBs to a
+      -- single CREATE (avoids a redundant no-op create that pg-mem rejects).
 
       CREATE TABLE IF NOT EXISTS webhooks (
         subscription_id TEXT PRIMARY KEY,
@@ -588,6 +582,26 @@ const MIGRATIONS: Record<number, (client: Queryable) => Promise<void>> = {
         count BIGINT NOT NULL
       );
       CREATE INDEX IF NOT EXISTS idx_run_budget_window ON run_budget (window_start);
+    `);
+  },
+  20: async (client) => {
+    // FORWARD-FIX for the RFC 0056 annotations table. It was originally declared
+    // in migration v1, but a long-lived DB initialized before that declaration
+    // was added to the v1 block never re-runs v1 (migrations are forward-only),
+    // so production hit `relation "annotations" does not exist` on the first
+    // annotation write (e.g. the workforce demo seed). This idempotent migration
+    // creates it on existing DBs; fresh DBs already have it from v1 (no-op).
+    // Mirrors sqlite mig 23.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS annotations (
+        annotation_id TEXT PRIMARY KEY,
+        run_id TEXT NOT NULL,
+        tenant_id TEXT NOT NULL,
+        payload JSONB NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_annotations_run
+        ON annotations (run_id, created_at);
     `);
   },
 };
