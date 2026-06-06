@@ -14,8 +14,10 @@ import {
   getWorkforce,
   listWorkforces,
   searchWorkforceTrace,
+  seedShowcaseWorkforces,
   seedWorkforceEntities,
   seedWorkforceHistory,
+  SHOWCASE_TENANT,
 } from '../src/host/workforceService.js';
 import type { Storage } from '../src/storage/storage.js';
 
@@ -29,6 +31,31 @@ describe('workforceService', () => {
     storage = openSqliteStorage(':memory:');
     initHostExtPersistence(storage);
     await __clearWorkforces();
+  });
+
+  it('seedShowcaseWorkforces: seeds the showcase, is idempotent on completeness, and self-heals a partial', async () => {
+    const count = async () =>
+      (await storage.listRuns({ tenantId: SHOWCASE_TENANT, limit: 5000 })).filter(
+        (r) => (r.metadata as { workforceId?: string }).workforceId === HERO,
+      ).length;
+
+    const first = await seedShowcaseWorkforces(storage, NOW);
+    expect(first.healed).toBe(true);
+    expect(first.runs).toBe(300);
+    expect(await count()).toBe(300);
+
+    // already complete → cheap no-op, no extra runs
+    const second = await seedShowcaseWorkforces(storage, NOW);
+    expect(second.healed).toBe(false);
+    expect(await count()).toBe(300);
+
+    // simulate an interrupted/partial seed → next call clears + reseeds to full
+    const partial = (await storage.listRuns({ tenantId: SHOWCASE_TENANT, limit: 5000 })).slice(0, 60);
+    for (const r of partial) await storage.deleteRun(r.runId);
+    expect(await count()).toBe(240);
+    const third = await seedShowcaseWorkforces(storage, NOW);
+    expect(third.healed).toBe(true);
+    expect(await count()).toBe(300);
   });
 
   it('seeds the hero workforce entity idempotently', async () => {
