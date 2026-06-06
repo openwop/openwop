@@ -23,23 +23,17 @@
  * cached token on every authedHeaders() call.
  */
 
-import { initializeApp, type FirebaseApp } from 'firebase/app';
-import {
-  fetchSignInMethodsForEmail,
-  getAuth,
-  getRedirectResult,
-  GoogleAuthProvider,
-  GithubAuthProvider,
-  linkWithCredential,
-  OAuthProvider,
-  signInWithRedirect,
-  signOut as fbSignOut,
-  onIdTokenChanged,
-  type AuthCredential,
-  type User,
-  type Auth,
-} from 'firebase/auth';
+// Firebase is loaded LAZILY (GAP-ANALYSIS E13): the SDK is ~120KB+ and only the
+// auth path needs it, so we keep it out of the initial bundle via dynamic
+// import() and pull it in on first auth use (sign-in, or the boot-time
+// onAuthChanged subscription). Types are `import type` only — erased at build,
+// so they add no runtime firebase reference to the entry chunk.
+import type { FirebaseApp } from 'firebase/app';
+import type { AuthCredential, User, Auth } from 'firebase/auth';
 import { setCurrentIdToken } from '../client/config.js';
+
+/** The lazily-imported `firebase/auth` module namespace. */
+type AuthMod = typeof import('firebase/auth');
 
 // ─── redirect-flow state persistence ────────────────────────────
 // We use the redirect-based sign-in flow (not popup) to dodge the
@@ -87,7 +81,7 @@ function stashPendingLink(cred: AuthCredential, attemptedProvider: ProviderId): 
     } satisfies SerializedLink));
   } catch { /* private mode */ }
 }
-function consumePendingLink(): { cred: AuthCredential; attemptedProvider: ProviderId } | null {
+function consumePendingLink(am: AuthMod): { cred: AuthCredential; attemptedProvider: ProviderId } | null {
   try {
     const raw = sessionStorage.getItem(PENDING_LINK_KEY);
     if (!raw) return null;
@@ -95,7 +89,7 @@ function consumePendingLink(): { cred: AuthCredential; attemptedProvider: Provid
     const parsed = JSON.parse(raw) as SerializedLink;
     // OAuthProvider.credentialFromJSON resurrects either Google or
     // GitHub OAuth credentials (both extend OAuthProvider).
-    const cred = OAuthProvider.credentialFromJSON(parsed.cred);
+    const cred = am.OAuthProvider.credentialFromJSON(parsed.cred);
     return { cred, attemptedProvider: parsed.attemptedProvider };
   } catch { return null; }
 }
@@ -159,7 +153,10 @@ interface FirebaseConfig {
 
 let auth: Auth | null = null;
 let app: FirebaseApp | null = null;
+let authMod: AuthMod | null = null;
 let cachedUser: User | null = null;
+/** Memoized init so concurrent first-callers share one SDK load + initializeApp. */
+let initPromise: Promise<Auth | null> | null = null;
 
 function readConfigFromEnv(): FirebaseConfig | null {
   const apiKey = import.meta.env.VITE_FIREBASE_API_KEY as string | undefined;
@@ -175,31 +172,42 @@ export function isAuthConfigured(): boolean {
   return readConfigFromEnv() !== null;
 }
 
-function ensureInit(): Auth | null {
+/**
+ * Lazily load the Firebase SDK + initialize Auth, exactly once. Returns null
+ * (without loading anything) when Firebase isn't configured for this build.
+ * Memoized via `initPromise` so the boot-time onAuthChanged subscription and a
+ * concurrent sign-in click share a single dynamic import + initializeApp.
+ */
+async function ensureInitAsync(): Promise<Auth | null> {
   if (auth) return auth;
   const cfg = readConfigFromEnv();
   if (!cfg) return null;
-  app = initializeApp(cfg);
-  auth = getAuth(app);
-  // Eagerly capture the cached user (page reload restores the prior session).
-  cachedUser = auth.currentUser;
-  // Keep the cache in sync + propagate the fresh ID token to the
-  // shared client/config cache so authedHeaders() reads it
-  // synchronously on every fetch.
-  onIdTokenChanged(auth, async (u) => {
-    cachedUser = u;
-    if (u) {
-      try {
-        const token = await u.getIdToken();
-        setCurrentIdToken(token);
-      } catch {
+  if (initPromise) return initPromise;
+  initPromise = (async () => {
+    const [appMod, am] = await Promise.all([import('firebase/app'), import('firebase/auth')]);
+    authMod = am;
+    app = appMod.initializeApp(cfg);
+    auth = am.getAuth(app);
+    // Eagerly capture the cached user (page reload restores the prior session).
+    cachedUser = auth.currentUser;
+    // Keep the cache in sync + propagate the fresh ID token to the shared
+    // client/config cache so authedHeaders() reads it synchronously on fetch.
+    am.onIdTokenChanged(auth, async (u) => {
+      cachedUser = u;
+      if (u) {
+        try {
+          const token = await u.getIdToken();
+          setCurrentIdToken(token);
+        } catch {
+          setCurrentIdToken(null);
+        }
+      } else {
         setCurrentIdToken(null);
       }
-    } else {
-      setCurrentIdToken(null);
-    }
-  });
-  return auth;
+    });
+    return auth;
+  })();
+  return initPromise;
 }
 
 export interface AuthUser {
@@ -226,18 +234,18 @@ function project(u: User | null): AuthUser | null {
  * `processRedirectResult()` at app boot.
  */
 export async function signInWithGoogle(): Promise<void> {
-  const a = ensureInit();
-  if (!a) throw new Error('Firebase Auth not configured');
+  const a = await ensureInitAsync();
+  if (!a || !authMod) throw new Error('Firebase Auth not configured');
   setAttemptedProvider('google.com');
-  await signInWithRedirect(a, new GoogleAuthProvider());
+  await authMod.signInWithRedirect(a, new authMod.GoogleAuthProvider());
 }
 
 /** Same as `signInWithGoogle`, for GitHub. */
 export async function signInWithGithub(): Promise<void> {
-  const a = ensureInit();
-  if (!a) throw new Error('Firebase Auth not configured');
+  const a = await ensureInitAsync();
+  if (!a || !authMod) throw new Error('Firebase Auth not configured');
   setAttemptedProvider('github.com');
-  await signInWithRedirect(a, new GithubAuthProvider());
+  await authMod.signInWithRedirect(a, new authMod.GithubAuthProvider());
 }
 
 /**
@@ -286,11 +294,12 @@ export function getRedirectState(): Promise<RedirectState> {
  * flight — returns { kind: 'none' }.
  */
 export async function processRedirectResult(): Promise<RedirectState> {
-  const a = ensureInit();
-  if (!a) return { kind: 'none' };
+  const a = await ensureInitAsync();
+  if (!a || !authMod) return { kind: 'none' };
+  const am = authMod;
   const attemptedProvider = consumeAttemptedProvider();
   try {
-    const result = await getRedirectResult(a);
+    const result = await am.getRedirectResult(a);
     // If getRedirectResult returned null BUT we were expecting a
     // redirect AND auth.currentUser is set, Firebase already processed
     // the sign-in on a prior load — treat it as success so the migrate
@@ -303,11 +312,11 @@ export async function processRedirectResult(): Promise<RedirectState> {
     // Successfully signed in via redirect. If there's a pending
     // credential stash from the previous (rejected) redirect, link
     // it now so subsequent visits work with either provider.
-    const pending = consumePendingLink();
+    const pending = consumePendingLink(am);
     let linked = false;
     if (pending) {
       try {
-        await linkWithCredential(result.user, pending.cred);
+        await am.linkWithCredential(result.user, pending.cred);
         linked = true;
       } catch (err) {
         console.warn('openwop.auth: provider linking failed', err);
@@ -322,11 +331,11 @@ export async function processRedirectResult(): Promise<RedirectState> {
       const email = e.customData.email;
       const pendingCred =
         attemptedProvider === 'google.com'
-          ? GoogleAuthProvider.credentialFromError(err as Parameters<typeof GoogleAuthProvider.credentialFromError>[0])
-          : GithubAuthProvider.credentialFromError(err as Parameters<typeof GithubAuthProvider.credentialFromError>[0]);
+          ? am.GoogleAuthProvider.credentialFromError(err as Parameters<typeof am.GoogleAuthProvider.credentialFromError>[0])
+          : am.GithubAuthProvider.credentialFromError(err as Parameters<typeof am.GithubAuthProvider.credentialFromError>[0]);
       let providers: readonly string[] = [];
       try {
-        providers = await fetchSignInMethodsForEmail(a, email);
+        providers = await am.fetchSignInMethodsForEmail(a, email);
       } catch { /* email-enum protection; fall through */ }
       if (pendingCred) stashPendingLink(pendingCred, attemptedProvider);
       const typed = new ExistingProviderSignInError(email, providers, pendingCred, attemptedProvider);
@@ -337,15 +346,29 @@ export async function processRedirectResult(): Promise<RedirectState> {
 }
 
 export async function signOut(): Promise<void> {
-  const a = ensureInit();
-  if (!a) return;
+  const a = await ensureInitAsync();
+  if (!a || !authMod) return;
   clearPendingLinkState();
-  await fbSignOut(a);
+  await authMod.signOut(a);
   cachedUser = null;
 }
 
+/**
+ * Delete the signed-in Firebase user (account hard-delete step 2). No-op when
+ * Firebase isn't configured or nobody is signed in. Surfaces Firebase errors
+ * (e.g. `auth/requires-recent-login`) to the caller. Keeps the firebase SDK
+ * import confined to this module so deleteAccount.ts stays SDK-free.
+ */
+export async function deleteCurrentFirebaseUser(): Promise<void> {
+  const a = await ensureInitAsync();
+  if (!a) return;
+  const u = a.currentUser;
+  if (u) await u.delete();
+}
+
+/** Cached signed-in user (sync). Returns null until the lazy auth init has
+ *  completed and onIdTokenChanged has populated the cache. */
 export function getCurrentUser(): AuthUser | null {
-  ensureInit();
   return project(cachedUser);
 }
 
@@ -353,21 +376,30 @@ export function getCurrentUser(): AuthUser | null {
  *  not configured. The SDK caches tokens internally — this call is
  *  cheap unless the cached token is near expiry. */
 export async function getCurrentIdToken(): Promise<string | null> {
-  const a = ensureInit();
+  const a = await ensureInitAsync();
   if (!a) return null;
   const u = a.currentUser ?? cachedUser;
   if (!u) return null;
   return await u.getIdToken();
 }
 
-/** Subscribe to auth-state changes. Fires immediately with the current
- *  value, then on every user change (sign-in, sign-out, token refresh).
- *  Returns an unsubscribe function. */
+/** Subscribe to auth-state changes. Kicks off the lazy SDK load, then fires
+ *  with the current value and on every change (sign-in, sign-out, token
+ *  refresh). Returns an unsubscribe that is safe to call before init resolves.
+ *  When Firebase isn't configured, fires once with null and never loads the SDK. */
 export function onAuthChanged(cb: (u: AuthUser | null) => void): () => void {
-  const a = ensureInit();
-  if (!a) {
-    cb(null);
-    return () => undefined;
-  }
-  return onIdTokenChanged(a, (u) => cb(project(u)));
+  let unsubscribe: (() => void) | null = null;
+  let cancelled = false;
+  void ensureInitAsync().then((a) => {
+    if (cancelled) return;
+    if (!a || !authMod) {
+      cb(null);
+      return;
+    }
+    unsubscribe = authMod.onIdTokenChanged(a, (u) => cb(project(u)));
+  });
+  return () => {
+    cancelled = true;
+    if (unsubscribe) unsubscribe();
+  };
 }
