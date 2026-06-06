@@ -12,7 +12,7 @@
 | OpenAPI operations | 48 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 324 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 89 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 90 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -35,7 +35,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 86 |
-| Active | 1 |
+| Active | 2 |
 | Draft | 2 |
 
 | RFC | Title | Status |
@@ -129,6 +129,7 @@
 | RFC 0087 | Define an **agent org-chart** - a tenant-scoped, descriptive grouping of standing roster agents (RFC 0086) into departments + roles with `reportsTo` edges and a responsibility view - under one load-bearing invariant: **org position confers NO authority** (a `reportsTo`/manager edge MUST NOT widen `toolAllowlist`, grant an RBAC scope, or bypass an approval gate); composing RFC 0086 (the members), RFC 0074 (tenant scoping), RFC 0049 (RBAC - unchanged by position), and RFC 0051 (approval gates - unchanged by position) | Accepted |
 | RFC 0088 | `openwop-core-standard` - the stable Core Standard Profile (the black-box-proven floor) | Accepted |
 | RFC 0089 | Conformance certification bundle - machine-readable per-profile evidence | Accepted |
+| RFC 0090 | Shadow-run contract - prove an agentic workflow against a baseline before cut-over | Active |
 
 ## SDK Helper Coverage
 
@@ -169,7 +170,7 @@
 ## Active Follow-Ups
 
 - 2 RFCs still `Draft` (RFC 0038, RFC 0043) — advance with schema/conformance proof or defer.
-- 1 RFC `Active` (RFC 0035) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 2 RFCs `Active` (RFC 0035, RFC 0090) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
