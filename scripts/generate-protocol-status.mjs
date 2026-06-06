@@ -122,7 +122,8 @@ function artifactVersions() {
     { artifact: 'Python SDK `openwop-client`', version: pyprojectVersion('sdk/python/pyproject.toml'), source: '`sdk/python/pyproject.toml`', cadence: 'tracks spec major; floats patch' },
     { artifact: 'Go SDK', version: 'git tag `sdk/go/v*`', source: '`sdk/go/` (tag-versioned module)', cadence: 'tracks spec major; tagged' },
     { artifact: 'Conformance suite `@openwop/openwop-conformance`', version: readJsonVersion('conformance/package.json'), source: '`conformance/package.json`', cadence: 'minor on scenario add/remove' },
-    { artifact: 'CLI `@openwop/cli`', version: readJsonVersion('cli/package.json'), source: '`cli/package.json`', cadence: 'independent 0.x via `cli/v*` tags' },
+    // The CLI (`@openwop/cli`) was extracted to openwop/openwop-cli and is no
+    // longer versioned from this repo — see that repo for its release line.
   ];
 }
 

@@ -151,16 +151,16 @@ New to OpenWOP? Two paths:
 - **[`QUICKSTART-10MIN.md`](./QUICKSTART-10MIN.md)** — fastest possible "what is OpenWOP and how do I run one?" Boots the in-memory reference host on your laptop, runs a workflow via curl + SDK + SSE. No vendor SDK, no managed-service setup. Just Node 20+ and a clone of this repo.
 - **[`QUICKSTART.md`](./QUICKSTART.md)** — end-to-end walkthrough against any OpenWOP-compliant host: auth + create run + read snapshot, SSE + webhooks, fork + replay, node packs, conformance.
 
-For the full workflow-engine demo app, use the repo-local CLI (a TypeScript package — build it once, then run the bundle):
+For the full workflow-engine demo app, use the **OpenWOP CLI** (`@openwop/cli`), which lives in its own repo, [`openwop/openwop-cli`](https://github.com/openwop/openwop-cli):
 
 ```bash
-npm --prefix cli install && npm --prefix cli run build
-node cli/dist/openwop.js doctor
-node cli/dist/openwop.js demo start
-node cli/dist/openwop.js demo status
+npm install -g @openwop/cli
+openwop doctor
+openwop demo start    # run from inside this checkout
+openwop demo status
 ```
 
-See [`cli/README.md`](./cli/README.md) and [`docs/OPENWOP-CLI-RESEARCH-AND-PLAN.md`](./docs/OPENWOP-CLI-RESEARCH-AND-PLAN.md).
+See the [openwop-cli repo](https://github.com/openwop/openwop-cli) for the full command catalog and install options.
 
 ## Examples
 

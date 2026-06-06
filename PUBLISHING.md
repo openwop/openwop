@@ -14,11 +14,11 @@ The spec corpus ships 4 distributable artifacts alongside the prose docs, plus 1
 | TypeScript conformance suite | `@openwop/openwop-conformance` | `1.0.0` | npm | **Ready for v1.0 publish** |
 | Python SDK | `openwop-client` | `1.0.0` | PyPI | **Ready for v1.0 publish** |
 | Go SDK | `github.com/openwop/openwop/sdk/go` | `v1.0.0` | Go modules (proxy.golang.org) | **Ready for v1.0 tag** |
-| OpenWOP CLI | `@openwop/cli` | `0.1.0` | npm | **Independently versioned** — operator-side; tags `cli/vX.Y.Z` to ship separately from the spec corpus |
+| OpenWOP CLI | `@openwop/cli` | — | npm | **Moved** — now lives in [`openwop/openwop-cli`](https://github.com/openwop/openwop-cli) and publishes from there (not from this repo) |
 
 The four spec-corpus artifacts should ship from the same v1.0 baseline. Historical point-in-time package versions from before the OpenWOP reset are intentionally ignored; this document is the source of truth for the OpenWOP v1.0 production release.
 
-The CLI is operator-side tooling (not part of the v1 wire surface), so it carries its own SemVer line — currently `0.x` — and tags as `cli/vX.Y.Z` to publish independently of corpus releases. A corpus-aligned `v*` tag also bumps the CLI as a convenience for users tracking both together.
+The CLI is operator-side tooling (not part of the v1 wire surface). It was extracted from this monorepo into [`openwop/openwop-cli`](https://github.com/openwop/openwop-cli), where it carries its own `0.x` SemVer line and publishes on its own `vX.Y.Z` tags via that repo's `publish.yml`. It is no longer built, tested, or released from this corpus repo, and a corpus-aligned `v*` tag no longer touches it.
 
 ---
 

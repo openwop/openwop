@@ -144,8 +144,8 @@ openwop relay whatsapp`}</Block>
         <p>
           The CLI is <a href="https://www.npmjs.com/package/@openwop/cli">@openwop/cli</a> on
           npm. Source, docs, and issue tracker live in
-          {' '}<a href="https://github.com/openwop/openwop/tree/main/cli">github.com/openwop/openwop</a>.
-          Bug reports especially welcome — the CLI is new (v0.1.x) and
+          {' '}<a href="https://github.com/openwop/openwop-cli">github.com/openwop/openwop-cli</a>.
+          Bug reports especially welcome — the CLI is new (v0.2.x) and
           additive changes will land throughout v1.x.
         </p>
       </div>
