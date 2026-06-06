@@ -474,11 +474,11 @@ export function searchWorkforceTrace(
 
 // ---- shadow & prove (EP1 MG-5 — RFC 0081 `live-shadow` eval, host-ext pilot) --
 //
-// RECONCILED (code review): the canonical "prove against a baseline" surface is
-// RFC 0081's `live-shadow` eval mode + `EvalSummary` (`spec/v1/agent-evaluation.md`),
-// gated by an RFC 0082 promotion gate — NOT a bespoke shadow shape (the original
-// RFC 0090 invention was withdrawn). This is a SIMPLIFIED host-ext stand-in for
-// RFC 0081's `EvalSummary`, pending the reference-host eval projection: it scores
+// The canonical "prove against a baseline" surface is RFC 0081's `live-shadow`
+// eval mode + `EvalSummary` (`spec/v1/agent-evaluation.md`), gated by an RFC 0082
+// promotion gate — NOT a bespoke shadow shape. This is a SIMPLIFIED host-ext
+// stand-in for RFC 0081's `EvalSummary`, pending the reference-host eval
+// projection: it scores
 // the workforce's runs against the human-override baseline (the agent's decision
 // "passed" when it stood — clean / escalated→approved; "diverged" when overridden
 // or later flagged a false positive). Field names mirror RFC 0081 `EvalSummary`
