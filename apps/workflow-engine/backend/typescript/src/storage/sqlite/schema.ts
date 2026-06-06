@@ -8,7 +8,7 @@
 
 import type { Database } from 'better-sqlite3';
 
-export const LATEST_SCHEMA_VERSION = 22;
+export const LATEST_SCHEMA_VERSION = 23;
 
 const MIGRATIONS: Record<number, (db: Database) => void> = {
   1: (db) => {
@@ -69,17 +69,9 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
       CREATE INDEX IF NOT EXISTS idx_interrupts_run_node
         ON interrupts (run_id, node_id, resolved_at);
 
-      -- RFC 0056 annotations: per-run side-store (NOT the replayable event log).
-      CREATE TABLE IF NOT EXISTS annotations (
-        annotation_id TEXT PRIMARY KEY,
-        run_id TEXT NOT NULL,
-        tenant_id TEXT NOT NULL,
-        payload TEXT NOT NULL,
-        created_at TEXT NOT NULL
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_annotations_run
-        ON annotations (run_id, created_at);
+      -- RFC 0056 annotations: created in migration v23 (NOT here) — mirrors
+      -- postgres v20. Kept to a single CREATE so long-lived DBs that predate the
+      -- table get it via the forward migration.
 
       CREATE TABLE IF NOT EXISTS webhooks (
         subscription_id TEXT PRIMARY KEY,
@@ -643,6 +635,23 @@ const MIGRATIONS: Record<number, (db: Database) => void> = {
         count INTEGER NOT NULL
       );
       CREATE INDEX IF NOT EXISTS idx_run_budget_window ON run_budget (window_start);
+    `);
+  },
+  23: (db) => {
+    // FORWARD-FIX for the RFC 0056 annotations table — see postgres mig 20.
+    // annotations was declared in v1, but a DB initialized before that
+    // declaration landed never re-runs v1 (forward-only migrations), so it can
+    // be missing on a long-lived DB. Idempotent; a no-op on fresh DBs.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS annotations (
+        annotation_id TEXT PRIMARY KEY,
+        run_id TEXT NOT NULL,
+        tenant_id TEXT NOT NULL,
+        payload TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_annotations_run
+        ON annotations (run_id, created_at);
     `);
   },
 };
