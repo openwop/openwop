@@ -27,8 +27,50 @@ import {
   setWorkforceStatus,
 } from '../host/workforceService.js';
 import type { WorkforceStatus } from '../host/workforce.js';
+import {
+  getMigrationJourney,
+  patchMigrationJourney,
+  type MigrationJourneyPatch,
+} from '../host/migrationService.js';
+import { MIGRATION_STAGE_KEYS, type MigrationStageKey, type StageStatus } from '../host/migrationJourney.js';
 
 const WORKFORCE_STATUSES: readonly WorkforceStatus[] = ['shadow', 'piloting', 'production'];
+
+/** Parse + validate the migration-journey PATCH body (light, host-extension). */
+function parseMigrationPatch(body: unknown): MigrationJourneyPatch {
+  const b = (body ?? {}) as Record<string, unknown>;
+  const patch: MigrationJourneyPatch = {};
+  if ('target' in b) {
+    const t = b.target as { workflowId?: unknown; targetOutcome?: unknown } | null;
+    patch.target = t === null ? null : {
+      workflowId: typeof t?.workflowId === 'string' ? t.workflowId : '',
+      targetOutcome: typeof t?.targetOutcome === 'string' ? t.targetOutcome : '',
+    };
+  }
+  if ('dataManifest' in b) {
+    const d = b.dataManifest as { dataSources?: unknown; sensitivity?: unknown; approvalModel?: unknown } | null;
+    patch.dataManifest = d === null ? null : {
+      dataSources: typeof d?.dataSources === 'string' ? d.dataSources : '',
+      sensitivity: typeof d?.sensitivity === 'string' ? d.sensitivity : '',
+      approvalModel: typeof d?.approvalModel === 'string' ? d.approvalModel : '',
+    };
+  }
+  if ('boundaries' in b) {
+    const bd = b.boundaries as { auto?: unknown; review?: unknown } | null;
+    const strArr = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []);
+    patch.boundaries = bd === null ? null : { auto: strArr(bd?.auto), review: strArr(bd?.review) };
+  }
+  if ('stageStatus' in b && b.stageStatus && typeof b.stageStatus === 'object') {
+    const ss: Partial<Record<MigrationStageKey, StageStatus>> = {};
+    for (const [k, v] of Object.entries(b.stageStatus as Record<string, unknown>)) {
+      if (MIGRATION_STAGE_KEYS.includes(k as MigrationStageKey) && (v === 'pending' || v === 'done')) {
+        ss[k as MigrationStageKey] = v;
+      }
+    }
+    patch.stageStatus = ss;
+  }
+  return patch;
+}
 
 interface Deps {
   storage: Storage;
@@ -129,6 +171,35 @@ export function registerWorkforceRoutes(app: Express, deps: Deps): void {
       }
       const updated = await setWorkforceStatus(req.params.workforceId, status as WorkforceStatus);
       res.json(updated);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // MG-0 — Workflow Migration journey state (per workforce).
+  app.get('/v1/host/sample/workforces/:workforceId/migration', async (req, res, next) => {
+    try {
+      const wf = await getWorkforce(req.params.workforceId);
+      if (!wf) {
+        throw new OpenwopError('not_found', `Workforce \`${req.params.workforceId}\` not found.`, 404, {
+          workforceId: req.params.workforceId,
+        });
+      }
+      res.json(await getMigrationJourney(req.params.workforceId));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.patch('/v1/host/sample/workforces/:workforceId/migration', async (req, res, next) => {
+    try {
+      const wf = await getWorkforce(req.params.workforceId);
+      if (!wf) {
+        throw new OpenwopError('not_found', `Workforce \`${req.params.workforceId}\` not found.`, 404, {
+          workforceId: req.params.workforceId,
+        });
+      }
+      res.json(await patchMigrationJourney(req.params.workforceId, parseMigrationPatch(req.body)));
     } catch (err) {
       next(err);
     }
