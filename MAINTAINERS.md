@@ -131,13 +131,10 @@ The repo currently hosts `spec/v1/` rendered at `/spec/v1/`. Under v1.x compatib
 The release manager:
 
 1. Lands the additive prose / schema / RFC content directly inside `spec/v1/`. Each touched file's status banner updates to the new minor: `Status: Stable · v1.2 (YYYY-MM-DD).`
-2. Adds a `## [1.2.0]` section to `CHANGELOG.md`. The changelog renderer in `site/src/build.mjs::buildChangelog()` picks the new version up automatically — no template change needed.
-3. Bumps the homepage hero status line in `public/index.html` (`v1.1 · 35 spec docs · …`). Search for the existing `v1.1` literal — it's a single occurrence.
-4. Updates the homepage Spec table (`§ 04 / Specification`) any rows whose claims change.
-5. Runs `bash scripts/build-site.sh` and verifies sitemap URL count is unchanged (no new spec-doc URLs land for a minor bump because canonical URLs are stable inside v1.x).
-6. Deploys: `firebase deploy --only hosting:docs`.
+2. Adds a `## [1.2.0]` section to `CHANGELOG.md`.
+3. Tags + publishes the release per `PUBLISHING.md`.
 
-**No `firebase.json` change is required for a minor bump.** The `/spec/v1.1/` and `/spec/latest/` redirects already point at `/spec/v1/` and will continue to serve any minor v1.x.
+**The public site is published from a separate repo** — [`openwop/openwop-site`](https://github.com/openwop/openwop-site) renders this corpus at a pinned version. The site (homepage hero, spec table, changelog, `/spec/v1/`, badges) re-renders and redeploys when `openwop-site` bumps its `OPENWOP_REF` pin to the new release (its `pin-bump` workflow opens that PR; merging it deploys). **No site steps, `public/index.html` edits, `build-site.sh` runs, or `firebase deploy --only hosting:docs` happen in this repo anymore.**
 
 ### Major bump to v2.x (rare)
 
