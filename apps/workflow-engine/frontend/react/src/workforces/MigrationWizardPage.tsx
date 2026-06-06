@@ -17,11 +17,14 @@ import {
   getWorkforceGovernance,
   getWorkforceShadow,
   patchMigrationJourney,
+  runWorkforceEval,
   updateWorkforceStatus,
+  EvalNotEnabledError,
   type MigrationJourney,
   type MigrationStageKey,
   type ShadowEvalSummary,
   type Workforce,
+  type WorkforceEvalSummary,
   type WorkforceGovernance,
   type WorkforceStatus,
 } from '../client/workforcesClient.js';
@@ -45,11 +48,27 @@ export function MigrationWizardPage(): JSX.Element {
   const [journey, setJourney] = useState<MigrationJourney | null>(null);
   const [governance, setGovernance] = useState<WorkforceGovernance | null>(null);
   const [shadow, setShadow] = useState<ShadowEvalSummary | null>(null);
+  const [evalResult, setEvalResult] = useState<WorkforceEvalSummary | null>(null);
+  const [evalState, setEvalState] = useState<'idle' | 'running' | 'unavailable'>('idle');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [active, setActive] = useState(0);
   const [busy, setBusy] = useState(false);
   const [stageError, setStageError] = useState<string | null>(null);
+
+  const runEval = async (): Promise<void> => {
+    setEvalState('running');
+    try {
+      setEvalResult(await runWorkforceEval(workforceId));
+      setEvalState('idle');
+    } catch (err) {
+      if (err instanceof EvalNotEnabledError) setEvalState('unavailable');
+      else {
+        setEvalState('idle');
+        setStageError(err instanceof Error ? err.message : 'eval failed');
+      }
+    }
+  };
 
   // editable form state
   const [target, setTarget] = useState({ workflowId: '', targetOutcome: '' });
@@ -206,6 +225,41 @@ export function MigrationWizardPage(): JSX.Element {
               human/legacy outcome) into an <code>EvalSummary</code>. Content-free per RFC 0081 §F — findings carry
               digests, never raw values.
             </p>
+
+            {/* Real eval RUN (RFC 0081 §C): dispatches the supervisor over the suite. */}
+            <div className="surface-card" style={{ padding: '0.75rem', marginBottom: '0.75rem' }}>
+              <div className="action-bar" style={{ justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <strong style={{ fontSize: '0.9rem' }}>Run a live-shadow eval</strong>
+                <button type="button" className="btn" disabled={evalState === 'running'} onClick={() => void runEval()}>
+                  {evalState === 'running' ? 'Running…' : evalResult ? 'Re-run eval' : 'Run eval'}
+                </button>
+              </div>
+              {evalState === 'unavailable' ? (
+                <Notice variant="info">This host hasn't enabled live eval runs (<code>agents.evalSuite</code>); showing the runs-derived scorecard below.</Notice>
+              ) : evalResult ? (
+                <>
+                  <div className="action-bar" style={{ gap: '0.75rem', flexWrap: 'wrap', margin: '0.5rem 0' }}>
+                    <span className={`chip ${evalResult.passed ? 'chip--success' : 'chip--warning'}`}>{evalResult.passed ? 'passed' : 'below bar'}</span>
+                    <span className="chip">score {pct(evalResult.aggregateScore)}</span>
+                    <span className="chip chip--muted">{evalResult.passedCount}/{evalResult.taskCount} tasks</span>
+                    <span className="chip chip--muted">{evalResult.suiteId}</span>
+                  </div>
+                  <ul style={{ margin: 0, fontSize: '0.8rem' }}>
+                    {evalResult.tasks.map((t) => (
+                      <li key={t.taskId}>
+                        <span className={`chip ${t.passed ? 'chip--success' : 'chip--danger'}`} style={{ marginRight: '0.4rem' }}>{t.passed ? '✓' : '✗'}</span>
+                        {t.taskId}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', margin: '0.4rem 0 0' }}>
+                  Dispatches the workforce's supervisor over the <code>invoice-exception</code> suite and scores each task against the human baseline.
+                </p>
+              )}
+            </div>
+
             {!shadow || shadow.status === 'pending' ? (
               <Notice variant="info">No shadow evidence yet — load the demo data (or run a live-shadow eval) to populate a scorecard.</Notice>
             ) : (
@@ -228,16 +282,21 @@ export function MigrationWizardPage(): JSX.Element {
                 ) : null}
               </>
             )}
-            <button
-              type="button"
-              className="btn"
-              disabled={busy || !shadow || shadow.status === 'pending'}
-              title={!shadow || shadow.status === 'pending' ? 'Needs shadow evidence first' : undefined}
-              onClick={() => void markDone('shadow-prove')}
-              style={{ marginTop: '0.5rem' }}
-            >
-              Mark proven &amp; continue
-            </button>
+            {(() => {
+              const proven = evalResult?.passed || (shadow != null && shadow.status !== 'pending');
+              return (
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={busy || !proven}
+                  title={!proven ? 'Run an eval (or load demo data) to gather proof first' : undefined}
+                  onClick={() => void markDone('shadow-prove')}
+                  style={{ marginTop: '0.5rem' }}
+                >
+                  Mark proven &amp; continue
+                </button>
+              );
+            })()}
           </div>
         ) : null}
 
