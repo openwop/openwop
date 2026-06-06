@@ -58,6 +58,34 @@ jobs:
       - name: Spec corpus consistency check
         run: npm run openwop:check
 
+  # Finding-2 cross-repo release-alignment guard. A coordinated spec release
+  # (`v*`) MUST be matched by SDK release tags in openwop/openwop-sdks (the SDKs
+  # track the spec major per PUBLISHING.md §"Versioning alignment"). This job
+  # makes that step loud + best-effort files a tracking issue in openwop-sdks so
+  # the SDKs can't silently fall behind the spec they implement. It only runs on
+  # a coordinated `v*` tag, not on `openwop-conformance/v*` (conformance-only).
+  remind-sdk-release:
+    needs: validate-tag
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Announce required openwop-sdks release
+        run: |
+          VER="${GITHUB_REF#refs/tags/}"
+          echo "::warning::Coordinated spec release ${VER} — push matching SDK tags in openwop/openwop-sdks (openwop/${VER}, openwop-client/${VER}, go/${VER}) per PUBLISHING.md §Versioning alignment."
+      - name: Open tracking issue in openwop-sdks (best-effort)
+        continue-on-error: true
+        env:
+          # Optional cross-repo token; the step no-ops cleanly if unset.
+          GH_TOKEN: ${{ secrets.SDKS_RELEASE_DISPATCH_TOKEN }}
+        run: |
+          [ -z "${GH_TOKEN:-}" ] && { echo "No SDKS_RELEASE_DISPATCH_TOKEN set — skipping issue creation."; exit 0; }
+          VER="${GITHUB_REF#refs/tags/}"
+          gh issue create --repo openwop/openwop-sdks \
+            --title "Release SDKs for spec ${VER}" \
+            --body "Coordinated spec release \`${VER}\` landed in openwop/openwop. Per PUBLISHING.md §\"Versioning alignment\", push matching SDK tags here: \`openwop/${VER}\`, \`openwop-client/${VER}\`, \`go/${VER}\`." \
+            || echo "issue creation failed (non-blocking)"
+
   publish-conformance:
     needs: preflight
     if: |
