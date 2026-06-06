@@ -1167,6 +1167,21 @@ pre {
 /* visually-hidden caption (a11y) */
 .data-table-caption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
+/* Skip-to-content link (a11y, GAP-ANALYSIS E6): off-screen until focused, so a
+ * keyboard user can jump past the persistent sidebar straight to <main>. */
+.skip-link {
+  position: absolute;
+  left: var(--space-2);
+  top: -4rem;
+  z-index: 1000;
+  padding: var(--space-2) var(--space-3);
+  background: var(--clay);
+  color: var(--color-on-scrim);
+  border-radius: var(--radius);
+  transition: top 0.15s ease;
+}
+.skip-link:focus { top: var(--space-2); }
+
 /* DataTable bulk-select column + bulk-action bar */
 .data-col--check { width: 1px; white-space: nowrap; text-align: center; }
 .data-col--check input { cursor: pointer; margin: 0; vertical-align: middle; }

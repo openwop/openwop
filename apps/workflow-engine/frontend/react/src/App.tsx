@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, Route, Routes, useLocation } from 'react-router-dom';
 import { NetworkPanel } from './devtools/NetworkPanel.js';
 import { installNetworkRecorder } from './devtools/networkRecorder.js';
@@ -42,6 +42,11 @@ export function App() {
   // Width/scroll treatment is manifest-declared per route (`chrome:`), never
   // hand-listed here. Admin-tier routes render inside <AdminLayout>'s
   // two-column shell, which needs the full-bleed main.
+  // Move keyboard focus to <main> on every navigation (a11y, GAP-ANALYSIS E6),
+  // so a route change doesn't strand focus on a now-irrelevant sidebar link.
+  const mainRef = useRef<HTMLElement>(null);
+  useEffect(() => { mainRef.current?.focus(); }, [location.pathname]);
+
   const chrome = chromeFor(location.pathname);
   const admin = isAdminPath(location.pathname);
   const mainClass = admin
@@ -56,6 +61,7 @@ export function App() {
   return (
     <AppGate>
     <div className={chrome === 'chat' ? 'app-shell app-shell--ai' : 'app-shell'}>
+      <a className="skip-link" href="#main-content">Skip to content</a>
       <AutoSeedDemoData />
       {/* Persistent left rail: grouped workspace nav (Build / Operate) + the
           single Admin entry, collapsible, with the workspace/org switcher +
@@ -63,7 +69,7 @@ export function App() {
       <Sidebar netOpen={netOpen} onToggleNet={() => setNetOpen((v) => !v)} />
       <div className="app-body">
         <DemoHostBanner />
-        <main className={mainClass}>
+        <main id="main-content" ref={mainRef} tabIndex={-1} className={mainClass}>
         <ErrorBoundary resetKey={location.pathname} label="page">
         <Routes>
           {FEATURES.filter((f) => f.tier !== 'admin').map((f) => (

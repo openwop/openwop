@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { resolveByRun } from '../client/interruptsClient.js';
 
 interface Props {
@@ -13,6 +13,11 @@ export function ClarificationDialog({ runId, nodeId, data, onResolved }: Props) 
   const [answer, setAnswer] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // HITL a11y (GAP-ANALYSIS E6): focus + label the answer field on mount.
+  const headingId = useId();
+  const answerId = useId();
+  const answerRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => { answerRef.current?.focus(); }, []);
 
   const question = ((data as { question?: string })?.question) ?? 'Please clarify.';
 
@@ -30,12 +35,14 @@ export function ClarificationDialog({ runId, nodeId, data, onResolved }: Props) 
   }
 
   return (
-    <div className="card">
-      <h2>Clarification needed</h2>
+    <div className="card" role="group" aria-labelledby={headingId}>
+      <h2 id={headingId}>Clarification needed</h2>
       <p>{question}</p>
       <div className="form-row">
-        <label>Your answer</label>
+        <label htmlFor={answerId}>Your answer</label>
         <textarea
+          id={answerId}
+          ref={answerRef}
           rows={3}
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}

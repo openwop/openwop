@@ -453,8 +453,12 @@ export function useChatSession(): UseChatSessionResult {
                 messages: s.messages.map((mm) => mm.id === m.id ? { ...mm, activeInterrupt: active } : mm),
               }));
             }
-          } catch {
-            /* ignore — best-effort resurfacing */
+          } catch (e) {
+            // Best-effort resurfacing, but no longer silent (GAP-ANALYSIS E6):
+            // a failed listOpenInterrupts left a run stuck with a phantom
+            // spinner and no signal. Surface it for diagnosis.
+            // eslint-disable-next-line no-console
+            console.warn('[chat] could not resurface open interrupts for run', runId, e);
           }
         } catch (err) {
           // Distinguish 404 (run record gone — account-deleted, retention
@@ -938,8 +942,11 @@ export function useChatSession(): UseChatSessionResult {
               ...s,
               messages: s.messages.map((m) => m.id === assistantId ? { ...m, activeInterrupt: active } : m),
             }));
-          } catch {
-            /* swallow; interrupt UI just stays absent */
+          } catch (e) {
+            // No longer silent (GAP-ANALYSIS E6): a dropped interrupt fetch
+            // previously left the approval card absent with no trace.
+            // eslint-disable-next-line no-console
+            console.warn('[chat] could not load open interrupt for run', runId, e);
           }
         } else if (ev.type === 'node.interrupt.resolved') {
           setSession((s) => ({
