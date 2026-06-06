@@ -2,6 +2,8 @@
 
 Companion to `0090-shadow-run-contract.md`. Likelihood × Impact (H/M/L). Critical/High risks require a named mitigation owner + target resolution.
 
+> **RECONCILED 2026-06-06.** The biggest realized risk was **R8 (new): duplicating Accepted RFC 0081's eval/live-shadow surface** — which materialized (the first draft did exactly that) and was caught in code review. Mitigation: re-scoped to compose RFC 0081 + 0082 + 0054; the duplicate wire surface is removed. R1–R3 (content-free / cross-tenant / side-effect risks of the invented `shadow.*` surface) are **moot** now that the surface is RFC 0081's already-Accepted, already-invariant-guarded `EvalSummary`. R4 (scope creep into an eval harness) is resolved by *deferring entirely* to RFC 0081, which is that harness.
+
 | ID | Risk | Likelihood | Impact | Score | Mitigation | Owner | Status |
 |---|---|---|---|---|---|---|---|
 | R1 | A host implements `shadow.diverged` / `shadow.compared` naively and includes **raw output values** (which may be PII / financial data) in the payload or event log. | M | H | **High** | Normative MUST-NOT (digests + metrics only); new `SECURITY/invariants.yaml` row; enforcing conformance scenario `shadow-comparison-content-free`; a worked redaction example in `shadow-run.md`. | Security Architect | Open |
