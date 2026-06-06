@@ -1,6 +1,6 @@
 # openwop Spec v1 — Conformance Certification Bundle
 
-> **Status: DRAFT v1.x (filed via [RFC 0089](../../RFCS/0089-conformance-certification-bundle.md), 2026-06-02).** Additive v1.x extension. Defines a **machine-readable conformance certification bundle** — an out-of-band artifact that binds a host's claimed profiles to the reproducible run that substantiates them. NOT a runtime wire surface (no `/v1/*` endpoint); the only discovery touch is one optional pointer field. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.x — reached `Accepted` via [RFC 0089](../../RFCS/0089-conformance-certification-bundle.md) (2026-06-02).** Additive v1.x extension. Defines a **machine-readable conformance certification bundle** — an out-of-band artifact that binds a host's claimed profiles to the reproducible run that substantiates them. NOT a runtime wire surface (no `/v1/*` endpoint); the only discovery touch is one optional pointer field. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ## Why this exists
 

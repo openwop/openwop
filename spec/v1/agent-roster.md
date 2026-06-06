@@ -1,6 +1,6 @@
 # openwop Spec v1 — Standing Agent Roster + Workflow Portfolio
 
-> **Status: DRAFT v1.x (filed via [RFC 0086](../../RFCS/0086-standing-agent-roster-and-workflow-portfolio.md), 2026-05-30).** Additive v1.x extension — not part of the v1.0 conformance gate. Lands the standing agent-instance record, the workflow-portfolio + inventory projection, the content-free `roster.run.initiated` attribution event, and the `capabilities.agents.roster` advertisement. The `GET /v1/agents/roster` endpoint, the SDK helpers, the behavioral attribution scenario, and the reference-host roster store land at `Active → Accepted`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.x — reached `Accepted` via [RFC 0086](../../RFCS/0086-standing-agent-roster-and-workflow-portfolio.md) (2026-05-31).** Additive v1.x extension — not part of the v1.0 conformance gate. Lands the standing agent-instance record, the workflow-portfolio + inventory projection, the content-free `roster.run.initiated` attribution event, and the `capabilities.agents.roster` advertisement. The `GET /v1/agents/roster` endpoint, the SDK helpers, the behavioral attribution scenario, and the reference-host roster store land at `Active → Accepted`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ## Why this exists
 
