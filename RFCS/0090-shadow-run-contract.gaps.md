@@ -2,7 +2,7 @@
 
 Companion to `0090-shadow-run-contract.md`. Open questions, deferred decisions, and missing inputs beyond the in-template Unresolved questions. Each gap has an owner + resolution path.
 
-> **RECONCILED 2026-06-06.** The RFC was returned to `Draft` and re-scoped to compose RFC 0081 (`live-shadow` eval + `EvalSummary`) + RFC 0082 (promotion gate) + RFC 0054 (diff) instead of inventing a parallel `capabilities.shadow` / `shadow.*` / `ShadowComparison` surface. Gaps G1–G8 below were written against that removed surface and are **superseded** by the single open question (Unresolved Q1): *is there any net-new wire surface, or does this RFC fully fold into RFC 0081 §D + RFC 0082 §E?* They are retained only for history.
+> **WITHDRAWN 2026-06-06.** Q1 resolved: "shadow → prove → cut over" is fully covered by RFC 0081 (`live-shadow` eval + `EvalSummary`) + RFC 0082 §E (promotion gate) + RFC 0054 (diff), so RFC 0090 was withdrawn with no net-new surface. Gaps G1–G8 below were written against the original (duplicating, never-implemented) `capabilities.shadow` / `shadow.*` / `ShadowComparison` invention and are **moot** — retained only for history.
 
 | ID | Section | Question / Missing Input | Owner | Resolution Path | Blocks |
 |---|---|---|---|---|---|
