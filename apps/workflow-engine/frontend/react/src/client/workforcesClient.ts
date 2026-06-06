@@ -88,6 +88,17 @@ export async function getWorkforceMetrics(workforceId: string): Promise<Workforc
   return asJson<WorkforceMetrics>(res, 'getWorkforceMetrics');
 }
 
+/** Cut over: change a workforce's status (MG-6). Production is gated server-side
+ *  on autonomy graduation — a 409 surfaces as a thrown Error with the host's message. */
+export async function updateWorkforceStatus(workforceId: string, status: WorkforceStatus): Promise<Workforce> {
+  const res = await fetch(`${base}/${encodeURIComponent(workforceId)}`, fetchOpts({
+    method: 'PATCH',
+    headers: { ...authedHeaders(), 'content-type': 'application/json' },
+    body: JSON.stringify({ status }),
+  }));
+  return asJson<Workforce>(res, 'updateWorkforceStatus');
+}
+
 // ── governance & graduated autonomy (EP1) ──────────────────────────────────
 
 export interface PromotionMilestone {

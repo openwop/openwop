@@ -19,7 +19,7 @@ import { DurableCollection } from './hostExtPersistence.js';
 import { createLogger } from '../observability/logger.js';
 import type { Storage } from '../storage/storage.js';
 import { generateWorkforceHistory } from './workforceHistory.js';
-import type { AutonomyLevel, Workforce } from './workforce.js';
+import type { AutonomyLevel, Workforce, WorkforceStatus } from './workforce.js';
 import workforceSeed from './seed-data/workforces.json';
 
 const log = createLogger('workforce');
@@ -40,6 +40,21 @@ export async function listWorkforces(): Promise<Workforce[]> {
 
 export async function putWorkforce(workforce: Workforce): Promise<void> {
   await workforces.put(workforce);
+}
+
+/** Update a workforce's cutover status (MG-6). Returns the updated entity, or
+ *  null if it doesn't exist. The PRODUCTION gate (only promote once the agent
+ *  has graduated to bounded-autonomous) is enforced at the route, which has the
+ *  run history to evaluate graduation. */
+export async function setWorkforceStatus(
+  workforceId: string,
+  status: WorkforceStatus,
+): Promise<Workforce | null> {
+  const wf = await workforces.get(workforceId);
+  if (!wf) return null;
+  const updated: Workforce = { ...wf, status };
+  await workforces.put(updated);
+  return updated;
 }
 
 /** Idempotent: create any seed Workforce that doesn't already exist. Cheap. */
