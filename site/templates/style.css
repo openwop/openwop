@@ -1645,14 +1645,17 @@ body:has(.spec-page-grid) .wrap {
   position: absolute;
   top: 16px;
   bottom: 16px;
-  left: clamp(96px, 18%, 170px);
+  /* 20px rung padding + 200px label column + half the 14px gap — keeps
+   * the spine in the gutter between labels and descriptions at any
+   * article width (percentage clamps diverged when the column widened). */
+  left: 227px;
   width: 1.5px;
   background: linear-gradient(var(--cmp-exo), var(--cmp-owp));
 }
 .oxo-rung {
   position: relative;
   display: grid;
-  grid-template-columns: clamp(120px, 22%, 210px) 1fr;
+  grid-template-columns: 200px 1fr;
   gap: 14px;
   align-items: baseline;
   padding: 9px 20px;
