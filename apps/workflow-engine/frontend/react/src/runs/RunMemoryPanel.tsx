@@ -24,6 +24,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { RunEventDoc } from '@openwop/openwop';
 import { listMemory, getCapabilities, type MemoryEntry } from '../client/runsClient.js';
 import { LockIcon, PencilIcon } from '../ui/icons/index.js';
+import { DataTable, type DataColumn } from '../ui/DataTable.js';
 
 interface Props {
   runId: string;
@@ -67,6 +68,62 @@ function buildAttribution(events: readonly RunEventDoc[]): Map<string, WriteAttr
     byMemoryId.set(p.memoryId, attr);
   }
   return byMemoryId;
+}
+
+/** Column set for the memory ledger DataTable. Factory so the Content cell can
+ *  attribute each entry via the run's `memory.written` map. Order-preserving:
+ *  no sortValue (entries keep their server order). */
+function MEMORY_COLUMNS(attribution: Map<string, WriteAttribution>): DataColumn<MemoryEntry>[] {
+  return [
+    {
+      key: 'content',
+      header: 'Content',
+      render: (e) => {
+        const attr = attribution.get(e.id);
+        return (
+          <>
+            {isRedacted(e.content) && (
+              <span className="memory-redacted-badge" title="Contains host-redacted secret material (SR-1)">
+                <LockIcon size={12} /> redacted
+              </span>
+            )}
+            {attr?.nodeId && (
+              <span
+                className="memory-wrote-badge"
+                title={`Written by node ${attr.nodeId}${attr.agentId ? ` (agent ${attr.agentId})` : ''} — RFC 0057 memory.written`}
+              >
+                <PencilIcon size={12} /> {attr.nodeId}
+              </span>
+            )}
+            <span className="memory-content">{e.content}</span>
+          </>
+        );
+      },
+    },
+    {
+      key: 'tags',
+      header: 'Tags',
+      render: (e) => (
+        <div className="memory-tags">
+          {e.tags.map((t) => (
+            <span key={t} className="memory-tag">{t}</span>
+          ))}
+        </div>
+      ),
+    },
+    {
+      key: 'created',
+      header: 'Created',
+      render: (e) => (
+        <span className="memory-created" title={e.createdAt}>
+          {new Date(e.createdAt).toLocaleString()}
+          {e.expiresAt && (
+            <span className="muted" title={`Expires ${e.expiresAt}`}> · TTL</span>
+          )}
+        </span>
+      ),
+    },
+  ];
 }
 
 export function RunMemoryPanel({ runId, events, status }: Props) {
@@ -153,56 +210,13 @@ export function RunMemoryPanel({ runId, events, status }: Props) {
       {error ? (
         <div className="alert error">{error}</div>
       ) : (
-        <table className="memory-table">
-          <thead>
-            <tr>
-              <th>Content</th>
-              <th>Tags</th>
-              <th>Created</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(entries ?? []).map((e) => {
-              const mine = mineFor(e);
-              const attr = attribution.get(e.id);
-              return (
-                <tr key={e.id} className={mine ? 'memory-row-mine' : undefined}>
-                  <td>
-                    {isRedacted(e.content) && (
-                      <span className="memory-redacted-badge" title="Contains host-redacted secret material (SR-1)">
-                        <LockIcon size={12} /> redacted
-                      </span>
-                    )}
-                    {attr?.nodeId && (
-                      <span
-                        className="memory-wrote-badge"
-                        title={`Written by node ${attr.nodeId}${attr.agentId ? ` (agent ${attr.agentId})` : ''} — RFC 0057 memory.written`}
-                      >
-                        <PencilIcon size={12} /> {attr.nodeId}
-                      </span>
-                    )}
-                    <span className="memory-content">{e.content}</span>
-                  </td>
-                  <td className="memory-tags">
-                    {e.tags.map((t) => (
-                      <span key={t} className="memory-tag">
-                        {t}
-                      </span>
-                    ))}
-                  </td>
-                  <td className="memory-created" title={e.createdAt}>
-                    {new Date(e.createdAt).toLocaleString()}
-                    {e.expiresAt && (
-                      <span className="muted" title={`Expires ${e.expiresAt}`}>
-                        {' '}· TTL
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <DataTable<MemoryEntry>
+          caption="Tenant memory entries"
+          rows={entries ?? []}
+          rowKey={(e) => e.id}
+          rowClassName={(e) => (mineFor(e) ? 'memory-row-mine' : undefined)}
+          columns={MEMORY_COLUMNS(attribution)}
+        />
       )}
     </div>
   );
