@@ -151,7 +151,7 @@ function DraggableCard({
         {card.dueAt ? <span style={{ ...muted, fontSize: '12px' }}>due {card.dueAt.slice(0, 10)}</span> : null}
       </div>
       {card.assignmentReason ? <div style={{ ...muted, fontSize: '12px' }}>Why assigned: {card.assignmentReason}</div> : null}
-      {card.blockerNote ? <div style={{ fontSize: '12px', color: 'var(--color-warning, var(--color-text-muted))', marginTop: 'var(--space-1)', display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}><AlertIcon size={12} /> Blocked: {card.blockerNote}</div> : null}
+      {card.blockerNote ? <div style={{ fontSize: '12px', color: 'var(--color-warning-text, var(--color-text-muted))', marginTop: 'var(--space-1)', display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}><AlertIcon size={12} /> Blocked: {card.blockerNote}</div> : null}
       <div className="kb-card-foot">
         {action && actionTarget && onMove ? (
           // The lane's ONE next action — the non-drag path (a11y + touch).
