@@ -389,7 +389,7 @@
 /* Spec/RFC pages render a sticky left-rail ToC inside .spec-page-grid;
  * give the grid more room than pure prose so sidebar + article both fit. */
 .site-main .wrap > .spec-page-grid {
-  max-width: 1180px;
+  max-width: none;
 }
 
 /* ─── Prose typography (markdown-rendered content) ─────────────────── */
@@ -1095,10 +1095,20 @@ table.rfc-index td:nth-child(2) {
   }
 }
 
-/* Widen .site-main when the spec-page-grid layout is in use so the
- * article column doesn't get squished by the sidebar. */
-.site-main:has(.spec-page-grid) {
-  max-width: 1180px;
+/* Long-form pages (anything with the spec-page-grid ToC rail) get a wider
+ * canvas on desktop. Widening EVERY .wrap on the page — topbar, main, and
+ * footer share the .wrap container — keeps their left edges aligned (the
+ * old `.site-main:has(...) { max-width: 1180px }` clamp had no auto
+ * margins, so the whole content column pinned LEFT while the topbar
+ * centered). Browsers without :has() fall back to the 1240px default,
+ * still centered. */
+body:has(.spec-page-grid) .wrap {
+  max-width: 1400px;
+}
+/* The page-header above the grid shares the grid's full width so the
+ * title's left edge lines up with the ToC rail below it. */
+.site-main:has(.spec-page-grid) .wrap > .page-header {
+  max-width: none;
 }
 
 /* ─── Protocol comparison page (/comparisons/a2a-openwop-mcp/) ────────
@@ -1136,6 +1146,10 @@ table.rfc-index td:nth-child(2) {
   --cmp-mcp:      oklch(74% 0.10 200);
   --cmp-mcp-rule: oklch(74% 0.10 200 / 0.45);
   --cmp-mcp-wash: oklch(74% 0.10 200 / 0.10);
+}
+
+.site-main .wrap > .comparison-page {
+  max-width: none;
 }
 
 /* Hero */
@@ -1201,6 +1215,7 @@ table.rfc-index td:nth-child(2) {
   grid-template-columns: repeat(3, 1fr);
   gap: 14px;
   margin-bottom: 2em;
+  max-width: 1100px;
 }
 .cmp-card {
   border: 1px solid var(--rule);
@@ -1284,7 +1299,7 @@ table.rfc-index td:nth-child(2) {
 }
 
 /* Wire schematic */
-.cmp-schematic { margin: 0; }
+.cmp-schematic { margin: 0; max-width: 1100px; }
 .cmp-diagram {
   display: grid;
   grid-template-columns: 1fr minmax(120px, 200px) 1fr;
@@ -1463,11 +1478,14 @@ table.rfc-index td:nth-child(2) {
   margin: 0 4px;
 }
 
-/* Article upgrades — numbered section heads + callout blockquotes.
- * Wide GFM tables scroll inside their own box instead of stretching the
- * page (the decision matrix is 4 chips wide on a 390px phone). */
-.comparison-doc table { display: block; overflow-x: auto; }
+/* Article upgrades — numbered section heads + callout blockquotes. */
 .comparison-doc { counter-reset: cmp-section; }
+/* On phones, wide GFM tables scroll inside their own box instead of
+ * stretching the page (the decision matrix is 4 chips wide at 390px).
+ * Desktop keeps real table layout so columns share the full column width. */
+@media (max-width: 760px) {
+  .comparison-doc table { display: block; overflow-x: auto; }
+}
 .comparison-doc > h2 {
   counter-increment: cmp-section;
   border-top: 1px solid var(--rule);
