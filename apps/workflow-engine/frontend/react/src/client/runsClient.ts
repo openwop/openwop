@@ -159,7 +159,7 @@ export async function pollEvents(runId: string, lastSequence = 0): Promise<PollE
  * derives the tenant from the bearer / cookie, so this client doesn't
  * need to pass a tenantId. Returns at most `limit` rows (default 50).
  */
-export async function listMyRuns(opts: { status?: string; limit?: number } = {}): Promise<RunListItem[]> {
+export async function listMyRuns(opts: { status?: string; limit?: number; signal?: AbortSignal } = {}): Promise<RunListItem[]> {
   const params = new URLSearchParams();
   if (opts.status) params.set('status', opts.status);
   if (opts.limit) params.set('limit', String(opts.limit));
@@ -171,6 +171,10 @@ export async function listMyRuns(opts: { status?: string; limit?: number } = {})
     method: 'GET',
     headers,
     credentials: includeCreds ? 'include' : 'same-origin',
+    // AbortSignal threaded from the caller's effect cleanup (GAP-ANALYSIS E15)
+    // so an in-flight read is cancelled on unmount rather than completing and
+    // burning the per-IP budget.
+    ...(opts.signal ? { signal: opts.signal } : {}),
   });
   if (!res.ok) {
     throw new Error(`listMyRuns failed: ${res.status} ${res.statusText}`);

@@ -74,27 +74,32 @@ export function RunsIndexPage() {
   });
   useEffect(() => { try { localStorage.setItem('openwop.runs.density', density); } catch { /* ignore */ } }, [density]);
 
-  async function refreshRuns() {
+  async function refreshRuns(signal?: AbortSignal) {
     setRunsLoading(true);
     setRunsError(null);
     try {
-      const list = await listMyRuns({ limit: 20 });
+      const list = await listMyRuns({ limit: 20, ...(signal ? { signal } : {}) });
       setRuns(list);
     } catch (err) {
+      // Ignore the abort fired by effect cleanup on unmount (GAP-ANALYSIS E15).
+      if (signal?.aborted || (err instanceof DOMException && err.name === 'AbortError')) return;
       // Friendly transport copy (GAP-ANALYSIS E5) — a busy page hitting the
       // per-IP budget shows "Too many requests, retry" instead of a raw
       // "listMyRuns failed: 429".
       const c = classifyHttpError(err);
       setRunsError(`${c.title} — ${c.detail}`);
     } finally {
-      setRunsLoading(false);
+      if (!signal?.aborted) setRunsLoading(false);
     }
   }
 
   useEffect(() => {
-    void refreshRuns();
+    // Abort the in-flight read on unmount / tenant change (GAP-ANALYSIS E15).
+    const ctrl = new AbortController();
+    void refreshRuns(ctrl.signal);
     // Refresh whenever sign-in state flips so the user sees their
     // new tenant's runs after migration.
+    return () => ctrl.abort();
   }, [user?.uid]);
 
   async function onSubmit(e: React.FormEvent) {
@@ -228,7 +233,7 @@ export function RunsIndexPage() {
               onChange={(e) => setQuery(e.target.value)}
             />
             <DensityToggle value={density} onChange={setDensity} />
-            <button type="button" className="secondary" onClick={refreshRuns} disabled={runsLoading}>
+            <button type="button" className="secondary" onClick={() => void refreshRuns()} disabled={runsLoading}>
               {runsLoading ? 'Loading…' : 'Refresh'}
             </button>
           </div>
