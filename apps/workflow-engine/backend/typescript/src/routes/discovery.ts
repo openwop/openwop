@@ -386,10 +386,14 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
           'openwop-interrupt-external-event',
         ],
       },
-      // Sample stubs fork: the route accepts the request and copies
-      // events 0..fromSeq, but doesn't reconstruct the executor's
-      // resume position. Honest advertisement: not yet supported.
-      replay: { supported: false, fork: false },
+      // `replay` mode (full deterministic re-execution from seq 0) IS
+      // supported: the engine re-executes the workflow and the host compares
+      // the observable run/node sequence against the source, emitting
+      // `replay.diverged` on a mismatch (replay.md §"Failure surfaces").
+      // `fork` (branch from an arbitrary `fromSeq` > 0) is NOT supported —
+      // the sample doesn't reconstruct the executor's resume position, so a
+      // partial-checkpoint branch would double-emit the prefix. Honest split.
+      replay: { supported: true, fork: false },
       // RFC 0056 — run feedback / annotations. The sample persists annotations
       // in a per-run side-store and serves POST/GET /v1/runs/{runId}/annotations
       // with secret-pattern + SR-1 redaction of correction/note.
