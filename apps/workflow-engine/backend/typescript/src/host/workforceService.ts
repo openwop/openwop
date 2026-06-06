@@ -58,6 +58,14 @@ export async function setWorkforceStatus(
   return updated;
 }
 
+/**
+ * Read-only synthetic demo tenant seeded once at boot. The workforce dashboards
+ * fall back to it when the caller's own tenant has no runs, so every visitor sees
+ * populated telemetry without a per-visitor history seed (which would be a write
+ * storm + accumulate per anon tenant). NOT a real tenant — only ever read.
+ */
+export const SHOWCASE_TENANT = '__showcase__';
+
 /** Idempotent: create any seed Workforce that doesn't already exist. Cheap. */
 export async function seedWorkforceEntities(): Promise<number> {
   let created = 0;

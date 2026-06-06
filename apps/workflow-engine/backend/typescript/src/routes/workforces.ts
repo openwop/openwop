@@ -27,6 +27,7 @@ import {
   listWorkforces,
   searchWorkforceTrace,
   setWorkforceStatus,
+  SHOWCASE_TENANT,
 } from '../host/workforceService.js';
 import type { WorkforceStatus } from '../host/workforce.js';
 import {
@@ -82,6 +83,23 @@ function tenantOf(req: Request): string {
   return (req as { tenantId?: string }).tenantId ?? 'default';
 }
 
+/**
+ * Runs to render a workforce dashboard from: the caller's own runs, OR — when the
+ * caller has none for this workforce (e.g. an anonymous demo visitor) — the
+ * synthetic `__showcase__` tenant seeded at boot. This is a READ of synthetic
+ * demo data only (never another real tenant), so every visitor sees populated
+ * dashboards with no per-visitor write. A tenant that runs its own workforce
+ * immediately sees its own data instead. Used by the read endpoints only — the
+ * cutover mutation stays strictly caller-scoped.
+ */
+async function dashboardRuns(deps: Deps, req: Request, workforceId: string) {
+  const own = await deps.storage.listRuns({ tenantId: tenantOf(req), limit: 5000 });
+  if (own.some((r) => (r.metadata as { workforceId?: string }).workforceId === workforceId)) {
+    return own;
+  }
+  return deps.storage.listRuns({ tenantId: SHOWCASE_TENANT, limit: 5000 });
+}
+
 export function registerWorkforceRoutes(app: Express, deps: Deps): void {
   app.get('/v1/host/sample/workforces', async (_req, res, next) => {
     try {
@@ -113,8 +131,8 @@ export function registerWorkforceRoutes(app: Express, deps: Deps): void {
           workforceId: req.params.workforceId,
         });
       }
-      // Single read; aggregation is pure over run metadata (no event fan-out).
-      const runs = await deps.storage.listRuns({ tenantId: tenantOf(req), limit: 5000 });
+      // Caller's runs, or the synthetic showcase fallback (see dashboardRuns).
+      const runs = await dashboardRuns(deps, req, req.params.workforceId);
       res.json(aggregateWorkforceMetrics(runs, req.params.workforceId));
     } catch (err) {
       next(err);
@@ -129,7 +147,7 @@ export function registerWorkforceRoutes(app: Express, deps: Deps): void {
           workforceId: req.params.workforceId,
         });
       }
-      const runs = await deps.storage.listRuns({ tenantId: tenantOf(req), limit: 5000 });
+      const runs = await dashboardRuns(deps, req, req.params.workforceId);
       res.json({
         autonomy: aggregateAutonomyGraduation(runs, req.params.workforceId),
         posture: aggregateGovernancePosture(runs, req.params.workforceId),
@@ -218,7 +236,7 @@ export function registerWorkforceRoutes(app: Express, deps: Deps): void {
         });
       }
       const q = typeof req.query.q === 'string' ? req.query.q : '';
-      const runs = await deps.storage.listRuns({ tenantId: tenantOf(req), limit: 5000 });
+      const runs = await dashboardRuns(deps, req, req.params.workforceId);
       res.json(searchWorkforceTrace(runs, req.params.workforceId, q));
     } catch (err) {
       next(err);
@@ -236,7 +254,7 @@ export function registerWorkforceRoutes(app: Express, deps: Deps): void {
           workforceId: req.params.workforceId,
         });
       }
-      const runs = await deps.storage.listRuns({ tenantId: tenantOf(req), limit: 5000 });
+      const runs = await dashboardRuns(deps, req, req.params.workforceId);
       res.json(aggregateShadowEval(runs, req.params.workforceId));
     } catch (err) {
       next(err);
