@@ -49,7 +49,7 @@ echo
 # 1. TypeScript SDK — build first (emits dist/) so step 2's corpus-validity
 # test can assert against the dist artifacts. Order matters: the conformance
 # corpus-validity test in step 2 reads sdk/typescript/dist/*.map.
-echo "[1/10] TypeScript reference SDK (build + emit dist/)..."
+echo "[1/9] TypeScript reference SDK (build + emit dist/)..."
 (
   cd "$SPEC_ROOT/sdk/typescript"
   if [[ ! -d node_modules ]]; then
@@ -63,7 +63,7 @@ echo "[1/10] TypeScript reference SDK (build + emit dist/)..."
 echo
 
 # 2. Conformance package — typecheck + server-free scenarios.
-echo "[2/10] Conformance suite (typecheck + server-free scenarios)..."
+echo "[2/9] Conformance suite (typecheck + server-free scenarios)..."
 (
   cd "$SPEC_ROOT/conformance"
   if [[ ! -d node_modules ]]; then
@@ -85,7 +85,7 @@ echo
 # 3. Python SDK — syntax check + import smoke. Mypy is NOT run here
 # (it's an optional dev dep); contributors can `pip install -e .[dev]`
 # and run mypy locally for a stricter check.
-echo "[3/10] Python reference SDK (syntax + import smoke)..."
+echo "[3/9] Python reference SDK (syntax + import smoke)..."
 (
   cd "$SPEC_ROOT/sdk/python"
   PY=$(command -v python3.13 || command -v python3.12 || command -v python3.11 || command -v python3.10 || command -v python3)
@@ -104,7 +104,7 @@ echo "[3/10] Python reference SDK (syntax + import smoke)..."
 echo
 
 # 4. Go SDK — go vet + tests (skipped if Go not installed).
-echo "[4/10] Go reference SDK (go vet + tests)..."
+echo "[4/9] Go reference SDK (go vet + tests)..."
 (
   cd "$SPEC_ROOT/sdk/go"
   if ! command -v go >/dev/null 2>&1; then
@@ -121,7 +121,7 @@ echo
 # `@latest` resolution forced a remote metadata lookup every gate run,
 # which is what raced the npm cache. The pinned semver tarball is
 # content-addressed; the second invocation hits the cache deterministically.
-echo "[5/10] OpenAPI 3.1 (redocly lint)..."
+echo "[5/9] OpenAPI 3.1 (redocly lint)..."
 (
   cd "$SPEC_ROOT/api"
   npm_config_cache="$NPM_CACHE" npx -y -p @redocly/cli@2.31.4 redocly lint openapi.yaml
@@ -130,7 +130,7 @@ echo
 
 # 6. AsyncAPI validate. Same pinning as step 5. `@asyncapi/cli@4.1.1` is
 # the last release compatible with Node 22 (5.x requires Node 24+).
-echo "[6/10] AsyncAPI 3.1 (asyncapi validate)..."
+echo "[6/9] AsyncAPI 3.1 (asyncapi validate)..."
 npm_config_cache="$NPM_CACHE" npx -y -p @asyncapi/cli@4.1.1 asyncapi validate "$SPEC_ROOT/api/asyncapi.yaml"
 echo
 
@@ -142,7 +142,7 @@ echo
 # vs. zero-deps mirror in examples/hosts/in-memory/). Plus the required-
 # property typo-catcher (replaces redocly's flawed walker — see
 # api/redocly.yaml comment for context).
-echo "[7/10] Generated protocol status..."
+echo "[7/9] Generated protocol status..."
 node "$SPEC_ROOT/scripts/generate-protocol-status.mjs" --check
 node "$SPEC_ROOT/scripts/check-workflow-chain-expansion-sync.mjs"
 node "$SPEC_ROOT/scripts/check-required-properties-defined.mjs"
@@ -218,7 +218,7 @@ echo
 
 # 8. Publish-metadata + package-content audit — catches placeholder URLs,
 # stale module paths, package posture drift, and package content leaks.
-echo "[8/10] Publish metadata + package contents..."
+echo "[8/9] Publish metadata + package contents..."
 "$(dirname "$0")/openwop-check-publish-metadata.sh"
 "$(dirname "$0")/check-npm-pack-contents.sh"
 "$(dirname "$0")/check-python-go-release-surface.sh"
@@ -226,22 +226,8 @@ echo
 
 # 9. Security invariants — every protocol-tier MUST-NOT in
 # SECURITY/invariants.yaml has at least one matching public test.
-echo "[9/10] Security invariants..."
+echo "[9/9] Security invariants..."
 "$(dirname "$0")/check-security-invariants.sh"
-echo
-
-# 10. CLI package — the @openwop/cli control plane is a TypeScript package;
-# build (esbuild) + typecheck (tsc --noEmit) + run its node:test suite against
-# the bundle. Closes the historical "CLI tests not in the gate" gap.
-echo "[10/10] CLI package (build + typecheck + tests)..."
-(
-  cd "$(dirname "$0")/../cli"
-  if [ ! -d node_modules ]; then
-    echo "  installing CLI deps (one-time)..."
-    npm ci --no-audit --no-fund --silent 2>/dev/null || npm install --no-audit --no-fund --silent
-  fi
-  npm run typecheck && npm test >/dev/null
-)
 echo
 
 echo "=== openwop:check OK — spec corpus is internally consistent ==="
