@@ -46,24 +46,15 @@ rm -rf "$NPM_CACHE/_locks" 2>/dev/null || true
 echo "=== openwop:check — validating $SPEC_ROOT/ ==="
 echo
 
-# 1. TypeScript SDK — build first (emits dist/) so step 2's corpus-validity
-# test can assert against the dist artifacts. Order matters: the conformance
-# corpus-validity test in step 2 reads sdk/typescript/dist/*.map.
-echo "[1/9] TypeScript reference SDK (build + emit dist/)..."
-(
-  cd "$SPEC_ROOT/sdk/typescript"
-  if [[ ! -d node_modules ]]; then
-    echo "  installing SDK deps (one-time)..."
-    npm_config_cache="$NPM_CACHE" npm install --no-audit --no-fund --prefer-offline >/dev/null
-  fi
-  # `npm run build` does `rm -rf dist && tsc -p tsconfig.build.json` —
-  # produces dist/*.js + dist/*.d.ts + dist/*.map.
-  npm run build >/dev/null
-)
-echo
-
-# 2. Conformance package — typecheck + server-free scenarios.
-echo "[2/9] Conformance suite (typecheck + server-free scenarios)..."
+# 1. Conformance package — typecheck + server-free scenarios.
+#
+# The TypeScript/Python/Go reference SDKs moved to the openwop-sdks repo; their
+# build + smoke steps left with them (verified by that repo's scripts/sdks-check.sh).
+# The conformance spec-corpus-validity suite has a `describe.skipIf` SDK-helper
+# block that reads sdk/typescript|python|go sources — it self-skips here now that
+# those sources are absent (the cross-SDK parity it covered is enforced in
+# openwop-sdks via check-sdk-parity.mjs).
+echo "[1/6] Conformance suite (typecheck + server-free scenarios)..."
 (
   cd "$SPEC_ROOT/conformance"
   if [[ ! -d node_modules ]]; then
@@ -82,55 +73,20 @@ echo "[2/9] Conformance suite (typecheck + server-free scenarios)..."
 )
 echo
 
-# 3. Python SDK — syntax check + import smoke. Mypy is NOT run here
-# (it's an optional dev dep); contributors can `pip install -e .[dev]`
-# and run mypy locally for a stricter check.
-echo "[3/9] Python reference SDK (syntax + import smoke)..."
-(
-  cd "$SPEC_ROOT/sdk/python"
-  PY=$(command -v python3.13 || command -v python3.12 || command -v python3.11 || command -v python3.10 || command -v python3)
-  if [[ -z "$PY" ]]; then
-    echo "  WARN: no python3.10+ found; skipping Python SDK smoke."
-  else
-    for f in src/openwop_client/*.py; do
-      "$PY" -c "import ast; ast.parse(open('$f').read())" || exit 1
-    done
-    "$PY" -c "import sys; sys.path.insert(0, 'src'); import openwop_client; print('  openwop_client', openwop_client.__version__, 'imports clean')"
-    if [[ -d tests ]]; then
-      PYTHONPATH=src "$PY" -m unittest discover -s tests
-    fi
-  fi
-)
-echo
-
-# 4. Go SDK — go vet + tests (skipped if Go not installed).
-echo "[4/9] Go reference SDK (go vet + tests)..."
-(
-  cd "$SPEC_ROOT/sdk/go"
-  if ! command -v go >/dev/null 2>&1; then
-    echo "  WARN: go binary not found; skipping Go SDK vet/tests."
-  else
-    export GOCACHE="${GOCACHE:-/tmp/openwop-go-build-cache}"
-    go vet ./...
-    go test ./...
-  fi
-)
-echo
-
-# 5. OpenAPI lint via redocly. Uses a PINNED version (not @latest) — the
+# 2. OpenAPI lint via redocly. Uses a PINNED version (not @latest) — the
 # `@latest` resolution forced a remote metadata lookup every gate run,
 # which is what raced the npm cache. The pinned semver tarball is
 # content-addressed; the second invocation hits the cache deterministically.
-echo "[5/9] OpenAPI 3.1 (redocly lint)..."
+echo "[2/6] OpenAPI 3.1 (redocly lint)..."
 (
   cd "$SPEC_ROOT/api"
   npm_config_cache="$NPM_CACHE" npx -y -p @redocly/cli@2.31.4 redocly lint openapi.yaml
 )
 echo
 
-# 6. AsyncAPI validate. Same pinning as step 5. `@asyncapi/cli@4.1.1` is
+# 3. AsyncAPI validate. Same pinning as step 2. `@asyncapi/cli@4.1.1` is
 # the last release compatible with Node 22 (5.x requires Node 24+).
-echo "[6/9] AsyncAPI 3.1 (asyncapi validate)..."
+echo "[3/6] AsyncAPI 3.1 (asyncapi validate)..."
 npm_config_cache="$NPM_CACHE" npx -y -p @asyncapi/cli@4.1.1 asyncapi validate "$SPEC_ROOT/api/asyncapi.yaml"
 echo
 
@@ -144,14 +100,12 @@ echo
 # zero-deps mirror in the in-memory host) moved to conformance-soak.yml, which
 # checks out openwop-examples for the host source — the host no longer lives in
 # this repo, so the guard can't run in this server-free local gate.
-echo "[7/9] Generated protocol status..."
+echo "[4/6] Generated protocol status..."
 node "$SPEC_ROOT/scripts/generate-protocol-status.mjs" --check
 node "$SPEC_ROOT/scripts/check-required-properties-defined.mjs"
-# SDK parity — every OpenAPI operation must declare a per-SDK helper status in
-# sdk/parity-expectations.json ('typed' or 'excluded'), and every 'typed' op's
-# path must still be wired in that SDK. Catches a route landing without an SDK
-# helper (or its declaration), and whole-surface SDK regressions.
-node "$SPEC_ROOT/scripts/check-sdk-parity.mjs"
+# SDK parity (OpenAPI operations <-> per-SDK typed helpers) moved to the
+# openwop-sdks repo (sdk/ extracted 2026-06; verified by that repo's
+# scripts/check-sdk-parity.mjs against its vendored api/openapi.yaml).
 # Backend dep-graph sanity — every external import in apps/workflow-engine/
 # backend/typescript/src/ MUST be declared in its package.json. Catches the
 # class of bug where local hoisting masks a missing dep that breaks Cloud
@@ -203,17 +157,18 @@ if [ -d "$SAMPLE_VENDORED" ] && [ -d "$CANONICAL_FIXTURES" ]; then
 fi
 echo
 
-# 8. Publish-metadata + package-content audit — catches placeholder URLs,
-# stale module paths, package posture drift, and package content leaks.
-echo "[8/9] Publish metadata + package contents..."
+# 5. Publish-metadata + package-content audit — catches placeholder URLs,
+# package posture drift, and package content leaks. Scoped to the conformance
+# suite now (the SDKs' publish metadata + the python/go release-surface check
+# moved to the openwop-sdks repo with sdk/).
+echo "[5/6] Publish metadata + package contents..."
 "$(dirname "$0")/openwop-check-publish-metadata.sh"
 "$(dirname "$0")/check-npm-pack-contents.sh"
-"$(dirname "$0")/check-python-go-release-surface.sh"
 echo
 
-# 9. Security invariants — every protocol-tier MUST-NOT in
+# 6. Security invariants — every protocol-tier MUST-NOT in
 # SECURITY/invariants.yaml has at least one matching public test.
-echo "[9/9] Security invariants..."
+echo "[6/6] Security invariants..."
 "$(dirname "$0")/check-security-invariants.sh"
 echo
 

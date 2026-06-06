@@ -24,14 +24,9 @@ pack_json() {
   ) >"$out_file"
 }
 
-TS_JSON="$TMP_DIR/typescript-pack.json"
+# The TypeScript SDK pack-contents audit moved to the openwop-sdks repo with
+# sdk/. The spec corpus's only publishable npm artifact is the conformance suite.
 CONFORMANCE_JSON="$TMP_DIR/conformance-pack.json"
-
-echo "  building TypeScript SDK dist/..."
-(
-  cd "$SPEC_ROOT/sdk/typescript"
-  npm_config_cache="$NPM_CACHE" npm run build >/dev/null
-)
 
 echo "  building conformance CLI dist/..."
 (
@@ -39,13 +34,12 @@ echo "  building conformance CLI dist/..."
   npm_config_cache="$NPM_CACHE" npm run build:cli >/dev/null
 )
 
-pack_json "$SPEC_ROOT/sdk/typescript" "$TS_JSON"
 pack_json "$SPEC_ROOT/conformance" "$CONFORMANCE_JSON"
 
-node - "$TS_JSON" "$CONFORMANCE_JSON" <<'NODE'
+node - "$CONFORMANCE_JSON" <<'NODE'
 const { readFileSync } = require('node:fs');
 
-const [typescriptPath, conformancePath] = process.argv.slice(2);
+const [conformancePath] = process.argv.slice(2);
 
 function readPack(path) {
   const raw = readFileSync(path, 'utf8');
@@ -92,25 +86,6 @@ function assertIncludes(packageName, paths, requiredPaths) {
   }
 }
 
-const tsPack = readPack(typescriptPath);
-const tsFiles = filePaths(tsPack);
-assert(tsPack.name === '@openwop/openwop', `unexpected TypeScript package name: ${tsPack.name}`);
-assert(tsPack.version === '1.2.0', `unexpected TypeScript package version: ${tsPack.version}`);
-assertNoCommonLeaks(tsPack.name, tsFiles);
-assertAllowedRoots(tsPack.name, tsFiles, new Set(['LICENSE', 'README.md', 'dist', 'package.json', 'src']));
-assertIncludes(tsPack.name, tsFiles, [
-  'LICENSE',
-  'README.md',
-  'package.json',
-  'dist/index.d.ts',
-  'dist/index.js',
-  'src/index.ts',
-]);
-for (const path of tsFiles) {
-  assert(!path.includes('__tests__/'), `${tsPack.name} packs test directory: ${path}`);
-  assert(!path.endsWith('.test.ts'), `${tsPack.name} packs test source: ${path}`);
-}
-
 const conformancePack = readPack(conformancePath);
 const conformanceFiles = filePaths(conformancePack);
 assert(
@@ -139,7 +114,6 @@ assertIncludes(conformancePack.name, conformanceFiles, [
   'coverage.md',
 ]);
 
-console.log(`  ok: ${tsPack.name}@${tsPack.version} packs ${tsFiles.length} files without tests or stray metadata.`);
 console.log(`  ok: ${conformancePack.name}@${conformancePack.version} packs ${conformanceFiles.length} files with vendored contracts.`);
 NODE
 

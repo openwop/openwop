@@ -1,6 +1,8 @@
 # openwop Spec v1 — Publishing Plan
 
-> **Status: FINAL v1.0 release plan (2026-05-10).** Operational plan for publishing the 4 spec-corpus artifacts (TypeScript SDK, TypeScript conformance suite, Python SDK, Go SDK) to their respective registries. The repo is being reset to a clean OpenWOP v1.0 production-release baseline; every publishable artifact MUST carry v1.0 metadata until the first v1.x maintenance release.
+> **⚠️ Repo split (2026-06):** the three SDKs (TypeScript `@openwop/openwop`, Python `openwop-client`, Go) moved to **[`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks)** and publish from there; the pack registry moved to **[`openwop/openwop-registry`](https://github.com/openwop/openwop-registry)**; reference hosts + examples to **[`openwop/openwop-examples`](https://github.com/openwop/openwop-examples)**; the CLI already lives in **[`openwop/openwop-cli`](https://github.com/openwop/openwop-cli)**. **This repo now publishes exactly one artifact: `@openwop/openwop-conformance`** (`conformance/`). The SDK release process below is retained for reference but is executed from `openwop-sdks`. **Versioning alignment still holds across repos:** the SDKs track the spec major — a coordinated spec release (`v*` here) MUST be matched by SDK release tags pushed in `openwop-sdks`.
+
+> **Status: FINAL v1.0 release plan (2026-05-10).** Operational plan for publishing the spec-corpus artifacts to their respective registries. Every publishable artifact MUST carry v1.0 metadata until the first v1.x maintenance release.
 
 ---
 
