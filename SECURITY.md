@@ -12,7 +12,7 @@ This policy covers vulnerabilities in:
 - The reference SDKs (`sdk/{typescript,python,go}/`).
 - The conformance harness (`conformance/`).
 - The machine-readable contracts (`schemas/`, `api/openapi.yaml`, `api/asyncapi.yaml`).
-- The example reference hosts (`examples/hosts/`) once they ship.
+- The example reference hosts (`examples/hosts/{in-memory,sqlite,postgres,python}/`).
 
 Out of scope:
 
@@ -115,10 +115,11 @@ This safe-harbor commitment binds the maintainer set; it does not bind third-par
 
 openwop threat models live at `SECURITY/threat-model-*.md` and cover specific attack surfaces:
 
-- `SECURITY/threat-model-secret-leakage.md` — BYOK secret resolution and redaction invariants (T1–T5 trust boundaries; 12 invariants).
-- `SECURITY/threat-model-prompt-injection.md` — LLM-mediated workflows (indirect injection via artifacts, exfiltration via tool outputs, refine-feedback path manipulation; 13 invariants).
-- `SECURITY/threat-model-node-packs.md` — node-pack supply chain (tampering, signature substitution, sandbox escape; 25 invariants).
+- `SECURITY/threat-model-secret-leakage.md` — BYOK secret resolution and redaction invariants (T1–T5 trust boundaries; 48 invariants — the largest surface, covering credential references, memory attribution, workspace, sub-run attestation, and egress policy).
+- `SECURITY/threat-model-prompt-injection.md` — LLM-mediated workflows (indirect injection via artifacts, exfiltration via tool outputs, refine-feedback path manipulation; 22 invariants).
+- `SECURITY/threat-model-node-packs.md` — node-pack supply chain (tampering, signature substitution, sandbox escape; 26 invariants).
 - `SECURITY/threat-model-provider-policy.md` — provider-policy bypass paths across all four modes; 13 invariants.
+- `SECURITY/threat-model-auth-profiles.md` — OAuth2-CC / OIDC user-bearer / mTLS / API-key-rotation enforcement boundaries (qualitative; its enforcement invariants are tracked under the rows above + the auth tier in `invariants.yaml`).
 
 The threat models track invariants in `SECURITY/invariants.yaml`; the CI gate at `scripts/check-security-invariants.sh` (step 8 of `openwop-check.sh`) verifies every protocol-tier MUST-NOT maps to at least one matching conformance test. Reference-impl-tier invariants are verified by the reference impl's CI; advisory invariants are defense-in-depth and don't gate.
 
