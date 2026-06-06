@@ -1525,6 +1525,210 @@ body:has(.spec-page-grid) .wrap {
   .cmp-vlink, .cmp-vgap { height: 48px; min-height: 48px; }
 }
 
+/* ─── Flow / tree / legend graphics (A2A vs MCP vs OpenWOP page) ───────
+ * The architecture, integration, pattern, and legend ASCII diagrams in
+ * the markdown are upgraded in place to designed graphics. Everything
+ * rides the three protocol hues via --cf: a flow sets it per-figure for
+ * a single-protocol pipeline, or per-link for the composition diagram,
+ * where the EDGES are the protocols and the nodes stay neutral. */
+.cmp-flow { margin: 1.8em 0; max-width: 720px; }
+.cmp-flow-node {
+  position: relative;
+  z-index: 1;
+  border: 1px solid var(--rule);
+  border-top: 3px solid var(--cf, var(--rule-2));
+  border-radius: 8px;
+  background: var(--paper);
+  padding: 14px 18px;
+}
+.cmp-flow-role {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 4px;
+}
+.cmp-flow-name {
+  display: block;
+  font-family: var(--serif);
+  font-size: clamp(18px, 2vw, 21px);
+  line-height: 1.2;
+  color: var(--cf, var(--ink));
+}
+.cmp-flow-sub {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+  margin-top: 5px;
+}
+.cmp-flow-parts {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 9px 0 1px;
+  padding: 0;
+}
+.cmp-flow-parts li {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper);
+  padding: 3px 10px;
+}
+/* The connector between two nodes — a vertical spine, an arrowhead, and a
+ * pill label, all tinted by the link's protocol (--cf). */
+.cmp-flow-link {
+  position: relative;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 0;
+}
+.cmp-flow-link::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: 50%;
+  width: 1.5px;
+  background: var(--cf, var(--ink-3));
+}
+.cmp-flow-link::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-inline: 4px solid transparent;
+  border-top: 6px solid var(--cf, var(--ink-3));
+}
+.cmp-flow-link span {
+  position: relative;
+  max-width: 90%;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--cf, var(--ink-2));
+  background: var(--paper);
+  border: 1px solid color-mix(in oklab, var(--cf, var(--ink-3)) 40%, transparent);
+  border-radius: 999px;
+  padding: 3px 11px;
+}
+.cmp-flow-a2a { --cf: var(--cmp-a2a); }
+.cmp-flow-mcp { --cf: var(--cmp-mcp); }
+.cmp-flow-owp { --cf: var(--cmp-owp); }
+.cmp-flow figcaption,
+.cmp-tree figcaption {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink-3);
+  text-align: center;
+  margin-top: 12px;
+  max-width: 64ch;
+  margin-inline: auto;
+}
+
+/* Nested call tree (pattern 3). Indentation IS the call stack; each row's
+ * left rail + tag take the protocol hue of the hop. */
+.cmp-tree {
+  margin: 1.8em 0;
+  max-width: 720px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--paper);
+  padding: 14px 18px;
+  display: grid;
+  gap: 6px;
+}
+.cmp-tree-row {
+  --cf: var(--ink-3);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: calc(var(--depth, 0) * clamp(14px, 3vw, 28px));
+  border-left: 2px solid var(--cf);
+  border-radius: 0 6px 6px 0;
+  background: color-mix(in oklab, var(--cf) 6%, var(--paper));
+  padding: 7px 12px;
+}
+.cmp-tree-row::before {
+  content: '→';
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1;
+  color: var(--cf);
+}
+.cmp-tree-row[data-d="0"]::before { content: ''; }
+.cmp-tree-tag {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--cf);
+  border: 1px solid color-mix(in oklab, var(--cf) 40%, transparent);
+  border-radius: 999px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+.cmp-tree-label {
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--ink);
+}
+.cmp-tree-a2a { --cf: var(--cmp-a2a); }
+.cmp-tree-mcp { --cf: var(--cmp-mcp); }
+.cmp-tree-owp { --cf: var(--cmp-owp); }
+
+/* Boundary legend — the closing definitions, one striped band per hue. */
+.cmp-legend { margin: 1.8em 0; max-width: 720px; display: grid; gap: 10px; }
+.cmp-legend-row {
+  --cf: var(--ink-3);
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--cf);
+  border-radius: 0 8px 8px 0;
+  background:
+    repeating-linear-gradient(-45deg, color-mix(in oklab, var(--cf) 8%, transparent) 0 10px, transparent 10px 20px),
+    var(--paper);
+  padding: 12px 16px;
+}
+.cmp-legend-name {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--cf);
+}
+.cmp-legend-def {
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.cmp-legend-a2a { --cf: var(--cmp-a2a); }
+.cmp-legend-mcp { --cf: var(--cmp-mcp); }
+.cmp-legend-owp { --cf: var(--cmp-owp); }
+
+@media (max-width: 760px) {
+  .cmp-tree-row { flex-wrap: wrap; gap: 6px 8px; }
+  .cmp-tree-label { font-size: 14px; }
+  .cmp-legend-row { flex-direction: column; gap: 4px; }
+}
+
 /* ─── OpenExO 3.0 positioning page (/comparisons/openexo-3-openwop/) ───
  * Shares the .comparison-page / .cmp-* system. Adds one page hue: gold
  * (hue 80, the --star-glow band) for the organizational THESIS, against

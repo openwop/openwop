@@ -1469,12 +1469,118 @@ function buildComparisonA2aMcp() {
     ${schematicHtml}
   </header>`;
 
+  // The six architecture / integration / pattern ASCII diagrams in the
+  // markdown are upgraded in place to designed graphics in the page's
+  // three-hue protocol grammar (A2A purple · MCP cyan · OpenWOP clay).
+  // Same swap-or-degrade contract as the OpenExO page: a figure replaces
+  // its ASCII block by matching the block's lead text; if that text ever
+  // changes shape the regex simply misses and the ASCII renders unharmed.
+  const flowNode = (n) => `
+      <div class="cmp-flow-node">${n.role ? `<span class="cmp-flow-role">${n.role}</span>` : ''}<span class="cmp-flow-name">${n.name}</span>${n.sub ? `<span class="cmp-flow-sub">${n.sub}</span>` : ''}${n.items ? `<ul class="cmp-flow-parts">${n.items.map((it) => `<li>${it}</li>`).join('')}</ul>` : ''}</div>`;
+  const flowLink = (l) => `
+      <div class="cmp-flow-link"${l.accent ? ` style="--cf: var(--cmp-${l.accent})"` : ''}><span>${l.label}</span></div>`;
+  const flowFigure = ({ cls = '', aria, caption, rows }) =>
+    `<figure class="cmp-flow${cls ? ' ' + cls : ''}" role="img" aria-label="${aria}">${rows.map((r) => (r.node ? flowNode(r.node) : flowLink(r.link))).join('')}
+      <figcaption>${caption}</figcaption>
+    </figure>`;
+
+  const a2aArchHtml = flowFigure({
+    cls: 'cmp-flow-a2a',
+    aria: 'A2A architecture: an A2A client or caller sends a message to an A2A server or remote agent, which creates or updates a Task; the Task lifecycle then drives status updates and produces artifacts and messages.',
+    caption: 'A remote-agent contract — the caller hands off a task and follows its lifecycle, never the agent’s internals.',
+    rows: [
+      { node: { role: 'Caller', name: 'A2A Client / Caller' } },
+      { link: { label: 'Send Message' } },
+      { node: { role: 'Remote agent', name: 'A2A Server / Remote Agent' } },
+      { link: { label: 'Creates or updates Task' } },
+      { node: { role: 'Outcome', name: 'Task lifecycle', items: ['status updates', 'artifacts', 'messages'] } },
+    ],
+  });
+  const mcpArchHtml = flowFigure({
+    cls: 'cmp-flow-mcp',
+    aria: 'MCP architecture: an MCP host — an AI application, IDE, or agent runtime — opens one or more MCP client connections to MCP servers, which expose tools, resources, prompts, and notifications backed by external APIs, databases, filesystems, SaaS apps, and services.',
+    caption: 'A host-client-server contract — the host connects to servers that expose tools and context over JSON-RPC.',
+    rows: [
+      { node: { role: 'Host', name: 'MCP Host', sub: 'AI application · IDE · agent runtime' } },
+      { link: { label: 'one or more MCP Client connections' } },
+      { node: { role: 'Server', name: 'MCP Server(s)' } },
+      { link: { label: 'expose tools, resources, prompts, notifications' } },
+      { node: { role: 'Backends', name: 'External systems', items: ['APIs', 'databases', 'filesystems', 'SaaS apps', 'services'] } },
+    ],
+  });
+  const owpArchHtml = flowFigure({
+    cls: 'cmp-flow-owp',
+    aria: 'OpenWOP architecture: a client, SDK, or agent POSTs to /v1/runs on an OpenWOP host, which executes a WorkflowDefinition; the run emits an event log streamed over SSE, webhooks, and OpenTelemetry, supports interrupt, pause, resume, and replay, and reaches humans, tools, agents, workers, subflows, and artifacts.',
+    caption: 'A workflow-host contract — a durable run with an event log you can stream, interrupt, resume, and replay.',
+    rows: [
+      { node: { role: 'Caller', name: 'Client / SDK / Agent' } },
+      { link: { label: 'POST /v1/runs' } },
+      { node: { role: 'Host', name: 'OpenWOP Host' } },
+      { link: { label: 'Executes WorkflowDefinition' } },
+      { node: { role: 'Run', name: 'Run → Event Log', items: ['SSE', 'Webhooks', 'OpenTelemetry'] } },
+      { link: { label: 'Interrupt / pause / resume / replay' } },
+      { node: { role: 'Reaches', name: 'Execution surface', items: ['Humans', 'tools', 'agents', 'workers', 'subflows', 'artifacts'] } },
+    ],
+  });
+  // The integration diagram is the page's thesis as a picture: neutral
+  // nodes, protocol-colored EDGES — each link owns one boundary.
+  const integrationHtml = flowFigure({
+    aria: 'Composable layers: an external agent ecosystem reaches an A2A-facing agent or gateway over A2A (discover agents, delegate tasks, exchange artifacts); that gateway drives a workflow host or orchestration plane over OpenWOP (start durable run, stream events, pause/resume, replay); the workflow host reaches external APIs, databases, files, SaaS apps, and local services over MCP (call tools, read resources, use prompts, elicit input).',
+    caption: 'The strongest architecture treats the three protocols as composable layers — the edges are the protocols, each owning one boundary.',
+    rows: [
+      { node: { name: 'External agent ecosystem' } },
+      { link: { accent: 'a2a', label: 'A2A · discover agents, delegate tasks, exchange artifacts' } },
+      { node: { name: 'A2A-facing agent or gateway' } },
+      { link: { accent: 'owp', label: 'OpenWOP · start durable run, stream events, pause/resume, replay' } },
+      { node: { name: 'Workflow host / orchestration plane' } },
+      { link: { accent: 'mcp', label: 'MCP · call tools, read resources, use prompts, elicit input' } },
+      { node: { name: 'External systems', items: ['APIs', 'databases', 'files', 'SaaS apps', 'local services'] } },
+    ],
+  });
+
+  // Pattern 3 — the nested call tree. Indentation is the call stack; each
+  // row's left rail + tag take the protocol hue of the hop. Labels carry
+  // the protocol-stripped noun (the tag supplies the protocol).
+  const TAG = { a2a: 'A2A', mcp: 'MCP', owp: 'OpenWOP' };
+  const TREE = [
+    { d: 0, p: 'a2a', label: 'caller' },
+    { d: 1, p: 'a2a', label: 'specialist agent' },
+    { d: 2, p: 'owp', label: 'workflow run' },
+    { d: 3, p: 'mcp', label: 'CRM server' },
+    { d: 3, p: 'mcp', label: 'database server' },
+    { d: 3, p: 'mcp', label: 'filesystem or document server' },
+    { d: 3, p: 'owp', label: 'approval interrupt' },
+    { d: 2, p: 'a2a', label: 'artifact result' },
+  ];
+  const treeHtml = `<figure class="cmp-tree" role="img" aria-label="Pattern 3 call tree: an A2A caller invokes an A2A specialist agent, which runs an OpenWOP workflow; the run calls an MCP CRM server, an MCP database server, and an MCP filesystem or document server, then hits an OpenWOP approval interrupt, and finally returns an A2A artifact result.">${TREE.map((r) => `
+      <div class="cmp-tree-row cmp-tree-${r.p}" data-d="${r.d}" style="--depth:${r.d}"><span class="cmp-tree-tag">${TAG[r.p]}</span><span class="cmp-tree-label">${r.label}</span></div>`).join('')}
+      <figcaption>One public A2A call fans out through an OpenWOP run into MCP tools and a human approval gate, then returns a single A2A artifact — the clean enterprise split of contract from execution.</figcaption>
+    </figure>`;
+
+  // The closing boundary legend.
+  const LEGEND = [
+    { p: 'a2a', name: 'A2A', def: 'public agent collaboration boundary' },
+    { p: 'mcp', name: 'MCP', def: 'tool, data, prompt, and context integration boundary' },
+    { p: 'owp', name: 'OpenWOP', def: 'internal durable workflow and observability boundary' },
+  ];
+  const legendHtml = `<figure class="cmp-legend" role="img" aria-label="Boundaries: A2A is the public agent collaboration boundary; MCP is the tool, data, prompt, and context integration boundary; OpenWOP is the internal durable workflow and observability boundary.">${LEGEND.map((r) => `
+      <div class="cmp-legend-row cmp-legend-${r.p}"><span class="cmp-legend-name">${r.name}</span><span class="cmp-legend-def">${r.def}</span></div>`).join('')}
+    </figure>`;
+
   // Render the prose, then decorate: protocol names in table headers and
   // decision-checklist answer cells become colored chips; H3s that open
   // with a protocol name get its hue on the name.
   const CHIP = { A2A: 'a2a', MCP: 'mcp', OpenWOP: 'owp' };
   const chip = (name) => `<span class="cmp-chip cmp-chip-${CHIP[name]}">${name}</span>`;
   let articleHtml = markdownToHtml(bodyMd)
+    // Swap each architecture / integration / pattern / legend ASCII block
+    // for its designed figure, matched on the block's lead text.
+    .replace(/<pre class="lang-"><code>A2A Client \/ Caller[\s\S]*?<\/code><\/pre>/, a2aArchHtml)
+    .replace(/<pre class="lang-"><code>MCP Host:[\s\S]*?<\/code><\/pre>/, mcpArchHtml)
+    .replace(/<pre class="lang-"><code>Client \/ SDK \/ Agent[\s\S]*?<\/code><\/pre>/, owpArchHtml)
+    .replace(/<pre class="lang-"><code>External agent ecosystem[\s\S]*?<\/code><\/pre>/, integrationHtml)
+    .replace(/<pre class="lang-"><code>A2A caller[\s\S]*?<\/code><\/pre>/, treeHtml)
+    .replace(/<pre class="lang-"><code>A2A = public[\s\S]*?<\/code><\/pre>/, legendHtml)
     .replace(/<th>(A2A|MCP|OpenWOP)<\/th>/g, (_, n) => `<th>${chip(n)}</th>`)
     .replace(/<td>((?:A2A|MCP|OpenWOP)(?: \+ (?:A2A|MCP|OpenWOP))*)<\/td>/g, (_, combo) =>
       `<td class="cmp-answer">${combo.split(' + ').map(chip).join('<span class="cmp-plus">+</span>')}</td>`)
