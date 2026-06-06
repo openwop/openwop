@@ -12,7 +12,7 @@
 | OpenAPI operations | 48 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 324 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 90 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 89 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -37,7 +37,6 @@
 | Accepted | 86 |
 | Active | 1 |
 | Draft | 2 |
-| Withdrawn | 1 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -130,7 +129,6 @@
 | RFC 0087 | Define an **agent org-chart** - a tenant-scoped, descriptive grouping of standing roster agents (RFC 0086) into departments + roles with `reportsTo` edges and a responsibility view - under one load-bearing invariant: **org position confers NO authority** (a `reportsTo`/manager edge MUST NOT widen `toolAllowlist`, grant an RBAC scope, or bypass an approval gate); composing RFC 0086 (the members), RFC 0074 (tenant scoping), RFC 0049 (RBAC - unchanged by position), and RFC 0051 (approval gates - unchanged by position) | Accepted |
 | RFC 0088 | `openwop-core-standard` - the stable Core Standard Profile (the black-box-proven floor) | Accepted |
 | RFC 0089 | Conformance certification bundle - machine-readable per-profile evidence | Accepted |
-| RFC 0090 | Shadow-prove migration gate - composing the eval surface to authorize a workflow cut-over | Withdrawn |
 
 ## SDK Helper Coverage
 
