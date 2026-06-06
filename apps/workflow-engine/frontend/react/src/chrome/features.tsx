@@ -48,6 +48,8 @@ import { AgentInstallPage } from '../agents/AgentInstallPage.js';
 import { AgentNewPage } from '../agents/AgentNewPage.js';
 import { AgentDashboardPage } from '../agents/AgentDashboardPage.js';
 import { AgentWorkspacePage } from '../agents/AgentWorkspacePage.js';
+import { WorkforcesGalleryPage } from '../workforces/WorkforcesGalleryPage.js';
+import { WorkforceOverviewPage } from '../workforces/WorkforceOverviewPage.js';
 import { AgentCreateWizard } from '../agents/AgentCreateWizard.js';
 import { DemoDataPage } from '../settings/DemoDataPage.js';
 import { AdminOverviewPage } from '../settings/AdminOverviewPage.js';
@@ -113,6 +115,13 @@ export const FEATURES: FeatureRoute[] = [
   { path: '/agents/install', element: <AgentInstallPage />, tier: 'workspace', chrome: 'narrow' },
   // Per-agent workspace (a roster id) — the agents-demo PRD's primary surface.
   { path: '/agents/:agentId', element: <AgentWorkspacePage />, tier: 'workspace' },
+  // Governed workforces (EP0) — a business function as a supervised agent
+  // cluster: purpose/policy, telemetry, agent specs. Read-only in EP0.
+  {
+    path: '/workforces', element: <WorkforcesGalleryPage />, tier: 'workspace',
+    nav: { group: 'Workspace', label: 'Workforces', icon: BuildingIcon, hint: 'Governed agent workforces — purpose, telemetry, autonomy' },
+  },
+  { path: '/workforces/:workforceId', element: <WorkforceOverviewPage />, tier: 'workspace' },
   {
     path: '/builder', element: <WorkflowsDashboard />, tier: 'workspace',
     nav: { group: 'Author', label: 'Workflows', icon: WorkflowIcon, hint: 'Author + edit workflows' },
