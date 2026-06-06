@@ -4,10 +4,11 @@
 |---|---|
 | **RFC** | 0090 |
 | **Title** | Shadow-run contract — prove an agentic workflow against a baseline before cut-over |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-06-06 |
 | **Updated** | 2026-06-06 |
+| **Comment window** | Waived by steward 2026-06-06 (bootstrap one-approval). The core wire shape (capability block, `shadow` run field, the three `shadow.*` events, `ShadowComparison`) is now LOCKED per `Active`; the Unresolved questions + Gap register remain open and resolve as the demo "Shadow & Prove" pilot exercises them, via additive follow-up if needed. |
 | **Affects** | new `spec/v1/shadow-run.md` (DRAFT); `schemas/capabilities.schema.json`, `schemas/run-snapshot.schema.json`, `schemas/run-event.schema.json`, `schemas/create-run-request.schema.json`; `api/openapi.yaml`, `api/asyncapi.yaml`; `conformance/`; composes with `spec/v1/replay.md` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` |
 | **Supersedes** | — |
