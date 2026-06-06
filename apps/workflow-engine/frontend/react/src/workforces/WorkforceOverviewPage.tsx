@@ -10,6 +10,7 @@ import { StateCard } from '../ui/StateCard.js';
 import { Skeleton } from '../ui/Skeleton.js';
 import { Notice } from '../ui/Notice.js';
 import { ArrowLeftIcon, BuildingIcon } from '../ui/icons/index.js';
+import { TraceSearchPanel } from './TraceSearchPanel.js';
 import {
   getWorkforce,
   getWorkforceGovernance,
@@ -281,6 +282,9 @@ export function WorkforceOverviewPage(): JSX.Element {
           </div>
         </section>
       ) : null}
+
+      {/* Cross-run trace search (GA-2) */}
+      <TraceSearchPanel workforceId={workforceId} />
 
       {/* Agent cluster */}
       <h3>Agent cluster</h3>
