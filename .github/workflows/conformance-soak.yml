@@ -201,11 +201,8 @@ jobs:
         run: |
           npx vitest run src/scenarios/restart-during-run.test.ts src/scenarios/staleClaim.test.ts
 
-      - name: Three-language SDK smoke
-        env:
-          OPENWOP_BASE_URL: http://127.0.0.1:${{ env.OPENWOP_PORT }}
-          OPENWOP_API_KEY: openwop-sqlite-dev-key
-        run: bash sdk/smoke/all.sh
+      # The three-language SDK smoke (sdk/smoke/all.sh) moved to openwop-sdks with
+      # the SDKs; it runs there against a booted host in that repo's CI.
 
       - name: Tear down host
         if: always()
