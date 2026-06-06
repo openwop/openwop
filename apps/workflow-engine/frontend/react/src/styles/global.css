@@ -17,7 +17,7 @@
   --rule-2:       #c4bfae;
   --ink:          #1a1a17;
   --ink-2:        #4a4842;
-  --ink-3:        #837f72;
+  --ink-3:        #6e6a5e; /* AA-contrast muted text on paper (GAP-ANALYSIS E10) */
   --clay:         oklch(58% 0.13 40);
   --clay-soft:    oklch(58% 0.13 40 / 0.10);
   --clay-rule:    oklch(58% 0.13 40 / 0.35);
@@ -1663,7 +1663,7 @@ pre {
   width: 22px;
   height: 22px;
   border-radius: 4px;
-  color: white;
+  color: var(--color-on-scrim);
   font-size: 11px;
   font-weight: 600;
   flex-shrink: 0;
@@ -3797,7 +3797,7 @@ pre {
   width: 26px;
   height: 26px;
   border-radius: 6px;
-  color: white;
+  color: var(--color-on-scrim);
   font-family: var(--sans, sans-serif);
   font-weight: 600;
   font-size: 13px;
