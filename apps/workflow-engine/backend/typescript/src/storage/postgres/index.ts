@@ -400,6 +400,52 @@ export async function openPostgresStorage(options: PostgresStorageOptions | stri
       }
     },
 
+    async appendEventsBatch(inputs) {
+      if (inputs.length === 0) return [];
+      const withIds = inputs.map((i) => ({ ...i, eventId: i.eventId || randomUUID() }));
+      const runIds = [...new Set(withIds.map((i) => i.runId))];
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        // Same per-run serialization as appendEvent (advisory lock per run), so a
+        // concurrent appender can't race sequence assignment.
+        for (const rid of runIds) {
+          await client.query('SELECT pg_advisory_xact_lock(hashtext($1), 1)', [rid]);
+        }
+        // One read of the current max sequence per run.
+        const { rows: maxRows } = await client.query<{ run_id: string; max: string }>(
+          `SELECT run_id, COALESCE(MAX(sequence), 0)::text AS max FROM events WHERE run_id = ANY($1) GROUP BY run_id`,
+          [runIds],
+        );
+        const nextSeq = new Map<string, number>(runIds.map((r) => [r, 0]));
+        for (const row of maxRows) nextSeq.set(row.run_id, Number(row.max));
+
+        const tuples: string[] = [];
+        const params: unknown[] = [];
+        const out: EventRecord[] = [];
+        let p = 0;
+        for (const e of withIds) {
+          const seq = (nextSeq.get(e.runId) ?? 0) + 1;
+          nextSeq.set(e.runId, seq);
+          tuples.push(`($${++p},$${++p},$${++p},$${++p},$${++p},$${++p},$${++p},$${++p})`);
+          params.push(e.eventId, e.runId, seq, e.type, e.nodeId ?? null, e.payload ?? null, e.timestamp, e.causationId ?? null);
+          out.push({ ...e, sequence: seq });
+        }
+        // One multi-row INSERT — the round-trip win over N appendEvent calls.
+        await client.query(
+          `INSERT INTO events (event_id, run_id, sequence, type, node_id, payload, timestamp, causation_id) VALUES ${tuples.join(',')}`,
+          params,
+        );
+        await client.query('COMMIT');
+        return out;
+      } catch (err) {
+        await client.query('ROLLBACK').catch(() => { /* connection already broken */ });
+        throw err;
+      } finally {
+        client.release();
+      }
+    },
+
     async listEvents(runId, opts = {}) {
       const fromSeq = opts.fromSeq ?? 0;
       const limit = opts.limit ?? 1000;

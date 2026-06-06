@@ -617,6 +617,17 @@ export function openSqliteStorage(dbPath: string): Storage {
       return result;
     },
 
+    async appendEventsBatch(inputs) {
+      if (inputs.length === 0) return [];
+      // better-sqlite3 is synchronous + in-process, so one transaction IS the
+      // batch — each insert sees prior inserts, so MAX(sequence)+1 stays correct
+      // per run. Byte-identical to N appendEvent calls.
+      const runBatch = db.transaction((events: readonly Omit<EventRecord, 'sequence'>[]): EventRecord[] =>
+        events.map((e) => appendEventTxn({ ...e, eventId: e.eventId || randomUUID() })),
+      );
+      return runBatch(inputs);
+    },
+
     async listEvents(runId, { fromSeq = 0, limit = 1000 } = {}) {
       const rows = listEventsStmt.all({ runId, fromSeq, limit });
       return rows.map(rowToEvent);

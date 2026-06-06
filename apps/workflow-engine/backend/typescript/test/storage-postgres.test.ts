@@ -120,6 +120,23 @@ async function makeStorage(): Promise<Storage> {
       );
       return { ...input, sequence: seq } as EventRecord;
     },
+    appendEventsBatch: async (inputs) => {
+      const out: EventRecord[] = [];
+      for (const input of inputs) {
+        const { rows } = await pool.query(
+          `SELECT COALESCE(MAX(sequence),0)+1 AS seq FROM events WHERE run_id = $1`,
+          [input.runId],
+        );
+        const seq = Number((rows[0] as { seq: number }).seq);
+        await pool.query(
+          `INSERT INTO events (event_id, run_id, sequence, type, payload, timestamp)
+           VALUES ($1,$2,$3,$4,$5,$6)`,
+          [input.eventId, input.runId, seq, input.type, input.payload ?? null, input.timestamp],
+        );
+        out.push({ ...input, sequence: seq } as EventRecord);
+      }
+      return out;
+    },
     listEvents: async (runId, opts = {}) => {
       const fromSeq = opts.fromSeq ?? 0;
       const { rows } = await pool.query(

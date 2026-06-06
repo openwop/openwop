@@ -134,7 +134,6 @@ export async function seedWorkforceHistory(
     let annotationStoreUnavailable = false;
     for (const gr of history.runs) {
       await storage.insertRun(gr.record);
-      for (const ev of gr.events) await storage.appendEvent(ev);
       // Annotations (RFC 0056 flavor) are BEST-EFFORT: the workforce surface
       // reads `metadata.outcome`, never annotation records, so a backend without
       // an annotations store (e.g. a Postgres deploy whose schema omits the
@@ -155,6 +154,10 @@ export async function seedWorkforceHistory(
         }
       }
     }
+    // Bulk-append every run's events in ONE round-trip (was N per-event appends —
+    // ~3000 sequential Cloud SQL writes, the dominant reseed cost). appendEventsBatch
+    // assigns the same monotonic per-run sequence, so the result is identical.
+    await storage.appendEventsBatch(history.runs.flatMap((gr) => gr.events));
     seededWorkforces++;
     seededRuns += history.runs.length;
     log.info('workforce_history_seeded', {
