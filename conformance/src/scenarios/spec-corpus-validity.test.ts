@@ -387,7 +387,19 @@ function extractReadmeDocumentIndex(readme: string): string {
 }
 
 function listMarkdownFilesRecursive(dir: string, repoRoot: string = dir): string[] {
-  const ignoredDirs = new Set(['.git', 'node_modules', 'dist']);
+  const ignoredDirs = new Set([
+    '.git',
+    'node_modules',
+    'dist',
+    // CI cross-repo checkouts: the host-conformance workflows (conformance-soak,
+    // postgres-host-conformance) check out openwop-examples + openwop-registry into
+    // examples-ext/ + registry-ext/ inside the workspace. Those carry their own
+    // READMEs whose links are relative to THEIR repo root (../../spec, ../../RFCS,
+    // ../../conformance, …) and don't resolve from this corpus. They're link-checked
+    // in their own repos; do not scan a vendored sibling-repo checkout here.
+    'examples-ext',
+    'registry-ext',
+  ]);
   // Repo-relative directory paths to prune. These are subtrees whose
   // content shouldn't be link-checked because either (a) they're
   // generated build output (`site/out`) or (b) they're a vendored
