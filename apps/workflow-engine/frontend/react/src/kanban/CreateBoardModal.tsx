@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import type { RosterEntry } from '../agents/rosterClient.js';
 import { ALL_WORKFLOW_OPTIONS } from '../agents/roleTemplates.js';
 import { IconButton } from '../ui/IconButton.js';
-import { XIcon } from '../ui/icons/index.js';
+import { XIcon, ZapIcon } from '../ui/icons/index.js';
 import { Modal } from '../ui/Modal.js';
 
 /**
@@ -39,7 +39,7 @@ export function CreateBoardModal({ roster, onClose, onCreate }: {
             <div className="hire-eyebrow">New board</div>
             <h2 className="hire-title">Create a board</h2>
             <p className="hire-lede">
-              A board tracks work through To do → Done. Optionally connect a workflow that fires when cards hit the ⚡ trigger column.
+              A board tracks work through To do → Done. Optionally connect a workflow that fires when cards hit the <ZapIcon size={12} aria-hidden /> trigger column.
             </p>
           </div>
           <IconButton label="Close" icon={<XIcon size={16} />} onClick={onClose} />

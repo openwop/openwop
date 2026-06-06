@@ -390,12 +390,16 @@ export function OrgsPage(): JSX.Element {
               <div
                 key={o.orgId}
                 className="surface-card"
+                role="button"
+                tabIndex={0}
+                aria-pressed={o.orgId === selectedOrgId}
                 style={{
                   marginBottom: 'var(--space-2)',
                   cursor: 'pointer',
                   borderColor: o.orgId === selectedOrgId ? 'var(--color-accent)' : undefined,
                 }}
                 onClick={() => setSelectedOrgId(o.orgId)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedOrgId(o.orgId); } }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-2)' }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-2)' }}>

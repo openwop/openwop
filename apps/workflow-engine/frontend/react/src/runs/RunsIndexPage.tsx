@@ -181,16 +181,17 @@ export function RunsIndexPage() {
         </p>
         <form onSubmit={onSubmit}>
           <div className="form-row">
-            <label>Workflow</label>
-            <select value={workflowId} onChange={(e) => setWorkflowId(e.target.value)}>
+            <label htmlFor="ri-workflow">Workflow</label>
+            <select id="ri-workflow" value={workflowId} onChange={(e) => setWorkflowId(e.target.value)}>
               {allOptions.map((w) => (
                 <option key={w.id} value={w.id}>{w.label}</option>
               ))}
             </select>
           </div>
           <div className="form-row">
-            <label>Inputs (JSON)</label>
+            <label htmlFor="ri-inputs">Inputs (JSON)</label>
             <textarea
+              id="ri-inputs"
               rows={6}
               value={inputsRaw}
               onChange={(e) => setInputsRaw(e.target.value)}

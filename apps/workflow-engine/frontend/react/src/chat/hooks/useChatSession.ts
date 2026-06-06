@@ -1679,10 +1679,9 @@ export function useChatSession(): UseChatSessionResult {
     }
   }, [session.messages, updateWorkflowRun]);
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks -- the hook
-  // call is unconditional; React rule-of-hooks holds. Placement here
-  // (vs at the top of the function) keeps the active-agents API
-  // logically grouped with the chat-session result it's exposed on.
+  // The useActiveAgents call is unconditional, so rule-of-hooks holds.
+  // Placement here (vs at the top of the function) keeps the active-agents
+  // API logically grouped with the chat-session result it's exposed on.
   const activeAgents = useActiveAgents(session, setSession);
 
   return {

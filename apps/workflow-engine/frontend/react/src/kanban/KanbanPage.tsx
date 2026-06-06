@@ -29,7 +29,7 @@ import { StateCard } from '../ui/StateCard.js';
 import { classifyHttpError } from '../client/classifyHttpError.js';
 import { PageHeader } from '../ui/PageHeader.js';
 import { IconButton } from '../ui/IconButton.js';
-import { AlertIcon, ColumnsIcon, DotsIcon, PencilIcon, TrashIcon, WorkflowIcon } from '../ui/icons/index.js';
+import { AlertIcon, ColumnsIcon, DotsIcon, PencilIcon, TrashIcon, WorkflowIcon, ZapIcon } from '../ui/icons/index.js';
 import { KanbanBoardView, type NewCardInput } from './KanbanBoardView.js';
 import { CreateBoardModal } from './CreateBoardModal.js';
 import {
@@ -317,7 +317,7 @@ export function KanbanPage(): JSX.Element {
       <PageHeader
         eyebrow="Boards"
         title="Boards"
-        lede={<>The same task boards your agents work from. Drag a card into the ⚡ <strong>To do</strong> column to fire its workflow.</>}
+        lede={<>The same task boards your agents work from. Drag a card into the <ZapIcon size={12} aria-hidden /> <strong>To do</strong> column to fire its workflow.</>}
         actions={<button type="button" className="btn-accent-solid" onClick={() => setCreating(true)}>+ New board</button>}
       />
 

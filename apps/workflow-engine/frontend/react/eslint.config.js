@@ -28,7 +28,7 @@ export default tseslint.config(
       // promote to error once clean.
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/ban-ts-comment': 'warn',
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', destructuredArrayIgnorePattern: '^_' }],
       // console.* should be intentional; the few diagnostic sites carry an
       // explicit eslint-disable. Enabling the rule makes those directives
       // meaningful (not "unused") and flags stray logging.
