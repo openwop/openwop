@@ -102,6 +102,31 @@ jobs:
           cd apps/workflow-engine/frontend/react
           npm run test
 
+  # Browser e2e gate: locks in the a11y (axe wcag2a/2aa over 16 routes x
+  # light+dark), focus-trap/Modal, and app-shell guarantees so they can't
+  # silently regress. Runs against a backend-less dev server (the app renders
+  # empty/error states, which axe still audits) — no backend needed in CI.
+  e2e-app-frontend:
+    name: App frontend (Playwright e2e — a11y/focus/smoke)
+    needs: changes
+    if: needs.changes.outputs.appfrontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Install deps + Chromium
+        run: |
+          cd apps/workflow-engine/frontend/react
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: e2e (smoke + modal + a11y)
+        run: |
+          cd apps/workflow-engine/frontend/react
+          npm run test:e2e
+
   lint-python:
     name: Python lint (ruff)
     needs: changes
