@@ -112,6 +112,11 @@ interface Props {
 
 export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'demo' }: Props): JSX.Element {
   const { session, isSending, error, send, cancel, emitSystem, reset, resolveInterrupt, runWorkflowMention, cancelWorkflowRun, regenerate, setFeedback, loadSessionFromBackend, activeAgents } = useChatSession();
+  // Stable regenerate handler (GAP-ANALYSIS E14): an inline arrow here made a
+  // new function each render, defeating MessageBubble's memo. useCallback keeps
+  // it referentially stable across streaming tokens (config is unchanged
+  // mid-stream) so settled bubbles skip re-render.
+  const onRegenerate = useCallback((id: string) => { void regenerate(id, config); }, [regenerate, config]);
   // Agent catalog — read once at mount, used by the submit-path's
   // `@`-mention detection (phase D3). The `AgentMentionAutocomplete`
   // popover refetches independently; both consumers pay the same
@@ -446,7 +451,7 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
             onResolveInterrupt={resolveInterrupt}
             onOpenWorkflowProgress={openProgressForRun}
             focusedWorkflowMessageId={activeRailTab === 'progress' ? focusedWorkflowMessageId : null}
-            onRegenerate={(id) => { void regenerate(id, config); }}
+            onRegenerate={onRegenerate}
             onFeedback={setFeedback}
             onReconfigureBYOK={onOpenSettings}
           />
