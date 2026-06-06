@@ -1,177 +1,89 @@
-# RFC 0090: Shadow-run contract — prove an agentic workflow against a baseline before cut-over
+# RFC 0090: Shadow-prove migration gate — composing the eval surface to authorize a workflow cut-over
 
 | Field | Value |
 |---|---|
 | **RFC** | 0090 |
-| **Title** | Shadow-run contract — prove an agentic workflow against a baseline before cut-over |
-| **Status** | `Active` |
+| **Title** | Shadow-prove migration gate — composing the eval surface to authorize a workflow cut-over |
+| **Status** | `Draft` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-06-06 |
 | **Updated** | 2026-06-06 |
-| **Comment window** | Waived by steward 2026-06-06 (bootstrap one-approval). The core wire shape (capability block, `shadow` run field, the three `shadow.*` events, `ShadowComparison`) is now LOCKED per `Active`; the Unresolved questions + Gap register remain open and resolve as the demo "Shadow & Prove" pilot exercises them, via additive follow-up if needed. |
-| **Affects** | new `spec/v1/shadow-run.md` (DRAFT); `schemas/capabilities.schema.json`, `schemas/run-snapshot.schema.json`, `schemas/run-event.schema.json`, `schemas/create-run-request.schema.json`; `api/openapi.yaml`, `api/asyncapi.yaml`; `conformance/`; composes with `spec/v1/replay.md` |
+| **Reconciliation note** | The first draft of this RFC (briefly flipped to `Active` on a steward waiver) independently invented a `capabilities.shadow` block, a `shadow` run-creation field, three `shadow.*` events, and a `ShadowComparison` result. Code review found this **duplicated Accepted RFC 0081** (Agent Evaluation — `live-shadow` mode, `baselineRunId`, `regression`, `EvalSummary`, `agents.evalSuite`) and **RFC 0082** (deployment promotion gate). This RFC has been **returned to `Draft` and re-scoped to compose those surfaces** rather than re-invent them. The duplicate wire surface is removed. |
+| **Affects** | `spec/v1/agent-evaluation.md` (RFC 0081, referenced), `RFCS/0082-agent-deployment-lifecycle.md` (referenced), `spec/v1/replay.md` (RFC 0054 diff, referenced). Net-new normative surface: **TBD — possibly none** (see Unresolved Q1). |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` |
 | **Supersedes** | — |
-| **Superseded by** | — |
+| **Superseded by** | — (candidate: fold entirely into RFC 0081 §D + RFC 0082 §E — see Unresolved Q1) |
 
 ## Summary
 
-A host MAY run a workflow in **shadow mode**: it executes the agentic workflow while materializing a **baseline** (a pinned prior workflow version via the existing replay/fork surface, or an externally-supplied legacy outcome), then emits a **deterministic comparison** — agreement rate, override rate, and per-key divergences — so a team can *prove* the agentic workflow against the process it replaces before cutting over production responsibility. The comparison is content-free (digests + metrics, never raw output values), discoverable via `capabilities.shadow`, and entirely optional.
+The "prove an agentic workflow against a baseline before cut-over" mechanism **already exists** in the corpus: RFC 0081 provides `live-shadow` and `regression` eval modes, an optional `baselineRunId`, a content-free `EvalSummary` scorecard, and an `agents.evalSuite` capability; RFC 0082 provides the deployment-promotion gate that consumes `EvalSummary.passed` / `aggregateScore >= requiredPassScore`; RFC 0054 provides the structural run-diff. This RFC therefore **does not introduce a parallel shadow surface.** Its only candidate contribution is a thin, optional **workflow/workforce-level binding** — a "shadow-prove migration gate" that authorizes cutting over *production responsibility for a whole workflow* (not a single agent pack) once a referenced `EvalSummary` passes. Whether even that is net-new — versus a pure composition of RFC 0081 + RFC 0082 — is the central open question (Q1).
 
 ## Motivation
 
-Migrating a human/legacy process to an agentic workflow needs a **prove-it step** between "built" and "in production." Today the protocol has no surface for *run-alongside-and-compare*:
+Migrating a human/legacy process to an agentic workflow needs a **prove-it step** between "built" and "in production." The first draft of this RFC asserted the protocol had "no surface for run-alongside-and-compare." **That was wrong** — it overlooked:
 
-- **Replay/fork** (`replay.md`) re-executes a workflow and compares it to *its own* prior run (divergence-from-self for time-travel debugging). It does **not** compare the agentic workflow to an independent baseline, and emits no agreement/override metric.
-- Teams therefore prove migrations out-of-band (spreadsheets, manual spot-checks) with no portable contract, no conformance, and no governable audit trail.
+- **RFC 0081 (Agent Evaluation, `Accepted`)** — `spec/v1/agent-evaluation.md`. A `live-shadow` eval mode runs a suite against live tools/memory (the run-alongside primitive); `regression` mode diffs scores against a `baselineRunId`; the terminal `EvalSummary` (`aggregateScore`, `passed`, per-task scores, `regression.scoreDelta`) is the portable, content-free comparison result (`eval-summary-no-content-leak` invariant). Discoverable via `capabilities.agents.evalSuite.modes[]`.
+- **RFC 0082 (Agent Deployment Lifecycle)** — `RFCS/0082-agent-deployment-lifecycle.md` §E. The promotion gate: a promotion request MAY carry `evalRunId`, and an RFC 0051 `approvalGate` MAY require `EvalSummary.passed === true` before `deployment.promoted`.
+- **RFC 0054 (run-diff)** — the structural delta between two runs.
 
-This is the "Shadow & Prove" stage of a workflow migration: run the new agent cluster in shadow over real inputs, measure how often it agrees with the baseline and how often a human would override it, and only graduate to production once the evidence clears a bar. The spec is the right place because the *comparison* must be portable across hosts and auditable — a host-private implementation gives no cross-host guarantee that "we proved it" means the same thing.
+So "shadow → prove → cut over" is **RFC 0081 (live-shadow eval) → `EvalSummary` → RFC 0082 (promotion gate)**. The genuine, narrow gap this RFC might still address: RFC 0081/0082 are framed at the **agent / agent-pack** level, whereas a migration cuts over an entire **workflow** (a cluster of agents + nodes) against a **non-agent legacy baseline**. If that workflow-level framing needs any wire surface beyond composing the three RFCs above, this RFC defines it; if not, this RFC documents the composition and is withdrawn.
 
 ## Proposal
 
-New DRAFT doc `spec/v1/shadow-run.md`. All additions are optional and gated on `capabilities.shadow`.
+**No new `capabilities.shadow`, no `shadow.*` events, no `ShadowComparison` — all removed.** The shadow comparison is an RFC 0081 `live-shadow` eval producing an `EvalSummary`; the cut-over is an RFC 0082 promotion gate keyed on `EvalSummary.passed`.
 
-### A. Capability advertisement
+Candidate net-new surface (to be confirmed in the comment window — see Q1), kept minimal and `Draft`:
 
-```jsonc
-// capabilities.schema.json — additive optional top-level block
-"shadow": {
-  "supported": true,
-  "baselineModes": ["replay", "external"],   // which baseline sources the host materializes
-  "comparison": { "strategies": ["exact", "keyed"] }
-}
-```
+- A **workflow-migration cut-over** MAY reference a passing `EvalSummary` (via RFC 0082's reserved `{ evalRunId, requiredPassScore? }` shape) as the authorization to migrate production responsibility for a workflow. This is expressed at the workflow level, reusing RFC 0082's gate verbatim.
+- A workflow's `live-shadow` eval MAY use a **non-agent baseline** (a legacy-process outcome supplied as the suite's `expected`/baseline) — confirming RFC 0081 already permits this rather than extending it.
 
-A host that does not advertise `capabilities.shadow` (or advertises `supported: false`) MUST reject a shadow run with `error.code: "capability_not_provided"`. Hosts that do not advertise it remain v1-compliant.
+If the comment window finds no surface beyond composition, this RFC is **withdrawn** with a pointer to RFC 0081 §D + RFC 0082 §E as the canonical home (Q1).
 
-### B. Starting a shadow run
+### Open spec gaps
 
-Additive optional `shadow` field on the run-creation request (`create-run-request.schema.json` / `RunOptions`):
-
-```jsonc
-{
-  "workflowId": "invoice-exception",
-  "inputs": { /* … */ },
-  "shadow": {
-    "baseline": { "mode": "replay", "fromRunId": "run_..." },
-    // …or: { "mode": "external", "outcome": { "<key>": "<digest-or-value>" } }
-    "comparison": { "outputKeys": ["decision", "amount"], "strategy": "exact" }
-  }
-}
-```
-
-- The agentic workflow executes normally. The host MAY ALSO materialize the baseline: in `replay` mode by replaying `fromRunId` (per `replay.md`); in `external` mode from the caller-supplied `outcome`.
-- The baseline leg MUST be **observe-only**: it MUST NOT perform production side-effects (no external writes, no irreversible tool calls). A `replay`-mode baseline reuses the replay idempotency guarantees (`replay.md §Determinism`).
-- The host MUST refuse a `replay` baseline whose `fromRunId` belongs to another tenant (`error.code: "forbidden_tenant"`) — CTI-1.
-
-### C. Events (new `RunEventType` members — additive, per-event version axis per `version-negotiation.md`)
-
-| Event | Payload (content-free) |
+| Gap | Disposition |
 |---|---|
-| `shadow.baseline.recorded` | `{ baselineMode, baselineRunId? }` |
-| `shadow.compared` | `{ agreementRate, overrideRate, divergenceCount, comparedKeys }` |
-| `shadow.diverged` | `{ key, agentOutcomeDigest, baselineOutcomeDigest }` — emitted per diverging key |
-
-`shadow.diverged` MUST carry **digests** (e.g., SHA-256 of the canonicalized value) of the compared values, NOT the raw values — see Security. The metrics on `shadow.compared` are derived, content-free numbers.
-
-### D. Comparison result (the EV-4 "proof" report)
-
-Additive optional `RunSnapshot.shadow` AND a read endpoint:
-
-```
-GET /v1/runs/{runId}/shadow   →   200 ShadowComparison
-```
-
-```jsonc
-// ShadowComparison
-{
-  "status": "agree" | "diverge" | "pending",
-  "baseline": { "mode": "replay", "runId": "run_..." },
-  "agreementRate": 0.94,
-  "overrideRate": 0.03,
-  "divergences": [ { "key": "amount", "agentDigest": "sha256:…", "baselineDigest": "sha256:…" } ]
-}
-```
-
-### E. Determinism (normative)
-
-The comparison MUST be **deterministic** given the same observable agent outputs and the same baseline: comparing the same run twice MUST yield the same `ShadowComparison`. Comparison is performed only over the declared `comparison.outputKeys`, using the declared `strategy` (`exact` = canonical-byte equality of the keyed value; `keyed` = equality of the value at each output key path). This reuses the observable-output-sequence determinism contract (`replay.md §C`) — the agentic leg's observable outputs are the comparison subject, not its internal tool-call bytes.
-
-### F. RFC 2119 prose (sketch)
-
-- A host that advertises `capabilities.shadow.supported: true` MUST accept a `shadow` block on run creation and MUST emit `shadow.compared` on completion of a shadow run.
-- A shadow run's baseline leg MUST NOT perform production side-effects.
-- `shadow.diverged` and `shadow.compared` payloads MUST NOT contain raw output values; they MUST carry only digests and derived metrics (SR-1).
-- A host MUST refuse a cross-tenant `replay` baseline (CTI-1).
-- The comparison MUST be deterministic over the declared `outputKeys` (§E).
-- A host that does not advertise the capability MUST reject a `shadow` block with `capability_not_provided` and otherwise ignore the (absent) surface.
-
-### Open spec gaps (this RFC does NOT cover)
-
-| Gap | Why deferred |
-|---|---|
-| Semantic/fuzzy comparison for free-text NL outputs | The invoice-exception pilot uses structured decisions (`exact`/`keyed`); NL comparison needs a separate strategy + a non-deterministic-output pilot. |
-| External-baseline *callback* ingestion (push-after-the-fact) | v1 takes the external outcome at run-creation time; a callback shape waits for a pilot that needs it. |
-| HITL *inside* the shadow leg | Whether the agentic leg's interrupts pause the comparison is left to a follow-up. |
-| Aggregation across many shadow runs (fleet-level proof) | This RFC is per-run; fleet roll-up is a host-extension/telemetry concern (see the demo app's workforce telemetry). |
+| Workflow-level (vs agent-pack-level) eval framing | Confirm whether RFC 0081's `AgentEvalSuite` already covers a workflow's output, or needs a thin `WorkflowEvalSuite` sibling. Likely covered. |
+| Non-agent legacy baseline | Confirm RFC 0081 `expected`/`live-shadow` already accepts an externally-supplied baseline. Likely covered. |
+| Fleet/workforce-level proof roll-up | Out of scope — a host-extension/telemetry concern (the demo app's workforce telemetry). |
 
 ## Compatibility
 
-**Additive** per `COMPATIBILITY.md §2.2`:
-
-- New **optional** capability block (`shadow`) — absent ⇒ unsupported; existing hosts unaffected.
-- New **optional** `shadow` field on run creation — absent ⇒ an ordinary run; existing clients never send it, existing servers ignore the absent field.
-- New **event types** — additively introduced on the per-event version axis (`version-negotiation.md`); an honest v1 client tolerates unknown event types (forward-compat), so emitting them does not break existing consumers.
-- New **optional** `RunSnapshot.shadow` (default absent) + a new **optional** endpoint — readers tolerate absence.
-
-No required field becomes optional/removed/type-changed; no event-type *shape* changes; no endpoint contract changes; no `MUST` is relaxed; no error-code meaning changes. Forward-compat guarantee: every addition is optional with an absent/`null` default; existing clients ignore it, existing servers don't emit it.
+**Additive** per `COMPATIBILITY.md §2.2` — and now *smaller*: the reconciled RFC removes the duplicate wire surface, so it adds at most a thin composition binding (or nothing). It introduces no required-field/contract/`MUST`/error change. Existing RFC 0081/0082/0054 surfaces are referenced, not modified.
 
 ## Conformance
 
-Existing adjacent coverage: `conformance/src/scenarios/replay-*.test.ts` (fork/replay), capability-discovery scenarios. New scenarios, **gated on `capabilities.shadow.supported`**:
-
-1. `shadow-run-emits-comparison` — a shadow run emits `shadow.compared` with `agreementRate`/`overrideRate`/`divergenceCount` (`shadow-run.md §C/§D`).
-2. `shadow-comparison-content-free` — `shadow.diverged` + `shadow.compared` carry digests/metrics, never raw output values (`shadow-run.md §Security`; enforces the new invariant).
-3. `shadow-comparison-deterministic` — comparing the same run twice yields an identical `ShadowComparison` (`shadow-run.md §E`).
-4. `shadow-baseline-no-side-effects` — the baseline leg performs no production writes (`shadow-run.md §B`).
-5. `shadow-cross-tenant-baseline-refused` — a `replay` baseline from another tenant → `forbidden_tenant` (CTI-1).
-
-Fixtures (new, under `conformance/fixtures/`, catalogued in `fixtures.md`): a `shadow-config` request + an expected `ShadowComparison`.
+No new shadow scenarios. The comparison + gate are already covered by RFC 0081's eval scenarios (`agent-eval-suite-shape.test.ts`, the gated `agent-eval-run.test.ts`) and RFC 0082's promotion-gate scenarios. If a workflow-level binding is confirmed (Q1), it adds at most one capability-gated composition scenario.
 
 ## Alternatives considered
 
-1. **Do nothing.** Teams prove migrations out-of-band. Rejected: no portable contract, no conformance, no governable audit trail — "we proved it" is unverifiable across hosts.
-2. **Reuse replay/fork only.** Replay compares a workflow to *its own* prior run (divergence-from-self), not to an independent baseline, and yields no agreement/override metric. Rejected: it answers "did I re-execute deterministically", not "does the agent match the process it replaces."
-3. **Client-side comparison.** The client diffs agent output vs a baseline it holds. Rejected: not portable, not conformance-testable, no on-the-wire audit trail, and every client reinvents the comparison semantics.
+1. **(Original draft) Invent a parallel `capabilities.shadow` + `shadow.*` events + `ShadowComparison`.** **Rejected** — duplicates RFC 0081 (`live-shadow`, `baselineRunId`, `regression`, content-free `EvalSummary`) and RFC 0082 (promotion gate). This was the first draft's mistake, caught in code review.
+2. **Withdraw RFC 0090 entirely.** Viable and currently the leading option: RFC 0081 §D + RFC 0082 §E + RFC 0054 may fully cover shadow → prove → cut over. Pending Q1.
+3. **This RFC (thin workflow-level binding).** Keep only if the workflow-vs-agent-pack framing needs surface beyond composition.
+4. **Do nothing.** The demo "Shadow & Prove" would compose RFC 0081 + 0082 directly without a documenting RFC — acceptable, but a short composition note aids implementers.
 
 ## Unresolved questions
 
-1. External-baseline ingestion: at-creation `outcome` only (this RFC), or also a post-hoc callback? The invoice-exception pilot should inform.
-2. Comparison strategies beyond `exact`/`keyed` (semantic/fuzzy for NL) — needed before a non-deterministic-output pilot.
-3. Does the agentic leg's HITL (interrupts) pause/annotate the comparison, or is shadow strictly non-interactive?
-4. `overrideRate` semantics when there is no human in the shadow loop — is "override" only meaningful with a HITL baseline, or derived from a policy boundary?
-5. Canonical read surface: `RunSnapshot.shadow`, the `GET …/shadow` endpoint, or both (and which is authoritative)?
-6. Interplay with RFC 0041 §C (replay determinism under non-deterministic models) for the `replay`-mode baseline leg.
+1. **Is there ANY net-new wire surface here, or is "shadow → prove → cut over" fully covered by RFC 0081 (live-shadow + EvalSummary) + RFC 0082 (promotion gate) + RFC 0054 (diff)?** If fully covered → withdraw this RFC and point to them. This is now the central question.
+2. Does RFC 0081's `AgentEvalSuite` cleanly express a *workflow*'s output (not just an agent pack's), or is a sibling artifact warranted?
+3. Can an RFC 0081 `live-shadow` baseline be a non-agent legacy outcome without extension?
 
 ## Implementation notes (non-normative)
 
-- Sequence: spec DRAFT → schema/OpenAPI/AsyncAPI → capability-gated conformance scenarios → reference-host (deferred; see Acceptance). No `CC-N` impl-plan coordination needed — additive, no breaking impl assumptions.
-- The openwop demo app's "Shadow & Prove" migration stage (MG-5) and its EV-4 comparison report are the intended first consumer; the pilot there will exercise §B/§D/§E and feed the Unresolved questions before this RFC advances to `Active`. Per the steward ruling, freeze only what that pilot has exercised.
-- Estimated effort: medium (one new spec doc + 4 schema touches + 5 scenarios). Reference-host implementation is explicitly deferred to a follow-up once the pilot stabilizes the shapes.
+- The openwop demo app's "Shadow & Prove" migration stage (MG-5) and "Cut Over" stage (MG-6) should consume **RFC 0081 `EvalSummary`** (live-shadow) and **RFC 0082**'s gate, not a bespoke shape. The demo's host-extension pilot is being re-pointed accordingly (companion app PR).
+- No spec/schema implementation should land for this RFC until Q1 resolves — there may be nothing to implement.
 
 ## Acceptance criteria
 
-- [ ] `spec/v1/shadow-run.md` merged (Status: DRAFT)
-- [ ] `capabilities`, `create-run-request`, `run-event`, `run-snapshot` schemas updated; OpenAPI (`GET …/shadow`) + AsyncAPI (3 events) updated; `redocly` + `asyncapi validate` clean
-- [ ] ≥1 capability-gated conformance scenario covering the new surface (target: all 5 sketched)
-- [ ] `SECURITY/invariants.yaml` row for "shadow comparison payloads MUST NOT carry raw output values" + its enforcing scenario
-- [ ] `CHANGELOG.md` `[Unreleased]` entry under additive
-- [ ] Reference host implements + passes the scenarios, OR this RFC explicitly defers reference-host implementation to a follow-up (default: defer until the demo pilot stabilizes the shapes)
+- [ ] Q1 resolved: confirm net-new surface, or withdraw with a pointer to RFC 0081 §D + RFC 0082 §E
+- [ ] If kept: the workflow-level binding lands as an additive composition of RFC 0081/0082 (no duplicate shadow surface)
+- [ ] Demo "Shadow & Prove"/"Cut Over" re-pointed at `EvalSummary` + the RFC 0082 gate (companion app PR)
+- [ ] CHANGELOG entry reflects the reconciliation
 
 ## References
 
-- `spec/v1/replay.md` — replay/fork surface this composes with (baseline `replay` mode; §C observable-output determinism)
-- `spec/v1/version-negotiation.md` — per-event version axis (additive event introduction)
-- `SECURITY/threat-model-secret-leakage.md`, `agent-memory.md` (SR-1, CTI-1)
-- Prior art: Temporal "shadowing" (worker versioning side-by-side); LangSmith/eval "online evaluation"; canary/shadow-traffic deployment patterns; A/B + shadow-deploy in service meshes
-- Demo app: "Shadow & Prove" migration stage (MG-5) + EV-4 comparison report (consumer)
+- **RFC 0081** `spec/v1/agent-evaluation.md` — `live-shadow`/`regression` modes, `baselineRunId`, `EvalSummary`, `agents.evalSuite` (the comparison mechanism this RFC was duplicating)
+- **RFC 0082** `RFCS/0082-agent-deployment-lifecycle.md` §E — the promotion gate keyed on `EvalSummary.passed`
+- **RFC 0054** — structural run-diff
+- `spec/v1/replay.md` — replay/fork (baseline-via-replay; §C observable-output determinism)
+- Demo app: "Shadow & Prove" (MG-5) + "Cut Over" (MG-6) stages (consumer, being re-pointed)
