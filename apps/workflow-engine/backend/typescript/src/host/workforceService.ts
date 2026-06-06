@@ -92,7 +92,6 @@ export async function seedWorkforceHistory(
   tenantId: string,
   opts: WorkforceHistorySeedOptions,
 ): Promise<{ workforces: number; runs: number }> {
-  const runCount = opts.runCount ?? 300;
   const windowMs = WEEKS * 7 * DAY_MS;
   let seededWorkforces = 0;
   let seededRuns = 0;
@@ -105,6 +104,13 @@ export async function seedWorkforceHistory(
 
   for (const w of seedDefs) {
     if (seenWorkforce.has(w.workforceId)) continue;
+    // Only INSTRUMENTED workforces (historyRunCount > 0) get history; the
+    // others ship as stand-up templates (the gallery still lists them). The
+    // per-call `opts.runCount` overrides the count for the instrumented ones
+    // (used by tests); it does NOT promote a template into an instrumented one.
+    const gate = w.historyRunCount ?? 0;
+    if (gate <= 0) continue;
+    const runCount = opts.runCount ?? gate;
     const history = generateWorkforceHistory({
       workforceId: w.workforceId,
       tenantId,
@@ -161,6 +167,8 @@ interface RunMeta {
   outcome?: string;
   costUsd?: number;
   cycleMs?: number;
+  correlationId?: string;
+  batchId?: string;
 }
 
 function median(xs: number[]): number | null {
@@ -403,4 +411,61 @@ export function aggregateGovernancePosture(
     policyViolations: count((o) => o === 'overridden'),
     recentEvents,
   };
+}
+
+// ---- cross-run trace search (EP1: GA-2) -----------------------------------
+
+export interface TraceMatch {
+  runId: string;
+  correlationId: string | null;
+  batchId: string | null;
+  outcome: string | null;
+  status: string;
+  startedAt: string;
+}
+
+export interface TraceSearchResult {
+  query: string;
+  matches: TraceMatch[];
+  /** Runs scanned (the workforce's runs in the caller's tenant). */
+  scanned: number;
+  /** True when more matches existed than the returned cap (no silent truncation). */
+  capped: boolean;
+}
+
+/**
+ * Cross-run trace/audit search over a workforce's runs by correlationId,
+ * batchId (a day's batch — the cross-run grouping), runId, outcome, or status.
+ * Pure over run metadata (single listRuns read, no event fan-out). Returns at
+ * most `limit` matches with an explicit `capped` flag rather than silently
+ * truncating.
+ */
+export function searchWorkforceTrace(
+  runs: readonly { runId: string; status: string; createdAt: string; metadata: Record<string, unknown> }[],
+  workforceId: string,
+  query: string,
+  limit = 50,
+): TraceSearchResult {
+  const q = query.trim().toLowerCase();
+  const mine = runs.filter((r) => (r.metadata as RunMeta).workforceId === workforceId);
+  const hits = q
+    ? mine.filter((r) => {
+        const m = r.metadata as RunMeta;
+        return [r.runId, m.correlationId, m.batchId, m.outcome, r.status].some(
+          (v) => typeof v === 'string' && v.toLowerCase().includes(q),
+        );
+      })
+    : [];
+  const matches: TraceMatch[] = hits.slice(0, limit).map((r) => {
+    const m = r.metadata as RunMeta;
+    return {
+      runId: r.runId,
+      correlationId: m.correlationId ?? null,
+      batchId: m.batchId ?? null,
+      outcome: m.outcome ?? null,
+      status: r.status,
+      startedAt: r.createdAt,
+    };
+  });
+  return { query, matches, scanned: mine.length, capped: hits.length > matches.length };
 }

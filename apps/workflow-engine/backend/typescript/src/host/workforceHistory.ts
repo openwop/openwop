@@ -206,6 +206,11 @@ export function generateWorkforceHistory(opts: WorkforceHistoryOptions): Workfor
     byOutcome[outcome]++;
 
     const runId = makeId('run', seed, i);
+    // Trace correlation (GA-2): a per-run correlationId, plus a batchId shared
+    // by all runs started the same day — so a cross-run trace search ("show me
+    // everything in this batch") returns a real multi-run set.
+    const correlationId = makeId('corr', seed, i);
+    const batchId = makeId('batch', seed, Math.floor(startMs / DAY_MS));
     const events: SeedEvent[] = [];
     const annotations: AnnotationRecord[] = [];
     let cursor = 0; // ms offset within the run
@@ -221,10 +226,11 @@ export function generateWorkforceHistory(opts: WorkforceHistoryOptions): Workfor
         ...(nodeId ? { nodeId } : {}),
         payload,
         timestamp: isoAt(epochMs, startMs + cursor),
+        causationId: correlationId, // links every event of a run to its trace
       });
     };
 
-    ev('run.started', { workflowId, workforceId, inputDigest: makeId('inp', seed, i) });
+    ev('run.started', { workflowId, workforceId, inputDigest: makeId('inp', seed, i), correlationId, batchId });
 
     // extract + match always run and complete (auto-safe nodes)
     for (const node of ['invoice-extract', 'invoice-match'] as const) {
@@ -317,6 +323,8 @@ export function generateWorkforceHistory(opts: WorkforceHistoryOptions): Workfor
         autonomyPhase: phase.autonomy,
         costUsd: Number(costUsd.toFixed(6)),
         cycleMs: cursor,
+        correlationId,
+        batchId,
       },
       configurable: {},
       createdAt,

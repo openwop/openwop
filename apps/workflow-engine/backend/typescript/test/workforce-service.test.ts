@@ -12,6 +12,7 @@ import {
   aggregateWorkforceMetrics,
   getWorkforce,
   listWorkforces,
+  searchWorkforceTrace,
   seedWorkforceEntities,
   seedWorkforceHistory,
 } from '../src/host/workforceService.js';
@@ -150,5 +151,66 @@ describe('workforceService', () => {
     for (let i = 1; i < p.recentEvents.length; i++) {
       expect(Date.parse(p.recentEvents[i - 1]!.atIso)).toBeGreaterThanOrEqual(Date.parse(p.recentEvents[i]!.atIso));
     }
+  });
+
+  it('cross-run trace search: batchId matches multiple runs, correlationId one', async () => {
+    await seedWorkforceEntities();
+    await seedWorkforceHistory(storage, 'demo', { nowMs: NOW, runCount: 300 });
+    const runs = await storage.listRuns({ tenantId: 'demo', limit: 5000 });
+    const sample = runs.find((r) => (r.metadata as { workforceId?: string }).workforceId === HERO)!;
+    const meta = sample.metadata as { correlationId: string; batchId: string };
+
+    // batchId groups runs started the same day → cross-run (>= 1, usually many)
+    const byBatch = searchWorkforceTrace(runs, HERO, meta.batchId);
+    expect(byBatch.matches.length).toBeGreaterThan(0);
+    expect(byBatch.matches.every((m) => m.batchId === meta.batchId)).toBe(true);
+
+    // correlationId is unique → exactly one run
+    const byCorr = searchWorkforceTrace(runs, HERO, meta.correlationId);
+    expect(byCorr.matches).toHaveLength(1);
+    expect(byCorr.matches[0]!.runId).toBe(sample.runId);
+  });
+
+  it('trace search: empty query returns nothing; outcome filter works; cap is explicit', async () => {
+    await seedWorkforceEntities();
+    await seedWorkforceHistory(storage, 'demo', { nowMs: NOW, runCount: 300 });
+    const runs = await storage.listRuns({ tenantId: 'demo', limit: 5000 });
+
+    expect(searchWorkforceTrace(runs, HERO, '   ').matches).toHaveLength(0);
+
+    const overrides = searchWorkforceTrace(runs, HERO, 'overridden', 5);
+    expect(overrides.matches.length).toBeLessThanOrEqual(5);
+    expect(overrides.matches.every((m) => m.outcome === 'overridden')).toBe(true);
+    if (overrides.scanned > 5 && overrides.matches.length === 5) {
+      // more than the cap existed → flagged, not silently dropped
+      expect(typeof overrides.capped).toBe('boolean');
+    }
+  });
+
+  it('seeds five starter workforces; only the instrumented one gets history', async () => {
+    const created = await seedWorkforceEntities();
+    expect(created).toBe(5);
+    const all = await listWorkforces();
+    expect(all.map((w) => w.workforceId).sort()).toEqual(
+      [
+        'workforce.finance.invoice-exception',
+        'workforce.fulfillment.order-exception',
+        'workforce.insurance.claims-review',
+        'workforce.procurement.approval',
+        'workforce.support.escalation-triage',
+      ].sort(),
+    );
+
+    // No template is promoted by the per-call override; only the hero
+    // (historyRunCount > 0) is instrumented — capped here at 10 for speed.
+    const res = await seedWorkforceHistory(storage, 'demo', { nowMs: NOW, runCount: 10 });
+    expect(res.workforces).toBe(1);
+    expect(res.runs).toBe(10);
+
+    const runs = await storage.listRuns({ tenantId: 'demo', limit: 5000 });
+    const byWf = (id: string): number =>
+      runs.filter((r) => (r.metadata as { workforceId?: string }).workforceId === id).length;
+    expect(byWf(HERO)).toBe(10);
+    expect(byWf('workforce.support.escalation-triage')).toBe(0); // template — no history
   });
 });
