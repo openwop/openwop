@@ -16,9 +16,10 @@
 # explicitly STRIP every .env* from the distributable below; adopters supply
 # their own per WHITE-LABEL.md.
 #
-# Output (both gitignored — generated at build/deploy time, never committed):
-#   public/downloads/openwop-demo-app.zip
-#   public/downloads/openwop-demo-app.zip.sha256
+# Output (into $OUT_DIR, default ./dist-whitelabel; the release workflow stages
+# it there before uploading as a release asset):
+#   $OUT_DIR/openwop-demo-app.zip
+#   $OUT_DIR/openwop-demo-app.zip.sha256
 #
 # The /install/ page (now served from the openwop/openwop-site repo) links to
 # the stable filename and publishes the sha256 so downloaders can verify it.

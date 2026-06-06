@@ -134,7 +134,7 @@ The release manager:
 2. Adds a `## [1.2.0]` section to `CHANGELOG.md`.
 3. Tags + publishes the release per `PUBLISHING.md`.
 
-**The public site is published from a separate repo** — [`openwop/openwop-site`](https://github.com/openwop/openwop-site) renders this corpus at a pinned version. The site (homepage hero, spec table, changelog, `/spec/v1/`, badges) re-renders and redeploys when `openwop-site` bumps its `OPENWOP_REF` pin to the new release (its `pin-bump` workflow opens that PR; merging it deploys). **No site steps, `public/index.html` edits, `build-site.sh` runs, or `firebase deploy --only hosting:docs` happen in this repo anymore.**
+**The public site is published from a separate repo** — [`openwop/openwop-site`](https://github.com/openwop/openwop-site) renders this corpus, tracking openwop `main` pinned to an exact commit. The site (homepage hero, spec table, changelog, `/spec/v1/`, badges) re-renders and redeploys when `openwop-site` advances its `OPENWOP_REF` pin (its `pin-bump` workflow opens that PR daily as `main` moves; merging it deploys). **No site steps, `public/index.html` edits, `build-site.sh` runs, or `firebase deploy --only hosting:docs` happen in this repo anymore.**
 
 ### Major bump to v2.x (rare)
 
