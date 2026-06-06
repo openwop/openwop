@@ -14,6 +14,7 @@ import { useSearchParams } from 'react-router-dom';
 import type { RunSnapshot, RunEventDoc } from '@openwop/openwop';
 import { getRun, pollEvents } from '../client/runsClient.js';
 import { PageHeader } from '../ui/PageHeader.js';
+import { StatusBadge } from '../ui/StatusBadge.js';
 import { RunTimeline } from './RunTimeline.js';
 
 interface Side {
@@ -87,7 +88,7 @@ function CompareColumn({ runId, side }: { runId: string; side: Side }) {
         <>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <code>{runId.slice(0, 16)}</code>
-            {side.snapshot && <span className={`status-badge ${side.snapshot.status}`}>{side.snapshot.status}</span>}
+            {side.snapshot && <StatusBadge status={side.snapshot.status} />}
             <span className="muted" style={{ fontSize: 12, marginLeft: 'auto' }}>{side.events.length} events</span>
           </div>
           {side.error && <div className="alert error">{side.error}</div>}

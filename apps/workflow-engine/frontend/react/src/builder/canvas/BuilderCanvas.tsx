@@ -134,7 +134,7 @@ function BuilderCanvasInner() {
         position: n.position,
         data: { kind: n.kind, name: n.name, runStatus: overlay?.nodeStatus[n.id] },
         selected: selectedSet.has(n.id),
-        ...(nodeDims[n.id] ? { width: nodeDims[n.id].width, height: nodeDims[n.id].height } : {}),
+        ...((d) => (d ? { width: d.width, height: d.height } : {}))(nodeDims[n.id]),
       })),
     [builderNodes, selectedSet, overlay, nodeDims],
   );

@@ -79,21 +79,7 @@ export function subscribeToRun(runId: string, opts: SubscribeOptions): Subscript
     idleTimer = setTimeout(() => fireTimeout('idle', onAbort), idleMs);
   }
 
-  if (config.authMode === 'bearer') {
-    return subscribeBearer(runId, opts, {
-      onTimedOut: () => timedOut,
-      onManuallyClosed: () => manuallyClosed,
-      setManuallyClosed: (v) => { manuallyClosed = v; },
-      clearTimers,
-      resetIdle,
-      armAbsolute: (onAbort) => {
-        absoluteTimer = setTimeout(() => fireTimeout('absolute', onAbort), absoluteMs);
-      },
-    });
-  }
-
-  // Cookie-mode path — native EventSource with withCredentials.
-  return subscribeCookie(runId, opts, {
+  const hooks: TimerHooks = {
     onTimedOut: () => timedOut,
     onManuallyClosed: () => manuallyClosed,
     setManuallyClosed: (v) => { manuallyClosed = v; },
@@ -102,7 +88,40 @@ export function subscribeToRun(runId: string, opts: SubscribeOptions): Subscript
     armAbsolute: (onAbort) => {
       absoluteTimer = setTimeout(() => fireTimeout('absolute', onAbort), absoluteMs);
     },
-  });
+  };
+
+  // Single mode arg normalization shared by both transports.
+  const modeOpt: StreamMode | readonly StreamMode[] | undefined =
+    opts.modes && opts.modes.length > 0
+      ? (opts.modes.length === 1 ? opts.modes[0]! : opts.modes)
+      : undefined;
+
+  // Both transports are now fetch + ReadableStream generators that yield
+  // EVERY event the backend emits — no hard-coded event-type allowlist, so
+  // additively-introduced event types (per `version-negotiation.md`) flow
+  // through on an SDK bump, not a hand-edit (GAP-ANALYSIS A-1). Bearer mode
+  // uses the published SDK's `streamEvents`; cookie mode uses a local twin
+  // that swaps the `Authorization` header for `credentials: 'include'`
+  // (the SDK's fetch can't carry the `openwop.session` cookie — see header).
+  const makeGenerator = config.authMode === 'bearer'
+    ? (lastEventId: string | undefined, signal: AbortSignal) =>
+        streamEvents(
+          { baseUrl: config.sseBaseUrl, apiKey: config.apiKey },
+          runId,
+          {
+            ...(modeOpt !== undefined ? { streamMode: modeOpt } : {}),
+            ...(lastEventId !== undefined ? { lastEventId } : {}),
+            signal,
+          },
+        )
+    : (lastEventId: string | undefined, signal: AbortSignal) =>
+        streamEventsCredentialed(config.sseBaseUrl, runId, {
+          ...(modeOpt !== undefined ? { streamMode: modeOpt } : {}),
+          ...(lastEventId !== undefined ? { lastEventId } : {}),
+          signal,
+        });
+
+  return subscribeViaGenerator(makeGenerator, opts, hooks);
 }
 
 /** Shared timer wiring passed from `subscribeToRun` to the transport-specific
@@ -117,11 +136,17 @@ interface TimerHooks {
   armAbsolute: (onAbort: () => void) => void;
 }
 
-/** Bearer-mode subscribe — uses the SDK's fetch-based `streamEvents()`.
- *  Reconnects with `Last-Event-ID` on transient errors up to MAX_RECONNECTS;
- *  surface fatal errors via `opts.onError`. */
-function subscribeBearer(
-  runId: string,
+/** Shared subscribe loop for both transports. `makeGenerator` builds a fresh
+ *  RunEventDoc async-generator (re-entered each reconnect with the recorded
+ *  Last-Event-ID). Reconnects on transient errors up to MAX_RECONNECTS, then
+ *  surfaces a fatal error via `opts.onError`. Every yielded event is shape-
+ *  validated before dispatch (GAP-ANALYSIS A-2): a value without a string
+ *  `type` is logged and skipped, never silently forwarded as a RunEventDoc. */
+function subscribeViaGenerator(
+  makeGenerator: (
+    lastEventId: string | undefined,
+    signal: AbortSignal,
+  ) => AsyncGenerator<RunEventDoc, void, void>,
   opts: SubscribeOptions,
   hooks: Pick<TimerHooks, 'onTimedOut' | 'onManuallyClosed' | 'setManuallyClosed' | 'clearTimers' | 'resetIdle' | 'armAbsolute'>,
 ): Subscription {
@@ -136,32 +161,22 @@ function subscribeBearer(
   void (async () => {
     while (!hooks.onTimedOut() && !hooks.onManuallyClosed() && attempt <= MAX_RECONNECTS) {
       try {
-        const modeOpt: StreamMode | readonly StreamMode[] | undefined =
-          opts.modes && opts.modes.length > 0
-            ? (opts.modes.length === 1 ? opts.modes[0]! : opts.modes)
-            : undefined;
-        // The SDK takes a single ctx + opts; pass the SSE-specific baseUrl
-        // (`sseBaseUrl` bypasses the Firebase Hosting `/api/**` proxy which
-        // buffers and breaks long-lived streams — see `config.ts`).
-        const generator = streamEvents(
-          { baseUrl: config.sseBaseUrl, apiKey: config.apiKey },
-          runId,
-          {
-            ...(modeOpt !== undefined ? { streamMode: modeOpt } : {}),
-            ...(lastEventId !== undefined ? { lastEventId } : {}),
-            signal: abort.signal,
-          },
-        );
+        const generator = makeGenerator(lastEventId, abort.signal);
         for await (const ev of generator) {
           if (hooks.onTimedOut() || hooks.onManuallyClosed()) return;
           hooks.resetIdle(onAbort);
-          // SDK doesn't surface the raw `id:` field on each yield, so we
-          // can't update Last-Event-ID precisely between events for the
-          // reconnect path. Fall back to the event's sequence — every
-          // openwop RunEventDoc carries `sequence` which the BE accepts
-          // as a Last-Event-ID equivalent for resume.
+          // SDK doesn't surface the raw `id:` field on each yield, so fall
+          // back to the event's `sequence` — every RunEventDoc carries it and
+          // the BE accepts it as a Last-Event-ID equivalent for resume.
           if (typeof ev.sequence === 'number') {
             lastEventId = String(ev.sequence);
+          }
+          // A-2: validate before dispatch. `RunEventDoc.type` is the
+          // forward-compat discriminator (string-typed in the SDK); a parsed
+          // JSON value lacking it isn't a run event we can route.
+          if (!ev || typeof ev.type !== 'string') {
+            console.warn('[streamsClient] dropping malformed run event (missing string `type`):', ev);
+            continue;
           }
           opts.onEvent(ev);
         }
@@ -177,18 +192,12 @@ function subscribeBearer(
         attempt += 1;
         if (attempt > MAX_RECONNECTS) {
           hooks.clearTimers();
-          if (opts.onError) {
-            const ev = new Event('error');
-            opts.onError(ev);
-          }
+          if (opts.onError) opts.onError(new Event('error'));
           return;
         }
-        // Linear backoff: 500ms × attempt. Keeps reconnect tight while not
-        // hammering the server during sustained outages.
+        // Linear backoff: 500ms × attempt. Tight reconnect without hammering
+        // the server during sustained outages. Re-subscribe with Last-Event-ID.
         await new Promise((r) => setTimeout(r, 500 * attempt));
-        // Loop and re-subscribe with the recorded Last-Event-ID. The SDK
-        // generator can't be re-entered, so we construct a fresh one each
-        // iteration.
         void err;
       }
     }
@@ -204,115 +213,81 @@ function subscribeBearer(
   };
 }
 
-/** Cookie-mode subscribe — preserves the EventSource implementation that
- *  relied on `withCredentials` to carry the openwop.session cookie.
- *  Re-tooled to share the timer hooks with the bearer path but otherwise
- *  unchanged from the pre-migration behavior. */
-function subscribeCookie(
+/** Cookie-mode SSE generator — a credentialed twin of the SDK's `streamEvents`
+ *  (`sse.ts`). Mirrors its RFC 8895 `event:`/`data:`/`id:` parser verbatim,
+ *  including the `event: batch` array envelope (S3) and keep-alive skipping,
+ *  but swaps the `Authorization` header for `credentials: 'include'` so the
+ *  `openwop.session` cookie rides along. Replaces the prior native EventSource
+ *  + hard-coded event-type allowlist (GAP-ANALYSIS A-1): this yields every
+ *  event the backend emits, so new event types need no client edit. */
+async function* streamEventsCredentialed(
+  baseUrl: string,
   runId: string,
-  opts: SubscribeOptions,
-  hooks: Pick<TimerHooks, 'onTimedOut' | 'onManuallyClosed' | 'setManuallyClosed' | 'clearTimers' | 'resetIdle' | 'armAbsolute'>,
-): Subscription {
-  // `new URL()` requires an absolute URL OR a relative URL with a base.
-  // In prod `config.baseUrl` is `/api` (relative, served via Firebase
-  // Hosting rewrite) — without a base, the constructor throws
-  // "Invalid URL". Pass `window.location.origin` as the base: it's
-  // ignored when baseUrl is absolute (e.g. http://localhost:8080 in
-  // dev) and used when relative, so this works in both modes.
-  // SSE-specific base URL. Bypasses the Firebase Hosting `/api/**`
-  // proxy which buffers responses and breaks long-lived SSE streams.
-  // See `config.ts > sseBaseUrl` for the rationale.
-  const url = new URL(
-    `${config.sseBaseUrl}/v1/runs/${encodeURIComponent(runId)}/events`,
-    window.location.origin,
-  );
-  if (opts.modes && opts.modes.length > 0) {
-    url.searchParams.set('mode', opts.modes.join(','));
+  opts: { streamMode?: StreamMode | readonly StreamMode[]; lastEventId?: string; signal?: AbortSignal },
+): AsyncGenerator<RunEventDoc, void, void> {
+  const params = new URLSearchParams();
+  if (opts.streamMode) {
+    params.set('streamMode', typeof opts.streamMode === 'string' ? opts.streamMode : opts.streamMode.join(','));
+  }
+  const qs = params.toString();
+  const url = `${baseUrl}/v1/runs/${encodeURIComponent(runId)}/events${qs ? `?${qs}` : ''}`;
+  const headers: Record<string, string> = { Accept: 'text/event-stream', 'Cache-Control': 'no-cache' };
+  if (opts.lastEventId) headers['Last-Event-ID'] = opts.lastEventId;
+
+  const internalAbort = new AbortController();
+  const externalSignal = opts.signal;
+  if (externalSignal) {
+    if (externalSignal.aborted) internalAbort.abort();
+    else externalSignal.addEventListener('abort', () => internalAbort.abort(), { once: true });
   }
 
-  const es = new EventSource(url.toString(), { withCredentials: true });
-  const onAbort = (): void => es.close();
-  hooks.armAbsolute(onAbort);
-  hooks.resetIdle(onAbort);
+  const res = await fetch(url, { method: 'GET', headers, credentials: 'include', signal: internalAbort.signal });
+  if (!res.ok || res.body === null) {
+    throw new Error(`SSE subscribe failed: HTTP ${res.status}`);
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let buffer = '';
+  let pendingEvent = 'message';
+  let pendingData: string[] = [];
 
-  // Generic listener catches every typed event the BE emits via SSE
-  // `event:` field. EventSource fires named events on `addEventListener`
-  // and falls back to `onmessage` for unnamed events; the BE sends
-  // every line with an `event:` field so addEventListener('*' won't
-  // catch them. We listen to a hard-coded set of canonical openwop
-  // event types — including the `agent.*`, `provider.usage`, and
-  // `core.workflowChain.*` families so the run-detail reasoning, cost,
-  // and handoff panels update live (not just on a post-run REST poll).
-  const eventTypes = [
-    'run.started',
-    'run.resumed',
-    'run.completed',
-    'run.failed',
-    'run.cancelled',
-    'node.started',
-    'node.completed',
-    'node.failed',
-    'node.suspended',
-    'node.interrupt.resolved',
-    'node.message',
-    'node.dispatched',
-    'agent.reasoned',
-    'agent.reasoning.delta',
-    'agent.toolCalled',
-    'agent.toolReturned',
-    'agent.handoff',
-    'agent.decided',
-    'provider.usage',
-    'runOrchestrator.decided',
-    'core.workflowChain.event',
-    'core.workflowChain.confidence-escalated',
-  ];
-
-  const handler = (raw: MessageEvent) => {
-    hooks.resetIdle(onAbort);
+  const flush = (): RunEventDoc[] => {
+    if (pendingData.length === 0) { pendingEvent = 'message'; return []; }
+    const dataStr = pendingData.join('\n');
+    const eventType = pendingEvent;
+    pendingEvent = 'message';
+    pendingData = [];
     try {
-      const parsed = JSON.parse(raw.data) as RunEventDoc;
-      opts.onEvent(parsed);
+      const parsed = JSON.parse(dataStr) as RunEventDoc | RunEventDoc[];
+      if (eventType === 'batch' && Array.isArray(parsed)) return parsed;
+      return [parsed as RunEventDoc];
     } catch {
-      /* swallow malformed event */
+      return []; // keep-alive / non-JSON vendor lines
     }
   };
-  for (const type of eventTypes) {
-    es.addEventListener(type, handler as EventListener);
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let nlIdx: number;
+      while ((nlIdx = buffer.indexOf('\n')) !== -1) {
+        const rawLine = buffer.slice(0, nlIdx).replace(/\r$/, '');
+        buffer = buffer.slice(nlIdx + 1);
+        if (rawLine === '') { yield* flush(); continue; }
+        if (rawLine.startsWith(':')) continue; // keep-alive comment
+        const colon = rawLine.indexOf(':');
+        const field = colon === -1 ? rawLine : rawLine.slice(0, colon);
+        const valueRaw = colon === -1 ? '' : rawLine.slice(colon + 1);
+        const fieldValue = valueRaw.startsWith(' ') ? valueRaw.slice(1) : valueRaw;
+        if (field === 'event') pendingEvent = fieldValue;
+        else if (field === 'data') pendingData.push(fieldValue);
+      }
+    }
+    yield* flush();
+  } finally {
+    internalAbort.abort();
+    reader.releaseLock();
   }
-  // Default unnamed-event handler too, in case the BE drops the event: field.
-  es.onmessage = handler;
-
-  // EventSource fires `onerror` on every connection close — including
-  // the totally-expected close after a terminal event AND React
-  // StrictMode's effect-cleanup-then-remount double-dispatch in dev.
-  // Only treat OPEN-state errors as user-visible failures. CLOSED means
-  // the server hung up cleanly (we've already received the terminal
-  // event, or we deliberately closed the subscription). CONNECTING
-  // means transient — the browser will auto-reconnect with Last-Event-ID.
-  es.onerror = () => {
-    if (hooks.onManuallyClosed() || hooks.onTimedOut()) return;
-    if (es.readyState === EventSource.CLOSED) {
-      // Stop the auto-reconnect loop on a clean server close.
-      hooks.clearTimers();
-      es.close();
-      opts.onClose?.();
-      return;
-    }
-    // readyState === CONNECTING (0) → transient; browser handles reconnect.
-    // readyState === OPEN (1) → genuine mid-stream error worth surfacing.
-    if (es.readyState === EventSource.OPEN && opts.onError) {
-      const dummyEvent = new Event('error');
-      opts.onError(dummyEvent);
-    }
-  };
-
-  return {
-    close() {
-      hooks.setManuallyClosed(true);
-      hooks.clearTimers();
-      es.close();
-      opts.onClose?.();
-    },
-  };
 }

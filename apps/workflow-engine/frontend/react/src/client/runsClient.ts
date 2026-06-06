@@ -18,7 +18,8 @@ import type {
   PollEventsResponse,
   RunSnapshot,
 } from '@openwop/openwop';
-import { authedHeaders, config } from './config.js';
+import { authedHeaders, config, onAuthChange } from './config.js';
+import { assertArrayField } from './parse.js';
 
 // Pass an explicitly-bound `fetch` to work around an SDK bug — the
 // client stores `opts.fetch ?? fetch` and later calls `this.#fetch(...)`,
@@ -66,8 +67,44 @@ export interface RunListItem {
   completedAt?: string;
 }
 
+// Capabilities cache (GAP-ANALYSIS A-3). The discovery payload is a host-boot
+// decision (`capabilities.md`), so ~12 call sites re-fetching it on every
+// run-detail page (4-6× per load) is pure waste that helps blow the per-IP
+// read budget. Cache the result with an in-flight promise so concurrent
+// callers share one request, time-bound to the endpoint's advertised
+// `Cache-Control: max-age=300` (not a permanent pin — per A-3), and drop it on
+// an auth/tenant change via the documented `setCurrentIdToken` seam.
+const CAPS_TTL_MS = 300_000;
+let capsCache: { value: Capabilities & Record<string, unknown>; at: number } | null = null;
+let capsInFlight: Promise<Capabilities & Record<string, unknown>> | null = null;
+// Generation guard: bumped on every clear (auth/tenant change) so a fetch that
+// was already in flight when the tenant changed does NOT write the prior
+// tenant's capabilities into the cache (review finding — mid-flight race).
+let capsGeneration = 0;
+
+/** Drop the capabilities cache so the next read re-negotiates. */
+export function clearCapabilitiesCache(): void {
+  capsCache = null;
+  capsInFlight = null;
+  capsGeneration += 1;
+}
+onAuthChange(clearCapabilitiesCache);
+
 export async function getCapabilities(): Promise<Capabilities & Record<string, unknown>> {
-  return (await client.discovery.capabilities()) as Capabilities & Record<string, unknown>;
+  if (capsCache && Date.now() - capsCache.at < CAPS_TTL_MS) return capsCache.value;
+  if (capsInFlight) return capsInFlight;
+  const generation = capsGeneration;
+  capsInFlight = (async () => {
+    try {
+      const value = (await client.discovery.capabilities()) as Capabilities & Record<string, unknown>;
+      // Only cache if no clear() happened while this request was in flight.
+      if (generation === capsGeneration) capsCache = { value, at: Date.now() };
+      return value;
+    } finally {
+      if (generation === capsGeneration) capsInFlight = null;
+    }
+  })();
+  return capsInFlight;
 }
 
 /** Forwards an optional `MutationOptions` so callers can supply the
@@ -129,7 +166,7 @@ export async function pollEvents(runId: string, lastSequence = 0): Promise<PollE
  * derives the tenant from the bearer / cookie, so this client doesn't
  * need to pass a tenantId. Returns at most `limit` rows (default 50).
  */
-export async function listMyRuns(opts: { status?: string; limit?: number } = {}): Promise<RunListItem[]> {
+export async function listMyRuns(opts: { status?: string; limit?: number; signal?: AbortSignal } = {}): Promise<RunListItem[]> {
   const params = new URLSearchParams();
   if (opts.status) params.set('status', opts.status);
   if (opts.limit) params.set('limit', String(opts.limit));
@@ -141,12 +178,19 @@ export async function listMyRuns(opts: { status?: string; limit?: number } = {})
     method: 'GET',
     headers,
     credentials: includeCreds ? 'include' : 'same-origin',
+    // AbortSignal threaded from the caller's effect cleanup (GAP-ANALYSIS E15)
+    // so an in-flight read is cancelled on unmount rather than completing and
+    // burning the per-IP budget.
+    ...(opts.signal ? { signal: opts.signal } : {}),
   });
   if (!res.ok) {
     throw new Error(`listMyRuns failed: ${res.status} ${res.statusText}`);
   }
-  const body = (await res.json()) as { runs: RunListItem[] };
-  return body.runs;
+  // Host-extension endpoint (`/v1/host/sample/*`) the SDK does not wrap —
+  // validate the list shape before the cast (A-2 / E4).
+  const body: unknown = await res.json();
+  assertArrayField(body, 'runs', 'listMyRuns response');
+  return (body as { runs: RunListItem[] }).runs;
 }
 
 export interface MemoryEntry {
@@ -182,7 +226,9 @@ export async function listMemory(
   if (!res.ok) {
     throw new Error(`listMemory failed: ${res.status} ${res.statusText}`);
   }
-  return (await res.json()) as { memoryRef: string; entries: MemoryEntry[] };
+  const body: unknown = await res.json();
+  assertArrayField(body, 'entries', 'listMemory response');
+  return body as { memoryRef: string; entries: MemoryEntry[] };
 }
 
 /** Returns the underlying SDK client for surfaces not yet wrapped here. */

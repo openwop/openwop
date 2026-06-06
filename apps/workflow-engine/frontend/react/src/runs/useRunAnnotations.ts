@@ -49,6 +49,20 @@ interface RunAnnotations {
   feedbackOn: boolean;
 }
 
+// Per-run annotation cache (GAP-ANALYSIS E3). The Runs index fans out one
+// `GET /v1/runs/{id}/annotations` per visible run; without a cache, navigating
+// away and back re-fires the whole fan-out against the per-IP read budget.
+// Short TTL keeps the flagged queue fresh while collapsing repeat loads.
+const ANN_TTL_MS = 60_000;
+const annCache = new Map<string, { value: readonly Annotation[]; at: number }>();
+async function listAnnotationsCached(runId: string): Promise<readonly Annotation[]> {
+  const hit = annCache.get(runId);
+  if (hit && Date.now() - hit.at < ANN_TTL_MS) return hit.value;
+  const value = await listAnnotations(runId);
+  annCache.set(runId, { value, at: Date.now() });
+  return value;
+}
+
 /** Fetch annotations for `runIds`, capability-gated. The dedup key is the
  *  joined id list so the effect re-runs only when the set actually changes. */
 export function useRunAnnotations(runIds: readonly string[]): RunAnnotations {
@@ -68,7 +82,7 @@ export function useRunAnnotations(runIds: readonly string[]): RunAnnotations {
         return;
       }
       setFeedbackOn(true);
-      const lists = await Promise.all(ids.map((id) => listAnnotations(id)));
+      const lists = await Promise.all(ids.map((id) => listAnnotationsCached(id)));
       if (cancelled) return;
       const next = new Map<string, readonly Annotation[]>();
       ids.forEach((id, i) => next.set(id, lists[i] ?? []));

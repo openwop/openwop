@@ -8,7 +8,7 @@
  * Bubbles with `meta.error` render in a warn-tinted state.
  */
 
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import type { ChatMessage } from './hooks/useChatSession.js';
 import { messageText } from './hooks/useChatSession.js';
 import { MessageRenderer } from './MessageRenderer.js';
@@ -145,7 +145,7 @@ function MessageActions({
   );
 }
 
-export function MessageBubble({ message, onRegenerate, onFeedback, onReconfigureBYOK }: Props): JSX.Element {
+function MessageBubbleInner({ message, onRegenerate, onFeedback, onReconfigureBYOK }: Props): JSX.Element {
   const isUser = message.role === 'user';
   const isSystem = message.role === 'system';
   const isError = !!message.meta?.error;
@@ -299,3 +299,11 @@ export function MessageBubble({ message, onRegenerate, onFeedback, onReconfigure
     </div>
   );
 }
+
+// Memoized (GAP-ANALYSIS E14): the streaming reducer remaps the message array
+// on every token but preserves object identity for UNCHANGED messages
+// (`.map(m => isStreaming ? {...m} : m)`), so a default shallow compare lets
+// every settled bubble skip re-render+re-parse while only the streaming bubble
+// updates. Effective as long as the callback props are stable (they are
+// useCallback-stabilized at the ChatSidebar source).
+export const MessageBubble = memo(MessageBubbleInner);

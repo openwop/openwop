@@ -3,6 +3,7 @@ import { getCapabilities } from '../client/runsClient.js';
 import { authedHeaders, config, fetchOpts } from '../client/config.js';
 import { McpToolsPanel } from '../mcp/McpToolsPanel.js';
 import { PageHeader } from '../ui/PageHeader.js';
+import { DataTable } from '../ui/DataTable.js';
 import { A2APeerPanel } from '../peers/A2APeerPanel.js';
 import { CheckIcon, CircleIcon } from '../ui/icons/index.js';
 
@@ -158,18 +159,16 @@ export function CapabilitiesPanel() {
               {blocked > 0 ? <> · <strong>{blocked}</strong> blocked</> : null}
             </p>
             {blockedBySurface.size > 0 ? (
-              <table className="cap-table">
-                <thead>
-                  <tr><th>Blocked by surface</th><th>Nodes</th></tr>
-                </thead>
-                <tbody>
-                  {[...blockedBySurface.entries()]
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([s, n]) => (
-                      <tr key={s}><td><code>{s}</code></td><td>{n}</td></tr>
-                    ))}
-                </tbody>
-              </table>
+              <DataTable
+                caption="Nodes blocked by surface"
+                rows={[...blockedBySurface.entries()].map(([surface, nodes]) => ({ surface, nodes }))}
+                rowKey={(r) => r.surface}
+                initialSort={{ key: 'nodes', dir: 'desc' }}
+                columns={[
+                  { key: 'surface', header: 'Blocked by surface', render: (r) => <code>{r.surface}</code>, sortValue: (r) => r.surface },
+                  { key: 'nodes', header: 'Nodes', align: 'right', render: (r) => r.nodes, sortValue: (r) => r.nodes },
+                ]}
+              />
             ) : null}
           </>
         ) : (

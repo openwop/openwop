@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import type { RunEventDoc } from '@openwop/openwop';
 import { cancelRun, deleteRun, listMyRuns, pollEvents, type RunListItem } from '../client/runsClient.js';
 import { PageHeader } from '../ui/PageHeader.js';
+import { StatusBadge } from '../ui/StatusBadge.js';
 import { subscribeToRun } from '../client/streamsClient.js';
 import { RunAgentTrace } from './RunAgentTrace.js';
 import { RunHandoffMap } from './RunHandoffMap.js';
@@ -133,7 +134,7 @@ export function CommandCenterPage() {
                   >
                     <span className="cc-run-top">
                       <code>{r.runId.slice(0, 8)}…</code>
-                      <span className={`status-badge ${r.status}`}>{r.status}</span>
+                      <StatusBadge status={r.status} />
                     </span>
                     <span className="cc-run-wf" title={r.workflowId}>{r.workflowId}</span>
                     {needsAttention(r.status) && (
@@ -227,7 +228,7 @@ function RunWatch({ runId, fallbackStatus }: { runId: string; fallbackStatus?: s
           {live && <span className="cc-live-dot" aria-hidden="true" />}
           <h2 style={{ margin: 0, flex: 1 }}>
             Run <code>{runId.slice(0, 8)}…</code>
-            <span className={`status-badge ${status}`} style={{ marginLeft: 8 }}>{status}</span>
+            <StatusBadge status={status} style={{ marginLeft: 8 }} />
           </h2>
           <Link to={`/runs/${runId}`}>Open full detail →</Link>
         </div>

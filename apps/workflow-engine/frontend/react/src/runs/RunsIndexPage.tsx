@@ -4,6 +4,8 @@ import { DataTable, DensityToggle, type DataColumn } from '../ui/DataTable.js';
 import { SkeletonRows } from '../ui/Skeleton.js';
 import { toast } from '../ui/toast.js';
 import { createRun, listMyRuns, type RunListItem } from '../client/runsClient.js';
+import { classifyHttpError } from '../client/classifyHttpError.js';
+import { StatusBadge } from '../ui/StatusBadge.js';
 import type { Annotation } from '../client/feedbackClient.js';
 import { useRunAnnotations, reviewOf, needsReview, reviewReason } from './useRunAnnotations.js';
 import { formatDuration } from './format.js';
@@ -72,23 +74,32 @@ export function RunsIndexPage() {
   });
   useEffect(() => { try { localStorage.setItem('openwop.runs.density', density); } catch { /* ignore */ } }, [density]);
 
-  async function refreshRuns() {
+  async function refreshRuns(signal?: AbortSignal) {
     setRunsLoading(true);
     setRunsError(null);
     try {
-      const list = await listMyRuns({ limit: 20 });
+      const list = await listMyRuns({ limit: 20, ...(signal ? { signal } : {}) });
       setRuns(list);
     } catch (err) {
-      setRunsError(err instanceof Error ? err.message : String(err));
+      // Ignore the abort fired by effect cleanup on unmount (GAP-ANALYSIS E15).
+      if (signal?.aborted || (err instanceof DOMException && err.name === 'AbortError')) return;
+      // Friendly transport copy (GAP-ANALYSIS E5) — a busy page hitting the
+      // per-IP budget shows "Too many requests, retry" instead of a raw
+      // "listMyRuns failed: 429".
+      const c = classifyHttpError(err);
+      setRunsError(`${c.title} — ${c.detail}`);
     } finally {
-      setRunsLoading(false);
+      if (!signal?.aborted) setRunsLoading(false);
     }
   }
 
   useEffect(() => {
-    void refreshRuns();
+    // Abort the in-flight read on unmount / tenant change (GAP-ANALYSIS E15).
+    const ctrl = new AbortController();
+    void refreshRuns(ctrl.signal);
     // Refresh whenever sign-in state flips so the user sees their
     // new tenant's runs after migration.
+    return () => ctrl.abort();
   }, [user?.uid]);
 
   async function onSubmit(e: React.FormEvent) {
@@ -170,16 +181,17 @@ export function RunsIndexPage() {
         </p>
         <form onSubmit={onSubmit}>
           <div className="form-row">
-            <label>Workflow</label>
-            <select value={workflowId} onChange={(e) => setWorkflowId(e.target.value)}>
+            <label htmlFor="ri-workflow">Workflow</label>
+            <select id="ri-workflow" value={workflowId} onChange={(e) => setWorkflowId(e.target.value)}>
               {allOptions.map((w) => (
                 <option key={w.id} value={w.id}>{w.label}</option>
               ))}
             </select>
           </div>
           <div className="form-row">
-            <label>Inputs (JSON)</label>
+            <label htmlFor="ri-inputs">Inputs (JSON)</label>
             <textarea
+              id="ri-inputs"
               rows={6}
               value={inputsRaw}
               onChange={(e) => setInputsRaw(e.target.value)}
@@ -222,7 +234,7 @@ export function RunsIndexPage() {
               onChange={(e) => setQuery(e.target.value)}
             />
             <DensityToggle value={density} onChange={setDensity} />
-            <button type="button" className="secondary" onClick={refreshRuns} disabled={runsLoading}>
+            <button type="button" className="secondary" onClick={() => void refreshRuns()} disabled={runsLoading}>
               {runsLoading ? 'Loading…' : 'Refresh'}
             </button>
           </div>
@@ -262,15 +274,6 @@ export function RunsIndexPage() {
       </div>
     </section>
   );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const tone =
-    status === 'completed' ? 'success'
-      : status === 'failed' || status === 'cancelled' ? 'error'
-        : status === 'running' || status === 'waiting' ? 'in-progress'
-          : 'muted';
-  return <span className={`status-badge status-${tone}`}>{status}</span>;
 }
 
 interface QualityRollup {

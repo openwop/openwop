@@ -97,6 +97,10 @@ jobs:
           cd apps/workflow-engine/frontend/react
           npm ci
           npm run build
+      - name: Test (vitest)
+        run: |
+          cd apps/workflow-engine/frontend/react
+          npm run test
 
   lint-python:
     name: Python lint (ruff)

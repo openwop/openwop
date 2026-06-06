@@ -50,10 +50,15 @@ export function RosterPage(): JSX.Element {
       const [r, c] = await Promise.all([listRoster(), getOrgChart()]);
       setRoster(r);
       setChart(c);
+      // Department rollups in parallel, not sequentially (GAP-ANALYSIS E3):
+      // one serial await per department turned N departments into N round-trip
+      // latencies on load. Each still degrades independently on failure.
       const views: Record<string, ResponsibilityView> = {};
-      for (const d of c.departments) {
-        try { views[d.departmentId] = await getDepartmentRollup(d.departmentId); } catch { /* skip */ }
-      }
+      await Promise.all(
+        c.departments.map(async (d) => {
+          try { views[d.departmentId] = await getDepartmentRollup(d.departmentId); } catch { /* skip */ }
+        }),
+      );
       setRollups(views);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));

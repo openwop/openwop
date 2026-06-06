@@ -16,9 +16,12 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { Notice } from '../ui/Notice.js';
+import { classifyHttpError } from '../client/classifyHttpError.js';
+import { MembersPanel } from './MembersPanel.js';
+import { GroupsPanel } from './GroupsPanel.js';
 import { StateCard } from '../ui/StateCard.js';
 import { PageHeader } from '../ui/PageHeader.js';
-import { BriefcaseIcon, ColumnsIcon, LockIcon, PencilIcon, ShieldIcon, TrashIcon, UserIcon } from '../ui/icons/index.js';
+import { BriefcaseIcon, ColumnsIcon, PencilIcon, ShieldIcon, TrashIcon } from '../ui/icons/index.js';
 import {
   type AccessRole,
   type BuiltInRoleId,
@@ -49,17 +52,15 @@ import {
   updateGroup,
   updateMember,
 } from '../client/accessClient.js';
-
-const muted: React.CSSProperties = { color: 'var(--color-text-muted)', fontSize: '0.85rem' };
+import { NEUTRAL_CHIP, muted } from './orgUi.js';
 
 /**
  * Roles, teams, and scopes are non-status LABEL dimensions, so per
  * DESIGN.app.md §5.3/§5.4 they differentiate by their text label — never by a
  * functional/accent color (those are reserved for run/agent/node status +
- * severity). Every such chip is the one neutral pill; selected/unselected in a
- * toggle is shown by opacity, not color.
+ * severity). Every such chip is the one neutral pill (`NEUTRAL_CHIP`, see
+ * orgUi.ts); selected/unselected in a toggle is shown by opacity, not color.
  */
-const NEUTRAL_CHIP = 'chip chip--muted';
 const ALL_ROLES: BuiltInRoleId[] = ['viewer', 'editor', 'admin', 'owner'];
 
 export function OrgsPage(): JSX.Element {
@@ -103,7 +104,12 @@ export function OrgsPage(): JSX.Element {
   const [viewAs, setViewAs] = useState<string | null>(null);
   const [viewScopes, setViewScopes] = useState<Set<string>>(new Set());
 
-  const fail = (err: unknown) => setError(err instanceof Error ? err.message : String(err));
+  const fail = (err: unknown) => {
+    // Friendly transport copy (GAP-ANALYSIS E5): 429/offline render as
+    // recoverable guidance, not a raw `listX failed: 429`.
+    const c = classifyHttpError(err);
+    setError(`${c.title} — ${c.detail}`);
+  };
 
   const loadOrgs = useCallback(async () => {
     try {
@@ -382,6 +388,13 @@ export function OrgsPage(): JSX.Element {
             <StateCard icon={<BriefcaseIcon size={32} />} title="No organizations yet" body="Create one to add teams and members." />
           ) : (
             orgs.map((o) => (
+              // Clickable card, but NOT role="button": it contains its own
+              // Delete <button>, and a button cannot nest interactive controls.
+              // The proper a11y fix (make the org NAME the button, with a CSS
+              // class to dodge the global button:hover dark-trap) needs a
+              // browser-verified pass; until then this stays a plain clickable
+              // div — a warn-first jsx-a11y backlog item, not an invalid-ARIA bug.
+              // eslint-disable-next-line jsx-a11y/click-events-have-key-events
               <div
                 key={o.orgId}
                 className="surface-card"
@@ -475,170 +488,54 @@ export function OrgsPage(): JSX.Element {
                 </div>
               )}
 
-              {/* Members */}
-              <h3 style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                <UserIcon size={15} /> Members
-              </h3>
-              <form onSubmit={onCreateMember} className="action-bar" style={{ flexWrap: 'wrap', marginBottom: 'var(--space-3)' }}>
-                <input value={memberName} onChange={(e) => setMemberName(e.target.value)} placeholder="Name" aria-label="Member name" />
-                <input value={memberEmail} onChange={(e) => setMemberEmail(e.target.value)} placeholder="Email (optional)" aria-label="Member email" />
-                <span className="action-bar" style={{ gap: '6px' }}>
-                  {assignableRoleIds.map((role) => (
-                    <label key={role} className={NEUTRAL_CHIP} style={{ cursor: 'pointer', opacity: memberRoles.has(role) ? 1 : 0.6 }}>
-                      <input
-                        type="checkbox"
-                        checked={memberRoles.has(role)}
-                        onChange={() => setMemberRoles((s) => toggleStr(s, role))}
-                        style={{ marginRight: 4 }}
-                      />
-                      {roleLabel(role)}
-                    </label>
-                  ))}
-                </span>
-                <button type="submit" className="primary" disabled={!memberName.trim() || !can('host:members:manage')} title={can('host:members:manage') ? undefined : 'Requires host:members:manage'}>Add member</button>
-              </form>
+              {/* Members (extracted — GAP-ANALYSIS E11) */}
+              <MembersPanel
+                members={members}
+                memberName={memberName}
+                setMemberName={setMemberName}
+                memberEmail={memberEmail}
+                setMemberEmail={setMemberEmail}
+                memberRoles={memberRoles}
+                setMemberRoles={setMemberRoles}
+                assignableRoleIds={assignableRoleIds}
+                editingId={editingId}
+                setEditingId={setEditingId}
+                draftRoles={draftRoles}
+                setDraftRoles={setDraftRoles}
+                accessFor={accessFor}
+                access={access}
+                onCreateMember={onCreateMember}
+                onShowAccess={onShowAccess}
+                startEdit={startEdit}
+                onDeleteMember={onDeleteMember}
+                onSaveRoles={onSaveRoles}
+                can={can}
+                roleLabel={roleLabel}
+                toggleStr={toggleStr}
+              />
 
-              {members.length === 0 ? (
-                <StateCard icon={<UserIcon size={28} />} title="No members yet" body="Add a member above and assign roles." />
-              ) : (
-                members.map((m) => (
-                  <div key={m.memberId} className="surface-card" style={{ marginBottom: 'var(--space-2)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 'var(--space-2)' }}>
-                      <span>
-                        <strong>{m.displayName}</strong>
-                        {m.email ? <span style={muted}> · {m.email}</span> : null}
-                      </span>
-                      <span className="action-bar">
-                        <button type="button" className="secondary" onClick={() => void onShowAccess(m)}>
-                          <ShieldIcon size={13} /> Access
-                        </button>
-                        <button type="button" className="secondary" disabled={!can('host:members:manage')} onClick={() => startEdit(m)} aria-label={`Edit roles for ${m.displayName}`}>
-                          <PencilIcon size={13} /> Roles
-                        </button>
-                        <button type="button" className="secondary" disabled={!can('host:members:manage')} onClick={() => void onDeleteMember(m)} aria-label={`Remove ${m.displayName}`}>
-                          <TrashIcon size={13} />
-                        </button>
-                      </span>
-                    </div>
-
-                    {/* role chips */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
-                      {m.roles.length === 0 ? (
-                        <span className="chip chip--muted">no roles</span>
-                      ) : (
-                        m.roles.map((r) => <span key={r} className={NEUTRAL_CHIP}>{roleLabel(r)}</span>)
-                      )}
-                    </div>
-
-                    {/* inline role editor */}
-                    {editingId === m.memberId ? (
-                      <div className="action-bar" style={{ flexWrap: 'wrap', marginTop: 'var(--space-2)' }}>
-                        {assignableRoleIds.map((role) => (
-                          <label key={role} className={NEUTRAL_CHIP} style={{ cursor: 'pointer', opacity: draftRoles.has(role) ? 1 : 0.6 }}>
-                            <input
-                              type="checkbox"
-                              checked={draftRoles.has(role)}
-                              onChange={() => setDraftRoles((s) => toggleStr(s, role))}
-                              style={{ marginRight: 4 }}
-                            />
-                            {roleLabel(role)}
-                          </label>
-                        ))}
-                        <button type="button" className="primary" onClick={() => void onSaveRoles(m)}>Save</button>
-                        <button type="button" className="secondary" onClick={() => setEditingId(null)}>Cancel</button>
-                      </div>
-                    ) : null}
-
-                    {/* effective-access preview */}
-                    {accessFor === m.memberId && access ? (
-                      <div style={{ marginTop: 'var(--space-2)' }}>
-                        <div style={muted}>
-                          Effective scopes (basis: {access.basis}) — resolved from assigned roles only:
-                        </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
-                          {access.scopes.length === 0 ? (
-                            <span className="chip chip--muted">no scopes (fail-closed)</span>
-                          ) : (
-                            access.scopes.map((s) => (
-                              <span key={s} className={NEUTRAL_CHIP}>{s}</span>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                ))
-              )}
-
-              {/* Groups — cross-cutting role bundles */}
-              <h3 style={{ fontSize: '0.9rem', marginTop: 'var(--space-5)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                <LockIcon size={15} /> Groups <span style={muted}>· role bundles</span>
-              </h3>
-              <p style={muted}>
-                A group bundles roles and grants them to its members — on top of each member&rsquo;s own
-                roles. Use it for batch access management (e.g. &ldquo;Editors&rdquo;, &ldquo;Admins&rdquo;).
-              </p>
-              <form onSubmit={onCreateGroup} className="action-bar" style={{ flexWrap: 'wrap', marginBottom: 'var(--space-2)' }}>
-                <input value={groupName} onChange={(e) => setGroupName(e.target.value)} placeholder="New group name" aria-label="New group name" />
-                <span className="action-bar" style={{ gap: '6px' }}>
-                  {assignableRoleIds.map((role) => (
-                    <label key={role} className={NEUTRAL_CHIP} style={{ cursor: 'pointer', opacity: groupRoles.has(role) ? 1 : 0.6 }}>
-                      <input type="checkbox" checked={groupRoles.has(role)} onChange={() => setGroupRoles((s) => toggleStr(s, role))} style={{ marginRight: 4 }} />
-                      {roleLabel(role)}
-                    </label>
-                  ))}
-                </span>
-                <button type="submit" className="primary" disabled={!groupName.trim() || !can('host:groups:manage')} title={can('host:groups:manage') ? undefined : 'Requires host:groups:manage'}>Add group</button>
-              </form>
-              {groups.length === 0 ? (
-                <p style={muted}>No groups yet.</p>
-              ) : (
-                groups.map((g) => (
-                  <div key={g.groupId} className="surface-card" style={{ marginBottom: 'var(--space-2)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 'var(--space-2)' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                        <LockIcon size={14} /> <strong>{g.name}</strong>
-                      </span>
-                      <span className="action-bar">
-                        <button type="button" className="secondary" disabled={!can('host:groups:manage')} onClick={() => startEditGroup(g)} aria-label={`Edit members of ${g.name}`}>
-                          <PencilIcon size={13} /> Members
-                        </button>
-                        <button type="button" className="secondary" disabled={!can('host:groups:manage')} onClick={() => void onDeleteGroup(g)} aria-label={`Delete group ${g.name}`}>
-                          <TrashIcon size={13} />
-                        </button>
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
-                      {g.roles.length === 0 ? <span className="chip chip--muted">no roles</span> : g.roles.map((r) => <span key={r} className={NEUTRAL_CHIP}>{roleLabel(r)}</span>)}
-                    </div>
-                    <div style={{ ...muted, marginTop: '4px' }}>
-                      {g.memberIds.length} member{g.memberIds.length === 1 ? '' : 's'}
-                      {g.memberIds.length ? `: ${g.memberIds.map(nameOfMember).join(', ')}` : ''}
-                    </div>
-                    {editingGroupId === g.groupId ? (
-                      <div className="action-bar" style={{ flexWrap: 'wrap', marginTop: 'var(--space-2)' }}>
-                        {members.length === 0 ? (
-                          <span style={muted}>Add members to the org first.</span>
-                        ) : (
-                          members.map((m) => (
-                            <label key={m.memberId} className={NEUTRAL_CHIP} style={{ cursor: 'pointer', opacity: draftGroupMembers.has(m.memberId) ? 1 : 0.6 }}>
-                              <input
-                                type="checkbox"
-                                checked={draftGroupMembers.has(m.memberId)}
-                                onChange={() => setDraftGroupMembers((s) => toggleStr(s, m.memberId))}
-                                style={{ marginRight: 4 }}
-                              />
-                              {m.displayName}
-                            </label>
-                          ))
-                        )}
-                        <button type="button" className="primary" onClick={() => void onSaveGroupMembers(g)}>Save</button>
-                        <button type="button" className="secondary" onClick={() => setEditingGroupId(null)}>Cancel</button>
-                      </div>
-                    ) : null}
-                  </div>
-                ))
-              )}
+              {/* Groups — cross-cutting role bundles (extracted — GAP-ANALYSIS E11) */}
+              <GroupsPanel
+                groups={groups}
+                members={members}
+                groupName={groupName}
+                setGroupName={setGroupName}
+                groupRoles={groupRoles}
+                setGroupRoles={setGroupRoles}
+                assignableRoleIds={assignableRoleIds}
+                editingGroupId={editingGroupId}
+                setEditingGroupId={setEditingGroupId}
+                draftGroupMembers={draftGroupMembers}
+                setDraftGroupMembers={setDraftGroupMembers}
+                onCreateGroup={onCreateGroup}
+                startEditGroup={startEditGroup}
+                onDeleteGroup={onDeleteGroup}
+                onSaveGroupMembers={onSaveGroupMembers}
+                nameOfMember={nameOfMember}
+                can={can}
+                roleLabel={roleLabel}
+                toggleStr={toggleStr}
+              />
 
               {/* Role catalog reference */}
               <h3 style={{ fontSize: '0.9rem', marginTop: 'var(--space-5)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>

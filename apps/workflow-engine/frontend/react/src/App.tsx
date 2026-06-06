@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { Link, Route, Routes, useLocation } from 'react-router-dom';
 import { NetworkPanel } from './devtools/NetworkPanel.js';
 import { installNetworkRecorder } from './devtools/networkRecorder.js';
@@ -13,6 +13,8 @@ import { AutoSeedDemoData } from './chrome/AutoSeedDemoData.js';
 import { FEATURES, chromeFor, isAdminPath } from './chrome/features.js';
 import { CommandPalette } from './ui/CommandPalette.js';
 import { Toaster } from './ui/toast.js';
+import { ErrorBoundary } from './ui/ErrorBoundary.js';
+import { Skeleton } from './ui/Skeleton.js';
 import { brand } from './brand/brand.js';
 
 /**
@@ -41,6 +43,11 @@ export function App() {
   // Width/scroll treatment is manifest-declared per route (`chrome:`), never
   // hand-listed here. Admin-tier routes render inside <AdminLayout>'s
   // two-column shell, which needs the full-bleed main.
+  // Move keyboard focus to <main> on every navigation (a11y, GAP-ANALYSIS E6),
+  // so a route change doesn't strand focus on a now-irrelevant sidebar link.
+  const mainRef = useRef<HTMLElement>(null);
+  useEffect(() => { mainRef.current?.focus(); }, [location.pathname]);
+
   const chrome = chromeFor(location.pathname);
   const admin = isAdminPath(location.pathname);
   const mainClass = admin
@@ -55,6 +62,7 @@ export function App() {
   return (
     <AppGate>
     <div className={chrome === 'chat' ? 'app-shell app-shell--ai' : 'app-shell'}>
+      <a className="skip-link" href="#main-content">Skip to content</a>
       <AutoSeedDemoData />
       {/* Persistent left rail: grouped workspace nav (Build / Operate) + the
           single Admin entry, collapsible, with the workspace/org switcher +
@@ -62,7 +70,9 @@ export function App() {
       <Sidebar netOpen={netOpen} onToggleNet={() => setNetOpen((v) => !v)} />
       <div className="app-body">
         <DemoHostBanner />
-        <main className={mainClass}>
+        <main id="main-content" ref={mainRef} tabIndex={-1} className={mainClass}>
+        <ErrorBoundary resetKey={location.pathname} label="page">
+        <Suspense fallback={<div style={{ padding: 'var(--space-4)' }}><Skeleton /></div>}>
         <Routes>
           {FEATURES.filter((f) => f.tier !== 'admin').map((f) => (
             <Route key={f.path} path={f.path} element={f.element} />
@@ -79,6 +89,8 @@ export function App() {
               unmatched URL must resolve here rather than render a blank main. */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        </Suspense>
+        </ErrorBoundary>
         </main>
         <footer className="app-footer">
           {brand.footerText} ·{' '}

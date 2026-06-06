@@ -274,6 +274,13 @@ export interface UseChatSessionResult {
   activeAgents: UseActiveAgentsResult;
 }
 
+/** Built-in fallback inputs for hardcoded sample.* workflows that ship without
+ *  a SavedWorkflow defaultInputs blob. Module-scoped (static data) so it has a
+ *  stable identity and never needs to appear in a hook dependency array. */
+const SAMPLE_DEFAULT_INPUTS: Record<string, Record<string, unknown>> = {
+  'sample.demo.uppercase': { text: 'hello world' },
+};
+
 export function useChatSession(): UseChatSessionResult {
   const [session, setSession] = useState<ChatSession>(loadSession);
   const [isSending, setIsSending] = useState(false);
@@ -354,7 +361,6 @@ export function useChatSession(): UseChatSessionResult {
         // retry on the next persist. The UI continues to work via
         // localStorage; the drawer just won't reflect this session
         // until connectivity returns.
-        // eslint-disable-next-line no-console
         console.warn('chat-session BE create failed (write-through degraded)', err);
       }
     }
@@ -383,7 +389,6 @@ export function useChatSession(): UseChatSessionResult {
       // drawer just won't show this message until the next persist
       // succeeds.
       persistedIdsRef.current.delete(msg.id);
-      // eslint-disable-next-line no-console
       console.warn('chat-message BE persist failed (write-through degraded)', err);
     }
   }, [ensureSessionInBackend]);
@@ -453,8 +458,11 @@ export function useChatSession(): UseChatSessionResult {
                 messages: s.messages.map((mm) => mm.id === m.id ? { ...mm, activeInterrupt: active } : mm),
               }));
             }
-          } catch {
-            /* ignore — best-effort resurfacing */
+          } catch (e) {
+            // Best-effort resurfacing, but no longer silent (GAP-ANALYSIS E6):
+            // a failed listOpenInterrupts left a run stuck with a phantom
+            // spinner and no signal. Surface it for diagnosis.
+            console.warn('[chat] could not resurface open interrupts for run', runId, e);
           }
         } catch (err) {
           // Distinguish 404 (run record gone — account-deleted, retention
@@ -938,8 +946,10 @@ export function useChatSession(): UseChatSessionResult {
               ...s,
               messages: s.messages.map((m) => m.id === assistantId ? { ...m, activeInterrupt: active } : m),
             }));
-          } catch {
-            /* swallow; interrupt UI just stays absent */
+          } catch (e) {
+            // No longer silent (GAP-ANALYSIS E6): a dropped interrupt fetch
+            // previously left the approval card absent with no trace.
+            console.warn('[chat] could not load open interrupt for run', runId, e);
           }
         } else if (ev.type === 'node.interrupt.resolved') {
           setSession((s) => ({
@@ -1042,7 +1052,12 @@ export function useChatSession(): UseChatSessionResult {
         inFlightAssistantIdRef.current = null;
       },
     });
-  }, [session.id, session.messages]);
+    // session.title added so a persist after a rename uses the current title.
+    // animation (ref-backed, stable methods) and persistMessage (useCallback)
+    // are intentionally omitted — their object identity churns each render and
+    // adding them would needlessly recreate `send` (used widely downstream).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.id, session.messages, session.title]);
 
   const cancel = useCallback(async () => {
     const runId = inFlightRunIdRef.current;
@@ -1075,6 +1090,9 @@ export function useChatSession(): UseChatSessionResult {
     inFlightRunIdRef.current = null;
     inFlightAssistantIdRef.current = null;
     setIsSending(false);
+    // animation's methods are ref-backed useCallbacks (stable); cancel reads
+    // only refs + setIsSending. No reactive deps. (GAP-ANALYSIS code-review)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const emitSystem = useCallback((content: string) => {
@@ -1266,10 +1284,6 @@ export function useChatSession(): UseChatSessionResult {
    *  ship without a SavedWorkflow defaultInputs blob. Keeps `@uppercase`
    *  from dispatching with an empty `inputs.text` and silently emitting
    *  an empty string. */
-  const SAMPLE_DEFAULT_INPUTS: Record<string, Record<string, unknown>> = {
-    'sample.demo.uppercase': { text: 'hello world' },
-  };
-
   const runWorkflowMention = useCallback(async (entry: WorkflowMentionEntry, trailing?: string) => {
     setError(null);
     // Preserve what the user actually typed so the chat history shows
@@ -1676,10 +1690,9 @@ export function useChatSession(): UseChatSessionResult {
     }
   }, [session.messages, updateWorkflowRun]);
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks -- the hook
-  // call is unconditional; React rule-of-hooks holds. Placement here
-  // (vs at the top of the function) keeps the active-agents API
-  // logically grouped with the chat-session result it's exposed on.
+  // The useActiveAgents call is unconditional, so rule-of-hooks holds.
+  // Placement here (vs at the top of the function) keeps the active-agents
+  // API logically grouped with the chat-session result it's exposed on.
   const activeAgents = useActiveAgents(session, setSession);
 
   return {
