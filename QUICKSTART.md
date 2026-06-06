@@ -256,7 +256,7 @@ Scenarios are organized by spec section:
 
 ## 9. SDKs
 
-Reference SDKs ship pinned to spec v1 in [`sdk/`](./sdk/):
+Reference SDKs ship pinned to spec v1 in [`sdk/`](https://github.com/openwop/openwop-sdks/tree/main/sdk):
 
 | Language | Package | Status |
 |---|---|---|

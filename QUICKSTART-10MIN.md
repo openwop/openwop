@@ -161,7 +161,7 @@ Final: completed
 
 The SDK is doing the same three calls under the hood, but you get type-checked clients (`@openwop/openwop` for TypeScript, `openwop-client` for Python, the Go SDK at `github.com/openwop/openwop/sdk/go`) and consistent error handling.
 
-A simpler version that doesn't require building the SDK locally is at [`examples/tiny-workflow/`](./examples/tiny-workflow/) — pure `fetch`, no SDK at all.
+A simpler version that doesn't require building the SDK locally is at [`examples/tiny-workflow/`](https://github.com/openwop/openwop-examples/tree/main/examples/tiny-workflow) — pure `fetch`, no SDK at all.
 
 ---
 
@@ -211,9 +211,9 @@ The streaming client will receive `node.cancelled` + `run.cancelled` and exit.
 | openwop wire contract | `spec/v1/rest-endpoints.md`, `spec/v1/capabilities.md` |
 | Run lifecycle + events | `spec/v1/observability.md` §"Canonical run lifecycle event names" |
 | SSE consumption | `spec/v1/stream-modes.md` |
-| Idempotency | `spec/v1/idempotency.md` + [`examples/idempotent-runs/`](./examples/idempotent-runs/) |
+| Idempotency | `spec/v1/idempotency.md` + [`examples/idempotent-runs/`](https://github.com/openwop/openwop-examples/tree/main/examples/idempotent-runs) |
 | Compatibility profiles | `spec/v1/profiles.md` |
-| Build your own host | [`examples/hosts/in-memory/`](./examples/hosts/in-memory/) — the host you just ran is one file |
+| Build your own host | [`examples/hosts/in-memory/`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts/in-memory) — the host you just ran is one file |
 | Conformance | `conformance/README.md` — run the suite against your own host |
 
 ---

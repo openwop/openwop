@@ -1484,9 +1484,15 @@ describe('spec-corpus: RFC 0089 conformance certification bundle + binding rule'
 // own captured discovery document AND be floor-proven. The bundle lives in
 // `examples/`, which is NOT bundled into the published tarball, so this skips
 // cleanly under the published layout (V1_DIR === null).
-describe.skipIf(V1_DIR === null)('spec-corpus: RFC 0089 committed reference-host certification bundle', () => {
-  const repoRoot = V1_DIR === null ? '' : pathResolve(V1_DIR, '..', '..');
-  const bundlePath = join(repoRoot, 'examples', 'hosts', 'in-memory', 'certification-bundle.json');
+// The committed reference-host certification bundle lives with the in-memory host,
+// which moved to the openwop-examples repo (2026-06). When the host tree is absent
+// (the spec corpus on its own), this committed-bundle check self-skips — it is
+// validated in openwop-examples CI against the published @openwop/openwop-conformance
+// verifyBundle. The sample-bundle schema + binding-rule checks above still run here.
+const RFC0089_BUNDLE_PATH =
+  V1_DIR === null ? null : join(pathResolve(V1_DIR, '..', '..'), 'examples', 'hosts', 'in-memory', 'certification-bundle.json');
+describe.skipIf(RFC0089_BUNDLE_PATH === null || !existsSync(RFC0089_BUNDLE_PATH))('spec-corpus: RFC 0089 committed reference-host certification bundle', () => {
+  const bundlePath = RFC0089_BUNDLE_PATH as string;
 
   const ajv = new Ajv2020({ allErrors: true, strict: false });
   addFormats(ajv);
