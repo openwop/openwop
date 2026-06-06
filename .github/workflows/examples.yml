@@ -25,11 +25,9 @@ on:
       - 'conformance/fixtures/**'
       - 'scripts/check-example-pack-refs.mjs'
       - 'scripts/check-doc-pack-claims.mjs'
-      - 'registry/v1/**'
       - 'docs/**'
       - 'spec/**'
       - 'RFCS/**'
-      - 'packs/**/README.md'
       - 'README.md'
       - 'ROADMAP.md'
       - 'CHANGELOG.md'
@@ -40,11 +38,9 @@ on:
       - 'conformance/fixtures/**'
       - 'scripts/check-example-pack-refs.mjs'
       - 'scripts/check-doc-pack-claims.mjs'
-      - 'registry/v1/**'
       - 'docs/**'
       - 'spec/**'
       - 'RFCS/**'
-      - 'packs/**/README.md'
       - 'README.md'
       - 'ROADMAP.md'
       - 'CHANGELOG.md'
@@ -56,20 +52,20 @@ jobs:
     # Workflow-definition examples (market-intel-pipeline, ads-publish-pipeline,
     # rag-grounded-chat) declare their pack dependencies in metadata.packs[].
     # This gate catches drift if a referenced pack is yanked or its version is
-    # no longer published. Uses the in-tree registry so the check runs against
-    # what the PR claims is publishable, not what's currently CDN-cached.
+    # no longer published. Resolves against the live registry at packs.openwop.dev
+    # (the registry/ catalog now lives in the openwop-registry repo).
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
       - name: Validate metadata.packs[] references resolve
-        run: node scripts/check-example-pack-refs.mjs --offline registry/v1/index.json
+        run: node scripts/check-example-pack-refs.mjs --registry https://packs.openwop.dev
       - name: Validate doc-prose pack claims
         # Catches registry-wide pack-count drift in prose (catalog/spec/RFC/
         # README/ROADMAP) and "future \`<pack>\`" qualifiers for shipped packs.
         # Complements the per-workflow validate-workflow-defs check above.
-        run: node scripts/check-doc-pack-claims.mjs --offline registry/v1/index.json
+        run: node scripts/check-doc-pack-claims.mjs --registry https://packs.openwop.dev
 
   examples:
     name: examples (${{ matrix.example.name }})

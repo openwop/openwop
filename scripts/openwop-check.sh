@@ -156,25 +156,11 @@ node "$SPEC_ROOT/scripts/check-sdk-parity.mjs"
 # class of bug where local hoisting masks a missing dep that breaks Cloud
 # Run's `npm ci`-isolated install (cf. ajv-formats / 2026-05-21 deploy thrash).
 node "$SPEC_ROOT/scripts/check-backend-dep-graph.mjs"
-# Registry signer-metadata consistency — every published pack version's catalog
-# index.json `signingKeyId` MUST match the per-version manifest `signing.publicKeyRef`
-# (the key that actually signed the tarball). Catches the class of drift where the
-# catalog named a different key than the real signer, which a strict consumer would
-# reject (cf. the 2026-05-27 81-version openwop-registry-root drift).
-node "$SPEC_ROOT/scripts/check-registry-signer-consistency.mjs"
-# Pack tarball signatures — cryptographically verify every NON-YANKED in-tree pack
-# version's embedded Ed25519 sig against its declared key over the EXACT in-tarball
-# pack.json octets. Catches what the string-compare guard above is blind to: an
-# UNSIGNED tarball (no signing block / no keys/pack.json.sig) whose catalog still
-# claims a signer, and a sig that verifies against no key (cf. the A2 finding —
-# core.openwop.examples@1.0.0 + vendor.openwop.rust-hello@1.0.0 shipped unsigned).
-node "$SPEC_ROOT/scripts/check-pack-tarball-signatures.mjs"
-# Agent-pack prompt bundling — every agent `systemPromptRef` in a source pack.json
-# MUST resolve to a prompts/*.md|.txt file the tarball bundler ships (RFC 0003 §C).
-# Catches the class where a declared prompt is missing or parked outside prompts/,
-# so an installing host fail-loud-rejects the pack (cf. the 2026-05-27 core agent
-# packs that shipped without their systemPromptRef body).
-node "$SPEC_ROOT/scripts/check-pack-prompt-refs.mjs"
+# Pack registry signature/signer/prompt-ref validation moved to the openwop-registry
+# repo (packs/ + registry/ extracted 2026-06; verified by that repo's
+# scripts/registry-check.sh). The spec corpus keeps prose honest about packs via the
+# live-fetching scripts/check-doc-pack-claims.mjs (run from examples CI), not by
+# re-validating in-tree pack tarballs that no longer live here.
 # External-audit remediation gate — once the audit report lands and findings are
 # recorded in SECURITY/external-audit-findings.json, an OPEN high/critical finding
 # MUST block the gate (and thus any release / standardization claim). Passes on
