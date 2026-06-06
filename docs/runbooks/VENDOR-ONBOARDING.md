@@ -202,7 +202,7 @@ Each authorized publisher key SHOULD rotate annually. See `KEY-ROTATION.md` (com
 ## See also
 
 - [`spec/v1/registry-operations.md`](../../spec/v1/registry-operations.md) §"Submission validation"
-- [`registry/README.md`](../../registry/README.md) §"Signing keys + namespace assignments"
+- [`registry/README.md`](https://github.com/openwop/openwop-registry/blob/main/registry/README.md) §"Signing keys + namespace assignments"
 - [`docs/runbooks/PACK-LIFECYCLE.md`](./PACK-LIFECYCLE.md) — yank/deprecate/unpublish flows
 - [`docs/runbooks/INCIDENT-RESPONSE.md`](./INCIDENT-RESPONSE.md) — what to do when a key or pack is compromised
 - [`docs/AUTHORING-CANVAS-PACKS.md`](../AUTHORING-CANVAS-PACKS.md) — how to author the first pack after onboarding

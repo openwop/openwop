@@ -1108,7 +1108,7 @@ ctx.mcp.serverStatus({
 
 **Capability flag:** `host.knowledge: supported`
 
-**Used by:** `vendor.myndhyve.knowledge-tools` (the `knowledge.retrieve` + `knowledge.augment-prompt` typeIds). Composes downstream of `core.openwop.ai` consumers for RAG-grounded workflows — see [`examples/rag-grounded-chat/`](../../examples/rag-grounded-chat/) for the canonical 2-node reference.
+**Used by:** `vendor.myndhyve.knowledge-tools` (the `knowledge.retrieve` + `knowledge.augment-prompt` typeIds). Composes downstream of `core.openwop.ai` consumers for RAG-grounded workflows — see [`examples/rag-grounded-chat/`](https://github.com/openwop/openwop-examples/tree/main/examples/rag-grounded-chat) for the canonical 2-node reference.
 
 Knowledge-base retrieval. Routes queries through the host's RAG pipeline (embedding → vector search → optional re-rank). The host owns the corpus, the embedding model, and the access-control boundary; the pack supplies the query.
 

@@ -290,10 +290,10 @@ If the integrity hash or signing keyId is wrong, the deploy succeeded but consum
 - [`spec/v1/host-capabilities.md`](../spec/v1/host-capabilities.md) — `host.*` capability contracts (currently DRAFT v1)
 - [`spec/v1/registry-operations.md`](../spec/v1/registry-operations.md) — namespace claims, signing-key registration, publish lifecycle
 - [`docs/CANVAS-PACKS-INVENTORY.md`](./CANVAS-PACKS-INVENTORY.md) — current scope (30 executors, 4 sub-packs)
-- [`registry/README.md`](../registry/README.md) — registry layout + signing-key + namespace assignment table
-- [`examples/packs/vendor-template/`](../examples/packs/vendor-template/) — pack source-tree skeleton (input to `scripts/new-pack.mjs`)
-- [`scripts/new-pack.mjs`](../scripts/new-pack.mjs) — pack generator
-- [`scripts/build-pack-tarball.mjs`](../scripts/build-pack-tarball.mjs) — deterministic tarball builder + signer
-- [`registry/scripts/verify-signatures.mjs`](../registry/scripts/verify-signatures.mjs) — CI sig-verification gate
-- [`registry/scripts/conformance-check.mjs`](../registry/scripts/conformance-check.mjs) — CI structural conformance gate
-- [`.github/workflows/registry-publish.yml`](../.github/workflows/registry-publish.yml) — CI pipeline running the three gates above
+- [`registry/README.md`](https://github.com/openwop/openwop-registry/blob/main/registry/README.md) — registry layout + signing-key + namespace assignment table
+- [`examples/packs/vendor-template/`](https://github.com/openwop/openwop-examples/tree/main/examples/packs/vendor-template) — pack source-tree skeleton (input to `scripts/new-pack.mjs`)
+- [`scripts/new-pack.mjs`](https://github.com/openwop/openwop-registry/blob/main/scripts/new-pack.mjs) — pack generator
+- [`scripts/build-pack-tarball.mjs`](https://github.com/openwop/openwop-registry/blob/main/scripts/build-pack-tarball.mjs) — deterministic tarball builder + signer
+- [`registry/scripts/verify-signatures.mjs`](https://github.com/openwop/openwop-registry/blob/main/registry/scripts/verify-signatures.mjs) — CI sig-verification gate
+- [`registry/scripts/conformance-check.mjs`](https://github.com/openwop/openwop-registry/blob/main/registry/scripts/conformance-check.mjs) — CI structural conformance gate
+- [`.github/workflows/registry-publish.yml`](https://github.com/openwop/openwop-registry/blob/main/.github/workflows/registry-publish.yml) — CI pipeline running the three gates above

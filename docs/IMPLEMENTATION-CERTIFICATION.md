@@ -57,7 +57,7 @@ Per-failure rationale, known flakes, host-specific seam env vars (e.g.,
 OPENWOP_TEST_TRIGGER_COMPACTION=true for RFC 0012 conformance).
 ```
 
-The Postgres reference host's [`conformance-full.md`](../examples/hosts/postgres/conformance-full.md) is the canonical reference shape.
+The Postgres reference host's [`conformance-full.md`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/postgres/conformance-full.md) is the canonical reference shape.
 
 ### 2. A row in [`INTEROP-MATRIX.md`](../INTEROP-MATRIX.md)
 
@@ -137,6 +137,6 @@ A host that reaches the `openwop-agent-platform` operational-annex status (`spec
 - [`docs/IMPLEMENTER-PATH.md`](./IMPLEMENTER-PATH.md) — full path from "what is OpenWOP" to "row in INTEROP-MATRIX".
 - [`docs/PROFILE-DECISION-GUIDE.md`](./PROFILE-DECISION-GUIDE.md) — which profiles to claim.
 - [`docs/KNOWN-LIMITS.md`](./KNOWN-LIMITS.md) — what's not yet covered.
-- [`examples/hosts/postgres/conformance-full.md`](../examples/hosts/postgres/conformance-full.md) — canonical `conformance.md` shape.
+- [`examples/hosts/postgres/conformance-full.md`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/postgres/conformance-full.md) — canonical `conformance.md` shape.
 - [`INTEROP-MATRIX.md`](../INTEROP-MATRIX.md) — public host roster.
 - [`conformance/coverage.md`](../conformance/coverage.md) §"Capability-gated scenarios" — which scenarios light up per advertised capability.

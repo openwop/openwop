@@ -19,7 +19,7 @@ Per [`spec/v1/production-profile.md`](../spec/v1/production-profile.md) (RFC 000
 5. **Production logs** — structured terminal-run logs with `runId` + `status` + `errorCode` + `durationMs`.
 6. **Every claimed auth profile passes under strict mode** — no claiming-without-implementing.
 
-The reference implementation is the Postgres host at [`examples/hosts/postgres/`](../examples/hosts/postgres/). The rest of this page distills its operator-facing surface.
+The reference implementation is the Postgres host at [`examples/hosts/postgres/`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts/postgres). The rest of this page distills its operator-facing surface.
 
 ---
 
@@ -57,7 +57,7 @@ cd examples/hosts/postgres
 npm ci && npm run build && npm start
 ```
 
-For an SDK quickstart against this host, see [`sdk/python/QUICKSTART.md`](../sdk/python/QUICKSTART.md) or [`sdk/go/QUICKSTART.md`](../sdk/go/QUICKSTART.md).
+For an SDK quickstart against this host, see [`sdk/python/QUICKSTART.md`](https://github.com/openwop/openwop-sdks/blob/main/sdk/python/QUICKSTART.md) or [`sdk/go/QUICKSTART.md`](https://github.com/openwop/openwop-sdks/blob/main/sdk/go/QUICKSTART.md).
 
 ---
 
@@ -149,5 +149,5 @@ Per [`observability.md`](../spec/v1/observability.md):
 - [`docs/PROFILE-DECISION-GUIDE.md`](./PROFILE-DECISION-GUIDE.md) — which profiles to claim.
 - [`docs/IMPLEMENTATION-CERTIFICATION.md`](./IMPLEMENTATION-CERTIFICATION.md) — how to publish your evidence.
 - [`spec/v1/production-profile.md`](../spec/v1/production-profile.md) — normative production-profile contract.
-- [`examples/hosts/postgres/README.md`](../examples/hosts/postgres/README.md) — reference host operator guide.
-- [`examples/hosts/postgres/conformance-full.md`](../examples/hosts/postgres/conformance-full.md) — current production-claim evidence.
+- [`examples/hosts/postgres/README.md`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/postgres/README.md) — reference host operator guide.
+- [`examples/hosts/postgres/conformance-full.md`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/postgres/conformance-full.md) — current production-claim evidence.

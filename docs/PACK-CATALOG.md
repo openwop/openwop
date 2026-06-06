@@ -135,7 +135,7 @@ The auto-play screen-generation workflow lifted from MyndHyve's App Builder canv
 
 ## Market Intelligence (VoC pipeline → ad angles)
 
-9 composable typeIds that together implement the VoC research pipeline from MyndHyve's marketIntel module. Compose freely via workflow definitions — see [`examples/market-intel-pipeline/`](../examples/market-intel-pipeline/) for the canonical 8-step DAG. All `aiProviders: supported` peer-dep (single `ctx.callAI` per typeId).
+9 composable typeIds that together implement the VoC research pipeline from MyndHyve's marketIntel module. Compose freely via workflow definitions — see [`examples/market-intel-pipeline/`](https://github.com/openwop/openwop-examples/tree/main/examples/market-intel-pipeline) for the canonical 8-step DAG. All `aiProviders: supported` peer-dep (single `ctx.callAI` per typeId).
 
 | Pack | typeId | Role |
 |---|---|---|
@@ -189,12 +189,12 @@ The auto-play screen-generation workflow lifted from MyndHyve's App Builder canv
 
 | Use case | Compose these packs |
 |---|---|
-| **End-to-end VoC research → ad copy** | `market-intel-query-builder` → `market-intel-discovery` → (host fetch) → `market-intel-content-extraction` → `market-intel-voc` → `market-intel-opportunity-scoring` → `market-intel-ad-angles` → `market-intel-audience-targeting` → `ads-copy-generate`. See [`examples/market-intel-pipeline/`](../examples/market-intel-pipeline/). |
-| **Publish a paid-ads campaign to Meta** | `ads-brief-build` → `ads-variant-plan` → `ads-platforms` (specs) → `ads-copy-generate` → `ads-image-generate` → `ads-creative-validate` → `ads-tools` (tracking links) → `ads-export` → `ads-publish-meta`. See [`examples/ads-publish-pipeline/ads-creative-publish-meta.json`](../examples/ads-publish-pipeline/ads-creative-publish-meta.json). |
-| **Same, multi-platform (Google or TikTok)** | Replace terminal `publish-meta` with `publish-google` or `publish-tiktok` — see [`examples/ads-publish-pipeline/`](../examples/ads-publish-pipeline/) for the three sibling variants showing per-platform credential + targeting shape differences. |
+| **End-to-end VoC research → ad copy** | `market-intel-query-builder` → `market-intel-discovery` → (host fetch) → `market-intel-content-extraction` → `market-intel-voc` → `market-intel-opportunity-scoring` → `market-intel-ad-angles` → `market-intel-audience-targeting` → `ads-copy-generate`. See [`examples/market-intel-pipeline/`](https://github.com/openwop/openwop-examples/tree/main/examples/market-intel-pipeline). |
+| **Publish a paid-ads campaign to Meta** | `ads-brief-build` → `ads-variant-plan` → `ads-platforms` (specs) → `ads-copy-generate` → `ads-image-generate` → `ads-creative-validate` → `ads-tools` (tracking links) → `ads-export` → `ads-publish-meta`. See [`examples/ads-publish-pipeline/ads-creative-publish-meta.json`](https://github.com/openwop/openwop-examples/blob/main/examples/ads-publish-pipeline/ads-creative-publish-meta.json). |
+| **Same, multi-platform (Google or TikTok)** | Replace terminal `publish-meta` with `publish-google` or `publish-tiktok` — see [`examples/ads-publish-pipeline/`](https://github.com/openwop/openwop-examples/tree/main/examples/ads-publish-pipeline) for the three sibling variants showing per-platform credential + targeting shape differences. |
 | **App-Builder auto-play** | `app-builder.iterate-tasks` (composes `app-builder.per-screen` internally per task) |
 | **Landing page generation** | `landing.content.generate` → `landing.structure.create` → `landing.theme.apply` → `landing.tracking.setup` → `landing.page.validate` → `landing.page.publish` |
-| **RAG-grounded AI call** | `knowledge.augment-prompt` (composes `knowledge.retrieve` + Sources block) → `core.ai.chatCompletion`. See [`examples/rag-grounded-chat/`](../examples/rag-grounded-chat/) — 2-node reference for the `host.knowledge` extension. |
+| **RAG-grounded AI call** | `knowledge.augment-prompt` (composes `knowledge.retrieve` + Sources block) → `core.ai.chatCompletion`. See [`examples/rag-grounded-chat/`](https://github.com/openwop/openwop-examples/tree/main/examples/rag-grounded-chat) — 2-node reference for the `host.knowledge` extension. |
 | **Drip campaign with conditional branching** | `campaign.sequence.condition` → `campaign.sequence.wait` → `campaign.sequence.email` (or `.sms`, `.webhook`). Note: these executors are host-scheduler-dispatched (the host enrollment scheduler decides when each fires); compose them as a sequence template, not an engine-edge-driven DAG. |
 
 ---
@@ -221,4 +221,4 @@ Future Phase D extensions are gated on [RFC 0013 (Workflow-chain packs)](../RFCS
 - [`spec/v1/registry-operations.md`](../spec/v1/registry-operations.md) — namespace claims, signing keys, publish lifecycle
 - [`docs/CANVAS-PACKS-INVENTORY.md`](CANVAS-PACKS-INVENTORY.md) — v3 closure: Phase A+B+C delivery log
 - [`docs/AUTHORING-CANVAS-PACKS.md`](AUTHORING-CANVAS-PACKS.md) — how to author a pack from scratch
-- [`registry/README.md`](../registry/README.md) — publish workflow against `packs.openwop.dev`
+- [`registry/README.md`](https://github.com/openwop/openwop-registry/blob/main/registry/README.md) — publish workflow against `packs.openwop.dev`

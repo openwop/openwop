@@ -120,4 +120,4 @@ node --input-type=module -e "
 - [`spec/v1/node-packs.md`](../../spec/v1/node-packs.md) — the pack format and runtime contract.
 - [`spec/v1/registry-operations.md`](../../spec/v1/registry-operations.md) — how packs are published.
 - [`docs/PACKS-MVP-PLAN.md`](../../docs/PACKS-MVP-PLAN.md) — the broader catalog plan.
-- [`examples/node-pack-publishing/`](../../examples/node-pack-publishing/) — end-to-end publish walkthrough.
+- [`examples/node-pack-publishing/`](https://github.com/openwop/openwop-examples/tree/main/examples/node-pack-publishing) — end-to-end publish walkthrough.

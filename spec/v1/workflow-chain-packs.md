@@ -310,7 +310,7 @@ Hosts and registries operating on workflow-chain packs MUST use these error code
 
 **Landed scenarios (all server-free against the reference expansion library at [`conformance/src/lib/workflow-chain-expansion.ts`](../../conformance/src/lib/workflow-chain-expansion.ts)):**
 
-1. `workflow-chain-pack-manifest-validation.test.ts` — Positive: a valid `kind: "workflow-chain"` manifest parses + indexes via the registry build path; the in-repo [`examples/packs/workflow-chain-sample/`](../../examples/packs/workflow-chain-sample/) pack validates from disk. Negatives: manifest with both `nodes[]` and `chains[]` returns `pack_kind_invalid`; chain entry with `chainId` not matching the reverse-DNS pattern returns `invalid_manifest`; manifest with missing `kind` field is rejected.
+1. `workflow-chain-pack-manifest-validation.test.ts` — Positive: a valid `kind: "workflow-chain"` manifest parses + indexes via the registry build path; the in-repo [`examples/packs/workflow-chain-sample/`](https://github.com/openwop/openwop-examples/tree/main/examples/packs/workflow-chain-sample) pack validates from disk. Negatives: manifest with both `nodes[]` and `chains[]` returns `pack_kind_invalid`; chain entry with `chainId` not matching the reverse-DNS pattern returns `invalid_manifest`; manifest with missing `kind` field is rejected.
 
 2. `workflow-chain-pack-signature-verification.test.ts` — Ed25519 verification recipe reused unchanged from `node-packs.md §Signing`: valid (manifest + signature) pairs verify; tampered manifests fail with byte-level tamper detection; wrong-key signatures fail; chain-pack `signing` block carries the same `publicKeyRef` / `signatureRef` / `method` shape as node packs.
 

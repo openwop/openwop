@@ -82,5 +82,5 @@ extracted from the SPKI DER (base64-encoded).
 
 - [`schemas/pack-lockfile.schema.json`](../../schemas/pack-lockfile.schema.json) — normative shape.
 - [`spec/v1/node-packs.md`](../../spec/v1/node-packs.md) §"Dependency resolution + lockfile".
-- [`registry/scripts/verify-signatures.mjs`](../../registry/scripts/verify-signatures.mjs) — canonical verifier (28/28 packs pass as of 2026-05-13).
+- [`registry/scripts/verify-signatures.mjs`](https://github.com/openwop/openwop-registry/blob/main/registry/scripts/verify-signatures.mjs) — canonical verifier (28/28 packs pass as of 2026-05-13).
 - [`SECURITY/external-audit-engagement.md`](../../SECURITY/external-audit-engagement.md) §2.1 — audit-gated pack list.

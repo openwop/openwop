@@ -12,7 +12,7 @@ The full list of profiles lives in [`spec/v1/profiles.md`](../spec/v1/profiles.m
 
 ### Are you building a host at all?
 
-If you're building a **client** that talks to OpenWOP hosts, you don't claim profiles — you read them. Skip ahead to the [SDK quickstarts](../sdk/python/QUICKSTART.md).
+If you're building a **client** that talks to OpenWOP hosts, you don't claim profiles — you read them. Skip ahead to the [SDK quickstarts](https://github.com/openwop/openwop-sdks/blob/main/sdk/python/QUICKSTART.md).
 
 If you're building a **host**, continue.
 
