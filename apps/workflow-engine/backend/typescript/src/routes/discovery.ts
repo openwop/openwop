@@ -841,6 +841,21 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       // Sample-namespace extensions block. Clients tolerate absence.
       'sample.notes': 'This is the openwop reference application sample. Not production-hardened.',
     },
+    // Governed-workforce surface (EP0) — EXPERIMENTAL host extension under the
+    // canonical `x-host-<host>-<key>` prefix (host-extensions.md). NOT a spec
+    // capability: it advertises the demo's read-only Workforce entity +
+    // telemetry, gated so the published SDK/conformance never depend on it
+    // until the `openwop-workforce-governance` profile RFC lands. Booleans are
+    // honest against what the host actually implements today.
+    'x-host-openwop-workforce': {
+      tier: 'experimental',
+      workforces: { supported: true, readOnly: true },
+      governance: { policyTags: true, refusalBoundaries: true, approvalGates: true },
+      // replay is genuinely supported (see `replay` family above); evals +
+      // shadow-mode are EP1/EP2 and honestly absent.
+      assurance: { replay: true, evals: false, shadow: false },
+      autonomyTiers: ['review', 'guided', 'auto'],
+    },
   };
   // RFC 0073 — capability families are document-root properties of the
   // discovery response (capabilities.schema.json roots agents/secrets/etc.;

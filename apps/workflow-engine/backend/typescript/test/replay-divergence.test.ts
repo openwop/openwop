@@ -115,6 +115,17 @@ describe('replay round-trip (end-to-end)', () => {
     expect(replay?.fork).toBe(false);
   });
 
+  it('advertises the experimental x-host-openwop-workforce block (gated, honest)', async () => {
+    const { body } = await jf<Record<string, unknown>>('/.well-known/openwop');
+    const wf = body['x-host-openwop-workforce'] as
+      | { tier?: string; workforces?: { supported?: boolean }; assurance?: { replay?: boolean; evals?: boolean } }
+      | undefined;
+    expect(wf?.tier).toBe('experimental');
+    expect(wf?.workforces?.supported).toBe(true);
+    expect(wf?.assurance?.replay).toBe(true); // consistent with the replay family
+    expect(wf?.assurance?.evals).toBe(false); // EP2, honestly absent
+  });
+
   it('full replay of a deterministic run reproduces it with no replay.diverged', async () => {
     await jf('/v1/host/sample/workflows', {
       method: 'POST',
