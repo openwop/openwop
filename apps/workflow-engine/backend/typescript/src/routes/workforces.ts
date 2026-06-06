@@ -21,7 +21,7 @@ import type { Storage } from '../storage/storage.js';
 import {
   aggregateAutonomyGraduation,
   aggregateGovernancePosture,
-  aggregateShadowComparison,
+  aggregateShadowEval,
   aggregateWorkforceMetrics,
   getWorkforce,
   listWorkforces,
@@ -187,7 +187,7 @@ export function registerWorkforceRoutes(app: Express, deps: Deps): void {
           workforceId: req.params.workforceId,
         });
       }
-      res.json(await getMigrationJourney(req.params.workforceId));
+      res.json(await getMigrationJourney(tenantOf(req), req.params.workforceId));
     } catch (err) {
       next(err);
     }
@@ -201,7 +201,7 @@ export function registerWorkforceRoutes(app: Express, deps: Deps): void {
           workforceId: req.params.workforceId,
         });
       }
-      res.json(await patchMigrationJourney(req.params.workforceId, parseMigrationPatch(req.body)));
+      res.json(await patchMigrationJourney(tenantOf(req), req.params.workforceId, parseMigrationPatch(req.body)));
     } catch (err) {
       next(err);
     }
@@ -225,8 +225,9 @@ export function registerWorkforceRoutes(app: Express, deps: Deps): void {
     }
   });
 
-  // MG-5 / EV-4 — "Shadow & Prove" pilot of RFC 0090's ShadowComparison shape
-  // (host extension; not the core capabilities.shadow wire surface).
+  // MG-5 — "Shadow & Prove": a host-ext stand-in for RFC 0081's `live-shadow`
+  // EvalSummary (NOT a bespoke shadow surface — see workforceService). The
+  // canonical surface is RFC 0081 + the RFC 0082 promotion gate.
   app.get('/v1/host/sample/workforces/:workforceId/shadow', async (req, res, next) => {
     try {
       const wf = await getWorkforce(req.params.workforceId);
@@ -236,7 +237,7 @@ export function registerWorkforceRoutes(app: Express, deps: Deps): void {
         });
       }
       const runs = await deps.storage.listRuns({ tenantId: tenantOf(req), limit: 5000 });
-      res.json(aggregateShadowComparison(runs, req.params.workforceId));
+      res.json(aggregateShadowEval(runs, req.params.workforceId));
     } catch (err) {
       next(err);
     }

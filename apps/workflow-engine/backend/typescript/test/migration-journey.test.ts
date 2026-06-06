@@ -12,6 +12,7 @@ import {
 import { MIGRATION_STAGE_KEYS } from '../src/host/migrationJourney.js';
 
 const WF = 'workforce.finance.invoice-exception';
+const T = 'demo';
 
 describe('migration journey', () => {
   beforeEach(async () => {
@@ -20,8 +21,9 @@ describe('migration journey', () => {
   });
 
   it('returns a default journey (all stages pending, nulls) when none exists', async () => {
-    const j = await getMigrationJourney(WF);
+    const j = await getMigrationJourney(T, WF);
     expect(j.workforceId).toBe(WF);
+    expect(j.tenantId).toBe(T);
     expect(j.target).toBeNull();
     expect(j.dataManifest).toBeNull();
     expect(j.boundaries).toBeNull();
@@ -31,17 +33,17 @@ describe('migration journey', () => {
   });
 
   it('merge-patches only the provided fields and persists', async () => {
-    await patchMigrationJourney(WF, {
+    await patchMigrationJourney(T, WF, {
       target: { workflowId: 'sample.agents.invoice-post', targetOutcome: 'clear exceptions in <1 day' },
       stageStatus: { target: 'done' },
     });
     // a second patch touches a different field; the first must survive
-    await patchMigrationJourney(WF, {
+    await patchMigrationJourney(T, WF, {
       dataManifest: { dataSources: 'ERP, invoice inbox', sensitivity: 'financial PII', approvalModel: '>$5k → human' },
       stageStatus: { 'map-data': 'done' },
     });
 
-    const j = await getMigrationJourney(WF);
+    const j = await getMigrationJourney(T, WF);
     expect(j.target?.workflowId).toBe('sample.agents.invoice-post');
     expect(j.dataManifest?.sensitivity).toBe('financial PII');
     expect(j.stageStatus.target).toBe('done');
@@ -50,8 +52,16 @@ describe('migration journey', () => {
   });
 
   it('supports clearing a field with null', async () => {
-    await patchMigrationJourney(WF, { target: { workflowId: 'x', targetOutcome: 'y' } });
-    await patchMigrationJourney(WF, { target: null });
-    expect((await getMigrationJourney(WF)).target).toBeNull();
+    await patchMigrationJourney(T, WF, { target: { workflowId: 'x', targetOutcome: 'y' } });
+    await patchMigrationJourney(T, WF, { target: null });
+    expect((await getMigrationJourney(T, WF)).target).toBeNull();
+  });
+
+  it('is tenant-scoped — one tenant cannot see another tenant journey (CTI-1)', async () => {
+    await patchMigrationJourney('tenant-a', WF, {
+      dataManifest: { dataSources: 'tenant-a ERP', sensitivity: 'financial PII', approvalModel: '>$5k' },
+    });
+    const b = await getMigrationJourney('tenant-b', WF);
+    expect(b.dataManifest).toBeNull(); // tenant-b sees a fresh journey, not tenant-a's content
   });
 });

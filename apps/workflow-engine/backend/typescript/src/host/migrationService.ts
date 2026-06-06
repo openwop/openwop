@@ -1,8 +1,11 @@
 /**
- * Migration journey store (EP1 MG-0). Persists one journey per workforce in the
- * generic host-ext DurableCollection (no per-backend schema change). Keyed by
- * workforceId, consistent with the Workforce entity's global scoping (demo
- * simplification — a production host would scope per tenant).
+ * Migration journey store (EP1 MG-0). Persists one journey per (tenant,
+ * workforce) in the generic host-ext DurableCollection (no per-backend schema
+ * change). TENANT-SCOPED: a journey holds tenant-authored content (the Data
+ * Manifest's data sources / sensitivity), so it is keyed `${tenantId}:${workforceId}`
+ * — one tenant's migration progress is never visible to another (CTI-1). The
+ * Workforce ENTITY itself stays global (shared starter templates), but its
+ * migration *state* is per tenant.
  */
 
 import { DurableCollection } from './hostExtPersistence.js';
@@ -16,21 +19,28 @@ import {
   type StageStatus,
 } from './migrationJourney.js';
 
-const journeys = new DurableCollection<MigrationJourney>('migration', (j) => j.workforceId);
+const journeys = new DurableCollection<MigrationJourney>(
+  'migration',
+  (j) => `${j.tenantId}:${j.workforceId}`,
+);
 
 function nowIso(): string {
   return new Date().toISOString();
 }
 
-function emptyJourney(workforceId: string): MigrationJourney {
+function key(tenantId: string, workforceId: string): string {
+  return `${tenantId}:${workforceId}`;
+}
+
+function emptyJourney(tenantId: string, workforceId: string): MigrationJourney {
   const stageStatus = Object.fromEntries(
     MIGRATION_STAGE_KEYS.map((k) => [k, 'pending' as StageStatus]),
   ) as Record<MigrationStageKey, StageStatus>;
-  return { workforceId, stageStatus, target: null, dataManifest: null, boundaries: null, updatedAt: nowIso() };
+  return { tenantId, workforceId, stageStatus, target: null, dataManifest: null, boundaries: null, updatedAt: nowIso() };
 }
 
-export async function getMigrationJourney(workforceId: string): Promise<MigrationJourney> {
-  return (await journeys.get(workforceId)) ?? emptyJourney(workforceId);
+export async function getMigrationJourney(tenantId: string, workforceId: string): Promise<MigrationJourney> {
+  return (await journeys.get(key(tenantId, workforceId))) ?? emptyJourney(tenantId, workforceId);
 }
 
 export interface MigrationJourneyPatch {
@@ -40,12 +50,13 @@ export interface MigrationJourneyPatch {
   stageStatus?: Partial<Record<MigrationStageKey, StageStatus>>;
 }
 
-/** Merge-patch the journey (only provided fields change). Creates it on first patch. */
+/** Merge-patch the (tenant-scoped) journey (only provided fields change). Creates it on first patch. */
 export async function patchMigrationJourney(
+  tenantId: string,
   workforceId: string,
   patch: MigrationJourneyPatch,
 ): Promise<MigrationJourney> {
-  const cur = await getMigrationJourney(workforceId);
+  const cur = await getMigrationJourney(tenantId, workforceId);
   const updated: MigrationJourney = {
     ...cur,
     ...(patch.target !== undefined ? { target: patch.target } : {}),
