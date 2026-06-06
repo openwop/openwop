@@ -51,6 +51,7 @@ const AgentWorkspacePage = lazy(() => import('../agents/AgentWorkspacePage.js').
 const AgentCreateWizard = lazy(() => import('../agents/AgentCreateWizard.js').then((m) => ({ default: m.AgentCreateWizard })));
 const WorkforcesGalleryPage = lazy(() => import('../workforces/WorkforcesGalleryPage.js').then((m) => ({ default: m.WorkforcesGalleryPage })));
 const WorkforceOverviewPage = lazy(() => import('../workforces/WorkforceOverviewPage.js').then((m) => ({ default: m.WorkforceOverviewPage })));
+const MigrationWizardPage = lazy(() => import('../workforces/MigrationWizardPage.js').then((m) => ({ default: m.MigrationWizardPage })));
 import { DemoDataPage } from '../settings/DemoDataPage.js';
 import { AdminOverviewPage } from '../settings/AdminOverviewPage.js';
 import { OrgsPage } from '../orgs/OrgsPage.js';
@@ -122,6 +123,8 @@ export const FEATURES: FeatureRoute[] = [
     nav: { group: 'Workspace', label: 'Workforces', icon: BuildingIcon, hint: 'Governed agent workforces — purpose, telemetry, autonomy' },
   },
   { path: '/workforces/:workforceId', element: <WorkforceOverviewPage />, tier: 'workspace' },
+  // Workflow Migration journey wizard (EP1 MG-0) — guided 6-stage onboarding.
+  { path: '/workforces/:workforceId/migrate', element: <MigrationWizardPage />, tier: 'workspace', chrome: 'narrow' },
   {
     path: '/builder', element: <WorkflowsDashboard />, tier: 'workspace',
     nav: { group: 'Author', label: 'Workflows', icon: WorkflowIcon, hint: 'Author + edit workflows' },

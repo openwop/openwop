@@ -99,6 +99,41 @@ export async function updateWorkforceStatus(workforceId: string, status: Workfor
   return asJson<Workforce>(res, 'updateWorkforceStatus');
 }
 
+// ── migration journey (EP1 MG-0) ───────────────────────────────────────────
+
+export type MigrationStageKey =
+  | 'target' | 'assess' | 'map-data' | 'map-boundaries' | 'shadow-prove' | 'cut-over';
+export type StageStatus = 'pending' | 'done';
+
+export interface MigrationJourney {
+  workforceId: string;
+  stageStatus: Record<MigrationStageKey, StageStatus>;
+  target: { workflowId: string; targetOutcome: string } | null;
+  dataManifest: { dataSources: string; sensitivity: string; approvalModel: string } | null;
+  boundaries: { auto: string[]; review: string[] } | null;
+  updatedAt: string;
+}
+export interface MigrationJourneyPatch {
+  target?: MigrationJourney['target'];
+  dataManifest?: MigrationJourney['dataManifest'];
+  boundaries?: MigrationJourney['boundaries'];
+  stageStatus?: Partial<Record<MigrationStageKey, StageStatus>>;
+}
+
+export async function getMigrationJourney(workforceId: string): Promise<MigrationJourney> {
+  const res = await fetch(`${base}/${encodeURIComponent(workforceId)}/migration`, fetchOpts({ headers: authedHeaders() }));
+  return asJson<MigrationJourney>(res, 'getMigrationJourney');
+}
+
+export async function patchMigrationJourney(workforceId: string, patch: MigrationJourneyPatch): Promise<MigrationJourney> {
+  const res = await fetch(`${base}/${encodeURIComponent(workforceId)}/migration`, fetchOpts({
+    method: 'PATCH',
+    headers: { ...authedHeaders(), 'content-type': 'application/json' },
+    body: JSON.stringify(patch),
+  }));
+  return asJson<MigrationJourney>(res, 'patchMigrationJourney');
+}
+
 // ── governance & graduated autonomy (EP1) ──────────────────────────────────
 
 export interface PromotionMilestone {

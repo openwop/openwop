@@ -125,7 +125,12 @@ export function WorkforceOverviewPage(): JSX.Element {
         eyebrow="WORKFORCE"
         title={wf.name}
         lede={wf.purpose.statement}
-        actions={back}
+        actions={
+          <span className="action-bar" style={{ gap: '0.5rem' }}>
+            {back}
+            <Link to={`/workforces/${encodeURIComponent(workforceId)}/migrate`} className="btn">Migration journey →</Link>
+          </span>
+        }
       />
 
       {/* Purpose & policy */}
