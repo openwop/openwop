@@ -10,7 +10,7 @@ import { CheckIcon, CircleIcon } from '../ui/icons/index.js';
 /** Render an advertised boolean as a tri-state glyph. `undefined` means the
  *  host hasn't declared the field; that's distinct from `false` (declared off). */
 function boolGlyph(v: boolean | undefined): JSX.Element {
-  if (v === true) return <span style={{ color: 'var(--color-success)' }}><CheckIcon size={14} /></span>;
+  if (v === true) return <span style={{ color: 'var(--color-success-text)' }}><CheckIcon size={14} /></span>;
   if (v === false) return <span style={{ color: 'var(--ink-3)' }}><CircleIcon size={14} /></span>;
   return <span className="muted">—</span>;
 }

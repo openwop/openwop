@@ -264,7 +264,7 @@ export function AgentNewPage(): JSX.Element {
               padding: 'var(--space-3)',
               border: '1px solid var(--color-danger)',
               borderRadius: 'var(--radius)',
-              color: 'var(--color-danger)',
+              color: 'var(--color-danger-text)',
               fontSize: 12.5,
               background: 'color-mix(in oklch, var(--color-danger) 6%, transparent)',
             }}

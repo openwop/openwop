@@ -70,7 +70,7 @@ export function ErrorCard({ error, onReconfigure, onRetry }: Props): JSX.Element
         lineHeight: 1.5,
       }}
     >
-      <div style={{ fontWeight: 600, color: 'var(--color-danger)' }}>{k.title}</div>
+      <div style={{ fontWeight: 600, color: 'var(--color-danger-text)' }}>{k.title}</div>
       {k.detail && <div style={{ marginTop: 4, color: 'var(--ink)' }}>{k.detail}</div>}
       <div style={{ marginTop: 6, fontSize: 11, opacity: 0.7, color: 'var(--color-text-muted)' }}>
         {error.code}

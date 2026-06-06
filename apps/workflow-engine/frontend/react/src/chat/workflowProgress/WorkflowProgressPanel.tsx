@@ -301,7 +301,7 @@ function FocusedRunView({
         <div style={{
           padding: '8px 10px',
           background: 'var(--clay-wash)',
-          color: 'var(--clay)',
+          color: 'var(--clay-text)',
           border: '1px solid var(--clay-rule)',
           borderRadius: 6,
           fontSize: 12,

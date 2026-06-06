@@ -56,7 +56,7 @@ function buildChips(events: readonly RunEventDoc[]): Chip[] {
       case 'runOrchestrator.decided': {
         const d = p.decision;
         const label = typeof d === 'string' ? d : (asRecord(d).kind as string) ?? 'decided';
-        chips.push({ seq: ev.sequence, kind: 'supervisor', label: `supervisor: ${label}`, sublabel: p.agentId as string, color: 'var(--color-ai)' });
+        chips.push({ seq: ev.sequence, kind: 'supervisor', label: `supervisor: ${label}`, sublabel: p.agentId as string, color: 'var(--color-ai-text)' });
         break;
       }
       case 'agent.handoff': {
@@ -67,7 +67,7 @@ function buildChips(events: readonly RunEventDoc[]): Chip[] {
           seq: ev.sequence, kind: 'handoff',
           label: `${from ?? '?'} → ${to ?? '?'}`,
           ...(typeof p.reason === 'string' ? { sublabel: p.reason as string } : {}),
-          color: 'var(--color-info)',
+          color: 'var(--color-info-text)',
         });
         break;
       }
@@ -76,7 +76,7 @@ function buildChips(events: readonly RunEventDoc[]): Chip[] {
           seq: ev.sequence, kind: 'dispatch',
           label: `dispatch ${String(p.childWorkflowId ?? '')}`.trim(),
           ...(typeof p.childStatus === 'string' ? { sublabel: p.childStatus as string } : {}),
-          color: 'var(--clay)',
+          color: 'var(--clay-text)',
         });
         break;
       case 'core.workflowChain.event': {
@@ -96,7 +96,7 @@ function buildChips(events: readonly RunEventDoc[]): Chip[] {
           sublabel: typeof p.confidence === 'number'
             ? `conf ${Math.round((p.confidence as number) * 100)}% < floor ${Math.round(((p.floor as number) ?? 0) * 100)}%`
             : (p.workerId as string),
-          color: 'var(--color-warning)',
+          color: 'var(--color-warning-text)',
           emphasize: true,
         });
         break;

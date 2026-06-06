@@ -204,7 +204,7 @@ function DegradedChip({ count }: { count: number }): JSX.Element {
         padding: '1px 8px',
         borderRadius: 10,
         background: 'color-mix(in oklch, var(--color-warning) 14%, transparent)',
-        color: 'var(--color-warning)',
+        color: 'var(--color-warning-text)',
         fontFamily: 'var(--mono)',
       }}
     >

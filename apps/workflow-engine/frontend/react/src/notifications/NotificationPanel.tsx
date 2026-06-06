@@ -415,7 +415,7 @@ function NotificationRow({
             type="button"
             className="secondary"
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            style={{ fontSize: 11, color: 'var(--color-danger)' }}
+            style={{ fontSize: 11, color: 'var(--color-danger-text)' }}
           >
             Delete
           </button>

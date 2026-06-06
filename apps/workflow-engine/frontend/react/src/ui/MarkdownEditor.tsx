@@ -298,7 +298,7 @@ export function MarkdownEditor({
         )}
       </div>
       {over ? (
-        <div style={{ fontSize: '0.72rem', color: 'var(--color-danger)', marginTop: 2 }}>
+        <div style={{ fontSize: '0.72rem', color: 'var(--color-danger-text)', marginTop: 2 }}>
           Over the suggested {maxLength} characters — consider trimming.
         </div>
       ) : null}

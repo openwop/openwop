@@ -9,7 +9,10 @@ import AxeBuilder from '@axe-core/playwright';
  * violations fail the suite; we fix the app until each route is clean.
  */
 
-const ROUTES = ['/', '/runs', '/boards', '/agents', '/orgs', '/keys', '/prompts'];
+const ROUTES = [
+  '/', '/chat', '/runs', '/boards', '/agents', '/orgs', '/keys', '/prompts',
+  '/builder', '/inbox', '/mission', '/memory', '/roster', '/capabilities', '/cli', '/demo-data',
+];
 
 async function setTheme(page: import('@playwright/test').Page, theme: 'light' | 'dark') {
   await page.evaluate((t) => {
@@ -32,23 +35,17 @@ for (const theme of ['light', 'dark'] as const) {
       const results = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa'])
         .analyze();
-      // KNOWN BASELINE — the accent/semantic palette fails WCAG AA as small
-      // text (and as a button fill against either white or dark text): the brand
-      // `--clay` (#b95c3a, oklch 58%) and `--color-ai` (#7377c6) are mid-tone, so
-      // they clear ~3.0–4.0:1, not 4.5. Fixing this is a design-system PALETTE
-      // decision (define AA text/fill variants, or darken the accents) pending
-      // sign-off — see the a11y findings note. Baselined here so the harness
-      // stays green and still catches every OTHER (and any new) violation, plus
-      // axe "can't-determine" nodes (gradient fills) which aren't actionable.
-      const ACCENTS = new Set(['#b95c3a', '#7377c6']);
-      const isBaselinedContrast = (n: { any?: Array<{ data?: unknown }> }): boolean => {
+      // The accent/semantic palette is now AA-compliant via --clay-text /
+      // --clay-strong / --color-ai-text (the prior mid-tone baseline is gone).
+      // Only skip axe "can't-determine" contrast nodes (e.g. gradient fills),
+      // which aren't actionable.
+      const isUnmeasurable = (n: { any?: Array<{ data?: unknown }> }): boolean => {
         const d = n.any?.[0]?.data as { fgColor?: string; bgColor?: string } | undefined;
-        if (!d || (d.fgColor === undefined && d.bgColor === undefined)) return true; // axe couldn't measure
-        return ACCENTS.has((d.fgColor ?? '').toLowerCase()) || ACCENTS.has((d.bgColor ?? '').toLowerCase());
+        return !d || (d.fgColor === undefined && d.bgColor === undefined);
       };
       const serious = results.violations
         .filter((v) => v.impact === 'serious' || v.impact === 'critical')
-        .map((v) => (v.id === 'color-contrast' ? { ...v, nodes: v.nodes.filter((n) => !isBaselinedContrast(n)) } : v))
+        .map((v) => (v.id === 'color-contrast' ? { ...v, nodes: v.nodes.filter((n) => !isUnmeasurable(n)) } : v))
         .filter((v) => v.nodes.length > 0);
       if (serious.length) {
         console.log(`\n[a11y ${route} ${theme}] ${serious.length} serious/critical:`);

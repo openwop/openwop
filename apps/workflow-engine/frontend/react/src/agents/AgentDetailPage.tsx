@@ -135,7 +135,7 @@ function AgentDetail({ agent }: { agent: AgentEntry }): JSX.Element {
               onClick={() => void onDelete()}
               disabled={isDeleting}
               title="Permanently delete this user-authored agent"
-              style={{ color: 'var(--color-danger)' }}
+              style={{ color: 'var(--color-danger-text)' }}
             >
               {isDeleting ? 'Deleting…' : 'Delete'}
             </button>
@@ -153,7 +153,7 @@ function AgentDetail({ agent }: { agent: AgentEntry }): JSX.Element {
               padding: 'var(--space-2) var(--space-3)',
               border: '1px solid var(--color-danger)',
               borderRadius: 'var(--radius)',
-              color: 'var(--color-danger)',
+              color: 'var(--color-danger-text)',
               fontSize: 12,
               background: 'color-mix(in oklch, var(--color-danger) 6%, transparent)',
             }}
@@ -264,7 +264,7 @@ function AgentDetail({ agent }: { agent: AgentEntry }): JSX.Element {
                   padding: '3px 10px',
                   borderRadius: 14,
                   background: 'color-mix(in oklch, var(--color-warning) 14%, transparent)',
-                  color: 'var(--color-warning)',
+                  color: 'var(--color-warning-text)',
                   fontSize: 11.5,
                   fontFamily: 'var(--mono)',
                 }}
