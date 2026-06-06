@@ -92,7 +92,6 @@ export async function seedWorkforceHistory(
   tenantId: string,
   opts: WorkforceHistorySeedOptions,
 ): Promise<{ workforces: number; runs: number }> {
-  const runCount = opts.runCount ?? 300;
   const windowMs = WEEKS * 7 * DAY_MS;
   let seededWorkforces = 0;
   let seededRuns = 0;
@@ -105,6 +104,13 @@ export async function seedWorkforceHistory(
 
   for (const w of seedDefs) {
     if (seenWorkforce.has(w.workforceId)) continue;
+    // Only INSTRUMENTED workforces (historyRunCount > 0) get history; the
+    // others ship as stand-up templates (the gallery still lists them). The
+    // per-call `opts.runCount` overrides the count for the instrumented ones
+    // (used by tests); it does NOT promote a template into an instrumented one.
+    const gate = w.historyRunCount ?? 0;
+    if (gate <= 0) continue;
+    const runCount = opts.runCount ?? gate;
     const history = generateWorkforceHistory({
       workforceId: w.workforceId,
       tenantId,

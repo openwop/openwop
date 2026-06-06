@@ -186,4 +186,31 @@ describe('workforceService', () => {
       expect(typeof overrides.capped).toBe('boolean');
     }
   });
+
+  it('seeds five starter workforces; only the instrumented one gets history', async () => {
+    const created = await seedWorkforceEntities();
+    expect(created).toBe(5);
+    const all = await listWorkforces();
+    expect(all.map((w) => w.workforceId).sort()).toEqual(
+      [
+        'workforce.finance.invoice-exception',
+        'workforce.fulfillment.order-exception',
+        'workforce.insurance.claims-review',
+        'workforce.procurement.approval',
+        'workforce.support.escalation-triage',
+      ].sort(),
+    );
+
+    // No template is promoted by the per-call override; only the hero
+    // (historyRunCount > 0) is instrumented — capped here at 10 for speed.
+    const res = await seedWorkforceHistory(storage, 'demo', { nowMs: NOW, runCount: 10 });
+    expect(res.workforces).toBe(1);
+    expect(res.runs).toBe(10);
+
+    const runs = await storage.listRuns({ tenantId: 'demo', limit: 5000 });
+    const byWf = (id: string): number =>
+      runs.filter((r) => (r.metadata as { workforceId?: string }).workforceId === id).length;
+    expect(byWf(HERO)).toBe(10);
+    expect(byWf('workforce.support.escalation-triage')).toBe(0); // template — no history
+  });
 });
