@@ -1,0 +1,208 @@
+{
+  "name": "core.openwop.db",
+  "version": "1.0.0",
+  "description": "Database adapter primitives — sql, nosql, search, vector. Each gated on its host capability (host.sql, host.nosql, host.searchIndex, host.vectorStore) per RFC 0018. Pack speaks no driver — delegates to ctx.db.*. Parametric SQL only (host enforces).",
+  "author": "OpenWOP Working Group",
+  "license": "Apache-2.0",
+  "homepage": "https://openwop.dev/packs/core.openwop.db",
+  "repository": "https://github.com/openwop/openwop",
+  "keywords": [
+    "core",
+    "db",
+    "sql",
+    "nosql",
+    "vector",
+    "search"
+  ],
+  "engines": {
+    "openwop": ">=1.0.0 <2.0.0"
+  },
+  "runtime": {
+    "language": "javascript",
+    "format": "esm",
+    "entry": "./index.mjs",
+    "minRuntimeVersion": "node>=20"
+  },
+  "nodes": [
+    {
+      "typeId": "core.db.sql-query",
+      "version": "1.0.0",
+      "label": "SQL Query",
+      "description": "Parametric SQL SELECT. Host MUST reject non-parametric queries (RFC 0018).",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/sql-query.config.json",
+      "inputSchemaRef": "schemas/sql-query.input.json",
+      "outputSchemaRef": "schemas/sql-query.output.json"
+    },
+    {
+      "typeId": "core.db.sql-execute",
+      "version": "1.0.0",
+      "label": "SQL Execute",
+      "description": "Parametric INSERT / UPDATE / DELETE.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/sql-execute.config.json",
+      "inputSchemaRef": "schemas/sql-execute.input.json",
+      "outputSchemaRef": "schemas/sql-execute.output.json"
+    },
+    {
+      "typeId": "core.db.sql-transaction",
+      "version": "1.0.0",
+      "label": "SQL Transaction",
+      "description": "Atomic transaction across N statements.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/sql-transaction.config.json",
+      "inputSchemaRef": "schemas/sql-transaction.input.json",
+      "outputSchemaRef": "schemas/sql-transaction.output.json"
+    },
+    {
+      "typeId": "core.db.nosql-find",
+      "version": "1.0.0",
+      "label": "NoSQL Find",
+      "description": "MongoDB-shape find.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/nosql-find.config.json",
+      "inputSchemaRef": "schemas/nosql-find.input.json",
+      "outputSchemaRef": "schemas/nosql-find.output.json"
+    },
+    {
+      "typeId": "core.db.nosql-insert",
+      "version": "1.0.0",
+      "label": "NoSQL Insert",
+      "description": "MongoDB-shape insertOne / insertMany.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/nosql-insert.config.json",
+      "inputSchemaRef": "schemas/nosql-insert.input.json",
+      "outputSchemaRef": "schemas/nosql-insert.output.json"
+    },
+    {
+      "typeId": "core.db.nosql-update",
+      "version": "1.0.0",
+      "label": "NoSQL Update",
+      "description": "updateMany.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/nosql-update.config.json",
+      "inputSchemaRef": "schemas/nosql-update.input.json",
+      "outputSchemaRef": "schemas/nosql-update.output.json"
+    },
+    {
+      "typeId": "core.db.nosql-delete",
+      "version": "1.0.0",
+      "label": "NoSQL Delete",
+      "description": "deleteMany.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/nosql-delete.config.json",
+      "inputSchemaRef": "schemas/nosql-delete.input.json",
+      "outputSchemaRef": "schemas/nosql-delete.output.json"
+    },
+    {
+      "typeId": "core.db.search-index",
+      "version": "1.0.0",
+      "label": "Search Index",
+      "description": "Index a document into a search store.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/search-index.config.json",
+      "inputSchemaRef": "schemas/search-index.input.json",
+      "outputSchemaRef": "schemas/search-index.output.json"
+    },
+    {
+      "typeId": "core.db.search-query",
+      "version": "1.0.0",
+      "label": "Search Query",
+      "description": "Full-text query against a search index.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/search-query.config.json",
+      "inputSchemaRef": "schemas/search-query.input.json",
+      "outputSchemaRef": "schemas/search-query.output.json"
+    },
+    {
+      "typeId": "core.db.vector-upsert",
+      "version": "1.0.0",
+      "label": "Vector Upsert",
+      "description": "Insert / update embedding vectors.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/vector-upsert.config.json",
+      "inputSchemaRef": "schemas/vector-upsert.input.json",
+      "outputSchemaRef": "schemas/vector-upsert.output.json"
+    },
+    {
+      "typeId": "core.db.vector-query",
+      "version": "1.0.0",
+      "label": "Vector Query",
+      "description": "k-NN search.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/vector-query.config.json",
+      "inputSchemaRef": "schemas/vector-query.input.json",
+      "outputSchemaRef": "schemas/vector-query.output.json"
+    },
+    {
+      "typeId": "core.db.vector-delete",
+      "version": "1.0.0",
+      "label": "Vector Delete",
+      "description": "Delete vectors by id or filter.",
+      "category": "integration",
+      "role": "side-effect",
+      "capabilities": [
+        "cacheable",
+        "side-effectful"
+      ],
+      "configSchemaRef": "schemas/vector-delete.config.json",
+      "inputSchemaRef": "schemas/vector-delete.input.json",
+      "outputSchemaRef": "schemas/vector-delete.output.json"
+    }
+  ]
+}

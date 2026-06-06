@@ -178,6 +178,11 @@ ui-debug.log
 !registry/v1/packs/core.openwop.db/
 !registry/v1/packs/core.openwop.db/**
 !packs/core.openwop.db/**
+# …and the vendored copy under the demo app (sync-packs.sh target). Without
+# this the `*.db` glob excludes it from the 85-pack vendored set, so a fresh
+# checkout can't run `core.db.*` nodes (e.g. nosql-surface.test.ts fails).
+!apps/workflow-engine/packs/core.openwop.db/
+!apps/workflow-engine/packs/core.openwop.db/**
 
 # ── Process / daemon state ───────────────────────────────────────────────────
 *.pid

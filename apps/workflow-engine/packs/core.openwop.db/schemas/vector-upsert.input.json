@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.db/1.0.0/vector-upsert.input.json",
+  "title": "VectorUpsertInput",
+  "type": "object",
+  "required": [
+    "records"
+  ],
+  "properties": {
+    "records": {
+      "type": "array",
+      "items": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "VRec",
+        "type": "object",
+        "required": [
+          "id",
+          "vector"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "vector": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
