@@ -43,4 +43,9 @@ export interface Workforce {
   agents: AgentSpec[];
   /** Per-node auto-safe vs human-review (MG-4). */
   decisionBoundaries: { auto: string[]; review: string[] };
+  /** Demo seeding: how many synthetic history runs to generate for this
+   *  workforce on the explicit "Load demo data" action. Omit / 0 → ship as a
+   *  stand-up TEMPLATE with no history (the gallery still lists it). Keeps the
+   *  heavy generator scoped to the instrumented examples, not all 5 templates. */
+  historyRunCount?: number;
 }

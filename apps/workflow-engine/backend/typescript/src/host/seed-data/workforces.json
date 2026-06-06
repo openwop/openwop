@@ -77,6 +77,95 @@
     "decisionBoundaries": {
       "auto": ["invoice-extract", "invoice-match"],
       "review": ["invoice-post"]
-    }
+    },
+    "historyRunCount": 300
+  },
+  {
+    "workforceId": "workforce.support.escalation-triage",
+    "name": "Customer Escalation Triage Workforce",
+    "businessFunction": "support-ops",
+    "status": "shadow",
+    "purpose": {
+      "statement": "Triage every inbound escalation to the right owner within minutes, with a human gate on high-severity cases.",
+      "policyTags": ["pii:contact", "requires-approval-on:severity-1"],
+      "refusalBoundaries": ["never auto-close a regulated-complaint ticket"]
+    },
+    "autonomyLevel": "review",
+    "dataManifestId": "dm.support.escalation-triage",
+    "successMetrics": ["cycle_time_p50_ms", "cost_per_resolved_escalation_usd", "override_rate", "false_positive_rate"],
+    "workflowCatalog": ["sample.agents.triage-classify", "sample.agents.triage-route", "sample.agents.triage-respond"],
+    "agents": [
+      { "agentRef": "host.triage-supervisor", "role": "supervisor", "autonomyLevel": "review", "dataBoundary": "Support tenant; ticket + customer-tier read.", "decisionBoundary": "Routes severity 2-4; escalates severity 1 to a human.", "memoryBoundary": "Run-scoped + tenant ticket history.", "performanceTarget": "P50 triage < 5 min; misroute < 2%.", "recoveryBehavior": "On low confidence, hold for human." },
+      { "agentRef": "host.triage-classify-worker", "role": "worker", "autonomyLevel": "auto", "dataBoundary": "Single ticket body; no write.", "decisionBoundary": "Severity + topic classification only.", "memoryBoundary": "Run-scoped.", "performanceTarget": "Severity accuracy >= 95%.", "recoveryBehavior": "Retry once, then default to severity 2." },
+      { "agentRef": "host.triage-respond-worker", "role": "worker", "autonomyLevel": "guided", "dataBoundary": "Ticket + KB (read); reply draft (write, gated).", "decisionBoundary": "Drafts first response; never sends regulated replies.", "memoryBoundary": "Run-scoped + KB cache.", "performanceTarget": "First-response quality rating >= 4/5.", "recoveryBehavior": "On KB miss, escalate to a human agent." },
+      { "agentRef": "host.triage-eval-agent", "role": "governance", "autonomyLevel": "review", "dataBoundary": "Event logs + eval set (read).", "decisionBoundary": "Scores triage accuracy; flags misroutes; never sends.", "memoryBoundary": "Tenant eval history.", "performanceTarget": "Catches >= 95% of seeded misroutes.", "recoveryBehavior": "On regression, block promotion and notify." }
+    ],
+    "decisionBoundaries": { "auto": ["triage-classify", "triage-route"], "review": ["triage-respond"] }
+  },
+  {
+    "workforceId": "workforce.insurance.claims-review",
+    "name": "Claims Review Workforce",
+    "businessFunction": "claims-ops",
+    "status": "shadow",
+    "purpose": {
+      "statement": "Adjudicate routine claims straight-through and route exceptions to an adjuster, fully audited.",
+      "policyTags": ["pii:health", "requires-approval-over-usd:10000"],
+      "refusalBoundaries": ["never auto-approve a claim flagged for potential fraud"]
+    },
+    "autonomyLevel": "review",
+    "dataManifestId": "dm.insurance.claims-review",
+    "successMetrics": ["cycle_time_p50_ms", "cost_per_adjudicated_claim_usd", "override_rate", "false_positive_rate"],
+    "workflowCatalog": ["sample.agents.claim-validate", "sample.agents.claim-assess", "sample.agents.claim-adjudicate"],
+    "agents": [
+      { "agentRef": "host.claims-supervisor", "role": "supervisor", "autonomyLevel": "review", "dataBoundary": "Claims tenant; policy + claim read.", "decisionBoundary": "Adjudicates under $10k; escalates above + all fraud flags.", "memoryBoundary": "Run-scoped + tenant claims history.", "performanceTarget": "P50 cycle < 1 day; override < 5%.", "recoveryBehavior": "On ambiguity, route to a human adjuster." },
+      { "agentRef": "host.claims-validate-worker", "role": "worker", "autonomyLevel": "auto", "dataBoundary": "Single claim packet; no write.", "decisionBoundary": "Completeness + eligibility check only.", "memoryBoundary": "Run-scoped.", "performanceTarget": "Validation accuracy >= 98%.", "recoveryBehavior": "On missing docs, request and pause." },
+      { "agentRef": "host.claims-adjudicate-worker", "role": "worker", "autonomyLevel": "guided", "dataBoundary": "Claim + policy terms; decision (write, gated).", "decisionBoundary": "Applies policy; gated above threshold.", "memoryBoundary": "Run-scoped.", "performanceTarget": "Decision accuracy >= 97%.", "recoveryBehavior": "On policy conflict, escalate." },
+      { "agentRef": "host.claims-eval-agent", "role": "governance", "autonomyLevel": "review", "dataBoundary": "Event logs + eval set (read).", "decisionBoundary": "Scores adjudications; flags fraud-pattern misses.", "memoryBoundary": "Tenant eval history.", "performanceTarget": "Catches >= 95% of seeded regressions.", "recoveryBehavior": "On regression, block promotion and notify." }
+    ],
+    "decisionBoundaries": { "auto": ["claim-validate", "claim-assess"], "review": ["claim-adjudicate"] }
+  },
+  {
+    "workforceId": "workforce.fulfillment.order-exception",
+    "name": "Order Exception Resolution Workforce",
+    "businessFunction": "fulfillment-ops",
+    "status": "shadow",
+    "purpose": {
+      "statement": "Resolve order exceptions (stockouts, address failures, split shipments) before SLA breach.",
+      "policyTags": ["pii:address", "requires-approval-over-usd:2500"],
+      "refusalBoundaries": ["never auto-cancel an order without a logged reason code"]
+    },
+    "autonomyLevel": "guided",
+    "dataManifestId": "dm.fulfillment.order-exception",
+    "successMetrics": ["cycle_time_p50_ms", "cost_per_resolved_order_usd", "override_rate", "false_positive_rate"],
+    "workflowCatalog": ["sample.agents.order-detect", "sample.agents.order-plan", "sample.agents.order-apply"],
+    "agents": [
+      { "agentRef": "host.order-supervisor", "role": "supervisor", "autonomyLevel": "guided", "dataBoundary": "Fulfillment tenant; order + inventory read.", "decisionBoundary": "Resolves under $2.5k impact; escalates above.", "memoryBoundary": "Run-scoped + tenant order history.", "performanceTarget": "P50 resolve < 2 h; SLA-breach rate < 1%.", "recoveryBehavior": "On low confidence, hold for ops." },
+      { "agentRef": "host.order-detect-worker", "role": "worker", "autonomyLevel": "auto", "dataBoundary": "Single order; no write.", "decisionBoundary": "Exception classification only.", "memoryBoundary": "Run-scoped.", "performanceTarget": "Classification accuracy >= 97%.", "recoveryBehavior": "Retry once, then flag." },
+      { "agentRef": "host.order-apply-worker", "role": "worker", "autonomyLevel": "guided", "dataBoundary": "Order-management API (write, gated).", "decisionBoundary": "Applies resolution; gated above threshold.", "memoryBoundary": "Run-scoped.", "performanceTarget": "Apply success >= 99%.", "recoveryBehavior": "On API failure, fail run for replay." },
+      { "agentRef": "host.order-eval-agent", "role": "governance", "autonomyLevel": "review", "dataBoundary": "Event logs + eval set (read).", "decisionBoundary": "Scores resolutions; flags reason-code gaps.", "memoryBoundary": "Tenant eval history.", "performanceTarget": "Catches >= 95% of seeded regressions.", "recoveryBehavior": "On regression, block promotion and notify." }
+    ],
+    "decisionBoundaries": { "auto": ["order-detect", "order-plan"], "review": ["order-apply"] }
+  },
+  {
+    "workforceId": "workforce.procurement.approval",
+    "name": "Procurement Approval Workforce",
+    "businessFunction": "procurement-ops",
+    "status": "shadow",
+    "purpose": {
+      "statement": "Route purchase requests through policy checks and the right approvers, fully audited.",
+      "policyTags": ["requires-approval-over-usd:25000", "segregation-of-duties"],
+      "refusalBoundaries": ["never auto-approve a request to a non-onboarded supplier"]
+    },
+    "autonomyLevel": "review",
+    "dataManifestId": "dm.procurement.approval",
+    "successMetrics": ["cycle_time_p50_ms", "cost_per_processed_request_usd", "override_rate", "false_positive_rate"],
+    "workflowCatalog": ["sample.agents.po-validate", "sample.agents.po-policy-check", "sample.agents.po-route"],
+    "agents": [
+      { "agentRef": "host.procurement-supervisor", "role": "supervisor", "autonomyLevel": "review", "dataBoundary": "Procurement tenant; PR + supplier read.", "decisionBoundary": "Routes under $25k; escalates above + SoD conflicts.", "memoryBoundary": "Run-scoped + tenant PR history.", "performanceTarget": "P50 routing < 1 h; policy-miss < 1%.", "recoveryBehavior": "On conflict, hold for a human approver." },
+      { "agentRef": "host.procurement-validate-worker", "role": "worker", "autonomyLevel": "auto", "dataBoundary": "Single PR; no write.", "decisionBoundary": "Completeness + supplier-onboarding check only.", "memoryBoundary": "Run-scoped.", "performanceTarget": "Validation accuracy >= 98%.", "recoveryBehavior": "On missing fields, request and pause." },
+      { "agentRef": "host.procurement-route-worker", "role": "worker", "autonomyLevel": "guided", "dataBoundary": "Approval graph (read); routing (write, gated).", "decisionBoundary": "Routes to approvers; gated above threshold.", "memoryBoundary": "Run-scoped.", "performanceTarget": "Correct-approver rate >= 99%.", "recoveryBehavior": "On ambiguous owner, escalate." },
+      { "agentRef": "host.procurement-eval-agent", "role": "governance", "autonomyLevel": "review", "dataBoundary": "Event logs + eval set (read).", "decisionBoundary": "Scores routing; flags SoD violations.", "memoryBoundary": "Tenant eval history.", "performanceTarget": "Catches >= 95% of seeded regressions.", "recoveryBehavior": "On regression, block promotion and notify." }
+    ],
+    "decisionBoundaries": { "auto": ["po-validate", "po-policy-check"], "review": ["po-route"] }
   }
 ]
