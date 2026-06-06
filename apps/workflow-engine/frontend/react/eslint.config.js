@@ -29,6 +29,10 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/ban-ts-comment': 'warn',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      // console.* should be intentional; the few diagnostic sites carry an
+      // explicit eslint-disable. Enabling the rule makes those directives
+      // meaningful (not "unused") and flags stray logging.
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
       // Hooks correctness — the highest-value lint for this codebase.
       'react-hooks/rules-of-hooks': 'warn',
       'react-hooks/exhaustive-deps': 'warn',

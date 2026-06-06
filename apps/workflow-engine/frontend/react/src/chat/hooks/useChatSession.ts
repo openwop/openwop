@@ -354,7 +354,6 @@ export function useChatSession(): UseChatSessionResult {
         // retry on the next persist. The UI continues to work via
         // localStorage; the drawer just won't reflect this session
         // until connectivity returns.
-        // eslint-disable-next-line no-console
         console.warn('chat-session BE create failed (write-through degraded)', err);
       }
     }
@@ -383,7 +382,6 @@ export function useChatSession(): UseChatSessionResult {
       // drawer just won't show this message until the next persist
       // succeeds.
       persistedIdsRef.current.delete(msg.id);
-      // eslint-disable-next-line no-console
       console.warn('chat-message BE persist failed (write-through degraded)', err);
     }
   }, [ensureSessionInBackend]);
@@ -457,7 +455,6 @@ export function useChatSession(): UseChatSessionResult {
             // Best-effort resurfacing, but no longer silent (GAP-ANALYSIS E6):
             // a failed listOpenInterrupts left a run stuck with a phantom
             // spinner and no signal. Surface it for diagnosis.
-            // eslint-disable-next-line no-console
             console.warn('[chat] could not resurface open interrupts for run', runId, e);
           }
         } catch (err) {
@@ -945,7 +942,6 @@ export function useChatSession(): UseChatSessionResult {
           } catch (e) {
             // No longer silent (GAP-ANALYSIS E6): a dropped interrupt fetch
             // previously left the approval card absent with no trace.
-            // eslint-disable-next-line no-console
             console.warn('[chat] could not load open interrupt for run', runId, e);
           }
         } else if (ev.type === 'node.interrupt.resolved') {

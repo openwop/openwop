@@ -175,7 +175,6 @@ function subscribeViaGenerator(
           // forward-compat discriminator (string-typed in the SDK); a parsed
           // JSON value lacking it isn't a run event we can route.
           if (!ev || typeof ev.type !== 'string') {
-            // eslint-disable-next-line no-console
             console.warn('[streamsClient] dropping malformed run event (missing string `type`):', ev);
             continue;
           }

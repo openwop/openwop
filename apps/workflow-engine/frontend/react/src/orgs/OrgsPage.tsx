@@ -51,17 +51,15 @@ import {
   updateGroup,
   updateMember,
 } from '../client/accessClient.js';
-
-const muted: React.CSSProperties = { color: 'var(--color-text-muted)', fontSize: '0.85rem' };
+import { NEUTRAL_CHIP, muted } from './orgUi.js';
 
 /**
  * Roles, teams, and scopes are non-status LABEL dimensions, so per
  * DESIGN.app.md §5.3/§5.4 they differentiate by their text label — never by a
  * functional/accent color (those are reserved for run/agent/node status +
- * severity). Every such chip is the one neutral pill; selected/unselected in a
- * toggle is shown by opacity, not color.
+ * severity). Every such chip is the one neutral pill (`NEUTRAL_CHIP`, see
+ * orgUi.ts); selected/unselected in a toggle is shown by opacity, not color.
  */
-const NEUTRAL_CHIP = 'chip chip--muted';
 const ALL_ROLES: BuiltInRoleId[] = ['viewer', 'editor', 'admin', 'owner'];
 
 export function OrgsPage(): JSX.Element {

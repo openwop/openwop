@@ -77,24 +77,31 @@ export interface RunListItem {
 const CAPS_TTL_MS = 300_000;
 let capsCache: { value: Capabilities & Record<string, unknown>; at: number } | null = null;
 let capsInFlight: Promise<Capabilities & Record<string, unknown>> | null = null;
+// Generation guard: bumped on every clear (auth/tenant change) so a fetch that
+// was already in flight when the tenant changed does NOT write the prior
+// tenant's capabilities into the cache (review finding — mid-flight race).
+let capsGeneration = 0;
 
 /** Drop the capabilities cache so the next read re-negotiates. */
 export function clearCapabilitiesCache(): void {
   capsCache = null;
   capsInFlight = null;
+  capsGeneration += 1;
 }
 onAuthChange(clearCapabilitiesCache);
 
 export async function getCapabilities(): Promise<Capabilities & Record<string, unknown>> {
   if (capsCache && Date.now() - capsCache.at < CAPS_TTL_MS) return capsCache.value;
   if (capsInFlight) return capsInFlight;
+  const generation = capsGeneration;
   capsInFlight = (async () => {
     try {
       const value = (await client.discovery.capabilities()) as Capabilities & Record<string, unknown>;
-      capsCache = { value, at: Date.now() };
+      // Only cache if no clear() happened while this request was in flight.
+      if (generation === capsGeneration) capsCache = { value, at: Date.now() };
       return value;
     } finally {
-      capsInFlight = null;
+      if (generation === capsGeneration) capsInFlight = null;
     }
   })();
   return capsInFlight;

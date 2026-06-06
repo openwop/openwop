@@ -11,9 +11,7 @@ import type { Dispatch, FormEvent, SetStateAction } from 'react';
 import type { OrgMember, EffectiveAccess } from '../client/accessClient.js';
 import { StateCard } from '../ui/StateCard.js';
 import { UserIcon, ShieldIcon, PencilIcon, TrashIcon } from '../ui/icons/index.js';
-
-const NEUTRAL_CHIP = 'chip chip--muted';
-const muted: React.CSSProperties = { color: 'var(--color-text-muted)', fontSize: '0.85rem' };
+import { NEUTRAL_CHIP, muted } from './orgUi.js';
 
 export interface MembersPanelProps {
   members: OrgMember[];
