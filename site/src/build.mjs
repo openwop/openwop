@@ -1568,6 +1568,36 @@ function buildComparisonOpenExo() {
     // Protocol names in table headers + bold first-column cells → chips.
     .replace(/<th>(A2A|MCP|OpenWOP)<\/th>/g, (_, n) => `<th>${chip(n)}</th>`)
     .replace(/<td><strong>(A2A|MCP|OpenWOP)<\/strong><\/td>/g, (_, n) => `<td>${chip(n)}</td>`);
+
+  // Footnotes. The markdown cites sources as [N](#fn-slug) — rendered raw,
+  // those are full-size links butting against the sentence, and the #fn-*
+  // anchors point at nothing (the Sources list has no ids). Two repairs:
+  //   1. Wrap every footnote ref in <sup class="oxo-fn">.
+  //   2. Give the Nth <li> of the Sources list the id the Nth-numbered
+  //      footnote targets, so the anchors actually land. The markdown's
+  //      numbering follows the list order; if the two ever drift apart
+  //      (more numbers than list items), the ids are skipped and the refs
+  //      degrade to styled-but-inert superscripts rather than mislinking.
+  const fnIdByNumber = new Map();
+  for (const m of articleHtml.matchAll(/<a href="#(fn-[a-z-]+)">(\d+)<\/a>/g)) {
+    fnIdByNumber.set(Number(m[2]), m[1]);
+  }
+  articleHtml = articleHtml.replace(
+    /(<a href="#fn-[a-z-]+">\d+<\/a>)(?!<\/sup>)/g,
+    '<sup class="oxo-fn">$1</sup>',
+  );
+  const sourcesSplit = articleHtml.split('<h2 id="sources-and-references">');
+  if (sourcesSplit.length === 2 && fnIdByNumber.size > 0) {
+    let li = 0;
+    const numberedTail = sourcesSplit[1].replace(/<li>/g, () => {
+      li += 1;
+      const id = fnIdByNumber.get(li);
+      return id ? `<li id="${id}">` : '<li>';
+    });
+    if (li >= Math.max(...fnIdByNumber.keys())) {
+      articleHtml = `${sourcesSplit[0]}<h2 id="sources-and-references">${numberedTail}`;
+    }
+  }
   articleHtml = `<article class="spec-doc comparison-doc">${articleHtml}</article>`;
 
   const content = `<div class="comparison-page">${heroHtml}${wrapWithToc(articleHtml, extractToc(bodyMd))}</div>`;
