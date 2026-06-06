@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { EmptyBlock, slugify } from './agentUi.js';
 import { Link, useNavigate } from 'react-router-dom';
 import { listAgents, type AgentEntry } from '../client/agentsClient.js';
 import { PageHeader } from '../ui/PageHeader.js';
@@ -212,38 +213,3 @@ function DegradedChip({ count }: { count: number }): JSX.Element {
   );
 }
 
-function EmptyBlock({
-  children,
-  tone = 'muted',
-}: {
-  children: React.ReactNode;
-  tone?: 'muted' | 'error';
-}): JSX.Element {
-  return (
-    <div
-      style={{
-        padding: 'var(--space-5)',
-        border: `1px ${tone === 'error' ? 'solid' : 'dashed'} ${
-          tone === 'error' ? 'var(--color-danger)' : 'var(--rule)'
-        }`,
-        borderRadius: 8,
-        textAlign: 'center',
-        color: tone === 'error' ? 'var(--color-danger)' : 'var(--ink-3)',
-        fontSize: 13,
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
-/** Local slug helper — keeps the list view's row chip aligned with
- *  the chat picker's `@persona-slug` rendering. Duplicated rather
- *  than re-exported from `chat/lib/agentMentions.ts` to avoid pulling
- *  the chat module into the agents tab graph. */
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'agent';
-}
