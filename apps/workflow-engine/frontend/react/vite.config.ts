@@ -164,6 +164,12 @@ export default defineConfig(({ mode }) => {
           // cache the markdown chunk independently of UI churn.
           manualChunks: {
             markdown: ['react-markdown', 'remark-gfm'],
+            // Split the Firebase Auth SDK into its own chunk (GAP-ANALYSIS E13):
+            // it is ~120KB+ and only the auth path uses it, so isolating it
+            // trims the main bundle and lets it cache independently of UI churn.
+            // (A full dynamic-import-on-sign-in is the larger follow-up; this is
+            // the safe, no-behavior-change split.)
+            firebase: ['firebase/app', 'firebase/auth'],
           },
         },
       },
