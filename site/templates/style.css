@@ -1714,3 +1714,202 @@ body:has(.spec-page-grid) .wrap {
 }
 .oxo-fn a:hover { text-decoration: underline; }
 .comparison-doc li[id^="fn-"] { scroll-margin-top: 90px; }
+
+/* Edge Twin pipeline (replaces the ASCII flow on the OpenExO page).
+ * Three bands tell the story in the page's hue grammar: the enterprise
+ * estate (neutral ink/rule), the OpenWOP-powered Edge Twin (clay), and
+ * the AI-native operating unit (gold — the thesis realized). */
+.oxo-flow { margin: 1.8em 0; max-width: 860px; }
+.oxo-flow-node {
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 14px 18px;
+  background: var(--paper);
+}
+.oxo-flow-name {
+  display: block;
+  font-family: var(--serif);
+  font-size: 19px;
+}
+.oxo-flow-terms {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+  margin-top: 5px;
+}
+.oxo-flow-mothership { border-color: var(--rule-2); }
+.oxo-flow-twin {
+  border-color: var(--cmp-owp-rule);
+  background:
+    repeating-linear-gradient(-45deg, var(--cmp-owp-wash) 0 10px, transparent 10px 20px),
+    var(--paper);
+}
+.oxo-flow-twin .oxo-flow-name { color: var(--cmp-owp); }
+.oxo-flow-parts {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 2px;
+  padding: 0;
+}
+.oxo-flow-parts li {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper);
+  padding: 3px 10px;
+}
+.oxo-flow-unit {
+  border-color: var(--cmp-exo-rule);
+  background:
+    repeating-linear-gradient(-45deg, var(--cmp-exo-wash) 0 10px, transparent 10px 20px),
+    var(--paper);
+}
+.oxo-flow-unit .oxo-flow-name { color: var(--cmp-exo); }
+.oxo-flow-link {
+  position: relative;
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 0;
+}
+.oxo-flow-link::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: 50%;
+  width: 1.5px;
+  background: var(--cmp-owp);
+}
+.oxo-flow-link::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-inline: 4px solid transparent;
+  border-top: 6px solid var(--cmp-owp);
+}
+.oxo-flow-link-main,
+.oxo-flow-link-sub {
+  position: relative;
+  font-family: var(--mono);
+  background: var(--paper);
+  padding: 2px 10px;
+}
+.oxo-flow-link-main {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--cmp-owp);
+  border: 1px solid var(--cmp-owp-rule);
+  border-radius: 999px;
+  padding: 3px 11px;
+}
+.oxo-flow-link-sub {
+  font-size: 10px;
+  color: var(--ink-3);
+}
+.oxo-flow figcaption,
+.oxo-nest figcaption {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink-3);
+  text-align: center;
+  margin-top: 12px;
+  max-width: 64ch;
+  margin-inline: auto;
+}
+
+/* Composition nest (replaces the ASCII tree). Containment IS the message,
+ * so the boxes nest: ExO 3.0 org ⊃ Intelligence Stack ⊃ OpenWOP ⊃
+ * (MCP | A2A), with GOVERN / ASSURE alongside as the watchful overlay. */
+.oxo-nest { margin: 1.8em 0; max-width: 860px; }
+.oxo-nest-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.oxo-nest-label-exo { color: var(--cmp-exo); }
+.oxo-nest-label-owp { color: var(--cmp-owp); }
+.oxo-nest-label-mcp { color: var(--cmp-mcp); }
+.oxo-nest-label-a2a { color: var(--cmp-a2a); }
+.oxo-nest-desc {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  color: var(--ink-2);
+}
+.oxo-nest-org {
+  border: 1px solid var(--cmp-exo-rule);
+  border-radius: 10px;
+  padding: 14px 16px 16px;
+  background: var(--paper);
+  display: grid;
+  gap: 10px;
+}
+.oxo-nest-stack {
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 12px 14px 14px;
+  background: var(--paper-2);
+  display: grid;
+  gap: 10px;
+}
+.oxo-nest-owp {
+  border: 1px solid var(--cmp-owp-rule);
+  border-radius: 8px;
+  padding: 12px 14px 14px;
+  background:
+    repeating-linear-gradient(-45deg, var(--cmp-owp-wash) 0 10px, transparent 10px 20px),
+    var(--paper);
+  display: grid;
+  gap: 10px;
+}
+.oxo-nest-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.oxo-nest-children {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.oxo-nest-child {
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: var(--paper);
+  display: grid;
+  gap: 4px;
+}
+.oxo-nest-mcp { border: 1px solid var(--cmp-mcp-rule); }
+.oxo-nest-a2a { border: 1px solid var(--cmp-a2a-rule); }
+.oxo-nest-govern {
+  border: 1px dashed var(--cmp-exo-rule);
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: var(--paper);
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 760px) {
+  .oxo-nest-children { grid-template-columns: 1fr; }
+  .oxo-flow-link-sub { text-align: center; }
+}
