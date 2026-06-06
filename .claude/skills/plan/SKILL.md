@@ -7,7 +7,7 @@ description: Structured Planning Mode for openwop — discovers existing spec/sc
 
 You are now in **Structured Planning Mode** for: $ARGUMENTS
 
-**Audience:** the openwop spec corpus (`spec/v1/`, `RFCS/`, `schemas/`, `api/`, `conformance/`, `sdk/`, `examples/hosts/`, `packs/`, `registry/`, `site/`, `SECURITY/`).
+**Audience:** the openwop spec corpus (`spec/v1/`, `RFCS/`, `schemas/`, `api/`, `conformance/`, `sdk/`, `../openwop-examples/examples/hosts/`, `../openwop-registry/packs/`, `../openwop-registry/registry/`, `../openwop-site/site/`, `SECURITY/`).
 
 ---
 
@@ -15,7 +15,7 @@ You are now in **Structured Planning Mode** for: $ARGUMENTS
 
 You do **not** unilaterally cut scope. openwop is a wire-level protocol — most "make it smaller" advice translates to "leave a spec gap." Spec gaps cost adoption credibility for years. Instead:
 
-1. **Audit what is already in place before claiming anything is missing.** Read `spec/v1/`, every `RFCS/NNNN-*.md`, `schemas/`, `api/openapi.yaml`, `api/asyncapi.yaml`, the relevant `conformance/src/scenarios/*.test.ts`, and the three reference hosts under `examples/hosts/`. Most "we'd need new surface for this" assumptions collapse once the existing surface is enumerated.
+1. **Audit what is already in place before claiming anything is missing.** Read `spec/v1/`, every `RFCS/NNNN-*.md`, `schemas/`, `api/openapi.yaml`, `api/asyncapi.yaml`, the relevant `conformance/src/scenarios/*.test.ts`, and the three reference hosts under `../openwop-examples/examples/hosts/`. Most "we'd need new surface for this" assumptions collapse once the existing surface is enumerated.
 2. **Treat scope as a sequencing problem, not an exit.** If the change composes from existing primitives (capability flags, profiles, channels, interrupts, events, schemas), say so. If it needs new primitives, name them and propose a phased build order — but do not recommend deferring the goal itself.
 3. **Phasing is a delivery technique, not a scope hatch.** Only call out a phase boundary when there is a specific gate: an RFC comment window, a CHANGELOG line, a CI gate (`npm run openwop:check`), a conformance fixture round-trip, a capability flip in `/.well-known/openwop`, a SECURITY invariant test in `SECURITY/invariants.yaml`. "It's a lot of work" is not a gate.
 4. **Big scope is not a CRITICAL or Blocking issue.** It is only critical when the scale itself introduces a wire-shape, version-negotiation, BYOK, replay, or cross-host interop risk that does not exist at smaller scale.
@@ -31,11 +31,11 @@ Before touching any file, decide which lane this falls into. The rest of the pla
 | Lane | What it covers | Required artifacts |
 |---|---|---|
 | **Editorial** | Typos, prose clarifications, link fixes, internal docs, examples without normative content | Direct PR; CHANGELOG optional |
-| **Non-normative** | New examples, optional reference notes, host-side docs (`examples/hosts/*/README.md`, `docs/runbooks/`) | Direct PR + CHANGELOG line |
+| **Non-normative** | New examples, optional reference notes, host-side docs (`../openwop-examples/examples/hosts/*/README.md`, `docs/runbooks/`) | Direct PR + CHANGELOG line |
 | **Normative — additive** | New optional field, new SHOULD recommendation, new event type that consumers can ignore, new capability flag, new profile, new SDK method that wraps existing endpoint | **RFC required** (7-day comment window) + schema/OpenAPI/AsyncAPI diff + new conformance scenario(s) + CHANGELOG line under `[Unreleased]` |
 | **Normative — safety-fix** | Breaks v1.x but justified by a CVE-class or correctness bug per `COMPATIBILITY.md` §3 | **RFC required** (90-day public window OR embargoed disclosure per `SECURITY.md`) + migration tooling + `version-negotiation.md` runbook + `CHANGELOG.md` `### Security` heading citing advisory ID |
 | **Normative — breaking** | Anything else that invalidates an existing v1 conformance pass | **RFC required** (30-day window) + v2 plan; should not land in v1.x |
-| **Implementation-only** | TS/Python/Go SDK changes, host changes under `examples/hosts/`, conformance scenario refactors that preserve assertions, scripts under `scripts/`, site changes under `site/` | Direct PR; SDK CHANGELOG line; coordination with `WORKFLOW-PROTOCOL-openwop-PLAN.md` for cross-cuts (CC-N) |
+| **Implementation-only** | TS/Python/Go SDK changes, host changes under `../openwop-examples/examples/hosts/`, conformance scenario refactors that preserve assertions, scripts under `scripts/`, site changes under `../openwop-site/site/` | Direct PR; SDK CHANGELOG line; coordination with `WORKFLOW-PROTOCOL-openwop-PLAN.md` for cross-cuts (CC-N) |
 
 Output a one-line **Lane Verdict** before Phase 1. If you cannot decide, default to "Normative — additive" and call out the ambiguity. Never silently treat a normative change as editorial.
 
@@ -61,11 +61,11 @@ Thoroughly explore the existing corpus before proposing any plan. Use Glob, Grep
 - **OpenAPI:** which endpoints in `api/openapi.yaml` change? Cross-file `$ref` to schemas — never inline.
 - **AsyncAPI:** which event channels in `api/asyncapi.yaml` change? Cross-file `$ref` only.
 - **Conformance:** which `conformance/src/scenarios/*.test.ts` files cover the surface today? Which need new scenarios? Which `conformance/fixtures/*` need new fixtures (and corresponding `fixtures.md` entries)?
-- **SDK:** which methods on `OpenwopClient` (`sdk/typescript/src/client.ts`), Python (`sdk/python/src/openwop_client/`), Go (`sdk/go/`) change? Reminder: per `CONTRIBUTING.md`, every endpoint maps to one method on `OpenwopClient`.
-- **Reference hosts:** which of `examples/hosts/{in-memory,sqlite,python}/` implement this? Which will need updates to remain in the **INTEROP-MATRIX.md** with their advertised profile set?
+- **SDK:** which methods on `OpenwopClient` (`../openwop-sdks/sdk/typescript/src/client.ts`), Python (`../openwop-sdks/sdk/python/src/openwop_client/`), Go (`../openwop-sdks/sdk/go/`) change? Reminder: per `CONTRIBUTING.md`, every endpoint maps to one method on `OpenwopClient`.
+- **Reference hosts:** which of `../openwop-examples/examples/hosts/{in-memory,sqlite,python}/` implement this? Which will need updates to remain in the **INTEROP-MATRIX.md** with their advertised profile set?
 - **Capabilities:** does this add a new capability surface? It must extend `/.well-known/openwop` per `capabilities.md` and `host-capabilities.md`, advertise via `capabilities.schema.json`, and gate any new conformance scenario.
 - **Profiles:** does it add a new compatibility profile per `profiles.md`? Update the profile predicate list in `INTEROP-MATRIX.md`.
-- **Site:** any prose surfacing on `openwop.dev` via `site/`? It re-renders from the spec corpus, so site changes are usually automatic — but check `site/src/build.mjs` if the structure changes.
+- **Site:** any prose surfacing on `openwop.dev` via `../openwop-site/site/`? It re-renders from the spec corpus, so site changes are usually automatic — but check `../openwop-site/site/src/build.mjs` if the structure changes.
 
 ### 1.3 Dependencies & integration points
 
@@ -156,13 +156,13 @@ Order: **spec text → schema → OpenAPI/AsyncAPI → conformance → SDKs → 
 
 | Task | Files | Description |
 |---|---|---|
-| 4.1 | `sdk/typescript/src/client.ts` + `src/types.ts` | New method on `OpenwopClient`; types extend `src/types.ts` |
-| 4.2 | `sdk/python/src/openwop_client/` | Method addition; Python 3.11 stdlib-only port stays stdlib-only |
-| 4.3 | `sdk/go/` | Method addition; `go vet ./...` and `gofmt -l .` clean |
+| 4.1 | `../openwop-sdks/sdk/typescript/src/client.ts` + `src/types.ts` | New method on `OpenwopClient`; types extend `src/types.ts` |
+| 4.2 | `../openwop-sdks/sdk/python/src/openwop_client/` | Method addition; Python 3.11 stdlib-only port stays stdlib-only |
+| 4.3 | `../openwop-sdks/sdk/go/` | Method addition; `go vet ./...` and `gofmt -l .` clean |
 
 **Acceptance Criteria:**
 - [ ] TS: `tsc --noEmit` clean with `strict + exactOptionalPropertyTypes`; no `as any`, no `@ts-ignore`
-- [ ] Python: `ruff check sdk/python/` clean
+- [ ] Python: `ruff check ../openwop-sdks/sdk/python/` clean
 - [ ] Go: `go vet ./...` clean, `gofmt -l .` produces no output
 
 #### Phase 5: Reference hosts + INTEROP-MATRIX
@@ -170,7 +170,7 @@ Order: **spec text → schema → OpenAPI/AsyncAPI → conformance → SDKs → 
 
 | Task | Files | Description |
 |---|---|---|
-| 5.1 | `examples/hosts/{in-memory\|sqlite\|python}/` | Implement the new surface in whichever host is most appropriate; update its `conformance.md` |
+| 5.1 | `../openwop-examples/examples/hosts/{in-memory\|sqlite\|python}/` | Implement the new surface in whichever host is most appropriate; update its `conformance.md` |
 | 5.2 | `INTEROP-MATRIX.md` | Update host row's profile list with new capability/profile if advertised |
 
 **Acceptance Criteria:**
@@ -228,8 +228,8 @@ State which applies. If `CC-N` is needed, draft the entry.
 - **Schema validity:** Ajv2020 compile (existing `spec-corpus-validity.test.ts`)
 - **Fixture validity:** new fixture validates against `workflow-definition.schema.json` (existing `fixtures-valid.test.ts`)
 - **Black-box conformance:** new scenarios in `conformance/src/scenarios/`
-- **SDK unit tests:** `sdk/typescript/src/__tests__/`, `sdk/python/tests/`, `sdk/go/`
-- **Host smoke:** `examples/hosts/{in-memory\|sqlite\|python}/test/`
+- **SDK unit tests:** `../openwop-sdks/sdk/typescript/src/__tests__/`, `../openwop-sdks/sdk/python/tests/`, `../openwop-sdks/sdk/go/`
+- **Host smoke:** `../openwop-examples/examples/hosts/{in-memory\|sqlite\|python}/test/`
 - **Security invariants:** if the RFC introduces a MUST-NOT, add an invariant row in `SECURITY/invariants.yaml` AND a public test, per `scripts/check-security-invariants.sh`
 
 ---

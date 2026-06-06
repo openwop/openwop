@@ -80,12 +80,12 @@ Use this checklist to verify a change meets every non-functional requirement bef
 ## HIGH: SDK contract alignment (per `CONTRIBUTING.md` §"TypeScript reference SDK")
 
 - [ ] Every new endpoint in `api/openapi.yaml` maps to exactly one method on `OpenwopClient`
-- [ ] Types extend `sdk/typescript/src/types.ts`; no inline shape redefinitions
-- [ ] `( cd sdk/typescript && npx tsc --noEmit )` clean with `strict + exactOptionalPropertyTypes`
-- [ ] No `as any`, no `@ts-ignore`, no `@ts-nocheck` in `sdk/typescript/src/`
+- [ ] Types extend `../openwop-sdks/sdk/typescript/src/types.ts`; no inline shape redefinitions
+- [ ] `( cd ../openwop-sdks/sdk/typescript && npx tsc --noEmit )` clean with `strict + exactOptionalPropertyTypes`
+- [ ] No `as any`, no `@ts-ignore`, no `@ts-nocheck` in `../openwop-sdks/sdk/typescript/src/`
 - [ ] Zero runtime deps remains the goal — any new dep has a stated reason in the PR description
-- [ ] Python SDK (`sdk/python/`): stdlib-only port; `ruff check sdk/python/` clean
-- [ ] Go SDK (`sdk/go/`): `go vet ./...` clean; `gofmt -l .` produces no output
+- [ ] Python SDK (`../openwop-sdks/sdk/python/`): stdlib-only port; `ruff check ../openwop-sdks/sdk/python/` clean
+- [ ] Go SDK (`../openwop-sdks/sdk/go/`): `go vet ./...` clean; `gofmt -l .` produces no output
 
 ## HIGH: Capability + profile coherence
 
@@ -144,7 +144,7 @@ Use this checklist to verify a change meets every non-functional requirement bef
 
 ## MEDIUM: Reference-host coherence
 
-- [ ] Each touched host (`examples/hosts/in-memory`, `examples/hosts/sqlite`, `examples/hosts/python`) still passes the suite version it advertises
+- [ ] Each touched host (`../openwop-examples/examples/hosts/in-memory`, `../openwop-examples/examples/hosts/sqlite`, `../openwop-examples/examples/hosts/python`) still passes the suite version it advertises
 - [ ] Host `conformance.md` evidence file updated (suite version, command used, target URL class, pass/fail/skip counts) — no private deployment identifiers or secrets
 - [ ] INTEROP-MATRIX row reflects the new advertised profile set honestly
 - [ ] If host gained a new profile claim, evidence file confirms it; otherwise marked "Not claimed"
@@ -165,7 +165,7 @@ Use this checklist to verify a change meets every non-functional requirement bef
 - [ ] CHANGELOG.md `[Unreleased]` line added
 - [ ] ROADMAP entry added/updated if the change closes a known gap from `docs/PROTOCOL-GAP-CLOSURE-PLAN.md`
 - [ ] MAINTAINERS.md untouched unless governance change
-- [ ] Site (under `site/`) regenerates from spec corpus cleanly (only check if `site/src/build.mjs` or templates changed)
+- [ ] Site (under `../openwop-site/site/`) regenerates from spec corpus cleanly (only check if `../openwop-site/site/src/build.mjs` or templates changed)
 
 ## LOW: Release-readiness (only when bumping packages)
 
@@ -183,7 +183,7 @@ Use this checklist to verify a change meets every non-functional requirement bef
 npm run openwop:check
 
 # Per-step:
-( cd sdk/typescript && npx tsc --noEmit && npm test )
+( cd ../openwop-sdks/sdk/typescript && npx tsc --noEmit && npm test )
 ( cd conformance && npx tsc --noEmit && npx vitest run )
 npx -y @redocly/cli@latest lint api/openapi.yaml
 npx -y @asyncapi/cli@latest validate api/asyncapi.yaml

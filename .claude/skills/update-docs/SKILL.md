@@ -28,9 +28,9 @@ openwop is a **wire-level spec project**. The "docs" surface here is not user-fa
 | `CODE_OF_CONDUCT.md` | Community baseline | Everyone |
 | `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` | Internal track grading (A–C) | Maintainer planning |
 | `docs/runbooks/` | Operational runbooks (e.g., signing-key rotation, embargoed disclosure) | Operators |
-| `examples/hosts/{name}/conformance.md` | Public evidence file for each reference host | Implementers comparing hosts |
+| `../openwop-examples/examples/hosts/{name}/conformance.md` | Public evidence file for each reference host | Implementers comparing hosts |
 | `conformance/coverage.md` + `fixtures.md` | Coverage map + fixture catalog | Scenario authors |
-| `site/templates/` + `public/` | Spec-site frontend (Firebase Hosting target) | Public visitors to `openwop.dev` |
+| `../openwop-site/site/templates/` + `../openwop-site/public/` | Spec-site frontend (Firebase Hosting target) | Public visitors to `openwop.dev` |
 
 There is **no** `src/components/docs/`, no canvas types, no design-token system. Don't write docs for those surfaces — they don't exist here.
 
@@ -46,19 +46,19 @@ This skill exists in large part because openwop's docs hold up multiple parallel
 | 2 | **README RFC counts ↔ `RFCS/[0-9]+-*.md` Status:** | README banner says "N Accepted / M Active / K Draft" but new RFC files landed without updating the banner. Same for `41 RFCs excluding template` ↔ actual file count. | `bash scripts/openwop-check.sh` step 7 reports `claims "N" Draft RFCs but actual is M`. Manual: `grep -lE '^\\| \\*\\*Status\\*\\* \\| \`Draft\`' RFCS/[0-9]*.md \| wc -l` |
 | 3 | **`docs/KNOWN-LIMITS.md` "RFCs not yet Accepted" table ↔ actual RFC Status fields** | KNOWN-LIMITS rows still list RFCs as `Active` after they were promoted to `Accepted` (or as `Draft` after promotion to `Active`). The PROTOCOL-STATUS.md generated table is authoritative; KNOWN-LIMITS is hand-maintained and lags. | `for rfc in 0025 0027 0028 0029 0030 0031 0032 0033 0034 0035 0036 0037 0038 0039 0040 0041 0042 0043; do f=RFCS/${rfc}-*.md; if ls $f &>/dev/null; then s=$(grep -oE '\`Draft\`\|\`Active\`\|\`Accepted\`\|\`Withdrawn\`' $f \| head -1); k=$(grep -oE "$rfc [^\|]*\| \`[A-Z][a-z]+\`" docs/KNOWN-LIMITS.md \| head -1); [ -n "$k" ] && echo "RFC $rfc actual=$s known-limits=$k"; fi; done` |
 | 4 | **`conformance/coverage.md` "Updated YYYY-MM-DD" header stale** | The body of coverage.md gets line-edited but the top-of-file date stays at a months-old timestamp, signaling staleness even when content is fresh. | `grep -E 'Updated 20[0-9]{2}-[0-9]{2}-[0-9]{2}' conformance/coverage.md \| head -1` — compare against `git log -1 --format=%ai conformance/coverage.md`. |
-| 5 | **`conformance/coverage.md` operation rows claim "endpoint surface in spec only" while host has impl** | When a reference host wires an endpoint, coverage.md often lags. Hit this on prompt endpoints — RFC 0028 promoted Draft → Active and the workflow-engine implemented all 6 `/v1/prompts*` routes, but coverage.md rows still said "reference host hasn't implemented the route yet." | `for op in createPromptTemplate updatePromptTemplate deletePromptTemplate; do  if grep -l "$op" apps/workflow-engine/backend/typescript/src/routes/*.ts examples/hosts/*/src/routes/*.ts 2>/dev/null; then echo "$op: implemented"; if grep -E "\`$op\` \\\| None.*endpoint surface in spec only" conformance/coverage.md; then echo "  but coverage.md still claims unimplemented"; fi; fi; done` |
+| 5 | **`conformance/coverage.md` operation rows claim "endpoint surface in spec only" while host has impl** | When a reference host wires an endpoint, coverage.md often lags. Hit this on prompt endpoints — RFC 0028 promoted Draft → Active and the workflow-engine implemented all 6 `/v1/prompts*` routes, but coverage.md rows still said "reference host hasn't implemented the route yet." | `for op in createPromptTemplate updatePromptTemplate deletePromptTemplate; do  if grep -l "$op" ../openwop-app/backend/typescript/src/routes/*.ts ../openwop-examples/examples/hosts/*/src/routes/*.ts 2>/dev/null; then echo "$op: implemented"; if grep -E "\`$op\` \\\| None.*endpoint surface in spec only" conformance/coverage.md; then echo "  but coverage.md still claims unimplemented"; fi; fi; done` |
 | 6 | **`INTEROP-MATRIX.md` pass-rate table measured against an older suite version** | The "Conformance trajectory" / pass-rate table cites suite `vX.Y.Z` but `conformance/package.json` has bumped past it. New scenarios in the newer suite shift the totals significantly (e.g., +700 tests v1.1.0 → v1.4.0). | `cur=$(jq -r .version conformance/package.json); cited=$(grep -oE 'suite v[0-9]+\\.[0-9]+\\.[0-9]+' INTEROP-MATRIX.md \| head -1); echo "current=$cur cited=$cited"` |
 | 7 | **`INTEROP-MATRIX.md` host-description columns carry pass-rate claims that read as current but are historical** | Host row description columns embed claims like "Conformance close-out 2026-05-12: 700/788 = 100% of applicable tests pass; zero failures" with no retrospective marker. After the table above the description is re-measured to v1.4.0, the description still reads as a current claim and conflicts with the table. | `grep -E 'Conformance close-out [0-9]{4}\|^[\| ]+Conformance posture' INTEROP-MATRIX.md \| grep -v 'suite v'` — any line that quotes a pass-rate without a `(YYYY-MM-DD, suite vX.Y.Z)` retrospective marker is suspect. |
-| 8 | **`examples/hosts/<name>/conformance.md` banner stale relative to suite** | The first 5 lines of the host evidence file cite a specific suite version + run date; if these lag conformance/package.json, the evidence reads as fresh when it's not. | `cur=$(jq -r .version conformance/package.json); for h in in-memory sqlite postgres python; do f=examples/hosts/$h/conformance*.md; cited=$(grep -oE '@openwop/openwop-conformance@[0-9.]+' $f \| head -1); echo "$h: cited=$cited current=$cur"; done` |
+| 8 | **`../openwop-examples/examples/hosts/<name>/conformance.md` banner stale relative to suite** | The first 5 lines of the host evidence file cite a specific suite version + run date; if these lag conformance/package.json, the evidence reads as fresh when it's not. | `cur=$(jq -r .version conformance/package.json); for h in in-memory sqlite postgres python; do f=../openwop-examples/examples/hosts/$h/conformance*.md; cited=$(grep -oE '@openwop/openwop-conformance@[0-9.]+' $f \| head -1); echo "$h: cited=$cited current=$cur"; done` |
 | 9 | **`docs/PROTOCOL-STATUS.md` not regenerated after sources moved** | This file is generated by `scripts/generate-protocol-status.mjs --write`. Whenever `INTEROP-MATRIX.md` pass-rates / `SECURITY/invariants.yaml` tier counts / RFC files / SDK helper counts / registry counts change, the generator must re-run. Caught by `--check` mode in step 7. | `node scripts/generate-protocol-status.mjs --check` exits non-zero if stale. |
-| 10 | **Cross-doc file paths cited in new docs don't exist** | New explanatory docs (e.g., progress trackers, audit responses) cite paths like `apps/workflow-engine/backend/typescript/src/host/mockAiProvider.ts` that aren't on disk. Erodes credibility of the very doc trying to demonstrate accountability. | `for f in docs/*.md RFCS/0042*.md RFCS/0043*.md docs/AUDIT-RESPONSE-2026-05.md docs/MULTI-AGENT-BEHAVIORAL-HARNESS-PROGRESS.md; do [ -f "$f" ] && grep -oE '[a-z][a-zA-Z0-9_-]+(/[a-zA-Z0-9._-]+)+\.(ts\|mjs\|js\|json\|yaml\|md\|py\|go\|sh)' "$f" \| sort -u \| while read p; do [ -e "$p" ] \|\| echo "$f: MISSING $p"; done; done` |
+| 10 | **Cross-doc file paths cited in new docs don't exist** | New explanatory docs (e.g., progress trackers, audit responses) cite paths like `../openwop-app/backend/typescript/src/host/mockAiProvider.ts` that aren't on disk. Erodes credibility of the very doc trying to demonstrate accountability. | `for f in docs/*.md RFCS/0042*.md RFCS/0043*.md docs/AUDIT-RESPONSE-2026-05.md docs/MULTI-AGENT-BEHAVIORAL-HARNESS-PROGRESS.md; do [ -f "$f" ] && grep -oE '[a-z][a-zA-Z0-9_-]+(/[a-zA-Z0-9._-]+)+\.(ts\|mjs\|js\|json\|yaml\|md\|py\|go\|sh)' "$f" \| sort -u \| while read p; do [ -e "$p" ] \|\| echo "$f: MISSING $p"; done; done` |
 | 11 | **Reverted feature still claimed as live** | When a commit reverts a feature (e.g., commit `5864a2f` reverted 7 sandbox SECURITY tier graduations), prose docs that mentioned the now-reverted graduation as fact (`docs/KNOWN-LIMITS.md`, `README.md` parenthetical, RFC follow-up status) need to be re-aligned. | `git log --grep='revert\|undo\|fix.*revert' --oneline -5` then scan named files. |
 | 12 | **`CHANGELOG.md` `[Unreleased]` empty after a doc-only session** | Doc-sync sessions that don't add a CHANGELOG line make the next release cut surprise the reader. **Detection caveat 1:** the obvious `awk '/^## \[Unreleased/,/^## \[/' CHANGELOG.md` range expression returns empty when only one `## [` heading exists in the file (the steady state until a release cut). **Detection caveat 2:** this repo's actual convention is `## [X.Y.Z — unreleased]` (e.g., `## [1.1.3 — unreleased]`), NOT bare `## [Unreleased]` — so a regex hard-coded to `\[Unreleased\]` will miss every entry. Use a permissive pattern that matches both forms. | `awk '/^## \\[[^]]*[Uu]nreleased/{flag=1;next} /^## \\[/{flag=0} flag' CHANGELOG.md \| grep -cE '^- '` |
 | 13 | **Partial multi-RFC row promotion in a comma-separated KNOWN-LIMITS row** | KNOWN-LIMITS uses rows like `\| 0037, 0039, 0040, 0041 (Multi-agent execution model Phases 1–4) \| Active \|`. When some but not all of the listed RFCs promote to `Accepted` (this session: 0037 + 0039 promoted, 0040 + 0041 stayed Active), the row must be **split**, not removed. Either "remove the row" or "leave the row" is wrong — the fix is `0037, 0039, 0040, 0041` → `0040, 0041` (drop the promoted IDs) + add a post-table prose paragraph noting which IDs graduated and when. | The Drift #3 scoped-section regex above will catch this once you confirm `0037` + `0039` no longer appear anywhere inside §"RFCs not yet `Accepted`". |
 | 14 | **Suite minor bump changes pass-counts even when CHANGELOG says "no new scenario files"** | A suite version bump (e.g., v1.4.0 → v1.5.0) can shift test totals without adding new files when an existing scenario gets relaxed AND the relaxation splits one strict-equality `expect(…).toBe(…)` into multiple discrete `it()` blocks. v1.5.0 grew 1558 → 1564 tests this way via the RFC 0044 vendor-kind routing relaxation. Lesson: re-measure even when CHANGELOG says no scenarios changed. | `cur=$(jq -r .version conformance/package.json); cited=$(grep -oE 'against suite v[0-9.]+' INTEROP-MATRIX.md \| head -1); [ "$cur" != "$cited" ] && echo "RE-MEASURE"` |
 | 15 | **External host advertisement triggers a suite bump cascade** | A non-steward host (e.g., MyndHyve) advertising a new capability often unblocks a Draft RFC → Active → Accepted promotion **and** drives a suite minor bump to ship the relaxed assertion logic. When you see `release(conformance):` commits, expect Drift #6, #8, #10 (host conformance.md banners), and #12 to all need attention in the same docs-sync. The bumps cluster. | `git log --oneline -10 \| grep -E 'release\(conformance\)\|Active → Accepted'` — any hit means cascade work is queued. |
-| 16 | **Drift #10 (file-path regex) has a high false-positive rate** | The path-extraction regex `[a-z][a-zA-Z0-9_-]+(/[a-zA-Z0-9._-]+){1,}\.(ts\|mjs\|...)` will flag (a) Markdown link-text segments where the surrounding `[`...`](full/path)` link itself resolves but the regex captured only the inner text; (b) intentional relative-shorthand citations where the doc is operating within a host-scoped paragraph (e.g., `executor/modelCapabilityGate.ts` inside a Postgres-host description that doesn't repeat `apps/workflow-engine/backend/typescript/src/`); (c) behavioral-harness-progress-style accountability docs that intentionally name files-to-be-created. Before flagging a path as missing, verify it isn't one of these patterns. | After running Drift #10, manually inspect each MISSING hit — only ~30% on average are real bugs. |
-| 17 | **Historical evidence files predating the suite-version convention** | `examples/hosts/<h>/conformance-full.md` and similar historical full-run records may carry a "Run date: 2026-05-11" but no `@openwop/openwop-conformance@X.Y.Z` citation because they predate versioned-suite convention. Drift #8 flags these as stale (empty `cited=`). Fix recipe is NOT "re-measure" — it's "add a `Latest measurement is at conformance.md` pointer at the top so the historical file doesn't read as current." | `for f in examples/hosts/*/conformance-full.md examples/hosts/*/conformance-phase*.md; do [ -f "$f" ] && head -10 "$f" \| grep -qE 'Latest measurement is at\|pre-versioned-suite era' \|\| echo "$f: needs historical-marker prefix"; done` |
+| 16 | **Drift #10 (file-path regex) has a high false-positive rate** | The path-extraction regex `[a-z][a-zA-Z0-9_-]+(/[a-zA-Z0-9._-]+){1,}\.(ts\|mjs\|...)` will flag (a) Markdown link-text segments where the surrounding `[`...`](full/path)` link itself resolves but the regex captured only the inner text; (b) intentional relative-shorthand citations where the doc is operating within a host-scoped paragraph (e.g., `executor/modelCapabilityGate.ts` inside a Postgres-host description that doesn't repeat `../openwop-app/backend/typescript/src/`); (c) behavioral-harness-progress-style accountability docs that intentionally name files-to-be-created. Before flagging a path as missing, verify it isn't one of these patterns. | After running Drift #10, manually inspect each MISSING hit — only ~30% on average are real bugs. |
+| 17 | **Historical evidence files predating the suite-version convention** | `../openwop-examples/examples/hosts/<h>/conformance-full.md` and similar historical full-run records may carry a "Run date: 2026-05-11" but no `@openwop/openwop-conformance@X.Y.Z` citation because they predate versioned-suite convention. Drift #8 flags these as stale (empty `cited=`). Fix recipe is NOT "re-measure" — it's "add a `Latest measurement is at conformance.md` pointer at the top so the historical file doesn't read as current." | `for f in ../openwop-examples/examples/hosts/*/conformance-full.md ../openwop-examples/examples/hosts/*/conformance-phase*.md; do [ -f "$f" ] && head -10 "$f" \| grep -qE 'Latest measurement is at\|pre-versioned-suite era' \|\| echo "$f: needs historical-marker prefix"; done` |
 | 18 | **`README.md` prose RFC-status lists lag the actual `Status:` fields** | The README banner at line ~66 is the generated-status surface that `scripts/generate-protocol-status.mjs --check` keeps honest (counts match `SECURITY/invariants.yaml` + actual RFC `Status:` fields). But the **per-RFC prose lists below** ("v1.x Capability Profiles", "Active RFCs", "Draft RFCs") are hand-curated and lag promotions. The 2026-05-23 audit caught README:281 marking RFCs 0027/0030/0031/0032/0033 as `Active` after they had all promoted to `Accepted` between 2026-05-21 and 2026-05-23. Generated-status passes; prose lags silently. | Scope the comparison to the prose lists explicitly: `awk '/\*\*Active RFCs/{flag=1} /\*\*Draft RFCs\|\*\*v1 Foundation/{flag=0} flag' README.md \| grep -oE 'RFC [0-9]+' \| sort -u > /tmp/readme-active.txt; for f in RFCS/[0-9][0-9][0-9][0-9]-*.md; do id=$(basename "$f" \| grep -oE '^[0-9]+'); s=$(grep -m1 '^\| \*\*Status\*\*' "$f"); echo "$s" \| grep -q '\`Active\`' && echo "$id"; done \| sort -u > /tmp/actual-active.txt; diff /tmp/readme-active.txt /tmp/actual-active.txt` |
 | 19 | **Per-track "Closing PR: TBD" strings linger AFTER a closure-snapshot table is added** | When a multi-track tracking doc (e.g., `docs/MULTI-AGENT-BEHAVIORAL-HARNESS-PROGRESS.md`) gets a closure snapshot prepended at the top of file (e.g., "Closure snapshot — 2026-05-22 (ALL TRACKS CLOSED) \| ✅ commit refs"), the per-track sections below often retain their original `Closing PR: TBD — feat(…)` strings — so the document says both "all closed" AND "still TBD" in different sections. Internal contradictions like this are exactly what external auditors flag as eroding credibility (the 2026-05-23 audit caught this verbatim in `docs/MULTI-AGENT-BEHAVIORAL-HARNESS-PROGRESS.md`). | `grep -nE "Closing PR.*TBD\|Closing commits.*TBD" docs/*.md \| head -10` — any hit on a doc that ALSO has a "ALL TRACKS CLOSED" or "✅ CLOSED end-to-end" snapshot above is a contradiction. Fix recipe: rewrite each `Closing PR: TBD — feat(…)` into `Closing commit: ✅ <sha> (date)` with the actual closing commit from the snapshot. |
 | 20 | **`it.todo` callsite count diverges from "grep `it.todo`" because of comment mentions** | An external auditor's mechanical `grep -rc 'it.todo'` against `conformance/src/scenarios/` over-counts when scenario files describe their own state via comments (e.g., "Surfaced as `it.todo` so reporters track the gap"). The Phase 4 SKILL.md was caught with this same drift — comment mentions inflated 14 actual callsites to 20 reported. **Use `grep -P 'it\.todo\('` to anchor on actual callsites (the `(` rules out comment mentions); use plain `grep 'it.todo'` only when intentionally surveying the comment-as-tracking-marker pattern.** Conversely: when retiring `it.todo` blocks via cross-reference `it.skip`, leave a comment that says `it.todo` (without the `(`) so test-reporter tooling that scans for the literal can still find the marker — the `grep -P` form will correctly exclude it. | Auditor-style: `grep -rcP 'it\.todo\(' conformance/src/scenarios/ \| awk -F: '$2>0' \| sort -t: -k2 -rn \| head -20` — produces the real per-file callsite count. Pair with `grep -rcl 'it\.todo' conformance/src/scenarios/ \| wc -l` only to count files-that-mention-the-marker, not callsites. |
@@ -117,7 +117,7 @@ Categorize changes:
 - **New / changed normative surface** → README Document index, RFCs index, CHANGELOG
 - **New / changed conformance scenarios + fixtures** → conformance/coverage.md, conformance/fixtures.md, conformance/CHANGELOG.md
 - **New / changed SDK methods** → sdk/<lang>/CHANGELOG.md
-- **Reference host advertisement change** → INTEROP-MATRIX.md row + examples/hosts/<name>/conformance.md evidence
+- **Reference host advertisement change** → INTEROP-MATRIX.md row + ../openwop-examples/examples/hosts/<name>/conformance.md evidence
 - **Gap closed in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md`** → README status banner + ROADMAP entry
 - **Governance / maintainer / process change** → MAINTAINERS.md, GOVERNANCE.md, CONTRIBUTING.md
 - **Security invariant or threat-model change** → SECURITY.md, SECURITY/*.md, SECURITY/invariants.yaml
@@ -140,7 +140,7 @@ Present a summary table of what needs updating before proceeding.
 | New event in `api/asyncapi.yaml` | Cited in `spec/v1/<area>.md` + `stream-modes.md` if stream-mode-visible; webhooks subscription register if eligible |
 | New `conformance/src/scenarios/<area>.test.ts` | `conformance/coverage.md` row + `conformance/fixtures.md` row (if fixture added) |
 | New fixture in `conformance/fixtures/` | `conformance/fixtures.md` catalog table + per-fixture contracts |
-| `INTEROP-MATRIX.md` row change (host profile claim) | Update matrix row + `examples/hosts/<name>/conformance.md` evidence |
+| `INTEROP-MATRIX.md` row change (host profile claim) | Update matrix row + `../openwop-examples/examples/hosts/<name>/conformance.md` evidence |
 | SDK method addition | `sdk/<lang>/CHANGELOG.md` + `sdk/<lang>/README.md` if public-facing usage example |
 | Closure of a gap in `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` | Update the track grade; mark items DONE with date; if it closes a known credibility gap, update README + ROADMAP |
 | New maintainer added | `MAINTAINERS.md`; if first non-steward maintainer → trip the vendor-neutral migration tripwire per `ROADMAP.md` + update `CONTRIBUTING.md` §"Bootstrap-phase notes" |
@@ -148,7 +148,7 @@ Present a summary table of what needs updating before proceeding.
 | New publishing artifact | `PUBLISHING.md` per-package section + README publish-ready artifacts list |
 | Release cut | CHANGELOG `[Unreleased]` → dated version block; PUBLISHING.md release cadence notes |
 | RFC Status field changed (Draft → Active or Active → Accepted) | Re-scan `docs/KNOWN-LIMITS.md` §"RFCs not yet `Accepted`" — promoted RFCs leave the table; new Active/Draft RFCs join. Run `node scripts/generate-protocol-status.mjs --write` because the README banner counts will drift otherwise. |
-| Conformance suite minor/major bump (`conformance/package.json` version) | Trigger a re-measurement pass against all reference hosts. Update `INTEROP-MATRIX.md` pass-rate table + each `examples/hosts/<h>/conformance*.md` banner. Publish a `docs/CONFORMANCE-RUNS-YYYY-MM.md` failure-topic taxonomy doc if the suite scenario count grew meaningfully. |
+| Conformance suite minor/major bump (`conformance/package.json` version) | Trigger a re-measurement pass against all reference hosts. Update `INTEROP-MATRIX.md` pass-rate table + each `../openwop-examples/examples/hosts/<h>/conformance*.md` banner. Publish a `docs/CONFORMANCE-RUNS-YYYY-MM.md` failure-topic taxonomy doc if the suite scenario count grew meaningfully. |
 | Commit reverts a previously-announced feature (`git log --grep=revert`) | Walk every doc that mentioned the feature as live + retract or prefix with `**Reverted <sha> (YYYY-MM-DD):**`. Specifically check: `docs/KNOWN-LIMITS.md`, `README.md` status banner parentheticals, any RFC follow-up status sections, host evidence files. |
 | External-audit-style review request | Treat the request itself as a drift trigger — drift modes #1, #3, #4, #6, #7 are almost always live when an external reviewer arrives. Run the full Phase 4 drift sweep before responding; publish a public `docs/AUDIT-RESPONSE-YYYY-MM.md` if the review is on the record. |
 
@@ -209,7 +209,7 @@ Top of file should have:
 
 When cutting a release, rename `[Unreleased]` to `[X.Y.Z] - YYYY-MM-DD` and add a new empty `[Unreleased]` block on top.
 
-For multi-package releases (suite + SDKs ship separately), each package has its own CHANGELOG (`conformance/CHANGELOG.md`, `sdk/typescript/CHANGELOG.md`). Update the right one.
+For multi-package releases (suite + SDKs ship separately), each package has its own CHANGELOG (`conformance/CHANGELOG.md`, `../openwop-sdks/sdk/typescript/CHANGELOG.md`). Update the right one.
 
 ### INTEROP-MATRIX.md updates
 
@@ -222,7 +222,7 @@ Update the host row when:
 | **<Host>** | <Use case> | `<path>` | `<profile-1>` · `<profile-2>` · `<profile-3>` | `<scale-tier>` | <Production-profile claim or "Not claimed"> | `<path-to-evidence>` |
 ```
 
-Cross-update `examples/hosts/<name>/conformance.md` with:
+Cross-update `../openwop-examples/examples/hosts/<name>/conformance.md` with:
 - Suite version (e.g., `@openwop/openwop-conformance@1.0.0`)
 - Command run (e.g., `OPENWOP_BASE_URL=http://localhost:3000 npx openwop-conformance`)
 - Target URL class
@@ -278,11 +278,11 @@ Only edit when:
 - A new "hello world" path opens (e.g., a new reference host)
 - The 10-minute version drifts substantially from the longer version
 
-### Spec site (`site/` + `public/`)
+### Spec site (`../openwop-site/site/` + `../openwop-site/public/`)
 
-If the change adds a new spec doc, the site regeneration picks it up automatically — `site/src/build.mjs` reads `spec/v1/` at build time. But:
-- If `site/templates/` references a doc by name (rare), update the template
-- If `public/index.html` carries a version/status banner that drifts, update it (gitStatus shows `public/index.html` and `public/styles.css` are currently modified)
+If the change adds a new spec doc, the site regeneration picks it up automatically — `../openwop-site/site/src/build.mjs` reads `spec/v1/` at build time. But:
+- If `../openwop-site/site/templates/` references a doc by name (rare), update the template
+- If `../openwop-site/public/index.html` carries a version/status banner that drifts, update it (gitStatus shows `../openwop-site/public/index.html` and `../openwop-site/public/styles.css` are currently modified)
 - Run `( cd site && node src/build.mjs )` to confirm clean build
 
 ---
@@ -362,9 +362,9 @@ When a host wires a previously-spec-only endpoint, the corresponding `/v1/operat
 # Heuristic — find operation names that coverage.md still calls unimplemented
 grep -E '^\| `[a-z][a-zA-Z]+` \| None' conformance/coverage.md | grep -oE '`[a-z][a-zA-Z]+`' | sort -u | while read op; do
   clean=${op//\`/}
-  if grep -rln "$clean" apps/workflow-engine/backend/typescript/src/routes/ examples/hosts/*/src/routes/ 2>/dev/null | head -1 >/dev/null; then
+  if grep -rln "$clean" ../openwop-app/backend/typescript/src/routes/ ../openwop-examples/examples/hosts/*/src/routes/ 2>/dev/null | head -1 >/dev/null; then
     echo "$op: coverage.md says unimplemented but found impl in: "
-    grep -rln "$clean" apps/workflow-engine/backend/typescript/src/routes/ examples/hosts/*/src/routes/ 2>/dev/null | head -3
+    grep -rln "$clean" ../openwop-app/backend/typescript/src/routes/ ../openwop-examples/examples/hosts/*/src/routes/ 2>/dev/null | head -3
   fi
 done
 ```
@@ -400,7 +400,7 @@ Each hit is a host-row description that quotes a pass-rate without a `(YYYY-MM-D
 ```bash
 cur=$(jq -r .version conformance/package.json)
 for h in in-memory sqlite postgres python; do
-  for f in examples/hosts/$h/conformance.md examples/hosts/$h/conformance-full.md; do
+  for f in ../openwop-examples/examples/hosts/$h/conformance.md ../openwop-examples/examples/hosts/$h/conformance-full.md; do
     [ -f "$f" ] || continue
     cited=$(grep -oE '@openwop/openwop-conformance@[0-9.]+' "$f" | head -1 | grep -oE '[0-9.]+')
     if [ "$cited" != "$cur" ]; then
@@ -421,7 +421,7 @@ for f in docs/*.md RFCS/[0-9]*.md $(git diff --name-only origin/main..HEAD | gre
     | sort -u | while read p; do
     [ -e "$p" ] || echo "$f: MISSING $p"
   done
-done | grep -v 'examples/packs\|node_modules' | head -30
+done | grep -v '../openwop-examples/examples/packs\|node_modules' | head -30
 ```
 
 Each MISSING hit is a doc that promises a file path that doesn't resolve on disk. Fix recipe: either correct the cited path or move the cited claim from a path reference to a prose description (e.g., "the mock-AI provider, currently in `aiProviders/aiProvidersHost.ts`, gains …").
@@ -490,19 +490,19 @@ git log --oneline -10 | grep -E 'release\(conformance\)|Active → Accepted' | h
 The Drift #10 regex catches three patterns that aren't real bugs:
 
 1. **Markdown link-text shorthand.** `[`outreach/STATUS.md`](../SECURITY/outreach/STATUS.md)` — the link itself resolves, but the regex captured just the inner backtick text.
-2. **Intentional relative-shorthand citations.** Inside a host-scoped paragraph (e.g., "Postgres host…"), a doc may say `executor/modelCapabilityGate.ts` instead of the full `apps/workflow-engine/backend/typescript/src/executor/modelCapabilityGate.ts`. The full path resolves; the regex didn't see the surrounding context.
-3. **Accountability-doc forward references.** `docs/MULTI-AGENT-BEHAVIORAL-HARNESS-PROGRESS.md` intentionally names files-to-be-created (`examples/hosts/postgres/src/sandbox-vm.ts`, `conformance/src/scenarios/secret-leakage-otel-attribute.test.ts`). These are work-in-progress claims, not assertions of current state.
+2. **Intentional relative-shorthand citations.** Inside a host-scoped paragraph (e.g., "Postgres host…"), a doc may say `executor/modelCapabilityGate.ts` instead of the full `../openwop-app/backend/typescript/src/executor/modelCapabilityGate.ts`. The full path resolves; the regex didn't see the surrounding context.
+3. **Accountability-doc forward references.** `docs/MULTI-AGENT-BEHAVIORAL-HARNESS-PROGRESS.md` intentionally names files-to-be-created (`../openwop-examples/examples/hosts/postgres/src/sandbox-vm.ts`, `conformance/src/scenarios/secret-leakage-otel-attribute.test.ts`). These are work-in-progress claims, not assertions of current state.
 
 Manually inspect each Drift #10 hit before flagging. Practical heuristic: if the doc says "MISSING" but the path looks like it follows a sensible naming pattern AND the doc context implies "future work" or "see Markdown link above", it's probably a false positive.
 
 ### Drift #17 — Historical evidence files predating the suite-version convention
 
-Some `examples/hosts/<h>/conformance-*.md` files (e.g., `conformance-full.md`, `conformance-phase1.md`) are historical full-run records that predate the `@openwop/openwop-conformance@X.Y.Z` versioned-suite convention. Drift #8 will flag these with empty `cited=` strings. The fix is NOT "re-measure" — it's "add a `Latest measurement is at conformance.md` pointer at the top of the historical file so a reader doesn't mistake it for current state":
+Some `../openwop-examples/examples/hosts/<h>/conformance-*.md` files (e.g., `conformance-full.md`, `conformance-phase1.md`) are historical full-run records that predate the `@openwop/openwop-conformance@X.Y.Z` versioned-suite convention. Drift #8 will flag these with empty `cited=` strings. The fix is NOT "re-measure" — it's "add a `Latest measurement is at conformance.md` pointer at the top of the historical file so a reader doesn't mistake it for current state":
 
 ```diff
   # Full Conformance Run — SQLite Reference Host
 
-+ > **Latest measurement is at `examples/hosts/sqlite/conformance.md`** (2026-05-22, suite v1.5.0). This file is a historical full-run record from the 2026-05-11 Phase 1 + review-fix cycle, retained for traceability.
++ > **Latest measurement is at `../openwop-examples/examples/hosts/sqlite/conformance.md`** (2026-05-22, suite v1.5.0). This file is a historical full-run record from the 2026-05-11 Phase 1 + review-fix cycle, retained for traceability.
 + >
   > **Run date:** 2026-05-11 (post Phase 1 + review-fix cycle)
 - > **Conformance suite:** `@openwop/openwop-conformance` (this repo, post Phase 1 + review fixes)
@@ -512,7 +512,7 @@ Some `examples/hosts/<h>/conformance-*.md` files (e.g., `conformance-full.md`, `
 Detection:
 
 ```bash
-for f in examples/hosts/*/conformance-full.md examples/hosts/*/conformance-phase*.md; do
+for f in ../openwop-examples/examples/hosts/*/conformance-full.md ../openwop-examples/examples/hosts/*/conformance-phase*.md; do
   [ -f "$f" ] && head -10 "$f" | grep -qE 'Latest measurement is at|pre-versioned-suite era' \
     || echo "$f: needs historical-marker prefix"
 done
@@ -733,7 +733,7 @@ done
 
 ```bash
 for host in in-memory sqlite python; do
-  evidence="examples/hosts/$host/conformance.md"
+  evidence="../openwop-examples/examples/hosts/$host/conformance.md"
   [[ -f "$evidence" ]] || continue
   echo "=== $evidence ==="
   grep -E "Suite version|date|run on" "$evidence" | head -3
@@ -745,7 +745,7 @@ If suite version cited is older than current `conformance/package.json` version,
 ### TypeScript build (when README claims publish-ready artifacts)
 
 ```bash
-( cd sdk/typescript && npx tsc --noEmit )
+( cd ../openwop-sdks/sdk/typescript && npx tsc --noEmit )
 ( cd conformance && npx tsc --noEmit )
 ```
 
@@ -769,7 +769,7 @@ Recommend the user view:
 | `audit only` | Run Phase 1 only — report what needs updating |
 | `drift sweep` | Run the 12-mode drift catalog from top of skill — report every hit before fixing anything |
 | `index-parity` | Run the doc-index drift check |
-| `evidence-refresh <host>` | Update `examples/hosts/<host>/conformance.md` after a rerun |
+| `evidence-refresh <host>` | Update `../openwop-examples/examples/hosts/<host>/conformance.md` after a rerun |
 | `re-measure all hosts` | Run the conformance suite against in-memory + sqlite + postgres-pglite + python; update INTEROP-MATRIX + per-host banners; regen PROTOCOL-STATUS |
 | `rfc-status-sync` | Walk every RFCS/NNNN-*.md, compare its `Status:` field to `docs/KNOWN-LIMITS.md` open-RFC table + `docs/PROTOCOL-STATUS.md` RFC table + `README.md` banner counts; report mismatches |
 | `changelog <package>` | Show or edit a per-package CHANGELOG |
@@ -785,7 +785,7 @@ Recommend the user view:
 | Spec doc index | `README.md` § "Document index" |
 | Spec docs themselves | `spec/v1/*.md` |
 | RFC archive | `RFCS/` (each `NNNN-<slug>.md` carries Status) |
-| Version-by-version compat record | `CHANGELOG.md` (root) + `conformance/CHANGELOG.md` + `sdk/typescript/CHANGELOG.md` |
+| Version-by-version compat record | `CHANGELOG.md` (root) + `conformance/CHANGELOG.md` + `../openwop-sdks/sdk/typescript/CHANGELOG.md` |
 | Host advertisement matrix | `INTEROP-MATRIX.md` + per-host `conformance.md` |
 | Planned work + tripwires | `ROADMAP.md` |
 | Internal gap tracking | `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` |
@@ -797,7 +797,7 @@ Recommend the user view:
 | Onboarding | `QUICKSTART.md`, `QUICKSTART-10MIN.md` |
 | Coverage map | `conformance/coverage.md` |
 | Fixture catalog | `conformance/fixtures.md` |
-| Spec site frontend | `site/templates/`, `public/index.html`, `public/styles.css` |
+| Spec site frontend | `../openwop-site/site/templates/`, `../openwop-site/public/index.html`, `../openwop-site/public/styles.css` |
 
 ---
 

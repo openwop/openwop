@@ -40,7 +40,7 @@ You also do not get to descope the proposal on the maintainer's behalf. If scope
    - `RFCS/*.md` — any open or accepted RFC overlapping scope? Read it.
    - `schemas/*.schema.json` — which schemas are nearest neighbors?
    - `conformance/src/scenarios/*.test.ts` — what scenarios cover the surface today?
-   - `examples/hosts/{in-memory,sqlite,python}/` — which reference hosts implement adjacent surface?
+   - `../openwop-examples/examples/hosts/{in-memory,sqlite,python}/` — which reference hosts implement adjacent surface?
 4. Reserve the RFC number: check `RFCS/` for the highest existing number. Reserve `NNNN+1` for this RFC.
 5. Produce an **Intake Summary** before proceeding:
 
@@ -130,7 +130,7 @@ Wear the **Conformance hat**. Per `CONTRIBUTING.md` §"Conformance suite":
    - Server-free scenarios <1s.
 3. **Fixtures.** Any new fixtures needed under `conformance/fixtures/`? Each must be added to `conformance/fixtures.md` catalog table + per-fixture contracts.
 4. **Capability gating.** Per `conformance/coverage.md` §"Capability-gated scenarios": is the new scenario gated on a capability flag? Name the flag (e.g., `host.<feature>.supported`).
-5. **Reference-host coverage.** Which of `examples/hosts/{in-memory,sqlite,python}/` will implement and update its `conformance.md` evidence file?
+5. **Reference-host coverage.** Which of `../openwop-examples/examples/hosts/{in-memory,sqlite,python}/` will implement and update its `conformance.md` evidence file?
 6. **INTEROP-MATRIX impact.** Does the new profile show up as a row column? Update the matrix in the same PR.
 
 Output: scenario stubs + fixture stubs + capability-gate names + INTEROP-MATRIX delta.

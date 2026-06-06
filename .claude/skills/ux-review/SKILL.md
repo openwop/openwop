@@ -1,6 +1,6 @@
 ---
 name: ux-review
-description: Multi-mode review for openwop user-facing surfaces. **Marketing-site mode** audits `public/index.html`, `public/styles.css`, `public/main.js` against `DESIGN.md` (typography, color tokens, spacing, components, a11y, localization, light/dark, mobile breakpoints, no hard-coded values). **App-UI mode** audits the reference app `apps/workflow-engine/frontend/react/src` against `DESIGN.app.md` — the shared `ui/` cohesion layer (`.surface-card`/`.chip`/`.action-bar`/`<Notice>`/`<StateCard>`), the `ui/icons` Lucide set + no-emoji-as-icons rule, status→chip semantics, the inline-style/token policy, and app a11y. **Spec-prose mode** audits `spec/v1/`, `RFCS/`, `README.md`, `CHANGELOG.md`, `INTEROP-MATRIX.md`, `ROADMAP.md`, `docs/` for RFC 2119 keyword discipline, Status legend, table format, normative voice, cross-doc link integrity, "Why this exists" + "Open spec gaps", doc-index drift, and PUBLISHING / SECURITY surface honesty.
+description: Multi-mode review for openwop user-facing surfaces. **Marketing-site mode** audits `../openwop-site/public/index.html`, `../openwop-site/public/styles.css`, `../openwop-site/public/main.js` against `DESIGN.md` (typography, color tokens, spacing, components, a11y, localization, light/dark, mobile breakpoints, no hard-coded values). **App-UI mode** audits the reference app `../openwop-app/frontend/react/src` against `../openwop-app/DESIGN.md` — the shared `ui/` cohesion layer (`.surface-card`/`.chip`/`.action-bar`/`<Notice>`/`<StateCard>`), the `ui/icons` Lucide set + no-emoji-as-icons rule, status→chip semantics, the inline-style/token policy, and app a11y. **Spec-prose mode** audits `spec/v1/`, `RFCS/`, `README.md`, `CHANGELOG.md`, `INTEROP-MATRIX.md`, `ROADMAP.md`, `docs/` for RFC 2119 keyword discipline, Status legend, table format, normative voice, cross-doc link integrity, "Why this exists" + "Open spec gaps", doc-index drift, and PUBLISHING / SECURITY surface honesty.
 ---
 
 # UX Review (openwop)
@@ -10,23 +10,23 @@ This skill runs in one of two modes — pick the mode that matches what changed,
 ## Mode selection
 
 ```bash
-# Marketing-site mode (Mode A): any change touching public/ or assets used by the live site
-git diff --name-only origin/main..HEAD | grep -E '^public/'
+# Marketing-site mode (Mode A): any change touching ../openwop-site/public/ or assets used by the live site
+git diff --name-only origin/main..HEAD | grep -E '^../openwop-site/public/'
 
-# App-UI mode (Mode A (app)): any change to the reference app frontend — reviewed against DESIGN.app.md
-git diff --name-only origin/main..HEAD | grep -E '^apps/workflow-engine/frontend/react/src/'
+# App-UI mode (Mode A (app)): any change to the reference app frontend — reviewed against ../openwop-app/DESIGN.md
+git diff --name-only origin/main..HEAD | grep -E '^../openwop-app/frontend/react/src/'
 
 # Spec-prose mode (Mode B): any change touching prose
 git diff --name-only origin/main..HEAD | grep -E '^(spec/v1|RFCS|docs|public)/.*\.md$|^(README|CHANGELOG|CONTRIBUTING|COMPATIBILITY|GOVERNANCE|MAINTAINERS|ROADMAP|SECURITY|PUBLISHING|QUICKSTART(-10MIN)?|INTEROP-MATRIX|CODE_OF_CONDUCT)\.md$'
 ```
 
-Run whichever modes match the diff (marketing → app → prose); the app surface (`apps/workflow-engine/frontend/react/`) is reviewed against `DESIGN.app.md`, the marketing site against `DESIGN.md`.
+Run whichever modes match the diff (marketing → app → prose); the app surface (`../openwop-app/frontend/react/`) is reviewed against `../openwop-app/DESIGN.md`, the marketing site against `DESIGN.md`.
 
 ---
 
 # Mode A — Marketing-site UX review
 
-You are a **Senior Product Designer** with deep accessibility, type-system, and front-end experience. Review the openwop public site (`public/index.html`, `public/styles.css`, `public/main.js`) against the **`DESIGN.md`** standards document at the repo root.
+You are a **Senior Product Designer** with deep accessibility, type-system, and front-end experience. Review the openwop public site (`../openwop-site/public/index.html`, `../openwop-site/public/styles.css`, `../openwop-site/public/main.js`) against the **`DESIGN.md`** standards document at the repo root.
 
 `DESIGN.md` is the source of truth. Every finding cites the DESIGN.md section it derives from. If `DESIGN.md` does not cover a category, propose an addition to it as part of the review output.
 
@@ -34,25 +34,25 @@ You are a **Senior Product Designer** with deep accessibility, type-system, and 
 
 ```bash
 # Hard-coded color values outside :root (FAIL)
-awk '/:root\s*{/,/^\s*}/{next} /#[0-9a-fA-F]{3,8}|rgb\(|rgba\(|hsl\(|oklch\(/ {print FILENAME":"NR": "$0}' public/styles.css
+awk '/:root\s*{/,/^\s*}/{next} /#[0-9a-fA-F]{3,8}|rgb\(|rgba\(|hsl\(|oklch\(/ {print FILENAME":"NR": "$0}' ../openwop-site/public/styles.css
 
 # Inline style attributes in HTML (FAIL except svg geometry)
-grep -nE 'style="[^"]*(color|font-family|font-size|background)' public/index.html
+grep -nE 'style="[^"]*(color|font-family|font-size|background)' ../openwop-site/public/index.html
 
 # Hard-coded SVG colors (FAIL)
-grep -nE 'fill="(#|black|white|rgb)' public/index.html public/assets/*.svg | grep -v 'fill="var(--' | grep -v 'fill="none"' | grep -v 'fill="currentColor"'
+grep -nE 'fill="(#|black|white|rgb)' ../openwop-site/public/index.html ../openwop-site/public/assets/*.svg | grep -v 'fill="var(--' | grep -v 'fill="none"' | grep -v 'fill="currentColor"'
 
 # Missing focus-visible style
-grep -c ':focus-visible' public/styles.css  # MUST be > 0
+grep -c ':focus-visible' ../openwop-site/public/styles.css  # MUST be > 0
 
 # Missing prefers-reduced-motion
-grep -c 'prefers-reduced-motion' public/styles.css  # MUST be > 0
+grep -c 'prefers-reduced-motion' ../openwop-site/public/styles.css  # MUST be > 0
 
 # Missing print stylesheet
-grep -c '@media print' public/styles.css  # MUST be > 0
+grep -c '@media print' ../openwop-site/public/styles.css  # MUST be > 0
 
 # Hard-coded breakpoints not matching DESIGN.md
-grep -nE '@media\s*\(max-width:\s*[0-9]+px\)' public/styles.css
+grep -nE '@media\s*\(max-width:\s*[0-9]+px\)' ../openwop-site/public/styles.css
 # Compare values against DESIGN.md §8 canonical breakpoints (1080, 920, 820, 760, 640)
 ```
 
@@ -106,17 +106,17 @@ grep -nE '@media\s*\(max-width:\s*[0-9]+px\)' public/styles.css
 ```
 ## CRITICAL Issues — Marketing-site UX
 
-1. [TOKENS · DESIGN.md §10] **public/styles.css:142 — hard-coded `#1a1a17`**
+1. [TOKENS · DESIGN.md §10] **../openwop-site/public/styles.css:142 — hard-coded `#1a1a17`**
    - Issue: Bypasses token system; will not theme under dark mode
    - Fix: Replace with `var(--ink)`
 
-2. [A11Y · DESIGN.md §7.5] **public/index.html:22 — logo has both `alt="OpenWOP logo"` and `aria-hidden="true"`**
+2. [A11Y · DESIGN.md §7.5] **../openwop-site/public/index.html:22 — logo has both `alt="OpenWOP logo"` and `aria-hidden="true"`**
    - Issue: Conflicting signals to assistive tech
    - Fix: If decorative, `alt=""` + `aria-hidden="true"`. If informative, drop `aria-hidden`.
 
 ## HIGH Issues — Marketing-site UX
 
-3. [COPY · DESIGN.md §2] **public/index.html:328 — `BYOK` used without expansion**
+3. [COPY · DESIGN.md §2] **../openwop-site/public/index.html:328 — `BYOK` used without expansion**
    - Issue: Acronyms must expand on first appearance in a section
    - Fix: Wrap with `<abbr title="Bring Your Own Key">BYOK</abbr>` or add parenthetical
 
@@ -139,14 +139,14 @@ grep -nE '@media\s*\(max-width:\s*[0-9]+px\)' public/styles.css
 
 ---
 
-# Mode A (app) — Reference-app UX review (`DESIGN.app.md`)
+# Mode A (app) — Reference-app UX review (`../openwop-app/DESIGN.md`)
 
-Audits the reference app at `apps/workflow-engine/frontend/react/src` against **`DESIGN.app.md`** (companion to `DESIGN.md`; shared tokens live in `DESIGN.md §3–§5 / §9`, mirrored in the app's `global.css :root`). Run this whenever the diff touches `apps/workflow-engine/frontend/react/`. Every finding cites a `DESIGN.app.md §N` (or `DESIGN.md §N` for a shared rule). Same Senior-Product-Designer lens as Mode A.
+Audits the reference app at `../openwop-app/frontend/react/src` against **`../openwop-app/DESIGN.md`** (companion to `DESIGN.md`; shared tokens live in `DESIGN.md §3–§5 / §9`, mirrored in the app's `global.css :root`). Run this whenever the diff touches `../openwop-app/frontend/react/`. Every finding cites a `../openwop-app/DESIGN.md §N` (or `DESIGN.md §N` for a shared rule). Same Senior-Product-Designer lens as Mode A.
 
-## Step Aa-1 — Automated checks (from `apps/workflow-engine/frontend/react/`)
+## Step Aa-1 — Automated checks (from `../openwop-app/frontend/react/`)
 
 ```bash
-# DESIGN.app.md §10 — zero hex literals in TS/TSX (FAIL on any hit; ui/icons SVG paths exempt)
+# ../openwop-app/DESIGN.md §10 — zero hex literals in TS/TSX (FAIL on any hit; ui/icons SVG paths exempt)
 grep -rEn "#[0-9a-fA-F]{3,6}" src/ | grep -v "/ui/icons/" | head
 # §10 — no literal (non-token) color/background in inline style (FAIL)
 grep -rEn "style=\{\{[^}]*(color|background)[^}]*[\"'](?!var\()" src/ | head
@@ -172,30 +172,30 @@ node node_modules/typescript/bin/tsc --noEmit && node node_modules/vite/bin/vite
 
 ## Step Aa-2 — Review categories
 
-### CRITICAL — `DESIGN.app.md §10` token discipline / `§3` functional tokens
+### CRITICAL — `../openwop-app/DESIGN.md §10` token discipline / `§3` functional tokens
 - Any hex / OKLCH literal in `.tsx`/`.ts` (outside `ui/icons` SVG paths) or in `global.css` outside `:root`.
 - A literal color in an inline `style={{}}` (a `var(--…)` reference is allowed).
 - A status color used as a body-weight background fill (§3 rule 3).
 
-### CRITICAL — `DESIGN.app.md §11` accessibility
+### CRITICAL — `../openwop-app/DESIGN.md §11` accessibility
 - An interactive element without a reachable `:focus-visible` (the global ring covers `button`/`select`/`input`/`[role=button]`/`.surface-card`; anything else needs its own).
 - Status conveyed by color alone — MUST pair with a label or glyph (§5.3).
 - A transient notice as bare colored text instead of `<Notice>` (`.alert.*` + `role="status"`).
 - An icon-only button without an `aria-label`.
 
-### HIGH — `DESIGN.app.md §5.2` iconography
+### HIGH — `../openwop-app/DESIGN.md §5.2` iconography
 - An **emoji used as a UI icon** anywhere (use `ui/icons`; add a new icon there if missing). Prose mentions / keyboard hints / ASCII art are exempt.
 - A vendor/brand mark re-colored (§8).
 
-### HIGH — `DESIGN.app.md §5.1` cohesion layer
+### HIGH — `../openwop-app/DESIGN.md §5.1` cohesion layer
 - A dashboard/list card hand-rolled with inline styles instead of `.surface-card` + `.card-grid`.
 - A bespoke chip / notice / empty-state instead of `.chip` / `<Notice>` / `<StateCard>`.
 - A second Kanban board renderer instead of `<KanbanBoardView>`.
 
-### HIGH — `DESIGN.app.md §5` component-registry drift
+### HIGH — `../openwop-app/DESIGN.md §5` component-registry drift
 - A new app component without a §5 row.
 
-### MEDIUM — `DESIGN.app.md §10` inline-style carve-outs
+### MEDIUM — `../openwop-app/DESIGN.md §10` inline-style carve-outs
 - Inline `fontSize` outside the 10–14px geometry band; inline color/font that isn't a token reference.
 
 ## Step Aa-3 — Pre-merge checklist (app surface)
@@ -205,7 +205,7 @@ node node_modules/typescript/bin/tsc --noEmit && node node_modules/vite/bin/vite
 - [ ] New cards / chips / notices reuse the §5.1 primitives
 - [ ] Status shown as a labeled chip, never color alone (§5.3)
 - [ ] New interactive elements keyboard-reachable (`:focus-visible`)
-- [ ] New component has a `DESIGN.app.md §5` row
+- [ ] New component has a `../openwop-app/DESIGN.md §5` row
 - [ ] `tsc --noEmit` + `vite build` clean
 
 ---
@@ -405,7 +405,7 @@ diff /tmp/disk-docs.txt /tmp/readme-docs.txt
 ### MEDIUM: CHANGELOG hygiene
 
 - `[Unreleased]` section present at top with subsections: `### Added` / `### Changed` / `### Deprecated` / `### Removed` / `### Fixed` / `### Security`
-- Per-package CHANGELOG (conformance, sdk/typescript) follows the same template
+- Per-package CHANGELOG (conformance, ../openwop-sdks/sdk/typescript) follows the same template
 - Safety-fix changes cite the advisory ID per `SECURITY.md`
 - Released sections have a date (YYYY-MM-DD) and a link or comparison ref to the prior version
 
@@ -445,7 +445,7 @@ diff /tmp/disk-docs.txt /tmp/readme-docs.txt
 ### LOW: Diagrams + ASCII art
 
 - ASCII art used sparingly; prefer prose tables for state machines, transitions
-- If diagrams added, ensure they render in the spec site build (`site/src/build.mjs`)
+- If diagrams added, ensure they render in the spec site build (`../openwop-site/site/src/build.mjs`)
 
 ---
 

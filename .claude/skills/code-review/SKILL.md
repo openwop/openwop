@@ -31,7 +31,7 @@ Before reviewing any change, run the full corpus gate. It is the same gate `.git
 npm run openwop:check 2>&1 | tee /tmp/openwop-check.txt
 
 # Individual gates if you need to isolate failures:
-( cd sdk/typescript && npx tsc --noEmit ) 2>&1 | tail -50
+( cd ../openwop-sdks/sdk/typescript && npx tsc --noEmit ) 2>&1 | tail -50
 ( cd conformance && npx tsc --noEmit ) 2>&1 | tail -50
 ( cd conformance && npx vitest run src/scenarios/spec-corpus-validity.test.ts src/scenarios/fixtures-valid.test.ts ) 2>&1 | tail -50
 npx -y @redocly/cli@latest lint api/openapi.yaml
@@ -42,9 +42,9 @@ bash scripts/check-npm-pack-contents.sh
 bash scripts/check-python-go-release-surface.sh
 
 # Per-SDK lint (PR check):
-( cd sdk/typescript && npx eslint . ) 2>&1 | tail -30      # if eslint configured
-( cd sdk/python && ruff check . ) 2>&1 | tail -30
-( cd sdk/go && go vet ./... && gofmt -l . ) 2>&1 | tail -30
+( cd ../openwop-sdks/sdk/typescript && npx eslint . ) 2>&1 | tail -30      # if eslint configured
+( cd ../openwop-sdks/sdk/python && ruff check . ) 2>&1 | tail -30
+( cd ../openwop-sdks/sdk/go && go vet ./... && gofmt -l . ) 2>&1 | tail -30
 ```
 
 ### Quality Gate
@@ -52,13 +52,13 @@ bash scripts/check-python-go-release-surface.sh
 | Check | Requirement |
 |---|---|
 | `npm run openwop:check` | **ALL 8 STEPS GREEN** — BLOCKING if any fail |
-| `tsc --noEmit` in `sdk/typescript/` and `conformance/` | **ZERO** errors — BLOCKING |
+| `tsc --noEmit` in `../openwop-sdks/sdk/typescript/` and `conformance/` | **ZERO** errors — BLOCKING |
 | `redocly lint api/openapi.yaml` | Clean — BLOCKING |
 | `asyncapi validate api/asyncapi.yaml` | Clean — BLOCKING |
 | `bash scripts/check-security-invariants.sh` | Every MUST-NOT has a public test — BLOCKING |
 | `bash scripts/openwop-check-publish-metadata.sh` | No placeholder URLs, stale module paths — BLOCKING for release |
 | `bash scripts/check-npm-pack-contents.sh` | No package content leaks — BLOCKING for release |
-| `@ts-ignore` / `@ts-expect-error` | **BANNED** in `sdk/typescript/src/`, `conformance/src/` (test files included unless documented justification) |
+| `@ts-ignore` / `@ts-expect-error` | **BANNED** in `../openwop-sdks/sdk/typescript/src/`, `conformance/src/` (test files included unless documented justification) |
 | `@ts-nocheck` | **BANNED** in production code; allowed only in conformance/SDK test files with documented justification |
 | `as any` / `as unknown as T` | **BANNED** everywhere |
 | Inline schema shapes in OpenAPI/AsyncAPI | **BANNED** — use `$ref: "../schemas/<name>.schema.json"` |
@@ -74,22 +74,22 @@ bash scripts/check-python-go-release-surface.sh
 
 Use Grep to scan the changed files.
 
-**Search for in `sdk/typescript/src/`, `conformance/src/lib/`, `examples/hosts/*/src/`:**
+**Search for in `../openwop-sdks/sdk/typescript/src/`, `conformance/src/lib/`, `../openwop-examples/examples/hosts/*/src/`:**
 - `@ts-ignore` and `@ts-expect-error`
 - `@ts-nocheck`
 - `as any` patterns
 - `as unknown as`
 - `eslint-disable` patterns
 
-**Search for in `sdk/typescript/src/__tests__/`, `conformance/src/scenarios/`, `examples/hosts/*/test/`:**
+**Search for in `../openwop-sdks/sdk/typescript/src/__tests__/`, `conformance/src/scenarios/`, `../openwop-examples/examples/hosts/*/test/`:**
 - `@ts-nocheck` — verify it's justified (10+ complex fixture type errors, not simple fixes) and documented in a top-of-file comment
 - Non-null assertions (`!.`) — review each for proper null handling
 
-**Search for in `sdk/python/`:**
+**Search for in `../openwop-sdks/sdk/python/`:**
 - `# type: ignore` without a comment explaining why
 - `Any` import without a use-site comment
 
-**Search for in `sdk/go/`:**
+**Search for in `../openwop-sdks/sdk/go/`:**
 - `interface{}` where a concrete type is available
 - Untyped `nil` returns from constructors
 
@@ -177,7 +177,7 @@ Per `CONTRIBUTING.md` §"Conformance suite":
 Per `CONTRIBUTING.md` §"TypeScript reference SDK":
 
 - Every new endpoint in `api/openapi.yaml` maps to exactly one method on `OpenwopClient`
-- Types extend `sdk/typescript/src/types.ts`; no inline shape redefs
+- Types extend `../openwop-sdks/sdk/typescript/src/types.ts`; no inline shape redefs
 - `tsc --noEmit` strict + `exactOptionalPropertyTypes` clean
 - Zero new runtime deps unless justified in the PR body
 - Python: stdlib-only; ruff clean; no new third-party deps
@@ -227,11 +227,11 @@ Per `CONTRIBUTING.md` §"Prose specs":
 
 ### MEDIUM: SDK code quality
 
-- `sdk/typescript/src/client.ts`: no `as any`, no `@ts-ignore`, all public methods have explicit return types
-- `sdk/typescript/src/run-helpers.ts`: helper functions cite the spec doc they encode
-- `sdk/typescript/src/sse.ts`: handles all four stream modes; tolerant of unknown event types (forward-compat per `COMPATIBILITY.md` §2.1)
-- `sdk/python/src/openwop_client/`: stdlib-only; `typing` annotations on every public function
-- `sdk/go/`: idiomatic Go; no unused imports; doc comments on exported symbols
+- `../openwop-sdks/sdk/typescript/src/client.ts`: no `as any`, no `@ts-ignore`, all public methods have explicit return types
+- `../openwop-sdks/sdk/typescript/src/run-helpers.ts`: helper functions cite the spec doc they encode
+- `../openwop-sdks/sdk/typescript/src/sse.ts`: handles all four stream modes; tolerant of unknown event types (forward-compat per `COMPATIBILITY.md` §2.1)
+- `../openwop-sdks/sdk/python/src/openwop_client/`: stdlib-only; `typing` annotations on every public function
+- `../openwop-sdks/sdk/go/`: idiomatic Go; no unused imports; doc comments on exported symbols
 
 ### MEDIUM: Reference-host coherence
 
@@ -261,7 +261,7 @@ Per `node-packs.md`, `registry-operations.md`:
 
 - README "Document index" updated if a new spec doc landed
 - ROADMAP entry added/checked if the change closes a known gap (`docs/PROTOCOL-GAP-CLOSURE-PLAN.md` tracks)
-- Site rebuild not required unless `site/src/build.mjs` changed
+- Site rebuild not required unless `../openwop-site/site/src/build.mjs` changed
 
 ---
 
@@ -294,7 +294,7 @@ Present findings in severity order:
    - Issue: New optional surface needs to gate on `host.newSurface.supported` per conformance/coverage.md §"Capability-gated scenarios"
    - Fix: Wrap `describe()` in the `capability-gated` helper that skips when the flag is unset
 
-3. [SDK-CONTRACT] **sdk/typescript/src/client.ts:120 — new endpoint missing in `OpenwopClient`**
+3. [SDK-CONTRACT] **../openwop-sdks/sdk/typescript/src/client.ts:120 — new endpoint missing in `OpenwopClient`**
    - Issue: api/openapi.yaml gained `/v1/runs/{runId}:newOp` but no SDK method exists
    - Fix: Per CONTRIBUTING.md §"TypeScript reference SDK," add one method on `OpenwopClient` with explicit param + return types from `src/types.ts`
 
@@ -336,7 +336,7 @@ Present findings in severity order:
 
 | Surface | Pattern | Count |
 |---|---|---|
-| `sdk/typescript/src/` | `as any` / `@ts-ignore` / `@ts-nocheck` | 0 required |
+| `../openwop-sdks/sdk/typescript/src/` | `as any` / `@ts-ignore` / `@ts-nocheck` | 0 required |
 | `conformance/src/` | `as any` / `@ts-ignore` | 0 required |
 | `schemas/` | Missing `additionalProperties: false` | 0 required |
 | `api/` | Inline schema (no `$ref`) | 0 required |
