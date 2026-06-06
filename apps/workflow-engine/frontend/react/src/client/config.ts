@@ -72,8 +72,27 @@ export const config = {
  * authed correctly.
  */
 let cachedIdToken: string | null = null;
+
+/** Listeners fired whenever the auth identity changes (sign-in / sign-out /
+ *  token rotation to a *different* token). Caches keyed on the tenant — chiefly
+ *  the capabilities cache (GAP-ANALYSIS A-3) — register here so a tenant change
+ *  re-negotiates instead of serving a prior tenant's view. Cycle-free: callers
+ *  register their own clearers rather than config importing them. */
+type AuthChangeListener = () => void;
+const authChangeListeners = new Set<AuthChangeListener>();
+export function onAuthChange(fn: AuthChangeListener): () => void {
+  authChangeListeners.add(fn);
+  return () => authChangeListeners.delete(fn);
+}
+
 export function setCurrentIdToken(token: string | null): void {
+  const changed = token !== cachedIdToken;
   cachedIdToken = token;
+  // Token rotation to the same value (rare) is a no-op; identity changes
+  // notify subscribers so tenant-scoped caches drop.
+  if (changed) {
+    for (const fn of authChangeListeners) fn();
+  }
 }
 
 /** Headers carrying auth.

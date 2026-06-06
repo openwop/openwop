@@ -18,7 +18,7 @@ import type {
   PollEventsResponse,
   RunSnapshot,
 } from '@openwop/openwop';
-import { authedHeaders, config } from './config.js';
+import { authedHeaders, config, onAuthChange } from './config.js';
 
 // Pass an explicitly-bound `fetch` to work around an SDK bug — the
 // client stores `opts.fetch ?? fetch` and later calls `this.#fetch(...)`,
@@ -66,8 +66,37 @@ export interface RunListItem {
   completedAt?: string;
 }
 
+// Capabilities cache (GAP-ANALYSIS A-3). The discovery payload is a host-boot
+// decision (`capabilities.md`), so ~12 call sites re-fetching it on every
+// run-detail page (4-6× per load) is pure waste that helps blow the per-IP
+// read budget. Cache the result with an in-flight promise so concurrent
+// callers share one request, time-bound to the endpoint's advertised
+// `Cache-Control: max-age=300` (not a permanent pin — per A-3), and drop it on
+// an auth/tenant change via the documented `setCurrentIdToken` seam.
+const CAPS_TTL_MS = 300_000;
+let capsCache: { value: Capabilities & Record<string, unknown>; at: number } | null = null;
+let capsInFlight: Promise<Capabilities & Record<string, unknown>> | null = null;
+
+/** Drop the capabilities cache so the next read re-negotiates. */
+export function clearCapabilitiesCache(): void {
+  capsCache = null;
+  capsInFlight = null;
+}
+onAuthChange(clearCapabilitiesCache);
+
 export async function getCapabilities(): Promise<Capabilities & Record<string, unknown>> {
-  return (await client.discovery.capabilities()) as Capabilities & Record<string, unknown>;
+  if (capsCache && Date.now() - capsCache.at < CAPS_TTL_MS) return capsCache.value;
+  if (capsInFlight) return capsInFlight;
+  capsInFlight = (async () => {
+    try {
+      const value = (await client.discovery.capabilities()) as Capabilities & Record<string, unknown>;
+      capsCache = { value, at: Date.now() };
+      return value;
+    } finally {
+      capsInFlight = null;
+    }
+  })();
+  return capsInFlight;
 }
 
 /** Forwards an optional `MutationOptions` so callers can supply the

@@ -158,10 +158,16 @@ export function KanbanPage(): JSX.Element {
     if (!boardId) return;
     const refresh = () => { void openBoard(boardId); };
     const unsubscribe = subscribeBoardEvents(boardId, refresh);
-    const poll = setInterval(refresh, 5000);
+    // Visibility-gated polling (GAP-ANALYSIS E3): a hidden tab does not spend
+    // the per-IP read budget; returning to the tab refreshes immediately so it
+    // is never stale on focus.
+    const poll = setInterval(() => { if (!document.hidden) refresh(); }, 5000);
+    const onVisible = () => { if (!document.hidden) refresh(); };
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       unsubscribe();
       clearInterval(poll);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [activeBoard?.id, openBoard]);
 

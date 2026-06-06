@@ -49,8 +49,12 @@ export function AgentBoardPanel({ boardId, persona, avatarUrl, roleTheme, workfl
   // flush in production; the poll keeps the board fresh regardless.
   useEffect(() => {
     const unsubscribe = subscribeBoardEvents(boardId, () => void refresh());
-    const poll = setInterval(() => void refresh(), 5000);
-    return () => { unsubscribe(); clearInterval(poll); };
+    // Visibility-gated polling (GAP-ANALYSIS E3): pause while the tab is hidden
+    // to stay off the per-IP read budget; refresh on return so it's never stale.
+    const poll = setInterval(() => { if (!document.hidden) void refresh(); }, 5000);
+    const onVisible = () => { if (!document.hidden) void refresh(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { unsubscribe(); clearInterval(poll); document.removeEventListener('visibilitychange', onVisible); };
   }, [boardId, refresh]);
 
   const onCreateCard = async (columnId: string, input: NewCardInput) => {
