@@ -25,8 +25,12 @@ on:
   push:
     branches: [main]
     paths:
-      - 'examples/hosts/sqlite/**'
+      # The SQLite reference host now lives in openwop-examples (checked out
+      # below). Cross-repo path triggers aren't possible, so host-only changes
+      # are exercised by the nightly cron + this repo's conformance/** changes;
+      # the openwop-examples repo can also `workflow_dispatch` this gate.
       - 'conformance/**'
+      - 'scripts/check-workflow-chain-expansion-sync.mjs'
       - '.github/workflows/conformance-soak.yml'
 
 jobs:
@@ -38,22 +42,38 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # Reference hosts moved to openwop-examples; check them out alongside.
+      - name: Check out openwop-examples (reference hosts)
+        uses: actions/checkout@v6
+        with:
+          repository: openwop/openwop-examples
+          path: examples-ext
+
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
           cache: 'npm'
           cache-dependency-path: |
-            examples/hosts/sqlite/package-lock.json
+            examples-ext/examples/hosts/sqlite/package-lock.json
             conformance/package-lock.json
             sdk/typescript/package-lock.json
 
       - name: Install SQLite reference host
-        working-directory: examples/hosts/sqlite
+        working-directory: examples-ext/examples/hosts/sqlite
         run: npm ci
 
       - name: Install conformance suite
         working-directory: conformance
         run: npm ci
+
+      # RFC 0013 expansion-algorithm drift guard — conformance/ canonical copy
+      # vs the zero-deps mirror in the in-memory host (now in openwop-examples,
+      # checked out at examples-ext). Moved here from the server-free local gate
+      # since the host source no longer lives in this repo.
+      - name: Workflow-chain expansion drift guard (vs openwop-examples host)
+        env:
+          OPENWOP_EXAMPLES_DIR: examples-ext
+        run: node scripts/check-workflow-chain-expansion-sync.mjs
 
       # Several spec-corpus scenarios assert against `sdk/typescript/dist/`
       # (e.g., `SDK HTTP error helpers match canonical REST vocabulary`'s
@@ -73,7 +93,7 @@ jobs:
           echo "OPENWOP_OTEL_COLLECTOR_PORT=14328" >> $GITHUB_ENV
 
       - name: Boot SQLite host (background)
-        working-directory: examples/hosts/sqlite
+        working-directory: examples-ext/examples/hosts/sqlite
         env:
           OPENWOP_PORT: ${{ env.OPENWOP_PORT }}
           OPENWOP_WEBHOOK_ALLOW_PRIVATE: 'true'
@@ -97,7 +117,7 @@ jobs:
           exit 1
 
       - name: Run host-internal audit-tamper test
-        working-directory: examples/hosts/sqlite
+        working-directory: examples-ext/examples/hosts/sqlite
         run: npm test
 
       - name: Full conformance suite (strict mode, no file parallelism)

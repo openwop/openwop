@@ -34,13 +34,11 @@ on:
   push:
     branches: [main]
     paths:
-      - 'examples/hosts/postgres/**'
       - 'conformance/**'
       - 'spec/v1/production-profile.md'
       - '.github/workflows/postgres-host-conformance.yml'
   pull_request:
     paths:
-      - 'examples/hosts/postgres/**'
       - 'conformance/**'
       - '.github/workflows/postgres-host-conformance.yml'
 
@@ -53,18 +51,48 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # Reference hosts moved to openwop-examples; check them out alongside.
+      - name: Check out openwop-examples (reference hosts)
+        uses: actions/checkout@v6
+        with:
+          repository: openwop/openwop-examples
+          path: examples-ext
+
+      # The postgres host's in-host test suite assumes the old monorepo layout —
+      # pack-consumer.test.ts reads <root>/registry/v1/packs + <root>/registry/keys
+      # (now in openwop-registry). Check that out too.
+      - name: Check out openwop-registry (pack fixtures for pack-consumer test)
+        uses: actions/checkout@v6
+        with:
+          repository: openwop/openwop-registry
+          path: registry-ext
+
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
           cache: 'npm'
-          cache-dependency-path: examples/hosts/postgres/package-lock.json
+          cache-dependency-path: examples-ext/examples/hosts/postgres/package-lock.json
 
       - name: Install Postgres host
-        working-directory: examples/hosts/postgres
+        working-directory: examples-ext/examples/hosts/postgres
         run: npm ci
 
+      # The host test suite expects spec-corpus + registry siblings at its REPO_ROOT
+      # (examples-ext/), via relative imports + join(REPO_ROOT, ...). Reconstruct
+      # that layout from the checked-out repos so the in-host smoke runs unchanged:
+      #   - conformance/src/lib/*           (spec corpus, stays here)  → mcp-client, oauth2-oidc, reasoning-event tests
+      #   - scripts/verify-audit-checkpoints.mjs (spec corpus)         → audit-checkpoint-export test
+      #   - registry/v1/packs + registry/keys (openwop-registry)       → pack-consumer test
+      - name: Reconstruct spec-corpus + registry siblings for host tests
+        run: |
+          npm --prefix conformance ci
+          ln -s "$GITHUB_WORKSPACE/conformance" examples-ext/conformance
+          ln -s "$GITHUB_WORKSPACE/scripts/verify-audit-checkpoints.mjs" \
+                examples-ext/scripts/verify-audit-checkpoints.mjs
+          ln -s "$GITHUB_WORKSPACE/registry-ext/registry" examples-ext/registry
+
       - name: Run in-host smoke suite
-        working-directory: examples/hosts/postgres
+        working-directory: examples-ext/examples/hosts/postgres
         env:
           OPENWOP_WEBHOOK_ALLOW_PRIVATE: 'true'
         run: npm test
@@ -77,16 +105,23 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # Reference hosts moved to openwop-examples; check them out alongside.
+      - name: Check out openwop-examples (reference hosts)
+        uses: actions/checkout@v6
+        with:
+          repository: openwop/openwop-examples
+          path: examples-ext
+
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
           cache: 'npm'
           cache-dependency-path: |
-            examples/hosts/postgres/package-lock.json
+            examples-ext/examples/hosts/postgres/package-lock.json
             conformance/package-lock.json
 
       - name: Install Postgres host
-        working-directory: examples/hosts/postgres
+        working-directory: examples-ext/examples/hosts/postgres
         run: npm ci
 
       - name: Install conformance suite
@@ -94,7 +129,7 @@ jobs:
         run: npm ci
 
       - name: Boot Postgres host via pglite (background)
-        working-directory: examples/hosts/postgres
+        working-directory: examples-ext/examples/hosts/postgres
         env:
           OPENWOP_WEBHOOK_ALLOW_PRIVATE: 'true'
           OPENWOP_PORT: '3839'

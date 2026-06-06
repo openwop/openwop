@@ -135,16 +135,17 @@ npm_config_cache="$NPM_CACHE" npx -y -p @asyncapi/cli@4.1.1 asyncapi validate "$
 echo
 
 # 7. Generated protocol status — catches stale corpus counts, RFC status
-# drift, registry-count drift, SDK parity-count drift, and active-doc stale
-# phrases that should not survive outside archived historical docs. Also
-# guards against silent drift between sanctioned duplicate-source files
-# (RFC 0013 expansion algorithm: spec-authoritative copy in conformance/
-# vs. zero-deps mirror in examples/hosts/in-memory/). Plus the required-
-# property typo-catcher (replaces redocly's flawed walker — see
-# api/redocly.yaml comment for context).
+# drift, SDK parity-count drift, and active-doc stale phrases that should not
+# survive outside archived historical docs. Plus the required-property
+# typo-catcher (replaces redocly's flawed walker — see api/redocly.yaml
+# comment for context).
+#
+# The RFC 0013 expansion-algorithm drift guard (conformance/ canonical vs the
+# zero-deps mirror in the in-memory host) moved to conformance-soak.yml, which
+# checks out openwop-examples for the host source — the host no longer lives in
+# this repo, so the guard can't run in this server-free local gate.
 echo "[7/9] Generated protocol status..."
 node "$SPEC_ROOT/scripts/generate-protocol-status.mjs" --check
-node "$SPEC_ROOT/scripts/check-workflow-chain-expansion-sync.mjs"
 node "$SPEC_ROOT/scripts/check-required-properties-defined.mjs"
 # SDK parity — every OpenAPI operation must declare a per-SDK helper status in
 # sdk/parity-expectations.json ('typed' or 'excluded'), and every 'typed' op's

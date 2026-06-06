@@ -61,3 +61,11 @@ jobs:
 
       - name: Full server-free release gate
         run: npm run openwop:check
+
+      # Spec-prose pack claims (README/ROADMAP/RFCS/CHANGELOG) must match real
+      # registry state. Validated against the live registry at packs.openwop.dev
+      # (the catalog lives in openwop-registry now). Kept out of openwop:check
+      # itself because it needs network; this step previously lived in the
+      # examples.yml workflow that moved to the openwop-examples repo.
+      - name: Spec-prose pack claims (live registry)
+        run: node scripts/check-doc-pack-claims.mjs --registry https://packs.openwop.dev
