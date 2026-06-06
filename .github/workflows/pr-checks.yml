@@ -27,7 +27,6 @@ jobs:
     # The SDK lint jobs (TS/Python/Go) moved to openwop-sdks with sdk/.
     outputs:
       conformance: ${{ steps.filter.outputs.conformance }}
-      appfrontend: ${{ steps.filter.outputs.appfrontend }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
@@ -36,8 +35,6 @@ jobs:
           filters: |
             conformance:
               - 'conformance/**'
-            appfrontend:
-              - 'apps/workflow-engine/frontend/react/**'
 
   lint-conformance:
     name: Lint (conformance)
@@ -56,57 +53,9 @@ jobs:
           npm ci
           npm run lint --if-present || (echo "::warning::lint script is not configured for this package" && true)
 
-  # Build gate for the reference app's React frontend. Previously the app
-  # frontend had NO PR gate, so a type error, a dead prompt-ref default, or a
-  # reference to an undefined CSS custom property only surfaced at deploy-time
-  # `npm run build`. `npm run build` here runs, in order: tsc --noEmit,
-  # check-prompt-ref-defaults, check-css-tokens (the var(--token) integrity
-  # gate), and the vite production build.
-  build-app-frontend:
-    name: App frontend (tsc + css-token gate + build)
-    needs: changes
-    if: needs.changes.outputs.appfrontend == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 8
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-      - name: Build (tsc + checks + vite)
-        run: |
-          cd apps/workflow-engine/frontend/react
-          npm ci
-          npm run build
-      - name: Test (vitest)
-        run: |
-          cd apps/workflow-engine/frontend/react
-          npm run test
-
-  # Browser e2e gate: locks in the a11y (axe wcag2a/2aa over 16 routes x
-  # light+dark), focus-trap/Modal, and app-shell guarantees so they can't
-  # silently regress. Runs against a backend-less dev server (the app renders
-  # empty/error states, which axe still audits) — no backend needed in CI.
-  e2e-app-frontend:
-    name: App frontend (Playwright e2e — a11y/focus/smoke)
-    needs: changes
-    if: needs.changes.outputs.appfrontend == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 12
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-      - name: Install deps + Chromium
-        run: |
-          cd apps/workflow-engine/frontend/react
-          npm ci
-          npx playwright install --with-deps chromium
-      - name: e2e (smoke + modal + a11y)
-        run: |
-          cd apps/workflow-engine/frontend/react
-          npm run test:e2e
+  # The reference app (frontend build + css-token gate + Playwright/axe e2e
+  # gate) moved to the openwop-app repo (apps/workflow-engine extracted 2026-06;
+  # gated by that repo's own .github/workflows/ci.yml).
 
   # SDK lint jobs (Python ruff, Go vet+gofmt) moved to openwop-sdks with sdk/.
 
