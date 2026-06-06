@@ -39,7 +39,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SUBTREE="apps/workflow-engine"
-OUT_DIR="$ROOT/public/downloads"
+# OUT_DIR is overridable so the release workflow can stage the zip outside the
+# (now-removed) public/ tree before uploading it as a release asset.
+OUT_DIR="${OUT_DIR:-$ROOT/dist-whitelabel}"
 ZIP="$OUT_DIR/openwop-demo-app.zip"
 PREFIX="openwop-demo-app/"
 

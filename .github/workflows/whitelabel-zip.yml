@@ -1,0 +1,47 @@
+name: White-label zip (release asset)
+
+# Decision 3 of the openwop-site migration: the white-label demo-app source
+# bundle is built HERE (it archives apps/workflow-engine, which stays in this
+# repo) and published as a versioned GitHub release asset. openwop-site fetches
+# it for its pinned OPENWOP_REF and serves it at openwop.dev/install/.
+#
+# Runs when a release is published, and on demand for an existing tag.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag to attach the zip to (e.g. v1.2.0)'
+        required: true
+
+permissions:
+  contents: write # upload release assets
+
+jobs:
+  build-upload:
+    name: Build + attach openwop-demo-app.zip
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Build the white-label zip
+        run: OUT_DIR="$GITHUB_WORKSPACE/dist-whitelabel" bash scripts/build-whitelabel-zip.sh
+
+      - name: Resolve target tag
+        id: tag
+        run: echo "tag=${{ github.event.release.tag_name || inputs.tag }}" >> "$GITHUB_OUTPUT"
+
+      - name: Attach to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ steps.tag.outputs.tag }}" \
+            dist-whitelabel/openwop-demo-app.zip \
+            dist-whitelabel/openwop-demo-app.zip.sha256 \
+            --clobber
+          echo "Attached openwop-demo-app.zip to release ${{ steps.tag.outputs.tag }}"
