@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { Link, Route, Routes, useLocation } from 'react-router-dom';
 import { NetworkPanel } from './devtools/NetworkPanel.js';
 import { installNetworkRecorder } from './devtools/networkRecorder.js';
@@ -14,6 +14,7 @@ import { FEATURES, chromeFor, isAdminPath } from './chrome/features.js';
 import { CommandPalette } from './ui/CommandPalette.js';
 import { Toaster } from './ui/toast.js';
 import { ErrorBoundary } from './ui/ErrorBoundary.js';
+import { Skeleton } from './ui/Skeleton.js';
 import { brand } from './brand/brand.js';
 
 /**
@@ -71,6 +72,7 @@ export function App() {
         <DemoHostBanner />
         <main id="main-content" ref={mainRef} tabIndex={-1} className={mainClass}>
         <ErrorBoundary resetKey={location.pathname} label="page">
+        <Suspense fallback={<div style={{ padding: 'var(--space-4)' }}><Skeleton /></div>}>
         <Routes>
           {FEATURES.filter((f) => f.tier !== 'admin').map((f) => (
             <Route key={f.path} path={f.path} element={f.element} />
@@ -87,6 +89,7 @@ export function App() {
               unmatched URL must resolve here rather than render a blank main. */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        </Suspense>
         </ErrorBoundary>
         </main>
         <footer className="app-footer">
