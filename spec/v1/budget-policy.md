@@ -1,6 +1,6 @@
 # openwop Spec v1 — Budget, Quota, and Cost Policy
 
-> **Status: DRAFT v1.x (filed via [RFC 0084](../../RFCS/0084-budget-quota-and-cost-policy.md), 2026-05-30).** Additive v1.x extension — not part of the v1.0 conformance gate. Lands the reserved `budget` run-options key, the content-free `budget.{reserved,consumed,threshold.crossed,exhausted}` events, the four `cap.breached{budget-*}` kinds, and the `budget` capability + `limits` ceilings. The behavioral enforcement scenario, the `budget_exhausted`/`budget_model_denied` OpenAPI error codes, and the reference-host accounting land at `Active → Accepted`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.x — reached `Accepted` via [RFC 0084](../../RFCS/0084-budget-quota-and-cost-policy.md) (2026-06-01).** Additive v1.x extension — not part of the v1.0 conformance gate. Lands the reserved `budget` run-options key, the content-free `budget.{reserved,consumed,threshold.crossed,exhausted}` events, the four `cap.breached{budget-*}` kinds, and the `budget` capability + `limits` ceilings. The behavioral enforcement scenario, the `budget_exhausted`/`budget_model_denied` OpenAPI error codes, and the reference-host accounting land at `Active → Accepted`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ## Why this exists
 

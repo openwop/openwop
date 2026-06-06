@@ -1,6 +1,6 @@
 # openwop Spec v1 — Agent Deployment Lifecycle
 
-> **Status: DRAFT v1.x (filed via [RFC 0082](../../RFCS/0082-agent-deployment-lifecycle.md), 2026-05-30).** Additive v1.x extension — not part of the v1.0 conformance gate. Lands the `agentId@channel` binding, the seven-state deployment machine, the channel→version replay pin (§B), the content-free `deployment.*` events, the `capabilities.agents.deployment` advertisement, and the promotion contract. The `POST /v1/agents/{agentId}/deployments` endpoint, the SDK helpers, the behavioral lifecycle scenario, and the reference-host deployment store land at `Active → Accepted`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.x — reached `Accepted` via [RFC 0082](../../RFCS/0082-agent-deployment-lifecycle.md) (2026-06-01).** Additive v1.x extension — not part of the v1.0 conformance gate. Lands the `agentId@channel` binding, the seven-state deployment machine, the channel→version replay pin (§B), the content-free `deployment.*` events, the `capabilities.agents.deployment` advertisement, and the promotion contract. The `POST /v1/agents/{agentId}/deployments` endpoint, the SDK helpers, the behavioral lifecycle scenario, and the reference-host deployment store land at `Active → Accepted`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ## Why this exists
 

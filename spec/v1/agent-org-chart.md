@@ -1,6 +1,6 @@
 # openwop Spec v1 — Agent Org-Chart
 
-> **Status: DRAFT v1.x (filed via [RFC 0087](../../RFCS/0087-agent-org-chart.md), 2026-05-30).** Additive v1.x extension — not part of the v1.0 conformance gate. Lands the descriptive org-chart record over RFC 0086 roster members, the derived responsibility roll-up, the `capabilities.agents.orgChart` advertisement, and — the normative heart — the protocol-tier `org-position-no-authority-escalation` SECURITY invariant. The `GET /v1/agents/org-chart` endpoint, the SDK helpers, the behavioral non-authority scenario, and the reference-host org store land at `Active → Accepted`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.x — reached `Accepted` via [RFC 0087](../../RFCS/0087-agent-org-chart.md) (2026-05-31).** Additive v1.x extension — not part of the v1.0 conformance gate. Lands the descriptive org-chart record over RFC 0086 roster members, the derived responsibility roll-up, the `capabilities.agents.orgChart` advertisement, and — the normative heart — the protocol-tier `org-position-no-authority-escalation` SECURITY invariant. The `GET /v1/agents/org-chart` endpoint, the SDK helpers, the behavioral non-authority scenario, and the reference-host org store land at `Active → Accepted`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ## Why this exists
 

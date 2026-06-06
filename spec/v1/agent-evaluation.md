@@ -1,6 +1,6 @@
 # openwop Spec v1 — Agent Evaluation
 
-> **Status: DRAFT v1.x (filed via [RFC 0081](../../RFCS/0081-agent-evaluation-and-scorecards.md), 2026-05-30).** Additive v1.x extension — not part of the v1.0 conformance gate. Lands the portable `AgentEvalSuite` artifact, the `mode: "eval"` run projection, the `eval.*` event family + `EvalSummary` scorecard, the `capabilities.agents.evalSuite` advertisement, and the deployment-promotion seam. The behavioral eval-run scenario, the `GET /v1/runs/{runId}/eval-summary` endpoint, the SDK helpers, and the reference-host eval projection land at `Active → Accepted`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.x — reached `Accepted` via [RFC 0081](../../RFCS/0081-agent-evaluation-and-scorecards.md) (2026-06-01).** Additive v1.x extension — not part of the v1.0 conformance gate. Lands the portable `AgentEvalSuite` artifact, the `mode: "eval"` run projection, the `eval.*` event family + `EvalSummary` scorecard, the `capabilities.agents.evalSuite` advertisement, and the deployment-promotion seam. The behavioral eval-run scenario, the `GET /v1/runs/{runId}/eval-summary` endpoint, the SDK helpers, and the reference-host eval projection land at `Active → Accepted`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ## Why this exists
 
