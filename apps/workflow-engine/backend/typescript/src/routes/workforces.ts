@@ -21,6 +21,7 @@ import type { Storage } from '../storage/storage.js';
 import {
   aggregateAutonomyGraduation,
   aggregateGovernancePosture,
+  aggregateShadowComparison,
   aggregateWorkforceMetrics,
   getWorkforce,
   listWorkforces,
@@ -219,6 +220,23 @@ export function registerWorkforceRoutes(app: Express, deps: Deps): void {
       const q = typeof req.query.q === 'string' ? req.query.q : '';
       const runs = await deps.storage.listRuns({ tenantId: tenantOf(req), limit: 5000 });
       res.json(searchWorkforceTrace(runs, req.params.workforceId, q));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // MG-5 / EV-4 — "Shadow & Prove" pilot of RFC 0090's ShadowComparison shape
+  // (host extension; not the core capabilities.shadow wire surface).
+  app.get('/v1/host/sample/workforces/:workforceId/shadow', async (req, res, next) => {
+    try {
+      const wf = await getWorkforce(req.params.workforceId);
+      if (!wf) {
+        throw new OpenwopError('not_found', `Workforce \`${req.params.workforceId}\` not found.`, 404, {
+          workforceId: req.params.workforceId,
+        });
+      }
+      const runs = await deps.storage.listRuns({ tenantId: tenantOf(req), limit: 5000 });
+      res.json(aggregateShadowComparison(runs, req.params.workforceId));
     } catch (err) {
       next(err);
     }

@@ -15,10 +15,12 @@ import {
   getMigrationJourney,
   getWorkforce,
   getWorkforceGovernance,
+  getWorkforceShadow,
   patchMigrationJourney,
   updateWorkforceStatus,
   type MigrationJourney,
   type MigrationStageKey,
+  type ShadowComparison,
   type Workforce,
   type WorkforceGovernance,
   type WorkforceStatus,
@@ -33,11 +35,16 @@ const STAGES: { key: MigrationStageKey; title: string; blurb: string; rfcGated?:
   { key: 'cut-over', title: 'Cut Over', blurb: 'Move production responsibility once the agent has graduated.' },
 ];
 
+function pct(n: number): string {
+  return `${(n * 100).toFixed(1)}%`;
+}
+
 export function MigrationWizardPage(): JSX.Element {
   const { workforceId = '' } = useParams();
   const [wf, setWf] = useState<Workforce | null>(null);
   const [journey, setJourney] = useState<MigrationJourney | null>(null);
   const [governance, setGovernance] = useState<WorkforceGovernance | null>(null);
+  const [shadow, setShadow] = useState<ShadowComparison | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [active, setActive] = useState(0);
@@ -55,12 +62,14 @@ export function MigrationWizardPage(): JSX.Element {
       getWorkforce(workforceId),
       getMigrationJourney(workforceId).catch(() => null),
       getWorkforceGovernance(workforceId).catch(() => null),
+      getWorkforceShadow(workforceId).catch(() => null),
     ])
-      .then(([w, j, g]) => {
+      .then(([w, j, g, s]) => {
         if (cancelled) return;
         setWf(w);
         setJourney(j);
         setGovernance(g);
+        setShadow(s);
         if (j?.target) setTarget(j.target);
         else if (w) setTarget({ workflowId: w.workflowCatalog[0] ?? '', targetOutcome: w.purpose.statement });
         if (j?.dataManifest) setDataManifest(j.dataManifest);
@@ -192,11 +201,42 @@ export function MigrationWizardPage(): JSX.Element {
 
         {stage.key === 'shadow-prove' ? (
           <div>
-            <Notice variant="info">
-              Shadow mode runs the agentic workflow alongside the legacy process and compares outputs to prove it before cut-over.
-              It depends on the shadow-run contract (a spec RFC) and isn't available yet — this stage is a placeholder.
-            </Notice>
-            <button type="button" className="btn" disabled={busy} onClick={() => void markDone('shadow-prove')} style={{ marginTop: '0.5rem' }}>Acknowledge &amp; continue</button>
+            <p style={{ color: 'var(--color-text-muted)', marginTop: 0 }}>
+              Shadow mode compares the agent's decisions against the baseline (the human/legacy outcome). Per RFC 0090 the
+              comparison is content-free — divergences carry digests, never raw values.
+            </p>
+            {!shadow || shadow.status === 'pending' ? (
+              <Notice variant="info">No shadow evidence yet — load the demo data (or run the workforce in shadow) to populate a comparison.</Notice>
+            ) : (
+              <>
+                <div className="action-bar" style={{ gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                  <span className={`chip ${shadow.status === 'agree' ? 'chip--success' : 'chip--warning'}`}>{shadow.status}</span>
+                  <span className="chip">agreement {pct(shadow.agreementRate)}</span>
+                  <span className="chip">override {pct(shadow.overrideRate)}</span>
+                  <span className="chip chip--muted">{shadow.divergenceCount} divergences</span>
+                </div>
+                {shadow.divergences.length > 0 ? (
+                  <details>
+                    <summary style={{ cursor: 'pointer' }}>Divergences ({shadow.divergences.length}) — content-free digests</summary>
+                    <ul style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', fontVariantNumeric: 'tabular-nums' }}>
+                      {shadow.divergences.slice(0, 10).map((d) => (
+                        <li key={d.key}>{d.key.slice(0, 16)}… — agent {d.agentDigest.slice(0, 20)} ≠ baseline {d.baselineDigest.slice(0, 20)}</li>
+                      ))}
+                    </ul>
+                  </details>
+                ) : null}
+              </>
+            )}
+            <button
+              type="button"
+              className="btn"
+              disabled={busy || !shadow || shadow.status === 'pending'}
+              title={!shadow || shadow.status === 'pending' ? 'Needs shadow evidence first' : undefined}
+              onClick={() => void markDone('shadow-prove')}
+              style={{ marginTop: '0.5rem' }}
+            >
+              Mark proven &amp; continue
+            </button>
           </div>
         ) : null}
 

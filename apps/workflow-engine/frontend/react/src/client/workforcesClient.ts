@@ -205,3 +205,26 @@ export async function searchWorkforceTrace(workforceId: string, q: string): Prom
   );
   return asJson<TraceSearchResult>(res, 'searchWorkforceTrace');
 }
+
+// ── shadow & prove (EP1 MG-5 / EV-4 — RFC 0090 pilot) ──────────────────────
+
+export interface ShadowDivergence {
+  key: string;
+  agentDigest: string;
+  baselineDigest: string;
+}
+export interface ShadowComparison {
+  workforceId: string;
+  status: 'agree' | 'diverge' | 'pending';
+  baseline: { mode: 'external' | 'replay'; runId: string | null };
+  agreementRate: number;
+  overrideRate: number;
+  divergenceCount: number;
+  divergences: ShadowDivergence[];
+}
+
+/** RFC 0090 ShadowComparison over the workforce's runs (host-extension pilot). */
+export async function getWorkforceShadow(workforceId: string): Promise<ShadowComparison> {
+  const res = await fetch(`${base}/${encodeURIComponent(workforceId)}/shadow`, fetchOpts({ headers: authedHeaders() }));
+  return asJson<ShadowComparison>(res, 'getWorkforceShadow');
+}

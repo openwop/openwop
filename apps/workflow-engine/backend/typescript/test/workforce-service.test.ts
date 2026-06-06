@@ -9,6 +9,7 @@ import {
   __clearWorkforces,
   aggregateAutonomyGraduation,
   aggregateGovernancePosture,
+  aggregateShadowComparison,
   aggregateWorkforceMetrics,
   getWorkforce,
   listWorkforces,
@@ -212,5 +213,33 @@ describe('workforceService', () => {
       runs.filter((r) => (r.metadata as { workforceId?: string }).workforceId === id).length;
     expect(byWf(HERO)).toBe(10);
     expect(byWf('workforce.support.escalation-triage')).toBe(0); // template — no history
+  });
+
+  it('shadow comparison: content-free divergence digests, no raw values', async () => {
+    await seedWorkforceEntities();
+    await seedWorkforceHistory(storage, 'demo', { nowMs: NOW, runCount: 300 });
+    const runs = await storage.listRuns({ tenantId: 'demo', limit: 5000 });
+
+    const c = aggregateShadowComparison(runs, HERO);
+    expect(c.status).not.toBe('pending');
+    expect(c.agreementRate).toBeGreaterThan(0);
+    expect(c.agreementRate).toBeLessThanOrEqual(1);
+    expect(c.divergenceCount).toBeGreaterThanOrEqual(c.divergences.length);
+
+    for (const d of c.divergences) {
+      // digests differ (that IS the divergence) and are sha256-prefixed
+      expect(d.agentDigest).toMatch(/^sha256:/);
+      expect(d.baselineDigest).toMatch(/^sha256:/);
+      expect(d.agentDigest).not.toBe(d.baselineDigest);
+    }
+    // content-free: the serialized divergences carry NO raw outcome value
+    const blob = JSON.stringify(c.divergences);
+    expect(blob).not.toMatch(/overridden|false-positive|cleared/);
+  });
+
+  it('shadow comparison is pending for a workforce with no runs', async () => {
+    const c = aggregateShadowComparison([], 'workforce.nonexistent');
+    expect(c.status).toBe('pending');
+    expect(c.divergences).toHaveLength(0);
   });
 });
