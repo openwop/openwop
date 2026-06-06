@@ -29,6 +29,7 @@
 import { describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
 import { experimentalGate } from '../lib/behavior-gate.js';
+import { __resetEnvCacheForTests } from '../lib/env.js';
 import { capabilityFamily } from '../lib/discovery-capabilities.js';
 
 const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
@@ -180,6 +181,12 @@ describe.skipIf(HTTP_SKIP)('experimental-tier-shape: §D experimentalGate helper
   it('experimentalGate routes through behaviorGate when tier === undefined or "stable"', () => {
     const prevReqBeh = process.env.OPENWOP_REQUIRE_BEHAVIOR;
     delete process.env.OPENWOP_REQUIRE_BEHAVIOR;
+    // behaviorGate/experimentalGate read a memoized loadEnv() snapshot. Under a
+    // strict suite run (e.g. the conformance-soak sets OPENWOP_REQUIRE_BEHAVIOR=true
+    // process-wide) an earlier scenario has already cached requireBehavior=true, so
+    // the delete above is a no-op against the cache and the default-mode assertions
+    // below would wrongly throw. Bust the memo so this self-test sees default mode.
+    __resetEnvCacheForTests();
     try {
       // Stable + advertised → proceed.
       expect(experimentalGate('test-stable', true, 'stable')).toBe(true);
@@ -188,6 +195,10 @@ describe.skipIf(HTTP_SKIP)('experimental-tier-shape: §D experimentalGate helper
       expect(experimentalGate('test-not-adv', false, 'stable')).toBe(false);
     } finally {
       if (prevReqBeh !== undefined) process.env.OPENWOP_REQUIRE_BEHAVIOR = prevReqBeh;
+      // Restore the real env into the memo so later scenarios gate correctly (a
+      // leaked default-mode cache would turn their strict behaviorGates into
+      // silent soft-skips — a coverage hole).
+      __resetEnvCacheForTests();
     }
   });
 });
