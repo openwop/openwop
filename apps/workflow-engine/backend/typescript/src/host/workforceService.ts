@@ -168,6 +168,35 @@ export async function seedWorkforceHistory(
   return { workforces: seededWorkforces, runs: seededRuns };
 }
 
+/**
+ * Self-healing boot seed of the read-only {@link SHOWCASE_TENANT} (architect
+ * Option B). The workforce dashboards' showcase fallback reads only workforce
+ * runs, so this seeds only those. Idempotent on COMPLETENESS: if the showcase
+ * already holds the full expected history it's a cheap no-op (one `listRuns`);
+ * otherwise it clears any partial and reseeds fresh, so an interrupted seed
+ * self-heals on the next boot. Runs at server startup (see index.ts `main()`),
+ * OUTSIDE the request/proxy budget — the ~60s Firebase proxy ceiling is why an
+ * in-request showcase seed (alongside the caller's already-~50s full reseed) is
+ * unreliable. Persisted in shared storage, so once complete every later boot is
+ * a fast skip.
+ */
+export async function seedShowcaseWorkforces(
+  storage: Storage,
+  nowMs: number,
+): Promise<{ runs: number; healed: boolean }> {
+  await seedWorkforceEntities();
+  const expected = seedDefs.reduce((n, w) => n + (w.historyRunCount ?? 0), 0);
+  const existing = await storage.listRuns({ tenantId: SHOWCASE_TENANT, limit: 5000 });
+  const have = existing.filter(
+    (r) => (r.metadata as { workforceId?: string }).workforceId,
+  ).length;
+  if (expected > 0 && have === expected) return { runs: have, healed: false };
+  // Empty or partial → clear any stale runs and reseed to the full history.
+  for (const r of existing) await storage.deleteRun(r.runId);
+  const res = await seedWorkforceHistory(storage, SHOWCASE_TENANT, { nowMs });
+  return { runs: res.runs, healed: true };
+}
+
 /** Test-only: drop the persisted workforce collection. */
 export async function __clearWorkforces(): Promise<void> {
   await workforces.__clear();

@@ -31,6 +31,7 @@ import { ensureRegistryPacksInstalled } from './bootstrap/installRegistryPacks.j
 import { ensureLocalPacksMounted } from './bootstrap/mountLocalPacks.js';
 import { loadPromptPacks, defaultPromptPackRoots } from './host/promptPackLoader.js';
 import { seedDefaultHostSurfaces } from './bootstrap/hostSurfaceRegistry.js';
+import { seedShowcaseWorkforces } from './host/workforceService.js';
 import { initInMemorySurfaces } from './host/inMemorySurfaces.js';
 import { setChatStorage } from './host/chatSurface.js';
 import { openStorage } from './storage/index.js';
@@ -330,6 +331,20 @@ async function main(): Promise<void> {
   // to this instance id so a crash lets another instance re-claim it.
   const storage = app.locals.storage as Storage;
   const hostSuite = app.locals.hostSuite as HostAdapterSuite;
+
+  // Always-on workforce demo: self-healing boot seed of the read-only
+  // `__showcase__` tenant the dashboards fall back to (architect Option B).
+  // Server-only (NOT in createApp, so tests don't pay it). Idempotent — a cheap
+  // no-op once complete; best-effort so a seed failure never blocks boot. Runs
+  // here, outside the ~60s proxy budget that makes an in-request showcase seed
+  // unreliable on top of the caller's already-~50s full reseed.
+  try {
+    const sc = await seedShowcaseWorkforces(storage, Date.now());
+    if (sc.healed) log.info('showcase_workforces_seeded', { runs: sc.runs });
+  } catch (err) {
+    log.warn('showcase_seed_failed', { reason: err instanceof Error ? err.message : String(err) });
+  }
+
   const webhookWorker = startWebhookDeliveryWorker(storage, `webhook-${getInstanceId()}`);
   const runSweeper = startRunDispatchSweeper({ storage, hostSuite });
   // Wall-clock scheduler: fires durable scheduled jobs on their cadence. Each

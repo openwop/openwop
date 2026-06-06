@@ -1,16 +1,20 @@
 /**
- * Always-on demo: the workforce dashboards fall back to the read-only
- * `__showcase__` tenant when the caller has no runs of their own, and the
- * reseed button (POST /v1/host/sample/demo/seed {heal:true}) also seeds
- * `__showcase__`. So after an admin reseeds, every visitor — including a brand
- * new tenant with zero runs — sees populated telemetry, with no per-visitor seed.
+ * Always-on demo: once the read-only `__showcase__` tenant is seeded (at server
+ * startup via seedShowcaseWorkforces — architect Option B), the workforce
+ * dashboards fall back to it for any caller with no runs of their own. So a
+ * brand-new tenant with zero runs sees populated telemetry, with no per-visitor
+ * seed.
  *
- * Covers routes/workforces.ts §dashboardRuns + routes/agentOps.ts §demo/seed.
+ * Covers host/workforceService.ts §seedShowcaseWorkforces + routes/workforces.ts
+ * §dashboardRuns. (The boot-seed lives in index.ts `main()`, which tests don't
+ * run, so we seed the showcase directly here.)
  */
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import http from 'node:http';
 import { createApp } from '../src/index.js';
+import type { Storage } from '../src/storage/storage.js';
+import { seedShowcaseWorkforces } from '../src/host/workforceService.js';
 
 let server: http.Server;
 const PORT = 18642;
@@ -20,7 +24,7 @@ const HERO = 'workforce.finance.invoice-exception';
 beforeAll(async () => {
   process.env.OPENWOP_STORAGE_DSN = 'memory://';
   // Cookies ENABLED so a no-auth request mints a fresh anon tenant (the "visitor"
-  // with zero runs) — distinct from the `sample-token` API-key tenant used to seed.
+  // with zero runs of its own).
   delete process.env.OPENWOP_AUTH_DISABLE_COOKIES;
   const app = await createApp({
     port: PORT,
@@ -29,6 +33,8 @@ beforeAll(async () => {
     serviceVersion: '0.0.1',
     enableConsoleTracer: false,
   });
+  // Stand in for the server-only boot seed (index.ts `main()`).
+  await seedShowcaseWorkforces(app.locals.storage as Storage, 1_750_000_000_000);
   await new Promise<void>((res) => {
     server = app.listen(PORT, res);
   });
@@ -39,17 +45,7 @@ afterAll(async () => {
 });
 
 describe('workforce dashboards — showcase fallback (always-on demo)', () => {
-  it('an admin reseed seeds __showcase__, and a fresh tenant sees it via the fallback', async () => {
-    // Admin clicks "reseed" (heal). This seeds the admin's own tenant AND the
-    // read-only __showcase__ tenant (best-effort, tied to the same button).
-    const seed = await fetch(`${BASE}/v1/host/sample/demo/seed`, {
-      method: 'POST',
-      headers: { authorization: 'Bearer sample-token', 'content-type': 'application/json' },
-      body: JSON.stringify({ heal: true }),
-    });
-    expect(seed.status).toBe(200);
-    expect(((await seed.json()) as { workforceRuns: number }).workforceRuns).toBe(300);
-
+  it('a fresh tenant with zero runs sees the seeded __showcase__ via the fallback', async () => {
     // A fresh anon visitor (no auth → minted empty tenant) has zero runs of its
     // own, so it must fall back to __showcase__ — totalRuns is the showcase's, not 0.
     const visitor = await fetch(`${BASE}/v1/host/sample/workforces/${HERO}/metrics`);
