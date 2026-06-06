@@ -53,6 +53,7 @@ import { registerAgentPackRegistryRoutes } from './agentPackRegistry.js';
 import { registerSchedulerRoutes } from './scheduler.js';
 import { registerRosterRoutes } from './roster.js';
 import { registerOrgChartRoutes } from './orgChart.js';
+import { registerWorkforceRoutes } from './workforces.js';
 import { registerAccessControlRoutes } from './accessControl.js';
 import { registerKanbanRoutes } from './kanban.js';
 import { registerAgentOpsRoutes } from './agentOps.js';
@@ -150,6 +151,9 @@ const ROUTE_MODULES: RouteModule[] = [
   // Agent org-chart — RFCS/0087 reference impl (departments/roles/reportsTo
   // over roster members; descriptive only, confers no authority).
   { name: 'orgChart', register: ({ app }) => registerOrgChartRoutes(app) },
+  // Governed Workforce (EP0) — read-only entity + telemetry over the caller's
+  // runs. Vendor-neutral host extension; no spec/wire change.
+  { name: 'workforces', register: ({ app, storage }) => registerWorkforceRoutes(app, { storage }) },
   // Organizations / teams / members + role-based access — sample host-extension
   // (non-normative). Roles map to RFC 0049 scopes; a SEPARATE layer from the
   // descriptive org-chart above (org position still confers no authority).

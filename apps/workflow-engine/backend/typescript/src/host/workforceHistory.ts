@@ -210,6 +210,8 @@ export function generateWorkforceHistory(opts: WorkforceHistoryOptions): Workfor
     const annotations: AnnotationRecord[] = [];
     let cursor = 0; // ms offset within the run
     let seq = 0;
+    let costUsd = 0; // accumulated provider cost — stashed in metadata so the
+    //                  /metrics endpoint aggregates from runs alone (no N+1).
     const ev = (type: string, payload: unknown, nodeId?: string): void => {
       cursor += 1000 + Math.floor(rng() * 4000);
       events.push({
@@ -231,13 +233,15 @@ export function generateWorkforceHistory(opts: WorkforceHistoryOptions): Workfor
       const outTok = 80 + Math.floor(rng() * 600);
       // cost drifts DOWN across the window (cheaper models / fewer retries as it matures)
       const rate = 0.0000025 * (1 - 0.35 * (i / runCount));
+      const cost = Number(((inTok + outTok) * rate).toFixed(6));
+      costUsd += cost;
       ev('provider.usage', {
         provider: 'anthropic',
         model: 'mock-ai',
         inputTokens: inTok,
         outputTokens: outTok,
         totalTokens: inTok + outTok,
-        costEstimateUsd: Number(((inTok + outTok) * rate).toFixed(6)),
+        costEstimateUsd: cost,
       }, node);
       ev('node.completed', { nodeId: node }, node);
     }
@@ -307,7 +311,13 @@ export function generateWorkforceHistory(opts: WorkforceHistoryOptions): Workfor
       tenantId,
       status,
       inputs: { invoiceRef: makeId('inv', seed, i) },
-      metadata: { workforceId, outcome, autonomyPhase: phase.autonomy },
+      metadata: {
+        workforceId,
+        outcome,
+        autonomyPhase: phase.autonomy,
+        costUsd: Number(costUsd.toFixed(6)),
+        cycleMs: cursor,
+      },
       configurable: {},
       createdAt,
       updatedAt: lastTs,
