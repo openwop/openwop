@@ -158,15 +158,14 @@ else
   ok "$PYPROJECT version is $EXPECTED_V1_VERSION."
 fi
 
-# 9. Example and site packages are not publishable artifacts, but they are
-#    part of the public release surface. Keep them under the OpenWOP scope,
-#    pinned to the v1.0 baseline, and private so npm publish workflows cannot
-#    accidentally ship demos or generated site assets.
-echo "[9/12] example/site package release metadata..."
+# 9. Example packages are not publishable artifacts, but they are part of the
+#    public release surface. Keep them under the OpenWOP scope, pinned to the
+#    v1.0 baseline, and private so npm publish workflows cannot accidentally
+#    ship demos. (The site package moved to the openwop/openwop-site repo.)
+echo "[9/12] example package release metadata..."
 for PKG in \
   "$SPEC_ROOT"/examples/*/package.json \
-  "$SPEC_ROOT"/examples/hosts/*/package.json \
-  "$SPEC_ROOT"/site/package.json; do
+  "$SPEC_ROOT"/examples/hosts/*/package.json; do
   PKG_NAME=$(grep -E '"name":' "$PKG" | head -1 | sed -E 's/.*"name":[[:space:]]*"([^"]+)".*/\1/')
   PKG_VERSION=$(grep -E '"version":' "$PKG" | head -1 | sed -E 's/.*"version":[[:space:]]*"([^"]+)".*/\1/')
   if [[ "$PKG_NAME" != ${EXPECTED_NPM_SCOPE}/* ]]; then
