@@ -15,6 +15,7 @@
  * VENDOR-NEUTRAL: no external-framework branding in names or content.
  */
 
+import { createHash } from 'node:crypto';
 import { DurableCollection } from './hostExtPersistence.js';
 import { createLogger } from '../observability/logger.js';
 import type { Storage } from '../storage/storage.js';
@@ -468,4 +469,71 @@ export function searchWorkforceTrace(
     };
   });
   return { query, matches, scanned: mine.length, capped: hits.length > matches.length };
+}
+
+// ---- shadow & prove comparison (EP1 MG-5 / EV-4 — RFC 0090 pilot) ----------
+//
+// Host-extension PILOT of RFC 0090's ShadowComparison shape (`shadow-run.md §D`).
+// It does NOT implement the core wire surface (capabilities.shadow + the
+// run-creation `shadow` field + baseline-leg execution) — that is the
+// reference-host follow-up that flips RFC 0090 to Accepted. Here we surface the
+// comparison over the workforce's existing runs, framing the human override as
+// the baseline: the agent "agreed" with the baseline when its decision stood
+// (clean / escalated→approved) and "diverged" when a human overrode it or it
+// was later flagged a false positive. Content-free per RFC 0090 §Security:
+// divergences carry DIGESTS, never raw output values.
+
+export interface ShadowDivergence {
+  key: string;
+  agentDigest: string;
+  baselineDigest: string;
+}
+export interface ShadowComparison {
+  workforceId: string;
+  status: 'agree' | 'diverge' | 'pending';
+  baseline: { mode: 'external' | 'replay'; runId: string | null };
+  agreementRate: number;
+  overrideRate: number;
+  divergenceCount: number;
+  divergences: ShadowDivergence[];
+}
+
+function shadowDigest(s: string): string {
+  return `sha256:${createHash('sha256').update(s).digest('hex').slice(0, 16)}`;
+}
+
+const SHADOW_AGREE = new Set(['clean', 'escalated']);
+const SHADOW_DIVERGE = new Set(['overridden', 'false-positive']);
+
+export function aggregateShadowComparison(
+  runs: readonly { runId: string; status: string; metadata: Record<string, unknown> }[],
+  workforceId: string,
+  limit = 20,
+): ShadowComparison {
+  const mine = runs.filter((r) => (r.metadata as RunMeta).workforceId === workforceId);
+  const outcome = (r: (typeof mine)[number]): string => (r.metadata as RunMeta).outcome ?? '';
+
+  const agree = mine.filter((r) => SHADOW_AGREE.has(outcome(r)));
+  const diverge = mine.filter((r) => SHADOW_DIVERGE.has(outcome(r)));
+  const decided = agree.length + diverge.length;
+
+  const approvalRequested = mine.filter((r) => APPROVAL_OUTCOMES.has(outcome(r))).length;
+  const overridden = mine.filter((r) => outcome(r) === 'overridden').length;
+
+  const divergences: ShadowDivergence[] = diverge.slice(0, limit).map((r) => ({
+    key: r.runId,
+    // digests differ — that IS the divergence; raw values never leave the host.
+    agentDigest: shadowDigest(`agent:${outcome(r)}:${r.runId}`),
+    baselineDigest: shadowDigest(`baseline:${outcome(r)}:${r.runId}`),
+  }));
+
+  return {
+    workforceId,
+    status: decided === 0 ? 'pending' : agree.length / decided >= 0.9 ? 'agree' : 'diverge',
+    baseline: { mode: 'external', runId: null },
+    agreementRate: decided ? Number((agree.length / decided).toFixed(4)) : 0,
+    overrideRate: approvalRequested ? Number((overridden / approvalRequested).toFixed(4)) : 0,
+    divergenceCount: diverge.length,
+    divergences,
+  };
 }
