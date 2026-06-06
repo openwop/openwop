@@ -1,6 +1,8 @@
 # Migration: extract the public site into `openwop-site`
 
-**Status:** plan — approved approach, not yet executed.
+**Status:** in progress — `openwop/openwop-site` created, history carved, and CI
+wired at the `v1.1.7` pin (Phases 0–4 done). Remaining: decommission in
+`openwop/openwop` (Phase 7) and the Phase-6 cutover. See §11.
 **Goal:** move the marketing/spec website out of `openwop/openwop` into a new
 `openwop-site` repo, leaving `openwop/openwop` as a clean, protocol-only source
 of truth that gains nothing and owes nothing to the website.
@@ -272,10 +274,25 @@ packs — with no knowledge that a website renders it.
 
 ---
 
-## 11. Outstanding outward-facing step (requires explicit go-ahead)
+## 11. Progress
 
-Creating the `openwop-site` GitHub repo, running the `git filter-repo` history
-carve, and the first push are outward-facing actions not yet taken.
+**Done (Phases 0–4):**
+- `openwop/openwop-site` created (public); `public/`+`site/`+scripts carved with
+  full history preserved (1537→108 commits).
+- Generator decoupled (`ROOT`/`CORPUS` → pinned `vendor/openwop`); only the 19
+  hand-authored files committed; generated output gitignored + rebuilt from the pin.
+- `OPENWOP_REF=v1.1.7` + `openwop-ref.lock`; canonicity + geometry gate.
+- CI: `build.yml` (gate), `deploy.yml` (WIF, gated on `ALLOW_DEPLOY`),
+  `pin-bump.yml` (pull-based).
+
+**Remaining:**
+- **Operator setup** before deploys run: extend the WIF SA binding to
+  `openwop/openwop-site` and set repo var `ALLOW_DEPLOY=1` (commands in
+  `openwop-site/.github/workflows/deploy.yml`).
+- **White-label zip** wiring (Decision 3) — builds currently pass `SKIP_WHITELABEL=1`.
+- **Phase 6 cutover** — deploy `docs` from `openwop-site` → byte-parity diff vs
+  live → promote → disable openwop's `docs` deploy.
+- **Phase 7 decommission** in `openwop/openwop` (this repo) per §10.
 
 ---
 
