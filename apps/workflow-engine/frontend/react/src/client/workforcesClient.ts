@@ -206,25 +206,28 @@ export async function searchWorkforceTrace(workforceId: string, q: string): Prom
   return asJson<TraceSearchResult>(res, 'searchWorkforceTrace');
 }
 
-// ── shadow & prove (EP1 MG-5 / EV-4 — RFC 0090 pilot) ──────────────────────
+// ── shadow & prove (EP1 MG-5 — RFC 0081 `live-shadow` EvalSummary, host-ext pilot) ─
 
-export interface ShadowDivergence {
+export interface ShadowFinding {
   key: string;
   agentDigest: string;
   baselineDigest: string;
 }
-export interface ShadowComparison {
+/** Mirrors RFC 0081's `EvalSummary` (live-shadow mode), simplified. */
+export interface ShadowEvalSummary {
   workforceId: string;
-  status: 'agree' | 'diverge' | 'pending';
-  baseline: { mode: 'external' | 'replay'; runId: string | null };
-  agreementRate: number;
+  mode: 'live-shadow';
+  aggregateScore: number; // agreement with baseline ∈ [0,1]
+  passed: boolean;
+  status: 'pass' | 'fail' | 'pending';
   overrideRate: number;
   divergenceCount: number;
-  divergences: ShadowDivergence[];
+  findings: ShadowFinding[];
+  baseline: { mode: 'external'; runId: string | null };
 }
 
-/** RFC 0090 ShadowComparison over the workforce's runs (host-extension pilot). */
-export async function getWorkforceShadow(workforceId: string): Promise<ShadowComparison> {
+/** RFC 0081 live-shadow EvalSummary over the workforce's runs (host-ext pilot). */
+export async function getWorkforceShadow(workforceId: string): Promise<ShadowEvalSummary> {
   const res = await fetch(`${base}/${encodeURIComponent(workforceId)}/shadow`, fetchOpts({ headers: authedHeaders() }));
-  return asJson<ShadowComparison>(res, 'getWorkforceShadow');
+  return asJson<ShadowEvalSummary>(res, 'getWorkforceShadow');
 }

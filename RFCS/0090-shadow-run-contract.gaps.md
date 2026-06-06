@@ -2,6 +2,8 @@
 
 Companion to `0090-shadow-run-contract.md`. Open questions, deferred decisions, and missing inputs beyond the in-template Unresolved questions. Each gap has an owner + resolution path.
 
+> **RECONCILED 2026-06-06.** The RFC was returned to `Draft` and re-scoped to compose RFC 0081 (`live-shadow` eval + `EvalSummary`) + RFC 0082 (promotion gate) + RFC 0054 (diff) instead of inventing a parallel `capabilities.shadow` / `shadow.*` / `ShadowComparison` surface. Gaps G1–G8 below were written against that removed surface and are **superseded** by the single open question (Unresolved Q1): *is there any net-new wire surface, or does this RFC fully fold into RFC 0081 §D + RFC 0082 §E?* They are retained only for history.
+
 | ID | Section | Question / Missing Input | Owner | Resolution Path | Blocks |
 |---|---|---|---|---|---|
 | G1 | Proposal §B | External-baseline ingestion shape — `outcome` supplied at run creation only, or also a post-hoc callback (push the legacy result after the agent run)? No pilot has exercised the callback path. | Spec Architect | Decide during comment window; default to at-creation `outcome` for v1, add callback as a follow-up if the invoice-exception pilot needs it. | `Active` (changes the `shadow.baseline` schema if callback is added) |
