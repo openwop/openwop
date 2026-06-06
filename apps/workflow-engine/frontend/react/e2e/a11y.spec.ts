@@ -32,6 +32,11 @@ for (const theme of ['light', 'dark'] as const) {
       await page.goto(route);
       await page.waitForSelector('main#main-content');
       await setTheme(page, theme);
+      // Let data fetches + AutoSeedDemoData re-renders settle before axe —
+      // capturing mid-fetch/mid-seed measures a transient render and reports
+      // false contrast failures (e.g. a board column briefly on default colors).
+      // NOTE: not networkidle — the live backend's SSE/polling never goes idle.
+      await page.waitForTimeout(1200);
       const results = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa'])
         .analyze();
