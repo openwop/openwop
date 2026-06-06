@@ -123,10 +123,29 @@ export async function seedWorkforceHistory(
       runCount,
       weeks: WEEKS,
     });
+    let annotationStoreUnavailable = false;
     for (const gr of history.runs) {
       await storage.insertRun(gr.record);
       for (const ev of gr.events) await storage.appendEvent(ev);
-      for (const ann of gr.annotations) await storage.insertAnnotation(ann);
+      // Annotations (RFC 0056 flavor) are BEST-EFFORT: the workforce surface
+      // reads `metadata.outcome`, never annotation records, so a backend without
+      // an annotations store (e.g. a Postgres deploy whose schema omits the
+      // table) must not abort the demo seed. Skip on first failure, don't retry.
+      if (!annotationStoreUnavailable) {
+        for (const ann of gr.annotations) {
+          try {
+            await storage.insertAnnotation(ann);
+          } catch (err) {
+            annotationStoreUnavailable = true;
+            log.warn('workforce_seed_annotations_skipped', {
+              tenantId,
+              workforceId: w.workforceId,
+              reason: err instanceof Error ? err.message : String(err),
+            });
+            break;
+          }
+        }
+      }
     }
     seededWorkforces++;
     seededRuns += history.runs.length;
