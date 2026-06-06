@@ -159,7 +159,8 @@ export function roleThemeForKey(key: string | undefined): RoleTheme {
 export function roleKeyForAgent(agentId: string | undefined, workflows: ReadonlyArray<string>): string {
   if (agentId) {
     const m = /^host:demo-(.+)$/.exec(agentId);
-    if (m && ROLE_THEMES[m[1]]) return m[1];
+    const key = m?.[1];
+    if (key && ROLE_THEMES[key]) return key;
   }
   // Infer from the portfolio: the template whose workflows overlap the most.
   let best: { key: string; hits: number } | null = null;

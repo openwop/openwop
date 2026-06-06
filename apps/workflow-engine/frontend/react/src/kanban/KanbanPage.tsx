@@ -148,7 +148,7 @@ export function KanbanPage(): JSX.Element {
   // Auto-open the first board so the page never greets with an empty shell
   // (decision-first: show the work, not a picker).
   useEffect(() => {
-    if (!activeBoard && boards.length > 0) void openBoard(boards[0].id);
+    if (!activeBoard && boards[0]) void openBoard(boards[0].id);
   }, [boards, activeBoard, openBoard]);
 
   // Live refresh: while a board is open, refetch on any change (this client's

@@ -239,7 +239,7 @@ const MATCHABLE = FEATURES.map((f) => ({ path: f.path }));
 export function featureFor(pathname: string): FeatureRoute | null {
   const matches = matchRoutes(MATCHABLE, pathname);
   if (!matches || matches.length === 0) return null;
-  const matchedPath = matches[matches.length - 1].route.path;
+  const matchedPath = matches[matches.length - 1]?.route.path;
   return FEATURES.find((f) => f.path === matchedPath) ?? null;
 }
 

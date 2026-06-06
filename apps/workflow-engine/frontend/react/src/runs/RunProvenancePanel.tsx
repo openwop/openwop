@@ -143,10 +143,11 @@ export function summarizeProvenance(
   }
 
   // Fall back to the event-log span when the snapshot omits timing.
-  if (!startedAt && events.length > 0) startedAt = events[0].timestamp;
-  if (!completedAt && events.length > 0) {
-    const last = events[events.length - 1];
-    if (['run.completed', 'run.failed', 'run.cancelled'].includes(last.type)) completedAt = last.timestamp;
+  const firstEvent = events[0];
+  if (!startedAt && firstEvent) startedAt = firstEvent.timestamp;
+  const lastEvent = events[events.length - 1];
+  if (!completedAt && lastEvent && ['run.completed', 'run.failed', 'run.cancelled'].includes(lastEvent.type)) {
+    completedAt = lastEvent.timestamp;
   }
   const durationMs = startedAt && completedAt
     ? Math.max(0, new Date(completedAt).getTime() - new Date(startedAt).getTime())
