@@ -2023,21 +2023,9 @@ pre {
 }
 
 /* Token & cost table (RFC 0026 provider.usage rollup) */
-.cost-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-  margin-top: var(--space-2);
-}
-.cost-table th,
-.cost-table td {
-  padding: 4px 8px;
-  text-align: left;
-  border-bottom: 1px solid var(--rule);
-}
-.cost-table th { font-weight: 600; color: var(--ink-3); }
-.cost-table .num { text-align: right; font-variant-numeric: tabular-nums; }
-.cost-bar-col { width: 80px; }
+/* (.cost-table table styling removed — RunCostPanel now uses <DataTable>;
+ *  the cost bar below + the tabular-nums utility are still used by it.) */
+.tabular-nums { font-variant-numeric: tabular-nums; }
 .cost-bar {
   display: block;
   height: 8px;
