@@ -24,6 +24,7 @@ import {
   aggregateWorkforceMetrics,
   getWorkforce,
   listWorkforces,
+  searchWorkforceTrace,
   setWorkforceStatus,
 } from '../host/workforceService.js';
 import type { WorkforceStatus } from '../host/workforce.js';
@@ -200,6 +201,24 @@ export function registerWorkforceRoutes(app: Express, deps: Deps): void {
         });
       }
       res.json(await patchMigrationJourney(req.params.workforceId, parseMigrationPatch(req.body)));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // GA-2 — cross-run trace/audit search by correlationId / batchId / runId /
+  // outcome / status. Single listRuns read; pure metadata search.
+  app.get('/v1/host/sample/workforces/:workforceId/trace', async (req, res, next) => {
+    try {
+      const wf = await getWorkforce(req.params.workforceId);
+      if (!wf) {
+        throw new OpenwopError('not_found', `Workforce \`${req.params.workforceId}\` not found.`, 404, {
+          workforceId: req.params.workforceId,
+        });
+      }
+      const q = typeof req.query.q === 'string' ? req.query.q : '';
+      const runs = await deps.storage.listRuns({ tenantId: tenantOf(req), limit: 5000 });
+      res.json(searchWorkforceTrace(runs, req.params.workforceId, q));
     } catch (err) {
       next(err);
     }

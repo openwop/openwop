@@ -179,3 +179,29 @@ export async function getWorkforceGovernance(workforceId: string): Promise<Workf
   const res = await fetch(`${base}/${encodeURIComponent(workforceId)}/governance`, fetchOpts({ headers: authedHeaders() }));
   return asJson<WorkforceGovernance>(res, 'getWorkforceGovernance');
 }
+
+// ── cross-run trace search (EP1 GA-2) ──────────────────────────────────────
+
+export interface TraceMatch {
+  runId: string;
+  correlationId: string | null;
+  batchId: string | null;
+  outcome: string | null;
+  status: string;
+  startedAt: string;
+}
+export interface TraceSearchResult {
+  query: string;
+  matches: TraceMatch[];
+  scanned: number;
+  capped: boolean;
+}
+
+/** Search the workforce's runs by correlationId / batchId / runId / outcome / status. */
+export async function searchWorkforceTrace(workforceId: string, q: string): Promise<TraceSearchResult> {
+  const res = await fetch(
+    `${base}/${encodeURIComponent(workforceId)}/trace?q=${encodeURIComponent(q)}`,
+    fetchOpts({ headers: authedHeaders() }),
+  );
+  return asJson<TraceSearchResult>(res, 'searchWorkforceTrace');
+}

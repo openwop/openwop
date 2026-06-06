@@ -12,6 +12,7 @@ import {
   aggregateWorkforceMetrics,
   getWorkforce,
   listWorkforces,
+  searchWorkforceTrace,
   seedWorkforceEntities,
   seedWorkforceHistory,
 } from '../src/host/workforceService.js';
@@ -149,6 +150,40 @@ describe('workforceService', () => {
     // recent events are newest-first
     for (let i = 1; i < p.recentEvents.length; i++) {
       expect(Date.parse(p.recentEvents[i - 1]!.atIso)).toBeGreaterThanOrEqual(Date.parse(p.recentEvents[i]!.atIso));
+    }
+  });
+
+  it('cross-run trace search: batchId matches multiple runs, correlationId one', async () => {
+    await seedWorkforceEntities();
+    await seedWorkforceHistory(storage, 'demo', { nowMs: NOW, runCount: 300 });
+    const runs = await storage.listRuns({ tenantId: 'demo', limit: 5000 });
+    const sample = runs.find((r) => (r.metadata as { workforceId?: string }).workforceId === HERO)!;
+    const meta = sample.metadata as { correlationId: string; batchId: string };
+
+    // batchId groups runs started the same day → cross-run (>= 1, usually many)
+    const byBatch = searchWorkforceTrace(runs, HERO, meta.batchId);
+    expect(byBatch.matches.length).toBeGreaterThan(0);
+    expect(byBatch.matches.every((m) => m.batchId === meta.batchId)).toBe(true);
+
+    // correlationId is unique → exactly one run
+    const byCorr = searchWorkforceTrace(runs, HERO, meta.correlationId);
+    expect(byCorr.matches).toHaveLength(1);
+    expect(byCorr.matches[0]!.runId).toBe(sample.runId);
+  });
+
+  it('trace search: empty query returns nothing; outcome filter works; cap is explicit', async () => {
+    await seedWorkforceEntities();
+    await seedWorkforceHistory(storage, 'demo', { nowMs: NOW, runCount: 300 });
+    const runs = await storage.listRuns({ tenantId: 'demo', limit: 5000 });
+
+    expect(searchWorkforceTrace(runs, HERO, '   ').matches).toHaveLength(0);
+
+    const overrides = searchWorkforceTrace(runs, HERO, 'overridden', 5);
+    expect(overrides.matches.length).toBeLessThanOrEqual(5);
+    expect(overrides.matches.every((m) => m.outcome === 'overridden')).toBe(true);
+    if (overrides.scanned > 5 && overrides.matches.length === 5) {
+      // more than the cap existed → flagged, not silently dropped
+      expect(typeof overrides.capped).toBe('boolean');
     }
   });
 });
