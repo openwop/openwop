@@ -24,7 +24,7 @@ The aggregate platform profile defined in `spec/v1/agent-platform-profile.md`. A
 
 ### Conformance pass rates
 
-Measured against `@openwop/openwop-conformance@1.18.1` in default mode (reference hosts 2026-06-01; workflow-engine harness 2026-06-02). Failures are honest non-claims for surfaces a host does not advertise; the durable reference hosts have **0 deterministic failures**.
+Measured against `@openwop/openwop-conformance@1.18.1` in default mode (reference hosts 2026-06-01; workflow-engine harness 2026-06-02). Failures are honest non-claims for surfaces a host does not advertise; the durable reference hosts have **0 deterministic failures**. (The published suite has since advanced to `1.20.0`; its only additions over `1.18.1` — the capability-gated `agent-channel-dispatch` scenario — soft-skip on these hosts, so applicable pass-rates are unchanged.)
 
 | Host | Passed | Failed | Skipped | Todo | Total | Pass rate (default) |
 |---|---:|---:|---:|---:|---:|---:|
