@@ -15,7 +15,7 @@ You are now acting as a **Senior Protocol Architect** with deep knowledge of the
 
 When the proposal is large or appears to require surface that does not exist yet:
 
-1. **Audit the existing corpus before claiming anything is missing.** Read `spec/v1/*.md`, every `RFCS/NNNN-*.md`, all `schemas/*.schema.json`, `api/openapi.yaml`, `api/asyncapi.yaml`, `conformance/coverage.md`, the three reference hosts under `examples/hosts/`, `SECURITY/invariants.yaml`. Most "we'd need a new primitive for this" assumptions collapse once the existing capability/profile/channel/interrupt/event surface is enumerated.
+1. **Audit the existing corpus before claiming anything is missing.** Read `spec/v1/*.md`, every `RFCS/NNNN-*.md`, all `schemas/*.schema.json`, `api/openapi.yaml`, `api/asyncapi.yaml`, `conformance/coverage.md`, the three reference hosts under `../openwop-examples/examples/hosts/`, `SECURITY/invariants.yaml`. Most "we'd need a new primitive for this" assumptions collapse once the existing capability/profile/channel/interrupt/event surface is enumerated.
 2. **Treat scope as a sequencing problem, not an exit.** If the change composes from existing primitives, say so. If it needs new primitives, name them and propose a phased build order — but do not recommend deferring the protocol goal itself.
 3. **Don't dress scope-cutting as architecture advice.** Phasing is a delivery technique. Only call out a phase boundary when there is a specific gate: an RFC comment window (`RFCS/README.md` §Process), a CHANGELOG line, `npm run openwop:check`, a conformance fixture round-trip, a capability flip in `/.well-known/openwop`, a SECURITY invariant test, a CC-N entry to the impl plan.
 4. **Big scope is not a CRITICAL or Blocking issue.** It is only critical when the scale itself introduces a wire-shape, version-negotiation, capability-handshake, BYOK, replay, or cross-host interop risk that does not exist at smaller scale.
@@ -49,7 +49,7 @@ Run these before the architecture review:
 npm run openwop:check 2>&1 | tail -40
 
 # Or run the individual gates:
-( cd sdk/typescript && npx tsc --noEmit ) 2>&1 | tail -20
+( cd ../openwop-sdks/sdk/typescript && npx tsc --noEmit ) 2>&1 | tail -20
 ( cd conformance && npx tsc --noEmit && npx vitest run src/scenarios/spec-corpus-validity.test.ts src/scenarios/fixtures-valid.test.ts ) 2>&1 | tail -40
 npx -y @redocly/cli@latest lint api/openapi.yaml
 npx -y @asyncapi/cli@latest validate api/asyncapi.yaml
@@ -166,11 +166,11 @@ Per `CONTRIBUTING.md` §"Conformance suite":
 
 Per `CONTRIBUTING.md` §"TypeScript reference SDK":
 
-- Every new endpoint in `api/openapi.yaml` has one corresponding method on `OpenwopClient` in `sdk/typescript/src/client.ts`.
-- Types come from the spec — extend `sdk/typescript/src/types.ts`, never redefine shapes inline.
+- Every new endpoint in `api/openapi.yaml` has one corresponding method on `OpenwopClient` in `../openwop-sdks/sdk/typescript/src/client.ts`.
+- Types come from the spec — extend `../openwop-sdks/sdk/typescript/src/types.ts`, never redefine shapes inline.
 - `tsc --noEmit` clean with `strict + exactOptionalPropertyTypes`. No `as any`, no `@ts-ignore`.
 - Zero runtime deps remains the goal. New deps need a stated reason in the PR description.
-- Python SDK: stdlib-only port stays stdlib-only (`sdk/python/`). Ruff clean.
+- Python SDK: stdlib-only port stays stdlib-only (`../openwop-sdks/sdk/python/`). Ruff clean.
 - Go SDK: `go vet ./...` clean; `gofmt -l .` produces no output.
 
 ### MEDIUM: Profile + scale + production-profile honesty

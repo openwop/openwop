@@ -219,7 +219,7 @@ Update `conformance/fixtures.md`:
 ( cd conformance && npx vitest run src/scenarios/spec-corpus-validity.test.ts src/scenarios/fixtures-valid.test.ts )
 
 # Full suite against a local host (in-memory reference)
-( cd examples/hosts/in-memory && npm start &
+( cd ../openwop-examples/examples/hosts/in-memory && npm start &
   sleep 2
   OPENWOP_BASE_URL=http://localhost:3000 ( cd ../../../conformance && npx vitest run )
 )
@@ -262,7 +262,7 @@ After scenarios land, the reference hosts that advertise the affected profile mu
 ```bash
 # For each host that should advertise the new surface
 for host in in-memory sqlite python; do
-  echo "Run conformance against $host, update examples/hosts/$host/conformance.md with:"
+  echo "Run conformance against $host, update ../openwop-examples/examples/hosts/$host/conformance.md with:"
   echo "  - Suite version"
   echo "  - Command used"
   echo "  - Target URL class"
@@ -365,7 +365,7 @@ Summarize:
 | `gate <flag>` | Wrap selected scenarios in `capability.requires('host.<flag>.supported')` and add a coverage.md row |
 | `bump <minor\|patch>` | Update `conformance/package.json` + CHANGELOG accordingly |
 | `verify` | Run Step 6 — typecheck + server-free + against in-memory host |
-| `evidence <host>` | Update `examples/hosts/<host>/conformance.md` with fresh pass/fail/skip counts |
+| `evidence <host>` | Update `../openwop-examples/examples/hosts/<host>/conformance.md` with fresh pass/fail/skip counts |
 | `report` | Generate the Step 9 summary |
 | `done` | Complete sync |
 

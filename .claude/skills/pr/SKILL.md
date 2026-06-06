@@ -49,12 +49,12 @@ Decide which kind of PR this is. Lane drives the title prefix, the body template
 | **Spec corpus (normative)** | `spec/v1/`, `RFCS/`, `schemas/`, `api/` | `spec(v1):` or `feat(spec):` | `openwop-spec` | Lead maintainer via CODEOWNERS |
 | **Spec corpus (editorial)** | `spec/v1/`, `RFCS/`, `schemas/`, `api/` — prose-only fixes | `docs(spec):` | `openwop-spec` | Lead maintainer via CODEOWNERS |
 | **Conformance** | `conformance/` | `feat(conformance):` / `fix(conformance):` | `openwop-spec` (suite is part of corpus) | Lead maintainer via CODEOWNERS |
-| **TS SDK** | `sdk/typescript/` | `feat(sdk-ts):` / `fix(sdk-ts):` | — | Standard review |
-| **Python SDK** | `sdk/python/` | `feat(sdk-py):` / `fix(sdk-py):` | — | Standard review |
-| **Go SDK** | `sdk/go/` | `feat(sdk-go):` / `fix(sdk-go):` | — | Standard review |
-| **Reference host** | `examples/hosts/{in-memory,sqlite,python}/` | `feat(host-<name>):` / `fix(host-<name>):` | — | Standard review |
-| **Pack / registry** | `packs/`, `registry/`, `examples/packs/` | `feat(packs):` / `feat(registry):` | — | Standard review |
-| **Site** | `site/`, `public/` | `chore(site):` / `feat(site):` | — | Standard review |
+| **TS SDK** | `../openwop-sdks/sdk/typescript/` | `feat(sdk-ts):` / `fix(sdk-ts):` | — | Standard review |
+| **Python SDK** | `../openwop-sdks/sdk/python/` | `feat(sdk-py):` / `fix(sdk-py):` | — | Standard review |
+| **Go SDK** | `../openwop-sdks/sdk/go/` | `feat(sdk-go):` / `fix(sdk-go):` | — | Standard review |
+| **Reference host** | `../openwop-examples/examples/hosts/{in-memory,sqlite,python}/` | `feat(host-<name>):` / `fix(host-<name>):` | — | Standard review |
+| **Pack / registry** | `../openwop-registry/packs/`, `../openwop-registry/registry/`, `../openwop-examples/examples/packs/` | `feat(packs):` / `feat(registry):` | — | Standard review |
+| **Site** | `../openwop-site/site/`, `../openwop-site/public/` | `chore(site):` / `feat(site):` | — | Standard review |
 | **Tooling / build** | `scripts/`, `.github/`, root `package.json` | `build:` / `chore:` | — | Standard review |
 | **Documentation** | `README.md`, `CHANGELOG.md`, `INTEROP-MATRIX.md`, `ROADMAP.md`, `GOVERNANCE.md`, `MAINTAINERS.md`, `docs/` | `docs:` | — | Standard review |
 
@@ -76,7 +76,7 @@ For each changed file, categorize:
 | API contracts (`api/`) | … | Endpoint / channel diff |
 | Conformance (`conformance/`) | … | Scenarios + fixtures added |
 | SDKs (`sdk/{typescript,python,go}/`) | … | Methods added / types updated |
-| Reference hosts (`examples/hosts/`) | … | Profile coverage delta |
+| Reference hosts (`../openwop-examples/examples/hosts/`) | … | Profile coverage delta |
 | Tests | … | What's covered |
 | Documentation | … | README / CHANGELOG / INTEROP-MATRIX / ROADMAP |
 | Config / build | … | scripts, workflows |
@@ -94,8 +94,8 @@ Run the same 8-step gate CI will run:
 npm run openwop:check 2>&1 | tee /tmp/pr-precheck.log
 
 # Per-SDK lint (PR check):
-( cd sdk/python && ruff check . ) 2>&1 | tail -10
-( cd sdk/go && go vet ./... && gofmt -l . ) 2>&1 | tail -10
+( cd ../openwop-sdks/sdk/python && ruff check . ) 2>&1 | tail -10
+( cd ../openwop-sdks/sdk/go && go vet ./... && gofmt -l . ) 2>&1 | tail -10
 
 # DCO: every commit signed?
 git log origin/main..HEAD --format='%H %s' | while read sha subject; do
@@ -145,11 +145,11 @@ If any of these fail, **fix before opening the PR**. The DCO bot blocks merge un
 - [ ] `conformance/coverage.md` updated
 
 ## SDK + reference host
-- [ ] `sdk/typescript/src/client.ts` — new method on `OpenwopClient` (if endpoint added)
-- [ ] `sdk/typescript/src/types.ts` — types extended from spec
-- [ ] `sdk/python/src/openwop_client/` — Python method addition (stdlib-only)
-- [ ] `sdk/go/` — Go method addition; `go vet` + `gofmt` clean
-- [ ] `examples/hosts/<name>/` — reference host implements + advertises in `conformance.md`
+- [ ] `../openwop-sdks/sdk/typescript/src/client.ts` — new method on `OpenwopClient` (if endpoint added)
+- [ ] `../openwop-sdks/sdk/typescript/src/types.ts` — types extended from spec
+- [ ] `../openwop-sdks/sdk/python/src/openwop_client/` — Python method addition (stdlib-only)
+- [ ] `../openwop-sdks/sdk/go/` — Go method addition; `go vet` + `gofmt` clean
+- [ ] `../openwop-examples/examples/hosts/<name>/` — reference host implements + advertises in `conformance.md`
 - [ ] `INTEROP-MATRIX.md` — row updated if advertisement changes
 
 ## SECURITY invariants
@@ -159,7 +159,7 @@ If any of these fail, **fix before opening the PR**. The DCO bot blocks merge un
 
 ## Test plan
 - [ ] `npm run openwop:check` passes (8/8 green)
-- [ ] `( cd sdk/typescript && npx tsc --noEmit )` clean
+- [ ] `( cd ../openwop-sdks/sdk/typescript && npx tsc --noEmit )` clean
 - [ ] `( cd conformance && npx vitest run )` server-free subset green
 - [ ] `redocly lint api/openapi.yaml` clean
 - [ ] `asyncapi validate api/asyncapi.yaml` clean
@@ -193,14 +193,14 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 - [ ] No spec corpus changes (`spec/v1/`, `api/`, `schemas/`, `RFCS/` untouched)
 
 ## Test plan
-- [ ] TS: `( cd sdk/typescript && npx tsc --noEmit && npm test )`
-- [ ] Python: `ruff check sdk/python/` + `python -m unittest discover sdk/python/tests`
-- [ ] Go: `( cd sdk/go && go vet ./... && go test ./... && gofmt -l . )`
+- [ ] TS: `( cd ../openwop-sdks/sdk/typescript && npx tsc --noEmit && npm test )`
+- [ ] Python: `ruff check ../openwop-sdks/sdk/python/` + `python -m unittest discover ../openwop-sdks/sdk/python/tests`
+- [ ] Go: `( cd ../openwop-sdks/sdk/go && go vet ./... && go test ./... && gofmt -l . )`
 - [ ] Conformance run against affected host (if applicable)
 - [ ] `INTEROP-MATRIX.md` row updated (if advertisement changes)
 
 ## CHANGELOG
-- [ ] `sdk/typescript/CHANGELOG.md` or `conformance/CHANGELOG.md` line added (if package version will bump)
+- [ ] `../openwop-sdks/sdk/typescript/CHANGELOG.md` or `conformance/CHANGELOG.md` line added (if package version will bump)
 
 ---
 Signed-off-by: David Tufts <email@davidtufts.me>

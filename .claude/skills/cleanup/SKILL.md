@@ -81,7 +81,7 @@ RFCs are **the historical record**. Per `RFCS/README.md`: "Numbers are not reuse
 
 The CHANGELOG is the canonical compatibility record. Older entries may look stale but they document the wire contract's evolution. **Never delete past-release blocks.** Only consolidate within `[Unreleased]` when the same artifact has multiple line entries.
 
-### 7. Reference-host evidence files (`examples/hosts/*/conformance.md`)
+### 7. Reference-host evidence files (`../openwop-examples/examples/hosts/*/conformance.md`)
 
 These are the public conformance evidence for each reference host. Don't delete; update with current suite version, command, target URL class, pass/fail/skip counts when re-running the suite.
 
@@ -118,7 +118,7 @@ For each `schemas/*.schema.json`:
 ```bash
 for schema in schemas/*.schema.json; do
   name=$(basename "$schema")
-  count=$(grep -rln "$name" api/ schemas/ conformance/src/ RFCS/ spec/v1/ sdk/ examples/ scripts/ 2>/dev/null | grep -v "^$schema$" | wc -l)
+  count=$(grep -rln "$name" api/ schemas/ conformance/src/ RFCS/ spec/v1/ sdk/ ../openwop-examples/examples/ scripts/ 2>/dev/null | grep -v "^$schema$" | wc -l)
   if [[ "$count" -eq 0 ]]; then
     echo "ORPHAN: $schema (no $refs found)"
   fi
@@ -171,7 +171,7 @@ Fix by adding the row to README's "Document index" table.
 
 ### 1.5 Schemas not advertised on the spec site
 
-If `site/src/build.mjs` generates a schema catalog from `schemas/`, confirm every schema is included. Mismatches indicate site regeneration didn't run after recent additions.
+If `../openwop-site/site/src/build.mjs` generates a schema catalog from `schemas/`, confirm every schema is included. Mismatches indicate site regeneration didn't run after recent additions.
 
 ---
 
@@ -248,7 +248,7 @@ Read `ROADMAP.md`. For every "DONE" or completed-quarter item, verify the artifa
 
 ### 3.1 Anti-pattern detection
 
-Search `conformance/src/scenarios/` and `sdk/typescript/src/__tests__/`:
+Search `conformance/src/scenarios/` and `../openwop-sdks/sdk/typescript/src/__tests__/`:
 
 | Anti-pattern | Grep pattern | Action |
 |---|---|---|
@@ -269,7 +269,7 @@ Cross-reference `conformance/fixtures/` against `conformance/fixtures.md` (per P
 
 ### 3.4 Reference-host evidence freshness
 
-For each `examples/hosts/{in-memory,sqlite,python}/conformance.md`:
+For each `../openwop-examples/examples/hosts/{in-memory,sqlite,python}/conformance.md`:
 - Suite version cited — is it the current `@openwop/openwop-conformance` version?
 - Pass/fail/skip counts — recent?
 - Profile advertisements honest against the rerun?
@@ -282,7 +282,7 @@ Outdated evidence → re-run the suite, update the evidence file.
 
 ### 4.1 SDK dead exports
 
-For each export in `sdk/typescript/src/index.ts`, `sdk/python/src/openwop_client/__init__.py`, `sdk/go/`:
+For each export in `../openwop-sdks/sdk/typescript/src/index.ts`, `../openwop-sdks/sdk/python/src/openwop_client/__init__.py`, `../openwop-sdks/sdk/go/`:
 - Is it covered by at least one method on `OpenwopClient` or equivalent?
 - Is there a corresponding endpoint in `api/openapi.yaml` (for clients) or schema in `schemas/` (for types)?
 
@@ -290,7 +290,7 @@ Dead exports here mean SDK drift from spec; remove or align.
 
 ### 4.2 Example host parity
 
-Each `examples/hosts/{in-memory,sqlite,python}/` should advertise a profile set in its `conformance.md`. If a profile is advertised but the host's code clearly doesn't implement it (e.g., it returns 501 on the gated endpoint), either:
+Each `../openwop-examples/examples/hosts/{in-memory,sqlite,python}/` should advertise a profile set in its `conformance.md`. If a profile is advertised but the host's code clearly doesn't implement it (e.g., it returns 501 on the gated endpoint), either:
 - Implement the missing surface, OR
 - Downgrade the advertised profile in INTEROP-MATRIX and `conformance.md`
 
@@ -300,14 +300,14 @@ Each `examples/hosts/{in-memory,sqlite,python}/` should advertise a profile set 
 
 ### 4.4 Site regeneration drift
 
-If `site/` content lags behind `spec/v1/` or `RFCS/`, run `site/src/build.mjs` and commit the updated `site/dist/`. If `site/templates/` references a doc that no longer exists, fix the template.
+If `../openwop-site/site/` content lags behind `spec/v1/` or `RFCS/`, run `../openwop-site/site/src/build.mjs` and commit the updated `../openwop-site/site/dist/`. If `../openwop-site/site/templates/` references a doc that no longer exists, fix the template.
 
 ### 4.5 Pack ecosystem cleanup
 
-`packs/` contains community + vendor packs. For each pack directory:
+`../openwop-registry/packs/` contains community + vendor packs. For each pack directory:
 - Is `manifest.json` valid against `node-pack-manifest.schema.json`?
 - For agent packs, valid against `agent-manifest.schema.json`?
-- Is the pack referenced from `registry/v1/` index?
+- Is the pack referenced from `../openwop-registry/registry/v1/` index?
 - Signature present per `node-packs.md`?
 
 Unsigned or unreferenced packs are noise; remove or fix.
@@ -351,7 +351,7 @@ Per `ROADMAP.md` and `CONTRIBUTING.md` §"Bootstrap-phase notes": one-approval r
 
 ### 6.1 Over-abstracted SDK helpers
 
-Find helper functions in `sdk/typescript/src/run-helpers.ts` or similar:
+Find helper functions in `../openwop-sdks/sdk/typescript/src/run-helpers.ts` or similar:
 - Used in exactly 1 place → inline
 - Wrap a single SDK call with no added logic → delete, use direct method
 - "Helper" files with < 3 exports → merge or delete
@@ -359,18 +359,18 @@ Find helper functions in `sdk/typescript/src/run-helpers.ts` or similar:
 ### 6.2 Redundant types
 
 Find types/interfaces that:
-- Duplicate a schema's TypedDict equivalent in `sdk/typescript/src/types.ts`
+- Duplicate a schema's TypedDict equivalent in `../openwop-sdks/sdk/typescript/src/types.ts`
 - Extend a schema-derived type without adding fields
 - Are identical to another type already exported
 
-### 6.3 Barrel file cleanup (`sdk/typescript/src/index.ts`)
+### 6.3 Barrel file cleanup (`../openwop-sdks/sdk/typescript/src/index.ts`)
 
 List re-exports. Verify each is consumed by external code (`@openwop/openwop` users — check `package.json` `files` field). Remove unused re-exports.
 
 ### 6.4 Dependency audit
 
 ```bash
-( cd sdk/typescript && npx depcheck --ignores="@types/*,vitest,typescript" )
+( cd ../openwop-sdks/sdk/typescript && npx depcheck --ignores="@types/*,vitest,typescript" )
 ( cd conformance && npx depcheck --ignores="@types/*,vitest,typescript" )
 ```
 
@@ -394,7 +394,7 @@ For each item identified in Phases 1–6:
 
 1. **Check protected categories FIRST** — spec doc? Schema with active `$ref`? Registered fixture? RFC? SECURITY invariant? CHANGELOG history? If yes → skip or ask.
 2. **Check cascade risk** — would deleting orphan other files? If 3+ would orphan → stop and ask.
-3. **Verify dead** — `grep -rn "<artifact>" api/ schemas/ conformance/ RFCS/ spec/v1/ sdk/ examples/ scripts/ site/ packs/ registry/ docs/`.
+3. **Verify dead** — `grep -rn "<artifact>" api/ schemas/ conformance/ RFCS/ spec/v1/ sdk/ ../openwop-examples/examples/ scripts/ ../openwop-site/site/ ../openwop-registry/packs/ ../openwop-registry/registry/ docs/`.
 4. **Delete**.
 5. **Run `npm run openwop:check`** — if it fails, restore immediately.
 6. **Run `bash scripts/check-security-invariants.sh`** — if it fails, restore immediately.

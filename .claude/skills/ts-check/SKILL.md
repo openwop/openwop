@@ -1,6 +1,6 @@
 ---
 name: ts-check
-description: Root-cause resolution of TypeScript / ruff / go vet / gofmt / redocly / asyncapi errors across the openwop corpus (sdk/typescript, conformance, examples/hosts, sdk/python, sdk/go, api/). Zero-tolerance on `as any` / `@ts-ignore` / `@ts-nocheck` in production code; iterates until npm run openwop:check is fully green.
+description: Root-cause resolution of TypeScript / ruff / go vet / gofmt / redocly / asyncapi errors across the openwop corpus (../openwop-sdks/sdk/typescript, conformance, ../openwop-examples/examples/hosts, ../openwop-sdks/sdk/python, ../openwop-sdks/sdk/go, api/). Zero-tolerance on `as any` / `@ts-ignore` / `@ts-nocheck` in production code; iterates until npm run openwop:check is fully green.
 ---
 
 # Cross-Language Error Resolution — Root Cause Analysis (openwop)
@@ -13,7 +13,7 @@ Your mission is to **understand the architecture and intent**, then fix errors a
 
 ## Pragmatic Error Resolution Standards
 
-### Production code (`sdk/typescript/src/`, `conformance/src/lib/`, `examples/hosts/*/src/`) — zero tolerance
+### Production code (`../openwop-sdks/sdk/typescript/src/`, `conformance/src/lib/`, `../openwop-examples/examples/hosts/*/src/`) — zero tolerance
 
 | Practice | Status | Why |
 |---|---|---|
@@ -26,9 +26,9 @@ Your mission is to **understand the architecture and intent**, then fix errors a
 | Python `# type: ignore` | BANNED in production | Hides type errors |
 | Go `interface{}` where concrete type available | BANNED | Loses type safety; openwop SDKs aim for strict typing |
 
-`sdk/typescript/` runs with `strict + exactOptionalPropertyTypes` (`tsconfig.json`). The `CONTRIBUTING.md` §"TypeScript reference SDK" rule is explicit: "No `as any`, no `@ts-ignore`."
+`../openwop-sdks/sdk/typescript/` runs with `strict + exactOptionalPropertyTypes` (`tsconfig.json`). The `CONTRIBUTING.md` §"TypeScript reference SDK" rule is explicit: "No `as any`, no `@ts-ignore`."
 
-### Test code (`sdk/typescript/src/__tests__/`, `conformance/src/scenarios/`, `examples/hosts/*/test/`) — pragmatic
+### Test code (`../openwop-sdks/sdk/typescript/src/__tests__/`, `conformance/src/scenarios/`, `../openwop-examples/examples/hosts/*/test/`) — pragmatic
 
 `@ts-nocheck` allowed when **all** apply:
 - 10+ complex type incompatibilities originating from fixture/mock plumbing (not business logic)
@@ -52,7 +52,7 @@ Conformance scenarios should almost never use `@ts-nocheck` — they're the cano
 
 ## Core Principles
 
-1. **Understand before fixing.** Read surrounding code, related schemas, related spec docs. A TypeScript error in `sdk/typescript/src/types.ts` usually means a schema in `schemas/*.schema.json` changed — find the schema, then derive the right type.
+1. **Understand before fixing.** Read surrounding code, related schemas, related spec docs. A TypeScript error in `../openwop-sdks/sdk/typescript/src/types.ts` usually means a schema in `schemas/*.schema.json` changed — find the schema, then derive the right type.
 2. **Root cause over symptoms.** Errors point at a type mismatch; the cause is usually upstream (spec doc, schema, OpenAPI yaml, fixture).
 3. **Preserve intent.** Don't widen a type to make an error vanish — narrow the producer or fix the consumer.
 4. **Spec is source of truth.** When SDK types diverge from `api/openapi.yaml` or `schemas/*.schema.json`, update the SDK, not the schema.
@@ -66,10 +66,10 @@ Conformance scenarios should almost never use `@ts-nocheck` — they're the cano
 
 Run each check **individually and non-blocking** to keep context manageable. Wait for each to finish before starting the next.
 
-#### Check 1: TypeScript SDK build (`sdk/typescript/`)
+#### Check 1: TypeScript SDK build (`../openwop-sdks/sdk/typescript/`)
 
 ```bash
-( cd sdk/typescript && npx tsc --noEmit 2>&1 | tee /tmp/openwop-ts-sdk.txt; echo "EXIT:$?" )
+( cd ../openwop-sdks/sdk/typescript && npx tsc --noEmit 2>&1 | tee /tmp/openwop-ts-sdk.txt; echo "EXIT:$?" )
 ```
 
 #### Check 2: Conformance suite typecheck
@@ -81,7 +81,7 @@ Run each check **individually and non-blocking** to keep context manageable. Wai
 #### Check 3: TypeScript SDK build emit
 
 ```bash
-( cd sdk/typescript && rm -rf dist && npx tsc -p tsconfig.build.json 2>&1 | tee /tmp/openwop-ts-sdk-build.txt; echo "EXIT:$?" )
+( cd ../openwop-sdks/sdk/typescript && rm -rf dist && npx tsc -p tsconfig.build.json 2>&1 | tee /tmp/openwop-ts-sdk-build.txt; echo "EXIT:$?" )
 ```
 
 #### Check 4: Conformance server-free scenarios
@@ -90,19 +90,19 @@ Run each check **individually and non-blocking** to keep context manageable. Wai
 ( cd conformance && npx vitest run src/scenarios/spec-corpus-validity.test.ts src/scenarios/fixtures-valid.test.ts 2>&1 | tee /tmp/openwop-conformance-vitest.txt; echo "EXIT:$?" )
 ```
 
-#### Check 5: Python SDK (`sdk/python/`)
+#### Check 5: Python SDK (`../openwop-sdks/sdk/python/`)
 
 ```bash
-( cd sdk/python && ruff check . 2>&1 | tee /tmp/openwop-py-ruff.txt; echo "EXIT:$?" )
-( cd sdk/python && python3 -c "import sys; sys.path.insert(0, 'src'); import openwop_client; print(openwop_client.__version__)" 2>&1 | tee /tmp/openwop-py-import.txt; echo "EXIT:$?" )
+( cd ../openwop-sdks/sdk/python && ruff check . 2>&1 | tee /tmp/openwop-py-ruff.txt; echo "EXIT:$?" )
+( cd ../openwop-sdks/sdk/python && python3 -c "import sys; sys.path.insert(0, 'src'); import openwop_client; print(openwop_client.__version__)" 2>&1 | tee /tmp/openwop-py-import.txt; echo "EXIT:$?" )
 ```
 
-#### Check 6: Go SDK (`sdk/go/`)
+#### Check 6: Go SDK (`../openwop-sdks/sdk/go/`)
 
 ```bash
-( cd sdk/go && go vet ./... 2>&1 | tee /tmp/openwop-go-vet.txt; echo "EXIT:$?" )
-( cd sdk/go && gofmt -l . 2>&1 | tee /tmp/openwop-go-fmt.txt; echo "EXIT:$?" )
-( cd sdk/go && go test ./... 2>&1 | tee /tmp/openwop-go-test.txt; echo "EXIT:$?" )
+( cd ../openwop-sdks/sdk/go && go vet ./... 2>&1 | tee /tmp/openwop-go-vet.txt; echo "EXIT:$?" )
+( cd ../openwop-sdks/sdk/go && gofmt -l . 2>&1 | tee /tmp/openwop-go-fmt.txt; echo "EXIT:$?" )
+( cd ../openwop-sdks/sdk/go && go test ./... 2>&1 | tee /tmp/openwop-go-test.txt; echo "EXIT:$?" )
 ```
 
 #### Check 7: OpenAPI + AsyncAPI lint
@@ -112,13 +112,13 @@ npx -y @redocly/cli@latest lint api/openapi.yaml 2>&1 | tee /tmp/openwop-redocly
 npx -y @asyncapi/cli@latest validate api/asyncapi.yaml 2>&1 | tee /tmp/openwop-asyncapi.txt; echo "EXIT:$?"
 ```
 
-#### Check 8: Reference hosts (`examples/hosts/`)
+#### Check 8: Reference hosts (`../openwop-examples/examples/hosts/`)
 
 ```bash
 for host in in-memory sqlite; do
-  ( cd "examples/hosts/$host" && npx tsc --noEmit 2>&1 | tee "/tmp/openwop-host-${host}.txt"; echo "EXIT:$?" )
+  ( cd "../openwop-examples/examples/hosts/$host" && npx tsc --noEmit 2>&1 | tee "/tmp/openwop-host-${host}.txt"; echo "EXIT:$?" )
 done
-( cd examples/hosts/python && python3 -c "import sys; sys.path.insert(0, 'src'); print('python host imports OK')" )
+( cd ../openwop-examples/examples/hosts/python && python3 -c "import sys; sys.path.insert(0, 'src'); print('python host imports OK')" )
 ```
 
 #### Combine results
@@ -150,15 +150,15 @@ wc -l "$ERROR_FILE"
 
 | Check | Surface | Catches |
 |---|---|---|
-| `tsc --noEmit` (SDK) | `sdk/typescript/src/` | Strict + `exactOptionalPropertyTypes` violations |
+| `tsc --noEmit` (SDK) | `../openwop-sdks/sdk/typescript/src/` | Strict + `exactOptionalPropertyTypes` violations |
 | `tsc --noEmit` (conformance) | `conformance/src/` | Scenario / driver / fixture loader type errors |
 | `tsc -p tsconfig.build.json` | SDK emit | Module resolution, declaration emit issues |
 | Conformance vitest | `spec-corpus-validity.test.ts`, `fixtures-valid.test.ts` | Ajv2020 compile failures + fixture validation gaps |
-| `ruff check` | `sdk/python/` | Python style + unused imports + obvious type issues |
-| `go vet` + `gofmt -l` | `sdk/go/` | Go vet warnings + formatting drift |
+| `ruff check` | `../openwop-sdks/sdk/python/` | Python style + unused imports + obvious type issues |
+| `go vet` + `gofmt -l` | `../openwop-sdks/sdk/go/` | Go vet warnings + formatting drift |
 | `redocly lint` | `api/openapi.yaml` | OpenAPI 3.1 violations |
 | `asyncapi validate` | `api/asyncapi.yaml` | AsyncAPI 3.1 violations |
-| Host `tsc --noEmit` | `examples/hosts/{in-memory,sqlite}/` | Host TypeScript errors |
+| Host `tsc --noEmit` | `../openwop-examples/examples/hosts/{in-memory,sqlite}/` | Host TypeScript errors |
 
 **After capturing, read the full report and proceed to Step 2.**
 
@@ -182,15 +182,15 @@ Group errors by surface and root cause.
 
 - **SDK type errors in non-public files** that break consumers transitively
 - **Conformance suite TypeScript errors** — scenarios cannot run
-- **Reference-host TypeScript errors** — `examples/hosts/*` cannot start
-- **Python `ruff` errors in `sdk/python/src/openwop_client/`** — published SDK surface
+- **Reference-host TypeScript errors** — `../openwop-examples/examples/hosts/*` cannot start
+- **Python `ruff` errors in `../openwop-sdks/sdk/python/src/openwop_client/`** — published SDK surface
 - **Go `vet` warnings in exported symbols** — published SDK surface
 
 #### MEDIUM (Fix After High)
 
 - **Unused variables / imports** — `_` prefix or remove
 - **Test file type errors** — annotate or fix fixture types
-- **`gofmt -l` formatting drift** — `gofmt -w .` from `sdk/go/`
+- **`gofmt -l` formatting drift** — `gofmt -w .` from `../openwop-sdks/sdk/go/`
 - **Python import smoke failures** — version mismatch or missing export
 
 #### LOW (Fix Last)
@@ -215,7 +215,7 @@ For each error:
 - Per `CONTRIBUTING.md` §"TypeScript reference SDK": "Types come from the spec — extend `src/types.ts` rather than redefining shapes inline."
 
 #### 3.3 Cross-check the other SDKs
-- If TS SDK has the field, do Python (`sdk/python/src/openwop_client/`) and Go (`sdk/go/`) also have it?
+- If TS SDK has the field, do Python (`../openwop-sdks/sdk/python/src/openwop_client/`) and Go (`../openwop-sdks/sdk/go/`) also have it?
 - A missing field in one SDK is usually a port-the-fix opportunity, not a "loosen the type" excuse.
 
 #### 3.4 Cross-check conformance
@@ -227,7 +227,7 @@ For each error:
 ### Step 4: Fix patterns
 
 #### Pattern 1: SDK type drifts from schema
-**Symptom:** `tsc` error on `sdk/typescript/src/types.ts` where a property is `undefined`-typed but the schema marks it required.
+**Symptom:** `tsc` error on `../openwop-sdks/sdk/typescript/src/types.ts` where a property is `undefined`-typed but the schema marks it required.
 **Fix:** Update `src/types.ts` to match the schema. Run `npx vitest run src/scenarios/spec-corpus-validity.test.ts` from `conformance/` to verify the schema is still valid.
 
 #### Pattern 2: Schema bumps required field
@@ -254,20 +254,20 @@ For each error:
 **Fix:** Update the fixture to match the schema, OR if the schema changed unintentionally, revert the schema. Decision criterion: does this RFC actually want the schema change?
 
 #### Pattern 7: Banned `as any` / `as unknown as T`
-**Symptom:** Grep finds the pattern in `sdk/typescript/src/` or `conformance/src/lib/`.
+**Symptom:** Grep finds the pattern in `../openwop-sdks/sdk/typescript/src/` or `conformance/src/lib/`.
 **Fix:** Type the producer. If a third-party library has a weak type, use a typed wrapper instead of asserting. If the value comes from `JSON.parse`, use a typed schema validator (Ajv) and narrow with a type guard.
 
 #### Pattern 8: Go SDK has `interface{}`
 **Symptom:** `go vet` does not warn, but reviewer flags. The Go SDK targets idiomatic Go with concrete types.
-**Fix:** Replace `interface{}` with the concrete type from `sdk/go/types.go` (or add the type if absent). Wire-shape source of truth is `schemas/`.
+**Fix:** Replace `interface{}` with the concrete type from `../openwop-sdks/sdk/go/types.go` (or add the type if absent). Wire-shape source of truth is `schemas/`.
 
 #### Pattern 9: Python SDK uses `Any` lazily
 **Symptom:** `ruff check` may not flag it, but the SDK is intended to be stdlib + typed.
-**Fix:** Replace `Any` with `TypedDict` / `dataclass` / explicit Union. Reference `sdk/python/src/openwop_client/types.py`.
+**Fix:** Replace `Any` with `TypedDict` / `dataclass` / explicit Union. Reference `../openwop-sdks/sdk/python/src/openwop_client/types.py`.
 
 #### Pattern 10: Reference host drifts from spec
 **Symptom:** A host advertises a profile in its `conformance.md` but a new scenario fails.
-**Fix:** Either implement the missing surface in the host OR downgrade the host's advertised profile in `INTEROP-MATRIX.md` and `examples/hosts/<host>/conformance.md`. Honesty is the goal.
+**Fix:** Either implement the missing surface in the host OR downgrade the host's advertised profile in `INTEROP-MATRIX.md` and `../openwop-examples/examples/hosts/<host>/conformance.md`. Honesty is the goal.
 
 ---
 
@@ -282,8 +282,8 @@ After each fix:
 ### Step 6: Cross-port the fix
 
 When a TypeScript fix encodes a new invariant (e.g., a stricter type guard, a new field), check:
-- `sdk/python/src/openwop_client/` — does the equivalent type exist?
-- `sdk/go/` — same
+- `../openwop-sdks/sdk/python/src/openwop_client/` — does the equivalent type exist?
+- `../openwop-sdks/sdk/go/` — same
 - `conformance/src/scenarios/` — is there a scenario that asserts the invariant on the wire?
 
 A wire invariant that lives in only one SDK is a future cross-host bug.
@@ -312,22 +312,22 @@ After all checks green, report:
 
 | Surface | Errors before | Errors after | Fix summary |
 |---|---|---|---|
-| `sdk/typescript/` `tsc --noEmit` | N | 0 | … |
+| `../openwop-sdks/sdk/typescript/` `tsc --noEmit` | N | 0 | … |
 | `conformance/` `tsc --noEmit` | N | 0 | … |
 | `conformance/` vitest server-free | N | 0 | … |
-| `sdk/python/` ruff | N | 0 | … |
-| `sdk/go/` vet + gofmt | N | 0 | … |
+| `../openwop-sdks/sdk/python/` ruff | N | 0 | … |
+| `../openwop-sdks/sdk/go/` vet + gofmt | N | 0 | … |
 | `api/openapi.yaml` redocly | N | 0 | … |
 | `api/asyncapi.yaml` asyncapi | N | 0 | … |
-| `examples/hosts/*/` tsc | N | 0 | … |
+| `../openwop-examples/examples/hosts/*/` tsc | N | 0 | … |
 | Banned patterns (`as any` / `@ts-ignore` / `@ts-nocheck`) | N | 0 | … |
 
 | Banned-pattern surface | Count |
 |---|---|
-| `sdk/typescript/src/` `as any` / `@ts-ignore` / `@ts-nocheck` | 0 required |
+| `../openwop-sdks/sdk/typescript/src/` `as any` / `@ts-ignore` / `@ts-nocheck` | 0 required |
 | `conformance/src/lib/` `as any` / `@ts-ignore` | 0 required |
-| `sdk/python/` `# type: ignore` without comment | 0 required |
-| `sdk/go/` `interface{}` in exported symbols | 0 expected |
+| `../openwop-sdks/sdk/python/` `# type: ignore` without comment | 0 required |
+| `../openwop-sdks/sdk/go/` `interface{}` in exported symbols | 0 expected |
 
 ---
 
@@ -335,10 +335,10 @@ After all checks green, report:
 
 ### Stream-mode event union narrowing
 
-`sdk/typescript/src/sse.ts` exposes events for four modes (`values`, `updates`, `messages`, `debug`). Adding a new event type requires:
-1. Type in `sdk/typescript/src/types.ts` (extend the event union)
-2. Discriminated `switch` in `sdk/typescript/src/sse.ts` — TypeScript will surface a missing case as an error
-3. Equivalent in `sdk/python/` and `sdk/go/`
+`../openwop-sdks/sdk/typescript/src/sse.ts` exposes events for four modes (`values`, `updates`, `messages`, `debug`). Adding a new event type requires:
+1. Type in `../openwop-sdks/sdk/typescript/src/types.ts` (extend the event union)
+2. Discriminated `switch` in `../openwop-sdks/sdk/typescript/src/sse.ts` — TypeScript will surface a missing case as an error
+3. Equivalent in `../openwop-sdks/sdk/python/` and `../openwop-sdks/sdk/go/`
 4. AsyncAPI channel + payload schema
 5. Conformance scenario
 

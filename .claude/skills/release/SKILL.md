@@ -40,10 +40,10 @@ awk '/^## \[/ {print NR": "$0; if (++c == 3) exit}' CHANGELOG.md
 
 # What versions do the 16 lockstep-bearing files currently report?
 jq -r '"umbrella           " + .version' package.json
-jq -r '"sdk/typescript     " + .version' sdk/typescript/package.json
-grep -m1 '^version' sdk/python/pyproject.toml
+jq -r '"../openwop-sdks/sdk/typescript     " + .version' ../openwop-sdks/sdk/typescript/package.json
+grep -m1 '^version' ../openwop-sdks/sdk/python/pyproject.toml
 jq -r '"conformance        " + .version' conformance/package.json
-for p in examples/*/package.json examples/hosts/*/package.json site/package.json; do
+for p in ../openwop-examples/examples/*/package.json ../openwop-examples/examples/hosts/*/package.json ../openwop-site/site/package.json; do
   jq -r --arg p "$p" '$p + " " + (.version // "(absent)")' "$p"
 done
 ```
@@ -130,7 +130,7 @@ Walk the `###` sub-entries in `[X.Y.Z — unreleased]` and cluster them by theme
 - **SECURITY invariant additions** — single bullet with the count delta + names
 - **Honest non-graduations / opt-outs** — single bullet (they're part of the public credibility surface)
 - **Conformance suite delta** — single bullet with version + scenario count
-- **Site updates** — single bullet if `site/src/build.mjs` changed
+- **Site updates** — single bullet if `../openwop-site/site/src/build.mjs` changed
 - **Honest corrections** — single bullet if any retraction/revert landed this cycle
 
 ### 2.3 Rename + commit
@@ -150,42 +150,42 @@ Walk the `###` sub-entries in `[X.Y.Z — unreleased]` and cluster them by theme
 
 ```
 package.json                              (umbrella)
-sdk/typescript/package.json
-sdk/python/pyproject.toml
-sdk/python/src/openwop_client/__init__.py (if __version__ is present)
+../openwop-sdks/sdk/typescript/package.json
+../openwop-sdks/sdk/python/pyproject.toml
+../openwop-sdks/sdk/python/src/openwop_client/__init__.py (if __version__ is present)
 conformance/package.json                  (independent-minor-bump rule — see 3.3)
-examples/approval-workflow/package.json
-examples/branch-fork/package.json
-examples/branching-workflow/package.json
-examples/idempotent-runs/package.json
-examples/mcp-stdio-bridge/package.json
-examples/mcp-tool/package.json
-examples/node-pack-publishing/package.json
-examples/streaming-client/package.json
-examples/tiny-workflow/package.json
-examples/hosts/in-memory/package.json
-examples/hosts/postgres/package.json
-examples/hosts/sqlite/package.json
-site/package.json
+../openwop-examples/examples/approval-workflow/package.json
+../openwop-examples/examples/branch-fork/package.json
+../openwop-examples/examples/branching-workflow/package.json
+../openwop-examples/examples/idempotent-runs/package.json
+../openwop-examples/examples/mcp-stdio-bridge/package.json
+../openwop-examples/examples/mcp-tool/package.json
+../openwop-examples/examples/node-pack-publishing/package.json
+../openwop-examples/examples/streaming-client/package.json
+../openwop-examples/examples/tiny-workflow/package.json
+../openwop-examples/examples/hosts/in-memory/package.json
+../openwop-examples/examples/hosts/postgres/package.json
+../openwop-examples/examples/hosts/sqlite/package.json
+../openwop-site/site/package.json
 ```
 
-`sdk/go/go.mod` carries no version field for v1.x.x — versioning is via the git tag (`sdk/go/vX.Y.Z`).
+`../openwop-sdks/sdk/go/go.mod` carries no version field for v1.x.x — versioning is via the git tag (`../openwop-sdks/sdk/go/vX.Y.Z`).
 
 ### 3.2 Bump all-at-once
 
 ```bash
 # Drive the bump with a single sed pass so a typo in one file is caught
 NEW=1.1.4
-for f in package.json sdk/typescript/package.json \
-         examples/*/package.json examples/hosts/*/package.json site/package.json; do
+for f in package.json ../openwop-sdks/sdk/typescript/package.json \
+         ../openwop-examples/examples/*/package.json ../openwop-examples/examples/hosts/*/package.json ../openwop-site/site/package.json; do
   # naive but works because these manifests carry their own "version":
   node -e "const f='$f';const j=require('fs').readFileSync(f,'utf8');const o=JSON.parse(j);o.version='$NEW';require('fs').writeFileSync(f, JSON.stringify(o,null,2)+'\n');"
 done
 # Python:
-sed -i.bak "s/^version = .*/version = \"$NEW\"/" sdk/python/pyproject.toml && rm sdk/python/pyproject.toml.bak
+sed -i.bak "s/^version = .*/version = \"$NEW\"/" ../openwop-sdks/sdk/python/pyproject.toml && rm ../openwop-sdks/sdk/python/pyproject.toml.bak
 # Python __version__ if present:
-[ -f sdk/python/src/openwop_client/__init__.py ] && \
-  sed -i.bak "s/^__version__ = .*/__version__ = '$NEW'/" sdk/python/src/openwop_client/__init__.py
+[ -f ../openwop-sdks/sdk/python/src/openwop_client/__init__.py ] && \
+  sed -i.bak "s/^__version__ = .*/__version__ = '$NEW'/" ../openwop-sdks/sdk/python/src/openwop_client/__init__.py
 ```
 
 ### 3.3 Conformance bump decision
@@ -230,7 +230,7 @@ PUBLISHING.md §"Pre-publish checklist" runs as a contract. CI also runs this on
 - [ ] `npm run openwop:check` → 9/9 green. Hard gate.
 - [ ] TypeScript SDK build:
   ```bash
-  ( cd sdk/typescript && npm run typecheck && npm run build )
+  ( cd ../openwop-sdks/sdk/typescript && npm run typecheck && npm run build )
   ```
 - [ ] npm-pack contents:
   ```bash
@@ -243,11 +243,11 @@ PUBLISHING.md §"Pre-publish checklist" runs as a contract. CI also runs this on
   ```
 - [ ] Python:
   ```bash
-  ( cd sdk/python && python -m hatchling build && python -m twine check dist/* )
+  ( cd ../openwop-sdks/sdk/python && python -m hatchling build && python -m twine check dist/* )
   ```
 - [ ] Go:
   ```bash
-  ( cd sdk/go && go vet ./... && go test ./... )
+  ( cd ../openwop-sdks/sdk/go && go vet ./... && go test ./... )
   ```
 - [ ] Python+Go release-surface alignment:
   ```bash
@@ -275,8 +275,8 @@ PUBLISHING.md §"Pre-publish checklist" runs as a contract. CI also runs this on
   This triggers the 4 publish jobs in `.github/workflows/openwop-publish.yml`.
 - [ ] **Additionally tag the Go submodule** (per PUBLISHING.md §"All artifacts" — Go requires the subdir-prefix tag):
   ```bash
-  git tag sdk/go/vX.Y.Z
-  git push origin sdk/go/vX.Y.Z
+  git tag ../openwop-sdks/sdk/go/vX.Y.Z
+  git push origin ../openwop-sdks/sdk/go/vX.Y.Z
   ```
 - [ ] Watch the 4 publish jobs:
   ```bash
@@ -300,7 +300,7 @@ PUBLISHING.md §"Pre-publish checklist" runs as a contract. CI also runs this on
   curl -sI https://proxy.golang.org/github.com/openwop/openwop/sdk/go/@v/vX.Y.Z.info
   # → 200
   ```
-- [ ] **Auto-PR check**: `.github/workflows/openwop-post-publish-bump.yml` should fire automatically after the TS SDK publish, opening a PR `chore: bump @openwop/openwop to ^X.Y.Z (post-publish)` that updates `apps/workflow-engine/{backend/typescript,frontend/react}/package.json` + lockfiles. If it doesn't fire within ~10 min, check the one-time "Allow GitHub Actions to create and approve PRs" toggle (PUBLISHING.md §"Post-publish lockfile bump").
+- [ ] **Auto-PR check**: `.github/workflows/openwop-post-publish-bump.yml` should fire automatically after the TS SDK publish, opening a PR `chore: bump @openwop/openwop to ^X.Y.Z (post-publish)` that updates `../openwop-app/{backend/typescript,frontend/react}/package.json` + lockfiles. If it doesn't fire within ~10 min, check the one-time "Allow GitHub Actions to create and approve PRs" toggle (PUBLISHING.md §"Post-publish lockfile bump").
 - [ ] Merge the auto-bump PR + redeploy per the gcloud / firebase commands in its body.
 
 ---
@@ -316,7 +316,7 @@ PUBLISHING.md §"Pre-publish checklist" runs as a contract. CI also runs this on
   done
   ```
 - [ ] Update `INTEROP-MATRIX.md` "Conformance trajectory" table with the new numbers + the new suite version citation.
-- [ ] Update each touched `examples/hosts/<name>/conformance.md` banner with the suite version, run date, pass/fail/skip counts.
+- [ ] Update each touched `../openwop-examples/examples/hosts/<name>/conformance.md` banner with the suite version, run date, pass/fail/skip counts.
 - [ ] Rebuild the spec site if any new spec doc landed this cycle:
   ```bash
   git diff "v<prev>..vX.Y.Z" --name-only spec/v1/ | head
@@ -341,7 +341,7 @@ Walk this top-to-bottom on every release. Each row is a real drift mode that has
 | 2 | **CHANGELOG release notes 5-10× too long** — the working `[X.Y.Z — unreleased]` block is 400-800 lines / 40-60 `###` sub-entries; the released form should be 10-15 bullets / ~75 lines. | `awk '/^## \[X.Y.Z/,/^## \[/{if(/^## \[/&&!/X.Y.Z/)exit;print}' CHANGELOG.md \| wc -l` — should be <100. | Do Phase 2 thoroughly. Cluster by theme; one bullet per cluster. |
 | 3 | **Generator-authored CHANGELOG drift** — running `generate-protocol-status.mjs --write` during the release cycle may append a CHANGELOG line that muddles your authored release notes. | `git diff CHANGELOG.md` after `--write`. | Run `--check` first; if it complains, regenerate + split into a separate `chore(docs)` commit BEFORE Phase 2. |
 | 4 | **README prose drift after promotions** — the README has the giant banner at line 66, the per-section accept/active lists, AND the document index. The auto-generated banner counts (`docs/PROTOCOL-STATUS.md`) don't update the per-section prose. | `/update-docs` drift #18 check. | Phase 1 runs this; don't skip. |
-| 5 | **Missing Go submodule tag** — pushing `vX.Y.Z` alone doesn't surface the Go module; `sdk/go/vX.Y.Z` is ALSO required for non-root-module Go consumers. | `curl -sI https://proxy.golang.org/github.com/openwop/openwop/sdk/go/@v/vX.Y.Z.info` returns 404. | Push both tags in Phase 5. |
+| 5 | **Missing Go submodule tag** — pushing `vX.Y.Z` alone doesn't surface the Go module; `../openwop-sdks/sdk/go/vX.Y.Z` is ALSO required for non-root-module Go consumers. | `curl -sI https://proxy.golang.org/github.com/openwop/openwop/sdk/go/@v/vX.Y.Z.info` returns 404. | Push both tags in Phase 5. |
 | 6 | **Post-publish lockfile bot didn't fire** — Cloud Run / Firebase Hosting silently pin the old SDK because `npm ci` runs in lockfile-isolated mode. The 1.1.2 → 1.1.3 release burned three Cloud Run revisions before the manual bump caught up. | `gh pr list --search "post-publish"` within ~10 min of TS SDK publish; expect 1 PR. | Check the one-time "Allow GitHub Actions to create and approve PRs" toggle in *Settings → Actions → General → Workflow permissions*. |
 | 7 | **Conformance independent-bump skipped** — patch-bumping conformance when scenarios were added (or minor-bumping when they weren't) confuses consumers about whether they need to re-measure. | `git log --oneline --diff-filter=A v<prev>..HEAD -- conformance/src/scenarios/` — count net-new files. | Apply the Phase 3.3 rule. |
 | 8 | **`[X.Y.Z — unreleased]` header word "unreleased" left in** — published release sections in the historical record carry "unreleased" forever. | `grep "unreleased" CHANGELOG.md` after Phase 2 — should only match the NEXT `[X.Y.Z+1 — unreleased]` placeholder you may have added. | Phase 2.3 explicitly removes it. |
@@ -349,9 +349,9 @@ Walk this top-to-bottom on every release. Each row is a real drift mode that has
 | 10 | **Suite-version retro-citation drift in INTEROP-MATRIX** — host description columns embed "Conformance close-out (date): N/M = 100%" claims with no retrospective marker. After the table above is re-measured to the new suite, the description still reads as a current claim. | `/update-docs` drift #7. | Phase 7 re-measurement updates the table; ensure the description gets a `(YYYY-MM-DD, suite vX.Y.Z)` marker. |
 | 11 | **Tagging from the wrong SHA** — if you tag the release-branch HEAD instead of `main` after merge, the tag references a commit that's not on the published-history line. | `git log main..vX.Y.Z` after tag — should be empty. | Always tag from `main` after merging the release PR. |
 | 12 | **Pre-publish `[Unreleased]` placeholder added too early** — adding `## [X.Y.Z+1 — unreleased]` BEFORE the tag means the release commit itself carries two `## [` headers. | `grep -c "^## \[" CHANGELOG.md` before tag — should be N (the released count); afterward, the next release cycle adds the placeholder. | Add the next placeholder in Phase 7 (after tag), not Phase 2. |
-| 13 | **`@ts-ignore` / `as any` sneaks past openwop:check** — openwop:check step 1 (SDK tsc) catches type errors but NOT banned-pattern violations. Use `/code-review` independently if anything new landed under `sdk/typescript/src/` or `conformance/src/lib/` this cycle. | `grep -rE "as any\\b\|@ts-(ignore\|nocheck\|expect-error)" sdk/typescript/src/ conformance/src/lib/ examples/hosts/*/src/` | If hits exist that weren't there at the previous release, file a `chore(sdk)` patch BEFORE this release. |
+| 13 | **`@ts-ignore` / `as any` sneaks past openwop:check** — openwop:check step 1 (SDK tsc) catches type errors but NOT banned-pattern violations. Use `/code-review` independently if anything new landed under `../openwop-sdks/sdk/typescript/src/` or `conformance/src/lib/` this cycle. | `grep -rE "as any\\b\|@ts-(ignore\|nocheck\|expect-error)" ../openwop-sdks/sdk/typescript/src/ conformance/src/lib/ ../openwop-examples/examples/hosts/*/src/` | If hits exist that weren't there at the previous release, file a `chore(sdk)` patch BEFORE this release. |
 | 14 | **CI publish secrets expired** — `NPM_TOKEN` / `PYPI_TOKEN` rotated since the last release and the workflow fails silently. | `gh secret list` — check `updatedAt` timestamps. | Rotate before Phase 5 if either is >90 days old. |
-| 15 | **Site rebuild needed but skipped** — `site/src/build.mjs` re-renders spec corpus into HTML; if any `spec/v1/*.md` changed this cycle the site goes stale even after Phase 6 succeeds. | `git diff v<prev>..vX.Y.Z --name-only spec/v1/` non-empty + `site/src/build.mjs` unchanged. | Phase 7 covers this. |
+| 15 | **Site rebuild needed but skipped** — `../openwop-site/site/src/build.mjs` re-renders spec corpus into HTML; if any `spec/v1/*.md` changed this cycle the site goes stale even after Phase 6 succeeds. | `git diff v<prev>..vX.Y.Z --name-only spec/v1/` non-empty + `../openwop-site/site/src/build.mjs` unchanged. | Phase 7 covers this. |
 
 ---
 
@@ -383,14 +383,14 @@ Walk this top-to-bottom on every release. Each row is a real drift mode that has
 | `PUBLISHING.md` | Per-package release cadence + version axes + CI publish-workflow matrix |
 | `CHANGELOG.md` | The release-notes target; previous releases are the template |
 | `.github/workflows/openwop-publish.yml` | Tag-triggered publish workflow |
-| `.github/workflows/openwop-post-publish-bump.yml` | Auto-PR that updates apps/workflow-engine lockfiles after TS SDK publish |
+| `.github/workflows/openwop-post-publish-bump.yml` | Auto-PR that updates ../openwop-app lockfiles after TS SDK publish |
 | `scripts/openwop-check-publish-metadata.sh` | Step-8 hard gate — version lockstep |
 | `scripts/check-npm-pack-contents.sh` | Step that the published npm tarball is contents-clean |
 | `scripts/check-python-go-release-surface.sh` | Python wheel + Go module-path alignment |
 | `scripts/generate-protocol-status.mjs` | Generator for `docs/PROTOCOL-STATUS.md`; honor the `--check` mode |
 | `ROADMAP.md` | `Last reviewed:` line is part of the release surface |
 | `INTEROP-MATRIX.md` | Conformance trajectory table — re-measure per release |
-| `examples/hosts/<name>/conformance.md` | Per-host evidence banner — re-measure per release |
+| `../openwop-examples/examples/hosts/<name>/conformance.md` | Per-host evidence banner — re-measure per release |
 
 ---
 
@@ -399,7 +399,7 @@ Walk this top-to-bottom on every release. Each row is a real drift mode that has
 | Skill | Purpose |
 |---|---|
 | `/update-docs` | Phase 1 dependency — sync README + KNOWN-LIMITS + PROTOCOL-STATUS + INTEROP-MATRIX + per-host banners |
-| `/code-review` | Run independently if anything new landed under `sdk/typescript/src/` or `conformance/src/lib/` this cycle (lesson #13) |
+| `/code-review` | Run independently if anything new landed under `../openwop-sdks/sdk/typescript/src/` or `conformance/src/lib/` this cycle (lesson #13) |
 | `/update-conformance` | Run BEFORE the release cycle if scenarios were added, so the Phase 3.3 conformance-bump decision is clean |
 | `/ux-review` | Optional — sanity-check the released-form CHANGELOG headline + opener for prose quality |
 | `/nfr` | Optional — final spec-corpus NFR sweep before tagging |
