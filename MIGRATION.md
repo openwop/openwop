@@ -1,14 +1,26 @@
 # Migration: extract the public site into `openwop-site`
 
-**Status:** in progress — `openwop/openwop-site` created, history carved, and CI
-wired at the `v1.1.7` pin (Phases 0–4 done). Remaining: decommission in
-`openwop/openwop` (Phase 7) and the Phase-6 cutover. See §11.
+**Status:** ✅ complete — `openwop.dev` is served from `openwop/openwop-site`;
+this repo is protocol-only (decommission merged in #617). See §11.
 **Goal:** move the marketing/spec website out of `openwop/openwop` into a new
 `openwop-site` repo, leaving `openwop/openwop` as a clean, protocol-only source
 of truth that gains nothing and owes nothing to the website.
 
-This document is the authoritative plan. The mechanics in §6–§8 were proven
-locally against the `v1.1.7` pin (see §9 — Evidence) before this was written.
+> **Update (post-cutover).** Two things below were superseded during execution and
+> are kept as written for the historical record:
+> - **Pin model.** The plan pins to a *release tag* (`v1.1.7`). The shipped model
+>   **tracks openwop `main`**, pinned to an exact commit SHA (advanced daily by the
+>   `pin-bump` workflow) — because `openwop.dev` has always rendered latest `main`,
+>   and pinning to the last release would have regressed the live site by 100
+>   commits. The canonicity gate + `openwop-ref.lock` are unchanged; only the ref
+>   advanced from a tag to a SHA.
+> - **Provisioning.** `provision-corpus.sh` fetches by exact ref
+>   (`git fetch --depth 1 origin <sha>`), not `git clone --branch`, so SHA pins work.
+> - **White-label zip** is fetched from the *latest release* asset (it tracks
+>   `apps/`, not the spec pin), not from the pinned ref's release.
+
+This document was the authoritative plan; the mechanics in §6–§8 were proven
+locally against the `v1.1.7` pin (see §9 — Evidence) before it was written.
 
 ---
 
