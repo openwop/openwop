@@ -19,6 +19,7 @@ import type {
   RunSnapshot,
 } from '@openwop/openwop';
 import { authedHeaders, config, onAuthChange } from './config.js';
+import { assertArrayField } from './parse.js';
 
 // Pass an explicitly-bound `fetch` to work around an SDK bug — the
 // client stores `opts.fetch ?? fetch` and later calls `this.#fetch(...)`,
@@ -174,8 +175,11 @@ export async function listMyRuns(opts: { status?: string; limit?: number } = {})
   if (!res.ok) {
     throw new Error(`listMyRuns failed: ${res.status} ${res.statusText}`);
   }
-  const body = (await res.json()) as { runs: RunListItem[] };
-  return body.runs;
+  // Host-extension endpoint (`/v1/host/sample/*`) the SDK does not wrap —
+  // validate the list shape before the cast (A-2 / E4).
+  const body: unknown = await res.json();
+  assertArrayField(body, 'runs', 'listMyRuns response');
+  return (body as { runs: RunListItem[] }).runs;
 }
 
 export interface MemoryEntry {
@@ -211,7 +215,9 @@ export async function listMemory(
   if (!res.ok) {
     throw new Error(`listMemory failed: ${res.status} ${res.statusText}`);
   }
-  return (await res.json()) as { memoryRef: string; entries: MemoryEntry[] };
+  const body: unknown = await res.json();
+  assertArrayField(body, 'entries', 'listMemory response');
+  return body as { memoryRef: string; entries: MemoryEntry[] };
 }
 
 /** Returns the underlying SDK client for surfaces not yet wrapped here. */
