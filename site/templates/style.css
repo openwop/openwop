@@ -1697,3 +1697,20 @@ body:has(.spec-page-grid) .wrap {
   .oxo-ladder::before { display: none; }
   .oxo-title { font-size: clamp(30px, 8vw, 40px); }
 }
+
+/* Footnote refs on the OpenExO page — superscript markers, not inline
+ * links jammed against the sentence. The target <li>s get scroll margin
+ * so the sticky topbar doesn't cover them on jump. */
+.oxo-fn {
+  font-size: 0.62em;
+  line-height: 0;
+  vertical-align: super;
+}
+.oxo-fn a {
+  font-family: var(--mono);
+  color: var(--clay);
+  text-decoration: none;
+  padding-left: 1px;
+}
+.oxo-fn a:hover { text-decoration: underline; }
+.comparison-doc li[id^="fn-"] { scroll-margin-top: 90px; }
