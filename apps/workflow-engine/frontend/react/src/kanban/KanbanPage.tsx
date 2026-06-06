@@ -26,9 +26,10 @@ import { roleThemeForAgent, workflowName } from '../agents/roleTemplates.js';
 import { AgentAvatar } from '../agents/AgentAvatar.js';
 import { Notice } from '../ui/Notice.js';
 import { StateCard } from '../ui/StateCard.js';
+import { classifyHttpError } from '../client/classifyHttpError.js';
 import { PageHeader } from '../ui/PageHeader.js';
 import { IconButton } from '../ui/IconButton.js';
-import { AlertIcon, ColumnsIcon, DotsIcon, PencilIcon, TrashIcon, WorkflowIcon } from '../ui/icons/index.js';
+import { AlertIcon, ColumnsIcon, DotsIcon, PencilIcon, TrashIcon, WorkflowIcon, ZapIcon } from '../ui/icons/index.js';
 import { KanbanBoardView, type NewCardInput } from './KanbanBoardView.js';
 import { CreateBoardModal } from './CreateBoardModal.js';
 import {
@@ -110,6 +111,9 @@ export function KanbanPage(): JSX.Element {
   const [activeBoard, setActiveBoard] = useState<KanbanBoard | null>(null);
   const [cards, setCards] = useState<KanbanCard[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // Init-true so the first load shows a loading state, not a false "No boards
+  // yet" empty flash before the fetch resolves (GAP-ANALYSIS E5).
+  const [boardsLoading, setBoardsLoading] = useState(true);
   const [notice, setNotice] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   // Roster members boards can be bound to (RFC 0086): the owner's avatar
@@ -120,7 +124,9 @@ export function KanbanPage(): JSX.Element {
     try {
       setBoards(await listBoardsWithCards());
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError((() => { const c = classifyHttpError(err); return `${c.title} — ${c.detail}`; })());
+    } finally {
+      setBoardsLoading(false);
     }
   }, []);
 
@@ -130,7 +136,7 @@ export function KanbanPage(): JSX.Element {
       setActiveBoard(board);
       setCards(c);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError((() => { const c = classifyHttpError(err); return `${c.title} — ${c.detail}`; })());
     }
   }, []);
 
@@ -142,7 +148,7 @@ export function KanbanPage(): JSX.Element {
   // Auto-open the first board so the page never greets with an empty shell
   // (decision-first: show the work, not a picker).
   useEffect(() => {
-    if (!activeBoard && boards.length > 0) void openBoard(boards[0].id);
+    if (!activeBoard && boards[0]) void openBoard(boards[0].id);
   }, [boards, activeBoard, openBoard]);
 
   // Live refresh: while a board is open, refetch on any change (this client's
@@ -158,10 +164,16 @@ export function KanbanPage(): JSX.Element {
     if (!boardId) return;
     const refresh = () => { void openBoard(boardId); };
     const unsubscribe = subscribeBoardEvents(boardId, refresh);
-    const poll = setInterval(refresh, 5000);
+    // Visibility-gated polling (GAP-ANALYSIS E3): a hidden tab does not spend
+    // the per-IP read budget; returning to the tab refreshes immediately so it
+    // is never stale on focus.
+    const poll = setInterval(() => { if (!document.hidden) refresh(); }, 5000);
+    const onVisible = () => { if (!document.hidden) refresh(); };
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       unsubscribe();
       clearInterval(poll);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [activeBoard?.id, openBoard]);
 
@@ -172,7 +184,7 @@ export function KanbanPage(): JSX.Element {
       await refreshBoards();
       await openBoard(board.id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError((() => { const c = classifyHttpError(err); return `${c.title} — ${c.detail}`; })());
     }
   };
 
@@ -204,7 +216,7 @@ export function KanbanPage(): JSX.Element {
       await refreshBoards();
       await openBoard(copy.id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError((() => { const c = classifyHttpError(err); return `${c.title} — ${c.detail}`; })());
     }
   };
 
@@ -220,7 +232,7 @@ export function KanbanPage(): JSX.Element {
       setNotice(`Renamed to "${renamed.name}".`);
       await refreshBoards();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError((() => { const c = classifyHttpError(err); return `${c.title} — ${c.detail}`; })());
     }
   };
 
@@ -234,7 +246,7 @@ export function KanbanPage(): JSX.Element {
       setCards([]);
       await refreshBoards();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError((() => { const c = classifyHttpError(err); return `${c.title} — ${c.detail}`; })());
     }
   };
 
@@ -257,7 +269,7 @@ export function KanbanPage(): JSX.Element {
       await openBoard(activeBoard.id);
       await refreshBoards();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError((() => { const c = classifyHttpError(err); return `${c.title} — ${c.detail}`; })());
     }
   };
 
@@ -270,21 +282,28 @@ export function KanbanPage(): JSX.Element {
       await openBoard(activeBoard.id);
       await refreshBoards();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError((() => { const c = classifyHttpError(err); return `${c.title} — ${c.detail}`; })());
     }
   };
 
   const onMoveCard = async (cardId: string, toColumnId: string) => {
     if (!activeBoard) return;
     const card = cards.find((c) => c.id === cardId);
+    // Optimistic move (GAP-ANALYSIS E15): apply locally immediately so the card
+    // stays where it was dropped instead of snapping back then jumping after the
+    // round-trip. Capture prior state to restore on failure.
+    const prevCards = cards;
+    setCards((cs) => cs.map((c) => (c.id === cardId ? { ...c, columnId: toColumnId } : c)));
     try {
       const { triggeredRunId } = await patchCard(cardId, { columnId: toColumnId });
       if (triggeredRunId && card) setNotice(`Started a run from "${card.title}" — it landed in a ⚡ trigger lane.`);
+      // Reconcile with server truth (covers triggered-run side effects); the
+      // card is already in place so there is no visible jump.
       await openBoard(activeBoard.id);
       await refreshBoards();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      await openBoard(activeBoard.id); // rollback to server truth
+      setCards(prevCards); // genuine rollback to the pre-move local state
+      setError((() => { const c = classifyHttpError(err); return `${c.title} — ${c.detail}`; })());
     }
   };
 
@@ -298,7 +317,7 @@ export function KanbanPage(): JSX.Element {
       <PageHeader
         eyebrow="Boards"
         title="Boards"
-        lede={<>The same task boards your agents work from. Drag a card into the ⚡ <strong>To do</strong> column to fire its workflow.</>}
+        lede={<>The same task boards your agents work from. Drag a card into the <ZapIcon size={12} aria-hidden /> <strong>To do</strong> column to fire its workflow.</>}
         actions={<button type="button" className="btn-accent-solid" onClick={() => setCreating(true)}>+ New board</button>}
       />
 
@@ -379,6 +398,8 @@ export function KanbanPage(): JSX.Element {
             onDeleteCard={(cardId) => void onDeleteCard(cardId)}
           />
         </>
+      ) : boardsLoading ? (
+        <StateCard loading title="Loading boards…" />
       ) : (
         <StateCard
           icon={<ColumnsIcon size={26} />}

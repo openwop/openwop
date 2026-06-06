@@ -18,7 +18,7 @@
  * the width tier all happen by declaration, not by editing layout code
  * (white-label PRD §2/§3 acceptance).
  */
-import type { ComponentType, ReactElement } from 'react';
+import { lazy, type ComponentType, type ReactElement } from 'react';
 import { Navigate, matchRoutes } from 'react-router-dom';
 import {
   MessageSquareIcon, BotIcon, WorkflowIcon, PlayIcon, ColumnsIcon, UserIcon,
@@ -33,24 +33,24 @@ import { RunComparePage } from '../runs/RunComparePage.js';
 import { CommandCenterPage } from '../runs/CommandCenterPage.js';
 import { NotificationsPage } from '../notifications/NotificationsPage.js';
 import { CapabilitiesPanel } from '../discovery/CapabilitiesPanel.js';
-import { BuilderTab } from '../builder/BuilderTab.js';
-import { WorkflowsDashboard } from '../builder/WorkflowsDashboard.js';
+const BuilderTab = lazy(() => import('../builder/BuilderTab.js').then((m) => ({ default: m.BuilderTab })));
+const WorkflowsDashboard = lazy(() => import('../builder/WorkflowsDashboard.js').then((m) => ({ default: m.WorkflowsDashboard })));
 import { PrivacyPage } from '../PrivacyPage.js';
 import { CliPage } from '../CliPage.js';
 import { PromptLibraryPage } from '../prompts/PromptLibraryPage.js';
 import { KeysPage } from '../byok/KeysPage.js';
 import { MemoryInspectorPage } from '../memory/MemoryInspectorPage.js';
-import { KanbanPage } from '../kanban/KanbanPage.js';
-import { RosterPage } from '../agents/RosterPage.js';
-import { AgentsPage } from '../agents/AgentsPage.js';
-import { AgentDetailPage } from '../agents/AgentDetailPage.js';
-import { AgentInstallPage } from '../agents/AgentInstallPage.js';
-import { AgentNewPage } from '../agents/AgentNewPage.js';
-import { AgentDashboardPage } from '../agents/AgentDashboardPage.js';
-import { AgentWorkspacePage } from '../agents/AgentWorkspacePage.js';
-import { WorkforcesGalleryPage } from '../workforces/WorkforcesGalleryPage.js';
-import { WorkforceOverviewPage } from '../workforces/WorkforceOverviewPage.js';
-import { AgentCreateWizard } from '../agents/AgentCreateWizard.js';
+const KanbanPage = lazy(() => import('../kanban/KanbanPage.js').then((m) => ({ default: m.KanbanPage })));
+const RosterPage = lazy(() => import('../agents/RosterPage.js').then((m) => ({ default: m.RosterPage })));
+const AgentsPage = lazy(() => import('../agents/AgentsPage.js').then((m) => ({ default: m.AgentsPage })));
+const AgentDetailPage = lazy(() => import('../agents/AgentDetailPage.js').then((m) => ({ default: m.AgentDetailPage })));
+const AgentInstallPage = lazy(() => import('../agents/AgentInstallPage.js').then((m) => ({ default: m.AgentInstallPage })));
+const AgentNewPage = lazy(() => import('../agents/AgentNewPage.js').then((m) => ({ default: m.AgentNewPage })));
+const AgentDashboardPage = lazy(() => import('../agents/AgentDashboardPage.js').then((m) => ({ default: m.AgentDashboardPage })));
+const AgentWorkspacePage = lazy(() => import('../agents/AgentWorkspacePage.js').then((m) => ({ default: m.AgentWorkspacePage })));
+const AgentCreateWizard = lazy(() => import('../agents/AgentCreateWizard.js').then((m) => ({ default: m.AgentCreateWizard })));
+const WorkforcesGalleryPage = lazy(() => import('../workforces/WorkforcesGalleryPage.js').then((m) => ({ default: m.WorkforcesGalleryPage })));
+const WorkforceOverviewPage = lazy(() => import('../workforces/WorkforceOverviewPage.js').then((m) => ({ default: m.WorkforceOverviewPage })));
 import { DemoDataPage } from '../settings/DemoDataPage.js';
 import { AdminOverviewPage } from '../settings/AdminOverviewPage.js';
 import { OrgsPage } from '../orgs/OrgsPage.js';
@@ -248,7 +248,7 @@ const MATCHABLE = FEATURES.map((f) => ({ path: f.path }));
 export function featureFor(pathname: string): FeatureRoute | null {
   const matches = matchRoutes(MATCHABLE, pathname);
   if (!matches || matches.length === 0) return null;
-  const matchedPath = matches[matches.length - 1].route.path;
+  const matchedPath = matches[matches.length - 1]?.route.path;
   return FEATURES.find((f) => f.path === matchedPath) ?? null;
 }
 

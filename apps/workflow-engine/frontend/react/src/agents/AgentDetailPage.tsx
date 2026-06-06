@@ -14,6 +14,7 @@
  */
 
 import { useEffect, useState } from 'react'; // useState used by both AgentDetailPage (state) and AgentDetail (delete-in-flight + error)
+import { EmptyBlock, slugify } from './agentUi.js';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { deleteUserAgent, getAgent, type AgentEntry } from '../client/agentsClient.js';
 import { ArrowLeftIcon, CheckIcon, CircleIcon } from '../ui/icons/index.js';
@@ -355,34 +356,3 @@ function MemoryBadge({ label, enabled }: { label: string; enabled: boolean }): J
   );
 }
 
-function EmptyBlock({
-  children,
-  tone = 'muted',
-}: {
-  children: React.ReactNode;
-  tone?: 'muted' | 'error';
-}): JSX.Element {
-  return (
-    <div
-      style={{
-        padding: 'var(--space-5)',
-        border: `1px ${tone === 'error' ? 'solid' : 'dashed'} ${
-          tone === 'error' ? 'var(--color-danger)' : 'var(--rule)'
-        }`,
-        borderRadius: 8,
-        textAlign: 'center',
-        color: tone === 'error' ? 'var(--color-danger)' : 'var(--ink-3)',
-        fontSize: 13,
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'agent';
-}

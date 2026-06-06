@@ -15,6 +15,7 @@ import { useMemo } from 'react';
 import type { RunEventDoc } from '@openwop/openwop';
 import { getProvider } from '../byok/lib/providers.js';
 import { formatUsd } from '../chat/lib/cost.js';
+import { DataTable, type DataColumn } from '../ui/DataTable.js';
 
 interface Props {
   events: readonly RunEventDoc[];
@@ -85,6 +86,33 @@ function aggregate(events: readonly RunEventDoc[]): { rows: Row[]; total: Row } 
   return { rows, total };
 }
 
+/** Columns for the cost rollup DataTable. Factory so the bar width is relative
+ *  to the run's max per-model cost. Order-preserving (no sortValue). */
+function COST_COLUMNS(maxCost: number): DataColumn<Row>[] {
+  return [
+    {
+      key: 'model',
+      header: 'Model',
+      render: (r) => (
+        <>
+          <span className="muted">{r.provider}/</span>{r.model}
+          {r.estimatedLocally && <span className="muted" title="Cost from local rate table, not host advisory"> *</span>}
+        </>
+      ),
+    },
+    { key: 'calls', header: 'Calls', align: 'right', cellClassName: 'tabular-nums', render: (r) => r.calls },
+    { key: 'in', header: 'In', align: 'right', cellClassName: 'tabular-nums', render: (r) => r.inputTokens.toLocaleString() },
+    { key: 'out', header: 'Out', align: 'right', cellClassName: 'tabular-nums', render: (r) => r.outputTokens.toLocaleString() },
+    { key: 'cost', header: 'Cost', align: 'right', cellClassName: 'tabular-nums', render: (r) => formatUsd(r.costUsd) },
+    {
+      key: 'bar',
+      header: '',
+      width: '80px',
+      render: (r) => <span className="cost-bar" style={{ width: `${(r.costUsd / maxCost) * 100}%` }} />,
+    },
+  ];
+}
+
 export function RunCostPanel({ events }: Props) {
   const { rows, total } = useMemo(() => aggregate(events), [events]);
   if (rows.length === 0) return null;
@@ -99,35 +127,12 @@ export function RunCostPanel({ events }: Props) {
           {(total.inputTokens + total.outputTokens).toLocaleString()} tokens · {total.calls} calls
         </span>
       </div>
-      <table className="cost-table">
-        <thead>
-          <tr>
-            <th>Model</th>
-            <th className="num">Calls</th>
-            <th className="num">In</th>
-            <th className="num">Out</th>
-            <th className="num">Cost</th>
-            <th className="cost-bar-col" />
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={`${r.provider}::${r.model}`}>
-              <td>
-                <span className="muted">{r.provider}/</span>{r.model}
-                {r.estimatedLocally && <span className="muted" title="Cost from local rate table, not host advisory"> *</span>}
-              </td>
-              <td className="num">{r.calls}</td>
-              <td className="num">{r.inputTokens.toLocaleString()}</td>
-              <td className="num">{r.outputTokens.toLocaleString()}</td>
-              <td className="num">{formatUsd(r.costUsd)}</td>
-              <td className="cost-bar-col">
-                <span className="cost-bar" style={{ width: `${(r.costUsd / maxCost) * 100}%` }} />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <DataTable<Row>
+        caption="Per-model token and cost rollup"
+        rows={rows}
+        rowKey={(r) => `${r.provider}::${r.model}`}
+        columns={COST_COLUMNS(maxCost)}
+      />
       <p className="muted" style={{ fontSize: 11, marginTop: 6 }}>
         Advisory estimates (RFC 0026) — not billing. <span title="Local rate table">*</span> = computed
         from providers.json rates where the host omitted an estimate.

@@ -20,6 +20,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { EmptyBlock } from './agentUi.js';
 import { Link } from 'react-router-dom';
 import {
   listAvailableAgentPacks,
@@ -212,27 +213,3 @@ function PackRow({
   );
 }
 
-function EmptyBlock({
-  children,
-  tone = 'muted',
-}: {
-  children: React.ReactNode;
-  tone?: 'muted' | 'error';
-}): JSX.Element {
-  return (
-    <div
-      style={{
-        padding: 'var(--space-5)',
-        border: `1px ${tone === 'error' ? 'solid' : 'dashed'} ${
-          tone === 'error' ? 'var(--color-danger)' : 'var(--rule)'
-        }`,
-        borderRadius: 8,
-        textAlign: 'center',
-        color: tone === 'error' ? 'var(--color-danger)' : 'var(--ink-3)',
-        fontSize: 13,
-      }}
-    >
-      {children}
-    </div>
-  );
-}

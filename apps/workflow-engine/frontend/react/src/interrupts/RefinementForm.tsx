@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { resolveByRun } from '../client/interruptsClient.js';
 
 interface Props {
@@ -13,6 +13,11 @@ export function RefinementForm({ runId, nodeId, data, onResolved }: Props) {
   const seed = ((data as { current?: unknown })?.current) ?? '';
   const [draft, setDraft] = useState(typeof seed === 'string' ? seed : JSON.stringify(seed, null, 2));
   const [submitting, setSubmitting] = useState(false);
+  // HITL a11y (GAP-ANALYSIS E6): focus + label the (previously unlabeled) draft.
+  const headingId = useId();
+  const draftId = useId();
+  const draftRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => { draftRef.current?.focus(); }, []);
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
@@ -35,11 +40,12 @@ export function RefinementForm({ runId, nodeId, data, onResolved }: Props) {
   }
 
   return (
-    <div className="card">
-      <h2>Refinement requested</h2>
+    <div className="card" role="group" aria-labelledby={headingId}>
+      <h2 id={headingId}>Refinement requested</h2>
       <p className="muted">Edit the draft and resubmit.</p>
       <div className="form-row">
-        <textarea rows={8} value={draft} onChange={(e) => setDraft(e.target.value)} spellCheck={false} />
+        <label htmlFor={draftId}>Draft</label>
+        <textarea id={draftId} ref={draftRef} rows={8} value={draft} onChange={(e) => setDraft(e.target.value)} spellCheck={false} />
       </div>
       {error && <div className="alert error">{error}</div>}
       <div className="button-row">

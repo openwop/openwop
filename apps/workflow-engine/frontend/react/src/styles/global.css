@@ -17,7 +17,7 @@
   --rule-2:       #c4bfae;
   --ink:          #1a1a17;
   --ink-2:        #4a4842;
-  --ink-3:        #837f72;
+  --ink-3:        #6e6a5e; /* AA-contrast muted text on paper (GAP-ANALYSIS E10) */
   --clay:         oklch(58% 0.13 40);
   --clay-soft:    oklch(58% 0.13 40 / 0.10);
   --clay-rule:    oklch(58% 0.13 40 / 0.35);
@@ -1167,6 +1167,21 @@ pre {
 /* visually-hidden caption (a11y) */
 .data-table-caption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
+/* Skip-to-content link (a11y, GAP-ANALYSIS E6): off-screen until focused, so a
+ * keyboard user can jump past the persistent sidebar straight to <main>. */
+.skip-link {
+  position: absolute;
+  left: var(--space-2);
+  top: -4rem;
+  z-index: 1000;
+  padding: var(--space-2) var(--space-3);
+  background: var(--clay);
+  color: var(--color-on-scrim);
+  border-radius: var(--radius);
+  transition: top 0.15s ease;
+}
+.skip-link:focus { top: var(--space-2); }
+
 /* DataTable bulk-select column + bulk-action bar */
 .data-col--check { width: 1px; white-space: nowrap; text-align: center; }
 .data-col--check input { cursor: pointer; margin: 0; vertical-align: middle; }
@@ -1648,7 +1663,7 @@ pre {
   width: 22px;
   height: 22px;
   border-radius: 4px;
-  color: white;
+  color: var(--color-on-scrim);
   font-size: 11px;
   font-weight: 600;
   flex-shrink: 0;
@@ -2008,21 +2023,9 @@ pre {
 }
 
 /* Token & cost table (RFC 0026 provider.usage rollup) */
-.cost-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-  margin-top: var(--space-2);
-}
-.cost-table th,
-.cost-table td {
-  padding: 4px 8px;
-  text-align: left;
-  border-bottom: 1px solid var(--rule);
-}
-.cost-table th { font-weight: 600; color: var(--ink-3); }
-.cost-table .num { text-align: right; font-variant-numeric: tabular-nums; }
-.cost-bar-col { width: 80px; }
+/* (.cost-table table styling removed — RunCostPanel now uses <DataTable>;
+ *  the cost bar below + the tabular-nums utility are still used by it.) */
+.tabular-nums { font-variant-numeric: tabular-nums; }
 .cost-bar {
   display: block;
   height: 8px;
@@ -2032,20 +2035,8 @@ pre {
 }
 
 /* Memory ledger (A3) */
-.memory-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-  margin-top: var(--space-2);
-}
-.memory-table th,
-.memory-table td {
-  padding: 4px 8px;
-  text-align: left;
-  vertical-align: top;
-  border-bottom: 1px solid var(--rule);
-}
-.memory-table th { font-weight: 600; color: var(--ink-3); }
+/* (.memory-table table styling removed — RunMemoryPanel now uses <DataTable>;
+ *  the row + per-cell classes below are still used by it + MemoryInspectorPage.) */
 .memory-row-mine { background: color-mix(in oklch, var(--clay) 8%, transparent); }
 .memory-content { white-space: pre-wrap; word-break: break-word; }
 .memory-tags { display: flex; flex-wrap: wrap; gap: 4px; }
@@ -3782,7 +3773,7 @@ pre {
   width: 26px;
   height: 26px;
   border-radius: 6px;
-  color: white;
+  color: var(--color-on-scrim);
   font-family: var(--sans, sans-serif);
   font-weight: 600;
   font-size: 13px;

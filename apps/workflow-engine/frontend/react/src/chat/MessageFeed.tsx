@@ -118,10 +118,16 @@ export function MessageFeed({
   } | null>(null);
 
   return (
-    <div style={{
-      flex: 1, overflowY: 'auto', padding: 'var(--chat-feed-pad, 16px)',
-      display: 'flex', flexDirection: 'column',
-    }}>
+    <div
+      role="log"
+      aria-live="polite"
+      aria-relevant="additions text"
+      aria-label="Conversation"
+      style={{
+        flex: 1, overflowY: 'auto', padding: 'var(--chat-feed-pad, 16px)',
+        display: 'flex', flexDirection: 'column',
+      }}
+    >
       {displayMessages.map((m) => (
         <div key={m.id}>
           {m.role === 'workflow_run'

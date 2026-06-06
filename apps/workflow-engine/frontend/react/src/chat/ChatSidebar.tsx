@@ -112,6 +112,11 @@ interface Props {
 
 export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'demo' }: Props): JSX.Element {
   const { session, isSending, error, send, cancel, emitSystem, reset, resolveInterrupt, runWorkflowMention, cancelWorkflowRun, regenerate, setFeedback, loadSessionFromBackend, activeAgents } = useChatSession();
+  // Stable regenerate handler (GAP-ANALYSIS E14): an inline arrow here made a
+  // new function each render, defeating MessageBubble's memo. useCallback keeps
+  // it referentially stable across streaming tokens (config is unchanged
+  // mid-stream) so settled bubbles skip re-render.
+  const onRegenerate = useCallback((id: string) => { void regenerate(id, config); }, [regenerate, config]);
   // Agent catalog — read once at mount, used by the submit-path's
   // `@`-mention detection (phase D3). The `AgentMentionAutocomplete`
   // popover refetches independently; both consumers pay the same
@@ -367,6 +372,11 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
       tools: toolsEnabled && supportsTools ? buildAvailableTools() : undefined,
       ...(activeAgentId ? { activeAgentId } : {}),
     });
+    // Intentionally depends on the specific stable activeAgents MEMBERS
+    // (currentAgentId, activateAgent) rather than the whole `activeAgents`
+    // object, whose identity churns each render and would needlessly recreate
+    // this callback. (GAP-ANALYSIS code-review)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [send, cancel, reset, emitSystem, config, webSearchEnabled, supportsWebSearch, toolsEnabled, supportsTools, runWorkflowMention, activeAgents.currentAgentId, activeAgents.activateAgent, agentEntries]);
 
   return (
@@ -446,7 +456,7 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
             onResolveInterrupt={resolveInterrupt}
             onOpenWorkflowProgress={openProgressForRun}
             focusedWorkflowMessageId={activeRailTab === 'progress' ? focusedWorkflowMessageId : null}
-            onRegenerate={(id) => { void regenerate(id, config); }}
+            onRegenerate={onRegenerate}
             onFeedback={setFeedback}
             onReconfigureBYOK={onOpenSettings}
           />

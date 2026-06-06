@@ -272,7 +272,7 @@ function colMatches(col: KanbanColumn, kind: 'todo' | 'working' | 'done'): boole
 }
 function topByPriority(cards: KanbanCard[]): KanbanCard | undefined {
   return [...cards].sort(
-    (a, b) => (PRIORITY_RANK[a.priority ?? 'normal'] - PRIORITY_RANK[b.priority ?? 'normal']) || a.order - b.order,
+    (a, b) => ((PRIORITY_RANK[a.priority ?? 'normal'] ?? 0) - (PRIORITY_RANK[b.priority ?? 'normal'] ?? 0)) || a.order - b.order,
   )[0];
 }
 

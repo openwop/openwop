@@ -16,6 +16,7 @@
  */
 
 import { config } from '../client/config.js';
+import { assertArrayField, assertRecord } from '../client/parse.js';
 
 export interface PackIndexEntry {
   name: string;
@@ -96,14 +97,23 @@ export function sbomUrlFor(v: PackVersionRecord): string {
   return registryUrl(v.manifestUrl.replace(/\.json$/, '.sbom.json'));
 }
 
-async function getJson<T>(url: string): Promise<T> {
+async function getJson<T>(url: string, validate?: (v: unknown) => void): Promise<T> {
   const res = await fetch(url, { headers: { accept: 'application/json' } });
   if (!res.ok) throw new Error(`Registry ${res.status} for ${url}`);
-  return (await res.json()) as T;
+  const body: unknown = await res.json();
+  // The registry is a separate, UNTRUSTED origin (packs.openwop.dev). Validate
+  // the response is at least the expected shape before the cast (A-2 / E4), so
+  // a malformed payload throws here instead of crashing a downstream `.map()`.
+  if (validate) validate(body);
+  else assertRecord(body, 'registry response');
+  return body as T;
 }
 
 export function fetchRegistryIndex(): Promise<RegistryIndex> {
-  return getJson<RegistryIndex>(registryUrl('/v1/index.json'));
+  // The index's `packs` array is immediately mapped over by the UI — assert it
+  // is actually an array before the cast so a malformed registry response can't
+  // crash the catalog (A-2 / E4).
+  return getJson<RegistryIndex>(registryUrl('/v1/index.json'), (v) => assertArrayField(v, 'packs', 'registry index'));
 }
 
 export function fetchPackDetail(name: string): Promise<PackDetail> {
