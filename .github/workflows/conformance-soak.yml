@@ -140,7 +140,18 @@ jobs:
           # strict-mode skip messages cite the right spec section
           # rather than firing a false-positive failure under
           # OPENWOP_REQUIRE_BEHAVIOR.
-          OPENWOP_OPTED_OUT_PROFILES: 'openwop-production,openwop-auth-oauth2-client-credentials,openwop-auth-oidc-user-bearer,openwop-auth-mtls,openwop-replay-fork,workflowChainPacks,prompts-supported,prompts-endpoints,prompts-mutable,prompts-agent-bindings,prompts-observability-full'
+          #
+          # Agent-platform cohort (RFCs 0078–0089, suite v1.11–v1.18) — 18
+          # capability-gated profiles the minimal SQLite reference host does NOT
+          # implement (verified against its `/.well-known/openwop`: it advertises
+          # core/host-sqlite/stream-poll/stream-sse/interrupt-*/auth-api-key-
+          # rotation/audit-log-integrity/byok only). These scenarios landed in the
+          # suite without a matching opt-out here, turning the strict-mode soak red
+          # since ~v1.11 (pre-dating the 2026-06 repo split). The reference
+          # workflow-engine/postgres hosts carry these surfaces; SQLite honestly
+          # doesn't. Opting out keeps the soak a clean regression signal for the
+          # profiles SQLite DOES claim ("0 deterministic failures").
+          OPENWOP_OPTED_OUT_PROFILES: 'openwop-production,openwop-auth-oauth2-client-credentials,openwop-auth-oidc-user-bearer,openwop-auth-mtls,openwop-replay-fork,workflowChainPacks,prompts-supported,prompts-endpoints,prompts-mutable,prompts-agent-bindings,prompts-observability-full,openwop-agent-platform,openwop-budget-enforcement,openwop-deployment-channel-dispatch,openwop-deployment-lifecycle,openwop-egress-audience-binding,openwop-egress-decision-content-free,openwop-eval-run,openwop-live-allowlist-enforced,openwop-live-invocation-bracket,openwop-live-structured-output,openwop-memory-degraded,openwop-org-chart-scoping,openwop-org-position-no-authority,openwop-roster-attribution,openwop-safefetch-live-audit,openwop-tool-catalog,openwop-tool-session-lifecycle,openwop-trigger-bridge'
           # Fixture-id opt-outs — the SQLite host auto-loads every
           # `conformance-*.json` fixture on disk (so the fixture IS
           # advertised in `/.well-known/openwop`) but does not implement
