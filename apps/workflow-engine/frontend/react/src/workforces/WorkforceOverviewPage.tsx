@@ -14,9 +14,11 @@ import {
   getWorkforce,
   getWorkforceGovernance,
   getWorkforceMetrics,
+  updateWorkforceStatus,
   type Workforce,
   type WorkforceGovernance,
   type WorkforceMetrics,
+  type WorkforceStatus,
 } from '../client/workforcesClient.js';
 
 function pct(n: number): string {
@@ -52,6 +54,21 @@ export function WorkforceOverviewPage(): JSX.Element {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [cutoverBusy, setCutoverBusy] = useState(false);
+  const [cutoverError, setCutoverError] = useState<string | null>(null);
+
+  async function cutOver(status: WorkforceStatus): Promise<void> {
+    setCutoverBusy(true);
+    setCutoverError(null);
+    try {
+      const updated = await updateWorkforceStatus(workforceId, status);
+      setWf(updated);
+    } catch (e: unknown) {
+      setCutoverError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setCutoverBusy(false);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -228,6 +245,35 @@ export function WorkforceOverviewPage(): JSX.Element {
               </ul>
             </details>
           ) : null}
+
+          {/* Cut over (MG-6) — production gated on graduation; rollback always allowed */}
+          <div style={{ marginTop: '0.75rem', borderTop: '1px solid var(--color-border)', paddingTop: '0.75rem' }}>
+            <div className="action-bar" style={{ gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <strong>Cut over:</strong>
+              <span className="chip chip--accent">now: {wf.status}</span>
+              {(['shadow', 'piloting', 'production'] as const)
+                .filter((s) => s !== wf.status)
+                .map((s) => {
+                  const gatedOut = s === 'production' && governance.autonomy.currentTier !== 'auto';
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      className="btn"
+                      disabled={cutoverBusy || gatedOut}
+                      onClick={() => { void cutOver(s); }}
+                      title={gatedOut ? 'Promote to production only after graduating to bounded-autonomous' : undefined}
+                    >
+                      → {s}
+                    </button>
+                  );
+                })}
+            </div>
+            <div style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', marginTop: '0.35rem' }}>
+              Production requires graduation to bounded-autonomous; rollback to shadow is always available (kill-switch).
+            </div>
+            {cutoverError ? <Notice variant="error">{cutoverError}</Notice> : null}
+          </div>
         </section>
       ) : null}
 

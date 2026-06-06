@@ -24,7 +24,11 @@ import {
   aggregateWorkforceMetrics,
   getWorkforce,
   listWorkforces,
+  setWorkforceStatus,
 } from '../host/workforceService.js';
+import type { WorkforceStatus } from '../host/workforce.js';
+
+const WORKFORCE_STATUSES: readonly WorkforceStatus[] = ['shadow', 'piloting', 'production'];
 
 interface Deps {
   storage: Storage;
@@ -86,6 +90,45 @@ export function registerWorkforceRoutes(app: Express, deps: Deps): void {
         autonomy: aggregateAutonomyGraduation(runs, req.params.workforceId),
         posture: aggregateGovernancePosture(runs, req.params.workforceId),
       });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // MG-6 — graduated production cutover. Forward to `production` is GATED on
+  // the agent having graduated to bounded-autonomous (currentTier === 'auto'),
+  // so cutover is evidence-based, not a toggle. Rollback to shadow/piloting is
+  // ALWAYS allowed (the kill-switch is always available).
+  app.patch('/v1/host/sample/workforces/:workforceId', async (req, res, next) => {
+    try {
+      const status = (req.body as { status?: unknown } | undefined)?.status;
+      if (typeof status !== 'string' || !WORKFORCE_STATUSES.includes(status as WorkforceStatus)) {
+        throw new OpenwopError('validation_error', `Field \`status\` must be one of: ${WORKFORCE_STATUSES.join(', ')}.`, 400, {
+          field: 'status',
+        });
+      }
+      const wf = await getWorkforce(req.params.workforceId);
+      if (!wf) {
+        throw new OpenwopError('not_found', `Workforce \`${req.params.workforceId}\` not found.`, 404, {
+          workforceId: req.params.workforceId,
+        });
+      }
+      if (status === 'production') {
+        const grad = aggregateAutonomyGraduation(
+          await deps.storage.listRuns({ tenantId: tenantOf(req), limit: 5000 }),
+          req.params.workforceId,
+        );
+        if (grad.currentTier !== 'auto') {
+          throw new OpenwopError(
+            'conflict',
+            `Cannot cut over to production: the workforce must graduate to bounded-autonomous first (current tier: ${grad.currentTier ?? 'unknown'}).`,
+            409,
+            { workforceId: req.params.workforceId, currentTier: grad.currentTier, reason: 'cutover_not_eligible' },
+          );
+        }
+      }
+      const updated = await setWorkforceStatus(req.params.workforceId, status as WorkforceStatus);
+      res.json(updated);
     } catch (err) {
       next(err);
     }
