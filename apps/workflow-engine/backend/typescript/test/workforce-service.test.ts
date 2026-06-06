@@ -7,6 +7,8 @@ import { openSqliteStorage } from '../src/storage/sqlite/index.js';
 import { initHostExtPersistence } from '../src/host/hostExtPersistence.js';
 import {
   __clearWorkforces,
+  aggregateAutonomyGraduation,
+  aggregateGovernancePosture,
   aggregateWorkforceMetrics,
   getWorkforce,
   listWorkforces,
@@ -105,5 +107,48 @@ describe('workforceService', () => {
     const runs = await storage.listRuns({ tenantId: 'demo', limit: 5000 });
     const other = aggregateWorkforceMetrics(runs, 'workforce.nonexistent');
     expect(other.totalRuns).toBe(0);
+  });
+
+  it('derives the autonomy graduation timeline (review → guided → auto)', async () => {
+    await seedWorkforceEntities();
+    await seedWorkforceHistory(storage, 'demo', { nowMs: NOW, runCount: 300 });
+    const runs = await storage.listRuns({ tenantId: 'demo', limit: 5000 });
+
+    const g = aggregateAutonomyGraduation(runs, HERO);
+    // initial tier + two promotions across the 6-week window
+    expect(g.milestones.length).toBe(3);
+    expect(g.milestones[0]!.fromTier).toBeNull();
+    expect(g.milestones.map((m) => m.toTier)).toEqual(['review', 'guided', 'auto']);
+    expect(g.currentTier).toBe('auto');
+    expect(g.nextTier).toBeNull(); // fully graduated
+
+    // each promotion's prior-window override incidence cleared the bar it unlocked
+    for (const m of g.milestones.slice(1)) {
+      expect(m.overrideIncidenceBefore).not.toBeNull();
+      expect(m.unlockThreshold).not.toBeNull();
+      expect(m.overrideIncidenceBefore!).toBeLessThanOrEqual(m.unlockThreshold!);
+    }
+  });
+
+  it('summarizes governance posture with recent events', async () => {
+    await seedWorkforceEntities();
+    await seedWorkforceHistory(storage, 'demo', { nowMs: NOW, runCount: 300 });
+    const runs = await storage.listRuns({ tenantId: 'demo', limit: 5000 });
+
+    const p = aggregateGovernancePosture(runs, HERO);
+    expect(p.totalRuns).toBe(300);
+    expect(p.overrides).toBeGreaterThan(0);
+    expect(p.escalations).toBeGreaterThanOrEqual(p.overrides);
+    expect(p.recentEvents.length).toBeGreaterThan(0);
+    expect(p.recentEvents.length).toBeLessThanOrEqual(8);
+    // events carry a runId + a known kind
+    for (const e of p.recentEvents) {
+      expect(e.runId).toBeTruthy();
+      expect(['override', 'false-positive', 'recovery']).toContain(e.kind);
+    }
+    // recent events are newest-first
+    for (let i = 1; i < p.recentEvents.length; i++) {
+      expect(Date.parse(p.recentEvents[i - 1]!.atIso)).toBeGreaterThanOrEqual(Date.parse(p.recentEvents[i]!.atIso));
+    }
   });
 });
