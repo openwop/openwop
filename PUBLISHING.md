@@ -150,14 +150,9 @@ For each subsequent release:
 
 Always: bump the version in the corresponding `package.json` / `pyproject.toml` BEFORE pushing the tag, and run `bash scripts/openwop-check.sh` locally to surface any pre-publish issues that the workflow's preflight would catch.
 
-### Post-publish lockfile bump (automated)
+### Post-publish SDK bump (downstream repos)
 
-After `openwop-publish.yml/publish-ts-client` succeeds, `.github/workflows/openwop-post-publish-bump.yml` fires automatically and opens a PR bumping the `@openwop/openwop` pin in every in-repo consumer:
-
-- `apps/workflow-engine/backend/typescript/package.json` + lockfile (Cloud Run image)
-- `apps/workflow-engine/frontend/react/package.json` + lockfile (Firebase Hosting bundle)
-
-The PR title is `chore: bump @openwop/openwop to ^X.Y.Z (post-publish)`; the body includes the gcloud / firebase commands to redeploy each surface once merged. The bot is idempotent — if the lockfiles are already at the latest published version (manual bump, prior run), no PR opens.
+After `openwop-publish.yml/publish-ts-client` publishes a new `@openwop/openwop`, downstream consumers bump their own pin in their own repos — most notably **[`openwop/openwop-app`](https://github.com/openwop/openwop-app)** (the reference app's Cloud Run backend + Firebase frontend bundle, extracted from this monorepo). The in-repo auto-bump workflow that previously updated `apps/workflow-engine/*` was removed with the app; that bump now lives with the app.
 
 **One-time repo setup** (only needed before the first auto-PR): in *Settings → Actions → General → Workflow permissions*, enable **"Allow GitHub Actions to create and approve pull requests"**. Without this, the bot's `gh pr create` call returns 403 and the workflow logs a clear error.
 
