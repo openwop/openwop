@@ -209,6 +209,14 @@ jobs:
           OPENWOP_API_KEY: openwop-sqlite-dev-key
           OPENWOP_RUN_RESTART_DURING_RUN: '1'
           OPENWOP_RUN_STALE_CLAIM: '1'
+          # These scenarios spawn their own host child processes (spawnHost →
+          # `npx tsx src/server.ts` in repoRoot/<HOST_DIR>). The host moved to
+          # openwop-examples (checked out at examples-ext/), so the default
+          # 'examples/hosts/sqlite' no longer exists under the spec-repo root that
+          # findRepoRoot() resolves to, and spawn fails with `spawn npx ENOENT`
+          # (invalid cwd). Point both scenarios at the checked-out host dir.
+          OPENWOP_RESTART_DURING_RUN_HOST_DIR: examples-ext/examples/hosts/sqlite
+          OPENWOP_STALE_CLAIM_HOST_DIR: examples-ext/examples/hosts/sqlite
         run: |
           npx vitest run src/scenarios/restart-during-run.test.ts src/scenarios/staleClaim.test.ts
 
