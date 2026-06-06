@@ -83,6 +83,21 @@ describe('workforceService', () => {
     expect(runs.length).toBe(0);
   });
 
+  it('seeds all runs even when the backend has no annotations store (best-effort; live-Postgres shape)', async () => {
+    await seedWorkforceEntities();
+    // Simulate a deploy whose schema omits the annotations table — insertAnnotation
+    // throws, exactly as the live Postgres backend did (relation "annotations" does not exist).
+    storage.insertAnnotation = async () => {
+      throw new Error('relation "annotations" does not exist');
+    };
+    const res = await seedWorkforceHistory(storage, 'demo', { nowMs: NOW, runCount: 40 });
+    expect(res.runs).toBe(40); // runs + events persisted despite annotation failures
+    const mine = (await storage.listRuns({ tenantId: 'demo', limit: 1000 })).filter(
+      (r) => (r.metadata as { workforceId?: string }).workforceId === HERO,
+    );
+    expect(mine).toHaveLength(40);
+  });
+
   it('aggregates the 8 telemetry metrics from seeded runs (no event fan-out)', async () => {
     await seedWorkforceEntities();
     await seedWorkforceHistory(storage, 'demo', { nowMs: NOW, runCount: 300 });
