@@ -198,4 +198,4 @@ New fixtures: a seeded credential entry + the `conformance.credential.echo` node
 - [`RFCS/0010-auth-profile-conformance.md`](./0010-auth-profile-conformance.md) — `openwop-auth-api-key-rotation`, the two-key-overlap rotation contract reused in §D.
 - [`spec/v1/run-options.md`](../spec/v1/run-options.md) §"Reserved keys" — the `ai.credentialRef` annex this RFC generalizes.
 - `SECURITY/invariants.yaml` — `mcp-toolcall-payload-redaction` (the sibling redaction invariant).
-- [`plans/myndhyve-protocol-extension-rfcs.md`](../plans/myndhyve-protocol-extension-rfcs.md) — Tier 1 context; RFC 0047 + RFC 0045 depend on this.
+- `plans/myndhyve-protocol-extension-rfcs.md` — Tier 1 context; RFC 0047 + RFC 0045 depend on this.

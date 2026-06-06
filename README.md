@@ -185,7 +185,7 @@ Examples run end-to-end in CI via [`.github/workflows/examples.yml`](https://git
 
 ## Reference applications
 
-End-to-end deployable templates under [`apps/`](./apps/) — a tier above `examples/`. Where `examples/` are single-file demos and `examples/hosts/` are conformance-test targets, `apps/` are full vertical-slice templates with backend + frontend + Dockerfile + auth + storage + observability wired together.
+End-to-end deployable templates under [`apps/`](https://github.com/openwop/openwop-app) — a tier above `examples/`. Where `examples/` are single-file demos and `examples/hosts/` are conformance-test targets, `apps/` are full vertical-slice templates with backend + frontend + Dockerfile + auth + storage + observability wired together.
 
 - **[`openwop/openwop-app`](https://github.com/openwop/openwop-app)** *(its own repo — extracted from `apps/workflow-engine/`)* — single-container TypeScript backend + React frontend; deploys `app.openwop.dev`. Implements run lifecycle, all 4 interrupt kinds, SSE streams (4 modes + Last-Event-ID resume), BYOK with strip-on-persist, OTel under `openwop.*`, pack consumption with SRI + Ed25519. Consumes the published `@openwop/openwop` SDK. See that repo's README for the conformance skip-equivalent matrix.
 

@@ -173,4 +173,4 @@ New fixture: a `conformance.media.emit` fixture node that emits one `media.image
 - [`spec/v1/structured-output-subset.md`](../spec/v1/structured-output-subset.md) — companion JSON-schema portability reference.
 - [`spec/v1/host-capabilities.md`](../spec/v1/host-capabilities.md) §host.aiProviders — the existing `ctx.callImageGenerator` / `ctx.callVideoGenerator` URL-reference convention this mirrors.
 - [`spec/v1/debug-bundle.md`](../spec/v1/debug-bundle.md) — asset-by-reference export.
-- [`plans/app-ux-enhancements.md`](../plans/app-ux-enhancements.md) — the reference-app UX work this unblocks.
+- `plans/app-ux-enhancements.md` — the reference-app UX work this unblocks.
