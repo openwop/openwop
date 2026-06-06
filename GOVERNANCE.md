@@ -59,8 +59,8 @@ Every spec change must:
 
 ## Release process
 
-- **Spec corpus** ships as named tags (`v1`, `v1`, …). Major versions are reserved for breaking changes.
-- **SDKs** (`@openwop/openwop`, `openwop-client`, `openwopclient` Go) ship independently with semantic versioning. SDK majors track the spec major they target.
+- **Spec corpus** ships as named tags (`v1.0.0`, `v1.1.0`, …). Major versions are reserved for breaking changes.
+- **SDKs** (`@openwop/openwop` (npm), `openwop-client` (PyPI), `github.com/openwop/openwop/sdk/go` (Go modules)) ship independently with semantic versioning. SDK majors track the spec major they target.
 - **Conformance suite** (`@openwop/openwop-conformance`) ships independently. Suite majors track the spec major; minors add scenarios for the same spec major.
 
 A release requires: passing CI on `main`, a CHANGELOG entry, and a maintainer cutting the tag. The release workflow at `.github/workflows/release.yml` automates package publication once the tag is pushed.
