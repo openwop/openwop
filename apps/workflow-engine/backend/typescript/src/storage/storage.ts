@@ -96,6 +96,14 @@ export interface Storage {
   // ── events ──
   /** Atomic append: assigns next sequence per (runId), returns sequence. */
   appendEvent(input: Omit<EventRecord, 'sequence'>): Promise<EventRecord>;
+  /**
+   * Bulk append for INITIAL LOADS (the demo seed) — one round-trip instead of N.
+   * Assigns the same monotonic per-(runId) `sequence` as `appendEvent` (continuing
+   * from each run's current max, in array order) and preserves the per-run
+   * serialization, so the result is byte-identical to N `appendEvent` calls. Use
+   * for bulk-loading; the hot path stays on `appendEvent`.
+   */
+  appendEventsBatch(inputs: readonly Omit<EventRecord, 'sequence'>[]): Promise<EventRecord[]>;
   listEvents(runId: string, opts?: { fromSeq?: number; limit?: number }): Promise<readonly EventRecord[]>;
   getMaxSequence(runId: string): Promise<number>;
 
