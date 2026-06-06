@@ -12,7 +12,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { Modal } from '../ui/Modal.js';
 import { useAuth } from './useAuth.js';
 import { migrateAnonToUser } from './migrateTenant.js';
 import {
@@ -49,17 +49,6 @@ function describeSignInError(err: unknown): string {
     return err.message;
   }
   return String(err);
-}
-
-/**
- * Portal the modal out of the SignInButton's render tree. The button
- * lives inside `<header className="app-header">`, which is
- * `position: sticky` + `backdrop-filter` — both create stacking
- * contexts that cap any descendant's z-index. Without the portal the
- * modal renders behind `<main>` even with z-index: 1000.
- */
-function ModalPortal({ children }: { children: React.ReactNode }) {
-  return createPortal(children, document.body);
 }
 
 interface PendingLink {
@@ -221,61 +210,54 @@ export function SignInButton() {
           Sign in
         </button>
         {modalOpen ? (
-          <ModalPortal>
-          <div
-            className="signin-modal-backdrop"
-            onClick={() => setModalOpen(false)}
+          <Modal
+            label="Sign in"
+            onClose={() => setModalOpen(false)}
+            className="signin-modal"
+            scrimClassName="signin-modal-backdrop"
           >
-            <div
-              className="signin-modal"
-              onClick={(e) => e.stopPropagation()}
-              role="dialog"
-              aria-label="Sign in"
-            >
-              {pendingLink ? (
-                <LinkAccountBody
-                  pendingLink={pendingLink}
-                  busy={busy}
-                  error={error}
-                  onContinue={attemptSignIn}
-                  onCancel={() => { setPendingLink(null); setError(null); }}
-                />
-              ) : (
-                <>
-                  <h3 className="signin-modal-title">Sign in to save your work</h3>
-                  <p className="signin-modal-lede muted">
-                    Workflows + BYOK keys you add after signing in persist across
-                    sessions. Anonymous demo state is wiped every 24h.
-                  </p>
-                  {error ? <div className="alert error" role="alert">{error}</div> : null}
-                  <button
-                    className="signin-provider signin-google"
-                    disabled={busy}
-                    type="button"
-                    onClick={() => { void attemptSignIn('google'); }}
-                  >
-                    Continue with Google
-                  </button>
-                  <button
-                    className="signin-provider signin-github"
-                    disabled={busy}
-                    type="button"
-                    onClick={() => { void attemptSignIn('github'); }}
-                  >
-                    Continue with GitHub
-                  </button>
-                  <button
-                    className="signin-modal-cancel"
-                    type="button"
-                    onClick={() => setModalOpen(false)}
-                  >
-                    Cancel
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-          </ModalPortal>
+            {pendingLink ? (
+              <LinkAccountBody
+                pendingLink={pendingLink}
+                busy={busy}
+                error={error}
+                onContinue={attemptSignIn}
+                onCancel={() => { setPendingLink(null); setError(null); }}
+              />
+            ) : (
+              <>
+                <h3 className="signin-modal-title">Sign in to save your work</h3>
+                <p className="signin-modal-lede muted">
+                  Workflows + BYOK keys you add after signing in persist across
+                  sessions. Anonymous demo state is wiped every 24h.
+                </p>
+                {error ? <div className="alert error" role="alert">{error}</div> : null}
+                <button
+                  className="signin-provider signin-google"
+                  disabled={busy}
+                  type="button"
+                  onClick={() => { void attemptSignIn('google'); }}
+                >
+                  Continue with Google
+                </button>
+                <button
+                  className="signin-provider signin-github"
+                  disabled={busy}
+                  type="button"
+                  onClick={() => { void attemptSignIn('github'); }}
+                >
+                  Continue with GitHub
+                </button>
+                <button
+                  className="signin-modal-cancel"
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                >
+                  Cancel
+                </button>
+              </>
+            )}
+          </Modal>
         ) : null}
       </>
     );
@@ -334,17 +316,12 @@ export function SignInButton() {
         </div>
       ) : null}
       {confirmingDelete ? (
-        <ModalPortal>
-        <div
-          className="signin-modal-backdrop"
-          onClick={() => !deleting && setConfirmingDelete(false)}
+        <Modal
+          label="Confirm account deletion"
+          onClose={() => { if (!deleting) setConfirmingDelete(false); }}
+          className="signin-modal"
+          scrimClassName="signin-modal-backdrop"
         >
-          <div
-            className="signin-modal"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-label="Confirm account deletion"
-          >
             <h3 className="signin-modal-title">Delete your account?</h3>
             <p>
               This permanently removes every workflow, run, event,
@@ -391,9 +368,7 @@ export function SignInButton() {
                 {deleting ? 'Deleting…' : 'Yes, delete everything'}
               </button>
             </div>
-          </div>
-        </div>
-        </ModalPortal>
+        </Modal>
       ) : null}
     </div>
   );
