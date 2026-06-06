@@ -12,8 +12,10 @@ import { Notice } from '../ui/Notice.js';
 import { ArrowLeftIcon, BuildingIcon } from '../ui/icons/index.js';
 import {
   getWorkforce,
+  getWorkforceGovernance,
   getWorkforceMetrics,
   type Workforce,
+  type WorkforceGovernance,
   type WorkforceMetrics,
 } from '../client/workforcesClient.js';
 
@@ -46,6 +48,7 @@ export function WorkforceOverviewPage(): JSX.Element {
   const { workforceId = '' } = useParams();
   const [wf, setWf] = useState<Workforce | null>(null);
   const [metrics, setMetrics] = useState<WorkforceMetrics | null>(null);
+  const [governance, setGovernance] = useState<WorkforceGovernance | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -53,13 +56,18 @@ export function WorkforceOverviewPage(): JSX.Element {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    // Two batched reads in parallel — no per-run fan-out (rate-limit safe).
-    Promise.all([getWorkforce(workforceId), getWorkforceMetrics(workforceId).catch(() => null)])
-      .then(([w, m]) => {
+    // Batched reads in parallel — no per-run fan-out (rate-limit safe).
+    Promise.all([
+      getWorkforce(workforceId),
+      getWorkforceMetrics(workforceId).catch(() => null),
+      getWorkforceGovernance(workforceId).catch(() => null),
+    ])
+      .then(([w, m, g]) => {
         if (cancelled) return;
         if (!w) { setNotFound(true); return; }
         setWf(w);
         setMetrics(m);
+        setGovernance(g);
         setError(null);
       })
       .catch((e: unknown) => { if (!cancelled) setError(e instanceof Error ? e.message : String(e)); })
@@ -165,6 +173,61 @@ export function WorkforceOverviewPage(): JSX.Element {
               </div>
             ))}
           </div>
+        </section>
+      ) : null}
+
+      {/* Governance & graduated autonomy (EP1: WG-5 + GA-5) */}
+      {governance ? (
+        <section className="surface-card" style={{ marginBottom: '1rem' }}>
+          <h3 style={{ marginTop: 0 }}>Governance &amp; autonomy</h3>
+
+          {/* Graduation timeline */}
+          <div className="action-bar" style={{ gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+            <span className="chip chip--accent">current tier: {governance.autonomy.currentTier ?? '—'}</span>
+            {governance.autonomy.nextTier ? (
+              <span className={`chip ${governance.autonomy.eligibleForNext ? 'chip--success' : 'chip--muted'}`}>
+                {governance.autonomy.eligibleForNext ? 'eligible' : 'not yet'} → {governance.autonomy.nextTier}
+                {governance.autonomy.nextThreshold !== null ? ` (override ≤ ${pct(governance.autonomy.nextThreshold)})` : ''}
+              </span>
+            ) : (
+              <span className="chip chip--success">fully graduated — bounded-autonomous</span>
+            )}
+          </div>
+          <ol style={{ margin: '0 0 0.75rem', paddingLeft: '1.1rem' }}>
+            {governance.autonomy.milestones.map((m) => (
+              <li key={`${m.toTier}-${m.runIndex}`}>
+                <strong>{m.fromTier ? `${m.fromTier} → ${m.toTier}` : `started at ${m.toTier}`}</strong>
+                {' '}<span style={{ color: 'var(--color-text-muted)' }}>· {new Date(m.atIso).toLocaleDateString()}</span>
+                {m.overrideIncidenceBefore !== null && m.unlockThreshold !== null ? (
+                  <span style={{ color: 'var(--color-text-muted)', fontVariantNumeric: 'tabular-nums' }}>
+                    {' '}— override incidence had fallen to {pct(m.overrideIncidenceBefore)} (bar: ≤ {pct(m.unlockThreshold)})
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ol>
+
+          {/* Posture */}
+          <div className="action-bar" style={{ gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+            <span className="chip">{governance.posture.overrides} overrides</span>
+            <span className="chip">{governance.posture.escalations} escalations</span>
+            <span className="chip">{governance.posture.falsePositives} false-positives</span>
+            <span className="chip">{governance.posture.recoveries} recoveries</span>
+            <span className="chip chip--warning">{governance.posture.policyViolations} policy violations</span>
+          </div>
+          {governance.posture.recentEvents.length > 0 ? (
+            <details>
+              <summary style={{ cursor: 'pointer' }}>Recent governance events ({governance.posture.recentEvents.length})</summary>
+              <ul style={{ margin: '0.5rem 0 0', fontSize: '0.85rem' }}>
+                {governance.posture.recentEvents.map((e) => (
+                  <li key={e.runId}>
+                    <span className={`chip ${e.kind === 'override' ? 'chip--warning' : e.kind === 'false-positive' ? 'chip--danger' : 'chip--muted'}`}>{e.kind}</span>
+                    {' '}{e.detail} <span style={{ color: 'var(--color-text-muted)' }}>· {new Date(e.atIso).toLocaleDateString()}</span>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
         </section>
       ) : null}
 

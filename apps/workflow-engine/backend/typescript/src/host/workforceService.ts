@@ -19,7 +19,7 @@ import { DurableCollection } from './hostExtPersistence.js';
 import { createLogger } from '../observability/logger.js';
 import type { Storage } from '../storage/storage.js';
 import { generateWorkforceHistory } from './workforceHistory.js';
-import type { Workforce } from './workforce.js';
+import type { AutonomyLevel, Workforce } from './workforce.js';
 import workforceSeed from './seed-data/workforces.json';
 
 const log = createLogger('workforce');
@@ -226,5 +226,166 @@ export function aggregateWorkforceMetrics(
     recoveryRate: total ? Number((failedRecovered / total).toFixed(4)) : 0,
     policyViolations: overridden,
     weekly,
+  };
+}
+
+// ---- graduated autonomy + governance posture (EP1: WG-5 + GA-5) -----------
+
+/** Tier order + the override-incidence ceiling that unlocks ENTRY to each
+ *  higher tier. "Override incidence" here = overrides ÷ runs in the trailing
+ *  window (the clean, monotone graduation signal — distinct from the headline
+ *  conditional `overrideRate` = overrides ÷ approvals). Thresholds chosen
+ *  consistent with the seeded curve (review ~8% → guided ~4% → auto ~2%). */
+const TIER_ORDER: readonly AutonomyLevel[] = ['review', 'guided', 'auto'];
+const UNLOCK_OVERRIDE_INCIDENCE: Record<Exclude<AutonomyLevel, 'review'>, number> = {
+  guided: 0.1,
+  auto: 0.05,
+};
+
+export interface PromotionMilestone {
+  fromTier: AutonomyLevel | null;
+  toTier: AutonomyLevel;
+  atIso: string;
+  runIndex: number;
+  /** Override incidence over the prior tier's window (null for the initial tier). */
+  overrideIncidenceBefore: number | null;
+  /** The ceiling that unlocked this tier (null for the initial tier). */
+  unlockThreshold: number | null;
+}
+
+export interface AutonomyGraduation {
+  workforceId: string;
+  currentTier: AutonomyLevel | null;
+  milestones: PromotionMilestone[];
+  nextTier: AutonomyLevel | null;
+  nextThreshold: number | null;
+  /** Override incidence over the most recent window. */
+  recentOverrideIncidence: number;
+  eligibleForNext: boolean;
+}
+
+function overrideIncidence(slice: readonly { metadata: Record<string, unknown> }[]): number {
+  if (slice.length === 0) return 0;
+  const overrides = slice.filter((r) => (r.metadata as RunMeta).outcome === 'overridden').length;
+  return Number((overrides / slice.length).toFixed(4));
+}
+
+/**
+ * Derive the evidence-based promotion timeline from a workforce's run history:
+ * each autonomy-tier transition becomes a milestone stamped with the override
+ * incidence that earned it. Turns the graduation curve into an auditable
+ * "promoted because the evidence cleared the bar" contract (WG-5).
+ */
+export function aggregateAutonomyGraduation(
+  runs: readonly { metadata: Record<string, unknown>; createdAt: string }[],
+  workforceId: string,
+): AutonomyGraduation {
+  const mine = runs
+    .filter((r) => (r.metadata as RunMeta).workforceId === workforceId)
+    .slice()
+    .sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
+
+  const milestones: PromotionMilestone[] = [];
+  let phaseStart = 0;
+  let prevTier: AutonomyLevel | null = null;
+
+  mine.forEach((run, i) => {
+    const tier = ((run.metadata as { autonomyPhase?: AutonomyLevel }).autonomyPhase) ?? null;
+    if (tier && tier !== prevTier) {
+      const before = prevTier === null ? null : overrideIncidence(mine.slice(phaseStart, i));
+      const threshold = tier === 'review' ? null : UNLOCK_OVERRIDE_INCIDENCE[tier];
+      milestones.push({
+        fromTier: prevTier,
+        toTier: tier,
+        atIso: run.createdAt,
+        runIndex: i,
+        overrideIncidenceBefore: before,
+        unlockThreshold: prevTier === null ? null : threshold,
+      });
+      phaseStart = i;
+      prevTier = tier;
+    }
+  });
+
+  const currentTier = prevTier;
+  const curIdx = currentTier ? TIER_ORDER.indexOf(currentTier) : -1;
+  const nextTier = curIdx >= 0 && curIdx < TIER_ORDER.length - 1 ? TIER_ORDER[curIdx + 1]! : null;
+  const nextThreshold = nextTier && nextTier !== 'review' ? UNLOCK_OVERRIDE_INCIDENCE[nextTier] : null;
+  // recent window = the current tier's runs (the live evidence).
+  const recent = overrideIncidence(mine.slice(phaseStart));
+
+  return {
+    workforceId,
+    currentTier,
+    milestones,
+    nextTier,
+    nextThreshold,
+    recentOverrideIncidence: recent,
+    eligibleForNext: nextThreshold !== null && recent <= nextThreshold,
+  };
+}
+
+export interface GovernanceEvent {
+  runId: string;
+  atIso: string;
+  kind: 'override' | 'false-positive' | 'recovery';
+  detail: string;
+}
+
+export interface GovernancePosture {
+  workforceId: string;
+  totalRuns: number;
+  overrides: number;
+  escalations: number;
+  falsePositives: number;
+  recoveries: number;
+  policyViolations: number;
+  recentEvents: GovernanceEvent[];
+}
+
+const GOVERNANCE_OUTCOME_KIND: Record<string, GovernanceEvent['kind']> = {
+  overridden: 'override',
+  'false-positive': 'false-positive',
+  'failed-recovered': 'recovery',
+};
+const GOVERNANCE_DETAIL: Record<GovernanceEvent['kind'], string> = {
+  override: 'Human overrode the agent (e.g. vendor not on master list).',
+  'false-positive': 'Cleared run later flagged wrong by a reviewer.',
+  recovery: 'Run failed and recovered via fork-replay.',
+};
+
+/**
+ * Governance posture for the workforce — runtime-control counts + the most
+ * recent notable events, so the demo shows GOVERN/ASSURE as live monitoring
+ * rather than after-the-fact audit (GA-5). Derived from run metadata; single
+ * read, no event fan-out.
+ */
+export function aggregateGovernancePosture(
+  runs: readonly { runId: string; metadata: Record<string, unknown>; createdAt: string }[],
+  workforceId: string,
+  recentLimit = 8,
+): GovernancePosture {
+  const mine = runs.filter((r) => (r.metadata as RunMeta).workforceId === workforceId);
+  const outcome = (r: (typeof mine)[number]): string => (r.metadata as RunMeta).outcome ?? '';
+  const count = (pred: (o: string) => boolean): number => mine.filter((r) => pred(outcome(r))).length;
+
+  const recentEvents = mine
+    .filter((r) => GOVERNANCE_OUTCOME_KIND[outcome(r)] !== undefined)
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
+    .slice(0, recentLimit)
+    .map((r): GovernanceEvent => {
+      const kind = GOVERNANCE_OUTCOME_KIND[outcome(r)]!;
+      return { runId: r.runId, atIso: r.createdAt, kind, detail: GOVERNANCE_DETAIL[kind] };
+    });
+
+  return {
+    workforceId,
+    totalRuns: mine.length,
+    overrides: count((o) => o === 'overridden'),
+    escalations: count((o) => o === 'escalated' || o === 'overridden' || o === 'open'),
+    falsePositives: count((o) => o === 'false-positive'),
+    recoveries: count((o) => o === 'failed-recovered'),
+    policyViolations: count((o) => o === 'overridden'),
+    recentEvents,
   };
 }
