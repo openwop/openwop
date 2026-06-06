@@ -34,6 +34,10 @@ export function AutonomyMeter({ autonomyLevel, showLabel = true }: {
   return (
     <span
       className="auto-meter"
+      // role="img": this is a visual gauge (filled bars). A bare <span> may not
+      // carry aria-label (aria-prohibited-attr); role=img makes it a named
+      // graphic, so SRs announce "Autonomy: Autonomous" instead of the bars.
+      role="img"
       title={`Autonomy: ${meta.label} — ${meta.help}`}
       aria-label={`Autonomy: ${meta.label}`}
     >

@@ -4654,6 +4654,9 @@ a.surface-card:hover,
 }
 .wf-figure--tile:hover { background: var(--paper); border-color: var(--rule); color: inherit; }
 .wf-figure--tile.is-active { box-shadow: inset 3px 0 0 var(--clay); background: var(--clay-soft); }
+/* On the clay-tinted active tile, --ink-3 muted text is 4.47:1 (a hair under
+ * AA); the selected tile uses the stronger --ink-2 for its label. */
+.wf-figure--tile.is-active .wf-figure-l { color: var(--ink-2); }
 .wf-figure--tile.is-attn .wf-figure-n,
 .wf-figure--tile.is-attn .wf-figure-l { color: var(--color-warning-text); }
 .wf-figure-n {

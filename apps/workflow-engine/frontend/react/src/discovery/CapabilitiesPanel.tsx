@@ -312,7 +312,8 @@ export function CapabilitiesPanel() {
           Full <code>GET /.well-known/openwop</code> payload.
         </p>
         {caps ? (
-          <pre>{JSON.stringify(caps, null, 2)}</pre>
+          // tabIndex=0 so the scrollable JSON is keyboard-reachable.
+          <pre tabIndex={0} aria-label="Raw capabilities JSON">{JSON.stringify(caps, null, 2)}</pre>
         ) : (
           !error && <div className="muted">Loading…</div>
         )}
