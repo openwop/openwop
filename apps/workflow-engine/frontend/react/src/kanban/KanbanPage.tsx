@@ -26,6 +26,7 @@ import { roleThemeForAgent, workflowName } from '../agents/roleTemplates.js';
 import { AgentAvatar } from '../agents/AgentAvatar.js';
 import { Notice } from '../ui/Notice.js';
 import { StateCard } from '../ui/StateCard.js';
+import { classifyHttpError } from '../client/classifyHttpError.js';
 import { PageHeader } from '../ui/PageHeader.js';
 import { IconButton } from '../ui/IconButton.js';
 import { AlertIcon, ColumnsIcon, DotsIcon, PencilIcon, TrashIcon, WorkflowIcon } from '../ui/icons/index.js';
@@ -110,6 +111,9 @@ export function KanbanPage(): JSX.Element {
   const [activeBoard, setActiveBoard] = useState<KanbanBoard | null>(null);
   const [cards, setCards] = useState<KanbanCard[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // Init-true so the first load shows a loading state, not a false "No boards
+  // yet" empty flash before the fetch resolves (GAP-ANALYSIS E5).
+  const [boardsLoading, setBoardsLoading] = useState(true);
   const [notice, setNotice] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   // Roster members boards can be bound to (RFC 0086): the owner's avatar
@@ -120,7 +124,9 @@ export function KanbanPage(): JSX.Element {
     try {
       setBoards(await listBoardsWithCards());
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError((() => { const c = classifyHttpError(err); return `${c.title} — ${c.detail}`; })());
+    } finally {
+      setBoardsLoading(false);
     }
   }, []);
 
@@ -130,7 +136,7 @@ export function KanbanPage(): JSX.Element {
       setActiveBoard(board);
       setCards(c);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError((() => { const c = classifyHttpError(err); return `${c.title} — ${c.detail}`; })());
     }
   }, []);
 
@@ -178,7 +184,7 @@ export function KanbanPage(): JSX.Element {
       await refreshBoards();
       await openBoard(board.id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError((() => { const c = classifyHttpError(err); return `${c.title} — ${c.detail}`; })());
     }
   };
 
@@ -210,7 +216,7 @@ export function KanbanPage(): JSX.Element {
       await refreshBoards();
       await openBoard(copy.id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError((() => { const c = classifyHttpError(err); return `${c.title} — ${c.detail}`; })());
     }
   };
 
@@ -226,7 +232,7 @@ export function KanbanPage(): JSX.Element {
       setNotice(`Renamed to "${renamed.name}".`);
       await refreshBoards();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError((() => { const c = classifyHttpError(err); return `${c.title} — ${c.detail}`; })());
     }
   };
 
@@ -240,7 +246,7 @@ export function KanbanPage(): JSX.Element {
       setCards([]);
       await refreshBoards();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError((() => { const c = classifyHttpError(err); return `${c.title} — ${c.detail}`; })());
     }
   };
 
@@ -263,7 +269,7 @@ export function KanbanPage(): JSX.Element {
       await openBoard(activeBoard.id);
       await refreshBoards();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError((() => { const c = classifyHttpError(err); return `${c.title} — ${c.detail}`; })());
     }
   };
 
@@ -276,7 +282,7 @@ export function KanbanPage(): JSX.Element {
       await openBoard(activeBoard.id);
       await refreshBoards();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError((() => { const c = classifyHttpError(err); return `${c.title} — ${c.detail}`; })());
     }
   };
 
@@ -289,7 +295,7 @@ export function KanbanPage(): JSX.Element {
       await openBoard(activeBoard.id);
       await refreshBoards();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError((() => { const c = classifyHttpError(err); return `${c.title} — ${c.detail}`; })());
       await openBoard(activeBoard.id); // rollback to server truth
     }
   };
@@ -385,6 +391,8 @@ export function KanbanPage(): JSX.Element {
             onDeleteCard={(cardId) => void onDeleteCard(cardId)}
           />
         </>
+      ) : boardsLoading ? (
+        <StateCard loading title="Loading boards…" />
       ) : (
         <StateCard
           icon={<ColumnsIcon size={26} />}

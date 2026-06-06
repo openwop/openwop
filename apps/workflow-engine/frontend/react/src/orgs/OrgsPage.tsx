@@ -16,6 +16,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { Notice } from '../ui/Notice.js';
+import { classifyHttpError } from '../client/classifyHttpError.js';
 import { StateCard } from '../ui/StateCard.js';
 import { PageHeader } from '../ui/PageHeader.js';
 import { BriefcaseIcon, ColumnsIcon, LockIcon, PencilIcon, ShieldIcon, TrashIcon, UserIcon } from '../ui/icons/index.js';
@@ -103,7 +104,12 @@ export function OrgsPage(): JSX.Element {
   const [viewAs, setViewAs] = useState<string | null>(null);
   const [viewScopes, setViewScopes] = useState<Set<string>>(new Set());
 
-  const fail = (err: unknown) => setError(err instanceof Error ? err.message : String(err));
+  const fail = (err: unknown) => {
+    // Friendly transport copy (GAP-ANALYSIS E5): 429/offline render as
+    // recoverable guidance, not a raw `listX failed: 429`.
+    const c = classifyHttpError(err);
+    setError(`${c.title} — ${c.detail}`);
+  };
 
   const loadOrgs = useCallback(async () => {
     try {

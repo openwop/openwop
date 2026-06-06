@@ -4,6 +4,7 @@ import { DataTable, DensityToggle, type DataColumn } from '../ui/DataTable.js';
 import { SkeletonRows } from '../ui/Skeleton.js';
 import { toast } from '../ui/toast.js';
 import { createRun, listMyRuns, type RunListItem } from '../client/runsClient.js';
+import { classifyHttpError } from '../client/classifyHttpError.js';
 import type { Annotation } from '../client/feedbackClient.js';
 import { useRunAnnotations, reviewOf, needsReview, reviewReason } from './useRunAnnotations.js';
 import { formatDuration } from './format.js';
@@ -79,7 +80,11 @@ export function RunsIndexPage() {
       const list = await listMyRuns({ limit: 20 });
       setRuns(list);
     } catch (err) {
-      setRunsError(err instanceof Error ? err.message : String(err));
+      // Friendly transport copy (GAP-ANALYSIS E5) — a busy page hitting the
+      // per-IP budget shows "Too many requests, retry" instead of a raw
+      // "listMyRuns failed: 429".
+      const c = classifyHttpError(err);
+      setRunsError(`${c.title} — ${c.detail}`);
     } finally {
       setRunsLoading(false);
     }
