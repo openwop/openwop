@@ -143,11 +143,11 @@
 
 | Host | Passed | Failed | Skipped | Todo | Total | Pass rate |
 |---|---:|---:|---:|---:|---:|---|
-| Postgres reference | 2068 | 0 | 93 | 0 | 2161 | 95.7% total; 0 deterministic failures (re-measured 2026-06-01 against suite v1.18.1 via pglite + OPENWOP_WEBHOOK_ALLOW_PRIVATE=true). +18 passed as the total rose 2143 -> 2161 with the 1.16-1.18.1 scenarios; all of them pass cleanly here. The cleanest reference host. |
-| SQLite reference | 2056 | 0 | 105 | 0 | 2161 | 95.1% total; 0 deterministic failures (re-measured 2026-06-01 against suite v1.18.1). Holds its 0-failure posture; +18 passed as the total rose 2143 -> 2161. |
-| In-memory reference | 2010 | 46 | 105 | 0 | 2161 | 93.0% total - the minimal-host floor. The 46 failures are honest non-claims for surfaces it does not behaviorally implement (interrupts ×6, multi-agent dispatch ×3, stream-mode buffering ×3, sub-workflow, BYOK round-trip, cap/cost-breach, channel-TTL, pause/resume, version-negotiation, artifacts, et al.), unchanged from the v1.15.0 reading; +18 passed as the total grew 2143 -> 2161. Not regressions. |
-| Python reference | 2008 | 2 | 151 | 0 | 2161 | 92.9% total; 100% of applicable when scoped to the host's claimed openwop-core + openwop-stream-poll + openwop-stream-sse profile set (the cross-language-parity floor). The 151 skips reflect the smaller stdlib-only advertised surface; the 2 failures (artifact-auth -> 404-not-401, run-execution-bounds-shape RFC 0058 run-timeout) are honest non-implementations outside the claimed set, unchanged from v1.15.0. (Booted on Python 3.9 stdlib in this run; the host targets 3.11 but the port is 3.9-compatible.) |
-| Workflow-engine reference (in-process harness) | 1400 | 20 | 107 | 0 | 1527 | Re-measured 2026-06-02 against suite v1.18.1 via the in-process npm run test:conformance harness (apps/workflow-engine/backend/typescript/conformance/run.ts; memory:// store, default flags) - the same harness as the prior reading, now run against the current suite (replacing a stale 2026-05-23 v1.5.0 number). 91.7% (1400/1527). The 20 failures are predominantly honest non-claims for surfaces this lean in-memory sample doesn't behaviorally implement - agent-pack install/export/provenance (7), AI-envelope truncation/retry per RFC 0033 (5), plus stream-reconnect (Last-Event-ID), event-ordering, and workspace-membership - analogous to the in-memory reference host's non-claims, not regressions. A per-failure triage separating any genuine gap from the non-claims is the remaining follow-up. The production-grade Postgres/SQLite reference hosts hold 0 deterministic failures at v1.18.1 (above). |
+| Postgres reference | 2068 | 0 | 93 | 0 | 2161 | 95.7% |
+| SQLite reference | 2056 | 0 | 105 | 0 | 2161 | 95.1% |
+| In-memory reference | 2010 | 46 | 105 | 0 | 2161 | 93.0% |
+| Python reference | 2008 | 2 | 151 | 0 | 2161 | 92.9% |
+| Workflow-engine reference (in-process) | 1400 | 20 | 107 | 0 | 1527 | 91.7% |
 
 ## Registry Snapshot
 
