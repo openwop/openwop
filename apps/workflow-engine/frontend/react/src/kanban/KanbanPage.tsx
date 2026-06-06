@@ -289,14 +289,21 @@ export function KanbanPage(): JSX.Element {
   const onMoveCard = async (cardId: string, toColumnId: string) => {
     if (!activeBoard) return;
     const card = cards.find((c) => c.id === cardId);
+    // Optimistic move (GAP-ANALYSIS E15): apply locally immediately so the card
+    // stays where it was dropped instead of snapping back then jumping after the
+    // round-trip. Capture prior state to restore on failure.
+    const prevCards = cards;
+    setCards((cs) => cs.map((c) => (c.id === cardId ? { ...c, columnId: toColumnId } : c)));
     try {
       const { triggeredRunId } = await patchCard(cardId, { columnId: toColumnId });
       if (triggeredRunId && card) setNotice(`Started a run from "${card.title}" — it landed in a ⚡ trigger lane.`);
+      // Reconcile with server truth (covers triggered-run side effects); the
+      // card is already in place so there is no visible jump.
       await openBoard(activeBoard.id);
       await refreshBoards();
     } catch (err) {
+      setCards(prevCards); // genuine rollback to the pre-move local state
       setError((() => { const c = classifyHttpError(err); return `${c.title} — ${c.detail}`; })());
-      await openBoard(activeBoard.id); // rollback to server truth
     }
   };
 
