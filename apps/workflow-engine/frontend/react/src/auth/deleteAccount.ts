@@ -15,8 +15,7 @@
  */
 
 import { config, authedHeaders, fetchOpts } from '../client/config.js';
-import { getCurrentUser } from './firebase.js';
-import { getAuth } from 'firebase/auth';
+import { deleteCurrentFirebaseUser } from './firebase.js';
 
 export interface DeleteAccountResult {
   deleted: true;
@@ -48,19 +47,16 @@ export async function deleteAccount(): Promise<DeleteAccountResult> {
   }
   const body = (await res.json()) as DeleteAccountResult;
 
-  // Step 2: Firebase user revocation.
-  const user = getCurrentUser();
-  if (user) {
-    try {
-      const fbUser = getAuth().currentUser;
-      if (fbUser) await fbUser.delete();
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes('requires-recent-login')) {
-        throw new RequiresRecentLoginError();
-      }
-      throw err;
+  // Step 2: Firebase user revocation (no-op if not configured / not signed in).
+  // Routed through firebase.ts so the lazily-loaded SDK stays the single import.
+  try {
+    await deleteCurrentFirebaseUser();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes('requires-recent-login')) {
+      throw new RequiresRecentLoginError();
     }
+    throw err;
   }
 
   return body;
