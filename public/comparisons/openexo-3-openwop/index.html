@@ -195,16 +195,17 @@
       <li class="toc-sub"><a href="#phase-2-build-one-reference-workflow">Phase 2: Build one reference workflow</a></li>
       <li class="toc-sub"><a href="#phase-3-instrument-for-proof">Phase 3: Instrument for proof</a></li>
       <li class="toc-sub"><a href="#phase-4-graduate-autonomy-in-waves">Phase 4: Graduate autonomy in waves</a></li>
-      <li class="toc-sub"><a href="#phase-5-package-as-an-openexo-accelerator">Phase 5: Package as an OpenExO accelerator</a></li>
-      <li class="toc-top"><a href="#risks-objections-and-guardrails">Risks, objections, and guardrails</a></li>
+      <li class="toc-sub"><a href="#phase-5-share-what-works">Phase 5: Share what works</a></li>
+      <li class="toc-top"><a href="#honest-boundaries">Honest boundaries</a></li>
       <li class="toc-top"><a href="#final-thesis">Final thesis</a></li>
+      <li class="toc-top"><a href="#an-open-door">An open door</a></li>
       <li class="toc-top"><a href="#sources-and-references">Sources and references</a></li>
     </ul>
   </aside><article class="spec-doc comparison-doc"><h2 id="why-this-matters-now">Why this matters now</h2>
 <p>OpenExO 3.0 argues that organizations must be redesigned around intelligence rather than merely upgraded with intelligent agents. Salim Ismail’s public ExO 3.0 framing describes a shift from hierarchical structures into AI-native systems capable of sensing, deciding, and executing at unprecedented speed and scale.<sup class="oxo-fn"><a href="#fn-salim">1</a></sup></p>
 <p>The OpenExO Organizational Singularity outline frames the transformation as three coupled moves: <strong>ExO 3.0</strong> as the destination architecture, the <strong>Intelligence Stack</strong> as the new operating system, and <strong>REWRITE</strong> as the migration playbook.<sup class="oxo-fn"><a href="#fn-os-outline">2</a></sup></p>
 <p>That creates a protocol gap. A firm cannot operate at machine tempo on strategy language alone. It needs an execution layer that can express workflows, run agent teams, pause for humans, preserve auditability, learn from replay, and connect to tools and other agents. OpenWOP addresses that gap by defining an open protocol for durable multi-agent workflow orchestration: supervisor agents decide, workers call tools, humans participate in conversation loops, and every event flows through an event log, streams, webhooks, and telemetry.<sup class="oxo-fn"><a href="#fn-openwop-home">3</a></sup></p>
-<blockquote><p><strong>Positioning statement:</strong> OpenWOP should be presented to the OpenExO community as the open execution protocol for the Intelligence Stack: not a replacement for ExO 3.0, not a generic agent framework, and not another consulting methodology, but the technical layer that makes agentic organizational work durable, inspectable, and governable.</p></blockquote>
+<blockquote><p><strong>Positioning statement:</strong> OpenWOP is the open execution protocol for the Intelligence Stack — not a replacement for ExO 3.0, not a generic agent framework, and not another consulting methodology, but the technical layer that makes agentic organizational work durable, inspectable, and governable.</p></blockquote>
 <h2 id="the-conceptual-fit-organization-design-meets-protocol-design">The conceptual fit: organization design meets protocol design</h2>
 <p>ExO 3.0 is concerned with the shape of the AI-native firm: purpose, autonomy, decision architecture, recursive learning, elastic agency, human architecture, governance, and ecosystem trust. OpenWOP is concerned with the execution contract for AI-native work: workflow definitions, run lifecycle, event streams, interrupts, artifacts, capabilities, scopes, conformance, and observability.</p>
 <table>
@@ -377,28 +378,31 @@ AI-native operating unit</code></pre>
 <li>Allow bounded autonomous action only after repeated replay and shadow-mode evidence.</li>
 <li>Keep rollback, pause, and kill-switch controls available throughout.</li>
 </ul>
-<h3 id="phase-5-package-as-an-openexo-accelerator">Phase 5: Package as an OpenExO accelerator</h3>
+<h3 id="phase-5-share-what-works">Phase 5: Share what works</h3>
 <ul>
-<li>Create an OpenExO 3.0 + OpenWOP reference guide.</li>
-<li>Publish workflow templates for the first five migration patterns.</li>
+<li>Co-author an ExO 3.0 + OpenWOP reference guide from the pilot's evidence.</li>
+<li>Publish workflow templates for the first five migration patterns, openly.</li>
 <li>Define a conformance checklist for Edge Twin pilots.</li>
-<li>Offer a workshop track: “Make REWRITE executable with OpenWOP.”</li>
+<li>Make REWRITE something a technical team can execute, not just read.</li>
 </ul>
-<h2 id="risks-objections-and-guardrails">Risks, objections, and guardrails</h2>
+<h2 id="honest-boundaries">Honest boundaries</h2>
+<p>A protocol earns trust by what it refuses to claim. Five boundaries worth stating plainly:</p>
 <table>
-<thead><tr><th>Likely objection</th><th>Response</th><th>Guardrail</th></tr></thead>
+<thead><tr><th>Fair challenge</th><th>Where OpenWOP stands</th></tr></thead>
 <tbody>
-<tr><td>“This sounds like another workflow engine.”</td><td>OpenWOP is a wire-level protocol and conformance target, not a single proprietary runtime.</td><td>Keep the page focused on protocol portability, not product claims.</td></tr>
-<tr><td>“OpenExO is a management model, not a software spec.”</td><td>Exactly: OpenWOP is the bridge from management model to executable workflow architecture.</td><td>Position this as an implementation layer for technical teams and CIOs.</td></tr>
-<tr><td>“Enterprises will not let an Edge Twin access core systems.”</td><td>The OpenExO v20 outline already rejects data forking and calls for workflow-scoped governed API access.<sup class="oxo-fn"><a href="#fn-edge-twin">7</a></sup></td><td>Require least-privilege scopes, short-lived credentials, source-of-truth rules, and correlation IDs.</td></tr>
-<tr><td>“Agent autonomy is risky.”</td><td>OpenWOP supports human interrupts, logging, replay, approval queues, and rollback at the workflow level.</td><td>Autonomy should graduate by wave, not be granted wholesale.</td></tr>
-<tr><td>“The protocol is new.”</td><td>Adoption should begin with pilot workflows, conformance checks, and optional profiles rather than mission-critical replacement on Day 1.</td><td>Use shadow mode, replay, reference workflows, and documented escape hatches.</td></tr>
+<tr><td>“This sounds like another workflow engine.”</td><td>It is a wire-level protocol and conformance target, not a proprietary runtime. Any host that passes the public suite runs the same workflows — portability is the point, not a product.</td></tr>
+<tr><td>“OpenExO is a management model, not a software spec.”</td><td>Exactly. The two meet at a boundary: ExO 3.0 defines what the AI-native firm should become; OpenWOP defines the contract its workflows run on. Neither replaces the other.</td></tr>
+<tr><td>“Enterprises will not let an Edge Twin access core systems.”</td><td>They should not — not without least-privilege scopes, short-lived credentials, source-of-truth rules, and correlation IDs. The Edge Twin pattern above assumes governed, workflow-scoped access, never a forked data estate — the same rule the OpenExO outline itself sets.<sup class="oxo-fn"><a href="#fn-edge-twin">7</a></sup></td></tr>
+<tr><td>“Agent autonomy is risky.”</td><td>It is. That is why autonomy graduates by wave — alert-only, then approval-gated, then bounded — with interrupts, replay, approval queues, and rollback available at every stage, never granted wholesale.</td></tr>
+<tr><td>“The protocol is young.”</td><td>True. Start with pilot workflows, shadow runs, and conformance checks rather than mission-critical replacement on Day 1. The escape hatches are documented, and the suite is public.</td></tr>
 </tbody></table>
 <h2 id="final-thesis">Final thesis</h2>
 <blockquote><p><strong>OpenExO 3.0 tells leaders what the AI-native organization should become. OpenWOP can tell systems how that organization actually runs.</strong></p></blockquote>
 <p>OpenWOP is compelling for OpenExO 3.0 because it sits exactly where the organizational thesis needs an implementation substrate: the boundary between strategic redesign and operational execution. It can turn REWRITE from a playbook into a set of durable, governed workflow migrations. It can turn the Intelligence Stack from a conceptual operating model into a runtime architecture. It can turn the agent workforce from a collection of bots into a measurable, auditable, portable execution system.</p>
-<p>The strongest public positioning is therefore:</p>
+<p>Said plainly:</p>
 <blockquote><p><strong>OpenWOP is the open workflow protocol for the ExO 3.0 Intelligence Stack: a durable, observable, human-governed execution layer for AI-native organizations.</strong></p></blockquote>
+<h2 id="an-open-door">An open door</h2>
+<p>Everything above is testable today, with nothing proprietary at stake. The <a href="https://openwop.dev/spec/v1/">v1 spec corpus</a>, the <a href="https://openwop.dev/conformance/">conformance suite</a>, and the reference hosts are public; the protocol is <a href="https://openwop.dev/governance/">openly governed</a> and implementable by unaffiliated hosts; and a <a href="https://openwop.dev/install/">downloadable white-label app</a> ships the full agent-workforce surface — named agents, autonomy tiers, approval queues, durable boards — ready to stand up against one real workflow. If the Organizational Singularity describes the firm that must exist, this is one concrete, open way to make it run.</p>
 <h2 id="sources-and-references">Sources and references</h2>
 <ul>
 <li id="fn-salim">Salim Ismail, <a href="https://salimismail.com/">official site</a>, public description of ExO 3.0 as a framework for redesigning organizations around intelligence, autonomy, and purpose.</li>
