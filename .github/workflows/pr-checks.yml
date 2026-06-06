@@ -24,10 +24,8 @@ jobs:
   changes:
     name: Detect changed paths
     runs-on: ubuntu-latest
+    # The SDK lint jobs (TS/Python/Go) moved to openwop-sdks with sdk/.
     outputs:
-      typescript: ${{ steps.filter.outputs.typescript }}
-      python: ${{ steps.filter.outputs.python }}
-      go: ${{ steps.filter.outputs.go }}
       conformance: ${{ steps.filter.outputs.conformance }}
       appfrontend: ${{ steps.filter.outputs.appfrontend }}
     steps:
@@ -36,23 +34,15 @@ jobs:
         id: filter
         with:
           filters: |
-            typescript:
-              - 'sdk/typescript/**'
-            python:
-              - 'sdk/python/**'
-            go:
-              - 'sdk/go/**.go'
-              - 'sdk/go/go.mod'
-              - 'sdk/go/go.sum'
             conformance:
               - 'conformance/**'
             appfrontend:
               - 'apps/workflow-engine/frontend/react/**'
 
-  lint-typescript:
-    name: TS lint (ESLint)
+  lint-conformance:
+    name: Lint (conformance)
     needs: changes
-    if: needs.changes.outputs.typescript == 'true' || needs.changes.outputs.conformance == 'true'
+    if: needs.changes.outputs.conformance == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -60,16 +50,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
-      # Lint the TypeScript SDK if it changed.
-      - name: Lint sdk/typescript
-        if: needs.changes.outputs.typescript == 'true'
-        run: |
-          cd sdk/typescript
-          npm ci
-          npm run lint --if-present || (echo "::warning::lint script is not configured for this package" && true)
-      # Lint the conformance suite if it changed.
       - name: Lint conformance
-        if: needs.changes.outputs.conformance == 'true'
         run: |
           cd conformance
           npm ci
@@ -127,47 +108,7 @@ jobs:
           cd apps/workflow-engine/frontend/react
           npm run test:e2e
 
-  lint-python:
-    name: Python lint (ruff)
-    needs: changes
-    if: needs.changes.outputs.python == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-      - run: pip install ruff
-      - name: ruff check
-        run: |
-          cd sdk/python
-          ruff check .
-
-  lint-go:
-    name: Go lint (vet + gofmt)
-    needs: changes
-    if: needs.changes.outputs.go == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-go@v6
-        with:
-          go-version: '1.22'
-      - name: go vet
-        run: |
-          cd sdk/go
-          go vet ./...
-      - name: gofmt -l (must produce no output)
-        run: |
-          cd sdk/go
-          unformatted=$(gofmt -l .)
-          if [ -n "$unformatted" ]; then
-            echo "::error::gofmt found unformatted files:"
-            echo "$unformatted"
-            exit 1
-          fi
+  # SDK lint jobs (Python ruff, Go vet+gofmt) moved to openwop-sdks with sdk/.
 
   # Regression guard: the suite must keep runtime dependencies in dependencies,
   # vitest/ajv/ajv-formats only in devDependencies, so consumers running

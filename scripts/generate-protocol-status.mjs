@@ -118,12 +118,11 @@ function pyprojectVersion(rel) {
 function artifactVersions() {
   return [
     { artifact: 'Spec corpus (root)', version: readJsonVersion('package.json'), source: '`package.json`', cadence: 'bumps only on a coordinated spec release' },
-    { artifact: 'TypeScript SDK `@openwop/openwop`', version: readJsonVersion('sdk/typescript/package.json'), source: '`sdk/typescript/package.json`', cadence: 'floats patch via `openwop/v*` tags' },
-    { artifact: 'Python SDK `openwop-client`', version: pyprojectVersion('sdk/python/pyproject.toml'), source: '`sdk/python/pyproject.toml`', cadence: 'tracks spec major; floats patch' },
-    { artifact: 'Go SDK', version: 'git tag `sdk/go/v*`', source: '`sdk/go/` (tag-versioned module)', cadence: 'tracks spec major; tagged' },
     { artifact: 'Conformance suite `@openwop/openwop-conformance`', version: readJsonVersion('conformance/package.json'), source: '`conformance/package.json`', cadence: 'minor on scenario add/remove' },
-    // The CLI (`@openwop/cli`) was extracted to openwop/openwop-cli and is no
-    // longer versioned from this repo — see that repo for its release line.
+    // The three SDKs (`@openwop/openwop`, `openwop-client`, Go) were extracted to
+    // openwop/openwop-sdks and are versioned there (tracking the spec major per
+    // PUBLISHING.md). The CLI (`@openwop/cli`) publishes from openwop/openwop-cli.
+    // Neither is versioned from this repo — see those repos for their release lines.
   ];
 }
 
@@ -143,21 +142,11 @@ function parseRfcs() {
     .sort((a, b) => a.id.localeCompare(b.id));
 }
 
+// SDK helper-coverage parity (sdk/PARITY.md) moved to the openwop-sdks repo with
+// the SDKs; this generator no longer reads it. The "SDK Helper Coverage" section
+// of the status doc now points there instead of pinning cross-repo counts.
 function parseSdkParity() {
-  const text = read('sdk/PARITY.md');
-  const rows = [];
-  for (const line of text.split('\n')) {
-    const match = line.match(/^\|\s*(TypeScript|Python|Go)[^|]*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|/);
-    if (match) {
-      rows.push({
-        sdk: match[1],
-        helpers: Number(match[2]),
-        rawOnly: Number(match[3]),
-        unreachable: Number(match[4]),
-      });
-    }
-  }
-  return rows;
+  return [];
 }
 
 function parseInteropPassRates() {
@@ -374,11 +363,7 @@ function generateStatus() {
   lines.push('');
   lines.push('## SDK Helper Coverage');
   lines.push('');
-  lines.push('| SDK | Typed helpers | Raw-only surfaces | Unreachable surfaces |');
-  lines.push('|---|---:|---:|---:|');
-  for (const row of sdkRows) {
-    lines.push(tableRow([row.sdk, String(row.helpers), String(row.rawOnly), String(row.unreachable)]));
-  }
+  lines.push('The TypeScript / Python / Go SDKs live in the [`openwop-sdks`](https://github.com/openwop/openwop-sdks) repo. Per-SDK helper coverage (typed / raw-only / unreachable surfaces) is tracked in that repo\'s `sdk/PARITY.md` and machine-enforced by its `scripts/check-sdk-parity.mjs` against the OpenAPI operation set.');
   lines.push('');
   lines.push('## Reference Host Conformance Evidence');
   lines.push('');

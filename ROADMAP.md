@@ -14,7 +14,7 @@ Released and locked:
 - 32 prose specs under `spec/v1/` at the v1.0 release — the corpus has since grown additively to 52 (see `docs/PROTOCOL-STATUS.md` for the live tally)
 - 24 first-class JSON Schemas at release (now 63; all compile clean under Ajv2020)
 - OpenAPI 3.1 + AsyncAPI 3.1
-- 3 reference SDKs: `@openwop/openwop` (TS), `openwop-client` (Python), `github.com/openwop/openwop/sdk/go` (Go)
+- 3 reference SDKs (now in [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks)): `@openwop/openwop` (TS), `openwop-client` (Python), `github.com/openwop/openwop-sdks/go` (Go)
 - `@openwop/openwop-conformance` 1.0 with server-free and server-required scenario groups (the suite has since shipped minors through `1.20.0`)
 
 See [`CHANGELOG.md`](./CHANGELOG.md) for the release record.
@@ -118,7 +118,7 @@ Forward-looking domain references in the spec corpus and roadmap use `openwop.de
 Three rules for domain usage:
 
 1. **All forward-looking public URLs** (`packs.openwop.dev`, `openwop.dev/openwop-conformance`, etc.) use `openwop.dev`.
-2. **Existing GitHub URLs and package names stay verbatim** (`github.com/openwop/openwop`, `@openwop/openwop`, `openwop-client`, `github.com/openwop/openwop/sdk/go`). These are the canonical artifact identifiers and are guaranteed stable through any v1.x release per `PUBLISHING.md`. The Go module path in particular cannot be redirected without a forced rewrite for every importer; the migration plan documents the cost honestly rather than minimizing it.
+2. **Published package names stay verbatim** (`@openwop/openwop` on npm, `openwop-client` on PyPI) and are guaranteed stable through any v1.x release per `PUBLISHING.md`. The 2026-06 repo split moved the SDK *source* to [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks); the npm/PyPI identifiers are unchanged, but the **Go module path changed** from `github.com/openwop/openwop/sdk/go` to `github.com/openwop/openwop-sdks/go` (a module is identified by its path, so this is a forced re-import for Go consumers — documented in the openwop-sdks README migration note rather than minimized).
 3. **Internal references in steward-private docs** are not normative and may use any name; this convention applies only to the public spec corpus, this ROADMAP, and the conformance suite.
 
 ### Vendor-neutral org migration

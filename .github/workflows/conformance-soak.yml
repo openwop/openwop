@@ -56,7 +56,6 @@ jobs:
           cache-dependency-path: |
             examples-ext/examples/hosts/sqlite/package-lock.json
             conformance/package-lock.json
-            sdk/typescript/package-lock.json
 
       - name: Install SQLite reference host
         working-directory: examples-ext/examples/hosts/sqlite
@@ -75,18 +74,9 @@ jobs:
           OPENWOP_EXAMPLES_DIR: examples-ext
         run: node scripts/check-workflow-chain-expansion-sync.mjs
 
-      # Several spec-corpus scenarios assert against `sdk/typescript/dist/`
-      # (e.g., `SDK HTTP error helpers match canonical REST vocabulary`'s
-      # three "TypeScript dist …" sub-cases). The local `npm run
-      # openwop:check` gate builds the SDK in its step [1/9] before
-      # invoking conformance; the soak workflow has to mirror that order
-      # or the dist-reading scenarios fail with "ENOENT: no such file".
-      - name: Build TypeScript reference SDK (emit dist/)
-        working-directory: sdk/typescript
-        run: |
-          npm ci
-          npm run build
-
+      # The SDKs moved to openwop-sdks. The conformance spec-corpus-validity
+      # SDK-helper block self-skips when sdk/typescript/dist is absent (its
+      # describe.skipIf guard), so the suite no longer needs the SDK built here.
       - name: Pre-allocate ports for host + OTel collector
         run: |
           echo "OPENWOP_PORT=3838" >> $GITHUB_ENV
@@ -211,11 +201,8 @@ jobs:
         run: |
           npx vitest run src/scenarios/restart-during-run.test.ts src/scenarios/staleClaim.test.ts
 
-      - name: Three-language SDK smoke
-        env:
-          OPENWOP_BASE_URL: http://127.0.0.1:${{ env.OPENWOP_PORT }}
-          OPENWOP_API_KEY: openwop-sqlite-dev-key
-        run: bash sdk/smoke/all.sh
+      # The three-language SDK smoke (sdk/smoke/all.sh) moved to openwop-sdks with
+      # the SDKs; it runs there against a booted host in that repo's CI.
 
       - name: Tear down host
         if: always()
