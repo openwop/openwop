@@ -231,3 +231,40 @@ export async function getWorkforceShadow(workforceId: string): Promise<ShadowEva
   const res = await fetch(`${base}/${encodeURIComponent(workforceId)}/shadow`, fetchOpts({ headers: authedHeaders() }));
   return asJson<ShadowEvalSummary>(res, 'getWorkforceShadow');
 }
+
+// ── real live-shadow eval RUN (RFC 0081 §C — host-ext, gated) ──────────────
+
+export interface EvalTaskResult {
+  taskId: string;
+  score: number;
+  passed: boolean;
+}
+/** The result of an actual eval RUN (dispatches the agent over a suite), vs the
+ *  runs-derived ShadowEvalSummary. Mirrors RFC 0081 `EvalSummary`. */
+export interface WorkforceEvalSummary {
+  runId: string;
+  workforceId: string;
+  suiteId: string;
+  suiteVersion: string;
+  mode: 'live-shadow';
+  aggregateScore: number;
+  passed: boolean;
+  taskCount: number;
+  passedCount: number;
+  evaluatedModelClass: string;
+  tasks: EvalTaskResult[];
+}
+
+/** Sentinel thrown when the host doesn't enable the eval suite (501). */
+export class EvalNotEnabledError extends Error {}
+
+/** Run a real live-shadow eval. Throws {@link EvalNotEnabledError} on a 501
+ *  (`OPENWOP_AGENT_EVAL_SUITE_ENABLED` off on this host). */
+export async function runWorkforceEval(workforceId: string): Promise<WorkforceEvalSummary> {
+  const res = await fetch(
+    `${base}/${encodeURIComponent(workforceId)}/eval`,
+    fetchOpts({ method: 'POST', headers: authedHeaders() }),
+  );
+  if (res.status === 501) throw new EvalNotEnabledError('eval suite not enabled on this host');
+  return asJson<WorkforceEvalSummary>(res, 'runWorkforceEval');
+}

@@ -13,6 +13,7 @@ import { listCapabilities } from '../executor/runtimeCapabilities.js';
 import type { Storage } from '../storage/storage.js';
 import { listHostSurfaces } from '../bootstrap/hostSurfaceRegistry.js';
 import { universalEnvelopeKinds } from '../host/envelopeAcceptor.js';
+import { evalSuiteEnabled } from '../host/workforceEval.js';
 import { MAX_INLINE_MEDIA_BYTES } from './mediaAssets.js';
 import { getFsSandboxRoot } from '../host/inMemorySurfaces.js';
 import { listLoadedConformanceFixtures } from '../host/index.js';
@@ -851,9 +852,24 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
       tier: 'experimental',
       workforces: { supported: true, readOnly: true },
       governance: { policyTags: true, refusalBoundaries: true, approvalGates: true },
-      // replay is genuinely supported (see `replay` family above); evals +
-      // shadow-mode are EP1/EP2 and honestly absent.
-      assurance: { replay: true, evals: false, shadow: false },
+      // replay is genuinely supported (see `replay` family above). `evals` is an
+      // EXPERIMENTAL host-ext (a `live-shadow` eval of the workforce supervisor,
+      // POST …/workforces/:id/eval), gated on OPENWOP_AGENT_EVAL_SUITE_ENABLED —
+      // NOT the normative RFC 0081 `agents.evalSuite` surface (mode:"eval" run
+      // projection + GET /v1/runs/:id/eval-summary), which is a follow-up. So
+      // this stays under the experimental host-ext tier and does not set the
+      // normative `agents.evalSuite` capability. shadow-mode wire is honestly absent.
+      assurance: { replay: true, evals: evalSuiteEnabled(), shadow: false },
+      ...(evalSuiteEnabled()
+        ? {
+            eval: {
+              supported: true,
+              surface: 'host-ext',
+              mode: 'live-shadow',
+              suiteId: 'sample.openwop.evals.invoice-exception',
+            },
+          }
+        : {}),
       autonomyTiers: ['review', 'guided', 'auto'],
     },
   };
