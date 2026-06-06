@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "OpenWOP reference application \u2014 React frontend consuming @openwop/openwop. Sample / template code; not production-hardened. See ../../README.md.",
+  "description": "OpenWOP reference application — React frontend consuming @openwop/openwop. Sample / template code; not production-hardened. See ../../README.md.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && node scripts/check-prompt-ref-defaults.mjs && node scripts/check-brand-resolver.mjs && node scripts/check-css-tokens.mjs && node scripts/check-tsx-color-literals.mjs && vite build && node scripts/check-built-css.mjs",
@@ -13,7 +13,9 @@
     "check:css-tokens": "node scripts/check-css-tokens.mjs",
     "check:brand-resolver": "node scripts/check-brand-resolver.mjs",
     "check:built-css": "node scripts/check-built-css.mjs",
-    "check:tsx-color-literals": "node scripts/check-tsx-color-literals.mjs"
+    "check:tsx-color-literals": "node scripts/check-tsx-color-literals.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -29,10 +31,14 @@
     "zustand": "^5.0.13"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.0",
+    "jsdom": "^25.0.1",
     "typescript": "^5.6.0",
-    "vite": "^5.4.0"
+    "vite": "^5.4.0",
+    "vitest": "^2.1.9"
   }
 }
