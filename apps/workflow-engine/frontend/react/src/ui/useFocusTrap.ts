@@ -32,6 +32,15 @@ export function useFocusTrap<T extends HTMLElement = HTMLElement>(
   const ref = useRef<T>(null);
   const restoreTo = useRef<HTMLElement | null>(null);
 
+  // Capture the opener at RENDER time, before the trapped content commits. The
+  // effect runs too late: a child with `autoFocus` fires during commit and
+  // would make `document.activeElement` the modal's own input, so restore on
+  // close would target a removed node and focus would fall to <body>. Reading
+  // activeElement during render is a side-effect-free read.
+  if (active && restoreTo.current === null && typeof document !== 'undefined') {
+    restoreTo.current = document.activeElement as HTMLElement | null;
+  }
+
   const onKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key !== 'Tab') return;
     const container = ref.current;
@@ -58,7 +67,7 @@ export function useFocusTrap<T extends HTMLElement = HTMLElement>(
     if (!active) return;
     const container = ref.current;
     if (!container) return;
-    restoreTo.current = document.activeElement as HTMLElement | null;
+    // restoreTo was captured at render (above) — before any child autoFocus.
     const items = focusable(container);
     (items[0] ?? container).focus();
     document.addEventListener('keydown', onKeyDown, true);
