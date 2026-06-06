@@ -1,0 +1,82 @@
+[
+  {
+    "workforceId": "workforce.finance.invoice-exception",
+    "name": "Invoice Exception Workforce",
+    "businessFunction": "finance-ops",
+    "status": "shadow",
+    "purpose": {
+      "statement": "Clear every invoice exception within one business day, fully audited.",
+      "policyTags": ["pii:financial", "requires-approval-over-usd:5000"],
+      "refusalBoundaries": ["never auto-approve a vendor absent from the master vendor list"]
+    },
+    "autonomyLevel": "guided",
+    "dataManifestId": "dm.finance.invoice-exception",
+    "successMetrics": [
+      "cycle_time_p50_ms",
+      "cost_per_cleared_invoice_usd",
+      "override_rate",
+      "false_positive_rate"
+    ],
+    "workflowCatalog": [
+      "sample.agents.invoice-extract",
+      "sample.agents.invoice-match",
+      "sample.agents.invoice-post"
+    ],
+    "agents": [
+      {
+        "agentRef": "host.priya",
+        "role": "supervisor",
+        "autonomyLevel": "guided",
+        "dataBoundary": "Finance tenant only; ERP read, invoice inbox read.",
+        "decisionBoundary": "May route and post under $5,000; escalates above.",
+        "memoryBoundary": "Run-scoped + tenant invoice history; no cross-tenant.",
+        "performanceTarget": "P50 cycle time < 1 business day; override rate < 3%.",
+        "recoveryBehavior": "On post failure, fork-replay once; else escalate."
+      },
+      {
+        "agentRef": "host.invoice-extract-worker",
+        "role": "worker",
+        "autonomyLevel": "auto",
+        "dataBoundary": "Single invoice document; no write access.",
+        "decisionBoundary": "Extraction only; no posting authority.",
+        "memoryBoundary": "Run-scoped.",
+        "performanceTarget": "Field-extraction accuracy >= 98%.",
+        "recoveryBehavior": "Retry extraction up to 2x, then flag for review."
+      },
+      {
+        "agentRef": "host.invoice-match-worker",
+        "role": "worker",
+        "autonomyLevel": "auto",
+        "dataBoundary": "Invoice + PO/master-vendor list (read).",
+        "decisionBoundary": "Match/no-match only; never posts.",
+        "memoryBoundary": "Run-scoped + vendor master cache.",
+        "performanceTarget": "False-match rate < 0.5%.",
+        "recoveryBehavior": "On ambiguous match, hand off to supervisor."
+      },
+      {
+        "agentRef": "host.invoice-post-worker",
+        "role": "worker",
+        "autonomyLevel": "guided",
+        "dataBoundary": "ERP post endpoint (write, gated).",
+        "decisionBoundary": "Posts only after gate clears for amounts over threshold.",
+        "memoryBoundary": "Run-scoped.",
+        "performanceTarget": "Post success >= 99%; recovery time < 5 min.",
+        "recoveryBehavior": "On ERP timeout, fail run for fork-replay recovery."
+      },
+      {
+        "agentRef": "host.invoice-eval-agent",
+        "role": "governance",
+        "autonomyLevel": "review",
+        "dataBoundary": "Event logs + eval set (read).",
+        "decisionBoundary": "Scores runs; raises policy-violation flags; never posts.",
+        "memoryBoundary": "Tenant eval history.",
+        "performanceTarget": "Catches >= 95% of seeded regressions.",
+        "recoveryBehavior": "On eval regression, block promotion and notify."
+      }
+    ],
+    "decisionBoundaries": {
+      "auto": ["invoice-extract", "invoice-match"],
+      "review": ["invoice-post"]
+    }
+  }
+]
