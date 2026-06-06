@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { RosterEntry } from '../agents/rosterClient.js';
 import { ALL_WORKFLOW_OPTIONS } from '../agents/roleTemplates.js';
 import { IconButton } from '../ui/IconButton.js';
 import { XIcon } from '../ui/icons/index.js';
-import { ModalPortal } from '../ui/ModalPortal.js';
+import { Modal } from '../ui/Modal.js';
 
 /**
  * "Create a board" modal (boards redesign) — replaces the inline create form.
@@ -21,14 +21,6 @@ export function CreateBoardModal({ roster, onClose, onCreate }: {
   const [name, setName] = useState('');
   const [workflowId, setWorkflowId] = useState('');
   const [rosterId, setRosterId] = useState('');
-  const dialogRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    dialogRef.current?.focus();
-    const onKey = (e: KeyboardEvent): void => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
 
   // The known workflow catalog, deduped (roles can share a workflow).
   const workflowOptions = useMemo(() => {
@@ -41,17 +33,7 @@ export function CreateBoardModal({ roster, onClose, onCreate }: {
   }, []);
 
   return (
-    <ModalPortal>
-    <div className="hire-scrim" onClick={onClose}>
-      <div
-        ref={dialogRef}
-        tabIndex={-1}
-        className="surface-card hire-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Create a board"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <Modal onClose={onClose} label="Create a board">
         <div className="hire-head">
           <div>
             <div className="hire-eyebrow">New board</div>
@@ -100,8 +82,6 @@ export function CreateBoardModal({ roster, onClose, onCreate }: {
             + Create board
           </button>
         </div>
-      </div>
-    </div>
-    </ModalPortal>
+    </Modal>
   );
 }

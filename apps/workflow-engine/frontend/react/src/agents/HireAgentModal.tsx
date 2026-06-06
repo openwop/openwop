@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROLE_TEMPLATES, roleThemeForKey } from './roleTemplates.js';
 import { IconButton } from '../ui/IconButton.js';
 import { XIcon, ArrowRightIcon } from '../ui/icons/index.js';
-import { ModalPortal } from '../ui/ModalPortal.js';
+import { Modal } from '../ui/Modal.js';
 
 /**
  * "Hire an agent" modal (agents-workforce redesign PR 4) — the fast path IN
@@ -19,14 +19,6 @@ export function HireAgentModal({ onClose }: { onClose: () => void }): JSX.Elemen
   const navigate = useNavigate();
   const [roleKey, setRoleKey] = useState<string | null>(null);
   const [autonomy, setAutonomy] = useState<'auto' | 'guided' | 'review'>('auto');
-  const dialogRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    dialogRef.current?.focus();
-    const onKey = (e: KeyboardEvent): void => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
 
   const go = (): void => {
     const params = new URLSearchParams();
@@ -37,17 +29,7 @@ export function HireAgentModal({ onClose }: { onClose: () => void }): JSX.Elemen
   };
 
   return (
-    <ModalPortal>
-    <div className="hire-scrim" onClick={onClose}>
-      <div
-        ref={dialogRef}
-        tabIndex={-1}
-        className="surface-card hire-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Hire an agent"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <Modal onClose={onClose} label="Hire an agent">
         <div className="hire-head">
           <div>
             <div className="hire-eyebrow">New agent</div>
@@ -109,8 +91,6 @@ export function HireAgentModal({ onClose }: { onClose: () => void }): JSX.Elemen
             Continue <ArrowRightIcon size={14} aria-hidden />
           </button>
         </div>
-      </div>
-    </div>
-    </ModalPortal>
+    </Modal>
   );
 }

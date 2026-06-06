@@ -14,5 +14,6 @@ export { Skeleton, SkeletonRows } from './Skeleton.js';
 export { PageHeader } from './PageHeader.js';
 export { IconButton } from './IconButton.js';
 export { ModalPortal } from './ModalPortal.js';
+export { Modal } from './Modal.js';
 export { DataTable, DensityToggle, type DataColumn } from './DataTable.js';
 export { toast, Toaster, dismiss, type ToastVariant, type ToastItem } from './toast.js';
