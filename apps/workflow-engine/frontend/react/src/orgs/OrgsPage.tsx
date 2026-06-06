@@ -19,9 +19,12 @@ import { Notice } from '../ui/Notice.js';
 import { classifyHttpError } from '../client/classifyHttpError.js';
 import { MembersPanel } from './MembersPanel.js';
 import { GroupsPanel } from './GroupsPanel.js';
+import { TeamsPanel } from './TeamsPanel.js';
+import { RoleCatalogPanel } from './RoleCatalogPanel.js';
+import { CustomRolesPanel } from './CustomRolesPanel.js';
 import { StateCard } from '../ui/StateCard.js';
 import { PageHeader } from '../ui/PageHeader.js';
-import { BriefcaseIcon, ColumnsIcon, PencilIcon, ShieldIcon, TrashIcon } from '../ui/icons/index.js';
+import { BriefcaseIcon, TrashIcon } from '../ui/icons/index.js';
 import {
   type AccessRole,
   type BuiltInRoleId,
@@ -52,7 +55,7 @@ import {
   updateGroup,
   updateMember,
 } from '../client/accessClient.js';
-import { NEUTRAL_CHIP, muted } from './orgUi.js';
+import { muted } from './orgUi.js';
 
 /**
  * Roles, teams, and scopes are non-status LABEL dimensions, so per
@@ -459,34 +462,15 @@ export function OrgsPage(): JSX.Element {
                 </Notice>
               ) : null}
 
-              {/* Teams */}
-              <h3 style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                <ColumnsIcon size={15} /> Teams
-              </h3>
-              <form onSubmit={onCreateTeam} className="action-bar" style={{ marginBottom: 'var(--space-2)' }}>
-                <input value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder="New team name" aria-label="New team name" />
-                <button type="submit" className="primary" disabled={!teamName.trim() || !can('host:teams:manage')} title={can('host:teams:manage') ? undefined : 'Requires host:teams:manage'}>Add team</button>
-              </form>
-              {teams.length === 0 ? (
-                <p style={muted}>No teams yet.</p>
-              ) : (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
-                  {teams.map((t) => (
-                    <span key={t.teamId} className={NEUTRAL_CHIP} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                      {t.name}
-                      <button
-                        type="button"
-                        aria-label={`Delete team ${t.name}`}
-                        disabled={!can('host:teams:manage')}
-                        onClick={() => void onDeleteTeam(t)}
-                        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'inherit', display: 'inline-flex' }}
-                      >
-                        <TrashIcon size={12} />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
+              {/* Teams (extracted — GAP-ANALYSIS E11) */}
+              <TeamsPanel
+                teams={teams}
+                teamName={teamName}
+                setTeamName={setTeamName}
+                onCreateTeam={onCreateTeam}
+                onDeleteTeam={onDeleteTeam}
+                can={can}
+              />
 
               {/* Members (extracted — GAP-ANALYSIS E11) */}
               <MembersPanel
@@ -537,79 +521,22 @@ export function OrgsPage(): JSX.Element {
                 toggleStr={toggleStr}
               />
 
-              {/* Role catalog reference */}
-              <h3 style={{ fontSize: '0.9rem', marginTop: 'var(--space-5)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                <ShieldIcon size={15} /> Role catalog
-              </h3>
-              <p style={muted}>Built-in roles and the scopes they grant. Bare scopes are RFC 0049 protocol scopes; <code>host:</code> scopes manage this org/team/member surface.</p>
-              {roles.map((r) => (
-                <div key={r.id} className="surface-card" style={{ marginBottom: 'var(--space-2)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                    <span className={NEUTRAL_CHIP}>{r.id}</span>
-                    <span style={muted}>{r.description}</span>
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
-                    {r.scopes.map((s) => (
-                      <span key={s} className={NEUTRAL_CHIP} style={{ fontSize: '0.7rem' }}>{s}</span>
-                    ))}
-                  </div>
-                </div>
-              ))}
+              {/* Role catalog reference (extracted — GAP-ANALYSIS E11) */}
+              <RoleCatalogPanel roles={roles} />
 
-              {/* Custom roles — org-defined role bundles */}
-              <h3 style={{ fontSize: '0.9rem', marginTop: 'var(--space-5)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                <PencilIcon size={15} /> Custom roles <span style={muted}>· define your own</span>
-              </h3>
-              <p style={muted}>
-                Bundle any scopes into a named role, then assign it to members and groups exactly like a
-                built-in role.
-              </p>
-              <form onSubmit={onCreateRole} className="action-bar" style={{ flexWrap: 'wrap', marginBottom: 'var(--space-2)' }}>
-                <input value={roleName} onChange={(e) => setRoleName(e.target.value)} placeholder="New role name" aria-label="New custom role name" />
-                <button
-                  type="submit"
-                  className="primary"
-                  disabled={!roleName.trim() || roleScopes.size === 0 || !can('host:roles:manage')}
-                  title={can('host:roles:manage') ? undefined : 'Requires host:roles:manage'}
-                >
-                  Create role
-                </button>
-              </form>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: 'var(--space-3)' }}>
-                {assignableScopes.map((s) => (
-                  <label
-                    key={s}
-                    className={NEUTRAL_CHIP}
-                    style={{ cursor: 'pointer', opacity: roleScopes.has(s) ? 1 : 0.65, fontSize: '0.7rem' }}
-                  >
-                    <input type="checkbox" checked={roleScopes.has(s)} onChange={() => setRoleScopes((x) => toggleStr(x, s))} style={{ marginRight: 4 }} />
-                    {s}
-                  </label>
-                ))}
-              </div>
-              {customRoles.length === 0 ? (
-                <p style={muted}>No custom roles yet.</p>
-              ) : (
-                customRoles.map((r) => (
-                  <div key={r.roleId} className="surface-card" style={{ marginBottom: 'var(--space-2)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 'var(--space-2)' }}>
-                      <strong>{r.name}</strong>
-                      <button type="button" className="secondary" disabled={!can('host:roles:manage')} onClick={() => void onDeleteRole(r)} aria-label={`Delete role ${r.name}`}>
-                        <TrashIcon size={13} />
-                      </button>
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
-                      {r.scopes.length === 0 ? (
-                        <span className="chip chip--muted">no scopes</span>
-                      ) : (
-                        r.scopes.map((s) => (
-                          <span key={s} className={NEUTRAL_CHIP} style={{ fontSize: '0.7rem' }}>{s}</span>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
+              {/* Custom roles — org-defined role bundles (extracted — GAP-ANALYSIS E11) */}
+              <CustomRolesPanel
+                customRoles={customRoles}
+                roleName={roleName}
+                setRoleName={setRoleName}
+                roleScopes={roleScopes}
+                setRoleScopes={setRoleScopes}
+                assignableScopes={assignableScopes}
+                onCreateRole={onCreateRole}
+                onDeleteRole={onDeleteRole}
+                can={can}
+                toggleStr={toggleStr}
+              />
             </>
           )}
         </div>
