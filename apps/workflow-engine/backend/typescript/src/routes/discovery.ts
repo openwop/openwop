@@ -386,10 +386,14 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
           'openwop-interrupt-external-event',
         ],
       },
-      // Sample stubs fork: the route accepts the request and copies
-      // events 0..fromSeq, but doesn't reconstruct the executor's
-      // resume position. Honest advertisement: not yet supported.
-      replay: { supported: false, fork: false },
+      // `replay` mode (full deterministic re-execution from seq 0) IS
+      // supported: the engine re-executes the workflow and the host compares
+      // the observable run/node sequence against the source, emitting
+      // `replay.diverged` on a mismatch (replay.md §"Failure surfaces").
+      // `fork` (branch from an arbitrary `fromSeq` > 0) is NOT supported —
+      // the sample doesn't reconstruct the executor's resume position, so a
+      // partial-checkpoint branch would double-emit the prefix. Honest split.
+      replay: { supported: true, fork: false },
       // RFC 0056 — run feedback / annotations. The sample persists annotations
       // in a per-run side-store and serves POST/GET /v1/runs/{runId}/annotations
       // with secret-pattern + SR-1 redaction of correction/note.
@@ -836,6 +840,21 @@ function buildAdvertisement(config: AppConfig): Record<string, unknown> {
     extensions: {
       // Sample-namespace extensions block. Clients tolerate absence.
       'sample.notes': 'This is the openwop reference application sample. Not production-hardened.',
+    },
+    // Governed-workforce surface (EP0) — EXPERIMENTAL host extension under the
+    // canonical `x-host-<host>-<key>` prefix (host-extensions.md). NOT a spec
+    // capability: it advertises the demo's read-only Workforce entity +
+    // telemetry, gated so the published SDK/conformance never depend on it
+    // until the `openwop-workforce-governance` profile RFC lands. Booleans are
+    // honest against what the host actually implements today.
+    'x-host-openwop-workforce': {
+      tier: 'experimental',
+      workforces: { supported: true, readOnly: true },
+      governance: { policyTags: true, refusalBoundaries: true, approvalGates: true },
+      // replay is genuinely supported (see `replay` family above); evals +
+      // shadow-mode are EP1/EP2 and honestly absent.
+      assurance: { replay: true, evals: false, shadow: false },
+      autonomyTiers: ['review', 'guided', 'auto'],
     },
   };
   // RFC 0073 — capability families are document-root properties of the

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://packs.openwop.dev/core.openwop.db/1.0.0/sql-execute.output.json",
+  "title": "SqlExecuteOutput",
+  "type": "object",
+  "required": [
+    "affected"
+  ],
+  "properties": {
+    "affected": {
+      "type": "integer"
+    },
+    "insertId": {
+      "type": [
+        "string",
+        "integer",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

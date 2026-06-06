@@ -28,6 +28,7 @@ import { createRosterEntry, listRoster, type RosterEntry } from './rosterService
 import { createBoard, createCard, listBoards, type KanbanBoard, type KanbanColumn, type KanbanCardSource } from './kanbanService.js';
 import { getJob, registerJob } from './schedulingService.js';
 import { getChart, putChart, type OrgDepartment, type OrgMember } from './orgChartService.js';
+import { seedWorkforceEntities, seedWorkforceHistory } from './workforceService.js';
 import { demoWorkflowsForRole, type DemoRoleKey } from './demoWorkflows.js';
 import { createLogger } from '../observability/logger.js';
 import { ensureUserAgentRegistered } from '../routes/userAgents.js';
@@ -116,6 +117,10 @@ function demoSeedEnabled(): boolean {
 export interface SeedResult {
   seeded: boolean;
   agents: number;
+  /** Number of Workforce entities created this call (idempotent). */
+  workforces?: number;
+  /** Number of synthetic history runs seeded (only on the explicit `heal` path). */
+  workforceRuns?: number;
   /** Present when `heal: true` — what an explicit re-seed restored for
    *  EXISTING personas (missing boards / schedule jobs / a missing chart). */
   healed?: { boards: number; schedules: number; orgChart: boolean };
@@ -320,9 +325,26 @@ export async function seedDemoAgents(
   if (healedBoards > 0 || healedSchedules > 0 || healedChart) {
     log.info('demo_seed_healed', { tenantId, healedBoards, healedSchedules, healedChart });
   }
-  log.info('demo_seed_complete', { tenantId, created, total: SEED_AGENTS.length });
+
+  // Workforce entity is cheap (one row) — seed it on any path, idempotently.
+  // The HEAVY run history is gated to the explicit "Load demo data" action
+  // (`heal`), so a cookieless anon visitor never triggers a 300-run write storm
+  // (architect CTI-1 / fan-out finding). Wall-clock is read here at the host
+  // boundary — the generator stays pure.
+  const workforcesSeeded = await seedWorkforceEntities();
+  let workforceRuns = 0;
+  if (opts.heal) {
+    const wf = await seedWorkforceHistory(storage, tenantId, { nowMs: Date.now() });
+    workforceRuns = wf.runs;
+  }
+
+  log.info('demo_seed_complete', {
+    tenantId, created, total: SEED_AGENTS.length, workforcesSeeded, workforceRuns,
+  });
   return {
     seeded: created > 0, agents: SEED_AGENTS.length,
+    ...(workforcesSeeded > 0 ? { workforces: workforcesSeeded } : {}),
+    ...(workforceRuns > 0 ? { workforceRuns } : {}),
     ...(opts.heal ? { healed: { boards: healedBoards, schedules: healedSchedules, orgChart: healedChart } } : {}),
   };
 }

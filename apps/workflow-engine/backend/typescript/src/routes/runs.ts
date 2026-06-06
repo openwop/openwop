@@ -29,6 +29,7 @@ import { snapshotCostRollup } from '../observability/costEmitter.js';
 import { executeRun } from '../executor/executor.js';
 import { CROSS_HOST_CAUSATION_HOST_ID, isPhase3Enabled } from './discovery.js';
 import { getEventLog } from '../executor/eventLog.js';
+import { detectAndRecordReplayDivergence } from '../executor/replayDivergence.js';
 import { stripSecretsFromPersisted } from '../byok/ephemeralRunSecrets.js';
 import { createLogger } from '../observability/logger.js';
 import { runQuotaMiddleware, reserveConcurrentSlot } from '../middleware/rateLimit.js';
@@ -830,12 +831,31 @@ export function registerRunRoutes(app: Express, deps: Deps): void {
       setImmediate(() => {
         executeRun(storage, forkedRun, wf.definition, {
           policyResolver: hostSuite.providerPolicyResolver,
-        }).catch((err) => {
-          log.error('fork dispatch failed', {
-            runId: newRunId,
-            error: err instanceof Error ? err.message : String(err),
+        })
+          .then(async () => {
+            // replay.md §"Failure surfaces": after a deterministic re-execution,
+            // compare the observable sequence against the source and emit
+            // `replay.diverged` if they differ. Replay-only (branch changes
+            // inputs by design, so divergence is expected, not reported).
+            if (body.mode === 'replay') {
+              const div = await detectAndRecordReplayDivergence(
+                storage,
+                getEventLog(),
+                sourceRun.runId,
+                newRunId,
+                body.fromSeq,
+              );
+              if (div.diverged) {
+                log.info('replay diverged', { runId: newRunId, divergencePoint: div.index });
+              }
+            }
+          })
+          .catch((err) => {
+            log.error('fork dispatch failed', {
+              runId: newRunId,
+              error: err instanceof Error ? err.message : String(err),
+            });
           });
-        });
       });
     } catch (err) {
       next(err);
