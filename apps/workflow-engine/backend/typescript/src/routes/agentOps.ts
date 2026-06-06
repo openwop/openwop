@@ -25,7 +25,11 @@ import { OpenwopError } from '../types.js';
 import type { HostAdapterSuite } from '../host/index.js';
 import type { Storage } from '../storage/storage.js';
 import { seedEverything } from '../host/seedEverything.js';
-import { SHOWCASE_TENANT } from '../host/workforceService.js';
+import {
+  SHOWCASE_TENANT,
+  seedWorkforceEntities,
+  seedWorkforceHistory,
+} from '../host/workforceService.js';
 import { createLogger } from '../observability/logger.js';
 import { getRosterEntry } from '../host/rosterService.js';
 import { runHeartbeatOnce } from '../host/heartbeatService.js';
@@ -53,12 +57,21 @@ export function registerAgentOpsRoutes(app: Express, deps: Deps): void {
       const result = await seedEverything(tenantOf(req), deps.storage, { heal });
       // Always-on demo, tied to this same reseed button: a heal reseed also
       // (re)populates the read-only `__showcase__` tenant that the workforce
-      // dashboards fall back to (see routes/workforces.ts dashboardRuns), so every
-      // visitor sees populated telemetry without a per-visitor seed. Best-effort +
-      // idempotent — a showcase failure must never fail the caller's reseed.
+      // dashboards fall back to (routes/workforces.ts §dashboardRuns), so every
+      // visitor sees populated telemetry without a per-visitor seed.
+      //
+      // WORKFORCE-ONLY + CLEAR-AND-RESEED: the fallback reads nothing but workforce
+      // runs, so we seed only those (NOT a second full seedEverything — that
+      // doubled the work and overran the proxy request budget, leaving a partial
+      // showcase). We clear first so it always lands at the full history and
+      // self-heals any partial from an earlier interrupted seed. Best-effort — a
+      // showcase failure must never fail the caller's reseed.
       if (heal && tenantOf(req) !== SHOWCASE_TENANT) {
         try {
-          await seedEverything(SHOWCASE_TENANT, deps.storage, { heal: true });
+          await seedWorkforceEntities();
+          const stale = await deps.storage.listRuns({ tenantId: SHOWCASE_TENANT, limit: 5000 });
+          for (const r of stale) await deps.storage.deleteRun(r.runId);
+          await seedWorkforceHistory(deps.storage, SHOWCASE_TENANT, { nowMs: Date.now() });
         } catch (err) {
           log.warn('showcase_seed_failed', { reason: err instanceof Error ? err.message : String(err) });
         }
