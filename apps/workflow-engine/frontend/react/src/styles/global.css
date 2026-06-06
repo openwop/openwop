@@ -4922,6 +4922,20 @@ a.surface-card:hover,
   flex-direction: column;
   gap: var(--space-3);
 }
+/* Artifact preview: a wider dialog whose header is fixed and whose body
+ * scrolls internally. Built on the Modal primitive (surface-card + the scrim/
+ * focus-trap it owns); these overrides widen the box, drop surface-card's
+ * padding/gap (the header + body own their padding), and clip overflow so the
+ * inner body's own scroll region works. */
+.artifact-modal {
+  width: min(820px, 100%);
+  max-height: 85vh;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+  box-shadow: 0 18px 50px var(--ink-shadow);
+}
+
 .hire-head { display: flex; align-items: flex-start; gap: var(--space-3); }
 .hire-head > div { flex: 1; min-width: 0; }
 .hire-eyebrow {
