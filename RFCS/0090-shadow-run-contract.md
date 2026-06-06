@@ -4,19 +4,19 @@
 |---|---|
 | **RFC** | 0090 |
 | **Title** | Shadow-prove migration gate — composing the eval surface to authorize a workflow cut-over |
-| **Status** | `Draft` |
+| **Status** | `Withdrawn` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-06-06 |
 | **Updated** | 2026-06-06 |
-| **Reconciliation note** | The first draft of this RFC (briefly flipped to `Active` on a steward waiver) independently invented a `capabilities.shadow` block, a `shadow` run-creation field, three `shadow.*` events, and a `ShadowComparison` result. Code review found this **duplicated Accepted RFC 0081** (Agent Evaluation — `live-shadow` mode, `baselineRunId`, `regression`, `EvalSummary`, `agents.evalSuite`) and **RFC 0082** (deployment promotion gate). This RFC has been **returned to `Draft` and re-scoped to compose those surfaces** rather than re-invent them. The duplicate wire surface is removed. |
-| **Affects** | `spec/v1/agent-evaluation.md` (RFC 0081, referenced), `RFCS/0082-agent-deployment-lifecycle.md` (referenced), `spec/v1/replay.md` (RFC 0054 diff, referenced). Net-new normative surface: **TBD — possibly none** (see Unresolved Q1). |
-| **Compatibility** | `additive` per `COMPATIBILITY.md` |
+| **Withdrawal note** | **WITHDRAWN 2026-06-06 (Q1 resolved: no net-new surface).** The first draft (briefly `Active` on a steward waiver) invented a `capabilities.shadow` block, a `shadow` run-creation field, three `shadow.*` events, and a `ShadowComparison` — which code review found **duplicated Accepted RFC 0081** (Agent Evaluation — `live-shadow` mode, `baselineRunId`, `regression`, content-free `EvalSummary`, `agents.evalSuite`) and **RFC 0082** (deployment promotion gate). On reconciliation, "shadow → prove → cut over" is **fully covered** by RFC 0081 (`live-shadow` eval → `EvalSummary`) + RFC 0082 §E (promotion gate keyed on `EvalSummary.passed`) + RFC 0054 (run-diff); the candidate workflow-level binding added nothing those don't already express. This RFC is therefore withdrawn with no wire surface. The demo "Shadow & Prove"/"Cut Over" stages consume RFC 0081 / 0082 (host-ext pilot of the `live-shadow` `EvalSummary`). |
+| **Affects** | Nothing — withdrawn with no normative surface. References only: `spec/v1/agent-evaluation.md` (RFC 0081), `RFCS/0082-agent-deployment-lifecycle.md`, `spec/v1/replay.md` (RFC 0054). |
+| **Compatibility** | n/a (withdrawn — no wire change ever landed) |
 | **Supersedes** | — |
-| **Superseded by** | — (candidate: fold entirely into RFC 0081 §D + RFC 0082 §E — see Unresolved Q1) |
+| **Superseded by** | RFC 0081 §D (`live-shadow` eval + `EvalSummary`) + RFC 0082 §E (promotion gate) + RFC 0054 (run-diff) — these predate and fully cover this proposal. |
 
 ## Summary
 
-The "prove an agentic workflow against a baseline before cut-over" mechanism **already exists** in the corpus: RFC 0081 provides `live-shadow` and `regression` eval modes, an optional `baselineRunId`, a content-free `EvalSummary` scorecard, and an `agents.evalSuite` capability; RFC 0082 provides the deployment-promotion gate that consumes `EvalSummary.passed` / `aggregateScore >= requiredPassScore`; RFC 0054 provides the structural run-diff. This RFC therefore **does not introduce a parallel shadow surface.** Its only candidate contribution is a thin, optional **workflow/workforce-level binding** — a "shadow-prove migration gate" that authorizes cutting over *production responsibility for a whole workflow* (not a single agent pack) once a referenced `EvalSummary` passes. Whether even that is net-new — versus a pure composition of RFC 0081 + RFC 0082 — is the central open question (Q1).
+**Withdrawn.** The "prove an agentic workflow against a baseline before cut-over" mechanism already exists in the corpus and this RFC was a redundant re-invention. RFC 0081 provides `live-shadow`/`regression` eval modes, an optional `baselineRunId`, a content-free `EvalSummary`, and an `agents.evalSuite` capability; RFC 0082 §E provides the deployment-promotion gate keyed on `EvalSummary.passed`; RFC 0054 provides the structural run-diff. Together they cover shadow → prove → cut over with no gap, so RFC 0090 introduces no net-new surface and is withdrawn. The text below is retained for history; the original `capabilities.shadow` / `shadow.*` / `ShadowComparison` invention (duplicating RFC 0081) was never implemented.
 
 ## Motivation
 
@@ -64,7 +64,7 @@ No new shadow scenarios. The comparison + gate are already covered by RFC 0081's
 
 ## Unresolved questions
 
-1. **Is there ANY net-new wire surface here, or is "shadow → prove → cut over" fully covered by RFC 0081 (live-shadow + EvalSummary) + RFC 0082 (promotion gate) + RFC 0054 (diff)?** If fully covered → withdraw this RFC and point to them. This is now the central question.
+1. **[RESOLVED 2026-06-06 → WITHDRAWN]** Is there ANY net-new wire surface here, or is "shadow → prove → cut over" fully covered by RFC 0081 (live-shadow + EvalSummary) + RFC 0082 (promotion gate) + RFC 0054 (diff)? **Answer: fully covered.** No net-new surface; RFC withdrawn in favor of those. Q2/Q3 (workflow-vs-agent-pack framing, non-agent baseline) are likewise answered by RFC 0081's existing `AgentEvalSuite` + `live-shadow`.
 2. Does RFC 0081's `AgentEvalSuite` cleanly express a *workflow*'s output (not just an agent pack's), or is a sibling artifact warranted?
 3. Can an RFC 0081 `live-shadow` baseline be a non-agent legacy outcome without extension?
 

@@ -2,7 +2,7 @@
 
 Companion to `0090-shadow-run-contract.md`. Likelihood × Impact (H/M/L). Critical/High risks require a named mitigation owner + target resolution.
 
-> **RECONCILED 2026-06-06.** The biggest realized risk was **R8 (new): duplicating Accepted RFC 0081's eval/live-shadow surface** — which materialized (the first draft did exactly that) and was caught in code review. Mitigation: re-scoped to compose RFC 0081 + 0082 + 0054; the duplicate wire surface is removed. R1–R3 (content-free / cross-tenant / side-effect risks of the invented `shadow.*` surface) are **moot** now that the surface is RFC 0081's already-Accepted, already-invariant-guarded `EvalSummary`. R4 (scope creep into an eval harness) is resolved by *deferring entirely* to RFC 0081, which is that harness.
+> **WITHDRAWN 2026-06-06.** The biggest realized risk — **duplicating Accepted RFC 0081's eval/live-shadow surface** — materialized (the first draft did exactly that) and was caught in code review; the resolution was to **withdraw** RFC 0090 entirely in favor of RFC 0081 §D + RFC 0082 §E + RFC 0054. R1–R7 below were risks of the invented (never-implemented) `shadow.*` surface and are **moot** now that no surface ships — retained for history.
 
 | ID | Risk | Likelihood | Impact | Score | Mitigation | Owner | Status |
 |---|---|---|---|---|---|---|---|
