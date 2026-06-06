@@ -87,3 +87,49 @@ export async function getWorkforceMetrics(workforceId: string): Promise<Workforc
   const res = await fetch(`${base}/${encodeURIComponent(workforceId)}/metrics`, fetchOpts({ headers: authedHeaders() }));
   return asJson<WorkforceMetrics>(res, 'getWorkforceMetrics');
 }
+
+// ── governance & graduated autonomy (EP1) ──────────────────────────────────
+
+export interface PromotionMilestone {
+  fromTier: AutonomyLevel | null;
+  toTier: AutonomyLevel;
+  atIso: string;
+  runIndex: number;
+  overrideIncidenceBefore: number | null;
+  unlockThreshold: number | null;
+}
+export interface AutonomyGraduation {
+  workforceId: string;
+  currentTier: AutonomyLevel | null;
+  milestones: PromotionMilestone[];
+  nextTier: AutonomyLevel | null;
+  nextThreshold: number | null;
+  recentOverrideIncidence: number;
+  eligibleForNext: boolean;
+}
+export interface GovernanceEvent {
+  runId: string;
+  atIso: string;
+  kind: 'override' | 'false-positive' | 'recovery';
+  detail: string;
+}
+export interface GovernancePosture {
+  workforceId: string;
+  totalRuns: number;
+  overrides: number;
+  escalations: number;
+  falsePositives: number;
+  recoveries: number;
+  policyViolations: number;
+  recentEvents: GovernanceEvent[];
+}
+export interface WorkforceGovernance {
+  autonomy: AutonomyGraduation;
+  posture: GovernancePosture;
+}
+
+/** Graduated-autonomy timeline + governance posture for the caller's tenant. */
+export async function getWorkforceGovernance(workforceId: string): Promise<WorkforceGovernance> {
+  const res = await fetch(`${base}/${encodeURIComponent(workforceId)}/governance`, fetchOpts({ headers: authedHeaders() }));
+  return asJson<WorkforceGovernance>(res, 'getWorkforceGovernance');
+}
