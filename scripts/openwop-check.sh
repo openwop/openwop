@@ -106,11 +106,8 @@ node "$SPEC_ROOT/scripts/check-required-properties-defined.mjs"
 # SDK parity (OpenAPI operations <-> per-SDK typed helpers) moved to the
 # openwop-sdks repo (sdk/ extracted 2026-06; verified by that repo's
 # scripts/check-sdk-parity.mjs against its vendored api/openapi.yaml).
-# Backend dep-graph sanity — every external import in apps/workflow-engine/
-# backend/typescript/src/ MUST be declared in its package.json. Catches the
-# class of bug where local hoisting masks a missing dep that breaks Cloud
-# Run's `npm ci`-isolated install (cf. ajv-formats / 2026-05-21 deploy thrash).
-node "$SPEC_ROOT/scripts/check-backend-dep-graph.mjs"
+# Backend dep-graph sanity moved to the openwop-app repo (apps/workflow-engine
+# extracted 2026-06; verified there by its own CI against its package.json).
 # Pack registry signature/signer/prompt-ref validation moved to the openwop-registry
 # repo (packs/ + registry/ extracted 2026-06; verified by that repo's
 # scripts/registry-check.sh). The spec corpus keeps prose honest about packs via the
@@ -139,22 +136,8 @@ if node "$SPEC_ROOT/scripts/verify-audit-checkpoints.mjs" "$SPEC_ROOT/conformanc
 else
   echo "  ok: audit-checkpoint verifier rejects the tampered sample bundle"
 fi
-# Workflow-engine sample bundles a vendored copy of conformance/fixtures/
-# into its Docker image (apps/workflow-engine/conformance-fixtures/, per
-# the Dockerfile + scripts/sync-fixtures.sh). Catch silent drift: if the
-# vendored copy gets out of sync, the deployed sample BE will serve
-# stale fixtures that don't match what the conformance suite asserts.
-SAMPLE_VENDORED="$SPEC_ROOT/apps/workflow-engine/conformance-fixtures"
-CANONICAL_FIXTURES="$SPEC_ROOT/conformance/fixtures"
-if [ -d "$SAMPLE_VENDORED" ] && [ -d "$CANONICAL_FIXTURES" ]; then
-  if ! diff -rq "$CANONICAL_FIXTURES" "$SAMPLE_VENDORED" >/dev/null 2>&1; then
-    echo "  FAIL: apps/workflow-engine/conformance-fixtures/ is out of sync with conformance/fixtures/" >&2
-    echo "  Run: bash apps/workflow-engine/scripts/sync-fixtures.sh" >&2
-    diff -rq "$CANONICAL_FIXTURES" "$SAMPLE_VENDORED" >&2
-    exit 1
-  fi
-  echo "  ok: workflow-engine vendored conformance-fixtures in sync"
-fi
+# Vendored-fixtures drift check moved to the openwop-app repo (apps/workflow-engine
+# extracted 2026-06; it vendors conformance/fixtures into its own image + CI).
 echo
 
 # 5. Publish-metadata + package-content audit — catches placeholder URLs,

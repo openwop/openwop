@@ -1,6 +1,6 @@
 # Reference-App UX Enhancements
 
-> **Scope:** the reference workflow-engine app at [`apps/workflow-engine/`](../apps/workflow-engine/) (deployed as `app.openwop.dev`). This is **sample / template code**, not the protocol and not the production Postgres host. Recommendations here build on what already ships and enhance UX; none require breaking the frozen v1 wire contract.
+> **Scope:** the reference workflow-engine app at [`apps/workflow-engine/`](https://github.com/openwop/openwop-app) (deployed as `app.openwop.dev`). This is **sample / template code**, not the protocol and not the production Postgres host. Recommendations here build on what already ships and enhance UX; none require breaking the frozen v1 wire contract.
 > **Companion RFCs:** [`RFCS/0055`](../RFCS/0055-multimodal-envelope-variants-and-rendering-hints.md) (multimodal rendering) and [`RFCS/0056`](../RFCS/0056-run-feedback-and-annotation-event.md) (feedback/annotation) — the only two protocol additions these recommendations lean on. Everything in Track A needs neither.
 > **Design source of truth:** [`DESIGN.app.md`](../DESIGN.app.md). All new UI uses its tokens/components — no hard-coded colors, spacing, or type. User-facing copy spells out "server"/"frontend" etc. per the no-jargon rule.
 > **Derived from:** the 2026-05-25 deep-dive of the "OpenWOP Expansion PRD" — which proposed 15 app features, ~8 of which already exist here in whole or part. This plan distinguishes *finish/strengthen* from *net-new*.
@@ -136,7 +136,7 @@ Ships when RFC 0056 reaches `Active` and the demo host advertises `host.feedback
 - **Trust scores, consensus swarms, cross-app memory roaming** — flagged in the deep-dive as out-of-charter / contested; no app work proposed.
 
 ## Cross-references
-- [`apps/workflow-engine/README.md`](../apps/workflow-engine/README.md) · [`apps/workflow-engine/ARCHITECTURE.md`](../apps/workflow-engine/ARCHITECTURE.md) — current app scope.
+- [`apps/workflow-engine/README.md`](https://github.com/openwop/openwop-app) · [`apps/workflow-engine/ARCHITECTURE.md`](https://github.com/openwop/openwop-app) — current app scope.
 - [`DESIGN.app.md`](../DESIGN.app.md) — tokens/components all new UI must use.
 - [`plans/app-buildable-now-on-existing-protocol.md`](app-buildable-now-on-existing-protocol.md) · [`plans/openwop-sample-chat-improvements-plan.md`](openwop-sample-chat-improvements-plan.md) — prior app-scope analyses this builds on.
 - [`RFCS/0055`](../RFCS/0055-multimodal-envelope-variants-and-rendering-hints.md) · [`RFCS/0056`](../RFCS/0056-run-feedback-and-annotation-event.md) — the protocol additions Tracks B and C depend on.
