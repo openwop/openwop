@@ -176,4 +176,4 @@ Because annotations live in a per-run side-store (§B), they sit cleanly outside
 - [`RFCS/0048-tenant-workspace-principal-identity-model.md`](./0048-tenant-workspace-principal-identity-model.md) — the `principalRef` actor identity (Draft).
 - [`RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md`](./0039-multi-agent-confidence-and-memory-lifecycle.md) — confidence semantics for agent-authored annotations (OQ#2).
 - [`RFCS/0054-run-diff-and-execution-comparison.md`](./0054-run-diff-and-execution-comparison.md) — the orthogonal run-comparison surface it composes with (Draft).
-- [`plans/app-ux-enhancements.md`](../plans/app-ux-enhancements.md) — the reference-app UX work this unblocks.
+- `plans/app-ux-enhancements.md` — the reference-app UX work this unblocks.
