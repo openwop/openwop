@@ -278,24 +278,35 @@
 <h2 id="edge-twin-architecture-powered-by-openwop">Edge Twin architecture powered by OpenWOP</h2>
 <p>The OpenExO outline defines the Edge Twin as a structurally separate, AI-first replica of a core business function or unit: a small human team plus an agent cluster that rebuilds specific mothership workflows using the Intelligence Stack, proves superior performance, then replaces those workflows one at a time.<sup class="oxo-fn"><a href="#fn-edge-twin">7</a></sup></p>
 <p>OpenWOP is especially strong here because an Edge Twin is fundamentally a workflow migration engine. It needs governed access to existing systems, parallel execution, rollback, audit trails, and evidence that agentic workflows are outperforming legacy ones.</p>
-<pre class="lang-"><code>Enterprise mothership systems
-  ERP · CRM · billing · support · policy · knowledge bases
-        │
-        │ workflow-scoped governed API access
-        │ read/write separated · short-lived credentials · correlation IDs
-        ▼
-OpenWOP-powered Edge Twin
-  ├─ workflow catalog
-  ├─ run lifecycle and event log
-  ├─ supervisor agents
-  ├─ worker agents and MCP tools
-  ├─ human approval queues
-  ├─ governance and eval agents
-  └─ telemetry, replay, cost, artifacts
-        │
-        │ prove → migrate → deprecate legacy workflow
-        ▼
-AI-native operating unit</code></pre>
+<figure class="oxo-flow" role="img" aria-label="Edge Twin pipeline: enterprise mothership systems (ERP, CRM, billing, support, policy, knowledge bases) connect through workflow-scoped governed API access — read/write separated, short-lived credentials, correlation IDs — into the OpenWOP-powered Edge Twin (workflow catalog, run lifecycle and event log, supervisor agents, worker agents and MCP tools, human approval queues, governance and eval agents, telemetry/replay/cost/artifacts), which proves, migrates, and deprecates legacy workflows to produce the AI-native operating unit.">
+    <div class="oxo-flow-node oxo-flow-mothership">
+      <span class="oxo-flow-name">Enterprise mothership systems</span>
+      <span class="oxo-flow-terms">ERP · CRM · billing · support · policy · knowledge bases</span>
+    </div>
+    <div class="oxo-flow-link">
+      <span class="oxo-flow-link-main">workflow-scoped governed API access</span>
+      <span class="oxo-flow-link-sub">read/write separated · short-lived credentials · correlation IDs</span>
+    </div>
+    <div class="oxo-flow-node oxo-flow-twin">
+      <span class="oxo-flow-name">OpenWOP-powered Edge Twin</span>
+      <ul class="oxo-flow-parts">
+        <li>workflow catalog</li>
+        <li>run lifecycle &amp; event log</li>
+        <li>supervisor agents</li>
+        <li>worker agents &amp; MCP tools</li>
+        <li>human approval queues</li>
+        <li>governance &amp; eval agents</li>
+        <li>telemetry · replay · cost · artifacts</li>
+      </ul>
+    </div>
+    <div class="oxo-flow-link">
+      <span class="oxo-flow-link-main">prove → migrate → deprecate legacy workflow</span>
+    </div>
+    <div class="oxo-flow-node oxo-flow-unit">
+      <span class="oxo-flow-name">AI-native operating unit</span>
+    </div>
+    <figcaption>The Edge Twin is a workflow migration engine: governed access in, proven workflows out — one at a time, with rollback the whole way.</figcaption>
+  </figure>
 <table>
 <thead><tr><th>Edge Twin requirement</th><th>OpenWOP design pattern</th></tr></thead>
 <tbody>
@@ -345,12 +356,32 @@ AI-native operating unit</code></pre>
 <tr><td><span class="cmp-chip cmp-chip-a2a">A2A</span></td><td>Agent-to-agent collaboration protocol</td><td>Between organizations, agent networks, vendors, or specialist agents.</td></tr>
 <tr><td><span class="cmp-chip cmp-chip-mcp">MCP</span></td><td>Tool, context, and data access protocol</td><td>Between an agent/workflow node and external systems such as databases, search, files, SaaS tools, and APIs. MCP is officially described as an open standard for connecting AI applications to external systems.<sup class="oxo-fn"><a href="#fn-mcp">11</a></sup></td></tr>
 </tbody></table>
-<pre class="lang-"><code>ExO 3.0 organization
-  └─ Intelligence Stack
-      ├─ OpenWOP: workflow run lifecycle, event log, governance, replay
-      │   ├─ MCP: tools, data sources, resources, prompts, APIs
-      │   └─ A2A: external specialist agents and partner organizations
-      └─ GOVERN / ASSURE: evals, logs, rollback, review queues</code></pre>
+<figure class="oxo-nest" role="img" aria-label="Composition: the ExO 3.0 organization contains the Intelligence Stack; inside it, OpenWOP owns workflow run lifecycle, event log, governance, and replay, and composes MCP (tools, data sources, resources, prompts, APIs) and A2A (external specialist agents and partner organizations) inside its workflows; GOVERN / ASSURE — evals, logs, rollback, review queues — sits alongside, watching the whole stack.">
+    <div class="oxo-nest-org">
+      <span class="oxo-nest-label oxo-nest-label-exo">ExO 3.0 organization</span>
+      <div class="oxo-nest-stack">
+        <span class="oxo-nest-label">Intelligence Stack</span>
+        <div class="oxo-nest-owp">
+          <span class="oxo-nest-head"><span class="oxo-nest-label oxo-nest-label-owp">OpenWOP</span><span class="oxo-nest-desc">workflow run lifecycle · event log · governance · replay</span></span>
+          <div class="oxo-nest-children">
+            <div class="oxo-nest-child oxo-nest-mcp">
+              <span class="oxo-nest-label oxo-nest-label-mcp">MCP</span>
+              <span class="oxo-nest-desc">tools · data sources · resources · prompts · APIs</span>
+            </div>
+            <div class="oxo-nest-child oxo-nest-a2a">
+              <span class="oxo-nest-label oxo-nest-label-a2a">A2A</span>
+              <span class="oxo-nest-desc">external specialist agents · partner organizations</span>
+            </div>
+          </div>
+        </div>
+        <div class="oxo-nest-govern">
+          <span class="oxo-nest-label oxo-nest-label-exo">GOVERN / ASSURE</span>
+          <span class="oxo-nest-desc">evals · logs · rollback · review queues</span>
+        </div>
+      </div>
+    </div>
+    <figcaption>Containment, not competition — MCP and A2A compose inside OpenWOP workflows; GOVERN / ASSURE watches everything the stack does.</figcaption>
+  </figure>
 <p>This composition lets OpenExO describe a practical open architecture: <strong>A2A for inter-agent collaboration, MCP for tool and data connectivity, and OpenWOP for durable organizational workflow execution.</strong></p>
 <h2 id="implementation-blueprint-from-concept-to-pilot">Implementation blueprint: from concept to pilot</h2>
 <p>The best proof of the OpenWOP/OpenExO fit is a concrete pilot. A strong candidate is an exception-heavy workflow such as invoice exception handling, customer escalation triage, claims review, order exception resolution, compliance intake, procurement approval, or sales operations follow-up.</p>

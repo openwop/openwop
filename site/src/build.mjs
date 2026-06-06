@@ -1560,11 +1560,78 @@ function buildComparisonOpenExo() {
     </div>`).join('')}
   </figure>`;
 
+  // Edge Twin flow — replaces the second ASCII diagram in place. The story
+  // is a vertical pipeline: the enterprise estate (neutral) flows through
+  // the OpenWOP-powered Edge Twin (clay) and emerges as the AI-native
+  // operating unit (gold — the thesis realized).
+  const edgeTwinHtml = `<figure class="oxo-flow" role="img" aria-label="Edge Twin pipeline: enterprise mothership systems (ERP, CRM, billing, support, policy, knowledge bases) connect through workflow-scoped governed API access — read/write separated, short-lived credentials, correlation IDs — into the OpenWOP-powered Edge Twin (workflow catalog, run lifecycle and event log, supervisor agents, worker agents and MCP tools, human approval queues, governance and eval agents, telemetry/replay/cost/artifacts), which proves, migrates, and deprecates legacy workflows to produce the AI-native operating unit.">
+    <div class="oxo-flow-node oxo-flow-mothership">
+      <span class="oxo-flow-name">Enterprise mothership systems</span>
+      <span class="oxo-flow-terms">ERP · CRM · billing · support · policy · knowledge bases</span>
+    </div>
+    <div class="oxo-flow-link">
+      <span class="oxo-flow-link-main">workflow-scoped governed API access</span>
+      <span class="oxo-flow-link-sub">read/write separated · short-lived credentials · correlation IDs</span>
+    </div>
+    <div class="oxo-flow-node oxo-flow-twin">
+      <span class="oxo-flow-name">OpenWOP-powered Edge Twin</span>
+      <ul class="oxo-flow-parts">
+        <li>workflow catalog</li>
+        <li>run lifecycle &amp; event log</li>
+        <li>supervisor agents</li>
+        <li>worker agents &amp; MCP tools</li>
+        <li>human approval queues</li>
+        <li>governance &amp; eval agents</li>
+        <li>telemetry · replay · cost · artifacts</li>
+      </ul>
+    </div>
+    <div class="oxo-flow-link">
+      <span class="oxo-flow-link-main">prove → migrate → deprecate legacy workflow</span>
+    </div>
+    <div class="oxo-flow-node oxo-flow-unit">
+      <span class="oxo-flow-name">AI-native operating unit</span>
+    </div>
+    <figcaption>The Edge Twin is a workflow migration engine: governed access in, proven workflows out — one at a time, with rollback the whole way.</figcaption>
+  </figure>`;
+
+  // Composition nest — replaces the third ASCII diagram. Containment IS
+  // the message, so the boxes nest: MCP and A2A compose inside OpenWOP
+  // workflows; GOVERN / ASSURE sits alongside, watching the whole stack.
+  const nestHtml = `<figure class="oxo-nest" role="img" aria-label="Composition: the ExO 3.0 organization contains the Intelligence Stack; inside it, OpenWOP owns workflow run lifecycle, event log, governance, and replay, and composes MCP (tools, data sources, resources, prompts, APIs) and A2A (external specialist agents and partner organizations) inside its workflows; GOVERN / ASSURE — evals, logs, rollback, review queues — sits alongside, watching the whole stack.">
+    <div class="oxo-nest-org">
+      <span class="oxo-nest-label oxo-nest-label-exo">ExO 3.0 organization</span>
+      <div class="oxo-nest-stack">
+        <span class="oxo-nest-label">Intelligence Stack</span>
+        <div class="oxo-nest-owp">
+          <span class="oxo-nest-head"><span class="oxo-nest-label oxo-nest-label-owp">OpenWOP</span><span class="oxo-nest-desc">workflow run lifecycle · event log · governance · replay</span></span>
+          <div class="oxo-nest-children">
+            <div class="oxo-nest-child oxo-nest-mcp">
+              <span class="oxo-nest-label oxo-nest-label-mcp">MCP</span>
+              <span class="oxo-nest-desc">tools · data sources · resources · prompts · APIs</span>
+            </div>
+            <div class="oxo-nest-child oxo-nest-a2a">
+              <span class="oxo-nest-label oxo-nest-label-a2a">A2A</span>
+              <span class="oxo-nest-desc">external specialist agents · partner organizations</span>
+            </div>
+          </div>
+        </div>
+        <div class="oxo-nest-govern">
+          <span class="oxo-nest-label oxo-nest-label-exo">GOVERN / ASSURE</span>
+          <span class="oxo-nest-desc">evals · logs · rollback · review queues</span>
+        </div>
+      </div>
+    </div>
+    <figcaption>Containment, not competition — MCP and A2A compose inside OpenWOP workflows; GOVERN / ASSURE watches everything the stack does.</figcaption>
+  </figure>`;
+
   const CHIP = { A2A: 'a2a', MCP: 'mcp', OpenWOP: 'owp' };
   const chip = (name) => `<span class="cmp-chip cmp-chip-${CHIP[name]}">${name}</span>`;
   let articleHtml = markdownToHtml(bodyMd)
     // Swap the first ASCII stack diagram for the designed ladder.
     .replace(/<pre class="lang-"><code>Purpose \/ MTP as protocol[\s\S]*?<\/code><\/pre>/, ladderHtml)
+    // Swap the Edge Twin + composition ASCII diagrams the same way.
+    .replace(/<pre class="lang-"><code>Enterprise mothership systems[\s\S]*?<\/code><\/pre>/, edgeTwinHtml)
+    .replace(/<pre class="lang-"><code>ExO 3\.0 organization[\s\S]*?<\/code><\/pre>/, nestHtml)
     // Protocol names in table headers + bold first-column cells → chips.
     .replace(/<th>(A2A|MCP|OpenWOP)<\/th>/g, (_, n) => `<th>${chip(n)}</th>`)
     .replace(/<td><strong>(A2A|MCP|OpenWOP)<\/strong><\/td>/g, (_, n) => `<td>${chip(n)}</td>`);
