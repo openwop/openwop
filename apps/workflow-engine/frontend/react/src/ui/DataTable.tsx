@@ -49,6 +49,9 @@ interface BaseProps<T> {
   initialSort?: SortState;
   /** Rendered in place of the table body when `rows` is empty. */
   empty?: ReactNode;
+  /** Optional per-row class (e.g. a highlight for the caller's own rows).
+   *  Appended to the built-in clickable/selected classes. */
+  rowClassName?: (row: T) => string | undefined;
 }
 
 /**
@@ -72,7 +75,7 @@ type SelectionProps<T> =
 type Props<T> = BaseProps<T> & SelectionProps<T>;
 
 export function DataTable<T>({
-  columns, rows, rowKey, onRowClick, density = 'comfortable', caption, initialSort, empty,
+  columns, rows, rowKey, onRowClick, density = 'comfortable', caption, initialSort, empty, rowClassName,
   selectable, selected = EMPTY_SELECTION, onSelectionChange, bulkActions,
 }: Props<T>): JSX.Element {
   const [sort, setSort] = useState<SortState | null>(initialSort ?? null);
@@ -179,7 +182,7 @@ export function DataTable<T>({
                 return (
                   <tr
                     key={key}
-                    className={`${onRowClick ? 'data-row--clickable' : ''}${isSel ? ' is-selected' : ''}`.trim() || undefined}
+                    className={`${onRowClick ? 'data-row--clickable' : ''}${isSel ? ' is-selected' : ''} ${rowClassName?.(row) ?? ''}`.trim() || undefined}
                     {...(onRowClick ? { onClick: () => onRowClick(row) } : {})}
                   >
                     {selectable && (
