@@ -176,7 +176,8 @@ function median(xs: number[]): number | null {
   if (xs.length === 0) return null;
   const s = [...xs].sort((a, b) => a - b);
   const mid = Math.floor(s.length / 2);
-  return s.length % 2 ? s[mid]! : Math.round((s[mid - 1]! + s[mid]!) / 2);
+  const hi = s[mid] ?? 0;
+  return s.length % 2 ? hi : Math.round(((s[mid - 1] ?? 0) + hi) / 2);
 }
 
 const APPROVAL_OUTCOMES = new Set(['escalated', 'overridden', 'open']);
@@ -471,32 +472,40 @@ export function searchWorkforceTrace(
   return { query, matches, scanned: mine.length, capped: hits.length > matches.length };
 }
 
-// ---- shadow & prove comparison (EP1 MG-5 / EV-4 — RFC 0090 pilot) ----------
+// ---- shadow & prove (EP1 MG-5 — RFC 0081 `live-shadow` eval, host-ext pilot) --
 //
-// Host-extension PILOT of RFC 0090's ShadowComparison shape (`shadow-run.md §D`).
-// It does NOT implement the core wire surface (capabilities.shadow + the
-// run-creation `shadow` field + baseline-leg execution) — that is the
-// reference-host follow-up that flips RFC 0090 to Accepted. Here we surface the
-// comparison over the workforce's existing runs, framing the human override as
-// the baseline: the agent "agreed" with the baseline when its decision stood
-// (clean / escalated→approved) and "diverged" when a human overrode it or it
-// was later flagged a false positive. Content-free per RFC 0090 §Security:
-// divergences carry DIGESTS, never raw output values.
+// RECONCILED (code review): the canonical "prove against a baseline" surface is
+// RFC 0081's `live-shadow` eval mode + `EvalSummary` (`spec/v1/agent-evaluation.md`),
+// gated by an RFC 0082 promotion gate — NOT a bespoke shadow shape (the original
+// RFC 0090 invention was withdrawn). This is a SIMPLIFIED host-ext stand-in for
+// RFC 0081's `EvalSummary`, pending the reference-host eval projection: it scores
+// the workforce's runs against the human-override baseline (the agent's decision
+// "passed" when it stood — clean / escalated→approved; "diverged" when overridden
+// or later flagged a false positive). Field names mirror RFC 0081 `EvalSummary`
+// (`aggregateScore`, `passed`, `mode`). Content-free per RFC 0081 §F: findings
+// carry DIGESTS, never raw output values.
 
-export interface ShadowDivergence {
+export interface ShadowFinding {
   key: string;
   agentDigest: string;
   baselineDigest: string;
 }
-export interface ShadowComparison {
+/** Mirrors the RFC 0081 `EvalSummary` shape (live-shadow), simplified. */
+export interface ShadowEvalSummary {
   workforceId: string;
-  status: 'agree' | 'diverge' | 'pending';
-  baseline: { mode: 'external' | 'replay'; runId: string | null };
-  agreementRate: number;
+  mode: 'live-shadow';
+  /** Agreement with the baseline ∈ [0,1] — RFC 0081 `EvalSummary.aggregateScore`. */
+  aggregateScore: number;
+  /** RFC 0081 `EvalSummary.passed` — aggregateScore >= the pass bar (0.9 here). */
+  passed: boolean;
+  status: 'pass' | 'fail' | 'pending';
   overrideRate: number;
   divergenceCount: number;
-  divergences: ShadowDivergence[];
+  findings: ShadowFinding[];
+  baseline: { mode: 'external'; runId: string | null };
 }
+
+const SHADOW_PASS_SCORE = 0.9;
 
 function shadowDigest(s: string): string {
   return `sha256:${createHash('sha256').update(s).digest('hex').slice(0, 16)}`;
@@ -505,11 +514,11 @@ function shadowDigest(s: string): string {
 const SHADOW_AGREE = new Set(['clean', 'escalated']);
 const SHADOW_DIVERGE = new Set(['overridden', 'false-positive']);
 
-export function aggregateShadowComparison(
+export function aggregateShadowEval(
   runs: readonly { runId: string; status: string; metadata: Record<string, unknown> }[],
   workforceId: string,
   limit = 20,
-): ShadowComparison {
+): ShadowEvalSummary {
   const mine = runs.filter((r) => (r.metadata as RunMeta).workforceId === workforceId);
   const outcome = (r: (typeof mine)[number]): string => (r.metadata as RunMeta).outcome ?? '';
 
@@ -520,20 +529,23 @@ export function aggregateShadowComparison(
   const approvalRequested = mine.filter((r) => APPROVAL_OUTCOMES.has(outcome(r))).length;
   const overridden = mine.filter((r) => outcome(r) === 'overridden').length;
 
-  const divergences: ShadowDivergence[] = diverge.slice(0, limit).map((r) => ({
+  const findings: ShadowFinding[] = diverge.slice(0, limit).map((r) => ({
     key: r.runId,
     // digests differ — that IS the divergence; raw values never leave the host.
     agentDigest: shadowDigest(`agent:${outcome(r)}:${r.runId}`),
     baselineDigest: shadowDigest(`baseline:${outcome(r)}:${r.runId}`),
   }));
 
+  const aggregateScore = decided ? Number((agree.length / decided).toFixed(4)) : 0;
   return {
     workforceId,
-    status: decided === 0 ? 'pending' : agree.length / decided >= 0.9 ? 'agree' : 'diverge',
-    baseline: { mode: 'external', runId: null },
-    agreementRate: decided ? Number((agree.length / decided).toFixed(4)) : 0,
+    mode: 'live-shadow',
+    aggregateScore,
+    passed: decided > 0 && aggregateScore >= SHADOW_PASS_SCORE,
+    status: decided === 0 ? 'pending' : aggregateScore >= SHADOW_PASS_SCORE ? 'pass' : 'fail',
     overrideRate: approvalRequested ? Number((overridden / approvalRequested).toFixed(4)) : 0,
     divergenceCount: diverge.length,
-    divergences,
+    findings,
+    baseline: { mode: 'external', runId: null },
   };
 }

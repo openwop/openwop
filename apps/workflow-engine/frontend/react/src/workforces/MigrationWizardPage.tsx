@@ -20,7 +20,7 @@ import {
   updateWorkforceStatus,
   type MigrationJourney,
   type MigrationStageKey,
-  type ShadowComparison,
+  type ShadowEvalSummary,
   type Workforce,
   type WorkforceGovernance,
   type WorkforceStatus,
@@ -44,7 +44,7 @@ export function MigrationWizardPage(): JSX.Element {
   const [wf, setWf] = useState<Workforce | null>(null);
   const [journey, setJourney] = useState<MigrationJourney | null>(null);
   const [governance, setGovernance] = useState<WorkforceGovernance | null>(null);
-  const [shadow, setShadow] = useState<ShadowComparison | null>(null);
+  const [shadow, setShadow] = useState<ShadowEvalSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [active, setActive] = useState(0);
@@ -202,24 +202,25 @@ export function MigrationWizardPage(): JSX.Element {
         {stage.key === 'shadow-prove' ? (
           <div>
             <p style={{ color: 'var(--color-text-muted)', marginTop: 0 }}>
-              Shadow mode compares the agent's decisions against the baseline (the human/legacy outcome). Per RFC 0090 the
-              comparison is content-free — divergences carry digests, never raw values.
+              A <strong>live-shadow eval</strong> (RFC 0081) scores the agent's decisions against the baseline (the
+              human/legacy outcome) into an <code>EvalSummary</code>. Content-free per RFC 0081 §F — findings carry
+              digests, never raw values.
             </p>
             {!shadow || shadow.status === 'pending' ? (
-              <Notice variant="info">No shadow evidence yet — load the demo data (or run the workforce in shadow) to populate a comparison.</Notice>
+              <Notice variant="info">No shadow evidence yet — load the demo data (or run a live-shadow eval) to populate a scorecard.</Notice>
             ) : (
               <>
                 <div className="action-bar" style={{ gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-                  <span className={`chip ${shadow.status === 'agree' ? 'chip--success' : 'chip--warning'}`}>{shadow.status}</span>
-                  <span className="chip">agreement {pct(shadow.agreementRate)}</span>
+                  <span className={`chip ${shadow.passed ? 'chip--success' : 'chip--warning'}`}>{shadow.passed ? 'passed' : 'below bar'}</span>
+                  <span className="chip">score {pct(shadow.aggregateScore)}</span>
                   <span className="chip">override {pct(shadow.overrideRate)}</span>
                   <span className="chip chip--muted">{shadow.divergenceCount} divergences</span>
                 </div>
-                {shadow.divergences.length > 0 ? (
+                {shadow.findings.length > 0 ? (
                   <details>
-                    <summary style={{ cursor: 'pointer' }}>Divergences ({shadow.divergences.length}) — content-free digests</summary>
+                    <summary style={{ cursor: 'pointer' }}>Divergence findings ({shadow.findings.length}) — content-free digests</summary>
                     <ul style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', fontVariantNumeric: 'tabular-nums' }}>
-                      {shadow.divergences.slice(0, 10).map((d) => (
+                      {shadow.findings.slice(0, 10).map((d) => (
                         <li key={d.key}>{d.key.slice(0, 16)}… — agent {d.agentDigest.slice(0, 20)} ≠ baseline {d.baselineDigest.slice(0, 20)}</li>
                       ))}
                     </ul>

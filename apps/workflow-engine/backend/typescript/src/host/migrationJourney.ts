@@ -34,6 +34,8 @@ export interface MigrationBoundaries {
 }
 
 export interface MigrationJourney {
+  /** Owning tenant — the journey is scoped per (tenant, workforce) (CTI-1). */
+  tenantId: string;
   workforceId: string;
   stageStatus: Record<MigrationStageKey, StageStatus>;
   target: MigrationTarget | null;
