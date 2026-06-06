@@ -68,6 +68,16 @@ jobs:
         working-directory: examples-ext/examples/hosts/postgres
         run: npm ci
 
+      # A few postgres host tests (mcp-client, oauth2-oidc, reasoning-event-emission)
+      # import conformance test-libs via ../../../../conformance/src/lib/*. That
+      # path is the spec corpus's conformance/ (which stays in this repo). Expose it
+      # at examples-ext/conformance (where the host's relative import resolves) and
+      # install its deps so the helpers load.
+      - name: Provide conformance test-libs to host tests
+        run: |
+          npm --prefix conformance ci
+          ln -s "$GITHUB_WORKSPACE/conformance" examples-ext/conformance
+
       - name: Run in-host smoke suite
         working-directory: examples-ext/examples/hosts/postgres
         env:
