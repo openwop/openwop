@@ -115,8 +115,8 @@ export function PromptLibraryPage() {
 
         <div className="form-row" style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end' }}>
           <div style={{ flex: '0 0 auto' }}>
-            <label>Kind</label>
-            <select value={kindFilter} onChange={(e) => setKindFilter(e.target.value as PromptKind | 'all')}>
+            <label htmlFor="prompt-kind-filter">Kind</label>
+            <select id="prompt-kind-filter" value={kindFilter} onChange={(e) => setKindFilter(e.target.value as PromptKind | 'all')}>
               {KINDS.map((k) => (
                 <option key={k.value} value={k.value}>{k.label}</option>
               ))}
@@ -301,8 +301,8 @@ function PromptEditorModal({
             />
           </div>
           <div className="form-row">
-            <label>Kind</label>
-            <select value={kind} onChange={(e) => setKind(e.target.value as PromptKind)}>
+            <label htmlFor="prompt-kind">Kind</label>
+            <select id="prompt-kind" value={kind} onChange={(e) => setKind(e.target.value as PromptKind)}>
               <option value="system">System</option>
               <option value="user">User</option>
               <option value="few-shot">Few-shot</option>

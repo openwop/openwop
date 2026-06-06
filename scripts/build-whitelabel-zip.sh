@@ -20,9 +20,15 @@
 #   public/downloads/openwop-demo-app.zip
 #   public/downloads/openwop-demo-app.zip.sha256
 #
-# The /install/ page links to the stable filename and publishes the sha256 so
-# downloaders can verify integrity. Run this before `firebase deploy --only
-# hosting:docs` (scripts/build-site.sh calls it for you).
+# The /install/ page (now served from the openwop/openwop-site repo) links to
+# the stable filename and publishes the sha256 so downloaders can verify it.
+#
+# NOTE: the public marketing/docs site moved to openwop/openwop-site, so the
+# old `public/downloads/` output path and the build-site.sh caller no longer
+# exist in this repo. Per the migration's Decision 3, this script stays here
+# (it builds from apps/workflow-engine) but is being rewired to publish the zip
+# as a versioned release asset that openwop-site fetches. Until then, run it
+# explicitly and point OUT_DIR at the intended publish location.
 #
 # Usage:
 #   bash scripts/build-whitelabel-zip.sh
@@ -33,7 +39,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SUBTREE="apps/workflow-engine"
-OUT_DIR="$ROOT/public/downloads"
+# OUT_DIR is overridable so the release workflow can stage the zip outside the
+# (now-removed) public/ tree before uploading it as a release asset.
+OUT_DIR="${OUT_DIR:-$ROOT/dist-whitelabel}"
 ZIP="$OUT_DIR/openwop-demo-app.zip"
 PREFIX="openwop-demo-app/"
 

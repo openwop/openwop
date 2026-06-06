@@ -10,7 +10,8 @@ test.describe('app shell', () => {
   test('boots to the chat surface with sidebar + main', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('main#main-content')).toBeVisible();
-    await expect(page.getByRole('navigation').or(page.locator('.app-shell'))).toBeVisible();
+    // The persistent left-rail sidebar nav (labelled "Sections").
+    await expect(page.getByRole('navigation', { name: 'Sections' })).toBeVisible();
   });
 
   test('exposes the skip-to-content link (a11y)', async ({ page }) => {

@@ -325,7 +325,12 @@ export function KanbanPage(): JSX.Element {
       {notice ? <Notice variant="success">{notice}</Notice> : null}
 
       {/* Switcher pills: owner avatar · name · live count · attention dot. */}
-      <div className="board-pills" role="tablist" aria-label="Boards">
+      <div className="board-pills">
+        {/* role="tablist" wraps ONLY the board tabs (display:contents keeps the
+            flex row); the "+ New board" action is a sibling, not a tab, so the
+            tablist's required-children contract holds (a11y, axe-verified). */}
+        {boards.length > 0 ? (
+        <div role="tablist" aria-label="Boards" style={{ display: 'contents' }}>
         {boards.map((b) => {
           const o = b.rosterId ? rosterById.get(b.rosterId) : undefined;
           const waiting = waitingCount(b.columns, b.cards);
@@ -354,6 +359,8 @@ export function KanbanPage(): JSX.Element {
             </button>
           );
         })}
+        </div>
+        ) : null}
         <button type="button" className="board-pill board-pill--new" onClick={() => setCreating(true)}>
           + New board
         </button>

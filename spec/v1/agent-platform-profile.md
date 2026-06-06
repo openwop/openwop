@@ -60,7 +60,7 @@ A host reports one of three statuses (in its `conformance.md` + `INTEROP-MATRIX.
 - **partial** — floor met + floor scenarios pass.
 - **full** — full predicate met + governance-tier scenarios pass.
 
-A new **`openwop-agent-platform` badge** ([`public/badge/openwop-agent-platform.svg`](../../public/badge/openwop-agent-platform.svg), generated per `docs/IMPLEMENTATION-CERTIFICATION.md`) renders the status + suite version, so `app.openwop.dev` and any adopter can show "Agent Platform profile: partial / full" backed by `INTEROP-MATRIX.md` evidence. The badge asserts the *aggregate* claim; it does not replace per-capability badges.
+A new **`openwop-agent-platform` badge** ([`openwop.dev/badge/openwop-agent-platform.svg`](https://openwop.dev/badge/openwop-agent-platform.svg), published from the [openwop-site](https://github.com/openwop/openwop-site) repo per `docs/IMPLEMENTATION-CERTIFICATION.md`) renders the status + suite version, so `app.openwop.dev` and any adopter can show "Agent Platform profile: partial / full" backed by `INTEROP-MATRIX.md` evidence. The badge asserts the *aggregate* claim; it does not replace per-capability badges.
 
 **Honest advertisement (the `production-profile.md` discipline):** a host MUST report `partial` (not `full`) until the full-tier scenarios actually pass — reporting `full` on shape alone is non-conformant by the §C aggregate-evidence rule.
 

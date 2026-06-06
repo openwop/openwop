@@ -18,9 +18,6 @@
     "openwop:check": "bash scripts/openwop-check.sh",
     "check": "bash scripts/openwop-check.sh",
     "check:publish": "bash scripts/openwop-check-publish-metadata.sh && bash scripts/check-npm-pack-contents.sh && bash scripts/check-python-go-release-surface.sh",
-    "check:agent-allowlist": "node scripts/check-agent-tool-allowlist.mjs",
-    "site:build": "bash scripts/build-site.sh",
-    "site:deploy": "bash scripts/build-site.sh && firebase deploy --only hosting:docs",
-    "og-cover:build": "node scripts/generate-og-cover.mjs"
+    "check:agent-allowlist": "node scripts/check-agent-tool-allowlist.mjs"
   }
 }
