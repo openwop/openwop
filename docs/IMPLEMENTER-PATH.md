@@ -65,7 +65,7 @@ Optional but high-value:
 10. `POST /v1/runs:bulk-cancel` — multi-run cancellation
 11. `POST /v1/runs/{id}:fork` — replay/fork
 
-The four reference hosts under [`examples/hosts/`](../examples/hosts/) — in-memory (~570 LOC), SQLite (~700 LOC), Python (~600 LOC), Postgres (~4300 LOC) — exist as canonical reference implementations. The in-memory host is the educational reference; SQLite is the durability reference; Python is the cross-language portability proof; Postgres is the production reference with full claim coverage.
+The four reference hosts under [`examples/hosts/`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts) — in-memory (~570 LOC), SQLite (~700 LOC), Python (~600 LOC), Postgres (~4300 LOC) — exist as canonical reference implementations. The in-memory host is the educational reference; SQLite is the durability reference; Python is the cross-language portability proof; Postgres is the production reference with full claim coverage.
 
 **Check:** your host returns 200 on discovery and 201 on `POST /v1/runs` with a fixture from `conformance/fixtures/conformance-noop.json`.
 
@@ -79,9 +79,9 @@ Use the language that matches your host. The three reference SDKs ship typed cli
 - Python: [`openwop-client`](https://pypi.org/project/openwop-client/) — `client.runs_create(...)`, `client.runs_events(...)`, etc.
 - Go: [`github.com/openwop/openwop/sdk/go`](https://pkg.go.dev/github.com/openwop/openwop/sdk/go) — `client.CreateRun(ctx, ...)`, `client.StreamEvents(ctx, ...)`, etc.
 
-See [`sdk/python/QUICKSTART.md`](../sdk/python/QUICKSTART.md), [`sdk/go/QUICKSTART.md`](../sdk/go/QUICKSTART.md), or the in-tree TypeScript SDK README for 5-minute walkthroughs.
+See [`sdk/python/QUICKSTART.md`](https://github.com/openwop/openwop-sdks/blob/main/sdk/python/QUICKSTART.md), [`sdk/go/QUICKSTART.md`](https://github.com/openwop/openwop-sdks/blob/main/sdk/go/QUICKSTART.md), or the in-tree TypeScript SDK README for 5-minute walkthroughs.
 
-**Check:** an SDK smoke against your host completes a run lifecycle end-to-end. Same pattern as the [`examples/hosts/postgres/test/lifecycle.test.ts`](../examples/hosts/postgres/test/lifecycle.test.ts) smoke — `POST /v1/runs` → poll until terminal → assert event types include the canonical core lifecycle.
+**Check:** an SDK smoke against your host completes a run lifecycle end-to-end. Same pattern as the [`examples/hosts/postgres/test/lifecycle.test.ts`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/postgres/test/lifecycle.test.ts) smoke — `POST /v1/runs` → poll until terminal → assert event types include the canonical core lifecycle.
 
 ---
 
@@ -119,7 +119,7 @@ Strict mode FAILS skip outcomes that lack an opt-out entry. Your `INTEROP-MATRIX
 
 ## Step 5: Publish your conformance evidence
 
-Create a `conformance.md` in your host's repo (mirror the pattern in [`examples/hosts/postgres/conformance-full.md`](../examples/hosts/postgres/conformance-full.md)). Include:
+Create a `conformance.md` in your host's repo (mirror the pattern in [`examples/hosts/postgres/conformance-full.md`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/postgres/conformance-full.md)). Include:
 
 - Suite version run (e.g., `@openwop/openwop-conformance@1.1.2`)
 - Command invoked (with env vars including any opt-outs)
@@ -152,7 +152,7 @@ The row is reviewed against your `conformance.md` evidence + the canonical confo
 
 If your host wants to execute typeIds from the public `packs.openwop.dev` registry:
 
-1. Implement the pack-consumer pattern — see [`examples/hosts/postgres/src/pack-consumer.ts`](../examples/hosts/postgres/src/pack-consumer.ts). Required checks: lockfile parse → SRI integrity → Ed25519 signature → version drift. Fail closed on any.
+1. Implement the pack-consumer pattern — see [`examples/hosts/postgres/src/pack-consumer.ts`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/postgres/src/pack-consumer.ts). Required checks: lockfile parse → SRI integrity → Ed25519 signature → version drift. Fail closed on any.
 2. Honor a workspace lockfile per [`spec/v1/node-packs.md`](../spec/v1/node-packs.md) §"Dependency resolution + lockfile".
 3. Wire a typeId dispatch table that maps `(packName, version, typeId)` to your executor.
 
@@ -190,8 +190,8 @@ This is what you keep host-private. Don't try to make it normative.
 - [`api/openapi.yaml`](../api/openapi.yaml) — wire contract
 - [`schemas/`](../schemas/) — JSON Schemas
 - [`conformance/`](../conformance/) — black-box suite
-- [`examples/hosts/`](../examples/hosts/) — four reference hosts
-- [`sdk/{typescript,python,go}/`](../sdk/) — three reference SDKs
+- [`examples/hosts/`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts) — four reference hosts
+- [`sdk/{typescript,python,go}/`](https://github.com/openwop/openwop-sdks/tree/main/sdk) — three reference SDKs
 - [`INTEROP-MATRIX.md`](../INTEROP-MATRIX.md) — public host roster
 - [`MAINTAINERS.md`](../MAINTAINERS.md) — review + waiver tables
 - [`CONTRIBUTING.md`](../CONTRIBUTING.md) — full contribution guide

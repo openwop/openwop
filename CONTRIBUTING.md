@@ -62,6 +62,8 @@ When to bump status:
 
 ### Pack-internal JSON Schemas (`packs/<name>/schemas/*.schema.json`)
 
+> **Moved:** the pack ecosystem (`packs/` source + the `registry/` catalog) now lives in [`openwop/openwop-registry`](https://github.com/openwop/openwop-registry). Pack contributions, the rules below, and the pack/registry validation gate (`scripts/registry-check.sh`) apply in that repo. The pack-manifest *schemas* remain normative here under `schemas/` (vendored into the registry repo with a drift guard).
+
 Distinct from the spec-corpus schemas above. These live inside a pack's tarball and are referenced via `pack.json` (`configSchemaRef` / `inputSchemaRef` / `outputSchemaRef` for nodes; `handoff.{task,return}SchemaRef` for agent manifests per RFC 0003 §D). Rules:
 
 - `$schema: "https://json-schema.org/draft/2020-12/schema"` — same as spec corpus.

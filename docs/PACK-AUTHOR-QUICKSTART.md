@@ -4,7 +4,7 @@
 
 A **pack** is a versioned, signed unit of nodes (and optionally agents) that a workflow definition references via `core.<…>` / `vendor.<…>` / `community.<…>` typeIds. Packs let third-party authors extend OpenWOP without forking the protocol — your pack lives in your repo (or a pull request to the registry), gets signed with your key, and is served from the public registry for any OpenWOP host to consume.
 
-This page is the **author** path. For host-side consumption (signature verification, lockfile honoring, fail-closed behavior), see [`examples/hosts/postgres/src/pack-consumer.ts`](../examples/hosts/postgres/src/pack-consumer.ts) (PACK-1 reference impl).
+This page is the **author** path. For host-side consumption (signature verification, lockfile honoring, fail-closed behavior), see [`examples/hosts/postgres/src/pack-consumer.ts`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/postgres/src/pack-consumer.ts) (PACK-1 reference impl).
 
 ---
 
@@ -48,7 +48,7 @@ Edit `pack.json` to declare:
 - `signing.keyId` — the keyId you'll sign with (configured in step 2)
 - `runtime` — `"javascript"` / `"wasm"` (per RFC 0008) / `"agent-only"`
 
-The [`examples/packs/vendor-template/`](../examples/packs/vendor-template/) shows the canonical shape. The [`examples/packs/rust-hello/`](../examples/packs/rust-hello/) shows a WASM pack end-to-end.
+The [`examples/packs/vendor-template/`](https://github.com/openwop/openwop-examples/tree/main/examples/packs/vendor-template) shows the canonical shape. The [`examples/packs/rust-hello/`](https://github.com/openwop/openwop-examples/tree/main/examples/packs/rust-hello) shows a WASM pack end-to-end.
 
 ---
 
@@ -134,7 +134,7 @@ OPENWOP_PACK_DIR=../../../packs npm start
 
 Run a workflow that references your typeId. The host loads your pack from disk, verifies signature against the local public key, and routes typeId calls into your node implementation.
 
-For Postgres host (production-shape) consumption via a lockfile, see [`examples/core-packs-lockfile/`](../examples/core-packs-lockfile/) for the canonical lockfile structure + [`examples/hosts/postgres/src/pack-consumer.ts`](../examples/hosts/postgres/src/pack-consumer.ts) for the install-time security pass.
+For Postgres host (production-shape) consumption via a lockfile, see [`examples/core-packs-lockfile/`](https://github.com/openwop/openwop-examples/tree/main/examples/core-packs-lockfile) for the canonical lockfile structure + [`examples/hosts/postgres/src/pack-consumer.ts`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/postgres/src/pack-consumer.ts) for the install-time security pass.
 
 ---
 
@@ -192,7 +192,7 @@ For long-lived packs, rotate the key:
 
 A safe shape for a first community pack: **one node, one tool wrapper, no external secrets, no AI calls**. E.g., a Markdown-table formatter, a date-difference calculator, a base64 encoder/decoder. Stay under 100 LOC; ship it; iterate.
 
-The [`examples/packs/rust-hello/`](../examples/packs/rust-hello/) is the canonical "hello world" — a Rust WASM pack with one typeId that echoes input. Read it before you build.
+The [`examples/packs/rust-hello/`](https://github.com/openwop/openwop-examples/tree/main/examples/packs/rust-hello) is the canonical "hello world" — a Rust WASM pack with one typeId that echoes input. Read it before you build.
 
 ---
 
@@ -204,7 +204,7 @@ The [`examples/packs/rust-hello/`](../examples/packs/rust-hello/) is the canonic
 - [`spec/v1/registry-operations.md`](../spec/v1/registry-operations.md) — registry submission / yank / rotation / federation flows.
 - [`schemas/node-pack-manifest.schema.json`](../schemas/node-pack-manifest.schema.json) — manifest schema.
 - [`schemas/pack-lockfile.schema.json`](../schemas/pack-lockfile.schema.json) — workspace lockfile schema.
-- [`registry/scripts/verify-signatures.mjs`](../registry/scripts/verify-signatures.mjs) — canonical signature verifier (same algorithm hosts run at install time).
-- [`examples/packs/rust-hello/`](../examples/packs/rust-hello/) — canonical reference pack.
-- [`examples/packs/vendor-template/`](../examples/packs/vendor-template/) — template skeleton.
-- [`examples/core-packs-lockfile/`](../examples/core-packs-lockfile/) — canonical lockfile pinning.
+- [`registry/scripts/verify-signatures.mjs`](https://github.com/openwop/openwop-registry/blob/main/registry/scripts/verify-signatures.mjs) — canonical signature verifier (same algorithm hosts run at install time).
+- [`examples/packs/rust-hello/`](https://github.com/openwop/openwop-examples/tree/main/examples/packs/rust-hello) — canonical reference pack.
+- [`examples/packs/vendor-template/`](https://github.com/openwop/openwop-examples/tree/main/examples/packs/vendor-template) — template skeleton.
+- [`examples/core-packs-lockfile/`](https://github.com/openwop/openwop-examples/tree/main/examples/core-packs-lockfile) — canonical lockfile pinning.

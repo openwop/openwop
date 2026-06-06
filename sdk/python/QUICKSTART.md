@@ -119,7 +119,7 @@ for event in client.stream_run_events(run.run_id):
 - **Auth profiles:** [`auth-profiles.md`](../../spec/v1/auth-profiles.md) — API-key rotation, OAuth2 client credentials, OIDC user-bearer, mTLS.
 - **Webhooks:** subscribe to run events out-of-band; see [`webhooks.md`](../../spec/v1/webhooks.md).
 - **Replay:** time-travel debugging via `POST /v1/runs/{runId}:fork`; see [`replay.md`](../../spec/v1/replay.md).
-- **Build your own host:** [`examples/hosts/sqlite/README.md`](../../examples/hosts/sqlite/README.md) doubles as a "Build Your Own Host" walkthrough.
+- **Build your own host:** [`examples/hosts/sqlite/README.md`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/sqlite/README.md) doubles as a "Build Your Own Host" walkthrough.
 
 ## Troubleshooting
 

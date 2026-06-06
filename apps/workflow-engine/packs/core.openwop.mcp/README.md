@@ -95,5 +95,5 @@ Hosts that don't expose this throw `host_capability_missing` at runtime (workflo
 
 - [`spec/v1/mcp-integration.md`](../../spec/v1/mcp-integration.md) — composition pattern + invariants
 - [`spec/v1/replay.md`](../../spec/v1/replay.md) §"Replay determinism"
-- [`examples/mcp-tool/`](../../examples/mcp-tool/) — vendor-extension probe + observability pattern
+- [`examples/mcp-tool/`](https://github.com/openwop/openwop-examples/tree/main/examples/mcp-tool) — vendor-extension probe + observability pattern
 - [`docs/PACKS-MVP-PLAN.md`](../../docs/PACKS-MVP-PLAN.md) — Phase 1 catalog

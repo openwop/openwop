@@ -190,42 +190,11 @@ function parseInteropPassRates() {
   return rows;
 }
 
-function registryStats() {
-  const indexRel = 'registry/v1/index.json';
-  if (!exists(indexRel)) {
-    return {
-      indexPackCount: 0,
-      indexedPacks: 0,
-      packDirs: 0,
-      versionManifests: 0,
-      tarballs: 0,
-      signatures: 0,
-      scopes: {},
-    };
-  }
-
-  const index = JSON.parse(read(indexRel));
-  const packs = Array.isArray(index.packs) ? index.packs : [];
-  const scopes = {};
-  for (const pack of packs) {
-    const scope = String(pack.name ?? '').split('.').slice(0, 2).join('.') || 'unknown';
-    scopes[scope] = (scopes[scope] ?? 0) + 1;
-  }
-
-  const versionManifests = walkFiles('registry/v1/packs', (rel) => /\/-\/[^/]+\.json$/.test(rel) && !rel.endsWith('.sbom.json'));
-  const tarballs = walkFiles('registry/v1/packs', (rel) => rel.endsWith('.tgz'));
-  const signatures = walkFiles('registry/v1/packs', (rel) => rel.endsWith('.sig'));
-
-  return {
-    indexPackCount: Number(index.packCount ?? packs.length),
-    indexedPacks: packs.length,
-    packDirs: listDirs('registry/v1/packs').length,
-    versionManifests: versionManifests.length,
-    tarballs: tarballs.length,
-    signatures: signatures.length,
-    scopes,
-  };
-}
+// The pack registry inventory moved to the openwop-registry repo (served at
+// packs.openwop.dev). Its per-pack counts/signatures are validated by that repo's
+// own gate (scripts/registry-check.sh); the spec corpus keeps prose honest about
+// packs via the live-fetching scripts/check-doc-pack-claims.mjs instead of pinning
+// volatile cross-repo counts in this committed, diff-checked status doc.
 
 function staleStatusFindings(rfcs) {
   // Recompute the same corpus state generateStatus() uses, so we can structurally
@@ -350,7 +319,6 @@ function generateStatus() {
   const rfcs = parseRfcs();
   const sdkRows = parseSdkParity();
   const interopRows = parseInteropPassRates();
-  const registry = registryStats();
   const rfcStatusCounts = rfcs.reduce((acc, rfc) => {
     acc[rfc.status] = (acc[rfc.status] ?? 0) + 1;
     return acc;
@@ -422,20 +390,7 @@ function generateStatus() {
   lines.push('');
   lines.push('## Registry Snapshot');
   lines.push('');
-  lines.push('| Metric | Count | Source |');
-  lines.push('|---|---:|---|');
-  lines.push(tableRow(['Index `packCount`', String(registry.indexPackCount), '`registry/v1/index.json`']));
-  lines.push(tableRow(['Indexed pack rows', String(registry.indexedPacks), '`registry/v1/index.json`']));
-  lines.push(tableRow(['Local pack directories', String(registry.packDirs), '`registry/v1/packs/*`']));
-  lines.push(tableRow(['Version manifests', String(registry.versionManifests), '`registry/v1/packs/*/-/*.json`']));
-  lines.push(tableRow(['Tarballs', String(registry.tarballs), '`registry/v1/packs/*/-/*.tgz`']));
-  lines.push(tableRow(['Signatures', String(registry.signatures), '`registry/v1/packs/*/-/*.sig`']));
-  lines.push('');
-  lines.push('| Scope | Indexed packs |');
-  lines.push('|---|---:|');
-  for (const scope of Object.keys(registry.scopes).sort()) {
-    lines.push(tableRow([scope, String(registry.scopes[scope])]));
-  }
+  lines.push('The pack registry now lives in the [`openwop-registry`](https://github.com/openwop/openwop-registry) repo and is served at [`packs.openwop.dev`](https://packs.openwop.dev/v1/index.json). Its inventory (pack count, version manifests, tarballs, signatures, per-scope breakdown) is validated by that repo\'s own gate; spec-corpus prose claims about packs are checked live by `scripts/check-doc-pack-claims.mjs`.');
   lines.push('');
   lines.push('## Active Follow-Ups');
   lines.push('');

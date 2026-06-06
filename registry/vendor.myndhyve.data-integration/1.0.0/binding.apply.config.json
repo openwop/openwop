@@ -1,9 +1,0 @@
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "properties": {
-    "updateMode": { "type": "string", "enum": ["immediate", "batched"], "default": "immediate" },
-    "preserveUndo": { "type": "boolean", "default": true }
-  },
-  "additionalProperties": true
-}

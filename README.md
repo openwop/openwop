@@ -68,7 +68,16 @@ For an honest comparison of OpenWOP vs **Temporal, Airflow, Argo Workflows, AWS 
 
 > **What remains v1.x work (external-action-gated).** External security audit engagement, first non-steward INTEROP-MATRIX row, first third-party node-pack on `packs.openwop.dev`, vendor-neutral org migration. None of these are controllable by the single-steward authoring this protocol; each is tracked with a named tripwire in [`ROADMAP.md`](./ROADMAP.md) §Phase 4. The corpus is **ready for first non-steward adoption** — the four reference hosts + 113 SECURITY invariants + 324 conformance scenario files + 3 SDKs + 1 spec-closure RFC umbrella close every gap a non-steward maintainer can be expected to discover on day one.
 
-This repository is the canonical source for the protocol itself; reference implementations live under [`examples/hosts/`](./examples/hosts/) and in third-party host repos listed in [`INTEROP-MATRIX.md`](./INTEROP-MATRIX.md).
+This repository is the canonical source for the **protocol contract** — the spec prose, JSON Schemas, OpenAPI/AsyncAPI, RFCs, SECURITY invariants, and the conformance suite that mechanically decides compliance. The implementations, ecosystem, and tooling built on the contract live in sibling repositories:
+
+> **Related repositories**
+> - [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks) — client SDKs: TypeScript [`@openwop/openwop`](https://www.npmjs.com/package/@openwop/openwop), Python [`openwop-client`](https://pypi.org/project/openwop-client/), Go `github.com/openwop/openwop-sdks/go`.
+> - [`openwop/openwop-examples`](https://github.com/openwop/openwop-examples) — reference hosts (in-memory, SQLite, Postgres, WASM-sandbox) + runnable workflow samples.
+> - [`openwop/openwop-registry`](https://github.com/openwop/openwop-registry) — the node/agent pack ecosystem + the published catalog served at [`packs.openwop.dev`](https://packs.openwop.dev).
+> - [`openwop/openwop-cli`](https://github.com/openwop/openwop-cli) — the `@openwop/cli` control plane.
+> - [`openwop/openwop-site`](https://github.com/openwop/openwop-site) — the [openwop.dev](https://openwop.dev) marketing + docs site.
+>
+> The only artifact published from *this* repo is [`@openwop/openwop-conformance`](https://www.npmjs.com/package/@openwop/openwop-conformance).
 
 ## Document index
 

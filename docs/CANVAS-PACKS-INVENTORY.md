@@ -75,8 +75,8 @@ PR #48 also formalized the de-facto `ctx.callAI` contract (which 14+ already-pub
 Discovery surfaces:
 
 - [`docs/PACK-CATALOG.md`](./PACK-CATALOG.md) — categorized inventory of every published pack with one-line descriptions, grouped by domain (framework / identity / canvas verticals / marketIntel / ads / campaign-sequence) plus a "Use cases → which packs" composition table.
-- [`examples/market-intel-pipeline/`](../examples/market-intel-pipeline/) — VoC research → ad-angle pipeline (9 packs composed declaratively; 2 entry variants).
-- [`examples/ads-publish-pipeline/`](../examples/ads-publish-pipeline/) — creative generation → platform publish (8 packs composed declaratively; 3 sibling variants targeting Meta / Google / TikTok). Composes downstream of the marketIntel pipeline via `audience-targeting.outputs.targetingPacks`.
+- [`examples/market-intel-pipeline/`](https://github.com/openwop/openwop-examples/tree/main/examples/market-intel-pipeline) — VoC research → ad-angle pipeline (9 packs composed declaratively; 2 entry variants).
+- [`examples/ads-publish-pipeline/`](https://github.com/openwop/openwop-examples/tree/main/examples/ads-publish-pipeline) — creative generation → platform publish (8 packs composed declaratively; 3 sibling variants targeting Meta / Google / TikTok). Composes downstream of the marketIntel pipeline via `audience-targeting.outputs.targetingPacks`.
 
 ---
 
@@ -276,5 +276,5 @@ These get resolved during Phase B implementation, not now.
 - [`spec/v1/node-packs.md`](../spec/v1/node-packs.md) — pack manifest format, registry HTTP API, `peerDependencies` for host capabilities
 - [`spec/v1/host-capabilities.md`](../spec/v1/host-capabilities.md) — `host.*` capability surface
 - [`spec/v1/registry-operations.md`](../spec/v1/registry-operations.md) — namespace claims, signing keys, publish lifecycle
-- [`registry/README.md`](../registry/README.md) — publish workflow against `packs.openwop.dev`
+- [`registry/README.md`](https://github.com/openwop/openwop-registry/blob/main/registry/README.md) — publish workflow against `packs.openwop.dev`
 - [`PUBLISHING.md`](../PUBLISHING.md) — SDK + conformance publishing (different artifact class, same release cadence)
