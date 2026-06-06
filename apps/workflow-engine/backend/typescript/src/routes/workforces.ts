@@ -36,6 +36,7 @@ import {
   type MigrationJourneyPatch,
 } from '../host/migrationService.js';
 import { MIGRATION_STAGE_KEYS, type MigrationStageKey, type StageStatus } from '../host/migrationJourney.js';
+import { evalSuiteEnabled, runWorkforceLiveShadowEval } from '../host/workforceEval.js';
 
 const WORKFORCE_STATUSES: readonly WorkforceStatus[] = ['shadow', 'piloting', 'production'];
 
@@ -256,6 +257,33 @@ export function registerWorkforceRoutes(app: Express, deps: Deps): void {
       }
       const runs = await dashboardRuns(deps, req, req.params.workforceId);
       res.json(aggregateShadowEval(runs, req.params.workforceId));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // MG-5 (real) — run an actual RFC 0081 `live-shadow` eval of the workforce's
+  // supervisor agent over the embedded suite, returning a real EvalSummary (vs
+  // the runs-derived `/shadow` stand-in). GATED on the host advertising the eval
+  // capability, so the disabled default stays honest (RFC 0031).
+  app.post('/v1/host/sample/workforces/:workforceId/eval', async (req, res, next) => {
+    try {
+      if (!evalSuiteEnabled()) {
+        throw new OpenwopError(
+          'host_capability_missing',
+          'This host does not enable the agent eval suite (set OPENWOP_AGENT_EVAL_SUITE_ENABLED=true).',
+          501,
+          { capability: 'agents.evalSuite' },
+        );
+      }
+      const wf = await getWorkforce(req.params.workforceId);
+      if (!wf) {
+        throw new OpenwopError('not_found', `Workforce \`${req.params.workforceId}\` not found.`, 404, {
+          workforceId: req.params.workforceId,
+        });
+      }
+      const summary = await runWorkforceLiveShadowEval(deps.storage, tenantOf(req), req.params.workforceId, Date.now());
+      res.status(200).json(summary);
     } catch (err) {
       next(err);
     }
