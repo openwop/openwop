@@ -15,6 +15,7 @@ The normative wire contract for v1.x.
 Where OpenWOP sits relative to adjacent agent protocols.
 
 - **[A2A vs MCP vs OpenWOP →](/comparisons/a2a-openwop-mcp/)** — a specification-level comparison of agent-to-agent collaboration, tool/context integration, and durable workflow orchestration.
+- **[OpenExO 3.0 and OpenWOP →](/comparisons/openexo-3-openwop/)** — an architecture thesis for using OpenWOP as the durable execution protocol beneath OpenExO 3.0, the Intelligence Stack, REWRITE, and Edge Twins.
 - **[Positioning & non-goals →](/spec/v1/positioning.html)** — the normative OpenWOP positioning surface inside the v1 spec.
 
 ## Conformance
