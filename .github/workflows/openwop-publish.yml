@@ -105,7 +105,12 @@ jobs:
       id-token: write
       contents: read
     steps:
+      # fetch-depth: 0 pulls full history + tags so prepublishOnly's
+      # stamp-corpus-version (git describe --match 'v*') resolves the corpus tag
+      # this SDK build sits on. A shallow checkout would stamp the dev sentinel.
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
           node-version: '24'

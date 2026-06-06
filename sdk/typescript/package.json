@@ -28,7 +28,8 @@
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "prepublishOnly": "npm run build"
+    "stamp-corpus-version": "node scripts/stamp-corpus-version.mjs",
+    "prepublishOnly": "node scripts/stamp-corpus-version.mjs && npm run build"
   },
   "engines": {
     "node": ">=20"

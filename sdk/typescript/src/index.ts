@@ -103,6 +103,10 @@ export type {
 export { streamEvents } from './sse.js';
 export type { EventsStreamContext, EventsStreamOptions } from './sse.js';
 
+// Corpus provenance — the corpus release this SDK build was stamped against
+// (extracted consumers use it to assert spec-artifact version coherence).
+export { CORPUS_VERSION, CORPUS_COMMIT } from './corpusVersion.js';
+
 // RFC 0002 + RFC 0024 typed event helpers — type guards over `RunEventDoc`
 // plus a high-level streaming-reasoning subscription helper.
 export {
