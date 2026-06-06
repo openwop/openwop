@@ -188,7 +188,7 @@ End-to-end deployable templates under [`apps/`](./apps/) — a tier above `examp
 
 ## Design standards
 
-- **[`DESIGN.md`](./DESIGN.md)** — marketing-site standards + shared editorial palette (`--paper` / `--ink` / `--clay` / `--star-glow`) + Instrument Serif + Geist + Geist Mono type triple. Source of truth for `public/styles.css` and the warm-dark token override that any future surface adopts.
+- **[`DESIGN.md`](https://github.com/openwop/openwop-site/blob/main/DESIGN.md)** — marketing-site standards + shared editorial palette (`--paper` / `--ink` / `--clay` / `--star-glow`) + Instrument Serif + Geist + Geist Mono type triple. Now lives in the [openwop-site](https://github.com/openwop/openwop-site) repo alongside the marketing site it governs.
 - **[`DESIGN.app.md`](./DESIGN.app.md)** — reference-app standards for `apps/workflow-engine/frontend/react/`. App-specific components, functional status tokens, xyflow canvas theming, Firebase-Auth vendor-mark policy, inline-style policy. Mirrors shared tokens from `DESIGN.md` per the SYNC RULE in `apps/workflow-engine/frontend/react/src/styles/global.css :root`.
 - Reviewed by `/ux-review`.
 
