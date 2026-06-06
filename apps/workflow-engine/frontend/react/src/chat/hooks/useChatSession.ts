@@ -274,6 +274,13 @@ export interface UseChatSessionResult {
   activeAgents: UseActiveAgentsResult;
 }
 
+/** Built-in fallback inputs for hardcoded sample.* workflows that ship without
+ *  a SavedWorkflow defaultInputs blob. Module-scoped (static data) so it has a
+ *  stable identity and never needs to appear in a hook dependency array. */
+const SAMPLE_DEFAULT_INPUTS: Record<string, Record<string, unknown>> = {
+  'sample.demo.uppercase': { text: 'hello world' },
+};
+
 export function useChatSession(): UseChatSessionResult {
   const [session, setSession] = useState<ChatSession>(loadSession);
   const [isSending, setIsSending] = useState(false);
@@ -1045,7 +1052,12 @@ export function useChatSession(): UseChatSessionResult {
         inFlightAssistantIdRef.current = null;
       },
     });
-  }, [session.id, session.messages]);
+    // session.title added so a persist after a rename uses the current title.
+    // animation (ref-backed, stable methods) and persistMessage (useCallback)
+    // are intentionally omitted — their object identity churns each render and
+    // adding them would needlessly recreate `send` (used widely downstream).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.id, session.messages, session.title]);
 
   const cancel = useCallback(async () => {
     const runId = inFlightRunIdRef.current;
@@ -1078,6 +1090,9 @@ export function useChatSession(): UseChatSessionResult {
     inFlightRunIdRef.current = null;
     inFlightAssistantIdRef.current = null;
     setIsSending(false);
+    // animation's methods are ref-backed useCallbacks (stable); cancel reads
+    // only refs + setIsSending. No reactive deps. (GAP-ANALYSIS code-review)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const emitSystem = useCallback((content: string) => {
@@ -1269,10 +1284,6 @@ export function useChatSession(): UseChatSessionResult {
    *  ship without a SavedWorkflow defaultInputs blob. Keeps `@uppercase`
    *  from dispatching with an empty `inputs.text` and silently emitting
    *  an empty string. */
-  const SAMPLE_DEFAULT_INPUTS: Record<string, Record<string, unknown>> = {
-    'sample.demo.uppercase': { text: 'hello world' },
-  };
-
   const runWorkflowMention = useCallback(async (entry: WorkflowMentionEntry, trailing?: string) => {
     setError(null);
     // Preserve what the user actually typed so the chat history shows

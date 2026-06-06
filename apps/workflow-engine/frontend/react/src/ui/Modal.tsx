@@ -40,6 +40,7 @@ export function Modal({
       {/* Backdrop dismiss is a convenience; the keyboard path is Escape
           (handled above). The target check means a click on the dialog body
           (which bubbles) does not close it — so the dialog needs no handler. */}
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events */}
       <div className={scrimClassName} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
         <div
           ref={ref}

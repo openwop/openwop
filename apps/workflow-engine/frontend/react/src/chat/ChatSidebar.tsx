@@ -372,6 +372,11 @@ export function ChatSidebar({ config, onOpenSettings, onRemoveKey, tenantId = 'd
       tools: toolsEnabled && supportsTools ? buildAvailableTools() : undefined,
       ...(activeAgentId ? { activeAgentId } : {}),
     });
+    // Intentionally depends on the specific stable activeAgents MEMBERS
+    // (currentAgentId, activateAgent) rather than the whole `activeAgents`
+    // object, whose identity churns each render and would needlessly recreate
+    // this callback. (GAP-ANALYSIS code-review)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [send, cancel, reset, emitSystem, config, webSearchEnabled, supportsWebSearch, toolsEnabled, supportsTools, runWorkflowMention, activeAgents.currentAgentId, activeAgents.activateAgent, agentEntries]);
 
   return (
