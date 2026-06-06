@@ -17,7 +17,7 @@
   --rule-2:       #c4bfae;
   --ink:          #1a1a17;
   --ink-2:        #4a4842;
-  --ink-3:        #6e6a5e; /* AA-contrast muted text on paper (GAP-ANALYSIS E10) */
+  --ink-3:        #66624f; /* AA muted text (≥4.5:1) on paper AND paper-2 (axe-verified) */
   --clay:         oklch(58% 0.13 40);
   --clay-soft:    oklch(58% 0.13 40 / 0.10);
   --clay-rule:    oklch(58% 0.13 40 / 0.35);
