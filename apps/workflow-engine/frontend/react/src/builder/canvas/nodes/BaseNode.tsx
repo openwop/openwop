@@ -22,10 +22,10 @@ interface NodeData extends Record<string, unknown> {
 
 // Status → accent color + glyph for the live-execution overlay badge.
 const RUN_STATUS_META: Record<NodeRunStatus, { color: string; label: string; glyph: ReactNode }> = {
-  running: { color: 'var(--color-warning)', label: 'Running', glyph: <CircleIcon size={12} filled /> },
-  completed: { color: 'var(--color-success)', label: 'Completed', glyph: <CheckIcon size={12} /> },
-  failed: { color: 'var(--color-danger)', label: 'Failed', glyph: <XIcon size={12} /> },
-  suspended: { color: 'var(--color-ai)', label: 'Suspended', glyph: <PauseIcon size={12} /> },
+  running: { color: 'var(--color-warning-text)', label: 'Running', glyph: <CircleIcon size={12} filled /> },
+  completed: { color: 'var(--color-success-text)', label: 'Completed', glyph: <CheckIcon size={12} /> },
+  failed: { color: 'var(--color-danger-text)', label: 'Failed', glyph: <XIcon size={12} /> },
+  suspended: { color: 'var(--color-ai-text)', label: 'Suspended', glyph: <PauseIcon size={12} /> },
 };
 
 function BaseNodeImpl({ id, data, selected }: NodeProps) {

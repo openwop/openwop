@@ -206,7 +206,7 @@ export function AvatarEditor({
             )}
 
             {localError ? (
-              <div role="alert" style={{ fontSize: 12.5, color: 'var(--color-danger)' }}>{localError}</div>
+              <div role="alert" style={{ fontSize: 12.5, color: 'var(--color-danger-text)' }}>{localError}</div>
             ) : null}
 
             {/* Footer actions */}
@@ -217,7 +217,7 @@ export function AvatarEditor({
                   className="secondary"
                   onClick={() => void onSave(null)}
                   disabled={saving}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--color-danger)' }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--color-danger-text)' }}
                 >
                   <TrashIcon size={13} /> Remove photo
                 </button>

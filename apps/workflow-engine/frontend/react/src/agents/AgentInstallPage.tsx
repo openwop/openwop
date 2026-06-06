@@ -97,7 +97,7 @@ export function AgentInstallPage(): JSX.Element {
             marginBottom: 'var(--space-3)',
             border: '1px solid var(--color-danger)',
             borderRadius: 'var(--radius)',
-            color: 'var(--color-danger)',
+            color: 'var(--color-danger-text)',
             background: 'color-mix(in oklch, var(--color-danger) 6%, transparent)',
             fontSize: 12.5,
           }}
@@ -161,7 +161,7 @@ function PackRow({
                 padding: '1px 8px',
                 borderRadius: 10,
                 background: 'color-mix(in oklch, var(--color-success) 14%, transparent)',
-                color: 'var(--color-success)',
+                color: 'var(--color-success-text)',
                 fontFamily: 'var(--mono)',
               }}
             >

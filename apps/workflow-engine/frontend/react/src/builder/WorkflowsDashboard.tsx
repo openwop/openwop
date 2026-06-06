@@ -317,7 +317,12 @@ function WorkflowCard({
   return (
     <div
       className="workflow-card"
-      role="button"
+      // NOT role="button": the card contains its own menu <button> + rename
+      // input, and an interactive role can't nest interactive controls
+      // (axe nested-interactive). It stays a focusable, keyboard-operable
+      // region (tabIndex + onKeyDown → open) with an aria-label, so full-card
+      // click AND keyboard both work without the invalid nesting.
+      aria-label={`Open workflow ${wf.name}`}
       tabIndex={renaming ? -1 : 0}
       onClick={(e) => {
         if (renaming) return;

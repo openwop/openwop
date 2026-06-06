@@ -241,7 +241,7 @@ export function ChatInput({
           <span style={{ flex: 1 }}>
             Voice attachment ({pendingAudio.audio.durationSeconds.toFixed(1)}s, {pendingAudio.audio.mimeType.split(';')[0]})
             {supportsAudioInput === false && (
-              <span style={{ color: 'var(--color-warning)', marginLeft: 6 }}>
+              <span style={{ color: 'var(--color-warning-text)', marginLeft: 6 }}>
                 — current model doesn't accept audio. Switch to a Gemini model or remove the attachment.
               </span>
             )}
@@ -293,7 +293,7 @@ export function ChatInput({
                   {pf.file.name}
                 </span>
                 {cantSend && (
-                  <span style={{ color: 'var(--color-warning)', display: 'inline-flex' }} title="Unsupported by the current model">
+                  <span style={{ color: 'var(--color-warning-text)', display: 'inline-flex' }} title="Unsupported by the current model">
                     <AlertIcon size={12} />
                   </span>
                 )}

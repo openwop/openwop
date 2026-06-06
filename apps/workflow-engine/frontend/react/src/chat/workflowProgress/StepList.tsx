@@ -144,7 +144,7 @@ export function StepList({ run, message }: Props): JSX.Element {
               {hasOutputs && (
                 <span style={{
                   fontSize: 10,
-                  color: 'var(--clay)',
+                  color: 'var(--clay-text)',
                   textDecoration: 'underline',
                   textDecorationColor: 'var(--clay-rule)',
                 }}>
@@ -160,7 +160,7 @@ export function StepList({ run, message }: Props): JSX.Element {
                   padding: '1px 8px',
                   borderRadius: 10,
                   background: 'var(--clay-wash)',
-                  color: 'var(--clay)',
+                  color: 'var(--clay-text)',
                   border: '1px solid var(--clay-rule)',
                   whiteSpace: 'nowrap',
                 }}>

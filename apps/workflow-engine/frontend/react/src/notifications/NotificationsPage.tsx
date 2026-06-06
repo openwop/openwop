@@ -203,7 +203,7 @@ function NotificationCard({
           type="button"
           className="secondary"
           onClick={onDelete}
-          style={{ color: 'var(--color-danger)' }}
+          style={{ color: 'var(--color-danger-text)' }}
         >
           Delete
         </button>

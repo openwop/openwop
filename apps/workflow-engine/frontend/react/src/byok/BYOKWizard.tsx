@@ -351,7 +351,7 @@ function ModelGrid({
           >
             <div style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 8 }}>
               <span style={{ fontWeight: 600, fontSize: 13 }}>{m.label}</span>
-              {m.recommended && <span className="status-badge" style={{ color: 'var(--color-success)' }}>recommended</span>}
+              {m.recommended && <span className="status-badge" style={{ color: 'var(--color-success-text)' }}>recommended</span>}
               <span style={{ marginLeft: 'auto', fontSize: 11 }} className="muted">{(m.contextWindow / 1000).toFixed(0)}K ctx</span>
             </div>
             <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>

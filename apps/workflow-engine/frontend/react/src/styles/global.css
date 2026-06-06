@@ -20,6 +20,14 @@
   --ink-3:        #66624f; /* AA muted text (≥4.5:1) on paper AND paper-2 (axe-verified) */
   --clay:         oklch(58% 0.13 40);
   --clay-soft:    oklch(58% 0.13 40 / 0.10);
+  /* WCAG-AA accent variants (--clay is mid-tone: fine for borders/large text at
+   * 3:1, but fails 4.5:1 as small text / as a white-text button fill).
+   *   --clay-text:   small-text clay on a surface (theme-dependent: dark on
+   *                  light, light on dark — see the dark blocks).
+   *   --clay-strong: solid-accent FILL deep enough for white text in BOTH
+   *                  themes (used by .btn-accent-solid). */
+  --clay-text:    oklch(46% 0.15 40);
+  --clay-strong:  oklch(46% 0.15 40);
   --clay-rule:    oklch(58% 0.13 40 / 0.35);
   --clay-wash:    oklch(58% 0.13 40 / 0.04);
   --clay-glow:    oklch(58% 0.13 40 / 0.50);
@@ -38,6 +46,14 @@
   --color-warning: oklch(72% 0.14 75);    /* warmer amber, neighbour of --star-glow */
   --color-danger:  oklch(55% 0.16 28);    /* muted brick red */
   --color-ai:      oklch(60% 0.12 280);   /* indigo for AI-category nodes; visually distinct from clay (flow) and the success/warning/danger functional tokens */
+  --color-ai-text: oklch(45% 0.13 280);   /* AA (>=4.5) AI-category SMALL TEXT on light (theme-dependent) */
+  /* AA small-text variants of the functional tokens (the base --color-* are
+   * tuned for fills/borders/icons at 3:1; as small text on light they fall
+   * short of 4.5:1). Theme-dependent: darker on light, lighter on dark. */
+  --color-success-text: oklch(46% 0.13 150);
+  --color-warning-text: oklch(48% 0.10 70);
+  --color-danger-text:  oklch(50% 0.18 28);
+  --color-info-text:    oklch(48% 0.12 240);
   --color-info:    oklch(58% 0.12 240);   /* azure — informational / dispatch accent; distinct from --color-ai (280) */
 
   /* Node-category accents (builder palette + run/handoff maps). Five
@@ -64,8 +80,8 @@
   --color-border:       var(--rule);
   --color-text:         var(--ink);
   --color-text-muted:   var(--ink-3);
-  --color-accent:       var(--clay);
-  --color-accent-hover: oklch(54% 0.13 40);
+  --color-accent:       var(--clay-text);  /* links are small text → AA-safe clay */
+  --color-accent-hover: oklch(40% 0.13 40);
   --font-sans:          var(--sans);
   --font-mono:          var(--mono);
 
@@ -126,6 +142,12 @@
     --color-warning: oklch(80% 0.14 75);
     --color-danger:  oklch(65% 0.16 28);
     --color-ai:      oklch(70% 0.12 280);
+    --color-ai-text: oklch(72% 0.12 280);
+    --clay-text:     oklch(72% 0.13 40);
+    --color-success-text: oklch(74% 0.14 150);
+    --color-warning-text: oklch(82% 0.13 80);
+    --color-danger-text:  oklch(70% 0.16 28);
+    --color-info-text:    oklch(70% 0.12 240);
     --color-info:    oklch(68% 0.12 240);
   }
 }
@@ -142,6 +164,12 @@
   --color-warning: oklch(80% 0.14 75);
   --color-danger:  oklch(65% 0.16 28);
   --color-ai:      oklch(70% 0.12 280);
+  --color-ai-text: oklch(72% 0.12 280);
+  --clay-text:     oklch(72% 0.13 40);
+  --color-success-text: oklch(74% 0.14 150);
+  --color-warning-text: oklch(82% 0.13 80);
+  --color-danger-text:  oklch(70% 0.16 28);
+  --color-info-text:    oklch(70% 0.12 240);
   --color-info:    oklch(68% 0.12 240);
 }
 
@@ -404,9 +432,9 @@
   line-height: 1.45;
   color: var(--ink-2);
 }
-.env-chip-info    { border-left-color: var(--color-ai); }
-.env-chip-warning { border-left-color: var(--color-warning); }
-.env-chip-danger  { border-left-color: var(--color-danger); }
+.env-chip-info    { border-left-color: var(--color-ai-text); }
+.env-chip-warning { border-left-color: var(--color-warning-text); }
+.env-chip-danger  { border-left-color: var(--color-danger-text); }
 .env-chip-muted   { border-left-color: var(--ink-3); }
 
 .env-chip-tag {
@@ -417,9 +445,9 @@
   text-transform: uppercase;
   flex-shrink: 0;
 }
-.env-chip-info    .env-chip-tag { color: var(--color-ai); }
-.env-chip-warning .env-chip-tag { color: var(--color-warning); }
-.env-chip-danger  .env-chip-tag { color: var(--color-danger); }
+.env-chip-info    .env-chip-tag { color: var(--color-ai-text); }
+.env-chip-warning .env-chip-tag { color: var(--color-warning-text); }
+.env-chip-danger  .env-chip-tag { color: var(--color-danger-text); }
 .env-chip-muted   .env-chip-tag { color: var(--ink-3); }
 
 .env-chip-text { color: var(--ink); flex: 1; min-width: 0; }
@@ -470,7 +498,7 @@
   cursor: pointer;
   padding: 0;
 }
-.env-chip-toggle:hover { color: var(--clay); }
+.env-chip-toggle:hover { color: var(--clay-text); }
 .env-chip-action {
   font-family: var(--sans);
   font-size: 11.5px;
@@ -483,7 +511,7 @@
   cursor: pointer;
   margin-left: auto;
 }
-.env-chip-action:hover { background: var(--clay); border-color: var(--clay); }
+.env-chip-action:hover { background: var(--clay); border-color: var(--clay-text); }
 .env-chip-detail {
   flex-basis: 100%;
   margin: 4px 0 0;
@@ -530,10 +558,10 @@
 .reasoning-disclosure-icon {
   font-style: normal;
   font-size: 12px;
-  color: var(--color-ai);
+  color: var(--color-ai-text);
   margin-right: 2px;
 }
-.reasoning-disclosure summary:hover { color: var(--clay); }
+.reasoning-disclosure summary:hover { color: var(--clay-text); }
 .reasoning-disclosure[open] summary { color: var(--ink); margin-bottom: 6px; }
 .reasoning-disclosure-body {
   font-family: var(--sans);
@@ -757,10 +785,10 @@ a:where(:visited):hover {
   line-height: 1.2;
 }
 .app-nav-link:hover { background: var(--paper); color: var(--ink); }
-.app-nav-link.is-active { background: var(--clay-soft); color: var(--clay); font-weight: 600; }
+.app-nav-link.is-active { background: var(--clay-soft); color: var(--clay-text); font-weight: 600; }
 .app-nav-icon { display: inline-flex; align-items: center; color: var(--ink-3); flex-shrink: 0; }
 .app-nav-link:hover .app-nav-icon { color: var(--ink-2); }
-.app-nav-link.is-active .app-nav-icon { color: var(--clay); }
+.app-nav-link.is-active .app-nav-icon { color: var(--clay-text); }
 .app-nav-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .app-sidebar.is-collapsed .app-nav-label { display: none; }
 .app-sidebar.is-collapsed .app-nav-link { justify-content: center; padding: var(--space-2); }
@@ -864,7 +892,7 @@ h1.brand-mark .brand-logo {
 h1.brand-mark .brand-logo svg { width: 100%; height: 100%; display: block; }
 h1.brand-mark em {
   font-style: italic;
-  color: var(--clay);
+  color: var(--clay-text);
 }
 .app-header-sub {
   font-family: var(--mono);
@@ -936,7 +964,7 @@ button {
 
 button:hover {
   background: var(--clay);
-  border-color: var(--clay);
+  border-color: var(--clay-text);
   color: var(--paper);
 }
 
@@ -1009,7 +1037,7 @@ label {
   color: var(--ink);
 }
 
-.card h2 em { font-style: italic; color: var(--clay); }
+.card h2 em { font-style: italic; color: var(--clay-text); }
 
 /* ─── Status badge — mono label, functional-color text, paper-2 fill.
  * Color pairs with a text label (never color alone) per DESIGN.app.md §11. */
@@ -1025,13 +1053,13 @@ label {
   color: var(--ink-3);
 }
 
-.status-badge.completed { color: var(--color-success); }
+.status-badge.completed { color: var(--color-success-text); }
 .status-badge.failed,
-.status-badge.cancelled { color: var(--color-danger); }
+.status-badge.cancelled { color: var(--color-danger-text); }
 .status-badge.waiting-approval,
 .status-badge.waiting-input,
-.status-badge.paused { color: var(--color-warning); }
-.status-badge.running { color: var(--clay); }
+.status-badge.paused { color: var(--color-warning-text); }
+.status-badge.running { color: var(--clay-text); }
 
 pre, code {
   font-family: var(--mono);
@@ -1162,7 +1190,7 @@ pre {
 .data-sort-btn:hover { color: var(--ink); }
 .data-sort-caret { display: inline-flex; opacity: 0; transition: opacity 0.12s ease, transform 0.12s ease; }
 .data-th--sortable:hover .data-sort-caret { opacity: 0.45; }
-.data-th--sortable.is-sorted .data-sort-caret { opacity: 1; color: var(--clay); }
+.data-th--sortable.is-sorted .data-sort-caret { opacity: 1; color: var(--clay-text); }
 .data-sort-caret.is-asc { transform: rotate(180deg); }
 /* visually-hidden caption (a11y) */
 .data-table-caption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -1197,7 +1225,7 @@ pre {
   border: 1px solid var(--clay-rule);
   border-radius: var(--radius);
 }
-.data-bulkbar-count { font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; color: var(--clay); flex-shrink: 0; }
+.data-bulkbar-count { font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; color: var(--clay-text); flex-shrink: 0; }
 .data-bulkbar-actions { display: flex; gap: var(--space-2); flex: 1; flex-wrap: wrap; }
 .data-bulkbar-clear { background: none; border: 0; color: var(--ink-3); font-size: 12px; cursor: pointer; flex-shrink: 0; }
 .data-bulkbar-clear:hover { color: var(--ink); }
@@ -1249,9 +1277,9 @@ pre {
   text-align: left;
   font-size: 13px;
 }
-.cmdk-item.is-active { background: var(--clay-soft); color: var(--clay); }
+.cmdk-item.is-active { background: var(--clay-soft); color: var(--clay-text); }
 .cmdk-item-icon { color: var(--ink-3); display: inline-flex; flex-shrink: 0; }
-.cmdk-item.is-active .cmdk-item-icon { color: var(--clay); }
+.cmdk-item.is-active .cmdk-item-icon { color: var(--clay-text); }
 .cmdk-item-label { flex: 1; min-width: 0; }
 .cmdk-item-group { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); flex-shrink: 0; }
 .cmdk-empty { padding: var(--space-5); text-align: center; color: var(--ink-3); font-size: 13px; }
@@ -1504,7 +1532,7 @@ pre {
 }
 
 .builder-palette-search-input:focus {
-  border-color: var(--clay);
+  border-color: var(--clay-text);
   box-shadow: 0 0 0 2px var(--clay-soft);
 }
 
@@ -1693,7 +1721,7 @@ pre {
 .builder-palette-item-host-warn {
   font-size: 10px;
   font-weight: 600;
-  color: var(--color-warning);
+  color: var(--color-warning-text);
   background: color-mix(in oklch, var(--color-warning) 12%, transparent);
   border-radius: 3px;
   padding: 1px 5px;
@@ -1722,7 +1750,7 @@ pre {
 
 .demo-host-banner-icon {
   flex-shrink: 0;
-  color: var(--clay);
+  color: var(--clay-text);
   font-weight: 600;
 }
 
@@ -1910,7 +1938,7 @@ pre {
 }
 .segmented > button + button { border-left: 1px solid var(--rule); }
 .segmented > button:hover { background: var(--paper-2); color: var(--ink); }
-.segmented > button[aria-pressed="true"] { background: var(--clay-soft); color: var(--clay); }
+.segmented > button[aria-pressed="true"] { background: var(--clay-soft); color: var(--clay-text); }
 
 /* Pack registry browser (RFC 0003 / 0013 / 0043) */
 .pack-browser-overlay {
@@ -1979,8 +2007,8 @@ pre {
   border-radius: 8px;
   color: var(--ink-3);
 }
-.pack-flag-ok { color: var(--color-success); border-color: var(--color-success); }
-.pack-flag-danger { color: var(--color-danger); border-color: var(--color-danger); }
+.pack-flag-ok { color: var(--color-success-text); border-color: var(--color-success-text); }
+.pack-flag-danger { color: var(--color-danger-text); border-color: var(--color-danger-text); }
 .pack-browser-detail { flex: 1; overflow-y: auto; padding: 12px 16px; }
 .pack-detail-head { display: flex; align-items: center; gap: 8px; }
 .pack-detail-head h3 { margin: 0; font-family: var(--mono, monospace); }
@@ -2106,13 +2134,13 @@ pre {
   font-size: 12px;
 }
 .agent-trace-reasoning {
-  border-left-color: var(--color-ai);
+  border-left-color: var(--color-ai-text);
   font-style: italic;
   color: var(--ink-2, var(--ink));
 }
 .agent-trace-text { white-space: pre-wrap; }
-.agent-trace-tool { border-left-color: var(--clay); flex-direction: column; align-items: stretch; }
-.agent-trace-tool-error { border-left-color: var(--color-danger); }
+.agent-trace-tool { border-left-color: var(--clay-text); flex-direction: column; align-items: stretch; }
+.agent-trace-tool-error { border-left-color: var(--color-danger-text); }
 .agent-trace-tool-head {
   display: flex;
   align-items: center;
@@ -2128,7 +2156,7 @@ pre {
 }
 .agent-trace-tool-status { margin-left: auto; }
 .agent-trace-tool-detail { margin-top: 6px; }
-.agent-trace-decision { border-left-color: var(--color-warning); }
+.agent-trace-decision { border-left-color: var(--color-warning-text); }
 .agent-trace-conf {
   padding: 0 6px;
   border: 1px solid;
@@ -2212,7 +2240,7 @@ pre {
 .cc-run-action { padding: 2px 8px; font-size: 11px; min-height: 0; }
 .cc-run-top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
 .cc-run-wf { font-size: 12px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cc-attention { font-family: var(--mono); font-size: 11px; color: var(--color-warning); }
+.cc-attention { font-family: var(--mono); font-size: 11px; color: var(--color-warning-text); }
 /* Running/live indicator uses the run-state accent (clay), not the success
    token — green would conflate "streaming" with "completed" (DESIGN.app.md §3). */
 .cc-live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--clay); flex-shrink: 0; }
@@ -2222,8 +2250,8 @@ pre {
 .run-stat { display: flex; flex-direction: column; gap: 2px; margin: 0; }
 .run-stat-label { margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); }
 .run-stat-value { margin: 0; font-size: 20px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
-.run-stat--warn .run-stat-value { color: var(--color-warning); }
-.run-stat--danger .run-stat-value { color: var(--color-danger); }
+.run-stat--warn .run-stat-value { color: var(--color-warning-text); }
+.run-stat--danger .run-stat-value { color: var(--color-danger-text); }
 
 /* Stack the rail above the detail on narrow viewports (sets up §A7 mobile). */
 @media (max-width: 720px) {
@@ -2506,7 +2534,7 @@ pre {
 }
 
 .builder-inspector-required {
-  color: var(--color-danger);
+  color: var(--color-danger-text);
   margin-left: 2px;
 }
 
@@ -2684,12 +2712,12 @@ pre {
 }
 
 .workflow-card-menu-popover .workflow-card-menu-danger {
-  color: var(--color-danger);
+  color: var(--color-danger-text);
 }
 
 .workflow-card-menu-popover .workflow-card-menu-danger:hover {
   background: color-mix(in oklch, var(--color-danger) 10%, transparent);
-  color: var(--color-danger);
+  color: var(--color-danger-text);
 }
 
 .workflow-card-empty {
@@ -2768,24 +2796,24 @@ pre {
 
 .workflow-template-badge-quickstart {
   background: color-mix(in oklch, var(--color-success) 12%, transparent);
-  color: var(--color-success);
+  color: var(--color-success-text);
 }
 
 .workflow-template-badge-hitl {
   background: color-mix(in oklch, var(--color-warning) 12%, transparent);
-  color: var(--color-warning);
+  color: var(--color-warning-text);
 }
 
 .workflow-template-badge-ai {
   background: var(--clay-soft);
-  color: var(--clay);
+  color: var(--clay-text);
 }
 
 .workflow-template-badge-pipeline {
   /* "pipeline" badge — reuses --color-ai (the AI/indigo category token)
    * so it themes through the warm-dark override. */
   background: color-mix(in oklch, var(--color-ai) 16%, transparent);
-  color: var(--color-ai);
+  color: var(--color-ai-text);
 }
 
 .workflow-template-byok-pill {
@@ -2795,7 +2823,7 @@ pre {
   font-weight: 600;
   border-radius: 12px;
   background: color-mix(in oklch, var(--color-warning) 12%, transparent);
-  color: var(--color-warning);
+  color: var(--color-warning-text);
 }
 
 .workflow-template-actions {
@@ -2867,7 +2895,7 @@ pre {
   letter-spacing: -0.01em;
   color: var(--ink);
 }
-.signin-modal-title em { font-style: italic; color: var(--clay); }
+.signin-modal-title em { font-style: italic; color: var(--clay-text); }
 .signin-modal-lede {
   font-size: 13.5px;
   line-height: 1.55;
@@ -2906,7 +2934,7 @@ pre {
   letter-spacing: 0.04em;
   cursor: pointer;
 }
-.signin-modal-cancel:hover { color: var(--clay); }
+.signin-modal-cancel:hover { color: var(--clay-text); }
 
 .app-gate {
   min-height: 100vh;
@@ -3036,8 +3064,8 @@ pre {
  * (0,1,0), so without this the menu text flips to near-black on the dark hover
  * box (black-on-black in dark mode). Same pin `.account-menu-trigger` uses. */
 .account-menu-item:hover { background: var(--color-surface-2); color: var(--color-text); }
-.account-menu-danger { color: var(--color-danger); }
-.account-menu-danger:hover { background: color-mix(in oklch, var(--color-danger) 10%, transparent); color: var(--color-danger); }
+.account-menu-danger { color: var(--color-danger-text); }
+.account-menu-danger:hover { background: color-mix(in oklch, var(--color-danger) 10%, transparent); color: var(--color-danger-text); }
 
 /* ---------------------------------------------------------------------
    Prompt library (RFC 0027 / 0028 wire shapes; surface still Draft).
@@ -3108,10 +3136,10 @@ pre {
   color: var(--ink-2);
   background: var(--paper);
 }
-.prompt-kind-system { border-color: var(--clay); color: var(--clay); }
-.prompt-kind-user { border-color: var(--color-ai, var(--ink-2)); color: var(--color-ai, var(--ink-2)); }
-.prompt-kind-few-shot { border-color: var(--color-success, var(--ink-2)); color: var(--color-success, var(--ink-2)); }
-.prompt-kind-schema-hint { border-color: var(--color-warning, var(--ink-2)); color: var(--color-warning, var(--ink-2)); }
+.prompt-kind-system { border-color: var(--clay-text); color: var(--clay-text); }
+.prompt-kind-user { border-color: var(--color-ai-text, var(--ink-2)); color: var(--color-ai-text, var(--ink-2)); }
+.prompt-kind-few-shot { border-color: var(--color-success-text, var(--ink-2)); color: var(--color-success-text, var(--ink-2)); }
+.prompt-kind-schema-hint { border-color: var(--color-warning-text, var(--ink-2)); color: var(--color-warning-text, var(--ink-2)); }
 
 /* RFC 0030 §B Tier-1 lint chip — appears on a schema-hint prompt when
  * the host advertises tierOneSubsetCompliance and the prompt text trips
@@ -3131,7 +3159,7 @@ pre {
   padding: 2px 8px;
   border-radius: 2px;
   background: color-mix(in oklch, var(--color-warning) 12%, transparent);
-  color: var(--color-warning);
+  color: var(--color-warning-text);
   border: 1px solid color-mix(in oklch, var(--color-warning) 35%, transparent);
 }
 
@@ -3231,7 +3259,7 @@ pre {
 }
 .byok-try-free-card:hover {
   background: var(--clay-wash);
-  border-color: var(--clay);
+  border-color: var(--clay-text);
   box-shadow: 0 1px 0 var(--clay-rule), 0 6px 18px -8px var(--clay-soft);
 }
 .byok-try-free-card:focus-visible {
@@ -3277,7 +3305,7 @@ pre {
   font-family: var(--sans);
   font-size: 13px;
   font-weight: 500;
-  color: var(--clay);
+  color: var(--clay-text);
   margin-top: 8px;
 }
 .byok-try-free-arrow {
@@ -3289,7 +3317,7 @@ pre {
   transition: transform 150ms ease, color 150ms ease;
 }
 .byok-try-free-card:hover .byok-try-free-arrow {
-  color: var(--clay);
+  color: var(--clay-text);
   transform: translateX(4px);
 }
 
@@ -3384,13 +3412,13 @@ pre {
   font-family: var(--sans);
   font-size: 12.5px;
   padding-left: 4px;
-  color: var(--clay);
+  color: var(--clay-text);
   text-decoration: underline;
   text-decoration-color: var(--clay-rule);
   text-underline-offset: 2px;
 }
 .byok-tile-link:hover {
-  text-decoration-color: var(--clay);
+  text-decoration-color: var(--clay-text);
 }
 
 /* BYOK stepper — same horizontal-bar progress but with brand-consistent
@@ -3503,7 +3531,7 @@ pre {
 }
 .backend-resting-refresh:hover {
   background: var(--clay);
-  border-color: var(--clay);
+  border-color: var(--clay-text);
   transform: translateY(-1px);
 }
 .backend-resting-refresh:active {
@@ -3512,13 +3540,13 @@ pre {
 .backend-resting-link {
   font-family: var(--sans);
   font-size: 13.5px;
-  color: var(--clay);
+  color: var(--clay-text);
   text-decoration: underline;
   text-decoration-color: var(--clay-rule);
   text-underline-offset: 3px;
 }
 .backend-resting-link:hover {
-  text-decoration-color: var(--clay);
+  text-decoration-color: var(--clay-text);
 }
 .backend-resting-detail {
   margin-top: 24px;
@@ -3536,7 +3564,7 @@ pre {
   font-size: 10.5px;
   color: var(--ink-3);
 }
-.backend-resting-detail summary:hover { color: var(--clay); }
+.backend-resting-detail summary:hover { color: var(--clay-text); }
 .backend-resting-detail p {
   margin: 10px 0 0;
   line-height: 1.5;
@@ -3642,7 +3670,7 @@ pre {
   background: var(--clay-wash);
   border-radius: 8px;
   font-size: 10px;
-  color: var(--clay);
+  color: var(--clay-text);
 }
 
 .envelope-inspector-panel {
@@ -3666,7 +3694,7 @@ pre {
   background: var(--paper);
   border: 1px solid var(--rule);
   border-radius: 3px;
-  color: var(--clay);
+  color: var(--clay-text);
 }
 .envelope-inspector-rows {
   list-style: none;
@@ -3689,7 +3717,7 @@ pre {
   font-size: 11px;
 }
 .envelope-inspector-kind {
-  color: var(--clay);
+  color: var(--clay-text);
   font-weight: 500;
 }
 .envelope-inspector-detail {
@@ -3734,7 +3762,7 @@ pre {
 }
 .prompt-user-delete:hover {
   background: var(--clay-wash) !important;
-  color: var(--clay) !important;
+  color: var(--clay-text) !important;
   border-color: var(--clay-rule) !important;
 }
 
@@ -3822,7 +3850,7 @@ pre {
 }
 .keys-list-item-delete:hover {
   background: var(--clay-wash) !important;
-  color: var(--clay) !important;
+  color: var(--clay-text) !important;
   border-color: var(--clay-rule) !important;
 }
 .keys-add-form {
@@ -3857,7 +3885,7 @@ pre {
 .app-header-net-toggle[aria-expanded="true"] {
   background: var(--clay-wash);
   border-color: var(--clay-rule);
-  color: var(--clay);
+  color: var(--clay-text);
 }
 
 /* ─── Network inspector slide-out ─────────────────────────────────────
@@ -3961,9 +3989,9 @@ pre {
   background: var(--paper);
   border: 1px solid var(--rule);
 }
-.netpanel-row-status-ok      { color: var(--color-success); border-color: color-mix(in oklch, var(--color-success) 40%, transparent); }
-.netpanel-row-status-warn    { color: var(--clay); border-color: var(--clay-rule); }
-.netpanel-row-status-err     { color: var(--color-danger); border-color: color-mix(in oklch, var(--color-danger) 40%, transparent); }
+.netpanel-row-status-ok      { color: var(--color-success-text); border-color: color-mix(in oklch, var(--color-success) 40%, transparent); }
+.netpanel-row-status-warn    { color: var(--clay-text); border-color: var(--clay-rule); }
+.netpanel-row-status-err     { color: var(--color-danger-text); border-color: color-mix(in oklch, var(--color-danger) 40%, transparent); }
 .netpanel-row-status-pending { color: var(--ink-3); }
 
 .netpanel-row-path {
@@ -3982,7 +4010,7 @@ pre {
 .netpanel-row-sse {
   padding: 0 5px;
   background: var(--clay-wash);
-  color: var(--clay);
+  color: var(--clay-text);
   border-radius: 3px;
   font-size: 9.5px;
   letter-spacing: 0.05em;
@@ -4279,11 +4307,11 @@ a.surface-card:hover,
   background: var(--color-surface-2);
   color: var(--color-text);
 }
-.chip--success { background: color-mix(in oklch, var(--color-success) 14%, transparent); color: var(--color-success); }
-.chip--warning { background: color-mix(in oklch, var(--color-warning) 16%, transparent); color: var(--color-warning); }
-.chip--danger  { background: color-mix(in oklch, var(--color-danger) 14%, transparent);  color: var(--color-danger); }
+.chip--success { background: color-mix(in oklch, var(--color-success) 14%, transparent); color: var(--color-success-text); }
+.chip--warning { background: color-mix(in oklch, var(--color-warning) 16%, transparent); color: var(--color-warning-text); }
+.chip--danger  { background: color-mix(in oklch, var(--color-danger) 14%, transparent);  color: var(--color-danger-text); }
 .chip--accent  { background: var(--clay-soft); color: var(--color-accent); }
-.chip--ai      { background: color-mix(in oklch, var(--color-ai) 12%, transparent); color: var(--color-ai); }
+.chip--ai      { background: color-mix(in oklch, var(--color-ai) 12%, transparent); color: var(--color-ai-text); }
 .chip--muted   { background: var(--color-surface-2); color: var(--color-text-muted); }
 
 /* Text-input baseline (opt-in .ui-input to avoid regressing existing inputs). */
@@ -4435,11 +4463,11 @@ a.surface-card:hover,
 }
 .admin-nav-link:visited { color: var(--ink-2); }
 .admin-nav-link:hover { background: var(--paper-2); color: var(--ink); }
-.admin-nav-link.is-active { background: var(--clay-soft); color: var(--clay); font-weight: 600; }
-.admin-nav-link.is-active:visited { color: var(--clay); }
+.admin-nav-link.is-active { background: var(--clay-soft); color: var(--clay-text); font-weight: 600; }
+.admin-nav-link.is-active:visited { color: var(--clay-text); }
 .admin-nav-icon { display: inline-flex; align-items: center; color: var(--ink-3); flex-shrink: 0; }
 .admin-nav-link:hover .admin-nav-icon { color: var(--ink-2); }
-.admin-nav-link.is-active .admin-nav-icon { color: var(--clay); }
+.admin-nav-link.is-active .admin-nav-icon { color: var(--clay-text); }
 .admin-nav-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* Collapsed icon strip — desktop only; the ≤860px layout stacks instead. */
 @media (min-width: 861px) {
@@ -4494,8 +4522,8 @@ a.surface-card:hover,
   color: var(--ink);
 }
 .admin-overview-card:visited { color: var(--ink); }
-.admin-overview-card:hover { border-color: var(--clay); }
-.admin-overview-icon { display: inline-flex; color: var(--clay); flex-shrink: 0; margin-top: 2px; }
+.admin-overview-card:hover { border-color: var(--clay-text); }
+.admin-overview-icon { display: inline-flex; color: var(--clay-text); flex-shrink: 0; margin-top: 2px; }
 .admin-overview-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .admin-overview-label { font-weight: 600; font-size: 14px; }
 .admin-overview-hint { color: var(--ink-2); font-size: 12.5px; line-height: 1.45; }
@@ -4559,7 +4587,7 @@ a.surface-card:hover,
   text-transform: uppercase;
   color: var(--ink-3);
 }
-.wf-ledger-more { font-size: 12px; color: var(--clay); text-decoration: none; }
+.wf-ledger-more { font-size: 12px; color: var(--clay-text); text-decoration: none; }
 .wf-ledger-more:hover { text-decoration: underline; }
 .wf-ledger-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .wf-ledger-row {
@@ -4578,7 +4606,7 @@ a.surface-card:hover,
 .wf-ledger-who em { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--ink); }
 .wf-ledger-what { font-size: 12px; color: var(--ink-2); }
 .wf-ledger-when { font-family: var(--mono); font-size: 11px; color: var(--ink-3); text-decoration: none; white-space: nowrap; }
-.wf-ledger-when:hover { color: var(--clay); }
+.wf-ledger-when:hover { color: var(--clay-text); }
 .wf-ledger-empty { margin: 0; color: var(--ink-2); font-size: 12.5px; line-height: 1.5; }
 .wf-ledger-foot { padding-top: var(--space-2); border-top: 1px solid var(--rule); display: flex; flex-direction: column; gap: var(--space-2); }
 .wf-depts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
@@ -4627,7 +4655,7 @@ a.surface-card:hover,
 .wf-figure--tile:hover { background: var(--paper); border-color: var(--rule); color: inherit; }
 .wf-figure--tile.is-active { box-shadow: inset 3px 0 0 var(--clay); background: var(--clay-soft); }
 .wf-figure--tile.is-attn .wf-figure-n,
-.wf-figure--tile.is-attn .wf-figure-l { color: var(--color-warning); }
+.wf-figure--tile.is-attn .wf-figure-l { color: var(--color-warning-text); }
 .wf-figure-n {
   font-family: var(--serif);
   font-size: clamp(28px, 4vw, 40px);
@@ -4645,7 +4673,7 @@ a.surface-card:hover,
 }
 
 /* The Needs-you queue. */
-.needs-card { padding: 0; overflow: hidden; border-color: var(--clay); margin-bottom: var(--space-5); }
+.needs-card { padding: 0; overflow: hidden; border-color: var(--clay-text); margin-bottom: var(--space-5); }
 .needs-clear { margin-bottom: var(--space-5); }
 .needs-head {
   display: flex;
@@ -4654,7 +4682,7 @@ a.surface-card:hover,
   padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--rule);
   background: var(--clay-soft);
-  color: var(--color-warning);
+  color: var(--color-warning-text);
 }
 .needs-title { font-family: var(--sans); font-weight: 650; font-size: 16.5px; color: var(--ink); }
 .needs-hint { margin-left: auto; font-size: 12.5px; color: var(--ink-2); }
@@ -4681,7 +4709,7 @@ a.surface-card:hover,
 .needs-clear-icon {
   width: 34px; height: 34px; border-radius: 50%;
   background: color-mix(in oklch, var(--color-success) 14%, transparent);
-  color: var(--color-success);
+  color: var(--color-success-text);
   display: inline-flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
@@ -4715,7 +4743,7 @@ a.surface-card:hover,
  * itself only hints with the name turning clay (no slab; overrides the
  * global button:hover fill). */
 .roster-id:hover { background: transparent; border-color: transparent; color: var(--ink); }
-.roster-id:hover .roster-name { color: var(--clay); }
+.roster-id:hover .roster-name { color: var(--clay-text); }
 .roster-name-wrap { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .roster-name-line { display: flex; align-items: center; gap: var(--space-2); }
 .roster-name { font-family: var(--sans); font-weight: 650; font-size: 14.5px; }
@@ -4723,7 +4751,7 @@ a.surface-card:hover,
 .roster-sub { min-width: 0; }
 .roster-subline { font-size: 13px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .roster-counts { display: flex; gap: var(--space-3); margin-top: 3px; font-size: 12px; color: var(--ink-3); flex-wrap: wrap; }
-.roster-count-waiting { color: var(--color-warning); }
+.roster-count-waiting { color: var(--color-warning-text); }
 .roster-autonomy { flex: 0 0 auto; }
 .roster-actions { flex-wrap: nowrap; }
 @media (max-width: 900px) {
@@ -4787,8 +4815,8 @@ a.surface-card:hover,
   border-bottom: 2px solid transparent;
 }
 .agent-drawer-tab:hover { color: var(--ink); background: transparent; border-color: transparent; }
-.agent-drawer-tab.is-active { color: var(--ink); font-weight: 600; border-bottom-color: var(--clay); }
-.agent-drawer-tab.is-active:hover { border-bottom-color: var(--clay); }
+.agent-drawer-tab.is-active { color: var(--ink); font-weight: 600; border-bottom-color: var(--clay-text); }
+.agent-drawer-tab.is-active:hover { border-bottom-color: var(--clay-text); }
 
 .agent-drawer-body { flex: 1; overflow-y: auto; padding: var(--space-4); }
 .agent-drawer-overview { display: flex; flex-direction: column; gap: var(--space-4); }
@@ -4806,7 +4834,7 @@ a.surface-card:hover,
   font-size: 10px;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: var(--color-warning);
+  color: var(--color-warning-text);
 }
 .agent-drawer-ask-title { font-weight: 600; font-size: 14.5px; margin-top: 6px; }
 .agent-drawer-ask-detail { color: var(--ink-2); font-size: 13px; margin-top: 2px; }
@@ -4847,7 +4875,7 @@ a.surface-card:hover,
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: var(--clay);
+  color: var(--clay-text);
   text-decoration: none;
 }
 .agent-drawer-full:hover { text-decoration: underline; }
@@ -4926,8 +4954,8 @@ a.surface-card:hover,
   gap: 2px;
   color: var(--ink);
 }
-.hire-role:hover { border-color: var(--clay); background: var(--paper-2); color: var(--ink); }
-.hire-role.is-selected { border-color: var(--clay); background: var(--clay-soft); }
+.hire-role:hover { border-color: var(--clay-text); background: var(--paper-2); color: var(--ink); }
+.hire-role.is-selected { border-color: var(--clay-text); background: var(--clay-soft); }
 .hire-role-title { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13.5px; }
 .hire-role-blurb { color: var(--ink-2); font-size: 12px; line-height: 1.45; }
 .hire-foot { justify-content: flex-end; }
@@ -4957,11 +4985,11 @@ a.surface-card:hover,
   border: 1px solid var(--clay);
   border-radius: var(--radius);
   background: var(--clay-soft);
-  color: var(--clay);
+  color: var(--clay-text);
   font-weight: 600;
   cursor: pointer;
 }
-.btn-accent:hover { background: color-mix(in oklch, var(--clay) 24%, transparent); color: var(--clay); border-color: var(--clay); }
+.btn-accent:hover { background: color-mix(in oklch, var(--clay) 24%, transparent); color: var(--clay-text); border-color: var(--clay-text); }
 .btn-accent:disabled { opacity: 0.55; cursor: not-allowed; }
 .btn-accent.btn-sm { padding: var(--space-1) var(--space-2-5); font-size: 12.5px; }
 
@@ -4971,15 +4999,17 @@ a.surface-card:hover,
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 1px solid var(--clay);
+  /* AA: deep clay fill + always-white text clears 4.5:1 in BOTH themes (the
+   * old var(--clay) fill + var(--paper) text failed — ~3.9:1 light, 3.86 dark). */
+  border: 1px solid var(--clay-strong);
   border-radius: var(--radius);
-  background: var(--clay);
-  color: var(--paper);
+  background: var(--clay-strong);
+  color: var(--color-on-scrim);
   font-weight: 600;
   cursor: pointer;
   padding: var(--space-2) var(--space-3);
 }
-.btn-accent-solid:hover { background: color-mix(in oklch, var(--clay) 86%, var(--ink)); }
+.btn-accent-solid:hover { background: color-mix(in oklch, var(--clay-strong) 88%, black); }
 .btn-accent-solid:disabled { opacity: 0.55; cursor: not-allowed; }
 .btn-accent-solid.btn-sm { padding: var(--space-1) var(--space-2-5); font-size: 12.5px; }
 
@@ -5000,7 +5030,7 @@ a.surface-card:hover,
   height: 22px;
   border-radius: 50%;
   background: color-mix(in oklch, var(--color-warning) 22%, transparent);
-  color: var(--color-warning);
+  color: var(--color-warning-text);
   font-family: var(--mono);
   font-size: 11.5px;
   font-weight: 600;
@@ -5026,13 +5056,13 @@ a.surface-card:hover,
   cursor: pointer;
 }
 .board-pill:hover { background: var(--paper-2); border-color: var(--rule-2); color: var(--ink); }
-.board-pill.is-active { border-color: var(--clay); background: var(--clay-soft); }
-.board-pill.is-active:hover { border-color: var(--clay); background: var(--clay-soft); }
+.board-pill.is-active { border-color: var(--clay-text); background: var(--clay-soft); }
+.board-pill.is-active:hover { border-color: var(--clay-text); background: var(--clay-soft); }
 .board-pill-name { font-weight: 600; }
 .board-pill-count { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
 .board-pill-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--color-warning); flex-shrink: 0; }
 .board-pill--new { border-style: dashed; color: var(--ink-2); }
-.board-pill--new:hover { color: var(--ink); border-color: var(--clay); background: transparent; }
+.board-pill--new:hover { color: var(--ink); border-color: var(--clay-text); background: transparent; }
 
 /* Board header: name · owner · trigger · waiting chip · overflow menu. */
 .board-head { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; margin: 0 0 var(--space-3); }
@@ -5066,8 +5096,8 @@ a.surface-card:hover,
   cursor: pointer;
 }
 .board-menu-item:hover { background: var(--paper-2); color: var(--ink); border-color: transparent; }
-.board-menu-item--danger { color: var(--color-danger); }
-.board-menu-item--danger:hover { color: var(--color-danger); background: color-mix(in oklch, var(--color-danger) 10%, transparent); }
+.board-menu-item--danger { color: var(--color-danger-text); }
+.board-menu-item--danger:hover { color: var(--color-danger-text); background: color-mix(in oklch, var(--color-danger) 10%, transparent); }
 .board-menu-rule { height: 1px; background: var(--rule); margin: var(--space-1) var(--space-2); }
 
 /* Columns: contained cards; the trigger column is accent-outlined. */
@@ -5079,7 +5109,7 @@ a.surface-card:hover,
   border-radius: var(--radius-lg);
   padding: var(--space-2-5);
 }
-.kb-col--trigger { border-color: var(--clay); }
+.kb-col--trigger { border-color: var(--clay-text); }
 .kb-col.is-over { background: var(--clay-wash); }
 .kb-col-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2-5); padding: 0 var(--space-1); }
 .kb-col-name { font-size: 13.5px; font-weight: 650; display: inline-flex; align-items: center; gap: var(--space-1); }
@@ -5102,7 +5132,7 @@ a.surface-card:hover,
   padding: var(--space-2);
   cursor: pointer;
 }
-.kb-add:hover { color: var(--ink); border-color: var(--clay); background: transparent; }
+.kb-add:hover { color: var(--ink); border-color: var(--clay-text); background: transparent; }
 
 /* Cards: waiting edge bar, ghost delete, person chip, footer action row. */
 .kb-card--waiting { box-shadow: inset 3px 0 0 var(--color-warning); }
@@ -5111,14 +5141,14 @@ a.surface-card:hover,
 .kb-person { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--ink-2); }
 .kb-card-foot { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-2); }
 .kb-card-foot-spacer { flex: 1; }
-.kb-run-link { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--clay); text-decoration: none; }
+.kb-run-link { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--clay-text); text-decoration: none; }
 .kb-run-link:hover { text-decoration: underline; }
 
 /* ── Chat welcome inner content (redesign 2026-06-05) ──────────────────────
  * Four real slash-workflow cards + the agent hand-off pills. */
 .welcome-key {
   font-family: var(--mono);
-  color: var(--clay);
+  color: var(--clay-text);
   background: var(--clay-soft);
   border-radius: 4px;
   padding: 0 5px;
@@ -5145,7 +5175,7 @@ a.surface-card:hover,
   color: var(--ink);
   cursor: pointer;
 }
-.welcome-card:hover { border-color: var(--clay); background: var(--paper-2); color: var(--ink); }
+.welcome-card:hover { border-color: var(--clay-text); background: var(--paper-2); color: var(--ink); }
 .welcome-card:disabled { opacity: 0.55; cursor: not-allowed; }
 .welcome-card-head { display: flex; align-items: center; gap: var(--space-2-5); }
 .welcome-card-icon {
@@ -5153,7 +5183,7 @@ a.surface-card:hover,
   height: 32px;
   border-radius: 50%;
   background: var(--clay-soft);
-  color: var(--clay);
+  color: var(--clay-text);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -5164,7 +5194,7 @@ a.surface-card:hover,
 .welcome-slug {
   font-family: var(--mono);
   font-size: 11px;
-  color: var(--clay);
+  color: var(--clay-text);
   background: var(--clay-soft);
   border-radius: 6px;
   padding: 2px 8px;
@@ -5191,7 +5221,7 @@ a.surface-card:hover,
   padding: 4px 12px 4px 5px;
   cursor: pointer;
 }
-.welcome-agent-pill:hover { border-color: var(--clay); background: var(--paper-2); color: var(--ink); }
+.welcome-agent-pill:hover { border-color: var(--clay-text); background: var(--paper-2); color: var(--ink); }
 .welcome-agent-avatar {
   width: 22px;
   height: 22px;

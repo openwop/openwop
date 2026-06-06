@@ -93,7 +93,7 @@ export function AgentWorkflowPortfolioPanel({
                 <div style={{ fontWeight: 600 }}>{workflowName(wfId)}</div>
                 <div style={{ ...muted, fontSize: '13px', minHeight: 30 }}>{workflowPurpose(wfId) ?? (known ? '' : 'Local workflow — assigned to this agent.')}</div>
                 {!known ? (
-                  <div style={{ display: 'flex', gap: 'var(--space-1)', alignItems: 'center', fontSize: '12px', color: 'var(--color-warning)' }}>
+                  <div style={{ display: 'flex', gap: 'var(--space-1)', alignItems: 'center', fontSize: '12px', color: 'var(--color-warning-text)' }}>
                     <AlertIcon size={13} /> Local-only — register on the host before it can run from a board or schedule.
                   </div>
                 ) : null}

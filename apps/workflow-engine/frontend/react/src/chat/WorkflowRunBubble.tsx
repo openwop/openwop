@@ -81,7 +81,7 @@ export function WorkflowRunBubble({ message, onOpenProgress, isFocusedInPanel }:
               padding: '1px 8px',
               borderRadius: 10,
               background: 'var(--clay-wash)',
-              color: 'var(--clay)',
+              color: 'var(--clay-text)',
               border: '1px solid var(--clay-rule)',
               whiteSpace: 'nowrap',
             }}>
