@@ -13,6 +13,7 @@ import { AutoSeedDemoData } from './chrome/AutoSeedDemoData.js';
 import { FEATURES, chromeFor, isAdminPath } from './chrome/features.js';
 import { CommandPalette } from './ui/CommandPalette.js';
 import { Toaster } from './ui/toast.js';
+import { ErrorBoundary } from './ui/ErrorBoundary.js';
 import { brand } from './brand/brand.js';
 
 /**
@@ -63,6 +64,7 @@ export function App() {
       <div className="app-body">
         <DemoHostBanner />
         <main className={mainClass}>
+        <ErrorBoundary resetKey={location.pathname} label="page">
         <Routes>
           {FEATURES.filter((f) => f.tier !== 'admin').map((f) => (
             <Route key={f.path} path={f.path} element={f.element} />
@@ -79,6 +81,7 @@ export function App() {
               unmatched URL must resolve here rather than render a blank main. */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        </ErrorBoundary>
         </main>
         <footer className="app-footer">
           {brand.footerText} ·{' '}
