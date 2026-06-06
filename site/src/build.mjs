@@ -1391,6 +1391,202 @@ function buildRfcs() {
   console.log(`[openwop-site] wrote rfcs/ (${items.length} RFCs + index)`);
 }
 
+// ── Protocol comparison page (bespoke layout) ──────────────────────────
+// /comparisons/a2a-openwop-mcp/ renders through a designed shell rather
+// than the generic markdown path: a protocol-identity hero, a pure-CSS
+// wire schematic of the three-plane agentic stack, and protocol-colored
+// chips post-processed into every table. The PROSE stays markdown-authored
+// in site/content/comparisons/a2a-openwop-mcp.md — this builder only owns
+// the hero, the schematic, and chip decoration, so editors keep editing
+// markdown and the page degrades gracefully if sections move.
+function buildComparisonA2aMcp() {
+  const srcAbsPath = join(SITE_DIR, 'content', 'comparisons', 'a2a-openwop-mcp.md');
+  if (!existsSync(srcAbsPath)) {
+    console.log('[openwop-site] skip comparisons/a2a-openwop-mcp — source not found');
+    return;
+  }
+  const md = readFile(srcAbsPath);
+  const description = extractFirstParagraph(md) ?? CANONICAL_DESCRIPTION;
+
+  // The hero re-renders the H1, the lede paragraph, and the "Prepared …"
+  // dateline blockquote — strip all three from the article body.
+  let bodyMd = stripLeadingH1(md);
+  bodyMd = bodyMd.replace(/^\s*A specification-level comparison[^\n]*\n/, '');
+  const datelineMatch = /^>\s*(Prepared [^\n]*)$/m.exec(bodyMd);
+  const dateline = datelineMatch ? datelineMatch[1].trim() : '';
+  if (datelineMatch) bodyMd = bodyMd.replace(datelineMatch[0] + '\n', '');
+
+  // Protocol identity cards — the skim layer above the prose. Facts mirror
+  // the Executive Summary table in the markdown source.
+  const PROTOCOLS = [
+    { key: 'a2a', name: 'A2A', full: 'Agent2Agent Protocol', plane: 'Horizontal plane', role: 'Agent ↔ agent collaboration', unit: 'Task', discovery: 'Agent Card', model: '“Ask another agent to do something.”' },
+    { key: 'mcp', name: 'MCP', full: 'Model Context Protocol', plane: 'Vertical plane', role: 'Agent ↕ tools, data &amp; context', unit: 'Tool / resource / prompt call', discovery: 'tools/list · resources/list', model: '“Give the model safe access to external capabilities.”' },
+    { key: 'owp', name: 'OpenWOP', full: 'Open Workflow Orchestration Protocol', plane: 'Substrate', role: 'Durable workflow control', unit: 'Run', discovery: 'Host capability document', model: '“Run and observe a durable workflow.”' },
+  ];
+  const cardsHtml = PROTOCOLS.map((p, i) => `
+    <article class="cmp-card cmp-card-${p.key}" style="--cmp-stagger:${i}">
+      <div class="cmp-card-head">
+        <span class="cmp-card-abbr">${p.name}</span>
+        <span class="cmp-card-plane">${p.plane}</span>
+      </div>
+      <h2 class="cmp-card-full">${p.full}</h2>
+      <p class="cmp-card-role">${p.role}</p>
+      <dl class="cmp-card-facts">
+        <div><dt>Core unit</dt><dd>${p.unit}</dd></div>
+        <div><dt>Discovery</dt><dd>${p.discovery}</dd></div>
+      </dl>
+      <p class="cmp-card-model">${p.model}</p>
+    </article>`).join('');
+
+  // The wire schematic: two opaque agents joined horizontally by A2A, each
+  // dropping vertically to tools over MCP, the whole engagement running on
+  // a durable OpenWOP substrate band. Pure CSS — no images, no JS.
+  const schematicHtml = `
+  <figure class="cmp-schematic">
+    <div class="cmp-diagram" role="img" aria-label="Wire schematic: Agent A and Agent B exchange tasks horizontally over A2A; each agent reaches tools, data, and prompts vertically over MCP; both sit on the OpenWOP substrate providing durable runs, an event log, human checkpoints, replay, and signed webhooks.">
+      <div class="cmp-node cmp-node-agent">Agent A<span class="cmp-node-sub">internals opaque</span></div>
+      <div class="cmp-hlink"><i></i><span>A2A · tasks &amp; messages</span><i></i></div>
+      <div class="cmp-node cmp-node-agent">Agent B<span class="cmp-node-sub">internals opaque</span></div>
+      <div class="cmp-vlink"><span>MCP</span></div>
+      <div class="cmp-vgap"></div>
+      <div class="cmp-vlink"><span>MCP</span></div>
+      <div class="cmp-node cmp-node-tool">Tools · data · prompts</div>
+      <div class="cmp-vgap"></div>
+      <div class="cmp-node cmp-node-tool">Tools · data · prompts</div>
+      <div class="cmp-substrate">
+        <span class="cmp-substrate-name">OpenWOP</span>
+        <span class="cmp-substrate-desc">durable runs · event log · human checkpoints · replay · signed webhooks</span>
+      </div>
+    </div>
+    <figcaption>Complementary planes, not substitutes — agents collaborate over A2A, reach tools and context over MCP, and the whole engagement executes durably on OpenWOP.</figcaption>
+  </figure>`;
+
+  const heroHtml = `<header class="cmp-hero">
+    <p class="cmp-eyebrow">Protocol comparison${dateline ? ` · <span>${escapeHtml(dateline)}</span>` : ''}</p>
+    <h1 class="cmp-title"><span class="cmp-name-a2a">A2A</span> <em>vs</em> <span class="cmp-name-mcp">MCP</span> <em>vs</em> <span class="cmp-name-owp">OpenWOP</span></h1>
+    <p class="lede">${escapeHtml(description)}</p>
+    <div class="cmp-cards">${cardsHtml}</div>
+    ${schematicHtml}
+  </header>`;
+
+  // Render the prose, then decorate: protocol names in table headers and
+  // decision-checklist answer cells become colored chips; H3s that open
+  // with a protocol name get its hue on the name.
+  const CHIP = { A2A: 'a2a', MCP: 'mcp', OpenWOP: 'owp' };
+  const chip = (name) => `<span class="cmp-chip cmp-chip-${CHIP[name]}">${name}</span>`;
+  let articleHtml = markdownToHtml(bodyMd)
+    .replace(/<th>(A2A|MCP|OpenWOP)<\/th>/g, (_, n) => `<th>${chip(n)}</th>`)
+    .replace(/<td>((?:A2A|MCP|OpenWOP)(?: \+ (?:A2A|MCP|OpenWOP))*)<\/td>/g, (_, combo) =>
+      `<td class="cmp-answer">${combo.split(' + ').map(chip).join('<span class="cmp-plus">+</span>')}</td>`)
+    .replace(/(<h3 id="[^"]*">)(A2A|MCP|OpenWOP)(:)/g, (_, open, n, colon) =>
+      `${open}<span class="cmp-name-${CHIP[n]}">${n}</span>${colon}`);
+  articleHtml = `<article class="spec-doc comparison-doc">${articleHtml}</article>`;
+
+  const content = `<div class="comparison-page">${heroHtml}${wrapWithToc(articleHtml, extractToc(bodyMd))}</div>`;
+  const destDir = join(DIST, 'comparisons', 'a2a-openwop-mcp');
+  ensureDir(destDir);
+  writeFileSync(
+    join(destDir, 'index.html'),
+    templatePage({
+      title: 'OpenWOP — A2A vs MCP vs OpenWOP',
+      content,
+      navActive: 'protocol',
+      description,
+      canonicalPath: '/comparisons/a2a-openwop-mcp/',
+      ogTitle: 'A2A vs MCP vs OpenWOP — the agentic protocol stack',
+    }),
+  );
+  console.log('[openwop-site] wrote comparisons/a2a-openwop-mcp/index.html (bespoke)');
+}
+
+// ── OpenExO 3.0 positioning page (bespoke layout) ──────────────────────
+// /comparisons/openexo-3-openwop/ tells a different story than the A2A
+// page: an organizational THESIS (ExO 3.0) bridged onto an execution
+// PROTOCOL (OpenWOP). The hero renders that bridge as two bands — thesis
+// above, protocol below — and the Intelligence Stack ASCII diagram in the
+// markdown is upgraded in place to a designed ladder (gold = organizational
+// layer, clay = where OpenWOP is foundational). Prose stays markdown-
+// authored; if the ASCII block ever changes shape, the ladder swap
+// degrades gracefully back to the code block.
+function buildComparisonOpenExo() {
+  const srcAbsPath = join(SITE_DIR, 'content', 'comparisons', 'openexo-3-openwop.md');
+  if (!existsSync(srcAbsPath)) {
+    console.log('[openwop-site] skip comparisons/openexo-3-openwop — source not found');
+    return;
+  }
+  const md = readFile(srcAbsPath);
+  const description = extractFirstParagraph(md) ?? CANONICAL_DESCRIPTION;
+  let bodyMd = stripLeadingH1(md);
+  // The hero re-renders the lede paragraph.
+  bodyMd = bodyMd.replace(/^\s*OpenExO 3\.0 describes the AI-native organization\.[^\n]*\n/, '');
+
+  const heroHtml = `<header class="cmp-hero">
+    <p class="cmp-eyebrow">Positioning brief · Organization design × protocol design</p>
+    <h1 class="cmp-title oxo-title"><span class="cmp-name-owp">OpenWOP</span> <em>as the protocol foundation for</em> <span class="cmp-name-exo">OpenExO&nbsp;3.0</span></h1>
+    <p class="lede">${escapeHtml(description)}</p>
+    <div class="oxo-bridge">
+      <div class="oxo-band oxo-band-exo">
+        <div class="oxo-band-head">
+          <span class="oxo-band-name">ExO 3.0</span>
+          <span class="oxo-band-tag">The organizational thesis</span>
+        </div>
+        <p class="oxo-band-terms">MTP · Intelligence Stack · DRIVE · SHAPE · REWRITE · Edge Twins · GOVERN / ASSURE</p>
+      </div>
+      <div class="oxo-bridge-link"><i></i><span>becomes executable through</span><i></i></div>
+      <div class="oxo-band oxo-band-owp">
+        <div class="oxo-band-head">
+          <span class="oxo-band-name">OpenWOP</span>
+          <span class="oxo-band-tag">The execution protocol</span>
+        </div>
+        <p class="oxo-band-terms">durable runs · event log · interrupts · replay · approvals · webhooks · conformance</p>
+      </div>
+    </div>
+  </header>`;
+
+  // Intelligence Stack ladder — replaces the first ASCII diagram in place.
+  const LADDER = [
+    { layer: 'Purpose / MTP', what: 'as protocol — machine-readable constraints attached to execution' },
+    { layer: 'Sense', what: 'gather signals, events, data, user input' },
+    { layer: 'Interpret', what: 'build context, assemble evidence, reason over state' },
+    { layer: 'Decide', what: 'supervisor agent selects next-worker, ask-user, or terminate' },
+    { layer: 'Orchestrate', what: 'OpenWOP run lifecycle, event log, state channels, interrupts', core: true },
+    { layer: 'Act', what: 'workers call tools, APIs, MCP servers, external systems' },
+    { layer: 'Learn', what: 'replay, fork, evals, human-correction capture, telemetry' },
+  ];
+  const ladderHtml = `<figure class="oxo-ladder" role="img" aria-label="The Intelligence Stack as a ladder: Purpose, Sense, Interpret, Decide, Orchestrate, Act, Learn — with Orchestrate highlighted as the layer OpenWOP standardizes.">${LADDER.map((r) => `
+    <div class="oxo-rung${r.core ? ' oxo-rung-core' : ''}">
+      <span class="oxo-rung-layer">${r.layer}${r.core ? '<em>OpenWOP core</em>' : ''}</span>
+      <span class="oxo-rung-what">${r.what}</span>
+    </div>`).join('')}
+  </figure>`;
+
+  const CHIP = { A2A: 'a2a', MCP: 'mcp', OpenWOP: 'owp' };
+  const chip = (name) => `<span class="cmp-chip cmp-chip-${CHIP[name]}">${name}</span>`;
+  let articleHtml = markdownToHtml(bodyMd)
+    // Swap the first ASCII stack diagram for the designed ladder.
+    .replace(/<pre class="lang-"><code>Purpose \/ MTP as protocol[\s\S]*?<\/code><\/pre>/, ladderHtml)
+    // Protocol names in table headers + bold first-column cells → chips.
+    .replace(/<th>(A2A|MCP|OpenWOP)<\/th>/g, (_, n) => `<th>${chip(n)}</th>`)
+    .replace(/<td><strong>(A2A|MCP|OpenWOP)<\/strong><\/td>/g, (_, n) => `<td>${chip(n)}</td>`);
+  articleHtml = `<article class="spec-doc comparison-doc">${articleHtml}</article>`;
+
+  const content = `<div class="comparison-page">${heroHtml}${wrapWithToc(articleHtml, extractToc(bodyMd))}</div>`;
+  const destDir = join(DIST, 'comparisons', 'openexo-3-openwop');
+  ensureDir(destDir);
+  writeFileSync(
+    join(destDir, 'index.html'),
+    templatePage({
+      title: 'OpenWOP — OpenExO 3.0 and OpenWOP',
+      content,
+      navActive: 'protocol',
+      description,
+      canonicalPath: '/comparisons/openexo-3-openwop/',
+      ogTitle: 'OpenWOP as the protocol foundation for OpenExO 3.0',
+    }),
+  );
+  console.log('[openwop-site] wrote comparisons/openexo-3-openwop/index.html (bespoke)');
+}
+
 // ── Site content (FAQ + audience landing pages) ────────────────────────
 
 function buildContentDir() {
@@ -1409,7 +1605,8 @@ function buildContentDir() {
     { src: 'scenarios.md',                    dest: ['scenarios'],                    nav: '',           label: 'Scenario walkthroughs' },
     { src: 'community.md',                    dest: ['community'],                    nav: 'community',  label: 'Community' },
     { src: 'protocol.md',                     dest: ['protocol'],                     nav: 'protocol',   label: 'The OpenWOP protocol' },
-    { src: 'comparisons/a2a-openwop-mcp.md',  dest: ['comparisons', 'a2a-openwop-mcp'], nav: 'protocol', label: 'A2A vs MCP vs OpenWOP' },
+    // comparisons/a2a-openwop-mcp.md renders through buildComparisonA2aMcp()
+    // (bespoke hero + wire schematic), not this generic path.
     { src: 'implement.md',                    dest: ['implement'],                    nav: 'implement',  label: 'Implementing OpenWOP' },
     { src: 'install.md',                      dest: ['install'],                      nav: 'implement',  label: 'Install the demo app' },
     { src: 'governance/spec-status.md',       dest: ['governance', 'spec-status'],    nav: 'protocol',   label: 'Spec status policy' },
@@ -1682,6 +1879,10 @@ function buildAll() {
   buildRfcs();
   // Net-new content authored under site/content/ (FAQ + audience pages).
   buildContentDir();
+  // Protocol comparison — bespoke hero + wire schematic.
+  buildComparisonA2aMcp();
+  // OpenExO 3.0 positioning brief — bespoke thesis→runtime bridge.
+  buildComparisonOpenExo();
   // REST API explorer (Redoc, self-hosted bundle).
   buildApiExplorer();
   // Sibling event + gRPC transport explorers (raw + cross-linked).

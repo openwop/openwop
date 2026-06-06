@@ -1100,3 +1100,579 @@ table.rfc-index td:nth-child(2) {
 .site-main:has(.spec-page-grid) {
   max-width: 1180px;
 }
+
+/* ─── Protocol comparison page (/comparisons/a2a-openwop-mcp/) ────────
+ * Bespoke "wire schematic" layout rendered by buildComparisonA2aMcp().
+ * Three page-scoped protocol hues sit on the same OKLCH band as the app's
+ * category tokens (DESIGN.md family): A2A → indigo 285, MCP → teal 200,
+ * OpenWOP → clay. Dark mode lifts luminance like the app's functional
+ * tokens (DESIGN.md §9.2 invariant 4); everything else rides the shared
+ * paper/ink/rule tokens, so the page flips with the theme for free. */
+.comparison-page {
+  --cmp-a2a:      oklch(50% 0.11 285);
+  --cmp-a2a-rule: oklch(50% 0.11 285 / 0.40);
+  --cmp-a2a-wash: oklch(50% 0.11 285 / 0.07);
+  --cmp-mcp:      oklch(50% 0.10 200);
+  --cmp-mcp-rule: oklch(50% 0.10 200 / 0.40);
+  --cmp-mcp-wash: oklch(50% 0.10 200 / 0.07);
+  --cmp-owp:      var(--clay);
+  --cmp-owp-rule: var(--clay-rule);
+  --cmp-owp-wash: var(--clay-soft);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light) .comparison-page {
+    --cmp-a2a:      oklch(74% 0.11 285);
+    --cmp-a2a-rule: oklch(74% 0.11 285 / 0.45);
+    --cmp-a2a-wash: oklch(74% 0.11 285 / 0.10);
+    --cmp-mcp:      oklch(74% 0.10 200);
+    --cmp-mcp-rule: oklch(74% 0.10 200 / 0.45);
+    --cmp-mcp-wash: oklch(74% 0.10 200 / 0.10);
+  }
+}
+:root.theme-dark .comparison-page {
+  --cmp-a2a:      oklch(74% 0.11 285);
+  --cmp-a2a-rule: oklch(74% 0.11 285 / 0.45);
+  --cmp-a2a-wash: oklch(74% 0.11 285 / 0.10);
+  --cmp-mcp:      oklch(74% 0.10 200);
+  --cmp-mcp-rule: oklch(74% 0.10 200 / 0.45);
+  --cmp-mcp-wash: oklch(74% 0.10 200 / 0.10);
+}
+
+/* Hero */
+.cmp-hero {
+  padding: clamp(8px, 2vw, 24px) 0 2.4em;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 2em;
+}
+.cmp-eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--clay);
+  margin: 0 0 0.9em;
+}
+.cmp-eyebrow span { color: var(--ink-3); text-transform: none; letter-spacing: 0.04em; }
+.cmp-title {
+  font-family: var(--serif);
+  font-size: clamp(40px, 6vw, 72px);
+  line-height: 1.02;
+  margin: 0 0 0.25em;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.cmp-title em {
+  font-style: italic;
+  font-size: 0.45em;
+  color: var(--ink-3);
+  vertical-align: 0.22em;
+  margin: 0 0.25em;
+}
+.cmp-name-a2a { color: var(--cmp-a2a); }
+.cmp-name-mcp { color: var(--cmp-mcp); }
+.cmp-name-owp { color: var(--cmp-owp); }
+.cmp-hero .lede {
+  font-family: var(--sans);
+  font-size: clamp(17px, 1.6vw, 19px);
+  color: var(--ink-2);
+  line-height: 1.55;
+  max-width: 70ch;
+  margin: 0 0 2em;
+}
+
+/* Page-load reveal — one orchestrated stagger, CSS-only. */
+@keyframes cmp-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+.cmp-hero > *, .cmp-card { animation: cmp-rise 0.5s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+.cmp-hero > :nth-child(2) { animation-delay: 60ms; }
+.cmp-hero > :nth-child(3) { animation-delay: 120ms; }
+.cmp-hero > :nth-child(4) { animation-delay: 180ms; }
+.cmp-hero > :nth-child(5) { animation-delay: 320ms; }
+.cmp-card { animation-delay: calc(180ms + var(--cmp-stagger, 0) * 70ms); }
+@media (prefers-reduced-motion: reduce) {
+  .cmp-hero > *, .cmp-card { animation: none; }
+}
+
+/* Identity cards */
+.cmp-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 2em;
+}
+.cmp-card {
+  border: 1px solid var(--rule);
+  border-top: 3px solid var(--cmp-c, var(--rule));
+  border-radius: 8px;
+  background: var(--paper);
+  padding: 16px 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cmp-card-a2a { --cmp-c: var(--cmp-a2a); --cmp-c-rule: var(--cmp-a2a-rule); --cmp-c-wash: var(--cmp-a2a-wash); }
+.cmp-card-mcp { --cmp-c: var(--cmp-mcp); --cmp-c-rule: var(--cmp-mcp-rule); --cmp-c-wash: var(--cmp-mcp-wash); }
+.cmp-card-owp { --cmp-c: var(--cmp-owp); --cmp-c-rule: var(--cmp-owp-rule); --cmp-c-wash: var(--cmp-owp-wash); }
+.cmp-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.cmp-card-abbr {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--cmp-c);
+}
+.cmp-card-plane {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+.cmp-card-full {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 400;
+  line-height: 1.15;
+  margin: 0;
+}
+.cmp-card-role {
+  font-family: var(--sans);
+  font-size: 13.5px;
+  color: var(--ink-2);
+  margin: 0;
+}
+.cmp-card-facts {
+  margin: 2px 0 0;
+  display: grid;
+  gap: 4px;
+  border-top: 1px solid var(--rule);
+  padding-top: 8px;
+}
+.cmp-card-facts > div { display: flex; gap: 8px; align-items: baseline; }
+.cmp-card-facts dt {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  flex: 0 0 72px;
+}
+.cmp-card-facts dd {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink);
+  margin: 0;
+}
+.cmp-card-model {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--ink-2);
+  margin: auto 0 0;
+  padding-top: 6px;
+}
+
+/* Wire schematic */
+.cmp-schematic { margin: 0; }
+.cmp-diagram {
+  display: grid;
+  grid-template-columns: 1fr minmax(120px, 200px) 1fr;
+  align-items: stretch;
+  padding: clamp(20px, 3.5vw, 40px);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background-image:
+    linear-gradient(color-mix(in oklab, var(--rule) 40%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklab, var(--rule) 40%, transparent) 1px, transparent 1px);
+  background-size: 26px 26px;
+  background-position: center;
+  background-color: var(--paper);
+}
+.cmp-node {
+  position: relative;
+  z-index: 1;
+  border: 1px solid var(--ink);
+  border-radius: 6px;
+  background: var(--paper);
+  box-shadow: 3px 3px 0 0 var(--rule);
+  padding: 14px 16px;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: clamp(17px, 2vw, 21px);
+  line-height: 1.2;
+}
+.cmp-node-sub {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-top: 4px;
+}
+.cmp-node-tool {
+  border: 1px dashed var(--rule-2);
+  border-radius: 6px;
+  box-shadow: none;
+  background: var(--paper-2);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--ink-2);
+  padding: 12px 10px;
+}
+/* Horizontal A2A link */
+.cmp-hlink {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cmp-hlink::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  top: 50%;
+  height: 1.5px;
+  background: var(--cmp-a2a);
+}
+.cmp-hlink i {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-block: 4px solid transparent;
+}
+.cmp-hlink i:first-of-type { left: -1px; border-right: 6px solid var(--cmp-a2a); }
+.cmp-hlink i:last-of-type  { right: -1px; border-left: 6px solid var(--cmp-a2a); }
+.cmp-hlink span,
+.cmp-vlink span {
+  position: relative;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  background: var(--paper);
+  border: 1px solid var(--cmp-a2a-rule);
+  color: var(--cmp-a2a);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+/* Vertical MCP links */
+.cmp-vlink {
+  position: relative;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cmp-vlink::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: 50%;
+  width: 1.5px;
+  background: var(--cmp-mcp);
+}
+.cmp-vlink::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-inline: 4px solid transparent;
+  border-top: 6px solid var(--cmp-mcp);
+}
+.cmp-vlink span {
+  border-color: var(--cmp-mcp-rule);
+  color: var(--cmp-mcp);
+}
+.cmp-vgap { min-height: 64px; }
+/* OpenWOP substrate band — the tool nodes sit half-embedded in it. */
+.cmp-substrate {
+  grid-column: 1 / -1;
+  position: relative;
+  margin-top: -14px;
+  border: 1px solid var(--cmp-owp-rule);
+  border-radius: 6px;
+  padding: 28px 20px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 18px;
+  justify-content: center;
+  background:
+    repeating-linear-gradient(-45deg, var(--cmp-owp-wash) 0 10px, transparent 10px 20px),
+    var(--paper);
+}
+.cmp-substrate-name {
+  font-family: var(--serif);
+  font-size: 22px;
+  color: var(--cmp-owp);
+}
+.cmp-substrate-desc {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+}
+.cmp-schematic figcaption {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink-3);
+  text-align: center;
+  margin-top: 12px;
+  max-width: 64ch;
+  margin-inline: auto;
+}
+
+/* Protocol chips (table headers + decision-checklist answers) */
+.cmp-chip {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  border: 1px solid;
+  border-radius: 999px;
+  padding: 2px 9px;
+  white-space: nowrap;
+}
+.cmp-chip-a2a { color: var(--cmp-a2a); border-color: var(--cmp-a2a-rule); background: var(--cmp-a2a-wash); }
+.cmp-chip-mcp { color: var(--cmp-mcp); border-color: var(--cmp-mcp-rule); background: var(--cmp-mcp-wash); }
+.cmp-chip-owp { color: var(--cmp-owp); border-color: var(--cmp-owp-rule); background: var(--cmp-owp-wash); }
+.cmp-answer .cmp-chip { margin: 1px 0; }
+.cmp-plus {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  margin: 0 4px;
+}
+
+/* Article upgrades — numbered section heads + callout blockquotes.
+ * Wide GFM tables scroll inside their own box instead of stretching the
+ * page (the decision matrix is 4 chips wide on a 390px phone). */
+.comparison-doc table { display: block; overflow-x: auto; }
+.comparison-doc { counter-reset: cmp-section; }
+.comparison-doc > h2 {
+  counter-increment: cmp-section;
+  border-top: 1px solid var(--rule);
+  padding-top: 1.2em;
+  margin-top: 2.2em;
+}
+.comparison-doc > h2::before {
+  content: counter(cmp-section, decimal-leading-zero);
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.5em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--clay);
+  vertical-align: 0.5em;
+  margin-right: 0.9em;
+}
+.comparison-doc blockquote {
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--clay);
+  border-radius: 0 8px 8px 0;
+  background: var(--paper-2);
+  padding: 14px 18px;
+  margin: 1.6em 0;
+}
+.comparison-doc blockquote strong { color: var(--clay); }
+
+@media (max-width: 760px) {
+  .cmp-cards { grid-template-columns: 1fr; }
+  .cmp-diagram {
+    grid-template-columns: 1fr minmax(72px, 110px) 1fr;
+    padding: 16px 12px;
+  }
+  .cmp-hlink span { font-size: 8.5px; padding: 2px 6px; }
+  .cmp-node { font-size: 15px; padding: 10px 8px; }
+  .cmp-node-tool { font-size: 9.5px; }
+  .cmp-vlink, .cmp-vgap { height: 48px; min-height: 48px; }
+}
+
+/* ─── OpenExO 3.0 positioning page (/comparisons/openexo-3-openwop/) ───
+ * Shares the .comparison-page / .cmp-* system. Adds one page hue: gold
+ * (hue 80, the --star-glow band) for the organizational THESIS, against
+ * clay for the execution PROTOCOL — vision above, runtime below. */
+.comparison-page {
+  --cmp-exo:      oklch(56% 0.11 78);
+  --cmp-exo-rule: oklch(56% 0.11 78 / 0.40);
+  --cmp-exo-wash: oklch(56% 0.11 78 / 0.07);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light) .comparison-page {
+    --cmp-exo:      oklch(80% 0.13 80);
+    --cmp-exo-rule: oklch(80% 0.13 80 / 0.45);
+    --cmp-exo-wash: oklch(80% 0.13 80 / 0.10);
+  }
+}
+:root.theme-dark .comparison-page {
+  --cmp-exo:      oklch(80% 0.13 80);
+  --cmp-exo-rule: oklch(80% 0.13 80 / 0.45);
+  --cmp-exo-wash: oklch(80% 0.13 80 / 0.10);
+}
+.cmp-name-exo { color: var(--cmp-exo); }
+.oxo-title { font-size: clamp(34px, 4.6vw, 56px); max-width: 24ch; }
+.oxo-title em {
+  font-size: 0.55em;
+  vertical-align: 0.12em;
+}
+
+/* Thesis → runtime bridge */
+.oxo-bridge { max-width: 760px; }
+.oxo-band {
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 16px 20px;
+  background: var(--paper);
+}
+.oxo-band-exo {
+  border-color: var(--cmp-exo-rule);
+  background:
+    repeating-linear-gradient(-45deg, var(--cmp-exo-wash) 0 10px, transparent 10px 20px),
+    var(--paper);
+}
+.oxo-band-owp {
+  border-color: var(--cmp-owp-rule);
+  background:
+    repeating-linear-gradient(-45deg, var(--cmp-owp-wash) 0 10px, transparent 10px 20px),
+    var(--paper);
+}
+.oxo-band-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.oxo-band-name { font-family: var(--serif); font-size: 24px; }
+.oxo-band-exo .oxo-band-name { color: var(--cmp-exo); }
+.oxo-band-owp .oxo-band-name { color: var(--cmp-owp); }
+.oxo-band-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.oxo-band-terms {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.03em;
+  color: var(--ink-2);
+  margin: 6px 0 0;
+}
+.oxo-bridge-link {
+  position: relative;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.oxo-bridge-link i {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  width: 1.5px;
+  background: linear-gradient(var(--cmp-exo), var(--cmp-owp));
+}
+.oxo-bridge-link i:first-of-type { left: 22%; }
+.oxo-bridge-link i:last-of-type { right: 22%; }
+.oxo-bridge-link i::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  border-inline: 4px solid transparent;
+  border-top: 6px solid var(--cmp-owp);
+}
+.oxo-bridge-link span {
+  position: relative;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--ink-2);
+  background: var(--paper);
+  padding: 2px 14px;
+}
+
+/* Intelligence Stack ladder (replaces the ASCII diagram in the article) */
+.oxo-ladder {
+  margin: 1.8em 0;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 10px 0;
+  background: var(--paper);
+  position: relative;
+}
+.oxo-ladder::before {
+  content: '';
+  position: absolute;
+  top: 16px;
+  bottom: 16px;
+  left: clamp(96px, 18%, 170px);
+  width: 1.5px;
+  background: linear-gradient(var(--cmp-exo), var(--cmp-owp));
+}
+.oxo-rung {
+  position: relative;
+  display: grid;
+  grid-template-columns: clamp(120px, 22%, 210px) 1fr;
+  gap: 14px;
+  align-items: baseline;
+  padding: 9px 20px;
+}
+.oxo-rung-layer {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cmp-exo);
+  text-align: right;
+}
+.oxo-rung-layer em {
+  display: block;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--cmp-owp);
+  margin-top: 2px;
+}
+.oxo-rung-what {
+  font-family: var(--sans);
+  font-size: 13.5px;
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+.oxo-rung-core {
+  background: var(--cmp-owp-wash);
+  border-block: 1px solid var(--cmp-owp-rule);
+}
+.oxo-rung-core .oxo-rung-layer { color: var(--cmp-owp); }
+.oxo-rung-core .oxo-rung-what { color: var(--ink); }
+
+@media (max-width: 760px) {
+  .oxo-rung { grid-template-columns: 1fr; gap: 2px; }
+  .oxo-rung-layer { text-align: left; }
+  .oxo-ladder::before { display: none; }
+  .oxo-title { font-size: clamp(30px, 8vw, 40px); }
+}

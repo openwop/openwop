@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>OpenWOP — OpenExO 3.0 and OpenWOP</title>
+  <meta name="description" content="OpenExO 3.0 describes the AI-native organization. OpenWOP can provide the durable workflow protocol that makes that organization executable, observable, governable, and portable across hosts."/>
+  <link rel="canonical" href="https://openwop.dev/comparisons/openexo-3-openwop/"/>
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Twitter previews) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OpenWOP — Multi-Agent Workflow Orchestration Protocol"/>
+  <meta property="og:title" content="OpenWOP as the protocol foundation for OpenExO 3.0"/>
+  <meta property="og:description" content="OpenExO 3.0 describes the AI-native organization. OpenWOP can provide the durable workflow protocol that makes that organization executable, observable, governable, and portable across hosts."/>
+  <meta property="og:url" content="https://openwop.dev/comparisons/openexo-3-openwop/"/>
+  <meta property="og:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="OpenWOP as the protocol foundation for OpenExO 3.0"/>
+  <meta name="twitter:description" content="OpenExO 3.0 describes the AI-native organization. OpenWOP can provide the durable workflow protocol that makes that organization executable, observable, governable, and portable across hosts."/>
+  <meta name="twitter:image" content="https://openwop.dev/og-default.png"/>
+
+  <!-- Icons / theme -->
+  <link rel="icon" href="/assets/OpenWOP.svg" type="image/svg+xml"/>
+  <link rel="icon" sizes="192x192" href="/assets/icon-192.png" type="image/png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)"/>
+  <meta name="theme-color" content="#1a1a17" media="(prefers-color-scheme: dark)"/>
+
+  <!-- Fonts (mirrors the marketing landing so the brand mark + serif/mono
+       register match across surfaces) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"/>
+
+  <!-- Marketing stylesheet provides design tokens (--paper, --ink, --clay,
+       --serif, --sans, --mono, etc.) plus the .topbar / .wrap / .foot
+       components. The subpage stylesheet below layers prose + spec-doc
+       rules on top. -->
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+
+  
+  
+  
+</head>
+<body>
+
+<!-- ─────────────────────── TOP BAR (mirrors marketing) ─────────────────────── -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em> <span class="brand-sub">openwop.dev</span></span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a class="hide-sm " href="/quickstart/">Quickstart</a>
+
+      <div class="nav-dropdown hide-sm active" data-nav-section="protocol">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Protocol <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/spec/v1/" role="menuitem">Spec</a>
+          <a href="/conformance/" role="menuitem">Conformance</a>
+          <a href="/comparisons/a2a-openwop-mcp/" role="menuitem">A2A vs MCP vs OpenWOP</a>
+          <a href="/comparisons/openexo-3-openwop/" role="menuitem">OpenExO 3.0 and OpenWOP</a>
+          <a href="/rfcs/" role="menuitem">RFCs</a>
+          <a href="/governance/" role="menuitem">Governance</a>
+          <a href="/security/" role="menuitem">Security</a>
+          <a href="/roadmap/" role="menuitem">Roadmap</a>
+          <a href="/protocol/" role="menuitem">All protocol surfaces →</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown hide-sm " data-nav-section="implement">
+        <button class="nav-dropdown-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          Implement <span class="nav-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/for/workflow-authors/" role="menuitem">Workflow authors</a>
+          <a href="/for/host-implementers/" role="menuitem">Host implementers</a>
+          <a href="/for/pack-authors/" role="menuitem">Pack authors</a>
+          <a href="/for/production-evaluators/" role="menuitem">Production evaluators</a>
+          <a href="/install/" role="menuitem">Install the demo app</a>
+          <a href="/implement/" role="menuitem">All implementer landings →</a>
+        </div>
+      </div>
+
+      <a class="hide-sm " href="/community/">Community</a>
+      <a class="hide-sm " href="/changelog/">Changelog</a>
+      <a class="pill hide-sm" href="https://github.com/openwop/openwop">GitHub →</a>
+
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-controls="site-menu" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span class="icon-close" aria-hidden="true">×</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="nav-scrim" aria-hidden="true"></div>
+<nav id="site-menu" class="nav-drawer" aria-label="Site navigation" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="nav-drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+      <span>Open<em>WOP</em></span>
+    </a>
+    <button class="nav-drawer-close" type="button" aria-label="Close menu">×</button>
+  </div>
+  <a href="/quickstart/">Quickstart</a>
+
+  <h3>Protocol</h3>
+  <ul>
+    <li><a href="/spec/v1/">Spec</a></li>
+    <li><a href="/conformance/">Conformance</a></li>
+    <li><a href="/comparisons/a2a-openwop-mcp/">A2A vs MCP vs OpenWOP</a></li>
+    <li><a href="/comparisons/openexo-3-openwop/">OpenExO 3.0 and OpenWOP</a></li>
+    <li><a href="/rfcs/">RFCs</a></li>
+    <li><a href="/governance/">Governance</a></li>
+    <li><a href="/security/">Security</a></li>
+    <li><a href="/roadmap/">Roadmap</a></li>
+    <li><a href="/protocol/">All protocol surfaces →</a></li>
+  </ul>
+
+  <h3>Implement</h3>
+  <ul>
+    <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+    <li><a href="/for/host-implementers/">Host implementers</a></li>
+    <li><a href="/for/pack-authors/">Pack authors</a></li>
+    <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+    <li><a href="/install/">Install the demo app</a></li>
+    <li><a href="/implement/">All implementer landings →</a></li>
+  </ul>
+
+  <a href="/community/">Community</a>
+  <a href="/changelog/">Changelog</a>
+
+  <div class="nav-drawer-cta">
+    <a href="https://github.com/openwop/openwop">GitHub →</a>
+  </div>
+</nav>
+
+<main class="site-main">
+  <div class="wrap">
+    <div class="comparison-page"><header class="cmp-hero">
+    <p class="cmp-eyebrow">Positioning brief · Organization design × protocol design</p>
+    <h1 class="cmp-title oxo-title"><span class="cmp-name-owp">OpenWOP</span> <em>as the protocol foundation for</em> <span class="cmp-name-exo">OpenExO&nbsp;3.0</span></h1>
+    <p class="lede">OpenExO 3.0 describes the AI-native organization. OpenWOP can provide the durable workflow protocol that makes that organization executable, observable, governable, and portable across hosts.</p>
+    <div class="oxo-bridge">
+      <div class="oxo-band oxo-band-exo">
+        <div class="oxo-band-head">
+          <span class="oxo-band-name">ExO 3.0</span>
+          <span class="oxo-band-tag">The organizational thesis</span>
+        </div>
+        <p class="oxo-band-terms">MTP · Intelligence Stack · DRIVE · SHAPE · REWRITE · Edge Twins · GOVERN / ASSURE</p>
+      </div>
+      <div class="oxo-bridge-link"><i></i><span>becomes executable through</span><i></i></div>
+      <div class="oxo-band oxo-band-owp">
+        <div class="oxo-band-head">
+          <span class="oxo-band-name">OpenWOP</span>
+          <span class="oxo-band-tag">The execution protocol</span>
+        </div>
+        <p class="oxo-band-terms">durable runs · event log · interrupts · replay · approvals · webhooks · conformance</p>
+      </div>
+    </div>
+  </header><div class="spec-page-grid"><aside class="spec-toc" aria-label="On this page">
+    <h4>On this page</h4>
+    <ul>
+      <li class="toc-top"><a href="#why-this-matters-now">Why this matters now</a></li>
+      <li class="toc-top"><a href="#the-conceptual-fit-organization-design-meets-protocol-design">The conceptual fit: organization design meets protocol design</a></li>
+      <li class="toc-top"><a href="#mapping-openwop-to-the-intelligence-stack">Mapping OpenWOP to the Intelligence Stack</a></li>
+      <li class="toc-top"><a href="#rewrite-as-an-openwop-workflow-migration-process">REWRITE as an OpenWOP workflow migration process</a></li>
+      <li class="toc-sub"><a href="#backcast-define-the-target-workflow-architecture">BACKCAST → define the target workflow architecture</a></li>
+      <li class="toc-sub"><a href="#assess-determine-migration-readiness">ASSESS → determine migration readiness</a></li>
+      <li class="toc-sub"><a href="#extract-create-the-workflow-data-manifest">EXTRACT → create the Workflow Data Manifest</a></li>
+      <li class="toc-sub"><a href="#diagnose-locate-decision-and-control-boundaries">DIAGNOSE → locate decision and control boundaries</a></li>
+      <li class="toc-sub"><a href="#build-prove-run-in-shadow-mode">BUILD &amp; PROVE → run in shadow mode</a></li>
+      <li class="toc-sub"><a href="#rewire-migrate-production-responsibility">REWIRE → migrate production responsibility</a></li>
+      <li class="toc-top"><a href="#edge-twin-architecture-powered-by-openwop">Edge Twin architecture powered by OpenWOP</a></li>
+      <li class="toc-top"><a href="#the-agent-workforce-as-an-operating-contract">The agent workforce as an operating contract</a></li>
+      <li class="toc-sub"><a href="#supervisor-agents">Supervisor agents</a></li>
+      <li class="toc-sub"><a href="#worker-agents">Worker agents</a></li>
+      <li class="toc-sub"><a href="#governance-agents">Governance agents</a></li>
+      <li class="toc-sub"><a href="#minimum-viable-agent-spec">Minimum viable agent spec</a></li>
+      <li class="toc-top"><a href="#govern-assure-becomes-executable">GOVERN / ASSURE becomes executable</a></li>
+      <li class="toc-sub"><a href="#trusted-evals">Trusted evals</a></li>
+      <li class="toc-sub"><a href="#searchable-logs">Searchable logs</a></li>
+      <li class="toc-sub"><a href="#granular-rollback">Granular rollback</a></li>
+      <li class="toc-sub"><a href="#human-review-queue">Human review queue</a></li>
+      <li class="toc-top"><a href="#how-openwop-composes-with-a2a-and-mcp">How OpenWOP composes with A2A and MCP</a></li>
+      <li class="toc-top"><a href="#implementation-blueprint-from-concept-to-pilot">Implementation blueprint: from concept to pilot</a></li>
+      <li class="toc-sub"><a href="#phase-1-publish-the-openexo-workflow-profile">Phase 1: Publish the OpenExO workflow profile</a></li>
+      <li class="toc-sub"><a href="#phase-2-build-one-reference-workflow">Phase 2: Build one reference workflow</a></li>
+      <li class="toc-sub"><a href="#phase-3-instrument-for-proof">Phase 3: Instrument for proof</a></li>
+      <li class="toc-sub"><a href="#phase-4-graduate-autonomy-in-waves">Phase 4: Graduate autonomy in waves</a></li>
+      <li class="toc-sub"><a href="#phase-5-package-as-an-openexo-accelerator">Phase 5: Package as an OpenExO accelerator</a></li>
+      <li class="toc-top"><a href="#risks-objections-and-guardrails">Risks, objections, and guardrails</a></li>
+      <li class="toc-top"><a href="#final-thesis">Final thesis</a></li>
+      <li class="toc-top"><a href="#sources-and-references">Sources and references</a></li>
+    </ul>
+  </aside><article class="spec-doc comparison-doc"><h2 id="why-this-matters-now">Why this matters now</h2>
+<p>OpenExO 3.0 argues that organizations must be redesigned around intelligence rather than merely upgraded with intelligent agents. Salim Ismail’s public ExO 3.0 framing describes a shift from hierarchical structures into AI-native systems capable of sensing, deciding, and executing at unprecedented speed and scale.<a href="#fn-salim">1</a></p>
+<p>The OpenExO Organizational Singularity outline frames the transformation as three coupled moves: <strong>ExO 3.0</strong> as the destination architecture, the <strong>Intelligence Stack</strong> as the new operating system, and <strong>REWRITE</strong> as the migration playbook.<a href="#fn-os-outline">2</a></p>
+<p>That creates a protocol gap. A firm cannot operate at machine tempo on strategy language alone. It needs an execution layer that can express workflows, run agent teams, pause for humans, preserve auditability, learn from replay, and connect to tools and other agents. OpenWOP addresses that gap by defining an open protocol for durable multi-agent workflow orchestration: supervisor agents decide, workers call tools, humans participate in conversation loops, and every event flows through an event log, streams, webhooks, and telemetry.<a href="#fn-openwop-home">3</a></p>
+<blockquote><p><strong>Positioning statement:</strong> OpenWOP should be presented to the OpenExO community as the open execution protocol for the Intelligence Stack: not a replacement for ExO 3.0, not a generic agent framework, and not another consulting methodology, but the technical layer that makes agentic organizational work durable, inspectable, and governable.</p></blockquote>
+<h2 id="the-conceptual-fit-organization-design-meets-protocol-design">The conceptual fit: organization design meets protocol design</h2>
+<p>ExO 3.0 is concerned with the shape of the AI-native firm: purpose, autonomy, decision architecture, recursive learning, elastic agency, human architecture, governance, and ecosystem trust. OpenWOP is concerned with the execution contract for AI-native work: workflow definitions, run lifecycle, event streams, interrupts, artifacts, capabilities, scopes, conformance, and observability.</p>
+<table>
+<thead><tr><th>OpenExO 3.0 need</th><th>OpenWOP capability</th><th>Why it matters</th></tr></thead>
+<tbody>
+<tr><td>Move from human-centric workflows to agentic workflows</td><td>Workflow definitions, runs, node packs, worker nodes, and human conversation nodes</td><td>Makes the redesigned workflow executable rather than conceptual.</td></tr>
+<tr><td>Make the Intelligence Stack operational</td><td>REST, SSE, signed webhooks, event logs, OpenTelemetry, per-run options</td><td>Provides the runtime contract for sensing, interpreting, deciding, orchestrating, acting, and learning.</td></tr>
+<tr><td>Build Edge Twins without forking the enterprise data estate</td><td>Workflow-scoped runs, metadata, scopes, correlation IDs, tool/resource access patterns</td><td>Supports governed access by workflow rather than uncontrolled data replication.</td></tr>
+<tr><td>Continuously govern agent actions</td><td>Interrupts, approval queues, logs, replay, redaction, scopes, and policy-aware hosts</td><td>Turns GOVERN / ASSURE into runtime controls instead of an after-the-fact audit process.</td></tr>
+<tr><td>Avoid proprietary lock-in while scaling agent workforces</td><td>Vendor-neutral wire protocol, conformance suite, additive v1.x compatibility</td><td>Lets firms adopt AI-native workflows without making one vendor the permanent nervous system.</td></tr>
+</tbody></table>
+<h2 id="mapping-openwop-to-the-intelligence-stack">Mapping OpenWOP to the Intelligence Stack</h2>
+<p>The Organizational Singularity describes the Intelligence Stack as the operating core of ExO 3.0, and crosswalks it to industry vocabulary such as intelligence, action, governance, orchestration, and economics.<a href="#fn-stack-crosswalk">4</a> OpenWOP maps naturally to the execution and orchestration layers, while also producing the telemetry and control evidence needed by governance and economics.</p>
+<figure class="oxo-ladder" role="img" aria-label="The Intelligence Stack as a ladder: Purpose, Sense, Interpret, Decide, Orchestrate, Act, Learn — with Orchestrate highlighted as the layer OpenWOP standardizes.">
+    <div class="oxo-rung">
+      <span class="oxo-rung-layer">Purpose / MTP</span>
+      <span class="oxo-rung-what">as protocol — machine-readable constraints attached to execution</span>
+    </div>
+    <div class="oxo-rung">
+      <span class="oxo-rung-layer">Sense</span>
+      <span class="oxo-rung-what">gather signals, events, data, user input</span>
+    </div>
+    <div class="oxo-rung">
+      <span class="oxo-rung-layer">Interpret</span>
+      <span class="oxo-rung-what">build context, assemble evidence, reason over state</span>
+    </div>
+    <div class="oxo-rung">
+      <span class="oxo-rung-layer">Decide</span>
+      <span class="oxo-rung-what">supervisor agent selects next-worker, ask-user, or terminate</span>
+    </div>
+    <div class="oxo-rung oxo-rung-core">
+      <span class="oxo-rung-layer">Orchestrate<em>OpenWOP core</em></span>
+      <span class="oxo-rung-what">OpenWOP run lifecycle, event log, state channels, interrupts</span>
+    </div>
+    <div class="oxo-rung">
+      <span class="oxo-rung-layer">Act</span>
+      <span class="oxo-rung-what">workers call tools, APIs, MCP servers, external systems</span>
+    </div>
+    <div class="oxo-rung">
+      <span class="oxo-rung-layer">Learn</span>
+      <span class="oxo-rung-what">replay, fork, evals, human-correction capture, telemetry</span>
+    </div>
+  </figure>
+<table>
+<thead><tr><th>Intelligence Stack layer</th><th>What OpenWOP contributes</th><th>OpenExO implication</th></tr></thead>
+<tbody>
+<tr><td><strong>Purpose / MTP</strong></td><td>Per-run metadata, policy tags, refusal boundaries, governance hooks</td><td>The organization’s purpose can become machine-readable constraints attached to workflow execution.</td></tr>
+<tr><td><strong>SENSE</strong></td><td>Run inputs, webhooks, event streams, external triggers, artifact ingestion</td><td>The firm can ingest signals into durable workflows rather than ad hoc prompts.</td></tr>
+<tr><td><strong>INTERPRET</strong></td><td>Worker nodes, evidence assembly, typed state channels, artifacts</td><td>Reasoning steps become inspectable, replayable, and improvable.</td></tr>
+<tr><td><strong>DECIDE</strong></td><td>Supervisor/orchestrator decisions, human interrupts, approval gates</td><td>Decision architecture can encode which decisions are automated, escalated, or reserved for humans.</td></tr>
+<tr><td><strong>ORCHESTRATE</strong></td><td>Run lifecycle, suspend/resume, replay/fork, streaming, cancellation, conformance</td><td>This is where OpenWOP is most foundational: it standardizes the execution control plane.</td></tr>
+<tr><td><strong>ACT</strong></td><td>Tool calls, node packs, MCP integration, external system interactions</td><td>Agents can act against real systems while remaining bounded by workflow context and policy.</td></tr>
+<tr><td><strong>LEARN</strong></td><td>Event logs, replay, time-travel debugging, eval hooks, run metrics</td><td>Recursive learning becomes operational: improvements can be derived from completed runs, failures, overrides, and cost traces.</td></tr>
+</tbody></table>
+<h2 id="rewrite-as-an-openwop-workflow-migration-process">REWRITE as an OpenWOP workflow migration process</h2>
+<p>OpenExO describes REWRITE as a six-step migration playbook and distinguishes Direct Mode for smaller organizations from Edge Mode for larger ones. The public outline emphasizes that the GOVERN / ASSURE control plane operates from Day 1, every agent action is logged with correlation IDs, and parallel runs require success criteria and rollback protocols.<a href="#fn-rewrite">5</a></p>
+<p>OpenWOP can make REWRITE concrete by turning each migration candidate into a versioned workflow definition, running it in shadow mode, collecting human corrections, and graduating autonomy only when telemetry proves readiness.</p>
+<h3 id="backcast-define-the-target-workflow-architecture">BACKCAST → define the target workflow architecture</h3>
+<p>Translate the future-state workflow into an OpenWOP workflow definition: nodes, edges, human checkpoints, tools, data dependencies, artifacts, success metrics, and failure boundaries.</p>
+<h3 id="assess-determine-migration-readiness">ASSESS → determine migration readiness</h3>
+<p>Use OpenWOP capability discovery and conformance checks to verify that the chosen host supports the required node types, event modes, security scopes, secrets, webhooks, and observability surfaces.</p>
+<h3 id="extract-create-the-workflow-data-manifest">EXTRACT → create the Workflow Data Manifest</h3>
+<p>OpenExO’s Workflow Data Manifest asks which data sources each workflow touches, why, with what sensitivity and approval model.<a href="#fn-data-manifest">6</a> OpenWOP can carry those requirements into per-run options, metadata, access scopes, tool bindings, and audit trails.</p>
+<h3 id="diagnose-locate-decision-and-control-boundaries">DIAGNOSE → locate decision and control boundaries</h3>
+<p>Identify which workflow steps are safe to automate, which require human review, which require policy agent checks, and which must remain human-only. Map those boundaries into interrupts, scopes, and approval queues.</p>
+<h3 id="build-prove-run-in-shadow-mode">BUILD & PROVE → run in shadow mode</h3>
+<p>Execute OpenWOP runs alongside the legacy workflow. Compare outputs, measure override rates, replay failures, and fork alternate designs before expanding autonomy.</p>
+<h3 id="rewire-migrate-production-responsibility">REWIRE → migrate production responsibility</h3>
+<p>Once the agentic workflow outperforms the old process, migrate responsibility incrementally. Keep rollback paths, run histories, audit artifacts, and operational-system source-of-truth rules intact.</p>
+<h2 id="edge-twin-architecture-powered-by-openwop">Edge Twin architecture powered by OpenWOP</h2>
+<p>The OpenExO outline defines the Edge Twin as a structurally separate, AI-first replica of a core business function or unit: a small human team plus an agent cluster that rebuilds specific mothership workflows using the Intelligence Stack, proves superior performance, then replaces those workflows one at a time.<a href="#fn-edge-twin">7</a></p>
+<p>OpenWOP is especially strong here because an Edge Twin is fundamentally a workflow migration engine. It needs governed access to existing systems, parallel execution, rollback, audit trails, and evidence that agentic workflows are outperforming legacy ones.</p>
+<pre class="lang-"><code>Enterprise mothership systems
+  ERP · CRM · billing · support · policy · knowledge bases
+        │
+        │ workflow-scoped governed API access
+        │ read/write separated · short-lived credentials · correlation IDs
+        ▼
+OpenWOP-powered Edge Twin
+  ├─ workflow catalog
+  ├─ run lifecycle and event log
+  ├─ supervisor agents
+  ├─ worker agents and MCP tools
+  ├─ human approval queues
+  ├─ governance and eval agents
+  └─ telemetry, replay, cost, artifacts
+        │
+        │ prove → migrate → deprecate legacy workflow
+        ▼
+AI-native operating unit</code></pre>
+<table>
+<thead><tr><th>Edge Twin requirement</th><th>OpenWOP design pattern</th></tr></thead>
+<tbody>
+<tr><td>Do not fork the data estate</td><td>Grant workflow-scoped tool/API access; preserve source-of-truth boundaries in metadata and policy.</td></tr>
+<tr><td>Run beside the mothership before replacing it</td><td>Use shadow runs, historical replay, parallel comparison, and explicit graduation criteria.</td></tr>
+<tr><td>Recover from agent failure</td><td>Pause, cancel, replay, fork, retry, and roll back at the workflow level.</td></tr>
+<tr><td>Show CIO/CISO governance evidence</td><td>Expose logs, traces, artifacts, scopes, approvals, redactions, and conformance results.</td></tr>
+<tr><td>Migrate one workflow at a time</td><td>Represent each migration candidate as a workflow definition with its own run history and manifest.</td></tr>
+</tbody></table>
+<h2 id="the-agent-workforce-as-an-operating-contract">The agent workforce as an operating contract</h2>
+<p>An agent workforce cannot be governed as a list of bots. It needs a contract that says what each agent team can do, how it receives work, what data it may touch, when it must escalate, and how performance is measured. OpenWOP provides the workflow-level contract for that workforce.</p>
+<h3 id="supervisor-agents">Supervisor agents</h3>
+<p>Own the workflow loop: decide next worker, ask a human, terminate, retry, or escalate. In OpenWOP terms, the supervisor governs the run path.</p>
+<h3 id="worker-agents">Worker agents</h3>
+<p>Execute bounded tasks: assemble evidence, classify exceptions, draft recommendations, call MCP tools, or produce artifacts.</p>
+<h3 id="governance-agents">Governance agents</h3>
+<p>Monitor policy, drift, spend, quality, risk, and human override patterns. They may begin alert-only, then gain escalation or kill-switch authority.</p>
+<h3 id="minimum-viable-agent-spec">Minimum viable agent spec</h3>
+<table>
+<thead><tr><th>Field</th><th>Purpose</th><th>OpenWOP implementation hook</th></tr></thead>
+<tbody>
+<tr><td>Role</td><td>What the agent is accountable for</td><td>Node type, workflow role, metadata</td></tr>
+<tr><td>Autonomy tier</td><td>What it can decide without a human</td><td>Interrupt rules, approval profiles, policy scopes</td></tr>
+<tr><td>Data boundary</td><td>Which systems and objects it may access</td><td>Tool permissions, per-run overlays, secrets, manifest references</td></tr>
+<tr><td>Decision boundary</td><td>What must be escalated</td><td>Human review queue, typed interrupts, policy gates</td></tr>
+<tr><td>Memory boundary</td><td>What may persist beyond the run</td><td>State channels, artifact retention, redaction policy</td></tr>
+<tr><td>Performance target</td><td>How improvement is measured</td><td>Run metrics, evals, outcome tags, cost traces</td></tr>
+<tr><td>Recovery behavior</td><td>How failures are handled</td><td>Retry, replay, fork, cancel, rollback, compensation workflow</td></tr>
+</tbody></table>
+<h2 id="govern-assure-becomes-executable">GOVERN / ASSURE becomes executable</h2>
+<p>OpenExO describes GOVERN / ASSURE as four operational primitives: trusted evals, searchable logs, granular rollback, and human review queues.<a href="#fn-govern">8</a> OpenWOP is unusually well aligned with this because it standardizes the runtime surfaces that produce those controls.</p>
+<h3 id="trusted-evals">Trusted evals</h3>
+<p>Attach eval runs, historical replay, and shadow-mode comparisons to workflow versions.</p>
+<h3 id="searchable-logs">Searchable logs</h3>
+<p>Persist event logs, artifacts, state transitions, correlation IDs, and trace context.</p>
+<h3 id="granular-rollback">Granular rollback</h3>
+<p>Replay, fork, cancel, pause, resume, or compensate at the workflow-run level.</p>
+<h3 id="human-review-queue">Human review queue</h3>
+<p>Use typed interrupts for approvals, clarifications, exceptions, and high-risk decisions.</p>
+<p>OpenWOP’s v1 spec corpus emphasizes run lifecycle, SSE stream modes, HMAC-signed webhooks, replay and time-travel debugging, idempotency, typed state channels, version negotiation, and human-in-the-loop interrupts.<a href="#fn-spec-corpus">9</a> Its governance page states the protocol mission as declaring, running, streaming, interrupting, replaying, and validating durable AI workflows across hosts while remaining vendor-neutral and implementable by unaffiliated hosts.<a href="#fn-governance">10</a></p>
+<h2 id="how-openwop-composes-with-a2a-and-mcp">How OpenWOP composes with A2A and MCP</h2>
+<p>OpenWOP should not be positioned as the only protocol in the ExO 3.0 stack. The better architecture assigns each protocol a clear layer:</p>
+<table>
+<thead><tr><th>Protocol</th><th>Best role in an ExO 3.0 architecture</th><th>Boundary</th></tr></thead>
+<tbody>
+<tr><td><span class="cmp-chip cmp-chip-owp">OpenWOP</span></td><td>Durable workflow execution protocol</td><td>Inside the Intelligence Stack: runs, event logs, interrupts, workflow lifecycle, observability, conformance.</td></tr>
+<tr><td><span class="cmp-chip cmp-chip-a2a">A2A</span></td><td>Agent-to-agent collaboration protocol</td><td>Between organizations, agent networks, vendors, or specialist agents.</td></tr>
+<tr><td><span class="cmp-chip cmp-chip-mcp">MCP</span></td><td>Tool, context, and data access protocol</td><td>Between an agent/workflow node and external systems such as databases, search, files, SaaS tools, and APIs. MCP is officially described as an open standard for connecting AI applications to external systems.<a href="#fn-mcp">11</a></td></tr>
+</tbody></table>
+<pre class="lang-"><code>ExO 3.0 organization
+  └─ Intelligence Stack
+      ├─ OpenWOP: workflow run lifecycle, event log, governance, replay
+      │   ├─ MCP: tools, data sources, resources, prompts, APIs
+      │   └─ A2A: external specialist agents and partner organizations
+      └─ GOVERN / ASSURE: evals, logs, rollback, review queues</code></pre>
+<p>This composition lets OpenExO describe a practical open architecture: <strong>A2A for inter-agent collaboration, MCP for tool and data connectivity, and OpenWOP for durable organizational workflow execution.</strong></p>
+<h2 id="implementation-blueprint-from-concept-to-pilot">Implementation blueprint: from concept to pilot</h2>
+<p>The best proof of the OpenWOP/OpenExO fit is a concrete pilot. A strong candidate is an exception-heavy workflow such as invoice exception handling, customer escalation triage, claims review, order exception resolution, compliance intake, procurement approval, or sales operations follow-up.</p>
+<h3 id="phase-1-publish-the-openexo-workflow-profile">Phase 1: Publish the OpenExO workflow profile</h3>
+<ul>
+<li>Define a minimal <code>openexo.workflow.profile</code> extension for OpenWOP run metadata.</li>
+<li>Include MTP alignment, autonomy tier, workflow data manifest ID, human review policy, cost budget, risk tier, and success metrics.</li>
+<li>Map GOVERN / ASSURE evidence requirements to run outputs.</li>
+</ul>
+<h3 id="phase-2-build-one-reference-workflow">Phase 2: Build one reference workflow</h3>
+<ul>
+<li>Select one real-world workflow with high coordination load and measurable output quality.</li>
+<li>Model it as an OpenWOP workflow: supervisor, evidence worker, policy worker, action worker, human reviewer, and learning loop.</li>
+<li>Run in shadow mode beside the current process.</li>
+</ul>
+<h3 id="phase-3-instrument-for-proof">Phase 3: Instrument for proof</h3>
+<ul>
+<li>Track cycle time, cost per completed outcome, escalation rate, human override rate, false-positive rate, customer impact, policy violations, and recovery time.</li>
+<li>Use OpenWOP event logs, artifacts, traces, and run metadata as the proof record.</li>
+</ul>
+<h3 id="phase-4-graduate-autonomy-in-waves">Phase 4: Graduate autonomy in waves</h3>
+<ul>
+<li>Begin with alert-only governance.</li>
+<li>Move to human approval for low-risk recommended actions.</li>
+<li>Allow bounded autonomous action only after repeated replay and shadow-mode evidence.</li>
+<li>Keep rollback, pause, and kill-switch controls available throughout.</li>
+</ul>
+<h3 id="phase-5-package-as-an-openexo-accelerator">Phase 5: Package as an OpenExO accelerator</h3>
+<ul>
+<li>Create an OpenExO 3.0 + OpenWOP reference guide.</li>
+<li>Publish workflow templates for the first five migration patterns.</li>
+<li>Define a conformance checklist for Edge Twin pilots.</li>
+<li>Offer a workshop track: “Make REWRITE executable with OpenWOP.”</li>
+</ul>
+<h2 id="risks-objections-and-guardrails">Risks, objections, and guardrails</h2>
+<table>
+<thead><tr><th>Likely objection</th><th>Response</th><th>Guardrail</th></tr></thead>
+<tbody>
+<tr><td>“This sounds like another workflow engine.”</td><td>OpenWOP is a wire-level protocol and conformance target, not a single proprietary runtime.</td><td>Keep the page focused on protocol portability, not product claims.</td></tr>
+<tr><td>“OpenExO is a management model, not a software spec.”</td><td>Exactly: OpenWOP is the bridge from management model to executable workflow architecture.</td><td>Position this as an implementation layer for technical teams and CIOs.</td></tr>
+<tr><td>“Enterprises will not let an Edge Twin access core systems.”</td><td>The OpenExO v20 outline already rejects data forking and calls for workflow-scoped governed API access.<a href="#fn-edge-twin">7</a></td><td>Require least-privilege scopes, short-lived credentials, source-of-truth rules, and correlation IDs.</td></tr>
+<tr><td>“Agent autonomy is risky.”</td><td>OpenWOP supports human interrupts, logging, replay, approval queues, and rollback at the workflow level.</td><td>Autonomy should graduate by wave, not be granted wholesale.</td></tr>
+<tr><td>“The protocol is new.”</td><td>Adoption should begin with pilot workflows, conformance checks, and optional profiles rather than mission-critical replacement on Day 1.</td><td>Use shadow mode, replay, reference workflows, and documented escape hatches.</td></tr>
+</tbody></table>
+<h2 id="final-thesis">Final thesis</h2>
+<blockquote><p><strong>OpenExO 3.0 tells leaders what the AI-native organization should become. OpenWOP can tell systems how that organization actually runs.</strong></p></blockquote>
+<p>OpenWOP is compelling for OpenExO 3.0 because it sits exactly where the organizational thesis needs an implementation substrate: the boundary between strategic redesign and operational execution. It can turn REWRITE from a playbook into a set of durable, governed workflow migrations. It can turn the Intelligence Stack from a conceptual operating model into a runtime architecture. It can turn the agent workforce from a collection of bots into a measurable, auditable, portable execution system.</p>
+<p>The strongest public positioning is therefore:</p>
+<blockquote><p><strong>OpenWOP is the open workflow protocol for the ExO 3.0 Intelligence Stack: a durable, observable, human-governed execution layer for AI-native organizations.</strong></p></blockquote>
+<h2 id="sources-and-references">Sources and references</h2>
+<ul>
+<li>Salim Ismail, <a href="https://salimismail.com/">official site</a>, public description of ExO 3.0 as a framework for redesigning organizations around intelligence, autonomy, and purpose.</li>
+<li>OpenExO, <a href="https://openexo.com/organizational-singularity">The Organizational Singularity v20 Bookapp</a>, outline describing ExO 3.0, the Intelligence Stack, and REWRITE.</li>
+<li>OpenWOP, <a href="https://openwop.dev/">homepage</a>, description of OpenWOP as a protocol for multi-agent workflow orchestration with REST, SSE, signed webhooks, event logs, and OpenTelemetry.</li>
+<li>OpenExO, <a href="https://openexo.com/organizational-singularity">The Organizational Singularity</a>, Intelligence Stack sections and industry stack crosswalk.</li>
+<li>OpenExO, <a href="https://openexo.com/organizational-singularity">REWRITE Playbook</a>, Direct Mode / Edge Mode and governance-from-Day-1 language.</li>
+<li>OpenExO, <a href="https://openexo.com/organizational-singularity">Workflow Data Manifest</a>, Step 3 EXTRACT language on workflow data sources, sensitivity, retention, and approvals.</li>
+<li>OpenExO, <a href="https://openexo.com/organizational-singularity">Edge Deployment Model</a>, Edge Twin definition and governed API access/no-data-fork guidance.</li>
+<li>OpenExO, <a href="https://openexo.com/organizational-singularity">GOVERN / ASSURE</a>, four primitives: trusted evals, searchable logs, granular rollback, human review queue.</li>
+<li>OpenWOP, <a href="https://openwop.dev/spec/v1/">v1 spec corpus</a>, run lifecycle, capability declaration, SSE stream modes, webhooks, replay, idempotency, typed state channels, and HITL interrupt primitive.</li>
+<li>OpenWOP, <a href="https://openwop.dev/governance/">governance page</a>, vendor-neutral mission and implementability by unaffiliated hosts.</li>
+<li>Model Context Protocol, <a href="https://modelcontextprotocol.io/docs/getting-started/intro">official introduction</a>, MCP as an open-source standard for connecting AI applications to external systems, tools, data, and workflows.</li>
+</ul></article></div><script src="/assets/spec-toc.js" defer></script></div>
+  </div>
+</main>
+
+<!-- ─────────────────────── FOOTER (mirrors marketing) ─────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-mark">
+          <img src="/assets/OpenWOP.svg" alt="" aria-hidden="true"/>
+          Open<em>WOP</em>
+        </div>
+        <p style="color:var(--ink-3); font-size:13px; max-width:32ch; margin-top:14px;">
+          The Workflow Orchestration Protocol — an open, conformance-tested
+          contract for durable, observable AI workflows across hosts.
+        </p>
+      </div>
+      <div>
+        <h5>Specification</h5>
+        <ul>
+          <li><a href="/spec/v1/">v1.x Core</a></li>
+          <li><a href="/rfcs/">RFCs</a></li>
+          <li><a href="/api/rest/">REST API reference</a></li>
+          <li><a href="/api/events/">AsyncAPI events</a></li>
+          <li><a href="/api/grpc/">gRPC transport</a></li>
+          <li><a href="/errors/">Error codes</a></li>
+          <li><a href="/scenarios/">Scenario walkthroughs</a></li>
+          <li><a href="/profiles/">Profiles</a></li>
+          <li><a href="/conformance/">Conformance</a></li>
+          <li><a href="/comparisons/a2a-openwop-mcp/">A2A vs MCP vs OpenWOP</a></li>
+          <li><a href="/comparisons/openexo-3-openwop/">OpenExO 3.0 and OpenWOP</a></li>
+          <li><a href="/adopters/">Adopters &amp; interop matrix</a></li>
+          <li><a href="/versioning/">Versioning policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Ecosystem</h5>
+        <ul>
+          <li><a href="https://packs.openwop.dev/">Pack registry</a></li>
+          <li><a href="/spec/v1/node-packs.html">Node Packs spec</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/examples/hosts">Reference hosts</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/INTEROP-MATRIX.md">Interop matrix</a></li>
+          <li><a href="https://github.com/openwop/openwop/tree/main/conformance">Conformance suite</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="/roadmap/">Roadmap</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+          <li><a href="/faq/">FAQ</a></li>
+          <li><a href="/security/">Security posture</a></li>
+          <li><a href="/governance/">Governance</a></li>
+          <li><a href="/maintainers/">Maintainers</a></li>
+          <li><a href="/contributing/">Contributing</a></li>
+          <li><a href="https://github.com/openwop/openwop/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/openwop/openwop/releases">Watch releases</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>For</h5>
+        <ul>
+          <li><a href="/for/workflow-authors/">Workflow authors</a></li>
+          <li><a href="/for/host-implementers/">Host implementers</a></li>
+          <li><a href="/for/pack-authors/">Pack authors</a></li>
+          <li><a href="/for/production-evaluators/">Production evaluators</a></li>
+          <li><a href="/install/">Install the demo app</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 OpenWOP contributors</span>
+      <span>Open source under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="license noopener">Apache 2.0 license</a> · openwop.dev</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/site-nav.js" defer></script>
+
+</body>
+</html>
