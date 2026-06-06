@@ -5,6 +5,7 @@ import { cancelRun, deleteRun, forkRun, getDebugBundle, getRun, pollEvents } fro
 import { subscribeToRun } from '../client/streamsClient.js';
 import { listOpenInterrupts, type OpenInterrupt } from '../client/interruptsClient.js';
 import { listAnnotations, type Annotation } from '../client/feedbackClient.js';
+import { StatusBadge } from '../ui/StatusBadge.js';
 import { EventStreamView } from '../streams/EventStreamView.js';
 import { RunTimeline } from './RunTimeline.js';
 import { RunStepInspector } from './RunStepInspector.js';
@@ -213,7 +214,7 @@ export function RunDetailPage() {
         )}
         <h2>
           Run <code>{runId}</code>
-          {snapshot && <span className={`status-badge ${snapshot.status}`} style={{ marginLeft: 8 }}>{snapshot.status}</span>}
+          {snapshot && <StatusBadge status={snapshot.status} style={{ marginLeft: 8 }} />}
         </h2>
         {snapshot && (
           <pre>{JSON.stringify(snapshot, null, 2)}</pre>

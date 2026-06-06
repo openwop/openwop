@@ -5,6 +5,7 @@ import { SkeletonRows } from '../ui/Skeleton.js';
 import { toast } from '../ui/toast.js';
 import { createRun, listMyRuns, type RunListItem } from '../client/runsClient.js';
 import { classifyHttpError } from '../client/classifyHttpError.js';
+import { StatusBadge } from '../ui/StatusBadge.js';
 import type { Annotation } from '../client/feedbackClient.js';
 import { useRunAnnotations, reviewOf, needsReview, reviewReason } from './useRunAnnotations.js';
 import { formatDuration } from './format.js';
@@ -267,15 +268,6 @@ export function RunsIndexPage() {
       </div>
     </section>
   );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const tone =
-    status === 'completed' ? 'success'
-      : status === 'failed' || status === 'cancelled' ? 'error'
-        : status === 'running' || status === 'waiting' ? 'in-progress'
-          : 'muted';
-  return <span className={`status-badge status-${tone}`}>{status}</span>;
 }
 
 interface QualityRollup {

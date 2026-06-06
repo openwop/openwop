@@ -8,6 +8,7 @@
 export { ErrorBoundary } from './ErrorBoundary.js';
 export { useFocusTrap } from './useFocusTrap.js';
 export { StateCard } from './StateCard.js';
+export { StatusBadge, statusTone } from './StatusBadge.js';
 export { Notice, type NoticeVariant } from './Notice.js';
 export { Skeleton, SkeletonRows } from './Skeleton.js';
 export { PageHeader } from './PageHeader.js';
