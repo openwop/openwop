@@ -187,7 +187,7 @@ Examples run end-to-end in CI via [`.github/workflows/examples.yml`](https://git
 
 End-to-end deployable templates under [`apps/`](./apps/) — a tier above `examples/`. Where `examples/` are single-file demos and `examples/hosts/` are conformance-test targets, `apps/` are full vertical-slice templates with backend + frontend + Dockerfile + auth + storage + observability wired together.
 
-- **[`apps/workflow-engine/`](https://github.com/openwop/openwop-app)** — single-container TypeScript backend + React frontend. Implements run lifecycle, all 4 interrupt kinds, SSE streams (4 modes + Last-Event-ID resume), BYOK with strip-on-persist, OTel under `openwop.*`, pack consumption with SRI + Ed25519. Sample / template code; not production-hardened. Targets ~70% conformance — see the README for the honest skip-equivalent matrix.
+- **[`openwop/openwop-app`](https://github.com/openwop/openwop-app)** *(its own repo — extracted from `apps/workflow-engine/`)* — single-container TypeScript backend + React frontend; deploys `app.openwop.dev`. Implements run lifecycle, all 4 interrupt kinds, SSE streams (4 modes + Last-Event-ID resume), BYOK with strip-on-persist, OTel under `openwop.*`, pack consumption with SRI + Ed25519. Consumes the published `@openwop/openwop` SDK. See that repo's README for the conformance skip-equivalent matrix.
 
 ## Operational references
 
@@ -198,7 +198,7 @@ End-to-end deployable templates under [`apps/`](./apps/) — a tier above `examp
 ## Design standards
 
 - **[`DESIGN.md`](https://github.com/openwop/openwop-site/blob/main/DESIGN.md)** — marketing-site standards + shared editorial palette (`--paper` / `--ink` / `--clay` / `--star-glow`) + Instrument Serif + Geist + Geist Mono type triple. Now lives in the [openwop-site](https://github.com/openwop/openwop-site) repo alongside the marketing site it governs.
-- **[`DESIGN.app.md`](./DESIGN.app.md)** — reference-app standards for `apps/workflow-engine/frontend/react/`. App-specific components, functional status tokens, xyflow canvas theming, Firebase-Auth vendor-mark policy, inline-style policy. Mirrors shared tokens from `DESIGN.md` per the SYNC RULE in `apps/workflow-engine/frontend/react/src/styles/global.css :root`.
+- **[`DESIGN.app.md`](./DESIGN.app.md)** — *moved with the app to [`openwop/openwop-app`](https://github.com/openwop/openwop-app)* (stub retained here). Reference-app frontend standards: app-specific components, functional status tokens, xyflow canvas theming, Firebase-Auth vendor-mark policy, inline-style policy. Mirrors shared tokens from `DESIGN.md`.
 - Reviewed by `/ux-review`.
 
 ## Status legend

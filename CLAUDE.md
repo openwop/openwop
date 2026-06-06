@@ -18,31 +18,6 @@ Multiple Claude Code sessions share this one checkout. Assume another session is
 - **Don't symlink `node_modules` as a shortcut.** The shell cwd resets between tool calls, so `ln -s` lands in the wrong dir and leaves stray `node_modules/node_modules` symlinks that break later `git checkout` ("cannot rmdir node_modules"). Provision worktrees with a real `npm install`.
 - **Clean up only your own artifacts.** Delete your stale branches after the PR is up; never delete branches, worktrees, or stashes you didn't create.
 
-## Deploying the demo app (`app.openwop.dev`)
+## The demo app moved to `openwop/openwop-app`
 
-The live demo is **two independent deploys** — get this wrong and you ship half a release. (Full recipe + prerequisites in `apps/workflow-engine/DEPLOY.md`; this is the gotcha digest.)
-
-- **`app.openwop.dev` = backend (Cloud Run) + frontend (Firebase Hosting), deployed separately.** The `apps/workflow-engine/Dockerfile` builds the **backend only** (no `COPY frontend`, no vite build). The React SPA is a *separate* Firebase Hosting deploy. A backend-only redeploy will NOT ship frontend changes, and vice-versa.
-- **Deploy order: backend FIRST, then frontend.** A new SPA calls new backend endpoints; if the frontend lands first, those calls 404 until the backend catches up. Wait for the Cloud Run revision to serve 100% traffic before `firebase deploy`.
-- **Deploy from a CLEAN `origin/main` checkout** (your worktree reset to `origin/main`, or `git worktree add --detach /tmp/owp-deploy origin/main`) — never the shared tree, whose uncommitted work would ride into the `--source` upload.
-- **Backend (Cloud Run `openwop-app-backend`):**
-  ```
-  gcloud run deploy openwop-app-backend --source apps/workflow-engine \
-    --region us-central1 --project openwop-dev --quiet
-  ```
-  **Pass NO `--set-secrets` / `--set-env-vars` / `--env-vars-file` flags.** A bare `gcloud run deploy` preserves the live secret + env config; DEPLOY.md §6's fuller command is STALE and would wipe the 7-secret config (Cloud SQL DSN, provider keys, messaging token). The build runs via Cloud Build (~3–5 min). The image vendors `conformance-fixtures/`, `schemas/`, `packs/` from the build context — re-run `scripts/sync-{fixtures,schemas,packs}.sh` only if those changed.
-- **Frontend (Firebase Hosting target `app`):**
-  ```
-  ( cd apps/workflow-engine/frontend/react && npm run build )   # uses .env.production
-  firebase deploy --only hosting:app --project openwop-dev
-  ```
-  `.env.production` wires the SPA to `VITE_OPENWOP_BASE_URL=/api` (a Firebase rewrite proxy to Cloud Run) + `cookie` auth. SSE bypasses `/api` (CDN buffers it) via a direct `*.run.app` URL — don't "simplify" it back to `/api`.
-- **Deploy account:** use the gcloud account that has `run.admin` on `openwop-dev` — check `LAST DEPLOYED BY` on `gcloud run services list --project openwop-dev`. The project-*owner* account may NOT have Cloud Run perms; the deployer is a different account (see private memory).
-- **Verify the full stack after both deploys:** `curl https://app.openwop.dev/` should reference the **same `assets/index-<hash>.js`** your local `dist/` just built; `curl https://app.openwop.dev/api/readiness` → 200 (503 only if a managed provider key is unconfigured); a `POST https://app.openwop.dev/api/v1/host/sample/demo/seed` (with a `-c -b` cookie jar — cookieless requests each get a throwaway `anon:<sid>` tenant) should round-trip.
-- **Watch the per-IP rate limit when a page adds request fan-out.** `middleware/rateLimit.ts` enforces a **per-IP read budget (default 60 req/min)** — separate from the tighter run-creation limits (10/min, 50/day, 5 concurrent). A SPA page that fires many parallel reads on load (a dashboard that fans out one fetch per agent/board, a `Promise.all` over N runs) can blow a single *real* user past 60/min and surface as a wall of `429`s (plus `500`s from the Firebase `/api` proxy faulting under the storm). Console symptom: `rate_limited` / `listX returned 429` across unrelated endpoints. Fix WITHOUT a rebuild via an **incremental** env update (preserves all secrets + other env — unlike `--set-env-vars`/`--set-secrets`, which replace and would wipe the live config):
-  ```
-  gcloud run services update openwop-app-backend \
-    --update-env-vars OPENWOP_RATELIMIT_IP_REQS_PER_MIN=300 \
-    --region us-central1 --project openwop-dev
-  ```
-  Confirm the bucketed key in logs is a real client IP (`jsonPayload.msg="ip rate limit hit"`) — XFF first-hop resolves to the actual user, so the budget is per-user, not global. Also prefer reducing front-end fan-out (batch reads; don't N+1 a per-row detail fetch on a list page).
+`app.openwop.dev` (Cloud Run `openwop-app-backend` + Firebase Hosting target `app`) is now built and deployed from **[`openwop/openwop-app`](https://github.com/openwop/openwop-app)** — the reference app was extracted from `apps/workflow-engine/` (2026-06, with full history). Its deploy recipe + the operational gotchas (bare `gcloud run deploy` preserves the 7-secret config; backend-FIRST-then-frontend ordering; the SSE-bypass `*.run.app` URL; the `OPENWOP_RATELIMIT_IP_REQS_PER_MIN` per-IP read budget; the `run.admin` deployer account) live in that repo's `DEPLOY.md`. **This monorepo no longer deploys any Firebase Hosting target.**
