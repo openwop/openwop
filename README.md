@@ -6,6 +6,8 @@ If you're building agentic systems, AI workflow engines, multi-agent application
 
 > **Try it live: [app.openwop.dev](https://app.openwop.dev/)** — anonymous demo of the reference workflow-engine app. Build a workflow visually, run it against 44 published `core.openwop.*` packs, see the SSE event stream + interrupt cards + capabilities advertisement. Sign in with Google or GitHub for persistent runs + workflows + BYOK secrets (KMS-encrypted at rest). Anonymous sessions reset every 24h; BYOK keys you paste are session-only and never persisted. [Privacy & cookies](https://app.openwop.dev/privacy).
 
+> **Read the paper: [*OpenWOP: A Vendor-Neutral Protocol for Durable, Portable Agentic Workflow Orchestration*](https://doi.org/10.5281/zenodo.20576239)** — published on Zenodo (DOI [10.5281/zenodo.20576239](https://doi.org/10.5281/zenodo.20576239), CC BY 4.0). The protocol-level argument, a reproducible cross-language portability result, and the full evidence artifact live in [`openwop/openwop-paper`](https://github.com/openwop/openwop-paper).
+
 ## Multi-Agent Architecture (v1+)
 
 OpenWOP v1 introduces first-class support for **orchestrator-driven multi-agent workflows**:
@@ -384,6 +386,7 @@ Project meta:
 - **[`GOVERNANCE.md`](./GOVERNANCE.md)** — maintainer model, decision-making, and spec change process.
 - **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** — how to propose changes, CI gates, change categories.
 - **[`SECURITY.md`](./SECURITY.md)** — coordinated disclosure process.
+- **Paper:** *OpenWOP: A Vendor-Neutral Protocol for Durable, Portable Agentic Workflow Orchestration* — [Zenodo, DOI 10.5281/zenodo.20576239](https://doi.org/10.5281/zenodo.20576239) (CC BY 4.0); source + reproducible evidence in [`openwop/openwop-paper`](https://github.com/openwop/openwop-paper).
 
 Reference implementations:
 
