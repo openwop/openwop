@@ -139,6 +139,10 @@ Until the tripwire fires, the canonical URL remains `github.com/openwop/openwop`
 
 Recruiting external maintainers is **out of band**. `MAINTAINERS.md` documents the criteria and process; this roadmap does not commit to a recruitment timeline.
 
+## Research & publications
+
+- **OpenWOP: A Vendor-Neutral Protocol for Durable, Portable Agentic Workflow Orchestration** — published on Zenodo, [DOI 10.5281/zenodo.20576239](https://doi.org/10.5281/zenodo.20576239) (CC BY 4.0). A protocol-level position paper with a reproducible cross-language portability result: the same workflow definition yields identical terminal state and `RunEvent` type-sequence across an independent TypeScript and a Python reference host. Source and the full evidence artifact live in [`openwop/openwop-paper`](https://github.com/openwop/openwop-paper). The paper is steward-authored and states so explicitly; independent external review and a non-steward host remain the decisive validation steps, tracked as the tripwires above.
+
 ## What this roadmap does not commit to
 
 - A specific date for v1 or v2.0.
