@@ -53,10 +53,6 @@ build/
 # Per-deployment signing keys, SQLite DBs, audit logs. Never committed.
 examples/hosts/postgres/data/
 examples/hosts/sqlite/data/
-apps/workflow-engine/backend/typescript/data/
-# Frontend dev-server runtime state (sqlite + host-fs sandbox written by
-# the in-memory host surfaces). Never source.
-apps/workflow-engine/frontend/react/data/
 # Conformance harness runtime state for local workflow-engine runs:
 # the BE's sqlite DB + WAL/shm sidecar files (caught by `*.db` for the
 # main file, but the WAL writer emits `.db-shm`/`.db-wal` siblings
@@ -67,19 +63,6 @@ conformance/data/*.db-shm
 conformance/data/*.db-wal
 conformance/data/.byok-master-key
 conformance/data/host-fs/
-
-# ── apps/workflow-engine: stray colocated TypeScript emit ────────────────────
-# `tsc` invoked without `--noEmit` (e.g., `tsc -b` outside the build
-# script) writes a `.js`+`.js.map` next to every `.ts`/`.tsx` source.
-# Source of truth is always the `.ts`/`.tsx` file — Vite imports those
-# directly. The general `dist/` rule above handles the BE bundle
-# output; these rules catch the colocated emit and the BE's `lib/`
-# directory that `tsc -b` sometimes targets. Scoped to this subtree so
-# legitimate `.js` files elsewhere in the repo (scripts/, etc.) are
-# untouched.
-apps/workflow-engine/**/src/**/*.js
-apps/workflow-engine/**/src/**/*.js.map
-apps/workflow-engine/backend/typescript/lib/
 
 # ── Registry: un-ignore the publication artifacts ────────────────────────────
 # The root `*.tgz` rule above would otherwise block every new signed pack
@@ -178,11 +161,6 @@ ui-debug.log
 !registry/v1/packs/core.openwop.db/
 !registry/v1/packs/core.openwop.db/**
 !packs/core.openwop.db/**
-# …and the vendored copy under the demo app (sync-packs.sh target). Without
-# this the `*.db` glob excludes it from the 85-pack vendored set, so a fresh
-# checkout can't run `core.db.*` nodes (e.g. nosql-surface.test.ts fails).
-!apps/workflow-engine/packs/core.openwop.db/
-!apps/workflow-engine/packs/core.openwop.db/**
 
 # ── Process / daemon state ───────────────────────────────────────────────────
 *.pid
