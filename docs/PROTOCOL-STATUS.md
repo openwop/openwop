@@ -11,8 +11,8 @@
 | JSON Schemas | 56 | `schemas/*.schema.json` |
 | OpenAPI operations | 48 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 324 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 89 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 330 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 92 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 1.20.0 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 1.21.0 | `conformance/package.json` | minor on scenario add/remove |
 
 ## OpenAPI Operations
 
@@ -32,7 +32,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 86 |
-| Active | 1 |
+| Active | 4 |
 | Draft | 2 |
 
 | RFC | Title | Status |
@@ -126,6 +126,9 @@
 | RFC 0087 | Define an **agent org-chart** - a tenant-scoped, descriptive grouping of standing roster agents (RFC 0086) into departments + roles with `reportsTo` edges and a responsibility view - under one load-bearing invariant: **org position confers NO authority** (a `reportsTo`/manager edge MUST NOT widen `toolAllowlist`, grant an RBAC scope, or bypass an approval gate); composing RFC 0086 (the members), RFC 0074 (tenant scoping), RFC 0049 (RBAC - unchanged by position), and RFC 0051 (approval gates - unchanged by position) | Accepted |
 | RFC 0088 | `openwop-core-standard` - the stable Core Standard Profile (the black-box-proven floor) | Accepted |
 | RFC 0089 | Conformance certification bundle - machine-readable per-profile evidence | Accepted |
+| RFC 0090 | A first-class verifier/critic turn (`agent.verified` event) + observable convergence criteria on the orchestrator `terminate` decision, so a multi-agent run can check work before committing and stop on a stated success condition rather than an opaque self-judgement | Active |
+| RFC 0091 | Let `ctx.callAI` messages carry typed multimodal content parts (text / image / audio / document) so an agent can *perceive* non-text input, gated behind an additive `capabilities.aiProviders.input.modalities[]` advertisement - closing the one agent-architecture layer (perception) openwop does not model | Active |
+| RFC 0092 | Let an agent manifest declare the host capabilities it needs (`requiresCapabilities[]`), and surface an agent whose requirements a host can't meet as degraded on the inventory - generalizing the RFC 0072 sectionC `degraded[]` / RFC 0080 sectionC memory-degraded projection from per-dependency to a stated capability floor | Active |
 
 ## SDK Helper Coverage
 
@@ -148,7 +151,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 2 RFCs still `Draft` (RFC 0038, RFC 0043) — advance with schema/conformance proof or defer.
-- 1 RFC `Active` (RFC 0035) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 4 RFCs `Active` (RFC 0035, RFC 0090, RFC 0091, RFC 0092) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

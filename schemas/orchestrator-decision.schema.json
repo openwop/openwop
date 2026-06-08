@@ -64,6 +64,19 @@
           "minimum": 0,
           "maximum": 1,
           "description": "RFC 0039 §A — supervisor's stated confidence in this termination decision, in [0, 1]. Optional; absent means 'no opinion stated' (NOT low confidence). Hosts advertising `capabilities.multiAgent.executionModel.version >= 2` MUST honor a confidence floor as documented on NextWorkerDecision.confidence above; the same MUST applies to TerminateDecision because a confidently-wrong terminate is the same class of failure as a confidently-wrong dispatch."
+        },
+        "successCriteria": {
+          "type": "array",
+          "description": "RFC 0090 (`multiAgent.executionModel.version >= 6`). Optional structured convergence record — the conditions the supervisor judged when terminating. Content-free: criterion keys + booleans only, never result content. When present, a terminate with any `met: false` entry signals a give-up (NOT goal-satisfied); consumers MUST NOT treat such a run as a success. Absent ⇒ today's free-text `reason` semantics, unchanged.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["key", "met"],
+            "properties": {
+              "key": { "type": "string", "minLength": 1, "description": "Criterion identifier (e.g. `goal-answered`)." },
+              "met": { "type": "boolean", "description": "Whether the supervisor judged this criterion satisfied." }
+            }
+          }
         }
       },
       "additionalProperties": false

@@ -1,6 +1,20 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [Unreleased]
+## [1.21.0] — 2026-06-07 — RFC 0090/0091/0092 conformance scenarios + vitest 4
+
+### Security — test-tooling dependency hygiene (consumer-facing)
+- **Bumped `vitest` 3 → 4 (kept in `dependencies`).** `vitest` was a hard `dependency` pinned `^3.0.0`, dragging the 2 critical `vitest`-3 advisories (which only trigger under `vitest --ui`, never `vitest run`, never production) into every consumer's tree. The fix is the **version bump alone**: `dependencies.vitest` is now `^4.0.0` — `vitest` 4 carries none of those advisories, so a consumer install now reports `0 vulnerabilities`. **`vitest` MUST remain a runtime `dependency`** (not a `devDependency` or optional peer): the suite's `bin` (`dist/cli.js`) runtime-invokes `npx vitest`, so a bare `npx -y @openwop/openwop-conformance` install path requires `vitest` resolvable from the installed package — enforced by the CI install-path guardrail (regression `F-2026-05-06-C`). The server-free gate passes under `vitest` 4; server-requiring scenarios are unaffected (they gate on `OPENWOP_BASE_URL`, orthogonal to the runner version). No scenario behavior or count change.
+
+### Added — RFCs 0090/0091/0092 conformance scenarios (count 324 → 330)
+Always-on, server-free shape probes:
+- **`agent-verifier-shape.test.ts`** (RFC 0090) — the content-free `agent.verified` payload $def (closed `verdict` enum; `additionalProperties:false` backing `verifier-no-content-leak`), `agent.verified` in the RunEventType enum, the additive `successCriteria` on the `terminate` decision, and `executionModel.version` 6 + the `verifier{supported,gating}` capability sub-block.
+- **`aiproviders-input-shape.test.ts`** (RFC 0091) — the additive `capabilities.aiProviders.input.modalities[]` (closed enum text/image/audio/document) + positive-integer `maxBytesPerPart`.
+- **`agent-requires-capabilities-shape.test.ts`** (RFC 0092) — the additive `AgentManifest.requiresCapabilities[]` (optional; non-string-array rejected).
+
+Capability-gated **behavioral** legs (soft-skip by default; hard-fail under `OPENWOP_REQUIRE_BEHAVIOR=true`) — the Active→Accepted reference-host proof for each RFC:
+- **`agent-capability-degraded-projection.test.ts`** (RFC 0092 §B) — gated on `agents.manifestRuntime`; the `degraded[]` projection iff-contract on the NORMATIVE `GET /v1/agents` (well-formed/unique members; a degraded key MUST be one the agent requires); non-vacuous via `OPENWOP_DEGRADED_CAPABILITY_AGENT_ID`. Black-box, no seam.
+- **`callai-multimodal.test.ts`** (RFC 0091 §A/§B) — gated on `aiProviders.input.modalities` including a non-text modality; an advertised modality part is accepted, an unadvertised one is rejected with `unsupported_modality`; via the `POST /v1/host/sample/ai/call` seam (soft-skip on 404).
+- **`verifier-gating.test.ts`** (RFC 0090 §B) — gated on `multiAgent.executionModel.verifier.gating`; a `fail` verdict blocks commit/terminate-as-success + emits `agent.verified{verdict:"fail"}`, a `pass` completes; via the `POST /v1/host/sample/agents/verify-run` seam (soft-skip on 404).
 
 ### Changed — test diagnostics (no behavior / count change)
 - **`agent-channel-dispatch.test.ts` (RFC 0082 §B) — value assertions over boolean assertions.** The four pin-comparison checks (Leg 1 `resolvedChannel`, Leg 2 + Leg 3 `resolvedAgentVersion`) now assert the observed value directly (`expect(observed, …).toBe(expected)` / `.not.toBe(movedVersion)`) instead of pre-computing a boolean and asserting `.toBe(true)`. A failing run on a third-party host now surfaces the *actual* resolved channel/version in the diff, not just "expected true, got false" + the requirement text. Pass/fail semantics, scenario count (324), and the published suite behavior are unchanged. Also documented Leg 3's test-isolation caveat: it promotes the bound agent's `stable` head via the conformance-only seam without rollback (the seam exposes no rollback primitive), so hosts SHOULD run the suite against an isolated/ephemeral deployment store.
