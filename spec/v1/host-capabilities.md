@@ -40,7 +40,14 @@ ctx.callAI({
   provider?: string,             // anthropic | openai | google | gemini | ...; defaults to host's preferred routing
   model?: string,                // model id; host-default when omitted
   systemPrompt?: string,
-  messages: Array<{ role: 'user' | 'assistant' | 'system', content: string }>,
+  // RFC 0091 — `content` is `string | ContentPart[]`. A plain string is text-only
+  // (today's behavior, always valid). A ContentPart[] carries multimodal PERCEPTION
+  // input — `{type:'text',text}` | `{type:'image'|'audio'|'document', mimeType, url? |
+  // mediaRef? | data?}` (exactly one source). Non-text parts are gated on
+  // `aiProviders.input.modalities`; an unadvertised modality MUST be rejected with
+  // `unsupported_modality`. Non-text input is UNTRUSTED (it can carry injected
+  // instructions) and inherits the threat-model-prompt-injection.md boundary.
+  messages: Array<{ role: 'user' | 'assistant' | 'system', content: string | ContentPart[] }>,
   temperature?: number,          // 0..2
   maxTokens?: number,            // upper bound; host MAY cap further
   stopSequences?: string[],

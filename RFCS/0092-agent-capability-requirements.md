@@ -1,0 +1,97 @@
+# RFC 0092: Agent-level capability requirements (`AgentManifest.requiresCapabilities`)
+
+| Field | Value |
+|---|---|
+| **RFC** | 0092 |
+| **Title** | Let an agent manifest declare the host capabilities it needs (`requiresCapabilities[]`), and surface an agent whose requirements a host can't meet as degraded on the inventory — generalizing the RFC 0072 §C `degraded[]` / RFC 0080 §C memory-degraded projection from per-dependency to a stated capability floor |
+| **Status** | `Active` |
+| **Author(s)** | David Tufts (@davidscotttufts) |
+| **Created** | 2026-06-07 |
+| **Updated** | 2026-06-07 (`Draft → Active` — comment window waived per `GOVERNANCE.md` single-maintainer lazy consensus during the bootstrap phase, after a steward wire-shape review. The additive surface (the `AgentManifest.requiresCapabilities[]` field + the degraded projection reusing the existing RFC 0072 §C `degraded[]` inventory marker) is landed and validates: `spec-corpus-validity` green and the always-on `agent-requires-capabilities-shape.test.ts` passes; a manifest without the field stays valid (absent ⇒ no requirements). **Wire shapes are now locked.** The behavioral `agent-capability-degraded-projection` scenario + the SDK type + a reference host serving the projection remain for `Active → Accepted`.) |
+| **Affects** | `schemas/agent-manifest.schema.json` (additive optional `requiresCapabilities[]`) · `spec/v1/multi-agent-execution.md` / agent-inventory prose (degraded surfacing) · `schemas/agent-inventory-response.schema.json` (reuses existing `degraded[]`) · conformance scenarios · SDKs · `CHANGELOG.md` · `INTEROP-MATRIX.md` |
+| **Compatibility** | `additive` |
+| **Supersedes** | — |
+| **Superseded by** | — |
+
+## Summary
+
+A node-pack declares the host capabilities it needs via `peerDependencies` (RFC 0003), but an **agent manifest** cannot — an agent inherits the run's `Capabilities` blindly, so a host can advertise + dispatch an agent whose required surface it doesn't provide (e.g. an agent that needs `host.workspace` or `aiProviders.toolCalling`), failing only at runtime with no pre-flight signal. This RFC adds an additive optional `AgentManifest.requiresCapabilities[]` — a list of capability keys the agent needs — and requires `GET /v1/agents` to surface an agent whose requirements the host can't meet as **degraded**, reusing the existing RFC 0072 §C `degraded[]` marker (the same pattern RFC 0080 §C applied to memory). Additive; absent ⇒ no declared requirements (today's behavior).
+
+## Motivation
+
+openwop has a per-dependency degradation-visibility pattern but no agent-level capability floor:
+
+1. **No agent capability floor.** `AgentManifest` (RFC 0003, `agent-manifest.schema.json`) declares `toolAllowlist`, `memoryShape`, `confidence`, `handoff` — but not "I require `host.workspace`" or "I require `aiProviders.toolCalling`." A pack declares `peerDependencies`; an agent has no equivalent. So a host advertising an agent on `GET /v1/agents` (RFC 0072/0074) presents it as plainly runnable even when a required surface is missing — the gap surfaces only when the agent fails mid-run.
+2. **The fix already has a precedent.** RFC 0072 §C added `degraded[]` (per-dependency degradation visibility on the inventory entry); RFC 0080 §C applied that exact shape to memory (`memoryDegraded` / `degradedMemoryDimensions`). This RFC generalizes the same "declare the need, surface the unmet need, dispatch at floor but observably" contract to arbitrary host capabilities — it is a generalization of an Accepted pattern, not a new mechanism.
+
+The spec is the right place because pre-flight capability matching is a cross-host interop concern: a client choosing an agent, or a builder adding one to a workflow, needs to know — from the inventory, before dispatch — whether *this host* can run *this agent* fully. The per-host capability *implementation* is unchanged; this RFC standardizes the *declaration* + its *degraded projection*, additively.
+
+## Proposal
+
+### §A — `AgentManifest.requiresCapabilities[]` (additive optional)
+
+```diff
+   "toolAllowlist": { "type": "array", "items": { "type": "string" } },
++  "requiresCapabilities": {
++    "type": "array",
++    "uniqueItems": true,
++    "items": { "type": "string", "minLength": 1 },
++    "description": "RFC 0092. Host-capability keys this agent needs to run fully (dotted, e.g. `host.workspace`, `aiProviders.toolCalling`, `multiAgent.executionModel.verifier`). Mirrors a node-pack's `peerDependencies` at the agent layer. A host that doesn't satisfy a listed key MUST surface the agent as degraded on GET /v1/agents (§B); it MAY still dispatch at the RFC 0070 floor. Absent ⇒ no declared requirements."
++  },
+```
+
+Keys are the dotted capability identifiers a client reads from `/.well-known/openwop` (the same vocabulary `capabilities.md` / `host-capabilities.md` define). The list is advisory about *need*, not a grant — it never widens the agent's authority.
+
+### §B — Degraded projection (normative, reuses RFC 0072 §C `degraded[]`)
+
+When a host advertises a manifest agent (RFC 0072/0074 `GET /v1/agents`) that declares `requiresCapabilities` containing a key the host does NOT advertise in its discovery document:
+
+1. The host MUST list the unmet key(s) in the existing inventory `degraded[]` field (RFC 0072 §C) — no new field; `degraded[]` already means "declared capability keys this installation does not satisfy." Absent/empty ⇒ all requirements met.
+2. A degraded agent MAY still dispatch at the RFC 0070 floor, but the degradation MUST be **observable** — a satisfied-looking inventory entry for an agent whose `requiresCapabilities` includes an unadvertised key is non-conformant (the RFC 0080 §C-2 silent-degradation rule, generalized).
+
+This composes with RFC 0080 §C: a memory dimension surfaces via `memoryDegraded`/`degradedMemoryDimensions`; a general capability surfaces via `degraded[]`. A host MAY populate both.
+
+### Examples
+
+**Positive.** Agent declares `requiresCapabilities: ["host.workspace", "aiProviders.toolCalling"]`; host advertises both → inventory entry's `degraded` is absent/empty (fully satisfied).
+
+**Negative (degraded).** Same agent on a host without `host.workspace` → `GET /v1/agents` entry MUST carry `degraded: ["host.workspace"]`. Dispatching as if satisfied (no `degraded`) → non-conformant by §B-2.
+
+**Negative (schema).** `requiresCapabilities: [123]` fails validation (items are non-empty strings).
+
+## Compatibility
+
+**Additive** (`COMPATIBILITY.md` §2.1). One new optional manifest array (absent ⇒ today's behavior); the projection reuses the existing optional `degraded[]` inventory field (no new inventory field). No existing field moved/renamed/removed/type-changed; no `MUST` relaxed; no conformance pass invalidated. The §B MUST only applies to agents that declare `requiresCapabilities` AND name an unadvertised key — i.e. only to manifests written against this RFC.
+
+## Conformance
+
+- **`agent-requires-capabilities-shape.test.ts`** (always-on, server-free): `requiresCapabilities` validates; items are non-empty unique strings; a manifest without it validates.
+- **`agent-capability-degraded-projection.test.ts`** (gated on `agents.manifestRuntime`): an agent whose `requiresCapabilities` names an unadvertised key surfaces it in `degraded[]` on `GET /v1/agents`; a fully-satisfied agent omits it (the §B-1/§B-2 contract). Soft-skips when unadvertised.
+
+## Alternatives considered
+
+1. **A new `agentDegraded`/`degradedCapabilities` inventory field.** Rejected — `degraded[]` (RFC 0072 §C) already carries exactly this meaning ("declared capability keys this installation doesn't satisfy"); a parallel field fragments the projection. Memory's `memoryDegraded` (RFC 0080) is the *dimension*-typed exception; general capabilities fit `degraded[]` as-is.
+2. **Reuse node-pack `peerDependencies` directly.** Rejected — an agent manifest is not a node pack; coupling agent requirements to a pack's peer-deps conflates two layers (an agent ships inside a pack but has its own capability needs). A dedicated field keeps the agent layer self-describing.
+3. **Refuse to dispatch a degraded agent.** Rejected — over-strict + breaking-flavored; the RFC 0070/0080 posture is "degrade at floor but observably," which preserves graceful behavior. A host MAY refuse as policy, but the spec requires only visibility.
+
+## Unresolved questions
+
+1. **Key vocabulary strictness.** Should `requiresCapabilities` items validate against a closed enum of known capability keys, or stay free-form dotted strings (forward-compatible with vendor capabilities)? Proposed: free-form (matches `NodeModule.requires` / `peerDependencies` posture). Confirm.
+2. **Transitive requirements.** If an agent requires `host.mcp`, is `aiProviders` implied? Proposed: no transitive closure (consistent with pack peer-deps); declare each directly. Confirm.
+3. **Run-time enforcement.** Beyond the inventory projection, should a host emit an event when it dispatches a degraded agent? Proposed: defer; the inventory projection is the floor, an event is a possible post-Accepted strengthening.
+
+## Acceptance criteria
+
+- [ ] `agent-manifest.schema.json` `requiresCapabilities` field.
+- [ ] Degraded-projection prose (agent-inventory / multi-agent-execution) reusing `degraded[]`.
+- [ ] Conformance: `agent-requires-capabilities-shape.test.ts` (always-on) + `agent-capability-degraded-projection.test.ts` (gated).
+- [ ] SDK manifest type; CHANGELOG + INTEROP-MATRIX rows.
+- [ ] All three Unresolved questions resolved (record in `Updated:`).
+- [ ] `Active → Accepted`: a host advertises an agent with `requiresCapabilities` + serves the degraded projection, passing the gated scenario non-vacuously.
+
+## References
+
+- [`schemas/agent-manifest.schema.json`](../schemas/agent-manifest.schema.json) — the manifest this extends.
+- [`RFCS/0072-agent-inventory-and-dispatch.md`](./0072-agent-inventory-and-dispatch.md) §C — the `degraded[]` marker this generalizes.
+- [`RFCS/0080-agent-memory-capability-reconciliation.md`](./0080-agent-memory-capability-reconciliation.md) §C — the memory-degraded projection this parallels.
+- [`RFCS/0003-agent-packs.md`](./0003-agent-packs.md) — `peerDependencies` (the pack-layer analogue).

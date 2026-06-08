@@ -553,8 +553,18 @@
             "version": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 5,
-              "description": "Profile version. 1 = Phase 1 (execution-loop framework + planner→worker handoff). 2 = Phase 2 (confidence-floor escalation + agent-memory lifecycle, RFC 0039). 3 = Phase 3 (cross-host causation, RFC 0040). 4 = Phase 4 (replay determinism under nondeterministic models, RFC 0041). 5 = Phase 5 (stateful agent-loop lifecycle — per-iteration workspace+memory snapshot inputs, the observable `iteration` counter on `runOrchestrator.decided`, and stateful HITL resume, RFC 0061). A host advertising `version: N` MUST implement all phases 1..N additively."
+              "maximum": 6,
+              "description": "Profile version. 1 = Phase 1 (execution-loop framework + planner→worker handoff). 2 = Phase 2 (confidence-floor escalation + agent-memory lifecycle, RFC 0039). 3 = Phase 3 (cross-host causation, RFC 0040). 4 = Phase 4 (replay determinism under nondeterministic models, RFC 0041). 5 = Phase 5 (stateful agent-loop lifecycle — per-iteration workspace+memory snapshot inputs, the observable `iteration` counter on `runOrchestrator.decided`, and stateful HITL resume, RFC 0061). 6 = Phase 6 (verifier/critic turn — the `agent.verified` event + `successCriteria` on the `terminate` decision, RFC 0090). A host advertising `version: N` MUST implement all phases 1..N additively."
+            },
+            "verifier": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["supported"],
+              "description": "RFC 0090 (`version >= 6`). The verifier/critic turn: the host emits `agent.verified` over a prior result and (optionally) gates commit on the verdict. Absent ⇒ no verifier turn; conformance scenarios soft-skip.",
+              "properties": {
+                "supported": { "type": "boolean", "description": "Host emits `agent.verified` and honors RFC 0090 §A. Applies only when `version >= 6`." },
+                "gating": { "type": "boolean", "description": "Host enforces the RFC 0090 §B commit-gating contract: a `fail` verdict blocks merge/terminate (fail-closed, composing RFC 0063); `revise` routes back to an actor turn. Absent/false ⇒ the verdict is observability-only." }
+              }
             },
             "confidenceEscalationFloor": {
               "type": "number",
@@ -685,6 +695,20 @@
           "items": { "type": "string", "minLength": 1 },
           "uniqueItems": true,
           "description": "Subset of `supported` for which BYOK is permitted. Empty array → all calls use platform-managed keys; non-empty → clients MAY pass `ai.credentialRef` in `RunOptions.configurable` for matching providers."
+        },
+        "input": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "RFC 0091. Multimodal PERCEPTION input on `ctx.callAI` — the modalities a `callAI` message ContentPart may carry as model INPUT. Absent ⇒ text-only (today's behavior); a `string` message content is always valid. Distinct from `imageGeneration` (output) and the `ai-envelope.md` media emission types (output).",
+          "properties": {
+            "modalities": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "type": "string", "enum": ["text", "image", "audio", "document"] },
+              "description": "Input modalities the host's `callAI` accepts as ContentParts. `text` is implicit even when omitted. A ContentPart whose `type` is not advertised here MUST be rejected with `unsupported_modality` (never silently dropped)."
+            },
+            "maxBytesPerPart": { "type": "integer", "minimum": 1, "description": "Optional host cap on a single inline (`data`) or `mediaRef` part." }
+          }
         },
         "authModes": {
           "type": "object",

@@ -1,6 +1,20 @@
 # `@openwop/openwop-conformance` Changelog
 
-## [Unreleased]
+## [1.21.0] — 2026-06-07 — RFC 0090/0091/0092 conformance scenarios + vitest 4
+
+### Security — test-tooling dependency hygiene (consumer-facing)
+- **Adopted `vitest` 4 and moved it out of `dependencies`.** `vitest` was a hard `dependency` pinned `^3.0.0`, so it was forced transitively into every consumer's tree (e.g. a host that installs the suite to run conformance) — dragging in the 2 critical `vitest`-3 advisories that only trigger under `vitest --ui` (never `vitest run`, never production), and which `npm overrides` could **not** force across the workspace-transitive boundary. It is now an **optional `peerDependency`** (`"vitest": "^3.0.0 || ^4.0.0"`, `peerDependenciesMeta.vitest.optional: true`) plus a `devDependency` (`^4.0.0`) for the suite's own CI. Consumers who run the scenarios now provide their own `vitest` (3 or 4) — their pins/overrides apply — and consumers who only import types/CLI pull no `vitest` at all. The suite's own server-free gate (`spec-corpus-validity` + the shape scenarios + `src/lib` units) passes under `vitest` 4 with `0 vulnerabilities`; server-requiring scenarios are unaffected (they gate on `OPENWOP_BASE_URL`, orthogonal to the runner version). No scenario behavior or count change.
+
+### Added — RFCs 0090/0091/0092 conformance scenarios (count 324 → 330)
+Always-on, server-free shape probes:
+- **`agent-verifier-shape.test.ts`** (RFC 0090) — the content-free `agent.verified` payload $def (closed `verdict` enum; `additionalProperties:false` backing `verifier-no-content-leak`), `agent.verified` in the RunEventType enum, the additive `successCriteria` on the `terminate` decision, and `executionModel.version` 6 + the `verifier{supported,gating}` capability sub-block.
+- **`aiproviders-input-shape.test.ts`** (RFC 0091) — the additive `capabilities.aiProviders.input.modalities[]` (closed enum text/image/audio/document) + positive-integer `maxBytesPerPart`.
+- **`agent-requires-capabilities-shape.test.ts`** (RFC 0092) — the additive `AgentManifest.requiresCapabilities[]` (optional; non-string-array rejected).
+
+Capability-gated **behavioral** legs (soft-skip by default; hard-fail under `OPENWOP_REQUIRE_BEHAVIOR=true`) — the Active→Accepted reference-host proof for each RFC:
+- **`agent-capability-degraded-projection.test.ts`** (RFC 0092 §B) — gated on `agents.manifestRuntime`; the `degraded[]` projection iff-contract on the NORMATIVE `GET /v1/agents` (well-formed/unique members; a degraded key MUST be one the agent requires); non-vacuous via `OPENWOP_DEGRADED_CAPABILITY_AGENT_ID`. Black-box, no seam.
+- **`callai-multimodal.test.ts`** (RFC 0091 §A/§B) — gated on `aiProviders.input.modalities` including a non-text modality; an advertised modality part is accepted, an unadvertised one is rejected with `unsupported_modality`; via the `POST /v1/host/sample/ai/call` seam (soft-skip on 404).
+- **`verifier-gating.test.ts`** (RFC 0090 §B) — gated on `multiAgent.executionModel.verifier.gating`; a `fail` verdict blocks commit/terminate-as-success + emits `agent.verified{verdict:"fail"}`, a `pass` completes; via the `POST /v1/host/sample/agents/verify-run` seam (soft-skip on 404).
 
 ### Changed — test diagnostics (no behavior / count change)
 - **`agent-channel-dispatch.test.ts` (RFC 0082 §B) — value assertions over boolean assertions.** The four pin-comparison checks (Leg 1 `resolvedChannel`, Leg 2 + Leg 3 `resolvedAgentVersion`) now assert the observed value directly (`expect(observed, …).toBe(expected)` / `.not.toBe(movedVersion)`) instead of pre-computing a boolean and asserting `.toBe(true)`. A failing run on a third-party host now surfaces the *actual* resolved channel/version in the diff, not just "expected true, got false" + the requirement text. Pass/fail semantics, scenario count (324), and the published suite behavior are unchanged. Also documented Leg 3's test-isolation caveat: it promotes the bound agent's `stable` head via the conformance-only seam without rollback (the seam exposes no rollback primitive), so hosts SHOULD run the suite against an isolated/ephemeral deployment store.

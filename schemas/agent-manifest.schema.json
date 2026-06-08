@@ -51,6 +51,12 @@
       "items": { "type": "string", "minLength": 1 },
       "description": "Tool identifiers the agent MAY invoke. Format: `<scope>:<tool-id>` where scope is `openwop:` (Core/protocol tools), `mcp:` (MCP-namespaced tools), or `<vendor>.<host>` for host-extension tools. Hosts MUST enforce this allowlist when dispatching the agent (see RFC 0002 §A14 mapping for the reference-impl `ToolPermissionService.filterTools(harnessRole)` derivation pattern). Hosts MAY treat absence as `[]` (no tools) or as `*` (host-default tool surface) — that policy is host-configured."
     },
+    "requiresCapabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "RFC 0092. Host-capability keys this agent needs to run fully — the agent-layer analogue of a node-pack's `peerDependencies`. Dotted identifiers from the discovery vocabulary (`capabilities.md` / `host-capabilities.md`), e.g. `host.workspace`, `aiProviders.toolCalling`, `multiAgent.executionModel.verifier`. A host that does NOT advertise a listed key MUST surface this agent as degraded on `GET /v1/agents` via the existing `degraded[]` inventory field (RFC 0072 §C); it MAY still dispatch at the RFC 0070 floor, but a silent satisfied-looking entry is non-conformant. Advisory about NEED only — never widens the agent's authority. Absent ⇒ no declared requirements."
+    },
     "memoryShape": {
       "type": "object",
       "description": "Declares which memory backends the agent reads/writes. Hosts that advertise `capabilities.agents.memoryBackends` MAY filter manifests during install based on these flags. The full memory-shape contract lands in RFC 0004 (Phase 3); RFC 0003 only declares the descriptor field and reserves `longTerm: true` as the redaction-harness trigger.",

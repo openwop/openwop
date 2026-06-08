@@ -1577,6 +1577,23 @@ invariants:
       negatives (a task entry with a taskOutput body; a safetyFinding with an
       excerpt) are the public test.
 
+  - id: verifier-no-content-leak
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/agent-verifier-shape.test.ts
+    note: |
+      RFC 0090 §A/§SECURITY. The `agent.verified` event
+      (run-event-payloads.schema.json#/$defs/agentVerified) MUST NOT carry the
+      verified content — the result text, the tool output, prompts, model
+      completions, or credential material (SR-1). It carries only the opaque
+      `target`, the closed-enum `verdict` (pass|fail|revise), the optional
+      criteria KEYS, and an optional verifier `confidence`. The verified result
+      body is served by the run's normal projection. The payload schema is
+      additionalProperties:false; the always-on agent-verifier-shape.test.ts
+      negative (an agent.verified carrying a `result` body) is the public test.
+
   - id: egress-decision-no-secret-leak
     tier: protocol
     severity: high

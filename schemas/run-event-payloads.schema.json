@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
   "title": "RunEventPayloads",
-  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n94 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n95 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
   "type": "object",
   "$defs": {
     "_typeIndex": {
@@ -70,6 +70,7 @@
         "agent.toolReturned":        { "$ref": "#/$defs/agentToolReturned" },
         "agent.handoff":             { "$ref": "#/$defs/agentHandoff" },
         "agent.decided":             { "$ref": "#/$defs/agentDecided" },
+        "agent.verified":            { "$ref": "#/$defs/agentVerified" },
         "runOrchestrator.decided":   { "$ref": "#/$defs/runOrchestratorDecided" },
         "node.dispatched":           { "$ref": "#/$defs/nodeDispatched" },
         "conversation.opened":       { "$ref": "#/$defs/conversationOpened" },
@@ -1252,6 +1253,21 @@
         "causationHostId": { "type": "string", "minLength": 1, "description": "RFC 0040 §A — optional cross-host causation pointer. Present + non-empty when this event's `causationId` points at an event on a DIFFERENT host; absent when same-host. MUST equal the originating host's `crossHostCausation.hostId`." }
       },
       "additionalProperties": true
+    },
+
+    "agentVerified": {
+      "type": "object",
+      "description": "RFC 0090 (`multiAgent.executionModel.version >= 6`). A critic agent's independent verdict over a prior result, emitted before the result is committed/merged. Content-free: names the target + verdict + (optional) criteria KEYS, never the verified content (SECURITY invariant `verifier-no-content-leak`). A `fail` verdict on a `verifier.gating: true` host MUST block the merge/terminate; `revise` SHOULD route back to another actor turn (bounded by `maxLoopIterations`, RFC 0058).",
+      "required": ["agentId", "target", "verdict"],
+      "properties": {
+        "agentId":  { "type": "string", "minLength": 3, "maxLength": 256, "description": "AgentRef.agentId of the verifying (critic) agent. SHOULD differ from the agent whose work is checked; a host MAY allow self-verification but MUST keep verifier identity inspectable." },
+        "target":   { "type": "string", "minLength": 1, "description": "Opaque reference to what was checked — the eventId of the verified `agent.decided`, a child runId, or a tool callId. Chains the verdict to its subject." },
+        "verdict":  { "type": "string", "enum": ["pass", "fail", "revise"], "description": "`pass`: acceptable, MAY commit/terminate. `fail`: rejected; a `verifier.gating` host MUST NOT commit it. `revise`: needs another actor turn; SHOULD route back, not terminate." },
+        "criteria": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true, "description": "Optional closed list of the criteria KEYS evaluated (e.g. `[\"schema-valid\",\"grounded\"]`). Keys only — never per-criterion verdict text — for SIEM safety." },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1, "description": "Optional verifier confidence in `[0,1]` — the critic's confidence in its OWN verdict, distinct from the actor's `agent.decided.confidence`. MAY drive the RFC 0039 escalation contract." },
+        "causationHostId": { "type": "string", "minLength": 1, "description": "RFC 0040 §A — cross-host causation pointer when the verified target lives on a different host." }
+      },
+      "additionalProperties": false
     },
 
     "runOrchestratorDecided": {
