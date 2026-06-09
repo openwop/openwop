@@ -80,13 +80,15 @@ describe('wasm-pack-memory-cap: positive path via misbehaving pack', () => {
     )).toBe('failed');
 
     const events = await driver.get(`/v1/runs/${encodeURIComponent(runId)}/events`);
-    const list = (events.json as { events?: Array<{ type: string; data?: unknown }> }).events ?? [];
+    const list = (events.json as { events?: Array<{ type: string; payload?: unknown }> }).events ?? [];
     const breachEvent = list.find((e) => e.type === 'cap.breached');
     expect(breachEvent, driver.describe(
       'RFCS/0008-wasm-abi.md §K',
       'host MUST emit cap.breached when a WASM module exceeds its memory ceiling',
     )).toBeDefined();
-    const breachKind = (breachEvent?.data as { kind?: string } | undefined)?.kind;
+    // Event detail rides under the canonical `payload` envelope field (per
+    // run-event-payloads.schema.json + every other event scenario), not `data`.
+    const breachKind = (breachEvent?.payload as { kind?: string } | undefined)?.kind;
     expect(breachKind, driver.describe(
       'RFCS/0008-wasm-abi.md §K',
       'cap.breached payload MUST carry kind: "wasm-memory" for memory-ceiling breaches',
