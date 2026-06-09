@@ -1,6 +1,6 @@
 # openwop Interop Matrix
 
-> **Last updated:** 2026-06-02. A live record of OpenWOP-compatible hosts — their advertised compatibility profiles and the conformance evidence behind each claim. A row is a **claim plus evidence**: the claim is the host's advertised profile; the evidence is the conformance result published with the host (or under [`conformance.md`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/<name>/conformance.md)).
+> **Last updated:** 2026-06-09. A live record of OpenWOP-compatible hosts — their advertised compatibility profiles and the conformance evidence behind each claim. A row is a **claim plus evidence**: the claim is the host's advertised profile; the evidence is the conformance result published with the host (or under [`conformance.md`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/<name>/conformance.md)).
 
 ## Hosts
 
@@ -24,15 +24,15 @@ The aggregate platform profile defined in `spec/v1/agent-platform-profile.md`. A
 
 ### Conformance pass rates
 
-Measured against `@openwop/openwop-conformance@1.18.1` in default mode (reference hosts 2026-06-01; workflow-engine harness 2026-06-02). Failures are honest non-claims for surfaces a host does not advertise; the durable reference hosts have **0 deterministic failures**. (The published suite has since advanced to `1.21.0`. The `1.19.0`/`1.20.0` additions — the capability-gated `agent-channel-dispatch` scenario — soft-skip on these hosts and leave applicable pass-rates unchanged; `1.21.0` adds 6 RFC 0090/0091/0092 scenarios, 3 of them **always-on** shape probes that shift the test totals. **The counts in the table below are the 2026-06-01 measurement against `1.18.1`, retained as historical context; a re-measure against `1.21.0` is pending.**)
+Measured against `@openwop/openwop-conformance@1.21.0` — the four example reference hosts re-measured 2026-06-09 (in-memory/python in default mode, SQLite under strict mode with honest profile/fixture opt-outs, Postgres via the pglite entry point). Failures are honest non-claims for surfaces a host does not advertise: SQLite, Postgres, and Python have **0 deterministic host failures**, and the in-memory host's 45 failures are all advertised-fixture surfaces the minimal host doesn't implement (bulk-cancel, BYOK, interrupts, stream-modes-buffer, dispatch, subworkflow). Test totals shifted from the 1.18.1 baseline (2161 → 1954 applicable) because 1.21.0's capability-gated scenarios — including the 6 RFC 0090/0091/0092 additions — gate on advertisement and soft-skip on these hosts. Pass rate is passed/total. (The **Workflow-engine** row is retained from the 2026-06-02 measurement against `1.18.1` — that host lives in `openwop-app`; its re-measure against `1.21.0` is tracked separately.)
 
 | Host | Passed | Failed | Skipped | Todo | Total | Pass rate (default) |
 |---|---:|---:|---:|---:|---:|---:|
-| Postgres reference | 2068 | 0 | 93 | 0 | 2161 | 95.7% |
-| SQLite reference | 2056 | 0 | 105 | 0 | 2161 | 95.1% |
-| In-memory reference | 2010 | 46 | 105 | 0 | 2161 | 93.0% |
-| Python reference | 2008 | 2 | 151 | 0 | 2161 | 92.9% |
-| Workflow-engine reference (in-process) | 1400 | 20 | 107 | 0 | 1527 | 91.7% |
+| Postgres reference | 1746 | 0 | 208 | 0 | 1954 | 89.4% |
+| SQLite reference | 1742 | 0 | 212 | 0 | 1954 | 89.1% |
+| In-memory reference | 1780 | 45 | 129 | 0 | 1954 | 91.1% |
+| Python reference | 1742 | 0 | 212 | 0 | 1954 | 89.1% |
+| Workflow-engine reference (in-process, 1.18.1 / 2026-06-02) | 1400 | 20 | 107 | 0 | 1527 | 91.7% |
 
 ### Composition partners — interop evidence
 
