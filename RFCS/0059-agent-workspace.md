@@ -1,21 +1,21 @@
 # RFC 0059: Agent workspace (`host.workspace`)
 
-| Field | Value |
-|---|---|
-| **RFC** | 0059 |
-| **Title** | A `host.workspace` capability — a versioned, atomic, tenant·workspace-scoped file store for an agent's persistent *ground-truth* artifacts (identity / directives / memory-index), loaded as a read snapshot at run start, complementing the transactional `MemoryAdapter` (RFC 0004) with a durable file layer |
-| **Status** | `Accepted` |
-| **Author(s)** | David Tufts (@davidscotttufts) |
-| **Created** | 2026-05-25 |
-| **Updated** | 2026-05-25 (Active → Accepted — Milestone 2: the in-memory reference host implements `capabilities.workspace` end-to-end (§C CRUD + `If-Match`, §D run-start snapshot, §E WCT-1 isolation + WSR-1 SR-1 redaction); the `workspace-cross-tenant-isolation` invariant landed in `SECURITY/invariants.yaml` with its public conformance test, and the `workspace-behavior` + `workspace-cross-tenant-isolation` scenarios are live + green.) |
-| **Affects** | `schemas/capabilities.schema.json` (`host.workspace` block) · new `schemas/workspace-file.schema.json` · `api/openapi.yaml` (workspace file endpoints) · `api/asyncapi.yaml` (`workspace.updated` event) · new `spec/v1/agent-workspace.md` · `spec/v1/profiles.md` (predicate) · `RFCS/0048` (identity triple this scopes to) · new conformance scenarios · proposed SECURITY invariant `workspace-cross-tenant-isolation` (lands at implementation) |
-| **Compatibility** | `additive` |
-| **Supersedes** | — |
-| **Superseded by** | — |
+| Field             | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RFC**           | 0059                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **Title**         | A `host.workspace` capability — a versioned, atomic, tenant·workspace-scoped file store for an agent's persistent _ground-truth_ artifacts (identity / directives / memory-index), loaded as a read snapshot at run start, complementing the transactional `MemoryAdapter` (RFC 0004) with a durable file layer                                                                                                                                       |
+| **Status**        | `Accepted`                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **Author(s)**     | David Tufts (@davidscotttufts)                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **Created**       | 2026-05-25                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **Updated**       | 2026-05-25 (Active → Accepted — Milestone 2: the in-memory reference host implements `capabilities.workspace` end-to-end (§C CRUD + `If-Match`, §D run-start snapshot, §E WCT-1 isolation + WSR-1 SR-1 redaction); the `workspace-cross-tenant-isolation` invariant landed in `SECURITY/invariants.yaml` with its public conformance test, and the `workspace-behavior` + `workspace-cross-tenant-isolation` scenarios are live + green.)             |
+| **Affects**       | `schemas/capabilities.schema.json` (`host.workspace` block) · new `schemas/workspace-file.schema.json` · `api/openapi.yaml` (workspace file endpoints) · `api/asyncapi.yaml` (`workspace.updated` event) · new `spec/v1/agent-workspace.md` · `spec/v1/profiles.md` (predicate) · `RFCS/0048` (identity triple this scopes to) · new conformance scenarios · proposed SECURITY invariant `workspace-cross-tenant-isolation` (lands at implementation) |
+| **Compatibility** | `additive`                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **Supersedes**    | —                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **Superseded by** | —                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
 ## Summary
 
-Autonomous agents in the wider industry (Claude Code, OpenClaw) keep persistent *ground-truth* files — identity, standing directives, a memory index — that are loaded at the start of every session and treated as authoritative. openwop has no such surface: `MemoryAdapter` (RFC 0004) is a transactional entry store, not a named, versioned, editable file. This RFC adds an additive `host.workspace` capability: a tenant·workspace-scoped (RFC 0048) file store with atomic, optimistically-concurrent writes (`If-Match` ETag), a `workspace.updated` attribution event, and a read snapshot exposed to every run as `ctx.workspace`. It expands openwop's architecture by adding a *durable file layer* alongside the *transactional memory layer*, without coupling the two.
+Autonomous agents in the wider industry (Claude Code, OpenClaw) keep persistent _ground-truth_ files — identity, standing directives, a memory index — that are loaded at the start of every session and treated as authoritative. openwop has no such surface: `MemoryAdapter` (RFC 0004) is a transactional entry store, not a named, versioned, editable file. This RFC adds an additive `host.workspace` capability: a tenant·workspace-scoped (RFC 0048) file store with atomic, optimistically-concurrent writes (`If-Match` ETag), a `workspace.updated` attribution event, and a read snapshot exposed to every run as `ctx.workspace`. It expands openwop's architecture by adding a _durable file layer_ alongside the _transactional memory layer_, without coupling the two.
 
 ## Motivation
 
@@ -70,18 +70,18 @@ Per the corpus convention every host capability is a **flat `capabilities.<name>
 
 ### §C — endpoints (`openapi.yaml`, gated on `host.workspace.supported`)
 
-| Method · path | Behavior |
-|---|---|
-| `GET /v1/host/workspace/files` | List file metadata (no bodies) for the caller's `{tenant, workspace}`. |
-| `GET /v1/host/workspace/files/{path}` | Return one `WorkspaceFile`. `404 not_found` if absent. |
-| `PUT /v1/host/workspace/files/{path}` | Atomic create/replace. MUST honor `If-Match: <etag>`; on mismatch return `409 workspace_conflict`. On success bump `version`, emit `workspace.updated`. |
-| `DELETE /v1/host/workspace/files/{path}` | Remove the file (and, if `versioned`, tombstone). |
+| Method · path                            | Behavior                                                                                                                                                |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /v1/host/workspace/files`           | List file metadata (no bodies) for the caller's `{tenant, workspace}`.                                                                                  |
+| `GET /v1/host/workspace/files/{path}`    | Return one `WorkspaceFile`. `404 not_found` if absent.                                                                                                  |
+| `PUT /v1/host/workspace/files/{path}`    | Atomic create/replace. MUST honor `If-Match: <etag>`; on mismatch return `409 workspace_conflict`. On success bump `version`, emit `workspace.updated`. |
+| `DELETE /v1/host/workspace/files/{path}` | Remove the file (and, if `versioned`, tombstone).                                                                                                       |
 
 A write MUST be **atomic** — a concurrent reader observes either the prior or the new content, never a partial. When `versioned: true`, `GET …/files/{path}?version=N` MUST return the historical snapshot.
 
 ### §D — run-time exposure (normative)
 
-When `host.workspace.supported`, the host MUST expose the workspace as a **read snapshot taken at `run.started`** under `ctx.workspace.get(path)` / `ctx.workspace.list()`. The snapshot is immutable for the run's duration (mirrors RFC 0004 memory's read-as-of-run-start rule) so replay is deterministic. Writes from within a run go through the same `PUT` contract and are visible to *subsequent* runs / loop iterations, not the current snapshot. Sub-agents dispatched via RFC 0007 inherit the parent's `{tenant, workspace}` and therefore the same workspace — this is how ground truth is shared.
+When `host.workspace.supported`, the host MUST expose the workspace as a **read snapshot taken at `run.started`** under `ctx.workspace.get(path)` / `ctx.workspace.list()`. The snapshot is immutable for the run's duration (mirrors RFC 0004 memory's read-as-of-run-start rule) so replay is deterministic. Writes from within a run go through the same `PUT` contract and are visible to _subsequent_ runs / loop iterations, not the current snapshot. Sub-agents dispatched via RFC 0007 inherit the parent's `{tenant, workspace}` and therefore the same workspace — this is how ground truth is shared.
 
 ### §E — invariants
 
@@ -105,9 +105,9 @@ When `host.workspace.supported`, the host MUST expose the workspace as a **read 
 
 ## Alternatives considered
 
-1. **Model ground-truth files as memory entries (RFC 0004).** Rejected — memory entries are unaddressable by path, untyped, and have no atomic-replace/ETag concurrency; operators need to *edit* `DIRECTIVES.md` between runs the way they edit a file.
+1. **Model ground-truth files as memory entries (RFC 0004).** Rejected — memory entries are unaddressable by path, untyped, and have no atomic-replace/ETag concurrency; operators need to _edit_ `DIRECTIVES.md` between runs the way they edit a file.
 2. **Put files in node packs (RFC 0003).** Rejected — packs are immutable, signed, registry-distributed artifacts; workspace files are mutable per-tenant runtime state.
-3. **Standardize specific filenames (`SOUL.md`, `IDENTITY.md`).** Rejected for v1 — the *store* is the protocol surface; which files an agent keeps is application convention. Standardizing names couples the wire to one product's ontology.
+3. **Standardize specific filenames (`SOUL.md`, `IDENTITY.md`).** Rejected for v1 — the _store_ is the protocol surface; which files an agent keeps is application convention. Standardizing names couples the wire to one product's ontology.
 
 ## Unresolved questions
 
@@ -125,7 +125,7 @@ Per `docs/autonomous-agent-runtime-plan.md` §8 — Unresolved questions resolve
 
 ## Status history
 
-- **2026-05-25 — Draft → Active.** The wire surface landed atomically per the repo's Active bar: `capabilities.workspace` block + `workspace-file.schema.json` + `workspace-file-create.schema.json`, the `workspace.updated` RunEvent (`run-event-payloads.schema.json` + `run-event.schema.json` enum), the four `/v1/host/workspace/files[/{path}]` OpenAPI endpoints, the AsyncAPI `workspace.updated` message, the `spec/v1/agent-workspace.md` prose doc (§C/§D/§E), `workspace_conflict` + `workspace_too_large` error codes, all three reference SDKs, and the always-on `workspace-capability-shape.test.ts` conformance scenario. `Active → Accepted` awaits reference-host *enforcement* (CRUD/ETag/snapshot behavior + the `workspace-cross-tenant-isolation` SECURITY invariant and its conformance test, which land at the implementation milestone with the `WorkspaceAdapter` wiring).
+- **2026-05-25 — Draft → Active.** The wire surface landed atomically per the repo's Active bar: `capabilities.workspace` block + `workspace-file.schema.json` + `workspace-file-create.schema.json`, the `workspace.updated` RunEvent (`run-event-payloads.schema.json` + `run-event.schema.json` enum), the four `/v1/host/workspace/files[/{path}]` OpenAPI endpoints, the AsyncAPI `workspace.updated` message, the `spec/v1/agent-workspace.md` prose doc (§C/§D/§E), `workspace_conflict` + `workspace_too_large` error codes, all three reference SDKs, and the always-on `workspace-capability-shape.test.ts` conformance scenario. `Active → Accepted` awaits reference-host _enforcement_ (CRUD/ETag/snapshot behavior + the `workspace-cross-tenant-isolation` SECURITY invariant and its conformance test, which land at the implementation milestone with the `WorkspaceAdapter` wiring).
 
 ## Implementation notes (non-normative)
 

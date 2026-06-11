@@ -1,17 +1,17 @@
 # RFC 0003: Agent Packs
 
-| Field | Value |
-|---|---|
-| **RFC** | 0003 |
-| **Title** | Agent Packs |
-| **Status** | `Accepted` |
-| **Author(s)** | David Tufts (@davidscotttufts) |
-| **Created** | 2026-05-01 |
-| **Updated** | 2026-05-11 (Active → Accepted: integration-seams audit closed via `docs/MULTI-AGENT-INTEGRATION-GAPS.md` archive; conformance scenarios pass against SQLite reference host) |
-| **Affects** | `schemas/node-pack-manifest.schema.json`, `schemas/agent-manifest.schema.json`, `spec/v1/node-packs.md`, `spec/v1/registry-operations.md`, `spec/v1/capabilities.md` |
-| **Compatibility** | `additive` |
-| **Supersedes** | — |
-| **Superseded by** | — |
+| Field             | Value                                                                                                                                                                       |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RFC**           | 0003                                                                                                                                                                        |
+| **Title**         | Agent Packs                                                                                                                                                                 |
+| **Status**        | `Accepted`                                                                                                                                                                  |
+| **Author(s)**     | David Tufts (@davidscotttufts)                                                                                                                                              |
+| **Created**       | 2026-05-01                                                                                                                                                                  |
+| **Updated**       | 2026-05-11 (Active → Accepted: integration-seams audit closed via `docs/MULTI-AGENT-INTEGRATION-GAPS.md` archive; conformance scenarios pass against SQLite reference host) |
+| **Affects**       | `schemas/node-pack-manifest.schema.json`, `schemas/agent-manifest.schema.json`, `spec/v1/node-packs.md`, `spec/v1/registry-operations.md`, `spec/v1/capabilities.md`        |
+| **Compatibility** | `additive`                                                                                                                                                                  |
+| **Supersedes**    | —                                                                                                                                                                           |
+| **Superseded by** | —                                                                                                                                                                           |
 
 ## Summary
 
@@ -66,7 +66,7 @@ Agent `agentId` values inside a pack MUST share the pack's namespace tier. Valid
 
 Registries MUST reject submissions where any agent's `agentId` violates this rule.
 
-Cross-pack agent references are valid (a workflow MAY use `vendor.acme.research-agents.summarizer` and `vendor.beta.tools.fetch` in the same run); namespace scoping is only enforced *within* a single pack.
+Cross-pack agent references are valid (a workflow MAY use `vendor.acme.research-agents.summarizer` and `vendor.beta.tools.fetch` in the same run); namespace scoping is only enforced _within_ a single pack.
 
 ### §C System-prompt resolution
 

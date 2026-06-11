@@ -16,7 +16,7 @@ The model assumes no LLM-level defense will be perfect. Instead, the invariants 
 
 ## 2. Trust boundaries
 
-```
+```text
 [User] ── inputs ──> [Host: validate, persist as inputs.user_*]
                           │
                           │  variable substitution, NOT prompt construction
@@ -48,14 +48,14 @@ Trust transitions:
 
 ## 3. Adversaries
 
-| ID | Adversary | Capability |
-|---|---|---|
-| A1 | External user supplying malicious workflow input | Submit `POST /v1/runs` with crafted `inputs` |
-| A2 | Hostile content in the knowledge base | Author of a KB document embeds prompt-injection sequences |
-| A3 | Hostile prior-artifact content | Workflow earlier created an artifact whose body contains injection content |
-| A4 | Hostile refine feedback | User supplies `refineFeedback.text` that attempts to override approval behavior |
-| A5 | Hostile MCP tool response | A registered MCP tool returns content that attempts to escalate |
-| A6 | Compromised LLM | Returns envelopes that don't match user intent — e.g., approves a run that should be rejected |
+| ID  | Adversary                                        | Capability                                                                                    |
+| --- | ------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| A1  | External user supplying malicious workflow input | Submit `POST /v1/runs` with crafted `inputs`                                                  |
+| A2  | Hostile content in the knowledge base            | Author of a KB document embeds prompt-injection sequences                                     |
+| A3  | Hostile prior-artifact content                   | Workflow earlier created an artifact whose body contains injection content                    |
+| A4  | Hostile refine feedback                          | User supplies `refineFeedback.text` that attempts to override approval behavior               |
+| A5  | Hostile MCP tool response                        | A registered MCP tool returns content that attempts to escalate                               |
+| A6  | Compromised LLM                                  | Returns envelopes that don't match user intent — e.g., approves a run that should be rejected |
 
 ## 4. STRIDE per surface
 
@@ -63,54 +63,54 @@ Trust transitions:
 
 `inputs` field of `POST /v1/runs`. Mounted as workflow variables.
 
-| Threat | Vector | Mitigation | Invariant |
-|---|---|---|---|
-| Spoofing | User input reaches prompt as if it were system instruction | Workflow templates MUST mark untrusted inputs with `<UNTRUSTED>` markers in prompt construction | `prompt-injection-input-marker` |
-| Information disclosure | User input includes prompt-injection that asks LLM to dump system prompt | LLM-level: redaction of system-prompt content from user-visible responses (host responsibility, not protocol-level) | (advisory) |
+| Threat                 | Vector                                                                   | Mitigation                                                                                                          | Invariant                       |
+| ---------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| Spoofing               | User input reaches prompt as if it were system instruction               | Workflow templates MUST mark untrusted inputs with `<UNTRUSTED>` markers in prompt construction                     | `prompt-injection-input-marker` |
+| Information disclosure | User input includes prompt-injection that asks LLM to dump system prompt | LLM-level: redaction of system-prompt content from user-visible responses (host responsibility, not protocol-level) | (advisory)                      |
 
 ### 4.2 Knowledge-base / artifact retrieval → prompt
 
 Retrieved content from `knowledge_chunks/` or earlier artifact bodies.
 
-| Threat | Vector | Mitigation | Invariant |
-|---|---|---|---|
-| Spoofing | KB content overrides workflow instructions | Retrieved content MUST be wrapped in `<UNTRUSTED>` markers per `spec/v1/run-options.md` §"Knowledge context" | `prompt-injection-kb-marker` |
-| Spoofing | Prior artifact content (e.g., a PRD body created earlier) is interpolated raw into a later prompt | Same: artifacts inherit untrusted-marker treatment | `prompt-injection-artifact-marker` |
+| Threat   | Vector                                                                                            | Mitigation                                                                                                   | Invariant                          |
+| -------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------- |
+| Spoofing | KB content overrides workflow instructions                                                        | Retrieved content MUST be wrapped in `<UNTRUSTED>` markers per `spec/v1/run-options.md` §"Knowledge context" | `prompt-injection-kb-marker`       |
+| Spoofing | Prior artifact content (e.g., a PRD body created earlier) is interpolated raw into a later prompt | Same: artifacts inherit untrusted-marker treatment                                                           | `prompt-injection-artifact-marker` |
 
 ### 4.3 Refine feedback → resume payload
 
 `approvalGate` resume with `action: 'refine'` carries a `refineFeedback` object. Object shape per `openwop/openwop@c0d63ae`.
 
-| Threat | Vector | Mitigation | Invariant |
-|---|---|---|---|
-| Tampering | Hostile `refineFeedback.text` causes the LLM to skip the next approval gate | Refine feedback is treated as untrusted content; the SAME approval gate runs after refine, with quorum reset | `prompt-injection-refine-quorum` |
-| Authority bypass | Hostile feedback claims to be from `decidedBy: 'admin'` and gets routed as an approval | `decidedBy` is host-populated only; client-supplied `decidedBy` is ignored | `prompt-injection-decidedby-host-only` |
+| Threat           | Vector                                                                                 | Mitigation                                                                                                   | Invariant                              |
+| ---------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
+| Tampering        | Hostile `refineFeedback.text` causes the LLM to skip the next approval gate            | Refine feedback is treated as untrusted content; the SAME approval gate runs after refine, with quorum reset | `prompt-injection-refine-quorum`       |
+| Authority bypass | Hostile feedback claims to be from `decidedBy: 'admin'` and gets routed as an approval | `decidedBy` is host-populated only; client-supplied `decidedBy` is ignored                                   | `prompt-injection-decidedby-host-only` |
 
 ### 4.4 MCP tool response → prompt
 
 MCP tool returns content; content is fed back as the next LLM turn.
 
-| Threat | Vector | Mitigation | Invariant |
-|---|---|---|---|
-| Spoofing | Tool response wraps content as if from system | Tool responses MUST be wrapped in `<UNTRUSTED tool="...">` markers | `prompt-injection-mcp-marker` |
+| Threat           | Vector                                                           | Mitigation                                                            | Invariant                          |
+| ---------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------- | ---------------------------------- |
+| Spoofing         | Tool response wraps content as if from system                    | Tool responses MUST be wrapped in `<UNTRUSTED tool="...">` markers    | `prompt-injection-mcp-marker`      |
 | Authority bypass | Tool response includes envelope-shaped content claiming approval | Tool responses NEVER advance approval gates; only HITL resolutions do | `prompt-injection-mcp-no-approval` |
 
 ### 4.5 LLM envelope → action
 
-| Threat | Vector | Mitigation | Invariant |
-|---|---|---|---|
-| Authority bypass | LLM emits an envelope of a type the workflow didn't request | Envelope schema validation rejects unrecognized types per `capabilities.md` §"supportedEnvelopes" | `prompt-injection-envelope-typecheck` |
-| Authority bypass | LLM emits an approval-resolution envelope to skip a HITL gate | Approval resolutions ONLY accept input via the HITL resume path (`/v1/interrupts/{token}`); LLM-emitted envelopes that look like approvals are rejected | `prompt-injection-no-llm-approval` |
-| Authority bypass | LLM emits a tool-call envelope referencing a tool not declared in the workflow | Tool-call envelopes validated against the workflow's declared `tools` set | `prompt-injection-tool-allowlist` |
-| Tampering | LLM-emitted envelope sets `metadata.workspaceId` to spoof tenant | Persistence layer ignores client-supplied tenant fields; tenant is derived from the auth principal | `prompt-injection-tenant-host-derived` |
+| Threat           | Vector                                                                         | Mitigation                                                                                                                                              | Invariant                              |
+| ---------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| Authority bypass | LLM emits an envelope of a type the workflow didn't request                    | Envelope schema validation rejects unrecognized types per `capabilities.md` §"supportedEnvelopes"                                                       | `prompt-injection-envelope-typecheck`  |
+| Authority bypass | LLM emits an approval-resolution envelope to skip a HITL gate                  | Approval resolutions ONLY accept input via the HITL resume path (`/v1/interrupts/{token}`); LLM-emitted envelopes that look like approvals are rejected | `prompt-injection-no-llm-approval`     |
+| Authority bypass | LLM emits a tool-call envelope referencing a tool not declared in the workflow | Tool-call envelopes validated against the workflow's declared `tools` set                                                                               | `prompt-injection-tool-allowlist`      |
+| Tampering        | LLM-emitted envelope sets `metadata.workspaceId` to spoof tenant               | Persistence layer ignores client-supplied tenant fields; tenant is derived from the auth principal                                                      | `prompt-injection-tenant-host-derived` |
 
 ### 4.6 Side effects from LLM output
 
-| Threat | Vector | Mitigation | Invariant |
-|---|---|---|---|
-| Authority bypass | LLM output includes a URL the host fetches | Hosts MUST NOT auto-fetch URLs from envelope content; URL fetches happen only via declared `external-api` nodes with explicit allowlists | `prompt-injection-no-auto-fetch` |
-| Authority bypass | LLM output triggers a webhook delivery | Webhooks fire only on declared `webhook.deliver` events from the workflow definition, not from LLM-content-derived URLs | `prompt-injection-webhook-host-only` |
-| Remote code execution | LLM output or untrusted input is executed as a host command (`exec`-class tool) | The protocol defines NO `exec`-class tool; arbitrary command execution is host-extension-only (`x-host-<vendor>-exec`) with host-owned sandboxing/allowlist/approval per `host-extensions.md` §"`exec`-class tools" (RFC 0069) | `exec-must-not-be-protocol-tier` |
+| Threat                | Vector                                                                          | Mitigation                                                                                                                                                                                                                     | Invariant                            |
+| --------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ |
+| Authority bypass      | LLM output includes a URL the host fetches                                      | Hosts MUST NOT auto-fetch URLs from envelope content; URL fetches happen only via declared `external-api` nodes with explicit allowlists                                                                                       | `prompt-injection-no-auto-fetch`     |
+| Authority bypass      | LLM output triggers a webhook delivery                                          | Webhooks fire only on declared `webhook.deliver` events from the workflow definition, not from LLM-content-derived URLs                                                                                                        | `prompt-injection-webhook-host-only` |
+| Remote code execution | LLM output or untrusted input is executed as a host command (`exec`-class tool) | The protocol defines NO `exec`-class tool; arbitrary command execution is host-extension-only (`x-host-<vendor>-exec`) with host-owned sandboxing/allowlist/approval per `host-extensions.md` §"`exec`-class tools" (RFC 0069) | `exec-must-not-be-protocol-tier`     |
 
 ### 4.7 `exec` tools (arbitrary command execution) — RFC 0069
 
@@ -120,23 +120,23 @@ openwop's mitigation is **structural**: the protocol defines no `exec`-class too
 
 ## 5. Invariants (MUST NOT)
 
-| ID | Statement |
-|---|---|
-| `prompt-injection-input-marker` | User-supplied workflow inputs MUST be wrapped in `<UNTRUSTED>` markers before reaching the LLM prompt context. |
-| `prompt-injection-kb-marker` | Knowledge-base / RAG retrieved content MUST be wrapped in `<UNTRUSTED>` markers. |
-| `prompt-injection-artifact-marker` | Prior-artifact content interpolated into a later prompt MUST be wrapped in `<UNTRUSTED>` markers. |
-| `chat-card-input-trust-boundary` | A chat card pack (`kind: "card"`, RFC 0071 Phase 2) prompt segment interpolated from a card input MUST carry `meta.contentTrust: "untrusted"` on the composed AI envelope unless the host can assert the input is host-trusted — card inputs commonly derive from untrusted run input / prior LLM output. Verified by `chat-card-pack-execution.test.ts` (host-pending; Phase 2 `Active` gate). |
-| `prompt-injection-refine-quorum` | Refine resume MUST reset the upstream approval gate's quorum; the same gate MUST re-run with the new artifact. |
-| `prompt-injection-decidedby-host-only` | The `decidedBy` field on approval/refine resume MUST be populated by the host's auth layer, NOT accepted from the client. |
-| `prompt-injection-mcp-marker` | MCP tool responses MUST be wrapped in `<UNTRUSTED tool="...">` markers in the next LLM turn. |
-| `prompt-injection-mcp-no-approval` | MCP tool responses MUST NOT advance HITL approval gates. |
-| `prompt-injection-envelope-typecheck` | LLM-emitted envelope types MUST be validated against the host-advertised `capabilities.supportedEnvelopes` set. |
-| `prompt-injection-no-llm-approval` | LLM-emitted approval-resolution envelopes MUST be rejected; approvals MUST come only via `POST /v1/interrupts/{token}`. |
-| `prompt-injection-tool-allowlist` | LLM-emitted tool-call envelopes MUST be validated against the workflow's declared tools allowlist. |
-| `prompt-injection-tenant-host-derived` | `tenantId` / `workspaceId` on persisted records MUST be derived from the auth principal, NOT accepted from envelope or LLM-supplied fields. |
-| `prompt-injection-no-auto-fetch` | Hosts MUST NOT fetch URLs that appear in LLM envelope content; URL fetches are restricted to declared `external-api`-class nodes with explicit allowlists. |
-| `prompt-injection-webhook-host-only` | Webhook deliveries MUST fire only from declared `webhook.deliver` workflow events; LLM-content-derived URLs MUST NOT trigger webhook fan-out. |
-| `exec-must-not-be-protocol-tier` | Arbitrary-command (`exec`-class) execution MUST NOT be exposed under any protocol-owned namespace (`core.*`, `openwop.*`) or `capabilities.*` flag; it lives only in named host-extension scopes (`x-host-<vendor>-exec`) whose safety controls the host owns end-to-end. |
+| ID                                     | Statement                                                                                                                                                                                                                                                                                                                                                                                       |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `prompt-injection-input-marker`        | User-supplied workflow inputs MUST be wrapped in `<UNTRUSTED>` markers before reaching the LLM prompt context.                                                                                                                                                                                                                                                                                  |
+| `prompt-injection-kb-marker`           | Knowledge-base / RAG retrieved content MUST be wrapped in `<UNTRUSTED>` markers.                                                                                                                                                                                                                                                                                                                |
+| `prompt-injection-artifact-marker`     | Prior-artifact content interpolated into a later prompt MUST be wrapped in `<UNTRUSTED>` markers.                                                                                                                                                                                                                                                                                               |
+| `chat-card-input-trust-boundary`       | A chat card pack (`kind: "card"`, RFC 0071 Phase 2) prompt segment interpolated from a card input MUST carry `meta.contentTrust: "untrusted"` on the composed AI envelope unless the host can assert the input is host-trusted — card inputs commonly derive from untrusted run input / prior LLM output. Verified by `chat-card-pack-execution.test.ts` (host-pending; Phase 2 `Active` gate). |
+| `prompt-injection-refine-quorum`       | Refine resume MUST reset the upstream approval gate's quorum; the same gate MUST re-run with the new artifact.                                                                                                                                                                                                                                                                                  |
+| `prompt-injection-decidedby-host-only` | The `decidedBy` field on approval/refine resume MUST be populated by the host's auth layer, NOT accepted from the client.                                                                                                                                                                                                                                                                       |
+| `prompt-injection-mcp-marker`          | MCP tool responses MUST be wrapped in `<UNTRUSTED tool="...">` markers in the next LLM turn.                                                                                                                                                                                                                                                                                                    |
+| `prompt-injection-mcp-no-approval`     | MCP tool responses MUST NOT advance HITL approval gates.                                                                                                                                                                                                                                                                                                                                        |
+| `prompt-injection-envelope-typecheck`  | LLM-emitted envelope types MUST be validated against the host-advertised `capabilities.supportedEnvelopes` set.                                                                                                                                                                                                                                                                                 |
+| `prompt-injection-no-llm-approval`     | LLM-emitted approval-resolution envelopes MUST be rejected; approvals MUST come only via `POST /v1/interrupts/{token}`.                                                                                                                                                                                                                                                                         |
+| `prompt-injection-tool-allowlist`      | LLM-emitted tool-call envelopes MUST be validated against the workflow's declared tools allowlist.                                                                                                                                                                                                                                                                                              |
+| `prompt-injection-tenant-host-derived` | `tenantId` / `workspaceId` on persisted records MUST be derived from the auth principal, NOT accepted from envelope or LLM-supplied fields.                                                                                                                                                                                                                                                     |
+| `prompt-injection-no-auto-fetch`       | Hosts MUST NOT fetch URLs that appear in LLM envelope content; URL fetches are restricted to declared `external-api`-class nodes with explicit allowlists.                                                                                                                                                                                                                                      |
+| `prompt-injection-webhook-host-only`   | Webhook deliveries MUST fire only from declared `webhook.deliver` workflow events; LLM-content-derived URLs MUST NOT trigger webhook fan-out.                                                                                                                                                                                                                                                   |
+| `exec-must-not-be-protocol-tier`       | Arbitrary-command (`exec`-class) execution MUST NOT be exposed under any protocol-owned namespace (`core.*`, `openwop.*`) or `capabilities.*` flag; it lives only in named host-extension scopes (`x-host-<vendor>-exec`) whose safety controls the host owns end-to-end.                                                                                                                       |
 
 ## 6. Residual risks
 

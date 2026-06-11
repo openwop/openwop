@@ -1,4 +1,4 @@
-# openwop Spec v1 — Capability Change Detection
+# OpenWOP Spec v1 — Capability Change Detection
 
 > **Status: Stable · v1.1 (2026-05-10).** Additive discovery annex for detecting changes to `/.well-known/openwop` and for documenting scoped capability views. This document does not change the required v1 capability payload. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
@@ -103,4 +103,3 @@ Conformance should add optional discovery scenarios:
 - Repeated discovery calls without host changes return the same value within the cache window.
 - Public discovery never requires authentication.
 - Auth-scoped discovery, when advertised, returns a valid capability shape and does not expose capabilities outside the caller's authorization.
-

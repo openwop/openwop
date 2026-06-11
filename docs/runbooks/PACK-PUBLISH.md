@@ -68,7 +68,7 @@ node scripts/build-pack-tarball.mjs --all --signed \
 
 Outputs in `dist/packs/`:
 
-```
+```text
 <name>-<version>.tgz             gzipped USTAR tarball
 <name>-<version>.manifest.json   augmented pack.json (with signing block)
 <name>-<version>.sig.b64         off-tarball Ed25519 signature (for reference)
@@ -118,7 +118,7 @@ node scripts/publish-pack.mjs --all
 
 Expected output (per pack):
 
-```
+```text
 ✓ <name>@<version>  published (first-time)        # 201
 ✓ <name>@<version>  re-published (idempotent)      # 200 (same content)
 ⚠ <name>@<version>  version_conflict               # 409 (different content)
@@ -170,16 +170,21 @@ Publishes are append-only by design. If a bad version ships:
 
 1. **Yank** (recommended within 72h): marks the version unavailable
    for new dispatches but keeps it loadable for in-flight runs.
+
    ```bash
    curl -X POST "$REGISTRY_URL/v1/packs/<name>/-/<version>/yank" \
      -H "Authorization: Bearer $FIREBASE_ID_TOKEN"
    ```
+
 2. **Unpublish** (only within 72h, per npm-style convention):
+
    ```bash
    curl -X DELETE "$REGISTRY_URL/v1/packs/<name>/-/<version>" \
      -H "Authorization: Bearer $FIREBASE_ID_TOKEN"
    ```
+
 3. **Deprecate** (after 72h or for soft retirement):
+
    ```bash
    curl -X POST "$REGISTRY_URL/v1/packs/<name>/-/<version>/deprecate" \
      -H "Authorization: Bearer $FIREBASE_ID_TOKEN" \

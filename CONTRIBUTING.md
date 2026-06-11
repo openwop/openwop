@@ -1,4 +1,4 @@
-# Contributing to openwop v1
+# Contributing to OpenWOP v1
 
 Thanks for considering a contribution. The OpenWOP v1.0 spec is small, mechanical, and intentionally focused — small PRs land fastest.
 
@@ -29,12 +29,12 @@ When a PR proposes adding to one of those surfaces, expect pushback: it likely b
 
 Per `auth.md` §status legend (and reflected in every prose doc's header):
 
-| Tag | Meaning |
-|---|---|
-| **STUB** | Minimal coverage of stable surfaces only. Implementers SHOULD pin only to what's documented; gaps are expected. |
-| **DRAFT** | Comprehensive coverage of stable + in-flight surfaces, but not yet reviewed by spec committee. |
-| **OUTLINE** | Sketched but not detailed. Section headings lock; field schemas may shift. |
-| **FINAL** | Reviewed + frozen for a given v1.X release. Breaking changes require a major bump. |
+| Tag         | Meaning                                                                                                         |
+| ----------- | --------------------------------------------------------------------------------------------------------------- |
+| **STUB**    | Minimal coverage of stable surfaces only. Implementers SHOULD pin only to what's documented; gaps are expected. |
+| **DRAFT**   | Comprehensive coverage of stable + in-flight surfaces, but not yet reviewed by spec committee.                  |
+| **OUTLINE** | Sketched but not detailed. Section headings lock; field schemas may shift.                                      |
+| **FINAL**   | Reviewed + frozen for a given v1.X release. Breaking changes require a major bump.                              |
 
 When to bump status:
 
@@ -62,7 +62,7 @@ When to bump status:
 
 ### Pack-internal JSON Schemas (`packs/<name>/schemas/*.schema.json`)
 
-> **Moved:** the pack ecosystem (`packs/` source + the `registry/` catalog) now lives in [`openwop/openwop-registry`](https://github.com/openwop/openwop-registry). Pack contributions, the rules below, and the pack/registry validation gate (`scripts/registry-check.sh`) apply in that repo. The pack-manifest *schemas* remain normative here under `schemas/` (vendored into the registry repo with a drift guard).
+> **Moved:** the pack ecosystem (`packs/` source + the `registry/` catalog) now lives in [`openwop/openwop-registry`](https://github.com/openwop/openwop-registry). Pack contributions, the rules below, and the pack/registry validation gate (`scripts/registry-check.sh`) apply in that repo. The pack-manifest _schemas_ remain normative here under `schemas/` (vendored into the registry repo with a drift guard).
 
 Distinct from the spec-corpus schemas above. These live inside a pack's tarball and are referenced via `pack.json` (`configSchemaRef` / `inputSchemaRef` / `outputSchemaRef` for nodes; `handoff.{task,return}SchemaRef` for agent manifests per RFC 0003 §D). Rules:
 

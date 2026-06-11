@@ -1,15 +1,15 @@
 # RFC 0016: host.tableStorage capability
 
-| Field | Value |
-|---|---|
-| **RFC** | 0016 |
-| **Title** | host.tableStorage structured record store |
-| **Status** | `Accepted` |
-| **Author(s)** | OpenWOP Working Group |
-| **Created** | 2026-05-17 |
-| **Updated** | 2026-05-18 (Active → Accepted: all 4 acceptance-criteria items satisfied. `capabilities.tableStorage` block in schema; `spec/v1/host-capabilities.md §host.tableStorage` landed at commit c5831fe; SECURITY invariant `table-cross-tenant-isolation` added at commit c5831fe; 3 scenarios (`table-cross-tenant-isolation`, `table-cursor-pagination`, `table-schema-enforcement`) all behavioral; reference impl advertised in `routes/discovery.ts` lines 185–192; CHANGELOG entry under `[Unreleased]`.) |
-| **Affects** | `spec/v1/host-capabilities.md` · `schemas/capabilities.schema.json` · `SECURITY/invariants.yaml` |
-| **Compatibility** | `additive` |
+| Field             | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RFC**           | 0016                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| **Title**         | host.tableStorage structured record store                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **Status**        | `Accepted`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **Author(s)**     | OpenWOP Working Group                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **Created**       | 2026-05-17                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **Updated**       | 2026-05-18 (Active → Accepted: all 4 acceptance-criteria items satisfied. `capabilities.tableStorage` block in schema; `spec/v1/host-capabilities.md §host.tableStorage` landed at commit c5831fe; SECURITY invariant `table-cross-tenant-isolation` added at commit c5831fe; 3 scenarios (`table-cross-tenant-isolation`, `table-cursor-pagination`, `table-schema-enforcement`) all behavioral; reference impl advertised in `routes/discovery.ts` lines 185–192; CHANGELOG entry under `[Unreleased]`.) |
+| **Affects**       | `spec/v1/host-capabilities.md` · `schemas/capabilities.schema.json` · `SECURITY/invariants.yaml`                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **Compatibility** | `additive`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 
 ## Summary
 
@@ -53,7 +53,7 @@ Adds an optional `host.tableStorage` capability — a structured-record store wi
 
 ## Compatibility
 
-**Additive**. Optional. `core.openwop.storage` table-* nodes refuse registration without advertisement.
+**Additive**. Optional. `core.openwop.storage` table-\* nodes refuse registration without advertisement.
 
 ## Implementation notes (non-normative)
 

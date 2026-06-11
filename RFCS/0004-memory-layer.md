@@ -1,17 +1,17 @@
 # RFC 0004: Memory Layer
 
-| Field | Value |
-|---|---|
-| **RFC** | 0004 |
-| **Title** | Memory Layer |
-| **Status** | `Accepted` |
-| **Author(s)** | David Tufts (@davidscotttufts) |
-| **Created** | 2026-05-01 |
-| **Updated** | 2026-05-11 (Active → Accepted: integration-seams audit closed via `docs/MULTI-AGENT-INTEGRATION-GAPS.md` archive; conformance scenarios pass against SQLite reference host) |
-| **Affects** | `schemas/memory-entry.schema.json`, `schemas/memory-list-options.schema.json`, `schemas/agent-manifest.schema.json`, `spec/v1/capabilities.md`, `SECURITY/threat-model-secret-leakage.md` |
-| **Compatibility** | `additive` |
-| **Supersedes** | — |
-| **Superseded by** | — |
+| Field             | Value                                                                                                                                                                                     |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RFC**           | 0004                                                                                                                                                                                      |
+| **Title**         | Memory Layer                                                                                                                                                                              |
+| **Status**        | `Accepted`                                                                                                                                                                                |
+| **Author(s)**     | David Tufts (@davidscotttufts)                                                                                                                                                            |
+| **Created**       | 2026-05-01                                                                                                                                                                                |
+| **Updated**       | 2026-05-11 (Active → Accepted: integration-seams audit closed via `docs/MULTI-AGENT-INTEGRATION-GAPS.md` archive; conformance scenarios pass against SQLite reference host)               |
+| **Affects**       | `schemas/memory-entry.schema.json`, `schemas/memory-list-options.schema.json`, `schemas/agent-manifest.schema.json`, `spec/v1/capabilities.md`, `SECURITY/threat-model-secret-leakage.md` |
+| **Compatibility** | `additive`                                                                                                                                                                                |
+| **Supersedes**    | —                                                                                                                                                                                         |
+| **Superseded by** | —                                                                                                                                                                                         |
 
 ## Summary
 
@@ -25,7 +25,7 @@ RFC 0002 declares `AgentRef.memoryRef` as an opaque handle for cross-run memory 
 2. **A2A peers** that want to share long-term agent context across organizations.
 3. **Replay machinery** that must read memory at the same logical point on every replay or replays diverge non-deterministically.
 
-The right protocol contract is *narrow*: read-path semantics and a redaction invariant. Storage shape (Redis, Postgres, Firestore, in-memory) and write-path policy (write-through, write-back, batched) remain host choices. The protocol does not prescribe an embedding model, retrieval ranking, or vector index — those are application-layer concerns.
+The right protocol contract is _narrow_: read-path semantics and a redaction invariant. Storage shape (Redis, Postgres, Firestore, in-memory) and write-path policy (write-through, write-back, batched) remain host choices. The protocol does not prescribe an embedding model, retrieval ranking, or vector index — those are application-layer concerns.
 
 ## Proposal
 
@@ -37,7 +37,7 @@ Hosts that advertise `capabilities.agents.memoryBackends` MUST expose a `MemoryA
 
 Returns memory entries visible to the run, ordered newest-first by `createdAt`.
 
-**Replay determinism rule (normative).** Within a single run, `list` MUST return the snapshot of entries visible *at run start*. Mid-run mutations to the underlying store (by other runs, by direct admin writes) MUST NOT be visible to the calling run. Hosts implement this by:
+**Replay determinism rule (normative).** Within a single run, `list` MUST return the snapshot of entries visible _at run start_. Mid-run mutations to the underlying store (by other runs, by direct admin writes) MUST NOT be visible to the calling run. Hosts implement this by:
 
 - Capturing a logical timestamp / snapshot id at run start.
 - Filtering subsequent `list` results to entries whose `createdAt ≤ snapshot.t`.
@@ -53,7 +53,7 @@ Output: `MemoryEntry[]` (per `memory-entry.schema.json`).
 
 #### `get(memoryRef, id): MemoryEntry | null`
 
-Returns a single entry by id. Same snapshot rule as `list`. Returns `null` if the entry does not exist *or* was created after the run's snapshot timestamp.
+Returns a single entry by id. Same snapshot rule as `list`. Returns `null` if the entry does not exist _or_ was created after the run's snapshot timestamp.
 
 #### `put(memoryRef, entry): MemoryEntry`
 
@@ -65,7 +65,7 @@ Writes a new entry. Returns the persisted entry with host-assigned `id` and `cre
 
 Deletes an entry by id. Returns `true` if the entry existed and was deleted, `false` otherwise.
 
-Deletes are visible to *future* runs immediately; the calling run's snapshot is unchanged (deleting an entry mid-run does not retroactively remove it from `list` results within the same run).
+Deletes are visible to _future_ runs immediately; the calling run's snapshot is unchanged (deleting an entry mid-run does not retroactively remove it from `list` results within the same run).
 
 ### §B Capability advertisement
 

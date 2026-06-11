@@ -1,4 +1,4 @@
-# openwop Spec v1 — REST Endpoint Catalog
+# OpenWOP Spec v1 — REST Endpoint Catalog
 
 > **Status: Stable · v1.1 (2026-04-27; hygiene pass 2026-05-10).** Comprehensive coverage of the canonical REST surface with per-route auth + scope, formalized in `api/openapi.yaml` against the JSON Schemas in `schemas/`. Replay/fork has shipped at `replay.md` + the `POST /v1/runs/{runId}:fork` endpoint. Remaining gaps are additive operational conveniences (bulk operations, explicit pause/resume, and any future gRPC transport), not blockers for v1 conformance. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
@@ -20,49 +20,49 @@ Every OpenWOP-compliant server MUST expose:
 
 ### Discovery
 
-| Method | Path | Auth | Scope | Purpose |
-|---|---|---|---|---|
-| `GET` | `/.well-known/openwop` | None | None | Capability declaration (see `capabilities.md`) |
-| `GET` | `/v1/openapi.json` | None | None | Self-describing OpenAPI spec |
+| Method | Path                   | Auth | Scope | Purpose                                        |
+| ------ | ---------------------- | ---- | ----- | ---------------------------------------------- |
+| `GET`  | `/.well-known/openwop` | None | None  | Capability declaration (see `capabilities.md`) |
+| `GET`  | `/v1/openapi.json`     | None | None  | Self-describing OpenAPI spec                   |
 
 ### Workflow manifest
 
-| Method | Path | Auth | Scope | Purpose |
-|---|---|---|---|---|
-| `GET` | `/v1/workflows/{workflowId}` | API key | `manifest:read` | Workflow definition |
+| Method | Path                         | Auth    | Scope           | Purpose             |
+| ------ | ---------------------------- | ------- | --------------- | ------------------- |
+| `GET`  | `/v1/workflows/{workflowId}` | API key | `manifest:read` | Workflow definition |
 
 ### Runs
 
-| Method | Path | Auth | Scope | Purpose |
-|---|---|---|---|---|
-| `POST` | `/v1/runs` | API key | `runs:create` | Create a run |
-| `GET` | `/v1/runs/{runId}` | API key | `runs:read` | Read run state |
-| `GET` | `/v1/runs/{runId}/events` | API key | `runs:read` | SSE event stream (resumable via `Last-Event-ID`) |
-| `GET` | `/v1/runs/{runId}/events/poll` | API key | `runs:read` | Long-poll fallback for non-SSE clients |
-| `GET` | `/v1/runs/{runId}/ancestry` | API key | `runs:read` | RFC 0040 cross-host composition parent (capability-gated; 404 when unadvertised) |
-| `GET` | `/v1/agents` | API key | `runs:read` | RFC 0072 §A manifest-agent inventory (capability-gated on `agents.manifestRuntime`; 404 when unadvertised) |
-| `GET` | `/v1/agents/{agentId}` | API key | `runs:read` | RFC 0072 §A one manifest agent's inventory entry; 404 when absent/unadvertised |
-| `GET` | `/v1/agents/{agentId}/deployments` | API key | `runs:read` | RFC 0082 §C/§E deployment records for a manifest agent (capability-gated on `agents.deployment`; 404 when unadvertised) |
-| `POST` | `/v1/agents/{agentId}/deployments` | API key | `deploy:*` | RFC 0082 §E deployment state transition (promote/pause/deprecate/rollback/adjust-canary); fail-closed authz (RFC 0049) + RFC 0051 approvalGate + RFC 0081 `requiredEval`; `403` `eval_gate_unmet` / `400` `no_active_deployment` |
-| `GET` | `/v1/agents/roster` | API key | `runs:read` | RFC 0086 §B standing agent roster (named instances + portfolios; capability-gated on `agents.roster`; tenant-scoped per RFC 0074; 404 when unadvertised) |
-| `GET` | `/v1/agents/roster/{rosterId}` | API key | `runs:read` | RFC 0086 §B one roster entry; 404 when absent/cross-tenant/unadvertised |
-| `GET` | `/v1/tools` | API key | `runs:read` | RFC 0078 §B portable tool catalog (`ToolDescriptor[]` across node-pack/workflow/mcp/connector/host-extension sources; capability-gated on `toolCatalog`; §F-2 authorization-scoped; 404 when unadvertised) |
-| `GET` | `/v1/tools/{toolId}` | API key | `runs:read` | RFC 0078 §B one `ToolDescriptor`; 404 when absent/unauthorized/unadvertised |
-| `GET` | `/v1/agents/org-chart` | API key | `runs:read` | RFC 0087 §C descriptive agent org-chart (capability-gated on `agents.orgChart`; tenant-scoped; 404 when unadvertised) |
-| `GET` | `/v1/agents/org-chart/{departmentId}` | API key | `runs:read` | RFC 0087 §D one department's subtree + responsibility roll-up (`?recursive=false` for direct members); 404 when unknown/cross-tenant/unadvertised |
-| `GET` | `/v1/runs/{runId}/eval-summary` | API key | `runs:read` | RFC 0081 §C the `EvalSummary` scorecard for a terminal `mode:"eval"` run (capability-gated on `agents.evalSuite`; 404 when unadvertised/not-an-eval-run; 409 while running) |
-| `GET` | `/v1/runs/{runId}:diff` | API key | `runs:read` | RFC 0054 deterministic structured diff of two runs (`?against={otherRunId}`; `runs:read` on both; 404 when unimplemented) |
-| `POST` | `/v1/runs/{runId}/cancel` | API key | `runs:cancel` | Cancel an in-flight run |
-| `POST` | `/v1/runs:bulk-cancel` | API key | `runs:cancel` | Bulk cancel a set of in-flight runs |
-| `POST` | `/v1/runs/{runId}:fork` | API key | `runs:create` + `runs:read` | Fork or replay a run from recorded state |
-| `POST` | `/v1/runs/{runId}:pause` | API key | `runs:cancel` | Administratively pause an in-flight run |
-| `POST` | `/v1/runs/{runId}:resume` | API key | `runs:cancel` | Resume a paused run |
-| `POST` | `/v1/runs/{runId}/annotations` | API key | `runs:annotate` | RFC 0056 record a quality annotation (capability-gated; `501` when `capabilities.feedback` unadvertised) |
-| `GET` | `/v1/runs/{runId}/annotations` | API key | `runs:read` | RFC 0056 list a run's annotations (capability-gated; `501` when unadvertised) |
-| `GET` | `/v1/host/workspace/files` | API key | `workspace:read` | RFC 0059 list workspace file metadata for the caller's tenant·workspace (capability-gated; `501` when `capabilities.workspace` unadvertised; optional `?prefix=`) |
-| `GET` | `/v1/host/workspace/files/{path}` | API key | `workspace:read` | RFC 0059 read one workspace file (capability-gated; `404` when absent; `?version=N` when versioned) |
-| `PUT` | `/v1/host/workspace/files/{path}` | API key | `workspace:write` | RFC 0059 atomic create/replace (honors `If-Match`; `409 workspace_conflict` on stale etag; `413 workspace_too_large` over `maxFileBytes`; emits `workspace.updated`) |
-| `DELETE` | `/v1/host/workspace/files/{path}` | API key | `workspace:write` | RFC 0059 delete a workspace file (capability-gated; emits `workspace.updated`) |
+| Method   | Path                                  | Auth    | Scope                       | Purpose                                                                                                                                                                                                                          |
+| -------- | ------------------------------------- | ------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST`   | `/v1/runs`                            | API key | `runs:create`               | Create a run                                                                                                                                                                                                                     |
+| `GET`    | `/v1/runs/{runId}`                    | API key | `runs:read`                 | Read run state                                                                                                                                                                                                                   |
+| `GET`    | `/v1/runs/{runId}/events`             | API key | `runs:read`                 | SSE event stream (resumable via `Last-Event-ID`)                                                                                                                                                                                 |
+| `GET`    | `/v1/runs/{runId}/events/poll`        | API key | `runs:read`                 | Long-poll fallback for non-SSE clients                                                                                                                                                                                           |
+| `GET`    | `/v1/runs/{runId}/ancestry`           | API key | `runs:read`                 | RFC 0040 cross-host composition parent (capability-gated; 404 when unadvertised)                                                                                                                                                 |
+| `GET`    | `/v1/agents`                          | API key | `runs:read`                 | RFC 0072 §A manifest-agent inventory (capability-gated on `agents.manifestRuntime`; 404 when unadvertised)                                                                                                                       |
+| `GET`    | `/v1/agents/{agentId}`                | API key | `runs:read`                 | RFC 0072 §A one manifest agent's inventory entry; 404 when absent/unadvertised                                                                                                                                                   |
+| `GET`    | `/v1/agents/{agentId}/deployments`    | API key | `runs:read`                 | RFC 0082 §C/§E deployment records for a manifest agent (capability-gated on `agents.deployment`; 404 when unadvertised)                                                                                                          |
+| `POST`   | `/v1/agents/{agentId}/deployments`    | API key | `deploy:*`                  | RFC 0082 §E deployment state transition (promote/pause/deprecate/rollback/adjust-canary); fail-closed authz (RFC 0049) + RFC 0051 approvalGate + RFC 0081 `requiredEval`; `403` `eval_gate_unmet` / `400` `no_active_deployment` |
+| `GET`    | `/v1/agents/roster`                   | API key | `runs:read`                 | RFC 0086 §B standing agent roster (named instances + portfolios; capability-gated on `agents.roster`; tenant-scoped per RFC 0074; 404 when unadvertised)                                                                         |
+| `GET`    | `/v1/agents/roster/{rosterId}`        | API key | `runs:read`                 | RFC 0086 §B one roster entry; 404 when absent/cross-tenant/unadvertised                                                                                                                                                          |
+| `GET`    | `/v1/tools`                           | API key | `runs:read`                 | RFC 0078 §B portable tool catalog (`ToolDescriptor[]` across node-pack/workflow/mcp/connector/host-extension sources; capability-gated on `toolCatalog`; §F-2 authorization-scoped; 404 when unadvertised)                       |
+| `GET`    | `/v1/tools/{toolId}`                  | API key | `runs:read`                 | RFC 0078 §B one `ToolDescriptor`; 404 when absent/unauthorized/unadvertised                                                                                                                                                      |
+| `GET`    | `/v1/agents/org-chart`                | API key | `runs:read`                 | RFC 0087 §C descriptive agent org-chart (capability-gated on `agents.orgChart`; tenant-scoped; 404 when unadvertised)                                                                                                            |
+| `GET`    | `/v1/agents/org-chart/{departmentId}` | API key | `runs:read`                 | RFC 0087 §D one department's subtree + responsibility roll-up (`?recursive=false` for direct members); 404 when unknown/cross-tenant/unadvertised                                                                                |
+| `GET`    | `/v1/runs/{runId}/eval-summary`       | API key | `runs:read`                 | RFC 0081 §C the `EvalSummary` scorecard for a terminal `mode:"eval"` run (capability-gated on `agents.evalSuite`; 404 when unadvertised/not-an-eval-run; 409 while running)                                                      |
+| `GET`    | `/v1/runs/{runId}:diff`               | API key | `runs:read`                 | RFC 0054 deterministic structured diff of two runs (`?against={otherRunId}`; `runs:read` on both; 404 when unimplemented)                                                                                                        |
+| `POST`   | `/v1/runs/{runId}/cancel`             | API key | `runs:cancel`               | Cancel an in-flight run                                                                                                                                                                                                          |
+| `POST`   | `/v1/runs:bulk-cancel`                | API key | `runs:cancel`               | Bulk cancel a set of in-flight runs                                                                                                                                                                                              |
+| `POST`   | `/v1/runs/{runId}:fork`               | API key | `runs:create` + `runs:read` | Fork or replay a run from recorded state                                                                                                                                                                                         |
+| `POST`   | `/v1/runs/{runId}:pause`              | API key | `runs:cancel`               | Administratively pause an in-flight run                                                                                                                                                                                          |
+| `POST`   | `/v1/runs/{runId}:resume`             | API key | `runs:cancel`               | Resume a paused run                                                                                                                                                                                                              |
+| `POST`   | `/v1/runs/{runId}/annotations`        | API key | `runs:annotate`             | RFC 0056 record a quality annotation (capability-gated; `501` when `capabilities.feedback` unadvertised)                                                                                                                         |
+| `GET`    | `/v1/runs/{runId}/annotations`        | API key | `runs:read`                 | RFC 0056 list a run's annotations (capability-gated; `501` when unadvertised)                                                                                                                                                    |
+| `GET`    | `/v1/host/workspace/files`            | API key | `workspace:read`            | RFC 0059 list workspace file metadata for the caller's tenant·workspace (capability-gated; `501` when `capabilities.workspace` unadvertised; optional `?prefix=`)                                                                |
+| `GET`    | `/v1/host/workspace/files/{path}`     | API key | `workspace:read`            | RFC 0059 read one workspace file (capability-gated; `404` when absent; `?version=N` when versioned)                                                                                                                              |
+| `PUT`    | `/v1/host/workspace/files/{path}`     | API key | `workspace:write`           | RFC 0059 atomic create/replace (honors `If-Match`; `409 workspace_conflict` on stale etag; `413 workspace_too_large` over `maxFileBytes`; emits `workspace.updated`)                                                             |
+| `DELETE` | `/v1/host/workspace/files/{path}`     | API key | `workspace:write`           | RFC 0059 delete a workspace file (capability-gated; emits `workspace.updated`)                                                                                                                                                   |
 
 #### `POST /v1/runs` request
 
@@ -80,6 +80,7 @@ Every OpenWOP-compliant server MUST expose:
 ```
 
 Headers:
+
 - `Authorization: Bearer <key>` — REQUIRED
 - `Idempotency-Key` — RECOMMENDED (see `idempotency.md`)
 - `X-Dedup: enforce` — OPTIONAL; when set, server cross-host claim system rejects duplicate (tenantId, scopeId) pairs with `409 Conflict`
@@ -96,6 +97,7 @@ Headers:
 ```
 
 Status codes:
+
 - `201 Created` — run accepted
 - `400 Bad Request` — malformed body, unknown workflowId, invalid inputs
 - `401/403` — auth failures (see `auth.md`)
@@ -205,58 +207,58 @@ A read-only, deterministic, replay-aware structured diff of two runs — typical
 
 ### HITL (approvals + suspensions)
 
-| Method | Path | Auth | Scope | Purpose |
-|---|---|---|---|---|
-| `POST` | `/v1/runs/{runId}/interrupts/{nodeId}` | API key | `approvals:respond` | Resolve a run-scoped interrupt or approval gate |
-| `POST` | `/v1/interrupts/{token}` | Signed token | None | Resolve any HITL interrupt via callback URL |
-| `GET` | `/v1/interrupts/{token}` | Signed token | None | Inspect an interrupt without resolving |
+| Method | Path                                   | Auth         | Scope               | Purpose                                         |
+| ------ | -------------------------------------- | ------------ | ------------------- | ----------------------------------------------- |
+| `POST` | `/v1/runs/{runId}/interrupts/{nodeId}` | API key      | `approvals:respond` | Resolve a run-scoped interrupt or approval gate |
+| `POST` | `/v1/interrupts/{token}`               | Signed token | None                | Resolve any HITL interrupt via callback URL     |
+| `GET`  | `/v1/interrupts/{token}`               | Signed token | None                | Inspect an interrupt without resolving          |
 
 The signed-token surface (`/v1/interrupts/{token}`) is for asynchronous HITL where the server POSTed a callback URL to an external system at suspension time. Tokens are HMAC-signed by the server and MUST carry an expiry (RFC 0093; the default SHOULD be 30 min, capped at the interrupt's own deadline when one exists). Token **intent** governs which methods a token authorizes (RFC 0093): a token minted with `intent: "resolve"` authorizes both `GET /v1/interrupts/{token}` (inspect) and `POST /v1/interrupts/{token}` (resolve); hosts MAY additionally mint `intent: "inspect"` tokens that authorize only the `GET` — a resolve attempt with an inspect-only token MUST be refused with `403 forbidden`. See `interrupt.md` §"Signed resolution tokens" for token format and lifecycle (expiry, invalidation, constant-time verification).
 
 ### Artifacts
 
-| Method | Path | Auth | Scope | Purpose |
-|---|---|---|---|---|
-| `GET` | `/v1/runs/{runId}/artifacts/{artifactId}` | API key | `artifacts:read` | Read a run-produced artifact |
+| Method | Path                                      | Auth    | Scope            | Purpose                      |
+| ------ | ----------------------------------------- | ------- | ---------------- | ---------------------------- |
+| `GET`  | `/v1/runs/{runId}/artifacts/{artifactId}` | API key | `artifacts:read` | Read a run-produced artifact |
 
 ### Webhooks
 
-| Method | Path | Auth | Scope | Purpose |
-|---|---|---|---|---|
-| `POST` | `/v1/webhooks` | API key | `webhooks:manage` | Register a subscription |
-| `DELETE` | `/v1/webhooks/{webhookId}` | API key | `webhooks:manage` | Unregister |
+| Method   | Path                       | Auth    | Scope             | Purpose                 |
+| -------- | -------------------------- | ------- | ----------------- | ----------------------- |
+| `POST`   | `/v1/webhooks`             | API key | `webhooks:manage` | Register a subscription |
+| `DELETE` | `/v1/webhooks/{webhookId}` | API key | `webhooks:manage` | Unregister              |
 
 ### Audit-log integrity (gated on profile)
 
 Hosts that advertise the `openwop-audit-log-integrity` profile per `auth-profiles.md` MUST expose:
 
-| Method | Path | Auth | Scope | Purpose |
-|---|---|---|---|---|
-| `GET` | `/v1/audit/verify` | API key | `audit:read` | Re-walk the audit-log hash chain over `[fromSeq, toSeq]` and return chain-validity verdict + signed checkpoints + anomalies. See `auth-profiles.md` §`openwop-audit-log-integrity` §4 and `schemas/audit-verify-result.schema.json`. |
+| Method | Path               | Auth    | Scope        | Purpose                                                                                                                                                                                                                              |
+| ------ | ------------------ | ------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET`  | `/v1/audit/verify` | API key | `audit:read` | Re-walk the audit-log hash chain over `[fromSeq, toSeq]` and return chain-validity verdict + signed checkpoints + anomalies. See `auth-profiles.md` §`openwop-audit-log-integrity` §4 and `schemas/audit-verify-result.schema.json`. |
 
 ### Prompt library (RFC 0028; gated on `capabilities.prompts.*`)
 
-Hosts that advertise `capabilities.prompts.endpointsSupported: true` per `prompts.md` §"Discovery & distribution" expose the read endpoints. The mutating endpoints additionally require `capabilities.prompts.mutableLibrary: true`. Hosts without the relevant capability return `501 capability_not_provided`. **Note:** `capabilities.prompts.supported: true` (without `endpointsSupported`) gates only the *node-execution* PromptRef-resolution surface (Phase A); it does NOT imply the REST endpoints are available.
+Hosts that advertise `capabilities.prompts.endpointsSupported: true` per `prompts.md` §"Discovery & distribution" expose the read endpoints. The mutating endpoints additionally require `capabilities.prompts.mutableLibrary: true`. Hosts without the relevant capability return `501 capability_not_provided`. **Note:** `capabilities.prompts.supported: true` (without `endpointsSupported`) gates only the _node-execution_ PromptRef-resolution surface (Phase A); it does NOT imply the REST endpoints are available.
 
-| Method | Path | Auth | Scope | Purpose |
-|---|---|---|---|---|
-| `GET` | `/v1/prompts` | API key | `prompts:read` | Paginated list with `?kind`, `?tag`, `?modelClass`, `?source` filters + opaque `cursor` + `limit`. |
-| `POST` | `/v1/prompts` | API key | `prompts:write` | Create a user-source PromptTemplate (mutable libraries only). `Idempotency-Key` supported. Returns `201` with `Location`. |
-| `GET` | `/v1/prompts/{templateId}` | API key | `prompts:read` | Fetch a template; optional `?version` SemVer pin + optional `?libraryId` for cross-pack disambiguation. `ETag` + `If-None-Match` revalidation. |
-| `PUT` | `/v1/prompts/{templateId}` | API key | `prompts:write` | Replace a user-source template; submitted SemVer MUST be strictly greater than stored. Mutable libraries only. |
-| `DELETE` | `/v1/prompts/{templateId}` | API key | `prompts:write` | Delete a user-source template; `403` on host-built-in or pack-sourced. Mutable libraries only. |
-| `POST` | `/v1/prompts:render` | API key | `prompts:read` | Render a template against supplied variable bindings; returns composed body + sha256 hash + per-variable hashes. Deterministic-hash invariant per RFC 0027 §F. Does NOT dispatch an LLM call. |
+| Method   | Path                       | Auth    | Scope           | Purpose                                                                                                                                                                                       |
+| -------- | -------------------------- | ------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`    | `/v1/prompts`              | API key | `prompts:read`  | Paginated list with `?kind`, `?tag`, `?modelClass`, `?source` filters + opaque `cursor` + `limit`.                                                                                            |
+| `POST`   | `/v1/prompts`              | API key | `prompts:write` | Create a user-source PromptTemplate (mutable libraries only). `Idempotency-Key` supported. Returns `201` with `Location`.                                                                     |
+| `GET`    | `/v1/prompts/{templateId}` | API key | `prompts:read`  | Fetch a template; optional `?version` SemVer pin + optional `?libraryId` for cross-pack disambiguation. `ETag` + `If-None-Match` revalidation.                                                |
+| `PUT`    | `/v1/prompts/{templateId}` | API key | `prompts:write` | Replace a user-source template; submitted SemVer MUST be strictly greater than stored. Mutable libraries only.                                                                                |
+| `DELETE` | `/v1/prompts/{templateId}` | API key | `prompts:write` | Delete a user-source template; `403` on host-built-in or pack-sourced. Mutable libraries only.                                                                                                |
+| `POST`   | `/v1/prompts:render`       | API key | `prompts:read`  | Render a template against supplied variable bindings; returns composed body + sha256 hash + per-variable hashes. Deterministic-hash invariant per RFC 0027 §F. Does NOT dispatch an LLM call. |
 
 ### Pack-registry test-mode namespace (RFC 0025; gated on `capabilities.packs.testMode`)
 
 Hosts that advertise `capabilities.packs.testMode.supported: true` per `node-packs.md` §"Test-mode registry namespace" expose a mirror surface against an isolated catalog so the conformance suite can exercise the 19-code publish error catalog without `packs:publish` scope on the real registry. Hosts without the advertisement return `404 Not Found` for every path below. The endpoints mirror the production `/v1/packs/*` PUT/GET/DELETE/sig surface verbatim — same request bodies, response shapes, status codes, and error code vocabulary.
 
-| Method | Path | Auth | Scope | Purpose |
-|---|---|---|---|---|
-| `PUT` | `/v1/packs-test/{name}/-/{version}.tgz` | API key | `packs:publish` | Publish a pack tarball to the isolated test catalog. Surfaces the documented 19-code error catalog from `node-packs.md` §"PUT /v1/packs/{name}/-/{version}.tgz" verbatim. Idempotent re-publish returns `200`; new publishes return `201`; conflicting re-publish returns `409`. |
-| `GET` | `/v1/packs-test/{name}/-/{version}.tgz` | API key | `packs:read` | Fetch a published test-catalog tarball. Mirror of `GET /v1/packs/{name}/-/{version}.tgz`. |
-| `DELETE` | `/v1/packs-test/{name}/-/{version}` | API key | `packs:publish` | Unpublish a test-catalog version. Mirror of `DELETE /v1/packs/{name}/-/{version}` — returns `400 unpublish_window_expired` for versions outside the unpublish window. |
-| `GET` | `/v1/packs-test/{name}/-/{version}.sig` | API key | `packs:read` | Fetch the detached signature blob for a test-catalog version. Mirror of `GET /v1/packs/{name}/-/{version}.sig`. |
+| Method   | Path                                    | Auth    | Scope           | Purpose                                                                                                                                                                                                                                                                          |
+| -------- | --------------------------------------- | ------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PUT`    | `/v1/packs-test/{name}/-/{version}.tgz` | API key | `packs:publish` | Publish a pack tarball to the isolated test catalog. Surfaces the documented 19-code error catalog from `node-packs.md` §"PUT /v1/packs/{name}/-/{version}.tgz" verbatim. Idempotent re-publish returns `200`; new publishes return `201`; conflicting re-publish returns `409`. |
+| `GET`    | `/v1/packs-test/{name}/-/{version}.tgz` | API key | `packs:read`    | Fetch a published test-catalog tarball. Mirror of `GET /v1/packs/{name}/-/{version}.tgz`.                                                                                                                                                                                        |
+| `DELETE` | `/v1/packs-test/{name}/-/{version}`     | API key | `packs:publish` | Unpublish a test-catalog version. Mirror of `DELETE /v1/packs/{name}/-/{version}` — returns `400 unpublish_window_expired` for versions outside the unpublish window.                                                                                                            |
+| `GET`    | `/v1/packs-test/{name}/-/{version}.sig` | API key | `packs:read`    | Fetch the detached signature blob for a test-catalog version. Mirror of `GET /v1/packs/{name}/-/{version}.sig`.                                                                                                                                                                  |
 
 ## Optional endpoints (transports)
 
@@ -265,6 +267,7 @@ An OpenWOP-compliant server MAY expose additional transports. If exposed, they M
 ### Server-Sent Events (SSE)
 
 The `GET /v1/runs/{runId}/events` endpoint MUST:
+
 - Set `Content-Type: text/event-stream`
 - Honor `Last-Event-ID` request header to resume from the next sequence after that ID
 - Emit a comment line (`:keepalive`) at least every 30 seconds to prevent intermediary timeouts
@@ -281,15 +284,15 @@ If exposed, the server MUST mount A2A at `/v1/a2a` (platform) or `/v1/a2a/{names
 
 ## Headers
 
-| Header | Direction | Purpose |
-|---|---|---|
-| `Authorization` | Request | `Bearer <api-key-or-jwt>` |
-| `Idempotency-Key` | Request | Per-mutation idempotency token (see `idempotency.md`) |
-| `X-Dedup` | Request | `enforce` to opt into cross-host run-claim deduplication |
-| `X-Force-Engine-Version` | Request (test-keys-only) | Forces the run to emit events at the specified engine version. Used by the conformance suite to verify forward-compat fold-best-effort. Servers MUST reject on production keys with `403 force_engine_version_forbidden`. See `version-negotiation.md` + F5 in `conformance/fixtures.md`. |
-| `Last-Event-ID` | Request (SSE) | Resume from sequence after this ID |
-| `Retry-After` | Response | Seconds to wait before retrying (with 409, 429, 503) |
-| `traceparent` / `tracestate` | Both | W3C Trace Context propagation (RECOMMENDED) |
+| Header                       | Direction                | Purpose                                                                                                                                                                                                                                                                                   |
+| ---------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Authorization`              | Request                  | `Bearer <api-key-or-jwt>`                                                                                                                                                                                                                                                                 |
+| `Idempotency-Key`            | Request                  | Per-mutation idempotency token (see `idempotency.md`)                                                                                                                                                                                                                                     |
+| `X-Dedup`                    | Request                  | `enforce` to opt into cross-host run-claim deduplication                                                                                                                                                                                                                                  |
+| `X-Force-Engine-Version`     | Request (test-keys-only) | Forces the run to emit events at the specified engine version. Used by the conformance suite to verify forward-compat fold-best-effort. Servers MUST reject on production keys with `403 force_engine_version_forbidden`. See `version-negotiation.md` + F5 in `conformance/fixtures.md`. |
+| `Last-Event-ID`              | Request (SSE)            | Resume from sequence after this ID                                                                                                                                                                                                                                                        |
+| `Retry-After`                | Response                 | Seconds to wait before retrying (with 409, 429, 503)                                                                                                                                                                                                                                      |
+| `traceparent` / `tracestate` | Both                     | W3C Trace Context propagation (RECOMMENDED)                                                                                                                                                                                                                                               |
 
 ## Error response shape
 
@@ -326,12 +329,14 @@ Reasoning:
 - The convention is RECOMMENDED, not REQUIRED. Hosts that don't emit trace IDs are still spec-conformant.
 
 The conformance suite's `errors.test.ts` (suite version 1.15.0+) asserts:
+
 1. No top-level keys outside `{error, message, details}` (additionalProperties:false equivalent).
 2. When present, `details.correlationId` MUST be a non-empty string.
 
 Hosts emitting `correlationId` at the top level (or other extras like `hint` / `requestId` / `traceId`) MUST move them under `details`.
 
 Common error codes:
+
 - `unauthenticated`, `forbidden`, `key_expired`, `key_revoked` — see `auth.md`
 - `validation_error` — request body/params malformed; `details` enumerates fields
 - `not_found` — resource doesn't exist or caller can't see it (do not leak existence)
@@ -379,7 +384,7 @@ When a host returns `429`, the response body MUST conform to the canonical `Erro
   "message": "Rate limit exceeded for tenant t-abc on /v1/runs.",
   "details": {
     "retryAfterMs": 12500,
-    "scope": "tenant" 
+    "scope": "tenant"
   }
 }
 ```
@@ -408,12 +413,12 @@ These canvas-typed routes MAY be served as aliases that map internally to the sp
 
 ## Open spec gaps
 
-| # | Gap | Owner |
-|---|---|---|
-| R1 | ✅ Bulk-cancel endpoint landed in v1.0 (this doc, 2026-05-12). | closed |
-| R2 | ✅ Explicit administrative pause/resume endpoints — landed in v1.0 (this doc, 2026-05-10). | closed |
-| R3 | ✅ Optional gRPC transport profile landed at `spec/v1/grpc-transport.md` (Phase B, 2026-05-12). REST + SSE remains the REQUIRED wire surface; gRPC is an additional opt-in surface advertised via `capabilities.supportedTransports: ["grpc"]`. Canonical service definition at `api/grpc/openwop.proto`. | closed |
-| R4 | ✅ Endpoint coverage manifest landed at `conformance/coverage.md` §"Endpoint Coverage Manifest". Every OpenAPI `operationId` MUST appear there (enforced by `spec-corpus-validity.test.ts`). Auto-generation tooling is a future polish; the manual manifest + the gate already close the gap. | closed |
+| #   | Gap                                                                                                                                                                                                                                                                                                       | Owner  |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| R1  | ✅ Bulk-cancel endpoint landed in v1.0 (this doc, 2026-05-12).                                                                                                                                                                                                                                            | closed |
+| R2  | ✅ Explicit administrative pause/resume endpoints — landed in v1.0 (this doc, 2026-05-10).                                                                                                                                                                                                                | closed |
+| R3  | ✅ Optional gRPC transport profile landed at `spec/v1/grpc-transport.md` (Phase B, 2026-05-12). REST + SSE remains the REQUIRED wire surface; gRPC is an additional opt-in surface advertised via `capabilities.supportedTransports: ["grpc"]`. Canonical service definition at `api/grpc/openwop.proto`. | closed |
+| R4  | ✅ Endpoint coverage manifest landed at `conformance/coverage.md` §"Endpoint Coverage Manifest". Every OpenAPI `operationId` MUST appear there (enforced by `spec-corpus-validity.test.ts`). Auto-generation tooling is a future polish; the manual manifest + the gate already close the gap.            | closed |
 
 ## References
 

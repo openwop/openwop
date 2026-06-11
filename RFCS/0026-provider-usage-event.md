@@ -1,17 +1,17 @@
 # RFC 0026: `provider.usage` Event
 
-| Field | Value |
-|---|---|
-| **RFC** | 0026 |
-| **Title** | `provider.usage` event — per-call durable usage record for LLM provider invocations |
-| **Status** | `Accepted` |
-| **Author(s)** | David Tufts (@davidscotttufts) |
-| **Created** | 2026-05-19 |
-| **Updated** | 2026-05-19 (Draft → Active → Accepted — see [Status history](#status-history) below). |
-| **Affects** | `schemas/run-event.schema.json`, `schemas/run-event-payloads.schema.json`, `schemas/capabilities.schema.json`, `api/asyncapi.yaml`, `spec/v1/observability.md` §"Provider usage events", `conformance/src/scenarios/provider-usage.test.ts`, `apps/workflow-engine/`, `CHANGELOG.md` |
-| **Compatibility** | `additive` per `COMPATIBILITY.md §2.1` |
-| **Supersedes** | — |
-| **Superseded by** | — |
+| Field             | Value                                                                                                                                                                                                                                                                                |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **RFC**           | 0026                                                                                                                                                                                                                                                                                 |
+| **Title**         | `provider.usage` event — per-call durable usage record for LLM provider invocations                                                                                                                                                                                                  |
+| **Status**        | `Accepted`                                                                                                                                                                                                                                                                           |
+| **Author(s)**     | David Tufts (@davidscotttufts)                                                                                                                                                                                                                                                       |
+| **Created**       | 2026-05-19                                                                                                                                                                                                                                                                           |
+| **Updated**       | 2026-05-19 (Draft → Active → Accepted — see [Status history](#status-history) below).                                                                                                                                                                                                |
+| **Affects**       | `schemas/run-event.schema.json`, `schemas/run-event-payloads.schema.json`, `schemas/capabilities.schema.json`, `api/asyncapi.yaml`, `spec/v1/observability.md` §"Provider usage events", `conformance/src/scenarios/provider-usage.test.ts`, `apps/workflow-engine/`, `CHANGELOG.md` |
+| **Compatibility** | `additive` per `COMPATIBILITY.md §2.1`                                                                                                                                                                                                                                               |
+| **Supersedes**    | —                                                                                                                                                                                                                                                                                    |
+| **Superseded by** | —                                                                                                                                                                                                                                                                                    |
 
 ## Summary
 
@@ -87,14 +87,14 @@ When the call was served from the LLM response cache (`cacheHit: true` per `repl
 
 Hosts that emit `provider.usage` SHOULD ALSO project the same data into the existing `openwop.cost.*` OTel attribute group per `observability.md §"Cost attribution attributes"` (closes O4). The mapping:
 
-| Event field | OTel attribute |
-|---|---|
-| `provider` | `openwop.cost.provider` |
-| `inputTokens` | `openwop.cost.tokens.input` |
-| `outputTokens` | `openwop.cost.tokens.output` |
-| `totalTokens` | `openwop.cost.tokens.total` |
-| `costEstimateUsd` | `openwop.cost.usd` |
-| `currency` | `openwop.cost.currency` |
+| Event field       | OTel attribute               |
+| ----------------- | ---------------------------- |
+| `provider`        | `openwop.cost.provider`      |
+| `inputTokens`     | `openwop.cost.tokens.input`  |
+| `outputTokens`    | `openwop.cost.tokens.output` |
+| `totalTokens`     | `openwop.cost.tokens.total`  |
+| `costEstimateUsd` | `openwop.cost.usd`           |
+| `currency`        | `openwop.cost.currency`      |
 
 The OTel projection is RECOMMENDED, not REQUIRED — hosts MAY emit only the event (for example, hosts that don't run an OTel exporter). The event is the load-bearing surface for replay determinism + subscribers; OTel is supplementary.
 

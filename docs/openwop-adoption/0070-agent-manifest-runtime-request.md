@@ -3,7 +3,7 @@
 **To:** MyndHyve workflow-runtime team
 **From:** OpenWOP steward (David Tufts)
 **Date:** 2026-05-26
-**Re:** RFC 0070 *Agent Manifest Runtime Capability* — now `Active`; one non-steward advertisement closes `Active → Accepted`
+**Re:** RFC 0070 _Agent Manifest Runtime Capability_ — now `Active`; one non-steward advertisement closes `Active → Accepted`
 
 ## Why we're asking
 

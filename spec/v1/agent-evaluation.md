@@ -1,10 +1,10 @@
-# openwop Spec v1 — Agent Evaluation
+# OpenWOP Spec v1 — Agent Evaluation
 
 > **Status: Stable · v1.x — reached `Accepted` via [RFC 0081](../../RFCS/0081-agent-evaluation-and-scorecards.md) (2026-06-01).** Additive v1.x extension — not part of the v1.0 conformance gate. Lands the portable `AgentEvalSuite` artifact, the `mode: "eval"` run projection, the `eval.*` event family + `EvalSummary` scorecard, the `capabilities.agents.evalSuite` advertisement, and the deployment-promotion seam. The behavioral eval-run scenario, the `GET /v1/runs/{runId}/eval-summary` endpoint, the SDK helpers, and the reference-host eval projection land at `Active → Accepted`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ## Why this exists
 
-openwop can run a manifest agent (`agent-memory.md`, `multi-agent-execution.md`; RFC 0070/0072/0077) and observe its reasoning, tool calls, cost (RFC 0026 `provider.usage`), and human feedback (RFC 0056 annotations) — but it has no portable way to answer **"is this agent good enough to deploy?"**. Feedback is a post-hoc human signal, not a repeatable benchmark; run-diff (RFC 0054) compares two runs structurally but carries no notion of *score* or *threshold*. A platform that wants to gate a model swap, a prompt change, or a pack publish on measurable quality has nowhere to put the eval suite, the scorecard, or the pass/fail bar — and two hosts cannot run *the same* evaluation of *the same* agent pack and compare results.
+openwop can run a manifest agent (`agent-memory.md`, `multi-agent-execution.md`; RFC 0070/0072/0077) and observe its reasoning, tool calls, cost (RFC 0026 `provider.usage`), and human feedback (RFC 0056 annotations) — but it has no portable way to answer **"is this agent good enough to deploy?"**. Feedback is a post-hoc human signal, not a repeatable benchmark; run-diff (RFC 0054) compares two runs structurally but carries no notion of _score_ or _threshold_. A platform that wants to gate a model swap, a prompt change, or a pack publish on measurable quality has nowhere to put the eval suite, the scorecard, or the pass/fail bar — and two hosts cannot run _the same_ evaluation of _the same_ agent pack and compare results.
 
 This document adds that surface **additively**. An [`AgentEvalSuite`](../../schemas/agent-eval-suite.schema.json) is a portable artifact (tasks + expected outputs or rubrics + deterministic tool/memory fixtures + allowed model classes + pass/fail thresholds), distributed in a pack tarball exactly like a `systemPromptRef`. An **eval run** is a projection over the existing run surface — `POST /v1/runs` with `mode: "eval"` — reusing the entire reasoning / tool-call / cost / observability machinery rather than a bespoke executor. It emits a content-free [`eval.{started,scored,completed}`](../../schemas/run-event-payloads.schema.json) family and terminates with an [`EvalSummary`](../../schemas/eval-summary.schema.json) scorecard. It **composes — does not duplicate** RFC 0054 (regression baseline), RFC 0026 (per-task cost), and RFC 0056 (human override of an auto-score), and defines the seam by which an RFC 0082 deployment promotion MAY require an eval pass.
 
@@ -33,11 +33,11 @@ The only new read surface is `GET /v1/runs/{runId}/eval-summary`, returning the 
 
 A host advertising `capabilities.agents.evalSuite.supported: true` **MUST** emit, on an eval run, exactly this content-free bracket:
 
-| Event | Emitted | Carries |
-|---|---|---|
-| [`eval.started`](../../schemas/run-event-payloads.schema.json) | once, at eval-run start | `suiteId`, `suiteVersion`, `taskCount`, `modes[]`, optional `baselineRunId` |
-| [`eval.scored`](../../schemas/run-event-payloads.schema.json) | once **per task**, after that task's terminal `agent.decided` | `taskId`, `score`, `passed`, optional `costUsd` / `latencyMs` / `schemaValid` / `safetyFindingCount` |
-| [`eval.completed`](../../schemas/run-event-payloads.schema.json) | once, before `run.completed`, after all tasks | `aggregateScore`, `passed`, `taskCount`, `passedCount`, optional `regressionVsBaseline` |
+| Event                                                            | Emitted                                                       | Carries                                                                                              |
+| ---------------------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| [`eval.started`](../../schemas/run-event-payloads.schema.json)   | once, at eval-run start                                       | `suiteId`, `suiteVersion`, `taskCount`, `modes[]`, optional `baselineRunId`                          |
+| [`eval.scored`](../../schemas/run-event-payloads.schema.json)    | once **per task**, after that task's terminal `agent.decided` | `taskId`, `score`, `passed`, optional `costUsd` / `latencyMs` / `schemaValid` / `safetyFindingCount` |
+| [`eval.completed`](../../schemas/run-event-payloads.schema.json) | once, before `run.completed`, after all tasks                 | `aggregateScore`, `passed`, `taskCount`, `passedCount`, optional `regressionVsBaseline`              |
 
 `eval.scored` is **per-task** so a streaming consumer sees results land incrementally. None of the three events carries task output, rubric prose, model completions, or credential material — only scores, scalars, and ids (§F).
 
@@ -55,7 +55,7 @@ The terminal [`EvalSummary`](../../schemas/eval-summary.schema.json) is set as t
 
 ## §E — The promotion seam
 
-This document defines *how an eval result is referenced by a deployment gate*, not the gate itself (that is [RFC 0082](../../RFCS/0082-agent-deployment-lifecycle.md)). A terminal eval run has a stable `runId` and an `EvalSummary.passed`. RFC 0082's promotion request MAY carry an `evalRunId`, and an RFC 0051 `approvalGate` MAY be configured to require `EvalSummary.passed === true` (or `aggregateScore >= requiredPassScore`) for a given `agentId@version` before `deployment.promoted` is emitted. This document reserves the reference shape `{ evalRunId, requiredPassScore? }` and defers the enforcement contract to RFC 0082 §E. A human MAY override an auto-score via an RFC 0056 annotation on an `eval.scored` event — the auto-score is advisory evidence, not an immutable verdict.
+This document defines _how an eval result is referenced by a deployment gate_, not the gate itself (that is [RFC 0082](../../RFCS/0082-agent-deployment-lifecycle.md)). A terminal eval run has a stable `runId` and an `EvalSummary.passed`. RFC 0082's promotion request MAY carry an `evalRunId`, and an RFC 0051 `approvalGate` MAY be configured to require `EvalSummary.passed === true` (or `aggregateScore >= requiredPassScore`) for a given `agentId@version` before `deployment.promoted` is emitted. This document reserves the reference shape `{ evalRunId, requiredPassScore? }` and defers the enforcement contract to RFC 0082 §E. A human MAY override an auto-score via an RFC 0056 annotation on an `eval.scored` event — the auto-score is advisory evidence, not an immutable verdict.
 
 ## §F — Safety
 
@@ -78,12 +78,12 @@ A host that omits the block does not run evals; `mode: "eval"` 501s and the beha
 
 ## Open spec gaps
 
-| ID | Description |
-|---|---|
+| ID     | Description                                                                                                                                                                                                                                 |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | EVAL-1 | `GET /v1/runs/{runId}/eval-summary` endpoint + `mode: "eval"` are described here but land in `openapi.yaml` + the `OpenwopClient` SDK helper at `Active → Accepted` (behavioral surface, deferred per the RFC 0077 Draft→Active precedent). |
-| EVAL-2 | The behavioral `agent-eval-run.test.ts` (event ordering, per-task scoring, `EvalSummary` round-trip) is gated on `capabilities.agents.evalSuite.supported` and soft-skips until a reference host wires the eval projection. |
-| EVAL-3 | Suite signing/trust inherits the pack signature (RFC 0003); a standalone (non-pack) suite distribution format is deferred. |
-| EVAL-4 | Judge-model selection + scoring for `rubric`/`adversarial` modes is host-internal at v1.x; a portable judge contract is a candidate successor RFC. |
+| EVAL-2 | The behavioral `agent-eval-run.test.ts` (event ordering, per-task scoring, `EvalSummary` round-trip) is gated on `capabilities.agents.evalSuite.supported` and soft-skips until a reference host wires the eval projection.                 |
+| EVAL-3 | Suite signing/trust inherits the pack signature (RFC 0003); a standalone (non-pack) suite distribution format is deferred.                                                                                                                  |
+| EVAL-4 | Judge-model selection + scoring for `rubric`/`adversarial` modes is host-internal at v1.x; a portable judge contract is a candidate successor RFC.                                                                                          |
 
 ## References
 
@@ -92,4 +92,4 @@ A host that omits the block does not run evals; `mode: "eval"` 501s and the beha
 - [`multi-agent-execution.md`](./multi-agent-execution.md) §"Live manifest dispatch" — the `agent.invocation.*` bracket each eval task reuses.
 - [`replay.md`](./replay.md) §"Recorded-fact events" — the determinism posture for eval scores.
 - `RFCS/0026` (per-task cost), `RFCS/0054` (regression diff), `RFCS/0056` (human override), `RFCS/0082` (the promotion seam).
-</content>
+  </content>

@@ -1,17 +1,17 @@
 # RFC 0007: Dispatch (`core.dispatch` Node Pattern)
 
-| Field | Value |
-|---|---|
-| **RFC** | 0007 |
-| **Title** | Dispatch (`core.dispatch` Node Pattern) |
-| **Status** | `Accepted` |
-| **Author(s)** | David Tufts (@davidscotttufts) |
-| **Created** | 2026-05-01 |
-| **Updated** | 2026-05-11 (Active → Accepted: integration-seams audit closed via `docs/MULTI-AGENT-INTEGRATION-GAPS.md` archive; conformance scenarios pass against SQLite reference host) |
-| **Affects** | `schemas/dispatch-config.schema.json`, `schemas/workflow-definition.schema.json`, `spec/v1/node-packs.md` (reserved typeIds), `spec/v1/capabilities.md` |
-| **Compatibility** | `additive` |
-| **Supersedes** | — |
-| **Superseded by** | — |
+| Field             | Value                                                                                                                                                                       |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RFC**           | 0007                                                                                                                                                                        |
+| **Title**         | Dispatch (`core.dispatch` Node Pattern)                                                                                                                                     |
+| **Status**        | `Accepted`                                                                                                                                                                  |
+| **Author(s)**     | David Tufts (@davidscotttufts)                                                                                                                                              |
+| **Created**       | 2026-05-01                                                                                                                                                                  |
+| **Updated**       | 2026-05-11 (Active → Accepted: integration-seams audit closed via `docs/MULTI-AGENT-INTEGRATION-GAPS.md` archive; conformance scenarios pass against SQLite reference host) |
+| **Affects**       | `schemas/dispatch-config.schema.json`, `schemas/workflow-definition.schema.json`, `spec/v1/node-packs.md` (reserved typeIds), `spec/v1/capabilities.md`                     |
+| **Compatibility** | `additive`                                                                                                                                                                  |
+| **Supersedes**    | —                                                                                                                                                                           |
+| **Superseded by** | —                                                                                                                                                                           |
 
 ## Summary
 
@@ -19,7 +19,7 @@ Introduce a new reserved node `typeId`, `core.dispatch`, that translates the lat
 
 ## Motivation
 
-RFC 0006 defines *what* the orchestrator decides; it does not define *how* a decision becomes runtime work. Without a normative dispatch node, hosts will invent their own conventions: which subsystem fires the worker, which interrupt routes the user prompt, how fan-out behaves, whether iteration is capped. That divergence breaks cross-host workflow portability — a workflow built against one host's dispatch convention fails to run on another.
+RFC 0006 defines _what_ the orchestrator decides; it does not define _how_ a decision becomes runtime work. Without a normative dispatch node, hosts will invent their own conventions: which subsystem fires the worker, which interrupt routes the user prompt, how fan-out behaves, whether iteration is capped. That divergence breaks cross-host workflow portability — a workflow built against one host's dispatch convention fails to run on another.
 
 `core.dispatch` is the canonical translator. It consumes the run's latest `runOrchestrator.decided` event and emits the corresponding side effect. Workflow authors place a `core.dispatch` node after an orchestrator-supervisor node; the dispatch node's per-kind behavior is pinned by `DispatchConfig`.
 

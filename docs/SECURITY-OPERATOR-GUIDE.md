@@ -12,13 +12,13 @@ For the threat-model background, see [`SECURITY.md`](../SECURITY.md) + the five 
 
 Pick the auth profiles you actually validate. Advertise nothing else.
 
-| Profile | When to enable | Operator action |
-|---|---|---|
-| **API-key bearer** (`openwop-core` baseline) | Always. | Generate a strong key (≥256 bits); store in your secrets manager; pass via `OPENWOP_API_KEY`. |
-| **API-key rotation** (`openwop-auth-api-key-rotation`) | When you can't atomically rotate all clients. | Configure `OPENWOP_SECONDARY_API_KEY` during overlap; both keys authenticate; remove the secondary post-rotation. Hosts MUST use constant-time dual-candidate comparison (the Postgres reference does). |
-| **OAuth2 client-credentials** (`openwop-auth-oauth2-client-credentials`) | When machine clients authenticate via an IdP. | `OPENWOP_OAUTH2_ISSUER_URL` + `OPENWOP_OAUTH2_AUDIENCE`. JWKS fetched lazily; cached 10 min; re-fetched on `kid` miss. |
-| **OIDC user-bearer** (`openwop-auth-oidc-user-bearer`) | When end-users authenticate via an IdP. | `OPENWOP_OIDC_ISSUER_URL` + `OPENWOP_OIDC_AUDIENCE`. Same JWKS handling as OAuth2. |
-| **mTLS** (`openwop-auth-mtls`) | When your transport terminates mTLS. | `OPENWOP_MTLS_CERT_PATH` + `OPENWOP_MTLS_KEY_PATH` + optional `OPENWOP_MTLS_CA_PATH` + `OPENWOP_MTLS_REQUIRED=true`. Host listens on HTTPS with `node:https.createServer({ requestCert: true })`. |
+| Profile                                                                  | When to enable                                | Operator action                                                                                                                                                                                         |
+| ------------------------------------------------------------------------ | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **API-key bearer** (`openwop-core` baseline)                             | Always.                                       | Generate a strong key (≥256 bits); store in your secrets manager; pass via `OPENWOP_API_KEY`.                                                                                                           |
+| **API-key rotation** (`openwop-auth-api-key-rotation`)                   | When you can't atomically rotate all clients. | Configure `OPENWOP_SECONDARY_API_KEY` during overlap; both keys authenticate; remove the secondary post-rotation. Hosts MUST use constant-time dual-candidate comparison (the Postgres reference does). |
+| **OAuth2 client-credentials** (`openwop-auth-oauth2-client-credentials`) | When machine clients authenticate via an IdP. | `OPENWOP_OAUTH2_ISSUER_URL` + `OPENWOP_OAUTH2_AUDIENCE`. JWKS fetched lazily; cached 10 min; re-fetched on `kid` miss.                                                                                  |
+| **OIDC user-bearer** (`openwop-auth-oidc-user-bearer`)                   | When end-users authenticate via an IdP.       | `OPENWOP_OIDC_ISSUER_URL` + `OPENWOP_OIDC_AUDIENCE`. Same JWKS handling as OAuth2.                                                                                                                      |
+| **mTLS** (`openwop-auth-mtls`)                                           | When your transport terminates mTLS.          | `OPENWOP_MTLS_CERT_PATH` + `OPENWOP_MTLS_KEY_PATH` + optional `OPENWOP_MTLS_CA_PATH` + `OPENWOP_MTLS_REQUIRED=true`. Host listens on HTTPS with `node:https.createServer({ requestCert: true })`.       |
 
 ### Auth honesty signals
 
@@ -59,7 +59,7 @@ Per [`spec/v1/webhooks.md`](../spec/v1/webhooks.md) §"Signature recipe".
 
 ### Wire shape
 
-```
+```text
 HMAC = SHA-256(secret, timestamp + "." + rawBody)
 Header: openwop-Webhook-Signature: v1=<hmac-hex>
 Header: openwop-Webhook-Timestamp: <unix-seconds>
@@ -174,14 +174,14 @@ Per [`spec/v1/node-packs.md`](../spec/v1/node-packs.md) + RFC 0008.
 
 Run these checks against your deployed host on a daily / per-deploy cadence:
 
-| Check | Surface | Failure mode |
-|---|---|---|
-| Discovery returns the expected profiles | `GET /.well-known/openwop` | Strict-mode conformance fails. |
-| BYOK roundtrip preserves redaction | Host smoke (e.g., `byok-roundtrip.test.ts`) | SR-1 violation. |
-| Audit-log verify roundtrip | `GET /v1/audit/verify` | Chain tamper or signing-key compromise. |
-| Webhook HMAC verification on receiver | Receiver-side test | Forged delivery accepted. |
-| Pack-consumer fail-closed | Host smoke (PACK-1) | Tampered tarball accepted. |
-| Strict-mode conformance | `OPENWOP_REQUIRE_BEHAVIOR=true npx openwop-conformance` | Honesty drift. |
+| Check                                   | Surface                                                 | Failure mode                            |
+| --------------------------------------- | ------------------------------------------------------- | --------------------------------------- |
+| Discovery returns the expected profiles | `GET /.well-known/openwop`                              | Strict-mode conformance fails.          |
+| BYOK roundtrip preserves redaction      | Host smoke (e.g., `byok-roundtrip.test.ts`)             | SR-1 violation.                         |
+| Audit-log verify roundtrip              | `GET /v1/audit/verify`                                  | Chain tamper or signing-key compromise. |
+| Webhook HMAC verification on receiver   | Receiver-side test                                      | Forged delivery accepted.               |
+| Pack-consumer fail-closed               | Host smoke (PACK-1)                                     | Tampered tarball accepted.              |
+| Strict-mode conformance                 | `OPENWOP_REQUIRE_BEHAVIOR=true npx openwop-conformance` | Honesty drift.                          |
 
 ---
 

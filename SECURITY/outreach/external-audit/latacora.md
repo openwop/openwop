@@ -2,9 +2,10 @@
 
 **Subject:** External security review — OpenWOP protocol (fixed-bid quote request)
 
-**To:** hello@latacora.com
+**To:** <hello@latacora.com>
 
 **Notes:**
+
 - Latacora's typical engagement is smaller + faster turnaround than the others; good fit if you want to start with a focused scope rather than the full engagement.
 - They specialize in security partnerships for early-stage projects — protocol governance pre-tripwire might appeal to them.
 - Lower-mid range of our budget ($15-25K) likely aligns best.
@@ -15,7 +16,7 @@
 
 Hi Latacora team,
 
-I'm the lead maintainer of OpenWOP (https://github.com/openwop/openwop), an open wire-level protocol for multi-agent workflow orchestration. We're commissioning an independent security review and I'd like a fixed-bid quote.
+I'm the lead maintainer of OpenWOP (<https://github.com/openwop/openwop>), an open wire-level protocol for multi-agent workflow orchestration. We're commissioning an independent security review and I'd like a fixed-bid quote.
 
 **Why Latacora:** the project is at the inflection point your engagement framing fits — public protocol with one steward maintainer, approaching the governance tripwire for vendor-neutral org migration. We're not pre-product but we're pre-third-party-adoption. An audit at this stage de-risks the upcoming non-steward host recruitments.
 
@@ -24,6 +25,7 @@ I'm the lead maintainer of OpenWOP (https://github.com/openwop/openwop), an open
 If a smaller-focused scope works better for your team, the engagement doc lets us anchor on the auth + webhook + node-pack-signing layer (~80 hrs, lower end of our $15K–$40K budget). The full scope adds multi-agent extensions + WASM ABI + a 90-day retest.
 
 The focused-scope deliverables:
+
 - Threat model + spec review for `auth.md` + `auth-profiles.md` (audit-log integrity, OAuth2 client credentials, mTLS profile, OIDC user-bearer profile)
 - `webhooks.md` HMAC scheme + signature-algorithm versioning + replay-attack resistance
 - `node-packs.md` + `registry-operations.md` Ed25519 + Sigstore signing chain + supply-chain controls
@@ -47,4 +49,4 @@ Thanks,
 David Tufts
 Lead Maintainer, OpenWOP
 GitHub: @davidscotttufts
-Engagement scope: https://github.com/openwop/openwop/blob/main/SECURITY/external-audit-engagement.md
+Engagement scope: <https://github.com/openwop/openwop/blob/main/SECURITY/external-audit-engagement.md>

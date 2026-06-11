@@ -1,4 +1,4 @@
-# openwop Spec v1 — Publishing Plan
+# OpenWOP Spec v1 — Publishing Plan
 
 > **⚠️ Repo split (2026-06):** the three SDKs (TypeScript `@openwop/openwop`, Python `openwop-client`, Go) moved to **[`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks)** and publish from there; the pack registry moved to **[`openwop/openwop-registry`](https://github.com/openwop/openwop-registry)**; reference hosts + examples to **[`openwop/openwop-examples`](https://github.com/openwop/openwop-examples)**; the CLI already lives in **[`openwop/openwop-cli`](https://github.com/openwop/openwop-cli)**. **This repo now publishes exactly one artifact: `@openwop/openwop-conformance`** (`conformance/`). The SDK release process below is retained for reference but is executed from `openwop-sdks`. **Versioning alignment still holds across repos:** the SDKs track the spec major — a coordinated spec release (`v*` here) MUST be matched by SDK release tags pushed in `openwop-sdks`.
 
@@ -10,13 +10,13 @@
 
 The spec corpus ships 4 distributable artifacts alongside the prose docs, plus 1 independently-versioned operator tool:
 
-| Artifact | Package name | Version | Registry | Status |
-|---|---|---|---|---|
-| TypeScript SDK | `@openwop/openwop` | `1.0.0` | npm | **Ready for v1.0 publish** |
-| TypeScript conformance suite | `@openwop/openwop-conformance` | `1.0.0` | npm | **Ready for v1.0 publish** |
-| Python SDK | `openwop-client` | `1.0.0` | PyPI | **Ready for v1.0 publish** |
-| Go SDK | `github.com/openwop/openwop/sdk/go` | `v1.0.0` | Go modules (proxy.golang.org) | **Ready for v1.0 tag** |
-| OpenWOP CLI | `@openwop/cli` | — | npm | **Moved** — now lives in [`openwop/openwop-cli`](https://github.com/openwop/openwop-cli) and publishes from there (not from this repo) |
+| Artifact                     | Package name                        | Version  | Registry                      | Status                                                                                                                                 |
+| ---------------------------- | ----------------------------------- | -------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| TypeScript SDK               | `@openwop/openwop`                  | `1.0.0`  | npm                           | **Ready for v1.0 publish**                                                                                                             |
+| TypeScript conformance suite | `@openwop/openwop-conformance`      | `1.0.0`  | npm                           | **Ready for v1.0 publish**                                                                                                             |
+| Python SDK                   | `openwop-client`                    | `1.0.0`  | PyPI                          | **Ready for v1.0 publish**                                                                                                             |
+| Go SDK                       | `github.com/openwop/openwop/sdk/go` | `v1.0.0` | Go modules (proxy.golang.org) | **Ready for v1.0 tag**                                                                                                                 |
+| OpenWOP CLI                  | `@openwop/cli`                      | —        | npm                           | **Moved** — now lives in [`openwop/openwop-cli`](https://github.com/openwop/openwop-cli) and publishes from there (not from this repo) |
 
 The four spec-corpus artifacts should ship from the same v1.0 baseline. Historical point-in-time package versions from before the OpenWOP reset are intentionally ignored; this document is the source of truth for the OpenWOP v1.0 production release.
 
@@ -28,13 +28,13 @@ The CLI is operator-side tooling (not part of the v1 wire surface). It was extra
 
 ### What gets published when
 
-| Trigger | Action |
-|---|---|
-| Spec patch release (e.g., 1.0.0 → 1.0.1) | All 4 artifacts re-publish at the patch version. |
-| Spec minor release (e.g., 1.0.x → 1.1.0) | All 4 artifacts re-publish at a new minor (or patch, if changes are SDK-internal). |
-| Spec major release (e.g., 1.x → 2.0) | All 4 artifacts re-publish at a new major. Old major remains accessible (npm tags, PyPI versions, Go module paths) for 12 months. |
-| SDK-only patch (e.g., bug fix in TS client) | Only the affected SDK re-publishes; spec corpus version unchanged. |
-| Conformance scenario addition | `@openwop/openwop-conformance` minor bump; other artifacts unaffected. |
+| Trigger                                     | Action                                                                                                                            |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Spec patch release (e.g., 1.0.0 → 1.0.1)    | All 4 artifacts re-publish at the patch version.                                                                                  |
+| Spec minor release (e.g., 1.0.x → 1.1.0)    | All 4 artifacts re-publish at a new minor (or patch, if changes are SDK-internal).                                                |
+| Spec major release (e.g., 1.x → 2.0)        | All 4 artifacts re-publish at a new major. Old major remains accessible (npm tags, PyPI versions, Go module paths) for 12 months. |
+| SDK-only patch (e.g., bug fix in TS client) | Only the affected SDK re-publishes; spec corpus version unchanged.                                                                |
+| Conformance scenario addition               | `@openwop/openwop-conformance` minor bump; other artifacts unaffected.                                                            |
 
 ### Versioning alignment
 
@@ -116,13 +116,13 @@ For v1 launch, the release manager is the spec working group lead recorded in `M
 
 Publish workflow at `.github/workflows/openwop-publish.yml`. Triggers map 1:1 to the §"Publication policy" release-type matrix above:
 
-| Tag pattern | Triggers | Use case |
-|---|---|---|
-| `v*` (e.g. `v1.0.0`) | all 4 publish jobs | Spec corpus release — patch / minor / major. Every artifact bumps to the same version. |
-| `openwop/v*` (e.g. `openwop/v1.0.1`) | `publish-ts-client` only | TS SDK bug fix; spec + conformance + Python + Go versions unchanged. |
-| `openwop-conformance/v*` (e.g. `openwop-conformance/v1.0.1`) | `publish-conformance` only | Conformance scenario addition or test-suite bug fix. |
-| `openwop-client/v*` (e.g. `openwop-client/v1.0.1`) | `publish-python` only | Python SDK bug fix. |
-| `sdk/go/v*` (e.g. `sdk/go/v1.0.0`) | `publish-go` only | Go SDK bug fix. **Doubles as the subdir-prefix tag** that proxy.golang.org requires for non-root modules. |
+| Tag pattern                                                  | Triggers                   | Use case                                                                                                  |
+| ------------------------------------------------------------ | -------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `v*` (e.g. `v1.0.0`)                                         | all 4 publish jobs         | Spec corpus release — patch / minor / major. Every artifact bumps to the same version.                    |
+| `openwop/v*` (e.g. `openwop/v1.0.1`)                         | `publish-ts-client` only   | TS SDK bug fix; spec + conformance + Python + Go versions unchanged.                                      |
+| `openwop-conformance/v*` (e.g. `openwop-conformance/v1.0.1`) | `publish-conformance` only | Conformance scenario addition or test-suite bug fix.                                                      |
+| `openwop-client/v*` (e.g. `openwop-client/v1.0.1`)           | `publish-python` only      | Python SDK bug fix.                                                                                       |
+| `sdk/go/v*` (e.g. `sdk/go/v1.0.0`)                           | `publish-go` only          | Go SDK bug fix. **Doubles as the subdir-prefix tag** that proxy.golang.org requires for non-root modules. |
 
 Push the most specific tag for the change. Per-package tags keep unrelated packages at their current version (no phantom no-op republishes).
 
@@ -131,11 +131,13 @@ Each publish job is **idempotent**: before publishing, it checks whether the pac
 The workflow runs `bash scripts/openwop-check.sh` as a hard preflight before any publish job, so a bad commit can't reach the registries even if a tag is pushed.
 
 Secrets required (configured once at repo settings):
+
 - `NPM_TOKEN` — npm automation token with publish scope on `@openwop` (used for `@openwop/openwop` and `@openwop/openwop-conformance`).
 - `PYPI_TOKEN` — PyPI API token (project-scoped to `openwop-client` recommended after first publish).
 - Go publication needs no secret — Go modules consume tags directly from the public repo.
 
 Activation checklist:
+
 1. [ ] npm scope: `@openwop` available to the release manager.
 2. [ ] PyPI project: `openwop-client` available to the release manager.
 3. [ ] Go module path: `github.com/openwop/openwop/sdk/go` verified from the public repo.
@@ -145,6 +147,7 @@ Activation checklist:
 7. [ ] Registry pages verified after publication.
 
 For each subsequent release:
+
 - **Corpus-aligned** (e.g. spec patch 1.0.0 → 1.0.1): push `vX.Y.Z`. All 4 jobs run.
 - **Per-package** (e.g. conformance 1.0.0 → 1.0.1): push the matching per-package tag from the matrix above. Only the matching job runs.
 
@@ -154,7 +157,7 @@ Always: bump the version in the corresponding `package.json` / `pyproject.toml` 
 
 After `openwop-publish.yml/publish-ts-client` publishes a new `@openwop/openwop`, downstream consumers bump their own pin in their own repos — most notably **[`openwop/openwop-app`](https://github.com/openwop/openwop-app)** (the reference app's Cloud Run backend + Firebase frontend bundle, extracted from this monorepo). The in-repo auto-bump workflow that previously updated `apps/workflow-engine/*` was removed with the app; that bump now lives with the app.
 
-**One-time repo setup** (only needed before the first auto-PR): in *Settings → Actions → General → Workflow permissions*, enable **"Allow GitHub Actions to create and approve pull requests"**. Without this, the bot's `gh pr create` call returns 403 and the workflow logs a clear error.
+**One-time repo setup** (only needed before the first auto-PR): in _Settings → Actions → General → Workflow permissions_, enable **"Allow GitHub Actions to create and approve pull requests"**. Without this, the bot's `gh pr create` call returns 403 and the workflow logs a clear error.
 
 Why this exists: every TS SDK release historically required a manual lockfile-bump step before the demo Cloud Run + Firebase Hosting deploys could pull the new SDK. Cloud Run's `npm ci` runs in lockfile-isolated mode, so an outdated lockfile silently pinned the old SDK even when npm carried a newer one. The 2026-05-21 1.1.2 → 1.1.3 release burned three Cloud Run revisions before the manual bump caught up; this workflow closes that loop.
 

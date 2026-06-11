@@ -1,13 +1,14 @@
 # `packs.openwop.dev` — Initial Pack Catalog Plan
 
 > Status: draft for review. Last reviewed: 2026-05-10.
-> Closes Track 7 work bullet *"Publish one signed example pack"* in `PROTOCOL-GAP-CLOSURE-PLAN.md` and stages content for the read-only registry deployment.
+> Closes Track 7 work bullet _"Publish one signed example pack"_ in `PROTOCOL-GAP-CLOSURE-PLAN.md` and stages content for the read-only registry deployment.
 
 This document plans the **first batch of packs** that will live at `https://packs.openwop.dev/`. It covers what to ship, what to defer, and how each pack is built, signed, and validated.
 
 ## Why this plan now
 
 Track 7's acceptance criteria:
+
 - Public registry returns registry-operation examples from `registry-operations.md`.
 - At least one pack can be fetched, verified, and used in a reference host.
 
@@ -21,14 +22,15 @@ The phasing follows Phase 1 #3 from the gap-closure plan sequencing (`Phase 1 �
 
 Four packs, three namespace tiers exercised. Each pack is intentionally small. The point of MVP is **proving the path**, not flooding the registry.
 
-| Pack | Namespace tier | Kind | Nodes | Agents | Signed |
-|---|---|---|---|---|---|
-| `core.openwop.examples` | core (steward-only) | Node | 3 | — | Sigstore (keyless OIDC) |
-| `core.openwop.http` | core (steward-only) | Node | 1 | — | Sigstore (keyless OIDC) |
-| `core.openwop.agent-examples` | core (steward-only) | Agent | — | 2 | Sigstore (keyless OIDC) |
-| `community.openwop-team.demo` | community | Node + Agent | 1 | 1 | Manual ed25519 |
+| Pack                          | Namespace tier      | Kind         | Nodes | Agents | Signed                  |
+| ----------------------------- | ------------------- | ------------ | ----- | ------ | ----------------------- |
+| `core.openwop.examples`       | core (steward-only) | Node         | 3     | —      | Sigstore (keyless OIDC) |
+| `core.openwop.http`           | core (steward-only) | Node         | 1     | —      | Sigstore (keyless OIDC) |
+| `core.openwop.agent-examples` | core (steward-only) | Agent        | —     | 2      | Sigstore (keyless OIDC) |
+| `community.openwop-team.demo` | community           | Node + Agent | 1     | 1      | Manual ed25519          |
 
 Rationale for tier coverage:
+
 - **`core.*`** — exercises the steward namespace + Sigstore signing path
 - **`community.*`** — exercises the open-publish namespace + manual ed25519 path (so independent contributors with no OIDC infra can publish)
 - **No `vendor.*` at MVP** — vendor packs require a vendor org to claim. Add later when first non-steward implementer onboards (Track 9's "recruit one non-steward host" prerequisite).
@@ -39,6 +41,7 @@ Rationale for tier coverage:
 Minimal node-pack proof. Three nodes that exist primarily to be runnable and to demonstrate the conformance categories.
 
 **Nodes:**
+
 - `core.openwop.examples.echo` — `category: data`, `role: pure`. Echoes input verbatim. Replay-safe.
 - `core.openwop.examples.coin-flip` — `category: data`, `role: pure`. Deterministic from a seed input; demonstrates the `cacheable` capability marker.
 - `core.openwop.examples.delay-with-progress` — `category: control`, `role: streaming-output`. Streams a `node.progress` event every 100ms; demonstrates `streamable` capability + bounded duration.
@@ -53,6 +56,7 @@ Minimal node-pack proof. Three nodes that exist primarily to be runnable and to 
 The most-requested ecosystem node: HTTP fetch with retry + idempotency.
 
 **Nodes:**
+
 - `core.openwop.http.fetch` — `category: integration`, `role: side-effect`, `capabilities: ['cacheable', 'side-effectful']`. Config: method, URL template, headers, body, retry policy, idempotency-key derivation. Output: status, headers, body.
 
 **Secrets:** declares `requiresSecrets: [{ id: 'http-bearer', kind: 'api-key', scope: 'tenant' }]` as an optional dependency — workflows that need authenticated requests resolve it via the host's `SecretResolver`. Unauthenticated requests are still supported (the secret is optional).
@@ -66,6 +70,7 @@ The most-requested ecosystem node: HTTP fetch with retry + idempotency.
 First **agent pack**. Validates the `agents[]` extension to `pack.json` (per `node-packs.md` §`agents[]` extension and `agent-manifest.schema.json`). Two minimal agents.
 
 **Agents:**
+
 - `core.openwop.agent-examples.echo-agent` — `persona: "Echo"`, `modelClass: 'general'`, `systemPrompt: "Echo the user's last message verbatim. No analysis, no embellishment."`, `toolAllowlist: []`. Vendor-neutral: the manifest doesn't pin a specific model — the host's BYOK aiProviders resolves.
 - `core.openwop.agent-examples.summarizer` — `persona: "Summarizer"`, `modelClass: 'writing'`, `systemPromptRef: 'prompts/summarizer.md'` (external file, ~200 words). `toolAllowlist: []`. Demonstrates the `systemPromptRef` (vs inline `systemPrompt`) path.
 
@@ -79,9 +84,11 @@ First **agent pack**. Validates the `agents[]` extension to `pack.json` (per `no
 The first **community-namespace** pack. Demonstrates that non-steward contributors can publish without OIDC. Combines one node + one agent so it exercises both extension paths.
 
 **Nodes:**
+
 - `community.openwop-team.demo.uppercase` — `category: data`, `role: pure`. Trivial: uppercase the input string.
 
 **Agents:**
+
 - `community.openwop-team.demo.greeter` — `persona: "Greeter"`, `modelClass: 'general'`, `systemPrompt: "Greet the user in a different language each turn..."`, `toolAllowlist: []`.
 
 **Runtime:** `language: javascript`, `format: esm`, `entry: ./dist/index.js`.
@@ -94,13 +101,13 @@ The first **community-namespace** pack. Demonstrates that non-steward contributo
 
 Ships once the MVP four are live and the publish path is exercised end-to-end. Targets the gaps remaining in Track 7 and the "ecosystem proof" half of Track 9.
 
-| Pack | Purpose |
-|---|---|
-| `core.openwop.approval-gate` | Standalone approval-gate node packaged separately from host built-ins; demonstrates the `gate` role + `interrupt` integration |
-| `core.openwop.llm` | Generic LLM-call node (multi-provider) with envelope-contract support; depends on `core.openwop.http` |
-| `core.openwop.mcp-bridge` | `language: remote` node that bridges a remote MCP server; demonstrates the MCP composition path documented in `mcp-integration.md` |
+| Pack                              | Purpose                                                                                                                                  |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `core.openwop.approval-gate`      | Standalone approval-gate node packaged separately from host built-ins; demonstrates the `gate` role + `interrupt` integration            |
+| `core.openwop.llm`                | Generic LLM-call node (multi-provider) with envelope-contract support; depends on `core.openwop.http`                                    |
+| `core.openwop.mcp-bridge`         | `language: remote` node that bridges a remote MCP server; demonstrates the MCP composition path documented in `mcp-integration.md`       |
 | `community.openwop-team.cookbook` | Bundle of small example packs (one entry per workflow pattern in `examples/`); demonstrates per-node versioning within a multi-node pack |
-| `vendor.<first-partner>.<pack>` | First vendor-namespace claim — gated on Track 9's non-steward host recruitment |
+| `vendor.<first-partner>.<pack>`   | First vendor-namespace claim — gated on Track 9's non-steward host recruitment                                                           |
 
 These are sketched here for catalog continuity but **not in MVP scope**. They land after the MVP four are verified.
 
@@ -110,7 +117,7 @@ These are sketched here for catalog continuity but **not in MVP scope**. They la
 
 A single `scripts/build-pack.sh <pack-dir>` produces the canonical artifact. Drop into `~/dev/openwop/scripts/`:
 
-```
+```text
 1. Read pack.json from <pack-dir>/pack.json
 2. Validate against schemas/node-pack-manifest.schema.json
 3. Build runtime artifact:
@@ -129,7 +136,7 @@ Outputs land under `dist/packs/<scope>/<name>/<version>/`. CI (a new `.github/wo
 
 **Source layout** (proposed; lives at repo root):
 
-```
+```text
 packs/
   README.md                                 — catalog overview
   core.openwop.examples/
@@ -172,6 +179,7 @@ The registry is read-only at MVP. Authoring uploads happen out-of-band (operator
 - **CDN:** GCS bucket already CDN-fronted; tarballs cached by SHA. Hot path is `GET /v1/packs/-/index.json` (the registry index).
 
 **Conformance:**
+
 - Hosts that claim `openwop-node-packs` profile point their resolver at `packs.openwop.dev` (or a host-private mirror).
 - The conformance test `pack-registry-publish.test.ts` (already in `conformance/src/scenarios/`) runs the publish lifecycle against a host's local copy of the registry's behavior.
 

@@ -1,17 +1,17 @@
 # RFC 0024: Streaming `agent.reasoned` Deltas
 
-| Field | Value |
-|---|---|
-| **RFC** | 0024 |
-| **Title** | Streaming `agent.reasoned` Deltas |
-| **Status** | `Accepted` |
-| **Author(s)** | David Tufts (@davidscotttufts) |
-| **Created** | 2026-05-18 |
-| **Updated** | 2026-05-19 (Active → Accepted — see [Status history](#status-history) below). |
-| **Affects** | `schemas/run-event-payloads.schema.json`, `schemas/run-event.schema.json`, `schemas/capabilities.schema.json`, `spec/v1/capabilities.md` §`agents.reasoning`, `spec/v1/node-packs.md` §"Authorized emitters", `api/asyncapi.yaml`, `conformance/src/scenarios/`, `conformance/fixtures/`, `examples/hosts/postgres/`, `apps/workflow-engine/` |
-| **Compatibility** | `additive` per `COMPATIBILITY.md §2.1` |
-| **Supersedes** | — |
-| **Superseded by** | — |
+| Field             | Value                                                                                                                                                                                                                                                                                                                                         |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RFC**           | 0024                                                                                                                                                                                                                                                                                                                                          |
+| **Title**         | Streaming `agent.reasoned` Deltas                                                                                                                                                                                                                                                                                                             |
+| **Status**        | `Accepted`                                                                                                                                                                                                                                                                                                                                    |
+| **Author(s)**     | David Tufts (@davidscotttufts)                                                                                                                                                                                                                                                                                                                |
+| **Created**       | 2026-05-18                                                                                                                                                                                                                                                                                                                                    |
+| **Updated**       | 2026-05-19 (Active → Accepted — see [Status history](#status-history) below).                                                                                                                                                                                                                                                                 |
+| **Affects**       | `schemas/run-event-payloads.schema.json`, `schemas/run-event.schema.json`, `schemas/capabilities.schema.json`, `spec/v1/capabilities.md` §`agents.reasoning`, `spec/v1/node-packs.md` §"Authorized emitters", `api/asyncapi.yaml`, `conformance/src/scenarios/`, `conformance/fixtures/`, `examples/hosts/postgres/`, `apps/workflow-engine/` |
+| **Compatibility** | `additive` per `COMPATIBILITY.md §2.1`                                                                                                                                                                                                                                                                                                        |
+| **Supersedes**    | —                                                                                                                                                                                                                                                                                                                                             |
+| **Superseded by** | —                                                                                                                                                                                                                                                                                                                                             |
 
 ## Summary
 
@@ -99,7 +99,7 @@ Per `spec/v1/replay.md`:
 
 **Positive — streaming-aware host:**
 
-```
+```text
 agent.reasoning.delta  { agentId: "asst-1", sequence: 0, delta: "Let me think.", verbosity: "full" }
 agent.reasoning.delta  { agentId: "asst-1", sequence: 1, delta: " First, the user is asking" }
 agent.reasoning.delta  { agentId: "asst-1", sequence: 2, delta: " about openwop." }
@@ -108,13 +108,13 @@ agent.reasoned         { agentId: "asst-1", reasoning: "Let me think. First, the
 
 **Positive — non-streaming host (unchanged behavior):**
 
-```
+```text
 agent.reasoned  { agentId: "asst-1", reasoning: "Let me think. First, the user is asking about openwop.", verbosity: "full" }
 ```
 
 **Negative — schema-rejected (missing required `sequence`):**
 
-```
+```text
 agent.reasoning.delta  { agentId: "asst-1", delta: "..." }
 ```
 

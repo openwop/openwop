@@ -1,4 +1,4 @@
-# openwop Spec v1 — HITL Interrupt Primitive
+# OpenWOP Spec v1 — HITL Interrupt Primitive
 
 > **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of the canonical `interrupt(payload)` primitive, deterministic resume keys, the eight `kind` discriminators (`approval`, `clarification`, `external-event`, `custom`, `conversation.start`, `conversation.exchange`, `conversation.close`, `low-confidence` — union completed per RFC 0094), the 5-action approval vocabulary, and the signed-token callback URL surface. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
@@ -140,7 +140,7 @@ type ApprovalResume =
   ;
 ```
 
-**Layer distinction (`decidedBy`).** The `decidedBy` field above is **typed optional at the resume layer** because it represents the wire shape *as submitted by the client*. Clients that have already authenticated to the host (the common case) MAY omit `decidedBy` and let the host's auth layer populate it from the request principal. Clients that submit on behalf of a different principal (e.g., admin acting-as) MAY supply it explicitly; the host MAY accept or refuse per its policy.
+**Layer distinction (`decidedBy`).** The `decidedBy` field above is **typed optional at the resume layer** because it represents the wire shape _as submitted by the client_. Clients that have already authenticated to the host (the common case) MAY omit `decidedBy` and let the host's auth layer populate it from the request principal. Clients that submit on behalf of a different principal (e.g., admin acting-as) MAY supply it explicitly; the host MAY accept or refuse per its policy.
 
 At the **event-emission layer** the contract is stricter — see `decidedBy` rules in §"Host-side enforcement boundary" below. Hosts MUST populate `decidedBy` in every emitted `approval.received` event. The opacity contract applies in both layers.
 
@@ -148,12 +148,12 @@ At the **event-emission layer** the contract is stricter — see `decidedBy` rul
 
 **Backward-compat mapping.** Legacy clients that send only `decision: 'approved' | 'rejected' | 'timeout' | 'cancelled'` (the pre-WORKFLOW-REQUEST-CHANGES vocabulary) without an explicit `action` field SHOULD be normalized by the host:
 
-| Legacy input | Normalized action |
-|---|---|
-| `decision: 'approved'`                           | `action: 'accept'` |
-| `decision: 'rejected'` + `feedback` non-empty    | `action: 'refine'` with `refineFeedback: { scope: 'whole', text: <legacy feedback> }` |
-| `decision: 'rejected'` + no `feedback`           | `action: 'reject'` |
-| `decision: 'timeout' \| 'cancelled'`             | (host-internal — emit timeout sentinel, not a resume) |
+| Legacy input                                  | Normalized action                                                                     |
+| --------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `decision: 'approved'`                        | `action: 'accept'`                                                                    |
+| `decision: 'rejected'` + `feedback` non-empty | `action: 'refine'` with `refineFeedback: { scope: 'whole', text: <legacy feedback> }` |
+| `decision: 'rejected'` + no `feedback`        | `action: 'reject'`                                                                    |
+| `decision: 'timeout' \| 'cancelled'`          | (host-internal — emit timeout sentinel, not a resume)                                 |
 
 Hosts MAY also accept legacy `feedback: string` alongside `refineFeedback: RefineFeedback` (the structured form supersedes the string when both are present).
 
@@ -174,8 +174,8 @@ This factoring keeps openwop minimal — the protocol describes the lifecycle (r
 
 **Multi-approver quorum composition is implementation-defined for v1.** When `requiredApprovals > 1`, two valid models exist:
 
-1. *Host-composed quorum*: the host's resolution endpoint accumulates verified resumes (one per approver), applies `rejectionPolicy` (`single-veto` / `majority`) and delivers ONE final `ApprovalResume` to the engine when quorum is reached. The engine sees a single terminal `approval.received` event.
-2. *Engine-composed quorum*: the engine accumulates votes via per-resume calls to its resolution surface and emits one `approval.received` per vote (or a single terminal one — implementation choice).
+1. _Host-composed quorum_: the host's resolution endpoint accumulates verified resumes (one per approver), applies `rejectionPolicy` (`single-veto` / `majority`) and delivers ONE final `ApprovalResume` to the engine when quorum is reached. The engine sees a single terminal `approval.received` event.
+2. _Engine-composed quorum_: the engine accumulates votes via per-resume calls to its resolution surface and emits one `approval.received` per vote (or a single terminal one — implementation choice).
 
 Either model satisfies the v1 wire contract: the FINAL terminal `approval.received` MUST carry a `decidedBy` representing whoever closed the quorum (the last approver, or a synthetic `quorum:<n>-of-<m>` identifier). The intermediate event sequence (whether per-vote partial-state events appear) is NOT spec-locked at v1 — see I1 in §"Open spec gaps."
 
@@ -350,7 +350,7 @@ When an external caller resolves an interrupt, the engine MUST emit:
 
 An OpenWOP-compliant server MUST expose:
 
-```
+```http
 POST /v1/runs/{runId}/interrupts/{nodeId}
 Authorization: Bearer <api-key with approvals:respond scope>
 Body: { resumeValue: <validated against resumeSchema> }
@@ -358,7 +358,7 @@ Body: { resumeValue: <validated against resumeSchema> }
 
 An OpenWOP-compliant server SHOULD also expose a signed-token surface for asynchronous callbacks where the resolving system isn't authenticated to the protocol surface (e.g., a webhook from a payment provider):
 
-```
+```http
 POST /v1/interrupts/{token}
 Body: { resumeValue: ... }
 ```
@@ -369,7 +369,7 @@ See §"Signed resolution tokens" below for the token format, lifecycle, and the 
 
 The token is HMAC-signed by the server. Format:
 
-```
+```text
 token = base64url(payload) + "." + hmac_sha256(secret, payload)
 payload = JSON({ runId, nodeId, interruptId, expiresAt, intent: 'resolve' | 'inspect' })
 ```
@@ -384,14 +384,14 @@ payload = JSON({ runId, nodeId, interruptId, expiresAt, intent: 'resolve' | 'ins
 
 ### Error responses
 
-| HTTP | Code | Cause |
-|---|---|---|
-| `400` | `validation_error` | resumeValue fails schema validation |
-| `401` / `403` | `unauthenticated` / `forbidden` | API key auth failures (see `auth.md`); `403 forbidden` also covers a resolve attempt with an inspect-only token (RFC 0093) |
-| `410` | `interrupt_expired` | Signed-token surface only — token past `expiresAt` (expiry MUSTs normative per RFC 0093) |
-| `404` | `interrupt_not_found` | The interrupt ID doesn't exist or already resolved |
-| `409` | `interrupt_already_resolved` | Concurrent duplicate resolve (the second loses); also any use of a token invalidated by resolution or run cancel/complete (RFC 0093) |
-| `422` | `interrupt_cancelled` | Run was cancelled while interrupt was pending (run-scoped surface; an invalidated signed token returns the `409` above per RFC 0093) |
+| HTTP          | Code                            | Cause                                                                                                                                |
+| ------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `400`         | `validation_error`              | resumeValue fails schema validation                                                                                                  |
+| `401` / `403` | `unauthenticated` / `forbidden` | API key auth failures (see `auth.md`); `403 forbidden` also covers a resolve attempt with an inspect-only token (RFC 0093)           |
+| `410`         | `interrupt_expired`             | Signed-token surface only — token past `expiresAt` (expiry MUSTs normative per RFC 0093)                                             |
+| `404`         | `interrupt_not_found`           | The interrupt ID doesn't exist or already resolved                                                                                   |
+| `409`         | `interrupt_already_resolved`    | Concurrent duplicate resolve (the second loses); also any use of a token invalidated by resolution or run cancel/complete (RFC 0093) |
+| `422`         | `interrupt_cancelled`           | Run was cancelled while interrupt was pending (run-scoped surface; an invalidated signed token returns the `409` above per RFC 0093) |
 
 Cross-tab race semantics for the run-scoped surface: if Tab A and Tab B both POST to resolve the same interrupt, exactly one succeeds; the other receives `409 interrupt_already_resolved`.
 
@@ -414,6 +414,7 @@ Implementations MAY cache resolved interrupts in memory for in-process replays; 
 An OpenWOP-compliant server SHOULD expose a "pending interrupts" admin view listing every run with a non-resolved `interrupt.requested` event. Each row SHOULD surface: `runId`, `nodeId`, `kind`, `requestedAt`, age, and a deep-link to the resolution UI for `kind: "approval" | "clarification"`.
 
 OTel attributes per `observability.md`:
+
 - `openwop.interrupt_kind` — the discriminator
 - `openwop.interrupt_id` — the suspension ID
 - `openwop.interrupt_count` — replay-determinism counter
@@ -426,12 +427,12 @@ A run **annotation** (RFC 0056 — rating / correction / label / flag) is distin
 
 ## Open spec gaps
 
-| # | Gap | Owner |
-|---|---|---|
-| I1 | Multi-approver quorum execution semantics — order of votes, partial-state events, half-vote scenarios. v1 defines the final wire state; future minors may standardize intermediate quorum-state events. | future v1.x |
-| I2 | Cancel-on-resolve semantics for cross-canvas approvals (parent waits on child interrupt — what happens when parent cancels?) | future |
-| I3 | `external-event` correlation matching — is the spec strict (exact equality on `correlation`) or fuzzy (subset-match)? | future v1.x |
-| I4 | Token format alternatives — JWT, paseto, etc. Currently HMAC-SHA256 is the only spec'd format. | future |
+| #   | Gap                                                                                                                                                                                                     | Owner       |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| I1  | Multi-approver quorum execution semantics — order of votes, partial-state events, half-vote scenarios. v1 defines the final wire state; future minors may standardize intermediate quorum-state events. | future v1.x |
+| I2  | Cancel-on-resolve semantics for cross-canvas approvals (parent waits on child interrupt — what happens when parent cancels?)                                                                            | future      |
+| I3  | `external-event` correlation matching — is the spec strict (exact equality on `correlation`) or fuzzy (subset-match)?                                                                                   | future v1.x |
+| I4  | Token format alternatives — JWT, paseto, etc. Currently HMAC-SHA256 is the only spec'd format.                                                                                                          | future      |
 
 ## References
 

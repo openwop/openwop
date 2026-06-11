@@ -16,7 +16,7 @@ Ordered by narrative leverage × likely receptivity.
 
 **Why first:** `README.md` §"Spec foundations" cites LangGraph for four of the six borrowed idioms in v1 (stream-mode taxonomy, `interrupt(payload)` HITL primitive, typed channels + reducers, replay/fork-from-checkpoint), plus LangChain for the `configurable` per-run overlay. `spec/v1/positioning.md` says explicitly: "LangGraph can be a client of an OpenWOP host." A LangGraph→OpenWOP adapter validates that claim publicly and gives every LangGraph user a portable wire contract.
 
-**Outreach target:** the LangChain team's `langgraph` repo discussions (https://github.com/langchain-ai/langgraph/discussions) or `info@langchain.com`.
+**Outreach target:** the LangChain team's `langgraph` repo discussions (<https://github.com/langchain-ai/langgraph/discussions>) or `info@langchain.com`.
 
 **Subject:** LangGraph ↔ OpenWOP adapter — proof-of-portability proposal
 
@@ -24,7 +24,7 @@ Ordered by narrative leverage × likely receptivity.
 
 Hi team,
 
-OpenWOP (https://github.com/openwop/openwop) is an open wire-level protocol for multi-agent workflow orchestration. Of the six borrowed idioms cited in our README's "Spec foundations" table, four come straight from LangGraph (stream-mode taxonomy, `interrupt(payload)` HITL primitive, `Annotated[T, reducer]` channels-and-reducers, `update_state(checkpoint, ...)` replay/fork) and one from LangChain (`RunnableConfig.configurable`). The positioning doc says explicitly: "LangGraph can be a client of an OpenWOP host."
+OpenWOP (<https://github.com/openwop/openwop>) is an open wire-level protocol for multi-agent workflow orchestration. Of the six borrowed idioms cited in our README's "Spec foundations" table, four come straight from LangGraph (stream-mode taxonomy, `interrupt(payload)` HITL primitive, `Annotated[T, reducer]` channels-and-reducers, `update_state(checkpoint, ...)` replay/fork) and one from LangChain (`RunnableConfig.configurable`). The positioning doc says explicitly: "LangGraph can be a client of an OpenWOP host."
 
 I'd like to make that real. An OpenWOP host backed by a LangGraph runtime would:
 
@@ -35,6 +35,7 @@ I'd like to make that real. An OpenWOP host backed by a LangGraph runtime would:
 The adapter would be ~700–1,000 LOC TypeScript modeled on `examples/hosts/sqlite/` (~3,600 LOC at the level of feature coverage required for the SQLite host's full surface; a LangGraph adapter can target a smaller surface — `openwop-core` + interrupts is enough to be useful and adds maybe 1,000 LOC of bridge code over the LangGraph runtime). Single dep on `langgraph`. The big translation chunks: LangGraph's checkpoint store → OpenWOP's `RunEventLogIO`; LangGraph's interrupt → OpenWOP's interrupt protocol (4 kinds, 5-action approval vocab); LangGraph's `Annotated[T, reducer]` → OpenWOP's channels-and-reducers (which OpenWOP borrowed from you).
 
 I'm happy to:
+
 - Write the first cut as a draft PR against a LangGraph adapter repo of your team's choice.
 - Support someone on your team who wants to own it; I'll handle the spec questions and the conformance gate.
 - Land it under whichever org you prefer; doesn't need to be in the OpenWOP repo.
@@ -45,8 +46,8 @@ Thanks,
 David Tufts
 Lead Maintainer, OpenWOP
 GitHub: @davidscotttufts
-Spec: https://github.com/openwop/openwop
-Positioning + LangGraph cross-reference: https://github.com/openwop/openwop/blob/main/spec/v1/positioning.md
+Spec: <https://github.com/openwop/openwop>
+Positioning + LangGraph cross-reference: <https://github.com/openwop/openwop/blob/main/spec/v1/positioning.md>
 
 ---
 
@@ -54,7 +55,7 @@ Positioning + LangGraph cross-reference: https://github.com/openwop/openwop/blob
 
 **Why second:** Restate is a durable-execution runtime with operational depth OpenWOP doesn't try to compete with. A Restate-backed OpenWOP host validates the "OpenWOP runs on Temporal-class durability runtimes" claim from `positioning.md`. Restate's team is small enough to commit quickly + their public posture is partnership-oriented.
 
-**Outreach target:** Restate's contact form at https://restate.dev/contact/ or `community@restate.dev`.
+**Outreach target:** Restate's contact form at <https://restate.dev/contact/> or `community@restate.dev`.
 
 **Subject:** OpenWOP host on Restate — durable-execution partnership proposal
 
@@ -62,7 +63,7 @@ Positioning + LangGraph cross-reference: https://github.com/openwop/openwop/blob
 
 Hi Restate team,
 
-OpenWOP (https://github.com/openwop/openwop) is an open wire-level protocol for multi-agent workflow orchestration. The positioning doc names Restate explicitly as one of the durable-execution runtimes OpenWOP composes with cleanly. I'd like to make that concrete.
+OpenWOP (<https://github.com/openwop/openwop>) is an open wire-level protocol for multi-agent workflow orchestration. The positioning doc names Restate explicitly as one of the durable-execution runtimes OpenWOP composes with cleanly. I'd like to make that concrete.
 
 A Restate-backed OpenWOP host would:
 
@@ -73,6 +74,7 @@ A Restate-backed OpenWOP host would:
 The adapter would be ~800-1,200 LOC TypeScript or Rust (your team's call). The translation: Restate's persistent invocations → OpenWOP's `RunEventLogIO`; Restate's awakeables → OpenWOP's interrupt protocol; Restate's keyed services → OpenWOP's per-run claim acquisition.
 
 I'm happy to:
+
 - Write the first cut as a draft PR against a Restate-OpenWOP-adapter repo your team owns.
 - Land it under your org; doesn't need to be in the OpenWOP repo.
 - Author the conformance evidence + the INTEROP-MATRIX submission.
@@ -83,7 +85,7 @@ Thanks,
 David Tufts
 Lead Maintainer, OpenWOP
 GitHub: @davidscotttufts
-Spec: https://github.com/openwop/openwop
+Spec: <https://github.com/openwop/openwop>
 
 ---
 
@@ -91,7 +93,7 @@ Spec: https://github.com/openwop/openwop
 
 **Why third:** DBOS's transactional-Postgres approach to durable execution maps directly onto OpenWOP's `RunEventLogIO` + `SuspendIO` contracts; their model is closer to a database-native workflow runtime than Temporal's. The DBOS team is small + receptive to OSS partnerships.
 
-**Outreach target:** DBOS contact form at https://www.dbos.dev/contact or peter@dbos.dev (founder).
+**Outreach target:** DBOS contact form at <https://www.dbos.dev/contact> or <peter@dbos.dev> (founder).
 
 **Subject:** OpenWOP host on DBOS — durable workflow proposal
 
@@ -99,7 +101,7 @@ Spec: https://github.com/openwop/openwop
 
 Hi DBOS team,
 
-OpenWOP (https://github.com/openwop/openwop) is an open wire-level protocol for multi-agent workflow orchestration. DBOS's transactional-Postgres approach to durable execution maps cleanly onto OpenWOP's storage-adapter contract — your `dbos.workflow()` decorators and OpenWOP's `RunEventLogIO` + `SuspendIO` are isomorphic at the storage layer.
+OpenWOP (<https://github.com/openwop/openwop>) is an open wire-level protocol for multi-agent workflow orchestration. DBOS's transactional-Postgres approach to durable execution maps cleanly onto OpenWOP's storage-adapter contract — your `dbos.workflow()` decorators and OpenWOP's `RunEventLogIO` + `SuspendIO` are isomorphic at the storage layer.
 
 A DBOS-backed OpenWOP host would:
 
@@ -110,6 +112,7 @@ A DBOS-backed OpenWOP host would:
 The adapter would be ~600-1,000 LOC Python or TypeScript — your team's pick. The translation: DBOS's workflow decorators → OpenWOP's executor; DBOS's communicator → OpenWOP's node-pack pattern; DBOS's transaction-wrapped state → OpenWOP's channels-and-reducers.
 
 I'm happy to:
+
 - Write the first cut as a draft PR against a DBOS-OpenWOP-adapter repo.
 - Land it under your org.
 - Author the conformance evidence + INTEROP-MATRIX submission.
@@ -120,7 +123,7 @@ Thanks,
 David Tufts
 Lead Maintainer, OpenWOP
 GitHub: @davidscotttufts
-Spec: https://github.com/openwop/openwop
+Spec: <https://github.com/openwop/openwop>
 
 ---
 
@@ -128,7 +131,7 @@ Spec: https://github.com/openwop/openwop
 
 **Why fourth:** Inngest's TS-native event-driven runtime is the right shape for OpenWOP's SSE-first wire surface — `inngest.step.run()` maps to OpenWOP nodes, `inngest.step.waitForEvent()` maps to interrupts. Big TS install base, low-friction-adoption profile.
 
-**Outreach target:** hello@inngest.com or via their Discord community.
+**Outreach target:** <hello@inngest.com> or via their Discord community.
 
 **Subject:** OpenWOP host on Inngest — TS-native AI-workflow proposal
 
@@ -136,7 +139,7 @@ Spec: https://github.com/openwop/openwop
 
 Hi Inngest team,
 
-OpenWOP (https://github.com/openwop/openwop) is an open wire-level protocol for multi-agent workflow orchestration. Inngest's TS-native event-driven model is the natural shape for OpenWOP's SSE-first wire surface — `inngest.step.run()` lines up with OpenWOP nodes, `inngest.step.waitForEvent()` with OpenWOP interrupts, and Inngest's keyed events with OpenWOP's signed-token callback resume.
+OpenWOP (<https://github.com/openwop/openwop>) is an open wire-level protocol for multi-agent workflow orchestration. Inngest's TS-native event-driven model is the natural shape for OpenWOP's SSE-first wire surface — `inngest.step.run()` lines up with OpenWOP nodes, `inngest.step.waitForEvent()` with OpenWOP interrupts, and Inngest's keyed events with OpenWOP's signed-token callback resume.
 
 An Inngest-backed OpenWOP host would:
 
@@ -154,7 +157,7 @@ Thanks,
 David Tufts
 Lead Maintainer, OpenWOP
 GitHub: @davidscotttufts
-Spec: https://github.com/openwop/openwop
+Spec: <https://github.com/openwop/openwop>
 
 ---
 

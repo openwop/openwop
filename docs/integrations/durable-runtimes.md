@@ -14,12 +14,12 @@ For broader composition stance see [`spec/v1/positioning.md`](../../spec/v1/posi
 
 The shared problem each durable runtime solves: **deterministic resumption of a long-running process across worker restarts, crashes, and scale events**. The shapes diverge:
 
-| Runtime | Native primitive | OpenWOP analogue |
-|---|---|---|
-| **Temporal** | Workflow (long-lived deterministic function) + Activities (side effects with retry) | OpenWOP run + node executions |
-| **Restate** | Service handler with virtual journal | OpenWOP run + per-node event-log |
-| **DBOS** | Workflow function with checkpoint-on-write | OpenWOP run + RunEventLogIO checkpoint |
-| **Inngest** | Step function with `step.run()` boundaries | OpenWOP run + node-level event boundaries |
+| Runtime      | Native primitive                                                                    | OpenWOP analogue                          |
+| ------------ | ----------------------------------------------------------------------------------- | ----------------------------------------- |
+| **Temporal** | Workflow (long-lived deterministic function) + Activities (side effects with retry) | OpenWOP run + node executions             |
+| **Restate**  | Service handler with virtual journal                                                | OpenWOP run + per-node event-log          |
+| **DBOS**     | Workflow function with checkpoint-on-write                                          | OpenWOP run + RunEventLogIO checkpoint    |
+| **Inngest**  | Step function with `step.run()` boundaries                                          | OpenWOP run + node-level event boundaries |
 
 In every case the substrate gives you "this thing keeps running for a long time, survives crashes, and replays deterministically." OpenWOP adds: a public wire contract + HITL primitives + replay/fork + signed audit log + capability discovery.
 
@@ -31,7 +31,7 @@ In every case the substrate gives you "this thing keeps running for a long time,
 
 Don't fan out runs across multiple durable invocations. The durable runtime's identity (workflow id / handler invocation id) becomes the OpenWOP `runId`. The two MUST track 1:1 across replays.
 
-```
+```text
 OpenWOP runId  ⇄  Temporal WorkflowID
               ⇄  Restate invocation id
               ⇄  DBOS workflow_uuid
@@ -44,12 +44,12 @@ This makes `POST /v1/runs/{id}:fork` map cleanly onto Temporal's `RestartWorkflo
 
 Side-effecting calls inside the durable workflow become OpenWOP node executions. The durable runtime's retry + idempotency guarantees become the OpenWOP node's retry behavior:
 
-| Durable primitive | OpenWOP node behavior |
-|---|---|
+| Durable primitive                      | OpenWOP node behavior                                                                                            |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | Activity / step retried by the runtime | OpenWOP node emits `node.started` once, `node.retrying` per retry, `node.completed` / `node.failed` on terminal. |
-| Activity timeout | OpenWOP node emits `node.failed` with `code: 'node_timeout'`. |
-| Activity heartbeats | OpenWOP MAY emit `node.progress` events at heartbeat boundaries. |
-| Activity cancellation | OpenWOP node emits `node.cancelled`. |
+| Activity timeout                       | OpenWOP node emits `node.failed` with `code: 'node_timeout'`.                                                    |
+| Activity heartbeats                    | OpenWOP MAY emit `node.progress` events at heartbeat boundaries.                                                 |
+| Activity cancellation                  | OpenWOP node emits `node.cancelled`.                                                                             |
 
 OpenWOP does NOT normate retry policy — you keep whatever your durable runtime ships. Just project the visible state transitions onto the canonical event vocabulary in [`observability.md`](../../spec/v1/observability.md) §"Canonical run lifecycle event names".
 
@@ -64,7 +64,7 @@ Don't double-write. The durable runtime's journal IS your `RunEventLogIO` per [`
 
 The mapping you maintain is:
 
-```
+```text
 durable-runtime-event  →  OpenWOP RunEvent { seq, runId, type, nodeId?, data, timestamp, causationId? }
 ```
 
@@ -74,12 +74,12 @@ Sequence numbers are critical: OpenWOP's wire contract guarantees `seq` is monot
 
 OpenWOP HITL interrupts (`waiting-approval` / `waiting-input` / `waiting-clarification` / `waiting-external-event`) project to native suspend:
 
-| Runtime | Native suspend mechanism |
-|---|---|
-| Temporal | `Workflow.await` on a signal |
-| Restate | `ctx.awakeable()` |
-| DBOS | `WorkflowHandle.send()` with a deferred await |
-| Inngest | `step.waitForEvent()` |
+| Runtime  | Native suspend mechanism                      |
+| -------- | --------------------------------------------- |
+| Temporal | `Workflow.await` on a signal                  |
+| Restate  | `ctx.awakeable()`                             |
+| DBOS     | `WorkflowHandle.send()` with a deferred await |
+| Inngest  | `step.waitForEvent()`                         |
 
 The signed-token callback per [`interrupt.md`](../../spec/v1/interrupt.md) §"Signed-token callback" becomes a webhook OR an out-of-band signal sender that resolves the native await. Either path is acceptable; the wire surface (`POST /v1/interrupts/{token}`) stays the same.
 

@@ -18,22 +18,22 @@ If you're building a **host**, continue.
 
 ### What's your deployment shape?
 
-| Shape | Start here |
-|---|---|
-| **Educational reference / local demo** | `minimal` — just `openwop-core` + your stream choice. See [`profiles.md`](../spec/v1/profiles.md) §"Minimal". |
-| **Single-machine production** (e.g., SQLite-backed) | `minimal` + your stream choice + `openwop-audit-log-integrity` if you care about audit. |
-| **Production multi-tenant SaaS** | `production` — claim `openwop-production` end-to-end. Requires backpressure 503 + retention sweep + claim acquisition + every auth profile you actually validate. |
-| **High-throughput orchestrator** | `production` + scale-tier `high-throughput` per `scale-profiles.md`. Today no reference host claims this; the bar is operator-defined. |
+| Shape                                               | Start here                                                                                                                                                        |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Educational reference / local demo**              | `minimal` — just `openwop-core` + your stream choice. See [`profiles.md`](../spec/v1/profiles.md) §"Minimal".                                                     |
+| **Single-machine production** (e.g., SQLite-backed) | `minimal` + your stream choice + `openwop-audit-log-integrity` if you care about audit.                                                                           |
+| **Production multi-tenant SaaS**                    | `production` — claim `openwop-production` end-to-end. Requires backpressure 503 + retention sweep + claim acquisition + every auth profile you actually validate. |
+| **High-throughput orchestrator**                    | `production` + scale-tier `high-throughput` per `scale-profiles.md`. Today no reference host claims this; the bar is operator-defined.                            |
 
 ---
 
 ## Decision 1: Pick your stream profile
 
-| You implement | Claim |
-|---|---|
-| Only `GET /v1/runs/{id}/events/poll` | `openwop-stream-poll` |
-| Only SSE on `GET /v1/runs/{id}/events` | `openwop-stream-sse` |
-| Both | `openwop-stream-poll` **and** `openwop-stream-sse` |
+| You implement                          | Claim                                              |
+| -------------------------------------- | -------------------------------------------------- |
+| Only `GET /v1/runs/{id}/events/poll`   | `openwop-stream-poll`                              |
+| Only SSE on `GET /v1/runs/{id}/events` | `openwop-stream-sse`                               |
+| Both                                   | `openwop-stream-poll` **and** `openwop-stream-sse` |
 
 **Do not claim** `openwop-stream-sse` if your runtime doesn't actually keep an SSE connection open for the duration of a run — pollers will get confused.
 
@@ -43,12 +43,12 @@ If you're building a **host**, continue.
 
 Every host implements API-key bearer auth (the `openwop-core` baseline). The four auth-extension profiles compose:
 
-| Profile | Claim when | Required env / config |
-|---|---|---|
-| `openwop-auth-api-key-rotation` | You accept BOTH a primary AND a secondary key during an overlap window. | Your host config carries TWO valid keys; the secondary is removed at rotation end. |
-| `openwop-auth-oauth2-client-credentials` | You validate OAuth2 JWT bearers via a JWKS issuer. | Issuer + audience configured; JWKS reachable. |
-| `openwop-auth-oidc-user-bearer` | You validate OIDC user-bearer JWTs (sub-claim → user identity). | OIDC issuer + audience configured. |
-| `openwop-auth-mtls` | Your transport terminates mTLS and verifies client certs. | TLS cert + key + (optional) CA bundle paths. |
+| Profile                                  | Claim when                                                              | Required env / config                                                              |
+| ---------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `openwop-auth-api-key-rotation`          | You accept BOTH a primary AND a secondary key during an overlap window. | Your host config carries TWO valid keys; the secondary is removed at rotation end. |
+| `openwop-auth-oauth2-client-credentials` | You validate OAuth2 JWT bearers via a JWKS issuer.                      | Issuer + audience configured; JWKS reachable.                                      |
+| `openwop-auth-oidc-user-bearer`          | You validate OIDC user-bearer JWTs (sub-claim → user identity).         | OIDC issuer + audience configured.                                                 |
+| `openwop-auth-mtls`                      | Your transport terminates mTLS and verifies client certs.               | TLS cert + key + (optional) CA bundle paths.                                       |
 
 **Compose freely.** A production host might claim all four. The conformance suite has a scenario per profile; each gates on the discovery advertisement.
 
@@ -58,21 +58,21 @@ Every host implements API-key bearer auth (the `openwop-core` baseline). The fou
 
 These are advertised separately under `capabilities.*`, not in `auth.profiles[]`. Claim only when you actually implement the behavior.
 
-| Capability | Profile concept | When to claim |
-|---|---|---|
-| `runs.pauseResume` | Operator pause/resume of in-flight runs | When you implement `POST :pause` + `:resume` with status transitions. Optionally advertise `drainPolicies: ['immediate', 'drain-current-node']`. |
-| `memory` | RFC 0004 MemoryAdapter | When you implement `list` + `get` over agent memory with CTI-1 cross-tenant isolation. |
-| `memory.compaction` | RFC 0012 host-managed compaction | When you periodically distill long-lived MemoryEntry rows. **MUST honor SR-1 carry-forward** per RFC 0012 §D. |
-| `agents` | RFC 0002–0007 Multi-Agent Shift | When you implement AgentRef + reasoning events + orchestrator + dispatch. Reading the RFCs first is recommended. |
-| `nodePackRuntimes.wasm` | RFC 0008 WASM ABI | When you execute WASM packs in a sandbox with `memory.grow` cap + fuel + execution-time enforcement. |
-| `aiProviders` | BYOK + 4-mode policy enforcement | When you broker LLM API calls and enforce `disabled` / `optional` / `required` / `restricted` policies per provider. |
-| `mcpClient` | MCP tool calls with `trustBoundary: untrusted` | When you implement `core.mcp.toolCall` with MCP-1 redaction (args + content hashed, never raw on event payloads). |
-| `httpClient` | `core.http.request` with SSRF guard | When you implement an SSRF-guarded outbound HTTP node with a documented response-body cap. |
-| `webhooks.signatureAlgorithms` | Signed webhook delivery | When you deliver run events to external receivers with HMAC signing. Always include `v1`. |
-| `idempotency.crossRegion` | Multi-region Layer-1 idempotency | When you deploy with cross-region idempotency cache replication. Honest values: `single-region` (default), `best-effort`, `strict`. |
-| `discovery.authScoped` | Per-principal narrowed views | When the same `/.well-known/openwop` endpoint returns a STRICT subset for less-privileged principals. |
-| `auditLogIntegrity` | Hash-chained event log + signed checkpoints | When you persist a tamper-evident audit log with Ed25519 checkpoint signatures. |
-| `production` | RFC 0009 production-profile claim | When you implement backpressure + retention + claim acquisition + audit-log integrity + every claimed auth profile end-to-end. |
+| Capability                     | Profile concept                                | When to claim                                                                                                                                    |
+| ------------------------------ | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `runs.pauseResume`             | Operator pause/resume of in-flight runs        | When you implement `POST :pause` + `:resume` with status transitions. Optionally advertise `drainPolicies: ['immediate', 'drain-current-node']`. |
+| `memory`                       | RFC 0004 MemoryAdapter                         | When you implement `list` + `get` over agent memory with CTI-1 cross-tenant isolation.                                                           |
+| `memory.compaction`            | RFC 0012 host-managed compaction               | When you periodically distill long-lived MemoryEntry rows. **MUST honor SR-1 carry-forward** per RFC 0012 §D.                                    |
+| `agents`                       | RFC 0002–0007 Multi-Agent Shift                | When you implement AgentRef + reasoning events + orchestrator + dispatch. Reading the RFCs first is recommended.                                 |
+| `nodePackRuntimes.wasm`        | RFC 0008 WASM ABI                              | When you execute WASM packs in a sandbox with `memory.grow` cap + fuel + execution-time enforcement.                                             |
+| `aiProviders`                  | BYOK + 4-mode policy enforcement               | When you broker LLM API calls and enforce `disabled` / `optional` / `required` / `restricted` policies per provider.                             |
+| `mcpClient`                    | MCP tool calls with `trustBoundary: untrusted` | When you implement `core.mcp.toolCall` with MCP-1 redaction (args + content hashed, never raw on event payloads).                                |
+| `httpClient`                   | `core.http.request` with SSRF guard            | When you implement an SSRF-guarded outbound HTTP node with a documented response-body cap.                                                       |
+| `webhooks.signatureAlgorithms` | Signed webhook delivery                        | When you deliver run events to external receivers with HMAC signing. Always include `v1`.                                                        |
+| `idempotency.crossRegion`      | Multi-region Layer-1 idempotency               | When you deploy with cross-region idempotency cache replication. Honest values: `single-region` (default), `best-effort`, `strict`.              |
+| `discovery.authScoped`         | Per-principal narrowed views                   | When the same `/.well-known/openwop` endpoint returns a STRICT subset for less-privileged principals.                                            |
+| `auditLogIntegrity`            | Hash-chained event log + signed checkpoints    | When you persist a tamper-evident audit log with Ed25519 checkpoint signatures.                                                                  |
+| `production`                   | RFC 0009 production-profile claim              | When you implement backpressure + retention + claim acquisition + audit-log integrity + every claimed auth profile end-to-end.                   |
 
 ---
 

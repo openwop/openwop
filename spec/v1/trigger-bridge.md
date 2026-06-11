@@ -1,10 +1,10 @@
-# openwop Spec v1 — Durable Trigger + Channel Bridge
+# OpenWOP Spec v1 — Durable Trigger + Channel Bridge
 
 > **Status: Stable · v1.x — reached `Accepted` via [RFC 0083](../../RFCS/0083-durable-trigger-and-channel-bridge-profile.md) (2026-05-31).** Additive v1.x extension — not part of the v1.0 conformance gate. Lands the `triggerBridge` capability + the opt-in `webhooks.durable` mode, the `TriggerSubscription` record + four-state machine, the content-free `trigger.subscription.state.changed` / `trigger.delivery.attempted` events, and the derived `openwop-trigger-bridge` profile. The behavioral delivery scenario, the subscription-management OpenAPI surface, and the reference-host durable-delivery implementation land at `Active → Accepted`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ## Why this exists
 
-openwop has the *pieces* of durable inbound work — scheduling (RFC 0052), dead-letter sinks (RFC 0053), a queue bus (RFC 0017), webhooks (`webhooks.md`), cross-host causation (RFC 0040), and 15 trigger node shapes (`core.openwop.triggers`) — but **no uniform contract that ties them together**. Webhooks are *signed but best-effort* (a circuit breaker, no durable retry); trigger fan-out is not wired; there is no subscription state machine, no delivery-attempt/dedup model, and no explicit trigger→run causation. An operator can't see "this subscription is failing / dead-lettered" and a client can't reason about at-least-once inbound delivery portably.
+openwop has the _pieces_ of durable inbound work — scheduling (RFC 0052), dead-letter sinks (RFC 0053), a queue bus (RFC 0017), webhooks (`webhooks.md`), cross-host causation (RFC 0040), and 15 trigger node shapes (`core.openwop.triggers`) — but **no uniform contract that ties them together**. Webhooks are _signed but best-effort_ (a circuit breaker, no durable retry); trigger fan-out is not wired; there is no subscription state machine, no delivery-attempt/dedup model, and no explicit trigger→run causation. An operator can't see "this subscription is failing / dead-lettered" and a client can't reason about at-least-once inbound delivery portably.
 
 This document composes those primitives into one **profile**, additively. It changes no existing primitive — the best-effort webhook contract is preserved as the default; durability is a strictly additional opt-in.
 
@@ -16,12 +16,12 @@ A host advertises `capabilities.triggerBridge` (`supported` + optional `subscrip
 
 A [`TriggerSubscription`](../../schemas/trigger-subscription.schema.json) is a durable record (a webhook registration, a schedule, a queue consumer) with a standardized `state`:
 
-| State | Meaning | Entered by |
-|---|---|---|
-| `active` | accepting + delivering inbound events | create / resume |
-| `paused` | retained but not delivering (operator-held) | pause |
-| `failed` | delivery failing past policy (the `webhooks.md` circuit-breaker generalized) | repeated delivery failure |
-| `dead-lettered` | terminal failure; deliveries routed to the RFC 0053 sink | retry exhaustion |
+| State           | Meaning                                                                      | Entered by                |
+| --------------- | ---------------------------------------------------------------------------- | ------------------------- |
+| `active`        | accepting + delivering inbound events                                        | create / resume           |
+| `paused`        | retained but not delivering (operator-held)                                  | pause                     |
+| `failed`        | delivery failing past policy (the `webhooks.md` circuit-breaker generalized) | repeated delivery failure |
+| `dead-lettered` | terminal failure; deliveries routed to the RFC 0053 sink                     | retry exhaustion          |
 
 The record carries `subscriptionId`, `source`, `state`, `dedupEnabled`, the `retryPolicy`, and (for webhooks) the existing `(webhookId, secretFingerprint)` register keys — **unchanged**, with the state machine layered over them. `failed` → `dead-lettered` reuses RFC 0053's `deadLetter` sink + `retentionDays`.
 
@@ -35,10 +35,10 @@ When an inbound event arrives on an `active` subscription, the host:
 
 Two **content-free** events ([`run-event-payloads.schema.json`](../../schemas/run-event-payloads.schema.json)):
 
-| Event | Payload (content-free) |
-|---|---|
-| `trigger.subscription.state.changed` | `{ subscriptionId, source, fromState, toState, reason? }` |
-| `trigger.delivery.attempted` | `{ subscriptionId, dedupKey, attempt, outcome: "delivered"\|"retrying"\|"dead-lettered", runId? }` |
+| Event                                | Payload (content-free)                                                                             |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `trigger.subscription.state.changed` | `{ subscriptionId, source, fromState, toState, reason? }`                                          |
+| `trigger.delivery.attempted`         | `{ subscriptionId, dedupKey, attempt, outcome: "delivered"\|"retrying"\|"dead-lettered", runId? }` |
 
 Neither carries the inbound payload, headers, or credential material (SR-1) — only the subscription id, dedup key, attempt counter, outcome, and the resulting `runId`. Content-freeness MUSTs: `state.changed.reason` is a **closed enum** (`retry-exhausted`/`operator-paused`/`signature-invalid`/`backpressure`/`source-removed`/`provenance-unevaluable`) — a free-form reason would let a host spill an inbound URL/header into it; `delivery.attempted.dedupKey` MUST be a **host-opaque** key (e.g. `hash(subscriptionId + inbound-event-id)`) that does NOT embed inbound body/path/header content in cleartext; and a `TriggerSubscription.secretFingerprint` MUST be a **salted/host-keyed, truncated** one-way digest (≤32 chars, never a raw secret or a full unsalted `SHA256(secret)` — a brute-force oracle). A source listed in `capabilities.triggerBridge.sources[]` MUST actually be driven through the four-state machine + emit the two `trigger.*` events (no over-claiming a feature that isn't a durable subscription).
 
@@ -48,13 +48,13 @@ A derived profile (`profiles.md` §`openwop-trigger-bridge`) — a predicate ove
 
 ## §E — Channels stay extensions (the Non-Goal, made explicit)
 
-This document does **not** standardize Slack/Discord/email/SMS message formats. A vendor channel connector (`vendor.slack.*` nodes, the CLI relay-gateway) stays a host/vendor extension; to participate in the profile it MUST *bridge into a uniform trigger subscription* — register a `TriggerSubscription`, emit the §C delivery events, and set the trigger→run `causationId`. The channel's *wire format* is its own; its *bridge* is openwop's.
+This document does **not** standardize Slack/Discord/email/SMS message formats. A vendor channel connector (`vendor.slack.*` nodes, the CLI relay-gateway) stays a host/vendor extension; to participate in the profile it MUST _bridge into a uniform trigger subscription_ — register a `TriggerSubscription`, emit the §C delivery events, and set the trigger→run `causationId`. The channel's _wire format_ is its own; its _bridge_ is openwop's.
 
 ## §F — `paused` semantics
 
-Pausing a webhook stops delivery. Pausing a *schedule* **skips** ticks (no catch-up); resume starts fresh (honoring the RFC 0052 §B missed-tick "skip" policy, not queue-and-replay).
+Pausing a webhook stops delivery. Pausing a _schedule_ **skips** ticks (no catch-up); resume starts fresh (honoring the RFC 0052 §B missed-tick "skip" policy, not queue-and-replay).
 
 ## Open spec gaps
 
 - The behavioral delivery scenario (dedup → retry → dead-letter → causation), the `GET /v1/trigger-subscriptions` read surface + per-source management in OpenAPI, and the reference-host durable-delivery state machine land at `Active → Accepted`; the always-on `trigger-bridge-shape.test.ts` + the profile predicate + the subscription schema + the two events ship now.
-- A net-new unified `Trigger` primitive was rejected (it would duplicate RFC 0052/0053/0017) — this is a *profile* that composes them.
+- A net-new unified `Trigger` primitive was rejected (it would duplicate RFC 0052/0053/0017) — this is a _profile_ that composes them.

@@ -1,4 +1,4 @@
-# openwop Governance
+# OpenWOP Governance
 
 > **Status:** Initial maintainer-driven model. This will evolve toward a working group / steering committee as the contributor base grows.
 
@@ -40,13 +40,13 @@ Tiebreaker for unresolved disagreement: the lead maintainer (the first entry in 
 
 Changes are categorized by impact on the wire contract per `COMPATIBILITY.md`:
 
-| Category | Examples | Process |
-|---|---|---|
-| **Editorial** | Typo fixes, prose clarifications that don't change normative meaning, link fixes | One maintainer approval. Merge directly. |
-| **Non-normative addition** | New examples, new non-normative reference impl notes, new optional capability profiles | One maintainer approval. Merge directly. CHANGELOG entry required. |
-| **Normative addition (backward-compatible)** | New optional fields, new SHOULD recommendations, new event types in additive position | RFC required (see `RFCS/`) + two maintainer approvals + 7-day comment window. CHANGELOG entry. Conformance suite update if applicable. |
-| **Safety-fix break** | A correctness or security fix that cannot be expressed additively | RFC required + 90-day public comment window unless under embargoed coordinated disclosure (`SECURITY.md`). Ships with migration tooling. Per `COMPATIBILITY.md` §3 — the only exception to v1.x's additive-only rule. |
-| **Breaking change** | Any other change that invalidates an existing v1 conformance pass | New major version. Requires public RFC, 30-day comment window, two maintainer approvals from different organizations once that's possible. The v1 contract is **locked**; breaking changes ship as v2.0+ in parallel, not as v1.X. |
+| Category                                     | Examples                                                                               | Process                                                                                                                                                                                                                            |
+| -------------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Editorial**                                | Typo fixes, prose clarifications that don't change normative meaning, link fixes       | One maintainer approval. Merge directly.                                                                                                                                                                                           |
+| **Non-normative addition**                   | New examples, new non-normative reference impl notes, new optional capability profiles | One maintainer approval. Merge directly. CHANGELOG entry required.                                                                                                                                                                 |
+| **Normative addition (backward-compatible)** | New optional fields, new SHOULD recommendations, new event types in additive position  | RFC required (see `RFCS/`) + two maintainer approvals + 7-day comment window. CHANGELOG entry. Conformance suite update if applicable.                                                                                             |
+| **Safety-fix break**                         | A correctness or security fix that cannot be expressed additively                      | RFC required + 90-day public comment window unless under embargoed coordinated disclosure (`SECURITY.md`). Ships with migration tooling. Per `COMPATIBILITY.md` §3 — the only exception to v1.x's additive-only rule.              |
+| **Breaking change**                          | Any other change that invalidates an existing v1 conformance pass                      | New major version. Requires public RFC, 30-day comment window, two maintainer approvals from different organizations once that's possible. The v1 contract is **locked**; breaking changes ship as v2.0+ in parallel, not as v1.X. |
 
 The formal RFC mechanism is defined in `RFCS/0001-rfc-process.md`. RFCs live at `RFCS/NNNN-short-title.md`; the authoring template is at `RFCS/0000-template.md`.
 

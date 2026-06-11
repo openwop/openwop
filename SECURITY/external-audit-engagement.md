@@ -15,7 +15,7 @@ This document defines what the openwop project asks of an external security revi
 The openwop protocol is approaching first non-steward adoption. Several invariants the protocol claims — secret redaction, append-only audit logs, signed node packs, prompt-injection containment — depend on the host honoring them. The conformance suite mechanically verifies many of these end-to-end against the reference host. An independent review:
 
 - Validates that the documented threat models cover the realistic attack surface.
-- Identifies invariants stated in the spec that are *not* mechanically enforced.
+- Identifies invariants stated in the spec that are _not_ mechanically enforced.
 - Catches design errors in cryptographic protocols (webhook HMAC, node-pack signing, audit-log integrity).
 - Produces a public report that prospective implementers can read before committing to the protocol.
 
@@ -28,6 +28,7 @@ The openwop protocol is approaching first non-steward adoption. Several invarian
 The review covers the protocol corpus + reference implementations as of the engagement-kickoff date. Specifically:
 
 **Documents:**
+
 - `spec/v1/auth.md` and `spec/v1/auth-profiles.md` (including OAuth2 client-credentials, OIDC user-bearer, mTLS, key rotation, and `openwop-audit-log-integrity` profiles)
 - `spec/v1/webhooks.md` (HMAC signing, replay-attack-resistant verification, signature-algorithm versioning)
 - `spec/v1/node-packs.md` and `spec/v1/registry-operations.md` (Ed25519 signing, supply-chain controls, registry submission/yank/rotation)
@@ -42,6 +43,7 @@ The review covers the protocol corpus + reference implementations as of the enga
 - `SECURITY/invariants.yaml` and the `scripts/check-security-invariants.sh` CI gate
 
 **Implementation:**
+
 - The TypeScript reference host at `examples/hosts/in-memory/` (~570 LOC) and SQLite reference host at `examples/hosts/sqlite/` (~700 LOC) AT THE PINNED COMMIT
 - The Python reference host at `examples/hosts/python/` (~600 LOC) AT THE PINNED COMMIT
 - **The Postgres reference host at `examples/hosts/postgres/` (~4300 LOC) AT THE PINNED COMMIT** — first host claiming `openwop-production` end-to-end. Implements MemoryAdapter + agent reasoning events + memory compaction (RFC 0012) + OAuth2-CC + OIDC user-bearer + mTLS termination + API-key rotation + auth-scoped discovery + Ed25519 pack consumption with SRI + signature + lockfile fail-closed enforcement.
@@ -50,6 +52,7 @@ The review covers the protocol corpus + reference implementations as of the enga
 
 **Spec-canonical `core.openwop.*` node packs (high-stakes, REQUIRED before publication):**
 These packs are advertised throughout the spec and will become permanent immutable artifacts on `packs.openwop.dev` once published. The audit MUST cover each before `(name, 1.0.0)` is published. ~~Until then they remain unpublished in this repo (source under `packs/core.openwop.*/`).~~ See §2.1.1 below: the steward elected to publish ahead of audit completion on 2026-05-17.
+
 - `core.openwop.ai` — calls external AI providers (OpenAI, Anthropic, etc.) with BYOK secrets. Threat models touched: `secret-leakage`, `provider-policy`, `prompt-injection`.
 - `core.openwop.http` — makes arbitrary outbound HTTP calls. Threat models touched: `secret-leakage` (headers), `provider-policy` (egress allowlists).
 - `core.openwop.mcp` — invokes MCP tools across the trust boundary. Threat models touched: `prompt-injection` (UNTRUSTED-marker discipline), `secret-leakage`.
@@ -80,6 +83,7 @@ Cross-cutting checks for all 27 + the 3 new fixture agents: (1) every `toolAllow
 Publication condition: each pack listed above moves from "in-tree" to "published on `packs.openwop.dev`" only when audit findings touching that pack are either (a) marked `informational` only, or (b) remediated and the remediation merged. Aggregate condition for the batch: all 27 + 1 must be cleared together (a single dangling finding holds the batch).
 
 **RFCs (state at engagement kickoff):**
+
 - RFCs 0002–0007 (multi-agent extensions — agent identity, agent packs, memory, conversation, orchestrator, dispatch) — all `Accepted`.
 - RFC 0008 (WASM ABI for node packs) — `Accepted`; review the ABI and reference loader/conformance scenarios including the misbehaving-memory + misbehaving-abi packs.
 - RFC 0009 (Production-Profile Conformance) — `Accepted`; review the production-profile mechanics on the Postgres reference host (backpressure 503 + retention sweep + audit-log integrity claim).
@@ -97,30 +101,30 @@ The single steward has elected to publish the following 17 `core.openwop.*` pack
 
 **Patch-bump publications (existing 1.0.0 stays available alongside the new 1.1.0):**
 
-| Pack | Old version | New version |
-|---|---|---|
-| `core.openwop.ai` | 1.0.0 | **1.1.0** |
-| `core.openwop.data` | 1.0.0 | **1.1.0** |
-| `core.openwop.http` | 1.0.0 | **1.1.0** |
-| `core.openwop.mcp` | 1.0.0 | **1.1.0** |
-| `core.openwop.triggers` | 1.0.0 | **1.1.0** |
-| `core.openwop.integration` | 1.0.0 | **1.1.0** |
+| Pack                       | Old version | New version |
+| -------------------------- | ----------- | ----------- |
+| `core.openwop.ai`          | 1.0.0       | **1.1.0**   |
+| `core.openwop.data`        | 1.0.0       | **1.1.0**   |
+| `core.openwop.http`        | 1.0.0       | **1.1.0**   |
+| `core.openwop.mcp`         | 1.0.0       | **1.1.0**   |
+| `core.openwop.triggers`    | 1.0.0       | **1.1.0**   |
+| `core.openwop.integration` | 1.0.0       | **1.1.0**   |
 
 **First-time publications:**
 
-| Pack | Version | Surface notes |
-|---|---|---|
-| `core.openwop.a2a` | 1.1.0 | A2A client + server-side nodes. Touches `secret-leakage`, `auth-profiles`. |
-| `core.openwop.agents` | 1.0.0 | n8n-style agent composition. Wraps `host.aiProviders`. |
-| `core.openwop.crypto` | 1.0.0 | Pure `node:crypto` primitives. No external I/O. |
-| `core.openwop.db` | 1.0.0 | SQL / NoSQL / search / vector. Depends on `host.db.*` (RFC 0018) — parametric-only SQL invariant. |
-| `core.openwop.files` | 1.0.0 | `host.fs` (RFC 0014) — path-traversal invariant. |
-| `core.openwop.flow` | 1.0.1 | Pure flow-control primitives. No external I/O. |
-| `core.openwop.hitl` | 1.0.0 | Suspends via existing interrupt mechanism. |
-| `core.openwop.messaging` | 1.0.0 | `host.queueBus` (RFC 0017) — cross-tenant message isolation. |
-| `core.openwop.obs` | 1.0.0 | Observability emitters. |
-| `core.openwop.rag` | 1.0.0 | Loaders + vector ops. Touches `host.db.vector`. |
-| `core.openwop.storage` | 1.0.0 | kv / table / cache / blob / queue (RFCs 0015–0019) — cross-tenant isolation. |
+| Pack                     | Version | Surface notes                                                                                     |
+| ------------------------ | ------- | ------------------------------------------------------------------------------------------------- |
+| `core.openwop.a2a`       | 1.1.0   | A2A client + server-side nodes. Touches `secret-leakage`, `auth-profiles`.                        |
+| `core.openwop.agents`    | 1.0.0   | n8n-style agent composition. Wraps `host.aiProviders`.                                            |
+| `core.openwop.crypto`    | 1.0.0   | Pure `node:crypto` primitives. No external I/O.                                                   |
+| `core.openwop.db`        | 1.0.0   | SQL / NoSQL / search / vector. Depends on `host.db.*` (RFC 0018) — parametric-only SQL invariant. |
+| `core.openwop.files`     | 1.0.0   | `host.fs` (RFC 0014) — path-traversal invariant.                                                  |
+| `core.openwop.flow`      | 1.0.1   | Pure flow-control primitives. No external I/O.                                                    |
+| `core.openwop.hitl`      | 1.0.0   | Suspends via existing interrupt mechanism.                                                        |
+| `core.openwop.messaging` | 1.0.0   | `host.queueBus` (RFC 0017) — cross-tenant message isolation.                                      |
+| `core.openwop.obs`       | 1.0.0   | Observability emitters.                                                                           |
+| `core.openwop.rag`       | 1.0.0   | Loaders + vector ops. Touches `host.db.vector`.                                                   |
+| `core.openwop.storage`   | 1.0.0   | kv / table / cache / blob / queue (RFCs 0015–0019) — cross-tenant isolation.                      |
 
 **Why this decision was made:**
 
@@ -240,19 +244,19 @@ A retest after remediation lands counts as 25% additional cost, capped at $10,00
 
 ## 8. Status tracker
 
-| Step | Status | Date |
-|---|---|---|
-| Engagement doc drafted | ✅ | 2026-05-10 |
-| Per-vendor outreach drafts ready | ✅ | 2026-05-11 — see `SECURITY/outreach/external-audit/` (5 vendors). Per-vendor reply status tracked in `SECURITY/outreach/external-audit/STATUS.md`. |
-| Vendor outreach sent | — | TBD |
-| Quotes received | — | TBD |
-| Vendor selected | — | TBD |
-| Contract signed | — | TBD |
-| Repository commit pinned | — | TBD |
-| Kickoff | — | TBD |
-| Findings delivered | — | TBD |
-| Remediation lands | — | TBD |
-| Public report posted | — | TBD |
+| Step                             | Status | Date                                                                                                                                               |
+| -------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Engagement doc drafted           | ✅     | 2026-05-10                                                                                                                                         |
+| Per-vendor outreach drafts ready | ✅     | 2026-05-11 — see `SECURITY/outreach/external-audit/` (5 vendors). Per-vendor reply status tracked in `SECURITY/outreach/external-audit/STATUS.md`. |
+| Vendor outreach sent             | —      | TBD                                                                                                                                                |
+| Quotes received                  | —      | TBD                                                                                                                                                |
+| Vendor selected                  | —      | TBD                                                                                                                                                |
+| Contract signed                  | —      | TBD                                                                                                                                                |
+| Repository commit pinned         | —      | TBD                                                                                                                                                |
+| Kickoff                          | —      | TBD                                                                                                                                                |
+| Findings delivered               | —      | TBD                                                                                                                                                |
+| Remediation lands                | —      | TBD                                                                                                                                                |
+| Public report posted             | —      | TBD                                                                                                                                                |
 
 This file gets updated as each step completes. The `SECURITY.md` §9 link points here once the engagement starts.
 

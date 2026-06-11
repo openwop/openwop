@@ -1,17 +1,17 @@
 # RFC 0048: Tenant · Workspace · Principal identity model
 
-| Field | Value |
-|---|---|
-| **RFC** | 0048 |
-| **Title** | Promote the existing tenant dimension to an explicit identity triple — `{ tenant, workspace?, principal }` — threading through auth context, scoped discovery, run ownership, and events, so workspace sub-tenancy and the acting principal become portable wire-level concepts |
-| **Status** | `Accepted` |
-| **Author(s)** | David Tufts (@davidscotttufts) |
-| **Created** | 2026-05-24 |
-| **Updated** | 2026-05-25 (Draft → Active → **Accepted** — MyndHyve workflow-runtime advertises the capability live on `https://api.myndhyve.ai/.well-known/openwop` (curl-verified 2026-05-25) and the cohort conformance scenarios pass against it: `@openwop/openwop-conformance@1.6.0`, revision `workflow-runtime-00211-69w`, commit `85275cdf87972e02c2e588cba481415f3e0edb15`, 28 PASS / 0 FAIL across RFCs 0045/0046/0047/0048/0049/0051/0052/0053. Implementation per `docs/openwop-adoption/0045-0054-cohort-summary.md`; promoted per `RFCS/0001` §"Promotion to Accepted".) |
-| **Affects** | `schemas/run-snapshot.schema.json` (additive optional `owner` field) · `schemas/run-event-payloads.schema.json` (`run.created` echoes the owner) · `spec/v1/auth.md` (identity claims) · `spec/v1/run-options.md` (workspace/principal claims) · RFC 0011 (extends tenant-scoped discovery to workspace granularity) · new conformance scenarios |
-| **Compatibility** | `additive` |
-| **Supersedes** | — |
-| **Superseded by** | — |
+| Field             | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **RFC**           | 0048                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **Title**         | Promote the existing tenant dimension to an explicit identity triple — `{ tenant, workspace?, principal }` — threading through auth context, scoped discovery, run ownership, and events, so workspace sub-tenancy and the acting principal become portable wire-level concepts                                                                                                                                                                                                                                                                                          |
+| **Status**        | `Accepted`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| **Author(s)**     | David Tufts (@davidscotttufts)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **Created**       | 2026-05-24                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| **Updated**       | 2026-05-25 (Draft → Active → **Accepted** — MyndHyve workflow-runtime advertises the capability live on `https://api.myndhyve.ai/.well-known/openwop` (curl-verified 2026-05-25) and the cohort conformance scenarios pass against it: `@openwop/openwop-conformance@1.6.0`, revision `workflow-runtime-00211-69w`, commit `85275cdf87972e02c2e588cba481415f3e0edb15`, 28 PASS / 0 FAIL across RFCs 0045/0046/0047/0048/0049/0051/0052/0053. Implementation per `docs/openwop-adoption/0045-0054-cohort-summary.md`; promoted per `RFCS/0001` §"Promotion to Accepted".) |
+| **Affects**       | `schemas/run-snapshot.schema.json` (additive optional `owner` field) · `schemas/run-event-payloads.schema.json` (`run.created` echoes the owner) · `spec/v1/auth.md` (identity claims) · `spec/v1/run-options.md` (workspace/principal claims) · RFC 0011 (extends tenant-scoped discovery to workspace granularity) · new conformance scenarios                                                                                                                                                                                                                         |
+| **Compatibility** | `additive`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| **Supersedes**    | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **Superseded by** | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 ## Summary
 
@@ -21,7 +21,7 @@ Promote openwop's existing tenant dimension (RFC 0011's tenant-scoped discovery)
 
 MyndHyve is deeply multi-tenant: every collaborative entity lives at `workspaces/{wsId}/`, every user has a personal workspace, team workspaces carry RBAC, and `runs/{runId}` is keyed by `userId` + `workspaceId` with cross-tab `run_claims`. openwop already has a **tenant** dimension — RFC 0011 narrows the capability view per tenant — but no notion of a **workspace** sub-tenant or a **principal** as portable, wire-level concepts. So MyndHyve's workspace scoping, run ownership, and `run_claims` dedup are host-private conventions that A2A peers and conformance cannot reason about: a federated peer can't tell which workspace a run belongs to, and conformance can't assert cross-workspace isolation.
 
-The protocol is the right place because the triple has to thread *across* the wire boundary — discovery (what does workspace W see?), run ownership (who owns run R?), and events (which principal triggered this?). Three downstream RFCs (0049/0050/0051) all need a stable identity vocabulary to bind to; defining it once here avoids each reinventing it.
+The protocol is the right place because the triple has to thread _across_ the wire boundary — discovery (what does workspace W see?), run ownership (who owns run R?), and events (which principal triggered this?). Three downstream RFCs (0049/0050/0051) all need a stable identity vocabulary to bind to; defining it once here avoids each reinventing it.
 
 ## Proposal
 
@@ -33,7 +33,7 @@ Standardize three optional claims in the auth context (`spec/v1/auth.md`):
 - `workspace` — an **optional** sub-tenant within a tenant. A collaborative scope; a tenant has ≥1 workspace.
 - `principal` — the **acting identity** (a user or an agent) making the request.
 
-These are claims the host derives from the caller's credential (API key, OIDC token, etc.); the protocol does not mandate *how* they are derived, only their names and that they are echoed redaction-safe where §C/§D require.
+These are claims the host derives from the caller's credential (API key, OIDC token, etc.); the protocol does not mandate _how_ they are derived, only their names and that they are echoed redaction-safe where §C/§D require.
 
 ### §B — Workspace-scoped discovery (extends RFC 0011)
 
@@ -83,14 +83,14 @@ A principal scoped to workspace A MUST NOT be able to read a run owned by worksp
 ## Alternatives considered
 
 1. **Reuse `tenant` alone and treat workspaces as sub-tenants by string convention (`tenant:workspace`).** Rejected — overloading one opaque string defeats conformance reasoning (you can't assert isolation on a substring convention) and breaks RFC 0011's existing tenant semantics.
-2. **Model identity as a free-form `metadata` bag.** Rejected — RBAC (0049), SAML/SCIM mapping (0050), and approval binding (0051) all need *named*, stable fields; a metadata bag has no contract to bind to and can't be conformance-tested.
+2. **Model identity as a free-form `metadata` bag.** Rejected — RBAC (0049), SAML/SCIM mapping (0050), and approval binding (0051) all need _named_, stable fields; a metadata bag has no contract to bind to and can't be conformance-tested.
 3. **Make the triple mandatory.** Rejected — most non-MyndHyve hosts are single-tenant; mandating `workspace`/`principal` would break them. Optionality preserves their posture (the same argument RFC 0014 made for capability-gating fs).
 
 ## Unresolved questions
 
-1. **Principal *kind* (`user` vs `agent`).** Should `principal` carry a kind discriminator so an agent-initiated run is distinguishable from a user-initiated one? Likely yes for audit (RFC 0049), but deferred until the RBAC binding needs it.
+1. **Principal _kind_ (`user` vs `agent`).** Should `principal` carry a kind discriminator so an agent-initiated run is distinguishable from a user-initiated one? Likely yes for audit (RFC 0049), but deferred until the RBAC binding needs it.
 2. **Workspace hierarchy depth.** Is one level of workspace-under-tenant enough, or do enterprises need nested workspaces? Start flat; revisit if an adopter pulls.
-3. **Run *transfer* of ownership.** Can a run's `owner` change (e.g. re-assignment)? Out of scope; ownership is set at `run.created` for now.
+3. **Run _transfer_ of ownership.** Can a run's `owner` change (e.g. re-assignment)? Out of scope; ownership is set at `run.created` for now.
 
 ## Implementation notes (non-normative)
 

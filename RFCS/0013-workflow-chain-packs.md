@@ -1,17 +1,17 @@
 # RFC 0013: Workflow-chain packs
 
-| Field | Value |
-|---|---|
-| **RFC** | 0013 |
-| **Title** | Workflow-chain packs (pre-configured DAG fragments published as registry artifacts) |
-| **Status** | `Accepted` |
-| **Author(s)** | David Tufts (@dtuftsg) |
-| **Created** | 2026-05-13 |
-| **Updated** | 2026-05-18 (Active → Accepted: reference-host expansion landed) |
-| **Affects** | `spec/v1/node-packs.md`, new `spec/v1/workflow-chain-packs.md`, `schemas/pack-manifest.schema.json`, registry HTTP API |
-| **Compatibility** | `additive` — introduces a new pack kind alongside the existing node-pack format; no existing surface changes |
-| **Supersedes** | — |
-| **Superseded by** | — |
+| Field             | Value                                                                                                                  |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **RFC**           | 0013                                                                                                                   |
+| **Title**         | Workflow-chain packs (pre-configured DAG fragments published as registry artifacts)                                    |
+| **Status**        | `Accepted`                                                                                                             |
+| **Author(s)**     | David Tufts (@dtuftsg)                                                                                                 |
+| **Created**       | 2026-05-13                                                                                                             |
+| **Updated**       | 2026-05-18 (Active → Accepted: reference-host expansion landed)                                                        |
+| **Affects**       | `spec/v1/node-packs.md`, new `spec/v1/workflow-chain-packs.md`, `schemas/pack-manifest.schema.json`, registry HTTP API |
+| **Compatibility** | `additive` — introduces a new pack kind alongside the existing node-pack format; no existing surface changes           |
+| **Supersedes**    | —                                                                                                                      |
+| **Superseded by** | —                                                                                                                      |
 
 ## Summary
 
@@ -83,13 +83,13 @@ interface WorkflowChain {
 
 A subset of the existing `schemas/workflow-definition.schema.json`. Differences from a top-level workflow:
 
-| Field | Behavior in fragment |
-|---|---|
-| `id` / `name` / `version` | Omitted; the host generates per-expansion (e.g., `${parentWorkflow.id}::${chainId}::${expansionId}`) |
-| `triggers` / `settings` / `metadata` | Omitted; inherited from parent workflow |
-| `variables` | Replaced by `parameters` — the chain author declares parameter names + JSON-Schema types; host editor collects values at author-time |
-| `nodes[]` | Required. Each node's `typeId` MUST reference an already-published node-pack typeId OR a `core.*` framework typeId. Forward-references to other chain packs MAY be allowed in a future RFC. |
-| `edges[]` | Required if nodes > 1. |
+| Field                                | Behavior in fragment                                                                                                                                                                        |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id` / `name` / `version`            | Omitted; the host generates per-expansion (e.g., `${parentWorkflow.id}::${chainId}::${expansionId}`)                                                                                        |
+| `triggers` / `settings` / `metadata` | Omitted; inherited from parent workflow                                                                                                                                                     |
+| `variables`                          | Replaced by `parameters` — the chain author declares parameter names + JSON-Schema types; host editor collects values at author-time                                                        |
+| `nodes[]`                            | Required. Each node's `typeId` MUST reference an already-published node-pack typeId OR a `core.*` framework typeId. Forward-references to other chain packs MAY be allowed in a future RFC. |
+| `edges[]`                            | Required if nodes > 1.                                                                                                                                                                      |
 
 Inside the fragment, parameter substitution syntax: `{{params.<name>}}` in any string field. Hosts MUST resolve these at expansion time (not at dispatch time) — substitution is a workflow-edit-time concern.
 
@@ -174,6 +174,7 @@ The registry's `/v1/index.json` already lists packs by name. Each pack entry MUS
 ```
 
 When an author drops this tile on a workflow, the host editor:
+
 1. Asks for `productIdea` + `targetAudience` via a parameter form
 2. Expands node `prd-call` with placeholders substituted into the `systemPrompt`
 3. Renames node id to `appbuilder_generatePRD_a8f3_prd-call` (collision-free)

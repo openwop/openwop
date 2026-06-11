@@ -1,4 +1,4 @@
-# openwop — CNA Registration
+# OpenWOP — CNA Registration
 
 > **Status: planned, not yet active (2026-05-12).** Operational plan for becoming a CVE Numbering Authority (CNA). This document describes the path; CNA status itself is not yet claimed.
 
@@ -41,7 +41,7 @@ The scope statement above is the same as `SECURITY.md` §1. The CNA registration
 ## Prerequisites
 
 1. **≥1 non-steward maintainer** listed in `MAINTAINERS.md`. CNA registration requires a maintainer group capable of independent decisions; a single-person CNA is allowed but discouraged because absence-of-maintainer freezes the disclosure pipeline.
-2. **CVE Services account** registered with the CVE Program. The application form is at https://www.cve.org/PartnerInformation/Partner/Apply (no maintainer action until tripwire #1 fires).
+2. **CVE Services account** registered with the CVE Program. The application form is at <https://www.cve.org/PartnerInformation/Partner/Apply> (no maintainer action until tripwire #1 fires).
 3. **Disclosure SLA documented** in `SECURITY.md` §6 — already done (24h ack, 90-day embargo unless ≥CVSS 9.0).
 4. **Advisory template** — landed at `SECURITY/advisory-template.md` (NOT YET — track here when this lands).
 5. **CVE record schema** familiarity — the CNA uses the CVE Record Format v5.1+; we already publish enough metadata to populate every required field.
@@ -50,10 +50,10 @@ The scope statement above is the same as `SECURITY.md` §1. The CNA registration
 
 ## Application process (after tripwire #1)
 
-1. Lead maintainer (per `MAINTAINERS.md` §"Lead maintainer routing") submits the CNA application via https://www.cve.org/PartnerInformation/Partner/Apply.
+1. Lead maintainer (per `MAINTAINERS.md` §"Lead maintainer routing") submits the CNA application via <https://www.cve.org/PartnerInformation/Partner/Apply>.
 2. CVE Program reviews; typical turnaround 4–8 weeks.
 3. CNA agreement signed by the openwop project entity (currently the original OpenWOP working group; future maintainer-set may incorporate a vendor-neutral foundation).
-4. Scope statement published at https://www.cve.org/CNAs (the public CNA directory).
+4. Scope statement published at <https://www.cve.org/CNAs> (the public CNA directory).
 5. `SECURITY.md` updated: §1 references the active CNA status; §6 references the new self-managed CVE pipeline alongside the existing GitHub Security Advisories path.
 
 ---

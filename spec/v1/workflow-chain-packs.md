@@ -1,4 +1,4 @@
-# openwop Spec v1 — Workflow-Chain Packs
+# OpenWOP Spec v1 — Workflow-Chain Packs
 
 > **Status: Draft (2026-05-17).** Closes Phase 1 of [RFC 0013 — Workflow-chain packs](../../RFCS/0013-workflow-chain-packs.md). Specifies a new pack kind that publishes pre-configured DAG fragments — registry-distributed sub-workflows that hosts expand inline at workflow-author time. Promotes to FINAL when (a) the reference host implements expansion and (b) at least the manifest-validation + expansion conformance scenarios both pass. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
 
@@ -18,10 +18,10 @@ Today these "editor presets" live in host-internal canvas registries with no nor
 
 The `pack.json` manifest is shared between node packs and workflow-chain packs. A top-level `kind` field distinguishes them:
 
-| Value | Behavior |
-|---|---|
+| Value                 | Behavior                                                                                                                                               |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `"node"` (or omitted) | Node pack per `node-packs.md`. Manifest validates against `schemas/node-pack-manifest.schema.json`. Contributes `nodes[]` (and optionally `agents[]`). |
-| `"workflow-chain"` | Workflow-chain pack per this document. Manifest validates against `schemas/workflow-chain-pack-manifest.schema.json`. Contributes `chains[]`. |
+| `"workflow-chain"`    | Workflow-chain pack per this document. Manifest validates against `schemas/workflow-chain-pack-manifest.schema.json`. Contributes `chains[]`.          |
 
 Manifests MUST have **exactly one** of `nodes[]` (kind=node) OR `chains[]` (kind=workflow-chain). Manifests containing both MUST be rejected at manifest validation with error code `pack_kind_invalid`. Manifests declaring `kind: "workflow-chain"` without a `chains[]` array MUST be rejected with `invalid_manifest`.
 
@@ -86,13 +86,13 @@ A workflow-chain pack manifest is JSON at the pack root (`pack.json`). Schema: `
 
 ### Required top-level fields
 
-| Field | Description |
-|---|---|
-| `name` | Pack name per §Pack identity. |
-| `version` | Pack-level semver. |
-| `kind` | MUST be `"workflow-chain"`. |
-| `engines.openwop` | Semver range — which openwop protocol versions this pack works against. |
-| `chains[]` | One or more chain entries (§Chain entry shape). At least one chain required. |
+| Field             | Description                                                                  |
+| ----------------- | ---------------------------------------------------------------------------- |
+| `name`            | Pack name per §Pack identity.                                                |
+| `version`         | Pack-level semver.                                                           |
+| `kind`            | MUST be `"workflow-chain"`.                                                  |
+| `engines.openwop` | Semver range — which openwop protocol versions this pack works against.      |
+| `chains[]`        | One or more chain entries (§Chain entry shape). At least one chain required. |
 
 Optional top-level fields: `description`, `author`, `license`, `homepage`, `repository`, `keywords[]`, `dependencies` (other node packs whose typeIds this pack's chains reference), `signing` (per `node-packs.md` §signing).
 
@@ -102,16 +102,16 @@ Workflow-chain packs MUST NOT include `nodes[]`, `agents[]`, or `runtime` — th
 
 Each entry in `chains[]`:
 
-| Field | Type | Required | Notes |
-|---|---|---|---|
-| `chainId` | string | yes | Namespaced like a node typeId (reverse-DNS pattern). MUST match `^[a-z][a-zA-Z0-9._-]*$`. Each `chainId` MUST be unique within the pack. |
-| `version` | string | yes | Per-chain semver. MAY differ from the pack-level `version` so a single pack can ship multiple chains that evolve independently. |
-| `label` | string | yes | Human-readable display label for the host editor's drag-tile catalog. |
-| `description` | string | yes | One-paragraph description of what the chain produces. |
-| `parameters` | JSON Schema 2020-12 object | yes | Schema for the parameter values the host editor MUST collect from the author at drop time. Hosts MUST validate author-supplied parameters against this schema and reject invalid input with `chain_parameter_invalid` before expansion. |
-| `dag` | WorkflowDefinitionFragment | yes | The fragment to splice (§WorkflowDefinitionFragment below). |
-| `outputs` | map | no | Declared outputs the chain surfaces to the parent workflow. Keys are output names; values declare `{ type: string, description: string }`. |
-| `capabilities` | string array | no | Capability traits to propagate to every expanded node. Values from the existing `nodes[].capabilities` enum (`streamable` / `cacheable` / `side-effectful` / `mcp-exportable`). Hosts MUST copy these into each expanded `WorkflowNode.capabilities` so existing capability checks (e.g., side-effect gating) cover expanded chains. |
+| Field          | Type                       | Required | Notes                                                                                                                                                                                                                                                                                                                                |
+| -------------- | -------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `chainId`      | string                     | yes      | Namespaced like a node typeId (reverse-DNS pattern). MUST match `^[a-z][a-zA-Z0-9._-]*$`. Each `chainId` MUST be unique within the pack.                                                                                                                                                                                             |
+| `version`      | string                     | yes      | Per-chain semver. MAY differ from the pack-level `version` so a single pack can ship multiple chains that evolve independently.                                                                                                                                                                                                      |
+| `label`        | string                     | yes      | Human-readable display label for the host editor's drag-tile catalog.                                                                                                                                                                                                                                                                |
+| `description`  | string                     | yes      | One-paragraph description of what the chain produces.                                                                                                                                                                                                                                                                                |
+| `parameters`   | JSON Schema 2020-12 object | yes      | Schema for the parameter values the host editor MUST collect from the author at drop time. Hosts MUST validate author-supplied parameters against this schema and reject invalid input with `chain_parameter_invalid` before expansion.                                                                                              |
+| `dag`          | WorkflowDefinitionFragment | yes      | The fragment to splice (§WorkflowDefinitionFragment below).                                                                                                                                                                                                                                                                          |
+| `outputs`      | map                        | no       | Declared outputs the chain surfaces to the parent workflow. Keys are output names; values declare `{ type: string, description: string }`.                                                                                                                                                                                           |
+| `capabilities` | string array               | no       | Capability traits to propagate to every expanded node. Values from the existing `nodes[].capabilities` enum (`streamable` / `cacheable` / `side-effectful` / `mcp-exportable`). Hosts MUST copy these into each expanded `WorkflowNode.capabilities` so existing capability checks (e.g., side-effect gating) cover expanded chains. |
 
 ---
 
@@ -119,13 +119,13 @@ Each entry in `chains[]`:
 
 A subset of `schemas/workflow-definition.schema.json`. Differences from a top-level workflow:
 
-| Field | Behavior in fragment |
-|---|---|
-| `id` / `name` / `version` | MUST be omitted. Host generates per-expansion (`${parentWorkflow.id}::${chainId}::${expansionId}`). |
-| `triggers` / `settings` / `metadata` | MUST be omitted. Inherited from parent. |
-| `variables` | Replaced by top-level `parameters`. Host editor collects values at author-time. |
-| `nodes[]` | Required. Each node's `typeId` MUST reference a published node-pack typeId OR a reserved `core.*` typeId. Each fragment node mirrors the shape of a top-level `WorkflowNode` (per `schemas/workflow-definition.schema.json#/$defs/WorkflowNode`) with relaxed `required[]` — chain authors MAY omit `name`/`position`/`config`/`inputs` for trivial pass-through nodes. The `FragmentNode` definition in `workflow-chain-pack-manifest.schema.json` SHOULD be kept in sync as `WorkflowNode` evolves. |
-| `edges[]` | Required when `nodes.length > 1`. Same shape as in a top-level workflow definition. |
+| Field                                | Behavior in fragment                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id` / `name` / `version`            | MUST be omitted. Host generates per-expansion (`${parentWorkflow.id}::${chainId}::${expansionId}`).                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `triggers` / `settings` / `metadata` | MUST be omitted. Inherited from parent.                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `variables`                          | Replaced by top-level `parameters`. Host editor collects values at author-time.                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `nodes[]`                            | Required. Each node's `typeId` MUST reference a published node-pack typeId OR a reserved `core.*` typeId. Each fragment node mirrors the shape of a top-level `WorkflowNode` (per `schemas/workflow-definition.schema.json#/$defs/WorkflowNode`) with relaxed `required[]` — chain authors MAY omit `name`/`position`/`config`/`inputs` for trivial pass-through nodes. The `FragmentNode` definition in `workflow-chain-pack-manifest.schema.json` SHOULD be kept in sync as `WorkflowNode` evolves. |
+| `edges[]`                            | Required when `nodes.length > 1`. Same shape as in a top-level workflow definition.                                                                                                                                                                                                                                                                                                                                                                                                                   |
 
 ### Parameter substitution
 
@@ -246,6 +246,7 @@ The registry's `PUT /v1/packs/{name}/-/{version}.tgz` handler MUST extract the m
 ```
 
 When an author drops this tile on a workflow `workflow-abc`, the host editor:
+
 1. Collects `productIdea` + `targetAudience` via a parameter form generated from the chain's `parameters` schema.
 2. Substitutes the values into the `systemPrompt` placeholder.
 3. Renames the node id to `vendor_acme_generatePRD_a8f3_prd-call` (collision-free within the parent workflow).
@@ -296,13 +297,13 @@ A chain declares a `dag.nodes[].typeId` the destination host cannot resolve:
 
 Hosts and registries operating on workflow-chain packs MUST use these error codes:
 
-| Code | Surface | Trigger |
-|---|---|---|
-| `pack_kind_invalid` | Registry validation + host editor | Manifest mixes `nodes[]`/`agents[]` and `chains[]`, OR `kind: "workflow-chain"` with no `chains[]`. |
-| `invalid_manifest` | Registry validation | `pack.json` fails schema validation. Includes failing JSON-pointer path in `details`. |
-| `chain_unresolvable_typeid` | Host editor expansion | Chain's `dag` references a typeId not registered with the host. `details.typeId` carries the offending value. |
-| `chain_parameter_invalid` | Host editor expansion | Author-supplied parameter values fail the chain's `parameters` schema. `details.path` carries the failing JSON-pointer. |
-| `pack_signature_invalid` | Host editor expansion | Pack signature verification failed (same surface as node packs; reused unchanged from `node-packs.md`). |
+| Code                        | Surface                           | Trigger                                                                                                                 |
+| --------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `pack_kind_invalid`         | Registry validation + host editor | Manifest mixes `nodes[]`/`agents[]` and `chains[]`, OR `kind: "workflow-chain"` with no `chains[]`.                     |
+| `invalid_manifest`          | Registry validation               | `pack.json` fails schema validation. Includes failing JSON-pointer path in `details`.                                   |
+| `chain_unresolvable_typeid` | Host editor expansion             | Chain's `dag` references a typeId not registered with the host. `details.typeId` carries the offending value.           |
+| `chain_parameter_invalid`   | Host editor expansion             | Author-supplied parameter values fail the chain's `parameters` schema. `details.path` carries the failing JSON-pointer. |
+| `pack_signature_invalid`    | Host editor expansion             | Pack signature verification failed (same surface as node packs; reused unchanged from `node-packs.md`).                 |
 
 ---
 
@@ -338,11 +339,11 @@ Hosts and registries operating on workflow-chain packs MUST use these error code
 
 ## Open spec gaps
 
-| # | Gap | Notes |
-|---|---|---|
-| WCP1 | Chain-to-chain composition | Can `dag.nodes[].typeId` reference another chain pack? Currently restricted to node-pack typeIds. If chain-to-chain is allowed: at what depth does expansion recurse? How are circular references detected? **Recommended: disallow in v1**; revisit in a follow-up RFC. |
+| #    | Gap                                | Notes                                                                                                                                                                                                                                                                                                                     |
+| ---- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| WCP1 | Chain-to-chain composition         | Can `dag.nodes[].typeId` reference another chain pack? Currently restricted to node-pack typeIds. If chain-to-chain is allowed: at what depth does expansion recurse? How are circular references detected? **Recommended: disallow in v1**; revisit in a follow-up RFC.                                                  |
 | WCP2 | Versioning across chain references | When a chain references `core.ai.callPrompt@1.0.0`, what happens if a future `core.ai.callPrompt@2.0.0` ships with a breaking config-schema change? **Recommended: chain MUST pin to a specific version per referenced typeId** (config snapshot at chain author-time), with a `min` / `max` range as future enhancement. |
-| WCP3 | Reference-host implementation | Phase 3 of RFC 0013 — one openwop reference host (the in-memory host is the natural fit) implements expansion in its workflow editor. Tracked separately; this spec defines the contract whether or not a reference exists yet. |
+| WCP3 | Reference-host implementation      | Phase 3 of RFC 0013 — one openwop reference host (the in-memory host is the natural fit) implements expansion in its workflow editor. Tracked separately; this spec defines the contract whether or not a reference exists yet.                                                                                           |
 
 ---
 

@@ -1,4 +1,4 @@
-# openwop Quickstart
+# OpenWOP Quickstart
 
 > **Status: Stable · v1.1 (2026-04-29).** End-to-end developer onboarding guide covering discovery, auth, run lifecycle, live event delivery (SSE + webhooks), time-travel debugging via fork, BYOK + RunOptions, node-pack authoring, conformance, SDKs, and storage adapters. Cross-references the canonical specs for full normative detail. See `auth.md` for the status legend.
 
@@ -241,6 +241,7 @@ npx openwop-conformance --base-url https://your-openwop-server.example --api-key
 ```
 
 Scenarios are organized by spec section:
+
 - **Auth + scopes** — `auth.md` enforcement
 - **Idempotency** — `Idempotency-Key` semantics
 - **Run lifecycle** — create / read / cancel / events / poll
@@ -258,13 +259,14 @@ Scenarios are organized by spec section:
 
 Reference SDKs ship pinned to spec v1 in [`sdk/`](https://github.com/openwop/openwop-sdks/tree/main/sdk):
 
-| Language | Package | Status |
-|---|---|---|
+| Language   | Package            | Status       |
+| ---------- | ------------------ | ------------ |
 | TypeScript | `@openwop/openwop` | ✅ Stable v1 |
-| Python | `openwop_client` | ✅ Stable v1 |
-| Go | `openwopclient` | ✅ Stable v1 |
+| Python     | `openwop_client`   | ✅ Stable v1 |
+| Go         | `openwopclient`    | ✅ Stable v1 |
 
 Each SDK provides:
+
 - Typed client for `POST /v1/runs`, `GET /v1/runs/{id}`, `POST /v1/runs/{id}/cancel`, etc.
 - SSE consumer with mode + bufferMs support; SDKs flatten `event: batch` arrays back into per-event yields.
 - Webhook signing helpers (`verifySignature`).

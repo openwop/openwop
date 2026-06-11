@@ -1,4 +1,4 @@
-# openwop Spec v1 — AI Envelope Primitive
+# OpenWOP Spec v1 — AI Envelope Primitive
 
 > **Status: Stable · v1.1.1 (promoted via [RFC 0021](../../RFCS/0021-ai-envelope-primitive.md), 2026-05-18; first cut 2026-05-17). Extended additively by [RFC 0030](../../RFCS/0030-envelope-reasoning-and-tier-one-subset.md) (§"Reasoning field"), [RFC 0031](../../RFCS/0031-envelope-variants-and-model-capabilities.md) (§"Variant payload discrimination"), [RFC 0032](../../RFCS/0032-envelope-reliability-events.md) (line-448 scope clarification + §"Envelope-reliability events"), and [RFC 0033](../../RFCS/0033-envelope-completion-contract.md) (§"Envelope-completion criteria"), all `Accepted` 2026-05-21.** Closes the long-standing gap where `Capabilities.supportedEnvelopes`, `Capabilities.schemaVersions`, `Capabilities.limits.envelopesPerTurn`, `Capabilities.limits.schemaRounds`, `Capabilities.limits.clarificationRounds`, `host.aiEnvelope.generate`, the `envelopeType` field on workflow-chain pack manifests, and the `openwop-interrupts` profile's `supportedEnvelopes.includes('clarification.request')` check all reference a wire concept whose own shape is not specified anywhere in v1 prose. This document specifies that shape, the universal kinds, the per-kind schema discipline, and the per-node "Envelope Contract" gate. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend. Fields marked **(stable)** lock; fields marked **(in-flight)** may shift compatibly within v1.x.
 
@@ -27,14 +27,14 @@ An **AI Envelope** is openwop's canonical **inbound** wire format for a typed, s
 
 An AI Envelope is **distinct from `RunEventDoc`** (`schemas/run-event.schema.json`). The two are complementary:
 
-| Concern | `RunEventDoc` | `AIEnvelope` |
-|---|---|---|
-| Direction | **Outbound** — host → client | **Inbound** — LLM → engine |
-| Source of truth | Append-only run event log | Single emission, persisted by reference via `RunEventDoc.causationId` |
-| Type discriminator | Fixed `RunEventType` enum, FINAL v1 | Open-ended kind catalog, host-advertised |
-| Schema versioning | Per-event `schemaVersion` integer | Per-kind `schemaVersion` integer (advertised via `Capabilities.schemaVersions[kind]`) |
-| Audience | Clients, observability tooling, replay | Engine, node dispatcher, artifact handlers |
-| Lifecycle | Immutable after `appendAtomic` | Validated → gated → routed → recorded as `RunEventDoc` |
+| Concern            | `RunEventDoc`                          | `AIEnvelope`                                                                          |
+| ------------------ | -------------------------------------- | ------------------------------------------------------------------------------------- |
+| Direction          | **Outbound** — host → client           | **Inbound** — LLM → engine                                                            |
+| Source of truth    | Append-only run event log              | Single emission, persisted by reference via `RunEventDoc.causationId`                 |
+| Type discriminator | Fixed `RunEventType` enum, FINAL v1    | Open-ended kind catalog, host-advertised                                              |
+| Schema versioning  | Per-event `schemaVersion` integer      | Per-kind `schemaVersion` integer (advertised via `Capabilities.schemaVersions[kind]`) |
+| Audience           | Clients, observability tooling, replay | Engine, node dispatcher, artifact handlers                                            |
+| Lifecycle          | Immutable after `appendAtomic`         | Validated → gated → routed → recorded as `RunEventDoc`                                |
 
 In short: **the LLM emits AI Envelopes; the engine emits `RunEventDoc`s.** When the engine accepts an envelope, it records the emission as one or more `RunEventDoc`s (`node.completed`, `artifact.created`, `agent.reasoned`, `clarification.requested` depending on kind), preserving the envelope's `correlationId` on the resulting events' `causationId` so projections can rebuild the causal chain.
 
@@ -178,14 +178,14 @@ It is a **hint, not a contract**:
 - When `display` is `image`, `audio`, or `file`, the consumer SHOULD render `alt` for assistive technologies, and the producer SHOULD provide it.
 - `meta.rendering` carries **no secret material** and is subject to the same SR-1 redaction discipline as the rest of `meta` (§"Redaction").
 
-| `display` | Meaning | Companion fields |
-|---|---|---|
-| `markdown` | Render `payload` (or its text) as Markdown. | — |
-| `code` | Render as a code block. | `lang` |
-| `card` | Render the structured `payload` as a titled card. | `title` |
-| `image` | Payload references/contains an image. | `mimeType`, `alt`, `title` |
-| `audio` | Payload references/contains an audio clip. | `mimeType`, `alt`, `title` |
-| `file` | Payload references/contains a downloadable file. | `mimeType`, `alt`, `title` |
+| `display`  | Meaning                                           | Companion fields           |
+| ---------- | ------------------------------------------------- | -------------------------- |
+| `markdown` | Render `payload` (or its text) as Markdown.       | —                          |
+| `code`     | Render as a code block.                           | `lang`                     |
+| `card`     | Render the structured `payload` as a titled card. | `title`                    |
+| `image`    | Payload references/contains an image.             | `mimeType`, `alt`, `title` |
+| `audio`    | Payload references/contains an audio clip.        | `mimeType`, `alt`, `title` |
+| `file`     | Payload references/contains a downloadable file.  | `mimeType`, `alt`, `title` |
 
 The `image` / `audio` / `file` families pair with the `media.*` payload convention (§"Media reference payloads", RFC 0055 §C) for the asset-URL discipline; a producer MAY also set `display: image` on a vendor-namespaced payload that carries its own inline data. The hint never overrides the `type` discriminator — payload shape is still selected and validated by `type`.
 
@@ -195,12 +195,12 @@ The `image` / `audio` / `file` families pair with the `media.*` payload conventi
 
 Every OpenWOP-compliant engine MUST recognize the following four kinds. They are **always allowed** — Envelope Contract gates MUST NOT refuse them. On hosts that advertise envelope support (a non-empty `supportedEnvelopes`), the four universal kinds MUST appear in `supportedEnvelopes` (RFC 0094). The complementary case is `profiles.md` §`openwop-core`: an engine-only host that exposes no LLM-emitting nodes MAY advertise an **empty** `supportedEnvelopes` and remains `openwop-core`-conformant. A host that advertises any envelope kind without also advertising the universal four is non-conformant.
 
-| Kind | Purpose | Bound to limit |
-|---|---|---|
-| `clarification.request` | LLM needs more information from the user before continuing. Engine SHOULD lift this to a `kind: "clarification"` interrupt per `interrupt.md`. | `limits.clarificationRounds` |
-| `schema.request` | LLM asks the engine for the JSON Schema of a kind it doesn't have memorized (or wants to verify). Engine responds out-of-band by re-injecting the kind's schema into the model's context. | `limits.schemaRounds` |
-| `schema.response` | LLM acknowledges receipt of a `schema.request` reply. Side-channel; never surfaces to users. | (none) |
-| `error` | LLM cannot produce a payload satisfying the requested contract and is surfacing the failure deliberately rather than guessing. | `limits.envelopesPerTurn` |
+| Kind                    | Purpose                                                                                                                                                                                   | Bound to limit               |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| `clarification.request` | LLM needs more information from the user before continuing. Engine SHOULD lift this to a `kind: "clarification"` interrupt per `interrupt.md`.                                            | `limits.clarificationRounds` |
+| `schema.request`        | LLM asks the engine for the JSON Schema of a kind it doesn't have memorized (or wants to verify). Engine responds out-of-band by re-injecting the kind's schema into the model's context. | `limits.schemaRounds`        |
+| `schema.response`       | LLM acknowledges receipt of a `schema.request` reply. Side-channel; never surfaces to users.                                                                                              | (none)                       |
+| `error`                 | LLM cannot produce a payload satisfying the requested contract and is surfacing the failure deliberately rather than guessing.                                                            | `limits.envelopesPerTurn`    |
 
 ### `clarification.request` payload
 
@@ -258,7 +258,7 @@ The `error` envelope is the **LLM's** error report (the model said "I couldn't d
 
 ## Reasoning field (normative)
 
-> Added by RFC 0030 (`Active` 2026-05-20). Closes the empirical reasoning-collapse finding from Tam et al., *"Let Me Speak Freely?"* (arXiv 2408.02442): when models are forced into strict-JSON output WITHOUT a free reasoning field, reasoning quality collapses materially across multi-step tasks. The mitigation is to give the model an in-schema reasoning slot.
+> Added by RFC 0030 (`Active` 2026-05-20). Closes the empirical reasoning-collapse finding from Tam et al., _"Let Me Speak Freely?"_ (arXiv 2408.02442): when models are forced into strict-JSON output WITHOUT a free reasoning field, reasoning quality collapses materially across multi-step tasks. The mitigation is to give the model an in-schema reasoning slot.
 
 Every envelope payload schema defined by this specification SHALL support an OPTIONAL `reasoning` field of type `string`. The field SHOULD appear as the first property in `propertyOrdering` when the underlying schema dialect supports ordering hints (e.g., Gemini's `responseSchema`).
 
@@ -272,12 +272,12 @@ The reasoning field is subject to the same SR-1 redaction harness as other envel
 
 The published universal-kind payload schemas under `schemas/envelopes/` are extended as follows:
 
-| Schema | `reasoning` posture |
-|---|---|
-| `clarification.request.schema.json` | OPTIONAL property — useful when the model wants to explain why it's asking |
-| `schema.request.schema.json` | OPTIONAL property — useful when the model is asking the host to verify a kind it's uncertain about |
-| `schema.response.schema.json` | NOT present — side-channel ack; no reasoning needed |
-| `error.schema.json` | OPTIONAL property — useful when the model is explaining why it could not produce the requested envelope |
+| Schema                              | `reasoning` posture                                                                                     |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `clarification.request.schema.json` | OPTIONAL property — useful when the model wants to explain why it's asking                              |
+| `schema.request.schema.json`        | OPTIONAL property — useful when the model is asking the host to verify a kind it's uncertain about      |
+| `schema.response.schema.json`       | NOT present — side-channel ack; no reasoning needed                                                     |
+| `error.schema.json`                 | OPTIONAL property — useful when the model is explaining why it could not produce the requested envelope |
 
 The field is NOT in `required` on these schemas — absence of `reasoning` is a valid envelope shape (preserves v1.1 backward compatibility for emitters that pre-date RFC 0030).
 
@@ -363,7 +363,7 @@ Per-kind payload schemas are JSON Schema 2020-12 documents. They MUST be address
 
 For a kind `K`, the canonical schema URL is:
 
-```
+```text
 {HostBase}/schemas/envelopes/{K}.schema.json
 ```
 
@@ -390,14 +390,14 @@ When the LLM emits an envelope with `schemaVersion` lower than the advertised fl
 
 ### Validation outcomes
 
-| Outcome | Engine behavior |
-|---|---|
-| Top-level shape mismatch (`type` missing, malformed JSON, `meta.source` absent) | Refuse synchronously with `invalid_envelope_shape`; emit `node.failed` if no retry budget remains. |
-| Unknown `type` (not in `supportedEnvelopes`) | Refuse with `unknown_envelope_kind`; counts against `limits.schemaRounds` if retryable. |
-| Top-level shape OK, but payload fails per-kind schema | Refuse with `envelope_invalid`; counts against `limits.schemaRounds`. The engine SHOULD return the validation details to the LLM as a follow-up system message and allow re-emission. |
-| `correlationId` already seen in this run with a different `type` | Refuse with `envelope_correlation_conflict`. |
-| `correlationId` already seen with the same `type` and an `accepted` outcome | Return the cached `accepted` outcome (replay short-circuit; see §Replay determinism). |
-| All checks pass | Outcome `accepted`; engine emits `RunEventDoc`(s) per §Production flow. |
+| Outcome                                                                         | Engine behavior                                                                                                                                                                       |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Top-level shape mismatch (`type` missing, malformed JSON, `meta.source` absent) | Refuse synchronously with `invalid_envelope_shape`; emit `node.failed` if no retry budget remains.                                                                                    |
+| Unknown `type` (not in `supportedEnvelopes`)                                    | Refuse with `unknown_envelope_kind`; counts against `limits.schemaRounds` if retryable.                                                                                               |
+| Top-level shape OK, but payload fails per-kind schema                           | Refuse with `envelope_invalid`; counts against `limits.schemaRounds`. The engine SHOULD return the validation details to the LLM as a follow-up system message and allow re-emission. |
+| `correlationId` already seen in this run with a different `type`                | Refuse with `envelope_correlation_conflict`.                                                                                                                                          |
+| `correlationId` already seen with the same `type` and an `accepted` outcome     | Return the cached `accepted` outcome (replay short-circuit; see §Replay determinism).                                                                                                 |
+| All checks pass                                                                 | Outcome `accepted`; engine emits `RunEventDoc`(s) per §Production flow.                                                                                                               |
 
 The per-kind schema check is **warning-only** when `Capabilities.schemaVersions` does not list the kind. Hosts that want strict-only behavior advertise `envelopeStrictness: 'strict'` on the capability surface (see §Capability handshake integration).
 
@@ -501,7 +501,7 @@ The Envelope Contract refusal is orthogonal to (and stacks atop) the existing ca
 
 The engine's accept path for an AI Envelope is:
 
-```
+```text
 LLM emission (text-with-fenced-JSON OR direct JSON via host.aiEnvelope.generate)
   │
   ▼
@@ -667,13 +667,13 @@ See `SECURITY/invariants.yaml` row `envelope-redaction-sr-1-carry-forward` (prot
 
 This spec adds **no new required v1 fields** to `capabilities.schema.json`. It re-uses the existing surface:
 
-| Field | Role under this spec |
-|---|---|
-| `supportedEnvelopes` (required v1) | The host's kind catalog. Universals MUST be present whenever the array is non-empty (RFC 0094 — see §"Universal kinds"); vendor kinds MUST be namespaced. |
-| `schemaVersions` (required v1) | The active per-kind schema version. Drives the §"Schema version advertisement" check. |
-| `limits.envelopesPerTurn` (required v1) | Hard cap on envelopes per LLM turn. Engine emits `cap.breached { kind: 'envelopes' }` on breach per `capabilities.md` §"Engine-enforced limits." |
-| `limits.schemaRounds` (required v1) | Hard cap on per-envelope retries when validation fails. Engine emits `cap.breached { kind: 'schema' }`. |
-| `limits.clarificationRounds` (required v1) | Hard cap on total `clarification.request` envelopes per node. Engine emits `cap.breached { kind: 'clarification' }`. |
+| Field                                      | Role under this spec                                                                                                                                      |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supportedEnvelopes` (required v1)         | The host's kind catalog. Universals MUST be present whenever the array is non-empty (RFC 0094 — see §"Universal kinds"); vendor kinds MUST be namespaced. |
+| `schemaVersions` (required v1)             | The active per-kind schema version. Drives the §"Schema version advertisement" check.                                                                     |
+| `limits.envelopesPerTurn` (required v1)    | Hard cap on envelopes per LLM turn. Engine emits `cap.breached { kind: 'envelopes' }` on breach per `capabilities.md` §"Engine-enforced limits."          |
+| `limits.schemaRounds` (required v1)        | Hard cap on per-envelope retries when validation fails. Engine emits `cap.breached { kind: 'schema' }`.                                                   |
+| `limits.clarificationRounds` (required v1) | Hard cap on total `clarification.request` envelopes per node. Engine emits `cap.breached { kind: 'clarification' }`.                                      |
 
 This spec adds **two OPTIONAL** fields to the `Capabilities` object (additive; v1.x):
 
@@ -703,12 +703,12 @@ When the engine accepts an AI Envelope, the resulting `RunEventDoc`(s) MUST set:
 
 The specific `RunEventDoc.type` emitted depends on the envelope kind. The recommended kind → event mapping for the universal kinds:
 
-| Envelope kind | RunEventDoc type emitted |
-|---|---|
-| `clarification.request` | `clarification.requested` + (after lift to interrupt) `interrupt.requested` |
-| `schema.request` | `log.appended` (level `debug`) |
-| `schema.response` | `log.appended` (level `debug`) |
-| `error` | `log.appended` (level `error`); SHOULD NOT emit `node.failed` (the LLM said the failure was deliberate) |
+| Envelope kind           | RunEventDoc type emitted                                                                                |
+| ----------------------- | ------------------------------------------------------------------------------------------------------- |
+| `clarification.request` | `clarification.requested` + (after lift to interrupt) `interrupt.requested`                             |
+| `schema.request`        | `log.appended` (level `debug`)                                                                          |
+| `schema.response`       | `log.appended` (level `debug`)                                                                          |
+| `error`                 | `log.appended` (level `error`); SHOULD NOT emit `node.failed` (the LLM said the failure was deliberate) |
 
 For vendor-namespaced kinds (e.g., `vendor.myndhyve.prd.create`), the host's handler chooses the appropriate `RunEventDoc.type` from the existing `RunEventType` enum. Hosts MUST NOT extend the `RunEventType` enum to add **per-envelope-kind routing events** — i.e., one event mirroring each envelope kind, which would create a parallel routing surface (the envelope's identity rides on `causationId`, not on a parallel event-type surface, so per-kind events are unnecessary). Hosts MAY emit **cross-kind operational events** that fire across many envelope kinds for shared operational concerns (retry, refusal, truncation, capability substitution, prompt composition, provider usage); these MAY extend `RunEventType` via the RFC process. Events introduced under this clarification: RFC 0026 (`provider.usage`), RFC 0027 (`prompt.composed`), RFC 0029 (`agent.promptResolved`), RFC 0031 (`model.capability.{substituted,insufficient}`), RFC 0032 (six envelope-reliability events — `envelope.retry.{attempted,exhausted}`, `envelope.refusal`, `envelope.truncated`, `envelope.nlToFormat.engaged`, `envelope.recovery.applied`).
 
@@ -720,14 +720,14 @@ For vendor-namespaced kinds (e.g., `vendor.myndhyve.prd.create`), the host's han
 
 > Added by RFC 0032 (`Active` 2026-05-20). Six new cross-kind operational `RunEventType` entries that standardize the protocol vocabulary for envelope-emission reliability behavior — retry attempts, retry exhaustion, refusals, truncations, NL-to-Format fallback engagement, and lenient-parsing recovery. Conformance suites use this vocabulary to assert correct host behavior on adverse paths; observability tools dashboard against it.
 
-| Event | Tier | When emitted | Schema |
-|---|---|---|---|
-| `envelope.retry.attempted` | SHOULD | Host retries an envelope emission after a parse/validation failure (emitted before each retry past the first) | `run-event-payloads.schema.json` §`envelopeRetryAttempted` |
-| `envelope.retry.exhausted` | **MUST** | Host has exhausted its retry budget and is about to surface a terminal envelope failure | `envelopeRetryExhausted` |
-| `envelope.refusal` | **MUST** | Provider returned an explicit refusal (OpenAI `message.refusal`, Anthropic safety-stop, Gemini safety-block). Host MUST NOT retry. | `envelopeRefusal` |
-| `envelope.truncated` | SHOULD | LLM emission was cut off mid-envelope (`stop_reason: "max_tokens"` or equivalent) | `envelopeTruncated` |
-| `envelope.nlToFormat.engaged` | MAY | Host escalated to two-call NL-to-Format fallback after retry exhaustion (Tam et al. mitigation pattern) | `envelopeNlToFormatEngaged` |
-| `envelope.recovery.applied` | MAY | Lenient parsing recovered a malformed envelope (JSON repair, markdown fence stripping, brace walker) | `envelopeRecoveryApplied` |
+| Event                         | Tier     | When emitted                                                                                                                       | Schema                                                     |
+| ----------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `envelope.retry.attempted`    | SHOULD   | Host retries an envelope emission after a parse/validation failure (emitted before each retry past the first)                      | `run-event-payloads.schema.json` §`envelopeRetryAttempted` |
+| `envelope.retry.exhausted`    | **MUST** | Host has exhausted its retry budget and is about to surface a terminal envelope failure                                            | `envelopeRetryExhausted`                                   |
+| `envelope.refusal`            | **MUST** | Provider returned an explicit refusal (OpenAI `message.refusal`, Anthropic safety-stop, Gemini safety-block). Host MUST NOT retry. | `envelopeRefusal`                                          |
+| `envelope.truncated`          | SHOULD   | LLM emission was cut off mid-envelope (`stop_reason: "max_tokens"` or equivalent)                                                  | `envelopeTruncated`                                        |
+| `envelope.nlToFormat.engaged` | MAY      | Host escalated to two-call NL-to-Format fallback after retry exhaustion (Tam et al. mitigation pattern)                            | `envelopeNlToFormatEngaged`                                |
+| `envelope.recovery.applied`   | MAY      | Lenient parsing recovered a malformed envelope (JSON repair, markdown fence stripping, brace walker)                               | `envelopeRecoveryApplied`                                  |
 
 Hosts opt into the family via `capabilities.envelopes.reliability.supported: true` with an explicit `events[]` listing which events the host actually emits. Hosts that advertise `supported: true` MUST include `envelope.retry.exhausted` and `envelope.refusal` in `events[]` (the two MUST tier events); the other four are optional per the SHOULD/MAY tiering.
 
@@ -789,14 +789,14 @@ See `docs/migration/v1.0-to-v1.1.md` for the field-by-field migration table once
 
 ## Open spec gaps
 
-| # | Gap | Owner |
-|---|---|---|
-| E1 | Streaming/partial envelope reassembly across SSE delivery — the `partial` field is specified but the cross-transport reassembly contract (when does the engine know a partial sequence is complete?) is not. | future v1.x |
-| E2 | Multi-turn envelope conversations (an envelope whose handler emits a follow-up `schema.request` that the LLM answers in the next turn) — the `correlationId` chaining model is described but the conversation-state surface is not. | future v1.x |
-| E3 | Vendor-kind registry — whether namespaced kinds (`vendor.myndhyve.prd.create`) should be advertised through a `kinds` registry parallel to the node-pack registry per `registry-operations.md`, or stay host-private. | future v1.x |
-| E4 | Schema sub-typing — `vendor.x.prd.create` v2 might want to declare "everything v1 accepted, plus new optional field" without restating the v1 schema. JSON Schema $ref vs flat duplication; not locked. | future v1.x |
-| E5 | Refusal-mode interaction with retry policies — `refusalMode: "fail-node"` plus a per-run retry policy can produce surprising loops if the LLM keeps emitting refused kinds. The interaction needs a worked example. | future v1.x |
-| E6 | ✅ OTel attribute names — closed. `observability.md` §"Envelope-reliability events (RFC 0032)" defines the `openwop.envelope.*` span-attribute projection for the envelope event vocabulary, and the redaction discipline for `openwop.envelope_*` attributes is enforced by `SECURITY/invariants.yaml` row `envelope-redaction-sr-1-carry-forward`. | closed |
+| #   | Gap                                                                                                                                                                                                                                                                                                                                                  | Owner       |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| E1  | Streaming/partial envelope reassembly across SSE delivery — the `partial` field is specified but the cross-transport reassembly contract (when does the engine know a partial sequence is complete?) is not.                                                                                                                                         | future v1.x |
+| E2  | Multi-turn envelope conversations (an envelope whose handler emits a follow-up `schema.request` that the LLM answers in the next turn) — the `correlationId` chaining model is described but the conversation-state surface is not.                                                                                                                  | future v1.x |
+| E3  | Vendor-kind registry — whether namespaced kinds (`vendor.myndhyve.prd.create`) should be advertised through a `kinds` registry parallel to the node-pack registry per `registry-operations.md`, or stay host-private.                                                                                                                                | future v1.x |
+| E4  | Schema sub-typing — `vendor.x.prd.create` v2 might want to declare "everything v1 accepted, plus new optional field" without restating the v1 schema. JSON Schema $ref vs flat duplication; not locked.                                                                                                                                              | future v1.x |
+| E5  | Refusal-mode interaction with retry policies — `refusalMode: "fail-node"` plus a per-run retry policy can produce surprising loops if the LLM keeps emitting refused kinds. The interaction needs a worked example.                                                                                                                                  | future v1.x |
+| E6  | ✅ OTel attribute names — closed. `observability.md` §"Envelope-reliability events (RFC 0032)" defines the `openwop.envelope.*` span-attribute projection for the envelope event vocabulary, and the redaction discipline for `openwop.envelope_*` attributes is enforced by `SECURITY/invariants.yaml` row `envelope-redaction-sr-1-carry-forward`. | closed      |
 
 These gaps do NOT block conformance against the Stable v1.1 surface; the open rows list candidate closures for future v1.x minors.
 

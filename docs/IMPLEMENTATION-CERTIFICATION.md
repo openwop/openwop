@@ -16,7 +16,7 @@ To claim a conformance posture, your host's repo MUST publish:
 
 One file per host implementation. Required fields:
 
-```markdown
+````markdown
 # <Host Name> — Conformance Evidence
 
 > Suite version: `@openwop/openwop-conformance@<version>`
@@ -55,7 +55,7 @@ npx openwop-conformance
 
 Per-failure rationale, known flakes, host-specific seam env vars (e.g.,
 OPENWOP_TEST_TRIGGER_COMPACTION=true for RFC 0012 conformance).
-```
+````
 
 The Postgres reference host's [`conformance-full.md`](https://github.com/openwop/openwop-examples/blob/main/examples/hosts/postgres/conformance-full.md) is the canonical reference shape.
 
@@ -63,17 +63,18 @@ The Postgres reference host's [`conformance-full.md`](https://github.com/openwop
 
 PR your row to this repo's `INTEROP-MATRIX.md`. Required columns:
 
-| Column | What it carries |
-|---|---|
-| Host name | The product / project name (not a marketing slogan). |
-| Positioning | One sentence: who is this host for? |
-| Source pointer | Repo URL or `examples/hosts/*/` path. |
-| Profiles claimed | Exact strings from your `capabilities.auth.profiles[]` + capability advertisements. |
-| Scale tier | `minimal` / `production` / `high-throughput` per [`spec/v1/scale-profiles.md`](../spec/v1/scale-profiles.md). |
-| `openwop-production` claim | Claimed / Not claimed — be honest. Don't claim if you don't pass the production-profile scenarios. |
-| Evidence pointer | URL or relative path to your `conformance.md`. |
+| Column                     | What it carries                                                                                               |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Host name                  | The product / project name (not a marketing slogan).                                                          |
+| Positioning                | One sentence: who is this host for?                                                                           |
+| Source pointer             | Repo URL or `examples/hosts/*/` path.                                                                         |
+| Profiles claimed           | Exact strings from your `capabilities.auth.profiles[]` + capability advertisements.                           |
+| Scale tier                 | `minimal` / `production` / `high-throughput` per [`spec/v1/scale-profiles.md`](../spec/v1/scale-profiles.md). |
+| `openwop-production` claim | Claimed / Not claimed — be honest. Don't claim if you don't pass the production-profile scenarios.            |
+| Evidence pointer           | URL or relative path to your `conformance.md`.                                                                |
 
 Maintainer review verifies the claim chain end-to-end:
+
 - Your `conformance.md` cites a real suite version.
 - The opt-outs in your command match your profile-not-claimed declarations.
 - The pass count is consistent with the scenario count at the suite version you cited.
@@ -112,7 +113,7 @@ A conformance row decays. Maintain it:
 
 Hosts MAY display a conformance badge linking to their `conformance.md`. Canonical badge URL pattern (when GOV-3 lands the hosted leaderboard):
 
-```
+```text
 https://openwop.dev/badges/<hostId>/<suite-version>.svg
 ```
 
@@ -120,7 +121,7 @@ Until the hosted leaderboard ships, hosts MAY produce a static SVG and host it i
 
 ### `openwop-agent-platform` badge (RFC 0085)
 
-A host that reaches the `openwop-agent-platform` operational-annex status (`spec/v1/agent-platform-profile.md`) MAY additionally render the aggregate platform badge — [`openwop.dev/badge/openwop-agent-platform.svg`](https://openwop.dev/badge/openwop-agent-platform.svg) (published from the [openwop-site](https://github.com/openwop/openwop-site) repo) — stamped with its reported status (`partial` / `full`) + suite version. Self-hosted now (the GOV-3 pattern); it does NOT block on the hosted leaderboard. The badge asserts the *aggregate* platform claim and MUST be backed by the host's `INTEROP-MATRIX.md` row (the §C aggregate-evidence rule: report `partial` until the full-tier scenarios actually pass). It does not replace the per-suite-version conformance badge above.
+A host that reaches the `openwop-agent-platform` operational-annex status (`spec/v1/agent-platform-profile.md`) MAY additionally render the aggregate platform badge — [`openwop.dev/badge/openwop-agent-platform.svg`](https://openwop.dev/badge/openwop-agent-platform.svg) (published from the [openwop-site](https://github.com/openwop/openwop-site) repo) — stamped with its reported status (`partial` / `full`) + suite version. Self-hosted now (the GOV-3 pattern); it does NOT block on the hosted leaderboard. The badge asserts the _aggregate_ platform claim and MUST be backed by the host's `INTEROP-MATRIX.md` row (the §C aggregate-evidence rule: report `partial` until the full-tier scenarios actually pass). It does not replace the per-suite-version conformance badge above.
 
 ---
 

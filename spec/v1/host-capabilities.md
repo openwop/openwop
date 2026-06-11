@@ -1,4 +1,4 @@
-# openwop Spec v1 — Host Capability Surfaces
+# OpenWOP Spec v1 — Host Capability Surfaces
 
 > **Status: Stable · v1.1 (2026-05-12).** Promoted DRAFT → FINAL after Phase B audit confirmed all 14 `host.*` capability sections are internally consistent + RFC 2119-clean + cross-linked to `capabilities.md` §"runtimeCapabilities" + `node-packs.md` §"Manifest format" `peerDependencies`. Normative contracts for the `host.*` capabilities that node-pack `peerDependencies` may declare. A pack that declares `peerDependencies: { "host.canvas": "supported" }` consumes the canvas surface defined here; the host that advertises `host.canvas: supported` in `/.well-known/openwop` MUST expose the contract specified in §host.canvas. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
@@ -29,7 +29,7 @@ Method signatures use TypeScript-flavor shapes; concrete hosts MAY return additi
 
 ## §host.aiProviders
 
-**Capability flag:** `aiProviders: supported` *(advertised via top-level `Capabilities.aiProviders.supported[]`; see [capabilities.md §aiProviders](capabilities.md#aiproviders))*
+**Capability flag:** `aiProviders: supported` _(advertised via top-level `Capabilities.aiProviders.supported[]`; see [capabilities.md §aiProviders](capabilities.md#aiproviders))_
 
 **Used by:** `core.openwop.ai`, `vendor.myndhyve.ai`, `vendor.myndhyve.ads-copy-generate`, `vendor.myndhyve.landing-page`, `vendor.myndhyve.market-intel-*` (all single-AI-call packs).
 
@@ -69,12 +69,12 @@ ctx.callAI({
 
 **Optional sub-capabilities:**
 
-| Flag | Adds | Used by |
-|---|---|---|
-| `aiProviders.toolCalling: supported` | `ctx.callAIWithTools(...)` — model may emit `tool_call` entries | `core.openwop.ai` (`core.ai.toolCalling`) |
-| `aiProviders.embeddings: supported` | `ctx.callAI({ embeddingMode: true, dimensions?: number })` returns `{ embedding: number[], dimensions, model }` | `core.openwop.ai` (`core.openwop.ai.embeddings`) |
-| `aiProviders.imageGeneration: supported` | `ctx.callImageGenerator(...)` — generates binary image asset (returns URL or base64 data); see optional method block below | `vendor.myndhyve.ads-image-generate` |
-| `aiProviders.videoGeneration: supported` | `ctx.callVideoGenerator(...)` — generates binary video asset (returns URL); see optional method block below. Long-running (typical 30-120s); host hides polling internally. | `vendor.myndhyve.ads-video-generate` |
+| Flag                                     | Adds                                                                                                                                                                        | Used by                                          |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `aiProviders.toolCalling: supported`     | `ctx.callAIWithTools(...)` — model may emit `tool_call` entries                                                                                                             | `core.openwop.ai` (`core.ai.toolCalling`)        |
+| `aiProviders.embeddings: supported`      | `ctx.callAI({ embeddingMode: true, dimensions?: number })` returns `{ embedding: number[], dimensions, model }`                                                             | `core.openwop.ai` (`core.openwop.ai.embeddings`) |
+| `aiProviders.imageGeneration: supported` | `ctx.callImageGenerator(...)` — generates binary image asset (returns URL or base64 data); see optional method block below                                                  | `vendor.myndhyve.ads-image-generate`             |
+| `aiProviders.videoGeneration: supported` | `ctx.callVideoGenerator(...)` — generates binary video asset (returns URL); see optional method block below. Long-running (typical 30-120s); host hides polling internally. | `vendor.myndhyve.ads-video-generate`             |
 
 ```typescript
 // Available when host advertises `aiProviders.imageGeneration: supported`.
@@ -146,6 +146,7 @@ ctx.callVideoGenerator({
 ```
 
 **Failure modes:**
+
 - `host_capability_missing` — `ctx.callAI` absent (workflow-register-time refusal via `peerDependencies: { aiProviders: "supported" }` is the correct path; runtime check is defense-in-depth)
 - `provider_unavailable` — provider rejected the call or is unreachable
 - `provider_quota_exhausted` — BYOK quota / host-side rate limit
@@ -206,6 +207,7 @@ ctx.aiEnvelope.await({
 **Required methods:** `generate`. `await` is required only when the host advertises `host.aiEnvelope.await: supported`.
 
 **Failure modes:**
+
 - `host_capability_missing` — `ctx.aiEnvelope` absent
 - `provider_unavailable` — provider rejected or unreachable
 - `provider_quota_exhausted` — BYOK quota / rate limit
@@ -228,12 +230,12 @@ When dispatching a NodeModule that declares `requiredModelCapabilities`, a host 
 1. Check the active model's advertised capabilities against the NodeModule's `requiredModelCapabilities[]`.
 2. **All required capabilities met** → dispatch normally.
 3. **Unmet AND `fallbackModel` declared AND host can authenticate to the fallback provider** (i.e., the fallback's `provider` is in `capabilities.aiProviders.supported[]` AND a credential is resolvable AND the host advertises `capabilities.modelCapabilities.substitutionSupported: true`):
-    - Substitute the active model with the fallback.
-    - Emit `model.capability.substituted` per the payload contract in `schemas/run-event-payloads.schema.json` §`modelCapabilitySubstituted`.
-    - Dispatch with the fallback model.
+   - Substitute the active model with the fallback.
+   - Emit `model.capability.substituted` per the payload contract in `schemas/run-event-payloads.schema.json` §`modelCapabilitySubstituted`.
+   - Dispatch with the fallback model.
 4. **Unmet AND (no `fallbackModel` declared, OR substitution not supported, OR host cannot authenticate to the fallback)**:
-    - Emit `model.capability.insufficient` per `modelCapabilityInsufficient` payload.
-    - Refuse to dispatch the node; terminate the run with `RunSnapshot.error.code = "capability_not_provided"` per `capabilities.md` §"Unsupported capability — refusal contract."
+   - Emit `model.capability.insufficient` per `modelCapabilityInsufficient` payload.
+   - Refuse to dispatch the node; terminate the run with `RunSnapshot.error.code = "capability_not_provided"` per `capabilities.md` §"Unsupported capability — refusal contract."
 
 The ordering MUST be: **capability check → optional substitution → emit telemetry → dispatch or refuse.** Hosts MUST NOT substitute silently (no event emission); hosts MUST NOT dispatch with an unsuitable model and hope for the best (the model's runtime failure is a worse signal than refusing up-front).
 
@@ -243,19 +245,19 @@ The ordering MUST be: **capability check → optional substitution → emit tele
 
 Spec-reserved identifiers (RFC 0031 §C):
 
-| Identifier | Meaning |
-|---|---|
-| `structured-output` | Vendor strict-mode JSON Schema support (Anthropic strict tool use `strict: true`, OpenAI strict mode `response_format.json_schema.strict: true`, Gemini `responseSchema` on `generateContent`). |
-| `discriminator-enum` | Single-string `enum: ["literal"]` discriminator support in `anyOf` branches per `ai-envelope.md` §"Variant payload discrimination (normative)." All three Tier-1 vendors support this when their respective strict modes are engaged. |
-| `long-context` | Context window ≥ 200k tokens. |
-| `reasoning` | Native reasoning / thinking-tokens (Anthropic extended thinking, Gemini `thinkingBudget`, OpenAI o-series reasoning). **Sibling concept** to the RFC 0030 envelope-payload `reasoning` field — this identifier means *model-native* thinking-tokens, NOT envelope-payload chain-of-thought. |
-| `function-calling` | Multi-turn function-calling / tool-use loop support. |
+| Identifier           | Meaning                                                                                                                                                                                                                                                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `structured-output`  | Vendor strict-mode JSON Schema support (Anthropic strict tool use `strict: true`, OpenAI strict mode `response_format.json_schema.strict: true`, Gemini `responseSchema` on `generateContent`).                                                                                             |
+| `discriminator-enum` | Single-string `enum: ["literal"]` discriminator support in `anyOf` branches per `ai-envelope.md` §"Variant payload discrimination (normative)." All three Tier-1 vendors support this when their respective strict modes are engaged.                                                       |
+| `long-context`       | Context window ≥ 200k tokens.                                                                                                                                                                                                                                                               |
+| `reasoning`          | Native reasoning / thinking-tokens (Anthropic extended thinking, Gemini `thinkingBudget`, OpenAI o-series reasoning). **Sibling concept** to the RFC 0030 envelope-payload `reasoning` field — this identifier means _model-native_ thinking-tokens, NOT envelope-payload chain-of-thought. |
+| `function-calling`   | Multi-turn function-calling / tool-use loop support.                                                                                                                                                                                                                                        |
 
 Host-private extensions MUST prefix with `x-host-<host>-<key>` per `host-extensions.md` §"Canonical-prefix table." A future RFC MAY add new spec-reserved identifiers.
 
 ### Interaction with prompt resolution (RFC 0029)
 
-`requiredModelCapabilities` and the four-layer prompt-resolution chain (RFC 0029) are orthogonal axes. When a host implements both, the recommended ordering is: **capability check first, then prompt resolution.** Rationale: substitution may swap models with different prompt-tuning expectations; resolving prompts against the *original* model when dispatch ends up using the *fallback* is incorrect. The `model.capability.substituted` event (this RFC) and `agent.promptResolved` (RFC 0029) MAY both fire for the same node execution; no precedence rule applies between them at the protocol level.
+`requiredModelCapabilities` and the four-layer prompt-resolution chain (RFC 0029) are orthogonal axes. When a host implements both, the recommended ordering is: **capability check first, then prompt resolution.** Rationale: substitution may swap models with different prompt-tuning expectations; resolving prompts against the _original_ model when dispatch ends up using the _fallback_ is incorrect. The `model.capability.substituted` event (this RFC) and `agent.promptResolved` (RFC 0029) MAY both fire for the same node execution; no precedence rule applies between them at the protocol level.
 
 ---
 
@@ -279,6 +281,7 @@ ctx.promptLibrary.get(promptId: string) → Promise<{
 **Required methods:** `get`.
 
 **Failure modes:**
+
 - `host_capability_missing` — `ctx.promptLibrary` absent
 - `prompt_not_found` — promptId doesn't resolve
 - `prompt_version_pinned` — pin requested but not retrievable
@@ -342,6 +345,7 @@ ctx.canvas.crossInvoke({
 **Required methods:** `read`, `write`. `create` and `crossInvoke` are required only when the host advertises `host.canvas.create: supported` / `host.canvas.crossInvoke: supported`.
 
 **Failure modes:**
+
 - `host_capability_missing` — `ctx.canvas` absent
 - `canvas_not_found` — canvasId doesn't resolve
 - `canvas_permission_denied` — caller lacks read/write permission
@@ -368,6 +372,7 @@ Unlike most `host.*` capabilities, this one adds **no `ctx.artifactTypes.*` meth
 ```
 
 **Behavior (normative):**
+
 - When `supported`, the host validates an artifact whose type matches a **registered** type — either an installed pack's `artifactTypeId` (`registrationSource: "pack"`) or a **host-native** type it validates against a host-known schema (`registrationSource: "host"`, RFC 0075) — against that type's schema before emitting `artifact.created` (and sets `registered: true` + `registrationSource`); unregistered types are accepted unvalidated with `registered: false` (the permanent first-class tier). See `artifact-type-packs.md` §"Binding the existing artifact surfaces".
 - A host advertising `store: true` MUST persist registered artifacts and emit `artifact.created`.
 - A host advertising `render: false` for a type it can `store` MUST still accept and store the artifact and MUST NOT fail the run for lack of a renderer — the cross-host store-without-render negotiation guarantee.
@@ -385,7 +390,7 @@ Unlike most `host.*` capabilities, this one adds **no `ctx.artifactTypes.*` meth
 }
 ```
 
-- `validated` (RFC 0075) is the **runtime validation guarantee** (`true` ⇒ the host validates this type before emit, so emits `registered: true`). `schemaVersions["…"]` is only a **version *declaration***; the two are decoupled so a host can declare known versions without obligating per-type validation.
+- `validated` (RFC 0075) is the **runtime validation guarantee** (`true` ⇒ the host validates this type before emit, so emits `registered: true`). `schemaVersions["…"]` is only a **version _declaration_**; the two are decoupled so a host can declare known versions without obligating per-type validation.
 - `validation` (`"open"`/`"closed"`) mirrors `ArtifactType.validation`, surfacing schema strictness in discovery so a consumer needn't fetch the schema to know whether to expect a closed-world shape (default `"open"` per `COMPATIBILITY.md` §2.1).
 - A host emitting `registered: true` for a host-native (no-pack) type MUST serve its canonical schema URL (`artifact-type-packs.md` §"Schema distribution", P1-3) so the claim is downstream-verifiable.
 
@@ -440,6 +445,7 @@ ctx.chat.updateCard({
 **`host.chat.cardPacks` (RFC 0071 Phase 2).** An additive sub-flag: a host advertising `host.chat.cardPacks: supported` resolves **registered chat-card definitions** (from installed `kind: "card"` packs — see [`chat-card-packs.md`](./chat-card-packs.md)) and executes them per that doc's §"Card execution": substitute the card's typed `inputs` into its `prompt.template`, route through `ctx.aiEnvelope.generate`, and (when the card declares an `outputArtifactType`) validate the result against the registered artifact type's schema before emitting `artifact.created`. A `WorkflowNode.cardType` (or `ctx.chat.emitCard` `cardType`) value SHOULD then reference a registered `cardTypeId`; existing free-form `cardType` strings remain valid. Card-input-derived prompt segments are `untrusted` and MUST propagate `meta.contentTrust: "untrusted"` per `chat-card-packs.md` §"Trust boundary". Requires `host.aiEnvelope: supported`.
 
 **Failure modes:**
+
 - `host_capability_missing` — `ctx.chat` absent
 - `chat_session_not_found` — sessionId doesn't resolve
 - `card_not_found` — updateCard targets a non-existent cardId (returns `found: false` instead of throwing)
@@ -504,6 +510,7 @@ ctx.brand.validatePersona(/* same shape as validateTheme */)
 **Required methods:** all five.
 
 **Failure modes:**
+
 - `host_capability_missing` — `ctx.brand` absent
 - `brand_not_found` — brandId doesn't resolve
 - `theme_invalid_shape` — payload fails server-side schema validation
@@ -602,6 +609,7 @@ ctx.kanban.moveTask(taskId: string, toColumn: string) → Promise<void>
 **Required methods:** `boardCreate`, `boardReview`, `taskAssign`, `timelinePlan`, `automateRules`, `resourceMonitor`, `getReadyTasks`, `moveTask`. `taskGet`, `taskCreateBatch` are optional.
 
 **Failure modes:**
+
 - `host_capability_missing`
 - `board_not_found`
 - `task_not_found`
@@ -674,6 +682,7 @@ ctx.webResearch.research({
 **Required methods:** `search`. `fetchBatch` and `research` required when host advertises `host.webResearch.scraping: supported`.
 
 **Failure modes:**
+
 - `host_capability_missing`
 - `search_quota_exhausted`
 - `fetch_blocked_by_robots`
@@ -689,7 +698,7 @@ ctx.webResearch.research({
 
 This is the heavyweight **swarm/consensus superset**. The minimal tier that makes a published agent pack runnable is `capabilities.agents.manifestRuntime` (RFC 0070) — loading a pack's `agents[]` into an `AgentRegistry` (RFC 0003) and dispatching one on the existing `core.dispatch`/orchestrator loop. A host advertising `host.agentRuntime: supported` **implies** `agents.manifestRuntime` (RFC 0070 §B), since `spawn({ manifestId })` instantiates a manifest agent. Hosts that only need single-agent / crew dispatch advertise the floor and omit this section. A multi-tenant host additionally advertises `agents.manifestRuntime.installScope: 'tenant'` (RFC 0074) so `GET /v1/agents` is scoped to the caller's owner triple (default `'host'` = host-global, RFC 0072 §A behavior); see `node-packs.md` §"Inventory scope".
 
-**Related: per-tool authorization lives at the top level, not under `agents`.** A host that runs a function-calling loop for manifest agents (the model requesting tools per RFC 0072 §B) advertises per-tool authorization, rate limiting, and the content-free tool-call audit trail via the **top-level** `Capabilities.toolHooks` block — see [§host.toolHooks](#hosttoolhooks) — *not* via a sub-flag of `agents` next to `manifestRuntime`. `toolHooks` is transport- and runtime-agnostic (it covers MCP, HTTP egress, and native tool calls alike), so it is not nested under the agent-runtime tier.
+**Related: per-tool authorization lives at the top level, not under `agents`.** A host that runs a function-calling loop for manifest agents (the model requesting tools per RFC 0072 §B) advertises per-tool authorization, rate limiting, and the content-free tool-call audit trail via the **top-level** `Capabilities.toolHooks` block — see [§host.toolHooks](#hosttoolhooks) — _not_ via a sub-flag of `agents` next to `manifestRuntime`. `toolHooks` is transport- and runtime-agnostic (it covers MCP, HTTP egress, and native tool calls alike), so it is not nested under the agent-runtime tier.
 
 Operates on RFC 0002 / 0003 / 0007 protocol primitives — spawn, delegate, consensus, message-send, skill-invoke, swarm-execute.
 
@@ -755,6 +764,7 @@ ctx.agentRuntime.swarmExecute({
 **Required methods:** all six.
 
 **Failure modes:**
+
 - `host_capability_missing`
 - `agent_not_found`
 - `agent_spawn_quota_exhausted`
@@ -768,7 +778,7 @@ ctx.agentRuntime.swarmExecute({
 
 **Used by:** `vendor.myndhyve.agent-orchestration` (the `coordination.*` typeIds)
 
-Multi-participant coordination primitives. Distinct from `host.agentRuntime` — coordination operates on *roles* (voters, competitors), not individual agent identities. A host MAY implement both surfaces; typical hosts that do implement `agentRuntime` by delegating to `coordination` internally.
+Multi-participant coordination primitives. Distinct from `host.agentRuntime` — coordination operates on _roles_ (voters, competitors), not individual agent identities. A host MAY implement both surfaces; typical hosts that do implement `agentRuntime` by delegating to `coordination` internally.
 
 ```typescript
 ctx.coordination.vote({
@@ -829,6 +839,7 @@ ctx.coordination.roundRobin({
 **Required methods:** `vote` is required when the capability is advertised. The others are required individually when the host advertises e.g. `host.coordination.consensus: supported`.
 
 **Failure modes:**
+
 - `host_capability_missing`
 - `quorum_not_met` — when input requires quorum and vote returned `quorumMet: false`
 - `consensus_max_rounds_exceeded`
@@ -920,6 +931,7 @@ ctx.dataIntegration.applyBinding({
 **Required methods:** depends on which sub-capabilities the host advertises. The minimal surface for `host.dataIntegration: supported` is `transform` + `applyBinding`. REST/GraphQL/A2A/MCP fetch methods require the respective sub-capabilities (`host.dataIntegration.rest: supported`, etc.).
 
 **Failure modes:**
+
 - `host_capability_missing`
 - `source_not_found` — sourceId doesn't resolve
 - `transform_expression_invalid`
@@ -961,6 +973,7 @@ ctx.launchStudio.resolveLinkedArtifacts({
 **Required methods:** all three.
 
 **Failure modes:**
+
 - `host_capability_missing`
 - `studio_not_found` — getStudio returns null on miss (NOT thrown — convention)
 - `studio_permission_denied`
@@ -1005,6 +1018,7 @@ ctx.entities.getAsset({
 **Required methods:** all three.
 
 **Failure modes:**
+
 - `host_capability_missing`
 - `entity_permission_denied`
 - `entity_quota_exceeded`
@@ -1052,6 +1066,7 @@ ctx.messaging.dispatchEgressEnvelope({
 **Required methods:** `dispatchEgressEnvelope`.
 
 **Failure modes:**
+
 - `host_capability_missing`
 - `connector_not_found`
 - `connector_disconnected`
@@ -1101,13 +1116,14 @@ ctx.mcp.serverStatus({
 **Required methods:** all four.
 
 **Failure modes:**
+
 - `host_capability_missing`
 - `mcp_server_not_found`
 - `mcp_server_disconnected`
 - `mcp_tool_not_found`
 - `mcp_tool_invocation_failed`
 
-**See also — server direction (RFC 0020).** The surface above covers workflows that *call out* to remote MCP servers. Hosts MAY also advertise the *server-mount* direction via `capabilities.mcp.serverMount: { supported: true, transports, samplingBridge, elicitationBridge }` — exposing their workflows as MCP tools, resources, and prompts callable by external MCP-aware LLM clients. See [`mcp-integration.md` §"OpenWOP host as MCP server"](mcp-integration.md) for the state-projection table, bidirectional `sampling/createMessage` and `elicitation/create` callbacks, trust-boundary discipline, and 6 capability-gated conformance scenarios.
+**See also — server direction (RFC 0020).** The surface above covers workflows that _call out_ to remote MCP servers. Hosts MAY also advertise the _server-mount_ direction via `capabilities.mcp.serverMount: { supported: true, transports, samplingBridge, elicitationBridge }` — exposing their workflows as MCP tools, resources, and prompts callable by external MCP-aware LLM clients. See [`mcp-integration.md` §"OpenWOP host as MCP server"](mcp-integration.md) for the state-projection table, bidirectional `sampling/createMessage` and `elicitation/create` callbacks, trust-boundary discipline, and 6 capability-gated conformance scenarios.
 
 ---
 
@@ -1169,14 +1185,17 @@ ctx.knowledge.embed({
 ```
 
 **RBAC:**
+
 - The host MUST enforce that `workspaceId` is one the calling run has read access to. Cross-workspace retrieval MUST return `403 knowledge_workspace_forbidden`.
 - `collectionIds[]` MUST be filtered to those visible to the caller; chunks from collections the caller cannot read MUST be omitted, NOT errored on.
 
 **Determinism:**
+
 - `retrieve` is NOT pure — corpus and embeddings change over time. Packs SHOULD treat results as an input snapshot for the current run.
 - Hosts SHOULD include enough metadata (chunkId, assetId, headingPath, pageNumber) for packs to render citations stably.
 
 **Failure modes:**
+
 - `host_capability_missing`
 - `knowledge_workspace_forbidden` — caller cannot read the workspace
 - `knowledge_query_too_long` — query exceeds host's embedding-model token limit
@@ -1187,7 +1206,7 @@ ctx.knowledge.embed({
 
 ## §host.secrets
 
-**Capability flag:** `secrets.resolveInPack: supported` *(advertised via top-level `Capabilities.secrets`; see [capabilities.md §secrets](capabilities.md#secrets))*
+**Capability flag:** `secrets.resolveInPack: supported` _(advertised via top-level `Capabilities.secrets`; see [capabilities.md §secrets](capabilities.md#secrets))_
 
 **Used by:** packs that must call external HTTP APIs requiring stored credentials (e.g., ad-platform APIs, third-party analytics endpoints, vendor-specific SaaS integrations). Current consumers: `vendor.myndhyve.ads-publish-meta`, `vendor.myndhyve.ads-publish-google`, `vendor.myndhyve.ads-publish-tiktok` (the 3 platform-publish packs; the `ads.publish.platform` umbrella decomposed into platform-specific packs during publish).
 
@@ -1210,21 +1229,22 @@ ctx.secrets.resolve({
 
 The plaintext returned by `ctx.secrets.resolve(...)` is the most sensitive value flowing through the pack runtime. Hosts AND packs MUST jointly enforce:
 
-| Rule | Owner | Detail |
-|---|---|---|
-| Plaintext MUST NOT appear in `RunEvent` payloads | Host | Event emitter MUST redact `secrets.resolve` outputs from every serialized event (including `node.input` / `node.output` / `node.error`). |
-| Plaintext MUST NOT appear in OTel spans, log lines, or trace exports | Host | Tracing adapter MUST scrub. Pack runtime MUST NOT log resolved plaintext via `ctx.log`. |
-| Plaintext MUST NOT appear in `RunSnapshot` exports or replay snapshots | Host | Snapshot serializer MUST redact. Replay determinism is preserved by replaying the *resolve call*, not by snapshotting the plaintext (host resolves freshly from the credential store on replay). |
-| Plaintext MUST NOT be persisted in pack-side caches across run boundaries | Pack | Pack MAY cache within a single `ctx.callImageGenerator` / `fetch()` call site for that one invocation. After the call, the plaintext reference MUST be discarded. |
-| Plaintext MUST NOT be sent to any `ctx.*` method other than the consuming call (e.g., `fetch`) | Pack | Specifically: never pass to `ctx.callAI`, `ctx.chat.sendMessage`, `ctx.canvas.write`, or any other host method. The resolution is for direct external HTTP only. |
-| `purpose` field MUST be present and non-empty | Pack | Host audit log records `{ref, purpose, runId, packName, packVersion, ts}` — `purpose` is the required audit breadcrumb. |
-| Lint + redaction unit tests | Host | Hosts that advertise this capability MUST add CI checks verifying plaintext never appears in serialized output across the surfaces above. |
+| Rule                                                                                           | Owner | Detail                                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Plaintext MUST NOT appear in `RunEvent` payloads                                               | Host  | Event emitter MUST redact `secrets.resolve` outputs from every serialized event (including `node.input` / `node.output` / `node.error`).                                                         |
+| Plaintext MUST NOT appear in OTel spans, log lines, or trace exports                           | Host  | Tracing adapter MUST scrub. Pack runtime MUST NOT log resolved plaintext via `ctx.log`.                                                                                                          |
+| Plaintext MUST NOT appear in `RunSnapshot` exports or replay snapshots                         | Host  | Snapshot serializer MUST redact. Replay determinism is preserved by replaying the _resolve call_, not by snapshotting the plaintext (host resolves freshly from the credential store on replay). |
+| Plaintext MUST NOT be persisted in pack-side caches across run boundaries                      | Pack  | Pack MAY cache within a single `ctx.callImageGenerator` / `fetch()` call site for that one invocation. After the call, the plaintext reference MUST be discarded.                                |
+| Plaintext MUST NOT be sent to any `ctx.*` method other than the consuming call (e.g., `fetch`) | Pack  | Specifically: never pass to `ctx.callAI`, `ctx.chat.sendMessage`, `ctx.canvas.write`, or any other host method. The resolution is for direct external HTTP only.                                 |
+| `purpose` field MUST be present and non-empty                                                  | Pack  | Host audit log records `{ref, purpose, runId, packName, packVersion, ts}` — `purpose` is the required audit breadcrumb.                                                                          |
+| Lint + redaction unit tests                                                                    | Host  | Hosts that advertise this capability MUST add CI checks verifying plaintext never appears in serialized output across the surfaces above.                                                        |
 
-**Determinism note.** `ctx.secrets.resolve` is non-deterministic by design — the host MAY rotate secrets between runs, MAY return different plaintext on the same `ref` across runs (rotation), AND MUST NOT snapshot plaintext for replay. Replay-aware hosts SHOULD record only the resolve *call site* (ref + purpose + ts) and re-resolve from the credential store at replay time. Packs that change behavior based on plaintext content (e.g., parsing a JWT to extract a tenant id) MUST treat the resolved value as run-input that may differ across runs.
+**Determinism note.** `ctx.secrets.resolve` is non-deterministic by design — the host MAY rotate secrets between runs, MAY return different plaintext on the same `ref` across runs (rotation), AND MUST NOT snapshot plaintext for replay. Replay-aware hosts SHOULD record only the resolve _call site_ (ref + purpose + ts) and re-resolve from the credential store at replay time. Packs that change behavior based on plaintext content (e.g., parsing a JWT to extract a tenant id) MUST treat the resolved value as run-input that may differ across runs.
 
 **RBAC.** The host MUST enforce that `ref` resolves only to credentials the calling run has access to. Refs from another workspace's secret namespace MUST fail with `secret_access_denied`. Hosts MUST NOT silently substitute a different credential if the requested `ref` is unavailable.
 
 **Failure modes:**
+
 - `host_capability_missing` — `ctx.secrets.resolve` absent (workflow-register-time refusal via `peerDependencies: { "secrets.resolveInPack": "supported" }` is the correct path; runtime check is defense-in-depth)
 - `secret_not_found` — `ref` doesn't resolve in the host's credential store
 - `secret_access_denied` — caller lacks read permission on `ref` (RBAC denied)
@@ -1251,11 +1271,11 @@ The plaintext returned by `ctx.secrets.resolve(...)` is the most sensitive value
 
 ## §host.credentials
 
-**Capability flag:** `credentials.supported: true` *(advertised via top-level `Capabilities.credentials`; see [capabilities.md §credentials](capabilities.md#credentials))* — RFC 0046, `Draft`.
+**Capability flag:** `credentials.supported: true` _(advertised via top-level `Capabilities.credentials`; see [capabilities.md §credentials](capabilities.md#credentials))_ — RFC 0046, `Draft`.
 
 **Used by:** packs that declare `requiredCredentials[]` (see [node-pack-manifest.schema.json](../../schemas/node-pack-manifest.schema.json)); the RFC 0047 `host.oauth` flow stores acquired tokens here; RFC 0045 connectors point their `auth` declarations at it.
 
-A portable credential **resolution + lifecycle** contract — the first-class sibling to `§host.secrets`. Where `secrets.resolveInPack` hands raw plaintext into the pack process for direct external HTTP, `host.credentials` is the broader surface for *storing, sharing, rotating, and resolving* a credential by an opaque reference, **without ever putting plaintext on the wire**. A pack references a credential by `{ ref, scope }` (the [`credential-reference.schema.json`](../../schemas/credential-reference.schema.json) wire shape — the reference, never the secret); the host resolves it at node-execution time and injects the material into the node sandbox **only**.
+A portable credential **resolution + lifecycle** contract — the first-class sibling to `§host.secrets`. Where `secrets.resolveInPack` hands raw plaintext into the pack process for direct external HTTP, `host.credentials` is the broader surface for _storing, sharing, rotating, and resolving_ a credential by an opaque reference, **without ever putting plaintext on the wire**. A pack references a credential by `{ ref, scope }` (the [`credential-reference.schema.json`](../../schemas/credential-reference.schema.json) wire shape — the reference, never the secret); the host resolves it at node-execution time and injects the material into the node sandbox **only**.
 
 **Resolution contract (normative).** A host advertising `credentials.supported: true` MUST:
 
@@ -1268,6 +1288,7 @@ A portable credential **resolution + lifecycle** contract — the first-class si
 **Relationship to `§host.secrets`.** `host.credentials` supersedes the informal `ai.credentialRef` / `secrets.resolveInPack` annex with a first-class store-at-rest + sharing + rotation surface; the `secrets` advertisement stays valid and is now a special case. A host MAY advertise both.
 
 **Failure modes:**
+
 - `credential_not_found` — `ref` doesn't resolve (or old key past the rotation grace window)
 - `credential_forbidden` — `ref` resolvable but out of the caller's `{ tenant, workspace, principal }` scope (fail-closed; never silently substitute)
 - `credential_scope_unsupported` — requested `scope` not in `capabilities.credentials.scopes`
@@ -1293,11 +1314,11 @@ Additive — hosts that omit the block ignore it; packs declaring `requiredCrede
 
 ## §host.oauth
 
-**Capability flag:** `oauth.supported: true` *(advertised via top-level `Capabilities.oauth`; see [capabilities.md §oauth](capabilities.md#oauth))* — RFC 0047, `Draft`.
+**Capability flag:** `oauth.supported: true` _(advertised via top-level `Capabilities.oauth`; see [capabilities.md §oauth](capabilities.md#oauth))_ — RFC 0047, `Draft`.
 
 **Used by:** connector packs whose nodes declare `auth: { type: 'oauth2', provider, scopes[] }` (see [node-pack-manifest.schema.json](../../schemas/node-pack-manifest.schema.json) `NodeAuth`). RFC 0045 connectors point their `auth` declaration here.
 
-The host performs the OAuth 2.0 **authorization-code + refresh** dance on a user's behalf, so a connector node declares *which provider + scopes* it needs — not *how* the token is obtained. This answers "what third-party token does a node hold," distinct from RFC 0010's host-authentication profiles ("who is the caller"). It composes with — and depends on — [§host.credentials](#host-credentials): acquired tokens are stored as `host.credentials` entries and resolved into the node sandbox as a bearer token, **never crossing the wire**.
+The host performs the OAuth 2.0 **authorization-code + refresh** dance on a user's behalf, so a connector node declares _which provider + scopes_ it needs — not _how_ the token is obtained. This answers "what third-party token does a node hold," distinct from RFC 0010's host-authentication profiles ("who is the caller"). It composes with — and depends on — [§host.credentials](#host-credentials): acquired tokens are stored as `host.credentials` entries and resolved into the node sandbox as a bearer token, **never crossing the wire**.
 
 **Token lifecycle (normative).** A host advertising `oauth.supported: true` MUST:
 
@@ -1308,10 +1329,12 @@ The host performs the OAuth 2.0 **authorization-code + refresh** dance on a user
 **Connector-auth declaration.** A node declares `auth: { type: 'oauth2', provider, scopes[] }`. The host matches `provider` against an advertised `oauth.providers[].id` and refuses to register the pack if the provider or a requested scope is not advertised (`oauth_provider_unsupported` / `oauth_scope_unsupported`).
 
 **Events (additive, redaction-safe):**
+
 - `connector.authorized` → `{ provider, credentialRef, scopes }` — token first acquired or re-authorized. Carries the credential **reference**, never the token.
 - `connector.auth_expired` → `{ provider, credentialRef, reason }` — refresh failed terminally.
 
 **Failure modes:**
+
 - `oauth_provider_unsupported` — node's `auth.provider` not in `capabilities.oauth.providers[]`
 - `oauth_scope_unsupported` — a requested scope not in the provider's `scopesSupported`
 - `connector_auth_expired` — stored token's refresh failed terminally
@@ -1336,7 +1359,7 @@ Additive — hosts that omit the block advertise no third-party token acquisitio
 
 ## §host.fs
 
-**Capability flag:** `fs.supported: true` *(advertised via top-level `Capabilities.fs`; see [capabilities.md](capabilities.md))*
+**Capability flag:** `fs.supported: true` _(advertised via top-level `Capabilities.fs`; see [capabilities.md](capabilities.md))_
 
 **Used by:** `core.openwop.files` (read / write / delete / stat / list nodes); transport sub-surfaces (FTP / SFTP / SSH) gate the corresponding `core.openwop.files.transport.*` nodes.
 
@@ -1354,13 +1377,13 @@ ctx.fs.list({ prefix?: string, cursor?: string, limit?: number }) → Promise<{ 
 
 **Hard rules:**
 
-| Rule | Detail |
-|---|---|
-| Path resolution | Every `path` MUST be normalized and resolved relative to `sandboxRoot`. Absolute paths outside the root MUST return `path_outside_sandbox`. |
-| Path traversal | Paths containing `..` segments that escape the root MUST return `path_outside_sandbox`. |
-| Symlink escape | Symlinks that resolve outside the sandbox root MUST return `path_outside_sandbox`. The host MUST NOT follow such links partially. |
-| Size enforcement | Writes exceeding `maxFileSizeBytes` MUST return `file_too_large`. Reads of larger files MAY return `file_too_large` rather than streaming. |
-| Permission errors | Permission denial MUST return `fs_permission_denied`, not silently fail or fall through. |
+| Rule              | Detail                                                                                                                                      |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Path resolution   | Every `path` MUST be normalized and resolved relative to `sandboxRoot`. Absolute paths outside the root MUST return `path_outside_sandbox`. |
+| Path traversal    | Paths containing `..` segments that escape the root MUST return `path_outside_sandbox`.                                                     |
+| Symlink escape    | Symlinks that resolve outside the sandbox root MUST return `path_outside_sandbox`. The host MUST NOT follow such links partially.           |
+| Size enforcement  | Writes exceeding `maxFileSizeBytes` MUST return `file_too_large`. Reads of larger files MAY return `file_too_large` rather than streaming.  |
+| Permission errors | Permission denial MUST return `fs_permission_denied`, not silently fail or fall through.                                                    |
 
 **Capability advertisement shape:**
 
@@ -1387,7 +1410,7 @@ ctx.fs.list({ prefix?: string, cursor?: string, limit?: number }) → Promise<{ 
 
 **Capability flag:** `kvStorage.supported: true`
 
-**Used by:** `core.openwop.storage` kv-* nodes (get / put / delete / cas / atomic-increment / ttl).
+**Used by:** `core.openwop.storage` kv-\* nodes (get / put / delete / cas / atomic-increment / ttl).
 
 TTL-aware key-value store with atomic primitives. Per-tenant isolation is non-negotiable.
 
@@ -1404,13 +1427,13 @@ ctx.storage.kv.list({ prefix?: string, cursor?: string, limit?: number }) → Pr
 
 **Hard rules:**
 
-| Rule | Detail |
-|---|---|
-| Cross-tenant isolation | A `get` for tenant A MUST NOT return values written by tenant B, even with identical keys. Same applies to `list` enumeration. Mirrors `agent-memory-cti-1`. |
-| Size limits | Keys exceeding `maxKeyBytes` MUST be rejected; values exceeding `maxValueBytes` MUST be rejected. |
-| TTL drift | Expiry visibility MUST be honored with at most 1-second drift. |
-| Atomic increment | When `atomicIncrement: true` is advertised, increments MUST be atomic across concurrent callers. |
-| Compare-and-swap | When `compareAndSwap: true` is advertised, CAS MUST be atomic (no read-modify-write races). Stale `expectedValue` returns `{swapped: false}` without mutation. |
+| Rule                   | Detail                                                                                                                                                         |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cross-tenant isolation | A `get` for tenant A MUST NOT return values written by tenant B, even with identical keys. Same applies to `list` enumeration. Mirrors `agent-memory-cti-1`.   |
+| Size limits            | Keys exceeding `maxKeyBytes` MUST be rejected; values exceeding `maxValueBytes` MUST be rejected.                                                              |
+| TTL drift              | Expiry visibility MUST be honored with at most 1-second drift.                                                                                                 |
+| Atomic increment       | When `atomicIncrement: true` is advertised, increments MUST be atomic across concurrent callers.                                                               |
+| Compare-and-swap       | When `compareAndSwap: true` is advertised, CAS MUST be atomic (no read-modify-write races). Stale `expectedValue` returns `{swapped: false}` without mutation. |
 
 **Capability advertisement shape:**
 
@@ -1437,7 +1460,7 @@ ctx.storage.kv.list({ prefix?: string, cursor?: string, limit?: number }) → Pr
 
 **Capability flag:** `tableStorage.supported: true`
 
-**Used by:** `core.openwop.storage` table-* nodes (row CRUD + cursor pagination + schema enforcement).
+**Used by:** `core.openwop.storage` table-\* nodes (row CRUD + cursor pagination + schema enforcement).
 
 Structured-record store. Sibling of `host.kvStorage` for workflows that need typed columns rather than opaque values. Schema is declared on first insert; subsequent rows MUST conform.
 
@@ -1454,12 +1477,12 @@ ctx.storage.table.delete({ table: string, rowId: string }) → Promise<{ deleted
 
 **Hard rules:**
 
-| Rule | Detail |
-|---|---|
+| Rule                   | Detail                                                                                                                                       |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | Cross-tenant isolation | A `query` for tenant A MUST NOT return rows written by tenant B. Same applies to direct `get` by rowId. Mirrors `kv-cross-tenant-isolation`. |
-| Schema enforcement | Insert / update MUST reject rows whose column types diverge from the declared schema, returning `table_schema_violation`. |
-| Cursor pagination | `query` MUST support cursor-based pagination; `nextCursor` MUST be opaque and stable across calls. |
-| Row count limit | Insert MUST be rejected when `maxRowsPerTable` is reached, returning `table_row_limit_reached`. |
+| Schema enforcement     | Insert / update MUST reject rows whose column types diverge from the declared schema, returning `table_schema_violation`.                    |
+| Cursor pagination      | `query` MUST support cursor-based pagination; `nextCursor` MUST be opaque and stable across calls.                                           |
+| Row count limit        | Insert MUST be rejected when `maxRowsPerTable` is reached, returning `table_row_limit_reached`.                                              |
 
 **Capability advertisement shape:**
 
@@ -1500,12 +1523,12 @@ ctx.queueBus.streamSubscribe({ topic: string, fromBeginning?: boolean }) → Asy
 
 **Hard rules:**
 
-| Rule | Detail |
-|---|---|
-| Cross-tenant isolation | A consumer for tenant A MUST NOT receive messages published by tenant B, even on the same logical topic. |
-| Ack semantics | `ack` MUST remove the message from the queue; `nack` MUST return it for redelivery; `deadLetter` MUST route it to the configured DLQ. |
-| Trigger delivery | When a workflow registers `core.messaging.consume` as a trigger, the host MUST deliver one workflow run per inbound message — no batching, no skipping. |
-| Backend transparency | Hosts MAY back the surface with any advertised backend (`rabbitmq`, `kafka`, `sqs`, etc.); wire shape MUST be backend-invariant. |
+| Rule                   | Detail                                                                                                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cross-tenant isolation | A consumer for tenant A MUST NOT receive messages published by tenant B, even on the same logical topic.                                                |
+| Ack semantics          | `ack` MUST remove the message from the queue; `nack` MUST return it for redelivery; `deadLetter` MUST route it to the configured DLQ.                   |
+| Trigger delivery       | When a workflow registers `core.messaging.consume` as a trigger, the host MUST deliver one workflow run per inbound message — no batching, no skipping. |
+| Backend transparency   | Hosts MAY back the surface with any advertised backend (`rabbitmq`, `kafka`, `sqs`, etc.); wire shape MUST be backend-invariant.                        |
 
 **Capability advertisement shape:**
 
@@ -1530,7 +1553,7 @@ ctx.queueBus.streamSubscribe({ topic: string, fromBeginning?: boolean }) → Asy
 
 **Capability flag:** `sql.supported: true`
 
-**Used by:** `core.openwop.db` sql-* nodes. SQL injection prevention is enforced at the host — the pack MUST NOT concatenate user input into SQL.
+**Used by:** `core.openwop.db` sql-\* nodes. SQL injection prevention is enforced at the host — the pack MUST NOT concatenate user input into SQL.
 
 ```typescript
 ctx.db.sql.query({ datasourceId: string, sql: string, params: ReadonlyArray<unknown> }) → Promise<{ rows: Array<Record<string, unknown>>, rowCount: number }>
@@ -1542,12 +1565,12 @@ ctx.db.sql.transaction({ datasourceId: string, operations: Array<{ sql: string, 
 
 **Hard rules:**
 
-| Rule | Detail |
-|---|---|
-| Parametric-only | `sql` MUST be treated as a parametric template; bound values MUST flow through `params[]`, never via string interpolation. Hosts SHOULD verify parameter binding before execution. |
-| Cross-datasource isolation | Datasources are scoped per tenant; cross-tenant access MUST return `datasource_access_denied`. |
-| Transaction atomicity | When `transactions: true` is advertised, partial failure inside `transaction` MUST roll back the entire batch. |
-| Driver transparency | Hosts MAY back the surface with any advertised driver (`postgres`, `mysql`, `sqlite`, etc.); wire shape MUST be driver-invariant. |
+| Rule                       | Detail                                                                                                                                                                             |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Parametric-only            | `sql` MUST be treated as a parametric template; bound values MUST flow through `params[]`, never via string interpolation. Hosts SHOULD verify parameter binding before execution. |
+| Cross-datasource isolation | Datasources are scoped per tenant; cross-tenant access MUST return `datasource_access_denied`.                                                                                     |
+| Transaction atomicity      | When `transactions: true` is advertised, partial failure inside `transaction` MUST roll back the entire batch.                                                                     |
+| Driver transparency        | Hosts MAY back the surface with any advertised driver (`postgres`, `mysql`, `sqlite`, etc.); wire shape MUST be driver-invariant.                                                  |
 
 **Capability advertisement shape:**
 
@@ -1572,7 +1595,7 @@ ctx.db.sql.transaction({ datasourceId: string, operations: Array<{ sql: string, 
 
 **Capability flag:** `nosql.supported: true`
 
-**Used by:** `core.openwop.db` nosql-* nodes (document-store CRUD).
+**Used by:** `core.openwop.db` nosql-\* nodes (document-store CRUD).
 
 Document-store sibling of `host.sql`. Driver-invariant document API; backends include MongoDB, DynamoDB, CosmosDB, Firestore.
 
@@ -1588,11 +1611,11 @@ ctx.db.nosql.delete({ datasourceId: string, collection: string, id: string }) �
 
 **Hard rules:**
 
-| Rule | Detail |
-|---|---|
-| Cross-tenant isolation | Datasources are scoped per tenant; cross-tenant access MUST return `datasource_access_denied`. |
-| Filter sanitization | `filter` operators MUST NOT permit injection (e.g., `$where` JavaScript evaluation in MongoDB MUST be rejected unless an explicit allowlist is configured). |
-| Driver transparency | Wire shape MUST be driver-invariant across advertised backends. |
+| Rule                   | Detail                                                                                                                                                      |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cross-tenant isolation | Datasources are scoped per tenant; cross-tenant access MUST return `datasource_access_denied`.                                                              |
+| Filter sanitization    | `filter` operators MUST NOT permit injection (e.g., `$where` JavaScript evaluation in MongoDB MUST be rejected unless an explicit allowlist is configured). |
+| Driver transparency    | Wire shape MUST be driver-invariant across advertised backends.                                                                                             |
 
 **Capability advertisement shape:**
 
@@ -1616,7 +1639,7 @@ Source: [RFC 0018](../../RFCS/0018-host-sql-vector-search-capability.md) §A–B
 
 **Capability flag:** `vectorStore.supported: true`
 
-**Used by:** `core.openwop.rag` vector-* nodes (upsert + KNN query + delete). Required by RAG packs that need similarity search.
+**Used by:** `core.openwop.rag` vector-\* nodes (upsert + KNN query + delete). Required by RAG packs that need similarity search.
 
 ```typescript
 ctx.db.vector.upsert({ collection: string, vectors: Array<{ id: string, embedding: ReadonlyArray<number>, metadata?: Record<string, unknown> }> }) → Promise<{ upserted: number }>
@@ -1628,11 +1651,11 @@ ctx.db.vector.delete({ collection: string, ids: ReadonlyArray<string> }) → Pro
 
 **Hard rules:**
 
-| Rule | Detail |
-|---|---|
-| Cross-tenant isolation | A `query` for tenant A MUST NOT return vectors written by tenant B, even within the same collection name. |
-| KNN roundtrip | An `upsert` followed by `query` with the same embedding MUST return the inserted ids in the top-k matches when k ≥ |inserted|. |
-| Backend transparency | Wire shape MUST be backend-invariant across advertised backends (`pinecone`, `qdrant`, `pgvector`, `in-memory`, etc.). |
+| Rule                   | Detail                                                                                                                 |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------- | --- |
+| Cross-tenant isolation | A `query` for tenant A MUST NOT return vectors written by tenant B, even within the same collection name.              |
+| KNN roundtrip          | An `upsert` followed by `query` with the same embedding MUST return the inserted ids in the top-k matches when k ≥     | inserted | .   |
+| Backend transparency   | Wire shape MUST be backend-invariant across advertised backends (`pinecone`, `qdrant`, `pgvector`, `in-memory`, etc.). |
 
 **Capability advertisement shape:**
 
@@ -1656,7 +1679,7 @@ ctx.db.vector.delete({ collection: string, ids: ReadonlyArray<string> }) → Pro
 
 **Capability flag:** `searchIndex.supported: true`
 
-**Used by:** `core.openwop.rag` search-* nodes (full-text / BM25 ranking). Sibling of `host.vectorStore` for lexical-rather-than-semantic retrieval.
+**Used by:** `core.openwop.rag` search-\* nodes (full-text / BM25 ranking). Sibling of `host.vectorStore` for lexical-rather-than-semantic retrieval.
 
 ```typescript
 ctx.db.search.index({ index: string, docs: Array<{ id: string, fields: Record<string, string|number|boolean> }> }) → Promise<{ indexed: number }>
@@ -1668,11 +1691,11 @@ ctx.db.search.delete({ index: string, ids: ReadonlyArray<string> }) → Promise<
 
 **Hard rules:**
 
-| Rule | Detail |
-|---|---|
-| Cross-tenant isolation | A `query` for tenant A MUST NOT return hits indexed by tenant B. |
-| BM25 roundtrip | An `index` followed by `query` with a substring of an indexed field MUST return the indexed id with score > 0. |
-| Backend transparency | Wire shape MUST be backend-invariant (`elasticsearch`, `opensearch`, `meilisearch`, `typesense`, `algolia`, in-memory linear scan). |
+| Rule                   | Detail                                                                                                                              |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Cross-tenant isolation | A `query` for tenant A MUST NOT return hits indexed by tenant B.                                                                    |
+| BM25 roundtrip         | An `index` followed by `query` with a substring of an indexed field MUST return the indexed id with score > 0.                      |
+| Backend transparency   | Wire shape MUST be backend-invariant (`elasticsearch`, `opensearch`, `meilisearch`, `typesense`, `algolia`, in-memory linear scan). |
 
 **Capability advertisement shape:**
 
@@ -1696,7 +1719,7 @@ ctx.db.search.delete({ index: string, ids: ReadonlyArray<string> }) → Promise<
 
 **Capability flag:** `blobStorage.supported: true`
 
-**Used by:** `core.openwop.storage` blob-* nodes (binary artifact store with presigned URLs). S3 / GCS / Azure Blob equivalent.
+**Used by:** `core.openwop.storage` blob-\* nodes (binary artifact store with presigned URLs). S3 / GCS / Azure Blob equivalent.
 
 ```typescript
 ctx.storage.blob.put({ bucket: string, key: string, bytes: Uint8Array, contentType?: string }) → Promise<{ url: string, sizeBytes: number }>
@@ -1710,11 +1733,11 @@ ctx.storage.blob.list({ bucket: string, prefix?: string, cursor?: string }) → 
 
 **Hard rules:**
 
-| Rule | Detail |
-|---|---|
-| Cross-tenant isolation | A `get` for tenant A MUST NOT return blobs written by tenant B, even with identical `bucket`/`key`. |
-| Presigned URL expiry | Presigned URLs MUST expire at the advertised TTL; presigned requests after expiry MUST fail at the storage layer, not after auth-skip. |
-| Object size limit | Writes exceeding `maxObjectBytes` MUST return `blob_object_too_large`. |
+| Rule                   | Detail                                                                                                                                 |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Cross-tenant isolation | A `get` for tenant A MUST NOT return blobs written by tenant B, even with identical `bucket`/`key`.                                    |
+| Presigned URL expiry   | Presigned URLs MUST expire at the advertised TTL; presigned requests after expiry MUST fail at the storage layer, not after auth-skip. |
+| Object size limit      | Writes exceeding `maxObjectBytes` MUST return `blob_object_too_large`.                                                                 |
 
 **Capability advertisement shape:**
 
@@ -1739,7 +1762,7 @@ ctx.storage.blob.list({ bucket: string, prefix?: string, cursor?: string }) → 
 
 **Capability flag:** `cache.supported: true`
 
-**Used by:** `core.openwop.storage` cache-* nodes (TTL cache for HTTP / AI response memoization). Lets idempotency-key replay deduplicate identical AI calls across runs without engaging the heavier Layer-2 invocation log.
+**Used by:** `core.openwop.storage` cache-\* nodes (TTL cache for HTTP / AI response memoization). Lets idempotency-key replay deduplicate identical AI calls across runs without engaging the heavier Layer-2 invocation log.
 
 ```typescript
 ctx.storage.cache.get({ key: string }) → Promise<{ value?: unknown, expiresAt?: string }>
@@ -1751,11 +1774,11 @@ ctx.storage.cache.delete({ key: string }) → Promise<{ deleted: boolean }>
 
 **Hard rules:**
 
-| Rule | Detail |
-|---|---|
+| Rule                   | Detail                                                                                     |
+| ---------------------- | ------------------------------------------------------------------------------------------ |
 | Cross-tenant isolation | A `get` for tenant A MUST NOT return values written by tenant B, even with identical keys. |
-| TTL drift | Expiry visibility MUST be honored with at most 1-second drift on read. |
-| Value size limit | Writes exceeding `maxValueBytes` MUST return `cache_value_too_large`. |
+| TTL drift              | Expiry visibility MUST be honored with at most 1-second drift on read.                     |
+| Value size limit       | Writes exceeding `maxValueBytes` MUST return `cache_value_too_large`.                      |
 
 **Capability advertisement shape:**
 
@@ -1801,16 +1824,16 @@ A host that advertises `capabilities.sandbox.supported: true` MUST enforce all 8
 
 ### Failure-mode invariants (normative)
 
-| Invariant id | MUST contract |
-|---|---|
-| `node-pack-sandbox-no-host-fs-escape` | Sandbox code MUST NOT read or write files outside the host-advertised sandbox root. Attempting to escape MUST fail closed with `sandbox_escape_attempt`. |
-| `node-pack-sandbox-no-host-env-leak` | Host environment variables MUST NOT be visible to sandbox code unless the host has explicitly forwarded them via an `allowedHostCalls` entry that exposes env-resolution. |
-| `node-pack-sandbox-no-network-escape` | Sandbox code MUST NOT initiate network requests unless `host.fetch` (or equivalent) is in `allowedHostCalls`. |
-| `node-pack-sandbox-no-host-process-escape` | Sandbox code MUST NOT spawn host processes, fork, or call exec-family syscalls. |
-| `node-pack-sandbox-memory-cap` | Exceeding `memoryLimitBytes` MUST fail the node with `error.code: "sandbox_memory_exceeded"`. |
-| `node-pack-sandbox-timeout-cap` | Exceeding `wallClockLimitMs` MUST fail the node with `error.code: "sandbox_timeout"`. |
-| `node-pack-sandbox-capability-gate-respected` | Sandbox code MUST NOT bypass the host's capability-advertisement check; calls to undeclared host capabilities MUST fail closed with `sandbox_capability_denied`. |
-| `node-pack-sandbox-no-cross-pack-mutation` | Sandbox code from pack A MUST NOT mutate state visible to pack B inside the same host process. |
+| Invariant id                                  | MUST contract                                                                                                                                                             |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `node-pack-sandbox-no-host-fs-escape`         | Sandbox code MUST NOT read or write files outside the host-advertised sandbox root. Attempting to escape MUST fail closed with `sandbox_escape_attempt`.                  |
+| `node-pack-sandbox-no-host-env-leak`          | Host environment variables MUST NOT be visible to sandbox code unless the host has explicitly forwarded them via an `allowedHostCalls` entry that exposes env-resolution. |
+| `node-pack-sandbox-no-network-escape`         | Sandbox code MUST NOT initiate network requests unless `host.fetch` (or equivalent) is in `allowedHostCalls`.                                                             |
+| `node-pack-sandbox-no-host-process-escape`    | Sandbox code MUST NOT spawn host processes, fork, or call exec-family syscalls.                                                                                           |
+| `node-pack-sandbox-memory-cap`                | Exceeding `memoryLimitBytes` MUST fail the node with `error.code: "sandbox_memory_exceeded"`.                                                                             |
+| `node-pack-sandbox-timeout-cap`               | Exceeding `wallClockLimitMs` MUST fail the node with `error.code: "sandbox_timeout"`.                                                                                     |
+| `node-pack-sandbox-capability-gate-respected` | Sandbox code MUST NOT bypass the host's capability-advertisement check; calls to undeclared host capabilities MUST fail closed with `sandbox_capability_denied`.          |
+| `node-pack-sandbox-no-cross-pack-mutation`    | Sandbox code from pack A MUST NOT mutate state visible to pack B inside the same host process.                                                                            |
 
 `SECURITY/invariants.yaml` carries the 8 matching rows. The graduation from `reference-impl` to `protocol` tier is gated on a reference host implementing the sandbox AND passing the 8 conformance scenarios named in [RFC 0035 §D](../../RFCS/0035-sandbox-execution-contract.md).
 
@@ -1825,11 +1848,11 @@ A host that advertises `capabilities.sandbox.supported: true` MUST enforce all 8
 
 ## §host.scheduling
 
-**Capability flag:** `scheduling.supported: true` *(advertised via top-level `Capabilities.scheduling`; see [capabilities.md §scheduling](capabilities.md#scheduling))* — RFC 0052, `Draft`.
+**Capability flag:** `scheduling.supported: true` _(advertised via top-level `Capabilities.scheduling`; see [capabilities.md §scheduling](capabilities.md#scheduling))_ — RFC 0052, `Draft`.
 
 **Used by:** the `schedule` trigger in `core.openwop.triggers` (cron / delayed / calendar). Promotes the scheduling intent behind RFC 0017 (`host.queueBus`) into a portable, conformance-tested execution contract.
 
-Gives the `schedule` trigger **time-based run-initiation semantics**: a cron expression, one-shot delay, or calendar reference produces a durable scheduled run. This is orthogonal to the in-DAG `core.control.delay` primitive (which reads `config.delayMs` and delays a node *within* a run); `host.scheduling` *initiates* runs at a time. It composes with `host.queueBus` (RFC 0017) where a host backs scheduling with a queue, but a host MAY advertise `scheduling` without `queueBus` (e.g. a cron daemon).
+Gives the `schedule` trigger **time-based run-initiation semantics**: a cron expression, one-shot delay, or calendar reference produces a durable scheduled run. This is orthogonal to the in-DAG `core.control.delay` primitive (which reads `config.delayMs` and delays a node _within_ a run); `host.scheduling` _initiates_ runs at a time. It composes with `host.queueBus` (RFC 0017) where a host backs scheduling with a queue, but a host MAY advertise `scheduling` without `queueBus` (e.g. a cron daemon).
 
 **Contract (normative).** A host advertising `scheduling.supported: true` MUST, for a `schedule` trigger configured with a cron expr / `delayMs` / calendar ref:
 
@@ -1862,21 +1885,21 @@ Additive — hosts that omit the block advertise no scheduling; `schedule`-trigg
 
 ## §host.heartbeat
 
-**Capability flag:** `heartbeat.supported: true` *(advertised via top-level `Capabilities.heartbeat`; see [capabilities.md §heartbeat](capabilities.md#heartbeat))* — RFC 0060, `Draft`.
+**Capability flag:** `heartbeat.supported: true` _(advertised via top-level `Capabilities.heartbeat`; see [capabilities.md §heartbeat](capabilities.md#heartbeat))_ — RFC 0060, `Draft`.
 
 **Used by:** system-managed, predicate-gated polling — the controlled, request-shaped exception to openwop's poll-free design (`positioning.md`). Composes on `host.scheduling` (RFC 0052) for the once-per-tick interval substrate.
 
-A heartbeat binds a **predicate** (a node/workflow designated as the heartbeat handler) to an interval. It wakes on a short interval to inspect external state (an inbox, a queue, a sensor) and acts *only* when an idempotent predicate transitions — enqueuing a run or notifying a human — rather than re-running the agent blindly every tick. `host.scheduling` answers "when"; `host.heartbeat` answers "evaluate cheaply, and act only on change." A host MAY advertise `scheduling` without `heartbeat`; a host advertising `heartbeat` SHOULD also advertise `scheduling` (the tick source) and, if it does not, MUST document its own interval substrate.
+A heartbeat binds a **predicate** (a node/workflow designated as the heartbeat handler) to an interval. It wakes on a short interval to inspect external state (an inbox, a queue, a sensor) and acts _only_ when an idempotent predicate transitions — enqueuing a run or notifying a human — rather than re-running the agent blindly every tick. `host.scheduling` answers "when"; `host.heartbeat` answers "evaluate cheaply, and act only on change." A host MAY advertise `scheduling` without `heartbeat`; a host advertising `heartbeat` SHOULD also advertise `scheduling` (the tick source) and, if it does not, MUST document its own interval substrate.
 
 **Contract (normative).** On each tick, a host advertising `heartbeat.supported: true` MUST:
 
 1. **Fire exactly once per tick** — no overlapping evaluations of the same heartbeat; if a prior tick's evaluation is still running, the host MUST skip (not queue) the new tick (composes with `idempotency.md` + RFC 0052's once-per-tick rule).
 2. **Bound the evaluation** to `maxRuntimeMs` (hard-ceilinged by `capabilities.limits.maxRunDurationMs`, RFC 0058); an over-budget predicate MUST be terminated and reported `heartbeat.evaluated { status: "timeout" }`, never left running.
-3. **Be idempotent** — the predicate receives the prior tick's emitted state (an opaque host-persisted token) and MUST be a pure function of observed external state + prior state. The host MUST NOT perform a side effect directly; the predicate's *output* drives action.
+3. **Be idempotent** — the predicate receives the prior tick's emitted state (an opaque host-persisted token) and MUST be a pure function of observed external state + prior state. The host MUST NOT perform a side effect directly; the predicate's _output_ drives action.
 4. **Emit `heartbeat.evaluated`** every tick — `{ heartbeatId, status: "ok" | "timeout" | "error", changed: boolean }`.
 5. **On a state transition only**, emit `heartbeat.stateChanged { heartbeatId, from, to }` and — if the predicate requests it — enqueue a run via the existing `POST /v1/runs` path. An unchanged tick MUST NOT enqueue a run or emit `heartbeat.stateChanged`.
 
-Gating action on a *transition* (computed against persisted prior state) — not on the tick itself — is what prevents notification spam.
+Gating action on a _transition_ (computed against persisted prior state) — not on the tick itself — is what prevents notification spam.
 
 **First tick (no persisted prior state).** The first evaluation of a `heartbeatId` has no prior state to compare against. The host MUST treat this as a transition (`changed: true`) — establishing the baseline by emitting `heartbeat.stateChanged { from: {}, to: <observed> }` and enqueuing if requested — rather than silently seeding the baseline. This keeps the first non-empty observation actionable (an inbox first seen at `unread: 3` MUST notify) and makes the transition rule total over the lifetime of a `heartbeatId`. A host that loses persisted prior state (e.g. an in-memory host across a restart) therefore re-fires the next tick as a first tick; durable hosts SHOULD persist prior state to avoid a post-restart re-notification.
 
@@ -1927,7 +1950,7 @@ ctx.http.safeFetch(
 - When `capabilities.toolHooks.prePostEvents: true` is **also** advertised, the host MUST emit the `agent.toolCalled` / `agent.toolReturned` pair (`transport: 'http'`) for every `safeFetch` invocation — centralizing egress in the host must increase auditability, not become a quiet bypass. Sampling belongs at the storage/projection tier; the wire-level emission stays unconditional (RFC 0064 posture).
 - A pack using `safeFetch` does **not** declare `net.dns` in `runtime.requires` for the fetch path (the host owns resolution); a pack that wants to run on hosts lacking the capability MAY feature-detect (`ctx.http?.safeFetch`) and fall back to its own `net.outbound` + `net.dns` path (declaring both). See RFC 0076 §A.
 
-`safeFetch` composes with a deployment-level egress allowlist (e.g. Cloud NAT) as defense-in-depth: the host's resolve→pin→connect guard applies *before* the proxy sees the request.
+`safeFetch` composes with a deployment-level egress allowlist (e.g. Cloud NAT) as defense-in-depth: the host's resolve→pin→connect guard applies _before_ the proxy sees the request.
 
 **Capability advertisement shape:**
 
@@ -1947,11 +1970,11 @@ Additive — hosts that omit `safeFetch` expose no `ctx.http.safeFetch`; packs f
 
 ### Credential provenance + egress policy (RFC 0079 §A–§F — `Active`)
 
-**Why this exists.** `safeFetch` (above) guards the *URL* (resolve→pin→connect, metadata block) but explicitly **parked** the credential question: when a tool attaches a host-issued credential (an RFC 0046 stored reference or an RFC 0047 OAuth token) to an egress, nothing checks that *this credential* is meant for *this destination*. A prompt-injected or misconfigured tool can attach a credential minted for service A to a request aimed at attacker-controlled service B — a confused-deputy / credential-exfiltration class the SSRF guard does not catch. RFC 0079 closes it.
+**Why this exists.** `safeFetch` (above) guards the _URL_ (resolve→pin→connect, metadata block) but explicitly **parked** the credential question: when a tool attaches a host-issued credential (an RFC 0046 stored reference or an RFC 0047 OAuth token) to an egress, nothing checks that _this credential_ is meant for _this destination_. A prompt-injected or misconfigured tool can attach a credential minted for service A to a request aimed at attacker-controlled service B — a confused-deputy / credential-exfiltration class the SSRF guard does not catch. RFC 0079 closes it.
 
 **Capability flag:** `capabilities.httpClient.egressPolicy.supported: true` — requires `httpClient.safeFetch` (the egress mechanism). Absent ⇒ the host does not perform provenance binding (the SSRF guard above still applies); the conformance behavioral scenarios skip cleanly.
 
-**§A — Credential provenance descriptor.** When the host binds a credential for an egress at the tool boundary, it attaches a [`CredentialProvenance`](../../schemas/credential-provenance.schema.json) — metadata *about* the credential (`credentialId`, `issuer`, REQUIRED `audiences`, optional `scopes`/`expiresAt`/`redactionPolicy`/`auditCorrelationId`), **never the secret value** (SR-1; reuses the RFC 0046 `credential-payload-redaction` posture).
+**§A — Credential provenance descriptor.** When the host binds a credential for an egress at the tool boundary, it attaches a [`CredentialProvenance`](../../schemas/credential-provenance.schema.json) — metadata _about_ the credential (`credentialId`, `issuer`, REQUIRED `audiences`, optional `scopes`/`expiresAt`/`redactionPolicy`/`auditCorrelationId`), **never the secret value** (SR-1; reuses the RFC 0046 `credential-payload-redaction` posture).
 
 **§B — `egress.decided` event.** A host advertising `egressPolicy` MUST emit the content-free `egress.decided` ([`run-event-payloads.schema.json` `egressDecided`](../../schemas/run-event-payloads.schema.json)) when it evaluates a credentialed egress: `{ decision ∈ {allowed, denied, downgraded, approval-required}, destination, credentialId?, reason?, auditCorrelationId? }` — identifiers + decision only, no credential value, no request/response body. **`destination` is the host/authority ONLY** (no path/query — a path/query can carry secrets; the host MUST strip them, keeping any path on a vendor `x-host-*` variant). **`reason` is a CLOSED enum** (`ok`/`out-of-audience`/`expired`/`ssrf-blocked`/`provenance-unevaluable`/`scope-denied`/`policy-denied`) — a free-form reason would let a host spill the blocked URL/host/header into it, defeating the content-free guarantee. On replay it is re-read from the log, never regenerated (a recorded fact).
 
@@ -1970,7 +1993,7 @@ Additive — a host that omits `egressPolicy` keeps the SSRF guard unchanged. Ve
 
 ## §host.toolHooks
 
-**Capability flag:** `toolHooks.supported: true` *(advertised via top-level `Capabilities.toolHooks`; see [capabilities.md §toolHooks](capabilities.md#toolhooks))* — RFC 0064, `Active`.
+**Capability flag:** `toolHooks.supported: true` _(advertised via top-level `Capabilities.toolHooks`; see [capabilities.md §toolHooks](capabilities.md#toolhooks))_ — RFC 0064, `Active`.
 
 **Used by:** per-tool authorization + rate limiting + a content-free tool-call audit trail, layered on the existing `agent.toolCalled` / `agent.toolReturned` events (RFC 0002). Generalizes the MCP-specific bridges across transports (`mcp` / `http` / `native`) — see [mcp-integration.md](mcp-integration.md). Reuses RFC 0049's `forbidden` error + `authorization-fail-closed` invariant and the existing `rate_limited` error; **no new event type, error code, or SECURITY invariant**.
 
@@ -1978,7 +2001,7 @@ Additive — a host that omits `egressPolicy` keeps the SSRF guard unchanged. Ve
 
 **Per-tool authorization (normative, when `perToolAuthorization: true`).** A tool declares required scopes (`actions[].requiredScopes[]` in its connector/mount manifest, per RFC 0045). Before invoking, the host MUST check the run principal's RFC 0049 scopes and **fail closed**: if the principal lacks a scope **or authorization cannot be evaluated**, the host MUST NOT invoke the tool, MUST emit `agent.toolReturned { status: 'forbidden' }`, and MUST surface the existing `forbidden` (403) error with `details.scope: 'tool'` + `details.toolName` + `details.requiredScopes`. Absence of a decision is denial — this is the per-tool application of RFC 0049's `authorization-fail-closed` invariant.
 
-**Forbidden-at-load (clarification).** A host MAY evaluate a manifest agent's `toolAllowlist` (RFC 0072 §D) *proactively at loop start* — before the first model call — and emit `agent.toolReturned { status: 'forbidden' }` for an entry that resolves to no approved pack (unknown typeId, or a pack the workspace has not approved per RFC 0074). Because the model has not requested the tool, **no `agent.toolCalled` precedes this row**: the host MUST synthesize the `callId` (a stable derivation such as `forbidden:<sha256(ref)>` is RECOMMENDED so the row is replay-stable) and **MAY omit `causationId`** — RFC 0002 §B requires `causationId` only to anchor a `toolReturned` to its paired `toolCalled`, and here there is no parent event. A host MUST NOT synthesize a placeholder `agent.toolCalled` *solely* to anchor the chain (it would assert a model request that never happened). Consumers reconstructing the causation graph MUST tolerate a `forbidden`/`rate_limited` `agent.toolReturned` whose `callId` has no matching `agent.toolCalled`.
+**Forbidden-at-load (clarification).** A host MAY evaluate a manifest agent's `toolAllowlist` (RFC 0072 §D) _proactively at loop start_ — before the first model call — and emit `agent.toolReturned { status: 'forbidden' }` for an entry that resolves to no approved pack (unknown typeId, or a pack the workspace has not approved per RFC 0074). Because the model has not requested the tool, **no `agent.toolCalled` precedes this row**: the host MUST synthesize the `callId` (a stable derivation such as `forbidden:<sha256(ref)>` is RECOMMENDED so the row is replay-stable) and **MAY omit `causationId`** — RFC 0002 §B requires `causationId` only to anchor a `toolReturned` to its paired `toolCalled`, and here there is no parent event. A host MUST NOT synthesize a placeholder `agent.toolCalled` _solely_ to anchor the chain (it would assert a model request that never happened). Consumers reconstructing the causation graph MUST tolerate a `forbidden`/`rate_limited` `agent.toolReturned` whose `callId` has no matching `agent.toolCalled`.
 
 **Per-tool rate limiting (normative, when `perToolRateLimit: true`).** The host MUST apply a token bucket keyed on `(principal, toolName)`; on exhaustion it MUST NOT invoke the tool, emits `agent.toolReturned { status: 'rate_limited' }`, and surfaces the existing `rate_limited` (429, `Retry-After`) error with `details.scope: 'tool'` — distinct from the HTTP-inbound limiter (unchanged), same envelope.
 
@@ -2003,11 +2026,11 @@ Additive — hosts that omit the block behave exactly as today (the `agent.toolC
 
 ## §host.deadLetter
 
-**Capability flag:** `deadLetter.supported: true` *(advertised via top-level `Capabilities.deadLetter`; see [capabilities.md §deadLetter](capabilities.md#deadletter))* — RFC 0053, `Draft`.
+**Capability flag:** `deadLetter.supported: true` _(advertised via top-level `Capabilities.deadLetter`; see [capabilities.md §deadLetter](capabilities.md#deadletter))_ — RFC 0053, `Draft`.
 
 **Used by:** the engine's terminal-failure path. Gives a run/node that exhausts its retry policy a durable, inspectable **sink** instead of being logged and lost — so a poisoned run can be examined and replayed.
 
-This is the run-level dead-letter surface, **distinct from** `queueBus.deadLetterSupported` (RFC 0017), which dead-letters transport *messages* on a queue backend, not *runs* in the engine. It composes with the retry policy (RFC 0009) and fork/replay (RFC 0011).
+This is the run-level dead-letter surface, **distinct from** `queueBus.deadLetterSupported` (RFC 0017), which dead-letters transport _messages_ on a queue backend, not _runs_ in the engine. It composes with the retry policy (RFC 0009) and fork/replay (RFC 0011).
 
 **Contract (normative).** A host advertising `deadLetter.supported: true` MUST:
 
@@ -2090,14 +2113,17 @@ ctx.knowledge.embed({
 ```
 
 **RBAC:**
+
 - The host MUST enforce that `workspaceId` is one the calling run has read access to. Cross-workspace retrieval MUST return `403 knowledge_workspace_forbidden`.
 - `collectionIds[]` MUST be filtered to those visible to the caller; chunks from collections the caller cannot read MUST be omitted, NOT errored on.
 
 **Determinism:**
+
 - `retrieve` is NOT pure — corpus and embeddings change over time. Packs SHOULD treat results as an input snapshot for the current run.
 - Hosts SHOULD include enough metadata (chunkId, assetId, headingPath, pageNumber) for packs to render citations stably.
 
 **Failure modes:**
+
 - `host_capability_missing`
 - `knowledge_workspace_forbidden` — caller cannot read the workspace
 - `knowledge_query_too_long` — query exceeds host's embedding-model token limit
@@ -2108,7 +2134,7 @@ ctx.knowledge.embed({
 
 ## §host.secrets
 
-**Capability flag:** `secrets.resolveInPack: supported` *(advertised via top-level `Capabilities.secrets`; see [capabilities.md §secrets](capabilities.md#secrets))*
+**Capability flag:** `secrets.resolveInPack: supported` _(advertised via top-level `Capabilities.secrets`; see [capabilities.md §secrets](capabilities.md#secrets))_
 
 **Used by:** packs that must call external HTTP APIs requiring stored credentials (e.g., ad-platform APIs, third-party analytics endpoints, vendor-specific SaaS integrations). Current consumers: `vendor.myndhyve.ads-publish-meta`, `vendor.myndhyve.ads-publish-google`, `vendor.myndhyve.ads-publish-tiktok` (the 3 platform-publish packs; the `ads.publish.platform` umbrella decomposed into platform-specific packs during publish).
 
@@ -2131,21 +2157,22 @@ ctx.secrets.resolve({
 
 The plaintext returned by `ctx.secrets.resolve(...)` is the most sensitive value flowing through the pack runtime. Hosts AND packs MUST jointly enforce:
 
-| Rule | Owner | Detail |
-|---|---|---|
-| Plaintext MUST NOT appear in `RunEvent` payloads | Host | Event emitter MUST redact `secrets.resolve` outputs from every serialized event (including `node.input` / `node.output` / `node.error`). |
-| Plaintext MUST NOT appear in OTel spans, log lines, or trace exports | Host | Tracing adapter MUST scrub. Pack runtime MUST NOT log resolved plaintext via `ctx.log`. |
-| Plaintext MUST NOT appear in `RunSnapshot` exports or replay snapshots | Host | Snapshot serializer MUST redact. Replay determinism is preserved by replaying the *resolve call*, not by snapshotting the plaintext (host resolves freshly from the credential store on replay). |
-| Plaintext MUST NOT be persisted in pack-side caches across run boundaries | Pack | Pack MAY cache within a single `ctx.callImageGenerator` / `fetch()` call site for that one invocation. After the call, the plaintext reference MUST be discarded. |
-| Plaintext MUST NOT be sent to any `ctx.*` method other than the consuming call (e.g., `fetch`) | Pack | Specifically: never pass to `ctx.callAI`, `ctx.chat.sendMessage`, `ctx.canvas.write`, or any other host method. The resolution is for direct external HTTP only. |
-| `purpose` field MUST be present and non-empty | Pack | Host audit log records `{ref, purpose, runId, packName, packVersion, ts}` — `purpose` is the required audit breadcrumb. |
-| Lint + redaction unit tests | Host | Hosts that advertise this capability MUST add CI checks verifying plaintext never appears in serialized output across the surfaces above. |
+| Rule                                                                                           | Owner | Detail                                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Plaintext MUST NOT appear in `RunEvent` payloads                                               | Host  | Event emitter MUST redact `secrets.resolve` outputs from every serialized event (including `node.input` / `node.output` / `node.error`).                                                         |
+| Plaintext MUST NOT appear in OTel spans, log lines, or trace exports                           | Host  | Tracing adapter MUST scrub. Pack runtime MUST NOT log resolved plaintext via `ctx.log`.                                                                                                          |
+| Plaintext MUST NOT appear in `RunSnapshot` exports or replay snapshots                         | Host  | Snapshot serializer MUST redact. Replay determinism is preserved by replaying the _resolve call_, not by snapshotting the plaintext (host resolves freshly from the credential store on replay). |
+| Plaintext MUST NOT be persisted in pack-side caches across run boundaries                      | Pack  | Pack MAY cache within a single `ctx.callImageGenerator` / `fetch()` call site for that one invocation. After the call, the plaintext reference MUST be discarded.                                |
+| Plaintext MUST NOT be sent to any `ctx.*` method other than the consuming call (e.g., `fetch`) | Pack  | Specifically: never pass to `ctx.callAI`, `ctx.chat.sendMessage`, `ctx.canvas.write`, or any other host method. The resolution is for direct external HTTP only.                                 |
+| `purpose` field MUST be present and non-empty                                                  | Pack  | Host audit log records `{ref, purpose, runId, packName, packVersion, ts}` — `purpose` is the required audit breadcrumb.                                                                          |
+| Lint + redaction unit tests                                                                    | Host  | Hosts that advertise this capability MUST add CI checks verifying plaintext never appears in serialized output across the surfaces above.                                                        |
 
-**Determinism note.** `ctx.secrets.resolve` is non-deterministic by design — the host MAY rotate secrets between runs, MAY return different plaintext on the same `ref` across runs (rotation), AND MUST NOT snapshot plaintext for replay. Replay-aware hosts SHOULD record only the resolve *call site* (ref + purpose + ts) and re-resolve from the credential store at replay time. Packs that change behavior based on plaintext content (e.g., parsing a JWT to extract a tenant id) MUST treat the resolved value as run-input that may differ across runs.
+**Determinism note.** `ctx.secrets.resolve` is non-deterministic by design — the host MAY rotate secrets between runs, MAY return different plaintext on the same `ref` across runs (rotation), AND MUST NOT snapshot plaintext for replay. Replay-aware hosts SHOULD record only the resolve _call site_ (ref + purpose + ts) and re-resolve from the credential store at replay time. Packs that change behavior based on plaintext content (e.g., parsing a JWT to extract a tenant id) MUST treat the resolved value as run-input that may differ across runs.
 
 **RBAC.** The host MUST enforce that `ref` resolves only to credentials the calling run has access to. Refs from another workspace's secret namespace MUST fail with `secret_access_denied`. Hosts MUST NOT silently substitute a different credential if the requested `ref` is unavailable.
 
 **Failure modes:**
+
 - `host_capability_missing` — `ctx.secrets.resolve` absent (workflow-register-time refusal via `peerDependencies: { "secrets.resolveInPack": "supported" }` is the correct path; runtime check is defense-in-depth)
 - `secret_not_found` — `ref` doesn't resolve in the host's credential store
 - `secret_access_denied` — caller lacks read permission on `ref` (RBAC denied)
@@ -2228,14 +2255,17 @@ ctx.knowledge.embed({
 ```
 
 **RBAC:**
+
 - The host MUST enforce that `workspaceId` is one the calling run has read access to. Cross-workspace retrieval MUST return `403 knowledge_workspace_forbidden`.
 - `collectionIds[]` MUST be filtered to those visible to the caller; chunks from collections the caller cannot read MUST be omitted, NOT errored on.
 
 **Determinism:**
+
 - `retrieve` is NOT pure — corpus and embeddings change over time. Packs SHOULD treat results as an input snapshot for the current run.
 - Hosts SHOULD include enough metadata (chunkId, assetId, headingPath, pageNumber) for packs to render citations stably.
 
 **Failure modes:**
+
 - `host_capability_missing`
 - `knowledge_workspace_forbidden` — caller cannot read the workspace
 - `knowledge_query_too_long` — query exceeds host's embedding-model token limit
@@ -2246,7 +2276,7 @@ ctx.knowledge.embed({
 
 ## §host.secrets
 
-**Capability flag:** `secrets.resolveInPack: supported` *(advertised via top-level `Capabilities.secrets`; see [capabilities.md §secrets](capabilities.md#secrets))*
+**Capability flag:** `secrets.resolveInPack: supported` _(advertised via top-level `Capabilities.secrets`; see [capabilities.md §secrets](capabilities.md#secrets))_
 
 **Used by:** packs that must call external HTTP APIs requiring stored credentials (e.g., ad-platform APIs, third-party analytics endpoints, vendor-specific SaaS integrations). Future consumers: `vendor.myndhyve.ads-publish-platform`, `vendor.myndhyve.ads-metrics-import`.
 
@@ -2269,21 +2299,22 @@ ctx.secrets.resolve({
 
 The plaintext returned by `ctx.secrets.resolve(...)` is the most sensitive value flowing through the pack runtime. Hosts AND packs MUST jointly enforce:
 
-| Rule | Owner | Detail |
-|---|---|---|
-| Plaintext MUST NOT appear in `RunEvent` payloads | Host | Event emitter MUST redact `secrets.resolve` outputs from every serialized event (including `node.input` / `node.output` / `node.error`). |
-| Plaintext MUST NOT appear in OTel spans, log lines, or trace exports | Host | Tracing adapter MUST scrub. Pack runtime MUST NOT log resolved plaintext via `ctx.log`. |
-| Plaintext MUST NOT appear in `RunSnapshot` exports or replay snapshots | Host | Snapshot serializer MUST redact. Replay determinism is preserved by replaying the *resolve call*, not by snapshotting the plaintext (host resolves freshly from the credential store on replay). |
-| Plaintext MUST NOT be persisted in pack-side caches across run boundaries | Pack | Pack MAY cache within a single `ctx.callImageGenerator` / `fetch()` call site for that one invocation. After the call, the plaintext reference MUST be discarded. |
-| Plaintext MUST NOT be sent to any `ctx.*` method other than the consuming call (e.g., `fetch`) | Pack | Specifically: never pass to `ctx.callAI`, `ctx.chat.sendMessage`, `ctx.canvas.write`, or any other host method. The resolution is for direct external HTTP only. |
-| `purpose` field MUST be present and non-empty | Pack | Host audit log records `{ref, purpose, runId, packName, packVersion, ts}` — `purpose` is the required audit breadcrumb. |
-| Lint + redaction unit tests | Host | Hosts that advertise this capability MUST add CI checks verifying plaintext never appears in serialized output across the surfaces above. |
+| Rule                                                                                           | Owner | Detail                                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Plaintext MUST NOT appear in `RunEvent` payloads                                               | Host  | Event emitter MUST redact `secrets.resolve` outputs from every serialized event (including `node.input` / `node.output` / `node.error`).                                                         |
+| Plaintext MUST NOT appear in OTel spans, log lines, or trace exports                           | Host  | Tracing adapter MUST scrub. Pack runtime MUST NOT log resolved plaintext via `ctx.log`.                                                                                                          |
+| Plaintext MUST NOT appear in `RunSnapshot` exports or replay snapshots                         | Host  | Snapshot serializer MUST redact. Replay determinism is preserved by replaying the _resolve call_, not by snapshotting the plaintext (host resolves freshly from the credential store on replay). |
+| Plaintext MUST NOT be persisted in pack-side caches across run boundaries                      | Pack  | Pack MAY cache within a single `ctx.callImageGenerator` / `fetch()` call site for that one invocation. After the call, the plaintext reference MUST be discarded.                                |
+| Plaintext MUST NOT be sent to any `ctx.*` method other than the consuming call (e.g., `fetch`) | Pack  | Specifically: never pass to `ctx.callAI`, `ctx.chat.sendMessage`, `ctx.canvas.write`, or any other host method. The resolution is for direct external HTTP only.                                 |
+| `purpose` field MUST be present and non-empty                                                  | Pack  | Host audit log records `{ref, purpose, runId, packName, packVersion, ts}` — `purpose` is the required audit breadcrumb.                                                                          |
+| Lint + redaction unit tests                                                                    | Host  | Hosts that advertise this capability MUST add CI checks verifying plaintext never appears in serialized output across the surfaces above.                                                        |
 
-**Determinism note.** `ctx.secrets.resolve` is non-deterministic by design — the host MAY rotate secrets between runs, MAY return different plaintext on the same `ref` across runs (rotation), AND MUST NOT snapshot plaintext for replay. Replay-aware hosts SHOULD record only the resolve *call site* (ref + purpose + ts) and re-resolve from the credential store at replay time. Packs that change behavior based on plaintext content (e.g., parsing a JWT to extract a tenant id) MUST treat the resolved value as run-input that may differ across runs.
+**Determinism note.** `ctx.secrets.resolve` is non-deterministic by design — the host MAY rotate secrets between runs, MAY return different plaintext on the same `ref` across runs (rotation), AND MUST NOT snapshot plaintext for replay. Replay-aware hosts SHOULD record only the resolve _call site_ (ref + purpose + ts) and re-resolve from the credential store at replay time. Packs that change behavior based on plaintext content (e.g., parsing a JWT to extract a tenant id) MUST treat the resolved value as run-input that may differ across runs.
 
 **RBAC.** The host MUST enforce that `ref` resolves only to credentials the calling run has access to. Refs from another workspace's secret namespace MUST fail with `secret_access_denied`. Hosts MUST NOT silently substitute a different credential if the requested `ref` is unavailable.
 
 **Failure modes:**
+
 - `host_capability_missing` — `ctx.secrets.resolve` absent (workflow-register-time refusal via `peerDependencies: { "secrets.resolveInPack": "supported" }` is the correct path; runtime check is defense-in-depth)
 - `secret_not_found` — `ref` doesn't resolve in the host's credential store
 - `secret_access_denied` — caller lacks read permission on `ref` (RBAC denied)
@@ -2330,6 +2361,7 @@ The pack registry's workflow-register handler MUST verify that the host advertis
 4. If any are missing, register returns `400 pack_peer_dependency_missing` with the missing capability list. The pack does NOT register.
 
 Hosts that want to add a new capability surface after publishing a pack MAY:
+
 - Re-publish the pack manifest with adjusted peerDependencies (creating a new pack version), OR
 - Add the capability declaration to `/.well-known/openwop` and re-register the existing version.
 

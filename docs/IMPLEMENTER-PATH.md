@@ -26,18 +26,18 @@ Bookmark these for reference; do not read the rest of the corpus yet:
 
 Every host starts with `openwop-core`. Pick the additional profiles you actually intend to implement; advertise nothing else.
 
-| Profile | When to claim |
-|---|---|
-| `openwop-core` (required) | Always. Discovery + run lifecycle + event poll + interrupts + error envelope. |
-| `openwop-stream-poll` | When you implement `GET /v1/runs/{id}/events/poll`. Most hosts. |
-| `openwop-stream-sse` | When you implement Server-Sent Events. Real-time UIs want this. |
-| `openwop-audit-log-integrity` | When you persist a hash-chained event log with signed checkpoints. |
-| `openwop-production` | When you implement backpressure 503 + retention sweep + claim acquisition. Production-only. |
-| `openwop-auth-api-key-rotation` | When you accept two API keys during a rotation overlap. |
-| `openwop-auth-oauth2-client-credentials` | When you validate OAuth2 JWT bearers. |
-| `openwop-auth-oidc-user-bearer` | When you validate OIDC user-bearer tokens. |
-| `openwop-auth-mtls` | When you terminate mTLS. |
-| Optional capabilities | `runs.pauseResume`, `idempotency.crossRegion`, `memory`, `memory.compaction`, `agents`, `webhooks.signatureAlgorithms`, etc. Advertise only what you implement. |
+| Profile                                  | When to claim                                                                                                                                                   |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `openwop-core` (required)                | Always. Discovery + run lifecycle + event poll + interrupts + error envelope.                                                                                   |
+| `openwop-stream-poll`                    | When you implement `GET /v1/runs/{id}/events/poll`. Most hosts.                                                                                                 |
+| `openwop-stream-sse`                     | When you implement Server-Sent Events. Real-time UIs want this.                                                                                                 |
+| `openwop-audit-log-integrity`            | When you persist a hash-chained event log with signed checkpoints.                                                                                              |
+| `openwop-production`                     | When you implement backpressure 503 + retention sweep + claim acquisition. Production-only.                                                                     |
+| `openwop-auth-api-key-rotation`          | When you accept two API keys during a rotation overlap.                                                                                                         |
+| `openwop-auth-oauth2-client-credentials` | When you validate OAuth2 JWT bearers.                                                                                                                           |
+| `openwop-auth-oidc-user-bearer`          | When you validate OIDC user-bearer tokens.                                                                                                                      |
+| `openwop-auth-mtls`                      | When you terminate mTLS.                                                                                                                                        |
+| Optional capabilities                    | `runs.pauseResume`, `idempotency.crossRegion`, `memory`, `memory.compaction`, `agents`, `webhooks.signatureAlgorithms`, etc. Advertise only what you implement. |
 
 **The honesty principle.** Advertise only profiles you mechanically pass. The conformance suite ships a strict-mode gate (`OPENWOP_REQUIRE_BEHAVIOR=true`); if you advertise a profile you don't implement, your scenarios fail in strict mode. Hosts may declare honest opt-outs via `OPENWOP_OPTED_OUT_PROFILES=name1,name2` — see [`conformance/coverage.md`](../conformance/coverage.md) §"Capability-gated scenarios".
 
@@ -60,10 +60,7 @@ Order that works:
 7. `POST /v1/runs/{id}/interrupts/{nodeId}` — HITL approval/clarification resolution
 8. SSE: `GET /v1/runs/{id}/events` — real-time stream
 
-Optional but high-value:
-9. `POST /v1/runs/{id}:pause` + `:resume` — operator pause/resume
-10. `POST /v1/runs:bulk-cancel` — multi-run cancellation
-11. `POST /v1/runs/{id}:fork` — replay/fork
+Optional but high-value: 9. `POST /v1/runs/{id}:pause` + `:resume` — operator pause/resume 10. `POST /v1/runs:bulk-cancel` — multi-run cancellation 11. `POST /v1/runs/{id}:fork` — replay/fork
 
 The four reference hosts under [`examples/hosts/`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts) — in-memory (~570 LOC), SQLite (~700 LOC), Python (~600 LOC), Postgres (~4300 LOC) — exist as canonical reference implementations. The in-memory host is the educational reference; SQLite is the durability reference; Python is the cross-language portability proof; Postgres is the production reference with full claim coverage.
 

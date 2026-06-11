@@ -6,16 +6,16 @@
 
 `build-pack-tarball.mjs` historically dropped agent `systemPromptRef` bodies from the tarball (`prompts/` was not bundled). The three published `core.openwop.agents.*` packs therefore shipped **without** their prompt, so an RFC 0003 §C fail-loud installing host (MyndHyve, during the RFC 0074 proof) correctly rejects them.
 
-- **#295 fixed the bundler + added guards** (`prompts/*.md|.txt` now ships; build-time fail-loud; the `check-pack-prompt-refs` CI guard). So every *future* build is correct.
+- **#295 fixed the bundler + added guards** (`prompts/*.md|.txt` now ships; build-time fail-loud; the `check-pack-prompt-refs` CI guard). So every _future_ build is correct.
 - This runbook re-publishes the three **already-published** packs so the live registry artifacts carry their prompts. It is a **registry operation** (sign + `PUT` to the live registry), not a repo edit — the `registry/v1/` tree is a server-published snapshot.
 
 Affected packs (each declares `systemPromptRef: prompts/<name>.md`, present in source, absent from the published `1.0.0.tgz`):
 
-| Pack | Source prompt |
-|---|---|
+| Pack                                | Source prompt              |
+| ----------------------------------- | -------------------------- |
 | `core.openwop.agents.deep-research` | `prompts/deep-research.md` |
-| `core.openwop.agents.react` | `prompts/react.md` |
-| `core.openwop.agents.supervisor` | `prompts/supervisor.md` |
+| `core.openwop.agents.react`         | `prompts/react.md`         |
+| `core.openwop.agents.supervisor`    | `prompts/supervisor.md`    |
 
 ## Key decision: patch-bump, do NOT overwrite 1.0.0
 

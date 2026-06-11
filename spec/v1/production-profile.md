@@ -1,4 +1,4 @@
-# openwop Spec v1 — Production Profile
+# OpenWOP Spec v1 — Production Profile
 
 > **Status: Stable · v1.1 (2026-05-11; was PROVISIONAL 2026-05-11 → was FINAL 2026-05-10).** Operational-readiness profile for public OpenWOP hosts. This document is additive: it combines existing v1 contracts into a production claim without changing required wire shapes. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 >
@@ -85,11 +85,10 @@ Public hosted services SHOULD target the `production` scale tier from `scale-pro
 
 ## Conformance gaps to close
 
-| Gap | Needed coverage |
-|---|---|
-| Backpressure envelope | Assert `503` uses `{error,message,details?}` and `details.retryAfter` matches `Retry-After`. |
-| Durable restart | Restart host during a suspended or running workflow and verify stale-claim recovery. |
-| Event retention | Verify expired run behavior where the host exposes a controllable retention test mode. |
-| Debug-bundle truncation | Add a high-volume fixture and assert explicit truncation metadata. |
-| Production report | Generate a machine-readable profile report from conformance results. |
-
+| Gap                     | Needed coverage                                                                              |
+| ----------------------- | -------------------------------------------------------------------------------------------- |
+| Backpressure envelope   | Assert `503` uses `{error,message,details?}` and `details.retryAfter` matches `Retry-After`. |
+| Durable restart         | Restart host during a suspended or running workflow and verify stale-claim recovery.         |
+| Event retention         | Verify expired run behavior where the host exposes a controllable retention test mode.       |
+| Debug-bundle truncation | Add a high-volume fixture and assert explicit truncation metadata.                           |
+| Production report       | Generate a machine-readable profile report from conformance results.                         |

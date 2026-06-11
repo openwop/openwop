@@ -8,27 +8,27 @@ This document does NOT change the native OpenWOP event log shape (`schemas/run-e
 
 ## Mapping
 
-| CloudEvents attribute | Source on OpenWOP `RunEvent` | Notes |
-|---|---|---|
-| `specversion` | Literal `"1.0"` | CloudEvents 1.0 envelope version. |
-| `id` | `event.eventId` (when present) OR `evt-${runId}-${seq}` synthesized | MUST be unique within the producer per CloudEvents §3.1.1. Reference hosts already use the `evt-` synthetic shape; reuse it. |
-| `source` | URI identifying the host + the run, e.g., `https://api.example.com/v1/runs/{runId}` | MUST be a non-empty URI-reference per CloudEvents §3.1.2. Hosts that don't expose a public base URL MAY use a URN form (`urn:openwop:host:<hostId>:run:<runId>`). |
-| `type` | OpenWOP event type prefixed with `dev.openwop.event.`, e.g., `dev.openwop.event.run.started` | Reverse-DNS-style per CloudEvents §3.1.3. The `dev.openwop.event.` prefix avoids collision with consumers that already use `run.*` for their own domain. |
-| `time` | `event.timestamp` (ISO 8601) | CloudEvents accepts RFC 3339 / ISO 8601 directly. |
-| `datacontenttype` | Literal `"application/json"` | OpenWOP event payloads are JSON. |
-| `subject` | `event.nodeId` (when present), otherwise the `runId` | Optional in CloudEvents but recommended for routing. |
-| `data` | The native OpenWOP `RunEvent` document (the whole event, including `seq`, `runId`, `type`, `nodeId`, `data`, `timestamp`, optional `causationId`) | Consumers can re-derive the canonical OpenWOP shape from `data` alone. |
+| CloudEvents attribute | Source on OpenWOP `RunEvent`                                                                                                                      | Notes                                                                                                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `specversion`         | Literal `"1.0"`                                                                                                                                   | CloudEvents 1.0 envelope version.                                                                                                                                 |
+| `id`                  | `event.eventId` (when present) OR `evt-${runId}-${seq}` synthesized                                                                               | MUST be unique within the producer per CloudEvents §3.1.1. Reference hosts already use the `evt-` synthetic shape; reuse it.                                      |
+| `source`              | URI identifying the host + the run, e.g., `https://api.example.com/v1/runs/{runId}`                                                               | MUST be a non-empty URI-reference per CloudEvents §3.1.2. Hosts that don't expose a public base URL MAY use a URN form (`urn:openwop:host:<hostId>:run:<runId>`). |
+| `type`                | OpenWOP event type prefixed with `dev.openwop.event.`, e.g., `dev.openwop.event.run.started`                                                      | Reverse-DNS-style per CloudEvents §3.1.3. The `dev.openwop.event.` prefix avoids collision with consumers that already use `run.*` for their own domain.          |
+| `time`                | `event.timestamp` (ISO 8601)                                                                                                                      | CloudEvents accepts RFC 3339 / ISO 8601 directly.                                                                                                                 |
+| `datacontenttype`     | Literal `"application/json"`                                                                                                                      | OpenWOP event payloads are JSON.                                                                                                                                  |
+| `subject`             | `event.nodeId` (when present), otherwise the `runId`                                                                                              | Optional in CloudEvents but recommended for routing.                                                                                                              |
+| `data`                | The native OpenWOP `RunEvent` document (the whole event, including `seq`, `runId`, `type`, `nodeId`, `data`, `timestamp`, optional `causationId`) | Consumers can re-derive the canonical OpenWOP shape from `data` alone.                                                                                            |
 
 ### Optional extension attributes
 
 OpenWOP hosts MAY emit these CloudEvents extension attributes (per CloudEvents §"Extension Context Attributes" naming rules — all-lowercase, no separators):
 
-| Extension | Source | Purpose |
-|---|---|---|
-| `openwoprunid` | `event.runId` | Lets routers shard by run without parsing `data`. |
-| `openwopseq` | `event.seq` as integer | Ordering hint; consumers MUST still rely on `causationId` for true causal order. |
-| `openwopcausationid` | `event.causationId` (when present) | Causal-chain anchor. |
-| `openwoptenantid` | Host-derived tenant scope | Auth + multi-tenancy routing. MUST NOT carry credential material. |
+| Extension            | Source                             | Purpose                                                                          |
+| -------------------- | ---------------------------------- | -------------------------------------------------------------------------------- |
+| `openwoprunid`       | `event.runId`                      | Lets routers shard by run without parsing `data`.                                |
+| `openwopseq`         | `event.seq` as integer             | Ordering hint; consumers MUST still rely on `causationId` for true causal order. |
+| `openwopcausationid` | `event.causationId` (when present) | Causal-chain anchor.                                                             |
+| `openwoptenantid`    | Host-derived tenant scope          | Auth + multi-tenancy routing. MUST NOT carry credential material.                |
 
 Hosts SHOULD NOT add other extensions without an RFC.
 

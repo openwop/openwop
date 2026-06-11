@@ -1,17 +1,17 @@
 # RFC 0002: Agent Identity and Reasoning Events
 
-| Field | Value |
-|---|---|
-| **RFC** | 0002 |
-| **Title** | Agent Identity and Reasoning Events |
-| **Status** | `Accepted` |
-| **Author(s)** | David Tufts (@davidscotttufts) |
-| **Created** | 2026-05-01 |
-| **Updated** | 2026-05-11 (Active → Accepted: integration-seams audit closed via `docs/MULTI-AGENT-INTEGRATION-GAPS.md` archive; conformance scenarios pass against SQLite reference host) |
-| **Affects** | `schemas/agent-manifest.schema.json`, `schemas/run-event.schema.json`, `schemas/run-event-payloads.schema.json`, `schemas/run-snapshot.schema.json`, `spec/v1/observability.md`, `spec/v1/replay.md`, `spec/v1/capabilities.md` |
-| **Compatibility** | `additive` |
-| **Supersedes** | — |
-| **Superseded by** | — |
+| Field             | Value                                                                                                                                                                                                                           |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RFC**           | 0002                                                                                                                                                                                                                            |
+| **Title**         | Agent Identity and Reasoning Events                                                                                                                                                                                             |
+| **Status**        | `Accepted`                                                                                                                                                                                                                      |
+| **Author(s)**     | David Tufts (@davidscotttufts)                                                                                                                                                                                                  |
+| **Created**       | 2026-05-01                                                                                                                                                                                                                      |
+| **Updated**       | 2026-05-11 (Active → Accepted: integration-seams audit closed via `docs/MULTI-AGENT-INTEGRATION-GAPS.md` archive; conformance scenarios pass against SQLite reference host)                                                     |
+| **Affects**       | `schemas/agent-manifest.schema.json`, `schemas/run-event.schema.json`, `schemas/run-event-payloads.schema.json`, `schemas/run-snapshot.schema.json`, `spec/v1/observability.md`, `spec/v1/replay.md`, `spec/v1/capabilities.md` |
+| **Compatibility** | `additive`                                                                                                                                                                                                                      |
+| **Supersedes**    | —                                                                                                                                                                                                                               |
+| **Superseded by** | —                                                                                                                                                                                                                               |
 
 > **Amended (additive) 2026-05-25:** RFC 0064 (tool invocation hooks) extends the `agent.toolCalled` / `agent.toolReturned` events with optional `argsHash` / `principal` / `transport` (on `toolCalled`) + `status` / `durationMs` (on `toolReturned`) fields. The events are `additionalProperties: true`, `required` is unchanged, and `agentId` **stays required** (non-agent egress emits under the reserved synthetic agent id `core.system`). Non-breaking per `COMPATIBILITY.md` §2.1; no `eventLogSchemaVersion` bump.
 
@@ -21,7 +21,7 @@ Introduce a protocol-level `AgentRef` wire shape and a closed set of five `agent
 
 ## Motivation
 
-The v1 baseline (`run-event.schema.json`, `run-snapshot.schema.json`) is agent-agnostic: a node's `started` and `completed` events carry no record of *which* agent the node delegated to. For single-agent or single-model deployments this is sufficient. As soon as a host adopts orchestrator-driven topologies (RFC 0006) or shared-context multi-agent patterns, several gaps appear:
+The v1 baseline (`run-event.schema.json`, `run-snapshot.schema.json`) is agent-agnostic: a node's `started` and `completed` events carry no record of _which_ agent the node delegated to. For single-agent or single-model deployments this is sufficient. As soon as a host adopts orchestrator-driven topologies (RFC 0006) or shared-context multi-agent patterns, several gaps appear:
 
 1. **Provenance.** Audit and replay can't answer "which agent reasoned about this state?"
 2. **Tool-call attribution.** When a node calls multiple tools across multiple sub-agents, observers can't disambiguate which agent's reasoning produced each call.
@@ -234,7 +234,7 @@ Both new scenarios MUST gate on capability advertisement (per `capabilities-chan
 1. **Embed reasoning in `node.completed.payload`.** Rejected: opacity. A single node may call many tools across many sub-agents; collapsing them all into the node's completion payload loses provenance and breaks per-tool causation chains.
 2. **Treat reasoning as a host extension (`vendor.openwop.agent.*`).** Rejected: every multi-agent host would invent the same shape under a different prefix, fracturing tooling.
 3. **Borrow LangGraph's `messages` reducer wholesale.** Partially adopted (§G + RFC 0005). Rejected as a sole mechanism because `messages` is conversation-oriented; reasoning, tool calls, and handoffs need distinct event types for selective subscription via `stream-modes.md` `updates` mode.
-4. **Use A2A `AgentCard` directly.** Rejected: A2A's `AgentCard` is a *discovery* shape (capabilities, transport), not a *per-event provenance* shape. The two surfaces compose (`AgentRef` references manifest agents that A2A peers can resolve to `AgentCard`s) but are not the same record.
+4. **Use A2A `AgentCard` directly.** Rejected: A2A's `AgentCard` is a _discovery_ shape (capabilities, transport), not a _per-event provenance_ shape. The two surfaces compose (`AgentRef` references manifest agents that A2A peers can resolve to `AgentCard`s) but are not the same record.
 
 ## Unresolved questions
 

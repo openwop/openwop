@@ -1,4 +1,4 @@
-# openwop Spec v1 — Run Debug Bundle
+# OpenWOP Spec v1 — Run Debug Bundle
 
 > **Status: Stable · v1.1 (2026-05-05).** Defines `GET /v1/runs/{runId}/debug-bundle` — a portable JSON export of a single run's diagnostic state. Additive over v1 per `COMPATIBILITY.md` §2.1: optional endpoint; hosts MAY omit. Graduated DRAFT → FINAL via RFC 0004. See `auth.md` for the status legend. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
@@ -20,12 +20,12 @@ This isn't an audit log (those are host-internal compliance artifacts) or a metr
 
 ## Endpoint
 
-```
+```http
 GET /v1/runs/{runId}/debug-bundle
 ```
 
-| Auth | Cache | Profile gating |
-|---|---|---|
+| Auth              | Cache                     | Profile gating                                                                    |
+| ----------------- | ------------------------- | --------------------------------------------------------------------------------- |
 | Required (Bearer) | `Cache-Control: no-store` | `openwop-debug-bundle` (advertised in `capabilities.debugBundle.supported: true`) |
 
 A host that doesn't advertise `capabilities.debugBundle.supported: true` returns `404 Not Found` on this endpoint. Hosts that advertise `true` MUST return a bundle that schema-validates against `schemas/debug-bundle.schema.json`.
@@ -96,17 +96,17 @@ The endpoint is intentionally separate from `GET /v1/runs/{runId}` (snapshot) an
 
 ### Top-level
 
-| Field | Type | Required | Notes |
-|---|---|---|---|
-| `bundleVersion` | string | MUST | Schema version of the bundle. v1.x bundles are `"1"`; future shape changes bump this independently of the run's own data. |
-| `generatedAt` | string | MUST | ISO 8601 timestamp when the host generated this response. |
-| `host` | object | MUST | Identifies the host that produced the bundle. Mirrors `capabilities.implementation` shape. |
-| `run` | object | MUST | The run snapshot — same shape as `GET /v1/runs/{runId}`. |
-| `events` | array | MUST | The full event log for this run, in order. Same shape as `GET /v1/runs/{runId}/events/poll`'s `events`. |
-| `spans` | array | SHOULD | OTel-style spans emitted during the run, if the host instruments them. Empty array if the host doesn't emit spans. |
-| `metrics` | object | SHOULD | Aggregate metrics for the run. |
-| `redactionApplied` | boolean | MUST | `true` if any field in this bundle was masked/omitted/hashed by the host's redaction harness. |
-| `redactionMode` | string | MUST | The masking mode in effect per `capabilities.compliance.defaultMode`. One of `mask` / `omit` / `hash` / `passthrough`. |
+| Field              | Type    | Required | Notes                                                                                                                     |
+| ------------------ | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `bundleVersion`    | string  | MUST     | Schema version of the bundle. v1.x bundles are `"1"`; future shape changes bump this independently of the run's own data. |
+| `generatedAt`      | string  | MUST     | ISO 8601 timestamp when the host generated this response.                                                                 |
+| `host`             | object  | MUST     | Identifies the host that produced the bundle. Mirrors `capabilities.implementation` shape.                                |
+| `run`              | object  | MUST     | The run snapshot — same shape as `GET /v1/runs/{runId}`.                                                                  |
+| `events`           | array   | MUST     | The full event log for this run, in order. Same shape as `GET /v1/runs/{runId}/events/poll`'s `events`.                   |
+| `spans`            | array   | SHOULD   | OTel-style spans emitted during the run, if the host instruments them. Empty array if the host doesn't emit spans.        |
+| `metrics`          | object  | SHOULD   | Aggregate metrics for the run.                                                                                            |
+| `redactionApplied` | boolean | MUST     | `true` if any field in this bundle was masked/omitted/hashed by the host's redaction harness.                             |
+| `redactionMode`    | string  | MUST     | The masking mode in effect per `capabilities.compliance.defaultMode`. One of `mask` / `omit` / `hash` / `passthrough`.    |
 
 ### `run` field
 
@@ -121,6 +121,7 @@ Mirrors the response shape of `GET /v1/runs/{runId}/events/poll`'s `events` arra
 OTel-format spans per `spec/v1/observability.md` §"Span attributes" + §"Span naming." Hosts that emit spans into a tracer (Honeycomb, Datadog, Cloud Trace) re-serialize them into this array. Hosts that don't emit spans return `[]`.
 
 Each span includes:
+
 - `name` (canonical `openwop.*` per observability.md)
 - `spanId` (16-byte hex string)
 - `parentSpanId` (16-byte hex string or null)
@@ -199,11 +200,11 @@ When a host advertises `capabilities.feedback.supported`, a run's debug bundle S
 
 ## Open spec gaps
 
-| ID | Description |
-|---|---|
+| ID             | Description                                                                                                                                                                   |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | DEBUG-BUNDLE-1 | ✅ Closed in the v1.0 conformance baseline. `capabilities.debugBundle.supported: true` is represented in `schemas/capabilities.schema.json` as an additive optional property. |
-| DEBUG-BUNDLE-2 | OTel-span-id format conventions when the bundle is consumed cross-trace are non-normative here — assume W3C trace context per observability.md §"Trace context propagation." |
-| DEBUG-BUNDLE-3 | The 8 MB default cap is conservative. A high-throughput host serving long-running runs may need a higher cap or a streaming variant; out of scope for v1.x. |
+| DEBUG-BUNDLE-2 | OTel-span-id format conventions when the bundle is consumed cross-trace are non-normative here — assume W3C trace context per observability.md §"Trace context propagation."  |
+| DEBUG-BUNDLE-3 | The 8 MB default cap is conservative. A high-throughput host serving long-running runs may need a higher cap or a streaming variant; out of scope for v1.x.                   |
 
 ---
 

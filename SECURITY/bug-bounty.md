@@ -1,4 +1,4 @@
-# openwop — Bug-Bounty Program
+# OpenWOP — Bug-Bounty Program
 
 > **Status: planned, not yet active (2026-05-12).** Operational plan for running a coordinated bug-bounty program for the openwop spec corpus + reference implementations. Same tripwire as CNA registration (`SECURITY/cna.md`): not active until `MAINTAINERS.md` lists ≥1 non-steward maintainer AND a maintaining org with budget for awards is in place.
 
@@ -38,17 +38,18 @@ A bug-bounty program rewards external researchers who find and responsibly discl
 
 Pending budget commitment from the maintaining org. Indicative tiers:
 
-| Severity | Criteria | Award range |
-|---|---|---|
-| **Critical** (CVSS 9.0–10.0) | Remote code execution; full BYOK secret leak; arbitrary audit-log mutation; cross-tenant data exposure | $3000 – $10000 |
-| **High** (CVSS 7.0–8.9) | Auth bypass on a non-public surface; partial credential leak; replay-attack vector on signed callbacks | $1000 – $3000 |
-| **Medium** (CVSS 4.0–6.9) | Information disclosure of non-sensitive metadata; DoS on a single tenant; signing-key rotation flaw | $250 – $1000 |
-| **Low** (CVSS 0.1–3.9) | Spec ambiguity that enables a defect class but no demonstrable exploit; defense-in-depth weakening | $50 – $250 |
-| **Informational** | Quality reports with no exploit path; thoughtful suggestions | $0 (acknowledgment + thanks) |
+| Severity                     | Criteria                                                                                               | Award range                  |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------- |
+| **Critical** (CVSS 9.0–10.0) | Remote code execution; full BYOK secret leak; arbitrary audit-log mutation; cross-tenant data exposure | $3000 – $10000               |
+| **High** (CVSS 7.0–8.9)      | Auth bypass on a non-public surface; partial credential leak; replay-attack vector on signed callbacks | $1000 – $3000                |
+| **Medium** (CVSS 4.0–6.9)    | Information disclosure of non-sensitive metadata; DoS on a single tenant; signing-key rotation flaw    | $250 – $1000                 |
+| **Low** (CVSS 0.1–3.9)       | Spec ambiguity that enables a defect class but no demonstrable exploit; defense-in-depth weakening     | $50 – $250                   |
+| **Informational**            | Quality reports with no exploit path; thoughtful suggestions                                           | $0 (acknowledgment + thanks) |
 
 CVSS scoring uses CVSS v3.1 base score. Disputes resolved by the maintainer set + the reporter; severity reviews happen during the initial 24-hour acknowledgment window.
 
 **Bonus considerations:**
+
 - **+25%** for the first report of a vulnerability class (similar reports during embargo get the base award without the bonus).
 - **+50%** for reports that include a proposed patch + a conformance scenario that would detect the regression.
 - **+100%** for vulnerabilities that span the spec text AND a reference implementation AND the SDK (cross-cutting findings demonstrate unusually deep review).

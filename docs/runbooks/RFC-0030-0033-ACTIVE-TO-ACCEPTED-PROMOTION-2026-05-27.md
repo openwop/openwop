@@ -132,7 +132,7 @@ Compatibility: ratification is **non-normative** — no new wire surface, no sch
 
 Find the Status line at the top of `spec/v1/ai-envelope.md` referencing the four RFCs:
 
-```
+```text
 Extended additively by [RFC 0030] (`Active 2026-05-20`)... [RFC 0031] (`Active 2026-05-20`)... [RFC 0032] (`Active 2026-05-20`)... [RFC 0033] (`Active 2026-05-20`)...
 ```
 

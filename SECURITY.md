@@ -23,7 +23,7 @@ Out of scope:
 
 ### 2.1 Preferred — GitHub Security Advisories
 
-File a private advisory at https://github.com/openwop/openwop/security/advisories/new. GitHub provides an embargoed working space for coordinated disclosure, CVE coordination, and downstream notification.
+File a private advisory at <https://github.com/openwop/openwop/security/advisories/new>. GitHub provides an embargoed working space for coordinated disclosure, CVE coordination, and downstream notification.
 
 ### 2.2 Active exploitation
 
@@ -37,12 +37,12 @@ Do not file public issues for vulnerabilities. The public issue tracker is not e
 
 The maintainer set commits to:
 
-| Phase | Target |
-|---|---|
-| Acknowledgment of receipt | **3 business days** |
-| Initial triage (severity assessment, scope confirmation, "we'll fix" / "out of scope" / "needs more info") | **10 business days** |
-| Remediation timeline communication | **20 business days** from triage |
-| Coordinated disclosure (per §4) | **90 days** from initial report unless reporter and maintainers agree to extend |
+| Phase                                                                                                      | Target                                                                          |
+| ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Acknowledgment of receipt                                                                                  | **3 business days**                                                             |
+| Initial triage (severity assessment, scope confirmation, "we'll fix" / "out of scope" / "needs more info") | **10 business days**                                                            |
+| Remediation timeline communication                                                                         | **20 business days** from triage                                                |
+| Coordinated disclosure (per §4)                                                                            | **90 days** from initial report unless reporter and maintainers agree to extend |
 
 The SLA applies to good-faith reports from any reporter. The maintainer set MAY decline to engage with reports that are spam, automated scanner output without proof-of-concept, or known false positives, with a brief explanation to the reporter.
 

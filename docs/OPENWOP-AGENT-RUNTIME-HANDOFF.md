@@ -12,13 +12,13 @@ Status: brief + direction, **not** an approved plan. Run `/prd` or `/plan` befor
 OpenWOP already ships **~26 agent packs** with **~30 fully-populated agent manifests**
 (`packs/core.openwop.agents.*/pack.json`), and the spec for how agents behave is
 **Accepted** (RFCs 0002/0003/0006/0007/0037/0059, 0061 Active). The CLI, AI Chat, and
-demo app gained an agent *surface* in the #256–#266 cohort.
+demo app gained an agent _surface_ in the #256–#266 cohort.
 
 **But the agent packs are inert.** Nothing in the demo host reads their `agents[]`
 arrays. There is no AgentRegistry. `routes/agents.ts` fakes an inventory from three
 hard-coded node roles. No host advertises the `host.agentRuntime` capability every pack
 declares a peer-dependency on. So you can publish, sign, and list an agent pack — and
-then nothing can actually *instantiate or run* the agent it describes.
+then nothing can actually _instantiate or run_ the agent it describes.
 
 The task: **build the agent runtime that closes this loop, and make it best-in-class** —
 on par with or better than LangGraph Supervisor / CrewAI hierarchical process (the
@@ -55,6 +55,7 @@ example — `packs/core.openwop.agents.supervisor/pack.json`:
 ```
 
 Inventory of what's already on disk:
+
 - ~26 packs under `packs/core.openwop.agents.*`; singletons (react, classifier,
   code-reviewer, deep-research, sdr, …) ship 1 agent; **crews** ship several
   (`research-crew` 4, `support-crew` 3, `devops-crew` 3).
@@ -73,19 +74,19 @@ not placeholders. The data is there waiting for a runtime.
 
 ## 2. What exists today (the surface), and why it doesn't close the loop
 
-| Layer | What's there | File | Verdict |
-|---|---|---|---|
-| Agent inventory endpoint | `GET /v1/host/sample/agents` + `/:agentId` | `apps/workflow-engine/backend/typescript/src/routes/agents.ts` | **Faked.** Returns 3 hard-coded `AGENT_ROLES` (supervisor / dispatch / chat-responder) filtered by node-type presence. Does **not** read any pack `agents[]`. |
-| Orchestrator + dispatch | `core.orchestrator.supervisor`, `core.dispatch` nodes | `src/bootstrap/nodes.ts:78,124` | Real (RFC 0006/0007/0037). But they route between **workflow nodes / sub-workflows**, not between *manifest-declared agents*. |
-| Agent.* events | `agent.reasoned/toolCalled/toolReturned/handoff/decided` | `src/bootstrap/nodes.ts`, `conformanceMockAgent.ts` | Emitted by the chat-responder + mock agent. Front-end renders them (`AgentEventCards.tsx`). |
-| Provider dispatch (BYOK) | anthropic / openai / google / minimax | `src/providers/dispatch.ts` | Real. This is how an agent reaches an LLM. |
-| Agent **registry** | — | — | **Does not exist.** No `getAgentRegistry()`, no manifest parsing. `tarballLoader.ts` / `nodePackResolver.ts` only read `manifest.nodes`, never `manifest.agents`. |
-| `host.agentRuntime` capability | — | `schemas/capabilities.schema.json` | **Not defined, not advertised.** Every agent pack peer-depends on it; install-time gating can never succeed. |
+| Layer                          | What's there                                             | File                                                           | Verdict                                                                                                                                                           |
+| ------------------------------ | -------------------------------------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Agent inventory endpoint       | `GET /v1/host/sample/agents` + `/:agentId`               | `apps/workflow-engine/backend/typescript/src/routes/agents.ts` | **Faked.** Returns 3 hard-coded `AGENT_ROLES` (supervisor / dispatch / chat-responder) filtered by node-type presence. Does **not** read any pack `agents[]`.     |
+| Orchestrator + dispatch        | `core.orchestrator.supervisor`, `core.dispatch` nodes    | `src/bootstrap/nodes.ts:78,124`                                | Real (RFC 0006/0007/0037). But they route between **workflow nodes / sub-workflows**, not between _manifest-declared agents_.                                     |
+| Agent.\* events                | `agent.reasoned/toolCalled/toolReturned/handoff/decided` | `src/bootstrap/nodes.ts`, `conformanceMockAgent.ts`            | Emitted by the chat-responder + mock agent. Front-end renders them (`AgentEventCards.tsx`).                                                                       |
+| Provider dispatch (BYOK)       | anthropic / openai / google / minimax                    | `src/providers/dispatch.ts`                                    | Real. This is how an agent reaches an LLM.                                                                                                                        |
+| Agent **registry**             | —                                                        | —                                                              | **Does not exist.** No `getAgentRegistry()`, no manifest parsing. `tarballLoader.ts` / `nodePackResolver.ts` only read `manifest.nodes`, never `manifest.agents`. |
+| `host.agentRuntime` capability | —                                                        | `schemas/capabilities.schema.json`                             | **Not defined, not advertised.** Every agent pack peer-depends on it; install-time gating can never succeed.                                                      |
 
 Net: agents are **node-attributed identities** (an agentId stamped on events emitted by a
 node) — not **instantiable units loaded from a pack**. The gap-doc and the prior analysis
 treated the role-inventory as a deliberate "don't invent normative surface" choice, and
-for a *read-only listing* it is fine. It is **not** enough to run a published agent.
+for a _read-only listing_ it is fine. It is **not** enough to run a published agent.
 
 ---
 
@@ -99,7 +100,7 @@ To go from "publish an agent pack" → "run that agent," the host must, at minim
    `src/bootstrap/nodePackResolver.ts`.
 2. **Advertise a capability** (`host.agentRuntime` or `agents.runtime`) in
    `capabilities.schema.json` + `discovery.ts`, so pack `peerDependencies` resolve and
-   conformance can gate on it. *(This is the part that likely needs an RFC — see §6.)*
+   conformance can gate on it. _(This is the part that likely needs an RFC — see §6.)_
 3. **Make `routes/agents.ts` real** — list/info from the registry, not 3 constants.
 4. **Dispatch a manifest agent**: resolve its system prompt (honoring the RFC 0029
    resolution chain), enforce `toolAllowlist` when handing tools to the provider, validate
@@ -133,7 +134,7 @@ themselves cite LangGraph Supervisor and CrewAI hierarchical process; match and 
   agents forks/replays deterministically (don't break `POST /v1/runs/{runId}:fork`).
 - **Visible across all three surfaces.** App (run an agent from a pack, see its reasoning/
   tools/handoffs), AI Chat (`@agent` dispatch, not just `@workflow`), CLI (`openwop agents
-  run`, not just `list/info`).
+run`, not just `list/info`).
 
 ---
 
@@ -153,13 +154,14 @@ themselves cite LangGraph Supervisor and CrewAI hierarchical process; match and 
 ## 6. Before you write code — governance gate
 
 This is **not** pure implementation. Two parts touch the wire contract:
+
 - a **new capability** (`host.agentRuntime`/`agents.runtime`) in `capabilities.schema.json`
-  + `/.well-known/openwop`, and
+  - `/.well-known/openwop`, and
 - possibly a **new list/run surface** if you expose more than the existing sample-extension
   `/v1/host/sample/agents`.
 
 Per `CONTRIBUTING.md`, capability advertisement and any normative endpoint are RFC
-surface. RFC 0003 declared the `agents[]` *manifest* but explicitly deferred the *runtime*
+surface. RFC 0003 declared the `agents[]` _manifest_ but explicitly deferred the _runtime_
 contract (RFC 0004 memory-shape was Phase 3). So:
 
 1. Run **`/prd`** to decide: does the agent-runtime capability + dispatch contract need a
@@ -177,7 +179,7 @@ contract (RFC 0004 memory-shape was Phase 3). So:
 ## 7. Parallel-session hygiene (this repo bites)
 
 - Work in your **own worktree** off `origin/main`: `git fetch && git worktree add
-  ../openwop-agent-runtime origin/main`. Never `git checkout -b` in the shared checkout.
+../openwop-agent-runtime origin/main`. Never `git checkout -b` in the shared checkout.
 - **Never `git stash` / `git reset --hard` / `git clean`** the shared tree — other
   sessions' unpushed work lives there.
 - Branch from `origin/main` (it advances under you — this whole cohort merged mid-session).

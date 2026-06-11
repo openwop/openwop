@@ -1,4 +1,4 @@
-# openwop Spec v1 — gRPC Transport Profile
+# OpenWOP Spec v1 — gRPC Transport Profile
 
 > **Status: Stable · v1.1 (2026-05-12).** Optional alternative transport profile. REST + SSE remains the REQUIRED wire surface for every v1-conforming host (per `rest-endpoints.md`); a host MAY ALSO expose the gRPC surface defined here under `capabilities.supportedTransports: ["grpc"]`. The two surfaces describe the same protocol semantics; gRPC clients can produce byte-equivalent runs against a dual-surface host. Closes R3 in `rest-endpoints.md` §"Open spec gaps". Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
@@ -87,7 +87,7 @@ Message shapes mirror the JSON Schemas. Field names are snake_case per Protobuf 
 
 Bearer tokens travel in the gRPC `authorization` metadata key per the standard convention:
 
-```
+```text
 authorization: Bearer <token>
 ```
 
@@ -95,19 +95,19 @@ Same scope vocabulary as REST per `auth.md`. The host validates the bearer token
 
 **Method ↔ required scope:**
 
-| gRPC method | Scope |
-|---|---|
-| `GetCapabilities` | none (unauthenticated) |
-| `GetWorkflow` | `manifest:read` |
-| `CreateRun` | `runs:create` |
-| `GetRun` / `StreamRunEvents` | `runs:read` |
-| `CancelRun` / `BulkCancelRuns` / `PauseRun` / `ResumeRun` | `runs:cancel` |
-| `ForkRun` | `runs:create` + `runs:read` |
-| `ResolveInterruptByRun` | `approvals:respond` |
-| `ResolveInterruptByToken` / `InspectInterruptByToken` | none (signed-token; auth is the token itself) |
-| `GetArtifact` | `artifacts:read` |
-| `RegisterWebhook` / `UnregisterWebhook` | `webhooks:manage` |
-| `VerifyAuditLog` | `audit:read` |
+| gRPC method                                               | Scope                                         |
+| --------------------------------------------------------- | --------------------------------------------- |
+| `GetCapabilities`                                         | none (unauthenticated)                        |
+| `GetWorkflow`                                             | `manifest:read`                               |
+| `CreateRun`                                               | `runs:create`                                 |
+| `GetRun` / `StreamRunEvents`                              | `runs:read`                                   |
+| `CancelRun` / `BulkCancelRuns` / `PauseRun` / `ResumeRun` | `runs:cancel`                                 |
+| `ForkRun`                                                 | `runs:create` + `runs:read`                   |
+| `ResolveInterruptByRun`                                   | `approvals:respond`                           |
+| `ResolveInterruptByToken` / `InspectInterruptByToken`     | none (signed-token; auth is the token itself) |
+| `GetArtifact`                                             | `artifacts:read`                              |
+| `RegisterWebhook` / `UnregisterWebhook`                   | `webhooks:manage`                             |
+| `VerifyAuditLog`                                          | `audit:read`                                  |
 
 Hosts MAY ALSO accept mTLS (per `auth-profiles.md` §`openwop-auth-mtls`) on the gRPC listener. mTLS is the recommended posture for internal-only gRPC deployments where bearer tokens are operationally expensive.
 
@@ -117,18 +117,18 @@ Hosts MAY ALSO accept mTLS (per `auth-profiles.md` §`openwop-auth-mtls`) on the
 
 REST `ErrorEnvelope` ↔ gRPC `Status`:
 
-| REST envelope `error` code | gRPC `code` (`google.rpc.Code`) |
-|---|---|
-| `unauthenticated`, `key_expired`, `key_revoked` | `UNAUTHENTICATED` (16) |
-| `forbidden` | `PERMISSION_DENIED` (7) |
-| `validation_error` | `INVALID_ARGUMENT` (3) |
-| `not_found`, `run_not_found`, `workflow_not_found` | `NOT_FOUND` (5) |
-| `run_already_active`, `idempotency_key_conflict`, `idempotency_key_mismatch` | `ALREADY_EXISTS` (6) — for run dedup; `ABORTED` (10) — for idempotency conflicts |
-| `recursion_limit_exceeded` | `RESOURCE_EXHAUSTED` (8) |
-| `rate_limited` | `RESOURCE_EXHAUSTED` (8) — gRPC has no native `429`; use this code + `retry-after` in metadata |
-| `capability_not_provided`, `capability_required` | `FAILED_PRECONDITION` (9) |
-| `credential_required`, `credential_forbidden`, `credential_unavailable` | `FAILED_PRECONDITION` (9) |
-| `internal_error` | `INTERNAL` (13) |
+| REST envelope `error` code                                                   | gRPC `code` (`google.rpc.Code`)                                                                |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `unauthenticated`, `key_expired`, `key_revoked`                              | `UNAUTHENTICATED` (16)                                                                         |
+| `forbidden`                                                                  | `PERMISSION_DENIED` (7)                                                                        |
+| `validation_error`                                                           | `INVALID_ARGUMENT` (3)                                                                         |
+| `not_found`, `run_not_found`, `workflow_not_found`                           | `NOT_FOUND` (5)                                                                                |
+| `run_already_active`, `idempotency_key_conflict`, `idempotency_key_mismatch` | `ALREADY_EXISTS` (6) — for run dedup; `ABORTED` (10) — for idempotency conflicts               |
+| `recursion_limit_exceeded`                                                   | `RESOURCE_EXHAUSTED` (8)                                                                       |
+| `rate_limited`                                                               | `RESOURCE_EXHAUSTED` (8) — gRPC has no native `429`; use this code + `retry-after` in metadata |
+| `capability_not_provided`, `capability_required`                             | `FAILED_PRECONDITION` (9)                                                                      |
+| `credential_required`, `credential_forbidden`, `credential_unavailable`      | `FAILED_PRECONDITION` (9)                                                                      |
+| `internal_error`                                                             | `INTERNAL` (13)                                                                                |
 
 Hosts MUST attach the full canonical `ErrorEnvelope` JSON as a `details[]` entry on the gRPC `Status` proto so clients can recover the structured `details.*` fields (e.g., `details.retryAfterMs`, `details.requiredCapability`):
 

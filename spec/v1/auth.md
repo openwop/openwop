@@ -1,8 +1,9 @@
-# openwop Spec v1 — Authentication and Authorization
+# OpenWOP Spec v1 — Authentication and Authorization
 
 > **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of the bearer-token auth model, scope vocabulary, and the canonical 401/403 error envelope (now backed by `schemas/error-envelope.schema.json` per JS5). Not yet final: OAuth 2.0, mTLS, key rotation, and webhook HMAC remain in "Open spec gaps" — but the stable surface (API key + scopes + error envelope) is comprehensive enough for SDK + conformance authoring. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 >
-> **Status legend** (used across all spec/v1/*.md). Full policy at [/governance/spec-status/](/governance/spec-status/):
+> **Status legend** (used across all spec/v1/\*.md). Full policy at [/governance/spec-status/](/governance/spec-status/):
+>
 > - **Stable** — frozen wire surface under v1.x. Required fields, event payloads, endpoint contracts, and package names cannot change without a v2.
 > - **Stabilizing** — comprehensive coverage; required-field set and endpoint shapes locked, but optional fields and behavior coverage are still landing additively.
 > - **Draft** — open comment window. Section headings and broad shape are stable, but field schemas and event payloads MAY shift on each weekly RFC roll-up.
@@ -33,6 +34,7 @@ REQUIRED for any server that exposes the openwop wire surface to non-human calle
 #### Key format
 
 The spec does not prescribe the visible prefix; reference implementations are encouraged to use a short, recognizable prefix that distinguishes:
+
 - Live keys from sandbox/test keys (e.g., `live_` vs `test_`)
 - The implementation's own keys from those of other systems (e.g., a vendor identifier)
 
@@ -47,21 +49,21 @@ Hosts MAY use any scheme they prefer; the prefix is purely operational.
 
 An OpenWOP-compliant server MUST support the following scope vocabulary at minimum:
 
-| Scope | Allows |
-|---|---|
-| `manifest:read` | Read workflow / canvas-type / endpoint manifests |
-| `runs:create` | Create new runs |
-| `runs:read` | Read run state and event stream |
-| `runs:cancel` | Cancel an in-flight run |
-| `artifacts:read` | Read artifacts produced by runs |
-| `webhooks:manage` | Register/unregister webhook subscriptions |
-| `approvals:respond` | Respond to HITL approval gates |
-| `packs:publish` | Publish new versions of node-packs to the registry (see `registry-operations.md`) |
-| `packs:yank` | Mark a published node-pack version yanked (advisory; existing pins keep resolving) |
-| `packs:yank-revert` | Reinstate a yanked node-pack version (super-admin) |
-| `audit:read` | Verify audit-log integrity via `GET /v1/audit/verify`. Gated on the `openwop-audit-log-integrity` profile per `auth-profiles.md`. |
-| `workspace:read` | Read agent-workspace files via `GET /v1/host/workspace/files[/{path}]`. Gated on `capabilities.workspace.supported` (RFC 0059). |
-| `workspace:write` | Create/replace/delete agent-workspace files via `PUT`/`DELETE /v1/host/workspace/files/{path}`. Gated on `capabilities.workspace.supported` (RFC 0059). |
+| Scope               | Allows                                                                                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `manifest:read`     | Read workflow / canvas-type / endpoint manifests                                                                                                        |
+| `runs:create`       | Create new runs                                                                                                                                         |
+| `runs:read`         | Read run state and event stream                                                                                                                         |
+| `runs:cancel`       | Cancel an in-flight run                                                                                                                                 |
+| `artifacts:read`    | Read artifacts produced by runs                                                                                                                         |
+| `webhooks:manage`   | Register/unregister webhook subscriptions                                                                                                               |
+| `approvals:respond` | Respond to HITL approval gates                                                                                                                          |
+| `packs:publish`     | Publish new versions of node-packs to the registry (see `registry-operations.md`)                                                                       |
+| `packs:yank`        | Mark a published node-pack version yanked (advisory; existing pins keep resolving)                                                                      |
+| `packs:yank-revert` | Reinstate a yanked node-pack version (super-admin)                                                                                                      |
+| `audit:read`        | Verify audit-log integrity via `GET /v1/audit/verify`. Gated on the `openwop-audit-log-integrity` profile per `auth-profiles.md`.                       |
+| `workspace:read`    | Read agent-workspace files via `GET /v1/host/workspace/files[/{path}]`. Gated on `capabilities.workspace.supported` (RFC 0059).                         |
+| `workspace:write`   | Create/replace/delete agent-workspace files via `PUT`/`DELETE /v1/host/workspace/files/{path}`. Gated on `capabilities.workspace.supported` (RFC 0059). |
 
 A server MAY define additional scopes for non-protocol surfaces (e.g., `canvas-types:list`, `projects:list` for platform-level keys). Such extensions MUST NOT shadow the names above.
 
@@ -91,13 +93,13 @@ Beyond scope checks on API keys, an OpenWOP-compliant server MUST enforce:
 
 OpenWOP standardizes a small, explicit **identity triple** the host MAY derive from the caller's credential and carry in the auth context. All three are **optional** — single-tenant hosts emit none of them and are unaffected:
 
-| Claim | Meaning |
-|---|---|
-| `tenant` | The top-level isolation boundary (the dimension RFC 0011 already narrows discovery by; now named). |
-| `workspace` | An **optional** sub-tenant within a tenant — a collaborative scope. A tenant has ≥ 1 workspace. |
-| `principal` | The **acting identity** (a user or an agent) making the request. Opaque id — never PII. |
+| Claim       | Meaning                                                                                            |
+| ----------- | -------------------------------------------------------------------------------------------------- |
+| `tenant`    | The top-level isolation boundary (the dimension RFC 0011 already narrows discovery by; now named). |
+| `workspace` | An **optional** sub-tenant within a tenant — a collaborative scope. A tenant has ≥ 1 workspace.    |
+| `principal` | The **acting identity** (a user or an agent) making the request. Opaque id — never PII.            |
 
-The protocol does not prescribe *how* a host derives these (API key, OIDC token, SAML assertion per RFC 0050, etc.) — only their names and the binding rules below.
+The protocol does not prescribe _how_ a host derives these (API key, OIDC token, SAML assertion per RFC 0050, etc.) — only their names and the binding rules below.
 
 - **Run ownership.** When a run is created under an identity triple, the host SHOULD record it as `RunSnapshot.owner` (`{ tenant, workspace?, principal? }`, per `run-snapshot.schema.json`) and echo it, redaction-safe, on the `run.started` event payload.
 - **Workspace isolation (normative).** Tenant isolation (§Authorization rule 1) extends to workspace granularity: a `principal` scoped to workspace A MUST NOT read or mutate a run owned by workspace B — within or across tenants. A cross-workspace read MUST fail closed with `run_forbidden` (never silently return another workspace's data). This is the CTI-style guarantee that makes the `workspace` claim enforceable rather than advisory.
@@ -108,13 +110,13 @@ RBAC (RFC 0049), enterprise SSO/provisioning (RFC 0050), and approval gates (RFC
 
 ## Role-based authorization (RFC 0049)
 
-A host MAY advertise `capabilities.authorization` to bind an RFC 0048 `principal`'s **role** to **scopes** and make authorization decisions observable, auditable, and conformance-testable. This reuses the existing API-key **scope grammar** (the §Authorization scope vocabulary above) — roles resolve *to* scopes; no new grammar is introduced.
+A host MAY advertise `capabilities.authorization` to bind an RFC 0048 `principal`'s **role** to **scopes** and make authorization decisions observable, auditable, and conformance-testable. This reuses the existing API-key **scope grammar** (the §Authorization scope vocabulary above) — roles resolve _to_ scopes; no new grammar is introduced.
 
 - **Role → scope binding.** The host advertises its role catalog as `capabilities.authorization.roles: [{ role, scopes[] }]`. A request is authorized when **any** of the principal's role-derived scopes matches the required scope, applying the same scope-match semantics the host already uses for API keys (per-segment wildcards + verb implication). A principal's role is resolved per `(principal, workspace)` — the same principal can hold different roles in different workspaces.
 - **Fail-closed (normative).** An absent, unseeded, or unresolvable role MUST deny (a cache miss or resolver error ⇒ `allowed: false`); the host MUST NOT default-allow under any error condition. `capabilities.authorization.failClosed` is `const: true`. This is the SECURITY invariant `authorization-fail-closed`.
 - **Decision event.** The host SHOULD emit `authorization.decided { principal, action, resource, allowed, reason }` (per `run-event-payloads.schema.json`) on a decision; every **deny** SHOULD be emitted and SHOULD feed the audit log (the RFC 0009/0010 audit-log integrity profile). The event is redaction-safe — `principal` is an opaque id and `reason` carries no credential material.
 
-A denied REST action returns the existing `forbidden` envelope; the `authorization.decided { allowed: false }` event is the observable, auditable record of *why*.
+A denied REST action returns the existing `forbidden` envelope; the `authorization.decided { allowed: false }` event is the observable, auditable record of _why_.
 
 ## Error response shape
 
@@ -129,6 +131,7 @@ Auth failures use the standard JSON-RPC 2.0 error shape on JSON-RPC transports, 
 ```
 
 Codes:
+
 - `unauthenticated` (401) — no credential or invalid credential
 - `forbidden` (403) — credential valid but lacks required scope or fails resource binding
 - `key_expired` (401)
@@ -152,13 +155,13 @@ An OpenWOP-compliant server SHOULD log every authenticated request with at minim
 
 ## Open spec gaps
 
-| # | Gap | Owner |
-|---|---|---|
-| A1 | ✅ Closed as optional profile in `auth-profiles.md`: OAuth2 client-credentials flow. | conformance minor |
-| A2 | ✅ Closed as optional profile in `auth-profiles.md`: mTLS deployment profile. | conformance minor |
-| A3 | ✅ Closed as optional profile in `auth-profiles.md`: API-key rotation/grace-period semantics. | conformance minor |
-| A4 | Webhook HMAC is now specified in `webhooks.md`; remaining work is shared auth-profile conformance across REST and webhook verification examples | conformance minor |
-| A5 | ✅ Closed as optional capability `host.oauth` (RFC 0047): OAuth 2.0 **authorization-code + refresh** for a node/connector acquiring a third-party token on a user's behalf. Distinct from A1 (client-credentials = host auth); 0047 is third-party delegation — acquired tokens stored as `host.credentials` (RFC 0046) entries, resolved into the node sandbox only. | conformance minor |
+| #   | Gap                                                                                                                                                                                                                                                                                                                                                                   | Owner             |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| A1  | ✅ Closed as optional profile in `auth-profiles.md`: OAuth2 client-credentials flow.                                                                                                                                                                                                                                                                                  | conformance minor |
+| A2  | ✅ Closed as optional profile in `auth-profiles.md`: mTLS deployment profile.                                                                                                                                                                                                                                                                                         | conformance minor |
+| A3  | ✅ Closed as optional profile in `auth-profiles.md`: API-key rotation/grace-period semantics.                                                                                                                                                                                                                                                                         | conformance minor |
+| A4  | Webhook HMAC is now specified in `webhooks.md`; remaining work is shared auth-profile conformance across REST and webhook verification examples                                                                                                                                                                                                                       | conformance minor |
+| A5  | ✅ Closed as optional capability `host.oauth` (RFC 0047): OAuth 2.0 **authorization-code + refresh** for a node/connector acquiring a third-party token on a user's behalf. Distinct from A1 (client-credentials = host auth); 0047 is third-party delegation — acquired tokens stored as `host.credentials` (RFC 0046) entries, resolved into the node sandbox only. | conformance minor |
 
 ## References
 

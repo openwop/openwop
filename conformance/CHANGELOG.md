@@ -5,39 +5,48 @@
 ### Added — RFCs 0093/0094 conformance scenarios (count 330 → 335)
 
 Fixture-consumer scenarios (close the two orphaned-fixture catalog gaps; ungated beyond the RFC 0003 fixture-advertisement check):
+
 - **`version-fold.test.ts`** (F5; `version-negotiation.md` §"Conformance via `X-Force-Engine-Version`") — runs the `conformance-version-fold` noop fixture once per forced engine version in `[min, current, max]` (deduped from `Capabilities.testing.forceEngineVersionRange`), asserting terminal `completed`, a readable `RunSnapshot`, and a non-empty `events/poll` log under each forced version — the black-box fold-best-effort proof for the cross-version interop matrix. Negative: an out-of-range forced version is `400 unsupported_force_engine_version`. Soft-skips when the host doesn't advertise `forceEngineVersionRange` (test seam) or answers `403 force_engine_version_forbidden` (production-scoped key).
 - **`stream-text-fixture.test.ts`** (F1; `stream-modes.md` §`messages`) — drives the `conformance-stream-text` fixture through the deterministic `stream-text` mock provider (`configurable.mockProvider`): the mocked tokens `["Hello", " ", "world", "!"]` arrive as `ai.message.chunk` SSE events in token order; the final chunk carries `isLast: true` + `meta.finishReason: "stop"` + `meta.usage.completionTokens: 4` (the RFC 0094 §D single-sourced payload); the stream is server-closed on terminal; the run completes. Negative: an unknown `mockProvider.id` is `400 unsupported_mock_provider`. Soft-skips when `Capabilities.testing.mockProviders` doesn't list `stream-text`.
 
 Capability-gated scenarios (soft-skip by default; hard-fail under `OPENWOP_REQUIRE_BEHAVIOR=true`):
+
 - **`i18n-negotiation.test.ts`** (`spec/v1/i18n.md`; `behaviorGate('openwop-i18n', …)` on `i18n.supported`) — always-on advertisement-shape probe (BCP 47 `defaultLocale`/`supportedLocales`, `supportedLocales` contains `defaultLocale`) plus three behavioral legs against a protected error-envelope route: an UNSUPPORTED `Accept-Language` falls back instead of failing (never 400/406), a MALFORMED `Accept-Language` MUST NOT cause `400`, `Content-Language` (when emitted) is BCP 47 and reflects the host default for the unsupported-tag request, and the machine-readable error `code` stays the canonical English token under a negotiated locale.
 - **`grpc-transport.test.ts`** (`spec/v1/grpc-transport.md`; `behaviorGate('openwop-grpc-transport', …)` on the `capabilities.grpc` block added by RFC 0094 §H) — ADVERTISEMENT-SHAPE ONLY (no gRPC dialing; the suite ships no gRPC client): `supported` boolean, `service` MUST be the canonical `openwop.v1.Engine` for v1, `tls` ∈ `required`/`optional`/`disabled`, `endpoint` (when present) is a `grpc://`/`grpcs://` URI, `supportedTransports` includes `"grpc"` when the surface is exposed, and a production-profile claimant MUST set `tls: "required"`. The end-to-end legs in `grpc-transport.md` §Conformance stay future host-side harness work.
 - **`webhook-tenant-isolation.test.ts`** (RFC 0093 §A.3; `behaviorGate('openwop-webhook-tenant-isolation', …)` on `webhooks.supported`) — backs the new protocol-tier `webhook-cross-tenant-isolation` SECURITY invariant, mirroring the `kv-cross-tenant-isolation` pattern: a two-tenant proof through the optional `POST /v1/host/sample/test/surface` seam (`surface: "webhooks"`, ops `register`/`list`/`unregister`; a tenant-A subscription is invisible to tenant B's list, soft-skip on 404) plus black-box single-tenant proxy assertions on the registration surface (registering under a tenant the caller is not a member of is refused; a held subscription cannot be unregistered through a foreign tenant scope). Delivery-time isolation itself is not black-box observable single-tenant (RFC 0093 §Conformance) and stays with the reference-impl-tier pointers.
 
 ### Added — RFC 0094 §A `createRun` satisfiability probe (in `spec-corpus-validity.test.ts`; no new scenario file)
+
 - The composed `createRun` requestBody MUST close at the composition site (`unevaluatedProperties: false`) and MUST NOT carry `additionalProperties: false` inside an `allOf` branch (the unsatisfiable-composition defect class found by the 2026-06-11 corpus review), and an ajv-2020 probe asserts the canonical documented bodies (`{workflowId}`, `{workflowId, configurable: {}}`, the full documented field set) PASS the composition of the on-disk `run-options.schema.json` with the inline branch's declared properties while an undeclared property FAILS.
 
 ### Fixed — stale scenario docblocks (no behavior / count change)
+
 - **`media-url-inline-cap.test.ts`** — the header claimed the behavioral legs were "staged via `it.todo`"; they have been real `it()` bodies driving the media-asset seam (soft-skip on 404) since the seam landed. Comment now reflects reality.
 - **`cross-host-traceparent-propagation.test.ts`** — the post-import comment said the placeholders are `it.todo` while the code uses `it.skip` (RFC 0042 §B experimental-tier routing). Comment aligned to `it.skip`.
 
 ## [1.21.0] — 2026-06-07 — RFC 0090/0091/0092 conformance scenarios + vitest 4
 
 ### Security — test-tooling dependency hygiene (consumer-facing)
+
 - **Bumped `vitest` 3 → 4 (kept in `dependencies`).** `vitest` was a hard `dependency` pinned `^3.0.0`, dragging the 2 critical `vitest`-3 advisories (which only trigger under `vitest --ui`, never `vitest run`, never production) into every consumer's tree. The fix is the **version bump alone**: `dependencies.vitest` is now `^4.0.0` — `vitest` 4 carries none of those advisories, so a consumer install now reports `0 vulnerabilities`. **`vitest` MUST remain a runtime `dependency`** (not a `devDependency` or optional peer): the suite's `bin` (`dist/cli.js`) runtime-invokes `npx vitest`, so a bare `npx -y @openwop/openwop-conformance` install path requires `vitest` resolvable from the installed package — enforced by the CI install-path guardrail (regression `F-2026-05-06-C`). The server-free gate passes under `vitest` 4; server-requiring scenarios are unaffected (they gate on `OPENWOP_BASE_URL`, orthogonal to the runner version). No scenario behavior or count change.
 
 ### Added — RFCs 0090/0091/0092 conformance scenarios (count 324 → 330)
+
 Always-on, server-free shape probes:
+
 - **`agent-verifier-shape.test.ts`** (RFC 0090) — the content-free `agent.verified` payload $def (closed `verdict` enum; `additionalProperties:false` backing `verifier-no-content-leak`), `agent.verified` in the RunEventType enum, the additive `successCriteria` on the `terminate` decision, and `executionModel.version` 6 + the `verifier{supported,gating}` capability sub-block.
 - **`aiproviders-input-shape.test.ts`** (RFC 0091) — the additive `capabilities.aiProviders.input.modalities[]` (closed enum text/image/audio/document) + positive-integer `maxBytesPerPart`.
 - **`agent-requires-capabilities-shape.test.ts`** (RFC 0092) — the additive `AgentManifest.requiresCapabilities[]` (optional; non-string-array rejected).
 
 Capability-gated **behavioral** legs (soft-skip by default; hard-fail under `OPENWOP_REQUIRE_BEHAVIOR=true`) — the Active→Accepted reference-host proof for each RFC:
+
 - **`agent-capability-degraded-projection.test.ts`** (RFC 0092 §B) — gated on `agents.manifestRuntime`; the `degraded[]` projection iff-contract on the NORMATIVE `GET /v1/agents` (well-formed/unique members; a degraded key MUST be one the agent requires); non-vacuous via `OPENWOP_DEGRADED_CAPABILITY_AGENT_ID`. Black-box, no seam.
 - **`callai-multimodal.test.ts`** (RFC 0091 §A/§B) — gated on `aiProviders.input.modalities` including a non-text modality; an advertised modality part is accepted, an unadvertised one is rejected with `unsupported_modality`; via the `POST /v1/host/sample/ai/call` seam (soft-skip on 404).
 - **`verifier-gating.test.ts`** (RFC 0090 §B) — gated on `multiAgent.executionModel.verifier.gating`; a `fail` verdict blocks commit/terminate-as-success + emits `agent.verified{verdict:"fail"}`, a `pass` completes; via the `POST /v1/host/sample/agents/verify-run` seam (soft-skip on 404).
 
 ### Changed — test diagnostics (no behavior / count change)
-- **`agent-channel-dispatch.test.ts` (RFC 0082 §B) — value assertions over boolean assertions.** The four pin-comparison checks (Leg 1 `resolvedChannel`, Leg 2 + Leg 3 `resolvedAgentVersion`) now assert the observed value directly (`expect(observed, …).toBe(expected)` / `.not.toBe(movedVersion)`) instead of pre-computing a boolean and asserting `.toBe(true)`. A failing run on a third-party host now surfaces the *actual* resolved channel/version in the diff, not just "expected true, got false" + the requirement text. Pass/fail semantics, scenario count (324), and the published suite behavior are unchanged. Also documented Leg 3's test-isolation caveat: it promotes the bound agent's `stable` head via the conformance-only seam without rollback (the seam exposes no rollback primitive), so hosts SHOULD run the suite against an isolated/ephemeral deployment store.
+
+- **`agent-channel-dispatch.test.ts` (RFC 0082 §B) — value assertions over boolean assertions.** The four pin-comparison checks (Leg 1 `resolvedChannel`, Leg 2 + Leg 3 `resolvedAgentVersion`) now assert the observed value directly (`expect(observed, …).toBe(expected)` / `.not.toBe(movedVersion)`) instead of pre-computing a boolean and asserting `.toBe(true)`. A failing run on a third-party host now surfaces the _actual_ resolved channel/version in the diff, not just "expected true, got false" + the requirement text. Pass/fail semantics, scenario count (324), and the published suite behavior are unchanged. Also documented Leg 3's test-isolation caveat: it promotes the bound agent's `stable` head via the conformance-only seam without rollback (the seam exposes no rollback primitive), so hosts SHOULD run the suite against an isolated/ephemeral deployment store.
 - **`spec-corpus-validity.test.ts` — markdown link-walker prunes CI sibling-repo checkouts.** Added `examples-ext` + `registry-ext` to the walker's `ignoredDirs`. After the 2026-06 repo split, the host-conformance gates check `openwop-examples` / `openwop-registry` out into the workspace; the server-free corpus link-scan would otherwise recurse into them and flag those repos' own cross-repo links as broken. Consumer runs (`--base-url`) don't have those dirs, so this is a no-op for them. No assertion / count change.
 - **`experimental-tier-shape.test.ts` — self-test busts the memoized env cache.** The `experimentalGate routes through behaviorGate` unit test deletes `OPENWOP_REQUIRE_BEHAVIOR` to assert default-mode soft-skip, but `behaviorGate` reads a memoized `loadEnv()` snapshot; under a strict suite run the delete was a no-op (order-dependent: passed in isolation, threw in the full run). Now calls the existing `__resetEnvCacheForTests()` after the toggle + in `finally`. No assertion / count change.
 
@@ -86,7 +95,7 @@ The fix preserves every legitimate soft-skip (capability/profile not advertised,
 
 - **`agent-eval-run.test.ts`** (RFC 0081) — previously the entire `eval.*` ordering/content block was wrapped in `if (startedEvents.length > 0)` and the `EvalSummary` read in `if (status === 200)`, so a host emitting nothing (or a non-200 summary) passed. Now: a wired eval-run MUST return a runId; the event-log seam MUST return the events; **exactly one** `eval.started`, **≥1** `eval.scored`, **exactly one** `eval.completed`; the ordering + per-task count + content-free + `score∈0..1` checks run unconditionally; and `GET /v1/runs/{runId}/eval-summary` MUST serve a **200** schema-valid `EvalSummary`.
 - **`agent-deployment-lifecycle.test.ts`** (RFC 0082) — previously the positive promote could pass with no record/runId and no `deployment.promoted`; the denial/channel-pin legs were conditionally checked. Now: a promote MUST return a runId + a schema-valid record + emit **≥1** `deployment.promoted`; the unauthorized + eval-gate-unmet legs MUST return a runId, be denied, and emit **zero** `deployment.promoted`; the channel-pin leg MUST emit `agent.invocation.started` carrying `resolvedAgentVersion`.
-- **`trigger-bridge-delivery.test.ts`** (RFC 0083) — previously dedup checked `≤1` delivered (zero passed) and causation only checked that a causationId *existed*. Now: dedup MUST be **exactly one** delivered attempt; exhaustion MUST emit a terminal `dead-lettered` delivery + a `dead-lettered` subscription transition; and the delivered run's `run.started.causationId` MUST **equal the delivery id** (the `trigger.delivery.attempted{delivered}` event's `eventId`) per trigger-bridge.md §C — not merely be non-empty.
+- **`trigger-bridge-delivery.test.ts`** (RFC 0083) — previously dedup checked `≤1` delivered (zero passed) and causation only checked that a causationId _existed_. Now: dedup MUST be **exactly one** delivered attempt; exhaustion MUST emit a terminal `dead-lettered` delivery + a `dead-lettered` subscription transition; and the delivered run's `run.started.causationId` MUST **equal the delivery id** (the `trigger.delivery.attempted{delivered}` event's `eventId`) per trigger-bridge.md §C — not merely be non-empty.
 
 New shared helper `requireEvents()` in `src/lib/event-log-query.ts` asserts a query succeeded (hard-fail, no vacuous pass) and returns the typed events. Capability-gated + additive; reference hosts that don't advertise these surfaces continue to soft-skip. MyndHyve (which already emits the full evidence) continues to pass non-vacuously.
 
@@ -262,6 +271,7 @@ Minor bump per `PUBLISHING.md` §"Versioning alignment" — bundles 45 new confo
 ### Added — RFC 0030-0033 envelope LLM-contract-hardening (Accepted 2026-05-21)
 
 12 new scenarios + 7 new fixtures covering the envelope-reliability surface:
+
 - **Reasoning** — `envelope-reasoning-shape.test.ts` (always-on; OPTIONAL `reasoning` property on the 3 universal-kind schemas), `envelope-reasoning-secret-redaction.test.ts` (RFC 0034 OTel-seam-gated; SR-1 redaction probe).
 - **Tier-1 subset** — `envelope-tier-one-subset-static.test.ts` (always-on for the no-`oneOf`/`allOf`/`not`/`prefixItems`/`propertyNames` rule; strict-mode gated for OpenAI-only constraints).
 - **Variant discriminator** — `envelope-variant-discriminator-static.test.ts` (always-on; every `anyOf` branch declares a single-string-enum discriminator in `required`).
@@ -274,6 +284,7 @@ Fixtures: `conformance-envelope-{retry-attempted, retry-exhausted, refusal, trun
 ### Added — RFC 0027 + 0028 + 0029 prompts track (Active; path-to-Accepted is non-steward adoption)
 
 11 new scenarios + 9 new fixtures covering the prompts surface:
+
 - **Wire shape (RFC 0027)** — `prompt-template-shape.test.ts` (always-on Ajv compile + round-trip), `prompt-composed-secret-redaction.test.ts` (capability-gated SR-1 probe), `prompt-composed-trust-marker.test.ts` (RFC 0020 §D `<UNTRUSTED>...</UNTRUSTED>` propagation), `prompt-all-four-kinds-events.test.ts` (system/user/schema-hint/few-shot end-to-end), `prompt-end-to-end-events.test.ts` (full prompt lifecycle through `core.openwop.local.sample.demo.mock-ai`).
 - **Library endpoints (RFC 0028)** — `prompt-list-and-fetch.test.ts` (`GET /v1/prompts` + `GET /v1/prompts/:templateId`), `prompt-mutable-lifecycle.test.ts` (`POST`/`PATCH`/`DELETE`), `prompt-render-deterministic.test.ts` (`POST /v1/prompts/:templateId:render` deterministic output), `prompt-pack-install.test.ts` (`kind: "prompt"` pack boot-time install + `?source=pack` filter).
 - **Resolution chain (RFC 0029)** — `prompt-resolution-chain-node-wins.test.ts` (layer 1 supersedes 2-4), `prompt-resolution-chain-agent-intrinsic.test.ts` (layer 2 wins when no layer 1), `prompt-resolution-chain-fallback-cascade.test.ts` (layer 3 → 4 → null cascade; chain[] always lists every attempted layer).
@@ -283,6 +294,7 @@ Fixtures: `conformance-prompt-{all-four-kinds, end-to-end}.json` plus the per-te
 ### Added — RFC 0035 sandbox execution contract (Active; reference-impl-tier today, protocol-tier on first sandbox host)
 
 8 new scenarios — one per failure-mode invariant in `host-capabilities.md` §"Sandbox execution contract (RFC 0035)":
+
 - `sandbox-capability-gate-respected.test.ts` — `sandbox_capability_denied` envelope when a sandbox call hits a capability not in `allowedHostCalls`.
 - `sandbox-memory-cap.test.ts` — `sandbox_memory_exceeded` envelope when memory cap breached.
 - `sandbox-timeout-cap.test.ts` — `sandbox_timeout` envelope when wall-clock cap breached.
@@ -297,6 +309,7 @@ Fixtures: `conformance-prompt-{all-four-kinds, end-to-end}.json` plus the per-te
 ### Added — RFC 0036 multi-region + cross-engine ordering (Active; path-to-Accepted is Postgres-host simulator + non-steward host)
 
 1 new scenario:
+
 - `cross-engine-append-ordering.test.ts` — capability-gated on `eventLog.crossEngineOrdering.supported: true`; asserts append-ordering invariants across `core.engine.append` calls from concurrent engines.
 
 (`multi-region-idempotency.test.ts` remains shape-only pending multi-region simulator or deployment; tracked in `docs/KNOWN-LIMITS.md`.)
@@ -304,6 +317,7 @@ Fixtures: `conformance-prompt-{all-four-kinds, end-to-end}.json` plus the per-te
 ### Added — RFC 0037 multi-agent execution model Phase 1 (Active; reference workflow-engine advertises)
 
 1 new scenario + 2 fixtures:
+
 - `multi-agent-handoff-state-machine.test.ts` — advertisement-shape probe (always-on) + behavioral assertion (capability-gated on `multiAgent.executionModel.supported: true`) covering the 7 handoff state-machine transition events with chained `causationId`.
 
 Fixtures: `conformance-multi-agent-handoff.json` (parent workflow) + `conformance-multi-agent-handoff-child.json` (child workflow). Reference workflow-engine advertises under `OPENWOP_MULTI_AGENT_EXECUTION_MODEL=true`.
@@ -311,6 +325,7 @@ Fixtures: `conformance-multi-agent-handoff.json` (parent workflow) + `conformanc
 ### Added — RFC 0039 multi-agent Phase 2 (confidence + memory lifecycle; Active)
 
 2 new scenarios + 1 fixture:
+
 - `multi-agent-confidence-escalation.test.ts` — gated on `multiAgent.executionModel.version >= 2`; asserts decisions with `confidence < confidenceEscalationFloor` MUST emit `core.workflowChain.confidence-escalated` event + suspend with `interrupt.kind: 'clarification'` + NOT execute the worker dispatch.
 - `multi-agent-memory-lifecycle.test.ts` — advertisement-shape probe + 2 `it.todo` behavioral assertions for MAE-2 cross-run TTL + MAE-3 replay snapshot (lights up when a memory-advertising Phase 2 host wires the test seam).
 
@@ -319,6 +334,7 @@ Fixture: `conformance-multi-agent-confidence-escalation.json`.
 ### Added — RFC 0040 multi-agent Phase 3 (cross-host causation; Active)
 
 3 new scenarios:
+
 - `cross-host-causation-shape.test.ts` — always-on when discovery reachable; asserts the shape of `multiAgent.executionModel.crossHostCausation.{supported, hostId, ancestryEndpointSupported}` + `version >= 3` when advertised.
 - `cross-host-ancestry-endpoint.test.ts` — capability-gated on `crossHostCausation.ancestryEndpointSupported: true`; covers `GET /v1/runs/{runId}/ancestry` top-level-run path (`parent: null`) + the 404 contract when the capability is not advertised.
 - `cross-host-traceparent-propagation.test.ts` — capability-gated behavioral; 2 `it.todo` assertions for outbound MCP + A2A `traceparent` injection (lights up when `OPENWOP_MCP_REAL_SERVER_URL` / `OPENWOP_A2A_REAL_PEER_URL` env harness ships).
@@ -326,6 +342,7 @@ Fixture: `conformance-multi-agent-confidence-escalation.json`.
 ### Added — RFC 0041 multi-agent Phase 4 (replay determinism; Active)
 
 3 new scenarios:
+
 - `replay-llm-cache-key-portable.test.ts` — RFC 0041 §E SECURITY-invariant probe (intra-host reproducibility + non-recipe-field invariance + Phase 4 advertisement alignment). Reuses the existing `POST /v1/host/sample/test/llm-cache-key` seam from `replay-llm-cache-key.test.ts`.
 - `replay-divergence-at-refusal.test.ts` — advertisement-shape probe + 2 `it.todo` for the dual-direction refusal-divergence case (original=valid + replay=refusal AND original=refusal + replay=valid).
 - `replay-observable-sequence-determinism.test.ts` — 2 `it.todo` for §C boundary byte-equivalence + observable-result caching (lights up when a `conformance-phase4-nondet-tool` fixture ships).

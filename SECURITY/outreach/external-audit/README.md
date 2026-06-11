@@ -8,13 +8,13 @@ This directory contains one ready-to-send outreach email per vendor on the short
 
 Per `SECURITY/external-audit-engagement.md` §4:
 
-| Vendor | Track record / fit | Public-report quality | Weight |
-|---|---|---|---:|
-| Trail of Bits | Strong on protocol-level + supply-chain; OAuth-adjacent | Reports are public + thorough | High |
-| NCC Group | Broad enterprise track record | Reports public | High |
-| Doyensec | Strong on web + workflow systems | Reports public | Medium |
-| Cure53 | LLM-adjacent + crypto-protocol heritage | Reports public | Medium |
-| Latacora | Smaller engagements; fast turnaround | Reports public | Medium |
+| Vendor        | Track record / fit                                      | Public-report quality         | Weight |
+| ------------- | ------------------------------------------------------- | ----------------------------- | -----: |
+| Trail of Bits | Strong on protocol-level + supply-chain; OAuth-adjacent | Reports are public + thorough |   High |
+| NCC Group     | Broad enterprise track record                           | Reports public                |   High |
+| Doyensec      | Strong on web + workflow systems                        | Reports public                | Medium |
+| Cure53        | LLM-adjacent + crypto-protocol heritage                 | Reports public                | Medium |
+| Latacora      | Smaller engagements; fast turnaround                    | Reports public                | Medium |
 
 Weighting per the engagement doc: protocol track record 40%, LLM/workflow experience 25%, schedule fit 15%, public-report quality 10%, cost 10%.
 
@@ -27,6 +27,7 @@ Weighting per the engagement doc: protocol track record 40%, LLM/workflow experi
 - `latacora.md` — primary outreach
 
 Each file has:
+
 - **Subject:** the line you paste into your mail client
 - **To:** the vendor's intake email (the public-facing one; replace with a known contact if you have one)
 - **Body:** the message verbatim
@@ -48,6 +49,7 @@ Each file has:
 ## After-engagement
 
 Once a vendor accepts:
+
 - Move `SECURITY/external-audit-engagement.md` §8 forward through the rest of the status rows.
 - Pin the repository commit hash per §5 preconditions.
 - The vendor's NDA gets signed before any non-public-finding access (which is narrow — most of the project is already public).

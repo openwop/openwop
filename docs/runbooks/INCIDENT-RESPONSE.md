@@ -10,12 +10,12 @@ This runbook is for openwop project maintainers + vendor registered-publisher ac
 
 Before responding to any incident, classify severity:
 
-| Severity | Meaning | Response time | Public disclosure |
-|---|---|---|---|
-| **S0 — Critical** | Key compromise (private key in unauthorized hands), supply-chain attack (malicious code in a published tarball), registry compromised | <1h to mitigation, public statement within 24h | YES — coordinated disclosure required |
-| **S1 — High** | Pack vulnerability with active exploitability (CVE-rated 7.0+), registry serving wrong content | <4h to mitigation, public statement within 7 days | YES — within the 90-day default window |
-| **S2 — Medium** | Pack vulnerability with theoretical impact (CVE 4.0–6.9), pack causing data loss in edge cases | <24h to mitigation, public statement at next scheduled release | Patch first, disclose with release notes |
-| **S3 — Low** | Cosmetic issues, performance regressions, docs errors | Triaged in normal sprint cadence | No coordinated disclosure |
+| Severity          | Meaning                                                                                                                               | Response time                                                  | Public disclosure                        |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ---------------------------------------- |
+| **S0 — Critical** | Key compromise (private key in unauthorized hands), supply-chain attack (malicious code in a published tarball), registry compromised | <1h to mitigation, public statement within 24h                 | YES — coordinated disclosure required    |
+| **S1 — High**     | Pack vulnerability with active exploitability (CVE-rated 7.0+), registry serving wrong content                                        | <4h to mitigation, public statement within 7 days              | YES — within the 90-day default window   |
+| **S2 — Medium**   | Pack vulnerability with theoretical impact (CVE 4.0–6.9), pack causing data loss in edge cases                                        | <24h to mitigation, public statement at next scheduled release | Patch first, disclose with release notes |
+| **S3 — Low**      | Cosmetic issues, performance regressions, docs errors                                                                                 | Triaged in normal sprint cadence                               | No coordinated disclosure                |
 
 ---
 
@@ -88,17 +88,21 @@ Detection paths:
 1. **Immediate yank — within 1 hour**:
    - Yank ALL versions of the compromised pack (not just the one with confirmed bad code)
    - Follow `docs/runbooks/PACK-LIFECYCLE.md` §"Yank" but **also delete the tarball files** in the same PR (Firebase Hosting doesn't auto-purge):
+
      ```bash
      rm registry/v1/packs/<name>/-/*.tgz
      rm registry/v1/packs/<name>/-/*.sig
      ```
+
    - Title PR `[YANK-COMPROMISE] <pack-name>` for visibility
 
 2. **Suspend the publisher key** (if the compromise reached the publisher's signing infrastructure):
    - Edit `.well-known/openwop-registry.json` `signingKeys[]` for the affected key:
+
      ```json
      { "keyId": "<org>-internal-1", "status": "suspended", ... }
      ```
+
    - Hosts running `verified` mode MUST refuse to install ANY pack signed by a suspended key
 
 3. **Forensics**:
@@ -131,6 +135,7 @@ A publisher's private signing key is suspected to be in unauthorized hands. Trig
 ### Step-by-step (S0)
 
 1. **Within 1 hour: mark the key suspended** in `.well-known/openwop-registry.json`:
+
    ```json
    {
      "keyId": "<org>-internal-1",
@@ -145,6 +150,7 @@ A publisher's private signing key is suspected to be in unauthorized hands. Trig
    - Iterate every pack version manifest in the affected namespace
    - If `signing.keyId === <suspended-key-id>`, mark `yanked: true`
    - Bulk via:
+
      ```bash
      for f in registry/v1/packs/vendor.<org>.*/-/*.json; do
        if grep -q "\"keyId\": \"<org>-internal-1\"" "$f"; then
@@ -152,6 +158,7 @@ A publisher's private signing key is suspected to be in unauthorized hands. Trig
        fi
      done
      ```
+
    - Run `node registry/scripts/build-index.mjs` to update indices
 
 3. **Generate a NEW key on uncompromised infrastructure**:
@@ -182,11 +189,13 @@ A publisher's private signing key is suspected to be in unauthorized hands. Trig
 ### Step-by-step
 
 1. **Verify scope** of the outage:
+
    ```bash
    curl -I https://packs.openwop.dev/
    curl -I https://packs.openwop.dev/v1/index.json
    curl -I https://packs.openwop.dev/keys/openwop-registry-root.pub
    ```
+
    - All 200: registry up, problem is elsewhere
    - Some 5xx: Firebase Hosting issue, check Firebase status page
    - All DNS-fail: Fastly CDN or DNS issue

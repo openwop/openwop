@@ -10,21 +10,21 @@ Public industry numbers: cold outreach reply rate without follow-ups is ~5–10%
 
 1. **Inbox surface area** — first email may have been buried by 200 others on a busy Tuesday.
 2. **Implicit signaling** — a follow-up tells the recipient "this isn't a one-shot promotional blast; the sender will keep showing up." That alone shifts replies from the "ignore" bucket to the "I should at least say no" bucket.
-3. **Lower-cost reply path** — each follow-up should make replying *cheaper* than not replying (specific time windows, lower-effort "no" options, single ask per email).
+3. **Lower-cost reply path** — each follow-up should make replying _cheaper_ than not replying (specific time windows, lower-effort "no" options, single ask per email).
 
 The cadence below maximizes 1–3 without becoming nagging. **Hard stop at follow-up #3.** Past that, the lead is cold — note in the tracker + revisit in 90 days.
 
 ## The cadence (per recipient)
 
-| Day | Action | Subject angle | Cost-to-reply lever |
-|---:|---|---|---|
-| 0 | Initial outreach | The artifact you wrote in the per-track template | Specific ask + Calendly fallback |
-| +5 | Nudge #1 | "Re: [original subject]" — top-of-inbox bump | Lower the ask: "even a one-line 'no fit' helps me" |
-| +12 | Nudge #2 | New angle ("did this get buried?" / share an artifact) | Attach or link a concrete artifact (conformance summary, public report, demo recording) |
-| +28 | Nudge #3 (final) | "Closing the loop" | Frame as last touch; offer future-dated re-contact |
-| +90 | Re-contact (optional) | Significant project update | Only if there's a real reason to retry (new release, new endorsement, new evidence) |
+| Day | Action                | Subject angle                                          | Cost-to-reply lever                                                                     |
+| --: | --------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+|   0 | Initial outreach      | The artifact you wrote in the per-track template       | Specific ask + Calendly fallback                                                        |
+|  +5 | Nudge #1              | "Re: [original subject]" — top-of-inbox bump           | Lower the ask: "even a one-line 'no fit' helps me"                                      |
+| +12 | Nudge #2              | New angle ("did this get buried?" / share an artifact) | Attach or link a concrete artifact (conformance summary, public report, demo recording) |
+| +28 | Nudge #3 (final)      | "Closing the loop"                                     | Frame as last touch; offer future-dated re-contact                                      |
+| +90 | Re-contact (optional) | Significant project update                             | Only if there's a real reason to retry (new release, new endorsement, new evidence)     |
 
-**Don't shorten the gaps.** Day +5 / +12 / +28 are calibrated; shorter intervals (+2, +5, +10) read as desperate and lower the reply rate on the *original* email retroactively. Recipients see the cadence in their inbox.
+**Don't shorten the gaps.** Day +5 / +12 / +28 are calibrated; shorter intervals (+2, +5, +10) read as desperate and lower the reply rate on the _original_ email retroactively. Recipients see the cadence in their inbox.
 
 ## Per-track timing
 
@@ -188,6 +188,7 @@ Copy / adapt per track. Each template is ≤ 80 words and asks for one thing.
 Each track has a per-vendor status row in `MAINTAINERS.md` §"Recruitment log" or `SECURITY/outreach/external-audit/STATUS.md`. Update in the same git commit that handles the reply (see `STATUS.md` maintenance convention).
 
 Status values:
+
 - `pending-outreach` — initial email not yet sent
 - `outreach-sent` — Day 0 happened, no reply yet
 - `nudge-1-sent` — Day +5 happened, no reply yet

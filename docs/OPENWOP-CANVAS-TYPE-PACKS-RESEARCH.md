@@ -1,4 +1,4 @@
-# Research — Should openwop define a "Canvas Type" (artifact-type) pack kind?
+# Research — Should OpenWOP define a "Canvas Type" (artifact-type) pack kind?
 
 > **Status: Research / recommendation only.** This document evaluates whether openwop
 > should promote the downstream "Canvas Type" concept into a first-class, spec-level
@@ -6,7 +6,7 @@
 > recommendation is accepted, §8 sketches the RFC scope so it can feed `/prd`.
 >
 > Produced 2026-05-26. Inputs: `spec/v1/{node-packs,workflow-chain-packs,ai-envelope,
-> capabilities,host-capabilities,channels-and-reducers,positioning}.md`,
+capabilities,host-capabilities,channels-and-reducers,positioning}.md`,
 > `schemas/{node-pack-manifest,workflow-definition,run-event-payloads}.schema.json`,
 > `registry/vendor.myndhyve.canvas/1.0.0/`, and the MyndHyve checkout at
 > `/Users/david/dev/myndhyve` (`docs/CANVAS_TYPE_*`, `src/canvas-types/`,
@@ -19,15 +19,15 @@
 - **The question is not "should we invent canvases."** openwop already ships the latent
   infrastructure: a `kind` pack discriminator (`node`, `workflow-chain`, and an existing
   `prompt-pack-manifest.schema.json`), an **unspecified** `nodes[].artifact.{typeId,
-  syncOn, supportsCheckpoint}` field in the node-pack manifest schema, a free-string
+syncOn, supportsCheckpoint}` field in the node-pack manifest schema, a free-string
   `artifact.created` run event, a `WorkflowNode.artifactType` tag, and AI Envelopes with
   per-kind payload schemas + advisory `meta.rendering` hints. The pieces exist but are
   uncoordinated and partly contract-free.
 - **MyndHyve already built the full thing downstream** — `CanvasManifest` bundling
   `nodePack` + `cardPack` + `canvasPack` + `artifactTypes[]` + `collectionSchemas[]` +
-  `workflowTemplates[]`. But what they *published* to the openwop registry
+  `workflowTemplates[]`. But what they _published_ to the openwop registry
   (`vendor.myndhyve.canvas`) encodes **none** of it — it's four opaque `canvasCreate/
-  Read/Write/crossCanvasInvoke` CRUD nodes with `additionalProperties: true` blobs. The
+Read/Write/crossCanvasInvoke` CRUD nodes with `additionalProperties: true` blobs. The
   entire canvas-type model lives above the protocol, inside their React/Fabric.js/Firestore
   stack.
 - **The genuinely portable nucleus is small**: a distributable, signed, versioned
@@ -49,17 +49,17 @@
 MyndHyve's `CanvasManifest` (`src/core/types/index.ts:635`) is a **vertical solution pack**.
 Its fields, classified by whether a protocol could ever own them:
 
-| Manifest section | What it is | Protocol-portable? |
-|---|---|---|
-| identity (`canvasTypeId`, `version`, `name`, `publisher`, `tags`, `visibility`) | metadata | **Portable** (already mirrors pack identity) |
-| `nodePack` → `NodeTypeDefinition[]` | workflow node executors w/ typed ports (`type:'artifact'`), `configSchema`, `execution` | **Portable** (this is just node packs) |
-| `artifactTypes[]` → `ArtifactTypeDefinition` (`typeId`, `schema`, `icon`, `color`, `versionable`, `diffable`) | declares the typed outputs nodes produce | **Portable** — this is the nucleus |
-| `collectionSchemas[]` | domain data models | Portable (plain JSON Schema) |
-| `cardPack` → `CardTemplateDefinition` (`primaryPrompt`, `outputArtifactType`, `outputSchema`) | chat-driven AI step cards | Partly — prompt text + output-type ref portable; `artifact-reference`/`canvas-reference` field types assume MyndHyve IDs |
-| `canvasPack` → `CanvasTypeDefinition` / `CanvasComponentDefinition` (`coordinateSystem`, `defaultPageSize`, component palette) | visual editing surface | **UI-coupled** — Fabric.js viewport concepts |
-| artifact **viewers** (`PRDViewer`, `CADModelSpecViewer`, …) | React+MUI render components | **UI-coupled** — no wire form |
-| `canvasExtension`, Canvas Shell plugin registries, Zustand stores | runtime UI plumbing | **UI-coupled** |
-| **exporters** (PPTX, pandoc, web export) | no manifest field at all; service classes | host-domain today |
+| Manifest section                                                                                                               | What it is                                                                              | Protocol-portable?                                                                                                       |
+| ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| identity (`canvasTypeId`, `version`, `name`, `publisher`, `tags`, `visibility`)                                                | metadata                                                                                | **Portable** (already mirrors pack identity)                                                                             |
+| `nodePack` → `NodeTypeDefinition[]`                                                                                            | workflow node executors w/ typed ports (`type:'artifact'`), `configSchema`, `execution` | **Portable** (this is just node packs)                                                                                   |
+| `artifactTypes[]` → `ArtifactTypeDefinition` (`typeId`, `schema`, `icon`, `color`, `versionable`, `diffable`)                  | declares the typed outputs nodes produce                                                | **Portable** — this is the nucleus                                                                                       |
+| `collectionSchemas[]`                                                                                                          | domain data models                                                                      | Portable (plain JSON Schema)                                                                                             |
+| `cardPack` → `CardTemplateDefinition` (`primaryPrompt`, `outputArtifactType`, `outputSchema`)                                  | chat-driven AI step cards                                                               | Partly — prompt text + output-type ref portable; `artifact-reference`/`canvas-reference` field types assume MyndHyve IDs |
+| `canvasPack` → `CanvasTypeDefinition` / `CanvasComponentDefinition` (`coordinateSystem`, `defaultPageSize`, component palette) | visual editing surface                                                                  | **UI-coupled** — Fabric.js viewport concepts                                                                             |
+| artifact **viewers** (`PRDViewer`, `CADModelSpecViewer`, …)                                                                    | React+MUI render components                                                             | **UI-coupled** — no wire form                                                                                            |
+| `canvasExtension`, Canvas Shell plugin registries, Zustand stores                                                              | runtime UI plumbing                                                                     | **UI-coupled**                                                                                                           |
+| **exporters** (PPTX, pandoc, web export)                                                                                       | no manifest field at all; service classes                                               | host-domain today                                                                                                        |
 
 **The linkage that matters** (how a node says "I produce artifact X"): three uncoordinated
 paths downstream — (A) a node output port with `type:'artifact'` (generic, doesn't name the
@@ -69,14 +69,14 @@ engine's `getRunArtifactByType()` and a runtime `ArtifactTypeRegistry` mapping t
 **Only (A) and the string tag are portable**; the registry resolution to viewers/cards is
 the UI-coupled part.
 
-**Crucial finding:** the artifact↔schema↔renderer coupling downstream is a *runtime string
-registry*, not a schema-enforced relationship. That is exactly the kind of latent, unsafe
+**Crucial finding:** the artifact↔schema↔renderer coupling downstream is a _runtime string
+registry_, not a schema-enforced relationship. That is exactly the kind of latent, unsafe
 coupling a wire spec is good at hardening — and exactly what openwop has left contract-free
 (see §2).
 
 ---
 
-## 2. What openwop already has (the surface), and why it doesn't close the loop
+## 2. What OpenWOP already has (the surface), and why it doesn't close the loop
 
 openwop is **further along than the original prompt assumed**. Existing surfaces:
 
@@ -104,7 +104,7 @@ openwop is **further along than the original prompt assumed**. Existing surfaces
 6. **`media.{image,audio,file}`** envelope kinds define asset-URL discipline but no
    schema+renderer+export bundle.
 
-**Why the loop is open:** a node *cannot* declare, in a normatively enforced and
+**Why the loop is open:** a node _cannot_ declare, in a normatively enforced and
 distributable way, "I emit artifact type X conforming to schema Y, rendering hint Z,
 exportable as W." The type tag is a free string; the schema (when it exists) is host-private
 and undistributed; rendering is advisory-inbound-only; and there is **no capability key** to
@@ -120,8 +120,8 @@ negotiate store-vs-render-vs-export across hosts.
 2. **No schema binding for the type tag.** `WorkflowNode.artifactType` and
    `artifact.created.artifactType` are free strings. Two hosts using `"prd"` have no
    guarantee they mean the same shape.
-3. **No store/render/export capability negotiation.** If host A can *store* a
-   `vendor.acme.cad-drawing` but not *render* it, there is no capability key to advertise
+3. **No store/render/export capability negotiation.** If host A can _store_ a
+   `vendor.acme.cad-drawing` but not _render_ it, there is no capability key to advertise
    that and no refusal contract. (Today `runtimeCapabilities[]` is an opaque string list;
    `supportedEnvelopes[]` covers inbound LLM kinds only.)
 4. **A shipped-but-undefined field.** `nodes[].artifact.{typeId,syncOn,supportsCheckpoint}`
@@ -132,8 +132,8 @@ negotiate store-vs-render-vs-export across hosts.
 
 ## 4. The "no UI" boundary — what must stay out of spec
 
-`positioning.md` is explicit: *"openwop is the wire contract; engines implement that
-contract,"* and it "is not a BPMN renderer." The furthest the spec goes toward rendering is
+`positioning.md` is explicit: _"openwop is the wire contract; engines implement that
+contract,"_ and it "is not a BPMN renderer." The furthest the spec goes toward rendering is
 the **advisory** `meta.rendering` hint and the `x-openwop-form` config annotation (RFC 0066),
 both "advisory only, never changes validation, consumers MUST degrade gracefully."
 
@@ -143,8 +143,8 @@ be rejected:
 - Artifact **viewers** / render components (MyndHyve's `PRDViewer`, Fabric.js canvas).
 - `canvasPack` concepts: `coordinateSystem`, `defaultPageSize`, component palettes.
 - Card packs as a UI invocation layer, chat-card registries, Zustand stores.
-- Concrete **export implementations** (PPTX/pandoc). The spec may name an *export format
-  identifier* (a hint); it must not specify how bytes are produced.
+- Concrete **export implementations** (PPTX/pandoc). The spec may name an _export format
+  identifier_ (a hint); it must not specify how bytes are produced.
 
 The protocol's legitimate concern is the **typed artifact on the wire**: identity, schema,
 sync/checkpoint lifecycle, and capability negotiation. That is a strict subset of
@@ -155,24 +155,30 @@ sync/checkpoint lifecycle, and capability negotiation. That is a strict subset o
 ## 5. Options
 
 ### Option A — Do nothing (status quo)
+
 Leave artifact typing as a host concern; MyndHyve keeps its downstream registry.
+
 - **Pro:** zero spec surface, zero interop risk, honest about the single-adopter reality.
 - **Con:** leaves `nodes[].artifact` contract-free (a standing inconsistency); the free-string
   `artifactType` is a latent interop trap if a second host ever emits artifacts; no portability
   for the one feature the adopter most visibly built on top of openwop.
 
 ### Option B — Host-extension only (document, don't standardize)
+
 Treat artifact types like `host.canvas` today: a vendor capability namespace, documented as
 an extension pattern, with no core schema.
+
 - **Pro:** low commitment; matches how `host.canvas` already works; reversible.
 - **Con:** doesn't harden the free-string tag or distribute schemas; every host reinvents the
   registry; doesn't resolve the orphaned `nodes[].artifact` field.
 
 ### Option C — Narrow spec capability (RECOMMENDED)
+
 Define an **`artifact-type` pack kind** + a **host `artifactTypes` capability** for
 store/render/export negotiation + give `nodes[].artifact` its normative prose binding a node's
 output to a registered artifact-type pack. **Explicitly excludes** viewers, card packs, canvas
 rendering.
+
 - **Pro:** distributable/signed/versioned artifact schemas; hardens the type tag to a
   registered id; gives the orphaned field a contract; clean store/render/export negotiation;
   reuses the proven `kind` discriminator and registry naming/signing wholesale.
@@ -180,7 +186,9 @@ rendering.
   (§7); risks scope-creep toward "canvases" if the boundary in §4 isn't policed.
 
 ### Option D — Full canvas-type pack (REJECTED)
+
 Port the whole `CanvasManifest` (canvasPack, viewers, card UI) into spec.
+
 - **Rejected:** violates the `positioning.md` "no rendering surface" invariant; ports
   UI-coupled, single-adopter concepts into a wire protocol; unbounded conformance burden.
 
@@ -190,14 +198,14 @@ Port the whole `CanvasManifest` (canvasPack, viewers, card UI) into spec.
 
 **Adopt Option C, scoped tightly.** Rationale:
 
-- It closes a *real* protocol gap (undistributable schemas + free-string type) rather than
+- It closes a _real_ protocol gap (undistributable schemas + free-string type) rather than
   chasing a product feature.
 - It cleans up an existing inconsistency (`nodes[].artifact` with no prose) — this alone is
   worth a small RFC.
 - The cost is bounded because the infrastructure is already present: the `kind` discriminator,
   registry naming/signing, and AI-envelope per-kind schema validation are all reusable.
-- It stays on the correct side of the `positioning.md` line: standardize the *type and
-  transport*, leave *rendering and editing* to the host.
+- It stays on the correct side of the `positioning.md` line: standardize the _type and
+  transport_, leave _rendering and editing_ to the host.
 
 **Naming:** call it **artifact-type packs** (`kind:"artifact-type"`), not "canvas packs."
 "Canvas" is MyndHyve's product surface; conflating them re-imports the UI boundary we are
@@ -236,7 +244,7 @@ Five-architect pass should resolve, at minimum:
 1. **Spec.** New `kind:"artifact-type"` section in `node-packs.md` (or a sibling
    `artifact-type-packs.md`). Define artifact-type identity (reverse-DNS, parallel to node
    `typeId`), the in-tarball schema reference, advisory rendering hint (reuse the
-   `meta.rendering` vocabulary — do **not** invent a second one), and an export-format *hint*
+   `meta.rendering` vocabulary — do **not** invent a second one), and an export-format _hint_
    list (identifiers only, no byte semantics). Give `nodes[].artifact.typeId` its prose,
    binding it to a registered artifact-type pack.
 2. **Schema.** `schemas/artifact-type-pack-manifest.schema.json`; turn the node manifest's
@@ -255,8 +263,9 @@ Five-architect pass should resolve, at minimum:
    doesn't understand (registry `pack_kind_invalid` vs. graceful skip).
 
 **Open questions to put to the maintainer before drafting:**
-- Should the artifact *schema* live inside the artifact-type pack, or continue to live at the
-  host's `{HostBase}/schemas/envelopes/{K}` and merely be *referenced*? (Distribution vs.
+
+- Should the artifact _schema_ live inside the artifact-type pack, or continue to live at the
+  host's `{HostBase}/schemas/envelopes/{K}` and merely be _referenced_? (Distribution vs.
   host-authority trade-off.)
 - Is the new host capability `host.artifactTypes` (parallel to `host.canvas`) or a block under
   the existing `capabilities` advertisement?

@@ -20,19 +20,22 @@ The external standards-readiness review explicitly flagged governance neutrality
 ## Candidate list
 
 Tier 1 — durable execution + workflow spec experience:
+
 - _(TBD — fill in 3-5 names from the durable-execution community before sending)_
 
 Tier 2 — multi-agent + protocol spec experience:
+
 - _(TBD — fill in 3-5 names)_
 
 Tier 3 — security/BYOK spec experience:
+
 - _(TBD — fill in 3-5 names from the BYOK + secret-redaction community)_
 
 ## Outreach template
 
 Subject: `OpenWOP external RFC review — would you be open to a single-RFC review pass?`
 
-```
+```text
 Hi <Name>,
 
 I'm the steward of OpenWOP (https://openwop.dev) — an open wire-protocol
@@ -76,8 +79,8 @@ When you contact a candidate:
 
 When a reply comes in:
 
-3. Note `accepted` / `declined` / `no response` next to their name + date.
-4. On acceptance: amend the target RFC to add a `## Reviewers` section naming them + the agreed review-deliverable date.
+1. Note `accepted` / `declined` / `no response` next to their name + date.
+2. On acceptance: amend the target RFC to add a `## Reviewers` section naming them + the agreed review-deliverable date.
 
 ## Outreach log
 

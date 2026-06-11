@@ -1,4 +1,4 @@
-# openwop Spec v1 — Scale Profiles
+# OpenWOP Spec v1 — Scale Profiles
 
 > **Status: Stable · v1.1 (2026-05-05).** Defines three scale tiers a host MAY claim. Scale claims are advertised in host documentation and verified at runtime by `@openwop/openwop-conformance` scenarios. No discovery-payload schema change. Graduated DRAFT → FINAL via RFC 0004. See `auth.md` for the status legend. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
@@ -20,17 +20,17 @@ Scale profiles are independent of compatibility profiles (`profiles.md`). A host
 
 ## Profile definitions
 
-| Property | `minimal` | `production` | `high-throughput` |
-|---|---|---|---|
-| Concurrent runs in flight (per tenant) | ≥ 1 | ≥ 50 | ≥ 500 |
-| Concurrent runs in flight (global) | ≥ 1 | ≥ 500 | ≥ 5000 |
-| `POST /v1/runs` p50 latency | ≤ 1000 ms | ≤ 250 ms | ≤ 100 ms |
-| `POST /v1/runs` p99 latency | ≤ 5000 ms | ≤ 1000 ms | ≤ 500 ms |
-| Event-stream delivery delay (p99) | ≤ 5000 ms | ≤ 500 ms | ≤ 200 ms |
-| Idempotency cache retention | ≥ 24 h | ≥ 24 h | ≥ 24 h |
-| Backpressure mechanism | 503 + Retry-After | 503 + Retry-After + queue | 503 + Retry-After + queue + admission control |
-| Fan-out cap (parallel sub-workflows) | ≥ 1 | ≥ 10 | ≥ 100 |
-| Run replay (cold-cache) | ≤ 30 s | ≤ 5 s | ≤ 2 s |
+| Property                               | `minimal`         | `production`              | `high-throughput`                             |
+| -------------------------------------- | ----------------- | ------------------------- | --------------------------------------------- |
+| Concurrent runs in flight (per tenant) | ≥ 1               | ≥ 50                      | ≥ 500                                         |
+| Concurrent runs in flight (global)     | ≥ 1               | ≥ 500                     | ≥ 5000                                        |
+| `POST /v1/runs` p50 latency            | ≤ 1000 ms         | ≤ 250 ms                  | ≤ 100 ms                                      |
+| `POST /v1/runs` p99 latency            | ≤ 5000 ms         | ≤ 1000 ms                 | ≤ 500 ms                                      |
+| Event-stream delivery delay (p99)      | ≤ 5000 ms         | ≤ 500 ms                  | ≤ 200 ms                                      |
+| Idempotency cache retention            | ≥ 24 h            | ≥ 24 h                    | ≥ 24 h                                        |
+| Backpressure mechanism                 | 503 + Retry-After | 503 + Retry-After + queue | 503 + Retry-After + queue + admission control |
+| Fan-out cap (parallel sub-workflows)   | ≥ 1               | ≥ 10                      | ≥ 100                                         |
+| Run replay (cold-cache)                | ≤ 30 s            | ≤ 5 s                     | ≤ 2 s                                         |
 
 The numbers are **floors a host MUST sustain to claim the tier**, not suggested defaults. A host that sustains `production`-tier numbers under typical load but not under sustained burst SHOULD claim `production` and document its burst behavior in its README.
 
@@ -131,11 +131,11 @@ Hosts whose workloads don't fit these tiers MAY define their own profile in a fo
 
 ## Open spec gaps
 
-| ID | Description |
-|---|---|
-| SCALE-1 | ✅ Closed in the v1.0 conformance baseline. `--scale-profile=<name>` filters scenarios by their profile tag. |
+| ID      | Description                                                                                                                                                                                                    |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SCALE-1 | ✅ Closed in the v1.0 conformance baseline. `--scale-profile=<name>` filters scenarios by their profile tag.                                                                                                   |
 | SCALE-2 | Latency-percentile measurement methodology (warm-up time, sample size, environment) is not specified here. Each scenario file documents its own. The `highConcurrency.test.ts` scenario seeds the methodology. |
-| SCALE-3 | Cross-region replication semantics (a single run originating in one region with replay served from another) is out of scope for v1.x. |
+| SCALE-3 | Cross-region replication semantics (a single run originating in one region with replay served from another) is out of scope for v1.x.                                                                          |
 
 ---
 

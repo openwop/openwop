@@ -1,4 +1,4 @@
-# openwop Spec v1 — AI Chat Card Packs
+# OpenWOP Spec v1 — AI Chat Card Packs
 
 > **Status: Stable · v1.1 (2026-05-27) — Phase 2 graduated to `Accepted`; RFC 0071 Accepted overall.** Phase 2 of [RFC 0071 — Artifact-Type Packs and AI Chat Card Packs](../../RFCS/0071-artifact-type-and-chat-card-packs.md). Specifies a pack kind that distributes **AI chat cards** — a prompt template bound to a typed output artifact. Depends on Phase 1 (artifact-type packs, `Accepted`) for the `outputArtifactType` linkage. **Phase 2 graduated `Active → Accepted` 2026-05-27** on MyndHyve's production adoption: the non-steward `workflow-runtime` host (rev `workflow-runtime-00402-bey`) advertises `host.chat.cardPacks` + `host.aiEnvelope` unconditionally on `api.myndhyve.ai` (steward curl-verified) with a real `core.chat.cardExecute` node routing through `ctx.aiEnvelope.generate`, and passes the `chat-card-pack-execution` R2 trust-tag proof (registry resolution + output-schema validation + `contentTrust:"untrusted"` propagation). G9 (the portable `inputs[].type` subset) is resolved against MyndHyve's authoritative `CardFieldType`; the R2 `chat-card-input-trust-boundary` invariant is enforced. With Phase 1 already `Accepted`, **RFC 0071 is now `Accepted` overall.** Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
 
@@ -8,13 +8,13 @@
 
 A recurring host pattern is the **AI step card**: a user (or an agent) fills a small form, the host composes a prompt from those inputs, calls an LLM, validates the structured result, and stores it as a typed artifact. MyndHyve built this as `CardTemplateDefinition`; the openwop demo app built a parallel `cardType → component` registry. Neither is portable — the prompt, the input contract, and the output-artifact binding live in host-private code, so a card authored for one host can't run on another.
 
-openwop already carries the *runtime* half of this: `host-capabilities.md` §host.chat defines `ctx.chat.emitCard` / `updateCard` (gated on `host.chat.cards: supported`), and `WorkflowNode.cardType` is a first-class field. What's missing is a **distributable card definition** — the prompt + input contract + output-artifact binding — so a card is publishable, signed, and runnable across hosts.
+openwop already carries the _runtime_ half of this: `host-capabilities.md` §host.chat defines `ctx.chat.emitCard` / `updateCard` (gated on `host.chat.cards: supported`), and `WorkflowNode.cardType` is a first-class field. What's missing is a **distributable card definition** — the prompt + input contract + output-artifact binding — so a card is publishable, signed, and runnable across hosts.
 
 A **chat card pack** is that distribution unit. A card is, precisely: `(typed inputs + prompt template) → ctx.aiEnvelope.generate → a typed artifact of a registered artifact type`. It composes three existing primitives — the AI envelope (`ai-envelope.md`), the artifact type (`artifact-type-packs.md`, Phase 1), and the chat-card runtime (§host.chat) — rather than introducing new machinery.
 
-This doc stops at the wire contract. It does **not** specify input-field *widgets*, card *rendering*, or the chat-sidebar UI — those are host-product concerns per `positioning.md`. It specifies the prompt, the input *types* (a closed portable subset), and the output-artifact binding.
+This doc stops at the wire contract. It does **not** specify input-field _widgets_, card _rendering_, or the chat-sidebar UI — those are host-product concerns per `positioning.md`. It specifies the prompt, the input _types_ (a closed portable subset), and the output-artifact binding.
 
-A chat card pack is distinct from a **prompt pack** (`prompts.md`): a prompt pack distributes reusable prompt *fragments* surfaced via `GET /v1/prompts`; a card is a higher-order composite (inputs + prompt + output-artifact binding) consumed via `WorkflowNode.cardType` / `ctx.chat.emitCard`. A card MAY *reference* a prompt-pack template rather than inlining its prompt (composition over duplication).
+A chat card pack is distinct from a **prompt pack** (`prompts.md`): a prompt pack distributes reusable prompt _fragments_ surfaced via `GET /v1/prompts`; a card is a higher-order composite (inputs + prompt + output-artifact binding) consumed via `WorkflowNode.cardType` / `ctx.chat.emitCard`. A card MAY _reference_ a prompt-pack template rather than inlining its prompt (composition over duplication).
 
 ---
 
@@ -55,26 +55,26 @@ Chat card packs are the fifth pack `kind`, peer to `node`, `workflow-chain`, `pr
 
 ### Required fields
 
-| Field | Description |
-|---|---|
-| `kind` | MUST be the literal `"card"`. |
-| `name`, `version`, `engines.openwop` | As for every pack kind (`node-packs.md` §Naming / §Versioning). |
-| `cards[]` | One or more card definitions; each `cardTypeId` MUST be unique within the pack. |
+| Field                                | Description                                                                     |
+| ------------------------------------ | ------------------------------------------------------------------------------- |
+| `kind`                               | MUST be the literal `"card"`.                                                   |
+| `name`, `version`, `engines.openwop` | As for every pack kind (`node-packs.md` §Naming / §Versioning).                 |
+| `cards[]`                            | One or more card definitions; each `cardTypeId` MUST be unique within the pack. |
 
 ### The `Card` definition
 
-| Field | Req. | Description |
-|---|---|---|
-| `cardTypeId` | MUST | Reverse-DNS identifier, same pattern + reserved scopes as a pack `name`. This is the value `WorkflowNode.cardType` (and the `ctx.chat.emitCard` `cardType` argument) MAY reference. Third parties MUST NOT publish under `core.*`. |
-| `prompt.template` | MUST | The prompt body, with `{{placeholder}}` slots. The host MUST substitute mapped input values (below) into the template before dispatch. |
-| `prompt.placeholderMapping` | MUST | Map of `{{placeholder}}` name → input path (e.g. `"spec": "inputs.spec"`). |
-| `prompt.systemPrompt` | MAY | Optional system prompt. |
-| `prompt.temperature`, `prompt.maxTokens` | MAY | Optional LLM-call hints. |
-| `inputs[]` | SHOULD | The card's typed input fields (below). |
-| `outputArtifactType` | MAY | A registered `artifactTypeId` (Phase 1). When present, the host MUST validate the card's LLM output against that artifact type's schema and emit `artifact.created` for the result. |
-| `outputSchemaRef` | MAY | Path inside the tarball to the JSON Schema the LLM output MUST conform to. SHOULD be consistent with the referenced artifact type's schema. |
-| `requiredModelCapabilities` | MAY | Model capabilities the card needs, drawn from the registry in `host-capabilities.md` §"Capability identifier registry" (reuses the `requiredModelCapabilities` idiom). |
-| `schemaVersion` | SHOULD | Integer card-schema version (the envelope/artifact integer-version axis). |
+| Field                                    | Req.   | Description                                                                                                                                                                                                                        |
+| ---------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cardTypeId`                             | MUST   | Reverse-DNS identifier, same pattern + reserved scopes as a pack `name`. This is the value `WorkflowNode.cardType` (and the `ctx.chat.emitCard` `cardType` argument) MAY reference. Third parties MUST NOT publish under `core.*`. |
+| `prompt.template`                        | MUST   | The prompt body, with `{{placeholder}}` slots. The host MUST substitute mapped input values (below) into the template before dispatch.                                                                                             |
+| `prompt.placeholderMapping`              | MUST   | Map of `{{placeholder}}` name → input path (e.g. `"spec": "inputs.spec"`).                                                                                                                                                         |
+| `prompt.systemPrompt`                    | MAY    | Optional system prompt.                                                                                                                                                                                                            |
+| `prompt.temperature`, `prompt.maxTokens` | MAY    | Optional LLM-call hints.                                                                                                                                                                                                           |
+| `inputs[]`                               | SHOULD | The card's typed input fields (below).                                                                                                                                                                                             |
+| `outputArtifactType`                     | MAY    | A registered `artifactTypeId` (Phase 1). When present, the host MUST validate the card's LLM output against that artifact type's schema and emit `artifact.created` for the result.                                                |
+| `outputSchemaRef`                        | MAY    | Path inside the tarball to the JSON Schema the LLM output MUST conform to. SHOULD be consistent with the referenced artifact type's schema.                                                                                        |
+| `requiredModelCapabilities`              | MAY    | Model capabilities the card needs, drawn from the registry in `host-capabilities.md` §"Capability identifier registry" (reuses the `requiredModelCapabilities` idiom).                                                             |
+| `schemaVersion`                          | SHOULD | Integer card-schema version (the envelope/artifact integer-version axis).                                                                                                                                                          |
 
 ### Input fields — a closed portable subset
 
@@ -82,19 +82,19 @@ Chat card packs are the fifth pack `kind`, peer to `node`, `workflow-chain`, `pr
 
 The subset is **named by data kind, not widget** (so a non-MyndHyve host renders `boolean` as whatever toggle/checkbox it likes). It was resolved (G9) against MyndHyve's authoritative `CardFieldType`, which every adopter maps onto the portable subset plus host extensions:
 
-| MyndHyve `CardFieldType` | openwop `inputs[].type` |
-|---|---|
-| `text` | `text` |
-| `textarea` | `longtext` |
-| `number` | `number` |
-| `toggle` | `boolean` |
-| `select` | `select` |
-| `multiselect` | `multiselect` |
-| `file` | `file` |
-| `artifact-reference` | `artifact-ref` |
-| `color` | `vendor.myndhyve.color` (host extension) |
-| `canvas-reference` | `vendor.myndhyve.canvas-reference` (host extension) |
-| `collection-reference` | `vendor.myndhyve.collection-reference` (host extension) |
+| MyndHyve `CardFieldType` | openwop `inputs[].type`                                 |
+| ------------------------ | ------------------------------------------------------- |
+| `text`                   | `text`                                                  |
+| `textarea`               | `longtext`                                              |
+| `number`                 | `number`                                                |
+| `toggle`                 | `boolean`                                               |
+| `select`                 | `select`                                                |
+| `multiselect`            | `multiselect`                                           |
+| `file`                   | `file`                                                  |
+| `artifact-reference`     | `artifact-ref`                                          |
+| `color`                  | `vendor.myndhyve.color` (host extension)                |
+| `canvas-reference`       | `vendor.myndhyve.canvas-reference` (host extension)     |
+| `collection-reference`   | `vendor.myndhyve.collection-reference` (host extension) |
 
 The three product-specific kinds (`color`, `canvas-reference`, `collection-reference`) stay host extensions — they presuppose MyndHyve's canvas/collection model, a host-UI concern per `positioning.md`. i18n key references and client-side validation widgets are likewise out of scope.
 
@@ -131,11 +131,11 @@ A `WorkflowNode.cardType` value (and the `cardType` argument to `ctx.chat.emitCa
 
 ## Open spec gaps
 
-| Gap | Tracking |
-|---|---|
-| ~~Confirm the closed `inputs[].type` subset against MyndHyve's field types~~ — **resolved (G9, 2026-05-27)**; subset finalized + `multiselect`/`file` added. | RFC 0071 G9 ✅ |
+| Gap                                                                                                                                                                                                                           | Tracking                                                  |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| ~~Confirm the closed `inputs[].type` subset against MyndHyve's field types~~ — **resolved (G9, 2026-05-27)**; subset finalized + `multiselect`/`file` added.                                                                  | RFC 0071 G9 ✅                                            |
 | A host passing `chat-card-pack-execution.test.ts` (R2 trust-tag propagation) end-to-end — the Phase-2 **`Accepted` (host-pass)** gate. The invariant + scenario are landed; awaits a host implementing `host.chat.cardPacks`. | RFC 0071 R2 / `SECURITY/threat-model-prompt-injection.md` |
-| Whether a card may be a thin reference to a `prompt`-pack template vs. always inlining `prompt.template`. | RFC 0071 (composition) |
+| Whether a card may be a thin reference to a `prompt`-pack template vs. always inlining `prompt.template`.                                                                                                                     | RFC 0071 (composition)                                    |
 
 ## References
 

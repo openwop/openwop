@@ -1,4 +1,4 @@
-# openwop Spec v1 — Version Negotiation and Deploy-Skew Safety
+# OpenWOP Spec v1 — Version Negotiation and Deploy-Skew Safety
 
 > **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of all four version axes (engine, per-run event-log, per-event, runtime pinning). Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
@@ -6,13 +6,13 @@
 
 ## Why this exists
 
-Long-running workflows persist state. State written by engine version N may be read by engine version N+1 (forward) or — in a botched deploy — by engine version N-1 (backward / "deploy skew"). Without a version contract, a backward read can silently lose state added in N+1; a forward read can crash on unfamiliar fields. Separately, workflows that have been *running* for hours or days may need to evolve their behavior without invalidating the runs already in flight.
+Long-running workflows persist state. State written by engine version N may be read by engine version N+1 (forward) or — in a botched deploy — by engine version N-1 (backward / "deploy skew"). Without a version contract, a backward read can silently lose state added in N+1; a forward read can crash on unfamiliar fields. Separately, workflows that have been _running_ for hours or days may need to evolve their behavior without invalidating the runs already in flight.
 
-openwop defines **four independent versioning axes** that callers and servers MUST track. Three are *schema* axes (writer/reader compatibility); one is a *runtime branching* axis (in-flight run determinism):
+openwop defines **four independent versioning axes** that callers and servers MUST track. Three are _schema_ axes (writer/reader compatibility); one is a _runtime branching_ axis (in-flight run determinism):
 
 1. **Engine version** (`engineVersion`) — semantic version of the engine code that wrote a run's persisted state. Bumped when run-doc shape changes (renamed/added/removed required field, semantic change).
-2. **Event-log schema version, per-run** (`eventLogSchemaVersion`) — version of the event-log *subcollection* format. Bumped on breaking changes to `RunEventDoc` envelope shape or path semantics.
-3. **Event-log schema version, per-event** (`schemaVersion` on each `RunEventDoc`) — version of an *individual* event-payload contract. Bumped when a specific event type's payload changes shape.
+2. **Event-log schema version, per-run** (`eventLogSchemaVersion`) — version of the event-log _subcollection_ format. Bumped on breaking changes to `RunEventDoc` envelope shape or path semantics.
+3. **Event-log schema version, per-event** (`schemaVersion` on each `RunEventDoc`) — version of an _individual_ event-payload contract. Bumped when a specific event type's payload changes shape.
 4. **Pinned change versions** (`version.pinned` events) — Temporal-style per-(run, changeId) branch pins. Bumped by node authors via `ctx.getVersion(changeId, min, max)` to evolve workflow behavior without breaking in-flight runs.
 
 The four are decoupled because they evolve at different rates and have different correctness guarantees. The three schema axes are deploy-coordinated; the pinning axis is runtime-pinned per-run.
@@ -31,10 +31,10 @@ Host implementations SHOULD define a single `CURRENT_ENGINE_VERSION` constant an
 
 When a reader fetches a persisted run, it MUST call an equivalent of `assertEngineVersionCompatible(runId, persistedVersion)`:
 
-| Persisted version | Action |
-|---|---|
-| `undefined` | Treat as compatible (legacy doc) |
-| `≤ CURRENT_ENGINE_VERSION` | Safe to read |
+| Persisted version          | Action                                                                              |
+| -------------------------- | ----------------------------------------------------------------------------------- |
+| `undefined`                | Treat as compatible (legacy doc)                                                    |
+| `≤ CURRENT_ENGINE_VERSION` | Safe to read                                                                        |
 | `> CURRENT_ENGINE_VERSION` | **Refuse** — throw `EngineVersionMismatchError` (`code: "engine_version_mismatch"`) |
 
 The third case represents a deploy skew: the doc was written by a newer engine the current reader doesn't understand. The reader MUST refuse rather than fall through, because silent best-effort reads will:
@@ -94,7 +94,7 @@ Bump `eventLogSchemaVersion` when any of:
 - An event type is renamed or repurposed
 - An event payload's required fields change shape in a non-backward-compatible way
 - Sequence semantics change (e.g., gap-fill rules)
-- The run-doc *path* changes (e.g., the v1 → v2 move from `users/{u}/canvases/...` to top-level `runs/{runId}`)
+- The run-doc _path_ changes (e.g., the v1 → v2 move from `users/{u}/canvases/...` to top-level `runs/{runId}`)
 
 Adding new optional event types or new optional payload fields does NOT require a bump (current readers ignore them).
 
@@ -106,8 +106,8 @@ Adding new optional event types or new optional payload fields does NOT require 
 
 Each individual event document inside `runs/{runId}/events/{seq}` carries its own `schemaVersion: number` field, stamped at append time by `EventLog.appendAtomic`. This is **distinct** from the per-run `eventLogSchemaVersion`:
 
-- Per-run `eventLogSchemaVersion` describes the *subcollection contract* (does this run even have an event subcollection? what path?).
-- Per-event `schemaVersion` describes the *individual event payload contract*.
+- Per-run `eventLogSchemaVersion` describes the _subcollection contract_ (does this run even have an event subcollection? what path?).
+- Per-event `schemaVersion` describes the _individual event payload contract_.
 
 The current v1 per-event schema version is `1`.
 
@@ -115,17 +115,17 @@ The current v1 per-event schema version is `1`.
 
 Per-event readers MUST be tolerant. The compatibility table:
 
-| Reader version | Event-stamped version | Behavior |
-|---|---|---|
-| N | unset | Legacy event from pre-EventLog days. Reader folds best-effort. |
-| N | ≤ N | Compatible — current shape contract |
-| N | > N | Future shape — reader folds what it recognizes, ignores unknown fields. **MUST NOT throw.** |
+| Reader version | Event-stamped version | Behavior                                                                                    |
+| -------------- | --------------------- | ------------------------------------------------------------------------------------------- |
+| N              | unset                 | Legacy event from pre-EventLog days. Reader folds best-effort.                              |
+| N              | ≤ N                   | Compatible — current shape contract                                                         |
+| N              | > N                   | Future shape — reader folds what it recognizes, ignores unknown fields. **MUST NOT throw.** |
 
 Tolerance is intentional: the projection's job is to produce best-possible state from whatever events exist. A future event with extra fields shouldn't break replay of earlier events with the older shape.
 
 ### Bumping
 
-Bump the per-event `schemaVersion` stamp when an *individual* event type's payload contract changes in a non-additive way. Additive changes (new optional fields) don't require a bump. This is distinct from bumping the per-run `eventLogSchemaVersion` (§"Event-log schema version" → "Bumping" above), which tracks the subcollection contract, not individual payload shapes.
+Bump the per-event `schemaVersion` stamp when an _individual_ event type's payload contract changes in a non-additive way. Additive changes (new optional fields) don't require a bump. This is distinct from bumping the per-run `eventLogSchemaVersion` (§"Event-log schema version" → "Bumping" above), which tracks the subcollection contract, not individual payload shapes.
 
 ---
 
@@ -133,7 +133,7 @@ Bump the per-event `schemaVersion` stamp when an *individual* event type's paylo
 
 ### Why
 
-Schema versioning protects readers from writers; it doesn't help an *in-flight run* whose code branch was changed mid-execution. A workflow started under code that says "capture payment, then notify" cannot safely switch mid-stream to "notify first, then capture" — the run has already done the first half under the old branch.
+Schema versioning protects readers from writers; it doesn't help an _in-flight run_ whose code branch was changed mid-execution. A workflow started under code that says "capture payment, then notify" cannot safely switch mid-stream to "notify first, then capture" — the run has already done the first half under the old branch.
 
 This is the [Temporal versioning](https://docs.temporal.io/dev-guide/typescript/versioning) idiom: per-(run, changeId) version pinning at first encounter, replayed deterministically on resume.
 
@@ -214,12 +214,12 @@ A client MAY pre-flight `/.well-known/openwop` and compare against its own pinne
 
 ## Cross-version interop matrix
 
-| Reader engine | Writer engine | Behavior |
-|---|---|---|
-| N | N | Normal operation |
-| N | N-1 (older) | Reader reads, MAY upgrade-on-write if migration registered. Without migration, reader writes back at N (older fields preserved as opaque) |
-| N | N+1 (newer) | Reader refuses (`engine_version_mismatch`). Caller must wait for fleet to roll forward. |
-| N (no version) | N | Reader treats as legacy. Reads succeed; no migration needed. |
+| Reader engine  | Writer engine | Behavior                                                                                                                                  |
+| -------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| N              | N             | Normal operation                                                                                                                          |
+| N              | N-1 (older)   | Reader reads, MAY upgrade-on-write if migration registered. Without migration, reader writes back at N (older fields preserved as opaque) |
+| N              | N+1 (newer)   | Reader refuses (`engine_version_mismatch`). Caller must wait for fleet to roll forward.                                                   |
+| N (no version) | N             | Reader treats as legacy. Reads succeed; no migration needed.                                                                              |
 
 ### Conformance via `X-Force-Engine-Version`
 
@@ -261,17 +261,17 @@ The response shape for past-end requests:
 
 The interaction between the four version axes determines deploy ordering. An OpenWOP-compliant deployment SHOULD adopt a "server-first" rollout convention so the writer is always at-or-ahead-of every reader (browser, CLI, SDK):
 
-| Change | Bumps | Drain in-flight? | Deploy order |
-|---|---|---|---|
-| Add optional field to run doc | None (additive) | No | Server first |
-| Add required field to run doc | `engineVersion` | Drain ⚠️ (clean state simplifies debug) | Server first, with codemod that defaults the field |
-| Rename run doc field | `engineVersion` | Drain ⚠️ | Server first, with codemod |
-| Add new RunEventType | None (readers ignore unknown) | No | Server first |
-| Remove a RunEventType | `eventLogSchemaVersion` | **Drain ✗** (already-emitted events become unreadable) | Server first |
-| Change existing event payload contract | per-event `schemaVersion` | Drain ⚠️ | Server first |
-| Change run-doc *path* | `eventLogSchemaVersion` | **Drain ✗** | Server first |
-| Add new branch via `ctx.getVersion(id, min, M)` | `max` (M+1) | No (in-flight runs stay on old `M`) | Either order — pinning is per-run |
-| Remove old branch via `ctx.getVersion(id, M+1, ...)` | `min` (M+1) | **Drain or migrate** runs holding pinned ≤ M, else they error | Server first |
+| Change                                               | Bumps                         | Drain in-flight?                                              | Deploy order                                       |
+| ---------------------------------------------------- | ----------------------------- | ------------------------------------------------------------- | -------------------------------------------------- |
+| Add optional field to run doc                        | None (additive)               | No                                                            | Server first                                       |
+| Add required field to run doc                        | `engineVersion`               | Drain ⚠️ (clean state simplifies debug)                       | Server first, with codemod that defaults the field |
+| Rename run doc field                                 | `engineVersion`               | Drain ⚠️                                                      | Server first, with codemod                         |
+| Add new RunEventType                                 | None (readers ignore unknown) | No                                                            | Server first                                       |
+| Remove a RunEventType                                | `eventLogSchemaVersion`       | **Drain ✗** (already-emitted events become unreadable)        | Server first                                       |
+| Change existing event payload contract               | per-event `schemaVersion`     | Drain ⚠️                                                      | Server first                                       |
+| Change run-doc _path_                                | `eventLogSchemaVersion`       | **Drain ✗**                                                   | Server first                                       |
+| Add new branch via `ctx.getVersion(id, min, M)`      | `max` (M+1)                   | No (in-flight runs stay on old `M`)                           | Either order — pinning is per-run                  |
+| Remove old branch via `ctx.getVersion(id, M+1, ...)` | `min` (M+1)                   | **Drain or migrate** runs holding pinned ≤ M, else they error | Server first                                       |
 
 ⚠️ = optional but recommended  
 ✗ = mandatory (otherwise data is stranded)
@@ -288,13 +288,13 @@ A deployment **channel** (`AgentRef.channel`, e.g. `stable` / `canary` / the res
 
 ## Open spec gaps
 
-| # | Gap | Owner |
-|---|---|---|
-| V1 | Schema codemod registry (`WorkflowSchemaMigrator`) — auto-upgrade older runs on read | future |
-| V2 | Concrete `protocolVersion` semver semantics — what counts as a major bump vs minor | future |
-| V3 | `minClientVersion` enforcement — currently advisory in spec; may become MUST | future v1.x |
-| V4 | Multi-region replication and split-brain version skew (region A on N, region B on N-1) | future |
-| V5 | Pinned-version migration tooling — currently the only path is "drain runs holding the deprecated pin". A registered codemod surface (e.g., "rewrite the `version.pinned` event in place when reading") would let `min` bumps proceed without drains | future v1.x |
+| #   | Gap                                                                                                                                                                                                                                                 | Owner       |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| V1  | Schema codemod registry (`WorkflowSchemaMigrator`) — auto-upgrade older runs on read                                                                                                                                                                | future      |
+| V2  | Concrete `protocolVersion` semver semantics — what counts as a major bump vs minor                                                                                                                                                                  | future      |
+| V3  | `minClientVersion` enforcement — currently advisory in spec; may become MUST                                                                                                                                                                        | future v1.x |
+| V4  | Multi-region replication and split-brain version skew (region A on N, region B on N-1)                                                                                                                                                              | future      |
+| V5  | Pinned-version migration tooling — currently the only path is "drain runs holding the deprecated pin". A registered codemod surface (e.g., "rewrite the `version.pinned` event in place when reading") would let `min` bumps proceed without drains | future v1.x |
 
 ## References
 

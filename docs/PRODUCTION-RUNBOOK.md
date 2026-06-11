@@ -87,15 +87,15 @@ Postgres reference numbers: 781 passed / 1 known flake / 38 skipped / 30 todo (8
 
 The Postgres reference host's discovery payload includes:
 
-| Limit | Default | What it controls |
-|---|---:|---|
-| `limits.envelopesPerTurn` | 50 | Max envelopes in a single turn (anti-runaway-loop). |
-| `limits.maxNodeExecutions` | 1000 | Hard cap on node executions per run; triggers `cap.breached`. |
-| `limits.maxRunDurationSeconds` | 3600 | Wall-clock cap per run. |
-| `limits.inflight.max` | 100 | Max concurrent in-flight runs before 503 backpressure. |
-| `limits.retentionDays` | 7 | Event-log retention window. |
-| `httpClient.maxResponseBodyBytes` | 1 MiB | SSRF-guard cap on `core.http.request` response bodies. |
-| `aiProviders.maxConcurrentCalls` | per-provider | Operator-defined; advertise actual value. |
+| Limit                             |      Default | What it controls                                              |
+| --------------------------------- | -----------: | ------------------------------------------------------------- |
+| `limits.envelopesPerTurn`         |           50 | Max envelopes in a single turn (anti-runaway-loop).           |
+| `limits.maxNodeExecutions`        |         1000 | Hard cap on node executions per run; triggers `cap.breached`. |
+| `limits.maxRunDurationSeconds`    |         3600 | Wall-clock cap per run.                                       |
+| `limits.inflight.max`             |          100 | Max concurrent in-flight runs before 503 backpressure.        |
+| `limits.retentionDays`            |            7 | Event-log retention window.                                   |
+| `httpClient.maxResponseBodyBytes` |        1 MiB | SSRF-guard cap on `core.http.request` response bodies.        |
+| `aiProviders.maxConcurrentCalls`  | per-provider | Operator-defined; advertise actual value.                     |
 
 These map to env vars (`OPENWOP_LIMITS_*`) — see the Postgres host README for the full list. **Advertise what you actually enforce.**
 
@@ -105,12 +105,12 @@ These map to env vars (`OPENWOP_LIMITS_*`) — see the Postgres host README for 
 
 The four reference hosts publish their strict-mode postures with explicit opt-outs:
 
-| Host | Required env for strict-mode green |
-|---|---|
-| **In-memory** | `OPENWOP_OPTED_OUT_PROFILES=openwop-production,openwop-auth-*,openwop-discovery-auth-scoped,openwop-audit-log-integrity` — minimal posture, opts out of everything beyond the wire-core surface. |
-| **SQLite** | `OPENWOP_OPTED_OUT_PROFILES=openwop-production,openwop-auth-oauth2-client-credentials,openwop-auth-oidc-user-bearer,openwop-auth-mtls,openwop-discovery-auth-scoped,openwop-replay-retention-expiry` |
-| **Python** | `OPENWOP_OPTED_OUT_PROFILES=<21 profiles>` — see INTEROP-MATRIX Python row. |
-| **Postgres** | `OPENWOP_REQUIRE_BEHAVIOR=true` with NO opt-outs (claims everything end-to-end). |
+| Host          | Required env for strict-mode green                                                                                                                                                                   |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **In-memory** | `OPENWOP_OPTED_OUT_PROFILES=openwop-production,openwop-auth-*,openwop-discovery-auth-scoped,openwop-audit-log-integrity` — minimal posture, opts out of everything beyond the wire-core surface.     |
+| **SQLite**    | `OPENWOP_OPTED_OUT_PROFILES=openwop-production,openwop-auth-oauth2-client-credentials,openwop-auth-oidc-user-bearer,openwop-auth-mtls,openwop-discovery-auth-scoped,openwop-replay-retention-expiry` |
+| **Python**    | `OPENWOP_OPTED_OUT_PROFILES=<21 profiles>` — see INTEROP-MATRIX Python row.                                                                                                                          |
+| **Postgres**  | `OPENWOP_REQUIRE_BEHAVIOR=true` with NO opt-outs (claims everything end-to-end).                                                                                                                     |
 
 Production hosts claiming `openwop-production` should match Postgres's "no opt-outs" posture.
 

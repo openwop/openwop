@@ -2,9 +2,10 @@
 
 **Subject:** External security review — OpenWOP protocol (fixed-bid quote request)
 
-**To:** info@doyensec.com (or via their contact form at https://www.doyensec.com/contact.html)
+**To:** <info@doyensec.com> (or via their contact form at <https://www.doyensec.com/contact.html>)
 
 **Notes:**
+
 - Doyensec's strength is web + workflow systems; they've done OpenWOP-adjacent reviews (Temporal, Argo, Pulumi).
 - Their public reports show systematic threat-model annotations — good fit for our engagement-doc §3 deliverable shape.
 - Typical engagement is medium-sized; aligns with the $20-30K mid-range of our budget.
@@ -15,7 +16,7 @@
 
 Hi Doyensec team,
 
-I'm the lead maintainer of OpenWOP (https://github.com/openwop/openwop), an open wire-level protocol for multi-agent workflow orchestration — similar problem space to Temporal / Argo / Step Functions but AI-native. We're commissioning an independent security review and I'd like a fixed-bid quote.
+I'm the lead maintainer of OpenWOP (<https://github.com/openwop/openwop>), an open wire-level protocol for multi-agent workflow orchestration — similar problem space to Temporal / Argo / Step Functions but AI-native. We're commissioning an independent security review and I'd like a fixed-bid quote.
 
 **Why I'm reaching out to Doyensec specifically:** your published work on workflow-orchestration systems (Temporal, Argo) maps cleanly onto our threat-model categories. Engagement-doc §2.2 lists eight specific questions the review answers; the workflow-adjacent ones (multi-tenant isolation, replay safety, node-pack supply-chain) are where I'd expect your team to surface the highest-value findings.
 
@@ -45,4 +46,4 @@ Thanks,
 David Tufts
 Lead Maintainer, OpenWOP
 GitHub: @davidscotttufts
-Engagement scope: https://github.com/openwop/openwop/blob/main/SECURITY/external-audit-engagement.md
+Engagement scope: <https://github.com/openwop/openwop/blob/main/SECURITY/external-audit-engagement.md>
