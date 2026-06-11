@@ -58,6 +58,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ### Fixed (editorial)
 
+- **Docs-sync for the RFC 0093/0094 cycle (2026-06-11).** `docs/KNOWN-LIMITS.md` §"RFCs not yet `Accepted`" re-synced to the live Status fields: RFC 0043's row flipped `Draft` → `Active` (matching the 2026-06-11 flip), rows added for RFC 0093 + 0094 with their path-to-`Accepted` (tier-2 deployed-host evidence), and the stale "only 0035/0038/0043 remain open" closing claim corrected to the five-RFC open set. README's generic graduation rule re-worded from "a non-steward host advertises" to the `GOVERNANCE.md` §"Acceptance evidence tiers" language (flips name their evidence tier).
+
 - **2026-06 corpus-review drift sweep (no wire, schema, or normative-`MUST` change).** A full-corpus editorial review repaired accumulated drift in one pass:
   - **Spec cross-reference + prose/schema alignment.** Broken/stale cross-references across `spec/v1/` repaired; `capabilities.md` prose realigned with the live schema surface.
   - **Status-label normalization.** Spec-doc headers and the README Status legend + Document index moved off the retired `STUB / DRAFT / OUTLINE / FINAL` vocabulary onto the canonical `Stable / Stabilizing / Draft / Experimental` legend (`auth.md` §Status legend); stale per-doc labels in the README index re-synced to live headers.
