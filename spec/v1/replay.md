@@ -1,4 +1,4 @@
-# openwop Spec v1 — Replay and Time-Travel Debugging
+# OpenWOP Spec v1 — Replay and Time-Travel Debugging
 
 > **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of `POST /v1/runs/{runId}:fork` for replay and branch-from-past, idempotency requirements on side-effecting nodes, determinism guarantees, and the admin Run Timeline View. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
@@ -9,6 +9,7 @@
 The durable event log makes time-travel debugging nearly free: every meaningful state transition is persisted with a sequence number, so the run state at any point in history can be reconstructed deterministically by folding events up to that sequence.
 
 Without a replay surface, this potential is wasted. Operators and developers who hit a workflow bug currently have to:
+
 - Read raw event docs from the backing event store.
 - Mentally fold the events to reconstruct state.
 - Make a hypothesis about what fix would change behavior.
@@ -25,16 +26,16 @@ The fork mechanism parallels [LangGraph's `update_state(checkpoint, ...)`](https
 
 ### `replay`
 
-Re-execute the workflow deterministically from event sequence `fromSeq`, using the *same* events the original run produced. Used to validate that current code reproduces the original behavior.
+Re-execute the workflow deterministically from event sequence `fromSeq`, using the _same_ events the original run produced. Used to validate that current code reproduces the original behavior.
 
 - The new run consumes events from the source run for sequences `< fromSeq` (treats them as fixed history).
-- For sequences `>= fromSeq`, the new run executes against the *current* code path, persisting NEW events.
+- For sequences `>= fromSeq`, the new run executes against the _current_ code path, persisting NEW events.
 - If the new events match the original sequence-by-sequence, the replay is deterministic.
 - If they diverge, the divergence point pinpoints the regression.
 
 ### `branch`
 
-Re-execute starting at the *projected state* at `fromSeq`, but with new caller-supplied inputs / `configurable` overrides. Used for "what-if" debugging: "what would have happened if we'd approved instead of rejected at step N?"
+Re-execute starting at the _projected state_ at `fromSeq`, but with new caller-supplied inputs / `configurable` overrides. Used for "what-if" debugging: "what would have happened if we'd approved instead of rejected at step N?"
 
 - The projected state at `fromSeq` becomes the initial state of the branched run.
 - Caller supplies new `RunOptions` to overlay.
@@ -45,7 +46,7 @@ Re-execute starting at the *projected state* at `fromSeq`, but with new caller-s
 
 ## Endpoint
 
-```
+```http
 POST /v1/runs/{runId}:fork
 Authorization: Bearer <api-key with runs:create scope>
 Idempotency-Key: <UUID>  (RECOMMENDED)
@@ -64,11 +65,11 @@ Body:
 }
 ```
 
-| Field | Type | Required for | Notes |
-|---|---|---|---|
-| `fromSeq` | `number` | branch only | Inclusive — events `< fromSeq` are fixed history; `>= fromSeq` are re-executed. `0` = full re-execution from start. Optional for `replay` — see "Replay-mode defaults" below. |
-| `mode` | `'replay' \| 'branch'` | both | Determines re-execution semantics (above). |
-| `runOptionsOverlay` | `RunOptions` (see `run-options.md`) | branch only | MUST be omitted or empty for `replay` (replay must be deterministic — overlays would break that). |
+| Field               | Type                                | Required for | Notes                                                                                                                                                                         |
+| ------------------- | ----------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fromSeq`           | `number`                            | branch only  | Inclusive — events `< fromSeq` are fixed history; `>= fromSeq` are re-executed. `0` = full re-execution from start. Optional for `replay` — see "Replay-mode defaults" below. |
+| `mode`              | `'replay' \| 'branch'`              | both         | Determines re-execution semantics (above).                                                                                                                                    |
+| `runOptionsOverlay` | `RunOptions` (see `run-options.md`) | branch only  | MUST be omitted or empty for `replay` (replay must be deterministic — overlays would break that).                                                                             |
 
 #### Replay-mode defaults
 
@@ -90,6 +91,7 @@ For `mode: "branch"`, `fromSeq` MUST be supplied — the branch point has no nat
 ```
 
 Status codes:
+
 - `201 Created` — fork accepted, new run started
 - `400 Bad Request` — invalid `fromSeq` (out of range), `replay` with non-empty `runOptionsOverlay`, etc.
 - `404 Not Found` — source `runId` doesn't exist or caller can't see it
@@ -129,7 +131,7 @@ The replayed run continues to completion or further divergence; the `replay.dive
 
 ## LLM cache-key recipe
 
-Replay determinism for LLM-calling nodes depends on hosts agreeing on the *cache key* under which a provider response is deduped. Without a canonical recipe, two hosts replaying the same workflow against the same provider can compute different keys, miss the dedup, and call the provider twice.
+Replay determinism for LLM-calling nodes depends on hosts agreeing on the _cache key_ under which a provider response is deduped. Without a canonical recipe, two hosts replaying the same workflow against the same provider can compute different keys, miss the dedup, and call the provider twice.
 
 This section defines the **canonical cache key** that an OpenWOP-compliant host MUST compute for any node that calls an LLM provider through the Layer-2 idempotency surface (`idempotency.md` §"Layer 2: Activity-level idempotency").
 
@@ -179,7 +181,7 @@ The resulting 64-character hex string is the **LLM cache key** for that invocati
 
 ### §C Layering with idempotency.md
 
-The LLM cache key is the *content-addressable* identity of the provider request. It composes with `idempotency.md` Layer 2 as follows:
+The LLM cache key is the _content-addressable_ identity of the provider request. It composes with `idempotency.md` Layer 2 as follows:
 
 - The Layer-2 `invocationId` is `sha256(runId || ':' || nodeId || ':' || attempt || ':' || providerKey)` (per `idempotency.md` §"Layer 2: Activity-level idempotency").
 - The LLM cache key is computed in addition, and is the dedup key inside the Layer-2 store for provider-call nodes.
@@ -320,15 +322,15 @@ Hosts MAY report a determinism score for replay validation runs. The score is ad
 
 A determinism report SHOULD include:
 
-| Field | Meaning |
-|---|---|
-| `sourceRunId` | Original run used as the baseline. |
-| `replayRunId` | New run created in `replay` mode. |
-| `fromSeq` | Sequence where replay began. |
-| `matchedEvents` | Count of comparable events that matched. |
-| `comparedEvents` | Count of comparable events considered. |
-| `firstDivergenceSeq` | First divergent sequence, if any. |
-| `score` | `matchedEvents / comparedEvents`, from `0` to `1`. |
+| Field                | Meaning                                            |
+| -------------------- | -------------------------------------------------- |
+| `sourceRunId`        | Original run used as the baseline.                 |
+| `replayRunId`        | New run created in `replay` mode.                  |
+| `fromSeq`            | Sequence where replay began.                       |
+| `matchedEvents`      | Count of comparable events that matched.           |
+| `comparedEvents`     | Count of comparable events considered.             |
+| `firstDivergenceSeq` | First divergent sequence, if any.                  |
+| `score`              | `matchedEvents / comparedEvents`, from `0` to `1`. |
 
 The conformance suite should treat exact fixture replay as a pass/fail assertion and use scoring only for richer host diagnostics.
 
@@ -352,13 +354,13 @@ RFC 0056 annotations are a per-run side-resource, **not** event-log entries — 
 
 ## Open spec gaps
 
-| # | Gap | Owner |
-|---|---|---|
-| RP1 | Bulk fork API — fork many runs at once for batch validation | future |
+| #   | Gap                                                                                         | Owner       |
+| --- | ------------------------------------------------------------------------------------------- | ----------- |
+| RP1 | Bulk fork API — fork many runs at once for batch validation                                 | future      |
 | RP2 | Branch-with-edited-event API — modify a specific event in-place rather than overlay options | future v1.x |
-| RP3 | ✅ Closed by §"Determinism scoring" for advisory replay reports. | v1.x annex |
-| RP4 | ✅ Closed by §"Retention and garbage collection". | v1.x annex |
-| RP5 | ✅ Closed by §"Privacy and replay". | v1.x annex |
+| RP3 | ✅ Closed by §"Determinism scoring" for advisory replay reports.                            | v1.x annex  |
+| RP4 | ✅ Closed by §"Retention and garbage collection".                                           | v1.x annex  |
+| RP5 | ✅ Closed by §"Privacy and replay".                                                         | v1.x annex  |
 
 ## References
 

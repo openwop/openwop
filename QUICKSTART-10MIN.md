@@ -1,4 +1,4 @@
-# openwop in 10 Minutes
+# OpenWOP in 10 Minutes
 
 > The fastest possible path from "what is openwop?" to "I have a workflow running on my laptop." Zero vendor SDK / managed-service / framework setup. Just Node 20+ and a clone of this repo.
 
@@ -35,7 +35,7 @@ npm start
 
 Output:
 
-```
+```text
 [openwop-host-in-memory] listening on http://127.0.0.1:3737 (api key: openwop-inmem-dev-key, 16 fixtures loaded)
 ```
 
@@ -153,7 +153,7 @@ node quickstart.mjs
 
 Output:
 
-```
+```text
 Server: openwop-host-in-memory
 Created: run-...
 Final: completed
@@ -174,7 +174,7 @@ npm start
 
 Output:
 
-```
+```text
 → POST /v1/runs { workflowId: "conformance-noop" }
   runId: run-...
 → Streaming /v1/runs/run-.../events
@@ -206,15 +206,15 @@ The streaming client will receive `node.cancelled` + `run.cancelled` and exit.
 
 ## What you just learned
 
-| Concept | Where to read |
-|---|---|
-| openwop wire contract | `spec/v1/rest-endpoints.md`, `spec/v1/capabilities.md` |
-| Run lifecycle + events | `spec/v1/observability.md` §"Canonical run lifecycle event names" |
-| SSE consumption | `spec/v1/stream-modes.md` |
-| Idempotency | `spec/v1/idempotency.md` + [`examples/idempotent-runs/`](https://github.com/openwop/openwop-examples/tree/main/examples/idempotent-runs) |
-| Compatibility profiles | `spec/v1/profiles.md` |
-| Build your own host | [`examples/hosts/in-memory/`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts/in-memory) — the host you just ran is one file |
-| Conformance | `conformance/README.md` — run the suite against your own host |
+| Concept                | Where to read                                                                                                                                     |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| openwop wire contract  | `spec/v1/rest-endpoints.md`, `spec/v1/capabilities.md`                                                                                            |
+| Run lifecycle + events | `spec/v1/observability.md` §"Canonical run lifecycle event names"                                                                                 |
+| SSE consumption        | `spec/v1/stream-modes.md`                                                                                                                         |
+| Idempotency            | `spec/v1/idempotency.md` + [`examples/idempotent-runs/`](https://github.com/openwop/openwop-examples/tree/main/examples/idempotent-runs)          |
+| Compatibility profiles | `spec/v1/profiles.md`                                                                                                                             |
+| Build your own host    | [`examples/hosts/in-memory/`](https://github.com/openwop/openwop-examples/tree/main/examples/hosts/in-memory) — the host you just ran is one file |
+| Conformance            | `conformance/README.md` — run the suite against your own host                                                                                     |
 
 ---
 
@@ -229,12 +229,12 @@ The streaming client will receive `node.cancelled` + `run.cancelled` and exit.
 
 ## Troubleshooting
 
-| Issue | Fix |
-|---|---|
-| `EADDRINUSE` on port 3737 | Set `OPENWOP_PORT=3738 npm start` and update the URLs in this guide |
-| `npm start` errors with "tsx not found" | Re-run `npm install` in `examples/hosts/in-memory/` |
-| `401 unauthenticated` | Include `Authorization: Bearer openwop-inmem-dev-key` (or whatever `OPENWOP_API_KEY` you set) |
-| `400 validation_error: workflowId MUST be a string` | Body must be valid JSON with `workflowId` as a top-level string |
-| `404 workflow_not_found` | The host loads fixtures from `conformance/fixtures/`; ensure you cloned the full repo |
+| Issue                                               | Fix                                                                                           |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `EADDRINUSE` on port 3737                           | Set `OPENWOP_PORT=3738 npm start` and update the URLs in this guide                           |
+| `npm start` errors with "tsx not found"             | Re-run `npm install` in `examples/hosts/in-memory/`                                           |
+| `401 unauthenticated`                               | Include `Authorization: Bearer openwop-inmem-dev-key` (or whatever `OPENWOP_API_KEY` you set) |
+| `400 validation_error: workflowId MUST be a string` | Body must be valid JSON with `workflowId` as a top-level string                               |
+| `404 workflow_not_found`                            | The host loads fixtures from `conformance/fixtures/`; ensure you cloned the full repo         |
 
-If something else doesn't work, file an issue at https://github.com/openwop/openwop/issues — the in-memory host is supposed to "just work" for this guide.
+If something else doesn't work, file an issue at <https://github.com/openwop/openwop/issues> — the in-memory host is supposed to "just work" for this guide.

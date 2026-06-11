@@ -1,10 +1,10 @@
-# openwop Spec v1 — Multi-Agent Execution Model
+# OpenWOP Spec v1 — Multi-Agent Execution Model
 
 > **Status: Draft v1.x (filed via [RFC 0037](../../RFCS/0037-multi-agent-execution-model.md), 2026-05-21).** First installment of a five-version execution-model formalization. This document lands the **execution-loop framework + planner→worker handoff state machine** at `multiAgent.executionModel.version: 1`. Subsequent versions land as additive RFCs: [RFC 0039](../../RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md) at `version: 2` (confidence escalation + agent-memory lifecycle), [RFC 0040](../../RFCS/0040-multi-agent-cross-host-causation.md) at `version: 3` (cross-host causation), [RFC 0041](../../RFCS/0041-multi-agent-replay-under-nondeterminism.md) at `version: 4` (replay determinism under nondeterministic models), and [RFC 0061](../../RFCS/0061-agent-loop-lifecycle.md) at `version: 5` (stateful agent-loop lifecycle — per-iteration snapshot inputs, the observable `iteration` counter, stateful HITL resume). The open-gaps table at the bottom tracks each version's follow-ups. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ## Why this exists
 
-Per the external standards-readiness review of 2026-05-21, finding (3): *"OpenWOP defines identities, dispatch, memory, reasoning events, envelopes, prompts, MCP/A2A composition, and host capabilities, but it does not yet give a sufficiently formal interoperable execution model for planner/worker handoff, confidence semantics, agent memory lifecycle, cross-host causality, and replay under nondeterministic model behavior."*
+Per the external standards-readiness review of 2026-05-21, finding (3): _"OpenWOP defines identities, dispatch, memory, reasoning events, envelopes, prompts, MCP/A2A composition, and host capabilities, but it does not yet give a sufficiently formal interoperable execution model for planner/worker handoff, confidence semantics, agent memory lifecycle, cross-host causality, and replay under nondeterministic model behavior."_
 
 The existing RFCs cover slices but no single doc states the **execution model** as a portable contract:
 
@@ -21,7 +21,7 @@ This document **integrates** those slices into a single normative execution loop
 
 A host that advertises `capabilities.multiAgent.executionModel.version >= 1` MUST implement the following loop on any workflow whose graph contains a `core.orchestrator.supervisor` node feeding into a `core.dispatch` node:
 
-```
+```text
 LOOP:
   1. Orchestrator turn:
      - Run the supervisor node per its config (`mockDispatchPlan` in conformance,
@@ -49,26 +49,26 @@ The loop MUST be re-entrant per `spec/v1/replay.md` §"Replay determinism under 
 
 When a supervisor's decision is `next-worker` and the engine begins dispatching, each dispatched worker MUST traverse the following 4-state machine:
 
-| State | Trigger | Allowed exits |
-|---|---|---|
-| `pending` | Supervisor's `OrchestratorDecision` named the worker; dispatch hasn't yet fired the child-run create | → `dispatching` (engine begins child-run creation) |
-| `dispatching` | Engine called `POST /v1/runs` (or sub-workflow equivalent) for the child | → `running` (`201 Created` returned + `inputMapping` projection emitted) <br> → `failed` (creation failed before child ran any node) |
-| `running` | Child run is in progress | → `completed` (terminal status) <br> → `failed` (terminal status) <br> → `cancelled` (terminal status) |
-| `harvested` | Child reached terminal `completed` AND non-empty `outputMapping` projection completed back into parent variables | (terminal — parent's next supervisor turn observes the new state) |
+| State         | Trigger                                                                                                          | Allowed exits                                                                                                                        |
+| ------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `pending`     | Supervisor's `OrchestratorDecision` named the worker; dispatch hasn't yet fired the child-run create             | → `dispatching` (engine begins child-run creation)                                                                                   |
+| `dispatching` | Engine called `POST /v1/runs` (or sub-workflow equivalent) for the child                                         | → `running` (`201 Created` returned + `inputMapping` projection emitted) <br> → `failed` (creation failed before child ran any node) |
+| `running`     | Child run is in progress                                                                                         | → `completed` (terminal status) <br> → `failed` (terminal status) <br> → `cancelled` (terminal status)                               |
+| `harvested`   | Child reached terminal `completed` AND non-empty `outputMapping` projection completed back into parent variables | (terminal — parent's next supervisor turn observes the new state)                                                                    |
 
 ### Transition events (normative)
 
 Each transition MUST emit a `core.workflowChain.event` (NEW event type — see §"Event-payload addition" below) with `causationId` linking to the prior transition's `eventId`. The chain is REQUIRED so replay-determinism gates per `spec/v1/replay.md` §"Replay determinism under nondeterministic models" can walk the causation chain backward through handoff sequences.
 
-| Transition | Event payload `phase` | `causationId` |
-|---|---|---|
-| `pending → dispatching` | `"dispatch.began"` | The `runOrchestrator.decided` event's `eventId` |
-| `dispatching → running` | `"dispatch.succeeded"` | The `dispatch.began` `eventId` |
-| `dispatching → failed` | `"dispatch.failed"` | The `dispatch.began` `eventId` |
-| `running → completed` | `"child.completed"` | The `dispatch.succeeded` `eventId` |
-| `running → failed` | `"child.failed"` | The `dispatch.succeeded` `eventId` |
-| `running → cancelled` | `"child.cancelled"` | The `dispatch.succeeded` `eventId` |
-| `completed → harvested` | `"output.harvested"` | The `child.completed` `eventId`; payload SHOULD include the `outputMapping` keys harvested |
+| Transition              | Event payload `phase`  | `causationId`                                                                              |
+| ----------------------- | ---------------------- | ------------------------------------------------------------------------------------------ |
+| `pending → dispatching` | `"dispatch.began"`     | The `runOrchestrator.decided` event's `eventId`                                            |
+| `dispatching → running` | `"dispatch.succeeded"` | The `dispatch.began` `eventId`                                                             |
+| `dispatching → failed`  | `"dispatch.failed"`    | The `dispatch.began` `eventId`                                                             |
+| `running → completed`   | `"child.completed"`    | The `dispatch.succeeded` `eventId`                                                         |
+| `running → failed`      | `"child.failed"`       | The `dispatch.succeeded` `eventId`                                                         |
+| `running → cancelled`   | `"child.cancelled"`    | The `dispatch.succeeded` `eventId`                                                         |
+| `completed → harvested` | `"output.harvested"`   | The `child.completed` `eventId`; payload SHOULD include the `outputMapping` keys harvested |
 
 The transition `running → harvested` MUST happen exactly when the child reaches a terminal `completed` AND the dispatch config's `outputMapping` is non-empty. Failed/cancelled children MUST skip the harvest per RFC 0022 §B (the `output.harvested` event MUST NOT fire for those terminal states).
 
@@ -151,27 +151,27 @@ The normative contracts live in [`replay.md`](./replay.md) §"Replay determinism
 
 ## Stateful agent-loop lifecycle (RFC 0061, normative — `version >= 5`)
 
-Per [RFC 0061](../../RFCS/0061-agent-loop-lifecycle.md). Applies only when the host advertises `capabilities.multiAgent.executionModel.version >= 5`. This promotes the §"Execution loop" framework (already re-entrant + replay-deterministic) to a *stateful* lifecycle — it adds no new loop, event type, or `terminate` exit; it pins what each iteration reloads, makes the iteration count observable + bounded, and guarantees a HITL suspend resumes mid-loop without losing progress.
+Per [RFC 0061](../../RFCS/0061-agent-loop-lifecycle.md). Applies only when the host advertises `capabilities.multiAgent.executionModel.version >= 5`. This promotes the §"Execution loop" framework (already re-entrant + replay-deterministic) to a _stateful_ lifecycle — it adds no new loop, event type, or `terminate` exit; it pins what each iteration reloads, makes the iteration count observable + bounded, and guarantees a HITL suspend resumes mid-loop without losing progress.
 
 **Iteration counter (normative).** A `version >= 5` host MUST set `runOrchestrator.decided.iteration` (additive optional field, `run-event-payloads.schema.json`) on every orchestrator turn — 1-based, monotonic, incrementing by exactly 1 per turn. This is the observable quantity `maxLoopIterations` (RFC 0058) bounds; a breach emits `cap.breached { kind: 'loop-iterations', limit: N, observed: N+1 }` + `loop_limit_exceeded`. Hosts on `version < 5` omit the field; consumers ignore it per the forward-compatibility contract.
 
-**Per-iteration state inputs (normative).** On entering orchestrator turn *i*, a `version >= 5` host MUST treat the following as the iteration's deterministic inputs, reproducible on replay:
+**Per-iteration state inputs (normative).** On entering orchestrator turn _i_, a `version >= 5` host MUST treat the following as the iteration's deterministic inputs, reproducible on replay:
 
 1. **Memory snapshot** — as-of the iteration's event-log index, per §"Replay carry-forward (MAE-3)" (already required at `version >= 2` + `memory.supported`). Restated here as a loop input; unchanged.
-2. **Workspace snapshot** — when `host.workspace.supported` ([RFC 0059](../../RFCS/0059-agent-workspace.md)), the workspace read snapshot as-of turn *i* per RFC 0059 §D. A `version >= 5` host WITHOUT `host.workspace` simply has no workspace input — the workspace is optional and the loop still runs.
+2. **Workspace snapshot** — when `host.workspace.supported` ([RFC 0059](../../RFCS/0059-agent-workspace.md)), the workspace read snapshot as-of turn _i_ per RFC 0059 §D. A `version >= 5` host WITHOUT `host.workspace` simply has no workspace input — the workspace is optional and the loop still runs.
 3. **Recent transcript** — the event-log tail, bounded by the host-advertised `executionModel.transcriptWindow` (event count) when present.
 
-Writes a turn produces (memory writes, RFC 0059 workspace `PUT`s) MUST become visible to turn *i+1*, never retroactively to turn *i* — the existing snapshot-immutability rule from §"Execution loop". This holds identically for memory and workspace writes made in the same turn.
+Writes a turn produces (memory writes, RFC 0059 workspace `PUT`s) MUST become visible to turn _i+1_, never retroactively to turn _i_ — the existing snapshot-immutability rule from §"Execution loop". This holds identically for memory and workspace writes made in the same turn.
 
-**Stateful resume (normative, when `executionModel.statefulResume: true`).** The loop already suspends on `clarify`/`escalate` (§"Execution loop"). A host advertising `statefulResume: true` MUST, on resume, continue at the **same iteration** — the `iteration` counter MUST NOT reset or skip — with the same memory + workspace snapshot lineage, so a human-in-the-loop interrupt mid-loop does not lose progress. This is a distinct claim from replay re-entrancy (deterministic replay of a completed prefix); stateful resume concerns a *live* suspend preserving the counter. A heartbeat (RFC 0060) MAY only enqueue a fresh loop run; it MUST NOT advance a suspended loop.
+**Stateful resume (normative, when `executionModel.statefulResume: true`).** The loop already suspends on `clarify`/`escalate` (§"Execution loop"). A host advertising `statefulResume: true` MUST, on resume, continue at the **same iteration** — the `iteration` counter MUST NOT reset or skip — with the same memory + workspace snapshot lineage, so a human-in-the-loop interrupt mid-loop does not lose progress. This is a distinct claim from replay re-entrancy (deterministic replay of a completed prefix); stateful resume concerns a _live_ suspend preserving the counter. A heartbeat (RFC 0060) MAY only enqueue a fresh loop run; it MUST NOT advance a suspended loop.
 
 **Acceptance + bound (existing surfaces, restated).** "Run until acceptance criteria met" is the existing `terminate` decision (§"Execution loop") — the supervisor evaluates the criteria and returns `terminate`, exiting to `run.completed`; RFC 0061 adds no mechanism, it names the pattern. "≤ N iterations" is RFC 0058's `maxLoopIterations`, bounding the iteration counter above; that bound gates on `capabilities.multiAgent.executionModel.supported` (orchestrator turns exist at `version >= 1`).
 
 ## Verifier and convergence (RFC 0090, normative — `version >= 6`)
 
-Per [RFC 0090](../../RFCS/0090-agent-verifier-and-convergence.md). Applies only when the host advertises `capabilities.multiAgent.executionModel.version >= 6` + the `verifier` sub-block. This adds the missing **critic** to the planner (orchestrator) + actor (worker) the loop already models: an independent agent that checks a result before it is committed, plus an observable record of *why* a run converged. It adds no new loop — it composes the existing execution loop, the RFC 0063 merge gate, and the RFC 0058 iteration bound.
+Per [RFC 0090](../../RFCS/0090-agent-verifier-and-convergence.md). Applies only when the host advertises `capabilities.multiAgent.executionModel.version >= 6` + the `verifier` sub-block. This adds the missing **critic** to the planner (orchestrator) + actor (worker) the loop already models: an independent agent that checks a result before it is committed, plus an observable record of _why_ a run converged. It adds no new loop — it composes the existing execution loop, the RFC 0063 merge gate, and the RFC 0058 iteration bound.
 
-**The `agent.verified` event (normative, when `verifier.supported: true`).** A critic agent MUST emit `agent.verified { agentId, target, verdict, criteria?, confidence? }` (`run-event-payloads.schema.json`) over a prior result — a worker's `agent.decided` (by its `eventId`), a child `runId`, or a tool `callId` (the `target`). It is **content-free** (SECURITY invariant `verifier-no-content-leak`): it carries the verdict and the criteria *keys*, never the verified content. `verdict` ∈ `pass | fail | revise`. The critic SHOULD differ from the actor; a host MAY allow self-verification but MUST keep verifier identity inspectable. The verifier's own `confidence` is distinct from the actor's `agent.decided.confidence` and MAY drive the §"Confidence escalation" contract.
+**The `agent.verified` event (normative, when `verifier.supported: true`).** A critic agent MUST emit `agent.verified { agentId, target, verdict, criteria?, confidence? }` (`run-event-payloads.schema.json`) over a prior result — a worker's `agent.decided` (by its `eventId`), a child `runId`, or a tool `callId` (the `target`). It is **content-free** (SECURITY invariant `verifier-no-content-leak`): it carries the verdict and the criteria _keys_, never the verified content. `verdict` ∈ `pass | fail | revise`. The critic SHOULD differ from the actor; a host MAY allow self-verification but MUST keep verifier identity inspectable. The verifier's own `confidence` is distinct from the actor's `agent.decided.confidence` and MAY drive the §"Confidence escalation" contract.
 
 **Verdict gating (normative, when `verifier.gating: true`).** A host advertising `verifier.gating: true` MUST treat the verdict as a commit gate: a `fail` over a sub-run output MUST NOT be merged (composing the RFC 0063 fail-closed merge gate) and MUST NOT silently `terminate` as success; a `revise` SHOULD route back to another actor turn, bounded by `maxLoopIterations` (RFC 0058); a `pass` MAY proceed. Absence of any `agent.verified` over a result is NOT a failure — verification is opt-in; only an emitted `fail`/`revise` gates. A host advertising `verifier.supported` but not `gating` emits the verdict for observability only.
 
@@ -179,7 +179,7 @@ Per [RFC 0090](../../RFCS/0090-agent-verifier-and-convergence.md). Applies only 
 
 ## Live manifest dispatch (RFC 0077, normative — `capabilities.agents.liveRuntime`)
 
-Per [RFC 0077](../../RFCS/0077-agent-run-lifecycle-and-live-manifest-dispatch.md). RFC 0070 (`agents.manifestRuntime`) makes a pack-declared `AgentManifest` loadable + dispatchable on a deterministic floor; RFC 0072 pins its inventory (`GET /v1/agents`) + dispatch path (`WorkflowNode.agent` + `POST /v1/runs`). **Live manifest dispatch** is the execution layer that runs a manifest agent against a *live* model + its real tools, gated behind the additive optional `capabilities.agents.liveRuntime` — a **strict superset of `agents.manifestRuntime`** (`liveRuntime.supported: true` REQUIRES `manifestRuntime.supported: true`). Hosts that advertise only the floor are unchanged.
+Per [RFC 0077](../../RFCS/0077-agent-run-lifecycle-and-live-manifest-dispatch.md). RFC 0070 (`agents.manifestRuntime`) makes a pack-declared `AgentManifest` loadable + dispatchable on a deterministic floor; RFC 0072 pins its inventory (`GET /v1/agents`) + dispatch path (`WorkflowNode.agent` + `POST /v1/runs`). **Live manifest dispatch** is the execution layer that runs a manifest agent against a _live_ model + its real tools, gated behind the additive optional `capabilities.agents.liveRuntime` — a **strict superset of `agents.manifestRuntime`** (`liveRuntime.supported: true` REQUIRES `manifestRuntime.supported: true`). Hosts that advertise only the floor are unchanged.
 
 ### Manifest → live-run mapping (normative, when `agents.liveRuntime.supported: true`)
 
@@ -189,7 +189,7 @@ A live manifest invocation MUST perform these steps; each composes an existing s
 2. **Prompt resolution.** Resolve the system prompt from `systemPrompt` | `systemPromptRef` (intrinsic, wins) with `promptOverrides` / `promptLibraryRef` fallback per `prompts.md` (RFC 0028/0029). The host MUST emit `agent.promptResolved` recording the resolved PromptRef identifiers (content-free per RFC 0028).
 3. **Tool-surface construction.** Construct the callable tool surface by filtering against `toolAllowlist` (RFC 0002 §A14). A tool NOT in the allowlist MUST NOT be callable. When `capabilities.toolHooks` (RFC 0064) is advertised, per-tool authorization MUST fail closed (`forbidden`) and tool calls MUST emit `agent.toolCalled` / `agent.toolReturned`.
 4. **Memory binding.** Bind the backends declared in `memoryShape` (RFC 0004). When `memoryShape.longTerm: true`, the host MUST apply the SR-1 redaction harness on writes and MAY emit `memory.written` (RFC 0057) / participate in consolidation (RFC 0068). Memory is tenant-scoped (CTI-1).
-5. **Reasoning + tool loop.** Run the agent turn(s): live inference + tool calls through the step-3 surface, emitting the existing `agent.reasoned` / `agent.reasoning.delta` / `agent.toolCalled` / `agent.toolReturned` events. **Single-shot is the `liveRuntime` floor** — a `liveRuntime` host MAY run one turn; the multi-turn agent loop composes *above* via the orchestrator + RFC 0061 (`executionModel.version >= 5`) and MUST NOT be folded into the `liveRuntime` floor (loop infrastructure is not required to advertise `liveRuntime`).
+5. **Reasoning + tool loop.** Run the agent turn(s): live inference + tool calls through the step-3 surface, emitting the existing `agent.reasoned` / `agent.reasoning.delta` / `agent.toolCalled` / `agent.toolReturned` events. **Single-shot is the `liveRuntime` floor** — a `liveRuntime` host MAY run one turn; the multi-turn agent loop composes _above_ via the orchestrator + RFC 0061 (`executionModel.version >= 5`) and MUST NOT be folded into the `liveRuntime` floor (loop infrastructure is not required to advertise `liveRuntime`).
 6. **Handoff + structured-output validation.** When `handoff.taskSchemaRef` is present, the host MUST validate the inbound task against it before step 5 and reject a non-conforming task. When `handoff.returnSchemaRef` is present AND `liveRuntime.structuredOutput: true` is advertised, the host MUST validate the terminal result against it and fail the run rather than ship a non-conforming result. Cross-agent handoffs emit `agent.handoff`.
 7. **Confidence escalation.** When `liveRuntime.confidenceEscalation: true`, an `agent.decided` whose `confidence` falls below the effective threshold (`confidence.defaultThreshold`, or the run-resolved threshold per RFC 0002 §F, default 0.7) MUST trigger the §"Confidence escalation" contract rather than silently accept. This `agent.decided` threshold (default 0.7, RFC 0077) is a distinct field from the non-configurable 0.5 `OrchestratorDecision.confidence` floor in §"Confidence escalation" above (RFC 0039); the two are not interchangeable.
 8. **Terminal result projection.** On termination, project the agent's terminal result onto the run's normal result surface. When the agent ran as a sub-run with `capabilities.agents.subRunAttestation` (RFC 0063), the attestation composes unchanged and follows the agent-scoped terminal. The host MUST emit `agent.invocation.completed` as the final agent-scoped event.
@@ -201,7 +201,7 @@ A `liveRuntime` host MUST emit `agent.invocation.started` as the FIRST agent-sco
 - **`invocationId`** correlates `started`↔`completed`. It is **host-defined and unique-within-run** — NOT a mandated global id-space. It is distinct from `runId` (one run MAY host several invocations — multiple agent nodes, or a handoff chain), but a host MAY derive it from an existing per-node-execution receipt id (e.g. `runId:nodeId:seq`) or mint a UUID, and a single-invocation run MAY reuse `runId`.
 - **`source`** ∈ `workflow-node` | `run-api` | `chat-mention` records the entry point (below). `agent.invocation.started` MAY also carry `modelClass`, the optional `resolvedModel`/`resolvedProvider`, `toolSurfaceCount`, `memoryBound`. `agent.invocation.completed` carries `outcome` ∈ `completed` | `handed-off` | `escalated` | `refused` | `failed`, plus optional `schemaValidated` / `confidence` / `enqueuedRunId`.
 
-**Event ordering (normative).** For a single live invocation the agent-scoped events MUST appear as: `agent.invocation.started` → `agent.promptResolved` → (`agent.reasoning.delta`* → `agent.reasoned`)+ → (`agent.toolCalled` → `agent.toolReturned`)* → `agent.decided`+ → `agent.handoff`? → `agent.invocation.completed`. `started` MUST precede every other agent-scoped event of the invocation; `completed` MUST follow them (and, for a sub-run, precedes the run-scoped RFC 0063 `output.harvested`).
+**Event ordering (normative).** For a single live invocation the agent-scoped events MUST appear as: `agent.invocation.started` → `agent.promptResolved` → (`agent.reasoning.delta`_→ `agent.reasoned`)+ → (`agent.toolCalled` → `agent.toolReturned`)_ → `agent.decided`+ → `agent.handoff`? → `agent.invocation.completed`. `started` MUST precede every other agent-scoped event of the invocation; `completed` MUST follow them (and, for a sub-run, precedes the run-scoped RFC 0063 `output.harvested`).
 
 ### Composition: three entry points (normative)
 
@@ -213,7 +213,7 @@ A live manifest agent is invocable three ways; all MUST resolve to the same mapp
 
 ### Safety carry-forward (normative)
 
-Live execution MUST NOT relax any RFC 0072 §D mandatory floor guarantee: (1) `toolAllowlist` enforcement is mandatory (a tool outside the allowlist MUST NOT be callable even under `liveRuntime`); (2) handoff inbound validation (`taskSchemaRef`) is mandatory when present; (3) tenant scoping (CTI-1) on memory + any enqueued run is mandatory; (4) live model output is untrusted — the host MUST treat it per the RFC 0031/0032 envelope contract (a refusal terminates with `outcome: "refused"`, never a silent substitution); (5) per-tool authorization (when `toolHooks` advertised) fails closed. `structuredOutput` + `confidenceEscalation` are advertised *quality* sub-flags (a host MAY run live without them); the five guarantees above are unconditional under `liveRuntime`.
+Live execution MUST NOT relax any RFC 0072 §D mandatory floor guarantee: (1) `toolAllowlist` enforcement is mandatory (a tool outside the allowlist MUST NOT be callable even under `liveRuntime`); (2) handoff inbound validation (`taskSchemaRef`) is mandatory when present; (3) tenant scoping (CTI-1) on memory + any enqueued run is mandatory; (4) live model output is untrusted — the host MUST treat it per the RFC 0031/0032 envelope contract (a refusal terminates with `outcome: "refused"`, never a silent substitution); (5) per-tool authorization (when `toolHooks` advertised) fails closed. `structuredOutput` + `confidenceEscalation` are advertised _quality_ sub-flags (a host MAY run live without them); the five guarantees above are unconditional under `liveRuntime`.
 
 ## Capability advertisement (normative)
 
@@ -230,13 +230,13 @@ Live execution MUST NOT relax any RFC 0072 §D mandatory floor guarantee: (1) `t
 }
 ```
 
-| Field | Type | Description |
-|---|---|---|
-| `supported` | `boolean` | When `true`, the host implements the execution loop + handoff state machine above. Conformance scenarios gating on this flag run unconditionally on advertising hosts. |
-| `version` | `integer 1–6` | Profile version. `1` = handoff state machine (this document — RFC 0037, execution-loop framework + planner→worker handoff). `2` = RFC 0039 (confidence escalation + agent-memory lifecycle), `3` = RFC 0040 (cross-host causation), `4` = RFC 0041 (replay determinism under nondeterminism), `5` = RFC 0061 (stateful agent-loop lifecycle — per-iteration snapshot inputs, the `iteration` counter, stateful resume), `6` = RFC 0090 (verifier/critic turn + convergence criteria). A host advertising `version: N` MUST implement all versions 1..N. |
-| `statefulResume` | `boolean` | RFC 0061 (`version >= 5`). When `true`, a `clarify`/`escalate` HITL suspend resumes the loop at the same iteration with the snapshot lineage + counter intact. See §"Stateful agent-loop lifecycle". |
-| `transcriptWindow` | `integer ≥ 1` | RFC 0061 (`version >= 5`). Host-advertised count of recent event-log entries fed each orchestrator turn as the transcript input. Absent ⇒ unbounded on the wire. |
-| `verifier` | `object` | RFC 0090 (`version >= 6`). `{ supported, gating? }`. When `supported`, the host emits `agent.verified` over results per §"Verifier and convergence". When `gating: true`, a `fail` verdict blocks merge/terminate (fail-closed) and `revise` routes back to an actor turn. Absent ⇒ no verifier turn. |
+| Field              | Type          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------ | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supported`        | `boolean`     | When `true`, the host implements the execution loop + handoff state machine above. Conformance scenarios gating on this flag run unconditionally on advertising hosts.                                                                                                                                                                                                                                                                                                                                                                                  |
+| `version`          | `integer 1–6` | Profile version. `1` = handoff state machine (this document — RFC 0037, execution-loop framework + planner→worker handoff). `2` = RFC 0039 (confidence escalation + agent-memory lifecycle), `3` = RFC 0040 (cross-host causation), `4` = RFC 0041 (replay determinism under nondeterminism), `5` = RFC 0061 (stateful agent-loop lifecycle — per-iteration snapshot inputs, the `iteration` counter, stateful resume), `6` = RFC 0090 (verifier/critic turn + convergence criteria). A host advertising `version: N` MUST implement all versions 1..N. |
+| `statefulResume`   | `boolean`     | RFC 0061 (`version >= 5`). When `true`, a `clarify`/`escalate` HITL suspend resumes the loop at the same iteration with the snapshot lineage + counter intact. See §"Stateful agent-loop lifecycle".                                                                                                                                                                                                                                                                                                                                                    |
+| `transcriptWindow` | `integer ≥ 1` | RFC 0061 (`version >= 5`). Host-advertised count of recent event-log entries fed each orchestrator turn as the transcript input. Absent ⇒ unbounded on the wire.                                                                                                                                                                                                                                                                                                                                                                                        |
+| `verifier`         | `object`      | RFC 0090 (`version >= 6`). `{ supported, gating? }`. When `supported`, the host emits `agent.verified` over results per §"Verifier and convergence". When `gating: true`, a `fail` verdict blocks merge/terminate (fail-closed) and `revise` routes back to an actor turn. Absent ⇒ no verifier turn.                                                                                                                                                                                                                                                   |
 
 Hosts that do NOT advertise this capability MAY implement RFCs 0006/0007/0022 individually with implementation flexibility on the integration semantics; conformance scenarios gating on this flag soft-skip on absence per the existing capability-gating convention.
 
@@ -296,17 +296,17 @@ Hosts that do NOT advertise `capabilities.multiAgent.executionModel.supported: t
 
 ## Open spec gaps
 
-| # | Gap | Land-in version (RFC) | Owner |
-|---|---|---|---|
-| MAE-1 | **`version: 2`:** Confidence-threshold semantics — at what `OrchestratorDecision.confidence` value MUST the supervisor escalate to clarification or approval, versus MAY escalate? Today: host policy. | RFC 0039 (`version: 2`) | OpenWOP WG |
+| #     | Gap                                                                                                                                                                                                             | Land-in version (RFC)   | Owner      |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ---------- |
+| MAE-1 | **`version: 2`:** Confidence-threshold semantics — at what `OrchestratorDecision.confidence` value MUST the supervisor escalate to clarification or approval, versus MAY escalate? Today: host policy.          | RFC 0039 (`version: 2`) | OpenWOP WG |
 | MAE-2 | **`version: 2`:** Agent memory lifecycle across sub-runs — `MemoryEntry.ttl` semantics when a parent run dispatches a child whose memory operations the parent inherits. Today: implicit; needs normative MUST. | RFC 0039 (`version: 2`) | OpenWOP WG |
-| MAE-3 | **`version: 2`:** Memory carry-forward when a sub-run is replayed from past event-log index — does the replay re-read the original memory snapshot, or the current memory state? | RFC 0039 (`version: 2`) | OpenWOP WG |
-| MAE-4 | **`version: 3`:** Extending `causationId` to span hosts (currently single-host scope per `spec/v1/replay.md` §"Determinism guarantees"). | RFC 0040 (`version: 3`) | OpenWOP WG |
-| MAE-5 | **`version: 3`:** W3C tracecontext propagation across MCP/A2A composition boundaries — partial coverage in `RFC 0023` for OTel; needs normative cross-host case. | RFC 0040 (`version: 3`) | OpenWOP WG |
-| MAE-6 | **`version: 3`:** Cross-host run-ID resolution — when host A's run dispatches to host B, what's the discoverable identifier chain? | RFC 0040 (`version: 3`) | OpenWOP WG |
-| MAE-7 | **`version: 4`:** LLM cache-key recipe — `replay.md` §"LLM cache-key recipe" already exists but `replay-llm-cache-key.test.ts` is shape-only per `docs/KNOWN-LIMITS.md:18`. | RFC 0041 (`version: 4`) | OpenWOP WG |
-| MAE-8 | **`version: 4`:** Recovery from envelope refusal in replay context — original run got envelope, replay gets refusal. | RFC 0041 (`version: 4`) | OpenWOP WG |
-| MAE-9 | **`version: 4`:** Determinism vs idempotency — replay produces the same observable output sequence even when underlying tool calls differ. | RFC 0041 (`version: 4`) | OpenWOP WG |
+| MAE-3 | **`version: 2`:** Memory carry-forward when a sub-run is replayed from past event-log index — does the replay re-read the original memory snapshot, or the current memory state?                                | RFC 0039 (`version: 2`) | OpenWOP WG |
+| MAE-4 | **`version: 3`:** Extending `causationId` to span hosts (currently single-host scope per `spec/v1/replay.md` §"Determinism guarantees").                                                                        | RFC 0040 (`version: 3`) | OpenWOP WG |
+| MAE-5 | **`version: 3`:** W3C tracecontext propagation across MCP/A2A composition boundaries — partial coverage in `RFC 0023` for OTel; needs normative cross-host case.                                                | RFC 0040 (`version: 3`) | OpenWOP WG |
+| MAE-6 | **`version: 3`:** Cross-host run-ID resolution — when host A's run dispatches to host B, what's the discoverable identifier chain?                                                                              | RFC 0040 (`version: 3`) | OpenWOP WG |
+| MAE-7 | **`version: 4`:** LLM cache-key recipe — `replay.md` §"LLM cache-key recipe" already exists but `replay-llm-cache-key.test.ts` is shape-only per `docs/KNOWN-LIMITS.md:18`.                                     | RFC 0041 (`version: 4`) | OpenWOP WG |
+| MAE-8 | **`version: 4`:** Recovery from envelope refusal in replay context — original run got envelope, replay gets refusal.                                                                                            | RFC 0041 (`version: 4`) | OpenWOP WG |
+| MAE-9 | **`version: 4`:** Determinism vs idempotency — replay produces the same observable output sequence even when underlying tool calls differ.                                                                      | RFC 0041 (`version: 4`) | OpenWOP WG |
 
 ## References
 

@@ -130,6 +130,7 @@ Reviewer (openwop project maintainer) verifies:
    - A public statement (blog post / press release / signed message) declaring the namespace claim
 
 2. **Public-key shape.** Verify the file is a valid Ed25519 public key:
+
    ```bash
    openssl pkey -in registry/keys/<org>-internal-1.pub -pubin -text -noout
    # Expects: "ED25519 Public-Key:" line + 32-byte hex dump
@@ -190,12 +191,12 @@ Each authorized publisher key SHOULD rotate annually. See `KEY-ROTATION.md` (com
 
 ## Common pitfalls
 
-| Symptom | Likely cause | Fix |
-|---|---|---|
-| Sig verification fails on first PR | `keyId` in pack.json doesn't match registered key | Re-build pack with correct `--key-id` |
-| Sig verification fails: "key not authorized for namespace" | Pack name's namespace doesn't match `permittedNamespaces` | Rename the pack OR add namespace to permittedNamespaces (Step 1) |
-| Public-key URL 404s after merge | Firebase Hosting deploy failed (check Actions tab) | Wait + retry; if persistent, manually `firebase deploy --only hosting:packs` |
-| `gh pr create` fails | PR author lacks write access to openwop/openwop | Fork → open PR from fork; maintainer can merge from any source |
+| Symptom                                                    | Likely cause                                              | Fix                                                                          |
+| ---------------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Sig verification fails on first PR                         | `keyId` in pack.json doesn't match registered key         | Re-build pack with correct `--key-id`                                        |
+| Sig verification fails: "key not authorized for namespace" | Pack name's namespace doesn't match `permittedNamespaces` | Rename the pack OR add namespace to permittedNamespaces (Step 1)             |
+| Public-key URL 404s after merge                            | Firebase Hosting deploy failed (check Actions tab)        | Wait + retry; if persistent, manually `firebase deploy --only hosting:packs` |
+| `gh pr create` fails                                       | PR author lacks write access to openwop/openwop           | Fork → open PR from fork; maintainer can merge from any source               |
 
 ---
 

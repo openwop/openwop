@@ -1,20 +1,20 @@
 # RFC 0030: Envelope `reasoning` field + Tier 1 Structured-Output Subset (informative)
 
-| Field | Value |
-|---|---|
-| **RFC** | 0030 |
-| **Title** | Optional `reasoning` field on envelope payload schemas; informative Tier-1 cross-vendor structured-output compatibility subset |
-| **Status** | `Accepted` |
-| **Author(s)** | OpenWOP Working Group |
-| **Created** | 2026-05-20 |
-| **Updated** | 2026-05-21 (Active → Accepted — see [Status history](#status-history) below). |
-| **Affects** | `spec/v1/ai-envelope.md` (adds §"Reasoning field (normative)" + §"Tier 1 Structured-Output Compatibility Subset (informative)") · `spec/v1/structured-output-subset.md` (NEW, informative) · `schemas/capabilities.schema.json` (adds optional `envelopes.reasoning` and `envelopes.tierOneSubsetCompliance` fields) · `SECURITY/invariants.yaml` (adds `envelope-reasoning-secret-redaction`) · 3 new conformance scenarios · CHANGELOG |
-| **Compatibility** | `additive` |
-| **Supersedes** | — |
+| Field             | Value                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RFC**           | 0030                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **Title**         | Optional `reasoning` field on envelope payload schemas; informative Tier-1 cross-vendor structured-output compatibility subset                                                                                                                                                                                                                                                                                                           |
+| **Status**        | `Accepted`                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| **Author(s)**     | OpenWOP Working Group                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Created**       | 2026-05-20                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| **Updated**       | 2026-05-21 (Active → Accepted — see [Status history](#status-history) below).                                                                                                                                                                                                                                                                                                                                                            |
+| **Affects**       | `spec/v1/ai-envelope.md` (adds §"Reasoning field (normative)" + §"Tier 1 Structured-Output Compatibility Subset (informative)") · `spec/v1/structured-output-subset.md` (NEW, informative) · `schemas/capabilities.schema.json` (adds optional `envelopes.reasoning` and `envelopes.tierOneSubsetCompliance` fields) · `SECURITY/invariants.yaml` (adds `envelope-reasoning-secret-redaction`) · 3 new conformance scenarios · CHANGELOG |
+| **Compatibility** | `additive`                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| **Supersedes**    | —                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 ## Summary
 
-Adds two complementary, additive surfaces to the AI Envelope spec (RFC 0021). First, every envelope payload schema defined by the spec — and any vendor-namespaced kind that requires multi-step reasoning to populate — SHALL support an OPTIONAL `reasoning` field of type `string`. The field is informational, never used for routing, and gives the model a place to put chain-of-thought *inside* the structured output so strict-JSON output mode doesn't collapse reasoning quality (per Tam et al., arXiv 2408.02442). Second, an informative companion document `spec/v1/structured-output-subset.md` documents the intersection of JSON-Schema features supported by OpenAI strict mode, Anthropic strict tool use, and Google Gemini `responseSchema`, so canvas-type authors writing new envelope payload schemas have a single reference for "what schema features are safe for cross-vendor portability."
+Adds two complementary, additive surfaces to the AI Envelope spec (RFC 0021). First, every envelope payload schema defined by the spec — and any vendor-namespaced kind that requires multi-step reasoning to populate — SHALL support an OPTIONAL `reasoning` field of type `string`. The field is informational, never used for routing, and gives the model a place to put chain-of-thought _inside_ the structured output so strict-JSON output mode doesn't collapse reasoning quality (per Tam et al., arXiv 2408.02442). Second, an informative companion document `spec/v1/structured-output-subset.md` documents the intersection of JSON-Schema features supported by OpenAI strict mode, Anthropic strict tool use, and Google Gemini `responseSchema`, so canvas-type authors writing new envelope payload schemas have a single reference for "what schema features are safe for cross-vendor portability."
 
 ## Motivation
 
@@ -22,7 +22,7 @@ Two empirical gaps in the current envelope surface:
 
 ### 2.1 Strict-JSON output without an in-payload reasoning slot degrades reasoning quality
 
-Tam et al. (*"Let Me Speak Freely? A Study on the Impact of Format Restrictions on the Performance of Large Language Models"* — arXiv 2408.02442) found that forcing models into strict-JSON output without a free reasoning field can materially degrade reasoning quality (GPT-3.5-Turbo on Last Letter task: 56.7% → 1.78%; GSM8K: 75.99% → 49.25%). JSONSchemaBench (arXiv 2501.10868) found constrained decoding *helps* quality — but only when the schema permits a free reasoning slot. The two findings reconcile: schema constraints help *format*, hurt *reasoning* unless reasoning is given an in-schema escape valve.
+Tam et al. (_"Let Me Speak Freely? A Study on the Impact of Format Restrictions on the Performance of Large Language Models"_ — arXiv 2408.02442) found that forcing models into strict-JSON output without a free reasoning field can materially degrade reasoning quality (GPT-3.5-Turbo on Last Letter task: 56.7% → 1.78%; GSM8K: 75.99% → 49.25%). JSONSchemaBench (arXiv 2501.10868) found constrained decoding _helps_ quality — but only when the schema permits a free reasoning slot. The two findings reconcile: schema constraints help _format_, hurt _reasoning_ unless reasoning is given an in-schema escape valve.
 
 The current envelope spec mandates strict payload-schema validation (`ai-envelope.md` §"Schema discipline") with no normative reasoning slot. Hosts adopting strict-output mode (Anthropic strict tool use, OpenAI structured outputs, Gemini `responseSchema`) are systematically degrading the model's reasoning quality on multi-step-reasoning envelope kinds (PRD generation, plan generation, design-system synthesis, persona research, etc.). This is a protocol-level concern, not a host-implementation choice.
 
@@ -30,21 +30,21 @@ The current envelope spec mandates strict payload-schema validation (`ai-envelop
 
 Each LLM vendor enforces a different JSON-Schema subset for native structured output:
 
-| Feature | OpenAI strict | Anthropic strict | Gemini responseSchema |
-|---|---|---|---|
-| `additionalProperties: false` required on every object | YES | YES | Accepted (Nov 2025+) |
-| `oneOf` | NO | NO | NO (silently dropped) |
-| `anyOf` inside properties | YES | YES | YES (Nov 2025+) |
-| `minLength`/`maxLength`/`pattern`/`format` | NO | NO | YES (Gemini 2.5+) |
-| `minimum`/`maximum`/`multipleOf` | NO | NO | YES (Gemini 2.5+) |
-| `prefixItems` | NO | NO | YES |
-| Recursive `$ref` | YES (`$defs`) | NO | YES (Nov 2025+) |
-| `propertyNames` | Unsupported | Unsupported | Silently dropped |
-| Max nesting depth (OpenAI strict) | 5 levels | — | — |
+| Feature                                                | OpenAI strict | Anthropic strict | Gemini responseSchema |
+| ------------------------------------------------------ | ------------- | ---------------- | --------------------- |
+| `additionalProperties: false` required on every object | YES           | YES              | Accepted (Nov 2025+)  |
+| `oneOf`                                                | NO            | NO               | NO (silently dropped) |
+| `anyOf` inside properties                              | YES           | YES              | YES (Nov 2025+)       |
+| `minLength`/`maxLength`/`pattern`/`format`             | NO            | NO               | YES (Gemini 2.5+)     |
+| `minimum`/`maximum`/`multipleOf`                       | NO            | NO               | YES (Gemini 2.5+)     |
+| `prefixItems`                                          | NO            | NO               | YES                   |
+| Recursive `$ref`                                       | YES (`$defs`) | NO               | YES (Nov 2025+)       |
+| `propertyNames`                                        | Unsupported   | Unsupported      | Silently dropped      |
+| Max nesting depth (OpenAI strict)                      | 5 levels      | —                | —                     |
 
 The intersection of all three is what an envelope payload schema MUST satisfy to be Tier-1-portable across hosts. Vendor docs don't enumerate this intersection; every host re-discovers it through production 400 responses. Worse, Gemini's "unsupported keywords are silently dropped" posture (per `docs.cloud.google.com/vertex-ai/...`) means host-side schemas can be stricter than what Gemini actually enforced — a silent correctness bug.
 
-This RFC documents the intersection in an informative appendix so canvas-type authors have a single reference. The appendix is *informative*, not normative — the protocol cannot mandate vendor behavior, only document it as of the spec ratification date.
+This RFC documents the intersection in an informative appendix so canvas-type authors have a single reference. The appendix is _informative_, not normative — the protocol cannot mandate vendor behavior, only document it as of the spec ratification date.
 
 ## Proposal
 
@@ -66,12 +66,12 @@ Add a new §"Reasoning field (normative)" to `spec/v1/ai-envelope.md` between §
 
 The four universal-kind payload schemas published under `schemas/envelopes/` gain `reasoning` as an OPTIONAL property:
 
-| Schema | `reasoning` posture |
-|---|---|
-| `clarification.request.schema.json` | OPTIONAL — useful when the model wants to explain *why* it's asking |
-| `schema.request.schema.json` | OPTIONAL — useful when the model is asking the host to verify a kind it's uncertain about |
-| `schema.response.schema.json` | OMITTED — side-channel ack; no reasoning needed |
-| `error.schema.json` | OPTIONAL — useful when the model is explaining *why* it could not produce the requested envelope |
+| Schema                              | `reasoning` posture                                                                              |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `clarification.request.schema.json` | OPTIONAL — useful when the model wants to explain _why_ it's asking                              |
+| `schema.request.schema.json`        | OPTIONAL — useful when the model is asking the host to verify a kind it's uncertain about        |
+| `schema.response.schema.json`       | OMITTED — side-channel ack; no reasoning needed                                                  |
+| `error.schema.json`                 | OPTIONAL — useful when the model is explaining _why_ it could not produce the requested envelope |
 
 Per-schema diff (illustrative for `clarification.request.schema.json`):
 
@@ -274,13 +274,13 @@ Promotion from `Active` → `Accepted`:
 - `RFCS/0027-prompt-templates.md` — `prompt.composed.systemPrompt|userPrompt` (host-composed prompt body) — sibling surface to envelope `reasoning`, see RFC 0027 §"Implementation notes" cross-reference.
 - `SECURITY/threat-model-secret-leakage.md` §SR-1 — redaction harness this RFC plugs into.
 - `SECURITY/threat-model-prompt-injection.md` — `<UNTRUSTED>...</UNTRUSTED>` marker discipline for untrusted `reasoning` content.
-- Tam et al., "Let Me Speak Freely?" — https://arxiv.org/pdf/2408.02442 (reasoning-collapse finding).
-- JSONSchemaBench — https://arxiv.org/abs/2501.10868 (constrained-decoding quality lift finding).
-- Anthropic Strict Tool Use — https://platform.claude.com/docs/en/agents-and-tools/tool-use/strict-tool-use
-- OpenAI Structured Outputs — https://developers.openai.com/api/docs/guides/structured-outputs
-- Azure mirror — https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/structured-outputs
-- Google Gemini Structured Output — https://ai.google.dev/gemini-api/docs/structured-output
-- Gemini Nov 2025 update — https://blog.google/technology/developers/gemini-api-structured-outputs/
+- Tam et al., "Let Me Speak Freely?" — <https://arxiv.org/pdf/2408.02442> (reasoning-collapse finding).
+- JSONSchemaBench — <https://arxiv.org/abs/2501.10868> (constrained-decoding quality lift finding).
+- Anthropic Strict Tool Use — <https://platform.claude.com/docs/en/agents-and-tools/tool-use/strict-tool-use>
+- OpenAI Structured Outputs — <https://developers.openai.com/api/docs/guides/structured-outputs>
+- Azure mirror — <https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/structured-outputs>
+- Google Gemini Structured Output — <https://ai.google.dev/gemini-api/docs/structured-output>
+- Gemini Nov 2025 update — <https://blog.google/technology/developers/gemini-api-structured-outputs/>
 - `RFCS/0031-envelope-variants-and-model-capabilities.md` (forthcoming) — sibling RFC in the envelope LLM-contract-hardening track; codifies the `anyOf` + discriminator pattern that complements the Tier-1 subset in this RFC.
 - `RFCS/0032-envelope-reliability-events.md` (forthcoming) — sibling RFC adding envelope-reliability `RunEventType` entries; references this RFC's `reasoning` field as a contributing factor to truncation budget calculations.
 - `RFCS/0033-envelope-completion-contract.md` (forthcoming) — sibling RFC normating retry routing; depends on this RFC's `reasoning` field design for the truncation-budget recommendation note.

@@ -1,4 +1,4 @@
-# openwop Spec v1 — Node Packs and the Public Registry
+# OpenWOP Spec v1 — Node Packs and the Public Registry
 
 > **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of the pack manifest format, distribution, signing, and registry HTTP API. Language-neutral stable surface for external review. The hosted reference registry is live at `https://packs.openwop.dev/`; local registry contents are summarized in `docs/PROTOCOL-STATUS.md`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
@@ -26,38 +26,38 @@ The pack/registry idiom parallels [npm](https://npmjs.com/) and [Helm chart repo
 
 Pack names use the reverse-DNS convention enforced by `typeId` patterns elsewhere in the spec (`workflow-definition.schema.json` §typeId):
 
-```
+```text
 <scope>.<author>.<pack>
 ```
 
-| Scope | Reservation |
-|---|---|
-| `core.*` | Reserved for spec-canonical packs maintained by the openwop working group. Third parties MUST NOT publish under this scope. |
-| `vendor.<org>.*` | Vendor-published packs. The `<org>` segment is reserved on first-publish; subsequent publishes from a different account return `403 forbidden`. |
-| `community.<author>.*` | Hobbyist / individual packs. Lighter reservation; squatting is disputable but enforcement is best-effort. |
-| `private.<host>.*` | **Host-internal packs** running on a single deployment's private registry. The `<host>` segment is operator-chosen and MUST NOT collide with reserved values. The public registry at `packs.openwop.dev` MUST refuse `private.*` uploads with `400 invalid_pack_scope` — `private.*` is for self-hosted registries only. Mirrors the `local.*` "not for public registries" semantic, distinguished by intent: `local.*` is in-repo / dev-time; `private.<host>.*` is the host's curated production registry. See registry-operations.md §"Host-private marketplace relationship" for the deployment model. |
-| `local.*` | NOT published. Reserved for in-repo / unpublished private packs. Registries MUST refuse `local.*` uploads with `400 invalid_pack_scope`. |
+| Scope                  | Reservation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `core.*`               | Reserved for spec-canonical packs maintained by the openwop working group. Third parties MUST NOT publish under this scope.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `vendor.<org>.*`       | Vendor-published packs. The `<org>` segment is reserved on first-publish; subsequent publishes from a different account return `403 forbidden`.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `community.<author>.*` | Hobbyist / individual packs. Lighter reservation; squatting is disputable but enforcement is best-effort.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `private.<host>.*`     | **Host-internal packs** running on a single deployment's private registry. The `<host>` segment is operator-chosen and MUST NOT collide with reserved values. The public registry at `packs.openwop.dev` MUST refuse `private.*` uploads with `400 invalid_pack_scope` — `private.*` is for self-hosted registries only. Mirrors the `local.*` "not for public registries" semantic, distinguished by intent: `local.*` is in-repo / dev-time; `private.<host>.*` is the host's curated production registry. See registry-operations.md §"Host-private marketplace relationship" for the deployment model. |
+| `local.*`              | NOT published. Reserved for in-repo / unpublished private packs. Registries MUST refuse `local.*` uploads with `400 invalid_pack_scope`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 
 ### Reserved Core OpenWOP node typeIds
 
 Within the `core.*` scope, the following typeIds are reserved for workflow primitives that every OpenWOP-compliant server is expected to provide.
 
-| TypeId | Purpose |
-|---|---|
-| `core.start` | Workflow entry point. |
-| `core.end` | Workflow terminal. |
-| `core.conditional` | Routing on edge conditions. |
-| `core.delay` | Wall-clock pause. |
-| `core.loop` | Iteration construct. |
-| `core.parallel` | Fan-out / parallel execution. |
-| `core.merge` | Fan-in / synchronization point. |
-| `core.setVariable` | Write to workflow variables. |
-| `core.getVariable` | Read from workflow variables. |
-| `core.interrupt` | HITL primitive — see `interrupt.md`. |
-| `core.identity` | Echo-input primitive — passes a named input port to an output port unchanged. Used by conformance fixtures to verify input/output passthrough; servers SHOULD ship for v1 conformance. |
-| `core.subWorkflow` | Synchronous sub-workflow invocation — parent waits for child terminal. Config shape, output shape, and `outputMapping` semantics are normative; see §"`core.subWorkflow` contract" below + `conformance/fixtures.md` §`conformance-subworkflow-parent`. |
-| `core.channelWrite` | Write a value to a named channel using a typed reducer (v1: `append` only) with optional `ttlMs` filtering. Closes C3 channel-TTL fold. See `channels-and-reducers.md` §append + §TTL and `conformance/fixtures.md` §`conformance-channel-ttl`. |
-| `core.orchestrator.supervisor` | Multi-Agent Shift Phase 5. Observes worker completions and emits an `OrchestratorDecision` (`schemas/orchestrator-decision.schema.json`) — discriminated union over `next-worker` / `ask-user` / `terminate`. Hosts advertising `capabilities.agents.orchestrator: true` MUST register this typeId. Pairs with `RunSnapshot.runOrchestrator` (the supervisor identity for the run's lifetime) and the `runOrchestrator.decided` event. Conservative-path: when the supervisor's `agent.decided.confidence` is below the resolved escalation threshold, the node MUST suspend via `node.suspended { reason: 'low-confidence' }` per the CP-1 invariant. **Conformance hooks** (RFC 0023 §C + RFC 0022 §"Unresolved questions" #6): hosts MAY honor three conformance-only config keys on this typeId:
+| TypeId                         | Purpose                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `core.start`                   | Workflow entry point.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `core.end`                     | Workflow terminal.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `core.conditional`             | Routing on edge conditions.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `core.delay`                   | Wall-clock pause.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `core.loop`                    | Iteration construct.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `core.parallel`                | Fan-out / parallel execution.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `core.merge`                   | Fan-in / synchronization point.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `core.setVariable`             | Write to workflow variables.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `core.getVariable`             | Read from workflow variables.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `core.interrupt`               | HITL primitive — see `interrupt.md`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `core.identity`                | Echo-input primitive — passes a named input port to an output port unchanged. Used by conformance fixtures to verify input/output passthrough; servers SHOULD ship for v1 conformance.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `core.subWorkflow`             | Synchronous sub-workflow invocation — parent waits for child terminal. Config shape, output shape, and `outputMapping` semantics are normative; see §"`core.subWorkflow` contract" below + `conformance/fixtures.md` §`conformance-subworkflow-parent`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `core.channelWrite`            | Write a value to a named channel using a typed reducer (v1: `append` only) with optional `ttlMs` filtering. Closes C3 channel-TTL fold. See `channels-and-reducers.md` §append + §TTL and `conformance/fixtures.md` §`conformance-channel-ttl`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `core.orchestrator.supervisor` | Multi-Agent Shift Phase 5. Observes worker completions and emits an `OrchestratorDecision` (`schemas/orchestrator-decision.schema.json`) — discriminated union over `next-worker` / `ask-user` / `terminate`. Hosts advertising `capabilities.agents.orchestrator: true` MUST register this typeId. Pairs with `RunSnapshot.runOrchestrator` (the supervisor identity for the run's lifetime) and the `runOrchestrator.decided` event. Conservative-path: when the supervisor's `agent.decided.confidence` is below the resolved escalation threshold, the node MUST suspend via `node.suspended { reason: 'low-confidence' }` per the CP-1 invariant. **Conformance hooks** (RFC 0023 §C + RFC 0022 §"Unresolved questions" #6): hosts MAY honor three conformance-only config keys on this typeId: |
 
 - `config.mockConfidence` (number 0..1) — overrides the live agent's `agent.decided.confidence`. Used by `conformance-orchestrator-low-confidence` (CP-1).
 - `config.mockPendingDecision` (`OrchestratorDecision`) — overrides the live decision shape for a single tick. Used by `conformance-orchestrator-low-confidence`.
@@ -129,7 +129,7 @@ Hosts that want to carry additional fields (e.g., aggregate `childOutcome` enum,
 
 #### `outputAttestation` — verify-before-merge (RFC 0063, `Active`)
 
-**Why this exists.** `outputMapping` merges a child's outputs into the parent the instant the child reaches `completed`, with no integrity check and no gate. For autonomous fan-out — a supervisor dispatching N workers whose artifacts are merged back — blind merge means one compromised or hallucinated child artifact silently enters the parent's state. `outputAttestation` adds opt-in *verification before merge*: a content checksum the parent can verify, and an optional approval gate that suspends before the merge.
+**Why this exists.** `outputMapping` merges a child's outputs into the parent the instant the child reaches `completed`, with no integrity check and no gate. For autonomous fan-out — a supervisor dispatching N workers whose artifacts are merged back — blind merge means one compromised or hallucinated child artifact silently enters the parent's state. `outputAttestation` adds opt-in _verification before merge_: a content checksum the parent can verify, and an optional approval gate that suspends before the merge.
 
 **Capability flag:** `capabilities.agents.subRunAttestation: true` (RFC 0063). Hosts that omit / `false` this flag treat `outputAttestation` as inert — blind merge, exactly today's behavior — and MUST NOT refuse a workflow that carries the block (it is forward-compatible advisory config, unlike `inputMapping`).
 
@@ -147,7 +147,7 @@ Hosts that want to carry additional fields (e.g., aggregate `childOutcome` enum,
 }
 ```
 
-- **§B — checksum (when `checksum: true`).** After the child reaches a terminal status and its outputs are harvested but **before** `outputMapping` is applied, the host MUST (1) compute a checksum over the child's harvested output object using RFC 8785 JCS canonicalization + SHA-256 — the same recipe pinned for replay cache keys in [`replay.md`](./replay.md) (RFC 0041) — so the digest is host-independent and a parent can verify a child that ran on a different host (RFC 0040); (2) surface it as the additive optional `attestation { checksum, algorithm }` object on the existing `core.workflowChain.event { phase: 'output.harvested' }` (RFC 0037 — no new event type; that phase *is* the merge point) AND under the sub-workflow node's `node.completed` `data.outputs.attestation.checksum`; (3) apply `outputMapping` as today. The checksum is **advisory for verification** — the parent or a downstream node MAY compare it against an expected value and fail the parent on divergence; the host MUST NOT itself reject on a checksum mismatch (that is policy, expressed as a parent node).
+- **§B — checksum (when `checksum: true`).** After the child reaches a terminal status and its outputs are harvested but **before** `outputMapping` is applied, the host MUST (1) compute a checksum over the child's harvested output object using RFC 8785 JCS canonicalization + SHA-256 — the same recipe pinned for replay cache keys in [`replay.md`](./replay.md) (RFC 0041) — so the digest is host-independent and a parent can verify a child that ran on a different host (RFC 0040); (2) surface it as the additive optional `attestation { checksum, algorithm }` object on the existing `core.workflowChain.event { phase: 'output.harvested' }` (RFC 0037 — no new event type; that phase _is_ the merge point) AND under the sub-workflow node's `node.completed` `data.outputs.attestation.checksum`; (3) apply `outputMapping` as today. The checksum is **advisory for verification** — the parent or a downstream node MAY compare it against an expected value and fail the parent on divergence; the host MUST NOT itself reject on a checksum mismatch (that is policy, expressed as a parent node).
 - **§C — approval gate (when `requireApproval: true`).** After harvest and **before** `outputMapping`, the host MUST suspend the parent via an `approval` interrupt (RFC 0051; see [`interrupt.md`](./interrupt.md)) carrying the child's outputs as the artifact (`actions: ['accept', 'reject', 'edit', 'ask']`). The merge proceeds **only** on `accept` (merge the child outputs unchanged) or `edit-accept` (merge the approver's `editedArtifactData`). On `reject` the host MUST NOT merge and MUST surface per the node's `onChildFailure` policy (`fail-parent` or `absorb`). This MUST **fail closed**: if the run terminates or the interrupt expires without an `accept`/`edit-accept`, the outputs MUST NOT be merged. (Backed by the proposed protocol-tier SECURITY invariant `subrun-merge-approval-fail-closed`, which lands with its public conformance test at reference-host implementation, not at `Active`.) One `approval` interrupt per child for v1; batched fan-out approval is a later optional optimization.
 - **§D — `principalScope` (optional).** When present, narrows the child run's effective scopes to the named RFC 0049 scopes — a child dispatched to "write a report" MAY be denied "delete data" even though the parent principal holds it. This references RFC 0049 scopes and defines no new ones; it reaffirms and tightens the existing tenant-inheritance isolation.
 
@@ -325,13 +325,13 @@ A pack's manifest is a JSON file named `pack.json` at the pack root. Schema: `sc
 
 ### Required fields
 
-| Field | Description |
-|---|---|
-| `name` | Pack name per §naming. |
-| `version` | Semver. |
-| `engines.openwop` | Semver range — which openwop protocol versions this pack works against. |
-| `nodes[]` | Each declared node has `typeId`, `version` (per-node, may differ from pack version), `category`, `role`, schemas. |
-| `runtime` | Language + entry-point + format triple. See §runtime formats. |
+| Field             | Description                                                                                                       |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `name`            | Pack name per §naming.                                                                                            |
+| `version`         | Semver.                                                                                                           |
+| `engines.openwop` | Semver range — which openwop protocol versions this pack works against.                                           |
+| `nodes[]`         | Each declared node has `typeId`, `version` (per-node, may differ from pack version), `category`, `role`, schemas. |
+| `runtime`         | Language + entry-point + format triple. See §runtime formats.                                                     |
 
 ### Optional fields
 
@@ -348,12 +348,12 @@ Each `nodes[].requiresSecrets[]` entry declares a secret the node needs at execu
 ]
 ```
 
-| Field | Type | Required | Notes |
-|---|---|---|---|
-| `id` | string | yes | Stable id the executor uses to look up the resolved secret. |
-| `kind` | enum | yes | `ai-provider` / `api-key` / `oauth-token` / `custom`. Drives host resolution policy. |
-| `provider` | string | iff `kind=ai-provider` | Provider id; MUST be in `Capabilities.aiProviders.supported`. |
-| `scope` | enum | no (default `tenant`) | `tenant` / `user` / `run`. MUST match a scope in `Capabilities.secrets.scopes`. |
+| Field      | Type   | Required               | Notes                                                                                |
+| ---------- | ------ | ---------------------- | ------------------------------------------------------------------------------------ |
+| `id`       | string | yes                    | Stable id the executor uses to look up the resolved secret.                          |
+| `kind`     | enum   | yes                    | `ai-provider` / `api-key` / `oauth-token` / `custom`. Drives host resolution policy. |
+| `provider` | string | iff `kind=ai-provider` | Provider id; MUST be in `Capabilities.aiProviders.supported`.                        |
+| `scope`    | enum   | no (default `tenant`)  | `tenant` / `user` / `run`. MUST match a scope in `Capabilities.secrets.scopes`.      |
 
 The host's `SecretResolver.resolveSecret(ctx)` returns an opaque `ResolvedSecret` reference that downstream provider adapters dereference internally. Raw key material NEVER appears in events, logs, traces, prompts, errors, exports, or screenshots — this is enforced by NFR-7 at the host layer.
 
@@ -375,13 +375,13 @@ A node MAY declare an optional `nodes[].artifact` block stating that the node pr
 }
 ```
 
-| Field | Type | Required | Notes |
-|---|---|---|---|
-| `typeId` | string | no | Reverse-DNS `artifactTypeId` the node produces. When it matches an `artifactTypeId` of an installed artifact-type pack on a host advertising `host.artifactTypes`, the host MUST validate the produced artifact against that type's schema before emitting `artifact.created` (see `artifact-type-packs.md` §"Binding the existing artifact surfaces"). When it matches none, it is an unregistered type and MUST NOT be schema-validated. |
-| `syncOn` | enum | no (default `completion`) | When the host registers the artifact as durable: `completion` / `approval` / `manual`. |
-| `supportsCheckpoint` | boolean | no | `true` if the artifact participates in checkpoint/resume. |
+| Field                | Type    | Required                  | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| -------------------- | ------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `typeId`             | string  | no                        | Reverse-DNS `artifactTypeId` the node produces. When it matches an `artifactTypeId` of an installed artifact-type pack on a host advertising `host.artifactTypes`, the host MUST validate the produced artifact against that type's schema before emitting `artifact.created` (see `artifact-type-packs.md` §"Binding the existing artifact surfaces"). When it matches none, it is an unregistered type and MUST NOT be schema-validated. |
+| `syncOn`             | enum    | no (default `completion`) | When the host registers the artifact as durable: `completion` / `approval` / `manual`.                                                                                                                                                                                                                                                                                                                                                     |
+| `supportsCheckpoint` | boolean | no                        | `true` if the artifact participates in checkpoint/resume.                                                                                                                                                                                                                                                                                                                                                                                  |
 
-`nodes[].artifact.typeId` is the pack-manifest counterpart of the per-instance `WorkflowNode.artifactType` field in `workflow-definition.schema.json`: the pack declares the *default* artifact type a node produces; a workflow author MAY override per-instance. Hosts that do not advertise `host.artifactTypes` MAY ignore the block entirely — it carries no execution requirement beyond the validation the capability gates.
+`nodes[].artifact.typeId` is the pack-manifest counterpart of the per-instance `WorkflowNode.artifactType` field in `workflow-definition.schema.json`: the pack declares the _default_ artifact type a node produces; a workflow author MAY override per-instance. Hosts that do not advertise `host.artifactTypes` MAY ignore the block entirely — it carries no execution requirement beyond the validation the capability gates.
 
 ---
 
@@ -418,15 +418,15 @@ A pack `configSchema` property MAY carry an `x-openwop-form` annotation hinting 
 
 **Vocabulary** (per [RFC 0066](../../RFCS/0066-x-openwop-form-vendor-extension.md) §A):
 
-| `kind` | Wire-store shape | Renderer behavior |
-|---|---|---|
-| `text` | `string` | Plain `<input>`. Equivalent to no extension. |
-| `textarea` | `string` | Multi-line `<textarea>`. |
-| `string-list` | `string[]` | One-per-line textarea round-tripping to `string[]`. |
-| `prompt-picker` | `string` (`PromptRef` per RFC 0027) | Dropdown from the prompt library; honors `promptKind` filter. |
-| `provider-picker` | `string` | Dropdown from `capabilities.aiProviders.supported`. |
-| `model-picker` | `string` | Dropdown from `capabilities.aiProviders.supportedModels[provider]`; reads sibling via `dependsOn`. |
-| `credential-picker` | `string` (`<provider>:<name>`) | Dropdown filtered by `provider` literal OR by sibling provider via `dependsOn`. |
+| `kind`              | Wire-store shape                    | Renderer behavior                                                                                  |
+| ------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `text`              | `string`                            | Plain `<input>`. Equivalent to no extension.                                                       |
+| `textarea`          | `string`                            | Multi-line `<textarea>`.                                                                           |
+| `string-list`       | `string[]`                          | One-per-line textarea round-tripping to `string[]`.                                                |
+| `prompt-picker`     | `string` (`PromptRef` per RFC 0027) | Dropdown from the prompt library; honors `promptKind` filter.                                      |
+| `provider-picker`   | `string`                            | Dropdown from `capabilities.aiProviders.supported`.                                                |
+| `model-picker`      | `string`                            | Dropdown from `capabilities.aiProviders.supportedModels[provider]`; reads sibling via `dependsOn`. |
+| `credential-picker` | `string` (`<provider>:<name>`)      | Dropdown filtered by `provider` literal OR by sibling provider via `dependsOn`.                    |
 
 **Optional sub-fields.** `dependsOn` names a sibling property whose current value drives the picker's option set. `provider` (and the legacy alias `credentialProvider`) filters a `credential-picker` when no `dependsOn` is set. `promptKind` constrains a `prompt-picker` to one of `system` / `user` / `few-shot` / `schema-hint`.
 
@@ -436,7 +436,7 @@ A pack `configSchema` property MAY carry an `x-openwop-form` annotation hinting 
 2. When the sibling field named by `dependsOn` changes value, CLEAR the dependent field so stale `{provider: anthropic, model: gpt-5}` configurations don't survive a swap.
 3. Treat a `dependsOn` to a non-existent or non-sibling property as if `x-openwop-form` were absent (graceful fallback, not a hard error).
 
-**Renderers MUST NOT** use `x-openwop-form` to bypass `configSchema` validation. The picker constrains *what the user can pick*; the schema constrains *what the host will accept*. Both apply.
+**Renderers MUST NOT** use `x-openwop-form` to bypass `configSchema` validation. The picker constrains _what the user can pick_; the schema constrains _what the host will accept_. Both apply.
 
 **Example** (`core.ai.chatCompletion` config annotated for picker UX):
 
@@ -456,7 +456,7 @@ Pack-author opt-in costs nothing for consumers that don't implement RFC 0066: th
 
 ## Connectors (RFC 0045)
 
-A pack MAY declare itself a **connector** — a named integration exposing typed **actions** (and reusing the existing trigger model) — via an optional top-level `connector` block (`Connector` in `node-pack-manifest.schema.json`). This is the n8n/Make-style *trigger + action + auth + pagination* bundle, expressed manifest-first rather than as a code SDK. Packs without a `connector` block remain plain node packs; the block is purely additive.
+A pack MAY declare itself a **connector** — a named integration exposing typed **actions** (and reusing the existing trigger model) — via an optional top-level `connector` block (`Connector` in `node-pack-manifest.schema.json`). This is the n8n/Make-style _trigger + action + auth + pagination_ bundle, expressed manifest-first rather than as a code SDK. Packs without a `connector` block remain plain node packs; the block is purely additive.
 
 ```jsonc
 {
@@ -492,14 +492,14 @@ A pack MAY declare itself a **connector** — a named integration exposing typed
 
 The `runtime.language` field declares how the engine loads the pack:
 
-| `language` | `entry` is | Server requirement |
-|---|---|---|
-| `javascript` | Path to a JS module (CommonJS or ESM) | Engine running in Node 20+ or a JS-compatible WASM host |
-| `python` | Path to a Python module / wheel | Python 3.10+ runtime adjacent to the engine |
-| `go` | Path to a Go plugin (`.so`) or compiled binary | Go 1.22+ runtime; plugin support varies by platform |
-| `wasm` | Path to a `.wasm` core module with a defined ABI | Any host with a WASM runtime + the RFC 0008 ABI v1 shim |
+| `language`       | `entry` is                                                     | Server requirement                                              |
+| ---------------- | -------------------------------------------------------------- | --------------------------------------------------------------- |
+| `javascript`     | Path to a JS module (CommonJS or ESM)                          | Engine running in Node 20+ or a JS-compatible WASM host         |
+| `python`         | Path to a Python module / wheel                                | Python 3.10+ runtime adjacent to the engine                     |
+| `go`             | Path to a Go plugin (`.so`) or compiled binary                 | Go 1.22+ runtime; plugin support varies by platform             |
+| `wasm`           | Path to a `.wasm` core module with a defined ABI               | Any host with a WASM runtime + the RFC 0008 ABI v1 shim         |
 | `wasm-component` | Path to a WASM Component Model module (WIT-defined interfaces) | Host with a Component-Model-aware runtime (Wasmtime ≥ 14, etc.) |
-| `remote` | URL to an HTTP endpoint conforming to the MCP tool surface | Engine acts as MCP client; pack runs anywhere reachable |
+| `remote`         | URL to an HTTP endpoint conforming to the MCP tool surface     | Engine acts as MCP client; pack runs anywhere reachable         |
 
 A registry MAY refuse uploads of any `language` it doesn't support. An engine implementation MAY refuse to load packs whose `language` it can't execute, returning `400 unsupported_runtime` at workflow-register time.
 
@@ -509,14 +509,14 @@ For cross-language interop (a JavaScript engine loading a Python pack), the `rem
 
 `language: wasm` packs are normatively specified by [RFC 0008 — WASM ABI v1](../../RFCS/0008-wasm-abi.md). Hosts loading WASM packs MUST advertise `capabilities.nodePackRuntimes.wasm.{supported, abiVersions, maxMemoryBytes}` per `capabilities.schema.json` and MUST reject packs whose declared `openwop_abi_version()` is not in the advertised `abiVersions[]` (per RFC 0008 §H). The reference loader at `examples/hosts/in-memory/src/wasm-loader.ts` ships zero-dep (uses Node's native `WebAssembly` runtime + a hand-rolled host-import bridge); it is the canonical baseline implementers compare against. Six conformance scenarios cover the surface end-to-end:
 
-| Scenario | Surface | RFC 0008 §reference |
-|---|---|---|
-| `wasm-pack-load.test.ts` | Module instantiation + manifest cross-check | §B (exports), §H (ABI handshake) |
-| `wasm-pack-invoke-completed.test.ts` | `openwop_node_invoke` → `outcome: 'completed'` round-trip | §D (response envelope) |
-| `wasm-pack-invoke-suspended.test.ts` | `openwop_node_invoke` → `outcome: 'suspended'` interrupt path | §D, §F (status codes) |
-| `wasm-pack-replay-determinism.test.ts` | Replay-mode invocation reproduces output bytes-for-bytes | §I (determinism) |
-| `wasm-pack-memory-cap.test.ts` | Misbehaving-pack memory-cap breach → `cap.breached` + terminal `failed` | §K (resource limits) |
-| `wasm-pack-abi-version-rejection.test.ts` | Pack declaring ABI 999 omitted from `loadedPacks[]` | §H (ABI version handshake) |
+| Scenario                                  | Surface                                                                 | RFC 0008 §reference              |
+| ----------------------------------------- | ----------------------------------------------------------------------- | -------------------------------- |
+| `wasm-pack-load.test.ts`                  | Module instantiation + manifest cross-check                             | §B (exports), §H (ABI handshake) |
+| `wasm-pack-invoke-completed.test.ts`      | `openwop_node_invoke` → `outcome: 'completed'` round-trip               | §D (response envelope)           |
+| `wasm-pack-invoke-suspended.test.ts`      | `openwop_node_invoke` → `outcome: 'suspended'` interrupt path           | §D, §F (status codes)            |
+| `wasm-pack-replay-determinism.test.ts`    | Replay-mode invocation reproduces output bytes-for-bytes                | §I (determinism)                 |
+| `wasm-pack-memory-cap.test.ts`            | Misbehaving-pack memory-cap breach → `cap.breached` + terminal `failed` | §K (resource limits)             |
+| `wasm-pack-abi-version-rejection.test.ts` | Pack declaring ABI 999 omitted from `loadedPacks[]`                     | §H (ABI version handshake)       |
 
 The two deliberately-misbehaving packs at `examples/packs/rust-misbehaving-memory/` (memory-cap) and `examples/packs/rust-misbehaving-abi/` (ABI 999) drive the positive paths for the last two scenarios. Production hosts MAY use Wasmtime / Wasmer / wasmtime-py / wasmer-go runtimes; the ABI contract is runtime-agnostic.
 
@@ -524,19 +524,19 @@ For the Component Model variant (`language: wasm-component`), per-pack interface
 
 ### Runtime platform requirements (RFC 0076)
 
-A pack MAY declare the **abstract platform primitives its runtime code exercises** via the OPTIONAL `runtime.requires[]` array (`node-pack-manifest.schema.json` `$defs/Runtime.requires`), so a sandbox-based host can gate at **install time** rather than discovering the need by a failed trial-load. This is distinct from `peerDependencies` (host agent-runtime capability *tiers*, RFC 0072 §C) and from `NodeModule.requires` / `capabilities.runtimeCapabilities` (host-advertised *facilities* checked per-node at dispatch, `capabilities.md`): `runtime.requires` is the *sandbox-primitive* axis, evaluated once at load.
+A pack MAY declare the **abstract platform primitives its runtime code exercises** via the OPTIONAL `runtime.requires[]` array (`node-pack-manifest.schema.json` `$defs/Runtime.requires`), so a sandbox-based host can gate at **install time** rather than discovering the need by a failed trial-load. This is distinct from `peerDependencies` (host agent-runtime capability _tiers_, RFC 0072 §C) and from `NodeModule.requires` / `capabilities.runtimeCapabilities` (host-advertised _facilities_ checked per-node at dispatch, `capabilities.md`): `runtime.requires` is the _sandbox-primitive_ axis, evaluated once at load.
 
 The vocabulary is **runtime-agnostic** (not language builtin names — `node:dns/promises` does not translate to the Python / Go / wasm runtimes) and **closed**:
 
-| Token | Primitive |
-|---|---|
-| `net.dns` | Resolves hostnames (e.g. SSRF pre-flight). |
-| `net.outbound` | Opens outbound network connections / fetch. |
-| `crypto` | Primitives beyond the standard hashing the host already provides. |
-| `subprocess` | Spawns a child process (composes with the RFC 0069 exec-class contract). |
-| `fs.read` / `fs.write` | Reads / writes the local filesystem. |
-| `env.read` | Reads the process environment (may expose deployment secrets if unscrubbed). |
-| `clock` | Reads wall-clock time as a **behavioral** input — gated for replay determinism (a pack that branches on the clock is non-deterministic on replay, `replay.md`), not access control. |
+| Token                  | Primitive                                                                                                                                                                           |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `net.dns`              | Resolves hostnames (e.g. SSRF pre-flight).                                                                                                                                          |
+| `net.outbound`         | Opens outbound network connections / fetch.                                                                                                                                         |
+| `crypto`               | Primitives beyond the standard hashing the host already provides.                                                                                                                   |
+| `subprocess`           | Spawns a child process (composes with the RFC 0069 exec-class contract).                                                                                                            |
+| `fs.read` / `fs.write` | Reads / writes the local filesystem.                                                                                                                                                |
+| `env.read`             | Reads the process environment (may expose deployment secrets if unscrubbed).                                                                                                        |
+| `clock`                | Reads wall-clock time as a **behavioral** input — gated for replay determinism (a pack that branches on the clock is non-deterministic on replay, `replay.md`), not access control. |
 
 **Normative behavior.**
 
@@ -554,7 +554,7 @@ Full rationale, the `ctx.http.safeFetch` companion (a separate track), and the R
 
 A pack is distributed as a `.tgz` (gzipped tarball) with the following layout:
 
-```
+```text
 pack.json
 README.md                  (recommended — surfaces in registry UI)
 schemas/                   (JSON Schemas referenced from pack.json `*SchemaRef`)
@@ -648,6 +648,7 @@ Fetch the detached Ed25519 signature blob over `pack.json` for this version. Pai
 The endpoint MAY 302-redirect to a storage-backend signed URL rather than streaming the bytes directly — clients SHOULD follow redirects.
 
 **Errors:**
+
 - `404 signature_not_available` — version is missing, yanked, unsigned at publish time, OR the registry's storage backend is unwired. The four cases are intentionally indistinguishable: yanked tarballs MUST NOT serve their signatures (consumers shouldn't be verifying against known-bad packs); unsigned tarballs simply have no `.sig` blob to return; missing tarballs and storage outages are infrastructural states the consumer can't act on differently.
 - `400 invalid_pack_name` / `400 invalid_version` — URL params don't match the spec's reverse-DNS / semver patterns.
 
@@ -656,6 +657,7 @@ The endpoint MAY 302-redirect to a storage-backend signed URL rather than stream
 Publish a new version. Body is the gzipped tarball as `application/gzip` (or `application/x-gzip` / `application/octet-stream`). Auth via API key + `packs:publish` scope. Returns `201 Created` on first publish, `200 OK` on idempotent re-publish (identical content), or `409 Conflict` if `(name, version)` already exists with different content.
 
 Headers:
+
 - `Authorization: Bearer <api-key>`
 - `X-Pack-Signing-Method: sigstore | manual | none`
 - `X-Pack-Sha256: sha256-<base64>` (caller-asserted; server verifies)
@@ -665,15 +667,18 @@ Manifest extraction: the registry MUST extract `pack.json` from the tarball root
 **Errors:**
 
 URL / scope:
+
 - `400 invalid_pack_scope` — name doesn't match `core.*` / `vendor.*` / `community.*` / `private.*`. Public registries (`packs.openwop.dev`) MUST additionally refuse `private.*` and `local.*` per §Naming.
 - `400 invalid_pack_name` — URL pack-name doesn't match the reverse-DNS pattern at all (e.g., single segment, uppercase scope).
 - `400 invalid_version` — URL version doesn't match semver.
 
 Body shape:
+
 - `400 invalid_body` — body is not a Buffer / not octet-stream-shaped (caller sent JSON instead of tarball bytes).
 - `400 invalid_body` — empty body.
 
 Tarball extraction (`tarball_<code>` prefix groups these together for client-side switching):
+
 - `400 tarball_gunzip_failed` — body isn't a valid gzip stream.
 - `400 tarball_too_large` — decompressed bytes exceed the registry's cap (recommended default: 50 MB).
 - `400 tarball_manifest_missing` — no `pack.json` at the tarball root.
@@ -685,12 +690,14 @@ Tarball extraction (`tarball_<code>` prefix groups these together for client-sid
 - `400 tarball_tar_parse_failed` — tar parser couldn't read the stream past the gzip layer.
 
 Manifest contents:
+
 - `400 invalid_manifest` — `pack.json` parsed but failed schema validation (missing required fields, wrong shape). Detail message includes the failing path.
 - `400 manifest_mismatch` — `manifest.name` and/or `manifest.version` differ from the URL params. Registries MAY emit this aggregate form or the granular pair (`manifest_name_mismatch` / `manifest_version_mismatch`); clients MUST handle either form.
 - `400 pack_integrity_failure` — server-computed SHA-256 doesn't match `X-Pack-Sha256` (when the header is supplied).
 - `400 unsupported_runtime` — `runtime.language` value not accepted by this registry.
 
 Authorization + conflict:
+
 - `403 forbidden` — caller lacks the namespace claim or `packs:publish` scope.
 - `409 conflict` — version already published with different content (semver pinning is immutable per npm convention). Registries MAY emit a more descriptive `version_conflict` body code; either form is spec-allowed.
 
@@ -701,6 +708,7 @@ Idempotent re-publish: callers that PUT the SAME content (sha256-equal) for an e
 Unpublish — registries SHOULD refuse this for versions older than 72 hours (npm's left-pad lesson). Auth via API key + `packs:publish` scope.
 
 **Errors:**
+
 - `400 unpublish_window_expired` — version is older than the registry's unpublish window (default 72h). Use the yank flow instead (`POST /v1/packs/{name}/-/{version}/yank`) for security incidents.
 - `403 forbidden` — caller lacks `packs:publish` scope.
 - `404 not_found` — version doesn't exist.
@@ -717,11 +725,11 @@ Per [RFC 0025](../../RFCS/0025-test-mode-registry-namespace.md), hosts MAY expos
 
 **Mirrored endpoints.** The following paths MUST behave identically to their `/v1/packs/*` counterparts — same request envelopes, response shapes, status codes, and error code vocabulary:
 
-| Test endpoint | Mirror of |
-|---|---|
+| Test endpoint                               | Mirror of                              |
+| ------------------------------------------- | -------------------------------------- |
 | `PUT /v1/packs-test/{name}/-/{version}.tgz` | `PUT /v1/packs/{name}/-/{version}.tgz` |
 | `GET /v1/packs-test/{name}/-/{version}.tgz` | `GET /v1/packs/{name}/-/{version}.tgz` |
-| `DELETE /v1/packs-test/{name}/-/{version}` | `DELETE /v1/packs/{name}/-/{version}` |
+| `DELETE /v1/packs-test/{name}/-/{version}`  | `DELETE /v1/packs/{name}/-/{version}`  |
 | `GET /v1/packs-test/{name}/-/{version}.sig` | `GET /v1/packs/{name}/-/{version}.sig` |
 
 All 19 publish error codes documented in `PUT /v1/packs/{name}/-/{version}.tgz` above (`invalid_pack_scope`, `invalid_pack_name`, `invalid_version`, `invalid_body`, the eight `tarball_*` codes, `invalid_manifest`, `manifest_mismatch` (or granular pair), `pack_integrity_failure`, `unsupported_runtime`, `forbidden`, `conflict`, `unpublish_window_expired`) MUST be surfaced verbatim. Scenarios authored against the test namespace prove the production-namespace contract.
@@ -741,9 +749,9 @@ All 19 publish error codes documented in `PUT /v1/packs/{name}/-/{version}.tgz` 
 
 Two additional `GET` surfaces are defined for hosts that expose a public pack-discovery layer:
 
-| Endpoint | Purpose |
-|---|---|
-| `GET /v1/packs` | Top-level listing of every pack the host serves. Response shape mirrors `GET /v1/packs/-/catalog` (an array of `{name, latest, description, ...}` summaries). |
+| Endpoint               | Purpose                                                                                                                                                                                   |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /v1/packs`        | Top-level listing of every pack the host serves. Response shape mirrors `GET /v1/packs/-/catalog` (an array of `{name, latest, description, ...}` summaries).                             |
 | `GET /v1/packs/export` | Exported `AgentManifest` projection of the host's installed agents (per pack). Response: `{manifests: [{agentId, modelClass, sourceManifestId?, ...}]}` per `agent-manifest.schema.json`. |
 
 Both endpoints are **OPTIONAL**. Hosts where the pack catalog is server-internal infrastructure (no public discovery surface) MAY decline to implement them.
@@ -795,19 +803,19 @@ A workflow that references a typeId not provided by any registered pack MUST be 
 
 > Additive v1.x extension (RFC 0082). Applies only to hosts advertising `capabilities.agents.deployment.supported: true`.
 
-The registry publishes **discrete semver tags** — which version of a pack (and its `agents[]`) *exists*. A **deployment channel** (`stable` / `canary` / the reserved `latest`) is a distinct, host-runtime concern — which version *serves*. The two MUST NOT be conflated: a published version may be `staged`, `paused`, or `rolled-back` and therefore not serve, and "latest published" is not "current production". A channel is a named pointer, resolved per-run and pinned as a recorded fact (`version-negotiation.md` §"Channel resolution + replay"), into the host's per-(agentId, version) deployment records. The deployment lifecycle, the channel→version resolution, the canary split, and the promotion contract are normative in [`agent-deployment.md`](./agent-deployment.md); the registry surface here is unchanged.
+The registry publishes **discrete semver tags** — which version of a pack (and its `agents[]`) _exists_. A **deployment channel** (`stable` / `canary` / the reserved `latest`) is a distinct, host-runtime concern — which version _serves_. The two MUST NOT be conflated: a published version may be `staged`, `paused`, or `rolled-back` and therefore not serve, and "latest published" is not "current production". A channel is a named pointer, resolved per-run and pinned as a recorded fact (`version-negotiation.md` §"Channel resolution + replay"), into the host's per-(agentId, version) deployment records. The deployment lifecycle, the channel→version resolution, the canary split, and the promotion contract are normative in [`agent-deployment.md`](./agent-deployment.md); the registry surface here is unchanged.
 
 ---
 
 ## Open spec gaps
 
-| # | Gap | Owner |
-|---|---|---|
-| ~~NP1~~ | ~~WASM ABI for `language: wasm` packs~~ — closed by [RFC 0008 — WASM ABI v1](../../RFCS/0008-wasm-abi.md) (`Accepted`). See §"WASM runtime" above. | closed |
-| ~~NP2~~ | ~~Pack-level `dependencies` resolution (transitive packs) — currently underspecified.~~ — closed 2026-05-15 (PACK-3) by §"Transitive dependency resolution" above (5-step normative algorithm + override-pinning + resolver-determinism rules + new `pack_dependency_conflict` and `pack_dependency_cycle` error codes; `pack-lockfile.schema.json` extended with `overrides` map). | ✅ closed |
+| #       | Gap                                                                                                                                                                                                                                                                                                                                                                                                                  | Owner     |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| ~~NP1~~ | ~~WASM ABI for `language: wasm` packs~~ — closed by [RFC 0008 — WASM ABI v1](../../RFCS/0008-wasm-abi.md) (`Accepted`). See §"WASM runtime" above.                                                                                                                                                                                                                                                                   | closed    |
+| ~~NP2~~ | ~~Pack-level `dependencies` resolution (transitive packs) — currently underspecified.~~ — closed 2026-05-15 (PACK-3) by §"Transitive dependency resolution" above (5-step normative algorithm + override-pinning + resolver-determinism rules + new `pack_dependency_conflict` and `pack_dependency_cycle` error codes; `pack-lockfile.schema.json` extended with `overrides` map).                                  | ✅ closed |
 | ~~NP3~~ | ~~Mirror / federation between registries (npm-style upstream-fallback).~~ — closed 2026-05-15 (PACK-4) by `registry-operations.md` §"Registry mirror + federation" (workspace `fallbackRegistries[]` ordering, per-registry trust roots, no-transitive-trust rule, offline-mode behavior, 2 new error codes `pack_registry_unreachable` + `pack_namespace_unauthorized`, `capabilities.packRegistry` advertisement). | ✅ closed |
-| ~~NP4~~ | ~~Pack deprecation flow~~ — closed by `registry-operations.md` §"Deprecation flow" (2026-04-29). | ✅ closed |
-| ~~NP5~~ | ~~Signing key rotation~~ — closed by `registry-operations.md` §"Signing-key rotation flow" (2026-04-29). | ✅ closed |
+| ~~NP4~~ | ~~Pack deprecation flow~~ — closed by `registry-operations.md` §"Deprecation flow" (2026-04-29).                                                                                                                                                                                                                                                                                                                     | ✅ closed |
+| ~~NP5~~ | ~~Signing key rotation~~ — closed by `registry-operations.md` §"Signing-key rotation flow" (2026-04-29).                                                                                                                                                                                                                                                                                                             | ✅ closed |
 
 ## References
 

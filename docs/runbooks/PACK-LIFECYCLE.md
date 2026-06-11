@@ -10,12 +10,12 @@ This runbook covers the operations that happen AFTER a pack is live at `packs.op
 
 Per `spec/v1/registry-operations.md`:
 
-| Operation | Effect on consumers | Reversible | When to use |
-|---|---|---|---|
-| **Deprecate** | Pack still installable + dispatch-able. Consumers running `verified` mode see a deprecation flag + SHOULD suggest migration. | Yes (via `undeprecate`) | "There's a newer version; we'd like you to upgrade but old version still works" |
-| **Yank** | Pack tarball blocked (registry refuses to serve). Consumers MUST NOT dispatch nodes from yanked versions. | Yes (via `unyank`) | "This version has a bug serious enough to block new installs; existing installs should re-pin" |
-| **Unpublish** | Pack removed from registry entirely (tarball + manifest + index entry). Only allowed within 72h of publish per spec. | NO — once unpublished, the version can never be re-published with the same bytes (consumers may have cached the SHA256 hash) | "We published by mistake within the last 72h; we want it gone before anyone consumes it" |
-| **Force-update** | New version published with bumped SemVer; old version stays at-rest | N/A (this is just the standard publish flow at a new version) | "Bug fix or feature addition" |
+| Operation        | Effect on consumers                                                                                                          | Reversible                                                                                                                   | When to use                                                                                    |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Deprecate**    | Pack still installable + dispatch-able. Consumers running `verified` mode see a deprecation flag + SHOULD suggest migration. | Yes (via `undeprecate`)                                                                                                      | "There's a newer version; we'd like you to upgrade but old version still works"                |
+| **Yank**         | Pack tarball blocked (registry refuses to serve). Consumers MUST NOT dispatch nodes from yanked versions.                    | Yes (via `unyank`)                                                                                                           | "This version has a bug serious enough to block new installs; existing installs should re-pin" |
+| **Unpublish**    | Pack removed from registry entirely (tarball + manifest + index entry). Only allowed within 72h of publish per spec.         | NO — once unpublished, the version can never be re-published with the same bytes (consumers may have cached the SHA256 hash) | "We published by mistake within the last 72h; we want it gone before anyone consumes it"       |
+| **Force-update** | New version published with bumped SemVer; old version stays at-rest                                                          | N/A (this is just the standard publish flow at a new version)                                                                | "Bug fix or feature addition"                                                                  |
 
 ---
 
@@ -146,6 +146,7 @@ Publisher keys SHOULD rotate annually. Hard rotation (compromise response) follo
 ### Annual rotation
 
 1. **Vendor generates new keypair** (`<org>-internal-2`):
+
    ```bash
    openssl genpkey -algorithm ed25519 -out ~/.openwop-keys/<org>-internal-2.private.pem
    openssl pkey -in ~/.openwop-keys/<org>-internal-2.private.pem -pubout \
@@ -170,12 +171,12 @@ Publisher keys SHOULD rotate annually. Hard rotation (compromise response) follo
 
 ## Common pitfalls
 
-| Symptom | Cause | Fix |
-|---|---|---|
-| Yank PR merges but tarball still serves | Firebase Hosting doesn't auto-purge content; only the metadata is updated | Follow up with a PR deleting the `.tgz` file from `registry/v1/packs/<name>/-/<version>.tgz` |
-| Deprecation flag not shown to consumers | Per-pack `index.json` `versionEntries[].deprecated` not updated | Re-run `node registry/scripts/build-index.mjs` |
-| `latestVersion` doesn't update after yanking the current latest | `build-index.mjs` recomputes latest from non-yanked versions; ensure yank PR merged + redeployed | Wait for Firebase Hosting cache TTL (~60s) or re-run build-index |
-| Unpublish PR merges after 72h | Spec allows the deletion but consumer caches still have the hash | Operational impact: consumers see 404; recommend yank instead next time |
+| Symptom                                                         | Cause                                                                                            | Fix                                                                                          |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| Yank PR merges but tarball still serves                         | Firebase Hosting doesn't auto-purge content; only the metadata is updated                        | Follow up with a PR deleting the `.tgz` file from `registry/v1/packs/<name>/-/<version>.tgz` |
+| Deprecation flag not shown to consumers                         | Per-pack `index.json` `versionEntries[].deprecated` not updated                                  | Re-run `node registry/scripts/build-index.mjs`                                               |
+| `latestVersion` doesn't update after yanking the current latest | `build-index.mjs` recomputes latest from non-yanked versions; ensure yank PR merged + redeployed | Wait for Firebase Hosting cache TTL (~60s) or re-run build-index                             |
+| Unpublish PR merges after 72h                                   | Spec allows the deletion but consumer caches still have the hash                                 | Operational impact: consumers see 404; recommend yank instead next time                      |
 
 ---
 

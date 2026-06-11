@@ -6,7 +6,7 @@ The full text is published at the URL above and is licensed under [CC BY 4.0](ht
 
 ## Reporting
 
-Report unacceptable behavior to **conduct@openwop.ai**.
+Report unacceptable behavior to **<conduct@openwop.ai>**.
 
 Reports are read by the maintainers listed in [`GOVERNANCE.md`](./GOVERNANCE.md). All reports are kept confidential. Maintainers will acknowledge receipt and follow up with a resolution as quickly as the project's resourcing allows. The project is in early incubation; firm response-time SLAs will be added to this document once a maintainer rotation is in place.
 

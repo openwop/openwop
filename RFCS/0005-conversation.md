@@ -1,17 +1,17 @@
 # RFC 0005: Multi-Turn Conversation
 
-| Field | Value |
-|---|---|
-| **RFC** | 0005 |
-| **Title** | Multi-Turn Conversation |
-| **Status** | `Accepted` |
-| **Author(s)** | David Tufts (@davidscotttufts) |
-| **Created** | 2026-05-01 |
-| **Updated** | 2026-05-11 (Active → Accepted: integration-seams audit closed via `docs/MULTI-AGENT-INTEGRATION-GAPS.md` archive; conformance scenarios pass against SQLite reference host) |
-| **Affects** | `schemas/conversation-event.schema.json`, `schemas/conversation-turn.schema.json`, `schemas/suspend-request.schema.json`, `schemas/run-event.schema.json`, `spec/v1/interrupt.md`, `spec/v1/capabilities.md` |
-| **Compatibility** | `additive` |
-| **Supersedes** | — |
-| **Superseded by** | — |
+| Field             | Value                                                                                                                                                                                                        |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **RFC**           | 0005                                                                                                                                                                                                         |
+| **Title**         | Multi-Turn Conversation                                                                                                                                                                                      |
+| **Status**        | `Accepted`                                                                                                                                                                                                   |
+| **Author(s)**     | David Tufts (@davidscotttufts)                                                                                                                                                                               |
+| **Created**       | 2026-05-01                                                                                                                                                                                                   |
+| **Updated**       | 2026-05-11 (Active → Accepted: integration-seams audit closed via `docs/MULTI-AGENT-INTEGRATION-GAPS.md` archive; conformance scenarios pass against SQLite reference host)                                  |
+| **Affects**       | `schemas/conversation-event.schema.json`, `schemas/conversation-turn.schema.json`, `schemas/suspend-request.schema.json`, `schemas/run-event.schema.json`, `spec/v1/interrupt.md`, `spec/v1/capabilities.md` |
+| **Compatibility** | `additive`                                                                                                                                                                                                   |
+| **Supersedes**    | —                                                                                                                                                                                                            |
+| **Superseded by** | —                                                                                                                                                                                                            |
 
 ## Summary
 
@@ -96,7 +96,7 @@ Already defined in `conversation-turn.schema.json`. Required fields:
 
 ### §D Lifecycle
 
-```
+```text
 node.suspended ─┐
                 ├─→ conversation.opened (turnIndex: 0)
                 │     │
@@ -111,7 +111,7 @@ node.suspended ─┐
                 └─→ node.resumed (carries final outcome)
 ```
 
-Between `conversation.opened` and `conversation.closed`, the node is in the `suspended` state. Each `exchange` turn round-trips through the host's resume endpoint (`POST /v1/runs/{runId}:resolveInterrupt` with a `ConversationResolve` payload) but does *not* transition the node out of `suspended`. Only `operation: 'close'` resumes the node.
+Between `conversation.opened` and `conversation.closed`, the node is in the `suspended` state. Each `exchange` turn round-trips through the host's resume endpoint (`POST /v1/runs/{runId}:resolveInterrupt` with a `ConversationResolve` payload) but does _not_ transition the node out of `suspended`. Only `operation: 'close'` resumes the node.
 
 ### §E Resume payload shape
 
@@ -154,7 +154,7 @@ Hosts that do not advertise `capabilities.conversationPrimitive: true` MUST reje
 
 ### §I Timeout
 
-Conversations MAY carry `timeoutMs` (per `InterruptPayload.timeoutMs`). The timeout applies to the *full* conversation, measured from `conversation.opened`. On timeout, the host MUST emit a `conversation.closed` with `outcome: null` and a `system`-role `finalTurn` indicating the timeout reason, then proceed with the node's normal timeout handling.
+Conversations MAY carry `timeoutMs` (per `InterruptPayload.timeoutMs`). The timeout applies to the _full_ conversation, measured from `conversation.opened`. On timeout, the host MUST emit a `conversation.closed` with `outcome: null` and a `system`-role `finalTurn` indicating the timeout reason, then proceed with the node's normal timeout handling.
 
 ## Compatibility
 
@@ -184,9 +184,9 @@ All gated on `capabilities.conversationPrimitive: true` advertisement.
 ## Alternatives considered
 
 1. **Loop of single-shot interrupts.** Rejected as the motivation describes. Loses turn ordering, event volume, and replay coherence.
-2. **Open-ended streaming SSE for conversation.** Considered. Rejected because conversation turns are persisted events (replay-relevant), not transient stream chunks. Conversations MAY *also* stream chunked content within a single turn via `output.chunk` events; that surface is unchanged.
+2. **Open-ended streaming SSE for conversation.** Considered. Rejected because conversation turns are persisted events (replay-relevant), not transient stream chunks. Conversations MAY _also_ stream chunked content within a single turn via `output.chunk` events; that surface is unchanged.
 3. **Reuse `clarification` with multiple questions.** Considered. Rejected because `clarification` is one-shot ("here are 5 questions, give me 5 answers, resume"); a conversation is bidirectional turn-taking.
-4. **Treat conversation as A2A messaging.** Considered. Rejected because A2A is *between* runs across organizations; conversation is *within* a single run. RFC 0005's conversation can transport A2A turns by mapping `from` to an A2A `AgentCard` URN, but the protocol surface is one host's primitive.
+4. **Treat conversation as A2A messaging.** Considered. Rejected because A2A is _between_ runs across organizations; conversation is _within_ a single run. RFC 0005's conversation can transport A2A turns by mapping `from` to an A2A `AgentCard` URN, but the protocol surface is one host's primitive.
 
 ## Unresolved questions
 

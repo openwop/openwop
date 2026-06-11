@@ -6,21 +6,21 @@
 
 Each reference host was built, started locally, and the full suite was run against it in **default mode** (no `OPENWOP_REQUIRE_BEHAVIOR`). The conformance runner and the TypeScript SDK `dist/` were built first so the server-free `spec-corpus-validity` / `fixtures-valid` scenarios pass (they assert the built SDK surface; without the `dist/` build they report 3 spurious failures unrelated to any host).
 
-| Host | Start command | Port | Suite invocation |
-|---|---|---|---|
-| in-memory | `tsx src/server.ts` | 3737 | `OPENWOP_BASE_URL=… OPENWOP_API_KEY=openwop-inmem-dev-key vitest run` |
-| sqlite | `tsx src/server.ts` | 3838 | `… OPENWOP_API_KEY=openwop-sqlite-dev-key …` |
-| postgres | `tsx scripts/start-pglite.ts` (pglite in-process) | 3839 | `… OPENWOP_API_KEY=openwop-postgres-dev-key OPENWOP_WEBHOOK_ALLOW_PRIVATE=true …` |
-| python | `python3.11 -m openwop_host` (stdlib-only) | 3740 | `… OPENWOP_API_KEY=openwop-inmem-dev-key …` |
+| Host      | Start command                                     | Port | Suite invocation                                                                  |
+| --------- | ------------------------------------------------- | ---- | --------------------------------------------------------------------------------- |
+| in-memory | `tsx src/server.ts`                               | 3737 | `OPENWOP_BASE_URL=… OPENWOP_API_KEY=openwop-inmem-dev-key vitest run`             |
+| sqlite    | `tsx src/server.ts`                               | 3838 | `… OPENWOP_API_KEY=openwop-sqlite-dev-key …`                                      |
+| postgres  | `tsx scripts/start-pglite.ts` (pglite in-process) | 3839 | `… OPENWOP_API_KEY=openwop-postgres-dev-key OPENWOP_WEBHOOK_ALLOW_PRIVATE=true …` |
+| python    | `python3.11 -m openwop_host` (stdlib-only)        | 3740 | `… OPENWOP_API_KEY=openwop-inmem-dev-key …`                                       |
 
 ## Results — default mode, suite v1.10.0 (305 files / 2074 tests)
 
-| Host | Passed | Failed | Skipped | Todo | Total | Pass rate (default) |
-|---|---:|---:|---:|---:|---:|---:|
-| Postgres reference | **1968** | 14 | 92 | 0 | 2074 | **94.9%** total; ~99.3% of non-skipped (pglite + `OPENWOP_WEBHOOK_ALLOW_PRIVATE=true`) |
-| SQLite reference | **1966** | 4 | 104 | 0 | 2074 | **94.8%** total; ~99.8% of non-skipped |
-| In-memory reference | **1922** | 48 | 104 | 0 | 2074 | **92.7%** total — the minimal-host floor |
-| Python reference | **1922** | 2 | 150 | 0 | 2074 | **92.7%** total; **~99.9% of non-skipped**, and 100% of applicable when scoped to the host's claimed `openwop-core` + `openwop-stream-poll` + `openwop-stream-sse` profile set |
+| Host                |   Passed | Failed | Skipped | Todo | Total |                                                                                                                                                            Pass rate (default) |
+| ------------------- | -------: | -----: | ------: | ---: | ----: | -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| Postgres reference  | **1968** |     14 |      92 |    0 |  2074 |                                                                                         **94.9%** total; ~99.3% of non-skipped (pglite + `OPENWOP_WEBHOOK_ALLOW_PRIVATE=true`) |
+| SQLite reference    | **1966** |      4 |     104 |    0 |  2074 |                                                                                                                                         **94.8%** total; ~99.8% of non-skipped |
+| In-memory reference | **1922** |     48 |     104 |    0 |  2074 |                                                                                                                                       **92.7%** total — the minimal-host floor |
+| Python reference    | **1922** |      2 |     150 |    0 |  2074 | **92.7%** total; **~99.9% of non-skipped**, and 100% of applicable when scoped to the host's claimed `openwop-core` + `openwop-stream-poll` + `openwop-stream-sse` profile set |
 
 `todo` is **0** across all hosts (the v1.5.0-era 14 `it.todo` markers were retired/converted since). `skip` counts vary by host because capability-gated scenarios soft-skip against a host that does not advertise the surface — Python skips the most (150) reflecting its smaller stdlib-only advertised surface; Postgres skips the fewest (92) because it wires more of the agent surface, so more scenarios actually execute (and a few edge-fail).
 
@@ -76,10 +76,10 @@ Two reference-host fixes landed the same day and were re-measured against the sa
 - **#376** (`fix(host-sqlite,host-postgres)`) — the RFC 0073 root-`limits` spread was clobbering the AI-envelope limits; merging the two `limits` objects closed `aiEnvelope.capBreached` (×3) + `discovery` (×1) on both hosts.
 - **#378** (`feat(host-postgres)`) — implemented the agent-memory read-side + `RunSnapshot.agent`/provenance + `message` reducer + RFC 0003 §D handoff-schema validation, closing the agent-memory (×5) + agent-pack (×3) failures.
 
-| Host | Before (#373) | After (#376 + #378) | Deterministic failures |
-|---|---|---|---|
-| SQLite | 1966 / 4 / 104 (2074) | **1982 / 0 / 104 (2086) = 95.0%** | **0** |
-| Postgres | 1968 / 14 / 92 (2074) | **1988 / 6 / 92 (2086) = 95.3%** | **1** (`orchestratorConservativePath`) |
+| Host     | Before (#373)         | After (#376 + #378)               | Deterministic failures                 |
+| -------- | --------------------- | --------------------------------- | -------------------------------------- |
+| SQLite   | 1966 / 4 / 104 (2074) | **1982 / 0 / 104 (2086) = 95.0%** | **0**                                  |
+| Postgres | 1968 / 14 / 92 (2074) | **1988 / 6 / 92 (2086) = 95.3%**  | **1** (`orchestratorConservativePath`) |
 
 The per-host total rose 2074 → 2086 as the now-correct root `limits` + agent advertisements re-activated capability-gated sub-tests.
 

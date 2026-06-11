@@ -1,13 +1,13 @@
 # RFC 0071: Artifact-Type Packs and AI Chat Card Packs
 
-| Field | Value |
-|---|---|
-| **RFC** | 0071 |
-| **Title** | Artifact-Type Packs and AI Chat Card Packs |
-| **Status** | `Accepted` |
-| **Author(s)** | David Tufts (@davidscotttufts) |
-| **Created** | 2026-05-26 |
-| **Updated** | 2026-05-26 |
+| Field         | Value                                      |
+| ------------- | ------------------------------------------ |
+| **RFC**       | 0071                                       |
+| **Title**     | Artifact-Type Packs and AI Chat Card Packs |
+| **Status**    | `Accepted`                                 |
+| **Author(s)** | David Tufts (@davidscotttufts)             |
+| **Created**   | 2026-05-26                                 |
+| **Updated**   | 2026-05-26                                 |
 
 > **✅ RFC 0071 ACCEPTED — both phases (2026-05-27).** With Phase 1 already `Accepted` (below) and **Phase 2 (chat card packs, `kind: "card"`) graduated `Active → Accepted` 2026-05-27**, RFC 0071 is `Accepted` overall. Phase 2 evidence: MyndHyve `workflow-runtime` (rev `workflow-runtime-00402-bey`) advertises `host.chat.cardPacks` + `host.aiEnvelope` unconditionally on `api.myndhyve.ai` (steward-curl-verified) with a real `core.chat.cardExecute` node routing card execution through `ctx.aiEnvelope.generate`; the `chat-card-pack-execution` R2 trust-tag proof passes (registry resolution + output-schema validation + `contentTrust:"untrusted"`). [`spec/v1/chat-card-packs.md`](../spec/v1/chat-card-packs.md) promoted DRAFT → FINAL; G9 resolved; the `chat-card-input-trust-boundary` invariant enforced. **Adoption-depth follow-ons (non-blocking, tracked):** a production workflow consuming `core.chat.cardExecute` end-to-end and a published `vendor.myndhyve.*` card pack — the same class of deferral as Phase 1's unpublished artifact-type packs (host-native adoption sufficed there too).
 >
@@ -16,11 +16,11 @@
 > **Phase 2 ACTIVE (2026-05-27).** RFC 0071 **Phase 2 (chat card packs, `kind: "card"`) promoted Draft → `Active`** — its design is locked. **G9 resolved:** the portable `inputs[].type` subset (`text|longtext|number|boolean|select|multiselect|file|artifact-ref`) was finalized against MyndHyve's authoritative `CardFieldType` (every one of their 11 maps to the subset or a `vendor.myndhyve.*` extension; the enum gained `multiselect` + `file`). **R2 surface landed:** the `chat-card-input-trust-boundary` protocol-tier invariant + `chat-card-pack-execution.test.ts` + the normative untrusted-input MUST are in the corpus. `Phase 2 → Accepted` awaits a host implementing `host.chat.cardPacks` and passing the execution scenario end-to-end (R2 host-pass); [`spec/v1/chat-card-packs.md`](../spec/v1/chat-card-packs.md) promotes DRAFT → FINAL then. MyndHyve's `CardTemplateDefinition` is the prior art, and Phase 1's now-`Accepted` artifact types are exactly what a card's `outputArtifactType` references.
 >
 > **Promotion note (2026-05-26):** Maintainer **waived the 7-day comment window** (`RFCS/README.md` §Process). The architect pass resolved all six original design questions (see §"Resolved design decisions") and the Phase-1 wire surface (`artifact-type-packs.md` + `artifact-type-pack-manifest.schema.json` + `node-packs.md` prose + `artifact.created.registered` + `§host.artifactTypes`) landed atomically, so **Phase 1 is `Active`** (wire shapes locked; conformance + reference-host implementation pending per the acceptance criteria). `Active → Accepted` for Phase 1 requires the R1 `artifact-schema-compile-bounded` invariant + test and the three conformance scenarios. **Phase 2 (chat card packs, `kind: "card"`) remains `Draft`** within this RFC pending G9 + R2.
-| **Affects** | new `spec/v1/artifact-type-packs.md` (Phase 1), new `spec/v1/chat-card-packs.md` (Phase 2), `spec/v1/node-packs.md` (§"Manifest format" kind prose + `PackNode.artifact` prose), `spec/v1/host-capabilities.md` (§host.chat, new §host.artifactTypes), `spec/v1/capabilities.md`; new `schemas/artifact-type-pack-manifest.schema.json`, new `schemas/chat-card-pack-manifest.schema.json`, `schemas/run-event-payloads.schema.json`, `schemas/capabilities.schema.json`; `api/openapi.yaml`, `api/asyncapi.yaml`; conformance scenarios |
-| **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 |
-| **Supersedes** | — |
-| **Superseded by** | — |
-| **Amended by** | [RFC 0075](./0075-artifact-type-packs-realworld-amendment.md) (artifact-type-packs real-world adoption amendment — host-native registration tier, `additionalProperties` MUST → SHOULD, per-type capability facets) |
+> | **Affects** | new `spec/v1/artifact-type-packs.md` (Phase 1), new `spec/v1/chat-card-packs.md` (Phase 2), `spec/v1/node-packs.md` (§"Manifest format" kind prose + `PackNode.artifact` prose), `spec/v1/host-capabilities.md` (§host.chat, new §host.artifactTypes), `spec/v1/capabilities.md`; new `schemas/artifact-type-pack-manifest.schema.json`, new `schemas/chat-card-pack-manifest.schema.json`, `schemas/run-event-payloads.schema.json`, `schemas/capabilities.schema.json`; `api/openapi.yaml`, `api/asyncapi.yaml`; conformance scenarios |
+> | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 |
+> | **Supersedes** | — |
+> | **Superseded by** | — |
+> | **Amended by** | [RFC 0075](./0075-artifact-type-packs-realworld-amendment.md) (artifact-type-packs real-world adoption amendment — host-native registration tier, `additionalProperties` MUST → SHOULD, per-type capability facets) |
 
 ## Summary
 
@@ -28,14 +28,14 @@ openwop distributes node packs, workflow-chain packs, and prompt packs, but it h
 
 ## Motivation
 
-**Who hits this today.** The one real non-steward adopter (MyndHyve) built an entire "Canvas Type" system — a manifest bundling node pack + card pack + artifact types — on top of openwop, but what it actually *published* to the registry (`vendor.myndhyve.canvas`) encodes none of it: four opaque `canvasCreate/Read/Write/crossCanvasInvoke` CRUD nodes whose mutation/state shapes are `additionalProperties: true` blobs. The artifact-type and card models live entirely above the protocol, in a host-private runtime registry mapping free strings (`"prd"`, `"theme"`) to React viewers. The OpenWOP demo app independently re-implemented a `cardType: string → component` registry in `chat/registry/`. Two adopters, two incompatible private vocabularies, zero interop.
+**Who hits this today.** The one real non-steward adopter (MyndHyve) built an entire "Canvas Type" system — a manifest bundling node pack + card pack + artifact types — on top of openwop, but what it actually _published_ to the registry (`vendor.myndhyve.canvas`) encodes none of it: four opaque `canvasCreate/Read/Write/crossCanvasInvoke` CRUD nodes whose mutation/state shapes are `additionalProperties: true` blobs. The artifact-type and card models live entirely above the protocol, in a host-private runtime registry mapping free strings (`"prd"`, `"theme"`) to React viewers. The OpenWOP demo app independently re-implemented a `cardType: string → component` registry in `chat/registry/`. Two adopters, two incompatible private vocabularies, zero interop.
 
-**Why the spec is the right place.** openwop already ships the *latent* surface for both concepts but left it contract-free:
+**Why the spec is the right place.** openwop already ships the _latent_ surface for both concepts but left it contract-free:
 
 - `schemas/node-pack-manifest.schema.json` defines a `PackNode.artifact` object — `{ typeId, syncOn, supportsCheckpoint }` — with **no normative prose in `node-packs.md` and no conformance coverage.**
 - `schemas/workflow-definition.schema.json` defines first-class `WorkflowNode.artifactType` and `WorkflowNode.cardType` fields, both free strings with no schema attachment and no registry binding.
 - `schemas/run-event-payloads.schema.json` emits `artifact.created` with a free-string `artifactType` and `additionalProperties: true`.
-- `spec/v1/host-capabilities.md` §host.chat defines `ctx.chat.emitCard({ cardId, cardType, payload, idempotencyKey })`, gated on `host.chat.cards: supported` — the card *emission* runtime exists, but `cardType` is a free-form string the spec only illustrates.
+- `spec/v1/host-capabilities.md` §host.chat defines `ctx.chat.emitCard({ cardId, cardType, payload, idempotencyKey })`, gated on `host.chat.cards: supported` — the card _emission_ runtime exists, but `cardType` is a free-form string the spec only illustrates.
 
 Two hosts using `artifactType: "prd"` or `cardType: "prd.create"` have **no guarantee they mean the same shape.** A free-string tag with a host-private schema is exactly the latent interop trap a wire contract exists to harden. This RFC closes the loop without inventing new primitives: it reuses the proven `kind` pack discriminator (`node-packs.md` §"Manifest format", which already distinguishes `node`/`workflow-chain`/`prompt`, each with its own manifest schema), the AI-envelope per-kind schema convention (`ai-envelope.md` §"Canonical schema location"), and the `host.*` capability pattern (`host-capabilities.md` §"The contract pattern").
 
@@ -79,7 +79,7 @@ Normative requirements (full prose in `spec/v1/artifact-type-packs.md`):
 - `rendering` is **OPTIONAL** and **MUST** reuse the `ai-envelope.md` §"Rendering hints" vocabulary (advisory; consumers degrade gracefully; `card` display reserved for envelopes). No second rendering vocabulary is introduced.
 - `exportFormats` is **OPTIONAL** format-identifier hints only; this RFC **MUST NOT** specify byte production.
 
-**Binding the contract-free surfaces** (when `host.artifactTypes: supported`): a `PackNode.artifact.typeId` / `WorkflowNode.artifactType` / `artifact.created.artifactType` value that matches a registered `artifactTypeId` is *registered* — the host **MUST** validate the payload against the pack schema before emitting `artifact.created`. A value matching no registered type remains valid (unregistered escape hatch, mirroring `local.*`): the host **MUST NOT** reject or schema-validate it, and **SHOULD** mark `artifact.created.registered: false`.
+**Binding the contract-free surfaces** (when `host.artifactTypes: supported`): a `PackNode.artifact.typeId` / `WorkflowNode.artifactType` / `artifact.created.artifactType` value that matches a registered `artifactTypeId` is _registered_ — the host **MUST** validate the payload against the pack schema before emitting `artifact.created`. A value matching no registered type remains valid (unregistered escape hatch, mirroring `local.*`): the host **MUST NOT** reject or schema-validate it, and **SHOULD** mark `artifact.created.registered: false`.
 
 **New host capability §host.artifactTypes** advertises store/render/export independently:
 
@@ -133,7 +133,7 @@ Normative requirements:
 
 - **New pack kinds** are new optional registry content with new manifest schemas; `node-pack-manifest.schema.json` is **unchanged**. Hosts that don't support them advertise no capability and reject installs as today (§2.1: new endpoints/optional capabilities MAY be added).
 - **`artifact.created.registered`** is a new optional field, default `true`; existing clients ignore it, existing servers omit it — the default preserves today's "every artifactType accepted" semantics.
-- **Free-string `artifactType`/`cardType`** remain valid (unregistered escape hatch). The RFC adds a `SHOULD` and a *conditional* `MUST` (validate iff registered **and** capability advertised); it relaxes no existing `MUST` and rejects no input that previously succeeded (§4: new normative requirement on previously-undefined behavior = additive).
+- **Free-string `artifactType`/`cardType`** remain valid (unregistered escape hatch). The RFC adds a `SHOULD` and a _conditional_ `MUST` (validate iff registered **and** capability advertised); it relaxes no existing `MUST` and rejects no input that previously succeeded (§4: new normative requirement on previously-undefined behavior = additive).
 - **`PackNode.artifact`** gains prose, not shape.
 - **§host.artifactTypes** and **§host.chat.cardPacks** are off by default.
 
@@ -151,20 +151,20 @@ All behavior scenarios use `describe.skipIf(!driver.capabilities.<flag>)` per `c
 
 ## Alternatives considered
 
-1. **Do nothing.** Leave artifact/card typing host-private. *Rejected:* leaves `PackNode.artifact` contract-free, guarantees any second artifact-producing host is non-interoperable with MyndHyve, and wastes the feature the sole adopter most visibly built on openwop.
-2. **Host-extension only** (document `host.artifactTypes` as a vendor capability, no pack kind, like `host.canvas`). *Rejected:* doesn't make schemas distributable/signed/verifiable, doesn't harden the free-string tag, leaves every host reinventing the registry, and leaves `PackNode.artifact` undefined.
-3. **One combined "canvas-type" pack** porting MyndHyve's full manifest (node + card + canvas + viewers). *Rejected:* violates `positioning.md` ("openwop is the wire contract … not a renderer"); imports UI-coupled single-adopter React/Fabric.js concepts; unbounded conformance burden.
-4. **Fold cards into the existing `prompt` pack kind.** *Considered, deferred to Q4:* prompt packs distribute reusable prompt fragments; cards are prompt + typed-output-artifact + input contract. Possibly unifiable, but conflating now risks overloading `prompt-pack-manifest.schema.json`.
+1. **Do nothing.** Leave artifact/card typing host-private. _Rejected:_ leaves `PackNode.artifact` contract-free, guarantees any second artifact-producing host is non-interoperable with MyndHyve, and wastes the feature the sole adopter most visibly built on openwop.
+2. **Host-extension only** (document `host.artifactTypes` as a vendor capability, no pack kind, like `host.canvas`). _Rejected:_ doesn't make schemas distributable/signed/verifiable, doesn't harden the free-string tag, leaves every host reinventing the registry, and leaves `PackNode.artifact` undefined.
+3. **One combined "canvas-type" pack** porting MyndHyve's full manifest (node + card + canvas + viewers). _Rejected:_ violates `positioning.md` ("openwop is the wire contract … not a renderer"); imports UI-coupled single-adopter React/Fabric.js concepts; unbounded conformance burden.
+4. **Fold cards into the existing `prompt` pack kind.** _Considered, deferred to Q4:_ prompt packs distribute reusable prompt fragments; cards are prompt + typed-output-artifact + input contract. Possibly unifiable, but conflating now risks overloading `prompt-pack-manifest.schema.json`.
 
 ## Resolved design decisions
 
 The architect pass resolved all six original open questions, optimizing for low-friction adoption and consistency with existing corpus idioms. Each is now baked into the Phase 1 spec/schema:
 
-1. **Schema home → in-tarball source of truth + optional host-served mirror.** The schema travels in the signed tarball at `schemaRef` (offline-verifiable, no host infra required to publish — matching node packs' `*SchemaRef`); a host that installs the pack and renders SHOULD *additionally* serve it at `{HostBase}/schemas/artifacts/{artifactTypeId}.schema.json` for runtime discovery by non-installing consumers (the envelope canonical-URL convention). Both copies MUST be byte-identical. Best of both: verifiable distribution *and* frictionless resolution, neither forced.
+1. **Schema home → in-tarball source of truth + optional host-served mirror.** The schema travels in the signed tarball at `schemaRef` (offline-verifiable, no host infra required to publish — matching node packs' `*SchemaRef`); a host that installs the pack and renders SHOULD _additionally_ serve it at `{HostBase}/schemas/artifacts/{artifactTypeId}.schema.json` for runtime discovery by non-installing consumers (the envelope canonical-URL convention). Both copies MUST be byte-identical. Best of both: verifiable distribution _and_ frictionless resolution, neither forced.
 2. **Capability shape → single `host.artifactTypes` object** with `store` / `render` / `export[]` facets, not dotted sub-capabilities. `export` carries a list (impossible as a boolean dotted key), and the facets are negotiated together rather than dispatched as independent methods (the distinction that justifies `host.canvas.create`'s dotted form).
 3. **Unregistered types → permanent first-class tier.** Free-string `artifactType` is the `local.*`-scope analog and the adoption on-ramp; `registered: false` is a permanent, honest signal, not a transitional wart. Registration governs whether a shape is bound to a distributed contract — never a precondition for producing artifacts.
-4. **Card kind → distinct `kind: "card"`.** A prompt pack distributes reusable prompt fragments surfaced via `GET /v1/prompts`; a card is a higher-order composite (input contract + prompt + output-artifact binding) consumed via `WorkflowNode.cardType` / `ctx.chat.emitCard`. A card MAY *reference* a prompt-pack template (composition over absorption), keeping the surfaces clean and DRY.
-5. **Versioning axis → integer `schemaVersion`** on the artifact type, riding the existing `capabilities.schemaVersions: Record<string, number>` advertisement; the *pack* keeps SemVer. This is the exact envelope split; semver minor/patch is meaningless for a wire schema.
+4. **Card kind → distinct `kind: "card"`.** A prompt pack distributes reusable prompt fragments surfaced via `GET /v1/prompts`; a card is a higher-order composite (input contract + prompt + output-artifact binding) consumed via `WorkflowNode.cardType` / `ctx.chat.emitCard`. A card MAY _reference_ a prompt-pack template (composition over absorption), keeping the surfaces clean and DRY.
+5. **Versioning axis → integer `schemaVersion`** on the artifact type, riding the existing `capabilities.schemaVersions: Record<string, number>` advertisement; the _pack_ keeps SemVer. This is the exact envelope split; semver minor/patch is meaningless for a wire schema.
 6. **`exportFormats` → reserved core identifier set + `vendor.*`/`x-` extension.** A core vocabulary (`pdf`, `pptx`, `docx`, `md`, `html`, `png`, `svg`, `csv`, `json`, `step`, `stl`, …) carries interoperable meaning; domain formats extend via prefixed identifiers. Mirrors the `requiredModelCapabilities` idiom — interop without a codec spec.
 
 ## Remaining open items (gate Phase-1 `Active`)

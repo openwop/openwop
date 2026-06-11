@@ -1,17 +1,17 @@
 # RFC NNNN: <Title>
 
-| Field | Value |
-|---|---|
-| **RFC** | NNNN |
-| **Title** | <Short descriptive title> |
-| **Status** | `Draft` |
-| **Author(s)** | <name(s) + GitHub handle(s)> |
-| **Created** | YYYY-MM-DD |
-| **Updated** | YYYY-MM-DD |
-| **Affects** | <spec docs / schemas / SDKs / conformance scenarios touched> |
+| Field             | Value                                                           |
+| ----------------- | --------------------------------------------------------------- |
+| **RFC**           | NNNN                                                            |
+| **Title**         | <Short descriptive title>                                       |
+| **Status**        | `Draft`                                                         |
+| **Author(s)**     | <name(s) + GitHub handle(s)>                                    |
+| **Created**       | YYYY-MM-DD                                                      |
+| **Updated**       | YYYY-MM-DD                                                      |
+| **Affects**       | <spec docs / schemas / SDKs / conformance scenarios touched>    |
 | **Compatibility** | <`additive` / `safety-fix` / `breaking`> per `COMPATIBILITY.md` |
-| **Supersedes** | <RFC number, if any> |
-| **Superseded by** | <RFC number, if any — filled when this RFC is replaced> |
+| **Supersedes**    | <RFC number, if any>                                            |
+| **Superseded by** | <RFC number, if any — filled when this RFC is replaced>         |
 
 ## Summary
 

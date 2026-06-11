@@ -1,4 +1,4 @@
-# openwop Spec v1 — Typed State Channels and Reducers
+# OpenWOP Spec v1 — Typed State Channels and Reducers
 
 > **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of channel declarations, six canonical reducers, the migration path from variable-prefix conventions, and the back-compat layer. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
@@ -8,23 +8,23 @@
 
 A workflow run carries state beyond the inputs and outputs of individual nodes: approval votes, refine-loop feedback history, loopback counters, artifact mirrors, multi-turn Q&A exchanges. The reference implementation persists this state in an **untyped variables map** with **prefix conventions**:
 
-| Prefix | Purpose | Reducer (implicit) |
-|---|---|---|
-| `_approvalVotes:{nodeId}` | Multi-approver vote tally | append |
-| `_askExchanges:{nodeId}` | Q&A exchanges during approval | append + cap |
-| `_clarificationAnswers:{nodeId}` | Clarification answers | merge |
-| `_feedbackHistory:{nodeId}` | Refine-loop feedback log | append |
-| `_loopbackCount:{nodeId}` | Loopback iteration counter | counter |
-| `_loopbackIteration:{nodeId}` | Current iteration index | replace (counter-like) |
-| `_previousArtifact:{nodeId}` | Pre-refine artifact snapshot | replace |
-| `wfArtifactData_{nodeId}` | Artifact mirror surviving doc-strip | replace |
-| `_activeClarification` | Active clarification descriptor | replace |
+| Prefix                           | Purpose                             | Reducer (implicit)     |
+| -------------------------------- | ----------------------------------- | ---------------------- |
+| `_approvalVotes:{nodeId}`        | Multi-approver vote tally           | append                 |
+| `_askExchanges:{nodeId}`         | Q&A exchanges during approval       | append + cap           |
+| `_clarificationAnswers:{nodeId}` | Clarification answers               | merge                  |
+| `_feedbackHistory:{nodeId}`      | Refine-loop feedback log            | append                 |
+| `_loopbackCount:{nodeId}`        | Loopback iteration counter          | counter                |
+| `_loopbackIteration:{nodeId}`    | Current iteration index             | replace (counter-like) |
+| `_previousArtifact:{nodeId}`     | Pre-refine artifact snapshot        | replace                |
+| `wfArtifactData_{nodeId}`        | Artifact mirror surviving doc-strip | replace                |
+| `_activeClarification`           | Active clarification descriptor     | replace                |
 
 **Why this is a problem:**
 
 1. **Prefix-as-namespace is fragile.** A typo in the prefix string silently writes to a different namespace; nothing surfaces the error.
 2. **Implicit reducers.** Each callsite reimplements its own append/merge/counter logic. Drift between writer and reader is the most common bug class.
-3. **No type safety.** `run.variables[`_approvalVotes:${nodeId}`]` is `unknown`; every reader casts and hopes.
+3. **No type safety.** `run.variables[`\_approvalVotes:${nodeId}`]` is `unknown`; every reader casts and hopes.
 4. **No external visibility.** External tools can't introspect the namespace structure — they see one giant `Record<string, unknown>`.
 
 openwop defines **typed channels with explicit reducers** as the replacement. Each channel is a first-class declaration with a typed value and a named reducer; the prefix conventions become a back-compat layer that the spec deprecates over time.
@@ -174,19 +174,19 @@ Error envelope:
 When a channel's `schema` evolves, prior persisted writes don't auto-revalidate against the new shape. openwop's migration model is **versioned schemas + auto-detect compatibility + fail-loud on breaking**:
 
 - `ChannelDeclaration.schemaVersion` — integer, defaults to 1. Authors increment when editing `schema`.
-- `ChannelDeclaration.compatibleWith` — list of older versions whose persisted writes are forward-readable under the *current* schema.
+- `ChannelDeclaration.compatibleWith` — list of older versions whose persisted writes are forward-readable under the _current_ schema.
 - Each `channel.written` event records its `schemaVersion` at write time (carried in the event payload — see `channel-written-payload.schema.json`).
 
 **Engine fold semantics on read:**
 
-| Event's `schemaVersion` | `compatibleWith` includes it? | Behavior |
-|---|---|---|
-| `=== current` | n/a | Fold normally. Validate against current `schema` if declared. |
-| `< current` | Yes | Validate the old write against the *current* schema. Pass → fold; fail → hard error `channel_schema_breaking_change`. |
-| `< current` | No | Hard error `channel_schema_breaking_change` with migration hint. |
-| `> current` | n/a | Forward-compat tolerant: fold permissively (`additionalProperties: true` semantics). Happens during deploy roll-back. |
+| Event's `schemaVersion` | `compatibleWith` includes it? | Behavior                                                                                                              |
+| ----------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `=== current`           | n/a                           | Fold normally. Validate against current `schema` if declared.                                                         |
+| `< current`             | Yes                           | Validate the old write against the _current_ schema. Pass → fold; fail → hard error `channel_schema_breaking_change`. |
+| `< current`             | No                            | Hard error `channel_schema_breaking_change` with migration hint.                                                      |
+| `> current`             | n/a                           | Forward-compat tolerant: fold permissively (`additionalProperties: true` semantics). Happens during deploy roll-back. |
 
-**Why automatic detection works.** The engine doesn't need to *understand* what changed between v1 and v2 — it just runs old data through the new schema. If it validates, the change is non-breaking. If not, it's breaking and the engine fails loud rather than silently corrupting state.
+**Why automatic detection works.** The engine doesn't need to _understand_ what changed between v1 and v2 — it just runs old data through the new schema. If it validates, the change is non-breaking. If not, it's breaking and the engine fails loud rather than silently corrupting state.
 
 **Author workflow for non-breaking edits** (the common case — adding optional fields, widening enums):
 
@@ -245,15 +245,15 @@ Channel reducers run engine-host-locally. When a sub-workflow (a parent invokes 
 
 #### Cross-engine write rules
 
-| Reducer | Cross-engine write? | Why |
-|---|---|---|
-| `append`   | ✅ Allowed | Commutative + associative — concurrent appends just produce more entries. Cross-engine order is engine-determined per §"Append ordering". |
-| `votes`    | ✅ Allowed | Per-voter latest-wins de-dup makes concurrent writes safe. |
-| `feedback` | ✅ Allowed | Append-with-bound; same as `append`. |
-| `counter`  | ✅ Allowed | Addition is commutative + associative. |
-| `replace`  | ❌ Forbidden | Last-write-wins with concurrent cross-engine writes is a workflow-design bug, not a silent race. |
-| `merge`    | ❌ Forbidden | Shallow-merge order matters for overlapping keys; concurrent cross-engine writes produce non-deterministic state. |
-| `vendor.*` | Server's call | Custom reducers declare their own cross-engine policy. Servers SHOULD reject cross-engine writes by default and require the pack to opt in. |
+| Reducer    | Cross-engine write? | Why                                                                                                                                         |
+| ---------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `append`   | ✅ Allowed          | Commutative + associative — concurrent appends just produce more entries. Cross-engine order is engine-determined per §"Append ordering".   |
+| `votes`    | ✅ Allowed          | Per-voter latest-wins de-dup makes concurrent writes safe.                                                                                  |
+| `feedback` | ✅ Allowed          | Append-with-bound; same as `append`.                                                                                                        |
+| `counter`  | ✅ Allowed          | Addition is commutative + associative.                                                                                                      |
+| `replace`  | ❌ Forbidden        | Last-write-wins with concurrent cross-engine writes is a workflow-design bug, not a silent race.                                            |
+| `merge`    | ❌ Forbidden        | Shallow-merge order matters for overlapping keys; concurrent cross-engine writes produce non-deterministic state.                           |
+| `vendor.*` | Server's call       | Custom reducers declare their own cross-engine policy. Servers SHOULD reject cross-engine writes by default and require the pack to opt in. |
 
 When a non-owner engine attempts a cross-engine write to a forbidden reducer, the server MUST return `400 channel_cross_engine_write_forbidden`:
 
@@ -319,10 +319,10 @@ nodes:
 
 Trigger config fields:
 
-| Field | Required | Notes |
-|---|---|---|
-| `channel` | Required | Name of the channel to watch. MUST match a key declared under `WorkflowDefinition.channels`. |
-| `onlyFrom` | Optional | `'child'` (only cross-engine writes), `'parent'` (only own-engine writes), `'any'` (default — all writes). Use `'child'` for the typical aggregation pattern. |
+| Field        | Required | Notes                                                                                                                                                                                     |
+| ------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `channel`    | Required | Name of the channel to watch. MUST match a key declared under `WorkflowDefinition.channels`.                                                                                              |
+| `onlyFrom`   | Optional | `'child'` (only cross-engine writes), `'parent'` (only own-engine writes), `'any'` (default — all writes). Use `'child'` for the typical aggregation pattern.                             |
 | `debounceMs` | Optional | When children write in bursts, wait for a quiet period of this many ms before firing. Recommended for `votes` / `feedback` aggregation; omit for low-frequency channels. Range: 0..60000. |
 
 #### Loop protection
@@ -337,7 +337,7 @@ The `channel.written` event log is the source of truth. During replay, the engin
 
 #### What this is NOT
 
-- It's NOT a CRDT-everywhere model. `replace` / `merge` are still single-writer; the `channel-write` trigger is the *escape hatch* to combine cross-engine inputs into a single-writer decision.
+- It's NOT a CRDT-everywhere model. `replace` / `merge` are still single-writer; the `channel-write` trigger is the _escape hatch_ to combine cross-engine inputs into a single-writer decision.
 - It's NOT a generic pub/sub system. Triggers fire within a single workflow run; cross-run reactivity is out of scope (use webhooks per `rest-endpoints.md`).
 - The spec does NOT define which engine-pair combinations are "child" vs "parent" — that's an implementation concern (sub-workflow ownership, cross-canvas-invoke topology, etc.). The `sourceEngineId` field is opaque to the spec.
 
@@ -465,6 +465,7 @@ Append-only, **idempotent on `messageId`**, replay-deterministic. The canonical 
 **Idempotency invariant.** A duplicate `messageId` lands in the log exactly once. Hosts MUST guarantee unique `messageId` per logical turn; consumers SHOULD treat re-emission as a non-event (covers retry / replay-fork scenarios without log corruption).
 
 **Use cases**:
+
 - Multi-agent conversation logs (Phase 1 + Phase 4)
 - Tool-call trace alongside `agent.toolCalled` / `agent.toolReturned` events
 - Orchestrator-supervisor context projection (`messageLog?` input to `core.orchestrator.supervisor`)
@@ -496,7 +497,7 @@ Channel writes are persisted as durable events. An OpenWOP-compliant engine MUST
 }
 ```
 
-The payload carries the *write input*, not the post-reduction state. Replay reconstructs the post-reduction state by folding all `channel.written` events through the declared reducer.
+The payload carries the _write input_, not the post-reduction state. Replay reconstructs the post-reduction state by folding all `channel.written` events through the declared reducer.
 
 ### Channel read
 
@@ -548,7 +549,7 @@ Workflows migrating from prefix conventions to declared channels:
 
 1. Audit `run.variables[<prefix>:*]` writes in NodeModules consumed by the workflow.
 2. Add `channels` block to `WorkflowDefinition` declaring each prefix family with the appropriate reducer.
-3. Switch NodeModule callsites from `ctx.setVariable(`_approvalVotes:${nodeId}`, ...)` to `ctx.channels.write(`approvalVotes:${nodeId}`, ...)`.
+3. Switch NodeModule callsites from `ctx.setVariable(`\_approvalVotes:${nodeId}`, ...)` to `ctx.channels.write(`approvalVotes:${nodeId}`, ...)`.
 4. Optionally, remove the prefix from the channel name (`approvalVotes:${nodeId}` instead of `_approvalVotes:${nodeId}`) — the underscore was a "framework-internal" marker no longer needed once channels are first-class.
 
 An OpenWOP-compliant server SHOULD ship a codemod tool that does steps 2–3 mechanically.
@@ -614,13 +615,13 @@ Range: `1 ≤ ttlMs ≤ 365 * 24 * 60 * 60 * 1000` (1 ms to 1 year). `0` means "
 
 ## Open spec gaps
 
-| # | Gap | Owner |
-|---|---|---|
-| C1 | Channel access control — done (2026-04-27: per-channel `access` field on `ChannelDeclaration`. Three forms: `'public'` / `'private'` shorthand / `{readers?, writers?}` explicit allowlists with nodeId + typeId-wildcard matching. Engine returns `400 channel_access_denied` on violation. See "Channel access control" §). | ✅ |
-| C2 | Distributed reducers — done (2026-04-27: cross-engine writes allowed for monotonic-add reducers (`append`/`votes`/`feedback`/`counter`); forbidden for `replace`/`merge` with `400 channel_cross_engine_write_forbidden`. New `channel-write` trigger type lets parents reactively derive authoritative state from child contributions. Events carry `sourceEngineId` + `sourceRunId`. See "Distributed reducers and cross-engine writes" §). | ✅ |
-| C3 | Channel TTL — done (2026-04-27: `ttlMs` field on `ChannelDeclaration`; lazy drop policy; replay-safe via original event timestamps. See "Channel TTL" §). | ✅ |
-| C4 | Schema migration — done (2026-04-27: versioned schemas + auto-detect compatibility + fail-loud on breaking. `ChannelDeclaration.schemaVersion` + `compatibleWith`; `channel.written` events carry `schemaVersion` at write time. See "Channel schema migration" §). | ✅ |
-| C5 | Cross-host channel coherence — reads from a stale projection cache could return pre-reduction state during the gap between event append and cache write. Currently the engine guarantees write-through, but the spec should formalize. | future v1.x |
+| #   | Gap                                                                                                                                                                                                                                                                                                                                                                                                                                           | Owner       |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| C1  | Channel access control — done (2026-04-27: per-channel `access` field on `ChannelDeclaration`. Three forms: `'public'` / `'private'` shorthand / `{readers?, writers?}` explicit allowlists with nodeId + typeId-wildcard matching. Engine returns `400 channel_access_denied` on violation. See "Channel access control" §).                                                                                                                 | ✅          |
+| C2  | Distributed reducers — done (2026-04-27: cross-engine writes allowed for monotonic-add reducers (`append`/`votes`/`feedback`/`counter`); forbidden for `replace`/`merge` with `400 channel_cross_engine_write_forbidden`. New `channel-write` trigger type lets parents reactively derive authoritative state from child contributions. Events carry `sourceEngineId` + `sourceRunId`. See "Distributed reducers and cross-engine writes" §). | ✅          |
+| C3  | Channel TTL — done (2026-04-27: `ttlMs` field on `ChannelDeclaration`; lazy drop policy; replay-safe via original event timestamps. See "Channel TTL" §).                                                                                                                                                                                                                                                                                     | ✅          |
+| C4  | Schema migration — done (2026-04-27: versioned schemas + auto-detect compatibility + fail-loud on breaking. `ChannelDeclaration.schemaVersion` + `compatibleWith`; `channel.written` events carry `schemaVersion` at write time. See "Channel schema migration" §).                                                                                                                                                                           | ✅          |
+| C5  | Cross-host channel coherence — reads from a stale projection cache could return pre-reduction state during the gap between event append and cache write. Currently the engine guarantees write-through, but the spec should formalize.                                                                                                                                                                                                        | future v1.x |
 
 ## References
 

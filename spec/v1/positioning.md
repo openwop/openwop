@@ -1,16 +1,16 @@
-# openwop Spec v1 — Positioning
+# OpenWOP Spec v1 — Positioning
 
 > **Status: Stable · v1.1 (2026-05-05).** Honest comparison of openwop against adjacent workflow / orchestration ecosystems. Non-normative — this document doesn't constrain any conforming implementation (zero RFC 2119 keywords by design). Graduated DRAFT → FINAL per GOVERNANCE.md "non-normative addition" rule (one-maintainer-approval direct merge); the doc has no MUST/SHOULD/MAY claims to lock. See `auth.md` for the status legend.
 
 ---
 
-## What openwop is
+## What OpenWOP is
 
 openwop is **an open protocol for portable, durable, AI-native workflow execution across hosts.**
 
 Concretely: openwop standardizes how independent systems define, start, stream, interrupt, resume, replay, validate, and observe durable workflows that include LLM-emitted structured envelopes, human-in-the-loop checkpoints, and conformance-tested cross-host behavior.
 
-## What openwop is not
+## What OpenWOP is not
 
 - A general-purpose batch-job orchestrator. Use Airflow, Argo, or your cloud's batch service.
 - A durable-execution runtime SDK. Use Temporal or AWS Step Functions for that level of operational maturity.
@@ -28,18 +28,18 @@ Concretely: openwop standardizes how independent systems define, start, stream, 
 
 > STD-1 close-out (2026-05-15). The earlier comparison table mixed standards (MCP, A2A) and runtimes (Temporal, LangGraph). This standalone matrix isolates the **standards** OpenWOP composes with and states the composition posture explicitly: when to use OpenWOP alongside the standard, what OpenWOP does NOT duplicate, and the current mapping-document status.
 
-| Standard | Use OpenWOP **alongside** for | Do NOT duplicate | Mapping status |
-|---|---|---|---|
-| **MCP** (Model Context Protocol) | The "what tools an LLM can call" surface. OpenWOP nodes invoke MCP tools via `core.mcp.toolCall` with `trustBoundary: "untrusted"`. | The MCP wire surface itself. OpenWOP MUST NOT define new tool-discovery / tool-call vocabulary. | **Active.** [`mcp-integration.md`](./mcp-integration.md) — three transports (streamable-http JSON + streamable-http SSE + stdio) verified end-to-end. |
-| **A2A** (Agent2Agent Protocol) | Inter-agent discovery + message exchange (AgentCard / Task / Skill). An OpenWOP host can expose itself as an A2A agent (Workflow → Skill, run → Task). | Inter-agent transport semantics. OpenWOP MUST NOT define a parallel agent-discovery surface. | **Active.** [`a2a-integration.md`](./a2a-integration.md) — state-projection table + roundtrip smoke. |
-| **OpenAPI 3.1** | The REST wire contract description for hosts. | An OpenAPI replacement. Every operation in OpenWOP ships an `operationId` in `api/openapi.yaml`. | **Normative.** [`api/openapi.yaml`](../../api/openapi.yaml) IS the canonical wire contract; redocly lints clean in CI. |
-| **AsyncAPI 3.1** | The SSE event-channel contract. | An AsyncAPI replacement. | **Normative.** [`api/asyncapi.yaml`](../../api/asyncapi.yaml) is the canonical event contract. |
-| **OpenTelemetry** | Distributed tracing + metrics under the canonical `openwop.*` semantic namespace per [`observability.md`](./observability.md). OTLP/HTTP-JSON + HTTP-protobuf + gRPC all accepted by the conformance suite's collector. | A vendor telemetry shape. Hosts SHOULD emit canonical `openwop.*` spans; vendor extensions ship under namespaced prefixes. | **Active.** Canonical namespace + 6 conformance scenarios covering trace continuity across `runs:fork`, interrupts, and `core.subWorkflow`. |
-| **CloudEvents** | Wire envelope for OpenWOP events emitted to external sinks (Pub/Sub, Kafka, EventBridge). The OpenWOP `RunEvent` shape composes; only the envelope differs. | An export-format replacement. Native OpenWOP event log stays JSON per [`observability.md`](./observability.md) §"Canonical run lifecycle event names". | **Non-normative.** Mapping landed 2026-05-15 in [`spec/v1/cloudevents-mapping.md`](./cloudevents-mapping.md) (STD-2 close-out). Promote to normative profile once a reference host ships a CloudEvents exporter. |
-| **DID** (W3C Decentralized Identifiers) | Optional identity backing for `AgentRef.agentId` in trust-sensitive deployments. An AgentRef MAY carry a DID without making DID mandatory. | A required identity layer. OpenWOP MUST NOT force DID adoption. | **Non-normative — pending.** STD-4 follow-up will add an `AgentRef.did` optional field + mapping note. |
-| **Serverless Workflow (CNCF)** | Workflow-definition export/import for hosts that interoperate with cloud orchestrators. | A workflow-definition replacement. OpenWOP keeps its own DAG shape per [`workflow-definition.schema.json`](../../schemas/workflow-definition.schema.json). | **Non-normative.** [`docs/integrations/serverless-workflow-and-bpmn.md`](../../docs/integrations/serverless-workflow-and-bpmn.md) (STD-5 close-out 2026-05-15). Explicit lossy-projection mapping + non-mapping list. |
-| **BPMN** (OMG) | Import/export with enterprise process-modeling tools. | A modeling language replacement. OpenWOP doesn't try to be a BPMN renderer. | **Non-normative.** Same doc as Serverless Workflow above (STD-5 close-out 2026-05-15). |
-| **Temporal / Restate / DBOS / Inngest** | Durable-execution substrates. Any OpenWOP host MAY use these as its internal runtime. | A durable-execution replacement. OpenWOP is a wire contract, not a runtime. | **Implementation notes.** [`docs/integrations/durable-runtimes.md`](../../docs/integrations/durable-runtimes.md) (STD-6 close-out 2026-05-15). Per-runtime call-outs for Temporal / Restate / DBOS / Inngest. |
+| Standard                                | Use OpenWOP **alongside** for                                                                                                                                                                                           | Do NOT duplicate                                                                                                                                           | Mapping status                                                                                                                                                                                                        |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **MCP** (Model Context Protocol)        | The "what tools an LLM can call" surface. OpenWOP nodes invoke MCP tools via `core.mcp.toolCall` with `trustBoundary: "untrusted"`.                                                                                     | The MCP wire surface itself. OpenWOP MUST NOT define new tool-discovery / tool-call vocabulary.                                                            | **Active.** [`mcp-integration.md`](./mcp-integration.md) — three transports (streamable-http JSON + streamable-http SSE + stdio) verified end-to-end.                                                                 |
+| **A2A** (Agent2Agent Protocol)          | Inter-agent discovery + message exchange (AgentCard / Task / Skill). An OpenWOP host can expose itself as an A2A agent (Workflow → Skill, run → Task).                                                                  | Inter-agent transport semantics. OpenWOP MUST NOT define a parallel agent-discovery surface.                                                               | **Active.** [`a2a-integration.md`](./a2a-integration.md) — state-projection table + roundtrip smoke.                                                                                                                  |
+| **OpenAPI 3.1**                         | The REST wire contract description for hosts.                                                                                                                                                                           | An OpenAPI replacement. Every operation in OpenWOP ships an `operationId` in `api/openapi.yaml`.                                                           | **Normative.** [`api/openapi.yaml`](../../api/openapi.yaml) IS the canonical wire contract; redocly lints clean in CI.                                                                                                |
+| **AsyncAPI 3.1**                        | The SSE event-channel contract.                                                                                                                                                                                         | An AsyncAPI replacement.                                                                                                                                   | **Normative.** [`api/asyncapi.yaml`](../../api/asyncapi.yaml) is the canonical event contract.                                                                                                                        |
+| **OpenTelemetry**                       | Distributed tracing + metrics under the canonical `openwop.*` semantic namespace per [`observability.md`](./observability.md). OTLP/HTTP-JSON + HTTP-protobuf + gRPC all accepted by the conformance suite's collector. | A vendor telemetry shape. Hosts SHOULD emit canonical `openwop.*` spans; vendor extensions ship under namespaced prefixes.                                 | **Active.** Canonical namespace + 6 conformance scenarios covering trace continuity across `runs:fork`, interrupts, and `core.subWorkflow`.                                                                           |
+| **CloudEvents**                         | Wire envelope for OpenWOP events emitted to external sinks (Pub/Sub, Kafka, EventBridge). The OpenWOP `RunEvent` shape composes; only the envelope differs.                                                             | An export-format replacement. Native OpenWOP event log stays JSON per [`observability.md`](./observability.md) §"Canonical run lifecycle event names".     | **Non-normative.** Mapping landed 2026-05-15 in [`spec/v1/cloudevents-mapping.md`](./cloudevents-mapping.md) (STD-2 close-out). Promote to normative profile once a reference host ships a CloudEvents exporter.      |
+| **DID** (W3C Decentralized Identifiers) | Optional identity backing for `AgentRef.agentId` in trust-sensitive deployments. An AgentRef MAY carry a DID without making DID mandatory.                                                                              | A required identity layer. OpenWOP MUST NOT force DID adoption.                                                                                            | **Non-normative — pending.** STD-4 follow-up will add an `AgentRef.did` optional field + mapping note.                                                                                                                |
+| **Serverless Workflow (CNCF)**          | Workflow-definition export/import for hosts that interoperate with cloud orchestrators.                                                                                                                                 | A workflow-definition replacement. OpenWOP keeps its own DAG shape per [`workflow-definition.schema.json`](../../schemas/workflow-definition.schema.json). | **Non-normative.** [`docs/integrations/serverless-workflow-and-bpmn.md`](../../docs/integrations/serverless-workflow-and-bpmn.md) (STD-5 close-out 2026-05-15). Explicit lossy-projection mapping + non-mapping list. |
+| **BPMN** (OMG)                          | Import/export with enterprise process-modeling tools.                                                                                                                                                                   | A modeling language replacement. OpenWOP doesn't try to be a BPMN renderer.                                                                                | **Non-normative.** Same doc as Serverless Workflow above (STD-5 close-out 2026-05-15).                                                                                                                                |
+| **Temporal / Restate / DBOS / Inngest** | Durable-execution substrates. Any OpenWOP host MAY use these as its internal runtime.                                                                                                                                   | A durable-execution replacement. OpenWOP is a wire contract, not a runtime.                                                                                | **Implementation notes.** [`docs/integrations/durable-runtimes.md`](../../docs/integrations/durable-runtimes.md) (STD-6 close-out 2026-05-15). Per-runtime call-outs for Temporal / Restate / DBOS / Inngest.         |
 
 **Reading the table.** The `Use OpenWOP alongside for` column states the composition value. The `Do NOT duplicate` column makes explicit which surface OpenWOP deliberately doesn't own — most adoption confusion comes from prospective adopters reading OpenWOP as a competitor to one of these standards rather than a composer of them. The `Mapping status` column tracks whether a dedicated mapping document exists, is pending, or is deliberately deferred until an actual implementer drives the work.
 
@@ -47,20 +47,20 @@ Concretely: openwop standardizes how independent systems define, start, stream, 
 
 ## Comparison table
 
-| System | Strength | openwop comparison |
-|---|---|---|
-| **Temporal** | Durable execution runtime; production-mature retries, signals, timers, task queues | Temporal is a runtime; openwop is a protocol. openwop can run on Temporal-backed hosts; the two are complementary, not competing. |
-| **Apache Airflow** | Scheduled batch data pipelines; mature ecosystem; cron-driven | openwop is interactive + AI-mediated, not scheduled batch. openwop is not a better Airflow. |
-| **Argo Workflows** | Kubernetes-native parallel jobs; container workflows | Argo is k8s-native + container-centric. openwop is host-neutral and AI-aware but much less battle-tested for container orchestration. |
-| **AWS Step Functions** | Enterprise trust; AWS-service integrations; ASL state-machine clarity | Step Functions is AWS-distribution and ASL-locked. openwop competes only on portability + AI-native semantics + host neutrality. |
-| **BPMN / OMG** | Standards legitimacy; enterprise process-modeling depth; governance history | BPMN is enterprise-standard for human-process modeling. openwop is API/AI-native but lacks BPMN's neutral-standardization weight. |
-| **LangGraph** | Closest conceptual competitor in agent-workflow land; durable execution + HITL primitives | LangGraph is a framework. openwop is a protocol + conformance suite. openwop can host LangGraph-built workflows; LangGraph can be a client of an OpenWOP host. |
-| **Model Context Protocol (MCP)** | Standardizes tool/resource/prompt access for LLM apps | **Complementary, not competing.** MCP standardizes what tools an LLM can call; openwop standardizes how multi-step LLM workflows run, pause, resume, stream, and validate. Worked example in `mcp-integration.md`. |
-| **Agent2Agent Protocol (A2A)** | Standardizes inter-agent discovery + message exchange (Agent Cards, Tasks, Skills) | **Complementary, not competing.** A2A standardizes how independent agents talk to each other; openwop standardizes how a workflow runs *inside* one agent. An OpenWOP host can expose itself as an A2A agent (Workflow → Skill, run → Task); an OpenWOP node can call out to an external A2A agent. Worked example + openwop↔A2A state-projection table in `a2a-integration.md`. |
+| System                           | Strength                                                                                  | openwop comparison                                                                                                                                                                                                                                                                                                                                                               |
+| -------------------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Temporal**                     | Durable execution runtime; production-mature retries, signals, timers, task queues        | Temporal is a runtime; openwop is a protocol. openwop can run on Temporal-backed hosts; the two are complementary, not competing.                                                                                                                                                                                                                                                |
+| **Apache Airflow**               | Scheduled batch data pipelines; mature ecosystem; cron-driven                             | openwop is interactive + AI-mediated, not scheduled batch. openwop is not a better Airflow.                                                                                                                                                                                                                                                                                      |
+| **Argo Workflows**               | Kubernetes-native parallel jobs; container workflows                                      | Argo is k8s-native + container-centric. openwop is host-neutral and AI-aware but much less battle-tested for container orchestration.                                                                                                                                                                                                                                            |
+| **AWS Step Functions**           | Enterprise trust; AWS-service integrations; ASL state-machine clarity                     | Step Functions is AWS-distribution and ASL-locked. openwop competes only on portability + AI-native semantics + host neutrality.                                                                                                                                                                                                                                                 |
+| **BPMN / OMG**                   | Standards legitimacy; enterprise process-modeling depth; governance history               | BPMN is enterprise-standard for human-process modeling. openwop is API/AI-native but lacks BPMN's neutral-standardization weight.                                                                                                                                                                                                                                                |
+| **LangGraph**                    | Closest conceptual competitor in agent-workflow land; durable execution + HITL primitives | LangGraph is a framework. openwop is a protocol + conformance suite. openwop can host LangGraph-built workflows; LangGraph can be a client of an OpenWOP host.                                                                                                                                                                                                                   |
+| **Model Context Protocol (MCP)** | Standardizes tool/resource/prompt access for LLM apps                                     | **Complementary, not competing.** MCP standardizes what tools an LLM can call; openwop standardizes how multi-step LLM workflows run, pause, resume, stream, and validate. Worked example in `mcp-integration.md`.                                                                                                                                                               |
+| **Agent2Agent Protocol (A2A)**   | Standardizes inter-agent discovery + message exchange (Agent Cards, Tasks, Skills)        | **Complementary, not competing.** A2A standardizes how independent agents talk to each other; openwop standardizes how a workflow runs _inside_ one agent. An OpenWOP host can expose itself as an A2A agent (Workflow → Skill, run → Task); an OpenWOP node can call out to an external A2A agent. Worked example + openwop↔A2A state-projection table in `a2a-integration.md`. |
 
 ---
 
-## When to choose openwop
+## When to choose OpenWOP
 
 Use openwop when:
 
@@ -70,7 +70,7 @@ Use openwop when:
 - **You need standardized observability + replay.** A debug bundle from one host can be ingested by tooling built for another.
 - **You want pack-style extensibility.** Workspace operators install signed node packs from a registry; the trust model is part of the protocol.
 
-## When NOT to choose openwop
+## When NOT to choose OpenWOP
 
 Use something else when:
 
@@ -78,11 +78,11 @@ Use something else when:
 - **You need a durable-execution runtime with deep production maturity TODAY.** Temporal has a decade of production hardening; openwop has months. Run openwop on top of Temporal where you can.
 - **You're running a single-host application that doesn't need cross-host portability.** A framework (LangGraph, LangChain) is lower-overhead than implementing a protocol.
 - **Your enterprise compliance posture requires BPMN + an OMG-recognized standardization body.** openwop's governance is documented but not yet at OMG-class neutrality.
-- **You need scheduled/cron-driven execution.** openwop is request-driven; scheduling is a host concern. (Qualified: RFC 0052 `host.scheduling` and RFC 0060 `host.heartbeat` make *bounded, predicate-gated, system-managed* time-based initiation an accepted host capability — distinct from an agent running an unbounded background loop on its own clock, which remains out of scope.)
+- **You need scheduled/cron-driven execution.** openwop is request-driven; scheduling is a host concern. (Qualified: RFC 0052 `host.scheduling` and RFC 0060 `host.heartbeat` make _bounded, predicate-gated, system-managed_ time-based initiation an accepted host capability — distinct from an agent running an unbounded background loop on its own clock, which remains out of scope.)
 
 ---
 
-## How openwop integrates with the alternatives
+## How OpenWOP integrates with the alternatives
 
 ### With MCP (Model Context Protocol)
 
@@ -110,7 +110,7 @@ An OpenWOP host can be implemented on top of Step Functions. The openwop HTTP su
 
 ---
 
-## What openwop solves especially well
+## What OpenWOP solves especially well
 
 The fit-with-problem statement: **"How do independent systems define, start, stream, interrupt, resume, replay, validate, and observe durable AI workflows?"**
 
@@ -126,7 +126,7 @@ In practice, openwop's strongest claims are:
 
 ---
 
-## What openwop is underdeveloped at
+## What OpenWOP is underdeveloped at
 
 Honest about gaps (per `the public security review plan`):
 

@@ -2,9 +2,10 @@
 
 **Subject:** External security review — OpenWOP protocol (fixed-bid quote request)
 
-**To:** sales@trailofbits.com (or hello@trailofbits.com — public intake)
+**To:** <sales@trailofbits.com> (or <hello@trailofbits.com> — public intake)
 
 **Notes:**
+
 - Trail of Bits has strong public reports on protocol-level engagements (e.g., Solana, Cosmos, Filecoin). Their findings track threat models cleanly.
 - Specifically reference their multi-tenant + supply-chain work if helpful.
 - Their typical engagement size matches the upper end of our budget range.
@@ -15,7 +16,7 @@
 
 Hi Trail of Bits team,
 
-I'm the lead maintainer of OpenWOP (https://github.com/openwop/openwop), an open wire-level protocol for multi-agent workflow orchestration. We're commissioning an independent security review and I'd like a fixed-bid quote.
+I'm the lead maintainer of OpenWOP (<https://github.com/openwop/openwop>), an open wire-level protocol for multi-agent workflow orchestration. We're commissioning an independent security review and I'd like a fixed-bid quote.
 
 **Scope summary** (full spec: `SECURITY/external-audit-engagement.md` in the repo):
 
@@ -37,6 +38,7 @@ I'm the lead maintainer of OpenWOP (https://github.com/openwop/openwop), an open
 **Embargo:** 90-day per `SECURITY.md` §6, extendable to 180 for safety-fix breaks. NDA before non-public access (the protocol is public; the NDA is narrow — pre-disclosure findings only).
 
 **Preconditions we commit to** (engagement-doc §5):
+
 - `openwop-audit-log-integrity` conformance scenarios PASS on the reference host (✓ verified 2026-05-11)
 - Phase 1 done; Phase 2 substantively done with the Postgres-host module ports (audit / interrupts / webhooks / observability for the 4th host) as a known follow-up that **will not land during the review window** (matches engagement-doc §5 "no in-flight normative changes during the review window")
 - Repository pinned to a specific commit for the review duration
@@ -48,5 +50,5 @@ Thanks,
 David Tufts
 Lead Maintainer, OpenWOP
 GitHub: @davidscotttufts
-Repository: https://github.com/openwop/openwop
-Engagement scope: https://github.com/openwop/openwop/blob/main/SECURITY/external-audit-engagement.md
+Repository: <https://github.com/openwop/openwop>
+Engagement scope: <https://github.com/openwop/openwop/blob/main/SECURITY/external-audit-engagement.md>

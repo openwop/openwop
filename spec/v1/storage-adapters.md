@@ -1,4 +1,4 @@
-# openwop Spec v1 — Storage Adapters
+# OpenWOP Spec v1 — Storage Adapters
 
 > **Status: Stable · v1.1 (2026-04-29).** Comprehensive coverage of the two normative storage-adapter contracts (`RunEventLogIO` and `SuspendIO`) that any OpenWOP-compliant engine implementation MUST satisfy. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
@@ -76,10 +76,10 @@ interface RunEventLogIO {
 
 The example hosts ship two reference implementations (in-memory + SQLite). Both are illustrative — third-party hosts MAY ship their own.
 
-| Implementation | Use | Module |
-|---|---|---|
-| `InMemoryEventLogIO` | Tests + reference deployments without durability | Reference-host implementation pattern |
-| `SqliteEventLogIO` | Durable single-node reference impl; zero-install on Node 22.5+ via `node:sqlite` | Reference-host implementation pattern |
+| Implementation       | Use                                                                              | Module                                |
+| -------------------- | -------------------------------------------------------------------------------- | ------------------------------------- |
+| `InMemoryEventLogIO` | Tests + reference deployments without durability                                 | Reference-host implementation pattern |
+| `SqliteEventLogIO`   | Durable single-node reference impl; zero-install on Node 22.5+ via `node:sqlite` | Reference-host implementation pattern |
 
 The contract surface above is the normative part and is reusable for any backend. The SQLite adapter is **Node-only** (browser bundlers cannot resolve `node:sqlite`) and should live under a dedicated sub-path so it does not pollute browser-safe surfaces.
 
@@ -150,21 +150,23 @@ interface PendingDoc {
 
 ### Reference implementations (non-normative)
 
-| Implementation | Use | Module |
-|---|---|---|
-| `InMemorySuspendIO` | Tests + reference deployments without durability | Reference-host implementation pattern |
-| `SqliteSuspendIO` | Durable single-node reference impl; zero-install on Node 22.5+ via `node:sqlite`; polling-based `watch()` (100ms default) | Reference-host implementation pattern |
+| Implementation      | Use                                                                                                                       | Module                                |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `InMemorySuspendIO` | Tests + reference deployments without durability                                                                          | Reference-host implementation pattern |
+| `SqliteSuspendIO`   | Durable single-node reference impl; zero-install on Node 22.5+ via `node:sqlite`; polling-based `watch()` (100ms default) | Reference-host implementation pattern |
 
 ---
 
 ## Naming and back-compat
 
 The original v1 type + class names carried a `Firestore-` prefix because Firestore was the only initial implementation:
+
 - `FirestoreSuspendIO` (interface)
 - `FirestorePendingDoc` (doc shape)
 - `FirestoreSuspendManager` (durable manager class)
 
 Post-v1 adopts host-agnostic names:
+
 - `SuspendIO`
 - `PendingDoc`
 - `DurableSuspendManager`

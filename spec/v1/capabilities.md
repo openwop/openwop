@@ -1,4 +1,4 @@
-# openwop Spec v1 — Capability Declaration (`/.well-known/openwop`)
+# OpenWOP Spec v1 — Capability Declaration (`/.well-known/openwop`)
 
 > **Status: Stable · v1.1 (2026-04-27; hygiene pass 2026-05-10).** Formalized as `schemas/capabilities.schema.json`. The public network handshake at `GET /.well-known/openwop` is the canonical v1 capability declaration. Fields marked **required v1** are required for conformance; fields marked **optional v1** have stable wire shapes but MAY be omitted by hosts that do not support the capability. Conformance suite scenarios verify the required surface end-to-end and gate optional profile scenarios from this document. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
@@ -6,7 +6,7 @@
 
 ## Why this exists
 
-External clients (CLIs, SDKs, agents from other ecosystems) need a deterministic way to discover what an OpenWOP-compliant server can do *before* they issue requests. Specifically:
+External clients (CLIs, SDKs, agents from other ecosystems) need a deterministic way to discover what an OpenWOP-compliant server can do _before_ they issue requests. Specifically:
 
 - Which protocol version they're talking to (and whether their client is too old)
 - Which envelope types and node types are registered
@@ -23,9 +23,9 @@ This document specifies the public surface. Implementations MAY also maintain ri
 
 An OpenWOP-compliant server MUST expose:
 
-| Method | Path | Auth | Cache |
-|---|---|---|---|
-| `GET` | `/.well-known/openwop` | None (public) | `Cache-Control: public, max-age=300` recommended |
+| Method | Path                   | Auth          | Cache                                            |
+| ------ | ---------------------- | ------------- | ------------------------------------------------ |
+| `GET`  | `/.well-known/openwop` | None (public) | `Cache-Control: public, max-age=300` recommended |
 
 The path follows [RFC 8615](https://www.rfc-editor.org/rfc/rfc8615) `.well-known` URI conventions. The response MUST be JSON with `Content-Type: application/json`.
 
@@ -71,6 +71,7 @@ interface CapabilityLimits {
 ```
 
 **Helper functions** (reference-app patterns, same `Capabilities.ts`):
+
 - `buildCapabilities(opts)` — construct from envelope catalog + limits. Validates `schemaVersions` are non-negative integers.
 - `formatCapabilitiesForPrompt(caps)` — render as system-prompt text block. Sorts envelope types + extension keys deterministically for prompt-cache stability.
 - `mergeCapabilities(base, extension)` — per-canvas-type merge. Union of envelopes, extension wins on schema-version + limit conflicts.
@@ -142,33 +143,33 @@ The example's `maxNodeExecutions: 1000` is a deliberately non-default value (the
 
 ### Field reference
 
-| Field | Type | Status | Notes |
-|---|---|---|---|
-| `protocolVersion` | `string` | **required v1** | Protocol version the server speaks, e.g. `"1.0"`. |
-| `supportedEnvelopes` | `string[]` | **required v1** | Envelope `type` strings the engine recognizes. |
-| `schemaVersions` | `Record<string, number>` | **required v1** | Active schema version per envelope type. **Per-envelope-type integer**, not per-spec-type semver. |
-| `limits.clarificationRounds` | `number` | **required v1** | Default `3`. |
-| `limits.schemaRounds` | `number` | **required v1** | Default `2`. |
-| `limits.envelopesPerTurn` | `number` | **required v1** | Default `5`. |
-| `extensions` | `Record<string, unknown>` | **optional v1** | Per-host or per-workflow extension data. Clients treat as opaque. |
-| `implementation.{name,version,vendor}` | object | **optional v1** | Identifies the server. |
-| `engineVersion` | `number` | **optional v1** | See `version-negotiation.md`. |
-| `eventLogSchemaVersion` | `number` | **optional v1** | See `version-negotiation.md`. |
-| `supportedTransports` | `string[]` | **optional v1** | Subset of `["rest", "mcp", "a2a", "grpc"]`. REST is required regardless of whether this field is present. |
-| `limits.maxNodeExecutions` | `number` | **optional v1** | Default `100`. Hosts that advertise it MUST enforce it. Engine-side ceiling clamping `RunOptions.configurable.recursionLimit`. Exceedance emits `cap.breached` with `kind: "node-executions"` and transitions the run to `failed` per §"Engine-enforced limits + cap.breached" below. |
-| `limits.maxRunDurationMs` | `number` | **optional v1** | Maximum run duration (milliseconds) the host intends to allow. Upper bound for `RunOptions.configurable.runTimeoutMs` (RFC 0058). |
-| `limits.maxRequestBodyBytes` | `number` | **optional v1** | Maximum REST request body accepted by the host, in bytes. Added to `capabilities.schema.json` by RFC 0094 (`limits` is otherwise closed — `additionalProperties: false`). |
-| `configurable` | object | **optional v1** | Per-run parameter overlay schema. |
-| `observability` | object | **optional v1** | OTel attribute taxonomy hints. See `observability.md`. |
-| `minClientVersion` | `string` | **optional v1** | Client-side version floor for `426 Upgrade Required`-style UX. |
-| `runtimeCapabilities` | `string[]` | **optional v1** | Host-advertised opaque capability ids that NodeModules may require via `NodeModule.requires`. See §"Runtime capabilities" below. |
-| `secrets.supported` | `boolean` | **optional v1** | Host advertises secret/credential resolution. Clients gate BYOK flows on this. See §"Secrets" below. |
-| `secrets.scopes` | `string[]` | **optional v1** | Subset of `["tenant", "user", "run"]`. |
-| `secrets.resolution` | `string` | **optional v1** | Currently `"host-managed"`. Reserved for future modes. |
-| `aiProviders.supported` | `string[]` | **optional v1** | Providers the host's AI proxy can route to (`anthropic`, `openai`, `gemini`, etc.). |
-| `aiProviders.byok` | `string[]` | **optional v1** | Subset of `aiProviders.supported` for which BYOK is permitted. |
-| `aiProviders.policies` | object | **optional v1** | Host-side policy enforcement modes (`disabled` / `optional` / `required` / `restricted`). |
-| `fixtures` | `string[]` | **optional v1** | Fixture workflow IDs the host has seeded. Conformance-suite-only contract. |
+| Field                                  | Type                      | Status          | Notes                                                                                                                                                                                                                                                                                 |
+| -------------------------------------- | ------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `protocolVersion`                      | `string`                  | **required v1** | Protocol version the server speaks, e.g. `"1.0"`.                                                                                                                                                                                                                                     |
+| `supportedEnvelopes`                   | `string[]`                | **required v1** | Envelope `type` strings the engine recognizes.                                                                                                                                                                                                                                        |
+| `schemaVersions`                       | `Record<string, number>`  | **required v1** | Active schema version per envelope type. **Per-envelope-type integer**, not per-spec-type semver.                                                                                                                                                                                     |
+| `limits.clarificationRounds`           | `number`                  | **required v1** | Default `3`.                                                                                                                                                                                                                                                                          |
+| `limits.schemaRounds`                  | `number`                  | **required v1** | Default `2`.                                                                                                                                                                                                                                                                          |
+| `limits.envelopesPerTurn`              | `number`                  | **required v1** | Default `5`.                                                                                                                                                                                                                                                                          |
+| `extensions`                           | `Record<string, unknown>` | **optional v1** | Per-host or per-workflow extension data. Clients treat as opaque.                                                                                                                                                                                                                     |
+| `implementation.{name,version,vendor}` | object                    | **optional v1** | Identifies the server.                                                                                                                                                                                                                                                                |
+| `engineVersion`                        | `number`                  | **optional v1** | See `version-negotiation.md`.                                                                                                                                                                                                                                                         |
+| `eventLogSchemaVersion`                | `number`                  | **optional v1** | See `version-negotiation.md`.                                                                                                                                                                                                                                                         |
+| `supportedTransports`                  | `string[]`                | **optional v1** | Subset of `["rest", "mcp", "a2a", "grpc"]`. REST is required regardless of whether this field is present.                                                                                                                                                                             |
+| `limits.maxNodeExecutions`             | `number`                  | **optional v1** | Default `100`. Hosts that advertise it MUST enforce it. Engine-side ceiling clamping `RunOptions.configurable.recursionLimit`. Exceedance emits `cap.breached` with `kind: "node-executions"` and transitions the run to `failed` per §"Engine-enforced limits + cap.breached" below. |
+| `limits.maxRunDurationMs`              | `number`                  | **optional v1** | Maximum run duration (milliseconds) the host intends to allow. Upper bound for `RunOptions.configurable.runTimeoutMs` (RFC 0058).                                                                                                                                                     |
+| `limits.maxRequestBodyBytes`           | `number`                  | **optional v1** | Maximum REST request body accepted by the host, in bytes. Added to `capabilities.schema.json` by RFC 0094 (`limits` is otherwise closed — `additionalProperties: false`).                                                                                                             |
+| `configurable`                         | object                    | **optional v1** | Per-run parameter overlay schema.                                                                                                                                                                                                                                                     |
+| `observability`                        | object                    | **optional v1** | OTel attribute taxonomy hints. See `observability.md`.                                                                                                                                                                                                                                |
+| `minClientVersion`                     | `string`                  | **optional v1** | Client-side version floor for `426 Upgrade Required`-style UX.                                                                                                                                                                                                                        |
+| `runtimeCapabilities`                  | `string[]`                | **optional v1** | Host-advertised opaque capability ids that NodeModules may require via `NodeModule.requires`. See §"Runtime capabilities" below.                                                                                                                                                      |
+| `secrets.supported`                    | `boolean`                 | **optional v1** | Host advertises secret/credential resolution. Clients gate BYOK flows on this. See §"Secrets" below.                                                                                                                                                                                  |
+| `secrets.scopes`                       | `string[]`                | **optional v1** | Subset of `["tenant", "user", "run"]`.                                                                                                                                                                                                                                                |
+| `secrets.resolution`                   | `string`                  | **optional v1** | Currently `"host-managed"`. Reserved for future modes.                                                                                                                                                                                                                                |
+| `aiProviders.supported`                | `string[]`                | **optional v1** | Providers the host's AI proxy can route to (`anthropic`, `openai`, `gemini`, etc.).                                                                                                                                                                                                   |
+| `aiProviders.byok`                     | `string[]`                | **optional v1** | Subset of `aiProviders.supported` for which BYOK is permitted.                                                                                                                                                                                                                        |
+| `aiProviders.policies`                 | object                    | **optional v1** | Host-side policy enforcement modes (`disabled` / `optional` / `required` / `restricted`).                                                                                                                                                                                             |
+| `fixtures`                             | `string[]`                | **optional v1** | Fixture workflow IDs the host has seeded. Conformance-suite-only contract.                                                                                                                                                                                                            |
 
 ### `configurable`
 
@@ -188,7 +189,7 @@ A client MUST consult this capability before sending `configurable` values and M
 
 ### Runtime capabilities
 
-Lets a host advertise opaque host facilities that NodeModules can require via `NodeModule.requires?: readonly string[]`. The protocol owns the *check*; provider value shapes are documented per-capability alongside their consumers, NOT here.
+Lets a host advertise opaque host facilities that NodeModules can require via `NodeModule.requires?: readonly string[]`. The protocol owns the _check_; provider value shapes are documented per-capability alongside their consumers, NOT here.
 
 ```json
 "runtimeCapabilities": ["chat.sendPrompt", "canvas.write", "secrets.byok"]
@@ -252,7 +253,7 @@ Companion to `secrets`. Advertises which AI providers the host's AI-proxy can ro
 
 #### `aiProviders.authModes` — BYOK auth-mode contract (RFC 0067, `Active`)
 
-`supported` and `byok` say *which* providers the host routes to and *which* permit BYOK, but not *how* a client is expected to supply a provider's credential. As the catalog grows beyond API-key providers (OAuth-backed providers, local Ollama/vLLM endpoints, platform-managed providers) the supply mechanism diverges. The optional `authModes` map advertises it so a client can pre-flight the credential UX without trial-and-error.
+`supported` and `byok` say _which_ providers the host routes to and _which_ permit BYOK, but not _how_ a client is expected to supply a provider's credential. As the catalog grows beyond API-key providers (OAuth-backed providers, local Ollama/vLLM endpoints, platform-managed providers) the supply mechanism diverges. The optional `authModes` map advertises it so a client can pre-flight the credential UX without trial-and-error.
 
 ```json
 "aiProviders": {
@@ -269,21 +270,21 @@ Companion to `secrets`. Advertises which AI providers the host's AI-proxy can ro
 
 **Field shape:** `authModes` is an OPTIONAL object whose keys are provider ids (each MUST appear in `supported`) and whose values are non-empty, unique arrays of auth modes drawn from the closed enum `["apiKey", "oauth-pkce", "oauth-device", "none"]`.
 
-| Mode | Meaning | Credential supply |
-|---|---|---|
-| `apiKey` | Host accepts a stored API-key credential. | Client passes `RunOptions.configurable.ai.credentialRef` (today's BYOK path). Provider MUST appear in `byok`. |
-| `oauth-pkce` | Host acquires a token via an OAuth 2.0 authorization-code + PKCE flow it owns (RFC 0047 `host.oauth`). | Client references the host-stored credential by `ref` (RFC 0046); the PKCE flow is host-driven; key material is NEVER passed on `ai.credentialRef`. |
-| `oauth-device` | Host acquires a token via an OAuth 2.0 device-authorization flow it owns. | Same as `oauth-pkce`. |
-| `none` | Provider needs no caller-supplied credential. | A local provider (Ollama / vLLM at a host-configured endpoint) or one served entirely from platform-managed keys. Provider MUST NOT appear in `byok`. |
+| Mode           | Meaning                                                                                                | Credential supply                                                                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apiKey`       | Host accepts a stored API-key credential.                                                              | Client passes `RunOptions.configurable.ai.credentialRef` (today's BYOK path). Provider MUST appear in `byok`.                                         |
+| `oauth-pkce`   | Host acquires a token via an OAuth 2.0 authorization-code + PKCE flow it owns (RFC 0047 `host.oauth`). | Client references the host-stored credential by `ref` (RFC 0046); the PKCE flow is host-driven; key material is NEVER passed on `ai.credentialRef`.   |
+| `oauth-device` | Host acquires a token via an OAuth 2.0 device-authorization flow it owns.                              | Same as `oauth-pkce`.                                                                                                                                 |
+| `none`         | Provider needs no caller-supplied credential.                                                          | A local provider (Ollama / vLLM at a host-configured endpoint) or one served entirely from platform-managed keys. Provider MUST NOT appear in `byok`. |
 
 **Auth-mode contract (normative when `authModes` is advertised):**
 
 1. Every key in `authModes` MUST also appear in `aiProviders.supported`.
-2. A provider whose mode array includes `apiKey` MUST also appear in `aiProviders.byok` (`apiKey` *is* the BYOK path; the two advertisements MUST agree).
+2. A provider whose mode array includes `apiKey` MUST also appear in `aiProviders.byok` (`apiKey` _is_ the BYOK path; the two advertisements MUST agree).
 3. A provider whose mode array is exactly `["none"]` MUST NOT appear in `aiProviders.byok`. A provider MAY advertise `["apiKey", "none"]` (BYOK permitted with a platform-managed fallback) and MUST then appear in `byok`.
 4. A provider advertising `oauth-pkce` or `oauth-device` SHOULD also advertise `capabilities.oauth` (RFC 0047) with a matching provider `id`; the OAuth flow itself is governed by RFC 0047. The credential is referenced by `ref` (RFC 0046), never passed as key material.
 5. Absent `authModes`, the default contract is unchanged: a provider in `byok` behaves as `apiKey`; a provider in `supported` but not in `byok` behaves as `none`. Clients MUST tolerate the field's absence and apply this default.
-6. `authModes` advertises *capability*, not a per-run *requirement* — per-provider policy enforcement remains `aiProviders.policies`. A client MUST NOT infer a policy mode from an auth mode, and MUST ignore an auth mode it does not recognize rather than reject the discovery document.
+6. `authModes` advertises _capability_, not a per-run _requirement_ — per-provider policy enforcement remains `aiProviders.policies`. A client MUST NOT infer a policy mode from an auth mode, and MUST ignore an auth mode it does not recognize rather than reject the discovery document.
 
 **Provider-name vocabulary (non-normative).** `supported` stays an open `string[]`. To reduce cross-host id drift, hosts SHOULD use the recommended ids in `schemas/capabilities.schema.json` §`aiProviders.supported` when routing to a known provider (`anthropic`, `openai`, `gemini`, `vertex`, `bedrock`, `mistral`, `cohere`, `openrouter`, `litellm`, `together`, `huggingface`, `qwen`, `ollama`, `vllm`). The list is advisory; a host MAY advertise any vendor-prefixed extension id, and clients MUST tolerate unknown ids. Aggregators (`openrouter`, `litellm`) front many upstream models disambiguated by `RunOptions.configurable.ai.model` (host-interpreted); this spec does not normate a model-id grammar.
 
@@ -311,16 +312,16 @@ Additive companion to `aiProviders`. Lets a host advertise which **policy modes*
 
 **The four modes** (host-side enforcement, opaque to the engine):
 
-| Mode | Meaning | Pre-dispatch behavior |
-|---|---|---|
-| `disabled` | Provider MUST NOT be used at all. | Reject before LLM call with `provider_policy_denied` (`reason: "provider_disabled"`). |
-| `optional` | No restriction. Default behavior; equivalent to no policy. | Permit. |
-| `required` | Provider MAY only be used when the caller supplies BYOK credentials. | Two reject paths: pre-resolve, when `RunOptions.configurable.ai.credentialRef` is absent (`reason: "byok_required"`); post-resolve, when the credential reference was supplied but the resolver returned no usable secret (`reason: "byok_required_but_unresolved"`). |
-| `restricted` | Provider use is limited to an allowlist of model patterns. | Reject when the requested model does not match any wildcard in `allowedModels` (`reason: "model_not_allowed"`). The same `reason` covers the case where the resolved `restricted` policy has an empty/missing `allowedModels` — a misconfigured policy fails closed via the same wire shape, with `allowed: []` in the error context. |
+| Mode         | Meaning                                                              | Pre-dispatch behavior                                                                                                                                                                                                                                                                                                                 |
+| ------------ | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `disabled`   | Provider MUST NOT be used at all.                                    | Reject before LLM call with `provider_policy_denied` (`reason: "provider_disabled"`).                                                                                                                                                                                                                                                 |
+| `optional`   | No restriction. Default behavior; equivalent to no policy.           | Permit.                                                                                                                                                                                                                                                                                                                               |
+| `required`   | Provider MAY only be used when the caller supplies BYOK credentials. | Two reject paths: pre-resolve, when `RunOptions.configurable.ai.credentialRef` is absent (`reason: "byok_required"`); post-resolve, when the credential reference was supplied but the resolver returned no usable secret (`reason: "byok_required_but_unresolved"`).                                                                 |
+| `restricted` | Provider use is limited to an allowlist of model patterns.           | Reject when the requested model does not match any wildcard in `allowedModels` (`reason: "model_not_allowed"`). The same `reason` covers the case where the resolved `restricted` policy has an empty/missing `allowedModels` — a misconfigured policy fails closed via the same wire shape, with `allowed: []` in the error context. |
 
 **`allowedModels`** is the per-policy companion field for `restricted` mode — a list of glob patterns matched against `RunOptions.configurable.ai.model`. Hosts MUST treat a `restricted` policy with no `allowedModels` as fail-closed; the rejection surfaces via `reason: "model_not_allowed"` (with an empty `allowed` array in the error context to disambiguate from the "model unmatched" subcase). The shape of stored policy documents (per-workspace / per-project / per-canvas-type) is host-internal and not part of the wire protocol.
 
-**Wire-format error.** When policy enforcement denies a request, the host MUST respond with the `errorCode` advertised above (default `provider_policy_denied`) and SHOULD include a machine-readable `reason` field with one of `["provider_disabled", "byok_required", "byok_required_but_unresolved", "model_not_allowed"]`. The error MUST NOT echo the resolved policy document — only the *decision*. This shape applies whether the denial surfaces as an HTTP error (REST), a JSON-RPC error (MCP), or a stream chunk's `errorCode` (streaming AI responses).
+**Wire-format error.** When policy enforcement denies a request, the host MUST respond with the `errorCode` advertised above (default `provider_policy_denied`) and SHOULD include a machine-readable `reason` field with one of `["provider_disabled", "byok_required", "byok_required_but_unresolved", "model_not_allowed"]`. The error MUST NOT echo the resolved policy document — only the _decision_. This shape applies whether the denial surfaces as an HTTP error (REST), a JSON-RPC error (MCP), or a stream chunk's `errorCode` (streaming AI responses).
 
 **Resolver behavior.**
 
@@ -328,7 +329,7 @@ Additive companion to `aiProviders`. Lets a host advertise which **policy modes*
 - If the resolver itself is unavailable (network outage, storage failure), hosts SHOULD fail-open to `optional` rather than fail-closed — denying ALL requests during resolver outage breaks the runbook unrecoverably.
 - The single exception is a `restricted` policy that resolved successfully but contains an empty/missing `allowedModels` — that's a misconfigured policy, not an outage, and MUST fail-closed (surfacing as `reason: "model_not_allowed"` with `allowed: []`).
 
-**Audit emission.** Hosts SHOULD emit a per-decision audit event (host-internal taxonomy; conventional name `policy.decision`) carrying the resolved policy + which scope-layer supplied each field. The exact payload shape is host-internal and NOT part of the wire protocol — clients learn the *outcome* through the `provider_policy_denied` error, not by subscribing to audit events.
+**Audit emission.** Hosts SHOULD emit a per-decision audit event (host-internal taxonomy; conventional name `policy.decision`) carrying the resolved policy + which scope-layer supplied each field. The exact payload shape is host-internal and NOT part of the wire protocol — clients learn the _outcome_ through the `provider_policy_denied` error, not by subscribing to audit events.
 
 **Backward compat.** Clients MUST tolerate the field's absence. A host that omits `policies` is equivalent to one that advertises `{"modes": ["optional"]}` and never returns `provider_policy_denied`.
 
@@ -526,7 +527,7 @@ Optional sub-block. Hosts that distill many short-lived `MemoryEntry` rows into 
 
 #### `memory.distillation` (RFC 0062, `Active`)
 
-**Why this exists.** A "dream" is a periodic background run that distills recent transactional memory into long-term artifacts under an explicit token budget, then refreshes a retrieval index the next session loads at startup. openwop already had the halves — `memory.compaction` (RFC 0012) defines host-managed distillation + the `memory.compacted` event, and `scheduling` (RFC 0052) defines scheduled run initiation — but nothing bound them, pinned a *token budget*, or defined the *index* that closes the loop back to startup. Distillation composes them; it reuses the `memory.compacted` event (extended with an additive optional `distillation` sub-object) rather than minting a parallel `memory.distilled` event.
+**Why this exists.** A "dream" is a periodic background run that distills recent transactional memory into long-term artifacts under an explicit token budget, then refreshes a retrieval index the next session loads at startup. openwop already had the halves — `memory.compaction` (RFC 0012) defines host-managed distillation + the `memory.compacted` event, and `scheduling` (RFC 0052) defines scheduled run initiation — but nothing bound them, pinned a _token budget_, or defined the _index_ that closes the loop back to startup. Distillation composes them; it reuses the `memory.compacted` event (extended with an additive optional `distillation` sub-object) rather than minting a parallel `memory.distilled` event.
 
 Optional sub-block. Hosts that omit it keep plain on-demand compaction (`memory.compaction`) or no memory; clients MUST NOT infer distillation from entry counts. The run contract — read snapshot → mandatory token budget → RFC 0012 distill with SR-1 carry-forward → byte-stable archive → `MEMORY-INDEX.json` workspace file → extended `memory.compacted` — is normative in [`agent-memory.md`](./agent-memory.md) §"Scheduled distillation".
 
@@ -623,18 +624,18 @@ Profile-string canonicalization follows `auth-profiles.md` §"Profile catalog". 
 
 ## Capability stability tier — `tier` / `experimentalUntil` (RFC 0042)
 
-Every object-valued capability sub-block under the network-handshake `capabilities.*` MAY carry an optional **`tier`** field, plus a paired **`experimentalUntil`** date. This makes a host's *stability claim* for a capability machine-readable on the wire, so a consumer can tell a stable contract apart from an `Active`-RFC preview without fetching `RFCS/*.md`.
+Every object-valued capability sub-block under the network-handshake `capabilities.*` MAY carry an optional **`tier`** field, plus a paired **`experimentalUntil`** date. This makes a host's _stability claim_ for a capability machine-readable on the wire, so a consumer can tell a stable contract apart from an `Active`-RFC preview without fetching `RFCS/*.md`.
 
-| Field | Type | Meaning |
-|---|---|---|
-| `tier` | `"stable" \| "experimental"` | Absent ⇒ `"stable"`. `stable`: the host commits to this capability's wire shape across v1.x minors. `experimental`: the host advertises the surface as a preview; the wire shape MAY shift compatibly without notice until the underlying RFC graduates to `Accepted` and the host re-advertises as `stable`. |
-| `experimentalUntil` | `string` (`YYYY-MM-DD`) | **REQUIRED when `tier: "experimental"`** (schema-enforced via `if`/`then`). ISO-8601 date no more than 12 months past the discovery-response date. |
+| Field               | Type                         | Meaning                                                                                                                                                                                                                                                                                                       |
+| ------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tier`              | `"stable" \| "experimental"` | Absent ⇒ `"stable"`. `stable`: the host commits to this capability's wire shape across v1.x minors. `experimental`: the host advertises the surface as a preview; the wire shape MAY shift compatibly without notice until the underlying RFC graduates to `Accepted` and the host re-advertises as `stable`. |
+| `experimentalUntil` | `string` (`YYYY-MM-DD`)      | **REQUIRED when `tier: "experimental"`** (schema-enforced via `if`/`then`). ISO-8601 date no more than 12 months past the discovery-response date.                                                                                                                                                            |
 
 **Normative rules.**
 
 - A host **MUST omit** `tier` for a capability whose underlying RFC is already `Accepted` (the advertisement is then unconditionally stable). A capability whose RFC is still `Active` **SHOULD** advertise `tier: "experimental"` until the RFC promotes.
 - When `tier: "experimental"`, the host **MUST** advertise `experimentalUntil` ≤ 12 months out. This is enforced at the schema layer: `tier: "experimental"` without `experimentalUntil` **MUST** fail discovery validation.
-- **Sunset rule.** Reaching `experimentalUntil` without the underlying RFC graduating to `Accepted` obliges the host to take one of three publicly-visible actions: **(1) flip to `stable`** (the wire shape held — commit to it); **(2) extend** with a new `experimentalUntil` ≤ 12 months out (a *second* extension REQUIRES an open deprecation RFC justifying the continued flux); or **(3) retract** the capability advertisement (clients then receive `capability_not_provided` per §"Unsupported capability — refusal contract"). A host advertising an `experimentalUntil` in the past is **non-conformant** (`validation_error`, `details.field: "capabilities.<path>.experimentalUntil"`, `details.reason: "experimentalUntil_in_past"`).
+- **Sunset rule.** Reaching `experimentalUntil` without the underlying RFC graduating to `Accepted` obliges the host to take one of three publicly-visible actions: **(1) flip to `stable`** (the wire shape held — commit to it); **(2) extend** with a new `experimentalUntil` ≤ 12 months out (a _second_ extension REQUIRES an open deprecation RFC justifying the continued flux); or **(3) retract** the capability advertisement (clients then receive `capability_not_provided` per §"Unsupported capability — refusal contract"). A host advertising an `experimentalUntil` in the past is **non-conformant** (`validation_error`, `details.field: "capabilities.<path>.experimentalUntil"`, `details.reason: "experimentalUntil_in_past"`).
 - `tier` is **per-capability, not per-host**: a host MAY advertise some capabilities `stable` and others `experimental` in the same discovery payload.
 
 **Conformance routing.** Scenarios gated on a capability consult its `tier` via the `experimentalGate(profileName, advertised, tier, experimentalUntil?)` helper (`conformance/src/lib/behavior-gate.ts`). Under default mode an `experimental` capability **soft-skips** (a dedicated `Skipped (experimental)` tally, distinct from the capability-gated skip bucket); it runs as a hard assertion only when **`OPENWOP_REQUIRE_EXPERIMENTAL=true`** is set (in addition to `OPENWOP_REQUIRE_BEHAVIOR=true`). A host that omits `tier` is evaluated as `stable` — the prior behavior, unchanged. The shape probes live in `conformance/src/scenarios/experimental-tier-shape.test.ts`.
@@ -678,11 +679,11 @@ The refusal MUST use the canonical error envelope (`error-envelope.schema.json`)
 
 ### Capability-gated typeId map (normative)
 
-| typeId | Gating capability | Reference |
-|---|---|---|
-| `core.conversationGate` | `conversationPrimitive: true` | §`conversationPrimitive` above |
-| `core.orchestrator.supervisor` | `orchestrator.supported: true` | §`orchestrator` (RFC 0006) |
-| `core.dispatch` | `dispatch.supported: true` | §`dispatch` (RFC 0007) |
+| typeId                         | Gating capability              | Reference                      |
+| ------------------------------ | ------------------------------ | ------------------------------ |
+| `core.conversationGate`        | `conversationPrimitive: true`  | §`conversationPrimitive` above |
+| `core.orchestrator.supervisor` | `orchestrator.supported: true` | §`orchestrator` (RFC 0006)     |
+| `core.dispatch`                | `dispatch.supported: true`     | §`dispatch` (RFC 0007)         |
 
 Future RFCs adding capability-gated reserved typeIds MUST extend this table and follow the same refusal contract.
 
@@ -698,12 +699,12 @@ The `Capabilities.limits` fields (`clarificationRounds`, `schemaRounds`, `envelo
 
 ### `cap.breached` payload
 
-| Field | Type | Notes |
-|---|---|---|
-| `kind` | string | One of `clarification`, `schema`, `envelopes`, `node-executions`; `wasm-memory` / `wasm-fuel` / `wasm-execution-time` (RFC 0008 §K); `run-duration` / `loop-iterations` (RFC 0058). |
-| `limit` | integer | The ceiling that was tripped (server-resolved value — see §Resolution below). For `run-duration` this is the resolved timeout in milliseconds; for `loop-iterations` the resolved iteration ceiling. |
-| `observed` | integer | The observed value at the moment of trip. Always strictly greater than `limit`. For `run-duration` the elapsed milliseconds; for `loop-iterations` the iteration count. MUST be recorded in the event and reused on replay / `:fork` — never recomputed from a live clock or counter (`replay.md`). |
-| `nodeId` | string (optional) | Set for node-scoped limits (`clarification`, `schema`). Absent for run-scoped limits (`envelopes`, `node-executions`, `run-duration`, `loop-iterations`). |
+| Field      | Type              | Notes                                                                                                                                                                                                                                                                                               |
+| ---------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`     | string            | One of `clarification`, `schema`, `envelopes`, `node-executions`; `wasm-memory` / `wasm-fuel` / `wasm-execution-time` (RFC 0008 §K); `run-duration` / `loop-iterations` (RFC 0058).                                                                                                                 |
+| `limit`    | integer           | The ceiling that was tripped (server-resolved value — see §Resolution below). For `run-duration` this is the resolved timeout in milliseconds; for `loop-iterations` the resolved iteration ceiling.                                                                                                |
+| `observed` | integer           | The observed value at the moment of trip. Always strictly greater than `limit`. For `run-duration` the elapsed milliseconds; for `loop-iterations` the iteration count. MUST be recorded in the event and reused on replay / `:fork` — never recomputed from a live clock or counter (`replay.md`). |
+| `nodeId`   | string (optional) | Set for node-scoped limits (`clarification`, `schema`). Absent for run-scoped limits (`envelopes`, `node-executions`, `run-duration`, `loop-iterations`).                                                                                                                                           |
 
 ### Resolution: `recursionLimit` + `maxNodeExecutions`
 
@@ -718,7 +719,7 @@ For the `node-executions` kind specifically (which is the runtime invariant for 
    - Sets `RunSnapshot.error.code = 'recursion_limit_exceeded'` and `RunSnapshot.error.message` to a human-readable description.
    - Stops scheduling further nodes.
 
-The other three kinds follow analogous patterns (per `clarification` / `schema` / `envelopes` semantics in §In-package shape above), differing only in *what* gets counted and *which counter* resets when.
+The other three kinds follow analogous patterns (per `clarification` / `schema` / `envelopes` semantics in §In-package shape above), differing only in _what_ gets counted and _which counter_ resets when.
 
 ### Resolution: `run-duration` + `loop-iterations` (RFC 0058)
 
@@ -762,7 +763,7 @@ openwop follows the same pattern: `cap.breached` with a `kind` discriminator cov
 
 A typical client startup:
 
-```
+```text
 1. Client → GET /.well-known/openwop
 2. Server → 200 OK, Capabilities JSON
 3. Client checks:
@@ -789,11 +790,11 @@ The required/optional split protects implementers from over-pinning: a host can 
 
 ## Open spec gaps
 
-| # | Gap | Owner |
-|---|---|---|
-| C2 | ✅ Closed by `capabilities-change-detection.md`: `Capabilities-Etag` semantics for mid-session capability change detection. | v1.x annex |
-| C3 | ✅ Closed by `capabilities-change-detection.md`: non-HTTP discovery handoff guidance for MCP/A2A composition. | v1.x annex |
-| C5 | ✅ Closed by `capabilities-change-detection.md`: scoped capability view rules without leaking private tenant features. | v1.x annex |
+| #   | Gap                                                                                                                         | Owner      |
+| --- | --------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| C2  | ✅ Closed by `capabilities-change-detection.md`: `Capabilities-Etag` semantics for mid-session capability change detection. | v1.x annex |
+| C3  | ✅ Closed by `capabilities-change-detection.md`: non-HTTP discovery handoff guidance for MCP/A2A composition.               | v1.x annex |
+| C5  | ✅ Closed by `capabilities-change-detection.md`: scoped capability view rules without leaking private tenant features.      | v1.x annex |
 
 ## References
 

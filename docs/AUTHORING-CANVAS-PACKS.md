@@ -53,13 +53,13 @@ For larger canvas-bound packs (e.g., `vendor.myndhyve.app-builder` at ~1066 LOC 
 
 ## 1. Pack identity rules
 
-| Field | Rule | Why |
-|---|---|---|
-| `name` | Reverse-DNS: `(core\|vendor\|community\|private).<org>.<rest>` | spec/v1/node-packs.md §Naming |
-| `name` (scope) | `core.*` reserved for openwop-project. `vendor.<org>.*` requires registered namespace claim. `community.<author>.*` is open-publish. `private.*` MUST NOT appear on `packs.openwop.dev` (host-internal only) | registry-operations.md §Step 1 |
-| `version` | SemVer 2.0.0 | spec/v1/node-packs.md §Versioning |
-| `signing.keyId` | MUST be registered in `.well-known/openwop-registry.json` `signingKeys[]` AND authorized for the pack's namespace via `permittedNamespaces` | enforced by `registry/scripts/verify-signatures.mjs` |
-| `runtime.language` | `javascript` (most packs), `wasm` (RFC 0008 packs), `remote` (agent-only) | enforced by `schemas/registry-version-manifest.schema.json` |
+| Field              | Rule                                                                                                                                                                                                         | Why                                                         |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| `name`             | Reverse-DNS: `(core\|vendor\|community\|private).<org>.<rest>`                                                                                                                                               | spec/v1/node-packs.md §Naming                               |
+| `name` (scope)     | `core.*` reserved for openwop-project. `vendor.<org>.*` requires registered namespace claim. `community.<author>.*` is open-publish. `private.*` MUST NOT appear on `packs.openwop.dev` (host-internal only) | registry-operations.md §Step 1                              |
+| `version`          | SemVer 2.0.0                                                                                                                                                                                                 | spec/v1/node-packs.md §Versioning                           |
+| `signing.keyId`    | MUST be registered in `.well-known/openwop-registry.json` `signingKeys[]` AND authorized for the pack's namespace via `permittedNamespaces`                                                                  | enforced by `registry/scripts/verify-signatures.mjs`        |
+| `runtime.language` | `javascript` (most packs), `wasm` (RFC 0008 packs), `remote` (agent-only)                                                                                                                                    | enforced by `schemas/registry-version-manifest.schema.json` |
 
 ---
 
@@ -132,15 +132,15 @@ export const myNode = defineNode({
 
 Canvas-bound packs DON'T directly access myndhyve-specific state. They go through `host.*` capability interfaces declared in `spec/v1/host-capabilities.md`:
 
-| Capability | Contract | Used by |
-|---|---|---|
-| `host.aiEnvelope` | `ctx.aiEnvelope.generate({...})` → typed envelope | AI-generation nodes |
+| Capability           | Contract                                          | Used by                          |
+| -------------------- | ------------------------------------------------- | -------------------------------- |
+| `host.aiEnvelope`    | `ctx.aiEnvelope.generate({...})` → typed envelope | AI-generation nodes              |
 | `host.promptLibrary` | `ctx.promptLibrary.get(promptId)` → system prompt | nodes that resolve prompts by id |
-| `host.canvas` | `ctx.host.canvas.{read,write,create,crossInvoke}` | canvas-state read/write |
-| `host.kanban` | (TBD) kanban operations | stack-item manipulation |
-| `host.brand` | brand asset access | brand workflow nodes |
-| `host.entities` | entity CRUD | entity management |
-| `host.webResearch` | web research queries | research/market-intel nodes |
+| `host.canvas`        | `ctx.host.canvas.{read,write,create,crossInvoke}` | canvas-state read/write          |
+| `host.kanban`        | (TBD) kanban operations                           | stack-item manipulation          |
+| `host.brand`         | brand asset access                                | brand workflow nodes             |
+| `host.entities`      | entity CRUD                                       | entity management                |
+| `host.webResearch`   | web research queries                              | research/market-intel nodes      |
 
 **Declaration:** every host capability your pack consumes MUST be declared in `pack.json` `peerDependencies`:
 
@@ -163,12 +163,12 @@ This is where the real engineering effort lives. The Phase A inventory (`CANVAS-
 
 The executor imports a myndhyve service that has a direct openwop host-capability equivalent.
 
-| Myndhyve import | OpenWOP equivalent |
-|---|---|
-| `import { aiService } from '@/core/ai/services/AIOrchestrationService'` | `ctx.callAI({...})` or `ctx.aiEnvelope.generate({...})` |
-| `import { createScopedLogger } from '@/core/utils/logger'` | `ctx.log(level, message, data)` |
-| `import { useCampaignStudioStore } from '@/core/canvas-types/campaign-studio/stores/...'` | `ctx.host.canvas.read({ scope: 'currentPage' })` |
-| `import { getApprovalRequestService } from '@/core/workflow/services/approvalRequest'` | engine-provided via `yield { type: 'suspend', ... }` |
+| Myndhyve import                                                                           | OpenWOP equivalent                                      |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `import { aiService } from '@/core/ai/services/AIOrchestrationService'`                   | `ctx.callAI({...})` or `ctx.aiEnvelope.generate({...})` |
+| `import { createScopedLogger } from '@/core/utils/logger'`                                | `ctx.log(level, message, data)`                         |
+| `import { useCampaignStudioStore } from '@/core/canvas-types/campaign-studio/stores/...'` | `ctx.host.canvas.read({ scope: 'currentPage' })`        |
+| `import { getApprovalRequestService } from '@/core/workflow/services/approvalRequest'`    | engine-provided via `yield { type: 'suspend', ... }`    |
 
 Refactor steps:
 
@@ -235,18 +235,18 @@ Project the TypeScript types to JSON Schema:
 
 ## 5. Anti-patterns (don't ship these)
 
-| Anti-pattern | Why it's wrong | Fix |
-|---|---|---|
-| Importing from `@/core/...` in the executor | Couples your pack to a specific host implementation; breaks on any other openwop host | Use `ctx.*` accessors |
-| Reading workflow state via `globalThis` | Side-effects that the engine can't replay | Use `ctx.host.canvas.read(...)` |
-| Catching errors silently | Hidden failure modes | Yield typed `error` events |
-| Throwing instead of yielding | Engine envelope is opaque | Always yield `error` events |
-| `console.log` | Doesn't route through observability | `ctx.log()` |
-| Setting `peerDependencies` you don't use | Hosts will refuse to install needlessly | Only declare what you call |
-| Schema with `additionalProperties: true` everywhere | Breaks input validation | Set `false` unless you specifically need open-shape |
-| Missing `description` on schema fields | Workflow authors can't tell what your inputs mean | Always describe each field |
-| Storing state across `execute()` invocations | Non-deterministic across replays + concurrent dispatches | Pure-functional executors |
-| Hardcoding workspace/user ids | Multi-tenant escape | Use `ctx.principal` / `ctx.workspaceId` |
+| Anti-pattern                                        | Why it's wrong                                                                        | Fix                                                 |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Importing from `@/core/...` in the executor         | Couples your pack to a specific host implementation; breaks on any other openwop host | Use `ctx.*` accessors                               |
+| Reading workflow state via `globalThis`             | Side-effects that the engine can't replay                                             | Use `ctx.host.canvas.read(...)`                     |
+| Catching errors silently                            | Hidden failure modes                                                                  | Yield typed `error` events                          |
+| Throwing instead of yielding                        | Engine envelope is opaque                                                             | Always yield `error` events                         |
+| `console.log`                                       | Doesn't route through observability                                                   | `ctx.log()`                                         |
+| Setting `peerDependencies` you don't use            | Hosts will refuse to install needlessly                                               | Only declare what you call                          |
+| Schema with `additionalProperties: true` everywhere | Breaks input validation                                                               | Set `false` unless you specifically need open-shape |
+| Missing `description` on schema fields              | Workflow authors can't tell what your inputs mean                                     | Always describe each field                          |
+| Storing state across `execute()` invocations        | Non-deterministic across replays + concurrent dispatches                              | Pure-functional executors                           |
+| Hardcoding workspace/user ids                       | Multi-tenant escape                                                                   | Use `ctx.principal` / `ctx.workspaceId`             |
 
 ---
 

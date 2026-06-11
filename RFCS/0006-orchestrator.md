@@ -1,17 +1,17 @@
 # RFC 0006: Run Orchestrator
 
-| Field | Value |
-|---|---|
-| **RFC** | 0006 |
-| **Title** | Run Orchestrator |
-| **Status** | `Accepted` |
-| **Author(s)** | David Tufts (@davidscotttufts) |
-| **Created** | 2026-05-01 |
-| **Updated** | 2026-05-11 (Active → Accepted: integration-seams audit closed via `docs/MULTI-AGENT-INTEGRATION-GAPS.md` archive; conformance scenarios pass against SQLite reference host) |
-| **Affects** | `schemas/orchestrator-decision.schema.json`, `schemas/run-orchestrator-decided-event.schema.json`, `schemas/run-snapshot.schema.json`, `schemas/run-event.schema.json`, `spec/v1/replay.md`, `spec/v1/capabilities.md` |
-| **Compatibility** | `additive` |
-| **Supersedes** | — |
-| **Superseded by** | — |
+| Field             | Value                                                                                                                                                                                                                  |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RFC**           | 0006                                                                                                                                                                                                                   |
+| **Title**         | Run Orchestrator                                                                                                                                                                                                       |
+| **Status**        | `Accepted`                                                                                                                                                                                                             |
+| **Author(s)**     | David Tufts (@davidscotttufts)                                                                                                                                                                                         |
+| **Created**       | 2026-05-01                                                                                                                                                                                                             |
+| **Updated**       | 2026-05-11 (Active → Accepted: integration-seams audit closed via `docs/MULTI-AGENT-INTEGRATION-GAPS.md` archive; conformance scenarios pass against SQLite reference host)                                            |
+| **Affects**       | `schemas/orchestrator-decision.schema.json`, `schemas/run-orchestrator-decided-event.schema.json`, `schemas/run-snapshot.schema.json`, `schemas/run-event.schema.json`, `spec/v1/replay.md`, `spec/v1/capabilities.md` |
+| **Compatibility** | `additive`                                                                                                                                                                                                             |
+| **Supersedes**    | —                                                                                                                                                                                                                      |
+| **Superseded by** | —                                                                                                                                                                                                                      |
 
 ## Summary
 
@@ -19,7 +19,7 @@ Introduce `runOrchestrator` — an optional supervisor agent that owns workflow 
 
 ## Motivation
 
-The v1 baseline executes a static DAG: workflow definitions list nodes and edges, and the engine traverses them. This is the right model for deterministic pipelines (data ETL, build pipelines, fixed approval flows). It does *not* fit orchestrator-driven agent workflows where:
+The v1 baseline executes a static DAG: workflow definitions list nodes and edges, and the engine traverses them. This is the right model for deterministic pipelines (data ETL, build pipelines, fixed approval flows). It does _not_ fit orchestrator-driven agent workflows where:
 
 - The next worker depends on what the supervisor decides after reasoning.
 - Termination is a goal-judgement, not a graph-edge.
@@ -113,7 +113,7 @@ The event envelope's top-level `nodeId` carries the supervisor node ID; the payl
 
 Named for cross-host conformance:
 
-**CO-1: Decision-then-effect.** `runOrchestrator.decided` MUST be persisted *before* any event reflecting its effect:
+**CO-1: Decision-then-effect.** `runOrchestrator.decided` MUST be persisted _before_ any event reflecting its effect:
 
 - For `next-worker`: before the `node.started` of the dispatched worker.
 - For `ask-user`: before the `conversation.opened` or `clarification.requested`.
@@ -149,15 +149,15 @@ Hosts that do not advertise `capabilities.orchestrator.supported: true` MUST rej
 
 ### §H Termination state matrix
 
-| Outcome | Run state | Trigger |
-|---|---|---|
-| Clean goal-reached | `run.completed` | `terminate` decision |
-| Iteration cap | `run.failed` (`cap.breached`) | CO-3 |
-| Uncaught error | `run.failed` | executor exception |
-| Operator cancel | `run.cancelled` | `POST /v1/runs/{runId}:cancel` |
-| Conversation timeout | `run.failed` (or `run.completed` with `null` outcome — host policy) | RFC 0005 §I |
+| Outcome              | Run state                                                           | Trigger                        |
+| -------------------- | ------------------------------------------------------------------- | ------------------------------ |
+| Clean goal-reached   | `run.completed`                                                     | `terminate` decision           |
+| Iteration cap        | `run.failed` (`cap.breached`)                                       | CO-3                           |
+| Uncaught error       | `run.failed`                                                        | executor exception             |
+| Operator cancel      | `run.cancelled`                                                     | `POST /v1/runs/{runId}:cancel` |
+| Conversation timeout | `run.failed` (or `run.completed` with `null` outcome — host policy) | RFC 0005 §I                    |
 
-`terminate` is the only orchestrator-emitted *clean* outcome.
+`terminate` is the only orchestrator-emitted _clean_ outcome.
 
 ## Compatibility
 

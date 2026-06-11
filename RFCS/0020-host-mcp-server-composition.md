@@ -1,25 +1,25 @@
 # RFC 0020: host-side MCP server composition
 
-| Field | Value |
-|---|---|
-| **RFC** | 0020 |
-| **Title** | Host-side MCP server composition |
-| **Status** | `Accepted` |
-| **Author(s)** | OpenWOP Working Group |
-| **Created** | 2026-05-17 |
-| **Updated** | 2026-05-18 (Active → Accepted: all 6 acceptance-criteria items satisfied. `spec/v1/mcp-integration.md §"OpenWOP host as MCP server"` landed at commit c5831fe (the §1-§6 buildout — mount transports, state-projection table, sampling/elicitation bridges, untrusted-boundary discipline, capability advertisement, 6 scenario references); `capabilities.mcp.serverMount` block in schema; SECURITY invariant `mcp-server-untrusted-args`; 6 scenarios (`mcp-server-tool-roundtrip`, `mcp-server-resource-roundtrip`, `mcp-server-prompt-roundtrip`, `mcp-server-sampling-bridge`, `mcp-server-elicitation-bridge`, `mcp-server-untrusted-args`) all behavioral (13/13 assertions pass); reference impl at `apps/workflow-engine/backend/typescript/src/routes/mcp.ts` (JSON-RPC over streamable-HTTP, env-gated `OPENWOP_MCP_SERVER_ENABLED=true`); CHANGELOG entry under `[Unreleased]`.) |
-| **Affects** | `spec/v1/mcp-integration.md` · `schemas/capabilities.schema.json` · new conformance scenarios |
-| **Compatibility** | `additive` |
+| Field             | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RFC**           | 0020                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| **Title**         | Host-side MCP server composition                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **Status**        | `Accepted`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Author(s)**     | OpenWOP Working Group                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **Created**       | 2026-05-17                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Updated**       | 2026-05-18 (Active → Accepted: all 6 acceptance-criteria items satisfied. `spec/v1/mcp-integration.md §"OpenWOP host as MCP server"` landed at commit c5831fe (the §1-§6 buildout — mount transports, state-projection table, sampling/elicitation bridges, untrusted-boundary discipline, capability advertisement, 6 scenario references); `capabilities.mcp.serverMount` block in schema; SECURITY invariant `mcp-server-untrusted-args`; 6 scenarios (`mcp-server-tool-roundtrip`, `mcp-server-resource-roundtrip`, `mcp-server-prompt-roundtrip`, `mcp-server-sampling-bridge`, `mcp-server-elicitation-bridge`, `mcp-server-untrusted-args`) all behavioral (13/13 assertions pass); reference impl at `apps/workflow-engine/backend/typescript/src/routes/mcp.ts` (JSON-RPC over streamable-HTTP, env-gated `OPENWOP_MCP_SERVER_ENABLED=true`); CHANGELOG entry under `[Unreleased]`.) |
+| **Affects**       | `spec/v1/mcp-integration.md` · `schemas/capabilities.schema.json` · new conformance scenarios                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **Compatibility** | `additive`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 ## Summary
 
-Adds a normative §"OpenWOP host as MCP server" section to `spec/v1/mcp-integration.md`, paralleling the existing §"OpenWOP host as A2A agent" treatment in `a2a-integration.md`. Lets an openwop host *mount* its workflows as MCP tools/resources/prompts, with bidirectional `sampling/createMessage` and `elicitation/create` callbacks routed into the existing AI-provider and interrupt mechanisms. Pairs with the 8 `core.openwop.mcp.{server-trigger,expose-*,handle-*,provide-roots}` nodes shipped in `core.openwop.mcp@1.1.0`.
+Adds a normative §"OpenWOP host as MCP server" section to `spec/v1/mcp-integration.md`, paralleling the existing §"OpenWOP host as A2A agent" treatment in `a2a-integration.md`. Lets an openwop host _mount_ its workflows as MCP tools/resources/prompts, with bidirectional `sampling/createMessage` and `elicitation/create` callbacks routed into the existing AI-provider and interrupt mechanisms. Pairs with the 8 `core.openwop.mcp.{server-trigger,expose-*,handle-*,provide-roots}` nodes shipped in `core.openwop.mcp@1.1.0`.
 
 ## Motivation
 
-`spec/v1/mcp-integration.md` currently covers only the *client* direction — an openwop workflow calling out to a remote MCP server via `ctx.mcp.*`. The *server* direction — an MCP-aware LLM client (Claude Desktop, Cursor, ChatGPT) discovering and invoking openwop workflows as tools — is unspecified. Track 6 of `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` was closed on the client half only; this RFC closes the server half.
+`spec/v1/mcp-integration.md` currently covers only the _client_ direction — an openwop workflow calling out to a remote MCP server via `ctx.mcp.*`. The _server_ direction — an MCP-aware LLM client (Claude Desktop, Cursor, ChatGPT) discovering and invoking openwop workflows as tools — is unspecified. Track 6 of `docs/PROTOCOL-GAP-CLOSURE-PLAN.md` was closed on the client half only; this RFC closes the server half.
 
-Demand signal: every other workflow editor in the 2026 catalog (Make, n8n, Zapier MCP previews) ships both directions. Without this, openwop workflows are *consumers* of the MCP ecosystem but cannot be *contributors* to it.
+Demand signal: every other workflow editor in the 2026 catalog (Make, n8n, Zapier MCP previews) ships both directions. Without this, openwop workflows are _consumers_ of the MCP ecosystem but cannot be _contributors_ to it.
 
 ## Proposal
 
@@ -62,23 +62,24 @@ A normative section mirroring `a2a-integration.md` §"Concrete example: OpenWOP 
 
 ### §C State projection table
 
-| OpenWOP run state | MCP server response |
-|---|---|
-| `pending` / `running` | (request blocks; SSE progress events emit `notifications/progress` if subscribed) |
-| `completed` | `CallToolResult { content: [...], isError: false }` |
-| `failed` | `CallToolResult { content: [error message], isError: true }` |
+| OpenWOP run state                | MCP server response                                                                   |
+| -------------------------------- | ------------------------------------------------------------------------------------- |
+| `pending` / `running`            | (request blocks; SSE progress events emit `notifications/progress` if subscribed)     |
+| `completed`                      | `CallToolResult { content: [...], isError: false }`                                   |
+| `failed`                         | `CallToolResult { content: [error message], isError: true }`                          |
 | `awaiting-input` (clarification) | (out-of-band: bridged via `elicitation/create` callback, NOT a `tools/call` response) |
-| `awaiting-input` (approval) | Same — bridged via `elicitation/create` with accept/decline/cancel mapping |
-| `canceled` | `CallToolResult { content: [...], isError: true }` with `tool_canceled` |
+| `awaiting-input` (approval)      | Same — bridged via `elicitation/create` with accept/decline/cancel mapping            |
+| `canceled`                       | `CallToolResult { content: [...], isError: true }` with `tool_canceled`               |
 
 ### §D Trust boundary
 
 - Inbound MCP requests cross an `untrusted` boundary regardless of transport. `tools/call.arguments` MUST validate against the declared `inputSchema`; resource URIs MUST be normalized + sandboxed; prompt arguments MUST NOT be template-evaluated.
 - The existing `prompt-injection-mcp-marker` invariant (`SECURITY/threat-model-prompt-injection.md`) applies. Outputs from an MCP tool feeding into an LLM downstream remain `trustBoundary: 'untrusted'`.
 
-### §E What openwop does NOT specify
+### §E What OpenWOP does NOT specify
 
 Same posture as `mcp-integration.md` §"What openwop does NOT specify about MCP":
+
 - Wire encoding details — those are the MCP spec.
 - Specific transports beyond advertising which are supported.
 - Tool authoring beyond the openwop pack contribution surface.
@@ -90,6 +91,7 @@ Same posture as `mcp-integration.md` §"What openwop does NOT specify about MCP"
 ## Conformance
 
 New scenarios (capability-gated on `capabilities.mcp.serverMount.supported`):
+
 - `mcp-server-tool-roundtrip.test.ts` — `tools/list` then `tools/call` against a workflow exposed via `core.openwop.mcp.expose-tool`.
 - `mcp-server-resource-roundtrip.test.ts` — `resources/list` then `resources/read`.
 - `mcp-server-prompt-roundtrip.test.ts` — `prompts/list` then `prompts/get`.
@@ -126,7 +128,7 @@ New scenarios (capability-gated on `capabilities.mcp.serverMount.supported`):
 
 - `spec/v1/mcp-integration.md` (existing client-side coverage; this RFC adds the server-side section).
 - `spec/v1/a2a-integration.md` (template for server-side composition prose).
-- `core.openwop.mcp@1.1.0` pack (8 mcp.server-* nodes that this RFC normates).
+- `core.openwop.mcp@1.1.0` pack (8 mcp.server-\* nodes that this RFC normates).
 - modelcontextprotocol.io 2025-06-18 spec (canonical wire reference).
 - `SECURITY/threat-model-prompt-injection.md` (untrusted-boundary invariants).
 - `core.openwop.ai@1.1.2` + `core.openwop.mcp@1.1.1` packs (2026-05-17) — honor §D downstream by wrapping user-role content in `<UNTRUSTED>...</UNTRUSTED>` markers when `ctx.trustBoundary === 'untrusted'`. See `CHANGELOG.md [Unreleased]` §"UNTRUSTED-marker discipline" and `apps/workflow-engine/backend/typescript/test/untrusted-marker.test.ts` (14 in-tree tests covering both packs' delegate behavior).

@@ -1,4 +1,4 @@
-# openwop Spec v1 — Host Extensions
+# OpenWOP Spec v1 — Host Extensions
 
 > **Status: Stable · v1.1 (2026-05-05).** Distinguishes the protocol's normative core from host-specific extensions. This document is the canonical reference cited from any spec doc that mentions a vendor-prefixed namespace (e.g., `acme.*`). Graduated DRAFT → FINAL via RFC 0006. See `auth.md` for the status legend. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
@@ -22,23 +22,23 @@ Any field, event type, span name, or capability that doesn't match one of the ca
 
 ### Canonical prefixes (protocol-owned)
 
-| Prefix | Owner | Examples |
-|---|---|---|
-| `openwop.*` | Protocol | `openwop.run_id`, `openwop.node.<typeId>`, `openwop.event.append` |
-| `core.*` | Protocol | `core.noop`, `core.delay`, `core.ai.callPrompt` (in node-pack scope) |
-| `community.*` | Public registry | `community.john.image-tools` (per `node-packs.md` §Naming) |
-| `vendor.<org>.*` | Public registry, org-authorized | `vendor.acme.search-tools` |
-| `private.<host>.*` | Host-internal pack registry | `private.openwop.canvas-tools` (per `openwop/openwop@0f2f7ff`) |
-| `local.*` | In-repo / dev-time / unpublished packs | `local.dev-test` |
+| Prefix             | Owner                                  | Examples                                                             |
+| ------------------ | -------------------------------------- | -------------------------------------------------------------------- |
+| `openwop.*`        | Protocol                               | `openwop.run_id`, `openwop.node.<typeId>`, `openwop.event.append`    |
+| `core.*`           | Protocol                               | `core.noop`, `core.delay`, `core.ai.callPrompt` (in node-pack scope) |
+| `community.*`      | Public registry                        | `community.john.image-tools` (per `node-packs.md` §Naming)           |
+| `vendor.<org>.*`   | Public registry, org-authorized        | `vendor.acme.search-tools`                                           |
+| `private.<host>.*` | Host-internal pack registry            | `private.openwop.canvas-tools` (per `openwop/openwop@0f2f7ff`)       |
+| `local.*`          | In-repo / dev-time / unpublished packs | `local.dev-test`                                                     |
 
 ### Vendor-prefixed namespaces (host extensions)
 
 A host MAY use any vendor-prefixed namespace for fields not covered above. Recommended convention: use the vendor's reverse-DNS or short identifier as the prefix.
 
-| Prefix | Used by | Notes |
-|---|---|---|
-| `acme.*` | A hypothetical vendor "Acme" | Workspace, project, canvas, persona, brand, etc. — example of how a host carves out a vendor namespace. (`openwop.*` is protocol-owned and is NOT available as a vendor prefix — see §"Canonical prefixes" above.) |
-| `<your-vendor>.*` | Your host | Anything openwop doesn't define |
+| Prefix            | Used by                      | Notes                                                                                                                                                                                                              |
+| ----------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `acme.*`          | A hypothetical vendor "Acme" | Workspace, project, canvas, persona, brand, etc. — example of how a host carves out a vendor namespace. (`openwop.*` is protocol-owned and is NOT available as a vendor prefix — see §"Canonical prefixes" above.) |
+| `<your-vendor>.*` | Your host                    | Anything openwop doesn't define                                                                                                                                                                                    |
 
 A client receiving an unknown vendor-prefixed field MUST treat it as opaque. Hosts MUST NOT depend on clients understanding their extension namespace.
 
@@ -48,20 +48,20 @@ A client receiving an unknown vendor-prefixed field MUST treat it as opaque. Hos
 
 openwop normatively owns:
 
-| Concept | Spec doc |
-|---|---|
-| Workflow definitions | `rest-endpoints.md`, `schemas/workflow-definition.schema.json` |
-| Run lifecycle (create / get / cancel / fork / interrupt) | `rest-endpoints.md` |
-| Run events (closed event-name vocabulary) | `observability.md` §"Canonical run lifecycle event names" |
-| Stream modes (SSE + polling) | `stream-modes.md` |
-| Interrupts (HITL approval + clarification) | `interrupt.md` |
-| Idempotency (Layer 1 + Layer 2) | `idempotency.md` |
-| Version negotiation | `version-negotiation.md` |
-| Capability discovery | `capabilities.md` |
-| Node-pack manifest shape | `node-packs.md` |
-| Compatibility profiles (derived from capabilities) | `profiles.md` |
-| Scale profiles | `scale-profiles.md` |
-| Conformance contracts | the `@openwop/openwop-conformance` suite |
+| Concept                                                  | Spec doc                                                       |
+| -------------------------------------------------------- | -------------------------------------------------------------- |
+| Workflow definitions                                     | `rest-endpoints.md`, `schemas/workflow-definition.schema.json` |
+| Run lifecycle (create / get / cancel / fork / interrupt) | `rest-endpoints.md`                                            |
+| Run events (closed event-name vocabulary)                | `observability.md` §"Canonical run lifecycle event names"      |
+| Stream modes (SSE + polling)                             | `stream-modes.md`                                              |
+| Interrupts (HITL approval + clarification)               | `interrupt.md`                                                 |
+| Idempotency (Layer 1 + Layer 2)                          | `idempotency.md`                                               |
+| Version negotiation                                      | `version-negotiation.md`                                       |
+| Capability discovery                                     | `capabilities.md`                                              |
+| Node-pack manifest shape                                 | `node-packs.md`                                                |
+| Compatibility profiles (derived from capabilities)       | `profiles.md`                                                  |
+| Scale profiles                                           | `scale-profiles.md`                                            |
+| Conformance contracts                                    | the `@openwop/openwop-conformance` suite                       |
 
 Anything else is a host concern.
 

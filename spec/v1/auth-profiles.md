@@ -1,4 +1,4 @@
-# openwop Spec v1 — Auth Profiles
+# OpenWOP Spec v1 — Auth Profiles
 
 > **Status: Stable · v1.1 (2026-05-10; conformance-reference hygiene 2026-06-02).** Optional production-auth annex for hosts that need stronger authentication than the baseline API-key contract in `auth.md`. This document is additive: it defines profile claims and conformance expectations without changing any required v1 endpoint, header, or error shape. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
@@ -61,7 +61,7 @@ The host requires mutual TLS in addition to bearer authentication.
 
 The host accepts OpenID Connect (OIDC) user-bearer tokens as an alternative to API keys for endpoints scoped to a human caller. Used in deployments that front the OpenWOP host with an SSO IdP (Okta, Auth0, Entra ID, Google Workspace, etc.) and want end-user attribution on `runs:create` / `approvals:respond` calls.
 
-This is distinct from `openwop-auth-oauth2-client-credentials` (which authenticates a *service*, not a user): the OIDC flow surfaces a verified human identity to the host, suitable for audit and HITL attribution.
+This is distinct from `openwop-auth-oauth2-client-credentials` (which authenticates a _service_, not a user): the OIDC flow surfaces a verified human identity to the host, suitable for audit and HITL attribution.
 
 **Requirements:**
 
@@ -286,4 +286,3 @@ The profile is **strongly RECOMMENDED** as a precondition for any host commissio
 - Verify all auth failures use the canonical error envelope and never echo credentials.
 - Run the conformance suite with auth-profile scenarios enabled for each claimed profile.
 - Include the suite version and profile pass result in `INTEROP-MATRIX.md`.
-

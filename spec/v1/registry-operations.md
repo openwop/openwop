@@ -1,4 +1,4 @@
-# openwop Spec v1 — Node-Pack Registry Operations
+# OpenWOP Spec v1 — Node-Pack Registry Operations
 
 > **Status: Stable · v1.1 (2026-04-29).** Comprehensive coverage of the operational lifecycle for a hosted node-pack registry: submission, validation, deprecation, yank, and signing-key rotation flows. Pairs with the registry HTTP API in `node-packs.md` §"Registry HTTP API" — that doc covers wire shapes; this doc covers the lifecycle operations + their security model. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
@@ -12,7 +12,7 @@ This doc is the operator's normative reference. An OpenWOP-compliant registry im
 
 The planned hosted reference registry at `packs.openwop.dev` implements these flows when it launches; third-party registry implementations (private mirrors, enterprise self-host) MUST do the same to remain compatible.
 
-> **Policy layer.** This doc is the *operational* reference (the how). The *policy* above it — submission gates, trust tiers, name reservation, IPR — is **[RFC 0043 — Registry and extension-policy](../../RFCS/0043-registry-and-extension-policy.md)** §B; the one-stop index is [`docs/governance/registry-policy.md`](../../docs/governance/registry-policy.md).
+> **Policy layer.** This doc is the _operational_ reference (the how). The _policy_ above it — submission gates, trust tiers, name reservation, IPR — is **[RFC 0043 — Registry and extension-policy](../../RFCS/0043-registry-and-extension-policy.md)** §B; the one-stop index is [`docs/governance/registry-policy.md`](../../docs/governance/registry-policy.md).
 
 ---
 
@@ -35,7 +35,7 @@ The full author-side workflow for publishing a new pack version.
 
 ### Step 1 — package the tarball
 
-```
+```text
 mypack/
   pack.json           # canonical manifest
   schemas/
@@ -136,7 +136,7 @@ What the registry checks before accepting a submission. An OpenWOP-compliant reg
 
 ## Type-ID indexing and cross-namespace exports
 
-A pack's contributed `nodes[].typeId` (and the `agents[]` it ships) **need not** be prefixed by the pack `name`. The manifest schema only *recommends* the prefix (`node-pack-manifest.schema.json` `nodes[].typeId.description`: "The pack's `name` prefix is recommended"); the `typeId` pattern itself permits any reverse-DNS namespace. A pack named `vendor.myndhyve.web-research` may legitimately publish a node typed `ai.research.web`, and an agent's `toolAllowlist` (RFC 0072) may name that typeId with no textual relationship to the providing pack.
+A pack's contributed `nodes[].typeId` (and the `agents[]` it ships) **need not** be prefixed by the pack `name`. The manifest schema only _recommends_ the prefix (`node-pack-manifest.schema.json` `nodes[].typeId.description`: "The pack's `name` prefix is recommended"); the `typeId` pattern itself permits any reverse-DNS namespace. A pack named `vendor.myndhyve.web-research` may legitimately publish a node typed `ai.research.web`, and an agent's `toolAllowlist` (RFC 0072) may name that typeId with no textual relationship to the providing pack.
 
 This has two operational consequences a registry and its consumers MUST account for:
 
@@ -161,7 +161,7 @@ This has two operational consequences a registry and its consumers MUST account 
 
 ## Runtime-requirement install gate (RFC 0076)
 
-A pack MAY declare the abstract platform primitives its runtime code exercises via `runtime.requires[]` (see [`node-packs.md` §"Runtime platform requirements"](node-packs.md#runtime-platform-requirements-rfc-0076)). This is a **consumer/host install-time gate**, not a registry-acceptance check: the registry stores the field verbatim (it is part of the validated manifest), and the *host installing the pack into a workspace* enforces it.
+A pack MAY declare the abstract platform primitives its runtime code exercises via `runtime.requires[]` (see [`node-packs.md` §"Runtime platform requirements"](node-packs.md#runtime-platform-requirements-rfc-0076)). This is a **consumer/host install-time gate**, not a registry-acceptance check: the registry stores the field verbatim (it is part of the validated manifest), and the _host installing the pack into a workspace_ enforces it.
 
 **Normative.** A host that gates platform access (a sandbox host) MUST, at install time, intersect a pack's `runtime.requires[]` against the set of primitives its sandbox will grant. If every listed primitive is grantable, install proceeds. If any primitive will **not** be granted, the host MUST refuse install with `pack_runtime_requirement_unmet` and MUST NOT silently install and fail at first invocation. The error reuses the `capability_not_provided` envelope (`capabilities.md`):
 
@@ -184,7 +184,7 @@ Marking a published version deprecated without unpublishing it. Lets pinned cons
 
 ### Endpoint
 
-```
+```http
 POST /v1/packs/{name}/-/{version}/deprecate
 ```
 
@@ -227,7 +227,7 @@ The version metadata at `GET /v1/packs/{name}/-/{version}.json` gains a `depreca
 
 ### Reverting deprecation
 
-```
+```http
 DELETE /v1/packs/{name}/-/{version}/deprecate
 ```
 
@@ -241,7 +241,7 @@ Emergency removal for security issues. Distinct from `DELETE /v1/packs/{name}/-/
 
 ### Endpoint
 
-```
+```http
 POST /v1/packs/{name}/-/{version}/yank
 ```
 
@@ -275,7 +275,7 @@ A yanked version is:
 
 Yanks are intentionally hard to revert — they're for emergencies. The endpoint is:
 
-```
+```http
 DELETE /v1/packs/{name}/-/{version}/yank
 ```
 
@@ -291,7 +291,7 @@ Long-lived ed25519 / Sigstore keys eventually need rotation. The spec supports t
 
 A namespace's signing keys are stored in a registry-managed `keychain` document. Each key entry has a unique `kid` (key id), `algorithm`, public-key bytes, validity period, and a signing-key chain that links subsequent keys.
 
-```
+```http
 GET /v1/packs/{name}/-/keychain
 ```
 
@@ -324,7 +324,7 @@ Response:
 
 ### Rotation operation
 
-```
+```http
 POST /v1/packs/{name}/-/keychain/rotate
 ```
 
@@ -445,14 +445,14 @@ This is informational — clients use it to understand which registries the host
 
 A host product MAY ship private extension packages that ARE node packs but live in a host-controlled namespace. The pattern below is one such layering, illustrated using a hypothetical `acme.*` host marketplace; substitute any host name. The relationship is:
 
-| Concern | Public OpenWOP node packs | Host-private marketplace packs (example: `acme.*`) |
-|---|---|---|
-| Registry | `packs.openwop.dev` (and any compliant mirror) | Host-internal registry; not exposed to public openwop consumers |
-| Namespace | `core.*` (working group), `vendor.*` (vendor-claimed), `community.*` (open) | Private — typically `<host>.<surface>.*` (e.g., `acme.app-builder.tasks-card`) |
-| Publication | Anyone with namespace claim + `packs:publish` scope | Host-tenant admins via the host's admin panel |
-| Trust model | Layered (allowlist / pinned / verified / open) per consumer | Hosts typically run in `verified` mode; only signed packs from approved publishers load |
-| Signing | Sigstore / ed25519 / PGP | Host-rooted ed25519 chain |
-| Wire format | Identical (`schemas/node-pack-manifest.schema.json`) | Identical |
+| Concern     | Public OpenWOP node packs                                                   | Host-private marketplace packs (example: `acme.*`)                                      |
+| ----------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Registry    | `packs.openwop.dev` (and any compliant mirror)                              | Host-internal registry; not exposed to public openwop consumers                         |
+| Namespace   | `core.*` (working group), `vendor.*` (vendor-claimed), `community.*` (open) | Private — typically `<host>.<surface>.*` (e.g., `acme.app-builder.tasks-card`)          |
+| Publication | Anyone with namespace claim + `packs:publish` scope                         | Host-tenant admins via the host's admin panel                                           |
+| Trust model | Layered (allowlist / pinned / verified / open) per consumer                 | Hosts typically run in `verified` mode; only signed packs from approved publishers load |
+| Signing     | Sigstore / ed25519 / PGP                                                    | Host-rooted ed25519 chain                                                               |
+| Wire format | Identical (`schemas/node-pack-manifest.schema.json`)                        | Identical                                                                               |
 
 **The wire format is the same.** A host-private pack and a public openwop pack share the canonical `pack.json` shape; the difference is purely deployment-side (which registry serves it, which signing chain validates it). This means:
 

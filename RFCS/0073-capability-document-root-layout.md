@@ -1,17 +1,17 @@
 # RFC 0073: Capability families are document-root properties of `/.well-known/openwop`
 
-| Field | Value |
-|---|---|
-| **RFC** | 0073 |
-| **Title** | Capability families are document-root properties of `/.well-known/openwop` |
-| **Status** | `Accepted` |
-| **Author(s)** | David Tufts (@dtufts, steward) |
-| **Created** | 2026-05-27 |
-| **Updated** | 2026-05-31 (Draft → Accepted: the root layout is the normative MUST since Phase 1, all four+ reference hosts serve root since Phase 3, and Phase 4 now makes the conformance suite **enforce** root by dropping the accessor's wrapper-fallback — a wrapper-only host grades as non-conformant. Both Unresolved Questions resolved: the host-side mirror affordance and the schema's `additionalProperties` tolerance retire **together at v2.0**, when `capabilities.schema.json` tightens to forbid the wrapper. They are paired because both serve laggard *clients* reading discovery during the v1.x window; removing the mirror while the schema stays permissive would be incoherent.) |
-| **Affects** | `spec/v1/capabilities.md`, `conformance/src/lib/*`, `conformance/src/scenarios/*`, `apps/workflow-engine/.../routes/discovery.ts`, `INTEROP-MATRIX.md` |
-| **Compatibility** | `safety-fix` (corrective; brings implementations + suite to the schema's existing shape — no normative wire-shape change) per `COMPATIBILITY.md` |
-| **Supersedes** | — |
-| **Superseded by** | — |
+| Field             | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RFC**           | 0073                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| **Title**         | Capability families are document-root properties of `/.well-known/openwop`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Status**        | `Accepted`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Author(s)**     | David Tufts (@dtufts, steward)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **Created**       | 2026-05-27                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Updated**       | 2026-05-31 (Draft → Accepted: the root layout is the normative MUST since Phase 1, all four+ reference hosts serve root since Phase 3, and Phase 4 now makes the conformance suite **enforce** root by dropping the accessor's wrapper-fallback — a wrapper-only host grades as non-conformant. Both Unresolved Questions resolved: the host-side mirror affordance and the schema's `additionalProperties` tolerance retire **together at v2.0**, when `capabilities.schema.json` tightens to forbid the wrapper. They are paired because both serve laggard _clients_ reading discovery during the v1.x window; removing the mirror while the schema stays permissive would be incoherent.) |
+| **Affects**       | `spec/v1/capabilities.md`, `conformance/src/lib/*`, `conformance/src/scenarios/*`, `apps/workflow-engine/.../routes/discovery.ts`, `INTEROP-MATRIX.md`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **Compatibility** | `safety-fix` (corrective; brings implementations + suite to the schema's existing shape — no normative wire-shape change) per `COMPATIBILITY.md`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **Supersedes**    | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| **Superseded by** | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 
 ## Summary
 
@@ -47,10 +47,10 @@ But the published conformance suite contains two contradictory reader families:
   `ai-envelope-shape.test.ts` + `approval-gate-flow.test.ts` read
   `doc.capabilities.<family>`.
 
-| Host serves… | Profile predicates (root) | Agent/MAS gating (wrapper) |
-|---|---|---|
-| families at **root** (schema) | ✅ pass | ❌ soft-skip |
-| families under **`capabilities`** (reference hosts) | ❌ predicates see `undefined` | ✅ pass |
+| Host serves…                                        | Profile predicates (root)     | Agent/MAS gating (wrapper) |
+| --------------------------------------------------- | ----------------------------- | -------------------------- |
+| families at **root** (schema)                       | ✅ pass                       | ❌ soft-skip               |
+| families under **`capabilities`** (reference hosts) | ❌ predicates see `undefined` | ✅ pass                    |
 
 Concretely, this fired on RFC 0070: MyndHyve advertised
 `agents.manifestRuntime` correctly at the root, but `agentRuntime.ts` read
@@ -121,6 +121,7 @@ host authors copying the reference see families at the root.
 ### Examples
 
 **Positive (canonical, root):**
+
 ```json
 { "protocolVersion": "1.1", "supportedEnvelopes": ["..."],
   "schemaVersions": {}, "limits": {},
@@ -190,14 +191,14 @@ waiver for this corpus the additive-clarification window is waived
 
 Both resolved at `Draft → Accepted` (2026-05-31):
 
-1. **Window length / what moves when.** *Resolved:* the change splits across two
+1. **Window length / what moves when.** _Resolved:_ the change splits across two
    release boundaries by what each piece tests. The **conformance suite**'s
-   wrapper-fallback is dropped **now** (v1.x) — the suite grades the *normative*
+   wrapper-fallback is dropped **now** (v1.x) — the suite grades the _normative_
    shape (root MUST), so enforcing root-only is correct in v1.x and a wrapper-only
    host is non-conformant. The **host-side mirror** is a backward-compat affordance
-   for laggard *clients* reading discovery, so it stays for the v1.x window and is
+   for laggard _clients_ reading discovery, so it stays for the v1.x window and is
    removed at **v2.0**, paired with Q2.
-2. **Schema forbid vs `SHOULD NOT`.** *Resolved:* leave `additionalProperties: true`
+2. **Schema forbid vs `SHOULD NOT`.** _Resolved:_ leave `additionalProperties: true`
    with the prose `SHOULD NOT` for v1.x (forbidding the wrapper in-schema now is a
    breaking change under `COMPATIBILITY.md` §2.2 for any host still emitting the
    deprecated mirror). Tighten `capabilities.schema.json` to **forbid** the
@@ -258,5 +259,6 @@ Both resolved at `Draft → Accepted` (2026-05-31):
 - `INTEROP-MATRIX.md` §"RFC 0070" (the soft-skip caveat this RFC resolves)
 - RFC 0070 (agent-manifest runtime), RFC 0072 (agent inventory & dispatch)
 - `COMPATIBILITY.md` §2.2 (wire-shape stability)
-</content>
+  </content>
+
 </invoke>

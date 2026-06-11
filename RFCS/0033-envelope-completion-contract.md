@@ -1,20 +1,20 @@
 # RFC 0033: Envelope-completion contract (truncation vs schema-violation distinction)
 
-| Field | Value |
-|---|---|
-| **RFC** | 0033 |
-| **Title** | Envelope-completion criteria; distinguishing truncation from schema-violation in retry routing; truncation-retry cap |
-| **Status** | `Accepted` |
-| **Author(s)** | OpenWOP Working Group |
-| **Created** | 2026-05-20 |
-| **Updated** | 2026-05-21 (Active → Accepted — see [Status history](#status-history) below). |
-| **Affects** | `spec/v1/ai-envelope.md` (adds §"Envelope-completion criteria"; amends §"Production flow" with the retry-routing distinction) · `schemas/capabilities.schema.json` (extends `envelopes.reliability` block from RFC 0032 with `completion` sub-fields) · `spec/v1/observability.md` (adds §"Envelope-completion retry routing") · 2 new conformance scenarios · CHANGELOG |
-| **Compatibility** | `additive` (new MUSTs in previously-undefined behavior space) |
-| **Supersedes** | — |
+| Field             | Value                                                                                                                                                                                                                                                                                                                                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **RFC**           | 0033                                                                                                                                                                                                                                                                                                                                                                     |
+| **Title**         | Envelope-completion criteria; distinguishing truncation from schema-violation in retry routing; truncation-retry cap                                                                                                                                                                                                                                                     |
+| **Status**        | `Accepted`                                                                                                                                                                                                                                                                                                                                                               |
+| **Author(s)**     | OpenWOP Working Group                                                                                                                                                                                                                                                                                                                                                    |
+| **Created**       | 2026-05-20                                                                                                                                                                                                                                                                                                                                                               |
+| **Updated**       | 2026-05-21 (Active → Accepted — see [Status history](#status-history) below).                                                                                                                                                                                                                                                                                            |
+| **Affects**       | `spec/v1/ai-envelope.md` (adds §"Envelope-completion criteria"; amends §"Production flow" with the retry-routing distinction) · `schemas/capabilities.schema.json` (extends `envelopes.reliability` block from RFC 0032 with `completion` sub-fields) · `spec/v1/observability.md` (adds §"Envelope-completion retry routing") · 2 new conformance scenarios · CHANGELOG |
+| **Compatibility** | `additive` (new MUSTs in previously-undefined behavior space)                                                                                                                                                                                                                                                                                                            |
+| **Supersedes**    | —                                                                                                                                                                                                                                                                                                                                                                        |
 
 ## Summary
 
-Normates the envelope-completion criteria and the **truncation-vs-schema-violation retry-routing distinction** that hosts MUST honor when emitting structured envelopes via LLM calls. An envelope is *complete* only when (a) the underlying LLM call reached a clean stop AND (b) the emitted payload validates against the envelope's payload schema. The two failure modes (truncation = output cut off; schema-violation = model emitted wrong-shape JSON) require fundamentally different retry strategies: truncation needs a budget increase; schema-violation needs a corrective system fragment. Conflating them is non-conformant. Reuses RFC 0032's `envelope.truncated` and `envelope.retry.attempted` events as the observability surface; reuses the existing `limits.schemaRounds` as the truncation-retry budget so no new cap surface is introduced. Closes spec gap E5 (Refusal-mode interaction with retry policies) from `ai-envelope.md` §"Open spec gaps."
+Normates the envelope-completion criteria and the **truncation-vs-schema-violation retry-routing distinction** that hosts MUST honor when emitting structured envelopes via LLM calls. An envelope is _complete_ only when (a) the underlying LLM call reached a clean stop AND (b) the emitted payload validates against the envelope's payload schema. The two failure modes (truncation = output cut off; schema-violation = model emitted wrong-shape JSON) require fundamentally different retry strategies: truncation needs a budget increase; schema-violation needs a corrective system fragment. Conflating them is non-conformant. Reuses RFC 0032's `envelope.truncated` and `envelope.retry.attempted` events as the observability surface; reuses the existing `limits.schemaRounds` as the truncation-retry budget so no new cap surface is introduced. Closes spec gap E5 (Refusal-mode interaction with retry policies) from `ai-envelope.md` §"Open spec gaps."
 
 ## Motivation
 
@@ -24,7 +24,7 @@ Normates the envelope-completion criteria and the **truncation-vs-schema-violati
 
 - **Schema violation.** The model returned JSON, but the JSON doesn't validate against the envelope's payload schema (missing required field, wrong type, invalid `enum` value). Standard retry strategy: re-prompt the model with a corrective fragment describing what was wrong. The model self-corrects on attempt 2.
 
-- **Truncation.** The model started emitting a syntactically correct JSON envelope but ran out of output tokens before finishing the closing brace. Standard retry strategy: retry with an increased output budget. A corrective schema fragment would be actively harmful — it tells the model "your shape was wrong" when actually the shape was *right*, just incomplete.
+- **Truncation.** The model started emitting a syntactically correct JSON envelope but ran out of output tokens before finishing the closing brace. Standard retry strategy: retry with an increased output budget. A corrective schema fragment would be actively harmful — it tells the model "your shape was wrong" when actually the shape was _right_, just incomplete.
 
 Hosts that conflate the two paths produce surprising behavior:
 
@@ -143,11 +143,11 @@ The two RFC 0032 events `envelope.refusal` and `envelope.recovery.applied` fire 
 
 Two new error codes for the terminal failure paths:
 
-| Code | When |
-|---|---|
-| `envelope_truncation_unrecoverable` | Truncation-retry budget exhausted while failure mode remained truncation. Pairs with `envelope.retry.exhausted { finalReason: "truncation" }` and `cap.breached { kind: "schema" }`. |
-| `envelope_refusal` | Provider returned an explicit refusal; the host (per §D) did not retry. Pairs with `envelope.refusal`. Renamed from `envelope_refusal` per the 2026-05-21 amendment to mirror the `envelope.refusal` RunEvent type name. |
-| `envelope_invalid` | Schema-violation-retry-exhaustion (or single emission failed payload validation with retries disabled). Pairs with `envelope.retry.exhausted { finalReason: "schema-violation" }`. Renamed from `envelope_invalid` (RFC 0021) per the 2026-05-21 amendment for naming consistency with the other envelope-track codes (`envelope_<short-failure-mode>`). |
+| Code                                | When                                                                                                                                                                                                                                                                                                                                                     |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `envelope_truncation_unrecoverable` | Truncation-retry budget exhausted while failure mode remained truncation. Pairs with `envelope.retry.exhausted { finalReason: "truncation" }` and `cap.breached { kind: "schema" }`.                                                                                                                                                                     |
+| `envelope_refusal`                  | Provider returned an explicit refusal; the host (per §D) did not retry. Pairs with `envelope.refusal`. Renamed from `envelope_refusal` per the 2026-05-21 amendment to mirror the `envelope.refusal` RunEvent type name.                                                                                                                                 |
+| `envelope_invalid`                  | Schema-violation-retry-exhaustion (or single emission failed payload validation with retries disabled). Pairs with `envelope.retry.exhausted { finalReason: "schema-violation" }`. Renamed from `envelope_invalid` (RFC 0021) per the 2026-05-21 amendment for naming consistency with the other envelope-track codes (`envelope_<short-failure-mode>`). |
 
 All three codes are documented in the canonical error-code table at `spec/v1/rest-endpoints.md` §"Common error codes." The rename from `envelope_invalid` → `envelope_invalid` and `envelope_refusal` → `envelope_refusal` lands as the same 2026-05-21 amendment — see the Status history block at the end of this RFC. Compatibility: additive per `COMPATIBILITY.md §2.1` because the codes were only canonized 2026-05-20 (Active commit `a280371`) and the rename predates any third-party host adoption of the longer-form names — MyndHyve, the first non-steward adopter, was already emitting the short-form names (`envelope_refusal` natively; `envelope_schema_violation` mapped to the new `envelope_invalid`).
 
@@ -155,7 +155,7 @@ All three codes are documented in the canonical error-code table at `spec/v1/res
 
 `ai-envelope.md` §"Production flow" gains a non-normative annotation showing the retry-routing branches:
 
-```
+```text
 LLM emission
   │
   ▼
@@ -196,7 +196,7 @@ This RFC's normative additions ride entirely on RFC 0032's event surface; no new
 
 - Existing required fields: unchanged.
 - Existing optional fields: unchanged.
-- Existing event types: unchanged. This RFC introduces no new `RunEventType` entries; it normates the *retry-routing semantics* using RFC 0032's existing event vocabulary.
+- Existing event types: unchanged. This RFC introduces no new `RunEventType` entries; it normates the _retry-routing semantics_ using RFC 0032's existing event vocabulary.
 - Existing endpoints: unchanged.
 - Existing MUST requirements: **not relaxed.** RFC 0033 introduces NEW MUSTs in a previously-silent area (the retry-routing distinction was not normated in v1.1). Per `COMPATIBILITY.md §4` row "New normative requirement on a previously-undefined behavior" — additive.
 - Existing error codes: unchanged. Two NEW error codes (`envelope_truncation_unrecoverable`, `envelope_refusal`) added; existing codes remain.
@@ -239,7 +239,7 @@ The `behaviorGate` helper from RFC 0032 gains a predicate `requireEnvelopeComple
 
 4. **Interaction with run-level retry policies.** A run-level `RunOptions.retryPolicy` may also produce retries at the node level (separate from the envelope-level retries this RFC normates). Should the spec clarify the precedence — envelope-level retries fire first, run-level fires only if the envelope-level path exhausts? Recommendation: yes; document in `spec/v1/run-options.md` §"Retry policy" as a non-normative integration note. The envelope-level path is the inner retry loop; the run-level path is the outer.
 
-5. **Truncation in tool-using flows.** When the LLM is mid-tool-call (function-calling) and truncates, the truncation might be in the tool-call arguments rather than the envelope payload. Is the truncation event still `envelope.truncated`, or something tool-call-specific? Recommendation: emit `envelope.truncated` for the *envelope's* completion; tool-call argument truncation is a separate condition handled by the function-calling layer. The two surfaces don't conflict because envelope emission and tool-call argument emission are sequential, not simultaneous.
+5. **Truncation in tool-using flows.** When the LLM is mid-tool-call (function-calling) and truncates, the truncation might be in the tool-call arguments rather than the envelope payload. Is the truncation event still `envelope.truncated`, or something tool-call-specific? Recommendation: emit `envelope.truncated` for the _envelope's_ completion; tool-call argument truncation is a separate condition handled by the function-calling layer. The two surfaces don't conflict because envelope emission and tool-call argument emission are sequential, not simultaneous.
 
 ## Implementation notes (non-normative)
 
@@ -275,7 +275,7 @@ Promotion from `Active` → `Accepted`:
 - `spec/v1/capabilities.md` §"Engine-enforced limits" — `limits.schemaRounds` reused as the truncation-retry budget per §B.
 - `spec/v1/rest-endpoints.md` §"Common error codes" — error-code table extended with the two new codes per §F.
 - `spec/v1/run-options.md` §"Retry policy" — outer retry loop; non-normative integration note recommended per §"Unresolved questions" #4.
-- Tam et al., "Let Me Speak Freely?" — https://arxiv.org/pdf/2408.02442 (informs the "truncation needs budget, not corrective fragment" recommendation: truncation typically reflects model running out of room mid-reasoning, not model emitting wrong shape).
+- Tam et al., "Let Me Speak Freely?" — <https://arxiv.org/pdf/2408.02442> (informs the "truncation needs budget, not corrective fragment" recommendation: truncation typically reflects model running out of room mid-reasoning, not model emitting wrong shape).
 
 ## Status history
 

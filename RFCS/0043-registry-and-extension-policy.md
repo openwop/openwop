@@ -1,17 +1,17 @@
 # RFC 0043: Registry and extension-policy
 
-| Field | Value |
-|---|---|
-| **RFC** | 0043 |
-| **Title** | Registry submission policy, extension namespace rules, profile/event/capability name reservation, and IPR posture |
-| **Status** | `Active` |
-| **Author(s)** | David Tufts (@davidscotttufts) |
-| **Created** | 2026-05-22 |
-| **Updated** | 2026-06-11 — `Draft → Active`: policy is live ([`docs/governance/registry-policy.md`](../docs/governance/registry-policy.md)) and cited as authoritative from normative spec (`host-extensions.md` §"Canonical prefixes", `registry-operations.md` policy layer); full ratification deferred to WG formation per RFC 0038. 2026-05-22 — filed `Draft`. |
-| **Affects** | `spec/v1/host-extensions.md` (cross-link to RFC 0043 for canonical prefix table) · `spec/v1/registry-operations.md` (policy layer above the operational reference) · `GOVERNANCE.md` (§"Path to working group" adds RFC 0043 as the registry-policy precondition) · `RFCS/0038-working-group-charter.md` (charter adds explicit reference to RFC 0043 for registry responsibilities) · `MAINTAINERS.md` (registry maintainer expectations) · NEW `docs/governance/registry-policy.md` (one-stop policy index) · CHANGELOG |
-| **Compatibility** | `additive` — policy text, no wire-shape change |
-| **Supersedes** | — |
-| **Superseded by** | — |
+| Field             | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RFC**           | 0043                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **Title**         | Registry submission policy, extension namespace rules, profile/event/capability name reservation, and IPR posture                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **Status**        | `Active`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **Author(s)**     | David Tufts (@davidscotttufts)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **Created**       | 2026-05-22                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **Updated**       | 2026-06-11 — `Draft → Active`: policy is live ([`docs/governance/registry-policy.md`](../docs/governance/registry-policy.md)) and cited as authoritative from normative spec (`host-extensions.md` §"Canonical prefixes", `registry-operations.md` policy layer); full ratification deferred to WG formation per RFC 0038. 2026-05-22 — filed `Draft`.                                                                                                                                                                    |
+| **Affects**       | `spec/v1/host-extensions.md` (cross-link to RFC 0043 for canonical prefix table) · `spec/v1/registry-operations.md` (policy layer above the operational reference) · `GOVERNANCE.md` (§"Path to working group" adds RFC 0043 as the registry-policy precondition) · `RFCS/0038-working-group-charter.md` (charter adds explicit reference to RFC 0043 for registry responsibilities) · `MAINTAINERS.md` (registry maintainer expectations) · NEW `docs/governance/registry-policy.md` (one-stop policy index) · CHANGELOG |
+| **Compatibility** | `additive` — policy text, no wire-shape change                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **Supersedes**    | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **Superseded by** | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 
 ## Summary
 
@@ -19,7 +19,7 @@ Codifies, in one document, the policies that govern the openwop project's stabil
 
 ## Motivation
 
-The 2026-05-22 standards-readiness review's finding (7) was: *"Governance is technically incomplete for an open standard. ... Registries, profile names, event types, capability names, and safety-fix exceptions are part of the protocol's technical stability surface."* The reviewer was correct that these policies exist in practice but live in fragments — a non-steward implementer who wants to add a `vendor.acme.*` namespace, register an `openwop-acme-feature` profile, or claim an `acme.*` OTel attribute namespace cannot find a single document that says "here is the policy, here is how to submit, here are the rules I am bound by." Working-group ratification (per `RFCS/0038`) is gated on the tripwire firing (≥3 organizations + ≥2 non-steward hosts); registry policy CANNOT wait for that gate because the registry is already live (`packs.openwop.dev` ships 48+ packs across 4 trust tiers per `KNOWN-LIMITS.md`).
+The 2026-05-22 standards-readiness review's finding (7) was: _"Governance is technically incomplete for an open standard. ... Registries, profile names, event types, capability names, and safety-fix exceptions are part of the protocol's technical stability surface."_ The reviewer was correct that these policies exist in practice but live in fragments — a non-steward implementer who wants to add a `vendor.acme.*` namespace, register an `openwop-acme-feature` profile, or claim an `acme.*` OTel attribute namespace cannot find a single document that says "here is the policy, here is how to submit, here are the rules I am bound by." Working-group ratification (per `RFCS/0038`) is gated on the tripwire firing (≥3 organizations + ≥2 non-steward hosts); registry policy CANNOT wait for that gate because the registry is already live (`packs.openwop.dev` ships 48+ packs across 4 trust tiers per `KNOWN-LIMITS.md`).
 
 This RFC is the **policy document the working group will ratify when it forms.** Landing it as `Draft` now means the policy is auditable today, and the WG's first action upon formation is a yes/no vote on adopting it.
 
@@ -57,12 +57,12 @@ A pack submission to `packs.openwop.dev` MUST satisfy:
 
 Per the existing pack-tier convention in `SECURITY/`:
 
-| Tier | Prefix | Auditing | Submission flow |
-|---|---|---|---|
-| **Spec-authoritative** | `core.openwop.*` | Audit-gated for public publication (pre-audit publication recorded in `SECURITY/external-audit-engagement.md` §2.1.1) | Submitter MUST be a project maintainer; 2 maintainer approvals (or 1 in bootstrap-phase). |
-| **Vendor-authoritative** | `vendor.<org>.*` | DNS-verified ownership + standard signing | 1 maintainer approval + DNS verification. |
-| **Community** | `community.<author>.*` | Standard signing + supply-chain checks | 1 maintainer approval. |
-| **Test-mode** | `test.*` (per RFC 0025) | Non-production conformance use only | No formal review; the registry rejects test-mode packs at install-time outside conformance scenarios. |
+| Tier                     | Prefix                  | Auditing                                                                                                              | Submission flow                                                                                       |
+| ------------------------ | ----------------------- | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Spec-authoritative**   | `core.openwop.*`        | Audit-gated for public publication (pre-audit publication recorded in `SECURITY/external-audit-engagement.md` §2.1.1) | Submitter MUST be a project maintainer; 2 maintainer approvals (or 1 in bootstrap-phase).             |
+| **Vendor-authoritative** | `vendor.<org>.*`        | DNS-verified ownership + standard signing                                                                             | 1 maintainer approval + DNS verification.                                                             |
+| **Community**            | `community.<author>.*`  | Standard signing + supply-chain checks                                                                                | 1 maintainer approval.                                                                                |
+| **Test-mode**            | `test.*` (per RFC 0025) | Non-production conformance use only                                                                                   | No formal review; the registry rejects test-mode packs at install-time outside conformance scenarios. |
 
 #### §B.3 — Deprecation and yank
 
@@ -211,9 +211,9 @@ The audit-friendly equivalent of "conformance" for this RFC is a **policy-audit 
 
 ## Acceptance criteria
 
-- [x] Spec text cross-links landed in `host-extensions.md`, `registry-operations.md`, `GOVERNANCE.md`, `RFCS/0038-working-group-charter.md`, `MAINTAINERS.md`. *(2026-05-25)*
-- [x] NEW `docs/governance/registry-policy.md` lands as a one-stop policy index pointing at this RFC. *(2026-05-25)*
-- [x] CHANGELOG entry under `[Unreleased]` referencing this RFC. *(2026-05-25)*
+- [x] Spec text cross-links landed in `host-extensions.md`, `registry-operations.md`, `GOVERNANCE.md`, `RFCS/0038-working-group-charter.md`, `MAINTAINERS.md`. _(2026-05-25)_
+- [x] NEW `docs/governance/registry-policy.md` lands as a one-stop policy index pointing at this RFC. _(2026-05-25)_
+- [x] CHANGELOG entry under `[Unreleased]` referencing this RFC. _(2026-05-25)_
 - [ ] 7-day public comment window closes without unresolved objections (additive policy).
 - [ ] Working group, when formed, ratifies the policy (gated on `GOVERNANCE.md` tripwire — this is a future-action gate, not a blocker for landing the Draft). **← the only remaining gate; flips `Draft` → `Accepted`.**
 

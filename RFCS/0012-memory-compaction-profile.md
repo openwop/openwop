@@ -1,17 +1,17 @@
 # RFC 0012: Memory Compaction Profile
 
-| Field | Value |
-|---|---|
-| **RFC** | 0012 |
-| **Title** | Memory Compaction Profile |
-| **Status** | `Accepted` |
-| **Author(s)** | David Tufts (@davidscotttufts) |
-| **Created** | 2026-05-13 |
-| **Updated** | 2026-05-15 (Active → Accepted; see §"Comment window note" below) |
-| **Affects** | `spec/v1/capabilities.md` (new optional `capabilities.memory.compaction` block), `spec/v1/observability.md` (new optional event type `memory.compacted`), `SECURITY/invariants.yaml` (SR-1 carry-forward through compaction outputs), `schemas/memory-entry.schema.json` (no shape change; new tag-prefix convention) |
-| **Compatibility** | `additive` |
-| **Supersedes** | — |
-| **Superseded by** | — |
+| Field             | Value                                                                                                                                                                                                                                                                                                                 |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RFC**           | 0012                                                                                                                                                                                                                                                                                                                  |
+| **Title**         | Memory Compaction Profile                                                                                                                                                                                                                                                                                             |
+| **Status**        | `Accepted`                                                                                                                                                                                                                                                                                                            |
+| **Author(s)**     | David Tufts (@davidscotttufts)                                                                                                                                                                                                                                                                                        |
+| **Created**       | 2026-05-13                                                                                                                                                                                                                                                                                                            |
+| **Updated**       | 2026-05-15 (Active → Accepted; see §"Comment window note" below)                                                                                                                                                                                                                                                      |
+| **Affects**       | `spec/v1/capabilities.md` (new optional `capabilities.memory.compaction` block), `spec/v1/observability.md` (new optional event type `memory.compacted`), `SECURITY/invariants.yaml` (SR-1 carry-forward through compaction outputs), `schemas/memory-entry.schema.json` (no shape change; new tag-prefix convention) |
+| **Compatibility** | `additive`                                                                                                                                                                                                                                                                                                            |
+| **Supersedes**    | —                                                                                                                                                                                                                                                                                                                     |
+| **Superseded by** | —                                                                                                                                                                                                                                                                                                                     |
 
 > **Amended (additive) 2026-05-25:** RFC 0062 (scheduled memory distillation) reuses the `memory.compacted` event with an optional `distillation` sub-object (`{ tokenBudget, tokensUsed, indexUpdated }`). The event is `additionalProperties: true`; `required` and the `trigger` enum are **unchanged** — a scheduled distillation emits `trigger: "host-managed"`. Non-breaking per `COMPATIBILITY.md` §2.1.
 
@@ -21,11 +21,11 @@ Define an optional capability profile that lets a host advertise it runs backgro
 
 ## Motivation
 
-RFC 0004 (`MemoryAdapter`) already gives hosts everything they need to *implement* compaction: `list` reads candidates, `put` writes the distilled entry, `delete` evicts the originals. Three concrete pain points motivate adding a thin protocol surface on top:
+RFC 0004 (`MemoryAdapter`) already gives hosts everything they need to _implement_ compaction: `list` reads candidates, `put` writes the distilled entry, `delete` evicts the originals. Three concrete pain points motivate adding a thin protocol surface on top:
 
 1. **Cross-host observability.** An operator running multiple OpenWOP hosts (e.g., a dev SQLite host plus a prod Postgres host) today has no portable way to ask "did each host's compaction run last night?" Each host invents its own log shape. A canonical `memory.compacted` event in the `openwop.*` namespace gives one query across hosts.
-2. **Replay attribution.** When `list` returns a *compacted* entry instead of the original raw entries, replay debugging is opaque — there's no protocol-visible link from "this distilled entry" back to "these source entries that no longer exist." A standard `tags: ["compacted-from:<runId>"]` convention plus a `sourceIds[]` field on the event gives the audit trail without requiring the source entries to still exist.
-3. **Redaction-invariant carry-forward.** SR-1 (RFC 0004 §D) is enforced at `put` time over the *direct* content. When a host summarizes ten entries into one, the summarization step is a *new* `put` whose content is derived from the originals. Without an explicit normative carry-forward, a naive host implementation could route summarized content around the BYOK redaction harness. This RFC tightens that.
+2. **Replay attribution.** When `list` returns a _compacted_ entry instead of the original raw entries, replay debugging is opaque — there's no protocol-visible link from "this distilled entry" back to "these source entries that no longer exist." A standard `tags: ["compacted-from:<runId>"]` convention plus a `sourceIds[]` field on the event gives the audit trail without requiring the source entries to still exist.
+3. **Redaction-invariant carry-forward.** SR-1 (RFC 0004 §D) is enforced at `put` time over the _direct_ content. When a host summarizes ten entries into one, the summarization step is a _new_ `put` whose content is derived from the originals. Without an explicit normative carry-forward, a naive host implementation could route summarized content around the BYOK redaction harness. This RFC tightens that.
 
 **Honest scope check.** Items (1) and (2) are observability conveniences; (3) is the only one that's strictly normative — a host that ignores it can leak secrets. The RFC is justified primarily by (3), with (1) and (2) as additive benefits that ride along.
 
@@ -83,7 +83,7 @@ Field semantics:
 
 - `memoryRef` (string, required) — same opaque handle from RFC 0004 §C. Bounds the compaction to a single memory scope.
 - `outputId` (string, required) — the id of the new `MemoryEntry` created by compaction. MUST be readable via `MemoryAdapter.get(memoryRef, outputId)` until normal TTL eviction.
-- `sourceIds` (array of strings, optional) — ids of entries that were collapsed into `outputId`. Hosts MAY omit this array when `sourceCount > 100` and instead rely on the `compacted-from:<runId>` tag convention (§C). Hosts that *do* include `sourceIds` MUST be exhaustive within the array (no "and N more" semantics).
+- `sourceIds` (array of strings, optional) — ids of entries that were collapsed into `outputId`. Hosts MAY omit this array when `sourceCount > 100` and instead rely on the `compacted-from:<runId>` tag convention (§C). Hosts that _do_ include `sourceIds` MUST be exhaustive within the array (no "and N more" semantics).
 - `sourceCount` (integer, required) — total count of source entries collapsed, including any not enumerated in `sourceIds`.
 - `trigger` (string, required) — matches `capabilities.memory.compaction.trigger`. Indicates which trigger path drove this run.
 - `byteSize` (integer, required) — byte size of the resulting `MemoryEntry.content`.
@@ -120,7 +120,7 @@ The following are explicitly NOT in this RFC:
 
 - `capabilities.memory.compaction` is a new optional sub-block of an existing optional block. Hosts that don't advertise it are unaffected.
 - `memory.compacted` is a new event type. The canonical `observability.md` rule is that consumers ignore unknown event types; this rule covers backward compatibility for existing observability consumers.
-- The SR-1 carry-forward extension applies only at the boundary where compaction occurs. Hosts that don't perform compaction never encounter it. Hosts that *do* perform compaction without advertising the profile are NOT bound by this RFC, but SHOULD migrate to either (a) advertising the profile and honoring SR-1 carry-forward, or (b) ceasing compaction — silent compaction with no audit event is a protocol smell.
+- The SR-1 carry-forward extension applies only at the boundary where compaction occurs. Hosts that don't perform compaction never encounter it. Hosts that _do_ perform compaction without advertising the profile are NOT bound by this RFC, but SHOULD migrate to either (a) advertising the profile and honoring SR-1 carry-forward, or (b) ceasing compaction — silent compaction with no audit event is a protocol smell.
 - No schema diffs to existing `MemoryEntry` or `MemoryListOptions` shapes. The provenance-tag convention (§C) lives entirely in the existing free-form `tags` array.
 
 Lands in a v1.x minor as part of `@openwop/openwop-conformance` `1.X.0`. No SDK wire-type additions are strictly required (the event is JSON-shape, dashboard-facing); SDK error catalogs SHOULD add `compaction_redaction_failed` if a host wants to surface SR-1 violations via the normal error envelope, but the wire surface stands without it.
@@ -152,7 +152,7 @@ All three scenarios skip cleanly when the capability is absent. Suite-version bu
 1. **Is there a concrete client use case for `trigger: "client-requested"`?** None has been articulated as of 2026-05-13. If none surfaces, the enum value should be dropped from §A in `Active` status to avoid reserving wire surface that no one uses.
 2. **Should `memory.compacted.sourceIds` be required, optional, or capped?** Current proposal: optional with a soft 100-id ceiling and `sourceCount` as the always-present count. A future revision may tighten this once real-world compaction batch sizes are known from the first reference-host implementation.
 3. **Does this RFC need a SECURITY invariant entry?** The §D SR-1 carry-forward is normative. Strong candidate for a new `SECURITY/invariants.yaml` row (`memory-compaction-sr-1-carry-forward`) so it's enforced by the same machinery as the existing 35 protocol-tier invariants. Decision deferred to `Active`.
-4. **Does this RFC even need to exist?** Honest open question. RFC 0004's existing `put`/`delete` is *functionally* sufficient for any host that wants to compact. This RFC's defense is the SR-1 carry-forward invariant (§D) plus the cross-host observability convenience. If maintainer review concludes (3) belongs in RFC 0004 as a clarifying revision and (1)+(2) don't clear the value-vs-protocol-surface bar, this RFC closes `Withdrawn` and the SR-1 carry-forward language folds into a `Accepted` revision of RFC 0004 §D.
+4. **Does this RFC even need to exist?** Honest open question. RFC 0004's existing `put`/`delete` is _functionally_ sufficient for any host that wants to compact. This RFC's defense is the SR-1 carry-forward invariant (§D) plus the cross-host observability convenience. If maintainer review concludes (3) belongs in RFC 0004 as a clarifying revision and (1)+(2) don't clear the value-vs-protocol-surface bar, this RFC closes `Withdrawn` and the SR-1 carry-forward language folds into a `Accepted` revision of RFC 0004 §D.
 
 ## Implementation notes (non-normative)
 

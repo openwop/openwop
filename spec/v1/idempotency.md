@@ -1,4 +1,4 @@
-# openwop Spec v1 — Idempotency
+# OpenWOP Spec v1 — Idempotency
 
 > **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of both layers: HTTP `Idempotency-Key` (Layer 1) + engine `invocationId` (Layer 2). Stable surface for external review. Open gaps in cross-region replication + entropy floor only. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
@@ -64,7 +64,7 @@ When two requests with the same composite key arrive concurrently and the first 
 
 ### Cache key composition
 
-```
+```text
 cacheKey = sha256(tenantId || ':' || endpoint || ':' || idempotencyKey)
 ```
 
@@ -84,11 +84,12 @@ Inside a workflow run, a node executor often makes external API calls (LLM, paym
 
 The engine constructs a per-side-effect idempotency key as:
 
-```
+```text
 invocationId = sha256(runId || ':' || nodeId || ':' || attempt || ':' || providerKey)
 ```
 
 Where:
+
 - `runId`: the run ID
 - `nodeId`: the node ID within the run
 - `attempt`: zero-based retry attempt counter for the side effect
@@ -130,7 +131,7 @@ For streaming responses (SSE, chunked transfer):
 
 A typical write flow:
 
-```
+```text
 Caller — POST /v1/runs
   Idempotency-Key: <UUID>
         │
@@ -223,12 +224,12 @@ Hosts that do NOT advertise the `multiRegion` block retain the existing best-eff
 
 ## Open spec gaps
 
-| # | Gap | Owner |
-|---|---|---|
-| I1 | ✅ Cross-region replication semantics — landed in v1.0 (this doc §"Multi-region idempotency", added 2026-05-10). | closed |
-| I2 | Garbage-collection guarantees / minimum TTL — currently RECOMMENDED 24h Layer 1 / 14d Layer 2; SHOULD be MUST after telemetry | future |
-| I3 | Streaming response handling — Layer 2 currently doesn't cache; conformance suite should validate this is "safe" not "broken" | P2-F4 |
-| I4 | Idempotency key entropy lower bound — currently no MUST; consider 128 bits | future v1.x |
+| #   | Gap                                                                                                                           | Owner       |
+| --- | ----------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| I1  | ✅ Cross-region replication semantics — landed in v1.0 (this doc §"Multi-region idempotency", added 2026-05-10).              | closed      |
+| I2  | Garbage-collection guarantees / minimum TTL — currently RECOMMENDED 24h Layer 1 / 14d Layer 2; SHOULD be MUST after telemetry | future      |
+| I3  | Streaming response handling — Layer 2 currently doesn't cache; conformance suite should validate this is "safe" not "broken"  | P2-F4       |
+| I4  | Idempotency key entropy lower bound — currently no MUST; consider 128 bits                                                    | future v1.x |
 
 ## References
 

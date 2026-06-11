@@ -1,20 +1,20 @@
 # RFC 0032: Envelope-reliability run-event vocabulary
 
-| Field | Value |
-|---|---|
-| **RFC** | 0032 |
-| **Title** | Six envelope-reliability `RunEventType` entries; scope clarification of `ai-envelope.md` §"Run event log integration" line 448 MUST NOT |
-| **Status** | `Accepted` |
-| **Author(s)** | OpenWOP Working Group |
-| **Created** | 2026-05-20 |
-| **Updated** | 2026-05-21 (Active → Accepted — see [Status history](#status-history) below). |
-| **Affects** | `spec/v1/ai-envelope.md` (clarifies §"Run event log integration" line 448; adds §"Envelope-reliability events") · `schemas/run-event.schema.json` (adds 6 new enum entries) · `schemas/run-event-payloads.schema.json` (adds 6 new `$defs` + `_typeIndex` entries) · `schemas/capabilities.schema.json` (adds optional `envelopes.reliability` block) · `spec/v1/observability.md` (adds §"Envelope-reliability events") · `api/asyncapi.yaml` (adds 6 channels) · `SECURITY/invariants.yaml` (adds `envelope-refusal-no-prompt-leak` + `envelope-recovery-no-content-leak`) · 6 new conformance scenarios · CHANGELOG |
-| **Compatibility** | `additive` |
-| **Supersedes** | — |
+| Field             | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RFC**           | 0032                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| **Title**         | Six envelope-reliability `RunEventType` entries; scope clarification of `ai-envelope.md` §"Run event log integration" line 448 MUST NOT                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **Status**        | `Accepted`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| **Author(s)**     | OpenWOP Working Group                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **Created**       | 2026-05-20                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| **Updated**       | 2026-05-21 (Active → Accepted — see [Status history](#status-history) below).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| **Affects**       | `spec/v1/ai-envelope.md` (clarifies §"Run event log integration" line 448; adds §"Envelope-reliability events") · `schemas/run-event.schema.json` (adds 6 new enum entries) · `schemas/run-event-payloads.schema.json` (adds 6 new `$defs` + `_typeIndex` entries) · `schemas/capabilities.schema.json` (adds optional `envelopes.reliability` block) · `spec/v1/observability.md` (adds §"Envelope-reliability events") · `api/asyncapi.yaml` (adds 6 channels) · `SECURITY/invariants.yaml` (adds `envelope-refusal-no-prompt-leak` + `envelope-recovery-no-content-leak`) · 6 new conformance scenarios · CHANGELOG |
+| **Compatibility** | `additive`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| **Supersedes**    | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 
 ## Summary
 
-Adds six new `RunEventType` entries to standardize the protocol vocabulary for envelope-emission reliability behavior — retry attempts, retry exhaustion, refusals, truncations, NL-to-Format fallback engagement, and lenient-parsing recovery. Two events are MUSTs (`envelope.retry.exhausted`, `envelope.refusal`); the other four are SHOULD or MAY. Codifies the events so conformance suites can assert correct host behavior on adverse paths (today there is no stable vocabulary, and each host emits bespoke telemetry). The RFC also formally clarifies the scope of `ai-envelope.md` line 448's MUST NOT ("Hosts MUST NOT extend the `RunEventType` enum to add envelope-specific events") — the prohibition was scoped to *per-envelope-kind* events (one event mirroring each envelope kind, which would create a parallel routing surface), NOT to *cross-kind operational* events. The six events introduced here are cross-kind operational events about envelope emission, not per-kind routing events; they sit alongside the existing `provider.usage` (RFC 0026) and `prompt.composed` (RFC 0027) precedents.
+Adds six new `RunEventType` entries to standardize the protocol vocabulary for envelope-emission reliability behavior — retry attempts, retry exhaustion, refusals, truncations, NL-to-Format fallback engagement, and lenient-parsing recovery. Two events are MUSTs (`envelope.retry.exhausted`, `envelope.refusal`); the other four are SHOULD or MAY. Codifies the events so conformance suites can assert correct host behavior on adverse paths (today there is no stable vocabulary, and each host emits bespoke telemetry). The RFC also formally clarifies the scope of `ai-envelope.md` line 448's MUST NOT ("Hosts MUST NOT extend the `RunEventType` enum to add envelope-specific events") — the prohibition was scoped to _per-envelope-kind_ events (one event mirroring each envelope kind, which would create a parallel routing surface), NOT to _cross-kind operational_ events. The six events introduced here are cross-kind operational events about envelope emission, not per-kind routing events; they sit alongside the existing `provider.usage` (RFC 0026) and `prompt.composed` (RFC 0027) precedents.
 
 ## Motivation
 
@@ -30,7 +30,7 @@ Standardizing six event types gives conformance suites a stable vocabulary to ve
 
 ### 2.2 Conformance can't gate retry/refusal/truncation behavior today
 
-`RFCS/0021-ai-envelope-primitive.md` §C lands the validation pipeline (shape → kind → payload → contract → limits → redaction → dedup → handler), but it doesn't enumerate the *adverse-path* event vocabulary. The host can perfectly implement the validation pipeline and silently mishandle truncation (e.g., retrying with a corrective schema fragment when it should retry with a doubled output budget) — and no conformance assertion catches it. RFC 0033 (envelope-completion contract) normates the retry-routing semantics; this RFC ships the events RFC 0033 asserts against.
+`RFCS/0021-ai-envelope-primitive.md` §C lands the validation pipeline (shape → kind → payload → contract → limits → redaction → dedup → handler), but it doesn't enumerate the _adverse-path_ event vocabulary. The host can perfectly implement the validation pipeline and silently mishandle truncation (e.g., retrying with a corrective schema fragment when it should retry with a doubled output budget) — and no conformance assertion catches it. RFC 0033 (envelope-completion contract) normates the retry-routing semantics; this RFC ships the events RFC 0033 asserts against.
 
 ### 2.3 The line-448 MUST NOT is being read more broadly than the original intent
 
@@ -38,7 +38,7 @@ The current FINAL-v1.1 prose at `spec/v1/ai-envelope.md:448` reads:
 
 > "For vendor-namespaced kinds (e.g., `vendor.myndhyve.prd.create`), the host's handler chooses the appropriate `RunEventDoc.type` from the existing 48-variant enum. Hosts MUST NOT extend the `RunEventType` enum to add envelope-specific events; the envelope's identity rides on `causationId`, not on a parallel event-type surface."
 
-A literal reading of "envelope-specific events" forbids any new `envelope.*` `RunEventType` entry. But the prose's *intent* — read with the surrounding context — is narrower: it prohibits hosts from creating a *parallel routing surface* where each envelope kind gets its own event type (e.g., `clarification.requested`, `prd.created`, `theme.created`, etc.), which would force consumers to learn the cross-product of envelope kinds × handler events. The envelope's identity rides on `causationId` precisely so that per-kind routing isn't needed.
+A literal reading of "envelope-specific events" forbids any new `envelope.*` `RunEventType` entry. But the prose's _intent_ — read with the surrounding context — is narrower: it prohibits hosts from creating a _parallel routing surface_ where each envelope kind gets its own event type (e.g., `clarification.requested`, `prd.created`, `theme.created`, etc.), which would force consumers to learn the cross-product of envelope kinds × handler events. The envelope's identity rides on `causationId` precisely so that per-kind routing isn't needed.
 
 This RFC clarifies the scope: line 448's MUST NOT applies to **per-envelope-kind events** (one new `RunEventType` entry per envelope kind), not to **cross-kind operational events** (one event type that fires across many envelope kinds for a shared operational concern like retry or refusal). The six events introduced here are cross-kind operational events; they don't create a per-kind routing surface, and they don't conflict with `causationId`-based handler routing.
 
@@ -58,7 +58,7 @@ Replace the second sentence of line 448 with the following clarified prose:
 >
 > > For vendor-namespaced kinds (e.g., `vendor.myndhyve.prd.create`), the host's handler chooses the appropriate `RunEventDoc.type` from the existing `RunEventType` enum. Hosts MUST NOT extend the `RunEventType` enum to add **per-envelope-kind routing events** — i.e., one event mirroring each envelope kind, which would create a parallel routing surface (the envelope's identity rides on `causationId`, not on a parallel event-type surface, so per-kind events are unnecessary). Hosts MAY emit **cross-kind operational events** that fire across many envelope kinds for shared operational concerns (retry, refusal, truncation, capability substitution, prompt composition, provider usage); these MAY extend `RunEventType` via the RFC process. Events introduced under this clarification: RFC 0026 (`provider.usage`), RFC 0027 (`prompt.composed`), RFC 0031 (`model.capability.{substituted,insufficient}`), RFC 0032 (six envelope-reliability events), RFC 0029 (`agent.promptResolved`).
 
-**Why this is a clarification, not a relaxation.** The original MUST NOT's *intent* is preserved: per-kind events remain forbidden. The clarification narrows the *literal* reading of "envelope-specific events" to match the original intent. Per `COMPATIBILITY.md §2.2`, existing MUSTs MUST NOT be relaxed in v1.x — this RFC does not relax the per-kind prohibition. The cross-kind operational allowance was always implicit in the surrounding text and existing precedent (RFCs 0026, 0027 shipped under the same interpretation); this RFC makes that interpretation explicit. Classified as `additive` per `COMPATIBILITY.md §4` row "New normative requirement on a previously-undefined behavior" (specifically, the *scope* of the existing MUST NOT was undefined; this RFC defines it).
+**Why this is a clarification, not a relaxation.** The original MUST NOT's _intent_ is preserved: per-kind events remain forbidden. The clarification narrows the _literal_ reading of "envelope-specific events" to match the original intent. Per `COMPATIBILITY.md §2.2`, existing MUSTs MUST NOT be relaxed in v1.x — this RFC does not relax the per-kind prohibition. The cross-kind operational allowance was always implicit in the surrounding text and existing precedent (RFCs 0026, 0027 shipped under the same interpretation); this RFC makes that interpretation explicit. Classified as `additive` per `COMPATIBILITY.md §4` row "New normative requirement on a previously-undefined behavior" (specifically, the _scope_ of the existing MUST NOT was undefined; this RFC defines it).
 
 ### §B — Six envelope-reliability event definitions
 
@@ -246,7 +246,7 @@ Emitted when lenient parsing recovered a malformed envelope (e.g., JSON repair v
 }
 ```
 
-MAY because lenient parsing is a host-discretion recovery path; some hosts deliberately refuse to apply recovery (preferring to retry with stricter system-prompt guidance). The event surfaces *which* recovery path was applied without normating *whether* recovery is allowed.
+MAY because lenient parsing is a host-discretion recovery path; some hosts deliberately refuse to apply recovery (preferring to retry with stricter system-prompt guidance). The event surfaces _which_ recovery path was applied without normating _whether_ recovery is allowed.
 
 ### §C — Capability advertisement
 
@@ -317,14 +317,14 @@ Divergence of `totalAttempts` or `path` MUST emit `replay.diverged` with `diverg
 
 Hosts that emit the reliability events SHOULD also project them into the existing OTel attribute group on the corresponding span (same posture as RFC 0026 §C):
 
-| Event | OTel attribute group |
-|---|---|
-| `envelope.retry.attempted` | `openwop.envelope.retry.{attempt, reason}` |
-| `envelope.retry.exhausted` | `openwop.envelope.retry.{total_attempts, final_reason}` |
-| `envelope.refusal` | `openwop.envelope.refusal.{safety_category}` (refusalText omitted from OTel — see §G SECURITY) |
-| `envelope.truncated` | `openwop.envelope.truncated.{stop_reason, output_token_count}` |
-| `envelope.nlToFormat.engaged` | `openwop.envelope.nl_to_format.{fallback_calls}` |
-| `envelope.recovery.applied` | `openwop.envelope.recovery.{path, byte_offset}` |
+| Event                         | OTel attribute group                                                                           |
+| ----------------------------- | ---------------------------------------------------------------------------------------------- |
+| `envelope.retry.attempted`    | `openwop.envelope.retry.{attempt, reason}`                                                     |
+| `envelope.retry.exhausted`    | `openwop.envelope.retry.{total_attempts, final_reason}`                                        |
+| `envelope.refusal`            | `openwop.envelope.refusal.{safety_category}` (refusalText omitted from OTel — see §G SECURITY) |
+| `envelope.truncated`          | `openwop.envelope.truncated.{stop_reason, output_token_count}`                                 |
+| `envelope.nlToFormat.engaged` | `openwop.envelope.nl_to_format.{fallback_calls}`                                               |
+| `envelope.recovery.applied`   | `openwop.envelope.recovery.{path, byte_offset}`                                                |
 
 The event log is the load-bearing surface (for replay determinism + subscribers); OTel is supplementary.
 
@@ -332,7 +332,7 @@ The event log is the load-bearing surface (for replay determinism + subscribers)
 
 `ai-envelope.md` §"Production flow" describes the validation pipeline. The reliability events emit at specific points in that flow:
 
-```
+```text
 Parser → extract envelope document
   │
   ├── parse failure
@@ -396,7 +396,7 @@ Two new entries in `SECURITY/invariants.yaml`. Gate timing matches RFC 0027 §G 
 - Existing optional fields: unchanged.
 - Existing event types: shape unchanged (`envelope.*` are NEW enum entries; existing types' schemas are untouched).
 - Existing endpoints: contract unchanged.
-- Existing MUST requirements: **clarified, not relaxed.** §A clarifies the scope of the FINAL-v1.1 `ai-envelope.md` line-448 MUST NOT. Per `COMPATIBILITY.md §4` row "New normative requirement on a previously-undefined behavior" — the *scope* of "envelope-specific events" was previously undefined; this RFC defines it without relaxing the per-kind prohibition. Per-kind events remain forbidden after this RFC; the new vocabulary is exclusively cross-kind operational.
+- Existing MUST requirements: **clarified, not relaxed.** §A clarifies the scope of the FINAL-v1.1 `ai-envelope.md` line-448 MUST NOT. Per `COMPATIBILITY.md §4` row "New normative requirement on a previously-undefined behavior" — the _scope_ of "envelope-specific events" was previously undefined; this RFC defines it without relaxing the per-kind prohibition. Per-kind events remain forbidden after this RFC; the new vocabulary is exclusively cross-kind operational.
 - Existing error codes: unchanged.
 
 Hosts that don't advertise `capabilities.envelopes.reliability.supported: true` see no behavioral change; the new event types appear in the enum but the host doesn't emit them. Consumers iterating events by type-string handle unknown types gracefully (existing forward-compat per `run-event.schema.json` line 64).
@@ -487,10 +487,10 @@ Promotion from `Active` → `Accepted`:
 - `spec/v1/observability.md` — OTel attribute group conventions this RFC extends.
 - `SECURITY/threat-model-prompt-injection.md` — informs `envelope.refusal.refusalText` redaction discipline.
 - `SECURITY/threat-model-secret-leakage.md` SR-1 — redaction harness this RFC's invariants plug into.
-- Tam et al., "Let Me Speak Freely?" — https://arxiv.org/pdf/2408.02442 (mitigation strategy for `envelope.nlToFormat.engaged`).
-- Instructor (retry-on-validation-error loop pattern) — https://github.com/jxnl/instructor
-- Pydantic AI retry semantics — https://pydantic.dev/docs/ai/core-concepts/output/
-- jsonrepair (JavaScript) — https://github.com/josdejong/jsonrepair (`envelope.recovery.applied.path: "jsonrepair"`)
+- Tam et al., "Let Me Speak Freely?" — <https://arxiv.org/pdf/2408.02442> (mitigation strategy for `envelope.nlToFormat.engaged`).
+- Instructor (retry-on-validation-error loop pattern) — <https://github.com/jxnl/instructor>
+- Pydantic AI retry semantics — <https://pydantic.dev/docs/ai/core-concepts/output/>
+- jsonrepair (JavaScript) — <https://github.com/josdejong/jsonrepair> (`envelope.recovery.applied.path: "jsonrepair"`)
 
 ## Status history
 
@@ -523,7 +523,7 @@ Promoted under the bootstrap-phase steward waiver per the RFC 0021–0031 preced
 Evidence at promotion:
 
 - **Spec text:**
-  - `spec/v1/ai-envelope.md` line-448 prose CLARIFIED per §A. The original FINAL-v1.1 text was: *"Hosts MUST NOT extend the `RunEventType` enum to add envelope-specific events; the envelope's identity rides on `causationId`, not on a parallel event-type surface."* The clarified text scopes "envelope-specific events" to **per-envelope-kind routing events** (one event mirroring each envelope kind, creating a parallel routing surface) — those remain FORBIDDEN. **Cross-kind operational events** (retry, refusal, truncation, capability substitution, prompt composition, provider usage) are PERMITTED via RFC. Lists the consuming RFCs (0026, 0027, 0029, 0031, 0032) so the precedent is permanent and future RFCs that extend `RunEventType` for operational concerns don't get blocked. Classified as `additive` per `COMPATIBILITY.md §4` row "New normative requirement on a previously-undefined behavior" (the *scope* of "envelope-specific" was previously undefined; this RFC defines it). NOT a MUST relaxation — per-kind events remain forbidden.
+  - `spec/v1/ai-envelope.md` line-448 prose CLARIFIED per §A. The original FINAL-v1.1 text was: _"Hosts MUST NOT extend the `RunEventType` enum to add envelope-specific events; the envelope's identity rides on `causationId`, not on a parallel event-type surface."_ The clarified text scopes "envelope-specific events" to **per-envelope-kind routing events** (one event mirroring each envelope kind, creating a parallel routing surface) — those remain FORBIDDEN. **Cross-kind operational events** (retry, refusal, truncation, capability substitution, prompt composition, provider usage) are PERMITTED via RFC. Lists the consuming RFCs (0026, 0027, 0029, 0031, 0032) so the precedent is permanent and future RFCs that extend `RunEventType` for operational concerns don't get blocked. Classified as `additive` per `COMPATIBILITY.md §4` row "New normative requirement on a previously-undefined behavior" (the _scope_ of "envelope-specific" was previously undefined; this RFC defines it). NOT a MUST relaxation — per-kind events remain forbidden.
   - `spec/v1/ai-envelope.md` extended with §"Envelope-reliability events" between §"Run event log integration" and §"Wire serialization". Documents the six events + tier (MUST/SHOULD/MAY) per §B; capability-handshake example; `reason` enum extensibility (closed enum + `x-host-*` pattern); trust-boundary + redaction discipline; replay determinism (which fields replay identically, which MAY differ); OTel projection summary cross-referencing `observability.md`.
   - `spec/v1/observability.md` extended with §"Envelope-reliability events (RFC 0032)" between §"Provider usage events (RFC 0026)" and §"Open spec gaps". Documents the OTel attribute mapping per event; the `envelope.refusal.refusalText` exclusion from OTel by default (private side channel — operators plumb through their own pipeline); the two SECURITY invariants (`envelope-refusal-no-prompt-leak`, `envelope-recovery-no-content-leak`) with their gate timing. Bonus: extended with §"Envelope-completion retry routing (RFC 0033)" recording RFC 0033's truncation-vs-schema-violation distinction for cross-reference.
 - **Schemas additive (no MUST relaxed; line-448 prose clarified, not relaxed):**

@@ -1,12 +1,12 @@
-# openwop Spec v1 — Agent Workspace (`host.workspace`)
+# OpenWOP Spec v1 — Agent Workspace (`host.workspace`)
 
-> **Status: Draft v1.x (2026-05-25).** Normative spec for the RFC 0059 `host.workspace` capability — a versioned, atomic, tenant·workspace-scoped file store for an agent's persistent *ground-truth* artifacts (identity / directives / memory-index), loaded as a read snapshot at run start. Complements the transactional `MemoryAdapter` (RFC 0004) with a durable, path-addressable file layer. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Draft v1.x (2026-05-25).** Normative spec for the RFC 0059 `host.workspace` capability — a versioned, atomic, tenant·workspace-scoped file store for an agent's persistent _ground-truth_ artifacts (identity / directives / memory-index), loaded as a read snapshot at run start. Complements the transactional `MemoryAdapter` (RFC 0004) with a durable, path-addressable file layer. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ## Why this exists
 
-Autonomous agents keep persistent *ground-truth* files — `IDENTITY.md`, standing `DIRECTIVES.md`, a `MEMORY-INDEX.json` — that are loaded at the start of every session and treated as authoritative. openwop's `MemoryAdapter` (RFC 0004) is a transactional, append-mostly entry store: entries are unaddressable by path, untyped, and have no atomic-replace or optimistic-concurrency contract. An operator who needs to *edit* `DIRECTIVES.md` between runs the way they edit a file has no protocol surface for it; `configurable` is run-scoped, not durable.
+Autonomous agents keep persistent _ground-truth_ files — `IDENTITY.md`, standing `DIRECTIVES.md`, a `MEMORY-INDEX.json` — that are loaded at the start of every session and treated as authoritative. openwop's `MemoryAdapter` (RFC 0004) is a transactional, append-mostly entry store: entries are unaddressable by path, untyped, and have no atomic-replace or optimistic-concurrency contract. An operator who needs to _edit_ `DIRECTIVES.md` between runs the way they edit a file has no protocol surface for it; `configurable` is run-scoped, not durable.
 
-`host.workspace` adds that surface as an additive, capability-gated file layer: a `{tenant, workspace}`-scoped (RFC 0048) store with atomic, optimistically-concurrent writes (`If-Match` ETag), a content-free `workspace.updated` attribution event (reusing the RFC 0057 pattern), and a **read snapshot** exposed to every run at `run.started`. It expands openwop's architecture by adding a *durable file layer* alongside the *transactional memory layer*, without coupling the two. "What file does the agent treat as authoritative, and what version of it did this run see" is a cross-host portability and replay-determinism guarantee — a run replayed on another host MUST observe the same workspace snapshot — not an implementation detail, which is why it belongs in the spec.
+`host.workspace` adds that surface as an additive, capability-gated file layer: a `{tenant, workspace}`-scoped (RFC 0048) store with atomic, optimistically-concurrent writes (`If-Match` ETag), a content-free `workspace.updated` attribution event (reusing the RFC 0057 pattern), and a **read snapshot** exposed to every run at `run.started`. It expands openwop's architecture by adding a _durable file layer_ alongside the _transactional memory layer_, without coupling the two. "What file does the agent treat as authoritative, and what version of it did this run see" is a cross-host portability and replay-determinism guarantee — a run replayed on another host MUST observe the same workspace snapshot — not an implementation detail, which is why it belongs in the spec.
 
 This document specifies the §C endpoints, the §D run-snapshot exposure, and the §E invariants. The capability advertisement is `capabilities.workspace` (`capabilities.schema.json`); the file shape is `workspace-file.schema.json`; the event is `workspace.updated` (`run-event-payloads.schema.json#$defs.workspaceUpdated`).
 
@@ -38,12 +38,12 @@ A workspace file (`workspace-file.schema.json`) is `{ path, content, contentType
 
 All endpoints are gated on `capabilities.workspace.supported: true` and scoped to the caller's `{tenant, workspace}` (RFC 0048). Full request/response shapes live in `api/openapi.yaml`.
 
-| Method · path | Behavior |
-|---|---|
-| `GET /v1/host/workspace/files` | List file metadata (no bodies) for the caller's `{tenant, workspace}`. Optional `?prefix=` filters the flat `path` namespace. |
-| `GET /v1/host/workspace/files/{path}` | Return one `WorkspaceFile`. `404 not_found` when absent. When `versioned: true`, `?version=N` returns the historical snapshot. |
-| `PUT /v1/host/workspace/files/{path}` | Atomic create/replace. MUST honor `If-Match: <etag>`; on mismatch the host MUST return `409 workspace_conflict` (with `details.currentVersion`). On success the host MUST bump `version`, recompute `etag`, and emit `workspace.updated`. `content` beyond `maxFileBytes` MUST return `workspace_too_large`. |
-| `DELETE /v1/host/workspace/files/{path}` | Remove the file (and, when `versioned: true`, write a tombstone). Emits `workspace.updated` on success. |
+| Method · path                            | Behavior                                                                                                                                                                                                                                                                                                     |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /v1/host/workspace/files`           | List file metadata (no bodies) for the caller's `{tenant, workspace}`. Optional `?prefix=` filters the flat `path` namespace.                                                                                                                                                                                |
+| `GET /v1/host/workspace/files/{path}`    | Return one `WorkspaceFile`. `404 not_found` when absent. When `versioned: true`, `?version=N` returns the historical snapshot.                                                                                                                                                                               |
+| `PUT /v1/host/workspace/files/{path}`    | Atomic create/replace. MUST honor `If-Match: <etag>`; on mismatch the host MUST return `409 workspace_conflict` (with `details.currentVersion`). On success the host MUST bump `version`, recompute `etag`, and emit `workspace.updated`. `content` beyond `maxFileBytes` MUST return `workspace_too_large`. |
+| `DELETE /v1/host/workspace/files/{path}` | Remove the file (and, when `versioned: true`, write a tombstone). Emits `workspace.updated` on success.                                                                                                                                                                                                      |
 
 A write MUST be **atomic** — a concurrent reader MUST observe either the prior or the new content, never a partial. When `versioned: true`, retaining the latest version is the MUST; historical versions are retained best-effort up to the advertised `maxVersions`, and `GET …/files/{path}?version=N` MUST return the historical snapshot for any version still retained.
 
@@ -84,13 +84,13 @@ Per the RFC 0059 Phase-0 ruling, the RFC 0062 distillation memory-index manifest
 
 ## Open spec gaps
 
-| Gap | Status |
-|---|---|
-| **Cross-host `path` / `etag` portability** | v1.x silent. A workspace minted on host A is NOT guaranteed re-resolvable on host B; `etag` is opaque and host-defined. A portable encoding MAY be normated later if implementer demand surfaces. |
-| **`WorkspaceAdapter` host-interface contract** | Deferred to `storage-adapters.md` at implementation (RFC 0059 §G5) — adapter authors are notified there once the reference wiring lands. |
-| **Version retention beyond `maxVersions`** | Latest is the MUST; history is best-effort. Hosts MAY purge versions beyond `maxVersions` at any time; a `?version=N` for a purged version returns `404 not_found`. |
-| **Per-file authorization within a workspace** | Silence intentional. WCT-1 is the only normative isolation surface; finer-grained RBAC within a `{tenant, workspace}` is host-internal (composes with RFC 0049 when present). |
-| **Directory / move / rename semantics** | Out of scope for v1 — the namespace is flat. A "rename" is a `PUT` of the new path plus a `DELETE` of the old. |
+| Gap                                                 | Status                                                                                                                                                                                                          |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Cross-host `path` / `etag` portability**          | v1.x silent. A workspace minted on host A is NOT guaranteed re-resolvable on host B; `etag` is opaque and host-defined. A portable encoding MAY be normated later if implementer demand surfaces.               |
+| **`WorkspaceAdapter` host-interface contract**      | Deferred to `storage-adapters.md` at implementation (RFC 0059 §G5) — adapter authors are notified there once the reference wiring lands.                                                                        |
+| **Version retention beyond `maxVersions`**          | Latest is the MUST; history is best-effort. Hosts MAY purge versions beyond `maxVersions` at any time; a `?version=N` for a purged version returns `404 not_found`.                                             |
+| **Per-file authorization within a workspace**       | Silence intentional. WCT-1 is the only normative isolation surface; finer-grained RBAC within a `{tenant, workspace}` is host-internal (composes with RFC 0049 when present).                                   |
+| **Directory / move / rename semantics**             | Out of scope for v1 — the namespace is flat. A "rename" is a `PUT` of the new path plus a `DELETE` of the old.                                                                                                  |
 | **SECURITY invariant + conformance behavior tests** | `workspace-cross-tenant-isolation` (WCT-1) + WSR-1 + CRUD/ETag/snapshot conformance land at the behavior milestone, not at this DRAFT. Shape-only conformance (`workspace-capability-shape.test.ts`) ships now. |
 
 ## References

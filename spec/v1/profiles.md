@@ -1,4 +1,4 @@
-# openwop Spec v1 — Compatibility Profiles
+# OpenWOP Spec v1 — Compatibility Profiles
 
 > **Status: Stable · v1.1 (2026-05-05; `openwop-fixtures` added 2026-05-07 via RFC 0003).** Profiles are an additive layer over v1 capabilities. They MUST be derivable from existing `/.well-known/openwop` fields without a wire-shape change. Graduated DRAFT → FINAL via RFC 0003. See `auth.md` for the status legend. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
@@ -28,6 +28,7 @@ Thirteen v1.x compatibility profiles. The catalog is closed: new compatibility p
 The minimum any conforming host MUST satisfy.
 
 **Requirements:**
+
 - `protocolVersion` is set to a `1.x.x` semver string.
 - `supportedEnvelopes` is an array (MAY be empty for engine-only hosts that don't expose LLM-emitting nodes).
 - `schemaVersions` is an object with non-negative integer values.
@@ -35,7 +36,7 @@ The minimum any conforming host MUST satisfy.
 
 **Predicate:**
 
-```
+```text
 openwop-core(c) :=
      typeof c.protocolVersion == 'string'
   && c.protocolVersion.startsWith('1.')
@@ -57,7 +58,7 @@ The host implements the interrupt/resume protocol per `interrupt.md`.
 
 **Predicate:**
 
-```
+```text
 openwop-interrupts(c) :=
      openwop-core(c)
   && c.supportedEnvelopes.includes('clarification.request')
@@ -75,7 +76,7 @@ The host accepts SSE streaming on the events endpoint per `stream-modes.md`.
 
 **Predicate:**
 
-```
+```text
 openwop-stream-sse(c) :=
      openwop-core(c)
   && (c.supportedTransports == null || c.supportedTransports.includes('rest'))
@@ -91,7 +92,7 @@ The host accepts polling on the events endpoint per `stream-modes.md` §"Polling
 
 **Predicate:** Same shape as `openwop-stream-sse` — runtime validated. Conformance scenarios in `stream-modes.test.ts` exercise polling.
 
-```
+```text
 openwop-stream-poll(c) :=
      openwop-core(c)
   && (c.supportedTransports == null || c.supportedTransports.includes('rest'))
@@ -107,7 +108,7 @@ The host implements credential resolution per `run-options.md` §"Credential ref
 
 **Predicate:**
 
-```
+```text
 openwop-secrets(c) :=
      openwop-core(c)
   && c.secrets != null
@@ -126,7 +127,7 @@ The host enforces AI provider policy modes per `capabilities.md` §`aiProviders.
 
 **Predicate:**
 
-```
+```text
 openwop-provider-policy(c) :=
      openwop-core(c)
   && c.aiProviders != null
@@ -146,7 +147,7 @@ The host implements `POST /v1/runs/{runId}:fork` per `replay.md`.
 
 **Predicate:**
 
-```
+```text
 openwop-replay-fork(c) :=
      openwop-core(c)
   && c.replay != null
@@ -165,7 +166,7 @@ The host advertises one or more conformance fixture workflows in the discovery p
 
 **Predicate:**
 
-```
+```text
 openwop-fixtures(c) :=
      openwop-core(c)
   && Array.isArray(c.fixtures)
@@ -185,7 +186,7 @@ The host serves a node-pack registry per `node-packs.md` §"Registry HTTP API."
 
 **Predicate (discovery-payload only — runtime check separate):**
 
-```
+```text
 openwop-node-packs-discovery(c) := openwop-core(c)
 ```
 
@@ -201,7 +202,7 @@ The host serves an authenticated capability view alongside the public unauthenti
 
 **Predicate (discovery-payload only — runtime check separate):**
 
-```
+```text
 openwop-discovery-auth-scoped(c) :=
     c.capabilities.discovery.authScoped.supported === true
   ∧ c.capabilities.discovery.authScoped.mode ∈ { 'same-endpoint', 'extension-endpoint', undefined }
@@ -219,7 +220,7 @@ The host implements the reconciled memory-capability model per `agent-memory.md`
 
 **Predicate (discovery-payload only):**
 
-```
+```text
 openwop-memory(c) :=
      openwop-core(c)
   && c.memory != null
@@ -241,7 +242,7 @@ The host implements the durable inbound-work contract per `trigger-bridge.md` (R
 
 **Predicate (discovery-payload only — runtime check separate):**
 
-```
+```text
 openwop-trigger-bridge(c) :=
      openwop-core(c)
   && c.triggerBridge != null && c.triggerBridge.supported === true
@@ -251,15 +252,15 @@ openwop-trigger-bridge(c) :=
        || (c.scheduling != null && c.scheduling.supported === true) )
 ```
 
-Capability families are document-root properties (RFC 0073), so the predicate reads `c.triggerBridge` / `c.deadLetter` / `c.queueBus` / `c.webhooks` / `c.scheduling`. The runtime conformance scenarios (`trigger-bridge-delivery.test.ts`, profile-gated) verify the state machine + dedup + causation behavior; the always-on `trigger-bridge-shape.test.ts` asserts the subscription record + the two content-free `trigger.*` payloads + the predicate derivation. Channels (Slack/email/SMS) stay vendor extensions (RFC 0083 §E) — only their *bridge* into a run is uniform.
+Capability families are document-root properties (RFC 0073), so the predicate reads `c.triggerBridge` / `c.deadLetter` / `c.queueBus` / `c.webhooks` / `c.scheduling`. The runtime conformance scenarios (`trigger-bridge-delivery.test.ts`, profile-gated) verify the state machine + dedup + causation behavior; the always-on `trigger-bridge-shape.test.ts` asserts the subscription record + the two content-free `trigger.*` payloads + the predicate derivation. Channels (Slack/email/SMS) stay vendor extensions (RFC 0083 §E) — only their _bridge_ into a run is uniform.
 
 ### `openwop-experimental`
 
-A host advertising at least one capability sub-block as a preview (RFC 0042). Unlike the other profiles, this one signals *instability*, not a feature set: clients that require stable-only contracts filter on its **negation**.
+A host advertising at least one capability sub-block as a preview (RFC 0042). Unlike the other profiles, this one signals _instability_, not a feature set: clients that require stable-only contracts filter on its **negation**.
 
 **Predicate:** any object-valued capability sub-block carries `tier: "experimental"` (with its required `experimentalUntil` sunset date, `capabilities.md` §"Capability stability tier").
 
-```
+```text
 openwop-experimental(c) :=
      ∃ sub-block b ∈ c.capabilities.* : b.tier === 'experimental'
 ```
@@ -272,7 +273,7 @@ Derived purely from the existing `tier` field — no new wire field. The profile
 
 The reference derivation for any conforming v1.x discovery payload `c` is:
 
-```
+```text
 profiles(c) := {
   'openwop-core'                       if openwop-core(c),
   'openwop-interrupts'                 if openwop-interrupts(c),
@@ -340,10 +341,10 @@ The derivation library is the single canonical implementation of profile members
 
 ## Open spec gaps
 
-| ID | Description |
-|---|---|
+| ID        | Description                                                                                                                                                                                                               |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | PROFILE-1 | Sub-profiles (`openwop-node-packs-readonly`, `openwop-node-packs-publish`) — deferred candidate. Derivable today from which scenarios pass; will be formalized via a successor RFC if a third-party host needs the split. |
-| PROFILE-2 | ✅ Closed in the v1.0 conformance baseline. Profile-gated scenarios use `describe.runIf(profile)`; the conformance runner exposes `--profile=<name>` to filter. |
+| PROFILE-2 | ✅ Closed in the v1.0 conformance baseline. Profile-gated scenarios use `describe.runIf(profile)`; the conformance runner exposes `--profile=<name>` to filter.                                                           |
 
 ---
 

@@ -6,16 +6,16 @@
 
 On a single verified conformance run, **8 RFCs promoted `Active → Accepted`** per [`../../RFCS/0001-rfc-process.md`](../../RFCS/0001-rfc-process.md) §"Promotion to Accepted" — the first time the non-steward-host validation gate fired for a whole cohort.
 
-| RFC | Capability advertised (live, curl-verified) | Conformance evidence | Status |
-|---|---|---|---|
-| **0045** connector manifest | pack `connector` block (typed actions + auth) | `connector-manifest-validity.test.ts` PASS | Accepted ✅ |
-| **0046** `host.credentials` | `capabilities.credentials.{supported,scopes,encryptionAtRest,sharing}` | `credential-payload-redaction.test.ts` via the `credentials/echo` seam | Accepted ✅ |
-| **0047** `host.oauth` | `capabilities.oauth.{supported,grants,providers}` | `oauth-connector-redaction.test.ts` via the `oauth/connector-echo` seam | Accepted ✅ |
-| **0048** identity triple | `RunSnapshot.owner` + `secrets.scopes` gains `workspace` | `cross-workspace-isolation.test.ts` via the `identity/*` seams | Accepted ✅ |
-| **0049** RBAC | `capabilities.authorization.{supported,failClosed,roles}` | `authorization-fail-closed.test.ts` via the `authorization/decide` seam | Accepted ✅ |
-| **0051** approval gate | `core.openwop.governance.approvalGate` + `approval.*` events | `approval-gate-flow.test.ts` via the `governance/approval-gate` seam | Accepted ✅ |
-| **0052** scheduling | `capabilities.scheduling.{supported,cron,delayed,calendar}` | `scheduling-cron-fires-once.test.ts` via the `scheduling/tick` seam | Accepted ✅ |
-| **0053** dead-letter | `capabilities.deadLetter.{supported,retentionDays}` + `run.dead_lettered` | `deadletter-retry-exhaustion.test.ts` via the `deadletter/exhaust` seam | Accepted ✅ |
+| RFC                         | Capability advertised (live, curl-verified)                               | Conformance evidence                                                    | Status      |
+| --------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ----------- |
+| **0045** connector manifest | pack `connector` block (typed actions + auth)                             | `connector-manifest-validity.test.ts` PASS                              | Accepted ✅ |
+| **0046** `host.credentials` | `capabilities.credentials.{supported,scopes,encryptionAtRest,sharing}`    | `credential-payload-redaction.test.ts` via the `credentials/echo` seam  | Accepted ✅ |
+| **0047** `host.oauth`       | `capabilities.oauth.{supported,grants,providers}`                         | `oauth-connector-redaction.test.ts` via the `oauth/connector-echo` seam | Accepted ✅ |
+| **0048** identity triple    | `RunSnapshot.owner` + `secrets.scopes` gains `workspace`                  | `cross-workspace-isolation.test.ts` via the `identity/*` seams          | Accepted ✅ |
+| **0049** RBAC               | `capabilities.authorization.{supported,failClosed,roles}`                 | `authorization-fail-closed.test.ts` via the `authorization/decide` seam | Accepted ✅ |
+| **0051** approval gate      | `core.openwop.governance.approvalGate` + `approval.*` events              | `approval-gate-flow.test.ts` via the `governance/approval-gate` seam    | Accepted ✅ |
+| **0052** scheduling         | `capabilities.scheduling.{supported,cron,delayed,calendar}`               | `scheduling-cron-fires-once.test.ts` via the `scheduling/tick` seam     | Accepted ✅ |
+| **0053** dead-letter        | `capabilities.deadLetter.{supported,retentionDays}` + `run.dead_lettered` | `deadletter-retry-exhaustion.test.ts` via the `deadletter/exhaust` seam | Accepted ✅ |
 
 ## Evidence (canonical copy in `INTEROP-MATRIX.md`)
 

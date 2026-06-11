@@ -1,4 +1,4 @@
-# openwop Spec v1 — Prompt Templates
+# OpenWOP Spec v1 — Prompt Templates
 
 > **Status: Draft v1.x (filed via [RFC 0027](../../RFCS/0027-prompt-templates.md), 2026-05-19; first cut 2026-05-20).** Lands the wire shape for portable, versioned, variable-bound prompts referenced by workflow nodes and agent manifests. Closes the gap where `core.ai.callPrompt` config (`workflow-chain-packs.md` line 69, `host-capabilities.md` line 347) and `AgentManifest.systemPrompt | systemPromptRef` (`agent-manifest.schema.json` lines 34–41) accept inline prompt bodies but offer no shared addressing, library distribution, variable schema, or observability of the composed result. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend. Fields marked **(stable)** lock; fields marked **(in-flight)** may shift compatibly within v1.x.
 
@@ -23,13 +23,13 @@ A **PromptTemplate** is openwop's canonical wire format for a named, versioned, 
 
 A PromptTemplate is **distinct from `AIEnvelope`** (`ai-envelope.md`) and **distinct from `RunEventDoc`** (`run-event.schema.json`):
 
-| Concern | `PromptTemplate` | `AIEnvelope` | `RunEventDoc` |
-|---|---|---|---|
-| Direction | **Authored** — host library, pack-distributed | **Inbound** — LLM → engine | **Outbound** — host → client |
-| Source of truth | Host library (built-in + installed packs + user) | Single emission, recorded as `RunEventDoc` | Append-only run event log |
-| Type discriminator | `kind` ∈ {system, user, few-shot, schema-hint} | Open-ended kind catalog, host-advertised | Fixed 51-variant enum, FINAL v1 |
-| Lifecycle | Authored once; resolved at every node execution | Validated → gated → routed → recorded | Immutable after `appendAtomic` |
-| Audience | Workflow editors, node dispatcher | Engine, node dispatcher | Clients, observability, replay |
+| Concern            | `PromptTemplate`                                 | `AIEnvelope`                               | `RunEventDoc`                   |
+| ------------------ | ------------------------------------------------ | ------------------------------------------ | ------------------------------- |
+| Direction          | **Authored** — host library, pack-distributed    | **Inbound** — LLM → engine                 | **Outbound** — host → client    |
+| Source of truth    | Host library (built-in + installed packs + user) | Single emission, recorded as `RunEventDoc` | Append-only run event log       |
+| Type discriminator | `kind` ∈ {system, user, few-shot, schema-hint}   | Open-ended kind catalog, host-advertised   | Fixed 51-variant enum, FINAL v1 |
+| Lifecycle          | Authored once; resolved at every node execution  | Validated → gated → routed → recorded      | Immutable after `appendAtomic`  |
+| Audience           | Workflow editors, node dispatcher                | Engine, node dispatcher                    | Clients, observability, replay  |
 
 In short: **PromptTemplates are what the host sends to the LLM. AIEnvelopes are what the LLM sends back. RunEventDocs are what the engine reports to clients.**
 
@@ -41,12 +41,12 @@ When a host composes a PromptTemplate for an LLM call (per the resolution chain 
 
 `schemas/prompt-kind.schema.json` (NEW) holds the shared `kind` enum referenced by every schema that names a prompt kind. The enum has four values:
 
-| Kind | Composed as | Notes |
-|---|---|---|
-| `system` | LLM system message | Carries behavior + output discipline. Composed once per call. |
-| `user` | LLM user message | The variable-substitution surface — per-call task content. |
-| `few-shot` | User-message prefix (or alternating user/assistant turns per host policy) | Example bodies. Hosts MAY support multiple `few-shot` templates per node via `additionalPromptRefs`. |
-| `schema-hint` | Injected into system or user message at compose time (per host policy) | Structured-output schema description (e.g., the JSON Schema the LLM is asked to populate). |
+| Kind          | Composed as                                                               | Notes                                                                                                |
+| ------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `system`      | LLM system message                                                        | Carries behavior + output discipline. Composed once per call.                                        |
+| `user`        | LLM user message                                                          | The variable-substitution surface — per-call task content.                                           |
+| `few-shot`    | User-message prefix (or alternating user/assistant turns per host policy) | Example bodies. Hosts MAY support multiple `few-shot` templates per node via `additionalPromptRefs`. |
+| `schema-hint` | Injected into system or user message at compose time (per host policy)    | Structured-output schema description (e.g., the JSON Schema the LLM is asked to populate).           |
 
 A node MAY reference one template of each kind via the `WorkflowNode.config.{systemPromptRef, userPromptRef, fewShotPromptRefs, schemaHintPromptRef}` convention — defined normatively in §"Resolution chain" Layer 1 below and in the `config` description of `schemas/workflow-definition.schema.json`.
 
@@ -122,7 +122,7 @@ A **PromptRef** is the reference type that workflow-node config and agent-manife
 
 **Stringy form** — canonical for inline use in `WorkflowNode.config`:
 
-```
+```text
 prompt:writer-system@1.0.0
 prompt:vendor.acme.writer.v2
 prompt:critic-system
@@ -168,14 +168,14 @@ A host advertises its prompt-resolution support via `capabilities.prompts` (per 
 
 Field semantics:
 
-| Field | Required | Semantics |
-|---|---|---|
-| `supported` | yes | RFC 0027 Phase A gate. When `true`, the host resolves PromptRef values on `WorkflowNode.config.{systemPromptRef, userPromptRef, additionalPromptRefs}` at node-execution time and emits `prompt.composed` events. When `false` or absent, those keys are treated as opaque strings and never composed. **Does NOT imply the `/v1/prompts*` REST surface is available** — see `endpointsSupported`. |
-| `endpointsSupported` | no | RFC 0028 Phase B gate. When `true`, the host serves the `/v1/prompts*` REST surface (at minimum the read endpoints). When `false` or absent, every `/v1/prompts*` request returns `501 capability_not_provided`. Independent of `supported`. |
-| `templateKinds` | no | Subset of `PromptKind` values the host accepts. Default: all four. |
-| `variableSources` | no | Subset of `PromptVariable.source` values supported. `secret` SHOULD only appear when `capabilities.secrets.supported: true`. |
-| `maxTemplateBytes` | no | Host cap on `text` length. MUST NOT exceed the schema cap (65536). |
-| `observability` | no | `off` / `hashed` / `full` — controls `prompt.composed` emission per §"Composition + observability" below. Default: `hashed`. |
+| Field                | Required | Semantics                                                                                                                                                                                                                                                                                                                                                                                          |
+| -------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supported`          | yes      | RFC 0027 Phase A gate. When `true`, the host resolves PromptRef values on `WorkflowNode.config.{systemPromptRef, userPromptRef, additionalPromptRefs}` at node-execution time and emits `prompt.composed` events. When `false` or absent, those keys are treated as opaque strings and never composed. **Does NOT imply the `/v1/prompts*` REST surface is available** — see `endpointsSupported`. |
+| `endpointsSupported` | no       | RFC 0028 Phase B gate. When `true`, the host serves the `/v1/prompts*` REST surface (at minimum the read endpoints). When `false` or absent, every `/v1/prompts*` request returns `501 capability_not_provided`. Independent of `supported`.                                                                                                                                                       |
+| `templateKinds`      | no       | Subset of `PromptKind` values the host accepts. Default: all four.                                                                                                                                                                                                                                                                                                                                 |
+| `variableSources`    | no       | Subset of `PromptVariable.source` values supported. `secret` SHOULD only appear when `capabilities.secrets.supported: true`.                                                                                                                                                                                                                                                                       |
+| `maxTemplateBytes`   | no       | Host cap on `text` length. MUST NOT exceed the schema cap (65536).                                                                                                                                                                                                                                                                                                                                 |
+| `observability`      | no       | `off` / `hashed` / `full` — controls `prompt.composed` emission per §"Composition + observability" below. Default: `hashed`.                                                                                                                                                                                                                                                                       |
 
 Phase B (RFC 0028) extends this block with `packsSupported` (pack-install path; requires `endpointsSupported: true` to be meaningful), `mutableLibrary` (write endpoints; requires `endpointsSupported: true`), and `library` (per-library knobs). Phase C (RFC 0029) extends it with `defaults` and `agentBindings`. This document covers Phase A; the Phase B fields are documented in §"Discovery & distribution" below.
 
@@ -224,11 +224,11 @@ Divergence of `hash` MUST emit a `replay.diverged` event with `divergencePoint: 
 
 OpenWOP distinguishes **three orthogonal observability surfaces** for LLM-call inspection. Multi-agent debugging tools render all three to reconstruct what an agent saw + thought + emitted:
 
-| Surface | What it captures | Source |
-|---|---|---|
-| `prompt.composed.systemPrompt` / `userPrompt` | The body **the host sent** to the LLM, post-substitution + post-redaction | This document |
-| `AIEnvelope.payload.reasoning` | Chain-of-thought **the LLM emitted as part of structured output** | RFC 0030 (parallel track, Draft) |
-| `agent.reasoning.delta` + `agent.reasoned` | The LLM's interleaved **thinking-tokens stream** | RFC 0024 (Accepted) |
+| Surface                                       | What it captures                                                          | Source                           |
+| --------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------- |
+| `prompt.composed.systemPrompt` / `userPrompt` | The body **the host sent** to the LLM, post-substitution + post-redaction | This document                    |
+| `AIEnvelope.payload.reasoning`                | Chain-of-thought **the LLM emitted as part of structured output**         | RFC 0030 (parallel track, Draft) |
+| `agent.reasoning.delta` + `agent.reasoned`    | The LLM's interleaved **thinking-tokens stream**                          | RFC 0024 (Accepted)              |
 
 None of these replaces the others. A complete multi-agent visualization renders all three streams in temporal order so an operator can see what the host instructed, what the model thought through, and what the model returned as structured output.
 
@@ -260,14 +260,14 @@ Phase B of the prompt-library track adds two complementary surfaces:
 
 Six operations under `/v1/prompts*`, all gated on `capabilities.prompts.endpointsSupported: true` (NOT `supported`; see §"Capability advertisement" above for the two-axis split — `supported` gates node-execution PromptRef resolution, `endpointsSupported` gates this REST surface). The mutating three (`POST` / `PUT` / `DELETE`) are additionally gated on `capabilities.prompts.mutableLibrary: true`. Hosts that don't advertise the relevant capability return `501 capability_not_provided`.
 
-| Method | Path | OperationId | Purpose |
-|---|---|---|---|
-| `GET` | `/v1/prompts` | `listPromptTemplates` | Paginated list with `?kind`, `?tag`, `?modelClass`, `?source` filters + opaque `cursor` + `limit`. |
-| `POST` | `/v1/prompts` | `createPromptTemplate` | Create a user-source template (mutable libraries only). Returns `201` with a `Location` header. |
-| `GET` | `/v1/prompts/{templateId}` | `getPromptTemplate` | Fetch a single template, optionally pinned via `?version`. `ETag` + `If-None-Match` revalidation. `?libraryId` disambiguates when packs collide. |
-| `PUT` | `/v1/prompts/{templateId}` | `updatePromptTemplate` | Replace a user-source template; submitted SemVer MUST be strictly greater than stored. |
-| `DELETE` | `/v1/prompts/{templateId}` | `deletePromptTemplate` | Delete a user-source template; `403` on host-built-in or pack-sourced. |
-| `POST` | `/v1/prompts:render` | `renderPromptTemplate` | Render with supplied bindings; returns composed body + sha256 hash + per-variable hashes. Does NOT dispatch an LLM call. |
+| Method   | Path                       | OperationId            | Purpose                                                                                                                                          |
+| -------- | -------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET`    | `/v1/prompts`              | `listPromptTemplates`  | Paginated list with `?kind`, `?tag`, `?modelClass`, `?source` filters + opaque `cursor` + `limit`.                                               |
+| `POST`   | `/v1/prompts`              | `createPromptTemplate` | Create a user-source template (mutable libraries only). Returns `201` with a `Location` header.                                                  |
+| `GET`    | `/v1/prompts/{templateId}` | `getPromptTemplate`    | Fetch a single template, optionally pinned via `?version`. `ETag` + `If-None-Match` revalidation. `?libraryId` disambiguates when packs collide. |
+| `PUT`    | `/v1/prompts/{templateId}` | `updatePromptTemplate` | Replace a user-source template; submitted SemVer MUST be strictly greater than stored.                                                           |
+| `DELETE` | `/v1/prompts/{templateId}` | `deletePromptTemplate` | Delete a user-source template; `403` on host-built-in or pack-sourced.                                                                           |
+| `POST`   | `/v1/prompts:render`       | `renderPromptTemplate` | Render with supplied bindings; returns composed body + sha256 hash + per-variable hashes. Does NOT dispatch an LLM call.                         |
 
 **Deterministic-render invariant.** The `:render` response's `hash` MUST equal the `hash` that a matching `prompt.composed` event would carry at dispatch time for the same `(ref, variables, contentTrust)` inputs. This is the same determinism contract `prompt.composed` participates in for replay (per §"Replay determinism" above) — the `:render` endpoint is the preview surface that lets clients validate hashes before dispatch.
 
@@ -327,10 +327,10 @@ See `schemas/prompt-pack-manifest.schema.json` for the full shape.
 
 Phase B extends `capabilities.prompts` with three additional optional fields:
 
-| Field | Semantics |
-|---|---|
-| `packsSupported: boolean` | Host installs `kind: "prompt"` packs and exposes their templates at `GET /v1/prompts` with `meta.source: "pack"`. False or absent = no pack support. |
-| `mutableLibrary: boolean` | Host honors `POST` / `PUT` / `DELETE /v1/prompts*`. False or absent → 501 on those endpoints. Pack-sourced + host-built-in templates remain read-only regardless. |
+| Field                                                 | Semantics                                                                                                                                                                                                          |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `packsSupported: boolean`                             | Host installs `kind: "prompt"` packs and exposes their templates at `GET /v1/prompts` with `meta.source: "pack"`. False or absent = no pack support.                                                               |
+| `mutableLibrary: boolean`                             | Host honors `POST` / `PUT` / `DELETE /v1/prompts*`. False or absent → 501 on those endpoints. Pack-sourced + host-built-in templates remain read-only regardless.                                                  |
 | `library.{id, renderEndpoint, maxRenderRequestBytes}` | Per-library configuration knobs. `id` enables structured-PromptRef `libraryId` lookup. `renderEndpoint` overrides the default `/v1/prompts:render` path. `maxRenderRequestBytes` caps `:render` request body size. |
 
 ### Provenance fields on `PromptTemplate.meta`
@@ -354,14 +354,14 @@ For every `(nodeId, kind)` pair the host attempts to resolve, the host MUST emit
 
 The host first consults the executing `WorkflowNode.config`:
 
-| Kind | Field consulted |
-|---|---|
-| `system` | `WorkflowNode.config.systemPromptRef` |
-| `user` | `WorkflowNode.config.userPromptRef` |
-| `few-shot` | `WorkflowNode.config.fewShotPromptRefs[]` (first non-empty entry; further entries surface as `additionalPromptRefs` for composition) |
-| `schema-hint` | `WorkflowNode.config.schemaHintPromptRef` |
+| Kind          | Field consulted                                                                                                                      |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `system`      | `WorkflowNode.config.systemPromptRef`                                                                                                |
+| `user`        | `WorkflowNode.config.userPromptRef`                                                                                                  |
+| `few-shot`    | `WorkflowNode.config.fewShotPromptRefs[]` (first non-empty entry; further entries surface as `additionalPromptRefs` for composition) |
+| `schema-hint` | `WorkflowNode.config.schemaHintPromptRef`                                                                                            |
 
-If the field is set, the resolved ref is that value and resolution halts. When the node carries an *inline* string body in the corresponding sibling field (e.g., `config.systemPrompt`) AND a `PromptRef`, the ref wins and the warn-log rule from RFC 0027 §C applies (`prompt_ref_supersedes_inline`).
+If the field is set, the resolved ref is that value and resolution halts. When the node carries an _inline_ string body in the corresponding sibling field (e.g., `config.systemPrompt`) AND a `PromptRef`, the ref wins and the warn-log rule from RFC 0027 §C applies (`prompt_ref_supersedes_inline`).
 
 ### Layer 2 — Agent binding
 
@@ -391,7 +391,7 @@ If all four layers yield `null`, the resolved ref for that `(nodeId, kind)` is `
 
 ### Run-configurable extension layer (optional, non-normative)
 
-Hosts MAY honor `RunOptions.configurable.promptOverrides` as the **highest-precedence layer** — applied *before* layer 1 in the traversal, taking precedence over node-config refs. When a host implements this extension, it MUST emit a chain entry with `layer: "run-configurable"` ahead of the `node` entry so cross-host debuggers render the additional step. This extension is non-normative in v1.x; a future RFC may promote it to a normative layer.
+Hosts MAY honor `RunOptions.configurable.promptOverrides` as the **highest-precedence layer** — applied _before_ layer 1 in the traversal, taking precedence over node-config refs. When a host implements this extension, it MUST emit a chain entry with `layer: "run-configurable"` ahead of the `node` entry so cross-host debuggers render the additional step. This extension is non-normative in v1.x; a future RFC may promote it to a normative layer.
 
 ### Replay determinism
 
@@ -403,7 +403,7 @@ Hosts MAY honor `RunOptions.configurable.promptOverrides` as the **highest-prece
 
 ### Orthogonality with model-capability gating (non-normative)
 
-Per the envelope-track RFC 0031 (Draft), `NodeModule.requiredModelCapabilities` and `NodeModule.fallbackModel` answer a different question — *which model can dispatch this node?* — and emit `model.capability.substituted` / `model.capability.insufficient` events. The two surfaces are orthogonal axes:
+Per the envelope-track RFC 0031 (Draft), `NodeModule.requiredModelCapabilities` and `NodeModule.fallbackModel` answer a different question — _which model can dispatch this node?_ — and emit `model.capability.substituted` / `model.capability.insufficient` events. The two surfaces are orthogonal axes:
 
 - **Prompt resolution (this section)** answers "which PromptRef applies at `(nodeId, kind)`?" — does not influence model selection.
 - **Model-capability gating (RFC 0031)** answers "which model can dispatch this node?" — does not influence prompt selection.
@@ -414,16 +414,16 @@ A node MAY carry both surfaces independently. The `agent.promptResolved` event e
 
 ## Open spec gaps
 
-| # | Gap | Owner / RFC |
-|---|---|---|
-| P1 | Reference-host implementation of the four-layer resolution chain + `agent.promptResolved` emission in `core.ai.callPrompt` | Acceptance-gate item per RFC 0029 (wire shape landed in this document §"Resolution chain (normative)") |
-| P2 | Reference-host emission of `prompt.composed` from `core.ai.callPrompt` in the workflow-engine sample | Acceptance-gate item per RFC 0027 |
-| P3 | First non-steward host advertises `capabilities.prompts.supported: true` | Acceptance-gate item per RFC 0027 |
-| P4 | Reference-host implementation of `/v1/prompts*` REST endpoints + prompt-pack install flow | Acceptance-gate item per RFC 0028 |
-| P5 | Nested template includes (`{{include:prompt:other@1.0.0}}`) — deferred to a future RFC if demand emerges | (open) |
-| P6 | Canonical enumeration of `context` source variable names — currently non-normative recommendations | (open) |
-| P7 | Cross-validation of `modelHints.envelopeType` against `capabilities.supportedEnvelopes` and the Tier-1 portability subset (RFC 0030) | RFC 0030 (Draft, parallel track) |
-| P8 | Cross-pack `dependencies` semantics — `extends:` template inheritance, transitive closure resolution | RFC follow-up to 0028 (deferred) |
+| #   | Gap                                                                                                                                  | Owner / RFC                                                                                            |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| P1  | Reference-host implementation of the four-layer resolution chain + `agent.promptResolved` emission in `core.ai.callPrompt`           | Acceptance-gate item per RFC 0029 (wire shape landed in this document §"Resolution chain (normative)") |
+| P2  | Reference-host emission of `prompt.composed` from `core.ai.callPrompt` in the workflow-engine sample                                 | Acceptance-gate item per RFC 0027                                                                      |
+| P3  | First non-steward host advertises `capabilities.prompts.supported: true`                                                             | Acceptance-gate item per RFC 0027                                                                      |
+| P4  | Reference-host implementation of `/v1/prompts*` REST endpoints + prompt-pack install flow                                            | Acceptance-gate item per RFC 0028                                                                      |
+| P5  | Nested template includes (`{{include:prompt:other@1.0.0}}`) — deferred to a future RFC if demand emerges                             | (open)                                                                                                 |
+| P6  | Canonical enumeration of `context` source variable names — currently non-normative recommendations                                   | (open)                                                                                                 |
+| P7  | Cross-validation of `modelHints.envelopeType` against `capabilities.supportedEnvelopes` and the Tier-1 portability subset (RFC 0030) | RFC 0030 (Draft, parallel track)                                                                       |
+| P8  | Cross-pack `dependencies` semantics — `extends:` template inheritance, transitive closure resolution                                 | RFC follow-up to 0028 (deferred)                                                                       |
 
 ---
 

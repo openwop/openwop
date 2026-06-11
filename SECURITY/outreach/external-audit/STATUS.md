@@ -10,13 +10,13 @@
 
 ## Per-vendor status
 
-| Vendor | Outreach sent | First reply received | Quote received | Range (USD) | Window | Decision | Final status |
-|---|---|---|---|---|---|---|---|
-| Trail of Bits | — | — | — | — | — | — | Pending |
-| NCC Group | — | — | — | — | — | — | Pending |
-| Doyensec | — | — | — | — | — | — | Pending |
-| Cure53 | — | — | — | — | — | — | Pending |
-| Latacora | — | — | — | — | — | — | Pending |
+| Vendor        | Outreach sent | First reply received | Quote received | Range (USD) | Window | Decision | Final status |
+| ------------- | ------------- | -------------------- | -------------- | ----------- | ------ | -------- | ------------ |
+| Trail of Bits | —             | —                    | —              | —           | —      | —        | Pending      |
+| NCC Group     | —             | —                    | —              | —           | —      | —        | Pending      |
+| Doyensec      | —             | —                    | —              | —           | —      | —        | Pending      |
+| Cure53        | —             | —                    | —              | —           | —      | —        | Pending      |
+| Latacora      | —             | —                    | —              | —           | —      | —        | Pending      |
 
 Decision values: `selected` / `declined-by-us` / `declined-by-vendor` / `no-response`.
 
@@ -33,6 +33,7 @@ When a reply comes in: fill in `First reply received`, `Quote received`, `Range`
 ## Selection workflow
 
 Per `SECURITY/external-audit-engagement.md` §4 selection weighting:
+
 - Track record on protocol-level reviews: 40%
 - LLM/workflow/agent-adjacent experience: 25%
 - Schedule fit: 15%

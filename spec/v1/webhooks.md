@@ -1,4 +1,4 @@
-# openwop Spec v1 — Webhook Subscriptions
+# OpenWOP Spec v1 — Webhook Subscriptions
 
 > **Status: Stable · v1.1 (2026-04-29).** Comprehensive coverage of subscription registration, payload signing, replay-attack protection, delivery semantics, and best-effort guarantees. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
@@ -14,10 +14,10 @@ openwop defines a subscription-style webhook surface: clients register a URL + e
 
 ## Endpoints
 
-| Method | Path | Purpose |
-|---|---|---|
-| `POST` | `/v1/webhooks` | Register a new subscription |
-| `DELETE` | `/v1/webhooks/{webhookId}` | Unregister a subscription |
+| Method   | Path                       | Purpose                     |
+| -------- | -------------------------- | --------------------------- |
+| `POST`   | `/v1/webhooks`             | Register a new subscription |
+| `DELETE` | `/v1/webhooks/{webhookId}` | Unregister a subscription   |
 
 Authentication: same as the rest of the canonical surface (`auth.md`). The caller MUST be a member of the tenant the subscription will live under.
 
@@ -36,12 +36,12 @@ Authentication: same as the rest of the canonical surface (`auth.md`). The calle
 }
 ```
 
-| Field | Type | Required | Notes |
-|---|---|---|---|
-| `url` | URI | yes | MUST be `https://`. The server SSRF-validates against private-IP / metadata-server ranges (see §Security below). |
-| `events` | string[] | yes | One or more `RunEventType` values. Empty array → 400. |
-| `tenantId` | string | yes | Workspace under which the subscription lives. Caller MUST be a member. |
-| `tags` | string[] | no | When set, only runs whose `RunOptions.tags` overlap deliver to this subscription. |
+| Field      | Type     | Required | Notes                                                                                                            |
+| ---------- | -------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
+| `url`      | URI      | yes      | MUST be `https://`. The server SSRF-validates against private-IP / metadata-server ranges (see §Security below). |
+| `events`   | string[] | yes      | One or more `RunEventType` values. Empty array → 400.                                                            |
+| `tenantId` | string   | yes      | Workspace under which the subscription lives. Caller MUST be a member.                                           |
+| `tags`     | string[] | no       | When set, only runs whose `RunOptions.tags` overlap deliver to this subscription.                                |
 
 **Response:**
 
@@ -59,7 +59,7 @@ The fingerprint is the first 8 hex characters of `sha256(secret)`. Logs referenc
 
 ### Unregister
 
-```
+```http
 DELETE /v1/webhooks/{webhookId}?tenantId=workspace-123
 ```
 
@@ -73,15 +73,15 @@ DELETE /v1/webhooks/{webhookId}?tenantId=workspace-123
 
 Every delivery carries these request headers in addition to the body:
 
-| Header | Value | Purpose |
-|---|---|---|
-| `Content-Type` | `application/json` | |
-| `User-Agent` | `openwop-webhook-dispatcher/{version}` | Identifies the openwop server software |
-| `X-openwop-Webhook-Id` | `{webhookId}` | The recipient subscription's id |
-| `X-openwop-Event-Type` | `{eventType}` | One of `RunEventType` |
-| `X-openwop-Timestamp` | Unix-seconds integer | When the dispatcher signed the body |
-| `X-openwop-Signature` | `sha256={hex}` | HMAC over `{X-openwop-Timestamp}.{rawBody}` |
-| `X-openwop-Signature-Algorithm` | `v1` (default) | Signature scheme version. Hosts adopting this surface MUST set the header; older hosts that omit it expect subscribers to treat absence as equivalent to `v1`. |
+| Header                          | Value                                  | Purpose                                                                                                                                                        |
+| ------------------------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Content-Type`                  | `application/json`                     |                                                                                                                                                                |
+| `User-Agent`                    | `openwop-webhook-dispatcher/{version}` | Identifies the openwop server software                                                                                                                         |
+| `X-openwop-Webhook-Id`          | `{webhookId}`                          | The recipient subscription's id                                                                                                                                |
+| `X-openwop-Event-Type`          | `{eventType}`                          | One of `RunEventType`                                                                                                                                          |
+| `X-openwop-Timestamp`           | Unix-seconds integer                   | When the dispatcher signed the body                                                                                                                            |
+| `X-openwop-Signature`           | `sha256={hex}`                         | HMAC over `{X-openwop-Timestamp}.{rawBody}`                                                                                                                    |
+| `X-openwop-Signature-Algorithm` | `v1` (default)                         | Signature scheme version. Hosts adopting this surface MUST set the header; older hosts that omit it expect subscribers to treat absence as equivalent to `v1`. |
 
 ### Body
 
@@ -141,11 +141,11 @@ The v1 baseline does not require durable retries. Durable retries (queue + sched
 
 The dispatcher tracks consecutive-failure counts per subscription:
 
-| Threshold | Action |
-|---|---|
-| 4 consecutive failures | Circuit opens; deliveries skipped for 1 hour |
-| 1 hour cooldown elapses | Circuit transitions to half-open; next event probes |
-| Probe succeeds | Circuit closes; normal delivery resumes |
+| Threshold                                      | Action                                                      |
+| ---------------------------------------------- | ----------------------------------------------------------- |
+| 4 consecutive failures                         | Circuit opens; deliveries skipped for 1 hour                |
+| 1 hour cooldown elapses                        | Circuit transitions to half-open; next event probes         |
+| Probe succeeds                                 | Circuit closes; normal delivery resumes                     |
 | 100 total failures within 7-day rolling window | Subscription marked `failed`; manual re-activation required |
 
 Operators can re-activate failed subscriptions by re-running `POST /v1/webhooks` with the same URL — registering creates a fresh subscription doc with a fresh secret.

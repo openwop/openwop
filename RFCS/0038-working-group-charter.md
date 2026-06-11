@@ -1,17 +1,17 @@
 # RFC 0038: OpenWOP Working Group charter
 
-| Field | Value |
-|---|---|
-| **RFC** | 0038 |
-| **Title** | OpenWOP Working Group charter |
-| **Status** | `Draft` (**Parked**) |
-| **Author(s)** | David Tufts (@davidscotttufts) |
-| **Created** | 2026-05-21 |
-| **Updated** | 2026-06-11 — **Parked** (per `RFCS/README.md` §"Parked Drafts"): deliberately idle pending the `GOVERNANCE.md` §"Path to working group" tripwires (≥3 independent-org maintainers + ≥2 non-steward conformant hosts); not abandoned. The charter is authored so ratification is mechanical the moment the tripwire fires. 2026-05-21 — filed `Draft`. |
-| **Affects** | `GOVERNANCE.md` (replaces lead-maintainer-tiebreaker section with steering-committee-vote rule) · `MAINTAINERS.md` (working-group succession addendum) · NEW `docs/working-group/` directory (charter doc + bylaws) · CHANGELOG |
-| **Compatibility** | `additive` (governance — does not affect any wire shape) |
-| **Supersedes** | — |
-| **Superseded by** | — |
+| Field             | Value                                                                                                                                                                                                                                                                                                                                                 |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RFC**           | 0038                                                                                                                                                                                                                                                                                                                                                  |
+| **Title**         | OpenWOP Working Group charter                                                                                                                                                                                                                                                                                                                         |
+| **Status**        | `Draft` (**Parked**)                                                                                                                                                                                                                                                                                                                                  |
+| **Author(s)**     | David Tufts (@davidscotttufts)                                                                                                                                                                                                                                                                                                                        |
+| **Created**       | 2026-05-21                                                                                                                                                                                                                                                                                                                                            |
+| **Updated**       | 2026-06-11 — **Parked** (per `RFCS/README.md` §"Parked Drafts"): deliberately idle pending the `GOVERNANCE.md` §"Path to working group" tripwires (≥3 independent-org maintainers + ≥2 non-steward conformant hosts); not abandoned. The charter is authored so ratification is mechanical the moment the tripwire fires. 2026-05-21 — filed `Draft`. |
+| **Affects**       | `GOVERNANCE.md` (replaces lead-maintainer-tiebreaker section with steering-committee-vote rule) · `MAINTAINERS.md` (working-group succession addendum) · NEW `docs/working-group/` directory (charter doc + bylaws) · CHANGELOG                                                                                                                       |
+| **Compatibility** | `additive` (governance — does not affect any wire shape)                                                                                                                                                                                                                                                                                              |
+| **Supersedes**    | —                                                                                                                                                                                                                                                                                                                                                     |
+| **Superseded by** | —                                                                                                                                                                                                                                                                                                                                                     |
 
 ## Summary
 
@@ -51,13 +51,13 @@ trust tiers, §C name reservation, §B.4 registry-root-key rotation).
 
 Replaces `GOVERNANCE.md` §"Decision making":
 
-| RFC category | Vote rule | Window |
-|---|---|---|
-| Editorial / Non-normative | Lazy consensus (no objection within 3 days) | 3 days |
-| Normative additive | Lazy consensus among WG; if any 2 WG members request a vote, simple majority of Steering Committee | 7 days |
-| Safety-fix | Simple majority of Steering Committee + Working Group Chair signoff | 90 days OR embargoed disclosure |
-| Breaking | 2/3 majority of Steering Committee | 30 days |
-| Governance changes (this charter, MAINTAINERS process, registry policy) | 2/3 majority of Steering Committee + WG Chair signoff | 30 days |
+| RFC category                                                            | Vote rule                                                                                          | Window                          |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------- |
+| Editorial / Non-normative                                               | Lazy consensus (no objection within 3 days)                                                        | 3 days                          |
+| Normative additive                                                      | Lazy consensus among WG; if any 2 WG members request a vote, simple majority of Steering Committee | 7 days                          |
+| Safety-fix                                                              | Simple majority of Steering Committee + Working Group Chair signoff                                | 90 days OR embargoed disclosure |
+| Breaking                                                                | 2/3 majority of Steering Committee                                                                 | 30 days                         |
+| Governance changes (this charter, MAINTAINERS process, registry policy) | 2/3 majority of Steering Committee + WG Chair signoff                                              | 30 days                         |
 
 ### §D — Registry policy ownership
 
@@ -66,7 +66,7 @@ The Working Group governs:
 - **Profile names** in `spec/v1/profiles.md`.
 - **Event type identifiers** in `schemas/run-event-payloads.schema.json`.
 - **Envelope kind names** in `schemas/envelopes/*.schema.json` and `capabilities.supportedEnvelopes`.
-- **Capability identifiers** in `schemas/capabilities.schema.json` + `host-capabilities.md` §"Canonical host.* identifiers."
+- **Capability identifiers** in `schemas/capabilities.schema.json` + `host-capabilities.md` §"Canonical host.\* identifiers."
 - **Host-extension namespace allocations** per `host-extensions.md` §"Canonical prefixes."
 
 A registry-policy RFC (filed separately) defines the format for new namespace requests — out of scope for this charter.

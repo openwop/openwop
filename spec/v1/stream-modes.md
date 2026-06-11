@@ -1,4 +1,4 @@
-# openwop Spec v1 — SSE Stream Modes
+# OpenWOP Spec v1 — SSE Stream Modes
 
 > **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of the four canonical stream consumption modes (values, updates, messages, debug), the `?streamMode=` query parameter, event-type-to-mode mapping, and CLI default. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
@@ -18,7 +18,7 @@ The four modes parallel [LangGraph's stream_mode taxonomy](https://langchain-ai.
 
 Clients select a mode via the `streamMode` query parameter on `GET /v1/runs/{runId}/events`:
 
-```
+```http
 GET /v1/runs/{runId}/events?streamMode=updates
 ```
 
@@ -57,9 +57,9 @@ The `Postgres` reference host at `examples/hosts/postgres/` implements this nego
 
 **Purpose**: minimal state-change stream. UI consumers and CLI watchers want to render progress without buffering full state on every event.
 
-**Emits**: an event for each *terminal node transition* (completed/failed/skipped/cancelled), each *suspension transition* (waiting-approval/waiting-input/resumed), each *run transition* (running/paused/completed/failed/cancelled), and each *artifact production*. NOT individual log lines, NOT internal projection cache writes, NOT every variable mutation.
+**Emits**: an event for each _terminal node transition_ (completed/failed/skipped/cancelled), each _suspension transition_ (waiting-approval/waiting-input/resumed), each _run transition_ (running/paused/completed/failed/cancelled), and each _artifact production_. NOT individual log lines, NOT internal projection cache writes, NOT every variable mutation.
 
-**Wire shape**: SSE events with type per `RunEventType`. Each event payload is a *delta* — the change since the last event, not a full snapshot.
+**Wire shape**: SSE events with type per `RunEventType`. Each event payload is a _delta_ — the change since the last event, not a full snapshot.
 
 **Termination**: server closes the connection when the run reaches a terminal status.
 
@@ -131,30 +131,30 @@ The `meta.usage.{promptTokens, completionTokens}` field is the per-chunk source 
 
 The canonical event types each mode emits (authoritative source: the per-mode channels in `api/asyncapi.yaml`):
 
-| RunEventType | `updates` | `values` (synthesized) | `messages` | `debug` |
-|---|---|---|---|---|
-| `run.started` | ✅ | ✅ snapshot | — | ✅ |
-| `run.completed` / `run.failed` / `run.cancelled` | ✅ | ✅ snapshot | — | ✅ |
-| `run.paused` / `run.resumed` | ✅ | ✅ snapshot | — | ✅ |
-| `run.annotated` | ✅ | ✅ snapshot | — | ✅ |
-| `workspace.updated` | ✅ | ✅ snapshot | — | ✅ |
-| `node.started` | — | ✅ snapshot | — | ✅ |
-| `node.completed` / `node.failed` / `node.skipped` | ✅ | ✅ snapshot | — | ✅ |
-| `node.suspended` | ✅ | ✅ snapshot | — | ✅ |
-| `node.dispatched` | ✅ | ✅ snapshot | — | ✅ |
-| `node.retried` | — | — | — | ✅ |
-| `approval.requested` | ✅ | ✅ snapshot | — | ✅ |
-| `approval.received` | ✅ | ✅ snapshot | — | ✅ |
-| `clarification.requested` / `clarification.resolved` | ✅ | ✅ snapshot | — | ✅ |
-| `interrupt.requested` / `interrupt.resolved` | ✅ | ✅ snapshot | — | ✅ |
-| `artifact.created` | ✅ | ✅ snapshot | — | ✅ |
-| `eval.started` / `eval.scored` / `eval.completed` | ✅ | ✅ snapshot | — | ✅ |
-| `deployment.promoted` / `deployment.rolledBack` / `deployment.canaryAdjusted` / `deployment.stateChanged` | ✅ | ✅ snapshot | — | ✅ |
-| `variable.changed` | — | — | — | ✅ |
-| `version.pinned` | — | — | — | ✅ |
-| `lease.acquired` / `lease.renewed` / `lease.lost` | — | — | — | ✅ |
-| `log.appended` | — | — | — | ✅ |
-| `ai.message.chunk` (synthesized from streaming AI calls) | — | — | ✅ | ✅ |
+| RunEventType                                                                                              | `updates` | `values` (synthesized) | `messages` | `debug` |
+| --------------------------------------------------------------------------------------------------------- | --------- | ---------------------- | ---------- | ------- |
+| `run.started`                                                                                             | ✅        | ✅ snapshot            | —          | ✅      |
+| `run.completed` / `run.failed` / `run.cancelled`                                                          | ✅        | ✅ snapshot            | —          | ✅      |
+| `run.paused` / `run.resumed`                                                                              | ✅        | ✅ snapshot            | —          | ✅      |
+| `run.annotated`                                                                                           | ✅        | ✅ snapshot            | —          | ✅      |
+| `workspace.updated`                                                                                       | ✅        | ✅ snapshot            | —          | ✅      |
+| `node.started`                                                                                            | —         | ✅ snapshot            | —          | ✅      |
+| `node.completed` / `node.failed` / `node.skipped`                                                         | ✅        | ✅ snapshot            | —          | ✅      |
+| `node.suspended`                                                                                          | ✅        | ✅ snapshot            | —          | ✅      |
+| `node.dispatched`                                                                                         | ✅        | ✅ snapshot            | —          | ✅      |
+| `node.retried`                                                                                            | —         | —                      | —          | ✅      |
+| `approval.requested`                                                                                      | ✅        | ✅ snapshot            | —          | ✅      |
+| `approval.received`                                                                                       | ✅        | ✅ snapshot            | —          | ✅      |
+| `clarification.requested` / `clarification.resolved`                                                      | ✅        | ✅ snapshot            | —          | ✅      |
+| `interrupt.requested` / `interrupt.resolved`                                                              | ✅        | ✅ snapshot            | —          | ✅      |
+| `artifact.created`                                                                                        | ✅        | ✅ snapshot            | —          | ✅      |
+| `eval.started` / `eval.scored` / `eval.completed`                                                         | ✅        | ✅ snapshot            | —          | ✅      |
+| `deployment.promoted` / `deployment.rolledBack` / `deployment.canaryAdjusted` / `deployment.stateChanged` | ✅        | ✅ snapshot            | —          | ✅      |
+| `variable.changed`                                                                                        | —         | —                      | —          | ✅      |
+| `version.pinned`                                                                                          | —         | —                      | —          | ✅      |
+| `lease.acquired` / `lease.renewed` / `lease.lost`                                                         | —         | —                      | —          | ✅      |
+| `log.appended`                                                                                            | —         | —                      | —          | ✅      |
+| `ai.message.chunk` (synthesized from streaming AI calls)                                                  | —         | —                      | ✅         | ✅      |
 
 ✅ = emitted in this mode; — = filtered out
 
@@ -186,7 +186,7 @@ Servers MUST NOT throttle or limit the number of subscribers per run except for 
 
 For high-volume runs (large multi-node DAGs, fan-out subworkflows), per-event SSE delivery can saturate consumer queues and produce visible jitter on UIs that re-render per event. `?bufferMs=N` is an optional query parameter that requests batched delivery — the server accumulates events for up to N ms (or until a forced-flush trigger fires) and emits a single SSE event whose `data:` is a **JSON array** of `RunEventDoc`.
 
-```
+```http
 GET /v1/runs/{runId}/events?streamMode=updates&bufferMs=100
 ```
 
@@ -205,7 +205,7 @@ An OpenWOP-compliant server MAY ignore the parameter (responding with the unbuff
 
 A subscriber that needs both progress events AND LLM token chunks currently has to open two SSE connections (one in `updates` mode, one in `messages`). Mixed-mode subscriptions allow a comma-separated list:
 
-```
+```http
 GET /v1/runs/{runId}/events?streamMode=updates,messages
 ```
 
@@ -235,12 +235,12 @@ An OpenWOP-compliant CLI (e.g., a host's workflow-run command with `--watch`) SH
 
 ## Open spec gaps
 
-| # | Gap | Owner |
-|---|---|---|
-| S1 | `state.snapshot` payload schema — done (2026-04-27: reuses `schemas/run-snapshot.schema.json` verbatim — same shape as `GET /v1/runs/{runId}` projection). | ✅ |
-| S2 | `ai.message.chunk` payload — done (2026-04-27: tiered shape — Tier 1 typed slots `finishReason / logprobs / toolCalls / model / usage`, Tier 2 `providerExtensions` escape hatch. Bare `{chunk, isLast}` remains the minimum compliant payload). Schema lives at `run-event-payloads.schema.json#$defs.outputChunk`. | ✅ |
-| S3 | Subscriber-side aggregation hints — done (2026-04-27: `?bufferMs=N` query param accepts 0..5000; batched SSE events use `event: batch` with array `data:`. Forced-flush on terminal events + suspensions. See "Aggregation hint" §). | ✅ |
-| S4 | Mixing modes — done (2026-04-27: comma-separated `?streamMode=A,B` accepted; union-of-filters semantics; per-event `event:` field labels which mode admitted it; `values` exclusive. See "Mixed mode" §). | ✅ |
+| #   | Gap                                                                                                                                                                                                                                                                                                                  | Owner |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| S1  | `state.snapshot` payload schema — done (2026-04-27: reuses `schemas/run-snapshot.schema.json` verbatim — same shape as `GET /v1/runs/{runId}` projection).                                                                                                                                                           | ✅    |
+| S2  | `ai.message.chunk` payload — done (2026-04-27: tiered shape — Tier 1 typed slots `finishReason / logprobs / toolCalls / model / usage`, Tier 2 `providerExtensions` escape hatch. Bare `{chunk, isLast}` remains the minimum compliant payload). Schema lives at `run-event-payloads.schema.json#$defs.outputChunk`. | ✅    |
+| S3  | Subscriber-side aggregation hints — done (2026-04-27: `?bufferMs=N` query param accepts 0..5000; batched SSE events use `event: batch` with array `data:`. Forced-flush on terminal events + suspensions. See "Aggregation hint" §).                                                                                 | ✅    |
+| S4  | Mixing modes — done (2026-04-27: comma-separated `?streamMode=A,B` accepted; union-of-filters semantics; per-event `event:` field labels which mode admitted it; `values` exclusive. See "Mixed mode" §).                                                                                                            | ✅    |
 
 ## References
 

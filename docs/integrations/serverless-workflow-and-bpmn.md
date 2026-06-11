@@ -14,28 +14,28 @@ OpenWOP composes with workflow standards rather than replacing them — see [`sp
 
 ### What maps cleanly
 
-| OpenWOP | Serverless Workflow | Notes |
-|---|---|---|
-| `WorkflowDefinition` | `Workflow` document | Both are JSON-shaped declarative DAGs. |
-| `WorkflowNode` with `typeId` | `OperationState` action | OpenWOP's typeId becomes the action's `functionRef`. |
-| `WorkflowEdge` (source/target) | State transitions | One transition per outbound edge. |
-| `core.subWorkflow` node | `CallbackState` or `OperationState` with `subFlowRef` | Both standards support sub-workflow invocation. |
-| `core.delay` node | `SleepState` | Both support time-driven waits. |
-| `core.approvalGate` interrupt | `CallbackState` with `eventRef` | The callback completes the interrupt. |
-| Run inputs / outputs | Workflow data input + data output | Both are JSON-typed. |
-| Idempotency-Key | Workflow `id` per Serverless Workflow §"Workflow Definition" | Both standards' run identifiers serve the same role. |
+| OpenWOP                        | Serverless Workflow                                          | Notes                                                |
+| ------------------------------ | ------------------------------------------------------------ | ---------------------------------------------------- |
+| `WorkflowDefinition`           | `Workflow` document                                          | Both are JSON-shaped declarative DAGs.               |
+| `WorkflowNode` with `typeId`   | `OperationState` action                                      | OpenWOP's typeId becomes the action's `functionRef`. |
+| `WorkflowEdge` (source/target) | State transitions                                            | One transition per outbound edge.                    |
+| `core.subWorkflow` node        | `CallbackState` or `OperationState` with `subFlowRef`        | Both standards support sub-workflow invocation.      |
+| `core.delay` node              | `SleepState`                                                 | Both support time-driven waits.                      |
+| `core.approvalGate` interrupt  | `CallbackState` with `eventRef`                              | The callback completes the interrupt.                |
+| Run inputs / outputs           | Workflow data input + data output                            | Both are JSON-typed.                                 |
+| Idempotency-Key                | Workflow `id` per Serverless Workflow §"Workflow Definition" | Both standards' run identifiers serve the same role. |
 
 ### What does NOT map
 
-| OpenWOP feature | Why no Serverless Workflow analogue |
-|---|---|
-| `core.orchestrator.supervisor` + `core.dispatch` (RFC 0006/0007) | Serverless Workflow has no concept of an LLM orchestrator emitting typed decisions with confidence scores + escalation thresholds. |
-| `agent.reasoned` + `agent.toolCalled` + reasoning verbosity governance | No agent-event vocabulary in Serverless Workflow. |
-| `RunOptions.configurable.reasoningVerbosity` | No reasoning-tier governance. |
-| `AgentRef` + `agentMemory` (RFC 0002/0004) | No agent-identity primitive. |
-| BYOK secret resolution (`credentialRef` + 4-mode policy) | Serverless Workflow has `auth` definitions but not the BYOK + 4-mode policy enforcement model. |
-| Signed audit log with Ed25519 checkpoints | Not in Serverless Workflow's surface. |
-| Memory compaction events (RFC 0012) | No analogue. |
+| OpenWOP feature                                                        | Why no Serverless Workflow analogue                                                                                                |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `core.orchestrator.supervisor` + `core.dispatch` (RFC 0006/0007)       | Serverless Workflow has no concept of an LLM orchestrator emitting typed decisions with confidence scores + escalation thresholds. |
+| `agent.reasoned` + `agent.toolCalled` + reasoning verbosity governance | No agent-event vocabulary in Serverless Workflow.                                                                                  |
+| `RunOptions.configurable.reasoningVerbosity`                           | No reasoning-tier governance.                                                                                                      |
+| `AgentRef` + `agentMemory` (RFC 0002/0004)                             | No agent-identity primitive.                                                                                                       |
+| BYOK secret resolution (`credentialRef` + 4-mode policy)               | Serverless Workflow has `auth` definitions but not the BYOK + 4-mode policy enforcement model.                                     |
+| Signed audit log with Ed25519 checkpoints                              | Not in Serverless Workflow's surface.                                                                                              |
+| Memory compaction events (RFC 0012)                                    | No analogue.                                                                                                                       |
 
 ### Recommended export shape
 
@@ -65,28 +65,28 @@ Serverless Workflow → OpenWOP is **mostly clean** for the subset OpenWOP suppo
 
 ### What maps cleanly
 
-| OpenWOP | BPMN | Notes |
-|---|---|---|
-| `WorkflowDefinition` | `<process>` element | Both are declarative DAGs with named tasks + transitions. |
-| Service-task-shaped `WorkflowNode` | `<serviceTask>` | OpenWOP typeId becomes the service task's `implementation` or extension attribute. |
-| `WorkflowEdge` | `<sequenceFlow>` | One sequence flow per edge. |
-| `core.subWorkflow` | `<callActivity>` | Both standards support sub-process invocation. |
-| `core.delay` | `<intermediateCatchEvent><timerEventDefinition>` | Time-based catch event. |
-| `core.approvalGate` | `<userTask>` | Both model HITL approval. |
-| `core.clarificationGate` | `<userTask>` with typed data | BPMN's user-task data inputs cover the typed-input case. |
-| Run start | `<startEvent>` | One per workflow. |
-| Run completion | `<endEvent>` | Multiple acceptable. |
+| OpenWOP                            | BPMN                                             | Notes                                                                              |
+| ---------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `WorkflowDefinition`               | `<process>` element                              | Both are declarative DAGs with named tasks + transitions.                          |
+| Service-task-shaped `WorkflowNode` | `<serviceTask>`                                  | OpenWOP typeId becomes the service task's `implementation` or extension attribute. |
+| `WorkflowEdge`                     | `<sequenceFlow>`                                 | One sequence flow per edge.                                                        |
+| `core.subWorkflow`                 | `<callActivity>`                                 | Both standards support sub-process invocation.                                     |
+| `core.delay`                       | `<intermediateCatchEvent><timerEventDefinition>` | Time-based catch event.                                                            |
+| `core.approvalGate`                | `<userTask>`                                     | Both model HITL approval.                                                          |
+| `core.clarificationGate`           | `<userTask>` with typed data                     | BPMN's user-task data inputs cover the typed-input case.                           |
+| Run start                          | `<startEvent>`                                   | One per workflow.                                                                  |
+| Run completion                     | `<endEvent>`                                     | Multiple acceptable.                                                               |
 
 ### What does NOT map
 
 The same set as Serverless Workflow plus:
 
-| OpenWOP feature | Why no BPMN analogue |
-|---|---|
-| Replay / fork (`POST /v1/runs/{id}:fork`) | BPMN has no run-replay primitive — re-execution is engine-specific. |
+| OpenWOP feature                                                   | Why no BPMN analogue                                                                            |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Replay / fork (`POST /v1/runs/{id}:fork`)                         | BPMN has no run-replay primitive — re-execution is engine-specific.                             |
 | Suspend tokens + signed callbacks (`POST /v1/interrupts/{token}`) | BPMN's message-event correlation is similar but lacks signed-token replay-resistance semantics. |
-| Strict event-log + canonical event-type vocabulary | BPMN engines emit vendor-specific audit trails; no shared event vocabulary. |
-| Stream modes (`values` / `updates` / `messages` / `debug`) | BPMN's runtime observation surface is engine-specific. |
+| Strict event-log + canonical event-type vocabulary                | BPMN engines emit vendor-specific audit trails; no shared event vocabulary.                     |
+| Stream modes (`values` / `updates` / `messages` / `debug`)        | BPMN's runtime observation surface is engine-specific.                                          |
 
 ### Recommended export shape
 

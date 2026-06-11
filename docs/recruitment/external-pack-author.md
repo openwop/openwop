@@ -21,6 +21,7 @@ Recruiting the first external pack author:
 The pitch: "your `<X>` capability becomes a node-pack with a typed envelope; users invoke it as part of a longer workflow with HITL + retries + replay handled by the host."
 
 Good fits:
+
 - **Small dev-tools vendors** where one engineer can ship a pack as a side project. Examples: Linear (Issues / Cycles API), Sourcegraph (Code Search / Cody), Vercel (Build / Edge Functions), Resend (transactional email), Stripe (payment workflows).
 - **Smaller B2B SaaS** with public APIs that fit a workflow node shape — anything that takes inputs and produces a typed result.
 
@@ -29,6 +30,7 @@ Good fits:
 The pitch: "your MCP server already exposes a tool catalog; wrapping it as an OpenWOP node-pack gives workflow-orchestrated access (HITL + retries + replay) on top of MCP's tool-exposure surface."
 
 Good fits:
+
 - Authors of MCP servers in `modelcontextprotocol/servers` (the Anthropic-curated catalog).
 - Authors of independent MCP servers (e.g., `mcp-github-server`, `mcp-filesystem-server`).
 
@@ -42,7 +44,7 @@ This is a smaller pitch because the wrapping work is light — the MCP server al
 
 Hi `<name>`,
 
-OpenWOP node packs (https://github.com/openwop/openwop/blob/main/spec/v1/node-packs.md) let you distribute signed workflow node implementations to any OpenWOP-compliant host. `<your tool>` would fit naturally — your `<X capability>` becomes a node-pack with a typed envelope; users invoke it as part of a longer workflow with HITL + retries + replay handled by the host (not by your tool).
+OpenWOP node packs (<https://github.com/openwop/openwop/blob/main/spec/v1/node-packs.md>) let you distribute signed workflow node implementations to any OpenWOP-compliant host. `<your tool>` would fit naturally — your `<X capability>` becomes a node-pack with a typed envelope; users invoke it as part of a longer workflow with HITL + retries + replay handled by the host (not by your tool).
 
 The publish flow is documented at `spec/v1/registry-operations.md`:
 
@@ -53,6 +55,7 @@ The publish flow is documented at `spec/v1/registry-operations.md`:
 The first external pack author goes on `INTEROP-MATRIX.md` as the first non-steward pack contributor. That's a real ecosystem signal — your tool gets a portable workflow-integration surface that any OpenWOP-compliant host honors.
 
 I'm happy to:
+
 - Walk through the publish flow end-to-end in a single 30-minute working session.
 - Author the first pack manifest with you (you tell me the API shape; I handle the OpenWOP wire-translation).
 - Land the PR under `vendor.<your-org>.<tool>` or `community.<your-handle>.<tool>` — your call.
@@ -65,9 +68,9 @@ Thanks,
 David Tufts
 Lead Maintainer, OpenWOP
 GitHub: @davidscotttufts
-Spec: https://github.com/openwop/openwop
-Pack catalogue: https://packs.openwop.dev/v1/index.json
-Publish docs: https://github.com/openwop/openwop/blob/main/spec/v1/registry-operations.md
+Spec: <https://github.com/openwop/openwop>
+Pack catalogue: <https://packs.openwop.dev/v1/index.json>
+Publish docs: <https://github.com/openwop/openwop/blob/main/spec/v1/registry-operations.md>
 
 ## Send checklist
 

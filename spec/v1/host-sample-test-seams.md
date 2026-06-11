@@ -20,12 +20,12 @@ Hosts that expose any test seam MUST advertise it under `/.well-known/openwop` p
 
 ### 1. `POST /v1/host/sample/prompt/resolve` — Prompt resolution chain (RFC 0029)
 
-| Field | Value |
-|---|---|
-| Method + path | `POST /v1/host/sample/prompt/resolve` |
-| Capability gate | `capabilities.prompts.supported: true` |
+| Field                     | Value                                                             |
+| ------------------------- | ----------------------------------------------------------------- |
+| Method + path             | `POST /v1/host/sample/prompt/resolve`                             |
+| Capability gate           | `capabilities.prompts.supported: true`                            |
 | Env gate (reference impl) | seam registered when `capabilities.prompts.supported` is asserted |
-| Introduced | RFC 0029 §C |
+| Introduced                | RFC 0029 §C                                                       |
 
 Request body:
 
@@ -77,12 +77,12 @@ Conformance: `prompt-resolution-chain-{node-wins,agent-intrinsic,fallback-cascad
 
 ### 2. `GET /v1/host/sample/test/otel/spans?runId=<id>` — OTel span scrape (RFC 0034)
 
-| Field | Value |
-|---|---|
-| Method + path | `GET /v1/host/sample/test/otel/spans?runId=<id>` |
-| Capability gate | `capabilities.observability.testSeams.otelScrape: true` |
-| Env gate (reference impl) | `OPENWOP_TEST_OTEL_SCRAPE=true` |
-| Introduced | RFC 0034 §B |
+| Field                     | Value                                                   |
+| ------------------------- | ------------------------------------------------------- |
+| Method + path             | `GET /v1/host/sample/test/otel/spans?runId=<id>`        |
+| Capability gate           | `capabilities.observability.testSeams.otelScrape: true` |
+| Env gate (reference impl) | `OPENWOP_TEST_OTEL_SCRAPE=true`                         |
+| Introduced                | RFC 0034 §B                                             |
 
 Returns recorded OTel spans for the named run. When `otelScrape: true`, the host MUST return `200 OK` with body:
 
@@ -99,6 +99,7 @@ Returns recorded OTel spans for the named run. When `otelScrape: true`, the host
 The `spans[]` array MUST include every span produced by the host's instrumentation for the named run, including any `openwop.*`-prefixed attributes added to span context. Hosts MAY redact span content using the canonical `[REDACTED:<secretId>]` marker per `agent-memory.md` §"SR-1 secret-redaction invariant" — that's the contract conformance tests.
 
 The seam graduates two SECURITY invariants from `reference-impl` to `protocol` tier:
+
 - `secret-leakage-otel-attribute` — BYOK plaintexts MUST NOT appear as values on any `openwop.*` OTel attribute
 - (paired) `secret-leakage-debug-bundle-otel` — same invariant on debug-bundle exports
 
@@ -106,12 +107,12 @@ Conformance: `envelope-reasoning-secret-redaction.test.ts` (capability-gated on 
 
 ### 3. `POST /v1/host/sample/test/debug-bundle/export` — Debug-bundle export probe (RFC 0034)
 
-| Field | Value |
-|---|---|
-| Method + path | `POST /v1/host/sample/test/debug-bundle/export` |
-| Capability gate | `capabilities.observability.testSeams.debugBundleExport: true` |
-| Env gate (reference impl) | `OPENWOP_TEST_DEBUG_BUNDLE_EXPORT=true` |
-| Introduced | RFC 0034 §B |
+| Field                     | Value                                                          |
+| ------------------------- | -------------------------------------------------------------- |
+| Method + path             | `POST /v1/host/sample/test/debug-bundle/export`                |
+| Capability gate           | `capabilities.observability.testSeams.debugBundleExport: true` |
+| Env gate (reference impl) | `OPENWOP_TEST_DEBUG_BUNDLE_EXPORT=true`                        |
+| Introduced                | RFC 0034 §B                                                    |
 
 Synchronous debug-bundle export for conformance scenarios that need to assert canary redaction without first triggering an interrupt → debug bundle workflow.
 
@@ -131,12 +132,12 @@ Conformance: gates on `capabilities.observability.testSeams.debugBundleExport: t
 
 ### 4. `POST /v1/host/sample/test/llm-cache-key` — LLM cache-key recipe (RFC 0041)
 
-| Field | Value |
-|---|---|
-| Method + path | `POST /v1/host/sample/test/llm-cache-key` |
-| Capability gate | `capabilities.multiAgent.executionModel.replayDeterminism.supported: true` (RFC 0041 Phase 4 hosts); MAY be implemented earlier without advertising |
-| Env gate (reference impl) | implicit — seam registered alongside the cache-key implementation |
-| Introduced | RFC 0041 §A |
+| Field                     | Value                                                                                                                                               |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Method + path             | `POST /v1/host/sample/test/llm-cache-key`                                                                                                           |
+| Capability gate           | `capabilities.multiAgent.executionModel.replayDeterminism.supported: true` (RFC 0041 Phase 4 hosts); MAY be implemented earlier without advertising |
+| Env gate (reference impl) | implicit — seam registered alongside the cache-key implementation                                                                                   |
+| Introduced                | RFC 0041 §A                                                                                                                                         |
 
 Computes the canonical LLM cache key per `replay.md` §"LLM cache-key recipe" §A + §B. Conformance scenarios drive the seam to assert (a) intra-host reproducibility, (b) non-recipe-field invariance, and (c) cross-host parity when two hosts both expose the seam.
 
@@ -175,6 +176,7 @@ Response body:
 ```
 
 Hosts MUST:
+
 1. Drop non-recipe fields from the input before canonicalization (§A closed-set rule)
 2. Canonicalize per `replay.md` §B (RFC 8785 JCS-style: sorted keys recursively, no whitespace, preserve array order, UTF-8 NFC strings)
 3. Return SHA-256 over the canonical bytes as lowercase hex
@@ -185,12 +187,12 @@ Conformance: `replay-llm-cache-key.test.ts`, `replay-llm-cache-key-portable.test
 
 ### 5. Staged-refusal seam — `POST /v1/host/sample/test/mock-ai/program` mode `refusal` (RFC 0041 §B)
 
-| Field | Value |
-|---|---|
-| Method + path | `POST /v1/host/sample/test/mock-ai/program` |
-| Capability gate | `capabilities.multiAgent.executionModel.replayDeterminism.refusalDivergenceEmission: true` (RFC 0041 Phase 4) |
-| Env gate (reference impl) | `OPENWOP_TEST_SEAM_ENABLED=true` |
-| Introduced | RFC 0041 §B; reuses the existing mock-AI program seam introduced by RFC 0032 §C |
+| Field                     | Value                                                                                                         |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Method + path             | `POST /v1/host/sample/test/mock-ai/program`                                                                   |
+| Capability gate           | `capabilities.multiAgent.executionModel.replayDeterminism.refusalDivergenceEmission: true` (RFC 0041 Phase 4) |
+| Env gate (reference impl) | `OPENWOP_TEST_SEAM_ENABLED=true`                                                                              |
+| Introduced                | RFC 0041 §B; reuses the existing mock-AI program seam introduced by RFC 0032 §C                               |
 
 The `replay.divergedAtRefusal` behavioral assertion requires staging the mock-AI provider to return a valid envelope on the original run and a refusal on the replay (or vice-versa). Phase 4 hosts that advertise `refusalDivergenceEmission: true` MUST honor the following program shape on `POST /v1/host/sample/test/mock-ai/program`:
 
@@ -207,6 +209,7 @@ The `replay.divergedAtRefusal` behavioral assertion requires staging the mock-AI
 The host's mock-AI provider MUST honor the program **deterministically by attempt index**: the first call (original run) returns the first entry; the second call (replay) returns the second entry. The seam is callable BEFORE the run is created — each conformance scenario uses a unique fixture (and therefore unique `nodeId`).
 
 When the replay's mock-AI call hits the `refusal` entry, the host MUST:
+
 1. Emit a `replay.divergedAtRefusal` event with payload per `schemas/run-event-payloads.schema.json` §`replayDivergedAtRefusal`
 2. Fail the replay with HTTP `422` + `error.code: "replay_diverged_at_refusal"`
 
@@ -214,12 +217,12 @@ Conformance: `replay-divergence-at-refusal.test.ts` (advertisement-shape probe l
 
 ### 6. Multi-region idempotency simulator — `POST /v1/host/sample/test/multi-region/simulate-partition` (RFC 0036 §C)
 
-| Field | Value |
-|---|---|
-| Method + path | `POST /v1/host/sample/test/multi-region/simulate-partition` |
-| Capability gate | `capabilities.idempotency.multiRegion.supported: true` OR `capabilities.idempotency.crossRegion ∈ {best-effort, strict}` (RFC 0036) |
-| Env gate (reference impl) | `OPENWOP_TEST_MULTI_REGION_SIMULATOR=true` |
-| Introduced | RFC 0036 §C — closes the CF-12 / OPS-5 multi-region simulation gap named in `docs/KNOWN-LIMITS.md` |
+| Field                     | Value                                                                                                                               |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Method + path             | `POST /v1/host/sample/test/multi-region/simulate-partition`                                                                         |
+| Capability gate           | `capabilities.idempotency.multiRegion.supported: true` OR `capabilities.idempotency.crossRegion ∈ {best-effort, strict}` (RFC 0036) |
+| Env gate (reference impl) | `OPENWOP_TEST_MULTI_REGION_SIMULATOR=true`                                                                                          |
+| Introduced                | RFC 0036 §C — closes the CF-12 / OPS-5 multi-region simulation gap named in `docs/KNOWN-LIMITS.md`                                  |
 
 The convergence rule in `spec/v1/idempotency.md` §"Multi-region idempotency annex" §"Convergence rule" is a pure-function MUST: given ≥2 conflicting `ConflictClaim` records sharing `(tenantId, endpoint, key)`, the resolver MUST return the lex-min `runId` as the winner deterministically without coordination. This seam exposes that algorithm directly so conformance can mechanically verify the property against synthetic partitions (no actual multi-region replication required).
 
@@ -258,18 +261,18 @@ Conformance: `multi-region-idempotency-behavior.test.ts` (6 assertions covering 
 
 ### 7. Cross-engine append-ordering harness — `POST /v1/host/sample/test/cross-engine/{append,read,reset}` (RFC 0036 §B)
 
-| Field | Value |
-|---|---|
-| Method + path | 3 endpoints (see below) |
-| Capability gate | `capabilities.eventLog.crossEngineOrdering.supported: true` (RFC 0036 §B) |
-| Env gate (reference impl) | `OPENWOP_TEST_CROSS_ENGINE_HARNESS=true` |
-| Introduced | RFC 0036 §B — closes the CF-8 cross-engine append-ordering gap named in `docs/KNOWN-LIMITS.md` |
+| Field                     | Value                                                                                          |
+| ------------------------- | ---------------------------------------------------------------------------------------------- |
+| Method + path             | 3 endpoints (see below)                                                                        |
+| Capability gate           | `capabilities.eventLog.crossEngineOrdering.supported: true` (RFC 0036 §B)                      |
+| Env gate (reference impl) | `OPENWOP_TEST_CROSS_ENGINE_HARNESS=true`                                                       |
+| Introduced                | RFC 0036 §B — closes the CF-8 cross-engine append-ordering gap named in `docs/KNOWN-LIMITS.md` |
 
 The cross-engine ordering invariant in `spec/v1/channels-and-reducers.md` §"Cross-engine ordering" requires that two engine instances writing to the same shared channel converge to a single globally-ordered linearization on read. This seam exposes a synthetic two-engine harness so conformance can verify the property without standing up two real engine instances.
 
 Endpoints:
 
-```
+```http
 POST /v1/host/sample/test/cross-engine/append
   Body: { engineId: string, channelId: string, value: unknown, lamport?: number }
   Returns: { engineId, value, lamport, seq } — the assigned timestamp + sequence
@@ -293,18 +296,18 @@ Conformance: `cross-engine-append-behavior.test.ts` (4 assertions covering globa
 
 ### 8. Sandbox MVP — `POST /v1/host/sample/test/sandbox-{load,invoke}` (RFC 0035)
 
-| Field | Value |
-|---|---|
-| Method + path | 2 endpoints (see below) |
-| Capability gate | `capabilities.sandbox.supported: true` (RFC 0035 §A) |
-| Env gate (reference impl) | `OPENWOP_TEST_SANDBOX_MVP=true` |
-| Introduced | RFC 0035 §B — exercises the 8 sandbox failure-mode invariants against a synthetic misbehaving-pack registry |
+| Field                     | Value                                                                                                       |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Method + path             | 2 endpoints (see below)                                                                                     |
+| Capability gate           | `capabilities.sandbox.supported: true` (RFC 0035 §A)                                                        |
+| Env gate (reference impl) | `OPENWOP_TEST_SANDBOX_MVP=true`                                                                             |
+| Introduced                | RFC 0035 §B — exercises the 8 sandbox failure-mode invariants against a synthetic misbehaving-pack registry |
 
 The sandbox seam exists so conformance can drive the §B failure-mode invariants without a real pack runtime + real misbehaving pack tarballs. Each `sandbox-invoke` request names a synthetic typeId from the host's pre-populated misbehaving-pack registry; the host executes the matching code body inside its sandbox and returns either the result or a typed error envelope per `host-capabilities.md` §"Error codes".
 
 Endpoints:
 
-```
+```http
 POST /v1/host/sample/test/sandbox-load
   Body: { packId: string }
   Returns: 200 { ok: true, packId } | 400 validation_error | 404 sandbox_pack_not_found
@@ -344,34 +347,34 @@ POST /v1/host/sample/test/sandbox-invoke
 
 Synthetic misbehaving-pack typeIds the conformance suite exercises:
 
-| typeId | Failure mode it probes |
-|---|---|
-| `misbehave.fs-escape-read` | sandbox_escape_attempt + escapeKind: host-fs-escape |
-| `misbehave.fs-escape-write` | sandbox_escape_attempt + escapeKind: host-fs-escape |
-| `misbehave.env-leak` | sandbox_escape_attempt + escapeKind: host-env-leak |
-| `misbehave.network-escape` | sandbox_escape_attempt + escapeKind: network-escape |
-| `misbehave.process-escape` | sandbox_escape_attempt + escapeKind: host-process-escape |
-| `misbehave.timeout` | sandbox_timeout |
-| `misbehave.memory-bomb` | sandbox_memory_exceeded |
-| `misbehave.cross-pack-mutate` | (no failure; result.shared MUST equal 1 on every invocation — cross-pack mutation MUST NOT leak across fresh contexts) |
-| `misbehave.capability-gate-violation` | sandbox_capability_denied + details.requestedCapability |
-| `well-behaved.echo` | (no failure; `result.echoed === args.input`) |
-| `well-behaved.host-fetch` | (no failure when `allowedHostCalls` includes `'fetch'`) |
+| typeId                                | Failure mode it probes                                                                                                 |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `misbehave.fs-escape-read`            | sandbox_escape_attempt + escapeKind: host-fs-escape                                                                    |
+| `misbehave.fs-escape-write`           | sandbox_escape_attempt + escapeKind: host-fs-escape                                                                    |
+| `misbehave.env-leak`                  | sandbox_escape_attempt + escapeKind: host-env-leak                                                                     |
+| `misbehave.network-escape`            | sandbox_escape_attempt + escapeKind: network-escape                                                                    |
+| `misbehave.process-escape`            | sandbox_escape_attempt + escapeKind: host-process-escape                                                               |
+| `misbehave.timeout`                   | sandbox_timeout                                                                                                        |
+| `misbehave.memory-bomb`               | sandbox_memory_exceeded                                                                                                |
+| `misbehave.cross-pack-mutate`         | (no failure; result.shared MUST equal 1 on every invocation — cross-pack mutation MUST NOT leak across fresh contexts) |
+| `misbehave.capability-gate-violation` | sandbox_capability_denied + details.requestedCapability                                                                |
+| `well-behaved.echo`                   | (no failure; `result.echoed === args.input`)                                                                           |
+| `well-behaved.host-fetch`             | (no failure when `allowedHostCalls` includes `'fetch'`)                                                                |
 
 Conformance: `sandbox-mvp-behavior.test.ts` (10 assertions covering 5 escape kinds + timeout + memory + cross-pack isolation + capability-gate + 2 well-behaved baselines).
 
 ### 9. Workspace cross-owner driver — `POST /v1/host/sample/workspace/op` (RFC 0059)
 
-| Field | Value |
-|---|---|
-| Method + path | `POST /v1/host/sample/workspace/op` |
-| Capability gate | `capabilities.workspace.supported: true` (RFC 0059 §A) |
-| Env gate (reference impl) | none (the in-memory host enables it unconditionally; production hosts gate per the §"Production safety" rule below) |
-| Introduced | RFC 0059 §E — drives `host.workspace` CRUD against an EXPLICIT `{tenant, workspace}` owner so the `workspace-cross-tenant-isolation` (WCT-1) invariant is exercisable on a single-credential host (mirrors the blob/kv/queue/table cross-tenant seams) |
+| Field                     | Value                                                                                                                                                                                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Method + path             | `POST /v1/host/sample/workspace/op`                                                                                                                                                                                                                    |
+| Capability gate           | `capabilities.workspace.supported: true` (RFC 0059 §A)                                                                                                                                                                                                 |
+| Env gate (reference impl) | none (the in-memory host enables it unconditionally; production hosts gate per the §"Production safety" rule below)                                                                                                                                    |
+| Introduced                | RFC 0059 §E — drives `host.workspace` CRUD against an EXPLICIT `{tenant, workspace}` owner so the `workspace-cross-tenant-isolation` (WCT-1) invariant is exercisable on a single-credential host (mirrors the blob/kv/queue/table cross-tenant seams) |
 
 The production §C endpoints (`/v1/host/workspace/files`) bind every request to one authenticated owner, so a single-credential host cannot demonstrate cross-owner isolation through them. This seam takes the `{tenant, workspace}` owner in the body — letting a conformance scenario write as owner A and attempt a read as owner B — and routes through the SAME owner-scoped store the §C endpoints use. The host MUST still scope strictly by the supplied owner triple (WCT-1); the seam only supplies the triple that production resolves from the authenticated identity.
 
-```
+```http
 POST /v1/host/sample/workspace/op
   Body: {
     tenant: string,            // owner tenant (RFC 0048)
@@ -416,10 +419,10 @@ The conformance driver targets the canonical fork endpoint with `mode: "replay"`
 
 Driving MAE-3 from outside therefore requires an actually-realized refusal-eligible state. Conventions:
 
-| Hook | Env var | Realizes |
-|---|---|---|
-| Past-retention run | `OPENWOP_TEST_EXPIRED_REPLAY_RUN_ID` | A known runId whose event log has aged past the host's retention window; forking with `mode: "replay"` returns `details.reason: "retention_expired"`. Operator provides the runId via env (parallel naming to the existing `OPENWOP_TEST_EXPIRED_RUN_ID` used by `production-retention-expiry`). |
-| Event-log-unavailable run | (host-side fault-injection seam) | Not deterministically reproducible from outside — requires a host-side fault-injection seam to mark a run's event log unavailable. Documented here for completeness; no env-var convention yet. |
+| Hook                      | Env var                              | Realizes                                                                                                                                                                                                                                                                                         |
+| ------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Past-retention run        | `OPENWOP_TEST_EXPIRED_REPLAY_RUN_ID` | A known runId whose event log has aged past the host's retention window; forking with `mode: "replay"` returns `details.reason: "retention_expired"`. Operator provides the runId via env (parallel naming to the existing `OPENWOP_TEST_EXPIRED_RUN_ID` used by `production-retention-expiry`). |
+| Event-log-unavailable run | (host-side fault-injection seam)     | Not deterministically reproducible from outside — requires a host-side fault-injection seam to mark a run's event log unavailable. Documented here for completeness; no env-var convention yet.                                                                                                  |
 
 Envelope shape (normative; covered behaviorally in `multi-agent-memory-lifecycle.test.ts`):
 
@@ -455,11 +458,11 @@ Conformance: `multi-agent-memory-lifecycle.test.ts` (the MAE-3 behavioral assert
 - **Sub-run attestation seam** (RFC 0063) — `POST /v1/host/sample/subrun/attest`. Gated on `capabilities.agents.subRunAttestation`. Contract: drive one sub-workflow harvest-then-merge for a request `{ childOutputs, outputAttestation: { checksum?, algorithm?, requireApproval?, principalScope? }, approvalAction? }` and return `{ attestation, harvestedEvent, merged, mergedValues? }` — the `attestation { checksum, algorithm }` the host would surface on `core.workflowChain.event { phase: 'output.harvested' }`, whether the merge proceeded, and the merged values. The `checksum` MUST be the RFC 8785 JCS + SHA-256 digest of `childOutputs` (byte-stable for identical inputs, host-independent). When `requireApproval: true`, `merged` MUST be `true` only for `approvalAction` `accept`/`edit-accept` and MUST be `false` (fail-closed) for `reject` or an absent/expired approval. `subrun-checksum-stable.test.ts` / `subrun-approval-gate.test.ts` / `subrun-approval-fail-closed.test.ts` drive these; soft-skip on `404` until a sub-run-attestation host wires the seam.
 - **Memory-distillation seam** (RFC 0062) — `POST /v1/host/sample/memory/distill`. Gated on `capabilities.memory.distillation.supported`. Contract: run one budgeted distillation for a request `{ memoryRef, tokenBudget?, sources?, indexEmitted?, includeSecretCanary? }` and return `{ event, archiveChecksum, indexUpdated, indexFile? }` — the `memory.compacted` event the host would emit (carrying the additive `distillation { tokenBudget, tokensUsed, indexUpdated }` sub-object) plus the stable archive's checksum. `event.distillation.tokensUsed` MUST be ≤ the resolved `tokenBudget`; an un-meetable budget MUST return `token_budget_exceeded` with no partial archive (atomic). The same `sources` + `tokenBudget` MUST yield an identical `archiveChecksum` (byte-stable). When `indexEmitted`, a `MEMORY-INDEX.json` workspace file MUST be retrievable and a `workspace.updated` event fired. When `includeSecretCanary`, a redacted secret in the sources MUST stay redacted in the archive (SR-1). `distillation-token-budget.test.ts` / `distillation-stable-archive.test.ts` / `distillation-index-roundtrip.test.ts` / `distillation-secret-carryforward.test.ts` drive these; soft-skip on `404` until a distillation host wires the seam.
 - **Dead-letter exhaustion seam** (RFC 0053) — `POST /v1/host/sample/deadletter/exhaust`. Gated on `capabilities.deadLetter.supported`. Contract: drive a node that deterministically exhausts a short retry policy for a named `scenario` (`exhaust-retries`, `fork-after-dead-letter`); the host returns `{ event, forkEligible }` — the `run.dead_lettered` event (carrying `attempts`) and whether the dead-lettered run is forkable. `deadletter-retry-exhaustion.test.ts` drives both; soft-skips on `404` until a dead-letter host wires the seam. (Retention-purge scenario deferred — needs a clock seam.)
-- **Agent-loop seam** (RFC 0061) — `POST /v1/host/sample/agentloop/run`. Gated on `capabilities.multiAgent.executionModel.version >= 5`. Contract: drive a bounded stateful loop for a request `{ turns, workspaceWriteAtTurn?, suspendAtTurn?, resume? }` and return `{ decisions, workspaceVisible?, resumedIteration? }` — the ordered `runOrchestrator.decided` payloads the host would emit (each carrying the `iteration` counter). `decisions[k].iteration` MUST equal `k+1` (1-based, monotonic, one per turn). When `workspaceWriteAtTurn: i` is set (requires `host.workspace.supported`), `workspaceVisible` MUST report the write invisible to turn *i*'s snapshot and visible to turn *i+1* (§C input 2). When `suspendAtTurn` + `resume` are set (requires `statefulResume: true`), `resumedIteration` MUST equal the suspend iteration — the counter does not reset or skip (§D). `agent-loop-iteration-monotonic.test.ts` / `agent-loop-workspace-snapshot.test.ts` / `agent-loop-stateful-resume.test.ts` drive these; soft-skip on `404` until a version-5 host wires the seam.
+- **Agent-loop seam** (RFC 0061) — `POST /v1/host/sample/agentloop/run`. Gated on `capabilities.multiAgent.executionModel.version >= 5`. Contract: drive a bounded stateful loop for a request `{ turns, workspaceWriteAtTurn?, suspendAtTurn?, resume? }` and return `{ decisions, workspaceVisible?, resumedIteration? }` — the ordered `runOrchestrator.decided` payloads the host would emit (each carrying the `iteration` counter). `decisions[k].iteration` MUST equal `k+1` (1-based, monotonic, one per turn). When `workspaceWriteAtTurn: i` is set (requires `host.workspace.supported`), `workspaceVisible` MUST report the write invisible to turn _i_'s snapshot and visible to turn _i+1_ (§C input 2). When `suspendAtTurn` + `resume` are set (requires `statefulResume: true`), `resumedIteration` MUST equal the suspend iteration — the counter does not reset or skip (§D). `agent-loop-iteration-monotonic.test.ts` / `agent-loop-workspace-snapshot.test.ts` / `agent-loop-stateful-resume.test.ts` drive these; soft-skip on `404` until a version-5 host wires the seam.
 - **Runtime-requirement install-gate seam** (RFC 0076 §A) — `POST /v1/host/sample/packs/install-gate`. No capability flag (RFC 0076 §A adds a manifest field + host behavior, not an advertisement); soft-skips on `404`. Contract: evaluate a candidate manifest's `runtime.requires[]` against a simulated host grant-set for a request `{ manifest, grantSet?, gating? }` and return the install-time outcome. When `gating !== false` (sandbox host): if every `runtime.requires` entry is in `grantSet` the host MUST return `200 { outcome: "installed" }`; if any entry is not granted the host MUST refuse at install with `400 { error: "pack_runtime_requirement_unmet", unmet: [...], manifest: "<name>@<version>", advice? }` (the `capability_not_provided` envelope shape) — NOT install-and-fail-at-first-invocation. When `gating: false` (non-sandbox host) the host installs unconditionally and SHOULD return `200 { outcome: "installed", requiresProjected: [...] }`, the declared requirements projected onto the inventory entry for operator visibility. `runtime-requires-install-gate.test.ts` drives install-grant / install-refuse / non-sandbox-projection; soft-skip on `404` until a runtime-requires-gating host (MyndHyve is the first adopter) wires the seam. The pure-schema vocabulary rejection (`runtime.requires: ["node:dns/promises"]` → `invalid_manifest`) is covered server-free by `runtime-requires-shape.test.ts`.
 - **Safe-fetch seam** (RFC 0076 §B) — `POST /v1/host/sample/http/safe-fetch`. Gated on `capabilities.httpClient.safeFetch.supported`; soft-skips on `404`. Contract: evaluate one `ctx.http.safeFetch` call for a request `{ url, init?, simulateRebindTo? }` and return `{ outcome, status?, blocked?, toolCalled?, toolReturned? }` — the host applies the §host.http SSRF guard (resolve→pin→connect). The host MUST return `{ outcome: "blocked", blocked: "ssrf" }` for a loopback / RFC 1918 / link-local / cloud-metadata target AND for a `simulateRebindTo` that re-resolves a public name to a blocked address (DNS-rebinding); MUST return `{ outcome: "blocked", blocked: "upgrade" }` when `init.headers` requests `Connection: upgrade`; else `{ outcome: "fetched", status }`. When `capabilities.toolHooks.prePostEvents` is also advertised, a fetched call MUST include the `{ toolCalled, toolReturned }` pair (`transport: "http"`). `safefetch-behavior.test.ts` drives SSRF-block / rebinding / upgrade-refusal / audit-when-both; soft-skip on `404` until a `safeFetch` host wires the seam.
-- **Safe-fetch live-run audit seam** (RFC 0076 §B / RFC 0064 §B) — `POST /v1/host/sample/http/safe-fetch-run`. Gated on `capabilities.httpClient.safeFetch.supported` + `capabilities.toolHooks.prePostEvents` (both); soft-skips on `404`. Distinct from the inline `safe-fetch` seam above: this seam executes one `ctx.http.safeFetch` call **inside a real run** through the host's *production* per-ctx injection path (the same `ctx.http.safeFetch` a node receives at dispatch), then returns `{ runId, outcome }`. Contract: for a request `{ url, init? }` the host MUST run one `ctx.http.safeFetch` in a real run and return `200 { runId, outcome }` where `outcome` is `"fetched"` (public target the guard allowed) or `"blocked"` (link-local / RFC-1918 / cloud-metadata target the SSRF guard refused); the conformance driver then reads the run's **durable** event log via `GET /v1/host/sample/test/runs/:runId/events` and asserts a `callId`-paired `agent.toolCalled` (`transport: "http"`) / `agent.toolReturned` was persisted. **The audit pair MUST be persisted for *every* invocation — `blocked` as well as `fetched`** (per §host.http "for every safeFetch invocation"; a refused egress attempt is itself a security-relevant event the durable log must capture). `safefetch-live-audit.test.ts` exploits this: it drives a guaranteed-blocked metadata URL as an **egress-independent floor** (reachable on any host with no outbound connectivity, so the bar can never pass vacuously on an egress-blocked host) plus a best-effort public fetch for success-path coverage. This closes the seam-vs-production gap in `safefetch-behavior.test.ts` (whose audit assertion reads only the inline seam echo): a host can pass the inline seam yet ship a production `createSafeFetch()` with no audit hooks — the "quiet bypass" §host.http forbids. `safefetch-live-audit.test.ts` drives it via `behaviorGate('openwop-safefetch-live-audit', …)` so a host advertising both flags but not emitting to the durable log FAILS under `OPENWOP_REQUIRE_BEHAVIOR=true`; the seam itself soft-skips on `404` (host-pending) until a `safeFetch` host wires it. This is the RFC 0076 §B → Accepted bar. **Load-bearing host note:** the audit pair MUST be emitted through the host's *durable* run-event-log append path (the same path production tool calls use — e.g. `getEventLog().append(runId, 'agent.toolCalled'|'agent.toolReturned', …)` with RFC 0002 §B `callId` pairing + `causationId`), **not** captured-and-echoed inline like the non-run `safe-fetch` seam above — otherwise the scenario reads the durable log, finds nothing, and correctly fails while the inline seam stays green.
-- **Run event-log read seam** (companion to the live-run seams above; used by `event-log-query.ts` → `queryTestEvents`) — `GET /v1/host/sample/test/runs/:runId/events`. Conformance-only, env-gated; soft-skips on `404` (`isEventLogSeamAvailable()`). Contract: return the run's **persisted** events as `{ events: TestEvent[] }` (each `{ eventId, runId, type, payload, timestamp, sequence, causationId?, nodeId?, contentTrust? }`), optionally filtered by `?type=&correlationId=&causationId=&nodeId=`. The host **MUST workspace-scope the read** — refuse (or return empty for) a `runId` outside the caller's `{tenant, workspace}`, so the test seam is never a weaker cross-tenant disclosure path than production (matches the `identity/*` / credential-echo seam RBAC precedent + the WCT-1 posture). **Enforcement scope:** like every `/v1/host/sample/test/*` seam this is *reference-host-honored*, not protocol-tier — `check-security-invariants.sh` covers production surfaces, not conformance-only test seams, so no protocol-tier invariant gates this MUST; it inherits the same cross-tenant intent as the production `workspace-cross-tenant-isolation` (WCT-1) invariant and is the host operator's responsibility to uphold when wiring the seam. Read-only; no side effects. Already consumed by the RFC 0021 aiEnvelope engine-projection scenarios and now by `safefetch-live-audit.test.ts`; a host that wires it un-soft-skips that whole cohort.
+- **Safe-fetch live-run audit seam** (RFC 0076 §B / RFC 0064 §B) — `POST /v1/host/sample/http/safe-fetch-run`. Gated on `capabilities.httpClient.safeFetch.supported` + `capabilities.toolHooks.prePostEvents` (both); soft-skips on `404`. Distinct from the inline `safe-fetch` seam above: this seam executes one `ctx.http.safeFetch` call **inside a real run** through the host's _production_ per-ctx injection path (the same `ctx.http.safeFetch` a node receives at dispatch), then returns `{ runId, outcome }`. Contract: for a request `{ url, init? }` the host MUST run one `ctx.http.safeFetch` in a real run and return `200 { runId, outcome }` where `outcome` is `"fetched"` (public target the guard allowed) or `"blocked"` (link-local / RFC-1918 / cloud-metadata target the SSRF guard refused); the conformance driver then reads the run's **durable** event log via `GET /v1/host/sample/test/runs/:runId/events` and asserts a `callId`-paired `agent.toolCalled` (`transport: "http"`) / `agent.toolReturned` was persisted. **The audit pair MUST be persisted for _every_ invocation — `blocked` as well as `fetched`** (per §host.http "for every safeFetch invocation"; a refused egress attempt is itself a security-relevant event the durable log must capture). `safefetch-live-audit.test.ts` exploits this: it drives a guaranteed-blocked metadata URL as an **egress-independent floor** (reachable on any host with no outbound connectivity, so the bar can never pass vacuously on an egress-blocked host) plus a best-effort public fetch for success-path coverage. This closes the seam-vs-production gap in `safefetch-behavior.test.ts` (whose audit assertion reads only the inline seam echo): a host can pass the inline seam yet ship a production `createSafeFetch()` with no audit hooks — the "quiet bypass" §host.http forbids. `safefetch-live-audit.test.ts` drives it via `behaviorGate('openwop-safefetch-live-audit', …)` so a host advertising both flags but not emitting to the durable log FAILS under `OPENWOP_REQUIRE_BEHAVIOR=true`; the seam itself soft-skips on `404` (host-pending) until a `safeFetch` host wires it. This is the RFC 0076 §B → Accepted bar. **Load-bearing host note:** the audit pair MUST be emitted through the host's _durable_ run-event-log append path (the same path production tool calls use — e.g. `getEventLog().append(runId, 'agent.toolCalled'|'agent.toolReturned', …)` with RFC 0002 §B `callId` pairing + `causationId`), **not** captured-and-echoed inline like the non-run `safe-fetch` seam above — otherwise the scenario reads the durable log, finds nothing, and correctly fails while the inline seam stays green.
+- **Run event-log read seam** (companion to the live-run seams above; used by `event-log-query.ts` → `queryTestEvents`) — `GET /v1/host/sample/test/runs/:runId/events`. Conformance-only, env-gated; soft-skips on `404` (`isEventLogSeamAvailable()`). Contract: return the run's **persisted** events as `{ events: TestEvent[] }` (each `{ eventId, runId, type, payload, timestamp, sequence, causationId?, nodeId?, contentTrust? }`), optionally filtered by `?type=&correlationId=&causationId=&nodeId=`. The host **MUST workspace-scope the read** — refuse (or return empty for) a `runId` outside the caller's `{tenant, workspace}`, so the test seam is never a weaker cross-tenant disclosure path than production (matches the `identity/*` / credential-echo seam RBAC precedent + the WCT-1 posture). **Enforcement scope:** like every `/v1/host/sample/test/*` seam this is _reference-host-honored_, not protocol-tier — `check-security-invariants.sh` covers production surfaces, not conformance-only test seams, so no protocol-tier invariant gates this MUST; it inherits the same cross-tenant intent as the production `workspace-cross-tenant-isolation` (WCT-1) invariant and is the host operator's responsibility to uphold when wiring the seam. Read-only; no side effects. Already consumed by the RFC 0021 aiEnvelope engine-projection scenarios and now by `safefetch-live-audit.test.ts`; a host that wires it un-soft-skips that whole cohort.
 
 - **Roster portfolio fire seam** (RFC 0086 §C) — `POST /v1/host/sample/roster/fire`. Gated on `capabilities.agents.roster.supported`; soft-skips on `404`. Contract: fire one workflow in a roster member's portfolio for a request `{ rosterId?, triggerSource?, asWorkItem? }` (host picks a default member when `rosterId` is omitted) and return `{ runId, rosterId, triggerSubscriptionId? }`. The fired run MUST emit `roster.run.initiated` as its FIRST attribution event — immediately after `run.started`, BEFORE any `agent.invocation.*` / `agent.*` event (§C ordering) — content-free per the `roster-attribution-no-content` invariant (ids + persona + trigger source ONLY; never the work-item body/prompt/credential). When `asWorkItem: true` the fire takes the RFC 0083 durable-work-item path and the event MUST carry `triggerSubscriptionId` (so trigger→run→roster is traceable via `/ancestry`, RFC 0040). The conformance driver reads the run's durable events via the run event-log read seam and asserts the ordering + content-free payload + work-item `triggerSubscriptionId`. `agent-roster-attribution.test.ts` drives it via `behaviorGate('openwop-roster-attribution', …)`; the normative `GET /v1/agents/roster` read leg runs black-box on any roster host regardless of this seam. **This is the RFC 0086 → Accepted bar** (first adopter: MyndHyve `agents.roster`).
 - **Live manifest-invocation seam** (RFC 0077 §B/§E/§F) — `POST /v1/host/sample/agents/live-invoke`. Gated on `capabilities.agents.liveRuntime.supported`; soft-skips on `404`. Contract: drive one live manifest invocation for a request `{ agentId?, source?, returnSchemaRef?, forceInvalidResult?, attemptTool? }` (host picks a default agent when `agentId` is omitted) and return `{ runId, invocationId, outcome? }`. The invocation MUST bracket its `agent.*` family with `agent.invocation.started` as the FIRST agent-scoped event and `agent.invocation.completed` as the LAST (§E), sharing one `invocationId`, with `source` ∈ {`workflow-node`,`run-api`,`chat-mention`} and `outcome` ∈ {`completed`,`handed-off`,`escalated`,`refused`,`failed`} — both events content-free (identifiers + selection/outcome metadata only, never prompt or result body). When `returnSchemaRef` + `forceInvalidResult: true` are set (requires `liveRuntime.structuredOutput`), the host MUST fail the invocation (`completed.outcome === "failed"`, `schemaValidated !== true`) rather than ship a result that violates `handoff.returnSchemaRef` (§B step 6). When `attemptTool` names a tool OUTSIDE the agent's `toolAllowlist`, the host MUST NOT call it (no `agent.toolCalled` for that tool — the §F-1 / RFC 0002 §A14 allowlist floor). The conformance driver reads the durable run events via the run event-log read seam. `agent-live-invocation-bracket.test.ts` / `agent-live-structured-output.test.ts` / `agent-live-allowlist-enforced.test.ts` drive these via `behaviorGate('openwop-live-invocation-bracket' | 'openwop-live-structured-output' | 'openwop-live-allowlist-enforced', …)`. **This is the RFC 0077 → Accepted bar** (first adopter: MyndHyve `agents.liveRuntime`).

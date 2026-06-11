@@ -10,12 +10,12 @@ This page is the **author** path. For host-side consumption (signature verificat
 
 ## 0. Pick a tier + name
 
-| Tier | Who can publish | Use for |
-|---|---|---|
-| `core.openwop.*` | Steward only | Framework-canonical primitives (`core.openwop.ai`, `core.openwop.http`, etc.) |
-| `vendor.<org>.*` | The org named in the prefix | Vendor-specific tools (`vendor.acme.crm`) |
-| `community.<group>.*` | Any group | Open-source community packs (`community.openwop-team.demo`) |
-| `private.<org>.*` | Local development only | Pre-registry exploration; NEVER published |
+| Tier                  | Who can publish             | Use for                                                                       |
+| --------------------- | --------------------------- | ----------------------------------------------------------------------------- |
+| `core.openwop.*`      | Steward only                | Framework-canonical primitives (`core.openwop.ai`, `core.openwop.http`, etc.) |
+| `vendor.<org>.*`      | The org named in the prefix | Vendor-specific tools (`vendor.acme.crm`)                                     |
+| `community.<group>.*` | Any group                   | Open-source community packs (`community.openwop-team.demo`)                   |
+| `private.<org>.*`     | Local development only      | Pre-registry exploration; NEVER published                                     |
 
 Reverse-DNS-style names per [`spec/v1/node-packs.md`](../spec/v1/node-packs.md) §Naming. Your pack name pattern: `^(core|vendor|community|private)\.[a-z][a-z0-9_-]*(\.[a-z][a-zA-Z0-9_-]*)+$`.
 
@@ -31,7 +31,7 @@ node scripts/new-pack.mjs --name community.your-group.your-pack --tier community
 
 This produces:
 
-```
+```text
 packs/community.your-group.your-pack/
   pack.json              # the manifest
   README.md              # author-facing docs
@@ -77,7 +77,7 @@ node scripts/build-pack-tarball.mjs --pack community.your-group.your-pack --sign
 
 This emits:
 
-```
+```text
 registry/v1/packs/community.your-group.your-pack/-/0.1.0.tgz   # the pack archive
 registry/v1/packs/community.your-group.your-pack/-/0.1.0.sig   # detached Ed25519 signature
 registry/v1/packs/community.your-group.your-pack/-/0.1.0.json  # version manifest with integrity + signing.keyId

@@ -1,10 +1,10 @@
-# openwop Spec v1 — Conformance Certification Bundle
+# OpenWOP Spec v1 — Conformance Certification Bundle
 
 > **Status: Stable · v1.x — reached `Accepted` via [RFC 0089](../../RFCS/0089-conformance-certification-bundle.md) (2026-06-02).** Additive v1.x extension. Defines a **machine-readable conformance certification bundle** — an out-of-band artifact that binds a host's claimed profiles to the reproducible run that substantiates them. NOT a runtime wire surface (no `/v1/*` endpoint); the only discovery touch is one optional pointer field. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ## Why this exists
 
-A host's **profile claims** are derivable from its `/.well-known/openwop` discovery document, but the **evidence** that a host actually passes a claimed profile has lived as hand-authored prose in `examples/hosts/*/conformance.md` and [`INTEROP-MATRIX.md`](../../INTEROP-MATRIX.md) — not bound to the run that produced it, and not machine-verifiable. An external standards-readiness review required that a standard "bind each claimed profile to a concrete suite version, pass list, host commit, and discovery document." This document defines that binding as a single JSON artifact with a falsifiable validity rule, so any third party (auditor, adopter, registry) reads the same shape and can mechanically re-check a claim. It is distinct from [`compliance.md`](./compliance.md) (a non-normative control-vocabulary map) and from [`profiles.md`](./profiles.md) (the discovery predicates the bundle *reuses*).
+A host's **profile claims** are derivable from its `/.well-known/openwop` discovery document, but the **evidence** that a host actually passes a claimed profile has lived as hand-authored prose in `examples/hosts/*/conformance.md` and [`INTEROP-MATRIX.md`](../../INTEROP-MATRIX.md) — not bound to the run that produced it, and not machine-verifiable. An external standards-readiness review required that a standard "bind each claimed profile to a concrete suite version, pass list, host commit, and discovery document." This document defines that binding as a single JSON artifact with a falsifiable validity rule, so any third party (auditor, adopter, registry) reads the same shape and can mechanically re-check a claim. It is distinct from [`compliance.md`](./compliance.md) (a non-normative control-vocabulary map) and from [`profiles.md`](./profiles.md) (the discovery predicates the bundle _reuses_).
 
 ## §A — The bundle (normative)
 

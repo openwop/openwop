@@ -1,19 +1,19 @@
 # RFC 0015: host.kvStorage capability
 
-| Field | Value |
-|---|---|
-| **RFC** | 0015 |
-| **Title** | host.kvStorage key-value capability |
-| **Status** | `Accepted` |
-| **Author(s)** | OpenWOP Working Group |
-| **Created** | 2026-05-17 |
-| **Updated** | 2026-05-18 (Active → Accepted: all 5 acceptance-criteria items satisfied. `capabilities.kvStorage` block in schema; `spec/v1/host-capabilities.md §host.kvStorage` landed at commit c5831fe; invariant `kv-cross-tenant-isolation` + 4 scenarios (`kv-cross-tenant-isolation`, `kv-atomic-increment`, `kv-cas`, `kv-ttl-expiry`) all behavioral; reference impl advertised in `routes/discovery.ts` lines 176–184; CHANGELOG entry under `[Unreleased]`.) |
-| **Affects** | `spec/v1/host-capabilities.md` · `schemas/capabilities.schema.json` · `SECURITY/invariants.yaml` (cross-tenant) · new conformance scenarios |
-| **Compatibility** | `additive` |
+| Field             | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RFC**           | 0015                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **Title**         | host.kvStorage key-value capability                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| **Status**        | `Accepted`                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **Author(s)**     | OpenWOP Working Group                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **Created**       | 2026-05-17                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **Updated**       | 2026-05-18 (Active → Accepted: all 5 acceptance-criteria items satisfied. `capabilities.kvStorage` block in schema; `spec/v1/host-capabilities.md §host.kvStorage` landed at commit c5831fe; invariant `kv-cross-tenant-isolation` + 4 scenarios (`kv-cross-tenant-isolation`, `kv-atomic-increment`, `kv-cas`, `kv-ttl-expiry`) all behavioral; reference impl advertised in `routes/discovery.ts` lines 176–184; CHANGELOG entry under `[Unreleased]`.) |
+| **Affects**       | `spec/v1/host-capabilities.md` · `schemas/capabilities.schema.json` · `SECURITY/invariants.yaml` (cross-tenant) · new conformance scenarios                                                                                                                                                                                                                                                                                                               |
+| **Compatibility** | `additive`                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 ## Summary
 
-Adds an optional `host.kvStorage` capability — a TTL-aware key-value store with atomic increment + compare-and-swap primitives. Required by `core.openwop.storage`'s kv-* nodes. The Make-Data-Store equivalent for openwop.
+Adds an optional `host.kvStorage` capability — a TTL-aware key-value store with atomic increment + compare-and-swap primitives. Required by `core.openwop.storage`'s kv-\* nodes. The Make-Data-Store equivalent for openwop.
 
 ## Motivation
 
@@ -71,7 +71,7 @@ Mirrors the existing `agentMemoryCrossTenantIsolation` invariant.
 
 ## Compatibility
 
-**Additive**. Optional capability; `core.openwop.storage` kv-* nodes refuse registration on hosts that don't advertise it.
+**Additive**. Optional capability; `core.openwop.storage` kv-\* nodes refuse registration on hosts that don't advertise it.
 
 ## Implementation notes (non-normative)
 

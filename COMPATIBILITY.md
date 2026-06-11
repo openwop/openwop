@@ -1,4 +1,4 @@
-# openwop Compatibility Commitment
+# OpenWOP Compatibility Commitment
 
 > **Status:** v1 — applies to the locked v1 contract and all subsequent v1.x releases.
 
@@ -10,11 +10,11 @@ The TL;DR: **v1.x is additive-only, with one explicit exception for safety and s
 
 openwop uses three independent version axes:
 
-| Axis | Range | Bump rule |
-|---|---|---|
-| **Spec corpus version** (e.g. `v1`, `v1.1`) | Major.Minor | Major = breaking; Minor = additive |
-| **Conformance suite version** (`@openwop/openwop-conformance`) | Major.Minor.Patch | Major tracks spec major; Minor adds scenarios for the same spec major; Patch yanks/fixes scenarios |
-| **SDK versions** (`@openwop/openwop`, `openwop-client`, Go SDK) | Major.Minor.Patch | Major tracks spec major; Minor adds methods or fixes types; Patch is bug fixes |
+| Axis                                                            | Range             | Bump rule                                                                                          |
+| --------------------------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------- |
+| **Spec corpus version** (e.g. `v1`, `v1.1`)                     | Major.Minor       | Major = breaking; Minor = additive                                                                 |
+| **Conformance suite version** (`@openwop/openwop-conformance`)  | Major.Minor.Patch | Major tracks spec major; Minor adds scenarios for the same spec major; Patch yanks/fixes scenarios |
+| **SDK versions** (`@openwop/openwop`, `openwop-client`, Go SDK) | Major.Minor.Patch | Major tracks spec major; Minor adds methods or fixes types; Patch is bug fixes                     |
 
 A host advertises:
 
@@ -88,14 +88,14 @@ A safety-fix change is the only category that can break v1.x. Everything else go
 
 Some changes don't touch wire shapes but change observable behavior:
 
-| Change | Allowed in v1.x? |
-|---|---|
-| New optional capability advertised, off by default | Yes — additive |
-| Existing optional capability becomes default-on (changes observed behavior on hosts that didn't advertise it) | Only via safety-fix process |
-| Performance improvement that changes observed timing | Yes — outside the scope of compatibility (timing is not a normative wire surface unless `scale-profiles.md` documents it) |
-| Stricter validation rejecting input that previously succeeded | Only via safety-fix process |
-| Looser validation accepting input that previously failed | Yes — additive (clients that sent invalid input were already broken) |
-| New normative requirement on a previously-undefined behavior | Yes — additive (the spec was previously silent) |
+| Change                                                                                                        | Allowed in v1.x?                                                                                                          |
+| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| New optional capability advertised, off by default                                                            | Yes — additive                                                                                                            |
+| Existing optional capability becomes default-on (changes observed behavior on hosts that didn't advertise it) | Only via safety-fix process                                                                                               |
+| Performance improvement that changes observed timing                                                          | Yes — outside the scope of compatibility (timing is not a normative wire surface unless `scale-profiles.md` documents it) |
+| Stricter validation rejecting input that previously succeeded                                                 | Only via safety-fix process                                                                                               |
+| Looser validation accepting input that previously failed                                                      | Yes — additive (clients that sent invalid input were already broken)                                                      |
+| New normative requirement on a previously-undefined behavior                                                  | Yes — additive (the spec was previously silent)                                                                           |
 
 When in doubt, file an RFC and let the comment window surface compatibility concerns.
 
