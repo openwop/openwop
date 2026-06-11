@@ -192,3 +192,6 @@ plans/*.md
 
 # Generated white-label demo-app zip (scripts/build-whitelabel-zip.sh) — built at deploy, not committed
 public/downloads/
+
+# graphify knowledge-graph output (local, not tracked)
+graphify-out/
