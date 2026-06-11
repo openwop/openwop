@@ -21,7 +21,7 @@ Per `COMPATIBILITY.md`, this document is additive — no v1 host implementation 
 
 ## Profile catalog
 
-Nine v1.x compatibility profiles. The catalog is closed: new compatibility profiles require an RFC per `RFCS/0001-rfc-process.md`.
+Thirteen v1.x compatibility profiles. The catalog is closed: new compatibility profiles require an RFC per `RFCS/0001-rfc-process.md`.
 
 ### `openwop-core`
 
@@ -286,6 +286,7 @@ profiles(c) := {
   'openwop-fixtures'       if openwop-fixtures(c),
   'openwop-memory'         if openwop-memory(c),
   'openwop-trigger-bridge' if openwop-trigger-bridge(c),
+  'openwop-experimental'   if openwop-experimental(c),
 }
 ```
 

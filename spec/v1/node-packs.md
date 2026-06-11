@@ -760,7 +760,7 @@ Hosts that don't expose either endpoint MUST signal the choice with `404 Not Fou
 
 The two-status acceptance lets hosts pick between (a) routing the path to a generic 404 handler and (b) implementing an explicit "this endpoint exists in the spec but is not surfaced here" stub. Either is conformant.
 
-The conformance suite's `agentPackInstall` and `agentPackExport` scenarios consume this signal to scope themselves: a 404/501 on the listing/export probe is treated as a spec-allowed skip, not a failure. Hosts that DO implement the endpoint must return 200 with the documented response shape.
+The conformance suite's `agentPackInstall` and `agentPackExport` scenarios consume this signal to scope themselves: a 404/501 on the listing/export probe is treated as a spec-allowed skip, not a failure. Hosts that DO implement the endpoint MUST return 200 with the documented response shape.
 
 ---
 

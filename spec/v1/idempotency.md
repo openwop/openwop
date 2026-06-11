@@ -47,12 +47,12 @@ Recommended key format: any URL-safe string ≤ 255 characters. UUIDv4 is conven
 
 A server receiving an `Idempotency-Key`:
 
-1. MUST cache the response (status, headers excluding `Set-Cookie`, body) under the composite key `(tenantId, endpoint, idempotencyKey)`.
-2. On a duplicate request with the same composite key, MUST return the cached response (status, body), and SHOULD set a `openwop-Idempotent-Replay: true` response header.
+1. MUST cache the response (status, headers excluding `Set-Cookie`, body) under the composite key `(tenantId, endpoint, idempotencyKey)` when the outcome is **final** per rule 6 (RFC 0093).
+2. On a duplicate request with the same composite key, MUST return the cached **final** response (status, body), and SHOULD set a `openwop-Idempotent-Replay: true` response header. Retryable-class outcomes are never replayed from cache — see rule 6 (RFC 0093).
 3. MUST retain the cache entry for at least 24 hours.
 4. SHOULD bound cache size and evict oldest entries on overflow; an evicted entry causes the server to treat the next duplicate request as a fresh request (which MAY produce a different result).
 5. MUST NOT cache responses for failed requests where the failure was a malformed key or auth failure (i.e., HTTP `400` `validation_error`, `401`, `403`); those failures aren't idempotent retries to begin with.
-6. MUST cache responses for `429`, `5xx` (since these are retryable from the client's perspective and the server's eventual successful response should replay).
+6. (RFC 0093) MUST cache **final** outcomes — `2xx` and non-retryable `4xx` — for the dedup window. Retryable-class responses (`429`, `500`, `502`, `503`, `504`) MUST NOT be served from cache to a same-key retry: the retry MUST attempt re-execution (subject to the §"Concurrent duplicates" in-flight rule below), and a later successful execution MUST replace any recorded retryable-class outcome so subsequent duplicates replay the success. Hosts MAY record retryable-class outcomes for observability — recording is not replaying.
 
 ### Concurrent duplicates
 

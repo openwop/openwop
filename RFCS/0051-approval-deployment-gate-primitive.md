@@ -83,8 +83,8 @@ New fixture: a minimal workflow with an `approvalGate` node + seeded roles, cata
 
 ## Unresolved questions
 
-1. **Time-boxed approvals.** Should the gate support an auto-reject (or auto-grant) on `timeoutMs` expiry, reusing `interrupt.timeoutMs`? Likely yes (auto-reject, fail-closed); pin the default before Active.
-2. **Quorum + override interaction.** If a quorum is configured, can a single `override`-role principal bypass the remaining quorum? Probably yes (that's the point of override) but it MUST be audited; confirm before Active.
+1. **Time-boxed approvals.** Should the gate support an auto-reject (or auto-grant) on `timeoutMs` expiry, reusing `interrupt.timeoutMs`? Likely yes (auto-reject, fail-closed); pin the default before Active. **Resolved by RFC 0093 (2026-06-11):** the default is **auto-reject on gate timeout** (fail closed); auto-grant is never a default.
+2. **Quorum + override interaction.** If a quorum is configured, can a single `override`-role principal bypass the remaining quorum? Probably yes (that's the point of override) but it MUST be audited; confirm before Active. **Resolved by RFC 0093 (2026-06-11):** a single configured override principal MAY bypass quorum **only** when the gate's policy explicitly sets `overrideBypassesQuorum: true` (default `false`); the bypass remains audited via `approval.overridden`.
 3. **Delegation.** Can an authorized principal delegate their approval authority? Out of scope for v1; revisit if an adopter pulls.
 
 ## Implementation notes (non-normative)

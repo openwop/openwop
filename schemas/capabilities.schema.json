@@ -64,6 +64,11 @@
           "type": "number",
           "minimum": 0,
           "description": "RFC 0084. Engine-side cost ceiling clamping `RunOptions.configurable.budget.maxCostUsd`. Optional; only meaningful with `capabilities.budget`."
+        },
+        "maxRequestBodyBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "RFC 0094 §H. Maximum REST request body size (bytes) the host accepts. Optional v1 field per `capabilities.md` §3 (previously documented as reserved — the closed `limits` object made advertising it a schema-validation failure). Hosts that advertise it MUST enforce it."
         }
       },
       "additionalProperties": false,
@@ -278,6 +283,34 @@
       "type": "array",
       "items": { "type": "string", "enum": ["rest", "mcp", "a2a", "grpc"] },
       "description": "Optional v1 transport advertisement. REST is required whether or not this field is present."
+    },
+    "grpc": {
+      "type": "object",
+      "description": "RFC 0094 §H. gRPC transport advertisement per `grpc-transport.md` §\"Capability advertisement\". Optional — absent ⇒ the host exposes no gRPC transport. A host that exposes the gRPC surface advertises this block AND includes `\"grpc\"` in `supportedTransports`. REST + SSE remain exposed regardless.",
+      "required": ["supported", "service", "tls"],
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Toggle — `true` when the gRPC surface is live."
+        },
+        "endpoint": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^grpcs?://",
+          "description": "Full URI: `grpc://` (cleartext, intra-trusted-network only) OR `grpcs://` (TLS). Hosts SHOULD require TLS in production."
+        },
+        "service": {
+          "type": "string",
+          "const": "openwop.v1.Engine",
+          "description": "Canonical service name. v1 hosts MUST use `openwop.v1.Engine` per `grpc-transport.md` §\"Field semantics\"."
+        },
+        "tls": {
+          "type": "string",
+          "enum": ["required", "optional", "disabled"],
+          "description": "TLS posture. Production hosts MUST set `\"required\"`."
+        }
+      },
+      "additionalProperties": false
     },
     "configurable": {
       "type": "object",

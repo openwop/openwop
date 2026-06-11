@@ -66,6 +66,19 @@ The two levers are mutually exclusive by RFC status: an `Active` surface uses Le
 
 The aggregate agent-platform target is already named separately by RFC 0085's `openwop-agent-platform` operational annex. `openwop-core-standard` does not duplicate it: the agent-platform capabilities are extensions outside the Core floor (Lever 1 for the `Active` ones, RFC 0085's `partial`/`full` claim for the `Accepted` ones). A host MAY advertise both annexes; they are orthogonal (Core = the stable wire floor; agent-platform = the aggregate platform claim).
 
+## Compatibility
+
+`additive` per `COMPATIBILITY.md` §2.1. The annex adds **no wire shape**: no new capability field, no new event, no new endpoint. The §B predicate is an AND of existing closed-catalog profiles (`openwop-core` ∧ `openwop-interrupts` ∧ a stream transport), and the claim itself is an out-of-band operational-annex assertion (like `production-profile.md`), not a discovery-payload change. A host that never claims the profile is unaffected; no existing v1 conformance pass is invalidated. The closed `profiles.md` catalog is unchanged except for a one-line annex cross-reference.
+
+## Conformance
+
+Two layers, both already in `@openwop/openwop-conformance` (≥ 1.18.0):
+
+- **Always-on, server-free:** `core-standard-profile.test.ts` asserts the §B derivation — the `isCoreStandard` annex helper in `conformance/src/lib/profiles.ts` (kept separate from the closed-catalog `deriveProfiles`) returns the right verdict on representative discovery payloads. No env gate, no seam, no soft-skip.
+- **The floor itself:** the §C black-box production-path scenario set (run lifecycle, discovery, auth-401, event ordering, error envelope, idempotency, the `interrupt-*` family, webhook signing, audit-log verification) — all pre-existing suite scenarios that exercise the live wire with no `/v1/host/sample/*` seam. A host claims the profile only when §B holds **and** every floor scenario passes against it; `conformance/coverage.md` records the row.
+
+No new scenarios were required beyond the aggregating meta-scenario; floor growth (§D Lever-2 graduations) lands as scenario-set additions tracked in the annex.
+
 ## Alternatives considered
 
 1. **Add `openwop-core-standard` to the closed `profiles.md` catalog.** Rejected: a Core *standard* claim requires runtime + documentation + conformance evidence (the floor scenarios passing black-box), which is the operational-annex contract, not a pure discovery predicate.
@@ -78,6 +91,10 @@ The aggregate agent-platform target is already named separately by RFC 0085's `o
 - The live aggregate-evidence assertion against a host claiming the profile is the `Active → Accepted` step — gated on a host advertising the claim in its `conformance.md`/`INTEROP-MATRIX.md` row (MyndHyve + all reference hosts already pass the floor scenarios).
 - As Phase-4 black-box harnesses land (workspace isolation, prompt-chain), the corresponding Lever-2 extensions graduate into the floor; each graduation is a §C scenario-set addition tracked in the annex.
 
+## Unresolved questions
+
+None open. The single question open at filing — does a real host's `openwop-core-standard` claim hold up against the §C floor scenarios end-to-end? — was resolved on Accept (2026-06-01): MyndHyve advertises the profile in its live `profiles[]` and the steward independently re-derived `isCoreStandard: true` from the public discovery document (see the `Updated` field). The remaining Lever-2 graduations (RFC 0034 OTel redaction, RFC 0036 multi-region/cross-engine, RFC 0035 sandbox) are floor-membership questions tracked in the annex §D, not open questions of this RFC.
+
 ## Acceptance criteria
 
 - [x] `spec/v1/core-standard-profile.md` operational annex authored.
@@ -85,7 +102,7 @@ The aggregate agent-platform target is already named separately by RFC 0085's `o
 - [x] Always-on server-free `core-standard-profile.test.ts` asserting the §B derivation.
 - [x] One-line cross-reference added to `profiles.md` §"Profile semantics" annex list.
 - [x] `coverage.md` row + CHANGELOG entry.
-- [ ] `Active → Accepted`: ≥1 host advertises the `openwop-core-standard` claim backed by the §C floor scenarios passing black-box (MyndHyve is the natural first).
+- [x] `Active → Accepted`: ≥1 host advertises the `openwop-core-standard` claim backed by the §C floor scenarios passing black-box (closed 2026-06-01 — MyndHyve, rev `workflow-runtime-00449-fal`; see the `Updated` field).
 
 ## References
 

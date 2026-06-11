@@ -10,6 +10,7 @@
 | **Updated** | 2026-05-18 (Active → Accepted: all 6 §7 acceptance-criteria items satisfied. The internal 5/6 were met at filing (DRAFT → FINAL spec, top-level envelope schema, 4 universal-kind payload schemas, conformance scenario, CHANGELOG line). The external 6/6 — third-party host adoption — was closed by MyndHyve at https://myndhyve-prod.web.app on 2026-05-18: discovery doc advertises `supportedEnvelopes: ["clarification.request", "schema.request", "schema.response", "error"]` plus matching `schemaVersions` entries; landed via MyndHyve commit `4d475f0b` (workflow-runtime Cloud Run revision `workflow-runtime-00169-5kl`, 100% traffic). Conformance evidence: `OPENWOP_BASE_URL=https://myndhyve-prod.web.app npx vitest run src/scenarios/ai-envelope-shape.test.ts` → 18/18 assertions pass on `9fb9bfc` of this repo, covering schema-compile, positive/negative round-trip validation, advertisement contract, behavioral `acceptEnvelope` pipeline (accept / invalid / gated / breached / trust-normalization paths), and universal-kind allowlist override.) |
 | **Affects** | `spec/v1/ai-envelope.md` (DRAFT → FINAL v1.1) · `schemas/ai-envelope.schema.json` (NEW) · `schemas/envelopes/{clarification.request,schema.request,schema.response,error}.schema.json` (NEW) · `schemas/capabilities.schema.json` (Capabilities.supportedEnvelopes is now schema-defined, not just example-text) · 1 new conformance scenario · CHANGELOG |
 | **Compatibility** | `additive` |
+| **Amended by** | [RFC 0033](./0033-envelope-completion-contract.md) (error-code rename) |
 
 ## Summary
 

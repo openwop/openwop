@@ -125,7 +125,7 @@ Tolerance is intentional: the projection's job is to produce best-possible state
 
 ### Bumping
 
-Bump `EVENT_LOG_SCHEMA_VERSION` when an *individual* event type's payload contract changes in a non-additive way. Additive changes (new optional fields) don't require a bump.
+Bump the per-event `schemaVersion` stamp when an *individual* event type's payload contract changes in a non-additive way. Additive changes (new optional fields) don't require a bump. This is distinct from bumping the per-run `eventLogSchemaVersion` (§"Event-log schema version" → "Bumping" above), which tracks the subcollection contract, not individual payload shapes.
 
 ---
 
@@ -221,12 +221,12 @@ A client MAY pre-flight `/.well-known/openwop` and compare against its own pinne
 | N | N+1 (newer) | Reader refuses (`engine_version_mismatch`). Caller must wait for fleet to roll forward. |
 | N (no version) | N | Reader treats as legacy. Reads succeed; no migration needed. |
 
-### Conformance via `X-Force-Engine-Version` (closes F5)
+### Conformance via `X-Force-Engine-Version`
 
-The conformance suite verifies the matrix above without requiring multiple deployed engine versions. A test-keys-only request header `X-Force-Engine-Version: <integer>` instructs the server to emit events for that run AS IF it were running the named engine version.
+The matrix above is verifiable without requiring multiple deployed engine versions: the conformance scenario `conformance/src/scenarios/version-fold.test.ts` exercises it via a test-keys-only request header `X-Force-Engine-Version: <integer>`, which instructs the server to emit events for that run AS IF it were running the named engine version.
 
 - Servers MUST reject on production keys with `403 force_engine_version_forbidden`.
-- Servers advertise the supported range via `Capabilities.testing.forceEngineVersionRange = { min, max }` (closes F5). Range typically spans `[current-1, current+1]` so back-compat AND forward-compat are exercisable from the same fixture.
+- Servers advertise the supported range via `Capabilities.testing.forceEngineVersionRange = { min, max }`. Range typically spans `[current-1, current+1]` so back-compat AND forward-compat are exercisable from the same fixture.
 - Outside the advertised range → `400 unsupported_force_engine_version` with the supported range in the body.
 
 The conformance fixture `conformance-version-fold` (see `conformance/fixtures.md`) exercises the matrix by running a single noop workflow once per supported version and asserting that:
@@ -254,10 +254,6 @@ The response shape for past-end requests:
 ```
 
 `lastEventSeq` echoes the caller's `lastSequence` when nothing newer exists, OR the run's highest emitted sequence when the host can determine it; either is acceptable. `isTerminal` reflects the run's current status.
-
----
-
-## Deploy ordering decision matrix
 
 ---
 

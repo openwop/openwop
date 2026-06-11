@@ -15,7 +15,7 @@ Eight v1 surfaces already reference "envelopes" as a distinct wire concept:
 - `profiles.md` lines 47 and 63 derive the `openwop-interrupts` profile from `c.supportedEnvelopes.includes('clarification.request')`.
 - `host-extensions.md` allows per-host `supportedEnvelopes` extensions via vendor-namespaced kinds.
 - `positioning.md` line 119 lists "LLM-driven workflows with structured envelopes (`prd.create` / `theme.create` / `tasks.create` / `clarification.request` / etc.)" as one of openwop's positioning claims.
-- `apps/workflow-engine/backend/typescript/src/routes/discovery.ts` line 91 advertises `envelopesPerTurn: 32` from the reference host.
+- The reference app (`openwop/openwop-app` repo: `backend/typescript/src/routes/discovery.ts`) advertises `envelopesPerTurn: 32`.
 
 What none of these specify: the **AI Envelope's own wire shape**, the **universal kinds every engine MUST recognize**, the **per-kind schema discipline**, the **per-node permission set** (which kinds a given typeId accepts), the **dedup/replay semantics**, the **trust-boundary tagging**, or the **redaction invariant**. Hosts have been free-handing all of these. This document closes the gap.
 
@@ -75,7 +75,7 @@ interface AIEnvelope<TPayload = unknown> {
   type: string;                                    // e.g., "clarification.request" | "schema.request" | "error" | "vendor.myndhyve.prd.create"
 
   /** Per-kind schema version. Matched against `Capabilities.schemaVersions[type]`. (stable) */
-  schemaVersion: number;                            // non-negative integer; absent → treat as 0
+  schemaVersion?: number;                           // non-negative integer; absent → treat as 0
 
   /** Globally unique envelope id. Engine assigns if absent; opaque to consumers. (stable) */
   envelopeId: string;                               // ≤128 chars
@@ -193,7 +193,7 @@ The `image` / `audio` / `file` families pair with the `media.*` payload conventi
 
 ## Universal kinds (normative)
 
-Every OpenWOP-compliant engine MUST recognize the following four kinds. They are **always allowed** — Envelope Contract gates MUST NOT refuse them, and they MUST NOT be omitted from a host's `supportedEnvelopes` advertisement.
+Every OpenWOP-compliant engine MUST recognize the following four kinds. They are **always allowed** — Envelope Contract gates MUST NOT refuse them. On hosts that advertise envelope support (a non-empty `supportedEnvelopes`), the four universal kinds MUST appear in `supportedEnvelopes` (RFC 0094). The complementary case is `profiles.md` §`openwop-core`: an engine-only host that exposes no LLM-emitting nodes MAY advertise an **empty** `supportedEnvelopes` and remains `openwop-core`-conformant. A host that advertises any envelope kind without also advertising the universal four is non-conformant.
 
 | Kind | Purpose | Bound to limit |
 |---|---|---|
@@ -386,7 +386,7 @@ The host MUST advertise the active schema version per kind via `Capabilities.sch
 }
 ```
 
-When the LLM emits an envelope with `schemaVersion` lower than the advertised floor for that kind, the engine MUST attempt the validation against the version advertised, log the mismatch as `envelope_schema_version_drift` in the OTel span, and proceed (warning-only). When `schemaVersion` is **higher** than advertised, the engine MUST refuse with `unknown_schema_version`.
+When the LLM emits an envelope with `schemaVersion` lower than the advertised floor for that kind, the engine MUST attempt the validation against the version advertised, log the mismatch as `envelope_schema_version_drift` in the OTel span, and proceed (warning-only) — unless the host advertises `envelopeStrictness: "strict"` (see §"Capability handshake integration"), in which case the drift MUST cause refusal. When `schemaVersion` is **higher** than advertised, the engine MUST refuse with `unknown_schema_version`.
 
 ### Validation outcomes
 
@@ -570,7 +570,7 @@ If conditions 1 and 2 both fail in the same response (e.g., the response is trun
 
 ### Truncation retry path (normative)
 
-A host MAY retry an emission whose `envelope.truncated` fires by re-issuing the LLM call with an **increased output budget**. The new budget SHOULD be greater than the previous budget; a 2× multiplier is RECOMMENDED but not normative — hosts advertise their multiplier via `capabilities.envelopes.reliability.completion.truncationBudgetMultiplier` (default 2; range 1..8).
+A host MAY retry an emission whose `envelope.truncated` fires by re-issuing the LLM call with an **increased output budget**. The new budget SHOULD be greater than the previous budget; a 2× multiplier is RECOMMENDED — hosts advertise their actual multiplier via `capabilities.envelopes.reliability.completion.truncationBudgetMultiplier` (default 2; range 1..8).
 
 Truncation retries SHALL NOT include any corrective system fragment that describes a schema problem — the previous attempt's payload shape (as far as it was emitted before truncation) was correct; the only failure mode is incomplete output.
 
@@ -659,7 +659,7 @@ The redaction pass runs **after** validation and **before** dedup/handler routin
 - The debug bundle export per `debug-bundle.md`.
 - Any error envelope returned to the client.
 
-See `SECURITY/invariants.yaml` row `envelope-redaction-sr-1-carry-forward` (to be added in the schema sibling to this spec).
+See `SECURITY/invariants.yaml` row `envelope-redaction-sr-1-carry-forward` (protocol tier, critical severity), which enforces this discipline.
 
 ---
 
@@ -669,7 +669,7 @@ This spec adds **no new required v1 fields** to `capabilities.schema.json`. It r
 
 | Field | Role under this spec |
 |---|---|
-| `supportedEnvelopes` (required v1) | The host's kind catalog. Universals MUST be present; vendor kinds MUST be namespaced. |
+| `supportedEnvelopes` (required v1) | The host's kind catalog. Universals MUST be present whenever the array is non-empty (RFC 0094 — see §"Universal kinds"); vendor kinds MUST be namespaced. |
 | `schemaVersions` (required v1) | The active per-kind schema version. Drives the §"Schema version advertisement" check. |
 | `limits.envelopesPerTurn` (required v1) | Hard cap on envelopes per LLM turn. Engine emits `cap.breached { kind: 'envelopes' }` on breach per `capabilities.md` §"Engine-enforced limits." |
 | `limits.schemaRounds` (required v1) | Hard cap on per-envelope retries when validation fails. Engine emits `cap.breached { kind: 'schema' }`. |
@@ -778,7 +778,7 @@ Profile gating: scenarios in this list run unconditionally against any host that
 
 For pre-v1.x hosts that already advertise `supportedEnvelopes` with unnamespaced kind strings (`prd.create`, `theme.create`, etc.), this spec is **additive only**. Specifically:
 
-1. Existing kinds continue to work; the four universals are now required to be advertised (every reference host already advertises `clarification.request`).
+1. Existing kinds continue to work; the four universals are now required to be advertised on any host with a non-empty `supportedEnvelopes` (RFC 0094 — every reference host already advertises `clarification.request`).
 2. Hosts SHOULD add `meta` to envelopes they emit; engines SHOULD synthesize a default `meta.source = 'ai-generation'` for envelopes that omit it (warning-only for v1.x; required at v2).
 3. `correlationId` SHOULD be populated; engines that find it absent SHOULD synthesize `${runId}:${nodeId}:${envelopeId}` and continue (warning-only for v1.x).
 4. Vendor namespacing of new kinds is RECOMMENDED for v1.x and REQUIRED at v2.
@@ -796,9 +796,9 @@ See `docs/migration/v1.0-to-v1.1.md` for the field-by-field migration table once
 | E3 | Vendor-kind registry — whether namespaced kinds (`vendor.myndhyve.prd.create`) should be advertised through a `kinds` registry parallel to the node-pack registry per `registry-operations.md`, or stay host-private. | future v1.x |
 | E4 | Schema sub-typing — `vendor.x.prd.create` v2 might want to declare "everything v1 accepted, plus new optional field" without restating the v1 schema. JSON Schema $ref vs flat duplication; not locked. | future v1.x |
 | E5 | Refusal-mode interaction with retry policies — `refusalMode: "fail-node"` plus a per-run retry policy can produce surprising loops if the LLM keeps emitting refused kinds. The interaction needs a worked example. | future v1.x |
-| E6 | OTel attribute names — `openwop.envelope_kind`, `openwop.envelope_id`, `openwop.envelope_correlation_id` are implied but not added to `observability.md` §"Canonical span attributes" until this spec graduates from DRAFT. | follow-up |
+| E6 | ✅ OTel attribute names — closed. `observability.md` §"Envelope-reliability events (RFC 0032)" defines the `openwop.envelope.*` span-attribute projection for the envelope event vocabulary, and the redaction discipline for `openwop.envelope_*` attributes is enforced by `SECURITY/invariants.yaml` row `envelope-redaction-sr-1-carry-forward`. | closed |
 
-These gaps do NOT block conformance against the DRAFT surface; they list what a graduation to FINAL MUST close.
+These gaps do NOT block conformance against the Stable v1.1 surface; the open rows list candidate closures for future v1.x minors.
 
 ---
 

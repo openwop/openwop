@@ -1,6 +1,6 @@
 # openwop Spec v1 — Agent Workspace (`host.workspace`)
 
-> **Status: DRAFT v1.x (2026-05-25).** Normative spec for the RFC 0059 `host.workspace` capability — a versioned, atomic, tenant·workspace-scoped file store for an agent's persistent *ground-truth* artifacts (identity / directives / memory-index), loaded as a read snapshot at run start. Complements the transactional `MemoryAdapter` (RFC 0004) with a durable, path-addressable file layer. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Draft v1.x (2026-05-25).** Normative spec for the RFC 0059 `host.workspace` capability — a versioned, atomic, tenant·workspace-scoped file store for an agent's persistent *ground-truth* artifacts (identity / directives / memory-index), loaded as a read snapshot at run start. Complements the transactional `MemoryAdapter` (RFC 0004) with a durable, path-addressable file layer. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ## Why this exists
 

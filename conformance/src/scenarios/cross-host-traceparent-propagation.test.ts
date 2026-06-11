@@ -35,10 +35,10 @@
 
 import { describe, it } from 'vitest';
 
-// Behavioral assertions in this file are currently `it.todo` placeholders;
+// Behavioral assertions in this file are currently `it.skip` placeholders;
 // the cross-host MCP / A2A peer harness (gated on OPENWOP_MCP_REAL_SERVER_URL
 // / OPENWOP_A2A_REAL_PEER_URL) hasn't landed yet. When it does, the
-// `it.todo` calls flip back to runnable `it(...)` bodies that read discovery
+// `it.skip` calls flip back to runnable `it(...)` bodies that read discovery
 // (via `driver.get('/.well-known/openwop')`), gate on `Phase 3` advertisement,
 // and drive the workflow through the configured real peer.
 
@@ -48,7 +48,7 @@ describe('cross-host-traceparent-propagation: behavioral (RFC 0040 §B)', () => 
   // OPENWOP_MCP_REAL_SERVER_URL) records inbound headers; the test reads
   // the recorded headers and asserts `traceparent` is present + matches
   // the format `00-{traceId}-{spanId}-{flags}` per W3C tracecontext.
-  // Until the peer harness lands, the assertion is surfaced as `todo` so
+  // Until the peer harness lands, the assertion is surfaced as `it.skip` so
   // test reporters track the gap rather than reporting a vacuous PASS.
   // Marked out of stable profile via RFC 0042 §B (experimental tier):
   // RFC 0040 remains Active. Hosts that wire Phase 3 cross-host causation

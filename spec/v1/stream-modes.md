@@ -30,9 +30,11 @@ If a client requests a mode the server doesn't implement, the server MUST respon
 {
   "error": "unsupported_stream_mode",
   "message": "Server does not implement streamMode='messages'",
-  "supported": ["values", "updates", "debug"]
+  "details": { "supported": ["values", "updates", "debug"] }
 }
 ```
+
+The `supported` array MUST live under `details` per the canonical error envelope (`schemas/error-envelope.schema.json` is closed — top-level keys other than `error` / `message` / `details` fail validation).
 
 Servers MAY advertise their supported modes in `/.well-known/openwop` (see `capabilities.md`).
 
@@ -127,20 +129,27 @@ The `meta.usage.{promptTokens, completionTokens}` field is the per-chunk source 
 
 ## Mode-to-event mapping
 
-The exact event types each mode emits:
+The canonical event types each mode emits (authoritative source: the per-mode channels in `api/asyncapi.yaml`):
 
 | RunEventType | `updates` | `values` (synthesized) | `messages` | `debug` |
 |---|---|---|---|---|
 | `run.started` | ✅ | ✅ snapshot | — | ✅ |
 | `run.completed` / `run.failed` / `run.cancelled` | ✅ | ✅ snapshot | — | ✅ |
 | `run.paused` / `run.resumed` | ✅ | ✅ snapshot | — | ✅ |
+| `run.annotated` | ✅ | ✅ snapshot | — | ✅ |
+| `workspace.updated` | ✅ | ✅ snapshot | — | ✅ |
 | `node.started` | — | ✅ snapshot | — | ✅ |
 | `node.completed` / `node.failed` / `node.skipped` | ✅ | ✅ snapshot | — | ✅ |
 | `node.suspended` | ✅ | ✅ snapshot | — | ✅ |
+| `node.dispatched` | ✅ | ✅ snapshot | — | ✅ |
 | `node.retried` | — | — | — | ✅ |
 | `approval.requested` | ✅ | ✅ snapshot | — | ✅ |
 | `approval.received` | ✅ | ✅ snapshot | — | ✅ |
 | `clarification.requested` / `clarification.resolved` | ✅ | ✅ snapshot | — | ✅ |
+| `interrupt.requested` / `interrupt.resolved` | ✅ | ✅ snapshot | — | ✅ |
+| `artifact.created` | ✅ | ✅ snapshot | — | ✅ |
+| `eval.started` / `eval.scored` / `eval.completed` | ✅ | ✅ snapshot | — | ✅ |
+| `deployment.promoted` / `deployment.rolledBack` / `deployment.canaryAdjusted` / `deployment.stateChanged` | ✅ | ✅ snapshot | — | ✅ |
 | `variable.changed` | — | — | — | ✅ |
 | `version.pinned` | — | — | — | ✅ |
 | `lease.acquired` / `lease.renewed` / `lease.lost` | — | — | — | ✅ |
@@ -148,6 +157,8 @@ The exact event types each mode emits:
 | `ai.message.chunk` (synthesized from streaming AI calls) | — | — | ✅ | ✅ |
 
 ✅ = emitted in this mode; — = filtered out
+
+Vendor-extension events appear in `debug` only (it is the unfiltered firehose); the other modes' filters admit only the canonical types above.
 
 ---
 
@@ -205,7 +216,7 @@ Semantics:
 - Termination: same rule as the single-mode case — server closes the connection on the run's terminal event.
 - Per-event labeling: each emitted SSE event SHOULD carry an `event:` field naming the mode that admitted it (e.g., `event: updates` or `event: messages`). When an event qualifies under multiple modes, the server MAY pick any one consistently. Consumers MUST tolerate this overlap.
 - `values` MUST NOT be combined with another mode (state.snapshot semantics need exclusive ownership of the stream).
-- Unsupported combinations return `400 Bad Request` with `error: "unsupported_stream_mode"`. The error body's `supported` array MUST include each individual mode name; mixed combinations are NOT advertised in `supported`.
+- Unsupported combinations return `400 Bad Request` with `error: "unsupported_stream_mode"`. The error body's `details.supported` array MUST include each individual mode name; mixed combinations are NOT advertised in `details.supported`.
 
 ---
 

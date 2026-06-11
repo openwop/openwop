@@ -57,6 +57,22 @@ Every spec change must:
 3. Update `@openwop/openwop-conformance` if the change introduces new testable behavior. Conformance scenarios for new optional surfaces ship as minor releases of the suite (`1.X.0`) against the unchanged v1 protocol.
 4. For normative-addition, safety-fix, and breaking changes: file an RFC per `RFCS/0001-rfc-process.md` before opening the spec PR.
 
+### Acceptance evidence tiers
+
+An RFC's `Active → Accepted` flip is backed by implementation evidence from a host. That evidence comes in three tiers, in increasing order of independence:
+
+1. **Tier 1 — steward-verified.** The steward's own host (a reference host in `openwop-examples`, or the steward-operated demo app) implements and passes the gated scenarios.
+2. **Tier 2 — steward-affiliated sibling host.** A separate deployment operated by the same maintainer organization — a genuinely distinct codebase and production environment, but not independent change control. Today this is **MyndHyve** (`api.myndhyve.ai`), the sibling host whose advertisements drove the RFC 0078–0092 graduations.
+3. **Tier 3 — independent-organization host.** A host built and operated by an organization with no affiliation to the steward.
+
+Rules:
+
+- An `Active → Accepted` flip **MUST name the tier of its evidence** in the RFC's `Updated` field (and the CHANGELOG graduation entry SHOULD repeat it).
+- During the bootstrap phase, **tier-2 evidence is sufficient** to graduate an RFC — it proves the wire shape cross-implements outside the reference tree. But the corpus **MUST NOT describe tier-2 evidence as "non-steward" or "independent"**: a sibling host under the same maintainer org is neither. The honest label is "steward-affiliated sibling host."
+- **Re-verification by a tier-3 host remains a `ROADMAP.md` gate** (the "second independent host implementation" line): tier-2 graduations are not retroactively invalidated when a tier-3 host arrives, but the working-group tripwires and the INTEROP-MATRIX "first non-steward row" milestone fire only on tier-3 evidence.
+
+> **Historical wording note.** Acceptance evidence recorded before 2026-06-11 (the RFC `Updated` fields and CHANGELOG entries for the RFC 0021–0092 graduations) frequently uses the phrase "non-steward host" for MyndHyve; that wording refers to **tier-2** evidence under this taxonomy and is not rewritten retroactively.
+
 ## Release process
 
 - **Spec corpus** ships as named tags (`v1.0.0`, `v1.1.0`, …). Major versions are reserved for breaking changes.

@@ -147,7 +147,7 @@ ai-feedback:
 
 A node passes if EITHER pass matches.
 
-**Engine enforcement.** When a node calls `ctx.channels.read('X')` or `ctx.channels.write('X', value)`:
+**Engine enforcement.** When a node calls `ctx.channels.get('X')` or `ctx.channels.write('X', value)`:
 
 - If `access` is omitted or `'public'`: allow.
 - If `access === 'private'`: deny (return `400 channel_access_denied`).
@@ -527,7 +527,7 @@ An OpenWOP-compliant server MAY continue accepting writes to the legacy `run.var
 
 ### Legacy mode (default for v1)
 
-`run.variables` reads/writes work as before. The reference implementation's recovery-internal-variable allowlist (per `WorkflowRunPersistenceService.ts:113`) continues to apply:
+`run.variables` reads/writes work as before. The reference app's recovery-internal-variable allowlist (historical cross-repo evidence: `openwop/openwop-app` repo, backend `WorkflowRunPersistenceService.ts`) continues to apply:
 
 - `_activeClarification`
 - Prefixes: `_approvalVotes:`, `_askExchanges:`, `_clarificationAnswers:`, `_feedbackHistory:`, `_loopbackCount:`, `_loopbackIteration:`, `_previousArtifact:`
@@ -603,7 +603,7 @@ Semantics:
 - Applies to reducers with monotonic-append semantics: `append`, `votes`, `feedback`. SHOULD be ignored for `replace` / `merge` / `counter` (those have no entry-age concept).
 - **Entry shape (normative).** On a channel that declares `ttlMs`, each entry stored under the channel's state MUST be wrapped in `{ value: T, _ts: number }`, where `_ts` is the write-time wall-clock in milliseconds since the Unix epoch as observed by the engine at append time. Hosts MUST NOT strip `_ts` from the entry between write and read. The wrap applies to the channel state surface (`RunSnapshot.variables.<channelName>`, `RunSnapshot.channels.<channelName>`, `channel.written` event payloads); raw `T` values are reserved for channels that omit `ttlMs`.
 - **Pruning timing (normative).** Pruning MUST happen at write time: before appending the new entry, the engine MUST remove every prior entry whose `_ts < (now - ttlMs)`. Engines MAY also prune opportunistically on read (e.g., to serve a fresher snapshot if wall-clock has advanced between writes), but write-time pruning is mandatory so any subsequent `RunSnapshot.variables` projection reflects the pruned state without depending on read-side fold timing. Servers MUST NOT surface entries with `_ts < (now - ttlMs)` on `GET /v1/runs/{runId}` once the next write has landed.
-- Per-entry timestamps come from the `RunEventDoc.timestamp` field on the `channel.written` event AND from the embedded `_ts` on each entry; both MUST agree at fold time. The reducer compares `_ts` against `now()` at fold time.
+- Per-entry timestamps come from the `RunEventDoc.timestamp` field on the `channel.written` event AND from the embedded `_ts` on each entry; both MUST agree at fold time. The reducer compares `_ts` against `now()` at fold time. During replay, `now()` is defined as the original wall-clock timestamp of the event being folded (a deterministic input from the event log), never the current clock — preserving `replay.md`'s byte-equivalence requirement.
 - Combines with `maxSize`: both apply. Whichever bound trips first wins; `ttlMs` is applied first (per the write-time pruning rule), then `maxSize` enforces the entry-count ceiling on the remainder.
 - Replay-safe: TTL drop is deterministic given the event log + `now()` at replay time. Replays MUST use the original event timestamps (not replay-wall-clock) for the comparison so the resulting state matches the original run modulo TTL drift.
 - An OpenWOP-compliant server MAY refuse `ttlMs` declarations on reducers that don't support it (`400 Bad Request` on workflow registration).

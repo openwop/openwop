@@ -25,7 +25,15 @@
       "maxLength": 128
     },
     "type": {
-      "$ref": "#/$defs/RunEventType"
+      "description": "Event-type discriminator. RFC 0094 §C: either a protocol-owned type from the authoritative `RunEventType` catalog, or a correctly-prefixed vendor-extension event per `host-extensions.md` §\"Vendor-prefixed namespaces\" (dotted name whose first segment is the vendor's short identifier or reverse-DNS label — e.g. `acme.canvas.published` — and is NOT a protocol-owned/registry-reserved prefix). Aligns the schema with `COMPATIBILITY.md` (\"Clients MUST ignore unknown event types\") and `version-negotiation.md` (readers ignore unknown).",
+      "anyOf": [
+        { "$ref": "#/$defs/RunEventType" },
+        {
+          "type": "string",
+          "pattern": "^(?!(?:openwop|core|community|vendor|private|local)\\.)[a-z][a-zA-Z0-9_-]*(\\.[a-zA-Z0-9_-]+)+$",
+          "description": "Vendor-extension event type: two or more dot-separated segments; the leading segment is the vendor prefix and MUST NOT be one of the protocol-owned / registry-reserved prefixes (`openwop.*`, `core.*`, `community.*`, `vendor.*`, `private.*`, `local.*`) per `host-extensions.md` §\"Canonical prefixes\"."
+        }
+      ]
     },
     "payload": {
       "description": "Event-type-specific payload. Servers MAY validate against per-type schemas; this top-level schema accepts any JSON value.",
@@ -57,7 +65,8 @@
       "maxLength": 128
     }
   },
-  "additionalProperties": false,
+  "$comment": "RFC 0094 §G + COMPATIBILITY.md §\"Schema closure\": RunEventDoc is a SERVER-EMITTED shape, so it is open (`additionalProperties: true`) — v1.x hosts may add optional fields additively without breaking schema-validating clients. Client-submitted shapes stay closed at their outermost composition.",
+  "additionalProperties": true,
   "$defs": {
     "RunEventType": {
       "type": "string",

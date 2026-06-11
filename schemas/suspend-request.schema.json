@@ -76,6 +76,11 @@
           "type": "string",
           "enum": ["single-veto", "majority"],
           "default": "single-veto"
+        },
+        "overrideBypassesQuorum": {
+          "type": "boolean",
+          "default": false,
+          "description": "RFC 0093 §D2 (pins RFC 0051 UQ 2). When `true`, a configured override principal (per `interrupt-profiles.md` §approval-gate `override.requiredRole`) MAY bypass the quorum (`requiredApprovals`) and release the gate alone. Default `false`: an override principal's approval counts as ONE quorum vote; quorum still applies. Optional, additive."
         }
       }
     },

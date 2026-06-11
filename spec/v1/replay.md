@@ -9,7 +9,7 @@
 The durable event log makes time-travel debugging nearly free: every meaningful state transition is persisted with a sequence number, so the run state at any point in history can be reconstructed deterministically by folding events up to that sequence.
 
 Without a replay surface, this potential is wasted. Operators and developers who hit a workflow bug currently have to:
-- Read raw event docs from Firestore.
+- Read raw event docs from the backing event store.
 - Mentally fold the events to reconstruct state.
 - Make a hypothesis about what fix would change behavior.
 - Modify the live workflow definition.
@@ -105,7 +105,7 @@ Status codes:
 
 An OpenWOP-compliant server MUST guarantee determinism of replay subject to the following caveats:
 
-1. **Side-effecting nodes** — every NodeModule that calls an external API (LLM, payment, message) MUST consult `FirestoreInvocationLog` (see `idempotency.md` Layer 2). On replay, the cached response is returned — the external system is NOT called twice.
+1. **Side-effecting nodes** — every NodeModule that calls an external API (LLM, payment, message) MUST consult the durable invocation log (see `idempotency.md` §"Layer 2: Activity-level idempotency"). On replay, the cached response is returned — the external system is NOT called twice.
 2. **`ctx.interrupt(payload)`** — every interrupt with key `K` short-circuits to the persisted `interrupt.resolved` value. The external system is NOT prompted again.
 3. **`ctx.getVersion(changeId, min, max)`** — pinned values from the original run are preserved (events `< fromSeq` are fixed history). The branch the original run took is the branch the replay takes.
 4. **Time-dependent code** — if a NodeModule reads `Date.now()` directly (not via the engine's logical clock), replay is non-deterministic. NodeModules MUST consume time via `ctx.now()` if available, or accept non-determinism.
@@ -131,7 +131,7 @@ The replayed run continues to completion or further divergence; the `replay.dive
 
 Replay determinism for LLM-calling nodes depends on hosts agreeing on the *cache key* under which a provider response is deduped. Without a canonical recipe, two hosts replaying the same workflow against the same provider can compute different keys, miss the dedup, and call the provider twice.
 
-This section defines the **canonical cache key** that an OpenWOP-compliant host MUST compute for any node that calls an LLM provider through the Layer-2 idempotency surface (`idempotency.md` §"Layer 2 — Engine invocationId").
+This section defines the **canonical cache key** that an OpenWOP-compliant host MUST compute for any node that calls an LLM provider through the Layer-2 idempotency surface (`idempotency.md` §"Layer 2: Activity-level idempotency").
 
 ### §A Domain
 
@@ -181,7 +181,7 @@ The resulting 64-character hex string is the **LLM cache key** for that invocati
 
 The LLM cache key is the *content-addressable* identity of the provider request. It composes with `idempotency.md` Layer 2 as follows:
 
-- The Layer-2 `invocationId` is `sha256(runId + nodeId + invocationIndex)` (per `idempotency.md` §"Layer 2 — Engine invocationId").
+- The Layer-2 `invocationId` is `sha256(runId || ':' || nodeId || ':' || attempt || ':' || providerKey)` (per `idempotency.md` §"Layer 2: Activity-level idempotency").
 - The LLM cache key is computed in addition, and is the dedup key inside the Layer-2 store for provider-call nodes.
 - A Layer-2 lookup that hits on `invocationId` returns the cached response unconditionally; the LLM cache key is the secondary lookup used when a fresh run computes the same provider request as a different (or no) prior run — enabling cross-run sharing of provider responses where the host opts in.
 
@@ -191,7 +191,7 @@ Hosts MUST NOT use the LLM cache key as a security boundary — two different te
 
 Two OpenWOP-compliant hosts replaying the same workflow against the same provider request **MUST compute the same LLM cache key**. The recipe is a normative invariant for `replay` mode — divergent cache keys are reportable via the `replay.diverged` event when the cached response differs.
 
-A future conformance scenario (`replay-llm-cache-key.test.ts`) will exercise this property cross-host once at least two reference hosts implement LLM-calling nodes. As of this writing both reference hosts (in-memory + SQLite) execute only deterministic-noop fixtures (`core.noop` / `core.delay` / `core.approvalGate`), so the scenario ships as `it.todo()`.
+The conformance scenario `replay-llm-cache-key.test.ts` (shipped in conformance suite 1.3.0) exercises this property and backs the security invariant `replay-llm-cache-key-portable`.
 
 ### §E Migration
 
@@ -210,7 +210,7 @@ Per [RFC 0041](../../RFCS/0041-multi-agent-replay-under-nondeterminism.md). Appl
 
 ### §A — LLM cache-key recipe: unconditional MUST + observable commitment
 
-The §"LLM cache-key recipe" §A + §B above already establishes a CONDITIONAL MUST: per the intro to that section, hosts MUST compute the cache key per the recipe **for any node that calls an LLM provider through the Layer-2 idempotency surface** (`idempotency.md` §"Layer 2 — Engine invocationId"). Phase 4 strengthens this in two ways:
+The §"LLM cache-key recipe" §A + §B above already establishes a CONDITIONAL MUST: per the intro to that section, hosts MUST compute the cache key per the recipe **for any node that calls an LLM provider through the Layer-2 idempotency surface** (`idempotency.md` §"Layer 2: Activity-level idempotency"). Phase 4 strengthens this in two ways:
 
 1. **Unconditional MUST.** Phase 4 hosts MUST follow the recipe for ALL LLM-calling nodes regardless of whether they use Layer-2 idempotency. The "for Layer-2 idempotency only" conditional in the original §"LLM cache-key recipe" intro does NOT apply when `multiAgent.executionModel.version >= 4`.
 2. **Observable commitment.** Phase 4 hosts MUST advertise the recipe they honor via `capabilities.multiAgent.executionModel.replayDeterminism.llmCacheKeyRecipe`. The value `spec-rfc-0041` claims the canonical recipe; vendor recipes use the canonical host-extension namespace `x-host-<host>-<recipe-name>` per `host-extensions.md` §"Canonical prefixes". The advertisement lets cross-host replay rely on byte-identical keys without trial computation.
@@ -250,12 +250,12 @@ Scenarios verifying §A + §B + §C gate on `capabilities.multiAgent.executionMo
 
 ## Replay-from-event-log internals
 
-The engine implementation reuses the existing `recoverRunFromEventLog(runId)` machinery (per `WORKFLOW_ORCHESTRATION.md`):
+An engine implementation typically reuses its existing run-recovery machinery (a non-normative example: the reference host's `recoverRunFromEventLog(runId)` helper), built on the `RunEventLogIO` storage-adapter contract (see `storage-adapters.md`):
 
-1. `EventLog.read(sourceRunId, { fromSequence: 0, limit: fromSeq })` — load events `< fromSeq`.
+1. `RunEventLogIO.read(sourceRunId, { fromSequence: 0, limit: fromSeq })` — load events `< fromSeq`.
 2. `fold(events) → ProjectedRunState` — derive initial state.
-3. New run is initialized with that state, copy-on-write into the new event subcollection.
-4. For `replay`, executor invocations consult `FirestoreInvocationLog` keyed on `(sourceRunId, ...)` for side-effect dedup.
+3. New run is initialized with that state, copy-on-write into the new run's event log.
+4. For `replay`, executor invocations consult the durable invocation log (`idempotency.md` §"Layer 2: Activity-level idempotency") keyed on `(sourceRunId, ...)` for side-effect dedup.
 5. For `branch`, executor invocations create new invocation log entries keyed on `(newRunId, ...)`.
 
 ---

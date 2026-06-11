@@ -57,6 +57,6 @@ This surface does **not** standardize Kanban boards, columns, cards, swimlanes, 
 |---|---|
 | `GET /v1/agents/roster[/{id}]` + roster-management endpoints | Deferred to `Active → Accepted` (OpenAPI/AsyncAPI + SDK helpers). The read surface is the interop slice; management is host-private at v1.x. |
 | Behavioral attribution + scoping conformance | Deferred to `Active → Accepted` (gated on `agents.roster.supported`); the always-on `agent-roster-shape.test.ts` asserts the wire contract now. |
-| Reference-host roster store | Demonstrated as a host-extension at `/v1/host/sample/roster` (apps/workflow-engine); the normative `GET /v1/agents/roster` reference wiring lands at `Active → Accepted`. |
+| Reference-host roster store | Demonstrated as a host-extension at `/v1/host/sample/roster` (the reference app, `openwop/openwop-app` repo); the normative `GET /v1/agents/roster` reference wiring lands at `Active → Accepted`. |
 | Dispatch-as-agent (resolving `agentRef` → the executing agent) | The reference impl attributes by `agentRef`; executing the portfolio workflow *as* that agent is deferred. |
 | `kanban.card.moved` as a normative event | Deferred to a future `host.kanban` RFC iff cross-host demand appears (§E). |

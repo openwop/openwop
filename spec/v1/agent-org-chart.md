@@ -60,6 +60,6 @@ GET /v1/agents/org-chart/{departmentId}         → one department's subtree + r
 |---|---|
 | `GET /v1/agents/org-chart[/{departmentId}]` + org-chart-management endpoints | Deferred to `Active → Accepted` (OpenAPI/AsyncAPI + SDK helpers). The read + roll-up are the interop surface; management is host-private at v1.x. |
 | Behavioral non-authority + scoping conformance | Deferred to `Active → Accepted` (gated on `agents.orgChart.supported`); the always-on `agent-org-chart-shape.test.ts` structural assertions (schema rejects an authority field; descriptive-only key set) assert the §B invariant now. |
-| Reference-host org store | Demonstrated as a host-extension at `/v1/host/sample/org-chart` (apps/workflow-engine, #371); the normative `GET /v1/agents/org-chart` reference wiring lands at `Active → Accepted`. |
+| Reference-host org store | Demonstrated as a host-extension at `/v1/host/sample/org-chart` (the reference app, `openwop/openwop-app` repo; originally PR #371); the normative `GET /v1/agents/org-chart` reference wiring lands at `Active → Accepted`. |
 | Multi-department membership; matrixed `reportsTo` across departments | A member belongs to one department + role per chart at v1.x; `reportsTo` MAY cross departments (only cycles + cross-tenant edges are forbidden). A future minor MAY add `memberships[]`. |
 | Delegated authority (a principal granting a scope to another) | Out of scope — that is delegation-by-RBAC (RFC 0049) with its own threat model, NOT authority-by-position. §B forbids the latter. |

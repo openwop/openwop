@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0038 |
 | **Title** | OpenWOP Working Group charter |
-| **Status** | `Draft` |
+| **Status** | `Draft` (**Parked**) |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-21 |
-| **Updated** | 2026-05-21 |
+| **Updated** | 2026-06-11 — **Parked** (per `RFCS/README.md` §"Parked Drafts"): deliberately idle pending the `GOVERNANCE.md` §"Path to working group" tripwires (≥3 independent-org maintainers + ≥2 non-steward conformant hosts); not abandoned. The charter is authored so ratification is mechanical the moment the tripwire fires. 2026-05-21 — filed `Draft`. |
 | **Affects** | `GOVERNANCE.md` (replaces lead-maintainer-tiebreaker section with steering-committee-vote rule) · `MAINTAINERS.md` (working-group succession addendum) · NEW `docs/working-group/` directory (charter doc + bylaws) · CHANGELOG |
 | **Compatibility** | `additive` (governance — does not affect any wire shape) |
 | **Supersedes** | — |

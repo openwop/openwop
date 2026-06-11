@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: Workflow Orchestration Protocol (openwop) API
-  version: "1.0"
+  version: "1.1.0"
   summary: REST surface for declaring, executing, suspending, resuming, and observing multi-step workflows.
   description: |
     Canonical OpenAPI 3.1 specification for openwop-compliant servers. Generated from `rest-endpoints.md` and references the JSON Schemas in `schemas/`.
@@ -16,6 +16,16 @@ info:
     - `run-options.md` — `configurable`/`tags`/`metadata`
     - `interrupt.md` — HITL primitive
     - `replay.md` — `:fork` endpoint
+
+    **Registry scope (RFC 0094 §I).** This document specifies the HOST
+    surface. The production node-pack registry surface (`/v1/packs/*` —
+    publish/get/delete/sig, deprecation, yank, key rotation) is specified in
+    `spec/v1/node-packs.md` §"Registry HTTP API" + `spec/v1/registry-operations.md`
+    and is served by a registry service (e.g. the planned hosted reference
+    registry `packs.openwop.dev`, or a third-party/private registry
+    implementation) — a distinct deployable, out of scope for this host
+    OpenAPI document. Only the test-mode mirror (`/v1/packs-test/*`, RFC 0025)
+    is host-mounted and documented here.
   contact:
     name: openwop spec working group
     url: https://openwop.dev/spec/v1/
@@ -74,6 +84,11 @@ tags:
       `OPENWOP_PACKS_TEST_NAMESPACE_ENABLED=true` env-gate. Lets the conformance suite exercise the documented
       19-code publish error catalog without `packs:publish` scope on the real registry. Hosts that haven't
       mounted this surface MUST return `404 Not Found` for every path under `/v1/packs-test/`.
+
+      Scope note (RFC 0094 §I): the PRODUCTION `/v1/packs/*` surface these paths mirror is specified in
+      `spec/v1/registry-operations.md` + `node-packs.md` §"Registry HTTP API" and is served by a registry
+      service (a distinct deployable from the host), so it is intentionally NOT defined in this host
+      OpenAPI document.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # PATHS
@@ -178,7 +193,13 @@ paths:
               # routing fields, plus the openwop RunOptions overlay (configurable,
               # tags, metadata) hoisted into a first-class JSON Schema at
               # ../schemas/run-options.schema.json. allOf composes the two
-              # so callers see one unified body shape.
+              # so callers see one unified body shape. RFC 0094 §A: neither
+              # allOf branch is closed via additionalProperties (two closed
+              # branches inside one allOf made every documented body
+              # unsatisfiable); the composed request is closed here with
+              # `unevaluatedProperties: false` (JSON Schema 2020-12), so
+              # undeclared properties still fail at the composition level.
+              unevaluatedProperties: false
               allOf:
                 - type: object
                   properties:
@@ -215,7 +236,6 @@ paths:
                       type: string
                       minLength: 1
                       description: RFC 0081 — the manifest agent the eval suite targets. Required when mode is `eval`.
-                  additionalProperties: false
                   if:
                     properties: { mode: { const: eval } }
                     required: [mode]
@@ -1843,6 +1863,9 @@ paths:
         `conflict`/`version_conflict`) MUST be served verbatim. The
         test catalog MUST be isolated per RFC 0025 §C — a pack PUT'd
         here MUST NOT appear in `GET /v1/packs/{name}` listings.
+        The mirrored production path is registry-service surface
+        (`registry-operations.md`), not defined in this host document
+        (see the `packs-test` tag scope note).
       operationId: putTestPackTarball
       parameters:
         - in: header
@@ -1914,7 +1937,7 @@ paths:
     get:
       tags: [packs-test]
       summary: Fetch a published test-catalog tarball.
-      description: 'Mirror of `GET /v1/packs/{name}/-/{version}.tgz`. Returns the gzipped tarball bytes with `Content-Type: application/tar+gzip` and an `ETag: "sha256-..."` matching the manifest''s `tarballSha256`.'
+      description: 'Mirror of `GET /v1/packs/{name}/-/{version}.tgz`. Returns the gzipped tarball bytes with `Content-Type: application/tar+gzip` and an `ETag: "sha256-..."` matching the manifest''s `tarballSha256`. The mirrored production path is registry-service surface (`registry-operations.md`), not defined in this host document (see the `packs-test` tag scope note).'
       operationId: getTestPackTarball
       responses:
         '200':
@@ -1951,7 +1974,10 @@ paths:
         for versions older than the registry's unpublish window
         (default 72h). Test-mode implementations MAY shorten the
         window for tractable conformance fixtures but MUST surface
-        the same error code.
+        the same error code. The mirrored production path is
+        registry-service surface (`registry-operations.md`), not
+        defined in this host document (see the `packs-test` tag
+        scope note).
       operationId: deleteTestPackVersion
       responses:
         '204':
@@ -1983,7 +2009,9 @@ paths:
       description: |
         Mirror of `GET /v1/packs/{name}/-/{version}.sig`. Returns the
         signature blob over `pack.json` for this version. MAY 302-redirect
-        to a storage-backend signed URL.
+        to a storage-backend signed URL. The mirrored production path is
+        registry-service surface (`registry-operations.md`), not defined
+        in this host document (see the `packs-test` tag scope note).
       operationId: getTestPackSignature
       responses:
         '200':

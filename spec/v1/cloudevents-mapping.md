@@ -1,6 +1,6 @@
 # OpenWOP → CloudEvents Mapping (non-normative)
 
-> **Status: DRAFT (non-normative addendum, 2026-05-15).** STD-2 from `plans/openwop-protocol-gap-closure-plan.md`. Maps OpenWOP `RunEvent` records onto the [CloudEvents 1.0](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md) envelope so hosts that export events to message brokers (Pub/Sub, Kafka, EventBridge, NATS) can do so under a wire-portable contract. **Non-normative** — OpenWOP hosts MAY but are NOT required to support CloudEvents export. Promote to a normative profile once a reference host ships one.
+> **Status: Draft (non-normative addendum, 2026-05-15).** STD-2 from `plans/openwop-protocol-gap-closure-plan.md`. Maps OpenWOP `RunEvent` records onto the [CloudEvents 1.0](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md) envelope so hosts that export events to message brokers (Pub/Sub, Kafka, EventBridge, NATS) can do so under a wire-portable contract. **Non-normative** — OpenWOP hosts MAY but are NOT required to support CloudEvents export. Promote to a normative profile once a reference host ships one.
 
 This document does NOT change the native OpenWOP event log shape (`schemas/run-event.schema.json` + `schemas/run-event-payloads.schema.json`). It defines a one-way projection from that shape onto CloudEvents 1.0 attributes for hosts that want to bridge run events into a CloudEvents-aware message bus.
 

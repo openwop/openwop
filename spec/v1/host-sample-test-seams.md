@@ -1,6 +1,6 @@
-> **Status: Stable · v1.1 (2026-05-22).** Normative spec for conformance-only host-sample test seams under `/v1/host/sample/*`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
-
 # Host-sample test seams
+
+> **Status: Stable · v1.1 (2026-05-22).** Normative spec for conformance-only host-sample test seams under `/v1/host/sample/*`. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 OpenWOP's [conformance suite](../../conformance/) verifies behavioral contracts that v1 cannot probe through the production wire surface alone. Examples:
 
