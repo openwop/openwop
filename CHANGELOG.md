@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.8 — unreleased]
 
+### Docs
+
+- **Cross-host re-measurement against `@openwop/openwop-conformance@1.22.0` (2026-06-11).** All five hosts re-measured; `INTEROP-MATRIX.md` pass-rate table refreshed (suite total 1963). Workflow-engine leaves its stale 1.18.1/2026-06-02 row: **1854/12/97** at the production-deployed `3537d3c8` (94.4%; the 12 failures are its known pre-existing set, 0 new). Postgres 1846/2/115, SQLite (strict) 1820/6/137, in-memory 1793/45/125 (unchanged honest non-claims), Python 1783/3/177. Two honesty findings recorded in the matrix caption: (1) the prior 1.21.0 example-host readings were taken with degraded fixture loading, so this broader-coverage run is the new basis; (2) **the new RFC 0093 §A3 `webhook-tenant-isolation` scenario found a real gap** — SQLite/Postgres/Python advertise `webhooks.supported: true` without a registration-time tenant-membership gate (2 deterministic failures each; fix tracked in `openwop-examples`, whose strict soak gate also gains the 1.22.0 profile opt-outs).
+
 ### Graduations (`Active → Accepted`)
 
 - **RFCs 0090 + 0091 + 0092 Accepted (2026-06-08).** All three of this cycle's additive RFCs (below) graduated `Active → Accepted` on steward-affiliated sibling-host evidence (MyndHyve `workflow-runtime` rev `00265-4p7`, steward-curl-verified): 0090 — `verifier {supported, gating}` + `multiAgent.executionModel.version: 6` advertised live, `verifier-gating.test.ts` passes non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true`; 0091 — `aiProviders.input.modalities: ["text","image"]` advertised live, `callai-multimodal.test.ts` passes non-vacuously; 0092 — a seeded degraded-capability agent proves the `requiresCapabilities` → `degraded[]` projection via `agent-capability-degraded-projection.test.ts`, non-vacuously. All against the published `@openwop/openwop-conformance@1.21.0`. Per-RFC evidence in each `Updated` field. No wire change at graduation (the surfaces shipped at `Draft → Active`, 2026-06-07).
