@@ -31,9 +31,9 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 89 |
-| Active | 4 |
-| Unknown | 1 |
+| Accepted | 91 |
+| Active | 2 |
+| Draft | 1 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -74,7 +74,7 @@
 | RFC 0035 | Sandbox execution contract for pack-loaded typeIds | Active |
 | RFC 0036 | Multi-region idempotency + cross-engine append-ordering guarantees | Accepted |
 | RFC 0037 | Multi-agent execution model + replay determinism under nondeterministic models | Accepted |
-| RFC 0038 | OpenWOP Working Group charter | Unknown |
+| RFC 0038 | OpenWOP Working Group charter | Draft |
 | RFC 0039 | Multi-agent execution model Phase 2: confidence-threshold escalation + agent memory lifecycle across sub-runs and replay | Accepted |
 | RFC 0040 | Multi-agent execution model Phase 3: cross-host causation linking + W3C tracecontext propagation across composition boundaries + cross-host run-ID resolution | Accepted |
 | RFC 0041 | Multi-agent execution model Phase 4: LLM cache-key recipe normation + envelope-refusal recovery in replay context + determinism vs idempotency contract | Accepted |
@@ -129,8 +129,8 @@
 | RFC 0090 | A first-class verifier/critic turn (`agent.verified` event) + observable convergence criteria on the orchestrator `terminate` decision, so a multi-agent run can check work before committing and stop on a stated success condition rather than an opaque self-judgement | Accepted |
 | RFC 0091 | Let `ctx.callAI` messages carry typed multimodal content parts (text / image / audio / document) so an agent can _perceive_ non-text input, gated behind an additive `capabilities.aiProviders.input.modalities[]` advertisement - closing the one agent-architecture layer (perception) openwop does not model | Accepted |
 | RFC 0092 | Let an agent manifest declare the host capabilities it needs (`requiresCapabilities[]`), and surface an agent whose requirements a host can't meet as degraded on the inventory - generalizing the RFC 0072 sectionC `degraded[]` / RFC 0080 sectionC memory-degraded projection from per-dependency to a stated capability floor | Accepted |
-| RFC 0093 | Close four security/correctness gaps found in the 2026-06-11 corpus review: (1) webhook delivery-time egress re-validation + no-redirect policy + an explicit delivery tenant-isolation MUST, (2) interrupt signed-token lifecycle (expiry, single-use invalidation, constant-time verification, inspect intent), (3) idempotent-response caching of retryable-class outcomes (429/5xx) made supersedable, (4) the two approval-gate decisions RFC 0051 left "pin before Active" (timeout ⇒ auto-reject; quorum override opt-in) | Active |
-| RFC 0094 | Repair the wire-shape defects found in the 2026-06-11 corpus review: the unsatisfiable `createRun` request schema, the missing `cancelling` run status, the closed `RunEventType` enum that contradicts the documented ignore-unknown policy, the three-way `ai.message.chunk` payload drift, the incomplete `InterruptPayload.kind` union, the universal-envelope-kinds vs `openwop-core` profile contradiction, the missing `capabilities.grpc` and `limits.maxRequestBodyBytes` schema surface, and a documented schema-closure policy in `COMPATIBILITY.md` | Active |
+| RFC 0093 | Close four security/correctness gaps found in the 2026-06-11 corpus review: (1) webhook delivery-time egress re-validation + no-redirect policy + an explicit delivery tenant-isolation MUST, (2) interrupt signed-token lifecycle (expiry, single-use invalidation, constant-time verification, inspect intent), (3) idempotent-response caching of retryable-class outcomes (429/5xx) made supersedable, (4) the two approval-gate decisions RFC 0051 left "pin before Active" (timeout ⇒ auto-reject; quorum override opt-in) | Accepted |
+| RFC 0094 | Repair the wire-shape defects found in the 2026-06-11 corpus review: the unsatisfiable `createRun` request schema, the missing `cancelling` run status, the closed `RunEventType` enum that contradicts the documented ignore-unknown policy, the three-way `ai.message.chunk` payload drift, the incomplete `InterruptPayload.kind` union, the universal-envelope-kinds vs `openwop-core` profile contradiction, the missing `capabilities.grpc` and `limits.maxRequestBodyBytes` schema surface, and a documented schema-closure policy in `COMPATIBILITY.md` | Accepted |
 
 ## SDK Helper Coverage
 
@@ -147,7 +147,8 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 4 RFCs `Active` (RFC 0035, RFC 0043, RFC 0093, RFC 0094) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
+- 2 RFCs `Active` (RFC 0035, RFC 0043) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
