@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0043 |
 | **Title** | Registry submission policy, extension namespace rules, profile/event/capability name reservation, and IPR posture |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-05-22 |
-| **Updated** | 2026-05-22 |
+| **Updated** | 2026-06-11 — `Draft → Active`: policy is live ([`docs/governance/registry-policy.md`](../docs/governance/registry-policy.md)) and cited as authoritative from normative spec (`host-extensions.md` §"Canonical prefixes", `registry-operations.md` policy layer); full ratification deferred to WG formation per RFC 0038. 2026-05-22 — filed `Draft`. |
 | **Affects** | `spec/v1/host-extensions.md` (cross-link to RFC 0043 for canonical prefix table) · `spec/v1/registry-operations.md` (policy layer above the operational reference) · `GOVERNANCE.md` (§"Path to working group" adds RFC 0043 as the registry-policy precondition) · `RFCS/0038-working-group-charter.md` (charter adds explicit reference to RFC 0043 for registry responsibilities) · `MAINTAINERS.md` (registry maintainer expectations) · NEW `docs/governance/registry-policy.md` (one-stop policy index) · CHANGELOG |
 | **Compatibility** | `additive` — policy text, no wire-shape change |
 | **Supersedes** | — |

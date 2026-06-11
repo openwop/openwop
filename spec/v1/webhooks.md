@@ -21,6 +21,8 @@ openwop defines a subscription-style webhook surface: clients register a URL + e
 
 Authentication: same as the rest of the canonical surface (`auth.md`). The caller MUST be a member of the tenant the subscription will live under.
 
+**Delivery tenant scope (RFC 0093).** The tenant established by this registration-time membership gate also scopes delivery: a subscription MUST receive only events from runs within its tenant scope. Cross-tenant delivery is a protocol violation regardless of how broad the subscription's `events` / `tags` filters are. See `SECURITY/invariants.yaml` invariant `webhook-cross-tenant-isolation`.
+
 ### Register
 
 **Request body:**
@@ -165,6 +167,16 @@ The server MUST validate subscription URLs at registration time and reject:
 - `localhost` / `metadata`
 
 Without this, attackers could register `https://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token` and the dispatcher would leak the GCP IAM token bound to the runtime's service account.
+
+### Delivery-time egress validation (RFC 0093)
+
+Registration-time validation alone leaves a time-of-check/time-of-use window: an attacker can register a public hostname that passes the checks above, then flip its DNS record to a denied address (DNS rebinding) — or have the public URL redirect to one. Per RFC 0093:
+
+- The dispatcher MUST re-resolve the delivery URL's hostname at delivery time and validate **every** resolved address against the same denied ranges listed in §"SSRF protection" above, plus any host-configured denylist.
+- The connection MUST be made to the validated address (pinned resolution). The dispatcher MUST NOT re-resolve the hostname between validation and connect — a second resolution reopens the rebinding window the check exists to close.
+- Webhook delivery MUST NOT follow redirects. A `3xx` response is a delivery failure and is retried per the existing retry policy (best-effort, or durable when `webhooks.durable` is advertised).
+
+Black-box conformance cannot observe a host's resolver behavior, so this contract is carried by the reference-impl-tier invariant `webhook-delivery-egress-revalidation` in `SECURITY/invariants.yaml`.
 
 ### Replay attack protection
 

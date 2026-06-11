@@ -37,6 +37,15 @@ For any release `v1.x` (where `x ≥ 0`):
 - New endpoints MAY be added under `/v1/`. Existing endpoints MUST continue to work as documented.
 - New conformance scenarios MAY be added in suite minor releases. Hosts that pass `1.0` are not required to pass `1.x.0`; they advertise the suite version they pass.
 
+#### Schema closure (RFC 0094)
+
+How a published JSON Schema treats undeclared properties is a compatibility decision, and the rule differs by direction of travel:
+
+- **Client-submitted shapes are closed.** Schemas validating client-submitted request bodies MUST be closed at the **outermost composition** — `additionalProperties: false` on a standalone object schema, or `unevaluatedProperties: false` at the composition site when the request shape is an `allOf` composition (JSON Schema 2020-12) — so client typos fail fast instead of being silently dropped. Closure MUST NOT be placed inside individual `allOf` branches (that composition is unsatisfiable).
+- **Server-emitted shapes are open.** Schemas describing server-emitted documents (events, snapshots, discovery payloads) MUST NOT be closed, so a v1.x host can add optional fields per §2.1 without breaking schema-validating clients.
+
+RFC 0094 applies this policy to the central server-emitted shape that violated it — `schemas/run-event.schema.json` is now open, with an `anyOf` vendor-event branch on `type` — and to the `createRun` request composition (closed via `unevaluatedProperties: false`). The full sweep of the remaining server-emitted schemas is a **named follow-up** (RFC 0094 §Unresolved questions), not silently included.
+
 ### 2.2 Never within v1.x
 
 - Existing required fields MUST NOT become optional, MUST NOT be removed, MUST NOT change type.

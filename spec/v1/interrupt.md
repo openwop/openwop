@@ -1,6 +1,6 @@
 # openwop Spec v1 — HITL Interrupt Primitive
 
-> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of the canonical `interrupt(payload)` primitive, deterministic resume keys, the four `kind` discriminators (`approval`, `clarification`, `external-event`, `custom`), the 5-action approval vocabulary, and the signed-token callback URL surface. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Stable · v1.1 (2026-04-27).** Comprehensive coverage of the canonical `interrupt(payload)` primitive, deterministic resume keys, the eight `kind` discriminators (`approval`, `clarification`, `external-event`, `custom`, `conversation.start`, `conversation.exchange`, `conversation.close`, `low-confidence` — union completed per RFC 0094), the 5-action approval vocabulary, and the signed-token callback URL surface. Stable surface for external review. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ---
 
@@ -53,8 +53,12 @@ a new requirement.
 
 ```typescript
 interface InterruptPayload<TResume = unknown> {
-  /** Discriminator for resume-time routing + UI rendering + observability. */
-  kind: 'approval' | 'clarification' | 'external-event' | 'custom';
+  /** Discriminator for resume-time routing + UI rendering + observability.
+   *  Full set per RFC 0094 — one literal per kind this document defines. */
+  kind:
+    | 'approval' | 'clarification' | 'external-event' | 'custom'
+    | 'conversation.start' | 'conversation.exchange' | 'conversation.close'
+    | 'low-confidence';
 
   /**
    * Deterministic key used to short-circuit on re-entry after process death.
@@ -71,7 +75,10 @@ interface InterruptPayload<TResume = unknown> {
   timeoutMs?: number;
 
   /** Discriminated payload data (see "Per-kind payloads" below). */
-  data: ApprovalData | ClarificationData | ExternalEventData | CustomData;
+  data:
+    | ApprovalData | ClarificationData | ExternalEventData | CustomData
+    | ConversationStartData | ConversationExchangeData | ConversationCloseData
+    | LowConfidenceData;
 }
 ```
 
@@ -227,7 +234,7 @@ type CustomResume = unknown;
 
 ### `kind: "conversation.start"` (Multi-Agent Shift Phase 4)
 
-Opens a multi-turn conversation context. The host mints a `conversationId` and emits `conversation.opened` per `run-event.schema.json`. Subsequent `conversation.exchange` suspends reuse the same id. Hosts that don't advertise `capabilities.conversationPrimitive: true` MUST refuse this kind at registration time with `validation_error` and direct clients to use `clarification.requested` for multi-turn flows.
+Opens a multi-turn conversation context. The host mints a `conversationId` and emits `conversation.opened` per `run-event.schema.json`. Subsequent `conversation.exchange` suspends reuse the same id. Hosts that don't advertise `capabilities.conversationPrimitive: true` MUST refuse workflows that reference this kind per the canonical refusal contract in `capabilities.md` §"Unsupported capability — refusal contract" (refusal at workflow registration **or** run creation, canonical error envelope, `details.requiredCapability: "conversationPrimitive"`); such hosts SHOULD direct clients to `clarification` interrupts for multi-turn flows.
 
 ```typescript
 interface ConversationStartData {
@@ -305,9 +312,13 @@ When `ctx.interrupt(payload)` is called, the engine MUST emit:
     runId: string;
     nodeId: string;
     interruptId: string;
-    kind: 'approval' | 'clarification' | 'external-event' | 'custom';
+    kind: 'approval' | 'clarification' | 'external-event' | 'custom'
+        | 'conversation.start' | 'conversation.exchange' | 'conversation.close'
+        | 'low-confidence'; // full set per RFC 0094
     key: string;
-    data: ApprovalData | ClarificationData | ExternalEventData | CustomData;
+    data: ApprovalData | ClarificationData | ExternalEventData | CustomData
+        | ConversationStartData | ConversationExchangeData | ConversationCloseData
+        | LowConfidenceData;
     timeoutMs?: number;
     requestedAt: string; // ISO 8601
   }
@@ -352,23 +363,35 @@ POST /v1/interrupts/{token}
 Body: { resumeValue: ... }
 ```
 
-The token is HMAC-signed by the server with a configurable expiry (recommended default: 30 min). Format:
+See §"Signed resolution tokens" below for the token format, lifecycle, and the companion inspect endpoint.
+
+### Signed resolution tokens
+
+The token is HMAC-signed by the server. Format:
 
 ```
 token = base64url(payload) + "." + hmac_sha256(secret, payload)
-payload = JSON({ runId, nodeId, interruptId, expiresAt, intent: 'resolve' })
+payload = JSON({ runId, nodeId, interruptId, expiresAt, intent: 'resolve' | 'inspect' })
 ```
+
+**Expiry (RFC 0093).** Every signed token MUST carry an expiry (`expiresAt`). The default SHOULD be 30 minutes. Hosts MAY allow per-interrupt lifetime configuration but MUST cap the token's lifetime at the interrupt's own deadline (`timeoutMs`) when one exists — a token MUST NOT outlive the interrupt it resolves. An expired token MUST be refused with the canonical `410 interrupt_expired` envelope — the response both signed-token endpoints already document in `api/openapi.yaml`.
+
+**Invalidation (RFC 0093).** A token MUST be invalidated once its interrupt is resolved, or once the owning run is cancelled or completed. Subsequent use of an invalidated token returns the existing `409 interrupt_already_resolved`.
+
+**Verification (RFC 0093).** Token MAC verification MUST use a constant-time comparison. Hosts SHOULD support overlapping verification secrets (key id / versioned secret) so signing secrets can rotate without orphaning outstanding tokens; the token's algorithm-version discriminator selects which verification secret applies (HMAC-SHA256 is today's only spec'd scheme — see open gap I4 for future formats).
+
+**Inspect intent (RFC 0093).** `GET /v1/interrupts/{token}` inspects a pending interrupt (kind, data, `requestedAt`, expiry) without resolving it — see `rest-endpoints.md` §HITL. A token minted with `intent: "resolve"` authorizes both the `GET` (inspect) and `POST /v1/interrupts/{token}` (resolve). Hosts MAY additionally mint `intent: "inspect"` tokens that authorize only the `GET`; a resolve attempt with an inspect-only token MUST be refused with `403 forbidden`.
 
 ### Error responses
 
 | HTTP | Code | Cause |
 |---|---|---|
 | `400` | `validation_error` | resumeValue fails schema validation |
-| `401` / `403` | `unauthenticated` / `forbidden` | API key auth failures (see `auth.md`) |
+| `401` / `403` | `unauthenticated` / `forbidden` | API key auth failures (see `auth.md`); `403 forbidden` also covers a resolve attempt with an inspect-only token (RFC 0093) |
+| `410` | `interrupt_expired` | Signed-token surface only — token past `expiresAt` (expiry MUSTs normative per RFC 0093) |
 | `404` | `interrupt_not_found` | The interrupt ID doesn't exist or already resolved |
-| `409` | `interrupt_already_resolved` | Concurrent duplicate resolve (the second loses) |
-| `410` | `interrupt_expired` | Signed-token surface only — token past `expiresAt` |
-| `422` | `interrupt_cancelled` | Run was cancelled while interrupt was pending |
+| `409` | `interrupt_already_resolved` | Concurrent duplicate resolve (the second loses); also any use of a token invalidated by resolution or run cancel/complete (RFC 0093) |
+| `422` | `interrupt_cancelled` | Run was cancelled while interrupt was pending (run-scoped surface; an invalidated signed token returns the `409` above per RFC 0093) |
 
 Cross-tab race semantics for the run-scoped surface: if Tab A and Tab B both POST to resolve the same interrupt, exactly one succeeds; the other receives `409 interrupt_already_resolved`.
 
@@ -413,7 +436,7 @@ A run **annotation** (RFC 0056 — rating / correction / label / flag) is distin
 ## References
 
 - `auth.md` — auth model + scope vocabulary (`approvals:respond`)
-- `rest-endpoints.md` — `POST /v1/runs/{runId}/interrupts/{nodeId}`, `POST /v1/interrupts/{token}`
+- `rest-endpoints.md` — `POST /v1/runs/{runId}/interrupts/{nodeId}`, `POST /v1/interrupts/{token}`, `GET /v1/interrupts/{token}` (inspect)
 - `version-negotiation.md` — `ctx.getVersion` is a separate primitive (versioning ≠ HITL)
 - `observability.md` — `openwop.interrupt_*` attributes
 - `stream-modes.md` — `interrupt.requested` / `interrupt.resolved` events in `updates` and `debug` modes

@@ -1,12 +1,12 @@
 # openwop Spec v1 — Host Extensions
 
-> **Status: Stable · v1.1 (2026-05-05).** Distinguishes the protocol's normative core from host-specific extensions. This document is the canonical reference cited from any spec doc that mentions a vendor-prefixed namespace (e.g., `openwop.*`). Graduated DRAFT → FINAL via RFC 0006. See `auth.md` for the status legend. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+> **Status: Stable · v1.1 (2026-05-05).** Distinguishes the protocol's normative core from host-specific extensions. This document is the canonical reference cited from any spec doc that mentions a vendor-prefixed namespace (e.g., `acme.*`). Graduated DRAFT → FINAL via RFC 0006. See `auth.md` for the status legend. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
 ---
 
 ## Why this exists
 
-A host implementing openwop often needs to expose product-specific concepts that aren't part of the protocol — workspaces, projects, canvases, custom node types, vendor analytics. The spec mentions some of these in passing (e.g., `openwop.canvasTypeId` in the `metadata` field of `POST /v1/runs`).
+A host implementing openwop often needs to expose product-specific concepts that aren't part of the protocol — workspaces, projects, canvases, custom node types, vendor analytics. The spec mentions some of these in passing (e.g., a vendor-prefixed `acme.canvasTypeId` in the `metadata` field of `POST /v1/runs`).
 
 External implementers reading the spec need to know **which fields are normative** (every conforming host MUST honor them) **vs which are host-specific** (a host MAY add them; clients MUST tolerate their absence).
 
@@ -37,7 +37,7 @@ A host MAY use any vendor-prefixed namespace for fields not covered above. Recom
 
 | Prefix | Used by | Notes |
 |---|---|---|
-| `openwop.*` | The reference host shipped with this repo | Workspace, project, canvas, persona, brand, etc. — example of how a host carves out a vendor namespace. |
+| `acme.*` | A hypothetical vendor "Acme" | Workspace, project, canvas, persona, brand, etc. — example of how a host carves out a vendor namespace. (`openwop.*` is protocol-owned and is NOT available as a vendor prefix — see §"Canonical prefixes" above.) |
 | `<your-vendor>.*` | Your host | Anything openwop doesn't define |
 
 A client receiving an unknown vendor-prefixed field MUST treat it as opaque. Hosts MUST NOT depend on clients understanding their extension namespace.
@@ -72,7 +72,7 @@ Anything else is a host concern.
 A host owns:
 
 - **Authentication.** openwop defines the bearer-token error envelope; how the token is provisioned, rotated, scoped, etc., is a host concern.
-- **Authorization.** openwop doesn't define RBAC. Hosts wire their own per-resource permissions.
+- **Authorization.** openwop defines a role-based authorization model (`auth.md` §"Role-based authorization", RFC 0049) covering protocol-surface scopes and roles; per-resource permission models beyond that surface (product-specific objects, custom roles, grant UIs) are a host concern.
 - **Tenant / workspace / project scoping.** openwop receives `metadata` with whatever scoping fields the host needs; the protocol only requires that runs are isolated per the host's documented scoping rules.
 - **Storage adapters.** The host's choice of database, key-value store, blob storage, vector index. openwop defines the `RunEventLogIO` and `SuspendIO` interfaces (see `storage-adapters.md`); how a host implements them is local.
 - **Secret resolution.** Hosts that advertise `capabilities.secrets.supported: true` MUST follow the credential-reference contract; how secrets are stored (KMS, Vault, env vars) is a host choice.
@@ -96,14 +96,14 @@ A host's domain extensions live in that host's own repo, not in this spec corpus
 {
   "workflowId": "conformance-noop",
   "metadata": {
-    "openwop.canvasTypeId": "campaign-studio",
-    "openwop.canvasId": "doc_abc123",
-    "openwop.projectId": "proj_xyz"
+    "acme.canvasTypeId": "campaign-studio",
+    "acme.canvasId": "doc_abc123",
+    "acme.projectId": "proj_xyz"
   }
 }
 ```
 
-An OpenWOP-conforming host MUST NOT reject the request because it doesn't recognize the `openwop.*` fields. A host MAY ignore them entirely. The host that owns the namespace honors the fields it understands; other hosts pass them through opaquely.
+An OpenWOP-conforming host MUST NOT reject the request because it doesn't recognize the `acme.*` fields. A host MAY ignore them entirely. The host that owns the namespace honors the fields it understands; other hosts pass them through opaquely.
 
 ### Discovery payload extensions
 
@@ -113,7 +113,7 @@ An OpenWOP-conforming host MUST NOT reject the request because it doesn't recogn
 {
   "protocolVersion": "1.0",
   "supportedEnvelopes": [...],
-  "openwop": {
+  "acme": {
     "workspaceId": "ws_default",
     "billingTier": "production"
   }
@@ -131,7 +131,7 @@ Per `capabilities.schema.json`, `additionalProperties: true` makes this additive
   "runId": "run-...",
   "workflowId": "...",
   "status": "completed",
-  "openwop": {
+  "acme": {
     "workspaceRole": "editor",
     "auditUrl": "..."
   }
@@ -157,7 +157,7 @@ Span attributes outside the `openwop.*` namespace are host extensions. The OTel 
 
 ---
 
-## `exec`-class tools (arbitrary command execution) — RFC 0069 (`Draft`)
+## `exec`-class tools (arbitrary command execution) — RFC 0069 (`Accepted`)
 
 An **`exec`-class tool** is any capability that runs a caller- or model-supplied command, shell string, script, or binary on the host or in an environment the host controls (e.g., a "run this shell command", "execute this Python", or "spawn this process" tool).
 

@@ -1,6 +1,6 @@
 # openwop Spec v1 — Workflow-Chain Packs
 
-> **Status: DRAFT (2026-05-17).** Closes Phase 1 of [RFC 0013 — Workflow-chain packs](../../RFCS/0013-workflow-chain-packs.md). Specifies a new pack kind that publishes pre-configured DAG fragments — registry-distributed sub-workflows that hosts expand inline at workflow-author time. Promotes to FINAL when (a) the reference host implements expansion and (b) at least the manifest-validation + expansion conformance scenarios both pass. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
+> **Status: Draft (2026-05-17).** Closes Phase 1 of [RFC 0013 — Workflow-chain packs](../../RFCS/0013-workflow-chain-packs.md). Specifies a new pack kind that publishes pre-configured DAG fragments — registry-distributed sub-workflows that hosts expand inline at workflow-author time. Promotes to FINAL when (a) the reference host implements expansion and (b) at least the manifest-validation + expansion conformance scenarios both pass. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). Status legend per `auth.md`.
 
 ---
 

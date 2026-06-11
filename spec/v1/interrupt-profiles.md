@@ -80,6 +80,8 @@ A first-class, **role-gated, audited** approval/deployment-gate node — distinc
   "requiredScope": "deploy:promote",
   "quorum": 2,                       // optional — reuses openwop-interrupt-quorum
   "override": { "requiredRole": "owner", "audited": true },  // optional role-gated escape hatch
+  "overrideBypassesQuorum": false,   // optional, default false — see §"Approval-gate timeout and quorum override" (RFC 0093)
+  "timeoutSec": 86400,               // optional — see §"Approval-gate timeout and quorum override" (RFC 0093)
   "resumeSchema": { "decision": "granted | rejected", "reason": "string?" }
 }
 ```
@@ -93,6 +95,13 @@ A first-class, **role-gated, audited** approval/deployment-gate node — distinc
 - Taking the `override` path MUST emit `approval.overridden { principal, reason }` (reason REQUIRED) AND write an audit-log entry (RFC 0009/0010). The overriding principal MUST satisfy `override.requiredRole`.
 - The resume value is validated against `resumeSchema` per the engine interrupt contract; a malformed resume MUST be rejected with `400 INVALID_RESUME_VALUE` and the run stays suspended.
 - All `approval.*` events are redaction-safe — `principal` is an opaque RFC 0048 id; no credential material in `reason`.
+
+#### Approval-gate timeout and quorum override (RFC 0093)
+
+RFC 0051 left two gate decisions marked "pin before Active"; RFC 0093 pins both:
+
+- **Timeout ⇒ auto-reject (fail closed).** The gate's timeout is `timeoutSec` from the node config when present; the host's default timeout when unset; no timeout when neither exists. When an approval gate reaches its timeout, the gate MUST resolve as **rejected** with resolution reason `timeout`, emitting the standard `interrupt.resolved` event with `outcome: "rejected"` and `reason: "timeout"`. Auto-approving on timeout fails open and is non-conformant — every other gate-shaped surface in the corpus (RFC 0049 authorization, RFC 0082 deployment promotion) fails closed.
+- **Quorum override is opt-in.** A principal taking the `override` path MAY bypass `quorum` only when the node config explicitly sets `overrideBypassesQuorum: true`. The default is `false`: absent the flag, an override principal's grant counts as **one** quorum vote. In both cases the override path MUST still emit `approval.overridden { principal, reason }` and write the audit-log entry per the requirements above. (`overrideBypassesQuorum` is an additive optional boolean on the gate's node config, default `false`.)
 
 **Conformance gaps to close:** `approval-gate-flow.test.ts` (capability-gated): role-gated grant releases; unauthorized principal denied (run stays suspended); override emits `approval.overridden` + an audit entry; reject loops back; quorum requires N grants. Behavioral assertions gate on the `POST /v1/host/sample/governance/approval-gate` seam and soft-skip until a governance-advertising host wires it.
 

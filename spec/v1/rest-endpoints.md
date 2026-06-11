@@ -211,7 +211,7 @@ A read-only, deterministic, replay-aware structured diff of two runs — typical
 | `POST` | `/v1/interrupts/{token}` | Signed token | None | Resolve any HITL interrupt via callback URL |
 | `GET` | `/v1/interrupts/{token}` | Signed token | None | Inspect an interrupt without resolving |
 
-The signed-token surface (`/v1/interrupts/{token}`) is for asynchronous HITL where the server POSTed a callback URL to an external system at suspension time. Tokens are HMAC-signed by the server with a configurable expiry (recommended default: 30 min). See `interrupt.md` for token format.
+The signed-token surface (`/v1/interrupts/{token}`) is for asynchronous HITL where the server POSTed a callback URL to an external system at suspension time. Tokens are HMAC-signed by the server and MUST carry an expiry (RFC 0093; the default SHOULD be 30 min, capped at the interrupt's own deadline when one exists). Token **intent** governs which methods a token authorizes (RFC 0093): a token minted with `intent: "resolve"` authorizes both `GET /v1/interrupts/{token}` (inspect) and `POST /v1/interrupts/{token}` (resolve); hosts MAY additionally mint `intent: "inspect"` tokens that authorize only the `GET` — a resolve attempt with an inspect-only token MUST be refused with `403 forbidden`. See `interrupt.md` §"Signed resolution tokens" for token format and lifecycle (expiry, invalidation, constant-time verification).
 
 ### Artifacts
 

@@ -64,16 +64,16 @@ interface CapabilityLimits {
 }
 ```
 
-**Default limits** (`DEFAULT_CAPABILITY_LIMITS` in `Capabilities.ts:118`):
+**Default limits** (`DEFAULT_CAPABILITY_LIMITS` in the reference app — `openwop/openwop-app` repo, backend `Capabilities.ts`; historical, non-normative):
 
 ```typescript
 { clarificationRounds: 3, schemaRounds: 2, envelopesPerTurn: 5 }
 ```
 
-**Helper functions**:
-- `buildCapabilities(opts)` — construct from envelope catalog + limits. Validates `schemaVersions` are non-negative integers (`Capabilities.ts:142`).
-- `formatCapabilitiesForPrompt(caps)` — render as system-prompt text block. Sorts envelope types + extension keys deterministically for prompt-cache stability (`Capabilities.ts:186`).
-- `mergeCapabilities(base, extension)` — per-canvas-type merge. Union of envelopes, extension wins on schema-version + limit conflicts (`Capabilities.ts:265`).
+**Helper functions** (reference-app patterns, same `Capabilities.ts`):
+- `buildCapabilities(opts)` — construct from envelope catalog + limits. Validates `schemaVersions` are non-negative integers.
+- `formatCapabilitiesForPrompt(caps)` — render as system-prompt text block. Sorts envelope types + extension keys deterministically for prompt-cache stability.
+- `mergeCapabilities(base, extension)` — per-canvas-type merge. Union of envelopes, extension wins on schema-version + limit conflicts.
 
 **Enforcement**: Implementations typically track counters per (run, task, turn) and emit a capability-limit error on breach. The public wire consequence is the `cap.breached` event described below.
 
@@ -106,8 +106,7 @@ A top-level `capabilities` wrapper object is a **deprecated legacy shape**, tole
     "schemaRounds": 2,
     "envelopesPerTurn": 5,
     "maxNodeExecutions": 1000,
-    "maxRunDurationSec": 86400,
-    "maxRequestBodyBytes": 1048576
+    "maxRunDurationMs": 86400000
   },
 
   "configurable": {
@@ -139,6 +138,8 @@ A top-level `capabilities` wrapper object is a **deprecated legacy shape**, tole
 }
 ```
 
+The example's `maxNodeExecutions: 1000` is a deliberately non-default value (the documented default is `100`) illustrating a host that raises the ceiling.
+
 ### Field reference
 
 | Field | Type | Status | Notes |
@@ -154,9 +155,9 @@ A top-level `capabilities` wrapper object is a **deprecated legacy shape**, tole
 | `engineVersion` | `number` | **optional v1** | See `version-negotiation.md`. |
 | `eventLogSchemaVersion` | `number` | **optional v1** | See `version-negotiation.md`. |
 | `supportedTransports` | `string[]` | **optional v1** | Subset of `["rest", "mcp", "a2a", "grpc"]`. REST is required regardless of whether this field is present. |
-| `limits.maxNodeExecutions` | `number` | **required v1** | Default `100`. Engine-side ceiling clamping `RunOptions.configurable.recursionLimit`. Exceedance emits `cap.breached` with `kind: "node-executions"` and transitions the run to `failed` per §"Engine-enforced limits + cap.breached" below. |
-| `limits.maxRunDurationSec` | `number` | **optional v1** | Maximum run duration the host intends to allow. |
-| `limits.maxRequestBodyBytes` | `number` | **optional v1** | Maximum REST request body accepted by the host. |
+| `limits.maxNodeExecutions` | `number` | **optional v1** | Default `100`. Hosts that advertise it MUST enforce it. Engine-side ceiling clamping `RunOptions.configurable.recursionLimit`. Exceedance emits `cap.breached` with `kind: "node-executions"` and transitions the run to `failed` per §"Engine-enforced limits + cap.breached" below. |
+| `limits.maxRunDurationMs` | `number` | **optional v1** | Maximum run duration (milliseconds) the host intends to allow. Upper bound for `RunOptions.configurable.runTimeoutMs` (RFC 0058). |
+| `limits.maxRequestBodyBytes` | `number` | **optional v1** | Maximum REST request body accepted by the host, in bytes. Added to `capabilities.schema.json` by RFC 0094 (`limits` is otherwise closed — `additionalProperties: false`). |
 | `configurable` | object | **optional v1** | Per-run parameter overlay schema. |
 | `observability` | object | **optional v1** | OTel attribute taxonomy hints. See `observability.md`. |
 | `minClientVersion` | `string` | **optional v1** | Client-side version floor for `426 Upgrade Required`-style UX. |
@@ -731,7 +732,7 @@ Both are run-scoped (no `nodeId`). Adding these two kinds to the `capBreached.ki
 ### What this closes
 
 - **CC-1**: the `recursionLimit` runtime invariant. Validation and runtime enforcement are expressed as a unified `cap.breached` emission rather than a separate event class. No `eventLogSchemaVersion` bump required — `cap.breached` already exists with `node-executions` in its `kind` enum (per `run-event-payloads.schema.json` and the `openwop.cap_kind` OTel attribute in `observability.md`).
-- **CC-4**: `Capabilities.limits.maxNodeExecutions` is required in v1. Default `100`. The clamp ceiling for `recursionLimit` overrides.
+- **CC-4**: `Capabilities.limits.maxNodeExecutions` is optional in v1 (only the three base limits are schema-required); hosts that advertise it MUST enforce it. Default `100`. The clamp ceiling for `recursionLimit` overrides.
 
 ### Industry-standard alignment
 

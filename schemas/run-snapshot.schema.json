@@ -28,9 +28,10 @@
         "waiting-external",
         "completed",
         "failed",
+        "cancelling",
         "cancelled"
       ],
-      "description": "Current run state. `waiting-external` MUST be used when the suspended interrupt's `kind` is `external-event` per `interrupt-profiles.md §openwop-interrupt-external-event` — distinguishes external-event waits from HITL waits at the wire level. Forward-compat: future statuses MAY be added; readers SHOULD treat unknown values as terminal-unknown rather than throw."
+      "description": "Current run state. `waiting-external` MUST be used when the suspended interrupt's `kind` is `external-event` per `interrupt-profiles.md §openwop-interrupt-external-event` — distinguishes external-event waits from HITL waits at the wire level. `cancelling` (RFC 0094 §B) is the transitional state between a cancel request being accepted and the terminal `cancelled` — `rest-endpoints.md` and the OpenAPI cancel responses already document the transition; a snapshot read during the cancel cascade carries it. Forward-compat: future statuses MAY be added; readers SHOULD treat unknown values as terminal-unknown rather than throw."
     },
     "owner": {
       "type": "object",

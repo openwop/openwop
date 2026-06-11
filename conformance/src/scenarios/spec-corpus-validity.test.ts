@@ -1552,3 +1552,110 @@ describe.skipIf(RFC0089_BUNDLE_PATH === null || !existsSync(RFC0089_BUNDLE_PATH)
     expect(bundle.discovery.sha256).toBe(recomputed);
   });
 });
+
+describe('spec-corpus: createRun composed request schema is satisfiable (RFC 0094 §A)', () => {
+  // The 2026-06-11 corpus review found the published createRun requestBody
+  // unsatisfiable: BOTH allOf branches (the inline request object and
+  // run-options.schema.json) carried `additionalProperties: false`, so every
+  // documented body failed one branch or the other. RFC 0094 §A moves the
+  // closure to the composition site (`unevaluatedProperties: false`, JSON
+  // Schema 2020-12) and opens both branches. These probes pin the repaired
+  // contract so the defect class cannot silently return:
+  //   1. (structural) the YAML composition closes at the composed level,
+  //      never at a branch;
+  //   2. (semantic, ajv-2020) the canonical documented bodies PASS the
+  //      composition of the on-disk run-options.schema.json with the inline
+  //      branch's declared properties, while an undeclared property FAILS.
+  const openapiPath = join(API_DIR, 'openapi.yaml');
+
+  function extractCreateRunRequestBlock(raw: string): string {
+    const opStart = raw.indexOf('operationId: createRun');
+    expect(opStart, 'OpenAPI MUST declare operationId createRun').toBeGreaterThanOrEqual(0);
+    const bodyStart = raw.indexOf('requestBody:', opStart);
+    const responsesStart = raw.indexOf('\n      responses:', bodyStart);
+    expect(bodyStart, 'createRun MUST declare a requestBody').toBeGreaterThan(opStart);
+    expect(responsesStart, 'createRun requestBody MUST precede its responses').toBeGreaterThan(bodyStart);
+    return raw.slice(bodyStart, responsesStart);
+  }
+
+  /** Property names declared on the inline (non-$ref) allOf branch of the
+   *  createRun requestBody — the 20-space-indented keys, minus JSON Schema
+   *  keywords that can appear at the same indent inside if/then/else. */
+  function extractInlineBranchPropertyNames(block: string): string[] {
+    const keywords = new Set([
+      'type', 'properties', 'required', 'description', 'enum', 'format',
+      'items', 'minLength', 'if', 'then', 'else', 'allOf', 'additionalProperties',
+      'unevaluatedProperties',
+    ]);
+    const names: string[] = [];
+    const re = /^ {20}([A-Za-z][A-Za-z0-9]*):/gm;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(block)) !== null) {
+      const name = m[1];
+      if (name && !keywords.has(name) && !names.includes(name)) names.push(name);
+    }
+    return names;
+  }
+
+  it('the requestBody closes at the composition (unevaluatedProperties), not inside a branch', () => {
+    const { raw } = readYamlHeader(openapiPath);
+    const block = extractCreateRunRequestBlock(raw);
+
+    expect(
+      block,
+      'RFC 0094 §A: the composed createRun request schema MUST be closed with `unevaluatedProperties: false`',
+    ).toContain('unevaluatedProperties: false');
+    expect(
+      block,
+      'RFC 0094 §A: no allOf branch of the createRun requestBody may carry `additionalProperties: false` ' +
+        '(a closed branch inside an allOf re-creates the unsatisfiable composition)',
+    ).not.toContain('additionalProperties: false');
+  });
+
+  it('canonical createRun bodies PASS the composed schema; an undeclared property FAILS', () => {
+    const { raw } = readYamlHeader(openapiPath);
+    const inlineProps = extractInlineBranchPropertyNames(extractCreateRunRequestBlock(raw));
+    expect(inlineProps, 'the inline branch MUST declare workflowId').toContain('workflowId');
+
+    // Compose exactly what RFC 0094 §A specifies: the inline branch's
+    // declared properties + the REAL on-disk run-options.schema.json
+    // (embedded with its $id so its internal #/$defs refs keep resolving),
+    // closed at the composition with unevaluatedProperties.
+    const runOptionsSchema = readJson(join(SCHEMAS_DIR, 'run-options.schema.json')) as Record<string, unknown>;
+    delete runOptionsSchema['$schema']; // embedded subschema; the parent declares the dialect
+    const composed = {
+      $schema: 'https://json-schema.org/draft/2020-12/schema',
+      type: 'object',
+      allOf: [
+        {
+          type: 'object',
+          properties: Object.fromEntries(inlineProps.map((p) => [p, true])),
+        },
+        runOptionsSchema,
+      ],
+      unevaluatedProperties: false,
+    };
+
+    const ajv = new Ajv2020({ allErrors: true, strict: false });
+    addFormats(ajv);
+    const validate = ajv.compile(composed);
+
+    const canonicalBodies: Array<Record<string, unknown>> = [
+      { workflowId: 'wf-1' },
+      { workflowId: 'wf-1', configurable: {} },
+      { workflowId: 'wf-1', inputs: {}, configurable: {}, tags: ['conformance'], metadata: {} },
+    ];
+    for (const body of canonicalBodies) {
+      expect(
+        validate(body),
+        `RFC 0094 §A: documented body ${JSON.stringify(body)} MUST satisfy the composed createRun ` +
+          `request schema; ajv said: ${JSON.stringify(validate.errors)}`,
+      ).toBe(true);
+    }
+
+    expect(
+      validate({ workflowId: 'wf-1', definitelyNotASpecField: true }),
+      'RFC 0094 §A: an undeclared property MUST still fail at the composed level (unevaluatedProperties: false)',
+    ).toBe(false);
+  });
+});

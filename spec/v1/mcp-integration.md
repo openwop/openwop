@@ -145,7 +145,7 @@ A host MAY expose an MCP-server endpoint over **stdio** (subprocess transport) a
 | `ping`, `logging/setLevel` | Required | Standard MCP lifecycle. |
 | `notifications/tools/list_changed`, `notifications/resources/list_changed`, `notifications/resources/updated`, `notifications/prompts/list_changed`, `notifications/message`, `notifications/progress`, `notifications/cancelled` | Required when applicable | Emitted as workflow / run state changes. |
 
-The reference `apps/workflow-engine` sample ships a JSON-RPC over streamable-HTTP server at `routes/mcp.ts`, env-gated on `OPENWOP_MCP_SERVER_ENABLED=true`.
+The reference app (`openwop/openwop-app` repo: `routes/mcp.ts`) ships a JSON-RPC over streamable-HTTP server, env-gated on `OPENWOP_MCP_SERVER_ENABLED=true`.
 
 ### 2. State projection: workflow → MCP tool
 
@@ -213,7 +213,7 @@ Six scenarios (all gated on `capabilities.mcp.serverMount.supported`):
 - `mcp-server-elicitation-bridge.test.ts` — inbound `elicitation/create` bridges to `ctx.suspend` and the accept / decline / cancel path round-trips (further gated on `elicitationBridge: true`).
 - `mcp-server-untrusted-args.test.ts` — malformed `arguments` rejected per `inputSchema` before any node executes.
 
-13/13 assertions pass against the reference `apps/workflow-engine` host as of 2026-05-17.
+13/13 assertions pass against the reference app host (`openwop/openwop-app` repo) as of 2026-05-17.
 
 ---
 

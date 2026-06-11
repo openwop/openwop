@@ -101,7 +101,7 @@ All fixtures MUST advertise:
 | MCP Tool Roundtrip | `conformance-mcp-tool-roundtrip` | Track 6 — host invokes a tool on the conformance suite's synthetic MCP server; trust-boundary visibility in the event log | `completed` | ≤ 30s |
 | A2A Task Roundtrip | `conformance-a2a-task-roundtrip` | Track 6 — host consumes the conformance suite's synthetic A2A peer; covers drift points #3 (`AUTH_REQUIRED`) and #4 (`REJECTED`) | `failed` or `waiting-input` (per `driftScenario` input) | ≤ 30s |
 | WASM Pack Roundtrip | `conformance-wasm-pack-roundtrip` | RFC 0008 — invokes `vendor.openwop.rust-hello.greet` (loaded WASM pack); exercises required exports + at least one import | `completed` | ≤ 10s |
-| WASM Pack Memory-Cap Breach | `conformance-wasm-pack-memory-cap-breach` | RFC 0008 §K — invokes the deliberately-misbehaving `vendor.openwop.misbehaving.memory-bomb` pack (allocates 1 GiB beyond the host's `memoryPagesMax`). Host MUST emit `cap.breached` with `kind: "wasm-memory"` and drive the run to terminal `failed`. Misbehaving pack lives at `examples/packs/rust-misbehaving-memory/` and is fixture-only (NOT signed for registry publication). | `failed` (with `cap.breached`) | ≤ 10s |
+| WASM Pack Memory-Cap Breach | `conformance-wasm-pack-memory-cap-breach` | RFC 0008 §K — invokes the deliberately-misbehaving `vendor.openwop.misbehaving.memory-bomb` pack (allocates 1 GiB beyond the host's `memoryPagesMax`). Host MUST emit `cap.breached` with `kind: "wasm-memory"` and drive the run to terminal `failed`. Misbehaving pack lives at `openwop-examples:examples/packs/rust-misbehaving-memory/` (repo-qualified per the 2026-06 monorepo split — the `openwop-examples` sibling repo) and is fixture-only (NOT signed for registry publication). | `failed` (with `cap.breached`) | ≤ 10s |
 | Configurable Schema | `conformance-configurable-schema` | Track 13 — workflow declares `configurableSchema` (`additionalProperties: false`, `recursionLimit: integer ≥ 1`). Suite verifies `GET /v1/workflows/{id}` surfaces the schema AND `POST /v1/runs` with a mismatched `configurable` returns `validation_error`. | `completed` (with accepted overlay) | ≤ 5s |
 | Smoke — BYOK Roundtrip | `openwop-smoke-byok-roundtrip` | End-to-end BYOK secret-resolution smoke. Single `conformance.secret.echo` node fetches the host-provisioned canary secret `openwop-conformance-canary-secret`, emits SHA-256 hex + byte length to variables — never the raw value. Spec: `run-options.md` §"Credential references" + `auth.md` §"Secret resolution" + `observability.md` §"Redaction". | `completed` | ≤ 10s |
 | Smoke — Cost Emit (G6 allowlist) | `openwop-smoke-cost-emit` | End-to-end cost-attribute allowlist smoke (G6 / O4). Single `conformance.cost.emit` node configured with a mix of allowlisted `openwop.cost.*` attributes + one non-allowlisted key + one credential-shaped canary under a non-allowlisted name. Scenario reads the live OTel span (when `OPENWOP_OTEL_COLLECTOR=true`) and asserts the cost-namespace attrs ⊆ `OPENWOP_COST_ATTRIBUTE_NAMES` AND that no canary plaintext leaks. Pairs with the `cost-attribution-allowlist-redaction` SECURITY invariant. Spec: `observability.md §"Cost attribution attributes"`. | `completed` | ≤ 10s |
@@ -248,6 +248,7 @@ The `messages`-mode stream fixture (AI token streaming) is covered by the determ
 
 ## `conformance-version-fold` (closes F5)
 
+- **Consuming scenario**: `conformance/src/scenarios/version-fold.test.ts` (added 2026-06-11; previously this fixture had no consuming scenario).
 - **Purpose**: verify forward-compat fold-best-effort tolerance across the spec's engine-version cross-version interop matrix (`version-negotiation.md` §Cross-version interop matrix). Uses the test-keys-only `X-Force-Engine-Version` header to drive the same workflow at three different engine versions from a single deployed server — no multi-version fleet needed.
 - **Fixture topology**: a single `core.noop` node. The workflow itself is trivial; the test exercises the server's READ path (projection, event-log fold) under each forced engine version.
 - **Inputs**: none.
@@ -270,6 +271,7 @@ This fixture closes F5 without requiring any new server-side test infrastructure
 
 ## `conformance-stream-text` (closes F1)
 
+- **Consuming scenario**: `conformance/src/scenarios/stream-text-fixture.test.ts` (added 2026-06-11; previously this fixture had no consuming scenario).
 - **Purpose**: verify the `messages` SSE stream mode end-to-end through a deterministic AI mock. Without a mock provider, conformance suites can't exercise streaming AI without burning real API budget; with one, the test is fully reproducible.
 - **Fixture topology**: a single `core.ai.callPrompt` (or similar AI-bearing typeId) node. The node's actual prompt content is irrelevant — the conformance driver intercepts the AI dispatch via `configurable.mockProvider`.
 - **Inputs**: none.
@@ -302,7 +304,7 @@ This fixture closes F5 without requiring any new server-side test infrastructure
   - Same fixture with `mockProvider.id: "does-not-exist"` returns `400 unsupported_mock_provider`.
 - **Replay assertion**: forking the run with `mode: replay` produces a byte-identical event log (mock providers are inherently replay-deterministic — no Layer-2 invocation log needed).
 
-This fixture is the canonical `messages`-mode test. Once it's wired into the conformance suite, the suite gains 5+ new server-required scenarios. Servers that don't yet support the mock-provider extension can mark this fixture optional in their conformance manifest until they do.
+This fixture is the canonical `messages`-mode test, wired into the suite via `stream-text-fixture.test.ts` (2026-06-11). Servers that don't yet support the mock-provider extension can mark this fixture optional in their conformance manifest until they do.
 
 ---
 

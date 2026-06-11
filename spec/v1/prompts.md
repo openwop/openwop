@@ -1,6 +1,6 @@
 # openwop Spec v1 — Prompt Templates
 
-> **Status: DRAFT v1.x (filed via [RFC 0027](../../RFCS/0027-prompt-templates.md), 2026-05-19; first cut 2026-05-20).** Lands the wire shape for portable, versioned, variable-bound prompts referenced by workflow nodes and agent manifests. Closes the gap where `core.ai.callPrompt` config (`workflow-chain-packs.md` line 69, `host-capabilities.md` line 347) and `AgentManifest.systemPrompt | systemPromptRef` (`agent-manifest.schema.json` lines 34–41) accept inline prompt bodies but offer no shared addressing, library distribution, variable schema, or observability of the composed result. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend. Fields marked **(stable)** lock; fields marked **(in-flight)** may shift compatibly within v1.x.
+> **Status: Draft v1.x (filed via [RFC 0027](../../RFCS/0027-prompt-templates.md), 2026-05-19; first cut 2026-05-20).** Lands the wire shape for portable, versioned, variable-bound prompts referenced by workflow nodes and agent manifests. Closes the gap where `core.ai.callPrompt` config (`workflow-chain-packs.md` line 69, `host-capabilities.md` line 347) and `AgentManifest.systemPrompt | systemPromptRef` (`agent-manifest.schema.json` lines 34–41) accept inline prompt bodies but offer no shared addressing, library distribution, variable schema, or observability of the composed result. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend. Fields marked **(stable)** lock; fields marked **(in-flight)** may shift compatibly within v1.x.
 
 ---
 
@@ -48,7 +48,7 @@ When a host composes a PromptTemplate for an LLM call (per the resolution chain 
 | `few-shot` | User-message prefix (or alternating user/assistant turns per host policy) | Example bodies. Hosts MAY support multiple `few-shot` templates per node via `additionalPromptRefs`. |
 | `schema-hint` | Injected into system or user message at compose time (per host policy) | Structured-output schema description (e.g., the JSON Schema the LLM is asked to populate). |
 
-A node MAY reference one template of each kind via the convention in `workflow-definition.md` §"Prompt references on nodes."
+A node MAY reference one template of each kind via the `WorkflowNode.config.{systemPromptRef, userPromptRef, fewShotPromptRefs, schemaHintPromptRef}` convention — defined normatively in §"Resolution chain" Layer 1 below and in the `config` description of `schemas/workflow-definition.schema.json`.
 
 Adding a new kind in a future RFC is a single edit to `prompt-kind.schema.json`; consumers automatically pick it up. Hosts MAY narrow the accepted kinds via `capabilities.prompts.templateKinds[]`.
 
@@ -429,7 +429,7 @@ A node MAY carry both surfaces independently. The `agent.promptResolved` event e
 
 ## Cross-reference
 
-- `workflow-definition.md` §"Prompt references on nodes" — the convention by which `WorkflowNode.config` carries PromptRef values.
+- `schemas/workflow-definition.schema.json` (`config` description) + §"Resolution chain" Layer 1 above — the convention by which `WorkflowNode.config` carries PromptRef values.
 - `capabilities.md` — discovery handshake (this document extends the `prompts` block).
 - `host-capabilities.md` §host.aiEnvelope — the existing LLM-call surface that prompt resolution feeds.
 - `mcp-integration.md` §"Trust boundary" + RFC 0020 §D — `meta.contentTrust` propagation that `prompt.composed.contentTrust` mirrors.

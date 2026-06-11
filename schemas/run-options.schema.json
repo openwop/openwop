@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-options.schema.json",
   "title": "RunOptions",
-  "description": "Per-run parameter overlay supplied by the caller in `POST /v1/runs`. See `run-options.md` for full semantics. Reserved keys are typed; unknown keys in `configurable` pass through to the engine.",
+  "description": "Per-run parameter overlay supplied by the caller in `POST /v1/runs`. See `run-options.md` for full semantics. Reserved keys are typed; unknown keys in `configurable` pass through to the engine. RFC 0094 §A: this schema is OPEN at its own root (no `additionalProperties: false`) because it participates in the composed `createRun` request body in `api/openapi.yaml`; the closure (`unevaluatedProperties: false`) lives at that composition site, the only place JSON Schema 2020-12 can express closure over an `allOf`.",
   "type": "object",
   "properties": {
     "configurable": {
@@ -21,7 +21,6 @@
       "description": "Free-form caller metadata. Persisted on the run doc; surfaces back via `RunSnapshot.metadata`. Server MAY enforce a serialized-size limit (recommended: 50KB)."
     }
   },
-  "additionalProperties": false,
   "$defs": {
     "Configurable": {
       "type": "object",

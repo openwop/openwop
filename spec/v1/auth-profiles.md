@@ -25,7 +25,7 @@ The host supports rolling API keys without interrupting in-flight runs.
 - A new key can be issued before the old key is revoked.
 - During the rotation grace window, both keys authenticate the same principal and tenant.
 - The host documents the minimum grace window. Production-profile hosts SHOULD support at least 24 hours.
-- Revoked keys return the canonical `401 invalid_token` or `403 insufficient_scope` envelope from `auth.md`.
+- Revoked keys return the canonical `401 key_revoked` (or `403 forbidden` when the credential is valid but lacks the required scope) envelope from `auth.md` §"Error response shape".
 - Audit logs distinguish `key.created`, `key.used`, and `key.revoked` events without storing raw key material.
 
 **Conformance gaps to close:** add rotation fixtures that verify old+new key overlap, revocation, and redaction in error bodies.
@@ -52,7 +52,7 @@ The host requires mutual TLS in addition to bearer authentication.
 
 - Client certificates authenticate a transport principal, not a replacement for operation scopes.
 - Certificate subject or SAN mapping to tenants is documented.
-- Failed client-certificate validation is surfaced as `401 invalid_token` or a transport-layer TLS failure. Hosts SHOULD document which behavior clients will observe.
+- Failed client-certificate validation is surfaced as `401 unauthenticated` or a transport-layer TLS failure. Hosts SHOULD document which behavior clients will observe.
 - Certificate rotation follows the same overlap principle as API-key rotation.
 
 **Conformance gaps to close:** add a harness-level mTLS mode for deployments that expose test certificates.

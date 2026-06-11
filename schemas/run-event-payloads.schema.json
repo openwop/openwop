@@ -423,7 +423,7 @@
       "properties": {
         "nodeId":      { "type": "string", "minLength": 1 },
         "interruptId": { "type": "string", "minLength": 1 },
-        "kind":        { "type": "string", "enum": ["approval", "clarification", "external-event", "custom"] },
+        "kind":        { "type": "string", "enum": ["approval", "clarification", "external-event", "custom", "conversation.start", "conversation.exchange", "conversation.close", "low-confidence"], "description": "RFC 0094 §E — the full kind union `interrupt.md` defines (mirrors suspend-request.schema.json). Conversation kinds are gated on the conversation capability per capabilities.md." },
         "key":         { "type": "string", "minLength": 1 }
       },
       "additionalProperties": true
@@ -608,7 +608,7 @@
       "properties": {
         "nodeId":      { "type": "string" },
         "interruptId": { "type": "string" },
-        "kind":        { "type": "string", "enum": ["approval", "clarification", "external-event", "custom"] },
+        "kind":        { "type": "string", "enum": ["approval", "clarification", "external-event", "custom", "conversation.start", "conversation.exchange", "conversation.close", "low-confidence"], "description": "RFC 0094 §E — the full kind union `interrupt.md` defines (mirrors suspend-request.schema.json). Conversation kinds are gated on the conversation capability per capabilities.md." },
         "resumeValue": {}
       },
       "additionalProperties": true
@@ -636,12 +636,13 @@
 
     "outputChunk": {
       "type": "object",
-      "description": "Emitted for streaming output (e.g., LLM token chunks). Stream-mode `messages` consumers see these. Tiered metadata per stream-modes.md §messages (S2 closure): bare {nodeId, chunk} is the minimum compliant payload; `meta` adds Tier 1 typed slots and a Tier 2 provider-pass-through escape hatch.",
-      "required": ["nodeId", "chunk"],
+      "description": "Emitted for streaming output (e.g., LLM token chunks). Stream-mode `messages` consumers see these. RFC 0094 §D single-sources the `ai.message.chunk` payload here: bare {nodeId, runId, chunk, isLast} is the minimum compliant payload per stream-modes.md §messages (the prior {nodeId, chunk}-only required set was the defective restatement). Tiered metadata per stream-modes.md §messages (S2 closure): `meta` adds Tier 1 typed slots and a Tier 2 provider-pass-through escape hatch.",
+      "required": ["nodeId", "runId", "chunk", "isLast"],
       "properties": {
         "nodeId":  { "type": "string", "minLength": 1 },
+        "runId":   { "type": "string", "minLength": 1, "description": "Run this chunk belongs to. Required so multiplexed consumers (mixed-mode streams, fan-in UIs) can route chunks without out-of-band context." },
         "chunk":   { "type": "string" },
-        "isLast":  { "type": "boolean" },
+        "isLast":  { "type": "boolean", "description": "True for the final chunk of a given AI node call. Required — both reference consumers rely on it for fold termination." },
         "channel": { "type": "string", "description": "Optional sub-stream identifier when a node emits multiple parallel streams." },
         "meta":    { "$ref": "#/$defs/_chunkMeta" }
       },

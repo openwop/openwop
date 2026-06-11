@@ -17,6 +17,17 @@
 #                 protocol-tier invariants. For reference-impl-tier
 #                 invariants, this may be [] when the implementation-specific
 #                 tests live outside the public OpenWOP protocol repository.
+#                 Pointer convention (2026-06 monorepo split): a test or
+#                 source pointer that lives in a sibling repository is
+#                 written repo-qualified as `<repo>:<path>`, where `<repo>`
+#                 is a repository under https://github.com/openwop — e.g.
+#                 `openwop-examples:examples/hosts/postgres/test/byok-roundtrip.test.ts`,
+#                 `openwop-app:backend/typescript/test/untrusted-marker.test.ts`,
+#                 `openwop-registry:registry/scripts/verify-signatures.mjs`.
+#                 The same convention applies to paths cited in `note:` prose.
+#                 Repo-qualified pointers document the sibling repo's own CI
+#                 surface; the CI gate here only resolves bare in-repo globs,
+#                 and only for protocol-tier invariants.
 #   note:         optional human-readable annotation
 #
 # Adding an invariant:
@@ -47,7 +58,7 @@ invariants:
       tool-using or prompt-handling. The host's `ctx.emit` plumbing MUST
       route every payload through the host-internal redaction layer
       before persistence (reference impl: `stripSecretsFromPersisted`
-      in `apps/workflow-engine/backend/typescript/src/byok/ephemeralRunSecrets.ts`,
+      in `openwop-app:backend/typescript/src/byok/ephemeralRunSecrets.ts`,
       wrapped at `executor.ts:emit`). Conformance scenario drives canaries
       through every persistence surface and asserts no leak.
 
@@ -66,7 +77,7 @@ invariants:
       event's `systemPrompt`, `userPrompt`, and `variableBindings`
       fields — never as the plaintext secret value. The reference impl
       enforces this in
-      `apps/workflow-engine/backend/typescript/src/host/promptCompose.ts`
+      `openwop-app:backend/typescript/src/host/promptCompose.ts`
       `resolveBinding()`: for secret-source bindings, the resolver
       asserts the secret exists in the BYOK store (via `resolveSecret`)
       but emits ONLY the `[REDACTED:<id>]` marker into the
@@ -256,8 +267,8 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
-      - examples/hosts/postgres/test/byok-roundtrip.test.ts
-      - examples/hosts/postgres/test/reasoning-event-emission.test.ts
+      - openwop-examples:examples/hosts/postgres/test/byok-roundtrip.test.ts
+      - openwop-examples:examples/hosts/postgres/test/reasoning-event-emission.test.ts
     note: |
       Sensitive workflow variables MUST be masked per host's advertised
       compliance.defaultMode. Verified in reference impl; conformance
@@ -358,8 +369,8 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
-      - examples/hosts/postgres/test/byok-roundtrip.test.ts
-      - examples/hosts/postgres/test/ai-policy.test.ts
+      - openwop-examples:examples/hosts/postgres/test/byok-roundtrip.test.ts
+      - openwop-examples:examples/hosts/postgres/test/ai-policy.test.ts
     note: |
       Resolved credential material must not enter prompt context.
       Verified by byok-roundtrip.test.ts (BYOK plaintext NEVER on
@@ -419,12 +430,14 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests:
-      - src/core/ai/prompts/__tests__/*.test.ts
-      - apps/workflow-engine/backend/typescript/test/untrusted-marker.test.ts
+      - openwop-app:backend/typescript/test/untrusted-marker.test.ts
     note: |
       Untrusted-marker discipline enforced at prompt construction.
       Reference-impl-tier; protocol can't observe prompt strings.
-      The in-tree test (`untrusted-marker.test.ts`) exercises the
+      An additional prompt-builder suite lives in the private upstream
+      reference impl (MyndHyve, `src/core/ai/prompts/__tests__/`),
+      outside any public openwop repo.
+      The reference-app test (`untrusted-marker.test.ts`) exercises the
       `core.openwop.ai` pack delegates' `applyUntrustedMarkers` helper:
       trusted runs leave content unmarked; untrusted runs wrap user-role
       content in `<UNTRUSTED>...</UNTRUSTED>` per RFC 0020 §D.
@@ -433,8 +446,10 @@ invariants:
     tier: reference-impl
     severity: high
     threat_model: SECURITY/threat-model-prompt-injection.md
-    tests:
-      - src/features/knowledge/__tests__/*.test.ts
+    tests: []
+    # enforcement pending — tracked gap: the verifying suite
+    # (src/features/knowledge/__tests__/) lives in the private upstream
+    # reference impl (MyndHyve), outside any public openwop repo.
     note: |
       KB content wrapped in untrusted markers in the reference impl.
 
@@ -442,8 +457,10 @@ invariants:
     tier: reference-impl
     severity: medium
     threat_model: SECURITY/threat-model-prompt-injection.md
-    tests:
-      - src/core/ai/prompts/__tests__/*.test.ts
+    tests: []
+    # enforcement pending — tracked gap: the verifying suite
+    # (src/core/ai/prompts/__tests__/) lives in the private upstream
+    # reference impl (MyndHyve), outside any public openwop repo.
     note: |
       Prior-artifact content wrapped in untrusted markers.
 
@@ -472,10 +489,10 @@ invariants:
     severity: medium
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests:
-      - apps/workflow-engine/backend/typescript/test/untrusted-marker.test.ts
+      - openwop-app:backend/typescript/test/untrusted-marker.test.ts
     note: |
       MCP tool responses wrapped in untrusted markers in next LLM turn.
-      The in-tree test exercises the `core.openwop.mcp.invoke-tool`
+      The reference-app test exercises the `core.openwop.mcp.invoke-tool`
       delegate's new `markedContent` field: wraps result in
       `<UNTRUSTED tool="<name>">...</UNTRUSTED>` whenever the host's
       MCP client flags untrustedContent OR the run is operating under
@@ -513,12 +530,19 @@ invariants:
     tier: reference-impl
     severity: high
     threat_model: SECURITY/threat-model-prompt-injection.md
-    tests: []
+    tests:
+      - conformance/src/scenarios/agent-live-allowlist-enforced.test.ts
     note: |
       Tool-call envelopes validated against workflow's tools allowlist.
       Host-side enforcement: the host MUST validate every LLM-emitted
       `toolCalls[].name` against the workflow's declared `tools[]` set
       before dispatching. Pack-side complement at `agents-run-no-raw-handler`.
+      The capability-gated conformance scenario
+      `agent-live-allowlist-enforced.test.ts` (RFC 0077 §F-1) exercises
+      the host-side refusal behaviorally — a live invocation MUST NOT
+      emit `agent.toolCalled` for a tool outside the agent's
+      `toolAllowlist` — for hosts advertising `agents.liveRuntime`;
+      it soft-skips elsewhere, so the invariant stays reference-impl tier.
 
   - id: agent-pack-handoff-schema-enforcement
     tier: protocol
@@ -579,6 +603,10 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests: []
+    # enforcement pending — tracked gap: no public conformance scenario
+    # yet (the safefetch-behavior/http-client-ssrf scenarios cover the
+    # SSRF guard on host-mediated fetches, not the no-auto-fetch rule
+    # for envelope content); verification is host-specific CI.
     note: |
       Hosts must not fetch URLs from envelope content directly.
 
@@ -587,6 +615,10 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests: []
+    # enforcement pending — tracked gap: no public conformance scenario
+    # yet (webhook-negative / webhook-receiver-adversarial cover SSRF +
+    # signature surfaces, not declared-events-only delivery); verification
+    # is host-specific CI.
     note: |
       Webhook deliveries fire from declared workflow events only.
 
@@ -678,14 +710,14 @@ invariants:
     severity: critical
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
-      - registry/scripts/verify-signatures.mjs
+      - openwop-registry:registry/scripts/verify-signatures.mjs
     note: |
       Registry-side signature verification at publish.
-      Verified by registry/scripts/verify-signatures.mjs, which is
-      gated in the registry-publish CI workflow per
-      .github/workflows/registry-publish.yml: every published pack
-      must verify against its declared keyId per the namespace
-      allow-list in registry/.well-known/openwop-registry.json
+      Verified by `openwop-registry:registry/scripts/verify-signatures.mjs`,
+      which is gated in that repo's registry-publish CI workflow:
+      every published pack must verify against its declared keyId per
+      the namespace allow-list in
+      `openwop-registry:registry/.well-known/openwop-registry.json`
       before the tarball lands in the index.
 
   - id: node-pack-sig-host-verify
@@ -693,11 +725,11 @@ invariants:
     severity: critical
     threat_model: SECURITY/threat-model-node-packs.md
     tests:
-      - examples/hosts/postgres/test/pack-consumer.test.ts
-      - examples/hosts/postgres/src/pack-consumer.ts
+      - openwop-examples:examples/hosts/postgres/test/pack-consumer.test.ts
+      - openwop-examples:examples/hosts/postgres/src/pack-consumer.ts
     note: |
       Host-side signature verification at resolve.
-      Verified by examples/hosts/postgres/test/pack-consumer.test.ts
+      Verified by `openwop-examples:examples/hosts/postgres/test/pack-consumer.test.ts`
       (9 paths against core.openwop.examples@1.0.0): positive
       Ed25519 verification + signature-corruption fail-closed +
       invalid-public-key rejection + truncated-signature rejection.
@@ -726,24 +758,35 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-node-packs.md
     tests: []
+    # enforcement pending — tracked gap: no public conformance scenario
+    # yet (pack-registry.test.ts probes keychain shape and yank → 404,
+    # not key revocation handling); verification is host-specific CI.
 
   - id: node-pack-approval-required
     tier: reference-impl
     severity: critical
     threat_model: SECURITY/threat-model-node-packs.md
     tests: []
+    # enforcement pending — tracked gap: no public conformance scenario
+    # covers host-side pack install approval; verification is
+    # host-specific CI.
 
   - id: node-pack-approval-host-state
     tier: reference-impl
     severity: high
     threat_model: SECURITY/threat-model-node-packs.md
     tests: []
+    # enforcement pending — tracked gap: no public conformance scenario
+    # covers host-side pack-approval state; verification is
+    # host-specific CI.
 
   - id: node-pack-approval-scope
     tier: reference-impl
     severity: high
     threat_model: SECURITY/threat-model-node-packs.md
     tests: []
+    # enforcement pending — tracked gap: no public conformance scenario
+    # covers pack-approval scoping; verification is host-specific CI.
 
   # SEC-4 close-out note (2026-05-15): the node-pack-sandbox-* group
   # is non-testable in the public repo until the first reference host
@@ -766,7 +809,8 @@ invariants:
       RFC 0035 §A invariant 4. Sandboxed code MUST NOT spawn host
       processes, fork, or call exec-family syscalls. GRADUATED
       reference-impl → protocol 2026-05-31: the WASM-isolation reference
-      (`examples/hosts/wasm-sandbox/`) makes this hold by construction —
+      (`openwop-examples:examples/hosts/wasm-sandbox/`) makes this hold
+      by construction —
       a process syscall can only be a declared import, refused before
       instantiation. The portable server-free `sandbox-wasm-isolation
       .test.ts` asserts `misbehaving-process` → sandbox_escape_attempt
@@ -930,6 +974,9 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-provider-policy.md
     tests: []
+    # enforcement pending — tracked gap: policies.test.ts /
+    # providerPolicyEnforcement.test.ts cover only the advertisement
+    # shape, not runtime rechecks; verification is host-specific CI.
 
   - id: provider-policy-disabled-hard
     tier: protocol
@@ -950,12 +997,18 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-provider-policy.md
     tests: []
+    # enforcement pending — tracked gap: no public conformance scenario
+    # exercises `required`-mode BYOK-only enforcement; verification is
+    # host-specific CI.
 
   - id: provider-policy-required-distinguishes-source
     tier: reference-impl
     severity: high
     threat_model: SECURITY/threat-model-provider-policy.md
     tests: []
+    # enforcement pending — tracked gap: no public conformance scenario
+    # exercises key-source distinction under `required` mode;
+    # verification is host-specific CI.
 
   - id: provider-policy-restricted-glob
     tier: protocol
@@ -976,6 +1029,9 @@ invariants:
     severity: high
     threat_model: SECURITY/threat-model-provider-policy.md
     tests: []
+    # enforcement pending — tracked gap: no public conformance scenario
+    # exercises canonical-name matching under `restricted` mode;
+    # verification is host-specific CI.
 
   - id: provider-policy-resolver-outage-fail-open
     tier: protocol
@@ -989,18 +1045,26 @@ invariants:
     severity: medium
     threat_model: SECURITY/threat-model-provider-policy.md
     tests: []
+    # enforcement pending — tracked gap: no public conformance scenario
+    # exercises partial policy resolution; verification is
+    # host-specific CI.
 
   - id: provider-policy-audit-emit
     tier: reference-impl
     severity: high
     threat_model: SECURITY/threat-model-provider-policy.md
     tests: []
+    # enforcement pending — tracked gap: no public conformance scenario
+    # asserts policy-decision audit emission; verification is
+    # host-specific CI.
 
   - id: provider-policy-audit-provenance
     tier: reference-impl
     severity: medium
     threat_model: SECURITY/threat-model-provider-policy.md
     tests: []
+    # enforcement pending — tracked gap: no public conformance scenario
+    # asserts audit provenance fields; verification is host-specific CI.
 
   # ===== MCP client (Phase H.2) =====
 
@@ -1037,7 +1101,7 @@ invariants:
       Without a body-size cap, a hostile upstream can OOM the host
       by streaming unbounded responses into per-run variables. Both
       defenses are reference-impl-tested in
-      `examples/hosts/postgres/test/http-client.test.ts`; this
+      `openwop-examples:examples/hosts/postgres/test/http-client.test.ts`; this
       protocol-tier invariant asserts the advertisement contract so
       independent implementers cannot ship a partial guard silently.
 
@@ -1079,7 +1143,7 @@ invariants:
       every list/get query by authenticated principal → tenant_id.
       Tenant A's `mem://shared-ref` entries MUST NOT surface from
       tenant B's calls against the same `memoryRef`. Reference-impl
-      verification: `examples/hosts/postgres/test/memory-adapter.test.ts`
+      verification: `openwop-examples:examples/hosts/postgres/test/memory-adapter.test.ts`
       §8 (CTI-1 cross-tenant probe).
 
   - id: agent-memory-sr-1-redaction
@@ -1486,7 +1550,7 @@ invariants:
       redaction": when a host rejects a bearer token, the 401
       response envelope MUST NOT echo the rejected token (or any
       portion of it) in `message` / `details`. Reference-impl probe:
-      `examples/hosts/postgres/test/auth-rotation-scoped.test.ts` §6
+      `openwop-examples:examples/hosts/postgres/test/auth-rotation-scoped.test.ts` §6
       asserts the rejected-token canary doesn't appear in the
       response body.
 
@@ -1515,7 +1579,7 @@ invariants:
   - id: annotation-cross-tenant-isolation
     tier: protocol
     severity: high
-    threat_model: SECURITY/invariants.yaml
+    threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/feedback-cross-tenant-isolation.test.ts
     note: |
@@ -1551,7 +1615,7 @@ invariants:
   - id: memory-attribution-tenant-scoped
     tier: protocol
     severity: high
-    threat_model: SECURITY/invariants.yaml
+    threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/memory-attribution-tenant-scoped.test.ts
     note: |
@@ -1695,7 +1759,7 @@ invariants:
   - id: org-position-no-authority-escalation
     tier: protocol
     severity: high
-    threat_model: SECURITY/invariants.yaml
+    threat_model: SECURITY/threat-model-prompt-injection.md
     tests:
       - conformance/src/scenarios/agent-org-chart-shape.test.ts
     note: |
@@ -1715,11 +1779,15 @@ invariants:
       object's key set is exactly {rosterId, departmentId, roleId, reportsTo})
       are the protocol-tier public test; the behavioral live-dispatch refusal
       is gated on agents.orgChart.supported and lands at Active -> Accepted.
+      Threat-model mapping: filed under the prompt-injection model with the
+      other authority-escalation / approval-bypass invariants
+      (prompt-injection-no-llm-approval, subrun-merge-approval-fail-closed);
+      the normative section documenting the invariant is RFC 0087 §B.
 
   - id: deployment-promotion-fail-closed
     tier: protocol
     severity: high
-    threat_model: SECURITY/invariants.yaml
+    threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/agent-deployment-lifecycle.test.ts
     note: |
@@ -1732,4 +1800,50 @@ invariants:
       invariant GRADUATES reference-impl -> protocol tier (the RFC 0035
       sandbox-invariant precedent). At Active the structural fail-closed is
       already covered by the protocol-tier authorization-fail-closed (RFC 0049)
-      applied to deploy:* scopes.
+      applied to deploy:* scopes. Threat-model mapping: filed under the
+      secret-leakage model alongside its structural cousin
+      authorization-fail-closed (RFC 0049 RBAC fail-closed); the normative
+      section documenting the invariant is RFC 0082 §E.
+
+  # ===== RFC 0093 webhook delivery hardening =====
+
+  - id: webhook-cross-tenant-isolation
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/webhook-tenant-isolation.test.ts
+    note: |
+      RFC 0093 §A: a webhook subscription MUST receive only events from
+      runs within the subscription's tenant scope — the tenant established
+      at registration by the membership gate in `webhooks.md` §Endpoints.
+      Cross-tenant delivery is a protocol violation regardless of
+      subscription filter breadth (`events` / `tags`). Mirrors
+      `agent-memory-cti-1` / `kv-cross-tenant-isolation` /
+      `queue-cross-tenant-isolation` for the delivery direction: every
+      other tenant-scoped surface already carried an explicit
+      cross-tenant-isolation invariant; webhook delivery was the omission.
+
+  - id: webhook-delivery-egress-revalidation
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests: []
+    # enforcement pending — tracked gap: black-box conformance cannot
+    # observe a host's resolver behavior. Enforcement lands in the
+    # reference host's webhook delivery client
+    # (openwop-app:backend/typescript/src/host/webhookDeliveryWorker.ts)
+    # per RFC 0093's open reference-host acceptance criterion; that repo's
+    # CI carries the verifying tests once wired.
+    note: |
+      RFC 0093 §A: hosts MUST re-resolve a webhook delivery URL's hostname
+      at delivery time and validate EVERY resolved address against the
+      same denied ranges as registration (`webhooks.md` §"SSRF protection"
+      plus any host-configured denylist). The connection MUST be made to
+      the validated address (pinned resolution); the dispatcher MUST NOT
+      re-resolve between validation and connect; and delivery MUST NOT
+      follow redirects — a `3xx` is a delivery failure retried per the
+      existing policy. Closes the DNS-rebinding / redirect-following
+      TOCTOU left open by registration-time-only validation (a registered
+      public hostname later re-pointed at `169.254.169.254`, or a `302`
+      to a metadata endpoint).

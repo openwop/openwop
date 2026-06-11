@@ -14,9 +14,11 @@
  *   4. When a host advertises `aiProviders.maxInlineMediaBytes`, it MUST be a
  *      non-negative integer.
  *
- * Behavioral (cross-tenant scoping + cap enforcement) is staged via `it.todo`
- * until a reference host wires tenant-scoped asset serving (greenfield;
- * RFC 0027 §G precedent — advertisement + schema land first).
+ * Behavioral (cross-tenant scoping + cap enforcement) runs as real `it()`
+ * bodies against the reference host's media-asset seam
+ * (`POST /v1/host/sample/media/put` store + `GET /v1/host/sample/assets/{token}`
+ * serve) and soft-skips (early `return`) on hosts that don't expose the
+ * store seam — no `it.todo` staging remains in this file.
  *
  * @see RFCS/0055-multimodal-envelope-variants-and-rendering-hints.md §C
  * @see spec/v1/ai-envelope.md §"Media reference payloads"

@@ -1,6 +1,6 @@
 # openwop Spec v1 — Multi-Agent Execution Model
 
-> **Status: DRAFT v1.x (filed via [RFC 0037](../../RFCS/0037-multi-agent-execution-model.md), 2026-05-21).** First installment of a five-version execution-model formalization. This document lands the **execution-loop framework + planner→worker handoff state machine** at `multiAgent.executionModel.version: 1`. Subsequent versions land as additive RFCs: [RFC 0039](../../RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md) at `version: 2` (confidence escalation + agent-memory lifecycle), [RFC 0040](../../RFCS/0040-multi-agent-cross-host-causation.md) at `version: 3` (cross-host causation), [RFC 0041](../../RFCS/0041-multi-agent-replay-under-nondeterminism.md) at `version: 4` (replay determinism under nondeterministic models), and [RFC 0061](../../RFCS/0061-agent-loop-lifecycle.md) at `version: 5` (stateful agent-loop lifecycle — per-iteration snapshot inputs, the observable `iteration` counter, stateful HITL resume). The open-gaps table at the bottom tracks each version's follow-ups. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
+> **Status: Draft v1.x (filed via [RFC 0037](../../RFCS/0037-multi-agent-execution-model.md), 2026-05-21).** First installment of a five-version execution-model formalization. This document lands the **execution-loop framework + planner→worker handoff state machine** at `multiAgent.executionModel.version: 1`. Subsequent versions land as additive RFCs: [RFC 0039](../../RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md) at `version: 2` (confidence escalation + agent-memory lifecycle), [RFC 0040](../../RFCS/0040-multi-agent-cross-host-causation.md) at `version: 3` (cross-host causation), [RFC 0041](../../RFCS/0041-multi-agent-replay-under-nondeterminism.md) at `version: 4` (replay determinism under nondeterministic models), and [RFC 0061](../../RFCS/0061-agent-loop-lifecycle.md) at `version: 5` (stateful agent-loop lifecycle — per-iteration snapshot inputs, the observable `iteration` counter, stateful HITL resume). The open-gaps table at the bottom tracks each version's follow-ups. Keywords MUST, SHOULD, MAY follow [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119). See `auth.md` for the status legend.
 
 ## Why this exists
 
@@ -43,7 +43,7 @@ LOOP:
      return to step 1.
 ```
 
-The loop MUST be re-entrant per `spec/v1/replay.md` §"Determinism with non-deterministic agents" — replaying from `fromSeq` after the Nth iteration MUST produce identical state at that index regardless of cross-region engine handoff (when `capabilities.eventLog.crossEngineOrdering.supported: true` per RFC 0036) or worker dispatch timing (when `capabilities.agents.dispatchMapping: true` per RFC 0022).
+The loop MUST be re-entrant per `spec/v1/replay.md` §"Replay determinism under nondeterministic models" — replaying from `fromSeq` after the Nth iteration MUST produce identical state at that index regardless of cross-region engine handoff (when `capabilities.eventLog.crossEngineOrdering.supported: true` per RFC 0036) or worker dispatch timing (when `capabilities.agents.dispatchMapping: true` per RFC 0022).
 
 ## Handoff state machine (normative)
 
@@ -58,7 +58,7 @@ When a supervisor's decision is `next-worker` and the engine begins dispatching,
 
 ### Transition events (normative)
 
-Each transition MUST emit a `core.workflowChain.event` (NEW event type — see §"Event-payload addition" below) with `causationId` linking to the prior transition's `eventId`. The chain is REQUIRED so replay-determinism gates per `spec/v1/replay.md` §"Determinism with non-deterministic agents" can walk the causation chain backward through handoff sequences.
+Each transition MUST emit a `core.workflowChain.event` (NEW event type — see §"Event-payload addition" below) with `causationId` linking to the prior transition's `eventId`. The chain is REQUIRED so replay-determinism gates per `spec/v1/replay.md` §"Replay determinism under nondeterministic models" can walk the causation chain backward through handoff sequences.
 
 | Transition | Event payload `phase` | `causationId` |
 |---|---|---|
@@ -85,7 +85,7 @@ An `OrchestratorDecision` MAY carry an optional `confidence: number` field in `[
 
 Hosts MUST NOT silently execute a `confidence < floor` decision without first recording the escalation event AND firing the matching interrupt. The escalation event is `core.workflowChain.confidence-escalated` (see §"Event-payload addition" below) and MUST appear in the run event log BEFORE the interrupt fires AND BEFORE any `core.workflowChain.event` with `phase: "dispatch.began"` for the escalated decision's intended next-worker.
 
-**Floor rationale (normative).** 0.5 is the maximum-entropy threshold — the value where a Bayesian observer with no prior has no preference between accept and clarify. Below it, silent execution would commit the workflow to an outcome the supervisor itself rates as less-than-arbitrary. Operator policy stricter than 0.5 advertises via `confidenceEscalationFloor`; the spec floor of 0.5 is non-configurable across hosts so cross-host workflows have a portable lower bound. See `RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md` §A "Why 0.5" for the full rationale.
+**Floor rationale (normative).** 0.5 is the maximum-entropy threshold — the value where a Bayesian observer with no prior has no preference between accept and clarify. Below it, silent execution would commit the workflow to an outcome the supervisor itself rates as less-than-arbitrary. Operator policy stricter than 0.5 advertises via `confidenceEscalationFloor`; the spec floor of 0.5 is non-configurable across hosts so cross-host workflows have a portable lower bound. See `RFCS/0039-multi-agent-confidence-and-memory-lifecycle.md` §A "Why 0.5" for the full rationale. This 0.5 floor applies to `OrchestratorDecision.confidence` only — it is a distinct field from the `agent.decided.confidence` threshold (default 0.7, RFC 0077) used by the `liveRuntime` escalation rule in §"Live manifest dispatch" step 7 below.
 
 **`confidence` field absence.** When the decision's `confidence` is absent (`undefined` / not emitted), the host MUST NOT escalate on this rule alone — `confidence === undefined` means "no opinion stated," not "low confidence." Operators wanting opt-in always-escalate behavior advertise a separate host-extension flag; this is not normated here.
 
@@ -191,7 +191,7 @@ A live manifest invocation MUST perform these steps; each composes an existing s
 4. **Memory binding.** Bind the backends declared in `memoryShape` (RFC 0004). When `memoryShape.longTerm: true`, the host MUST apply the SR-1 redaction harness on writes and MAY emit `memory.written` (RFC 0057) / participate in consolidation (RFC 0068). Memory is tenant-scoped (CTI-1).
 5. **Reasoning + tool loop.** Run the agent turn(s): live inference + tool calls through the step-3 surface, emitting the existing `agent.reasoned` / `agent.reasoning.delta` / `agent.toolCalled` / `agent.toolReturned` events. **Single-shot is the `liveRuntime` floor** — a `liveRuntime` host MAY run one turn; the multi-turn agent loop composes *above* via the orchestrator + RFC 0061 (`executionModel.version >= 5`) and MUST NOT be folded into the `liveRuntime` floor (loop infrastructure is not required to advertise `liveRuntime`).
 6. **Handoff + structured-output validation.** When `handoff.taskSchemaRef` is present, the host MUST validate the inbound task against it before step 5 and reject a non-conforming task. When `handoff.returnSchemaRef` is present AND `liveRuntime.structuredOutput: true` is advertised, the host MUST validate the terminal result against it and fail the run rather than ship a non-conforming result. Cross-agent handoffs emit `agent.handoff`.
-7. **Confidence escalation.** When `liveRuntime.confidenceEscalation: true`, an `agent.decided` whose `confidence` falls below the effective threshold (`confidence.defaultThreshold`, or the run-resolved threshold per RFC 0002 §F, default 0.7) MUST trigger the §"Confidence escalation" contract rather than silently accept.
+7. **Confidence escalation.** When `liveRuntime.confidenceEscalation: true`, an `agent.decided` whose `confidence` falls below the effective threshold (`confidence.defaultThreshold`, or the run-resolved threshold per RFC 0002 §F, default 0.7) MUST trigger the §"Confidence escalation" contract rather than silently accept. This `agent.decided` threshold (default 0.7, RFC 0077) is a distinct field from the non-configurable 0.5 `OrchestratorDecision.confidence` floor in §"Confidence escalation" above (RFC 0039); the two are not interchangeable.
 8. **Terminal result projection.** On termination, project the agent's terminal result onto the run's normal result surface. When the agent ran as a sub-run with `capabilities.agents.subRunAttestation` (RFC 0063), the attestation composes unchanged and follows the agent-scoped terminal. The host MUST emit `agent.invocation.completed` as the final agent-scoped event.
 
 ### Invocation bracket events (normative)
@@ -285,7 +285,7 @@ Hosts that do NOT advertise this capability MAY implement RFCs 0006/0007/0022 in
     },
     "error": {
       "type": "object",
-      "description": "On phases `dispatch.failed` / `child.failed` / `child.cancelled`: the canonical error envelope per spec/v1/auth.md §'Canonical error envelope'.",
+      "description": "On phases `dispatch.failed` / `child.failed` / `child.cancelled`: the canonical error envelope per spec/v1/auth.md §'Error response shape'.",
       "additionalProperties": true
     }
   }
@@ -301,7 +301,7 @@ Hosts that do NOT advertise `capabilities.multiAgent.executionModel.supported: t
 | MAE-1 | **`version: 2`:** Confidence-threshold semantics — at what `OrchestratorDecision.confidence` value MUST the supervisor escalate to clarification or approval, versus MAY escalate? Today: host policy. | RFC 0039 (`version: 2`) | OpenWOP WG |
 | MAE-2 | **`version: 2`:** Agent memory lifecycle across sub-runs — `MemoryEntry.ttl` semantics when a parent run dispatches a child whose memory operations the parent inherits. Today: implicit; needs normative MUST. | RFC 0039 (`version: 2`) | OpenWOP WG |
 | MAE-3 | **`version: 2`:** Memory carry-forward when a sub-run is replayed from past event-log index — does the replay re-read the original memory snapshot, or the current memory state? | RFC 0039 (`version: 2`) | OpenWOP WG |
-| MAE-4 | **`version: 3`:** Extending `causationId` to span hosts (currently single-host scope per `spec/v1/replay.md` §"Determinism with non-deterministic agents"). | RFC 0040 (`version: 3`) | OpenWOP WG |
+| MAE-4 | **`version: 3`:** Extending `causationId` to span hosts (currently single-host scope per `spec/v1/replay.md` §"Determinism guarantees"). | RFC 0040 (`version: 3`) | OpenWOP WG |
 | MAE-5 | **`version: 3`:** W3C tracecontext propagation across MCP/A2A composition boundaries — partial coverage in `RFC 0023` for OTel; needs normative cross-host case. | RFC 0040 (`version: 3`) | OpenWOP WG |
 | MAE-6 | **`version: 3`:** Cross-host run-ID resolution — when host A's run dispatches to host B, what's the discoverable identifier chain? | RFC 0040 (`version: 3`) | OpenWOP WG |
 | MAE-7 | **`version: 4`:** LLM cache-key recipe — `replay.md` §"LLM cache-key recipe" already exists but `replay-llm-cache-key.test.ts` is shape-only per `docs/KNOWN-LIMITS.md:18`. | RFC 0041 (`version: 4`) | OpenWOP WG |
@@ -317,6 +317,6 @@ Hosts that do NOT advertise `capabilities.multiAgent.executionModel.supported: t
 - [`RFCS/0022-dispatch-input-output-mapping.md`](../../RFCS/0022-dispatch-input-output-mapping.md) — `inputMapping` / `outputMapping` contract.
 - [`RFCS/0024-agent-reasoning-streaming.md`](../../RFCS/0024-agent-reasoning-streaming.md) — `agent.reasoning.delta` event vocabulary.
 - [`RFCS/0026-provider-usage-event.md`](../../RFCS/0026-provider-usage-event.md) — cost-attribution surface.
-- [`spec/v1/replay.md`](./replay.md) §"Determinism with non-deterministic agents" — the replay contract this execution model preserves.
+- [`spec/v1/replay.md`](./replay.md) §"Determinism guarantees" + §"Replay determinism under nondeterministic models" — the replay contract this execution model preserves.
 - [`spec/v1/positioning.md`](./positioning.md) — "we don't standardize orchestration topology" — the principle this RFC's `executionModel.version` flag respects (the framework is opt-in; non-advertising hosts retain full implementation flexibility).
 - External standards-readiness review 2026-05-21 — finding (3).

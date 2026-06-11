@@ -11,8 +11,8 @@
 | JSON Schemas | 56 | `schemas/*.schema.json` |
 | OpenAPI operations | 48 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 330 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 92 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 335 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 94 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 1.21.0 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 1.22.0 | `conformance/package.json` | minor on scenario add/remove |
 
 ## OpenAPI Operations
 
@@ -32,8 +32,8 @@
 | Status | Count |
 |---|---:|
 | Accepted | 89 |
-| Active | 1 |
-| Draft | 2 |
+| Active | 4 |
+| Unknown | 1 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -74,12 +74,12 @@
 | RFC 0035 | Sandbox execution contract for pack-loaded typeIds | Active |
 | RFC 0036 | Multi-region idempotency + cross-engine append-ordering guarantees | Accepted |
 | RFC 0037 | Multi-agent execution model + replay determinism under nondeterministic models | Accepted |
-| RFC 0038 | OpenWOP Working Group charter | Draft |
+| RFC 0038 | OpenWOP Working Group charter | Unknown |
 | RFC 0039 | Multi-agent execution model Phase 2: confidence-threshold escalation + agent memory lifecycle across sub-runs and replay | Accepted |
 | RFC 0040 | Multi-agent execution model Phase 3: cross-host causation linking + W3C tracecontext propagation across composition boundaries + cross-host run-ID resolution | Accepted |
 | RFC 0041 | Multi-agent execution model Phase 4: LLM cache-key recipe normation + envelope-refusal recovery in replay context + determinism vs idempotency contract | Accepted |
 | RFC 0042 | Experimental capability tier - optional `tier` field on capability advertisements + sunset rule + derived `openwop-experimental` profile | Accepted |
-| RFC 0043 | Registry submission policy, extension namespace rules, profile/event/capability name reservation, and IPR posture | Draft |
+| RFC 0043 | Registry submission policy, extension namespace rules, profile/event/capability name reservation, and IPR posture | Active |
 | RFC 0044 | `multiAgent.executionModel.confidenceEscalationInterruptKind` capability advertisement - supports canonical (`clarification` / `approval`) and vendor-extension (`x-host-<host>-<kind>`) interrupt-kind names without forcing cross-cutting rename on hosts with entrenched kinds | Accepted |
 | RFC 0045 | A manifest-first `connector` block that lets a pack declare itself a named integration exposing typed **actions** (reusing the existing trigger model), each bound to an RFC 0047 `auth` declaration + RFC 0046 `requiredCredentials`, with standardized idempotency / retry / rate-limit metadata - the n8n/Make "connector" abstraction, expressed the openwop way | Accepted |
 | RFC 0046 | `host.credentials` capability - a portable credential resolution + lifecycle contract (store-at-rest, workspace sharing, two-key-overlap rotation, redaction-everywhere) | Accepted |
@@ -129,6 +129,8 @@
 | RFC 0090 | A first-class verifier/critic turn (`agent.verified` event) + observable convergence criteria on the orchestrator `terminate` decision, so a multi-agent run can check work before committing and stop on a stated success condition rather than an opaque self-judgement | Accepted |
 | RFC 0091 | Let `ctx.callAI` messages carry typed multimodal content parts (text / image / audio / document) so an agent can *perceive* non-text input, gated behind an additive `capabilities.aiProviders.input.modalities[]` advertisement - closing the one agent-architecture layer (perception) openwop does not model | Accepted |
 | RFC 0092 | Let an agent manifest declare the host capabilities it needs (`requiresCapabilities[]`), and surface an agent whose requirements a host can't meet as degraded on the inventory - generalizing the RFC 0072 sectionC `degraded[]` / RFC 0080 sectionC memory-degraded projection from per-dependency to a stated capability floor | Accepted |
+| RFC 0093 | Close four security/correctness gaps found in the 2026-06-11 corpus review: (1) webhook delivery-time egress re-validation + no-redirect policy + an explicit delivery tenant-isolation MUST, (2) interrupt signed-token lifecycle (expiry, single-use invalidation, constant-time verification, inspect intent), (3) idempotent-response caching of retryable-class outcomes (429/5xx) made supersedable, (4) the two approval-gate decisions RFC 0051 left "pin before Active" (timeout ⇒ auto-reject; quorum override opt-in) | Active |
+| RFC 0094 | Repair the wire-shape defects found in the 2026-06-11 corpus review: the unsatisfiable `createRun` request schema, the missing `cancelling` run status, the closed `RunEventType` enum that contradicts the documented ignore-unknown policy, the three-way `ai.message.chunk` payload drift, the incomplete `InterruptPayload.kind` union, the universal-envelope-kinds vs `openwop-core` profile contradiction, the missing `capabilities.grpc` and `limits.maxRequestBodyBytes` schema surface, and a documented schema-closure policy in `COMPATIBILITY.md` | Active |
 
 ## SDK Helper Coverage
 
@@ -138,11 +140,11 @@ The TypeScript / Python / Go SDKs live in the [`openwop-sdks`](https://github.co
 
 | Host | Passed | Failed | Skipped | Todo | Total | Pass rate |
 |---|---:|---:|---:|---:|---:|---|
-| Postgres reference | 2068 | 0 | 93 | 0 | 2161 | 95.7% |
-| SQLite reference | 2056 | 0 | 105 | 0 | 2161 | 95.1% |
-| In-memory reference | 2010 | 46 | 105 | 0 | 2161 | 93.0% |
-| Python reference | 2008 | 2 | 151 | 0 | 2161 | 92.9% |
-| Workflow-engine reference (in-process) | 1400 | 20 | 107 | 0 | 1527 | 91.7% |
+| Postgres reference | 1746 | 0 | 208 | 0 | 1954 | 89.4% |
+| SQLite reference | 1742 | 0 | 212 | 0 | 1954 | 89.1% |
+| In-memory reference | 1780 | 45 | 129 | 0 | 1954 | 91.1% |
+| Python reference | 1742 | 0 | 212 | 0 | 1954 | 89.1% |
+| Workflow-engine reference (in-process, 1.18.1 / 2026-06-02) | 1400 | 20 | 107 | 0 | 1527 | 91.7% |
 
 ## Registry Snapshot
 
@@ -150,8 +152,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 2 RFCs still `Draft` (RFC 0038, RFC 0043) — advance with schema/conformance proof or defer.
-- 1 RFC `Active` (RFC 0035) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 4 RFCs `Active` (RFC 0035, RFC 0043, RFC 0093, RFC 0094) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
