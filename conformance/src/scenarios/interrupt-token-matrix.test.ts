@@ -20,7 +20,7 @@
  *      (NEVER 200 from a different run's scope).
  *
  * Gating identical to interrupt-external-event-correlation: skips when
- * the `conformance-external-event` fixture isn't advertised.
+ * the `conformance-interrupt-external-event` fixture isn't advertised.
  *
  * @see spec/v1/interrupt.md §"Signed-token callback"
  * @see spec/v1/rest-endpoints.md §"GET /v1/interrupts/{token}" + §"POST /v1/interrupts/{token}"
@@ -31,7 +31,7 @@ import { driver } from '../lib/driver.js';
 import { pollUntilStatus } from '../lib/polling.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 
-const FIXTURE = 'conformance-external-event';
+const FIXTURE = 'conformance-interrupt-external-event';
 const SKIP = !isFixtureAdvertised(FIXTURE);
 
 function randomBytesB64(length: number): string {
