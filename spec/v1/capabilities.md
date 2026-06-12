@@ -431,7 +431,7 @@ RFC 0095 (`Draft`). When `packsSupported: true`, the host installs `kind: "conne
 "connections": { "packsSupported": true }
 ```
 
-**Field shape:** OPTIONAL `object`. When present, `packsSupported: boolean` is REQUIRED. Hosts that don't install connection packs omit the block entirely (provider resolution stays implementation-defined / host-built-in, exactly as before RFC 0095).
+**Field shape:** OPTIONAL `object`. When present, `packsSupported: boolean` is REQUIRED. Hosts that don't install connection packs omit the block entirely (provider resolution stays implementation-defined / host-built-in, exactly as before RFC 0095). An optional `supported: boolean` MAY accompany it for family-shape uniformity; behavior keys on `packsSupported` only.
 
 **Composition.** Connection packs are only *useful* alongside `oauth.supported` (RFC 0047) or `credentials.supported` (RFC 0046); a host SHOULD NOT advertise `connections.packsSupported` without at least one of those.
 

@@ -441,6 +441,10 @@
       "description": "RFC 0095 (`Draft`). Connection packs — portable, registry-distributable provider definitions (`kind: \"connection\"`, `connection-pack-manifest.schema.json`) that the RFC 0045/0047 `provider` string resolves against. Only useful alongside `oauth.supported` (RFC 0047) or `credentials.supported` (RFC 0046); a host SHOULD NOT advertise this block without at least one of those.",
       "required": ["packsSupported"],
       "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "OPTIONAL convenience flag mirroring the other capability families. RFC 0095 keys behavior on `packsSupported`; hosts MAY also advertise `supported` for family-shape uniformity."
+        },
         "packsSupported": {
           "type": "boolean",
           "description": "RFC 0095 §C. When `true`, the host installs `kind: \"connection\"` registry packs and MUST implement the §B.6 resolution contract: an RFC 0045 connector's `auth.provider` (or an RFC 0047 `host.oauth` provider string) resolves against the installed connection pack whose `provider.id` matches, with installed-vs-built-in precedence per SemVer §11 and `connection_provider_unresolved` / `connection_provider_conflict` diagnostics. When `false` or absent, connection packs are not loaded and provider resolution stays implementation-defined."
