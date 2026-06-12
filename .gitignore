@@ -195,3 +195,13 @@ public/downloads/
 
 # graphify knowledge-graph output (local, not tracked)
 graphify-out/
+
+# ── Extracted-repo residue ───────────────────────────────────────────────────
+# `apps/workflow-engine` moved to openwop/openwop-app (#660) and `examples/`
+# (hosts + samples) moved to openwop/openwop-examples (813f984a); neither
+# directory holds tracked content in this monorepo anymore. Local checkouts
+# still carry pre-extraction build residue (lockfiles, Rust target/, dist
+# output, runtime DBs/keys) — ignore the directories wholesale. New work on
+# those surfaces belongs in the extracted repos, not here.
+/apps/
+/examples/
