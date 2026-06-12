@@ -154,6 +154,40 @@ describe('fixtures: node-pack-manifest schema validity', () => {
   });
 });
 
+describe('fixtures: connection-pack-manifest schema validity', () => {
+  // Connection-pack fixtures live in `fixtures/connection-packs/` (RFC 0095)
+  // so the node-pack validator above doesn't apply the wrong schema. They are
+  // schema-level proof points AND the canonical install payloads for the
+  // capability-gated `connection-provider-resolution` behavioral scenario.
+  const ajv = new Ajv2020({ allErrors: true, strict: false });
+  addFormats(ajv);
+  const schema = JSON.parse(readFileSync(join(SCHEMAS_DIR, 'connection-pack-manifest.schema.json'), 'utf8'));
+  const validate = ajv.compile(schema);
+
+  const dir = join(FIXTURES_DIR, 'connection-packs');
+  const files = readdirSync(dir)
+    .filter((f) => f.endsWith('.json'))
+    .sort();
+
+  it('finds at least one connection-pack fixture (RFC 0095 coverage)', () => {
+    expect(files.length).toBeGreaterThan(0);
+  });
+
+  for (const file of files) {
+    it(`connection-packs/${file} validates against connection-pack-manifest.schema.json`, () => {
+      const data = JSON.parse(readFileSync(join(dir, file), 'utf8'));
+      const ok = validate(data);
+      const errors = (validate.errors ?? [])
+        .map((e: ErrorObject) => `${e.instancePath || '/'}: ${e.message}`)
+        .join('\n');
+      expect(
+        ok,
+        `Fixture connection-packs/${file} fails connection-pack-manifest schema:\n${errors}`,
+      ).toBe(true);
+    });
+  }
+});
+
 describe('fixtures: prompt-template schema validity', () => {
   // PromptTemplate fixtures live in `fixtures/prompt-templates/` per
   // RFC 0027 §A. Like pack manifests, they're schema-level proof points,

@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/connection-pack-manifest.schema.json",
+  "title": "ConnectionPackManifest",
+  "description": "RFC 0095. Manifest for a published OpenWOP connection pack — `pack.json` at the pack root with `kind: \"connection\"`. Peer to and disjoint from `node-pack-manifest.schema.json` (RFC 0003), `prompt-pack-manifest.schema.json` (RFC 0028), and `workflow-chain-pack-manifest.schema.json` (RFC 0013) via the `kind` discriminator. A connection pack is a portable PROVIDER definition — the authorize/token/revoke endpoints, the read/write OAuth scope catalog, and how the integration is reached (an MCP server, an OpenAPI surface, or a core integration node). It carries NO secret: the OAuth client credential is a host concern (RFC 0047), supplied out of band. When installed, it makes an RFC 0045 connector's `auth.provider` / an RFC 0047 `host.oauth` provider string resolve against `provider.id` instead of host-locked code. See `spec/v1/connection-packs.md`.",
+  "type": "object",
+  "required": ["name", "version", "kind", "engines", "provider"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Reverse-DNS pack name per `node-packs.md` §Naming. Reserved scopes are identical (`core.*` / `vendor.<org>.*` / `community.<author>.*` / `private.<host>.*`). Mirror of `prompt-pack-manifest.schema.json#/properties/name`.",
+      "pattern": "^(core|vendor|community|private)\\.[a-z][a-z0-9_-]*(\\.[a-z][a-zA-Z0-9_-]*)+$",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "version": {
+      "type": "string",
+      "description": "Pack-level SemVer 2.0.0.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+    },
+    "kind": {
+      "type": "string",
+      "const": "connection",
+      "description": "Pack kind discriminator. MUST be the literal string `\"connection\"` for this schema."
+    },
+    "description": { "type": "string", "maxLength": 1024 },
+    "author": { "type": "string" },
+    "license": { "type": "string", "description": "SPDX license identifier (e.g., `Apache-2.0`)." },
+    "homepage": { "type": "string", "format": "uri" },
+    "repository": { "type": "string", "format": "uri" },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string", "maxLength": 64 },
+      "maxItems": 50
+    },
+    "engines": {
+      "type": "object",
+      "required": ["openwop"],
+      "additionalProperties": false,
+      "properties": {
+        "openwop": { "type": "string", "description": "SemVer range of the openwop spec version this pack targets." }
+      }
+    },
+    "provider": {
+      "type": "object",
+      "description": "The portable provider definition. Exactly one per connection pack.",
+      "required": ["id", "displayName", "category", "auth", "reach"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "description": "Stable provider id an RFC 0045/0047 `provider` string resolves to, e.g. `github`."
+        },
+        "displayName": { "type": "string", "minLength": 1 },
+        "category": {
+          "type": "string",
+          "enum": ["communication", "docs", "crm", "dev", "storage", "email-calendar", "ticketing", "data-warehouse", "marketing", "finance", "hr", "esignature", "support", "project-management", "payments", "other"]
+        },
+        "auth": {
+          "type": "object",
+          "required": ["kind"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "type": "string", "enum": ["oauth2", "api_key", "bearer", "basic"] },
+            "authFlow": { "type": "string", "enum": ["pkce", "client_credentials", "manual", "none"] },
+            "scopeModel": {
+              "type": "string",
+              "enum": ["groups", "coarse", "capabilities"],
+              "default": "groups",
+              "description": "`groups` = read/write scope groups (Google/Jira/Graph). `coarse` = a single read-vs-write toggle (Stripe Connect read_only/read_write). `capabilities` = consent is a static developer-portal capability set, not per-request scopes (Notion)."
+            },
+            "endpoints": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Fixed, manifest-declared https endpoints (RFC 0095 §B.3). Never derived from runtime user input — not an SSRF surface.",
+              "properties": {
+                "authorize": { "type": "string", "format": "uri", "pattern": "^https://" },
+                "token": { "type": "string", "format": "uri", "pattern": "^https://" },
+                "revoke": { "type": "string", "format": "uri", "pattern": "^https://" }
+              }
+            },
+            "scopes": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Read/write scope groups. `write` is requested as a SEPARATE re-consent step (RFC 0095 §B.4).",
+              "properties": {
+                "read": { "type": "array", "items": { "$ref": "#/$defs/ScopeGroup" } },
+                "write": { "type": "array", "items": { "$ref": "#/$defs/ScopeGroup" } }
+              }
+            },
+            "instanceUrlTemplate": {
+              "type": "string",
+              "description": "For per-account-host providers (Snowflake/NetSuite/ServiceNow): a template the host fills per connection, e.g. `https://{account}.snowflakecomputing.com`. Its presence signals the provider cannot use a single global OAuth app."
+            }
+          }
+        },
+        "reach": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 1,
+          "additionalProperties": false,
+          "description": "Exactly ONE of mcp | openapi | integration — which core node injects the resolved credential (RFC 0095 §B.5).",
+          "properties": {
+            "mcp": {
+              "type": "object",
+              "required": ["server"],
+              "additionalProperties": false,
+              "properties": {
+                "server": {
+                  "type": "object",
+                  "required": ["url", "transport"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "url": { "type": "string", "format": "uri", "pattern": "^https://" },
+                    "transport": { "type": "string", "enum": ["http", "sse"] }
+                  }
+                }
+              }
+            },
+            "openapi": {
+              "type": "object",
+              "required": ["ref"],
+              "additionalProperties": false,
+              "properties": {
+                "ref": { "type": "string", "description": "URL or in-pack path of the OpenAPI document for core.openwop.http.openapi-call." }
+              }
+            },
+            "integration": {
+              "type": "object",
+              "required": ["node"],
+              "additionalProperties": false,
+              "properties": {
+                "node": { "type": "string", "description": "A core.openwop.integration.* node typeId." }
+              }
+            }
+          }
+        },
+        "consumerNodes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "The core node typeIds that consume this provider's credential (e.g. core.openwop.mcp.invoke-tool)."
+        },
+        "docsUrl": { "type": "string", "format": "uri" }
+      }
+    }
+  },
+  "$defs": {
+    "ScopeGroup": {
+      "type": "object",
+      "required": ["key", "label", "scopes"],
+      "additionalProperties": false,
+      "properties": {
+        "key": { "type": "string", "pattern": "^[a-z][a-z0-9._-]*$" },
+        "label": { "type": "string", "minLength": 1 },
+        "scopes": { "type": "array", "items": { "type": "string" }, "description": "The provider's raw scope strings, e.g. `https://www.googleapis.com/auth/drive.readonly`." }
+      }
+    }
+  }
+}

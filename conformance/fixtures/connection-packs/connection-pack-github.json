@@ -1,0 +1,31 @@
+{
+  "name": "core.openwop.connections.github",
+  "version": "1.0.0",
+  "kind": "connection",
+  "engines": { "openwop": ">=1.0.0" },
+  "provider": {
+    "id": "github",
+    "displayName": "GitHub",
+    "category": "dev",
+    "auth": {
+      "kind": "oauth2",
+      "authFlow": "pkce",
+      "scopeModel": "groups",
+      "endpoints": {
+        "authorize": "https://github.com/login/oauth/authorize",
+        "token": "https://github.com/login/oauth/access_token"
+      },
+      "scopes": {
+        "read": [
+          { "key": "repo.read", "label": "Read repositories", "scopes": ["repo:status", "public_repo"] }
+        ],
+        "write": [
+          { "key": "repo.write", "label": "Write repositories", "scopes": ["repo"] }
+        ]
+      }
+    },
+    "reach": { "mcp": { "server": { "url": "https://api.githubcopilot.com/mcp/", "transport": "http" } } },
+    "consumerNodes": ["core.openwop.mcp.invoke-tool", "core.openwop.mcp.read-resource"],
+    "docsUrl": "https://docs.github.com/en/apps/oauth-apps"
+  }
+}

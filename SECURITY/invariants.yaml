@@ -1847,3 +1847,28 @@ invariants:
       TOCTOU left open by registration-time-only validation (a registered
       public hostname later re-pointed at `169.254.169.254`, or a `302`
       to a metadata endpoint).
+
+  - id: connection-pack-no-credential-material
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/connection-pack-no-credential-material.test.ts
+    note: |
+      RFC 0095 / connection-packs.md §Manifest clause 2. A connection-pack
+      manifest (kind: "connection") is PUBLIC provider metadata and MUST NOT
+      contain credential material in any field — no client secret, no
+      access/refresh token, no API key, no password. A host MUST reject a
+      manifest carrying a property whose name matches the normative minimum
+      blocklist (clientSecret, client_secret, apiKey, api_key, token,
+      accessToken, refreshToken, password, privateKey, secret — matched
+      case-insensitively at any depth) with
+      connection_pack_credential_material; the single exemption is the
+      property named `token` at exactly provider.auth.endpoints.token (the
+      OAuth token-endpoint URL). The scan runs BEFORE generic schema
+      validation so the specific code wins over a generic shape error. The
+      OAuth client credential is a host concern (RFC 0047), supplied out of
+      band by the operator — never shipped in the pack. Public test: the
+      always-on schema probe (additionalProperties:false rejects every
+      blocklisted name at the schema layer) + the capability-gated
+      behavioral leg asserting the specific error code on a live host.

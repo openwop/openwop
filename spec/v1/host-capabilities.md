@@ -1328,6 +1328,8 @@ The host performs the OAuth 2.0 **authorization-code + refresh** dance on a user
 
 **Connector-auth declaration.** A node declares `auth: { type: 'oauth2', provider, scopes[] }`. The host matches `provider` against an advertised `oauth.providers[].id` and refuses to register the pack if the provider or a requested scope is not advertised (`oauth_provider_unsupported` / `oauth_scope_unsupported`).
 
+**Provider definition source (RFC 0095).** What a `provider` id *resolves to* — its authorize/token/revoke endpoints, scope catalog, and reach — has a portable, registry-distributable representation: the **connection pack** ([`connection-packs.md`](./connection-packs.md), `kind: "connection"`). On a host advertising `capabilities.connections.packsSupported: true`, resolution MUST follow `connection-packs.md` §Manifest clause 6 (installed pack keyed by `provider.id`, installed-vs-built-in precedence per SemVer §11, `connection_provider_unresolved` / `connection_provider_conflict` diagnostics). Hosts without that flag keep their provider catalog implementation-defined, exactly as before RFC 0095.
+
 **Events (additive, redaction-safe):**
 
 - `connector.authorized` → `{ provider, credentialRef, scopes }` — token first acquired or re-authorized. Carries the credential **reference**, never the token.
