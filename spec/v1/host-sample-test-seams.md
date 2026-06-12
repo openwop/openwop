@@ -394,6 +394,55 @@ POST /v1/host/sample/workspace/op
 
 Conformance: `workspace-cross-tenant-isolation.test.ts` (WCT-1 — write as owner A, then assert a different workspace AND a different tenant both fail closed on `get`/`list`, while the owner still reads its own file).
 
+### 10. Connection-pack install/resolve/consent driver — `POST /v1/host/sample/connection-packs/{install,resolve,consent-plan}` (RFC 0095)
+
+| Field                     | Value                                                                                                                                                       |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Method + path             | `POST /v1/host/sample/connection-packs/install` · `POST /v1/host/sample/connection-packs/resolve` · `POST /v1/host/sample/connection-packs/consent-plan`    |
+| Capability gate           | `capabilities.connections.packsSupported: true` (RFC 0095 §C)                                                                                              |
+| Env gate (reference impl) | seam registered when `connections.packsSupported` is asserted; production hosts gate per §"Production safety"                                              |
+| Introduced                | RFC 0095 §Conformance — drives `connection-packs.md` §Manifest clauses 2/4/6/8 black-box on hosts whose install path is otherwise boot-time or publish-time |
+
+Connection packs install through host-specific channels (a boot-time loader on the reference app; a registry publish path on other hosts), so the §Manifest clause 2/6/8 behaviors need a uniform driver for black-box conformance. The seams route through the SAME validation + resolution code paths the host's production install channel uses; they only supply the manifest (and, for `resolve`, an optional simulated built-in) that production sources elsewhere.
+
+```http
+POST /v1/host/sample/connection-packs/install
+  Body: { manifest: <connection-pack manifest JSON> }
+  Returns: 200 {
+    installed: boolean,
+    errors?: Array<{ code: string, path?: string }>,
+    //          code ∈ connection_pack_credential_material | pack_kind_invalid
+    //                 | schema-validation identifiers (host-specific)
+  }
+
+POST /v1/host/sample/connection-packs/resolve
+  Body: {
+    provider: string,                 // the RFC 0045/0047 provider id
+    simulateBuiltinVersion?: string,  // optional: behave as if a built-in
+                                      // definition of `provider` at this
+                                      // version existed (SemVer §11 probe)
+  }
+  Returns: 200 {
+    resolved: boolean,
+    source?: 'pack' | 'builtin',
+    version?: string,
+    code?: 'connection_provider_unresolved' | 'connection_provider_conflict',
+  }
+
+POST /v1/host/sample/connection-packs/consent-plan
+  Body: { provider: string, requested: Array<'read' | 'write'> }
+  Returns: 200 {
+    steps: Array<{
+      groups?: Array<{ key: string, access: 'read' | 'write' }>,
+      includesWrite?: boolean,
+    }>,
+  }
+```
+
+The `install` seam MUST run the clause-2 credential-material scan BEFORE generic schema validation (the specific code wins); a rejected manifest is NOT installed and MUST NOT disturb other installed packs (clause 8). The `resolve` seam applies the clause-6 precedence rule (installed ≥ built-in per SemVer §11, else `connection_provider_conflict`). The `consent-plan` seam returns the host's planned consent sequence; write groups MUST occupy a separate step from the initial read authorization (clause 4).
+
+Conformance: `connection-pack-no-credential-material.test.ts` (specific-code leg), `connection-provider-resolution.test.ts` (clauses 6 + 8), `connection-pack-write-reconsent.test.ts` (clause 4).
+
 ## Production safety (normative)
 
 All seams under `/v1/host/sample/*` are conformance-only. Hosts deployed in production:

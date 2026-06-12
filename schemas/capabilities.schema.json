@@ -436,6 +436,18 @@
       },
       "additionalProperties": false
     },
+    "connections": {
+      "type": "object",
+      "description": "RFC 0095 (`Draft`). Connection packs — portable, registry-distributable provider definitions (`kind: \"connection\"`, `connection-pack-manifest.schema.json`) that the RFC 0045/0047 `provider` string resolves against. Only useful alongside `oauth.supported` (RFC 0047) or `credentials.supported` (RFC 0046); a host SHOULD NOT advertise this block without at least one of those.",
+      "required": ["packsSupported"],
+      "properties": {
+        "packsSupported": {
+          "type": "boolean",
+          "description": "RFC 0095 §C. When `true`, the host installs `kind: \"connection\"` registry packs and MUST implement the §B.6 resolution contract: an RFC 0045 connector's `auth.provider` (or an RFC 0047 `host.oauth` provider string) resolves against the installed connection pack whose `provider.id` matches, with installed-vs-built-in precedence per SemVer §11 and `connection_provider_unresolved` / `connection_provider_conflict` diagnostics. When `false` or absent, connection packs are not loaded and provider resolution stays implementation-defined."
+        }
+      },
+      "additionalProperties": false
+    },
     "credentials": {
       "type": "object",
       "description": "RFC 0046 (`Draft`). Portable credential resolution + lifecycle contract — sibling to `secrets`, first-class store-at-rest + workspace sharing + two-key-overlap rotation. A pack references a credential by `{ ref, scope }` (see `credential-reference.schema.json`); the host resolves it into the node sandbox ONLY — never into inputs, persisted variables, channels, any run.* event payload, the debug bundle, or replay state (SECURITY invariant `credential-payload-redaction`). Supersedes the informal BYOK annex; the `secrets` advertisement stays valid.",

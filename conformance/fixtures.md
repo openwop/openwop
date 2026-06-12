@@ -490,6 +490,18 @@ Pack-manifest fixtures are exercised by the server-free `fixtures-valid.test.ts`
 
 ---
 
+## Connection pack fixtures
+
+The `fixtures/connection-packs/` sub-directory holds canonical connection-pack manifests (RFC 0095, `kind: "connection"`) used as schema-level proof points (validated server-free against `../schemas/connection-pack-manifest.schema.json`) AND as the install payloads the capability-gated behavioral scenarios POST to the `POST /v1/host/sample/connection-packs/install` seam. They are NOT seeded into a server.
+
+| Fixture                  | `provider.id` | Purpose                                                                                                                                                                |
+| ------------------------ | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `connection-pack-github` | `github`      | Canonical positive manifest (oauth2 + pkce, read/write scope groups, MCP reach, the exempt `provider.auth.endpoints.token` endpoint URL). Drives manifest-valid, no-credential-material, reach-exclusive, provider-resolution, and write-reconsent scenarios. |
+
+Negative manifests (credential material, mixed kinds, dual reach) are inline test data in the scenario files per suite convention — a deliberately-invalid fixture file would fail the automatic `fixtures-valid.test.ts` sweep.
+
+---
+
 ## OAuth provider fixtures
 
 The `fixtures/oauth-providers/` sub-directory holds synthetic OAuth provider definitions used to prove the RFC 0047 `host.oauth` authorization-code roundtrip end-to-end **without a live IdP**. They are NOT `WorkflowDefinition`s and are NOT seeded as workflows — they parameterize the behavioral roundtrip scenario, which drives the host's `POST /v1/host/sample/oauth/authorize-code-roundtrip` seam against the provider's `authUrl`/`tokenUrl` (served by a conformance test double).

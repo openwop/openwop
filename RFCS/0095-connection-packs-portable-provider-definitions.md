@@ -4,11 +4,11 @@
 |---|---|
 | **RFC** | 0095 |
 | **Title** | Connection packs — a registry-distributable provider definition that resolves the RFC 0047 `provider` string |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-06-12 |
 | **Updated** | 2026-06-12 |
-| **Affects** | `schemas/connection-pack-manifest.schema.json` (new) · `schemas/capabilities.schema.json` (additive `connections.packsSupported` flag) · `spec/v1/node-packs.md` (new §"Connection packs", sibling to §"Connectors") · `spec/v1/auth.md` (the RFC 0047 `provider` string gains a portable definition source) · `registry/` index + `packs.openwop.dev` (new `connection` artifact facet) · `SECURITY/invariants.yaml` (new `connection-pack-no-credential-material` invariant) · new conformance scenarios |
+| **Affects** | `schemas/connection-pack-manifest.schema.json` (new) · `schemas/capabilities.schema.json` (additive `connections.packsSupported` flag) · `spec/v1/connection-packs.md` (new standalone doc, per the pack-family precedent of `artifact-type-packs.md` / `chat-card-packs.md` / `workflow-chain-packs.md`; `node-packs.md` gains a cross-reference) · `spec/v1/host-capabilities.md` §host.oauth (the RFC 0047 `provider` string gains a portable definition source) · `registry/` index + `packs.openwop.dev` (new `connection` artifact facet) · `SECURITY/invariants.yaml` (new `connection-pack-no-credential-material` invariant) · new conformance scenarios |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` |
 | **Supersedes** | — |
 | **Superseded by** | — |
@@ -119,15 +119,19 @@ A connection pack is `pack.json` at the pack root with `kind: "connection"`, pee
 }
 ```
 
-### §B — Normative prose (new `spec/v1/node-packs.md` §"Connection packs")
+### §B — Normative prose (new `spec/v1/connection-packs.md`)
+
+> **2026-06-12 amendment (pre-floor, from the two host implementations).** The prose lands as a standalone `spec/v1/connection-packs.md` per the pack-family precedent (`artifact-type-packs.md`, `chat-card-packs.md`, `workflow-chain-packs.md` are each standalone docs), not as a `node-packs.md` section. §B.2 gains the normative blocklist, the full-path `token` exemption, and the scan-before-validation ordering; §B.6 gains the SemVer §11 prerelease-precedence sentence; new §B.8 (rejection isolation + publish-path idempotency ordering) and §B.9 (validator robustness) capture failure-mode conduct both reference implementations converged on during cross-review.
 
 1. A connection pack manifest **MUST** carry `kind: "connection"` and validate against `connection-pack-manifest.schema.json`. It **MUST** declare exactly one `provider`.
-2. A connection pack **MUST NOT** contain credential material — no client secret, no access/refresh token, no API key, no password — in any field. A host **MUST** reject a connection-pack manifest that carries a property whose name or value indicates a secret (e.g. `clientSecret`, `apiKey`, `token`, `password`) with `connection_pack_credential_material`. The OAuth **client** credential is a host concern (RFC 0047; supplied out of band by the operator), never shipped in the pack.
+2. A connection pack **MUST NOT** contain credential material — no client secret, no access/refresh token, no API key, no password — in any field. A host **MUST** reject a connection-pack manifest that carries a property whose name indicates a secret with `connection_pack_credential_material`; the normative minimum blocklist (matched case-insensitively, at any depth) is `clientSecret`, `client_secret`, `apiKey`, `api_key`, `token`, `accessToken`, `refreshToken`, `password`, `privateKey`, `secret` — with the single exemption of the property named `token` at exactly the path `provider.auth.endpoints.token` (the OAuth token-endpoint URL). The scan **MUST** run before generic schema validation so the specific code wins over a generic shape error. Hosts **MAY** extend the blocklist and **SHOULD** also reject values matching well-known credential formats. The OAuth **client** credential is a host concern (RFC 0047; supplied out of band by the operator), never shipped in the pack.
 3. `provider.auth.endpoints.{authorize,token,revoke}`, when present, **MUST** be absolute `https://` URLs. A host **MUST** treat them as **fixed, manifest-declared** values and **MUST NOT** derive them from runtime user input — they are not an SSRF surface (the same posture RFC 0047 already requires for token endpoints).
 4. When `provider.auth.kind` is `oauth2` and `scopeModel` is `groups`, `auth.scopes.read` **SHOULD** be present, and `auth.scopes.write` (when present) **MUST** be requested as a **separate** consent step — a host **MUST NOT** bundle write scopes into the initial read authorization (composes with the write-re-consent pattern already used by RFC 0047 hosts).
 5. `provider.reach` **MUST** specify exactly one of `mcp` / `openapi` / `integration`, declaring which core node family injects the resolved credential.
-6. **Resolution (the core contract).** When an RFC 0045 connector declares `auth: { type: 'oauth2', provider: P }` (or RFC 0047 `host.oauth` is invoked for provider `P`), a host advertising `capabilities.connections.packsSupported: true` **MUST** resolve `P` against the installed connection pack whose `provider.id === P` to obtain the authorize/token endpoints and scope catalog. If no installed connection pack matches `P` **and** the host has no built-in definition for `P`, the host **MUST** refuse to register the dependent connector/pack with `connection_provider_unresolved`. A host **MAY** retain built-in provider definitions; an installed connection pack for the same `id` **MUST** take precedence over a built-in of the same `id` only when its `version` is greater-or-equal (else the host **MUST** surface a `connection_provider_conflict` diagnostic rather than silently choosing).
+6. **Resolution (the core contract).** When an RFC 0045 connector declares `auth: { type: 'oauth2', provider: P }` (or RFC 0047 `host.oauth` is invoked for provider `P`), a host advertising `capabilities.connections.packsSupported: true` **MUST** resolve `P` against the installed connection pack whose `provider.id === P` to obtain the authorize/token endpoints and scope catalog. If no installed connection pack matches `P` **and** the host has no built-in definition for `P`, the host **MUST** refuse to register the dependent connector/pack with `connection_provider_unresolved`. A host **MAY** retain built-in provider definitions; an installed connection pack for the same `id` **MUST** take precedence over a built-in of the same `id` only when its `version` is greater-or-equal (else the host **MUST** surface a `connection_provider_conflict` diagnostic rather than silently choosing). Version comparison **MUST** follow SemVer §11 — a prerelease (`1.0.0-alpha.1`) is lower than its release (`1.0.0`), and the prerelease component begins at the *first* hyphen after the patch digits.
 7. Connection packs **MUST** be distributed through the same signed-tarball + Ed25519 + SRI pipeline as node/prompt/agent packs (`node-packs.md` §Signing), and **MUST** surface in the `registry/` index and on `packs.openwop.dev` as a distinct `connection` artifact facet (data-only — no new endpoint, mirroring RFC 0045 §Discovery).
+8. **Rejection isolation.** A rejected connection pack means **not installed** — nothing more. On loader-path hosts (packs loaded at process start), one malformed pack **MUST NOT** abort host startup or block the registration of other packs; the host **MUST** warn-and-continue per pack with the rejection reason observable (e.g. an `errors[]` projection) carrying the specific error code. On publish-path hosts (validation behind an idempotent publish endpoint), §B.6 resolution **MUST** run *after* the idempotency short-circuit — a byte-identical re-publish **MUST** succeed even when resolution inputs changed since the original publish.
+9. **Validator robustness.** Failure to load or compile `connection-pack-manifest.schema.json` itself **MUST NOT** abort host startup and **MUST NOT** surface as an unstructured `5xx`: publish-path hosts return a structured error; loader-path hosts disable connection-pack loading for the process while continuing to boot.
 
 ### §C — `capabilities.schema.json` (additive)
 
@@ -212,7 +216,7 @@ Forward-compat clauses: a connection pack a host hasn't installed is simply abse
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (`node-packs.md §Connection packs`; `auth.md` note on the `provider` resolution source)
+- [ ] Spec text merged (`spec/v1/connection-packs.md` standalone doc + `node-packs.md` pack-kinds cross-reference; `host-capabilities.md` §host.oauth note on the `provider` resolution source)
 - [ ] `connection-pack-manifest.schema.json` added; `capabilities.schema.json` `connections.packsSupported` added; both pass `npm run openwop:check`
 - [ ] `SECURITY/invariants.yaml` gains `connection-pack-no-credential-material` with a public conformance test
 - [ ] At least the five conformance scenarios above land, capability-gated, with fixtures cataloged

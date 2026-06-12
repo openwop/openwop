@@ -423,6 +423,20 @@ RFC 0013 (`Accepted` 2026-05-18; the matching spec doc [`workflow-chain-packs.md
 
 **Runtime invariance.** The `workflowChainPacks` capability advertises **editor** support only — the runtime engine never sees chain-pack-specific surface (workflows reach the runtime fully expanded into concrete `core.*`/published-vendor typeIds). Hosts that omit the capability still execute workflows containing post-expansion DAGs cleanly; what they can't do is implement the author-time drag-tile flow. There is no runtime refusal contract for this capability — the chain reference is workflow-edit-time only and leaves no surface for the runtime to gate on.
 
+### `connections`
+
+RFC 0095 (`Draft`). When `packsSupported: true`, the host installs `kind: "connection"` registry packs — portable provider definitions ([`connection-packs.md`](./connection-packs.md)) — and MUST implement the [`connection-packs.md`](./connection-packs.md) §Manifest clause 6 resolution contract: an RFC 0045 connector's `auth.provider` (or an RFC 0047 `host.oauth` provider string) resolves against the installed connection pack whose `provider.id` matches, with installed-vs-built-in precedence per SemVer §11 and `connection_provider_unresolved` / `connection_provider_conflict` diagnostics.
+
+```json
+"connections": { "packsSupported": true }
+```
+
+**Field shape:** OPTIONAL `object`. When present, `packsSupported: boolean` is REQUIRED. Hosts that don't install connection packs omit the block entirely (provider resolution stays implementation-defined / host-built-in, exactly as before RFC 0095).
+
+**Composition.** Connection packs are only *useful* alongside `oauth.supported` (RFC 0047) or `credentials.supported` (RFC 0046); a host SHOULD NOT advertise `connections.packsSupported` without at least one of those.
+
+**Conformance.** The `connection-pack-manifest-valid` / `connection-pack-no-credential-material` / `connection-pack-reach-exclusive` schema probes are always-on (server-free); the behavioral `connection-provider-resolution` / `connection-pack-write-reconsent` scenarios gate on `connections.packsSupported` and soft-skip when unadvertised (hard-fail under `OPENWOP_REQUIRE_BEHAVIOR=true`).
+
 ### `observability`
 
 Optional v1 observability advertisement. See `observability.md`.
