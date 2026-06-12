@@ -1,6 +1,6 @@
 # OpenWOP in 10 Minutes
 
-> The fastest possible path from "what is openwop?" to "I have a workflow running on my laptop." Zero vendor SDK / managed-service / framework setup. Just Node 20+ and a clone of this repo.
+> The fastest possible path from "what is openwop?" to "I have a workflow running on my laptop." Zero vendor SDK / managed-service / framework setup. Just Node 20+ and a clone of [`openwop/openwop-examples`](https://github.com/openwop/openwop-examples) — the reference hosts + runnable samples, extracted from this spec repo (2026-06).
 
 This guide walks through:
 
@@ -27,8 +27,8 @@ That's it. No Docker, no cloud account, no API keys.
 ## Minute 0–2 — Start the in-memory reference host
 
 ```bash
-git clone https://github.com/openwop/openwop.git
-cd openwop/examples/hosts/in-memory
+git clone https://github.com/openwop/openwop-examples.git
+cd openwop-examples/examples/hosts/in-memory
 npm install
 npm start
 ```
@@ -106,23 +106,13 @@ You just ran an OpenWOP workflow. Three HTTP calls. No client library, no schema
 
 ## Minute 5–8 — Run the same workflow via the TypeScript SDK
 
-In a fresh terminal, build the SDK once and link it locally so any project can import it:
-
-```bash
-# From wherever you cloned the openwop repo:
-cd openwop/sdk/typescript
-npm install
-npm run build
-npm link        # registers @openwop/openwop for local linking
-```
-
-Now create a quickstart project that links to it:
+In a fresh terminal, create a quickstart project and install the published SDK from npm:
 
 ```bash
 mkdir -p /tmp/openwop-quickstart && cd /tmp/openwop-quickstart
 npm init -y > /dev/null
 npm pkg set type=module
-npm link @openwop/openwop
+npm install @openwop/openwop
 
 cat > quickstart.mjs <<'EOF'
 import { OpenwopClient } from '@openwop/openwop';
@@ -149,7 +139,7 @@ EOF
 node quickstart.mjs
 ```
 
-> **Note**: `npm link` is the simplest portable way to test the SDK from this checkout. For registry-based use, replace the link step with `npm install @openwop/openwop`.
+> **Note**: to test an unpublished SDK checkout instead, clone [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks), run `npm install && npm run build && npm link` in `sdk/typescript/`, and replace the install step with `npm link @openwop/openwop`.
 
 Output:
 
@@ -159,16 +149,16 @@ Created: run-...
 Final: completed
 ```
 
-The SDK is doing the same three calls under the hood, but you get type-checked clients (`@openwop/openwop` for TypeScript, `openwop-client` for Python, the Go SDK at `github.com/openwop/openwop/sdk/go`) and consistent error handling.
+The SDK is doing the same three calls under the hood, but you get type-checked clients (`@openwop/openwop` for TypeScript, `openwop-client` for Python, the Go SDK at `github.com/openwop/openwop-sdks/go` — all three live in [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks)) and consistent error handling.
 
-A simpler version that doesn't require building the SDK locally is at [`examples/tiny-workflow/`](https://github.com/openwop/openwop-examples/tree/main/examples/tiny-workflow) — pure `fetch`, no SDK at all.
+A simpler version that doesn't need the SDK at all is at [`examples/tiny-workflow/`](https://github.com/openwop/openwop-examples/tree/main/examples/tiny-workflow) — pure `fetch`.
 
 ---
 
 ## Minute 8–10 — Stream events live via SSE
 
 ```bash
-cd openwop/examples/streaming-client
+cd openwop-examples/examples/streaming-client
 npm start
 ```
 
@@ -232,9 +222,9 @@ The streaming client will receive `node.cancelled` + `run.cancelled` and exit.
 | Issue                                               | Fix                                                                                           |
 | --------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | `EADDRINUSE` on port 3737                           | Set `OPENWOP_PORT=3738 npm start` and update the URLs in this guide                           |
-| `npm start` errors with "tsx not found"             | Re-run `npm install` in `examples/hosts/in-memory/`                                           |
+| `npm start` errors with "tsx not found"             | Re-run `npm install` in `openwop-examples/examples/hosts/in-memory/`                          |
 | `401 unauthenticated`                               | Include `Authorization: Bearer openwop-inmem-dev-key` (or whatever `OPENWOP_API_KEY` you set) |
 | `400 validation_error: workflowId MUST be a string` | Body must be valid JSON with `workflowId` as a top-level string                               |
-| `404 workflow_not_found`                            | The host loads fixtures from `conformance/fixtures/`; ensure you cloned the full repo         |
+| `404 workflow_not_found`                            | The host resolves the fixture catalog (this repo's `conformance/fixtures/`) via a vendored fallback, a sibling `../openwop` checkout, or an explicit `OPENWOP_FIXTURES_DIR` — the boot line logs the resolved dir + fixture count |
 
 If something else doesn't work, file an issue at <https://github.com/openwop/openwop/issues> — the in-memory host is supposed to "just work" for this guide.

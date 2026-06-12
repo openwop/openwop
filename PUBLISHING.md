@@ -15,7 +15,7 @@ The spec corpus ships 4 distributable artifacts alongside the prose docs, plus 1
 | TypeScript SDK               | `@openwop/openwop`                  | `1.0.0`  | npm                           | **Ready for v1.0 publish**                                                                                                             |
 | TypeScript conformance suite | `@openwop/openwop-conformance`      | `1.0.0`  | npm                           | **Ready for v1.0 publish**                                                                                                             |
 | Python SDK                   | `openwop-client`                    | `1.0.0`  | PyPI                          | **Ready for v1.0 publish**                                                                                                             |
-| Go SDK                       | `github.com/openwop/openwop/sdk/go` | `v1.0.0` | Go modules (proxy.golang.org) | **Ready for v1.0 tag**                                                                                                                 |
+| Go SDK                       | `github.com/openwop/openwop-sdks/go` (was `…/openwop/sdk/go`, frozen at its last in-corpus tag) | `v1.0.0` | Go modules (proxy.golang.org) | **Ready for v1.0 tag** (from `openwop-sdks`)                                                                                           |
 | OpenWOP CLI                  | `@openwop/cli`                      | —        | npm                           | **Moved** — now lives in [`openwop/openwop-cli`](https://github.com/openwop/openwop-cli) and publishes from there (not from this repo) |
 
 The four spec-corpus artifacts should ship from the same v1.0 baseline. Historical point-in-time package versions from before the OpenWOP reset are intentionally ignored; this document is the source of truth for the OpenWOP v1.0 production release.
@@ -92,11 +92,11 @@ Run before EVERY publish (manual or CI-driven). The checklist is a hard gate; on
 
 ### `openwopclient` (Go modules)
 
-- [ ] `cd sdk/go && go vet ./...` clean.
-- [ ] `cd sdk/go && go test ./...` passes.
-- [ ] `go.mod` declares `go 1.22+` and module path `github.com/openwop/openwop/sdk/go` (no `/v1` suffix at v1.x.x; only v2+ uses the suffix).
-- [ ] Tag the repo at `sdk/go/v1.0.0` — Go requires the subdirectory prefix for non-root modules. (Just `v1.0.0` at the repo root WON'T work for a sub-module.)
-- [ ] Verify discoverability: `curl -sI https://proxy.golang.org/github.com/openwop/openwop/sdk/go/@v/v1.0.0.info` returns 200 after tag push (cache warm-up ~5 min).
+- [ ] `cd sdk/go && go vet ./...` clean (in `openwop-sdks`).
+- [ ] `cd sdk/go && go test ./...` passes (in `openwop-sdks`).
+- [ ] `go.mod` declares `go 1.22+` and module path `github.com/openwop/openwop-sdks/go` (no `/v1` suffix at v1.x.x; only v2+ uses the suffix). The pre-split `github.com/openwop/openwop/sdk/go` path is frozen at its last in-corpus tag.
+- [ ] Tag `openwop-sdks` with the subdirectory prefix matching the module's path within that repo — Go requires it for non-root modules. (A bare `v1.0.0` at the repo root WON'T work for a sub-module.)
+- [ ] Verify discoverability: `curl -sI https://proxy.golang.org/github.com/openwop/openwop-sdks/go/@v/v1.0.0.info` returns 200 after tag push (cache warm-up ~5 min).
 
 ---
 
@@ -124,7 +124,7 @@ Publish workflow at `.github/workflows/openwop-publish.yml`. Triggers map 1:1 to
 | `openwop-client/v*` (e.g. `openwop-client/v1.0.1`)           | `publish-python` only      | Python SDK bug fix.                                                                                       |
 | `sdk/go/v*` (e.g. `sdk/go/v1.0.0`)                           | `publish-go` only          | Go SDK bug fix. **Doubles as the subdir-prefix tag** that proxy.golang.org requires for non-root modules. |
 
-Push the most specific tag for the change. Per-package tags keep unrelated packages at their current version (no phantom no-op republishes).
+Push the most specific tag for the change. Per-package tags keep unrelated packages at their current version (no phantom no-op republishes). Post-split, only the `v*` (corpus) and `openwop-conformance/v*` patterns fire from this repo; the three SDK tag patterns are executed in `openwop-sdks` (its publish workflow keeps the same per-package shape).
 
 Each publish job is **idempotent**: before publishing, it checks whether the package's manifest version is already on its registry (`npm view <pkg>@<version>` for the three npm packages; `skip-existing: true` for the PyPI upload) and **skips rather than fails** if so. This means a corpus-aligned `v*` tag — which fires every publish job — can never partial-publish or hard-fail when some packages are already at their version (e.g. shipped earlier via their per-package tag); only the genuinely-fresh packages publish. The guard makes re-running a tag safe and makes a corpus tag tolerant of the common "only one package changed" case, but it does **not** change the policy above: push the most specific tag, and reserve a `v*` corpus tag for a genuine coordinated multi-artifact delta.
 
@@ -140,10 +140,10 @@ Activation checklist:
 
 1. [ ] npm scope: `@openwop` available to the release manager.
 2. [ ] PyPI project: `openwop-client` available to the release manager.
-3. [ ] Go module path: `github.com/openwop/openwop/sdk/go` verified from the public repo.
+3. [ ] Go module path: `github.com/openwop/openwop-sdks/go` verified from the public `openwop-sdks` repo (the pre-split `…/openwop/sdk/go` path is frozen at its last in-corpus tag).
 4. [ ] `NPM_TOKEN` + `PYPI_TOKEN` configured in repo settings, or local manual publish credentials prepared.
 5. [ ] Workflow active at `.github/workflows/openwop-publish.yml`, if using CI publish.
-6. [ ] Initial OpenWOP release tags planned: `v1.0.0` for corpus-aligned artifacts and `sdk/go/v1.0.0` for the Go submodule.
+6. [ ] Initial OpenWOP release tags planned: `v1.0.0` for corpus-aligned artifacts here, and the Go submodule's subdir-prefix tag in `openwop-sdks`.
 7. [ ] Registry pages verified after publication.
 
 For each subsequent release:
