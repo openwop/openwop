@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0095 |
 | **Title** | Connection packs — a registry-distributable provider definition that resolves the RFC 0047 `provider` string |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-06-12 |
-| **Updated** | 2026-06-12 |
+| **Updated** | 2026-06-12 (`Draft → Active` on the spec floor #690; `Active → Accepted` same day: non-steward host MyndHyve `workflow-runtime` serving revision `workflow-runtime-00268-x9l` advertises `connections: { supported: true, packsSupported: true }` on `api.myndhyve.ai` (steward curl-verified) and passes all five RFC 0095 scenarios NON-VACUOUSLY vs published `@openwop/openwop-conformance@1.23.0` under `OPENWOP_REQUIRE_BEHAVIOR=true` (behavioral legs over the live `host-sample-test-seams.md` §10 seams: §B.6 resolution incl. the SemVer §11 prerelease conflict, §B.8 rejection isolation, §B.2 specific-code rejection, §B.4 write-re-consent). Reference host openwop-app deployed rev `00160-kjq` advertising the capability with the same five scenarios passing strict non-vacuously against a seam-enabled instance at the deployed code (seams correctly 404 in production). Host impls: openwop-app#178/#194, myndhyve#167/#168/#169.) |
 | **Affects** | `schemas/connection-pack-manifest.schema.json` (new) · `schemas/capabilities.schema.json` (additive `connections.packsSupported` flag) · `spec/v1/connection-packs.md` (new standalone doc, per the pack-family precedent of `artifact-type-packs.md` / `chat-card-packs.md` / `workflow-chain-packs.md`; `node-packs.md` gains a cross-reference) · `spec/v1/host-capabilities.md` §host.oauth (the RFC 0047 `provider` string gains a portable definition source) · `registry/` index + `packs.openwop.dev` (new `connection` artifact facet) · `SECURITY/invariants.yaml` (new `connection-pack-no-credential-material` invariant) · new conformance scenarios |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` |
 | **Supersedes** | — |
