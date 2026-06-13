@@ -12,7 +12,7 @@
 | OpenAPI operations | 48 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 340 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 96 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 97 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -33,7 +33,7 @@
 |---|---:|
 | Accepted | 92 |
 | Active | 2 |
-| Draft | 2 |
+| Draft | 3 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -133,6 +133,7 @@
 | RFC 0094 | Repair the wire-shape defects found in the 2026-06-11 corpus review: the unsatisfiable `createRun` request schema, the missing `cancelling` run status, the closed `RunEventType` enum that contradicts the documented ignore-unknown policy, the three-way `ai.message.chunk` payload drift, the incomplete `InterruptPayload.kind` union, the universal-envelope-kinds vs `openwop-core` profile contradiction, the missing `capabilities.grpc` and `limits.maxRequestBodyBytes` schema surface, and a documented schema-closure policy in `COMPATIBILITY.md` | Accepted |
 | RFC 0095 | Connection packs - a registry-distributable provider definition that resolves the RFC 0047 `provider` string | Accepted |
 | RFC 0096 | Reviewable Learning - Skill/Automation Proposal Lifecycle | Draft |
+| RFC 0097 | Standing Goals and Judge-Based Continuation | Draft |
 
 ## SDK Helper Coverage
 
@@ -149,7 +150,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 2 RFCs still `Draft` (RFC 0038, RFC 0096) — advance with schema/conformance proof or defer.
+- 3 RFCs still `Draft` (RFC 0038, RFC 0096, RFC 0097) — advance with schema/conformance proof or defer.
 - 2 RFCs `Active` (RFC 0035, RFC 0043) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
