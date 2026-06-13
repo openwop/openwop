@@ -167,6 +167,7 @@ Current tally: **Accepted 91 · Active 2 · Draft 1** (94 RFCs, excluding the `0
 | [0094](./0094-wire-shape-reconciliation.md)                          | Wire-shape reconciliation — schema/prose defect repairs and forward-compat closure policy                                            | `Active`             |
 | [0096](./0096-reviewable-learning-skill-proposal-lifecycle.md)       | Reviewable learning — skill/automation proposal lifecycle (inert drafts, RFC 0051-gated activation)                                  | `Draft`              |
 | [0097](./0097-standing-goals-and-judge-based-continuation.md)        | Standing goals — judge-based (RFC 0090) completion + bounded continuation                                                            | `Draft`              |
+| [0098](./0098-agent-platform-portability-export-bundle-and-import.md) | Agent-platform portability — export bundle + tenant import (refs-only, dry-run, idempotent)                                          | `Draft`              |
 
 ## See also
 

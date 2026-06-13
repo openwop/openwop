@@ -12,7 +12,7 @@
 | OpenAPI operations | 48 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 340 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 97 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 98 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -33,7 +33,7 @@
 |---|---:|
 | Accepted | 92 |
 | Active | 2 |
-| Draft | 3 |
+| Draft | 4 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -134,6 +134,7 @@
 | RFC 0095 | Connection packs - a registry-distributable provider definition that resolves the RFC 0047 `provider` string | Accepted |
 | RFC 0096 | Reviewable Learning - Skill/Automation Proposal Lifecycle | Draft |
 | RFC 0097 | Standing Goals and Judge-Based Continuation | Draft |
+| RFC 0098 | Agent Platform Portability - Export Bundle and Tenant Import | Draft |
 
 ## SDK Helper Coverage
 
@@ -150,7 +151,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 3 RFCs still `Draft` (RFC 0038, RFC 0096, RFC 0097) — advance with schema/conformance proof or defer.
+- 4 RFCs still `Draft` (RFC 0038, RFC 0096, RFC 0097, RFC 0098) — advance with schema/conformance proof or defer.
 - 2 RFCs `Active` (RFC 0035, RFC 0043) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
