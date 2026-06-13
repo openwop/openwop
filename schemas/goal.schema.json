@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/goal.schema.json",
+  "title": "Goal",
+  "description": "RFC 0097 §B. A standing goal — a durable objective with explicit completion criteria, evaluated by a host-side judge (RFC 0090 verifier verdict or an opaque host evaluator), that keeps an agent working across turns and runs until the judge is satisfied, a declared RFC 0058 bound is crossed, or the agent escalates (RFC 0044). Completion MUST be the judge's verdict — a client MUST NOT set `state: satisfied` directly. Continuation MUST be bounded. `objective` and any verdict payload are SR-1 redaction-safe. Gated on the `agents.goals` capability.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "objective", "state", "completion", "continuation", "bounds", "owner", "createdAt"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Host-assigned identifier."
+    },
+    "objective": {
+      "type": "string",
+      "description": "The standing objective. SR-1 redaction-safe — no secrets/PII."
+    },
+    "state": {
+      "type": "string",
+      "enum": ["active", "satisfied", "escalated", "abandoned", "bound-exceeded"],
+      "description": "Lifecycle state. `satisfied` is set ONLY by the host on a judge verdict, never by a client. `bound-exceeded` is set when a declared bound is crossed; `escalated` when an RFC 0044 confidence-escalation interrupt fires against the goal; `abandoned` on explicit abandon."
+    },
+    "completion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["check"],
+      "description": "How the goal's completion is judged.",
+      "properties": {
+        "check": {
+          "type": "string",
+          "enum": ["verifier", "host"],
+          "description": "`verifier`: completion is an RFC 0090 verifier verdict. `host`: an opaque host evaluator."
+        },
+        "verifierRef": {
+          "type": ["string", "null"],
+          "default": null,
+          "description": "RFC 0090 verifier id when `check = verifier`."
+        },
+        "lastVerdict": {
+          "type": ["object", "null"],
+          "default": null,
+          "additionalProperties": false,
+          "description": "Most recent judge verdict. Content-free re: objective text. Non-deterministic judge output — MUST be persisted (carried in the `goal.evaluated` event / checkpoint) and never recomputed on replay/fork.",
+          "properties": {
+            "satisfied": { "type": "boolean" },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+            "runId": { "type": "string", "description": "The run this verdict evaluated (RFC 0040 causation-compatible)." }
+          }
+        }
+      }
+    },
+    "continuation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "description": "How the goal re-engages work between judge checks.",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["schedule", "commitment", "heartbeat", "manual"],
+          "description": "`schedule` (RFC 0052), `commitment` (RFC 0068), `heartbeat` (RFC 0060), `manual`."
+        },
+        "armRef": {
+          "type": ["string", "null"],
+          "default": null,
+          "description": "The RFC 0052 job / RFC 0068 commitment / RFC 0060 heartbeat that re-engages work for this goal."
+        }
+      }
+    },
+    "bounds": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0058 execution bounds. The host MUST stop continuation and set `state: bound-exceeded` when any declared bound is crossed. When `agents.goals.requiresBounds` is true, at least one bound MUST be present before the goal may activate.",
+      "properties": {
+        "maxLoopIterations": { "type": "integer", "minimum": 1, "description": "RFC 0058. Max contributing iterations before the goal is bound-exceeded." },
+        "runTimeoutMs": { "type": "integer", "minimum": 0, "description": "RFC 0058. Wall-clock deadline (ms) for the standing goal." },
+        "maxCostUsd": { "type": "number", "minimum": 0, "description": "RFC 0084. Accumulated cost ceiling across contributing runs." }
+      }
+    },
+    "progress": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Continuation progress so far.",
+      "properties": {
+        "iterations": { "type": "integer", "minimum": 0 },
+        "contributingRunIds": { "type": "array", "items": { "type": "string" }, "description": "RFC 0040 causation-compatible." }
+      }
+    },
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tenant"],
+      "description": "RFC 0048 identity triple. Redaction-safe — `principal` is an opaque id, never PII or credential material.",
+      "properties": {
+        "tenant": { "type": "string", "minLength": 1 },
+        "workspace": { "type": "string", "minLength": 1 },
+        "principal": { "type": "string", "minLength": 1 }
+      }
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  }
+}

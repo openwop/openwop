@@ -4,10 +4,10 @@
 | ----------------- | -------------------------------------------------------------------------------------------------------------------- |
 | **RFC**           | 0097                                                                                                                  |
 | **Title**         | Standing Goals and Judge-Based Continuation                                                                          |
-| **Status**        | `Draft`                                                                                                              |
+| **Status**        | `Active`                                                                                                             |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                                                                       |
 | **Created**       | 2026-06-13                                                                                                          |
-| **Updated**       | 2026-06-13                                                                                                          |
+| **Updated**       | 2026-06-13 (`Draft → Active`: spec floor landed — `agents.goals` capability + `goal.schema.json` + `agent-runtime.md` §"Standing goals" + the `goal-continuation-bounded` / `goal-completion-judge-only` invariants + content-free `goal.evaluated`/`goal.closed` events + 3 capability-gated scenarios. 7-day comment window bypassed by maintainer.) |
 | **Affects**       | `capabilities.schema.json`, `spec/v1/agent-runtime.md` (new §), `schemas/goal.schema.json` (new), `api/openapi.yaml`, conformance, `@openwop/cli` (`goals` group) |
 | **Compatibility** | `additive`                                                                                                          |
 | **Supersedes**    | —                                                                                                                  |
@@ -66,7 +66,7 @@ What is missing is the **objective object that ties a success criterion to a jud
 
 ```jsonc
 {
-  "$id": "https://openwop.ai/schemas/goal.schema.json",
+  "$id": "https://openwop.dev/spec/v1/goal.schema.json",
   "type": "object",
   "required": ["id", "objective", "state", "completion", "bounds", "owner", "createdAt"],
   "properties": {
@@ -90,7 +90,7 @@ What is missing is the **objective object that ties a success criterion to a jud
         "armRef": { "type": ["string", "null"], "description": "The RFC 0052 job / RFC 0068 commitment / RFC 0060 heartbeat that re-engages work." }
       }
     },
-    "bounds":  { "$ref": "https://openwop.ai/schemas/execution-bounds.schema.json", "description": "RFC 0058 ceilings: max iterations, max cost, wall-clock deadline." },
+    "bounds":  { "type": "object", "additionalProperties": false, "properties": { "maxLoopIterations": { "type": "integer", "minimum": 1 }, "runTimeoutMs": { "type": "integer", "minimum": 0 }, "maxCostUsd": { "type": "number", "minimum": 0 } }, "description": "RFC 0058 ceilings inlined (no standalone execution-bounds.schema.json in the corpus): max loop iterations, wall-clock deadline (ms), accumulated cost (RFC 0084)." },
     "progress": {
       "type": "object",
       "properties": {
@@ -98,7 +98,7 @@ What is missing is the **objective object that ties a success criterion to a jud
         "contributingRunIds": { "type": "array", "items": { "type": "string" } }
       }
     },
-    "owner":     { "$ref": "https://openwop.ai/schemas/identity.schema.json" },
+    "owner":     { "type": "object", "additionalProperties": false, "required": ["tenant"], "properties": { "tenant": { "type": "string", "minLength": 1 }, "workspace": { "type": "string", "minLength": 1 }, "principal": { "type": "string", "minLength": 1 } }, "description": "RFC 0048 identity triple — inlined (matches run-snapshot.schema.json.owner)." },
     "createdAt": { "type": "string", "format": "date-time" },
     "updatedAt": { "type": "string", "format": "date-time" }
   }

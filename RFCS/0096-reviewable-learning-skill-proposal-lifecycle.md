@@ -4,10 +4,10 @@
 | ----------------- | -------------------------------------------------------------------------------------------------------------------- |
 | **RFC**           | 0096                                                                                                                  |
 | **Title**         | Reviewable Learning — Skill/Automation Proposal Lifecycle                                                            |
-| **Status**        | `Draft`                                                                                                              |
+| **Status**        | `Active`                                                                                                             |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                                                                       |
 | **Created**       | 2026-06-13                                                                                                          |
-| **Updated**       | 2026-06-13                                                                                                          |
+| **Updated**       | 2026-06-13 (`Draft → Active`: spec floor landed — `agents.proposals` capability + `proposal.schema.json` + `agent-memory.md` §"Reviewable learning" + the `proposal-inert-until-applied` / `proposal-no-resynthesis` invariants + content-free `proposal.created`/`proposal.activated` events + 3 capability-gated scenarios. `rule` artifact kind dropped (no defining RFC). 7-day comment window bypassed by maintainer.) |
 | **Affects**       | `capabilities.schema.json`, `spec/v1/agent-memory.md` (new §), `schemas/proposal.schema.json` (new), `api/openapi.yaml`, conformance, `@openwop/cli` (`proposals` group) |
 | **Compatibility** | `additive`                                                                                                          |
 | **Supersedes**    | —                                                                                                                  |
@@ -44,7 +44,7 @@ What is missing is the **inert-draft object and its review state machine**: wher
 +          "artifactKinds": {
 +            "type": "array",
 +            "description": "Which artifact kinds the host can propose.",
-+            "items": { "enum": ["agent-pack", "workflow-chain-pack", "prompt-template", "automation", "rule"] }
++            "items": { "enum": ["agent-pack", "workflow-chain-pack", "prompt-template", "automation"] }
 +          },
 +          "duplicationDetection": { "type": "boolean", "default": false },
 +          "activation": {
@@ -64,12 +64,12 @@ A host advertises `agents.proposals` only if it serves the §C endpoints. The CL
 
 ```jsonc
 {
-  "$id": "https://openwop.ai/schemas/proposal.schema.json",
+  "$id": "https://openwop.dev/spec/v1/proposal.schema.json",
   "type": "object",
   "required": ["id", "kind", "state", "artifact", "provenance", "createdAt", "owner"],
   "properties": {
     "id":    { "type": "string", "description": "Host-assigned, stable across revisions." },
-    "kind":  { "enum": ["agent-pack", "workflow-chain-pack", "prompt-template", "automation", "rule"] },
+    "kind":  { "enum": ["agent-pack", "workflow-chain-pack", "prompt-template", "automation"] },
     "state": { "enum": ["draft", "revised", "applied", "rejected", "archived"] },
     "title": { "type": "string" },
     "rationale": { "type": "string", "description": "Plain-language why, SR-1 redaction-safe (no secrets/PII)." },
@@ -83,7 +83,7 @@ A host advertises `agents.proposals` only if it serves the §C endpoints. The CL
       }
     },
     "duplicateOf": { "type": ["string", "null"], "default": null, "description": "Existing artifact ref this proposal restates/overlaps, if duplication detection is on." },
-    "owner": { "$ref": "https://openwop.ai/schemas/identity.schema.json", "description": "RFC 0048 {tenant, workspace?, principal}." },
+    "owner": { "type": "object", "additionalProperties": false, "required": ["tenant"], "properties": { "tenant": { "type": "string", "minLength": 1 }, "workspace": { "type": "string", "minLength": 1 }, "principal": { "type": "string", "minLength": 1 } }, "description": "RFC 0048 identity triple {tenant, workspace?, principal} — inlined (no standalone identity.schema.json in the corpus; matches run-snapshot.schema.json.owner)." },
     "activation": { "type": ["object", "null"], "description": "When applied: the RFC 0051 approval reference + the resulting installed artifact ref.", "default": null },
     "createdAt": { "type": "string", "format": "date-time" },
     "updatedAt": { "type": "string", "format": "date-time" }

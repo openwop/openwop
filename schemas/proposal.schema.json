@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/proposal.schema.json",
+  "title": "Proposal",
+  "description": "RFC 0096 §B. A reviewable-learning proposal — an INERT, draft-state reusable artifact (skill/pack/template/automation) the host synthesized from run/tool traces, that MUST NOT influence the resolution, planning, or execution of any run while in any state other than `applied`. Activation is delegated to RFC 0051 approval-gate or RFC 0049 RBAC (no new authorization path). On `apply` the installed artifact MUST byte-match the last-persisted `artifact` (no silent re-synthesis). `rationale` and `provenance.sourceRunIds` are SR-1 redaction-safe (no secrets/PII). Gated on the `agents.proposals` capability.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "kind", "state", "artifact", "provenance", "owner", "createdAt"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Host-assigned identifier, stable across revisions."
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["agent-pack", "workflow-chain-pack", "prompt-template", "automation"],
+      "description": "The reusable artifact kind. `agent-pack` (RFC 0003), `workflow-chain-pack` (RFC 0013), `prompt-template` (RFC 0027), `automation` (RFC 0052 scheduled job)."
+    },
+    "state": {
+      "type": "string",
+      "enum": ["draft", "revised", "applied", "rejected", "archived"],
+      "description": "Lifecycle state. Only `applied` may influence a run. `draft`/`revised` are inert; `rejected`/`archived` are terminal-inert."
+    },
+    "title": {
+      "type": "string",
+      "description": "Human-facing label. SR-1 redaction-safe."
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Plain-language justification. SR-1 redaction-safe — no secrets/PII."
+    },
+    "artifact": {
+      "type": "object",
+      "description": "The proposed artifact, shaped by `kind` (an RFC 0003 pack manifest, an RFC 0013 chain pack, an RFC 0027 template, an RFC 0052 job spec). Inert until applied. Deliberately open (`additionalProperties` not constrained here) because the payload conforms to the kind's own existing schema, validated by the host at `apply` (malformed-for-kind ⇒ 422).",
+      "$comment": "Intentionally open object — the artifact body is validated against the kind's own schema, not this envelope."
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceRunIds"],
+      "description": "Where the proposal came from.",
+      "properties": {
+        "sourceRunIds": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Runs whose traces produced this proposal (RFC 0040 causation-compatible). SR-1 redaction-safe."
+        },
+        "synthesizerModel": {
+          "type": "string",
+          "description": "Opaque identifier of the model/process that synthesized the draft."
+        }
+      }
+    },
+    "duplicateOf": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Existing artifact ref this proposal restates/overlaps, when `agents.proposals.duplicationDetection` is on. `null` when unknown or detection is off."
+    },
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tenant"],
+      "description": "RFC 0048 identity triple that owns this proposal. Redaction-safe — `principal` is an opaque id, never PII or credential material. Single-tenant hosts populate at least `tenant`.",
+      "properties": {
+        "tenant": { "type": "string", "minLength": 1, "description": "Top-level isolation boundary." },
+        "workspace": { "type": "string", "minLength": 1, "description": "Optional sub-tenant within the tenant (RFC 0048 workspace)." },
+        "principal": { "type": "string", "minLength": 1, "description": "Acting identity (user or agent) — opaque id, never PII." }
+      }
+    },
+    "activation": {
+      "type": ["object", "null"],
+      "default": null,
+      "description": "Populated only when `state: applied`: the RFC 0051 approval reference (if `activation = approval-gate`) and the resulting installed artifact ref.",
+      "additionalProperties": false,
+      "properties": {
+        "approvalId": { "type": ["string", "null"], "description": "RFC 0051 approval/gate id when activation routed through an approval gate." },
+        "installedArtifactRef": { "type": "string", "description": "Ref of the artifact installed on `apply` (RFC 0043 install path)." }
+      }
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  }
+}
