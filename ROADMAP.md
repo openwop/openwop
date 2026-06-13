@@ -57,6 +57,17 @@ The 2026-05-12 architect review framed the remaining gap-closure work as **myndh
 
 Hosts publish which suite version they pass; non-pass on a later suite is **not** a v1 conformance regression.
 
+### RFC 0099 + 0100 — `Active`, corpus implementation pending (2026-06-13)
+
+RFC 0099 (external-event trigger ingestion, extends RFC 0083) and RFC 0100 (async/durable A2A tasks, extends `a2a-integration.md`) were promoted **Draft → Active** (#700). Both are `additive` + capability-gated. Their **normative corpus artifacts are not yet landed** — tracked here so host advertisement does not outrun conformance coverage:
+
+| RFC | Pending normative artifacts |
+| --- | --- |
+| 0099 | NEW `schemas/trigger-event.schema.json` + `schemas/trigger-subscription-registration.schema.json`; `capabilities.schema.json` `triggerBridge.ingestion` sub-block; `spec/v1/trigger-bridge.md` §F; `api/openapi.yaml` `POST /v1/trigger-subscriptions`; SECURITY invariants `trigger-ingestion-ssrf` + `trigger-ingestion-content-redaction` **+ public conformance tests**; `profiles.md` predicate widening. |
+| 0100 | NEW `schemas/a2a-task-state.schema.json`; `capabilities.schema.json` `a2a` block; `spec/v1/a2a-integration.md` §"Async / durable Tasks"; `api/openapi.yaml` durable-task read seam; async subtests in `a2a-task-roundtrip.test.ts`. |
+
+The **openwop-app reference host already wires both** (its ADR 0034 / 0035), so it advertises `triggerBridge.ingestion` / `a2a.durableTasks` ahead of corpus conformance — landing these closes the capability-honesty gap. Each RFC's MUST-NOTs (0099: SSRF + content-redaction; 0100: trust-boundary) need a public conformance test before the corpus claims coverage.
+
 ## v1.2 outlook (projected)
 
 A projection of what would land in a v1.2 minor — each item carries a **gate condition** that determines whether it ships. The list is descriptive, not a commitment: surfaces only ship when their gate condition is met. Items can move to "Withdrawn" if no implementer adoption signal arrives within the RFC comment window.
