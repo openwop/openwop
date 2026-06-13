@@ -89,14 +89,18 @@ Distinct from the spec-corpus schemas above. These live inside a pack's tarball 
 
 ### TypeScript reference SDK (`sdk/typescript/`)
 
-- Every endpoint in `api/openapi.yaml` should map to ONE method on `OpenwopClient`. If you add an endpoint to the spec, add the corresponding SDK method in the same PR.
+> **Moved:** the three reference SDKs (TypeScript, Python, Go) now live in [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks); SDK contributions and the SDK build/lint/parity gate (`scripts/sdks-check.sh`) apply in that repo. The rules below are retained because they remain the contract a spec change imposes on the SDKs.
+
+- Every endpoint in `api/openapi.yaml` should map to ONE method on `OpenwopClient`. If you add an endpoint to the spec, add the corresponding SDK method in a paired `openwop-sdks` PR.
 - Types come from the spec — extend `src/types.ts` rather than redefining shapes inline.
 - `tsc --noEmit` must pass with `strict + exactOptionalPropertyTypes`. No `as any`, no `@ts-ignore`.
 - Zero runtime dependencies remains a goal. New deps need a stated reason in the PR description.
 
 ### Reference applications (`apps/`)
 
-A separate tier from `examples/` (single-file demos) and `examples/hosts/` (conformance-test targets). Each `apps/<sample>/` is a deployable template — backend + frontend + Dockerfile + auth + storage + observability wired together.
+> **Moved:** the deployable reference app was extracted to [`openwop/openwop-app`](https://github.com/openwop/openwop-app), and the single-file demos + conformance-target hosts to [`openwop/openwop-examples`](https://github.com/openwop/openwop-examples). Contributions to either go to those repos; the conventions below travel with them.
+
+A separate tier from the single-file demos and `examples/hosts/` conformance-test targets (both in `openwop-examples`). Each reference app is a deployable template — backend + frontend + Dockerfile + auth + storage + observability wired together.
 
 Conventions when contributing a new sample (or a new BE/FE under an existing one):
 
@@ -120,14 +124,11 @@ A openwop-spec PR is mergeable when:
 3. Every JSON Schema compiles via Ajv2020 (covered by `conformance/src/scenarios/spec-corpus-validity.test.ts`).
 4. Every fixture validates against `workflow-definition.schema.json` (covered by `conformance/src/scenarios/fixtures-valid.test.ts`).
 5. Every prose doc carries a `Status:` legend tag (covered by `spec-corpus-validity.test.ts`).
-6. The TS SDK builds clean (`cd sdk/typescript && tsc --noEmit`).
-7. The `openwop-conformance --offline` server-free subset passes.
-8. `CHANGELOG.md` updated when changing any artifact (1-line entry under `[Unreleased]` is fine).
-9. Per-SDK lint passes for any SDK directory the PR touches (per `.github/workflows/pr-checks.yml`):
-   - **TypeScript** — ESLint via the SDK's existing config.
-   - **Python** — `ruff check sdk/python/`.
-   - **Go** — `go vet ./...` and `gofmt -l .` produces no output.
-10. Every commit on the PR carries a `Signed-off-by:` trailer per the DCO (see §"Sign your commits" below).
+6. The `openwop-conformance --offline` server-free subset passes.
+7. `CHANGELOG.md` updated when changing any artifact (1-line entry under `[Unreleased]` is fine).
+8. Every commit on the PR carries a `Signed-off-by:` trailer per the DCO (see §"Sign your commits" below).
+
+(The SDK build + per-SDK lint gates moved to `openwop-sdks` with the SDKs — that repo's `scripts/sdks-check.sh` covers TypeScript `tsc`/ESLint, Python `ruff`, Go `go vet`/`gofmt`, and cross-SDK parity.)
 
 Run the full local check from the repo root:
 
@@ -228,16 +229,17 @@ The bootstrap-phase amendment is filed as RFC 0005 in the `RFCS/` directory.
 
 ```bash
 # Validate every schema compiles + fixtures + spec corpus, all server-free
+# (build the CLI once first: cd conformance && npm install && npm run build:cli)
 conformance/dist/cli.js --offline
 
-# Lint OpenAPI
-npx -y @redocly/cli@latest lint api/openapi.yaml
+# Lint OpenAPI (pinned — matches the openwop-check.sh gate; @latest races the npm cache)
+npx -y -p @redocly/cli@2.31.4 redocly lint api/openapi.yaml
 
-# Validate AsyncAPI
-npx -y @asyncapi/cli@latest validate api/asyncapi.yaml
+# Validate AsyncAPI (pinned — 4.1.1 is the last Node-22-compatible release)
+npx -y -p @asyncapi/cli@4.1.1 asyncapi validate api/asyncapi.yaml
 
-# Build TS SDK
-(cd sdk/typescript && npm install && npm run build)
+# Build the TS SDK (lives in openwop-sdks now)
+(cd ../openwop-sdks/sdk/typescript && npm install && npm run build)
 
 # Find every prose doc that's still STUB-tier (candidates for promotion)
 grep -l "Status:.*STUB" *.md

@@ -9,10 +9,10 @@ Profile-specific threat models live under `SECURITY/`, including `threat-model-a
 This policy covers vulnerabilities in:
 
 - The spec corpus (`spec/v1/`).
-- The reference SDKs (`sdk/{typescript,python,go}/`).
+- The reference SDKs (`sdk/{typescript,python,go}/` in [`openwop/openwop-sdks`](https://github.com/openwop/openwop-sdks) — report here; one policy covers both repos).
 - The conformance harness (`conformance/`).
 - The machine-readable contracts (`schemas/`, `api/openapi.yaml`, `api/asyncapi.yaml`).
-- The example reference hosts (`examples/hosts/{in-memory,sqlite,postgres,python}/`).
+- The example reference hosts (`examples/hosts/{in-memory,sqlite,postgres,python}/` in [`openwop/openwop-examples`](https://github.com/openwop/openwop-examples) — same single-policy coverage).
 
 Out of scope:
 
