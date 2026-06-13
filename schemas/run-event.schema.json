@@ -166,7 +166,12 @@
         "core.workflowChain.confidence-escalated",
         "connector.authorized",
         "connector.auth_expired",
-        "authorization.decided"
+        "authorization.decided",
+        "proposal.created",
+        "proposal.activated",
+        "goal.evaluated",
+        "goal.closed",
+        "import.applied"
       ]
     }
   }

@@ -443,6 +443,41 @@ The `install` seam MUST run the clause-2 credential-material scan BEFORE generic
 
 Conformance: `connection-pack-no-credential-material.test.ts` (specific-code leg), `connection-provider-resolution.test.ts` (clauses 6 + 8), `connection-pack-write-reconsent.test.ts` (clause 4).
 
+### 11. Reviewable-learning / goals / portability surfaces — `/v1/host/sample/{proposals,goals,export,import}` (RFCs 0096/0097/0098)
+
+| Field                     | Value                                                                                                                                                                  |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Method + path             | `/v1/host/sample/proposals[...]` (RFC 0096) · `/v1/host/sample/goals[...]` (RFC 0097) · `GET /v1/host/sample/export` · `POST /v1/host/sample/import[?dryRun=]` (RFC 0098) |
+| Capability gate           | `capabilities.agents.proposals` · `capabilities.agents.goals` · `capabilities.portability`                                                                            |
+| Env gate (reference impl) | seam registered when the matching capability is asserted; production hosts gate per §"Production safety". These are the floor surfaces, promotable to the normative `/v1/{proposals,goals,export,import}` paths at graduation (RFC 0086 precedent). |
+| Introduced                | RFCs 0096/0097/0098 §Conformance — black-box drivers for the inertness / bounded-continuation / no-secret-values behavioral legs                                       |
+
+```http
+# RFC 0096 — proposals
+GET    /v1/host/sample/proposals[?state=&kind=]      → 200 { proposals: Proposal[] }
+GET    /v1/host/sample/proposals/{id}                → 200 Proposal
+PATCH  /v1/host/sample/proposals/{id}                → 200 Proposal   # revise; MUST NOT activate
+POST   /v1/host/sample/proposals/{id}/apply          → 200 { installedArtifactRef } | 403 (no scope) | 422 (malformed-for-kind)
+POST   /v1/host/sample/proposals/{id}/reject         → 200 Proposal
+DELETE /v1/host/sample/proposals/{id}                → 200 Proposal   # archive (soft)
+
+# RFC 0097 — goals  (no `complete`/`satisfy` write: completion is the judge's verdict)
+GET    /v1/host/sample/goals[?state=]                → 200 { goals: Goal[] }
+GET    /v1/host/sample/goals/{id}                    → 200 Goal
+POST   /v1/host/sample/goals                         → 200 Goal | 422 (requiresBounds advertised + no bounds)
+PATCH  /v1/host/sample/goals/{id}                    → 200 Goal | 4xx (client-set state:satisfied refused)
+POST   /v1/host/sample/goals/{id}/{pause,resume,abandon} → 200 Goal
+
+# RFC 0098 — portability
+GET    /v1/host/sample/export[?kinds=]               → 200 ExportBundle              # refs only, no secret values
+POST   /v1/host/sample/import?dryRun=true            → 200 ImportPlan                # no writes
+POST   /v1/host/sample/import                        → 200 ImportResult | 422 (literal credential value | dependsOn cycle) | 403 (no import scope)
+```
+
+The `proposals/{id}/apply` seam MUST install the byte image last persisted on the proposal (no re-synthesis — `proposal-no-resynthesis`) and MUST route activation through the advertised `agents.proposals.activation` mode. The `goals` POST seam MUST reject a bounds-less goal `422` when `requiresBounds` is advertised, and a client-supplied `state: satisfied` is refused on PATCH (`goal-completion-judge-only`). The `import` seam MUST reject a bundle whose `connection-ref` payload carries a literal credential value `422` BEFORE applying (`export-bundle-no-credential-material`), and `?dryRun=true` MUST make zero writes.
+
+Conformance: `proposal-reviewable-learning.test.ts`, `goal-standing-continuation.test.ts`, `export-bundle-portability.test.ts` (each soft-skips on 404 when the seam is unwired).
+
 ## Production safety (normative)
 
 All seams under `/v1/host/sample/*` are conformance-only. Hosts deployed in production:

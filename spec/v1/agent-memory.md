@@ -187,9 +187,27 @@ Both events (`agent.memory.consolidated`, `commitment.fired`) are defined in `sc
 - **Bulk-ops API** (`MemoryAdapter.listAll`, `MemoryAdapter.deleteAll`) — deferred. v1.0 read surface is per-`memoryRef` `list/get` only.
 - **Per-node write attribution** — _closed by [`RFCS/0057`](../../RFCS/0057-memory-write-attribution-event.md) (Active)._ The additive, content-free `memory.written` RunEvent (capability-gated on `capabilities.memory.attribution.emitsWriteEvents`) attributes each write to the node/agent that caused it, carrying identifiers only — never entry content — so provenance is observable on the wire without reopening the SR-1 surface or replay determinism (the event records a write that already happened and is re-read from the log on replay, never regenerated). Reads remain unattributed by design.
 
+## Reviewable learning (RFC 0096)
+
+> **Status: Active · v1.x (RFC 0096).** Capability-gated on `capabilities.agents.proposals`. Hosts that omit the block are unchanged.
+
+An agent improves from experience without silently mutating its own production behavior: the host MAY synthesize a **reusable artifact** — an agent pack (RFC 0003), a workflow-chain pack (RFC 0013), a prompt template (RFC 0027), or a scheduled automation (RFC 0052) — from its own run/tool traces, persist it as an inert **`Proposal`** (`schemas/proposal.schema.json`), and surface it for human review. The *synthesis algorithm* is entirely a host choice; this section pins the object, its lifecycle, the activation gate, and the inertness invariant.
+
+A `Proposal` carries a typed `artifact` (shaped by `kind`), a `provenance.sourceRunIds` pointer, an optional `duplicateOf` signal, an `owner` (RFC 0048), and a state machine: `draft → revised → applied | rejected | archived`. Hosts advertise the supported `artifactKinds`, whether `duplicationDetection` is on, and the `activation` mode (`approval-gate` | `direct-rbac`) under `capabilities.agents.proposals`.
+
+Normative requirements:
+
+1. **Inertness.** A `Proposal` in any state other than `applied` **MUST NOT** influence the resolution, planning, or execution of any run. (SECURITY invariant `proposal-inert-until-applied`.)
+2. **Gated activation.** `apply` **MUST** be authorized: if `activation = approval-gate`, the host **MUST** drive an RFC 0051 gate and **MUST NOT** install the artifact unless the gate is `granted` (or `overridden`, which **MUST** be audited per RFC 0009/0010); if `activation = direct-rbac`, the caller **MUST** hold the RFC 0049 scope the host advertises for activation. Activation introduces **no new authorization path** — it reuses RFC 0051/0049.
+3. **No re-synthesis.** On `apply`, the installed artifact **MUST** be the exact `artifact` payload last persisted on the proposal — no silent re-synthesis at activation. (SECURITY invariant `proposal-no-resynthesis`.)
+4. **Redaction.** `provenance.sourceRunIds` and `rationale` **MUST** be SR-1 redaction-safe (no secrets/PII).
+
+The host serves the proposal surface as a host-extension under `/v1/host/sample/proposals` (`GET` list/read, `PATCH` revise, `POST .../apply|reject`, `DELETE` archive — see `host-sample-test-seams.md`), promotable to the normative `/v1/proposals` at graduation. Two additive, content-free events are emitted (gated on the capability): `proposal.created` and `proposal.activated` (`run-event-payloads.schema.json`).
+
 ## References
 
 - `schemas/memory-entry.schema.json`
+- `schemas/proposal.schema.json`
 - `schemas/memory-list-options.schema.json`
 - `schemas/agent-ref.schema.json` §`memoryRef`
 - `capabilities.md` §`agents.memoryBackends`

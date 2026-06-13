@@ -4,10 +4,10 @@
 | ----------------- | -------------------------------------------------------------------------------------------------------------------- |
 | **RFC**           | 0098                                                                                                                  |
 | **Title**         | Agent Platform Portability — Export Bundle and Tenant Import                                                         |
-| **Status**        | `Draft`                                                                                                              |
+| **Status**        | `Active`                                                                                                             |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                                                                       |
 | **Created**       | 2026-06-13                                                                                                          |
-| **Updated**       | 2026-06-13                                                                                                          |
+| **Updated**       | 2026-06-13 (`Draft → Active`: spec floor landed — top-level `portability` capability (with the `import ⇒ dryRun` if/then) + `export-bundle.schema.json` + `portability.md` + the `export-bundle-no-credential-material` invariant + content-free `import.applied` event + 3 capability-gated scenarios. 7-day comment window bypassed by maintainer.) |
 | **Affects**       | `capabilities.schema.json`, `spec/v1/portability.md` (new), `schemas/export-bundle.schema.json` (new), `api/openapi.yaml`, conformance, `@openwop/cli` (`import`/`export` group) |
 | **Compatibility** | `additive`                                                                                                          |
 | **Supersedes**    | —                                                                                                                  |
@@ -54,7 +54,7 @@ openwop already standardizes every *piece* of the estate (agents 0070, packs 000
 
 ```jsonc
 {
-  "$id": "https://openwop.ai/schemas/export-bundle.schema.json",
+  "$id": "https://openwop.dev/spec/v1/export-bundle.schema.json",
   "type": "object",
   "required": ["bundleVersion", "source", "items"],
   "properties": {

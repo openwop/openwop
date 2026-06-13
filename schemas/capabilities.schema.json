@@ -1119,6 +1119,54 @@
           "type": "boolean",
           "default": false,
           "description": "RFC 0063 (`Active`). When `true`, host honors the optional `outputAttestation` block on `core.subWorkflow`: computes a content checksum (RFC 8785 JCS + SHA-256, the `replay.md` recipe) over a child's harvested outputs and surfaces it as the additive optional `attestation` object on the existing `core.workflowChain.event { phase: 'output.harvested' }` (RFC 0037) BEFORE applying `outputMapping`; when the config sets `requireApproval: true`, suspends the parent via an `approval` interrupt (RFC 0051) before merge and fails closed (no `accept`/`edit-accept` ⇒ no merge). Reuses RFC 0051's `approval` kind + RFC 0049 scopes for `principalScope` — no new interrupt kind, event type, or error code. Hosts that omit / `false` this flag treat `outputAttestation` as inert (blind merge, today's behavior)."
+        },
+        "proposals": {
+          "type": "object",
+          "description": "RFC 0096 (`Active`). Reviewable learning — the host synthesizes reusable artifacts (skills/packs/templates/automations) from run/tool traces as INERT, reviewable drafts that MUST NOT influence the resolution, planning, or execution of any run until an authorized principal activates them. A host advertising this serves the `/v1/host/sample/proposals` surface (promotable to `/v1/proposals`) and emits the content-free `proposal.created` / `proposal.activated` events. Activation is delegated to RFC 0051 approval-gate or RFC 0049 RBAC — no new authorization path. On `apply` the installed artifact MUST byte-match the last-persisted `artifact` (no silent re-synthesis). Hosts that omit this block do not synthesize proposals; the conformance scenarios skip cleanly.",
+          "additionalProperties": false,
+          "required": ["artifactKinds", "activation"],
+          "properties": {
+            "artifactKinds": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["agent-pack", "workflow-chain-pack", "prompt-template", "automation"] },
+              "uniqueItems": true,
+              "description": "Which reusable artifact kinds the host can propose. `agent-pack` (RFC 0003), `workflow-chain-pack` (RFC 0013), `prompt-template` (RFC 0027), `automation` (RFC 0052 scheduled job)."
+            },
+            "duplicationDetection": {
+              "type": "boolean",
+              "default": false,
+              "description": "When `true`, the host populates `Proposal.duplicateOf` with an existing artifact ref the proposal restates/overlaps (the 'Curator' duplication signal)."
+            },
+            "activation": {
+              "type": "string",
+              "enum": ["approval-gate", "direct-rbac"],
+              "description": "`approval-gate`: `apply` MUST drive an RFC 0051 gate (role/scope/quorum, audited override) and MUST NOT install unless granted/overridden. `direct-rbac`: `apply` requires only the RFC 0049 scope the host advertises for activation."
+            }
+          }
+        },
+        "goals": {
+          "type": "object",
+          "description": "RFC 0097 (`Active`). Standing goals — a durable objective with explicit completion criteria, evaluated by a host-side judge (RFC 0090 verifier or host evaluator), that keeps an agent working across turns/runs until the judge is satisfied, a declared RFC 0058 bound is crossed, or the agent escalates (RFC 0044). A host advertising this serves `/v1/host/sample/goals` (promotable to `/v1/goals`) and emits the content-free `goal.evaluated` / `goal.closed` events. Completion MUST be the judge's verdict — a client MUST NOT set `state: satisfied` directly. Continuation MUST be bounded. Hosts that omit this block do not run standing goals; the conformance scenarios skip cleanly.",
+          "additionalProperties": false,
+          "required": ["judge", "continuation"],
+          "properties": {
+            "judge": {
+              "type": "string",
+              "enum": ["verifier", "host"],
+              "description": "`verifier`: completion is an RFC 0090 verifier verdict. `host`: an opaque host evaluator."
+            },
+            "continuation": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["schedule", "commitment", "heartbeat", "manual"] },
+              "uniqueItems": true,
+              "description": "How a goal re-engages work between judge checks. `schedule` (RFC 0052), `commitment` (RFC 0068), `heartbeat` (RFC 0060), `manual`."
+            },
+            "requiresBounds": {
+              "type": "boolean",
+              "default": true,
+              "description": "When `true` (default), a goal MUST declare valid RFC 0058 `bounds` before it may activate; a `POST /goals` without bounds returns 422. The host MUST stop continuation and set `state: bound-exceeded` when any declared bound (iteration count / accumulated cost / wall-clock deadline) is crossed."
+            }
+          }
         }
       },
       "additionalProperties": true
@@ -1979,6 +2027,36 @@
         }
       },
       "additionalProperties": false
+    },
+    "portability": {
+      "type": "object",
+      "description": "RFC 0098 (`Active`). Export/import of a tenant's reusable estate (agents 0070, packs 0003/0013, prompt templates 0027, connection *refs* 0045/0095, schedules 0052, roster/org-chart 0086/0087). An export bundle carries NO credential values — only refs to be re-bound at the destination (RFC 0046/0079). Import maps the estate onto the destination's RFC 0048 identity, MUST offer a no-write dry-run plan, MUST be idempotent, and is gated by an RFC 0049 scope. A host advertising this serves `/v1/host/sample/{export,import}` (promotable to `/v1/{export,import}`) and emits the content-free `import.applied` event. Hosts that omit this block neither export nor import; the conformance scenarios skip cleanly.",
+      "additionalProperties": false,
+      "properties": {
+        "export": {
+          "type": "boolean",
+          "default": false,
+          "description": "Host can emit an export bundle for the caller's tenant/workspace via `GET /export`."
+        },
+        "import": {
+          "type": "boolean",
+          "default": false,
+          "description": "Host can import an export bundle via `POST /import`. When `true`, `dryRun` MUST also be `true` (a no-write plan preview is mandatory)."
+        },
+        "kinds": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["agent", "pack", "prompt-template", "connection-ref", "schedule", "roster", "org-chart"] },
+          "uniqueItems": true,
+          "description": "Estate kinds this host can export/import."
+        },
+        "dryRun": {
+          "type": "boolean",
+          "default": true,
+          "description": "Import supports a no-write plan preview (`POST /import?dryRun=true`). MUST be true if `import` is true."
+        }
+      },
+      "if": { "properties": { "import": { "const": true } }, "required": ["import"] },
+      "then": { "properties": { "dryRun": { "const": true } }, "required": ["dryRun"] }
     }
   },
   "additionalProperties": true

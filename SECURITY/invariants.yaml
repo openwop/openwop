@@ -1872,3 +1872,97 @@ invariants:
       always-on schema probe (additionalProperties:false rejects every
       blocklisted name at the schema layer) + the capability-gated
       behavioral leg asserting the specific error code on a live host.
+
+  - id: proposal-inert-until-applied
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/proposal-reviewable-learning.test.ts
+    note: |
+      RFC 0096 / agent-memory.md §"Reviewable learning" clause 1. A Proposal
+      in any state other than `applied` MUST NOT influence the resolution,
+      planning, or execution of any run (the inertness invariant). A host
+      advertising `agents.proposals` MUST keep a synthesized draft/revised
+      proposal inert: a workflow-chain-pack proposal in `draft` does not alter
+      a run that would match it; only after an authorized `apply` does the
+      behavior appear. This is the safety guarantee that an agent cannot
+      silently mutate its own production behavior — a synthesized reusable
+      behavior is reviewable-first. Public test: the always-on schema leg
+      (the `state` enum + open-`artifact` shape) + the capability-gated
+      behavioral leg asserting a draft proposal leaves a matching run
+      unchanged until applied.
+
+  - id: proposal-no-resynthesis
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/proposal-reviewable-learning.test.ts
+    note: |
+      RFC 0096 / agent-memory.md §"Reviewable learning" clause 3. On `apply`,
+      the installed artifact MUST be the exact `artifact` payload last
+      persisted on the proposal — no silent re-synthesis at activation. A
+      host MUST NOT regenerate or mutate the artifact between the last human
+      revision and installation; the byte image a reviewer approved is the
+      byte image installed. Closes the "the agent changed what I approved at
+      the moment I approved it" trust gap. Public test: the capability-gated
+      behavioral leg asserting the installed artifact byte-matches the
+      last-persisted `artifact`.
+
+  - id: goal-continuation-bounded
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/goal-standing-continuation.test.ts
+    note: |
+      RFC 0097 / agent-runtime.md §"Standing goals" clause 2. A standing
+      goal's continuation MUST be bounded: when `agents.goals.requiresBounds`
+      is advertised, an `active` goal without RFC 0058 `bounds` is invalid
+      (`POST /goals` ⇒ 422). The host MUST stop continuation and set
+      `state: bound-exceeded` (emitting `goal.closed`) when any declared
+      bound is crossed — iteration count, accumulated cost (RFC 0084), or
+      wall-clock deadline. This is the termination guarantee an operator
+      running unattended goals depends on: the loop cannot run forever.
+      Public test: the always-on schema leg (bounds object) + the
+      capability-gated behavioral leg asserting a never-satisfied goal halts
+      exactly at `maxLoopIterations` with no further runs.
+
+  - id: goal-completion-judge-only
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/goal-standing-continuation.test.ts
+    note: |
+      RFC 0097 / agent-runtime.md §"Standing goals" clause 1. A goal's
+      completion MUST be determined by the judge declared in
+      `completion.check` (an RFC 0090 verifier verdict or the host
+      evaluator). A client MUST NOT be able to set `state: satisfied`
+      directly — a write attempting it is rejected. Closes the "mark my own
+      homework" gap where a caller declares a goal done without the judge
+      agreeing. Public test: the capability-gated behavioral leg asserting a
+      client-supplied `state: satisfied` is refused and only a judge verdict
+      transitions the goal to satisfied.
+
+  - id: export-bundle-no-credential-material
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/export-bundle-portability.test.ts
+    note: |
+      RFC 0098 / portability.md §Invariants clause 1. An export bundle MUST
+      NOT contain credential VALUES. `connection-ref` items carry only
+      refs/provider ids (RFC 0046/0079); the importer MUST report unbound
+      refs in `secretsToRebind` and MUST NOT invent or transfer secret
+      material. A host MUST reject an imported bundle whose `connection-ref`
+      payload carries a literal credential value (client secret, access/
+      refresh token, API key, password, private key — matched
+      case-insensitively at any depth) with a secret-value rejection (422).
+      Mirrors `connection-pack-no-credential-material`: credentials are
+      host-side and re-bound at the destination, never carried on the wire.
+      Public test: the always-on schema leg (no credential fields in the
+      bundle shape) + the capability-gated behavioral leg asserting a bundle
+      with an embedded literal key is rejected and export emits refs only.

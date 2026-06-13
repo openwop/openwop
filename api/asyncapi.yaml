@@ -126,6 +126,11 @@ channels:
       deploymentRolledBack:     { $ref: '#/components/messages/DeploymentRolledBack' }
       deploymentCanaryAdjusted: { $ref: '#/components/messages/DeploymentCanaryAdjusted' }
       deploymentStateChanged:   { $ref: '#/components/messages/DeploymentStateChanged' }
+      proposalCreated:          { $ref: '#/components/messages/ProposalCreated' }
+      proposalActivated:        { $ref: '#/components/messages/ProposalActivated' }
+      goalEvaluated:            { $ref: '#/components/messages/GoalEvaluated' }
+      goalClosed:               { $ref: '#/components/messages/GoalClosed' }
+      importApplied:            { $ref: '#/components/messages/ImportApplied' }
 
   runEventsValues:
     address: /runs/{runId}/events
@@ -375,6 +380,47 @@ components:
       payload:
         $ref: '#/components/schemas/DeploymentStateChangedPayload'
 
+    # ── Reviewable learning (RFC 0096) — content-free proposal lifecycle ──
+    ProposalCreated:
+      name: proposal.created
+      title: Proposal created (RFC 0096)
+      summary: The host synthesized a reviewable-learning draft. Content-free — ids/kind/refs only, never the artifact body or rationale (proposal-inert-until-applied). Emitted only when capabilities.agents.proposals is advertised.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProposalCreatedPayload'
+    ProposalActivated:
+      name: proposal.activated
+      title: Proposal activated (RFC 0096)
+      summary: A proposal was applied (RFC 0051/0049-gated). Content-free; the installed artifact byte-matches the last-persisted draft (proposal-no-resynthesis).
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProposalActivatedPayload'
+
+    # ── Standing goals (RFC 0097) — content-free judge/continuation events ─
+    GoalEvaluated:
+      name: goal.evaluated
+      title: Goal evaluated (RFC 0097)
+      summary: A judge check ran against a standing goal. Content-free — no objective text; the verdict is recorded (not recomputed on replay).
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/GoalEvaluatedPayload'
+    GoalClosed:
+      name: goal.closed
+      title: Goal closed (RFC 0097)
+      summary: A standing goal stopped continuation (satisfied / escalated / abandoned / bound-exceeded). Content-free.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/GoalClosedPayload'
+
+    # ── Portability (RFC 0098) — content-free import event ───────────────
+    ImportApplied:
+      name: import.applied
+      title: Import applied (RFC 0098)
+      summary: An estate import was applied. Content-free — counts + refs only, never item payloads or secret values (export-bundle-no-credential-material).
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ImportAppliedPayload'
+
     # ── Run-lifecycle ────────────────────────────────────────────────────
     RunStarted:
       name: run.started
@@ -614,6 +660,14 @@ components:
     DeploymentRolledBackPayload:     { $ref: '../schemas/run-event-payloads.schema.json#/$defs/deploymentRolledBack' }
     DeploymentCanaryAdjustedPayload: { $ref: '../schemas/run-event-payloads.schema.json#/$defs/deploymentCanaryAdjusted' }
     DeploymentStateChangedPayload:   { $ref: '../schemas/run-event-payloads.schema.json#/$defs/deploymentStateChanged' }
+    # RFC 0096 — reviewable-learning proposal event payloads.
+    ProposalCreatedPayload:   { $ref: '../schemas/run-event-payloads.schema.json#/$defs/proposalCreated' }
+    ProposalActivatedPayload: { $ref: '../schemas/run-event-payloads.schema.json#/$defs/proposalActivated' }
+    # RFC 0097 — standing-goal event payloads.
+    GoalEvaluatedPayload: { $ref: '../schemas/run-event-payloads.schema.json#/$defs/goalEvaluated' }
+    GoalClosedPayload:    { $ref: '../schemas/run-event-payloads.schema.json#/$defs/goalClosed' }
+    # RFC 0098 — portability import event payload.
+    ImportAppliedPayload: { $ref: '../schemas/run-event-payloads.schema.json#/$defs/importApplied' }
 
     # RFC 0056. The run.annotated notification carries an Annotation —
     # NOT a RunEventDoc — because annotations are a side-resource, not
