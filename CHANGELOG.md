@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [1.1.8 — unreleased]
 
+### Conformance suite
+
+- **`@openwop/openwop-conformance` 1.23.0 → 1.24.0** — minor bump carrying the three RFC 0096/0097/0098 capability-gated scenario files (`proposal-reviewable-learning`, `goal-standing-continuation`, `export-bundle-portability`; 340 → 343 scenario files) added in #698. Published via the `openwop-conformance/v1.24.0` tag.
+
 ### Added (RFC drafts — no normative landing yet)
 
 - **RFC 0099 — External-event trigger ingestion (`Draft`).** Extends the RFC 0083 durable-trigger bridge so `webhook` / `email` / `form` subscription sources can deliver an externally-originated event → start a run (today only schedule + queue ingestion is normative). Proposes a content-free-on-the-wire `TriggerEvent` envelope (the normalized event handed to the run as `ctx.triggerData`, never event-logged), a `TriggerSubscriptionRegistration` create contract served by an additive `POST /v1/trigger-subscriptions`, an additive `triggerBridge.ingestion` capability sub-block, and two new SECURITY invariants (`trigger-ingestion-ssrf` + `trigger-ingestion-content-redaction`). Additive; gates the openwop-app ADR 0033 external-event-triggers host wiring. RFC draft only — no spec/schema/conformance landing yet.
