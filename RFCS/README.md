@@ -165,6 +165,7 @@ Current tally: **Accepted 91 · Active 2 · Draft 1** (94 RFCs, excluding the `0
 | [0092](./0092-agent-capability-requirements.md)                      | Agent-level capability requirements (`AgentManifest.requiresCapabilities`)                                                           | `Accepted`           |
 | [0093](./0093-protocol-hardening-webhooks-tokens-idempotency.md)     | Protocol hardening — webhook delivery egress, interrupt-token lifecycle, retryable-response caching, approval-gate timeout semantics | `Active`             |
 | [0094](./0094-wire-shape-reconciliation.md)                          | Wire-shape reconciliation — schema/prose defect repairs and forward-compat closure policy                                            | `Active`             |
+| [0096](./0096-reviewable-learning-skill-proposal-lifecycle.md)       | Reviewable learning — skill/automation proposal lifecycle (inert drafts, RFC 0051-gated activation)                                  | `Draft`              |
 
 ## See also
 
