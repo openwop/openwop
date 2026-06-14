@@ -31,8 +31,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 95 |
-| Active | 4 |
+| Accepted | 96 |
+| Active | 3 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -135,7 +135,7 @@
 | RFC 0096 | Reviewable Learning - Skill/Automation Proposal Lifecycle | Accepted |
 | RFC 0097 | Standing Goals and Judge-Based Continuation | Accepted |
 | RFC 0098 | Agent Platform Portability - Export Bundle and Tenant Import | Accepted |
-| RFC 0099 | External-Event Trigger Ingestion - extend the RFC 0083 durable-trigger bridge so `webhook` / `email` / `form` subscription sources can deliver an externally-originated event -> start a run, with a normative inbound-event envelope, a subscription-registration contract, and SSRF/replay safety | Active |
+| RFC 0099 | External-Event Trigger Ingestion - extend the RFC 0083 durable-trigger bridge so `webhook` / `email` / `form` subscription sources can deliver an externally-originated event -> start a run, with a normative inbound-event envelope, a subscription-registration contract, and SSRF/replay safety | Accepted |
 | RFC 0100 | Async / Durable A2A Tasks - extend the A2A composition surface (`a2a-integration.md` + the existing sync `message/send` -> `tasks/get` round-trip) with a durable Task lifecycle, `tasks/resubscribe` streaming, and push-notification config, advertised via a new `a2a` capability slot, so an OpenWOP-host-as-A2A-agent runs cross-host handoffs asynchronously instead of synchronously | Active |
 
 ## SDK Helper Coverage
@@ -154,7 +154,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 4 RFCs `Active` (RFC 0035, RFC 0043, RFC 0099, RFC 0100) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 3 RFCs `Active` (RFC 0035, RFC 0043, RFC 0100) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
