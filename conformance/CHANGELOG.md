@@ -1,5 +1,17 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [1.25.0] — 2026-06-14 — RFC 0099/0100 conformance scenarios
+
+Ships the public conformance scenarios for the RFC 0099 / RFC 0100 spec floor landed in openwop#705 (`b1678801`). Those scenario files were merged to the repo **after** `1.24.0` was published to npm, so `1.24.0` does not contain them; this bump republishes the suite at content parity with the corpus so 0099/0100 hosts can run conformance. (Versions `1.23.0` and `1.24.0` were RFC 0095 connection-packs and RFC 0096/0097/0098 floor bumps respectively; their CHANGELOG entries were omitted at the time.)
+
+### Added — RFC 0099 external-event trigger ingestion
+
+- **`trigger-ingestion.test.ts`** (NEW; `trigger-bridge.md` §F; `behaviorGate('triggerBridge.ingestion', …)`) — the external-event ingestion leg of the RFC 0083 durable bridge. Always-on server-free schema probes (a conforming `TriggerEvent` validates against `trigger-event.schema.json`; the durable `trigger.delivery.attempted` payload declares ONLY the content-free `{subscriptionId, dedupKey, attempt, outcome, runId}` fields — any inbound-content field is rejected, backing `trigger-ingestion-content-redaction`; the `TriggerSubscriptionRegistration` request validates) plus behavioral legs (gated on `capabilities.triggerBridge.ingestion`) against the `POST /v1/trigger-subscriptions` create surface and the inbound delivery path: a registration binds a source + a workflow + dedup/verification config; a re-delivered external event with the same `dedupKey` is deduplicated; the normalized inbound event reaches the started run as a `TriggerEvent` (`ctx.triggerData`); the durable `trigger.delivery.attempted` carries no inbound body/header content; a host-side fetch on the ingestion path is SSRF-guarded (`trigger-ingestion-ssrf`). New fixtures under `fixtures/trigger-events/` (`trigger-event-email.json`) + `trigger-subscription-registration-email.json`; catalogued in `fixtures.md` and validated by `fixtures-valid.test.ts`.
+
+### Added — RFC 0100 async / durable A2A tasks
+
+- **`a2a-task-roundtrip.test.ts`** (MODIFIED; async/durable subtests; `a2a-integration.md` §"Async / durable Tasks"; RFC 0100) — extends the existing synchronous `message/send` → `tasks/get` round-trip. New always-on server-free probes: a conforming `A2ATaskState` validates against `a2a-task-state.schema.json` with the **lowercase-hyphen** A2A v0.3 state enum and `taskId == runId`; an UPPERCASE state is rejected; a record carrying run inputs/outputs/artifacts inline is rejected (`additionalProperties:false`, SR-1); the new `capabilities.a2a` block shape is validated (`supported` + `agentCardUrl` required; `streaming`/`pushNotifications`/`durableTasks` optional booleans). New HTTP behavioral leg gated on `behaviorGate('a2a.durableTasks', …)`: drive the backing run to a paused HITL state, then `GET /v1/host/sample/a2a/tasks/{taskId}` returns the live input-required projection after disconnect (not a stale `working`) with `taskId == runId`; the `/v1/host/sample/a2a/tasks/push-config` egress is SSRF-guarded (`a2a-push-egress-ssrf`). Soft-skips when `capabilities.a2a.durableTasks` is not advertised.
+
 ## [1.22.0] — 2026-06-11 — RFC 0093/0094 conformance scenarios
 
 ### Added — RFCs 0093/0094 conformance scenarios (count 330 → 335)
