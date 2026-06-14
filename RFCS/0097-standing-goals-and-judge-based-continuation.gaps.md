@@ -12,3 +12,13 @@ Open questions, deferred decisions, and "learn-from-implementation" items beyond
 | G6 | Replay / determinism | Does replay determinism hold across a judge-driven continuation loop (the same open question RFC 0068 flagged for consolidation)? A non-deterministic judge makes replay diverge. | Conformance Architect | Carry an explicit Unresolved-questions note (as RFC 0068 did); gate any determinism claim on RFC 0041 replay-under-nondeterminism. | Accepted status |
 | G7 | Conformance | Which reference host implements `/goals` first? Needs an RFC 0090 verifier + the scheduler/commitment continuation machinery wired together. | Conformance Architect | Decide example-host vs `openwop-app` reference leg (cf. RFC 0095 precedent). | Accepted status |
 | G8 | Boundary vs RFC 0068 | Make the goal-vs-commitment boundary unambiguous in prose so implementers don't build a goal as "a commitment with a repeat flag." | Spec Architect | Add a normative note: a goal *uses* a commitment/schedule/heartbeat as a continuation arm; it is not itself an arm. Cross-link RFC 0068. | None (clarity) |
+
+## Register sweep — `Active → Accepted` 2026-06-14
+
+Per `RFCS/README.md` §"register sweep gates promotion", every open row is closed, transferred, or carried forward before this flip:
+
+- **G7 (Accepted-gating) — RESOLVED.** Which host implements `/goals` first / example-host vs `openwop-app` reference leg: resolved per the RFC 0095 precedent — the **openwop-app reference host** (rev `00174-6m6`, serving `/v1/host/sample/goals` with the RFC 0090 verifier judge, `goal-standing-continuation` 7/7 non-vacuous vs suite 1.24.0) **plus** a **non-steward live witness** (MyndHyve rev `workflow-runtime-00269-ljm`, advertising `agents.goals` at `judge:[verifier]`/`requiresBounds:true` + serving create-without-bounds → 422 and client `state:satisfied` → 422, steward-curl-verified) satisfy the §D Accepted bar. An example host is not required.
+- **G2/G4 (`before Active`) — passed at the Active flip** (minimal `goal.evaluated` verdict shape; inlined RFC 0058 bounds expose maxLoopIterations/runTimeoutMs/maxCostUsd); no change at Accept.
+- **G6 (replay determinism under a non-deterministic judge)** carried forward as a named Unresolved-question (gated on RFC 0041), as RFC 0068 did; `goal.evaluated.runId` makes each verdict attributable. **G1/G3/G5/G8 (scoping / Draft-acceptable / clarity)** carried forward as non-blocking.
+
+Risks R1–R7 are mitigated-by-design or covered by the shipped protocol-tier invariants (`goal-continuation-bounded`, `goal-completion-judge-only`) + content-free events; none block Accepted.
