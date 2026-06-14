@@ -13,3 +13,13 @@ Open questions, deferred decisions, and "learn-from-implementation" items beyond
 | G7 | Conformance | Which reference host implements `/proposals` first? `openwop-app` has the synthesis hook; the example hosts do not. | Conformance Architect | Decide whether `Accepted` requires an *example* host or accepts the `openwop-app` reference leg as evidence (cf. RFC 0095 precedent). | Accepted status |
 | G8 | Lifecycle / downstream | Once an `applied` proposal becomes a deployable agent, where does RFC 0082 (deployment lifecycle) take over? Avoid two overlapping promotion state machines. | Spec Architect | Document the hand-off: a proposal's `apply` *installs* the artifact; subsequent environment promotion is RFC 0082. Cross-link both RFCs. | None (clarity) |
 | G9 | Wire path | Ship `proposals` as host-extension `/v1/host/sample/proposals` first, or define normative `/v1/proposals` immediately? | Compatibility Architect | Start host-extension (matches the CLI's deferred `proposals` group); promote to `/v1/*` once a second host needs it (RFC 0073 layout). | None (scoping) |
+
+## Register sweep — `Active → Accepted` 2026-06-14
+
+Per `RFCS/README.md` §"register sweep gates promotion", every open row is closed, transferred, or carried forward before this flip:
+
+- **G7 (Accepted-gating) — RESOLVED.** Which host implements `/proposals` first / example-host vs `openwop-app` reference leg: resolved per the RFC 0095 precedent — the **openwop-app reference host** (rev `00174-6m6`, serving `/v1/host/sample/proposals`, `proposal-reviewable-learning` 7/7 non-vacuous vs suite 1.24.0) **plus** a **non-steward live witness** (MyndHyve rev `workflow-runtime-00269-ljm`, advertising `agents.proposals` + serving the apply-without-scope → 403 seam, steward-curl-verified) together satisfy the §D Accepted bar. An example host is not required.
+- **G1/G2/G5 (`before Active`) — passed at the Active flip** (in-place revise, single `duplicateOf`, schema-validate-at-`apply`); no change at Accept.
+- **G3/G8/G9 (None / clarity / scoping)** and **G4/G6 (resolved in the floor: `direct-rbac` default documented; SR-1 redaction clause + invariant shipped)** — carried forward as non-blocking; tracked here.
+
+Risks R1–R7 (see the risk register) are all mitigated-by-design or covered by the shipped protocol-tier invariants (`proposal-inert-until-applied`, `proposal-no-resynthesis`) + content-free events; none block Accepted.
