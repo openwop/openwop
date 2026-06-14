@@ -1,7 +1,7 @@
 # OpenWOP Roadmap
 
 > **Status:** Living document. Updated as milestones land.
-> **Last reviewed:** 2026-06-02 (corpus release v1.1.7 cut — the Active→Accepted graduation program + agent-platform capstone, with the agent-platform read surface finally published to the Python + Go SDKs (v1.1.7) alongside `@openwop/openwop@1.2.0`; conformance unchanged at `@1.18.1`). The generated protocol snapshot lives at `docs/PROTOCOL-STATUS.md`. RFC status: see `docs/PROTOCOL-STATUS.md` for the authoritative Accepted / Active / Draft counts. SECURITY surface now at 116 invariants (90 protocol-tier, 24 reference-impl, 2 advisory) — re-counted 2026-06-11 against `SECURITY/invariants.yaml` (the +2 are RFC 0093's webhook invariants); the per-RFC addition history lives in the README status banner + `CHANGELOG.md`.
+> **Last reviewed:** 2026-06-14 (corpus release v1.1.8 cut — the 2026-06 monorepo split + the RFC 0089–0100 graduation cycle; conformance advanced `1.18.1 → 1.25.0`, published independently on its own `openwop-conformance/v*` tags). The generated protocol snapshot lives at `docs/PROTOCOL-STATUS.md`. RFC status: **Accepted 96 / Active 3 (0035, 0043, 0100) / Draft 1** — see `docs/PROTOCOL-STATUS.md` for the authoritative counts. SECURITY surface now at 125 invariants (99 protocol-tier, 24 reference-impl, 2 advisory) against `SECURITY/invariants.yaml`; the per-RFC addition history lives in the README status banner + `CHANGELOG.md`.
 
 This roadmap distinguishes **stable v1** (locked contract), **v1.X minor work** (additive, conformance-only), and **post-v1 ecosystem** (extension profiles, infrastructure, governance).
 
