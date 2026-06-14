@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/trigger-event.schema.json",
+  "title": "TriggerEvent",
+  "description": "RFC 0099 §F.1. The normalized external-event envelope a host hands a started run as `ctx.triggerData` when an externally-originated event (`webhook`/`email`/`form`) is delivered to an `active` TriggerSubscription (RFC 0083). This is an IN-RUN payload only — it never appears on the durable event log; the `trigger.delivery.attempted` event stays content-free (RFC 0083 §C / SECURITY `trigger-ingestion-content-redaction`). A TriggerEvent carries exactly the per-source sub-object matching its `source`. All content is `untrusted` (SECURITY `threat-model-prompt-injection.md`).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["source", "subscriptionId", "deliveryId", "receivedAt"],
+  "properties": {
+    "source": {
+      "type": "string",
+      "enum": ["webhook", "email", "form"],
+      "description": "Which external source originated the event. A TriggerEvent MUST carry exactly the per-source sub-object matching this value and MUST NOT carry the others (RFC 0099 §F.1)."
+    },
+    "subscriptionId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The RFC 0083 §B subscription this event was delivered to."
+    },
+    "deliveryId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable per-delivery id; equals the `causationId` stamped on `run.started` (RFC 0083 §C-3 / RFC 0040)."
+    },
+    "dedupKey": {
+      "type": "string",
+      "description": "The host-opaque dedup key (RFC 0083 §C-1). Present iff the subscription's `dedupEnabled`. MUST NOT embed inbound body/header content in cleartext (SECURITY `trigger-ingestion-content-redaction`)."
+    },
+    "receivedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the host received the external event."
+    },
+    "verified": {
+      "type": "boolean",
+      "description": "Whether the host verified the source's authenticity (webhook signature / email DMARC / form CSRF+origin) before delivery per the subscription's `verification` policy (RFC 0099 §F.2). A run MUST be able to gate on this."
+    },
+    "contentTrust": {
+      "type": "string",
+      "enum": ["untrusted"],
+      "description": "Always `untrusted`. Inbound external content reaching an LLM node MUST be wrapped per `threat-model-prompt-injection.md` §UNTRUSTED; a TriggerEvent MUST NOT directly advance a HITL approval gate (the `prompt-injection-mcp-no-approval` invariant generalizes)."
+    },
+    "webhook": { "$ref": "#/$defs/WebhookEvent" },
+    "email": { "$ref": "#/$defs/EmailEvent" },
+    "form": { "$ref": "#/$defs/FormEvent" }
+  },
+  "allOf": [
+    {
+      "description": "RFC 0099 §F.1 — a TriggerEvent MUST carry exactly the per-source sub-object matching its `source` and MUST NOT carry the others.",
+      "if": { "properties": { "source": { "const": "webhook" } } },
+      "then": { "not": { "anyOf": [{ "required": ["email"] }, { "required": ["form"] }] } }
+    },
+    {
+      "if": { "properties": { "source": { "const": "email" } } },
+      "then": { "not": { "anyOf": [{ "required": ["webhook"] }, { "required": ["form"] }] } }
+    },
+    {
+      "if": { "properties": { "source": { "const": "form" } } },
+      "then": { "not": { "anyOf": [{ "required": ["webhook"] }, { "required": ["email"] }] } }
+    }
+  ],
+  "$defs": {
+    "WebhookEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Present iff `source == \"webhook\"`.",
+      "properties": {
+        "method": { "type": "string", "enum": ["POST", "PUT", "PATCH"] },
+        "headers": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Host-allowlisted headers only — a host MUST NOT pass through `Authorization`, `Cookie`, `Proxy-Authorization`, or any header carrying credential material (RFC 0099 §F.1 / SECURITY `trigger-ingestion-content-redaction`)."
+        },
+        "body": {
+          "description": "The parsed JSON body, or a string for non-JSON. Bounded by `triggerBridge.ingestion.maxBodyBytes`."
+        }
+      }
+    },
+    "EmailEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Present iff `source == \"email\"`.",
+      "properties": {
+        "from": { "type": "string" },
+        "to": { "type": "array", "items": { "type": "string" } },
+        "subject": { "type": "string" },
+        "text": { "type": "string" },
+        "html": { "type": "string" },
+        "attachments": { "type": "array", "items": { "$ref": "#/$defs/AttachmentRef" } }
+      }
+    },
+    "FormEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Present iff `source == \"form\"`.",
+      "properties": {
+        "fields": { "type": "object", "additionalProperties": true, "description": "The submitted field map." },
+        "files": { "type": "array", "items": { "$ref": "#/$defs/AttachmentRef" } }
+      }
+    },
+    "AttachmentRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref"],
+      "description": "A host-internal opaque handle to a resolved attachment/upload — NEVER a raw external URL the run is expected to fetch itself (RFC 0099 §F.1/§F.4). The host resolves and ingests attachments through its SSRF guard (SECURITY `trigger-ingestion-ssrf`), then hands the run an internal ref.",
+      "properties": {
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A host-internal opaque handle (e.g. a `host.blobStorage` key)."
+        },
+        "filename": { "type": "string" },
+        "mediaType": { "type": "string" },
+        "bytes": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "examples": [
+    {
+      "source": "email",
+      "subscriptionId": "sub_7",
+      "deliveryId": "dlv_a1b2",
+      "dedupKey": "msgid:abc@in.example.com",
+      "receivedAt": "2026-06-13T18:04:11Z",
+      "verified": true,
+      "contentTrust": "untrusted",
+      "email": {
+        "from": "customer@example.org",
+        "to": ["triage-support+sub_7@in.example.com"],
+        "subject": "Cannot log in",
+        "text": "I keep getting a 403.",
+        "attachments": [{ "ref": "blob_a1", "filename": "screenshot.png", "mediaType": "image/png", "bytes": 20481 }]
+      }
+    },
+    {
+      "source": "webhook",
+      "subscriptionId": "sub_9",
+      "deliveryId": "dlv_c3d4",
+      "receivedAt": "2026-06-13T18:10:00Z",
+      "verified": true,
+      "contentTrust": "untrusted",
+      "webhook": {
+        "method": "POST",
+        "headers": { "X-Event-Type": "issue.created" },
+        "body": { "issue": { "id": 42, "title": "Bug" } }
+      }
+    }
+  ]
+}

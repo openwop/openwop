@@ -1,0 +1,6 @@
+{
+  "source": "email",
+  "workflowId": "triage-support",
+  "dedupEnabled": true,
+  "verification": { "mode": "required" }
+}

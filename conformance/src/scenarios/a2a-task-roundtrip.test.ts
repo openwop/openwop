@@ -36,12 +36,20 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import Ajv2020 from 'ajv/dist/2020.js';
+import addFormats from 'ajv-formats';
 import { driver } from '../lib/driver.js';
 import { getA2AFakePeer } from '../lib/a2a-fake-peer.js';
 import { isFixtureAdvertised } from '../lib/fixtures.js';
 import { pollUntilTerminal, pollUntilStatus } from '../lib/polling.js';
+import { SCHEMAS_DIR } from '../lib/paths.js';
+import { behaviorGate } from '../lib/behavior-gate.js';
+import { readCapabilityFamily } from '../lib/discovery-capabilities.js';
 
 const ROUNDTRIP_FIXTURE = 'conformance-a2a-task-roundtrip';
+const HTTP_SKIP = !process.env.OPENWOP_BASE_URL;
 
 /** Resolve the A2A endpoint to probe: real-peer env wins; otherwise the in-process fake. */
 function probePeer(): { url: string; isReal: boolean } | null {
@@ -264,5 +272,133 @@ describe('a2a-task-roundtrip: drift point #4 — REJECTED projects to failed', (
       'a2a-integration.md §"State projection" drift point #4',
       "host SHOULD surface 'rejected_by_remote' (or equivalent) so observers can attribute the failure to the remote A2A peer",
     )).toBe(true);
+  });
+});
+
+// ─── RFC 0100: async / durable A2A tasks ──────────────────────────────
+// Capability-shape always-on + durable-get / resubscribe / push-SSRF gated.
+
+describe('a2a-task-roundtrip: A2ATaskState + a2a capability shape (always-on, server-free; RFC 0100)', () => {
+  const ajv = new Ajv2020({ allErrors: true, strict: false });
+  addFormats(ajv);
+  const taskStateSchema = JSON.parse(
+    readFileSync(join(SCHEMAS_DIR, 'a2a-task-state.schema.json'), 'utf8'),
+  );
+  const capabilitiesSchema = JSON.parse(
+    readFileSync(join(SCHEMAS_DIR, 'capabilities.schema.json'), 'utf8'),
+  );
+  const validateTaskState = ajv.compile(taskStateSchema);
+  const a2aBlockSchema = capabilitiesSchema.properties?.a2a;
+
+  it('a conforming A2ATaskState validates with the lowercase-hyphen state enum and taskId == runId', () => {
+    const ok = {
+      taskId: 'run_x',
+      runId: 'run_x',
+      contextId: 'ctx_42',
+      state: 'input-required',
+      interruptKind: 'approval',
+      updatedAt: '2026-06-13T19:00:00Z',
+    };
+    expect(
+      validateTaskState(ok),
+      `a2a-task-state.schema.json MUST accept a conforming record. Errors: ${JSON.stringify(validateTaskState.errors)}`,
+    ).toBe(true);
+  });
+
+  it('an UPPERCASE state fails (the persisted/wire form is the A2A v0.3 lowercase-hyphen variant)', () => {
+    expect(
+      validateTaskState({ taskId: 'r', runId: 'r', state: 'WORKING', updatedAt: '2026-06-13T19:00:00Z' }),
+      'a2a-integration.md spelling-drift note — the persisted A2ATaskState.state MUST be the lowercase-hyphen form',
+    ).toBe(false);
+  });
+
+  it('an A2ATaskState carrying run inputs/artifacts inline fails (additionalProperties:false; SR-1)', () => {
+    expect(
+      validateTaskState({
+        taskId: 'r',
+        runId: 'r',
+        state: 'completed',
+        updatedAt: '2026-06-13T19:00:00Z',
+        inputs: { secret: 'x' },
+      }),
+      'SECURITY a2a-push-egress-ssrf / SR-1 — the persisted record MUST NOT carry run inputs/outputs/artifacts inline',
+    ).toBe(false);
+  });
+
+  it('a PushConfig requires `url` and structurally rejects a raw (non-truncated) push token', () => {
+    const validatePush = ajv.compile({
+      $ref: 'https://openwop.dev/spec/v1/a2a-task-state.schema.json#/$defs/PushConfig',
+      $defs: taskStateSchema.$defs,
+    });
+    expect(validatePush({ tokenFingerprint: 'a1b2' }), 'PushConfig MUST require `url`').toBe(false);
+    expect(
+      validatePush({ url: 'https://caller.example.com/push', tokenFingerprint: 'a'.repeat(33) }),
+      'SECURITY a2a-push-egress-ssrf — tokenFingerprint maxLength:32 structurally rejects a full-length raw token (SR-1)',
+    ).toBe(false);
+    expect(
+      validatePush({ url: 'https://caller.example.com/push', tokenFingerprint: 'a1b2c3d4' }),
+      'a truncated fingerprint + uri url MUST validate',
+    ).toBe(true);
+  });
+
+  it('the capabilities.a2a block shape is declared (supported + agentCardUrl required; three optional booleans)', () => {
+    expect(a2aBlockSchema, 'capabilities.schema.json MUST declare the a2a block').toBeDefined();
+    expect(a2aBlockSchema.required).toEqual(expect.arrayContaining(['supported', 'agentCardUrl']));
+    expect(a2aBlockSchema.additionalProperties).toBe(false);
+    const validateA2A = ajv.compile({ ...a2aBlockSchema, $id: 'urn:test:a2a-block' });
+    expect(
+      validateA2A({ supported: true, agentCardUrl: 'https://example.com/.well-known/agent-card.json', durableTasks: true }),
+      `a conforming a2a block MUST validate. Errors: ${JSON.stringify(validateA2A.errors)}`,
+    ).toBe(true);
+    expect(validateA2A({ supported: true }), 'agentCardUrl is required').toBe(false);
+  });
+});
+
+describe.skipIf(HTTP_SKIP)('a2a-task-roundtrip: durable tasks/get after disconnect (gated on a2a.durableTasks; RFC 0100)', () => {
+  it('a paused-at-HITL run projects a live input-required task on a later tasks/get read', async () => {
+    const a2a = await readCapabilityFamily<{ durableTasks?: boolean }>('a2a');
+    if (!behaviorGate('a2a.durableTasks', a2a?.durableTasks === true)) return;
+
+    // Host-extension durable-task read seam (RFC 0100 §2). The host drives a
+    // backing run to a paused HITL state; we read the persisted projection
+    // WITHOUT holding the original connection.
+    const start = await driver.post('/v1/host/sample/a2a/tasks/start', {
+      scenario: 'paused-at-approval',
+    });
+    if (start.status === 404 || start.status === 403) return; // seam unwired — soft-skip
+    const taskId = (start.json as { taskId?: string })?.taskId;
+    if (!taskId) return;
+
+    const read = await driver.get(`/v1/host/sample/a2a/tasks/${encodeURIComponent(taskId)}`);
+    if (read.status === 404 || read.status === 403) return;
+    const state = read.json as { state?: string; runId?: string; metadata?: { openwop?: { interrupt?: { kind?: string } } } };
+    expect(
+      state.state,
+      driver.describe('a2a-integration.md §"Async / durable Tasks"', 'tasks/get after disconnect MUST return the live input-required projection (not a stale working)'),
+    ).toBe('input-required');
+    expect(
+      state.runId,
+      driver.describe('a2a-task-state.schema.json', 'taskId MUST equal the backing runId'),
+    ).toBe(taskId);
+  });
+});
+
+describe.skipIf(HTTP_SKIP)('a2a-task-roundtrip: push-config SSRF (gated on a2a.pushNotifications; RFC 0100)', () => {
+  it('registering a pushConfig.url at a private address is refused (a2a-push-egress-ssrf)', async () => {
+    const a2a = await readCapabilityFamily<{ pushNotifications?: boolean }>('a2a');
+    if (!behaviorGate('a2a.pushNotifications', a2a?.pushNotifications === true)) return;
+
+    const res = await driver.post('/v1/host/sample/a2a/tasks/push-config', {
+      taskId: 'run_x',
+      url: 'http://10.0.0.5/push',
+    });
+    if (res.status === 404 || res.status === 403) return; // seam unwired — soft-skip
+    expect(
+      res.status >= 400,
+      driver.describe(
+        'a2a-integration.md §"Async / durable Tasks"',
+        'a2a-push-egress-ssrf — a caller-supplied pushConfig.url at a private/loopback address MUST be refused before any push',
+      ),
+    ).toBe(true);
   });
 });

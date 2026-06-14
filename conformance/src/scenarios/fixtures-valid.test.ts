@@ -188,6 +188,44 @@ describe('fixtures: connection-pack-manifest schema validity', () => {
   }
 });
 
+describe('fixtures: trigger-event + registration schema validity', () => {
+  // External-event ingestion fixtures live in `fixtures/trigger-events/`
+  // (RFC 0099). They are schema-level proof points validated against the
+  // `TriggerEvent` / `TriggerSubscriptionRegistration` schemas — NOT seeded
+  // into a workflow store. A fixture is dispatched to the right schema by a
+  // filename convention: `trigger-event-*` → trigger-event.schema.json;
+  // `trigger-subscription-registration-*` → the registration schema.
+  const ajv = new Ajv2020({ allErrors: true, strict: false });
+  addFormats(ajv);
+  // The registration schema $refs the subscription schema; register it.
+  ajv.addSchema(JSON.parse(readFileSync(join(SCHEMAS_DIR, 'trigger-subscription.schema.json'), 'utf8')));
+  const validateEvent = ajv.compile(JSON.parse(readFileSync(join(SCHEMAS_DIR, 'trigger-event.schema.json'), 'utf8')));
+  const validateReg = ajv.compile(
+    JSON.parse(readFileSync(join(SCHEMAS_DIR, 'trigger-subscription-registration.schema.json'), 'utf8')),
+  );
+
+  const dir = join(FIXTURES_DIR, 'trigger-events');
+  const files = readdirSync(dir)
+    .filter((f) => f.endsWith('.json'))
+    .sort();
+
+  it('finds at least one trigger-event fixture (RFC 0099 coverage)', () => {
+    expect(files.length).toBeGreaterThan(0);
+  });
+
+  for (const file of files) {
+    it(`trigger-events/${file} validates against its schema`, () => {
+      const data = JSON.parse(readFileSync(join(dir, file), 'utf8'));
+      const validate = file.startsWith('trigger-subscription-registration') ? validateReg : validateEvent;
+      const ok = validate(data);
+      const errors = (validate.errors ?? [])
+        .map((e: ErrorObject) => `${e.instancePath || '/'}: ${e.message}`)
+        .join('\n');
+      expect(ok, `Fixture trigger-events/${file} fails its schema:\n${errors}`).toBe(true);
+    });
+  }
+});
+
 describe('fixtures: prompt-template schema validity', () => {
   // PromptTemplate fixtures live in `fixtures/prompt-templates/` per
   // RFC 0027 §A. Like pack manifests, they're schema-level proof points,

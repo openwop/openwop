@@ -250,10 +250,42 @@ The earlier sections cover happy-path projection. Production deployments hit edg
 
 These mappings stay non-normative for v1.x — A2A's spec is itself evolving. Hosts that codify deviations from this table SHOULD document them in their own integration notes.
 
+## Async / durable Tasks (RFC 0100)
+
+> **Status: additive, normative for any host that advertises `capabilities.a2a.durableTasks` (2026-06-14, [RFC 0100](../../RFCS/0100-async-durable-a2a-tasks.md) `Active`).** The synchronous `message/send` → poll `tasks/get` round-trip above is unchanged. This section closes the two Future-work items below — the `a2a` capability slot and the `metadata.openwop.*` interrupt-kind shape — and makes the §"State projection" mapping durable + resumable so a host can run a cross-host handoff asynchronously. The run-status → TaskState mapping is **persisted, not changed**.
+
+### The `a2a` capability slot
+
+Discovery gains a `capabilities.a2a` block: `{ supported, agentCardUrl, streaming?, pushNotifications?, durableTasks? }`. `supported: true` with `durableTasks` absent/`false` ⇒ the host exposes A2A but only the **synchronous** round-trip already specified (today's behavior — no regression). `durableTasks: true` is the opt-in for the contracts below.
+
+### The durable Task projection record (`A2ATaskState`)
+
+When `durableTasks: true`, the host MUST persist an **`A2ATaskState`** (`a2a-task-state.schema.json`) per backing run, durable for the run's whole lifecycle (surviving caller disconnect, host restart within retention, and HITL pauses). It is the persisted form of the §"State projection (forward)" mapping — `taskId` MUST equal the backing `runId`; `state` MUST be the A2A 0.3 lowercase-hyphen wire form per the spelling-drift note; `interruptKind` (present iff `state == 'input-required'`) durably disambiguates drift point #2 and is carried in `Task.metadata.openwop.interrupt.kind` (the codified `metadata.openwop.*` shape). The record MUST carry no run inputs/outputs/artifacts/credential material — artifacts project to A2A `Artifact`s over the A2A transport (§3), not into this record.
+
+### `tasks/get` after disconnect + `tasks/resubscribe`
+
+When `durableTasks: true`:
+
+- **`tasks/get` MUST return live state after disconnect.** After `message/send` returns (or its stream drops), the caller MAY `tasks/get { id: taskId }` at any later time within the run's retention window; the host MUST return the current `A2ATaskState`-projected Task (the live `run.status`-derived `state`, including a paused-at-HITL `input-required`). The host MUST NOT require the caller to hold the original connection.
+- **`tasks/resubscribe` MUST re-attach the update stream without re-sending.** When `streaming: true`, a caller that dropped the `message/stream` SSE MAY `tasks/resubscribe { id: taskId }` to re-attach to the `TaskStatusUpdateEvent` / `TaskArtifactUpdateEvent` stream (§3) from the current state forward. The host MUST NOT re-execute the run or re-accept the originating message on resubscribe; resubscribe is read-only re-attachment. Multiple observers MAY resubscribe concurrently (read-only, mirroring openwop's own SSE multi-observer model).
+- **Resume across the boundary is unchanged.** An A2A Message reply into an `input-required` Task resolves the HITL interrupt exactly as §4 already specifies (the 5-action approval vocabulary). This section makes the *waiting* durable + re-attachable; it does not change resume.
+
+### Push-notification config
+
+When `pushNotifications: true`, a caller MAY register an A2A push config (`A2ATaskState.PushConfig`) for a Task; the host MUST:
+
+- **Validate the push `url` through the RFC 0093 webhook-egress SSRF guard** before any delivery (no private/loopback/link-local target) — SECURITY invariant `a2a-push-egress-ssrf`.
+- **Fire a push on each durable TaskState transition the caller subscribed to** — at minimum on the transitions to `input-required`, `completed`, `failed`, `canceled`. The push body is an A2A `TaskStatusUpdateEvent` (composed per §3); its HMAC/signing follows A2A §4.3.3 (openwop defers the HMAC details per §"What openwop does NOT specify" — unchanged).
+- **Never include run-internal content** in the push beyond the projected Task state + the A2A artifact references (SR-1 / trust boundary — the same content-free projection as the persisted record).
+
+### Trust boundary + replay (unchanged under async)
+
+The §"Trust boundary" and §"Operational mapping table" rows hold under async unchanged: A2A messages reaching run state stay `contentTrust: 'untrusted'`; an external A2A agent's result MUST NOT advance a HITL gate; a bridge node MUST cache an external A2A peer's response in the event-log payload and replace it from cache at replay (RFC 0006 §C). Async adds no new trust surface — a durable Task is the same projection, persisted; `tasks/resubscribe` is a read-only observer; a push is an outbound projection, SSRF-guarded.
+
 ## Future work
 
-- Codify a recommended `metadata.openwop.*` shape so A2A clients can render openwop-interrupt-rich payloads consistently across hosts.
-- Add an `a2a` capability slot to `/.well-known/openwop` discovery.
+- ~~Codify a recommended `metadata.openwop.*` shape so A2A clients can render openwop-interrupt-rich payloads consistently across hosts.~~ ✅ Codified for the interrupt-kind carrier by RFC 0100 (`metadata.openwop.interrupt.kind`, `A2ATaskState.interruptKind`); the broader namespace stays a host extension.
+- ~~Add an `a2a` capability slot to `/.well-known/openwop` discovery.~~ ✅ Added by RFC 0100 (`capabilities.a2a`).
 - Specify a normative `auth-required` interrupt kind in v1.x to remove drift point #3.
 - ~~Ship `a2a-task-roundtrip.test.ts` in a future conformance minor.~~ ✅ Live as of 2026-05-10; real-peer interop-evidence mode added 2026-05-11 (Phase 3 T3.4).
 - Worked node-pack example: `examples/a2a-bridge/` showing an OpenWOP node that invokes an external A2A agent. Filed as a candidate post-v1 example.

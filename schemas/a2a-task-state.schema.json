@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/a2a-task-state.schema.json",
+  "title": "A2ATaskState",
+  "description": "RFC 0100 §2. The durable, persisted projection of an A2A `Task` an OpenWOP host keeps per backing run when it advertises `capabilities.a2a.durableTasks: true` — durable for the run's whole lifecycle (surviving caller disconnect, host restart within retention, and HITL pauses) so `tasks/get` returns live state after a disconnect. It is the persisted form of the `a2a-integration.md` §\"State projection (forward)\" mapping, NOT a new mapping. Content-free of run inputs/outputs/artifacts/credential material (SR-1 / `a2a-integration.md` trust boundary) — artifacts project to A2A `Artifact`s over the A2A transport, not into this record.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["taskId", "runId", "state", "updatedAt"],
+  "properties": {
+    "taskId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The A2A Task.id. MUST equal the backing OpenWOP `runId` (a2a-integration.md §2 — 'the returned runId becomes the A2A Task.id')."
+    },
+    "runId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The backing OpenWOP run. Bound 1:1 to `taskId`."
+    },
+    "contextId": {
+      "type": "string",
+      "description": "The A2A context_id (carried as the run tag `a2a:ctx_*` per a2a-integration.md §2)."
+    },
+    "state": {
+      "type": "string",
+      "enum": ["submitted", "working", "input-required", "auth-required", "completed", "failed", "canceled", "rejected"],
+      "description": "The A2A 0.3 JSON-RPC wire form (lowercase-hyphen — a2a-integration.md §'Wire-shape spelling drift'). Projected from `run.status` per a2a-integration.md §'State projection (forward)': pending→submitted, running→working, paused→working, waiting-approval/waiting-input→input-required, completed→completed, failed→failed, cancelled→canceled. `auth-required` is carried for reverse-direction fidelity only; the forward projection never sets it (openwop has no native auth interrupt — a2a-integration.md drift point #3)."
+    },
+    "interruptKind": {
+      "type": "string",
+      "enum": ["approval", "clarification"],
+      "description": "Present iff `state == 'input-required'`. Disambiguates a2a-integration.md drift point #2 (both approval + clarification project to INPUT_REQUIRED) — carried in `Task.metadata.openwop.interrupt.kind`, the `metadata.openwop.*` shape the doc's Future-work asks to codify."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the projected state last changed."
+    },
+    "pushConfig": { "$ref": "#/$defs/PushConfig" }
+  },
+  "$defs": {
+    "PushConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url"],
+      "description": "RFC 0100 §4. A caller-registered A2A push-notification config for this Task.",
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Caller-registered push target. The host MUST validate it through the RFC 0093 webhook-egress SSRF guard before any push (no private/loopback/link-local target) — SECURITY invariant `a2a-push-egress-ssrf`."
+        },
+        "tokenFingerprint": {
+          "type": "string",
+          "maxLength": 32,
+          "description": "MAY — a truncated/salted digest of the caller's push-auth token (NEVER the raw token; same SR-1 rule as RFC 0083's `secretFingerprint`). The A2A push HMAC details (A2A §4.3.3) stay inside the A2A layer per a2a-integration.md."
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "taskId": "run_x",
+      "runId": "run_x",
+      "contextId": "ctx_42",
+      "state": "input-required",
+      "interruptKind": "approval",
+      "updatedAt": "2026-06-13T19:00:00Z",
+      "pushConfig": { "url": "https://caller.example.com/a2a/push", "tokenFingerprint": "a1b2c3d4e5f6" }
+    },
+    {
+      "taskId": "run_y",
+      "runId": "run_y",
+      "state": "completed",
+      "updatedAt": "2026-06-13T19:05:00Z"
+    }
+  ]
+}

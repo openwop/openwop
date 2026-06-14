@@ -236,15 +236,18 @@ export function isMemory(c: DiscoveryPayload): boolean {
 }
 
 /**
- * `openwop-trigger-bridge` predicate (RFC 0083). Host composes the durable
- * inbound-work contract: advertises the `triggerBridge`, has a `deadLetter`
- * sink for exhausted deliveries, and has at least one durable inbound source
- * (queue bus, durable webhooks, or scheduling). Capability families are
+ * `openwop-trigger-bridge` predicate (RFC 0083, widened by RFC 0099). Host
+ * composes the durable inbound-work contract: advertises the `triggerBridge`,
+ * has a `deadLetter` sink for exhausted deliveries, and has at least one
+ * durable inbound source (queue bus, durable webhooks, scheduling, OR — per
+ * RFC 0099 — externally-ingested `email`/`form` via
+ * `triggerBridge.ingestion.externalSources[]`). Capability families are
  * document-root properties (RFC 0073), so this reads `c.triggerBridge` /
- * `c.deadLetter` / `c.queueBus` / `c.webhooks` / `c.scheduling`.
+ * `c.deadLetter` / `c.queueBus` / `c.webhooks` / `c.scheduling`. The RFC 0099
+ * widening only ADDS disjuncts — a host already in the profile stays in it.
  *
  * @see spec/v1/profiles.md §`openwop-trigger-bridge`
- * @see spec/v1/trigger-bridge.md
+ * @see spec/v1/trigger-bridge.md §D / §F
  */
 export function isTriggerBridge(c: DiscoveryPayload): boolean {
   if (!isCore(c)) return false;
@@ -253,10 +256,16 @@ export function isTriggerBridge(c: DiscoveryPayload): boolean {
   if (!supported(c.triggerBridge)) return false;
   if (!supported(c.deadLetter)) return false;
   const webhooks = c.webhooks as { durable?: unknown } | undefined;
+  // RFC 0099: an externally-ingested email/form source is a durable inbound
+  // source for the profile (it rides the same four-state machine + dead-letter).
+  const ingestion = (c.triggerBridge as { ingestion?: { externalSources?: unknown } } | undefined)?.ingestion;
+  const externalSources = Array.isArray(ingestion?.externalSources) ? (ingestion!.externalSources as unknown[]) : [];
+  const externalEmailOrForm = externalSources.includes('email') || externalSources.includes('form');
   const durableSource =
     supported(c.queueBus) ||
     supported(c.scheduling) ||
-    (webhooks != null && typeof webhooks === 'object' && webhooks.durable === true);
+    (webhooks != null && typeof webhooks === 'object' && webhooks.durable === true) ||
+    externalEmailOrForm;
   return durableSource;
 }
 
