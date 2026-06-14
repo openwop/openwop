@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/trigger-subscription-registration.schema.json",
+  "title": "TriggerSubscriptionRegistration",
+  "description": "RFC 0099 §F.2. The portable create request for an external-event trigger subscription, served by `POST /v1/trigger-subscriptions`. Binds an external source (`webhook`/`email`/`form`) to a Workflow to start, with a dedup config and a source-authenticity verification policy. This is the unified create surface RFC 0083 UQ1 left per-source. The response returns the created `TriggerSubscription` (RFC 0083 §B) plus a source-specific `binding`; the binding secret/URL is returned ONCE at creation and is not re-fetchable in cleartext (SR-1).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["source", "workflowId"],
+  "properties": {
+    "source": {
+      "type": "string",
+      "enum": ["webhook", "email", "form"],
+      "description": "The external source this subscription ingests. MUST appear in the host's `capabilities.triggerBridge.ingestion.externalSources[]`."
+    },
+    "workflowId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The Workflow a delivered event starts (the run's `workflowId`). MUST resolve under the caller's RFC 0048 owner triple — a registration MUST NOT bind a workflow the caller cannot start (RFC 0049 scope check)."
+    },
+    "dedupEnabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Per RFC 0083 §C-1. Defaults true for external sources — at-least-once inbound delivery without dedup is a footgun."
+    },
+    "retryPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Delivery retry policy (RFC 0083 §C-2). Same shape as `trigger-subscription.schema.json#/properties/retryPolicy`. On exhaustion the delivery transitions to `dead-lettered` (RFC 0053).",
+      "properties": {
+        "maxAttempts": { "type": "integer", "minimum": 1, "description": "Maximum delivery attempts before dead-lettering." },
+        "backoff": { "type": "string", "enum": ["none", "fixed", "exponential"], "description": "Backoff strategy between attempts." }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Source-authenticity policy. The host MUST verify per this policy BEFORE delivery and stamp `TriggerEvent.verified`; an event failing a `required` verification MUST NOT start a run (it transitions `trigger.delivery.attempted{outcome:'dead-lettered'}` with `trigger.subscription.state.changed.reason:'signature-invalid'`).",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["required", "best-effort", "none"],
+          "default": "required",
+          "description": "`required`: an unverified event is dead-lettered, no run. `best-effort`: the host verifies when it can and stamps `verified` accordingly but still delivers. `none`: no verification."
+        }
+      }
+    },
+    "inputMapping": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "OPTIONAL host-extension hint mapping `TriggerEvent` fields onto the workflow's `inputs`. Non-normative shape (host-specific); absent ⇒ the run receives the whole `TriggerEvent` as `ctx.triggerData`."
+    }
+  },
+  "examples": [
+    {
+      "source": "email",
+      "workflowId": "triage-support",
+      "dedupEnabled": true,
+      "verification": { "mode": "required" }
+    },
+    {
+      "source": "webhook",
+      "workflowId": "ingest-jira-issue",
+      "verification": { "mode": "required" },
+      "retryPolicy": { "maxAttempts": 5, "backoff": "exponential" }
+    }
+  ]
+}

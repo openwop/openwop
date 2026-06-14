@@ -502,6 +502,19 @@ Negative manifests (credential material, mixed kinds, dual reach) are inline tes
 
 ---
 
+## Trigger-event fixtures
+
+The `fixtures/trigger-events/` sub-directory holds canonical external-event ingestion documents (RFC 0099) used as schema-level proof points — validated server-free against `../schemas/trigger-event.schema.json` (`trigger-event-*`) and `../schemas/trigger-subscription-registration.schema.json` (`trigger-subscription-registration-*`) by the `fixtures-valid.test.ts` sweep + the `trigger-ingestion.test.ts` scenario. They are NOT seeded into a server.
+
+| Fixture                                      | Schema                                        | Purpose                                                                                                                            |
+| -------------------------------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `trigger-event-email`                        | `trigger-event.schema.json`                   | Canonical positive `source:"email"` TriggerEvent — `verified`, `contentTrust:"untrusted"`, an `AttachmentRef` with a host-internal `ref`. Drives the §F.1 one-of, AttachmentRef, and contentTrust shape assertions. |
+| `trigger-subscription-registration-email`    | `trigger-subscription-registration.schema.json` | Canonical positive registration (`source:"email"`, `workflowId`, `verification.mode:"required"`). Drives the registration shape assertions. |
+
+Negative cases (cross-source sub-objects, raw attachment URLs, `Authorization` headers) are inline test data in `trigger-ingestion.test.ts` per suite convention — a deliberately-invalid fixture file would fail the automatic sweep.
+
+---
+
 ## OAuth provider fixtures
 
 The `fixtures/oauth-providers/` sub-directory holds synthetic OAuth provider definitions used to prove the RFC 0047 `host.oauth` authorization-code roundtrip end-to-end **without a live IdP**. They are NOT `WorkflowDefinition`s and are NOT seeded as workflows — they parameterize the behavioral roundtrip scenario, which drives the host's `POST /v1/host/sample/oauth/authorize-code-roundtrip` seam against the provider's `authUrl`/`tokenUrl` (served by a conformance test double).

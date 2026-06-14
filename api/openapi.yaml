@@ -71,6 +71,8 @@ tags:
     description: Run-produced artifacts.
   - name: webhooks
     description: Subscribe to run events via outbound HTTP.
+  - name: triggers
+    description: Durable trigger-bridge subscriptions (RFC 0083). RFC 0099 adds the external-event create surface (`POST /v1/trigger-subscriptions`); gated on `capabilities.triggerBridge.ingestion.registrationEndpoint`.
   - name: audit
     description: Audit-log integrity verification (gated on the `openwop-audit-log-integrity` profile).
   - name: prompts
@@ -473,6 +475,106 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '501':
           description: 'Host does not advertise capabilities.feedback.supported (RFC 0056).'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+
+  # ── External-event trigger subscriptions (RFC 0099) ──────────────────
+  # Gated on `capabilities.triggerBridge.ingestion.registrationEndpoint: true`.
+  # The portable create surface for an external-event (webhook/email/form)
+  # subscription that binds a source to a workflow to start. Returns the
+  # created TriggerSubscription (RFC 0083 §B) plus a source-specific binding
+  # (ingest URL/address + secret fingerprint), returned once at creation.
+  # Hosts without the advertised capability return `501 capability_not_provided`.
+  /v1/trigger-subscriptions:
+    post:
+      tags: [triggers]
+      summary: Register an external-event trigger subscription (RFC 0099).
+      description: |
+        Creates an external-event (`webhook`/`email`/`form`) TriggerSubscription
+        bound to a workflow, with a dedup config and a source-authenticity
+        verification policy (RFC 0099 §F.2). The `workflowId` MUST resolve under
+        the caller's RFC 0048 owner triple. The response carries the created
+        TriggerSubscription plus a source-specific `binding`; the binding
+        secret/URL is returned ONCE and is not re-fetchable in cleartext.
+      operationId: createTriggerSubscription
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/trigger-subscription-registration.schema.json'
+      responses:
+        '201':
+          description: Subscription created. Returns the TriggerSubscription + a source-specific binding.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [subscription, binding]
+                additionalProperties: false
+                properties:
+                  subscription:
+                    $ref: '../schemas/trigger-subscription.schema.json'
+                  binding:
+                    type: object
+                    description: |
+                      Source-specific binding the caller needs to wire the external
+                      source. For `webhook`: `{ ingestUrl, secretFingerprint }`; for
+                      `email`: `{ ingestAddress }`; for `form`: `{ ingestUrl }`. The
+                      secret is returned once at creation (SR-1).
+                    additionalProperties: true
+                    properties:
+                      ingestUrl: { type: string, format: uri }
+                      ingestAddress: { type: string }
+                      secretFingerprint: { type: string, maxLength: 32 }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '501':
+          description: 'Host does not advertise capabilities.triggerBridge.ingestion.registrationEndpoint (RFC 0099).'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+
+  # ── Durable A2A task read seam (RFC 0100) ────────────────────────────
+  # Host-extension convenience read of the persisted A2ATaskState projection
+  # (RFC 0100 §2). The NORMATIVE A2A surface stays the A2A `tasks/get`
+  # JSON-RPC method per A2A v0.3 — this is a non-normative host-extension
+  # name under `/v1/host/sample/*`. Gated on `capabilities.a2a.durableTasks`.
+  /v1/host/sample/a2a/tasks/{taskId}:
+    get:
+      tags: [host]
+      summary: Read the persisted durable A2A task projection (RFC 0100, host-extension).
+      description: |
+        Returns the persisted `A2ATaskState` for `taskId` (== the backing
+        `runId`) per RFC 0100 §2 — a host-extension convenience read of the
+        durable projection that survives caller disconnect. The normative A2A
+        read surface remains the A2A `tasks/get` JSON-RPC method. Hosts that do
+        not advertise `capabilities.a2a.durableTasks` return `501`.
+      operationId: getA2ATaskState
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: string, minLength: 1 }
+          description: The A2A Task.id (equals the backing OpenWOP runId).
+      responses:
+        '200':
+          description: The persisted durable A2A task projection.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/a2a-task-state.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '501':
+          description: 'Host does not advertise capabilities.a2a.durableTasks (RFC 0100).'
           content:
             application/json:
               schema:

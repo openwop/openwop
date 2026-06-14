@@ -1966,3 +1966,79 @@ invariants:
       Public test: the always-on schema leg (no credential fields in the
       bundle shape) + the capability-gated behavioral leg asserting a bundle
       with an embedded literal key is rejected and export emits refs only.
+
+  # ===== RFC 0099 external-event trigger ingestion =====
+
+  - id: trigger-ingestion-ssrf
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/trigger-ingestion.test.ts
+    note: |
+      RFC 0099 §F.4 / trigger-bridge.md §F.4. ANY host-side fetch the
+      external-event ingestion path performs (webhook verification callback,
+      email-attachment resolution, form file-upload retrieval) MUST go through
+      the RFC 0076 §B SSRF guard (`assertPublicUrl` / `httpClient.safeFetch`):
+      no fetch to a private/link-local/loopback address, with the
+      `maxResponseBodyBytes` cap. The host MUST NOT hand the run an external
+      URL to fetch itself — `TriggerEvent.AttachmentRef.ref` is a host-internal
+      opaque handle, never a raw external URL. An attachment whose resolution
+      would hit a private address (e.g. `http://169.254.169.254/...`) MUST be
+      refused (the attachment dropped, the run still starting on the rest of
+      the event). Public test: the always-on schema leg asserts `AttachmentRef`
+      requires `ref` and rejects a raw `url` field (the schema structurally
+      forbids handing the run a fetchable URL); the capability-gated behavioral
+      leg (`triggerBridge.ingestion`) asserts an ingestion-path fetch to a
+      private address is refused, reusing the `http-client-ssrf-guard` posture.
+
+  - id: trigger-ingestion-content-redaction
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/trigger-ingestion.test.ts
+    note: |
+      RFC 0099 §F.4 / trigger-bridge.md §F.4. The inbound external-event body,
+      headers, email content, and form fields MUST NOT appear on any `run.*` /
+      `trigger.*` durable event payload (RFC 0083 §C content-freeness,
+      generalized to external sources). The content lives ONLY in
+      `ctx.triggerData` (the in-run `TriggerEvent`, never event-logged) and the
+      run's own variables (SR-1 redaction applies). `webhook.headers` MUST be a
+      host-curated allowlist — the host MUST NOT pass through `Authorization`,
+      `Cookie`, or `Proxy-Authorization`; `dedupKey` MUST be host-opaque.
+      Public test: the always-on schema leg asserts the in-run `TriggerEvent`
+      is the ONLY carrier of inbound content (the per-source one-of rule holds;
+      `AttachmentRef` requires a host-internal `ref` and rejects a raw `url`;
+      `contentTrust` is the const `"untrusted"`) and that the durable
+      `trigger.delivery.attempted` payload schema carries only the content-free
+      `{subscriptionId,dedupKey,attempt,outcome,runId?}` fields (RFC 0083 §C —
+      the inbound body never appears on it); the capability-gated behavioral leg
+      (`triggerBridge.ingestion`) asserts a delivered event's
+      `trigger.delivery.attempted` carries no inbound body/header content and
+      that `webhook.headers` is a host-curated allowlist (no `Authorization`).
+
+  # ===== RFC 0100 async / durable A2A tasks =====
+
+  - id: a2a-push-egress-ssrf
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/a2a-task-roundtrip.test.ts
+    note: |
+      RFC 0100 §4 / a2a-integration.md §"Async / durable Tasks". A
+      caller-registered A2A push-notification `pushConfig.url` MUST be validated
+      through the RFC 0093 webhook-egress SSRF guard before any push (no
+      private/loopback/link-local target) — a caller-supplied push URL is an
+      SSRF surface identical to a webhook. A push MUST NOT carry run-internal
+      content beyond the projected `A2ATaskState` + A2A artifact references;
+      `pushConfig.tokenFingerprint` MUST be a truncated/salted digest
+      (`maxLength: 32`), never the raw push-auth token (SR-1, mirroring RFC
+      0083's `secretFingerprint`). Public test: the always-on schema leg in
+      `a2a-task-roundtrip.test.ts` asserts `PushConfig` requires `url`, that the
+      `tokenFingerprint` ceiling structurally rejects a full-length raw token,
+      and that an `A2ATaskState` carrying run inputs/artifacts inline fails
+      `additionalProperties:false`; the capability-gated behavioral leg
+      (`a2a.pushNotifications`) asserts a `pushConfig.url` at a private address
+      is refused, reusing the RFC 0093 webhook-egress-guard fixture posture.

@@ -1514,7 +1514,31 @@
             "backoff": { "type": "string", "enum": ["none", "fixed", "exponential"], "description": "Backoff strategy between attempts." }
           }
         },
-        "sources": { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["webhook", "schedule", "queue", "email", "form"] }, "description": "Which trigger sources bridge uniformly. A source listed here MUST have a registerable `TriggerSubscription` driven through the four-state machine AND emit the two `trigger.*` events for that source — the list MUST NOT over-claim a source the host has as a feature but does not wire as a durable trigger subscription. A consumer MUST tolerate any subset." }
+        "sources": { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["webhook", "schedule", "queue", "email", "form"] }, "description": "Which trigger sources bridge uniformly. A source listed here MUST have a registerable `TriggerSubscription` driven through the four-state machine AND emit the two `trigger.*` events for that source — the list MUST NOT over-claim a source the host has as a feature but does not wire as a durable trigger subscription. A consumer MUST tolerate any subset." },
+        "ingestion": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "RFC 0099 §F.3 (additive). External-event ingestion advertisement — which of `sources[]` the host actually ingests from EXTERNALLY-originated events (`webhook`/`email`/`form`), normalizing each to a `TriggerEvent` (`trigger-event.schema.json`) and starting a run. Absent ⇒ the host does NOT externally-ingest (today's behavior — schedule/queue only). A source in `externalSources[]` MUST actually accept an external event, normalize it, and start a run — over-claiming is a dishonest advertisement. A consumer MUST tolerate any subset.",
+          "properties": {
+            "externalSources": { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["webhook", "email", "form"] }, "description": "Which of `sources[]` are EXTERNALLY ingested per RFC 0099. The honesty gate — each MUST normalize to a `TriggerEvent` and start a run." },
+            "maxBodyBytes": { "type": "integer", "minimum": 1, "description": "Inbound body cap (webhook body / email / form), reusing the RFC 0076 §B response-cap discipline." },
+            "verification": { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["webhook-signature", "email-dmarc", "form-origin"] }, "description": "Which source-authenticity checks the host performs. An advertised check MUST actually be performed (RFC 0099 §F.3 / UQ1)." },
+            "registrationEndpoint": { "type": "boolean", "description": "`true` ⇒ the host serves `POST /v1/trigger-subscriptions` (RFC 0099 §F.2) for portable external-event subscription creation." }
+          }
+        }
+      }
+    },
+    "a2a": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0100 (`Active`). The host exposes itself as an A2A (Agent2Agent) agent. `supported: true` alone ⇒ the SYNCHRONOUS `message/send` → poll `tasks/get` round-trip already specified by `a2a-integration.md` (today's behavior — no regression). The optional `streaming`/`pushNotifications`/`durableTasks` flags gate the RFC 0100 async/durable additions (resubscribe re-attach, push config, persisted `A2ATaskState` so `tasks/get` returns live state after disconnect). Absent block ⇒ no A2A advertisement.",
+      "required": ["supported", "agentCardUrl"],
+      "properties": {
+        "supported": { "type": "boolean", "description": "Host exposes itself as an A2A agent." },
+        "agentCardUrl": { "type": "string", "format": "uri", "description": "The A2A 0.3 well-known agent card URL (`/.well-known/agent-card.json`)." },
+        "streaming": { "type": "boolean", "description": "Host supports `message/stream` + `tasks/resubscribe` (A2A `capabilities.streaming`). Gates the RFC 0100 §3 resubscribe re-attach." },
+        "pushNotifications": { "type": "boolean", "description": "Host supports A2A push-notification config (A2A `capabilities.push_notifications`). Gates the RFC 0100 §4 push contract; a caller-supplied `pushConfig.url` is SSRF-validated (`a2a-push-egress-ssrf`)." },
+        "durableTasks": { "type": "boolean", "description": "RFC 0100 §2. Host PERSISTS the projected Task (`A2ATaskState`) per backing run; `tasks/get` returns live state after disconnect. Absent/false ⇒ synchronous round-trip only." }
       }
     },
     "budget": {

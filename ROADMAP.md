@@ -57,16 +57,16 @@ The 2026-05-12 architect review framed the remaining gap-closure work as **myndh
 
 Hosts publish which suite version they pass; non-pass on a later suite is **not** a v1 conformance regression.
 
-### RFC 0099 + 0100 — `Active`, corpus implementation pending (2026-06-13)
+### RFC 0099 + 0100 — `Active`, corpus implementation landed (2026-06-14)
 
-RFC 0099 (external-event trigger ingestion, extends RFC 0083) and RFC 0100 (async/durable A2A tasks, extends `a2a-integration.md`) were promoted **Draft → Active** (#700). Both are `additive` + capability-gated. Their **normative corpus artifacts are not yet landed** — tracked here so host advertisement does not outrun conformance coverage:
+RFC 0099 (external-event trigger ingestion, extends RFC 0083) and RFC 0100 (async/durable A2A tasks, extends `a2a-integration.md`) were promoted **Draft → Active** (#700). Both are `additive` + capability-gated. Their **normative corpus artifacts are now landed** — the capability-honesty gap (host advertisement outrunning conformance coverage) is closed:
 
-| RFC | Pending normative artifacts |
+| RFC | Normative artifacts (✅ landed) |
 | --- | --- |
-| 0099 | NEW `schemas/trigger-event.schema.json` + `schemas/trigger-subscription-registration.schema.json`; `capabilities.schema.json` `triggerBridge.ingestion` sub-block; `spec/v1/trigger-bridge.md` §F; `api/openapi.yaml` `POST /v1/trigger-subscriptions`; SECURITY invariants `trigger-ingestion-ssrf` + `trigger-ingestion-content-redaction` **+ public conformance tests**; `profiles.md` predicate widening. |
-| 0100 | NEW `schemas/a2a-task-state.schema.json`; `capabilities.schema.json` `a2a` block; `spec/v1/a2a-integration.md` §"Async / durable Tasks"; `api/openapi.yaml` durable-task read seam; async subtests in `a2a-task-roundtrip.test.ts`. |
+| 0099 | ✅ `schemas/trigger-event.schema.json` + `schemas/trigger-subscription-registration.schema.json`; `capabilities.schema.json` `triggerBridge.ingestion` sub-block; `spec/v1/trigger-bridge.md` §F; `api/openapi.yaml` `POST /v1/trigger-subscriptions`; SECURITY invariants `trigger-ingestion-ssrf` + `trigger-ingestion-content-redaction` **+ public conformance tests** (`trigger-ingestion.test.ts`); `profiles.md` + `profiles.ts` predicate widening. |
+| 0100 | ✅ `schemas/a2a-task-state.schema.json`; `capabilities.schema.json` `a2a` block; `spec/v1/a2a-integration.md` §"Async / durable Tasks"; `api/openapi.yaml` durable-task read seam; SECURITY invariant `a2a-push-egress-ssrf` + async subtests in `a2a-task-roundtrip.test.ts`. |
 
-The **openwop-app reference host already wires both** (its ADR 0034 / 0035), so it advertises `triggerBridge.ingestion` / `a2a.durableTasks` ahead of corpus conformance — landing these closes the capability-honesty gap. Each RFC's MUST-NOTs (0099: SSRF + content-redaction; 0100: trust-boundary) need a public conformance test before the corpus claims coverage.
+The **openwop-app reference host already wires both** (its ADR 0034 / 0035), so it advertised `triggerBridge.ingestion` / `a2a.durableTasks` ahead of corpus conformance — these landings close that gap. Each RFC's MUST-NOTs (0099: SSRF + content-redaction; 0100: trust-boundary / push-egress SSRF) now carry a public conformance test. Remaining work for `Active → Accepted`: the reference-host durable-delivery / durable-Task behavioral evidence (the gated legs soft-skip until a host wires the `/v1/host/sample/{trigger-bridge,a2a}/*` seams).
 
 ## v1.2 outlook (projected)
 

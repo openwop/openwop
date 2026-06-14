@@ -53,10 +53,10 @@ Measured against `@openwop/openwop-conformance@1.22.0` (the published suite has 
 
 The conformance suite's MCP and A2A probes run against live reference implementations of the adjacent protocols. See [A2A vs MCP vs OpenWOP](https://openwop.dev/comparisons/a2a-openwop-mcp/) for how the three layers compose.
 
-| Partner | Reference impl                                             | Result                                     |
-| ------- | ---------------------------------------------------------- | ------------------------------------------ |
-| **MCP** | `@modelcontextprotocol/sdk@1.29.0` (all three transports)  | ✅ pass                                    |
-| **A2A** | `@a2a-js/sdk@0.3.13` reference peer (echo skill, JSON-RPC) | ✅ 1/1 pass (`a2a-task-roundtrip.test.ts`) |
+| Partner | Reference impl                                             | Sync round-trip                            | Async / durable (RFC 0100)                                                                 |
+| ------- | ---------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| **MCP** | `@modelcontextprotocol/sdk@1.29.0` (all three transports)  | ✅ pass                                    | —                                                                                          |
+| **A2A** | `@a2a-js/sdk@0.3.13` reference peer (echo skill, JSON-RPC) | ✅ 1/1 pass (`a2a-task-roundtrip.test.ts`) | ⏳ corpus landed (`capabilities.a2a` + `A2ATaskState` + durable-`tasks/get`/resubscribe/push subtests); reference-host durable-Task evidence at `Active → Accepted` |
 
 ## Reading Rows
 
