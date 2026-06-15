@@ -67,7 +67,7 @@ Every RFC follows `0000-template.md` and must answer:
 
 <!-- Hand-generated 2026-06-11 from each RFC's header `Status` field. TODO: this table should be emitted by `scripts/generate-protocol-status.mjs` (which already derives these statuses for docs/PROTOCOL-STATUS.md) instead of being hand-maintained. -->
 
-Current tally: **Accepted 96 · Active 4 · Draft 2** (102 RFCs, excluding the `0000` template; Active = 0035, 0043, 0100, 0102; Draft = 0038 Parked, 0101 Parked).
+Current tally: **Accepted 97 · Active 3 · Draft 2** (102 RFCs, excluding the `0000` template; Active = 0035, 0043, 0100; Draft = 0038 Parked, 0101 Parked).
 
 | RFC                                                                  | Title                                                                                                                                | Status               |
 | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
@@ -171,7 +171,7 @@ Current tally: **Accepted 96 · Active 4 · Draft 2** (102 RFCs, excluding the `
 | [0099](./0099-external-event-trigger-ingestion.md)                   | External-event trigger ingestion — webhook/email/form sources start a run (extends RFC 0083; `TriggerEvent` envelope + registration contract + SSRF/replay safety) | `Accepted`             |
 | [0100](./0100-async-durable-a2a-tasks.md)                            | Async / durable A2A tasks — durable Task persistence + `tasks/resubscribe` + push for cross-host handoffs (extends `a2a-integration.md`; new `a2a` capability slot) | `Active`             |
 | [0101](./0101-multi-party-group-conversation.md)                   | Multi-party group conversation — shared transcript + speaker attribution (Parked)                                                                                  | `Draft`              |
-| [0102](./0102-a2ui-agent-authored-interface-surfaces.md)             | A2UI agent-authored interface surfaces — declarative cross-trust-boundary UI as a vendor-namespaced `vendor.<host>.a2ui.surface` envelope kind (extends RFC 0055; closed surface, enumerated catalog, actions confined to interrupt-resume/exchange)                                                | `Active`             |
+| [0102](./0102-a2ui-agent-authored-interface-surfaces.md)             | A2UI agent-authored interface surfaces — declarative cross-trust-boundary UI as a **core, advertised** `ui.a2ui-surface` envelope kind beside `media.*` (extends RFC 0055; closed `anyOf` surface, enumerated catalog, actions confined to interrupt-resume/exchange)                                | `Accepted`           |
 
 ## See also
 
