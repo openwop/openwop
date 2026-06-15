@@ -138,7 +138,7 @@
 | RFC 0099 | External-Event Trigger Ingestion - extend the RFC 0083 durable-trigger bridge so `webhook` / `email` / `form` subscription sources can deliver an externally-originated event -> start a run, with a normative inbound-event envelope, a subscription-registration contract, and SSRF/replay safety | Accepted |
 | RFC 0100 | Async / Durable A2A Tasks - extend the A2A composition surface (`a2a-integration.md` + the existing sync `message/send` -> `tasks/get` round-trip) with a durable Task lifecycle, `tasks/resubscribe` streaming, and push-notification config, advertised via a new `a2a` capability slot, so an OpenWOP-host-as-A2A-agent runs cross-host handoffs asynchronously instead of synchronously | Active |
 | RFC 0101 | Multi-party group conversation (shared transcript, speaker attribution) | Draft |
-| RFC 0102 | A2UI agent-authored interface surfaces (declarative cross-trust-boundary UI as an AI-envelope kind) | Active |
+| RFC 0102 | A2UI agent-authored interface surfaces (declarative cross-trust-boundary UI as a vendor-namespaced envelope kind) | Active |
 
 ## SDK Helper Coverage
 
