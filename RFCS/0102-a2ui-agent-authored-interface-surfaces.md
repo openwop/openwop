@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0102                                                            |
 | **Title**         | A2UI agent-authored interface surfaces (declarative cross-trust-boundary UI as an AI-envelope kind) |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-06-15                                                      |
-| **Updated**       | 2026-06-15                                                      |
+| **Updated**       | 2026-06-15 (Draft → **Active** — 7-day comment window waived by maintainer to unblock implementation; wire shape now locked per `RFCS/README.md` §"Status states". Open gaps G1/G2/G6 carry forward to the `Accepted` register sweep.) |
 | **Affects**       | `spec/v1/ai-envelope.md` (new optional advertised kind `ui.a2ui-surface`, alongside the `media.*` family) · **new `schemas/envelopes/ui.a2ui-surface.schema.json`** + `Capabilities.supportedEnvelopes`/`schemaVersions` advertisement · `schemas/capabilities.schema.json` (new OPTIONAL `a2ui` catalog-detail block — supplementary; no required field added) · `spec/v1/host-capabilities.md` (§ "A2UI surface support") · `SECURITY/invariants.yaml` (`a2ui-surface-no-code-exec`, `a2ui-action-confinement`) · new conformance scenarios · `INTEROP-MATRIX.md` (advertisement column) |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1                          |
 | **Supersedes**    | —                                                               |
