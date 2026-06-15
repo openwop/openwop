@@ -1,5 +1,19 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [1.26.0] — 2026-06-15 — RFC 0102 A2UI surface scenarios
+
+Ships the public conformance scenarios + the core payload schema for **RFC 0102 — A2UI agent-authored interface surfaces** (the core, advertised envelope kind `ui.a2ui-surface`), landed in openwop#716 (`e2b3a99b`). Minor bump per the scenario-add rule (5 net-new scenario files; suite 344 → 349). The vendored `schemas/envelopes/ui.a2ui-surface.schema.json` ships byte-identical to the corpus so adopting hosts can validate inbound surfaces with zero drift.
+
+### Added — RFC 0102 A2UI agent-authored interface surfaces (count 344 → 349)
+
+- **`a2ui-surface-shape.test.ts`** (NEW; always-on server-free) — Ajv2020 validation of the closed `ui.a2ui-surface` payload schema: a positive surface (closed day-1 catalog + a confined `resume`/`exchange` action) validates; an out-of-catalog component, an extra/script-bearing property, a missing `catalogVersion`/`surface`, an unenumerated `catalogVersion`, and an `action.target` outside `enum["resume","exchange"]` (or carrying an arbitrary URL) each fail. The structural half of `a2ui-action-confinement` and the enabling precondition for the render-side `a2ui-surface-no-code-exec` / `a2ui-surface-no-network-egress` reference-app probes.
+- **`a2ui-surface-degrades.test.ts`** (NEW) — `ui.a2ui-surface` is an optional/advertised kind, not a MUST-recognize universal kind; an unadvertised kind is `gated` (run survives, N6), never crashing the run. HTTP leg via `/v1/host/sample/envelope/accept`, soft-skips on 404.
+- **`a2ui-surface-version-refusal.test.ts`** (NEW) — the enumerated `catalogVersion` rejects an unadvertised version (→ `unknown_schema_version`); the surface schema carries no external `$ref` (self-contained for replay).
+- **`a2ui-surface-replay.test.ts`** (NEW) — all schema `$ref`s are internal, so a stored surface `:fork`/replays deterministically; same-`correlationId` + divergent `type` → `envelope_correlation_conflict`.
+- **`a2ui-untrusted-blocks-approval.test.ts`** (NEW) — a `meta.contentTrust:'untrusted'` surface is trust-gated and MUST NOT advance an approval interrupt (composition of `untrusted_content_blocks_approval`).
+
+The four behavioral legs soft-skip on 404 (host-pending; the `openwop-app` reference renderer is the render-side probe). New core schema `schemas/envelopes/ui.a2ui-surface.schema.json` vendored into the tarball; five SECURITY invariants added to the corpus (`a2ui-surface-no-code-exec`, `a2ui-action-confinement`, `a2ui-surface-no-network-egress`, `a2ui-surface-no-secret-rendering`, `a2ui-untrusted-blocks-approval`).
+
 ## [1.25.0] — 2026-06-14 — RFC 0099/0100 conformance scenarios
 
 Ships the public conformance scenarios for the RFC 0099 / RFC 0100 spec floor landed in openwop#705 (`b1678801`). Those scenario files were merged to the repo **after** `1.24.0` was published to npm, so `1.24.0` does not contain them; this bump republishes the suite at content parity with the corpus so 0099/0100 hosts can run conformance. (Versions `1.23.0` and `1.24.0` were RFC 0095 connection-packs and RFC 0096/0097/0098 floor bumps respectively; their CHANGELOG entries were omitted at the time.)
