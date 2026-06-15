@@ -3,38 +3,49 @@
 | Field             | Value                                                           |
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0102                                                            |
-| **Title**         | A2UI agent-authored interface surfaces (declarative cross-trust-boundary UI as a vendor-namespaced envelope kind) |
+| **Title**         | A2UI agent-authored interface surfaces (declarative cross-trust-boundary UI as a core, advertised envelope kind) |
 | **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-06-15                                                      |
-| **Updated**       | 2026-06-15 (Draft → **Active** — 7-day window waived by maintainer to unblock implementation. **Amended in place at Active** the same day, per maintainer decision, to fold in a cross-session architecture review (`openwop-1`): kind is now **vendor-namespaced** (was a core `ui.a2ui-surface` — withdrawn, §A); `catalogVersion` is host-**enumerated** not free-string (§A/§C); the top-level `a2ui` capability block is **dropped** in favor of `supportedEnvelopes`/`schemaVersions` (§C); the invariant set expands to **five** + a threat-model update (§Conformance). Wire shape now stable at this revision.) |
-| **Affects**       | `spec/v1/ai-envelope.md` (§"A2UI surfaces" — a vendor-namespaced kind convention + the `surface` closed-shape + asset/egress discipline; **no new core envelope kind**) · `spec/v1/host-capabilities.md` (§"A2UI surface support" — how a host advertises the kind + its enumerated catalog versions) · **host-supplied** `schemas/envelopes/vendor.<host>.a2ui.surface.schema.json` (the RFC specifies the RECOMMENDED closed `surface` `oneOf` shape; openwop core ships no schema for a vendor kind) · `SECURITY/invariants.yaml` (5 rows, below) · `SECURITY/threat-model-prompt-injection.md` (new agent→user render surface) · new conformance scenarios · `INTEROP-MATRIX.md` (advertisement column) |
+| **Updated**       | 2026-06-15 (Draft → **Active** — 7-day window waived by maintainer to unblock implementation. **Amended in place at Active** the same day — twice — per maintainer decision. (1) A first cross-session review (`openwop-1`) was made *before that reviewer had read this RFC* and recommended vendor-namespacing; it landed (#715). (2) The reviewer then re-ran the review **with the landed RFC in hand**, reversed to **core**, and the maintainer ruled core. This revision restores the **core, advertised kind `ui.a2ui-surface`** (a portable content-primitive family beside `media.*`, §A), keeps `catalogVersion` host-**enumerated** (§A/§C), keeps advertisement via `supportedEnvelopes`/`schemaVersions` (§C), keeps the **five** invariants + threat-model update (§Conformance), and fixes the `surface` discriminator to **`anyOf` + single-string-enum** (was `oneOf`, banned by `ai-envelope.md` §"Schema discipline" for LLM-emitted payloads). Wire shape now stable at this revision.) |
+| **Affects**       | `spec/v1/ai-envelope.md` (new §"A2UI surfaces" — a **core, advertised** kind `ui.a2ui-surface` beside the `media.*` family + a carve-out clarification to §"Vendor-namespaced kinds") · `spec/v1/host-capabilities.md` (§"A2UI surface support" — how a host advertises the kind + its enumerated catalog versions) · new core `schemas/envelopes/ui.a2ui-surface.schema.json` (closed `surface` `anyOf` + enumerated `catalogVersion`) · `SECURITY/invariants.yaml` (5 rows, below) · `SECURITY/threat-model-prompt-injection.md` (new agent→user render surface) · new conformance scenarios · `INTEROP-MATRIX.md` (advertisement column) |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1                          |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
 
 > **Amendment note (2026-06-15).** This RFC was flipped to `Active` and then amended at
-> `Active` the same day — unusual, because `Active` normally locks the wire. Both were
-> explicit sole-steward maintainer decisions during the bootstrap phase (`GOVERNANCE.md`),
-> recorded here rather than silently editing the original rationale, per the project's
-> "correct, don't rewrite history" rule. The amendment strictly *narrows* the wire surface
-> (vendor-namespaced instead of a core carve-out), so it cannot break a client that hadn't
-> shipped yet. The pre-amendment shape (core `ui.a2ui-surface`) was never implemented.
+> `Active` the same day — twice — all explicit sole-steward maintainer decisions during the
+> bootstrap phase (`GOVERNANCE.md`), recorded here rather than silently rewriting history.
+> The sequence: (a) original Draft proposed a **core** `ui.a2ui-surface`; (b) a cross-session
+> architecture review (`openwop-1`) recommended **vendor-namespacing**, which landed (#715) —
+> but that review was made *before the reviewer had read this RFC* and rested on a literal
+> reading of `ai-envelope.md` §"Vendor-namespaced kinds" that overlooked the `media.*`
+> content-primitive carve-out; (c) the reviewer re-ran the review **with the RFC in hand**,
+> reversed to **core** (vendor-namespacing would defeat the cross-host portability this RFC
+> exists to deliver, and buys nothing on external-catalog stability that the enumerated
+> `catalogVersion` handle does not already buy), and the maintainer ruled **core**. This
+> revision is that ruling. No wire shipped under either intermediate shape — the reference
+> app's `vendor.openwop-app.a2ui.surface` is an explicitly-interim Phase-1 prototype
+> (`supported:false`) that switches to the core kind, so nothing breaks.
 
 ## Summary
 
-Define a portable **convention** for an agent to emit a declarative
-[A2UI](https://a2ui.org/) interface surface as a **vendor-namespaced** AI-envelope kind
-(`vendor.<host>.a2ui.surface`): a component tree built from a **host-pinned, pre-approved
-catalog**, with data bindings and actions. A consumer renders it with native widgets and
-routes user actions back to the producing agent **without executing any agent-supplied
-code**. The surface payload is a **closed** shape (`oneOf` over the host's day-1 component
-set), the target catalog is a **host-enumerated** version (not a free string), actions are
-**confined** to interrupt-resume / conversation-exchange, and untrusted-authored surfaces
-are gated by the existing `meta.contentTrust` + `untrusted_content_blocks_approval` rules.
-The kind advertises through the existing `supportedEnvelopes`/`schemaVersions` surface —
-no new capability block, no core envelope kind, no OpenAPI/AsyncAPI change. Everything is
-advertisement- or envelope-level and ignorable by existing clients.
+Define `ui.a2ui-surface` — an **optional, advertised** AI-envelope kind, **core and
+un-namespaced**, that sits beside the `media.{image,audio,file}` family (RFC 0055) as a
+portable *content primitive*: where `media.*` carries an image/audio/file, `ui.a2ui-surface`
+carries an **interactive** declarative [A2UI](https://a2ui.org/) surface — a component tree
+built from a **host-pinned, pre-approved catalog**, with data bindings and actions. A
+consumer renders it with native widgets and routes user actions back to the producing agent
+**without executing any agent-supplied code**. The surface payload is a **closed** shape
+(`anyOf` + single-string-enum discriminator over the day-1 component set — not `oneOf`,
+which `ai-envelope.md` §"Schema discipline" bans for LLM-emitted payloads), the target
+catalog is a **host-enumerated** version (not a free string), actions are **confined** to
+interrupt-resume / conversation-exchange, and untrusted-authored surfaces are gated by the
+existing `meta.contentTrust` + `untrusted_content_blocks_approval` rules. The kind
+advertises through the existing `supportedEnvelopes`/`schemaVersions` surface — no new
+capability block, no OpenAPI/AsyncAPI change. Everything is advertisement- or
+envelope-level and ignorable by existing clients (an unrecognizing consumer
+store-without-renders, exactly as for an unknown `media.*` kind).
 
 ## Motivation
 
@@ -62,35 +73,38 @@ on this RFC.
 
 ## Proposal
 
-### §A — `vendor.<host>.a2ui.surface` envelope kind (additive; the primary change)
+### §A — `ui.a2ui-surface` envelope kind (additive; the primary change)
 
-A2UI surfaces ride the **existing vendor-namespaced-kind mechanism** (`ai-envelope.md`
-§"Vendor-namespaced kinds": *"All non-universal kinds MUST be vendor-namespaced … core v1
-does not specify domain-specific kinds"*). This RFC does **not** add a core kind; it
-standardizes a *convention* any host MAY adopt under its own namespace, e.g.
-`vendor.openwop-app.a2ui.surface`. (A future core, un-namespaced `ui.*` family — a portable
-cross-host kind blessed like `media.*` — is explicitly deferred to its own carve-out RFC if
-cross-host demand proves it; see Alternatives §6.)
+Add an **optional, advertised** kind `ui.a2ui-surface`, **core and un-namespaced**, modeled
+exactly on the `media.*` family. This is a deliberate core carve-out, consistent with the
+line `ai-envelope.md` §"Vendor-namespaced kinds" actually draws: the MUST to vendor-namespace
+applies to **domain-specific** kinds (`prd.create`, `theme.create`); core reserves a small
+set of **portable content-primitive families** — `media.*` (RFC 0055), and now `ui.*`. A
+declarative surface assembled from a fixed catalog carries no business semantics; it is
+generic *interactive content*, the sibling of an image or a file, so it belongs on the core
+side of that line. (This RFC adds the carve-out clause to §"Vendor-namespaced kinds".) The
+core kind is what makes a surface **portable**: a remote A2A agent on host X emits one and a
+*different* consumer host Y renders it, because both resolve the same `type` discriminator
+and the same canonical schema — impossible if every host invented its own `vendor.*` prefix.
 
-A host that adopts the convention:
+A host that supports the kind:
 
-- Lists `vendor.<host>.a2ui.surface` in `Capabilities.supportedEnvelopes` and gives it a
-  `schemaVersions[…]` entry, and serves its per-kind schema at the canonical location
-  (`ai-envelope.md` §"Schema discipline"). It is **not** a MUST-recognize universal kind; a
-  consumer that doesn't recognize it **MUST** fall back to default (store-without-render)
+- Lists `ui.a2ui-surface` in `Capabilities.supportedEnvelopes` and gives it a
+  `schemaVersions["ui.a2ui-surface"]` entry. It is **not** a MUST-recognize universal kind; a
+  consumer that doesn't advertise it **MUST** fall back to default (store-without-render)
   rendering and **MUST NOT** fail the run (precedent: `artifact-type-store-without-render.test.ts`).
 
-Payload (RECOMMENDED closed shape the host's per-kind schema SHOULD use):
+Payload (canonical schema `schemas/envelopes/ui.a2ui-surface.schema.json`):
 
 ```jsonc
 {
-  "type": "vendor.openwop-app.a2ui.surface",
+  "type": "ui.a2ui-surface",
   "schemaVersion": 1,
   "envelopeId": "env-surface-1",
   "correlationId": "run-1:node-2:turn-0:abc123",
   "payload": {
     "catalogVersion": "0.9.1",          // REQUIRED; MUST be one the host advertises (enumerated, §C)
-    "surface": { /* closed oneOf over the host's day-1 component set */ },
+    "surface": { /* closed anyOf + single-string-enum discriminator over the day-1 component set */ },
     "reasoning": "…"                     // OPTIONAL per RFC 0030 §A (first property)
   },
   "partial": false,
@@ -101,8 +115,10 @@ Payload (RECOMMENDED closed shape the host's per-kind schema SHOULD use):
 Normative behavior:
 
 1. **Closed surface (H6).** `payload.surface` **MUST** validate against a **closed**
-   schema — a `oneOf` over the host's enumerated day-1 components, every object
-   `additionalProperties: false`. An open `surface` object is non-conformant: it would make
+   schema — an `anyOf` with a single-string-enum discriminator over the day-1 components,
+   every object `additionalProperties: false`. Schema authors **MUST NOT** use `oneOf`
+   (`ai-envelope.md` §"Schema discipline" — `oneOf` is rejected/dropped by Tier-1 strict
+   structured-output vendors). An open `surface` object is non-conformant: it would make
    `a2ui-surface-no-code-exec` unenforceable.
 2. **Closed catalog, fail-closed.** A consumer **MUST** render only components in the host's
    advertised catalog and **MUST** reject any out-of-catalog/malformed surface fail-closed
@@ -146,13 +162,13 @@ enum is the one non-clean-additive edge. No change to `meta.rendering` is propos
 ### §C — Advertisement via the existing surface (additive; no new block)
 
 There is **no** top-level `a2ui` capability block (the original draft's was removed — two
-discovery surfaces for one kind). A host advertises support exactly as every other kind
-does:
+discovery surfaces for one kind). A host advertises support exactly as every other advertised
+kind does:
 
-- `Capabilities.supportedEnvelopes` includes `vendor.<host>.a2ui.surface`.
-- `Capabilities.schemaVersions["vendor.<host>.a2ui.surface"]` gives the active schema version.
+- `Capabilities.supportedEnvelopes` includes `ui.a2ui-surface`.
+- `Capabilities.schemaVersions["ui.a2ui-surface"]` gives the active schema version.
 - The catalog detail a producer needs (which A2UI catalog versions + components the host
-  renders) is conveyed **on the per-kind schema itself** — the closed `surface` `oneOf`
+  renders) is conveyed **on the per-kind schema itself** — the closed `surface` `anyOf`
   *is* the component allowlist, and the schema's `catalogVersion` enum *is* the supported-
   version set. Discovery stays single-sourced; no peer of `agents`/`secrets`.
 
@@ -166,7 +182,7 @@ advertisement).
 |---|---|---|
 | P1 | §A payload, components all in the advertised closed set, `catalogVersion` advertised, `partial:false`, action resolves the open interrupt | Renders + collects resume value |
 | N1 | `surface` missing / `payload.catalogVersion` absent | **Fails** the host's per-kind schema |
-| N2 | `surface` carries an object outside the closed `oneOf` | **Fails** schema (`additionalProperties:false`) |
+| N2 | `surface` carries an object outside the closed `anyOf` | **Fails** schema (`additionalProperties:false`) |
 | N3 | `catalogVersion` the host doesn't advertise | **Refused** `unknown_schema_version` |
 | N4 | Action targets anything but resume/exchange, or opens a network request | **Rejected** (`a2ui-action-confinement` / `a2ui-surface-no-network-egress`) |
 | N5 | Untrusted-authored surface bound to an `approval` interrupt | Gate **blocked** (`untrusted_content_blocks_approval`) |
@@ -174,11 +190,16 @@ advertisement).
 
 ## Compatibility
 
-**Additive** per `COMPATIBILITY.md` §2.1 — and strictly *cleaner* than the original draft:
+**Additive** per `COMPATIBILITY.md` §2.1:
 
-- **§A** rides the existing vendor-namespaced-kind mechanism — no core kind, no enum
-  change, no existing envelope reshaped. A host that doesn't advertise it never emits or
-  receives it. This is the canonical additive profile (a new vendor kind).
+- **§A** adds a new **optional, advertised** core kind beside the `media.*` family — no
+  enum change, no existing envelope reshaped. A host that doesn't advertise it never emits
+  or receives it; an unrecognizing consumer store-without-renders. This is the canonical
+  additive profile (a new advertised kind, exactly like RFC 0055 added `media.*`).
+- The carve-out clause added to `ai-envelope.md` §"Vendor-namespaced kinds" is a
+  **clarification, not a relaxation**: it scopes the existing "MUST be vendor-namespaced"
+  to *domain* kinds and names the reserved core content-primitive families (`media.*`,
+  `ui.*`). No host relied on "`ui.*` is forbidden", so no interop guarantee is weakened.
 - **§B** — no change proposed.
 - **§C** — uses only existing required fields (`supportedEnvelopes`/`schemaVersions`); no
   new capability key.
@@ -199,7 +220,7 @@ precedent), `media-url-inline-cap.test.ts` + `aiEnvelope.correlationReplay.test.
 
 **New (capability-gated on the kind ∈ `supportedEnvelopes`):**
 
-1. `a2ui-surface-shape` — server-free Ajv2020 validation of the closed `oneOf` `surface`
+1. `a2ui-surface-shape` — server-free Ajv2020 validation of the closed `anyOf` `surface`
    schema; valid validates, open/extra props fail, missing `catalogVersion` fails.
 2. `a2ui-surface-degrades` — host without the kind store-without-renders, run survives.
 3. `a2ui-surface-version-refusal` — unadvertised `catalogVersion` → `unknown_schema_version`.
@@ -228,10 +249,14 @@ text-only rendering + action confinement are its mitigations.
 5. **Free-string `catalogVersion`.** Rejected (C3): an uncontrolled 5th version axis pinned
    to a pre-1.0 external standard breaks replay determinism. Host-enumerated + self-contained
    surface instead.
-6. **Core un-namespaced `ui.a2ui-surface` kind (the original draft).** Rejected by maintainer
-   review: a core kind is a deliberate carve-out (like `media.*` via RFC 0055), not justified
-   by analogy. Vendor-namespacing is the spec default; a portable core kind can come later via
-   its own carve-out RFC if cross-host demand proves it.
+6. **Vendor-namespaced `vendor.<host>.a2ui.surface` (interim #715 amendment).** Briefly
+   adopted, then rejected on re-review: vendor-namespacing demotes a portable cross-host
+   primitive to a per-host private feature (O(N) consumer↔producer coordination vs O(1)),
+   defeating the cross-host portability in §Motivation; and it does not insulate core from
+   the external A2UI catalog's instability — the enumerated `catalogVersion` handle (§A.3)
+   does that, identically, whether the kind is core or vendor. A core kind beside `media.*`
+   is the additive, interoperable vehicle. The reference app's interim vendor kind remains a
+   Phase-1 prototype that switches to `ui.a2ui-surface`.
 
 ## Unresolved questions
 
@@ -239,31 +264,33 @@ text-only rendering + action confinement are its mitigations.
 2. ~~`catalogVersion` free-string vs registry?~~ **Resolved: host-enumerated** advertised
    set (§A.3/§C); settles this RFC's G2 and the existing open gap **E3** (`ai-envelope.md`
    §"Schema version advertisement").
-3. **Minimum component set.** Does the convention mandate a normative minimum day-1 set a
-   conforming `*.a2ui.surface` SHOULD support, or is each host's closed `oneOf` free to
-   differ? (Affects cross-host predictability.)
+3. **Minimum component set.** Does the kind mandate a normative minimum day-1 set a
+   conforming `ui.a2ui-surface` host SHOULD support, or is each host's closed `anyOf` free
+   to differ? (Affects cross-host predictability — sharper now that the kind is core.)
 4. **Action ↔ resume mapping shape.** Normatively specify how `(actionId, collected field
    values)` maps into the interrupt `resumeValue`, or leave it to the surface author + the
    interrupt's answer schema?
-5. **Future core carve-out.** What evidence (cross-host adoption count?) should trigger
-   promoting the convention to a core `ui.*` kind (Alternatives §6)?
+5. **Further `ui.*` family members.** What other portable interactive primitives (beyond a
+   surface) might join the `ui.*` family, and what evidence should gate each addition?
 
 ## Implementation notes (non-normative)
 
-- **Reference implementation:** ADR 0051 (`openwop-app`), card type
-  `vendor.openwop-app.a2ui.surface`. Wires over the chat **card registry** + the `host.chat`
-  `emitCard`/`updateCard` surface; actions map onto the existing `onAction('resolve', …)`
-  interrupt contract — no new HITL, RPC, or route. **Phase 1 (renderer + closed catalog + 9
-  tests) shipped: openwop-app#316.** A `core.chat.emitSurface` node is ergonomic sugar over
-  `emitCard`.
-- **Effort:** host per-kind schema + spec prose ≈ S; reference-app renderer ≈ M; conformance
+- **Reference implementation:** ADR 0051 (`openwop-app`). Wires over the chat **card
+  registry** + the `host.chat` `emitCard`/`updateCard` surface; actions map onto the existing
+  `onAction('resolve', …)` interrupt contract — no new HITL, RPC, or route. **Phase 1
+  (renderer + closed catalog + 9 tests) shipped under the interim vendor kind
+  `vendor.openwop-app.a2ui.surface` (`supported:false`): openwop-app#316.** Phase 2 switches
+  the card type to the core `ui.a2ui-surface` and advertises it once this RFC's core schema
+  lands. A `core.chat.emitSurface` node is ergonomic sugar over `emitCard`.
+- **Effort:** core schema + spec prose ≈ S; reference-app renderer ≈ M; conformance
   + threat-model ≈ S.
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (`ai-envelope.md` §"A2UI surfaces" + `host-capabilities.md`).
-- [ ] Host-supplied per-kind schema documents the closed `surface` `oneOf` + enumerated
-      `catalogVersion`; advertisement via `supportedEnvelopes`/`schemaVersions`.
+- [ ] Spec text merged (`ai-envelope.md` §"A2UI surfaces" + §"Vendor-namespaced kinds"
+      carve-out clause + `host-capabilities.md`).
+- [ ] Core schema `schemas/envelopes/ui.a2ui-surface.schema.json` — closed `surface` `anyOf`
+      + enumerated `catalogVersion`; advertisement via `supportedEnvelopes`/`schemaVersions`.
 - [ ] `SECURITY/invariants.yaml`: the **five** rows, each with a public conformance test;
       `threat-model-prompt-injection.md` updated.
 - [ ] ≥1 conformance scenario per the five above (capability-gated); two as reference-app probes.

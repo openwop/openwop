@@ -345,9 +345,31 @@ Per-kind payload schemas live at the canonical location (`schemas/envelopes/medi
 
 ---
 
+## A2UI surfaces (RFC 0102)
+
+`ui.a2ui-surface` is an **optional, advertised** kind for an LLM-emitted (or host-emitted) **declarative interactive UI surface** — a component tree built from a host-pinned [A2UI](https://a2ui.org/) catalog, with data bindings and actions. It is the **interactive** sibling of the `media.*` family: where `media.image` carries an image, `ui.a2ui-surface` carries a form/panel a consumer renders with native widgets and whose actions route the collected data back to the producing agent **without executing any agent-supplied code**. Like `media.*`, it is **not** one of the four MUST-recognize universal kinds — a host emits and advertises it only if it renders A2UI; a consumer that doesn't advertise it **MUST** fall back to store-without-render and **MUST NOT** fail the run.
+
+The per-kind payload schema lives at the canonical location (`schemas/envelopes/ui.a2ui-surface.schema.json`); a host that supports it lists `ui.a2ui-surface` in `Capabilities.supportedEnvelopes` + `schemaVersions`. The payload shape is `{ catalogVersion, surface, reasoning? }`:
+
+- **`catalogVersion`** (REQUIRED) — the A2UI catalog version the surface targets. It **MUST** be a version the host advertises as supported (an enumerated set carried by the schema's `catalogVersion` enum — never a free string the producer invents). An unknown or higher version **MUST** be refused with `unknown_schema_version` (§"Schema version advertisement"). Pinning the version in the payload keeps a `:fork`/replay deterministic after the external A2UI standard ships a breaking version.
+- **`surface`** (REQUIRED) — the A2UI surface document: a **closed** component tree. Its schema **MUST** be an `anyOf` with a single-string-enum discriminator over the host's day-1 component set, every object `additionalProperties: false` (per §"Schema discipline" — `oneOf` is banned for LLM-emitted payloads). The closed shape is what makes `a2ui-surface-no-code-exec` enforceable; an open `surface` object is non-conformant. The surface **MUST** be **self-contained** — renderable from the payload alone, never a live reference into an external catalog.
+- **`reasoning`** (OPTIONAL) — per RFC 0030 §A, the OPTIONAL first property.
+
+Normative rendering + safety rules:
+
+1. **Closed catalog, fail-closed.** A consumer **MUST** render only components in the host's advertised catalog and **MUST** reject any out-of-catalog or malformed surface fail-closed (render a fallback notice). It **MUST NOT** execute or evaluate any agent-supplied code, script, expression, or markup. *(SECURITY invariant `a2ui-surface-no-code-exec`.)*
+2. **Action confinement.** A surface action, when invoked by the user, **MUST** resolve to exactly one host-allowlisted target — a run interrupt resume (`interrupt.md`; the collected data becomes the `resumeValue`) or a conversation exchange (RFC 0005). It **MUST NOT** invoke any other host endpoint, side effect, or RPC, and **MUST NOT** initiate network egress from the surface. *(Invariants `a2ui-action-confinement`, `a2ui-surface-no-network-egress`.)*
+3. **Streaming.** With `partial: true`, a consumer MAY render progressively but **MUST NOT** enable any action until the envelope finalizes (`partial: false`).
+4. **Replay determinism.** The surface envelope replays by `correlationId` (§"Replay determinism"); on recovery/`:fork` the cached outcome is returned and the surface is **never** regenerated. Durable state is exactly `(surface envelope, submitted resume value)`.
+5. **Trust boundary + redaction.** A surface emitted by a node that consumed untrusted MCP/A2A content **MUST** carry `meta.contentTrust: 'untrusted'` (§"Trust boundary"); the existing `untrusted_content_blocks_approval` rule then blocks it from advancing an `approval` interrupt. The payload is walked by the SR-1 redaction harness (§"Redaction") — no secret material renders. *(Invariants `a2ui-untrusted-blocks-approval`, `a2ui-surface-no-secret-rendering`.)* Any asset the surface references obeys the `media-asset-url-tenant-scoped` discipline (§"Asset-URL discipline").
+
+---
+
 ## Vendor-namespaced kinds
 
-All non-universal kinds MUST be vendor-namespaced per `host-extensions.md` §"Canonical-prefix table." Core v1 does **not** specify domain-specific kinds (`prd.create`, `theme.create`, `tasks.create`, etc.). A host that wishes to advertise these kinds MUST namespace them — e.g., `vendor.myndhyve.prd.create`, `vendor.myndhyve.theme.create` — and supply the per-kind JSON Schema at the canonical schema location (see §Schema discipline).
+All non-universal **domain-specific** kinds MUST be vendor-namespaced per `host-extensions.md` §"Canonical-prefix table." Core v1 does **not** specify domain-specific kinds (`prd.create`, `theme.create`, `tasks.create`, etc.). A host that wishes to advertise these kinds MUST namespace them — e.g., `vendor.myndhyve.prd.create`, `vendor.myndhyve.theme.create` — and supply the per-kind JSON Schema at the canonical schema location (see §Schema discipline).
+
+**Reserved core content-primitive families (exception).** The MUST above scopes to *domain* kinds. Core spec MAY define a small set of **portable, content-primitive** kind families — content with no business semantics that any host can render — and these are un-namespaced and shipped by core: the `media.*` family (`media.{image,audio,file}`, RFC 0055 §C) and the `ui.*` family (`ui.a2ui-surface`, RFC 0102 — see §"A2UI surfaces"). These remain **optional, advertised** kinds (not MUST-recognize universal kinds); a host emits and advertises them only if it produces that content, and an unrecognizing consumer falls back to store-without-render. The distinction is deliberate: a portable primitive any host could render belongs in core — so a surface or an image emitted by a remote A2A agent renders identically on any consumer — while domain kinds stay vendor-owned. New core families are added only by RFC.
 
 The shorter, unnamespaced kind strings (`prd.create`, `theme.create`, `tasks.create`) MAY appear in `Capabilities.supportedEnvelopes` for **backward compatibility** with pre-v1.x hosts that shipped before this spec; conformant v1.x hosts SHOULD prefer the namespaced form. Migration guidance lives in `docs/migration/v1.0-to-v1.1.md`.
 

@@ -2042,3 +2042,83 @@ invariants:
       `additionalProperties:false`; the capability-gated behavioral leg
       (`a2a.pushNotifications`) asserts a `pushConfig.url` at a private address
       is refused, reusing the RFC 0093 webhook-egress-guard fixture posture.
+
+  # ===== RFC 0102 — A2UI agent-authored interface surfaces =====
+
+  - id: a2ui-action-confinement
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/a2ui-surface-shape.test.ts
+    note: |
+      RFC 0102 §A.2 / ai-envelope.md §"A2UI surfaces" rule 2. A `ui.a2ui-surface`
+      action MUST resolve to exactly one host-allowlisted target — a run interrupt
+      resume (interrupt.md) or a conversation exchange (RFC 0005) — and MUST NOT
+      invoke any other host endpoint, side effect, or RPC. The closed
+      `ui.a2ui-surface.schema.json` enforces this structurally: `action.button.action`
+      is `{ target: enum["resume","exchange"] }` with `additionalProperties:false`,
+      so a surface that targets an arbitrary URL/endpoint fails per-kind schema
+      validation. Public test: the server-free Ajv2020 leg in `a2ui-surface-shape.test.ts`
+      asserts a valid resume/exchange action validates and an out-of-enum / extra-prop
+      action target is rejected.
+
+  - id: a2ui-untrusted-blocks-approval
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/a2ui-untrusted-blocks-approval.test.ts
+    note: |
+      RFC 0102 §A.5. A `ui.a2ui-surface` emitted by a node that consumed untrusted
+      MCP/A2A content MUST carry `meta.contentTrust: 'untrusted'`, and the existing
+      `untrusted_content_blocks_approval` rule then blocks that surface from advancing
+      an `approval` interrupt — a prompt-injected surface cannot drive an approval gate.
+      Composition of the existing untrusted-content rule for this kind; public test
+      `a2ui-untrusted-blocks-approval.test.ts` asserts an untrusted-marked surface bound
+      to an approval interrupt is refused.
+
+  - id: a2ui-surface-no-secret-rendering
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/redaction.test.ts
+    note: |
+      RFC 0102 §A.5 (SR-1 carry-forward). A `ui.a2ui-surface` payload is walked by the
+      same SR-1 redaction harness as every envelope payload (ai-envelope.md §"Redaction"),
+      so no secret material renders in a surface. This is a specialization of
+      `secret-leakage-eventlog-payload`, which `redaction.test.ts` verifies applies to
+      ALL envelope payloads; the a2ui payload carries only text/label/binding fields
+      (closed schema) and no opaque blob field, so there is no secret-bearing channel to
+      bypass redaction.
+
+  - id: a2ui-surface-no-code-exec
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - openwop-app:frontend/react/src/chat/a2ui/__tests__/no-code-exec.test.ts
+    note: |
+      RFC 0102 §A.1 / ai-envelope.md §"A2UI surfaces" rule 1. A consumer rendering a
+      `ui.a2ui-surface` MUST render only components in the host's advertised catalog and
+      MUST NOT execute or evaluate any agent-supplied code, script, expression, or markup;
+      an out-of-catalog/malformed surface renders fail-closed (fallback notice). This is a
+      render-side guarantee the server-oriented conformance suite cannot observe — it ships
+      as a suite-version requirement with a reference-app client probe (openwop-app, ADR
+      0051). The closed `anyOf` `surface` schema (verified server-free in
+      `a2ui-surface-shape.test.ts`) is the enabling precondition: a surface that smuggles a
+      script-bearing field fails schema validation before it can reach a renderer.
+
+  - id: a2ui-surface-no-network-egress
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - openwop-app:frontend/react/src/chat/a2ui/__tests__/no-egress.test.ts
+    note: |
+      RFC 0102 §A.2. A rendered `ui.a2ui-surface` MUST NOT initiate any network egress
+      (fetch/beacon/img-to-attacker-URL) — data-exfil via an injected action is the threat.
+      Render-side guarantee, reference-app client probe (suite-version requirement). The
+      schema's confined `action.target` enum (no arbitrary URL) is the structural
+      precondition verified server-free in `a2ui-surface-shape.test.ts`.
