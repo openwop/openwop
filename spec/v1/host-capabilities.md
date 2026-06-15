@@ -215,6 +215,16 @@ ctx.aiEnvelope.await({
 
 **Relationship to `spec/v1/ai-envelope.md` (DRAFT v1.x).** The `generate()` return shape above is a **projection** of the full `AIEnvelope` document defined in `ai-envelope.md` — it surfaces the fields a node pack typically consumes (`envelopeType`, `payload`, `envelopeId`, `usage`, `model`) without obliging packs to handle every envelope-level concern (`correlationId`, `meta.source`, `meta.contentTrust`, `partial`). When the host accepts the emission for engine processing per `ai-envelope.md` §"Production flow," it wraps the projection back into a full envelope before applying validation, contract gating, redaction, and dedup. A future v1.x evolution MAY widen the projection to surface additional envelope-level fields to packs that opt in; the current narrow shape is preserved for backward compatibility with packs written against pre-DRAFT-v1.x hosts.
 
+### A2UI surface support (RFC 0102)
+
+A host that renders agent-authored A2UI surfaces advertises the **optional, advertised** kind `ui.a2ui-surface` (`ai-envelope.md` §"A2UI surfaces") exactly as it advertises any other advertised envelope kind — there is **no** separate `host.a2ui` capability block:
+
+- It lists `ui.a2ui-surface` in `Capabilities.supportedEnvelopes`, and gives it a `Capabilities.schemaVersions["ui.a2ui-surface"]` entry.
+- The **supported A2UI catalog versions** and the **day-1 component allowlist** are carried by the per-kind schema itself, not by a separate capability field: the `catalogVersion` enum in `schemas/envelopes/ui.a2ui-surface.schema.json` *is* the supported-version set, and the closed `surface` `anyOf` *is* the component allowlist. Discovery stays single-sourced.
+- A host **SHOULD** advertise `ui.a2ui-surface` only when its renderer actually renders the enumerated catalog versions — capability honesty; a host running with `OPENWOP_REQUIRE_BEHAVIOR=true` fails a dishonest advertisement.
+
+`ui.a2ui-surface` is **not** a MUST-recognize universal kind: a host that does not render A2UI simply omits it from `supportedEnvelopes`, and a consumer receiving an unrecognized `ui.a2ui-surface` falls back to store-without-render (it MUST NOT fail the run). Requires `host.aiEnvelope: supported`.
+
 ---
 
 ## Model-capability declarations
