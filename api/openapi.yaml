@@ -77,6 +77,8 @@ tags:
     description: Audit-log integrity verification (gated on the `openwop-audit-log-integrity` profile).
   - name: prompts
     description: Prompt-template library — list, fetch, render, mutate (RFC 0028; gated on `capabilities.prompts.*`).
+  - name: content
+    description: Localized authored content — public delivery + tenant-scoped admin CRUD (RFC 0103; gated on `capabilities.content.supported`).
   - name: host
     description: Host-capability resources — e.g. the RFC 0059 agent workspace file store (gated on `capabilities.workspace.*`).
   - name: packs-test
@@ -540,6 +542,219 @@ paths:
             application/json:
               schema:
                 $ref: '../schemas/error-envelope.schema.json'
+
+  # ── Localized content surface (RFC 0103) ─────────────────────────────
+  # Public, cacheable delivery + tenant-scoped admin CRUD for authored
+  # localized content (pages → sections). Locale on the public path is
+  # negotiated via `Accept-Language` per the Stable i18n.md annex (no
+  # `?locale=`); admin writes target a locale in the body. Gated on
+  # `capabilities.content.supported: true` (requires `i18n.supported`).
+  # Hosts without the capability return `501 capability_not_provided`.
+  /v1/content/pages/{slug}:
+    get:
+      tags: [content]
+      # Public delivery: anonymous-capable, cacheable. Tenant is host-resolved
+      # (credential-derived when authenticated; host-defined when anonymous,
+      # localized-content.md §F). Clears global ApiKeyAuth like getCapabilities.
+      security: []
+      summary: Deliver a published content page resolved for the negotiated locale (RFC 0103 §D).
+      description: |
+        Resolves the published page `slug` for the locale negotiated from
+        `Accept-Language` (i18n.md fallback: q-value order → language family →
+        `content.baseLocale`), applies the per-section field merge
+        (`localized-content.md` §C), and returns the already-merged sections in
+        render order. Sets `Content-Language` to the locale used,
+        `Vary: Accept-Language, Accept-Encoding`, and
+        `Cache-Control: public, max-age=300, stale-while-revalidate=3600`.
+        Serves `status: "published"` content only. Tenant is host-resolved
+        (`localized-content.md` §F): credential-derived when authenticated,
+        host-defined (e.g. domain) when anonymous. A `slug` absent for the
+        resolved tenant returns the same `404` as a nonexistent slug (no
+        cross-tenant enumeration).
+      operationId: getContentPage
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string, pattern: '^[a-z][a-z0-9-]*$' }
+          description: The page slug.
+        - name: Accept-Language
+          in: header
+          required: false
+          schema: { type: string }
+          description: BCP-47 preference list; authoritative for locale selection (i18n.md). A malformed value MUST NOT 400.
+      responses:
+        '200':
+          description: The resolved, published page for the negotiated locale.
+          headers:
+            Content-Language:
+              schema: { type: string }
+              description: The BCP-47 locale actually used (equals the response `locale`).
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/localized-content-page-response.schema.json'
+        '404': { $ref: '#/components/responses/NotFound' }
+        '501':
+          description: 'Host does not advertise capabilities.content.supported (RFC 0103).'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+
+  /v1/content/pages:
+    get:
+      tags: [content]
+      summary: List content pages for the caller's tenant (RFC 0103 §D, admin).
+      description: |
+        Tenant-scoped admin listing of pages (draft + published). Requires a
+        principal with `content.read` scope.
+      operationId: listContentPages
+      responses:
+        '200':
+          description: The caller-tenant's pages.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '../schemas/localized-content-page.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '501':
+          description: 'Host does not advertise capabilities.content.supported (RFC 0103).'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+    post:
+      tags: [content]
+      summary: Create a content page (RFC 0103 §D, admin).
+      description: Tenant-scoped page creation. Requires `content.write` scope.
+      operationId: createContentPage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/localized-content-page.schema.json'
+      responses:
+        '201':
+          description: The created page.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/localized-content-page.schema.json'
+        '400':
+          description: 'Invalid request (e.g. baseLocale in supportedLocales, or a malformed locale/slug).'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /v1/content/pages/{pageId}/sections/{sectionId}:
+    put:
+      tags: [content]
+      summary: Upsert a section's base or per-locale fields (RFC 0103 §D, admin).
+      description: |
+        Locale-targeted write: `locale == content.baseLocale` upserts the
+        section's base `data`; any other (BCP-47-subset) locale upserts
+        `localizations[locale]`. Tenant-scoped; requires `content.write`.
+      operationId: putContentSection
+      parameters:
+        - name: pageId
+          in: path
+          required: true
+          schema: { type: string, minLength: 1 }
+        - name: sectionId
+          in: path
+          required: true
+          schema: { type: string, minLength: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [locale, data]
+              properties:
+                locale:
+                  type: string
+                  pattern: '^[a-z]{2}(-[A-Z]{2})?$'
+                  description: Target locale; baseLocale upserts `data`, else `localizations[locale]`.
+                data:
+                  type: object
+                  additionalProperties: true
+                  description: The field overlay for the target locale.
+      responses:
+        '200':
+          description: The updated section record.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/localized-content-section.schema.json'
+        '400':
+          description: 'Invalid request (e.g. baseLocale in supportedLocales, or a malformed locale/slug).'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/content/settings:
+    get:
+      tags: [content]
+      summary: Read the tenant's content language settings (RFC 0103 §B, admin).
+      description: Tenant-scoped read of `{ baseLocale, supportedLocales, autoTranslateOnPublish }`. Requires `content.read`.
+      operationId: getContentSettings
+      responses:
+        '200':
+          description: The tenant's language settings.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/localized-content-language-settings.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '501':
+          description: 'Host does not advertise capabilities.content.supported (RFC 0103).'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+    put:
+      tags: [content]
+      summary: Update the tenant's content language settings (RFC 0103 §B, admin).
+      description: |
+        Tenant-scoped settings update. The invariant `baseLocale ∉
+        supportedLocales` MUST hold (else `400`). Requires `content.write`.
+      operationId: putContentSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/localized-content-language-settings.schema.json'
+      responses:
+        '200':
+          description: The updated language settings.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/localized-content-language-settings.schema.json'
+        '400':
+          description: 'Invalid request (e.g. baseLocale in supportedLocales, or a malformed locale/slug).'
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-envelope.schema.json'
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
 
   # ── Durable A2A task read seam (RFC 0100) ────────────────────────────
   # Host-extension convenience read of the persisted A2ATaskState projection

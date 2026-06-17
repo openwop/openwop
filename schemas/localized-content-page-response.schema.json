@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openwop.dev/spec/v1/localized-content-page-response.schema.json",
+  "title": "LocalizedContentPageResponse",
+  "description": "RFC 0103 (spec/v1/localized-content.md §D). The resolved delivery response for `GET /v1/content/pages/{slug}`. `locale` is the negotiated locale (equals the `Content-Language` response header). `sections[]` carry the ALREADY-MERGED section bodies — resolution (the per-section field merge §C) happened server-side, so no `localizations` map appears in the response. Only `published`, `enabled` sections are present, in render order.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "generatedAt", "locale", "slug", "page", "sections"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Response schema version marker (e.g. `\"1\"`)."
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the resolved response was generated."
+    },
+    "locale": {
+      "type": "string",
+      "pattern": "^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8}){0,3}$",
+      "description": "The negotiated locale actually used (BCP-47). Equals the `Content-Language` response header."
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "The requested page slug."
+    },
+    "page": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pageId", "slug", "name"],
+      "description": "Resolved page metadata (status omitted — only published pages are delivered).",
+      "properties": {
+        "pageId": { "type": "string", "minLength": 1 },
+        "slug": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "name": { "type": "string", "minLength": 1 },
+        "seo": { "type": "object", "additionalProperties": true }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "description": "Resolved sections in render order; each body is the merged result, not the raw record.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sectionId", "sectionType", "data"],
+        "properties": {
+          "sectionId": { "type": "string", "minLength": 1 },
+          "sectionType": { "type": "string", "minLength": 1 },
+          "data": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "The merged section body for the negotiated locale (exact → family → base shallow overlay)."
+          }
+        }
+      }
+    }
+  }
+}

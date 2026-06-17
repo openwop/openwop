@@ -251,6 +251,19 @@ Hosts that advertise `capabilities.prompts.endpointsSupported: true` per `prompt
 | `DELETE` | `/v1/prompts/{templateId}` | API key | `prompts:write` | Delete a user-source template; `403` on host-built-in or pack-sourced. Mutable libraries only.                                                                                                |
 | `POST`   | `/v1/prompts:render`       | API key | `prompts:read`  | Render a template against supplied variable bindings; returns composed body + sha256 hash + per-variable hashes. Deterministic-hash invariant per RFC 0027 §F. Does NOT dispatch an LLM call. |
 
+### Localized content surface (RFC 0103; gated on `capabilities.content.supported`)
+
+Hosts that advertise `capabilities.content.supported: true` (which requires `i18n.supported`) serve the authored-content surface per `localized-content.md`. The public delivery path is anonymous-capable and cacheable; locale is negotiated from `Accept-Language` (no `?locale=`). Admin paths are tenant-scoped. Hosts without the advertisement return `501 capability_not_provided`.
+
+| Method   | Path                                                  | Auth    | Scope           | Purpose                                                                                                                              |
+| -------- | ----------------------------------------------------- | ------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`    | `/v1/content/pages/{slug}`                            | None    | None            | Public delivery — resolve a published page for the negotiated locale (§C merge); sets `Content-Language` + `Vary` + `Cache-Control`. |
+| `GET`    | `/v1/content/pages`                                   | API key | `content:read`  | Admin list of the caller-tenant's pages (draft + published).                                                                        |
+| `POST`   | `/v1/content/pages`                                   | API key | `content:write` | Create a content page.                                                                                                              |
+| `PUT`    | `/v1/content/pages/{pageId}/sections/{sectionId}`     | API key | `content:write` | Locale-targeted upsert — `{ locale, data }` writes base `data` (locale==baseLocale) or `localizations[locale]`.                     |
+| `GET`    | `/v1/content/settings`                                | API key | `content:read`  | Read the tenant's language settings (`baseLocale`/`supportedLocales`/`autoTranslateOnPublish`).                                     |
+| `PUT`    | `/v1/content/settings`                                | API key | `content:write` | Update language settings; `baseLocale ∉ supportedLocales` MUST hold.                                                                |
+
 ### Pack-registry test-mode namespace (RFC 0025; gated on `capabilities.packs.testMode`)
 
 Hosts that advertise `capabilities.packs.testMode.supported: true` per `node-packs.md` §"Test-mode registry namespace" expose a mirror surface against an isolated catalog so the conformance suite can exercise the 19-code publish error catalog without `packs:publish` scope on the real registry. Hosts without the advertisement return `404 Not Found` for every path below. The endpoints mirror the production `/v1/packs/*` PUT/GET/DELETE/sig surface verbatim — same request bodies, response shapes, status codes, and error code vocabulary.

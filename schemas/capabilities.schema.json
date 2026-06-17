@@ -2052,6 +2052,32 @@
       },
       "additionalProperties": false
     },
+    "content": {
+      "type": "object",
+      "description": "RFC 0103 (spec/v1/localized-content.md). Localized authored content (pages → sections) advertisement. Reuses the i18n annex's Accept-Language/Content-Language negotiation; it does NOT redeclare negotiation. Requires `i18n.supported: true`. `baseLocale` MUST equal `capabilities.i18n.defaultLocale`; `({baseLocale} ∪ supportedLocales)` MUST be a subset of `capabilities.i18n.supportedLocales`; `baseLocale` MUST NOT appear in `supportedLocales`. Hosts that omit this block serve no content surface; the conformance scenarios skip cleanly.",
+      "additionalProperties": false,
+      "required": ["supported", "baseLocale", "supportedLocales"],
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Host serves the localized-content surface (`GET /v1/content/pages/{slug}` + tenant-scoped admin CRUD). Requires `i18n.supported: true`."
+        },
+        "baseLocale": {
+          "type": "string",
+          "pattern": "^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8}){0,3}$",
+          "description": "The locale section `data` is authored in. MUST equal `capabilities.i18n.defaultLocale`."
+        },
+        "supportedLocales": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8}){0,3}$"
+          },
+          "description": "BCP 47 tags the host has authored content translations for. MUST NOT contain `baseLocale`; `({baseLocale} ∪ supportedLocales)` MUST be a subset of `i18n.supportedLocales`."
+        }
+      }
+    },
     "portability": {
       "type": "object",
       "description": "RFC 0098 (`Active`). Export/import of a tenant's reusable estate (agents 0070, packs 0003/0013, prompt templates 0027, connection *refs* 0045/0095, schedules 0052, roster/org-chart 0086/0087). An export bundle carries NO credential values — only refs to be re-bound at the destination (RFC 0046/0079). Import maps the estate onto the destination's RFC 0048 identity, MUST offer a no-write dry-run plan, MUST be idempotent, and is gated by an RFC 0049 scope. A host advertising this serves `/v1/host/sample/{export,import}` (promotable to `/v1/{export,import}`) and emits the content-free `import.applied` event. Hosts that omit this block neither export nor import; the conformance scenarios skip cleanly.",

@@ -1,5 +1,13 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [1.27.0] — 2026-06-17 — RFC 0103 localized-content scenarios
+
+Ships the public conformance scenario + the four content schemas for **RFC 0103 — Localized Content Surface** (the capability-gated `content` surface that reuses the Stable `i18n.md` annex's negotiation), graduated to `Accepted` on dual non-steward host evidence (openwop-app reference + MyndHyve witness). Minor bump per the scenario-add rule (1 net-new scenario file; suite 349 → 350).
+
+### Added — RFC 0103 localized content surface (count 349 → 350)
+
+- **`localized-content-delivery.test.ts`** (NEW; always-on server-free + capability-gated behavioral) — Layer A asserts the `content` capability block shape, the four content schemas (`localized-content-{section,page,language-settings,page-response}.schema.json`) compile + round-trip conforming instances and reject malformed ones (base-locale-cased `localizations` key, underscore key, bad `slug`, out-of-enum `status`, missing required), the §C `resolveSection` per-section field merge (exact → language-family → base, shallow overlay; partial-translation fall-through), and the §A capability-coherence predicate (content requires i18n; `baseLocale == i18n.defaultLocale`; `({baseLocale} ∪ supportedLocales) ⊆ i18n.supportedLocales`; `baseLocale ∉ supportedLocales`). Doubles as the public test for the three protocol-tier SECURITY invariants `content-published-cache-no-draft`, `content-response-tenant-scoped`, `content-no-cross-tenant-enumeration`. Layer B (gated on `capabilities.content.supported` via `behaviorGate('openwop-content', …)`) asserts live advertisement coherence; the host-pending behavioral legs (malformed `Accept-Language` → base locale, `Content-Language` reflects, published-only delivery, tenant isolation, no cross-tenant enumeration) soft-skip without a live `GET /v1/content/pages/{slug}` target.
+
 ## [1.26.0] — 2026-06-15 — RFC 0102 A2UI surface scenarios
 
 Ships the public conformance scenarios + the core payload schema for **RFC 0102 — A2UI agent-authored interface surfaces** (the core, advertised envelope kind `ui.a2ui-surface`), landed in openwop#716 (`e2b3a99b`). Minor bump per the scenario-add rule (5 net-new scenario files; suite 344 → 349). The vendored `schemas/envelopes/ui.a2ui-surface.schema.json` ships byte-identical to the corpus so adopting hosts can validate inbound surfaces with zero drift.

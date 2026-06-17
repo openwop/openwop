@@ -4,6 +4,16 @@ Working document (not normative). Likelihood × Impact, each H/M/L. Critical/Hig
 carry a named mitigation owner. Per `RFCS/README.md`, open rows gate the `Accepted` flip and
 must be swept.
 
+**Register sweep — Active → Accepted (2026-06-17).** All High/Critical rows are mitigated by
+shipped artifacts: the draft-leak / tenant-isolation / no-enumeration risks are now backed by
+the three protocol-tier SECURITY invariants (`content-published-cache-no-draft`,
+`content-response-tenant-scoped`, `content-no-cross-tenant-enumeration`) with the public test
+`localized-content-delivery.test.ts`; the second-locale-mechanism risk is closed by the §C
+reuse + the forbidden-`?locale=` exclusion; merge-drift is closed by the shared normative
+`resolveSection` + its conformance legs; the `Active`-locks-shape risk is retired by two
+independent non-steward host implementations (openwop-app + MyndHyve) landing against the
+verbatim names with zero `type=blocked`. No open High/Critical rows remain.
+
 | ID | Risk | Likelihood | Impact | Score | Mitigation | Owner | Status |
 |----|------|------------|--------|-------|------------|-------|--------|
 | R1 | **Draft content leaks via the public cache.** A draft section is written into a shared/public cache entry and served from a cached `published` response. | M | H | **High** | RFC §F MUST: public path serves `status:"published"` only; draft MUST NOT enter any public response or shared cache; cache key scoped so a draft can't be served from a cached published entry. Wire into the SECURITY-invariant coverage check + conformance scenario 6. | Security Architect | Open — confirm cache-key scoping in the host implementation + add the SECURITY invariant. |

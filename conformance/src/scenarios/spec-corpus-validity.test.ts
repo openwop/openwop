@@ -703,6 +703,7 @@ describe('spec-corpus: OpenAPI 3.1 spec is structurally valid', () => {
       'getOpenApiSpec',
       'inspectInterruptByToken',
       'resolveInterruptByToken',
+      'getContentPage',
     ]);
 
     const operations = extractOpenApiOperations(raw);

@@ -2122,3 +2122,47 @@ invariants:
       Render-side guarantee, reference-app client probe (suite-version requirement). The
       schema's confined `action.target` enum (no arbitrary URL) is the structural
       precondition verified server-free in `a2ui-surface-shape.test.ts`.
+
+  - id: content-published-cache-no-draft
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/localized-content-delivery.test.ts
+    note: |
+      RFC 0103 §F (`localized-content.md`). The public, cacheable content
+      delivery path (`GET /v1/content/pages/{slug}`) MUST serve
+      `status: "published"` sections/pages only. A draft section or page MUST
+      NOT appear in any public response and MUST NOT be written into any
+      shared/public cache entry; the cache key MUST be scoped so a draft can
+      never be served from a cached published response. Unpublished authored
+      content is pre-release material — leaking it via the `public,
+      max-age=300` cache is the threat.
+
+  - id: content-response-tenant-scoped
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/localized-content-delivery.test.ts
+    note: |
+      RFC 0103 §F (`localized-content.md`). Every content read and write MUST
+      be scoped to the resolved tenant (credential-derived per RFC 0048 when
+      authenticated; host-defined mapping when anonymous, §F / register G11).
+      A page/section belonging to another tenant MUST be unreachable. Mirrors
+      `webhook-cross-tenant-isolation` / `kv-cross-tenant-isolation` for the
+      content-delivery surface.
+
+  - id: content-no-cross-tenant-enumeration
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/localized-content-delivery.test.ts
+    note: |
+      RFC 0103 §F (`localized-content.md`). A request for a
+      `slug`/`pageId`/`sectionId` that exists under a DIFFERENT tenant MUST
+      return the same `404` as a wholly nonexistent id — the response MUST NOT
+      distinguish "exists for another tenant" from "does not exist" (no
+      existence oracle). The no-enumeration guarantee holds relative to the
+      host-resolved tenant.
