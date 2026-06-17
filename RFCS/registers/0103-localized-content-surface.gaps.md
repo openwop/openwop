@@ -9,6 +9,19 @@ Because this RFC lands at `Active` with the comment window **waived**, every gap
 **wire shape** was resolved *in the RFC* before the flip (G1–G3 below, now Closed). The
 remaining open rows are deliberately non-wire-shape — they gate `Accepted`, not `Active`.
 
+**Register sweep — Active → Accepted (2026-06-17).** Disposition of every open row:
+- **G1, G2, G3** — Closed in the RFC at `Active` (wire-shape locks).
+- **G4** (AsyncAPI events) — **Carried forward**: v1 is delivery-only; no content-lifecycle events shipped. A future `content.page.published` channel is itself additive. Recorded as a future-additive enhancement.
+- **G5** (locale-key strictness) — **Closed**: the four schemas ship with the pragmatic `^[a-z]{2}(-[A-Z]{2})?$` subset for `localizations` keys + write `locale`; widening to full BCP-47 stays additive. Documented in `localized-content.md` §B.
+- **G6** (settings vs advertisement source of truth) — **Closed in §B**: the language-settings object is the source of truth; the advertised `content` block MUST reflect it.
+- **G7** (per-locale publish) — **Carried forward** to a future additive field; v1 is atomic (`localized-content.md` §E).
+- **G8** (open section bodies) — **Closed in §B**: the envelope is closed (`additionalProperties:false` wrapper; `data`/`localizations` values open); conformance asserts envelope + merge only.
+- **G9** (reference host lacked the annex) — **Closed**: openwop-app HOST-1 implemented the annex; HOST-2 the content surface.
+- **G10** (no driving issue) — Informational; closed by `CMS-I18N-PLAN.md` + the two host PRs.
+- **G11** (anonymous tenant resolution) — **Resolved in `localized-content.md` §F** as a host-defined carve-out; portability scoped to a resolved `(tenant, locale)` pair.
+
+No open rows remain that block `Accepted`; carried-forward items (G4, G7) are future-additive and do not invalidate any shipped wire shape.
+
 | ID | Section | Question / Missing Input | Owner | Resolution Path | Blocks |
 |----|---------|--------------------------|-------|-----------------|--------|
 | G1 | Proposal §A | `content` capability relationship to `i18n`: own block vs sub-object; does content declare its own `supportedLocales` or inherit `i18n`'s? | Spec Architect | **CLOSED in RFC §A:** sibling `content` block; requires `i18n.supported:true`; `content.baseLocale == i18n.defaultLocale`; `({baseLocale} ∪ content.supportedLocales) ⊆ i18n.supportedLocales`; `baseLocale ∉ content.supportedLocales`. | was `Active` (shape lock) |
