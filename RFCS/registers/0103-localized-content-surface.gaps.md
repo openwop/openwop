@@ -1,0 +1,23 @@
+# RFC 0103 — Gap Register
+
+Working document (not normative). Per `RFCS/README.md` § "Companion gap & risk registers", a
+status flip to `Accepted` requires a **register sweep**: every open row must be closed,
+transferred to a tracked surface, or carried forward as a named open gap in the RFC's "Open
+spec gaps" / "Unresolved questions" section.
+
+Because this RFC lands at `Active` with the comment window **waived**, every gap that affects a
+**wire shape** was resolved *in the RFC* before the flip (G1–G3 below, now Closed). The
+remaining open rows are deliberately non-wire-shape — they gate `Accepted`, not `Active`.
+
+| ID | Section | Question / Missing Input | Owner | Resolution Path | Blocks |
+|----|---------|--------------------------|-------|-----------------|--------|
+| G1 | Proposal §A | `content` capability relationship to `i18n`: own block vs sub-object; does content declare its own `supportedLocales` or inherit `i18n`'s? | Spec Architect | **CLOSED in RFC §A:** sibling `content` block; requires `i18n.supported:true`; `content.baseLocale == i18n.defaultLocale`; `({baseLocale} ∪ content.supportedLocales) ⊆ i18n.supportedLocales`; `baseLocale ∉ content.supportedLocales`. | was `Active` (shape lock) |
+| G2 | Proposal §E | Per-locale publish vs atomic `status` across locales. | Spec Architect | **CLOSED in RFC §E:** atomic across locales for v1; per-locale publish is a named future additive enhancement (G7). | was `Active` (shape lock) |
+| G3 | Proposal §F | Security MUST-NOTs for a cacheable, tenant-scoped public delivery path. | Security Architect | **CLOSED in RFC §F (normative prose):** published cache excludes draft content; responses tenant-scoped; cross-tenant id → 404 (no enumeration oracle); `Content-Language` request-scoped, not logged. | was `Active` (shape lock) |
+| G4 | Q1 / §D | AsyncAPI: content-lifecycle events (e.g. `content.page.published`) or delivery-only? | Spec Architect | A new channel is itself additive — decide before `Accepted`. Lean delivery-only for v1; if events are added, note them in `api/asyncapi.yaml` and the spec doc. | `Accepted` |
+| G5 | Q3 / §B | `localizations` keys + write `locale` use the subset `^[a-z]{2}(-[A-Z]{2})?$`, not the annex's full BCP-47 pattern. Confirm or widen (widening is additive). | Schema Architect | Confirm the pragmatic subset vs `^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8}){0,3}$` before locking the four schemas; document the choice in `spec/v1/localized-content.md`. | Schema finalization; `Accepted` |
+| G6 | Q4 / §B | Language-settings object vs advertised `content` block can drift (settings editable, advertisement is host config). Which is authoritative? | Spec Architect | Define reconciliation (recommend: advertisement is derived from settings; settings is the source of truth, advertisement MUST reflect it). | `Accepted` (prose completeness) |
+| G7 | §E | Per-locale publish as a future additive field — capture so it isn't silently dropped. | Author | Carry forward to `ROADMAP.md` as a tracked future-additive line when this flips to `Accepted`. | none (tracked-forward) |
+| G8 | Q5 / §B | `data`/`localizations` are open objects; conformance validates the **envelope** but not arbitrary `sectionType` bodies. | Conformance Architect | Spec defines the envelope strictly (`additionalProperties:false` on the wrapper) and leaves body shapes to the host/section-type; conformance asserts envelope + merge only. Document in `coverage.md`. | `Accepted` |
+| G9 | Conformance | Reference host (openwop-app) does NOT implement the `i18n.md` annex yet (no `Accept-Language`/`capabilities.i18n`/`Content-Language`). Content delivery reuses the annex, so the host needs the annex first. | Reference-impl | Host-side prerequisite (openwop-app HOST-1): stand up annex negotiation + pass `i18n-negotiation.test.ts` before the content surface. Not a spec gap; sequencing only. | `Accepted` (reference-host checkbox) |
+| G10 | Inputs | No failing conformance scenario or external implementer issue drove this — forward-authored from the openwop-app host product need (`CMS-I18N-PLAN.md`). Prior art (source-CMS `resolveLocale`) cited; no OpenWOP-side issue link. | Author | Acceptable for `Active`. Link the openwop-app CMS PR + the plan doc when the host implementation lands. | none (informational) |
