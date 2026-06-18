@@ -166,16 +166,43 @@ describe.skipIf(HTTP_SKIP)('i18n-negotiation: behavioral (i18n.md §Accept-Langu
     // Prefer a non-default supported locale so localization actually engages.
     const negotiated = supported.find((t) => t !== defaultLocale) ?? defaultLocale;
 
+    // Baseline: the same probe under the host's DEFAULT locale. The i18n MUST is
+    // locale-INVARIANCE of the machine-readable code, not a specific vocabulary
+    // value. i18n.md §"`locale` field on `ErrorEnvelope.details`" requires the
+    // `error` code to "remain English / lowercase / underscore-cased regardless
+    // of locale" — it is an identifier, not human text. The spec does NOT pin a
+    // missing run to the literal `not_found`: error-envelope.schema.json says
+    // codes are SHOULD-snake_case, rest-endpoints.md §"Common error codes" is
+    // non-exhaustive, and `run_forbidden` (RFC 0048) sets precedent that hosts
+    // MAY use run-specific codes. Asserting a literal here would also pressure a
+    // conformant host into a COMPATIBILITY.md §2.2 breaking error-code change.
+    const baseRes = await driver.get(PROBE_PATH, {
+      headers: { 'Accept-Language': defaultLocale },
+    });
+    const baseCode = errCode(baseRes.json);
+
     const res = await driver.get(PROBE_PATH, {
       headers: { 'Accept-Language': negotiated },
     });
     expect(res.status).toBe(404);
+    const negotiatedCode = errCode(res.json);
+
+    // (a) the code is an English snake_case identifier (not localized prose)
     expect(
-      errCode(res.json),
+      typeof negotiatedCode === 'string' && /^[a-z][a-z0-9_]*$/.test(negotiatedCode),
       driver.describe(
         'i18n.md §"`locale` field on `ErrorEnvelope.details`"',
-        `the machine-readable error code MUST remain the canonical English token regardless of the negotiated locale (${negotiated})`,
+        `the machine-readable error code MUST be an English lowercase snake_case identifier, not localized text (got ${String(negotiatedCode)} under ${negotiated})`,
       ),
-    ).toBe('not_found');
+    ).toBe(true);
+
+    // (b) it is byte-identical to the default-locale code — the actual invariance MUST
+    expect(
+      negotiatedCode,
+      driver.describe(
+        'i18n.md §"`locale` field on `ErrorEnvelope.details`"',
+        `the machine-readable error code MUST remain identical regardless of the negotiated locale (default ${defaultLocale} → ${String(baseCode)}; negotiated ${negotiated})`,
+      ),
+    ).toBe(baseCode);
   });
 });
