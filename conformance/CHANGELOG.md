@@ -1,5 +1,13 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [1.27.1] — 2026-06-18 — i18n-negotiation error-code assertion fix
+
+Patch fix to `i18n-negotiation.test.ts`: the "error code stays canonical English under a negotiated locale" assertion was over-strict — it pinned the literal `not_found` instead of testing the actual `i18n.md` MUST, which is **locale-invariance** of the machine-readable code. Surfaced by a second non-steward host (openwop-app) running the leg non-vacuously: it returns the run-specific `run_not_found` (a valid English snake_case identifier), which the spec permits — `error-envelope.schema.json` marks codes SHOULD-snake_case, `rest-endpoints.md` §"Common error codes" is non-exhaustive, and `run_forbidden` (RFC 0048) is precedent for host-specific codes. Pinning the literal would have pressured a conformant host into a `COMPATIBILITY.md §2.2` breaking error-code change. No scenario count change.
+
+### Fixed
+
+- **`i18n-negotiation.test.ts`** — the negotiated-locale error-code assertion now captures the code under the host's default locale and asserts the negotiated-locale code is (a) an English lowercase snake_case identifier (`^[a-z][a-z0-9_]*$`, not localized prose) and (b) byte-identical to the default-locale code (the real invariance MUST), instead of `.toBe('not_found')`.
+
 ## [1.27.0] — 2026-06-17 — RFC 0103 localized-content scenarios
 
 Ships the public conformance scenario + the four content schemas for **RFC 0103 — Localized Content Surface** (the capability-gated `content` surface that reuses the Stable `i18n.md` annex's negotiation), graduated to `Accepted` on dual non-steward host evidence (openwop-app reference + MyndHyve witness). Minor bump per the scenario-add rule (1 net-new scenario file; suite 349 → 350).
