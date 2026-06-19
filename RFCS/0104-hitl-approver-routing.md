@@ -83,12 +83,12 @@ Reference host: openwop-app ADR 0075 implements the routing host-side ahead of t
 
 ## Acceptance criteria
 
-- [ ] `interrupt.md` updated with the optional fields + advisory RFC 2119 prose.
-- [ ] `schemas/suspend-request.schema.json` adds the fields to the `approval` branch (its `additionalProperties: false` preserved; the new `audience` object declares its own `additionalProperties: false`); AsyncAPI updated via `$ref`.
-- [ ] Capability flag specified in `capabilities.md` + `capabilities.schema.json`.
-- [ ] Capability-gated conformance scenarios + fixtures.
-- [ ] SDK interrupt types updated.
-- [ ] CHANGELOG `[Unreleased]` entry.
+- [x] `interrupt.md` updated with the optional fields + advisory RFC 2119 prose (§"Portable approver routing (RFC 0104)").
+- [x] `schemas/suspend-request.schema.json` adds the fields to the `ApprovalData` `$def` (the branch is an open object — no `additionalProperties: false` to preserve; the new `audience` object declares its own `additionalProperties: false`). AsyncAPI needs no change: `interrupt.requested` carries the generic `RunEventDoc` payload, not an inline `ApprovalData`.
+- [x] Capability flag specified in `capabilities.md` + `capabilities.schema.json` (new top-level `interrupt.approverRouting = { supported, refKinds[], audience }`).
+- [x] Capability-gated conformance scenario `interrupt-approver-routing.test.ts` (conformance 1.27.1 → 1.28.0). No JSON fixture file needed — payloads are built inline.
+- [ ] SDK interrupt types updated — **follow-up in the [`openwop-sdks`](https://github.com/openwop/openwop-sdks) sibling repo** (the monorepo split moved the SDKs out; the spec corpus no longer carries SDK source).
+- [x] CHANGELOG `[Unreleased]` entry (root + `conformance/CHANGELOG.md`).
 - [x] 7-day additive comment window — **waived by steward authority** on 2026-06-19 (additive-only surface; reference-host implementation in flight under openwop-app ADR 0075). Promoted `Draft` → `Active`.
 
 ## References

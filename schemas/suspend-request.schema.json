@@ -81,6 +81,26 @@
           "type": "boolean",
           "default": false,
           "description": "RFC 0093 §D2 (pins RFC 0051 UQ 2). When `true`, a configured override principal (per `interrupt-profiles.md` §approval-gate `override.requiredRole`) MAY bypass the quorum (`requiredApprovals`) and release the gate alone. Default `false`: an override principal's approval counts as ONE quorum vote; quorum still applies. Optional, additive."
+        },
+        "approverGroupRefs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "RFC 0104 — OPTIONAL, ADVISORY. Opaque group refs whose resolved members are eligible to approve. Like `approversList`, advisory: the host resolves refs against its own identity/RBAC and ENFORCES eligibility at resolve time; the engine treats refs as opaque (no membership resolution in the engine). Capability-gated via `interrupt.approverRouting` (`refKinds` MUST include `group`). Hosts that don't advertise it ignore this field. Membership is resolved at decision time and snapshotted for deterministic replay."
+        },
+        "approverRoleRefs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "RFC 0104 — OPTIONAL, ADVISORY. Opaque role refs whose holders are eligible to approve. Same advisory + host-resolved + opaque-to-engine + decision-time-snapshot semantics as `approverGroupRefs`. Capability-gated via `interrupt.approverRouting` (`refKinds` MUST include `role`)."
+        },
+        "audience": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "RFC 0104 — OPTIONAL, ADVISORY notification-targeting hint: who should be TOLD about this gate, distinct from who MAY approve (the eligibility refs). When OMITTED, the host SHOULD notify the resolved union of the eligibility refs (`approversList` ∪ `approverGroupRefs` ∪ `approverRoleRefs`). When PRESENT, it OVERRIDES that default. Advisory; the host remains the routing authority. Capability-gated via `interrupt.approverRouting.audience`.",
+          "properties": {
+            "subjects": { "type": "array", "items": { "type": "string" }, "description": "Opaque subject refs to notify." },
+            "groups": { "type": "array", "items": { "type": "string" }, "description": "Opaque group refs to notify." },
+            "roles": { "type": "array", "items": { "type": "string" }, "description": "Opaque role refs to notify." }
+          }
         }
       }
     },
