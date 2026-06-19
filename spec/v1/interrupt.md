@@ -114,6 +114,15 @@ interface ApprovalData {
   approversList?: string[];
   /** Resolution policy when one approver rejects in a multi-approver gate. */
   rejectionPolicy?: 'single-veto' | 'majority';
+  /** RFC 0104 — OPTIONAL, ADVISORY. Opaque group/role refs whose resolved
+   *  members/holders are eligible to approve. Host-resolved + enforced;
+   *  opaque to the engine; capability-gated via `interrupt.approverRouting`. */
+  approverGroupRefs?: string[];
+  approverRoleRefs?: string[];
+  /** RFC 0104 — OPTIONAL, ADVISORY notification-targeting hint (who is TOLD,
+   *  distinct from who MAY approve). Omitted ⇒ notify the resolved eligible
+   *  union; present ⇒ overrides it. */
+  audience?: { subjects?: string[]; groups?: string[]; roles?: string[] };
 }
 
 interface RefineFeedback {
@@ -171,6 +180,13 @@ Hosts MAY also accept legacy `feedback: string` alongside `refineFeedback: Refin
 This factoring keeps openwop minimal — the protocol describes the lifecycle (request → response → recorded principal) and the wire shape, not the host's permission system. A host with rich RBAC (workspace roles, budget-tier approver assignment, multi-org quorum) and a host with no RBAC (single-user CLI runner) both implement the same wire contract.
 
 **`approversList` and `requiredApprovals` advertise constraint, they do not enforce it.** When the engine surfaces an `InterruptPayload` with `approversList: ['admin', 'owner']`, the values are advisory metadata for clients (e.g., the UI shows "must be approved by admin or owner"). The actual enforcement at resolve time is host-side — the engine accepts whatever the host hands it. Clients that display the list MUST NOT assume the engine refuses non-listed approvers; the host's resolution layer is the only authoritative gate.
+
+**Portable approver routing (RFC 0104) — `approverGroupRefs`, `approverRoleRefs`, `audience`.** A host MAY advertise `interrupt.approverRouting` in `/.well-known/openwop` (`capabilities.md`) to make group/role approver routing portable across hosts, so one workflow definition can express "anyone in the finance-approvers group" or "whoever holds the Controller role" and have any advertising host route the same way. The three fields are **OPTIONAL** and, like `approversList`, **advisory**: they describe intended routing; the host remains the authority for eligibility enforcement at resolve time.
+
+- `approverGroupRefs` and `approverRoleRefs` are **opaque** to the engine — the spec does NOT define group/role membership resolution; the host resolves them against its own identity/RBAC. A host that advertises `interrupt.approverRouting` with `refKinds` including `group` (resp. `role`) MUST surface the corresponding field unchanged on the `InterruptPayload`, and MUST resolve and enforce its members/holders as eligible approvers at resolve time exactly as it does for `approversList`. A host that does not advertise the matching `refKinds` MAY ignore the field.
+- `audience` is a **notification-targeting** hint — who is TOLD about the gate, distinct from who MAY approve. When `audience` is **omitted**, a host that routes notifications SHOULD notify the resolved union of the eligibility refs (`approversList` ∪ `approverGroupRefs` ∪ `approverRoleRefs`). When `audience` is **present**, it OVERRIDES that default: the host SHOULD notify the resolved union of `audience.subjects` ∪ `audience.groups` ∪ `audience.roles` instead. `audience` is advisory; a host that does not advertise `interrupt.approverRouting.audience` MAY ignore it.
+- Because group/role membership is dynamic host state, a host MUST resolve membership at decision time and MUST NOT re-resolve membership during replay or `POST /v1/runs/{runId}:fork`. The eligibility decision recorded in the resume event is fixed history per `replay.md` §"Determinism guarantees" (caveats 2 + 5 — an interrupt short-circuits to its persisted resolved value; recorded-fact events are re-emitted, not recomputed), so replay is deterministic without re-resolution. A host SHOULD additionally persist the resolved eligible set at decision time for audit non-repudiation — so the eligibility basis stays verifiable after membership later changes — but this is a recommendation, not a requirement for replay determinism (recording the decision and replaying it suffices).
+- These fields add NO enforcement semantics to `approversList`. A host without RBAC, or one that does not advertise `interrupt.approverRouting`, is fully conformant and simply ignores them; eligibility enforcement stays host-side per the boundary above. Step-up authentication (`acr`/`amr`) at a sensitive gate and credential-bound (on-behalf-of) approvals are explicitly **out of scope** for RFC 0104 and tracked separately.
 
 **Multi-approver quorum composition is implementation-defined for v1.** When `requiredApprovals > 1`, two valid models exist:
 

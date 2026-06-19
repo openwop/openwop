@@ -2107,6 +2107,29 @@
       },
       "if": { "properties": { "import": { "const": true } }, "required": ["import"] },
       "then": { "properties": { "dryRun": { "const": true } }, "required": ["dryRun"] }
+    },
+    "interrupt": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0104 (`Active`). Interrupt-surface capabilities. Currently advertises portable HITL approver routing on the `kind: \"approval\"` InterruptPayload.",
+      "properties": {
+        "approverRouting": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "description": "RFC 0104. When `supported: true`, the host surfaces the OPTIONAL, ADVISORY `approverGroupRefs` / `approverRoleRefs` / `audience` fields on the approval InterruptPayload unchanged, resolves the ref kinds it advertises against its own identity/RBAC, ENFORCES eligibility at resolve time (the refs stay advisory metadata for clients; enforcement is host-side), and SHOULD route notifications to the resolved union. Refs are opaque to the engine and snapshotted at decision time for deterministic replay. Hosts that omit this block (or set `supported: false`) ignore the fields and remain conformant. Advertise only what the host actually resolves (`refKinds`) and honors (`audience`).",
+          "properties": {
+            "supported": { "type": "boolean", "description": "Host honors the RFC 0104 approver-routing fields." },
+            "refKinds": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["group", "role"] },
+              "uniqueItems": true,
+              "description": "Which approver ref kinds the host actually resolves. `group` ⇒ honors `approverGroupRefs`; `role` ⇒ honors `approverRoleRefs`. Absent ⇒ the host resolves neither (advisory-only passthrough). Capability honesty: advertise only the kinds the host's resolver supports."
+            },
+            "audience": { "type": "boolean", "default": false, "description": "Host honors the `audience` notification-targeting override. Absent/`false` ⇒ the host notifies the resolved eligible union and ignores `audience`." }
+          }
+        }
+      }
     }
   },
   "additionalProperties": true

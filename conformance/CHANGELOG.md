@@ -1,5 +1,9 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [1.28.0] — 2026-06-19 — RFC 0104 portable HITL approver routing
+
+Adds `interrupt-approver-routing.test.ts` (+1 scenario file, 350 → 351) for RFC 0104. Server-free legs: the `interrupt.approverRouting` capability block shape (`supported` required; `refKinds` ⊆ {group, role}; `audience` boolean), the additive optionality of `approverGroupRefs` / `approverRoleRefs` / `audience` on the approval `ApprovalData` schema (a payload without them still validates; the `audience` object is closed), and the §"Portable approver routing" `notifyTargets` reference rule (`audience` defaults to the resolved eligibility union when omitted, overrides it when present). One capability-gated leg asserts an advertising host's `interrupt.approverRouting` is honest and soft-skips otherwise. Minor bump (scenario add) per the major/minor rule; all legs additive + capability-gated, so no existing host pass-count changes.
+
 ## [1.27.1] — 2026-06-18 — i18n-negotiation error-code assertion fix
 
 Patch fix to `i18n-negotiation.test.ts`: the "error code stays canonical English under a negotiated locale" assertion was over-strict — it pinned the literal `not_found` instead of testing the actual `i18n.md` MUST, which is **locale-invariance** of the machine-readable code. Surfaced by a second non-steward host (openwop-app) running the leg non-vacuously: it returns the run-specific `run_not_found` (a valid English snake_case identifier), which the spec permits — `error-envelope.schema.json` marks codes SHOULD-snake_case, `rest-endpoints.md` §"Common error codes" is non-exhaustive, and `run_forbidden` (RFC 0048) is precedent for host-specific codes. Pinning the literal would have pressured a conformant host into a `COMPATIBILITY.md §2.2` breaking error-code change. No scenario count change.
