@@ -173,6 +173,7 @@ Current tally: **Accepted 98 · Active 3 · Draft 2** (103 RFCs, excluding the `
 | [0101](./0101-multi-party-group-conversation.md)                   | Multi-party group conversation — shared transcript + speaker attribution (Parked)                                                                                  | `Draft`              |
 | [0102](./0102-a2ui-agent-authored-interface-surfaces.md)             | A2UI agent-authored interface surfaces — declarative cross-trust-boundary UI as a **core, advertised** `ui.a2ui-surface` envelope kind beside `media.*` (extends RFC 0055; closed `anyOf` surface, enumerated catalog, actions confined to interrupt-resume/exchange)                                | `Accepted`           |
 | [0103](./0103-localized-content-surface.md)                          | Localized content surface — durable authored content (pages → sections; section = base `data` + sparse `localizations` map) reusing the Stable `i18n.md` annex's `Accept-Language`/`Content-Language` negotiation; new capability-gated `content` block (⊆ `i18n.supportedLocales`) + per-section field merge | `Accepted`           |
+| [0104](./0104-hitl-approver-routing.md)                              | Portable HITL approver routing — optional, advisory `approverGroupRefs` / `approverRoleRefs` / `audience` on the approval `InterruptPayload` so group/role approver routing is portable + capability-gated across hosts (`approversList` stays advisory; enforcement host-side). Step-up + credential-bound approvals are a separate RFC | `Draft`              |
 
 ## See also
 
