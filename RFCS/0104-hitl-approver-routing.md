@@ -8,7 +8,7 @@
 | **Author(s)**     | David Tufts (@davidtufts)                                                             |
 | **Created**       | 2026-06-19                                                                           |
 | **Updated**       | 2026-06-19                                                                           |
-| **Affects**       | `spec/v1/interrupt.md`, `schemas/interrupt-payload.schema.json`, `api/asyncapi.yaml`, conformance `interrupt-*` scenarios, SDK interrupt types |
+| **Affects**       | `spec/v1/interrupt.md`, `schemas/suspend-request.schema.json`, `api/asyncapi.yaml`, conformance `interrupt-*` scenarios, SDK interrupt types |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                                                    |
 | **Supersedes**    | —                                                                                    |
 | **Superseded by** | —                                                                                    |
@@ -28,7 +28,7 @@ The reference host (openwop-app) is shipping group/role routing host-side under 
 
 ## Proposal
 
-Extend the `kind: "approval"` `InterruptPayload` (`interrupt.md` §per-kind payloads, `schemas/interrupt-payload.schema.json`) with three **optional** fields:
+Extend the `kind: "approval"` `InterruptPayload` (`interrupt.md` §per-kind payloads, `schemas/suspend-request.schema.json`) with three **optional** fields:
 
 ```ts
 interface ApprovalData {
@@ -84,7 +84,7 @@ Reference host: openwop-app ADR 0075 implements the routing host-side ahead of t
 ## Acceptance criteria
 
 - [ ] `interrupt.md` updated with the optional fields + advisory RFC 2119 prose.
-- [ ] `schemas/interrupt-payload.schema.json` adds the fields (`additionalProperties: false` preserved); AsyncAPI updated via `$ref`.
+- [ ] `schemas/suspend-request.schema.json` adds the fields to the `approval` branch (its `additionalProperties: false` preserved; the new `audience` object declares its own `additionalProperties: false`); AsyncAPI updated via `$ref`.
 - [ ] Capability flag specified in `capabilities.md` + `capabilities.schema.json`.
 - [ ] Capability-gated conformance scenarios + fixtures.
 - [ ] SDK interrupt types updated.

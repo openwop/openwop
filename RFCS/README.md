@@ -67,7 +67,7 @@ Every RFC follows `0000-template.md` and must answer:
 
 <!-- Hand-generated 2026-06-11 from each RFC's header `Status` field. TODO: this table should be emitted by `scripts/generate-protocol-status.mjs` (which already derives these statuses for docs/PROTOCOL-STATUS.md) instead of being hand-maintained. -->
 
-Current tally: **Accepted 98 · Active 3 · Draft 2** (103 RFCs, excluding the `0000` template; Active = 0035, 0043, 0100; Draft = 0038 Parked, 0101 Parked).
+Current tally: **Accepted 98 · Active 3 · Draft 3** (104 RFCs, excluding the `0000` template; Active = 0035, 0043, 0100; Draft = 0038 Parked, 0101 Parked, 0104).
 
 | RFC                                                                  | Title                                                                                                                                | Status               |
 | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
