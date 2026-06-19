@@ -4,10 +4,10 @@
 | ----------------- | ------------------------------------------------------------------------------------ |
 | **RFC**           | 0104                                                                                 |
 | **Title**         | Portable HITL approver routing (group/role refs + audience)                          |
-| **Status**        | `Draft`                                                                              |
+| **Status**        | `Active`                                                                             |
 | **Author(s)**     | David Tufts (@davidtufts)                                                             |
 | **Created**       | 2026-06-19                                                                           |
-| **Updated**       | 2026-06-19                                                                           |
+| **Updated**       | 2026-06-19 — promoted `Draft` → `Active`; the 7-day additive comment window was waived by steward authority (additive-only surface, reference-host implementation already in flight under openwop-app ADR 0075). |
 | **Affects**       | `spec/v1/interrupt.md`, `schemas/suspend-request.schema.json`, `api/asyncapi.yaml`, conformance `interrupt-*` scenarios, SDK interrupt types |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                                                    |
 | **Supersedes**    | —                                                                                    |
@@ -89,7 +89,7 @@ Reference host: openwop-app ADR 0075 implements the routing host-side ahead of t
 - [ ] Capability-gated conformance scenarios + fixtures.
 - [ ] SDK interrupt types updated.
 - [ ] CHANGELOG `[Unreleased]` entry.
-- [ ] 7-day additive comment window elapsed.
+- [x] 7-day additive comment window — **waived by steward authority** on 2026-06-19 (additive-only surface; reference-host implementation in flight under openwop-app ADR 0075). Promoted `Draft` → `Active`.
 
 ## References
 
