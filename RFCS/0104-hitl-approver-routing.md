@@ -4,10 +4,10 @@
 | ----------------- | ------------------------------------------------------------------------------------ |
 | **RFC**           | 0104                                                                                 |
 | **Title**         | Portable HITL approver routing (group/role refs + audience)                          |
-| **Status**        | `Active`                                                                             |
+| **Status**        | `Accepted`                                                                           |
 | **Author(s)**     | David Tufts (@davidtufts)                                                             |
 | **Created**       | 2026-06-19                                                                           |
-| **Updated**       | 2026-06-19 — promoted `Draft` → `Active`; the 7-day additive comment window was waived by steward authority (additive-only surface, reference-host implementation already in flight under openwop-app ADR 0075). |
+| **Updated**       | 2026-06-19 — promoted `Draft` → `Active` (7-day additive window waived by steward authority), then `Active` → `Accepted` the same day on **dual independent non-steward host behavioral evidence** vs `@openwop/openwop-conformance@1.28.0` (`interrupt-approver-routing.test.ts`, 8/0/0 non-vacuous each, capability-gated live leg executed): **openwop-app** (`feat/hitl-approver-routing` → merged its main; advertises `interrupt.approverRouting:{supported:true,refKinds:["group","role"],audience:true}`) and **MyndHyve** (separate repo `github.com/myndhyve/myndhyve`, branch `feat/rfc-0104-approver-routing`; advertises `{supported:true,refKinds:["role","group"],audience:false}` — honestly-divergent `audience`, validating the structured capability). |
 | **Affects**       | `spec/v1/interrupt.md`, `schemas/suspend-request.schema.json`, `api/asyncapi.yaml`, conformance `interrupt-*` scenarios, SDK interrupt types |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                                                    |
 | **Supersedes**    | —                                                                                    |
