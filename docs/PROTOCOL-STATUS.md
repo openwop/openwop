@@ -12,7 +12,7 @@
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 351 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 104 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 105 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -33,7 +33,7 @@
 |---|---:|
 | Accepted | 99 |
 | Active | 3 |
-| Draft | 2 |
+| Draft | 3 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -141,6 +141,7 @@
 | RFC 0102 | A2UI agent-authored interface surfaces (declarative cross-trust-boundary UI as a core, advertised envelope kind) | Accepted |
 | RFC 0103 | Localized Content Surface - a capability-gated content data model (page -> section, where a section is one record with a base `data` payload plus a sparse `localizations` map) plus delivery + admin endpoints, **reusing the Stable `spec/v1/i18n.md` annex's `Accept-Language`/`Content-Language` negotiation and fallback verbatim** and adding only the content model + a per-section field merge, so a host can serve durable authored content in multiple locales without a second locale mechanism | Accepted |
 | RFC 0104 | Portable HITL approver routing (group/role refs + audience) | Accepted |
+| RFC 0105 | Add an optional AI-provider sub-capability `aiProviders.speechSynthesis: supported` exposing `ctx.callSpeechSynthesizer({ text, voiceId, … })` -> a binary audio asset, paralleling `ctx.callImageGenerator` - the one generation modality openwop's wire cannot express today | Draft |
 
 ## SDK Helper Coverage
 
@@ -157,7 +158,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 2 RFCs still `Draft` (RFC 0038, RFC 0101) — advance with schema/conformance proof or defer.
+- 3 RFCs still `Draft` (RFC 0038, RFC 0101, RFC 0105) — advance with schema/conformance proof or defer.
 - 3 RFCs `Active` (RFC 0035, RFC 0043, RFC 0100) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
