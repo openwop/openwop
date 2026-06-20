@@ -74,6 +74,7 @@ ctx.callAI({
 | `aiProviders.toolCalling: supported`     | `ctx.callAIWithTools(...)` — model may emit `tool_call` entries                                                                                                             | `core.openwop.ai` (`core.ai.toolCalling`)        |
 | `aiProviders.embeddings: supported`      | `ctx.callAI({ embeddingMode: true, dimensions?: number })` returns `{ embedding: number[], dimensions, model }`                                                             | `core.openwop.ai` (`core.openwop.ai.embeddings`) |
 | `aiProviders.imageGeneration: supported` | `ctx.callImageGenerator(...)` — generates binary image asset (returns URL or base64 data); see optional method block below                                                  | `vendor.myndhyve.ads-image-generate`             |
+| `aiProviders.speechSynthesis: supported` | `ctx.callSpeechSynthesizer(...)` — synthesizes speech (text + opaque `voiceId`) → binary audio asset (URL or base64); one call per speaker. See optional method block below. RFC 0105. | `core.openwop.media` (`feature.podcasts`)        |
 | `aiProviders.videoGeneration: supported` | `ctx.callVideoGenerator(...)` — generates binary video asset (returns URL); see optional method block below. Long-running (typical 30-120s); host hides polling internally. | `vendor.myndhyve.ads-video-generate`             |
 
 ```typescript
@@ -145,6 +146,41 @@ ctx.callVideoGenerator({
 }>
 ```
 
+```typescript
+// Available when host advertises `aiProviders.speechSynthesis: supported` (RFC 0105).
+// Synthesizes speech (text-to-speech) → a binary audio asset, paralleling
+// ctx.callImageGenerator. One call synthesizes ONE speaker's turn; a multi-speaker
+// dialogue is produced by calling once per turn (each with its own voiceId) and the
+// host/pack mixing the clips. Whole-file: the Promise resolves with the finished asset.
+ctx.callSpeechSynthesizer({
+  provider?: string,        // host routes; MUST be a member of aiProviders.supported[]
+  model?: string,           // e.g. 'eleven_multilingual_v2' | 'gpt-4o-mini-tts'
+  text: string,             // REQUIRED — the utterance to synthesize (one speaker's turn)
+  voiceId: string,          // REQUIRED — OPAQUE host-resolved voice handle; spec does NOT enumerate voices
+  mimeType?: string,        // requested output type ('audio/mpeg' | 'audio/wav' | 'audio/ogg'); host MAY substitute and echoes the actual
+  format?: string,          // optional codec/bitrate hint forwarded to providers that accept it
+  languageCode?: string,    // optional BCP-47 hint (e.g. 'en-US', 'pt-BR') for multilingual voices
+  speed?: number,           // optional rate multiplier (host MAY clamp; default 1.0)
+  seed?: number,            // optional determinism hint where the provider supports it
+}) → Promise<{
+  audio: {
+    url?: string,           // host-served URL (preferred for large assets)
+    base64?: string,        // inline base64 (smaller assets) — EXACTLY ONE of url|base64 MUST be present
+    mimeType: string,       // actual output type ('audio/mpeg' | ...)
+    durationSeconds?: number,
+    voiceId: string,        // the voiceId actually used (echoes input)
+    seed?: number,
+    metadata?: { model?: string, provider?: string, generationTimeMs?: number },
+  },
+  totalTimeMs?: number,
+  usage?: { totalCost?: number, characters?: number },
+}>
+```
+
+- `text` and `voiceId` are REQUIRED; `voiceId` is an opaque, host-resolved string (the spec does NOT schema-validate voices, exactly as `model` ids are host-routed for `callImageGenerator`).
+- Exactly one of `audio.url` / `audio.base64` MUST be present (mirrors `images[].url` / `images[].base64`).
+- A `url`-referenced asset MUST be served/fetched through the host's SSRF-guarded path (RFC 0076); synthesized bytes are generated media and inherit the untrusted-media boundary (`threat-model-prompt-injection.md` §4.9; RFC 0091 §C). `voiceId` MUST NOT encode secret material.
+
 **Failure modes:**
 
 - `host_capability_missing` — `ctx.callAI` absent (workflow-register-time refusal via `peerDependencies: { aiProviders: "supported" }` is the correct path; runtime check is defense-in-depth)
@@ -156,6 +192,8 @@ ctx.callVideoGenerator({
 - `content_too_long` — request exceeds the model's context window (host SHOULD reject pre-flight when possible)
 - `image_generation_failed` — sub-capability-specific (`ctx.callImageGenerator`)
 - `image_safety_filtered_all` — every requested image was safety-filtered (all → `filteredCount: count`, `images: []`)
+- `speech_synthesis_unsupported` — `ctx.callSpeechSynthesizer` invoked on a host that does NOT advertise `aiProviders.speechSynthesis: supported`. A host MUST reject (never no-op), paralleling RFC 0091's `unsupported_modality`. Register-time refusal via `peerDependencies` / `requiredHostCapabilities` is the correct primary path; the runtime check is defense-in-depth.
+- `speech_synthesis_failed` — sub-capability-specific provider/synthesis failure (`ctx.callSpeechSynthesizer`); carries the provider-reported reason when available. (Text over the provider's per-call limit returns the shared `content_too_long`.)
 - `video_generation_failed` — sub-capability-specific (`ctx.callVideoGenerator`)
 - `video_safety_filtered` — video was safety-filtered (resolves with `video.safetyFiltered: true` AND a placeholder thumbnail; never throws — packs decide how to surface)
 - `video_generation_timeout` — long-running job exceeded the host's max wait window (host-configured, typical 5 min). Pack should treat as retryable.
