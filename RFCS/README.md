@@ -67,7 +67,7 @@ Every RFC follows `0000-template.md` and must answer:
 
 <!-- Hand-generated 2026-06-11 from each RFC's header `Status` field. TODO: this table should be emitted by `scripts/generate-protocol-status.mjs` (which already derives these statuses for docs/PROTOCOL-STATUS.md) instead of being hand-maintained. -->
 
-Current tally: **Accepted 99 · Active 3 · Draft 3** (105 RFCs, excluding the `0000` template; Active = 0035, 0043, 0100; Draft = 0038 Parked, 0101 Parked, 0105).
+Current tally: **Accepted 99 · Active 4 · Draft 2** (105 RFCs, excluding the `0000` template; Active = 0035, 0043, 0100, 0105; Draft = 0038 Parked, 0101 Parked).
 
 | RFC                                                                  | Title                                                                                                                                | Status               |
 | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
@@ -174,7 +174,7 @@ Current tally: **Accepted 99 · Active 3 · Draft 3** (105 RFCs, excluding the `
 | [0102](./0102-a2ui-agent-authored-interface-surfaces.md)             | A2UI agent-authored interface surfaces — declarative cross-trust-boundary UI as a **core, advertised** `ui.a2ui-surface` envelope kind beside `media.*` (extends RFC 0055; closed `anyOf` surface, enumerated catalog, actions confined to interrupt-resume/exchange)                                | `Accepted`           |
 | [0103](./0103-localized-content-surface.md)                          | Localized content surface — durable authored content (pages → sections; section = base `data` + sparse `localizations` map) reusing the Stable `i18n.md` annex's `Accept-Language`/`Content-Language` negotiation; new capability-gated `content` block (⊆ `i18n.supportedLocales`) + per-section field merge | `Accepted`           |
 | [0104](./0104-hitl-approver-routing.md)                              | Portable HITL approver routing — optional, advisory `approverGroupRefs` / `approverRoleRefs` / `audience` on the approval `InterruptPayload` so group/role approver routing is portable + capability-gated across hosts (`approversList` stays advisory; enforcement host-side). Step-up + credential-bound approvals are a separate RFC | `Accepted`           |
-| [0105](./0105-speech-synthesis-adapter.md)                           | Speech synthesis adapter — additive optional `aiProviders.speechSynthesis` sub-capability + `ctx.callSpeechSynthesizer({ text, voiceId, … })` → binary audio asset, paralleling `ctx.callImageGenerator`; closes the TTS (audio-output) wire gap (image-gen + RFC 0091 audio-input exist, but no speech synthesis) | `Draft`              |
+| [0105](./0105-speech-synthesis-adapter.md)                           | Speech synthesis adapter — additive optional `aiProviders.speechSynthesis` sub-capability + `ctx.callSpeechSynthesizer({ text, voiceId, … })` → binary audio asset, paralleling `ctx.callImageGenerator`; closes the TTS (audio-output) wire gap (image-gen + RFC 0091 audio-input exist, but no speech synthesis) | `Active`             |
 
 ## See also
 
