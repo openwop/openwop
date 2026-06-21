@@ -1,10 +1,14 @@
 /**
  * Multi-Agent Shift capability-gating helper.
  *
- * Reads the host's `/.well-known/openwop` `capabilities.agents` block
- * + `capabilities.conversationPrimitive` flag at suite init and caches
- * them as discrete predicates. Sibling to `lib/fixtures.ts` — same
- * pattern, different surface.
+ * Reads the host's `/.well-known/openwop` `agents` block + the
+ * `conversationPrimitive` flag — both at the document ROOT (RFC 0073
+ * root-first; `setMultiAgentCapabilities` reads `body.agents` /
+ * `body.conversationPrimitive`, NOT a nested `.capabilities` object) —
+ * at suite init and caches them as discrete predicates. A host that
+ * advertises these only under a `.capabilities` wrapper resolves to
+ * `false` and its gated scenarios skip vacuously. Sibling to
+ * `lib/fixtures.ts` — same pattern, different surface.
  *
  * Why: Multi-Agent Shift scenarios (Phases 1-6) gate on per-phase
  * capability flags. Mirrors the fixture-gating pattern from RFC 0003
