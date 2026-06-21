@@ -4,10 +4,10 @@
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **RFC**           | 0105                                                                                                                                                                                                                                                                            |
 | **Title**         | Add an optional AI-provider sub-capability `aiProviders.speechSynthesis: supported` exposing `ctx.callSpeechSynthesizer({ text, voiceId, … })` → a binary audio asset, paralleling `ctx.callImageGenerator` — the one generation modality openwop's wire cannot express today |
-| **Status**        | `Draft`                                                                                                                                                                                                                                                                       |
+| **Status**        | `Active`                                                                                                                                                                                                                                                                      |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                                                                                                                                                                                                                                |
 | **Created**       | 2026-06-20                                                                                                                                                                                                                                                                    |
-| **Updated**       | 2026-06-20                                                                                                                                                                                                                                                                    |
+| **Updated**       | 2026-06-20 (`Draft → Active` — single-maintainer waiver of the 7-day comment window per `GOVERNANCE.md` lazy consensus; all four Unresolved questions resolved in-RFC because `Active` locks the wire shape)                                                                  |
 | **Affects**       | `spec/v1/host-capabilities.md` (§host.aiProviders — new optional `ctx.callSpeechSynthesizer` method block + `speech_synthesis_failed` / `speech_synthesis_unsupported` failure modes) · `schemas/capabilities.schema.json` (additive optional `aiProviders.speechSynthesis` flag) · `SECURITY/threat-model-prompt-injection.md` (synthesized audio inherits the untrusted-media boundary) · conformance scenarios · SDKs · `CHANGELOG.md` · `INTEROP-MATRIX.md` |
 | **Compatibility** | `additive`                                                                                                                                                                                                                                                                    |
 | **Supersedes**    | —                                                                                                                                                                                                                                                                            |
@@ -135,12 +135,14 @@ An always-on, server-free `aiproviders-speechsynth-shape.test.ts` asserts the sc
 2. **A generic `ctx.callMediaGenerator(kind)` umbrella** that subsumes image/video/speech. Rejected — image generation already shipped as its own dedicated `ctx.callImageGenerator` method (and video as `ctx.callVideoGenerator`); a dedicated `ctx.callSpeechSynthesizer` is **consistent** with that precedent and **clearer to gate** (one flag → one method). Retrofitting an umbrella would be a breaking re-shape of two already-shipped methods.
 3. **Do nothing.** Rejected — there is no way to express TTS on the wire, the omission is **silent** (nothing advertises "no TTS"), and the only workaround is a raw provider HTTP call inside a node that bypasses BYOK, policy gating, and the media-trust boundary, and is non-portable. The asymmetry with image/video generation and with RFC 0091 audio _input_ is itself the argument that the floor should be a stated, discoverable capability.
 
-## Unresolved questions
+## Resolved questions (resolved at `Active`)
 
-1. **Streaming vs whole-file audio.** v1 proposes whole-file (the Promise resolves with the finished asset, like `callImageGenerator`). Should a streaming/chunked variant be advertised separately later? Proposed: defer; whole-file is the floor.
-2. **Multi-voice in one call vs one-call-per-speaker.** Proposed (recommended): **one call per speaker** — each `callSpeechSynthesizer` synthesizes one turn with one `voiceId`; the host/pack mixes the clips. A single-call multi-speaker shape is left to a future additive field. Confirm before `Active`.
-3. **SSML support.** Should `text` accept SSML, gated by a sub-flag (e.g. `speechSynthesis.ssml`)? Proposed: plain text in v1; SSML is an additive follow-on. Confirm.
-4. **Max text length.** Should the host advertise a per-call character cap (analogous to `imageGeneration` size caps / `input.maxBytesPerPart`)? Proposed: `content_too_long` on overflow in v1; an advertised cap is an additive follow-on.
+Because `Active` locks the wire shape, all four opens are resolved in-RFC at the `Draft → Active` waiver. Each resolution adopts the floor and leaves the richer shape to a **future additive** field/sub-flag, so none narrows or pre-commits the locked surface:
+
+1. **Streaming vs whole-file audio — RESOLVED: whole-file.** The Promise resolves with the finished asset (like `callImageGenerator`). A streaming/chunked variant, if ever needed, is advertised separately as an additive follow-on; it does not change this method's shape.
+2. **Multi-voice in one call vs one-call-per-speaker — RESOLVED: one call per speaker.** Each `callSpeechSynthesizer` synthesizes one turn with one `voiceId`; the host/pack mixes the resulting clips. A single-call multi-speaker shape, if ever added, is a future additive field — it does not alter the locked single-speaker request.
+3. **SSML support — RESOLVED: plain text in v1.** `text` is plain text; SSML is a future additive follow-on, gated behind an additive `speechSynthesis.ssml` sub-flag so plain-text callers are unaffected.
+4. **Max text length — RESOLVED: `content_too_long` on overflow, no advertised cap in v1.** Overflow returns the existing shared `content_too_long` code (`host-capabilities.md` §host.aiProviders "Failure modes"); an advertised per-call character cap is a future additive follow-on.
 
 ## Implementation notes (non-normative)
 
@@ -153,7 +155,7 @@ This graduates the way RFC 0091 and RFC 0078 did: spec text + schema flag + capa
 - [ ] `threat-model-prompt-injection.md` synthesized-audio-untrusted note (extends RFC 0091 §C).
 - [ ] Conformance: `aiproviders-speechsynth-shape.test.ts` (always-on) + `speech-synthesis-roundtrip.test.ts` + `speech-synthesis-unadvertised.test.ts` (both gated).
 - [ ] SDK `ctx` types add `callSpeechSynthesizer`; `CHANGELOG.md` + `INTEROP-MATRIX.md` rows.
-- [ ] All four Unresolved questions resolved (record in `Updated:`).
+- [x] All four Unresolved questions resolved in-RFC at the `Draft → Active` waiver (recorded in `Updated:` + §"Resolved questions").
 - [ ] `Active → Accepted`: a reference host advertises `aiProviders.speechSynthesis` + passes the gated scenarios (openwop-app ADR 0086).
 
 ## References
