@@ -745,6 +745,10 @@
           "uniqueItems": true,
           "description": "Subset of `supported` for which BYOK is permitted. Empty array → all calls use platform-managed keys; non-empty → clients MAY pass `ai.credentialRef` in `RunOptions.configurable` for matching providers."
         },
+        "speechSynthesis": {
+          "const": "supported",
+          "description": "RFC 0105. When present (value MUST be the string `\"supported\"`), the host exposes `ctx.callSpeechSynthesizer({ text, voiceId, mimeType?, format?, languageCode?, ... })` returning a binary audio asset (host-served `url` OR inline `base64` + `mimeType`), paralleling `aiProviders.imageGeneration`. Absent ⇒ no TTS; a call MUST be rejected with `speech_synthesis_unsupported` (never a no-op). Voices are referenced by an opaque host-resolved `voiceId`; the spec does NOT enumerate voices. TTS provider ids are advertised via the existing `aiProviders.supported[]` (the call's `provider?` MUST be a member); there is no `speechSynthesis` sub-field for providers. Per-host model/voice routing is a host choice."
+        },
         "input": {
           "type": "object",
           "additionalProperties": false,

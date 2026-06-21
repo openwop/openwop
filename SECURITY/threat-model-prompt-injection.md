@@ -132,6 +132,16 @@ The mitigation is **declarative-data, not code** (the property A2UI exists for) 
 | Information disclosure  | Surface field echoes secret material                                    | Payload walked by the SR-1 redaction harness like any envelope; closed shape carries only text/label/binding fields (no opaque blob channel)                            | `a2ui-surface-no-secret-rendering` |
 | Authority bypass (HITL) | Untrusted-authored surface drives an `approval` interrupt               | Surface from an untrusted-content node carries `meta.contentTrust:'untrusted'`; the existing `untrusted_content_blocks_approval` rule blocks the gate                   | `a2ui-untrusted-blocks-approval`   |
 
+### 4.9 Synthesized audio output (speech synthesis) — RFC 0105
+
+`ctx.callSpeechSynthesizer` (`host-capabilities.md` §host.aiProviders) is a **generation adapter**: text in, provider-produced audio bytes back into the run. It introduces no *new* trust primitive — it reuses the existing generated-media boundary — but the boundary MUST be applied, so it is recorded here for completeness. No new protocol-tier invariant is minted; the mitigations are reuse of `egress-credential-audience-bound` / RFC 0076 SSRF and the RFC 0091 §C generated-media discipline.
+
+| Threat                 | Vector                                                                              | Mitigation                                                                                                                                                          | Reuses                              |
+| ---------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- |
+| SSRF / unguarded fetch | A `url`-referenced audio asset is fetched/served without the SSRF guard             | A `url` asset MUST be served/fetched through the host's SSRF-guarded path (`ctx.http.safeFetch`); never a raw fetch of a pack- or provider-supplied URL              | RFC 0076 `safeFetch` (SSRF guard)   |
+| Round-trip injection   | `text` (model/user-derived) carries injected instructions that re-enter if re-perceived | Synthesized bytes are generated media → carry the `<UNTRUSTED>` marker like any generated asset; `text` MUST NOT be treated as trusted on a transcription/perception round-trip | RFC 0091 §C generated-media boundary |
+| Secret in handle       | `voiceId` smuggles credential/tenant secret into event logs or replay payloads      | `voiceId` is an opaque host-resolved handle and MUST NOT encode secret material; audio bytes are not credentials (BYOK/SR-1 unaffected)                              | SR-1 redaction; `threat-model-secret-leakage.md` |
+
 ## 5. Invariants (MUST NOT)
 
 | ID                                     | Statement                                                                                                                                                                                                                                                                                                                                                                                       |

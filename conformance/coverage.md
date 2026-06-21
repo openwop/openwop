@@ -334,6 +334,14 @@ server-free or shape-probe assertions that run unconditionally.
 | `agent-requires-capabilities-shape.test.ts`    | RFC 0092 (`AgentManifest.requiresCapabilities[]` shape)                       | always-on                                                                                |
 | `agent-capability-degraded-projection.test.ts` | RFC 0092 §B (degraded projection on `GET /v1/agents`, behavioral)             | `capabilities.agents.manifestRuntime` (behaviorGate `openwop-agent-capability-degraded`) |
 
+### RFC 0105 (speech synthesis adapter)
+
+| Scenario file                              | Spec doc / RFC                                                                | Gating capability                                                                                          |
+| ------------------------------------------ | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `aiproviders-speechsynth-shape.test.ts`    | RFC 0105 §B (`capabilities.aiProviders.speechSynthesis` const advertisement)  | always-on                                                                                                 |
+| `speech-synthesis-roundtrip.test.ts`       | RFC 0105 §A (`ctx.callSpeechSynthesizer` audio round-trip, behavioral)        | `aiProviders.speechSynthesis === 'supported'` (behaviorGate `openwop-speech-synthesis`)                   |
+| `speech-synthesis-unadvertised.test.ts`    | RFC 0105 §C (unadvertised host rejects with `speech_synthesis_unsupported`)   | `aiProviders.speechSynthesis` ABSENT (behaviorGate `openwop-speech-synthesis-unadvertised`)               |
+
 ### Conversation primitive (RFC 0005)
 
 | Scenario file                               | Spec doc / RFC                                                  | Gating capability                                            |
