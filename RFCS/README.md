@@ -67,7 +67,7 @@ Every RFC follows `0000-template.md` and must answer:
 
 <!-- Hand-generated 2026-06-11 from each RFC's header `Status` field. TODO: this table should be emitted by `scripts/generate-protocol-status.mjs` (which already derives these statuses for docs/PROTOCOL-STATUS.md) instead of being hand-maintained. -->
 
-Current tally: **Accepted 101 · Active 3 · Draft 1** (105 RFCs, excluding the `0000` template; Active = 0035, 0043, 0100; Draft = 0038 Parked).
+Current tally: **Accepted 101 · Active 4 · Draft 1** (106 RFCs, excluding the `0000` template; Active = 0035, 0043, 0100, 0106; Draft = 0038 Parked).
 
 | RFC                                                                  | Title                                                                                                                                | Status               |
 | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
@@ -175,6 +175,7 @@ Current tally: **Accepted 101 · Active 3 · Draft 1** (105 RFCs, excluding the 
 | [0103](./0103-localized-content-surface.md)                          | Localized content surface — durable authored content (pages → sections; section = base `data` + sparse `localizations` map) reusing the Stable `i18n.md` annex's `Accept-Language`/`Content-Language` negotiation; new capability-gated `content` block (⊆ `i18n.supportedLocales`) + per-section field merge | `Accepted`           |
 | [0104](./0104-hitl-approver-routing.md)                              | Portable HITL approver routing — optional, advisory `approverGroupRefs` / `approverRoleRefs` / `audience` on the approval `InterruptPayload` so group/role approver routing is portable + capability-gated across hosts (`approversList` stays advisory; enforcement host-side). Step-up + credential-bound approvals are a separate RFC | `Accepted`           |
 | [0105](./0105-speech-synthesis-adapter.md)                           | Speech synthesis adapter — additive optional `aiProviders.speechSynthesis` sub-capability + `ctx.callSpeechSynthesizer({ text, voiceId, … })` → binary audio asset, paralleling `ctx.callImageGenerator`; closes the TTS (audio-output) wire gap (image-gen + RFC 0091 audio-input exist, but no speech synthesis) | `Accepted`           |
+| [0106](./0106-realtime-voice-session-profile.md)                     | Real-time voice session profile — additive optional `aiProviders.realtimeVoice`: streaming transcription `ctx.callTranscriber` (`AsyncIterable<TranscriptEvent>`, interim/final + endpointing), a streaming arm on the RFC 0105 synthesizer, a distinct `streamRef` live handle, and a `voice.*` turn-taking / barge-in run-event taxonomy | `Active`             |
 
 ## See also
 
