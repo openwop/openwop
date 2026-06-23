@@ -1,0 +1,10 @@
+# RFC 0107 — Gap Register
+
+| ID | Section | Question / Missing Input | Owner | Resolution Path | Blocks |
+|---|---|---|---|---|---|
+| G1 | Proposal / Schema | Validate the published declarative payload (`artifactTypes[]`, `provider`) **inline** via `$ref` into the per-kind source schemas, or keep it loose `object` (matching how `nodes[]`/`agents[]` ride the version manifest today)? | Schema Architect | Decision in comment window; recommend loose-now (parity with nodes/agents), tighten later if needed | Schema diff finalization → Active |
+| G2 | Alternatives | Single discriminated schema (`if/then` on `kind`) vs. per-kind `$ref` split if it grows unwieldy. | Schema Architect | Revisit only if a 3rd+ declarative kind lands; not blocking for artifact-type+connection | — |
+| G3 | Conformance / API | Typed reverse-lookup endpoints for declarative ids (`/v1/packs/-/by-artifact-type/{id}`, `/by-provider/{id}`) vs. just extending the per-pack `publishedTypeIds[]` denormalization. | Conformance + Spec Architect | Defer to a follow-up RFC unless an implementer needs reverse lookup now | Reverse-lookup scenario (not this RFC) |
+| G4 | Scope | Land `artifact-type` + `connection` only, or also `workflow-chain` / `prompt` / `chat-card` (source schemas exist, no consumer yet)? | Spec Architect | Recommend: enumerate all in `kind` for forward-compat, but only require/test artifact-type+connection now (the two with real packs); others reserved | Final `kind` enum + conformance scope |
+| G5 | Security | Should the registry's submission-time credential-material re-scan (RFC 0095 §B.2) on a published `provider` be a **MUST** or **SHOULD** at the registry layer (it is a MUST at source)? | Security Architect | Decision in comment window; draft as SHOULD (source MUST already binds) unless a maintainer wants belt-and-suspenders | Normative prose item #5 |
+| G6 | Conformance | Need 2 fixtures (`registry-version-manifest-{artifact-type,connection}.json`) + their `fixtures.md` catalog rows authored. | Conformance Architect | Author with the scenario when RFC → Active | Conformance scenario lands |

@@ -1,0 +1,11 @@
+# RFC 0107 — Risk Register
+
+Likelihood × Impact (H/M/L). Critical/High require a named mitigation owner + target date.
+
+| ID | Risk | Likelihood | Impact | Score | Mitigation | Owner | Status |
+|---|---|---|---|---|---|---|---|
+| R1 | A registry implements the relaxed `runtime` requirement naively (drops it unconditionally) and starts accepting **node** packs with no `runtime` — a real regression. | L | H | Med | The schema re-tightens via `allOf if/then/else` (node/absent ⇒ `runtime` required); conformance negative case `node-manifest-without-runtime → rejected` enforces it. Call out explicitly in §Conformance. | Schema + Conformance Architect | Open |
+| R2 | A connection pack's published `provider` carries credential material (clientSecret/apiKey) through to the public registry index. | L | H | Med | RFC 0095 §B.2 already forbids credential material in the manifest (enforced at source); this RFC reaffirms it for the published manifest (prose #5) and recommends a registry re-scan. Add a negative conformance fixture (provider-with-secret → rejected). | Security Architect | Open |
+| R3 | Third-party registries adopt the additive schema but stay on an older conformance suite → INTEROP-MATRIX drift (some registries serve declarative kinds, some don't). | M | L | Low | Additive + default `kind:"node"` means non-adopting registries are still conformant for node packs; mark the declarative scenarios as a suite-version requirement (not a v1 spec MUST for all registries). Note in INTEROP-MATRIX. | Compatibility Architect | Open |
+| R4 | Discovery consumers that string-match on pack shape (assume `runtime` present) break on a declarative manifest. | L | M | Low | The existing spec already warns against shape assumptions (`registry-operations.md` §"Type-ID indexing" — consumers MUST consult the manifest, not assume); `kind` makes the discriminator explicit. Document the `kind`-first inspection order. | Spec Architect | Open |
+| R5 | Scope creep — enumerating `prompt`/`chat-card` in `kind` invites pressure to fully spec/publish them now (no consumer exists). | M | L | Low | G4: enumerate for forward-compat but require/test only artifact-type + connection; reserve the rest with an explicit "no consumer yet" note. | Spec Architect | Open |
