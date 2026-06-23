@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
   "title": "RunEventPayloads",
-  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n100 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n107 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
   "type": "object",
   "$defs": {
     "_typeIndex": {
@@ -109,10 +109,95 @@
         "proposal.activated":        { "$ref": "#/$defs/proposalActivated" },
         "goal.evaluated":            { "$ref": "#/$defs/goalEvaluated" },
         "goal.closed":               { "$ref": "#/$defs/goalClosed" },
-        "import.applied":            { "$ref": "#/$defs/importApplied" }
+        "import.applied":            { "$ref": "#/$defs/importApplied" },
+        "voice.speech_start":        { "$ref": "#/$defs/voiceSpeechStart" },
+        "voice.transcript":          { "$ref": "#/$defs/voiceTranscript" },
+        "voice.endpoint_candidate":  { "$ref": "#/$defs/voiceEndpointCandidate" },
+        "voice.turn_commit":         { "$ref": "#/$defs/voiceTurnCommit" },
+        "voice.synthesis_chunk":     { "$ref": "#/$defs/voiceSynthesisChunk" },
+        "voice.barge_in":            { "$ref": "#/$defs/voiceBargeIn" },
+        "voice.cancelled":           { "$ref": "#/$defs/voiceCancelled" }
       }
     },
 
+    "voiceSpeechStart": {
+      "description": "RFC 0106 §D. Emitted when inbound user speech onset is detected in a live voice session. Content-free (a timestamp only). MUST NOT be emitted unless `aiProviders.realtimeVoice.transcription: \"streaming\"` is advertised.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["atMs"],
+      "properties": {
+        "atMs": { "type": "integer", "minimum": 0, "description": "Session-relative onset timestamp (ms)." }
+      }
+    },
+    "voiceTranscript": {
+      "description": "RFC 0106 §B/§D. A settled or provisional transcript part for the current turn, emitted on the durable event log as the single canonical record (the `ctx.callTranscriber` Promise resolves separately at `turn_commit`). `text` is the recognized speech — UNTRUSTED input (anyone in acoustic range is an unauthenticated writer): it MUST carry `contentTrust: \"untrusted\"` and MUST NOT be promoted to system/developer authority (SECURITY invariant `voice-transcript-untrusted`). A part with `isFinal: false` is provisional and MUST NOT be persisted to durable memory / the replay log / RAG or drive a side-effecting tool call before it finalizes (`voice-interim-not-durable`).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "isFinal", "atMs", "contentTrust"],
+      "properties": {
+        "text": { "type": "string", "description": "The current hypothesis for this segment (editable tail when `isFinal:false`)." },
+        "isFinal": { "type": "boolean", "description": "true ⇒ this segment's text is settled and will not change." },
+        "committedPrefix": { "type": "string", "description": "The leading portion the host guarantees will not change (Deepgram/Web-Speech model)." },
+        "stability": { "type": "number", "minimum": 0, "maximum": 1, "description": "Graded tail confidence (Google `stability`); omit/1.0 for immutable ASR." },
+        "formatted": { "type": "boolean", "description": "Punctuation/casing/ITN applied; absent ⇒ raw." },
+        "atMs": { "type": "integer", "minimum": 0 },
+        "contentTrust": { "const": "untrusted", "description": "MUST be `\"untrusted\"` — live transcript is untrusted ingress (`voice-transcript-untrusted`); never promote to higher authority." }
+      }
+    },
+    "voiceEndpointCandidate": {
+      "description": "RFC 0106 §B/§D. A silence boundary / likely end-of-turn appeared (only when `turnDetection: \"semantic\"`), DISTINCT from `voice.turn_commit` (Deepgram `UtteranceEnd` vs `speech_final`). Content-free.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["atMs"],
+      "properties": {
+        "atMs": { "type": "integer", "minimum": 0 },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1, "description": "Optional end-of-turn confidence." }
+      }
+    },
+    "voiceTurnCommit": {
+      "description": "RFC 0106 §B/§D. The user yielded the floor (turn boundary). This is where the `ctx.callTranscriber` Promise resolves. `finalText` is the settled transcript and is UNTRUSTED (it inherits the `voice.transcript` boundary).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["atMs", "finalText"],
+      "properties": {
+        "atMs": { "type": "integer", "minimum": 0 },
+        "finalText": { "type": "string", "description": "The settled transcript for the committed turn (untrusted input)." }
+      }
+    },
+    "voiceSynthesisChunk": {
+      "description": "RFC 0106 §C. Announces a clause-boundary streaming-synthesis chunk. METADATA ONLY — the audio bytes are referenced by a session-scoped `streamRef`/`url`, NOT inlined on the event log past the host's inline cap (RFC 0055 256 KiB precedent; spill to a tenant-scoped `url`), so replay/`:fork` stays bounded over long sessions. MUST NOT be emitted unless `aiProviders.realtimeVoice.synthesis: \"streaming\"` is advertised.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["seq", "mimeType"],
+      "properties": {
+        "seq": { "type": "integer", "minimum": 0, "description": "Monotonic chunk sequence." },
+        "mimeType": { "type": "string", "minLength": 1, "description": "Audio chunk type (e.g. `audio/mpeg`)." },
+        "durationMs": { "type": "integer", "minimum": 0, "description": "Optional chunk duration." },
+        "url": { "type": "string", "description": "Tenant-scoped, SSRF-guarded (RFC 0076) reference to the chunk bytes." },
+        "streamRef": { "type": "string", "description": "Session-scoped live-stream handle for the chunk bytes." },
+        "base64": { "type": "string", "description": "OPTIONAL inline bytes, permitted ONLY while under the host's inline cap; past the cap the host MUST use `url`/`streamRef`." },
+        "final": { "type": "boolean", "description": "true on the terminal chunk." }
+      }
+    },
+    "voiceBargeIn": {
+      "description": "RFC 0106 §D. User speech overlapped active assistant playback (probable cut-in). A host advertising `realtimeVoice.bargeIn: \"supported\"` MUST emit this on detected overlap. Content-free. Distinct from `voice.cancelled` (a backchannel \"uh-huh\" MAY produce `barge_in` with no `cancelled`).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["atMs"],
+      "properties": {
+        "atMs": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "voiceCancelled": {
+      "description": "RFC 0106 §D. Downstream LLM/TTS work was cancelled (barge-in or explicit). A cancellation MUST NOT emit partial tool outputs or partial un-guardrailed model output and MUST roll back or fully complete an in-flight side effect (SECURITY invariant `voice-bargein-no-partial-leak`). Content-free.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["atMs"],
+      "properties": {
+        "atMs": { "type": "integer", "minimum": 0 },
+        "reason": { "type": "string", "enum": ["barge-in", "explicit"], "description": "Why downstream work was cancelled." }
+      }
+    },
     "authorizationDecided": {
       "description": "RFC 0049 — emitted on a role-based authorization decision (allow or deny). Redaction-safe: `principal` is an opaque RFC 0048 id; `reason` carries no credential material. Every deny SHOULD be emitted and SHOULD feed the audit log (RFC 0009/0010). MUST NOT be emitted unless `capabilities.authorization.supported: true`.",
       "type": "object",

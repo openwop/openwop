@@ -642,6 +642,59 @@ components:
       payload:
         $ref: '#/components/schemas/RunEventDoc'
 
+    # ── Voice (RFC 0106) ─────────────────────────────────────────────────
+    # The voice.* turn-taking / barge-in taxonomy — the single canonical record of a
+    # live voice turn (ctx.callTranscriber resolves its Promise at turn_commit; these
+    # events ARE the streaming representation on the durable log). All RunEventDocs.
+    VoiceSpeechStart:
+      name: voice.speech_start
+      title: Inbound user speech onset detected
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    VoiceTranscript:
+      name: voice.transcript
+      title: Interim/final transcript part (untrusted ingress; carries contentTrust)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    VoiceEndpointCandidate:
+      name: voice.endpoint_candidate
+      title: Likely end-of-turn boundary (semantic turn detection)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    VoiceTurnCommit:
+      name: voice.turn_commit
+      title: User yielded the floor (callTranscriber Promise resolves here)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    VoiceSynthesisChunk:
+      name: voice.synthesis_chunk
+      title: Clause-boundary streaming-synthesis chunk (metadata only)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    VoiceBargeIn:
+      name: voice.barge_in
+      title: User speech overlapped active assistant playback
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
+    VoiceCancelled:
+      name: voice.cancelled
+      title: Downstream LLM/TTS work cancelled (barge-in or explicit)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+
   # ── Schemas ────────────────────────────────────────────────────────────
   schemas:
 

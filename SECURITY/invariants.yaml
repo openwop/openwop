@@ -2166,3 +2166,72 @@ invariants:
       distinguish "exists for another tenant" from "does not exist" (no
       existence oracle). The no-enumeration guarantee holds relative to the
       host-resolved tenant.
+
+  - id: voice-transcript-untrusted
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/voice-event-payloads-shape.test.ts
+    note: |
+      RFC 0106 §F INV-2. Every live-transcript emission (interim AND final) —
+      `voice.transcript` and `voice.turn_commit.finalText` — is UNTRUSTED ingress
+      (a live mic is an always-open, low-friction channel; anyone in acoustic
+      range is an unauthenticated writer). It MUST carry the `contentTrust:
+      "untrusted"` marker and MUST NOT be promoted to system/developer authority
+      (OWASP LLM01:2025; the OpenAI Model Spec trust hierarchy), inheriting the
+      RFC 0091 §C / RFC 0105 §D untrusted-media boundary. The wire half is
+      schema-enforced and verified server-free: the `voice.transcript` payload
+      REQUIRES `contentTrust: "untrusted"` (`run-event-payloads.schema.json`
+      `$defs.voiceTranscript`). The behavioral "not promoted to authority" half
+      is exercised by the gated reference-host leg at `Active → Accepted`.
+
+  - id: voice-interim-not-durable
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    note: |
+      RFC 0106 §F INV-1. Non-final transcript (`voice.transcript` with
+      `isFinal: false`) MUST NOT be persisted to durable memory, the
+      replay/event log, or RAG, and MUST NOT drive a side-effecting tool call,
+      until it finalizes. Interim ASR is provider-documented as revisable (AWS
+      `Stable:false`, Deepgram/Google `is_final:false`); acting on it commits to
+      a string the speaker never finally said (interim→final poisoning). Detect:
+      feed a scripted stream whose interim ("transfer 500") differs from its
+      final ("transfer information"); assert the durable log and any
+      side-effecting tool invocation contain only finalized text, and no
+      side-effecting tool fired before `turn_commit` / `isFinal:true`.
+      Behavioral — verified by the reference host's CI (the openwop-app voice arm
+      at P2); graduates reference-impl → protocol at `Active → Accepted`.
+
+  - id: voice-bargein-no-partial-leak
+    tier: reference-impl
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    note: |
+      RFC 0106 §F INV-3. A barge-in / stream cancellation (`voice.cancelled`)
+      MUST NOT emit partial tool outputs or partial un-guardrailed model output,
+      and MUST roll back or fully complete (never half-apply) an in-flight tool
+      side effect; retained state MUST pass the end-of-turn redaction/guardrail
+      pass the cancellation would otherwise skip. Detect: start a turn that calls
+      a slow tool / streams a long completion, barge-in mid-flight, assert no
+      partial-tool-output event and no un-guardrailed partial reached the client
+      or log, and the tool's effect is all-or-nothing. Behavioral — verified by
+      the reference host's CI; graduates reference-impl → protocol at
+      `Active → Accepted`.
+
+  - id: voice-streamref-tenant-bound
+    tier: reference-impl
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    note: |
+      RFC 0106 §F INV-4. A `streamRef` MUST be bound to exactly one tenant +
+      session for its lifetime; no buffered audio or interim transcript may be
+      readable via another handle; and the session MUST enforce a max-duration /
+      max-uncommitted-audio budget so a never-finalizing stream is bounded
+      (TDoS-analog). Detect: (a) two concurrent streams under different tenants —
+      tenant B presenting A's `streamRef` is rejected; (b) a stream that never
+      finalizes is terminated at the configured budget. Reuses the
+      `media-asset-url-tenant-scoped` (RFC 0055) tenant-scoping precedent.
+      Behavioral — verified by the reference host's CI; graduates
+      reference-impl → protocol at `Active → Accepted`.
