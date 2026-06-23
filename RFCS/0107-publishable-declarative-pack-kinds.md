@@ -32,6 +32,8 @@ This is the registry-publication analogue of the source-vs-published split the s
 
 ### Wire shape changes
 
+> **⚠️ Correction (2026-06-23, see the `Updated` row):** the diff below shows `chat-card` for the chat-card-pack kind. The canonical kind string is **`card`** (RFC 0071); the shipped schema enumerates `card`, not `chat-card`. The original diff is kept here as history — read `card` wherever `chat-card` appears below.
+
 `registry-version-manifest.schema.json` gains a `kind` discriminator and the per-kind declarative payload, and makes `runtime` **conditionally** required.
 
 ```diff
