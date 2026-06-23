@@ -2190,6 +2190,8 @@ invariants:
     tier: reference-impl
     severity: critical
     threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/voice-interim-not-durable.test.ts
     note: |
       RFC 0106 §F INV-1. Non-final transcript (`voice.transcript` with
       `isFinal: false`) MUST NOT be persisted to durable memory, the
@@ -2201,29 +2203,36 @@ invariants:
       final ("transfer information"); assert the durable log and any
       side-effecting tool invocation contain only finalized text, and no
       side-effecting tool fired before `turn_commit` / `isFinal:true`.
-      Behavioral — verified by the reference host's CI (the openwop-app voice arm
-      at P2); graduates reference-impl → protocol at `Active → Accepted`.
+      STAYS reference-impl: the openwop-app live host transcribes via finalized
+      media assets (no divergent-interim emission to observe), so a non-vacuous
+      interim-vs-final divergence is not yet proven; the gated leg
+      `voice-interim-not-durable.test.ts` soft-skips until a host with a
+      scripted-interim test-seam arm proves it, then graduates to protocol.
 
   - id: voice-bargein-no-partial-leak
-    tier: reference-impl
+    tier: protocol
     severity: high
     threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/voice-bargein-no-partial-leak.test.ts
     note: |
       RFC 0106 §F INV-3. A barge-in / stream cancellation (`voice.cancelled`)
       MUST NOT emit partial tool outputs or partial un-guardrailed model output,
       and MUST roll back or fully complete (never half-apply) an in-flight tool
       side effect; retained state MUST pass the end-of-turn redaction/guardrail
-      pass the cancellation would otherwise skip. Detect: start a turn that calls
-      a slow tool / streams a long completion, barge-in mid-flight, assert no
-      partial-tool-output event and no un-guardrailed partial reached the client
-      or log, and the tool's effect is all-or-nothing. Behavioral — verified by
-      the reference host's CI; graduates reference-impl → protocol at
-      `Active → Accepted`.
+      pass the cancellation would otherwise skip. Detect: drive the barge-in seam
+      and assert `voice.barge_in` → `voice.cancelled` with NO `voice.synthesis_chunk`
+      (partial output) emitted AFTER the cancel. Graduated reference-impl → protocol
+      2026-06-23 on the openwop-app live host (rev `00293-89w`, steward-curl-verified:
+      the `/v1/host/sample/voice/barge-in` seam emits chunks, then barge_in→cancelled,
+      none after) — the behavioral leg `voice-bargein-no-partial-leak.test.ts`.
 
   - id: voice-streamref-tenant-bound
     tier: reference-impl
     severity: critical
     threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/voice-streamref-tenant-bound.test.ts
     note: |
       RFC 0106 §F INV-4. A `streamRef` MUST be bound to exactly one tenant +
       session for its lifetime; no buffered audio or interim transcript may be
@@ -2233,5 +2242,8 @@ invariants:
       tenant B presenting A's `streamRef` is rejected; (b) a stream that never
       finalizes is terminated at the configured budget. Reuses the
       `media-asset-url-tenant-scoped` (RFC 0055) tenant-scoping precedent.
-      Behavioral — verified by the reference host's CI; graduates
-      reference-impl → protocol at `Active → Accepted`.
+      STAYS reference-impl: live `streamRef` transport is host-internal per §E and
+      unsupported on the stateless openwop-app host (honest `transcription_unsupported`
+      for a live `streamRef`), so there is no live conduit to exhibit cross-tenant
+      binding; the gated leg `voice-streamref-tenant-bound.test.ts` soft-skips until
+      a host with live `streamRef` transport proves it, then graduates to protocol.

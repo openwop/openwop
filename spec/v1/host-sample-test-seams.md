@@ -478,6 +478,16 @@ The `proposals/{id}/apply` seam MUST install the byte image last persisted on th
 
 Conformance: `proposal-reviewable-learning.test.ts`, `goal-standing-continuation.test.ts`, `export-bundle-portability.test.ts` (each soft-skips on 404 when the seam is unwired).
 
+### 12. Real-time voice seams — `POST /v1/host/sample/ai/call-{transcriber,speech-synthesizer}` + `/v1/host/sample/voice/barge-in` (RFC 0106)
+
+Three seams let the gated RFC 0106 scenarios drive the `realtimeVoice` surface without a media-transport stack:
+
+- **`POST /v1/host/sample/ai/call-transcriber`** `{ audio: { streamRef? | url? }, languageCode?, interimResults? }` — the `ctx.callTranscriber` path. A host whose live-stream transport is host-internal per §E MUST honestly reject a live `audio.streamRef` with `transcription_unsupported` (the deterministic arm, under `OPENWOP_TEST_SEAM_ENABLED`, forces a `mock` provider and returns the canonical `voice.*` turn). A produced turn resolves a non-empty `finalText` at `voice.turn_commit`; every emitted `voice.transcript` carries `contentTrust: "untrusted"` (§F INV-2).
+- **`POST /v1/host/sample/ai/call-speech-synthesizer`** with `{ …, stream: true }` — the §C streaming arm. Returns the finalized RFC 0105 `audio` asset (exactly one of `url`/`base64`) AND an `events[]` array of `voice.synthesis_chunk` run-events carrying metadata only (`seq`/`mimeType`; bytes by `url`/`streamRef`, inline `base64` only under the host cap — G8), terminated by `final: true`.
+- **`POST /v1/host/sample/voice/barge-in`** — emits a `voice.*` sequence demonstrating `voice.barge_in` → `voice.cancelled` with NO `voice.synthesis_chunk` after the cancel (the §F INV-3 `voice-bargein-no-partial-leak` proof).
+
+Conformance: `voice-transcription-streaming.test.ts`, `voice-transcription-unadvertised.test.ts`, `voice-synthesis-streaming.test.ts`, `voice-bargein-no-partial-leak.test.ts`, `voice-interim-not-durable.test.ts`, `voice-streamref-tenant-bound.test.ts` (each gated on `aiProviders.realtimeVoice.*` and soft-skipping on 404 / on the honest `transcription_unsupported` §E path). Reference host: openwop-app (rev `00293-89w`, live).
+
 ## Production safety (normative)
 
 All seams under `/v1/host/sample/*` are conformance-only. Hosts deployed in production:
