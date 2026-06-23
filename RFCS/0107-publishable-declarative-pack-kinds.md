@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0107 |
 | **Title** | Publishable declarative pack kinds — registry version manifest carries `kind` + declarative payload, `runtime` conditional |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-06-23 |
-| **Updated** | 2026-06-23 — flipped to `Active`; 7-day comment window **waived** by the maintainer (David Tufts) under single-org bootstrap governance (`GOVERNANCE.md` — lazy consensus, maintainer-driven). Additive/backward-compatible; no objections outstanding. Implementation pending; wire shapes locked except the explicit Unresolved questions (G1, G4). |
+| **Updated** | 2026-06-23 — flipped to `Accepted`; implementation landed (PR #749 → `534a25be`) and conformance reflects it (suite `1.33.0`, tag `openwop-conformance/v1.33.0`). The reference registry published the first declarative packs (`openwop-registry` PR #4 → `4dde5009`) and `packs.openwop.dev` serves them live (artifact-type + 6 connection packs; 4-tab landing). All acceptance criteria met. _Prior:_ 2026-06-23 — flipped to `Active`; 7-day comment window **waived** by the maintainer (David Tufts) under single-org bootstrap governance (`GOVERNANCE.md` — lazy consensus, maintainer-driven). Additive/backward-compatible; no objections outstanding. |
 | **Affects** | `spec/v1/registry-operations.md` §"Validation flow" + §"Type-ID indexing and cross-namespace exports"; `schemas/registry-version-manifest.schema.json`; `conformance/src/scenarios/registry-public.test.ts` (+ fixtures); reference registry (`openwop-registry`) `build-index` + landing |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 |
 | **Supersedes** | — |
@@ -135,11 +135,11 @@ Sequencing once Active: (1) land the schema + `registry-operations.md` prose + c
 
 ## Acceptance criteria
 
-- [ ] `spec/v1/registry-operations.md` §"Validation flow" amended (kind discriminator + conditional runtime + skip runtime-check for declarative kinds + denormalization extension).
-- [ ] `schemas/registry-version-manifest.schema.json` updated (additive: `kind`, declarative payload props, `if/then/else` runtime conditional; `additionalProperties:false` preserved).
-- [ ] ≥1 conformance scenario covering a published artifact-type + connection manifest (positive) and a declarative-with-runtime manifest (negative); fixtures catalogued.
-- [ ] `CHANGELOG.md` entry under the appropriate v1.x minor.
-- [ ] Reference registry (`openwop-registry`) re-vendors the schema, serves a published artifact-type + connection pack, and the landing surfaces the kinds — OR this RFC explicitly defers the reference-registry publish to a follow-up tracked task.
+- [x] `spec/v1/registry-operations.md` §"Validation flow" amended (kind discriminator + conditional runtime + skip runtime-check for declarative kinds + denormalization extension). — PR #749 (`534a25be`).
+- [x] `schemas/registry-version-manifest.schema.json` updated (additive: `kind`, declarative payload props, `if/then/else` runtime conditional; `additionalProperties:false` preserved). — PR #749 (`534a25be`).
+- [x] ≥1 conformance scenario covering a published artifact-type + connection manifest (positive) and a declarative-with-runtime manifest (negative); fixtures catalogued. — `conformance/src/scenarios/registry-declarative-kinds.test.ts` (8 tests), PR #749; suite `1.33.0` (tag `openwop-conformance/v1.33.0`).
+- [x] `CHANGELOG.md` entry under the appropriate v1.x minor. — PR #749, conformance suite `1.32.0 → 1.33.0`.
+- [x] Reference registry (`openwop-registry`) re-vendors the schema, serves a published artifact-type + connection pack, and the landing surfaces the kinds. — `openwop-registry` PR #4 (`4dde5009`): re-vendored schema + `build-index` 4-tab landing + 7 signed declarative packs (`core.openwop.artifact-types` + 6 `core.openwop.connections.*`), `registry-check` green (96 packs). Live on `packs.openwop.dev` — manifests + `.sig` served (HTTP 200), landing shows Node 58 · Agent 5 · Artifact-type 1 · Connection 6. First non-node packs ever published.
 
 ## References
 
