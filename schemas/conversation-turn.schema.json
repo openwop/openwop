@@ -66,7 +66,42 @@
       "type": "integer",
       "minimum": 0,
       "description": "0-based index within the conversation. `conversation.opened.initialTurn` carries `turnIndex: 0`; subsequent `conversation.exchanged` turns increment monotonically; `conversation.closed.finalTurn` carries the highest index."
+    },
+    "speakerId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "description": "RFC 0101. Stable speaker identity of this turn — the roster INSTANCE id of the agent that produced it (the `host:<id>` AgentRef agentId per `agent-roster-entry.schema.json` §A / RFC 0086), NOT the manifest/class `AgentRef.agentId`. REQUIRED when `role: 'agent'` (the conditional below) so that 'turn N was spoken by agent X' is an observable, replay-stable, cross-host-projectable fact in a multi-party transcript. When a `participants` roster is declared on `conversation.opened` (RFC 0101), `speakerId` MUST be a member of that roster; a turn whose `speakerId` is not a participant MUST be rejected (host-enforced, capability-gated on `multiPartyConversation.supported`). For `role: 'user'` / `role: 'system'` turns the field is OPTIONAL and carries no normative meaning. Additive-safe: pre-RFC-0101 `role: 'agent'` turns that omit it are accepted by hosts that do NOT advertise `multiPartyConversation`."
     }
   },
+  "allOf": [
+    {
+      "$comment": "RFC 0101 — agent turns MUST carry speaker attribution. Conditional (not unconditional `required`) so the field is only mandatory for `role: 'agent'`; `user`/`system` turns and pre-RFC-0101 producers on non-multi-party hosts are unaffected. Capability-gated: hosts enforce this only when advertising `multiPartyConversation.supported` (capabilities.schema.json).",
+      "if": { "properties": { "role": { "const": "agent" } }, "required": ["role"] },
+      "then": { "required": ["speakerId"] }
+    }
+  ],
+  "examples": [
+    {
+      "$comment": "RFC 0101 POSITIVE — an agent turn in a multi-party council carrying speaker attribution (the roster instance id).",
+      "messageId": "council-q1:1:agent",
+      "from": "host:advisor-cfo",
+      "content": "From a cash-runway view I'd push the launch one quarter.",
+      "ts": 1718900000000,
+      "role": "agent",
+      "turnIndex": 1,
+      "speakerId": "host:advisor-cfo"
+    },
+    {
+      "$comment": "RFC 0101 POSITIVE — a user turn; speakerId is OPTIONAL for non-agent roles and omitted here.",
+      "messageId": "council-q1:0:user",
+      "from": "user",
+      "content": "Should we launch in Q3 or Q4?",
+      "ts": 1718900000000,
+      "role": "user",
+      "turnIndex": 0
+    }
+  ],
+  "$comment": "RFC 0101 NEGATIVE (covered by the `allOf`/`if` conditional + conversation scenarios, NOT validatable as an `examples[]` entry which must be VALID): a `{ role: 'agent', ... }` turn that OMITS `speakerId` MUST FAIL validation; see conformance/src/scenarios/multi-party-conversation-shape.test.ts.",
   "additionalProperties": true
 }

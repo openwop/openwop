@@ -566,6 +566,23 @@
       "uniqueItems": true,
       "description": "Optional v1 host-advertised opaque capability ids that NodeModules may declare in `NodeModule.requires`. Naming convention: dotted, domain-scoped (`chat.sendPrompt`, `canvas.write`, `secrets.byok`). Provider value shapes are documented per-capability alongside consumers, NOT in the protocol package — the protocol owns the *check*, not domain provider contracts. A client that submits a workflow whose nodes declare a `requires` entry SHOULD first verify the host advertises that capability; a host that lacks a capability MUST refuse to dispatch nodes that declare it, terminating the run with `RunSnapshot.error.code = 'capability_not_provided'`. See `capabilities.md` §\"Runtime capabilities\"."
     },
+    "multiPartyConversation": {
+      "type": "object",
+      "description": "RFC 0101 — Multi-party group conversation (shared transcript + speaker attribution). When advertised with `supported: true`, the host honors the RFC 0101 normative contract: (1) it accepts an OPTIONAL `participants: AgentRef[]` roster on `conversation.opened` (`conversation-event.schema.json`); (2) it REQUIRES a `speakerId` (the roster INSTANCE id, `host:<id>` per RFC 0086) on every `role: 'agent'` turn; and (3) when a `participants` roster is present it MUST reject a turn whose `speakerId` is not a roster member. Absent block ⇒ no advertisement: the host runs single-agent conversations (RFC 0005) and treats `participants`/`speakerId` as opaque, unenforced fields. Advertising `supported: true` without honoring (1)+(2)+(3) is a dishonest wire claim (`OPENWOP_REQUIRE_BEHAVIOR=true` fails the gated conformance scenarios). Host product policy — turn-taking order, round count, synchronous vs. async rounds — stays NON-normative (RFC 0101 §Spec); only roster membership, agent-turn attribution, and this capability are normative. Requires `conversationPrimitive: true` (RFC 0005) — this block extends the single-agent conversation primitive, it does not replace it.",
+      "required": ["supported"],
+      "additionalProperties": false,
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "RFC 0101. Host enforces the multi-party roster + speaker-attribution contract. When `false` or absent, RFC 0101 conformance scenarios soft-skip and the host applies no roster/attribution enforcement."
+        },
+        "maxParticipants": {
+          "type": "integer",
+          "minimum": 2,
+          "description": "RFC 0101. OPTIONAL host ceiling on the size of the `conversation.opened.participants` roster. A multi-party council has at least 2 participants. When advertised, the host MUST reject a `conversation.opened` whose `participants` array exceeds this count. Absent ⇒ the host does not bound the roster size on the wire."
+        }
+      }
+    },
     "multiAgent": {
       "type": "object",
       "description": "RFC 0037 — Multi-agent execution model + handoff state machine. Hosts that advertise implement the supervisor→dispatch→harvest loop + the 4-state handoff state machine + the `core.workflowChain.event` emission contract per spec/v1/multi-agent-execution.md. Absent block = host implements RFCs 0006/0007/0022 individually with implementation flexibility on integration semantics; conformance scenarios gating on this flag soft-skip on absence.",

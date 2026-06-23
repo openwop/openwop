@@ -156,6 +156,42 @@ Hosts that do not advertise `capabilities.conversationPrimitive: true` MUST reje
 
 Conversations MAY carry `timeoutMs` (per `InterruptPayload.timeoutMs`). The timeout applies to the _full_ conversation, measured from `conversation.opened`. On timeout, the host MUST emit a `conversation.closed` with `outcome: null` and a `system`-role `finalTurn` indicating the timeout reason, then proceed with the node's normal timeout handling.
 
+### §J Multi-party group conversation (RFC 0101)
+
+> Added by RFC 0101 (`Accepted` 2026-06-22, `additive`). RFC 0005 defines the
+> conversation primitive around one human + one driving agent; RFC 0101 extends it
+> — it does not replace it — to **N agents co-participating in one shared
+> transcript** (the advisory-council / panel pattern). The extension is three
+> additive, capability-gated facts:
+
+- **Participant roster.** `conversation.opened` MAY carry `participants: AgentRef[]`
+  (`conversation-event.schema.json`) — the cohort permitted to speak, identified by
+  **roster INSTANCE id** (`host:<id>`, RFC 0086). When present (and the host
+  advertises `multiPartyConversation.supported`), a turn whose speaker is not a roster
+  member MUST be rejected with `validation_error` (the §E turn-validation path).
+- **Speaker attribution.** Every `role: 'agent'` turn MUST carry `speakerId` (the
+  speaking agent's roster instance id) — on `initialTurn`, every `exchanged.turn`, and
+  `finalTurn`. This is the §C `ConversationTurn` shape's additive
+  conditionally-required field (required only when `role: 'agent'`); `user`/`system`
+  turns are unaffected. Attribution is replay-stable (§G): the recorded `speakerId` is
+  fixed history and MUST NOT be re-resolved against a moved roster on replay/`:fork`.
+- **Capability.** Gated on `capabilities.multiPartyConversation { supported,
+  maxParticipants? }`. Absent ⇒ the host runs single-agent conversations (this RFC's
+  baseline) and treats `participants`/`speakerId` as opaque, unenforced fields.
+
+**Turn-taking is host product policy (non-normative).** Who speaks next, the round
+count, synchronous vs. asynchronous rounds, broadcast (`to` absent) vs. addressed
+(`to` set, §C) routing, and per-participant timeout across N participants are HOST
+decisions. RFC 0101 standardizes only the observable wire facts (roster + attribution
++ capability), NOT a turn-taking protocol.
+
+**Relationship to §F / RFC 0002 §A8.** The §F `groupId` → `shared:<groupId>` mapping
+scopes shared **memory** (what an agent reads/writes); the RFC 0101 `participants`
+roster scopes **speaking rights** (who may emit a turn). They are orthogonal — a host
+MUST NOT conflate them. A council that wants both a shared transcript channel AND a
+shared memory scope sets BOTH the conversation `groupId` (§F) and the `participants`
+roster (RFC 0101). See `RFCS/0101-multi-party-group-conversation.md` §Spec.
+
 ## Compatibility
 
 **Additive.**
