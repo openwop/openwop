@@ -94,6 +94,16 @@ describe('registry-declarative-kinds: version-manifest schema admits declarative
     expect(ok, why('registry-operations.md §Validation flow', 'connection manifest publishes (RFC 0107)')).toBe(true);
   });
 
+  it('a published chat-card version manifest validates (kind: "card" per RFC 0071, + cards, no runtime)', () => {
+    const ok = validate({ ...base, kind: 'card', cards: [{ cardTypeId: 'core.openwop.card.summarize', prompt: { template: 'Summarize: {{input}}' } }] });
+    expect(ok, why('registry-operations.md §Validation flow', 'chat-card pack publishes with kind "card" (RFC 0071 / RFC 0107) — NOT "chat-card"')).toBe(true);
+  });
+
+  it('the legacy "chat-card" kind string is REJECTED (RFC 0071 kind is "card")', () => {
+    const ok = validate({ ...base, kind: 'chat-card', cards: [{ cardTypeId: 'core.openwop.card.x', prompt: { template: 'x' } }] });
+    expect(ok, why('registry-version-manifest.schema.json', 'kind enum is "card", not "chat-card" (corrected 2026-06-23)')).toBe(false);
+  });
+
   it('an unchanged node version manifest still validates (no kind, runtime + nodes)', () => {
     const ok = validate({ ...base, runtime: { language: 'javascript' }, nodes: [{ typeId: 'core.openwop.x.n', version: '1.0.0', category: 'data', role: 'pure' }] });
     expect(ok, why('COMPATIBILITY.md §2.1', 'RFC 0107 is additive — node manifests validate unchanged')).toBe(true);
