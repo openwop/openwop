@@ -171,7 +171,14 @@
         "proposal.activated",
         "goal.evaluated",
         "goal.closed",
-        "import.applied"
+        "import.applied",
+        "voice.speech_start",
+        "voice.transcript",
+        "voice.endpoint_candidate",
+        "voice.turn_commit",
+        "voice.synthesis_chunk",
+        "voice.barge_in",
+        "voice.cancelled"
       ]
     }
   }
