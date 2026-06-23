@@ -11,7 +11,7 @@
 | JSON Schemas | 67 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 354 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 355 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 105 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
@@ -31,9 +31,9 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 100 |
+| Accepted | 101 |
 | Active | 3 |
-| Draft | 2 |
+| Draft | 1 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -137,7 +137,7 @@
 | RFC 0098 | Agent Platform Portability - Export Bundle and Tenant Import | Accepted |
 | RFC 0099 | External-Event Trigger Ingestion - extend the RFC 0083 durable-trigger bridge so `webhook` / `email` / `form` subscription sources can deliver an externally-originated event -> start a run, with a normative inbound-event envelope, a subscription-registration contract, and SSRF/replay safety | Accepted |
 | RFC 0100 | Async / Durable A2A Tasks - extend the A2A composition surface (`a2a-integration.md` + the existing sync `message/send` -> `tasks/get` round-trip) with a durable Task lifecycle, `tasks/resubscribe` streaming, and push-notification config, advertised via a new `a2a` capability slot, so an OpenWOP-host-as-A2A-agent runs cross-host handoffs asynchronously instead of synchronously | Active |
-| RFC 0101 | Multi-party group conversation (shared transcript, speaker attribution) | Draft |
+| RFC 0101 | Multi-party group conversation (shared transcript, speaker attribution) | Accepted |
 | RFC 0102 | A2UI agent-authored interface surfaces (declarative cross-trust-boundary UI as a core, advertised envelope kind) | Accepted |
 | RFC 0103 | Localized Content Surface - a capability-gated content data model (page -> section, where a section is one record with a base `data` payload plus a sparse `localizations` map) plus delivery + admin endpoints, **reusing the Stable `spec/v1/i18n.md` annex's `Accept-Language`/`Content-Language` negotiation and fallback verbatim** and adding only the content model + a per-section field merge, so a host can serve durable authored content in multiple locales without a second locale mechanism | Accepted |
 | RFC 0104 | Portable HITL approver routing (group/role refs + audience) | Accepted |
@@ -158,7 +158,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 2 RFCs still `Draft` (RFC 0038, RFC 0101) — advance with schema/conformance proof or defer.
+- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
 - 3 RFCs `Active` (RFC 0035, RFC 0043, RFC 0100) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.

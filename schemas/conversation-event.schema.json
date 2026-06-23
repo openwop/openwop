@@ -9,6 +9,16 @@
     { "$ref": "#/$defs/ConversationClosedPayload" }
   ],
   "$defs": {
+    "AgentRef": {
+      "type": "object",
+      "description": "RFC 0101. Slim wire-shape projection of an agent's identity. Mirror of the relevant subset of `agent-ref.schema.json`; kept in sync (inlined for self-containment under per-file Ajv compile order, same convention as `ConversationTurn`). Used by `ConversationOpenedPayload.participants` — the cohort permitted to speak. `agentId` here is the roster INSTANCE id (`host:<id>` per RFC 0086) for council members, matching a turn's `speakerId`.",
+      "required": ["agentId"],
+      "properties": {
+        "agentId": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "name": { "type": "string", "maxLength": 256 }
+      },
+      "additionalProperties": true
+    },
     "ConversationTurn": {
       "type": "object",
       "description": "One turn in a multi-turn conversation. Mirror of `conversation-turn.schema.json`; kept in sync. Structural superset of `ConversationMessage` (RFC 0002 §G).",
@@ -35,8 +45,21 @@
           },
           "additionalProperties": true
         },
-        "turnIndex": { "type": "integer", "minimum": 0 }
+        "turnIndex": { "type": "integer", "minimum": 0 },
+        "speakerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "RFC 0101. Roster INSTANCE id of this turn's speaker (`host:<id>` AgentRef per RFC 0086). REQUIRED when `role: 'agent'` (the `allOf`/`if` conditional below). Mirror of `conversation-turn.schema.json`'s `speakerId`; kept in sync."
+        }
       },
+      "allOf": [
+        {
+          "$comment": "RFC 0101 — agent turns MUST carry speaker attribution. Mirror of `conversation-turn.schema.json`; kept in sync.",
+          "if": { "properties": { "role": { "const": "agent" } }, "required": ["role"] },
+          "then": { "required": ["speakerId"] }
+        }
+      ],
       "additionalProperties": true
     },
     "ConversationOpenedPayload": {
@@ -56,6 +79,11 @@
           "minLength": 1,
           "maxLength": 256
         },
+        "participants": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/AgentRef" },
+          "description": "RFC 0101. OPTIONAL. The agent cohort permitted to speak in this conversation (multi-party group conversation / advisory council). Each `agentId` is a roster INSTANCE id (`host:<id>` per RFC 0086). When present (and the host advertises `multiPartyConversation.supported`), a turn whose `speakerId` is not a member of this roster MUST be rejected. Disambiguates the singular `agentId` (the owner) from the full speaking cohort. Absent ⇒ no roster enforcement (back-compat: single-agent conversations are unaffected). MVP: declared at open-time only; mid-conversation roster mutation is out of scope (RFC 0101 §Resolved questions)."
+        },
         "initialTurn": { "$ref": "#/$defs/ConversationTurn" },
         "schema": {
           "type": "object",
@@ -70,7 +98,27 @@
           }
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "examples": [
+        {
+          "$comment": "RFC 0101 POSITIVE — a 3-agent advisory council opens with a participant roster (instance ids) and a user's opening turn.",
+          "conversationId": "run-abc:n1:0",
+          "agentId": "host:advisor-cfo",
+          "participants": [
+            { "agentId": "host:advisor-cfo", "name": "CFO" },
+            { "agentId": "host:advisor-cmo", "name": "CMO" },
+            { "agentId": "host:advisor-cto", "name": "CTO" }
+          ],
+          "initialTurn": {
+            "messageId": "run-abc:n1:0:user",
+            "from": "user",
+            "content": "Should we launch in Q3 or Q4?",
+            "ts": 1718900000000,
+            "role": "user",
+            "turnIndex": 0
+          }
+        }
+      ]
     },
     "ConversationExchangedPayload": {
       "type": "object",

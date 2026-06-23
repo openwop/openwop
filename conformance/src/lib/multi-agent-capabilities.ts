@@ -50,6 +50,7 @@ interface AgentCaps {
 
 let _agentCaps: AgentCaps | null = null;
 let _conversationPrimitive = false;
+let _multiPartyConversation = false;
 
 function asBoolean(value: unknown): boolean {
   return value === true;
@@ -72,6 +73,7 @@ export function setMultiAgentCapabilities(c: DiscoveryPayload | null | undefined
   if (!c || typeof c !== 'object') {
     _agentCaps = null;
     _conversationPrimitive = false;
+    _multiPartyConversation = false;
     return;
   }
 
@@ -109,6 +111,12 @@ export function setMultiAgentCapabilities(c: DiscoveryPayload | null | undefined
   }
 
   _conversationPrimitive = asBoolean((c as { conversationPrimitive?: unknown }).conversationPrimitive);
+
+  // RFC 0101 — root-first read of the `multiPartyConversation` block (sibling
+  // of `conversationPrimitive`), matching the root-first convention above.
+  const mpcRaw = (c as { multiPartyConversation?: unknown }).multiPartyConversation;
+  _multiPartyConversation =
+    !!mpcRaw && typeof mpcRaw === 'object' && asBoolean((mpcRaw as Record<string, unknown>).supported);
 }
 
 /** Phase 1 master switch. */
@@ -147,6 +155,12 @@ export function isConversationPrimitiveSupported(): boolean {
   return _conversationPrimitive;
 }
 
+/** RFC 0101 — host enforces the multi-party group-conversation roster +
+ *  speaker-attribution contract (`multiPartyConversation.supported: true`). */
+export function isMultiPartyConversationSupported(): boolean {
+  return _multiPartyConversation;
+}
+
 /** Phase 5 — host implements `core.orchestrator.supervisor` + CP-1. */
 export function isOrchestratorSupported(): boolean {
   return _agentCaps?.orchestrator === true;
@@ -166,4 +180,5 @@ export function getCachedAgentCaps(): AgentCaps | null {
 export function __resetForTests(): void {
   _agentCaps = null;
   _conversationPrimitive = false;
+  _multiPartyConversation = false;
 }
