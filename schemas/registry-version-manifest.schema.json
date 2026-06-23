@@ -4,10 +4,26 @@
   "title": "RegistryVersionManifest",
   "description": "Registry-augmented version manifest served at `/v1/packs/{name}/-/{version}.json`. Extends the bare pack manifest (`node-pack-manifest.schema.json`) with registry-side metadata (integrity hash, publishedAt timestamp, signed-blob URLs, lifecycle flags). This is the shape clients receive when they GET a specific pack version; the bare manifest is what publishers commit inside the tarball.\n\n**Why two schemas?** The bare manifest is the authoring contract — what a vendor writes in their pack source tree. The registry-augmented version is the SERVING contract — what `packs.openwop.dev` produces after `build-index.mjs` computes integrity hashes + adds URL templates. Validating both surfaces independently catches drift between authored content and served metadata.",
   "type": "object",
-  "required": ["name", "version", "engines", "runtime", "integrity"],
+  "required": ["name", "version", "engines", "integrity"],
   "anyOf": [
     { "properties": { "nodes": { "type": "array", "minItems": 1 } }, "required": ["nodes"] },
-    { "properties": { "agents": { "type": "array", "minItems": 1 } }, "required": ["agents"] }
+    { "properties": { "agents": { "type": "array", "minItems": 1 } }, "required": ["agents"] },
+    { "properties": { "artifactTypes": { "type": "array", "minItems": 1 } }, "required": ["artifactTypes"] },
+    { "required": ["provider"] },
+    { "properties": { "chains": { "type": "array", "minItems": 1 } }, "required": ["chains"] },
+    { "properties": { "prompts": { "type": "array", "minItems": 1 } }, "required": ["prompts"] },
+    { "properties": { "cards": { "type": "array", "minItems": 1 } }, "required": ["cards"] }
+  ],
+  "allOf": [
+    {
+      "$comment": "RFC 0107 — runtime is required for EXECUTABLE kinds (node, or kind absent) and MUST be absent for DECLARATIVE kinds (artifact-type, connection, workflow-chain, prompt, chat-card).",
+      "if": {
+        "properties": { "kind": { "enum": ["artifact-type", "connection", "workflow-chain", "prompt", "chat-card"] } },
+        "required": ["kind"]
+      },
+      "then": { "not": { "required": ["runtime"] } },
+      "else": { "required": ["runtime"] }
+    }
   ],
   "properties": {
     "name": {
@@ -39,6 +55,37 @@
         "openwop": { "type": "string", "minLength": 1 }
       },
       "additionalProperties": { "type": "string" }
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["node", "artifact-type", "connection", "workflow-chain", "prompt", "chat-card"],
+      "default": "node",
+      "description": "Pack-kind discriminator (RFC 0107). ABSENT ≡ `node` (the original, executable kind — backward compatible). Executable kinds (`node`) carry `runtime` + `nodes[]`/`agents[]`. DECLARATIVE kinds carry their own payload and NO `runtime`: `artifact-type` → `artifactTypes[]` (RFC 0075); `connection` → `provider` (RFC 0095); `workflow-chain` → `chains[]` (RFC 0013); `prompt` → `prompts[]`; `chat-card` → `cards[]`. The registry's runtime-support check (registry-operations.md §Validation flow #7) is skipped for declarative kinds."
+    },
+    "artifactTypes": {
+      "type": "array",
+      "description": "Present iff `kind == \"artifact-type\"` (RFC 0075). Mirrors `artifact-type-pack-manifest.schema.json` `artifactTypes[]` (each: `artifactTypeId`, `title`, `schema`, `export[]`). Carried loosely here (the source schema is authoritative); the registry denormalizes `artifactTypes[].artifactTypeId` into the per-pack index for discovery.",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "provider": {
+      "type": "object",
+      "description": "Present iff `kind == \"connection\"` (RFC 0095). Mirrors `connection-pack-manifest.schema.json` `provider` (id, category, auth, reach, …). MUST NOT carry credential material (RFC 0095 §B.2 — enforced at source; a registry SHOULD re-scan). The registry denormalizes `provider.id` into the per-pack index.",
+      "additionalProperties": true
+    },
+    "chains": {
+      "type": "array",
+      "description": "Present iff `kind == \"workflow-chain\"` (RFC 0013). Carried loosely (the source schema is authoritative); the registry denormalizes `chains[].chainId` into the per-pack index.",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "prompts": {
+      "type": "array",
+      "description": "Present iff `kind == \"prompt\"`. Carried loosely; source schema authoritative.",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "cards": {
+      "type": "array",
+      "description": "Present iff `kind == \"chat-card\"`. Carried loosely; source schema authoritative.",
+      "items": { "type": "object", "additionalProperties": true }
     },
     "runtime": {
       "type": "object",
