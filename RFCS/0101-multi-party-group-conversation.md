@@ -286,7 +286,7 @@ non-vacuously once that host advertises `multiPartyConversation.supported: true`
 - [x] Conformance: `multi-party-conversation-shape.test.ts` (always-on) + `isMultiPartyConversationSupported()` gating helper.
 - [x] All four Open Questions resolved in-RFC (recorded in `Updated:` + §"Resolved questions").
 - [x] `CHANGELOG.md` `[Unreleased]` additive entry.
-- [ ] `Active → Accepted` behavioral evidence: a reference host advertises `multiPartyConversation.supported` + passes the gated leg non-vacuously (openwop-app ADR 0040 Phase 6 — follow-on; the wire shape is locked at `Accepted` per this RFC).
+- [~] `Active → Accepted` behavioral evidence: the **host implementation has landed** — openwop-app ADR 0040 Phase 6 (openwop-app#666) advertises `multiPartyConversation { supported:true, maxParticipants:8 }`, emits the `participants` roster on `conversation.opened`, stamps `speakerId` on agent turns, and rejects non-participant turns (host-side enforcement tested). The wire shape is locked at `Accepted` per this RFC, and the always-on conformance shape leg passes. **Remaining:** the strict-verified live run — the gated leg passing NON-VACUOUSLY (`OPENWOP_REQUIRE_BEHAVIOR=true`) against the **deployed** host + a steward-curl of the live discovery doc — lands with the app's next deploy (tracked in INTEROP-MATRIX § "Multi-party group conversation").
 
 ## References
 
