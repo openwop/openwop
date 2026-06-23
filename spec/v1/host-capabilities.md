@@ -76,6 +76,7 @@ ctx.callAI({
 | `aiProviders.imageGeneration: supported` | `ctx.callImageGenerator(...)` — generates binary image asset (returns URL or base64 data); see optional method block below                                                  | `vendor.myndhyve.ads-image-generate`             |
 | `aiProviders.speechSynthesis: supported` | `ctx.callSpeechSynthesizer(...)` — synthesizes speech (text + opaque `voiceId`) → binary audio asset (URL or base64); one call per speaker. See optional method block below. RFC 0105. | `core.openwop.media` (`feature.podcasts`)        |
 | `aiProviders.videoGeneration: supported` | `ctx.callVideoGenerator(...)` — generates binary video asset (returns URL); see optional method block below. Long-running (typical 30-120s); host hides polling internally. | `vendor.myndhyve.ads-video-generate`             |
+| `aiProviders.realtimeVoice: { transcription?, synthesis?, turnDetection?, bargeIn? }` | `ctx.callTranscriber(...)` — streaming STT: resolves a `Promise` at `turn_commit` and emits interim/final/endpoint signals as `voice.*` run-events on the durable log; plus a `stream: true` arm on `ctx.callSpeechSynthesizer`. See optional method block below. RFC 0106. | (an openwop-app voice-chat surface over RFC 0005) |
 
 ```typescript
 // Available when host advertises `aiProviders.imageGeneration: supported`.
@@ -181,6 +182,48 @@ ctx.callSpeechSynthesizer({
 - Exactly one of `audio.url` / `audio.base64` MUST be present (mirrors `images[].url` / `images[].base64`).
 - A `url`-referenced asset MUST be served/fetched through the host's SSRF-guarded path (RFC 0076); synthesized bytes are generated media and inherit the untrusted-media boundary (`threat-model-prompt-injection.md` §4.9; RFC 0091 §C). `voiceId` MUST NOT encode secret material.
 
+```typescript
+// Available when host advertises `aiProviders.realtimeVoice.transcription: "streaming"` (RFC 0106 §B).
+// Streaming transcription. The method RESOLVES A PROMISE AT turn_commit with the settled final
+// transcript; the progressive interim/final/endpoint signals are emitted as `voice.*` run-events on
+// the durable event log (the SINGLE canonical record — §D). This is the callAI(stream:true) idiom
+// (a resolved Promise + deltas to the log), NOT an AsyncIterable: a node-facing ctx method that
+// returned a live iterable would be a side-channel off the durable log and break replay/runs:fork
+// (replay.md §"Determinism guarantees"). One call = one turn; barge-in is a host-emitted
+// `voice.barge_in` event that cancels the in-flight synthesis Promise.
+ctx.callTranscriber({
+  provider?: string,        // host routes; MUST be a member of aiProviders.supported[]
+  model?: string,           // e.g. 'nova-3' | 'whisper-large-v3' — host-routed, opaque
+  audio: { streamRef?: string, url?: string },  // the live audio SOURCE; EXACTLY ONE present.
+                            //   streamRef = an opaque, session-bound, tenant-scoped LIVE-STREAM handle
+                            //     (readyState live|ended; no size/hash; non-portable; not seekable).
+                            //   url = SSRF-guarded host-fetchable (RFC 0076) finite source.
+                            //   Inline base64 and a finite-blob mediaRef MUST be rejected (a live mic
+                            //   feed is unbounded — use streamRef; mediaRef/base64 are the RFC 0091 clip path).
+  languageCode?: string,    // BCP-47 hint ('en-US', 'pt-BR') for multilingual ASR
+  interimResults?: boolean, // request provisional parts (default true); false ⇒ finals only
+  endpointing?: { silenceMs?: number },  // host MAY clamp; advisory only — semantics stay host-defined
+}) → Promise<{
+  finalText: string,        // the settled transcript for the committed turn
+  atMs: number,             // turn_commit timestamp
+  language?: string,        // detected/used BCP-47 language when the provider reports it
+}>
+
+// Streaming arm of RFC 0105's ctx.callSpeechSynthesizer (RFC 0106 §C). Available when the host
+// advertises `aiProviders.realtimeVoice.synthesis: "streaming"` (which requires speechSynthesis).
+// `stream` is OPTIONAL, defaults to false (RFC 0105 whole-file — UNCHANGED). When true the call
+// RESOLVES A PROMISE at completion with the finalized RFC 0105 asset, while each clause-boundary
+// chunk is announced as a `voice.synthesis_chunk` run-event carrying METADATA ONLY
+// ({ seq, mimeType, durationMs?, url?|streamRef?, final? }) — bytes by reference, NOT inlined on the
+// event log past the host's inline cap (RFC 0055 256 KiB precedent; spill to a tenant-scoped url).
+ctx.callSpeechSynthesizer({ /* …RFC 0105 fields… */, stream: true })
+  → Promise<{ audio: { url?: string, base64?: string, mimeType: string, voiceId: string } }>
+```
+
+- `ctx.callTranscriber` MUST be rejected with `transcription_unsupported` when `aiProviders.realtimeVoice.transcription: "streaming"` is not advertised (never a no-op), paralleling `speech_synthesis_unsupported` / RFC 0091's `unsupported_modality`.
+- `stream: true` on `ctx.callSpeechSynthesizer` MUST be rejected with `speech_synthesis_failed` (reason `streaming_unsupported`) when `realtimeVoice.synthesis: "streaming"` is not advertised — never a silent whole-file fallback (a caller that asked to stream is making a latency decision).
+- A `voice.transcript` with `isFinal: false` is PROVISIONAL: a consumer MUST NOT persist it to durable memory / the replay log / RAG and MUST NOT drive a side-effecting tool call until it finalizes (`SECURITY/invariants.yaml` `voice-interim-not-durable`; lands with the §F invariant scenarios). Every transcript emission is untrusted (`contentTrust: "untrusted"`). A `streamRef` is tenant-+session-bound, non-portable, and MUST NOT encode secret material.
+
 **Failure modes:**
 
 - `host_capability_missing` — `ctx.callAI` absent (workflow-register-time refusal via `peerDependencies: { aiProviders: "supported" }` is the correct path; runtime check is defense-in-depth)
@@ -193,7 +236,8 @@ ctx.callSpeechSynthesizer({
 - `image_generation_failed` — sub-capability-specific (`ctx.callImageGenerator`)
 - `image_safety_filtered_all` — every requested image was safety-filtered (all → `filteredCount: count`, `images: []`)
 - `speech_synthesis_unsupported` — `ctx.callSpeechSynthesizer` invoked on a host that does NOT advertise `aiProviders.speechSynthesis: supported`. A host MUST reject (never no-op), paralleling RFC 0091's `unsupported_modality`. Register-time refusal via `peerDependencies` / `requiredHostCapabilities` is the correct primary path; the runtime check is defense-in-depth.
-- `speech_synthesis_failed` — sub-capability-specific provider/synthesis failure (`ctx.callSpeechSynthesizer`); carries the provider-reported reason when available. (Text over the provider's per-call limit returns the shared `content_too_long`.)
+- `speech_synthesis_failed` — sub-capability-specific provider/synthesis failure (`ctx.callSpeechSynthesizer`); carries the provider-reported reason when available. (Text over the provider's per-call limit returns the shared `content_too_long`.) The streaming arm's `streaming_unsupported` (a `stream: true` call when `realtimeVoice.synthesis: "streaming"` is unadvertised) is reported as a `speech_synthesis_failed` with reason `streaming_unsupported` (RFC 0106 §C).
+- `transcription_unsupported` — `ctx.callTranscriber` invoked on a host that does NOT advertise `aiProviders.realtimeVoice.transcription: "streaming"` (RFC 0106 §B). A host MUST reject (never no-op), paralleling `speech_synthesis_unsupported` / RFC 0091's `unsupported_modality`. Register-time refusal via `peerDependencies` / `requiredHostCapabilities` is the correct primary path; the runtime check is defense-in-depth.
 - `video_generation_failed` — sub-capability-specific (`ctx.callVideoGenerator`)
 - `video_safety_filtered` — video was safety-filtered (resolves with `video.safetyFiltered: true` AND a placeholder thumbnail; never throws — packs decide how to surface)
 - `video_generation_timeout` — long-running job exceeded the host's max wait window (host-configured, typical 5 min). Pack should treat as retryable.

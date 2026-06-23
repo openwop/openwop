@@ -823,9 +823,49 @@
           "minimum": 0,
           "default": 262144,
           "description": "RFC 0055 §C rule 2 — optional cap (bytes) on inline base64 in `media.*` envelope payloads. A `media.{image,audio,file}` asset above this size MUST be served by a tenant-scoped `url` reference rather than inlined (bounds event-log + replay-payload size). Default 256 KiB (262144) when absent. A host MAY set 0 to force URL references for all emitted media."
+        },
+        "realtimeVoice": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "RFC 0106. Optional real-time voice profile. Absent ⇒ no live voice (a call to `ctx.callTranscriber` MUST be rejected with `transcription_unsupported`, and `stream:true` on `ctx.callSpeechSynthesizer` with `streaming_unsupported`). `ctx.callTranscriber` resolves a `Promise` at `turn_commit` with the settled final transcript and emits the interim/final/endpoint signals as `voice.*` run-events on the durable event log (the single canonical record); the streaming synthesis arm resolves a `Promise` at completion and announces clause-boundary chunks as `voice.synthesis_chunk` metadata run-events (bytes by `streamRef`/`url`, not inlined past the host cap).",
+          "properties": {
+            "transcription": {
+              "const": "streaming",
+              "description": "When present (value MUST be `\"streaming\"`), the host exposes `ctx.callTranscriber(...)` (streaming STT). `turnDetection` and `bargeIn` require `transcription`."
+            },
+            "synthesis": {
+              "const": "streaming",
+              "description": "When present (value MUST be `\"streaming\"`), the RFC 0105 `ctx.callSpeechSynthesizer` request honors `stream: true` (chunked synthesis). REQUIRES `aiProviders.speechSynthesis: \"supported\"` (enforced by the if/then closure on `aiProviders`)."
+            },
+            "turnDetection": {
+              "enum": ["vad", "semantic"],
+              "description": "Endpointing sophistication. `vad` = silence-threshold endpointing only; `semantic` = a turn detector that emits `voice.endpoint_candidate` distinct from `voice.turn_commit`. Requires `transcription`."
+            },
+            "bargeIn": {
+              "const": "supported",
+              "description": "When present, the host MUST emit `voice.barge_in` on overlapping speech during playback and `voice.cancelled` when it actually cancels downstream work. Requires `transcription`."
+            }
+          },
+          "dependentRequired": {
+            "turnDetection": ["transcription"],
+            "bargeIn": ["transcription"]
+          }
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "$comment": "RFC 0106 §A closure: realtimeVoice.synthesis (streaming TTS) requires the whole-file TTS surface aiProviders.speechSynthesis to be advertised.",
+          "if": {
+            "type": "object",
+            "required": ["realtimeVoice"],
+            "properties": {
+              "realtimeVoice": { "type": "object", "required": ["synthesis"] }
+            }
+          },
+          "then": { "required": ["speechSynthesis"] }
+        }
+      ]
     },
     "testing": {
       "type": "object",
