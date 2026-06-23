@@ -16,9 +16,9 @@
   ],
   "allOf": [
     {
-      "$comment": "RFC 0107 — runtime is required for EXECUTABLE kinds (node, or kind absent) and MUST be absent for DECLARATIVE kinds (artifact-type, connection, workflow-chain, prompt, chat-card).",
+      "$comment": "RFC 0107 — runtime is required for EXECUTABLE kinds (node, or kind absent) and MUST be absent for DECLARATIVE kinds (artifact-type, connection, workflow-chain, prompt, card). NOTE: the chat-card-pack kind string is `card` per RFC 0071 (corrected 2026-06-23; an earlier RFC 0107 draft said `chat-card`).",
       "if": {
-        "properties": { "kind": { "enum": ["artifact-type", "connection", "workflow-chain", "prompt", "chat-card"] } },
+        "properties": { "kind": { "enum": ["artifact-type", "connection", "workflow-chain", "prompt", "card"] } },
         "required": ["kind"]
       },
       "then": { "not": { "required": ["runtime"] } },
@@ -58,9 +58,9 @@
     },
     "kind": {
       "type": "string",
-      "enum": ["node", "artifact-type", "connection", "workflow-chain", "prompt", "chat-card"],
+      "enum": ["node", "artifact-type", "connection", "workflow-chain", "prompt", "card"],
       "default": "node",
-      "description": "Pack-kind discriminator (RFC 0107). ABSENT ≡ `node` (the original, executable kind — backward compatible). Executable kinds (`node`) carry `runtime` + `nodes[]`/`agents[]`. DECLARATIVE kinds carry their own payload and NO `runtime`: `artifact-type` → `artifactTypes[]` (RFC 0075); `connection` → `provider` (RFC 0095); `workflow-chain` → `chains[]` (RFC 0013); `prompt` → `prompts[]`; `chat-card` → `cards[]`. The registry's runtime-support check (registry-operations.md §Validation flow #7) is skipped for declarative kinds."
+      "description": "Pack-kind discriminator (RFC 0107). ABSENT ≡ `node` (the original, executable kind — backward compatible). Executable kinds (`node`) carry `runtime` + `nodes[]`/`agents[]`. DECLARATIVE kinds carry their own payload and NO `runtime`: `artifact-type` → `artifactTypes[]` (RFC 0075); `connection` → `provider` (RFC 0095); `workflow-chain` → `chains[]` (RFC 0013); `prompt` → `prompts[]`; `card` → `cards[]` (the chat-card pack, RFC 0071 — kind string is `card`, NOT `chat-card`; an earlier RFC 0107 draft used `chat-card`, corrected 2026-06-23). The registry's runtime-support check (registry-operations.md §Validation flow #7) is skipped for declarative kinds."
     },
     "artifactTypes": {
       "type": "array",
@@ -84,7 +84,7 @@
     },
     "cards": {
       "type": "array",
-      "description": "Present iff `kind == \"chat-card\"`. Carried loosely; source schema authoritative.",
+      "description": "Present iff `kind == \"card\"` (the chat-card pack, RFC 0071; the registry denormalizes `cards[].cardTypeId` into the per-pack index). Carried loosely; source schema authoritative.",
       "items": { "type": "object", "additionalProperties": true }
     },
     "runtime": {
