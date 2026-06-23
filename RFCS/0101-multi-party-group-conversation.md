@@ -198,12 +198,32 @@ behavioral leg — the wire contract is asserted now; the live-host behavior is 
   predicate (a `speakerId` not in the declared roster MUST be rejected) is asserted over the
   same shapes — JSON Schema cannot express cross-field roster membership, so the wire shape
   that makes the host check possible is verified server-free.
-- **Capability-gated behavioral leg** (`multiPartyConversation.supported`, via
-  `isMultiPartyConversationSupported()` in `conformance/src/lib/multi-agent-capabilities.ts`)
-  — a live host advertising the capability accepts a 3-agent shared transcript where each
-  agent turn is roster-valid + attributed, and rejects a turn from a non-participant agent
-  with `validation_error`. Soft-skips when unadvertised. This leg lands with the first
-  reference host that advertises the capability (openwop-app ADR 0040 Phase 6).
+- **`multi-party-conversation-behavioral.test.ts`** — capability-gated behavioral leg
+  (`multiPartyConversation.supported`, via `isMultiPartyConversationSupported()` in
+  `conformance/src/lib/multi-agent-capabilities.ts`). A live host advertising the capability
+  (a) accepts a 3-agent shared transcript where each agent turn is roster-valid + attributed,
+  (b) rejects a turn whose `speakerId` is NOT in the declared roster with `validation_error`,
+  (c) rejects a `role: 'agent'` turn missing `speakerId` with `validation_error`, and (d)
+  rejects a `conversation.opened` whose roster exceeds the advertised `maxParticipants` with
+  `validation_error`. Soft-skips when unadvertised (default) / hard-fails under
+  `OPENWOP_REQUIRE_BEHAVIOR=true` via `behaviorGate`. The leg asserts on `error.code ===
+  'validation_error'` and is tolerant of the host's HTTP status (`400`/`422`) — RFC 0005 §E
+  pins the error *code*, not the status.
+
+  **No standard client trigger — exercised via the conformance-seam convention.** RFC 0101
+  standardizes the multi-party *shape* (roster + `speakerId` + capability) but deliberately
+  does NOT mint a normative client wire-route to *open* a multi-party conversation — opening,
+  turn-taking order, and round protocol are non-normative host product policy (see
+  §"Non-normative product policy"). A conformance driver therefore initiates a council via the
+  conformance-only **multi-party conversation test seam** (`POST /v1/host/sample/conversation/
+  multi-party/{open,exchange}`, `host-sample-test-seams.md` §11 — the same `/v1/host/sample/*`
+  convention every other capability-gated behavioral leg uses, NOT a production wire surface).
+  A host advertising the capability MAY satisfy the leg either by exposing this seam (the
+  reference path) or, where its enforcement is bound to a product flow (e.g. openwop-app ADR
+  0040's advisory-board council, which keys roster enforcement on a board group rather than a
+  generic open), by its own host-side behavioral test plus an `INTEROP-MATRIX.md` witness — the
+  RFC 0086 dual-staging. The reference seam exists so the behavioral MUSTs have at least one
+  *suite-executable, host-agnostic* witness rather than relying solely on host-private tests.
 
 Every normative MUST in §Spec has a corresponding assertion in the shape scenario (the
 schema-expressible ones) or the gated behavioral leg (the cross-field/runtime ones). No new

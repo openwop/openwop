@@ -355,6 +355,15 @@ server-free or shape-probe assertions that run unconditionally.
 | `conversationVsLegacySuspend.test.ts`       | RFC 0005 (`conversation.exchanged` ≠ `clarification.requested`) | `capabilities.conversationPrimitive`                         |
 | `conversationReplayDeterminism.test.ts`     | RFC 0005 (replay-fork yields byte-equal conversation log)       | `capabilities.conversationPrimitive` + replay-fork + fixture |
 
+### Multi-party group conversation (RFC 0101)
+
+| Scenario file                                  | Spec doc / RFC                                                                                | Gating capability                                                                                                |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `multi-party-conversation-shape.test.ts`       | RFC 0101 §Schema (participant roster + conditional `speakerId` + `multiPartyConversation` block) | always-on (server-free)                                                                                          |
+| `multi-party-conversation-behavioral.test.ts`  | RFC 0101 §Spec (roster membership + attribution + `maxParticipants`, behavioral)             | `capabilities.multiPartyConversation.supported` (behaviorGate `openwop-multi-party-conversation`) + the `POST /v1/host/sample/conversation/multi-party/{open,exchange}` seam |
+
+The behavioral leg drives the conformance-only seam (RFC 0101 mints no normative client trigger to open a council) and asserts the cross-field MUSTs JSON Schema cannot express: a roster-valid attributed agent turn is accepted, while a `role:'agent'` turn missing `speakerId`, a non-participant `speakerId`, and an over-`maxParticipants` open are each rejected with `error.code:'validation_error'` (status-tolerant `400`/`422` per RFC 0005 §E). Soft-skips on `404`/`405`. **This is the RFC 0101 → behavioral-conformance bar** (reference impl: the postgres example host; a product-flow-bound host — e.g. openwop-app ADR 0040's advisory-board council — witnesses instead via its host-side test + an `INTEROP-MATRIX.md` row, the RFC 0086 dual-staging).
+
 ### Dispatch / sub-workflow mapping (RFC 0022) + sub-run attestation (RFC 0063)
 
 | Scenario file                           | Spec doc / RFC                                                             | Gating capability                              |
