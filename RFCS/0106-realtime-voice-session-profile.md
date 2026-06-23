@@ -15,7 +15,7 @@
 
 ## Summary
 
-openwop can _perceive_ a whole audio clip (RFC 0091, `aiProviders.input.modalities ⊇ ["audio"]`) and _generate_ a whole audio file (RFC 0105, `ctx.callSpeechSynthesizer`), but it has no way to express **live, full-duplex voice**: a streaming transcript that settles from interim to final, an endpointing / turn-commit signal, a streaming (chunked) synthesis output, and the barge-in / interruption control loop. This RFC adds an optional `aiProviders.realtimeVoice` profile with three additive surfaces: (1) a streaming transcription adapter `ctx.callTranscriber` returning an async stream of `interim` / `final` transcript parts plus endpointing events; (2) a streaming arm on the RFC 0105 synthesizer (the follow-on RFC 0105 §"Resolved questions" §1 explicitly deferred), advertised via `speechSynthesis.streaming`; and (3) an additive `voice.*` run-event taxonomy for the turn-taking and barge-in lifecycle. Hosts that don't advertise the profile are unchanged; the **media transport** (WebRTC / gRPC / WebSocket audio path), the **serving stack** (vLLM, faster-whisper, etc.), and **latency targets** are explicitly out of scope — those are host/implementation choices per `CONTRIBUTING.md`.
+openwop can _perceive_ a whole audio clip (RFC 0091, `aiProviders.input.modalities ⊇ ["audio"]`) and _generate_ a whole audio file (RFC 0105, `ctx.callSpeechSynthesizer`), but it has no way to express **live, full-duplex voice**: a streaming transcript that settles from interim to final, an endpointing / turn-commit signal, a streaming (chunked) synthesis output, and the barge-in / interruption control loop. This RFC adds an optional `aiProviders.realtimeVoice` profile with three additive surfaces: (1) a streaming transcription adapter `ctx.callTranscriber` that resolves a `Promise` at turn-commit while emitting `interim` / `final` transcript parts plus endpointing as `voice.*` run-events on the durable log (the replay-safe `callAI(stream:true)` idiom); (2) a streaming arm on the RFC 0105 synthesizer (the follow-on RFC 0105 §"Resolved questions" §1 explicitly deferred), advertised via `speechSynthesis.streaming`; and (3) an additive `voice.*` run-event taxonomy for the turn-taking and barge-in lifecycle — the single canonical record of a voice turn. Hosts that don't advertise the profile are unchanged; the **media transport** (WebRTC / gRPC / WebSocket audio path), the **serving stack** (vLLM, faster-whisper, etc.), and **latency targets** are explicitly out of scope — those are host/implementation choices per `CONTRIBUTING.md`.
 
 ## Motivation
 
@@ -49,7 +49,7 @@ A new optional object alongside `imageGeneration` / `speechSynthesis` / `input` 
 +        "properties": {
 +          "transcription": {
 +            "const": "streaming",
-+            "description": "Host exposes `ctx.callTranscriber(...)` returning a stream of interim/final transcript parts plus endpointing events. Absent ⇒ no streaming STT; a call MUST be rejected with `transcription_unsupported`."
++            "description": "Host exposes `ctx.callTranscriber(...)`, which resolves a Promise at turn_commit and emits interim/final transcript parts plus endpointing as `voice.*` run-events on the durable log. Absent ⇒ no streaming STT; a call MUST be rejected with `transcription_unsupported`."
 +          },
 +          "turnDetection": {
 +            "type": "string", "enum": ["vad", "semantic"],
@@ -76,7 +76,9 @@ And `speechSynthesis` gains an additive streaming sub-flag — the follow-on RFC
 
 ### §B — Streaming transcription adapter `ctx.callTranscriber` (prose, §host.aiProviders)
 
-Available only when the host advertises `aiProviders.realtimeVoice.transcription: streaming`. The method returns an **`AsyncIterable<TranscriptEvent>`** — the same streaming primitive the SDK already uses for `client.runs.events()` / `agentReasoningStreaming` (`sdk/typescript/src/sse.ts` `streamEvents` is an `AsyncGenerator<RunEventDoc>`; resolves RFC 0106 G1). Consumption is `for await (const ev of ctx.callTranscriber(...))`, mirroring the existing event-stream idiom exactly. (The live audio _source_ is a `streamRef` — see below; resolves G4.)
+Available only when the host advertises `aiProviders.realtimeVoice.transcription: streaming`. The method **resolves a `Promise` at `turn_commit`** with the settled final transcript for the turn; the progressive interim / final / endpointing signals are emitted as **`voice.*` run-events on the durable event log** (§D), which are the **single canonical record** of the turn. This is the exact streaming idiom every other node-facing `ctx` AI method already uses — `callAI(stream:true)` resolves a `Promise` while emitting `ai.message.chunk` deltas to the log; the entire `ctx` surface is `Promise`-returning. The node loop is `while (active) { const turn = await ctx.callTranscriber({ audio: { streamRef } }); … }`, one call per turn (symmetric with `callSpeechSynthesizer`), with barge-in surfaced as a host-emitted `voice.barge_in` event that cancels the in-flight synthesis `Promise`. (The live audio _source_ is a `streamRef` — see below; resolves G4.)
+
+> **Amended after `Active` (2026-06-23, resolves G1 the other way).** The original `Draft → Active` shape returned an `AsyncIterable<TranscriptEvent>`, citing the SDK's `client.runs.events()` `AsyncGenerator`. That conflated two layers: `client.runs.events()` (`sdk/typescript/src/sse.ts` `streamEvents`) is the **client** tailing the already-persisted event log over SSE from _outside_ a run — replay-irrelevant — whereas `ctx.callTranscriber` is **node-facing**, inside run execution that MUST replay deterministically. An iterable returned from `ctx` is a live side-channel **not** recorded on the durable log, so a `POST /v1/runs/{runId}:fork` against a historical checkpoint would have nothing to replay (`replay.md` §"Determinism guarantees": run state is reconstructed by folding the durable event log; any value a node depends on must be a log event). The corrected shape — `Promise` + `voice.*` events as the sole taxonomy — is replay-safe by construction, removes the `§B`/`§D` dual representation (one source of truth), and is consistent with every other `ctx` method. No host had implemented the iterable, so this is a free correction to a not-yet-built surface, not a v1.x wire break (`Active` stays; only §B changes — the openwop-app reference host surfaced the finding pre-implementation).
 
 ```typescript
 // Available when host advertises `aiProviders.realtimeVoice.transcription: "streaming"`.
@@ -91,12 +93,16 @@ ctx.callTranscriber({
   languageCode?: string,    // BCP-47 hint ('en-US', 'pt-BR') for multilingual ASR
   interimResults?: boolean, // request provisional parts (default true); false ⇒ finals only
   endpointing?: { silenceMs?: number },  // host MAY clamp; advisory only — semantics stay host-defined
-}) → AsyncIterable<TranscriptEvent>
+}) → Promise<{ finalText: string, atMs: number, language?: string }>   // resolves at turn_commit with the settled turn
 
+// The progressive signals below are NOT iterable elements — they are the PAYLOAD SHAPES of the
+// `voice.*` run-events emitted on the durable log (§D) as the turn progresses. The `Promise`
+// resolves at turn_commit; consumers that want the live signal subscribe to the run's event
+// stream (`GET /v1/runs/{runId}/events`, the same `voice.*` events §D enumerates).
 // Two orthogonal axes: TEXT-FINALITY (transcript.isFinal + graded stability) and
 // TURN SIGNALS (speech_start / endpoint_candidate / turn_commit). Distilled as the
 // common denominator across Deepgram, OpenAI Realtime, AssemblyAI, Google STT, Web Speech.
-type TranscriptEvent =
+type VoiceEventPayload =
   | { type: 'speech_start';       atMs: number }
   | { type: 'transcript';
       text: string;               // the current hypothesis for this segment (editable tail when isFinal:false)
@@ -127,33 +133,40 @@ Normative requirements:
 - When the host advertises `turnDetection: "semantic"`, it MUST emit `endpoint_candidate` (a silence boundary / likely end-of-turn appeared) **distinct from** `turn_commit` (the host is confident the user yielded the floor) — the candidate-vs-commit split, modeled on Deepgram's deliberate separation of `UtteranceEnd` (candidate) from `speech_final` (commit). A `vad`-only host MUST NOT emit `endpoint_candidate`; it MAY emit `turn_commit` on its silence threshold. Equating silence with turn completion (emitting `turn_commit` on the first silence with no end-of-thought signal) is permitted for `vad` hosts but SHOULD be avoided where semantic detection is available.
 - The host MUST reject `ctx.callTranscriber` with `transcription_unsupported` when `realtimeVoice.transcription: "streaming"` is not advertised (never no-op) — paralleling RFC 0091 `unsupported_modality` / RFC 0105 `speech_synthesis_unsupported`.
 
-**Host implementation note (non-normative).** Native streaming-ASR SDKs are push-shaped event-emitters (Deepgram, OpenAI Realtime, Web Speech); a host adapts that push source to the pulled `AsyncIterable` via a **bounded internal queue** that **losslessly** delivers `final` transcripts, `speech_start`, `endpoint_candidate`, and `turn_commit`, but MAY **coalesce/drop superseded `isFinal:false` interims** (a stale interim is worthless once a newer one exists). The iterable's backpressure is consumer-side buffering, not upstream flow control: a human speaker cannot be slowed, and a browser WebSocket source has no receive-side backpressure (gRPC transports do, via HTTP/2 flow control). An optional `.on(type, cb)` emitter facade over the same queue is a reasonable SDK convenience for endpoint-only consumers, but the `AsyncIterable` is canonical.
+**Host implementation note (non-normative).** Native streaming-ASR SDKs are push-shaped event-emitters (Deepgram, OpenAI Realtime, Web Speech); a host adapts that push source by **emitting a `voice.*` run-event per signal** as it arrives (`speech_start`, each `voice.transcript`, `endpoint_candidate`) and **resolving the `callTranscriber` `Promise` at `turn_commit`** — exactly the `callAI(stream:true)` mechanism (deltas to the durable log + a resolved `Promise`) the host already runs. The host MAY **coalesce/drop superseded `isFinal:false` interims** before emission (a stale interim is worthless once a newer one exists; INV-1 forbids persisting non-final text regardless). The durable event log is the **canonical record** — replay/`:fork` reconstructs the turn by folding the `voice.*` events, never from a live side-channel. A human speaker cannot be slowed, so a host MUST bound the per-session uncommitted-audio budget (§F INV-4) rather than rely on consumer backpressure.
 
 ### §C — Streaming synthesis arm (RFC 0105 follow-on, §host.aiProviders)
 
-Available only when the host advertises `aiProviders.realtimeVoice.synthesis: "streaming"` (which requires `speechSynthesis: supported`). The RFC 0105 request gains an optional `stream?: boolean`; when `stream: true` the call resolves to an async stream of audio chunks instead of one finished asset:
+Available only when the host advertises `aiProviders.realtimeVoice.synthesis: "streaming"` (which requires `speechSynthesis: supported`). The RFC 0105 request gains an optional `stream?: boolean`; when `stream: true` the call **resolves a `Promise` at completion** with the finalized asset, while each clause-boundary audio chunk is announced as a `voice.synthesis_chunk` run-event on the durable log — symmetric with `callTranscriber` and consistent with the rest of the `ctx` surface (one method, `Promise` + `voice.*` deltas):
 
 ```typescript
 // Streaming arm of RFC 0105's ctx.callSpeechSynthesizer. All RFC 0105 fields unchanged.
 ctx.callSpeechSynthesizer({ text, voiceId, /* …RFC 0105 fields… */, stream: true })
-  → AsyncIterable<{ audioChunk: { base64: string, mimeType: string, seq: number }, final?: boolean }>
+  → Promise<{ audio: { url?: string, base64?: string, mimeType: string, voiceId: string } }>  // the finalized asset (RFC 0105 shape)
+// Progressive chunks are `voice.synthesis_chunk` run-events carrying METADATA ONLY:
+//   { seq: number, mimeType: string, durationMs?: number, url?: string, streamRef?: string, final?: boolean }
+// The audio BYTES are NOT inlined on the event log — see G8 below.
 ```
 
 - `stream` is OPTIONAL and defaults to `false` (RFC 0105 whole-file behavior — **unchanged**). A host that doesn't advertise `synthesis: "streaming"` MUST reject `stream: true` with `speech_synthesis_failed` (reason `streaming_unsupported`), never silently fall back to whole-file (a caller that asked to stream is making a latency decision).
-- Chunks SHOULD be flushed at clause/sentence boundaries, not token boundaries (prosodic stability); the boundary policy itself is non-normative. `seq` is monotonic; the terminal chunk carries `final: true`.
+- Chunks SHOULD be flushed at clause/sentence boundaries, not token boundaries (prosodic stability); the boundary policy itself is non-normative. `seq` is monotonic; the terminal `voice.synthesis_chunk` carries `final: true`.
+- **The run-event log carries chunk METADATA only, never the audio bytes (resolves G8).** A `voice.synthesis_chunk` event references its bytes by a session-scoped `streamRef`/`url`, or a host MAY inline a clause-sized `base64` chunk **only** while it stays under the host's inline cap (the RFC 0055 `media-asset-url-tenant-scoped` 256 KiB precedent); past that cap, or past a per-session cumulative budget over a long multi-turn session, the host MUST spill bytes to a tenant-scoped media `url` and keep only metadata on the log. This keeps the durable event log (and replay/`:fork`) bounded regardless of session length.
 
 ### §D — The voice-turn / barge-in run-event taxonomy (additive, `run-event-payloads.schema.json` + AsyncAPI)
 
 When a host runs an agent inside a live voice session it MAY emit a new family of `voice.*` run events on the existing event stream (`GET /v1/runs/{runId}/events`), so the turn-taking control loop is **observable and conformance-testable** without prescribing the media path. New event types are additive per `COMPATIBILITY.md` §2.1 — **clients MUST ignore unknown event types**, so existing consumers are unaffected:
 
-| Event type             | Emitted when                                                      | Maps to stream mode |
-| ---------------------- | ----------------------------------------------------------------- | ------------------- |
-| `voice.speech_start`   | inbound user speech onset detected                                | `updates`           |
-| `voice.transcript`     | an interim/final transcript part settled (mirrors §B)             | `messages`          |
-| `voice.turn_commit`    | the user yielded the floor (turn boundary)                        | `updates`           |
-| `voice.barge_in`       | user speech overlapped active assistant playback (probable cut-in) | `updates`           |
-| `voice.cancelled`      | downstream LLM/TTS work was cancelled (barge-in or explicit)      | `updates`           |
+| Event type               | Emitted when                                                      | Maps to stream mode |
+| ------------------------ | ----------------------------------------------------------------- | ------------------- |
+| `voice.speech_start`     | inbound user speech onset detected                                | `updates`           |
+| `voice.transcript`       | an interim/final transcript part settled                          | `messages`          |
+| `voice.endpoint_candidate` | a silence/likely-end-of-turn boundary (only when `turnDetection: "semantic"`) | `updates`     |
+| `voice.turn_commit`      | the user yielded the floor (turn boundary; the `callTranscriber` `Promise` resolves here) | `updates`           |
+| `voice.synthesis_chunk`  | a clause-boundary synthesis chunk is ready (metadata only — §C)   | `messages`          |
+| `voice.barge_in`         | user speech overlapped active assistant playback (probable cut-in) | `updates`           |
+| `voice.cancelled`        | downstream LLM/TTS work was cancelled (barge-in or explicit)      | `updates`           |
 
+- **This taxonomy is the single canonical record of a voice turn (resolves G1).** `ctx.callTranscriber` (§B) and the streaming `ctx.callSpeechSynthesizer` arm (§C) emit these `voice.*` events as the turn progresses and resolve their `Promise` at the turn/asset boundary; the `VoiceEventPayload` shapes in §B ARE these events' payloads. There is no second (iterable) representation to drift from the log.
 - A host advertising `realtimeVoice.bargeIn: "supported"` MUST emit `voice.barge_in` when it detects overlapping speech during playback **and** `voice.cancelled` when it actually cancels downstream work — the two are distinct (a backchannel "uh-huh" MAY produce `barge_in` with no `cancelled`).
 - These events are gated by emission, not by a separate flag: a host that doesn't run voice sessions never emits them, and a client that doesn't understand them ignores them. They are mapped into the existing `stream-modes.md` taxonomy (right column) so no new stream mode is introduced.
 
@@ -179,7 +192,7 @@ BYOK/SR-1 is unaffected (audio bytes and `streamRef` handles are not credentials
 
 ### Examples
 
-**Positive (transcription).** On a host advertising `realtimeVoice: { transcription: "streaming", turnDetection: "semantic" }`, `ctx.callTranscriber({ audio: { streamRef: 'stream:run-7/mic' }, languageCode: 'en-US' })` yields, in order: `{ type:'speech_start', atMs:120 }`, `{ type:'transcript', text:'book a', isFinal:false, atMs:600 }`, `{ type:'transcript', text:'book a table for two', isFinal:false, committedPrefix:'book a table', stability:0.7, atMs:1100 }`, `{ type:'endpoint_candidate', atMs:1400, confidence:0.6 }`, `{ type:'turn_commit', finalText:'book a table for two', atMs:1650 }`.
+**Positive (transcription).** On a host advertising `realtimeVoice: { transcription: "streaming", turnDetection: "semantic" }`, `ctx.callTranscriber({ audio: { streamRef: 'stream:run-7/mic' }, languageCode: 'en-US' })` emits, in order, these `voice.*` run-events on the durable log: `voice.speech_start { atMs:120 }`, `voice.transcript { text:'book a', isFinal:false, atMs:600 }`, `voice.transcript { text:'book a table for two', isFinal:false, committedPrefix:'book a table', stability:0.7, atMs:1100 }`, `voice.endpoint_candidate { atMs:1400, confidence:0.6 }`, `voice.turn_commit { finalText:'book a table for two', atMs:1650 }` — and the `callTranscriber` `Promise` resolves with `{ finalText:'book a table for two', atMs:1650 }`. On `:fork` from a checkpoint at seq 1400, the host re-emits the same `voice.*` events from the log (deterministic), never a live re-capture.
 
 **Negative (capability).** The same `callTranscriber` on a host that does NOT advertise `realtimeVoice.transcription` → `transcription_unsupported`.
 
@@ -190,7 +203,7 @@ BYOK/SR-1 is unaffected (audio bytes and `streamRef` handles are not credentials
 **Additive** (`COMPATIBILITY.md` §2.1):
 
 - `aiProviders.realtimeVoice` is a new + optional object (absent ⇒ no live voice, today's stated posture). Every sub-flag is independently optional.
-- `ctx.callTranscriber` is a new method, present only when `realtimeVoice.transcription` is advertised; it returns the host's existing streaming primitive.
+- `ctx.callTranscriber` is a new method, present only when `realtimeVoice.transcription` is advertised; it resolves a `Promise` at `turn_commit` and emits interim/endpoint signals as `voice.*` run-events — the host's existing emit-to-durable-log streaming idiom (`callAI(stream:true)`), so it introduces no new replay surface.
 - The streaming synthesis arm is a new optional `stream?: boolean` on RFC 0105's request defaulting to `false` — RFC 0105's whole-file behavior is **unchanged**, and `stream: true` is only honored under the new `synthesis: "streaming"` flag. No existing RFC 0105 field is removed/renamed/type-narrowed; the locked `speechSynthesis: const "supported"` is **not re-typed** (the streaming flag is a sibling).
 - The `voice.*` events are new event types; per §2.1 clients MUST ignore unknown event types, so existing consumers are unaffected. They reuse existing stream modes (no new mode).
 - No existing field is removed/renamed/type-narrowed; no existing `MUST` is relaxed; no current v1 conformance pass is invalidated. Every new reject (`transcription_unsupported`, `streaming_unsupported`) fires only for the new methods/flags, which only a voice-aware pack exercises — and such a pack SHOULD declare the dependency (`requiredHostCapabilities`) so refusal happens at register time.
@@ -202,9 +215,9 @@ Backward-compat clauses: existing hosts that never advertise `realtimeVoice` emi
 Phased, gated per `coverage.md` / `profiles.md` (soft-skip when the relevant flag is unadvertised):
 
 - **`aiproviders-realtimevoice-shape.test.ts`** (always-on, server-free): the `aiProviders.realtimeVoice` advertisement validates; sub-flag enums are closed; `synthesis: "streaming"` requires `speechSynthesis: "supported"` (the §A closure); absence is the default; existing 0091/0105 shapes still validate.
-- **`voice-transcription-streaming.test.ts`** (gated on `realtimeVoice.transcription: "streaming"`): `callTranscriber({ audio: { mediaRef } })` yields ≥1 `transcript` part and a terminal `turn_commit`; a part with `isFinal:false` is marked provisional; inline base64 audio is rejected. Non-vacuous under `OPENWOP_REQUIRE_BEHAVIOR=true`.
+- **`voice-transcription-streaming.test.ts`** (gated on `realtimeVoice.transcription: "streaming"`): `callTranscriber({ audio: { streamRef } })` emits ≥1 `voice.transcript` run-event and a terminal `voice.turn_commit`, and its `Promise` resolves with the committed `finalText`; a `voice.transcript` with `isFinal:false` is marked provisional and absent from the durable log until finalized (INV-1); inline base64 / finite-`mediaRef` audio is rejected. Non-vacuous under `OPENWOP_REQUIRE_BEHAVIOR=true`.
 - **`voice-transcription-unadvertised.test.ts`** (gated by ABSENCE): a host NOT advertising `realtimeVoice.transcription` MUST reject `callTranscriber` with `transcription_unsupported`.
-- **`voice-synthesis-streaming.test.ts`** (gated on `realtimeVoice.synthesis: "streaming"`): `callSpeechSynthesizer({ …, stream:true })` yields an ordered chunk stream with a `final:true` terminal; `stream:true` on a non-advertising host returns `speech_synthesis_failed (streaming_unsupported)`.
+- **`voice-synthesis-streaming.test.ts`** (gated on `realtimeVoice.synthesis: "streaming"`): `callSpeechSynthesizer({ …, stream:true })` emits ordered `voice.synthesis_chunk` metadata run-events with a `final:true` terminal and resolves its `Promise` with the finalized RFC 0105 asset; chunk events carry metadata only (no over-cap inline `base64` on the log); `stream:true` on a non-advertising host returns `speech_synthesis_failed (streaming_unsupported)`.
 - **`voice-turn-events.test.ts`** (gated on `realtimeVoice.bargeIn: "supported"`): a host that emits `voice.barge_in` during playback also emits a distinct `voice.cancelled` when it cancels downstream work; `endpoint_candidate` only appears when `turnDetection: "semantic"`.
 
 A normative-addition RFC ships ≥1 gated scenario; the always-on shape scenario lands in the same `@openwop/openwop-conformance` minor as the spec text. Per `COMPATIBILITY.md` §2.3 the suite MAY be stricter about edge cases (ordering, provisional marking) than the prose, marked as suite-version requirements.
@@ -218,7 +231,7 @@ A normative-addition RFC ships ≥1 gated scenario; the always-on shape scenario
 
 ## Resolved during Draft (deep-dive, 2026-06-23)
 
-- **Return primitive (was Q1 / G1) — RESOLVED: `AsyncIterable<TranscriptEvent>`.** The TS SDK exposes streaming _only_ as `AsyncGenerator` (`sdk/typescript/src/sse.ts` `streamEvents`; `client.runs.events()`); image/video/TTS are `Promise`. Matching that convention beats a bespoke emitter. Backpressure is consumer-side buffering (browser WebSocket has no receive-side flow control; gRPC does) — host-internal, handled by the bounded-queue note in §B.1, not a wire signal. The event taxonomy was enriched to the cross-provider common denominator (graded `stability`, `committedPrefix`, `formatted`, candidate-vs-commit split).
+- **Return primitive (was Q1 / G1) — RESOLVED (amended after `Active`): a `Promise` that resolves at `turn_commit` + the `voice.*` run-event taxonomy as the single canonical record.** The `Draft → Active` shape returned `AsyncIterable<TranscriptEvent>` (matching the SDK's `client.runs.events()` `AsyncGenerator`); the openwop-app reference host surfaced, pre-implementation, that this conflated the **client/SSE** layer (which tails the persisted log from outside a run — replay-irrelevant) with the **node-facing `ctx`** layer (inside run execution, which MUST replay). An iterable returned from `ctx` is a live side-channel off the durable log, so `:fork` against a checkpoint has nothing to replay (`replay.md` §"Determinism guarantees"); and it would have been the only iterable-returning method in a uniformly-`Promise` `ctx` surface. The corrected shape — `Promise` + `voice.*` events (the `callAI(stream:true)` emit-to-log idiom) — is replay-safe by construction and removes the §B/§D dual representation. No host had built the iterable, so the amendment is a free correction to a not-yet-implemented surface (`Active` stays; only §B/§C change). The event taxonomy keeps the cross-provider common denominator (graded `stability`, `committedPrefix`, `formatted`, candidate-vs-commit split) as the `voice.*` payloads.
 - **Live-stream handle (was Q3 / G4) — RESOLVED: a distinct `streamRef` kind (§B.1).** Unanimous cross-protocol precedent (WebRTC track+`readyState`, A2A Task/Artifact, LiveKit SID/egress, S3-key/presigned) shows live conduits and stored bytes are always separate handle kinds; overloading `mediaRef` would re-introduce an `isLive` discriminator in all but name. `streamRef` has a `readyState` lifecycle, no size/hash, is session-bound + non-portable, with a `streamRef → mediaRef` finalize seam.
 - **Live-ingress threat model (was implicit / G5) — RESOLVED: §F + four `invariants.yaml` rows** (`voice-interim-not-durable`, `voice-transcript-untrusted`, `voice-bargein-no-partial-leak`, `voice-streamref-tenant-bound`).
 
@@ -230,8 +243,8 @@ Because `Active` locks the wire shape, all six opens are resolved in-RFC at the 
 2. **Where the turn-event taxonomy lives — RESOLVED: extend `stream-modes.md`, no new doc.** The `voice.*` taxonomy is mapped into the existing `stream-modes.md` / `channels-and-reducers.md` surface (no new stream mode, no `spec/v1/voice-session.md`). A dedicated doc is reconsidered only if the profile later grows (telephony, multi-party) — a documentation move, not a wire change.
 3. **RFC 0101 multi-party per-speaker attribution — RESOLVED: defer; floor is single-speaker.** The locked floor carries no `subject` field on `voice.turn_commit`. Because the `voice.*` payloads are server-emitted-open (RFC 0094), an optional `subject?` can be added additively when multi-party voice rooms are specified (a 0101-voice follow-on) — no breaking flip required.
 4. **`scale-profiles.md` voice-latency profile — RESOLVED: out of scope; named follow-on.** Latency stays non-normative here (§E). A first-audio-byte advisory scale target, if pursued, is a separate profile RFC opened after `Active` — explicitly not part of 0106.
-5. **Streaming-synthesis chunk transport — RESOLVED: inline base64 chunks (floor).** §C returns base64 chunks inline over the async stream. A `streamRef`-per-session (§B.1) or a single growing `mediaRef`, better at high chunk rates, is a future additive transport option advertised separately — it does not alter the locked inline-chunk shape.
-6. **Author confirmation of the distillation (G10) — RESOLVED.** The author confirmed the four Draft resolutions (the `AsyncIterable<TranscriptEvent>` return, the distinct `streamRef` live handle, the enriched `TranscriptEvent` taxonomy, and the four §F live-ingress invariants) match intent at the `Draft → Active` flip.
+5. **Streaming-synthesis chunk transport (was Q5 / G8) — RESOLVED (amended after `Active`): chunk METADATA on the durable log; audio bytes to a session-scoped egress.** §C emits `voice.synthesis_chunk` run-events carrying metadata (`seq`, `mimeType`, `durationMs`, `url`/`streamRef`); a host MAY inline a clause-sized `base64` chunk only while under its inline cap (RFC 0055 256 KiB precedent), and MUST spill to a tenant-scoped media `url` past that cap or a per-session cumulative budget. The original "inline base64 chunks (floor)" resolution was corrected for the same replay reason as Q1: unbounded inline audio on the event log makes replay/`:fork` cost grow with session length. The `Promise`-resolves-at-completion shape matches the corrected `callTranscriber`.
+6. **Author confirmation of the distillation (G10) — RESOLVED.** The author confirmed the four Draft resolutions (the streaming-transcription return primitive — **subsequently amended** from `AsyncIterable` to a `Promise` + `voice.*` events per Q1 above on a post-`Active` replay-determinism finding — the distinct `streamRef` live handle, the enriched transcript taxonomy, and the four §F live-ingress invariants) match intent at the `Draft → Active` flip.
 
 ## Implementation notes (non-normative)
 
@@ -245,7 +258,7 @@ Reference consumer candidate: an openwop-app voice-chat surface driving the exis
 
 ## Acceptance criteria
 
-- [ ] `host-capabilities.md` §host.aiProviders: `ctx.callTranscriber` method block (`AsyncIterable<TranscriptEvent>`) + `streamRef` live-handle kind (§B.1) + `stream` arm on `ctx.callSpeechSynthesizer` + failure codes (`transcription_unsupported`, `streaming_unsupported`).
+- [ ] `host-capabilities.md` §host.aiProviders: `ctx.callTranscriber` method block (`Promise<{ finalText, atMs, … }>` resolving at `turn_commit`, with interim/endpoint signals as `voice.*` run-events) + `streamRef` live-handle kind (§B.1) + `stream` arm on `ctx.callSpeechSynthesizer` (`Promise` + `voice.synthesis_chunk` metadata events) + failure codes (`transcription_unsupported`, `streaming_unsupported`).
 - [ ] `capabilities.schema.json` `aiProviders.realtimeVoice` additive optional block (with the `synthesis ⇒ speechSynthesis` and `turnDetection/bargeIn ⇒ transcription` closures).
 - [ ] `run-event-payloads.schema.json` + `api/asyncapi.yaml`: additive `voice.*` event payloads (server-emitted ⇒ open per RFC 0094).
 - [ ] The turn-event taxonomy mapped into `stream-modes.md` (no new mode).
