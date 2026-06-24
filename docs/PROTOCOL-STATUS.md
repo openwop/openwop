@@ -32,8 +32,8 @@
 | Status | Count |
 |---|---:|
 | Accepted | 103 |
-| Active | 3 |
-| Draft | 2 |
+| Active | 4 |
+| Draft | 1 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -144,7 +144,7 @@
 | RFC 0105 | Add an optional AI-provider sub-capability `aiProviders.speechSynthesis: supported` exposing `ctx.callSpeechSynthesizer({ text, voiceId, … })` -> a binary audio asset, paralleling `ctx.callImageGenerator` - the one generation modality openwop's wire cannot express today | Accepted |
 | RFC 0106 | Add an optional real-time voice profile: a streaming transcription adapter (`ctx.callTranscriber`, interim/final + endpointing), a streaming arm for the RFC 0105 synthesizer, and an additive turn-taking / barge-in run-event taxonomy - gated behind `aiProviders.realtimeVoice`, so a conformant host can express live full-duplex voice on the wire | Accepted |
 | RFC 0107 | Publishable declarative pack kinds - registry version manifest carries `kind` + declarative payload, `runtime` conditional | Accepted |
-| RFC 0108 | Self-hosted / OpenAI-compatible provider-class advertisement - `aiProviders.selfHosted[]`, the capability-non-inference rule, and the endpoint-non-disclosure invariant | Draft |
+| RFC 0108 | Self-hosted / OpenAI-compatible provider-class advertisement - `aiProviders.selfHosted[]`, the capability-non-inference rule, and the endpoint-non-disclosure invariant | Active |
 
 ## SDK Helper Coverage
 
@@ -161,8 +161,8 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 2 RFCs still `Draft` (RFC 0038, RFC 0108) — advance with schema/conformance proof or defer.
-- 3 RFCs `Active` (RFC 0035, RFC 0043, RFC 0100) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
+- 4 RFCs `Active` (RFC 0035, RFC 0043, RFC 0100, RFC 0108) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
