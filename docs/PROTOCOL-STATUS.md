@@ -11,7 +11,7 @@
 | JSON Schemas | 67 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 367 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 368 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 109 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
@@ -31,9 +31,9 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 105 |
+| Accepted | 106 |
 | Active | 2 |
-| Draft | 2 |
+| Draft | 1 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -145,7 +145,7 @@
 | RFC 0106 | Add an optional real-time voice profile: a streaming transcription adapter (`ctx.callTranscriber`, interim/final + endpointing), a streaming arm for the RFC 0105 synthesizer, and an additive turn-taking / barge-in run-event taxonomy - gated behind `aiProviders.realtimeVoice`, so a conformant host can express live full-duplex voice on the wire | Accepted |
 | RFC 0107 | Publishable declarative pack kinds - registry version manifest carries `kind` + declarative payload, `runtime` conditional | Accepted |
 | RFC 0108 | Self-hosted / OpenAI-compatible provider-class advertisement - `aiProviders.selfHosted[]`, the capability-non-inference rule, and the endpoint-non-disclosure invariant | Accepted |
-| RFC 0109 | Conversation-turn model provenance (`agent.model`) | Draft |
+| RFC 0109 | Conversation-turn model provenance (`agent.model`) | Accepted |
 
 ## SDK Helper Coverage
 
@@ -162,7 +162,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 2 RFCs still `Draft` (RFC 0038, RFC 0109) — advance with schema/conformance proof or defer.
+- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
 - 2 RFCs `Active` (RFC 0035, RFC 0043) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.

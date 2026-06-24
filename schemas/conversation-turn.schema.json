@@ -58,6 +58,16 @@
         "memoryRef": {
           "type": "string",
           "description": "Opaque memory reference per RFC 0002 §A + RFC 0004 §A. Resolves to `MemoryEntry[]` via host `MemoryAdapter` for cross-run conversation continuity."
+        },
+        "model": {
+          "type": "object",
+          "description": "RFC 0109 — OPTIONAL provenance: which model produced this `role: 'agent'` turn. NON-SECRET, NON-PII: provider + model identifiers ONLY (`additionalProperties: false` forbids any credential/endpoint/prompt leaking in — the SR-1 secret-redaction guard). Stamped at emit; read VERBATIM on `:fork` (never re-resolved). A host that stamps it MUST advertise `conversationTurnModelProvenance.supported: true`. Absent ⇒ no advertisement; clients MUST tolerate its absence.",
+          "additionalProperties": false,
+          "required": ["provider", "model"],
+          "properties": {
+            "provider": { "type": "string", "minLength": 1, "maxLength": 128, "description": "Provider identifier (e.g. `anthropic`, `openai`, `google`). Non-secret." },
+            "model": { "type": "string", "minLength": 1, "maxLength": 256, "description": "Model identifier as the provider names it (e.g. `claude-opus-4-8`). Non-secret." }
+          }
         }
       },
       "additionalProperties": true

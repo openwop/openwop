@@ -12,6 +12,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 ---
 
 
+## [Unreleased]
+
+### Added
+
+- **RFC 0109 — Conversation-turn model provenance (`Accepted`, 2026-06-24).** Additive OPTIONAL `agent.model` ({ `provider`, `model` }) on `conversation-turn.schema.json` recording which model produced a `role:'agent'` turn, gated on a new optional `conversationTurnModelProvenance.supported` capability. NON-SECRET / NON-PII by `additionalProperties:false` on `agent.model` (the SR-1 guard — no credential/endpoint/prompt rides the stamp); read VERBATIM on `:fork`. Server-free shape conformance scenario (`conversation-turn-model-provenance-shape.test.ts`). Additive per `COMPATIBILITY.md` §2.1 (new optional field + new optional capability; clients ignore an absent stamp). `Draft → Accepted` via the bootstrap single-maintainer comment-window waiver (zero external reviewers). Reference-host stamp = openwop-app ADR 0124 Phase 2d.
+
+---
+
 ## [1.1.9] — 2026-06-24 — the modality + agent-interaction graduation cycle (RFC 0100–0108)
 
 Closes the RFC 0100–0108 graduation cycle: eight RFCs reached `Accepted` on dual-witness (one single-witness, bootstrap-waiver) behavioral evidence, landing agent-authored UI, localized content, portable HITL approver routing, speech synthesis, real-time voice, durable A2A tasks, multi-party conversation, and a self-hosted / OpenAI-compatible provider class. All wire shapes additive per `COMPATIBILITY.md` §2.1; no v1 wire break. RFC counts move `Accepted 96 → 105 / Active 3 → 2 (0035, 0043) / Draft 1 (0038)`.

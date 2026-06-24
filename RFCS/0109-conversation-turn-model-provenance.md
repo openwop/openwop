@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0109                                                            |
 | **Title**         | Conversation-turn model provenance (`agent.model`)              |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Accepted`                                                      |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-06-24                                                      |
-| **Updated**       | 2026-06-24                                                      |
+| **Updated**       | 2026-06-24 — `Draft → Accepted` via the `/prd` five-architect pass; the additive 7-day comment window waived by single-maintainer steward authority (bootstrap-phase, `CONTRIBUTING.md` §"RFC comment-window waivers" / `GOVERNANCE.md` lazy consensus) — zero external reviewers. Acceptance work landed: `conversation-turn.schema.json` `agent.model` ({provider, model}, closed); `capabilities.schema.json` `conversationTurnModelProvenance`; the server-free shape conformance scenario; CHANGELOG. Reference-host stamp = openwop-app ADR 0124 Phase 2d. |
 | **Affects**       | `schemas/conversation-turn.schema.json`; RFC 0005 §C (turn shape); `capabilities.md` (new optional capability); conformance (1 new capability-gated scenario); SDK `ConversationTurn` type |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.2                          |
 | **Supersedes**    | —                                                               |
@@ -162,12 +162,12 @@ the openwop-app host stamp (ADR 0124 Phase 2d) is the reference implementation.
 
 ## Acceptance criteria
 
-- [ ] Spec text (RFC 0005 §C addendum) merged
-- [ ] `conversation-turn.schema.json` `agent.model` added (additive; `additionalProperties:false` on `model`)
-- [ ] `capabilities.md` `conversationTurnModelProvenance.supported` documented
-- [ ] ≥1 capability-gated conformance scenario covering presence + no-secret
-- [ ] CHANGELOG `[Unreleased] > Added` entry
-- [ ] Reference host (openwop-app, ADR 0124 Phase 2d) stamps `agent.model`, OR the RFC defers reference-host to the dependent ADR
+- [x] Spec text (RFC 0005 §C addendum) merged — this RFC + the schema descriptions
+- [x] `conversation-turn.schema.json` `agent.model` added (additive; `additionalProperties:false` on `model`)
+- [x] `capabilities.md` `conversationTurnModelProvenance.supported` documented — declared in `capabilities.schema.json`
+- [x] ≥1 capability-gated conformance scenario covering presence + no-secret — `conversation-turn-model-provenance-shape.test.ts` (6 assertions: conforming / required / closed-SR-1 / optional / capability)
+- [x] CHANGELOG `[Unreleased] > Added` entry
+- [ ] Reference host (openwop-app, ADR 0124 Phase 2d) stamps `agent.model` — the follow-on host PR (now unblocked: this RFC is Accepted)
 
 ## References
 
