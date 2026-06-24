@@ -344,6 +344,7 @@ server-free or shape-probe assertions that run unconditionally.
 | ------------------------------------------ | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | `aiproviders-speechsynth-shape.test.ts`    | RFC 0105 §B (`capabilities.aiProviders.speechSynthesis` const advertisement)  | always-on                                                                                                 |
 | `aiproviders-selfhosted-shape.test.ts`     | RFC 0108 §A/§D (`capabilities.aiProviders.selfHosted` shape + §A.1 subset + §A.3 no-URL non-disclosure) | always-on                                                                                |
+| `aiproviders-selfhosted-honesty.test.ts`   | RFC 0108 §A.2/§D (a selfHosted dispatch reaches a real endpoint, not `capability_not_provided`; endpoint location absent from response/error) | `aiProviders.selfHosted.length > 0` (behaviorGate `openwop-selfhosted-providers`); §D leg needs `OPENWOP_TEST_COMPAT_ENDPOINT` |
 | `speech-synthesis-roundtrip.test.ts`       | RFC 0105 §A (`ctx.callSpeechSynthesizer` audio round-trip, behavioral)        | `aiProviders.speechSynthesis === 'supported'` (behaviorGate `openwop-speech-synthesis`)                   |
 | `speech-synthesis-unadvertised.test.ts`    | RFC 0105 §C (unadvertised host rejects with `speech_synthesis_unsupported`)   | `aiProviders.speechSynthesis` ABSENT (behaviorGate `openwop-speech-synthesis-unadvertised`)               |
 

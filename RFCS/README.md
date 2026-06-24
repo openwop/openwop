@@ -67,7 +67,7 @@ Every RFC follows `0000-template.md` and must answer:
 
 <!-- Hand-generated 2026-06-11 from each RFC's header `Status` field. TODO: this table should be emitted by `scripts/generate-protocol-status.mjs` (which already derives these statuses for docs/PROTOCOL-STATUS.md) instead of being hand-maintained. -->
 
-Current tally: **Accepted 103 · Active 4 · Draft 1** (108 RFCs, excluding the `0000` template; Active = 0035, 0043, 0100, 0108; Draft = 0038 Parked).
+Current tally: **Accepted 104 · Active 3 · Draft 1** (108 RFCs, excluding the `0000` template; Active = 0035, 0043, 0108; Draft = 0038 Parked).
 
 | RFC                                                                  | Title                                                                                                                                | Status               |
 | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
@@ -169,7 +169,7 @@ Current tally: **Accepted 103 · Active 4 · Draft 1** (108 RFCs, excluding the 
 | [0097](./0097-standing-goals-and-judge-based-continuation.md)        | Standing goals — judge-based (RFC 0090) completion + bounded continuation                                                            | `Accepted`           |
 | [0098](./0098-agent-platform-portability-export-bundle-and-import.md) | Agent-platform portability — export bundle + tenant import (refs-only, dry-run, idempotent)                                          | `Accepted`           |
 | [0099](./0099-external-event-trigger-ingestion.md)                   | External-event trigger ingestion — webhook/email/form sources start a run (extends RFC 0083; `TriggerEvent` envelope + registration contract + SSRF/replay safety) | `Accepted`             |
-| [0100](./0100-async-durable-a2a-tasks.md)                            | Async / durable A2A tasks — durable Task persistence + `tasks/resubscribe` + push for cross-host handoffs (extends `a2a-integration.md`; new `a2a` capability slot) | `Active`             |
+| [0100](./0100-async-durable-a2a-tasks.md)                            | Async / durable A2A tasks — durable Task persistence + `tasks/resubscribe` + push for cross-host handoffs (extends `a2a-integration.md`; new `a2a` capability slot) | `Accepted`           |
 | [0101](./0101-multi-party-group-conversation.md)                   | Multi-party group conversation — shared transcript + speaker attribution                                                                                  | `Accepted`              |
 | [0102](./0102-a2ui-agent-authored-interface-surfaces.md)             | A2UI agent-authored interface surfaces — declarative cross-trust-boundary UI as a **core, advertised** `ui.a2ui-surface` envelope kind beside `media.*` (extends RFC 0055; closed `anyOf` surface, enumerated catalog, actions confined to interrupt-resume/exchange)                                | `Accepted`           |
 | [0103](./0103-localized-content-surface.md)                          | Localized content surface — durable authored content (pages → sections; section = base `data` + sparse `localizations` map) reusing the Stable `i18n.md` annex's `Accept-Language`/`Content-Language` negotiation; new capability-gated `content` block (⊆ `i18n.supportedLocales`) + per-section field merge | `Accepted`           |
