@@ -1,7 +1,7 @@
 # OpenWOP Roadmap
 
 > **Status:** Living document. Updated as milestones land.
-> **Last reviewed:** 2026-06-14 (corpus release v1.1.8 cut — the 2026-06 monorepo split + the RFC 0089–0100 graduation cycle; conformance advanced `1.18.1 → 1.25.0`, published independently on its own `openwop-conformance/v*` tags). The generated protocol snapshot lives at `docs/PROTOCOL-STATUS.md`. RFC status: **Accepted 96 / Active 3 (0035, 0043, 0100) / Draft 1** — see `docs/PROTOCOL-STATUS.md` for the authoritative counts. SECURITY surface now at 125 invariants (99 protocol-tier, 24 reference-impl, 2 advisory) against `SECURITY/invariants.yaml`; the per-RFC addition history lives in the README status banner + `CHANGELOG.md`.
+> **Last reviewed:** 2026-06-24 (the RFC 0102–0108 graduation cycle — A2UI, localized content, approver routing, speech synthesis, real-time voice, async/durable A2A, and the self-hosted / OpenAI-compatible provider class — all reached `Accepted`; conformance advanced `1.25.0 → 1.37.0`, published independently on its own `openwop-conformance/v*` tags). The generated protocol snapshot lives at `docs/PROTOCOL-STATUS.md`. RFC status: **Accepted 105 / Active 2 (0035, 0043) / Draft 1 (0038)** — see `docs/PROTOCOL-STATUS.md` for the authoritative counts. SECURITY surface now at 138 invariants (108 protocol-tier, 28 reference-impl, 2 advisory) against `SECURITY/invariants.yaml`; the per-RFC addition history lives in the README status banner + `CHANGELOG.md`.
 
 This roadmap distinguishes **stable v1** (locked contract), **v1.X minor work** (additive, conformance-only), and **post-v1 ecosystem** (extension profiles, infrastructure, governance).
 
@@ -57,16 +57,16 @@ The 2026-05-12 architect review framed the remaining gap-closure work as **myndh
 
 Hosts publish which suite version they pass; non-pass on a later suite is **not** a v1 conformance regression.
 
-### RFC 0099 + 0100 — `Active`, corpus implementation landed (2026-06-14)
+### RFC 0099 + 0100 — `Accepted` (both graduated; corpus implementation landed)
 
-RFC 0099 (external-event trigger ingestion, extends RFC 0083) and RFC 0100 (async/durable A2A tasks, extends `a2a-integration.md`) were promoted **Draft → Active** (#700). Both are `additive` + capability-gated. Their **normative corpus artifacts are now landed** — the capability-honesty gap (host advertisement outrunning conformance coverage) is closed:
+RFC 0099 (external-event trigger ingestion, extends RFC 0083) and RFC 0100 (async/durable A2A tasks, extends `a2a-integration.md`) were promoted **Draft → Active** (#700), then both reached **`Accepted`** — RFC 0099 on **2026-06-14** (dual live evidence: openwop-app reference rev `00177-75t` + MyndHyve non-steward witness rev `00271-cj5`, vs suite 1.25.0) and RFC 0100 on **2026-06-24** (dual-witness vs suite 1.34.0: openwop-app reference rev `00299-hns` + MyndHyve non-steward witness rev `00505-seh`). Both are `additive` + capability-gated. Their **normative corpus artifacts landed** ahead of graduation — the capability-honesty gap (host advertisement outrunning conformance coverage) was closed:
 
 | RFC | Normative artifacts (✅ landed) |
 | --- | --- |
 | 0099 | ✅ `schemas/trigger-event.schema.json` + `schemas/trigger-subscription-registration.schema.json`; `capabilities.schema.json` `triggerBridge.ingestion` sub-block; `spec/v1/trigger-bridge.md` §F; `api/openapi.yaml` `POST /v1/trigger-subscriptions`; SECURITY invariants `trigger-ingestion-ssrf` + `trigger-ingestion-content-redaction` **+ public conformance tests** (`trigger-ingestion.test.ts`); `profiles.md` + `profiles.ts` predicate widening. |
 | 0100 | ✅ `schemas/a2a-task-state.schema.json`; `capabilities.schema.json` `a2a` block; `spec/v1/a2a-integration.md` §"Async / durable Tasks"; `api/openapi.yaml` durable-task read seam; SECURITY invariant `a2a-push-egress-ssrf` + async subtests in `a2a-task-roundtrip.test.ts`. |
 
-The **openwop-app reference host already wires both** (its ADR 0034 / 0035), so it advertised `triggerBridge.ingestion` / `a2a.durableTasks` ahead of corpus conformance — these landings close that gap. Each RFC's MUST-NOTs (0099: SSRF + content-redaction; 0100: trust-boundary / push-egress SSRF) now carry a public conformance test. Remaining work for `Active → Accepted`: the reference-host durable-delivery / durable-Task behavioral evidence (the gated legs soft-skip until a host wires the `/v1/host/sample/{trigger-bridge,a2a}/*` seams).
+The **openwop-app reference host already wired both** (its ADR 0034 / 0035), advertising `triggerBridge.ingestion` / `a2a.durableTasks` ahead of corpus conformance — these landings closed that gap. Each RFC's MUST-NOTs (0099: SSRF + content-redaction; 0100: trust-boundary / push-egress SSRF) carries a public conformance test. The `Active → Accepted` bar — non-vacuous reference-host durable-delivery / durable-Task behavioral evidence — is now **met for both**: 0100's `a2a-task-roundtrip` durable-get (real paused-at-approval run projection → `input-required`, `taskId == runId`) + push-config SSRF-rejection passed non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true`, dual-witnessed across openwop-app + MyndHyve.
 
 ## v1.2 outlook (projected)
 
