@@ -11,8 +11,8 @@
 | JSON Schemas | 67 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 367 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 108 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 368 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 109 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -31,7 +31,7 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 105 |
+| Accepted | 106 |
 | Active | 2 |
 | Draft | 1 |
 
@@ -145,6 +145,7 @@
 | RFC 0106 | Add an optional real-time voice profile: a streaming transcription adapter (`ctx.callTranscriber`, interim/final + endpointing), a streaming arm for the RFC 0105 synthesizer, and an additive turn-taking / barge-in run-event taxonomy - gated behind `aiProviders.realtimeVoice`, so a conformant host can express live full-duplex voice on the wire | Accepted |
 | RFC 0107 | Publishable declarative pack kinds - registry version manifest carries `kind` + declarative payload, `runtime` conditional | Accepted |
 | RFC 0108 | Self-hosted / OpenAI-compatible provider-class advertisement - `aiProviders.selfHosted[]`, the capability-non-inference rule, and the endpoint-non-disclosure invariant | Accepted |
+| RFC 0109 | Conversation-turn model provenance (`agent.model`) | Accepted |
 
 ## SDK Helper Coverage
 

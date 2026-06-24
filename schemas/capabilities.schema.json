@@ -583,6 +583,18 @@
         }
       }
     },
+    "conversationTurnModelProvenance": {
+      "type": "object",
+      "description": "RFC 0109 — Conversation-turn model provenance. When advertised with `supported: true`, the host stamps the OPTIONAL `agent.model` object (`{ provider, model }`) on `role: 'agent'` conversation turns (`conversation-turn.schema.json`), recording which model produced the turn. The stamp is NON-SECRET + NON-PII (`additionalProperties: false` on `agent.model` forbids any credential/endpoint/prompt — the SR-1 guard) and is read VERBATIM on `:fork` (never re-resolved, so a forked transcript preserves the original provenance). Absent block ⇒ no advertisement: the host omits `agent.model` and treats it as an opaque, unenforced field. Advertising `supported: true` without stamping is a dishonest wire claim (`OPENWOP_REQUIRE_BEHAVIOR=true` fails the gated scenario). Additive over RFC 0005 — extends the conversation primitive, does not replace it.",
+      "required": ["supported"],
+      "additionalProperties": false,
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "RFC 0109. Host stamps `agent.model` ({ provider, model }) on `role: 'agent'` conversation turns. When `false` or absent, the RFC 0109 conformance scenario soft-skips and the host emits no model provenance."
+        }
+      }
+    },
     "multiAgent": {
       "type": "object",
       "description": "RFC 0037 — Multi-agent execution model + handoff state machine. Hosts that advertise implement the supervisor→dispatch→harvest loop + the 4-state handoff state machine + the `core.workflowChain.event` emission contract per spec/v1/multi-agent-execution.md. Absent block = host implements RFCs 0006/0007/0022 individually with implementation flexibility on integration semantics; conformance scenarios gating on this flag soft-skip on absence.",
