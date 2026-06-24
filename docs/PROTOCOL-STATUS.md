@@ -8,11 +8,11 @@
 | Surface | Current value | Source |
 |---|---:|---|
 | Spec prose documents | 56 | `spec/v1/*.md` |
-| JSON Schemas | 67 | `schemas/*.schema.json` |
+| JSON Schemas | 68 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 368 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 109 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 369 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 110 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -31,7 +31,7 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 106 |
+| Accepted | 107 |
 | Active | 2 |
 | Draft | 1 |
 
@@ -146,6 +146,7 @@
 | RFC 0107 | Publishable declarative pack kinds - registry version manifest carries `kind` + declarative payload, `runtime` conditional | Accepted |
 | RFC 0108 | Self-hosted / OpenAI-compatible provider-class advertisement - `aiProviders.selfHosted[]`, the capability-non-inference rule, and the endpoint-non-disclosure invariant | Accepted |
 | RFC 0109 | Conversation-turn model provenance (`agent.model`) | Accepted |
+| RFC 0110 | Channel presence (online + typing) | Accepted |
 
 ## SDK Helper Coverage
 

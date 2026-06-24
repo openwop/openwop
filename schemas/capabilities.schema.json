@@ -595,6 +595,18 @@
         }
       }
     },
+    "channelPresence": {
+      "type": "object",
+      "description": "RFC 0110 — Channel presence (online + typing). When advertised with `supported: true`, the host emits the OPTIONAL `channel.presence` RunEvent (`channel-presence-payload.schema.json`) for a `type:'channel'` conversation, carrying the currently-present member subject refs + optional per-member typing. Presence is EPHEMERAL live state: the host MUST NOT persist it to the replayable event log / transcript and it MUST NOT affect replay or `:fork` (the load-bearing distinction from the persisted `conversation.exchanged` turn). Membership-gated: every ref MUST be a current participant and the event MUST NOT be delivered to a non-member (DEFAULT-DENY, CTI-1). NON-PII (opaque RFC 0041 subject refs only). Absent block ⇒ no advertisement: the host emits no presence. Advertising `supported: true` without emitting is a dishonest wire claim (`OPENWOP_REQUIRE_BEHAVIOR=true` fails the gated scenario). Additive over RFC 0005.",
+      "required": ["supported"],
+      "additionalProperties": false,
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "RFC 0110. Host emits the ephemeral `channel.presence` RunEvent for channel conversations. When `false` or absent, the RFC 0110 conformance scenario soft-skips and the host emits no presence."
+        }
+      }
+    },
     "multiAgent": {
       "type": "object",
       "description": "RFC 0037 — Multi-agent execution model + handoff state machine. Hosts that advertise implement the supervisor→dispatch→harvest loop + the 4-state handoff state machine + the `core.workflowChain.event` emission contract per spec/v1/multi-agent-execution.md. Absent block = host implements RFCs 0006/0007/0022 individually with implementation flexibility on integration semantics; conformance scenarios gating on this flag soft-skip on absence.",
