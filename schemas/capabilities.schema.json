@@ -762,6 +762,12 @@
           "uniqueItems": true,
           "description": "Subset of `supported` for which BYOK is permitted. Empty array → all calls use platform-managed keys; non-empty → clients MAY pass `ai.credentialRef` in `RunOptions.configurable` for matching providers."
         },
+        "selfHosted": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true,
+          "description": "RFC 0108. Subset of `supported` whose entries are operator- or tenant-configured OpenAI-compatible endpoints (e.g. an Ollama / vLLM / LM Studio / any `/v1/chat/completions`-compatible server), as opposed to a host-managed connection to a known public vendor. Each entry MUST also appear in `supported`. An entry MAY also appear in `byok` (the endpoint requires a client/tenant-supplied key) or be absent from it (the endpoint needs no key, e.g. a default Ollama). The provider id is an OPAQUE label chosen by the host; it MUST NOT encode the endpoint's network location (scheme, host, port, path, or base-URL) per RFC 0108 §A.3, and the endpoint location MUST NOT be disclosed on any wire surface (see the `self-hosted-endpoint-no-disclosure` SECURITY invariant). A client MUST NOT infer model capabilities from a `selfHosted` id (RFC 0108 §B); the only authoritative capability sources are `modelCapabilities.advertised[]` (RFC 0031) and `aiProviders.input.modalities` (RFC 0091)."
+        },
         "speechSynthesis": {
           "const": "supported",
           "description": "RFC 0105. When present (value MUST be the string `\"supported\"`), the host exposes `ctx.callSpeechSynthesizer({ text, voiceId, mimeType?, format?, languageCode?, ... })` returning a binary audio asset (host-served `url` OR inline `base64` + `mimeType`), paralleling `aiProviders.imageGeneration`. Absent ⇒ no TTS; a call MUST be rejected with `speech_synthesis_unsupported` (never a no-op). Voices are referenced by an opaque host-resolved `voiceId`; the spec does NOT enumerate voices. TTS provider ids are advertised via the existing `aiProviders.supported[]` (the call's `provider?` MUST be a member); there is no `speechSynthesis` sub-field for providers. Per-host model/voice routing is a host choice."

@@ -11,7 +11,7 @@
 | JSON Schemas | 67 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 365 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 366 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 108 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 1.35.0 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 1.36.0 | `conformance/package.json` | minor on scenario add/remove |
 
 ## OpenAPI Operations
 
