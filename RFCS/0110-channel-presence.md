@@ -173,7 +173,8 @@ renders an avatar stack + a typing indicator.
 - [x] `capabilities.schema.json` adds `channelPresence` (closed, `supported`)
 - [x] ≥1 server-free conformance scenario — `channel-presence-shape.test.ts` (conforming / required / closed-no-PII / typing-optional / enum-membership / capability)
 - [x] CHANGELOG `[Unreleased] > Added`
-- [ ] Reference host emits debounced presence — **DEFERRED** (the acceptance-criteria option): openwop-app channels are fetch-based (no per-channel SSE transport) + multi-instance presence needs shared live state the demo's DB budget can't hold; a single-instance / sticky-session deployment is the natural first emitter. The wire is frozen + conformance-covered.
+- [x] Behavioral conformance leg — `channel-presence-behavioral.test.ts` (capability-gated; closed-shape / members-only / no-PII / non-vacuous; soft-skips until a host wires the `/v1/host/sample/channel-presence/snapshot` seam, documented in `host-sample-test-seams.md` §13)
+- [x] Reference host emits presence — openwop-app ADR 0126 Phase 4 (ephemeral membership-gated channel-presence SSE + the snapshot seam witness; gated default-OFF via `OPENWOP_CHANNEL_PRESENCE_ENABLED`). The earlier DEFERRED note is superseded: per-instance presence is RFC-correct (correctness, not completeness) (the acceptance-criteria option): openwop-app channels are fetch-based (no per-channel SSE transport) + multi-instance presence needs shared live state the demo's DB budget can't hold; a single-instance / sticky-session deployment is the natural first emitter. The wire is frozen + conformance-covered.
 
 ## References
 

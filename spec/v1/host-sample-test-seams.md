@@ -598,3 +598,12 @@ Conformance: `multi-agent-memory-lifecycle.test.ts` (the MAE-3 behavioral assert
 - `observability.md` §"OTel collector test seam (RFC 0034)" — the canonical RFC 0034 §B normative text the OTel + debug-bundle seams implement
 - `replay.md` §"LLM cache-key recipe" — the canonical recipe the §4 LLM cache-key seam computes
 - `prompts.md` §"Resolution chain (normative)" — the canonical RFC 0029 resolver semantics the §1 seam exposes
+
+### 13. Channel-presence snapshot — `POST /v1/host/sample/channel-presence/snapshot` (RFC 0110)
+
+OPTIONAL. Gated on `capabilities.channelPresence.supported`. RFC 0110 carries `channel.presence` over a host SSE — a held connection a conformance client cannot assert against — and mints no normative client route to open presence. This seam returns a live `channel.presence` snapshot after a TRANSIENT join (so `present` is non-vacuous: it includes the requesting member), routing through the SAME membership gate + closed payload the host applies in production.
+
+- **Request:** `{ "conversationId": string, "member": "user:<id>" }`.
+- **Response 200:** the RFC 0110 `channel-presence-payload.schema.json` shape — `{ conversationId, present: string[], typing: string[] }` — CLOSED (no field beyond these; the no-PII guard); every ref an opaque RFC 0041 `user:`/`agent:` subject; `typing ⊆ present`; the requesting member appears in `present`.
+- **404 / 405:** seam not wired — the gated scenario (`channel-presence-behavioral.test.ts`) soft-skips. A host whose presence is bound to a product flow (e.g. a membership-gated channel SSE) witnesses via its own host-side route test + an `INTEROP-MATRIX.md` row (the RFC 0086 dual-staging).
+- **Ephemerality (RFC 0110):** presence is live state — the host MUST NOT persist `channel.presence` to the replayable event log; it does not appear on `GET /v1/runs/{runId}/events`.
