@@ -100,6 +100,7 @@
         "interrupt.requested",
         "interrupt.resolved",
         "channel.written",
+        "channel.presence",
         "artifact.created",
         "output.chunk",
         "variable.changed",
