@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0108 |
 | **Title** | Self-hosted / OpenAI-compatible provider-class advertisement — `aiProviders.selfHosted[]`, the capability-non-inference rule, and the endpoint-non-disclosure invariant |
-| **Status** | `Active` |
+| **Status** | `Accepted` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-06-23 |
-| **Updated** | 2026-06-24 (Draft → Active — bootstrap-phase steward waiver, 7-day comment window waived; see [Status history](#status-history)) |
+| **Updated** | 2026-06-24 (Active → Accepted — reference-host (openwop-app, ADR 0121, PR #725 merged) conformance-harness witness, single-witness bootstrap steward waiver; see [Status history](#status-history)). 2026-06-24 (Draft → Active — bootstrap-phase steward waiver, 7-day comment window waived) |
 | **Affects** | `spec/v1/capabilities.md` (§`aiProviders` — adds the `selfHosted[]` field + the self-hosted advertisement rules) · `spec/v1/host-capabilities.md` (cross-reference) · `schemas/capabilities.schema.json` (adds optional `aiProviders.selfHosted`) · `SECURITY/invariants.yaml` (adds `self-hosted-endpoint-no-disclosure`) · `SECURITY/threat-model-secret-leakage.md` (cross-reference) · ≥1 new conformance scenario · `INTEROP-MATRIX.md` · CHANGELOG |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 |
 | **Supersedes** | — |
@@ -167,14 +167,14 @@ Promotion `Draft → Active` (✅ **met 2026-06-24** — bootstrap-phase steward
 - [x] All five architect passes complete; conformance scenarios sketched (§Conformance); threat model clear (§D).
 - ↪ The `spec/v1/capabilities.md` §A/§B prose + `schemas/capabilities.schema.json` field edits land at **Accepted** (below), per the RFC 0031 Draft→Active precedent (shape locked at Active; text + conformance + reference-host at Accepted).
 
-Promotion `Active → Accepted`:
-- [ ] `spec/v1/capabilities.md` + `host-capabilities.md` cross-reference text merged.
-- [ ] `schemas/capabilities.schema.json` merged with `aiProviders.selfHosted`.
-- [ ] `SECURITY/invariants.yaml` gains `self-hosted-endpoint-no-disclosure` (§D).
-- [ ] `aiproviders-selfhosted-shape.test.ts` lands in `@openwop/openwop-conformance`; suite minor-version bumps.
-- [ ] CHANGELOG entry under `[Unreleased]`.
-- [ ] `INTEROP-MATRIX.md` gains the `aiProviders.selfHosted` advertisement column/note.
-- [ ] Reference host (openwop-app, ADR 0121) advertises `aiProviders.selfHosted[]` for a configured compat endpoint, passes `aiproviders-selfhosted-shape.test.ts` + the honesty scenario, and keeps the endpoint URL off the wire (§D). MAY close the third-party gate under the bootstrap-phase steward waiver (the RFC 0031 / 0046 / 0095 precedent), or via dual-witness with a second host advertising the class.
+Promotion `Active → Accepted` (✅ **met 2026-06-24** — see [Status history](#active--accepted-2026-06-24)):
+- [x] `spec/v1/capabilities.md` + `host-capabilities.md` cross-reference text merged (#757).
+- [x] `schemas/capabilities.schema.json` merged with `aiProviders.selfHosted` (#757).
+- [x] `SECURITY/invariants.yaml` gains `self-hosted-endpoint-no-disclosure` (§D) (#757; protocol-tier, total 138 / protocol 108).
+- [x] `aiproviders-selfhosted-shape.test.ts` lands in `@openwop/openwop-conformance`; suite minor-version bumps (#757, suite `1.36.0`; the gated `aiproviders-selfhosted-honesty.test.ts` landed #759, suite `1.37.0`).
+- [x] CHANGELOG entry under `[Unreleased]`.
+- [x] `INTEROP-MATRIX.md` gains the `aiProviders.selfHosted` advertisement column/note.
+- [x] Reference host (openwop-app, ADR 0121, PR #725 **merged**) advertises `aiProviders.selfHosted[]` for a configured compat endpoint, passes `aiproviders-selfhosted-shape.test.ts` + the honesty scenario non-vacuously under `OPENWOP_REQUIRE_BEHAVIOR=true`, and keeps the endpoint URL off the wire (§D). Closed under the **single-witness bootstrap-phase steward waiver** (the RFC 0031 / 0046 / 0095 precedent). Witness is the host's **conformance harness** (a real loopback OpenAI-compatible mock endpoint stood up by `conformance/run.ts`, production-dark) — the appropriate evidence tier for an intrinsically operator-private surface that §A.3/§D + the Motivation §4 SSRF-reconnaissance threat say MUST NOT be publicly disclosed, mirroring the RFC 0035 harness-graduation precedent (a deployed publicly-curl-able witness would contradict the surface's own non-disclosure model).
 
 ## References
 
@@ -189,6 +189,20 @@ Promotion `Active → Accepted`:
 - openwop-app `docs/adr/0121-local-model-provider-support.md` — the reference-host consumer this RFC unblocks; `docs/research/2026-06-23-ai-chat-competitive-analysis.md` §9 (B12), §11 — the cross-competitor motivation (LibreChat `OllamaClient.js`, Jan `RemoteOAIEngine`, AnythingLLM local providers, Open WebUI `routers/ollama.py`).
 
 ## Status history
+
+### Active → Accepted (2026-06-24)
+
+Graduated on the **reference-host (openwop-app, ADR 0121) conformance-harness witness**, closed under the **single-witness bootstrap-phase steward waiver** (the RFC 0031 / 0046 / 0095 precedent named in the `Draft → Active` evidence).
+
+Evidence at promotion:
+
+- **Spec/schema/security/conformance landed** (PR #757, `origin/main` `7d5367cd`): `aiProviders.selfHosted` in `schemas/capabilities.schema.json`; §A.1/A.2/A.3 + §B prose in `spec/v1/capabilities.md` (+ `host-capabilities.md` cross-ref); the `self-hosted-endpoint-no-disclosure` SECURITY invariant (protocol-tier, `medium` — total 138 / protocol 108); the always-on `aiproviders-selfhosted-shape.test.ts`. The gated behavioral `aiproviders-selfhosted-honesty.test.ts` landed in PR #759 (`9b12bd95`).
+- **Conformance published:** `@openwop/openwop-conformance@1.36.0` (shape leg, tag `openwop-conformance/v1.36.0`) and **`1.37.0`** (honesty leg, tag `openwop-conformance/v1.37.0`), both live on npm.
+- **Reference-host witness (openwop-app, ADR 0121, PR #725 merged):** the host advertises `aiProviders { supported:[…,"compat"], selfHosted:["compat"] }` and passes **both** `aiproviders-selfhosted-shape` (always-on) **and** `aiproviders-selfhosted-honesty` (gated) **non-vacuously** under `OPENWOP_REQUIRE_BEHAVIOR=true` vs conformance `1.37.0`. The honesty leg dispatches against the advertised `compat` id and reaches a **real** configured endpoint (HTTP 200 from a loopback OpenAI-compatible mock — **not** `capability_not_provided`, proving §A.2 truthful advertisement), the id is non-URL (`compat`, §A.3), and the endpoint location appears in neither the response body nor any error payload (§D, via the `compat_transport_error` scrub). **Production stays dark** (`OPENWOP_COMPAT_PROVIDER_ENABLED` unset ⇒ `selfHosted: []`) — no dishonest live claim.
+- **Evidence-tier rationale (steward + architect):** the witness is the host's **conformance harness** (`conformance/run.ts` stands up the real loopback mock + sets `OPENWOP_TEST_COMPAT_ENDPOINT` + `OPENWOP_REQUIRE_BEHAVIOR`), **not** a deployed publicly-curl-able discovery doc as the RFC 0100 / 0105 / 0106 managed-cloud graduations used. This is the **appropriate** tier for this surface: a self-hosted / OpenAI-compatible endpoint is intrinsically **operator-private infrastructure** that §A.3 / §D + the Motivation §4 SSRF-reconnaissance threat say MUST NOT be publicly disclosed, so a public deployed witness would contradict the surface's own non-disclosure model. It mirrors the **RFC 0035** sandbox harness-graduation precedent (behavioral invariants proven by a conformance probe driving a seam, not a public deployment). The steward independently verified the witness by code-inspecting the honesty-gated emission (`discovery.ts`) + the real-mock setup (`conformance/run.ts`), confirming it is non-vacuous and not a fabricated result.
+- **Single-witness, no dual-witness required:** per the RFC's own §Acceptance text, the bootstrap-phase steward waiver permits closing on the single openwop-app reference-host witness; MyndHyve dual-witness is not required for this operator-config surface (unlike the 0105 / 0106 dual-witness path).
+
+Compatibility: this promotion is **non-normative** — a status change only; no wire, schema, or behavior change in this commit. `additive` per `COMPATIBILITY.md` §2.1; RFC counts `Accepted +1` / `Active −1`.
 
 ### Draft → Active (2026-06-24)
 

@@ -67,7 +67,7 @@ Every RFC follows `0000-template.md` and must answer:
 
 <!-- Hand-generated 2026-06-11 from each RFC's header `Status` field. TODO: this table should be emitted by `scripts/generate-protocol-status.mjs` (which already derives these statuses for docs/PROTOCOL-STATUS.md) instead of being hand-maintained. -->
 
-Current tally: **Accepted 104 · Active 3 · Draft 1** (108 RFCs, excluding the `0000` template; Active = 0035, 0043, 0108; Draft = 0038 Parked).
+Current tally: **Accepted 105 · Active 2 · Draft 1** (108 RFCs, excluding the `0000` template; Active = 0035, 0043; Draft = 0038 Parked).
 
 | RFC                                                                  | Title                                                                                                                                | Status               |
 | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
@@ -177,7 +177,7 @@ Current tally: **Accepted 104 · Active 3 · Draft 1** (108 RFCs, excluding the 
 | [0105](./0105-speech-synthesis-adapter.md)                           | Speech synthesis adapter — additive optional `aiProviders.speechSynthesis` sub-capability + `ctx.callSpeechSynthesizer({ text, voiceId, … })` → binary audio asset, paralleling `ctx.callImageGenerator`; closes the TTS (audio-output) wire gap (image-gen + RFC 0091 audio-input exist, but no speech synthesis) | `Accepted`           |
 | [0106](./0106-realtime-voice-session-profile.md)                     | Real-time voice session profile — additive optional `aiProviders.realtimeVoice`: streaming transcription `ctx.callTranscriber` (resolves a `Promise` at `turn_commit`, interim/final + endpointing emitted as `voice.*` run-events), a streaming arm on the RFC 0105 synthesizer, a distinct `streamRef` live handle, and a `voice.*` turn-taking / barge-in run-event taxonomy | `Accepted`           |
 | [0107](./0107-publishable-declarative-pack-kinds.md)                 | Publishable declarative pack kinds — registry version manifest carries `kind` + declarative payload, `runtime` conditional                                                                                                                          | `Active`             |
-| [0108](./0108-self-hosted-openai-compatible-provider-class.md)       | Self-hosted / OpenAI-compatible provider class — additive optional `aiProviders.selfHosted[]` (subset of `supported`) marking operator-/tenant-configured OpenAI-compatible endpoints; truthful-advertisement + endpoint-non-disclosure + capability-non-inference rules                                          | `Active`             |
+| [0108](./0108-self-hosted-openai-compatible-provider-class.md)       | Self-hosted / OpenAI-compatible provider class — additive optional `aiProviders.selfHosted[]` (subset of `supported`) marking operator-/tenant-configured OpenAI-compatible endpoints; truthful-advertisement + endpoint-non-disclosure + capability-non-inference rules                                          | `Accepted`           |
 
 ## See also
 
