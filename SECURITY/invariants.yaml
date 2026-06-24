@@ -159,6 +159,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/aiproviders-selfhosted-shape.test.ts
+      - conformance/src/scenarios/aiproviders-selfhosted-honesty.test.ts
     note: |
       RFC 0108 §A.3: the network location (scheme, host, port, path, base-URL)
       of an `aiProviders.selfHosted[]` endpoint is operator-private
