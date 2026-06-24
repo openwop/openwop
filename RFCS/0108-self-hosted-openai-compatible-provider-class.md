@@ -4,10 +4,10 @@
 |---|---|
 | **RFC** | 0108 |
 | **Title** | Self-hosted / OpenAI-compatible provider-class advertisement — `aiProviders.selfHosted[]`, the capability-non-inference rule, and the endpoint-non-disclosure invariant |
-| **Status** | `Draft` |
+| **Status** | `Active` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-06-23 |
-| **Updated** | 2026-06-23 |
+| **Updated** | 2026-06-24 (Draft → Active — bootstrap-phase steward waiver, 7-day comment window waived; see [Status history](#status-history)) |
 | **Affects** | `spec/v1/capabilities.md` (§`aiProviders` — adds the `selfHosted[]` field + the self-hosted advertisement rules) · `spec/v1/host-capabilities.md` (cross-reference) · `schemas/capabilities.schema.json` (adds optional `aiProviders.selfHosted`) · `SECURITY/invariants.yaml` (adds `self-hosted-endpoint-no-disclosure`) · `SECURITY/threat-model-secret-leakage.md` (cross-reference) · ≥1 new conformance scenario · `INTEROP-MATRIX.md` · CHANGELOG |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 |
 | **Supersedes** | — |
@@ -159,10 +159,13 @@ Forward-compatibility guarantees: a client on an older spix that ignores `selfHo
 
 ## Acceptance criteria
 
-Promotion `Draft → Active`:
-- [ ] Comment window opens; Unresolved questions 1–5 have a recommended resolution recorded.
-- [ ] `schemas/capabilities.schema.json` `aiProviders.selfHosted` field locked (shape frozen).
-- [ ] `spec/v1/capabilities.md` §`aiProviders` extended with §A (selfHosted + A.1/A.2/A.3) and §B (capability non-inference).
+Promotion `Draft → Active` (✅ **met 2026-06-24** — bootstrap-phase steward waiver; see [Status history](#status-history)):
+- [x] Comment window: **waived** under the bootstrap-phase steward waiver (RFC 0031 / 0046 / 0095 precedent) — single-steward repo, zero external reviewers.
+- [x] Unresolved questions 1–5 each have a recommended resolution recorded (§Unresolved questions); none is critical or blocking.
+- [x] Compatibility classification firm: **additive** (§Compatibility).
+- [x] Wire-shape frozen: the `aiProviders.selfHosted[]` field shape + the §A/§B/§D normative rules are locked — no shape changes before Accepted.
+- [x] All five architect passes complete; conformance scenarios sketched (§Conformance); threat model clear (§D).
+- ↪ The `spec/v1/capabilities.md` §A/§B prose + `schemas/capabilities.schema.json` field edits land at **Accepted** (below), per the RFC 0031 Draft→Active precedent (shape locked at Active; text + conformance + reference-host at Accepted).
 
 Promotion `Active → Accepted`:
 - [ ] `spec/v1/capabilities.md` + `host-capabilities.md` cross-reference text merged.
@@ -184,3 +187,22 @@ Promotion `Active → Accepted`:
 - `SECURITY/threat-model-secret-leakage.md`, `SECURITY/threat-model-provider-policy.md` — the threat models §D/§B reference.
 - `schemas/capabilities.schema.json` §`aiProviders` (lines 749–868) — the object the `selfHosted` field is added to.
 - openwop-app `docs/adr/0121-local-model-provider-support.md` — the reference-host consumer this RFC unblocks; `docs/research/2026-06-23-ai-chat-competitive-analysis.md` §9 (B12), §11 — the cross-competitor motivation (LibreChat `OllamaClient.js`, Jan `RemoteOAIEngine`, AnythingLLM local providers, Open WebUI `routers/ollama.py`).
+
+## Status history
+
+### Draft → Active (2026-06-24)
+
+Promoted under the **bootstrap-phase steward waiver** per `CONTRIBUTING.md` §"Bootstrap-phase notes" + `MAINTAINERS.md` §"Bootstrap-phase RFC waivers" — the same path RFC 0031, RFC 0046, and RFC 0095 used. **The 7-day comment window is waived** (single-steward bootstrap repo; zero external reviewers). The wire-shape is locked; the spec/schema text, the `self-hosted-endpoint-no-disclosure` SECURITY invariant, the `aiproviders-selfhosted-shape.test.ts` conformance scenario, and the reference-host (openwop-app ADR 0121) advertisement remain the path to `Accepted`.
+
+Evidence at promotion:
+
+- **Classification firm — `additive`** per `COMPATIBILITY.md` §2.1: one optional field on a server-emitted shape; no existing field / event / error changes; new MUSTs bind only hosts that advertise `aiProviders.selfHosted[]`; no migration.
+- **Wire-shape locked:** `aiProviders.selfHosted: string[]` (subset of `supported`, mirroring `byok[]`) + §A.1/A.2/A.3 (subset constraint, truthful advertisement, endpoint non-disclosure) + §B (capability non-inference) + the §D `self-hosted-endpoint-no-disclosure` invariant. No shape changes expected before Accepted.
+- **Five architect passes complete; no CRITICAL gaps.** The gap register (G1–G7) and risk register (R1–R6) carry only Active/Accepted-stage items; the §Unresolved-questions recommendations stand as the working decisions (flag-now over a `providerClasses` map; declared-or-probed capability source host-internal; egress host-internal).
+- **Path to `Active → Accepted`:** land the §A/§B prose in `spec/v1/capabilities.md` (+ `host-capabilities.md` cross-ref) and the `aiProviders.selfHosted` field in `schemas/capabilities.schema.json`; add the SECURITY invariant + the shape conformance scenario; openwop-app (ADR 0121) advertises `selfHosted[]` for a configured compat endpoint and passes — closable under the steward waiver or via dual-witness with a second advertising host.
+
+Compatibility: this promotion is **non-normative** — a status change only; no wire, schema, or behavior change in this commit.
+
+### Draft (2026-06-23)
+
+Authored via the five-architect pass (`/prd`). RFC + gap (G1–G7) + risk (R1–R6) registers landed (PR #755). The wire-gate for openwop-app ADR 0121 (local / OpenAI-compatible model provider).
