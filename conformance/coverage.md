@@ -343,6 +343,7 @@ server-free or shape-probe assertions that run unconditionally.
 | Scenario file                              | Spec doc / RFC                                                                | Gating capability                                                                                          |
 | ------------------------------------------ | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | `aiproviders-speechsynth-shape.test.ts`    | RFC 0105 §B (`capabilities.aiProviders.speechSynthesis` const advertisement)  | always-on                                                                                                 |
+| `aiproviders-selfhosted-shape.test.ts`     | RFC 0108 §A/§D (`capabilities.aiProviders.selfHosted` shape + §A.1 subset + §A.3 no-URL non-disclosure) | always-on                                                                                |
 | `speech-synthesis-roundtrip.test.ts`       | RFC 0105 §A (`ctx.callSpeechSynthesizer` audio round-trip, behavioral)        | `aiProviders.speechSynthesis === 'supported'` (behaviorGate `openwop-speech-synthesis`)                   |
 | `speech-synthesis-unadvertised.test.ts`    | RFC 0105 §C (unadvertised host rejects with `speech_synthesis_unsupported`)   | `aiProviders.speechSynthesis` ABSENT (behaviorGate `openwop-speech-synthesis-unadvertised`)               |
 
