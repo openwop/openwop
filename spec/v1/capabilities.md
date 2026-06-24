@@ -168,6 +168,7 @@ The example's `maxNodeExecutions: 1000` is a deliberately non-default value (the
 | `secrets.resolution`                   | `string`                  | **optional v1** | Currently `"host-managed"`. Reserved for future modes.                                                                                                                                                                                                                                |
 | `aiProviders.supported`                | `string[]`                | **optional v1** | Providers the host's AI proxy can route to (`anthropic`, `openai`, `gemini`, etc.).                                                                                                                                                                                                   |
 | `aiProviders.byok`                     | `string[]`                | **optional v1** | Subset of `aiProviders.supported` for which BYOK is permitted.                                                                                                                                                                                                                        |
+| `aiProviders.selfHosted`               | `string[]`                | **optional v1** | RFC 0108. Subset of `aiProviders.supported` that are operator-/tenant-configured OpenAI-compatible endpoints (opaque id, never URL-shaped; endpoint location non-disclosed; no capability inference from the id).                                                                       |
 | `aiProviders.policies`                 | object                    | **optional v1** | Host-side policy enforcement modes (`disabled` / `optional` / `required` / `restricted`).                                                                                                                                                                                             |
 | `fixtures`                             | `string[]`                | **optional v1** | Fixture workflow IDs the host has seeded. Conformance-suite-only contract.                                                                                                                                                                                                            |
 | `interrupt.approverRouting.supported`  | `boolean`                 | **optional v1** | RFC 0104. Host honors the OPTIONAL, ADVISORY `approverGroupRefs` / `approverRoleRefs` / `audience` fields on the `kind:"approval"` InterruptPayload — resolves the advertised ref kinds against its own identity/RBAC, enforces eligibility host-side, routes notifications. Absent ⇒ the fields are ignored and the host stays conformant.                                                                                                  |
@@ -245,6 +246,7 @@ Companion to `secrets`. Advertises which AI providers the host's AI-proxy can ro
 
 - `supported` (string array) — provider ids the host's AI-proxy can route to. Conventional ids: `anthropic`, `openai`, `gemini`, `mistral`, `cohere`, `vertex`, `bedrock`. Hosts MAY add vendor-prefixed extensions.
 - `byok` (string array, subset of `supported`) — providers for which the host permits BYOK. Empty array → all calls use platform-managed keys; non-empty → clients MAY pass an opaque `ai.credentialRef` in `RunOptions.configurable` for matching providers.
+- `selfHosted` (string array, subset of `supported`) — RFC 0108. The subset of `supported` whose entries are operator- or tenant-configured OpenAI-compatible endpoints rather than host-managed connections to known public vendors. See [`aiProviders.selfHosted`](#aiproviders-selfhosted--self-hostedopenai-compatible-provider-class-rfc-0108) below for its three normative rules.
 
 **Client semantics.**
 
@@ -253,6 +255,28 @@ Companion to `secrets`. Advertises which AI providers the host's AI-proxy can ro
 - `RunOptions.configurable.ai.credentialRef` — opaque host-issued reference to a stored secret (must reference a credential of a provider in `byok`).
 
 **Server semantics.** Servers reject `ai.credentialRef` for providers NOT in `byok` with `credential_forbidden`. Servers reject unknown `provider` ids with `validation_error`.
+
+#### `aiProviders.selfHosted` — self-hosted/OpenAI-compatible provider class (RFC 0108)
+
+`supported`/`byok` say which providers a host routes to and which permit BYOK, but not whether an entry is a **host-managed connection to a known public vendor** (e.g. `anthropic`) or an **operator- or tenant-configured OpenAI-compatible endpoint** (Ollama, vLLM, LM Studio, or any `/v1/chat/completions`-compatible server). Those are materially different trust, capability, and key-custody surfaces. The optional `selfHosted[]` advertisement marks the latter so a client and the conformance suite can read the distinction honestly.
+
+```json
+"aiProviders": {
+  "supported": ["anthropic", "openai", "ollama", "compat"],
+  "byok": ["anthropic", "openai", "compat"],
+  "selfHosted": ["ollama", "compat"]
+}
+```
+
+`selfHosted` is OPTIONAL; an absent or empty array means the host advertises no self-hosted/compatible endpoints (its `supported[]` entries are all host-managed or BYOK-cloud connections — today's behavior). The capabilities document is **host-scoped**: a `selfHosted` entry means "this host supports configuring such an endpoint and at least one is configured in the advertising scope," not "you, the reading client, have one" — the same scope semantics `byok[]` already has.
+
+**A.1 — Subset constraint.** Every entry of `aiProviders.selfHosted[]` MUST also appear in `aiProviders.supported[]`. A `selfHosted` entry MAY additionally appear in `aiProviders.byok[]` (the endpoint requires a tenant-supplied key) or not (the endpoint needs no key, e.g. a default Ollama).
+
+**A.2 — Truthful advertisement (normative).** A host MUST list a provider id in `aiProviders.selfHosted[]` only when the host can route to **at least one configured, reachable** OpenAI-compatible endpoint for that id within the advertising scope. Listing a self-hosted provider with no backing endpoint is a dishonest capability claim per [§Truthful advertisement](#truthful-advertisement) and is non-conformant; `OPENWOP_REQUIRE_BEHAVIOR=true` MUST fail it.
+
+**A.3 — Endpoint non-disclosure (normative).** The provider id in `selfHosted[]` is an opaque host-chosen label. A host MUST NOT encode the endpoint's network location (scheme, host, port, path, or base-URL) in the provider id, and MUST NOT disclose that location on any wire surface — the capabilities document, any `run.*` event payload, error envelopes, the debug bundle, exports, or replay state. See the `self-hosted-endpoint-no-disclosure` SECURITY invariant. Disclosing the endpoint leaks internal network topology and enables SSRF reconnaissance against the operator's network. The endpoint base-URL is **configuration, not a credential**; an optional endpoint key remains a BYOK credential governed by RFC 0046 verbatim.
+
+**B — Capability non-inference (normative).** For a provider id present in `aiProviders.selfHosted[]`, a client MUST NOT infer model capabilities (e.g. `structured-output`, `discriminator-enum`, `function-calling`, `long-context`, `reasoning` per RFC 0031 §C, or input modalities per RFC 0091) from the provider id or from any known-vendor capability mapping. The **only** authoritative source of a self-hosted provider's capabilities is what the host actually advertises and gates on: `capabilities.modelCapabilities.advertised[]` (RFC 0031) and `aiProviders.input.modalities` (RFC 0091). A self-hosted endpoint whose capabilities the host does not advertise is treated as text-only; the host MUST refuse a request for an unadvertised capability or modality per the RFC 0031 model-capability gate (`capability_not_provided`), exactly as for any other provider. This prevents a client from assuming, e.g., that a `selfHosted` id named `ollama` supports vision merely because some public deployment of that engine does. How a host *derives* a self-hosted endpoint's capabilities — a static declaration captured at configuration time, or a runtime probe — is host-internal and out of scope, exactly as RFC 0031 §C leaves the derivation of the model-capability mapping host-internal.
 
 #### `aiProviders.authModes` — BYOK auth-mode contract (RFC 0067, `Active`)
 

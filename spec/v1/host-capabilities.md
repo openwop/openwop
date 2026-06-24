@@ -31,6 +31,8 @@ Method signatures use TypeScript-flavor shapes; concrete hosts MAY return additi
 
 **Capability flag:** `aiProviders: supported` _(advertised via top-level `Capabilities.aiProviders.supported[]`; see [capabilities.md §aiProviders](capabilities.md#aiproviders))_
 
+**Self-hosted / OpenAI-compatible providers (RFC 0108):** a host MAY mark the subset of `aiProviders.supported[]` that are operator-/tenant-configured OpenAI-compatible endpoints (Ollama / vLLM / LM Studio / any `/v1/chat/completions`-compatible server) via `aiProviders.selfHosted[]` (see [capabilities.md §aiProviders.selfHosted](capabilities.md#aiproviders-selfhosted--self-hostedopenai-compatible-provider-class-rfc-0108)). A client MUST NOT infer a self-hosted provider's model capabilities from its id — the authoritative sources remain the host's `modelCapabilities.advertised[]` (RFC 0031) and `aiProviders.input.modalities` (RFC 0091), so an unadvertised capability/modality on a self-hosted provider is refused exactly as for any other provider. The endpoint's network location is operator-private and MUST NOT appear on any wire surface (`self-hosted-endpoint-no-disclosure`).
+
 **Used by:** `core.openwop.ai`, `vendor.myndhyve.ai`, `vendor.myndhyve.ads-copy-generate`, `vendor.myndhyve.landing-page`, `vendor.myndhyve.market-intel-*` (all single-AI-call packs).
 
 The lower-level escape hatch for AI invocation. Packs that need raw model output (untyped text + optional structured-output schema) call `ctx.callAI` directly. The typed-envelope companion is `§host.aiEnvelope`.

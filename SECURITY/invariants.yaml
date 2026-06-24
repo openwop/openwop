@@ -153,6 +153,27 @@ invariants:
       dispatch — workspace-internal info that some operators prefer to
       keep private. Gate timing: lands alongside reference-host emission.
 
+  - id: self-hosted-endpoint-no-disclosure
+    tier: protocol
+    severity: medium
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/aiproviders-selfhosted-shape.test.ts
+    note: |
+      RFC 0108 §A.3: the network location (scheme, host, port, path, base-URL)
+      of an `aiProviders.selfHosted[]` endpoint is operator-private
+      infrastructure and MUST NOT appear on any wire surface — the capabilities
+      document, any run.* event payload, error envelopes, the debug bundle,
+      exports, or replay state. The provider id is an opaque host-chosen label
+      and MUST NOT encode the endpoint URL. Disclosing the endpoint leaks
+      internal network topology and enables SSRF reconnaissance against the
+      operator's network. Distinct from credential-payload-redaction (RFC 0046):
+      the endpoint URL is not a credential, but it is private infrastructure.
+      The shape scenario statically asserts no `selfHosted[]` id is URL-shaped
+      (no `://`, bare `host:port`, or leading `/` path); the Active→Accepted
+      honesty scenario asserts the endpoint location appears in no run.* event
+      or error payload.
+
   - id: media-asset-url-tenant-scoped
     tier: protocol
     severity: critical
