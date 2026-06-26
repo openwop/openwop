@@ -627,3 +627,20 @@ OPTIONAL. The orchestrator transcript the host assembles each iteration is host-
   - `summarizedRanges` lists each in-window range the host replaced with a summary; every entry's `summaryRef` MUST have a matching `context.summarized` event in the run event-log.
 - **404 / 405:** seam not wired — the gated scenario (`context-budget-transcript-bound.test.ts`) soft-skips.
 - **Non-vacuity ceiling (RFC 0111):** the seam proves the host's DECLARED accounting is internally consistent + within budget; it cannot black-box-prove the host feeds nothing additional off-seam. The capability is advertise-and-attest — a host that lies in the seam fails the cross-check; a host that lies past the seam is outside any wire/seam witness.
+
+### 15. A2UI surface-emit driver — `POST /v1/host/sample/a2ui/emit-surface` (RFC 0114)
+
+| Field                     | Value                                                                                                 |
+| ------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Method + path             | `POST /v1/host/sample/a2ui/emit-surface`                                                               |
+| Capability gate           | `capabilities.a2uiSurface.deltaTransport: true` (RFC 0114)                                             |
+| Env gate (reference impl) | `OPENWOP_TEST_SEAM_ENABLED=true`                                                                       |
+| Introduced                | RFC 0114 §"Delta transport"                                                                            |
+
+OPTIONAL. A real `ui.a2ui-surface` envelope is one-shot per producing node, so a conformance harness cannot, from the canonical wire alone, drive the SECOND surface emission needed to observe a delta frame. This seam supplies that trigger ONLY — it MUST flow through the host's REAL surface-emit path, the REAL `?a2uiDelta=1` delta transport, and the REAL closed-catalog validator (mirroring RFC 0114 §"Delta transport"); it MUST NOT be a mock that synthesizes a delta or bypasses validation. The harness drives the trigger; the host produces the delta exactly as it would in production.
+
+- **Request:** `{ "runId": string, "surface": object }` — `surface` is a full `ui.a2ui-surface` payload (`{ catalogVersion, surface, reasoning? }`) the host records as the run's current full surface. The first call establishes the baseline (surface A); each subsequent call is a new full surface (surface B, …) the host both records full AND, for any `?a2uiDelta=1` subscriber, transports as a delta frame computed against the previously emitted full.
+- **Response 200:** `{ surfaceRef: string }` — the recorded envelope id of the surface just emitted (the `surfaceRef` a delta frame references). The host MUST record the canonical envelope as the FULL surface (never a delta).
+- **Out-of-catalog surface:** a request whose `surface` carries a component outside the host's closed `catalogVersion` catalog MUST be rejected by the SAME real validator a full surface receives — the seam returns a fail-closed error (no delta is transported, no out-of-catalog component reaches render), exactly as RFC 0114 requires of any delta whose post-patch surface fails closed-catalog validation.
+- **404 / 405:** seam not wired — the gated scenario (`a2ui-surface-delta-transport.test.ts`) soft-skips its live-host leg (the always-on schema + RFC 6902 reconstruction legs still run).
+- **Non-vacuity (RFC 0114):** the witness is non-vacuous because both the surface-emit and the `?a2uiDelta=1` transport are the host's production paths and the catalog gate is the host's real validator — the harness only supplies the surface-update trigger (same shape as RFC 0115's harness-driven re-poll). A `?a2uiDelta=1` subscriber's reconstructed surface MUST equal the full surface a non-negotiating subscriber materializes for the same update.

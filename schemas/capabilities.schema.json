@@ -2295,6 +2295,17 @@
           "description": "RFC 0115. Content-Encoding values the host will negotiate on run reads (advertisement of standard-HTTP behavior). `gzip` is the baseline; `br`/`zstd` are OPTIONAL — the host advertises only the subset it can actually serve. For each advertised value the decoded body MUST be byte-identical to the identity body."
         }
       }
+    },
+    "a2uiSurface": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0114 (`Active`). Host-side TRANSPORT features over the recorded `ui.a2ui-surface` envelope (RFC 0102). A transport optimization, NOT an envelope-payload kind — the recorded envelope stays the full surface. Optional.",
+      "properties": {
+        "deltaTransport": {
+          "type": "boolean",
+          "description": "RFC 0114. Host delivers RFC 6902 (`a2ui-surface-delta-frame.schema.json`) delta frames over the run event stream to subscribers that negotiate `?a2uiDelta=1`; the full surface is materialized for everyone else, the event-log read, and replay. The recorded `ui.a2ui-surface` envelope stays full. The consumer re-validates the post-patch surface against the closed `catalogVersion` catalog before render and falls back fail-closed on any apply/validation failure (the host then re-materializes full)."
+        }
+      }
     }
   },
   "additionalProperties": true
