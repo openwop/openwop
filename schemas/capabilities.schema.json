@@ -729,6 +729,47 @@
               "type": "integer",
               "minimum": 1,
               "description": "RFC 0061 (`version >= 5`). Host-advertised count of recent event-log entries the host feeds each orchestrator turn as the iteration's transcript input (§C input 3). Advertise-and-honor; not a fixed wire constant. Absent ⇒ the host does not bound the transcript window on the wire."
+            },
+            "contextBudget": {
+              "type": "object",
+              "description": "RFC 0111 (`Active`, `version >= 5`). Opt-in, token-denominated bound on the orchestrator transcript the host feeds each iteration, plus a declared summarization contract for turns evicted beyond that budget. SCOPE: governs the RFC 0061 per-iteration ORCHESTRATOR-LOOP transcript (`multi-agent-execution.md` §\"Per-iteration state inputs\" input 3 — the same transcript `transcriptWindow` bounds), NOT a general chat-conversation history. A host whose orchestrator loop does not run real model turns (e.g. a mock supervisor) MUST NOT advertise this block, exactly as it MUST NOT dishonestly advertise `transcriptWindow`. Budget-only advertisement (`transcriptTokenBudget` + `tokenCounter` WITHOUT `summarization.supported`) is valid for a host that HAS a real orchestrator loop but does not summarize. Purely additive: a host that omits this block behaves exactly as today, including `transcriptWindow`'s `absent ⇒ unbounded` default (NOT flipped by this RFC). Complements (does not replace) the event-count `transcriptWindow`; when both bound a turn the host MUST honor whichever is tighter. Summarization here is a NONDETERMINISTIC host output governed exactly like an RFC 0041 envelope: each substitution MUST be recorded as a `context.summarized` event whose `summaryRef` artifact replay reuses (never re-summarizes) per `multi-agent-execution.md` §\"Context economy (RFC 0111)\".",
+              "additionalProperties": false,
+              "properties": {
+                "transcriptTokenBudget": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "RFC 0111. Max tokens of transcript the host feeds any single orchestrator turn, measured in the unit named by `tokenCounter`. Advertise-and-honor; complements (does not replace) `transcriptWindow`. When both are present the host MUST honor whichever bound is tighter for a given turn. Absent ⇒ no token bound on the transcript (only the event-count `transcriptWindow`, if any, applies)."
+                },
+                "tokenCounter": {
+                  "type": "string",
+                  "enum": ["o200k_base", "cl100k_base", "chars", "host-defined"],
+                  "description": "RFC 0111. The unit `transcriptTokenBudget` is denominated in, so the bound is interpretable across hosts. REQUIRED when `transcriptTokenBudget` is present (enforced via the `if/then` clause). `o200k_base`/`cl100k_base` are tokenizer encodings; `chars` counts UTF-8/Unicode characters (a tokenizer-free unit a client can reason about directly); `host-defined` is an opaque host unit. Same enum as RFC 0113 `memory.injectionBudget.tokenCounter` — transcript (0111) and memory (0113) budgets denominate in one consistent vocabulary; no shared `$ref` (decoupled)."
+                },
+                "summarization": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["supported"],
+                  "description": "RFC 0111. Declared contract for turns evicted beyond `transcriptTokenBudget`. When `supported: true`, the host MAY replace older in-window turns with a host-produced summary; it MUST keep the most recent `keepLastTurns` turns verbatim and MUST NOT summarize the active (most recent) turn. Each substitution MUST be recorded as a `context.summarized` event and is replay-governed under RFC 0041 (replay reuses the recorded `summaryRef`, never re-summarizes).",
+                  "properties": {
+                    "supported": {
+                      "type": "boolean",
+                      "description": "REQUIRED when the sub-block is present. When `true`, the host implements the RFC 0111 declared-summarization contract; conformance scenario `context-summarization-replay` gates on this flag and soft-skips when absent/false."
+                    },
+                    "strategy": {
+                      "type": "string",
+                      "enum": ["sliding-window", "recursive", "map-reduce"],
+                      "description": "RFC 0111. Informational descriptor of the host's summarization strategy. `sliding-window` keeps a recent verbatim tail and summarizes the prefix; `recursive` folds prior summaries into new ones; `map-reduce` summarizes chunks then combines. Does not change the replay-determinism contract — all strategies record `context.summarized` and reuse `summaryRef` on replay."
+                    },
+                    "keepLastTurns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "RFC 0111. Number of most-recent turns kept verbatim at the head of the window; older in-window turns MAY be replaced by a summary. The active (most recent) turn MUST NOT be summarized regardless of this value. Absent ⇒ host-defined verbatim floor."
+                    }
+                  }
+                }
+              },
+              "if": { "required": ["transcriptTokenBudget"] },
+              "then": { "required": ["transcriptTokenBudget", "tokenCounter"] }
             }
           }
         }

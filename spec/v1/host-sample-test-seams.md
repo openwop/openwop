@@ -607,3 +607,23 @@ OPTIONAL. Gated on `capabilities.channelPresence.supported`. RFC 0110 carries `c
 - **Response 200:** the RFC 0110 `channel-presence-payload.schema.json` shape — `{ conversationId, present: string[], typing: string[] }` — CLOSED (no field beyond these; the no-PII guard); every ref an opaque RFC 0041 `user:`/`agent:` subject; `typing ⊆ present`; the requesting member appears in `present`.
 - **404 / 405:** seam not wired — the gated scenario (`channel-presence-behavioral.test.ts`) soft-skips. A host whose presence is bound to a product flow (e.g. a membership-gated channel SSE) witnesses via its own host-side route test + an `INTEROP-MATRIX.md` row (the RFC 0086 dual-staging).
 - **Ephemerality (RFC 0110):** presence is live state — the host MUST NOT persist `channel.presence` to the replayable event log; it does not appear on `GET /v1/runs/{runId}/events`.
+
+### 14. Transcript-window accounting — `GET /v1/host/sample/agent/transcript-window?runId=…&iteration=N` (RFC 0111)
+
+| Field                     | Value                                                                                                 |
+| ------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Method + path             | `GET /v1/host/sample/agent/transcript-window?runId=<id>&iteration=<N>`                                 |
+| Capability gate           | `capabilities.multiAgent.executionModel.contextBudget.transcriptTokenBudget` present (RFC 0111)        |
+| Env gate (reference impl) | `OPENWOP_TEST_SEAM_ENABLED=true`                                                                       |
+| Introduced                | RFC 0111 §"Conformance seam"                                                                           |
+
+OPTIONAL. The orchestrator transcript the host assembles each iteration is host-internal and never crosses the wire; conformance cannot observe the per-turn token bound from discovery alone. This seam returns the host's OWN accounting of what it fed the model on orchestrator turn `iteration` of run `runId`, so the harness can cross-check it against the run event-log and the advertised `contextBudget`.
+
+- **Request:** query params `runId` (string) + `iteration` (1-based integer, the `runOrchestrator.decided.iteration` of the turn).
+- **Response 200:** `{ tokenCounter: string, tokenCount: integer, eventIds: string[], summarizedRanges: Array<{ summaryRef: string, replacedTurns: string[] }> }`.
+  - `tokenCounter` MUST equal the advertised `contextBudget.tokenCounter`.
+  - `tokenCount` is the host's reported total tokens of transcript fed that turn, in `tokenCounter` units; it MUST be ≤ `contextBudget.transcriptTokenBudget`.
+  - `eventIds` are the event-log entries (most-recent tail) the host fed verbatim that turn — no older event included while a newer eligible one is dropped. The harness independently reads these from the run event-log (`GET /v1/host/sample/test/runs/:runId/events`) and re-computes their token sum in the advertised unit, confirming the host's `tokenCount` is internally consistent and ≤ budget.
+  - `summarizedRanges` lists each in-window range the host replaced with a summary; every entry's `summaryRef` MUST have a matching `context.summarized` event in the run event-log.
+- **404 / 405:** seam not wired — the gated scenario (`context-budget-transcript-bound.test.ts`) soft-skips.
+- **Non-vacuity ceiling (RFC 0111):** the seam proves the host's DECLARED accounting is internally consistent + within budget; it cannot black-box-prove the host feeds nothing additional off-seam. The capability is advertise-and-attest — a host that lies in the seam fails the cross-check; a host that lies past the seam is outside any wire/seam witness.

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
   "title": "RunEventPayloads",
-  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n108 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n109 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
   "type": "object",
   "$defs": {
     "_typeIndex": {
@@ -39,6 +39,7 @@
         "interrupt.resolved":        { "$ref": "#/$defs/interruptResolved" },
         "channel.written":           { "$ref": "#/$defs/channelWritten" },
         "channel.presence":          { "$ref": "#/$defs/channelPresence" },
+        "context.summarized":        { "$ref": "#/$defs/contextSummarized" },
         "artifact.created":          { "$ref": "#/$defs/artifactCreated" },
         "output.chunk":              { "$ref": "#/$defs/outputChunk" },
         "variable.changed":          { "$ref": "#/$defs/variableChanged" },
@@ -784,6 +785,21 @@
 
     "channelPresence": {
       "$ref": "https://openwop.dev/spec/v1/channel-presence-payload.schema.json"
+    },
+
+    "contextSummarized": {
+      "type": "object",
+      "description": "RFC 0111. Emitted when the host replaces older in-window orchestrator transcript turns with a host-produced summary to honor `multiAgent.executionModel.contextBudget.transcriptTokenBudget`. CONTENT-FREE: the summary text is NEVER inlined — `summaryRef` is an artifactId resolved via `GET /v1/runs/{runId}/artifacts/{artifactId}`. The summary is a NONDETERMINISTIC host output governed like an RFC 0041 envelope: on `:fork mode:replay` the host MUST reuse this recorded `summaryRef` and MUST NOT re-summarize (see multi-agent-execution.md §\"Context economy (RFC 0111)\"). `replacedTurns` lists the event ids the summary stands in for, so a replay engine reconstructs the exact transcript.",
+      "required": ["iteration", "replacedTurns", "summaryRef", "tokenCounter", "tokensBefore", "tokensAfter"],
+      "properties": {
+        "iteration":     { "type": "integer", "minimum": 0, "description": "The orchestrator-loop iteration (the `runOrchestrator.decided.iteration` counter) whose transcript assembly triggered this summarization." },
+        "replacedTurns": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "Event ids (run event-log entries) the summary stands in for. A replay engine reconstructs the exact model-facing transcript by substituting the `summaryRef` artifact for this contiguous range." },
+        "summaryRef":    { "type": "string", "minLength": 1, "description": "ArtifactId of the persisted summary (read via `GET /v1/runs/{runId}/artifacts/{artifactId}`). The summary text is NOT on the wire. MUST be persisted/readable as-of the iteration's event-log index; a host that cannot serve it at the requested `fromSeq` MUST refuse the fork (mirrors `replay_memory_snapshot_unavailable`)." },
+        "tokenCounter":  { "type": "string", "enum": ["o200k_base", "cl100k_base", "chars", "host-defined"], "description": "The unit `tokensBefore`/`tokensAfter` are denominated in. MUST equal the advertised `contextBudget.tokenCounter`." },
+        "tokensBefore":  { "type": "integer", "minimum": 0, "description": "Token count of the `replacedTurns` range before summarization, in `tokenCounter` units." },
+        "tokensAfter":   { "type": "integer", "minimum": 0, "description": "Token count of the summary that replaced the range, in `tokenCounter` units. Expected ≤ `tokensBefore`." }
+      },
+      "additionalProperties": false
     },
 
     "artifactCreated": {
