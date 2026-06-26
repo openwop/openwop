@@ -37,6 +37,25 @@ Both are additive optional endpoints; a host that omits `toolCatalog` returns `4
 
 The catalog capability and the §D session-event capability are **separate honesty gates**: a host advertising `capabilities.toolCatalog.supported` WITHOUT `sessionLifecycle` is NOT expected to emit `tool.session.*` — it serves descriptors with single-shot (RFC 0064) call events only.
 
+## §compact — Compact projection (RFC 0112)
+
+A host MAY advertise the additive optional flag `capabilities.toolCatalog.compactView: true` (`capabilities.schema.json`). When it does, it **MUST** honor an optional `view` query parameter on both catalog endpoints:
+
+- **`GET /v1/tools?view=compact`** **MUST** return the envelope `{ tools: CompactToolDescriptor[] }` — NOT a bare array — exactly as §B's standard list returns `{ tools: ToolDescriptor[] }`.
+- **`GET /v1/tools/{toolId}?view=compact`** **MUST** return one [`CompactToolDescriptor`](../../schemas/compact-tool-descriptor.schema.json), or `404` for an unknown/unauthorized id (the §F-2 non-disclosure pattern, unchanged).
+- `view` defaults to `standard`; omitting it (or any value other than `compact`) **MUST** yield today's exact standard response. A host that does NOT advertise `compactView` **MUST** treat `view=compact` as any unknown query parameter — ignore it and return the standard view. Clients detect support via the `toolCatalog.compactView` capability flag, not by probing.
+
+[`compact-tool-descriptor.schema.json`](../../schemas/compact-tool-descriptor.schema.json) (`additionalProperties: false`) is a **lossy projection** of `ToolDescriptor` restricted to the model-relevant fields: REQUIRED `toolId`/`source`/`safetyTier` and OPTIONAL `title`/`description`/`inputSchema`. `source` is retained so the `safetyTier: "exec" ⇒ source: "host-extension"` cross-field MUST (RFC 0069, §C-1) stays expressible — the compact schema mirrors that `if/then`. The heavy fields (`outputSchema`/`auth`/`egress`/`approval`/`replayPolicy`/`costHint`/`latencyHint`) are **omitted**. Like the full descriptor, a `CompactToolDescriptor` **MUST** be content-free of secrets (§C MUST 2).
+
+**The compact structural subset (normative, self-contained).** When an `inputSchema` is present in a compact descriptor it **MUST**:
+
+- have top-level `type: "object"` with an explicit `properties` map; and
+- **MUST NOT** use `$ref`, `oneOf`, `allOf`, `anyOf`, `not`, `patternProperties`, or `dependentSchemas` **at any nesting depth** — including inside nested property schemas, since nested combinators are exactly the verbosity the compact view exists to drop.
+
+This subset is the stable structural core of the RFC 0030 Tier-1 universal subset (cited as rationale), but it is **pinned in `compact-tool-descriptor.schema.json`** — not a normative dereference of the informative, drift-prone `structured-output-subset.md` table — so conformance is machine-checkable. The published schema enforces the **top-level floor**; the conformance suite enforces the **total any-depth** constraint via a schema-aware recursive walk (pure JSON Schema cannot express the recursive bound cleanly). The **standard view's** Tier-1 recommendation (§C, "the host SHOULD … constrain `inputSchema`") stays a **SHOULD**; this RFC adds a **MUST** only on the new opt-in compact surface.
+
+**Projection completeness + authorization-scoping (normative).** The compact `tools[]` **MUST** carry the **same `toolId` set** as the standard view for the same principal — a compact catalog that drops a tool the standard view shows is non-conformant. The compact view **MUST** stay authorization-scoped and non-disclosing per the RFC 0074 pattern (§F-2): it exposes exactly the tools the principal could already see in the standard view, never more. The compact projection is a pure read transform over the existing descriptor store — no new persistence, no new invocation path.
+
 ## §D — Tool-session lifecycle (optional, when `toolCatalog.sessionLifecycle: true`)
 
 Most tools are single-shot (one call → one result, already covered by RFC 0064's `agent.toolCalled`/`agent.toolReturned`). A _tool session_ models a multi-step interaction (an MCP server holding a stateful connection; a connector OAuth dance mid-call). The lifecycle is **content-free observability** over the existing call events:
