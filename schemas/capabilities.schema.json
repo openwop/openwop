@@ -2221,6 +2221,22 @@
           }
         }
       }
+    },
+    "restTransport": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0115 (`Active`). Conditional-GET + Content-Encoding negotiation on run reads (`GET /v1/runs/{runId}`). Optional. Distinct from the file-egress `fileHandling.transport` (ftp/sftp/ssh) sub-capability — this advertises HTTP-layer poll economy on the run-read REST surface.",
+      "properties": {
+        "conditionalRunGet": {
+          "type": "boolean",
+          "description": "RFC 0115. Host emits a strong, event-log-sequence-derived `ETag` on `GET /v1/runs/{runId}` and honors `If-None-Match` with a `304 Not Modified` (empty body) when the validator matches the current state version."
+        },
+        "contentEncodings": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["gzip", "br", "zstd"] },
+          "description": "RFC 0115. Content-Encoding values the host will negotiate on run reads (advertisement of standard-HTTP behavior). `gzip` is the baseline; `br`/`zstd` are OPTIONAL — the host advertises only the subset it can actually serve. For each advertised value the decoded body MUST be byte-identical to the identity body."
+        }
+      }
     }
   },
   "additionalProperties": true
