@@ -170,6 +170,7 @@ The example's `maxNodeExecutions: 1000` is a deliberately non-default value (the
 | `aiProviders.byok`                     | `string[]`                | **optional v1** | Subset of `aiProviders.supported` for which BYOK is permitted.                                                                                                                                                                                                                        |
 | `aiProviders.selfHosted`               | `string[]`                | **optional v1** | RFC 0108. Subset of `aiProviders.supported` that are operator-/tenant-configured OpenAI-compatible endpoints (opaque id, never URL-shaped; endpoint location non-disclosed; no capability inference from the id).                                                                       |
 | `aiProviders.policies`                 | object                    | **optional v1** | Host-side policy enforcement modes (`disabled` / `optional` / `required` / `restricted`).                                                                                                                                                                                             |
+| `aiProviders.promptPrefixCache`        | object                    | **optional v1** | RFC 0116. Provider-scoped advert that the host honors the `generate` request's `cachePrefixId` as a context-cache routing hint — tenant-keyed (`prompt-prefix-cache-cross-tenant-isolation`), secret-free, replay-invariant.                                                            |
 | `fixtures`                             | `string[]`                | **optional v1** | Fixture workflow IDs the host has seeded. Conformance-suite-only contract.                                                                                                                                                                                                            |
 | `interrupt.approverRouting.supported`  | `boolean`                 | **optional v1** | RFC 0104. Host honors the OPTIONAL, ADVISORY `approverGroupRefs` / `approverRoleRefs` / `audience` fields on the `kind:"approval"` InterruptPayload — resolves the advertised ref kinds against its own identity/RBAC, enforces eligibility host-side, routes notifications. Absent ⇒ the fields are ignored and the host stays conformant.                                                                                                  |
 | `interrupt.approverRouting.refKinds`   | `string[]`                | **optional v1** | RFC 0104. Subset of `["group","role"]` the host actually resolves. `group` ⇒ honors `approverGroupRefs`; `role` ⇒ honors `approverRoleRefs`. Advertise only what the resolver supports (capability honesty).                                                                            |
@@ -359,6 +360,34 @@ Additive companion to `aiProviders`. Lets a host advertise which **policy modes*
 **Audit emission.** Hosts SHOULD emit a per-decision audit event (host-internal taxonomy; conventional name `policy.decision`) carrying the resolved policy + which scope-layer supplied each field. The exact payload shape is host-internal and NOT part of the wire protocol — clients learn the _outcome_ through the `provider_policy_denied` error, not by subscribing to audit events.
 
 **Backward compat.** Clients MUST tolerate the field's absence. A host that omits `policies` is equivalent to one that advertises `{"modes": ["optional"]}` and never returns `provider_policy_denied`.
+
+### `aiProviders.promptPrefixCache` — portable prompt-prefix cache hint (RFC 0116)
+
+Additive, provider-scoped companion to `aiProviders`. Advertises that the host honors the AI-envelope `generate` request's optional `cachePrefixId` (`ai-envelope.md` §"Prompt-prefix cache (RFC 0116)" + `host-capabilities.md` §host.aiEnvelope) as a routing hint into the routed provider's server-side context cache.
+
+```json
+"aiProviders": {
+  "supported": ["anthropic", "openai", "gemini"],
+  "promptPrefixCache": {
+    "supported": true,
+    "providers": ["anthropic"]
+  }
+}
+```
+
+**Field shape:**
+
+- `supported` (boolean, required when the block is present) — whether the host honors `cachePrefixId`.
+- `providers` (string array, optional) — the subset of `aiProviders.supported[]` for which the host honors `cachePrefixId`. Prefix caching is **provider-specific** (e.g. Anthropic ephemeral); this is **NOT a universal claim**. A request whose routed provider is not in this list MUST have `cachePrefixId` ignored. Absent ⇒ host-defined per-provider routing.
+
+**Normative rules** (full text in `ai-envelope.md` §"Prompt-prefix cache (RFC 0116)"):
+
+- **MAY honor / MUST ignore.** A host advertising `promptPrefixCache` for the routed provider MAY honor `cachePrefixId`; otherwise it MUST ignore it (no error, no behavior change).
+- **Cross-tenant isolation (MUST).** The host MUST key its provider context cache by `(resolved tenant, cachePrefixId)` — tenant-namespaced, never global. Two tenants supplying the same `cachePrefixId` MUST NOT share a cache entry; tenant B's first use of A's id MUST be a miss. Enforced by SECURITY invariant `prompt-prefix-cache-cross-tenant-isolation` (protocol tier).
+- **Replay invariance (MUST).** `cachePrefixId` is a cost hint, never a semantic input: the recorded envelope + `provider.usage.inputTokens`/`outputTokens` MUST be identical hit-vs-miss and MUST replay identically. The cost-only `provider.usage.cacheReadTokens`/`cacheWriteTokens` witness a hit (and a cross-tenant non-share) and are replay-non-asserted.
+- **BYOK (MUST NOT).** `cachePrefixId` MUST NOT encode or derive from secret/BYOK material — it is the provider cache key and appears in host logs/metrics.
+
+**Backward compat.** Clients MUST tolerate the field's absence; a host that omits `promptPrefixCache` ignores `cachePrefixId`.
 
 ### `fixtures`
 

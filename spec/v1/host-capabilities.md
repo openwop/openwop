@@ -268,6 +268,7 @@ ctx.aiEnvelope.generate({
   userMessage?: string,
   variables?: Record<string, unknown>,
   context?: Record<string, unknown>,
+  cachePrefixId?: string,      // RFC 0116. Stable, tenant-namespaced, secret-free label for a cacheable prompt prefix. Honored only when the host advertises aiProviders.promptPrefixCache for the routed provider; otherwise ignored (no error). See ai-envelope.md §"Prompt-prefix cache (RFC 0116)".
   idempotencyKey: string,
 }) → Promise<{
   envelopeType: string,
