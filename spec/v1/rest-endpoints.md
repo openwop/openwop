@@ -207,6 +207,16 @@ A read-only, deterministic, replay-aware structured diff of two runs — typical
 - **Canonical comparison — excluded fields (normative).** Two events at the same `seq` are compared on their `type` + their canonicalized `payload` (RFC 8785 JCS, per `replay.md`). The following fields MUST be **excluded** from the comparison because they are run-scoped or non-deterministic by construction — including them would make every cross-run diff report total divergence: `eventId`, `runId`, `causationId`, `correlationId`, the wall-clock `ts` (receipt/emit time), and any transport metadata (`traceparent`, delivery headers). Equivalently, the comparison key is `(seq, type, JCS(payload-minus-excluded))`. Payload sub-fields that are themselves run-scoped ids carried for replay (e.g. `memoryId`, `childRunId`) are compared as-is — they are part of the observable payload, and a fork that re-mints them is a genuine divergence.
 - The endpoint is OPTIONAL; a host that does not implement it MUST return `404` for the path (and MAY omit it from its OpenAPI). Clients discover support via the endpoint manifest.
 
+#### `GET /v1/runs/{runId}` conditional read + Content-Encoding (RFC 0115)
+
+Run state is the most-polled REST resource, and clients commonly re-poll a run that has not advanced. This OPTIONAL transport economy mirrors the conditional-GET pattern already specified for `GET /v1/prompts/{templateId}` and is advertised via `capabilities.restTransport`. It is transparent to clients that send neither `If-None-Match` nor `Accept-Encoding` — they receive today's `200` plus an identity body. A host advertises support by setting `capabilities.restTransport.conditionalRunGet: true` and/or `capabilities.restTransport.contentEncodings`.
+
+- The server **SHOULD** return a strong `ETag` header on the `200` response. When present, the `ETag` **MUST** be a strong validator derived from the run's latest persisted event-log sequence number (`replay.md` §"durable event log" guarantees every observable transition carries a monotonic sequence), so that it changes on every observable state change and is stable while none occurs. A host **MUST NOT** derive the `ETag` from a coarser signal (e.g., wall-clock or a cached projection) that could leave a `304` stale.
+- When a request carries `If-None-Match` matching the current `ETag`, the server **MUST** respond `304 Not Modified` with no body.
+- The server **MAY** honor `Accept-Encoding` compression on run reads. `gzip` is the baseline: a host that advertises `restTransport.conditionalRunGet` with any compression **SHOULD** support `gzip`; `br` (Brotli) and `zstd` are **OPTIONAL**, and the host advertises (via `restTransport.contentEncodings`) only the subset it can actually serve. When it compresses, it **MUST** set `Content-Encoding` accordingly, **MUST** set `Vary: Accept-Encoding` (mirroring the localized-content delivery path), and **MUST NOT** alter the decoded body's bytes or semantics. The `200` body schema is unchanged; these are HTTP-layer optimizations.
+
+See RFC 0115. A host that advertises `restTransport.conditionalRunGet` but returns a `304` while the run has in fact advanced (a stale `ETag`) is non-conformant.
+
 ### HITL (approvals + suspensions)
 
 | Method | Path                                   | Auth         | Scope               | Purpose                                         |

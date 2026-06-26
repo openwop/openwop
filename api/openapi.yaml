@@ -289,13 +289,37 @@ paths:
       operationId: getRun
       parameters:
         - $ref: '#/components/parameters/RunId'
+        - in: header
+          name: If-None-Match
+          required: false
+          schema: { type: string }
+          description: |
+            RFC 0115. Conditional revalidation. When this carries the
+            current `ETag`, the host responds `304 Not Modified` with no
+            body (capability-gated on `restTransport.conditionalRunGet`).
       responses:
         '200':
           description: Projected run state.
+          headers:
+            ETag:
+              schema: { type: string }
+              description: |
+                RFC 0115. Strong validator derived from the run's latest
+                persisted event-log sequence number; changes on every
+                observable state transition, stable while none occurs.
+            Content-Encoding:
+              required: false
+              schema: { type: string, enum: [gzip, br, zstd] }
+              description: |
+                RFC 0115. Present only when the host negotiated compression
+                from `Accept-Encoding`; pairs with `Vary: Accept-Encoding`.
+                The decoded body is byte-identical to the identity body.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RunSnapshot'
+        '304':
+          description: 'RFC 0115. Not Modified — `If-None-Match` matched the current `ETag`. Empty body.'
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
