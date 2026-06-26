@@ -51,6 +51,23 @@ The `Postgres` reference host at `examples/hosts/postgres/` implements this nego
 
 ---
 
+## A2UI delta transport: `?a2uiDelta=1` (RFC 0114)
+
+A host that advertises `a2uiSurface.deltaTransport: true` (`capabilities.schema.json`) **MAY** transport [`ui.a2ui-surface`](ai-envelope.md#a2ui-surfaces-rfc-0102) updates to a subscriber as RFC 6902 (JSON-Patch) **delta frames** instead of re-materializing the full surface tree on every emission. This is a per-subscriber **transport** choice negotiated at subscribe time on the events stream, like `?streamMode=` — not an envelope handshake and not a recorded-payload change. The frame shape is [`schemas/a2ui-surface-delta-frame.schema.json`](../../schemas/a2ui-surface-delta-frame.schema.json).
+
+```
+GET /v1/runs/{runId}/events?a2uiDelta=1
+```
+
+- When `?a2uiDelta=1` is **present** and the host advertises `deltaTransport`, the host **MAY** deliver an `a2ui-surface-delta-frame` (`{ surfaceRef, catalogVersion, patch[] }`) for a surface update, where `patch` is an RFC 6902 document over the surface last delivered under `surfaceRef`.
+- When the parameter is **absent** (every v1 client), the host **MUST** deliver the materialized **full** surface for that update — the default, unchanged.
+- The **recorded** `ui.a2ui-surface` envelope is **never** a delta. The event-log read, `:fork`, replay, and any non-negotiating subscriber always receive the **full** surface; the host **MUST** be able to materialize the full surface for any subscriber at any time.
+- A consumer that receives a delta frame applies the `patch` and **MUST** re-validate the result against the closed `catalogVersion` catalog before render — the same fail-closed validation a full surface receives (`ai-envelope.md` §"A2UI surfaces" rule 1). On **any** apply/validation failure it **MUST** fall back to store-without-render and the host **MUST** re-materialize the full surface. Every A2UI security invariant **MUST** hold on the post-patch surface (see `ai-envelope.md` §"Delta transport").
+
+Delta transport is OPTIONAL. A host that does not advertise `deltaTransport`, or a subscriber that does not send `?a2uiDelta=1`, sees today's full surfaces unchanged.
+
+---
+
 ## The four modes
 
 ### `updates` (default)

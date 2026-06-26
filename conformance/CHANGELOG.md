@@ -1,5 +1,13 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [1.42.0] — 2026-06-26 — RFC 0114 A2UI surface deltas
+
+Adds `a2ui-surface-delta-transport.test.ts` (suite 375 → 376) for **RFC 0114 — A2UI Surface Deltas** (the opt-in, host-side RFC 6902 delta TRANSPORT over the recorded `ui.a2ui-surface` envelope — the recorded envelope stays the full surface, the host MAY deliver delta frames over the run event stream to subscribers that negotiate `?a2uiDelta=1`).
+
+The always-on legs (Ajv2020 + a cast-free, dependency-free client-side RFC 6902 applier the suite owns) assert: the new `a2ui-surface-delta-frame.schema.json` compiles and a positive frame validates, the op enum **excludes `test`** (and `additionalProperties:false` rejects a smuggled patch field); a full surface + a sequence of delta frames reconstruct the expected tree AND the reconstruction **equals the full surface a non-negotiating subscriber materializes** (delta and full agree) and re-validates against the closed catalog; **a delta that `add`s/`replace`s an out-of-catalog (or script-bearing) component yields a post-patch surface that FAILS closed-catalog validation** — rejected fail-closed, the `a2ui-surface-no-code-exec` boundary holding on the post-patch surface, forcing full re-materialization; and the recorded envelope (event-log read / replay) is **always the full surface** (a delta frame does not validate as a recorded `ui.a2ui-surface` payload; `catalogVersion` on a delta equals the referenced full's).
+
+The HTTP leg is capability-gated on `a2uiSurface.deltaTransport` (root-first per RFC 0073) and soft-skips on absent host / absent capability / `404`/`405` on the OPTIONAL `GET /v1/host/sample/a2ui/surface/materialized` seam: when a host advertises `deltaTransport`, a non-negotiating subscriber MUST receive the materialized FULL surface, never a delta frame. The recorded `ui.a2ui-surface.schema.json` envelope is UNCHANGED.
+
 ## [1.41.0] — 2026-06-26 — RFC 0111 context economy
 
 Adds `context-budget-transcript-bound.test.ts` + `context-summarization-replay.test.ts` (suite 373 → 375) for **RFC 0111 — Context Economy** (the opt-in `multiAgent.executionModel.contextBudget` token-denominated bound on the RFC 0061 per-iteration orchestrator-loop transcript + declared summarization contract). Both legs drive the new `conformance-context-budget-multiturn` orchestrator fixture (a multi-iteration `core.orchestrator.supervisor` loop) and read host-internal accounting via OPTIONAL seams.
