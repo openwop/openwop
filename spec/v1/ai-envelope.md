@@ -671,6 +671,24 @@ Implementations MAY cache outcomes in memory for in-process replays; they MUST c
 
 ---
 
+## Prompt-prefix cache (RFC 0116)
+
+> Added by RFC 0116 (`Active` 2026-06-26). A portable, opt-in cost hint for server-side provider context caching. Additive: absent ⇒ no behavior change.
+
+`ctx.aiEnvelope.generate` accepts an OPTIONAL `cachePrefixId` (string) — a stable, tenant-namespaced, secret-free label that declares a request's prompt prefix (e.g. the front-loaded system prompt + the RFC 0112 compact tool surface) as cacheable. A host MAY use it to route the stable prefix to its provider's context cache (e.g. Anthropic ephemeral prefix caching). It is governed by these normative rules:
+
+1. **Advertisement gate (MAY / MUST ignore).** A host advertising `aiProviders.promptPrefixCache` (`capabilities.md` §`aiProviders`) for the **routed provider** MAY honor `cachePrefixId`. A host that does not advertise it — or whose routed provider is not in the advertised `promptPrefixCache.providers` — **MUST** ignore the field: no error, no behavior change. `promptPrefixCache` is **provider-scoped**, never a universal claim.
+
+2. **Cross-tenant isolation (MUST — invariant `prompt-prefix-cache-cross-tenant-isolation`).** A host **MUST** key its provider context cache by the pair **(resolved tenant, `cachePrefixId`)** — `cachePrefixId` is **tenant-namespaced, never global**. The owning tenant **MUST** come from the authenticated identity, not from any caller-supplied scope hint. Two distinct tenants supplying the **same** `cachePrefixId` **MUST NOT** share a provider cache entry; tenant B's **first** use of a `cachePrefixId` that tenant A primed **MUST** be a cache miss (`provider.usage.cacheReadTokens == 0`). Cross-tenant cache sharing is context leakage — the central hazard; this mirrors the `kv` / `queue` / `workspace` cross-tenant isolation invariants. See `SECURITY/threat-model-provider-policy.md` §"Prompt-prefix cache cross-tenant leakage."
+
+3. **Replay invariance (MUST).** `cachePrefixId` is a **cost hint, never a semantic input.** The recorded run outcome — the accepted envelope and `provider.usage.inputTokens` + `outputTokens` — **MUST** be identical whether the prefix cache hit or missed, and **MUST** replay (RFC 0041) identically. A host whose output differs on a cache hit is non-conformant. Only the cost-side cache metrics may differ between hit and miss, and those are explicitly replay-non-asserted (next rule).
+
+4. **Observable witness (cost-only).** `provider.usage` (RFC 0026, `run-event-payloads.schema.json` §`providerUsage`) gains two OPTIONAL, cost-only integer fields: `cacheReadTokens` (a cache HIT shows `> 0`) and `cacheWriteTokens` (a cache PRIME shows `> 0`). They MAY be omitted on replay (NOT replay-asserted, like `costEstimateUsd`). They make a hit and a cross-tenant non-share observable on the wire without breaking the replay-invariant outcome.
+
+5. **BYOK (MUST NOT).** `cachePrefixId` is a client-chosen opaque label that **MUST NOT** encode or be derived from secret/BYOK material: it is the provider cache key and appears in host logs/metrics. Per `SECURITY/threat-model-secret-leakage.md`, a host **MUST NOT** persist prompt/response substrings keyed by it, and the `cacheReadTokens`/`cacheWriteTokens` fields **MUST NOT** carry prompt substrings (SR-1).
+
+---
+
 ## Trust boundary
 
 When a node consumes content from an untrusted source (MCP tool result per `mcp-integration.md`, A2A inbound message per `a2a-integration.md`), any envelope it subsequently emits whose payload incorporates that content MUST carry `meta.contentTrust: 'untrusted'`.

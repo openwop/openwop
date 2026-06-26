@@ -11,8 +11,8 @@
 | JSON Schemas | 70 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 376 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 115 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 377 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 116 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 1.42.0 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 1.43.0 | `conformance/package.json` | minor on scenario add/remove |
 
 ## OpenAPI Operations
 
@@ -32,7 +32,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 107 |
-| Active | 7 |
+| Active | 8 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -152,6 +152,7 @@
 | RFC 0113 | Memory Injection Budget | Active |
 | RFC 0114 | A2UI Surface Deltas | Active |
 | RFC 0115 | Run Transport Economy - Conditional GET & Content-Encoding | Active |
+| RFC 0116 | Portable Prompt-Prefix Cache (`cachePrefixId`) | Active |
 
 ## SDK Helper Coverage
 
@@ -169,7 +170,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 7 RFCs `Active` (RFC 0035, RFC 0043, RFC 0111, RFC 0112, RFC 0113, RFC 0114, RFC 0115) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 8 RFCs `Active` (RFC 0035, RFC 0043, RFC 0111, RFC 0112, RFC 0113, RFC 0114, RFC 0115, RFC 0116) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

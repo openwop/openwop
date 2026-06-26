@@ -1,8 +1,8 @@
 # Threat Model: Provider Policy Bypass
 
-> **Scope:** AI-provider policy enforcement modes (`disabled` / `optional` / `required` / `restricted`) per `spec/v1/capabilities.md` §`aiProviders.policies`. Covers the bypass paths a workspace member, workflow author, or attacker might attempt to use a provider/model combination the workspace policy forbids.
-> **Last updated:** 2026-05-01
-> **Companion artifacts:** `spec/v1/capabilities.md` §`aiProviders.policies` · `spec/v1/run-options.md` · `SECURITY/invariants.yaml` (entries `provider-policy-*`).
+> **Scope:** AI-provider policy enforcement modes (`disabled` / `optional` / `required` / `restricted`) per `spec/v1/capabilities.md` §`aiProviders.policies`, plus the RFC 0116 prompt-prefix cache (`aiProviders.promptPrefixCache` / `cachePrefixId`) cross-tenant leakage surface (§4.7). Covers the bypass paths a workspace member, workflow author, or attacker might attempt to use a provider/model combination the workspace policy forbids, or to read another tenant's cached prompt-prefix context.
+> **Last updated:** 2026-06-26
+> **Companion artifacts:** `spec/v1/capabilities.md` §`aiProviders.policies` + §`aiProviders.promptPrefixCache` · `spec/v1/ai-envelope.md` §"Prompt-prefix cache (RFC 0116)" · `spec/v1/run-options.md` · `SECURITY/invariants.yaml` (entries `provider-policy-*`, `prompt-prefix-cache-cross-tenant-isolation`).
 
 ## 1. Why this model
 
@@ -110,6 +110,18 @@ The protocol's normative requirement: every LLM call MUST go through the pre-dis
 | Repudiation | Workspace admin claims a denial decision was a bug                                    | Resolver emits `ProviderPolicyResolution` audit event with `policy`, `modeScope`, `fieldScopes` | `provider-policy-audit-emit`       |
 | Repudiation | Audit event omits which scope (workspace / project / canvas-type) supplied each field | Provenance fields (`fieldScopes`) MUST identify the source layer per field                      | `provider-policy-audit-provenance` |
 
+### 4.7 Prompt-prefix cache cross-tenant leakage (RFC 0116)
+
+A host advertising `aiProviders.promptPrefixCache` honors the AI-envelope `generate` request's optional `cachePrefixId` — a client-chosen, secret-free label declaring a prompt prefix (system prompt + RFC 0112 tool surface) cacheable, so a supporting provider can serve it from a server-side context cache. `cachePrefixId` is **client-supplied and predictable** (e.g. `"std-base-v1"`): two unrelated tenants will routinely choose the same label. If the host keyed the provider cache by `cachePrefixId` **alone** (global), tenant B reusing tenant A's label would be served A's cached prefix context — a direct prompt/context leak across the tenant boundary.
+
+| Threat                 | Vector                                                                                                                                  | Mitigation                                                                                                                                                                                                 | Invariant                                      |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| Information disclosure | Tenant B supplies `cachePrefixId` equal to a label tenant A already primed, expecting (or probing for) a cross-tenant cache hit         | Host MUST key the provider context cache by `(resolved tenant, cachePrefixId)`; tenant resolved from the authenticated identity, never caller-supplied. B's first use of A's id is a MISS (`cacheReadTokens == 0`) | `prompt-prefix-cache-cross-tenant-isolation`   |
+| Information disclosure | `cachePrefixId` (in host logs/metrics/the provider cache key) encodes secret/BYOK material, or cache metrics carry prompt substrings    | `cachePrefixId` MUST NOT encode/derive from secret/BYOK material (it is a public cache key); `provider.usage.cacheReadTokens`/`cacheWriteTokens` are cost-only and MUST NOT carry prompt substrings (SR-1) | `prompt-prefix-cache-cross-tenant-isolation`   |
+| Tampering (replay)     | A cache hit changes the recorded outcome, so a replayed run diverges from the original                                                  | `cachePrefixId` is a cost hint, never semantic: recorded envelope + `provider.usage.inputTokens`/`outputTokens` MUST be identical hit-vs-miss and replay identically; only cost-side cache metrics differ   | `prompt-prefix-cache-cross-tenant-isolation`   |
+
+The `(tenant, cachePrefixId)` key mirrors the `kv` / `queue` / `workspace` cross-tenant isolation invariants: the owner binding comes from the authenticated identity, isolation is fail-closed, and the public conformance test (`conformance/src/scenarios/prompt-prefix-cache.test.ts`) proves the non-share via the cost-only cache-token witness.
+
 ## 5. Invariants (MUST NOT)
 
 | ID                                              | Statement                                                                                                                                                                |
@@ -127,6 +139,7 @@ The protocol's normative requirement: every LLM call MUST go through the pre-dis
 | `provider-policy-partial-resolution`            | Missing fields in the resolver response MUST be treated as default-permissive for that field; partial responses MUST NOT cause silent fail-closed.                       |
 | `provider-policy-audit-emit`                    | Every policy decision MUST emit a `ProviderPolicyResolution` audit event including `policy`, `modeScope`, `fieldScopes`.                                                 |
 | `provider-policy-audit-provenance`              | The `fieldScopes` audit field MUST identify which layer (workspace / project / canvas-type) supplied each policy field.                                                  |
+| `prompt-prefix-cache-cross-tenant-isolation`    | RFC 0116 — a host honoring `cachePrefixId` MUST key its provider context cache by `(resolved tenant, cachePrefixId)`; two tenants with the same id MUST NOT share an entry (tenant B's first use of A's id MUST be a miss). `cachePrefixId` MUST NOT encode secret/BYOK material; the cost-only cache-token fields MUST NOT carry prompt substrings; a cache hit/miss MUST NOT change the recorded envelope or `inputTokens`/`outputTokens` (replay-invariant). |
 
 ## 6. Residual risks
 

@@ -921,6 +921,24 @@
             "turnDetection": ["transcription"],
             "bargeIn": ["transcription"]
           }
+        },
+        "promptPrefixCache": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "RFC 0116. Host honors the AI-envelope `generate` request's optional `cachePrefixId` as a provider-cache routing hint — tenant-namespaced (SECURITY invariant `prompt-prefix-cache-cross-tenant-isolation`), secret-free, and replay-invariant (a cache hit/miss MUST NOT change the recorded envelope or `provider.usage.inputTokens`/`outputTokens`). Absent ⇒ a host MUST ignore `cachePrefixId` (no error, no behavior change). PROVIDER-SCOPED: prefix caching is provider-specific (e.g. Anthropic ephemeral), so this is NOT a universal claim — see `providers`.",
+          "properties": {
+            "supported": {
+              "type": "boolean",
+              "description": "Whether the host honors `cachePrefixId` as a provider-cache routing hint."
+            },
+            "providers": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "uniqueItems": true,
+              "description": "RFC 0116. The subset of `aiProviders.supported[]` for which the host honors `cachePrefixId` (prefix caching is provider-specific). A request whose routed provider is NOT in this list MUST have `cachePrefixId` ignored. Absent ⇒ host-defined per-provider routing; NOT a universal claim across providers."
+            }
+          },
+          "required": ["supported"]
         }
       },
       "additionalProperties": false,

@@ -1283,6 +1283,31 @@ invariants:
       — the production-path proof that graduates this surface into the
       `openwop-core-standard` floor (RFC 0088 §D Lever-2), no seam.
 
+  # ===== RFC 0116 prompt-prefix cache cross-tenant isolation =====
+
+  - id: prompt-prefix-cache-cross-tenant-isolation
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-provider-policy.md
+    tests:
+      - conformance/src/scenarios/prompt-prefix-cache.test.ts
+    note: |
+      RFC 0116: a host advertising `aiProviders.promptPrefixCache` MUST key its
+      provider context cache by the pair `(resolved tenant, cachePrefixId)` —
+      `cachePrefixId` is tenant-namespaced, never global. The owning tenant MUST
+      come from the authenticated identity, not from any caller-supplied scope
+      hint (fail-closed). Two distinct tenants supplying the SAME `cachePrefixId`
+      MUST NOT share a provider cache entry; tenant B's FIRST use of a
+      `cachePrefixId` that tenant A primed MUST be a cache miss
+      (`provider.usage.cacheReadTokens == 0`). Cross-tenant cache sharing is
+      prompt/context leakage — the central hazard. Mirrors
+      `kv-cross-tenant-isolation` / `queue-cross-tenant-isolation` /
+      `workspace-cross-tenant-isolation`. The cost-only
+      `provider.usage.cacheReadTokens`/`cacheWriteTokens` fields make the
+      non-share observable on the wire while the recorded envelope +
+      `inputTokens`/`outputTokens` stay replay-invariant (cost-hint-only). The
+      public test is the cross-tenant leg of `prompt-prefix-cache.test.ts`.
+
   # ===== RFC 0063 core.subWorkflow output-merge approval fail-closed =====
 
   - id: subrun-merge-approval-fail-closed
