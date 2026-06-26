@@ -1,0 +1,44 @@
+{
+  "id": "conformance-agent-memory-injection-budget",
+  "name": "Conformance: Agent Memory Injection Budget (RFC 0113)",
+  "version": "1.0",
+  "description": "RFC 0113. Drives a token-budgeted MemoryAdapter.list() over a seeded set whose total exceeds the budget AND that includes one single entry larger than the whole budget, plus a BYOK-redacted entry and a cross-tenant probe. The host surfaces, in workflow variables: the budgeted recency slice (`budgetedEntries`), its `budgetedTokenTotal`, the echoed `tokenBudget` + `tokenCounter`, an `overBudgetEntryId` (an entry larger than the budget) and `overBudgetEntryOmitted` flag, a `redactedContentSample` from the budgeted read (SR-1 re-assertion), a `crossTenantBudgetedProbe` (CTI-1 re-assertion under the budgeted path), and — only when the host also advertises memory.search semantic — `recencyOrder` + `relevanceOrder` id lists. See memory-injection-budget.test.ts.",
+  "nodes": [
+    {
+      "id": "memory-injection-budget",
+      "typeId": "core.identity",
+      "name": "Memory Injection Budget",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "memoryAction": "list-budgeted",
+        "tokenBudget": 800,
+        "rank": "recency",
+        "relevanceQuery": "refund policy"
+      },
+      "inputs": {},
+      "agent": {
+        "agentId": "core.conformance.memory-agent",
+        "memoryRef": "conformance/agent-memory-injection-budget",
+        "modelClass": "chat"
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [
+    { "name": "budgetedEntries", "type": "array" },
+    { "name": "budgetedTokenTotal", "type": "number" },
+    { "name": "tokenBudget", "type": "number" },
+    { "name": "tokenCounter", "type": "string" },
+    { "name": "overBudgetEntryId", "type": "string" },
+    { "name": "overBudgetEntryOmitted", "type": "boolean" },
+    { "name": "redactedContentSample", "type": "string" },
+    { "name": "crossTenantBudgetedProbe", "type": "array" },
+    { "name": "recencyOrder", "type": "array" },
+    { "name": "relevanceOrder", "type": "array" }
+  ],
+  "metadata": { "tags": ["conformance", "multi-agent", "memory", "rfc-0113", "injection-budget", "sr-1", "cti-1"] },
+  "settings": { "timeout": 15000 }
+}

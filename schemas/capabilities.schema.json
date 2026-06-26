@@ -1365,6 +1365,22 @@
             "ttl": { "type": "boolean", "description": "When `true`, memory entries expire per `expiresAt` (the `ttlSupported` semantics surfaced as a named retention dimension)." },
             "forget": { "type": "boolean", "description": "When `true`, the host supports a tenant-scoped delete-by-subject forget operation (composes the CTI-1 cross-tenant invariant — a forget MUST NOT cross tenant boundaries)." }
           }
+        },
+        "injectionBudget": {
+          "type": "object",
+          "description": "RFC 0113 (`Active`). The host honors `MemoryListOptions.tokenBudget` — a token-denominated bound on a single injection read (the live read that feeds a turn), distinct from RFC 0062 distillation's background-compaction budget. Advertising it commits the host to return a token-bounded prefix of the ranked entry list (over-budget single entry omitted, never truncated mid-entry) over the SR-1-redacted, CTI-1-single-tenant result set. Relevance ranking is NOT advertised here — `rank:'relevance'` delegates to the existing `memory.search` semantic mode (RFC 0080), so there is exactly one relevance surface in the corpus. Hosts that omit this block do not honor `tokenBudget` (a supplied `tokenBudget` is ignored, today's `limit`/`tag` behavior).",
+          "additionalProperties": false,
+          "required": ["supported"],
+          "properties": {
+            "supported": { "type": "boolean", "description": "REQUIRED when the sub-block is present. When `true`, the host honors `MemoryListOptions.tokenBudget` per `agent-memory.md` §\"Injection budget\"." },
+            "tokenCounter": {
+              "type": "string",
+              "enum": ["o200k_base", "cl100k_base", "chars", "host-defined"],
+              "description": "The unit `tokenBudget` is denominated in. REQUIRED when `injectionBudget.supported` (enforced via the `if/then` clause). `o200k_base`/`cl100k_base` are tokenizer encodings; `chars` counts UTF-8/Unicode characters of the entry `content` (a tokenizer-free unit a client can reason about directly — preferred over opaque `host-defined`); `host-defined` is an opaque host unit. The over-budget-single-entry-omitted rule applies regardless of unit. RFC 0111 aligns to these same values when it lands (0113 lands first); no shared `$ref` (decoupled)."
+            }
+          },
+          "if": { "properties": { "supported": { "const": true } }, "required": ["supported"] },
+          "then": { "required": ["supported", "tokenCounter"] }
         }
       },
       "additionalProperties": true

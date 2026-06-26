@@ -42,6 +42,9 @@ interface MemoryEntry {
 interface MemoryListOptions {
   readonly limit?: number;        // host MAY further bound
   readonly tag?: string;          // filter to entries carrying this tag
+  readonly tokenBudget?: number;  // RFC 0113. Max cumulative tokens across returned entries (the new lever).
+  readonly rank?: 'recency' | 'relevance';  // RFC 0113. Selection order; 'relevance' DELEGATES to memory.search (RFC 0080).
+  readonly query?: string;        // RFC 0113. Relevance anchor when rank='relevance' (the memory.search semantic query).
 }
 ```
 
@@ -81,6 +84,23 @@ Reference-impl notes (non-normative):
 - Per-run registries die with the run (process-memory only). Cross-pod resume re-registers via the new pod's BYOK resolver.
 
 **Conformance:** `conformance/src/scenarios/agentMemoryRedactionContract.test.ts` exercises SR-1 via the `conformance-agent-memory-redaction` fixture (resolves a BYOK secret, writes a memory entry containing the plaintext, reads back, asserts `[REDACTED:<secretId>]`).
+
+## Injection budget (RFC 0113, `Active`)
+
+**Why this exists.** `MemoryAdapter.list` bounds reads only by entry `limit` and `tag` — there is no token budget, so a host that injects "recent memory" into a turn can inject an unbounded number of tokens (a count `limit` is a poor proxy: one long entry blows the budget). RFC 0062 distillation has a `tokenBudget`, but that governs *background compaction*, not the *live read* that feeds a turn. RFC 0113 adds optional `tokenBudget` + `rank` + `query` to `MemoryListOptions`, letting a host return a token-bounded, optionally relevance-ranked top-k slice for injection. This is the read-path lever the host-internal memory budget (e.g. a Tier-A internal budget) calls through — one contract, not two.
+
+**Capability flag:** `capabilities.memory.injectionBudget.supported: true` with a REQUIRED `tokenCounter` (`o200k_base` | `cl100k_base` | `chars` | `host-defined`; `chars` counts UTF-8/Unicode characters of the entry `content` — a tokenizer-free unit a client can reason about directly; see `capabilities.md` §`memory`). A host advertising it MUST honor the contract below; hosts that omit the block ignore a supplied `tokenBudget` (today's `limit`/`tag` behavior) and the injection-budget conformance scenario skips cleanly.
+
+**Contract (normative, when `memory.injectionBudget.supported: true`):**
+
+1. When `tokenBudget` is supplied, the adapter **MUST** return a prefix of the ranked entry list whose cumulative token count (in the unit named by `memory.injectionBudget.tokenCounter`) does not exceed `tokenBudget`. A single entry exceeding the budget on its own **MUST** be omitted (not truncated mid-entry).
+2. `tokenBudget` and `limit` **MAY** both be supplied; the adapter **MUST** honor whichever yields fewer entries.
+3. When `rank: 'relevance'` is supplied, `query` **MUST** be present **and** the host **MUST** advertise `memory.search` with `semantic` mode (RFC 0080) — `rank:'relevance'` is the budgeted projection *over* that existing semantic-search surface, **not** a new ranking capability (there is exactly one relevance surface in the corpus). A host that does not advertise `memory.search` semantic mode **MUST** reject `rank:'relevance'` (or, if it advertises only `memory.injectionBudget`, fall back to `'recency'` per its documented behavior — it MUST NOT silently fabricate a relevance ranking). When `rank` is absent or `'recency'`, entries are ordered most-recent-first (today's behavior).
+4. **SR-1 and CTI-1 hold by construction on this path** (not merely restated). SR-1 redacts at *write* time (§SR-1 — the persisted `content` already carries `[REDACTED:<secretId>]`), so a budgeted/ranked read ranks over already-redacted content and cannot leak plaintext. CTI-1 scopes the resolve to a single tenant (§CTI-1), so a budget/rank prefix of an already-single-tenant list stays single-tenant. The adapter **MUST NOT** widen either: ranking **MUST** operate on the redacted, single-tenant result set. Conformance re-asserts both on the budgeted path as a regression guard.
+
+**Compatibility.** Additive: `tokenBudget`/`rank`/`query` are new optional `MemoryListOptions` fields; callers that omit them get today's `limit`/`tag` behavior. `memory.injectionBudget` is a new optional capability object (the `memory` block is `additionalProperties:true`). Relevance reuses RFC 0080 `memory.search` — no new ranking surface.
+
+**Conformance:** `conformance/src/scenarios/memory-injection-budget.test.ts` (gated on `capabilities.memory.injectionBudget.supported`) asserts cumulative tokens ≤ `tokenBudget`, an over-budget single entry omitted, the relevance-vs-recency ordering difference (only when `memory.search` semantic is ALSO advertised — else the relevance leg soft-skips), and re-asserts SR-1 (redacted content) + CTI-1 (cross-tenant probe empty) on the budgeted path.
 
 ## TTL semantics
 
@@ -215,3 +235,4 @@ The host serves the proposal surface as a host-extension under `/v1/host/sample/
 - `conformance/src/scenarios/agentMemoryCrossTenantIsolation.test.ts`
 - `conformance/src/scenarios/agentMemoryRedactionContract.test.ts`
 - `conformance/src/scenarios/agentMemoryTtlExpiry.test.ts`
+- `conformance/src/scenarios/memory-injection-budget.test.ts`
