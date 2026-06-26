@@ -101,6 +101,7 @@
         "interrupt.resolved",
         "channel.written",
         "channel.presence",
+        "context.summarized",
         "artifact.created",
         "output.chunk",
         "variable.changed",

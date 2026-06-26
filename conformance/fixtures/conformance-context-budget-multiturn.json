@@ -1,0 +1,50 @@
+{
+  "id": "conformance-context-budget-multiturn",
+  "name": "Conformance: Context-Budget Multi-Turn Orchestrator (RFC 0111)",
+  "version": "1.0",
+  "description": "RFC 0111. Drives a multi-iteration `core.orchestrator.supervisor` loop so the per-turn transcript grows across iterations — enough turns that an UNBOUNDED transcript would exceed a host's advertised `multiAgent.executionModel.contextBudget.transcriptTokenBudget`. A host that bounds the transcript exposes its per-iteration accounting via the OPTIONAL seam `GET /v1/host/sample/agent/transcript-window?runId=…&iteration=N` (`host-sample-test-seams.md` §14): `{ tokenCounter, tokenCount, eventIds, summarizedRanges }`. The conformance scenario `context-budget-transcript-bound.test.ts` asserts `tokenCount ≤ budget`, independently re-counts the events named in `eventIds` from the run event-log, confirms the recent-tail + keepLastTurns-verbatim rules, and (for `summarization.supported` hosts) `context-summarization-replay.test.ts` replays the run and asserts the recorded `context.summarized` → `summaryRef` is reused (never re-summarized). Reference hosts that do not advertise `contextBudget` soft-skip both scenarios.",
+  "nodes": [
+    {
+      "id": "supervisor",
+      "typeId": "core.orchestrator.supervisor",
+      "name": "Supervisor",
+      "position": { "x": 0, "y": 0 },
+      "config": {
+        "mockDecisions": [
+          { "kind": "next-worker", "nextWorkerIds": ["conformance-noop"] },
+          { "kind": "next-worker", "nextWorkerIds": ["conformance-noop"] },
+          { "kind": "next-worker", "nextWorkerIds": ["conformance-noop"] },
+          { "kind": "next-worker", "nextWorkerIds": ["conformance-noop"] },
+          { "kind": "terminate", "reason": "goal-reached" }
+        ]
+      },
+      "inputs": {},
+      "agent": {
+        "agentId": "core.conformance.supervisor",
+        "modelClass": "reasoning"
+      }
+    },
+    {
+      "id": "dispatch",
+      "typeId": "core.dispatch",
+      "name": "Dispatch",
+      "position": { "x": 200, "y": 0 },
+      "config": {
+        "askUserRouting": "auto",
+        "workerDispatchModel": "child-run",
+        "fanOutPolicy": "sequential"
+      },
+      "inputs": {}
+    }
+  ],
+  "edges": [
+    { "id": "e1", "sourceNodeId": "supervisor", "targetNodeId": "dispatch" },
+    { "id": "e2", "sourceNodeId": "dispatch", "targetNodeId": "supervisor" }
+  ],
+  "triggers": [
+    { "id": "manual", "type": "manual", "enabled": true }
+  ],
+  "variables": [],
+  "metadata": { "tags": ["conformance", "multi-agent", "phase-5", "orchestrator", "context-budget", "rfc-0111"] },
+  "settings": { "timeout": 60000 }
+}

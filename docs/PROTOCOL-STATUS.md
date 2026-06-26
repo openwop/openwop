@@ -11,8 +11,8 @@
 | JSON Schemas | 69 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 373 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 113 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 375 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 114 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 1.40.0 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 1.41.0 | `conformance/package.json` | minor on scenario add/remove |
 
 ## OpenAPI Operations
 
@@ -32,7 +32,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 107 |
-| Active | 5 |
+| Active | 6 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -147,6 +147,7 @@
 | RFC 0108 | Self-hosted / OpenAI-compatible provider-class advertisement - `aiProviders.selfHosted[]`, the capability-non-inference rule, and the endpoint-non-disclosure invariant | Accepted |
 | RFC 0109 | Conversation-turn model provenance (`agent.model`) | Accepted |
 | RFC 0110 | Channel presence (online + typing) | Accepted |
+| RFC 0111 | Context Economy - Transcript Token Budget & Declared Summarization | Active |
 | RFC 0112 | Compact Tool Projection | Active |
 | RFC 0113 | Memory Injection Budget | Active |
 | RFC 0115 | Run Transport Economy - Conditional GET & Content-Encoding | Active |
@@ -167,7 +168,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 5 RFCs `Active` (RFC 0035, RFC 0043, RFC 0112, RFC 0113, RFC 0115) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 6 RFCs `Active` (RFC 0035, RFC 0043, RFC 0111, RFC 0112, RFC 0113, RFC 0115) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
