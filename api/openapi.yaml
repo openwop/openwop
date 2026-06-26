@@ -1403,14 +1403,33 @@ paths:
         NOT see another principal's tools (non-disclosure). Read-only; each
         descriptor is content-free of any credential material (SR-1).
       operationId: listTools
+      parameters:
+        - name: view
+          in: query
+          required: false
+          schema: { type: string, enum: [standard, compact], default: standard }
+          description: >
+            RFC 0112. `compact` returns the `{ tools: CompactToolDescriptor[] }`
+            projection — heavy descriptor fields omitted and `inputSchema`
+            bounded to the compact structural subset — when the host advertises
+            `capabilities.toolCatalog.compactView: true`. Defaults to `standard`;
+            a host that does not advertise `compactView` treats `view=compact`
+            as any unknown query param and returns the standard view.
       responses:
         '200':
-          description: The caller's authorized tool catalog.
+          description: 'The caller''s authorized tool catalog (standard array, or the compact `{ tools: [] }` projection when `view=compact`).'
           content:
             application/json:
               schema:
-                type: array
-                items: { $ref: '../schemas/tool-descriptor.schema.json' }
+                oneOf:
+                  - type: array
+                    items: { $ref: '../schemas/tool-descriptor.schema.json' }
+                  - type: object
+                    required: [tools]
+                    properties:
+                      tools:
+                        type: array
+                        items: { $ref: '../schemas/compact-tool-descriptor.schema.json' }
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404':
@@ -1434,12 +1453,26 @@ paths:
           required: true
           schema: { type: string }
           description: The stable tool id (`ToolDescriptor.toolId`).
+        - name: view
+          in: query
+          required: false
+          schema: { type: string, enum: [standard, compact], default: standard }
+          description: >
+            RFC 0112. `compact` returns one `CompactToolDescriptor` (heavy
+            fields omitted; `inputSchema` bounded to the compact structural
+            subset) when the host advertises
+            `capabilities.toolCatalog.compactView: true`. Defaults to
+            `standard`; a host that does not advertise `compactView` treats
+            `view=compact` as any unknown query param.
       responses:
         '200':
-          description: The tool descriptor.
+          description: The tool descriptor (standard, or one `CompactToolDescriptor` when `view=compact`).
           content:
             application/json:
-              schema: { $ref: '../schemas/tool-descriptor.schema.json' }
+              schema:
+                oneOf:
+                  - $ref: '../schemas/tool-descriptor.schema.json'
+                  - $ref: '../schemas/compact-tool-descriptor.schema.json'
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404':

@@ -1532,7 +1532,8 @@
           "items": { "type": "string", "enum": ["node-pack", "workflow", "mcp", "connector", "host-extension"] },
           "description": "Which tool sources the catalog projects. A host advertises only the sources it actually surfaces; a consumer MUST tolerate any subset. Absent ⇒ all sources the host implements."
         },
-        "sessionLifecycle": { "type": "boolean", "description": "`true` ⇒ the host emits the RFC 0078 §D tool-session lifecycle events (`tool.session.opened`/`tool.session.closed`, content-free) bracketing the existing RFC 0064 `agent.toolCalled`/`agent.toolReturned` call events for multi-step interactions. Absent ⇒ `false` (single-shot tool calls only)." }
+        "sessionLifecycle": { "type": "boolean", "description": "`true` ⇒ the host emits the RFC 0078 §D tool-session lifecycle events (`tool.session.opened`/`tool.session.closed`, content-free) bracketing the existing RFC 0064 `agent.toolCalled`/`agent.toolReturned` call events for multi-step interactions. Absent ⇒ `false` (single-shot tool calls only)." },
+        "compactView": { "type": "boolean", "description": "RFC 0112. `true` ⇒ the host honors `GET /v1/tools?view=compact` + `GET /v1/tools/{toolId}?view=compact`, returning the `{ tools: CompactToolDescriptor[] }` projection (`compact-tool-descriptor.schema.json`): the heavy descriptor fields (`outputSchema`/`auth`/`egress`/`approval`/`replayPolicy`/`costHint`/`latencyHint`) are dropped and any `inputSchema` is bounded to the compact structural subset. The compact `tools[]` carries the same `toolId` set as the standard view for the same principal. Absent ⇒ the host treats `view=compact` as an unknown query param (standard view)." }
       }
     },
     "httpClient": {
