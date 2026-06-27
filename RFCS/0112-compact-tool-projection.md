@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------------------- |
 | **RFC**           | 0112                                                                        |
 | **Title**         | Compact Tool Projection                                                     |
-| **Status**        | `Active`                                                                    |
+| **Status**        | `Accepted`                                                                    |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                              |
 | **Created**       | 2026-06-26                                                                  |
-| **Updated**       | 2026-06-26                                                                  |
+| **Updated**       | 2026-06-27 (Active → Accepted — dual-witness vs conformance suite 1.43.0: openwop-app reference host rev `00332-gm2` + MyndHyve tier-2 witness rev `00511-len`, both passing the compact-tool-projection scenario non-vacuously (toolId set-equal to standard view, op-keyword-free structural subset, invalid-view → 400), steward-curl-verified). 2026-06-26                                                                  |
 | **Affects**       | `spec/v1/tool-catalog.md`, `api/openapi.yaml`, `schemas/compact-tool-descriptor.schema.json` (NEW), `schemas/capabilities.schema.json`, conformance |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                                           |
 | **Supersedes**    | —                                                                           |
@@ -122,11 +122,11 @@ This subset is the structural core of RFC 0030 Tier-1 (cited as rationale), but 
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (`tool-catalog.md` §compact projection).
-- [ ] `openapi.yaml` `view` param + `CompactToolDescriptor` schema/component.
-- [ ] `tool-catalog-compact-projection.test.ts` in the suite.
-- [ ] CHANGELOG entry.
-- [ ] A reference host advertises `toolCatalog.compactView` and passes the scenario, or reference-host impl is explicitly deferred.
+- [x] Spec text merged (`tool-catalog.md` §compact projection).
+- [x] `openapi.yaml` `view` param + `CompactToolDescriptor` schema/component.
+- [x] `tool-catalog-compact-projection.test.ts` in the suite.
+- [x] CHANGELOG entry.
+- [x] A reference host advertises `toolCatalog.compactView` and passes the scenario, or reference-host impl is explicitly deferred.
 
 ## References
 

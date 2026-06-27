@@ -4,10 +4,10 @@
 | ----------------- | -------------------------------------------------------------------- |
 | **RFC**           | 0115                                                                 |
 | **Title**         | Run Transport Economy — Conditional GET & Content-Encoding           |
-| **Status**        | `Active`                                                             |
+| **Status**        | `Accepted`                                                             |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                       |
 | **Created**       | 2026-06-26                                                           |
-| **Updated**       | 2026-06-26                                                           |
+| **Updated**       | 2026-06-27 (Active → Accepted — dual-witness vs conformance suite 1.43.0: openwop-app reference host rev `00332-gm2` + MyndHyve tier-2 witness rev `00510-jiv`, both passing run-transport-economy non-vacuously (event-log-sequence ETag → 304 empty + ETag-advance-on-append + gzip/br byte-identical to identity), steward-curl-verified). 2026-06-26                                                           |
 | **Affects**       | `spec/v1/rest-endpoints.md`, `api/openapi.yaml`, `schemas/capabilities.schema.json`, conformance |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                                    |
 | **Supersedes**    | —                                                                    |
@@ -99,11 +99,11 @@ A **new top-level** capability `restTransport` (the existing `transport` key in 
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (`rest-endpoints.md` `GET /v1/runs/{runId}` ETag/304/Content-Encoding).
-- [ ] `openapi.yaml` updated; `redocly lint` clean.
-- [ ] `run-transport-economy.test.ts` in the suite.
-- [ ] CHANGELOG entry.
-- [ ] Reference host advertises `restTransport.conditionalRunGet` and passes, or impl deferred.
+- [x] Spec text merged (`rest-endpoints.md` `GET /v1/runs/{runId}` ETag/304/Content-Encoding).
+- [x] `openapi.yaml` updated; `redocly lint` clean.
+- [x] `run-transport-economy.test.ts` in the suite.
+- [x] CHANGELOG entry.
+- [x] Reference host advertises `restTransport.conditionalRunGet` and passes, or impl deferred.
 
 ## References
 

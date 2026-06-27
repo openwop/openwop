@@ -31,8 +31,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 107 |
-| Active | 8 |
+| Accepted | 110 |
+| Active | 5 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -148,10 +148,10 @@
 | RFC 0109 | Conversation-turn model provenance (`agent.model`) | Accepted |
 | RFC 0110 | Channel presence (online + typing) | Accepted |
 | RFC 0111 | Context Economy - Transcript Token Budget & Declared Summarization | Active |
-| RFC 0112 | Compact Tool Projection | Active |
-| RFC 0113 | Memory Injection Budget | Active |
+| RFC 0112 | Compact Tool Projection | Accepted |
+| RFC 0113 | Memory Injection Budget | Accepted |
 | RFC 0114 | A2UI Surface Deltas | Active |
-| RFC 0115 | Run Transport Economy - Conditional GET & Content-Encoding | Active |
+| RFC 0115 | Run Transport Economy - Conditional GET & Content-Encoding | Accepted |
 | RFC 0116 | Portable Prompt-Prefix Cache (`cachePrefixId`) | Active |
 
 ## SDK Helper Coverage
@@ -170,7 +170,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 8 RFCs `Active` (RFC 0035, RFC 0043, RFC 0111, RFC 0112, RFC 0113, RFC 0114, RFC 0115, RFC 0116) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 5 RFCs `Active` (RFC 0035, RFC 0043, RFC 0111, RFC 0114, RFC 0116) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
