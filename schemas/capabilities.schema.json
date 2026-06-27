@@ -1742,6 +1742,33 @@
       },
       "additionalProperties": false
     },
+    "uiPlugins": {
+      "type": "object",
+      "description": "RFC 0117 (`Active`). Host loads SIGNED, SANDBOXED front-end plugin packs (`kind: \"frontend-plugin\"`) — canvas editors, custom artifact viewers, settings panels — in a CROSS-ORIGIN ISOLATED iframe and talks to them over the closed `ui-plugin/1` `postMessage` host-RPC boundary. The wire owns the boundary (isolation + RPC allowlist + manifest), NOT a renderer. Gated on `supported: true`; a host that does not advertise it rejects `kind: \"frontend-plugin\"` packs at registration and renders no plugin surface (graceful degradation to RFC 0071 host rendering). SECURITY invariants `frontend-plugin-isolation` / `frontend-plugin-egress` / `frontend-plugin-rpc-allowlist` / `frontend-plugin-no-byok` (RFC 0117 §Security).",
+      "required": ["supported"],
+      "properties": {
+        "supported": { "type": "boolean", "description": "Host loads `kind: \"frontend-plugin\"` packs in a cross-origin sandbox and serves the `ui-plugin/1` host-RPC boundary." },
+        "isolation": {
+          "type": "string",
+          "const": "cross-origin-iframe",
+          "description": "The ONLY conformant isolation model. In-process / same-origin / module-federation loading is a protocol-tier MUST NOT (`frontend-plugin-isolation`). Pinned as a `const` so the advertisement cannot claim a weaker model."
+        },
+        "surfaces": {
+          "type": "array",
+          "description": "Plugin surfaces this host renders. A pack's `uiPlugins[].surface` not in this set is installable-but-inert (§Degradation).",
+          "items": { "type": "string", "enum": ["artifact-viewer", "route", "settings-panel"] },
+          "uniqueItems": true
+        },
+        "hostApi": {
+          "type": "array",
+          "description": "The `ui-plugin/1` host-RPC methods this host honors. A plugin call to a method not in this set (regardless of the plugin's declared `hostApi`) MUST be rejected with `method_not_allowed` (`frontend-plugin-rpc-allowlist`). A host advertising `artifact.write` MUST enforce the `version`-token optimistic concurrency (RFC 0117 §Concurrency).",
+          "items": { "type": "string", "enum": ["artifact.read", "artifact.write", "host.toast", "host.navigate"] },
+          "uniqueItems": true
+        },
+        "maxEntryBytes": { "type": "integer", "minimum": 1, "description": "Per-plugin entry-bundle byte ceiling the host will load." }
+      },
+      "additionalProperties": false
+    },
     "sql": {
       "type": "object",
       "description": "RFC 0018 (`Active`). SQL database adapter with parametric-only enforcement. Hosts MUST reject non-parametric queries that inline user input (`sql-parametric-only` invariant — guards against SQL injection across every workflow).",
