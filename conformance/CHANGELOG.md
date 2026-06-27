@@ -1,5 +1,11 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [1.44.0] — 2026-06-27 — RFC 0117 front-end plugin packs
+
+Adds `frontend-plugin-packs.test.ts` (suite 377 → 378) for **RFC 0117 — Front-End Plugin Packs** (the `kind: "frontend-plugin"` registry pack + the OPTIONAL `capabilities.uiPlugins` capability for signed, SANDBOXED UI extensions loaded in a cross-origin isolated iframe over the closed `ui-plugin/1` host-RPC boundary).
+
+Two always-on, server-free schema layers assert the wire shape: `frontend-plugin-manifest.schema.json` validates a well-formed manifest, rejects a backend `runtime` member (a plugin is sandboxed UI, not a node entry), rejects a `uiPlugins[]` entry missing `entry`, rejects an `entry` path-traversal (`..`), rejects a `hostApi` method outside the closed allowlist (`frontend-plugin-rpc-allowlist`), and rejects an empty `uiPlugins[]`; `ui-plugin-message.schema.json` validates a version-bearing `artifact.write` request + the `artifact_conflict` + `currentVersion` conflict response (the optimistic-concurrency `version` token, §Concurrency), rejects an out-of-allowlist `method`, rejects a non-`ui-plugin/1` protocol tag, and rejects any credential-named envelope field (`additionalProperties:false` — `frontend-plugin-no-byok`). The capability-shape leg asserts a host advertising `uiPlugins` pins `isolation` to `cross-origin-iframe` (`frontend-plugin-isolation`). The capability-gated behavioral legs drive the `POST /v1/host/sample/ui-plugin/rpc` seam: an undeclared method → `method_not_allowed`; a stale `artifact.write` → `artifact_conflict` + `currentVersion` with no persist. Soft-skips on absent `capabilities.uiPlugins.supported` or `404`/`403` on the seam (RFC 0117 stays `Active` pending host witnesses; the openwop-app reference host is the first witness). Cast-free (no `as any` / `@ts-ignore`). The public test for the protocol-tier invariants `frontend-plugin-isolation` / `-egress` / `-rpc-allowlist` / `-no-byok`.
+
 ## [1.43.0] — 2026-06-26 — RFC 0116 portable prompt-prefix cache
 
 Adds `prompt-prefix-cache.test.ts` (suite 376 → 377) for **RFC 0116 — Portable Prompt-Prefix Cache** (the optional, tenant-namespaced `cachePrefixId` hint on `ctx.aiEnvelope.generate`, the new provider-scoped `aiProviders.promptPrefixCache` capability, and the cost-only `provider.usage.cacheReadTokens`/`cacheWriteTokens` witness).
