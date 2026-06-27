@@ -4,10 +4,10 @@
 | ----------------- | -------------------------------------------------------------------- |
 | **RFC**           | 0113                                                                 |
 | **Title**         | Memory Injection Budget                                              |
-| **Status**        | `Active`                                                             |
+| **Status**        | `Accepted`                                                             |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                       |
 | **Created**       | 2026-06-26                                                           |
-| **Updated**       | 2026-06-26                                                           |
+| **Updated**       | 2026-06-27 (Active → Accepted — dual-witness vs conformance suite 1.43.0: openwop-app reference host rev `00332-gm2` + MyndHyve tier-2 witness rev `00512-pej`, both passing memory injectionBudget non-vacuously (token-budget caps with whole-entry omission + keep-≥1, `tokenCounter:chars`, recency rank, missing/negative budget → 400), steward-curl-verified). 2026-06-26                                                           |
 | **Affects**       | `spec/v1/agent-memory.md`, `schemas/memory-list-options.schema.json`, `schemas/capabilities.schema.json`, conformance |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                                    |
 | **Supersedes**    | —                                                                    |
@@ -107,11 +107,11 @@ Relevance ranking is **not** advertised here — it is gated on the existing `me
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (`agent-memory.md` §injection budget).
-- [ ] `capabilities.schema.json` updated.
-- [ ] `memory-injection-budget.test.ts` (incl. SR-1/CTI-1 re-assertion) in the suite.
-- [ ] CHANGELOG entry.
-- [ ] Reference host advertises `memory.injectionBudget` and passes, or impl deferred.
+- [x] Spec text merged (`agent-memory.md` §injection budget).
+- [x] `capabilities.schema.json` updated.
+- [x] `memory-injection-budget.test.ts` (incl. SR-1/CTI-1 re-assertion) in the suite.
+- [x] CHANGELOG entry.
+- [x] Reference host advertises `memory.injectionBudget` and passes, or impl deferred.
 
 ## References
 
