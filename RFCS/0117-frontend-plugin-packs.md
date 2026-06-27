@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------------- |
 | **RFC**           | 0117                                                                  |
 | **Title**         | Front-End Plugin Packs (Sandboxed UI Extensions)                      |
-| **Status**        | `Draft`                                                               |
+| **Status**        | `Active`                                                              |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                        |
 | **Created**       | 2026-06-27                                                            |
-| **Updated**       | 2026-06-27                                                            |
+| **Updated**       | 2026-06-27 (`Draft → Active` — steward waiver of the 7-day additive comment window per `GOVERNANCE.md` lazy consensus; all four Open questions resolved in-RFC because `Active` locks the wire shape) |
 | **Affects**       | `node-packs.md` (new `kind`), `host-capabilities.md` (`host.uiPlugins`), `capabilities.md`, `registry-operations.md`, a new `spec/v1/frontend-plugin-packs.md`, conformance scenarios, `SECURITY/invariants.yaml` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                                     |
 | **Supersedes**    | —                                                                     |
@@ -171,12 +171,14 @@ New capability-gated scenarios in `conformance/src/scenarios/frontend-plugin-pac
 - **In-process module federation (Backstage dynamic-plugin style).** Rejected: federated remotes execute with the host's full privileges — acceptable for first-party plugins, unacceptable for registry-distributed third-party code. The isolation MUST-NOT exists precisely to forbid this.
 - **Ship the bundle bytes in the spec's scope (a normative renderer runtime).** Rejected: violates `positioning.md`. This RFC keeps bytes opaque — the spec owns the *boundary* (isolation + RPC + manifest), not the *renderer*.
 
-## Open questions
+## Resolved questions (resolved at `Active`)
 
-1. **Persistent plugin state** — should the host expose a scoped `host.kv` RPC method for plugin-local state, or is that out of charter (plugins persist via `artifact.write` only)? Lean: defer; `artifact.write` suffices for v1.
-2. **Inter-plugin composition** — can a `route` plugin embed an `artifact-viewer` plugin? Lean: no in v1 (one sandbox per surface) to keep the trust model simple.
-3. **Versioned `hostApi` deprecation** — the method vocabulary will grow; codify the same additive/safety-fix discipline (this RFC's §3 vocabulary is `ui-plugin/1`; a breaking method change bumps to `ui-plugin/2`).
-4. **Streaming** — should `artifact.read` support a streaming variant for large artifacts, or is request/response sufficient? Lean: request/response for v1; revisit with a real adopter.
+Because `Active` locks the wire shape, all four opens are resolved in-RFC at the `Draft → Active` waiver. Each resolution adopts the floor and leaves the richer shape to a **future additive** method/sub-flag, so none narrows or pre-commits the locked manifest + RPC surface:
+
+1. **Persistent plugin state — RESOLVED: `artifact.write` only in v1.** No scoped `host.kv` RPC method is added; plugins persist exclusively via the existing `artifact.write` allowlist entry. A keyed plugin-local store, if a real adopter needs it, is a future additive `hostApi` method gated under a bumped `ui-plugin/*` vocabulary — it does not change the v1 allowlist.
+2. **Inter-plugin composition — RESOLVED: no in v1 (one sandbox per surface).** A `route` plugin MUST NOT embed another plugin; each surface is exactly one cross-origin sandbox, keeping the trust model and CSP boundary single-tenant per frame. Nested composition, if ever introduced, is an additive surface that does not relax this isolation MUST.
+3. **Versioned `hostApi` deprecation — RESOLVED: additive/safety-fix discipline on `ui-plugin/N`.** The host-RPC vocabulary is versioned `ui-plugin/1`; new methods are additive within a version, and any breaking method change bumps the major (`ui-plugin/2`) and is advertised as a distinct supported version — the same `COMPATIBILITY.md` discipline the rest of the wire follows.
+4. **Streaming — RESOLVED: request/response in v1.** `artifact.read` is whole-response in v1; a streaming/chunked variant, if a real large-artifact adopter needs it, is a future additive `hostApi` method and does not alter the v1 request/response shape.
 
 ## Adoption / reference
 
