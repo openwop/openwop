@@ -12,7 +12,7 @@
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 377 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 116 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 118 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -33,7 +33,7 @@
 |---|---:|
 | Accepted | 110 |
 | Active | 5 |
-| Draft | 1 |
+| Draft | 3 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -153,6 +153,8 @@
 | RFC 0114 | A2UI Surface Deltas | Active |
 | RFC 0115 | Run Transport Economy - Conditional GET & Content-Encoding | Accepted |
 | RFC 0116 | Portable Prompt-Prefix Cache (`cachePrefixId`) | Active |
+| RFC 0117 | Front-End Plugin Packs (Sandboxed UI Extensions) | Draft |
+| RFC 0118 | Parallel sub-workflow fan-out and join (`fanOutPolicy: 'parallel'` + `joinPolicy`) | Draft |
 
 ## SDK Helper Coverage
 
@@ -169,7 +171,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
+- 3 RFCs still `Draft` (RFC 0038, RFC 0117, RFC 0118) — advance with schema/conformance proof or defer.
 - 5 RFCs `Active` (RFC 0035, RFC 0043, RFC 0111, RFC 0114, RFC 0116) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
