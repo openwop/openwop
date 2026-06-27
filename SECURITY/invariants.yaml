@@ -2294,3 +2294,81 @@ invariants:
       for a live `streamRef`), so there is no live conduit to exhibit cross-tenant
       binding; the gated leg `voice-streamref-tenant-bound.test.ts` soft-skips until
       a host with live `streamRef` transport proves it, then graduates to protocol.
+
+  # ===== RFC 0117 front-end plugin packs (sandboxed UI extensions) =====
+
+  - id: frontend-plugin-isolation
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/frontend-plugin-packs.test.ts
+    note: |
+      `frontend-plugin-packs.md` §Isolation: a host advertising
+      `capabilities.uiPlugins.supported: true` MUST load every plugin `entry`
+      in a CROSS-ORIGIN, SANDBOXED iframe (a distinct origin + an HTML `sandbox`
+      attribute withholding same-origin privileges). In-process loading,
+      same-origin iframes, and module federation (the federated remote executing
+      with the host's full privileges) are a protocol-tier MUST NOT — registry-
+      distributed third-party code must never run with host authority. The host
+      advertises the model as `capabilities.uiPlugins.isolation` pinned to the
+      schema `const "cross-origin-iframe"`, so the advertisement cannot claim a
+      weaker model. The always-on shape leg of `frontend-plugin-packs.test.ts`
+      asserts the capability `const`; the gated behavioral leg drives a host
+      advertising `uiPlugins.supported` and asserts the served plugin frame is a
+      distinct origin with `sandbox`. Graduates reference-impl → protocol when the
+      openwop-app reference host (ADR 0153) serves the live sandboxed frame.
+
+  - id: frontend-plugin-egress
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/frontend-plugin-packs.test.ts
+    note: |
+      `frontend-plugin-packs.md` §Security: absent declared `connectSrc`
+      exceptions in the manifest, the host MUST serve the plugin under a
+      DENY-EGRESS Content-Security-Policy — no network egress beyond the
+      `ui-plugin/1` host-RPC channel. This confines a malicious or compromised
+      plugin bundle to the host-mediated, authz-checked RPC seam and prevents
+      exfiltration of any data the surface renders. Any `connectSrc` exception is
+      part of the registry front-end-review checkpoint (`registry-operations.md`)
+      and a host MAY refuse a pack whose exceptions it will not grant. The gated
+      leg asserts the served CSP denies egress for a plugin with no declared
+      `connectSrc`.
+
+  - id: frontend-plugin-rpc-allowlist
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/frontend-plugin-packs.test.ts
+    note: |
+      `frontend-plugin-packs.md` §Host-RPC: the host MUST reject any `ui-plugin/1`
+      `request` whose `method` is not in BOTH the plugin's declared manifest
+      `hostApi` allowlist AND the host's advertised `capabilities.uiPlugins.hostApi`
+      set — returning a `response` `{ ok:false, error:{ code:"method_not_allowed" } }`,
+      NEVER silently executing it. The plugin holds no credentials; every method
+      is host-mediated and authz-checked, so an undeclared/unknown method is the
+      privilege-escalation surface this invariant closes. The always-on shape leg
+      validates the `ui-plugin-message.schema.json` allowlist `enum` + the
+      `method_not_allowed` error code; the gated leg drives an undeclared-method
+      `request` against a live host and asserts the `method_not_allowed` refusal.
+
+  - id: frontend-plugin-no-byok
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/frontend-plugin-packs.test.ts
+    note: |
+      `frontend-plugin-packs.md` §Security: no BYOK credential material EVER
+      crosses the `ui-plugin/1` boundary into the sandbox. A plugin operates
+      purely through host-mediated, authz-checked RPC and holds no credentials;
+      the `ui-plugin-message.schema.json` envelope carries no credential field,
+      and the `error.message` field MUST NOT carry secret material. Reuses the
+      SR-1 secret-redaction precedent (the sandbox is an untrusted boundary like
+      RFC 0091 untrusted media). The always-on shape leg asserts the message
+      schema exposes no credential-bearing field and that `additionalProperties`
+      is closed on the envelope; the gated leg asserts an `artifact.read` result
+      crossing the boundary carries no resolved BYOK plaintext.

@@ -7,11 +7,11 @@
 
 | Surface | Current value | Source |
 |---|---:|---|
-| Spec prose documents | 56 | `spec/v1/*.md` |
-| JSON Schemas | 70 | `schemas/*.schema.json` |
+| Spec prose documents | 57 | `spec/v1/*.md` |
+| JSON Schemas | 72 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 377 | `conformance/src/scenarios/*.test.ts` |
+| Conformance scenario files | 378 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 118 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
