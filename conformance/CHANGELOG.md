@@ -1,5 +1,11 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [1.45.0] — 2026-06-28 — RFC 0118 parallel sub-workflow fan-out and join
+
+Adds `dispatch-fanout-parallel.test.ts` (suite 378 → 379) for **RFC 0118 — Parallel sub-workflow fan-out and join** (the additive `fanOutPolicy: 'parallel'` enum value plus the optional `joinPolicy` object and `maxConcurrency` on `DispatchConfig`, the `core.dispatch.fanOut` / `core.dispatch.join` run-events, and the `capabilities.dispatch.{fanOutPolicies,joinModes,maxFanOut}` descriptors — closing RFC 0007 §K3).
+
+Two always-on, server-free schema layers assert the wire shape: `dispatch-config.schema.json` accepts a valid `parallel` config (each `joinPolicy.mode` of wait-all/quorum/first/race, `maxConcurrency`), rejects an unknown `fanOutPolicy`/`mode`/`onChildFailure`, rejects `additionalProperties` on `joinPolicy` and a non-positive `maxConcurrency`, and keeps a pre-RFC-0118 config valid (additive); the `dispatchFanOut` / `dispatchJoin` event `$defs` (`run-event-payloads.schema.json`) validate well-formed payloads, enforce `fanOutPolicy` const `"parallel"` + `childCount ≥ 2`, and require the replay-deterministic `mergeOrder` on the join. The capability-gated behavioral legs drive the `POST /v1/host/sample/dispatch/fanout` seam (a wait-all/collect join over all-completing children → `joinOutcome: 'satisfied'` + a full `children[]` + a recorded `mergeOrder`) and the un-gated registration-rejection leg (a host advertising `dispatch.fanOutSupported: false` MUST reject `fanOutPolicy: 'parallel'` with a 4xx `validation_error`). Cast-free. Soft-skips on absent `capabilities.dispatch.fanOutSupported` / `"parallel"` not in `fanOutPolicies`, or `404`/`403` on the seam (RFC 0118 stays `Active` pending host witnesses).
+
 ## [1.44.0] — 2026-06-27 — RFC 0117 front-end plugin packs
 
 Adds `frontend-plugin-packs.test.ts` (suite 377 → 378) for **RFC 0117 — Front-End Plugin Packs** (the `kind: "frontend-plugin"` registry pack + the OPTIONAL `capabilities.uiPlugins` capability for signed, SANDBOXED UI extensions loaded in a cross-origin isolated iframe over the closed `ui-plugin/1` host-RPC boundary).
