@@ -112,6 +112,8 @@ channels:
       nodeSkipped:       { $ref: '#/components/messages/NodeSkipped' }
       nodeSuspended:     { $ref: '#/components/messages/NodeSuspended' }
       nodeDispatched:    { $ref: '#/components/messages/NodeDispatched' }
+      dispatchFanOut:    { $ref: '#/components/messages/DispatchFanOut' }
+      dispatchJoin:      { $ref: '#/components/messages/DispatchJoin' }
       approvalRequested: { $ref: '#/components/messages/ApprovalRequested' }
       approvalReceived:  { $ref: '#/components/messages/ApprovalReceived' }
       clarificationRequested: { $ref: '#/components/messages/ClarificationRequested' }
@@ -536,6 +538,20 @@ components:
     NodeDispatched:
       name: node.dispatched
       title: core.dispatch spawned a child workflow (RFC 0007 §D + RFC 0022 §A)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+    DispatchFanOut:
+      name: core.dispatch.fanOut
+      title: core.dispatch began a parallel fan-out wave (RFC 0118)
+      summary: Emitted when a fanOutPolicy=parallel wave begins; payload $defs.dispatchFanOut carries childCount/maxConcurrency/joinMode. Parallel path only.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RunEventDoc'
+    DispatchJoin:
+      name: core.dispatch.join
+      title: core.dispatch parallel join satisfied (RFC 0118)
+      summary: Emitted when a fanOutPolicy=parallel join is satisfied/failed; payload $defs.dispatchJoin carries joinOutcome + the replay-deterministic mergeOrder.
       contentType: application/json
       payload:
         $ref: '#/components/schemas/RunEventDoc'
