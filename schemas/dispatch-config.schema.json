@@ -20,9 +20,39 @@
     },
     "fanOutPolicy": {
       "type": "string",
-      "enum": ["sequential", "reject"],
+      "enum": ["sequential", "reject", "parallel"],
       "default": "sequential",
-      "description": "Behavior when `decision.kind === 'next-worker'` and `nextWorkerIds.length > 1`. `'sequential'` dispatches each in array order, blocking on each child terminal before starting the next; the dispatch node's output reports the LAST child's `childRunId`/`childStatus` (intermediate child-run identifiers surface in the run's event log via standard `node.*` events). `'reject'` fails the dispatch with a structured `'fan_out_unsupported'` error envelope per `error-envelope.md`. Parallel fan-out is OUT OF SCOPE for v1.x — see RFC 0007 §K3 (unresolved question)."
+      "description": "Behavior when `decision.kind === 'next-worker'` and `nextWorkerIds.length > 1`. `'sequential'` (default) dispatches each in array order, blocking on each child terminal before starting the next; the dispatch node's output reports the LAST child's `childRunId`/`childStatus` (intermediate child-run identifiers surface in the run's event log via standard `node.*` events). `'reject'` fails the dispatch with a structured `'fan_out_unsupported'` error envelope per `error-envelope.md`. `'parallel'` (RFC 0118) dispatches ALL `nextWorkerIds[i]` as child runs concurrently (bounded by `maxConcurrency`) and joins on their terminals per `joinPolicy`; it REQUIRES the host to advertise `capabilities.dispatch.fanOutSupported: true` — a host that does not MUST surface a `validation_error` at `POST /v1/workflows`."
+    },
+    "joinPolicy": {
+      "type": "object",
+      "description": "RFC 0118. Completion + error-aggregation semantics for `fanOutPolicy: 'parallel'`. Meaningful ONLY when `fanOutPolicy === 'parallel'`; a host MUST surface a `validation_error` at registration if `joinPolicy` is present while `fanOutPolicy !== 'parallel'`. `mode` and `onChildFailure` are orthogonal axes (completion condition vs error aggregation).",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["wait-all", "quorum", "first", "race"],
+          "default": "wait-all",
+          "description": "When the join is satisfied. `'wait-all'` (default) — the dispatch node stays suspended until EVERY dispatched child reaches a terminal state (`completed`/`failed`/`cancelled`); the only mode that never discards a child's outcome. `'quorum'` — satisfied at `quorum` `completed` children (REQUIRES `quorum`, `1 ≤ quorum ≤ nextWorkerIds.length`; a missing/out-of-range `quorum` is a registration `validation_error`); in-flight children are cancelled per the `interrupt-profiles.md` parent-child cascade. `'first'` — satisfied at the first `completed`; remaining cancelled. `'race'` — satisfied at the first terminal of ANY kind (`completed` OR `failed`); remaining cancelled."
+        },
+        "quorum": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Required iff `mode === 'quorum'`. The number of `completed` children that satisfies the join. MUST be `1 ≤ quorum ≤ nextWorkerIds.length`."
+        },
+        "onChildFailure": {
+          "type": "string",
+          "enum": ["collect", "fail-fast", "absorb"],
+          "default": "collect",
+          "description": "How a non-`completed` child terminal affects the dispatch node. `'collect'` (default) — no individual failure short-circuits; the node waits per `mode`, then reports per-child outcomes in its output (§D). `'fail-fast'` — the first child to reach `failed`/`cancelled` immediately fails the dispatch node and cancels the rest (equivalent to single-child `fail-parent` applied at first failure). `'absorb'` — failed children are recorded in the log + node output but never fail the parent; the join still completes per `mode`. The default deliberately DIVERGES from single-child `core.subWorkflow.onChildFailure: 'fail-parent'` because independent fan-out siblings are the common case (RFC 0118 §Resolved Q1)."
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "maxConcurrency": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "RFC 0118. Maximum number of children dispatched concurrently under `fanOutPolicy: 'parallel'`. When `nextWorkerIds.length` exceeds this, the host dispatches in waves of at most `maxConcurrency`, starting a queued child as each in-flight child terminates (the host MUST NOT silently drop children above the ceiling). Absent → host-defined effective concurrency (a host MAY cap to protect itself and MUST advertise that cap as `capabilities.dispatch.maxFanOut`). The EFFECTIVE concurrency is `min(maxConcurrency ?? ∞, capabilities.dispatch.maxFanOut ?? ∞)`. Does not change join semantics — `joinPolicy` evaluates over the full `nextWorkerIds` set. Meaningful only under `fanOutPolicy: 'parallel'`."
     },
     "iterationCap": {
       "type": "integer",
@@ -67,6 +97,16 @@
       "askUserRouting": "clarification",
       "fanOutPolicy": "reject",
       "iterationCap": 25
+    },
+    {
+      "workerDispatchModel": "child-run",
+      "fanOutPolicy": "parallel",
+      "maxConcurrency": 5,
+      "joinPolicy": { "mode": "wait-all", "onChildFailure": "collect" }
+    },
+    {
+      "fanOutPolicy": "parallel",
+      "joinPolicy": { "mode": "quorum", "quorum": 3, "onChildFailure": "fail-fast" }
     }
   ]
 }

@@ -156,6 +156,8 @@
         "budget.exhausted",
         "runOrchestrator.decided",
         "node.dispatched",
+        "core.dispatch.fanOut",
+        "core.dispatch.join",
         "conversation.opened",
         "conversation.exchanged",
         "conversation.closed",

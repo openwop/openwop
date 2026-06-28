@@ -544,13 +544,22 @@ When `orchestrator.supported: true`, hosts MUST also advertise `dispatch.support
 "dispatch": {
   "supported": true,
   "models": ["child-run"],
-  "fanOutSupported": false,
+  "fanOutSupported": true,
+  "fanOutPolicies": ["sequential", "reject", "parallel"],
+  "joinModes": ["wait-all", "quorum", "first", "race"],
+  "maxFanOut": 16,
   "askUserRoutings": ["conversation", "clarification", "auto"]
 }
 ```
 
 - `models` — supported `workerDispatchModel` values. v1.x normates only `"child-run"`; hosts MAY add vendor extensions under `vendor.<host>.<model>`.
+- `fanOutSupported` — when `true`, host honors `nextWorkerIds.length > 1` per RFC 0007's `fanOutPolicy`. Since RFC 0118 it is ALSO the gate for accepting `fanOutPolicy: 'parallel'` at registration: a host advertising `false` MUST reject a `core.dispatch` node pinning `'parallel'` with a `validation_error` at `POST /v1/workflows`. Hosts that always treat length > 1 as a workflow-authoring error set `false`.
+- `fanOutPolicies` (RFC 0118, OPTIONAL) — the `fanOutPolicy` values the host accepts. Lets an author detect partial support; a host MAY ship `["sequential", "reject"]` only (parallel unsupported) even with `fanOutSupported: true` for the length-rejection sense. Absent ⇒ treat as `["sequential", "reject"]`.
+- `joinModes` (RFC 0118, OPTIONAL) — the `joinPolicy.mode` values the host implements for `fanOutPolicy: 'parallel'`. A host MAY ship `["wait-all"]` only. A `core.dispatch` node pinning a `joinPolicy.mode` not in `joinModes` is a registration `validation_error`. Absent ⇒ the host implements no parallel join (advertise `fanOutPolicies` without `"parallel"`).
+- `maxFanOut` (RFC 0118, OPTIONAL) — the host's hard concurrency/breadth ceiling for a parallel fan-out (§`maxConcurrency`). The effective concurrency is `min(config.maxConcurrency ?? ∞, maxFanOut ?? ∞)`; the host dispatches in waves up to this ceiling, never silently dropping children. Absent ⇒ unbounded (authors SHOULD treat absent as "unknown, may be capped").
 - `askUserRoutings` — supported `askUserRouting` values from `DispatchConfig`. Hosts that omit `"conversation"` MUST also omit `conversationPrimitive: true`.
+
+A host that advertises `dispatch.supported: true` but not `fanOutSupported: true` (or omits `"parallel"` from `fanOutPolicies`) is fully conformant — `fanOutPolicy: 'parallel'` is opt-in (RFC 0118).
 
 ### `memory` (RFC 0004)
 

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v1/run-event-payloads.schema.json",
   "title": "RunEventPayloads",
-  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n109 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
+  "description": "Per-RunEventType payload schemas. The base RunEventDoc shape (run-event.schema.json) leaves `payload` permissive for forward-compat. This schema defines the canonical payload contract for each known RunEventType. Consumers MAY pin strict payload validation via `$defs.<typeId>` and `ajv.validate(schema.$defs[event.type], event.payload)`. Unknown event types MUST be tolerated (no $defs match → fold best-effort).\n\n111 variants from `run-event.schema.json#$defs.RunEventType` are covered, grouped into ~20 shape families with shared $defs. Naming convention: camelCase keys mirror dotted RunEventType names (e.g., `run.started` → `runStarted`).",
   "type": "object",
   "$defs": {
     "_typeIndex": {
@@ -75,6 +75,8 @@
         "agent.verified":            { "$ref": "#/$defs/agentVerified" },
         "runOrchestrator.decided":   { "$ref": "#/$defs/runOrchestratorDecided" },
         "node.dispatched":           { "$ref": "#/$defs/nodeDispatched" },
+        "core.dispatch.fanOut":      { "$ref": "#/$defs/dispatchFanOut" },
+        "core.dispatch.join":        { "$ref": "#/$defs/dispatchJoin" },
         "conversation.opened":       { "$ref": "#/$defs/conversationOpened" },
         "conversation.exchanged":    { "$ref": "#/$defs/conversationExchanged" },
         "conversation.closed":       { "$ref": "#/$defs/conversationClosed" },
@@ -1478,6 +1480,33 @@
         "childRunId":       { "type": "string", "minLength": 1, "description": "RunId of the spawned child run." },
         "childWorkflowId":  { "type": "string", "minLength": 1, "description": "WorkflowId of the spawned child." },
         "childStatus":      { "type": "string", "description": "Status of the child run at the moment the dispatch step returned (typically `completed`, `failed`, `cancelled`, or one of the `waiting-*` states when the child suspended)." }
+      },
+      "additionalProperties": false
+    },
+
+    "dispatchFanOut": {
+      "type": "object",
+      "description": "RFC 0118. Emitted by `core.dispatch` when a `fanOutPolicy: 'parallel'` wave BEGINS, so the parent stays observable while children run concurrently. The envelope's `nodeId` carries the dispatching `core.dispatch` node id; `causationId` is set to the consumed `runOrchestrator.decided` event so replay reconstructs decision → fan-out. Emitted ONLY on the parallel path.",
+      "required": ["fanOutPolicy", "childCount"],
+      "properties": {
+        "fanOutPolicy":   { "const": "parallel", "description": "Always `\"parallel\"` — this event is emitted only on the parallel fan-out path." },
+        "childCount":     { "type": "integer", "minimum": 2, "description": "Number of children dispatched in this fan-out (`nextWorkerIds.length`; > 1 by construction)." },
+        "maxConcurrency": { "type": "integer", "minimum": 1, "description": "Effective concurrency ceiling for the wave (`min(config.maxConcurrency ?? ∞, capabilities.dispatch.maxFanOut ?? ∞)`), when bounded." },
+        "joinMode":       { "type": "string", "enum": ["wait-all", "quorum", "first", "race"], "description": "The `joinPolicy.mode` governing this fan-out." }
+      },
+      "additionalProperties": false
+    },
+
+    "dispatchJoin": {
+      "type": "object",
+      "description": "RFC 0118. Emitted by `core.dispatch` when a `fanOutPolicy: 'parallel'` join is SATISFIED (or fails). The envelope's `nodeId` carries the dispatching node id; `causationId` matches the paired `core.dispatch.fanOut`. `mergeOrder` is the canonical replay-deterministic record of the output-merge tiebreak: a replay MUST re-apply `outputMapping` in `mergeOrder` (the parent host's observed wall-clock terminal order), NOT in `nextWorkerIds` order.",
+      "required": ["joinOutcome", "completedCount", "failedCount", "mergeOrder"],
+      "properties": {
+        "joinOutcome":    { "type": "string", "enum": ["satisfied", "failed", "partial"], "description": "`'satisfied'` — `mode` met and `onChildFailure` did not fail the node. `'failed'` — `onChildFailure: 'fail-fast'` tripped, or `mode` could not be satisfied (e.g. quorum unreachable); the dispatch node fails. `'partial'` — `mode` satisfied but ≥1 child is non-`completed` under `collect`/`absorb`; the node SUCCEEDS." },
+        "completedCount": { "type": "integer", "minimum": 0, "description": "Number of children that reached `completed`." },
+        "failedCount":    { "type": "integer", "minimum": 0, "description": "Number of children that reached `failed`." },
+        "cancelledCount": { "type": "integer", "minimum": 0, "description": "Number of children cancelled (e.g. in-flight when `quorum`/`first`/`race`/`fail-fast` short-circuited the join)." },
+        "mergeOrder":     { "type": "array", "items": { "type": "string" }, "description": "`childRunId`s in the parent host's observed wall-clock terminal order — the replay-deterministic tiebreak for colliding `outputMapping` keys. Recorded at terminal-fold time; never recomputed from child timestamps." }
       },
       "additionalProperties": false
     },
