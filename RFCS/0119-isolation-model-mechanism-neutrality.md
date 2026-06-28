@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------------- |
 | **RFC**           | 0119                                                                  |
 | **Title**         | Front-End Plugin Isolation as a Mechanism-Neutral Property (amends RFC 0117) |
-| **Status**        | `Draft`                                                               |
+| **Status**        | `Active`                                                              |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                        |
 | **Created**       | 2026-06-28                                                            |
-| **Updated**       | 2026-06-28                                                            |
+| **Updated**       | 2026-06-28 (`Draft → Active` — comment window satisfied by openwop-app's explicit source-grounded ACK as the sole adoption-coupled witness; additive const→enum widen, normative surface landed in this PR) |
 | **Affects**       | `RFCS/0117-frontend-plugin-packs.md` (amends §"Isolation model" + §"Host-RPC" channel binding), `schemas/capabilities.schema.json` (`uiPlugins.isolation`), `schemas/ui-plugin-message.schema.json` (description only), `schemas/frontend-plugin-manifest.schema.json` (descriptions only), `spec/v1/frontend-plugin-packs.md`, `SECURITY/invariants.yaml` (`frontend-plugin-isolation` wording), conformance scenario `frontend-plugin-packs.test.ts` (one assertion generalized) |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §4 ("looser validation accepting input that previously failed") |
 | **Supersedes**    | —                                                                     |

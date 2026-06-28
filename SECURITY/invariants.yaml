@@ -2304,20 +2304,25 @@ invariants:
     tests:
       - conformance/src/scenarios/frontend-plugin-packs.test.ts
     note: |
-      `frontend-plugin-packs.md` §Isolation: a host advertising
-      `capabilities.uiPlugins.supported: true` MUST load every plugin `entry`
-      in a CROSS-ORIGIN, SANDBOXED iframe (a distinct origin + an HTML `sandbox`
-      attribute withholding same-origin privileges). In-process loading,
-      same-origin iframes, and module federation (the federated remote executing
-      with the host's full privileges) are a protocol-tier MUST NOT — registry-
-      distributed third-party code must never run with host authority. The host
-      advertises the model as `capabilities.uiPlugins.isolation` pinned to the
-      schema `const "cross-origin-iframe"`, so the advertisement cannot claim a
-      weaker model. The always-on shape leg of `frontend-plugin-packs.test.ts`
-      asserts the capability `const`; the gated behavioral leg drives a host
-      advertising `uiPlugins.supported` and asserts the served plugin frame is a
-      distinct origin with `sandbox`. Graduates reference-impl → protocol when the
-      openwop-app reference host (ADR 0153) serves the live sandboxed frame.
+      `frontend-plugin-packs.md` §Isolation (amended by RFC 0119): a host
+      advertising `capabilities.uiPlugins.supported: true` MUST execute every
+      plugin `entry` in an ORIGIN/EXECUTION-ISOLATED sandbox — the plugin has no
+      access to the host's execution context, host DOM, host-origin storage, or
+      host credentials. A cross-origin sandboxed iframe (distinct origin + an HTML
+      `sandbox` attribute withholding same-origin privileges) is the canonical
+      browser mechanism; an equivalent WASM/process/container/VM sandbox enforcing
+      the SAME property is equally conformant (the advertised
+      `capabilities.uiPlugins.isolation` value names the mechanism). In-process
+      loading, same-origin iframes, and module federation (the federated remote
+      executing with the host's full privileges) are a protocol-tier MUST NOT —
+      REGARDLESS of the advertised mechanism — because registry-distributed
+      third-party code must never run with host authority. The always-on shape leg
+      of `frontend-plugin-packs.test.ts` asserts `uiPlugins.isolation` is a member
+      of the conformant model set (RFC 0119 enum / `x-host-*`); the gated
+      behavioral leg drives a host advertising `uiPlugins.supported` and asserts
+      the plugin runs out of the host's execution context. Graduates reference-impl
+      → protocol when the openwop-app reference host (ADR 0153) serves the live
+      sandboxed frame.
 
   - id: frontend-plugin-egress
     tier: protocol
