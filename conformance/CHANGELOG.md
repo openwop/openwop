@@ -1,5 +1,11 @@
 # `@openwop/openwop-conformance` Changelog
 
+## [1.46.0] — 2026-06-29 — RFC 0120 connection-pack `apiHosts` credential-egress allow-list
+
+Adds `connection-pack-apihosts.test.ts` (suite 379 → 380) for **RFC 0120 — Connection-pack provider `apiHosts`** (the optional `provider.apiHosts` credential-egress allow-list on the RFC 0095 connection-pack manifest + the `reach: openapi ⇒ apiHosts` conditional MUST). The public test for the two protocol-tier invariants `connection-pack-api-host-shape` + `connection-pack-egress-host-bound`.
+
+Two always-on, server-free layers assert the wire shape + the matching rule. The **schema legs** (`connection-pack-manifest.schema.json`) validate the canonical `connection-pack-apihosts-valid` fixture (an `openapi`-reach `meta-ads` provider declaring `apiHosts: ["facebook.com"]`), reject an `openapi`-reach provider that omits `apiHosts` (the provider-level conditional-MUST `allOf`), and reject IP-literal / wildcard / port-bearing / single-label / uppercase entries (the `connection_pack_invalid_api_host` shape). The **matching-rule legs** assert the §Manifest item-10 dot-anchored eTLD+1 suffix-containment rule: an entry admits itself and its subdomains, a pack MAY declare a tighter exact host that does not admit siblings, and a non-match fails closed with **no substring/suffix/prefix escape** (`notexample.com` / `evil.com` / `example.com.evil.com` MUST NOT match `example.com`). The capability-gated behavioral leg drives the new `POST /v1/host/sample/connection-packs/egress-check` seam (`host-sample-test-seams.md` §10): a credential-bearing egress to an `apiHosts` match is PERMITTED, a non-match is FAIL-CLOSED. Cast-free. Soft-skips on absent `capabilities.connections.packsSupported` or `404`/`403` on the seam (RFC 0120 stays `Active` pending the openwop-app witness re-measure against this published suite).
+
 ## [1.45.0] — 2026-06-28 — RFC 0118 parallel sub-workflow fan-out and join
 
 Adds `dispatch-fanout-parallel.test.ts` (suite 378 → 379) for **RFC 0118 — Parallel sub-workflow fan-out and join** (the additive `fanOutPolicy: 'parallel'` enum value plus the optional `joinPolicy` object and `maxConcurrency` on `DispatchConfig`, the `core.dispatch.fanOut` / `core.dispatch.join` run-events, and the `capabilities.dispatch.{fanOutPolicies,joinModes,maxFanOut}` descriptors — closing RFC 0007 §K3).
