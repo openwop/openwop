@@ -7,7 +7,7 @@
 | **Status** | `Draft` |
 | **Author(s)** | David Tufts (@davidscotttufts) |
 | **Created** | 2026-06-28 |
-| **Updated** | 2026-06-28 |
+| **Updated** | 2026-06-29 (architect review: fixed the §A `apiHosts` regex to reject IPv4 literals via a TLD-must-be-alphabetic rule (CRITICAL — the prior pattern accepted `127.0.0.1`); split the SECURITY invariant into shape (`connection-pack-api-host-shape`, always-on) + egress-binding (`connection-pack-egress-host-bound`, gated behavioral) so the fail-closed MUST does not ride a shape-only test; added normative §B item 11 + resolved UQ4/G4: `apiHosts` AND-composes with — never widens past — the RFC 0079 `egress-credential-audience-bound` guard. Still `Draft`; UQ1 (SHOULD vs MUST) + UQ3 (eTLD+1 vs exact-host) stay open for implementer input). 2026-06-28 |
 | **Affects** | `schemas/connection-pack-manifest.schema.json` · `spec/v1/connection-packs.md` (§B) · `SECURITY/invariants.yaml` · `conformance/src/scenarios/connection-pack-manifest-valid.test.ts` (+ a host-behavioral egress scenario) · reference host (`providerRegistry`/connection-pack loader) |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` |
 | **Supersedes** | — |
@@ -44,7 +44,7 @@ Add one optional property to the `provider` object (which is `"additionalPropert
 +    "apiHosts": {
 +      "type": "array",
 +      "description": "RFC 0120. The API host(s) a host MAY send this provider's resolved credential to for connector egress (RFC 0045). Each entry is a bare registrable hostname — no scheme, port, path, wildcard, or IP literal. Matched under the registrable-domain (eTLD+1) suffix rule, never substring. Omitted ⇒ no credential-bearing connector egress is reachable (fails closed).",
-+      "items": { "type": "string", "format": "hostname", "pattern": "^(?!-)[a-z0-9-]{1,63}(\\.[a-z0-9-]{1,63})+$" },
++      "items": { "type": "string", "format": "hostname", "pattern": "^(?!-)[a-z0-9-]{1,63}(\\.[a-z0-9-]{1,63})*\\.[a-z][a-z0-9-]*$" },
 +      "uniqueItems": true,
 +      "minItems": 1
 +    }
@@ -58,13 +58,15 @@ Appended after the existing reach/scope items:
 
 6. **`provider.apiHosts`**, when present, is the set of API hosts a host **MAY** send this provider's resolved credential to for connector egress (an RFC 0045 action / brokered fetch). A host performing credential-bearing connector egress **MUST** restrict the destination to a host that matches an `apiHosts` entry under the **registrable-domain (eTLD+1) suffix rule** — the same matching RFC 0079 uses, never a substring match — and **MUST fail closed** (no credential sent) otherwise.
 
-7. Each `apiHosts` entry **MUST** be a **bare registrable hostname**: lowercase ASCII, two or more dot-separated labels, and **MUST NOT** carry a scheme, userinfo, port, path, query, fragment, wildcard (`*`), or IP literal (v4 or v6). A host **MUST** reject a connection-pack manifest whose `apiHosts` contains a non-conforming entry with the error code `connection_pack_invalid_api_host`. (Rationale: the allow-list governs where a credential may be sent; a loose entry — a URL, a wildcard, an IP, or a single label — widens the confused-deputy surface.)
+7. Each `apiHosts` entry **MUST** be a **bare registrable hostname**: lowercase ASCII, two or more dot-separated labels, the **final (TLD) label beginning with an ASCII letter**, and **MUST NOT** carry a scheme, userinfo, port, path, query, fragment, wildcard (`*`), or IP literal (v4 or v6). A host **MUST** reject a connection-pack manifest whose `apiHosts` contains a non-conforming entry with the error code `connection_pack_invalid_api_host`. (Rationale: the allow-list governs where a credential may be sent; a loose entry — a URL, a wildcard, an IP, or a single label — widens the confused-deputy surface. The TLD-must-be-alphabetic rule is what makes the §A `pattern` reject IPv4 literals such as `127.0.0.1` / `10.0.0.1` — an all-numeric dotted string would otherwise match a hostname-shaped pattern; `format: "hostname"` is advisory in JSON Schema and admits all-numeric hosts, so the egress allow-list **MUST NOT** rely on it for IP rejection.)
 
 8. `apiHosts` is **independent of** the OAuth `authorize`/`token`/`revoke` endpoint hosts (RFC 0047, the *auth* surface) and of any `reach.openapi.ref` documentation host. A host **MUST NOT** infer `apiHosts` from those — they routinely differ from the API host. A pack **MUST** declare `apiHosts` explicitly to be reachable by credential-bearing egress.
 
 9. When a pack's provider is consumed by a credential-bearing connector action (RFC 0045) or declares `reach: openapi`, it **SHOULD** declare `apiHosts`. A provider without `apiHosts` is **not** an error — but every credential-bearing connector call to it **fails closed** (item 6). Hosts **SHOULD** surface this as an honest "provider unreachable for egress" rather than a silent no-op.
 
 10. `apiHosts` only constrains the **destination** of a credential the host already resolves host-side (RFC 0046/0047 unchanged). It does **not** place the credential anywhere new — neither on the wire, in events, the debug bundle, nor replay state. A host **MUST** treat `apiHosts` as **fixed, manifest-declared** data and **MUST NOT** derive or extend it from runtime user/agent input.
+
+11. **`apiHosts` composes with — and never widens past — the RFC 0079 `egress-credential-audience-bound` guard.** `apiHosts` is the *pack-declared static allow-list* for a provider's credential egress; RFC 0079's per-use provenance `audiences` is a *runtime audit-and-binding* layer. They are **independent and AND-composed**: where a host enforces both, a credential-bearing egress **MUST** satisfy both (a destination must match `apiHosts` **and** pass the RFC 0079 audience binding). A host **MUST NOT** treat a successful `apiHosts` match as an escape hatch that bypasses, relaxes, or auto-satisfies the RFC 0079 confused-deputy MUST — `apiHosts` may only *narrow* the destination set, never *widen* it past what RFC 0079 already permits. (For a fresh pack credential whose provenance `audiences` are empty, the egress allow-list is governed by `apiHosts`; the RFC 0079 binding still applies to any credential it covers.)
 
 **Positive example** (meta-ads):
 ```json
@@ -113,7 +115,7 @@ New fixtures: a `connection-pack-apihosts-valid` and `connection-pack-apihosts-i
 1. **SHOULD vs MUST** for `apiHosts` when a provider is consumed by an RFC 0045 action / `reach: openapi` (item 9). MUST would catch the footgun at install time but breaks metadata-only / read-via-MCP packs that legitimately have no REST API host. Current draft: SHOULD, with the fail-closed consequence stated.
 2. **Port support.** The draft forbids a port (443 only). Some providers expose non-443 API ports. Keep host-only, or allow an optional `:port`? (Leaning host-only — a port in an allow-list is unusual and widens the parser.)
 3. **eTLD+1 vs exact-host matching.** The draft reuses RFC 0079's registrable-domain suffix match for consistency. Should `apiHosts` instead require an exact host match (tighter, but forces packs to enumerate every subdomain)? Trade-off: `googleapis.com` (one entry, all `*.googleapis.com`) vs enumerating `googleads.`, `bigquery.`, etc.
-4. **Relationship to RFC 0079 `connectionUse` provenance audiences.** Should a successful egress to an `apiHosts` host auto-populate the RFC 0079 provenance `audiences`, or are they independent layers? (They serve different purposes — allow-list vs per-use audit — but may want to agree.)
+4. **Relationship to RFC 0079 `connectionUse` provenance audiences. — RESOLVED 2026-06-29.** Independent, AND-composed layers (now normative — §B item 11): `apiHosts` is the pack-declared *static allow-list*; RFC 0079 `audiences` is the *runtime audit/binding*. A credential-bearing egress MUST satisfy **both** where both apply; an `apiHosts` match MUST NOT bypass/relax the RFC 0079 `egress-credential-audience-bound` MUST, and MUST NOT widen egress past it. No auto-population — they stay distinct layers.
 5. **Reference-host migration.** The reference app currently encodes `apiHosts` in `providerRegistry.ts` built-ins; once packs can declare it, do the `bigquery`/`microsoft-graph` dedicated built-ins fold back into their packs, or stay as narrow read-only identities for a different reason? (Implementation-side, non-normative.)
 
 ## Implementation notes (non-normative)
@@ -125,10 +127,10 @@ New fixtures: a `connection-pack-apihosts-valid` and `connection-pack-apihosts-i
 
 ## Acceptance criteria
 
-- [ ] Spec text (`spec/v1/connection-packs.md` items 6–10) merged
-- [ ] `schemas/connection-pack-manifest.schema.json` adds optional `provider.apiHosts` (host-shape pattern, `uniqueItems`)
-- [ ] `SECURITY/invariants.yaml` row `connection-pack-api-host-shape` + a public conformance test
-- [ ] ≥1 conformance scenario (manifest validity + the host-behavioral egress allow-list), capability-gated on `connections.packsSupported`
+- [ ] Spec text (`spec/v1/connection-packs.md` items 6–11) merged
+- [ ] `schemas/connection-pack-manifest.schema.json` adds optional `provider.apiHosts` (host-shape pattern with the TLD-must-be-alphabetic rule so IP literals are rejected, `uniqueItems`)
+- [ ] **Two** `SECURITY/invariants.yaml` rows, each with its public test: (a) `connection-pack-api-host-shape` — protocol-tier, the manifest-shape MUST-NOT (URL/wildcard/IP/single-label/port rejected `connection_pack_invalid_api_host`), verified **always-on, server-free**; and (b) `connection-pack-egress-host-bound` — the security-critical egress MUST (item 6): a credential-bearing egress to a non-`apiHosts` host **fails closed** + composes with RFC 0079 (item 11), verified by the **capability-gated behavioral** leg. (The egress-binding guarantee MUST NOT ride only the shape test — a shape test never proves a credential *isn't* sent to a non-allowed host.)
+- [ ] ≥2 conformance scenarios: the always-on manifest-validity leg (incl. the IP-literal rejection) **and** the gated host-behavioral egress allow-list leg, capability-gated on `connections.packsSupported`
 - [ ] CHANGELOG `[Unreleased] > Additive` entry
 - [ ] Reference host reads `provider.apiHosts` in the connection-pack loader and passes the new scenarios
 
