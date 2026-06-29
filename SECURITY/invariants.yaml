@@ -1920,6 +1920,58 @@ invariants:
       blocklisted name at the schema layer) + the capability-gated
       behavioral leg asserting the specific error code on a live host.
 
+  - id: connection-pack-api-host-shape
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/connection-pack-apihosts.test.ts
+    note: |
+      RFC 0120 / connection-packs.md §Manifest items 11 + 13. A connection-pack
+      `provider.apiHosts` entry governs WHERE a resolved credential may be sent
+      for connector egress (RFC 0045), so its shape MUST be tight: each entry is
+      a bare, lowercase, registrable hostname of two-or-more dot-separated labels
+      whose final (TLD) label begins with an ASCII letter, and MUST NOT carry a
+      scheme, userinfo, port, path, query, fragment, wildcard (`*`), or IP literal
+      (v4 or v6). A host MUST reject a non-conforming entry with
+      connection_pack_invalid_api_host. The TLD-must-be-alphabetic rule is what
+      makes the schema `pattern` reject IPv4 literals such as 127.0.0.1 — JSON
+      Schema `format:"hostname"` is advisory and admits all-numeric hosts, so the
+      allow-list MUST NOT rely on it for IP rejection. Conditional MUST: when
+      `provider.reach` is `openapi` (a credentialed REST/OpenAPI egress surface)
+      `apiHosts` is REQUIRED (the provider-level `allOf`); an `mcp`/metadata
+      provider MAY omit it. Public test: the always-on, server-free schema legs of
+      connection-pack-apihosts.test.ts (positive apiHosts fixture; openapi-without-
+      apiHosts rejected; IP/wildcard/port/single-label/uppercase entries rejected;
+      mcp-omission valid).
+
+  - id: connection-pack-egress-host-bound
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/connection-pack-apihosts.test.ts
+    note: |
+      RFC 0120 / connection-packs.md §Manifest items 10 + 15. A host performing
+      credential-bearing connector egress (an RFC 0045 action / brokered fetch)
+      for a pack-delivered provider MUST restrict the destination to a host that
+      MATCHES an `apiHosts` entry and MUST fail closed (no credential sent)
+      otherwise — the confused-deputy guard for pack providers. Matching is
+      dot-anchored suffix containment: a request host matches an entry IFF it
+      equals the entry OR ends with `"." + entry` — never a bare substring, so
+      `notexample.com` / `evil.com` / `example.com.evil.com` MUST NOT match
+      `example.com`. eTLD+1 is the floor (an entry admits its subdomains); a pack
+      MAY declare a tighter exact host to narrow egress. `apiHosts` is
+      AND-composed with — and never widens past — the RFC 0079
+      `egress-credential-audience-bound` guard (item 15): where both apply an
+      egress MUST satisfy both, and an `apiHosts` match MUST NOT be treated as an
+      escape hatch that bypasses RFC 0079. Public test: the always-on, server-free
+      matching-rule legs of connection-pack-apihosts.test.ts (dot-anchored
+      containment + no-substring/suffix/prefix escape + tighter-exact-host) plus
+      the capability-gated behavioral egress-allow-list leg (permit an apiHosts
+      match; fail closed otherwise) driven through the
+      POST /v1/host/sample/connection-packs/egress-check seam.
+
   - id: proposal-inert-until-applied
     tier: protocol
     severity: critical

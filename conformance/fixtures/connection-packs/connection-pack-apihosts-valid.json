@@ -1,0 +1,26 @@
+{
+  "name": "core.openwop.connections.meta-ads",
+  "version": "1.0.0",
+  "kind": "connection",
+  "engines": { "openwop": ">=1.0.0" },
+  "provider": {
+    "id": "meta-ads",
+    "displayName": "Meta Ads",
+    "category": "marketing",
+    "auth": {
+      "kind": "oauth2",
+      "authFlow": "pkce",
+      "scopeModel": "groups",
+      "endpoints": {
+        "authorize": "https://www.facebook.com/v19.0/dialog/oauth",
+        "token": "https://graph.facebook.com/v19.0/oauth/access_token"
+      },
+      "scopes": {
+        "read": [{ "key": "ads.read", "label": "Read ads insights", "scopes": ["ads_read"] }],
+        "write": [{ "key": "ads.manage", "label": "Manage ad campaigns", "scopes": ["ads_management"] }]
+      }
+    },
+    "reach": { "openapi": { "ref": "https://developers.facebook.com/docs/marketing-api" } },
+    "apiHosts": ["facebook.com"]
+  }
+}

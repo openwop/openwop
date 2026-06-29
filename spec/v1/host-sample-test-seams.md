@@ -398,7 +398,7 @@ Conformance: `workspace-cross-tenant-isolation.test.ts` (WCT-1 — write as owne
 
 | Field                     | Value                                                                                                                                                       |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Method + path             | `POST /v1/host/sample/connection-packs/install` · `POST /v1/host/sample/connection-packs/resolve` · `POST /v1/host/sample/connection-packs/consent-plan`    |
+| Method + path             | `POST /v1/host/sample/connection-packs/install` · `POST /v1/host/sample/connection-packs/resolve` · `POST /v1/host/sample/connection-packs/consent-plan` · `POST /v1/host/sample/connection-packs/egress-check` (RFC 0120) |
 | Capability gate           | `capabilities.connections.packsSupported: true` (RFC 0095 §C)                                                                                              |
 | Env gate (reference impl) | seam registered when `connections.packsSupported` is asserted; production hosts gate per §"Production safety"                                              |
 | Introduced                | RFC 0095 §Conformance — drives `connection-packs.md` §Manifest clauses 2/4/6/8 black-box on hosts whose install path is otherwise boot-time or publish-time |
@@ -437,11 +437,22 @@ POST /v1/host/sample/connection-packs/consent-plan
       includesWrite?: boolean,
     }>,
   }
+
+POST /v1/host/sample/connection-packs/egress-check      // RFC 0120
+  Body: {
+    provider: string,        // an installed pack's provider id
+    requestHost: string,     // the destination host a credential-bearing
+                             // RFC 0045 connector egress would target
+  }
+  Returns: 200 {
+    allowed: boolean,        // true IFF requestHost matches provider.apiHosts
+    code?: 'host_not_allowed' | 'connection_provider_unresolved',
+  }
 ```
 
-The `install` seam MUST run the clause-2 credential-material scan BEFORE generic schema validation (the specific code wins); a rejected manifest is NOT installed and MUST NOT disturb other installed packs (clause 8). The `resolve` seam applies the clause-6 precedence rule (installed ≥ built-in per SemVer §11, else `connection_provider_conflict`). The `consent-plan` seam returns the host's planned consent sequence; write groups MUST occupy a separate step from the initial read authorization (clause 4).
+The `install` seam MUST run the clause-2 credential-material scan BEFORE generic schema validation (the specific code wins); a rejected manifest is NOT installed and MUST NOT disturb other installed packs (clause 8). The `resolve` seam applies the clause-6 precedence rule (installed ≥ built-in per SemVer §11, else `connection_provider_conflict`). The `consent-plan` seam returns the host's planned consent sequence; write groups MUST occupy a separate step from the initial read authorization (clause 4). The `egress-check` seam (RFC 0120) reports the host's credential-egress allow-list decision for `(provider, requestHost)`: `allowed` is `true` IFF `requestHost` matches an `apiHosts` entry under the §Manifest item-10 **dot-anchored suffix-containment** rule (equal OR ends with `"." + entry`) — it MUST fail closed (`allowed:false`) for any non-match (no substring/suffix escape) and for a provider with no `apiHosts`. It is a pure decision probe: no credential is sent and no outbound request is made.
 
-Conformance: `connection-pack-no-credential-material.test.ts` (specific-code leg), `connection-provider-resolution.test.ts` (clauses 6 + 8), `connection-pack-write-reconsent.test.ts` (clause 4).
+Conformance: `connection-pack-no-credential-material.test.ts` (specific-code leg), `connection-provider-resolution.test.ts` (clauses 6 + 8), `connection-pack-write-reconsent.test.ts` (clause 4), `connection-pack-apihosts.test.ts` (RFC 0120 — the egress allow-list behavioral leg).
 
 ### 11. Reviewable-learning / goals / portability surfaces — `/v1/host/sample/{proposals,goals,export,import}` (RFCs 0096/0097/0098)
 
