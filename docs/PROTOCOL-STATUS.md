@@ -31,8 +31,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 110 |
-| Active | 8 |
+| Accepted | 111 |
+| Active | 7 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -154,7 +154,7 @@
 | RFC 0115 | Run Transport Economy - Conditional GET & Content-Encoding | Accepted |
 | RFC 0116 | Portable Prompt-Prefix Cache (`cachePrefixId`) | Active |
 | RFC 0117 | Front-End Plugin Packs (Sandboxed UI Extensions) | Active |
-| RFC 0118 | Parallel sub-workflow fan-out and join (`fanOutPolicy: 'parallel'` + `joinPolicy`) | Active |
+| RFC 0118 | Parallel sub-workflow fan-out and join (`fanOutPolicy: 'parallel'` + `joinPolicy`) | Accepted |
 | RFC 0119 | Front-End Plugin Isolation as a Mechanism-Neutral Property (amends RFC 0117) | Active |
 
 ## SDK Helper Coverage
@@ -173,7 +173,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 8 RFCs `Active` (RFC 0035, RFC 0043, RFC 0111, RFC 0114, RFC 0116, RFC 0117, RFC 0118, RFC 0119) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 7 RFCs `Active` (RFC 0035, RFC 0043, RFC 0111, RFC 0114, RFC 0116, RFC 0117, RFC 0119) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 

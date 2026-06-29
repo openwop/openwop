@@ -470,7 +470,7 @@ Hosts can implement this pattern with a private namespace, a host-rooted signing
 
 ## Reference deployment
 
-The hosted reference registry is live at [`packs.openwop.dev`](https://packs.openwop.dev) — Stage 1–4 operational maturity deployed 2026-05-12 (WIF auto-deploy, CycloneDX SBOMs, registry CVE feed + OSV scanning, Cloud Monitoring uptime check). As of 2026-06-27 it hosts 73 packs across four trust tiers (`core.openwop.*`, `community.openwop-team.*`, `vendor.openwop.*`, `vendor.myndhyve.*`). See [`docs/PACK-CATALOG.md`](../../docs/PACK-CATALOG.md) for the categorized inventory and [`ROADMAP.md`](../../ROADMAP.md) §"Hosted infrastructure" for the deployment status row.
+The hosted reference registry is live at [`packs.openwop.dev`](https://packs.openwop.dev) — Stage 1–4 operational maturity deployed 2026-05-12 (WIF auto-deploy, CycloneDX SBOMs, registry CVE feed + OSV scanning, Cloud Monitoring uptime check). As of 2026-06-28 it hosts 79 packs across four trust tiers (`core.openwop.*`, `community.openwop-team.*`, `vendor.openwop.*`, `vendor.myndhyve.*`). See [`docs/PACK-CATALOG.md`](../../docs/PACK-CATALOG.md) for the categorized inventory and [`ROADMAP.md`](../../ROADMAP.md) §"Hosted infrastructure" for the deployment status row.
 
 Operator notes for self-hosted registries:
 
