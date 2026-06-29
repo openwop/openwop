@@ -12,6 +12,7 @@
 | **Compatibility** | `additive` per `COMPATIBILITY.md`                                     |
 | **Supersedes**    | —                                                                     |
 | **Superseded by** | —                                                                     |
+| **Amended by**    | [RFC 0119](./0119-isolation-model-mechanism-neutrality.md) — generalizes the `isolation` advertisement from a single browser mechanism (`cross-origin-iframe`) to a categorical, mechanism-neutral model (additive); §Isolation + §Host-RPC reframed to the property + a transport-agnostic channel binding. |
 
 ## Summary
 
@@ -66,16 +67,18 @@ A `uiPlugins` pack MUST NOT also declare executable backend `nodes` in the same 
 
 A host that advertises `host.uiPlugins: supported` and loads a `frontend-plugin`:
 
-- **MUST** render the plugin `entry` inside a sandboxed browser context that is **origin-isolated from the host application** — a cross-origin `<iframe>` (a distinct origin from the host UI) with the `sandbox` attribute, or an equivalent OS/web sandbox that provides the same origin + DOM isolation.
-- **MUST NOT** load plugin bytes into the host's own execution context (no in-process module federation, no host-origin `<script>`, no same-origin iframe). _This is a protocol-tier MUST NOT with a public conformance test._
-- **MUST** apply a Content-Security-Policy to the plugin document that denies network egress by default (`connect-src 'none'` unless a capability grants otherwise) so a plugin cannot exfiltrate host data.
-- **MUST** mediate **all** plugin↔host interaction through the §3 `postMessage` RPC channel; the plugin has no other handle to the host (no shared globals, no direct DOM access, no host cookies/storage).
+- **MUST** execute the plugin `entry` inside a boundary that is **origin/execution-isolated from the host application** — the plugin has no access to the host's execution context, host DOM (where one exists), host-origin storage, or host credentials. A cross-origin sandboxed `<iframe>` (a distinct origin from the host UI, with the `sandbox` attribute) is the canonical browser mechanism; an equivalent WASM / OS-process / container / VM sandbox that provides the same isolation property is equally conformant. The host advertises **which** mechanism via `capabilities.uiPlugins.isolation` (RFC 0119: a categorical enum — `cross-origin-iframe` default, or `wasm`/`process`/`container`/`vm`/`x-host-*`).
+- **MUST NOT** load plugin bytes into the host's own execution context (no in-process module federation, no host-origin `<script>`, no same-origin iframe). _This is a protocol-tier MUST NOT with a public conformance test, **regardless of the advertised `isolation` mechanism**._
+- **MUST** apply a deny-by-default egress policy to the plugin context (a Content-Security-Policy `connect-src 'none'` where the substrate is a browser; the equivalent sandbox egress control otherwise — unless a capability grants otherwise) so a plugin cannot exfiltrate host data.
+- **MUST** mediate **all** plugin↔host interaction through the §3 `ui-plugin/1` RPC channel; the plugin has no other handle to the host (no shared globals, no direct DOM access, no host cookies/storage).
 
-The spec does not mandate *how* the host builds the sandbox (iframe origin scheme, CSP nonce strategy, WASM-VM vs. browser origin) — only that the isolation properties above hold. This preserves `positioning.md`: the host owns the renderer; the wire owns the boundary.
+The spec does not mandate *how* the host builds the sandbox (iframe origin scheme, CSP nonce strategy, WASM-VM vs. browser origin) — only that the isolation properties above hold, and that the advertised `capabilities.uiPlugins.isolation` value names the mechanism truthfully. This preserves `positioning.md`: the host owns the renderer; the wire owns the boundary (the **property**, not the browser technology).
 
 ### 3. Host-RPC message protocol
 
-Plugin↔host communication is a request/response + event protocol over `postMessage`. Every message is an object with a `type` and a monotonic `id` (for response correlation). The host exposes **only** the methods a plugin declared in `hostApi` **and** that the host recognizes; a call to an undeclared or unknown method MUST be rejected with an `error` response (never silently executed).
+Plugin↔host communication is a request/response + event protocol. Every message is an object with a `type` and a monotonic `id` (for response correlation). The host exposes **only** the methods a plugin declared in `hostApi` **and** that the host recognizes; a call to an undeclared or unknown method MUST be rejected with an `error` response (never silently executed).
+
+**Channel binding (RFC 0119, normative).** The host **MUST** deliver `ui-plugin/1` envelopes across the isolation boundary as discrete messages with request/response correlation by the envelope `id`. The **transport is host-internal** and follows the advertised `isolation` mechanism: browser `window.postMessage` for `cross-origin-iframe`, a host-import/export call for `wasm`, an IPC channel for `process`/`container`/`vm`. The envelope shape (the `openwop: "ui-plugin/1"` tag, `type` ∈ request/response/event, `id`, `method`, `result`/`error`) is transport-agnostic and **MUST** be identical across all isolation models. A host **MUST NOT** expose any plugin↔host channel other than this mediated RPC.
 
 ```jsonc
 // plugin → host (request)

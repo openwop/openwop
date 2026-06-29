@@ -161,16 +161,24 @@ describe('ui-plugin/1 message: schema layer (always-on, server-free)', () => {
 });
 
 describe('frontend-plugin: isolation advertisement (always-on, capability shape)', () => {
-  it('a host advertising uiPlugins MUST pin isolation to cross-origin-iframe', async () => {
+  // RFC 0119: `isolation` is a categorical model, not a single browser const. A conformant host
+  // advertises a member of the enum (cross-origin-iframe default) or an x-host-* vendor model —
+  // every value denotes the SAME mandatory property (in-process loading is a protocol-tier MUST NOT,
+  // regardless of mechanism). cross-origin-iframe stays valid + default, so existing browser hosts
+  // pass unchanged; a weaker/unknown non-x-host value is rejected.
+  const CONFORMANT_ISOLATION = ['cross-origin-iframe', 'wasm', 'process', 'container', 'vm'];
+  const X_HOST = /^x-host-[a-z0-9-]+-[a-z0-9-]+$/;
+  it('a host advertising uiPlugins MUST advertise a conformant isolation model', async () => {
     const uiPlugins = await readCapabilityFamily<{ supported?: boolean; isolation?: string }>('uiPlugins');
     if (!uiPlugins?.supported) return; // unadvertised → out of scope (graceful degradation)
+    const iso = uiPlugins.isolation;
     expect(
-      uiPlugins.isolation,
+      iso !== undefined && (CONFORMANT_ISOLATION.includes(iso) || X_HOST.test(iso)),
       driver.describe(
-        'frontend-plugin-packs.md §Isolation',
-        'frontend-plugin-isolation — the ONLY conformant isolation model is cross-origin-iframe (in-process is a protocol-tier MUST NOT)',
+        'frontend-plugin-packs.md §Isolation (RFC 0119)',
+        'frontend-plugin-isolation — isolation MUST be a conformant model (cross-origin-iframe default | wasm | process | container | vm | x-host-*); every value denotes the same property, in-process loading is a protocol-tier MUST NOT regardless of mechanism',
       ),
-    ).toBe('cross-origin-iframe');
+    ).toBe(true);
   });
 });
 

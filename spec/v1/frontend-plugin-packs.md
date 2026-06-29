@@ -16,7 +16,7 @@ exactly the cross-host portability break the pack ecosystem exists to prevent.
 
 This document specifies the **boundary**, not a renderer. The wire owns four things and
 nothing else: the **manifest** shape (`frontend-plugin-manifest.schema.json`), the
-**mandatory cross-origin-iframe isolation model**, the **closed `ui-plugin/1` host-RPC
+**mandatory isolation model** (a mechanism-neutral property; `cross-origin-iframe` default — RFC 0119), the **closed `ui-plugin/1` host-RPC
 protocol** (`ui-plugin-message.schema.json`) with its method allowlist, and **signing**. The
 plugin's `entry` bundle stays **opaque bytes** the host runs in a sandbox — OpenWOP defines
 no component model, no rendering runtime, no framework. The host still owns the renderer
@@ -61,13 +61,18 @@ reviewed.
 
 ## Isolation (mandatory)
 
-A host that advertises `capabilities.uiPlugins.supported: true` MUST load every plugin `entry`
-in a **cross-origin, sandboxed iframe** — a distinct origin from the host application, with an
-HTML `sandbox` attribute that withholds same-origin privileges. In-process loading, same-origin
-iframes, and module federation (the federated remote executing with the host's privileges) are
-a **protocol-tier MUST NOT** (`frontend-plugin-isolation`). The host advertises the model as
-`capabilities.uiPlugins.isolation: "cross-origin-iframe"` — pinned as a schema `const`, so an
-advertisement cannot claim a weaker model.
+A host that advertises `capabilities.uiPlugins.supported: true` MUST execute every plugin `entry`
+in an **origin/execution-isolated sandbox** — the plugin has no access to the host's execution
+context, host DOM, host-origin storage, or host credentials. A **cross-origin, sandboxed iframe**
+(a distinct origin from the host application, with an HTML `sandbox` attribute that withholds
+same-origin privileges) is the canonical browser mechanism; an equivalent WASM / OS-process /
+container / VM sandbox enforcing the same property is equally conformant. In-process loading,
+same-origin iframes, and module federation (the federated remote executing with the host's
+privileges) are a **protocol-tier MUST NOT** (`frontend-plugin-isolation`) — **regardless of the
+advertised mechanism**. The host advertises **which** mechanism via
+`capabilities.uiPlugins.isolation` — a categorical enum (RFC 0119): `cross-origin-iframe`
+(default), `wasm`, `process`, `container`, `vm`, or an `x-host-*` vendor model. The field names
+the mechanism; it never relaxes the property.
 
 A plugin holds **no credentials** and has **no ambient host authority**: every privileged
 action goes through the host-mediated, authz-checked `ui-plugin/1` RPC (§Host-RPC). The plugin
@@ -149,7 +154,7 @@ A host advertises support under the top-level `capabilities.uiPlugins` object
 }
 ```
 
-`isolation` MUST be `"cross-origin-iframe"` (the only conformant value). `surfaces` / `hostApi`
+`isolation` MUST be a member of the conformant model set — `cross-origin-iframe` (default), `wasm`, `process`, `container`, `vm`, or an `x-host-*` vendor model (RFC 0119); every value denotes the same mandatory isolation property. `surfaces` / `hostApi`
 let an author detect partial support; a pack whose `surface`/`hostApi` is not a subset of the
 host's advertised sets is installable-but-inert on the unsupported parts (§Degradation), never a
 registration error.

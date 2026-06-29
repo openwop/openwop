@@ -1744,14 +1744,18 @@
     },
     "uiPlugins": {
       "type": "object",
-      "description": "RFC 0117 (`Active`). Host loads SIGNED, SANDBOXED front-end plugin packs (`kind: \"frontend-plugin\"`) — canvas editors, custom artifact viewers, settings panels — in a CROSS-ORIGIN ISOLATED iframe and talks to them over the closed `ui-plugin/1` `postMessage` host-RPC boundary. The wire owns the boundary (isolation + RPC allowlist + manifest), NOT a renderer. Gated on `supported: true`; a host that does not advertise it rejects `kind: \"frontend-plugin\"` packs at registration and renders no plugin surface (graceful degradation to RFC 0071 host rendering). SECURITY invariants `frontend-plugin-isolation` / `frontend-plugin-egress` / `frontend-plugin-rpc-allowlist` / `frontend-plugin-no-byok` (RFC 0117 §Security).",
+      "description": "RFC 0117 (`Active`; amended by RFC 0119). Host loads SIGNED, SANDBOXED front-end plugin packs (`kind: \"frontend-plugin\"`) — canvas editors, custom artifact viewers, settings panels — in an ORIGIN/EXECUTION-ISOLATED sandbox (mechanism named by `isolation`: cross-origin iframe by default, or wasm/process/container/vm) and talks to them over the closed `ui-plugin/1` host-RPC boundary. The wire owns the boundary (isolation + RPC allowlist + manifest), NOT a renderer. Gated on `supported: true`; a host that does not advertise it rejects `kind: \"frontend-plugin\"` packs at registration and renders no plugin surface (graceful degradation to RFC 0071 host rendering). SECURITY invariants `frontend-plugin-isolation` / `frontend-plugin-egress` / `frontend-plugin-rpc-allowlist` / `frontend-plugin-no-byok` (RFC 0117 §Security).",
       "required": ["supported"],
       "properties": {
-        "supported": { "type": "boolean", "description": "Host loads `kind: \"frontend-plugin\"` packs in a cross-origin sandbox and serves the `ui-plugin/1` host-RPC boundary." },
+        "supported": { "type": "boolean", "description": "Host loads `kind: \"frontend-plugin\"` packs in an origin/execution-isolated sandbox (mechanism per `isolation`) and serves the `ui-plugin/1` host-RPC boundary." },
         "isolation": {
           "type": "string",
-          "const": "cross-origin-iframe",
-          "description": "The ONLY conformant isolation model. In-process / same-origin / module-federation loading is a protocol-tier MUST NOT (`frontend-plugin-isolation`). Pinned as a `const` so the advertisement cannot claim a weaker model."
+          "anyOf": [
+            { "enum": ["cross-origin-iframe", "wasm", "process", "container", "vm"] },
+            { "pattern": "^x-host-[a-z0-9-]+-[a-z0-9-]+$" }
+          ],
+          "default": "cross-origin-iframe",
+          "description": "RFC 0117 (amended by RFC 0119). The categorical isolation model the host enforces for plugin bytes. `cross-origin-iframe` = a distinct-origin sandboxed browser frame (the browser default; §Isolation). `wasm`/`process`/`container`/`vm` mirror `sandbox.isolationModel` (RFC 0035) for non-browser hosts that enforce the SAME isolation property. Vendor-specific models advertise `^x-host-<host>-<key>$` per `host-extensions.md`. ALL values denote the SAME mandatory property (`frontend-plugin-isolation`): plugin bytes execute in a boundary with no access to the host's execution context / DOM / origin-storage / credentials, deny-egress by default, and all host interaction mediated by the closed `ui-plugin/1` RPC. The field names the MECHANISM, never relaxes the property. In-process / same-origin / module-federation loading is a protocol-tier MUST NOT regardless of the advertised value."
         },
         "surfaces": {
           "type": "array",
