@@ -47,6 +47,13 @@
       "description": "The portable provider definition. Exactly one per connection pack.",
       "required": ["id", "displayName", "category", "auth", "reach"],
       "additionalProperties": false,
+      "allOf": [
+        {
+          "$comment": "RFC 0120 UQ1: apiHosts is REQUIRED when reach is openapi (a credentialed REST/OpenAPI egress surface). A pure metadata / mcp / integration provider MAY omit it. The runtime binding-site validator (spec §Manifest item 13) is the complementary check for credentialed-egress paths the manifest cannot see.",
+          "if": { "required": ["reach"], "properties": { "reach": { "required": ["openapi"] } } },
+          "then": { "required": ["apiHosts"] }
+        }
+      ],
       "properties": {
         "id": {
           "type": "string",
@@ -142,7 +149,14 @@
           "items": { "type": "string" },
           "description": "The core node typeIds that consume this provider's credential (e.g. core.openwop.mcp.invoke-tool)."
         },
-        "docsUrl": { "type": "string", "format": "uri" }
+        "docsUrl": { "type": "string", "format": "uri" },
+        "apiHosts": {
+          "type": "array",
+          "description": "RFC 0120. API host(s) a host MAY send this provider's resolved credential to for connector egress (RFC 0045). Each entry is a bare registrable hostname — lowercase ASCII, >=2 labels, TLD label beginning with a letter; no scheme, port, path, wildcard, or IP literal. Matched by dot-anchored suffix containment (request host == entry OR ends with '.'+entry); eTLD+1 is the floor and a pack MAY list a tighter exact host (e.g. googleads.googleapis.com). Omitted => no credential-bearing connector egress is reachable (fails closed). REQUIRED when reach is openapi (see the provider-level allOf).",
+          "items": { "type": "string", "format": "hostname", "pattern": "^(?!-)[a-z0-9-]{1,63}(\\.[a-z0-9-]{1,63})*\\.[a-z][a-z0-9-]*$" },
+          "uniqueItems": true,
+          "minItems": 1
+        }
       }
     }
   },
