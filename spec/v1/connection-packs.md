@@ -119,6 +119,66 @@ through the same signed-tarball + Ed25519 + SRI pipeline (`node-packs.md` §Sign
    publish attempt; a loader-path host **MUST** disable connection-pack loading for the
    process (no pack installs; built-ins remain available) while continuing to boot.
 
+10. **`provider.apiHosts` — credential-egress allow-list (RFC 0120).** When present, `apiHosts`
+    is the set of API hosts a host **MAY** send this provider's resolved credential to for
+    connector egress (an RFC 0045 action / brokered fetch). A host performing credential-bearing
+    connector egress **MUST** restrict the destination to a host that **matches** an `apiHosts`
+    entry and **MUST fail closed** (no credential sent) otherwise. **Matching is dot-anchored
+    suffix containment**: a request host matches an entry **iff** it equals the entry **or** ends
+    with `"." + entry` — never a bare substring (so `notexample.com` and `evil.com` do **not**
+    match `example.com`). An entry is matched at the registrable-domain (eTLD+1) **floor** —
+    `facebook.com` admits `graph.facebook.com` — and a pack **MAY** declare a tighter exact host
+    (`googleads.googleapis.com`) to narrow egress: the host enforces the containment, the pack
+    chooses the granularity.
+
+11. **`apiHosts` entry shape.** Each entry **MUST** be a **bare registrable hostname**: lowercase
+    ASCII, two or more dot-separated labels, the **final (TLD) label beginning with an ASCII
+    letter**, and **MUST NOT** carry a scheme, userinfo, port, path, query, fragment, wildcard
+    (`*`), or IP literal (v4 or v6). A host **MUST** reject a manifest whose `apiHosts` contains a
+    non-conforming entry with the error code `connection_pack_invalid_api_host`. (The
+    TLD-must-be-alphabetic rule is what makes the schema `pattern` reject IPv4 literals such as
+    `127.0.0.1` / `10.0.0.1`; `format: "hostname"` is advisory in JSON Schema and admits
+    all-numeric hosts, so the egress allow-list **MUST NOT** rely on it for IP rejection.)
+
+12. **No inference from auth/doc hosts.** `apiHosts` is **independent of** the OAuth
+    `authorize`/`token`/`revoke` endpoint hosts (RFC 0047) and of any `reach.openapi.ref`
+    documentation host — these routinely differ from the API host. A host **MUST NOT** infer
+    `apiHosts` from them; a pack **MUST** declare `apiHosts` explicitly to be reachable by
+    credential-bearing egress.
+
+13. **When `apiHosts` is required (conditional MUST).** A provider **SHOULD** declare `apiHosts`
+    whenever it can be consumed by a credential-bearing connector action (RFC 0045). This SHOULD
+    is sharpened to a **MUST at two enforcement points**, so the footgun is caught where it bites
+    without breaking host-less packs:
+    1. **Install-time (manifest schema).** When `provider.reach` is `openapi` (a credentialed
+       REST/OpenAPI egress surface), `apiHosts` is **REQUIRED** — a manifest that omits it **MUST**
+       be rejected (schema-validation failure / `connection_pack_invalid_api_host`).
+    2. **Consumption-time (runtime).** When an RFC 0045 credential-bearing action binds this
+       provider, a host **MUST** verify `apiHosts` is present and **MUST fail closed**
+       (`validation_error`, no credential sent) if it is absent — this catches credentialed-egress
+       paths the manifest cannot see (e.g. a `reach: mcp` provider that nonetheless brokers a
+       credentialed fetch).
+
+    A provider with neither an `openapi` reach nor a credentialed-egress consumer — a
+    metadata-only or read-via-MCP pack with no REST host — **MAY** omit `apiHosts` and remains
+    valid; every credential-bearing call to a provider without `apiHosts` simply **fails closed**,
+    which a host **SHOULD** surface as an honest "provider unreachable for egress" rather than a
+    silent no-op.
+
+14. **Destination-only; manifest-fixed.** `apiHosts` only constrains the **destination** of a
+    credential the host already resolves host-side (RFC 0046/0047 unchanged). It places the
+    credential nowhere new — not on the wire, in events, the debug bundle, or replay state. A host
+    **MUST** treat `apiHosts` as **fixed, manifest-declared** data and **MUST NOT** derive or
+    extend it from runtime user/agent input.
+
+15. **Composition with RFC 0079 (AND-composed, never widen).** `apiHosts` is the *pack-declared
+    static allow-list*; RFC 0079's per-use provenance `audiences` is a *runtime audit-and-binding*
+    layer. They are **independent and AND-composed**: where a host enforces both, a
+    credential-bearing egress **MUST** satisfy both. A successful `apiHosts` match **MUST NOT** be
+    treated as an escape hatch that bypasses, relaxes, or auto-satisfies the RFC 0079
+    `egress-credential-audience-bound` MUST — `apiHosts` may only **narrow** the destination set,
+    never **widen** it past what RFC 0079 already permits.
+
 ## Capability
 
 A host advertises connection-pack support via `capabilities.connections.packsSupported: boolean`
@@ -173,6 +233,23 @@ Manifests that a host **MUST** reject:
 
 // non-https endpoint (clause 3) → schema validation failure
 { "provider": { "auth": { "endpoints": { "token": "http://example.com/token" } } } }
+
+// openapi reach without apiHosts (clause 13) → schema validation failure (conditional MUST)
+{ "provider": { "reach": { "openapi": { "ref": "https://api.example.com/openapi.json" } } } }
+
+// IP literal in apiHosts (clause 11) → connection_pack_invalid_api_host
+{ "provider": { "reach": { "openapi": { "ref": "https://api.example.com/o" } },
+  "apiHosts": ["127.0.0.1"] } }
+```
+
+A well-formed `openapi`-reach provider declaring its credential-egress allow-list (clauses 10–13):
+
+```jsonc
+{ "provider": { "id": "meta-ads", "displayName": "Meta Ads", "category": "marketing",
+  "auth": { "kind": "oauth2", "endpoints": { "token": "https://graph.facebook.com/v19.0/oauth/access_token" } },
+  "reach": { "openapi": { "ref": "https://developers.facebook.com/docs/marketing-api" } },
+  "apiHosts": ["facebook.com"] } }
+// graph.facebook.com (the real API host) matches facebook.com by dot-anchored eTLD+1 containment.
 ```
 
 ## Open spec gaps
