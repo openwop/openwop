@@ -499,6 +499,7 @@ The `fixtures/connection-packs/` sub-directory holds canonical connection-pack m
 | Fixture                  | `provider.id` | Purpose                                                                                                                                                                |
 | ------------------------ | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `connection-pack-github` | `github`      | Canonical positive manifest (oauth2 + pkce, read/write scope groups, MCP reach, the exempt `provider.auth.endpoints.token` endpoint URL). Drives manifest-valid, no-credential-material, reach-exclusive, provider-resolution, and write-reconsent scenarios. |
+| `connection-pack-apihosts-valid` | `meta-ads` | Canonical positive `openapi`-reach manifest declaring a `provider.apiHosts` credential-egress allow-list (`["facebook.com"]`) — RFC 0120. Drives `connection-pack-apihosts` (the `apiHosts` schema + conditional-MUST + egress allow-list scenario). Negatives (IP/wildcard/port/single-label/uppercase entries, openapi-without-apiHosts) are inline mutations per suite convention. |
 
 Negative manifests (credential material, mixed kinds, dual reach) are inline test data in the scenario files per suite convention — a deliberately-invalid fixture file would fail the automatic `fixtures-valid.test.ts` sweep.
 
