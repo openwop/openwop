@@ -80,6 +80,12 @@ Plugin↔host communication is a request/response + event protocol. Every messag
 
 **Channel binding (RFC 0119, normative).** The host **MUST** deliver `ui-plugin/1` envelopes across the isolation boundary as discrete messages with request/response correlation by the envelope `id`. The **transport is host-internal** and follows the advertised `isolation` mechanism: browser `window.postMessage` for `cross-origin-iframe`, a host-import/export call for `wasm`, an IPC channel for `process`/`container`/`vm`. The envelope shape (the `openwop: "ui-plugin/1"` tag, `type` ∈ request/response/event, `id`, `method`, `result`/`error`) is transport-agnostic and **MUST** be identical across all isolation models. A host **MUST NOT** expose any plugin↔host channel other than this mediated RPC.
 
+The following make the binding sound across non-browser transports (a browser `MessagePort` provides the first two for free; a byte-stream transport does not). Surfaced by the MyndHyve implementer review from a live non-iframe `ui-plugin/1` Worker bridge, resolving RFC 0119 Unresolved Question #1:
+
+- **Framing & ordering (RFC 0119).** The transport **MUST** preserve message-boundary framing and per-channel ordering of envelopes, so that "correlation by `id`" is well-defined. A browser `MessagePort` satisfies this inherently; a byte-stream transport (IPC / stdio / shared-memory) **MUST** add framing (e.g. length-prefixing) or equivalent — `id`-correlated envelopes **MUST NOT** be permitted to interleave or fragment.
+- **WASM single-import (RFC 0119).** For `isolation: "wasm"`, "no other channel" means the host **MUST NOT** bind any host import to the plugin module other than the single `ui-plugin/1` RPC entrypoint (no ambient host functions). This is the WASM-mechanism form of the `frontend-plugin-isolation` MUST NOT — a WASM guest can otherwise import arbitrary host functions as a silent side channel the iframe model cannot express — and mirrors the closed `openwop` import namespace RFC 0008 §C already mandates for backend WASM node-packs.
+- **Backpressure (RFC 0119).** Hosts **SHOULD** bound the number of concurrent in-flight request `id`s and **MAY** refuse excess requests with an ordinary error response on the **existing** channel (never a new channel, and without a new error code in v1.x). Browser `postMessage` queues are effectively unbounded; a byte-stream host with no bound grows memory under a chatty plugin.
+
 ```jsonc
 // plugin → host (request)
 { "openwop": "ui-plugin/1", "id": 7, "type": "request", "method": "artifact.read",

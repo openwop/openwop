@@ -2316,7 +2316,12 @@ invariants:
       loading, same-origin iframes, and module federation (the federated remote
       executing with the host's full privileges) are a protocol-tier MUST NOT —
       REGARDLESS of the advertised mechanism — because registry-distributed
-      third-party code must never run with host authority. The always-on shape leg
+      third-party code must never run with host authority. For `isolation:"wasm"`
+      this MUST NOT additionally means the host binds NO host import to the plugin
+      module beyond the single `ui-plugin/1` RPC entrypoint (no ambient host
+      functions — an extra import is a silent side channel), mirroring the closed
+      `openwop` import namespace RFC 0008 §C mandates for backend WASM packs (RFC
+      0119 §Host-RPC). The always-on shape leg
       of `frontend-plugin-packs.test.ts` asserts `uiPlugins.isolation` is a member
       of the conformant model set (RFC 0119 enum / `x-host-*`); the gated
       behavioral leg drives a host advertising `uiPlugins.supported` and asserts
