@@ -12,6 +12,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 ---
 
 
+## [Unreleased]
+
+_No changes yet._
+
+---
+
 ## [1.2.0] — 2026-06-30 — the token-economy, front-end-plugin, and parallel-fan-out graduation cycle (RFC 0109–0120)
 
 Closes the RFC 0109–0120 cycle: seven RFCs reached `Accepted` (0109, 0110, 0112, 0113, 0115, 0118, 0120) and five new ones landed their `Active` normative surface (0111, 0114, 0116, 0117, 0119). The work clusters into a token / transport economy, sandboxed front-end plugin packs, parallel sub-workflow fan-out, and a pack-delivered credential-egress allow-list. All wire shapes additive per `COMPATIBILITY.md` §2.1; no v1 wire break. RFC counts move `Accepted 105 → 112 / Active 2 → 7 / Draft 1 (0038)`.
