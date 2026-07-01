@@ -136,7 +136,11 @@ function parseRfcs() {
       const text = read(rel);
       const id = path.basename(rel).slice(0, 4);
       const title = text.match(/\|\s*\*\*Title\*\*\s*\|\s*([^|]+)\|/)?.[1]?.trim() ?? path.basename(rel, '.md');
-      const status = text.match(/\|\s*\*\*Status\*\*\s*\|\s*`?([^`|]+)`?\s*\|/)?.[1]?.trim() ?? 'Unknown';
+      // Capture the leading status keyword only, tolerating a trailing
+      // annotation in the same cell (e.g. `Draft` (**Parked**), `Active` (waived)).
+      // The prior `([^`|]+)…\|` form required the status token to be the whole
+      // cell and silently returned 'Unknown' for any annotated Status field.
+      const status = text.match(/\|\s*\*\*Status\*\*\s*\|\s*`?([A-Za-z][\w-]*)/)?.[1]?.trim() ?? 'Unknown';
       return { id, title, status, rel };
     })
     .sort((a, b) => a.id.localeCompare(b.id));
