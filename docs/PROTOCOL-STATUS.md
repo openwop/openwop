@@ -12,7 +12,7 @@
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 380 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 120 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 121 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -34,6 +34,7 @@
 | Accepted | 112 |
 | Active | 7 |
 | Draft | 1 |
+| Unknown | 1 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -157,6 +158,7 @@
 | RFC 0118 | Parallel sub-workflow fan-out and join (`fanOutPolicy: 'parallel'` + `joinPolicy`) | Accepted |
 | RFC 0119 | Front-End Plugin Isolation as a Mechanism-Neutral Property (amends RFC 0117) | Active |
 | RFC 0120 | Connection-pack provider `apiHosts` - declared credential-egress allow-list | Accepted |
+| RFC 0121 | Subscription-reuse provider auth mode - adds `"subscription"` to the `aiProviders.authModes` closed enum (RFC 0067), so a host can honestly advertise that a provider's credential may be supplied by reusing an existing personal consumer subscription (e.g. Claude Pro/Max, ChatGPT Plus) rather than a metered API key or a host-owned OAuth client | Unknown |
 
 ## SDK Helper Coverage
 
