@@ -3,7 +3,7 @@
  *
  * Verifies `capabilities.aiProviders.authModes` — the optional per-provider
  * advertisement of HOW a host expects a provider's credential to be supplied
- * (`apiKey` / `oauth-pkce` / `oauth-device` / `none`).
+ * (`apiKey` / `oauth-pkce` / `oauth-device` / `none` / `subscription`).
  *
  * Two assertion groups:
  *   1. Schema shape (always-on, server-free) — the `aiProviders.authModes`
@@ -53,13 +53,13 @@ function authModesValidator() {
       type: 'array',
       minItems: 1,
       uniqueItems: true,
-      items: { type: 'string', enum: ['apiKey', 'oauth-pkce', 'oauth-device', 'none'] },
+      items: { type: 'string', enum: ['apiKey', 'oauth-pkce', 'oauth-device', 'none', 'subscription'] },
     },
   });
 }
 
 describe('byok-auth-modes: schema shape (RFC 0067, server-free)', () => {
-  it('the capabilities schema declares aiProviders.authModes with the four-mode enum', () => {
+  it('the capabilities schema declares aiProviders.authModes with the five-mode enum', () => {
     const caps = JSON.parse(
       readFileSync(join(SCHEMAS_DIR, 'capabilities.schema.json'), 'utf8'),
     ) as Record<string, unknown>;
@@ -77,6 +77,7 @@ describe('byok-auth-modes: schema shape (RFC 0067, server-free)', () => {
       'oauth-pkce',
       'oauth-device',
       'none',
+      'subscription',
     ]);
   });
 
@@ -117,6 +118,14 @@ describe('byok-auth-modes: cross-field consistency (gated on advertisement)', ()
         expect(
           byok.has(provider),
           driver.describe('RFC 0067 §B.2', `provider '${provider}' with apiKey MUST appear in aiProviders.byok`),
+        ).toBe(true);
+      }
+
+      // RFC 0121 §B.7 — a `subscription` provider is a BYOK path and MUST be in `byok`.
+      if (modes.includes('subscription')) {
+        expect(
+          byok.has(provider),
+          driver.describe('RFC 0121 §B.7', `provider '${provider}' with subscription MUST appear in aiProviders.byok`),
         ).toBe(true);
       }
 

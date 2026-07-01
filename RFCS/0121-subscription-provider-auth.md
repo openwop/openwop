@@ -147,14 +147,14 @@ Promotion `Draft → Active` (✅ **met 2026-07-01** — bootstrap-phase steward
 
 Promotion `Active → Accepted` requires, in addition to the standard checklist:
 
-- [ ] **Unresolved question 1 has a documented resolution** for at least one named provider (legal/ToS review citation, or the provider's own sanctioned integration-path documentation) — re-scoped from the original un-parking tripwire; **gates all implementation, not just Accepted**.
-- [ ] Spec text merged (`capabilities.md` §A/§B).
-- [ ] Schema updated (`capabilities.schema.json` `authModes` enum +1 value).
-- [ ] `SECURITY/invariants.yaml` gains `subscription-credential-user-scope-only`.
-- [ ] `conformance/src/scenarios/byok-auth-modes.test.ts`'s existing hard-coded enum assertion is updated in the same conformance-suite release that ships the new scenario (explicitly called out — this is a modification to an existing always-on scenario, not purely additive test authorship).
-- [ ] At least one new conformance scenario (`aiproviders-subscription-scope.test.ts`) covering the new surface.
-- [ ] CHANGELOG entry under the appropriate version.
-- [ ] Reference host implements and passes the new scenarios (or dual-witness per the graduation bar), on a lawfully-cleared provider.
+- [ ] **Unresolved question 1 has a documented resolution** for at least one named provider (legal/ToS review citation, or the provider's own sanctioned integration-path documentation) — re-scoped from the original un-parking tripwire; **gates all implementation, not just Accepted**. _(Steward reports cleared 2026-07-01; citation to be recorded here before the surface merges.)_
+- [x] Spec text merged (`capabilities.md` §`aiProviders.authModes` — mode-table row + clauses 7–9).
+- [x] Schema updated (`capabilities.schema.json` `authModes` enum +1 value: `subscription`).
+- [x] `SECURITY/invariants.yaml` gains `subscription-credential-user-scope-only` (protocol-tier, high).
+- [x] `conformance/src/scenarios/byok-auth-modes.test.ts`'s hard-coded enum assertion updated to the five-mode set (same suite release as the new scenario).
+- [x] New conformance scenario `aiproviders-subscription-scope.test.ts` (always-on enum-shape + gated §B.7 in-`byok` + `OPENWOP_REQUIRE_BEHAVIOR` §B.8 tenant-scope-rejection legs); conformance suite `1.46.0 → 1.47.0`.
+- [x] CHANGELOG entry ([Unreleased]).
+- [ ] Reference host (openwop-app) advertises `subscription` for a lawfully-cleared provider and passes the new scenarios (or dual-witness per the graduation bar) — the crosstalk integration.
 
 ## References
 

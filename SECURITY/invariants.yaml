@@ -175,6 +175,27 @@ invariants:
       honesty scenario asserts the endpoint location appears in no run.* event
       or error payload.
 
+  - id: subscription-credential-user-scope-only
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-provider-policy.md
+    tests:
+      - conformance/src/scenarios/aiproviders-subscription-scope.test.ts
+    note: |
+      RFC 0121 §B clause 8: a credential resolved under
+      `aiProviders.authModes` "subscription" mode MUST be bound to
+      host.credentials (RFC 0046) scope:"user" and MUST NOT be resolvable at
+      tenant/workspace scope. A host that permits tenant-scope binding of a
+      personal-subscription credential both violates the credential owner's
+      individual-seat subscription terms and creates an unaudited multi-user
+      sharing surface. A binding attempt at tenant/workspace scope MUST be
+      rejected with the canonical `credential_scope_forbidden` error code.
+      Distinct from credential-payload-redaction (RFC 0046): this invariant is
+      about scope binding, not payload disclosure. The shape scenario statically
+      asserts the "subscription" enum value is present + a subscription provider
+      appears in `byok`; the Active→Accepted behavioral leg (OPENWOP_REQUIRE_BEHAVIOR)
+      asserts a tenant-scope binding is rejected with `credential_scope_forbidden`.
+
   - id: media-asset-url-tenant-scoped
     tier: protocol
     severity: critical
