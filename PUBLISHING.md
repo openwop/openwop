@@ -40,7 +40,7 @@ The CLI is operator-side tooling (not part of the v1 wire surface). It was extra
 
 - The 3 SDKs (`@openwop/openwop`, `openwop-client`, `openwopclient`) MUST track the spec major. A spec at v1.x always has SDKs at v1.x. Within a major, SDK patch versions float independently.
 - `@openwop/openwop-conformance` starts at `1.0.0` for the v1.0 release. After v1.0, it may independently bump minors when scenarios are added/removed. Patch versions track bug fixes in scenario assertions.
-- Go module path includes the major (`/v1`) per Go convention. The v1 path is `github.com/openwop/openwop/sdk/go`; v2 will be `github.com/openwop/openwop/sdk/go/v2`.
+- Go module path includes the major (`/v1`) per Go convention. Post-split the v1 path is `github.com/openwop/openwop-sdks/go`; v2 will be `github.com/openwop/openwop-sdks/go/v2`. (The pre-split `github.com/openwop/openwop/sdk/go` path is frozen at its last in-corpus tag.)
 
 ### Deprecation policy
 
@@ -92,8 +92,8 @@ Run before EVERY publish (manual or CI-driven). The checklist is a hard gate; on
 
 ### `openwopclient` (Go modules)
 
-- [ ] `cd sdk/go && go vet ./...` clean (in `openwop-sdks`).
-- [ ] `cd sdk/go && go test ./...` passes (in `openwop-sdks`).
+- [ ] `cd go && go vet ./...` clean (in `openwop-sdks`, where the module lives at `/go`).
+- [ ] `cd go && go test ./...` passes (in `openwop-sdks`).
 - [ ] `go.mod` declares `go 1.22+` and module path `github.com/openwop/openwop-sdks/go` (no `/v1` suffix at v1.x.x; only v2+ uses the suffix). The pre-split `github.com/openwop/openwop/sdk/go` path is frozen at its last in-corpus tag.
 - [ ] Tag `openwop-sdks` with the subdirectory prefix matching the module's path within that repo — Go requires it for non-root modules. (A bare `v1.0.0` at the repo root WON'T work for a sub-module.)
 - [ ] Verify discoverability: `curl -sI https://proxy.golang.org/github.com/openwop/openwop-sdks/go/@v/v1.0.0.info` returns 200 after tag push (cache warm-up ~5 min).
@@ -122,7 +122,7 @@ Publish workflow at `.github/workflows/openwop-publish.yml`. Triggers map 1:1 to
 | `openwop/v*` (e.g. `openwop/v1.0.1`)                         | `publish-ts-client` only   | TS SDK bug fix; spec + conformance + Python + Go versions unchanged.                                      |
 | `openwop-conformance/v*` (e.g. `openwop-conformance/v1.0.1`) | `publish-conformance` only | Conformance scenario addition or test-suite bug fix.                                                      |
 | `openwop-client/v*` (e.g. `openwop-client/v1.0.1`)           | `publish-python` only      | Python SDK bug fix.                                                                                       |
-| `sdk/go/v*` (e.g. `sdk/go/v1.0.0`)                           | `publish-go` only          | Go SDK bug fix. **Doubles as the subdir-prefix tag** that proxy.golang.org requires for non-root modules. |
+| `go/v*` (e.g. `go/v1.0.0`)                                   | `publish-go` only          | Go SDK bug fix (from `openwop-sdks`, where the module lives at `/go`). **Doubles as the subdir-prefix tag** that proxy.golang.org requires for non-root modules. |
 
 Push the most specific tag for the change. Per-package tags keep unrelated packages at their current version (no phantom no-op republishes). Post-split, only the `v*` (corpus) and `openwop-conformance/v*` patterns fire from this repo; the three SDK tag patterns are executed in `openwop-sdks` (its publish workflow keeps the same per-package shape).
 
