@@ -131,7 +131,7 @@ Severity is `high` (not `critical`): the failure mode is unauthorized multi-user
 
 ## Implementation notes (non-normative)
 
-- **Reference-host commitment — UQ1 gate narrowed (2026-07-01, see [Status history](#status-history)).** This RFC does not require any `openwop-examples` or `openwop-app` implementation at `Active` (wire-shape only, per the RFC 0108 Draft → Active precedent). The UQ1 implementation gate is scoped to the **acquisition-bearing** surface: **no host may author an ADR for, implement, or advertise the live `subscription` advertisement or a credential-acquisition mechanism until Unresolved question 1 has a documented resolution.** The **acquisition-free scope-safety rail** — §B.7 in-`byok` consistency, §B.8 user-scope-only enforcement + the `credential_scope_forbidden` error, and the `POST /v1/host/sample/credentials/bind` conformance witness seam — carries no ToS/legal exposure (no subscription is reused) and **MAY be authored and implemented pre-UQ1** as reference-host hardening; an ADR **scoped to that rail only** (advertisement + acquisition sections deferred/gated on UQ1) is permitted. The acquisition-bearing legal precondition still sits *upstream* of any advertisement/acquisition decision.
+- **Reference-host commitment — UQ1 gate narrowed (2026-07-01, see [Status history](#status-history)).** This RFC does not require any `openwop-examples` or `openwop-app` implementation at `Active` (wire-shape only, per the RFC 0108 Draft → Active precedent). The UQ1 implementation gate was scoped to the **acquisition-bearing** surface (live `subscription` advertisement + credential-acquisition mechanism); as of the **2026-07-01 at-own-risk waiver** (see [Status history](#status-history)) that gate is **waived** — a host MAY implement/advertise the acquisition-bearing surface at the operator's and end-user's own risk while UQ1 stays UNRESOLVED, and SHOULD disclose the ToS/account-suspension risk to users. The **acquisition-free scope-safety rail** — §B.7 in-`byok` consistency, §B.8 user-scope-only enforcement + the `credential_scope_forbidden` error, and the `POST /v1/host/sample/credentials/bind` conformance witness seam — carries no ToS/legal exposure (no subscription is reused) and **MAY be authored and implemented pre-UQ1** as reference-host hardening; an ADR **scoped to that rail only** (advertisement + acquisition sections deferred/gated on UQ1) is permitted. The acquisition-bearing legal precondition still sits *upstream* of any advertisement/acquisition decision.
 - **Effort estimate if/when un-parked, wire-only:** schema enum + spec prose ~0.25 day; the SECURITY invariant + shape conformance scenario ~0.5 day; the companion `byok-auth-modes.test.ts` enum-list update ~0.25 day; CHANGELOG + INTEROP-MATRIX ~30 min. Full host implementation (whichever §C shape is lawful) is materially larger and intentionally unscoped here.
 - **Cross-cut:** none identified against `WORKFLOW-PROTOCOL-openwop-PLAN.md` — this is an additive-only wire vocabulary change (Active; wire-shape only) with no reference-host obligation yet.
 
@@ -147,7 +147,7 @@ Promotion `Draft → Active` (✅ **met 2026-07-01** — bootstrap-phase steward
 
 Promotion `Active → Accepted` requires, in addition to the standard checklist:
 
-- [ ] **Unresolved question 1 has a documented resolution** for at least one named provider (legal/ToS review citation, or the provider's own sanctioned integration-path documentation) — re-scoped from the original un-parking tripwire; **gates all implementation, not just Accepted**. _(Steward reports cleared 2026-07-01; citation to be recorded here before the surface merges.)_
+- [ ] **Unresolved question 1 has a documented resolution** for at least one named provider (legal/ToS review citation, or the provider's own sanctioned integration-path documentation) — re-scoped from the original un-parking tripwire; **gated all implementation** UNLESS waived. _(No citation exists as of 2026-07-01; UQ1 remains **UNRESOLVED**. The steward has instead issued an **at-own-risk waiver** of the implementation gate — see [Status history](#status-history) — accepting that operators/end-users bear the ToS/legal risk. This item stays open: it is **waived, not satisfied**.)_
 - [x] Spec text merged (`capabilities.md` §`aiProviders.authModes` — mode-table row + clauses 7–9).
 - [x] Schema updated (`capabilities.schema.json` `authModes` enum +1 value: `subscription`).
 - [x] `SECURITY/invariants.yaml` gains `subscription-credential-user-scope-only` (protocol-tier, high).
@@ -168,6 +168,14 @@ Promotion `Active → Accepted` requires, in addition to the standard checklist:
 - openwop-app competitive feature-gap analysis (conversation-derived, 2026-07-01) — the originating motivation, comparing competing coding-agent tools' feature surface against openwop-app's current BYOK/API-key-only model.
 
 ## Status history
+
+### UQ1 at-own-risk waiver (2026-07-01)
+
+No documented UQ1 resolution exists — no consumer-AI-subscription provider's terms of service is known to permit third-party API-shaped use of a reused personal login, and no provider-sanctioned integration path was identified. **UQ1 therefore remains formally UNRESOLVED.** The steward has nonetheless authorized proceeding with the `subscription` **acquisition-bearing** surface (live advertisement + acquisition mechanism, including §C shape 1 borrowed-session) **at the operator's and end-user's own risk**, superseding the earlier "gated until UQ1 documented" implementation gate.
+
+Explicit risk acceptance: reusing a personal consumer subscription for third-party automation **may violate the provider's terms of service and can result in suspension of or action against the end user's account**. Operators enabling this **SHOULD disclose the risk to users before use**. This is a documented **risk waiver, NOT a legal clearance** — UQ1's acceptance checkbox stays open.
+
+The wire safety rail is unaffected: the §B.8 `subscription-credential-user-scope-only` MUST (user-scope binding; a tenant/workspace binding is rejected with `credential_scope_forbidden`) **remains mandatory**, and acquisition remains host-internal (§C).
 
 ### UQ1 implementation-gate narrowed (2026-07-01)
 
