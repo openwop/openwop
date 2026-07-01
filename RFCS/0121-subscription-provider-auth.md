@@ -131,7 +131,7 @@ Severity is `high` (not `critical`): the failure mode is unauthorized multi-user
 
 ## Implementation notes (non-normative)
 
-- **No reference-host commitment.** This RFC does not propose or require any `openwop-examples` or `openwop-app` implementation at `Active` (wire-shape only, per the RFC 0108 Draft → Active precedent). In particular, **no openwop-app ADR should be authored for this surface until Unresolved question 1 has a documented resolution** — this inverts the usual RFC-then-ADR sequencing (cf. RFC 0108 → ADR 0121 in `openwop-app`) deliberately, because here the legal precondition sits *upstream* of any implementation decision, not downstream of it.
+- **Reference-host commitment — UQ1 gate narrowed (2026-07-01, see [Status history](#status-history)).** This RFC does not require any `openwop-examples` or `openwop-app` implementation at `Active` (wire-shape only, per the RFC 0108 Draft → Active precedent). The UQ1 implementation gate is scoped to the **acquisition-bearing** surface: **no host may author an ADR for, implement, or advertise the live `subscription` advertisement or a credential-acquisition mechanism until Unresolved question 1 has a documented resolution.** The **acquisition-free scope-safety rail** — §B.7 in-`byok` consistency, §B.8 user-scope-only enforcement + the `credential_scope_forbidden` error, and the `POST /v1/host/sample/credentials/bind` conformance witness seam — carries no ToS/legal exposure (no subscription is reused) and **MAY be authored and implemented pre-UQ1** as reference-host hardening; an ADR **scoped to that rail only** (advertisement + acquisition sections deferred/gated on UQ1) is permitted. The acquisition-bearing legal precondition still sits *upstream* of any advertisement/acquisition decision.
 - **Effort estimate if/when un-parked, wire-only:** schema enum + spec prose ~0.25 day; the SECURITY invariant + shape conformance scenario ~0.5 day; the companion `byok-auth-modes.test.ts` enum-list update ~0.25 day; CHANGELOG + INTEROP-MATRIX ~30 min. Full host implementation (whichever §C shape is lawful) is materially larger and intentionally unscoped here.
 - **Cross-cut:** none identified against `WORKFLOW-PROTOCOL-openwop-PLAN.md` — this is an additive-only wire vocabulary change (Active; wire-shape only) with no reference-host obligation yet.
 
@@ -168,6 +168,10 @@ Promotion `Active → Accepted` requires, in addition to the standard checklist:
 - openwop-app competitive feature-gap analysis (conversation-derived, 2026-07-01) — the originating motivation, comparing competing coding-agent tools' feature surface against openwop-app's current BYOK/API-key-only model.
 
 ## Status history
+
+### UQ1 implementation-gate narrowed (2026-07-01)
+
+Reconciliation raised during the openwop-app integration crosstalk (the RFC author flagged that a peer re-scoping must not silently override the RFC's written gate). The original Implementation-notes read "no openwop-app ADR should be authored for this surface until UQ1 has a documented resolution." That gate is **narrowed to the acquisition-bearing surface**: the live `subscription` advertisement + any credential-acquisition mechanism remain UQ1-gated (no ADR, no implement, no advertise). The **acquisition-free scope-safety rail** — §B.7 in-`byok`, §B.8 user-scope-only enforcement + `credential_scope_forbidden`, and the `POST /v1/host/sample/credentials/bind` conformance witness seam — reuses no subscription and carries no ToS/legal exposure, so it MAY be authored/implemented pre-UQ1 as reference-host hardening (ADR scoped to the rail only). This narrows *where* the gate bites; it does **not** weaken the rail — the ToS-risky acquisition stays fully gated. Architect-grounded; the safety rail is preserved at the acquisition/advertisement boundary.
 
 ### Draft → Active (2026-07-01)
 
