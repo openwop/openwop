@@ -14,7 +14,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1/) loosely. Ver
 
 ## [Unreleased]
 
-_No changes yet._
+### Added
+
+- **RFC 0121** (`Draft`, **Parked**) — Subscription-reuse provider auth mode: proposes adding `"subscription"` to the `aiProviders.authModes` closed enum (RFC 0067) so a host can honestly advertise that a provider credential may be supplied by reusing an existing personal consumer subscription (Claude Pro/Max, ChatGPT), with a new user-scope-only invariant. Parked pending a provider-specific ToS/legal review (the un-parking tripwire). Additive per `COMPATIBILITY.md` §2.1.
 
 ---
 
