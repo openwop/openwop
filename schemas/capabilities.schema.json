@@ -853,14 +853,14 @@
         },
         "authModes": {
           "type": "object",
-          "description": "RFC 0067 (`Draft`). Optional per-provider advertisement of HOW the host expects a provider's credential to be supplied. Keys are provider ids appearing in `supported`; values are the auth modes the host honors for that provider. Absent ⇒ no advertisement: a provider in `byok` defaults to `apiKey` semantics (client passes `ai.credentialRef`); a provider in `supported` but not in `byok` defaults to `none` (platform-managed). This map only DESCRIBES the supply mechanism — `oauth-pkce`/`oauth-device` flow mechanics compose RFC 0047 `host.oauth` and resolve credentials by `ref` (RFC 0046), never on `ai.credentialRef`. A provider with `apiKey` MUST appear in `byok`; a provider whose modes are exactly `[\"none\"]` MUST NOT appear in `byok`. Consumers MUST ignore an auth mode they don't recognize rather than reject the discovery doc.",
+          "description": "RFC 0067 (`Active`), extended by RFC 0121 (`Active`). Optional per-provider advertisement of HOW the host expects a provider's credential to be supplied. Keys are provider ids appearing in `supported`; values are the auth modes the host honors for that provider. Absent ⇒ no advertisement: a provider in `byok` defaults to `apiKey` semantics (client passes `ai.credentialRef`); a provider in `supported` but not in `byok` defaults to `none` (platform-managed). This map only DESCRIBES the supply mechanism — `oauth-pkce`/`oauth-device` flow mechanics compose RFC 0047 `host.oauth` and resolve credentials by `ref` (RFC 0046), never on `ai.credentialRef`. A provider with `apiKey` MUST appear in `byok`; a provider whose modes are exactly `[\"none\"]` MUST NOT appear in `byok`. `subscription` (RFC 0121) advertises that a provider credential may be supplied by reusing the caller's existing personal, non-metered consumer subscription (e.g. Claude Pro/Max, ChatGPT Plus) rather than a metered API key; a `subscription` provider MUST appear in `byok`, is referenced by `ref` (RFC 0046) like the `oauth-*` modes (never on `ai.credentialRef`), and its credential MUST bind at `host.credentials` `scope:\"user\"` — never tenant/workspace-shared (SECURITY invariant `subscription-credential-user-scope-only`). Consumers MUST ignore an auth mode they don't recognize rather than reject the discovery doc.",
           "additionalProperties": {
             "type": "array",
             "minItems": 1,
             "uniqueItems": true,
             "items": {
               "type": "string",
-              "enum": ["apiKey", "oauth-pkce", "oauth-device", "none"]
+              "enum": ["apiKey", "oauth-pkce", "oauth-device", "none", "subscription"]
             }
           }
         },
