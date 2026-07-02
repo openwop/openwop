@@ -12,7 +12,7 @@
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
 | Conformance scenario files | 382 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 122 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| RFCs tracked | 123 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -33,7 +33,7 @@
 |---|---:|
 | Accepted | 113 |
 | Active | 8 |
-| Draft | 1 |
+| Draft | 2 |
 
 | RFC | Title | Status |
 |---|---|---|
@@ -159,6 +159,7 @@
 | RFC 0120 | Connection-pack provider `apiHosts` - declared credential-egress allow-list | Accepted |
 | RFC 0121 | Subscription-reuse provider auth mode - adds `"subscription"` to the `aiProviders.authModes` closed enum (RFC 0067), so a host can honestly advertise that a provider's credential may be supplied by reusing an existing personal consumer subscription (e.g. Claude Pro/Max, ChatGPT Plus) rather than a metered API key or a host-owned OAuth client | Active |
 | RFC 0122 | Self-hosted runner (remote-driven local execution) | Accepted |
+| RFC 0123 | An additive `vendor` field on the connection-pack provider manifest, so a catalog can group connectors by the commercial vendor a customer does business with | Draft |
 
 ## SDK Helper Coverage
 
@@ -175,7 +176,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 
 ## Active Follow-Ups
 
-- 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
+- 2 RFCs still `Draft` (RFC 0038, RFC 0123) — advance with schema/conformance proof or defer.
 - 8 RFCs `Active` (RFC 0035, RFC 0043, RFC 0111, RFC 0114, RFC 0116, RFC 0117, RFC 0119, RFC 0121) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
