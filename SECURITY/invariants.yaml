@@ -196,6 +196,45 @@ invariants:
       appears in `byok`; the Active→Accepted behavioral leg (OPENWOP_REQUIRE_BEHAVIOR)
       asserts a tenant-scope binding is rejected with `credential_scope_forbidden`.
 
+  - id: runner-credential-non-transit
+    tier: protocol
+    severity: critical
+    threat_model: SECURITY/threat-model-secret-leakage.md
+    tests:
+      - conformance/src/scenarios/self-hosted-runner.test.ts
+    note: |
+      RFC 0122 §Behavior clause 2: a self-hosted runner's local credential (a
+      subscription CLI login per RFC 0121, a private endpoint key per RFC 0108)
+      is held on the user's runner and MUST NOT transit the host. It MUST NOT
+      appear in any `SelfHostedRunnerDispatchFrame` or `SelfHostedRunnerResultFrame`,
+      run.* event payload, run result, debug bundle, export, replay state, or log.
+      The host sends `inputs` and receives `output`; it never sees the credential
+      (the whole point of execution locality — a hosted control plane using compute
+      + credentials that exist only on the user's machine). This is the runner-channel
+      analog of the BYOK SR-1 credential-non-transit rule (cross-references
+      secret-leakage-eventlog-payload / credential-payload-redaction). The frame
+      schemas are `additionalProperties:false`, so a runner cannot smuggle a
+      credential field onto a result frame; the behavioral leg (OPENWOP_REQUIRE_BEHAVIOR)
+      asserts a dispatch/result round-trip carries no credential material on any
+      observable surface.
+
+  - id: runner-output-untrusted-transport
+    tier: protocol
+    severity: high
+    threat_model: SECURITY/threat-model-prompt-injection.md
+    tests:
+      - conformance/src/scenarios/self-hosted-runner.test.ts
+    note: |
+      RFC 0122 §Behavior clause 3: a host MUST treat a runner as untrusted
+      transport. Runner-returned `output` re-entering an agent loop MUST be fenced
+      as untrusted (wrapped `<UNTRUSTED>` in the next LLM turn), consistent with the
+      existing tool-output fencing requirement — a runner is a user-controlled
+      process whose output is attacker-influenceable, so it carries the same
+      prompt-injection exposure as pack output (cross-references
+      node-pack-output-untrusted / prompt-injection-* ids). The behavioral leg
+      (OPENWOP_REQUIRE_BEHAVIOR) asserts runner output re-entering an agent loop is
+      marked untrusted, not trusted host-origin content.
+
   - id: media-asset-url-tenant-scoped
     tier: protocol
     severity: critical
