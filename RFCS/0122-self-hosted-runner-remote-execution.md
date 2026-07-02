@@ -4,24 +4,24 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0122                                                            |
 | **Title**         | Self-hosted runner (remote-driven local execution)              |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                      |
 | **Author(s)**     | David Tufts (openwop-app maintainer)                            |
 | **Created**       | 2026-07-02                                                      |
-| **Updated**       | 2026-07-02 — Draft → Active (bootstrap-phase steward waiver; 7-day comment window waived; see [Status history](#status-history)). Wire-shape locked (architect-reviewed); the spec doc + `selfHostedRunner` capability + 2 SECURITY invariants + gated conformance scenario + dual reference-host witness remain the path to `Accepted`. No host may advertise `selfHostedRunner` until `Accepted`. |
+| **Updated**       | 2026-07-02 — Active → Accepted (dual-witness graduation vs conformance suite `1.48.0`: openwop-app reference host + MyndHyve tier-2 witness both pass the gated `self-hosted-runner` scenario non-vacuously behind the capability gate; see [Status history](#status-history)). The wire surface (`selfHostedRunner` capability + dispatch/result/registration frame schemas + 2 protocol-tier SECURITY invariants + gated conformance scenario) is implemented and reflected in the corpus; hosts MAY now advertise `selfHostedRunner`. |
 | **Affects**       | new spec doc `spec/v1/self-hosted-runner.md`; `capabilities.md` (a new advertised capability); conformance (a new gated scenario); potentially SDK client types |
 | **Compatibility** | `additive`                                                      |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
 
-> **Status note.** This is `Active` — the **wire vocabulary is locked** under the
-> bootstrap-phase steward waiver (see [Status history](#status-history)); it is NOT
-> yet `Accepted`. **No host may advertise the `selfHostedRunner` capability, or
-> claim it in `INTEROP-MATRIX.md`, until this reaches `Accepted`** per
-> `capabilities.md` — the safety rail moves from the status label to the
-> implementation gate. Reference hosts (openwop-app ADR 0182 Phase 5; a second
-> witness) MAY wire the runner↔host channel *behind the capability gate*
-> (seam-wired, conformance soft-skipping) at `Active`, but the gated behavioral
-> scenario stays soft-skip until each host honestly advertises at graduation.
+> **Status note.** This is `Accepted` (2026-07-02) — the wire surface is
+> implemented and reflected in the corpus, and the gated `self-hosted-runner`
+> conformance scenario was witnessed **non-vacuously** on two hosts (openwop-app
+> reference + MyndHyve tier-2) vs suite `1.48.0` (see [Status history](#status-history)).
+> **Hosts MAY now advertise the `selfHostedRunner` capability and claim it in
+> `INTEROP-MATRIX.md`** once they pass the gated scenario honestly. The
+> credential-non-transit and output-untrusted-transport safety rails
+> (`runner-credential-non-transit`, `runner-output-untrusted-transport`) are
+> protocol-tier SECURITY invariants verified at the spec gate.
 
 ## Summary
 
@@ -201,6 +201,42 @@ Reference-host advertisement (openwop-app ADR 0182 Phase 5; a second witness)
 proceeds only once this reaches `Accepted`.
 
 ## Status history
+
+### Active → Accepted (2026-07-02)
+
+Graduated on **dual-witness evidence** vs published conformance suite
+`@openwop/openwop-conformance@1.48.0`. Per `GOVERNANCE.md` §"Acceptance evidence
+tiers" this is a **tier-1 reference (openwop-app) + tier-2 (MyndHyve
+steward-affiliated sibling)** graduation — not independent-organization
+dual-witness. Both hosts implement the runner↔host channel behind the
+`selfHostedRunner` capability gate and pass the gated `self-hosted-runner`
+scenario **non-vacuously** under `OPENWOP_REQUIRE_BEHAVIOR=true` (the tier-3
+`POST /v1/host/sample/runner/{register,dispatch}` seam RUNS — `register` → HTTP
+200, not a 404 soft-skip — driving each host's real subject-first match + real
+`{runId, stepId}` at-most-once result store, not a fabricating mock).
+
+Witnesses:
+
+- **openwop-app reference host** — PR openwop-app#1066. `host/selfHostedRunner.ts`
+  per-subject registry + subject-first match (no cross-subject fallback) +
+  at-most-once `{runId, stepId}` dedup on a real `DurableCollection`; §19 seam via
+  `routes/runnerSeam.ts`; advertises `selfHostedRunner { supported:true,
+  dispatchKinds:["model"] }`. Published `self-hosted-runner.test.ts` **7/7** under
+  `OPENWOP_REQUIRE_BEHAVIOR=true` — subject-first `runner_unavailable` (HTTP 409 +
+  `retriable:true`) with no cross-subject fallback, and `deduped:true` on a
+  redelivered `{runId, stepId}` backed by the persisted result. Both invariants
+  honored (`runner-credential-non-transit`: closed frames, token stays on the
+  runner; `runner-output-untrusted-transport`: output fenced `<UNTRUSTED>`).
+  Model-dispatch arm first (ADR 0182 Phase 5); the SSE outbound-dial product
+  channel is deferred. No vendor-CLI spawn in `backend/src` (ADR 0182 gate holds).
+- **MyndHyve `workflow-runtime`** (tier-2) — <!-- TODO(witness-2): fill MyndHyve rev + PR + confirm non-vacuous pass of self-hosted-runner.test.ts under OPENWOP_REQUIRE_BEHAVIOR=true vs suite 1.48.0 (subject-first runner_unavailable + retriable; deduped:true on real persisted {runId,stepId} store on the run_claims Firestore pattern; Principal-keyed subject-first match; output <UNTRUSTED>-fenced). runner_unavailable status host-chosen (503 or 409 — both conformant; the witness asserts the envelope, not a numeric status). --> **PENDING** — see `INTEROP-MATRIX.md` row (filled at graduation once MyndHyve's arm lands its non-vacuous witness).
+
+**Status-status flip note.** The `runner_unavailable` numeric HTTP status is
+**host-chosen** (any `>= 400`): the conformance witness asserts the envelope
+`{ error: { code: "runner_unavailable", retriable: true } }`, NOT a fixed status
+(mirrors `run_forbidden` / `capability_required`; registered in
+`rest-endpoints.md` §"Common error codes" per #815). openwop-app returns `409`;
+MyndHyve MAY return `503` — both are conformant and both witness non-vacuously.
 
 ### Draft → Active (2026-07-02)
 
