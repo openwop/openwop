@@ -4,24 +4,24 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0122                                                            |
 | **Title**         | Self-hosted runner (remote-driven local execution)              |
-| **Status**        | `Active`                                                        |
+| **Status**        | `Accepted`                                                      |
 | **Author(s)**     | David Tufts (openwop-app maintainer)                            |
 | **Created**       | 2026-07-02                                                      |
-| **Updated**       | 2026-07-02 — Draft → Active (bootstrap-phase steward waiver; 7-day comment window waived; see [Status history](#status-history)). Wire-shape locked (architect-reviewed); the spec doc + `selfHostedRunner` capability + 2 SECURITY invariants + gated conformance scenario + dual reference-host witness remain the path to `Accepted`. No host may advertise `selfHostedRunner` until `Accepted`. |
+| **Updated**       | 2026-07-02 — Active → Accepted (dual-witness graduation vs conformance suite `1.48.0`: openwop-app reference host + MyndHyve tier-2 witness both pass the gated `self-hosted-runner` scenario non-vacuously behind the capability gate; see [Status history](#status-history)). The wire surface (`selfHostedRunner` capability + dispatch/result/registration frame schemas + 2 protocol-tier SECURITY invariants + gated conformance scenario) is implemented and reflected in the corpus; hosts MAY now advertise `selfHostedRunner`. |
 | **Affects**       | new spec doc `spec/v1/self-hosted-runner.md`; `capabilities.md` (a new advertised capability); conformance (a new gated scenario); potentially SDK client types |
 | **Compatibility** | `additive`                                                      |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
 
-> **Status note.** This is `Active` — the **wire vocabulary is locked** under the
-> bootstrap-phase steward waiver (see [Status history](#status-history)); it is NOT
-> yet `Accepted`. **No host may advertise the `selfHostedRunner` capability, or
-> claim it in `INTEROP-MATRIX.md`, until this reaches `Accepted`** per
-> `capabilities.md` — the safety rail moves from the status label to the
-> implementation gate. Reference hosts (openwop-app ADR 0182 Phase 5; a second
-> witness) MAY wire the runner↔host channel *behind the capability gate*
-> (seam-wired, conformance soft-skipping) at `Active`, but the gated behavioral
-> scenario stays soft-skip until each host honestly advertises at graduation.
+> **Status note.** This is `Accepted` (2026-07-02) — the wire surface is
+> implemented and reflected in the corpus, and the gated `self-hosted-runner`
+> conformance scenario was witnessed **non-vacuously** on two hosts (openwop-app
+> reference + MyndHyve tier-2) vs suite `1.48.0` (see [Status history](#status-history)).
+> **Hosts MAY now advertise the `selfHostedRunner` capability and claim it in
+> `INTEROP-MATRIX.md`** once they pass the gated scenario honestly. The
+> credential-non-transit and output-untrusted-transport safety rails
+> (`runner-credential-non-transit`, `runner-output-untrusted-transport`) are
+> protocol-tier SECURITY invariants verified at the spec gate.
 
 ## Summary
 
@@ -201,6 +201,74 @@ Reference-host advertisement (openwop-app ADR 0182 Phase 5; a second witness)
 proceeds only once this reaches `Accepted`.
 
 ## Status history
+
+### Active → Accepted (2026-07-02)
+
+Graduated on **dual-witness evidence** vs published conformance suite
+`@openwop/openwop-conformance@1.48.0`. Per `GOVERNANCE.md` §"Acceptance evidence
+tiers" this is a **tier-1 reference (openwop-app) + tier-2 (MyndHyve
+steward-affiliated sibling)** graduation — not independent-organization
+dual-witness. **Both witnesses are LIVE-DEPLOYED** (each on a real deployed Cloud
+Run revision, advertising `selfHostedRunner` honest-off `supported:false` on its
+live `/.well-known/openwop` — the openwop-app row via prod `app.openwop.dev`, the
+MyndHyve row via a `--no-traffic --tag` witness revision) and were
+**steward-curl-verified** 2026-07-02 (discovery honest-off + the `POST
+/v1/host/sample/runner/register` seam live, HTTP 400 on a minimal payload, NOT a
+404 route-absent). Both pass the gated `self-hosted-runner` scenario
+**non-vacuously** under `OPENWOP_REQUIRE_BEHAVIOR=true` (the tier-3
+`POST /v1/host/sample/runner/{register,dispatch}` seam RUNS — `register` → HTTP
+200, not a 404 soft-skip — driving each host's real subject-first match + real
+`{runId, stepId}` at-most-once result store, not a fabricating mock).
+
+Witnesses:
+
+- **openwop-app reference host** (tier-1) — PR openwop-app#1066 **merged to
+  `main`**; **live in prod** at `app.openwop.dev`, Cloud Run rev
+  `openwop-app-backend-00363-gtg` @ 100%. (CI was red only on the GitHub-Actions
+  billing outage — jobs failed at startup with 0 steps; the local `npm run ci`
+  gate is authoritative per CLAUDE.md → backend suite 3889 passed; admin-override
+  merge.) `host/selfHostedRunner.ts` per-subject registry + subject-first match (no
+  cross-subject fallback) + at-most-once `{runId, stepId}` dedup on a real
+  `DurableCollection`; §19 seam via `routes/runnerSeam.ts`; advertises
+  `selfHostedRunner { supported:false→true, dispatchKinds:["model"] }`
+  (honest-off pre-flip; steward-curl-verified live honest-off). Published
+  `self-hosted-runner.test.ts` **7/7** under `OPENWOP_REQUIRE_BEHAVIOR=true` —
+  subject-first `runner_unavailable` (HTTP **409** + `retriable:true`) with no
+  cross-subject fallback, and `deduped:true` on a redelivered `{runId, stepId}`
+  backed by the persisted result. Both invariants honored
+  (`runner-credential-non-transit`: closed frames, token stays on the runner;
+  `runner-output-untrusted-transport`: output fenced `<UNTRUSTED>`). Model-dispatch
+  arm first (ADR 0182 Phase 5); the SSE outbound-dial product channel is deferred.
+  No vendor-CLI spawn in `backend/src` (ADR 0182 gate holds).
+- **MyndHyve `workflow-runtime`** (tier-2) — PR myndhyve#192. **Live-deployed**
+  witness revision `workflow-runtime-00516-yuz` (tag `rfc0122`, **0% traffic** —
+  prod serving untouched, RFC 0115 witness pattern; steward-curl-verified live
+  honest-off `selfHostedRunner { supported:false, dispatchKinds:["model","tool"] }`
+  + seam live `register` → 200). `host/selfHostedRunner.ts` SSOT: subject-first
+  match keyed on the RFC 0048 `Principal` (filters subject before capability, no
+  cross-subject fallback) + at-most-once `{runId, stepId}` dedup on a real
+  persisted store (same idempotency shape as its `run_claims` registry) + a
+  loopback runner that really answers so the dedup leg is non-vacuous. Published
+  `@openwop/openwop-conformance@1.48.0` `--filter self-hosted-runner` **16 passed /
+  0 failed** under `OPENWOP_REQUIRE_BEHAVIOR=true`
+  (`OPENWOP_OPTED_OUT_PROFILES=openwop-self-hosted-runner`, `supported:false`
+  pre-flip; tier-3 seam RUNS `register` → 200, not a 404 soft-skip). Non-vacuity
+  independently re-proven live via curl with fresh identifiers: subject-first
+  register-subjB → dispatch-subjA → **503**
+  `{error:{code:"runner_unavailable",retriable:true}}` (no cross-subject fallback);
+  first dispatch `deduped:false` → redelivery `deduped:true`; result `output`
+  fenced `<UNTRUSTED>…</UNTRUSTED>` + `contentTrust:"untrusted"`
+  (`runner-output-untrusted-transport`); closed frames, no credential field
+  (`runner-credential-non-transit`).
+
+**Status-status flip note.** The `runner_unavailable` numeric HTTP status is
+**host-chosen** (any `>= 400`): the conformance witness asserts the envelope
+`{ error: { code: "runner_unavailable", retriable: true } }`, NOT a fixed status
+(mirrors `run_forbidden` / `capability_required`; registered in
+`rest-endpoints.md` §"Common error codes" per #815). openwop-app returns `409`,
+MyndHyve returns `503` — both conformant, both witnessed non-vacuously; the two
+reference witnesses at 409/503 demonstrate the envelope-not-status contract
+holds cross-host.
 
 ### Draft → Active (2026-07-02)
 
