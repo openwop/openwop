@@ -208,35 +208,67 @@ Graduated on **dual-witness evidence** vs published conformance suite
 `@openwop/openwop-conformance@1.48.0`. Per `GOVERNANCE.md` §"Acceptance evidence
 tiers" this is a **tier-1 reference (openwop-app) + tier-2 (MyndHyve
 steward-affiliated sibling)** graduation — not independent-organization
-dual-witness. Both hosts implement the runner↔host channel behind the
-`selfHostedRunner` capability gate and pass the gated `self-hosted-runner`
-scenario **non-vacuously** under `OPENWOP_REQUIRE_BEHAVIOR=true` (the tier-3
+dual-witness. **Both witnesses are LIVE-DEPLOYED** (each on a real deployed Cloud
+Run revision, advertising `selfHostedRunner` honest-off `supported:false` on its
+live `/.well-known/openwop` — the openwop-app row via prod `app.openwop.dev`, the
+MyndHyve row via a `--no-traffic --tag` witness revision) and were
+**steward-curl-verified** 2026-07-02 (discovery honest-off + the `POST
+/v1/host/sample/runner/register` seam live, HTTP 400 on a minimal payload, NOT a
+404 route-absent). Both pass the gated `self-hosted-runner` scenario
+**non-vacuously** under `OPENWOP_REQUIRE_BEHAVIOR=true` (the tier-3
 `POST /v1/host/sample/runner/{register,dispatch}` seam RUNS — `register` → HTTP
 200, not a 404 soft-skip — driving each host's real subject-first match + real
 `{runId, stepId}` at-most-once result store, not a fabricating mock).
 
 Witnesses:
 
-- **openwop-app reference host** — PR openwop-app#1066. `host/selfHostedRunner.ts`
-  per-subject registry + subject-first match (no cross-subject fallback) +
-  at-most-once `{runId, stepId}` dedup on a real `DurableCollection`; §19 seam via
-  `routes/runnerSeam.ts`; advertises `selfHostedRunner { supported:true,
-  dispatchKinds:["model"] }`. Published `self-hosted-runner.test.ts` **7/7** under
-  `OPENWOP_REQUIRE_BEHAVIOR=true` — subject-first `runner_unavailable` (HTTP 409 +
-  `retriable:true`) with no cross-subject fallback, and `deduped:true` on a
-  redelivered `{runId, stepId}` backed by the persisted result. Both invariants
-  honored (`runner-credential-non-transit`: closed frames, token stays on the
-  runner; `runner-output-untrusted-transport`: output fenced `<UNTRUSTED>`).
-  Model-dispatch arm first (ADR 0182 Phase 5); the SSE outbound-dial product
-  channel is deferred. No vendor-CLI spawn in `backend/src` (ADR 0182 gate holds).
-- **MyndHyve `workflow-runtime`** (tier-2) — <!-- TODO(witness-2): fill MyndHyve rev + PR + confirm non-vacuous pass of self-hosted-runner.test.ts under OPENWOP_REQUIRE_BEHAVIOR=true vs suite 1.48.0 (subject-first runner_unavailable + retriable; deduped:true on real persisted {runId,stepId} store on the run_claims Firestore pattern; Principal-keyed subject-first match; output <UNTRUSTED>-fenced). runner_unavailable status host-chosen (503 or 409 — both conformant; the witness asserts the envelope, not a numeric status). --> **PENDING** — see `INTEROP-MATRIX.md` row (filled at graduation once MyndHyve's arm lands its non-vacuous witness).
+- **openwop-app reference host** (tier-1) — PR openwop-app#1066 **merged to
+  `main`**; **live in prod** at `app.openwop.dev`, Cloud Run rev
+  `openwop-app-backend-00363-gtg` @ 100%. (CI was red only on the GitHub-Actions
+  billing outage — jobs failed at startup with 0 steps; the local `npm run ci`
+  gate is authoritative per CLAUDE.md → backend suite 3889 passed; admin-override
+  merge.) `host/selfHostedRunner.ts` per-subject registry + subject-first match (no
+  cross-subject fallback) + at-most-once `{runId, stepId}` dedup on a real
+  `DurableCollection`; §19 seam via `routes/runnerSeam.ts`; advertises
+  `selfHostedRunner { supported:false→true, dispatchKinds:["model"] }`
+  (honest-off pre-flip; steward-curl-verified live honest-off). Published
+  `self-hosted-runner.test.ts` **7/7** under `OPENWOP_REQUIRE_BEHAVIOR=true` —
+  subject-first `runner_unavailable` (HTTP **409** + `retriable:true`) with no
+  cross-subject fallback, and `deduped:true` on a redelivered `{runId, stepId}`
+  backed by the persisted result. Both invariants honored
+  (`runner-credential-non-transit`: closed frames, token stays on the runner;
+  `runner-output-untrusted-transport`: output fenced `<UNTRUSTED>`). Model-dispatch
+  arm first (ADR 0182 Phase 5); the SSE outbound-dial product channel is deferred.
+  No vendor-CLI spawn in `backend/src` (ADR 0182 gate holds).
+- **MyndHyve `workflow-runtime`** (tier-2) — PR myndhyve#192. **Live-deployed**
+  witness revision `workflow-runtime-00516-yuz` (tag `rfc0122`, **0% traffic** —
+  prod serving untouched, RFC 0115 witness pattern; steward-curl-verified live
+  honest-off `selfHostedRunner { supported:false, dispatchKinds:["model","tool"] }`
+  + seam live `register` → 200). `host/selfHostedRunner.ts` SSOT: subject-first
+  match keyed on the RFC 0048 `Principal` (filters subject before capability, no
+  cross-subject fallback) + at-most-once `{runId, stepId}` dedup on a real
+  persisted store (same idempotency shape as its `run_claims` registry) + a
+  loopback runner that really answers so the dedup leg is non-vacuous. Published
+  `@openwop/openwop-conformance@1.48.0` `--filter self-hosted-runner` **16 passed /
+  0 failed** under `OPENWOP_REQUIRE_BEHAVIOR=true`
+  (`OPENWOP_OPTED_OUT_PROFILES=openwop-self-hosted-runner`, `supported:false`
+  pre-flip; tier-3 seam RUNS `register` → 200, not a 404 soft-skip). Non-vacuity
+  independently re-proven live via curl with fresh identifiers: subject-first
+  register-subjB → dispatch-subjA → **503**
+  `{error:{code:"runner_unavailable",retriable:true}}` (no cross-subject fallback);
+  first dispatch `deduped:false` → redelivery `deduped:true`; result `output`
+  fenced `<UNTRUSTED>…</UNTRUSTED>` + `contentTrust:"untrusted"`
+  (`runner-output-untrusted-transport`); closed frames, no credential field
+  (`runner-credential-non-transit`).
 
 **Status-status flip note.** The `runner_unavailable` numeric HTTP status is
 **host-chosen** (any `>= 400`): the conformance witness asserts the envelope
 `{ error: { code: "runner_unavailable", retriable: true } }`, NOT a fixed status
 (mirrors `run_forbidden` / `capability_required`; registered in
-`rest-endpoints.md` §"Common error codes" per #815). openwop-app returns `409`;
-MyndHyve MAY return `503` — both are conformant and both witness non-vacuously.
+`rest-endpoints.md` §"Common error codes" per #815). openwop-app returns `409`,
+MyndHyve returns `503` — both conformant, both witnessed non-vacuously; the two
+reference witnesses at 409/503 demonstrate the envelope-not-status contract
+holds cross-host.
 
 ### Draft → Active (2026-07-02)
 
