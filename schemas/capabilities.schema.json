@@ -452,6 +452,24 @@
       },
       "additionalProperties": false
     },
+    "selfHostedRunner": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0122 (`Active`). The host routes a run's per-step model/tool dispatch to a user-controlled RUNNER that dials OUT to the host over a persistent channel (SSE receive + POST result) and holds the local credentials the host cannot reach (a subscription CLI login per RFC 0121, a private endpoint per RFC 0108). The host stays the sole orchestration/persistence/replay authority; the runner is a stateless dispatch executor. This is the discovery-time capability shape ONLY; the per-subject `SelfHostedRunnerRegistration` record stays OFF `/.well-known/openwop`. A host MUST NOT advertise `supported: true` until RFC 0122 reaches `Accepted` and the channel is honored (truthful-advertisement, `OPENWOP_REQUIRE_BEHAVIOR=true`). Absent block ⇒ no runner advertisement.",
+      "required": ["supported"],
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "RFC 0122. When `true`, the host accepts runner registrations and routes matching dispatch steps to a registered runner owned by the run's subject. When `false` or absent, no runner channel is offered."
+        },
+        "dispatchKinds": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["model", "tool"] },
+          "uniqueItems": true,
+          "description": "OPTIONAL. Which dispatch kinds the host routes to runners. A host MAY implement `model` first and add `tool` later behind the same capability gate (openwop-app ADR 0182 Phase 5 lands model-dispatch first). Absent ⇒ implementation-defined, but a host SHOULD enumerate what it actually routes."
+        }
+      }
+    },
     "credentials": {
       "type": "object",
       "description": "RFC 0046 (`Draft`). Portable credential resolution + lifecycle contract — sibling to `secrets`, first-class store-at-rest + workspace sharing + two-key-overlap rotation. A pack references a credential by `{ ref, scope }` (see `credential-reference.schema.json`); the host resolves it into the node sandbox ONLY — never into inputs, persisted variables, channels, any run.* event payload, the debug bundle, or replay state (SECURITY invariant `credential-payload-redaction`). Supersedes the informal BYOK annex; the `secrets` advertisement stays valid.",
