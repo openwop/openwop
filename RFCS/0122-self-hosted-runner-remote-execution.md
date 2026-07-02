@@ -4,20 +4,24 @@
 | ----------------- | --------------------------------------------------------------- |
 | **RFC**           | 0122                                                            |
 | **Title**         | Self-hosted runner (remote-driven local execution)              |
-| **Status**        | `Draft`                                                         |
+| **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (openwop-app maintainer)                            |
 | **Created**       | 2026-07-02                                                      |
-| **Updated**       | 2026-07-02                                                      |
+| **Updated**       | 2026-07-02 — Draft → Active (bootstrap-phase steward waiver; 7-day comment window waived; see [Status history](#status-history)). Wire-shape locked (architect-reviewed); the spec doc + `selfHostedRunner` capability + 2 SECURITY invariants + gated conformance scenario + dual reference-host witness remain the path to `Accepted`. No host may advertise `selfHostedRunner` until `Accepted`. |
 | **Affects**       | new spec doc `spec/v1/self-hosted-runner.md`; `capabilities.md` (a new advertised capability); conformance (a new gated scenario); potentially SDK client types |
 | **Compatibility** | `additive`                                                      |
 | **Supersedes**    | —                                                               |
 | **Superseded by** | —                                                               |
 
-> **Status note.** This is a **Draft** authored to open the design; it is NOT yet
-> `Accepted`. No host may advertise the capability until this reaches `Accepted`
-> per `capabilities.md`. It exists to unblock design discussion for the deferred
-> Phase 5 of openwop-app ADR 0182 (self-hosted subscription-CLI execution driven
-> from a remote/hosted server).
+> **Status note.** This is `Active` — the **wire vocabulary is locked** under the
+> bootstrap-phase steward waiver (see [Status history](#status-history)); it is NOT
+> yet `Accepted`. **No host may advertise the `selfHostedRunner` capability, or
+> claim it in `INTEROP-MATRIX.md`, until this reaches `Accepted`** per
+> `capabilities.md` — the safety rail moves from the status label to the
+> implementation gate. Reference hosts (openwop-app ADR 0182 Phase 5; a second
+> witness) MAY wire the runner↔host channel *behind the capability gate*
+> (seam-wired, conformance soft-skipping) at `Active`, but the gated behavioral
+> scenario stays soft-skip until each host honestly advertises at graduation.
 
 ## Summary
 
@@ -128,16 +132,109 @@ frame → the host MUST strip/reject it.
 
 ## Open questions
 
-1. Channel transport: reuse an existing streaming transport (SSE/WebSocket) or
-   define a dedicated framing? Interaction with the A2A surfaces (RFC 0100/0101)?
-2. Granularity: route whole runs, or only individual model/tool dispatch steps?
-   (Per-step keeps host-side orchestration/replay authoritative.)
-3. Replay/fork: a run partly executed on a now-absent runner — does it fork on
-   the host with a re-route, or pin to the original runner?
-4. Runner capability schema (which providers/models/tools it can serve).
+Resolved at `Active` (architect-reviewed 2026-07-02, cross-reviewed by both
+reference-host teams — openwop-app ADR 0182 Phase 5 + a myndhyve second arm — each
+of whom ran it through their own architecture review; wire-shape locked). Each
+resolution below is normative for the forthcoming `spec/v1/self-hosted-runner.md`.
+
+1. **Channel transport — RESOLVED: reuse SSE.** OpenWOP has no WebSocket transport;
+   the only persistent wire shape is SSE (`stream-modes.md`) plus the A2A durable
+   `{taskId↔runId}` record (`a2a-task-state.schema.json`). The runner dials OUT: a
+   long-lived **GET (SSE) to receive dispatch frames**, ordinary **POST to return
+   result frames** — no inbound network exposure of the runner's machine
+   (preserving the ADR 0182 loopback-only property end-to-end). Each dispatch frame
+   MUST carry a **per-runner monotonic dispatch cursor** that is a **distinct
+   sequence from the run event-log `sequence`** (they MUST NOT be conflated — reusing
+   the event-log seq, e.g. the RFC 0115 `Capabilities-Etag`-from-seq derivation,
+   breaks resume dedup). A reconnecting runner resumes via `Last-Event-ID` at the
+   batch `id:` (`stream-modes.md §Resumption`) so a dispatch is never redelivered
+   past the runner's cursor. Because a runner side effect (a subscription-CLI turn =
+   real spend; a tool action) is **not itself idempotent**, `Last-Event-ID` alone is
+   insufficient: the **host MUST additionally drop (not re-dispatch) any redelivered
+   `{runId, stepId}` whose result is already persisted** — an at-most-once
+   host-side idempotency guarantee, defense-in-depth beyond the runner cursor. No new
+   framing is invented.
+2. **Granularity — RESOLVED: per-step dispatch, not whole runs.** The host routes
+   only individual model/tool **dispatch steps** and remains the sole
+   orchestration/persistence/replay authority; the runner is a **stateless dispatch
+   executor**. Dispatch frame `{ runId, stepId, provider/model | tool, inputs }`;
+   result frame `{ runId, stepId, output }`. Whole-run routing is rejected: it would
+   move replay authority off-host and break `POST /v1/runs/{runId}:fork`. The frame
+   shape carries both model- and tool-dispatch from v1; a host MAY implement
+   model-dispatch first and add tool-dispatch later behind the same capability gate
+   (openwop-app ADR 0182 Phase 5 lands model-dispatch first).
+3. **Replay/fork — RESOLVED: replay never re-dispatches; fork re-routes, no pin.**
+   Each dispatch result is persisted as a normal step record, so replay reads from
+   persistence and MUST NOT re-dispatch to the runner (`replay.md`). A fork of a run
+   whose steps executed on a now-absent runner re-routes *future* dispatch to any
+   runner owned by **the run's owning subject** (the stable RFC 0048 principal the
+   host stamps on `run.metadata`, NOT a fresh id) with a matching capability; it MUST
+   NOT pin to the original `runnerId`. Dispatch to an absent runner fails with the
+   distinct **retriable** error `runner_unavailable`.
+4. **Runner capability schema — RESOLVED.** A runner registers
+   `{ runnerId, subject, capabilities: { providers?: string[], models?: string[],
+   tools?: string[] } }`, where `subject` is the run's owning RFC 0048 principal
+   (§3). Work is addressed by `runnerId` (direct) or by capability-match. **Match
+   MUST filter on `subject` FIRST, then capability** — never the reverse — so a
+   capability match can never route a subject's step to another subject's runner (a
+   cross-tenant leak); the gated conformance scenario MUST assert this subject-first
+   ordering explicitly (SR-1-adjacent). The registration record is per-subject
+   runtime state and MUST NOT appear on `/.well-known/openwop`; only the
+   `selfHostedRunner: { supported: boolean, ... }` discovery block does (root-level,
+   per the RFC 0073 document-root layout, modeled on `agents`/`connections`/`a2a`).
 
 ## Adoption / conformance
 
-A new gated conformance scenario asserting isolation (no cross-subject routing),
-credential non-transit, and `runner_unavailable` on liveness loss. Reference-host
-work (openwop-app ADR 0182 Phase 5) proceeds only once this reaches `Accepted`.
+A new gated conformance scenario asserting **subject-first match** (a capability
+match never routes across subjects — OQ4), **at-most-once dispatch** (a redelivered
+`{runId, stepId}` with a persisted result is dropped, not re-dispatched — OQ1),
+credential non-transit, and `runner_unavailable` on liveness loss. Two new
+protocol-tier SECURITY invariants land in lockstep with the capability (each with a
+matching public test): **runner-credential-non-transit** (a runner credential MUST
+NOT appear in any dispatch/result frame, run event, result, or log — modeled on the
+BYOK SR-1 family + `subscription-credential-user-scope-only`) and
+**runner-output-untrusted-transport** (runner-returned content re-entering an agent
+loop MUST be fenced `<UNTRUSTED>` — modeled on `node-pack-output-untrusted`). The
+shape probe is always-on/server-free; the behavioral leg gates on `selfHostedRunner`
+and soft-skips when unadvertised (hard-fails under `OPENWOP_REQUIRE_BEHAVIOR=true`).
+Reference-host advertisement (openwop-app ADR 0182 Phase 5; a second witness)
+proceeds only once this reaches `Accepted`.
+
+## Status history
+
+### Draft → Active (2026-07-02)
+
+Promoted under the **bootstrap-phase steward waiver** per `CONTRIBUTING.md`
+§"Bootstrap-phase notes" + `MAINTAINERS.md` §"Bootstrap-phase RFC waivers" — the
+same path RFC 0031 / 0046 / 0095 / 0108 / 0121 used. **The 7-day comment window is
+waived** (single-steward bootstrap repo; zero external reviewers). This promotion is
+**non-normative** — a status change only; no wire, schema, or behavior change lands
+in this commit.
+
+Evidence at promotion:
+
+- **Classification firm — `additive`** per `COMPATIBILITY.md` §2.1: a new OPTIONAL
+  root capability + a new spec doc + new gated scenarios + two RFC-authorized
+  SECURITY invariants. No existing required field, event shape, endpoint contract,
+  error code, or `MUST` is touched. Hosts that omit `selfHostedRunner` stay fully
+  v1-compliant; no version-negotiation impact.
+- **Wire-shape locked** — the four Open questions are resolved above (SSE outbound
+  transport + monotonic dispatch sequence; per-step dispatch granularity; replay-
+  from-persistence + no-pin fork + `runner_unavailable`; the `selfHostedRunner`
+  discovery block + off-wire runner registration record). Architect-reviewed
+  2026-07-02; no shape change expected before `Accepted`.
+- **Safety rail preserved at the implementation gate.** No host may advertise or
+  claim `selfHostedRunner` until `Accepted`; reference hosts may wire the channel
+  *behind the capability gate* (seam-wired, soft-skipping) at `Active`.
+- **Path to `Active → Accepted`:** land `spec/v1/self-hosted-runner.md` + the
+  `selfHostedRunner` capability in `capabilities.md` + the schemas + the two SECURITY
+  invariants + the gated conformance scenario (published in a conformance bump);
+  then a dual reference-host witness (openwop-app ADR 0182 Phase 5 + a second host)
+  passes the gated scenario non-vacuously and honestly advertises.
+
+### Draft (2026-07-02)
+
+Authored to open the design and unblock the deferred Phase 5 of openwop-app ADR 0182
+(self-hosted subscription-CLI execution driven from a remote/hosted control plane),
+closing the execution-locality gap RFC 0108 (host-reachable endpoint only) and RFC
+0121 (needs a local client) leave open (PR #812).
