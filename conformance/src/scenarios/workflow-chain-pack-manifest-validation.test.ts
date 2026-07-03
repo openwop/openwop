@@ -104,6 +104,65 @@ describe('category: workflow-chain-pack manifest validation', () => {
     ).toBe(true);
   });
 
+  it('positive: a FragmentEdge condition takes the top-level EdgeCondition shape (RFC 0013 safety-fix 2026-07-03)', () => {
+    // §edges: "Same shape as in a top-level workflow definition." An edge
+    // condition therefore MUST be the EdgeCondition object {type,left,right},
+    // not a bare string — this is what lets a chain express content routing.
+    const conditionalChain = {
+      name: 'vendor.acme.router',
+      version: '1.0.0',
+      kind: 'workflow-chain',
+      engines: { openwop: '>=1.0.0' },
+      chains: [
+        {
+          chainId: 'vendor.acme.route',
+          version: '1.0.0',
+          label: 'Route',
+          description: 'Router with a conditional branch.',
+          parameters: { type: 'object', properties: {} },
+          dag: {
+            nodes: [
+              { id: 'route', typeId: 'core.flow.router' },
+              { id: 'urgent', typeId: 'core.identity' },
+            ],
+            edges: [
+              { from: 'route', to: 'urgent', condition: { type: 'contains', left: 'branches', right: 'urgent' } },
+            ],
+          },
+        },
+      ],
+    };
+    const ok = validate(conditionalChain);
+    const errs = (validate.errors ?? []).map((e: ErrorObject) => `${e.instancePath || '/'}: ${e.message}`).join('\n');
+    expect(ok, `Object-shaped edge condition MUST validate — got:\n${errs}`).toBe(true);
+  });
+
+  it('negative: a bare-string FragmentEdge condition is rejected (the pre-2026-07-03 shape)', () => {
+    const stringCondition = {
+      name: 'vendor.acme.legacy',
+      version: '1.0.0',
+      kind: 'workflow-chain',
+      engines: { openwop: '>=1.0.0' },
+      chains: [
+        {
+          chainId: 'vendor.acme.legacy',
+          version: '1.0.0',
+          label: 'Legacy',
+          description: 'x',
+          parameters: { type: 'object', properties: {} },
+          dag: {
+            nodes: [
+              { id: 'a', typeId: 'core.identity' },
+              { id: 'b', typeId: 'core.identity' },
+            ],
+            edges: [{ from: 'a', to: 'b', condition: 'output.approved == true' }],
+          },
+        },
+      ],
+    };
+    expect(validate(stringCondition), 'A string edge condition MUST NOT validate under the corrected schema').toBe(false);
+  });
+
   it('negative: manifest mixing chains[] AND nodes[] is rejected (pack_kind_invalid)', () => {
     // Per workflow-chain-packs.md §Pack kind discriminator: "Manifests MUST
     // have exactly one of nodes[] (kind=node) OR chains[] (kind=workflow-chain).

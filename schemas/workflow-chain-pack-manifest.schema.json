@@ -197,9 +197,23 @@
           "description": "Target node id (must reference a node in `nodes[]`). MAY use `nodeId.inputPort` syntax."
         },
         "condition": {
-          "type": "string",
-          "description": "Optional edge condition expression — same shape as a top-level workflow edge's condition."
+          "$ref": "#/$defs/EdgeCondition",
+          "description": "Optional edge condition — the SAME shape as a top-level workflow edge's condition (workflow-definition.schema.json §EdgeCondition). When present, the edge contributes to the target only if the condition holds against the source node's output, letting a chain express content routing (router/switch/conditional branches). Safety-fix (RFC 0013 amendment 2026-07-03): the field was previously typed `string`, contradicting this description; no chain used the string form (hosts dropped the field at expansion), so correcting it to the object shape breaks no conformant behavior."
         }
+      },
+      "additionalProperties": false
+    },
+    "EdgeCondition": {
+      "type": "object",
+      "description": "Edge condition — identical to workflow-definition.schema.json §EdgeCondition (RFC 0013 §edges: 'same shape as a top-level workflow definition'). Inlined here so the manifest schema is self-contained for pack-loader validators.",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["expression", "equals", "notEquals", "contains", "regex"]
+        },
+        "left": { "type": "string", "description": "Left operand path (e.g., 'status', 'output.approved')." },
+        "right": { "description": "Right operand value (any JSON value)." },
+        "expression": { "type": "string", "description": "Used when type='expression'." }
       },
       "additionalProperties": false
     },

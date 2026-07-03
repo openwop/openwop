@@ -335,6 +335,25 @@ Promotion to `Accepted` (2026-05-18 — reference-host expansion landed):
 
   **Reference-host implementation:** `examples/hosts/in-memory/src/workflow-chain-expansion.ts` (~330 LOC). Pure `node:crypto` + `node:fs` + `node:url`. The pure expansion algorithm is a verbatim copy of `conformance/src/lib/workflow-chain-expansion.ts` (the spec-authoritative version exercised by the server-free scenarios); the live-host scenario asserts the two implementations stay in sync by black-box comparison of their outputs on the same fixture inputs.
 
+### Amendment (2026-07-03) — `FragmentEdge.condition` shape correction (safety-fix)
+
+`schemas/workflow-chain-pack-manifest.schema.json` typed `FragmentEdge.condition`
+as `string`, contradicting its own description and §edges ("Same shape as in a
+top-level workflow definition"). The corrected schema `$ref`s the inlined
+`EdgeCondition` object (`{type, left, right, expression}` — identical to
+`workflow-definition.schema.json#/$defs/EdgeCondition`), so a chain can express
+content routing (a router/switch/conditional branch that gates on the source
+node's output).
+
+**Classification: safety-fix.** No chain ever used the string form — reference
+hosts dropped `condition` at expansion (it never reached the expanded
+`WorkflowDefinition`), so no conformant behavior depended on it; old hosts that
+dropped the field remain forward-compatible, and hosts that honor it now
+evaluate the same `EdgeCondition` semantics they already apply to top-level
+workflow edges. Conformance: `workflow-chain-pack-manifest-validation.test.ts`
+gains a positive (object condition validates) + negative (string condition
+rejected) case.
+
 ## References
 
 - **Inventory motivating this RFC:** [`docs/CANVAS-PACKS-INVENTORY.md`](../docs/CANVAS-PACKS-INVENTORY.md) v3 closure (2026-05-13). The 55 editor presets dropped from Phase B–C scope are the concrete population this RFC addresses.
