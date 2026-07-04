@@ -145,6 +145,11 @@ A per-run `sensitive` value that is also interpolated into a prompt is BOTH untr
 
 The at-rest protection is enforced only by hosts that **recognize** `x-openwop-sensitive`; a host predating this RFC ignores the unknown key and would expansion-time-freeze the value. Chain authors publishing sensitive-bearing chains SHOULD therefore treat deferred-capable recognition as a distribution precondition, and a future revision MAY tie `x-openwop-sensitive` acceptance to a manifest-declared minimum capability so a non-recognizing host rejects rather than silently freezes. (Tightens risk-register R2.)
 
+### Error codes + host annotations
+
+- **`sensitive_param_not_deferrable`** (HTTP `422`) — the fail-closed error a recognizing host MUST return when a chain would resolve an `x-openwop-sensitive` parameter in a frozen (expansion-time) position — i.e. any position that is not portably deferrable (arbitrary `config`, an embedded token, or a host operating without deferred support). The host MUST refuse the expansion rather than freeze the secret. A `sensitive` parameter that resolves only to a deferrable position (a whole-value variable-sourced PortValue, or a lifted PromptTemplate variable) expands normally.
+- **`metadata.expansionMode`** — hosts MAY annotate an expanded workflow with the mode used (`"expansion-time"` | `"deferred"`), parallel to `metadata.expandedFrom` (§Round-trip note). The runtime MUST ignore unknown metadata per `COMPATIBILITY.md` §2.1; the marker is a host-editor concern with no dispatch-time meaning.
+
 ## Compatibility
 
 **Additive** per `COMPATIBILITY.md` §2.1. Per-clause guarantees:
