@@ -1,0 +1,11 @@
+# RFC 0125 — Risk Register
+
+Companion to `0125-chain-fragment-edge-trigger-rule.md`. Likelihood × Impact scored H/M/L.
+
+| ID | Risk | Likelihood | Impact | Score | Mitigation | Owner | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| R1 | **`triggerRule` dropped at expansion** → the scheduler never sees it, the field is silently ignored, the RFC is a no-op (the exact failure the `condition` amendment documented — hosts historically dropped `condition` at expansion). | M | H | **High** | Normative "expansion MUST preserve `triggerRule`" in §"Expansion semantics" step 6 + a server-free conformance assertion that a `triggerRule`-bearing fragment edge expands to a `WorkflowEdge` retaining it. The spec-authoritative lib carries it through (verified). | Conformance Architect | Mitigated (spec MUST + test) |
+| R2 | **Semantic drift vs `WorkflowEdge.triggerRule`** — the chain enum diverges from the base-engine enum, so a chain-authored rule means something different than the same value on a top-level edge. | L | H | **Med** | Schema uses the IDENTICAL enum + default, copied from `WorkflowEdge.triggerRule`; the expanded edge IS a `WorkflowEdge`, so the base engine's semantics apply unchanged. Cross-referenced in the field description. | Spec Architect | Mitigated (same shape) |
+| R3 | **Composition confusion with `condition`** — an author expects `condition` and `triggerRule` to interact (ordering / precedence). | L | M | **Low** | Spec states they are orthogonal: `condition` gates edge participation, `triggerRule` governs target fan-in; both preserved independently at expansion. | Spec Architect | Mitigated (prose) |
+| R4 | **Stale lib type masks a real drop** — the lib mistyped `condition?: string` (a #818 miss); a similar mistype on `triggerRule` could let a wrong shape through untested. | L | M | **Low** | `condition` corrected to `unknown`; `triggerRule` typed to the `TriggerRule` union; conformance asserts the actual runtime value survives, not just the type. | Conformance Architect | Mitigated |
+| R5 | **Schema-file merge conflict with RFC 0124 (#821)** on `workflow-chain-pack-manifest.schema.json`. | L | L | **Low** | `$def`-disjoint (`FragmentEdge` vs chain-entry `parameters`); re-derive count surfaces (RFCS/README, CHANGELOG) on the second merge. | Compatibility Architect | Mitigated |
