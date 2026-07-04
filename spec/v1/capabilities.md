@@ -477,10 +477,12 @@ Multi-Agent Shift Phase 4 capability. When `true`, host advertises that it imple
 RFC 0013 (`Accepted` 2026-05-18; the matching spec doc [`workflow-chain-packs.md`](./workflow-chain-packs.md) remains at `DRAFT v1.x` pending Phase B/C closure). When `supported: true`, the host's workflow editor implements **workflow-chain pack expansion** — the author drops a chain tile, the host resolves the pack (verifying signature), prompts for `parameters`, substitutes `{{params.<name>}}` placeholders throughout the chain's DAG, rewrites node ids for collision avoidance, and splices the resulting nodes into the parent workflow. Dispatching runtimes see only the expanded `core.*`/published-vendor typeIds — the chain reference is NOT preserved at runtime, so this capability is a workflow-edit-time concern only.
 
 ```json
-"workflowChainPacks": { "supported": true }
+"workflowChainPacks": { "supported": true, "deferredParameters": { "supported": true } }
 ```
 
 **Field shape:** OPTIONAL `object`. When present, `supported: boolean` is REQUIRED. Hosts that don't implement chain expansion omit the block entirely (or set `supported: false`).
+
+**`deferredParameters`** (OPTIONAL sub-object; RFC 0124 / WCP4, `Active`). When `supported: true`, the host offers a capability-gated **deferred-parameter expansion mode** in addition to expansion-time substitution (which stays the default and floor): at drop time it materializes the chain's `parameters` into top-level workflow `variables[]` (author value as `defaultValue`) and rewrites `{{params.<name>}}` into a spec'd runtime binding (PromptTemplate `{{varName}}` with `source:"variable"`, or a variable-sourced PortValue), keeping chain parameters overridable per run via `configurable` while the persisted definition holds ZERO `{{params.*}}` tokens. A parameter marked `x-openwop-sensitive` MUST be deferred or fail closed (`sensitive_param_not_deferrable`, 422) — never frozen into persisted `config` (secret-at-rest). Offering deferred mode SHOULD require `prompts.supported: true` with `variable` in `prompts.variableSources`. **No host may advertise `deferredParameters.supported: true` until RFC 0124 is `Accepted`.** See [`workflow-chain-packs.md`](./workflow-chain-packs.md) §"Deferred-parameter expansion".
 
 **Conformance.** `workflow-chain-pack-manifest-validation.test.ts` gates on this flag for the registry-validation path; future `workflow-chain-expansion.test.ts` (Phase 2/3) will gate on it for end-to-end expansion. Hosts that don't advertise the capability are skipped, not failed.
 
