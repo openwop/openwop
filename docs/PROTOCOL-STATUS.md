@@ -31,8 +31,8 @@
 
 | Status | Count |
 |---|---:|
-| Accepted | 113 |
-| Active | 10 |
+| Accepted | 114 |
+| Active | 9 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -160,7 +160,7 @@
 | RFC 0121 | Subscription-reuse provider auth mode - adds `"subscription"` to the `aiProviders.authModes` closed enum (RFC 0067), so a host can honestly advertise that a provider's credential may be supplied by reusing an existing personal consumer subscription (e.g. Claude Pro/Max, ChatGPT Plus) rather than a metered API key or a host-owned OAuth client | Active |
 | RFC 0122 | Self-hosted runner (remote-driven local execution) | Accepted |
 | RFC 0124 | Portable per-run parameter deferral for workflow-chain packs (WCP4) | Active |
-| RFC 0125 | Chain-pack `FragmentEdge.triggerRule` - mirror `WorkflowEdge.triggerRule` onto chain fragment edges | Active |
+| RFC 0125 | Chain-pack `FragmentEdge.triggerRule` - mirror `WorkflowEdge.triggerRule` onto chain fragment edges | Accepted |
 
 ## SDK Helper Coverage
 
@@ -178,7 +178,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 10 RFCs `Active` (RFC 0035, RFC 0043, RFC 0111, RFC 0114, RFC 0116, RFC 0117, RFC 0119, RFC 0121, RFC 0124, RFC 0125) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 9 RFCs `Active` (RFC 0035, RFC 0043, RFC 0111, RFC 0114, RFC 0116, RFC 0117, RFC 0119, RFC 0121, RFC 0124) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
