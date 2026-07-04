@@ -184,6 +184,118 @@ describe('category: workflow-chain expansion — placeholder substitution', () =
   });
 });
 
+describe('category: workflow-chain expansion — whole-value typed resolution', () => {
+  it('resolves a whole-value {{params.x}} token to the RAW typed value (object/array/number/boolean)', () => {
+    const chain: WorkflowChain = {
+      ...SAMPLE_CHAIN,
+      parameters: {
+        type: 'object',
+        properties: {
+          retryPolicy: { type: 'object' },
+          allowlist: { type: 'array' },
+          maxTokens: { type: 'number' },
+          streaming: { type: 'boolean' },
+        },
+      },
+      dag: {
+        nodes: [
+          {
+            id: 'n',
+            typeId: 'core.identity',
+            config: {
+              retryPolicy: '{{params.retryPolicy}}',
+              allowlist: '{{params.allowlist}}',
+              maxTokens: '{{params.maxTokens}}',
+              streaming: '{{params.streaming}}',
+            },
+          },
+        ],
+        edges: [],
+      },
+    };
+    const fragment = expandChain(chain, {
+      expansionId: 'wv1',
+      params: {
+        retryPolicy: { attempts: 3, backoff: 'exponential' },
+        allowlist: ['a', 'b'],
+        maxTokens: 4096,
+        streaming: true,
+      },
+      isTypeIdResolvable: RESOLVE_ALL,
+    });
+    const config = at(fragment.nodes, 0, 'fragment.nodes').config as {
+      retryPolicy: unknown;
+      allowlist: unknown;
+      maxTokens: unknown;
+      streaming: unknown;
+    };
+    expect(
+      config.retryPolicy,
+      'Per workflow-chain-packs.md §"Parameter substitution": a value that is EXACTLY one `{{params.x}}` token MUST resolve to the raw typed value — an object param MUST NOT be stringified to "[object Object]".',
+    ).toEqual({ attempts: 3, backoff: 'exponential' });
+    expect(config.allowlist).toEqual(['a', 'b']);
+    expect(config.maxTokens).toBe(4096);
+    expect(config.streaming).toBe(true);
+  });
+
+  it('does literal string coercion for an EMBEDDED token in surrounding text', () => {
+    const chain: WorkflowChain = {
+      ...SAMPLE_CHAIN,
+      parameters: { type: 'object', properties: { count: { type: 'number' } } },
+      dag: {
+        nodes: [{ id: 'n', typeId: 'core.identity', config: { label: 'items: {{params.count}}' } }],
+        edges: [],
+      },
+    };
+    const fragment = expandChain(chain, {
+      expansionId: 'wv2',
+      params: { count: 42 },
+      isTypeIdResolvable: RESOLVE_ALL,
+    });
+    const config = at(fragment.nodes, 0, 'fragment.nodes').config as { label: string };
+    expect(
+      config.label,
+      'A token embedded in surrounding text MUST do literal string substitution (the numeric param coerces to its string form).',
+    ).toBe('items: 42');
+  });
+});
+
+describe('category: workflow-chain expansion — inputs preservation', () => {
+  it('preserves a present node.inputs (PortValue references) through expansion', () => {
+    const chain: WorkflowChain = {
+      ...SAMPLE_CHAIN,
+      dag: {
+        nodes: [
+          {
+            id: 'n',
+            typeId: 'core.identity',
+            config: {},
+            inputs: {
+              prompt: { sourceNodeId: 'upstream', sourcePort: 'text' },
+              seed: '{{params.seed}}',
+            },
+          },
+        ],
+        edges: [],
+      },
+    };
+    const fragment = expandChain(chain, {
+      expansionId: 'ip1',
+      params: { seed: 'xyz' },
+      isTypeIdResolvable: RESOLVE_ALL,
+    });
+    const inputs = at(fragment.nodes, 0, 'fragment.nodes').inputs as {
+      prompt: unknown;
+      seed: unknown;
+    };
+    expect(
+      inputs.prompt,
+      'Per workflow-chain-packs.md §"Parameter substitution": expansion MUST preserve a present `node.inputs` (PortValue references) verbatim — only `{{params.*}}` tokens inside its string leaves are substituted.',
+    ).toEqual({ sourceNodeId: 'upstream', sourcePort: 'text' });
+    expect(inputs.seed).toBe('xyz');
+  });
+});
+
 describe('category: workflow-chain expansion — node id collision avoidance', () => {
   it('same chain expanded TWICE in one parent workflow produces non-colliding node ids', () => {
     const first = expandChain(SAMPLE_CHAIN, {

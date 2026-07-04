@@ -110,12 +110,30 @@ export class ChainUnresolvableTypeIdError extends Error {
 }
 
 const PARAM_PATTERN = /\{\{params\.([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g;
+/** Matches a string that is EXACTLY one `{{params.<name>}}` token with no
+ *  surrounding text — the "whole-value" case that resolves to the raw typed
+ *  parameter value rather than a string coercion. */
+const WHOLE_VALUE_PATTERN = /^\{\{params\.([a-zA-Z_][a-zA-Z0-9_]*)\}\}$/;
 
-/** Recursive literal substitution of `{{params.<name>}}` placeholders in
- *  any string field. Non-string values pass through unchanged; nested
- *  arrays/objects are walked. */
+/** Recursive substitution of `{{params.<name>}}` placeholders in any string
+ *  field. Two cases per `workflow-chain-packs.md` §"Parameter substitution":
+ *    - WHOLE-VALUE: a string that is exactly one `{{params.x}}` token resolves
+ *      to the RAW typed parameter value (object / array / number / boolean
+ *      survive as their JSON type instead of being stringified).
+ *    - EMBEDDED: one or more tokens inside surrounding text do literal string
+ *      substitution.
+ *  Non-string values pass through unchanged; nested arrays/objects are walked. */
 function substitute(value: unknown, params: Record<string, unknown>): unknown {
   if (typeof value === 'string') {
+    const whole = WHOLE_VALUE_PATTERN.exec(value);
+    if (whole) {
+      // Whole-value token — return the raw typed value so a param typed
+      // `object` / `array` / `number` / `boolean` reaches the node config
+      // intact. `undefined` (undeclared param) collapses to the empty string,
+      // matching the embedded-token convention below.
+      const v = params[whole[1] as string];
+      return v === undefined ? '' : v;
+    }
     return value.replace(PARAM_PATTERN, (_match, name: string) => {
       const v = params[name];
       // Per the spec, parameter values are validated against the chain's
