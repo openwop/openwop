@@ -393,6 +393,17 @@ gap **WCP4** for a follow-up additive RFC — cross-ref openwop-app ADR 0237.
    its string leaves are substituted. Authors MAY still omit `inputs`; the rule
    constrains what happens to an `inputs` that *is* present.
 
+3. **Parameter-distinct persisted identity** (§Expansion semantics step 6).
+   Because expansion-time substitution bakes the author-supplied parameters into
+   `config`/`inputs`, a host that keys the persisted definition on an identity
+   derived from the expansion MUST make that identity distinguish expansions that
+   differ only in parameter values (unique `expansionId` per drop, or fold the
+   canonical params into the id). A deterministic id keyed on `chainId` alone
+   collides across param-sets and silently overwrites the prior drop. Surfaced by
+   openwop-app (ADR 0237) whose `deterministicExpansionId` was called with an
+   empty param set — benign while params weren't frozen, a data-loss hazard the
+   moment a Path-A host freezes them.
+
 **Classification: safety-fix.** Both edge rules pin previously under-specified
 behavior with no conformant dependence on the gap (published examples used only
 string params + omitted `inputs`); the spec-authoritative expansion library
