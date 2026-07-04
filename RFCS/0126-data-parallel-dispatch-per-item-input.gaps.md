@@ -11,3 +11,17 @@ Companion to `0126-data-parallel-dispatch-per-item-input.md`. Open questions, de
 | G5 | Proposal / Replay | Interaction with `mockDispatchPlan` (RFC 0022 §Unresolved #6, `config.mockDispatchPlan` on `core.orchestrator.supervisor`) — does the mock-plan seam need a per-item-input field so conformance can drive data-parallel without a real supervisor? | Conformance Architect | Extend the mock-plan fixture shape if the harness can't otherwise emit `nextWorkerInputs`. | Scenario authoring |
 | G6 | Acceptance | Python reference host — implement now or defer? in-memory + sqlite are the `Accepted` gate; python may lag. | Compatibility Architect | Decide at `Active`; if deferred, record the INTEROP-MATRIX cell as `—` with a tracking issue. | `Accepted` |
 | G7 | Proposal | Does `nextWorkerInputs` interact with `askUserRouting` / `terminate` decisions? No — it is defined ONLY on `NextWorkerDecision`. Confirm the schema `oneOf` keeps it off the other two kinds. | Schema Architect | Schema review; the field lives only in the `NextWorkerDecision` branch. | Schema diff finalization |
+
+## Sweep at `Accepted` (2026-07-04)
+
+Register-sweep gate per `RFCS/README.md` §Process (an `Accepted` RFC MUST have every open row closed, transferred, or explicitly carried forward as a named open gap). Single-witness graduation (openwop-app PR #1278) under the bootstrap steward waiver.
+
+| ID | Disposition | Evidence / carry-forward home |
+|---|---|---|
+| G1 | **RESOLVED** | Per-item overrides on key collision. Pinned in `node-packs.md §core.dispatch per-item input`, conformance assertion 2, and the openwop-app witness (test 2). |
+| G2 | **RESOLVED** | Name = `capabilities.dispatch.perItemInput`, landed as a **prose** descriptor in `capabilities.md §dispatch` (prose-only `dispatch.*` family); no `capabilities.schema.json` diff — the wire-honest home for a descriptor the schema does not enumerate. |
+| G3 | **CARRIED FORWARD** | No hard per-item depth/size cap; arbitrary nested JSON permitted. Bounded by existing decision-event size limits + `maxFanOut`/`maxConcurrency`/`iterationCap` (count). Named in RFC §Unresolved Q3; = risk R2. A later cap is additive. |
+| G4 | **RESOLVED** | Runtime-only `validation_error` (length-mismatch + unadvertised-capability); no registration-time signal possible (node `typeId` not known-data-parallel at `POST /v1/workflows`). RFC §Unresolved Q4; witness tests 3–4. |
+| G5 | **CARRIED FORWARD** | `mockDispatchPlan` per-item seam for the *server-free* conformance harness. The current single witness drives the real `core.dispatch` node via openwop-app's own test; the server-free behavioral legs use the `POST /v1/host/sample/dispatch/per-item` seam (soft-skip until wired). Extending the mock-plan fixture to emit `nextWorkerInputs` without a live host is a follow-on for the conformance suite (tracked). |
+| G6 | **CARRIED FORWARD** | Python + in-memory/sqlite reference hosts deferred — not required for single-witness graduation (openwop-app is implementer #1). INTEROP-MATRIX cells stay `—` until they implement; = risk R4. |
+| G7 | **RESOLVED** | `nextWorkerInputs` lives only in the `NextWorkerDecision` branch of the `orchestrator-decision.schema.json` `oneOf`; `AskUserDecision`/`TerminateDecision` (both `additionalProperties:false`) reject it. |
