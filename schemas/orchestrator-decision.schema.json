@@ -23,6 +23,11 @@
           },
           "description": "Ordered list of worker node-ids OR agent-ids to dispatch. Hosts that interpret entries as node-ids dispatch in DAG order; hosts that interpret as agent-ids resolve to nodes via the run's static DAG."
         },
+        "nextWorkerInputs": {
+          "type": "array",
+          "items": { "type": "object" },
+          "description": "RFC 0126 (data-parallel fan-out). OPTIONAL, index-aligned with `nextWorkerIds`: `nextWorkerInputs[i]` is a per-child input object (child input variable names → values) projected into the child dispatched for `nextWorkerIds[i]`, over the RFC 0022 `inputMapping`/`perWorkerInputMappings` projection (per-item value WINS on key collision). Enables fanning ONE `childWorkflowId` over N runtime items with distinct inputs (the map-over-collection pattern). When present, `nextWorkerInputs.length` MUST equal `nextWorkerIds.length` (a host MUST fail the dispatch node with `validation_error` and dispatch NO child otherwise — length is not JSON-Schema-enforceable, so this is a runtime MUST). Gated on `capabilities.dispatch.perItemInput`: a host NOT advertising it, upon receiving a non-empty `nextWorkerInputs`, MUST fail closed with `validation_error` and MUST NOT silently drop-and-dispatch N identical children (the correctness/spend hazard this closes). Replay-safe: rides the recorded `runOrchestrator.decided` event, re-read verbatim on `:fork`, never recomputed (frozen at decision time). A `sensitive`/secret per-item value MUST NOT appear here in plaintext (use the secret channel). See `node-packs.md` §core.dispatch."
+        },
         "confidence": {
           "type": "number",
           "minimum": 0,
