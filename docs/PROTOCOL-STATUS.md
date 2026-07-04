@@ -11,8 +11,8 @@
 | JSON Schemas | 75 | `schemas/*.schema.json` |
 | OpenAPI operations | 56 | `api/openapi.yaml` |
 | AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
-| Conformance scenario files | 382 | `conformance/src/scenarios/*.test.ts` |
-| RFCs tracked | 124 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
+| Conformance scenario files | 383 | `conformance/src/scenarios/*.test.ts` |
+| RFCs tracked | 125 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
@@ -21,7 +21,7 @@
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
 | Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 1.48.0 | `conformance/package.json` | minor on scenario add/remove |
+| Conformance suite `@openwop/openwop-conformance` | 1.49.0 | `conformance/package.json` | minor on scenario add/remove |
 
 ## OpenAPI Operations
 
@@ -32,7 +32,7 @@
 | Status | Count |
 |---|---:|
 | Accepted | 114 |
-| Active | 9 |
+| Active | 10 |
 | Draft | 1 |
 
 | RFC | Title | Status |
@@ -161,6 +161,7 @@
 | RFC 0122 | Self-hosted runner (remote-driven local execution) | Accepted |
 | RFC 0124 | Portable per-run parameter deferral for workflow-chain packs (WCP4) | Active |
 | RFC 0125 | Chain-pack `FragmentEdge.triggerRule` - mirror `WorkflowEdge.triggerRule` onto chain fragment edges | Accepted |
+| RFC 0126 | Data-parallel `core.dispatch` - per-item input fan-out | Active |
 
 ## SDK Helper Coverage
 
@@ -178,7 +179,7 @@ The pack registry now lives in the [`openwop-registry`](https://github.com/openw
 ## Active Follow-Ups
 
 - 1 RFC still `Draft` (RFC 0038) — advance with schema/conformance proof or defer.
-- 9 RFCs `Active` (RFC 0035, RFC 0043, RFC 0111, RFC 0114, RFC 0116, RFC 0117, RFC 0119, RFC 0121, RFC 0124) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
+- 10 RFCs `Active` (RFC 0035, RFC 0043, RFC 0111, RFC 0114, RFC 0116, RFC 0117, RFC 0119, RFC 0121, RFC 0124, RFC 0126) — wire-shape MAY shift compatibly within v1.x until promotion to `Accepted`.
 - External audit, non-steward host recruitment, and non-steward maintainer recruitment remain external-action gates.
 - Multi-region idempotency and some optional-profile behavior checks remain lower-confidence than the core wire contract.
 
