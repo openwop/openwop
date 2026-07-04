@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | **RFC**           | 0125                                                                                                                        |
 | **Title**         | Chain-pack `FragmentEdge.triggerRule` — mirror `WorkflowEdge.triggerRule` onto chain fragment edges                          |
-| **Status**        | `Active`                                                                                                                    |
+| **Status**        | `Accepted`                                                                                                                  |
 | **Author(s)**     | David Tufts (@dtuftsg); motivated by the openwop-app STRAT-PORTAL team (ADR 0247)                                            |
 | **Created**       | 2026-07-04                                                                                                                  |
-| **Updated**       | 2026-07-04 (Draft → Active — bootstrap steward waiver, 7-day comment window waived)                                          |
+| **Updated**       | 2026-07-04 (Active → Accepted — single-witness: spec/schema/conformance `#822` + openwop-app reference-host `#1272`)          |
 | **Affects**       | `schemas/workflow-chain-pack-manifest.schema.json`, `spec/v1/workflow-chain-packs.md`, `conformance/src/lib/workflow-chain-expansion.ts`, `conformance/src/scenarios/workflow-chain-expansion.test.ts` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` §2.1 — new OPTIONAL enum field on `FragmentEdge`, default `all_success` = the implicit prior behavior |
 | **Supersedes**    | —                                                                                                                          |
@@ -93,12 +93,14 @@ A host that drops `triggerRule` at expansion (produces `{ from, to }` with no `t
 
 ## Acceptance criteria
 
+**Promoted to `Accepted` 2026-07-04 (single-witness, bootstrap steward waiver).** Witness: openwop-app reference host **#1272** (squash `2683286d`) — the `mapEdgeCondition` `triggerRule` pass-through carries the field onto the expanded `WorkflowEdge` verbatim, and the **non-vacuous host-gated leg** (forms-intake chain: an `all_complete` `done`-terminal reached from a `submit-idea` that 404s → the run **completes cleanly** in a real `executeRun`) closes ADR 0247 OQ-2; full backend suite 4793/0. Spec/schema/conformance side is `#822`. Single-witness under the 0120/0121 precedent (reference host + conformance). Register sweep: G3/G4 closed by #1272; no open register rows.
+
 - [x] Schema: `FragmentEdge.triggerRule` (OPTIONAL, `WorkflowEdge` enum + default).
 - [x] Spec: `workflow-chain-packs.md` §WorkflowDefinitionFragment edges row + §"Expansion semantics" step 6 edge-field-preservation MUST.
 - [x] Spec-authoritative lib carries `triggerRule` through expansion; `condition` type corrected.
 - [x] Server-free conformance asserts `condition` + `triggerRule` survive expansion + the omit-default case.
 - [x] CHANGELOG entry + RFCS/README row/tally.
-- [ ] Reference host (openwop-app) implements the `mapEdgeCondition` `triggerRule` pass-through + advertises no new capability (rides `workflowChainPacks.supported`); tracked as host-side follow-up.
+- [x] Reference host (openwop-app #1272) implements the `mapEdgeCondition` `triggerRule` pass-through + non-vacuous host-gated e2e witness (ADR 0247 OQ-2); rides `workflowChainPacks.supported`, no new capability.
 
 ## References
 
