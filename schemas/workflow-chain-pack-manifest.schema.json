@@ -199,6 +199,12 @@
         "condition": {
           "$ref": "#/$defs/EdgeCondition",
           "description": "Optional edge condition — the SAME shape as a top-level workflow edge's condition (workflow-definition.schema.json §EdgeCondition). When present, the edge contributes to the target only if the condition holds against the source node's output, letting a chain express content routing (router/switch/conditional branches). Safety-fix (RFC 0013 amendment 2026-07-03): the field was previously typed `string`, contradicting this description; no chain used the string form (hosts dropped the field at expansion), so correcting it to the object shape breaks no conformant behavior."
+        },
+        "triggerRule": {
+          "type": "string",
+          "enum": ["all_success", "any_success", "all_complete", "none_failed", "any_failed"],
+          "default": "all_success",
+          "description": "Optional fan-in / error-routing rule — the SAME shape and enum as a top-level workflow edge's `triggerRule` (workflow-definition.schema.json §WorkflowEdge). Governs how the target node fires given its incoming edges: `all_success` (default — every incoming edge's source succeeded), `any_success`, `all_complete` (fire when all sources have finished regardless of success — best-effort completion), `none_failed`, `any_failed`. Additive (RFC 0125): omitting it is identical to `all_success`, the implicit prior behavior. Mirrors the RFC 0013 2026-07-03 `condition` amendment's WorkflowEdge→FragmentEdge move. Expansion MUST carry this value onto the resulting `WorkflowEdge` so the scheduler honors it (see `workflow-chain-packs.md` §\"Expansion semantics\")."
         }
       },
       "additionalProperties": false
