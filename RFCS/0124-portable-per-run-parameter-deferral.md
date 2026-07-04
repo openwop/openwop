@@ -88,6 +88,8 @@ Because materialized parameters are ordinary `variables[]`, they are overridable
 
 The drop-time `defaultValue` applies when no override is supplied. This is exactly the "reusable, re-parameterizable tile" ergonomic openwop-app wants, expressed in spec'd wire shape.
 
+**Required-parameter ergonomics.** This also closes a concrete UX gap the expansion-time model leaves open: under Path A (RFC 0013), a required chain parameter dropped without a value must be frozen (e.g. to empty) at expansion — there is no "copy the tile now, supply the value per run" path. Deferred mode makes a required parameter a `required` workflow variable with no `defaultValue`, so the value is supplied per run (via `configurable`) and the host can enforce presence at run-start rather than forcing a value at drop time. (Reported by openwop-app as the motivating gap behind their Path-A `from-chain` required-param deferral.)
+
 ### Positive example
 
 Chain `vendor.acme.generatePRD` with `parameters.productIdea: {type: string}`, dropped in deferred mode on `workflow-abc` with `productIdea = "AI toaster"`:
