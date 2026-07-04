@@ -135,6 +135,50 @@ describe('dispatch-per-item: per-item input behavior (capability-gated, RFC 0126
     ).toBe(true);
   });
 
+  it('nextWorkerInputs[i] OVERRIDES the inputMapping projection on key collision (G1 precedence)', async () => {
+    const dispatch = await readCapabilityFamily<{ perItemInput?: boolean }>('dispatch');
+    if (!behaviorGate('dispatch.perItemInput', dispatch?.perItemInput === true)) return;
+
+    // The seam applies `inputMapping` first (parent-variable projection, RFC 0022), then overlays
+    // nextWorkerInputs[i]. A key present in BOTH MUST resolve to the per-item value (most-specific wins).
+    const res = await driver.post('/v1/host/sample/dispatch/per-item', {
+      nextWorkerIds: ['conformance.child', 'conformance.child'],
+      inputMapping: { contactId: 'from-mapping', region: 'us' },
+      nextWorkerInputs: [{ contactId: 'c-1' }, { contactId: 'c-2' }],
+    });
+    if (res.status === 404 || res.status === 403) return; // seam unwired — soft-skip
+
+    const body = res.json as { children?: Array<{ inputs?: Record<string, unknown> }> } | undefined;
+    expect(
+      body?.children?.map((c) => c.inputs?.contactId),
+      driver.describe('node-packs.md §core.dispatch per-item input', 'on key collision the per-item value wins over inputMapping (G1)'),
+    ).toEqual(['c-1', 'c-2']);
+    expect(
+      body?.children?.every((c) => c.inputs?.region === 'us'),
+      driver.describe('node-packs.md §core.dispatch per-item input', 'non-colliding inputMapping keys still project (per-item merges OVER, does not replace)'),
+    ).toBe(true);
+  });
+
+  it('replay re-reads the recorded nextWorkerInputs verbatim — no recomputation (R5 replay-freeze)', async () => {
+    const dispatch = await readCapabilityFamily<{ perItemInput?: boolean }>('dispatch');
+    if (!behaviorGate('dispatch.perItemInput', dispatch?.perItemInput === true)) return;
+
+    // A :fork/replay MUST re-read the per-item inputs frozen in the recorded runOrchestrator.decided
+    // decision and reproduce byte-identical children (CP-2), never re-derive them at replay time.
+    const res = await driver.post('/v1/host/sample/dispatch/per-item', {
+      nextWorkerIds: ['conformance.child', 'conformance.child'],
+      nextWorkerInputs: [{ contactId: 'c-1' }, { contactId: 'c-2' }],
+      replay: true,
+    });
+    if (res.status === 404 || res.status === 403) return; // seam unwired — soft-skip
+
+    const body = res.json as { children?: Array<{ inputs?: Record<string, unknown> }>; replayed?: boolean } | undefined;
+    expect(
+      body?.children?.map((c) => c.inputs?.contactId),
+      driver.describe('node-packs.md §core.dispatch per-item input', 'replay/:fork reproduces the recorded per-item children verbatim (frozen at decision time)'),
+    ).toEqual(['c-1', 'c-2']);
+  });
+
   it('a host NOT advertising perItemInput MUST fail closed on a non-empty nextWorkerInputs', async () => {
     const dispatch = await readCapabilityFamily<{ supported?: boolean; perItemInput?: boolean }>('dispatch');
     if (!dispatch?.supported) return; // no dispatch surface → out of scope

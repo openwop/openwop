@@ -4,10 +4,10 @@
 |---|---|
 | **RFC**           | 0126 |
 | **Title**         | Data-parallel `core.dispatch` — per-item input fan-out |
-| **Status**        | `Active` |
+| **Status**        | `Accepted` |
 | **Author(s)**     | David Tufts (@davidscotttufts); motivated by the openwop-app segment-winback team (ADR 0255) |
 | **Created**       | 2026-07-04 |
-| **Updated**       | 2026-07-04 (Draft → Active — bootstrap steward waiver, 7-day comment window waived; gaps G1–G4 resolved) |
+| **Updated**       | 2026-07-04 (Active → Accepted — single-witness bootstrap steward waiver; register swept, gaps G1/G2/G4/G7 resolved, G3/G5/G6 + risks R2/R3/R4 carried forward as named open gaps) |
 | **Affects**       | `schemas/orchestrator-decision.schema.json` (`nextWorkerInputs`), `spec/v1/node-packs.md §core.dispatch`, `spec/v1/capabilities.md` (`dispatch.perItemInput` descriptor — prose, matching the existing prose-only `dispatch.*` descriptors; `capabilities.dispatch` is not enumerated in `capabilities.schema.json`), `conformance/src/scenarios/dispatch-per-item-input.test.ts` (new). Builds on RFC 0118 (parallel fan-out + join) and RFC 0022 (dispatch input/output mapping). |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` |
 | **Supersedes**    | — |
@@ -41,7 +41,7 @@ An index-aligned array of per-child input objects. When present, the host MUST p
 - Each `nextWorkerInputs[i]` is a flat-or-nested JSON object of child input variable names → values.
 - **Merge precedence.** Child `i`'s effective inputs are the `inputMapping` / `perWorkerInputMappings` projection from parent variables (RFC 0022), with `nextWorkerInputs[i]` merged **over** it — a key present in both resolves to the `nextWorkerInputs[i]` value. Per-item literal data is the more specific source and wins. (See Unresolved question 1.)
 
-**2. New capability descriptor `capabilities.dispatch.perItemInput`** (`capabilities.schema.json`), a boolean alongside the RFC 0118 `capabilities.dispatch.*` descriptors.
+**2. New capability descriptor `capabilities.dispatch.perItemInput`** — a boolean **prose** descriptor documented in `capabilities.md §dispatch`, alongside the RFC 0118 `capabilities.dispatch.*` descriptors (`fanOutSupported`, `maxFanOut`, `joinModes`), which are themselves prose-only. `capabilities.dispatch` is not enumerated in `capabilities.schema.json` (the root capabilities object is `additionalProperties: true`), so advertising `capabilities.dispatch.perItemInput: true` is wire-legal with **no** `capabilities.schema.json` change. (See Unresolved question 2 / gap G2.)
 
 - A host that advertises `capabilities.dispatch.perItemInput: true` **MUST** honor `nextWorkerInputs` as specified above.
 - A host that does **not** advertise it, upon consuming a `next-worker` decision carrying a non-empty `nextWorkerInputs`, **MUST** fail the dispatch node with a `validation_error` and **MUST NOT** dispatch. It **MUST NOT** silently drop `nextWorkerInputs` and dispatch N identically-inputted children — silent-drop is the exact correctness/spend hazard this RFC closes, so the gate fails **closed**. (Old hosts predating this RFC reject the field automatically: `OrchestratorDecision` is `additionalProperties: false`, so a strict validator refuses the unknown property — the fail-closed behavior is consistent with the existing schema.)
@@ -106,15 +106,14 @@ No migration tooling is required (additive, no old shape to detect).
 
 **Existing adjacent coverage:** `conformance/src/scenarios/dispatch-fanout-parallel.test.ts` (RFC 0118 parallel fan-out + join), `dispatch-input-mapping.test.ts` / `dispatch-output-mapping.test.ts` (RFC 0022 mapping), `orchestratorDispatch.test.ts`, `dispatchLoop.test.ts`.
 
-**New scenario — `dispatch-per-item-input.test.ts`**, gated on `capabilities.dispatch.perItemInput: true` (skipped on hosts that don't advertise it). Asserts, each via `driver.describe('node-packs.md §core.dispatch', '<requirement>')`:
+**Landed scenario — `dispatch-per-item-input.test.ts`** (suite `1.49.0`), in two layers:
 
-1. **Per-index projection** — a `next-worker` decision with `nextWorkerIds` = one id ×3 + `nextWorkerInputs` of 3 distinct objects dispatches 3 children, each receiving its indexed input (verified via child variables / a child echo node).
-2. **Length-mismatch rejection** — `nextWorkerInputs.length !== nextWorkerIds.length` ⇒ `validation_error`, zero children dispatched.
-3. **Merge precedence** — a key present in both `inputMapping` and `nextWorkerInputs[i]` resolves to the per-item value.
-4. **Replay freeze** — replaying/forking the run re-reads the recorded `nextWorkerInputs`; children reproduce identically (no recomputation).
-5. **Capability gate (negative, ungated companion)** — a host without the capability receiving the field surfaces `validation_error` and dispatches nothing.
+- **Always-on, server-free schema legs** (run in the CI spec-corpus gate, no host): a well-formed index-aligned `nextWorkerInputs` validates on `NextWorkerDecision`; a decision omitting it stays valid (additive/back-compat); a non-object item and a non-array are rejected; a mis-named `perItemInputs` is rejected by `additionalProperties:false` (the pre-0126 fail-closed rail); and a length-mismatch is **ADMITTED at the wire** — array-length equality with `nextWorkerIds` is not JSON-Schema-expressible, so it is a **runtime** MUST driven in the behavioral layer.
+- **Capability-gated behavioral legs** (gated on `capabilities.dispatch.perItemInput: true`, over the `POST /v1/host/sample/dispatch/per-item` seam; soft-skip on 404/403 until a host wires the seam), each via `driver.describe('node-packs.md §core.dispatch per-item input', '<requirement>')`: **(1) per-index projection**, **(2) merge precedence** (per-item value wins over `inputMapping` on key collision, G1), **(3) length-mismatch** ⇒ `validation_error`, zero children, **(4) replay-freeze** (a `:fork`/replay re-reads the recorded per-item inputs verbatim), and **(5) the fail-closed gate** — a host **not** advertising the capability that receives a non-empty `nextWorkerInputs` surfaces `validation_error` and dispatches nothing.
 
-**Fixtures:** one new fixture (`conformance-dispatch-per-item-input.json`) added to `conformance/fixtures.md`. **Reference hosts:** in-memory + sqlite implement and update their `conformance.md` evidence; python may defer (recorded in the gap register). **INTEROP-MATRIX:** add a `dispatch.perItemInput` column.
+**Single-witness evidence:** the graduation is witnessed by the **openwop-app** reference host (PR #1278), whose own `dispatch-per-item-input-executor.test.ts` (5/5) drives projection, precedence (G1), the fail-closed gate, length-mismatch, back-compat, and the replay-safe recorded-decision re-read (R5) through a **real** `core.dispatch` node + real `subWorkflowDispatcher`. The host is honest-off (behind an env flag) until the post-graduation advertisement flip.
+
+**Carried-forward conformance gaps** (named per the register sweep; none is graduation-critical wire surface): the `POST /v1/host/sample/dispatch/per-item` seam is not yet wired in the in-repo reference hosts, so the behavioral legs above soft-skip in the server-free suite (precedence + replay-freeze are therefore reference-host-witnessed today, not yet server-free-pinned — gap G5); the in-memory/sqlite hosts + python do not yet implement (gap G6, INTEROP-MATRIX cells `—`); the `dispatch.perItemInput` INTEROP-MATRIX column populates when openwop-app advertises post-flip (risk R4). A dedicated fixture is not required (the scenario builds decisions inline).
 
 ## Alternatives considered
 
@@ -125,11 +124,13 @@ No migration tooling is required (additive, no old shape to detect).
 
 ## Unresolved questions
 
-1. **Merge precedence** (Proposal §1). Should `nextWorkerInputs[i]` override the `inputMapping` projection on key collision (proposed), merge-under it, or be a `validation_error` on overlap? Proposed: per-item overrides (most-specific wins).
-2. **Capability name.** `capabilities.dispatch.perItemInput` (proposed, describes the wire delta) vs `capabilities.dispatch.dataParallel` (describes the pattern). Pick one before `Active`.
-3. **Item value constraints.** Should `nextWorkerInputs[i]` be constrained to flat scalar maps, or allow arbitrary nested JSON (proposed, matching unconstrained child inputs)? A depth/size cap may be warranted for the bounded-work guarantee.
-4. **Mismatch error timing.** Length-mismatch is a runtime `validation_error` (the decision is runtime, not registration-time). Confirm no registration-time signal is expected/possible.
-5. **Per-item output symmetry.** This RFC adds per-item *input* only; per-child *output* already maps via RFC 0022 `outputMapping` per completed child. Is a per-item output projection ever needed, or is the existing keyed mapping sufficient? Proposed: out of scope for 0126.
+_Resolution status recorded at `Accepted` (register sweep, 2026-07-04)._
+
+1. **Merge precedence** (Proposal §1). **RESOLVED — per-item overrides** (most-specific wins). `nextWorkerInputs[i]` projects *over* the RFC 0022 `inputMapping` projection; a key present in both resolves to the per-item value. Pinned in `node-packs.md §core.dispatch per-item input` + conformance assertion 2 + the openwop-app witness (test 2). (Closes gap G1.)
+2. **Capability name.** **RESOLVED — `capabilities.dispatch.perItemInput`** (describes the wire delta). Landed as a **prose** descriptor in `capabilities.md §dispatch` (matching the prose-only `dispatch.*` descriptors); no `capabilities.schema.json` change. (Closes gap G2.)
+3. **Item value constraints.** **CARRIED FORWARD (named open gap).** `nextWorkerInputs[i]` permits arbitrary nested JSON (matching unconstrained child inputs); **no hard per-item depth/size cap is specified**. The bounded-work guarantee rests on the existing decision-event size limits (the whole decision, including `nextWorkerInputs`, rides one `runOrchestrator.decided` event and is bounded by the host's event-size ceiling) plus `maxFanOut`/`maxConcurrency`/`iterationCap` bounding child *count*. A dedicated per-item size cap is deferred to a follow-up if a resource-exhaustion signal appears in practice (gap G3 / risk R2, tracked). This is not a wire-shape commitment — a later cap is additive.
+4. **Mismatch error timing.** **RESOLVED — runtime `validation_error` only.** The decision is produced at run time, not registration time, and the emitting node's `typeId` is not known-data-parallel at `POST /v1/workflows`; there is no registration-time signal. Length-mismatch and unadvertised-capability both fail the dispatch node at run time, dispatching no child. (Closes gap G4.)
+5. **Per-item output symmetry.** **RESOLVED — out of scope for 0126.** Per-child *output* already maps via RFC 0022 `outputMapping` per completed child; no per-item output projection is added here. A future RFC may revisit if a per-item output need appears.
 
 ## Implementation notes (non-normative)
 
@@ -140,12 +141,12 @@ No migration tooling is required (additive, no old shape to detect).
 
 ## Acceptance criteria
 
-- [ ] Spec text merged (`node-packs.md §core.dispatch` per-item-input clause; `capabilities.md` descriptor).
-- [ ] `orchestrator-decision.schema.json` (`nextWorkerInputs`) + `capabilities.schema.json` (`dispatch.perItemInput`) updated; `additionalProperties: false` preserved on `NextWorkerDecision`; positive + negative examples added.
-- [ ] OpenAPI / AsyncAPI: no endpoint/channel change (the decision rides the existing `runOrchestrator.decided` event) — confirmed, no diff.
-- [ ] At least one conformance scenario (`dispatch-per-item-input.test.ts`) covering per-index projection, length-mismatch, precedence, replay-freeze, and the capability gate.
-- [ ] `CHANGELOG.md` entry under the next version (`### Added`).
-- [ ] Reference hosts (in-memory, sqlite) implement + pass the new scenario and advertise `capabilities.dispatch.perItemInput`, OR the RFC explicitly defers a host (recorded in `.gaps.md`).
+- [x] Spec text merged (`node-packs.md §core.dispatch` per-item-input clause; `capabilities.md` `perItemInput` descriptor). — #825.
+- [x] `orchestrator-decision.schema.json` (`nextWorkerInputs`) updated; `additionalProperties: false` preserved on `NextWorkerDecision`; positive + negative examples added. **G2 resolution:** the capability landed as a **prose** descriptor in `capabilities.md §dispatch` (matching the existing prose-only `dispatch.*` descriptors); `capabilities.dispatch` is not enumerated in `capabilities.schema.json`, so there is no `capabilities.schema.json` diff. — #825.
+- [x] OpenAPI / AsyncAPI: no endpoint/channel change (the decision rides the existing `runOrchestrator.decided` event) — confirmed, no diff.
+- [x] At least one conformance scenario (`dispatch-per-item-input.test.ts`) covering per-index projection, length-mismatch, precedence (over `inputMapping`), the fail-closed capability gate, and the length-mismatch/back-compat cases. Server-free schema legs always-on; behavioral legs capability-gated (soft-skip until a host advertises). — #825, suite `1.48.0 → 1.49.0`.
+- [x] `CHANGELOG.md` entry under `[Unreleased] → ### Added`. — #825 (Active surface) + this graduation entry.
+- [x] **Single-witness reference-host implementation** — **openwop-app** (implementer #1) landed the host executor arm (PR #1278): `subWorkflowDispatcher.perItemInputs` projected over the RFC 0022 mapping (per-item override), `decision.nextWorkerInputs[idx]` projected into each child on **both** the parallel fan-out and sequential-loop arms, the fail-closed gate (non-advertising host + length-mismatch ⇒ `validation_error`, 0 children), and replay-safe re-read of the recorded decision (CP-2). Witness `dispatch-per-item-input-executor.test.ts` — 5/5 green on a **real** `core.dispatch` node + real dispatcher (distinct-per-item projection not N-identical; per-item overrides `inputMapping`; fail-closed unadvertised; length-mismatch closed; no-`nextWorkerInputs` back-compat); 64 existing dispatch/scheduler tests still green. Host advertises **honest-off** (capability behind an env flag, default false) until this graduation; the flip to advertise `perItemInput` is a one-line follow-up now unblocked. Graduated **single-witness** under the bootstrap steward waiver (RFC 0120/0121/0125 precedent). **Deferred hosts** (recorded, G6): the in-memory / sqlite conformance reference hosts + the Python host are not required for this graduation — their INTEROP-MATRIX cells stay `—` until they implement (R4 tracked).
 
 ## References
 
