@@ -120,6 +120,31 @@ A run overrides it with `POST /v1/runs {"configurable": {"productIdea": "AI kett
 
 A host in deferred mode persisting `config.systemPrompt = "Write a PRD for: {{params.productIdea}}"` (a raw `{{params.*}}` token still present) → **rejected**: violates step 3. The token MUST have been rewritten to a PromptTemplate `{{varName}}` slot or resolved at expansion time. There is no conformant persisted state containing `{{params.*}}`.
 
+## Security
+
+A deferred-materialized variable can carry two **orthogonal** risk markers. Where both apply to the same materialized variable, a host MUST honor both — they are not either/or.
+
+### Untrusted content (prompt-injection)
+
+Every deferred-variable binding interpolated into a prompt MUST compose with `bindingTrust: "untrusted"` → aggregate `contentTrust: "untrusted"` + `<UNTRUSTED>…</UNTRUSTED>` fencing, **unconditionally** — a host MUST NOT branch on author-`defaultValue`-vs-per-run-override provenance (step 4). Per `SECURITY/threat-model-prompt-injection.md`. This is the injection-surface delta versus expansion-time substitution, whose author-supplied value carries author trust.
+
+### Secret-class values (secret-leakage, SR-1)
+
+A chain parameter MAY be declared secret-class via `parameters.properties.<p>.x-openwop-sensitive: true`. This is a JSON-Schema extension key and is **already valid** against `workflow-chain-pack-manifest.schema.json` (the `parameters` object is an open JSON-Schema document); it is documented here as a known extension key and lands explicitly in the schema on the path to `Accepted`. For a parameter so marked:
+
+- **Deferred-only (at-rest) — MUST.** A host that recognizes `x-openwop-sensitive` MUST NOT resolve the parameter by expansion-time substitution. Expansion-time substitution bakes the value into the persisted `config`/`inputs` in **plaintext** — a secret-at-rest leak in the stored `WorkflowDefinition` (the storage-layer SR-1 failure, distinct from the observability-layer redaction below). The parameter MUST instead be deferred: materialized as a variable with `sensitive: true`, supplied per run via `configurable`, and never persisted with a value. A host that recognizes the hint but does **not** support deferred mode MUST **refuse to expand** the chain (fail closed) rather than freeze the secret.
+- **Redaction (observability) — MUST when declared.** The materialized `sensitive` variable's value MUST be redacted to `[REDACTED:<id>]` in `prompt.composed` events and debug bundles per `SECURITY/threat-model-secret-leakage.md` §SR-1. When `x-openwop-sensitive` is **absent**, a host MAY infer sensitivity and SHOULD default non-sensitive; redaction is a `SHOULD` in the inferred case.
+
+The `x-openwop-sensitive` hint is therefore **load-bearing**: it drives BOTH the expansion-mode gate (fail-closed / deferred-only, storage layer) AND redaction marking (observability layer).
+
+### Composition
+
+A per-run `sensitive` value that is also interpolated into a prompt is BOTH untrusted (fenced, above) AND secret (redacted, above). Both markers apply to the same materialized variable and a host MUST apply both.
+
+### Residual risk
+
+The at-rest protection is enforced only by hosts that **recognize** `x-openwop-sensitive`; a host predating this RFC ignores the unknown key and would expansion-time-freeze the value. Chain authors publishing sensitive-bearing chains SHOULD therefore treat deferred-capable recognition as a distribution precondition, and a future revision MAY tie `x-openwop-sensitive` acceptance to a manifest-declared minimum capability so a non-recognizing host rejects rather than silently freezes. (Tightens risk-register R2.)
+
 ## Compatibility
 
 **Additive** per `COMPATIBILITY.md` §2.1. Per-clause guarantees:
@@ -156,7 +181,7 @@ No migration is required. openwop-app migrates from its non-conformant private-t
 
 **Resolved at Active promotion (2026-07-04):**
 
-- ~~`sensitive` inference~~ → **resolved (declarative manifest hint)**: a workflow-chain manifest MAY carry an OPTIONAL `parameters.properties.<p>.x-openwop-sensitive: true` hint. When present, deferred expansion MUST set `sensitive: true` on the materialized variable, and the value MUST be redacted to `[REDACTED:<id>]` in `prompt.composed` and debug bundles per `SECURITY/threat-model-secret-leakage.md` §SR-1. When the hint is absent, the host MAY infer sensitivity and SHOULD default to non-sensitive; redaction is a `SHOULD` in the inferred case. This keeps secret-class marking declarative + portable (the chain author declares it, every host honors it) rather than host-guesswork. The `x-openwop-sensitive` property lands in `workflow-chain-pack-manifest.schema.json` as part of the normative surface on the path to `Accepted`.
+- ~~`sensitive` inference~~ → **resolved (declarative manifest hint)**: a workflow-chain manifest MAY carry an OPTIONAL `parameters.properties.<p>.x-openwop-sensitive: true` hint. When present, deferred expansion MUST set `sensitive: true` on the materialized variable, and the value MUST be redacted to `[REDACTED:<id>]` in `prompt.composed` and debug bundles per `SECURITY/threat-model-secret-leakage.md` §SR-1. When the hint is absent, the host MAY infer sensitivity and SHOULD default to non-sensitive; redaction is a `SHOULD` in the inferred case. This keeps secret-class marking declarative + portable (the chain author declares it, every host honors it) rather than host-guesswork. The `x-openwop-sensitive` property lands in `workflow-chain-pack-manifest.schema.json` as part of the normative surface on the path to `Accepted`. **The hint is load-bearing beyond redaction** — it also forces deferred-only / fail-closed handling to prevent a secret-at-rest leak; see §Security (endorsed by the openwop-app security review, 2026-07-04).
 
 **Resolved in review (openwop-app-1 Track-A host review, 2026-07-04):**
 
