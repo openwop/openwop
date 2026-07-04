@@ -71,7 +71,7 @@ PR #48 also formalized the de-facto `ctx.callAI` contract (which 14+ already-pub
 
 ### Registry status (post-Phases B+C)
 
-`packs.openwop.dev` now hosts **79 packs** with **44 vendor typeIds** under `vendor.myndhyve.*` (plus the framework `core.openwop.*` packs). The four canvas verticals from the v2 audit (App Builder, Ads Studio, Landing Page, Campaign Sequence) are fully expressible as DAGs of published packs.
+`packs.openwop.dev` now hosts **94 packs** with **44 vendor typeIds** under `vendor.myndhyve.*` (plus the framework `core.openwop.*` packs). The four canvas verticals from the v2 audit (App Builder, Ads Studio, Landing Page, Campaign Sequence) are fully expressible as DAGs of published packs.
 
 Discovery surfaces:
 
