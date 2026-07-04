@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | **RFC**           | 0124                                                                                                                        |
 | **Title**         | Portable per-run parameter deferral for workflow-chain packs (WCP4)                                                         |
-| **Status**        | `Active`                                                                                                                    |
+| **Status**        | `Accepted`                                                                                                                  |
 | **Author(s)**     | David Tufts (@dtuftsg)                                                                                                       |
 | **Created**       | 2026-07-04                                                                                                                  |
-| **Updated**       | 2026-07-04 (Draft → Active — bootstrap steward waiver, 7-day comment window waived)                                          |
+| **Updated**       | 2026-07-04 (Active → Accepted — single-witness bootstrap steward waiver; §Security amendment reflected; register swept, G6 second-witness carried forward as a named open gap per the steward's pre-authorized single-witness path)                                          |
 | **Affects**       | `spec/v1/workflow-chain-packs.md`, `spec/v1/capabilities.md`, `schemas/capabilities.schema.json`, `schemas/workflow-chain-pack-manifest.schema.json` (non-normative note), `conformance/src/scenarios/workflow-chain-*.test.ts` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` — a new OPTIONAL capability-gated expansion mode; expansion-time substitution remains the default and floor |
 | **Supersedes**    | —                                                                                                                          |
@@ -130,6 +130,8 @@ Every deferred-variable binding interpolated into a prompt MUST compose with `bi
 
 ### Secret-class values (secret-leakage, SR-1)
 
+> **⚠️ Superseded in part by the [2026-07-04 Amendment](#amendment-2026-07-04--sensitive--sourcesecret-prompt-body-only-run-time-never-plaintext-safety-fix) below.** This subsection's original resolution — materialize a sensitive param as a plaintext `sensitive:true` `source:"variable"` variable "supplied per run via `configurable`" — was found to leak the value at run time (run bag / `RunSnapshot.variables` / at-rest). The **normative** handling is the Amendment: a sensitive param materializes as a **`source:"secret"`** PromptVariable, is deferrable ONLY in a prompt-body position, fails closed (`sensitive_param_not_deferrable`, 422) elsewhere, and its per-run supply is a `credentialRef`, never plaintext. The reasoning below is retained for context; where it says "plaintext variable / configurable value," read "`source:"secret"` / `credentialRef`."
+
 A chain parameter MAY be declared secret-class via `parameters.properties.<p>.x-openwop-sensitive: true`. This is a JSON-Schema extension key and is **already valid** against `workflow-chain-pack-manifest.schema.json` (the `parameters` object is an open JSON-Schema document); it is documented here as a known extension key and lands explicitly in the schema on the path to `Accepted`. For a parameter so marked:
 
 - **Deferred-only (at-rest) — MUST.** A host that recognizes `x-openwop-sensitive` MUST NOT resolve the parameter by expansion-time substitution. Expansion-time substitution bakes the value into the persisted `config`/`inputs` in **plaintext** — a secret-at-rest leak in the stored `WorkflowDefinition` (the storage-layer SR-1 failure, distinct from the observability-layer redaction below). The parameter MUST instead be deferred: materialized as a variable with `sensitive: true`, supplied per run via `configurable`, and never persisted with a value. A host that recognizes the hint but does **not** support deferred mode MUST **refuse to expand** the chain (fail closed) rather than freeze the secret.
@@ -171,9 +173,9 @@ No migration is required. openwop-app migrates from its non-conformant private-t
 
 **Existing coverage.** `workflow-chain-expansion.test.ts` (server-free, spec-authoritative lib) + `workflow-chain-pack-manifest-validation.test.ts` + `workflow-chain-host-expansion.test.ts` (live-host, gated on `workflowChainPacks.supported`).
 
-**New scenarios (land with `Accepted`):**
+**Scenarios (landed at `Accepted`, 2026-07-04):**
 
-1. `workflow-chain-deferred-parameters.test.ts` (server-free) — deferred expansion of a chain materializes `variables[]` with `defaultValue` = author input + `type` copied from the parameter schema; every `{{params.*}}` token is rewritten (prompt token → `{{varName}}` + `source:"variable"`; whole-value token → variable-sourced PortValue); the persisted fragment contains **zero** `{{params.*}}` tokens; a typed (object/number) whole-value param composes with the WCP2 raw-typed rule. Gated logically on the deferred mode; runs unconditionally as spec-corpus logic.
+1. `workflow-chain-deferred-parameters.test.ts` (server-free, against the reference `expandChainDeferred`) — deferred expansion materializes `variables[]` with `defaultValue` = author input + `type` copied from the parameter schema; every `{{params.*}}` token is rewritten (prompt token → `{{varName}}` + `source:"variable"`; whole-value token → variable-sourced PortValue); the persisted fragment contains **zero** `{{params.*}}` tokens; a typed whole-value param composes with the WCP2 raw-typed rule. **§Security legs (the new fail-closed path's only public test):** a `x-openwop-sensitive` prompt-body param materializes `source:"secret"` with the plaintext appearing NOWHERE (not bagged); a sensitive whole-value `node.input`, and a sensitive param on a host without `secrets` support, each fail closed with `sensitive_param_not_deferrable` (422); a host without a `prompts.variable` source falls back to expansion-time (G5). Runs unconditionally as spec-corpus logic.
 2. Host-side leg in `workflow-chain-host-expansion.test.ts` gated on `capabilities.workflowChainPacks.deferredParameters.supported: true` — a deferred expansion round-trips; a `POST /v1/runs` `configurable` override **keyed on the bare parameter name** changes the resolved value; a `:fork` replays the same bound value (determinism); and a deferred variable interpolated into a prompt composes with `contentTrust: "untrusted"` (step 4 unconditional fence). Hosts without the flag are skipped, not failed.
 
 **Capability gating.** New host legs gate on `workflowChainPacks.deferredParameters.supported` per `conformance/coverage.md` §"Capability-gated scenarios".
@@ -212,13 +214,13 @@ Promoted `Draft → Active` under the bootstrap steward waiver (per `GOVERNANCE.
 
 ### Acceptance criteria (path to `Accepted`)
 
-- [ ] Spec text merged: `workflow-chain-packs.md` §"Deferred-parameter expansion (normative)" + WCP4 gap row updated to point at this RFC.
-- [ ] Schema updated: `workflowChainPacks.deferredParameters` in `capabilities.schema.json` + `capabilities.md` documentation; `x-openwop-sensitive` hint in `workflow-chain-pack-manifest.schema.json`.
-- [ ] At least one server-free conformance scenario (`workflow-chain-deferred-parameters.test.ts`) + one capability-gated host leg.
-- [ ] CHANGELOG entry under the appropriate `[Unreleased]` / version.
-- [ ] One reference host implements deferred mode and passes the gated scenario (openwop-app = reference implementer #1), plus a second witness with a PromptTemplate compose path.
+- [x] Spec text merged: `workflow-chain-packs.md` §"Deferred-parameter expansion" (incl. the 2026-07-04 §Security amendment: `source:"secret"`, prompt-body-only, fail-closed, pinned `credentialRef` per-run supply shape) + WCP4 gap row pointing at this RFC.
+- [x] Schema updated: `workflowChainPacks.deferredParameters` in `capabilities.schema.json` + `capabilities.md` (vocab aligned to `source:"secret"`); `x-openwop-sensitive` hint in `workflow-chain-pack-manifest.schema.json` (description reconciled to the amended MUST, this graduation).
+- [x] Server-free conformance scenario `workflow-chain-deferred-parameters.test.ts` — 10 always-on legs against the reference `expandChainDeferred` (materialization + zero-residual-tokens R3 + WCP2 whole-value PortValue + bare-param override key R6 + the §Security MUSTs: `source:"secret"`/no-plaintext, whole-value fail-closed 422, no-secrets fail-closed, G5 fallback) + capability-gated host legs (override / `:fork` replay / untrusted-fence / `[REDACTED]` compose, soft-skip). Suite `1.49.0 → 1.50.0`.
+- [x] CHANGELOG entry under `[Unreleased]`.
+- [x] **Single-witness reference host** — openwop-app (implementer #1) deferred stack `#1245 → #1281` (`source:"secret"` #1281); gated leg proves materialize → bare-param override → `:fork` replay → sensitive `source:"secret"` `[REDACTED]` with plaintext-never-anywhere; backend 4806 green. **Second witness carried forward (G6)** — MyndHyve `workflow-runtime` + the in-memory host both lack a chain-expansion / PromptTemplate-compose path, so a PromptTemplate-compose host is the deferred dual-witness path; graduated single-witness under the steward waiver (0120/0121/0125/0126 precedent), witness #2 as a tracked follow-up.
 - [x] All Draft-phase Unresolved questions resolved (override-key, inline-lift, embedded-boundary, `sensitive` inference).
-- [ ] Conformance asserts a deferred-variable prompt binding composes with `contentTrust: "untrusted"` (unconditional fence, step 4).
+- [x] Conformance asserts a deferred-variable prompt binding composes with `contentTrust: "untrusted"` (unconditional fence, step 4) — the capability-gated host leg (`workflow-chain-deferred-parameters.test.ts`), witnessed by openwop-app.
 
 ## References
 
