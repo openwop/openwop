@@ -4,10 +4,10 @@
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | **RFC**           | 0124                                                                                                                        |
 | **Title**         | Portable per-run parameter deferral for workflow-chain packs (WCP4)                                                         |
-| **Status**        | `Draft`                                                                                                                     |
+| **Status**        | `Active`                                                                                                                    |
 | **Author(s)**     | David Tufts (@dtuftsg)                                                                                                       |
 | **Created**       | 2026-07-04                                                                                                                  |
-| **Updated**       | 2026-07-04                                                                                                                  |
+| **Updated**       | 2026-07-04 (Draft → Active — bootstrap steward waiver, 7-day comment window waived)                                          |
 | **Affects**       | `spec/v1/workflow-chain-packs.md`, `spec/v1/capabilities.md`, `schemas/capabilities.schema.json`, `schemas/workflow-chain-pack-manifest.schema.json` (non-normative note), `conformance/src/scenarios/workflow-chain-*.test.ts` |
 | **Compatibility** | `additive` per `COMPATIBILITY.md` — a new OPTIONAL capability-gated expansion mode; expansion-time substitution remains the default and floor |
 | **Supersedes**    | —                                                                                                                          |
@@ -152,7 +152,11 @@ No migration is required. openwop-app migrates from its non-conformant private-t
 
 ## Unresolved questions
 
-1. **`sensitive` inference.** How does the host know a chain parameter carries secret-class material to set `sensitive: true`? Options: a new OPTIONAL `parameters.properties.<p>.x-openwop-sensitive` manifest hint, or leave it host-judgment with a `SHOULD`. Needs a decision before the redaction invariant can be tightened from `SHOULD` to `MUST`. *(Only open question remaining before `Active`.)*
+*(All Draft-phase questions resolved; none remained open at the Active promotion.)*
+
+**Resolved at Active promotion (2026-07-04):**
+
+- ~~`sensitive` inference~~ → **resolved (declarative manifest hint)**: a workflow-chain manifest MAY carry an OPTIONAL `parameters.properties.<p>.x-openwop-sensitive: true` hint. When present, deferred expansion MUST set `sensitive: true` on the materialized variable, and the value MUST be redacted to `[REDACTED:<id>]` in `prompt.composed` and debug bundles per `SECURITY/threat-model-secret-leakage.md` §SR-1. When the hint is absent, the host MAY infer sensitivity and SHOULD default to non-sensitive; redaction is a `SHOULD` in the inferred case. This keeps secret-class marking declarative + portable (the chain author declares it, every host honors it) rather than host-guesswork. The `x-openwop-sensitive` property lands in `workflow-chain-pack-manifest.schema.json` as part of the normative surface on the path to `Accepted`.
 
 **Resolved in review (openwop-app-1 Track-A host review, 2026-07-04):**
 
@@ -166,14 +170,18 @@ No migration is required. openwop-app migrates from its non-conformant private-t
 - **Reference implementer:** openwop-app (ADR 0237) is the natural first host — it already has the run-scoped variable bag; the work is to move the rewrite from private tokens to materialized `variables[]` + PromptTemplate `{{varName}}`. A second witness (in-memory reference host or a tier-2 sibling) closes `Accepted`.
 - **Estimated effort:** capability + schema + spec prose ~1–2 days; conformance scenarios ~1 day; reference-host rewrite ~2–3 days.
 
-## Acceptance criteria
+### Promotion to Active (2026-07-04 — bootstrap steward waiver, 7-day comment window waived)
+
+Promoted `Draft → Active` under the bootstrap steward waiver (per `GOVERNANCE.md`; same mechanism as RFC 0121/0122). The design is accepted; all Draft-phase questions are resolved (override-key, inline-lift, embedded-boundary in the 2026-07-04 openwop-app Track-A review; `sensitive` inference at this promotion). Compatibility classification is firm (**additive**). This is a **status/design promotion** — the normative surface (capability schema + spec prose + conformance scenarios) and the reference-host implementation remain the path to `Accepted`. **No host may advertise `workflowChainPacks.deferredParameters.supported: true` until RFC 0124 is `Accepted`** (truthful-advertisement; `OPENWOP_REQUIRE_BEHAVIOR`).
+
+### Acceptance criteria (path to `Accepted`)
 
 - [ ] Spec text merged: `workflow-chain-packs.md` §"Deferred-parameter expansion (normative)" + WCP4 gap row updated to point at this RFC.
-- [ ] Schema updated: `workflowChainPacks.deferredParameters` in `capabilities.schema.json` + `capabilities.md` documentation.
+- [ ] Schema updated: `workflowChainPacks.deferredParameters` in `capabilities.schema.json` + `capabilities.md` documentation; `x-openwop-sensitive` hint in `workflow-chain-pack-manifest.schema.json`.
 - [ ] At least one server-free conformance scenario (`workflow-chain-deferred-parameters.test.ts`) + one capability-gated host leg.
 - [ ] CHANGELOG entry under the appropriate `[Unreleased]` / version.
-- [ ] One reference host implements deferred mode and passes the gated scenario, OR the RFC explicitly defers reference-host implementation to a named follow-up.
-- [ ] Unresolved Q1 (`sensitive` inference) resolved before `Active` (override-key, inline-lift, and embedded-boundary questions resolved in the 2026-07-04 host review).
+- [ ] One reference host implements deferred mode and passes the gated scenario (openwop-app = reference implementer #1), plus a second witness with a PromptTemplate compose path.
+- [x] All Draft-phase Unresolved questions resolved (override-key, inline-lift, embedded-boundary, `sensitive` inference).
 - [ ] Conformance asserts a deferred-variable prompt binding composes with `contentTrust: "untrusted"` (unconditional fence, step 4).
 
 ## References
