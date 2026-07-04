@@ -54,10 +54,25 @@ export interface FragmentNode {
   inputs?: Record<string, unknown>;
 }
 
+/** A fan-in / error-routing rule mirrored from `WorkflowEdge.triggerRule`
+ *  (workflow-definition.schema.json). RFC 0125. */
+export type TriggerRule =
+  | 'all_success'
+  | 'any_success'
+  | 'all_complete'
+  | 'none_failed'
+  | 'any_failed';
+
 export interface FragmentEdge {
   from: string;
   to: string;
-  condition?: string;
+  /** Edge condition — an `EdgeCondition` object (RFC 0013 amendment #818).
+   *  Carried through expansion opaquely; typed `unknown` since the lib does
+   *  not evaluate it. */
+  condition?: unknown;
+  /** Fan-in / error-routing rule (RFC 0125). Carried through expansion onto
+   *  the resulting WorkflowEdge so the scheduler honors it. */
+  triggerRule?: TriggerRule;
 }
 
 /** Per-expansion context the caller supplies. */
@@ -90,7 +105,7 @@ export interface ExpandedFragment {
     inputs?: Record<string, unknown>;
     capabilities?: ReadonlyArray<string>;
   }>;
-  edges: ReadonlyArray<{ from: string; to: string; condition?: string }>;
+  edges: ReadonlyArray<{ from: string; to: string; condition?: unknown; triggerRule?: TriggerRule }>;
   /** Map of original-fragment-id → rewritten-id, so the caller can
    *  wire the parent workflow's adjacent edges into the expansion. */
   idMap: ReadonlyMap<string, string>;
@@ -206,6 +221,10 @@ export function expandChain(chain: WorkflowChain, ctx: ExpansionContext): Expand
       to: rewriteEdgeRef(e.to, fragmentNodeIds, prefix),
     };
     if (e.condition !== undefined) out.condition = e.condition;
+    // RFC 0125: carry the fan-in/error-routing rule onto the expanded
+    // WorkflowEdge so the scheduler honors it (mirrors the `condition`
+    // pass-through; without this the field is silently dropped at expansion).
+    if (e.triggerRule !== undefined) out.triggerRule = e.triggerRule;
     return out;
   });
 
