@@ -88,7 +88,7 @@
         },
         "parameters": {
           "type": "object",
-          "description": "JSON Schema 2020-12 fragment describing the parameter values the host editor MUST collect from the author at drop time. Authors-supplied values are validated against this schema before expansion proceeds; invalid input MUST be rejected with `chain_parameter_invalid`.",
+          "description": "JSON Schema 2020-12 fragment describing the parameter values the host editor MUST collect from the author at drop time. Authors-supplied values are validated against this schema before expansion proceeds; invalid input MUST be rejected with `chain_parameter_invalid`. RECOGNIZED EXTENSION KEY (RFC 0124 / WCP4): a property MAY carry `x-openwop-sensitive: true` to declare the parameter secret-class. A host that recognizes it MUST NOT expansion-time-freeze that parameter (plaintext secret-at-rest leak, SR-1) — it MUST defer it (materialized `sensitive` variable, never persisted) or fail closed with `sensitive_param_not_deferrable` (422), and MUST redact it to `[REDACTED:<id>]` in `prompt.composed`. See `workflow-chain-packs.md` §\"Deferred-parameter expansion\" / RFC 0124 §Security.",
           "additionalProperties": true,
           "$comment": "Open by design — this field IS a JSON Schema document, so it must accept any of the 30+ JSON Schema 2020-12 keywords (`type`, `properties`, `required`, `oneOf`, `allOf`, etc.). Strict closure would require importing the JSON Schema meta-schema."
         },

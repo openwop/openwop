@@ -165,6 +165,22 @@ Hosts MAY optionally annotate expanded nodes with a `metadata.expandedFrom: { ch
 
 ---
 
+## Deferred-parameter expansion (RFC 0124)
+
+Expansion-time substitution (above) is the default and the floor. A host MAY additionally offer an OPTIONAL, capability-gated **deferred-parameter mode** — advertised via `capabilities.workflowChainPacks.deferredParameters.supported: true` (`capabilities.md`) — that keeps chain parameters overridable **per run** without breaking portability. RFC 0124 is the normative source; this section is the spec-doc summary. **No host may advertise `deferredParameters.supported: true` until RFC 0124 is `Accepted`.**
+
+In deferred mode, in place of step 5 (literal substitution) the host MUST:
+
+1. **Materialize parameters as variables.** For each property in the chain's `parameters`, add a top-level `WorkflowVariable` to the parent workflow: `name` = a collision-free name (`${chainIdSlug}_${expansionId}_${p}`), `type` copied from the parameter's JSON-Schema `type`, `defaultValue` = the author-supplied value, `required` mirroring `parameters.required`.
+2. **Rewrite tokens to spec'd bindings.** Replace every `{{params.x}}` with a portable runtime binding: for prompt bodies, a PromptTemplate `{{varName}}` slot with a matching `PromptVariable` `source: "variable"` (`prompts.md` §"Variable interpolation"); for a whole-value `config`/`inputs` token, a **variable-sourced PortValue**. An inline `config.systemPrompt` body MUST be lifted into a host-resident PromptTemplate to defer it, else resolved at expansion time. An embedded token in arbitrary non-prompt `config` has no portable runtime home and MUST be resolved at expansion time.
+3. **Keep the persisted definition token-free.** The result MUST contain NO `{{params.*}}` tokens under any mode — a destination host resolves only concrete typeIds, PromptTemplate variable slots, and PortValue refs.
+
+**Override key.** The normative per-run override key is the **bare parameter name** (`productIdea`); the prefixed internal name is not author-facing. Deferred expansion MUST auto-generate/extend the parent workflow's `configurableSchema` mapping bare → materialized variable, so `POST /v1/runs` / `:fork` `configurable` overrides resolve. Overrides ride the event log; replay is deterministic via `replay.md`'s `RunSnapshot.variables` byte-equivalence.
+
+**Security.** A per-run value interpolated into a prompt is untrusted content and MUST compose with `bindingTrust: "untrusted"` → `contentTrust: "untrusted"` + `<UNTRUSTED>` fencing, unconditionally (no default-vs-override provenance branch), per `SECURITY/threat-model-prompt-injection.md`. A parameter declared `x-openwop-sensitive: true` (a recognized manifest extension key) is secret-class: a recognizing host MUST NOT expansion-time-freeze it (plaintext secret-at-rest leak, SR-1) — it MUST defer it (materialized `sensitive` variable, per-run via `configurable`, never persisted) OR **fail closed with `sensitive_param_not_deferrable` (422)** if it cannot defer; and MUST redact it to `[REDACTED:<id>]` in `prompt.composed`/debug per `SECURITY/threat-model-secret-leakage.md` §SR-1. Untrusted and secret markers are orthogonal and compose on the same materialized variable.
+
+---
+
 ## Capability gating
 
 Hosts that implement workflow-chain pack expansion advertise this via `Capabilities.workflowChainPacks.supported: true` (see `capabilities.md`). The conformance suite uses this flag to scope chain-specific scenarios — hosts that don't implement expansion MUST be skipped from those tests, not failed.
@@ -304,6 +320,7 @@ Hosts and registries operating on workflow-chain packs MUST use these error code
 | `chain_unresolvable_typeid` | Host editor expansion             | Chain's `dag` references a typeId not registered with the host. `details.typeId` carries the offending value.           |
 | `chain_parameter_invalid`   | Host editor expansion             | Author-supplied parameter values fail the chain's `parameters` schema. `details.path` carries the failing JSON-pointer. |
 | `pack_signature_invalid`    | Host editor expansion             | Pack signature verification failed (same surface as node packs; reused unchanged from `node-packs.md`).                 |
+| `sensitive_param_not_deferrable` | Host editor expansion (RFC 0124) | HTTP `422`. A recognizing host cannot portably defer an `x-openwop-sensitive` parameter (it resolves only to a frozen position, or the host lacks deferred mode); the host MUST refuse the expansion rather than freeze the secret into persisted `config`. |
 
 ---
 
